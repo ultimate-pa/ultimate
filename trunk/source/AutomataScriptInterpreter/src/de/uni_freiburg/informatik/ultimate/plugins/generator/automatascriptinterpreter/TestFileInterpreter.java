@@ -54,7 +54,8 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.FileLocator;
 
-import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -705,6 +706,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			ats = (AutomataTestFileAST) node;
 		}
 		Finished interpretationFinished = Finished.FINISHED;
+		String errorMessage = null;
 		reportToLogger(LoggerSeverity.DEBUG, "Interpreting automata definitions...");
 		// Interpret automata definitions
 		try {
@@ -715,6 +717,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			reportToLogger(LoggerSeverity.INFO, "Interpretation of testfile cancelled.");
 			reportToUltimate(Severity.ERROR, e.getMessage() + " Interpretation of testfile cancelled.", "Error", node);
 			interpretationFinished = Finished.ERROR;
+			errorMessage = e.getMessage();
 		}
 
 		if (interpretationFinished == Finished.FINISHED) {
@@ -733,6 +736,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 				}
 				reportToUltimate(Severity.ERROR, e.getLongDescription(), shortDescription, node);
 				interpretationFinished = Finished.ERROR;
+				errorMessage = e.getLongDescription();
 			}
 		}
 
@@ -753,6 +757,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 						interpretationFinished = Finished.OUTOFMEMORY;
 					} else {
 						interpretationFinished = Finished.ERROR;
+						errorMessage = e.getLongDescription();
 					}
 					printMessage(Severity.ERROR, LoggerSeverity.INFO, e.getLongDescription(),
 							"Interpretation of ats file failed", node);
@@ -760,7 +765,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			}
 		}
 		reportToLogger(LoggerSeverity.DEBUG, "Reporting results...");
-		reportResult(interpretationFinished);
+		reportResult(interpretationFinished, errorMessage);
 		if (mPrintAutomataToFile) {
 			mPrintWriter.close();
 		}
@@ -1067,7 +1072,6 @@ public class TestFileInterpreter implements IMessagePrinter {
 			result = arguments.get(0);
 			if (result instanceof Boolean) {
 				if ((Boolean) result) {
-
 					mResultOfAssertStatements.add(new GenericResultAtElement<AtsASTNode>(oe, Activator.s_PLUGIN_ID,
 							mServices.getBacktranslationService(), s_AssertionHoldsMessage, oe.getAsString(),
 							Severity.INFO));
@@ -1083,24 +1087,48 @@ public class TestFileInterpreter implements IMessagePrinter {
 			String argsAsString = children.get(0).getAsString();
 			// ILocation loc = children.get(0).getLocation();
 			reportToLogger(LoggerSeverity.INFO, "Printing " + argsAsString);
-			for (Object o : arguments) {
-				final String text;
-				if (o instanceof IAutomaton) {
-					mLastPrintedAutomaton = (IAutomaton<?, ?>) o;
-					text = (new AtsDefinitionPrinter<String, String>(mServices, "automaton", o))
-							.getDefinitionAsString();
+			final String text;
+			if (arguments.get(0) instanceof IAutomaton) {
+				final Format format;
+				if (arguments.size() == 1) {
+					format = Format.ATS;
+				} else if (arguments.size() == 2) {
+					if (arguments.get(1) instanceof String) {
+						try {
+							format = Format.valueOf((String) arguments.get(1));
+						} catch (Exception e) {
+							throw new InterpreterException(oe.getLocation(), 
+									"unknown format " + (String) arguments.get(1));
+						}
+					} else {
+						throw new InterpreterException(oe.getLocation(), 
+								"if first argument of print command is an "
+								+ "automaton second argument has to be a string "
+								+ "that defines an output format");
+					}
 				} else {
-					text = String.valueOf(o);
+					throw new InterpreterException(oe.getLocation(), 
+							"if first argument of print command is an "
+							+ "automaton only two arguments are allowed");
 				}
-				printMessage(Severity.INFO, LoggerSeverity.INFO, text, oe.getAsString(), oe);
-				if (mPrintAutomataToFile) {
-					String comment = "/* " + oe.getAsString() + " */";
-					mPrintWriter.println(comment);
-					mPrintWriter.println(text);
+				mLastPrintedAutomaton = (IAutomaton<?, ?>) arguments.get(0);
+				text = (new AutomatonDefinitionPrinter<String, String>(mServices, "automaton", format, arguments.get(0)))
+							.getDefinitionAsString();
+			} else {
+				if (arguments.size() > 1) {
+					throw new InterpreterException(oe.getLocation(), 
+							"if first argument of print command is not an "
+							+ "automaton no second argument allowed");
+				} else {
+					text = String.valueOf(arguments.get(0));
 				}
-
 			}
-
+			printMessage(Severity.INFO, LoggerSeverity.INFO, text, oe.getAsString(), oe);
+			if (mPrintAutomataToFile) {
+				String comment = "/* " + oe.getAsString() + " */";
+				mPrintWriter.println(comment);
+				mPrintWriter.println(text);
+			}
 		} else {
 			IOperation<String, String> op = getAutomataOperation(oe, arguments);
 			if (op != null) {
@@ -1249,8 +1277,9 @@ public class TestFileInterpreter implements IMessagePrinter {
 	/**
 	 * Reports the results of assert statements to the Logger and to Ultimate as
 	 * a GenericResult.
+	 * @param errorMessage 
 	 */
-	private void reportResult(Finished finished) {
+	private void reportResult(Finished finished, String errorMessage) {
 		mLogger.info("----------------- Test Summary -----------------");
 		boolean oneOrMoreAssertionsFailed = false;
 		for (GenericResultAtElement<AtsASTNode> test : mResultOfAssertStatements) {
@@ -1284,7 +1313,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		} else {
 			throw new AssertionError();
 		}
-		IResult result = new AutomataScriptInterpreterOverallResult(Activator.s_PLUGIN_ID, overallResult);
+		IResult result = new AutomataScriptInterpreterOverallResult(Activator.s_PLUGIN_ID, overallResult, errorMessage);
 		mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
 		reportToLogger(loggerSeverity, result.getLongDescription());
 	}

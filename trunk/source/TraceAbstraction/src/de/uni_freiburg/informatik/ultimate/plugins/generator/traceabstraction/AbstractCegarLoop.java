@@ -36,8 +36,8 @@ import java.util.Collection;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter.Labeling;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
@@ -169,7 +169,7 @@ public abstract class AbstractCegarLoop {
 	// used for debugging only
 	protected IAutomaton<CodeBlock, IPredicate> m_ArtifactAutomaton;
 	protected PrintWriter m_IterationPW;
-	protected final Labeling m_PrintAutomataLabeling;
+	protected final Format m_PrintAutomataLabeling;
 
 	protected CegarLoopBenchmarkGenerator m_CegarLoopBenchmark;
 
@@ -432,7 +432,7 @@ public abstract class AbstractCegarLoop {
 	}
 
 	protected void writeAutomatonToFile(IAutomaton<CodeBlock, IPredicate> automaton, String filename) {
-		new AtsDefinitionPrinter<String, String>(m_Services, filename, m_Pref.dumpPath() + "/" + filename, m_PrintAutomataLabeling,
+		new AutomatonDefinitionPrinter<String, String>(m_Services, filename, m_Pref.dumpPath() + "/" + filename, m_PrintAutomataLabeling,
 				"", automaton);
 	}
 

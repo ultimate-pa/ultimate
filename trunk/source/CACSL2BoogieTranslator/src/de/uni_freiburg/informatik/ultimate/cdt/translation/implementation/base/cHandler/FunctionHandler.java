@@ -492,12 +492,13 @@ public class FunctionHandler {
 		// calculate SCCs and a mapping for each methodId to its SCC
 		// O(|edges| + |calls|)
 		LinkedHashSet<LinkedHashSet<String>> sccs = new TarjanSCC().getSCCs(callGraph);
-		LinkedHashMap<String, LinkedHashSet<String>> mapping = new LinkedHashMap<String, LinkedHashSet<String>>();
+		LinkedHashMap<String, LinkedHashSet<String>> functionNameToScc = new LinkedHashMap<String, LinkedHashSet<String>>();
 		for (LinkedHashSet<String> scc : sccs) { // O(|proc|)
 			for (String s : scc) {
-				mapping.put(s, scc);
+				functionNameToScc.put(s, scc);
 			}
 		}
+		// counts how many incoming edges an scc has in the updateGraph
 		LinkedHashMap<LinkedHashSet<String>, Integer> incomingEdges = new LinkedHashMap<LinkedHashSet<String>, Integer>();
 		for (LinkedHashSet<String> scc : sccs) {
 			incomingEdges.put(scc, 0);
@@ -505,59 +506,70 @@ public class FunctionHandler {
 		// calculate the SCC update graph without loops and dead ends
 		Queue<LinkedHashSet<String>> deadEnds = new LinkedList<LinkedHashSet<String>>();
 		deadEnds.addAll(sccs);
-		LinkedHashMap<LinkedHashSet<String>, LinkedHashSet<LinkedHashSet<String>>> updateGraph = new LinkedHashMap<LinkedHashSet<String>, LinkedHashSet<LinkedHashSet<String>>>();
-		for (String p : callGraph.keySet()) { // O(|calls|)
-			for (String s : callGraph.get(p)) { // foreach s : succ(p)
-				// edge (p, s), means p calls s
-				LinkedHashSet<String> sccP = mapping.get(p);
-				LinkedHashSet<String> sccS = mapping.get(s);
-				if (sccP == sccS)
-					continue; // skip self loops
-				if (updateGraph.containsKey(sccS)) {
-					updateGraph.get(sccS).add(sccP);
-				} else {
-					LinkedHashSet<LinkedHashSet<String>> predSCCs = new LinkedHashSet<LinkedHashSet<String>>();
-					predSCCs.add(sccP);
-					updateGraph.put(sccS, predSCCs);
-				}
-				incomingEdges.put(sccP, incomingEdges.get(sccP) + 1);
-				deadEnds.remove(sccP);
-			}
-		}
+
+		// updateGraph maps a calleeSCC to many callerSCCs
 		// This graph might not be complete! It is i.e. missing all procedures,
 		// that do not have incoming or outgoing edges!
 		// But: They don't need an update anyway!
-
+		LinkedHashMap<LinkedHashSet<String>, LinkedHashSet<LinkedHashSet<String>>> updateGraph = new LinkedHashMap<LinkedHashSet<String>, LinkedHashSet<LinkedHashSet<String>>>();
+		for (String caller : callGraph.keySet()) { // O(|calls|)
+			for (String callee : callGraph.get(caller)) { // foreach s : succ(p)
+				LinkedHashSet<String> sccCaller = functionNameToScc.get(caller);
+				LinkedHashSet<String> sccCallee = functionNameToScc.get(callee);
+				if (sccCaller == sccCallee)
+					continue; // skip self loops
+				if (updateGraph.containsKey(sccCallee)) {
+					updateGraph.get(sccCallee).add(sccCaller);
+				} else {
+					LinkedHashSet<LinkedHashSet<String>> predSCCs = new LinkedHashSet<LinkedHashSet<String>>();
+					predSCCs.add(sccCaller);
+					updateGraph.put(sccCallee, predSCCs);
+				}
+				deadEnds.remove(sccCaller);
+			}
+		}
+		
+		// incoming edges must be computed on a graph that has Sccs as nodes (updategraph), not just the functions (callgraph)
+		for (LinkedHashSet<String> calleeScc : updateGraph.keySet()) {
+			for (LinkedHashSet<String> callerScc : updateGraph.get(calleeScc)) {
+				incomingEdges.put(callerScc, incomingEdges.get(callerScc) + 1);
+			}
+		}
+		
 		// calculate transitive modifies clause
-		LinkedHashMap<LinkedHashSet<String>, LinkedHashSet<String>> modGlobals = new LinkedHashMap<LinkedHashSet<String>, LinkedHashSet<String>>();
+		LinkedHashMap<LinkedHashSet<String>, LinkedHashSet<String>> sccToModifiedGlobals = new LinkedHashMap<LinkedHashSet<String>, LinkedHashSet<String>>();
 		while (!deadEnds.isEmpty()) {
 			// O (|proc| + |edges in updateGraph|), where
 			// |edges in updateGraph| <= |calls|
-			LinkedHashSet<String> d = deadEnds.poll();
-			for (String p : d) {
-				if (!modGlobals.containsKey(d)) {
-					LinkedHashSet<String> n = new LinkedHashSet<String>();
-					n.addAll(modifiedGlobals.get(p));
-					modGlobals.put(d, n);
+			LinkedHashSet<String> deadEnd = deadEnds.poll();
+
+			// the modified globals of the scc is the union of the modified globals of all its functions
+			for (String func : deadEnd) {
+				if (!sccToModifiedGlobals.containsKey(deadEnd)) {
+					sccToModifiedGlobals.put(deadEnd, new LinkedHashSet<String>(modifiedGlobals.get(func)));
 				} else {
-					modGlobals.get(d).addAll(modifiedGlobals.get(p));
+					sccToModifiedGlobals.get(deadEnd).addAll(modifiedGlobals.get(func));
 				}
 			}
-			if (updateGraph.get(d) == null)
+
+			//if the scc has no callers, do nothing with it
+			if (updateGraph.get(deadEnd) == null)
 				continue;
-			for (LinkedHashSet<String> next : updateGraph.get(d)) {
-				if (!modGlobals.containsKey(next)) {
+
+			// for all callers of the scc, add the modified globals to them, make them deadends, if all their input has been processed
+			for (LinkedHashSet<String> caller : updateGraph.get(deadEnd)) {
+				if (!sccToModifiedGlobals.containsKey(caller)) {
 					LinkedHashSet<String> n = new LinkedHashSet<String>();
-					n.addAll(modGlobals.get(d));
-					modGlobals.put(next, n);
+					n.addAll(sccToModifiedGlobals.get(deadEnd));
+					sccToModifiedGlobals.put(caller, n);
 				} else {
-					modGlobals.get(next).addAll(modGlobals.get(d));
+					sccToModifiedGlobals.get(caller).addAll(sccToModifiedGlobals.get(deadEnd));
 				}
-				int remainingUpdates = incomingEdges.get(next) - 1;
+				int remainingUpdates = incomingEdges.get(caller) - 1;
 				if (remainingUpdates == 0) {
-					deadEnds.add(next);
+					deadEnds.add(caller);
 				}
-				incomingEdges.put(next, remainingUpdates);
+				incomingEdges.put(caller, remainingUpdates);
 			}
 		}
 		// update the modifies clauses!
@@ -567,18 +579,15 @@ public class FunctionHandler {
 			Specification[] spec = procDecl.getSpecification();
 			CACSLLocation loc = (CACSLLocation) procDecl.getLocation();
 			if (!modifiedGlobalsIsUserDefined.contains(mId)) {
-				assert mapping.get(mId) != null;
-				LinkedHashSet<String> currModClause = modGlobals.get(mapping.get(mId));
+				assert functionNameToScc.get(mId) != null;
+				LinkedHashSet<String> currModClause = sccToModifiedGlobals.get(functionNameToScc.get(mId));
 				assert currModClause != null : "No modifies clause proc " + mId;
-//				if (currModClause == null) {
-//					currModClause = new LinkedHashSet<>();
-//				}
-//				modifiedGlobals.put(mId, currModClause);
-				modifiedGlobals.get(mId).addAll(currModClause);//TODO Hack --> understand what's going on, makes a difference in ntdrivers/parport_false..
+
+				modifiedGlobals.get(mId).addAll(currModClause);
 				int nrSpec = spec.length;
 				spec = Arrays.copyOf(spec, nrSpec + 1);
 				LinkedHashSet<String> modifySet = new LinkedHashSet<>();
-//				for (String var : currModClause) {
+
 				for (String var : modifiedGlobals.get(mId)) {
 					modifySet.add(var);
 				}

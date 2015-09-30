@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences;
 
-import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter.Labeling;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
@@ -64,7 +64,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<InterpolantAutomaton>(LABEL_INTERPOLANT_AUTOMATON,
 						InterpolantAutomaton.CANONICAL, PreferenceType.Combo, InterpolantAutomaton.values()),
 				new UltimatePreferenceItem<Boolean>(LABEL_DUMPAUTOMATA, DEF_DUMPAUTOMATA, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Labeling>(LABEL_AUTOMATAFORMAT, DEF_AUTOMATAFORMAT, PreferenceType.Combo, Labeling.values()),
+				new UltimatePreferenceItem<Format>(LABEL_AUTOMATAFORMAT, DEF_AUTOMATAFORMAT, PreferenceType.Combo, Format.values()),
 				new UltimatePreferenceItem<String>(LABEL_DUMPPATH, DEF_DUMPPATH, PreferenceType.Directory),
 				new UltimatePreferenceItem<InterpolantAutomatonEnhancement>(LABEL_InterpolantAutomatonEnhancement,
 						InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION, PreferenceType.Combo, InterpolantAutomatonEnhancement.values()),
@@ -154,7 +154,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final INTERPOLATION DEF_INTERPOLANTS = INTERPOLATION.ForwardPredicates;
 	public static final String DEF_ADDITIONAL_EDGES = VALUE_InterpolantAutomaton_Canonical;
 	public static final boolean DEF_DUMPAUTOMATA = false;
-	public static final Labeling DEF_AUTOMATAFORMAT = Labeling.TOSTRING;
+	public static final Format DEF_AUTOMATAFORMAT = Format.ATS;
 	public static final String DEF_DUMPPATH = ".";
 	public static final boolean DEF_DIFFERENCE_SENWA = false;
 	public static final boolean DEF_MINIMIZE = true;

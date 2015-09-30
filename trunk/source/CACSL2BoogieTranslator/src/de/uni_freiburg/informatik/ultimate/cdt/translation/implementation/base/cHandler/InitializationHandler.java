@@ -566,6 +566,10 @@ public class InitializationHandler {
 //				TODO: we may need to pass statements, decls, ...
 				if (list != null && list.size() > i && list.get(i).lrVal != null) {
 					val = (RValue) list.get(i).lrVal; 
+					decl.addAll(list.get(i).decl);
+					auxVars.putAll(list.get(i).auxVars);
+					stmt.addAll(list.get(i).stmt);
+					overApp.addAll(list.get(i).overappr);
 					stmt.addAll(mMemoryHandler.getWriteCall(loc, new HeapLValue(writeLocation, valueType), val.getValue(), val.getCType()));
 				} else {
 					if (valueType instanceof CArray) {
@@ -576,8 +580,8 @@ public class InitializationHandler {
 						stmt.addAll(sInit.stmt);
 						decl.addAll(sInit.decl);
 						auxVars.putAll(sInit.auxVars);
-						assert sInit.decl.size() == 0 && sInit.auxVars.size() == 0 : "==> change return type of initArray..";
-						val = (RValue) sInit.lrVal;
+//						assert sInit.decl.size() == 0 && sInit.auxVars.size() == 0 : "==> change return type of initArray..";
+//						val = (RValue) sInit.lrVal;
 					} else if (valueType instanceof CPrimitive 
 							|| valueType instanceof CPointer) {
 						ExpressionResult pInit = main.cHandler.getInitHandler().initVar(loc, main, 
@@ -590,6 +594,7 @@ public class InitializationHandler {
 					}
 				}
 			}
+			return new ExpressionResult(stmt, null, decl, auxVars, overApp);
 		} else {
 			for (int i = 0; i < currentSizeInt; i++) { 
 				Expression newStartAddressOffsetInner = newStartAddressOffset;
@@ -630,8 +635,8 @@ public class InitializationHandler {
 				auxVars.putAll(initRex.auxVars);
 				overApp.addAll(initRex.overappr);
 			}
+			return new ExpressionResult(stmt, null, decl, auxVars, overApp);
 		}
-		return new ExpressionResult(stmt, null, decl, auxVars, overApp);
 	}
 
 	/**
@@ -713,6 +718,7 @@ public class InitializationHandler {
 				addOverApprToStatementAnnots(overApp, assignment);
 				stmt.add(assignment);
 			}
+			return new ExpressionResult(stmt, null, decl, auxVars, overApp);
 		} else {
 			for (int i = 0; i < currentSizeInt; i++) { 
 
@@ -750,9 +756,9 @@ public class InitializationHandler {
 				auxVars.putAll(initRex.auxVars);
 				overApp.addAll(initRex.overappr);
 			}
+			return new ExpressionResult(stmt, null, decl, auxVars, overApp);
 		}
 //		return arrayWrites;
-		return new ExpressionResult(stmt, null, decl, auxVars, overApp);
 	}
 
 	/**

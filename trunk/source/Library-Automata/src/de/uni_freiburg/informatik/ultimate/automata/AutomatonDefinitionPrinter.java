@@ -57,7 +57,8 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 
 
 /**
- * Writes an automaton definition in the .ats format for a given automaton.
+ * Writes an automaton definition in for a given automaton.
+ * 
  * if Labeling == TOSTRING
  * The String representation of LETTER and STATE is used.
  * if Labeling == QUOTED
@@ -70,9 +71,35 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
  * @author heizmann@informatik.uni-freiburg.de
  */
 
-public class AtsDefinitionPrinter<LETTER,STATE> {
+public class AutomatonDefinitionPrinter<LETTER,STATE> {
 
-		public enum Labeling { NUMERATE, TOSTRING, QUOTED, BA_FORMAT };
+		public enum Format {
+			/**
+			 * Automata script.
+			 * The toString() representation of LETTER and STATE is used.
+			 */
+			ATS,
+			/**
+			 * Automata script.
+			 * The String representations of LETTER and STATE are ignored.
+			 * The TestFileWriter introduces new names, e.g. the letters of 
+			 * the alphabet are a0, ..., an.
+			 */
+			ATS_NUMERATE, 
+			/**
+			 * Automata script.
+			 * The String representation of LETTER and STATE plus the hashcode() is used.
+			 */
+			ATS_QUOTED,
+			/**
+			 * The BA format, that is also used by some tools of Yu-Fang Chen.
+			 */
+			BA,
+			/**
+			 * The Hanoi Omega Automaton Format
+			 */
+			HOA,
+		};
 		
 		private final IUltimateServiceProvider m_Services;
 		private final Logger m_Logger;
@@ -97,8 +124,8 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		}
 		
 		
-		public AtsDefinitionPrinter(IUltimateServiceProvider services,
-				String automatonName, String filename, Labeling labels, String message, Object... automata) {
+		public AutomatonDefinitionPrinter(IUltimateServiceProvider services,
+				String automatonName, String filename, Format labels, String message, Object... automata) {
 			m_Services = services;
 			m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 			m_Logger.warn("Dumping Testfile");
@@ -116,12 +143,12 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		}
 		
 		
-		public AtsDefinitionPrinter(IUltimateServiceProvider services, String name, Object automaton) {
+		public AutomatonDefinitionPrinter(IUltimateServiceProvider services, String name, Format format, Object automaton) {
 			m_Services = services;
 			m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 			m_StringWriter = new StringWriter();
 			m_printWriter = new PrintWriter(m_StringWriter);
-			printAutomaton(name, automaton, Labeling.TOSTRING);
+			printAutomaton(name, automaton, format);
 		}
 		
 		public String getDefinitionAsString() {
@@ -134,7 +161,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		
 		
 		@SuppressWarnings("unchecked")
-		private void printAutomaton(String name, Object automaton, Labeling labels) {
+		private void printAutomaton(String name, Object automaton, Format format) {
 			if (automaton instanceof INestedWordAutomatonSimple) {
 				INestedWordAutomaton<LETTER,STATE> nwa;
 				if (automaton instanceof INestedWordAutomaton) {
@@ -147,30 +174,29 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 					}
 				}
 					
-				if (labels == Labeling.TOSTRING) {
+				if (format == Format.ATS) {
 					new NwaTestFileWriterToString(name, nwa);
-				} else if (labels == Labeling.QUOTED) {
+				} else if (format == Format.ATS_QUOTED) {
 					new NwaTestFileWriterToStringWithHash(name, nwa);
-				
-				} else if (labels == Labeling.NUMERATE) {
+				} else if (format == Format.ATS_NUMERATE) {
 					new NwaTestFileWriter(name, nwa);
-				} else if (labels == Labeling.BA_FORMAT) {
+				} else if (format == Format.BA) {
 					new BaFormatWriter(nwa);
-				}
-				
-				else {
+				} else if (format == Format.HOA) {
+					new HanoiFormatWriter(nwa);
+				} else {
 					throw new AssertionError("unsupported labeling");
 				}
 			}
 			
 			else if (automaton instanceof IPetriNet) {
 				IPetriNet<LETTER,STATE> net = (IPetriNet<LETTER,STATE>) automaton;
-				if (labels == Labeling.TOSTRING) {
+				if (format == Format.ATS) {
 					new NetTestFileWriterToString(net);
-				} else if (labels == Labeling.QUOTED) {
+				} else if (format == Format.ATS_QUOTED) {
 					new NetTestFileWriterToStringWithUniqueNumber(net);
 				
-				} else if (labels == Labeling.NUMERATE) {
+				} else if (format == Format.ATS_NUMERATE) {
 					new NetTestFileWriter(net);
 				} else {
 					throw new AssertionError("unsupported labeling");
@@ -691,12 +717,21 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 		
 		private class BaFormatWriter {
 
+			protected final Map<LETTER, String> m_AlphabetMapping;
+			protected final Map<STATE, String> m_StateMapping;
+			protected final INestedWordAutomaton<LETTER, STATE> m_Nwa;
+
 			public BaFormatWriter(INestedWordAutomaton<LETTER, STATE> nwa) {
-				Map<LETTER, String> alphabetMapping = computeAlphabetMapping(nwa.getInternalAlphabet());
-				Map<STATE, String> stateMapping = computeStateMapping(nwa.getStates());
-				StringBuilder initStateSb = computeStateString(nwa.getInitialStates(), stateMapping);
-				StringBuilder transSb = computeTransitionString(nwa, stateMapping, alphabetMapping);
-				StringBuilder finalStateSb = computeStateString(nwa.getFinalStates(), stateMapping);
+				m_AlphabetMapping = computeAlphabetMapping(nwa.getInternalAlphabet());
+				m_StateMapping = computeStateMapping(nwa.getStates());
+				m_Nwa = nwa;
+				doPrint();
+			}
+
+			protected void doPrint() {
+				StringBuilder initStateSb = computeStateString(m_Nwa.getInitialStates(), m_StateMapping);
+				StringBuilder transSb = computeTransitionString(m_Nwa, m_StateMapping, m_AlphabetMapping);
+				StringBuilder finalStateSb = computeStateString(m_Nwa.getFinalStates(), m_StateMapping);
 				m_printWriter.print(initStateSb);
 				m_printWriter.print(transSb);
 				m_printWriter.print(finalStateSb);
@@ -733,7 +768,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 
 			
 			
-			protected Map<LETTER,String> computeAlphabetMapping(Collection<LETTER> alphabet) {
+			private Map<LETTER,String> computeAlphabetMapping(Collection<LETTER> alphabet) {
 				Integer counter = 0;
 				Map<LETTER,String> alphabetMapping = new HashMap<LETTER,String>();
 				for (LETTER letter : alphabet) {
@@ -743,7 +778,7 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 				return alphabetMapping;
 			}
 
-			protected Map<STATE,String> computeStateMapping(Collection<STATE> states) {
+			private Map<STATE,String> computeStateMapping(Collection<STATE> states) {
 				Integer counter = 0;
 				Map<STATE,String> stateMapping = new HashMap<STATE,String>();
 				for (STATE state : states) {
@@ -755,6 +790,95 @@ public class AtsDefinitionPrinter<LETTER,STATE> {
 			
 		}
 		
+		
+		private class HanoiFormatWriter extends BaFormatWriter {
+
+			public HanoiFormatWriter(INestedWordAutomaton<LETTER, STATE> nwa) {
+				super(nwa);
+			}
+
+			@Override
+			protected void doPrint() {
+				String header = constructHeader();
+				m_printWriter.print(header);
+				String bodyToken = "--BODY--";
+				m_printWriter.print(bodyToken);
+				m_printWriter.print(System.lineSeparator());
+				String body = constructBody();
+				m_printWriter.print(body);
+				String endToken = "--END--";
+				m_printWriter.print(endToken);
+			}
+
+			private String constructHeader() {
+				StringBuilder sb = new StringBuilder();
+				sb.append("HOA: v1");
+				sb.append(System.lineSeparator());
+				
+				sb.append("States: " + m_Nwa.getStates().size());
+				sb.append(System.lineSeparator());
+				
+				for (STATE state : m_Nwa.getInitialStates()) {
+					sb.append("Start: " + m_StateMapping.get(state));
+					sb.append(System.lineSeparator());
+				}
+				
+				sb.append("AP: " + m_Nwa.getInternalAlphabet().size());
+				for (LETTER letter : m_Nwa.getInternalAlphabet()) {
+					sb.append(" \"" + letter + "\"");
+				}
+				sb.append(System.lineSeparator());
+				
+				sb.append("Acceptance: " + m_Nwa.getFinalStates().size());
+				sb.append(" Inf(" + 0 + ")");
+//				boolean first = true;
+//				for (STATE state : m_Nwa.getFinalStates()) {
+//					if (first) {
+//						sb.append(" ");
+//						first = false;
+//					} else {
+//						sb.append(" | ");
+//					}
+//					sb.append("Inf(" + m_StateMapping.get(state) + ")");
+//				}
+				sb.append(System.lineSeparator());
+				
+				
+				sb.append("acc-name: Buchi");
+				sb.append(System.lineSeparator());
+				
+				sb.append("tool: \"Ultimate Automata Library\"");
+				sb.append(System.lineSeparator());
+				
+				return sb.toString();
+			}
+			
+			private String constructBody() {
+				StringBuilder sb = new StringBuilder();
+
+				String accSig = "{0}";
+				for (STATE state : m_Nwa.getStates()) {
+					sb.append("State: " + m_StateMapping.get(state) + " \"" + state + "\"");
+					if (m_Nwa.isFinal(state)) {
+						sb.append(" " + accSig);
+					}
+					sb.append(System.lineSeparator());
+					for (LETTER letter : m_Nwa.lettersInternal(state)) {
+						for (OutgoingInternalTransition<LETTER, STATE> tes : m_Nwa.internalSuccessors(state, letter)) {
+							sb.append("[");
+							sb.append(m_AlphabetMapping.get(tes.getLetter()));
+							sb.append("] ");
+							sb.append(m_StateMapping.get(tes.getSucc()));
+							sb.append(System.lineSeparator());
+						}
+					}
+					
+				}
+				return sb.toString();
+			}
+			
+			
+		}
 
 	}
 

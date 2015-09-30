@@ -76,7 +76,19 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 //								ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),						
 						new ColumnDefinition(
 								"Overall iterations", "Iter{-}ations",
-								ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
+								ConversionContext.Divide(1, 2, ""), Aggregate.Ignore, Aggregate.Average),
+//						
+//						new ColumnDefinition("InterpolantConsolidationBenchmark_InterpolantsDropped", "Interpolants dropped", ConversionContext.Divide(1, 2, ""), Aggregate.Ignore, Aggregate.Average),								
+//						new ColumnDefinition("InterpolantConsolidationBenchmark_NewlyCreatedInterpolants", "Newly Created Interpolants", ConversionContext.Divide(1, 2, ""), Aggregate.Ignore, Aggregate.Average),								
+//						new ColumnDefinition("EdgeCheckerBenchmarkData_Sat", "Num Sats", ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),										
+//						new ColumnDefinition("EdgeCheckerBenchmarkData_Unsat", "Num Unsats", ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),										
+//						new ColumnDefinition("EdgeCheckerBenchmarkData_Unknown", "Num Unknown", ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Sum),										
+//						new ColumnDefinition("EdgeCheckerBenchmarkData_NotChecked", "Num NotChecked", ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Sum),										
+//						new ColumnDefinition("InterpolantConsolidationBenchmark_NumOfHoareTripleChecks", "NumOfHTC{-}Checks{-}IC", 
+//								ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Max),								
+//						new ColumnDefinition("InterpolantConsolidationBenchmark_TimeOfConsolidation", "Time{-}Of{-}Consol.", 
+//								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average)
+						
 //						new ColumnDefinition(
 //								"NumberOfCodeBlocks", null,
 //								ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
@@ -97,17 +109,7 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 //								ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
 //						new ColumnDefinition(
 //								"ICC %", "ICC",
-//								ConversionContext.Percent(true,2), Aggregate.Ignore, Aggregate.Average),
-//						new ColumnDefinition("InterpolantConsolidationBenchmark_DifferenceAutomatonEmptyCounter", "Diff.{-}Automaton{-}Empty{-}Counter",
-//								ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Sum),
-//						new ColumnDefinition("InterpolantConsolidationBenchmark_DisjunctionsGreaterOneCounter", "Disjunction{-}Greater{-}OneCounter",
-//										ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Sum),
-//						new ColumnDefinition("InterpolantConsolidationBenchmark_SumOfInterpolantsBefore", "Interpols{-}Before",
-//												ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Sum),										
-//						new ColumnDefinition("InterpolantConsolidationBenchmark_SumOfInterpolantsAfterConsoli", "Interpols{-}After",
-//												ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Sum),
-//						new ColumnDefinition("InterpolantConsolidationBenchmark_MaximalDifferenceBeforeAfter", "Max.{-}Diff.{-}Before{-}After",
-//								ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Max)								
+//								ConversionContext.Percent(true,2), Aggregate.Ignore, Aggregate.Average)						
 					};
 				// @formatter:on
 
@@ -115,9 +117,9 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 				new TraceAbstractionTestSummary(this.getClass()),
 				new CsvConcatenator(this.getClass(), TraceAbstractionBenchmarks.class), 
 				new LatexOverviewSummary(getClass(), benchmarks, columnDef),
-				new LatexDetailedSummary(getClass(), benchmarks, columnDef),
+//				new LatexDetailedSummary(getClass(), benchmarks, columnDef),
 //				new CsvSummary(getClass(), benchmarks, columnDef),
-				new HTMLSummary(getClass(), benchmarks, columnDef),
+//				new HTMLSummary(getClass(), benchmarks, columnDef),
 				new KingOfTheHillSummary(this.getClass()),
 		};
 	}

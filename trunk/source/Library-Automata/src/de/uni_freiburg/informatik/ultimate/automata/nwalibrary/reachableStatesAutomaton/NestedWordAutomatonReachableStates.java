@@ -42,11 +42,12 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.InCaReCounter;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -1932,7 +1933,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 
 	@Override
 	public String toString() {
-		return (new AtsDefinitionPrinter<String, String>(m_Services, "nwa", this)).getDefinitionAsString();
+		return (new AutomatonDefinitionPrinter<String, String>(m_Services, "nwa", Format.ATS, this)).getDefinitionAsString();
 	}
 
 	@Override

@@ -38,8 +38,8 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter.Labeling;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
@@ -178,7 +178,7 @@ public class BuchiCegarLoop {
 	protected NestedWordAutomaton<CodeBlock, IPredicate> m_InterpolAutomaton;
 
 	protected IAutomaton<CodeBlock, IPredicate> m_ArtifactAutomaton;
-	protected final static Labeling m_PrintAutomataLabeling = Labeling.TOSTRING;
+	protected final static Format m_PrintAutomataLabeling = Format.ATS;
 
 	// used for the collection of statistics
 	int m_Infeasible = 0;
@@ -871,7 +871,7 @@ public class BuchiCegarLoop {
 
 	protected static void writeAutomatonToFile(IUltimateServiceProvider services, IAutomaton<CodeBlock, IPredicate> automaton, String path,
 			String filename, String message) {
-		new AtsDefinitionPrinter<String, String>(services, filename, path + "/" + filename, m_PrintAutomataLabeling, message, automaton);
+		new AutomatonDefinitionPrinter<String, String>(services, filename, path + "/" + filename, m_PrintAutomataLabeling, message, automaton);
 	}
 
 	public BuchiAutomizerModuleDecompositionBenchmark getMDBenchmark() {
