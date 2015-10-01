@@ -30,10 +30,7 @@ public final class TypeTranslator {
 			return new NamedType(loc, joogieType.getName(),
 					new ASTType[] { translate(((BoogieFieldType) joogieType).getNestedType(), loc) });
 		} else if (joogieType instanceof BoogieObjectType) {
-			// Note: The BoogieObjectType implementation translates hardcoded to
-			// "ref"; internally, they use strings produced from the original
-			// file
-			return new NamedType(loc, "ref", new ASTType[0]);
+			return new NamedType(loc, joogieType.getName(), new ASTType[0]);
 		} else if (joogieType instanceof BoogiePrimitiveType) {
 			return new PrimitiveType(loc, translateJoogiePrimitiveStrings(joogieType.getName()));
 		} else if (joogieType instanceof HeapType) {
@@ -65,7 +62,7 @@ public final class TypeTranslator {
 		} else {
 			// mLogger.fatal("getPrimitiveType called with unknown type " +
 			// primitiveString + "!");
-			return BoogieType.errorType.toString();
+			throw new AssertionError("Type error. Cannot convert " + primitiveString);
 		}
 	}
 }

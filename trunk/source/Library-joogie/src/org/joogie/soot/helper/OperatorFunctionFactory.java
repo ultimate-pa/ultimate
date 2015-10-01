@@ -181,17 +181,17 @@ public class OperatorFunctionFactory {
 		modInt = createProcedure("$modint", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getIntType(),
 				BoogieBaseTypes.getIntType());
 
-		eqInt = new BoogieProcedure("$eqint", BoogieBaseTypes.getIntType(),
+		eqInt = new BoogieProcedure("$eqint", BoogieBaseTypes.getBoolType(),
 				createLogOpExpression(Operator.Eq, BoogieBaseTypes.getIntType()), mProgDec.getUniqueUid());
-		neInt = new BoogieProcedure("$neint", BoogieBaseTypes.getIntType(),
+		neInt = new BoogieProcedure("$neint", BoogieBaseTypes.getBoolType(),
 				createLogOpExpression(Operator.Neq, BoogieBaseTypes.getIntType()), mProgDec.getUniqueUid());
-		ltInt = new BoogieProcedure("$ltint", BoogieBaseTypes.getIntType(),
+		ltInt = new BoogieProcedure("$ltint", BoogieBaseTypes.getBoolType(),
 				createLogOpExpression(Operator.Lt, BoogieBaseTypes.getIntType()), mProgDec.getUniqueUid());
-		leInt = new BoogieProcedure("$leint", BoogieBaseTypes.getIntType(),
+		leInt = new BoogieProcedure("$leint", BoogieBaseTypes.getBoolType(),
 				createLogOpExpression(Operator.Le, BoogieBaseTypes.getIntType()), mProgDec.getUniqueUid());
-		gtInt = new BoogieProcedure("$gtint", BoogieBaseTypes.getIntType(),
+		gtInt = new BoogieProcedure("$gtint", BoogieBaseTypes.getBoolType(),
 				createLogOpExpression(Operator.Gt, BoogieBaseTypes.getIntType()), mProgDec.getUniqueUid());
-		geInt = new BoogieProcedure("$geint", BoogieBaseTypes.getIntType(),
+		geInt = new BoogieProcedure("$geint", BoogieBaseTypes.getBoolType(),
 				createLogOpExpression(Operator.Ge, BoogieBaseTypes.getIntType()), mProgDec.getUniqueUid());
 
 		cmpInt = new BoogieProcedure("$cmpint", BoogieBaseTypes.getIntType(),
@@ -218,9 +218,9 @@ public class OperatorFunctionFactory {
 
 		// Real operations
 		// -------------------------------------------------------
-		eqReal = new BoogieProcedure("$eqreal", BoogieBaseTypes.getIntType(),
+		eqReal = new BoogieProcedure("$eqreal", BoogieBaseTypes.getBoolType(),
 				createLogOpExpression(Operator.Eq, BoogieBaseTypes.getRealType()), mProgDec.getUniqueUid());
-		neReal = new BoogieProcedure("$nereal", BoogieBaseTypes.getIntType(),
+		neReal = new BoogieProcedure("$nereal", BoogieBaseTypes.getBoolType(),
 				createLogOpExpression(Operator.Neq, BoogieBaseTypes.getRealType()), mProgDec.getUniqueUid());
 		addReal = createProcedure("$addreal", BoogieBaseTypes.getRealType(), BoogieBaseTypes.getRealType(),
 				BoogieBaseTypes.getRealType());
@@ -271,9 +271,9 @@ public class OperatorFunctionFactory {
 		modRef = createProcedure("$modref", BoogieBaseTypes.getRefType(), BoogieBaseTypes.getRefType(),
 				BoogieBaseTypes.getRefType());
 
-		eqRef = new BoogieProcedure("$eqref", BoogieBaseTypes.getIntType(),
+		eqRef = new BoogieProcedure("$eqref", BoogieBaseTypes.getBoolType(),
 				createLogOpExpression(Operator.Eq, BoogieBaseTypes.getRefType()), mProgDec.getUniqueUid());
-		neRef = new BoogieProcedure("$neref", BoogieBaseTypes.getIntType(),
+		neRef = new BoogieProcedure("$neref", BoogieBaseTypes.getBoolType(),
 				createLogOpExpression(Operator.Neq, BoogieBaseTypes.getRefType()), mProgDec.getUniqueUid());
 
 		ltRef = createProcedure("$ltref", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRefType(),
@@ -804,8 +804,7 @@ public class OperatorFunctionFactory {
 	private Expression createLogOpExpression(BinOpExpression.Operator op, BoogieType t) {
 		Variable x = mProgDec.createBoogieVariable("x", t, false);
 		Variable y = mProgDec.createBoogieVariable("y", t, false);
-		return new IteExpression(new BinOpExpression(op, x, y), new UboundedIntConstant(1L),
-				new UboundedIntConstant(0L));
+		return new BinOpExpression(op, x, y);
 	}
 
 	/*
@@ -823,20 +822,20 @@ public class OperatorFunctionFactory {
 			Expression equality = createBinOp("==", x, y);
 			Expression comparison = createBinOp("<", x, y);
 			Expression lt;
-			Expression eq;
+//			Expression eq;
 
 			if (comparison instanceof BinOpExpression)
 				lt = comparison;
 			else
 				lt = new BinOpExpression(Operator.Eq, comparison, new UboundedIntConstant(1L));
 
-			if (equality instanceof BinOpExpression)
-				eq = equality;
-			else
-				eq = new BinOpExpression(Operator.Eq, equality, new UboundedIntConstant(1L));
+//			if (equality instanceof BinOpExpression)
+//				eq = equality;
+//			else
+//				eq = new BinOpExpression(Operator.Eq, equality, new UboundedIntConstant(1L));
 
 			return new IteExpression(lt, new UboundedIntConstant(1L),
-					new IteExpression(eq, new UboundedIntConstant(0L), new UboundedIntConstant(-1L)));
+					new IteExpression(equality, new UboundedIntConstant(0L), new UboundedIntConstant(-1L)));
 		} else {
 			Expression lt = new BinOpExpression(Operator.Lt, x, y);
 			Expression eq = new BinOpExpression(Operator.Eq, x, y);

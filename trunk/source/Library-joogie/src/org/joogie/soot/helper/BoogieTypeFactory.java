@@ -151,7 +151,7 @@ public class BoogieTypeFactory {
 		return mTypeHierarchy.createTypeVariable(t);
 	}
 
-	private class TypeHierarchy {
+	private static class TypeHierarchy {
 		private HashMap<RefType, TypeNode> usedTypes = new HashMap<RefType, TypeNode>();
 		private HashMap<BoogieType, TypeNode> boogie2Nodes = new HashMap<BoogieType, TypeNode>();
 
@@ -224,7 +224,8 @@ public class BoogieTypeFactory {
 					TypeNode supertype = registerType(t.getSootClass().getSuperclass().getType());
 					ret = new TypeNode(((RefType) t).getClassName());
 					String shortname = t.getSootClass().getShortName() + t.getNumber();
-					ret.Value = new BoogieObjectType(shortname);
+//					ret.Value = new BoogieObjectType(shortname);
+					ret.Value = BoogieBaseTypes.getRefType();
 					ret.Parent = supertype;
 					supertype.Children.add(ret);
 					usedTypes.put(t, ret);
@@ -232,7 +233,8 @@ public class BoogieTypeFactory {
 					return ret;
 				} else {
 					ret = new TypeNode(((RefType) t).getClassName());
-					ret.Value = new BoogieObjectType(((RefType) t).getClassName());
+//					ret.Value = new BoogieObjectType(((RefType) t).getClassName());
+					ret.Value = BoogieBaseTypes.getRefType();
 					usedTypes.put(t, ret);
 					boogie2Nodes.put(ret.Value, ret);
 					// rootNode = ret;

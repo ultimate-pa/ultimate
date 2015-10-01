@@ -13,7 +13,7 @@ public class BoogieBaseTypes {
 			"bool");
 	private static BoogiePrimitiveType realType = new BoogiePrimitiveType(
 			"realVar");
-	private static BoogiePrimitiveType classConstType = new BoogiePrimitiveType(
+	private static BoogieObjectType classConstType = new BoogieObjectType(
 			"classConst");
 	private static BoogieObjectType refType = new BoogieObjectType("ref");
 	private static BoogieObjectType voidType = new BoogieObjectType("void");
@@ -24,7 +24,7 @@ public class BoogieBaseTypes {
 			refType);
 
 
-	public static BoogiePrimitiveType getClassConstType() {
+	public static BoogieObjectType getClassConstType() {
 		return classConstType;
 	}
 

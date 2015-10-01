@@ -12,6 +12,7 @@ import java.util.Map;
 import org.joogie.HeapMode;
 import org.joogie.boogie.BoogieProcedure;
 import org.joogie.boogie.LocationTag;
+import org.joogie.boogie.expressions.Expression;
 import org.joogie.boogie.expressions.Variable;
 import org.joogie.util.Util;
 
@@ -98,7 +99,8 @@ public class GlobalsCache {
 			// TODO: IS THIS SAFE TO DO? Is it true that all non-static
 			// procedures should require that __this is not null?
 			if (proc.getThisVariable() != null) {
-				proc.addRequires(mProgDecl.getOperatorFunctionFactory().isNotNull(proc.getThisVariable()));
+				final Expression req = mProgDecl.getOperatorFunctionFactory().isNotNull(proc.getThisVariable());
+				proc.addRequires(req);
 			}
 			// undo change to BoogieHelpers.currentProcedure
 			mProgDecl.setCurrentProcedure(old_);

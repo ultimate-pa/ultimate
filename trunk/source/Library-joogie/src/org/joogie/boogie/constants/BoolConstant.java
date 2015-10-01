@@ -19,23 +19,48 @@
 
 package org.joogie.boogie.constants;
 
+import java.util.LinkedList;
+import java.util.List;
+
 import org.joogie.boogie.expressions.Expression;
+import org.joogie.boogie.expressions.Variable;
+import org.joogie.boogie.types.BoogieBaseTypes;
 import org.joogie.boogie.types.BoogieType;
 
 /**
  * @author schaef
  */
-public abstract class Constant extends Expression {
+public class BoolConstant extends Constant {
 
+	private boolean value;
+
+	public BoolConstant(boolean c) {
+		value = c;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.joogie.boogie.expressions.Expression#toBoogie()
+	 */
 	@Override
 	public String toBoogie() {
-		// TODO Auto-generated method stub
-		return "TestConst";
+		return String.valueOf(value);
 	}
 
 	@Override
 	public BoogieType getType() {
-		return null;
+		return BoogieBaseTypes.getBoolType();
+	}
+
+	@Override
+	public Expression clone() {
+		return this; // TODO Warning, this does not clone, as it is immutable!
+	}
+
+	@Override
+	public List<Variable> getUsedVariables() {
+		return new LinkedList<Variable>();
 	}
 
 }

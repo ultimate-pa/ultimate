@@ -27,10 +27,4 @@ public class BoogieObjectType extends BoogieType {
 	public BoogieObjectType(String name) {
 		super(name);
 	}
-
-	@Override
-	public String toBoogie() {
-		return "ref";
-	}
-
 }

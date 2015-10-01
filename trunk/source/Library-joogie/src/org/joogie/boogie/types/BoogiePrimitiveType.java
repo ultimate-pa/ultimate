@@ -27,5 +27,4 @@ public class BoogiePrimitiveType extends BoogieType {
 	public BoogiePrimitiveType(String name) {
 		super(name);
 	}
-
 }
