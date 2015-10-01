@@ -533,11 +533,4 @@ public class BoogieProcedure {
 	public Set<Variable> getModifiesGlobals() {
 		return mModifiesGlobals;
 	}
-
-	public List<Statement> getStatements() {
-		if (mRootBlock == null) {
-			return null;
-		}
-		return mRootBlock.getStatements();
-	}
 }

@@ -245,4 +245,8 @@ public class BasicBlock {
 		return mPredecessors;
 	}
 
+	public boolean isLoopHead() {
+		return mIsLoopHead;
+	}
+
 }
