@@ -8,6 +8,7 @@ Bundle-Vendor: https://github.com/ultimate-pa/ultimate
 Require-Bundle: UltimateCore,
  Library-log4j,
  Library-joogie,
- Library-soottocfg
+ Library-soottocfg,
+ BoogiePreprocessor
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8

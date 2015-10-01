@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.source.java;
+package de.uni_freiburg.informatik.ultimate.source.java.joogie;
 
 import java.util.List;
 import java.util.stream.Collectors;

@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.source.java;
+package de.uni_freiburg.informatik.ultimate.source.java.joogie;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -158,7 +158,7 @@ public class ExpressionTranslator extends JoogieExpressionTransformer<Expression
 	@Override
 	protected Expression visit(final QuantifiedExpression expr) {
 		final List<VarList> parameters = expr.getBoundVariables().stream().map(bv -> new VarList(mLocation,
-				new String[] { bv.getName() }, Joogie2BoogieUtil.getASTType(bv, mLocation)))
+				new String[] { bv.getName() }, TypeTranslator.translate(bv, mLocation)))
 				.collect(Collectors.toList());
 		return new QuantifierExpression(mLocation, expr.getQuantifier() == Quantifier.ForAll, new String[0],
 				parameters.toArray(new VarList[parameters.size()]), new Attribute[0], visit(expr.getExpression()));

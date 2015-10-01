@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.source.java;
+package de.uni_freiburg.informatik.ultimate.source.java.joogie;
 
 import org.joogie.boogie.statements.AssertStatement;
 import org.joogie.boogie.statements.AssignStatement;

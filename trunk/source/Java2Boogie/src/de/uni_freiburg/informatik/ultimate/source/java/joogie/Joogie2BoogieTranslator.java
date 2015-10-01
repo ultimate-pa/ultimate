@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.source.java;
+package de.uni_freiburg.informatik.ultimate.source.java.joogie;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.source.java.Activator;
 
 //TODO: Pull line numbers from soot statements to the top; extend location tag for this 
 
@@ -275,13 +276,13 @@ public class Joogie2BoogieTranslator {
 			ASTType type = null;
 			if (proc.getReturnVariable() != null) {
 				identifiers.add(proc.getReturnVariable().getName());
-				type = Joogie2BoogieUtil.getASTType(proc.getReturnVariable(), mLoc);
+				type = TypeTranslator.translate(proc.getReturnVariable(), mLoc);
 			}
 
 			for (final Entry<BoogieType, org.joogie.boogie.expressions.Expression> entry : proc
 					.getExceptionalReturnVariables().entrySet()) {
 				identifiers.add(((Variable) entry.getValue()).getName());
-				type = Joogie2BoogieUtil.getASTType(entry.getKey(), mLoc);
+				type = TypeTranslator.translate(entry.getKey(), mLoc);
 			}
 			assert type != null;
 			outParam = new VarList(mLoc, identifiers.toArray(new String[identifiers.size()]), type);
@@ -346,7 +347,7 @@ public class Joogie2BoogieTranslator {
 	}
 
 	private VarList makeVarList(final Variable var) {
-		return new VarList(getLocation(), new String[] { var.getName() }, Joogie2BoogieUtil.getASTType(var, mLoc));
+		return new VarList(getLocation(), new String[] { var.getName() }, TypeTranslator.translate(var, mLoc));
 	}
 
 }
