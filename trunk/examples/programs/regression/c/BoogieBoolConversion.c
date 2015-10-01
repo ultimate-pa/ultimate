@@ -20,9 +20,13 @@ int main() {
 	b =  ( 13 > 7);
 	//@ assert b == 1;
 	
-	/* on assignment */
-	int b = ( 13 > 7);
+	/* on initialization */
+	int c = ( 13 > 7);
 	//@ assert b == 1;
+	
+	/* before cast */
+	long long d = (long long) (13 > 7);
+	//@ assert d == 1;
 	
 	
 	return 0;
