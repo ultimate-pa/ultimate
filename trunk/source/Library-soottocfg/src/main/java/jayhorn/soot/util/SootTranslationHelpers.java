@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import jayhorn.cfg.Program;
+import jayhorn.cfg.SourceLocation;
 import jayhorn.cfg.Variable;
 import jayhorn.soot.memory_model.MemoryModel;
 import jayhorn.soot.memory_model.SimpleBurstallBornatModel;
@@ -14,6 +15,7 @@ import jayhorn.util.Log;
 import soot.RefType;
 import soot.SootClass;
 import soot.SootMethod;
+import soot.Unit;
 import soot.jimple.ClassConstant;
 import soot.tagkit.AbstractHost;
 import soot.tagkit.SourceFileTag;
@@ -52,6 +54,16 @@ public enum SootTranslationHelpers {
 	public Program getProgram() {
 		return this.program;
 	}
+	
+	public SourceLocation getSourceLocation(Unit u) {
+		int lineNumber = u.getJavaSourceStartLineNumber();
+
+		if (lineNumber < 0) {
+			lineNumber = SootTranslationHelpers.v().getJavaSourceLine(
+					SootTranslationHelpers.v().getCurrentMethod());
+		}
+		return new SourceLocation(this.currentSourceFileName, lineNumber);
+	}
 
 	public MemoryModel getMemoryModel() {
 		if (this.memoryModel == null) {
@@ -62,7 +74,9 @@ public enum SootTranslationHelpers {
 	}
 
 	public Variable lookupClassConstant(ClassConstant cc) {
-		throw new RuntimeException("Not implemented");
+		return null;
+		//TODO
+		// throw new RuntimeException("Not implemented");
 	}
 
 	public Variable lookupTypeVariable(soot.Type t) {
@@ -78,8 +92,10 @@ public enum SootTranslationHelpers {
 			RefType rt = (RefType) t;
 			return rt.getClassName();
 		} else {
-			throw new UnsupportedOperationException(
-					"Did not expect type to be " + (null == t ? "null" : t.getClass().getSimpleName()));
+			return "HansWurst";
+			//TODO: handle this case ...
+			// throw new UnsupportedOperationException(
+			// 		"Did not expect type to be " + (null == t ? "null" : t.getClass().getSimpleName()));
 		}
 	}
 

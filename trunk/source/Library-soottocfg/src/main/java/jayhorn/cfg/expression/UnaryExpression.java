@@ -3,6 +3,13 @@
  */
 package jayhorn.cfg.expression;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import jayhorn.cfg.Variable;
+import jayhorn.cfg.type.BoolType;
+import jayhorn.cfg.type.Type;
+
 /**
  * @author schaef
  *
@@ -21,7 +28,8 @@ public class UnaryExpression extends Expression {
 	        return (otherName == null) ? false : name.equals(otherName);
 	    }
 
-	    public String toString() {
+	    @Override
+		public String toString() {
 	       return this.name;
 	    }			
 	}
@@ -51,5 +59,32 @@ public class UnaryExpression extends Expression {
 		sb.append(")");
 		return sb.toString();		
 	}
+
+	@Override
+	public Set<Variable> getUsedVariables() {
+		Set<Variable> used = new HashSet<Variable>();
+		used.addAll(expression.getUsedVariables());
+		return used;
+	}
+
+	@Override
+	public Set<Variable> getLVariables() {
+		//because this can't happen on the left.
+		Set<Variable> used = new HashSet<Variable>();
+		return used;
+	}
 	
+	@Override
+	public Type getType() {
+		switch (op) {
+		case LNot: {
+			return BoolType.instance();
+		}
+		case Neg: {
+			return expression.getType();
+		}
+		}
+		throw new RuntimeException("Unknown case " + op);
+	}
+
 }

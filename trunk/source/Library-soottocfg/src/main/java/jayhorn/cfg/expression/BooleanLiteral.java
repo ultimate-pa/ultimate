@@ -14,41 +14,37 @@ import jayhorn.cfg.type.Type;
  * @author schaef
  *
  */
-public class InstanceOfExpression extends Expression {
+public class BooleanLiteral extends Expression {
 
-	private final Expression expression;
-	private final Variable typeVariable;
-	
-	/**
-	 * 
-	 */
-	public InstanceOfExpression(Expression expr, Variable typeVar) {
-		this.expression = expr;
-		this.typeVariable = typeVar;
+	private boolean value;
+
+	public static BooleanLiteral trueLiteral() {
+		return new BooleanLiteral(true);
+	}
+
+	public static BooleanLiteral falseLiteral() {
+		return new BooleanLiteral(false);
+	}
+
+	public BooleanLiteral(boolean value) {
+		this.value = value;
 	}
 
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append("(");
-		sb.append(this.expression);
-		sb.append(" instanceof ");
-		sb.append(this.typeVariable.getName());
-		sb.append(")");
+		sb.append(value);
 		return sb.toString();
 	}
 	
 	@Override
 	public Set<Variable> getUsedVariables() {
 		Set<Variable> used = new HashSet<Variable>();
-		used.addAll(expression.getUsedVariables());
-		used.add(typeVariable);
 		return used;
 	}
-	
+
 	@Override
 	public Set<Variable> getLVariables() {
-		//because this can't happen on the left.
 		Set<Variable> used = new HashSet<Variable>();
 		return used;
 	}
@@ -57,4 +53,5 @@ public class InstanceOfExpression extends Expression {
 	public Type getType() {
 		return BoolType.instance();
 	}
+
 }

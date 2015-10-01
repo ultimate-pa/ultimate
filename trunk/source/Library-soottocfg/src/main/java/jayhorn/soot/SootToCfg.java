@@ -8,7 +8,6 @@ import jayhorn.soot.SootRunner.CallgraphAlgorithm;
 import jayhorn.soot.util.MethodInfo;
 import jayhorn.soot.util.SootTranslationHelpers;
 import jayhorn.soot.visitors.SootStmtSwitch;
-import jayhorn.util.Log;
 import soot.Body;
 import soot.Scene;
 import soot.SootClass;
@@ -28,8 +27,8 @@ public class SootToCfg {
 	 * Run Soot and translate classes into Boogie/Horn
 	 * 
 	 * @param input
-	 * @param classPath 
-	 * @param cfg 
+	 * @param classPath
+	 * @param cfg
 	 */
 	public void run(String input, String classPath, CallgraphAlgorithm cfg) {
 
@@ -39,14 +38,23 @@ public class SootToCfg {
 		// init the helper classes for pre-processing
 		SootPreprocessing.v().initialize();
 
-		//Create a new program
-		SootTranslationHelpers.v().setProgram(new Program());
-		
+		// Create a new program
+		Program program = new Program();
+		SootTranslationHelpers.v().setProgram(program);
+
 		for (SootClass sc : Scene.v().getClasses()) {
 			processSootClass(sc);
 		}
+		
+		// now set the entry points.
+		for (SootMethod entryPoint : Scene.v().getEntryPoints()) {
+			if (entryPoint.getDeclaringClass().isApplicationClass()) {
+				//TODO: maybe we want to add all Main methods instead.
+				program.addEntryPoint(program.loopupMethod(entryPoint.getSignature()));
+			}
+		}
 	}
-	
+
 	public Program getProgram() {
 		return SootTranslationHelpers.v().getProgram();
 	}
@@ -62,10 +70,10 @@ public class SootToCfg {
 		}
 
 		if (sc.isApplicationClass()) {
-			Log.info("Class " + sc.getName() + "  " + sc.resolvingLevel());
-			
+//			Log.info("Class " + sc.getName() + "  " + sc.resolvingLevel());
+
 			SootTranslationHelpers.v().setCurrentClass(sc);
-			
+
 			for (SootMethod sm : sc.getMethods()) {
 				processSootMethod(sm);
 			}
@@ -75,31 +83,25 @@ public class SootToCfg {
 
 	private void processSootMethod(SootMethod sm) {
 		if (sm.isConcrete()) {
-			//TODO: remove
-//			if (!sm.getBytecodeSignature().equals(
-//					"<translation_tests.TranslationTest01: virtualCalls(I)V>"))
-//				return;
-			//-------------
-			
-			Log.info("\t" + sm.getBytecodeSignature());
+//			Log.info("\t" + sm.getBytecodeSignature());
 			SootTranslationHelpers.v().setCurrentMethod(sm);
-			
+
 			Body body = sm.retrieveActiveBody();
 			processMethodBody(body);
 		}
 	}
 
 	private void processMethodBody(Body body) {
-		System.err.println(body.toString());
+//		System.err.println(body.toString());
 		MethodInfo mi = new MethodInfo(body.getMethod(), SootTranslationHelpers.v().getCurrentSourceFileName());
-		
+
 		SootPreprocessing.v().removeAssertionRelatedNonsense(body);
 		SootPreprocessing.v().reconstructJavaAssertions(body);
 
-		SootStmtSwitch ss = new SootStmtSwitch(body, mi); 
+		SootStmtSwitch ss = new SootStmtSwitch(body, mi);
 		mi.setSource(ss.getEntryBlock());
-		
+
 		mi.finalizeAndAddToProgram();
-		System.err.println(mi.getMethod());
+//		System.err.println(mi.getMethod());
 	}
 }

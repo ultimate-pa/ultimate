@@ -3,11 +3,14 @@
  */
 package jayhorn.cfg.statement;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+import jayhorn.cfg.SourceLocation;
+import jayhorn.cfg.Variable;
 import jayhorn.cfg.expression.Expression;
 import jayhorn.cfg.method.Method;
-import soot.Unit;
 
 /**
  * @author schaef
@@ -21,8 +24,8 @@ public class CallStatement extends Statement {
 	/**
 	 * @param createdFrom
 	 */
-	public CallStatement(Unit createdFrom, Method method, List<Expression> arguments, List<Expression> receiver) {
-		super(createdFrom);
+	public CallStatement(SourceLocation loc, Method method, List<Expression> arguments, List<Expression> receiver) {
+		super(loc);
 		this.method = method;
 		this.arguments = arguments;
 		this.receiver = receiver;
@@ -50,4 +53,24 @@ public class CallStatement extends Statement {
 		return sb.toString();
 	}
 
+	@Override
+	public Set<Variable> getUsedVariables() {
+		Set<Variable> used = new HashSet<Variable>();
+		for (Expression e : arguments) {
+			used.addAll(e.getUsedVariables());
+		}
+		for (Expression e : receiver) {
+			used.addAll(e.getUsedVariables());
+		}		
+		return used;
+	}
+
+	@Override
+	public Set<Variable> getLVariables() {
+		Set<Variable> used = new HashSet<Variable>();
+		for (Expression e : receiver) {
+			used.addAll(e.getLVariables());
+		}				
+		return used;
+	}
 }

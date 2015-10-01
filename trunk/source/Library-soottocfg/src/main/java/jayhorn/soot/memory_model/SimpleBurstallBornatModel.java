@@ -17,6 +17,7 @@ import jayhorn.cfg.expression.IdentifierExpression;
 import jayhorn.cfg.expression.InstanceOfExpression;
 import jayhorn.cfg.statement.AssignStatement;
 import jayhorn.cfg.statement.AssumeStatement;
+import jayhorn.cfg.type.IntType;
 import jayhorn.cfg.type.Type;
 import jayhorn.soot.util.MethodInfo;
 import jayhorn.soot.util.SootTranslationHelpers;
@@ -79,7 +80,7 @@ public class SimpleBurstallBornatModel extends MemoryModel {
 		} else {
 			throw new RuntimeException();
 		}
-		this.statementSwitch.push(new AssignStatement(u,
+		this.statementSwitch.push(new AssignStatement(SootTranslationHelpers.v().getSourceLocation(u),
 				new IdentifierExpression(heapVariable),
 				new ArrayStoreExpression(target, indices, value)));
 	}
@@ -95,12 +96,12 @@ public class SimpleBurstallBornatModel extends MemoryModel {
 		MethodInfo mi = this.statementSwitch.getMethodInto();
 		Variable newLocal = mi.createFreshLocal("$new", newType);
 		// add: assume newLocal!=null
-		this.statementSwitch.push(new AssumeStatement(this.statementSwitch
-				.getCurrentStmt(), new BinaryExpression(BinaryOperator.Ne,
+		this.statementSwitch.push(new AssumeStatement(SootTranslationHelpers.v().getSourceLocation(this.statementSwitch
+				.getCurrentStmt()), new BinaryExpression(BinaryOperator.Ne,
 				new IdentifierExpression(newLocal), this.mkNullConstant())));
 		// add: assume newLocal instanceof newType
-		this.statementSwitch.push(new AssumeStatement(this.statementSwitch
-				.getCurrentStmt(), new InstanceOfExpression(
+		this.statementSwitch.push(new AssumeStatement(SootTranslationHelpers.v().getSourceLocation(this.statementSwitch
+				.getCurrentStmt()), new InstanceOfExpression(
 				new IdentifierExpression(newLocal), SootTranslationHelpers.v()
 						.lookupTypeVariable(arg0.getBaseType()))));
 
@@ -116,8 +117,8 @@ public class SimpleBurstallBornatModel extends MemoryModel {
 	 */
 	@Override
 	public Expression mkNewArrayExpr(NewArrayExpr arg0) {
-		// TODO Auto-generated method stub
-		return null;
+		// TODO Auto-generated method stub		
+		return new IdentifierExpression(SootTranslationHelpers.v().getProgram().loopupGlobalVariable("TODO", IntType.instance()));
 	}
 
 	/*
@@ -130,7 +131,7 @@ public class SimpleBurstallBornatModel extends MemoryModel {
 	@Override
 	public Expression mkNewMultiArrayExpr(NewMultiArrayExpr arg0) {
 		// TODO Auto-generated method stub
-		return null;
+		return new IdentifierExpression(SootTranslationHelpers.v().getProgram().loopupGlobalVariable("TODO", IntType.instance()));
 	}
 
 	/*
@@ -143,7 +144,7 @@ public class SimpleBurstallBornatModel extends MemoryModel {
 	@Override
 	public Expression mkArrayRefExpr(ArrayRef arg0) {
 		// TODO Auto-generated method stub
-		return null;
+		return new IdentifierExpression(SootTranslationHelpers.v().getProgram().loopupGlobalVariable("TODO", IntType.instance()));
 	}
 
 	/*
@@ -154,9 +155,21 @@ public class SimpleBurstallBornatModel extends MemoryModel {
 	@Override
 	public Expression mkArrayLengthExpr(Value arg0) {
 		// TODO Auto-generated method stub
-		return null;
+		return new IdentifierExpression(SootTranslationHelpers.v().getProgram().loopupGlobalVariable("TODO", IntType.instance()));
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see jayhorn.soot.memory_model.MemoryModel#mkStringLengthExpr(soot.Value)
+	 */
+	@Override
+	public Expression mkStringLengthExpr(Value arg0) {
+		// TODO Auto-generated method stub
+		return new IdentifierExpression(SootTranslationHelpers.v().getProgram().loopupGlobalVariable("TODO", IntType.instance()));
+	}
+	
+	
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -217,7 +230,7 @@ public class SimpleBurstallBornatModel extends MemoryModel {
 	@Override
 	public Expression mkStringConstant(StringConstant arg0) {
 		// TODO Auto-generated method stub
-		return null;
+		return new IdentifierExpression(SootTranslationHelpers.v().getProgram().loopupGlobalVariable("TODO", IntType.instance()));
 	}
 
 	/*
@@ -229,7 +242,7 @@ public class SimpleBurstallBornatModel extends MemoryModel {
 	@Override
 	public Expression mkDoubleConstant(DoubleConstant arg0) {
 		// TODO Auto-generated method stub
-		return null;
+		return new IdentifierExpression(SootTranslationHelpers.v().getProgram().loopupGlobalVariable("TODO", IntType.instance()));
 	}
 
 	/*
@@ -241,7 +254,7 @@ public class SimpleBurstallBornatModel extends MemoryModel {
 	@Override
 	public Expression mkFloatConstant(FloatConstant arg0) {
 		// TODO Auto-generated method stub
-		return null;
+		return new IdentifierExpression(SootTranslationHelpers.v().getProgram().loopupGlobalVariable("TODO", IntType.instance()));
 	}
 
 	@Override

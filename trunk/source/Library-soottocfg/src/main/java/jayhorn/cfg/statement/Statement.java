@@ -3,9 +3,11 @@
  */
 package jayhorn.cfg.statement;
 
+import java.util.Set;
+
 import jayhorn.cfg.Node;
-import jayhorn.soot.util.SootTranslationHelpers;
-import soot.Unit;
+import jayhorn.cfg.SourceLocation;
+import jayhorn.cfg.Variable;
 
 /**
  * @author schaef
@@ -13,21 +15,18 @@ import soot.Unit;
  */
 public abstract class Statement implements Node {
 
-	private final int javaSourceLineNumber;
+	private final SourceLocation sourceLocation;
 
-	public Statement(Unit createdFrom) {
+	public Statement(SourceLocation loc) {
+		this.sourceLocation = loc;
 
-		int lineNumber = createdFrom.getJavaSourceStartLineNumber();
-
-		if (lineNumber < 0) {
-			lineNumber = SootTranslationHelpers.v().getJavaSourceLine(
-					SootTranslationHelpers.v().getCurrentMethod());
-		}
-
-		this.javaSourceLineNumber = lineNumber;
 	}
 
+	public abstract Set<Variable> getUsedVariables();
+	
+	public abstract Set<Variable> getLVariables();
+	
 	public int getJavaSourceLine() {
-		return this.javaSourceLineNumber;
+		return this.sourceLocation.getLineNumber();
 	}
 }

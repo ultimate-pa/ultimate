@@ -3,6 +3,13 @@
  */
 package jayhorn.cfg.expression;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import jayhorn.cfg.Variable;
+import jayhorn.cfg.type.IntType;
+import jayhorn.cfg.type.Type;
+
 /**
  * @author schaef
  *
@@ -34,4 +41,22 @@ public class IntegerLiteral extends Expression {
 		sb.append(value);
 		return sb.toString();		
 	}	
+	
+	@Override
+	public Set<Variable> getUsedVariables() {
+		Set<Variable> used = new HashSet<Variable>();
+		return used;
+	}
+
+	@Override
+	public Set<Variable> getLVariables() {
+		//because this can't happen on the left.
+		Set<Variable> used = new HashSet<Variable>();
+		return used;
+	}
+
+	@Override
+	public Type getType() {
+		return IntType.instance();
+	}
 }

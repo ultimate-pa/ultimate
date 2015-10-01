@@ -88,7 +88,7 @@ public class MethodInfo {
 	}
 	
 	public Method getMethod() {
-		return SootTranslationHelpers.v().getProgram().loopupMethod(this.sootMethod);
+		return SootTranslationHelpers.v().getProgram().loopupMethod(this.sootMethod.getSignature());
 	}
 	
 	/**
@@ -97,12 +97,13 @@ public class MethodInfo {
 	 * and fills in all the information. Should only be called
 	 * once per method.  
 	 */
-	public void finalizeAndAddToProgram() {
-		Method m = SootTranslationHelpers.v().getProgram().loopupMethod(this.sootMethod);
+	public void finalizeAndAddToProgram() {		
+		Method m = SootTranslationHelpers.v().getProgram().loopupMethod(this.sootMethod.getSignature());
 		Collection<Variable> locals = new LinkedHashSet<Variable>();
 		locals.addAll(this.localsMap.values());
 		locals.addAll(this.freshLocals);
-		m.initialize(this.thisVariable, this.returnVariable, this.exceptionalReturnVariable, this.parameterList, locals, source);
+		m.initialize(this.thisVariable, this.returnVariable, this.exceptionalReturnVariable, this.parameterList, locals, source, sootMethod.isEntryMethod());
+		
 	}
 
 	public String getSourceFileName() {

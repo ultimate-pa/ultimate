@@ -3,6 +3,12 @@
  */
 package jayhorn.cfg.expression;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import jayhorn.cfg.Variable;
+import jayhorn.cfg.type.Type;
+
 /**
  * @author schaef
  *
@@ -30,4 +36,26 @@ public class IteExpression extends Expression {
 		return sb.toString();		
 	}	
 
+	@Override
+	public Set<Variable> getUsedVariables() {
+		Set<Variable> used = new HashSet<Variable>();
+		used.addAll(condition.getUsedVariables());
+		used.addAll(thenExpr.getUsedVariables());
+		used.addAll(elseExpr.getUsedVariables());
+		return used;
+	}
+
+	@Override
+	public Set<Variable> getLVariables() {
+		//because this can't happen on the left.
+		Set<Variable> used = new HashSet<Variable>();
+		return used;
+	}
+	
+	@Override
+	public Type getType() {
+		assert (thenExpr.getType().equals(elseExpr.getType()));
+		return thenExpr.getType();
+	}
+	
 }

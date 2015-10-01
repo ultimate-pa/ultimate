@@ -3,8 +3,13 @@
  */
 package jayhorn.cfg.expression;
 
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
+
+import jayhorn.cfg.Variable;
+import jayhorn.cfg.type.Type;
 
 /**
  * @author schaef
@@ -44,6 +49,29 @@ public class ArrayStoreExpression extends Expression {
 		sb.append(this.value);
 		sb.append(")");
 		return sb.toString();
+	}
+
+	@Override
+	public Set<Variable> getUsedVariables() {
+		Set<Variable> used = new HashSet<Variable>();
+		used.addAll(base.getUsedVariables());
+		for (Expression e : indices) {
+			used.addAll(e.getUsedVariables());
+		}
+		used.addAll(value.getUsedVariables());
+		return used;
+	}
+
+	@Override
+	public Set<Variable> getLVariables() {
+		Set<Variable> used = new HashSet<Variable>();
+		used.addAll(base.getLVariables());
+		return used;
+	}
+	
+	@Override
+	public Type getType() {
+		return base.getType();
 	}
 
 }

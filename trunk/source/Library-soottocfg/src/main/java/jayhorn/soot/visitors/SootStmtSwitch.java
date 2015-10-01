@@ -28,6 +28,7 @@ import jayhorn.cfg.Program;
 import jayhorn.cfg.Variable;
 import jayhorn.cfg.expression.BinaryExpression;
 import jayhorn.cfg.expression.BinaryExpression.BinaryOperator;
+import jayhorn.cfg.expression.BooleanLiteral;
 import jayhorn.cfg.expression.Expression;
 import jayhorn.cfg.expression.InstanceOfExpression;
 import jayhorn.cfg.expression.IntegerLiteral;
@@ -96,23 +97,22 @@ public class SootStmtSwitch implements StmtSwitch {
 
 	private CfgBlock currentBlock, entryBlock, exitBlock;
 	private boolean insideMonitor = false;
-	
+
 	private Stmt currentStmt;
 	private final Program program;
-	
-	private final LocalMayAliasAnalysis localMayAlias; 
-	private final NullnessAnalysis  localNullness;
-	
+
+	private final LocalMayAliasAnalysis localMayAlias;
+	private final NullnessAnalysis localNullness;
+
 	public SootStmtSwitch(Body body, MethodInfo mi) {
 		this.methodInfo = mi;
 		this.sootBody = body;
 		this.sootMethod = sootBody.getMethod();
 
-		
-		UnitGraph unitGraph = new CompleteUnitGraph(sootBody);		
+		UnitGraph unitGraph = new CompleteUnitGraph(sootBody);
 		localNullness = new NullnessAnalysis(unitGraph);
 		localMayAlias = new LocalMayAliasAnalysis(unitGraph);
-		
+
 		this.program = SootTranslationHelpers.v().getProgram();
 
 		this.valueSwitch = new SootValueSwitch(this);
@@ -142,24 +142,24 @@ public class SootStmtSwitch implements StmtSwitch {
 	}
 
 	/**
-	 * Get the set of possible aliases for the value v in the current body.
-	 * This uses Soots LocalMayAliasAnalysis.
+	 * Get the set of possible aliases for the value v in the current body. This
+	 * uses Soots LocalMayAliasAnalysis.
+	 * 
 	 * @param v
 	 * @return
 	 */
 	public Set<Value> getMayAliasInCurrentUnit(Value v) {
 		return this.localMayAlias.mayAliases(v, this.currentStmt);
 	}
-	
+
 	public boolean mustBeNull(Unit u, Immediate i) {
-		return this.localNullness.isAlwaysNullBefore(u, i);		
+		return this.localNullness.isAlwaysNullBefore(u, i);
 	}
 
 	public boolean mustBeNonNull(Unit u, Immediate i) {
 		return this.localNullness.isAlwaysNonNullBefore(u, i);
 	}
 
-	
 	public CfgBlock getEntryBlock() {
 		return this.entryBlock;
 	}
@@ -179,7 +179,7 @@ public class SootStmtSwitch implements StmtSwitch {
 	public Stmt getCurrentStmt() {
 		return this.currentStmt;
 	}
-	
+
 	/**
 	 * Checks if the current statement is synchronized or inside a monitor
 	 * 
@@ -213,9 +213,8 @@ public class SootStmtSwitch implements StmtSwitch {
 	public void caseAssignStmt(AssignStmt arg0) {
 		precheck(arg0);
 		if (arg0.containsInvokeExpr()) {
-			assert (arg0.getRightOp() instanceof InvokeExpr);
-			translateMethodInvokation(arg0, arg0.getLeftOp(),
-					arg0.getInvokeExpr());
+			assert(arg0.getRightOp() instanceof InvokeExpr);
+			translateMethodInvokation(arg0, arg0.getLeftOp(), arg0.getInvokeExpr());
 		} else {
 			translateDefinitionStmt(arg0);
 		}
@@ -256,9 +255,8 @@ public class SootStmtSwitch implements StmtSwitch {
 	public void caseIdentityStmt(IdentityStmt arg0) {
 		precheck(arg0);
 		if (arg0.containsInvokeExpr()) {
-			assert (arg0.getRightOp() instanceof InvokeExpr);
-			translateMethodInvokation(arg0, arg0.getLeftOp(),
-					arg0.getInvokeExpr());
+			assert(arg0.getRightOp() instanceof InvokeExpr);
+			translateMethodInvokation(arg0, arg0.getLeftOp(), arg0.getInvokeExpr());
 		} else {
 			translateDefinitionStmt(arg0);
 		}
@@ -280,12 +278,11 @@ public class SootStmtSwitch implements StmtSwitch {
 		Unit next = units.getSuccOf(arg0);
 		if (next != null) {
 			CfgBlock elseBlock = methodInfo.lookupCfgBlock(next);
-			this.currentBlock.addConditionalSuccessor(new UnaryExpression(
-					UnaryOperator.LNot, cond), elseBlock);
+			this.currentBlock.addConditionalSuccessor(new UnaryExpression(UnaryOperator.LNot, cond), elseBlock);
 			this.currentBlock = elseBlock;
 		} else {
-			this.currentBlock.addConditionalSuccessor(new UnaryExpression(
-					UnaryOperator.LNot, cond), methodInfo.getSink());
+			this.currentBlock.addConditionalSuccessor(new UnaryExpression(UnaryOperator.LNot, cond),
+					methodInfo.getSink());
 			this.currentBlock = null;
 		}
 	}
@@ -306,8 +303,8 @@ public class SootStmtSwitch implements StmtSwitch {
 		arg0.getKey().apply(this.valueSwitch);
 		Expression key = this.valueSwitch.popExpression();
 		for (int i = 0; i < arg0.getTargetCount(); i++) {
-			BinaryExpression cond = new BinaryExpression(BinaryOperator.Eq,
-					key, new IntegerLiteral(arg0.getLookupValue(i)));
+			BinaryExpression cond = new BinaryExpression(BinaryOperator.Eq, key,
+					new IntegerLiteral(arg0.getLookupValue(i)));
 			cases.add(cond);
 			targets.add(arg0.getTarget(i));
 		}
@@ -330,8 +327,8 @@ public class SootStmtSwitch implements StmtSwitch {
 		precheck(arg0);
 		arg0.getOp().apply(valueSwitch);
 		Expression returnValue = valueSwitch.popExpression();
-		currentBlock.addStatement(new AssignStatement(arg0, methodInfo
-				.getReturnVariable(), returnValue));
+		currentBlock.addStatement(new AssignStatement(SootTranslationHelpers.v().getSourceLocation(arg0),
+				methodInfo.getReturnVariable(), returnValue));
 		currentBlock.addSuccessor(methodInfo.getSink());
 		currentBlock = null;
 	}
@@ -353,8 +350,7 @@ public class SootStmtSwitch implements StmtSwitch {
 		Expression key = valueSwitch.popExpression();
 		int counter = 0;
 		for (int i = arg0.getLowIndex(); i <= arg0.getHighIndex(); i++) {
-			Expression cond = new BinaryExpression(BinaryOperator.Eq, key,
-					new IntegerLiteral(i));
+			Expression cond = new BinaryExpression(BinaryOperator.Eq, key, new IntegerLiteral(i));
 			cases.add(cond);
 			targets.add(arg0.getTarget(counter));
 			counter++;
@@ -367,8 +363,8 @@ public class SootStmtSwitch implements StmtSwitch {
 		precheck(arg0);
 		arg0.getOp().apply(valueSwitch);
 		Expression exception = valueSwitch.popExpression();
-		currentBlock.addStatement(new AssignStatement(arg0, methodInfo
-				.getExceptionVariable(), exception));
+		currentBlock.addStatement(new AssignStatement(SootTranslationHelpers.v().getSourceLocation(arg0),
+				methodInfo.getExceptionVariable(), exception));
 		// TODO connect to the next block
 	}
 
@@ -386,9 +382,8 @@ public class SootStmtSwitch implements StmtSwitch {
 	 * @param targets
 	 * @param defaultTarget
 	 */
-	private void translateSwitch(List<Expression> cases, List<Unit> targets,
-			Unit defaultTarget) {
-		assert (cases.size() == targets.size());
+	private void translateSwitch(List<Expression> cases, List<Unit> targets, Unit defaultTarget) {
+		assert(cases.size() == targets.size());
 		for (int i = 0; i < cases.size(); i++) {
 			CfgBlock elseCase;
 			if (i == cases.size() - 1 && defaultTarget != null) {
@@ -396,16 +391,13 @@ public class SootStmtSwitch implements StmtSwitch {
 			} else {
 				elseCase = new CfgBlock();
 			}
-			currentBlock.addConditionalSuccessor(cases.get(i),
-					methodInfo.lookupCfgBlock(targets.get(i)));
-			currentBlock.addConditionalSuccessor(new UnaryExpression(
-					UnaryOperator.LNot, cases.get(i)), elseCase);
+			currentBlock.addConditionalSuccessor(cases.get(i), methodInfo.lookupCfgBlock(targets.get(i)));
+			currentBlock.addConditionalSuccessor(new UnaryExpression(UnaryOperator.LNot, cases.get(i)), elseCase);
 			currentBlock = elseCase;
 		}
 	}
 
-	private void translateMethodInvokation(Unit u, Value optionalLhs,
-			InvokeExpr call) {
+	private void translateMethodInvokation(Unit u, Value optionalLhs, InvokeExpr call) {
 		if (isHandledAsSpecialCase(u, optionalLhs, call)) {
 			return;
 		}
@@ -427,14 +419,13 @@ public class SootStmtSwitch implements StmtSwitch {
 			// add the "this" variable to the list of args
 			args.addFirst(baseExpression);
 			// TODO: assert that base!=null
-						
+
 			// this include Interface-, Virtual, and SpecialInvokeExpr
-			if (call.getMethod().isConstructor()
-					&& call instanceof SpecialInvokeExpr) {
+			if (call.getMethod().isConstructor() && call instanceof SpecialInvokeExpr) {
 				possibleTargets.add(call.getMethod());
 			} else {
-				//TODO: Create the InvokeResolver elsewhere.
-//				InvokeResolver ivkr = new DefaultInvokeResolver();
+				// TODO: Create the InvokeResolver elsewhere.
+				// InvokeResolver ivkr = new DefaultInvokeResolver();
 				InvokeResolver ivkr = new SimpleInvokeResolver();
 				possibleTargets.addAll(ivkr.resolveVirtualCall(this.sootBody, u, iivk));
 			}
@@ -444,8 +435,7 @@ public class SootStmtSwitch implements StmtSwitch {
 			DynamicInvokeExpr divk = (DynamicInvokeExpr) call;
 			Log.info("Ignoring dynamic invoke: " + divk.toString());
 		} else {
-			throw new RuntimeException("Cannot compute instance for "
-					+ call.getClass().toString());
+			throw new RuntimeException("Cannot compute instance for " + call.getClass().toString());
 		}
 
 		List<Expression> receiver = new LinkedList<Expression>();
@@ -456,33 +446,32 @@ public class SootStmtSwitch implements StmtSwitch {
 		receiver.add(this.methodInfo.getExceptionVariable());
 
 		if (possibleTargets.size() == 1) {
-			Method method = program.loopupMethod(
-					possibleTargets.get(0));
-			CallStatement stmt = new CallStatement(u, method, args, receiver);
+			Method method = program.loopupMethod(possibleTargets.get(0).getSignature());
+			CallStatement stmt = new CallStatement(SootTranslationHelpers.v().getSourceLocation(u), method, args,
+					receiver);
 			this.currentBlock.addStatement(stmt);
 		} else {
-			assert (!possibleTargets.isEmpty());
-			assert (baseExpression != null);
+			assert(!possibleTargets.isEmpty());
+			assert(baseExpression != null);
 			CfgBlock join = new CfgBlock();
 			for (SootMethod m : possibleTargets) {
-				Method method = program.loopupMethod(m);
+				Method method = program.loopupMethod(m.getSignature());
 				Variable v = SootTranslationHelpers.v().lookupTypeVariable(m.getDeclaringClass().getType());
 
 				CfgBlock thenBlock = new CfgBlock();
-				thenBlock.addStatement(new CallStatement(u, method, args,
-						receiver));
+				thenBlock.addStatement(
+						new CallStatement(SootTranslationHelpers.v().getSourceLocation(u), method, args, receiver));
 				thenBlock.addSuccessor(join);
-				this.currentBlock.addConditionalSuccessor(
-						new InstanceOfExpression(baseExpression, v), thenBlock);
+				this.currentBlock.addConditionalSuccessor(new InstanceOfExpression(baseExpression, v), thenBlock);
 				CfgBlock elseBlock = new CfgBlock();
-				this.currentBlock.addConditionalSuccessor(new UnaryExpression(
-						UnaryOperator.LNot, new InstanceOfExpression(
-								baseExpression, v)), elseBlock);
+				this.currentBlock.addConditionalSuccessor(
+						new UnaryExpression(UnaryOperator.LNot, new InstanceOfExpression(baseExpression, v)),
+						elseBlock);
 				this.currentBlock = elseBlock;
 			}
 			this.currentBlock.addSuccessor(join);
 			this.currentBlock = join;
-			
+
 			// TODO
 			// for (RefType t : TrapManager.getExceptionTypesOf(u,
 			// sootBlock.getBody())) {
@@ -491,7 +480,7 @@ public class SootStmtSwitch implements StmtSwitch {
 			//
 			// for (Trap t : TrapManager.getTrapsAt(u, sootBlock.getBody())) {
 			// System.err.println("\t type "+t.getException());
-			// }			
+			// }
 		}
 	}
 
@@ -505,35 +494,50 @@ public class SootStmtSwitch implements StmtSwitch {
 	 * @return true, if its a special method that is handled by the procedure,
 	 *         and false, otherwise.
 	 */
-	private boolean isHandledAsSpecialCase(Unit u, Value optionalLhs,
-			InvokeExpr call) {
+	private boolean isHandledAsSpecialCase(Unit u, Value optionalLhs, InvokeExpr call) {
 		if (call.getMethod() == SootPreprocessing.v().getAssertMethod()) {
-			assert (optionalLhs == null);
-			assert (call.getArgCount() == 1);
+			assert(optionalLhs == null);
+			assert(call.getArgCount() == 1);
 			call.getArg(0).apply(valueSwitch);
-			currentBlock.addStatement(new AssertStatement(u, valueSwitch
-					.popExpression()));
+			currentBlock.addStatement(
+					new AssertStatement(SootTranslationHelpers.v().getSourceLocation(u), valueSwitch.popExpression()));
 			return true;
 		}
-		if (call.getMethod().getSignature()
-				.contains("<java.lang.String: int length()>")
-				&& optionalLhs != null) {
-			throw new RuntimeException("todo");
+		if (call.getMethod().getSignature().contains("<java.lang.String: int length()>")) {
+			assert(call instanceof InstanceInvokeExpr);
+			Expression rhs = SootTranslationHelpers.v().getMemoryModel()
+					.mkStringLengthExpr(((InstanceInvokeExpr) call).getBase());
+			if (optionalLhs != null) {
+				optionalLhs.apply(valueSwitch);
+				Expression lhs = valueSwitch.popExpression();
+				currentBlock
+						.addStatement(new AssignStatement(SootTranslationHelpers.v().getSourceLocation(u), lhs, rhs));
+			}
+			return true;
 		}
-		if (call.getMethod().getSignature()
-				.contains("<java.lang.System: void exit(int)>")) {
+		if (call.getMethod().getSignature().contains("<java.lang.System: void exit(int)>")) {
 			throw new RuntimeException("todo");
 		}
 
-		if (call.getMethod().getDeclaringClass().getName().contains("Assert")) {
+		if (call.getMethod().getDeclaringClass().getName().contains("org.junit.Assert")) {
+			// staticinvoke <org.junit.Assert: void fail()>()
+			if (call.getMethod().getName().equals("fail")) {
+				currentBlock.addStatement(new AssertStatement(SootTranslationHelpers.v().getSourceLocation(u),
+						BooleanLiteral.falseLiteral()));
+				return true;
+			}
+			if (call.getMethod().getName().equals("assertTrue")) {
+				currentBlock.addStatement(new AssertStatement(SootTranslationHelpers.v().getSourceLocation(u),
+						BooleanLiteral.falseLiteral()));
+				return true;
+			}
 			throw new RuntimeException("we should hardcode JUnit stuff "
-					+ call.getMethod().getDeclaringClass().getName());
+					+ call.getMethod().getDeclaringClass().getName() + "  method " + call.getMethod().getName());
 		}
 
-		if (call.getMethod().getDeclaringClass().getName()
-				.contains("Preconditions")) {
-			throw new RuntimeException("we should hardcode Guava stuff "
-					+ call.getMethod().getDeclaringClass().getName());
+		if (call.getMethod().getDeclaringClass().getName().contains("Preconditions")) {
+			throw new RuntimeException(
+					"we should hardcode Guava stuff " + call.getMethod().getDeclaringClass().getName());
 		}
 
 		return false;
@@ -543,9 +547,9 @@ public class SootStmtSwitch implements StmtSwitch {
 		Value lhs = def.getLeftOp();
 		Value rhs = def.getRightOp();
 		/*
-		 * Distinguish the case when the lhs is an array/instance access
-		 * to ensure that we create an ArrayStoreExpression and not an
-		 * assignment of two reads.
+		 * Distinguish the case when the lhs is an array/instance access to
+		 * ensure that we create an ArrayStoreExpression and not an assignment
+		 * of two reads.
 		 */
 		if (lhs instanceof InstanceFieldRef || lhs instanceof ArrayRef) {
 			SootTranslationHelpers.v().getMemoryModel().mkHeapAssignment(def, lhs, rhs);
@@ -554,7 +558,8 @@ public class SootStmtSwitch implements StmtSwitch {
 			Expression left = valueSwitch.popExpression();
 			rhs.apply(valueSwitch);
 			Expression right = valueSwitch.popExpression();
-			currentBlock.addStatement(new AssignStatement(def, left, right));
+			currentBlock
+					.addStatement(new AssignStatement(SootTranslationHelpers.v().getSourceLocation(def), left, right));
 		}
 	}
 

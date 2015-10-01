@@ -3,7 +3,11 @@
  */
 package jayhorn.cfg.expression;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import jayhorn.cfg.Variable;
+import jayhorn.cfg.type.Type;
 
 /**
  * @author schaef
@@ -23,7 +27,29 @@ public class IdentifierExpression extends Expression {
 	@Override
 	public String toString(){
 		StringBuilder sb = new StringBuilder();
-		sb.append(this.variable.getName());
+		if (this.variable==null) {
+			sb.append("==NOT IMPLEMENTED==");
+		} else {
+			sb.append(this.variable.getName());
+		}
 		return sb.toString();		
 	}	
+	
+	@Override
+	public Set<Variable> getUsedVariables() {
+		Set<Variable> used = new HashSet<Variable>();
+		used.add(variable);
+		return used;
+	}
+	
+	@Override
+	public Set<Variable> getLVariables() {
+		return getUsedVariables();
+	}
+
+	
+	@Override
+	public Type getType() {
+		return variable.getType();
+	}
 }

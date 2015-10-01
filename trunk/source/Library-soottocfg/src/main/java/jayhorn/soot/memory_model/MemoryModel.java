@@ -51,6 +51,8 @@ public abstract class MemoryModel {
 
 	public abstract Expression mkArrayLengthExpr(Value arg0);
 	
+	public abstract Expression mkStringLengthExpr(Value arg0);
+	
 	public abstract Expression mkInstanceFieldRefExpr(InstanceFieldRef arg0);
 
 	public abstract Expression mkStaticFieldRefExpr(StaticFieldRef arg0);

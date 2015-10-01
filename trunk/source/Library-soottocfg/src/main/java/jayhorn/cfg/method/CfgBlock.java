@@ -4,11 +4,15 @@
 package jayhorn.cfg.method;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 import jayhorn.cfg.Node;
+import jayhorn.cfg.Variable;
 import jayhorn.cfg.expression.Expression;
 import jayhorn.cfg.statement.Statement;
 import jayhorn.soot.util.SootTranslationHelpers;
@@ -40,6 +44,10 @@ public class CfgBlock implements Node {
 	
 	public void addStatement(Statement s) {
 		this.statements.add(s);
+	}
+	
+	public List<Statement> getStatements() {
+		return this.statements;
 	}
 	
 	public void addSuccessor(CfgBlock suc) {
@@ -90,4 +98,27 @@ public class CfgBlock implements Node {
 		}
 		return sb.toString();
 	}
+	
+	@Override
+	public Set<Variable> getUsedVariables() {
+		Set<Variable> used = new HashSet<Variable>();
+		for (Statement s : statements) {
+			used.addAll(s.getUsedVariables());
+		}
+		//TODO: do the variables in the conditional belong to this block?
+		for (Entry<CfgBlock, Expression> entry : successorConditions.entrySet()) {
+			used.addAll(entry.getValue().getUsedVariables());
+		}
+		return used;
+	}
+	
+	@Override
+	public Set<Variable> getLVariables() {
+		Set<Variable> used = new HashSet<Variable>();
+		for (Statement s : statements) {
+			used.addAll(s.getLVariables());
+		}
+		return used;
+	}	
+	
 }

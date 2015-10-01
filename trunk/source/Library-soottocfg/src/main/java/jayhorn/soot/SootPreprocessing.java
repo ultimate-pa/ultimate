@@ -190,7 +190,7 @@ public enum SootPreprocessing {
 	public void reconstructJavaAssertions(Body body) {
 		Set<Unit> unitsToRemove = new HashSet<Unit>();
 		Map<Unit, Value> assertionsToInsert = new HashMap<Unit,Value>();
-		
+
 //		body.getUnits().insertAfter(toInsert, point);
 		Iterator<Unit> iterator = body.getUnits().iterator();
 		while (iterator.hasNext()) {
