@@ -19,6 +19,7 @@ import org.joogie.boogie.types.BoogieType;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
@@ -93,10 +94,13 @@ public class Joogie2BoogieTranslator {
 	private Collection<? extends Declaration> declarePrelude(final BoogieProgram program) {
 		final List<Declaration> decls = new ArrayList<>();
 
-		decls.add(new TypeDeclaration(getLocation(), null, false, BoogieBaseTypes.getRefArrType().getName(), null));
-		decls.add(new TypeDeclaration(getLocation(), null, false, BoogieBaseTypes.getRealType().getName(), null));
-		decls.add(new TypeDeclaration(getLocation(), null, false, BoogieBaseTypes.getClassConstType().getName(), null));
-		decls.add(new TypeDeclaration(getLocation(), null, false, "Field", new String[] { "x" }));
+		decls.add(new TypeDeclaration(getLocation(), new Attribute[0], false, BoogieBaseTypes.getRefType().getName(),
+				new String[0]));
+		decls.add(new TypeDeclaration(getLocation(), new Attribute[0], false, BoogieBaseTypes.getRealType().getName(),
+				new String[0]));
+		decls.add(new TypeDeclaration(getLocation(), new Attribute[0], false,
+				BoogieBaseTypes.getClassConstType().getName(), new String[0]));
+		decls.add(new TypeDeclaration(getLocation(), new Attribute[0], false, "Field", new String[] { "x" }));
 		decls.add(declareVariable(program.getHeapVariable()));
 
 		decls.add(declareConstant(program.getNullReference()));
@@ -165,8 +169,8 @@ public class Joogie2BoogieTranslator {
 		final Collection<Specification> spec = createProcedureSpecification(proc);
 		final Body body = createProcedureBody(proc);
 
-		return new Procedure(mLoc, null, proc.getName(), null, inParams.toArray(new VarList[inParams.size()]),
-				outParams.isEmpty() ? null : outParams.toArray(new VarList[outParams.size()]),
+		return new Procedure(mLoc, new Attribute[0], proc.getName(), new String[0],
+				inParams.toArray(new VarList[inParams.size()]), outParams.toArray(new VarList[outParams.size()]),
 				spec.toArray(new Specification[spec.size()]), body);
 	}
 
@@ -191,13 +195,13 @@ public class Joogie2BoogieTranslator {
 		final Collection<VariableDeclaration> localVars = createProcedureLocalVars(proc);
 		final Collection<Statement> statements = createProcedureStatements(proc);
 		return new Body(mLoc, localVars.toArray(new VariableDeclaration[localVars.size()]),
-				statements == null ? null : statements.toArray(new Statement[statements.size()]));
+				statements.toArray(new Statement[statements.size()]));
 	}
 
 	private Collection<Statement> createProcedureStatements(final BoogieProcedure proc) {
 		final List<org.joogie.boogie.statements.Statement> statements = proc.getStatements();
 		if (statements == null) {
-			return null;
+			return new ArrayList<>();
 		}
 		return statements.stream().map(stmt -> StatementTranslator.translate(mLogger, mLoc, stmt))
 				.collect(Collectors.toList());
@@ -283,8 +287,8 @@ public class Joogie2BoogieTranslator {
 			outParam = new VarList(mLoc, identifiers.toArray(new String[identifiers.size()]), type);
 		}
 		final Expression body = getFunctionBody(proc);
-		return new FunctionDeclaration(mLoc, null, proc.getName(), null, inParams.toArray(new VarList[inParams.size()]),
-				outParam, body);
+		return new FunctionDeclaration(mLoc, new Attribute[0], proc.getName(), new String[0],
+				inParams.toArray(new VarList[inParams.size()]), outParam, body);
 	}
 
 	private Expression getFunctionBody(BoogieProcedure proc) {
@@ -326,7 +330,7 @@ public class Joogie2BoogieTranslator {
 	}
 
 	private Declaration declareAxiom(final BoogieAxiom axiom) {
-		return new Axiom(getLocation(), null, makeExpression(axiom.getExpression()));
+		return new Axiom(getLocation(), new Attribute[0], makeExpression(axiom.getExpression()));
 	}
 
 	private Expression makeExpression(final org.joogie.boogie.expressions.Expression expression) {
@@ -334,11 +338,11 @@ public class Joogie2BoogieTranslator {
 	}
 
 	private VariableDeclaration declareVariable(final Variable var) {
-		return new VariableDeclaration(getLocation(), null, new VarList[] { makeVarList(var) });
+		return new VariableDeclaration(getLocation(), new Attribute[0], new VarList[] { makeVarList(var) });
 	}
 
 	private ConstDeclaration declareConstant(final Variable var) {
-		return new ConstDeclaration(getLocation(), null, var.isConstUnique(), makeVarList(var), null, true);
+		return new ConstDeclaration(getLocation(), new Attribute[0], var.isConstUnique(), makeVarList(var), null, true);
 	}
 
 	private VarList makeVarList(final Variable var) {

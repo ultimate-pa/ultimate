@@ -17,6 +17,7 @@ import org.joogie.boogie.expressions.SimpleHeapAccess;
 import org.joogie.boogie.expressions.Variable;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -43,7 +44,7 @@ public class ExpressionTranslator extends JoogieExpressionTransformer<Expression
 	private final Expression mExpression;
 	private final ILocation mLocation;
 
-	private ExpressionTranslator(Logger logger, ILocation location,
+	private ExpressionTranslator(final Logger logger, final ILocation location,
 			org.joogie.boogie.expressions.Expression expression) {
 		mLogger = logger;
 		mLocation = location;
@@ -54,45 +55,45 @@ public class ExpressionTranslator extends JoogieExpressionTransformer<Expression
 		return mExpression;
 	}
 
-	public static Expression translate(Logger logger, ILocation location,
+	public static Expression translate(final Logger logger, final ILocation location,
 			org.joogie.boogie.expressions.Expression expression) {
 		return new ExpressionTranslator(logger, location, expression).getTranslation();
 	}
 
 	@Override
-	protected Expression visit(Variable expr) {
+	protected Expression visit(final Variable expr) {
 		return new IdentifierExpression(mLocation, expr.getName());
 	}
 
 	@Override
-	protected Expression visit(RealConstant expr) {
+	protected Expression visit(final RealConstant expr) {
 		return new RealLiteral(mLocation, expr.toBoogie());
 	}
 
 	@Override
-	protected Expression visit(UboundedIntConstant expr) {
+	protected Expression visit(final UboundedIntConstant expr) {
 		return new IntegerLiteral(mLocation, expr.toBoogie());
 	}
 
 	@Override
-	protected Expression visit(ArrayReadExpression expr) {
+	protected Expression visit(final ArrayReadExpression expr) {
 		return new ArrayAccessExpression(mLocation, visit(expr.getBaseExpression()),
 				new Expression[] { visit(expr.getIndexExpression()) });
 	}
 
 	@Override
-	protected Expression visit(SimpleHeapAccess expr) {
+	protected Expression visit(final SimpleHeapAccess expr) {
 		return new ArrayAccessExpression(mLocation, visit(expr.getHeapVariable()),
 				new Expression[] { visit(expr.getBaseExpression()), visit(expr.getFieldExpression()) });
 	}
 
 	@Override
-	protected Expression visit(TypeExpression expr) {
+	protected Expression visit(final TypeExpression expr) {
 		return new IdentifierExpression(mLocation, expr.getTypeVariable().getName());
 	}
 
 	@Override
-	protected Expression visit(InvokeExpression expr) {
+	protected Expression visit(final InvokeExpression expr) {
 		assert expr.getModifiedVars() == null
 				|| expr.getModifiedVars().isEmpty() : "expressions must be side-effect free";
 		return new FunctionApplication(mLocation, expr.getInvokedProcedure().getName(), expr.getArguments().stream()
@@ -100,7 +101,7 @@ public class ExpressionTranslator extends JoogieExpressionTransformer<Expression
 	}
 
 	@Override
-	protected Expression visit(BinOpExpression expr) {
+	protected Expression visit(final BinOpExpression expr) {
 		final Operator operator;
 
 		switch (expr.getOp()) {
@@ -150,21 +151,21 @@ public class ExpressionTranslator extends JoogieExpressionTransformer<Expression
 	}
 
 	@Override
-	protected Expression visit(IteExpression expr) {
+	protected Expression visit(final IteExpression expr) {
 		return new IfThenElseExpression(mLocation, visit(expr.getCond()), visit(expr.getThen()), visit(expr.getElse()));
 	}
 
 	@Override
-	protected Expression visit(QuantifiedExpression expr) {
+	protected Expression visit(final QuantifiedExpression expr) {
 		final List<VarList> parameters = expr.getBoundVariables().stream().map(bv -> new VarList(mLocation,
 				new String[] { bv.getName() }, Joogie2BoogieUtil.getASTType(bv, mLocation)))
 				.collect(Collectors.toList());
-		return new QuantifierExpression(mLocation, expr.getQuantifier() == Quantifier.ForAll, null,
-				parameters.toArray(new VarList[parameters.size()]), null, visit(expr.getExpression()));
+		return new QuantifierExpression(mLocation, expr.getQuantifier() == Quantifier.ForAll, new String[0],
+				parameters.toArray(new VarList[parameters.size()]), new Attribute[0], visit(expr.getExpression()));
 	}
 
 	@Override
-	protected Expression visit(org.joogie.boogie.expressions.UnaryExpression expr) {
+	protected Expression visit(final org.joogie.boogie.expressions.UnaryExpression expr) {
 		final UnaryExpression.Operator op;
 		switch (expr.getOperator()) {
 		case Minus:
