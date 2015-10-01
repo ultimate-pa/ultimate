@@ -113,7 +113,7 @@ public class TranslationTestResultDecider extends TestResultDecider {
 
 					if (!desiredContent.equals(actualContent)) {
 						String message = "Desired content does not match actual content.";
-						setResultCategory("Mismatch between .bpl and .c");
+						setResultCategory("Mismatch between expected and actual .bpl");
 						setResultMessage(message);
 						customMessages.add(message);
 						customMessages.add("Desired content:");
