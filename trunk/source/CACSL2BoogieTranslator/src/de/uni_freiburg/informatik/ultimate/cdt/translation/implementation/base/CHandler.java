@@ -2634,6 +2634,7 @@ public class CHandler implements ICHandler {
 			}
 		}
 
+		expr = ConvExpr.rexBoolToIntIfNecessary(loc, expr, m_ExpressionTranslation);
 		castToType(main, loc, expr, newCType);
 
 		// String msg = "Ignored cast! At line: "
