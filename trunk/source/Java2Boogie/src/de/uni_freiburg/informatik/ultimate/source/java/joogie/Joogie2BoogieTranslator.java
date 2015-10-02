@@ -14,6 +14,7 @@ import org.joogie.boogie.BasicBlock;
 import org.joogie.boogie.BoogieAxiom;
 import org.joogie.boogie.BoogieProcedure;
 import org.joogie.boogie.BoogieProgram;
+import org.joogie.boogie.LocationTag;
 import org.joogie.boogie.expressions.Variable;
 import org.joogie.boogie.statements.ExpressionStatement;
 import org.joogie.boogie.types.BoogieBaseTypes;
@@ -165,6 +166,10 @@ public class Joogie2BoogieTranslator {
 		return mLoc;
 	}
 
+	private ILocation getLocation(LocationTag locationTag, boolean isLoopEntry) {
+		return new BoogieLocation(mLoc.getFileName(), locationTag.getLineNumber(), -1, -1, -1, isLoopEntry);
+	}
+
 	private Declaration declareProcedure(final BoogieProcedure proc) {
 		// Note that in Joogie, procedures can be functions as well as
 		// procedures
@@ -175,7 +180,7 @@ public class Joogie2BoogieTranslator {
 		final Collection<Specification> spec = createProcedureSpecification(proc);
 		final Body body = createProcedureBody(proc);
 
-		return new Procedure(getLocation(), new Attribute[0], proc.getName(), new String[0],
+		return new Procedure(getLocation(proc.getLocationTag(), false), new Attribute[0], proc.getName(), new String[0],
 				inParams.toArray(new VarList[inParams.size()]), outParams.toArray(new VarList[outParams.size()]),
 				spec.toArray(new Specification[spec.size()]), body);
 	}
@@ -206,12 +211,12 @@ public class Joogie2BoogieTranslator {
 
 	private List<Statement> createProcedureStatements(final BoogieProcedure proc) {
 		final List<Statement> rtr = new ArrayList<Statement>();
-		if(proc == null || proc.getRootBlock() == null){
+		if (proc == null || proc.getRootBlock() == null) {
 			return rtr;
 		}
 		final ArrayDeque<BasicBlock> worklist = new ArrayDeque<>();
 		final Set<BasicBlock> closed = new HashSet<BasicBlock>();
-		
+
 		worklist.add(proc.getRootBlock());
 
 		while (!worklist.isEmpty()) {

@@ -94,6 +94,10 @@ public final class Java2Boogie implements ISource {
 
 	@Override
 	public IElement parseAST(final File file) throws IOException {
+		return runJoogie(file);
+	}
+
+	private IElement runJoogie(final File file) throws IOException {
 		// we also add the directory of the input file to the classpath
 		final Dispatcher dispatch = new Dispatcher(file.getAbsolutePath(), HeapMode.Default, null, file.getParent(),
 				mLogger);

@@ -533,4 +533,8 @@ public class BoogieProcedure {
 	public Set<Variable> getModifiesGlobals() {
 		return mModifiesGlobals;
 	}
+
+	public LocationTag getLocationTag() {
+		return mLocationTag;
+	}
 }
