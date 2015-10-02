@@ -12,7 +12,8 @@ import de.uni_freiburg.informatik.ultimatetest.suites.AbstractModelCheckerTestSu
  */
 public class InterpolantConsolidationTest extends AbstractTraceAbstractionTestSuite {
 	
-	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
+//	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
+	private static int m_FilesPerDirectoryLimit = 5;
 	
 	private static final DirectoryFileEndingsPair[] m_SVCOMP_Examples = {
 //		/*** Category 1. Arrays ***/
@@ -95,12 +96,12 @@ public class InterpolantConsolidationTest extends AbstractTraceAbstractionTestSu
 	 * 
 	 */
 	private static final String[] m_Settings = {
-//			"automizer/ForwardPredicates.epf",
-//			"automizer/ForwardPredicates_InterpolantConsolidation.epf",
-//			"automizer/BackwardPredicates.epf",
-//			"automizer/BackwardPredicates_InterpolantConsolidation.epf",
-//			"automizer/ForwardPredicatesAndBackwardPredicates_InterpolantConsolidation.epf",
-//			"automizer/ForwardPredicatesAndBackwardPredicates.epf"
+			"automizer/interpolantConsolidation/ForwardPredicates.epf",
+			"automizer/interpolantConsolidation/ForwardPredicates_InterpolantConsolidation.epf",
+			"automizer/interpolantConsolidation/BackwardPredicates.epf",
+			"automizer/interpolantConsolidation/BackwardPredicates_InterpolantConsolidation.epf",
+			"automizer/interpolantConsolidation/ForwardPredicatesAndBackwardPredicates_InterpolantConsolidation.epf",
+			"automizer/interpolantConsolidation/ForwardPredicatesAndBackwardPredicates.epf"
 	};
 	
 	/**
@@ -108,17 +109,17 @@ public class InterpolantConsolidationTest extends AbstractTraceAbstractionTestSu
 	 */
 	@Override
 	public long getTimeout() {
-		return 10 * 1000;
+		return 60 * 1000;
 	}
 	
 	private static final String[] m_BoogieToolchains = {
 //		"AutomizerBpl.xml",
-//		"AutomizerBplInline.xml",
+		"AutomizerBplInline.xml",
 	};
 	
 	private static final String[] m_CToolchains = {
 //		"AutomizerC.xml",
-//		"AutomizerCInline.xml",
+		"AutomizerCInline.xml",
 	};
 
 	@Override
