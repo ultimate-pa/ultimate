@@ -5,10 +5,10 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.source.java;singleton:=
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.source.java.Activator
 Bundle-Vendor: https://github.com/ultimate-pa/ultimate
-Require-Bundle: UltimateCore,
- Library-log4j,
- Library-joogie,
- Library-soottocfg,
- BoogiePreprocessor
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Require-Bundle: Library-log4j,
+ UltimateCore,
+ BoogiePreprocessor,
+ Library-joogie,
+ Library-soottocfg

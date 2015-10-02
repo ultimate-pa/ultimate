@@ -48,6 +48,10 @@ import de.uni_freiburg.informatik.ultimate.model.Payload;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.source.java.joogie.Joogie2BoogieTranslator;
+import de.uni_freiburg.informatik.ultimate.source.java.soottocfg.SootToCfg2BoogieTranslator;
+import soottocfg.soot.SootToCfg;
+import soottocfg.cfg.Program;
+import soottocfg.soot.SootRunner.CallgraphAlgorithm;
 
 /**
  * 
@@ -94,6 +98,7 @@ public final class Java2Boogie implements ISource {
 
 	@Override
 	public IElement parseAST(final File file) throws IOException {
+//		return runSoot2Cfg(file);
 		return runJoogie(file);
 	}
 
@@ -107,6 +112,13 @@ public final class Java2Boogie implements ISource {
 			return null;
 		}
 		return new Joogie2BoogieTranslator(boogieprog, mServices, file.getAbsolutePath()).getUnit();
+	}
+
+	private IElement runSoot2Cfg(final File file) throws IOException {
+		final SootToCfg runner = new SootToCfg();
+		runner.run(file.getAbsolutePath(), file.getParent(), CallgraphAlgorithm.None);
+		final Program prog = runner.getProgram();
+		return new SootToCfg2BoogieTranslator(prog, mServices, file.getAbsolutePath()).getUnit();
 	}
 
 	@Override

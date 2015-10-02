@@ -3,8 +3,6 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Library-soottocfg
 Bundle-SymbolicName: Library-soottocfg
 Bundle-Version: 0.0.1
-Require-Bundle: Library-soot,
- Library-log4j
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: soottocfg,
  soottocfg.cfg,
@@ -19,3 +17,4 @@ Export-Package: soottocfg,
  soottocfg.soot.util,
  soottocfg.soot.visitors,
  soottocfg.util
+Require-Bundle: Library-soot;visibility:=reexport
