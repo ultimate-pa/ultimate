@@ -116,7 +116,7 @@ public class OperatorFunctionFactory {
 				BoogieBaseTypes.getRealArrType());
 		mOperatorProcs.add(eqRealArray);
 
-		eqRefArray = createProcedure("$eqrefarray", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRefArrType(),
+		eqRefArray = createProcedure("$eqrefarray", BoogieBaseTypes.getBoolType(), BoogieBaseTypes.getRefArrType(),
 				BoogieBaseTypes.getRefArrType());
 		mOperatorProcs.add(eqRefArray);
 

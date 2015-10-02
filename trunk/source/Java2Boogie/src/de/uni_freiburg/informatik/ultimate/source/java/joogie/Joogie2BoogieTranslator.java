@@ -59,9 +59,9 @@ public class Joogie2BoogieTranslator {
 	private final IUltimateServiceProvider mServices;
 	private final Logger mLogger;
 	private final Unit mOutput;
+	private final String mFilename;
 	private final BoogieLocation mLoc;
 	private final BoogieLocation mLoopLoc;
-	private final String mFilename;
 
 	public Joogie2BoogieTranslator(final BoogieProgram program, final IUltimateServiceProvider services,
 			final String filename) {
@@ -100,29 +100,29 @@ public class Joogie2BoogieTranslator {
 	 */
 	private Collection<? extends Declaration> declarePrelude(final BoogieProgram program) {
 		final List<Declaration> decls = new ArrayList<>();
-
-		decls.add(new TypeDeclaration(getLocation(), new Attribute[0], false, BoogieBaseTypes.getRefType().getName(),
+		final ILocation loc = getLocation();
+		decls.add(new TypeDeclaration(loc, new Attribute[0], false, BoogieBaseTypes.getRefType().getName(),
 				new String[0]));
-		decls.add(new TypeDeclaration(getLocation(), new Attribute[0], false, BoogieBaseTypes.getRealType().getName(),
+		decls.add(new TypeDeclaration(loc, new Attribute[0], false, BoogieBaseTypes.getRealType().getName(),
 				new String[0]));
-		decls.add(new TypeDeclaration(getLocation(), new Attribute[0], false,
-				BoogieBaseTypes.getClassConstType().getName(), new String[0]));
-		decls.add(new TypeDeclaration(getLocation(), new Attribute[0], false, "Field", new String[] { "x" }));
-		decls.add(declareVariable(program.getHeapVariable()));
+		decls.add(new TypeDeclaration(loc, new Attribute[0], false, BoogieBaseTypes.getClassConstType().getName(),
+				new String[0]));
+		decls.add(new TypeDeclaration(loc, new Attribute[0], false, "Field", new String[] { "x" }));
+		decls.add(declareVariable(program.getHeapVariable(), loc));
 
-		decls.add(declareConstant(program.getNullReference()));
+		decls.add(declareConstant(program.getNullReference(), loc));
 
-		decls.add(declareConstant(program.getNullIntArray()));
-		decls.add(declareConstant(program.getNullRealArray()));
-		decls.add(declareConstant(program.getNullRefArray()));
+		decls.add(declareConstant(program.getNullIntArray(), loc));
+		decls.add(declareConstant(program.getNullRealArray(), loc));
+		decls.add(declareConstant(program.getNullRefArray(), loc));
 
-		decls.add(declareConstant(program.getSizeIndexArray()));
+		decls.add(declareConstant(program.getSizeIndexArray(), loc));
 
-		decls.add(declareVariable(program.getSizeArrayInt()));
-		decls.add(declareVariable(program.getSizeArrayReal()));
-		decls.add(declareVariable(program.getSizeArrayRef()));
+		decls.add(declareVariable(program.getSizeArrayInt(), loc));
+		decls.add(declareVariable(program.getSizeArrayReal(), loc));
+		decls.add(declareVariable(program.getSizeArrayRef(), loc));
 
-		decls.add(declareVariable(program.getSizeString()));
+		decls.add(declareVariable(program.getSizeString(), loc));
 
 		for (final BoogieAxiom axiom : program.getAxioms()) {
 			decls.add(declareAxiom(axiom));
@@ -141,7 +141,7 @@ public class Joogie2BoogieTranslator {
 	private Collection<? extends Declaration> declareVariables(final BoogieProgram program) {
 		final List<Declaration> decls = new ArrayList<>();
 		program.getGlobalVariables().stream().filter(g -> !g.isConstUnique())
-				.forEach(g -> decls.add(declareVariable(g)));
+				.forEach(g -> decls.add(declareVariable(g, getLocation())));
 		return decls;
 	}
 
@@ -149,24 +149,27 @@ public class Joogie2BoogieTranslator {
 		final List<Declaration> decls = new ArrayList<>();
 
 		for (final Variable typeVar : program.getTypeVariables()) {
-			decls.add(declareConstant(typeVar));
+			decls.add(declareConstant(typeVar, getLocation()));
 		}
 
 		program.getGlobalVariables().stream().filter(g -> g.isConstUnique())
-				.forEach(g -> decls.add(declareConstant(g)));
+				.forEach(g -> decls.add(declareConstant(g, getLocation())));
 
 		return decls;
-	}
-
-	private ILocation getLoopLocation() {
-		return mLoopLoc;
 	}
 
 	private ILocation getLocation() {
 		return mLoc;
 	}
 
-	private ILocation getLocation(LocationTag locationTag, boolean isLoopEntry) {
+	private ILocation getLoopLocation() {
+		return mLoopLoc;
+	}
+
+	private ILocation getLocation(final LocationTag locationTag, boolean isLoopEntry) {
+		if (locationTag == null) {
+			return isLoopEntry ? getLoopLocation() : getLocation();
+		}
 		return new BoogieLocation(mLoc.getFileName(), locationTag.getLineNumber(), -1, -1, -1, isLoopEntry);
 	}
 
@@ -187,16 +190,17 @@ public class Joogie2BoogieTranslator {
 
 	private Collection<VarList> createpProcedureOutParams(final BoogieProcedure proc) {
 		final Collection<VarList> outParams = new ArrayList<>();
+		final ILocation loc = getLocation(proc.getLocationTag(), false);
 
 		if (proc.getReturnVariable() != null) {
-			outParams.add(makeVarList(proc.getReturnVariable()));
+			outParams.add(makeVarList(proc.getReturnVariable(), loc));
 		}
 
 		for (final Entry<BoogieType, org.joogie.boogie.expressions.Expression> entry : proc
 				.getExceptionalReturnVariables().entrySet()) {
 			final Variable exceptionalReturnVariable = (Variable) entry.getValue();
 			assert exceptionalReturnVariable.getType().toBoogie().equals(entry.getKey().toBoogie());
-			outParams.add(makeVarList(exceptionalReturnVariable));
+			outParams.add(makeVarList(exceptionalReturnVariable, loc));
 		}
 
 		return outParams;
@@ -222,7 +226,8 @@ public class Joogie2BoogieTranslator {
 		while (!worklist.isEmpty()) {
 			final BasicBlock current = worklist.removeFirst();
 			closed.add(current);
-			final ILocation loc = current.isLoopHead() ? getLoopLocation() : getLocation();
+
+			final ILocation loc = getLocation(current.getLocationTag(), current.isLoopHead());
 			rtr.add(new Label(loc, current.getName()));
 			current.getStatements().forEach(stmt -> rtr.add(StatementTranslator.translate(mLogger, loc, stmt)));
 			final Collection<BasicBlock> succs = current.getSuccessors();
@@ -241,7 +246,8 @@ public class Joogie2BoogieTranslator {
 
 	private Collection<VariableDeclaration> createProcedureLocalVars(final BoogieProcedure proc) {
 		final Collection<VariableDeclaration> localVars = new ArrayList<VariableDeclaration>();
-		getProcLocals(proc).forEach(a -> localVars.add(declareVariable(a)));
+		final ILocation loc = getLocation(proc.getLocationTag(), false);
+		getProcLocals(proc).forEach(a -> localVars.add(declareVariable(a, loc)));
 		return localVars;
 	}
 
@@ -249,13 +255,12 @@ public class Joogie2BoogieTranslator {
 		// this is so weird; but we have to declare all the local variables and
 
 		final Set<Variable> procLocals = new HashSet<Variable>();
-		procLocals.addAll(proc.getLocalVars());
-		final Set<org.joogie.boogie.expressions.Expression> candidates = proc.getExceptionalReturnVariables().entrySet()
+		final Set<org.joogie.boogie.expressions.Expression> alreadyDeclared = proc.getExceptionalReturnVariables().entrySet()
 				.stream().map(a -> a.getValue()).filter(a -> a instanceof Variable).collect(Collectors.toSet());
 
-		for (final org.joogie.boogie.expressions.Expression candidate : candidates) {
+		for (final org.joogie.boogie.expressions.Expression candidate : proc.getLocalVars()) {
 			final String boogieRep = candidate.toBoogie();
-			if (procLocals.stream().anyMatch(a -> a.toBoogie().equals(boogieRep))) {
+			if (alreadyDeclared.stream().anyMatch(a -> a.toBoogie().equals(boogieRep))) {
 				continue;
 			}
 			procLocals.add((Variable) candidate);
@@ -343,10 +348,11 @@ public class Joogie2BoogieTranslator {
 
 	private Collection<VarList> createProcedureInParams(final BoogieProcedure proc) {
 		final Collection<VarList> inParams = new ArrayList<>();
+		final ILocation loc = getLocation(proc.getLocationTag(), false);
 		if (!proc.isStatic()) {
-			inParams.add(makeVarList(proc.getThisVariable()));
+			inParams.add(makeVarList(proc.getThisVariable(), loc));
 		}
-		proc.getParameterList().stream().map(p -> makeVarList(p)).forEach(inParams::add);
+		proc.getParameterList().stream().map(p -> makeVarList(p, loc)).forEach(inParams::add);
 		return inParams;
 	}
 
@@ -373,16 +379,17 @@ public class Joogie2BoogieTranslator {
 		return ExpressionTranslator.translate(mLogger, getLocation(), expression);
 	}
 
-	private VariableDeclaration declareVariable(final Variable var) {
-		return new VariableDeclaration(getLocation(), new Attribute[0], new VarList[] { makeVarList(var) });
+	private VariableDeclaration declareVariable(final Variable var, final ILocation loc) {
+		return new VariableDeclaration(getLocation(), new Attribute[0], new VarList[] { makeVarList(var, loc) });
 	}
 
-	private ConstDeclaration declareConstant(final Variable var) {
-		return new ConstDeclaration(getLocation(), new Attribute[0], var.isConstUnique(), makeVarList(var), null, true);
+	private ConstDeclaration declareConstant(final Variable var, final ILocation loc) {
+		return new ConstDeclaration(getLocation(), new Attribute[0], var.isConstUnique(), makeVarList(var, loc), null,
+				true);
 	}
 
-	private VarList makeVarList(final Variable var) {
-		return new VarList(getLocation(), new String[] { var.getName() }, TypeTranslator.translate(var, getLocation()));
+	private VarList makeVarList(final Variable var, final ILocation loc) {
+		return new VarList(loc, new String[] { var.getName() }, TypeTranslator.translate(var, getLocation()));
 	}
 
 }
