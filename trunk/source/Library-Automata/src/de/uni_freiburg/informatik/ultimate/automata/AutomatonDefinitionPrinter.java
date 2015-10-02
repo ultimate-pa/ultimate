@@ -829,6 +829,28 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 				}
 				sb.append(System.lineSeparator());
 				
+				for (LETTER letter : m_Nwa.getInternalAlphabet()) {
+					sb.append("Alias: @");
+					sb.append(m_AlphabetMapping.get(letter));
+					boolean firstOther = true;
+					for (LETTER otherLetter : m_Nwa.getInternalAlphabet()) {
+						if (firstOther) {
+							firstOther = false;
+						} else {
+							sb.append(" &");
+						}
+						if (otherLetter == letter) {
+							sb.append(" ");
+							sb.append(m_AlphabetMapping.get(otherLetter));
+						} else {
+							sb.append(" !");
+							sb.append(m_AlphabetMapping.get(otherLetter));
+
+						}
+					}
+					sb.append(System.lineSeparator());
+				}
+				
 				sb.append("Acceptance: " + m_Nwa.getFinalStates().size());
 				sb.append(" Inf(" + 0 + ")");
 //				boolean first = true;
@@ -865,7 +887,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 					sb.append(System.lineSeparator());
 					for (LETTER letter : m_Nwa.lettersInternal(state)) {
 						for (OutgoingInternalTransition<LETTER, STATE> tes : m_Nwa.internalSuccessors(state, letter)) {
-							sb.append("[");
+							sb.append("[@");
 							sb.append(m_AlphabetMapping.get(tes.getLetter()));
 							sb.append("] ");
 							sb.append(m_StateMapping.get(tes.getSucc()));
