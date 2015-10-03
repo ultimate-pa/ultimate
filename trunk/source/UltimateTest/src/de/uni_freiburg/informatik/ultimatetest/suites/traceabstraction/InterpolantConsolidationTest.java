@@ -221,6 +221,7 @@ public class InterpolantConsolidationTest extends AbstractTraceAbstractionTestSu
 				//	new HTMLSummary(getClass(), benchmarks, columnDef),
 				new KingOfTheHillSummary(this.getClass()),
 		};
+	}
 
 	
 }
