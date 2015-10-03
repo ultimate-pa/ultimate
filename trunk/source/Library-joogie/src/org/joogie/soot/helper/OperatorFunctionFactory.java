@@ -104,15 +104,15 @@ public class OperatorFunctionFactory {
 		newVariable = createProcedure("$newvariable", BoogieBaseTypes.getRefType(), BoogieBaseTypes.getIntType());
 		mOperatorProcs.add(newVariable);
 
-		instanceofOp = createProcedure("$instanceof", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRefType(),
+		instanceofOp = createProcedure("$instanceof", BoogieBaseTypes.getBoolType(), BoogieBaseTypes.getRefType(),
 				BoogieBaseTypes.getClassConstType());
 		mOperatorProcs.add(instanceofOp);
 
-		eqIntArray = createProcedure("$eqintarray", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getIntArrType(),
+		eqIntArray = createProcedure("$eqintarray", BoogieBaseTypes.getBoolType(), BoogieBaseTypes.getIntArrType(),
 				BoogieBaseTypes.getIntArrType());
 		mOperatorProcs.add(eqIntArray);
 
-		eqRealArray = createProcedure("$eqrealarray", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRealArrType(),
+		eqRealArray = createProcedure("$eqrealarray", BoogieBaseTypes.getBoolType(), BoogieBaseTypes.getRealArrType(),
 				BoogieBaseTypes.getRealArrType());
 		mOperatorProcs.add(eqRealArray);
 
@@ -232,13 +232,13 @@ public class OperatorFunctionFactory {
 				BoogieBaseTypes.getRealType());
 		modReal = createProcedure("$modreal", BoogieBaseTypes.getRealType(), BoogieBaseTypes.getRealType(),
 				BoogieBaseTypes.getRealType());
-		ltReal = createProcedure("$ltreal", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRealType(),
+		ltReal = createProcedure("$ltreal", BoogieBaseTypes.getBoolType(), BoogieBaseTypes.getRealType(),
 				BoogieBaseTypes.getRealType());
-		leReal = createProcedure("$lereal", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRealType(),
+		leReal = createProcedure("$lereal", BoogieBaseTypes.getBoolType(), BoogieBaseTypes.getRealType(),
 				BoogieBaseTypes.getRealType());
-		gtReal = createProcedure("$gtreal", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRealType(),
+		gtReal = createProcedure("$gtreal", BoogieBaseTypes.getBoolType(), BoogieBaseTypes.getRealType(),
 				BoogieBaseTypes.getRealType());
-		geReal = createProcedure("$gereal", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRealType(),
+		geReal = createProcedure("$gereal", BoogieBaseTypes.getBoolType(), BoogieBaseTypes.getRealType(),
 				BoogieBaseTypes.getRealType());
 		andReal = createProcedure("$andreal", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRealType(),
 				BoogieBaseTypes.getRealType());
@@ -276,13 +276,13 @@ public class OperatorFunctionFactory {
 		neRef = new BoogieProcedure("$neref", BoogieBaseTypes.getBoolType(),
 				createLogOpExpression(Operator.Neq, BoogieBaseTypes.getRefType()), mProgDec.getUniqueUid());
 
-		ltRef = createProcedure("$ltref", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRefType(),
+		ltRef = createProcedure("$ltref", BoogieBaseTypes.getBoolType(), BoogieBaseTypes.getRefType(),
 				BoogieBaseTypes.getRefType());
-		leRef = createProcedure("$leref", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRefType(),
+		leRef = createProcedure("$leref", BoogieBaseTypes.getBoolType(), BoogieBaseTypes.getRefType(),
 				BoogieBaseTypes.getRefType());
-		gtRef = createProcedure("$gtref", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRefType(),
+		gtRef = createProcedure("$gtref", BoogieBaseTypes.getBoolType(), BoogieBaseTypes.getRefType(),
 				BoogieBaseTypes.getRefType());
-		geRef = createProcedure("$geref", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRefType(),
+		geRef = createProcedure("$geref", BoogieBaseTypes.getBoolType(), BoogieBaseTypes.getRefType(),
 				BoogieBaseTypes.getRefType());
 
 		andRef = createProcedure("$andref", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRefType(),
@@ -814,31 +814,18 @@ public class OperatorFunctionFactory {
 	 * two arguments are equal, 1 if the second argument is larger, or -1 if the
 	 * first argument is larger.
 	 */
-	private Expression createCmpExpression(BoogieType t) {
-		Variable x = mProgDec.createBoogieVariable("x", t, false);
-		Variable y = mProgDec.createBoogieVariable("y", t, false);
+	private Expression createCmpExpression(final BoogieType t) {
+		final Variable x = mProgDec.createBoogieVariable("x", t, false);
+		final Variable y = mProgDec.createBoogieVariable("y", t, false);
 
 		if (t != BoogieBaseTypes.getIntType()) {
-			Expression equality = createBinOp("==", x, y);
-			Expression comparison = createBinOp("<", x, y);
-			Expression lt;
-//			Expression eq;
-
-			if (comparison instanceof BinOpExpression)
-				lt = comparison;
-			else
-				lt = new BinOpExpression(Operator.Eq, comparison, new UboundedIntConstant(1L));
-
-//			if (equality instanceof BinOpExpression)
-//				eq = equality;
-//			else
-//				eq = new BinOpExpression(Operator.Eq, equality, new UboundedIntConstant(1L));
-
-			return new IteExpression(lt, new UboundedIntConstant(1L),
+			final Expression equality = createBinOp("==", x, y);
+			final Expression comparison = createBinOp("<", x, y);
+			return new IteExpression(comparison, new UboundedIntConstant(1L),
 					new IteExpression(equality, new UboundedIntConstant(0L), new UboundedIntConstant(-1L)));
 		} else {
-			Expression lt = new BinOpExpression(Operator.Lt, x, y);
-			Expression eq = new BinOpExpression(Operator.Eq, x, y);
+			final Expression lt = new BinOpExpression(Operator.Lt, x, y);
+			final Expression eq = new BinOpExpression(Operator.Eq, x, y);
 			return new IteExpression(lt, new UboundedIntConstant(1L),
 					new IteExpression(eq, new UboundedIntConstant(0L), new UboundedIntConstant(-1L)));
 		}
