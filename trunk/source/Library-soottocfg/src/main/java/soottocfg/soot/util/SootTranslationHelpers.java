@@ -109,7 +109,7 @@ public enum SootTranslationHelpers {
 				SourceFileTag t = (SourceFileTag) tag;
 				currentSourceFileName = t.getAbsolutePath();
 			} else {
-				System.err.println("Unprocessed tag " + tag.getClass() + " - " + tag);
+//				System.err.println("Unprocessed tag " + tag.getClass() + " - " + tag);
 			}
 		}
 	}

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package soottocfg.soot;
+package soottocfg.soot.transformers;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -41,10 +41,10 @@ import soot.jimple.ThrowStmt;
  * @author schaef
  *
  */
-public enum SootPreprocessing {
+public enum AssertionReconstruction {
 	INSTANCE;
 
-	public static SootPreprocessing v() {
+	public static AssertionReconstruction v() {
 		return INSTANCE;
 	}
 

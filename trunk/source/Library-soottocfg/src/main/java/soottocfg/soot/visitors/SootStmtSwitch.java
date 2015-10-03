@@ -75,9 +75,9 @@ import soottocfg.cfg.statement.AssertStatement;
 import soottocfg.cfg.statement.AssignStatement;
 import soottocfg.cfg.statement.CallStatement;
 import soottocfg.cfg.statement.Statement;
-import soottocfg.soot.SootPreprocessing;
 import soottocfg.soot.invoke_resolver.InvokeResolver;
 import soottocfg.soot.invoke_resolver.SimpleInvokeResolver;
+import soottocfg.soot.transformers.AssertionReconstruction;
 import soottocfg.soot.util.MethodInfo;
 import soottocfg.soot.util.SootTranslationHelpers;
 
@@ -103,13 +103,13 @@ public class SootStmtSwitch implements StmtSwitch {
 	private final LocalMayAliasAnalysis localMayAlias;
 	private final NullnessAnalysis localNullness;
 
-	public SootStmtSwitch(Body body, MethodInfo mi) {
+	public SootStmtSwitch(Body body, MethodInfo mi, LocalMayAliasAnalysis maa, NullnessAnalysis nna) {
 		this.methodInfo = mi;
 		this.sootBody = body;
 		this.sootMethod = sootBody.getMethod();
 
 		UnitGraph unitGraph = new CompleteUnitGraph(sootBody);
-		localNullness = new NullnessAnalysis(unitGraph);
+		localNullness = nna;
 		localMayAlias = new LocalMayAliasAnalysis(unitGraph);
 
 		this.program = SootTranslationHelpers.v().getProgram();
@@ -266,15 +266,27 @@ public class SootStmtSwitch implements StmtSwitch {
 		precheck(arg0);
 		arg0.getCondition().apply(valueSwitch);
 		Expression cond = valueSwitch.popExpression();
-		CfgBlock thenBlock = methodInfo.lookupCfgBlock(arg0.getTarget());
-		this.currentBlock.addConditionalSuccessor(cond, thenBlock);
-
 		/*
 		 * In jimple, conditionals are of the form if (x) goto y; So we end the
 		 * current block and create two new blocks for then and else branch. The
 		 * new currenBlock becomes the else branch.
+		 */		
+		
+		Unit next = units.getSuccOf(arg0);		
+		/* 
+		 * In rare cases of empty If- and Else- blocks,
+		 * next and arg0.getTraget() are the same. For these
+		 * cases, we do not generate an If statement, but
+		 * still translate the conditional in case it may
+		 * throw an exception.
 		 */
-		Unit next = units.getSuccOf(arg0);
+		if (next==arg0.getTarget()) {
+			//ignore the IfStmt.
+			return;
+		}
+		
+		CfgBlock thenBlock = methodInfo.lookupCfgBlock(arg0.getTarget());
+		this.currentBlock.addConditionalSuccessor(cond, thenBlock);		
 		if (next != null) {
 			CfgBlock elseBlock = methodInfo.lookupCfgBlock(next);
 			this.currentBlock.addConditionalSuccessor(new UnaryExpression(UnaryOperator.LNot, cond), elseBlock);
@@ -470,16 +482,6 @@ public class SootStmtSwitch implements StmtSwitch {
 			}
 			this.currentBlock.addSuccessor(join);
 			this.currentBlock = join;
-
-			// TODO
-			// for (RefType t : TrapManager.getExceptionTypesOf(u,
-			// sootBlock.getBody())) {
-			// System.err.println("\t type "+t);
-			// }
-			//
-			// for (Trap t : TrapManager.getTrapsAt(u, sootBlock.getBody())) {
-			// System.err.println("\t type "+t.getException());
-			// }
 		}
 	}
 
@@ -494,7 +496,7 @@ public class SootStmtSwitch implements StmtSwitch {
 	 *         and false, otherwise.
 	 */
 	private boolean isHandledAsSpecialCase(Unit u, Value optionalLhs, InvokeExpr call) {
-		if (call.getMethod() == SootPreprocessing.v().getAssertMethod()) {
+		if (call.getMethod() == AssertionReconstruction.v().getAssertMethod()) {
 			assert(optionalLhs == null);
 			assert(call.getArgCount() == 1);
 			call.getArg(0).apply(valueSwitch);
