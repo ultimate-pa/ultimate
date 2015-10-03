@@ -15,11 +15,12 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggreg
 import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimatetest.summaries.KingOfTheHillSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.LatexOverviewSummary;
+import de.uni_freiburg.informatik.ultimatetest.summaries.StandingsSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.TraceAbstractionTestSummary;
 
 /**
  * 
- * @author Betim Musa <musab@informatik.uni-freiburg.de>
+ * @author Betim Musa <musab@informatik.uni-freiburg.de>, Matthias Heizmann
  *
  */
 public class InterpolantConsolidationTest extends AbstractTraceAbstractionTestSuite {
@@ -40,7 +41,7 @@ public class InterpolantConsolidationTest extends AbstractTraceAbstractionTestSu
 //		new DirectoryFileEndingsPair("examples/svcomp/ssh-simplified/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
 //		new DirectoryFileEndingsPair("examples/svcomp/locks/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
 //		
-//		new DirectoryFileEndingsPair("examples/svcomp/loops/", new String[]{".i"}) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/loops/", new String[]{".i"}, m_FilesPerDirectoryLimit) ,
 //		new DirectoryFileEndingsPair("examples/svcomp/loop-acceleration/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
 //		new DirectoryFileEndingsPair("examples/svcomp/loop-invgen/", new String[]{".i"}, m_FilesPerDirectoryLimit) ,
 //		new DirectoryFileEndingsPair("examples/svcomp/loop-lit/", new String[]{ ".i", ".c" }, m_FilesPerDirectoryLimit) ,
@@ -220,6 +221,7 @@ public class InterpolantConsolidationTest extends AbstractTraceAbstractionTestSu
 				//	new CsvSummary(getClass(), benchmarks, columnDef),
 				//	new HTMLSummary(getClass(), benchmarks, columnDef),
 				new KingOfTheHillSummary(this.getClass()),
+				new StandingsSummary(this.getClass()),
 		};
 	}
 
