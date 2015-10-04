@@ -16,6 +16,5 @@ Require-Bundle: UltimateCore,
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2
-Import-Package: de.uni_freiburg.informatik.ultimate.model.acsl.ast
-Bundle-ClassPath: ppl_java.jar,
- .
+Bundle-NativeCode: native_lib/ppl_java.dll; native_lib/libgcc_s_seh-1.dll; native_lib/libgmp-10.dll; native_lib/libgmpxx-4.dll; native_lib/libppl-13.dll; native_lib/libstdc++-6.dll; native_lib/libwinpthread-1.dll
+Bundle-ClassPath: .,lib/ppl_java.jar

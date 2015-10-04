@@ -24,7 +24,7 @@ import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 
 /**
- * @author Jan Hättig
+ * @author Jan Hï¿½ttig
  * 
  */
 @SuppressWarnings("rawtypes")
@@ -98,8 +98,7 @@ public class AbstractInterpreter {
 	 */
 	public AbstractInterpreter(IUltimateServiceProvider services) {
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(
-				AIActivator.s_PLUGIN_ID);
+		mLogger = mServices.getLoggingService().getLogger(AIActivator.s_PLUGIN_ID);
 
 		mPreferences = new AIPreferences();
 		mPreferences.fetchPreferences();
@@ -122,8 +121,7 @@ public class AbstractInterpreter {
 	 *            The states at the given location
 	 */
 	private void annotateElement(IElement element, List<StackState> states) {
-		AbstractInterpretationAnnotations anno = new AbstractInterpretationAnnotations(
-				states);
+		AbstractInterpretationAnnotations anno = new AbstractInterpretationAnnotations(states);
 		anno.annotate(element);
 	}
 
@@ -141,15 +139,13 @@ public class AbstractInterpreter {
 		mRecursionEntryNodes.clear();
 
 		// state change logger
-		if (mPreferences.getStateChangeLogConsole()
-				|| mPreferences.getStateChangeLogFile()) {
+		if (mPreferences.getStateChangeLogConsole() || mPreferences.getStateChangeLogFile()) {
 			String fileDir = "";
 			String fileName = "";
 			if (mPreferences.getStateChangeLogFile()) {
 				File sourceFile = new File(root.getFilename());
 				DateFormat dfm = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss");
-				fileName = sourceFile.getName() + "_AI_"
-						+ dfm.format(new Date()) + ".txt";
+				fileName = sourceFile.getName() + "_AI_" + dfm.format(new Date()) + ".txt";
 
 				// ---- DEFECT FILE STARTED HERE ----
 				if (mPreferences.getStateChangeLogUseSourcePath()) {
@@ -158,14 +154,11 @@ public class AbstractInterpreter {
 					fileDir = null;
 				}
 				if (fileDir == null) {
-					fileDir = new File(mPreferences.getStateChangeLogPath())
-							.getAbsolutePath();
+					fileDir = new File(mPreferences.getStateChangeLogPath()).getAbsolutePath();
 				}
 			}
-			StateChangeLogger scl = new StateChangeLogger(mLogger,
-					mPreferences.getStateChangeLogConsole(),
-					mPreferences.getStateChangeLogFile(), fileDir
-							+ File.separatorChar + fileName);
+			StateChangeLogger scl = new StateChangeLogger(mLogger, mPreferences.getStateChangeLogConsole(),
+					mPreferences.getStateChangeLogFile(), fileDir + File.separatorChar + fileName);
 			this.registerStateChangeListener(scl);
 		}
 
@@ -174,8 +167,7 @@ public class AbstractInterpreter {
 		numbersForWidening.addAll(mPreferences.getNumbersForWidening());
 		// collect literals if preferences say so
 		if (mPreferences.getWideningAutoNumbers()) {
-			LiteralCollector literalCollector = new LiteralCollector(root,
-					mLogger);
+			LiteralCollector literalCollector = new LiteralCollector(root, mLogger);
 			numbersForWidening.addAll(literalCollector.getResult());
 		}
 
@@ -210,10 +202,8 @@ public class AbstractInterpreter {
 		for (ProgramPoint pp : mLoopEntryNodes.keySet()) {
 			Map<RCFGEdge, RCFGEdge> loopsie = mLoopEntryNodes.get(pp);
 			for (Entry<RCFGEdge, RCFGEdge> e : loopsie.entrySet()) {
-				mLogger.debug(String.format(
-						"Loop: %s -> %s -> ... -> %s -> %s", pp,
-						(ProgramPoint) e.getKey().getTarget(), (ProgramPoint) e
-								.getValue().getSource(), pp));
+				mLogger.debug(String.format("Loop: %s -> %s -> ... -> %s -> %s", pp,
+						(ProgramPoint) e.getKey().getTarget(), (ProgramPoint) e.getValue().getSource(), pp));
 			}
 		}
 
@@ -235,14 +225,12 @@ public class AbstractInterpreter {
 		for (String s : entryNodes.keySet()) {
 			ProgramPoint entryNode = entryNodes.get(s);
 			// check for ULTIMATE.start
-			if (entryNode.getProcedure().startsWith(
-					mPreferences.getUltimateStartProcName())) {
+			if (entryNode.getProcedure().startsWith(mPreferences.getUltimateStartProcName())) {
 				mainEntry = entryNode;
 			}
 
 			// check for recursive methods
-			Collection<ProgramPoint> methodNodes = ra.getProgramPoints().get(s)
-					.values();
+			Collection<ProgramPoint> methodNodes = ra.getProgramPoints().get(s).values();
 
 			for (RCFGEdge e : entryNode.getIncomingEdges()) {
 				if (methodNodes.contains(e.getSource())) {
@@ -266,12 +254,10 @@ public class AbstractInterpreter {
 					StackState state = new StackState(mDomain, mLogger);
 
 					if (target instanceof ProgramPoint) {
-						CallStatement mainProcMockStatement = new CallStatement(
-								null, false, null,
+						CallStatement mainProcMockStatement = new CallStatement(null, false, null,
 								((ProgramPoint) target).getProcedure(), null);
 						// layer for main method
-						state.pushStackLayer(mainProcMockStatement,
-								mDomain.createState());
+						state.pushStackLayer(mainProcMockStatement, mDomain.createState());
 					}
 					putStateToNode(state, e, target);
 					mNodesToVisit.add(target);
@@ -281,10 +267,9 @@ public class AbstractInterpreter {
 
 		visitNodes();
 
-		mLogger.info(String
-				.format("Executed operations: #Steps: %s,  #Merge: %s,  #Widening: %s,  #RecMerge: %s,  #RecWidening: %s",
-						mNofSteps, mNofMerging, mNofWidening, mNofRecMerging,
-						mNofRecWidening));
+		mLogger.info(String.format(
+				"Executed operations: #Steps: %s,  #Merge: %s,  #Widening: %s,  #RecMerge: %s,  #RecWidening: %s",
+				mNofSteps, mNofMerging, mNofWidening, mNofRecMerging, mNofRecWidening));
 		/*
 		 * report as safe if the analysis terminated after having explored the
 		 * whole reachable state space without finding an error
@@ -344,8 +329,7 @@ public class AbstractInterpreter {
 					unprocessedState.setProcessed(true);
 					mVisitor.setCurrentNode(node);
 
-					RCFGEdge exclusiveEdge = unprocessedState
-							.getExclusiveEdgeAt(pp);
+					RCFGEdge exclusiveEdge = unprocessedState.getExclusiveEdgeAt(pp);
 					RCFGEdge ignoredEdge = unprocessedState.getIgnoreEdgeAt(pp);
 					// process the state using each outgoing edge
 					for (RCFGEdge edge : node.getOutgoingEdges()) {
@@ -354,8 +338,7 @@ public class AbstractInterpreter {
 
 						// do not take the outwards edge directly after widening
 
-						if ((exclusiveEdge != null && exclusiveEdge != edge)
-								|| ignoredEdge == edge) {
+						if ((exclusiveEdge != null && exclusiveEdge != edge) || ignoredEdge == edge) {
 							// mLogger.debug("postponed/ignored (" + edge +
 							// ")");
 							// mPostponeEdge.remove(unprocessedState);
@@ -372,13 +355,11 @@ public class AbstractInterpreter {
 
 						// check for errors
 						if (!mVisitor.getError().isEmpty()) {
-							reportUnsupportedSyntaxResult(edge,
-									mVisitor.getError());
+							reportUnsupportedSyntaxResult(edge, mVisitor.getError());
 						}
 
 						// check the resulting state
-						List<StackState> resultingStates = mVisitor
-								.getResultingStates();
+						List<StackState> resultingStates = mVisitor.getResultingStates();
 
 						if (resultingStates.size() == 0) {
 							// do not add the state if bottom
@@ -392,8 +373,7 @@ public class AbstractInterpreter {
 						// else if everything went fine, put node to state
 						// handle each state
 						for (StackState resultingState : resultingStates) {
-								resultingState
-									.addCodeBlockToTrace((CodeBlock) edge);
+							resultingState.addCodeBlockToTrace((CodeBlock) edge);
 
 							// if this is a loop entry, add a loop stack entry
 							increaseLoopCount(node, edge, resultingState);
@@ -401,27 +381,20 @@ public class AbstractInterpreter {
 							// put to node
 							RCFGNode targetNode = edge.getTarget();
 							if (targetNode != null) {
-								if (putStateToNode(resultingState, edge,
-										targetNode)) {
+								if (putStateToNode(resultingState, edge, targetNode)) {
 									ProgramPoint targetP = (ProgramPoint) targetNode;
-									if (mErrorLocs.contains(targetP)
-											&& !mReachedErrorLocs
-													.contains(targetP)) {
+									if (mErrorLocs.contains(targetP) && !mReachedErrorLocs.contains(targetP)) {
 										mReachedErrorLocs.add(targetP);
-										reportErrorResult(targetP,
-												resultingState);
-									} else if (!mNodesToVisit
-											.contains(targetNode)) {
+										reportErrorResult(targetP, resultingState);
+									} else if (!mNodesToVisit.contains(targetNode)) {
 										mNodesToVisit.add(targetNode);
 									}
 								}
 							}
 						}
 					}
-					mContinueProcessing = mContinueProcessing
-							&& mVisitor.getContinueProcessing()
-							&& mServices.getProgressMonitorService()
-									.continueProcessing();
+					mContinueProcessing = mContinueProcessing && mVisitor.getContinueProcessing()
+							&& mServices.getProgressMonitorService().continueProcessing();
 				} // hasUnprocessed
 
 				// remove states if they aren't needed for possible widening
@@ -429,10 +402,8 @@ public class AbstractInterpreter {
 				if (node.getIncomingEdges().size() <= 1) {
 					mStates.remove(node);
 				}
-				if (!mCallStatementsAtCalls
-						.containsAll(mCallStatementsAtSummaries)) {
-					reportUnsupportedSyntaxResult(
-							node,
+				if (!mCallStatementsAtCalls.containsAll(mCallStatementsAtSummaries)) {
+					reportUnsupportedSyntaxResult(node,
 							"Abstract interpretation plug-in can't verify programs which contain procedures without implementations.");
 				}
 				if (!mContinueProcessing) {
@@ -442,8 +413,7 @@ public class AbstractInterpreter {
 		}
 	}
 
-	private void increaseLoopCount(RCFGNode node, RCFGEdge edge,
-			StackState resultingState) {
+	private void increaseLoopCount(RCFGNode node, RCFGEdge edge, StackState resultingState) {
 		Map<RCFGEdge, RCFGEdge> loopEdges = mLoopEntryNodes.get(node);
 		ProgramPoint pp = (ProgramPoint) node;
 		if (loopEdges != null) {
@@ -476,8 +446,7 @@ public class AbstractInterpreter {
 	 *         at the node)
 	 */
 	@SuppressWarnings({ "unchecked" })
-	private boolean putStateToNode(StackState state, RCFGEdge edge,
-			RCFGNode targetNode) {
+	private boolean putStateToNode(StackState state, RCFGEdge edge, RCFGNode targetNode) {
 		mLogger.debug("Put state to node?");
 
 		List<StackState> statesAtNode = mStates.get(targetNode);
@@ -487,8 +456,7 @@ public class AbstractInterpreter {
 		}
 
 		StackState newState = state;
-		List<StackState> statesAtNodeBackup = new ArrayList<StackState>(
-				statesAtNode);
+		List<StackState> statesAtNodeBackup = new ArrayList<StackState>(statesAtNode);
 
 		ProgramPoint pp = (ProgramPoint) targetNode;
 
@@ -500,15 +468,14 @@ public class AbstractInterpreter {
 		RCFGEdge loopEntry = null;
 		boolean applyLoopWidening = false;
 
-		if (pp != null && mLoopEntryNodes.containsKey(pp)
-				&& newState.containsLoopElement(targetNode, edge)) {
+		if (pp != null && mLoopEntryNodes.containsKey(pp) && newState.containsLoopElement(targetNode, edge)) {
 			// find the correct loop entry
 			LoopStackElement le = newState.peekLoopEntry();
 			// if it was not the topmost one, remove all entries
 			// until the correct one was found
 			while (le.getLoopNode() != targetNode && le.getEntryEdge() != edge) {
 				// remove it
-				LoopStackElement dump = newState.popLoopEntry();
+				newState.popLoopEntry();
 				// mLogger.debug("Dump lse: " + dump);
 				// and get the next (outer one)
 				le = newState.peekLoopEntry();
@@ -516,9 +483,7 @@ public class AbstractInterpreter {
 			le.increaseIterationCount();
 			// mLogger.debug("Found lse: " + le);
 
-			if (le != null
-					&& le.getIterationCount() >= mPreferences
-							.getIterationsUntilWidening()) {
+			if (le != null && le.getIterationCount() >= mPreferences.getIterationsUntilWidening()) {
 				applyLoopWidening = true;
 				loopEntry = le.getEntryEdge();
 			}
@@ -527,9 +492,8 @@ public class AbstractInterpreter {
 		// check for recursive method exit / widening
 		boolean applyRecursionWidening = false;
 		if (edge instanceof Call
-		// mRecursionEntryNodes.contains(targetNode)
-				&& newState.getRecursionCount() >= mPreferences
-						.getIterationsUntilRecursiveWidening()) {
+				// mRecursionEntryNodes.contains(targetNode)
+				&& newState.getRecursionCount() >= mPreferences.getIterationsUntilRecursiveWidening()) {
 			// try to shrink the state (all sequences)
 			applyRecursionWidening = true;
 		}
@@ -539,8 +503,7 @@ public class AbstractInterpreter {
 		Set<StackState> statesToRemove = new HashSet<StackState>();
 		StackState addState = null;
 		for (StackState s : statesAtNode) {
-			if (!(edge instanceof Return) && s.isSuperOrEqual(newState)
-					&& s.getExclusiveEdgeAt(pp) == null) {
+			if (!(edge instanceof Return) && s.isSuperOrEqual(newState) && s.getExclusiveEdgeAt(pp) == null) {
 				// mLogger.debug("NO!");
 				return false; // abort if a super state exists
 			}
@@ -586,14 +549,15 @@ public class AbstractInterpreter {
 						// try to match the sizes of the call stacks
 						// shrink/merge the new state until they are equal in
 						// size
-						// mLogger.debug(String.format("Widening after recursion at "
+						// mLogger.debug(String.format("Widening after recursion
+						// at "
 						// + pp + "\n" + s + "\n---and---\n" + newState));
-						while (newState.getStackSize() > s.getStackSize()
-								&& newState.MergeStackLayers()) {
+						while (newState.getStackSize() > s.getStackSize() && newState.MergeStackLayers()) {
 							mNofRecMerging++;
 							// canBeMerged = true;
 						}
-						// mLogger.debug(String.format("\n---after stack merging---\n"
+						// mLogger.debug(String.format("\n---after stack
+						// merging---\n"
 						// + newState));
 
 						// only try to widen if the merging lead to equal stack
@@ -613,7 +577,8 @@ public class AbstractInterpreter {
 
 							newState = widenedState;
 						} else {
-							// mLogger.debug("cannot apply widening on different size state stacks");
+							// mLogger.debug("cannot apply widening on different
+							// size state stacks");
 						}
 					}
 
@@ -622,10 +587,10 @@ public class AbstractInterpreter {
 					// the state only grows after widening
 					// check again if the (possibly widened state is not super
 					// to the old)
-					if ((applyRecursionWidening || applyLoopWidening)
-							&& s.getExclusiveEdgeAt(pp) == null
+					if ((applyRecursionWidening || applyLoopWidening) && s.getExclusiveEdgeAt(pp) == null
 							&& s.isSuperOrEqual(newState)) {
-						// mLogger.debug("new (widened) state is not super to the old state -> NO");
+						// mLogger.debug("new (widened) state is not super to
+						// the old state -> NO");
 						newState = null;
 						break;
 					}
@@ -656,8 +621,7 @@ public class AbstractInterpreter {
 		}
 
 		// merge unprocessed states (into the newState and remove them)
-		if (unprocessedStates.size() + 1 > mPreferences
-				.getParallelStatesUntilMerge()) {
+		if (unprocessedStates.size() + 1 > mPreferences.getParallelStatesUntilMerge()) {
 			// merge states
 			// mLogger.debug(String.format("Merging at %s",
 			// targetNode.toString()));
@@ -695,8 +659,7 @@ public class AbstractInterpreter {
 	 * @return True if it has been added, false if not, i.e. if it was already
 	 *         registered
 	 */
-	public boolean registerStateChangeListener(
-			IAbstractStateChangeListener listener) {
+	public boolean registerStateChangeListener(IAbstractStateChangeListener listener) {
 		return mStateChangeListeners.add(listener);
 	}
 
@@ -708,8 +671,7 @@ public class AbstractInterpreter {
 	 * @return True if it was in the list and has been removed, false if it
 	 *         wasn't there to begin with
 	 */
-	public boolean removeStateChangeListener(
-			IAbstractStateChangeListener listener) {
+	public boolean removeStateChangeListener(IAbstractStateChangeListener listener) {
 		return mStateChangeListeners.remove(listener);
 	}
 
@@ -721,12 +683,10 @@ public class AbstractInterpreter {
 	 * @param newState
 	 * @param mergedState
 	 */
-	private void notifyStateChangeListeners(RCFGEdge viaEdge,
-			List<StackState> oldStates, StackState newState,
+	private void notifyStateChangeListeners(RCFGEdge viaEdge, List<StackState> oldStates, StackState newState,
 			StackState mergedState) {
 		for (IAbstractStateChangeListener l : mStateChangeListeners) {
-			List<StackState> statesCopy = new ArrayList<StackState>(
-					oldStates.size());
+			List<StackState> statesCopy = new ArrayList<StackState>(oldStates.size());
 			statesCopy.addAll(oldStates);
 			l.onStateChange(viaEdge, statesCopy, newState, mergedState);
 		}
@@ -741,25 +701,22 @@ public class AbstractInterpreter {
 	 *            The abstract state at the error location
 	 */
 	@SuppressWarnings("unchecked")
-	private UnprovableResult<RcfgElement, CodeBlock, Expression> reportErrorResult(
-			ProgramPoint location, StackState state) {
+	private UnprovableResult<RcfgElement, CodeBlock, Expression> reportErrorResult(ProgramPoint location,
+			StackState state) {
 
-		RcfgProgramExecution programExecution = new RcfgProgramExecution(
-				state.getTrace(),
+		RcfgProgramExecution programExecution = new RcfgProgramExecution(state.getTrace(),
 				new HashMap<Integer, ProgramState<Expression>>(), null);
 
 		UnprovableResult<RcfgElement, CodeBlock, Expression> result = new UnprovableResult<RcfgElement, CodeBlock, Expression>(
-				AIActivator.s_PLUGIN_NAME, location,
-				mServices.getBacktranslationService(), programExecution);
+				AIActivator.s_PLUGIN_NAME, location, mServices.getBacktranslationService(), programExecution,
+				Collections.emptyMap());
 
-		mServices.getResultService().reportResult(AIActivator.s_PLUGIN_ID,
-				result);
+		mServices.getResultService().reportResult(AIActivator.s_PLUGIN_ID, result);
 
 		if (mPreferences.getStopAfterAnyError()) {
 			mContinueProcessing = false;
-			mLogger.info(String
-					.format("Abstract interpretation finished after reaching error location %s",
-							location.getLocationName()));
+			mLogger.info(String.format("Abstract interpretation finished after reaching error location %s",
+					location.getLocationName()));
 		} else if (mPreferences.getStopAfterAllErrors()) {
 			if (mReachedErrorLocs.containsAll(mErrorLocs)) {
 				mContinueProcessing = false;
@@ -770,12 +727,10 @@ public class AbstractInterpreter {
 	}
 
 	private void reportUnsupportedSyntaxResult(IElement location, String message) {
-		UnsupportedSyntaxResult<IElement> result = new UnsupportedSyntaxResult<IElement>(
-				location, AIActivator.s_PLUGIN_NAME,
-				mServices.getBacktranslationService(), message);
+		UnsupportedSyntaxResult<IElement> result = new UnsupportedSyntaxResult<IElement>(location,
+				AIActivator.s_PLUGIN_NAME, mServices.getBacktranslationService(), message);
 
-		mServices.getResultService().reportResult(AIActivator.s_PLUGIN_ID,
-				result);
+		mServices.getResultService().reportResult(AIActivator.s_PLUGIN_ID, result);
 
 		mContinueProcessing = false;
 	}
@@ -784,29 +739,23 @@ public class AbstractInterpreter {
 	 * Reports safety of the program as the plugin's result
 	 */
 	private void reportSafeResult() {
-		mServices.getResultService().reportResult(
-				AIActivator.s_PLUGIN_ID,
-				new AllSpecificationsHoldResult(AIActivator.s_PLUGIN_NAME,
-						"No error locations were reached."));
+		mServices.getResultService().reportResult(AIActivator.s_PLUGIN_ID,
+				new AllSpecificationsHoldResult(AIActivator.s_PLUGIN_NAME, "No error locations were reached."));
 	}
 
 	/*
 	 * Reports non-safety of the program as the plugin's result
 	 */
 	private void reportUnSafeResult(String message) {
-		mServices.getResultService().reportResult(
-				AIActivator.s_PLUGIN_ID,
-				new GenericResult(AIActivator.s_PLUGIN_NAME,
-						"assert violation", message, Severity.INFO));
+		mServices.getResultService().reportResult(AIActivator.s_PLUGIN_ID,
+				new GenericResult(AIActivator.s_PLUGIN_NAME, "assert violation", message, Severity.INFO));
 	}
 
 	/**
 	 * Reports a timeout of the analysis
 	 */
 	private void reportTimeoutResult() {
-		mServices.getResultService().reportResult(
-				AIActivator.s_PLUGIN_ID,
-				new TimeoutResult(AIActivator.s_PLUGIN_NAME,
-						"Analysis aborted."));
+		mServices.getResultService().reportResult(AIActivator.s_PLUGIN_ID,
+				new TimeoutResult(AIActivator.s_PLUGIN_NAME, "Analysis aborted."));
 	}
 }

@@ -62,7 +62,7 @@ public class AbstractInterpretationEvalTestSuiteMk2 extends
 			// "examples/programs/regression/c/",
 			// "examples/programs/recursivePrograms",
 			/* SV-COMP repo */
-			// "examples/svcomp/loops/", // SPLIT
+			 "examples/svcomp/loops/", // SPLIT
 			// "examples/svcomp/loopsSelection/",
 			// "examples/svcomp/eca/", // SPLIT
 			// "examples/svcomp/ecaSelection/",

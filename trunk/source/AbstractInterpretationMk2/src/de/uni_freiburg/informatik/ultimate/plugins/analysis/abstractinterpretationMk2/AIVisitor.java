@@ -10,15 +10,46 @@ import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
+import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.*;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.util.*;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.*;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BreakStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.GotoStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Label;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WhileStatement;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.util.IRCFGVisitor;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.util.IStatementVisitor;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 /**
  * Used to evaluate boogie statements during abstract interpretation
@@ -181,8 +212,8 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 	 * @param domain
 	 * @param numbersForWidening
 	 */
-	public AIVisitor(Logger logger, IUltimateServiceProvider services,
-			BoogieSymbolTable symbolTable, IAbstractDomain<?> domain) {
+	public AIVisitor(Logger logger, IUltimateServiceProvider services, BoogieSymbolTable symbolTable,
+			IAbstractDomain<?> domain) {
 		mLogger = logger;
 		mServices = services;
 		mSymbolTable = symbolTable;
@@ -216,8 +247,8 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 
 		mResultingStates = new ArrayList<StackState>();
 
-		assert (mCurrentStates.size() == 1); // must start with exactly one
-												// state
+		assert(mCurrentStates.size() == 1); // must start with exactly one
+											// state
 		mResultingStates.add(mCurrentStates.get(0).incrementTop());
 
 		// add a root stack element
@@ -412,7 +443,7 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		 * This should not happen
 		 */
 		// mLogger.debug(mDebugOuputNesting + "> RootEdge");
-		throw new NotImplementedException();
+		throw new UnsupportedOperationException();
 	}
 
 	/*
@@ -600,11 +631,9 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		// mLogger("Applying assert: " + s.toString());
 
 		for (StackState ss : mResultingStates) {
-			if (!mDomain.checkAssert(ss.getCurrentScope().getState(),
-					s.getFormula())) {
+			if (!mDomain.checkAssert(ss.getCurrentScope().getState(), s.getFormula())) {
 				mViolatedAssert = true;
-				mResult = "assert was not fulfilled: " + s.getFormula()
-						+ " for ss";
+				mResult = "assert was not fulfilled: " + s.getFormula() + " for ss";
 				// mResultingState = null;
 			}
 		}
@@ -634,8 +663,7 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 			Expression[] rhs = s.getRhs();
 
 			if (lhs.length != rhs.length) {
-				mLogger.warn(String.format("%s lhs and rhs size mismatch!",
-						s.getClass()));
+				mLogger.warn(String.format("%s lhs and rhs size mismatch!", s.getClass()));
 				return;
 			}
 
@@ -644,17 +672,16 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 				Expression r = rhs[i];
 				TypedAbstractVariable variable;
 				if (l instanceof ArrayLHS) {
-					throw new NotImplementedException();
+					throw new UnsupportedOperationException();
 				} else if (l instanceof VariableLHS) {
 					VariableLHS var = (VariableLHS) l;
-					variable = new TypedAbstractVariable(var.getIdentifier(),
-							var.getDeclarationInformation(), var.getType());
+					variable = new TypedAbstractVariable(var.getIdentifier(), var.getDeclarationInformation(),
+							var.getType());
 				} else {
-					throw new UnsupportedOperationException(String.format(
-							"Unsupported LeftHandSide type %s", l.getClass()));
+					throw new UnsupportedOperationException(
+							String.format("Unsupported LeftHandSide type %s", l.getClass()));
 				}
-				resultingState = mDomain.applyExpression(resultingState,
-						variable, r);
+				resultingState = mDomain.applyExpression(resultingState, variable, r);
 			}
 			if (!resultingState.isBottom()) {
 				newResultingStates.add(state.increment(resultingState));
@@ -677,8 +704,8 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		List<StackState> newResultingStates = new ArrayList<StackState>();
 		for (StackState state : mResultingStates) {
 			// apply the formula on a copy of the topmost state
-			List<IAbstractState> resultingStates = mDomain.applyAssume(state
-					.getCurrentScope().getState(), s.getFormula());
+			List<IAbstractState> resultingStates = mDomain.applyAssume(state.getCurrentScope().getState(),
+					s.getFormula());
 
 			// there can be more than one resulting state (due to
 			// or-expressions)
@@ -711,9 +738,8 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 			for (VariableLHS lhs : s.getIdentifiers()) {
 				// mLogger.debug("Havoc : " + lhs.getIdentifier());
 
-				TypedAbstractVariable variable = new TypedAbstractVariable(
-						lhs.getIdentifier(), lhs.getDeclarationInformation(),
-						lhs.getType());
+				TypedAbstractVariable variable = new TypedAbstractVariable(lhs.getIdentifier(),
+						lhs.getDeclarationInformation(), lhs.getType());
 				resultingState = mDomain.applyHavoc(resultingState, variable);
 			}
 
@@ -751,12 +777,10 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		// mLogger.debug(String.format("CALL: %s", procedureName));
 
 		// fetch method declaration to get input parameters
-		List<Declaration> methodDecList = mSymbolTable
-				.getFunctionOrProcedureDeclaration(procedureName);
+		List<Declaration> methodDecList = mSymbolTable.getFunctionOrProcedureDeclaration(procedureName);
 
 		if (methodDecList.size() < 1) {
-			error(String.format("Procedure declaration \"%s\" not found.",
-					procedureName));
+			error(String.format("Procedure declaration \"%s\" not found.", procedureName));
 			return;
 		}
 
@@ -769,9 +793,7 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 			Procedure procedureDec = (Procedure) methodDec;
 			parameters = procedureDec.getInParams();
 		} else {
-			error(String.format(
-					"Unknown method declaration kind \"%s\" encountered.",
-					methodDec));
+			error(String.format("Unknown method declaration kind \"%s\" encountered.", methodDec));
 			return;
 		}
 
@@ -781,18 +803,15 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		// match arguments and expressions
 		List<TypedAbstractVariable> targetVariables = new ArrayList<TypedAbstractVariable>();
 		List<Expression> argumentExpressions = new ArrayList<Expression>();
-		if (!matchArguments(parameters, arguments, null, targetVariables,
-				argumentExpressions)) {
+		if (!matchArguments(parameters, arguments, null, targetVariables, argumentExpressions)) {
 			return;
 		}
 
 		// apply the call statement on every available state
 		for (StackState state : mResultingStates) {
 			// hand over global variables as arguments
-			List<TypedAbstractVariable> allTargetVariables = new ArrayList<TypedAbstractVariable>(
-					targetVariables);
-			List<Expression> allArgumentExpressions = new ArrayList<Expression>(
-					argumentExpressions);
+			List<TypedAbstractVariable> allTargetVariables = new ArrayList<TypedAbstractVariable>(targetVariables);
+			List<Expression> allArgumentExpressions = new ArrayList<Expression>(argumentExpressions);
 			addGlobals(state, allTargetVariables, allArgumentExpressions);
 
 			// apply the formula on a copy of the topmost state
@@ -803,8 +822,7 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 
 			// compute the new state
 			// and add a new scope (copies the actual)
-			mDomain.applyExpressionScoped(resultingState, oldState,
-					allTargetVariables, allArgumentExpressions);
+			mDomain.applyExpressionScoped(resultingState, oldState, allTargetVariables, allArgumentExpressions);
 
 			state.pushStackLayer(s, resultingState);
 		}
@@ -825,8 +843,7 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 
 		// it is assumed that all states have the same call stack history
 		// since this visitor is only called with one state
-		CallStatement currentScopeCall = mResultingStates.get(0)
-				.getCurrentScope().getCallStatement();
+		CallStatement currentScopeCall = mResultingStates.get(0).getCurrentScope().getCallStatement();
 		if (currentScopeCall != callStatement) {
 			// mLogger.debug("Return does not belong to Call");
 			mResultingStates = new ArrayList<StackState>();
@@ -834,12 +851,10 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		}
 
 		// fetch method declaration to get input parameters
-		List<Declaration> methodDecList = mSymbolTable
-				.getFunctionOrProcedureDeclaration(procedureName);
+		List<Declaration> methodDecList = mSymbolTable.getFunctionOrProcedureDeclaration(procedureName);
 
 		if (methodDecList.size() < 1) {
-			error(String.format("Procedure declaration \"%s\" not found.",
-					procedureName));
+			error(String.format("Procedure declaration \"%s\" not found.", procedureName));
 			return;
 		}
 
@@ -849,9 +864,7 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 			Procedure procedureDec = (Procedure) methodDec;
 			parameters = procedureDec.getOutParams();
 		} else {
-			error(String.format(
-					"Unknown method declaration kind \"%s\" encountered.",
-					methodDec));
+			error(String.format("Unknown method declaration kind \"%s\" encountered.", methodDec));
 			return;
 		}
 
@@ -861,18 +874,15 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		// match arguments and expressions
 		List<TypedAbstractVariable> targetVariables = new ArrayList<TypedAbstractVariable>();
 		List<Expression> argumentExpressions = new ArrayList<Expression>();
-		if (!matchArguments(parameters, null, lhsVariables, targetVariables,
-				argumentExpressions)) {
+		if (!matchArguments(parameters, null, lhsVariables, targetVariables, argumentExpressions)) {
 			return;
 		}
 
 		// apply the call statement on every available state
 		for (StackState state : mResultingStates) {
 			// hand over global variables as arguments
-			List<TypedAbstractVariable> allTargetVariables = new ArrayList<TypedAbstractVariable>(
-					targetVariables);
-			List<Expression> allArgumentExpressions = new ArrayList<Expression>(
-					argumentExpressions);
+			List<TypedAbstractVariable> allTargetVariables = new ArrayList<TypedAbstractVariable>(targetVariables);
+			List<Expression> allArgumentExpressions = new ArrayList<Expression>(argumentExpressions);
 			addGlobals(state, allTargetVariables, allArgumentExpressions);
 
 			// apply the formula on a the top scope and save
@@ -881,39 +891,32 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 			state.popStackLayer();
 			IAbstractState oldScope = state.getCurrentScope().getState();
 
-			mDomain.applyExpressionScoped(oldScope, topScope,
-					allTargetVariables, allArgumentExpressions);
+			mDomain.applyExpressionScoped(oldScope, topScope, allTargetVariables, allArgumentExpressions);
 
 			state.increment(oldScope);
 		}
 	}
 
-	private void addGlobals(StackState state,
-			List<TypedAbstractVariable> allTargetVariables,
+	private void addGlobals(StackState state, List<TypedAbstractVariable> allTargetVariables,
 			List<Expression> allArgumentExpressions) {
 		// Add global variables
-		for (Entry<String, Declaration> entry : mSymbolTable
-				.getGlobalVariables().entrySet()) {
-			if (allTargetVariables
-					.contains(new AbstractVariable(entry.getKey()))) {
+		for (Entry<String, Declaration> entry : mSymbolTable.getGlobalVariables().entrySet()) {
+			if (allTargetVariables.contains(new AbstractVariable(entry.getKey()))) {
 				continue; // do not override global variables if they are a left
 							// hand side variable
 			}
 
 			AbstractVariable abstGlobal = new AbstractVariable(entry.getKey());
 			if (state.getCurrentState().hasVariable(abstGlobal)) {
-				TypedAbstractVariable global = state.getCurrentState()
-						.getTypedVariable(abstGlobal);
+				TypedAbstractVariable global = state.getCurrentState().getTypedVariable(abstGlobal);
 
 				if (global == null) {
 					throw new RuntimeException();
 				}
 				allTargetVariables.add(global);
-				VariableDeclaration varDec = (VariableDeclaration) entry
-						.getValue();
-				allArgumentExpressions.add(new IdentifierExpression(varDec
-						.getLocation(), global.getType(), entry.getKey(),
-						global.getDeclaration()));
+				VariableDeclaration varDec = (VariableDeclaration) entry.getValue();
+				allArgumentExpressions.add(new IdentifierExpression(varDec.getLocation(), global.getType(),
+						entry.getKey(), global.getDeclaration()));
 			}
 
 		}
@@ -932,17 +935,14 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 	 * 
 	 * @return
 	 */
-	private boolean matchArguments(VarList[] parameters,
-			Expression[] arguments, VariableLHS[] lhsVariables,
-			List<TypedAbstractVariable> targetVariables,
-			List<Expression> argumentExpressions) {
+	private boolean matchArguments(VarList[] parameters, Expression[] arguments, VariableLHS[] lhsVariables,
+			List<TypedAbstractVariable> targetVariables, List<Expression> argumentExpressions) {
 		if (parameters == null) {
 			mLogger.warn(String.format("Parameters of not found."));
 			return false;
 		}
 
-		int nofVariables = arguments == null ? lhsVariables.length
-				: arguments.length;
+		int nofVariables = arguments == null ? lhsVariables.length : arguments.length;
 
 		int currentExpression = 0;
 		for (int p = 0; p < parameters.length; p++) {
@@ -953,8 +953,7 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 			for (int i = 0; i < identifiers.length; i++) {
 				if (currentExpression >= nofVariables) {
 					// this may not happen
-					error(String
-							.format("Invalid number of arguments for method call!"));
+					error(String.format("Invalid number of arguments for method call!"));
 					return false;
 				}
 
@@ -962,15 +961,12 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 				{
 					// match the argument expression pair
 					argumentExpressions.add(arguments[currentExpression]);
-					targetVariables.add(new TypedAbstractVariable(
-							identifiers[i], null, type));
+					targetVariables.add(new TypedAbstractVariable(identifiers[i], null, type));
 				} else if (lhsVariables != null) // return
 				{
 					// match the argument expression pair
-					argumentExpressions.add(new IdentifierExpression(null,
-							type, identifiers[i], null));
-					targetVariables
-							.add(evaluateLeftHandSide(lhsVariables[currentExpression]));
+					argumentExpressions.add(new IdentifierExpression(null, type, identifiers[i], null));
+					targetVariables.add(evaluateLeftHandSide(lhsVariables[currentExpression]));
 				} else {
 					throw new RuntimeException();
 				}
@@ -987,20 +983,17 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		} else if (lhs instanceof VariableLHS) {
 			return visit((VariableLHS) lhs);
 		} else {
-			throw new UnsupportedOperationException(String.format(
-					"Unsupported LeftHandSide type %s", lhs.getClass()));
+			throw new UnsupportedOperationException(String.format("Unsupported LeftHandSide type %s", lhs.getClass()));
 		}
 	}
 
 	private TypedAbstractVariable visit(VariableLHS lhs) {
-		return new TypedAbstractVariable(lhs.getIdentifier(),
-				lhs.getDeclarationInformation(), lhs.getType());
+		return new TypedAbstractVariable(lhs.getIdentifier(), lhs.getDeclarationInformation(), lhs.getType());
 	}
 
 	private TypedAbstractVariable visit(ArrayLHS lhs) {
-		mLogger.warn(String.format("Unsupported LeftHandSide type: %s",
-				lhs.getClass()));
-		throw new NotImplementedException();
+		mLogger.warn(String.format("Unsupported LeftHandSide type: %s", lhs.getClass()));
+		throw new UnsupportedOperationException();
 	}
 
 	/** ------------ Helper functions ------------ **/
@@ -1024,7 +1017,7 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		/**
 		 * this should not occur
 		 */
-		throw new NotImplementedException();
+		throw new UnsupportedOperationException();
 	}
 
 	/*
@@ -1040,7 +1033,7 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		/**
 		 * this should not occur
 		 */
-		throw new NotImplementedException();
+		throw new UnsupportedOperationException();
 	}
 
 	/*
@@ -1069,7 +1062,7 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		/**
 		 * this should not occur
 		 */
-		throw new NotImplementedException();
+		throw new UnsupportedOperationException();
 	}
 
 }

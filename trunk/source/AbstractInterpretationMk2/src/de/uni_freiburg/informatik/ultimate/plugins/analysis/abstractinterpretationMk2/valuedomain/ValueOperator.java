@@ -2,11 +2,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Map.Entry;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.TypedAbstractVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.*;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractState;
 
 /**
  * Superclass of widening and merge operator to prevent copy code
@@ -73,7 +73,7 @@ public abstract class ValueOperator implements IAbstractOperator<ValueState> {
 			} else
 			// TODO
 			{
-				throw new NotImplementedException();
+				throw new UnsupportedOperationException();
 			}
 
 			resutlingState.writeValue(var, resultValue);
