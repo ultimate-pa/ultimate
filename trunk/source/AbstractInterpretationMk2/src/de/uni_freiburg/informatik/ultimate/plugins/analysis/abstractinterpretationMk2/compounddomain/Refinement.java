@@ -1,7 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.compounddomain;
 
-import com.sun.org.apache.bcel.internal.generic.Type;
-
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractState;
 
 /**
@@ -16,10 +14,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public abstract class Refinement<F, T> {
-	private final Class<Type> mFrom;
-	private final Class<Type> mTo;
+	private final Class<?> mFrom;
+	private final Class<?> mTo;
 
-	public Refinement(Class<Type> from, Class<Type> to) {
+	public Refinement(Class<?> from, Class<?> to) {
 		mFrom = from;
 		mTo = to;
 	}

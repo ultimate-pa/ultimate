@@ -1,14 +1,16 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.polytopedomain;
 
-import java.util.Map.Entry;
-
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.AbstractVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.TypedAbstractVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.*;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-import parma_polyhedra_library.*;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractState;
+import parma_polyhedra_library.Coefficient;
+import parma_polyhedra_library.Constraint;
+import parma_polyhedra_library.Degenerate_Element;
+import parma_polyhedra_library.Linear_Expression;
+import parma_polyhedra_library.NNC_Polyhedron;
+import parma_polyhedra_library.Variable;
 
 public class PolytopeState implements IAbstractState<PolytopeState> {
 	/**
@@ -96,8 +98,7 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 	 * .ultimate.plugins.analysis.abstractinterpretationMk2.AbstractVariable)
 	 */
 	public TypedAbstractVariable getTypedVariable(AbstractVariable variable) {
-		for (TypedAbstractVariable tav : mVariableTranslation.getVariables()
-				.keySet()) {
+		for (TypedAbstractVariable tav : mVariableTranslation.getVariables().keySet()) {
 			if (tav.equals(variable)) {
 				return tav;
 			}
@@ -122,7 +123,7 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 		// mLogger.debug("Remove variable: " + variable.toString() +
 		// " (implementation not finished)");
 		mVariableTranslation.getVariables().remove(variable);
-		throw new NotImplementedException();
+		throw new UnsupportedOperationException();
 	}
 
 	/**
@@ -168,13 +169,12 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 	 * @param pState
 	 */
 	public void updateDimensions() {
-		int missingDimensions = mVariableTranslation.nofVariables()
-				- (int) mPolyhedron.space_dimension();
+		int missingDimensions = mVariableTranslation.nofVariables() - (int) mPolyhedron.space_dimension();
 		if (missingDimensions > 0) {
 			mPolyhedron.add_space_dimensions_and_embed(missingDimensions);
 		} else if (missingDimensions < 0) {
 			// too many dimensions
-			throw new NotImplementedException();
+			throw new UnsupportedOperationException();
 		}
 	}
 
@@ -194,8 +194,7 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 			} else {
 				// fold the dimensions of one poytope to match the table of the
 				// other state
-				throw new RuntimeException(
-						"The two states must have the same variable tanslation");
+				throw new RuntimeException("The two states must have the same variable tanslation");
 			}
 		}
 		updateDimensions();
@@ -307,7 +306,7 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 		String output = "[UID_" + mUID + " ";
 		output += mVariableTranslation.toString() + " ";
 		return output
-		// + "pObj(" + mPolyhedron.space_dimension() + "): "
+				// + "pObj(" + mPolyhedron.space_dimension() + "): "
 				+ mPolyhedron.toString() + "]";
 	}
 

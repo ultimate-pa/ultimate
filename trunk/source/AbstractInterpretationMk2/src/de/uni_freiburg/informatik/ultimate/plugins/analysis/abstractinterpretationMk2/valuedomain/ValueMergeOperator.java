@@ -1,12 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.valuedomain;
 
-import java.util.Map.Entry;
-
-import javax.management.RuntimeErrorException;
-
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.*;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractMergeOperator;
 
 /**
  * Implements the merging of two ValueStates

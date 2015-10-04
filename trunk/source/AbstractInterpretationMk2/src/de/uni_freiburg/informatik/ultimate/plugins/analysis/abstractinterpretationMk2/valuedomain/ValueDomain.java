@@ -5,12 +5,19 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.TypedAbstractVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.*;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractMergeOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractWideningOperator;
 
 public class ValueDomain implements IAbstractDomain<ValueState> {
 	private static final String s_domainID = "VALUES";
@@ -486,7 +493,7 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 						break;
 
 					default:
-						throw new NotImplementedException();
+						throw new UnsupportedOperationException();
 					}
 
 					if (rightHandAssumeResult != null) {
@@ -516,7 +523,7 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 				return applyAssumption(unaryExpression.getExpr(), states, null,
 						!negate);
 			} else {
-				throw new NotImplementedException();
+				throw new UnsupportedOperationException();
 			}
 		} else if (exp instanceof BooleanLiteral) {
 			BooleanLiteral boolFormula = (BooleanLiteral) exp;

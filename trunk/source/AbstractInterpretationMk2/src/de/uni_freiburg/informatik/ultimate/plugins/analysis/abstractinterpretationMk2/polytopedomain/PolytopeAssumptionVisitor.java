@@ -5,12 +5,19 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-import parma_polyhedra_library.*;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
+import parma_polyhedra_library.Coefficient;
+import parma_polyhedra_library.Constraint;
+import parma_polyhedra_library.Linear_Expression;
+import parma_polyhedra_library.Linear_Expression_Coefficient;
+import parma_polyhedra_library.Linear_Expression_Sum;
+import parma_polyhedra_library.Relation_Symbol;
 
 /**
  * This walker is used by the polytope domain to manifest the implications of
@@ -31,8 +38,7 @@ public class PolytopeAssumptionVisitor {
 	 * 
 	 * @param logger
 	 */
-	public PolytopeAssumptionVisitor(
-			PolytopeExpressionVisitor expressionVisitor, Logger logger) {
+	public PolytopeAssumptionVisitor(PolytopeExpressionVisitor expressionVisitor, Logger logger) {
 		mLogger = logger;
 		mExpressionVisitor = expressionVisitor;
 		// mStates = new ArrayList<PolytopeState>();
@@ -43,8 +49,7 @@ public class PolytopeAssumptionVisitor {
 	 * @param expr
 	 * @return
 	 */
-	public List<PolytopeState> applyAssumption(Expression expr,
-			List<PolytopeState> states, boolean negate) {
+	public List<PolytopeState> applyAssumption(Expression expr, List<PolytopeState> states, boolean negate) {
 		if (expr instanceof BinaryExpression) {
 			BinaryExpression binExpr = (BinaryExpression) expr;
 			BinaryExpression.Operator oper = binExpr.getOperator();
@@ -71,24 +76,19 @@ public class PolytopeAssumptionVisitor {
 					// a NOR b = not(a) AND not(b)
 					// do each side if it is not a unary expression
 					if (applyLeft) {
-						states = applyAssumption(binExpr.getLeft(), states,
-								negate);
+						states = applyAssumption(binExpr.getLeft(), states, negate);
 					}
 					if (applyRight) {
-						states = applyAssumption(binExpr.getRight(), states,
-								negate);
+						states = applyAssumption(binExpr.getRight(), states, negate);
 					}
 					return states;
-				} else if ((oper == BinaryExpression.Operator.LOGICIMPLIES)
-						&& negate) {
+				} else if ((oper == BinaryExpression.Operator.LOGICIMPLIES) && negate) {
 					// a NIMPL b = a AND not(b)
 					if (applyLeft) {
-						states = applyAssumption(binExpr.getLeft(), states,
-								false);
+						states = applyAssumption(binExpr.getLeft(), states, false);
 					}
 					if (applyRight) {
-						states = applyAssumption(binExpr.getRight(), states,
-								true);
+						states = applyAssumption(binExpr.getRight(), states, true);
 					}
 					return states;
 				} else if (((oper == BinaryExpression.Operator.LOGICAND) && negate)
@@ -103,27 +103,22 @@ public class PolytopeAssumptionVisitor {
 					// apply the assumption result for left and right on two
 					// copies
 					if (applyLeft) {
-						newStates.addAll(applyAssumption(binExpr.getLeft(),
-								copyStatesIf(states, applyRight), negate));
+						newStates.addAll(applyAssumption(binExpr.getLeft(), copyStatesIf(states, applyRight), negate));
 					}
 					if (applyRight) {
-						newStates.addAll(applyAssumption(binExpr.getRight(),
-								states, negate));
+						newStates.addAll(applyAssumption(binExpr.getRight(), states, negate));
 					}
 					return newStates;
-				} else if ((oper == BinaryExpression.Operator.LOGICIMPLIES)
-						&& !negate) {
+				} else if ((oper == BinaryExpression.Operator.LOGICIMPLIES) && !negate) {
 					// a IMPL b = not(a) OR b
 					// here is where the number of resulting states doubles
 					List<PolytopeState> newStates = new ArrayList<PolytopeState>();
 
 					if (applyLeft) {
-						newStates.addAll(applyAssumption(binExpr.getLeft(),
-								copyStatesIf(states, applyRight), true));
+						newStates.addAll(applyAssumption(binExpr.getLeft(), copyStatesIf(states, applyRight), true));
 					}
 					if (applyRight) {
-						newStates.addAll(applyAssumption(binExpr.getRight(),
-								states, false));
+						newStates.addAll(applyAssumption(binExpr.getRight(), states, false));
 					}
 					return newStates;
 				} else if ((oper == BinaryExpression.Operator.LOGICIFF)) {
@@ -134,10 +129,8 @@ public class PolytopeAssumptionVisitor {
 					List<PolytopeState> posStates = new ArrayList<PolytopeState>();
 
 					// 'pos' (a AND b)
-					posStates.addAll(applyAssumption(binExpr.getLeft(),
-							copyStatesIf(states, true), true));
-					posStates = applyAssumption(binExpr.getRight(), posStates,
-							!negate);
+					posStates.addAll(applyAssumption(binExpr.getLeft(), copyStatesIf(states, true), true));
+					posStates = applyAssumption(binExpr.getRight(), posStates, !negate);
 
 					// 'neg' (not(a) AND not(b))
 					states = applyAssumption(binExpr.getLeft(), states, false);
@@ -164,15 +157,13 @@ public class PolytopeAssumptionVisitor {
 					typeRight = ((ArrayType) typeRight).getValueType();
 				}
 
-				if (typeLeft instanceof PrimitiveType
-						&& typeRight instanceof PrimitiveType) {
+				if (typeLeft instanceof PrimitiveType && typeRight instanceof PrimitiveType) {
 					PrimitiveType ptLeft = (PrimitiveType) typeLeft;
 					PrimitiveType ptRight = (PrimitiveType) typeRight;
-					integer = ptLeft.getTypeCode() == PrimitiveType.INT
-							&& ptRight.getTypeCode() == PrimitiveType.INT;
+					integer = ptLeft.getTypeCode() == PrimitiveType.INT && ptRight.getTypeCode() == PrimitiveType.INT;
 				} else {
 					// handle this type of type
-					throw new NotImplementedException();
+					throw new UnsupportedOperationException();
 				}
 
 				List<PolytopeState> newStates = new ArrayList<PolytopeState>();
@@ -180,28 +171,24 @@ public class PolytopeAssumptionVisitor {
 				for (PolytopeState state : states) {
 					// evaluate both sides first
 					mExpressionVisitor.prepare(state, "");
-					Linear_Expression left = mExpressionVisitor.walk(binExpr
-							.getLeft());
-					Linear_Expression right = mExpressionVisitor.walk(binExpr
-							.getRight());
+					Linear_Expression left = mExpressionVisitor.walk(binExpr.getLeft());
+					Linear_Expression right = mExpressionVisitor.walk(binExpr.getRight());
 
 					if (left == null || right == null) {
 						// the resulting expression is top
-						// mLogger.warn(String.format("Cannot linearize expression \"%s\"",
+						// mLogger.warn(String.format("Cannot linearize
+						// expression \"%s\"",
 						// expr));
 						continue;
 					}
 
-					Linear_Expression rightPlusOne = new Linear_Expression_Sum(
-							right, new Linear_Expression_Coefficient(
-									new Coefficient(1)));
-					Linear_Expression leftPlusOne = new Linear_Expression_Sum(
-							left, new Linear_Expression_Coefficient(
-									new Coefficient(1)));
+					Linear_Expression rightPlusOne = new Linear_Expression_Sum(right,
+							new Linear_Expression_Coefficient(new Coefficient(1)));
+					Linear_Expression leftPlusOne = new Linear_Expression_Sum(left,
+							new Linear_Expression_Coefficient(new Coefficient(1)));
 
 					if (oper == BinaryExpression.Operator.COMPEQ && negate
-							|| oper == BinaryExpression.Operator.COMPNEQ
-							&& !negate) {
+							|| oper == BinaryExpression.Operator.COMPNEQ && !negate) {
 
 						// left != right (NOT_EQUAL operator is broken)
 						// make two constraints out of it, since the
@@ -209,59 +196,36 @@ public class PolytopeAssumptionVisitor {
 						PolytopeState copy = state.copy().getConcrete();
 
 						if (integer) {
-							state.addConstraint(new Constraint(left,
-									Relation_Symbol.GREATER_OR_EQUAL,
-									rightPlusOne));
-							copy.addConstraint(new Constraint(leftPlusOne,
-									Relation_Symbol.LESS_OR_EQUAL, right));
+							state.addConstraint(new Constraint(left, Relation_Symbol.GREATER_OR_EQUAL, rightPlusOne));
+							copy.addConstraint(new Constraint(leftPlusOne, Relation_Symbol.LESS_OR_EQUAL, right));
 						} else {
-							state.addConstraint(new Constraint(left,
-									Relation_Symbol.GREATER_THAN, right));
-							copy.addConstraint(new Constraint(left,
-									Relation_Symbol.LESS_THAN, right));
+							state.addConstraint(new Constraint(left, Relation_Symbol.GREATER_THAN, right));
+							copy.addConstraint(new Constraint(left, Relation_Symbol.LESS_THAN, right));
 						}
 
 						newStates.add(copy);
-					} else if (oper == BinaryExpression.Operator.COMPEQ
-							&& !negate
-							|| oper == BinaryExpression.Operator.COMPNEQ
-							&& negate) {
-						state.addConstraint(new Constraint(left,
-								Relation_Symbol.EQUAL, right));
-					} else if (oper == BinaryExpression.Operator.COMPGEQ
-							&& !negate
-							|| oper == BinaryExpression.Operator.COMPLT
-							&& negate) {
-						state.addConstraint(new Constraint(left,
-								Relation_Symbol.GREATER_OR_EQUAL, right));
-					} else if (oper == BinaryExpression.Operator.COMPLEQ
-							&& !negate
-							|| oper == BinaryExpression.Operator.COMPGT
-							&& negate) {
-						state.addConstraint(new Constraint(left,
-								Relation_Symbol.LESS_OR_EQUAL, right));
-					} else if (oper == BinaryExpression.Operator.COMPLT
-							&& !negate
-							|| oper == BinaryExpression.Operator.COMPGEQ
-							&& negate) {
+					} else if (oper == BinaryExpression.Operator.COMPEQ && !negate
+							|| oper == BinaryExpression.Operator.COMPNEQ && negate) {
+						state.addConstraint(new Constraint(left, Relation_Symbol.EQUAL, right));
+					} else if (oper == BinaryExpression.Operator.COMPGEQ && !negate
+							|| oper == BinaryExpression.Operator.COMPLT && negate) {
+						state.addConstraint(new Constraint(left, Relation_Symbol.GREATER_OR_EQUAL, right));
+					} else if (oper == BinaryExpression.Operator.COMPLEQ && !negate
+							|| oper == BinaryExpression.Operator.COMPGT && negate) {
+						state.addConstraint(new Constraint(left, Relation_Symbol.LESS_OR_EQUAL, right));
+					} else if (oper == BinaryExpression.Operator.COMPLT && !negate
+							|| oper == BinaryExpression.Operator.COMPGEQ && negate) {
 						if (integer) {
-							state.addConstraint(new Constraint(leftPlusOne,
-									Relation_Symbol.LESS_OR_EQUAL, right));
+							state.addConstraint(new Constraint(leftPlusOne, Relation_Symbol.LESS_OR_EQUAL, right));
 						} else {
-							state.addConstraint(new Constraint(left,
-									Relation_Symbol.LESS_THAN, right));
+							state.addConstraint(new Constraint(left, Relation_Symbol.LESS_THAN, right));
 						}
-					} else if (oper == BinaryExpression.Operator.COMPGT
-							&& !negate
-							|| oper == BinaryExpression.Operator.COMPLEQ
-							&& negate) {
+					} else if (oper == BinaryExpression.Operator.COMPGT && !negate
+							|| oper == BinaryExpression.Operator.COMPLEQ && negate) {
 						if (integer) {
-							state.addConstraint(new Constraint(left,
-									Relation_Symbol.GREATER_OR_EQUAL,
-									rightPlusOne));
+							state.addConstraint(new Constraint(left, Relation_Symbol.GREATER_OR_EQUAL, rightPlusOne));
 						} else {
-							state.addConstraint(new Constraint(left,
-									Relation_Symbol.GREATER_THAN, right));
+							state.addConstraint(new Constraint(left, Relation_Symbol.GREATER_THAN, right));
 						}
 					} else {
 						applied = false; // not handeled relation symbol
@@ -276,10 +240,9 @@ public class PolytopeAssumptionVisitor {
 		} else if (expr instanceof UnaryExpression) {
 			UnaryExpression unaryExpression = (UnaryExpression) expr;
 			if (unaryExpression.getOperator() == UnaryExpression.Operator.LOGICNEG) {
-				return applyAssumption(unaryExpression.getExpr(), states,
-						!negate);
+				return applyAssumption(unaryExpression.getExpr(), states, !negate);
 			} else {
-				throw new NotImplementedException();
+				throw new UnsupportedOperationException();
 			}
 		} else if (expr instanceof BooleanLiteral) {
 			BooleanLiteral boolFormula = (BooleanLiteral) expr;
@@ -293,7 +256,8 @@ public class PolytopeAssumptionVisitor {
 			}
 		}
 
-		// mLogger.warn(String.format("Can not reduce value range at assume statement \"%s\"",
+		// mLogger.warn(String.format("Can not reduce value range at assume
+		// statement \"%s\"",
 		// expr));
 		return states;
 	}
@@ -305,8 +269,7 @@ public class PolytopeAssumptionVisitor {
 	 * @param copy
 	 * @return
 	 */
-	protected List<PolytopeState> copyStatesIf(List<PolytopeState> states,
-			boolean copy) {
+	protected List<PolytopeState> copyStatesIf(List<PolytopeState> states, boolean copy) {
 		if (!copy) {
 			return states;
 		}

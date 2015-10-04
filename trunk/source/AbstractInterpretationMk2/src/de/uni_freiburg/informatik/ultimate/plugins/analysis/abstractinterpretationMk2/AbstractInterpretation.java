@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 /**
  * Main class of Plug-In AbstractInterpretation
  * 
- * @author Jan Hättig
+ * @author Jan HÃ¤ttig
  */
 public class AbstractInterpretation implements IAnalysis {
 
@@ -27,8 +27,7 @@ public class AbstractInterpretation implements IAnalysis {
 
 	@Override
 	public GraphType getOutputDefinition() {
-		return new GraphType(AIActivator.s_PLUGIN_ID,
-				m_InputDefinition.getType(), m_InputDefinition.getFileNames());
+		return new GraphType(AIActivator.s_PLUGIN_ID, m_InputDefinition.getType(), m_InputDefinition.getFileNames());
 	}
 
 	@Override

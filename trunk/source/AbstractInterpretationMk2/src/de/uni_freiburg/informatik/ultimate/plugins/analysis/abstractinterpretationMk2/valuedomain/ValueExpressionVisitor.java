@@ -6,17 +6,28 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitVectorAccessExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.TypedAbstractVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.util.*;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.util.ExpressionVisitor;
 
-public class ValueExpressionVisitor extends
-		ExpressionVisitor<IAbstractValue<?>> {
+public class ValueExpressionVisitor extends ExpressionVisitor<IAbstractValue<?>> {
 	private final ValueDomain mDomain;
 	private Logger mLogger;
 	private ValueState mCurrentState;
@@ -55,8 +66,7 @@ public class ValueExpressionVisitor extends
 	 * @return
 	 */
 	public IAbstractValue<?> getResult(Expression exp, boolean negated) {
-		return negated ? mInterimResultsNegated.get(exp)
-				: mInterimResultsNormal.get(exp);
+		return negated ? mInterimResultsNegated.get(exp) : mInterimResultsNormal.get(exp);
 	}
 
 	/*
@@ -105,8 +115,7 @@ public class ValueExpressionVisitor extends
 		if (array instanceof IdentifierExpression) {
 			IdentifierExpression arrayIdent = (IdentifierExpression) array;
 			IType type = ((ArrayType) arrayIdent.getType()).getValueType();
-			TypedAbstractVariable abst = new TypedAbstractVariable(
-					arrayIdent.getIdentifier(),
+			TypedAbstractVariable abst = new TypedAbstractVariable(arrayIdent.getIdentifier(),
 					arrayIdent.getDeclarationInformation(), type);
 			if (!mCurrentState.hasVariable(abst)) {
 				// mLogger.warn("Variable " + abst.toString() +
@@ -130,7 +139,7 @@ public class ValueExpressionVisitor extends
 	 */
 	@Override
 	public IAbstractValue<?> visit(ArrayStoreExpression expr) {
-		throw new NotImplementedException();
+		throw new UnsupportedOperationException();
 	}
 
 	/*
@@ -143,8 +152,7 @@ public class ValueExpressionVisitor extends
 	 */
 	@Override
 	public IAbstractValue<?> visit(BitvecLiteral expr) {
-		return mDomain.getBitVectorValueFactory().makeBitVectorValue(
-				expr.getValue());
+		return mDomain.getBitVectorValueFactory().makeBitVectorValue(expr.getValue());
 	}
 
 	/*
@@ -157,8 +165,7 @@ public class ValueExpressionVisitor extends
 	 * int, int)
 	 */
 	@Override
-	public IAbstractValue<?> visited(BitVectorAccessExpression expr,
-			IAbstractValue<?> bvVal, int start, int end) {
+	public IAbstractValue<?> visited(BitVectorAccessExpression expr, IAbstractValue<?> bvVal, int start, int end) {
 		return bvVal.bitVectorAccess(start, end);
 	}
 
@@ -229,9 +236,8 @@ public class ValueExpressionVisitor extends
 	 */
 	@Override
 	public IAbstractValue<?> visit(IdentifierExpression expr) {
-		return mCurrentState.getValue(new TypedAbstractVariable(expr
-				.getIdentifier(), expr.getDeclarationInformation(), expr
-				.getType()));
+		return mCurrentState.getValue(
+				new TypedAbstractVariable(expr.getIdentifier(), expr.getDeclarationInformation(), expr.getType()));
 	}
 
 	/*
@@ -259,8 +265,7 @@ public class ValueExpressionVisitor extends
 	 * .ultimate.model.boogie.ast.UnaryExpression, java.lang.Object)
 	 */
 	@Override
-	public IAbstractValue<?> visited(UnaryExpression expr,
-			IAbstractValue<?> value) {
+	public IAbstractValue<?> visited(UnaryExpression expr, IAbstractValue<?> value) {
 		switch (expr.getOperator()) {
 		case ARITHNEGATIVE:
 			return value == null ? null : value.negative();
@@ -274,7 +279,7 @@ public class ValueExpressionVisitor extends
 
 		case OLD:
 		default:
-			throw new NotImplementedException();
+			throw new UnsupportedOperationException();
 		}
 	}
 
@@ -307,8 +312,7 @@ public class ValueExpressionVisitor extends
 
 				// OR: one must be non-bottom
 				if (isBottom(a) && isBottom(b)) {
-					return mDomain.getTopBottomValueForType(expr.getType(),
-							false);
+					return mDomain.getTopBottomValueForType(expr.getType(), false);
 				}
 				// otherwise the value does not tell us anything
 				// since the returned ranges of left and right
@@ -327,8 +331,7 @@ public class ValueExpressionVisitor extends
 				}
 				// both must be non-bottom
 				if (isBottom(a) || isBottom(b)) {
-					return mDomain.getTopBottomValueForType(expr.getType(),
-							false);
+					return mDomain.getTopBottomValueForType(expr.getType(), false);
 				}
 				return null;
 			}
@@ -359,10 +362,8 @@ public class ValueExpressionVisitor extends
 				}
 
 				// NIFF: one is bottom or the other
-				if ((isBottom(a) && isBottom(b))
-						|| (isBottom(aNeg) && isBottom(bNeg))) {
-					return mDomain.getTopBottomValueForType(expr.getType(),
-							false);
+				if ((isBottom(a) && isBottom(b)) || (isBottom(aNeg) && isBottom(bNeg))) {
+					return mDomain.getTopBottomValueForType(expr.getType(), false);
 				}
 				return null;
 			} else {
@@ -374,10 +375,8 @@ public class ValueExpressionVisitor extends
 				}
 
 				// IFF: one of the two NANDs must be satisfiable
-				if ((isBottom(a) || isBottom(b))
-						&& (isBottom(aNeg) || isBottom(bNeg))) {
-					return mDomain.getTopBottomValueForType(expr.getType(),
-							false);
+				if ((isBottom(a) || isBottom(b)) && (isBottom(aNeg) || isBottom(bNeg))) {
+					return mDomain.getTopBottomValueForType(expr.getType(), false);
 				}
 				return null;
 			}
@@ -397,8 +396,7 @@ public class ValueExpressionVisitor extends
 				}
 				// AND: Both must be non-bottom
 				if (isBottom(a) || isBottom(b)) {
-					return mDomain.getTopBottomValueForType(expr.getType(),
-							false);
+					return mDomain.getTopBottomValueForType(expr.getType(), false);
 				}
 				return null;
 			} else {
@@ -414,8 +412,7 @@ public class ValueExpressionVisitor extends
 				}
 				// OR: not both may be bottom
 				if (isBottom(a) && isBottom(b)) {
-					return mDomain.getTopBottomValueForType(expr.getType(),
-							false);
+					return mDomain.getTopBottomValueForType(expr.getType(), false);
 				}
 				return null;
 			}
@@ -435,8 +432,7 @@ public class ValueExpressionVisitor extends
 				}
 				// AND: Both must be non-bottom
 				if (isBottom(a) || isBottom(b)) {
-					return mDomain.getTopBottomValueForType(expr.getType(),
-							false);
+					return mDomain.getTopBottomValueForType(expr.getType(), false);
 				}
 				return null;
 			} else {
@@ -452,8 +448,7 @@ public class ValueExpressionVisitor extends
 				}
 				// OR: not both may be bottom
 				if (isBottom(a) && isBottom(b)) {
-					return mDomain.getTopBottomValueForType(expr.getType(),
-							false);
+					return mDomain.getTopBottomValueForType(expr.getType(), false);
 				}
 				return null;
 			}
@@ -478,8 +473,7 @@ public class ValueExpressionVisitor extends
 	 * java.lang.Object)
 	 */
 	@Override
-	public IAbstractValue<?> visited(BinaryExpression expr,
-			IAbstractValue<?> left, IAbstractValue<?> right) {
+	public IAbstractValue<?> visited(BinaryExpression expr, IAbstractValue<?> left, IAbstractValue<?> right) {
 		switch (expr.getOperator()) {
 		case ARITHDIV:
 			return left.divide(right);
@@ -533,7 +527,7 @@ public class ValueExpressionVisitor extends
 
 		case COMPPO:
 		default:
-			throw new NotImplementedException();
+			throw new UnsupportedOperationException();
 		}
 	}
 
@@ -547,8 +541,7 @@ public class ValueExpressionVisitor extends
 	 * java.lang.Object, java.lang.Object)
 	 */
 	@Override
-	public IAbstractValue<?> visited(IfThenElseExpression expr,
-			IAbstractValue<?> ifValue, IAbstractValue<?> thenValue,
+	public IAbstractValue<?> visited(IfThenElseExpression expr, IAbstractValue<?> ifValue, IAbstractValue<?> thenValue,
 			IAbstractValue<?> elseValue) {
 		// TODO: the assume in the then and else is not applied here
 		IAbstractValue<?> condition = booleanFromAbstractValue(ifValue);
@@ -564,8 +557,7 @@ public class ValueExpressionVisitor extends
 		}
 
 		// merge both values
-		IValueMergeOperator<?> mergeOp = mDomain
-				.mergeOperatorForDomainOfValue(thenValue);
+		IValueMergeOperator<?> mergeOp = mDomain.mergeOperatorForDomainOfValue(thenValue);
 
 		return mergeOp.apply(thenValue, elseValue);
 	}
@@ -579,9 +571,8 @@ public class ValueExpressionVisitor extends
 	 * .ultimate.model.boogie.ast.FunctionApplication, java.util.List)
 	 */
 	@Override
-	public IAbstractValue<?> visited(FunctionApplication expr,
-			List<IAbstractValue<?>> args) {
-		throw new NotImplementedException();
+	public IAbstractValue<?> visited(FunctionApplication expr, List<IAbstractValue<?>> args) {
+		throw new UnsupportedOperationException();
 	}
 
 	/*
@@ -601,7 +592,8 @@ public class ValueExpressionVisitor extends
 		IAbstractValueFactory<?> boolFactory = mDomain.getBoolValueFactory();
 		if (value == null) {
 			throw new RuntimeException("depricated code");
-			// mLogger.warn("Encountered a boolean value of null, using UNKNOWN instead.");
+			// mLogger.warn("Encountered a boolean value of null, using UNKNOWN
+			// instead.");
 			// return boolFactory.makeTopValue();
 		}
 

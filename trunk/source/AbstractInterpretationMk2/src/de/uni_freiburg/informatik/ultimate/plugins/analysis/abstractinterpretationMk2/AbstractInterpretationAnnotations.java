@@ -5,7 +5,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.List;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
 
@@ -46,7 +45,7 @@ public class AbstractInterpretationAnnotations extends AbstractAnnotations {
 	 */
 	@Override
 	protected Object getFieldValue(String field) {
-		throw new NotImplementedException();
+		throw new UnsupportedOperationException();
 		/*
 		 * switch (field) { case "Abstract states": if (m_states == null) return
 		 * "No states"; // state -> (scope -> (value, array -> (value, has

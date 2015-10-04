@@ -4,24 +4,30 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.polytopedomain;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.TypedAbstractVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.*;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.valuedomain.IAbstractValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.valuedomain.ValueState;
-import parma_polyhedra_library.*;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractMergeOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractWideningOperator;
+import parma_polyhedra_library.Constraint;
+import parma_polyhedra_library.Linear_Expression;
+import parma_polyhedra_library.Linear_Expression_Variable;
+import parma_polyhedra_library.NNC_Polyhedron;
+import parma_polyhedra_library.Parma_Polyhedra_Library;
+import parma_polyhedra_library.Relation_Symbol;
+import parma_polyhedra_library.Variable;
 
 /**
  * Implements the polytope domain
  * 
- * @author Jan Hättig
+ * @author Jan Hï¿½ttig
  *
  */
 public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
@@ -54,7 +60,7 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 	 */
 	private final PolytopeExpressionVisitor mExpressionVisitor;
 
-	private static boolean mParmaLibraryInitialized = false;
+	private static boolean sParmaLibraryInitialized = false;
 
 	/**
 	 * Constructor
@@ -62,27 +68,36 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 	 * @param logger
 	 */
 	public PolytopeDomain(Logger logger) {
-		if (!mParmaLibraryInitialized) {
+		if (!sParmaLibraryInitialized) {
 			try {
-				System.loadLibrary("ppl_java");
-				System.out.println("Loaded PPL");
-			} catch (UnsatisfiedLinkError e) {
-				System.err.println("Unable to load the library");
-				System.err.println(e.getMessage());
-				e.printStackTrace();
+				// because of OSGi, we have to load all dependent libraries
+				// manually
+				// the order is important (!)
+				System.loadLibrary("libgmp-10");
+				System.loadLibrary("libwinpthread-1");
+				System.loadLibrary("libgcc_s_seh-1");
+				System.loadLibrary("libstdc++-6");
+				System.loadLibrary("libgmpxx-4");
+				System.loadLibrary("libppl-13");
 
+				// now we load the real deal
+				System.loadLibrary("ppl_java");
+				
+				logger.info("Loaded PPL");
+			} catch (UnsatisfiedLinkError e) {
+				final String errorMsg = "Unable to load PPL: " + e.getMessage();
+				logger.fatal(errorMsg);
+				logger.fatal(e);
+				throw new RuntimeException(errorMsg, e);
 			}
 
-			logger.info("Parma-Library: Initializing (Version"
-					+ Parma_Polyhedra_Library.version() + ")");
+			logger.info("Parma-Library: Initializing (Version" + Parma_Polyhedra_Library.version() + ")");
 			Parma_Polyhedra_Library.initialize_library();
-
-			mParmaLibraryInitialized = true;
+			sParmaLibraryInitialized = true;
 		}
 		mLogger = logger;
 		mExpressionVisitor = new PolytopeExpressionVisitor(logger);
-		mAssumptionVisitor = new PolytopeAssumptionVisitor(mExpressionVisitor,
-				logger);
+		mAssumptionVisitor = new PolytopeAssumptionVisitor(mExpressionVisitor, logger);
 	}
 
 	/*
@@ -120,8 +135,7 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 	 * .abstractdomain.IAbstractMergeOperator)
 	 */
 	@Override
-	public void setMergeOperator(
-			IAbstractMergeOperator<PolytopeState> mergeOperator) {
+	public void setMergeOperator(IAbstractMergeOperator<PolytopeState> mergeOperator) {
 		mMergeOperator = mergeOperator;
 	}
 
@@ -136,8 +150,7 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 	 * .abstractdomain.IAbstractWideningOperator)
 	 */
 	@Override
-	public void setWideningOperator(
-			IAbstractWideningOperator<PolytopeState> wideningOperator) {
+	public void setWideningOperator(IAbstractWideningOperator<PolytopeState> wideningOperator) {
 		mWideningOperator = wideningOperator;
 	}
 
@@ -166,9 +179,8 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 	 * de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression)
 	 */
 	@Override
-	public IAbstractState<PolytopeState> applyExpression(
-			IAbstractState<PolytopeState> state, TypedAbstractVariable target,
-			Expression exp) {
+	public IAbstractState<PolytopeState> applyExpression(IAbstractState<PolytopeState> state,
+			TypedAbstractVariable target, Expression exp) {
 		return applyExpression(state, target, exp, "");
 	}
 
@@ -178,9 +190,8 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 	 * @param prefix
 	 *            this prefix will be to each variable in the given expression
 	 */
-	public IAbstractState<PolytopeState> applyExpression(
-			IAbstractState<PolytopeState> state, TypedAbstractVariable target,
-			Expression exp, String prefix) {
+	public IAbstractState<PolytopeState> applyExpression(IAbstractState<PolytopeState> state,
+			TypedAbstractVariable target, Expression exp, String prefix) {
 		PolytopeState pState = (PolytopeState) state;
 
 		mExpressionVisitor.prepare(pState, prefix);
@@ -218,8 +229,7 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 			Variable var = pState.getVariable(target);
 
 			// Put it into to the polytope
-			pState.addConstraint(new Constraint(new Linear_Expression_Variable(
-					var), Relation_Symbol.EQUAL, right));
+			pState.addConstraint(new Constraint(new Linear_Expression_Variable(var), Relation_Symbol.EQUAL, right));
 		} else {
 			// the old value must be renamed such that
 			// all relations keep being correct and a new one must
@@ -248,8 +258,7 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 	 * abstractinterpretationMk2.abstractdomain.TypedAbstractVariable)
 	 */
 	@Override
-	public IAbstractState<PolytopeState> applyHavoc(
-			IAbstractState<PolytopeState> state, TypedAbstractVariable target) {
+	public IAbstractState<PolytopeState> applyHavoc(IAbstractState<PolytopeState> state, TypedAbstractVariable target) {
 		if (state.hasVariable(target)) {
 			((PolytopeState) state).havocVariable(target);
 		} else {
@@ -270,12 +279,10 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 	 * de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression)
 	 */
 	@Override
-	public List<IAbstractState<PolytopeState>> applyAssume(
-			IAbstractState<PolytopeState> state, Expression expr) {
+	public List<IAbstractState<PolytopeState>> applyAssume(IAbstractState<PolytopeState> state, Expression expr) {
 		List<PolytopeState> states = new ArrayList<PolytopeState>();
 		states.add(state.getConcrete());
-		List<PolytopeState> resultingState = mAssumptionVisitor
-				.applyAssumption(expr, states, false);
+		List<PolytopeState> resultingState = mAssumptionVisitor.applyAssumption(expr, states, false);
 
 		List<IAbstractState<PolytopeState>> result = new ArrayList<IAbstractState<PolytopeState>>();
 		for (PolytopeState s : resultingState) {
@@ -303,8 +310,7 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 	 * de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression)
 	 */
 	@Override
-	public boolean checkAssert(IAbstractState<PolytopeState> state,
-			Expression exp) {
+	public boolean checkAssert(IAbstractState<PolytopeState> state, Expression exp) {
 		mLogger.warn("PolytopeDomain: ApplyAssert not implemented");
 
 		return false;
@@ -323,11 +329,8 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 	 * java.util.List)
 	 */
 	@Override
-	public void applyExpressionScoped(
-			IAbstractState<PolytopeState> targetState,
-			IAbstractState<PolytopeState> oldState,
-			List<TypedAbstractVariable> targetVariables,
-			List<Expression> arguments) {
+	public void applyExpressionScoped(IAbstractState<PolytopeState> targetState, IAbstractState<PolytopeState> oldState,
+			List<TypedAbstractVariable> targetVariables, List<Expression> arguments) {
 		// concrete states
 		PolytopeState target = targetState.getConcrete();
 		PolytopeState old = oldState.getConcrete();
@@ -358,16 +361,13 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 
 		// TODO: add a prefix to the old variables
 		// add the variables as additional dimensions
-		long additionalDimensions = vtOld.nofVariables();
+		vtOld.nofVariables();
 		long existingDimensions = vtTarget.nofVariables();
-		for (Entry<TypedAbstractVariable, Variable> entry : vtOld
-				.getVariables().entrySet()) {
+		for (Entry<TypedAbstractVariable, Variable> entry : vtOld.getVariables().entrySet()) {
 			TypedAbstractVariable normal = entry.getKey();
-			TypedAbstractVariable prefixed = new TypedAbstractVariable(
-					prefixOld + normal.getString(), normal.getDeclaration(),
-					normal.getType());
-			vtRenamed.getVariables().put(prefixed,
-					new Variable(existingDimensions + entry.getValue().id()));
+			TypedAbstractVariable prefixed = new TypedAbstractVariable(prefixOld + normal.getString(),
+					normal.getDeclaration(), normal.getType());
+			vtRenamed.getVariables().put(prefixed, new Variable(existingDimensions + entry.getValue().id()));
 		}
 
 		// pTarget.add_space_dimensions_and_embed(additionalDimensions);
@@ -382,12 +382,10 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 			TypedAbstractVariable targetVariable = targetVariables.get(i);
 
 			// get the renamed rename target variable
-			TypedAbstractVariable renamedVariable = new TypedAbstractVariable(
-					prefixTarget + targetVariable.getString(),
+			TypedAbstractVariable renamedVariable = new TypedAbstractVariable(prefixTarget + targetVariable.getString(),
 					targetVariable.getDeclaration(), targetVariable.getType());
 
-			applyExpression(targetState, renamedVariable, arguments.get(i),
-					prefixOld);
+			applyExpression(targetState, renamedVariable, arguments.get(i), prefixOld);
 		}
 
 		// restore the old variable translation

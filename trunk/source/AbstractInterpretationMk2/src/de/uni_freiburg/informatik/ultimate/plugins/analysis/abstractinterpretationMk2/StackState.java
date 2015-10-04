@@ -6,10 +6,16 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.*;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.*;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractMergeOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractWideningOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 
 /**
  * 
@@ -612,7 +618,7 @@ public class StackState<T> {
 		if (allLayers) {
 			StackState<T> result = s; // new StackState<T>(mDomain, mLogger);
 			if (getStackSize() != s.getStackSize()) {
-				throw new NotImplementedException();
+				throw new UnsupportedOperationException();
 			}
 			for (int i = 0; i < getStackSize(); i++) {
 				// result.Scope(i).setState(

@@ -2,11 +2,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import org.apache.log4j.Logger;
 
-import parma_polyhedra_library.NNC_Polyhedron;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractMergeOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractWideningOperator;
+import parma_polyhedra_library.NNC_Polyhedron;
 
 public class PolytopeWideningOperator implements
 		IAbstractMergeOperator<PolytopeState>,
