@@ -263,8 +263,13 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 			LevelRankingConstraint<LETTER, STATE> lrcwh) {
 		Set<DoubleDecker<StateWithRankInfo<STATE>>> doubleDeckersWithVoluntaryDecrease = new HashSet<DoubleDecker<StateWithRankInfo<STATE>>>();
 		for (DoubleDecker<StateWithRankInfo<STATE>> predWasAccepting : lrcwh.getPredecessorWasAccepting()) {
-			int rank = lrcwh.getRank(predWasAccepting.getDown(), predWasAccepting.getUp().getState());
-			if (LevelRankingState.isEven(rank) && !m_Operand.isFinal(predWasAccepting.getUp().getState())) {
+			// we only want to decrease if state was in O 
+			// (because the decrease is only done to let the state leave O)
+			boolean inO = lrcwh.inO(predWasAccepting.getDown(), predWasAccepting.getUp().getState());
+			// if not only the predecessor but also the state is final,
+			// it is useless to decrease the rank
+			boolean isFinal = m_Operand.isFinal(predWasAccepting.getUp().getState()); 
+			if ( inO && !isFinal) {
 				doubleDeckersWithVoluntaryDecrease.add(predWasAccepting);
 			}
 		}
