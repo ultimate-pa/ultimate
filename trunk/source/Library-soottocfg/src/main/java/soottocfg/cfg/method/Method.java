@@ -3,6 +3,7 @@
  */
 package soottocfg.cfg.method;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -27,7 +28,7 @@ public class Method implements Node {
 	private Collection<Variable> modifiedGlobals;
 	private CfgBlock source;
 	private boolean isEntry = false;
-	
+
 	public Method(String uniqueName) {
 		methodName = uniqueName;
 	}
@@ -36,9 +37,8 @@ public class Method implements Node {
 		return this.methodName;
 	}
 
-	public void initialize(Variable thisVariable, Variable returnVariable,
-			Variable exceptionalReturnVariable, List<Variable> parameterList,
-			Collection<Variable> locals, CfgBlock source, boolean isEntryPoint) {
+	public void initialize(Variable thisVariable, Variable returnVariable, Variable exceptionalReturnVariable,
+			List<Variable> parameterList, Collection<Variable> locals, CfgBlock source, boolean isEntryPoint) {
 		this.thisVariable = thisVariable;
 		this.returnVariable = returnVariable;
 		this.exceptionalReturnVariable = exceptionalReturnVariable;
@@ -46,8 +46,8 @@ public class Method implements Node {
 		this.locals = locals;
 		this.source = source;
 		this.isEntry = isEntryPoint;
-		
-		//compute the modifies clause.
+
+		// compute the modifies clause.
 		this.modifiedGlobals = new HashSet<Variable>();
 		this.modifiedGlobals.addAll(this.getLVariables());
 		this.modifiedGlobals.removeAll(locals);
@@ -56,24 +56,52 @@ public class Method implements Node {
 		this.modifiedGlobals.remove(returnVariable);
 		this.modifiedGlobals.remove(thisVariable);
 	}
-	
+
 	public boolean isEntryPoint() {
 		return this.isEntry;
 	}
-	
+
 	public CfgBlock getSource() {
 		return this.source;
 	}
+
+	public Collection<Variable> getInParams() {
+		final List<Variable> rtr = new ArrayList<Variable>();
+		if (thisVariable != null) {
+			rtr.add(thisVariable);
+		}
+		rtr.addAll(parameterList);
+		return rtr;
+	}
+
+	public Collection<Variable> getOutParams() {
+		final List<Variable> rtr = new ArrayList<Variable>();
+		if (returnVariable != null) {
+			rtr.add(thisVariable);
+		}
+		if (exceptionalReturnVariable != null) {
+			rtr.add(exceptionalReturnVariable);
+		}
+		return rtr;
+	}
+
+	public Collection<Variable> getModifiedGlobals() {
+		return modifiedGlobals;
+	}
 	
+	public Collection<Variable> getLocals() {
+		return locals;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		
+
 		sb.append("Method ");
 		sb.append(this.methodName);
 		String comma = "";
 		sb.append("(");
-		if (this.thisVariable!=null) {
+		if (this.thisVariable != null) {
 			sb.append(this.thisVariable.getName());
 			comma = ", ";
 		}
@@ -83,12 +111,12 @@ public class Method implements Node {
 			comma = ", ";
 		}
 		sb.append(")\n");
-		if (this.returnVariable!=null) {
+		if (this.returnVariable != null) {
 			sb.append("\treturns: ");
 			sb.append(this.returnVariable.getName());
 			sb.append("\n");
 		}
-		if (this.modifiedGlobals!=null && this.modifiedGlobals.size()>0) {
+		if (this.modifiedGlobals != null && this.modifiedGlobals.size() > 0) {
 			sb.append("\tmodifies: ");
 			for (Variable v : this.modifiedGlobals) {
 				sb.append(comma);
@@ -109,14 +137,14 @@ public class Method implements Node {
 				sb.append("\n");
 			}
 		}
-		
+
 		List<CfgBlock> todo = new LinkedList<CfgBlock>();
 		todo.add(this.source);
-		Set<CfgBlock> done = new HashSet<CfgBlock>();		
+		Set<CfgBlock> done = new HashSet<CfgBlock>();
 		while (!todo.isEmpty()) {
 			CfgBlock current = todo.remove(0);
 			done.add(current);
-			if (this.source==current) {
+			if (this.source == current) {
 				sb.append("Root ->");
 			}
 			sb.append(current);
@@ -128,13 +156,13 @@ public class Method implements Node {
 		}
 		return sb.toString();
 	}
-	
+
 	@Override
 	public Set<Variable> getUsedVariables() {
 		Set<Variable> used = new HashSet<Variable>();
 		List<CfgBlock> todo = new LinkedList<CfgBlock>();
 		todo.add(this.source);
-		Set<CfgBlock> done = new HashSet<CfgBlock>();		
+		Set<CfgBlock> done = new HashSet<CfgBlock>();
 		while (!todo.isEmpty()) {
 			CfgBlock current = todo.remove(0);
 			done.add(current);
@@ -146,14 +174,14 @@ public class Method implements Node {
 			}
 		}
 		return used;
-	}	
-	
+	}
+
 	@Override
 	public Set<Variable> getLVariables() {
 		Set<Variable> used = new HashSet<Variable>();
 		List<CfgBlock> todo = new LinkedList<CfgBlock>();
 		todo.add(this.source);
-		Set<CfgBlock> done = new HashSet<CfgBlock>();		
+		Set<CfgBlock> done = new HashSet<CfgBlock>();
 		while (!todo.isEmpty()) {
 			CfgBlock current = todo.remove(0);
 			done.add(current);
@@ -166,18 +194,19 @@ public class Method implements Node {
 		}
 		return used;
 	}
-	
+
 	/**
-	 * Return the set of live variable per block.
-	 * A variable is live between its first and last use.
-	 * TODO: this is not implemented! For each block, it returns all variables.
+	 * Return the set of live variable per block. A variable is live between its
+	 * first and last use. TODO: this is not implemented! For each block, it
+	 * returns all variables.
+	 * 
 	 * @return
 	 */
 	public Map<CfgBlock, Set<Variable>> computeLiveVariables() {
 		Map<CfgBlock, Set<Variable>> res = new LinkedHashMap<CfgBlock, Set<Variable>>();
 		List<CfgBlock> todo = new LinkedList<CfgBlock>();
 		todo.add(this.source);
-		Set<CfgBlock> done = new HashSet<CfgBlock>();		
+		Set<CfgBlock> done = new HashSet<CfgBlock>();
 		while (!todo.isEmpty()) {
 			CfgBlock current = todo.remove(0);
 			done.add(current);

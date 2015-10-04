@@ -229,7 +229,7 @@ public class Joogie2BoogieTranslator {
 
 			final ILocation loc = getLocation(current.getLocationTag(), current.isLoopHead());
 			rtr.add(new Label(loc, current.getName()));
-			current.getStatements().forEach(stmt -> rtr.add(StatementTranslator.translate(mLogger, loc, stmt)));
+			current.getStatements().forEach(stmt -> rtr.add(JoogieStatementTranslator.translate(mLogger, loc, stmt)));
 			final Collection<BasicBlock> succs = current.getSuccessors();
 			if (succs.isEmpty()) {
 				rtr.add(new ReturnStatement(loc));
@@ -274,13 +274,13 @@ public class Joogie2BoogieTranslator {
 		if (proc.getEnsures() != null) {
 			for (final org.joogie.boogie.expressions.Expression ensure : proc.getEnsures()) {
 				specs.add(new EnsuresSpecification(getLocation(), false,
-						ExpressionTranslator.translate(mLogger, getLocation(), ensure)));
+						JoogieExpressionTranslator.translate(mLogger, getLocation(), ensure)));
 			}
 		}
 		if (proc.getRequires() != null) {
 			for (final org.joogie.boogie.expressions.Expression requires : proc.getRequires()) {
 				specs.add(new RequiresSpecification(getLocation(), false,
-						ExpressionTranslator.translate(mLogger, getLocation(), requires)));
+						JoogieExpressionTranslator.translate(mLogger, getLocation(), requires)));
 			}
 		}
 		if (proc.getModifiesGlobals() != null) {
@@ -313,13 +313,13 @@ public class Joogie2BoogieTranslator {
 			ASTType type = null;
 			if (proc.getReturnVariable() != null) {
 				identifiers.add(proc.getReturnVariable().getName());
-				type = TypeTranslator.translate(proc.getReturnVariable(), getLocation());
+				type = JoogieTypeTranslator.translate(proc.getReturnVariable(), getLocation());
 			}
 
 			for (final Entry<BoogieType, org.joogie.boogie.expressions.Expression> entry : proc
 					.getExceptionalReturnVariables().entrySet()) {
 				identifiers.add(((Variable) entry.getValue()).getName());
-				type = TypeTranslator.translate(entry.getKey(), getLocation());
+				type = JoogieTypeTranslator.translate(entry.getKey(), getLocation());
 			}
 			assert type != null;
 			outParam = new VarList(getLocation(), identifiers.toArray(new String[identifiers.size()]), type);
@@ -343,7 +343,7 @@ public class Joogie2BoogieTranslator {
 		assert statements.size() == 1 : "Functions should have only one ExpressionStatement as body";
 		org.joogie.boogie.statements.Statement body = statements.get(0);
 		assert body instanceof ExpressionStatement;
-		return ExpressionTranslator.translate(mLogger, getLocation(), ((ExpressionStatement) body).getExpression());
+		return JoogieExpressionTranslator.translate(mLogger, getLocation(), ((ExpressionStatement) body).getExpression());
 	}
 
 	private Collection<VarList> createProcedureInParams(final BoogieProcedure proc) {
@@ -376,7 +376,7 @@ public class Joogie2BoogieTranslator {
 	}
 
 	private Expression makeExpression(final org.joogie.boogie.expressions.Expression expression) {
-		return ExpressionTranslator.translate(mLogger, getLocation(), expression);
+		return JoogieExpressionTranslator.translate(mLogger, getLocation(), expression);
 	}
 
 	private VariableDeclaration declareVariable(final Variable var, final ILocation loc) {
@@ -389,7 +389,7 @@ public class Joogie2BoogieTranslator {
 	}
 
 	private VarList makeVarList(final Variable var, final ILocation loc) {
-		return new VarList(loc, new String[] { var.getName() }, TypeTranslator.translate(var, getLocation()));
+		return new VarList(loc, new String[] { var.getName() }, JoogieTypeTranslator.translate(var, getLocation()));
 	}
 
 }

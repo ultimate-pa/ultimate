@@ -98,8 +98,8 @@ public final class Java2Boogie implements ISource {
 
 	@Override
 	public IElement parseAST(final File file) throws IOException {
-//		return runSoot2Cfg(file);
-		return runJoogie(file);
+		return runSoot2Cfg(file);
+//		return runJoogie(file);
 	}
 
 	private IElement runJoogie(final File file) throws IOException {
@@ -116,7 +116,7 @@ public final class Java2Boogie implements ISource {
 
 	private IElement runSoot2Cfg(final File file) throws IOException {
 		final SootToCfg runner = new SootToCfg();
-		runner.run(file.getAbsolutePath(), file.getParent(), CallgraphAlgorithm.None);
+		runner.run(file.getParent(), file.getParent(), CallgraphAlgorithm.None);
 		final Program prog = runner.getProgram();
 		return new SootToCfg2BoogieTranslator(prog, mServices, file.getAbsolutePath()).getUnit();
 	}

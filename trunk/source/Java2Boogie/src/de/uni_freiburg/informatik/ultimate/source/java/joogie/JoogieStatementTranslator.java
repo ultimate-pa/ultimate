@@ -28,13 +28,13 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class StatementTranslator extends JoogieStatementTransformer<Statement> {
+public class JoogieStatementTranslator extends JoogieStatementTransformer<Statement> {
 
 	private final Logger mLogger;
 	private final ILocation mLocation;
 	private final Statement mStatement;
 
-	private StatementTranslator(final Logger logger, final ILocation location, final org.joogie.boogie.statements.Statement stmt) {
+	private JoogieStatementTranslator(final Logger logger, final ILocation location, final org.joogie.boogie.statements.Statement stmt) {
 		mLogger = logger;
 		mLocation = location;
 		mStatement = visit(stmt);
@@ -46,18 +46,18 @@ public class StatementTranslator extends JoogieStatementTransformer<Statement> {
 
 	public static Statement translate(final Logger logger, final ILocation location,
 			final org.joogie.boogie.statements.Statement stmt) {
-		return new StatementTranslator(logger, location, stmt).getTranslation();
+		return new JoogieStatementTranslator(logger, location, stmt).getTranslation();
 	}
 
 	@Override
 	protected Statement visit(final org.joogie.boogie.statements.AssertStatement stmt) {
-		return new AssertStatement(mLocation, ExpressionTranslator.translate(mLogger, mLocation, stmt.getExpression()));
+		return new AssertStatement(mLocation, JoogieExpressionTranslator.translate(mLogger, mLocation, stmt.getExpression()));
 	}
 
 	@Override
 	protected Statement visit(final AssignStatement stmt) {
-		final Expression left = ExpressionTranslator.translate(mLogger, mLocation, stmt.getLeft());
-		final Expression right = ExpressionTranslator.translate(mLogger, mLocation, stmt.getRight());
+		final Expression left = JoogieExpressionTranslator.translate(mLogger, mLocation, stmt.getLeft());
+		final Expression right = JoogieExpressionTranslator.translate(mLogger, mLocation, stmt.getRight());
 		return new AssignmentStatement(mLocation, new LeftHandSide[] { makeLeftHandSide(left) },
 				new Expression[] { right });
 	}
@@ -78,7 +78,7 @@ public class StatementTranslator extends JoogieStatementTransformer<Statement> {
 
 	@Override
 	protected Statement visit(final org.joogie.boogie.statements.AssumeStatement stmt) {
-		return new AssumeStatement(mLocation, ExpressionTranslator.translate(mLogger, mLocation, stmt.getExpression()));
+		return new AssumeStatement(mLocation, JoogieExpressionTranslator.translate(mLogger, mLocation, stmt.getExpression()));
 	}
 
 	@Override
@@ -91,10 +91,10 @@ public class StatementTranslator extends JoogieStatementTransformer<Statement> {
 	protected Statement visit(final InvokeStatement stmt) {
 		final List<VariableLHS> lhs = stmt.getReturnTargets().stream()
 				.map(a -> new VariableLHS(mLocation,
-						((IdentifierExpression) ExpressionTranslator.translate(mLogger, mLocation, a)).getIdentifier()))
+						((IdentifierExpression) JoogieExpressionTranslator.translate(mLogger, mLocation, a)).getIdentifier()))
 				.collect(Collectors.toList());
 		final List<Expression> arguments = stmt.getArguments().stream()
-				.map(a -> ExpressionTranslator.translate(mLogger, mLocation, a)).collect(Collectors.toList());
+				.map(a -> JoogieExpressionTranslator.translate(mLogger, mLocation, a)).collect(Collectors.toList());
 		return new CallStatement(mLocation, false, lhs.toArray(new VariableLHS[lhs.size()]),
 				stmt.getInvokedProcedure().getName(), arguments.toArray(new Expression[arguments.size()]));
 	}

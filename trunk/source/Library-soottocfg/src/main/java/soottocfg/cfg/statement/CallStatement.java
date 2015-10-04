@@ -19,8 +19,9 @@ import soottocfg.cfg.method.Method;
 public class CallStatement extends Statement {
 
 	private final Method method;
-	private final List<Expression> arguments; 
+	private final List<Expression> arguments;
 	private final List<Expression> receiver;
+
 	/**
 	 * @param createdFrom
 	 */
@@ -29,6 +30,10 @@ public class CallStatement extends Statement {
 		this.method = method;
 		this.arguments = arguments;
 		this.receiver = receiver;
+	}
+
+	public Method getCallTarget() {
+		return method;
 	}
 
 	@Override
@@ -48,7 +53,7 @@ public class CallStatement extends Statement {
 			sb.append(comma);
 			sb.append(e);
 			comma = ", ";
-		}		
+		}
 		sb.append(")");
 		return sb.toString();
 	}
@@ -61,7 +66,7 @@ public class CallStatement extends Statement {
 		}
 		for (Expression e : receiver) {
 			used.addAll(e.getUsedVariables());
-		}		
+		}
 		return used;
 	}
 
@@ -70,7 +75,7 @@ public class CallStatement extends Statement {
 		Set<Variable> used = new HashSet<Variable>();
 		for (Expression e : receiver) {
 			used.addAll(e.getLVariables());
-		}				
+		}
 		return used;
 	}
 }

@@ -19,7 +19,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class TypeTranslator {
+public final class JoogieTypeTranslator {
 
 	public static ASTType translate(final org.joogie.boogie.types.BoogieType joogieType, final ILocation loc) {
 		if (joogieType instanceof BoogieArrayType) {

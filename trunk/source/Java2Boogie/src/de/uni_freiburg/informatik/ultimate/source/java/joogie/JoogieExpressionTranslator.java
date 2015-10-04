@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class ExpressionTranslator extends JoogieExpressionTransformer<Expression> {
+public class JoogieExpressionTranslator extends JoogieExpressionTransformer<Expression> {
 
 	// TODO: Why is a Variable an expression in Joogie?
 
@@ -44,7 +44,7 @@ public class ExpressionTranslator extends JoogieExpressionTransformer<Expression
 	private final Expression mExpression;
 	private final ILocation mLocation;
 
-	private ExpressionTranslator(final Logger logger, final ILocation location,
+	private JoogieExpressionTranslator(final Logger logger, final ILocation location,
 			org.joogie.boogie.expressions.Expression expression) {
 		mLogger = logger;
 		mLocation = location;
@@ -57,7 +57,7 @@ public class ExpressionTranslator extends JoogieExpressionTransformer<Expression
 
 	public static Expression translate(final Logger logger, final ILocation location,
 			org.joogie.boogie.expressions.Expression expression) {
-		return new ExpressionTranslator(logger, location, expression).getTranslation();
+		return new JoogieExpressionTranslator(logger, location, expression).getTranslation();
 	}
 
 	@Override
@@ -158,7 +158,7 @@ public class ExpressionTranslator extends JoogieExpressionTransformer<Expression
 	@Override
 	protected Expression visit(final QuantifiedExpression expr) {
 		final List<VarList> parameters = expr.getBoundVariables().stream().map(bv -> new VarList(mLocation,
-				new String[] { bv.getName() }, TypeTranslator.translate(bv, mLocation)))
+				new String[] { bv.getName() }, JoogieTypeTranslator.translate(bv, mLocation)))
 				.collect(Collectors.toList());
 		return new QuantifierExpression(mLocation, expr.getQuantifier() == Quantifier.ForAll, new String[0],
 				parameters.toArray(new VarList[parameters.size()]), new Attribute[0], visit(expr.getExpression()));
