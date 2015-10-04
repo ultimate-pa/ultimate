@@ -8,13 +8,12 @@ import soot.Scene;
 import soot.SootClass;
 import soot.SootMethod;
 import soot.jimple.toolkits.annotation.nullcheck.NullnessAnalysis;
-import soot.jimple.toolkits.pointer.LocalMayAliasAnalysis;
 import soot.toolkits.graph.CompleteUnitGraph;
 import soot.toolkits.graph.UnitGraph;
 import soottocfg.cfg.Program;
 import soottocfg.soot.SootRunner.CallgraphAlgorithm;
-import soottocfg.soot.transformers.ExceptionTransformer;
 import soottocfg.soot.transformers.AssertionReconstruction;
+import soottocfg.soot.transformers.ExceptionTransformer;
 import soottocfg.soot.transformers.SwitchStatementRemover;
 import soottocfg.soot.util.MethodInfo;
 import soottocfg.soot.util.SootTranslationHelpers;
@@ -90,8 +89,8 @@ public class SootToCfg {
 
 	private void processSootMethod(SootMethod sm) {
 		if (sm.isConcrete()) {			
-//			//TODO
-//			if (!sm.getSignature().equals("<soottocfg.transformers.ExceptionMagic: java.util.List refMayThrowException(soot.Unit,soot.jimple.Ref)>")) {
+			//TODO
+//			if (!sm.getSignature().equals("<org.apache.tools.ant.taskdefs.optional.unix.Symlink: void delete()>")) {
 //				return;
 //			}
 //			System.err.println(sm.getSignature());
@@ -104,28 +103,36 @@ public class SootToCfg {
 	}
 
 	private void processMethodBody(Body body) {
-
-		MethodInfo mi = new MethodInfo(body.getMethod(), SootTranslationHelpers.v().getCurrentSourceFileName());
-		System.err.println(body.toString());
 		
-		UnitGraph unitGraph = new CompleteUnitGraph(body);
-		NullnessAnalysis localNullness = new NullnessAnalysis(unitGraph);
-		LocalMayAliasAnalysis localMayAlias = new LocalMayAliasAnalysis(unitGraph);
-
-		ExceptionTransformer em = new ExceptionTransformer(localNullness);
-		em.transform(body);
-		SwitchStatementRemover so = new SwitchStatementRemover();
-		so.transform(body);
-
-		AssertionReconstruction.v().removeAssertionRelatedNonsense(body);
-		AssertionReconstruction.v().reconstructJavaAssertions(body);
-
-		System.err.println(body.toString());
-
-		SootStmtSwitch ss = new SootStmtSwitch(body, mi, localMayAlias, localNullness);
+//		System.err.println(body.toString());		
+		preProcessBody(body);
+//		System.err.println(body.toString());
+		
+		//generate the CFG structures on the processed body.
+		MethodInfo mi = new MethodInfo(body.getMethod(), SootTranslationHelpers.v().getCurrentSourceFileName());
+		SootStmtSwitch ss = new SootStmtSwitch(body, mi);
 		mi.setSource(ss.getEntryBlock());
 
 		mi.finalizeAndAddToProgram();
 //		System.err.println(mi.getMethod());
+	}
+	
+	private void preProcessBody(Body body) {
+		//pre-process the body
+		UnitGraph unitGraph = new CompleteUnitGraph(body);
+		NullnessAnalysis localNullness = new NullnessAnalysis(unitGraph);
+//		LocalMayAliasAnalysis localMayAlias = new LocalMayAliasAnalysis(unitGraph);
+		
+		//first reconstruct the assertions.
+		AssertionReconstruction.v().removeAssertionRelatedNonsense(body);
+		AssertionReconstruction.v().reconstructJavaAssertions(body);
+
+		//make the exception handling explicit
+		ExceptionTransformer em = new ExceptionTransformer(localNullness);
+		em.transform(body);
+		//replace all switches by sets of IfStmt
+		SwitchStatementRemover so = new SwitchStatementRemover();
+		so.transform(body);
+		
 	}
 }

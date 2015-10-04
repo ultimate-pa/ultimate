@@ -30,7 +30,7 @@ public enum SootTranslationHelpers {
 	public static SootTranslationHelpers v() {
 		return INSTANCE;
 	}
-
+	
 	private final Map<soot.Type, Variable> typeVariables = new HashMap<soot.Type, Variable>();
 
 	private SootMethod currentMethod;

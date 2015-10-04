@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Set;
 
 import soot.Local;
-import soot.Scene;
 import soot.SootMethod;
 import soot.Unit;
 import soot.VoidType;
@@ -24,6 +23,7 @@ import soottocfg.cfg.method.CfgBlock;
 import soottocfg.cfg.method.Method;
 import soottocfg.cfg.type.Type;
 import soottocfg.soot.memory_model.MemoryModel;
+import soottocfg.soot.transformers.ExceptionTransformer;
 
 /**
  * @author schaef
@@ -35,7 +35,6 @@ public class MethodInfo {
 
 	private static final String parameterPrefix = "$in_";
 	private static final String returnVariableName = "$ret_";
-	private static final String exceptionVariableName = "$exc_";
 	private static final String thisVariableName = "$this_";
 
 	private final MemoryModel memoryModel;
@@ -66,9 +65,13 @@ public class MethodInfo {
 		}
 
 		// create a return variable for exceptional returns.
-		this.exceptionalReturnVariable = new Variable(exceptionVariableName,
-				memoryModel.lookupType(Scene.v()
-						.getSootClass("java.lang.Throwable").getType()));
+		for (Local l : sm.getActiveBody().getLocals()) {
+			if (l.getName().equals(ExceptionTransformer.getExceptionLocalName())) {
+				this.exceptionalReturnVariable = lookupLocalVariable(l);
+				break;
+			}
+		}
+		assert (exceptionalReturnVariable!=null);
 
 		// If the method is not static, create a this-variable which is
 		// passed as the first parameter to the method.
@@ -126,11 +129,15 @@ public class MethodInfo {
 		return new IdentifierExpression(parameterList.get(arg0.getIndex()));
 	}
 
-	public Expression lookupLocal(Local arg0) {
+	public Variable lookupLocalVariable(Local arg0) {
 		if (!localsMap.containsKey(arg0)) {
 			localsMap.put(arg0, createLocalVariable(arg0));
 		}
-		return new IdentifierExpression(localsMap.get(arg0));
+		return localsMap.get(arg0);		
+	}
+	
+	public Expression lookupLocal(Local arg0) {
+		return new IdentifierExpression(lookupLocalVariable(arg0));
 	}
 
 	private Variable createLocalVariable(Local arg0) {
@@ -153,10 +160,7 @@ public class MethodInfo {
 	}
 
 	public CfgBlock findBlock(Unit u) {
-		if (!unitToBlockMap.containsKey(u)) {
-			return unitToBlockMap.get(u);
-		}
-		return null;
+		return unitToBlockMap.get(u);
 	}
 
 	public CfgBlock getSource() {
@@ -170,5 +174,5 @@ public class MethodInfo {
 	public CfgBlock getSink() {
 		return sink;
 	}
-
+	
 }

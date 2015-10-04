@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import soot.Body;
-import soot.BodyTransformer;
 import soot.PatchingChain;
 import soot.Unit;
 import soot.jimple.Expr;
@@ -24,7 +23,7 @@ import soot.jimple.TableSwitchStmt;
  * @author schaef
  *
  */
-public class SwitchStatementRemover extends BodyTransformer {
+public class SwitchStatementRemover extends AbstractTransformer {
 
 	/**
 	 * 
@@ -84,12 +83,15 @@ public class SwitchStatementRemover extends BodyTransformer {
 		}
 		
 		for (int i=0; i<cases.size(); i++) {
-			result.add(Jimple.v().newIfStmt(cases.get(i), targets.get(i)));
+			//create the ifstmt
+			Unit ifstmt = ifStmtFor(cases.get(i), targets.get(i), s);
+			result.add(ifstmt);
 		}
 		if (defaultTarget!=null) {
-			result.add(Jimple.v().newGotoStmt(defaultTarget));
+			Unit gotoStmt = gotoStmtFor(defaultTarget, s);
+			result.add(gotoStmt);
 		}
 		return result;
 	}
-
+	
 }

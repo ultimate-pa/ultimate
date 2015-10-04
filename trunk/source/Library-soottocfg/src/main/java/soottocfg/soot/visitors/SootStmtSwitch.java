@@ -22,10 +22,8 @@ package soottocfg.soot.visitors;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 import soot.Body;
-import soot.Immediate;
 import soot.PatchingChain;
 import soot.SootMethod;
 import soot.Unit;
@@ -55,19 +53,12 @@ import soot.jimple.Stmt;
 import soot.jimple.StmtSwitch;
 import soot.jimple.TableSwitchStmt;
 import soot.jimple.ThrowStmt;
-import soot.jimple.toolkits.annotation.nullcheck.NullnessAnalysis;
-import soot.jimple.toolkits.pointer.LocalMayAliasAnalysis;
-import soot.toolkits.graph.CompleteUnitGraph;
-import soot.toolkits.graph.UnitGraph;
 import soottocfg.cfg.Program;
 import soottocfg.cfg.Variable;
-import soottocfg.cfg.expression.BinaryExpression;
 import soottocfg.cfg.expression.BooleanLiteral;
 import soottocfg.cfg.expression.Expression;
 import soottocfg.cfg.expression.InstanceOfExpression;
-import soottocfg.cfg.expression.IntegerLiteral;
 import soottocfg.cfg.expression.UnaryExpression;
-import soottocfg.cfg.expression.BinaryExpression.BinaryOperator;
 import soottocfg.cfg.expression.UnaryExpression.UnaryOperator;
 import soottocfg.cfg.method.CfgBlock;
 import soottocfg.cfg.method.Method;
@@ -100,17 +91,10 @@ public class SootStmtSwitch implements StmtSwitch {
 	private Stmt currentStmt;
 	private final Program program;
 
-	private final LocalMayAliasAnalysis localMayAlias;
-	private final NullnessAnalysis localNullness;
-
-	public SootStmtSwitch(Body body, MethodInfo mi, LocalMayAliasAnalysis maa, NullnessAnalysis nna) {
+	public SootStmtSwitch(Body body, MethodInfo mi) {
 		this.methodInfo = mi;
 		this.sootBody = body;
 		this.sootMethod = sootBody.getMethod();
-
-		UnitGraph unitGraph = new CompleteUnitGraph(sootBody);
-		localNullness = nna;
-		localMayAlias = new LocalMayAliasAnalysis(unitGraph);
 
 		this.program = SootTranslationHelpers.v().getProgram();
 
@@ -138,25 +122,6 @@ public class SootStmtSwitch implements StmtSwitch {
 			this.exitBlock = null;
 		}
 		// TODO: connect stuff to exit.
-	}
-
-	/**
-	 * Get the set of possible aliases for the value v in the current body. This
-	 * uses Soots LocalMayAliasAnalysis.
-	 * 
-	 * @param v
-	 * @return
-	 */
-	public Set<Value> getMayAliasInCurrentUnit(Value v) {
-		return this.localMayAlias.mayAliases(v, this.currentStmt);
-	}
-
-	public boolean mustBeNull(Unit u, Immediate i) {
-		return this.localNullness.isAlwaysNullBefore(u, i);
-	}
-
-	public boolean mustBeNonNull(Unit u, Immediate i) {
-		return this.localNullness.isAlwaysNonNullBefore(u, i);
 	}
 
 	public CfgBlock getEntryBlock() {
@@ -195,28 +160,31 @@ public class SootStmtSwitch implements StmtSwitch {
 
 	private void precheck(Stmt st) {
 		this.currentStmt = st;
-		// first check if we already created a block
-		// for this statement.
-		if (methodInfo.findBlock(st) != null) {
-			// TODO: connect to predecessor.
-			currentBlock = methodInfo.findBlock(st);
-		}
-		// If not, and we currently don't have a block,
-		// create a new one.
-		if (currentBlock == null) {
+
+		if (currentBlock != null) {
+			// first check if we already created a block
+			// for this statement.
+			CfgBlock block = methodInfo.findBlock(st);
+			if (block != null && block != currentBlock) {
+				currentBlock.addSuccessor(block);
+				currentBlock = block;
+			}
+		} else {
+			// If not, and we currently don't have a block,
+			// create a new one.
 			currentBlock = methodInfo.lookupCfgBlock(st);
 		}
 	}
 
+	/*
+	 * Below follow the visitor methods from StmtSwitch
+	 * 
+	 */
+
 	@Override
 	public void caseAssignStmt(AssignStmt arg0) {
 		precheck(arg0);
-		if (arg0.containsInvokeExpr()) {
-			assert(arg0.getRightOp() instanceof InvokeExpr);
-			translateMethodInvokation(arg0, arg0.getLeftOp(), arg0.getInvokeExpr());
-		} else {
-			translateDefinitionStmt(arg0);
-		}
+		translateDefinitionStmt(arg0);
 	}
 
 	@Override
@@ -245,7 +213,7 @@ public class SootStmtSwitch implements StmtSwitch {
 	@Override
 	public void caseGotoStmt(GotoStmt arg0) {
 		precheck(arg0);
-		CfgBlock target = this.methodInfo.lookupCfgBlock(arg0.getTarget());
+		CfgBlock target = this.methodInfo.lookupCfgBlock(arg0.getTarget());		
 		this.currentBlock.addSuccessor(target);
 		this.currentBlock = null;
 	}
@@ -253,12 +221,7 @@ public class SootStmtSwitch implements StmtSwitch {
 	@Override
 	public void caseIdentityStmt(IdentityStmt arg0) {
 		precheck(arg0);
-		if (arg0.containsInvokeExpr()) {
-			assert(arg0.getRightOp() instanceof InvokeExpr);
-			translateMethodInvokation(arg0, arg0.getLeftOp(), arg0.getInvokeExpr());
-		} else {
-			translateDefinitionStmt(arg0);
-		}
+		translateDefinitionStmt(arg0);
 	}
 
 	@Override
@@ -270,23 +233,22 @@ public class SootStmtSwitch implements StmtSwitch {
 		 * In jimple, conditionals are of the form if (x) goto y; So we end the
 		 * current block and create two new blocks for then and else branch. The
 		 * new currenBlock becomes the else branch.
-		 */		
-		
-		Unit next = units.getSuccOf(arg0);		
-		/* 
-		 * In rare cases of empty If- and Else- blocks,
-		 * next and arg0.getTraget() are the same. For these
-		 * cases, we do not generate an If statement, but
-		 * still translate the conditional in case it may
+		 */
+
+		Unit next = units.getSuccOf(arg0);
+		/*
+		 * In rare cases of empty If- and Else- blocks, next and
+		 * arg0.getTraget() are the same. For these cases, we do not generate an
+		 * If statement, but still translate the conditional in case it may
 		 * throw an exception.
 		 */
-		if (next==arg0.getTarget()) {
-			//ignore the IfStmt.
+		if (next == arg0.getTarget()) {
+			// ignore the IfStmt.
 			return;
 		}
-		
+
 		CfgBlock thenBlock = methodInfo.lookupCfgBlock(arg0.getTarget());
-		this.currentBlock.addConditionalSuccessor(cond, thenBlock);		
+		this.currentBlock.addConditionalSuccessor(cond, thenBlock);
 		if (next != null) {
 			CfgBlock elseBlock = methodInfo.lookupCfgBlock(next);
 			this.currentBlock.addConditionalSuccessor(new UnaryExpression(UnaryOperator.LNot, cond), elseBlock);
@@ -306,20 +268,7 @@ public class SootStmtSwitch implements StmtSwitch {
 
 	@Override
 	public void caseLookupSwitchStmt(LookupSwitchStmt arg0) {
-		precheck(arg0);
-
-		List<Expression> cases = new LinkedList<Expression>();
-		List<Unit> targets = new LinkedList<Unit>();
-
-		arg0.getKey().apply(this.valueSwitch);
-		Expression key = this.valueSwitch.popExpression();
-		for (int i = 0; i < arg0.getTargetCount(); i++) {
-			BinaryExpression cond = new BinaryExpression(BinaryOperator.Eq, key,
-					new IntegerLiteral(arg0.getLookupValue(i)));
-			cases.add(cond);
-			targets.add(arg0.getTarget(i));
-		}
-		translateSwitch(cases, targets, arg0.getDefaultTarget());
+		throw new RuntimeException("Should have been eliminated by SwitchStatementRemover");
 	}
 
 	@Override
@@ -329,7 +278,6 @@ public class SootStmtSwitch implements StmtSwitch {
 
 	@Override
 	public void caseRetStmt(RetStmt arg0) {
-		precheck(arg0);
 		throw new RuntimeException("Not implemented " + arg0);
 	}
 
@@ -353,20 +301,7 @@ public class SootStmtSwitch implements StmtSwitch {
 
 	@Override
 	public void caseTableSwitchStmt(TableSwitchStmt arg0) {
-		precheck(arg0);
-		List<Expression> cases = new LinkedList<Expression>();
-		List<Unit> targets = new LinkedList<Unit>();
-
-		arg0.getKey().apply(valueSwitch);
-		Expression key = valueSwitch.popExpression();
-		int counter = 0;
-		for (int i = arg0.getLowIndex(); i <= arg0.getHighIndex(); i++) {
-			Expression cond = new BinaryExpression(BinaryOperator.Eq, key, new IntegerLiteral(i));
-			cases.add(cond);
-			targets.add(arg0.getTarget(counter));
-			counter++;
-		}
-		translateSwitch(cases, targets, arg0.getDefaultTarget());
+		throw new RuntimeException("Should have been eliminated by SwitchStatementRemover");
 	}
 
 	@Override
@@ -376,36 +311,13 @@ public class SootStmtSwitch implements StmtSwitch {
 		Expression exception = valueSwitch.popExpression();
 		currentBlock.addStatement(new AssignStatement(SootTranslationHelpers.v().getSourceLocation(arg0),
 				methodInfo.getExceptionVariable(), exception));
-		// TODO connect to the next block
+		currentBlock.addSuccessor(methodInfo.getSink());
+		currentBlock = null;
 	}
 
 	@Override
 	public void defaultCase(Object arg0) {
 		throw new RuntimeException("Case not implemented");
-	}
-
-	/**
-	 * Translates a set of switch cases into a nested IfThenElse of the form: if
-	 * (case1) goto target1 else { if (case2) goto target2 else { ... Asserts
-	 * that size of cases and targets is equal.
-	 * 
-	 * @param cases
-	 * @param targets
-	 * @param defaultTarget
-	 */
-	private void translateSwitch(List<Expression> cases, List<Unit> targets, Unit defaultTarget) {
-		assert(cases.size() == targets.size());
-		for (int i = 0; i < cases.size(); i++) {
-			CfgBlock elseCase;
-			if (i == cases.size() - 1 && defaultTarget != null) {
-				elseCase = methodInfo.lookupCfgBlock(defaultTarget);
-			} else {
-				elseCase = new CfgBlock();
-			}
-			currentBlock.addConditionalSuccessor(cases.get(i), methodInfo.lookupCfgBlock(targets.get(i)));
-			currentBlock.addConditionalSuccessor(new UnaryExpression(UnaryOperator.LNot, cases.get(i)), elseCase);
-			currentBlock = elseCase;
-		}
 	}
 
 	private void translateMethodInvokation(Unit u, Value optionalLhs, InvokeExpr call) {
@@ -429,8 +341,6 @@ public class SootStmtSwitch implements StmtSwitch {
 			baseExpression = valueSwitch.popExpression();
 			// add the "this" variable to the list of args
 			args.addFirst(baseExpression);
-			// TODO: assert that base!=null
-
 			// this include Interface-, Virtual, and SpecialInvokeExpr
 			if (call.getMethod().isConstructor() && call instanceof SpecialInvokeExpr) {
 				possibleTargets.add(call.getMethod());
@@ -517,7 +427,9 @@ public class SootStmtSwitch implements StmtSwitch {
 			return true;
 		}
 		if (call.getMethod().getSignature().contains("<java.lang.System: void exit(int)>")) {
-			throw new RuntimeException("todo");
+			//TODO: this is not sufficient for interprocedural analysis.
+			currentBlock = null;
+			return true;
 		}
 
 		if (call.getMethod().getDeclaringClass().getName().contains("org.junit.Assert")) {
@@ -545,6 +457,12 @@ public class SootStmtSwitch implements StmtSwitch {
 	}
 
 	private void translateDefinitionStmt(DefinitionStmt def) {
+
+		if (def.containsInvokeExpr()) {
+			translateMethodInvokation(def, def.getLeftOp(), def.getInvokeExpr());
+			return;
+		}
+
 		Value lhs = def.getLeftOp();
 		Value rhs = def.getRightOp();
 		/*
