@@ -48,6 +48,8 @@ import de.uni_freiburg.informatik.ultimate.model.Payload;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 import de.uni_freiburg.informatik.ultimate.source.java.joogie.Joogie2BoogieTranslator;
+import de.uni_freiburg.informatik.ultimate.source.java.preferences.Java2BoogiePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.source.java.preferences.Java2BoogiePreferenceInitializer.Mode;
 import de.uni_freiburg.informatik.ultimate.source.java.soottocfg.SootToCfg2BoogieTranslator;
 import soottocfg.soot.SootToCfg;
 import soottocfg.cfg.Program;
@@ -98,8 +100,15 @@ public final class Java2Boogie implements ISource {
 
 	@Override
 	public IElement parseAST(final File file) throws IOException {
-		return runSoot2Cfg(file);
-//		return runJoogie(file);
+		final Mode mode = Java2BoogiePreferenceInitializer.getMode();
+		switch (mode) {
+		case Joogie:
+			return runJoogie(file);
+		case Soot2Cfg:
+			return runSoot2Cfg(file);
+		default:
+			throw new UnsupportedOperationException("Unknown mode " + mode);
+		}
 	}
 
 	private IElement runJoogie(final File file) throws IOException {
@@ -162,7 +171,7 @@ public final class Java2Boogie implements ISource {
 
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
-		return null;
+		return new Java2BoogiePreferenceInitializer();
 	}
 
 	@Override

@@ -34,5 +34,5 @@ import org.eclipse.core.runtime.Plugin;
  */
 public class Activator extends Plugin {
 	public static final String PLUGIN_ID = Java2Boogie.class.getPackage().getName();
-
+	public static final String PLUGIN_NAME = "Java2Boogie";
 }
