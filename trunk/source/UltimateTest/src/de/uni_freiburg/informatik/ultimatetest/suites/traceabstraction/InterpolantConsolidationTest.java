@@ -178,6 +178,11 @@ public class InterpolantConsolidationTest extends AbstractTraceAbstractionTestSu
 								"Overall iterations", "Iter{-}ations",
 								ConversionContext.Divide(1, 2, ""), Aggregate.Ignore, Aggregate.Average),
 //						
+						new ColumnDefinition("InterpolantConsolidationBenchmark_DifferenceAutomatonEmptyCounter", "Diff.{-}Automaton{-}Empty{-}Counter",
+								ConversionContext.Divide(1, 2, ""), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition("InterpolantConsolidationBenchmark_DisjunctionsGreaterOneCounter", "Disjunction{-}Greater{-}OneCounter",
+						ConversionContext.Divide(1, 2, ""), Aggregate.Ignore, Aggregate.Average),
+						
 						new ColumnDefinition("InterpolantConsolidationBenchmark_InterpolantsDropped", "Interpolants dropped", ConversionContext.Divide(1, 2, ""), Aggregate.Ignore, Aggregate.Average),								
 						new ColumnDefinition("InterpolantConsolidationBenchmark_NewlyCreatedInterpolants", "Newly Created Interpolants", ConversionContext.Divide(1, 2, ""), Aggregate.Ignore, Aggregate.Average),								
 						new ColumnDefinition("EdgeCheckerBenchmarkData_Sat", "Num Sats", ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),										
