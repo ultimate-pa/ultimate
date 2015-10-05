@@ -396,6 +396,7 @@ public class ToolchainManager {
 			} catch (Exception e) {
 				mLogger.fatal(getLogPrefix() + ": Parsing gives Exception", e);
 				resetModelManager();
+				throw e;
 			} finally {
 				parser.finish();
 			}
