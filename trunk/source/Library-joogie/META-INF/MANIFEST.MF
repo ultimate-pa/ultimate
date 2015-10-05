@@ -11,4 +11,4 @@ Export-Package: org.joogie,
  org.joogie.boogie.types
 Require-Bundle: Library-log4j,
  Library-soot;visibility:=reexport
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
