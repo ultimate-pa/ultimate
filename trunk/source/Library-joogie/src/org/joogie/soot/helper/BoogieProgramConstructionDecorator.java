@@ -152,7 +152,7 @@ public class BoogieProgramConstructionDecorator {
 		if (t instanceof VoidType) {
 			ret = null;
 		} else {
-			ret = createBoogieVariable("__ret", mFacType.lookupBoogieType(returntype), false);
+			ret = createBoogieVariable("__ret", mFacType.lookupBoogieType(returntype));
 		}
 		return ret;
 	}
@@ -160,8 +160,7 @@ public class BoogieProgramConstructionDecorator {
 	public Variable createProcedureThisVariable(SootMethod method) {
 		// Create this variable
 		if (!method.isStatic()) {
-			return createBoogieVariable("__this", mFacType.lookupBoogieType(method.getDeclaringClass().getType()),
-					false);
+			return createBoogieVariable("__this", mFacType.lookupBoogieType(method.getDeclaringClass().getType()));
 		}
 		return null;
 	}
@@ -170,7 +169,7 @@ public class BoogieProgramConstructionDecorator {
 		StringBuilder sb = new StringBuilder();
 		sb.append("$param_");
 		sb.append(p.getIndex());
-		return createBoogieVariable(sb.toString(), mFacType.lookupBoogieType(p.getType()), false);
+		return createBoogieVariable(sb.toString(), mFacType.lookupBoogieType(p.getType()));
 	}
 
 	public Variable createLocalVar(Local local) {
@@ -191,8 +190,8 @@ public class BoogieProgramConstructionDecorator {
 		return v;
 	}
 
-	public Variable createBoogieVariable(String name, BoogieType t, boolean isunique) {
-		return new Variable(name, t, isunique);
+	public Variable createBoogieVariable(String name, BoogieType t) {
+		return new Variable(name, t);
 	}
 
 	public OperatorFunctionFactory getOperatorFunctionFactory() {

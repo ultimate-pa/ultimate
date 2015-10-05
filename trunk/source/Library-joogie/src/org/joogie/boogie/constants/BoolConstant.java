@@ -38,11 +38,6 @@ public class BoolConstant extends Constant {
 		value = c;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.joogie.boogie.expressions.Expression#toBoogie()
-	 */
 	@Override
 	public String toBoogie() {
 		return String.valueOf(value);

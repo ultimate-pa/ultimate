@@ -27,53 +27,40 @@ import org.joogie.boogie.types.BoogieType;
 
 /**
  * @author schaef
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class Variable extends Expression {
 
-	private String varName = "TestVar";
-	private BoogieType varType;
-	private boolean constUnique = false;
+	private String mVarName;
+	private final BoogieType mVarType;
+	private boolean mIsBound;
+	private boolean mIsConstant;
+	private boolean mIsUnique;
 
-	public boolean isBound = false;
-
-	public Variable(String name, BoogieType t) {
-		varName = name;
-		varType = t;
+	public Variable(final String name, final BoogieType t) {
+		this(name, t, false);
 	}
 
-	public Variable(String name, BoogieType t, boolean constunique) {
-		varName = name;
-		varType = t;
-		constUnique = constunique;
+	public Variable(final String name, final BoogieType type, final boolean constunique) {
+		mVarName = name;
+		mVarType = type;
+		mIsBound = false;
+		mIsConstant = constunique;
+		mIsUnique = constunique;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.joogie.boogie.expressions.Variable#getName()
-	 */
 	public String getName() {
-		return varName;
+		return mVarName;
 	}
 
-	public void setName(String name) {
-		varName = name;
+	public void setName(final String name) {
+		mVarName = name;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.joogie.boogie.expressions.Variable#isConstUnique()
-	 */
-	public boolean isConstUnique() {
-		return constUnique;
+	public void setIsBound(final boolean isBound) {
+		mIsBound = isBound;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.joogie.boogie.expressions.Variable#clone()
-	 */
 	@Override
 	public Variable clone() {
 		return this;
@@ -85,39 +72,23 @@ public class Variable extends Expression {
 
 	// TODO should we introduce getType for all expression? then we can do
 	// TypeChecking.
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.joogie.boogie.expressions.Variable#getType()
-	 */
 	@Override
 	public BoogieType getType() {
-		return varType;
+		return mVarType;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.joogie.boogie.expressions.Expression#toBoogie()
-	 */
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.joogie.boogie.expressions.Variable#toBoogie()
-	 */
 	@Override
 	public String toBoogie() {
-		return varName;
+		return mVarName;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see org.joogie.boogie.expressions.Variable#getUsedVariables()
-	 */
 	@Override
 	public List<Variable> getUsedVariables() {
 		return new LinkedList<Variable>(Arrays.asList(new Variable[] { this }));
+	}
+
+	public boolean isConstUnique() {
+		return mIsConstant && mIsUnique;
 	}
 
 }

@@ -136,7 +136,6 @@ public class BoogieProcedureInfo {
 	}
 
 	public Expression lookupLocalExceptionVar(Trap t) {
-
 		if (!mCaughtExceptionVars.containsKey(t)) {
 			BoogieType type = mProgDecl.getTypeFactory().lookupBoogieType(t.getException().getType());
 			mCaughtExceptionVars.put(t, mProgDecl.getFreshLocalVariable("$caughtEx", type));

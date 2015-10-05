@@ -132,7 +132,7 @@ public class GlobalsCache {
 	public Variable lookupStaticField(SootField arg0) {
 		if (!mPublicFields.containsKey(arg0)) {
 			Variable v = mProgDecl.createBoogieVariable(mProgDecl.getQualifiedName(arg0),
-					mProgDecl.getTypeFactory().lookupBoogieType(arg0.getType()), false);
+					mProgDecl.getTypeFactory().lookupBoogieType(arg0.getType()));
 			mPublicFields.put(arg0, v);
 
 			mProgDecl.getProgram().addGlobalVar(v);
@@ -143,7 +143,7 @@ public class GlobalsCache {
 	public Variable lookupField(SootField arg0) {
 		if (!mPublicFields.containsKey(arg0)) {
 			Variable v = mProgDecl.createBoogieVariable(mProgDecl.getQualifiedName(arg0),
-					mProgDecl.getTypeFactory().lookupBoogieFieldType(arg0.getType()), false);
+					mProgDecl.getTypeFactory().lookupBoogieFieldType(arg0.getType()));
 			mPublicFields.put(arg0, v);
 			mProgDecl.getProgram().addGlobalVar(v);
 		}

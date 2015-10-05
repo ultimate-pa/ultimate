@@ -49,14 +49,13 @@ public class QuantifiedExpression extends Expression {
 
 	}
 
-	public QuantifiedExpression(Quantifier q, List<Variable> bound,
-			Expression term) {
+	public QuantifiedExpression(Quantifier q, List<Variable> bound, Expression term) {
 		quant = q;
 		this.boundVars = new LinkedList<Variable>(bound);
 		this.termExpression = term;
 		// double check that the boundflag is set for the bound variables
 		for (Variable v : this.boundVars)
-			v.isBound = true;
+			v.setIsBound(true);
 	}
 
 	public Expression getExpression() {
@@ -123,8 +122,7 @@ public class QuantifiedExpression extends Expression {
 		LinkedList<Variable> clones = new LinkedList<Variable>();
 		for (Variable v : this.boundVars)
 			clones.add(v.clone());
-		return new QuantifiedExpression(this.quant, clones,
-				this.termExpression.clone());
+		return new QuantifiedExpression(this.quant, clones, this.termExpression.clone());
 	}
 
 	public List<Variable> getUsedVariables() {

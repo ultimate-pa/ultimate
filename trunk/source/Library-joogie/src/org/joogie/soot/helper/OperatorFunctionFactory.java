@@ -23,9 +23,9 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
-import org.joogie.HeapMode;
 import org.joogie.boogie.BoogieProcedure;
 import org.joogie.boogie.BoogieProgram;
 import org.joogie.boogie.constants.UboundedIntConstant;
@@ -55,9 +55,8 @@ public class OperatorFunctionFactory {
 
 	private final BoogieProgramConstructionDecorator mProgDec;
 
-	// TODO: Remove singleton pattern from this
-	private HeapMode mHeapmode;
-	private HashSet<BoogieProcedure> mOperatorProcs;
+	private Set<BoogieProcedure> mOperatorProcs;
+	private Set<BoogieProcedure> mUsedOperatorProcs;
 
 	private BoogieProcedure addInt, subInt, mulInt, divInt, modInt, cmpInt, eqInt, ltInt, leInt, gtInt, geInt, neInt,
 			andInt, orInt, xorInt, shlInt, shrInt, ushrInt, negInt;
@@ -83,6 +82,7 @@ public class OperatorFunctionFactory {
 		mLogger = logger;
 		mProgDec = progDec;
 		mOperatorProcs = new HashSet<BoogieProcedure>();
+		mUsedOperatorProcs = new HashSet<BoogieProcedure>();
 
 		// TODO: What is this about? Did I write this?
 		// /// BEGIN HACK
@@ -331,12 +331,14 @@ public class OperatorFunctionFactory {
 	 * heapvars
 	 */
 	public BoogieProcedure getNewVarProcedure() {
-		return this.newVariable;
+		mUsedOperatorProcs.add(newVariable);
+		return newVariable;
 	}
 
 	public Expression createBinOp(String op, Expression left, Expression right) {
 		Expression exp = null;
 		op = op.trim();
+
 		if (op.compareTo("+") == 0) {
 			exp = getOperatorFun("add", left, right);
 		} else if (op.compareTo("-") == 0) {
@@ -381,148 +383,12 @@ public class OperatorFunctionFactory {
 			LinkedList<Expression> args = new LinkedList<Expression>();
 			args.add(left);
 			args.add(right);
+			mUsedOperatorProcs.add(instanceofOp);
 			exp = createInvokeExpression(instanceofOp, args);
 		} else {
 			throw new UnsupportedOperationException("Operator not handled: " + op);
 		}
 		return exp;
-	}
-
-	private Expression getOperatorFun(String opcode, Expression l, Expression r) {
-		LinkedList<BoogieProcedure> proctype = null;
-		if (l.getType() == r.getType() && l.getType() == BoogieBaseTypes.getIntType()) {
-			proctype = intOperators;
-		} else if (l.getType() == r.getType() && l.getType() == BoogieBaseTypes.getRealType()) {
-			proctype = realOperators;
-		} else if (l.getType() instanceof BoogieObjectType && r.getType() instanceof BoogieObjectType) {
-			proctype = refOperators;
-		} else if (l.getType() == BoogieBaseTypes.getIntType() && r.getType() instanceof BoogieObjectType) {
-			r = castToInt(r);
-			proctype = intOperators;
-		} else if (l.getType() instanceof BoogieObjectType && r.getType() == BoogieBaseTypes.getIntType()) {
-			l = castToInt(l);
-			proctype = intOperators;
-		} else if (l.getType() instanceof BoogieArrayType && r.getType() instanceof BoogieArrayType) {
-			// TODO test,if there are more cases to consider
-			if (opcode.compareTo("eq") == 0) {
-				return compareArrayEquality(l, r);
-			} else if (opcode.compareTo("ne") == 0) {
-				return createNegOp(compareArrayEquality(l, r));
-			}
-		} else if (l == mProgDec.getProgram().getNullReference() && r.getType() instanceof BoogieArrayType) {
-			l = mProgDec.getProgram().getArrayNullReference(((BoogieArrayType) r.getType()).getNestedType());
-			if (opcode.compareTo("eq") == 0) {
-				return compareArrayEquality(l, r);
-			} else if (opcode.compareTo("ne") == 0) {
-				return createNegOp(compareArrayEquality(l, r));
-			}
-		} else if (l.getType() instanceof BoogieArrayType && r == mProgDec.getProgram().getNullReference()) {
-			r = mProgDec.getProgram().getArrayNullReference(((BoogieArrayType) l.getType()).getNestedType());
-			if (opcode.compareTo("eq") == 0) {
-				return compareArrayEquality(l, r);
-			} else if (opcode.compareTo("ne") == 0) {
-				return createNegOp(compareArrayEquality(l, r));
-			}
-		} else {
-			throw new UnsupportedOperationException(
-					"Types don't match: " + l.getType().getName() + " and " + r.getType().getName());
-		}
-		BoogieProcedure proc = findProcedureWithPrefix(opcode, proctype);
-		if (mHeapmode == HeapMode.SimpleHeap) {
-			// BEGIN HACK : Our model checker doesn't understand functions with
-			// bodies
-			// well, we do equality and inequality inline to avoid the prelude
-			if (opcode.compareTo("eq") == 0) {
-				BinOpExpression ex = new BinOpExpression(Operator.Eq, l, r);
-				return ex;
-			}
-
-			if (opcode.compareTo("ne") == 0) {
-				BinOpExpression ex = new BinOpExpression(Operator.Neq, l, r);
-				return ex;
-			}
-
-			if (opcode.compareTo("add") == 0) {
-				BinOpExpression ex = new BinOpExpression(Operator.Plus, l, r);
-				return ex;
-			}
-
-			if (opcode.compareTo("sub") == 0) {
-				BinOpExpression ex = new BinOpExpression(Operator.Minus, l, r);
-				return ex;
-			}
-
-			if (opcode.compareTo("mul") == 0) {
-				BinOpExpression ex = new BinOpExpression(Operator.Mul, l, r);
-				return ex;
-			}
-
-			if (opcode.compareTo("div") == 0) {
-				BinOpExpression ex = new BinOpExpression(Operator.Div, l, r);
-				return ex;
-			}
-
-			if (opcode.compareTo("ge") == 0) {
-				BinOpExpression ex = new BinOpExpression(Operator.Ge, l, r);
-				return ex;
-			}
-
-			if (opcode.compareTo("le") == 0) {
-				BinOpExpression ex = new BinOpExpression(Operator.Le, l, r);
-				return ex;
-			}
-
-			if (opcode.compareTo("lt") == 0) {
-				BinOpExpression ex = new BinOpExpression(Operator.Lt, l, r);
-				return ex;
-			}
-
-			if (opcode.compareTo("gt") == 0) {
-				BinOpExpression ex = new BinOpExpression(Operator.Gt, l, r);
-				return ex;
-			}
-			// // END HACK
-		}
-		if (proc != null) {
-			LinkedList<Expression> args = new LinkedList<Expression>();
-			args.add(l);
-			args.add(r);
-			InvokeExpression e = createInvokeExpression(proc, args);
-			return e;
-		}
-		return null;
-	}
-
-	private Expression compareArrayEquality(Expression l, Expression r) {
-		LinkedList<Expression> args = new LinkedList<Expression>();
-		args.add(l);
-		args.add(r);
-		if (l.getType() == BoogieBaseTypes.getIntArrType()) {
-			return createInvokeExpression(eqIntArray, args);
-		} else if (l.getType() == BoogieBaseTypes.getRealArrType()) {
-			return createInvokeExpression(eqRealArray, args);
-		} else if (l.getType() instanceof RefArrayType) {
-			return createInvokeExpression(eqRefArray, args);
-		} else if (l.getType() instanceof ArrArrayType) {
-			mLogger.error("compareArrayEquality: CASE not implemented");
-			return mProgDec.getFreshGlobalConstant(BoogieBaseTypes.getIntType());
-		}
-		mLogger.error("compareArrayEquality: Type not implemented");
-		return mProgDec.getFreshGlobalConstant(BoogieBaseTypes.getIntType());
-	}
-
-	private BoogieProcedure findProcedureWithPrefix(String prefix, List<BoogieProcedure> l) {
-		for (BoogieProcedure proc : l) {
-			if (proc == null)
-				continue; // This can only occur during the construction of the
-							// singleton
-			if (proc.getName().startsWith("$" + prefix))
-				return proc;
-		}
-
-		mLogger.error("TODO!!! " + prefix); // TODO remove if there are no bugs
-		// caused by this method
-		return null;
 	}
 
 	public Expression createNegOp(Expression exp) {
@@ -541,25 +407,10 @@ public class OperatorFunctionFactory {
 			LinkedList<Expression> args = new LinkedList<Expression>();
 			args.add(exp);
 			InvokeExpression e = createInvokeExpression(proc, args);
+			mUsedOperatorProcs.add(proc);
 			return e;
 		}
 		return null;
-	}
-
-	private boolean compareTypes(BoogieType a, BoogieType b) {
-		if (b instanceof BoogieObjectType && a instanceof RefArrayType) {
-			mLogger.debug("comparing array with object type. this could be a bug");
-		}
-
-		if (a == b) {
-			return true;
-		} else if ((a instanceof BoogieObjectType && b instanceof BoogieObjectType)
-				|| (a instanceof RefArrayType && b instanceof RefArrayType)) {
-			return true;
-		} else if (a instanceof ArrArrayType && b instanceof ArrArrayType) {
-			return compareTypes(((ArrArrayType) a).getNestedType(), ((ArrArrayType) b).getNestedType());
-		}
-		return false;
 	}
 
 	public Expression castIfNecessary(Expression exp, BoogieType targetType) {
@@ -588,68 +439,6 @@ public class OperatorFunctionFactory {
 			} else {
 				throw new AssertionError("Cannot cast " + exp.toBoogie() + " to " + targetType.toBoogie());
 			}
-		}
-	}
-
-	private Expression castToInt(Expression exp) {
-		if (exp.getType() == BoogieBaseTypes.getIntType()) {
-			return exp;
-		} else if (exp.getType() == BoogieBaseTypes.getRealType()) {
-			LinkedList<Expression> args = new LinkedList<Expression>();
-			args.add(exp);
-			return createInvokeExpression(realToInt, args);
-		} else if (exp.getType() instanceof BoogieObjectType) {
-			LinkedList<Expression> args = new LinkedList<Expression>();
-			args.add(exp);
-			return createInvokeExpression(refToInt, args);
-		} else {
-			return exp;
-		}
-	}
-
-	private Expression castToReal(Expression exp) {
-		if (exp.getType() == BoogieBaseTypes.getIntType()) {
-			LinkedList<Expression> args = new LinkedList<Expression>();
-			args.add(exp);
-			return createInvokeExpression(intToReal, args);
-		} else {
-			return exp;
-		}
-	}
-
-	private Expression castToArray(BoogieProgram prog, Expression exp, BoogieType arrtype) {
-		LinkedList<Expression> args = new LinkedList<Expression>();
-		args.add(exp);
-		if (exp.getType() instanceof BoogieObjectType) {
-			if (arrtype == BoogieBaseTypes.getIntArrType()) {
-				return createInvokeExpression(refToIntArr, args);
-			} else if (arrtype == BoogieBaseTypes.getRealArrType()) {
-				return createInvokeExpression(refToRealArr, args);
-			} else if (arrtype instanceof RefArrayType) {
-				return createInvokeExpression(refToRefArr, args);
-			} else if (arrtype instanceof ArrArrayType) {
-				mLogger.error("castToArray: multiarrays are not really implemented");
-				return mProgDec.getFreshGlobalConstant(arrtype);
-			}
-		}
-		mLogger.error("castToArray: case is not implemented");
-		mLogger.error("  cast from " + exp.getType().toString() + " to " + arrtype.toString());
-		return mProgDec.getFreshGlobalConstant(arrtype);
-	}
-
-	private Expression castArrayToRef(BoogieProgram prog, Expression exp) {
-		LinkedList<Expression> args = new LinkedList<Expression>();
-		args.add(exp);
-		BoogieType arrtype = exp.getType();
-		if (arrtype == BoogieBaseTypes.getIntArrType()) {
-			return createInvokeExpression(intArrToRef, args);
-		} else if (arrtype == BoogieBaseTypes.getRealArrType()) {
-			return createInvokeExpression(realArrToRef, args);
-		} else if (arrtype instanceof RefArrayType) {
-			return createInvokeExpression(refArrToRef, args);
-		} else {
-			mLogger.error("castToArray: case is not implemented");
-			return mProgDec.getFreshGlobalConstant(BoogieBaseTypes.getRefType());
 		}
 	}
 
@@ -751,59 +540,186 @@ public class OperatorFunctionFactory {
 		return false;
 	}
 
-	public String toBoogie() {
-		StringBuilder sb = new StringBuilder();
+	public Set<BoogieProcedure> getUsedPreludeProcedures() {
+		return mUsedOperatorProcs;
+	}
 
-		if (mHeapmode == HeapMode.Default) {
-			sb.append("// operator procedures ............\n");
-			sb.append(negInt.toBoogie());
-			sb.append(negReal.toBoogie());
-			sb.append(negRef.toBoogie());
-
-			sb.append(eqIntArray.toBoogie());
-			sb.append(eqRealArray.toBoogie());
-			sb.append(eqRefArray.toBoogie());
-
-			sb.append("\n // Cast operators");
-			sb.append(refToInt.toBoogie());
-			sb.append(realToInt.toBoogie());
-			sb.append(intToReal.toBoogie());
-
-			sb.append(refArrToRef.toBoogie());
-			sb.append(realArrToRef.toBoogie());
-			sb.append(intArrToRef.toBoogie());
-
-			sb.append(refToIntArr.toBoogie());
-			sb.append(refToRealArr.toBoogie());
-			sb.append(refToRefArr.toBoogie());
-
-			sb.append(instanceofOp.toBoogie());
-			// sb.append(lengthOp.toBoogie());
-
-			sb.append(newVariable.toBoogie());
-
-			for (BoogieProcedure proc : intOperators) {
-				sb.append(proc.toBoogie());
+	private Expression getOperatorFun(String opcode, Expression l, Expression r) {
+		LinkedList<BoogieProcedure> proctype = null;
+		if (l.getType() == r.getType() && l.getType() == BoogieBaseTypes.getIntType()) {
+			proctype = intOperators;
+		} else if (l.getType() == r.getType() && l.getType() == BoogieBaseTypes.getRealType()) {
+			proctype = realOperators;
+		} else if (l.getType() instanceof BoogieObjectType && r.getType() instanceof BoogieObjectType) {
+			proctype = refOperators;
+		} else if (l.getType() == BoogieBaseTypes.getIntType() && r.getType() instanceof BoogieObjectType) {
+			r = castToInt(r);
+			proctype = intOperators;
+		} else if (l.getType() instanceof BoogieObjectType && r.getType() == BoogieBaseTypes.getIntType()) {
+			l = castToInt(l);
+			proctype = intOperators;
+		} else if (l.getType() instanceof BoogieArrayType && r.getType() instanceof BoogieArrayType) {
+			// TODO test,if there are more cases to consider
+			if (opcode.compareTo("eq") == 0) {
+				return compareArrayEquality(l, r);
+			} else if (opcode.compareTo("ne") == 0) {
+				return createNegOp(compareArrayEquality(l, r));
 			}
-			for (BoogieProcedure proc : realOperators) {
-				sb.append(proc.toBoogie());
+		} else if (l == mProgDec.getProgram().getNullReference() && r.getType() instanceof BoogieArrayType) {
+			l = mProgDec.getProgram().getArrayNullReference(((BoogieArrayType) r.getType()).getNestedType());
+			if (opcode.compareTo("eq") == 0) {
+				return compareArrayEquality(l, r);
+			} else if (opcode.compareTo("ne") == 0) {
+				return createNegOp(compareArrayEquality(l, r));
 			}
-			for (BoogieProcedure proc : refOperators) {
-				sb.append(proc.toBoogie());
+		} else if (l.getType() instanceof BoogieArrayType && r == mProgDec.getProgram().getNullReference()) {
+			r = mProgDec.getProgram().getArrayNullReference(((BoogieArrayType) l.getType()).getNestedType());
+			if (opcode.compareTo("eq") == 0) {
+				return compareArrayEquality(l, r);
+			} else if (opcode.compareTo("ne") == 0) {
+				return createNegOp(compareArrayEquality(l, r));
+			}
+		} else {
+			throw new UnsupportedOperationException(
+					"Types don't match: " + l.getType().getName() + " and " + r.getType().getName());
+		}
+		BoogieProcedure proc = findProcedureWithPrefix(opcode, proctype);
+
+		if (proc != null) {
+			LinkedList<Expression> args = new LinkedList<Expression>();
+			args.add(l);
+			args.add(r);
+			InvokeExpression e = createInvokeExpression(proc, args);
+			mUsedOperatorProcs.add(proc);
+			return e;
+		}
+		return null;
+	}
+
+	private Expression compareArrayEquality(Expression l, Expression r) {
+		LinkedList<Expression> args = new LinkedList<Expression>();
+		args.add(l);
+		args.add(r);
+		if (l.getType() == BoogieBaseTypes.getIntArrType()) {
+			mUsedOperatorProcs.add(eqIntArray);
+			return createInvokeExpression(eqIntArray, args);
+		} else if (l.getType() == BoogieBaseTypes.getRealArrType()) {
+			mUsedOperatorProcs.add(eqRealArray);
+			return createInvokeExpression(eqRealArray, args);
+		} else if (l.getType() instanceof RefArrayType) {
+			mUsedOperatorProcs.add(eqRefArray);
+			return createInvokeExpression(eqRefArray, args);
+		} else if (l.getType() instanceof ArrArrayType) {
+			throw new UnsupportedOperationException("compareArrayEquality: CASE not implemented");
+		}
+		throw new UnsupportedOperationException("compareArrayEquality: Type not implemented");
+	}
+
+	private BoogieProcedure findProcedureWithPrefix(String prefix, List<BoogieProcedure> l) {
+		for (BoogieProcedure proc : l) {
+			if (proc == null)
+				continue; // This can only occur during the construction of the
+							// singleton
+			if (proc.getName().startsWith("$" + prefix))
+				return proc;
+		}
+
+		mLogger.error("TODO!!! " + prefix); // TODO remove if there are no bugs
+		// caused by this method
+		return null;
+	}
+
+	private boolean compareTypes(BoogieType a, BoogieType b) {
+		if (b instanceof BoogieObjectType && a instanceof RefArrayType) {
+			mLogger.debug("comparing array with object type. this could be a bug");
+		}
+
+		if (a == b) {
+			return true;
+		} else if ((a instanceof BoogieObjectType && b instanceof BoogieObjectType)
+				|| (a instanceof RefArrayType && b instanceof RefArrayType)) {
+			return true;
+		} else if (a instanceof ArrArrayType && b instanceof ArrArrayType) {
+			return compareTypes(((ArrArrayType) a).getNestedType(), ((ArrArrayType) b).getNestedType());
+		}
+		return false;
+	}
+
+	private Expression castToInt(Expression exp) {
+		if (exp.getType() == BoogieBaseTypes.getIntType()) {
+			return exp;
+		} else if (exp.getType() == BoogieBaseTypes.getRealType()) {
+			LinkedList<Expression> args = new LinkedList<Expression>();
+			args.add(exp);
+			mUsedOperatorProcs.add(realToInt);
+			return createInvokeExpression(realToInt, args);
+		} else if (exp.getType() instanceof BoogieObjectType) {
+			LinkedList<Expression> args = new LinkedList<Expression>();
+			args.add(exp);
+			mUsedOperatorProcs.add(refToInt);
+			return createInvokeExpression(refToInt, args);
+		} else {
+			return exp;
+		}
+	}
+
+	private Expression castToReal(Expression exp) {
+		if (exp.getType() == BoogieBaseTypes.getIntType()) {
+			LinkedList<Expression> args = new LinkedList<Expression>();
+			args.add(exp);
+			mUsedOperatorProcs.add(intToReal);
+			return createInvokeExpression(intToReal, args);
+		} else {
+			return exp;
+		}
+	}
+
+	private Expression castToArray(BoogieProgram prog, Expression exp, BoogieType arrtype) {
+		LinkedList<Expression> args = new LinkedList<Expression>();
+		args.add(exp);
+		if (exp.getType() instanceof BoogieObjectType) {
+			if (arrtype == BoogieBaseTypes.getIntArrType()) {
+				mUsedOperatorProcs.add(refToIntArr);
+				return createInvokeExpression(refToIntArr, args);
+			} else if (arrtype == BoogieBaseTypes.getRealArrType()) {
+				mUsedOperatorProcs.add(refToRealArr);
+				return createInvokeExpression(refToRealArr, args);
+			} else if (arrtype instanceof RefArrayType) {
+				return createInvokeExpression(getRefToRefArr(), args);
+			} else if (arrtype instanceof ArrArrayType) {
+				throw new UnsupportedOperationException("castToArray: multiarrays are not really implemented");
 			}
 		}
-		return sb.toString();
+		throw new UnsupportedOperationException("castToArray: case is not implemented");
+	}
+
+	private Expression castArrayToRef(BoogieProgram prog, Expression exp) {
+		LinkedList<Expression> args = new LinkedList<Expression>();
+		args.add(exp);
+		BoogieType arrtype = exp.getType();
+		if (arrtype == BoogieBaseTypes.getIntArrType()) {
+			mUsedOperatorProcs.add(intArrToRef);
+			return createInvokeExpression(intArrToRef, args);
+		} else if (arrtype == BoogieBaseTypes.getRealArrType()) {
+			mUsedOperatorProcs.add(realArrToRef);
+			return createInvokeExpression(realArrToRef, args);
+		} else if (arrtype instanceof RefArrayType) {
+			mUsedOperatorProcs.add(refArrToRef);
+			return createInvokeExpression(refArrToRef, args);
+		} else {
+			throw new UnsupportedOperationException("castToArray: case is not implemented");
+		}
 	}
 
 	private Expression createBinOpExpression(BinOpExpression.Operator op, BoogieType t) {
-		Variable x = mProgDec.createBoogieVariable("x", t, false);
-		Variable y = mProgDec.createBoogieVariable("y", t, false);
+		Variable x = mProgDec.createBoogieVariable("x", t);
+		Variable y = mProgDec.createBoogieVariable("y", t);
 		return new BinOpExpression(op, x, y);
 	}
 
 	private Expression createLogOpExpression(BinOpExpression.Operator op, BoogieType t) {
-		Variable x = mProgDec.createBoogieVariable("x", t, false);
-		Variable y = mProgDec.createBoogieVariable("y", t, false);
+		Variable x = mProgDec.createBoogieVariable("x", t);
+		Variable y = mProgDec.createBoogieVariable("y", t);
 		return new BinOpExpression(op, x, y);
 	}
 
@@ -815,8 +731,8 @@ public class OperatorFunctionFactory {
 	 * first argument is larger.
 	 */
 	private Expression createCmpExpression(final BoogieType t) {
-		final Variable x = mProgDec.createBoogieVariable("x", t, false);
-		final Variable y = mProgDec.createBoogieVariable("y", t, false);
+		final Variable x = mProgDec.createBoogieVariable("x", t);
+		final Variable y = mProgDec.createBoogieVariable("y", t);
 
 		if (t != BoogieBaseTypes.getIntType()) {
 			final Expression equality = createBinOp("==", x, y);
@@ -832,7 +748,7 @@ public class OperatorFunctionFactory {
 	}
 
 	private Expression createNegIntExpression() {
-		Variable x = mProgDec.createBoogieVariable("x", BoogieBaseTypes.getIntType(), false);
+		Variable x = mProgDec.createBoogieVariable("x", BoogieBaseTypes.getIntType());
 		return new IteExpression(new BinOpExpression(Operator.Eq, x, new UboundedIntConstant(0L)),
 				new UboundedIntConstant(1L), new UboundedIntConstant(0L));
 
@@ -848,8 +764,8 @@ public class OperatorFunctionFactory {
 				(new LinkedList<BoogieType>(Arrays.asList(new BoogieType[] { t1, t2 }))), true);
 	}
 
-	public HashSet<BoogieProcedure> getPreludeProcedures() {
-		return this.mOperatorProcs;
+	private BoogieProcedure getRefToRefArr() {
+		mUsedOperatorProcs.add(refToRefArr);
+		return refToRefArr;
 	}
-
 }

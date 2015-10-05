@@ -189,7 +189,6 @@ public class SootRunner extends Runner {
 			BoogieProgram prog = new BoogieProgram(mLogger);
 			BoogieProgramConstructionDecorator progDec = BoogieProgramConstructionDecorator.create(prog, mLogger);
 			OperatorFunctionFactory opFuncFac = progDec.getOperatorFunctionFactory();
-			prog.addProcedures(opFuncFac.getPreludeProcedures());
 
 			// reset & init Soot
 			soot.G.reset();
@@ -200,6 +199,8 @@ public class SootRunner extends Runner {
 			// Finally, run Soot
 			mLogger.info("Running soot with " + String.join(" ", args));
 			soot.Main.main(args.toArray(new String[args.size()]));
+			
+			prog.addProcedures(opFuncFac.getUsedPreludeProcedures());
 			return prog;
 
 		} finally {

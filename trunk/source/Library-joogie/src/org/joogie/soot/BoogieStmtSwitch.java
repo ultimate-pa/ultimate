@@ -407,7 +407,7 @@ public class BoogieStmtSwitch implements StmtSwitch {
 	public void caseAssignStmt(AssignStmt arg0) {
 		translateAssigningStatement(arg0);
 	}
-
+	
 	@Override
 	public void caseBreakpointStmt(BreakpointStmt arg0) {
 		mLogger.error("Breakpoint: " + arg0.toString());

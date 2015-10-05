@@ -44,6 +44,7 @@ import org.joogie.boogie.types.BoogieType;
  * we use isPure() to distinguish but this is not a clean solution.
  * 
  * @author schaef
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class BoogieProcedure {
 	// Call graph successors
@@ -73,7 +74,7 @@ public class BoogieProcedure {
 	private final List<Expression> mRequires;
 	private final List<Expression> mEnsures;
 
-	private final Set<Variable> tmpLocals;
+	private final Set<Variable> mTmpLocals;
 
 	private final boolean mIsPure;
 	private final LocationTag mLocationTag;
@@ -90,7 +91,7 @@ public class BoogieProcedure {
 	private BoogieProcedure(final String procname, final Variable returnVar, final Variable thisVar,
 			final boolean isPure, final List<Variable> parameterList, final LocationTag locationTag,
 			final String signature, final BasicBlock rootAndExitBlock) {
-		tmpLocals = new HashSet<Variable>();
+		mTmpLocals = new HashSet<Variable>();
 		mRequires = new LinkedList<Expression>();
 		mEnsures = new LinkedList<Expression>();
 		mModifiesGlobals = new HashSet<Variable>();
@@ -178,15 +179,35 @@ public class BoogieProcedure {
 		this.mLocalVars.add(v);
 	}
 
+	/**
+	 * All local variables including temporary ones and exception variables
+	 * 
+	 * @return
+	 */
 	public Set<Variable> getLocalVars() {
-		return mLocalVars;
+		final Set<Variable> rtr = new HashSet<Variable>();
+		rtr.addAll(mLocalVars);
+		rtr.addAll(mTmpLocals);
+
+		for (final Entry<BoogieType, Expression> entry : mExceptionReturnExpressions.entrySet()) {
+			final Expression excep = entry.getValue();
+			final String excepStr = excep.toBoogie();
+			for (Variable var : rtr) {
+				final String varStr = var.toBoogie();
+				if (varStr.equals(excepStr)) {
+					rtr.remove(var);
+					break;
+				}
+			}
+		}
+		return rtr;
 	}
 
 	/**
 	 * @return the tmpLocals
 	 */
 	public Set<Variable> getTmpLocals() {
-		return tmpLocals;
+		return mTmpLocals;
 	}
 
 	private static Variable createReturnVar(BoogieType rettype) {
@@ -238,8 +259,8 @@ public class BoogieProcedure {
 	}
 
 	public Variable getFreshLocalVariable(String prefix, BoogieType t) {
-		Variable v = new Variable(prefix + (this.tmpLocals.size()), t, false);
-		this.tmpLocals.add(v);
+		Variable v = new Variable(prefix + (this.mTmpLocals.size()), t, false);
+		this.mTmpLocals.add(v);
 		return v;
 	}
 
@@ -341,7 +362,7 @@ public class BoogieProcedure {
 				sb.append("\n  modifies ");
 
 				firstround = true;
-				for (Variable v : this.getModifiesGlobals()) {
+				for (Expression v : this.getModifiesGlobals()) {
 					if (!firstround) {
 						sb.append(", ");
 					} else
@@ -387,9 +408,9 @@ public class BoogieProcedure {
 			sb.append(";\n");
 		}
 
-		if (this.tmpLocals.size() > 0) {
+		if (this.mTmpLocals.size() > 0) {
 			sb.append("\n //temp local variables \n");
-			for (Variable v : this.tmpLocals) {
+			for (Variable v : this.mTmpLocals) {
 				boolean alreadyDeclared = false;
 				for (Expression e : mExceptionReturnExpressions.values()) {
 					if (e instanceof Variable && ((Variable) e).toBoogie().equals(v.toBoogie())) {
@@ -465,7 +486,7 @@ public class BoogieProcedure {
 			p.setName(this.getName() + p.getName());
 		}
 		mThisVariable.setName(this.getName() + "$" + mThisVariable.getName());
-		for (Variable v : tmpLocals) {
+		for (Variable v : mTmpLocals) {
 			v.setName(this.getName() + v.getName());
 		}
 	}
