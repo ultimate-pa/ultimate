@@ -382,7 +382,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			ILocation errorLocation = oe.getLocation();
 			String opName = oe.getOperationName().toLowerCase();
 			if (!mExistingOperations.containsKey(opName)) {
-				if (!opName.equals("assert") && !opName.equals("print")) {
+				if (!opName.equals("assert") && !opName.equals("print") && !opName.equals("write")) {
 					String shortDescr = "Unsupported operation \"" + oe.getOperationName() + "\"";
 					String shortDescription = shortDescr;
 					String allOperations = (new ListExistingOperations(mExistingOperations)).prettyPrint();
@@ -567,7 +567,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 				OperationInvocationExpressionAST oe = (OperationInvocationExpressionAST) n;
 				String opName = oe.getOperationName().toLowerCase();
 				Set<Class<?>> returnTypes = new HashSet<Class<?>>();
-				if (opName.equals("print") || opName.equals("assert")) {
+				if (opName.equals("print") || opName.equals("assert") || opName.equals("write")) {
 					return returnTypes;
 				}
 				if (mExistingOperations.containsKey(opName)) {
@@ -1129,6 +1129,23 @@ public class TestFileInterpreter implements IMessagePrinter {
 				mPrintWriter.println(comment);
 				mPrintWriter.println(text);
 			}
+		} else if (oe.getOperationName().equalsIgnoreCase("write")) {
+			if (arguments.size() != 3) {
+				throw new InterpreterException(oe.getLocation(), "write needs three arguments");
+			}
+			IAutomaton<String, String> automaton = (IAutomaton<String, String>) arguments.get(0);
+			String filename = (String) arguments.get(1);
+			final Format format;
+			String formatAsString = (String) arguments.get(2);
+			try {
+				format = Format.valueOf((String) formatAsString);
+			} catch (Exception e) {
+				throw new InterpreterException(oe.getLocation(), 
+						"unknown format " + (String) arguments.get(1));
+			}
+			String argsAsString = children.get(0).getAsString();
+			reportToLogger(LoggerSeverity.INFO, "Writing " + argsAsString + " to file " + filename + " in " + format + " format.");
+			new AutomatonDefinitionPrinter<String, String>(mServices, "ats", filename, format, "hello", automaton);
 		} else {
 			IOperation<String, String> op = getAutomataOperation(oe, arguments);
 			if (op != null) {
