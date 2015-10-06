@@ -4,24 +4,16 @@
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: 2015-10-04
 
-
-// NestedLassoWord emptyOmega = [,];
-// assert(!buchiAccepts(finitelyManyA, emptyOmega));
-// 
-// assert(buchiAccepts(finitelyManyA, [ a a b a, b ]));
-// assert(!buchiIsEmpty(finitelyManyA));
-// 
-// assert(!buchiAccepts(finitelyManyB, [ a a a a a a , b ]));
-// assert(!buchiIsEmpty(finitelyManyB));
-// 
-// assert(buchiAccepts(infinitelyManyA, [ , a b b b ]));
-// assert(!buchiAccepts(infinitelyManyA, [ , b ]));
-// 
-// assert(buchiAccepts(AfollowedByB, [ b b b , a b b b a b ]));
-// assert(!buchiAccepts(AfollowedByB, [ b b b , a a b b a b ]));
-
 NestedWordAutomaton complementBS = buchiComplementBS(nwa);
-print(complementBS);
+print(numberOfStates(complementBS));
+// print(complementBS);
+NestedWordAutomaton complementFKV = buchiComplementFKV(nwa, "HeiMat2", 77);
+print(numberOfStates(complementFKV));
+
+assert(!buchiAccepts(nwa, [ a b, a ]));
+assert(buchiAccepts(complementBS, [ a b, a ]));
+assert(buchiAccepts(complementFKV, [ a b , a ]));
+
 
 NestedWordAutomaton nwa = (
 	callAlphabet = { },
