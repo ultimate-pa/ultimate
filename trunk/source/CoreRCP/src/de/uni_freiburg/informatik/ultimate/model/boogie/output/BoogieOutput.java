@@ -948,7 +948,7 @@ public class BoogieOutput {
 	public void printVarDeclaration(VariableDeclaration decl, String indent) {
 		StringBuilder sb = new StringBuilder();
 		appendVariableDeclaration(sb, decl, indent);
-		m_Writer.println(sb.toString());
+		m_Writer.print(sb.toString());
 	}
 
 	protected void appendVariableDeclaration(StringBuilder sb, VariableDeclaration decl, String indent) {
