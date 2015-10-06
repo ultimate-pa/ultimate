@@ -102,9 +102,13 @@ public class KeywordBasedExpectedResultFinder<OVERALL_RESULT> implements
 			}
 		}
 		String firstline = TestUtil.extractFirstLine(file);
-		for (Entry<String, OVERALL_RESULT> entry  : m_FirstlineKeywords.entrySet()) {
-			if (firstline.contains(entry.getKey())) {
-				expectedResult.add(entry.getValue());
+		// 2015-10-04 Matthias: firstline != null is a workaround that I used
+		// for emtpy files (SV-COMP benchmark set contained empty files). 
+		if (firstline != null) {
+			for (Entry<String, OVERALL_RESULT> entry  : m_FirstlineKeywords.entrySet()) {
+				if (firstline.contains(entry.getKey())) {
+					expectedResult.add(entry.getValue());
+				}
 			}
 		}
 		if (expectedResult.size() == 0) {

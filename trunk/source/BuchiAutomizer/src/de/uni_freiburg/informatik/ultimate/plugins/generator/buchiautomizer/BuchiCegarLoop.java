@@ -871,7 +871,7 @@ public class BuchiCegarLoop {
 
 	protected static void writeAutomatonToFile(IUltimateServiceProvider services, IAutomaton<CodeBlock, IPredicate> automaton, String path,
 			String filename, String message) {
-		new AutomatonDefinitionPrinter<String, String>(services, filename, path + "/" + filename, m_PrintAutomataLabeling, message, automaton);
+		new AutomatonDefinitionPrinter<String, String>(services, "nwa", path + "/" + filename, m_PrintAutomataLabeling, message, automaton);
 	}
 
 	public BuchiAutomizerModuleDecompositionBenchmark getMDBenchmark() {

@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -186,9 +187,9 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 		return m_Operand.getReturnAlphabet();
 	}
 	
-	private LevelRankingConstraint<LETTER, STATE> computeSuccLevelRankingConstraints_Internal(
+	private LevelRankingConstraintDrdCheck<LETTER, STATE> computeSuccLevelRankingConstraints_Internal(
 			STATE state, LETTER letter) {
-		LevelRankingConstraint<LETTER, STATE> lrcwh = new LevelRankingConstraint(m_Operand, 7777, true);
+		LevelRankingConstraintDrdCheck<LETTER, STATE> lrcwh = new LevelRankingConstraintDrdCheck(m_Operand, 7777, true);
 		LevelRankingState<LETTER,STATE> lvlrkState = m_res2det.get(state);
 		for (StateWithRankInfo<STATE> down : lvlrkState.getDownStates()) {
 			for (StateWithRankInfo<STATE> up : lvlrkState.getUpStates(down)) {
@@ -202,9 +203,9 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 		return lrcwh;
 	}
 	
-	private LevelRankingConstraint<LETTER, STATE> computeSuccLevelRankingConstraints_Call(
+	private LevelRankingConstraintDrdCheck<LETTER, STATE> computeSuccLevelRankingConstraints_Call(
 			STATE state, LETTER letter) {
-		LevelRankingConstraint<LETTER, STATE> lrcwh = new LevelRankingConstraint(m_Operand, 7777, true);
+		LevelRankingConstraintDrdCheck<LETTER, STATE> lrcwh = new LevelRankingConstraintDrdCheck(m_Operand, 7777, true);
 		LevelRankingState<LETTER,STATE> lvlrkState = m_res2det.get(state);
 		for (StateWithRankInfo<STATE> down : lvlrkState.getDownStates()) {
 			for (StateWithRankInfo<STATE> up : lvlrkState.getUpStates(down)) {
@@ -218,9 +219,9 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 		return lrcwh;
 	}
 	
-	private LevelRankingConstraint<LETTER, STATE> computeSuccLevelRankingConstraints_Return(
+	private LevelRankingConstraintDrdCheck<LETTER, STATE> computeSuccLevelRankingConstraints_Return(
 			STATE state, STATE hier, LETTER letter) {
-		LevelRankingConstraint<LETTER, STATE> lrcwh = new LevelRankingConstraint(m_Operand, 7777, true);
+		LevelRankingConstraintDrdCheck<LETTER, STATE> lrcwh = new LevelRankingConstraintDrdCheck(m_Operand, 7777, true);
 		LevelRankingState<LETTER,STATE> lvlrkState = m_res2det.get(state);
 		LevelRankingState<LETTER,STATE> lvlrkHier = m_res2det.get(hier);
 		for (StateWithRankInfo<STATE> downHier : lvlrkHier.getDownStates()) {
@@ -242,7 +243,11 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 
 
 	private List<LevelRankingState<LETTER, STATE>> computeSuccLevelRankingStates(
-			LevelRankingConstraint<LETTER, STATE> lrcwh) {
+			LevelRankingConstraintDrdCheck<LETTER, STATE> lrcwh) {
+		if (lrcwh.aroseFromDelayedRankDecrease()) {
+			// in this case we do not want to have successor states
+			return Collections.emptyList();
+		}
 		List<LevelRankingState<LETTER, STATE>> succLvls = new ArrayList<LevelRankingState<LETTER,STATE>>();
 		Set<DoubleDecker<StateWithRankInfo<STATE>>> allDoubleDeckersWithVoluntaryDecrease = 
 				computeDoubleDeckersWithVoluntaryDecrease(lrcwh);
@@ -260,16 +265,16 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 
 
 	private Set<DoubleDecker<StateWithRankInfo<STATE>>> computeDoubleDeckersWithVoluntaryDecrease(
-			LevelRankingConstraint<LETTER, STATE> lrcwh) {
+			LevelRankingConstraintDrdCheck<LETTER, STATE> lrcwh) {
 		Set<DoubleDecker<StateWithRankInfo<STATE>>> doubleDeckersWithVoluntaryDecrease = new HashSet<DoubleDecker<StateWithRankInfo<STATE>>>();
 		for (DoubleDecker<StateWithRankInfo<STATE>> predWasAccepting : lrcwh.getPredecessorWasAccepting()) {
-			// we only want to decrease if state was in O 
-			// (because the decrease is only done to let the state leave O)
-			boolean inO = lrcwh.inO(predWasAccepting.getDown(), predWasAccepting.getUp().getState());
-			// if not only the predecessor but also the state is final,
-			// it is useless to decrease the rank
+			// we will decrease the rank if 
+			// predecessor was final
+			// state has even rank (resp. lowest rank constraint is even)
+			// state is not final
+			int rank = lrcwh.getRank(predWasAccepting.getDown(), predWasAccepting.getUp().getState());
 			boolean isFinal = m_Operand.isFinal(predWasAccepting.getUp().getState()); 
-			if ( inO && !isFinal) {
+			if (LevelRankingState.isEven(rank) && !isFinal) {
 				doubleDeckersWithVoluntaryDecrease.add(predWasAccepting);
 			}
 		}
@@ -277,7 +282,7 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 	}
 
 
-	private LevelRankingState<LETTER, STATE> computeLevelRanking(LevelRankingConstraint<LETTER, STATE> lrcwh,
+	private LevelRankingState<LETTER, STATE> computeLevelRanking(LevelRankingConstraintDrdCheck<LETTER, STATE> lrcwh,
 			Set<DoubleDecker<StateWithRankInfo<STATE>>> doubleDeckersWithVoluntaryDecrease) {
 		LevelRankingState<LETTER, STATE> result = new LevelRankingState<LETTER, STATE>(m_Operand);
 		for (StateWithRankInfo<STATE> down : lrcwh.getDownStates()) {
@@ -324,7 +329,7 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 			STATE state, LETTER letter) {
 		Collection<STATE> succs = m_Cache.succInternal(state, letter);
 		if (succs == null) {
-			LevelRankingConstraint<LETTER, STATE> lrcwh = computeSuccLevelRankingConstraints_Internal(
+			LevelRankingConstraintDrdCheck<LETTER, STATE> lrcwh = computeSuccLevelRankingConstraints_Internal(
 					state, letter);
 			List<LevelRankingState<LETTER, STATE>> succLvls = computeSuccLevelRankingStates(lrcwh);
 			for (LevelRankingState<LETTER, STATE> succLvl : succLvls) {
@@ -349,7 +354,7 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 			STATE state, LETTER letter) {
 		Collection<STATE> succs = m_Cache.succCall(state, letter);
 		if (succs == null) {
-			LevelRankingConstraint<LETTER, STATE> lrcwh = computeSuccLevelRankingConstraints_Call(
+			LevelRankingConstraintDrdCheck<LETTER, STATE> lrcwh = computeSuccLevelRankingConstraints_Call(
 					state, letter);
 			List<LevelRankingState<LETTER, STATE>> succLvls = computeSuccLevelRankingStates(lrcwh);
 			for (LevelRankingState<LETTER, STATE> succLvl : succLvls) {
@@ -376,7 +381,7 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 			STATE state, STATE hier, LETTER letter) {
 		Collection<STATE> succs = m_Cache.succReturn(state, hier, letter);
 		if (succs == null) {
-			LevelRankingConstraint<LETTER, STATE> lrcwh = computeSuccLevelRankingConstraints_Return(
+			LevelRankingConstraintDrdCheck<LETTER, STATE> lrcwh = computeSuccLevelRankingConstraints_Return(
 					state, hier, letter);
 			List<LevelRankingState<LETTER, STATE>> succLvls = computeSuccLevelRankingStates(lrcwh);
 			for (LevelRankingState<LETTER, STATE> succLvl : succLvls) {
