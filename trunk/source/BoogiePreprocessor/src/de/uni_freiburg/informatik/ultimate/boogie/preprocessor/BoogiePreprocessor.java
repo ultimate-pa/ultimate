@@ -40,8 +40,6 @@ import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 
 /**
  * This class initializes the boogie preprocessor.
@@ -105,6 +103,7 @@ public class BoogiePreprocessor implements IAnalysis {
 		observers.add(new StructExpander(backTranslator, logger));
 		observers.add(new UnstructureCode(backTranslator));
 		observers.add(new FunctionInliner());
+		observers.add(new TypeFlattener(logger));
 		observers.add(symb);
 		return observers;
 	}
