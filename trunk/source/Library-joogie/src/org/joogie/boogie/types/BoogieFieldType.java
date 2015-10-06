@@ -24,19 +24,19 @@ package org.joogie.boogie.types;
  */
 public class BoogieFieldType extends BoogieType {
 
-	private BoogieType nestedType;
+	private BoogieType mNestedType;
 
 	public BoogieFieldType(String name, BoogieType nestedtype) {
 		super(name);
-		nestedType = nestedtype;
+		mNestedType = nestedtype;
 	}
 
 	public BoogieType getNestedType() {
-		return nestedType;
+		return mNestedType;
 	}
 
 	@Override
 	public String toBoogie() {
-		return "Field " + nestedType.toBoogie();
+		return getName() + " " + mNestedType.toBoogie();
 	}
 }

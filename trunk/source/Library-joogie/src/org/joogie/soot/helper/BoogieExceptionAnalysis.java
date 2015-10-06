@@ -25,7 +25,7 @@ import java.util.HashSet;
 import org.joogie.HeapMode;
 import org.joogie.boogie.BoogieProcedure;
 import org.joogie.boogie.expressions.Variable;
-import org.joogie.boogie.types.BoogieBaseTypes;
+import org.joogie.boogie.types.BoogiePreludeTypes;
 import org.joogie.boogie.types.BoogieType;
 import org.joogie.boogie.types.RefArrayType;
 
@@ -127,9 +127,9 @@ public class BoogieExceptionAnalysis {
 						// TODO maybe this should be moved to the array handling
 						// as it is only a helper var
 						BoogieType t = mProgDecl.getTypeFactory().lookupBoogieArrayType((ArrayType) rhs.getType());
-						if (t == BoogieBaseTypes.getIntArrType()) {
+						if (t == BoogiePreludeTypes.TYPE_INT_ARRAY) {
 							proc.getModifiesGlobals().add(mProgDecl.getProgram().getIntArraySize());
-						} else if (t == BoogieBaseTypes.getRealArrType()) {
+						} else if (t == BoogiePreludeTypes.TYPE_REAL_ARRAY) {
 							proc.getModifiesGlobals().add(mProgDecl.getProgram().getRealArraySize());
 						} else if (t instanceof RefArrayType) {
 							proc.getModifiesGlobals().add(mProgDecl.getProgram().getRefArraySize());

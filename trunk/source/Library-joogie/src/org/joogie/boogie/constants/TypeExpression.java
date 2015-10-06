@@ -24,7 +24,7 @@ import java.util.List;
 
 import org.joogie.boogie.expressions.Expression;
 import org.joogie.boogie.expressions.Variable;
-import org.joogie.boogie.types.BoogieBaseTypes;
+import org.joogie.boogie.types.BoogiePreludeTypes;
 import org.joogie.boogie.types.BoogieType;
 
 /**
@@ -56,7 +56,7 @@ public class TypeExpression extends Expression {
 
 	@Override
 	public BoogieType getType() {
-		return BoogieBaseTypes.getClassConstType();
+		return BoogiePreludeTypes.TYPE_CLASS_CONST;
 	}
 
 	@Override

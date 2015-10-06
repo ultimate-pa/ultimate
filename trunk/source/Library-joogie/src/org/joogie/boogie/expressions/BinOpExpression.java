@@ -22,7 +22,7 @@ package org.joogie.boogie.expressions;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.joogie.boogie.types.BoogieBaseTypes;
+import org.joogie.boogie.types.BoogiePreludeTypes;
 import org.joogie.boogie.types.BoogieType;
 
 /**
@@ -108,7 +108,7 @@ public class BinOpExpression extends Expression {
 		case Implies:
 		case LAnd:
 		case LOr:
-			return BoogieBaseTypes.getBoolType();
+			return BoogiePreludeTypes.TYPE_BOOL;
 		case Div:
 		case Minus:
 		case Mul:

@@ -107,7 +107,7 @@ public class BoogieStmtSwitch implements StmtSwitch {
 		mCurrentProcedure = proc;
 		mLogger = logger;
 		mHeapMode = mode;
-		
+
 		// check if there is a rootblock already (e.g., because exception vars
 		// are initialized)
 		mCurrentBlock = proc.getRootBlock();
@@ -117,7 +117,7 @@ public class BoogieStmtSwitch implements StmtSwitch {
 		// TODO: the current procedure should not be
 		// kept in 2 different places. This causes bugs
 		mProgDecl.setCurrentProcedure(proc);
-		
+
 	}
 
 	public void prepareCurrentBlock(Stmt stmt) {
@@ -407,7 +407,7 @@ public class BoogieStmtSwitch implements StmtSwitch {
 	public void caseAssignStmt(AssignStmt arg0) {
 		translateAssigningStatement(arg0);
 	}
-	
+
 	@Override
 	public void caseBreakpointStmt(BreakpointStmt arg0) {
 		mLogger.error("Breakpoint: " + arg0.toString());
@@ -419,6 +419,7 @@ public class BoogieStmtSwitch implements StmtSwitch {
 	 */
 	@Override
 	public void caseEnterMonitorStmt(EnterMonitorStmt arg0) {
+		mLogger.warn("Ignoring monitorEnter");
 		// We do not consider multi threading right now
 	}
 
@@ -427,6 +428,7 @@ public class BoogieStmtSwitch implements StmtSwitch {
 	 */
 	@Override
 	public void caseExitMonitorStmt(ExitMonitorStmt arg0) {
+		mLogger.warn("Ignoring monitorExit");
 		// We do not consider multi threading right now
 	}
 

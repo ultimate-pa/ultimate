@@ -25,7 +25,7 @@ package org.joogie.boogie.types;
  */
 public class RealArrayType extends BoogieArrayType {
 	public RealArrayType(String name) {
-		super(name, BoogieBaseTypes.getRealType());
+		super(name, BoogiePreludeTypes.TYPE_REAL);
 	}
 
 }

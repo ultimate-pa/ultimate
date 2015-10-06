@@ -29,7 +29,7 @@ public class RefArrayType extends BoogieArrayType {
 	}
 
 	public RefArrayType(String name) {
-		super(name, BoogieBaseTypes.getRefType());
+		super(name, BoogiePreludeTypes.TYPE_REF);
 	}
 
 }

@@ -24,7 +24,7 @@ import java.util.List;
 
 import org.joogie.boogie.expressions.Expression;
 import org.joogie.boogie.expressions.Variable;
-import org.joogie.boogie.types.BoogieBaseTypes;
+import org.joogie.boogie.types.BoogiePreludeTypes;
 import org.joogie.boogie.types.BoogieType;
 
 /**
@@ -33,7 +33,7 @@ import org.joogie.boogie.types.BoogieType;
 public class UboundedIntConstant extends Constant {
 
 	private Long value;
-	private BoogieType type = BoogieBaseTypes.getIntType();
+	private BoogieType type = BoogiePreludeTypes.TYPE_INT;
 
 	public Long getValue() {
 		return value;

@@ -41,7 +41,7 @@ import org.joogie.boogie.expressions.Variable;
 import org.joogie.boogie.statements.AssignStatement;
 import org.joogie.boogie.types.ArrArrayType;
 import org.joogie.boogie.types.BoogieArrayType;
-import org.joogie.boogie.types.BoogieBaseTypes;
+import org.joogie.boogie.types.BoogiePreludeTypes;
 import org.joogie.boogie.types.BoogieObjectType;
 import org.joogie.boogie.types.BoogieType;
 import org.joogie.boogie.types.RefArrayType;
@@ -101,114 +101,114 @@ public class OperatorFunctionFactory {
 	}
 
 	private void init(BoogieProgram prog) {
-		newVariable = createProcedure("$newvariable", BoogieBaseTypes.getRefType(), BoogieBaseTypes.getIntType());
+		newVariable = createProcedure("$newvariable", BoogiePreludeTypes.TYPE_REF, BoogiePreludeTypes.TYPE_INT);
 		mOperatorProcs.add(newVariable);
 
-		instanceofOp = createProcedure("$instanceof", BoogieBaseTypes.getBoolType(), BoogieBaseTypes.getRefType(),
-				BoogieBaseTypes.getClassConstType());
+		instanceofOp = createProcedure("$instanceof", BoogiePreludeTypes.TYPE_BOOL, BoogiePreludeTypes.TYPE_REF,
+				BoogiePreludeTypes.TYPE_CLASS_CONST);
 		mOperatorProcs.add(instanceofOp);
 
-		eqIntArray = createProcedure("$eqintarray", BoogieBaseTypes.getBoolType(), BoogieBaseTypes.getIntArrType(),
-				BoogieBaseTypes.getIntArrType());
+		eqIntArray = createProcedure("$eqintarray", BoogiePreludeTypes.TYPE_BOOL, BoogiePreludeTypes.TYPE_INT_ARRAY,
+				BoogiePreludeTypes.TYPE_INT_ARRAY);
 		mOperatorProcs.add(eqIntArray);
 
-		eqRealArray = createProcedure("$eqrealarray", BoogieBaseTypes.getBoolType(), BoogieBaseTypes.getRealArrType(),
-				BoogieBaseTypes.getRealArrType());
+		eqRealArray = createProcedure("$eqrealarray", BoogiePreludeTypes.TYPE_BOOL, BoogiePreludeTypes.TYPE_REAL_ARRAY,
+				BoogiePreludeTypes.TYPE_REAL_ARRAY);
 		mOperatorProcs.add(eqRealArray);
 
-		eqRefArray = createProcedure("$eqrefarray", BoogieBaseTypes.getBoolType(), BoogieBaseTypes.getRefArrType(),
-				BoogieBaseTypes.getRefArrType());
+		eqRefArray = createProcedure("$eqrefarray", BoogiePreludeTypes.TYPE_BOOL, BoogiePreludeTypes.TYPE_REF_ARRAY,
+				BoogiePreludeTypes.TYPE_REF_ARRAY);
 		mOperatorProcs.add(eqRefArray);
 
-		intArrToRef = createProcedure("$intarrtoref", BoogieBaseTypes.getRefType(), BoogieBaseTypes.getIntArrType());
+		intArrToRef = createProcedure("$intarrtoref", BoogiePreludeTypes.TYPE_REF, BoogiePreludeTypes.TYPE_INT_ARRAY);
 		mOperatorProcs.add(intArrToRef);
 
-		realArrToRef = createProcedure("$realarrtoref", BoogieBaseTypes.getRefType(), BoogieBaseTypes.getRealArrType());
+		realArrToRef = createProcedure("$realarrtoref", BoogiePreludeTypes.TYPE_REF, BoogiePreludeTypes.TYPE_REAL_ARRAY);
 		mOperatorProcs.add(realArrToRef);
 
-		refArrToRef = createProcedure("$refarrtoref", BoogieBaseTypes.getRefType(), BoogieBaseTypes.getRefArrType());
+		refArrToRef = createProcedure("$refarrtoref", BoogiePreludeTypes.TYPE_REF, BoogiePreludeTypes.TYPE_REF_ARRAY);
 		mOperatorProcs.add(refArrToRef);
 
-		refToIntArr = createProcedure("$reftointarr", BoogieBaseTypes.getIntArrType(), BoogieBaseTypes.getRefType());
+		refToIntArr = createProcedure("$reftointarr", BoogiePreludeTypes.TYPE_INT_ARRAY, BoogiePreludeTypes.TYPE_REF);
 		mOperatorProcs.add(refToIntArr);
 
-		refToRealArr = createProcedure("$reftorealarr", BoogieBaseTypes.getRealArrType(), BoogieBaseTypes.getRefType());
+		refToRealArr = createProcedure("$reftorealarr", BoogiePreludeTypes.TYPE_REAL_ARRAY, BoogiePreludeTypes.TYPE_REF);
 		mOperatorProcs.add(refToRealArr);
 
-		refToRefArr = createProcedure("$reftorefarr", BoogieBaseTypes.getRefArrType(), BoogieBaseTypes.getRefType());
+		refToRefArr = createProcedure("$reftorefarr", BoogiePreludeTypes.TYPE_REF_ARRAY, BoogiePreludeTypes.TYPE_REF);
 		mOperatorProcs.add(refToRefArr);
 
-		intToReal = createProcedure("$inttoreal", BoogieBaseTypes.getRealType(), BoogieBaseTypes.getIntType());
+		intToReal = createProcedure("$inttoreal", BoogiePreludeTypes.TYPE_REAL, BoogiePreludeTypes.TYPE_INT);
 		mOperatorProcs.add(intToReal);
 
-		refToInt = createProcedure("$reftoint", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRefType());
+		refToInt = createProcedure("$reftoint", BoogiePreludeTypes.TYPE_INT, BoogiePreludeTypes.TYPE_REF);
 		mOperatorProcs.add(refToInt);
 
-		realToInt = createProcedure("$realtoint", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRealType());
+		realToInt = createProcedure("$realtoint", BoogiePreludeTypes.TYPE_INT, BoogiePreludeTypes.TYPE_REAL);
 		mOperatorProcs.add(realToInt);
 
-		negInt = new BoogieProcedure("$negInt", BoogieBaseTypes.getIntType(), createNegIntExpression(),
+		negInt = new BoogieProcedure("$negInt", BoogiePreludeTypes.TYPE_INT, createNegIntExpression(),
 				mProgDec.getUniqueUid());
 		mOperatorProcs.add(negInt);
 
-		negReal = createProcedure("$negReal", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRealType());
+		negReal = createProcedure("$negReal", BoogiePreludeTypes.TYPE_INT, BoogiePreludeTypes.TYPE_REAL);
 		mOperatorProcs.add(negReal);
 
-		negRef = createProcedure("$negRef", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRefType());
+		negRef = createProcedure("$negRef", BoogiePreludeTypes.TYPE_INT, BoogiePreludeTypes.TYPE_REF);
 		mOperatorProcs.add(negRef);
 
 		// Integer operations
-		addInt = new BoogieProcedure("$addint", BoogieBaseTypes.getIntType(),
-				createBinOpExpression(Operator.Plus, BoogieBaseTypes.getIntType()), mProgDec.getUniqueUid());
-		subInt = new BoogieProcedure("$subint", BoogieBaseTypes.getIntType(),
-				createBinOpExpression(Operator.Minus, BoogieBaseTypes.getIntType()), mProgDec.getUniqueUid());
+		addInt = new BoogieProcedure("$addint", BoogiePreludeTypes.TYPE_INT,
+				createBinOpExpression(Operator.Plus, BoogiePreludeTypes.TYPE_INT), mProgDec.getUniqueUid());
+		subInt = new BoogieProcedure("$subint", BoogiePreludeTypes.TYPE_INT,
+				createBinOpExpression(Operator.Minus, BoogiePreludeTypes.TYPE_INT), mProgDec.getUniqueUid());
 		// TODO Don't create a procedure body for mul as Princess cannot deal
 		// with that
 		// mulInt = new BoogieProcedure("$mulint",
 		// BoogieBaseTypes.getIntType(),
 		// createBinOpExpression(Operator.Mul,
 		// BoogieBaseTypes.getIntType()));
-		mulInt = createProcedure("$mulint", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getIntType(),
-				BoogieBaseTypes.getIntType());
+		mulInt = createProcedure("$mulint", BoogiePreludeTypes.TYPE_INT, BoogiePreludeTypes.TYPE_INT,
+				BoogiePreludeTypes.TYPE_INT);
 
 		// TODO Don't create a procedure body for div as Princess cannot deal
 		// with that
 		// divInt = new BoogieProcedure("$divint",
 		// BoogieBaseTypes.getIntType(), createBinOpExpression(Operator.Div,
 		// BoogieBaseTypes.getIntType()) );
-		divInt = createProcedure("$divint", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getIntType(),
-				BoogieBaseTypes.getIntType());
-		modInt = createProcedure("$modint", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getIntType(),
-				BoogieBaseTypes.getIntType());
+		divInt = createProcedure("$divint", BoogiePreludeTypes.TYPE_INT, BoogiePreludeTypes.TYPE_INT,
+				BoogiePreludeTypes.TYPE_INT);
+		modInt = createProcedure("$modint", BoogiePreludeTypes.TYPE_INT, BoogiePreludeTypes.TYPE_INT,
+				BoogiePreludeTypes.TYPE_INT);
 
-		eqInt = new BoogieProcedure("$eqint", BoogieBaseTypes.getBoolType(),
-				createLogOpExpression(Operator.Eq, BoogieBaseTypes.getIntType()), mProgDec.getUniqueUid());
-		neInt = new BoogieProcedure("$neint", BoogieBaseTypes.getBoolType(),
-				createLogOpExpression(Operator.Neq, BoogieBaseTypes.getIntType()), mProgDec.getUniqueUid());
-		ltInt = new BoogieProcedure("$ltint", BoogieBaseTypes.getBoolType(),
-				createLogOpExpression(Operator.Lt, BoogieBaseTypes.getIntType()), mProgDec.getUniqueUid());
-		leInt = new BoogieProcedure("$leint", BoogieBaseTypes.getBoolType(),
-				createLogOpExpression(Operator.Le, BoogieBaseTypes.getIntType()), mProgDec.getUniqueUid());
-		gtInt = new BoogieProcedure("$gtint", BoogieBaseTypes.getBoolType(),
-				createLogOpExpression(Operator.Gt, BoogieBaseTypes.getIntType()), mProgDec.getUniqueUid());
-		geInt = new BoogieProcedure("$geint", BoogieBaseTypes.getBoolType(),
-				createLogOpExpression(Operator.Ge, BoogieBaseTypes.getIntType()), mProgDec.getUniqueUid());
+		eqInt = new BoogieProcedure("$eqint", BoogiePreludeTypes.TYPE_BOOL,
+				createLogOpExpression(Operator.Eq, BoogiePreludeTypes.TYPE_INT), mProgDec.getUniqueUid());
+		neInt = new BoogieProcedure("$neint", BoogiePreludeTypes.TYPE_BOOL,
+				createLogOpExpression(Operator.Neq, BoogiePreludeTypes.TYPE_INT), mProgDec.getUniqueUid());
+		ltInt = new BoogieProcedure("$ltint", BoogiePreludeTypes.TYPE_BOOL,
+				createLogOpExpression(Operator.Lt, BoogiePreludeTypes.TYPE_INT), mProgDec.getUniqueUid());
+		leInt = new BoogieProcedure("$leint", BoogiePreludeTypes.TYPE_BOOL,
+				createLogOpExpression(Operator.Le, BoogiePreludeTypes.TYPE_INT), mProgDec.getUniqueUid());
+		gtInt = new BoogieProcedure("$gtint", BoogiePreludeTypes.TYPE_BOOL,
+				createLogOpExpression(Operator.Gt, BoogiePreludeTypes.TYPE_INT), mProgDec.getUniqueUid());
+		geInt = new BoogieProcedure("$geint", BoogiePreludeTypes.TYPE_BOOL,
+				createLogOpExpression(Operator.Ge, BoogiePreludeTypes.TYPE_INT), mProgDec.getUniqueUid());
 
-		cmpInt = new BoogieProcedure("$cmpint", BoogieBaseTypes.getIntType(),
-				createCmpExpression(BoogieBaseTypes.getIntType()), mProgDec.getUniqueUid());
+		cmpInt = new BoogieProcedure("$cmpint", BoogiePreludeTypes.TYPE_INT,
+				createCmpExpression(BoogiePreludeTypes.TYPE_INT), mProgDec.getUniqueUid());
 
-		andInt = createProcedure("$andint", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getIntType(),
-				BoogieBaseTypes.getIntType());
-		orInt = createProcedure("$orint", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getIntType(),
-				BoogieBaseTypes.getIntType());
-		xorInt = createProcedure("$xorint", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getIntType(),
-				BoogieBaseTypes.getIntType());
-		ushrInt = createProcedure("$ushrint", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getIntType(),
-				BoogieBaseTypes.getIntType());
-		shlInt = createProcedure("$shlint", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getIntType(),
-				BoogieBaseTypes.getIntType());
-		shrInt = createProcedure("$shrint", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getIntType(),
-				BoogieBaseTypes.getIntType());
+		andInt = createProcedure("$andint", BoogiePreludeTypes.TYPE_INT, BoogiePreludeTypes.TYPE_INT,
+				BoogiePreludeTypes.TYPE_INT);
+		orInt = createProcedure("$orint", BoogiePreludeTypes.TYPE_INT, BoogiePreludeTypes.TYPE_INT,
+				BoogiePreludeTypes.TYPE_INT);
+		xorInt = createProcedure("$xorint", BoogiePreludeTypes.TYPE_INT, BoogiePreludeTypes.TYPE_INT,
+				BoogiePreludeTypes.TYPE_INT);
+		ushrInt = createProcedure("$ushrint", BoogiePreludeTypes.TYPE_INT, BoogiePreludeTypes.TYPE_INT,
+				BoogiePreludeTypes.TYPE_INT);
+		shlInt = createProcedure("$shlint", BoogiePreludeTypes.TYPE_INT, BoogiePreludeTypes.TYPE_INT,
+				BoogiePreludeTypes.TYPE_INT);
+		shrInt = createProcedure("$shrint", BoogiePreludeTypes.TYPE_INT, BoogiePreludeTypes.TYPE_INT,
+				BoogiePreludeTypes.TYPE_INT);
 
 		intOperators = new LinkedList<BoogieProcedure>(
 				Arrays.asList(new BoogieProcedure[] { addInt, subInt, mulInt, divInt, modInt, cmpInt, eqInt, ltInt,
@@ -218,40 +218,40 @@ public class OperatorFunctionFactory {
 
 		// Real operations
 		// -------------------------------------------------------
-		eqReal = new BoogieProcedure("$eqreal", BoogieBaseTypes.getBoolType(),
-				createLogOpExpression(Operator.Eq, BoogieBaseTypes.getRealType()), mProgDec.getUniqueUid());
-		neReal = new BoogieProcedure("$nereal", BoogieBaseTypes.getBoolType(),
-				createLogOpExpression(Operator.Neq, BoogieBaseTypes.getRealType()), mProgDec.getUniqueUid());
-		addReal = createProcedure("$addreal", BoogieBaseTypes.getRealType(), BoogieBaseTypes.getRealType(),
-				BoogieBaseTypes.getRealType());
-		subReal = createProcedure("$subreal", BoogieBaseTypes.getRealType(), BoogieBaseTypes.getRealType(),
-				BoogieBaseTypes.getRealType());
-		mulReal = createProcedure("$mulreal", BoogieBaseTypes.getRealType(), BoogieBaseTypes.getRealType(),
-				BoogieBaseTypes.getRealType());
-		divReal = createProcedure("$divreal", BoogieBaseTypes.getRealType(), BoogieBaseTypes.getRealType(),
-				BoogieBaseTypes.getRealType());
-		modReal = createProcedure("$modreal", BoogieBaseTypes.getRealType(), BoogieBaseTypes.getRealType(),
-				BoogieBaseTypes.getRealType());
-		ltReal = createProcedure("$ltreal", BoogieBaseTypes.getBoolType(), BoogieBaseTypes.getRealType(),
-				BoogieBaseTypes.getRealType());
-		leReal = createProcedure("$lereal", BoogieBaseTypes.getBoolType(), BoogieBaseTypes.getRealType(),
-				BoogieBaseTypes.getRealType());
-		gtReal = createProcedure("$gtreal", BoogieBaseTypes.getBoolType(), BoogieBaseTypes.getRealType(),
-				BoogieBaseTypes.getRealType());
-		geReal = createProcedure("$gereal", BoogieBaseTypes.getBoolType(), BoogieBaseTypes.getRealType(),
-				BoogieBaseTypes.getRealType());
-		andReal = createProcedure("$andreal", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRealType(),
-				BoogieBaseTypes.getRealType());
-		orReal = createProcedure("$orreal", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRealType(),
-				BoogieBaseTypes.getRealType());
-		xorReal = createProcedure("$xorreal", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRealType(),
-				BoogieBaseTypes.getRealType());
-		ushrReal = createProcedure("$ushrreal", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRealType(),
-				BoogieBaseTypes.getRealType());
-		shlReal = createProcedure("$shlreal", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRealType(),
-				BoogieBaseTypes.getRealType());
-		shrReal = createProcedure("$shrreal", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRealType(),
-				BoogieBaseTypes.getRealType());
+		eqReal = new BoogieProcedure("$eqreal", BoogiePreludeTypes.TYPE_BOOL,
+				createLogOpExpression(Operator.Eq, BoogiePreludeTypes.TYPE_REAL), mProgDec.getUniqueUid());
+		neReal = new BoogieProcedure("$nereal", BoogiePreludeTypes.TYPE_BOOL,
+				createLogOpExpression(Operator.Neq, BoogiePreludeTypes.TYPE_REAL), mProgDec.getUniqueUid());
+		addReal = createProcedure("$addreal", BoogiePreludeTypes.TYPE_REAL, BoogiePreludeTypes.TYPE_REAL,
+				BoogiePreludeTypes.TYPE_REAL);
+		subReal = createProcedure("$subreal", BoogiePreludeTypes.TYPE_REAL, BoogiePreludeTypes.TYPE_REAL,
+				BoogiePreludeTypes.TYPE_REAL);
+		mulReal = createProcedure("$mulreal", BoogiePreludeTypes.TYPE_REAL, BoogiePreludeTypes.TYPE_REAL,
+				BoogiePreludeTypes.TYPE_REAL);
+		divReal = createProcedure("$divreal", BoogiePreludeTypes.TYPE_REAL, BoogiePreludeTypes.TYPE_REAL,
+				BoogiePreludeTypes.TYPE_REAL);
+		modReal = createProcedure("$modreal", BoogiePreludeTypes.TYPE_REAL, BoogiePreludeTypes.TYPE_REAL,
+				BoogiePreludeTypes.TYPE_REAL);
+		ltReal = createProcedure("$ltreal", BoogiePreludeTypes.TYPE_BOOL, BoogiePreludeTypes.TYPE_REAL,
+				BoogiePreludeTypes.TYPE_REAL);
+		leReal = createProcedure("$lereal", BoogiePreludeTypes.TYPE_BOOL, BoogiePreludeTypes.TYPE_REAL,
+				BoogiePreludeTypes.TYPE_REAL);
+		gtReal = createProcedure("$gtreal", BoogiePreludeTypes.TYPE_BOOL, BoogiePreludeTypes.TYPE_REAL,
+				BoogiePreludeTypes.TYPE_REAL);
+		geReal = createProcedure("$gereal", BoogiePreludeTypes.TYPE_BOOL, BoogiePreludeTypes.TYPE_REAL,
+				BoogiePreludeTypes.TYPE_REAL);
+		andReal = createProcedure("$andreal", BoogiePreludeTypes.TYPE_INT, BoogiePreludeTypes.TYPE_REAL,
+				BoogiePreludeTypes.TYPE_REAL);
+		orReal = createProcedure("$orreal", BoogiePreludeTypes.TYPE_INT, BoogiePreludeTypes.TYPE_REAL,
+				BoogiePreludeTypes.TYPE_REAL);
+		xorReal = createProcedure("$xorreal", BoogiePreludeTypes.TYPE_INT, BoogiePreludeTypes.TYPE_REAL,
+				BoogiePreludeTypes.TYPE_REAL);
+		ushrReal = createProcedure("$ushrreal", BoogiePreludeTypes.TYPE_INT, BoogiePreludeTypes.TYPE_REAL,
+				BoogiePreludeTypes.TYPE_REAL);
+		shlReal = createProcedure("$shlreal", BoogiePreludeTypes.TYPE_INT, BoogiePreludeTypes.TYPE_REAL,
+				BoogiePreludeTypes.TYPE_REAL);
+		shrReal = createProcedure("$shrreal", BoogiePreludeTypes.TYPE_INT, BoogiePreludeTypes.TYPE_REAL,
+				BoogiePreludeTypes.TYPE_REAL);
 
 		realOperators = new LinkedList<BoogieProcedure>(
 				Arrays.asList(new BoogieProcedure[] { addReal, subReal, mulReal, divReal, modReal, eqReal, ltReal,
@@ -260,43 +260,43 @@ public class OperatorFunctionFactory {
 		mOperatorProcs.addAll(realOperators);
 
 		// Ref operations
-		addRef = createProcedure("$addref", BoogieBaseTypes.getRefType(), BoogieBaseTypes.getRefType(),
-				BoogieBaseTypes.getRefType());
-		subRef = createProcedure("$subref", BoogieBaseTypes.getRefType(), BoogieBaseTypes.getRefType(),
-				BoogieBaseTypes.getRefType());
-		mulRef = createProcedure("$mulref", BoogieBaseTypes.getRefType(), BoogieBaseTypes.getRefType(),
-				BoogieBaseTypes.getRefType());
-		divRef = createProcedure("$divref", BoogieBaseTypes.getRefType(), BoogieBaseTypes.getRefType(),
-				BoogieBaseTypes.getRefType());
-		modRef = createProcedure("$modref", BoogieBaseTypes.getRefType(), BoogieBaseTypes.getRefType(),
-				BoogieBaseTypes.getRefType());
+		addRef = createProcedure("$addref", BoogiePreludeTypes.TYPE_REF, BoogiePreludeTypes.TYPE_REF,
+				BoogiePreludeTypes.TYPE_REF);
+		subRef = createProcedure("$subref", BoogiePreludeTypes.TYPE_REF, BoogiePreludeTypes.TYPE_REF,
+				BoogiePreludeTypes.TYPE_REF);
+		mulRef = createProcedure("$mulref", BoogiePreludeTypes.TYPE_REF, BoogiePreludeTypes.TYPE_REF,
+				BoogiePreludeTypes.TYPE_REF);
+		divRef = createProcedure("$divref", BoogiePreludeTypes.TYPE_REF, BoogiePreludeTypes.TYPE_REF,
+				BoogiePreludeTypes.TYPE_REF);
+		modRef = createProcedure("$modref", BoogiePreludeTypes.TYPE_REF, BoogiePreludeTypes.TYPE_REF,
+				BoogiePreludeTypes.TYPE_REF);
 
-		eqRef = new BoogieProcedure("$eqref", BoogieBaseTypes.getBoolType(),
-				createLogOpExpression(Operator.Eq, BoogieBaseTypes.getRefType()), mProgDec.getUniqueUid());
-		neRef = new BoogieProcedure("$neref", BoogieBaseTypes.getBoolType(),
-				createLogOpExpression(Operator.Neq, BoogieBaseTypes.getRefType()), mProgDec.getUniqueUid());
+		eqRef = new BoogieProcedure("$eqref", BoogiePreludeTypes.TYPE_BOOL,
+				createLogOpExpression(Operator.Eq, BoogiePreludeTypes.TYPE_REF), mProgDec.getUniqueUid());
+		neRef = new BoogieProcedure("$neref", BoogiePreludeTypes.TYPE_BOOL,
+				createLogOpExpression(Operator.Neq, BoogiePreludeTypes.TYPE_REF), mProgDec.getUniqueUid());
 
-		ltRef = createProcedure("$ltref", BoogieBaseTypes.getBoolType(), BoogieBaseTypes.getRefType(),
-				BoogieBaseTypes.getRefType());
-		leRef = createProcedure("$leref", BoogieBaseTypes.getBoolType(), BoogieBaseTypes.getRefType(),
-				BoogieBaseTypes.getRefType());
-		gtRef = createProcedure("$gtref", BoogieBaseTypes.getBoolType(), BoogieBaseTypes.getRefType(),
-				BoogieBaseTypes.getRefType());
-		geRef = createProcedure("$geref", BoogieBaseTypes.getBoolType(), BoogieBaseTypes.getRefType(),
-				BoogieBaseTypes.getRefType());
+		ltRef = createProcedure("$ltref", BoogiePreludeTypes.TYPE_BOOL, BoogiePreludeTypes.TYPE_REF,
+				BoogiePreludeTypes.TYPE_REF);
+		leRef = createProcedure("$leref", BoogiePreludeTypes.TYPE_BOOL, BoogiePreludeTypes.TYPE_REF,
+				BoogiePreludeTypes.TYPE_REF);
+		gtRef = createProcedure("$gtref", BoogiePreludeTypes.TYPE_BOOL, BoogiePreludeTypes.TYPE_REF,
+				BoogiePreludeTypes.TYPE_REF);
+		geRef = createProcedure("$geref", BoogiePreludeTypes.TYPE_BOOL, BoogiePreludeTypes.TYPE_REF,
+				BoogiePreludeTypes.TYPE_REF);
 
-		andRef = createProcedure("$andref", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRefType(),
-				BoogieBaseTypes.getRefType());
-		orRef = createProcedure("$orref", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRefType(),
-				BoogieBaseTypes.getRefType());
-		xorRef = createProcedure("$xorref", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRefType(),
-				BoogieBaseTypes.getRefType());
-		ushrRef = createProcedure("$ushrref", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRefType(),
-				BoogieBaseTypes.getRefType());
-		shlRef = createProcedure("$shlref", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRefType(),
-				BoogieBaseTypes.getRefType());
-		shrRef = createProcedure("$shrref", BoogieBaseTypes.getIntType(), BoogieBaseTypes.getRefType(),
-				BoogieBaseTypes.getRefType());
+		andRef = createProcedure("$andref", BoogiePreludeTypes.TYPE_INT, BoogiePreludeTypes.TYPE_REF,
+				BoogiePreludeTypes.TYPE_REF);
+		orRef = createProcedure("$orref", BoogiePreludeTypes.TYPE_INT, BoogiePreludeTypes.TYPE_REF,
+				BoogiePreludeTypes.TYPE_REF);
+		xorRef = createProcedure("$xorref", BoogiePreludeTypes.TYPE_INT, BoogiePreludeTypes.TYPE_REF,
+				BoogiePreludeTypes.TYPE_REF);
+		ushrRef = createProcedure("$ushrref", BoogiePreludeTypes.TYPE_INT, BoogiePreludeTypes.TYPE_REF,
+				BoogiePreludeTypes.TYPE_REF);
+		shlRef = createProcedure("$shlref", BoogiePreludeTypes.TYPE_INT, BoogiePreludeTypes.TYPE_REF,
+				BoogiePreludeTypes.TYPE_REF);
+		shrRef = createProcedure("$shrref", BoogiePreludeTypes.TYPE_INT, BoogiePreludeTypes.TYPE_REF,
+				BoogiePreludeTypes.TYPE_REF);
 
 		refOperators = new LinkedList<BoogieProcedure>(
 				Arrays.asList(new BoogieProcedure[] { addRef, subRef, mulRef, divRef, modRef, eqRef, ltRef, leRef,
@@ -306,13 +306,13 @@ public class OperatorFunctionFactory {
 
 		// The cmp operators for real and ref are created in the end,
 		// because they use other prelude functions
-		cmpReal = new BoogieProcedure("$cmpreal", BoogieBaseTypes.getIntType(),
-				createCmpExpression(BoogieBaseTypes.getRealType()), mProgDec.getUniqueUid());
+		cmpReal = new BoogieProcedure("$cmpreal", BoogiePreludeTypes.TYPE_INT,
+				createCmpExpression(BoogiePreludeTypes.TYPE_REAL), mProgDec.getUniqueUid());
 		realOperators.add(cmpReal);
 		mOperatorProcs.add(cmpReal);
 
-		cmpRef = new BoogieProcedure("$cmpref", BoogieBaseTypes.getIntType(),
-				createCmpExpression(BoogieBaseTypes.getRefType()), mProgDec.getUniqueUid());
+		cmpRef = new BoogieProcedure("$cmpref", BoogiePreludeTypes.TYPE_INT,
+				createCmpExpression(BoogiePreludeTypes.TYPE_REF), mProgDec.getUniqueUid());
 		refOperators.add(cmpRef);
 
 		mOperatorProcs.add(cmpRef); // operatorProcs now contains all prelude
@@ -393,13 +393,13 @@ public class OperatorFunctionFactory {
 
 	public Expression createNegOp(Expression exp) {
 		BoogieProcedure proc = null;
-		if (exp.getType() == BoogieBaseTypes.getIntType()) {
+		if (exp.getType() == BoogiePreludeTypes.TYPE_INT) {
 			proc = negInt;
-		} else if (exp.getType() == BoogieBaseTypes.getRealType()) {
+		} else if (exp.getType() == BoogiePreludeTypes.TYPE_REAL) {
 			proc = negReal;
 		} else if (exp.getType() instanceof BoogieObjectType) {
 			proc = negRef;
-		} else if (exp.getType() == BoogieBaseTypes.getBoolType()) {
+		} else if (exp.getType() == BoogiePreludeTypes.TYPE_BOOL) {
 			// Inline the negation operator for boolean expressions
 			return new UnaryExpression(UnaryOperator.Not, exp);
 		}
@@ -417,9 +417,9 @@ public class OperatorFunctionFactory {
 		if (compareTypes(exp.getType(), targetType)) {
 			return exp;
 		} else {
-			if (targetType == BoogieBaseTypes.getIntType()) {
+			if (targetType == BoogiePreludeTypes.TYPE_INT) {
 				return castToInt(exp);
-			} else if (targetType == BoogieBaseTypes.getRealType()) {
+			} else if (targetType == BoogiePreludeTypes.TYPE_REAL) {
 				return castToReal(exp);
 			} else if (targetType instanceof BoogieObjectType && exp.getType() instanceof BoogieArrayType) {
 				return castArrayToRef(mProgDec.getProgram(), exp);
@@ -546,16 +546,16 @@ public class OperatorFunctionFactory {
 
 	private Expression getOperatorFun(String opcode, Expression l, Expression r) {
 		LinkedList<BoogieProcedure> proctype = null;
-		if (l.getType() == r.getType() && l.getType() == BoogieBaseTypes.getIntType()) {
+		if (l.getType() == r.getType() && l.getType() == BoogiePreludeTypes.TYPE_INT) {
 			proctype = intOperators;
-		} else if (l.getType() == r.getType() && l.getType() == BoogieBaseTypes.getRealType()) {
+		} else if (l.getType() == r.getType() && l.getType() == BoogiePreludeTypes.TYPE_REAL) {
 			proctype = realOperators;
 		} else if (l.getType() instanceof BoogieObjectType && r.getType() instanceof BoogieObjectType) {
 			proctype = refOperators;
-		} else if (l.getType() == BoogieBaseTypes.getIntType() && r.getType() instanceof BoogieObjectType) {
+		} else if (l.getType() == BoogiePreludeTypes.TYPE_INT && r.getType() instanceof BoogieObjectType) {
 			r = castToInt(r);
 			proctype = intOperators;
-		} else if (l.getType() instanceof BoogieObjectType && r.getType() == BoogieBaseTypes.getIntType()) {
+		} else if (l.getType() instanceof BoogieObjectType && r.getType() == BoogiePreludeTypes.TYPE_INT) {
 			l = castToInt(l);
 			proctype = intOperators;
 		} else if (l.getType() instanceof BoogieArrayType && r.getType() instanceof BoogieArrayType) {
@@ -600,10 +600,10 @@ public class OperatorFunctionFactory {
 		LinkedList<Expression> args = new LinkedList<Expression>();
 		args.add(l);
 		args.add(r);
-		if (l.getType() == BoogieBaseTypes.getIntArrType()) {
+		if (l.getType() == BoogiePreludeTypes.TYPE_INT_ARRAY) {
 			mUsedOperatorProcs.add(eqIntArray);
 			return createInvokeExpression(eqIntArray, args);
-		} else if (l.getType() == BoogieBaseTypes.getRealArrType()) {
+		} else if (l.getType() == BoogiePreludeTypes.TYPE_REAL_ARRAY) {
 			mUsedOperatorProcs.add(eqRealArray);
 			return createInvokeExpression(eqRealArray, args);
 		} else if (l.getType() instanceof RefArrayType) {
@@ -646,9 +646,9 @@ public class OperatorFunctionFactory {
 	}
 
 	private Expression castToInt(Expression exp) {
-		if (exp.getType() == BoogieBaseTypes.getIntType()) {
+		if (exp.getType() == BoogiePreludeTypes.TYPE_INT) {
 			return exp;
-		} else if (exp.getType() == BoogieBaseTypes.getRealType()) {
+		} else if (exp.getType() == BoogiePreludeTypes.TYPE_REAL) {
 			LinkedList<Expression> args = new LinkedList<Expression>();
 			args.add(exp);
 			mUsedOperatorProcs.add(realToInt);
@@ -664,7 +664,7 @@ public class OperatorFunctionFactory {
 	}
 
 	private Expression castToReal(Expression exp) {
-		if (exp.getType() == BoogieBaseTypes.getIntType()) {
+		if (exp.getType() == BoogiePreludeTypes.TYPE_INT) {
 			LinkedList<Expression> args = new LinkedList<Expression>();
 			args.add(exp);
 			mUsedOperatorProcs.add(intToReal);
@@ -678,10 +678,10 @@ public class OperatorFunctionFactory {
 		LinkedList<Expression> args = new LinkedList<Expression>();
 		args.add(exp);
 		if (exp.getType() instanceof BoogieObjectType) {
-			if (arrtype == BoogieBaseTypes.getIntArrType()) {
+			if (arrtype == BoogiePreludeTypes.TYPE_INT_ARRAY) {
 				mUsedOperatorProcs.add(refToIntArr);
 				return createInvokeExpression(refToIntArr, args);
-			} else if (arrtype == BoogieBaseTypes.getRealArrType()) {
+			} else if (arrtype == BoogiePreludeTypes.TYPE_REAL_ARRAY) {
 				mUsedOperatorProcs.add(refToRealArr);
 				return createInvokeExpression(refToRealArr, args);
 			} else if (arrtype instanceof RefArrayType) {
@@ -697,10 +697,10 @@ public class OperatorFunctionFactory {
 		LinkedList<Expression> args = new LinkedList<Expression>();
 		args.add(exp);
 		BoogieType arrtype = exp.getType();
-		if (arrtype == BoogieBaseTypes.getIntArrType()) {
+		if (arrtype == BoogiePreludeTypes.TYPE_INT_ARRAY) {
 			mUsedOperatorProcs.add(intArrToRef);
 			return createInvokeExpression(intArrToRef, args);
-		} else if (arrtype == BoogieBaseTypes.getRealArrType()) {
+		} else if (arrtype == BoogiePreludeTypes.TYPE_REAL_ARRAY) {
 			mUsedOperatorProcs.add(realArrToRef);
 			return createInvokeExpression(realArrToRef, args);
 		} else if (arrtype instanceof RefArrayType) {
@@ -734,7 +734,7 @@ public class OperatorFunctionFactory {
 		final Variable x = mProgDec.createBoogieVariable("x", t);
 		final Variable y = mProgDec.createBoogieVariable("y", t);
 
-		if (t != BoogieBaseTypes.getIntType()) {
+		if (t != BoogiePreludeTypes.TYPE_INT) {
 			final Expression equality = createBinOp("==", x, y);
 			final Expression comparison = createBinOp("<", x, y);
 			return new IteExpression(comparison, new UboundedIntConstant(1L),
@@ -748,7 +748,7 @@ public class OperatorFunctionFactory {
 	}
 
 	private Expression createNegIntExpression() {
-		Variable x = mProgDec.createBoogieVariable("x", BoogieBaseTypes.getIntType());
+		Variable x = mProgDec.createBoogieVariable("x", BoogiePreludeTypes.TYPE_INT);
 		return new IteExpression(new BinOpExpression(Operator.Eq, x, new UboundedIntConstant(0L)),
 				new UboundedIntConstant(1L), new UboundedIntConstant(0L));
 

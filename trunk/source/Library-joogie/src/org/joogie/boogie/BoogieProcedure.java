@@ -34,7 +34,7 @@ import org.joogie.boogie.expressions.Expression;
 import org.joogie.boogie.expressions.Variable;
 import org.joogie.boogie.statements.ExpressionStatement;
 import org.joogie.boogie.statements.Statement;
-import org.joogie.boogie.types.BoogieBaseTypes;
+import org.joogie.boogie.types.BoogiePreludeTypes;
 import org.joogie.boogie.types.BoogieType;
 
 /**
@@ -137,11 +137,11 @@ public class BoogieProcedure {
 
 	public BoogieProcedure(String name, BoogieType returnType, LocationTag tag, String nameInSource,
 			LinkedList<BoogieType> parameterList2) {
-		this(name, createReturnVar(returnType), new Variable("__this", BoogieBaseTypes.getRefType(), false), false,
+		this(name, createReturnVar(returnType), new Variable("__this", BoogiePreludeTypes.TYPE_REF, false), false,
 				null, tag, nameInSource, null);
 		int i = 0;
 		for (BoogieType typ : parameterList2) {
-			mParameterList.add(new Variable("param" + (i++), BoogieBaseTypes.getRefType(), false));
+			mParameterList.add(new Variable("param" + (i++), BoogiePreludeTypes.TYPE_REF, false));
 		}
 
 	}
@@ -171,7 +171,7 @@ public class BoogieProcedure {
 	 */
 	public BoogieProcedure(String name, BoogieType rettype, boolean ispure, boolean thisref) {
 		this(name, createReturnVar(rettype),
-				thisref ? new Variable("__this", BoogieBaseTypes.getRefType(), false) : null, ispure, null, null, "",
+				thisref ? new Variable("__this", BoogiePreludeTypes.TYPE_REF, false) : null, ispure, null, null, "",
 				null);
 	}
 

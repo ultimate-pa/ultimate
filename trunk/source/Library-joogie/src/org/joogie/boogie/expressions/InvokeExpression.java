@@ -24,7 +24,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import org.joogie.boogie.BoogieProcedure;
-import org.joogie.boogie.types.BoogieBaseTypes;
+import org.joogie.boogie.types.BoogiePreludeTypes;
 import org.joogie.boogie.types.BoogieType;
 
 /**
@@ -45,7 +45,7 @@ public class InvokeExpression extends Expression {
 		if (proc.getReturnVariable() != null) {
 			returnType = proc.getReturnVariable().getType();
 		} else {
-			returnType = BoogieBaseTypes.getVoidType();
+			returnType = BoogiePreludeTypes.TYPE_VOID;
 		}
 
 		arguments = args;

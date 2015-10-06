@@ -30,7 +30,7 @@ import org.joogie.boogie.expressions.ArrayReadExpression;
 import org.joogie.boogie.expressions.Expression;
 import org.joogie.boogie.statements.AssertStatement;
 import org.joogie.boogie.statements.Statement;
-import org.joogie.boogie.types.BoogieBaseTypes;
+import org.joogie.boogie.types.BoogiePreludeTypes;
 import org.joogie.boogie.types.BoogieObjectType;
 import org.joogie.soot.helper.BoogieProcedureInfo;
 import org.joogie.soot.helper.BoogieProgramConstructionDecorator;
@@ -157,7 +157,7 @@ public class BoogieValueSwitch implements JimpleValueSwitch {
 		Expression left = mExpressionStack.pop();
 		mExpressionStack.push(mProgDecl.getOperatorFunctionFactory().createBinOp(arg0.getSymbol(), left, right));
 
-		if (arg0.getSymbol().contains(" / ") && right.getType() == BoogieBaseTypes.getIntType()) {
+		if (arg0.getSymbol().contains(" / ") && right.getType() == BoogiePreludeTypes.TYPE_INT) {
 			this.mGuardingStatements.add(new AssertStatement(mProgDecl.getOperatorFunctionFactory().createBinOp("!=",
 					right, mProgDecl.getConstantFactory().createConst(0))));
 		}
@@ -177,17 +177,11 @@ public class BoogieValueSwitch implements JimpleValueSwitch {
 				// if the this var is not a reference we do a brute force cast
 				// this is a hack but should be sound
 				mLogger.error("WARNING - more testing requried for translateInvokeExpr");
-				thisvar = mProgDecl.getOperatorFunctionFactory().castIfNecessary(thisvar, BoogieBaseTypes.getRefType());
+				thisvar = mProgDecl.getOperatorFunctionFactory().castIfNecessary(thisvar, BoogiePreludeTypes.TYPE_REF);
 			}
 
 			assertNonNull(thisvar);
 			args.add(thisvar);
-
-			// this identifies a call in argoUML that caused problems
-			// if (arg0.getMethod().getNumber()==35 &&
-			// arg0.getMethod().getName().contains("clone")) {
-			// Log.error("");
-			// }
 
 		}
 		for (int i = 0; i < arg0.getArgCount(); i++) {
@@ -318,7 +312,7 @@ public class BoogieValueSwitch implements JimpleValueSwitch {
 		} else {
 			// arg0 checks an ArrayType not a RefType...
 			mLogger.error("caseInstanceOfExpr is not fully implemented");
-			te = mProgDecl.getFreshGlobalConstant(BoogieBaseTypes.getIntType());
+			te = mProgDecl.getFreshGlobalConstant(BoogiePreludeTypes.TYPE_INT);
 		}
 		mExpressionStack.add(te);
 	}

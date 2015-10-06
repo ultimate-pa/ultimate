@@ -26,6 +26,6 @@ package org.joogie.boogie.types;
 public class IntArrayType extends BoogieArrayType {
 
 	public IntArrayType(String name) {
-		super(name, BoogieBaseTypes.getIntType());
+		super(name, BoogiePreludeTypes.TYPE_INT);
 	}
 }

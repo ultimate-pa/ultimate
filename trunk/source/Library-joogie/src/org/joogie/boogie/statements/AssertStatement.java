@@ -24,7 +24,7 @@ import java.util.List;
 
 import org.joogie.boogie.expressions.Expression;
 import org.joogie.boogie.expressions.Variable;
-import org.joogie.boogie.types.BoogieBaseTypes;
+import org.joogie.boogie.types.BoogiePreludeTypes;
 
 /**
  * @author schaef
@@ -54,7 +54,7 @@ public class AssertStatement extends Statement {
 		}
 		sb.append("\t assert (");
 		sb.append(expression.toBoogie());
-		if (expression.getType() == BoogieBaseTypes.getBoolType())
+		if (expression.getType() == BoogiePreludeTypes.TYPE_BOOL)
 			sb.append(")");
 		else
 			sb.append("==1)");

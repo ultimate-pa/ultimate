@@ -22,7 +22,6 @@ package org.joogie.soot.helper;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -36,7 +35,6 @@ import org.joogie.boogie.expressions.Variable;
 import org.joogie.boogie.types.BoogieType;
 
 import soot.Local;
-import soot.SootClass;
 import soot.SootField;
 import soot.SootMethod;
 import soot.Type;

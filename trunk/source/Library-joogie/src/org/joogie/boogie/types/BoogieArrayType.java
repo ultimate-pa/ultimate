@@ -31,7 +31,7 @@ public class BoogieArrayType extends BoogieType {
 	public BoogieArrayType(String name, BoogieType nestedtype) {
 		super(name);
 		nestedType = nestedtype;
-		indexType = BoogieBaseTypes.getIntType();
+		indexType = BoogiePreludeTypes.TYPE_INT;
 	}
 
 	public BoogieArrayType(String name, BoogieType idxtype,

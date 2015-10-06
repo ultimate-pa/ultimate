@@ -17,7 +17,10 @@ import org.joogie.boogie.BoogieProgram;
 import org.joogie.boogie.LocationTag;
 import org.joogie.boogie.expressions.Variable;
 import org.joogie.boogie.statements.ExpressionStatement;
-import org.joogie.boogie.types.BoogieBaseTypes;
+import org.joogie.boogie.types.BoogieFieldType;
+import org.joogie.boogie.types.BoogieObjectType;
+import org.joogie.boogie.types.BoogiePreludeTypes;
+import org.joogie.boogie.types.BoogiePrimitiveType;
 import org.joogie.boogie.types.BoogieType;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
@@ -87,14 +90,14 @@ public class Joogie2BoogieTranslator {
 		final List<Declaration> decls = new ArrayList<>();
 
 		final Collection<? extends Declaration> procedures = declareProcedures(program);
-		
-		final Collection<? extends Declaration> constants = declareConstants(program);
-		final Collection<? extends Declaration> variables = declareVariables(program);
+
+		final Collection<? extends Declaration> types = declareTypes(program);
+		final Collection<? extends Declaration> globals = declareGlobals(program);
 		final Collection<? extends Declaration> prelude = declarePrelude(program);
-		
+
+		decls.addAll(types);
 		decls.addAll(prelude);
-		decls.addAll(constants);
-		decls.addAll(variables);
+		decls.addAll(globals);
 		decls.addAll(procedures);
 
 		return new Unit(getLocation(), decls.toArray(new Declaration[decls.size()]));
@@ -107,37 +110,33 @@ public class Joogie2BoogieTranslator {
 	private Collection<? extends Declaration> declarePrelude(final BoogieProgram program) {
 		final List<Declaration> decls = new ArrayList<>();
 		final ILocation loc = getLocation();
-		decls.add(new TypeDeclaration(loc, new Attribute[0], false, BoogieBaseTypes.getRefType().getName(),
-				new String[0]));
-		decls.add(new TypeDeclaration(loc, new Attribute[0], false, BoogieBaseTypes.getRealType().getName(),
-				new String[0]));
-		decls.add(new TypeDeclaration(loc, new Attribute[0], false, BoogieBaseTypes.getClassConstType().getName(),
-				new String[0]));
-		decls.add(new TypeDeclaration(loc, new Attribute[0], false, "Field", new String[] { "x" }));
 
 		program.getPreludeVariables().forEach(a -> decls.add(declareConstOrVar(a, loc)));
-
-		// decls.add(declareVariable(program.getHeapVariable(), loc));
-		//
-		// decls.add(declareConstant(program.getNullReference(), loc));
-		//
-		// decls.add(declareConstant(program.getNullIntArray(), loc));
-		// decls.add(declareConstant(program.getNullRealArray(), loc));
-		// decls.add(declareConstant(program.getNullRefArray(), loc));
-		//
-		// decls.add(declareConstant(program.getSizeIndexArray(), loc));
-		//
-		// decls.add(declareVariable(program.getSizeArrayInt(), loc));
-		// decls.add(declareVariable(program.getSizeArrayReal(), loc));
-		// decls.add(declareVariable(program.getSizeArrayRef(), loc));
-		//
-		// decls.add(declareVariable(program.getSizeString(), loc));
 
 		for (final BoogieAxiom axiom : program.getAxioms()) {
 			decls.add(declareAxiom(axiom));
 		}
 
 		return decls;
+	}
+
+	private TypeDeclaration declareType(final BoogieType type, final ILocation loc) {
+		// FIXME: very hacky
+		if (type instanceof BoogieFieldType) {
+			return declareType(type.getName(), new String[] { ((BoogieFieldType) type).getNestedType().getName() },
+					loc);
+		} else if (type instanceof BoogiePrimitiveType || type instanceof BoogieObjectType) {
+			return declareType(type.getName(), loc);
+		}
+		throw new UnsupportedOperationException("Cannot declare " + type.toBoogie());
+	}
+
+	private TypeDeclaration declareType(final String name, final ILocation loc) {
+		return new TypeDeclaration(loc, new Attribute[0], false, name, new String[0]);
+	}
+
+	private TypeDeclaration declareType(final String name, final String[] typeParams, final ILocation loc) {
+		return new TypeDeclaration(loc, new Attribute[0], false, name, typeParams);
 	}
 
 	private Declaration declareConstOrVar(final Variable var, final ILocation loc) {
@@ -155,22 +154,28 @@ public class Joogie2BoogieTranslator {
 		return decls;
 	}
 
-	private Collection<? extends Declaration> declareVariables(final BoogieProgram program) {
+	private Collection<? extends Declaration> declareGlobals(final BoogieProgram program) {
 		final List<Declaration> decls = new ArrayList<>();
 		program.getGlobalVariables().stream().filter(g -> !g.isConstUnique())
 				.forEach(g -> decls.add(declareVariable(g, getLocation())));
+		program.getGlobalVariables().stream().filter(g -> g.isConstUnique())
+				.forEach(g -> decls.add(declareConstant(g, getLocation())));
 		return decls;
 	}
 
-	private Collection<? extends Declaration> declareConstants(final BoogieProgram program) {
+	private Collection<? extends Declaration> declareTypes(final BoogieProgram program) {
 		final List<Declaration> decls = new ArrayList<>();
+		final ILocation loc = getLocation();
 
-		for (final Variable typeVar : program.getTypeVariables()) {
-			decls.add(declareConstant(typeVar, getLocation()));
+		decls.add(declareType(BoogiePreludeTypes.TYPE_REF, loc));
+		decls.add(declareType(BoogiePreludeTypes.TYPE_REAL, loc));
+		decls.add(declareType(BoogiePreludeTypes.TYPE_CLASS_CONST, loc));
+		decls.add(declareType(BoogiePreludeTypes.TYPE_FIELD, loc));
+
+		for (final BoogieType typeVar : program.getTypeVariables()) {
+			// TODO: FIXME
+			mLogger.error("Ignoring type var " + typeVar);
 		}
-
-		program.getGlobalVariables().stream().filter(g -> g.isConstUnique())
-				.forEach(g -> decls.add(declareConstant(g, getLocation())));
 
 		return decls;
 	}

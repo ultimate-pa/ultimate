@@ -77,7 +77,7 @@ public class SootRunner extends Runner {
 		List<File> jarFiles = new ArrayList<File>();
 		extractClassPath(new File(jarFile), jarFiles);
 		jarFiles.add(new File(jarFile));
-		fillClassPath(jarFiles);
+		addJREToClassPath(jarFiles);
 
 		// additional classpath available?
 		String cp = getClassPathString(classPath, jarFiles);
@@ -118,8 +118,8 @@ public class SootRunner extends Runner {
 	public BoogieProgram runWithClass(String classFile, String classPath, HeapMode mode, String scope) {
 		assert classPath != null;
 		// dependent JAR files
-		List<File> jarFiles = new ArrayList<File>();
-		fillClassPath(jarFiles);
+		List<File> classPathFiles = new ArrayList<File>();
+		addJREToClassPath(classPathFiles);
 
 		// command-line arguments for Soot
 		List<String> args = new ArrayList<String>();
@@ -127,7 +127,7 @@ public class SootRunner extends Runner {
 
 		// add soot-class-path
 		args.add("-cp");
-		args.add(getClassPathString(classPath, jarFiles));
+		args.add(getClassPathString(classPath, classPathFiles));
 		args.add(classFile);
 
 		// finally, run soot
@@ -153,14 +153,14 @@ public class SootRunner extends Runner {
 
 		// add standard classpath
 		List<File> jarFiles = new ArrayList<File>();
-		fillClassPath(jarFiles);
+		addJREToClassPath(jarFiles);
 
 		// add additional classpath
 		String cp = getClassPathString(classPath, jarFiles);
 
 		// add classpath to soot arguments
 		args.add("-cp");
-		args.add(cp);
+		args.add(cp+"F:/repos/ultimate/trunk/examples/JavaToBoogieTranslation/regression/minepump/MinePumpSystem;");
 		final String filename = new File(sourceFile).getName();
 		// add source file
 		args.add(filename.substring(0, filename.lastIndexOf(".java")));
@@ -231,7 +231,7 @@ public class SootRunner extends Runner {
 	 * @param files
 	 *            Standard JAR files needed by Soot
 	 */
-	protected void fillClassPath(List<File> files) {
+	protected void addJREToClassPath(List<File> files) {
 		// add Runtime Library
 		files.add(new File(new File(System.getProperty("java.home"), "lib"), "rt.jar"));
 

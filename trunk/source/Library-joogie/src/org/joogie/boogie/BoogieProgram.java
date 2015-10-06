@@ -37,8 +37,8 @@ import org.joogie.boogie.expressions.Expression;
 import org.joogie.boogie.expressions.Variable;
 import org.joogie.boogie.types.ArrArrayType;
 import org.joogie.boogie.types.BoogieArrayType;
-import org.joogie.boogie.types.BoogieBaseTypes;
 import org.joogie.boogie.types.BoogieObjectType;
+import org.joogie.boogie.types.BoogiePreludeTypes;
 import org.joogie.boogie.types.BoogieType;
 import org.joogie.boogie.types.HeapType;
 import org.joogie.boogie.types.RefArrayType;
@@ -72,7 +72,7 @@ public class BoogieProgram {
 	private final List<BoogieAxiom> mBoogieAxioms;
 	private final Set<BoogieProcedure> mBoogieProcedures;
 	private final Set<Variable> mGlobalsVars;
-	private final Set<Variable> mTypeVariables;
+	private final Set<BoogieType> mTypes;
 
 	private final Logger mLogger;
 	private final Map<String, PreludeVariable> mPreludeVariables;
@@ -82,24 +82,24 @@ public class BoogieProgram {
 		mBoogieAxioms = new LinkedList<BoogieAxiom>();
 		mBoogieProcedures = new HashSet<BoogieProcedure>();
 		mGlobalsVars = new HashSet<Variable>();
-		mTypeVariables = new HashSet<Variable>();
+		mTypes = new HashSet<BoogieType>();
 
 		mPreludeVariables = new HashMap<String, PreludeVariable>();
 
-		registerPreludeVariable(NULL, BoogieBaseTypes.getRefType(), true);
-		registerPreludeVariable(INT_ARR_NULL, BoogieBaseTypes.getIntArrType(), true);
-		registerPreludeVariable(REAL_ARR_NULL, BoogieBaseTypes.getRealArrType(), true);
-		registerPreludeVariable(REF_ARR_NULL, BoogieBaseTypes.getRefArrType(), true);
+		registerPreludeVariable(NULL, BoogiePreludeTypes.TYPE_REF, true);
+		registerPreludeVariable(INT_ARR_NULL, BoogiePreludeTypes.TYPE_INT_ARRAY, true);
+		registerPreludeVariable(REAL_ARR_NULL, BoogiePreludeTypes.TYPE_REAL_ARRAY, true);
+		registerPreludeVariable(REF_ARR_NULL, BoogiePreludeTypes.TYPE_REF_ARRAY, true);
 		registerPreludeVariable(INT_ARR_SIZE,
-				new BoogieArrayType(INTARRSIZETYPE, BoogieBaseTypes.getIntType(), BoogieBaseTypes.getIntType()), false);
+				new BoogieArrayType(INTARRSIZETYPE, BoogiePreludeTypes.TYPE_INT, BoogiePreludeTypes.TYPE_INT), false);
 		registerPreludeVariable(REAL_ARR_SIZE,
-				new BoogieArrayType(REALARRSIZETYPE, BoogieBaseTypes.getRealType(), BoogieBaseTypes.getIntType()),
+				new BoogieArrayType(REALARRSIZETYPE, BoogiePreludeTypes.TYPE_REAL, BoogiePreludeTypes.TYPE_INT),
 				false);
 		registerPreludeVariable(REF_ARR_SIZE,
-				new BoogieArrayType(REFARRSIZETYPE, BoogieBaseTypes.getRefType(), BoogieBaseTypes.getIntType()), false);
+				new BoogieArrayType(REFARRSIZETYPE, BoogiePreludeTypes.TYPE_REF, BoogiePreludeTypes.TYPE_INT), false);
 		registerPreludeVariable(STRING_SIZE,
-				new BoogieArrayType(STRINGSIZETYPE, BoogieBaseTypes.getRefType(), BoogieBaseTypes.getIntType()), false);
-		registerPreludeVariable(ARRAY_SIZE_INDEX, BoogieBaseTypes.getIntType(), true);
+				new BoogieArrayType(STRINGSIZETYPE, BoogiePreludeTypes.TYPE_REF, BoogiePreludeTypes.TYPE_INT), false);
+		registerPreludeVariable(ARRAY_SIZE_INDEX, BoogiePreludeTypes.TYPE_INT, true);
 		registerPreludeVariable(HEAP_VAR, new HeapType(), false);
 
 		// setup the BoogieAxioms
@@ -143,8 +143,8 @@ public class BoogieProgram {
 		return mBoogieProcedures;
 	}
 
-	public Set<Variable> getTypeVariables() {
-		return mTypeVariables;
+	public Set<BoogieType> getTypeVariables() {
+		return mTypes;
 	}
 
 	public void addProcedure(BoogieProcedure proc) {
@@ -163,8 +163,8 @@ public class BoogieProgram {
 		this.mGlobalsVars.add(v);
 	}
 
-	public void addTypeVariable(Variable v) {
-		this.mTypeVariables.add(v);
+	public void addType(BoogieType v) {
+		this.mTypes.add(v);
 	}
 
 	public void addBoogieAxiom(BoogieAxiom axiom) {
@@ -196,15 +196,15 @@ public class BoogieProgram {
 	public Expression getArraySizeExpression(Expression arrvar) {
 		Expression ret = null;
 		BoogieType t = arrvar.getType();
-		if (t == BoogieBaseTypes.getIntArrType()) {
+		if (t == BoogiePreludeTypes.TYPE_INT_ARRAY) {
 			ret = new ArrayReadExpression(getIntArraySize(), new ArrayReadExpression(arrvar, getArraySizeIndex()));
-		} else if (t == BoogieBaseTypes.getRealArrType()) {
+		} else if (t == BoogiePreludeTypes.TYPE_REAL_ARRAY) {
 			ret = new ArrayReadExpression(getRealArraySize(), new ArrayReadExpression(arrvar, getArraySizeIndex()));
 		} else if (t instanceof RefArrayType) {
 			ret = new ArrayReadExpression(getRefArraySize(), new ArrayReadExpression(arrvar, getArraySizeIndex()));
 		} else if (t instanceof ArrArrayType) {
 			mLogger.error("MultiArraySize is not implemented");
-			Variable tmp = new Variable("$fresh" + (++Util.runningNumber).toString(), BoogieBaseTypes.getIntType());
+			Variable tmp = new Variable("$fresh" + (++Util.runningNumber).toString(), BoogiePreludeTypes.TYPE_INT);
 			this.mGlobalsVars.add(tmp);
 			ret = tmp;
 		} else {
@@ -217,9 +217,9 @@ public class BoogieProgram {
 
 	// TODO: this has to be moved to the different translators!!!!
 	public Expression getArrayNullReference(BoogieType nestedArrayType) {
-		if (nestedArrayType == BoogieBaseTypes.getIntType()) {
+		if (nestedArrayType == BoogiePreludeTypes.TYPE_INT) {
 			return getNullIntArray();
-		} else if (nestedArrayType == BoogieBaseTypes.getRealType()) {
+		} else if (nestedArrayType == BoogiePreludeTypes.TYPE_REAL) {
 			return getNullRealArray();
 		} else if (nestedArrayType instanceof BoogieObjectType) {
 			return getNullRefArray();

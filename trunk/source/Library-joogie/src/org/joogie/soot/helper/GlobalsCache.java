@@ -66,12 +66,13 @@ public class GlobalsCache {
 	}
 
 	public Variable lookupTypeVariable(RefType t) {
-		if (!mTypeVariables.containsKey(t)) {
-			Variable v = mProgDecl.getTypeFactory().createTypeVariable(t);
-			mTypeVariables.put(t, v);
-			mProgDecl.getProgram().addTypeVariable(v);
+		Variable rtr = mTypeVariables.get(t);
+		if (rtr == null) {
+			rtr = mProgDecl.getTypeFactory().createTypeVariable(t);
+			mTypeVariables.put(t, rtr);
+			mProgDecl.getProgram().addType(rtr.getType());
 		}
-		return mTypeVariables.get(t);
+		return rtr;
 	}
 
 	public BoogieProcedure lookupProcedure(SootMethod m, HeapMode heapMode) {
@@ -130,24 +131,27 @@ public class GlobalsCache {
 	}
 
 	public Variable lookupStaticField(SootField arg0) {
-		if (!mPublicFields.containsKey(arg0)) {
-			Variable v = mProgDecl.createBoogieVariable(mProgDecl.getQualifiedName(arg0),
+		Variable v = mPublicFields.get(arg0);
+		if (v == null) {
+			v = mProgDecl.createBoogieVariable(mProgDecl.getQualifiedName(arg0),
 					mProgDecl.getTypeFactory().lookupBoogieType(arg0.getType()));
 			mPublicFields.put(arg0, v);
-
 			mProgDecl.getProgram().addGlobalVar(v);
 		}
-		return mPublicFields.get(arg0);
+		assert v != null;
+		return v;
 	}
 
 	public Variable lookupField(SootField arg0) {
-		if (!mPublicFields.containsKey(arg0)) {
-			Variable v = mProgDecl.createBoogieVariable(mProgDecl.getQualifiedName(arg0),
+		Variable v = mPublicFields.get(arg0);
+		if (v == null) {
+			v = mProgDecl.createBoogieVariable(mProgDecl.getQualifiedName(arg0),
 					mProgDecl.getTypeFactory().lookupBoogieFieldType(arg0.getType()));
 			mPublicFields.put(arg0, v);
 			mProgDecl.getProgram().addGlobalVar(v);
 		}
-		return mPublicFields.get(arg0);
+		assert v != null;
+		return v;
 	}
 
 	public LocationTag createLocationTag(BoogieProcedure proc) {

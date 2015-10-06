@@ -30,7 +30,7 @@ public class ArrArrayType extends BoogieArrayType {
 	 * @param nestedtype
 	 */
 	public ArrArrayType(String name, BoogieArrayType nestedtype) {
-		super(name, BoogieBaseTypes.getIntType(), nestedtype);
+		super(name, BoogiePreludeTypes.TYPE_INT, nestedtype);
 		// TODO Auto-generated constructor stub
 	}
 
