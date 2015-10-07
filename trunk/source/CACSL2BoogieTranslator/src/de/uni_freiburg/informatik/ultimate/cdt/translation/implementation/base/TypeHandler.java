@@ -531,7 +531,7 @@ public class TypeHandler implements ITypeHandler {
     }
 
     @Override
-	public ASTType ctype2asttype(ILocation loc, CType cType, boolean isBool, boolean isPointer) {
+	public ASTType ctype2asttype(ILocation loc, CType cType) {
 		if (cType instanceof CPrimitive) {
 			return cPrimitive2asttype(loc, (CPrimitive) cType);
 		} else if (cType instanceof CPointer) {
@@ -599,11 +599,6 @@ public class TypeHandler implements ITypeHandler {
     	m_DefinedTypes.put(id, type);
     }
 
-	@Override
-	public ASTType ctype2asttype(ILocation loc, CType cType) {
-		return this.ctype2asttype(loc, cType, false, false);
-	}
-	
 	@Override
 	public ASTType constructPointerType(ILocation loc) {
 		m_PointerTypeNeeded = true;

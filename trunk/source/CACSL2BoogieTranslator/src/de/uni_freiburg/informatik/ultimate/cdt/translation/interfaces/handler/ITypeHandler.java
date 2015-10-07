@@ -221,9 +221,6 @@ public interface ITypeHandler extends IHandler {
      */
 	LinkedScopedHashMap<String, TypesResult> getDefinedTypes();
 
-	ASTType ctype2asttype(ILocation loc, CType cType, boolean wrappedInt,
-			boolean isBool);
-
 	void addDefinedType(String id, TypesResult type);
 
 	ASTType constructPointerType(ILocation loc);
