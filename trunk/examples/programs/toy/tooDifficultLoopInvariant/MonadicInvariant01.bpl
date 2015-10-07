@@ -10,7 +10,7 @@
  * - The variable offset is the "offset" of some int pointer.
  * - The while loop moves a pointer along some memory area.
  * - The assert checks if we are still in some allocated area.
- * - An int takes four bite, hence the pointer is incremented b four.
+ * - An int takes four byte, hence the pointer is incremented by four.
  * 
  * Author: heizmann@informatik.uni-freiburg.de
  * Date: 2015-09-03
