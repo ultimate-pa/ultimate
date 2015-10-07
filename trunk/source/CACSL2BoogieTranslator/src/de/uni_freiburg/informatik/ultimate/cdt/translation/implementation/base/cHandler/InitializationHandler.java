@@ -543,7 +543,7 @@ public class InitializationHandler {
 		}
 
 		if (dimensions.length == 1) {
-			RValue val = null;
+//			RValue val = null;
 
 			for (int i = 0; i < currentSizeInt; i++) {
 				CType valueType = arrayType.getValueType().getUnderlyingType();
@@ -565,7 +565,7 @@ public class InitializationHandler {
 
 //				TODO: we may need to pass statements, decls, ...
 				if (list != null && list.size() > i && list.get(i).lrVal != null) {
-					val = (RValue) list.get(i).lrVal; 
+					RValue val = (RValue) list.get(i).lrVal; 
 					decl.addAll(list.get(i).decl);
 					auxVars.putAll(list.get(i).auxVars);
 					stmt.addAll(list.get(i).stmt);
@@ -580,14 +580,12 @@ public class InitializationHandler {
 						stmt.addAll(sInit.stmt);
 						decl.addAll(sInit.decl);
 						auxVars.putAll(sInit.auxVars);
-//						assert sInit.decl.size() == 0 && sInit.auxVars.size() == 0 : "==> change return type of initArray..";
-//						val = (RValue) sInit.lrVal;
 					} else if (valueType instanceof CPrimitive 
 							|| valueType instanceof CPointer) {
 						ExpressionResult pInit = main.cHandler.getInitHandler().initVar(loc, main, 
 								(VariableLHS) null, valueType, null);
 						assert pInit.stmt.isEmpty() && pInit.decl.isEmpty() && pInit.auxVars.isEmpty();
-						val = (RValue) pInit.lrVal;
+						RValue val = (RValue) pInit.lrVal;
 						stmt.addAll(mMemoryHandler.getWriteCall(loc, new HeapLValue(writeLocation, valueType), val.getValue(), val.getCType()));
 					} else {
 						throw new UnsupportedSyntaxException(loc, "trying to init unknown type");
@@ -689,7 +687,6 @@ public class InitializationHandler {
 						decl.addAll(sInit.decl);
 						auxVars.putAll(sInit.auxVars);
 						overApp.addAll(sInit.overappr);
-						assert sInit.decl.size() == 0 && sInit.auxVars.size() == 0 : "==> change return type of initArray..";
 						val = (RValue) sInit.lrVal;
 					} else if (valueType instanceof CPrimitive 
 							|| valueType instanceof CPointer) {

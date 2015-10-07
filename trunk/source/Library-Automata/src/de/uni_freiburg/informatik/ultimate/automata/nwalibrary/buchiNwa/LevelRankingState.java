@@ -249,4 +249,8 @@ public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE
 			throw new IllegalArgumentException();
 		}
 	}
+
+	public boolean isEmpty() {
+		return m_LevelRanking.isEmpty();
+	}
 }

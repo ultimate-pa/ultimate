@@ -78,27 +78,37 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			 * Automata script.
 			 * The toString() representation of LETTER and STATE is used.
 			 */
-			ATS,
+			ATS("ats"),
 			/**
 			 * Automata script.
 			 * The String representations of LETTER and STATE are ignored.
 			 * The TestFileWriter introduces new names, e.g. the letters of 
 			 * the alphabet are a0, ..., an.
 			 */
-			ATS_NUMERATE, 
+			ATS_NUMERATE("ats"), 
 			/**
 			 * Automata script.
 			 * The String representation of LETTER and STATE plus the hashcode() is used.
 			 */
-			ATS_QUOTED,
+			ATS_QUOTED("ats"),
 			/**
 			 * The BA format, that is also used by some tools of Yu-Fang Chen.
 			 */
-			BA,
+			BA("ba"),
 			/**
 			 * The Hanoi Omega Automaton Format
 			 */
-			HOA,
+			HOA("hoa");
+			
+			private final String m_FileEnding;
+			
+			private Format(String fileEnding) {
+				m_FileEnding = fileEnding;
+			}
+			
+			public String getFileEnding() {
+				return m_FileEnding;
+			}
 		};
 		
 		private final IUltimateServiceProvider m_Services;
@@ -113,8 +123,8 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 		
 		StringWriter m_StringWriter;
 		
-		private void initializePrintWriter(String filename) {
-			File testfile = new File(filename + ".ats");
+		private void initializePrintWriter(String filename, Format format) {
+			File testfile = new File(filename + "." + format.getFileEnding());
 			try {
 				FileWriter fileWriter = new FileWriter(testfile);
 				m_printWriter = new PrintWriter(fileWriter);
@@ -125,20 +135,32 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 		
 		
 		public AutomatonDefinitionPrinter(IUltimateServiceProvider services,
-				String automatonName, String filename, Format labels, String message, Object... automata) {
+				String automatonName, String filename, Format format, String message, Object... automata) {
 			m_Services = services;
 			m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 			m_Logger.warn("Dumping Testfile");
-			initializePrintWriter(filename);
-			m_printWriter.println("// Testfile dumped by Ultimate at "+getDateTime());
-			m_printWriter.println("//");
-			m_printWriter.println("// " + message);
-			m_printWriter.println("");
+			initializePrintWriter(filename, format);
+			switch (format) {
+			case ATS:
+			case ATS_NUMERATE:
+			case ATS_QUOTED:
+				m_printWriter.println("// Testfile dumped by Ultimate at "+getDateTime());
+				m_printWriter.println("//");
+				m_printWriter.println("// " + message);
+				m_printWriter.println("");
+				break;
+			case BA:
+			case HOA:
+				// add nothing
+				break;
+			default:
+				throw new AssertionError();
+			}
 			if (automata.length == 1) {
-				printAutomaton(automatonName, automata[0], labels);
+				printAutomaton(automatonName, automata[0], format);
 			}
 			for (int i=0; i< automata.length; i++) {
-				printAutomaton(automatonName + String.valueOf(i), automata[i], labels);
+				printAutomaton(automatonName + String.valueOf(i), automata[i], format);
 			}
 		}
 		
