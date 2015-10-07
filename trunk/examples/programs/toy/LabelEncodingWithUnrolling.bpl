@@ -1,3 +1,10 @@
+//#Unsafe
+/*
+ * Author: ???
+ * Note: The result of this test is not manually verified. DD just added the missing header based on some Ultimate results. 
+ * 
+ */
+
 //Test for label encoding in unrolling example. This loop must be unrolled once to find the counterexample.
 
 procedure main() {

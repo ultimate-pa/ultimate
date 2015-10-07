@@ -158,7 +158,8 @@ public class FunctionHandler {
 	 * boogie procedure has to be created in the postProcessor that deals with
 	 * the function pointer calls that can happen.
 	 */
-	LinkedHashSet<CFunction> functionSignaturesThatHaveAFunctionPointer;
+//	LinkedHashSet<CFunction> functionSignaturesThatHaveAFunctionPointer;
+	LinkedHashSet<ProcedureSignature> functionSignaturesThatHaveAFunctionPointer;
 	
 	private final AExpressionTranslation m_ExpressionTranslation;
 
@@ -813,6 +814,29 @@ public class FunctionHandler {
 		}
 	}
 
+	/**
+	 * 
+	 * The plan for function pointers:
+	 *  - every function f, that is used as a pointer in the C code gets a number #f
+	 *  - a pointer variable that points to a function then has the value {base: -1, offset: #f}
+	 *  - for every function f, that is used as a pointer, and that has a signature s, we introduce a "dispatch-procedure" in Boogie for s
+	 *  - the dispatch function for s = t1 x t2 x ... x tn -> t has the signature t1 x t2 x ... x tn x fp -> t, i.e., it takes the normal arguments, and a function address. 
+	 *    When called, it calls the procedure that corresponds to the function address with the corresponding arguments and returns the returned value
+	 *  - a call to a function pointer is then translated to a call to the dispatch-procedure with fitting signature where the function pointer is given as additional argument
+	 *  - nb: when thinking about the function signatures, one has to keep in mind, the differences between C and Boogie, here. 
+	 *    For instance, different C-function-signatures may correspond to on Boogie procedure signature, because a Boogie pointer does not know what it points to.
+	 *    Also, void types need special treatment as any pointer can be used as a void-pointer 
+	 *    The special method CType.isCompatibleWith() is used for this.
+	 *      --> the  names of the different dispatch function have to match exactly the classification done by isCompatibleWith.
+	 *    
+	 * @param loc
+	 * @param main
+	 * @param memoryHandler
+	 * @param structHandler
+	 * @param functionName
+	 * @param arguments
+	 * @return
+	 */
 	private Result handleFunctionPointerCall(ILocation loc, Dispatcher main, MemoryHandler memoryHandler,
 			StructHandler structHandler, IASTExpression functionName, IASTInitializerClause[] arguments) {
 
@@ -843,9 +867,14 @@ public class FunctionHandler {
 					calledFuncCFunction.takesVarArgs());
 		}
 
-		functionSignaturesThatHaveAFunctionPointer.add(calledFuncCFunction);
+		//new Procedure()
+		//functionSignaturesThatHaveAFunctionPointer = null;
+//		TODO: use is compatible with instead of equals/set, make the name of the inserted procedure compatible to isCompatibleWith
+		ProcedureSignature procSig = new ProcedureSignature(main, calledFuncCFunction);
+		functionSignaturesThatHaveAFunctionPointer.add(procSig); 
 
-		String procName = calledFuncCFunction.functionSignatureAsProcedureName();
+//		String procName = calledFuncCFunction.functionSignatureAsProcedureName();
+		String procName = procSig.toString();
 
 		CFunction cFuncWithFP = addFPParamToCFunction(calledFuncCFunction);
 
@@ -924,7 +953,7 @@ public class FunctionHandler {
 														// Boogie
 				type = main.typeHandler.constructPointerType(loc);
 			} else {
-				type = ((TypeHandler) main.typeHandler).ctype2asttype(loc, paramDec.getType());
+				type = main.typeHandler.ctype2asttype(loc, paramDec.getType());
 			}
 
 			String paramId = main.nameHandler.getInParamIdentifier(paramDec.getName());
@@ -1216,12 +1245,14 @@ public class FunctionHandler {
 	}
 
 	public Body getFunctionPointerFunctionBody(ILocation loc, Dispatcher main, MemoryHandler memoryHandler,
-			StructHandler structHandler, String fpfName, CFunction funcSignature, VarList[] inParams, VarList[] outParam) {
-		CFunction calledFuncType = funcSignature;
+			//StructHandler structHandler, String fpfName, CFunction funcSignature, VarList[] inParams, VarList[] outParam) {
+			StructHandler structHandler, String fpfName, ProcedureSignature funcSignature, VarList[] inParams, VarList[] outParam) {
+		//CFunction calledFuncType = funcSignature;
 
-		boolean resultTypeIsVoid = calledFuncType.getResultType() instanceof CPrimitive
-				&& ((CPrimitive) calledFuncType.getResultType()).getType() == PRIMITIVE.VOID;
-
+//		boolean resultTypeIsVoid = calledFuncType.getResultType() instanceof CPrimitive
+//				&& ((CPrimitive) calledFuncType.getResultType()).getType() == PRIMITIVE.VOID;
+		boolean resultTypeIsVoid = funcSignature.returnType == null;
+				
 		ArrayList<Statement> stmt = new ArrayList<>();
 		ArrayList<VariableDeclaration> decl = new ArrayList<>();
 
@@ -1245,8 +1276,9 @@ public class FunctionHandler {
 		// match the signature
 		ArrayList<String> fittingFunctions = new ArrayList<>();
 		for (Entry<String, Integer> en : ((MainDispatcher) main).getFunctionToIndex().entrySet()) {
-			CType ptdToFuncType = procedureToCFunctionType.get(en.getKey());
-			if (ptdToFuncType.isCompatibleWith(calledFuncType)) {
+			CFunction ptdToFuncType = procedureToCFunctionType.get(en.getKey());
+//			if (ptdToFuncType.isCompatibleWith(calledFuncType)) {
+			if (new ProcedureSignature(main, ptdToFuncType).equals(funcSignature)) {
 				fittingFunctions.add(en.getKey());
 			}
 		}
@@ -1289,8 +1321,10 @@ public class FunctionHandler {
 			if (!resultTypeIsVoid) {
 				tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.FUNCPTRRES);
 				VariableDeclaration tmpVarDec = new VariableDeclaration(loc, new Attribute[0],
-						new VarList[] { new VarList(loc, new String[] { tmpId }, main.typeHandler.ctype2asttype(loc,
-								((CFunction) calledFuncType).getResultType())) });
+						new VarList[] { new VarList(loc, new String[] { tmpId }, 
+								//main.typeHandler.ctype2asttype(loc,
+//								((CFunction) calledFuncType).getResultType())) });
+								funcSignature.returnType )});
 				decl.add(tmpVarDec);
 				auxVars.put(tmpVarDec, loc);
 				funcCallResult = new IdentifierExpression(loc, tmpId);

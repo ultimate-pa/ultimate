@@ -214,10 +214,11 @@ public class PostProcessor {
 			MemoryHandler memoryHandler, StructHandler structHandler) {
 		ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		ArrayList<Declaration> result = new ArrayList<>();
-		for (CFunction cFunc : functionHandler.functionSignaturesThatHaveAFunctionPointer) {
-			String procName = cFunc.functionSignatureAsProcedureName();
+//		for (CFunction cFunc : functionHandler.functionSignaturesThatHaveAFunctionPointer) {
+		for (ProcedureSignature cFunc : functionHandler.functionSignaturesThatHaveAFunctionPointer) {
+//			String procName = cFunc.functionSignatureAsProcedureName();
+			String procName = cFunc.toString();
 			
-
 			VarList[] inParams = functionHandler.getProcedures().get(procName).getInParams();
 			VarList[] outParams = functionHandler.getProcedures().get(procName).getOutParams();
 			assert outParams.length <= 1;
