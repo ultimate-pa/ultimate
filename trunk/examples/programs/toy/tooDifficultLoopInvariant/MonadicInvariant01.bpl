@@ -2,7 +2,7 @@
 /* Nontrivial program whose correctness can be shown using a monadic loop
  * invariant.
  * E.g., the following loop invariant is sufficient.
- * 0 <= offset < 4 * 10000  /\  offset % 4 == 0  /\  length = 4 * 10000
+ * 0 <= offset <= 4 * 10000  /\  offset % 4 == 0  /\  length = 4 * 10000
  * Note that the second conjunct (divisibility) is indispensable.
  * 
  * Simplified version of verification problem that occurs regularly if we use
