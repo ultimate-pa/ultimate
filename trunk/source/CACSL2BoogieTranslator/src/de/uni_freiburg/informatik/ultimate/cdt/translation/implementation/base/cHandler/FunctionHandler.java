@@ -1111,17 +1111,7 @@ public class FunctionHandler {
 				&& !(funcType.getResultType() instanceof CPointer)) {
 			if (methodsCalledBeforeDeclared.contains(methodName)) {
 				// this method was assumed to return int -> return int
-				out[0] = new VarList(loc, new String[] { SFO.RES }, new PrimitiveType(loc, /*
-																							 * new
-																							 * InferredType
-																							 * (
-																							 * Type
-																							 * .
-																							 * Integer
-																							 * )
-																							 * ,
-																							 */
-				SFO.INT));
+				out[0] = new VarList(loc, new String[] { SFO.RES }, new PrimitiveType(loc, SFO.INT));
 			} else {
 				// void, so there are no out vars
 				out = new VarList[0];

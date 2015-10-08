@@ -77,6 +77,7 @@ import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTGotoStatement;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTIfStatement;
+import org.eclipse.cdt.core.dom.ast.IASTInitializer;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerList;
 import org.eclipse.cdt.core.dom.ast.IASTLabelStatement;
@@ -422,7 +423,7 @@ public class CHandler implements ICHandler {
 				// we have to add a global variable
 				DeclarationResult rd = (DeclarationResult) childRes;
 				for (CDeclaration cd : rd.getDeclarations()) {
-					mDeclarationsGlobalInBoogie.put(mSymbolTable.getBoogieDeclOfResultDecl(cd), cd);
+					mDeclarationsGlobalInBoogie.put(mSymbolTable.getBoogieDeclOfCDecl(cd), cd);
 				}
 			} else {
 				if (childRes instanceof SkipResult)
@@ -643,6 +644,7 @@ public class CHandler implements ICHandler {
 				assert declResult.getDeclarations().size() == 1;
 				CDeclaration cDec = declResult.getDeclarations().get(0);
 
+				///////////////////
 				// update symbol table
 
 				// functions keep their cId, and their declaration is not stored
@@ -653,6 +655,26 @@ public class CHandler implements ICHandler {
 					mFunctionHandler.handleFunctionDeclarator(main, LocationFactory.createCLocation(d), mContract, cDec);
 					continue;
 				}
+				
+				// if the same variable is declared multiple times (within the same scope), we only keep one declaration
+				// if one of them has an initializer, we keep that one.
+				if (mSymbolTable.existsInCurrentScope(cDec.getName())) {
+					if (cDec.hasInitializer()) {
+						// undo the effects of the old declaration
+						if (mFunctionHandler.noCurrentProcedure() && !mTypeHandler.isStructDeclaration()) {
+							mDeclarationsGlobalInBoogie.remove(mSymbolTable.get(cDec.getName(), loc).getBoogieDecl());
+						}
+						//local variable may not be a problem, because symboltable will overwrite at put
+						// .. or are they not allowed in C?... TODO --> should look it up in standard
+						// if that is the case, then this code section may be simplified, probably..
+					} else {
+						// this variable has already been declared, and the current declaration does not have an initializer
+						// --> skip the current declaration
+						continue;
+					}
+				}
+				
+				
 
 				boolean onHeap = cDec.isOnHeap();
 				String bId = main.nameHandler.getUniqueIdentifier(node, cDec.getName(),
