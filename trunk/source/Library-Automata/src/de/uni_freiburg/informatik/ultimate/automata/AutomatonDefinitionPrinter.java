@@ -873,8 +873,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 					sb.append(System.lineSeparator());
 				}
 				
-				sb.append("Acceptance: " + m_Nwa.getFinalStates().size());
-				sb.append(" Inf(" + 0 + ")");
+				sb.append("Acceptance: 1 Inf(0)");
 //				boolean first = true;
 //				for (STATE state : m_Nwa.getFinalStates()) {
 //					if (first) {
