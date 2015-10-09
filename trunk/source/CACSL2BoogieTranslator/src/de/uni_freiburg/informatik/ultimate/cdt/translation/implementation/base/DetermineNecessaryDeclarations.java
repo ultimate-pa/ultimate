@@ -351,6 +351,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 					}
 				} 
 			}
+			/////////////////////////////
 			//global or local
 			for (IASTDeclarator d : cd.getDeclarators()) {
 				// "typedef declSpec declarators" introduces a dependency from each declarator to 
@@ -384,7 +385,8 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 					//					addDependency(declaration, declSpec);
 				}
 			}
-			if (declSpec instanceof IASTCompositeTypeSpecifier) {
+			if (declSpec instanceof IASTCompositeTypeSpecifier
+					|| declSpec instanceof IASTEnumerationSpecifier) {
 				currentFunOrStructDefOrInitializer.push(declaration);
 			}
 			return super.visit(declaration);
@@ -493,7 +495,9 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
         	sT.endScope();
         } else if (declaration instanceof IASTSimpleDeclaration) {
         	if (((IASTSimpleDeclaration) declaration).getDeclSpecifier() 
-        			instanceof IASTCompositeTypeSpecifier) {
+        			instanceof IASTCompositeTypeSpecifier
+        			|| ((IASTSimpleDeclaration) declaration).getDeclSpecifier() 
+        			instanceof IASTEnumerationSpecifier) {
         		currentFunOrStructDefOrInitializer.pop();
         	}
         }
@@ -547,16 +551,21 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     	return result;
     }
     
-    private void addDependency(IASTDeclaration declaration, IASTDeclaration symbolDec) {
-    	assert declaration != null;
-    	assert symbolDec != null;
+	/**
+	 * introduce a dependency in the dependencyGraph saying "lhs depends on rhs"
+	 * @param lhs
+	 * @param rhs
+	 */
+    private void addDependency(IASTDeclaration lhs, IASTDeclaration rhs) {
+    	assert lhs != null;
+    	assert rhs != null;
     			
-    	LinkedHashSet<IASTDeclaration> set = dependencyGraph.get(declaration);
+    	LinkedHashSet<IASTDeclaration> set = dependencyGraph.get(lhs);
     	if (set == null) {
     		set = new LinkedHashSet<>();
     	}
-    	set.add(symbolDec);
-    	dependencyGraph.put(declaration, set);
+    	set.add(rhs);
+    	dependencyGraph.put(lhs, set);
 	}
 
     String prettyPrintDependencyGraph() {
