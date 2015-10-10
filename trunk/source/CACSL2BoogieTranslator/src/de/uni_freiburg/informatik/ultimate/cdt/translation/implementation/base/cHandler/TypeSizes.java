@@ -172,6 +172,10 @@ public class TypeSizes {
 		}
 	}
 	
+	public int getSizeOfPointer() {
+		return this.sizeOfPointerType;
+	}
+	
 	public boolean isCharSigned() {
 		return charIsSigned;
 	}

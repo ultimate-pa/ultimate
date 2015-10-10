@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.C
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
@@ -369,7 +370,7 @@ public class ExpressionResult extends Result {
 			final LRValue fieldLRVal;
 			if(underlyingType instanceof CPrimitive) {
 				ExpressionResult fieldRead = (ExpressionResult) structHandler.readFieldInTheStructAtAddress(
-						main, memoryHandler, loc, fieldIds[i], 
+						main, loc, i, 
 						structOnHeapAddress, structType);
 				fieldLRVal = (RValue) fieldRead.lrVal;
 				newStmt.addAll(fieldRead.stmt);
@@ -377,7 +378,7 @@ public class ExpressionResult extends Result {
 				newAuxVars.putAll(fieldRead.auxVars);
 			} else if (underlyingType instanceof CPointer) {
 				ExpressionResult fieldRead = (ExpressionResult) structHandler.readFieldInTheStructAtAddress(
-						main, memoryHandler, loc, fieldIds[i], 
+						main, loc, i, 
 						structOnHeapAddress, structType);
 				fieldLRVal = (RValue) fieldRead.lrVal;
 				newStmt.addAll(fieldRead.stmt);
@@ -405,7 +406,7 @@ public class ExpressionResult extends Result {
 			} else if (underlyingType instanceof CEnum) {
 				//like CPrimitive..
 				ExpressionResult fieldRead = (ExpressionResult) structHandler.readFieldInTheStructAtAddress(
-						main, memoryHandler, loc, fieldIds[i], 
+						main, loc, i, 
 						structOnHeapAddress, structType);
 				fieldLRVal = (RValue) fieldRead.lrVal;
 				newStmt.addAll(fieldRead.stmt);
@@ -413,8 +414,7 @@ public class ExpressionResult extends Result {
 				newAuxVars.putAll(fieldRead.auxVars);
 //				throw new UnsupportedSyntaxException(loc, "..");
 			} else if (underlyingType instanceof CStruct) {
-				Expression innerStructOffset = 
-						StructHandler.getStructOrUnionOffsetConstantExpression(loc, memoryHandler, fieldIds[i], structType);
+				Expression innerStructOffset = memoryHandler.getTypeSizeAndOffsetComputer().constructOffsetForField(loc, structType, i);
 				Expression innerStructAddress = MemoryHandler.constructPointerFromBaseAndOffset(currentStructBaseAddress, 
 						new BinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS, 
 								currentStructOffset, 
@@ -492,7 +492,7 @@ public class ExpressionResult extends Result {
 				newStartAddressOffset = MemoryHandler.getPointerOffset(arrayStartAddress, loc);
 			}
 
-			Expression valueTypeSize = memoryHandler.calculateSizeOf(arrayType.getValueType(), loc);
+			Expression valueTypeSize = memoryHandler.calculateSizeOf(loc, arrayType.getValueType());
 
 			Expression arrayEntryAddressOffset = newStartAddressOffset;
 

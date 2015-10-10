@@ -118,6 +118,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.PostProcessor;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue.StorageClass;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -319,6 +320,8 @@ public class CHandler implements ICHandler {
 
 	protected final AExpressionTranslation m_ExpressionTranslation;
 
+	protected final TypeSizeAndOffsetComputer mTypeSizeComputer;
+
 	public AExpressionTranslation getExpressionTranslation() {
 		return m_ExpressionTranslation;
 	}
@@ -342,7 +345,6 @@ public class CHandler implements ICHandler {
 				CACSLPreferenceInitializer.UNSIGNED_TREATMENT.class);
 
 		this.mArrayHandler = new ArrayHandler();
-		this.mStructHandler = new StructHandler();
 		boolean checkPointerValidity = main.mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY);
 		
 		this.mSymbolTable = new SymbolTable(main);
@@ -366,7 +368,9 @@ public class CHandler implements ICHandler {
 		}
 		this.mPostProcessor = new PostProcessor(main, mLogger, m_ExpressionTranslation);
 		this.mFunctionHandler = new FunctionHandler(m_ExpressionTranslation);
-		this.mMemoryHandler = new MemoryHandler(mFunctionHandler, checkPointerValidity, main.getTypeSizes(), m_ExpressionTranslation);
+		this.mTypeSizeComputer = new TypeSizeAndOffsetComputer((TypeHandler) mTypeHandler, m_ExpressionTranslation, main.getTypeSizes());
+		this.mMemoryHandler = new MemoryHandler(mFunctionHandler, checkPointerValidity, mTypeSizeComputer, m_ExpressionTranslation);
+		this.mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, m_ExpressionTranslation);
 		this.mInitHandler = new InitializationHandler(mFunctionHandler, mStructHandler, mMemoryHandler, m_ExpressionTranslation);
 	}
 
@@ -464,6 +468,8 @@ public class CHandler implements ICHandler {
 
 		// this has to happen after postprocessing as pping may add sizeof
 		// constants for initializations
+		decl.addAll(mTypeSizeComputer.getConstants());
+		decl.addAll(mTypeSizeComputer.getAxioms());
 		decl.addAll(mMemoryHandler.declareMemoryModelInfrastructure(main, loc));
 		
 		// add type declarations introduced by the translation, e.g., $Pointer$
@@ -1071,7 +1077,7 @@ public class CHandler implements ICHandler {
 			return o;
 		case IASTUnaryExpression.op_sizeof:
 			Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>(0);
-			return new ExpressionResult(new RValue(mMemoryHandler.calculateSizeOf(oType, loc), new CPrimitive(
+			return new ExpressionResult(new RValue(mMemoryHandler.calculateSizeOf(loc, oType), new CPrimitive(
 					PRIMITIVE.INT)), emptyAuxVars);
 		case IASTUnaryExpression.op_star: {
 			ExpressionResult rop = o.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
@@ -1948,7 +1954,7 @@ public class CHandler implements ICHandler {
 				IASTBinaryExpression.op_minus, 
 				ptr1Offset, m_ExpressionTranslation.getCTypeOfPointerComponents(), 
 				ptr2Offset, m_ExpressionTranslation.getCTypeOfPointerComponents(), loc);
-		Expression typesize = mMemoryHandler.calculateSizeOf(pointsToType, loc);
+		Expression typesize = mMemoryHandler.calculateSizeOf(loc, pointsToType);
 		CPrimitive typesizeType = new CPrimitive(PRIMITIVE.INT);
 		//TODO: typesizeType and .getCTypeOfPointerComponents() might be 
 		// different then one expression has to be converted into the type of
@@ -2779,7 +2785,7 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(Dispatcher main, IASTFieldReference node) {
-		return mStructHandler.handleFieldReference(main, node, mMemoryHandler);
+		return mStructHandler.handleFieldReference(main, node);
 	}
 
 	@Override
@@ -2832,7 +2838,7 @@ public class CHandler implements ICHandler {
 			TypesResult checked = checkForPointer(main, node.getTypeId().getAbstractDeclarator().getPointerOperators(),
 					rt, false);
 
-			return new ExpressionResult(new RValue(mMemoryHandler.calculateSizeOf(checked.cType, loc), new CPrimitive(
+			return new ExpressionResult(new RValue(mMemoryHandler.calculateSizeOf(loc, checked.cType), new CPrimitive(
 					PRIMITIVE.INT)));
 			// }
 		default:
@@ -2979,8 +2985,8 @@ public class CHandler implements ICHandler {
 					if (rightHandSide.getCType().equals(en.getValue())
 							|| (rightHandSide.getCType().getUnderlyingType() instanceof CPrimitive && en.getValue() instanceof CPrimitive
 							 && ((CPrimitive) rightHandSide.getCType().getUnderlyingType()).getGeneralType().equals(((CPrimitive) en.getValue()).getGeneralType())
-							 && (mMemoryHandler.calculateSizeOfWithGivenTypeSizes(loc, rightHandSide.getCType()) 
-									 == mMemoryHandler.calculateSizeOfWithGivenTypeSizes(loc, en.getValue())))) {
+							 && (mMemoryHandler.calculateSizeOf(loc, rightHandSide.getCType()) 
+									 == mMemoryHandler.calculateSizeOf(loc, en.getValue())))) {
 						stmt.add(new AssignmentStatement(loc, new LeftHandSide[] { en.getKey() },
 								new Expression[] { rightHandSide.getValue() }));
 //					} else if (rightHandSide.cType.getUnderlyingType() instanceof CStruct && unionIsFixedSize) {
@@ -3216,7 +3222,7 @@ public class CHandler implements ICHandler {
 		final Expression timesSizeOf;
 		timesSizeOf = m_ExpressionTranslation.createArithmeticExpression(
 				IASTBinaryExpression.op_multiply, integerExpression, integerExpresionType,
-				mMemoryHandler.calculateSizeOf(valueType, loc), integerExpresionType, loc);
+				mMemoryHandler.calculateSizeOf(loc, valueType), integerExpresionType, loc);
 		return timesSizeOf;
 	}
 

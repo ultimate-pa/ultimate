@@ -523,7 +523,7 @@ public class InitializationHandler {
 		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 		ArrayList<Overapprox> overApp = new ArrayList<>();
 
-		Expression sizeOfCell = mMemoryHandler.calculateSizeOf(arrayType.getValueType(), loc); 
+		Expression sizeOfCell = mMemoryHandler.calculateSizeOf(loc, arrayType.getValueType()); 
 		Expression[] dimensions = arrayType.getDimensions();
 		Integer currentSizeInt = null;
 		try {
@@ -808,7 +808,7 @@ public class InitializationHandler {
 			CType underlyingFieldType = fieldTypes[i].getUnderlyingType();
 
 			Expression fieldAddressBase = newStartAddressBase;
-			Expression fieldAddressOffset = mStructHandler.computeStructFieldOffset(mMemoryHandler, loc, fieldIds[i], 
+			Expression fieldAddressOffset = mStructHandler.computeStructFieldOffset(mMemoryHandler, loc, i, 
 					newStartAddressOffset, structType);
 			StructConstructor fieldPointer = MemoryHandler.constructPointerFromBaseAndOffset(
 					fieldAddressBase, fieldAddressOffset, loc);
