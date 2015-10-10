@@ -77,7 +77,6 @@ import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTGotoStatement;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTIfStatement;
-import org.eclipse.cdt.core.dom.ast.IASTInitializer;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerList;
 import org.eclipse.cdt.core.dom.ast.IASTLabelStatement;
@@ -1276,8 +1275,8 @@ public class CHandler implements ICHandler {
 			Expression one = m_ExpressionTranslation.constructLiteralForIntegerType(
 					loc, cPrimitive, BigInteger.ONE);
 			addIntegerBoundsCheck(main, loc, result, cPrimitive, op, value, one);
-			valueIncremented = m_ExpressionTranslation.createArithmeticExpression(
-					op, value, cPrimitive, one, cPrimitive, loc);
+			valueIncremented = m_ExpressionTranslation.constructArithmeticExpression(
+					loc, op, value, cPrimitive, one, cPrimitive);
 		} else {
 			throw new IllegalArgumentException("input has to be CPointer or CPrimitive");
 		}
@@ -1748,8 +1747,8 @@ public class CHandler implements ICHandler {
 			throw new AssertionError("no multiplicative " + op);
 		}
 		
-		final Expression expr = m_ExpressionTranslation.createArithmeticExpression(
-				op, left.lrVal.getValue(), typeOfResult, right.lrVal.getValue(), typeOfResult, loc);
+		final Expression expr = m_ExpressionTranslation.constructArithmeticExpression(
+				loc, op, left.lrVal.getValue(), typeOfResult, right.lrVal.getValue(), typeOfResult);
 		final RValue rval = new RValue(expr,typeOfResult, false, false);
 		
 		switch (op) {
@@ -1830,8 +1829,8 @@ public class CHandler implements ICHandler {
 			assert typeOfResult.equals(right.lrVal.getCType());
 			result = ExpressionResult.copyStmtDeclAuxvarOverapprox(left, right);
 			addIntegerBoundsCheck(main, loc, result, (CPrimitive)  typeOfResult, op, left.lrVal.getValue(), right.lrVal.getValue());
-			expr = m_ExpressionTranslation.createArithmeticExpression(
-				op, left.lrVal.getValue(), (CPrimitive)  typeOfResult, right.lrVal.getValue(), (CPrimitive)  typeOfResult, loc);
+			expr = m_ExpressionTranslation.constructArithmeticExpression(
+				loc, op, left.lrVal.getValue(), (CPrimitive)  typeOfResult, right.lrVal.getValue(), (CPrimitive)  typeOfResult);
 		} else if ((lType instanceof CPointer) && rType.isArithmeticType()) {
 			typeOfResult = left.lrVal.getCType();
 			CType pointsToType = ((CPointer) typeOfResult).pointsToType;
@@ -1950,19 +1949,19 @@ public class CHandler implements ICHandler {
 			CType pointsToType) {
 		Expression ptr1Offset = new StructAccessExpression(loc, ptr1, SFO.POINTER_OFFSET);
 		Expression ptr2Offset = new StructAccessExpression(loc, ptr2, SFO.POINTER_OFFSET);
-		Expression offsetDifference = m_ExpressionTranslation.createArithmeticExpression(
-				IASTBinaryExpression.op_minus, 
-				ptr1Offset, m_ExpressionTranslation.getCTypeOfPointerComponents(), 
-				ptr2Offset, m_ExpressionTranslation.getCTypeOfPointerComponents(), loc);
+		Expression offsetDifference = m_ExpressionTranslation.constructArithmeticExpression(
+				loc, 
+				IASTBinaryExpression.op_minus, ptr1Offset, 
+				m_ExpressionTranslation.getCTypeOfPointerComponents(), ptr2Offset, m_ExpressionTranslation.getCTypeOfPointerComponents());
 		Expression typesize = mMemoryHandler.calculateSizeOf(loc, pointsToType);
 		CPrimitive typesizeType = new CPrimitive(PRIMITIVE.INT);
 		//TODO: typesizeType and .getCTypeOfPointerComponents() might be 
 		// different then one expression has to be converted into the type of
 		// the other
-		Expression offsetDifferenceDividedByTypesize = m_ExpressionTranslation.createArithmeticExpression(
-				IASTBinaryExpression.op_divide, 
-				offsetDifference, m_ExpressionTranslation.getCTypeOfPointerComponents(),
-				typesize, typesizeType, loc);
+		Expression offsetDifferenceDividedByTypesize = m_ExpressionTranslation.constructArithmeticExpression(
+				loc, 
+				IASTBinaryExpression.op_divide, offsetDifference,
+				m_ExpressionTranslation.getCTypeOfPointerComponents(), typesize, typesizeType);
 		return offsetDifferenceDividedByTypesize;
 	}
 
@@ -2153,8 +2152,8 @@ public class CHandler implements ICHandler {
 				operationResult = m_ExpressionTranslation.constructUnaryExpression(
 						loc, operation, operands[0], resultType);
 			} else if (operands.length == 2) {
-				operationResult = m_ExpressionTranslation.createArithmeticExpression(
-						operation, operands[0], resultType, operands[1], resultType, loc);
+				operationResult = m_ExpressionTranslation.constructArithmeticExpression(
+						loc, operation, operands[0], resultType, operands[1], resultType);
 			} else {
 				throw new AssertionError("no such operation");
 			}
@@ -3204,9 +3203,9 @@ public class CHandler implements ICHandler {
 		final Expression pointerOffset = MemoryHandler.getPointerOffset(ptrAddress, loc);
 		final Expression timesSizeOf = multiplyWithSizeOfAnotherType(loc, valueType, integer.getValue(), 
 					m_ExpressionTranslation.getCTypeOfPointerComponents());
-		final Expression sum = m_ExpressionTranslation.createArithmeticExpression(operator, 
-				pointerOffset, m_ExpressionTranslation.getCTypeOfPointerComponents(),
-				timesSizeOf, m_ExpressionTranslation.getCTypeOfPointerComponents(), loc);
+		final Expression sum = m_ExpressionTranslation.constructArithmeticExpression(loc, 
+				operator, pointerOffset,
+				m_ExpressionTranslation.getCTypeOfPointerComponents(), timesSizeOf, m_ExpressionTranslation.getCTypeOfPointerComponents());
 		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
 		return newPointer;
 	}
@@ -3220,9 +3219,9 @@ public class CHandler implements ICHandler {
 	public Expression multiplyWithSizeOfAnotherType(ILocation loc, CType valueType, Expression integerExpression,
 			CPrimitive integerExpresionType) {
 		final Expression timesSizeOf;
-		timesSizeOf = m_ExpressionTranslation.createArithmeticExpression(
-				IASTBinaryExpression.op_multiply, integerExpression, integerExpresionType,
-				mMemoryHandler.calculateSizeOf(loc, valueType), integerExpresionType, loc);
+		timesSizeOf = m_ExpressionTranslation.constructArithmeticExpression(
+				loc, IASTBinaryExpression.op_multiply, integerExpression,
+				integerExpresionType, mMemoryHandler.calculateSizeOf(loc, valueType), integerExpresionType);
 		return timesSizeOf;
 	}
 
@@ -3710,8 +3709,8 @@ public class CHandler implements ICHandler {
 			} else if (cEnum.getFieldValue(fId) == null) {
 				Expression one = m_ExpressionTranslation.constructLiteralForIntegerType(
 						loc, typeOfEnumIdentifiers, BigInteger.ONE);
-				newValue = m_ExpressionTranslation.createArithmeticExpression(
-						IASTBinaryExpression.op_plus, oldValue, typeOfEnumIdentifiers, one, typeOfEnumIdentifiers, loc); 
+				newValue = m_ExpressionTranslation.constructArithmeticExpression(
+						loc, IASTBinaryExpression.op_plus, oldValue, typeOfEnumIdentifiers, one, typeOfEnumIdentifiers); 
 			} else {
 				newValue = cEnum.getFieldValue(fId);
 			}

@@ -139,9 +139,9 @@ public class StructHandler {
 				newStartAddressOffset = MemoryHandler.getPointerOffset(startAddress, loc);
 			}
 			Expression fieldOffset = m_TypeSizeAndOffsetComputer.constructOffsetForField(loc, cStructType, field);
-			Expression sumOffset = m_ExpressionTranslation.createArithmeticExpression(IASTBinaryExpression.op_plus, 
-					newStartAddressOffset, m_ExpressionTranslation.getCTypeOfPointerComponents(), 
-					fieldOffset, m_ExpressionTranslation.getCTypeOfPointerComponents(), loc);
+			Expression sumOffset = m_ExpressionTranslation.constructArithmeticExpression(loc, 
+					IASTBinaryExpression.op_plus, newStartAddressOffset, 
+					m_ExpressionTranslation.getCTypeOfPointerComponents(), fieldOffset, m_ExpressionTranslation.getCTypeOfPointerComponents());
 			Expression newPointer = MemoryHandler.constructPointerFromBaseAndOffset(
 					newStartAddressBase, sumOffset, loc);
 			newValue = new HeapLValue(newPointer, cFieldType);
@@ -224,10 +224,10 @@ public class StructHandler {
 		} else {
 			Expression fieldOffset = m_TypeSizeAndOffsetComputer.
 					constructOffsetForField(loc, structType, fieldIndex);
-			Expression result = m_ExpressionTranslation.createArithmeticExpression(
-					IASTBinaryExpression.op_plus, 
-					addressOffsetOfFieldOwner, m_TypeSizeAndOffsetComputer.getSize_T(), 
-					fieldOffset, m_TypeSizeAndOffsetComputer.getSize_T(), loc);
+			Expression result = m_ExpressionTranslation.constructArithmeticExpression(
+					loc, 
+					IASTBinaryExpression.op_plus, addressOffsetOfFieldOwner, 
+					m_TypeSizeAndOffsetComputer.getSize_T(), fieldOffset, m_TypeSizeAndOffsetComputer.getSize_T());
 			return result;
 		}
 	}

@@ -43,10 +43,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
@@ -379,9 +379,9 @@ public class TypeSizeAndOffsetComputer {
 
 			@Override
 			protected Expression aggregateExpressions(ILocation loc, Expression op1, Expression op2) {
-				return m_ExpressionTranslation.createArithmeticExpression(
-						IASTBinaryExpression.op_plus, op1, getSize_T(), 
-						op2, getSize_T(), loc);
+				return m_ExpressionTranslation.constructArithmeticExpression(
+						loc, IASTBinaryExpression.op_plus, op1, 
+						getSize_T(), op2, getSize_T());
 			}
 
 			@Override
@@ -399,9 +399,9 @@ public class TypeSizeAndOffsetComputer {
 
 			@Override
 			protected Expression aggregateExpressions(ILocation loc, Expression op1, Expression op2) {
-				return m_ExpressionTranslation.createArithmeticExpression(
-						IASTBinaryExpression.op_multiply, op1, getSize_T(), 
-						op2, getSize_T(), loc);
+				return m_ExpressionTranslation.constructArithmeticExpression(
+						loc, IASTBinaryExpression.op_multiply, op1, 
+						getSize_T(), op2, getSize_T());
 			}
 
 			@Override

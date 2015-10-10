@@ -786,10 +786,10 @@ public class MemoryHandler {
 	
 	private Expression constructPointerComponentAddition(
 			ILocation loc, Expression left, Expression right) {
-		return m_ExpressionTranslation.createArithmeticExpression(
-				IASTBinaryExpression.op_plus, 
-				left, m_ExpressionTranslation.getCTypeOfPointerComponents(), 
-				right, m_ExpressionTranslation.getCTypeOfPointerComponents(), loc);
+		return m_ExpressionTranslation.constructArithmeticExpression(
+				loc, 
+				IASTBinaryExpression.op_plus, left, 
+				m_ExpressionTranslation.getCTypeOfPointerComponents(), right, m_ExpressionTranslation.getCTypeOfPointerComponents());
 	}
 	
 	private Expression constructPointerComponentLessEqual(
