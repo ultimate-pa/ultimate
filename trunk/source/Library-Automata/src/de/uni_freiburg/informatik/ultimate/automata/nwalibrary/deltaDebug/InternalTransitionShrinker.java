@@ -54,6 +54,12 @@ public class InternalTransitionShrinker<LETTER, STATE>
 		oldTransitions.removeAll(list);
 		m_factory.addInternalTransitions(automaton, oldTransitions);
 		
+		// add all return transitions
+		m_factory.addFilteredCallTransitions(automaton, m_automaton);
+		
+		// add all return transitions
+		m_factory.addFilteredReturnTransitions(automaton, m_automaton);
+		
 		return automaton;
 	}
 	
