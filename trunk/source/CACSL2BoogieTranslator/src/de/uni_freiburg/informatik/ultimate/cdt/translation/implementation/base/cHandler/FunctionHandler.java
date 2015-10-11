@@ -659,7 +659,7 @@ public class FunctionHandler {
 			}
 			// .. and if it is really called with more that its normal parameter
 			// number, we throw an exception, because we may be unsound
-			// (the code before this does not make so much sense, but maybe some
+			// (the code before this does not make that much sense, but maybe some
 			// day we want that solution again..
 			if (!(main.mPreferences.getEnum(CACSLPreferenceInitializer.LABEL_MODE, TranslationMode.class)
 					.equals(TranslationMode.SV_COMP14)) 
@@ -719,7 +719,7 @@ public class FunctionHandler {
 																			// the
 																			// parameters
 				// do implicit casts and bool/int conversion
-				CType expectedParamType = procedureToCFunctionType.get(methodName).getParameterTypes()[i].getType();
+				CType expectedParamType = procedureToCFunctionType.get(methodName).getParameterTypes()[i].getType().getUnderlyingType();
 				// bool/int conversion
 				if (expectedParamType instanceof CPrimitive
 						&& ((CPrimitive) expectedParamType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
