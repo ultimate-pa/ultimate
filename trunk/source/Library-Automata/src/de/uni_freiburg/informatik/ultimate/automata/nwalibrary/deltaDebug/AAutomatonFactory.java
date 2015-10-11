@@ -146,18 +146,52 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 	}
 	
 	/**
-	 * @param transitions
+	 * @param automaton automaton
+	 * @param transitions internal transitions
 	 */
 	public void addInternalTransitions(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final Collection<TypedTransition<LETTER, STATE>> transitions) {
 		for (final TypedTransition<LETTER, STATE> trans : transitions) {
+			assert(trans.m_letter.m_type == ELetterType.Internal) :
+				"Wrong transition type.";
 			addInternalTransition(automaton, trans.m_pred,
 					trans.m_letter.m_letter, trans.m_succ);
 		}
 	}
 	
 	/**
+	 * @param automaton automaton
+	 * @param transitions internal transitions
+	 */
+	public void addCallTransitions(
+			final INestedWordAutomaton<LETTER, STATE> automaton,
+			final Collection<TypedTransition<LETTER, STATE>> transitions) {
+		for (final TypedTransition<LETTER, STATE> trans : transitions) {
+			assert(trans.m_letter.m_type == ELetterType.Call) :
+				"Wrong transition type.";
+			addCallTransition(automaton, trans.m_pred,
+					trans.m_letter.m_letter, trans.m_succ);
+		}
+	}
+	
+	/**
+	 * @param automaton automaton
+	 * @param transitions return transitions
+	 */
+	public void addReturnTransitions(
+			final INestedWordAutomaton<LETTER, STATE> automaton,
+			final Collection<TypedTransition<LETTER, STATE>> transitions) {
+		for (final TypedTransition<LETTER, STATE> trans : transitions) {
+			assert(trans.m_letter.m_type == ELetterType.Return) :
+				"Wrong transition type.";
+			addReturnTransition(automaton, trans.m_pred,
+					trans.m_hier, trans.m_letter.m_letter, trans.m_succ);
+		}
+	}
+	
+	/**
+	 * @param automaton automaton
 	 * @return all internal transitions
 	 */
 	public Set<TypedTransition<LETTER, STATE>> getInternalTransitions(
@@ -177,41 +211,126 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 	}
 	
 	/**
-	 * Adds original transitions filtered by current states.
-	 * 
 	 * @param automaton automaton
+	 * @return all call transitions
 	 */
-	public void addFilteredTransitions(
+	public Set<TypedTransition<LETTER, STATE>> getCallTransitions(
 			final INestedWordAutomaton<LETTER, STATE> automaton) {
-		final Set<STATE> remainingStates = automaton.getStates();
+		final Set<TypedTransition<LETTER, STATE>> transitions =
+				new HashSet<TypedTransition<LETTER, STATE>>();
+		for (final STATE state : automaton.getStates()) {
+			for (final OutgoingCallTransition<LETTER, STATE> trans :
+					automaton.callSuccessors(state)) {
+				transitions.add(new TypedTransition<LETTER, STATE>(state,
+						trans.getSucc(), null,
+						new TypedLetter<LETTER>(trans.getLetter(),
+								ELetterType.Call)));
+			}
+		}
+		return transitions;
+	}
+	
+	/**
+	 * @param automaton automaton
+	 * @return all return transitions
+	 */
+	public Set<TypedTransition<LETTER, STATE>> getReturnTransitions(
+			final INestedWordAutomaton<LETTER, STATE> automaton) {
+		final Set<TypedTransition<LETTER, STATE>> transitions =
+				new HashSet<TypedTransition<LETTER, STATE>>();
+		for (final STATE state : automaton.getStates()) {
+			for (final OutgoingReturnTransition<LETTER, STATE> trans :
+					automaton.returnSuccessors(state)) {
+				transitions.add(new TypedTransition<LETTER, STATE>(state,
+						trans.getSucc(), trans.getHierPred(),
+						new TypedLetter<LETTER>(trans.getLetter(),
+								ELetterType.Return)));
+			}
+		}
+		return transitions;
+	}
+	
+	/**
+	 * Adds original internal transitions filtered by current states.
+	 * 
+	 * @param automatonTo automaton to add the transitions to
+	 * @param automatonFrom automaton to take the transitions from
+	 */
+	public void addFilteredInternalTransitions(
+			final INestedWordAutomaton<LETTER, STATE> automatonTo,
+			final INestedWordAutomaton<LETTER, STATE> automatonFrom) {
+		final Set<STATE> remainingStates = automatonTo.getStates();
 		for (final STATE state : remainingStates) {
 			for (final OutgoingInternalTransition<LETTER, STATE> trans :
-					m_automaton.internalSuccessors(state)) {
+					automatonFrom.internalSuccessors(state)) {
 				final STATE succ = trans.getSucc();
 				if (remainingStates.contains(succ)) {
 					addInternalTransition(
-							automaton, state, trans.getLetter(), succ);
+							automatonTo, state, trans.getLetter(), succ);
 				}
 			}
+		}
+	}
+	
+	/**
+	 * Adds original call transitions filtered by current states.
+	 * 
+	 * @param automatonTo automaton to add the transitions to
+	 * @param automatonFrom automaton to take the transitions from
+	 */
+	public void addFilteredCallTransitions(
+			final INestedWordAutomaton<LETTER, STATE> automatonTo,
+			final INestedWordAutomaton<LETTER, STATE> automatonFrom) {
+		final Set<STATE> remainingStates = automatonTo.getStates();
+		for (final STATE state : remainingStates) {
 			for (final OutgoingCallTransition<LETTER, STATE> trans :
-					m_automaton.callSuccessors(state)) {
+					automatonFrom.callSuccessors(state)) {
 				final STATE succ = trans.getSucc();
 				if (remainingStates.contains(succ)) {
 					addCallTransition(
-							automaton, state, trans.getLetter(), succ);
+							automatonTo, state, trans.getLetter(), succ);
 				}
 			}
+		}
+	}
+	
+	/**
+	 * Adds original return transitions filtered by current states.
+	 * 
+	 * @param automatonTo automaton to add the transitions to
+	 * @param automatonFrom automaton to take the transitions from
+	 */
+	public void addFilteredReturnTransitions(
+			final INestedWordAutomaton<LETTER, STATE> automatonTo,
+			final INestedWordAutomaton<LETTER, STATE> automatonFrom) {
+		final Set<STATE> remainingStates = automatonTo.getStates();
+		for (final STATE state : remainingStates) {
+			
 			for (final OutgoingReturnTransition<LETTER, STATE> trans :
-					m_automaton.returnSuccessors(state)) {
+					automatonFrom.returnSuccessors(state)) {
 				final STATE succ = trans.getSucc();
 				final STATE hier = trans.getHierPred();
 				if ((remainingStates.contains(succ)) &&
 						(remainingStates.contains(hier))) {
 					addReturnTransition(
-							automaton, state, hier, trans.getLetter(), succ);
+							automatonTo, state, hier, trans.getLetter(), succ);
 				}
 			}
 		}
+	}
+	
+	/**
+	 * Adds original transitions filtered by current states.
+	 * 
+	 * @param automatonTo automaton to add the transitions to
+	 * @param automatonFrom automaton to take the transitions from
+	 */
+	public void addFilteredTransitions(
+			final INestedWordAutomaton<LETTER, STATE> automatonTo,
+			final INestedWordAutomaton<LETTER, STATE> automatonFrom) {
+		addFilteredInternalTransitions(automatonTo, automatonFrom);
+		addFilteredCallTransitions(automatonTo, automatonFrom);
+		addFilteredReturnTransitions(automatonTo, automatonFrom);
 	}
 	
 	@Override

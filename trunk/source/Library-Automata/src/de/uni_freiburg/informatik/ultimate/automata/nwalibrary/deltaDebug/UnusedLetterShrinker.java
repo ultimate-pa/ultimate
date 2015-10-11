@@ -65,10 +65,9 @@ public class UnusedLetterShrinker<LETTER, STATE>
 		
 		// add original states and transitions
 		m_factory.addStates(automaton, m_automaton.getStates());
-		m_factory.addFilteredTransitions(automaton);
 		
 		// add transitions which still remain
-		m_factory.addFilteredTransitions(automaton);
+		m_factory.addFilteredTransitions(automaton, m_automaton);
 		
 		return automaton;
 	}

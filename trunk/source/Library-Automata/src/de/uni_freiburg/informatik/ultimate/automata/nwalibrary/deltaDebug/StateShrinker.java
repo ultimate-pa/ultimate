@@ -57,7 +57,7 @@ public class StateShrinker<STATE, LETTER>
 		m_factory.addStates(automaton, oldStates);
 		
 		// add transitions which still remain
-		m_factory.addFilteredTransitions(automaton);
+		m_factory.addFilteredTransitions(automaton, m_automaton);
 		
 		return automaton;
 	}
