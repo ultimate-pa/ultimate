@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.services.ToolchainStorage;
 
@@ -74,6 +73,7 @@ public class SampleAutomatonDebugger {
 		shrinkersLoop.add(new StateShrinker<String, String>());
 		shrinkersLoop.add(new InternalTransitionShrinker<String, String>());
 		shrinkersLoop.add(new CallTransitionShrinker<String, String>());
+		shrinkersLoop.add(new ReturnTransitionShrinker<String, String>());
 		
 		// list of shrinkers (i.e., rules to apply) to be applied only once
 		final List<AShrinker<?, String, String>> shrinkersEnd =
@@ -132,6 +132,10 @@ public class SampleAutomatonDebugger {
 		automaton.addCallTransition("q1", "c1", "q1");
 		automaton.addCallTransition("q5", "c2", "q2");
 		automaton.addCallTransition("q5", "c3", "q3");
+
+		automaton.addReturnTransition("q1", "q1", "r1", "q1");
+		automaton.addReturnTransition("q2", "q5", "r1", "q1");
+		automaton.addReturnTransition("q4", "q5", "r1", "q1");
 		
 		return automaton;
 	}
@@ -148,7 +152,6 @@ public class SampleAutomatonDebugger {
 		@Override
 		public void execute(INestedWordAutomaton<String, String> automaton)
 				throws DebuggerException {
-			// 
 			boolean result = true;
 			
 			// states: q1 and q3 exist
@@ -164,6 +167,9 @@ public class SampleAutomatonDebugger {
 			result &= automaton.callSuccessors("q1").iterator().hasNext();
 			// q5 has an outgoing transition (nondeterministic!)
 			result &= automaton.callSuccessors("q5").iterator().hasNext();
+			
+			// return transitions: q2 has an outgoing transition
+			result &= automaton.returnSuccessors("q2").iterator().hasNext();
 			
 			// internal alphabet: a2 exists
 			result &= automaton.getAlphabet().contains("a2");
