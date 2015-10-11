@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.services.ToolchainStorage;
 
@@ -60,8 +61,7 @@ public class SampleAutomatonDebugger {
 						stateFactory, automaton, services);
 		
 		// tester
-		final ATester<String, String> tester =
-				new SampleTester<String, String>();
+		final ATester<String, String> tester = new SampleTester();
 		
 		// delta debugger
 		final AutomatonDebugger<String, String> debugger =
@@ -72,6 +72,7 @@ public class SampleAutomatonDebugger {
 		final List<AShrinker<?, String, String>> shrinkersLoop =
 				new ArrayList<AShrinker<?, String, String>>();
 		shrinkersLoop.add(new StateShrinker<String, String>());
+		shrinkersLoop.add(new InternalTransitionShrinker<String, String>());
 		
 		// list of shrinkers (i.e., rules to apply) to be applied only once
 		final List<AShrinker<?, String, String>> shrinkersEnd =
@@ -84,7 +85,7 @@ public class SampleAutomatonDebugger {
 		
 		// print result
 		System.out.println(
-				"The automaton debugger terminated resulting in the following automaton:");
+			"The automaton debugger terminated resulting in the following automaton:");
 		System.out.println(result);
 	}
 	
@@ -97,10 +98,10 @@ public class SampleAutomatonDebugger {
 			final IUltimateServiceProvider services,
 			final StateFactory<String> stateFactory) {
 		final HashSet<String> internals = new HashSet<String>();
-		internals.add("a");
-		internals.add("b");
-		internals.add("c");
-		internals.add("d");
+		internals.add("a1");
+		internals.add("a2");
+		internals.add("a3");
+		internals.add("a4");
 		final HashSet<String> calls = new HashSet<String>();
 		final HashSet<String> returns = new HashSet<String>();
 		
@@ -115,32 +116,47 @@ public class SampleAutomatonDebugger {
 		automaton.addState(false, false, "q4");
 		automaton.addState(false, true, "q5");
 		
-		automaton.addInternalTransition("q0", "a", "q1");
-		automaton.addInternalTransition("q1", "a", "q2");
-		automaton.addInternalTransition("q2", "a", "q3");
-		automaton.addInternalTransition("q3", "a", "q4");
-		automaton.addInternalTransition("q4", "a", "q5");
+		automaton.addInternalTransition("q0", "a1", "q1");
+		automaton.addInternalTransition("q1", "a1", "q2");
+		automaton.addInternalTransition("q2", "a1", "q3");
+		automaton.addInternalTransition("q3", "a1", "q4");
+		automaton.addInternalTransition("q4", "a1", "q5");
 		
 		return automaton;
 	}
 	
 	/**
-	 * Sample tester which throws an error whenever the automaton contains
-	 * a state "q1" or "q3".
+	 * Sample tester which throws an exception iff the automaton violates one of
+	 * the specified constraints. 
 	 */
-	static class SampleTester<LETTER, STATE>
-			extends ATester<LETTER, STATE> {
+	static class SampleTester extends ATester<String, String> {
 		public SampleTester() {
 			super(new DebuggerException(null, "test exception"));
 		}
 		
 		@Override
-		public void execute(INestedWordAutomaton<LETTER, STATE> automaton)
+		public void execute(INestedWordAutomaton<String, String> automaton)
 				throws DebuggerException {
+			// 
 			boolean result = true;
-			result &= ! automaton.getStates().contains("q1");
-			result &= ! automaton.getStates().contains("q3");
-			if (! result) {
+			
+			// states: q1 and q3 exist
+			result &= automaton.getStates().contains("q1");
+			result &= automaton.getStates().contains("q3");
+			
+			// internal transitions: q1 and q2 have an outgoing transition
+			Iterable<OutgoingInternalTransition<String, String>> q1Trans =
+					automaton.internalSuccessors("q1");
+			result &= q1Trans.iterator().hasNext();
+			Iterable<OutgoingInternalTransition<String, String>> q2Trans =
+					automaton.internalSuccessors("q2");
+			result &= q2Trans.iterator().hasNext();
+			
+			// internal alphabet: a2 exists
+			result &= automaton.getAlphabet().contains("a2");
+			
+			// throw an exception if one of the above constraints is violated
+			if (result) {
 				throw new DebuggerException(this.getClass(), "test exception");
 			}
 		}
