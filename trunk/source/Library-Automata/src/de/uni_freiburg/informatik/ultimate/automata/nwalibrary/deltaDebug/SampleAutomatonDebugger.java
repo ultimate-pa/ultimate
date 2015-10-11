@@ -73,6 +73,7 @@ public class SampleAutomatonDebugger {
 				new ArrayList<AShrinker<?, String, String>>();
 		shrinkersLoop.add(new StateShrinker<String, String>());
 		shrinkersLoop.add(new InternalTransitionShrinker<String, String>());
+		shrinkersLoop.add(new CallTransitionShrinker<String, String>());
 		
 		// list of shrinkers (i.e., rules to apply) to be applied only once
 		final List<AShrinker<?, String, String>> shrinkersEnd =
@@ -103,7 +104,13 @@ public class SampleAutomatonDebugger {
 		internals.add("a3");
 		internals.add("a4");
 		final HashSet<String> calls = new HashSet<String>();
+		calls.add("c1");
+		calls.add("c2");
+		calls.add("c3");
 		final HashSet<String> returns = new HashSet<String>();
+		returns.add("r1");
+		returns.add("r2");
+		returns.add("r3");
 		
 		NestedWordAutomaton<String, String> automaton =
 				new NestedWordAutomaton<String, String>(services, internals,
@@ -121,6 +128,10 @@ public class SampleAutomatonDebugger {
 		automaton.addInternalTransition("q2", "a1", "q3");
 		automaton.addInternalTransition("q3", "a1", "q4");
 		automaton.addInternalTransition("q4", "a1", "q5");
+
+		automaton.addCallTransition("q1", "c1", "q1");
+		automaton.addCallTransition("q5", "c2", "q2");
+		automaton.addCallTransition("q5", "c3", "q3");
 		
 		return automaton;
 	}
@@ -145,12 +156,14 @@ public class SampleAutomatonDebugger {
 			result &= automaton.getStates().contains("q3");
 			
 			// internal transitions: q1 and q2 have an outgoing transition
-			Iterable<OutgoingInternalTransition<String, String>> q1Trans =
-					automaton.internalSuccessors("q1");
-			result &= q1Trans.iterator().hasNext();
-			Iterable<OutgoingInternalTransition<String, String>> q2Trans =
-					automaton.internalSuccessors("q2");
-			result &= q2Trans.iterator().hasNext();
+			result &= automaton.internalSuccessors("q1").iterator().hasNext();
+			result &= automaton.internalSuccessors("q2").iterator().hasNext();
+			
+			// call transitions:
+			// q1 has an outgoing transition
+			result &= automaton.callSuccessors("q1").iterator().hasNext();
+			// q5 has an outgoing transition (nondeterministic!)
+			result &= automaton.callSuccessors("q5").iterator().hasNext();
 			
 			// internal alphabet: a2 exists
 			result &= automaton.getAlphabet().contains("a2");
