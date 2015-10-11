@@ -1180,9 +1180,10 @@ public class MemoryHandler {
         		StructAccessExpression sae = new StructAccessExpression(loc, 
         				value, fieldId);
         		Expression fieldOffset = m_TypeSizeAndOffsetComputer.constructOffsetForField(loc, rStructType, fieldId);
-        		Expression newOffset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus, 
-        				newStartAddressOffset,
-        				fieldOffset, loc);
+        		Expression newOffset = m_ExpressionTranslation.constructArithmeticExpression(
+        				loc, IASTBinaryExpression.op_plus, 
+        				newStartAddressOffset, m_ExpressionTranslation.getCTypeOfPointerComponents(), 
+        				fieldOffset, m_ExpressionTranslation.getCTypeOfPointerComponents());
         		HeapLValue fieldHlv = new HeapLValue(
         				constructPointerFromBaseAndOffset(newStartAddressBase,
         				newOffset, loc), fieldType);
@@ -1240,8 +1241,12 @@ public class MemoryHandler {
 						stmt.addAll(getWriteCall(loc, 
 								new HeapLValue(constructPointerFromBaseAndOffset(newStartAddressBase, arrayEntryAddressOffset, loc), arrayType.getValueType()), 
 								arrayAccRVal.getValue(), arrayAccRVal.getCType()));
-						arrayEntryAddressOffset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus, 
-								arrayEntryAddressOffset, valueTypeSize, loc);
+						//TODO 2015-10-11 Matthias: Why is there an addition of value Type size
+						// and no multiplication? Check this more carefully.
+						arrayEntryAddressOffset = m_ExpressionTranslation.constructArithmeticExpression(
+		        				loc, IASTBinaryExpression.op_plus, 
+		        				arrayEntryAddressOffset, m_ExpressionTranslation.getCTypeOfPointerComponents(), 
+		        				valueTypeSize, m_ExpressionTranslation.getCTypeOfPointerComponents());
 					}
         	} else {
         		throw new UnsupportedSyntaxException(loc, "we need to generalize this to nested and/or variable length arrays");

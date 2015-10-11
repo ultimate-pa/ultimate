@@ -548,16 +548,18 @@ public class InitializationHandler {
 			for (int i = 0; i < currentSizeInt; i++) {
 				CType valueType = arrayType.getValueType().getUnderlyingType();
 				
-
-				Expression writeOffset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, 
-						new IntegerLiteral(null, new Integer(i).toString()), 
-						sizeOfCell,
-						null);	
-				writeOffset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus,
-						newStartAddressOffset,
-						writeOffset, 
-						loc);
-
+				Expression iAsExpression = mExpressionTranslation.constructLiteralForIntegerType(
+						loc, mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(i));
+				Expression writeOffset = mExpressionTranslation.constructArithmeticExpression(
+						loc, IASTBinaryExpression.op_multiply, 
+						iAsExpression, mExpressionTranslation.getCTypeOfPointerComponents(), 
+						sizeOfCell, mExpressionTranslation.getCTypeOfPointerComponents()); 
+						
+				writeOffset = mExpressionTranslation.constructArithmeticExpression(
+						loc, IASTBinaryExpression.op_plus, 
+						newStartAddressOffset, mExpressionTranslation.getCTypeOfPointerComponents(), 
+						writeOffset, mExpressionTranslation.getCTypeOfPointerComponents()); 
+						
 				Expression writeLocation = MemoryHandler.constructPointerFromBaseAndOffset(
 						newStartAddressBase,
 						writeOffset, 
@@ -599,21 +601,22 @@ public class InitializationHandler {
 
 				Expression blockOffset = sizeOfCell;
 				for (int j = 1; j < dimensions.length; j++) {
-					blockOffset = 
-							CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply,
-									dimensions[j],
-									blockOffset,
-									loc);
+					blockOffset = mExpressionTranslation.constructArithmeticExpression(
+							loc, IASTBinaryExpression.op_multiply, 
+							dimensions[j], mExpressionTranslation.getCTypeOfPointerComponents(), 
+							blockOffset, mExpressionTranslation.getCTypeOfPointerComponents()); 
 				}
-				blockOffset = 
-						CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply,
-								new IntegerLiteral(loc, new Integer(i).toString()),	blockOffset,
-								loc);	
-				newStartAddressOffsetInner = 
-						CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus,
-								newStartAddressOffsetInner,
-								blockOffset,
-								loc);	
+				Expression iAsExpression = mExpressionTranslation.constructLiteralForIntegerType(
+						loc, mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(i));
+				blockOffset = mExpressionTranslation.constructArithmeticExpression(
+						loc, IASTBinaryExpression.op_multiply, 
+						iAsExpression, mExpressionTranslation.getCTypeOfPointerComponents(), 
+						blockOffset, mExpressionTranslation.getCTypeOfPointerComponents()); 
+
+				newStartAddressOffsetInner = mExpressionTranslation.constructArithmeticExpression(
+						loc, IASTBinaryExpression.op_plus, 
+						newStartAddressOffsetInner, mExpressionTranslation.getCTypeOfPointerComponents(), 
+						blockOffset, mExpressionTranslation.getCTypeOfPointerComponents()); 
 
 				ArrayList<Expression> innerDims = new ArrayList<Expression>(Arrays.asList(arrayType.getDimensions()));
 				innerDims.remove(0);//TODO ??

@@ -42,6 +42,7 @@ import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -61,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
@@ -413,12 +413,16 @@ public class ExpressionResult extends Result {
 				newAuxVars.putAll(fieldRead.auxVars);
 //				throw new UnsupportedSyntaxException(loc, "..");
 			} else if (underlyingType instanceof CStruct) {
+				
 				Expression innerStructOffset = memoryHandler.getTypeSizeAndOffsetComputer().constructOffsetForField(loc, structType, i);
+				
+				AExpressionTranslation exprTrans = ((CHandler) main.cHandler).getExpressionTranslation();
+				Expression offsetSum = exprTrans.constructArithmeticExpression(
+						loc, IASTBinaryExpression.op_plus, 
+						currentStructOffset, exprTrans.getCTypeOfPointerComponents(), 
+						innerStructOffset, exprTrans.getCTypeOfPointerComponents()); 
 				Expression innerStructAddress = MemoryHandler.constructPointerFromBaseAndOffset(currentStructBaseAddress, 
-						new BinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS, 
-								currentStructOffset, 
-								innerStructOffset),
-								loc);
+						offsetSum, loc);
 				
 				ExpressionResult fieldRead = readStructFromHeap(main, structHandler, memoryHandler, 
 						loc, innerStructAddress, (CStruct) underlyingType);
@@ -519,9 +523,11 @@ public class ExpressionResult extends Result {
 				stmt = assRex.stmt;
 				auxVars = assRex.auxVars;
 				overApp.addAll(assRex.overappr);
-
-				arrayEntryAddressOffset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus, 
-						arrayEntryAddressOffset, valueTypeSize, loc);
+				
+				AExpressionTranslation exprTrans = ((CHandler) main.cHandler).getExpressionTranslation();
+				arrayEntryAddressOffset = exprTrans.constructArithmeticExpression(
+						loc, IASTBinaryExpression.op_plus, arrayEntryAddressOffset, exprTrans.getCTypeOfPointerComponents(), 
+						valueTypeSize, exprTrans.getCTypeOfPointerComponents()); 
 			}
 		} else {
 			throw new UnsupportedSyntaxException(loc, "we need to generalize this to nested and/or variable length arrays");
@@ -532,8 +538,7 @@ public class ExpressionResult extends Result {
 	
 	/**
 	 * Add all declaration, statements, auxvars, etc. from another 
-	 * ResultExpression. Lock the other ResultExpression afterwards to indicate
-	 * that the other Result expression should not be used any more. 
+	 * ResultExpression.
 	 */
 	public void addAll(ExpressionResult re) {
 		this.decl.addAll(re.decl);
