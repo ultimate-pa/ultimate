@@ -1422,7 +1422,7 @@ public class FunctionHandler {
 		}
 		stmt.add(call);
 		CType returnCType = methodsCalledBeforeDeclared.contains(methodName) ? new CPrimitive(PRIMITIVE.INT)
-				: procedureToCFunctionType.get(methodName).getResultType();
+				: procedureToCFunctionType.get(methodName).getResultType().getUnderlyingType();
 		assert (CHandler.isAuxVarMapcomplete(main, decl, auxVars));
 		return new ExpressionResult(stmt, new RValue(expr, returnCType), decl, auxVars, overappr);
 	}
