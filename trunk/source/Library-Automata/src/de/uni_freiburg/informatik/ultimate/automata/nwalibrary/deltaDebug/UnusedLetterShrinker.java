@@ -70,10 +70,7 @@ public class UnusedLetterShrinker<LETTER, STATE>
 		// add transitions which still remain
 		m_factory.addFilteredTransitions(automaton);
 		
-		// store automaton temporarily
-		m_prevAutomaton = automaton;
-		
-		return m_automaton;
+		return automaton;
 	}
 	
 	@Override

@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 public abstract class AShrinker<T, LETTER, STATE> {
 	INestedWordAutomaton<LETTER, STATE> m_automaton;
 	AAutomatonFactory<LETTER, STATE> m_factory;
-	INestedWordAutomaton<LETTER, STATE> m_prevAutomaton;
 	
 	/**
 	 * Creates an automaton.
@@ -75,18 +74,16 @@ public abstract class AShrinker<T, LETTER, STATE> {
 	/**
 	 * Called when the error still occurs for a shrunk automaton (-> success).
 	 */
-	public void error(final List<T> list) {
-		assert (m_prevAutomaton != null) :
-			"The previous automaton should have been stored.";
-		m_automaton = m_prevAutomaton;
-		m_prevAutomaton = null;
+	public void error(final INestedWordAutomaton<LETTER, STATE> newAutomaton) {
+		// use shrunk automaton henceforth
+		m_automaton = newAutomaton;
 	}
 	
 	/**
 	 * Called when no error occurs for a shrunk automaton (-> failure).
 	 */
-	public void noError(final List<T> list) {
-		m_prevAutomaton = null;
+	public void noError(final INestedWordAutomaton<LETTER, STATE> newAutomaton) {
+		// no action for standard shrinker
 	}
 	
 	/**
@@ -104,7 +101,6 @@ public abstract class AShrinker<T, LETTER, STATE> {
 			final AAutomatonFactory<LETTER, STATE> factory) {
 		m_automaton = automaton;
 		m_factory = factory;
-		m_prevAutomaton = automaton;
 		final BinaryDebug<T, LETTER, STATE> binSearch =
 				new BinaryDebug<T, LETTER, STATE>(tester, this);
 		final boolean isReduced = binSearch.run();

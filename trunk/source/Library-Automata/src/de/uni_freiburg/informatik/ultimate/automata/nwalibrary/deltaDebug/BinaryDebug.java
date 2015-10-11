@@ -143,7 +143,7 @@ public class BinaryDebug<T, LETTER, STATE> {
 			
 			if (isTestSuccessful) {
 				// error reproduced
-				m_shrinker.error(sublist);
+				m_shrinker.error(automaton);
 				result = true;
 				if (sb.m_isLhs) {
 					/*
@@ -157,7 +157,7 @@ public class BinaryDebug<T, LETTER, STATE> {
 				}
 			} else {
 				// error not reproduced => split list into two parts
-				m_shrinker.noError(sublist);
+				m_shrinker.noError(automaton);
 				split(sb);
 			}
 		}
