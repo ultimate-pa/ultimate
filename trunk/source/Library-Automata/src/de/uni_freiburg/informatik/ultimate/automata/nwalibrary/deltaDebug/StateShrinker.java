@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.deltaDebug;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -24,12 +25,10 @@ public class StateShrinker<STATE, LETTER>
 		INestedWordAutomaton<LETTER, STATE> automaton = m_factory.create();
 		
 		// add the complement of the passed states
-		final Set<STATE> oldStates = m_automaton.getStates();
-		for (final STATE state : oldStates) {
-			if (! states.contains(state)) {
-				m_factory.addState(automaton, state);
-			}
-		}
+		final Set<STATE> oldStates =
+				new HashSet<STATE>(m_automaton.getStates());
+		oldStates.removeAll(states);
+		m_factory.addStates(automaton, oldStates);
 		
 		// add transitions which still remain
 		m_factory.addFilteredTransitions(automaton);
