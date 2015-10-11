@@ -395,6 +395,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 								GlobalSettings._instance._interpolationMode);
 						break;
 					}
+					if (traceChecker.getToolchainCancelledExpection() != null) {
+						throw traceChecker.getToolchainCancelledExpection();
+					}
 
 					LBool isSafe = traceChecker.isCorrect();
 					if (isSafe == LBool.UNSAT) { // trace is infeasible

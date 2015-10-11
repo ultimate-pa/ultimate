@@ -108,7 +108,11 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		m_LiveVariables = useLiveVariables;
 		m_PredicateTransformer = new PredicateTransformer(m_SmtManager, m_ModifiedGlobals, mServices);
 		if (isCorrect() == LBool.UNSAT) {
-			computeInterpolants(new AllIntegers(), interpolation);
+			try {
+				computeInterpolants(new AllIntegers(), interpolation);
+			} catch (ToolchainCanceledException tce) {
+				m_ToolchainCanceledException = tce;
+			}
 		}
 	}
 
@@ -519,6 +523,9 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		TraceChecker tc = new TraceChecker(rv.getPrecondition(), rv.getPostcondition(),
 				new TreeMap<Integer, IPredicate>(), rv.getTrace(), m_SmtManager, m_ModifiedGlobals, rv,
 				AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, true);
+		if (tc.getToolchainCancelledExpection() != null) {
+			throw tc.getToolchainCancelledExpection();
+		}
 		boolean result = (tc.isCorrect() == LBool.UNSAT);
 		return result;
 	}
