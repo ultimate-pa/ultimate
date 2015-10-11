@@ -183,7 +183,7 @@ public class TypeSizeAndOffsetComputer {
 					m_TypeSizePointer = constructSizeTValue_Pointer(loc);
 				}
 				return m_TypeSizePointer;
-			} else if (cType instanceof CEnum) { 
+			} else if (underlyingType instanceof CEnum) { 
 				// an Enum contains constants of type int
 				return computeSize(loc, new CPrimitive(PRIMITIVE.INT));
 			} else {
