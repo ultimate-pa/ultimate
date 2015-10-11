@@ -1835,7 +1835,9 @@ public class CHandler implements ICHandler {
 			typeOfResult = left.lrVal.getCType();
 			CType pointsToType = ((CPointer) typeOfResult).pointsToType;
 			result = ExpressionResult.copyStmtDeclAuxvarOverapprox(left, right);
-			expr = doPointerArithmetic(main, op, loc, left.lrVal.getValue(), (RValue) right.lrVal, pointsToType);
+			ExpressionResult re = doPointerArithmeticWithConversion(main, op, loc, left.lrVal.getValue(), (RValue) right.lrVal, pointsToType);
+			result.addAll(re);
+			expr = re.lrVal.getValue();
 			addOffsetInBoundsCheck(main, loc, expr, result);
 		} else if (lType.isArithmeticType() && (rType instanceof CPointer)) {
 			if (op != IASTBinaryExpression.op_plus && op != IASTBinaryExpression.op_plusAssign) {
@@ -1844,7 +1846,9 @@ public class CHandler implements ICHandler {
 			typeOfResult = right.lrVal.getCType();
 			CType pointsToType = ((CPointer) typeOfResult).pointsToType;
 			result = ExpressionResult.copyStmtDeclAuxvarOverapprox(left, right);
-			expr = doPointerArithmetic(main, op, loc, right.lrVal.getValue(), (RValue) left.lrVal, pointsToType);
+			ExpressionResult re = doPointerArithmeticWithConversion(main, op, loc, right.lrVal.getValue(), (RValue) left.lrVal, pointsToType);
+			result.addAll(re);
+			expr = re.lrVal.getValue();
 			addOffsetInBoundsCheck(main, loc, expr, result);
 		} else if ((lType instanceof CPointer) && (rType instanceof CPointer)) {
 			if (op != IASTBinaryExpression.op_minus && op != IASTBinaryExpression.op_minusAssign) {
@@ -3183,13 +3187,15 @@ public class CHandler implements ICHandler {
 
 	/**
 	 * Add or subtract a Pointer and an integer.
+	 * Use this method only if you are sure that the type of the integer
+	 * is the same as the type that we use for our pointer components.
+	 * Otherwise, use the method below.
 	 * 
 	 * @param operator Either plus or minus.
 	 * @param integer
 	 * @param valueType
 	 *            The value type the pointer points to (we need it because we
-	 *            have to multiply with its size) if valueType is null, then we
-	 *            leave out the multiplication
+	 *            have to multiply with its size)
 	 * @return a pointer of the form: {base: ptr.base, offset: ptr.offset +
 	 *         integer * sizeof(valueType)}
 	 */
@@ -3208,6 +3214,27 @@ public class CHandler implements ICHandler {
 				m_ExpressionTranslation.getCTypeOfPointerComponents(), timesSizeOf, m_ExpressionTranslation.getCTypeOfPointerComponents());
 		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
 		return newPointer;
+	}
+	
+	/**
+	 * Like {@link CHandler#doPointerArithmetic(Dispatcher, int, ILocation, Expression, RValue, CType)}
+	 * but additionally the integer operand is converted to the same type
+	 * that we use to represent pointer components.
+	 * As a consequence we have to return an ExpressionResult.
+	 */
+	public ExpressionResult doPointerArithmeticWithConversion(Dispatcher main, int operator, ILocation loc, Expression ptrAddress,
+			RValue integer, CType valueType) {
+		ExpressionResult eres = new ExpressionResult(integer);
+		AExpressionTranslation exprTrans = ((CHandler) main.cHandler).getExpressionTranslation();
+		exprTrans.convert(loc, eres, exprTrans.getCTypeOfPointerComponents());
+		Expression resultExpression = doPointerArithmetic(main, operator, loc, ptrAddress, (RValue) eres.lrVal, valueType);
+		eres.lrVal = new RValue(resultExpression, m_ExpressionTranslation.getCTypeOfPointerComponents());
+		return eres;
+	}
+	
+	
+	{
+
 	}
 	
 	/**
