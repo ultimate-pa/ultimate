@@ -27,39 +27,42 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.deltaDebug;
 
 /**
- * Fresh exception type for the debugger.
- * 
- * In order to prevent several causes for the designated error, this exception
- * can be thrown at the respective position to make sure the debugger looks
- * for the correct error position.
- * Of course, a user can specify new types of exceptions as well.
- * 
- * NOTE: After debugging the exception should be removed again, so that the
- * invariant that this exception is thrown at most once in the whole library
- * holds.
+ * Wraps a letter together with its type (internal, call, return).
  * 
  * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
  */
-class DebuggerException extends Exception {
-	private static final long serialVersionUID = 1L;
+class TypedLetter<LETTER> {
+	final LETTER m_letter;
+	final ELetterType m_type;
 	
-	final Class<?> m_classOfThrower;
-	final String m_message;
-	
-	public DebuggerException(final Class<?> thrower, final String message) {
-		m_classOfThrower = thrower;
-		m_message = message;
+	public TypedLetter(final LETTER letter, final ELetterType type) {
+		this.m_letter = letter;
+		this.m_type = type;
 	}
 	
 	@Override
 	public String toString() {
 		final StringBuilder b = new StringBuilder();
-		b.append(this.getClass().getSimpleName());
+		b.append(m_letter);
 		b.append("(");
-		b.append(m_classOfThrower);
-		b.append(" : ");
-		b.append(m_message);
+		b.append(m_type);
 		b.append(")");
 		return b.toString();
+	}
+	
+	@Override
+	public int hashCode() {
+		return m_letter.hashCode() + m_type.hashCode();
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean equals(Object o) {
+		if (! (o instanceof TypedLetter)) {
+			return false;
+		}
+		final TypedLetter<LETTER> other = (TypedLetter<LETTER>) o;
+		return (other.m_letter.equals(this.m_letter)) &&
+				(other.m_type == this.m_type);
 	}
 }

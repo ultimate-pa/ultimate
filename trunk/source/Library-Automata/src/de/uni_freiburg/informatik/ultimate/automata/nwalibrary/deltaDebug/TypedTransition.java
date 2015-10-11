@@ -27,39 +27,65 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.deltaDebug;
 
 /**
- * Fresh exception type for the debugger.
- * 
- * In order to prevent several causes for the designated error, this exception
- * can be thrown at the respective position to make sure the debugger looks
- * for the correct error position.
- * Of course, a user can specify new types of exceptions as well.
- * 
- * NOTE: After debugging the exception should be removed again, so that the
- * invariant that this exception is thrown at most once in the whole library
- * holds.
+ * Wraps a transition together with its type (internal, call, return).
  * 
  * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
  */
-class DebuggerException extends Exception {
-	private static final long serialVersionUID = 1L;
+class TypedTransition<LETTER, STATE> {
+	final STATE m_pred;
+	final STATE m_succ;
+	final STATE m_hier;
+	final TypedLetter<LETTER> m_letter;
 	
-	final Class<?> m_classOfThrower;
-	final String m_message;
+	public TypedTransition(final STATE pred, final STATE succ,
+			final STATE hier, final TypedLetter<LETTER> letter) {
+		this.m_pred = pred;
+		this.m_succ = succ;
+		this.m_hier = hier;
+		this.m_letter = letter;
+	}
 	
-	public DebuggerException(final Class<?> thrower, final String message) {
-		m_classOfThrower = thrower;
-		m_message = message;
+	@Override
+	public int hashCode() {
+		final int hashCode = (m_hier == null ? 0 : m_hier.hashCode());
+		return hashCode + m_pred.hashCode() + m_succ.hashCode() +
+				m_letter.hashCode();
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public boolean equals(Object o) {
+		if (! (o instanceof TypedTransition)) {
+			return false;
+		}
+		final TypedTransition<LETTER, STATE> other =
+				(TypedTransition<LETTER, STATE>) o;
+		if (this.m_hier == null) {
+			if (other.m_hier != null) {
+				return false;
+			}
+		} else if (other.m_hier == null) {
+			return false;
+		}
+		return (other.m_pred.equals(this.m_pred)) &&
+				(other.m_succ.equals(this.m_succ)) &&
+				(other.m_letter.equals(this.m_letter));
 	}
 	
 	@Override
 	public String toString() {
 		final StringBuilder b = new StringBuilder();
-		b.append(this.getClass().getSimpleName());
-		b.append("(");
-		b.append(m_classOfThrower);
-		b.append(" : ");
-		b.append(m_message);
-		b.append(")");
+		b.append("<");
+		b.append(m_pred);
+		b.append(", ");
+		b.append(m_letter);
+		if (m_hier != null) {
+			b.append(m_hier);
+			b.append(", ");
+		}
+		b.append(", ");
+		b.append(m_succ);
+		b.append(">");
 		return b.toString();
 	}
 }
