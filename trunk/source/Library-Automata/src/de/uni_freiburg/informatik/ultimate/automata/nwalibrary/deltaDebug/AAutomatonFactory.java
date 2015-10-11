@@ -39,6 +39,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 /**
  * Factory for {@link INestedWordAutomaton} objects.
  * 
+ * NOTE: The automaton field is not updated during the shrinking process.
+ * Use it with caution.
+ * 
  * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
  */
 public abstract class AAutomatonFactory<LETTER, STATE> {
@@ -157,12 +160,13 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 	/**
 	 * @return all internal transitions
 	 */
-	public Set<TypedTransition<LETTER, STATE>> getInternalTransitions() {
+	public Set<TypedTransition<LETTER, STATE>> getInternalTransitions(
+			final INestedWordAutomaton<LETTER, STATE> automaton) {
 		final Set<TypedTransition<LETTER, STATE>> transitions =
 				new HashSet<TypedTransition<LETTER, STATE>>();
-		for (final STATE state : m_automaton.getStates()) {
+		for (final STATE state : automaton.getStates()) {
 			for (final OutgoingInternalTransition<LETTER, STATE> trans :
-					m_automaton.internalSuccessors(state)) {
+					automaton.internalSuccessors(state)) {
 				transitions.add(new TypedTransition<LETTER, STATE>(state,
 						trans.getSucc(), null,
 						new TypedLetter<LETTER>(trans.getLetter(),
