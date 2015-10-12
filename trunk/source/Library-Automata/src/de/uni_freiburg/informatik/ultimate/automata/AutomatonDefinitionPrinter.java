@@ -155,6 +155,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 				break;
 			case BA:
 			case HOA:
+			case GFF:
 				// add nothing
 				break;
 			default:
