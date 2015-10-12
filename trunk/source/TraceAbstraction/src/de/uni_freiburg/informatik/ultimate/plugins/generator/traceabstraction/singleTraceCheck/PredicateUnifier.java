@@ -901,16 +901,17 @@ public class PredicateUnifier {
 		@Override
 		public String prettyprintBenchmarkData(IBenchmarkDataProvider benchmarkData) {
 			StringBuilder sb = new StringBuilder();
-			sb.append("PredicateUnifier: ");
 			for (String key : getKeys()) {
 				if (key == s_Time) {
 					long time = (long) benchmarkData.getValue(s_Time);
 					sb.append(TraceAbstractionBenchmarks.prettyprintNanoseconds(time));
 					sb.append(s_Time);
 				} else {
-					sb.append(benchmarkData.getValue(key) + key);
+					sb.append(benchmarkData.getValue(key));
+					sb.append(" ");
+					sb.append(key);
 				}
-				sb.append(" ");
+				sb.append(", ");
 			}
 			return sb.toString();
 		}
