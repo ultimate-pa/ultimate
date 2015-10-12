@@ -48,6 +48,7 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 	public static final String s_AutomataMinimizationTime = "Minimization time";
 	public static final String s_HoareAnnotationTime = "Time for computing Hoare annotation";
 	public static final String s_EdgeCheckerData = "EdgeCheckerBenchmarkData";
+	public static final String s_PredicateUnifierData = "PredicateUnifierData";
 	public static final String s_StatesRemovedByMinimization = "States removed by minization";
 	public static final String s_BasicInterpolantAutomatonTime = "BasicInterpolantAutomatonTime";
 	public static final String s_BiggestAbstraction = "BiggestAbstraction";
@@ -72,6 +73,7 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 				s_AutomataMinimizationTime, s_HoareAnnotationTime, 
 				s_BasicInterpolantAutomatonTime, s_BiggestAbstraction }));
 		keyList.add(s_EdgeCheckerData);
+		keyList.add(s_PredicateUnifierData);
 		keyList.add(s_StatesRemovedByMinimization);
 		keyList.add(s_TraceCheckerBenchmark);
 		keyList.add(s_InterpolantConsolidationBenchmark);
@@ -110,6 +112,7 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 			Long time2 = (Long) value2;
 			return time1 + time2;
 		case s_EdgeCheckerData:
+		case s_PredicateUnifierData:
 		case s_TraceCheckerBenchmark:
 		case s_InterpolantConsolidationBenchmark:
 		case s_TotalInterpolationBenchmark:
@@ -197,6 +200,13 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 		BenchmarkData ecData = 
 				(BenchmarkData) benchmarkData.getValue(s_EdgeCheckerData);
 		sb.append(ecData);
+		sb.append("\t");
+		
+		sb.append(s_PredicateUnifierData);
+		sb.append(": ");
+		BenchmarkData puData = 
+				(BenchmarkData) benchmarkData.getValue(s_PredicateUnifierData);
+		sb.append(puData);
 		sb.append("\t");
 		
 		sb.append(s_TraceCheckerBenchmark);
