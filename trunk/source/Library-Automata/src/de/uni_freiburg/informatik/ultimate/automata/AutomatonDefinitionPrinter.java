@@ -96,6 +96,10 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			 */
 			BA("ba"),
 			/**
+			 * (GOAL File Format) - The XML file format used by GOAL.
+			 */
+			GFF("gff"),
+			/**
 			 * The Hanoi Omega Automaton Format
 			 */
 			HOA("hoa");
@@ -206,6 +210,8 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 					new BaFormatWriter(nwa);
 				} else if (format == Format.HOA) {
 					new HanoiFormatWriter(nwa);
+				} else if (format == Format.GFF) {
+					new GoalFormatWriter(nwa);
 				} else {
 					throw new AssertionError("unsupported labeling");
 				}
@@ -935,6 +941,148 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 
 
 		}
+		
+		
+		
+		
+		private class GoalFormatWriter extends AbstractWriter {
+			
+			private final Converter<LETTER> m_LetterConverter;
+			private final Converter<STATE> m_StateConverter;
+
+			public GoalFormatWriter(INestedWordAutomaton<LETTER, STATE> nwa) {
+				super(nwa);
+				m_LetterConverter = new MapBasedConverter<LETTER, String>(m_AlphabetMapping, "");
+				m_StateConverter = new MapBasedConverter<STATE, String>(m_StateMapping, "");
+				doPrint();
+			}
+
+			protected void doPrint() {
+				StringBuilder sb = new StringBuilder();
+				sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>");
+				sb.append(System.lineSeparator());
+				sb.append("<Structure label-on=\"Transition\" type=\"FiniteStateAutomaton\">");
+				sb.append(System.lineSeparator());
+				sb.append(constuctAlphabetSection());
+				sb.append(constuctStateSection());
+				sb.append(constuctInitialStateSection());
+				sb.append(constuctTransitionSection());
+				sb.append(constuctAcceptingStateSection());
+				sb.append("</Structure>");
+				sb.append(System.lineSeparator());
+				m_printWriter.print(sb.toString());
+			}
+			
+			private String constuctAlphabetSection() {
+				StringBuilder sb = new StringBuilder();
+				sb.append("\t");
+				sb.append("<Alphabet type=\"Classical\">");
+				sb.append(System.lineSeparator());
+				for (LETTER letter : m_Nwa.getInternalAlphabet()) {
+					sb.append("\t");
+					sb.append("\t");
+					sb.append("<Symbol>");
+					sb.append(m_LetterConverter.convert(letter));
+					sb.append("</Symbol>");
+					sb.append(System.lineSeparator());
+				}
+				sb.append("\t");
+				sb.append("</Alphabet>");
+				sb.append(System.lineSeparator());
+				return sb.toString();
+			}
+			
+			private String constuctStateSection() {
+				StringBuilder sb = new StringBuilder();
+				sb.append("\t");
+				sb.append("<StateSet>");
+				sb.append(System.lineSeparator());
+				for (STATE state : m_Nwa.getStates()) {
+					sb.append("\t");
+					sb.append("\t");
+					sb.append("<State sid=\"");
+					sb.append(m_StateConverter.convert(state));
+					sb.append("\" />");
+					sb.append(System.lineSeparator());
+				}
+				sb.append("\t");
+				sb.append("</StateSet>");
+				sb.append(System.lineSeparator());
+				return sb.toString();
+			}
+			
+			private String constuctInitialStateSection() {
+				StringBuilder sb = new StringBuilder();
+				sb.append("\t");
+				sb.append("<InitialStateSet>");
+				sb.append(System.lineSeparator());
+				for (STATE state : m_Nwa.getInitialStates()) {
+					sb.append("\t");
+					sb.append("\t");
+					sb.append("<StateID>");
+					sb.append(m_StateConverter.convert(state));
+					sb.append("</StateID>");
+					sb.append(System.lineSeparator());
+				}
+				sb.append("\t");
+				sb.append("</InitialStateSet>");
+				sb.append(System.lineSeparator());
+				return sb.toString();
+			}
+			
+			private String constuctTransitionSection() {
+				int tid = 0;
+				StringBuilder sb = new StringBuilder();
+				sb.append("\t");
+				sb.append("<TransitionSet complete=\"false\">");
+				sb.append(System.lineSeparator());
+				for (STATE state : m_Nwa.getInitialStates()) {
+					for (OutgoingInternalTransition<LETTER, STATE> trans : m_Nwa.internalSuccessors(state)) {
+						sb.append("\t");
+						sb.append("\t");
+						sb.append("<Transition tid=\"");
+						sb.append(tid++);
+						sb.append("\">");
+						sb.append("<From>");
+						sb.append(m_StateConverter.convert(state));
+						sb.append("</From>");
+						sb.append("<To>");
+						sb.append(m_StateConverter.convert(trans.getSucc()));
+						sb.append("</To>");
+						sb.append("<Label>");
+						sb.append(m_LetterConverter.convert(trans.getLetter()));
+						sb.append("</Label>");
+						sb.append("</Transition>");
+						sb.append(System.lineSeparator());
+					}
+				}
+				sb.append("\t");
+				sb.append("</TransitionSet>");
+				sb.append(System.lineSeparator());
+				return sb.toString();
+			}
+			
+			private String constuctAcceptingStateSection() {
+				StringBuilder sb = new StringBuilder();
+				sb.append("\t");
+				sb.append("<Acc type=\"Buchi\">");
+				sb.append(System.lineSeparator());
+				for (STATE state : m_Nwa.getInitialStates()) {
+					sb.append("\t");
+					sb.append("\t");
+					sb.append("<StateID>");
+					sb.append(m_StateConverter.convert(state));
+					sb.append("</StateID>");
+					sb.append(System.lineSeparator());
+				}
+				sb.append("\t");
+				sb.append("</Acc>");
+				sb.append(System.lineSeparator());
+				return sb.toString();
+			}
+		}
+		
+		
 		
 	private interface Converter<E> {
 		public String convert(E elem);
