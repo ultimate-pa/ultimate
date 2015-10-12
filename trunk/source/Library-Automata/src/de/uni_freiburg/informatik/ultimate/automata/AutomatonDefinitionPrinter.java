@@ -737,16 +737,44 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 
 		}
 		
-		private class BaFormatWriter {
-
+		private class AbstractWriter {
+			
 			protected final Map<LETTER, String> m_AlphabetMapping;
 			protected final Map<STATE, String> m_StateMapping;
 			protected final INestedWordAutomaton<LETTER, STATE> m_Nwa;
 
-			public BaFormatWriter(INestedWordAutomaton<LETTER, STATE> nwa) {
+			public AbstractWriter(INestedWordAutomaton<LETTER, STATE> nwa) {
 				m_AlphabetMapping = computeAlphabetMapping(nwa.getInternalAlphabet());
 				m_StateMapping = computeStateMapping(nwa.getStates());
 				m_Nwa = nwa;
+			}
+			
+			private Map<LETTER,String> computeAlphabetMapping(Collection<LETTER> alphabet) {
+				Integer counter = 0;
+				Map<LETTER,String> alphabetMapping = new HashMap<LETTER,String>();
+				for (LETTER letter : alphabet) {
+					alphabetMapping.put(letter, counter.toString());
+					counter++;
+				}
+				return alphabetMapping;
+			}
+
+			private Map<STATE,String> computeStateMapping(Collection<STATE> states) {
+				Integer counter = 0;
+				Map<STATE,String> stateMapping = new HashMap<STATE,String>();
+				for (STATE state : states) {
+					stateMapping.put(state, counter.toString());
+					counter++;
+				}
+				return stateMapping;
+			}
+			
+		}
+		
+		private class BaFormatWriter extends AbstractWriter {
+
+			public BaFormatWriter(INestedWordAutomaton<LETTER, STATE> nwa) {
+				super(nwa);
 				doPrint();
 			}
 
@@ -790,36 +818,26 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 
 			
 			
-			private Map<LETTER,String> computeAlphabetMapping(Collection<LETTER> alphabet) {
-				Integer counter = 0;
-				Map<LETTER,String> alphabetMapping = new HashMap<LETTER,String>();
-				for (LETTER letter : alphabet) {
-					alphabetMapping.put(letter, counter.toString());
-					counter++;
-				}
-				return alphabetMapping;
-			}
 
-			private Map<STATE,String> computeStateMapping(Collection<STATE> states) {
-				Integer counter = 0;
-				Map<STATE,String> stateMapping = new HashMap<STATE,String>();
-				for (STATE state : states) {
-					stateMapping.put(state, counter.toString());
-					counter++;
-				}
-				return stateMapping;
-			}
 			
 		}
 		
 		
-		private class HanoiFormatWriter extends BaFormatWriter {
+		private class HanoiFormatWriter extends AbstractWriter {
+			
+			private final boolean m_UseLabels = false;
+			private final Converter<LETTER> m_LetterConverterAP;
 
 			public HanoiFormatWriter(INestedWordAutomaton<LETTER, STATE> nwa) {
 				super(nwa);
+				if (m_UseLabels) {
+					m_LetterConverterAP = new ToStringConverter<LETTER>();
+				} else {
+					m_LetterConverterAP = new MapBasedConverter<LETTER, String>(m_AlphabetMapping, "");
+				}
+				doPrint();
 			}
 
-			@Override
 			protected void doPrint() {
 				String header = constructHeader();
 				m_printWriter.print(header);
@@ -847,7 +865,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 				
 				sb.append("AP: " + m_Nwa.getInternalAlphabet().size());
 				for (LETTER letter : m_Nwa.getInternalAlphabet()) {
-					sb.append(" \"" + letter + "\"");
+					sb.append(" \"" + m_LetterConverterAP.convert(letter) + "\"");
 				}
 				sb.append(System.lineSeparator());
 				
@@ -874,16 +892,6 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 				}
 				
 				sb.append("Acceptance: 1 Inf(0)");
-//				boolean first = true;
-//				for (STATE state : m_Nwa.getFinalStates()) {
-//					if (first) {
-//						sb.append(" ");
-//						first = false;
-//					} else {
-//						sb.append(" | ");
-//					}
-//					sb.append("Inf(" + m_StateMapping.get(state) + ")");
-//				}
 				sb.append(System.lineSeparator());
 				
 				
@@ -901,7 +909,12 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 
 				String accSig = "{0}";
 				for (STATE state : m_Nwa.getStates()) {
-					sb.append("State: " + m_StateMapping.get(state) + " \"" + state + "\"");
+					sb.append("State: " + m_StateMapping.get(state));
+					if (m_UseLabels) {
+						sb.append(" \"");
+						sb.append(state);
+						sb.append(" \"");
+					}
 					if (m_Nwa.isFinal(state)) {
 						sb.append(" " + accSig);
 					}
@@ -919,10 +932,45 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 				}
 				return sb.toString();
 			}
-			
-			
+
+
+		}
+		
+	private interface Converter<E> {
+		public String convert(E elem);
+	}
+	
+	private class ToStringConverter<E> implements Converter<E> {
+
+		@Override
+		public String convert(E elem) {
+			return String.valueOf(elem);
+		}
+		
+	}
+	
+	private class MapBasedConverter<E,V> implements Converter<E> {
+		
+		private final Map<E,V> m_Map;
+		private final String m_Prefix;
+		
+		public MapBasedConverter(Map<E, V> map, String prefix) {
+			super();
+			m_Prefix = prefix;
+			m_Map = map;
 		}
 
+		@Override
+		public String convert(E elem) {
+			V value = m_Map.get(elem);
+			if (value == null) {
+				throw new IllegalArgumentException("unknown element: " + elem);
+			}
+			return m_Prefix + String.valueOf(value);
+		}
+		
 	}
+
+}
 
 
