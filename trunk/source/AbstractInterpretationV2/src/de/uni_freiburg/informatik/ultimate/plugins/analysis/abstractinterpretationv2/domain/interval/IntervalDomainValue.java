@@ -72,7 +72,9 @@ public class IntervalDomainValue implements IEvaluationResult<IntervalDomainValu
 	protected IntervalDomainValue(IntervalValue lower, IntervalValue upper) {
 		if (!lower.isInfinity() && !upper.isInfinity()) {
 			if (lower.getValue().compareTo(upper.getValue()) > 0) {
-				throw new UnsupportedOperationException("The lower value must be larger than the upper value.");
+				throw new UnsupportedOperationException(
+				        "The lower value must be smaller than or qual to the upper value. Lower: " + lower.getValue()
+				                + ", Upper: " + upper.getValue());
 			}
 		}
 
