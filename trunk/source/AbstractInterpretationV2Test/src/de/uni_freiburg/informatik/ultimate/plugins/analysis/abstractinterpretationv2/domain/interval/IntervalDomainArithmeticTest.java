@@ -76,6 +76,10 @@ public class IntervalDomainArithmeticTest {
 		System.out.println("Expected: " + expectedResult.toString());
 		System.out.println();
 
+		if (interval1.isBottom() || interval2.isBottom()) {
+			return result.equals(expectedResult);
+		}
+
 		final boolean lowerResult = result.getResult().getLower().equals(expectedResult.getLower());
 		final boolean upperResult = result.getResult().getUpper().equals(expectedResult.getUpper());
 
@@ -130,6 +134,22 @@ public class IntervalDomainArithmeticTest {
 		interval4.getLower().setToInfinity();
 		assertTrue(interval4.isUnbounded());
 		assertFalse(interval4.isInfinity());
+
+		// Result should be [-\infty, 2]
+		IntervalDomainValue expectedResult3 = createInterval(0, 2);
+		expectedResult3.getLower().setToInfinity();
+
+		assertTrue(computeAdditionResult(interval4, interval2, expectedResult3));
+
+		// Interval [\-infty, \infty]
+		IntervalDomainValue infinite = new IntervalDomainValue();
+		assertTrue(infinite.isInfinity());
+		assertFalse(infinite.isBottom());
+		assertTrue(infinite.getLower().isInfinity());
+		assertTrue(infinite.getUpper().isInfinity());
+		assertTrue(infinite.isUnbounded());
+
+		assertTrue(computeAdditionResult(infinite, infinite, infinite));
 	}
 
 	@Test
@@ -159,5 +179,25 @@ public class IntervalDomainArithmeticTest {
 		IntervalDomainValue expectedResult = createInterval(-25, -10);
 
 		assertTrue(computeAdditionResult(interval1, interval2, expectedResult));
+	}
+
+	@Test
+	public void testBottomIntervalAddition() {
+		// Interval \bot
+		IntervalDomainValue interval1 = new IntervalDomainValue(true);
+		assertTrue(interval1.isBottom());
+		assertFalse(interval1.isInfinity());
+
+		// Interval [0, 1]
+		IntervalDomainValue interval2 = createInterval(0, 1);
+
+		// Result should be \bot
+		IntervalDomainValue expectedResult = new IntervalDomainValue(true);
+
+		assertTrue(computeAdditionResult(interval1, interval2, expectedResult));
+
+		assertTrue(computeAdditionResult(interval2, interval1, expectedResult));
+		
+		assertTrue(computeAdditionResult(interval1, interval1, expectedResult));
 	}
 }

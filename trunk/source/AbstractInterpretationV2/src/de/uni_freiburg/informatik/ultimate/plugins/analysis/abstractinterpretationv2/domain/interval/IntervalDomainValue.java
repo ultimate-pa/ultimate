@@ -111,6 +111,9 @@ public class IntervalDomainValue implements IEvaluationResult<IntervalDomainValu
 	 * @return <code>true</code> or <code>false</code>.
 	 */
 	protected boolean isUnbounded() {
+		if (mIsBottom) {
+			return false;
+		}
 		return mLower.isInfinity() || mUpper.isInfinity();
 	}
 
@@ -120,6 +123,9 @@ public class IntervalDomainValue implements IEvaluationResult<IntervalDomainValu
 	 * @return
 	 */
 	protected boolean isInfinity() {
+		if (mIsBottom) {
+			return false;
+		}
 		return mLower.isInfinity() && mUpper.isInfinity();
 	}
 

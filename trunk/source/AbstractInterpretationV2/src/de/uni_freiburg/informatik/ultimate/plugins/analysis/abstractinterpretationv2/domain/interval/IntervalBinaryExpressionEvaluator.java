@@ -134,18 +134,18 @@ public class IntervalBinaryExpressionEvaluator implements INAryEvaluator<Interva
 		if (firstResult.getResult().getLower().isInfinity() || secondResult.getResult().getLower().isInfinity()) {
 			lowerBound.setToInfinity();
 		} else {
-			lowerBound.setValue(firstResult.getResult().getLower().getValue()
-			        .add(secondResult.getResult().getLower().getValue()));
+			lowerBound.setValue(
+			        firstResult.getResult().getLower().getValue().add(secondResult.getResult().getLower().getValue()));
 		}
 
 		if (firstResult.getResult().getUpper().isInfinity() || secondResult.getResult().getUpper().isInfinity()) {
 			upperBound.setToInfinity();
 		} else {
-			upperBound.setValue(firstResult.getResult().getUpper().getValue()
-			        .add(secondResult.getResult().getUpper().getValue()));
+			upperBound.setValue(
+			        firstResult.getResult().getUpper().getValue().add(secondResult.getResult().getUpper().getValue()));
 		}
 
-		if (lowerBound.compareTo(upperBound) > 0) {
+		if (lowerBound.compareTo(upperBound) > 0 && !lowerBound.isInfinity()) {
 			IntervalValue tmp = lowerBound;
 			lowerBound = upperBound;
 			upperBound = tmp;
