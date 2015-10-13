@@ -1080,7 +1080,6 @@ public class CHandler implements ICHandler {
 					PRIMITIVE.INT)), emptyAuxVars);
 		case IASTUnaryExpression.op_star: {
 			ExpressionResult rop = o.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-			rop.replaceCFunctionByCPointer();
 			Expression addr = rop.lrVal.getValue();
 			if (rop.lrVal.getCType() instanceof CArray) {
 				CArray arrayCType = (CArray) rop.lrVal.getCType();
@@ -1411,8 +1410,6 @@ public class CHandler implements ICHandler {
 					address = new RValue(r.lrVal.getValue(), new CPointer(((CArray) rType).getValueType()));
 				return makeAssignment(main, loc, stmt, l.lrVal, address, decl, auxVars, overappr);
 			} else {
-				rr.replaceCFunctionByCPointer();
-				rr.replaceEnumByInt();
 				stmt.addAll(rr.stmt);
 				decl.addAll(rr.decl);
 				auxVars.putAll(rr.auxVars);
@@ -1617,8 +1614,6 @@ public class CHandler implements ICHandler {
 			int op, ExpressionResult left, ExpressionResult right) {
 		assert (left.lrVal instanceof RValue) : "no RValue";
 		assert (right.lrVal instanceof RValue) : "no RValue";
-		left.replaceEnumByInt();
-		right.replaceEnumByInt();
 		left  = ConvExpr.rexBoolToIntIfNecessary(loc, left, m_ExpressionTranslation);
 		right = ConvExpr.rexBoolToIntIfNecessary(loc, right, m_ExpressionTranslation);
 		final CType lType = left.lrVal.getCType().getUnderlyingType();
@@ -2012,8 +2007,6 @@ public class CHandler implements ICHandler {
 		assert (left.lrVal instanceof RValue) : "no RValue";
 		assert (right.lrVal instanceof RValue) : "no RValue";
 		{
-			left.replaceCFunctionByCPointer();
-			right.replaceCFunctionByCPointer();
 			final CType lType = left.lrVal.getCType().getUnderlyingType();
 			final CType rType = right.lrVal.getCType().getUnderlyingType();
 			//FIXME Matthias 2015-09-05: operation only legal if both have type 

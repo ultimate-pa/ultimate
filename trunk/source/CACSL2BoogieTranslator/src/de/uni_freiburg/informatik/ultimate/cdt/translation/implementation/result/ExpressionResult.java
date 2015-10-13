@@ -237,7 +237,9 @@ public class ExpressionResult extends Result {
 		if (lrVal == null) {
 			result =  this;
 		} else if (lrVal instanceof RValue) {
-			result =  this;
+			replaceCFunctionByCPointer();
+			replaceEnumByInt();
+			result = this;
 		} else if (lrVal instanceof LocalLValue) {
 			if (!(main instanceof PRDispatcher) && (lrVal.getCType() instanceof CArray)) {
 				throw new AssertionError("on-heap/off-heap bug: array " + lrVal.toString() + " has to be on-heap");
@@ -553,7 +555,7 @@ public class ExpressionResult extends Result {
 	 * CType enum, then replace it by CType int. If an enum variable occurs as
 	 * an RValue we use this method to replace its type by int. 
 	 */
-	public void replaceEnumByInt() {
+	private void replaceEnumByInt() {
 		if (this.lrVal instanceof RValue) {
 			RValue old = (RValue) this.lrVal;
 			if (old.getCType() instanceof CEnum) {
@@ -577,7 +579,7 @@ public class ExpressionResult extends Result {
 	 * ‘‘function returning type’’ is converted to an expression that has type 
 	 * ‘‘pointer to function returning type’’.
 	 */
-	public void replaceCFunctionByCPointer() {
+	private void replaceCFunctionByCPointer() {
 		if (this.lrVal instanceof RValue) {
 			RValue old = (RValue) this.lrVal;
 			if (old.getCType() instanceof CFunction) {
