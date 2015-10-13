@@ -61,7 +61,7 @@ public class PlaceholderType extends BoogieType {
 		return depth;
 	}
 
-	//@Override
+	@Override
 	protected BoogieType substitutePlaceholders(int deltaDepth, BoogieType[] substType) {
 		int relDepth = depth - deltaDepth;
 		if (relDepth < 0) {
@@ -84,7 +84,7 @@ public class PlaceholderType extends BoogieType {
 		}
 	}
 
-	//@Override
+	@Override
 	protected BoogieType incrementPlaceholders(int deltaDepth, int incDepth) {
 		int relDepth = depth - deltaDepth;
 		if (relDepth < 0) {
@@ -96,7 +96,7 @@ public class PlaceholderType extends BoogieType {
 		}
 	}
 
-	//@Override
+	@Override
 	protected boolean unify(int deltaDepth, BoogieType other, BoogieType[] substitution) {
 		if (other == errorType)
 			return true;
@@ -126,7 +126,7 @@ public class PlaceholderType extends BoogieType {
 		return depth >= minDepth && depth <= maxDepth;
 	}
 
-	//@Override
+	@Override
 	protected boolean isUnifiableTo(int deltaDepth, BoogieType other, 
 									ArrayList<BoogieType> substitution) {
 		/* fast path first */
@@ -202,7 +202,7 @@ public class PlaceholderType extends BoogieType {
 			NamedType(loc, this, toString(depth, false), new ASTType[0]);
 	}
 	
-	//@Override
+	@Override
 	public boolean isFinite() {
 		return true;
 	}

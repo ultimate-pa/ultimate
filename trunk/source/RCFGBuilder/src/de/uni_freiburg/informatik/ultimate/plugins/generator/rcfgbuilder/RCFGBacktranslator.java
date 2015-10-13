@@ -113,7 +113,7 @@ public class RCFGBacktranslator extends DefaultTranslator<CodeBlock, BoogieASTNo
 	 */
 	private void addCodeBlock(CodeBlock cb, List<AtomicTraceElement<BoogieASTNode>> trace,
 			Map<TermVariable, Boolean> branchEncoders) {
-		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringprovider();
+		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringProvider();
 		if (cb instanceof Call) {
 			Statement st = ((Call) cb).getCallStatement();
 			trace.add(new AtomicTraceElement<BoogieASTNode>(st, st, StepInfo.PROC_CALL, stringProvider));

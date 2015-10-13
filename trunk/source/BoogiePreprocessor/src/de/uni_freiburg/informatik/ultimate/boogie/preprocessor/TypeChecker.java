@@ -107,11 +107,6 @@ import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck.CheckableExpression;
 import de.uni_freiburg.informatik.ultimate.result.TypeErrorResult;
 
-/**
- * This class is a AST-Visitor for creating textual representations of the tree.
- * It creates a String.
- * 
- */
 public class TypeChecker extends BaseObserver {
 	private TypeManager typeManager;
 	private HashMap<String, FunctionInfo> declaredFunctions;
@@ -237,20 +232,18 @@ public class TypeChecker extends BaseObserver {
 				break;
 			case COMPPO:
 				if (!left.equals(right) && !left.equals(errorType) && !right.equals(errorType)) {
-					typeError(
-							expr,
-							"Type check failed for " + expr + ": " + left.getUnderlyingType() + " != "
-									+ right.getUnderlyingType());
+					typeError(expr, "Type check failed for " + expr + ": " + left.getUnderlyingType() + " != "
+							+ right.getUnderlyingType());
 				}
 				resultType = boolType; /* try to recover in any case */
 				break;
 			case BITVECCONCAT:
 				int leftLen = getBitVecLength(left);
 				int rightLen = getBitVecLength(right);
-				if (leftLen < 0 || rightLen < 0 || leftLen + rightLen < 0 /*
-																		 * handle
-																		 * overflow
-																		 */) {
+				if (leftLen < 0 || rightLen < 0
+						|| leftLen + rightLen < 0 /*
+													 * handle overflow
+													 */) {
 					if (!left.equals(errorType) && !right.equals(errorType))
 						typeError(expr, "Type check failed for " + expr);
 					leftLen = 0;
@@ -475,11 +468,11 @@ public class TypeChecker extends BaseObserver {
 	 * Compare existingDeclInfo with correctDeclInfo and raise an internalError
 	 * if both are not equivalent.
 	 */
-	private static void checkExistingDeclarationInformation(
-			String id, DeclarationInformation existingDeclInfo, DeclarationInformation correctDeclInfo) {
+	private void checkExistingDeclarationInformation(String id, DeclarationInformation existingDeclInfo,
+			DeclarationInformation correctDeclInfo) {
 		if (!existingDeclInfo.equals(correctDeclInfo)) {
-			internalError("Incorrect DeclarationInformation of " + id + ". Expected: " 
-						+ correctDeclInfo + "   Found: " + existingDeclInfo);
+			internalError("Incorrect DeclarationInformation of " + id + ". Expected: " + correctDeclInfo + "   Found: "
+					+ existingDeclInfo);
 		}
 	}
 
@@ -638,8 +631,8 @@ public class TypeChecker extends BaseObserver {
 
 		typeManager.popTypeScope();
 
-		FunctionSignature fs = new FunctionSignature(funcDecl.getTypeParams().length, paramNames, paramTypes,
-				valueName, valueType);
+		FunctionSignature fs = new FunctionSignature(funcDecl.getTypeParams().length, paramNames, paramTypes, valueName,
+				valueType);
 		// s_logger.info("Declaring function "+name+fs);
 		declaredFunctions.put(name, new FunctionInfo(funcDecl, name, typeParams, fs));
 	}
@@ -748,7 +741,8 @@ public class TypeChecker extends BaseObserver {
 					if (var.getDeclarationInformation() == null) {
 						var.setDeclarationInformation(declInfo);
 					} else {
-						checkExistingDeclarationInformation(var.getIdentifier(), var.getDeclarationInformation(), declInfo);
+						checkExistingDeclarationInformation(var.getIdentifier(), var.getDeclarationInformation(),
+								declInfo);
 					}
 					String id = var.getIdentifier();
 					if (m_Globals.contains(id)) {
@@ -1049,7 +1043,9 @@ public class TypeChecker extends BaseObserver {
 
 	private void processImplementation(Procedure impl) {
 		if (impl.getBody() == null) {
-			/* This is a procedure declaration without body. Nothing to check. */
+			/*
+			 * This is a procedure declaration without body. Nothing to check.
+			 */
 			return;
 		}
 		ProcedureInfo procInfo = declaredProcedures.get(impl.getIdentifier());
@@ -1066,20 +1062,16 @@ public class TypeChecker extends BaseObserver {
 		m_LocalVars = new HashSet<String>();
 		DeclarationInformation declInfoInParam;
 		DeclarationInformation declInfoOutParam;
-		// We call this procedure object a pure implementation if it contains 
+		// We call this procedure object a pure implementation if it contains
 		// only the implementation and another procedure object contains the
 		// specification
 		boolean isPureImplementation = (procInfo.getDeclaration() != impl);
 		if (isPureImplementation) {
-			declInfoInParam = new DeclarationInformation(
-					StorageClass.IMPLEMENTATION_INPARAM, impl.getIdentifier());
-			declInfoOutParam = new DeclarationInformation(
-					StorageClass.IMPLEMENTATION_OUTPARAM, impl.getIdentifier());
+			declInfoInParam = new DeclarationInformation(StorageClass.IMPLEMENTATION_INPARAM, impl.getIdentifier());
+			declInfoOutParam = new DeclarationInformation(StorageClass.IMPLEMENTATION_OUTPARAM, impl.getIdentifier());
 		} else {
-			declInfoInParam = new DeclarationInformation(
-					StorageClass.PROC_FUNC_INPARAM, impl.getIdentifier());
-			declInfoOutParam = new DeclarationInformation(
-					StorageClass.PROC_FUNC_OUTPARAM, impl.getIdentifier());
+			declInfoInParam = new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, impl.getIdentifier());
+			declInfoOutParam = new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, impl.getIdentifier());
 		}
 		LinkedList<VariableInfo> allParams = new LinkedList<VariableInfo>();
 		VariableInfo[] procInParams = procInfo.getInParams();
@@ -1152,8 +1144,8 @@ public class TypeChecker extends BaseObserver {
 			declaredProcedures = new HashMap<String, ProcedureInfo>();
 			varScopes = new Stack<VariableInfo[]>();
 			// pass1: parse type declarations
-			typeManager = new TypeManager(unit.getDeclarations(), mServices.getLoggingService().getLogger(
-					Activator.PLUGIN_ID));
+			typeManager = new TypeManager(unit.getDeclarations(),
+					mServices.getLoggingService().getLogger(Activator.PLUGIN_ID));
 			typeManager.init();
 			// pass2: variable, constant and function declarations
 			for (Declaration decl : unit.getDeclarations()) {
@@ -1223,8 +1215,9 @@ public class TypeChecker extends BaseObserver {
 		mServices.getProgressMonitorService().cancelToolchain();
 	}
 
-	private static void internalError(String message) {
-		throw new AssertionError(message);
+	private void internalError(String message) {
+		mServices.getLoggingService().getLogger(Activator.PLUGIN_ID).fatal(message);
+		// throw new AssertionError(message);
 	}
 
 }

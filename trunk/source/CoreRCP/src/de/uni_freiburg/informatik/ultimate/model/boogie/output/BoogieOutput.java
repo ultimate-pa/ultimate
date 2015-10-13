@@ -93,6 +93,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WildcardExpression;
 
 /**
  * @author hoenicke
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class BoogieOutput {
 
@@ -101,10 +102,10 @@ public class BoogieOutput {
 	/**
 	 * The file writer.
 	 */
-	PrintWriter m_Writer;
+	PrintWriter mWriter;
 
 	public BoogieOutput(PrintWriter output) {
-		m_Writer = output;
+		mWriter = output;
 	}
 
 	public void printBoogieProgram(Unit unit) {
@@ -423,7 +424,7 @@ public class BoogieOutput {
 	 * @param precedence
 	 *            TODO: what is precedence?
 	 */
-	private void appendType(StringBuilder sb, ASTType type, int precedence) {
+	public void appendType(StringBuilder sb, ASTType type, int precedence) {
 		if (type instanceof NamedType) {
 			NamedType nt = (NamedType) type;
 			ASTType[] args = nt.getTypeArgs();
@@ -544,14 +545,7 @@ public class BoogieOutput {
 		}
 	}
 
-	/**
-	 * Print type declaration.
-	 * 
-	 * @param decl
-	 *            the type declaration.
-	 */
-	public void printTypeDeclaration(TypeDeclaration decl) {
-		StringBuilder sb = new StringBuilder();
+	public StringBuilder appendTypeDeclaration(final StringBuilder sb, final TypeDeclaration decl) {
 		sb.append("type ");
 		appendAttributes(sb, decl.getAttributes());
 		if (decl.isFinite())
@@ -559,13 +553,24 @@ public class BoogieOutput {
 		sb.append(decl.getIdentifier());
 		for (String args : decl.getTypeParams())
 			sb.append(" ").append(args);
-		ASTType synonym = decl.getSynonym();
+		final ASTType synonym = decl.getSynonym();
 		if (synonym != null) {
 			sb.append(" = ");
 			appendType(sb, synonym, 0);
 		}
 		sb.append(";");
-		m_Writer.println(sb.toString());
+		return sb;
+	}
+
+	/**
+	 * Print type declaration.
+	 * 
+	 * @param decl
+	 *            the type declaration.
+	 */
+	public void printTypeDeclaration(final TypeDeclaration decl) {
+		final StringBuilder sb = appendTypeDeclaration(new StringBuilder(), decl);
+		mWriter.println(sb.toString());
 	}
 
 	/**
@@ -598,7 +603,7 @@ public class BoogieOutput {
 			sb.append(" }");
 		} else
 			sb.append(";");
-		m_Writer.println(sb.toString());
+		mWriter.println(sb.toString());
 	}
 
 	/**
@@ -610,7 +615,7 @@ public class BoogieOutput {
 	public void printProcedure(Procedure decl) {
 		StringBuilder sb = new StringBuilder();
 		appendProcedure(sb, decl);
-		m_Writer.print(sb.toString());
+		mWriter.print(sb.toString());
 	}
 
 	public void appendProcedure(StringBuilder sb, Procedure decl) {
@@ -659,7 +664,7 @@ public class BoogieOutput {
 	public void printSpecification(Specification spec) {
 		StringBuilder sb = new StringBuilder();
 		appendSpecification(sb, spec);
-		m_Writer.print(sb.toString());
+		mWriter.print(sb.toString());
 	}
 
 	public void appendSpecification(StringBuilder sb, Specification spec) {
@@ -696,7 +701,7 @@ public class BoogieOutput {
 	public void printBody(Body body) {
 		StringBuilder sb = new StringBuilder();
 		appendBody(sb, body);
-		m_Writer.print(sb.toString());
+		mWriter.print(sb.toString());
 	}
 
 	public void appendBody(StringBuilder sb, Body body) {
@@ -720,7 +725,7 @@ public class BoogieOutput {
 	public void printBlock(Statement[] block, String indent) {
 		StringBuilder sb = new StringBuilder();
 		appendBlock(sb, block, indent);
-		m_Writer.print(sb.toString());
+		mWriter.print(sb.toString());
 	}
 
 	public void appendBlock(StringBuilder sb, Statement[] block) {
@@ -732,7 +737,7 @@ public class BoogieOutput {
 		for (Statement s : block) {
 			if (s instanceof Label) {
 				// SF: Labels aren't on the first column anymore, they are
-				// treated as pragmas if they are. Added "  "
+				// treated as pragmas if they are. Added " "
 				sb.append(indent + "  " + ((Label) s).getName() + ":" + sLinebreak);
 			} else {
 				appendStatement(sb, s, nextIndent);
@@ -887,7 +892,7 @@ public class BoogieOutput {
 	public void printStatement(Statement s, String indent) {
 		StringBuilder sb = new StringBuilder();
 		appendStatement(sb, s, indent);
-		m_Writer.print(sb.toString());
+		mWriter.print(sb.toString());
 	}
 
 	/**
@@ -934,7 +939,7 @@ public class BoogieOutput {
 		appendAttributes(sb, decl.getAttributes());
 		appendExpression(sb, decl.getFormula(), 0);
 		sb.append(";");
-		m_Writer.println(sb.toString());
+		mWriter.println(sb.toString());
 	}
 
 	/**
@@ -948,7 +953,7 @@ public class BoogieOutput {
 	public void printVarDeclaration(VariableDeclaration decl, String indent) {
 		StringBuilder sb = new StringBuilder();
 		appendVariableDeclaration(sb, decl, indent);
-		m_Writer.print(sb.toString());
+		mWriter.print(sb.toString());
 	}
 
 	protected void appendVariableDeclaration(StringBuilder sb, VariableDeclaration decl, String indent) {
@@ -990,6 +995,6 @@ public class BoogieOutput {
 		if (decl.isComplete())
 			sb.append(" complete");
 		sb.append(";");
-		m_Writer.println(sb.toString());
+		mWriter.println(sb.toString());
 	}
 }

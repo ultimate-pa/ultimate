@@ -114,7 +114,7 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 		Set<CallStatement> knownCalls = new HashSet<>();
 		List<BoogieASTNode> translatedTrace = new ArrayList<>();
 		CallReinserter callReinserter = new CallReinserter();
-		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringprovider();
+		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringProvider();
 		for (BoogieASTNode traceElem : trace) {
 			AtomicTraceElement<BoogieASTNode> atomicTraceElem;
 			if (traceElem instanceof CallStatement) {
@@ -148,7 +148,7 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 	public IProgramExecution<BoogieASTNode, Expression> translateProgramExecution(
 			IProgramExecution<BoogieASTNode, Expression> exec) {
 		final int length = exec.getLength();
-		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringprovider();
+		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringProvider();
 		CallReinserter callReinserter = new CallReinserter();
 		Map<Integer, ProgramState<Expression>> translatedStates = new HashMap<>();
 		List<AtomicTraceElement<BoogieASTNode>> translatedTrace = new ArrayList<>();

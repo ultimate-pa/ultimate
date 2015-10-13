@@ -28,11 +28,13 @@
 package de.uni_freiburg.informatik.ultimate.model.boogie.output;
 
 import de.uni_freiburg.informatik.ultimate.core.util.IToString;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 
@@ -103,6 +105,14 @@ public class BoogiePrettyPrinter {
 		return sb.toString();
 	}
 
+	public static String print(final ASTType type) {
+		final BoogieOutput output = new BoogieOutput(null);
+		final StringBuilder sb = new StringBuilder();
+		output.appendType(sb, type, 0);
+		removeLastLinebreak(sb);
+		return sb.toString();
+	}
+
 	public static String printSignature(Procedure decl) {
 		Procedure actual = new Procedure(decl.getLocation(), decl.getAttributes(), decl.getIdentifier(),
 				decl.getTypeParams(), decl.getInParams(), decl.getOutParams(), decl.getSpecification(), null);
@@ -113,7 +123,15 @@ public class BoogiePrettyPrinter {
 		return sb.toString();
 	}
 
-	public static IToString<BoogieASTNode> getBoogieToStringprovider() {
+	public static String print(TypeDeclaration typeDecl) {
+		final BoogieOutput output = new BoogieOutput(null);
+		final StringBuilder sb = new StringBuilder();
+		output.appendTypeDeclaration(sb, typeDecl);
+		removeLastLinebreak(sb);
+		return sb.toString();
+	}
+
+	public static IToString<BoogieASTNode> getBoogieToStringProvider() {
 		IToString<BoogieASTNode> stringProvider = new IToString<BoogieASTNode>() {
 			@Override
 			public String toString(BoogieASTNode elem) {
@@ -127,6 +145,8 @@ public class BoogiePrettyPrinter {
 					return BoogiePrettyPrinter.print((VariableDeclaration) elem);
 				} else if (elem instanceof Specification) {
 					return BoogiePrettyPrinter.print((Specification) elem);
+				} else if (elem instanceof ASTType) {
+					return BoogiePrettyPrinter.print((ASTType) elem);
 				} else {
 					return elem.toString();
 				}

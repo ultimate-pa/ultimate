@@ -194,7 +194,7 @@ public class BoogiePreprocessorBacktranslator extends
 			IProgramExecution<BoogieASTNode, Expression> programExecution) {
 
 		List<AtomicTraceElement<BoogieASTNode>> atomicTrace = new ArrayList<>();
-		IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringprovider();
+		IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringProvider();
 
 		for (int i = 0; i < translatedTrace.size(); ++i) {
 			BoogieASTNode elem = translatedTrace.get(i);
