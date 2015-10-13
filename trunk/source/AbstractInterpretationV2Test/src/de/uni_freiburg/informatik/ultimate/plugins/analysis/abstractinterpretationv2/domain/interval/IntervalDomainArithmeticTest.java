@@ -124,6 +124,12 @@ public class IntervalDomainArithmeticTest {
 		expectedResult2.getUpper().setToInfinity();
 
 		assertTrue(computeAdditionResult(interval3, interval2, expectedResult2));
+
+		// Interval [-\infty, 0]
+		IntervalDomainValue interval4 = createInterval(0, 0);
+		interval4.getLower().setToInfinity();
+		assertTrue(interval4.isUnbounded());
+		assertFalse(interval4.isInfinity());
 	}
 
 	@Test
