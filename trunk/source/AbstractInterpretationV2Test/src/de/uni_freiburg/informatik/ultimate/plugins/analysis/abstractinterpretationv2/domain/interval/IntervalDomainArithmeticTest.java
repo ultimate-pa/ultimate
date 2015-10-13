@@ -39,13 +39,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class IntervalDomainArithmeticTest {
 
 	private IntervalDomainValue createInterval(int lower, int upper) {
-		return new IntervalDomainValue(new IntervalValue(new BigDecimal(lower)), new IntervalValue(
-		        new BigDecimal(upper)));
+		return new IntervalDomainValue(new IntervalValue(new BigDecimal(lower)),
+		        new IntervalValue(new BigDecimal(upper)));
 	}
 
 	private IntervalBinaryExpressionEvaluator createBinaryEvaluator(IntervalDomainValue first,
 	        IntervalDomainValue second, Operator operator) {
-		IntervalSingletonValueExpressionEvaluator value1Evaluator = new IntervalSingletonValueExpressionEvaluator(first);
+		IntervalSingletonValueExpressionEvaluator value1Evaluator = new IntervalSingletonValueExpressionEvaluator(
+		        first);
 		IntervalSingletonValueExpressionEvaluator value2Evaluator = new IntervalSingletonValueExpressionEvaluator(
 		        second);
 
@@ -75,10 +76,8 @@ public class IntervalDomainArithmeticTest {
 		System.out.println("Expected: " + expectedResult.toString());
 		System.out.println();
 
-		final boolean lowerResult = result.getResult().getLower().getValue()
-		        .equals(expectedResult.getLower().getValue());
-		final boolean upperResult = result.getResult().getUpper().getValue()
-		        .equals(expectedResult.getUpper().getValue());
+		final boolean lowerResult = result.getResult().getLower().equals(expectedResult.getLower());
+		final boolean upperResult = result.getResult().getUpper().equals(expectedResult.getUpper());
 
 		return lowerResult && upperResult;
 	}
@@ -96,6 +95,35 @@ public class IntervalDomainArithmeticTest {
 		IntervalDomainValue expectedResult = createInterval(16, 30);
 
 		assertTrue(computeAdditionResult(interval1, interval2, expectedResult));
+	}
+
+	@Test
+	public void testInfiniteIntervalAddition() {
+		// Interval [1, \infty]
+		IntervalDomainValue interval1 = createInterval(1, 1);
+		interval1.getUpper().setToInfinity();
+
+		assertTrue(interval1.isUnbounded());
+		assertFalse(interval1.isInfinity());
+
+		// Interval [1,2]
+		IntervalDomainValue interval2 = createInterval(1, 2);
+
+		// Result should be [2, \infty]
+		IntervalDomainValue expectedResult1 = createInterval(2, 2);
+		expectedResult1.getUpper().setToInfinity();
+
+		assertTrue(computeAdditionResult(interval1, interval2, expectedResult1));
+
+		// Interval [1, \infty]
+		IntervalDomainValue interval3 = createInterval(-1, -1);
+		interval3.getUpper().setToInfinity();
+
+		// Result should be [0, \infty]
+		IntervalDomainValue expectedResult2 = createInterval(0, 0);
+		expectedResult2.getUpper().setToInfinity();
+
+		assertTrue(computeAdditionResult(interval3, interval2, expectedResult2));
 	}
 
 	@Test
@@ -123,7 +151,7 @@ public class IntervalDomainArithmeticTest {
 
 		// Result should be [-25;-10]
 		IntervalDomainValue expectedResult = createInterval(-25, -10);
-		
+
 		assertTrue(computeAdditionResult(interval1, interval2, expectedResult));
 	}
 }
