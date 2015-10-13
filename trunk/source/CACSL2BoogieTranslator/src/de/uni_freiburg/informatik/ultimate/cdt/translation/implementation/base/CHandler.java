@@ -2014,10 +2014,12 @@ public class CHandler implements ICHandler {
 			// for arrays (or structs or union?)
 			if (lType instanceof CPointer || rType instanceof CPointer) {
 				if (!(lType instanceof CPointer)) {
-					castToType(main, loc, left, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+					throw new AssertionError("illegal case");
+//					castToType(main, loc, left, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
 				}
 				if (!(rType instanceof CPointer)) {
-					castToType(main, loc, right, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+					throw new AssertionError("illegal case");
+//					castToType(main, loc, right, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
 				}
 			} else if (lType.isArithmeticType() && rType.isArithmeticType()) {
 				m_ExpressionTranslation.usualArithmeticConversions(main, loc, left, right);
