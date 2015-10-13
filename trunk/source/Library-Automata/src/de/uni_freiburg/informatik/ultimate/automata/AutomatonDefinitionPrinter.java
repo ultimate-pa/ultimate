@@ -1068,7 +1068,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 				sb.append("\t");
 				sb.append("<Acc type=\"Buchi\">");
 				sb.append(System.lineSeparator());
-				for (STATE state : m_Nwa.getInitialStates()) {
+				for (STATE state : m_Nwa.getFinalStates()) {
 					sb.append("\t");
 					sb.append("\t");
 					sb.append("<StateID>");
