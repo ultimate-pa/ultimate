@@ -1037,7 +1037,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 				sb.append("\t");
 				sb.append("<TransitionSet complete=\"false\">");
 				sb.append(System.lineSeparator());
-				for (STATE state : m_Nwa.getInitialStates()) {
+				for (STATE state : m_Nwa.getStates()) {
 					for (OutgoingInternalTransition<LETTER, STATE> trans : m_Nwa.internalSuccessors(state)) {
 						sb.append("\t");
 						sb.append("\t");
