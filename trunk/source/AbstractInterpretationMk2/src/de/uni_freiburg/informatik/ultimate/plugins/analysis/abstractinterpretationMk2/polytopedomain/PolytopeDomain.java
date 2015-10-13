@@ -73,16 +73,28 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 				// because of OSGi, we have to load all dependent libraries
 				// manually
 				// the order is important (!)
-				System.loadLibrary("libgmp-10");
-				System.loadLibrary("libwinpthread-1");
-				System.loadLibrary("libgcc_s_seh-1");
-				System.loadLibrary("libstdc++-6");
-				System.loadLibrary("libgmpxx-4");
-				System.loadLibrary("libppl-13");
+				switch (System.getProperty("os.name")) {
+				case "Linux":
+					System.loadLibrary("gmp"); // libgmp version >= 10 is needed.
+					System.loadLibrary("gmpxx"); // libgmpxx version >= 4 is needed.
+					System.loadLibrary("ppl"); // libppl version >= 13 is needed. 
+					break;
+				case "Windows":
+					System.loadLibrary("libgmp-10");
+					System.loadLibrary("libwinpthread-1");
+					System.loadLibrary("libgcc_s_seh-1");
+					System.loadLibrary("libstdc++-6");
+					System.loadLibrary("libgmpxx-4");
+					System.loadLibrary("libppl-13");
+					break;
+				default:
+					throw new UnsatisfiedLinkError(
+					        "The operating system \"" + System.getProperty("os.name") + "\" is not supported.");
+				}
 
 				// now we load the real deal
 				System.loadLibrary("ppl_java");
-				
+
 				logger.info("Loaded PPL");
 			} catch (UnsatisfiedLinkError e) {
 				final String errorMsg = "Unable to load PPL: " + e.getMessage();
@@ -103,8 +115,7 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
 	 * .abstractdomain.IAbstractDomainFactory#getMergeOperator()
 	 */
 	@Override
@@ -115,8 +126,7 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
 	 * .abstractdomain.IAbstractDomainFactory#getWideningOperator()
 	 */
 	@Override
@@ -127,12 +137,9 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractDomain#setMergeOperator(
-	 * de.uni_freiburg.informatik
-	 * .ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractMergeOperator)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
+	 * .abstractdomain.IAbstractDomain#setMergeOperator( de.uni_freiburg.informatik
+	 * .ultimate.plugins.analysis.abstractinterpretationMk2 .abstractdomain.IAbstractMergeOperator)
 	 */
 	@Override
 	public void setMergeOperator(IAbstractMergeOperator<PolytopeState> mergeOperator) {
@@ -142,12 +149,9 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractDomain#setWideningOperator
-	 * (de.uni_freiburg.informatik
-	 * .ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractWideningOperator)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
+	 * .abstractdomain.IAbstractDomain#setWideningOperator (de.uni_freiburg.informatik
+	 * .ultimate.plugins.analysis.abstractinterpretationMk2 .abstractdomain.IAbstractWideningOperator)
 	 */
 	@Override
 	public void setWideningOperator(IAbstractWideningOperator<PolytopeState> wideningOperator) {
@@ -168,19 +172,16 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractDomain#ApplyExpression(de
-	 * .uni_freiburg.informatik
-	 * .ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractState,
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
+	 * .abstractdomain.IAbstractDomain#ApplyExpression(de .uni_freiburg.informatik
+	 * .ultimate.plugins.analysis.abstractinterpretationMk2 .abstractdomain.IAbstractState,
 	 * de.uni_freiburg.informatik.ultimate.plugins
 	 * .analysis.abstractinterpretationMk2.abstractdomain.TypedAbstractVariable,
 	 * de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression)
 	 */
 	@Override
 	public IAbstractState<PolytopeState> applyExpression(IAbstractState<PolytopeState> state,
-			TypedAbstractVariable target, Expression exp) {
+	        TypedAbstractVariable target, Expression exp) {
 		return applyExpression(state, target, exp, "");
 	}
 
@@ -191,7 +192,7 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 	 *            this prefix will be to each variable in the given expression
 	 */
 	public IAbstractState<PolytopeState> applyExpression(IAbstractState<PolytopeState> state,
-			TypedAbstractVariable target, Expression exp, String prefix) {
+	        TypedAbstractVariable target, Expression exp, String prefix) {
 		PolytopeState pState = (PolytopeState) state;
 
 		mExpressionVisitor.prepare(pState, prefix);
@@ -249,12 +250,10 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractDomain#ApplyHavoc(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractState, de.uni_freiburg.informatik.ultimate.plugins.analysis.
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
+	 * .abstractdomain.IAbstractDomain#ApplyHavoc(de.uni_freiburg .informatik.ultimate
+	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain .IAbstractState,
+	 * de.uni_freiburg.informatik.ultimate.plugins.analysis.
 	 * abstractinterpretationMk2.abstractdomain.TypedAbstractVariable)
 	 */
 	@Override
@@ -270,12 +269,9 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractDomain#ApplyAssume(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractState,
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
+	 * .abstractdomain.IAbstractDomain#ApplyAssume(de.uni_freiburg .informatik.ultimate
+	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain .IAbstractState,
 	 * de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression)
 	 */
 	@Override
@@ -301,12 +297,9 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractDomain#ApplyAssert(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractState,
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
+	 * .abstractdomain.IAbstractDomain#ApplyAssert(de.uni_freiburg .informatik.ultimate
+	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain .IAbstractState,
 	 * de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression)
 	 */
 	@Override
@@ -319,18 +312,15 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractDomain#ApplyCall(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractState, de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.IAbstractState, java.util.List,
-	 * java.util.List)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
+	 * .abstractdomain.IAbstractDomain#ApplyCall(de.uni_freiburg .informatik.ultimate
+	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain .IAbstractState,
+	 * de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2.abstractdomain.IAbstractState,
+	 * java.util.List, java.util.List)
 	 */
 	@Override
 	public void applyExpressionScoped(IAbstractState<PolytopeState> targetState, IAbstractState<PolytopeState> oldState,
-			List<TypedAbstractVariable> targetVariables, List<Expression> arguments) {
+	        List<TypedAbstractVariable> targetVariables, List<Expression> arguments) {
 		// concrete states
 		PolytopeState target = targetState.getConcrete();
 		PolytopeState old = oldState.getConcrete();
@@ -366,7 +356,7 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 		for (Entry<TypedAbstractVariable, Variable> entry : vtOld.getVariables().entrySet()) {
 			TypedAbstractVariable normal = entry.getKey();
 			TypedAbstractVariable prefixed = new TypedAbstractVariable(prefixOld + normal.getString(),
-					normal.getDeclaration(), normal.getType());
+			        normal.getDeclaration(), normal.getType());
 			vtRenamed.getVariables().put(prefixed, new Variable(existingDimensions + entry.getValue().id()));
 		}
 
@@ -383,7 +373,7 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 
 			// get the renamed rename target variable
 			TypedAbstractVariable renamedVariable = new TypedAbstractVariable(prefixTarget + targetVariable.getString(),
-					targetVariable.getDeclaration(), targetVariable.getType());
+			        targetVariable.getDeclaration(), targetVariable.getType());
 
 			applyExpression(targetState, renamedVariable, arguments.get(i), prefixOld);
 		}

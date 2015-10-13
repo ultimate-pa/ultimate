@@ -709,7 +709,7 @@ public class AbstractInterpreter {
 
 		UnprovableResult<RcfgElement, CodeBlock, Expression> result = new UnprovableResult<RcfgElement, CodeBlock, Expression>(
 				AIActivator.s_PLUGIN_NAME, location, mServices.getBacktranslationService(), programExecution,
-				Collections.emptyMap());
+				Collections.emptyList());
 
 		mServices.getResultService().reportResult(AIActivator.s_PLUGIN_ID, result);
 
