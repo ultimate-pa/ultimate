@@ -43,12 +43,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -214,10 +213,11 @@ public class PostProcessor {
 			MemoryHandler memoryHandler, StructHandler structHandler) {
 		ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		ArrayList<Declaration> result = new ArrayList<>();
-		for (CFunction cFunc : functionHandler.functionSignaturesThatHaveAFunctionPointer) {
-			String procName = cFunc.functionSignatureAsProcedureName();
+//		for (CFunction cFunc : functionHandler.functionSignaturesThatHaveAFunctionPointer) {
+		for (ProcedureSignature cFunc : functionHandler.functionSignaturesThatHaveAFunctionPointer) {
+//			String procName = cFunc.functionSignatureAsProcedureName();
+			String procName = cFunc.toString();
 			
-
 			VarList[] inParams = functionHandler.getProcedures().get(procName).getInParams();
 			VarList[] outParams = functionHandler.getProcedures().get(procName).getOutParams();
 			assert outParams.length <= 1;

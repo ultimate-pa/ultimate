@@ -19,10 +19,10 @@ necessary steps.
    patch -p1 < ../smtinterpol.git/smtinterpol.diff
 
 4. Update Version.properties.  The easiest way to do this is:
-   cd .../smtinterpol.git
+   cd ../smtinterpol.git
    ant
    cd ../source/SMTInterpol/src
-   unzip ../../smtinterpol.git/smtinterpol.jar \*Version.properties
+   unzip ../../../smtinterpol.git/smtinterpol.jar \*Version.properties
    cd ../../..
 
 5. Make sure you added all new files and deleted all old files.  Run

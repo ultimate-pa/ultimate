@@ -451,7 +451,7 @@ public class Theory {
 		if (denom.equals(BigInteger.ONE))
 			return decimal(new BigDecimal(num));// numeral(num);
 		FunctionSymbol div = getFunction("/", mNumericSort, mNumericSort);
-		return term(div, numeral(num), numeral(denom));
+		return term(div, decimal(new BigDecimal(num)), decimal(new BigDecimal(denom)));
 	}
 	
 	public Term modelRational(Rational rat, Sort sort) {

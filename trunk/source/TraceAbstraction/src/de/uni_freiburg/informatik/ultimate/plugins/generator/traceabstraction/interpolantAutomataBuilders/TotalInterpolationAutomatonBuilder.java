@@ -301,6 +301,10 @@ public class TotalInterpolationAutomatonBuilder {
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
 		}
+		m_BenchmarkGenerator.addTraceCheckerData(tc.getTraceCheckerBenchmark());
+		if (tc.getToolchainCancelledExpection() != null) {
+			throw tc.getToolchainCancelledExpection();
+		}
 		if (tc.isCorrect() == LBool.UNSAT) {
 			m_BenchmarkGenerator.incrementUsefullRunGeq2();
 			int additionalInterpolants = addInterpolants(run.getStateSequence(), tc.getInterpolants());
@@ -309,7 +313,6 @@ public class TotalInterpolationAutomatonBuilder {
 		} else {
 			m_BenchmarkGenerator.incrementUselessRunGeq2();
 		}
-		m_BenchmarkGenerator.addTraceCheckerData(tc.getTraceCheckerBenchmark());
 	}
 
 	private SortedMap<Integer, IPredicate> computePendingContexts(NestedRun<CodeBlock, IPredicate> run) {

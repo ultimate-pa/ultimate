@@ -485,6 +485,9 @@ public class LassoChecker {
 			default:
 				throw new UnsupportedOperationException("unsupported interpolation");
 			}
+			if (result.getToolchainCancelledExpection() != null) {
+				throw result.getToolchainCancelledExpection();
+			}
 			return result;
 		}
 

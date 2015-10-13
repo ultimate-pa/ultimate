@@ -845,8 +845,10 @@ public class SMTInterpol extends NoopScript {
 				System.exit(13);
 		}
 		mStatusSet = null;
-		if (timer != null)
+		if (timer != null) {
 			timer.cancel();
+			TimerHolder.timer.purge();
+		}
 		return result;
 	}
 	

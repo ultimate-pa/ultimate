@@ -28,6 +28,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -46,11 +47,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppHyperEdge;
@@ -76,7 +80,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EdgeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -98,6 +101,7 @@ import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
+import de.uni_freiburg.informatik.ultimate.result.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -147,6 +151,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 	boolean loop_forever = true; // for DEBUG
 	int iterationsLimit = -1; // for DEBUG
+	private boolean outputHoareAnnotation = true;
 
 
 	CodeCheckObserver(IUltimateServiceProvider services) {
@@ -315,14 +320,16 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 		InterpolatingTraceChecker traceChecker = null;
 
-		for (AnnotatedProgramPoint procRoot : procRootsToCheck) {
+		for (AnnotatedProgramPoint procedureRoot : procRootsToCheck) {
+//		for (AnnotatedProgramPoint procRoot : procRootsToCheck) {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				verificationInterrupted = true;
 				break;
 			}
 
-			mLogger.debug("Exploring : " + procRoot);
-			AnnotatedProgramPoint procedureRoot = procRoot;
+			mLogger.debug("Exploring : " + procedureRoot);
+			//mLogger.debug("Exploring : " + procRoot);
+			//AnnotatedProgramPoint procedureRoot = procRoot;
 
 			IEmptinessCheck emptinessCheck = new NWAEmptinessCheck(mServices);
 
@@ -338,6 +345,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun = emptinessCheck.checkForEmptiness(procedureRoot);
 
 				if (errorRun == null) {
+					//TODO: this only works for the case where we have 1 procedure in procRootsToCheck, right??
 					_graphWriter.writeGraphAsImage(procedureRoot, String.format("graph_%s_%s_noEP",
 							_graphWriter._graphCounter, procedureRoot.toString().substring(0, 5)));
 					// if an error trace doesn't exist, return safe
@@ -387,6 +395,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 								GlobalSettings._instance._interpolationMode);
 						break;
 					}
+					if (traceChecker.getToolchainCancelledExpection() != null) {
+						throw traceChecker.getToolchainCancelledExpection();
+					}
 
 					LBool isSafe = traceChecker.isCorrect();
 					if (isSafe == LBool.UNSAT) { // trace is infeasible
@@ -434,6 +445,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				if (DEBUG)
 					codeChecker.debug();
 			}
+			// we need a fresh copy for each iteration because..??
 			m_graphRoot = copyGraph(originalGraphCopy);
 			codeChecker.m_graphRoot = m_graphRoot;
 
@@ -497,6 +509,17 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 		if (overallResult == Result.CORRECT) {
 			reportPositiveResults(mErrNodesOfAllProc);
+
+			if (outputHoareAnnotation) {
+				for (AnnotatedProgramPoint pr : procRootsToCheck) {
+					mLogger.info("Hoare annotation for entrypoint " + pr.getProgramPoint().getProcedure());
+					HashMap<ProgramPoint, Term> ha = computeHoareAnnotation(pr);
+					for (Entry<ProgramPoint, Term> kvp : ha.entrySet()) {
+						mLogger.info("At program point  " + prettyPrintProgramPoint(kvp.getKey())
+						+ "  the Hoare annotation is:  " + kvp.getValue());			
+					}
+				}
+			}
 		} else if (overallResult == Result.INCORRECT) {
 			reportCounterexampleResult(realErrorProgramExecution);
 		} else {
@@ -508,6 +531,73 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		}
 
 		return false;
+	}
+
+	//taken from TraceAbstractionStarter
+	private static String prettyPrintProgramPoint(ProgramPoint pp) {
+		int startLine = pp.getPayload().getLocation().getStartLine();
+		int endLine = pp.getPayload().getLocation().getStartLine();
+		StringBuilder sb = new StringBuilder();
+		sb.append(pp);
+		if (startLine == endLine) {
+			sb.append("(line " + startLine + ")");
+		} else {
+			sb.append("(lines " + startLine + " " + endLine + ")");
+		}
+		return sb.toString();
+	}
+
+	private HashMap<ProgramPoint,Term> computeHoareAnnotation(AnnotatedProgramPoint pr) {
+		HashMap<ProgramPoint, HashSet<AnnotatedProgramPoint>> programPointToAnnotatedProgramPoints = new HashMap<>();
+
+		HashMap<ProgramPoint, Term> programPointToHoareAnnotation = new HashMap<>();
+
+		computeProgramPointToAnnotatedProgramPoints(pr, programPointToAnnotatedProgramPoints); 
+		
+		for (Entry<ProgramPoint, HashSet<AnnotatedProgramPoint>> kvp : programPointToAnnotatedProgramPoints.entrySet()) {
+			IPredicate annot = m_smtManager.newFalsePredicate();
+
+			for (AnnotatedProgramPoint app : kvp.getValue()) {
+				TermVarsProc tvp = m_smtManager.or(annot, app.getPredicate());
+				annot = m_smtManager.newSPredicate(kvp.getKey(), tvp);
+			}
+	//		programPointToHoareAnnotation.put(kvp.getKey(), annot.getClosedFormula());
+			programPointToHoareAnnotation.put(kvp.getKey(), annot.getFormula());
+		}
+		return programPointToHoareAnnotation;
+	}
+
+	/**
+	 * fill up the map programPointToAnnotatedProgramPoints with the reachable part of the CFG
+	 * @param annotatedProgramPoint
+	 * @param programPointToAnnotatedProgramPoints
+	 */
+	private void computeProgramPointToAnnotatedProgramPoints(AnnotatedProgramPoint entry,
+			HashMap<ProgramPoint, HashSet<AnnotatedProgramPoint>> programPointToAnnotatedProgramPoints) {
+
+		HashSet<AnnotatedProgramPoint> visited = new HashSet<>();
+		
+		ArrayDeque<AnnotatedProgramPoint> queue = new ArrayDeque<>();
+		
+		queue.push(entry);
+		
+		while (!queue.isEmpty()) {
+			AnnotatedProgramPoint current = queue.pop();
+			
+			HashSet<AnnotatedProgramPoint> apps = programPointToAnnotatedProgramPoints.get(current.getProgramPoint());
+			if (apps == null) {
+				apps = new HashSet<AnnotatedProgramPoint>();
+				programPointToAnnotatedProgramPoints.put(current.getProgramPoint(), apps);
+			}
+			apps.add(current);
+
+			for (AppEdge outEdge : current.getOutgoingEdges()) {
+				if (!visited.contains(outEdge.getTarget())){
+						queue.push(outEdge.getTarget());
+						visited.add(outEdge.getTarget());
+				}
+			}
+		}
 	}
 
 	/**
@@ -582,7 +672,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 	private void reportCounterexampleResult(RcfgProgramExecution pe) {
 		if (!pe.getOverapproximations().isEmpty()) {
-			reportUnproveableResult(pe, pe.getOverapproximations());
+			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
 			return;
 		}
 
@@ -590,10 +680,10 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				mServices.getBacktranslationService(), pe));
 	}
 
-	private void reportUnproveableResult(RcfgProgramExecution pe, Map<String, ILocation> overapproximations) {
+	private void reportUnproveableResult(RcfgProgramExecution pe, List<UnprovabilityReason> unproabilityReasons) {
 		ProgramPoint errorPP = getErrorPP(pe);
 		UnprovableResult<RcfgElement, CodeBlock, Expression> uknRes = new UnprovableResult<RcfgElement, CodeBlock, Expression>(
-				Activator.s_PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe, overapproximations);
+				Activator.s_PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}
 
@@ -617,40 +707,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			// s_Logger.warn(timeOutMessage);
 		}
 	}
-
-	// private void reportCounterexampleResult(CodeBlock position,
-	// List<ILocation> failurePath,
-	// IProgramExecution<RcfgElement, Expression> pe) {
-	// ILocation errorLoc = failurePath.get(failurePath.size() - 1);
-	// ILocation origin = errorLoc.getOrigin();
-	//
-	// List<ITranslator<?, ?, ?, ?>> translatorSequence = UltimateServices
-	// .getInstance().getTranslatorSequence();
-	// String ctxMessage = origin.checkedSpecification().getNegativeMessage();
-	// ctxMessage += " (line " + origin.getStartLine() + ")";
-	// Backtranslator backtrans = (Backtranslator) translatorSequence
-	// .get(translatorSequence.size() - 1);
-	// BoogieProgramExecution bpe = (BoogieProgramExecution) backtrans
-	// .translateProgramExecution(pe);
-	// CounterExampleResult<RcfgElement, Expression> ctxRes = new
-	// CounterExampleResult<RcfgElement, Expression>(
-	// position, Activator.s_PLUGIN_NAME, translatorSequence, pe,
-	// CounterExampleResult.getLocationSequence(bpe),
-	// bpe.getValuation());
-	// ctxRes.setLongDescription(bpe.toString());
-	//
-	// System.out.println("=== Start of program execution");
-	// System.out.println("--- Error Path: ---");
-	// for (ILocation loc : ctxRes.getFailurePath()) {
-	// System.out.println(loc.toString());
-	// }
-	// System.out.println("--- Valuation: ---");
-	// System.out.println(bpe.toString());
-	// System.out.println("=== End of program execution");
-	//
-	// reportResult(ctxRes);
-	// s_Logger.warn(ctxMessage);
-	// }
 
 	private void reportResult(IResult res) {
 		mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, res);

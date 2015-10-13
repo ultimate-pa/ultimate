@@ -42,6 +42,7 @@ import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -61,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
@@ -237,7 +237,9 @@ public class ExpressionResult extends Result {
 		if (lrVal == null) {
 			result =  this;
 		} else if (lrVal instanceof RValue) {
-			result =  this;
+			replaceCFunctionByCPointer();
+			replaceEnumByInt();
+			result = this;
 		} else if (lrVal instanceof LocalLValue) {
 			if (!(main instanceof PRDispatcher) && (lrVal.getCType() instanceof CArray)) {
 				throw new AssertionError("on-heap/off-heap bug: array " + lrVal.toString() + " has to be on-heap");
@@ -369,7 +371,7 @@ public class ExpressionResult extends Result {
 			final LRValue fieldLRVal;
 			if(underlyingType instanceof CPrimitive) {
 				ExpressionResult fieldRead = (ExpressionResult) structHandler.readFieldInTheStructAtAddress(
-						main, memoryHandler, loc, fieldIds[i], 
+						main, loc, i, 
 						structOnHeapAddress, structType);
 				fieldLRVal = (RValue) fieldRead.lrVal;
 				newStmt.addAll(fieldRead.stmt);
@@ -377,7 +379,7 @@ public class ExpressionResult extends Result {
 				newAuxVars.putAll(fieldRead.auxVars);
 			} else if (underlyingType instanceof CPointer) {
 				ExpressionResult fieldRead = (ExpressionResult) structHandler.readFieldInTheStructAtAddress(
-						main, memoryHandler, loc, fieldIds[i], 
+						main, loc, i, 
 						structOnHeapAddress, structType);
 				fieldLRVal = (RValue) fieldRead.lrVal;
 				newStmt.addAll(fieldRead.stmt);
@@ -405,7 +407,7 @@ public class ExpressionResult extends Result {
 			} else if (underlyingType instanceof CEnum) {
 				//like CPrimitive..
 				ExpressionResult fieldRead = (ExpressionResult) structHandler.readFieldInTheStructAtAddress(
-						main, memoryHandler, loc, fieldIds[i], 
+						main, loc, i, 
 						structOnHeapAddress, structType);
 				fieldLRVal = (RValue) fieldRead.lrVal;
 				newStmt.addAll(fieldRead.stmt);
@@ -413,13 +415,16 @@ public class ExpressionResult extends Result {
 				newAuxVars.putAll(fieldRead.auxVars);
 //				throw new UnsupportedSyntaxException(loc, "..");
 			} else if (underlyingType instanceof CStruct) {
-				Expression innerStructOffset = 
-						StructHandler.getStructOrUnionOffsetConstantExpression(loc, memoryHandler, fieldIds[i], structType);
+				
+				Expression innerStructOffset = memoryHandler.getTypeSizeAndOffsetComputer().constructOffsetForField(loc, structType, i);
+				
+				AExpressionTranslation exprTrans = ((CHandler) main.cHandler).getExpressionTranslation();
+				Expression offsetSum = exprTrans.constructArithmeticExpression(
+						loc, IASTBinaryExpression.op_plus, 
+						currentStructOffset, exprTrans.getCTypeOfPointerComponents(), 
+						innerStructOffset, exprTrans.getCTypeOfPointerComponents()); 
 				Expression innerStructAddress = MemoryHandler.constructPointerFromBaseAndOffset(currentStructBaseAddress, 
-						new BinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS, 
-								currentStructOffset, 
-								innerStructOffset),
-								loc);
+						offsetSum, loc);
 				
 				ExpressionResult fieldRead = readStructFromHeap(main, structHandler, memoryHandler, 
 						loc, innerStructAddress, (CStruct) underlyingType);
@@ -492,7 +497,7 @@ public class ExpressionResult extends Result {
 				newStartAddressOffset = MemoryHandler.getPointerOffset(arrayStartAddress, loc);
 			}
 
-			Expression valueTypeSize = memoryHandler.calculateSizeOf(arrayType.getValueType(), loc);
+			Expression valueTypeSize = memoryHandler.calculateSizeOf(loc, arrayType.getValueType());
 
 			Expression arrayEntryAddressOffset = newStartAddressOffset;
 
@@ -520,9 +525,11 @@ public class ExpressionResult extends Result {
 				stmt = assRex.stmt;
 				auxVars = assRex.auxVars;
 				overApp.addAll(assRex.overappr);
-
-				arrayEntryAddressOffset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus, 
-						arrayEntryAddressOffset, valueTypeSize, loc);
+				
+				AExpressionTranslation exprTrans = ((CHandler) main.cHandler).getExpressionTranslation();
+				arrayEntryAddressOffset = exprTrans.constructArithmeticExpression(
+						loc, IASTBinaryExpression.op_plus, arrayEntryAddressOffset, exprTrans.getCTypeOfPointerComponents(), 
+						valueTypeSize, exprTrans.getCTypeOfPointerComponents()); 
 			}
 		} else {
 			throw new UnsupportedSyntaxException(loc, "we need to generalize this to nested and/or variable length arrays");
@@ -533,8 +540,7 @@ public class ExpressionResult extends Result {
 	
 	/**
 	 * Add all declaration, statements, auxvars, etc. from another 
-	 * ResultExpression. Lock the other ResultExpression afterwards to indicate
-	 * that the other Result expression should not be used any more. 
+	 * ResultExpression.
 	 */
 	public void addAll(ExpressionResult re) {
 		this.decl.addAll(re.decl);
@@ -549,7 +555,7 @@ public class ExpressionResult extends Result {
 	 * CType enum, then replace it by CType int. If an enum variable occurs as
 	 * an RValue we use this method to replace its type by int. 
 	 */
-	public void replaceEnumByInt() {
+	private void replaceEnumByInt() {
 		if (this.lrVal instanceof RValue) {
 			RValue old = (RValue) this.lrVal;
 			if (old.getCType() instanceof CEnum) {
@@ -573,7 +579,7 @@ public class ExpressionResult extends Result {
 	 * ‘‘function returning type’’ is converted to an expression that has type 
 	 * ‘‘pointer to function returning type’’.
 	 */
-	public void replaceCFunctionByCPointer() {
+	private void replaceCFunctionByCPointer() {
 		if (this.lrVal instanceof RValue) {
 			RValue old = (RValue) this.lrVal;
 			if (old.getCType() instanceof CFunction) {

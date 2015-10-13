@@ -179,11 +179,16 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 		return m_MostSignificantResults;
 	}
 
+	
 	private String concatenateShortDescriptions(Set<IResult> iresults) {
 		StringBuilder sb = new StringBuilder();
 		for (IResult iResult : iresults) {
 			sb.append(iResult.getShortDescription());
 			sb.append(" ");
+			if (iResult instanceof UnprovableResult) {
+				sb.append(((UnprovableResult) iResult).getReasons());
+				sb.append(" ");
+			}
 		}
 		return sb.toString();
 	}

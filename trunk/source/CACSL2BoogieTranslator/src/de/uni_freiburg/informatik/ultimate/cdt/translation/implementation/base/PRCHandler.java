@@ -139,8 +139,8 @@ public class PRCHandler extends CHandler {
 
 		this.mArrayHandler = new ArrayHandler();
 		this.mFunctionHandler = new PRFunctionHandler(m_ExpressionTranslation);
-		this.mStructHandler = new StructHandler();
-		this.mMemoryHandler = new MemoryHandler(mFunctionHandler, false, main.getTypeSizes(), m_ExpressionTranslation);
+		this.mMemoryHandler = new MemoryHandler(mFunctionHandler, false, mTypeSizeComputer, m_ExpressionTranslation);
+		this.mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, m_ExpressionTranslation);
 		this.mSymbolTable = new SymbolTable(main);
 		this.mContract = new ArrayList<ACSLNode>();
 		this.mCurrentDeclaredTypes = new ArrayDeque<TypesResult>();
@@ -620,7 +620,7 @@ public class PRCHandler extends CHandler {
 			TypesResult checked = checkForPointer(main, node.getTypeId().getAbstractDeclarator().getPointerOperators(),
 					rt, false);
 
-			return new ExpressionResult(new RValue(mMemoryHandler.calculateSizeOf(checked.cType, loc), new CPrimitive(
+			return new ExpressionResult(new RValue(mMemoryHandler.calculateSizeOf(loc, checked.cType), new CPrimitive(
 					PRIMITIVE.INT)));
 			// }
 		default:

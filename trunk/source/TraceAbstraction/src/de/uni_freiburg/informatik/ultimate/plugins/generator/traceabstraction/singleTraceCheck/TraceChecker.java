@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.be
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 
 /**
@@ -145,6 +146,7 @@ public class TraceChecker {
 	protected final TraceCheckerBenchmarkGenerator m_TraceCheckerBenchmarkGenerator;
 	protected final AssertCodeBlockOrder m_assertCodeBlocksIncrementally;
 	protected final IUltimateServiceProvider mServices;
+	protected ToolchainCanceledException m_ToolchainCanceledException;
 
 	/**
 	 * Defines benchmark for measuring data about the usage of TraceCheckers.
@@ -372,18 +374,25 @@ public class TraceChecker {
 		m_NestedFormulas = rv;
 		m_TraceCheckerBenchmarkGenerator = getBenchmarkGenerator();
 		m_assertCodeBlocksIncrementally = assertCodeBlocksIncrementally;
-		m_IsSafe = checkTrace();
-		if (m_IsSafe == LBool.UNSAT) {
-			if (unlockSmtSolverAlsoIfUnsat) {
-				unlockSmtManager();
-			}
-		} else {
-			if (computeRcfgProgramExecution) {
-				computeRcfgProgramExecution();
+		LBool isSafe = null;
+		try {
+			isSafe = checkTrace();
+			if (isSafe == LBool.UNSAT) {
+				if (unlockSmtSolverAlsoIfUnsat) {
+					unlockSmtManager();
+				}
 			} else {
-				m_TraceCheckFinished = true;
-				unlockSmtManager();
+				if (computeRcfgProgramExecution) {
+					computeRcfgProgramExecution(isSafe);
+				} else {
+					m_TraceCheckFinished = true;
+					unlockSmtManager();
+				}
 			}
+		} catch (ToolchainCanceledException tce) {
+			m_ToolchainCanceledException = tce;
+		} finally {
+			m_IsSafe = isSafe;
 		}
 	}
 	
@@ -446,13 +455,14 @@ public class TraceChecker {
 	 * parallel composed CodeBlock violates the specification.
 	 * <li>If we have proven that the trace satisfies its specification (result
 	 * of trace check is UNSAT) we throw an Error.
+	 * @param isSafe 
 	 */
-	private void computeRcfgProgramExecution() {
+	private void computeRcfgProgramExecution(LBool isSafe) {
 		if (!(m_NestedFormulas instanceof DefaultTransFormulas)) {
 			throw new AssertionError("program execution only computable if "
 					+ "m_NestedFormulas instanceof DefaultTransFormulas");
 		}
-		if (m_IsSafe == LBool.SAT) {
+		if (isSafe == LBool.SAT) {
 			if (!((DefaultTransFormulas) m_NestedFormulas).hasBranchEncoders()) {
 				unlockSmtManager();
 				DefaultTransFormulas withBE = new DefaultTransFormulas(m_NestedFormulas.getTrace(),
@@ -462,14 +472,17 @@ public class TraceChecker {
 						m_NestedFormulas.getPostcondition(), m_PendingContexts,
 						m_NestedFormulas.getTrace(), m_SmtManager, m_ModifiedGlobals, withBE,
 						AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, true);
+				if (tc.getToolchainCancelledExpection() != null) {
+					throw tc.getToolchainCancelledExpection();
+				}
 				assert tc.isCorrect() == LBool.SAT;
 				m_RcfgProgramExecution = tc.getRcfgProgramExecution();
 			} else {
 				m_RcfgProgramExecution = computeRcfgProgramExecutionCaseSAT(m_Nsb);
 			}
-		} else if (m_IsSafe == LBool.UNKNOWN) {
+		} else if (isSafe == LBool.UNKNOWN) {
 			m_RcfgProgramExecution = computeRcfgProgramExecutionCaseUNKNOWN();
-		} else if (m_IsSafe == LBool.UNSAT) {
+		} else if (isSafe == LBool.UNSAT) {
 			throw new AssertionError("specification satisfied - " + "cannot compute counterexample");
 		} else {
 			throw new AssertionError("unexpected result of correctness check");
@@ -591,11 +604,20 @@ public class TraceChecker {
 
 
 	public TraceCheckerBenchmarkGenerator getTraceCheckerBenchmark() {
-		if (m_TraceCheckFinished) {
+		if (m_TraceCheckFinished || m_ToolchainCanceledException != null) {
 			return m_TraceCheckerBenchmarkGenerator;
 		} else {
 			throw new AssertionError("Benchmark is only available after the trace check is finished.");
 		}
+	}
+	
+	/**
+	 * Returns the {@link ToolchainCanceledException} that was thrown if
+	 * the computation was cancelled. If the computation was not cancelled,
+	 * we return null.
+	 */
+	public ToolchainCanceledException getToolchainCancelledExpection() {
+		return m_ToolchainCanceledException;
 	}
 
 }

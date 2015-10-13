@@ -39,6 +39,7 @@ public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatch
 	
 	private Object m_Result;
 	private final BenchmarkData m_EcData = new BenchmarkData();
+	private final BenchmarkData m_PuData = new BenchmarkData();
 	private final BenchmarkData m_TcData = new BenchmarkData();
 	private final BenchmarkData m_TiData = new BenchmarkData();
 	private final BenchmarkData m_InterpolantConsolidationBenchmarks = new BenchmarkData();
@@ -58,6 +59,10 @@ public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatch
 	
 	public void addEdgeCheckerData(IBenchmarkDataProvider ecbd) {
 		m_EcData.aggregateBenchmarkData(ecbd);
+	}
+	
+	public void addPredicateUnifierData(IBenchmarkDataProvider pubd) {
+		m_PuData.aggregateBenchmarkData(pubd);
 	}
 	
 	public void addTraceCheckerData(IBenchmarkDataProvider tcbd) {
@@ -108,6 +113,8 @@ public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatch
 			}
 		case CegarLoopBenchmarkType.s_EdgeCheckerData:
 			return m_EcData;
+		case CegarLoopBenchmarkType.s_PredicateUnifierData:
+			return m_PuData;
 		case CegarLoopBenchmarkType.s_TraceCheckerBenchmark:
 			return m_TcData;
 		case CegarLoopBenchmarkType.s_InterpolantConsolidationBenchmark:

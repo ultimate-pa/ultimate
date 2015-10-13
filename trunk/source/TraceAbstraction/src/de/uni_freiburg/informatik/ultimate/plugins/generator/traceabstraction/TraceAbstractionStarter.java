@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -63,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.ProcedureContractResult;
 import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
+import de.uni_freiburg.informatik.ultimate.result.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
@@ -252,7 +254,7 @@ public class TraceAbstractionStarter {
 			break;
 		case UNKNOWN: {
 			RcfgProgramExecution pe = basicCegarLoop.getRcfgProgramExecution();
-			reportUnproveableResult(pe, pe.getOverapproximations());
+			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
 			if (m_OverallResult != Result.UNSAFE) {
 				m_OverallResult = result;
 			}
@@ -309,7 +311,7 @@ public class TraceAbstractionStarter {
 
 	private void reportCounterexampleResult(RcfgProgramExecution pe) {
 		if (!pe.getOverapproximations().isEmpty()) {
-			reportUnproveableResult(pe, pe.getOverapproximations());
+			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
 			return;
 		}
 		reportResult(new CounterExampleResult<RcfgElement,CodeBlock, Expression>(getErrorPP(pe), Activator.s_PLUGIN_NAME,
@@ -330,10 +332,10 @@ public class TraceAbstractionStarter {
 		}
 	}
 
-	private void reportUnproveableResult(RcfgProgramExecution pe, Map<String, ILocation> overapproximations) {
+	private void reportUnproveableResult(RcfgProgramExecution pe, List<UnprovabilityReason> unproabilityReasons) {
 		ProgramPoint errorPP = getErrorPP(pe);
 		UnprovableResult<RcfgElement, CodeBlock, Expression> uknRes = new UnprovableResult<RcfgElement, CodeBlock, Expression>(
-				Activator.s_PLUGIN_NAME, errorPP, m_Services.getBacktranslationService(), pe, overapproximations);
+				Activator.s_PLUGIN_NAME, errorPP, m_Services.getBacktranslationService(), pe, unproabilityReasons);
 		reportResult(uknRes);
 	}
 

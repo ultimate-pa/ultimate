@@ -81,7 +81,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     private LinkedHashMap<String, IASTNode> functionTable;
 //    private LinkedHashMap<String, IASTFunctionDefinition> functionTable;
     
-    Stack<IASTDeclaration> currentFunOrStructDefOrInitializer;
+    Stack<IASTDeclaration> currentFunOrStructOrEnumDefOrInitializer;
     
     LinkedHashMap<IASTDeclaration, LinkedHashSet<IASTDeclaration>> dependencyGraph;
     
@@ -112,7 +112,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
         this.dependencyGraph = new LinkedHashMap<>();
         this.dependencyGraphPreliminaryInverse = new LinkedHashMap<>();
         this.reachableDeclarations = new LinkedHashSet<>();
-        this.currentFunOrStructDefOrInitializer = new Stack<>();
+        this.currentFunOrStructOrEnumDefOrInitializer = new Stack<>();
         this.checkedMethod = checkedMethod;
         this.functionToIndex = functionToIndex;
     }
@@ -146,8 +146,8 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 	public int visit(IASTParameterDeclaration declaration) {
     	IASTDeclSpecifier declSpec = declaration.getDeclSpecifier();
     	IASTDeclaration funcDec = null;
-    	if (!currentFunOrStructDefOrInitializer.isEmpty()) {
-    		funcDec = currentFunOrStructDefOrInitializer.peek();
+    	if (!currentFunOrStructOrEnumDefOrInitializer.isEmpty()) {
+    		funcDec = currentFunOrStructOrEnumDefOrInitializer.peek();
     	} else { //we are not inside a function definition, but may still be inside a function declaration
     		//one getParent to reach the declarator, the other one to get to the declaration
     		IASTNode node = declaration;
@@ -190,9 +190,9 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 		}
     	IASTDeclaration symbolDec = sT.get(symbolName);
     	if (symbolDec != null)
-    		addDependency(currentFunOrStructDefOrInitializer.peek(), symbolDec);
+    		addDependency(currentFunOrStructOrEnumDefOrInitializer.peek(), symbolDec);
     	else
-    		dependencyGraphPreliminaryInverse.put(symbolName, currentFunOrStructDefOrInitializer.peek());
+    		dependencyGraphPreliminaryInverse.put(symbolName, currentFunOrStructOrEnumDefOrInitializer.peek());
 		return super.visit(typeId);
 	}
 
@@ -214,11 +214,11 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     	IASTDeclaration symbolDec = sT.get(symbolName);
     	IASTNode funDec = functionTable.get(symbolName);
     	if (symbolDec != null)
-    		addDependency(currentFunOrStructDefOrInitializer.peek(), symbolDec);
+    		addDependency(currentFunOrStructOrEnumDefOrInitializer.peek(), symbolDec);
     	else if (funDec != null)
-    		addDependency(currentFunOrStructDefOrInitializer.peek(), getDeclarationFromFuncDefinitionOrFuncDeclarator(funDec));
+    		addDependency(currentFunOrStructOrEnumDefOrInitializer.peek(), getDeclarationFromFuncDefinitionOrFuncDeclarator(funDec));
     	else
-    		dependencyGraphPreliminaryInverse.put(symbolName, currentFunOrStructDefOrInitializer.peek());
+    		dependencyGraphPreliminaryInverse.put(symbolName, currentFunOrStructOrEnumDefOrInitializer.peek());
         return super.visit(expression);
     }
     
@@ -232,17 +232,17 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     				functionTable.get(idEx.getName().toString()));
 //    		if (funcTableEntry != null)
     		if (decFromFuncTableEntry != null)
-    			addDependency(currentFunOrStructDefOrInitializer.peek(), decFromFuncTableEntry);
+    			addDependency(currentFunOrStructOrEnumDefOrInitializer.peek(), decFromFuncTableEntry);
     		IASTDeclaration sTEntry = sT.get(idEx.getName().toString());
     		if (sTEntry != null)
-    			addDependency(currentFunOrStructDefOrInitializer.peek(), sTEntry);
+    			addDependency(currentFunOrStructOrEnumDefOrInitializer.peek(), sTEntry);
     		if (sTEntry == null || decFromFuncTableEntry == null) //we have to delay making the entry in the dependency graph
-    			dependencyGraphPreliminaryInverse.put(idEx.getName().toString(), currentFunOrStructDefOrInitializer.peek());
+    			dependencyGraphPreliminaryInverse.put(idEx.getName().toString(), currentFunOrStructOrEnumDefOrInitializer.peek());
     	} else {
     		// We add a dependency from the method/whatever the function pointer is used in to 
     		//all methods that a function pointer may point to (from PreRunner's analysis)
     		for (String fName : functionToIndex.keySet()) {
-    			addDependency(currentFunOrStructDefOrInitializer.peek(), getDeclarationFromFuncDefinitionOrFuncDeclarator(functionTable.get(fName)));
+    			addDependency(currentFunOrStructOrEnumDefOrInitializer.peek(), getDeclarationFromFuncDefinitionOrFuncDeclarator(functionTable.get(fName)));
     		}
     		
     	}
@@ -334,9 +334,9 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 					String name = getKindStringFromCompositeOrElaboratedTS(elts) + elts.getName().toString();
 					IASTDeclaration decOfName = sT.get(name);
 					if (decOfName != null) { //if it is null, it must reference to a local declaration (of the same scope..) that we keep anyway
-						addDependency(currentFunOrStructDefOrInitializer.peek(), decOfName);
+						addDependency(currentFunOrStructOrEnumDefOrInitializer.peek(), decOfName);
 					} else { //.. or it may reference a global declaration that we haven't seen yet (this may overapproximate, as we declare shadowed decls reachable, right?? //TODO: not entirely clear..
-						dependencyGraphPreliminaryInverse.put(name, currentFunOrStructDefOrInitializer.peek());
+						dependencyGraphPreliminaryInverse.put(name, currentFunOrStructOrEnumDefOrInitializer.peek());
 					}
 
 
@@ -345,12 +345,13 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 					String name = nts.getName().toString();
 					IASTDeclaration decOfName = sT.get(name);
 					if (decOfName != null) { //if it is null, it must reference to a local declaration (of the same scope..) that we keep anyway
-						addDependency(currentFunOrStructDefOrInitializer.peek(), decOfName);
+						addDependency(currentFunOrStructOrEnumDefOrInitializer.peek(), decOfName);
 					} else { //.. or it may reference a global declaration that we haven't seen yet (this may overapproximate, as we declare shadowed decls reachable, right?? //TODO: not entirely clear..
-						dependencyGraphPreliminaryInverse.put(name, currentFunOrStructDefOrInitializer.peek());
+						dependencyGraphPreliminaryInverse.put(name, currentFunOrStructOrEnumDefOrInitializer.peek());
 					}
 				} 
 			}
+			/////////////////////////////
 			//global or local
 			for (IASTDeclarator d : cd.getDeclarators()) {
 				// "typedef declSpec declarators" introduces a dependency from each declarator to 
@@ -384,8 +385,9 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 					//					addDependency(declaration, declSpec);
 				}
 			}
-			if (declSpec instanceof IASTCompositeTypeSpecifier) {
-				currentFunOrStructDefOrInitializer.push(declaration);
+			if (declSpec instanceof IASTCompositeTypeSpecifier
+					|| declSpec instanceof IASTEnumerationSpecifier) {
+				currentFunOrStructOrEnumDefOrInitializer.push(declaration);
 			}
 			return super.visit(declaration);
 		} else if (declaration instanceof IASTFunctionDefinition) {
@@ -414,7 +416,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 					sT.put(key, declaration);
 				}
 			}
-			currentFunOrStructDefOrInitializer.push(funDef);
+			currentFunOrStructOrEnumDefOrInitializer.push(funDef);
 			int nr = super.visit(declaration);
 			return nr;
 		} else {
@@ -467,7 +469,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 		if (initializer instanceof IASTEqualsInitializer) {
 			IASTDeclaration correspondingDeclaration = (IASTDeclaration) initializer.getParent().getParent();
 			if (correspondingDeclaration.getParent() instanceof IASTTranslationUnit) {
-				currentFunOrStructDefOrInitializer.push(correspondingDeclaration);
+				currentFunOrStructOrEnumDefOrInitializer.push(correspondingDeclaration);
 			}
 		}
 		return super.visit(initializer);
@@ -478,7 +480,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 		if (initializer instanceof IASTEqualsInitializer) {
 			IASTDeclaration correspondingDeclaration = (IASTDeclaration) initializer.getParent().getParent();
 			if (correspondingDeclaration.getParent() instanceof IASTTranslationUnit) {
-				currentFunOrStructDefOrInitializer.pop();
+				currentFunOrStructOrEnumDefOrInitializer.pop();
 			}
 		}
 		return super.leave(initializer);
@@ -489,12 +491,14 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 	@Override
     public int leave(IASTDeclaration declaration) {
         if (declaration instanceof IASTFunctionDefinition) {
-        	currentFunOrStructDefOrInitializer.pop();
+        	currentFunOrStructOrEnumDefOrInitializer.pop();
         	sT.endScope();
         } else if (declaration instanceof IASTSimpleDeclaration) {
         	if (((IASTSimpleDeclaration) declaration).getDeclSpecifier() 
-        			instanceof IASTCompositeTypeSpecifier) {
-        		currentFunOrStructDefOrInitializer.pop();
+        			instanceof IASTCompositeTypeSpecifier
+        			|| ((IASTSimpleDeclaration) declaration).getDeclSpecifier() 
+        			instanceof IASTEnumerationSpecifier) {
+        		currentFunOrStructOrEnumDefOrInitializer.pop();
         	}
         }
         return super.leave(declaration);
@@ -547,16 +551,21 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
     	return result;
     }
     
-    private void addDependency(IASTDeclaration declaration, IASTDeclaration symbolDec) {
-    	assert declaration != null;
-    	assert symbolDec != null;
+	/**
+	 * introduce a dependency in the dependencyGraph saying "lhs depends on rhs"
+	 * @param lhs
+	 * @param rhs
+	 */
+    private void addDependency(IASTDeclaration lhs, IASTDeclaration rhs) {
+    	assert lhs != null;
+    	assert rhs != null;
     			
-    	LinkedHashSet<IASTDeclaration> set = dependencyGraph.get(declaration);
+    	LinkedHashSet<IASTDeclaration> set = dependencyGraph.get(lhs);
     	if (set == null) {
     		set = new LinkedHashSet<>();
     	}
-    	set.add(symbolDec);
-    	dependencyGraph.put(declaration, set);
+    	set.add(rhs);
+    	dependencyGraph.put(lhs, set);
 	}
 
     String prettyPrintDependencyGraph() {
