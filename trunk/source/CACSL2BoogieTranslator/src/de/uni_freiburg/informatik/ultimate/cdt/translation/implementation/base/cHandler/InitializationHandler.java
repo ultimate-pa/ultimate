@@ -55,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
@@ -192,7 +191,7 @@ public class InitializationHandler {
 				if (initializer == null) {
 					rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, (CPrimitive) lCType, BigInteger.ZERO);
 				} else {
-					initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer, mExpressionTranslation);
+					initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 					rhs = initializer.lrVal.getValue();
 				}
 				break;
@@ -273,7 +272,7 @@ public class InitializationHandler {
 			if (initializer == null) {
 				rhs = new IntegerLiteral(loc, SFO.NR0);
 			} else {
-				initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer, mExpressionTranslation);
+				initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 				rhs = initializer.lrVal.getValue();
 			}		
 			lrVal = new RValue(rhs, lCType);
@@ -326,7 +325,7 @@ public class InitializationHandler {
 				if (initializer == null) {
 					rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, (CPrimitive) lCType, BigInteger.ZERO);
 				} else {
-					initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer, mExpressionTranslation);
+					initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 					main.cHandler.castToType(main, loc, initializer, lCType);
 					rhs = initializer.lrVal.getValue();
 				}
@@ -475,7 +474,7 @@ public class InitializationHandler {
 				rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, 
 						new CPrimitive(CPrimitive.PRIMITIVE.INT), BigInteger.ZERO);
 			} else {
-				initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer, mExpressionTranslation);
+				initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 				rhs = initializer.lrVal.getValue();
 			}		
 			if (onHeap) {

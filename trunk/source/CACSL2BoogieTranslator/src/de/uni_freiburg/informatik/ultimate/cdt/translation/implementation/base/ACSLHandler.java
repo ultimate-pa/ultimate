@@ -65,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IACSLHandler;
@@ -432,9 +431,9 @@ public class ACSLHandler implements IACSLHandler {
 		{
 	        Operator op = getBoogieBinaryExprOperator(node.getOperator());
 	        if (op != null) {
-	        	ExpressionResult leftOp = ConvExpr.rexIntToBoolIfNecessary(loc, left, ((CHandler) main.cHandler).getExpressionTranslation());
-	        	ExpressionResult rightOp = ConvExpr.rexIntToBoolIfNecessary(loc, right, ((CHandler) main.cHandler).getExpressionTranslation());
-	        	BinaryExpression be = new BinaryExpression(loc, op, leftOp.lrVal.getValue(), rightOp.lrVal.getValue());
+	        	left.rexIntToBoolIfNecessary(loc, ((CHandler) main.cHandler).getExpressionTranslation());
+	        	right.rexIntToBoolIfNecessary(loc, ((CHandler) main.cHandler).getExpressionTranslation());
+	        	BinaryExpression be = new BinaryExpression(loc, op, left.lrVal.getValue(), right.lrVal.getValue());
 	        	// TODO: Handle Ctype
 	            return new ExpressionResult(stmt, new RValue(be, new CPrimitive(PRIMITIVE.INT), true), decl, auxVars, overappr);
 	            //return new Result(new BinaryExpression(loc, op, left, right));

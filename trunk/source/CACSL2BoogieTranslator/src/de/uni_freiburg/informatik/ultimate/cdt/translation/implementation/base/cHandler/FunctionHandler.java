@@ -73,7 +73,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.TarjanSCC;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -419,7 +418,7 @@ public class FunctionHandler {
 		} else if (node.getReturnValue() != null) {
 			ExpressionResult exprResult = ((ExpressionResult) main.dispatch(node.getReturnValue()))
 					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-			exprResult = ConvExpr.rexBoolToIntIfNecessary(loc, exprResult, m_ExpressionTranslation);
+			exprResult.rexBoolToIntIfNecessary(loc, m_ExpressionTranslation);
 
 			// do some implicit casts
 			CType functionResultType = this.procedureToCFunctionType.get(currentProcedure.getIdentifier())
@@ -721,7 +720,7 @@ public class FunctionHandler {
 				// bool/int conversion
 				if (expectedParamType instanceof CPrimitive
 						&& ((CPrimitive) expectedParamType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-					in = ConvExpr.rexBoolToIntIfNecessary(loc, in, m_ExpressionTranslation);
+					in.rexBoolToIntIfNecessary(loc, m_ExpressionTranslation);
 				}
 				if (expectedParamType instanceof CFunction) {
 					// workaround - better: make this conversion already in declaration
