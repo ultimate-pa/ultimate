@@ -99,13 +99,21 @@ public class IntervalBinaryExpressionEvaluator implements INAryEvaluator<Interva
 		switch (mOperator) {
 		case ARITHPLUS:
 			return performAddition(firstResult, secondResult);
+		case ARITHMINUS:
+			return performSubtraction(firstResult, secondResult);
 		default:
 			throw new UnsupportedOperationException("The operator " + mOperator.toString() + " is not implemented.");
 		}
 	}
 
 	/**
-	 * Adds two {@link IntervalDomainValue}s.
+	 * Adds two {@link IntervalDomainValue}s following the scheme:
+	 * 
+	 * <p>
+	 * <ul>
+	 * <li>[a, b] + [c, d] = [a + c, b + d]</li>
+	 * </ul>
+	 * </p>
 	 * 
 	 * @param firstResult
 	 *            The first interval.
@@ -138,6 +146,7 @@ public class IntervalBinaryExpressionEvaluator implements INAryEvaluator<Interva
 			        firstResult.getResult().getLower().getValue().add(secondResult.getResult().getLower().getValue()));
 		}
 
+		// Compute upper bound
 		if (firstResult.getResult().getUpper().isInfinity() || secondResult.getResult().getUpper().isInfinity()) {
 			upperBound.setToInfinity();
 		} else {
@@ -145,10 +154,53 @@ public class IntervalBinaryExpressionEvaluator implements INAryEvaluator<Interva
 			        firstResult.getResult().getUpper().getValue().add(secondResult.getResult().getUpper().getValue()));
 		}
 
-		if (lowerBound.compareTo(upperBound) > 0 && !lowerBound.isInfinity()) {
-			IntervalValue tmp = lowerBound;
-			lowerBound = upperBound;
-			upperBound = tmp;
+		return new IntervalDomainValue(lowerBound, upperBound);
+	}
+
+	/**
+	 * Computes the subtraction of two {@link IntervalDomainValue}s following the scheme:
+	 * <p>
+	 * <ul>
+	 * <li>[a, b] - [c, d] = [a - d, b - c]</li>
+	 * </ul>
+	 * </p>
+	 * 
+	 * @param firstResult
+	 *            The first interval.
+	 * @param secondResult
+	 *            The second interval.
+	 * @return A new interval representing the result of <code>firstResult</code> - <code>secondResult</code>.
+	 */
+	private IEvaluationResult<IntervalDomainValue> performSubtraction(
+	        IEvaluationResult<IntervalDomainValue> firstResult, IEvaluationResult<IntervalDomainValue> secondResult) {
+		assert firstResult != null;
+		assert secondResult != null;
+
+		if (firstResult.getResult().isBottom() || secondResult.getResult().isBottom()) {
+			return new IntervalDomainValue(true);
+		}
+
+		if (firstResult.getResult().isInfinity() || secondResult.getResult().isInfinity()) {
+			return new IntervalDomainValue();
+		}
+
+		IntervalValue lowerBound = new IntervalValue();
+		IntervalValue upperBound = new IntervalValue();
+
+		// Compute lower bound
+		if (firstResult.getResult().getLower().isInfinity() || secondResult.getResult().getUpper().isInfinity()) {
+			lowerBound.setToInfinity();
+		} else {
+			lowerBound.setValue(firstResult.getResult().getLower().getValue()
+			        .subtract(secondResult.getResult().getUpper().getValue()));
+		}
+
+		// Compute upper bound
+		if (firstResult.getResult().getUpper().isInfinity() || secondResult.getResult().getLower().isInfinity()) {
+			upperBound.setToInfinity();
+		} else {
+			upperBound.setValue(firstResult.getResult().getUpper().getValue()
+			        .subtract(secondResult.getResult().getLower().getValue()));
 		}
 
 		return new IntervalDomainValue(lowerBound, upperBound);
