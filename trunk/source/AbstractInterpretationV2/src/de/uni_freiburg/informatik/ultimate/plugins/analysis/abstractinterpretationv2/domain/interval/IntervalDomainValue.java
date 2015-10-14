@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.interval;
 
+import java.awt.dnd.InvalidDnDOperationException;
+
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluationResult;
 
 /**
@@ -147,6 +149,23 @@ public class IntervalDomainValue implements IEvaluationResult<IntervalDomainValu
 		return mUpper;
 	}
 
+	/**
+	 * Returns <code>true</code> if and only if <code>0</code> is part of the interval.
+	 * 
+	 * @return <code>true</code> if 0 is part of the interval, <code>false</code> otherwise.
+	 */
+	protected boolean containsZero() {
+		if (mIsBottom) {
+			return false;
+		}
+
+		if (isInfinity()) {
+			return true;
+		}
+
+		return mLower.getValue().signum() <= 0 && mUpper.getValue().signum() >= 0;
+	}
+
 	@Override
 	public IntervalDomainValue getResult() {
 		return this;
@@ -154,8 +173,8 @@ public class IntervalDomainValue implements IEvaluationResult<IntervalDomainValu
 
 	@Override
 	public int compareTo(IntervalDomainValue o) {
-		// TODO Auto-generated method stub
-		return 0;
+		throw new InvalidDnDOperationException(
+		        "The compareTo operation is not defined on arbitrary intervals and can therefore not be used.");
 	}
 
 	@Override
