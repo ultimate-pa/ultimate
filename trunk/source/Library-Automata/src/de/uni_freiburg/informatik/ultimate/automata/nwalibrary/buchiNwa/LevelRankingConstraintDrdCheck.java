@@ -41,12 +41,20 @@ import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation3;
 public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingConstraint<LETTER, STATE> {
 	
 	
-	HashRelation3<StateWithRankInfo<STATE>, STATE, Integer> m_RankConstraintsOfNonFinalPredecessors;
+	private final HashRelation3<StateWithRankInfo<STATE>, STATE, Integer> m_RankConstraintsOfNonFinalPredecessors;
 
 	public LevelRankingConstraintDrdCheck(INestedWordAutomatonSimple<LETTER, STATE> operand,
 			int userDefinedMaxRank, boolean useDoubleDeckers) {
 		super(operand, userDefinedMaxRank, useDoubleDeckers);
 		m_RankConstraintsOfNonFinalPredecessors = new HashRelation3<>();
+	}
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	public LevelRankingConstraintDrdCheck() {
+		super();
+		m_RankConstraintsOfNonFinalPredecessors = null;
 	}
 
 	@Override

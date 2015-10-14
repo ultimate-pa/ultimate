@@ -31,7 +31,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKVNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.LevelRankingState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.StateWithRankInfo;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
@@ -135,6 +134,9 @@ public class StringFactory extends StateFactory<String> {
 	
 	@Override
 	public String buchiComplementFKV(LevelRankingState<?, String> compl) {
+		if (compl.isNonAcceptingSink()) {
+			return compl.toString();
+		}
 		
 		StringBuilder sb = new StringBuilder();
 		sb.append("{");

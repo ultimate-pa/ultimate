@@ -70,6 +70,16 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 		m_UserDefinedMaxRank = userDefinedMaxRank;
 		m_UseDoubleDeckers = useDoubleDeckers;
 	}
+	
+	/**
+	 * Constructor for the constraint that is only satisfied by the
+	 * non accepting sink state.
+	 */
+	public LevelRankingConstraint() {
+		super();
+		m_UserDefinedMaxRank = -1;
+		m_UseDoubleDeckers = true;
+	}
 
 	void internalSuccessorConstraints(IFkvState<LETTER, STATE> state, LETTER symbol) {
 		for (StateWithRankInfo<STATE> down : state.getDownStates()) {
