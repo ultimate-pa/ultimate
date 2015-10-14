@@ -11,7 +11,7 @@ assert(numberOfStates(removeDeadEnds(complementBS)) == 10);
 //print(complementBS);
 NestedWordAutomaton complementFKV = buchiComplementFKV(nwa, "HeiMat2", 77);
 print(numberOfStates(complementFKV));
-assert(numberOfStates(removeDeadEnds(complementFKV)) == 10);
+assert(numberOfStates(removeDeadEnds(complementFKV)) == 14);
 
 
 NestedWordAutomaton nwa = (
