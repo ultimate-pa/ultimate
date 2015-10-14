@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.interval;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -101,6 +103,8 @@ public class IntervalBinaryExpressionEvaluator implements INAryEvaluator<Interva
 			return performAddition(firstResult, secondResult);
 		case ARITHMINUS:
 			return performSubtraction(firstResult, secondResult);
+		case ARITHMUL:
+			return performMultiplication(firstResult, secondResult);
 		default:
 			throw new UnsupportedOperationException("The operator " + mOperator.toString() + " is not implemented.");
 		}
@@ -204,6 +208,171 @@ public class IntervalBinaryExpressionEvaluator implements INAryEvaluator<Interva
 		}
 
 		return new IntervalDomainValue(lowerBound, upperBound);
+	}
+
+	/**
+	 * Computes the result of the multiplication of two {@link IntervalDomainValue}s following the scheme:
+	 * 
+	 * <p>
+	 * <ul>
+	 * <li>[a, b] * [c, d] = [min(a*c, a*d, b*c, b*d), max(a*c, a*d, b*c, b*d)]</li>
+	 * </ul>
+	 * </p>
+	 * 
+	 * @param firstResult
+	 *            The first interval.
+	 * @param secondResult
+	 *            The second interval.
+	 * @return A new interval representing the result of <code>firstResult</code> * <code>secondRestult</code>.
+	 */
+	private IEvaluationResult<IntervalDomainValue> performMultiplication(
+	        IEvaluationResult<IntervalDomainValue> firstResult, IEvaluationResult<IntervalDomainValue> secondResult) {
+		assert firstResult != null;
+		assert secondResult != null;
+
+		if (firstResult.getResult().isBottom() || secondResult.getResult().isBottom()) {
+			return new IntervalDomainValue(true);
+		}
+
+		// Note: No check for infinite intervals here, since a multiplication with 0 would result in too coarse results.
+
+		IntervalValue lowerBound = computeMin(firstResult.getResult(), secondResult.getResult());
+		// TODO Implement maximum computation
+		IntervalValue upperBound = new IntervalValue();
+
+		// TODO Auto-generated method stub
+		return new IntervalDomainValue();
+	}
+
+	/**
+	 * Computes the minimum value of the multiplication of two intervals:
+	 * 
+	 * <p>
+	 * [a, b] and [c, d]: min(ac, ad, bc, bd).
+	 * </p>
+	 * 
+	 * @param first
+	 *            The first interval of the form [a, b].
+	 * @param second
+	 *            The second interval of the form [c, d].
+	 * @return min(ac, ad, bc, bd).
+	 */
+	private IntervalValue computeMin(IntervalDomainValue first, IntervalDomainValue second) {
+
+		IntervalValue returnValue = new IntervalValue();
+		boolean valuePresent = false;
+
+		// If both intervals are infinite, the minimum is -\infty;
+		if (first.isInfinity() && second.isInfinity()) {
+			return new IntervalValue();
+		}
+
+		// Compute a*c
+		if (first.getLower().isInfinity()) {
+			if (!second.getLower().isInfinity()) {
+
+				// -\infty * val = -\infty, if val > 0.
+				if (second.getLower().getValue().signum() > 0) {
+					return new IntervalValue();
+				}
+
+				// -\infty * val = 0, if val = 0.
+				if (second.getLower().getValue().signum() == 0) {
+					returnValue = updateIfSmaller(returnValue, new BigDecimal(0), valuePresent);
+					valuePresent = true;
+				}
+			}
+		} else {
+
+			// 0 * anything = 0.
+			if (first.getLower().getValue().signum() == 0) {
+				returnValue = updateIfSmaller(returnValue, new BigDecimal(0), valuePresent);
+				valuePresent = true;
+			} else {
+				if (second.getLower().isInfinity()) {
+
+					// val * -\infty = -\infty, if val > 0
+					if (first.getLower().getValue().signum() > 0) {
+						return new IntervalValue();
+					}
+				} else {
+					returnValue = updateIfSmaller(returnValue,
+					        first.getLower().getValue().multiply(second.getLower().getValue()), valuePresent);
+					valuePresent = true;
+				}
+			}
+		}
+
+		// Compute a*d
+		if (first.getLower().isInfinity()) {
+
+			// -\infty * \infty = -\infty
+			if (second.getUpper().isInfinity()) {
+				return new IntervalValue();
+			}
+
+			// -\infty * val = -\infty, if val > 0
+			if (second.getUpper().getValue().signum() > 0) {
+				return new IntervalValue();
+			}
+
+			// anything * 0 = 0.
+			if (second.getUpper().getValue().signum() == 0) {
+				returnValue = updateIfSmaller(returnValue, new BigDecimal(0), valuePresent);
+				valuePresent = true;
+			}
+		} else {
+
+			// 0 * anything = 0
+			if (first.getLower().getValue().signum() == 0) {
+				returnValue = updateIfSmaller(returnValue, new BigDecimal(0), valuePresent);
+				valuePresent = true;
+			} else {
+				if (second.getUpper().isInfinity()) {
+
+					// val * \infty = -\infty, if val < 0
+					if (first.getLower().getValue().signum() < 0) {
+						return new IntervalValue();
+					}
+				} else {
+					returnValue = updateIfSmaller(returnValue,
+					        first.getLower().getValue().multiply(second.getUpper().getValue()), valuePresent);
+					valuePresent = true;
+				}
+			}
+		}
+		
+		
+		// TODO Implement following computations
+		// Compute b * c
+		
+		// Compute b * d
+
+		return returnValue;
+	}
+
+	private IntervalValue updateIfSmaller(IntervalValue oldValue, BigDecimal newValue, boolean valuePresent) {
+		if (valuePresent) {
+			if (oldValue.getValue().compareTo(newValue) >= 0) {
+				return new IntervalValue(newValue);
+			} else {
+				return oldValue;
+			}
+		} else {
+			return new IntervalValue(newValue);
+		}
+	}
+
+	private IntervalValue updateIfLarger(IntervalValue oldValue, BigDecimal newValue, boolean valuePresent) {
+		if (valuePresent) {
+			if (oldValue.getValue().compareTo(newValue) <= 0) {
+				return new IntervalValue(newValue);
+			} else {
+				return oldValue;
+			}
+		} else {
+			return new IntervalValue(newValue);
+		}
 	}
 
 	@Override
