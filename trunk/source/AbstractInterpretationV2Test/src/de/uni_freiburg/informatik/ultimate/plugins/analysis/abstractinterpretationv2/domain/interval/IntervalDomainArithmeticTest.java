@@ -179,6 +179,14 @@ public class IntervalDomainArithmeticTest {
 		IntervalDomainValue expectedResult = createInterval(-25, -10);
 
 		assertTrue(computeAdditionResult(interval1, interval2, expectedResult));
+
+		// Interval [-10; 5]
+		IntervalDomainValue interval3 = createInterval(-10, 5);
+
+		// Result should be [-5; 15]
+		IntervalDomainValue expectedResult1 = createInterval(-5, 15);
+
+		assertTrue(computeAdditionResult(interval3, interval2, expectedResult1));
 	}
 
 	@Test
@@ -197,7 +205,7 @@ public class IntervalDomainArithmeticTest {
 		assertTrue(computeAdditionResult(interval1, interval2, expectedResult));
 
 		assertTrue(computeAdditionResult(interval2, interval1, expectedResult));
-		
+
 		assertTrue(computeAdditionResult(interval1, interval1, expectedResult));
 	}
 }
