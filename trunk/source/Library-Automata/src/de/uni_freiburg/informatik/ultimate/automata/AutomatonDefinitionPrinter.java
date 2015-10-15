@@ -872,7 +872,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 				
 				sb.append("AP: " + m_Nwa.getInternalAlphabet().size());
 				for (LETTER letter : m_Nwa.getInternalAlphabet()) {
-					sb.append(" \"" + m_LetterConverterAP.convert(letter) + "\"");
+					sb.append(" \"p" + m_LetterConverterAP.convert(letter) + "\"");
 				}
 				sb.append(System.lineSeparator());
 				
@@ -887,10 +887,10 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 							sb.append(" &");
 						}
 						if (otherLetter == letter) {
-							sb.append(" ");
+							sb.append(" p");
 							sb.append(m_AlphabetMapping.get(otherLetter));
 						} else {
-							sb.append(" !");
+							sb.append(" !p");
 							sb.append(m_AlphabetMapping.get(otherLetter));
 
 						}
