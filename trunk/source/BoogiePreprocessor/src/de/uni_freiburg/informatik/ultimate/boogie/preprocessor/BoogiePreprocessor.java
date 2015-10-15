@@ -34,7 +34,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.typeflattening.TypeFlattener;
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.typeflattening.TypeFlattenerObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTableConstructor;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
@@ -101,13 +101,13 @@ public class BoogiePreprocessor implements IAnalysis {
 		// observers.add(new DebugObserver(logger));
 		observers.add(new TypeChecker(mServices));
 		observers.add(new ConstExpander(backTranslator));
+		observers.add(new TypeFlattenerObserver(logger));
 		observers.add(new StructExpander(backTranslator, logger));
 		observers.add(new UnstructureCode(backTranslator));
-		
 		observers.add(new FunctionInliner());
 		
 		
-		observers.add(new TypeFlattener(logger));
+
 		// FIXME: running the typechecker two times just to be sure the type
 				// flattener did nothing stupid
 		observers.add(new TypeChecker(mServices));

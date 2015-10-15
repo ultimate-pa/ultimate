@@ -301,7 +301,7 @@ public abstract class BoogieType implements IType {
             BoogieType[] substitution);
 
     /**
-     * Unify the this type (which contains Placeholders) with another type
+     * Unify this type (which contains Placeholders) with another type
      * (which doesn't) and compute a suitable substitution.
      * 
      * @param other
