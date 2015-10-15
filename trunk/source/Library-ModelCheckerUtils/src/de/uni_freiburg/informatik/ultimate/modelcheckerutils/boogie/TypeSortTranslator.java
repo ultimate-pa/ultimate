@@ -31,10 +31,10 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayBoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedBoogieType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -146,25 +146,25 @@ public class TypeSortTranslator {
 	 */
 	protected Sort constructSort(IType boogieType, BoogieASTNode BoogieASTNode) {
 		Sort result;
-		if (boogieType instanceof PrimitiveType) {
-			if (boogieType.equals(PrimitiveType.boolType)) {
+		if (boogieType instanceof PrimitiveBoogieType) {
+			if (boogieType.equals(PrimitiveBoogieType.boolType)) {
 				result = m_Script.sort("Bool");
-			} else if (boogieType.equals(PrimitiveType.intType)) {
+			} else if (boogieType.equals(PrimitiveBoogieType.intType)) {
 				result = m_Script.sort("Int");
-			} else if (boogieType.equals(PrimitiveType.realType)) {
+			} else if (boogieType.equals(PrimitiveBoogieType.realType)) {
 				result = m_Script.sort("Real");
-			} else if (boogieType.equals(PrimitiveType.errorType)) {
+			} else if (boogieType.equals(PrimitiveBoogieType.errorType)) {
 				throw new IllegalArgumentException("BoogieAST contains type "
 						+ "errors. This plugin supports only BoogieASTs without type errors");
-			} else if (((PrimitiveType) boogieType).getTypeCode() > 0) {
-				int bitvectorSize = ((PrimitiveType) boogieType).getTypeCode();
+			} else if (((PrimitiveBoogieType) boogieType).getTypeCode() > 0) {
+				int bitvectorSize = ((PrimitiveBoogieType) boogieType).getTypeCode();
 				BigInteger[] sortIndices = { BigInteger.valueOf(bitvectorSize) };
 				result = m_Script.sort("BitVec", sortIndices);
 			} else {
 				throw new IllegalArgumentException("Unsupported PrimitiveType " + boogieType);
 			}
-		} else if (boogieType instanceof ArrayType) {
-			ArrayType arrayType = (ArrayType) boogieType;
+		} else if (boogieType instanceof ArrayBoogieType) {
+			ArrayBoogieType arrayType = (ArrayBoogieType) boogieType;
 			Sort rangeSort = constructSort(arrayType.getValueType(), BoogieASTNode);
 			if (m_BlackHoleArrays) {
 				result = rangeSort;
@@ -185,8 +185,8 @@ public class TypeSortTranslator {
 					}
 				}
 			}
-		} else if (boogieType instanceof ConstructedType) {
-			ConstructedType constructedType = (ConstructedType) boogieType;
+		} else if (boogieType instanceof ConstructedBoogieType) {
+			ConstructedBoogieType constructedType = (ConstructedBoogieType) boogieType;
 			String name = constructedType.getConstr().getName();
 			result = m_Script.sort(name);
 		} else {

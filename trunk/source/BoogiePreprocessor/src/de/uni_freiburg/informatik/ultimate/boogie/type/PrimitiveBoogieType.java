@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
-public class PrimitiveType extends BoogieType {
+public class PrimitiveBoogieType extends BoogieType {
 	/**
 	 * long serialVersionUID
 	 */
@@ -48,7 +48,7 @@ public class PrimitiveType extends BoogieType {
 	 */
 	private final int type;
 	
-	PrimitiveType(int type) {
+	PrimitiveBoogieType(int type) {
 		this.type = type;
 	}
 
@@ -70,7 +70,7 @@ public class PrimitiveType extends BoogieType {
 	//@Override
 	protected boolean isUnifiableTo(int depth, BoogieType other,
 			ArrayList<BoogieType> subst) {
-		if (other instanceof PlaceholderType)
+		if (other instanceof PlaceholderBoogieType)
 			return other.isUnifiableTo(depth, this, subst);
 		return this == errorType || other == errorType || this == other;
 	}

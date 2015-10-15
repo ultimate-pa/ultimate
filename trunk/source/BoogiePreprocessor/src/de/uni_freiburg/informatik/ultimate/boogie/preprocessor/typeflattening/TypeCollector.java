@@ -14,7 +14,7 @@ import java.util.Stack;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PlaceholderType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.PlaceholderBoogieType;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
@@ -167,7 +167,7 @@ class TypeCollector extends BoogieTransformer {
 			if (typeargs.length != params.length) {
 				if (typeargs.length == 0 && params.length == 1) {
 					BoogieType bt = ((BoogieType) namedGeneric.getBoogieType());
-					if (bt instanceof PlaceholderType) {
+					if (bt instanceof PlaceholderBoogieType) {
 						return params[0];
 					}
 				}

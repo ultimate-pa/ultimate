@@ -35,7 +35,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveBoogieType;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
@@ -192,10 +192,10 @@ public class FunctionInliner extends BoogieTransformer implements IUnmanagedObse
 
 						Expression fbody = quantifyBody(fdecl.getInParams(), fdecl.getBody());
 
-						Expression funcEq = new BinaryExpression(fdecl.getLocation(), PrimitiveType.boolType,
+						Expression funcEq = new BinaryExpression(fdecl.getLocation(), PrimitiveBoogieType.boolType,
 								BinaryExpression.Operator.COMPEQ, funcApp, fbody);
 
-						Expression funcDecl = new QuantifierExpression(fdecl.getLocation(), PrimitiveType.boolType,
+						Expression funcDecl = new QuantifierExpression(fdecl.getLocation(), PrimitiveBoogieType.boolType,
 								true, fdecl.getTypeParams(), fdecl.getInParams(), new Attribute[] { funcTrigger },
 								funcEq);
 						Axiom fdeclAxiom = new Axiom(fdecl.getLocation(), new Attribute[0], funcDecl);

@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 import java.math.BigInteger;
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -52,7 +52,7 @@ public class TypeSortTranslatorBitvectorWorkaround extends TypeSortTranslator {
 	}
 
 	protected Sort constructSort(IType boogieType, BoogieASTNode BoogieASTNode) {
-		if (boogieType.equals(PrimitiveType.intType)) {
+		if (boogieType.equals(PrimitiveBoogieType.intType)) {
 			BigInteger[] sortIndices = { BigInteger.valueOf(32) };
 			return m_Script.sort("BitVec", sortIndices);
 		} else {

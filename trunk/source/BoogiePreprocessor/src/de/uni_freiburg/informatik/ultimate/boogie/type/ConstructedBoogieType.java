@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @author hoenicke
  *
  */
-public class ConstructedType extends BoogieType {
+public class ConstructedBoogieType extends BoogieType {
 	/**
 	 * long serialVersionUID
 	 */
@@ -45,7 +45,7 @@ public class ConstructedType extends BoogieType {
 	private final BoogieType[] parameters;
 	private final BoogieType realType;
 	
-	ConstructedType(TypeConstructor c, BoogieType[] parameters) {
+	ConstructedBoogieType(TypeConstructor c, BoogieType[] parameters) {
 		this.constr = c;
 		this.parameters = parameters;
 
@@ -101,9 +101,9 @@ public class ConstructedType extends BoogieType {
 
 	//@Override
 	protected boolean unify(int depth, BoogieType other, BoogieType[] substitution) {
-		if (!(other instanceof ConstructedType))
+		if (!(other instanceof ConstructedBoogieType))
 			return false;
-		ConstructedType type = (ConstructedType) other;
+		ConstructedBoogieType type = (ConstructedBoogieType) other;
 		if (constr != type.constr)
 			return false;
 		for (int i = 0; i < parameters.length; i++) {
@@ -125,9 +125,9 @@ public class ConstructedType extends BoogieType {
 	protected boolean isUnifiableTo(int depth, BoogieType other, ArrayList<BoogieType> subst) {
 		if (this == other || other == errorType)
 			return true;
-		if (!(other instanceof ConstructedType))
+		if (!(other instanceof ConstructedBoogieType))
 			return false;
-		ConstructedType type = (ConstructedType) other;
+		ConstructedBoogieType type = (ConstructedBoogieType) other;
 		if (constr != type.constr)
 			return false;
 		for (int i = 0; i < parameters.length; i++) {

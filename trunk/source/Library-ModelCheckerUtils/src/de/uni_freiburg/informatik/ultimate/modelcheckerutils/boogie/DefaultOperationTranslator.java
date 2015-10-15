@@ -32,7 +32,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import java.math.BigInteger;
 
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.IType;
@@ -83,11 +83,11 @@ public class DefaultOperationTranslator implements IOperationTranslator {
 			} else if (op == BinaryExpression.Operator.LOGICIFF) {
 				return "=";
 			} else if (op == BinaryExpression.Operator.ARITHDIV) {
-				if (type1 instanceof PrimitiveType) {
-					PrimitiveType primType = (PrimitiveType) type1;
-					if (primType.getTypeCode() == PrimitiveType.INT) {
+				if (type1 instanceof PrimitiveBoogieType) {
+					PrimitiveBoogieType primType = (PrimitiveBoogieType) type1;
+					if (primType.getTypeCode() == PrimitiveBoogieType.INT) {
 						return "div";
-					} else if (primType.getTypeCode() == PrimitiveType.REAL) {
+					} else if (primType.getTypeCode() == PrimitiveBoogieType.REAL) {
 						return "/";
 					} else {
 						throw new AssertionError("ARITHDIV of this type not allowed");

@@ -32,7 +32,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -209,7 +209,7 @@ public class Expression2Term {
 			// Sort sort = m_Smt2Boogie.getSort(binexp.getLeft().getType());
             if (op == BinaryExpression.Operator.COMPNEQ) {
             	return SmtUtils.termWithLocalSimplification(m_Script, 
-            			m_OperationTranslator.opTranslation(UnaryExpression.Operator.LOGICNEG, PrimitiveType.boolType), 
+            			m_OperationTranslator.opTranslation(UnaryExpression.Operator.LOGICNEG, PrimitiveBoogieType.boolType), 
             			SmtUtils.termWithLocalSimplification(m_Script, 
 				    	 m_OperationTranslator.opTranslation(BinaryExpression.Operator.COMPEQ, binexp.getLeft().getType(), binexp.getRight().getType()), 
 					     translate(binexp.getLeft()), translate(binexp.getRight())));

@@ -41,11 +41,11 @@ import java.util.Set;
 import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
-import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayBoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.FunctionSignature;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.StructType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveBoogieType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.StructBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
@@ -156,9 +156,9 @@ public class TypeChecker extends BaseObserver {
 
 	private static int getBitVecLength(BoogieType t) {
 		t = t.getUnderlyingType();
-		if (!(t instanceof PrimitiveType))
+		if (!(t instanceof PrimitiveBoogieType))
 			return -1;
-		return ((PrimitiveType) t).getTypeCode();
+		return ((PrimitiveBoogieType) t).getTypeCode();
 	}
 
 	private VariableInfo findVariable(String name) {
@@ -291,12 +291,12 @@ public class TypeChecker extends BaseObserver {
 		} else if (expr instanceof StructAccessExpression) {
 			StructAccessExpression sae = (StructAccessExpression) expr;
 			BoogieType e = typecheckExpression(sae.getStruct()).getUnderlyingType();
-			if (!(e instanceof StructType)) {
+			if (!(e instanceof StructBoogieType)) {
 				if (!e.equals(errorType))
 					typeError(expr, "Type check failed (not a struct): " + expr);
 				resultType = errorType;
 			} else {
-				StructType str = (StructType) e;
+				StructBoogieType str = (StructBoogieType) e;
 				resultType = null;
 				for (int i = 0; i < str.getFieldCount(); i++)
 					if (str.getFieldIds()[i].equals(sae.getField()))
@@ -309,12 +309,12 @@ public class TypeChecker extends BaseObserver {
 		} else if (expr instanceof ArrayAccessExpression) {
 			ArrayAccessExpression aaexpr = (ArrayAccessExpression) expr;
 			BoogieType e = typecheckExpression(aaexpr.getArray()).getUnderlyingType();
-			if (!(e instanceof ArrayType)) {
+			if (!(e instanceof ArrayBoogieType)) {
 				if (!e.equals(errorType))
 					typeError(expr, "Type check failed (not an array): " + expr);
 				resultType = errorType;
 			} else {
-				ArrayType arr = (ArrayType) e;
+				ArrayBoogieType arr = (ArrayBoogieType) e;
 				BoogieType[] subst = new BoogieType[arr.getNumPlaceholders()];
 				Expression[] indices = aaexpr.getIndices();
 				if (indices.length != arr.getIndexCount()) {
@@ -332,12 +332,12 @@ public class TypeChecker extends BaseObserver {
 		} else if (expr instanceof ArrayStoreExpression) {
 			ArrayStoreExpression asexpr = (ArrayStoreExpression) expr;
 			BoogieType e = typecheckExpression(asexpr.getArray()).getUnderlyingType();
-			if (!(e instanceof ArrayType)) {
+			if (!(e instanceof ArrayBoogieType)) {
 				if (!e.equals(errorType))
 					typeError(expr, "Type check failed (not an array): " + expr);
 				resultType = errorType;
 			} else {
-				ArrayType arr = (ArrayType) e;
+				ArrayBoogieType arr = (ArrayBoogieType) e;
 				BoogieType[] subst = new BoogieType[arr.getNumPlaceholders()];
 				Expression[] indices = asexpr.getIndices();
 				if (indices.length != arr.getIndexCount()) {
@@ -494,12 +494,12 @@ public class TypeChecker extends BaseObserver {
 		} else if (lhs instanceof StructLHS) {
 			StructLHS slhs = (StructLHS) lhs;
 			BoogieType type = typecheckLeftHandSide(slhs.getStruct()).getUnderlyingType();
-			if (!(type instanceof StructType)) {
+			if (!(type instanceof StructBoogieType)) {
 				if (!type.equals(errorType))
 					typeError(lhs, "Type check failed (not a struct): " + lhs);
 				resultType = errorType;
 			} else {
-				StructType str = (StructType) type;
+				StructBoogieType str = (StructBoogieType) type;
 				resultType = null;
 				for (int i = 0; i < str.getFieldCount(); i++)
 					if (str.getFieldIds()[i].equals(slhs.getField()))
@@ -513,12 +513,12 @@ public class TypeChecker extends BaseObserver {
 			ArrayLHS alhs = (ArrayLHS) lhs;
 			// SFA: Patched to look inside ConstructedType
 			BoogieType type = typecheckLeftHandSide(alhs.getArray()).getUnderlyingType();
-			if (!(type instanceof ArrayType)) {
+			if (!(type instanceof ArrayBoogieType)) {
 				if (!type.equals(errorType))
 					typeError(lhs, "Type check failed (not an array): " + lhs);
 				resultType = errorType;
 			} else {
-				ArrayType arrType = (ArrayType) type;
+				ArrayBoogieType arrType = (ArrayBoogieType) type;
 				BoogieType[] subst = new BoogieType[arrType.getNumPlaceholders()];
 				Expression[] indices = alhs.getIndices();
 				if (indices.length != arrType.getIndexCount()) {
@@ -1011,7 +1011,7 @@ public class TypeChecker extends BaseObserver {
 		for (VariableDeclaration decl : body.getLocalVars()) {
 			for (VarList vl : decl.getVariables()) {
 				BoogieType type = typeManager.resolveType(vl.getType());
-				if (type.equals(PrimitiveType.errorType)) {
+				if (type.equals(PrimitiveBoogieType.errorType)) {
 					typeError(vl, "VarList has unresolveable type " + vl.getType());
 				}
 				for (String id : vl.getIdentifiers()) {

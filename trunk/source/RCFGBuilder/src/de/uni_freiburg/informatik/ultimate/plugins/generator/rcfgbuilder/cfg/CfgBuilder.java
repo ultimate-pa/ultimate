@@ -46,7 +46,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
@@ -391,7 +391,7 @@ public class CfgBuilder {
 		} else {
 			Expression conj = expressions.remove(0);
 			for (Expression expr : expressions) {
-				conj = new BinaryExpression(null, PrimitiveType.boolType, BinaryExpression.Operator.LOGICAND, conj,
+				conj = new BinaryExpression(null, PrimitiveBoogieType.boolType, BinaryExpression.Operator.LOGICAND, conj,
 						expr);
 			}
 			return conj;
@@ -402,7 +402,7 @@ public class CfgBuilder {
 		if (expr == null) {
 			return null;
 		} else {
-			return new UnaryExpression(expr.getLocation(), PrimitiveType.boolType, UnaryExpression.Operator.LOGICNEG,
+			return new UnaryExpression(expr.getLocation(), PrimitiveBoogieType.boolType, UnaryExpression.Operator.LOGICNEG,
 					expr);
 		}
 	}

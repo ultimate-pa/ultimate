@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @author Markus Lindenmann
  * @date 11.09.2012
  */
-public class StructType extends BoogieType {
+public class StructBoogieType extends BoogieType {
     /**
      * Serial unique identifier.
      */
@@ -73,7 +73,7 @@ public class StructType extends BoogieType {
      * @param fTypes
      *            a list of type names.
      */
-    public StructType(String[] fNames, BoogieType[] fTypes) {
+    public StructBoogieType(String[] fNames, BoogieType[] fTypes) {
         assert fNames.length == fTypes.length;
         this.fNames = fNames;
         this.fTypes = fTypes;
@@ -135,9 +135,9 @@ public class StructType extends BoogieType {
     @Override
     protected boolean unify(int depth, BoogieType other,
             BoogieType[] substitution) {
-        if (!(other instanceof StructType))
+        if (!(other instanceof StructBoogieType))
             return false;
-        StructType type = (StructType) other;
+        StructBoogieType type = (StructBoogieType) other;
         if (isFinite() != type.isFinite())
             return false;
         for (String f : fNames) {
@@ -162,9 +162,9 @@ public class StructType extends BoogieType {
             ArrayList<BoogieType> subst) {
         if (this == other || other == errorType)
             return true;
-        if (!(other instanceof StructType))
+        if (!(other instanceof StructBoogieType))
             return false;
-        StructType type = (StructType) other;
+        StructBoogieType type = (StructBoogieType) other;
         if (isFinite() != type.isFinite())
             return false;
         for (String f : fNames) {

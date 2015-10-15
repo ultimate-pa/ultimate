@@ -46,17 +46,17 @@ public abstract class BoogieType implements IType {
      * long serialVersionUID
      */
     private static final long serialVersionUID = -1366978000551630241L;
-    private final static ArrayList<PlaceholderType> s_placeholders = new ArrayList<PlaceholderType>();
-    private final static ArrayList<PrimitiveType> s_bitvectypes = new ArrayList<PrimitiveType>();
+    private final static ArrayList<PlaceholderBoogieType> s_placeholders = new ArrayList<PlaceholderBoogieType>();
+    private final static ArrayList<PrimitiveBoogieType> s_bitvectypes = new ArrayList<PrimitiveBoogieType>();
     private final static UnifyHash<BoogieType> s_globalTypes = new UnifyHash<BoogieType>();
-    public final static PrimitiveType intType = new PrimitiveType(
-            PrimitiveType.INT);
-    public final static PrimitiveType realType = new PrimitiveType(
-            PrimitiveType.REAL);
-    public final static PrimitiveType boolType = new PrimitiveType(
-            PrimitiveType.BOOL);
-    public final static PrimitiveType errorType = new PrimitiveType(
-            PrimitiveType.ERROR);
+    public final static PrimitiveBoogieType intType = new PrimitiveBoogieType(
+            PrimitiveBoogieType.INT);
+    public final static PrimitiveBoogieType realType = new PrimitiveBoogieType(
+            PrimitiveBoogieType.REAL);
+    public final static PrimitiveBoogieType boolType = new PrimitiveBoogieType(
+            PrimitiveBoogieType.BOOL);
+    public final static PrimitiveBoogieType errorType = new PrimitiveBoogieType(
+            PrimitiveBoogieType.ERROR);
 
     /**
      * Create a bit vector type; reuses an old instance if it already exists.
@@ -67,7 +67,7 @@ public abstract class BoogieType implements IType {
      */
     public static BoogieType createBitvectorType(int len) {
         for (int j = s_bitvectypes.size(); j <= len; j++) {
-            s_bitvectypes.add(new PrimitiveType(j));
+            s_bitvectypes.add(new PrimitiveBoogieType(j));
         }
         return s_bitvectypes.get(len);
     }
@@ -90,7 +90,7 @@ public abstract class BoogieType implements IType {
      */
     public static BoogieType createPlaceholderType(int i) {
         for (int j = s_placeholders.size(); j <= i; j++) {
-            s_placeholders.add(new PlaceholderType(j));
+            s_placeholders.add(new PlaceholderBoogieType(j));
         }
         return s_placeholders.get(i);
     }
@@ -112,7 +112,7 @@ public abstract class BoogieType implements IType {
      * 
      * @
      */
-    public static ConstructedType createConstructedType(TypeConstructor constr,
+    public static ConstructedBoogieType createConstructedType(TypeConstructor constr,
             BoogieType... params) {
         assert (constr.getParamCount() == params.length);
         int hashcode = constr.hashCode();
@@ -120,9 +120,9 @@ public abstract class BoogieType implements IType {
             hashcode = hashcode * 31 + params[i].hashCode();
         }
         for (BoogieType t : s_globalTypes.iterateHashCode(hashcode)) {
-            if (!(t instanceof ConstructedType))
+            if (!(t instanceof ConstructedBoogieType))
                 continue;
-            ConstructedType c = (ConstructedType) t;
+            ConstructedBoogieType c = (ConstructedBoogieType) t;
             if (c.getConstr() != constr)
                 continue;
             for (int i = 0; true; i++) {
@@ -132,7 +132,7 @@ public abstract class BoogieType implements IType {
                     break;
             }
         }
-        ConstructedType newType = new ConstructedType(constr, params);
+        ConstructedBoogieType newType = new ConstructedBoogieType(constr, params);
         s_globalTypes.put(hashcode, newType);
         return newType;
     }
@@ -148,7 +148,7 @@ public abstract class BoogieType implements IType {
      *            the type constructor, constr.getParamCount() must be 0.
      * @return The constructed type.
      */
-    public static ConstructedType createConstructedType(TypeConstructor constr) {
+    public static ConstructedBoogieType createConstructedType(TypeConstructor constr) {
         return createConstructedType(constr, EMPTY);
     }
 
@@ -166,7 +166,7 @@ public abstract class BoogieType implements IType {
      *            the type of the values stored in the array.
      * @return The array type.
      */
-    public static ArrayType createArrayType(int numPlaceholders,
+    public static ArrayBoogieType createArrayType(int numPlaceholders,
             BoogieType[] indexTypes, BoogieType valueType) {
         int hashcode = numPlaceholders;
         for (int i = 0; i < indexTypes.length; i++) {
@@ -174,9 +174,9 @@ public abstract class BoogieType implements IType {
         }
         hashcode = hashcode * 31 + valueType.hashCode();
         for (BoogieType t : s_globalTypes.iterateHashCode(hashcode)) {
-            if (!(t instanceof ArrayType))
+            if (!(t instanceof ArrayBoogieType))
                 continue;
-            ArrayType arrType = (ArrayType) t;
+            ArrayBoogieType arrType = (ArrayBoogieType) t;
             if (arrType.getNumPlaceholders() != numPlaceholders
                     || arrType.getIndexCount() != indexTypes.length
                     || arrType.getValueType() != valueType)
@@ -188,7 +188,7 @@ public abstract class BoogieType implements IType {
                     break;
             }
         }
-        ArrayType newType = new ArrayType(numPlaceholders, indexTypes,
+        ArrayBoogieType newType = new ArrayBoogieType(numPlaceholders, indexTypes,
                 valueType);
         s_globalTypes.put(hashcode, newType);
         return newType;
@@ -203,7 +203,7 @@ public abstract class BoogieType implements IType {
      *            Field types.
      * @return The struct type.
      */
-    public static StructType createStructType(String[] fNames,
+    public static StructBoogieType createStructType(String[] fNames,
             BoogieType[] fTypes) {
         assert fNames.length == fTypes.length;
         int hashCode = 1031;
@@ -212,9 +212,9 @@ public abstract class BoogieType implements IType {
             hashCode = hashCode * 31 + fNames[i].hashCode();
         }
         outer: for (BoogieType t : s_globalTypes.iterateHashCode(hashCode)) {
-            if (!(t instanceof StructType))
+            if (!(t instanceof StructBoogieType))
                 continue;
-            StructType strType = (StructType) t;
+            StructBoogieType strType = (StructBoogieType) t;
             if (strType.getFieldCount() != fNames.length)
                 continue;
             if (!Arrays.equals(fNames, strType.getFieldIds()))
@@ -226,7 +226,7 @@ public abstract class BoogieType implements IType {
             return strType;
         }
         // no match found -> create a new one
-        StructType newType = new StructType(fNames, fTypes);
+        StructBoogieType newType = new StructBoogieType(fNames, fTypes);
         s_globalTypes.put(hashCode, newType);
         return newType;
     }

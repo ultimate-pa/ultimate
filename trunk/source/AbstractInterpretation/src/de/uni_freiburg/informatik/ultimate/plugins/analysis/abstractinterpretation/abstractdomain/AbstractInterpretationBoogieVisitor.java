@@ -37,8 +37,8 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
-import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayBoogieType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveBoogieType;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
@@ -368,7 +368,7 @@ public class AbstractInterpretationBoogieVisitor {
 																			// an
 																			// ArrayAccessExpression
 				if (rhsValue != null) {
-					if (m_lhsType.equals(PrimitiveType.boolType))
+					if (m_lhsType.equals(PrimitiveBoogieType.boolType))
 						rhsValue = booleanFromAbstractValue(rhsValue);
 
 					mLogger.debug(String.format("Assignment: %s := %s", identifier, rhsValue));
@@ -867,8 +867,8 @@ public class AbstractInterpretationBoogieVisitor {
 			IdentifierExpression arrayIdent = (IdentifierExpression) array;
 			variableIdentifier = arrayIdentifier = arrayIdent.getIdentifier();
 			type = arrayIdent.getType();
-			if (type instanceof ArrayType)
-				type = ((ArrayType) type).getValueType();
+			if (type instanceof ArrayBoogieType)
+				type = ((ArrayBoogieType) type).getValueType();
 			m_declarationInformation = arrayIdent.getDeclarationInformation();
 		} else if (array instanceof ArrayAccessExpression) {
 			ArrayAccessExpression arrayAccess = (ArrayAccessExpression) array;
@@ -990,14 +990,14 @@ public class AbstractInterpretationBoogieVisitor {
 	private IAbstractValue<?> getTopValueForType(IType type) {
 		if (type == null)
 			return null;
-		if (type instanceof PrimitiveType) {
-			PrimitiveType pt = (PrimitiveType) type;
+		if (type instanceof PrimitiveBoogieType) {
+			PrimitiveBoogieType pt = (PrimitiveBoogieType) type;
 			IAbstractValue<?> topValue = null;
-			if (pt.getTypeCode() == PrimitiveType.BOOL) {
+			if (pt.getTypeCode() == PrimitiveBoogieType.BOOL) {
 				topValue = m_boolFactory.makeTopValue();
-			} else if (pt.getTypeCode() == PrimitiveType.INT) {
+			} else if (pt.getTypeCode() == PrimitiveBoogieType.INT) {
 				topValue = m_intFactory.makeTopValue();
-			} else if (pt.getTypeCode() == PrimitiveType.REAL) {
+			} else if (pt.getTypeCode() == PrimitiveBoogieType.REAL) {
 				topValue = m_realFactory.makeTopValue();
 			} else {
 				writeError(String.format("Unsupported primitive type \"%s\"", pt));
@@ -1012,10 +1012,10 @@ public class AbstractInterpretationBoogieVisitor {
 	private IAbstractValue<?> havocValue(String identifier, DeclarationInformation declarationInformation, IType type) {
 		// is an array?
 
-		if (type instanceof ArrayType) {
+		if (type instanceof ArrayBoogieType) {
 			ArrayData arrayData = getArrayData(identifier, declarationInformation);
 			arrayData.setIndicesUnclear();
-			IAbstractValue<?> result = getTopValueForType(((ArrayType) type).getValueType());
+			IAbstractValue<?> result = getTopValueForType(((ArrayBoogieType) type).getValueType());
 			arrayData.setValue(result);
 			// no need to havoc any individual values, since now only the global
 			// one will be accessed

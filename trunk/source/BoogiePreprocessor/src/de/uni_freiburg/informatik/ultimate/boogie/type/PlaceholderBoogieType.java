@@ -42,14 +42,14 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @author hoenicke
  *
  */
-public class PlaceholderType extends BoogieType {
+public class PlaceholderBoogieType extends BoogieType {
 	/**
 	 * long serialVersionUID
 	 */
 	private static final long serialVersionUID = 3301828910886451978L;
 	private int depth;
 
-	public PlaceholderType(int depth) {
+	public PlaceholderBoogieType(int depth) {
 		this.depth = depth;
 	}
 
@@ -103,9 +103,9 @@ public class PlaceholderType extends BoogieType {
 		int relDepth = depth - deltaDepth;
 		if (relDepth < 0 || relDepth >= substitution.length) {
 			/* This placeholder is not substituted */
-			if (!(other instanceof PlaceholderType))
+			if (!(other instanceof PlaceholderBoogieType))
 				return false;
-			PlaceholderType type = (PlaceholderType) other;
+			PlaceholderBoogieType type = (PlaceholderBoogieType) other;
 			return (type.depth == (relDepth < 0 ? depth : depth - substitution.length));
 		} else {
 			/* Check freedom of inner bounded variable */
@@ -145,14 +145,14 @@ public class PlaceholderType extends BoogieType {
 			other = other.substitutePlaceholders(deltaDepth, subst);
 			if (me == other)
 				return true;
-			if (!(me instanceof PlaceholderType)) {
+			if (!(me instanceof PlaceholderBoogieType)) {
 				/* we are no longer a placeholder type, let the unification
 				 * process continue;
 				 */
 				return other.isUnifiableTo(deltaDepth, me, substitution);
 			}
 			/* We are a currently unsubstituted placeholder */
-			relDepth = ((PlaceholderType) me).depth - deltaDepth;
+			relDepth = ((PlaceholderBoogieType) me).depth - deltaDepth;
 			/* Inner placeholders cannot be substituted */
 			if (relDepth < 0)
 				return false;

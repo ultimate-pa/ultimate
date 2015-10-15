@@ -36,9 +36,9 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.StructType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedBoogieType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveBoogieType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.StructBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.util.IToString;
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
@@ -499,8 +499,8 @@ public class BoogiePreprocessorBacktranslator extends
 
 		private IdentifierExpression extractIdentifier(ILocation mappedLoc, VarList list,
 				IdentifierExpression inputExp, BoogieType type) {
-			if (type instanceof StructType) {
-				StructType st = (StructType) type;
+			if (type instanceof StructBoogieType) {
+				StructBoogieType st = (StructBoogieType) type;
 				String[] inputNames = inputExp.getIdentifier().split("\\.");
 				if (inputNames.length == 1) {
 					// its the struct itself
@@ -536,10 +536,10 @@ public class BoogiePreprocessorBacktranslator extends
 					reportUnfinishedBacktranslation("Unfinished Backtranslation: Nested struct field access of VarList "
 							+ BoogiePrettyPrinter.print(list) + " not handled");
 				}
-			} else if (type instanceof ConstructedType) {
-				ConstructedType ct = (ConstructedType) type;
+			} else if (type instanceof ConstructedBoogieType) {
+				ConstructedBoogieType ct = (ConstructedBoogieType) type;
 				return extractIdentifier(mappedLoc, list, inputExp, ct.getUnderlyingType());
-			} else if (type instanceof PrimitiveType) {
+			} else if (type instanceof PrimitiveBoogieType) {
 				String inputName = inputExp.getIdentifier();
 				for (String name : list.getIdentifiers()) {
 					if (inputName.contains(name)) {
