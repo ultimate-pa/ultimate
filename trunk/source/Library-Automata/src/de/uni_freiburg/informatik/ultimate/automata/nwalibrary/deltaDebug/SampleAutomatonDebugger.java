@@ -80,6 +80,7 @@ public class SampleAutomatonDebugger {
 		final List<AShrinker<?, String, String>> shrinkersEnd =
 				new ArrayList<AShrinker<?, String, String>>();
 		shrinkersEnd.add(new UnusedLetterShrinker<String, String>());
+		shrinkersEnd.add(new NormalizeStateShrinker<String, String>());
 		
 		// execute delta debugger (binary search)
 		final INestedWordAutomaton<String, String> result =
@@ -164,7 +165,8 @@ public class SampleAutomatonDebugger {
 			// states: q1 and q3 exist
 			result &= automaton.getStates().contains("q1");
 			result &= automaton.getStates().contains("q2");
-			result &= automaton.getStates().contains("q3");
+			result &= automaton.getStates().contains("q3") ||
+					automaton.getStates().contains("q_1");
 			result &= automaton.getStates().contains("q5");
 			result &= automaton.getStates().contains("q8");
 			
