@@ -40,9 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 /**
  * Removes unused letters.
  * 
- * This shrinker removes only letters which do not occur on any transitions.
- * 
- * It should not have any effect for  
+ * This shrinker removes only letters which do not occur on any transition.
  * 
  * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
  */
@@ -60,10 +58,10 @@ public class UnusedLetterShrinker<LETTER, STATE>
 				m_automaton.getReturnAlphabet(), ELetterType.Return);
 		
 		// create fresh automaton
-		INestedWordAutomaton<LETTER, STATE> automaton = m_factory.create(
+		final INestedWordAutomaton<LETTER, STATE> automaton = m_factory.create(
 				internalAlphabet, callAlphabet, returnAlphabet);
 		
-		// add original states and transitions
+		// add original states
 		m_factory.addStates(automaton, m_automaton.getStates());
 		
 		// add transitions which still remain
