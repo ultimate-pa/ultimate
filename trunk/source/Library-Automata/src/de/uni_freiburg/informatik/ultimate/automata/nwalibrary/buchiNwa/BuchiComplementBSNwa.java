@@ -83,6 +83,7 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 	 */
 	private final Map<STATE, LevelRankingState<LETTER,STATE>> m_res2det =
 		new HashMap<STATE, LevelRankingState<LETTER,STATE>>();
+	private final boolean m_OmitNonAcceptingSink = true;
 	
 	
 	public BuchiComplementBSNwa(IUltimateServiceProvider services,
@@ -277,7 +278,11 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 	private List<LevelRankingState<LETTER, STATE>> computeSuccLevelRankingStates(
 			LevelRankingConstraintDrdCheck<LETTER, STATE> lrcwh) {
 		if (lrcwh.isNonAcceptingSink()) {
-			return Collections.singletonList(new LevelRankingState<LETTER, STATE>());
+			if (m_OmitNonAcceptingSink ) {
+				return Collections.emptyList();
+			} else {
+				return Collections.singletonList(new LevelRankingState<LETTER, STATE>());
+			}
 		}
 		if (lrcwh.aroseFromDelayedRankDecrease()) {
 			// in this case we do not want to have successor states
@@ -367,10 +372,12 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 			LevelRankingConstraintDrdCheck<LETTER, STATE> lrcwh = computeSuccLevelRankingConstraints_Internal(
 					state, letter);
 			List<LevelRankingState<LETTER, STATE>> succLvls = computeSuccLevelRankingStates(lrcwh);
+			List<STATE> computedSuccs = new ArrayList<>(); 
 			for (LevelRankingState<LETTER, STATE> succLvl : succLvls) {
 				STATE resSucc = getOrAdd(false, succLvl);
-				m_Cache.addInternalTransition(state, letter, resSucc);
+				computedSuccs.add(resSucc);
 			}
+			m_Cache.addInternalTransitions(state, letter, computedSuccs);
 		}
 		return m_Cache.internalSuccessors(state, letter);
 	}
