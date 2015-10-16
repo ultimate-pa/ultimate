@@ -236,12 +236,177 @@ public class IntervalBinaryExpressionEvaluator implements INAryEvaluator<Interva
 
 		// Note: No check for infinite intervals here, since a multiplication with 0 would result in too coarse results.
 
-		IntervalValue lowerBound = computeMin(firstResult.getResult(), secondResult.getResult());
-		// TODO Implement maximum computation
-		IntervalValue upperBound = new IntervalValue();
+		IntervalValue lowerBound = computeMinMult(firstResult.getResult(), secondResult.getResult());
+		IntervalValue upperBound = computeMaxMult(firstResult.getResult(), secondResult.getResult());
 
-		// TODO Auto-generated method stub
-		return new IntervalDomainValue();
+		return new IntervalDomainValue(lowerBound, upperBound);
+	}
+
+	/**
+	 * Computes the maximum value of the multiplication of two intervals:
+	 * 
+	 * <p>
+	 * [a, b] and [c, d]: max(ac, ad, bc, bd).
+	 * </p>
+	 * 
+	 * @param first
+	 *            The first interval of the form [a, b].
+	 * @param second
+	 *            The second interval of the form [c, d].
+	 * @return max(ac, ad, bc, bd).
+	 */
+	private IntervalValue computeMaxMult(IntervalDomainValue first, IntervalDomainValue second) {
+
+		IntervalValue returnValue = new IntervalValue();
+		boolean valuePresent = false;
+
+		// If both intervals are infinite, the maximum is \infty.
+		if (first.isInfinity() && second.isInfinity()) {
+			return new IntervalValue();
+		}
+
+		// Compute a*c
+		if (first.getLower().isInfinity()) {
+
+			// -\infty * -\infty = \infty
+			if (second.getLower().isInfinity()) {
+				return new IntervalValue();
+			} else {
+				// -\infty * val = \infty, if val < 0
+				if (second.getLower().getValue().signum() < 0) {
+					return new IntervalValue();
+				}
+
+				// -\infty * 0 = 0
+				if (second.getLower().getValue().signum() == 0) {
+					returnValue = updateIfLarger(returnValue, new BigDecimal(0), valuePresent);
+					valuePresent = true;
+				}
+			}
+		} else {
+			if (second.getLower().isInfinity()) {
+				// val * -\infty = \infty, if val > 0
+				if (first.getLower().getValue().signum() < 0) {
+					return new IntervalValue();
+				}
+
+				// 0 * -\infty = 0
+				if (first.getLower().getValue().signum() == 0) {
+					returnValue = updateIfLarger(returnValue, new BigDecimal(0), valuePresent);
+					valuePresent = true;
+				}
+			} else {
+				returnValue = updateIfLarger(returnValue,
+				        first.getLower().getValue().multiply(second.getLower().getValue()), valuePresent);
+				valuePresent = true;
+			}
+		}
+
+		// Compute a*d
+		if (first.getLower().isInfinity()) {
+			if (!second.getUpper().isInfinity()) {
+				// -\infty * val = \infty, if val < 0
+				if (second.getUpper().getValue().signum() < 0) {
+					return new IntervalValue();
+				}
+
+				// -\infty * 0 = 0
+				if (second.getUpper().getValue().signum() == 0) {
+					returnValue = updateIfLarger(returnValue, new BigDecimal(0), valuePresent);
+					valuePresent = true;
+				}
+			}
+		} else {
+
+			if (second.getUpper().isInfinity()) {
+				// val * \infty = \infty, if val > 0
+				if (first.getLower().getValue().signum() > 0) {
+					return new IntervalValue();
+				}
+
+				// 0 * anything = 0
+				if (first.getLower().getValue().signum() == 0) {
+					returnValue = updateIfLarger(returnValue, new BigDecimal(0), valuePresent);
+					valuePresent = true;
+				}
+			} else {
+				returnValue = updateIfLarger(returnValue,
+				        first.getLower().getValue().multiply(second.getUpper().getValue()), valuePresent);
+				valuePresent = true;
+			}
+		}
+
+		// Compute b*c
+		if (first.getUpper().isInfinity()) {
+			if (!second.getLower().isInfinity()) {
+				// \infty * val = \infty, if val > 0
+				if (second.getLower().getValue().signum() > 0) {
+					return new IntervalValue();
+				}
+
+				// \infty * 0 = 0
+				if (second.getLower().getValue().signum() == 0) {
+					returnValue = updateIfLarger(returnValue, new BigDecimal(0), valuePresent);
+					valuePresent = true;
+				}
+			}
+		} else {
+			if (second.getLower().isInfinity()) {
+				// val * -\infty = \infty, if val < 0
+				if (first.getUpper().getValue().signum() < 0) {
+					return new IntervalValue();
+				}
+
+				// 0 * anything = 0
+				if (first.getUpper().getValue().signum() == 0) {
+					returnValue = updateIfLarger(returnValue, new BigDecimal(0), valuePresent);
+					valuePresent = true;
+				}
+			} else {
+				returnValue = updateIfLarger(returnValue,
+				        first.getUpper().getValue().multiply(second.getLower().getValue()), valuePresent);
+				valuePresent = true;
+			}
+		}
+
+		// Compute b*d
+		if (first.getUpper().isInfinity()) {
+			// \infty * \infty = \infty
+			if (second.getUpper().isInfinity()) {
+				return new IntervalValue();
+			} else {
+				// \infty * val = \infty, if val > 0
+				if (second.getUpper().getValue().signum() > 0) {
+					return new IntervalValue();
+				}
+
+				// \infty * 0 = 0
+				if (second.getUpper().getValue().signum() == 0) {
+					returnValue = updateIfLarger(returnValue, new BigDecimal(0), valuePresent);
+					valuePresent = true;
+				}
+			}
+		} else {
+			if (second.getUpper().isInfinity()) {
+				// val * \infty = \infty, if val > 0
+				if (first.getUpper().getValue().signum() > 0) {
+					return new IntervalValue();
+				}
+
+				// 0 * \infty = 0
+				if (first.getUpper().getValue().signum() == 0) {
+					returnValue = updateIfLarger(returnValue, new BigDecimal(0), valuePresent);
+					valuePresent = true;
+				}
+			} else {
+				returnValue = updateIfLarger(returnValue,
+				        first.getUpper().getValue().multiply(second.getUpper().getValue()), valuePresent);
+				valuePresent = true;
+			}
+		}
+
+		assert valuePresent;
+		return returnValue;
 	}
 
 	/**
@@ -257,12 +422,12 @@ public class IntervalBinaryExpressionEvaluator implements INAryEvaluator<Interva
 	 *            The second interval of the form [c, d].
 	 * @return min(ac, ad, bc, bd).
 	 */
-	private IntervalValue computeMin(IntervalDomainValue first, IntervalDomainValue second) {
+	private IntervalValue computeMinMult(IntervalDomainValue first, IntervalDomainValue second) {
 
 		IntervalValue returnValue = new IntervalValue();
 		boolean valuePresent = false;
 
-		// If both intervals are infinite, the minimum is -\infty;
+		// If both intervals are infinite, the minimum is -\infty.
 		if (first.isInfinity() && second.isInfinity()) {
 			return new IntervalValue();
 		}
@@ -341,13 +506,78 @@ public class IntervalBinaryExpressionEvaluator implements INAryEvaluator<Interva
 				}
 			}
 		}
-		
-		
-		// TODO Implement following computations
-		// Compute b * c
-		
-		// Compute b * d
 
+		// Compute b*c
+		if (first.getUpper().isInfinity()) {
+
+			// \infty * -\infty = -\infty
+			if (second.getLower().isInfinity()) {
+				return new IntervalValue();
+			}
+
+			// \infty * val = -\infty, if val < 0
+			if (second.getLower().getValue().signum() < 0) {
+				return new IntervalValue();
+			}
+
+			// \infty * 0 = 0
+			if (second.getLower().getValue().signum() == 0) {
+				returnValue = updateIfSmaller(returnValue, new BigDecimal(0), valuePresent);
+				valuePresent = true;
+			}
+		} else {
+			if (second.getLower().isInfinity()) {
+				// val * -\infty = -\infty, if val > 0
+				if (first.getUpper().getValue().signum() > 0) {
+					return new IntervalValue();
+				}
+
+				// 0 * anything = 0
+				if (first.getUpper().getValue().signum() == 0) {
+					returnValue = updateIfSmaller(returnValue, new BigDecimal(0), valuePresent);
+					valuePresent = true;
+				}
+			} else {
+				returnValue = updateIfSmaller(returnValue,
+				        first.getUpper().getValue().multiply(second.getLower().getValue()), valuePresent);
+				valuePresent = true;
+			}
+		}
+
+		// Compute b * d
+		if (first.getUpper().isInfinity()) {
+			if (!second.getUpper().isInfinity()) {
+
+				// \infty * val = -\infty, if val < 0
+				if (second.getUpper().getValue().signum() < 0) {
+					return new IntervalValue();
+				}
+
+				if (second.getUpper().getValue().signum() == 0) {
+					returnValue = updateIfSmaller(returnValue, new BigDecimal(0), valuePresent);
+					valuePresent = true;
+				}
+			}
+		} else {
+			if (second.getUpper().isInfinity()) {
+				// val * \infty = -\infty, if val < 0
+				if (first.getUpper().getValue().signum() < 0) {
+					return new IntervalValue();
+				}
+
+				// 0 * \infty = 0
+				if (first.getUpper().getValue().signum() == 0) {
+					returnValue = updateIfSmaller(returnValue, new BigDecimal(0), valuePresent);
+					valuePresent = true;
+				}
+			} else {
+				returnValue = updateIfSmaller(returnValue,
+				        first.getUpper().getValue().multiply(second.getLower().getValue()), valuePresent);
+				valuePresent = true;
+			}
+		}
+
+		assert valuePresent;
 		return returnValue;
 	}
 
