@@ -62,7 +62,25 @@ public class IntervalDomainArithmeticTest {
 	private String getMethodName() {
 		final StackTraceElement[] ste = Thread.currentThread().getStackTrace();
 
-		return ste[3].getMethodName();
+		return ste[4].getMethodName();
+	}
+
+	private boolean computeResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
+	        IntervalDomainValue expectedResult, IEvaluationResult<IntervalDomainValue> evaluatorResult) {
+
+		System.out.println(getMethodName());
+		System.out.println("Result  : " + evaluatorResult.toString());
+		System.out.println("Expected: " + expectedResult.toString());
+		System.out.println();
+
+		if (interval1.isBottom() || interval2.isBottom()) {
+			return evaluatorResult.equals(expectedResult);
+		}
+
+		final boolean lowerResult = evaluatorResult.getResult().getLower().equals(expectedResult.getLower());
+		final boolean upperResult = evaluatorResult.getResult().getUpper().equals(expectedResult.getUpper());
+
+		return lowerResult && upperResult;
 	}
 
 	private boolean computeAdditionResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
@@ -71,19 +89,25 @@ public class IntervalDomainArithmeticTest {
 		final IEvaluationResult<IntervalDomainValue> result = createBinaryEvaluator(interval1, interval2,
 		        Operator.ARITHPLUS).evaluate(null);
 
-		System.out.println(getMethodName());
-		System.out.println("Result  : " + result.toString());
-		System.out.println("Expected: " + expectedResult.toString());
-		System.out.println();
+		return computeResult(interval1, interval2, expectedResult, result);
+	}
 
-		if (interval1.isBottom() || interval2.isBottom()) {
-			return result.equals(expectedResult);
-		}
+	private boolean computeSubtractionResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
+	        IntervalDomainValue expectedResult) {
 
-		final boolean lowerResult = result.getResult().getLower().equals(expectedResult.getLower());
-		final boolean upperResult = result.getResult().getUpper().equals(expectedResult.getUpper());
+		final IEvaluationResult<IntervalDomainValue> result = createBinaryEvaluator(interval1, interval2,
+		        Operator.ARITHMINUS).evaluate(null);
 
-		return lowerResult && upperResult;
+		return computeResult(interval1, interval2, expectedResult, result);
+	}
+
+	private boolean computeMultiplicationResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
+	        IntervalDomainValue expectedResult) {
+
+		final IEvaluationResult<IntervalDomainValue> result = createBinaryEvaluator(interval1, interval2,
+		        Operator.ARITHMUL).evaluate(null);
+
+		return computeResult(interval1, interval2, expectedResult, result);
 	}
 
 	@Test
