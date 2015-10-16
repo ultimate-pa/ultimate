@@ -74,6 +74,7 @@ public class SampleAutomatonDebugger {
 		shrinkersLoop.add(new InternalTransitionShrinker<String, String>());
 		shrinkersLoop.add(new CallTransitionShrinker<String, String>());
 		shrinkersLoop.add(new ReturnTransitionShrinker<String, String>());
+		shrinkersLoop.add(new SingleExitShrinker<String, String>());
 		
 		// list of shrinkers (i.e., rules to apply) to be applied only once
 		final List<AShrinker<?, String, String>> shrinkersEnd =
@@ -122,20 +123,26 @@ public class SampleAutomatonDebugger {
 		automaton.addState(false, false, "q3");
 		automaton.addState(false, false, "q4");
 		automaton.addState(false, true, "q5");
+		automaton.addState(false, false, "q6");
+		automaton.addState(false, false, "q7");
+		automaton.addState(false, true, "q8");
 		
 		automaton.addInternalTransition("q0", "a1", "q1");
 		automaton.addInternalTransition("q1", "a1", "q2");
 		automaton.addInternalTransition("q2", "a1", "q3");
 		automaton.addInternalTransition("q3", "a1", "q4");
 		automaton.addInternalTransition("q4", "a1", "q5");
+		automaton.addInternalTransition("q5", "a1", "q6");
 
 		automaton.addCallTransition("q1", "c1", "q1");
 		automaton.addCallTransition("q5", "c2", "q2");
 		automaton.addCallTransition("q5", "c3", "q3");
+		automaton.addCallTransition("q6", "c1", "q7");
 
 		automaton.addReturnTransition("q1", "q1", "r1", "q1");
 		automaton.addReturnTransition("q2", "q5", "r1", "q1");
 		automaton.addReturnTransition("q4", "q5", "r1", "q1");
+		automaton.addReturnTransition("q7", "q6", "r1", "q8");
 		
 		return automaton;
 	}
@@ -156,11 +163,16 @@ public class SampleAutomatonDebugger {
 			
 			// states: q1 and q3 exist
 			result &= automaton.getStates().contains("q1");
+			result &= automaton.getStates().contains("q2");
 			result &= automaton.getStates().contains("q3");
+			result &= automaton.getStates().contains("q5");
+			result &= automaton.getStates().contains("q8");
 			
 			// internal transitions: q1 and q2 have an outgoing transition
 			result &= automaton.internalSuccessors("q1").iterator().hasNext();
 			result &= automaton.internalSuccessors("q2").iterator().hasNext();
+			// q8 has an incoming internal transition
+			result &= automaton.internalPredecessors("q8").iterator().hasNext();
 			
 			// call transitions:
 			// q1 has an outgoing transition
