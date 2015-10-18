@@ -4,11 +4,11 @@
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: 2015-10-13
 
-NestedWordAutomaton complementBS = buchiComplementBS(nwa);
-print(numberOfStates(complementBS));
-assert(numberOfStates(removeDeadEnds(complementBS)) == 10);
+NestedWordAutomaton complementNCSB = buchiComplementNCSB(nwa);
+print(numberOfStates(complementNCSB));
+assert(numberOfStates(removeDeadEnds(complementNCSB)) == 10);
 
-//print(complementBS);
+//print(complementNCSB);
 NestedWordAutomaton complementFKV = buchiComplementFKV(nwa, "HeiMat2", 77);
 print(numberOfStates(complementFKV));
 assert(numberOfStates(removeDeadEnds(complementFKV)) == 14);

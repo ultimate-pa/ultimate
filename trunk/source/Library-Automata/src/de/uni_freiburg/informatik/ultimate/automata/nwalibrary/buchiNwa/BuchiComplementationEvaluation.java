@@ -104,7 +104,7 @@ public class BuchiComplementationEvaluation<LETTER,STATE> implements IOperation<
 		LinkedHashMap<String, Integer> results = new LinkedHashMap<>();
 		{
 			String name = "BuchiComplementBS";
-			NestedWordAutomatonReachableStates<LETTER, STATE> result = (new BuchiComplementBS<LETTER, STATE>(m_Services, stateFactory, m_Operand)).getResult();
+			NestedWordAutomatonReachableStates<LETTER, STATE> result = (new BuchiComplementNCSB<LETTER, STATE>(m_Services, stateFactory, m_Operand)).getResult();
 			addToResultsWithSizeReduction(results, name, result);
 		}
 		for (FkvOptimization fkvOptimization : FkvOptimization.values()) {

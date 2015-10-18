@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.util.PowersetIterator;
  * automata whose working title is TABA (termination analysis Büchi automata).
  * @author heizmann@informatik.uni-freiburg.de
  */
-public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonSimple<LETTER,STATE> {
+public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomatonSimple<LETTER,STATE> {
 	
 	private final IUltimateServiceProvider m_Services;
 	private final Logger m_Logger;
@@ -86,7 +86,7 @@ public class BuchiComplementBSNwa<LETTER,STATE> implements INestedWordAutomatonS
 	private final boolean m_OmitNonAcceptingSink = true;
 	
 	
-	public BuchiComplementBSNwa(IUltimateServiceProvider services,
+	public BuchiComplementNCSBNwa(IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<LETTER,STATE> operand,
 			StateFactory<STATE> stateFactory) throws OperationCanceledException {
 		m_Services = services;
