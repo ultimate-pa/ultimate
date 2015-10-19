@@ -1,5 +1,6 @@
 <project name="proj1" default="generate_parser" basedir=".">
-    <property name="cupDir" location="${workspacedir}/JavaCup/bin"/>
+	<record name="${workspacedir}/antbuild-constraintparser.log" />
+	<property name="cupDir" location="${workspacedir}/JavaCup/bin"/>
     <property name="flexJar" location="${workspacedir}/JavaCup/JFlex.jar"/>
     <description>
         Build File for Compiler Project

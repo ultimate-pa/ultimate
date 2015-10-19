@@ -17,6 +17,7 @@ You should have received a copy of the GNU Lesser General Public License
 along with SMTInterpol.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <project name="proj1" default="generate_parser" basedir=".">
+	<record name="${workspacedir}/antbuild-smtinterpol-smtlib2.log" />
     <property name="cupDir" location="${workspacedir}/JavaCup/bin"/>
     <property name="flexJar" location="${workspacedir}/JavaCup/JFlex.jar"/>
     <description>

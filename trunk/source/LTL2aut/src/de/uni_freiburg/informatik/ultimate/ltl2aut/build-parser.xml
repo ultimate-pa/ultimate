@@ -1,31 +1,32 @@
 <project name="proj1" default="generate_parser" basedir=".">
-	    <property name="cupDir" location="${workspacedir}/JavaCup/bin"/>
-	    <property name="flexJar" location="${workspacedir}/JavaCup/JFlex.jar"/>
+	<record name="${workspacedir}/antbuild-ltl2aut.log" />
+	<property name="cupDir" location="${workspacedir}/JavaCup/bin" />
+	<property name="flexJar" location="${workspacedir}/JavaCup/JFlex.jar" />
 	<description>
 		Build File for Compiler Project
 	</description>
 
 	<target name="generate_parser">
-		
+
 		<echo>AutPromela.flex</echo>
 		<java jar="${flexJar}" fork="true">
 			<arg value="AutPromela.flex" />
 		</java>
-		
+
 		<echo>AutPromela.cup</echo>
 		<java classname="java_cup.Main" classpath="${cupDir}" fork="true">
-		<arg line="-parser Parser"/>
+			<arg line="-parser Parser" />
 			<arg value="AutPromela.cup" />
 		</java>
-		
+
 		<echo>Apformula.flex</echo>
 		<java jar="${flexJar}" fork="true">
 			<arg value="Apformula.flex" />
 		</java>
-		
+
 		<echo>Apformula.cup</echo>
 		<java classname="java_cup.Main" classpath="${cupDir}" fork="true">
-		<arg line="-parser Parser"/>
+			<arg line="-parser Parser" />
 			<arg value="Apformula.cup" />
 		</java>
 

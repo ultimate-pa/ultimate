@@ -1,6 +1,7 @@
 <project name="proj1" default="generate_parser" basedir=".">
-    <property name="cupDir" location="../../../../../../../../JavaCup/bin"/>
-    <property name="flexJar" location="../../../../../../../../JavaCup/JFlex.jar"/>
+	<record name="${workspacedir}/antbuild-bplparser.log" />
+	<property name="cupDir" location="${workspacedir}/JavaCup/bin"/>
+    <property name="flexJar" location="${workspacedir}/JavaCup/JFlex.jar"/>
     <description>
         Build File for Compiler Project
     </description>

@@ -17,6 +17,8 @@ You should have received a copy of the GNU Lesser General Public License
 along with SMTInterpol.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <project name="dimacs" default="generate_parser" basedir=".">
+	<record name="${workspacedir}/antbuild-smtinterpol-dimacs.log" />
+	
 	<property name="cupDir" location="${workspacedir}/JavaCup/bin"/>
 	<property name="flexJar" location="${workspacedir}/JavaCup/JFlex.jar"/>
     <description>
