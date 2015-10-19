@@ -237,7 +237,7 @@ public class SymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
 //        }
     }
     
-    public Declaration getBoogieDeclOfResultDecl(CDeclaration cDec) {
+    public Declaration getBoogieDeclOfCDecl(CDeclaration cDec) {
     	return mCDecl2BoogieDecl.get(cDec);
     }
 
@@ -249,4 +249,14 @@ public class SymbolTable extends LinkedScopedHashMap<String, SymbolTableValue> {
     public Map<String, String> getIdentifierMapping() {
         return Collections.unmodifiableMap(boogieID2CID);
     }
+
+	public boolean existsInCurrentScope(String name) {
+		if (!this.containsCSymbol(name))
+			return false;
+		boolean result = false;
+		for (String k : currentScopeKeys()) {
+			result |= name.equals(k);
+		}
+		return result;
+	}
 }

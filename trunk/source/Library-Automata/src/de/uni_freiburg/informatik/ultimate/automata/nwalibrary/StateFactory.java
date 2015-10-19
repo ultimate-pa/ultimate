@@ -78,6 +78,10 @@ public abstract class StateFactory<STATE> {
 		return null;
 	}
 	
+	public STATE buchiComplementNCSB(LevelRankingState<?, STATE> compl) {
+		return null;
+	}
+	
 	public STATE complementBuchiDeterministicNonFinal(STATE c) {
 		return null;
 	}

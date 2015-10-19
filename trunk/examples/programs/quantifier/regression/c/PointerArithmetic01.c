@@ -7,7 +7,7 @@
 
 #include <stdlib.h>
 
-int main(void) {
+int nonmain(void) {
 	int a[7] = { 23, 42, 1048, 7 };
 	int *p = &a[0];
 	int x;

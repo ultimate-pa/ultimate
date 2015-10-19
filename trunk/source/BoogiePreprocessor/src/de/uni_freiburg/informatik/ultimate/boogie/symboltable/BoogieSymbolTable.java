@@ -133,7 +133,7 @@ public class BoogieSymbolTable {
 	}
 
 	private void AssertIsEmpty(StorageClass sc, String scopeName, String symbolName) {
-		assert (!getMap(sc, scopeName).containsKey(symbolName));
+		assert (!getMap(sc, scopeName).containsKey(symbolName)) : "duplicate symbol " + symbolName;
 	}
 
 	private Map<String, Declaration> getMap(StorageClass sc, String scopeName) {

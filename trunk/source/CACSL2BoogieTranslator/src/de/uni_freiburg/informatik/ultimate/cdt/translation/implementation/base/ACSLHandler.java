@@ -48,7 +48,6 @@ import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.CastAndConversionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
@@ -58,15 +57,14 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ContractResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ContractResult;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IACSLHandler;
@@ -400,10 +398,10 @@ public class ACSLHandler implements IACSLHandler {
 		case ARITHMUL:
 		case ARITHPLUS:
 		{
-			Expression expr = expressionTranslation.createArithmeticExpression(
-					getCASTBinaryExprOperator(node.getOperator()), 
-					left.lrVal.getValue(), (CPrimitive) left.lrVal.getCType(), 
-					right.lrVal.getValue(), (CPrimitive) right.lrVal.getCType(), loc);
+			Expression expr = expressionTranslation.constructArithmeticExpression(
+					loc, 
+					getCASTBinaryExprOperator(node.getOperator()), left.lrVal.getValue(), 
+					(CPrimitive) left.lrVal.getCType(), right.lrVal.getValue(), (CPrimitive) right.lrVal.getCType());
 			CType type = new CPrimitive(PRIMITIVE.INT);
 			return new ExpressionResult(stmt, new RValue(expr, type), decl, auxVars, overappr);
 			
@@ -433,9 +431,9 @@ public class ACSLHandler implements IACSLHandler {
 		{
 	        Operator op = getBoogieBinaryExprOperator(node.getOperator());
 	        if (op != null) {
-	        	ExpressionResult leftOp = ConvExpr.rexIntToBoolIfNecessary(loc, left, ((CHandler) main.cHandler).getExpressionTranslation());
-	        	ExpressionResult rightOp = ConvExpr.rexIntToBoolIfNecessary(loc, right, ((CHandler) main.cHandler).getExpressionTranslation());
-	        	BinaryExpression be = new BinaryExpression(loc, op, leftOp.lrVal.getValue(), rightOp.lrVal.getValue());
+	        	left.rexIntToBoolIfNecessary(loc, ((CHandler) main.cHandler).getExpressionTranslation());
+	        	right.rexIntToBoolIfNecessary(loc, ((CHandler) main.cHandler).getExpressionTranslation());
+	        	BinaryExpression be = new BinaryExpression(loc, op, left.lrVal.getValue(), right.lrVal.getValue());
 	        	// TODO: Handle Ctype
 	            return new ExpressionResult(stmt, new RValue(be, new CPrimitive(PRIMITIVE.INT), true), decl, auxVars, overappr);
 	            //return new Result(new BinaryExpression(loc, op, left, right));

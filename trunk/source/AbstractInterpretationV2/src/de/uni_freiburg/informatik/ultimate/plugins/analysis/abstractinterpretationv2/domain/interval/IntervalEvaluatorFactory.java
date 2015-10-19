@@ -85,15 +85,10 @@ public class IntervalEvaluatorFactory implements IEvaluatorFactory<IntervalDomai
 	public IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> createSingletonValueExpressionEvaluator(String value,
 	        Class<?> valueType) {
 
-		if (valueType.equals(BigInteger.class)) {
-			return new IntervalUnaryExpressionEvaluator();
-		}
 
-		if (valueType.equals(BigDecimal.class)) {
-			return new IntervalBinaryExpressionEvaluator(mServices);
-		}
 
-		throw new UnsupportedOperationException("The type " + valueType.toString() + " is not implemented.");
+		return new IntervalSingletonValueExpressionEvaluator(
+		        new IntervalDomainValue(new IntervalValue(value), new IntervalValue(value)));
 	}
 
 	@Override

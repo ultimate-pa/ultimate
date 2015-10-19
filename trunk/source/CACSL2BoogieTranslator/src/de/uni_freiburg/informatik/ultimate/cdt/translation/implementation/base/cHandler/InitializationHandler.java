@@ -49,13 +49,12 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListRecResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListRecResult;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
@@ -192,7 +191,7 @@ public class InitializationHandler {
 				if (initializer == null) {
 					rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, (CPrimitive) lCType, BigInteger.ZERO);
 				} else {
-					initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer, mExpressionTranslation);
+					initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 					rhs = initializer.lrVal.getValue();
 				}
 				break;
@@ -273,7 +272,7 @@ public class InitializationHandler {
 			if (initializer == null) {
 				rhs = new IntegerLiteral(loc, SFO.NR0);
 			} else {
-				initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer, mExpressionTranslation);
+				initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 				rhs = initializer.lrVal.getValue();
 			}		
 			lrVal = new RValue(rhs, lCType);
@@ -326,7 +325,7 @@ public class InitializationHandler {
 				if (initializer == null) {
 					rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, (CPrimitive) lCType, BigInteger.ZERO);
 				} else {
-					initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer, mExpressionTranslation);
+					initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 					main.cHandler.castToType(main, loc, initializer, lCType);
 					rhs = initializer.lrVal.getValue();
 				}
@@ -475,7 +474,7 @@ public class InitializationHandler {
 				rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, 
 						new CPrimitive(CPrimitive.PRIMITIVE.INT), BigInteger.ZERO);
 			} else {
-				initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer, mExpressionTranslation);
+				initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 				rhs = initializer.lrVal.getValue();
 			}		
 			if (onHeap) {
@@ -523,7 +522,7 @@ public class InitializationHandler {
 		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 		ArrayList<Overapprox> overApp = new ArrayList<>();
 
-		Expression sizeOfCell = mMemoryHandler.calculateSizeOf(arrayType.getValueType(), loc); 
+		Expression sizeOfCell = mMemoryHandler.calculateSizeOf(loc, arrayType.getValueType()); 
 		Expression[] dimensions = arrayType.getDimensions();
 		Integer currentSizeInt = null;
 		try {
@@ -548,16 +547,18 @@ public class InitializationHandler {
 			for (int i = 0; i < currentSizeInt; i++) {
 				CType valueType = arrayType.getValueType().getUnderlyingType();
 				
-
-				Expression writeOffset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, 
-						new IntegerLiteral(null, new Integer(i).toString()), 
-						sizeOfCell,
-						null);	
-				writeOffset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus,
-						newStartAddressOffset,
-						writeOffset, 
-						loc);
-
+				Expression iAsExpression = mExpressionTranslation.constructLiteralForIntegerType(
+						loc, mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(i));
+				Expression writeOffset = mExpressionTranslation.constructArithmeticExpression(
+						loc, IASTBinaryExpression.op_multiply, 
+						iAsExpression, mExpressionTranslation.getCTypeOfPointerComponents(), 
+						sizeOfCell, mExpressionTranslation.getCTypeOfPointerComponents()); 
+						
+				writeOffset = mExpressionTranslation.constructArithmeticExpression(
+						loc, IASTBinaryExpression.op_plus, 
+						newStartAddressOffset, mExpressionTranslation.getCTypeOfPointerComponents(), 
+						writeOffset, mExpressionTranslation.getCTypeOfPointerComponents()); 
+						
 				Expression writeLocation = MemoryHandler.constructPointerFromBaseAndOffset(
 						newStartAddressBase,
 						writeOffset, 
@@ -599,21 +600,22 @@ public class InitializationHandler {
 
 				Expression blockOffset = sizeOfCell;
 				for (int j = 1; j < dimensions.length; j++) {
-					blockOffset = 
-							CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply,
-									dimensions[j],
-									blockOffset,
-									loc);
+					blockOffset = mExpressionTranslation.constructArithmeticExpression(
+							loc, IASTBinaryExpression.op_multiply, 
+							dimensions[j], mExpressionTranslation.getCTypeOfPointerComponents(), 
+							blockOffset, mExpressionTranslation.getCTypeOfPointerComponents()); 
 				}
-				blockOffset = 
-						CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply,
-								new IntegerLiteral(loc, new Integer(i).toString()),	blockOffset,
-								loc);	
-				newStartAddressOffsetInner = 
-						CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus,
-								newStartAddressOffsetInner,
-								blockOffset,
-								loc);	
+				Expression iAsExpression = mExpressionTranslation.constructLiteralForIntegerType(
+						loc, mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(i));
+				blockOffset = mExpressionTranslation.constructArithmeticExpression(
+						loc, IASTBinaryExpression.op_multiply, 
+						iAsExpression, mExpressionTranslation.getCTypeOfPointerComponents(), 
+						blockOffset, mExpressionTranslation.getCTypeOfPointerComponents()); 
+
+				newStartAddressOffsetInner = mExpressionTranslation.constructArithmeticExpression(
+						loc, IASTBinaryExpression.op_plus, 
+						newStartAddressOffsetInner, mExpressionTranslation.getCTypeOfPointerComponents(), 
+						blockOffset, mExpressionTranslation.getCTypeOfPointerComponents()); 
 
 				ArrayList<Expression> innerDims = new ArrayList<Expression>(Arrays.asList(arrayType.getDimensions()));
 				innerDims.remove(0);//TODO ??
@@ -808,7 +810,7 @@ public class InitializationHandler {
 			CType underlyingFieldType = fieldTypes[i].getUnderlyingType();
 
 			Expression fieldAddressBase = newStartAddressBase;
-			Expression fieldAddressOffset = mStructHandler.computeStructFieldOffset(mMemoryHandler, loc, fieldIds[i], 
+			Expression fieldAddressOffset = mStructHandler.computeStructFieldOffset(mMemoryHandler, loc, i, 
 					newStartAddressOffset, structType);
 			StructConstructor fieldPointer = MemoryHandler.constructPointerFromBaseAndOffset(
 					fieldAddressBase, fieldAddressOffset, loc);

@@ -66,14 +66,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ContractResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ContractResult;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.TarjanSCC;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -419,7 +418,7 @@ public class FunctionHandler {
 		} else if (node.getReturnValue() != null) {
 			ExpressionResult exprResult = ((ExpressionResult) main.dispatch(node.getReturnValue()))
 					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-			exprResult = ConvExpr.rexBoolToIntIfNecessary(loc, exprResult, m_ExpressionTranslation);
+			exprResult.rexBoolToIntIfNecessary(loc, m_ExpressionTranslation);
 
 			// do some implicit casts
 			CType functionResultType = this.procedureToCFunctionType.get(currentProcedure.getIdentifier())
@@ -659,7 +658,7 @@ public class FunctionHandler {
 			}
 			// .. and if it is really called with more that its normal parameter
 			// number, we throw an exception, because we may be unsound
-			// (the code before this does not make so much sense, but maybe some
+			// (the code before this does not make that much sense, but maybe some
 			// day we want that solution again..
 			if (!(main.mPreferences.getEnum(CACSLPreferenceInitializer.LABEL_MODE, TranslationMode.class)
 					.equals(TranslationMode.SV_COMP14)) 
@@ -697,8 +696,6 @@ public class FunctionHandler {
 			} else {
 				in = in.switchToRValueIfNecessary(main,
 					memoryHandler, structHandler, loc);
-				in.replaceEnumByInt();
-				in.replaceCFunctionByCPointer();
 			}
 
 			
@@ -719,11 +716,11 @@ public class FunctionHandler {
 																			// the
 																			// parameters
 				// do implicit casts and bool/int conversion
-				CType expectedParamType = procedureToCFunctionType.get(methodName).getParameterTypes()[i].getType();
+				CType expectedParamType = procedureToCFunctionType.get(methodName).getParameterTypes()[i].getType().getUnderlyingType();
 				// bool/int conversion
 				if (expectedParamType instanceof CPrimitive
 						&& ((CPrimitive) expectedParamType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-					in = ConvExpr.rexBoolToIntIfNecessary(loc, in, m_ExpressionTranslation);
+					in.rexBoolToIntIfNecessary(loc, m_ExpressionTranslation);
 				}
 				if (expectedParamType instanceof CFunction) {
 					// workaround - better: make this conversion already in declaration
@@ -1111,17 +1108,7 @@ public class FunctionHandler {
 				&& !(funcType.getResultType() instanceof CPointer)) {
 			if (methodsCalledBeforeDeclared.contains(methodName)) {
 				// this method was assumed to return int -> return int
-				out[0] = new VarList(loc, new String[] { SFO.RES }, new PrimitiveType(loc, /*
-																							 * new
-																							 * InferredType
-																							 * (
-																							 * Type
-																							 * .
-																							 * Integer
-																							 * )
-																							 * ,
-																							 */
-				SFO.INT));
+				out[0] = new VarList(loc, new String[] { SFO.RES }, new PrimitiveType(loc, SFO.INT));
 			} else {
 				// void, so there are no out vars
 				out = new VarList[0];
@@ -1432,7 +1419,7 @@ public class FunctionHandler {
 		}
 		stmt.add(call);
 		CType returnCType = methodsCalledBeforeDeclared.contains(methodName) ? new CPrimitive(PRIMITIVE.INT)
-				: procedureToCFunctionType.get(methodName).getResultType();
+				: procedureToCFunctionType.get(methodName).getResultType().getUnderlyingType();
 		assert (CHandler.isAuxVarMapcomplete(main, decl, auxVars));
 		return new ExpressionResult(stmt, new RValue(expr, returnCType), decl, auxVars, overappr);
 	}

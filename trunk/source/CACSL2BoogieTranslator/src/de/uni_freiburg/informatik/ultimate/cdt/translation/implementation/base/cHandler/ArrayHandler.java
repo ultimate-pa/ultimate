@@ -36,6 +36,7 @@ import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -105,10 +106,12 @@ public class ArrayHandler {
 			Expression oldAddress = leftExpRes.lrVal.getValue();
 			RValue integer = (RValue) subscript.lrVal;
 			CType valueType = ((CPointer) cTypeLeft).pointsToType;;
-			Expression newAddress = ((CHandler) main.cHandler).doPointerArithmetic(main, 
+			ExpressionResult newAddress_ER = ((CHandler) main.cHandler).doPointerArithmeticWithConversion(main, 
 					IASTBinaryExpression.op_plus, loc, oldAddress, integer, valueType);
+			Expression newAddress = newAddress_ER.lrVal.getValue();
 			result = ExpressionResult.copyStmtDeclAuxvarOverapprox(leftExpRes, subscript);
 			HeapLValue lValue = new HeapLValue(newAddress, valueType, false);
+			result.addAll(newAddress_ER);
 			result.lrVal = lValue;
 		} else {
 			assert cTypeLeft.getUnderlyingType() instanceof CArray : "cType not instanceof CArray";
@@ -143,10 +146,12 @@ public class ArrayHandler {
 				//     addressOf(a) + 2 * sizeof(resultCType)
 				Expression oldAddress = ((HeapLValue) leftExpRes.lrVal).getAddress();
 				RValue index = (RValue) subscript.lrVal;
-				Expression newAddress = ((CHandler) main.cHandler).doPointerArithmetic(
+				ExpressionResult newAddress_ER = ((CHandler) main.cHandler).doPointerArithmeticWithConversion(
 						main, IASTBinaryExpression.op_plus, loc, oldAddress, index,	resultCType);
+				Expression newAddress = newAddress_ER.lrVal.getValue();
 				HeapLValue lValue = new HeapLValue(newAddress, resultCType, false);
 				result = ExpressionResult.copyStmtDeclAuxvarOverapprox(leftExpRes, subscript);
+				result.addAll(newAddress_ER);
 				result.lrVal = lValue;
 			} else if (leftExpRes.lrVal instanceof LocalLValue) {
 				// If the left hand side is an array represented as LocalLValue

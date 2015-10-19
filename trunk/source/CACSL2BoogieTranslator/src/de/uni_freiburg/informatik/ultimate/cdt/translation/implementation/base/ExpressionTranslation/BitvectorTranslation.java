@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -231,14 +231,14 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 	
 	@Override
-	public Expression createArithmeticExpression(int op, Expression left, CPrimitive typeLeft,
-			Expression right, CPrimitive typeRight, ILocation loc) {
+	public Expression constructArithmeticExpression(ILocation loc, int nodeOperator, Expression exp1,
+			CPrimitive type1, Expression exp2, CPrimitive type2) {
 		FunctionApplication func;
-		if(!m_FunctionDeclarations.checkParameters(typeLeft, typeRight)) {
-			throw new IllegalArgumentException("incompatible types " + typeLeft + " " + typeRight);
+		if(!m_FunctionDeclarations.checkParameters(type1, type2)) {
+			throw new IllegalArgumentException("incompatible types " + type1 + " " + type2);
 		}
 		final String funcname;
-		switch (op) {
+		switch (nodeOperator) {
 		case IASTBinaryExpression.op_minusAssign:
 		case IASTBinaryExpression.op_minus:
 			funcname = "bvsub";
@@ -249,9 +249,9 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			break;
 		case IASTBinaryExpression.op_divideAssign:
 		case IASTBinaryExpression.op_divide:
-			if (typeLeft.isUnsigned() && typeRight.isUnsigned()) {
+			if (type1.isUnsigned() && type2.isUnsigned()) {
 				funcname = "bvudiv";
-			} else if (!typeLeft.isUnsigned() && !typeRight.isUnsigned()) {
+			} else if (!type1.isUnsigned() && !type2.isUnsigned()) {
 				funcname = "bvsdiv";
 			} else {
 				throw new IllegalArgumentException("Mixed signed and unsigned");
@@ -259,9 +259,9 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			break;
 		case IASTBinaryExpression.op_moduloAssign:
 		case IASTBinaryExpression.op_modulo:
-			if (typeLeft.isUnsigned() && typeRight.isUnsigned()) {
+			if (type1.isUnsigned() && type2.isUnsigned()) {
 				funcname = "bvurem";
-			} else if (!typeLeft.isUnsigned() && !typeRight.isUnsigned()) {
+			} else if (!type1.isUnsigned() && !type2.isUnsigned()) {
 				funcname = "bvsrem";
 			} else {
 				throw new IllegalArgumentException("Mixed signed and unsigned");
@@ -276,8 +276,8 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 		
-		declareBitvectorFunction(loc, funcname, funcname + m_FunctionDeclarations.computeBitvectorSuffix(loc, typeLeft, typeRight), false, typeLeft, null, typeLeft, typeRight);
-		func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname + m_FunctionDeclarations.computeBitvectorSuffix(loc, typeLeft, typeRight), new Expression[]{left, right});
+		declareBitvectorFunction(loc, funcname, funcname + m_FunctionDeclarations.computeBitvectorSuffix(loc, type1, type2), false, type1, null, type1, type2);
+		func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcname + m_FunctionDeclarations.computeBitvectorSuffix(loc, type1, type2), new Expression[]{exp1, exp2});
 
 		return func;
 	}

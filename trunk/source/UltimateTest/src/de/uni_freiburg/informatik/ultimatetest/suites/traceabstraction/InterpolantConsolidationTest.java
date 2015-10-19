@@ -109,12 +109,12 @@ public class InterpolantConsolidationTest extends AbstractTraceAbstractionTestSu
 	 * 
 	 */
 	private static final String[] m_Settings = {
-			"automizer/interpolantConsolidation/ForwardPredicates.epf",
-			"automizer/interpolantConsolidation/ForwardPredicates_InterpolantConsolidation.epf",
-			"automizer/interpolantConsolidation/BackwardPredicates.epf",
-			"automizer/interpolantConsolidation/BackwardPredicates_InterpolantConsolidation.epf",
-			"automizer/interpolantConsolidation/ForwardPredicatesAndBackwardPredicates_InterpolantConsolidation.epf",
-			"automizer/interpolantConsolidation/ForwardPredicatesAndBackwardPredicates.epf"
+			"automizer/interpolantConsolidation/FP.epf",
+			"automizer/interpolantConsolidation/FP_CO.epf",
+			"automizer/interpolantConsolidation/BP.epf",
+			"automizer/interpolantConsolidation/BP_CO.epf",
+			"automizer/interpolantConsolidation/TwoTrack_CO.epf",
+			"automizer/interpolantConsolidation/TwoTrack.epf"
 	};
 	
 	/**

@@ -53,13 +53,12 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -73,13 +72,11 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Axiom;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -89,7 +86,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RequiresSpecification;
@@ -97,8 +93,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
@@ -125,26 +119,7 @@ public class MemoryHandler {
      * The "~addr" variable identifier.
      */
     private static final String ADDR = "~addr";
-    /**
-     * The set holding the Ids of all sizeof constants.
-     */
-    private LinkedHashSet<String> sizeofConsts;
-    /**
-     * The set holding the Ids of all (struct) offset constants.
-     */
-    private LinkedHashSet<String> structOffSetConstants;
- 
-    /**
-     * A set of constants, required for the memory model. E.g. sizeof and offset
-     * constants.
-     */
-    private final LinkedHashSet<ConstDeclaration> constants;
-    /**
-     * A set of axioms, required for the memory model. E.g. for sizeof and
-     * offset constants.
-     */
-    private final LinkedHashSet<Axiom> axioms;
-    
+
     /**
      * Add also implementations of malloc, free, write and read functions.
      * TODO: details
@@ -184,37 +159,25 @@ public class MemoryHandler {
 		declareMemCpy = true;
 	}
 	
-	//constants for the sizes of the base types
-	private final TypeSizes typeSizeConstants;
-	
-	/**
-     * Cache for speeding up calculateSizeOfWithGivenTypeSizes, which is a bottleneck otherwise.
-     * (linked would not be necessary, but should not hurt, and detecting nondterminism in the translation through
-     * searching for HashMaps stays easy..)
-     */
-    LinkedHashMap<CType, Integer> sizeOfCTypeCache;
 	private final AExpressionTranslation m_ExpressionTranslation;
-
+	
+	private final TypeSizeAndOffsetComputer m_TypeSizeAndOffsetComputer;
+	
 	
 	/**
      * Constructor.
      * @param checkPointerValidity 
+	 * @param typeSizeComputer 
      */
     public MemoryHandler(FunctionHandler functionHandler, boolean checkPointerValidity, 
-    		TypeSizes typeSizes, AExpressionTranslation expressionTranslation) {
+    		TypeSizeAndOffsetComputer typeSizeComputer, AExpressionTranslation expressionTranslation) {
     	m_functionHandler = functionHandler;
     	m_ExpressionTranslation = expressionTranslation;
-        this.sizeofConsts = new LinkedHashSet<String>();
-        this.structOffSetConstants = new LinkedHashSet<String>();
-        this.axioms = new LinkedHashSet<Axiom>();
-        this.constants = new LinkedHashSet<ConstDeclaration>();
 		this.variablesToBeMalloced = new LinkedScopedHashMap<LocalLValueILocationPair, Integer>();
 		this.variablesToBeFreed = new LinkedScopedHashMap<LocalLValueILocationPair, Integer>();
 		//read preferences from settings
 		UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
 		
-		typeSizeConstants = typeSizes;
-
 		m_PointerBaseValidity = 
 				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY, POINTER_CHECKMODE.class);
     	m_PointerAllocated = 
@@ -229,9 +192,13 @@ public class MemoryHandler {
 		isIntArrayRequiredInMM = false;
 		isFloatArrayRequiredInMM = false;
 		isPointerArrayRequiredInMM = false;
-		
-		sizeOfCTypeCache = new LinkedHashMap<>();
+		m_TypeSizeAndOffsetComputer = typeSizeComputer;
     }
+    
+    
+    public Expression calculateSizeOf(ILocation loc, CType cType) {
+    	return m_TypeSizeAndOffsetComputer.constructBytesizeExpression(loc, cType);
+	}
 
     /**
      * Declare all variables required for the memory model.
@@ -309,8 +276,6 @@ public class MemoryHandler {
         if (declareMemCpy) {
         	decl.addAll(declareMemCpy(main, namesOfAllMemoryArrayTypes, astTypesOfAllMemoryArrayTypes));
         }
-        decl.addAll(constants);
-        decl.addAll(axioms);
         return decl;
     }
 
@@ -492,59 +457,6 @@ public class MemoryHandler {
 		return memCpyDecl;
 	}
 
-	/**
-     * Declare sizeof constants and add to the sizeOfConst set.
-	 * @param main 
-     * 
-     * @param l the location.
-     * @param t the type string.
-	 * @param useFixedTypeSizes 
-     */
-    private void declareSizeOf(Dispatcher main, ILocation l, String t, boolean useFixedTypeSizes) {
-        String id = SFO.SIZEOF + t;
-        if (sizeofConsts.contains(id)) {
-            return;
-        }
-        ASTType intType = main.typeHandler.ctype2asttype(l, new CPrimitive(PRIMITIVE.INT));
-        // const #sizeof~t : int;
-        constants.add(new ConstDeclaration(l, new Attribute[0], false,
-                new VarList(l, new String[] { id }, intType), null, false));
-        Expression idex = new IdentifierExpression(l, id);
-        if (useFixedTypeSizes) {
-        //axiom #sizeof~t = 8	 (or another constant, dependent on the settings)
-        	//TODO: add the missing cases to the switch
-        	int value = 0;
-        	switch (t) {
-        	case "INT":
-        		value = typeSizeConstants.sizeOfIntType;
-        		break;
-        	case "CHAR":
-        		value = typeSizeConstants.sizeOfCharType;
-        		break;
-        	case "FLOAT":
-        		value = typeSizeConstants.sizeOfFloatType;
-        		break;
-        	case "DOUBLE":
-        		value = typeSizeConstants.sizeOfDoubleType;
-        		break;
-        	case SFO.POINTER:
-        		value = typeSizeConstants.sizeOfPointerType;
-        		break;
-        	default:
-        		value = typeSizeConstants.defaultTypeSize;
-        	}
-        	axioms.add(new Axiom(l, new Attribute[0], new BinaryExpression(l,
-        			Operator.COMPEQ, idex, 
-        			m_ExpressionTranslation.constructLiteralForIntegerType(l, 
-        					new CPrimitive(PRIMITIVE.INT), BigInteger.valueOf(value)))));
-        } else {
-        // axiom #sizeof~t > 0;
-        	axioms.add(new Axiom(l, new Attribute[0], new BinaryExpression(l,
-        			Operator.COMPGT, idex, new IntegerLiteral(l, SFO.NR0))));
-        }
-        sizeofConsts.add(id);
-    }
-  
     /**
      * Declares those of the memory arrays <code>#memory_int</code>,
      * <code>#memory_bool</code> (deprecated), <code>#memory_real</code> and
@@ -574,7 +486,7 @@ public class MemoryHandler {
         	} else {
         		CtypeCompatibleId = typeName.toUpperCase();
         	}
-            declareSizeOf(main, loc, CtypeCompatibleId, typeSizeConstants.useFixedTypeSizes());
+//            declareSizeOf(main, loc, CtypeCompatibleId, typeSizeConstants.useFixedTypeSizes());
             ASTType memoryType = new ArrayType(loc, new String[0],
                     new ASTType[] { main.typeHandler.constructPointerType(loc) }, astType);
             VarList vlM = new VarList(loc, new String[] { SFO.MEMORY + "_"
@@ -800,10 +712,10 @@ public class MemoryHandler {
 	
 	private Expression constructPointerComponentAddition(
 			ILocation loc, Expression left, Expression right) {
-		return m_ExpressionTranslation.createArithmeticExpression(
-				IASTBinaryExpression.op_plus, 
-				left, m_ExpressionTranslation.getCTypeOfPointerComponents(), 
-				right, m_ExpressionTranslation.getCTypeOfPointerComponents(), loc);
+		return m_ExpressionTranslation.constructArithmeticExpression(
+				loc, 
+				IASTBinaryExpression.op_plus, left, 
+				m_ExpressionTranslation.getCTypeOfPointerComponents(), right, m_ExpressionTranslation.getCTypeOfPointerComponents());
 	}
 	
 	private Expression constructPointerComponentLessEqual(
@@ -1082,7 +994,7 @@ public class MemoryHandler {
 
     public CallStatement getMallocCall(Dispatcher main,	FunctionHandler fh, 
 			LocalLValue resultPointer, ILocation loc) {
-    	return getMallocCall(main, fh, calculateSizeOf(resultPointer.getCType(), loc), resultPointer, loc);
+    	return getMallocCall(main, fh, calculateSizeOf(loc, resultPointer.getCType()), resultPointer, loc);
     }
 
     private CallStatement getMallocCall(Dispatcher main,	FunctionHandler fh, Expression size,
@@ -1104,197 +1016,6 @@ public class MemoryHandler {
             fh.getCallGraph().get(fh.getCurrentProcedureID()).add(SFO.MALLOC);
         }
         return mallocCall;
-    }
-    
-    /**
-     * Note: 6.5.3.4.2 of C11 says that the return type is int
-     */
-    public Expression calculateSizeOf(CType cType, ILocation loc) {
-    	if (typeSizeConstants.useFixedTypeSizes()) {
-    		if((cType instanceof CArray) && ((CArray) cType).isVariableLength()) {
-    			return calculateSizeOfVarLengthArrayTypeWithGivenTypeSizes(loc, ((CArray) cType));
-    		} else {
-    			int size = calculateSizeOfWithGivenTypeSizes(loc, cType);
-    			return m_ExpressionTranslation.constructLiteralForIntegerType(
-    					loc, new CPrimitive(PRIMITIVE.INT), BigInteger.valueOf(size));
-    		}
-    	} else {
-    		return calculateSizeOfWithVariableTypeSizes(cType, loc);
-    	}
-    }
-    
-    private Expression calculateSizeOfVarLengthArrayTypeWithGivenTypeSizes(
-			ILocation loc, CArray cArray) {
-    	Expression size = new IntegerLiteral(loc, 
-    			new Integer(calculateSizeOfWithGivenTypeSizes(loc, ((CArray) cArray).getValueType())).toString());
-    	for (Expression dim : ((CArray) cArray).getDimensions()) {
-    		size = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, size, dim, loc);
-    	}
-		return size;
-	}
-    
-
-	public int calculateSizeOfWithGivenTypeSizes(ILocation loc, CType cType) {
-		Integer cacheEntry = sizeOfCTypeCache.get(cType);
-		if (cacheEntry != null)
-			return cacheEntry;
-		
-		int size = 0;
-		if (cType instanceof CPrimitive) {
-			Integer sizeI = typeSizeConstants.getSize(((CPrimitive) cType).getType());
-			if (sizeI != null)
-				size = sizeI;
-			else
-				size = typeSizeConstants.defaultTypeSize;
-		} else if (cType instanceof CPointer) {
-			size = typeSizeConstants.sizeOfPointerType;
- 		} else if (cType instanceof CArray) {
- 			size = calculateSizeOfWithGivenTypeSizes(loc, ((CArray) cType).getValueType());
- 			for (Expression dim : ((CArray) cType).getDimensions()) {
- 				size *= Integer.parseInt(((IntegerLiteral) dim).getValue());
- 			}
- 		} else if (cType instanceof CStruct) {
- 			Attribute[] attr = new Attribute[0];
- 			ASTType intT = new PrimitiveType(loc, SFO.INT);
- 			CStruct cs = (CStruct) cType;
- 			if (cs.isIncomplete()) {
- 				// do nothing
- 			} else {
- 				for (int i = 0; i < cs.getFieldCount(); i++) {
- 					CType csf = cs.getFieldTypes()[i];
- 					String csfId = cs.getFieldIds()[i];	
- 					String oId = SFO.OFFSET + cType.toString() + "~" + csfId;
- 					
- 					if (!structOffSetConstants.contains(oId)) {
- 						structOffSetConstants.add(oId);
- 						this.constants.add(new ConstDeclaration(loc, attr, false,
- 								new VarList(loc, new String[] { oId }, intT), null,
- 								false));
- 						Expression offIdEx = new IdentifierExpression(loc, oId);
- 						int offsetValue = cType instanceof CUnion ? 0 : size;
- 						Expression offsetOfField = new BinaryExpression(loc, Operator.COMPEQ,
- 								offIdEx, new IntegerLiteral(loc, (new Integer(offsetValue).toString())));
- 						this.axioms.add(new Axiom(loc, attr, offsetOfField));
- 					}
-
-
-					if (cType instanceof CUnion) {
-						int s = calculateSizeOfWithGivenTypeSizes(loc, csf);
-						size = size < s ? s : size;
-					} else {
-						size += calculateSizeOfWithGivenTypeSizes(loc, csf);
-					}
- 				}
- 			}
- 		} else if (cType instanceof CNamed) {
- 			size = calculateSizeOfWithGivenTypeSizes(loc, ((CNamed) cType).getUnderlyingType());
- 		} else if (cType instanceof CEnum) {
- 			size = typeSizeConstants.sizeOfEnumType;
- 		} else {
- 			throw new UnsupportedSyntaxException(loc, "failed trying to calculate size of " + cType + " (with constant sizes)");
- 		}
-
-		sizeOfCTypeCache.put(cType, size);
-		return size;
-    }
-
-    /**
-     * Calculate the sizeof constants for the given CType.
-     * 
-     * @param cType
-     *            the CVariable to work on.
-     * @return a reference to the constant, holding sizeof cvar.
-     */
-    public IdentifierExpression calculateSizeOfWithVariableTypeSizes(CType cType, ILocation loc) {
-
-    	assert cType != null;
-    	ASTType intT = new PrimitiveType(loc, SFO.INT);
-    	String id = SFO.SIZEOF + cType.toString();
-    	IdentifierExpression idex = new IdentifierExpression(loc, id);
-    	Attribute[] attr = new Attribute[0];
-    	if (!sizeofConsts.contains(id)) {
-    		this.constants.add(new ConstDeclaration(loc, attr, false,
-    				new VarList(loc, new String[] { id }, intT), null, false));
-    		this.axioms.add(new Axiom(loc, attr, new BinaryExpression(loc,
-    				Operator.COMPGT, idex, new IntegerLiteral(loc, SFO.NR0))));
-    		sizeofConsts.add(id);
-
-    		if (cType instanceof CArray) {
-    			CArray ca = (CArray) cType;
-    			Expression valSize = calculateSizeOfWithVariableTypeSizes(ca.getValueType(), loc);
-    			Expression nrElem = new IntegerLiteral(loc, "1");
-    			for (Expression dim : ca.getDimensions()) 
-    				nrElem = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, nrElem, dim, loc);
-    			Expression size = new BinaryExpression(loc, Operator.ARITHMUL,
-    					nrElem, valSize);
-    			Expression f = new BinaryExpression(loc, Operator.COMPEQ, idex,
-    					size);
-    			this.axioms.add(new Axiom(loc, attr, f));
-    		} else if (cType instanceof CStruct) {
-    			CStruct cs = (CStruct) cType;
-    			if (cs.isIncomplete()) {
-    				// do nothing
-    			} else {
-    				Expression nextOffset = new IntegerLiteral(loc, SFO.NR0);
-    				for (int i = 0; i < cs.getFieldCount(); i++) {
-    					CType csf = cs.getFieldTypes()[i];
-    					String csfId = cs.getFieldIds()[i];
-    					String oId = SFO.OFFSET + cType.toString() + "~" + csfId;
-    					this.constants.add(new ConstDeclaration(loc, attr, false,
-    							new VarList(loc, new String[] { oId }, intT), null,
-    							false));
-    					Expression offIdEx = new IdentifierExpression(loc, oId);
-    					Expression offsetOfField = null;
-    					//                		if (cvar instanceof CUnion) {//in a union every field begins at 0
-    					//                			//(optimization: don't use so many constants where all are 0, but this way it is more 
-    					//                			//consisten with struct treatment, thus easier, for now)
-    					//                			offsetOfField = new BinaryExpression(loc, Operator.COMPEQ,
-    					//                					offIdEx, new IntegerLiteral(loc, SFO.NR0));
-    					//                		} else {
-    					offsetOfField = new BinaryExpression(loc, Operator.COMPEQ,
-    							offIdEx, nextOffset);
-    					//                		}
-    					this.axioms.add(new Axiom(loc, attr, offsetOfField));
-    					Expression fieldSize = calculateSizeOfWithVariableTypeSizes(csf, loc);
-
-    					if (cType instanceof CUnion) {
-    						this.axioms.add(new Axiom(loc, attr, 
-    								new BinaryExpression(loc, Operator.COMPGEQ, idex, fieldSize)));
-    					} else {//only in the struct case, the offsets grow, in the union case they stay at 0
-    						nextOffset = constructPointerComponentAddition(loc,
-    								nextOffset, fieldSize);
-    					}
-    				}
-    				if (!(cType instanceof CUnion)) { //we have a normal struct
-    					// add an axiom : sizeof cvar (>)= nextOffset
-    					Expression f = new BinaryExpression(loc, Operator.COMPGEQ,
-    							idex, nextOffset);
-    					this.axioms.add(new Axiom(loc, attr, f));
-    				}
-    			}
-    		} else if (cType instanceof CNamed) {
-    			// add an axiom, binding the sizeof of the named type to
-    			// the sizeof of the underlying type
-    			CNamed cn = ((CNamed) cType);
-    			Expression e = calculateSizeOfWithVariableTypeSizes(cn.getUnderlyingType(), loc);
-    			Expression f = new BinaryExpression(loc, Operator.COMPEQ, idex,
-    					e);
-    			this.axioms.add(new Axiom(loc, attr, f));
-    			// NB: I'm not sure, if this is really required! I think we
-    			// resolve all named types during translation anyway ... and the
-    			// constants accordingly ...
-    		} else if (cType instanceof CEnum) {
-    			// Here we return a new constant, which might (!) be
-    			// different from all others (i.e. not the same as int!)
-    			// the size of these variables is not bound to any value, except
-    			// it is specified, that it must be capable of holding the max.
-    			// value of the corresponding possible enums value domain!
-    			// TODO : no idea how to do that, w/o log_2 function in boogie!
-    			// so it is just ignored and assumed to be >0!
-    			assert false : "need to do something (insert an enum size), here..";
-    		}
-    	}
-    	return idex;
     }
     
     /**
@@ -1337,7 +1058,7 @@ public class MemoryHandler {
         decl.add(tVarDecl);
         VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, tmpId) };
         CallStatement call = new CallStatement(loc, false, lhs, "read~" + heapTypeName,//heapType.toString(),
-                new Expression[] { address, this.calculateSizeOf(resultType, loc) });
+                new Expression[] { address, this.calculateSizeOf(loc, resultType) });
         for (Overapprox overapprItem : overappr) {
             call.getPayload().getAnnotations().put(Overapprox.getIdentifier(),
                     overapprItem);
@@ -1416,14 +1137,14 @@ public class MemoryHandler {
         		m_functionHandler.getModifiedGlobals().
         			get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY_INT);
         		stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.INT,
-        				new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(hlv.getCType(), loc)}));
+        				new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(loc, hlv.getCType())}));
         		break;
         	case FLOATTYPE:
         		isFloatArrayRequiredInMM = true;
         		m_functionHandler.getModifiedGlobals().
         			get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY_REAL);
         		stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.REAL,
-        				new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(hlv.getCType(), loc) }));
+        				new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(loc, hlv.getCType()) }));
         		break;	
         	default:
         		throw new UnsupportedSyntaxException(loc, "we don't recognize this type");
@@ -1434,13 +1155,13 @@ public class MemoryHandler {
         	m_functionHandler.getModifiedGlobals().
         	get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY_INT);
         	stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.INT,
-        			new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(hlv.getCType(), loc)}));
+        			new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(loc, hlv.getCType())}));
         } else if (valueType instanceof CPointer) {
         	isPointerArrayRequiredInMM = true;
         	m_functionHandler.getModifiedGlobals().
         			get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY_POINTER);
         	stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.POINTER,
-        			new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(hlv.getCType(), loc) }));
+        			new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(loc, hlv.getCType()) }));
         } else if (valueType instanceof CStruct) {
         	CStruct rStructType = (CStruct) valueType;
         	for (String fieldId : rStructType.getFieldIds()) {
@@ -1458,11 +1179,11 @@ public class MemoryHandler {
         		CType fieldType = rStructType.getFieldType(fieldId);
         		StructAccessExpression sae = new StructAccessExpression(loc, 
         				value, fieldId);
-        		Expression fieldOffset = 
-						StructHandler.getStructOrUnionOffsetConstantExpression(loc, this, fieldId, rStructType);
-        		Expression newOffset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus, 
-        				newStartAddressOffset,
-        				fieldOffset, loc);
+        		Expression fieldOffset = m_TypeSizeAndOffsetComputer.constructOffsetForField(loc, rStructType, fieldId);
+        		Expression newOffset = m_ExpressionTranslation.constructArithmeticExpression(
+        				loc, IASTBinaryExpression.op_plus, 
+        				newStartAddressOffset, m_ExpressionTranslation.getCTypeOfPointerComponents(), 
+        				fieldOffset, m_ExpressionTranslation.getCTypeOfPointerComponents());
         		HeapLValue fieldHlv = new HeapLValue(
         				constructPointerFromBaseAndOffset(newStartAddressBase,
         				newOffset, loc), fieldType);
@@ -1489,7 +1210,7 @@ public class MemoryHandler {
         		newStartAddressOffset = MemoryHandler.getPointerOffset(arrayStartAddress, loc);
         	}
 
-        	Expression valueTypeSize = calculateSizeOf(arrayType.getValueType(), loc);
+        	Expression valueTypeSize = calculateSizeOf(loc, arrayType.getValueType());
 
         	Expression arrayEntryAddressOffset = newStartAddressOffset;
 
@@ -1520,8 +1241,12 @@ public class MemoryHandler {
 						stmt.addAll(getWriteCall(loc, 
 								new HeapLValue(constructPointerFromBaseAndOffset(newStartAddressBase, arrayEntryAddressOffset, loc), arrayType.getValueType()), 
 								arrayAccRVal.getValue(), arrayAccRVal.getCType()));
-						arrayEntryAddressOffset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus, 
-								arrayEntryAddressOffset, valueTypeSize, loc);
+						//TODO 2015-10-11 Matthias: Why is there an addition of value Type size
+						// and no multiplication? Check this more carefully.
+						arrayEntryAddressOffset = m_ExpressionTranslation.constructArithmeticExpression(
+		        				loc, IASTBinaryExpression.op_plus, 
+		        				arrayEntryAddressOffset, m_ExpressionTranslation.getCTypeOfPointerComponents(), 
+		        				valueTypeSize, m_ExpressionTranslation.getCTypeOfPointerComponents());
 					}
         	} else {
         		throw new UnsupportedSyntaxException(loc, "we need to generalize this to nested and/or variable length arrays");
@@ -1535,7 +1260,9 @@ public class MemoryHandler {
         return stmt;
     }
    
-    /**
+
+
+	/**
      * Takes a pointer Expression and returns the pointers base address.
      * If it is already given as a struct, then the first field is returned,
      * otherwise a StructAccessExpression pointer!base is returned.
@@ -1603,13 +1330,11 @@ public class MemoryHandler {
 	public Expression constructNullPointer(ILocation loc) {
 		return new IdentifierExpression(loc, SFO.NULL);
 	}
-	
-	/**
-	 * Get the CType that represents <em> size_t </em>.
-	 * TODO: Currently hard-coded to uint. Should probably be a setting. 
-	 * TODO: maybe the MemoryHandler is not the right place. 
-	 */
-	public CPrimitive getSize_T() {
-		return new CPrimitive(PRIMITIVE.UINT);
+
+
+	public TypeSizeAndOffsetComputer getTypeSizeAndOffsetComputer() {
+		return m_TypeSizeAndOffsetComputer;
 	}
+	
+
 }

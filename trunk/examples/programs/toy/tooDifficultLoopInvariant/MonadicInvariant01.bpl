@@ -2,7 +2,7 @@
 /* Nontrivial program whose correctness can be shown using a monadic loop
  * invariant.
  * E.g., the following loop invariant is sufficient.
- * 0 <= offset < 4 * 10000  /\  offset % 4 == 0  /\  length = 4 * 10000
+ * 0 <= offset <= 4 * 10000  /\  offset % 4 == 0  /\  length = 4 * 10000
  * Note that the second conjunct (divisibility) is indispensable.
  * 
  * Simplified version of verification problem that occurs regularly if we use
@@ -10,7 +10,7 @@
  * - The variable offset is the "offset" of some int pointer.
  * - The while loop moves a pointer along some memory area.
  * - The assert checks if we are still in some allocated area.
- * - An int takes four bite, hence the pointer is incremented b four.
+ * - An int takes four byte, hence the pointer is incremented by four.
  * 
  * Author: heizmann@informatik.uni-freiburg.de
  * Date: 2015-09-03

@@ -43,14 +43,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAu
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 
 
-public class BuchiDifferenceBS<LETTER,STATE> implements IOperation<LETTER,STATE> {
+public class BuchiDifferenceNCSB<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 	private final IUltimateServiceProvider m_Services;
 	private final Logger m_Logger;
 	
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_FstOperand;
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_SndOperand;
-	private BuchiComplementBSNwa<LETTER,STATE> m_SndComplemented;
+	private BuchiComplementNCSBNwa<LETTER,STATE> m_SndComplemented;
 	private BuchiIntersectNwa<LETTER, STATE> m_Intersect;
 	private NestedWordAutomatonReachableStates<LETTER,STATE> m_Result;
 	private final StateFactory<STATE> m_StateFactory;
@@ -81,7 +81,7 @@ public class BuchiDifferenceBS<LETTER,STATE> implements IOperation<LETTER,STATE>
 	}
 	
 	
-	public BuchiDifferenceBS(IUltimateServiceProvider services,
+	public BuchiDifferenceNCSB(IUltimateServiceProvider services,
 			StateFactory<STATE> stateFactory,
 			INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
 			INestedWordAutomatonSimple<LETTER,STATE> sndOperand
@@ -102,7 +102,7 @@ public class BuchiDifferenceBS<LETTER,STATE> implements IOperation<LETTER,STATE>
 	
 	
 	private void constructDifference() throws AutomataLibraryException {
-		m_SndComplemented = new BuchiComplementBSNwa<LETTER, STATE>(m_Services, m_SndOperand, m_StateFactory);
+		m_SndComplemented = new BuchiComplementNCSBNwa<LETTER, STATE>(m_Services, m_SndOperand, m_StateFactory);
 		m_Intersect = new BuchiIntersectNwa<LETTER, STATE>(m_FstOperand, m_SndComplemented, m_StateFactory);
 		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Intersect);
 	}
@@ -118,7 +118,7 @@ public class BuchiDifferenceBS<LETTER,STATE> implements IOperation<LETTER,STATE>
 	
 	
 
-	public BuchiComplementBSNwa<LETTER, STATE> getSndComplemented() {
+	public BuchiComplementNCSBNwa<LETTER, STATE> getSndComplemented() {
 		return m_SndComplemented;
 	}
 

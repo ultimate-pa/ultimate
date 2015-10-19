@@ -167,6 +167,9 @@ public class LoopCannibalizer {
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
 		}
+		if (traceChecker.getToolchainCancelledExpection() != null) {
+			throw traceChecker.getToolchainCancelledExpection();
+		}
 		return traceChecker;
 	}
 

@@ -51,14 +51,14 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
  * automata whose working title is TABA (termination analysis Büchi automata).
  * @author heizmann@informatik.uni-freiburg.de
  */
-public class BuchiComplementBS<LETTER,STATE> implements IOperation<LETTER,STATE> {
+public class BuchiComplementNCSB<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	private final IUltimateServiceProvider m_Services;
 	private final Logger m_Logger;
 	
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_Operand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_Result;
-	private final BuchiComplementBSNwa<LETTER, STATE> m_Complemented;	
+	private final BuchiComplementNCSBNwa<LETTER, STATE> m_Complemented;	
 	
 	
 	
@@ -82,14 +82,14 @@ public class BuchiComplementBS<LETTER,STATE> implements IOperation<LETTER,STATE>
 				m_Result.sizeInformation();
 	}
 	
-	public BuchiComplementBS(IUltimateServiceProvider services,
+	public BuchiComplementNCSB(IUltimateServiceProvider services,
 			StateFactory<STATE> stateFactory, 
 			INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataLibraryException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		this.m_Operand = input;
 		m_Logger.info(startMessage());
-		m_Complemented = new BuchiComplementBSNwa<LETTER, STATE>(m_Services, input, stateFactory);
+		m_Complemented = new BuchiComplementNCSBNwa<LETTER, STATE>(m_Services, input, stateFactory);
 		m_Result = new NestedWordAutomatonReachableStates<LETTER, STATE>(m_Services, m_Complemented);
 		m_Logger.info(exitMessage());
 	}

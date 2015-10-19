@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKV;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiDifferenceBS;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiDifferenceNCSB;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiDifferenceFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiIntersect;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
@@ -52,6 +52,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLa
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.TightLevelRankingStateGeneratorBuilder;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.TightLevelRankingStateGeneratorBuilder.FkvOptimization;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsDeterministic;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsSemiDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
@@ -320,7 +322,7 @@ public class RefineBuchi {
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction;
 		if (m_Difference) {
 			if (setting.getUsedDefinedMaxRank() == -3) {
-				BuchiDifferenceBS<CodeBlock, IPredicate> diff = new BuchiDifferenceBS<CodeBlock, IPredicate>(m_Services, 
+				BuchiDifferenceNCSB<CodeBlock, IPredicate> diff = new BuchiDifferenceNCSB<CodeBlock, IPredicate>(m_Services, 
 						m_StateFactoryForRefinement, m_Abstraction, m_InterpolAutomatonUsedInRefinement);
 				finishComputation(m_InterpolAutomatonUsedInRefinement, setting);
 				benchmarkGenerator.reportHighestRank(3);
@@ -392,9 +394,39 @@ public class RefineBuchi {
 		// IPredicate>(newAbstraction,m_Counterexample.getNestedLassoWord())).getResult()
 		// : "no progress";
 		if (m_DumpAutomata) {
-			String filename = m_RootNode.getFilename() + "_" + "interpolBuchiAutomatonUsedInRefinement" + m_Iteration + "after";
+			final String automatonString;
+			if (m_InterpolAutomatonUsedInRefinement.getCallAlphabet().isEmpty()) {
+				automatonString = "interpolBuchiAutomatonUsedInRefinement";
+			} else {
+				automatonString = "interpolBuchiNestedWordAutomatonUsedInRefinement";
+			}
+			String filename = m_RootNode.getFilename() + "_" + automatonString + m_Iteration + "after";
 			String message = setting.toString();
 			BuchiCegarLoop.writeAutomatonToFile(m_Services, m_InterpolAutomatonUsedInRefinement, m_DumpPath, filename, message);
+		}
+		boolean tacasDump = false;
+		if (tacasDump){
+			final String determinicity;
+			boolean isSemiDeterministic = (new IsSemiDeterministic<CodeBlock, IPredicate>(m_Services, m_InterpolAutomatonUsedInRefinement)).getResult();
+			boolean isDeterministic = (new IsDeterministic<CodeBlock, IPredicate>(m_Services, m_InterpolAutomatonUsedInRefinement)).getResult();
+			if (isDeterministic) {
+				determinicity = "deterministic";
+				assert isSemiDeterministic : "but semi deterministic";
+			} else if (isSemiDeterministic) {
+				determinicity = "semideterministic";
+			} else {
+				determinicity = "nondeterministic";
+			}
+			final String automatonString;
+			if (m_InterpolAutomatonUsedInRefinement.getCallAlphabet().isEmpty()) {
+				automatonString = "interpolBuchiAutomatonUsedInRefinement";
+			} else {
+				automatonString = "interpolBuchiNestedWordAutomatonUsedInRefinement";
+			}
+			String filename = m_RootNode.getFilename() + "_" + determinicity + automatonString + m_Iteration + "after";
+			String message = setting.toString();
+			BuchiCegarLoop.writeAutomatonToFile(m_Services, m_InterpolAutomatonUsedInRefinement, m_DumpPath, filename, message);
+
 		}
 		return newAbstraction;
 	}
@@ -402,10 +434,11 @@ public class RefineBuchi {
 	private InterpolatingTraceChecker constructTraceChecker(IPredicate precond, IPredicate postcond,
 			NestedWord<CodeBlock> word, SmtManager smtManager, BuchiModGlobalVarManager buchiModGlobalVarManager, 
 			PredicateUnifier pu, INTERPOLATION interpolation) {
+		final InterpolatingTraceChecker itc;
 		switch (m_Interpolation) {
 		case Craig_NestedInterpolation:
-		case Craig_TreeInterpolation:
-			return new InterpolatingTraceCheckerCraig(precond, postcond, new TreeMap<Integer, IPredicate>(), word,
+		case Craig_TreeInterpolation: {
+			itc = new InterpolatingTraceCheckerCraig(precond, postcond, new TreeMap<Integer, IPredicate>(), word,
 					m_SmtManager, buchiModGlobalVarManager,
 					/*
 					 * TODO: When Matthias
@@ -414,10 +447,12 @@ public class RefineBuchi {
 					 * Check if you want to set this
 					 * to a different value.
 					 */AssertCodeBlockOrder.NOT_INCREMENTALLY, m_Services, false, pu, interpolation);
+			break;
+		}
 		case ForwardPredicates:
 		case BackwardPredicates:
-		case FPandBP:
-			return new TraceCheckerSpWp(precond, postcond, new TreeMap<Integer, IPredicate>(),
+		case FPandBP: {
+			itc = new TraceCheckerSpWp(precond, postcond, new TreeMap<Integer, IPredicate>(),
 					word, m_SmtManager, buchiModGlobalVarManager,
 					/*
 					 * TODO: When Matthias
@@ -427,9 +462,15 @@ public class RefineBuchi {
 					 * to a different value.
 					 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
 					 UnsatCores.CONJUNCT_LEVEL, true, m_Services, false, pu, interpolation);
+			break;
+		}
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
 		}
+		if (itc.getToolchainCancelledExpection() != null) {
+			throw itc.getToolchainCancelledExpection();
+		}
+		return itc;
 	}
 
 	private boolean isUsefulInterpolantAutomaton(
