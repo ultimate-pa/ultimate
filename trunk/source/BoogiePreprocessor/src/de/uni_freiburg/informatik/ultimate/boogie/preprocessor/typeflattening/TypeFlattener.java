@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.typeflattening;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -13,19 +14,22 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayBoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedBoogieType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.PlaceholderBoogieType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveBoogieType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.StructBoogieType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructType;
@@ -33,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
 /**
  * 
@@ -43,13 +46,15 @@ import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 class TypeFlattener {
 
 	private final Logger mLogger;
-	private final Map<String, PlaceholderTypeDeclaration> mGenericTypes;
-	private final ScopedHashMap<String, PlaceholderVarList> mGenericVariables;
+	private final Map<String, PlaceholderTypeDeclaration> mGenericTypeDeclarations;
+	private final Map<BoogieType, Set<BoogieType>> mGenericType2InstantiatedTypes;
+	private final Map<BoogieType, Set<PlaceholderVarList>> mGenericType2Vars;
 
 	TypeFlattener(final Logger logger) {
 		mLogger = logger;
-		mGenericTypes = new LinkedHashMap<>();
-		mGenericVariables = new ScopedHashMap<>();
+		mGenericTypeDeclarations = new LinkedHashMap<>();
+		mGenericType2InstantiatedTypes = new HashMap<BoogieType, Set<BoogieType>>();
+		mGenericType2Vars = new HashMap<BoogieType, Set<PlaceholderVarList>>();
 	}
 
 	void run(final Unit unit) {
@@ -63,6 +68,8 @@ class TypeFlattener {
 			}
 		}
 
+		consolidateMaps();
+
 		final SecondRun second = new SecondRun();
 		for (int i = 0; i < newdecls.size(); ++i) {
 			newdecls.set(i, second.processDeclaration(newdecls.get(i)));
@@ -70,6 +77,17 @@ class TypeFlattener {
 
 		unit.setDeclarations(newdecls.toArray(new Declaration[newdecls.size()]));
 		return;
+	}
+
+	private void consolidateMaps() {
+		for (final Entry<BoogieType, Set<PlaceholderVarList>> gtype2vars : mGenericType2Vars.entrySet()) {
+			final Set<BoogieType> instantiatedTypes = mGenericType2InstantiatedTypes.get(gtype2vars.getKey());
+			for (final PlaceholderVarList var : gtype2vars.getValue()) {
+				for (final BoogieType instantiatedType : instantiatedTypes) {
+					var.addType(instantiatedType);
+				}
+			}
+		}
 	}
 
 	private boolean isGeneric(final VarList vl) {
@@ -88,9 +106,6 @@ class TypeFlattener {
 		if (synonyms == null) {
 			return false;
 		}
-		if (synonyms instanceof FakeASTType) {
-			return true;
-		}
 		return isGeneric(synonyms);
 	}
 
@@ -103,7 +118,7 @@ class TypeFlattener {
 			return isGeneric(atype.getValueType()) || Arrays.stream(atype.getIndexTypes()).anyMatch(this::isGeneric);
 		} else if (type instanceof NamedType) {
 			final NamedType ntype = (NamedType) type;
-			return ntype.getTypeArgs().length > 0 || mGenericTypes.containsKey(ntype.getName());
+			return ntype.getTypeArgs().length > 0 || mGenericTypeDeclarations.containsKey(ntype.getName());
 		} else if (type instanceof StructType) {
 			throw new UnsupportedOperationException("Structs should have been resolved already");
 		} else if (type instanceof PrimitiveType) {
@@ -122,7 +137,7 @@ class TypeFlattener {
 	}
 
 	private PlaceholderTypeDeclaration findGenericDeclaration(String typeName) {
-		for (final Entry<String, PlaceholderTypeDeclaration> possibleParent : mGenericTypes.entrySet()) {
+		for (final Entry<String, PlaceholderTypeDeclaration> possibleParent : mGenericTypeDeclarations.entrySet()) {
 			if (possibleParent.getKey().equals(typeName)) {
 				return possibleParent.getValue();
 			}
@@ -134,7 +149,7 @@ class TypeFlattener {
 		if (type instanceof NamedType) {
 			final NamedType ntype = (NamedType) type;
 			if (ntype.getTypeArgs().length == 0) {
-				if (mGenericTypes.containsKey(ntype.getName())) {
+				if (mGenericTypeDeclarations.containsKey(ntype.getName())) {
 					// this is a synonym and it should not be flattened
 					return null;
 				}
@@ -171,160 +186,182 @@ class TypeFlattener {
 		return sb.toString();
 	}
 
+	private Set<BoogieType> getInstantiatedTypes(final BoogieType genericType) {
+		final BoogieType realGenericType = genericType.getUnderlyingType();
+		return mGenericType2InstantiatedTypes.get(realGenericType);
+	}
+
+	private void markGenericType(final BoogieType genericType, final PlaceholderVarList vl) {
+		final BoogieType realGenericType = genericType.getUnderlyingType();
+		Set<BoogieType> set = mGenericType2InstantiatedTypes.get(realGenericType);
+		if (set == null) {
+			set = new HashSet<BoogieType>();
+			mGenericType2InstantiatedTypes.put(realGenericType, set);
+		}
+
+		Set<PlaceholderVarList> varlists = mGenericType2Vars.get(realGenericType);
+		if (varlists == null) {
+			varlists = new HashSet<PlaceholderVarList>();
+			mGenericType2Vars.put(realGenericType, varlists);
+		}
+		varlists.add(vl);
+	}
+
+	private StringBuilder mangleTypeName(StringBuilder sb, final BoogieType type) {
+		if (type instanceof ArrayBoogieType) {
+			final ArrayBoogieType atype = (ArrayBoogieType) type;
+			sb.append("A");
+			for (int i = 0; i < atype.getIndexCount(); ++i) {
+				sb.append("$");
+				mangleTypeName(sb, atype.getIndexType(i));
+			}
+			sb.append("$");
+			return mangleTypeName(sb, atype.getValueType());
+		} else if (type instanceof ConstructedBoogieType) {
+			final ConstructedBoogieType ctype = ((ConstructedBoogieType) type);
+			sb.append("C").append("$").append(ctype.getConstr().getName());
+			for (int i = 0; i < ctype.getParameterCount(); ++i) {
+				sb.append("$");
+				mangleTypeName(sb, ctype.getParameter(i));
+			}
+			return sb;
+		} else if (type instanceof PlaceholderBoogieType) {
+			return sb.append("__");
+		} else if (type instanceof PrimitiveBoogieType) {
+			return sb.append("P$").append(type.toString());
+		} else if (type instanceof StructBoogieType) {
+			final StructBoogieType sbtype = (StructBoogieType) type;
+			sb.append("S");
+			for (int i = 0; i < sbtype.getFieldCount(); ++i) {
+				sb.append("$");
+				mangleTypeName(sb, sbtype.getFieldType(i));
+			}
+			return sb;
+		} else {
+			throw new UnsupportedOperationException(
+					"Cannot mangle unknown BoogieType " + (type == null ? "null" : type.getClass().getSimpleName()));
+		}
+	}
+
 	private final class FirstRun extends BoogieTransformer {
 
 		@Override
 		protected Declaration processDeclaration(final Declaration decl) {
-			if (decl instanceof FunctionDeclaration || decl instanceof Procedure) {
-				mGenericVariables.beginScope();
-				final Declaration rtr = super.processDeclaration(decl);
-				mGenericVariables.endScope();
-				return rtr;
-			} else if (decl instanceof TypeDeclaration) {
+			if (decl instanceof TypeDeclaration) {
 				final TypeDeclaration tdecl = (TypeDeclaration) decl;
 				if (isGeneric(tdecl)) {
-					return processGenericTypeDeclaration(tdecl);
+					mLogger.info(tdecl);
+					// a declaration of a generic type will be deleted. If we
+					// can, we instantiate it right here
+					final PlaceholderTypeDeclaration rtr = new PlaceholderTypeDeclaration(tdecl);
+					mGenericTypeDeclarations.put(rtr.getIdentifier(), rtr);
+					return rtr;
 				}
 				return tdecl;
+			} else if (decl instanceof Procedure) {
+				Procedure proc = (Procedure) decl;
+				if (proc.getTypeParams().length > 0) {
+					throw new UnsupportedOperationException(
+							"We cannot (yet) flatten generic procedures: " + BoogiePrettyPrinter.printSignature(proc));
+				}
+			} else if (decl instanceof FunctionDeclaration) {
+				FunctionDeclaration func = (FunctionDeclaration) decl;
+				if (func.getTypeParams().length > 0) {
+					throw new UnsupportedOperationException(
+							"We cannot (yet) flatten generic functions: " + BoogiePrettyPrinter.printSignature(func));
+				}
 			}
-
 			return super.processDeclaration(decl);
 		}
 
 		@Override
 		protected VarList processVarList(final VarList vl) {
 			if (isGeneric(vl)) {
-				return processGenericVarList(vl);
+				mLogger.info(vl);
+				final PlaceholderVarList rtr = new PlaceholderVarList(vl);
+				BoogieType bt = (BoogieType) vl.getType().getBoogieType();
+				markGenericType(bt, rtr);
+				return rtr;
 			}
 			return super.processVarList(vl);
 		}
 
 		@Override
-		protected Body processBody(final Body body) {
-			mGenericVariables.beginScope();
-			final Body rtr = super.processBody(body);
-			mGenericVariables.endScope();
-			return rtr;
-		}
+		protected Expression processExpression(final Expression expr) {
+			if (expr instanceof ArrayAccessExpression) {
+				final ArrayAccessExpression aaexpr = (ArrayAccessExpression) expr;
+				final BoogieType atype = (BoogieType) aaexpr.getArray().getType();
+				final Set<BoogieType> set = getInstantiatedTypes(atype);
 
-		@Override
-		protected Expression processExpression(Expression expr) {
-			if (expr instanceof IdentifierExpression) {
-				IdentifierExpression iexpr = (IdentifierExpression) expr;
-				PlaceholderVarList var = mGenericVariables.get(iexpr.getIdentifier());
-				return expr;
-			} else if (expr instanceof ArrayAccessExpression) {
-				ArrayAccessExpression aaexpr = (ArrayAccessExpression) expr;
-				if (aaexpr.getArray() instanceof IdentifierExpression) {
-					PlaceholderVarList var = mGenericVariables
-							.get(((IdentifierExpression) aaexpr.getArray()).getIdentifier());
-					if (var != null) {
-						ASTType type = getType(var);
-						ArrayBoogieType btype = (ArrayBoogieType) type.getBoogieType();
-						Expression[] idxExpr = aaexpr.getIndices();
-						BoogieType[] idxTypes = new BoogieType[idxExpr.length];
-						for (int i = 0; i < idxExpr.length; ++i) {
-							idxTypes[i] = (BoogieType) idxExpr[i].getType();
-						}
-						ArrayBoogieType newArrayType = btype.instantiate(idxTypes, (BoogieType) aaexpr.getType());
-						ASTType newArrayASTType = newArrayType.toASTType(expr.getLocation());
-						var.addType(newArrayASTType);
-						// TODO: this should be an array access were the struct
-						// is the array
-						Expression rtr = new StructAccessExpression(expr.getLocation(), newArrayType, aaexpr.getArray(),
-								"NameOfNewInnerArrayFieldMangled");
-						mLogger.info("Replaced " + BoogiePrettyPrinter.print(expr) + " with "
-								+ BoogiePrettyPrinter.print(rtr));
-						return rtr;
+				if (set != null) {
+					// it is a generic
+					final ArrayBoogieType genericType = (ArrayBoogieType) atype;
+					final Expression[] idxExpr = aaexpr.getIndices().clone();
+					final BoogieType[] idxTypes = new BoogieType[idxExpr.length];
+					for (int i = 0; i < idxExpr.length; ++i) {
+						idxExpr[i] = processExpression(idxExpr[i]);
+						idxTypes[i] = (BoogieType) idxExpr[i].getType();
 					}
+					final ArrayBoogieType newArrayType = genericType.instantiate(idxTypes,
+							(BoogieType) aaexpr.getType());
+					assert newArrayType.getUnderlyingType().equals(newArrayType);
+
+					set.add(newArrayType);
+					final Expression arrayExpr = processExpression(aaexpr.getArray());
+
+					final Expression rtr = new ArrayAccessExpression(expr.getLocation(), newArrayType,
+							new StructAccessExpression(expr.getLocation(), newArrayType, arrayExpr,
+									getStructFieldName(newArrayType)),
+							idxExpr);
+
+					mLogger.info(
+							"Replaced " + BoogiePrettyPrinter.print(expr) + " with " + BoogiePrettyPrinter.print(rtr));
+					return rtr;
 				}
+				mLogger.info(BoogiePrettyPrinter.print(expr) + " is not generic");
 			} else if (expr instanceof ArrayStoreExpression) {
-				ArrayStoreExpression asexpr = (ArrayStoreExpression) expr;
-				if (asexpr.getArray() instanceof IdentifierExpression) {
-					PlaceholderVarList var = mGenericVariables
-							.get(((IdentifierExpression) asexpr.getArray()).getIdentifier());
-					if (var != null) {
-						ASTType type = getType(var);
-						ArrayBoogieType btype = (ArrayBoogieType) type.getBoogieType();
-						Expression[] idxExpr = asexpr.getIndices();
-						BoogieType[] idxTypes = new BoogieType[idxExpr.length];
-						for (int i = 0; i < idxExpr.length; ++i) {
-							idxTypes[i] = (BoogieType) idxExpr[i].getType();
-						}
-						ArrayBoogieType newArrayType = btype.instantiate(idxTypes,
-								(BoogieType) asexpr.getValue().getType());
-						ASTType newArrayASTType = newArrayType.toASTType(expr.getLocation());
-						var.addType(newArrayASTType);
-						
-						Expression arrayFromStructExpression = new StructAccessExpression(expr.getLocation(), newArrayType,
-								asexpr.getArray(), "NameOfNewInnerArrayFieldMangled");
-						
-						Expression newArrayStoreExpr = new ArrayStoreExpression(expr.getLocation(), newArrayType,
-								arrayFromStructExpression, asexpr.getIndices(), asexpr.getValue());
-						
-						// we have to fill in the actual struct type in the next
-						// run
-						Expression rtr = new StructConstructor(expr.getLocation(), null,
-								new String[] { "NameOfNewInnerArrayFieldMangled" },
-								new Expression[] { newArrayStoreExpr });
-						mLogger.info("Replaced " + BoogiePrettyPrinter.print(expr) + " with "
-								+ BoogiePrettyPrinter.print(rtr));
-						return rtr;
-					}
+				final ArrayStoreExpression asexpr = (ArrayStoreExpression) expr;
+				final BoogieType atype = (BoogieType) asexpr.getArray().getType();
+				final Set<BoogieType> set = getInstantiatedTypes(atype);
 
+				if (set != null) {
+					final ArrayBoogieType btype = (ArrayBoogieType) atype;
+					final Expression[] idxExpr = asexpr.getIndices().clone();
+					final BoogieType[] idxTypes = new BoogieType[idxExpr.length];
+					for (int i = 0; i < idxExpr.length; ++i) {
+						idxTypes[i] = (BoogieType) idxExpr[i].getType();
+					}
+					final ArrayBoogieType newArrayType = btype.instantiate(idxTypes,
+							(BoogieType) asexpr.getValue().getType());
+					assert newArrayType.getUnderlyingType().equals(newArrayType);
+					set.add(newArrayType);
+
+					final Expression arrayFromStructExpression = new StructAccessExpression(expr.getLocation(),
+							newArrayType, asexpr.getArray(), getStructFieldName(newArrayType));
+
+					final Expression newArrayStoreExpr = new ArrayStoreExpression(expr.getLocation(), newArrayType,
+							arrayFromStructExpression, asexpr.getIndices(), asexpr.getValue());
+
+					// we have to fill in the actual struct type in a later run
+					final Expression rtr = new StructConstructor(expr.getLocation(), null,
+							new String[] { getStructFieldName(newArrayType) }, new Expression[] { newArrayStoreExpr });
+					mLogger.info(
+							"Replaced " + BoogiePrettyPrinter.print(expr) + " with " + BoogiePrettyPrinter.print(rtr));
+					return rtr;
 				}
-				return expr;
+				mLogger.info(BoogiePrettyPrinter.print(expr) + " is not generic");
+			} else if (expr instanceof QuantifierExpression) {
+				final QuantifierExpression qexpr = (QuantifierExpression) expr;
+				if (qexpr.getTypeParams().length > 0) {
+					throw new UnsupportedOperationException("We do not support generic quantifier expressions (yet): "
+							+ BoogiePrettyPrinter.print(expr));
+				}
 			}
 			return super.processExpression(expr);
 		}
 
-		/**
-		 * Get the asttype of this generic variable (resolving synonyms if
-		 * necessary)
-		 */
-		private ASTType getType(PlaceholderVarList type) {
-			final ASTType rtr = type.getType();
-			if (rtr instanceof NamedType) {
-				final NamedType ntype = (NamedType) rtr;
-				final PlaceholderTypeDeclaration ptd = mGenericTypes.get(ntype.getName());
-				if (ptd != null) {
-					return ptd.getSynonym();
-				}
-			}
-			return rtr;
-		}
-
-		private VarList processGenericVarList(final VarList vl) {
-			mLogger.info(vl);
-			final PlaceholderVarList rtr = new PlaceholderVarList(vl);
-			for (final String id : rtr.getIdentifiers()) {
-				mGenericVariables.put(id, rtr);
-			}
-			return rtr;
-		}
-
-		/**
-		 * Produces a placeholder typedecl that will be instantiated in
-		 * {@link #run(Unit)}.
-		 * 
-		 * @param tdecl
-		 * @return
-		 */
-		private Declaration processGenericTypeDeclaration(final TypeDeclaration tdecl) {
-			mLogger.info(tdecl);
-			// a declaration of a generic type will be deleted. If we can, we
-			// instantiate it right here
-			final PlaceholderTypeDeclaration rtr = new PlaceholderTypeDeclaration(tdecl);
-
-			// either the type has a synonym and we have to look at this, or it
-			// has
-			// type params and then we need to look at those
-
-			// mark variable names as belonging to instantiatable typedecls
-			// in id expr, check variable names
-
-			mGenericTypes.put(rtr.getIdentifier(), rtr);
-
+		private String getStructFieldName(ArrayBoogieType newArrayType) {
+			final String rtr = mangleTypeName(new StringBuilder(), newArrayType).toString();
 			return rtr;
 		}
 	}
@@ -348,10 +385,25 @@ class TypeFlattener {
 			mParent = findParent();
 		}
 
-		private void addType(ASTType type) {
-			mTypes.add(type);
+		private void addType(BoogieType type) {
+			if (type == null) {
+				return;
+			}
 			if (mParent != null) {
 				mParent.addType(type);
+			} else {
+				mTypes.add(type.toASTType(getLocation()));
+			}
+		}
+
+		private void addType(ASTType type) {
+			if (type == null) {
+				return;
+			}
+			if (mParent != null) {
+				mParent.addType(type);
+			} else {
+				mTypes.add(type);
 			}
 		}
 
@@ -365,6 +417,11 @@ class TypeFlattener {
 				return null;
 			}
 			return findGenericDeclaration(typeName);
+		}
+
+		@Override
+		public String toString() {
+			return super.toString() + " (" + mTypes.toString() + ")";
 		}
 	}
 
@@ -392,14 +449,33 @@ class TypeFlattener {
 			return findGenericDeclaration(typename);
 		}
 
+		private void addType(BoogieType type) {
+			if (type == null) {
+				return;
+			}
+
+			if (mParent != null) {
+				mParent.addType(type);
+			} else {
+				mTypes.add(type.toASTType(getLocation()));
+			}
+		}
+
 		private void addType(ASTType type) {
 			if (type == null) {
 				return;
 			}
-			mTypes.add(type);
+
 			if (mParent != null) {
 				mParent.addType(type);
+			} else {
+				mTypes.add(type);
 			}
+		}
+		
+		@Override
+		public String toString() {
+			return super.toString() + " (" + mTypes.toString() + ")";
 		}
 	}
 }
