@@ -122,7 +122,7 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 			LevelRankingState<LETTER,STATE> lvlrk) {
 		STATE resState = m_det2res.get(lvlrk);
 		if (resState == null) {
-			resState = m_StateFactory.buchiComplementFKV(lvlrk);
+			resState = m_StateFactory.buchiComplementNCSB(lvlrk);
 			m_det2res.put(lvlrk, resState);
 			m_res2det.put(resState, lvlrk);
 			boolean isFinal = !lvlrk.isNonAcceptingSink() && lvlrk.isOempty();

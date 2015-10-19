@@ -26,8 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -176,6 +178,82 @@ public class StringFactory extends StateFactory<String> {
 	}
 	
 	
+	
+	@Override
+	public String buchiComplementNCSB(LevelRankingState<?, String> compl) {
+		if (compl.isNonAcceptingSink()) {
+			return compl.toString();
+		}
+		
+		List<DoubleDecker<String>> n = new ArrayList<DoubleDecker<String>>();
+		List<DoubleDecker<String>> c = new ArrayList<DoubleDecker<String>>();
+		List<DoubleDecker<String>> s = new ArrayList<DoubleDecker<String>>();
+		List<DoubleDecker<String>> b = new ArrayList<DoubleDecker<String>>();
+		
+		for (StateWithRankInfo<String> down : compl.getDownStates()) {
+			for (StateWithRankInfo<String> up : compl.getUpStates(down)) {
+				if (up.hasRank()) {
+					if (up.getRank() == 3) {
+						n.add(new DoubleDecker<String>(down.getState(), up.getState()));
+					} else if (up.getRank() == 2) {
+						c.add(new DoubleDecker<String>(down.getState(), up.getState()));
+						if (up.isInO()) {
+							b.add(new DoubleDecker<String>(down.getState(), up.getState()));
+						}
+					} else if (up.getRank() == 1) {
+						s.add(new DoubleDecker<String>(down.getState(), up.getState()));
+					} else {
+						throw new IllegalArgumentException("only 1,2,3");
+					}
+				} else {
+					throw new IllegalArgumentException("must have rank");
+				}
+			}
+		}
+		final boolean isNestedWordAutomaton = 
+				!compl.getOperand().getCallAlphabet().isEmpty();
+		StringBuilder sb = new StringBuilder();
+		sb.append("(");
+		sb.append(prettyprintCollectionOfStates(n,isNestedWordAutomaton));
+		sb.append(",");
+		sb.append(prettyprintCollectionOfStates(c,isNestedWordAutomaton));
+		sb.append(",");
+		sb.append(prettyprintCollectionOfStates(s,isNestedWordAutomaton));
+		sb.append(",");
+		sb.append(prettyprintCollectionOfStates(b,isNestedWordAutomaton));
+		sb.append("}");
+		return sb.toString();
+	}
+	
+	
+
+	private String prettyprintCollectionOfStates(List<DoubleDecker<String>> collection, boolean isNestedWordAutomaton) {
+		if (collection.isEmpty()) {
+			return "∅";
+		} else {
+			StringBuilder sb = new StringBuilder();
+			sb.append("{");
+			boolean isFirst = true;
+			for (DoubleDecker<String> dd : collection) {
+				if (isFirst) {
+					isFirst = false;
+				} else {
+					sb.append(",");
+				}
+				if (isNestedWordAutomaton) {
+					sb.append("(");
+					sb.append(dd.getDown());
+					sb.append(",");
+					sb.append(dd.getUp());
+					sb.append(")");
+				} else {
+					sb.append(dd.getUp());
+				}
+			}
+			sb.append("}");
+			return sb.toString();
+		}
+	}
 
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.ContentFactory#complementBuchiDeterministicNonFinal(java.lang.Object)
