@@ -138,22 +138,26 @@ public class StringFactory extends StateFactory<String> {
 			return compl.toString();
 		}
 		
+		final boolean isNestedWordAutomaton = 
+				!compl.getOperand().getCallAlphabet().isEmpty();
 		StringBuilder sb = new StringBuilder();
 		sb.append("{");
 		for (StateWithRankInfo<String> down : compl.getDownStates()) {
 			for (StateWithRankInfo<String> up : compl.getUpStates(down)) {
 				sb.append("(");
-				sb.append(down.getState());
-				sb.append(",");
-				if (down.hasRank()) {
-					sb.append(down.getRank());
-					if (down.isInO()) {
-						sb.append("X");
+				if (isNestedWordAutomaton) {
+					sb.append(down.getState());
+					sb.append(",");
+					if (down.hasRank()) {
+						sb.append(down.getRank());
+						if (down.isInO()) {
+							sb.append("X");
+						}
+					} else {
+						sb.append("∞");
 					}
-				} else {
-					sb.append("∞");
+					sb.append(",");
 				}
-				sb.append(",");
 				sb.append(up.getState());
 				sb.append(",");
 				if (up.hasRank()) {
