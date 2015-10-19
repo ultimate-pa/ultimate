@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.core.util.IToString;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
@@ -119,6 +120,16 @@ public class BoogiePrettyPrinter {
 		BoogieOutput output = new BoogieOutput(null);
 		StringBuilder sb = new StringBuilder();
 		output.appendProcedure(sb, actual);
+		removeLastLinebreak(sb);
+		return sb.toString();
+	}
+	
+	public static String printSignature(FunctionDeclaration decl) {
+		FunctionDeclaration actual = new FunctionDeclaration(decl.getLocation(), decl.getAttributes(), decl.getIdentifier(),
+				decl.getTypeParams(), decl.getInParams(), decl.getOutParam(), null);
+		BoogieOutput output = new BoogieOutput(null);
+		StringBuilder sb = new StringBuilder();
+		output.appendFunctionDeclaration(sb, actual);
 		removeLastLinebreak(sb);
 		return sb.toString();
 	}

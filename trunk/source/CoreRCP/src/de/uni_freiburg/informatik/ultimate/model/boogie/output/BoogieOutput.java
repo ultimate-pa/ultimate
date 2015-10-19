@@ -581,6 +581,11 @@ public class BoogieOutput {
 	 */
 	public void printFunctionDeclaration(FunctionDeclaration decl) {
 		StringBuilder sb = new StringBuilder();
+		appendFunctionDeclaration(sb,decl);
+		mWriter.println(sb.toString());
+	}
+
+	public void appendFunctionDeclaration(final StringBuilder sb, final FunctionDeclaration decl) {
 		sb.append("function ");
 		appendAttributes(sb, decl.getAttributes());
 		sb.append(decl.getIdentifier());
@@ -601,9 +606,9 @@ public class BoogieOutput {
 			sb.append(" { ");
 			appendExpression(sb, decl.getBody(), 0);
 			sb.append(" }");
-		} else
+		} else {
 			sb.append(";");
-		mWriter.println(sb.toString());
+		}
 	}
 
 	/**
