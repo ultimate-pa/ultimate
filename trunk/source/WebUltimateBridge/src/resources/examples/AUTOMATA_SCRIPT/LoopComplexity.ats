@@ -32,9 +32,9 @@ NestedWordAutomaton a1 = (
 	finalStates = {q1},
 	callTransitions = {},
 	internalTransitions = {
-	(q0 "0" q0)
-	(q0 "1" q1)
-	(q1 "0" q1)
+		(q0 "0" q0)
+		(q0 "1" q1)
+		(q1 "0" q1)
 	},
 	returnTransitions = {}
 );
@@ -52,10 +52,10 @@ NestedWordAutomaton a2 = (
 	finalStates = {q1},
 	callTransitions = {},
 	internalTransitions = {
-	(q0 "0" q1)
-	(q1 "1" q2)
-	(q2 "0" q1)
-	(q1 "0" q0)
+		(q0 "0" q1)
+		(q1 "1" q2)
+		(q2 "0" q1)
+		(q1 "0" q0)
 	},
 	returnTransitions = {}
 );
@@ -74,15 +74,15 @@ NestedWordAutomaton a3 = (
 	finalStates = {},
 	callTransitions = {},
 	internalTransitions = {
-	(q0 "1" q0)
-	(q0 "0" q1)
-	(q0 "0" q2)
-	(q1 "1" q0)
-	(q1 "0" q1)
-	(q1 "0" q2)
-	(q2 "1" q0)
-	(q2 "0" q1)
-	(q2 "0" q2)
+		(q0 "1" q0)
+		(q0 "0" q1)
+		(q0 "0" q2)
+		(q1 "1" q0)
+		(q1 "0" q1)
+		(q1 "0" q2)
+		(q2 "1" q0)
+		(q2 "0" q1)
+		(q2 "0" q2)
 	},
 	returnTransitions = {}
 );
