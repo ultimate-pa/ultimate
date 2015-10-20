@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Trigger;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
@@ -217,6 +218,24 @@ public abstract class BoogieTransformer {
 			ASTType[] newArgTypes = processTypes(argTypes);
 			if (newArgTypes != argTypes)
 				newType = new NamedType(ntype.getLocation(), ntype.getBoogieType(), ntype.getName(), newArgTypes);
+		} else if (type instanceof StructType) {
+			StructType stype = (StructType) type;
+			VarList[] fields = stype.getFields();
+			VarList[] newfields = stype.getFields();
+			boolean changed = false;
+			for (int i = 0; i < fields.length; ++i) {
+				VarList oldVarList = fields[i];
+				VarList newVarList = processVarList(oldVarList);
+				if (oldVarList != newVarList) {
+					newfields[i] = newVarList;
+					changed = true;
+				} else {
+					newfields[i] = oldVarList;
+				}
+			}
+			if (changed) {
+				newType = new StructType(stype.getLocation(), stype.getBoogieType(), newfields);
+			}
 		}
 		if (newType == null) {
 			return type;
