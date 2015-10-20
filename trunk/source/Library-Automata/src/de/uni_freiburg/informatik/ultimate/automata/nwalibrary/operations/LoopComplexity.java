@@ -51,8 +51,10 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
 /**
- * TODO: comment
- * 
+ * Operation that computes the loop complexity of an automaton.
+ * We define the loop complexity of an automaton as the loop complexity of
+ * the underlying graph representation. This number is also called cycle rank.
+ * https://en.wikipedia.org/wiki/Cycle_rank
  * 
  * @author Thomas Lang, Matthias Heizmann
  *
@@ -253,7 +255,7 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Operand with" + 
+		return "Finished " + operationName() + ". Operand with " + 
 				m_Operand.getStates().size() + " states hast loop complexity " 
 				+ m_Result;
 	}
