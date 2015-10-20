@@ -218,14 +218,14 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 			Iterable<IncomingInternalTransition<LETTER, STATE>> preds = m_Graph.internalPredecessors(q);
 			Iterable<OutgoingInternalTransition<LETTER, STATE>> succs = m_Graph.internalSuccessors(q);
 
-			for (@SuppressWarnings("unused") IncomingInternalTransition<LETTER, STATE> p : preds) {
+			for (IncomingInternalTransition<LETTER, STATE> p : preds) {
 				if (!states.contains(p.getPred())) {
 					continue;
 				}
 				++pCount;
 			}
 
-			for (@SuppressWarnings("unused") OutgoingInternalTransition<LETTER, STATE> s : succs) {
+			for (OutgoingInternalTransition<LETTER, STATE> s : succs) {
 				if (!states.contains(s.getSucc())) {
 					continue;
 				}
