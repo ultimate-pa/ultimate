@@ -89,24 +89,16 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 		LETTER internalLetter = m_Operand.getInternalAlphabet().iterator().next();
 		singletonLetter.add(internalLetter);
 		NestedWordAutomaton<LETTER, STATE> graph = new NestedWordAutomaton<LETTER, STATE>(m_Services, singletonLetter, singletonLetter, singletonLetter, m_Operand.getStateFactory());
-		Set<STATE> states = m_Operand.getStates();
 				
-		for (STATE q : states) {
+		for (STATE q : m_Operand.getStates()) {
 			graph.addState(true, true, q);
 		}
-				
-		for (LETTER l : m_Operand.getInternalAlphabet()) {
-			for (STATE q1 : states) {
-				// Check for cancel button.
-				if (!m_Services.getProgressMonitorService().continueProcessing()) {
-					throw new OperationCanceledException(this.getClass());
-				}
-				for (STATE q2 : states) {
-					if (m_Operand.containsInternalTransition(q1, l, q2)) {
-						if (!graph.containsInternalTransition(q1, internalLetter, q2)) {
-							graph.addInternalTransition(q1, internalLetter, q2);
-						}
-					}
+		
+		for (STATE q1 : m_Operand.getStates()) {
+			for ( OutgoingInternalTransition<LETTER, STATE> outTrans : m_Operand.internalSuccessors(q1)) {
+				STATE q2 = outTrans.getSucc();
+				if (!graph.containsInternalTransition(q1, internalLetter, q2)) {
+					graph.addInternalTransition(q1, internalLetter, q2);
 				}
 			}
 		}
