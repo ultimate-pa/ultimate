@@ -102,16 +102,14 @@ public class BoogiePreprocessor implements IAnalysis {
 		observers.add(new TypeChecker(mServices));
 		observers.add(new ConstExpander(backTranslator));
 		observers.add(new TypeFlattenerObserver(logger));
+		// FIXME: running the typechecker two times just to be sure the type
+		// flattener did nothing stupid
+		observers.add(new TypeChecker(mServices));
+
 		observers.add(new StructExpander(backTranslator, logger));
 		observers.add(new UnstructureCode(backTranslator));
 		observers.add(new FunctionInliner());
-		
-		
 
-		// FIXME: running the typechecker two times just to be sure the type
-				// flattener did nothing stupid
-		observers.add(new TypeChecker(mServices));
-		
 		observers.add(symb);
 		return observers;
 	}
