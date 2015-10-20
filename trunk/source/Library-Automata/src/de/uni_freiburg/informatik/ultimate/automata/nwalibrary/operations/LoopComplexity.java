@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * TODO: comment
  * 
  * 
- * @author Thomas Lang
+ * @author Thomas Lang, Matthias Heizmann
  *
  * @param <LETTER>
  * @param <STATE>
@@ -84,31 +84,42 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 			m_Operand = (new RemoveUnreachable<LETTER, STATE>(m_Services, operand)).getResult();
 		}
 		
-		// Build graph from m_Operand.
-		HashSet<LETTER> singletonLetter = new HashSet<LETTER>();
-		LETTER internalLetter = m_Operand.getInternalAlphabet().iterator().next();
-		singletonLetter.add(internalLetter);
-		NestedWordAutomaton<LETTER, STATE> graph = new NestedWordAutomaton<LETTER, STATE>(m_Services, singletonLetter, singletonLetter, singletonLetter, m_Operand.getStateFactory());
-				
-		for (STATE q : m_Operand.getStates()) {
-			graph.addState(true, true, q);
-		}
+		INestedWordAutomaton<LETTER, STATE> automaton = m_Operand;
 		
-		for (STATE q1 : m_Operand.getStates()) {
-			for ( OutgoingInternalTransition<LETTER, STATE> outTrans : m_Operand.internalSuccessors(q1)) {
-				STATE q2 = outTrans.getSucc();
-				if (!graph.containsInternalTransition(q1, internalLetter, q2)) {
-					graph.addInternalTransition(q1, internalLetter, q2);
-				}
-			}
-		}
-				
-		m_Graph = (new RemoveUnreachable<LETTER, STATE>(m_Services, graph)).getResult();
+		m_Graph = constructGraph(automaton);
 		
 		m_Logger.info(this.startMessage());
 		
 		m_Result = compute(m_Graph.getStates());
 		m_Logger.info(this.exitMessage());
+	}
+
+	/**
+	 * Construct an automaton that represents the graph structure of
+	 * the operand. The Result is a copy of the operand where each edge
+	 * has the same label. As label we us some letter form the alphabet.
+	 */
+	private NestedWordAutomatonReachableStates<LETTER, STATE> constructGraph(
+			INestedWordAutomaton<LETTER, STATE> automaton) throws OperationCanceledException {
+		LETTER letter = automaton.getInternalAlphabet().iterator().next();
+		Set<LETTER> singletonAlphabet = Collections.singleton(letter);
+		NestedWordAutomaton<LETTER, STATE> graph = new NestedWordAutomaton<LETTER, STATE>(
+				m_Services, singletonAlphabet, singletonAlphabet, singletonAlphabet, 
+				automaton.getStateFactory());
+				
+		for (STATE q : automaton.getStates()) {
+			graph.addState(true, true, q);
+		}
+		
+		for (STATE q1 : automaton.getStates()) {
+			for ( OutgoingInternalTransition<LETTER, STATE> outTrans : automaton.internalSuccessors(q1)) {
+				STATE q2 = outTrans.getSucc();
+				if (!graph.containsInternalTransition(q1, letter, q2)) {
+					graph.addInternalTransition(q1, letter, q2);
+				}
+			}
+		}
+		return (new RemoveUnreachable<LETTER, STATE>(m_Services, graph)).getResult();
 	}
 
 	// Compute the loop complexity of the subgraph of m_Graph specified by 'states'.
