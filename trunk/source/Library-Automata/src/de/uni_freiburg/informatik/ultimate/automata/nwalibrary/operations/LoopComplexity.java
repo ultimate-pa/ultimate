@@ -84,13 +84,11 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 			m_Operand = (new RemoveUnreachable<LETTER, STATE>(m_Services, operand)).getResult();
 		}
 		
-		INestedWordAutomaton<LETTER, STATE> automaton = m_Operand;
-		
-		m_Graph = constructGraph(automaton);
+		m_Graph = constructGraph(m_Operand);
 		
 		m_Logger.info(this.startMessage());
 		
-		m_Result = compute(m_Graph.getStates());
+		m_Result = computeLoopComplexityOfSubgraph(m_Graph.getStates());
 		m_Logger.info(this.exitMessage());
 	}
 
@@ -121,13 +119,19 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 		}
 		return (new RemoveUnreachable<LETTER, STATE>(m_Services, graph)).getResult();
 	}
+	
 
-	// Compute the loop complexity of the subgraph of m_Graph specified by 'states'.
-	private Integer compute(Set<STATE> states) throws AutomataLibraryException {
+	/**
+	 * Compute the loop complexity of the subgraph that is obtained by
+	 * projecting m_Graph to a subgraph. 
+	 * @throws AutomataLibraryException
+	 */
+	private Integer computeLoopComplexityOfSubgraph(Set<STATE> statesOfSubgraph) 
+			throws AutomataLibraryException {
 
-		AutomatonSccComputation<LETTER, STATE> sccComputer = new AutomatonSccComputation<LETTER, STATE>(m_Graph, m_Services, states, states);
-
-		Collection<StronglyConnectedComponent<STATE>> balls = sccComputer.getBalls();
+		AutomatonSccComputation<LETTER, STATE> sccComputation = 
+				new AutomatonSccComputation<LETTER, STATE>(m_Graph, m_Services, statesOfSubgraph, statesOfSubgraph);
+		Collection<StronglyConnectedComponent<STATE>> balls = sccComputation.getBalls();
 
 		for (StronglyConnectedComponent<STATE> scc : balls) {
 			scc.getNodes();
@@ -178,7 +182,7 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 			Collection<Integer> subGraphLoopComplexities = new ArrayList<Integer>();
 
 			// Create a copy since 'peakStates' itself should not be modified.
-			Set<STATE> copyStates = new HashSet<STATE>(states);
+			Set<STATE> copyStates = new HashSet<STATE>(statesOfSubgraph);
 
 			for (STATE stateOut : peakStates) {
 				// Check for cancel button.
@@ -191,7 +195,7 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 				if (statesToLC.containsKey(copyStates)) {
 					subGraphLoopComplexities.add(statesToLC.get(copyStates));
 				} else {
-					Integer i = this.compute(copyStates);
+					Integer i = this.computeLoopComplexityOfSubgraph(copyStates);
 
 					// Create another copy to prevent HashMap from not
 					// recognizing sets of states after they have been modified.
@@ -213,7 +217,7 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 				if (statesToLC.containsKey(scc.getNodes())) {
 					ballLoopComplexities.add(statesToLC.get(scc.getNodes()));
 				} else {
-					Integer i = this.compute(scc.getNodes());
+					Integer i = this.computeLoopComplexityOfSubgraph(scc.getNodes());
 
 					Set<STATE> keyStates = new HashSet<STATE>(scc.getNodes());
 					statesToLC.put(keyStates, i);
