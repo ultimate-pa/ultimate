@@ -133,10 +133,6 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 				new AutomatonSccComputation<LETTER, STATE>(m_Graph, m_Services, statesOfSubgraph, statesOfSubgraph);
 		Collection<StronglyConnectedComponent<STATE>> balls = sccComputation.getBalls();
 
-		for (StronglyConnectedComponent<STATE> scc : balls) {
-			scc.getNodes();
-		}
-
 		// Graph contains no balls.
 		if (balls.isEmpty()) {
 			return 0;
@@ -168,6 +164,8 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 					++sCount;
 				}
 
+				assert pCount > 0 : "must have at least one predecessor";
+				assert sCount > 0 : "must have at least one successor";
 				// Add all those states with the maximum number of edges to peakStates.
 				if (pCount != 1 || sCount != 1) {
 					peakStates.add(q);
