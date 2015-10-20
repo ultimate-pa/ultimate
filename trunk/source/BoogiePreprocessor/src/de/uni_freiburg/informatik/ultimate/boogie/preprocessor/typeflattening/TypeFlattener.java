@@ -2,14 +2,10 @@ package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.typeflattening;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -56,9 +52,7 @@ import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 class TypeFlattener {
 
 	private final Logger mLogger;
-	private final Map<String, PlaceholderTypeDeclaration> mGenericTypeDeclarations;
 	private final Map<BoogieType, Set<BoogieType>> mGenericType2InstantiatedTypes;
-	private final Map<BoogieType, Set<PlaceholderVarList>> mGenericType2Vars;
 	private final Map<StructConstructor, BoogieType> mStructConsts2BoogieTypes;
 	private final Map<BoogieType, StructBoogieType> mOld2NewArrayTypes;
 	private final ScopedHashMap<String, BoogieType> mVarnames2NewTypes;
@@ -69,9 +63,7 @@ class TypeFlattener {
 
 	TypeFlattener(final Logger logger) {
 		mLogger = logger;
-		mGenericTypeDeclarations = new LinkedHashMap<>();
 		mGenericType2InstantiatedTypes = new HashMap<BoogieType, Set<BoogieType>>();
-		mGenericType2Vars = new HashMap<BoogieType, Set<PlaceholderVarList>>();
 		mStructConsts2BoogieTypes = new HashMap<StructConstructor, BoogieType>();
 		mOld2NewArrayTypes = new HashMap<BoogieType, StructBoogieType>();
 		mVarnames2NewTypes = new ScopedHashMap<String, BoogieType>();
@@ -82,16 +74,17 @@ class TypeFlattener {
 
 	void run(final Unit unit) {
 
-		final ExposedTransformer[] transformers = new ExposedTransformer[] { 
-//				new InstantiateUninterpretedTypes(),
-				new InstantiateInterpretedTypes() 
-				};
+		final ExposedTransformer[] transformers = new ExposedTransformer[] { new InstantiateInterpretedTypes(),
+				new DeclareNewInterpretedTypes(), new InstantiateUninterpretedTypes(), };
 
 		List<Declaration> newdecls = new ArrayList<>();
 		List<Declaration> olddecls = new ArrayList<>();
-		olddecls.addAll(Arrays.asList(unit.getDeclarations()));
+		newdecls.addAll(Arrays.asList(unit.getDeclarations()));
 
 		for (final ExposedTransformer transformer : transformers) {
+			olddecls = newdecls;
+			newdecls = new ArrayList<Declaration>();
+
 			mLogger.info("Run " + transformer.getClass().getSimpleName());
 			for (final Declaration decl : olddecls) {
 				final Declaration newdecl = transformer.processDeclaration(decl);
@@ -100,43 +93,11 @@ class TypeFlattener {
 				}
 			}
 			transformer.finish(newdecls);
-			olddecls = newdecls;
-			newdecls = new ArrayList<Declaration>();
-		}
 
-		mLogger.info("Consolidate");
-		consolidateMaps();
-
-		olddecls = newdecls;
-		newdecls = new ArrayList<Declaration>();
-		mLogger.info("Second run");
-		final DeclareNewTypes second = new DeclareNewTypes();
-		for (final Declaration decl : olddecls) {
-			final Collection<Declaration> result = second.process(decl);
-			if (result != null) {
-				newdecls.addAll(result);
-			}
 		}
 
 		unit.setDeclarations(newdecls.toArray(new Declaration[newdecls.size()]));
 		return;
-	}
-
-	private void consolidateMaps() {
-		for (final Entry<BoogieType, Set<PlaceholderVarList>> gtype2vars : mGenericType2Vars.entrySet()) {
-			final Set<BoogieType> instantiatedTypes = mGenericType2InstantiatedTypes.get(gtype2vars.getKey());
-			for (final PlaceholderVarList var : gtype2vars.getValue()) {
-				for (final BoogieType instantiatedType : instantiatedTypes) {
-					var.addType(instantiatedType);
-				}
-			}
-		}
-	}
-
-	private boolean isGeneric(final VarList vl) {
-		// either the vl has an already defined generic type, or it is of a
-		// generic array type
-		return isGeneric(vl.getType());
 	}
 
 	private boolean isGeneric(final TypeDeclaration typeDecl) {
@@ -161,9 +122,15 @@ class TypeFlattener {
 			return isGeneric(atype.getValueType()) || Arrays.stream(atype.getIndexTypes()).anyMatch(this::isGeneric);
 		} else if (type instanceof NamedType) {
 			final NamedType ntype = (NamedType) type;
-			return ntype.getTypeArgs().length > 0 || mGenericTypeDeclarations.containsKey(ntype.getName());
+			return ntype.getTypeArgs().length > 0;
 		} else if (type instanceof StructType) {
-			throw new UnsupportedOperationException("Structs should have been resolved already");
+			final StructType stype = (StructType) type;
+			for (VarList field : stype.getFields()) {
+				if (isGeneric(field.getType())) {
+					return true;
+				}
+			}
+			return false;
 		} else if (type instanceof PrimitiveType) {
 			return false;
 		} else {
@@ -172,30 +139,49 @@ class TypeFlattener {
 		}
 	}
 
-	private String getTypeName(ASTType atype) {
-		if (atype instanceof NamedType) {
-			return ((NamedType) atype).getName();
-		}
-		return null;
-	}
+	private boolean isGeneric(BoogieType type) {
+		assert type != null;
+		type = type.getUnderlyingType();
 
-	private PlaceholderTypeDeclaration findGenericDeclaration(String typeName) {
-		for (final Entry<String, PlaceholderTypeDeclaration> possibleParent : mGenericTypeDeclarations.entrySet()) {
-			if (possibleParent.getKey().equals(typeName)) {
-				return possibleParent.getValue();
+		if (type instanceof ArrayBoogieType) {
+			final ArrayBoogieType atype = ((ArrayBoogieType) type);
+			if (atype.getNumPlaceholders() > 0) {
+				return true;
 			}
+			if (isGeneric(atype.getValueType())) {
+				return true;
+			}
+			for (int i = 0; i < atype.getIndexCount(); ++i) {
+				if (isGeneric(atype.getIndexType(i))) {
+					return true;
+				}
+			}
+			return false;
+
+		} else if (type instanceof ConstructedBoogieType) {
+			return ((ConstructedBoogieType) type).getParameterCount() > 0;
+		} else if (type instanceof PrimitiveBoogieType) {
+			return false;
+		} else if (type instanceof PlaceholderBoogieType) {
+			return true;
+		} else if (type instanceof StructBoogieType) {
+			final StructBoogieType stype = ((StructBoogieType) type);
+			for (BoogieType ftype : stype.getFieldTypes()) {
+				if (isGeneric(ftype)) {
+					return true;
+				}
+			}
+			return false;
+		} else {
+			throw new UnsupportedOperationException(
+					"Unknown type " + (type == null ? "null" : type.getClass().getSimpleName()));
 		}
-		return null;
 	}
 
 	private ASTType flatten(final ASTType type) {
 		if (type instanceof NamedType) {
 			final NamedType ntype = (NamedType) type;
 			if (ntype.getTypeArgs().length == 0) {
-				if (mGenericTypeDeclarations.containsKey(ntype.getName())) {
-					// this is a synonym and it should not be flattened
-					return null;
-				}
 				return ntype;
 			}
 
@@ -208,7 +194,11 @@ class TypeFlattener {
 					types.add(flattened);
 				}
 			}
-			return new NamedType(type.getLocation(), ntype.getName() + getNewTypeName(types), new ASTType[0]);
+
+			final String newname = ntype.getName() + getNewTypeName(types);
+			final BoogieType btype = BoogieType
+					.createConstructedType(new TypeConstructor(newname, false, 0, new int[0]));
+			return new NamedType(type.getLocation(), btype, newname, new ASTType[0]);
 		} else if (type instanceof PrimitiveType) {
 			return type;
 		}
@@ -231,23 +221,12 @@ class TypeFlattener {
 
 	private Set<BoogieType> getInstantiatedTypes(final BoogieType genericType) {
 		final BoogieType realGenericType = genericType.getUnderlyingType();
-		return mGenericType2InstantiatedTypes.get(realGenericType);
-	}
-
-	private void markGenericType(final BoogieType genericType, final PlaceholderVarList vl) {
-		final BoogieType realGenericType = genericType.getUnderlyingType();
-		Set<BoogieType> set = mGenericType2InstantiatedTypes.get(realGenericType);
-		if (set == null) {
-			set = new HashSet<BoogieType>();
-			mGenericType2InstantiatedTypes.put(realGenericType, set);
+		Set<BoogieType> rtr = mGenericType2InstantiatedTypes.get(realGenericType);
+		if (rtr == null) {
+			rtr = new HashSet<BoogieType>();
+			mGenericType2InstantiatedTypes.put(realGenericType, rtr);
 		}
-
-		Set<PlaceholderVarList> varlists = mGenericType2Vars.get(realGenericType);
-		if (varlists == null) {
-			varlists = new HashSet<PlaceholderVarList>();
-			mGenericType2Vars.put(realGenericType, varlists);
-		}
-		varlists.add(vl);
+		return rtr;
 	}
 
 	private StringBuilder mangleTypeName(StringBuilder sb, final BoogieType type) {
@@ -290,6 +269,48 @@ class TypeFlattener {
 		return iexpr.getIdentifier() + " (" + iexpr.getType() + ")";
 	}
 
+	private ASTType getNewType(final ASTType oldtype) {
+		// check if we already instantiated it
+		ASTType newtype = mOld2NewAstTypes.get(oldtype);
+		if (newtype != null) {
+			return newtype;
+		}
+
+		newtype = flatten(oldtype);
+		if (newtype == null) {
+			// cannot flatten directly
+			return null;
+		}
+		final String uninterpretedTypeName = BoogiePrettyPrinter.print(newtype);
+		mOld2NewAstTypes.put(oldtype, newtype);
+
+		final BoogieType oldboogietype = (BoogieType) oldtype.getBoogieType();
+		final BoogieType newboogietype = BoogieType
+				.createConstructedType(new TypeConstructor(uninterpretedTypeName, false, 0, new int[0]));
+		mOld2NewBoogieTypes.put(oldboogietype, newboogietype);
+
+		mNewType.add(uninterpretedTypeName);
+		return newtype;
+	}
+
+	private ASTType instantiateType(ASTType oldtype) {
+		assert oldtype != null;
+		assert oldtype.getBoogieType() != null;
+
+		BoogieType btype = ((BoogieType) oldtype.getBoogieType()).getUnderlyingType();
+		if (!isGeneric(btype)) {
+			return null;
+		}
+
+		final ASTType newtype = getNewType(oldtype);
+		if (newtype == null) {
+			return null;
+		}
+		mLogger.info(
+				"Replaced type " + BoogiePrettyPrinter.print(oldtype) + " with " + BoogiePrettyPrinter.print(newtype));
+		return newtype;
+	}
+
 	private static class ExposedTransformer extends BoogieTransformer {
 		@Override
 		protected Declaration processDeclaration(Declaration decl) {
@@ -328,7 +349,8 @@ class TypeFlattener {
 			}
 
 			final VarList rtr = new VarList(vl.getLocation(), vl.getIdentifiers(), newtype, vl.getWhereClause());
-			mLogger.info("Replaced varlist " + BoogiePrettyPrinter.print(vl) + " with " + BoogiePrettyPrinter.print(rtr));
+			mLogger.info(
+					"Replaced varlist " + BoogiePrettyPrinter.print(vl) + " with " + BoogiePrettyPrinter.print(rtr));
 			return rtr;
 		}
 
@@ -350,35 +372,8 @@ class TypeFlattener {
 
 		@Override
 		protected ASTType processType(ASTType oldtype) {
-			if (!isGeneric(oldtype)) {
-				return super.processType(oldtype);
-			}
-
-			final ASTType newtype = getNewType(oldtype);
-			if (newtype == null) {
-				return super.processType(oldtype);
-			}
-			mLogger.info(
-					"Replaced type " + BoogiePrettyPrinter.print(oldtype) + " with " + BoogiePrettyPrinter.print(newtype));
-			return newtype;
-		}
-
-		private ASTType getNewType(final ASTType oldtype) {
-			final ASTType newtype = flatten(oldtype);
-			if (newtype == null) {
-				// cannot flatten now, do it later
-				return null;
-			}
-			final String uninterpretedTypeName = BoogiePrettyPrinter.print(newtype);
-			mOld2NewAstTypes.put(oldtype, newtype);
-
-			final BoogieType oldboogietype = (BoogieType) oldtype.getBoogieType();
-			final BoogieType newboogietype = BoogieType
-					.createConstructedType(new TypeConstructor(uninterpretedTypeName, false, 0, new int[0]));
-			mOld2NewBoogieTypes.put(oldboogietype, newboogietype);
-
-			mNewType.add(uninterpretedTypeName);
-			return newtype;
+			final ASTType newtype = instantiateType(oldtype);
+			return null == newtype ? super.processType(oldtype) : newtype;
 		}
 
 		@Override
@@ -395,18 +390,7 @@ class TypeFlattener {
 
 		@Override
 		protected Declaration processDeclaration(final Declaration decl) {
-			if (decl instanceof TypeDeclaration) {
-				final TypeDeclaration tdecl = (TypeDeclaration) decl;
-				if (isGeneric(tdecl)) {
-					mLogger.info("Replaced " + BoogiePrettyPrinter.print(tdecl) + " with placeholder");
-					// a declaration of a generic type will be deleted. If we
-					// can, we instantiate it right here
-					final PlaceholderTypeDeclaration rtr = new PlaceholderTypeDeclaration(tdecl);
-					mGenericTypeDeclarations.put(rtr.getIdentifier(), rtr);
-					return rtr;
-				}
-				return tdecl;
-			} else if (decl instanceof Procedure) {
+			if (decl instanceof Procedure) {
 				Procedure proc = (Procedure) decl;
 				if (proc.getTypeParams().length > 0) {
 					throw new UnsupportedOperationException(
@@ -423,26 +407,12 @@ class TypeFlattener {
 		}
 
 		@Override
-		protected VarList processVarList(final VarList vl) {
-			if (isGeneric(vl)) {
-				final PlaceholderVarList rtr = new PlaceholderVarList(vl);
-				BoogieType bt = (BoogieType) vl.getType().getBoogieType();
-				markGenericType(bt, rtr);
-				mLogger.info("Replaced " + BoogiePrettyPrinter.print(vl) + " with placeholder");
-				return rtr;
-			}
-			return super.processVarList(vl);
-		}
-
-		@Override
 		protected Expression processExpression(final Expression expr) {
 			if (expr instanceof ArrayAccessExpression) {
 				final ArrayAccessExpression aaexpr = (ArrayAccessExpression) expr;
 				final BoogieType atype = (BoogieType) aaexpr.getArray().getType();
-				final Set<BoogieType> set = getInstantiatedTypes(atype);
-
-				if (set != null) {
-					// it is a generic
+				if (isGeneric(atype)) {
+					final Set<BoogieType> set = getInstantiatedTypes(atype);
 					final ArrayBoogieType genericType = (ArrayBoogieType) atype;
 					final Expression[] idxExpr = aaexpr.getIndices().clone();
 					final BoogieType[] idxTypes = new BoogieType[idxExpr.length];
@@ -463,18 +433,17 @@ class TypeFlattener {
 									getStructFieldName(newArrayType)),
 							idxExpr);
 
-					mLogger.info(
-							"Replaced " + BoogiePrettyPrinter.print(expr) + " with " + BoogiePrettyPrinter.print(rtr));
+					mLogger.info("Replaced ArrayAccessExpression " + BoogiePrettyPrinter.print(expr) + " with "
+							+ BoogiePrettyPrinter.print(rtr));
 					return rtr;
 				}
 				mLogger.info(BoogiePrettyPrinter.print(expr) + " is not generic");
 			} else if (expr instanceof ArrayStoreExpression) {
 				final ArrayStoreExpression asexpr = (ArrayStoreExpression) expr;
 				final BoogieType atype = (BoogieType) asexpr.getArray().getType();
-				final Set<BoogieType> set = getInstantiatedTypes(atype);
 
-				if (set != null) {
-
+				if (isGeneric(atype)) {
+					final Set<BoogieType> set = getInstantiatedTypes(atype);
 					final Expression[] newIdxExpr = new Expression[asexpr.getIndices().length];
 					final BoogieType[] idxTypes = new BoogieType[asexpr.getIndices().length];
 					for (int i = 0; i < newIdxExpr.length; ++i) {
@@ -501,8 +470,8 @@ class TypeFlattener {
 					// we have to fill in the actual struct type in a later run
 					final StructConstructor rtr = new StructConstructor(expr.getLocation(), null,
 							new String[] { getStructFieldName(newArrayType) }, new Expression[] { newArrayStoreExpr });
-					mLogger.info(
-							"Replaced " + BoogiePrettyPrinter.print(expr) + " with " + BoogiePrettyPrinter.print(rtr));
+					mLogger.info("Replaced ArrayStoreExpression " + BoogiePrettyPrinter.print(expr) + " with "
+							+ BoogiePrettyPrinter.print(rtr));
 					mStructConsts2BoogieTypes.put(rtr, atype);
 					return rtr;
 				}
@@ -523,57 +492,57 @@ class TypeFlattener {
 		}
 	}
 
-	private final class DeclareNewTypes extends BoogieTransformer {
+	private final class DeclareNewInterpretedTypes extends ExposedTransformer {
 
-		private Collection<Declaration> process(Declaration decl) {
-			if (decl instanceof PlaceholderTypeDeclaration) {
-				final Collection<Declaration> rtr = new ArrayList<Declaration>();
-				final PlaceholderTypeDeclaration ptdecl = (PlaceholderTypeDeclaration) decl;
-				final ASTType interpretedType = ptdecl.getSynonym();
-				if (interpretedType != null) {
+		@Override
+		protected Declaration processDeclaration(Declaration decl) {
+			if (decl instanceof TypeDeclaration) {
+				final TypeDeclaration tdecl = (TypeDeclaration) decl;
+				final ASTType interpretedType = tdecl.getSynonym();
+				if (interpretedType != null && isGeneric(interpretedType)) {
 					if (interpretedType instanceof ArrayType) {
-						final ILocation loc = ptdecl.getLocation();
-						int size = ptdecl.mTypes.size();
+						BoogieType oldBoogieType = (BoogieType) interpretedType.getBoogieType();
+						Set<BoogieType> set = mGenericType2InstantiatedTypes.get(oldBoogieType);
+
+						final ILocation loc = tdecl.getLocation();
+						int size = set.size();
 						final VarList[] fields = new VarList[size];
 						final String[] fNames = new String[size];
 						final BoogieType[] fTypes = new BoogieType[size];
 
 						int i = 0;
-						for (final ASTType newType : ptdecl.mTypes) {
+						for (final BoogieType newBoogieType : set) {
+							ASTType newType = newBoogieType.toASTType(decl.getLocation());
 							fNames[i] = getFieldName(newType);
-							fTypes[i] = (BoogieType) newType.getBoogieType();
+							fTypes[i] = newBoogieType;
 							fields[i] = new VarList(loc, new String[] { fNames[i] }, newType);
 							++i;
 						}
 
 						final StructBoogieType boogieType = BoogieType.createStructType(fNames, fTypes);
 
-						final ASTType synonym = new StructType(loc, boogieType, fields);
-						final TypeDeclaration newdecl = new TypeDeclaration(loc, ptdecl.getAttributes(),
-								ptdecl.isFinite(), ptdecl.getIdentifier(), new String[0], synonym);
-						mLogger.info("Declared " + BoogiePrettyPrinter.print(newdecl));
+						final ASTType synonym = processType(new StructType(loc, boogieType, fields));
+						final TypeDeclaration newdecl = new TypeDeclaration(loc, tdecl.getAttributes(),
+								tdecl.isFinite(), tdecl.getIdentifier(), new String[0], synonym);
+						mLogger.info("Replaced typedecl " + BoogiePrettyPrinter.print(tdecl) + " with "
+								+ BoogiePrettyPrinter.print(newdecl));
 						mOld2NewArrayTypes.put((BoogieType) interpretedType.getBoogieType(), boogieType);
-						rtr.add(newdecl);
-					}
-				} else {
-					// all uninterpreted types are just named types
-					for (final ASTType newType : ptdecl.mTypes) {
-						final NamedType nt = (NamedType) newType;
-						final TypeDeclaration newdecl = new TypeDeclaration(ptdecl.getLocation(),
-								ptdecl.getAttributes(), ptdecl.isFinite(), nt.getName(), new String[0]);
-						mLogger.info("Declared " + BoogiePrettyPrinter.print(newdecl));
-						rtr.add(newdecl);
+						return newdecl;
 					}
 				}
-				return rtr;
 			} else if (decl instanceof FunctionDeclaration || decl instanceof Procedure) {
 				mVarnames2NewTypes.beginScope();
-				final List<Declaration> rtr = Collections.singletonList(super.processDeclaration(decl));
+				Declaration rtr = super.processDeclaration(decl);
 				mVarnames2NewTypes.endScope();
 				return rtr;
 			}
+			return super.processDeclaration(decl);
+		}
 
-			return Collections.singletonList(super.processDeclaration(decl));
+		@Override
+		protected ASTType processType(ASTType oldtype) {
+			final ASTType newtype = instantiateType(oldtype);
+			return null == newtype ? super.processType(oldtype) : newtype;
 		}
 
 		@Override
@@ -585,49 +554,8 @@ class TypeFlattener {
 		}
 
 		@Override
-		protected VarList processVarList(VarList vl) {
-			if (vl instanceof PlaceholderVarList) {
-				final PlaceholderVarList phvl = ((PlaceholderVarList) vl);
-				final ASTType type = phvl.getType();
-				ASTType newtype = flatten(type);
-				if (newtype == null) {
-					// we probably replaced the parent, so lets just get that
-					// one
-					BoogieType oldBoogieType = ((BoogieType) type.getBoogieType()).getUnderlyingType();
-					StructBoogieType newBoogieType = mOld2NewArrayTypes.get(oldBoogieType);
-					newtype = newBoogieType.toASTType(vl.getLocation());
-				} else {
-					final BoogieType oldBoogieType = (BoogieType) type.getBoogieType();
-					newtype.setBoogieType(BoogieType.createConstructedType(new TypeConstructor(
-							((NamedType) newtype).getName(), oldBoogieType.isFinite(), 0, new int[0])));
-
-				}
-				final BoogieType bt = (BoogieType) newtype.getBoogieType();
-				assert bt != null;
-				final VarList newvl = new VarList(vl.getLocation(), vl.getIdentifiers(), newtype, vl.getWhereClause());
-				for (final String id : vl.getIdentifiers()) {
-					mVarnames2NewTypes.put(id, bt.getUnderlyingType());
-				}
-				mLogger.info("Declared " + BoogiePrettyPrinter.print(newvl));
-				return newvl;
-			}
-
-			return super.processVarList(vl);
-		}
-
-		@Override
 		protected Expression processExpression(Expression expr) {
-			if (expr instanceof IdentifierExpression) {
-				final IdentifierExpression iexpr = (IdentifierExpression) expr;
-				final BoogieType newtype = mVarnames2NewTypes.get(iexpr.getIdentifier());
-				if (newtype != null) {
-					mLogger.info("Changed type of identifier " + BoogiePrettyPrinter.print(iexpr) + ": "
-							+ iexpr.getType() + " -> " + newtype);
-					return new IdentifierExpression(expr.getLocation(), newtype, iexpr.getIdentifier(),
-							iexpr.getDeclarationInformation());
-				}
-
-			} else if (expr instanceof StructConstructor) {
+			if (expr instanceof StructConstructor) {
 				return createStructConstructor((StructConstructor) expr);
 			} else if (expr instanceof StructAccessExpression) {
 				// replace all the wrong array types with the now known struct
@@ -697,111 +625,5 @@ class TypeFlattener {
 			return rtr;
 		}
 
-	}
-
-	private final class PlaceholderTypeDeclaration extends TypeDeclaration {
-		private static final long serialVersionUID = 602282055128508050L;
-		private Set<ASTType> mTypes;
-		private PlaceholderTypeDeclaration mParent;
-
-		public PlaceholderTypeDeclaration(TypeDeclaration tdecl) {
-			super(tdecl.getLocation(), tdecl.getAttributes(), tdecl.isFinite(), tdecl.getIdentifier(),
-					tdecl.getTypeParams(), tdecl.getSynonym());
-			mTypes = new HashSet<>();
-			mParent = findParent();
-		}
-
-		private void addType(BoogieType type) {
-			if (type == null) {
-				return;
-			}
-			if (mParent != null) {
-				mParent.addType(type);
-			} else {
-				mTypes.add(type.toASTType(getLocation()));
-			}
-		}
-
-		private void addType(ASTType type) {
-			if (type == null) {
-				return;
-			}
-			if (mParent != null) {
-				mParent.addType(type);
-			} else {
-				mTypes.add(type);
-			}
-		}
-
-		private PlaceholderTypeDeclaration findParent() {
-			if (getSynonym() == null) {
-				return null;
-			}
-
-			final String typeName = getTypeName(getSynonym());
-			if (typeName == null) {
-				return null;
-			}
-			return findGenericDeclaration(typeName);
-		}
-
-		@Override
-		public String toString() {
-			return super.toString() + " (" + mTypes.toString() + ")";
-		}
-	}
-
-	private final class PlaceholderVarList extends VarList {
-		private static final long serialVersionUID = -4964753793362170227L;
-		private PlaceholderTypeDeclaration mParent;
-		private Set<ASTType> mTypes;
-
-		public PlaceholderVarList(VarList vl) {
-			super(vl.getLocation(), vl.getIdentifiers(), vl.getType(), vl.getWhereClause());
-			mParent = findParent();
-			mTypes = new HashSet<ASTType>();
-			addType(flatten(getType()));
-		}
-
-		private PlaceholderTypeDeclaration findParent() {
-			BoogieType bt = (BoogieType) getType().getBoogieType();
-			ASTType atype = bt.toASTType(getLocation());
-			String typename = getTypeName(atype);
-			if (typename == null) {
-				// this might be a generic variable; we have to duplicate it
-				// based on its access
-				return null;
-			}
-			return findGenericDeclaration(typename);
-		}
-
-		private void addType(BoogieType type) {
-			if (type == null) {
-				return;
-			}
-
-			if (mParent != null) {
-				mParent.addType(type);
-			} else {
-				mTypes.add(type.toASTType(getLocation()));
-			}
-		}
-
-		private void addType(ASTType type) {
-			if (type == null) {
-				return;
-			}
-
-			if (mParent != null) {
-				mParent.addType(type);
-			} else {
-				mTypes.add(type);
-			}
-		}
-
-		@Override
-		public String toString() {
-			return super.toString() + " (" + mTypes.toString() + ")";
-		}
 	}
 }
