@@ -139,50 +139,22 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 		} else if (balls.size() == 1) { // Graph itself is a ball.
 			// Consider all subgraphs differing from original graph by one vertex.
 
-			Collection<STATE> peakStates = new ArrayList<STATE>();
+
 			Set<STATE> ballStates = balls.iterator().next().getNodes();
 
-			// Determine number of predecessors and successors for each state.
-			for (STATE q : ballStates) {
-				int pCount = 0;
-				int sCount = 0;
-
-				Iterable<IncomingInternalTransition<LETTER, STATE>> preds = m_Graph.internalPredecessors(q);
-				Iterable<OutgoingInternalTransition<LETTER, STATE>> succs = m_Graph.internalSuccessors(q);
-
-				for (@SuppressWarnings("unused") IncomingInternalTransition<LETTER, STATE> p : preds) {
-					if (!ballStates.contains(p.getPred())) {
-						continue;
-					}
-					++pCount;
-				}
-
-				for (@SuppressWarnings("unused") OutgoingInternalTransition<LETTER, STATE> s : succs) {
-					if (!ballStates.contains(s.getSucc())) {
-						continue;
-					}
-					++sCount;
-				}
-
-				assert pCount > 0 : "must have at least one predecessor";
-				assert sCount > 0 : "must have at least one successor";
-				// Add all those states with the maximum number of edges to peakStates.
-				if (pCount != 1 || sCount != 1) {
-					peakStates.add(q);
-				}
-			}
+			Collection<STATE> nonchainStates = extractNonchainStates(ballStates);
 
 			// If every state has one predecessor and one successor, the ball is a cycle.
-			if (peakStates.isEmpty()) {
+			if (nonchainStates.isEmpty()) {
 				return 1;
 			}
 
 			Collection<Integer> subGraphLoopComplexities = new ArrayList<Integer>();
 
-			// Create a copy since 'peakStates' itself should not be modified.
+			// Create a copy since 'nonchainStates' itself should not be modified.
 			Set<STATE> copyStates = new HashSet<STATE>(statesOfSubgraph);
 
-			for (STATE stateOut : peakStates) {
+			for (STATE stateOut : nonchainStates) {
 				// Check for cancel button.
 				if (!m_Services.getProgressMonitorService().continueProcessing()) {
 					throw new OperationCanceledException(this.getClass());
@@ -228,6 +200,46 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 		}
 	}
 
+	
+	/**
+	 * Returns a new collection that contains only the non-chain states.
+	 * We call a state a non-chain state if it has not exactly one predecessor
+	 * or not exactly one successor. 
+	 */
+	private Collection<STATE> extractNonchainStates(Set<STATE> states) {
+		Collection<STATE> peakStates = new ArrayList<STATE>();
+		// Determine number of predecessors and successors for each state.
+		for (STATE q : states) {
+			int pCount = 0;
+			int sCount = 0;
+
+			Iterable<IncomingInternalTransition<LETTER, STATE>> preds = m_Graph.internalPredecessors(q);
+			Iterable<OutgoingInternalTransition<LETTER, STATE>> succs = m_Graph.internalSuccessors(q);
+
+			for (@SuppressWarnings("unused") IncomingInternalTransition<LETTER, STATE> p : preds) {
+				if (!states.contains(p.getPred())) {
+					continue;
+				}
+				++pCount;
+			}
+
+			for (@SuppressWarnings("unused") OutgoingInternalTransition<LETTER, STATE> s : succs) {
+				if (!states.contains(s.getSucc())) {
+					continue;
+				}
+				++sCount;
+			}
+
+			assert pCount > 0 : "must have at least one predecessor";
+			assert sCount > 0 : "must have at least one successor";
+			// Add all those states with the maximum number of edges to peakStates.
+			if (pCount != 1 || sCount != 1) {
+				peakStates.add(q);
+			}
+		}
+		return peakStates;
+	}
+
 	@Override
 	public String operationName() {
 		return "loopComplexity";
@@ -241,7 +253,9 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 
 	@Override
 	public String exitMessage() {
-		return "test";
+		return "Finished " + operationName() + ". Operand with" + 
+				m_Operand.getStates().size() + " states hast loop complexity " 
+				+ m_Result;
 	}
 
 	@Override
