@@ -221,7 +221,7 @@ public class StringFactory extends StateFactory<String> {
 		sb.append(prettyprintCollectionOfStates(s,isNestedWordAutomaton));
 		sb.append(",");
 		sb.append(prettyprintCollectionOfStates(b,isNestedWordAutomaton));
-		sb.append("}");
+		sb.append(")");
 		return sb.toString();
 	}
 	
@@ -229,7 +229,7 @@ public class StringFactory extends StateFactory<String> {
 
 	private String prettyprintCollectionOfStates(List<DoubleDecker<String>> collection, boolean isNestedWordAutomaton) {
 		if (collection.isEmpty()) {
-			return "∅";
+			return "{}";
 		} else {
 			StringBuilder sb = new StringBuilder();
 			sb.append("{");
