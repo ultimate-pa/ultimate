@@ -53,12 +53,12 @@ public class InterpolantConsolidationMemsafetyTest extends AbstractTraceAbstract
 	 * 
 	 */
 	private static final String[] m_Settings = {
-			"automizer/interpolantConsolidation/FP.epf",
-			"automizer/interpolantConsolidation/FP_CO.epf",
-			"automizer/interpolantConsolidation/BP.epf",
-			"automizer/interpolantConsolidation/BP_CO.epf",
-			"automizer/interpolantConsolidation/TwoTrack_CO.epf",
-			"automizer/interpolantConsolidation/TwoTrack.epf"
+			"automizer/interpolantConsolidation/FP-Mem.epf",
+			"automizer/interpolantConsolidation/FP_CO-Mem.epf",
+			"automizer/interpolantConsolidation/BP-Mem.epf",
+			"automizer/interpolantConsolidation/BP_CO-Mem.epf",
+			"automizer/interpolantConsolidation/TwoTrack_CO-Mem.epf",
+			"automizer/interpolantConsolidation/TwoTrack-Mem.epf"
 	};
 	
 	/**
