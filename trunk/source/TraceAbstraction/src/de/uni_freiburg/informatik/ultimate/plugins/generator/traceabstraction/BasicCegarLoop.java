@@ -86,6 +86,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.StraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.TotalInterpolationAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.TwoTrackInterpolantAutomatonBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EfficientHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
@@ -146,6 +147,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected final boolean m_AbstractInterpretationMode;
 	private Map<Object, Term> m_AITermMap;
 	private NestedWordAutomaton<WitnessEdge, WitnessNode> m_WitnessAutomaton;
+	private IHoareTripleChecker m_HoareTripleChecker;
 
 	public BasicCegarLoop(String name, RootNode rootNode, SmtManager smtManager, TAPreferences taPrefs,
 			Collection<ProgramPoint> errorLocs, INTERPOLATION interpolation, boolean computeHoareAnnotation,
@@ -456,9 +458,14 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		// Map<IPredicate, Set<IPredicate>> removedDoubleDeckers = null;
 		// Map<IPredicate, IPredicate> context2entry = null;
 
-		IHoareTripleChecker htc = getEfficientHoareTripleChecker(m_Pref.getHoareTripleChecks(), 
-				m_SmtManager, m_ModGlobVarManager, m_InterpolantGenerator.getPredicateUnifier());
-
+		final IHoareTripleChecker htc;
+		if (m_HoareTripleChecker != null) {
+			htc = m_HoareTripleChecker;
+		} else {
+			IHoareTripleChecker ehtc = getEfficientHoareTripleChecker(m_Pref.getHoareTripleChecks(), 
+					m_SmtManager, m_ModGlobVarManager, m_InterpolantGenerator.getPredicateUnifier());
+			htc = new CachingHoareTripleChecker(ehtc, m_InterpolantGenerator.getPredicateUnifier());
+		}
 		try {
 			if (m_DifferenceInsteadOfIntersection) {
 				mLogger.debug("Start constructing difference");
