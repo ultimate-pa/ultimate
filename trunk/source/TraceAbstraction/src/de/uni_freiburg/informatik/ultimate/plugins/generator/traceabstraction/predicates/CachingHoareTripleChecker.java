@@ -74,49 +74,53 @@ public class CachingHoareTripleChecker implements IHoareTripleChecker {
 	}
 
 	private Validity extendedCacheCheckInternal(IPredicate pre, CodeBlock cb, IPredicate succ) {
-		Set<IPredicate> strongerThanPre = m_PredicateUnifer.getCoverageRelation().getCoveringPredicates(pre);
-		Set<IPredicate> weakerThanSucc = m_PredicateUnifer.getCoverageRelation().getCoveredPredicates(succ);
 		boolean someResultWasUnknown = false;
-		for (IPredicate strengthenedPre : strongerThanPre) {
-			for (IPredicate weakenedSucc : weakerThanSucc) {
-				Validity result = m_InternalCache.get(strengthenedPre, cb, weakenedSucc);
-				if (result != null) {
-					switch (result) {
-					case VALID:
-						break;
-					case UNKNOWN:
-						someResultWasUnknown = true;
-						break;
-					case INVALID:
-						return result;
-					case NOT_CHECKED:
-						break;
+		{
+			Set<IPredicate> strongerThanPre = m_PredicateUnifer.getCoverageRelation().getCoveredPredicates(succ);
+			Set<IPredicate> weakerThanSucc = m_PredicateUnifer.getCoverageRelation().getCoveringPredicates(pre);
+			for (IPredicate strengthenedPre : strongerThanPre) {
+				for (IPredicate weakenedSucc : weakerThanSucc) {
+					Validity result = m_InternalCache.get(strengthenedPre, cb, weakenedSucc);
+					if (result != null) {
+						switch (result) {
+						case VALID:
+							break;
+						case UNKNOWN:
+							someResultWasUnknown = true;
+							break;
+						case INVALID:
+							return result;
+						case NOT_CHECKED:
+							break;
 //						throw new IllegalStateException("use protective Hoare triple checker");
-					default:
-						throw new AssertionError("unknown case");
+						default:
+							throw new AssertionError("unknown case");
+						}
 					}
 				}
 			}
 		}
-		Set<IPredicate> weakerThanPre = m_PredicateUnifer.getCoverageRelation().getCoveringPredicates(pre);
-		Set<IPredicate> strongerThanSucc = m_PredicateUnifer.getCoverageRelation().getCoveredPredicates(succ);
-		for (IPredicate weakenedPre : weakerThanPre) {
-			for (IPredicate strengthenedSucc : strongerThanSucc) {
-				Validity result = m_InternalCache.get(weakenedPre, cb, strengthenedSucc);
-				if (result != null) {
-					switch (result) {
-					case VALID:
-						return result;
-					case UNKNOWN:
-						someResultWasUnknown = true;
-						break;
-					case INVALID:
-						break;
-					case NOT_CHECKED:
-						break;
+		{
+			Set<IPredicate> weakerThanPre = m_PredicateUnifer.getCoverageRelation().getCoveringPredicates(pre);
+			Set<IPredicate> strongerThanSucc = m_PredicateUnifer.getCoverageRelation().getCoveredPredicates(succ);
+			for (IPredicate weakenedPre : weakerThanPre) {
+				for (IPredicate strengthenedSucc : strongerThanSucc) {
+					Validity result = m_InternalCache.get(weakenedPre, cb, strengthenedSucc);
+					if (result != null) {
+						switch (result) {
+						case VALID:
+							return result;
+						case UNKNOWN:
+							someResultWasUnknown = true;
+							break;
+						case INVALID:
+							break;
+						case NOT_CHECKED:
+							break;
 //						throw new IllegalStateException("use protective Hoare triple checker");
-					default:
-						throw new AssertionError("unknown case");
+						default:
+							throw new AssertionError("unknown case");
+						}
 					}
 				}
 			}
