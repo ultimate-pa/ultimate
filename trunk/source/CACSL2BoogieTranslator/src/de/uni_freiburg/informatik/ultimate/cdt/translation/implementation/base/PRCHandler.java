@@ -574,7 +574,7 @@ public class PRCHandler extends CHandler {
 				variablesOnHeap.add(d);
 			} else {
 				//TODO: handle f.i. something like "(int *) a[2]" where a is two-dimensional (thus a[2] is an array)
-				throw new UnsupportedOperationException("determine on-heap/off-heap for nested arrays");
+//				throw new UnsupportedOperationException("determine on-heap/off-heap for nested arrays");
 			}
 			return switchedRexpr;
 		}

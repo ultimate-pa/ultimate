@@ -41,11 +41,15 @@ import java.util.Map;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRCHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.PRSymbolTableValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
@@ -59,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieIdExpressionExtractor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
@@ -247,8 +252,28 @@ public class ExpressionResult extends Result {
 			replaceEnumByInt();
 			result = this;
 		} else if (lrVal instanceof LocalLValue) {
-			if (!(main instanceof PRDispatcher) && (lrVal.getCType() instanceof CArray)) {
-				throw new AssertionError("on-heap/off-heap bug: array " + lrVal.toString() + " has to be on-heap");
+			if (main instanceof PRDispatcher) {
+				// we are in prerun mode
+				if (lrVal.getCType().getUnderlyingType() instanceof CArray) {
+					// move it on-heap
+					Expression expr = lrVal.getValue();
+					BoogieIdExpressionExtractor biee = new BoogieIdExpressionExtractor();
+					biee.processExpression(expr);
+					for (IdentifierExpression idexpr : biee.getIdExpressions()) {
+						SymbolTable st = main.cHandler.getSymbolTable();
+						String cid = st.getCID4BoogieID(idexpr.getIdentifier(), loc);
+						PRSymbolTableValue value = (PRSymbolTableValue) st.get(cid, loc);
+						CType type = value.getCVariable().getUnderlyingType();
+						if (type instanceof CArray || type instanceof CStruct) {
+							((PRCHandler) main.cHandler).getVarsForHeap().add(value.decl);
+						}
+						
+					}
+				}
+			} else {
+				if (lrVal.getCType().getUnderlyingType() instanceof CArray) {
+					throw new AssertionError("on-heap/off-heap bug: array " + lrVal.toString() + " has to be on-heap");
+				}
 			}
 			final CType underlyingType = this.lrVal.getCType().getUnderlyingType();
 			final CType resultType;
