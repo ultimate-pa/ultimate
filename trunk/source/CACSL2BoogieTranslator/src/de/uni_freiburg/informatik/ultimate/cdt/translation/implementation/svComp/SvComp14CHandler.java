@@ -323,8 +323,11 @@ public class SvComp14CHandler extends CHandler {
 		 * triggers the processor to load something into cache, does nothing else
 		 * is void thus has no return value
 		 */
-		if (methodName.equals("__builtin_prefetch")) {
-			main.warn(loc, "ignored call to __builtin_prefetch");
+		if (methodName.equals("__builtin_prefetch") || 
+				methodName.equals("__builtin_va_start") ||
+				methodName.equals("__builtin_va_end") ||
+				methodName.equals("__builtin_return_address")) {
+			main.warn(loc, "ignored call to " + methodName);
 			return new SkipResult();
 		}
 
