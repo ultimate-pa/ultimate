@@ -35,6 +35,7 @@ import java.util.ListIterator;
 import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.typechecker.TypeCheckException;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ModelUtils;

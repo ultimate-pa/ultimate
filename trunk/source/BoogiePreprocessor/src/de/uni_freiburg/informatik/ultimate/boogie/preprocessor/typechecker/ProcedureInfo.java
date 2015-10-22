@@ -24,44 +24,70 @@
  * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
+package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.typechecker;
 
-import de.uni_freiburg.informatik.ultimate.boogie.type.FunctionSignature;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
-
-public class FunctionInfo {
-	private final FunctionDeclaration declaration;
-	private final String name;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
+/**
+ * 
+ * @author Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
+ *
+ */
+class ProcedureInfo {
+	private final Procedure declaration;
 	private final TypeParameters typeParams;
-	private final FunctionSignature sig;
-	
-	public String getName() {
-		return name;
-	}
-
-	public FunctionSignature getSignature() {
-		return sig;
-	}
+	private final VariableInfo[] inParams;
+	private final VariableInfo[] outParams;
 	
 	public TypeParameters getTypeParameters() {
 		return typeParams;
 	}
 
-	public FunctionDeclaration getDeclaration() {
+	public Procedure getDeclaration() {
 		return declaration;
 	}
 	
-	public FunctionInfo(FunctionDeclaration declaration, String name, 
-			TypeParameters typeParams, FunctionSignature sig) {
-		this.declaration = declaration; 
-		this.name = name;
-		this.typeParams = typeParams;
-		this.sig = sig;
+	public VariableInfo[] getInParams() {
+		return inParams;
 	}
-
+	
+	public VariableInfo[] getOutParams() {
+		return outParams;
+	}
+	
+	public ProcedureInfo(Procedure declaration, 
+			TypeParameters typeParams, VariableInfo[] inParams, VariableInfo[] outParams) {
+		this.declaration = declaration; 
+		this.typeParams = typeParams;
+		this.inParams = inParams;
+		this.outParams = outParams;
+	}
+	
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
-		sb.append(declaration.getIdentifier()).append(sig);
+		sb.append(declaration.getIdentifier()).append('<').append(typeParams.getCount());
+		sb.append(">(");
+		String comma ="";
+		for (VariableInfo vi : inParams) {
+			sb.append(comma);
+			if (vi.getName() != null) {
+				sb.append(vi.getName()).append(":");
+			}
+			sb.append(vi.getType());
+			comma = ",";
+		}
+		if (outParams.length > 0) {
+			sb.append(") returns (");
+			comma ="";
+			for (VariableInfo vi : outParams) {
+				sb.append(comma);
+				if (vi.getName() != null) {
+					sb.append(vi.getName()).append(":");
+				}
+				sb.append(vi.getType());
+				comma = ",";
+			}
+		}
+		sb.append(")");
 		return sb.toString();
 	}
 }

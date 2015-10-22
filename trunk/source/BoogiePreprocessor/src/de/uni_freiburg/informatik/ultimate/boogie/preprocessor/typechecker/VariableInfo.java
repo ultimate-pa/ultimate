@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2008-2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
+ * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE BoogiePreprocessor plug-in.
@@ -24,66 +25,55 @@
  * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
+package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.typechecker;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 
-public class ProcedureInfo {
-	private final Procedure declaration;
-	private final TypeParameters typeParams;
-	private final VariableInfo[] inParams;
-	private final VariableInfo[] outParams;
+/**
+ * 
+ * @author Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
+ *
+ */
+class VariableInfo {
+	private final boolean rigid;
+	private final Declaration declaration;
+	private final String name;
+	private final BoogieType type;
+	private final DeclarationInformation declarationInformation;
 	
-	public TypeParameters getTypeParameters() {
-		return typeParams;
+	public boolean isRigid() {
+		return rigid;
 	}
 
-	public Procedure getDeclaration() {
+	public String getName() {
+		return name;
+	}
+
+	public BoogieType getType() {
+		return type;
+	}
+	
+	public Declaration getDeclaration() {
 		return declaration;
 	}
 	
-	public VariableInfo[] getInParams() {
-		return inParams;
+	public DeclarationInformation getDeclarationInformation() {
+		return declarationInformation;
 	}
-	
-	public VariableInfo[] getOutParams() {
-		return outParams;
-	}
-	
-	public ProcedureInfo(Procedure declaration, 
-			TypeParameters typeParams, VariableInfo[] inParams, VariableInfo[] outParams) {
+
+	public VariableInfo(boolean rigid, Declaration declaration, String name, 
+			BoogieType type, DeclarationInformation declarationInformation) {
+		super();
+		this.rigid = rigid;
 		this.declaration = declaration; 
-		this.typeParams = typeParams;
-		this.inParams = inParams;
-		this.outParams = outParams;
+		this.name = name;
+		this.type = type;
+		this.declarationInformation = declarationInformation;
 	}
 	
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
-		sb.append(declaration.getIdentifier()).append('<').append(typeParams.getCount());
-		sb.append(">(");
-		String comma ="";
-		for (VariableInfo vi : inParams) {
-			sb.append(comma);
-			if (vi.getName() != null) {
-				sb.append(vi.getName()).append(":");
-			}
-			sb.append(vi.getType());
-			comma = ",";
-		}
-		if (outParams.length > 0) {
-			sb.append(") returns (");
-			comma ="";
-			for (VariableInfo vi : outParams) {
-				sb.append(comma);
-				if (vi.getName() != null) {
-					sb.append(vi.getName()).append(":");
-				}
-				sb.append(vi.getType());
-				comma = ",";
-			}
-		}
-		sb.append(")");
-		return sb.toString();
+		return name + ":" + type;
 	}
 }

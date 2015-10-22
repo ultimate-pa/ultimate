@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2008-2015 Jochen Hoenicke (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2008-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
@@ -27,7 +28,7 @@
 /**
  * 
  */
-package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
+package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.typechecker;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,6 +42,7 @@ import java.util.Set;
 import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayBoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.FunctionSignature;
@@ -107,6 +109,11 @@ import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck.CheckableExpression;
 import de.uni_freiburg.informatik.ultimate.result.TypeErrorResult;
 
+/**
+ * 
+ * @author Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
+ *
+ */
 public class TypeChecker extends BaseObserver {
 	private TypeManager typeManager;
 	private HashMap<String, FunctionInfo> declaredFunctions;

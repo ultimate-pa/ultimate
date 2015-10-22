@@ -34,6 +34,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.typechecker.TypeChecker;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.typeflattening.TypeFlattenerObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTableConstructor;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;

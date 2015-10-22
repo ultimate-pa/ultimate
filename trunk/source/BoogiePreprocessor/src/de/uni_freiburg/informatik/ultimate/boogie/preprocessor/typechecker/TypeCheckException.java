@@ -27,13 +27,13 @@
 /**
  * 
  */
-package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
+package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.typechecker;
 
 /**
  * This exception is thrown by the type checker if there is a type error in the
  * Boogie file.
  * 
- * @author hoenicke
+ * @author Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
  *
  */
 public class TypeCheckException extends RuntimeException {

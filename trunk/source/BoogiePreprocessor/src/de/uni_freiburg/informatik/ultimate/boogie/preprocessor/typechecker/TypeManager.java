@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
+package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.typechecker;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,6 +44,11 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 
+/**
+ * 
+ * @author Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
+ *
+ */
 public class TypeManager {
 
 	private Logger mLogger;
