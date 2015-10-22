@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.boogie.preferences;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
 
 /**
@@ -46,8 +47,9 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 
-		return new UltimatePreferenceItem<?>[] { new UltimatePreferenceItem<Boolean>(
-				LABEL_SHOWALLANNOTATIONS, false, PreferenceType.Boolean) };
+		return new UltimatePreferenceItem<?>[] {
+				new UltimatePreferenceItem<Boolean>(LABEL_SHOWALLANNOTATIONS, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_PARANOID_TYPECHECK, true, PreferenceType.Boolean) };
 	}
 
 	@Override
@@ -61,5 +63,10 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	}
 
 	public static final String LABEL_SHOWALLANNOTATIONS = "Show all Annotations";
+	public static final String LABEL_PARANOID_TYPECHECK = "Perform a second type checker run after all transformations";
+
+	public static UltimatePreferenceStore getPreferences() {
+		return new UltimatePreferenceStore(Activator.PLUGIN_ID);
+	}
 
 }

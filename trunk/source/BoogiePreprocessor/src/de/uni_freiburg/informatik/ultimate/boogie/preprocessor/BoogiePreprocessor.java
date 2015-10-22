@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.typechecker.TypeC
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.typeflattening.TypeFlattenerObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTableConstructor;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
@@ -103,15 +104,15 @@ public class BoogiePreprocessor implements IAnalysis {
 		observers.add(new TypeChecker(mServices));
 		observers.add(new ConstExpander(backTranslator));
 		observers.add(new TypeFlattenerObserver(logger));
-		// FIXME: running the typechecker two times just to be sure the type
-		// flattener did nothing stupid
-		observers.add(new TypeChecker(mServices));
-
+		
 		observers.add(new StructExpander(backTranslator, logger));
 		observers.add(new UnstructureCode(backTranslator));
 		observers.add(new FunctionInliner());
-
 		observers.add(symb);
+
+		if (PreferenceInitializer.getPreferences().getBoolean(PreferenceInitializer.LABEL_PARANOID_TYPECHECK)) {
+			observers.add(new TypeChecker(mServices));
+		}
 		return observers;
 	}
 

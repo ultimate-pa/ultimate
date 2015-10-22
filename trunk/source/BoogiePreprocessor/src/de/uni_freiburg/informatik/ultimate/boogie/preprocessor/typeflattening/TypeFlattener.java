@@ -2,8 +2,8 @@ package de.uni_freiburg.informatik.ultimate.boogie.preprocessor.typeflattening;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -69,13 +69,13 @@ class TypeFlattener {
 
 	TypeFlattener(final Logger logger) {
 		mLogger = logger;
-		mGenericType2InstantiatedTypes = new HashMap<BoogieType, Set<BoogieType>>();
-		mStructConsts2BoogieTypes = new HashMap<StructConstructor, BoogieType>();
+		mGenericType2InstantiatedTypes = new LinkedHashMap<BoogieType, Set<BoogieType>>();
+		mStructConsts2BoogieTypes = new LinkedHashMap<StructConstructor, BoogieType>();
 		mScope = new Scope<String, Set<BoogieType>>();
-		mNewUninterpretedType = new HashSet<>();
-		mOld2NewBoogieTypes = new HashMap<>();
-		mOld2NewAstTypes = new HashMap<>();
-		mTypeCache = new HashMap<String, TypeConstructor>();
+		mNewUninterpretedType = new LinkedHashSet<>();
+		mOld2NewBoogieTypes = new LinkedHashMap<>();
+		mOld2NewAstTypes = new LinkedHashMap<>();
+		mTypeCache = new LinkedHashMap<String, TypeConstructor>();
 	}
 
 	void run(final Unit unit) {
@@ -191,7 +191,7 @@ class TypeFlattener {
 				return ntype;
 			}
 
-			final Set<ASTType> types = new HashSet<ASTType>();
+			final Set<ASTType> types = new LinkedHashSet<ASTType>();
 			for (final ASTType arg : ntype.getTypeArgs()) {
 				final ASTType flattened = flatten(arg);
 				if (flattened == null) {
@@ -238,7 +238,7 @@ class TypeFlattener {
 		final BoogieType realGenericType = genericType.getUnderlyingType();
 		Set<BoogieType> rtr = mGenericType2InstantiatedTypes.get(realGenericType);
 		if (rtr == null) {
-			rtr = new HashSet<BoogieType>();
+			rtr = new LinkedHashSet<BoogieType>();
 			mGenericType2InstantiatedTypes.put(realGenericType, rtr);
 		}
 		return rtr;
@@ -328,7 +328,7 @@ class TypeFlattener {
 	private Set<BoogieType> addToDeclaration(String id, BoogieType type) {
 		Set<BoogieType> set = mScope.lookupCurrentScope(id);
 		if (set == null) {
-			set = new HashSet<BoogieType>();
+			set = new LinkedHashSet<BoogieType>();
 			mScope.declare(id, set);
 		}
 		set.add(type);
