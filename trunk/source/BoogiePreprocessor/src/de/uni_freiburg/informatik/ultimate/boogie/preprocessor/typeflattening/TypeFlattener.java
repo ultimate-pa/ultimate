@@ -18,11 +18,14 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveBoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.StructBoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.TypeConstructor;
 import de.uni_freiburg.informatik.ultimate.model.IType;
+import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
@@ -30,16 +33,19 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.QuantifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
@@ -59,6 +65,8 @@ class TypeFlattener {
 	private final Map<ASTType, ASTType> mOld2NewAstTypes;
 	private final Map<BoogieType, BoogieType> mOld2NewBoogieTypes;
 
+	private final Map<String, TypeConstructor> mTypeCache;
+
 	TypeFlattener(final Logger logger) {
 		mLogger = logger;
 		mGenericType2InstantiatedTypes = new HashMap<BoogieType, Set<BoogieType>>();
@@ -67,6 +75,7 @@ class TypeFlattener {
 		mNewUninterpretedType = new HashSet<>();
 		mOld2NewBoogieTypes = new HashMap<>();
 		mOld2NewAstTypes = new HashMap<>();
+		mTypeCache = new HashMap<String, TypeConstructor>();
 	}
 
 	void run(final Unit unit) {
@@ -193,13 +202,22 @@ class TypeFlattener {
 			}
 
 			final String newname = ntype.getName() + getNewTypeName(types);
-			final BoogieType btype = BoogieType
-					.createConstructedType(new TypeConstructor(newname, false, 0, new int[0]));
+			TypeConstructor typeconst = getTypeConstructor(newname);
+			final BoogieType btype = BoogieType.createConstructedType(typeconst);
 			return new NamedType(type.getLocation(), btype, newname, new ASTType[0]);
 		} else if (type instanceof PrimitiveType) {
 			return type;
 		}
 		return null;
+	}
+
+	private TypeConstructor getTypeConstructor(String newname) {
+		TypeConstructor rtr = mTypeCache.get(newname);
+		if (rtr == null) {
+			rtr = new TypeConstructor(newname, false, 0, new int[0]);
+			mTypeCache.put(newname, rtr);
+		}
+		return rtr;
 	}
 
 	private String getNewTypeName(final Set<ASTType> types) {
@@ -282,8 +300,7 @@ class TypeFlattener {
 		mOld2NewAstTypes.put(oldtype, newtype);
 
 		final BoogieType oldboogietype = (BoogieType) oldtype.getBoogieType();
-		final BoogieType newboogietype = BoogieType
-				.createConstructedType(new TypeConstructor(uninterpretedTypeName, false, 0, new int[0]));
+		final BoogieType newboogietype = BoogieType.createConstructedType(getTypeConstructor(uninterpretedTypeName));
 		mOld2NewBoogieTypes.put(oldboogietype, newboogietype);
 
 		mNewUninterpretedType.add(uninterpretedTypeName);
@@ -316,6 +333,50 @@ class TypeFlattener {
 		}
 		set.add(type);
 		return set;
+	}
+
+	private String getStructFieldName(final BoogieType newArrayType) {
+		return mangleTypeName(new StringBuilder(), newArrayType).toString();
+	}
+
+	private String getStructFieldName(final ASTType type) {
+		return getStructFieldName((BoogieType) type.getBoogieType());
+	}
+
+	private AssignmentStatement replaceArrayLHS(AssignmentStatement assign) {
+		LeftHandSide[] lhs = assign.getLhs();
+		Expression[] rhs = assign.getRhs();
+		boolean changed = false;
+		for (int i = 0; i < lhs.length; i++) {
+			while (lhs[i] instanceof ArrayLHS) {
+				LeftHandSide array = ((ArrayLHS) lhs[i]).getArray();
+				Expression[] indices = ((ArrayLHS) lhs[i]).getIndices();
+				Expression arrayExpr = (Expression) getLHSExpression(array);
+				rhs[i] = new ArrayStoreExpression(lhs[i].getLocation(), array.getType(), arrayExpr, indices, rhs[i]);
+				lhs[i] = array;
+				changed = true;
+			}
+		}
+		if (changed) {
+			AssignmentStatement newAssign = new AssignmentStatement(assign.getLocation(), lhs, rhs);
+			ModelUtils.mergeAnnotations(assign, newAssign);
+			return newAssign;
+		}
+		return assign;
+	}
+
+	private Expression getLHSExpression(LeftHandSide lhs) {
+		Expression expr;
+		if (lhs instanceof ArrayLHS) {
+			ArrayLHS arrlhs = (ArrayLHS) lhs;
+			Expression array = getLHSExpression(arrlhs.getArray());
+			expr = new ArrayAccessExpression(lhs.getLocation(), lhs.getType(), array, arrlhs.getIndices());
+		} else {
+			VariableLHS varlhs = (VariableLHS) lhs;
+			expr = new IdentifierExpression(lhs.getLocation(), lhs.getType(), varlhs.getIdentifier(),
+					varlhs.getDeclarationInformation());
+		}
+		return expr;
 	}
 
 	/**
@@ -402,8 +463,6 @@ class TypeFlattener {
 
 					final Expression arrayExpr = processExpression(aaexpr.getArray());
 					assert arrayExpr instanceof IdentifierExpression;
-					// mScope.replace(((IdentifierExpression)
-					// arrayExpr).getIdentifier(), newArrayType);
 
 					// we have to set the struct type later as we currently not
 					// know it
@@ -411,7 +470,7 @@ class TypeFlattener {
 							new StructAccessExpression(expr.getLocation(), null, arrayExpr,
 									getStructFieldName(newArrayType)),
 							idxExpr);
-
+					ModelUtils.mergeAnnotations(expr, rtr);
 					mLogger.info("Replaced ArrayAccessExpression " + BoogiePrettyPrinter.print(expr) + " with "
 							+ BoogiePrettyPrinter.print(rtr));
 					return rtr;
@@ -440,8 +499,6 @@ class TypeFlattener {
 
 					final Expression newArrayExpr = processExpression(asexpr.getArray());
 					assert newArrayExpr instanceof IdentifierExpression;
-					// mScope.replace(((IdentifierExpression)
-					// newArrayExpr).getIdentifier(), newArrayType);
 
 					final Expression newValueExpr = processExpression(asexpr.getValue());
 					final Expression arrayFromStructExpression = new StructAccessExpression(expr.getLocation(),
@@ -456,6 +513,7 @@ class TypeFlattener {
 					mLogger.info("Replaced ArrayStoreExpression " + BoogiePrettyPrinter.print(expr) + " with "
 							+ BoogiePrettyPrinter.print(rtr));
 					mStructConsts2BoogieTypes.put(rtr, atype);
+					ModelUtils.mergeAnnotations(expr, rtr);
 					return rtr;
 				}
 				mLogger.info(BoogiePrettyPrinter.print(expr) + " is not generic");
@@ -480,9 +538,12 @@ class TypeFlattener {
 			}
 		}
 
-		private String getStructFieldName(final ArrayBoogieType newArrayType) {
-			final String rtr = mangleTypeName(new StringBuilder(), newArrayType).toString();
-			return rtr;
+		@Override
+		protected Statement processStatement(Statement statement) {
+			if (statement instanceof AssignmentStatement) {
+				statement = replaceArrayLHS((AssignmentStatement) statement);
+			}
+			return super.processStatement(statement);
 		}
 	}
 
@@ -508,7 +569,7 @@ class TypeFlattener {
 						int i = 0;
 						for (final BoogieType newBoogieType : set) {
 							ASTType newType = newBoogieType.toASTType(decl.getLocation());
-							fNames[i] = getFieldName(newType);
+							fNames[i] = getStructFieldName(newType);
 							fTypes[i] = newBoogieType;
 							fields[i] = new VarList(loc, new String[] { fNames[i] }, newType);
 							++i;
@@ -519,6 +580,7 @@ class TypeFlattener {
 						final ASTType synonym = processType(new StructType(loc, boogieType, fields));
 						final TypeDeclaration newdecl = new TypeDeclaration(loc, tdecl.getAttributes(),
 								tdecl.isFinite(), tdecl.getIdentifier(), new String[0], synonym);
+						ModelUtils.mergeAnnotations(decl, newdecl);
 						mLogger.info("Replaced typedecl " + BoogiePrettyPrinter.print(tdecl) + " with "
 								+ BoogiePrettyPrinter.print(newdecl));
 						mOld2NewBoogieTypes.put((BoogieType) interpretedType.getBoogieType(), boogieType);
@@ -558,7 +620,7 @@ class TypeFlattener {
 					int i = 0;
 					for (final BoogieType newBoogieType : set) {
 						ASTType newType = newBoogieType.toASTType(loc);
-						fNames[i] = getFieldName(newType);
+						fNames[i] = getStructFieldName(newType);
 						fTypes[i] = newBoogieType;
 						fields[i] = new VarList(loc, new String[] { fNames[i] }, newType);
 						++i;
@@ -568,25 +630,24 @@ class TypeFlattener {
 
 					final ASTType newAstType = processType(new StructType(loc, boogieType, fields));
 					final VarList newvl = new VarList(loc, vl.getIdentifiers(), newAstType, vl.getWhereClause());
+					ModelUtils.mergeAnnotations(vl, newvl);
 					mLogger.info("Replaced varlist " + BoogiePrettyPrinter.print(vl) + " with "
 							+ BoogiePrettyPrinter.print(newvl));
 					mOld2NewBoogieTypes.put((BoogieType) interpretedType.getBoogieType(), boogieType);
 					return newvl;
 				}
 			}
-
-			// VarList rtr = super.processVarList(vl);
-			// for (String id : rtr.getIdentifiers()) {
-			// Set<BoogieType> types = mScope.lookup(id);
-			// assert types != null && !types.isEmpty();
-			// }
 			return super.processVarList(vl);
 		}
 
 		@Override
 		protected ASTType processType(final ASTType oldtype) {
 			final ASTType newtype = instantiateType(oldtype);
-			return null == newtype ? super.processType(oldtype) : newtype;
+			if (newtype == null) {
+				return super.processType(oldtype);
+			}
+			ModelUtils.mergeAnnotations(oldtype, newtype);
+			return newtype;
 		}
 
 		@Override
@@ -605,35 +666,15 @@ class TypeFlattener {
 				// replace all the wrong array types with the now known struct
 				// type
 				final StructAccessExpression saexpr = (StructAccessExpression) expr;
-//				Expression newStructExpr = processExpression(saexpr.getStruct());
 				if (saexpr.getStruct() instanceof IdentifierExpression) {
-					// IdentifierExpression structidexpr =
-					// (IdentifierExpression) newStructExpr;
-					// Set<BoogieType> types =
-					// mScope.lookup(structidexpr.getIdentifier());
-
-					// mLogger.info("Finalized struct access with " +
-					// BoogiePrettyPrinter.print(saexpr));
-
 					final IType oldType = saexpr.getStruct().getType();
 					if (oldType instanceof ArrayBoogieType) {
-						// we did not know the real type at that time, now we
-						// know
-						BoogieType newType = mOld2NewBoogieTypes.get(oldType);
-						// if (newType == null) {
-						// assert saexpr.getStruct() instanceof
-						// IdentifierExpression;
-						// String id = ((IdentifierExpression)
-						// saexpr.getStruct()).getIdentifier();
-						// newType = mScope.lookup(id);
-						// }
-						// assert newType != null;
+						final BoogieType newType = mOld2NewBoogieTypes.get(oldType);
 						saexpr.getStruct().setType(newType);
 						mLogger.info("Finalized struct access " + BoogiePrettyPrinter.print(saexpr)
 								+ " by changing type from " + oldType + " to " + newType);
 					}
 				}
-
 				return super.processExpression(expr);
 			} else if (expr instanceof FunctionApplication || expr instanceof QuantifierExpression) {
 				mScope.beginScope(expr);
@@ -643,10 +684,6 @@ class TypeFlattener {
 			} else {
 				return super.processExpression(expr);
 			}
-		}
-
-		private String getFieldName(final ASTType type) {
-			return mangleTypeName(new StringBuilder(), (BoogieType) type.getBoogieType()).toString();
 		}
 
 		private StructConstructor createStructConstructor(final StructConstructor sconst) {
@@ -689,6 +726,7 @@ class TypeFlattener {
 				}
 			}
 			final StructConstructor rtr = new StructConstructor(loc, newBoogieType, fieldIdentifiers, fieldValues);
+			ModelUtils.mergeAnnotations(sconst, rtr);
 			mLogger.info("Finalized struct constructor with " + BoogiePrettyPrinter.print(rtr));
 			return rtr;
 		}
@@ -728,6 +766,7 @@ class TypeFlattener {
 			}
 
 			final VarList rtr = new VarList(vl.getLocation(), vl.getIdentifiers(), newtype, vl.getWhereClause());
+			ModelUtils.mergeAnnotations(vl, rtr);
 			mLogger.info(
 					"Replaced varlist " + BoogiePrettyPrinter.print(vl) + " with " + BoogiePrettyPrinter.print(rtr));
 			return rtr;
@@ -742,6 +781,7 @@ class TypeFlattener {
 				if (newtype != null) {
 					final IdentifierExpression rtr = new IdentifierExpression(expr.getLocation(), newtype,
 							iexpr.getIdentifier(), iexpr.getDeclarationInformation());
+					ModelUtils.mergeAnnotations(expr, rtr);
 					mLogger.info("Replaced expr " + prettyPrintTyped(iexpr) + " with " + prettyPrintTyped(rtr));
 					return rtr;
 				}
@@ -759,7 +799,11 @@ class TypeFlattener {
 		@Override
 		protected ASTType processType(final ASTType oldtype) {
 			final ASTType newtype = instantiateType(oldtype);
-			return null == newtype ? super.processType(oldtype) : newtype;
+			if (newtype == null) {
+				return super.processType(oldtype);
+			}
+			ModelUtils.mergeAnnotations(oldtype, newtype);
+			return newtype;
 		}
 
 		@Override

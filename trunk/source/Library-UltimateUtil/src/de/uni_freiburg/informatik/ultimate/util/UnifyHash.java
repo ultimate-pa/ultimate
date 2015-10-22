@@ -76,6 +76,8 @@ import java.util.*;
  *        return o;
  *    }
  * </pre>
+ * 
+ * @author Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
  */
 public class UnifyHash<E> extends AbstractCollection<E> {
 
