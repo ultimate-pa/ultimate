@@ -336,7 +336,7 @@ public class MainDispatcher extends Dispatcher {
 		PRDispatcher prd = new PRDispatcher(backtranslator, mServices, mLogger, mFunctionToIndex, reachableDeclarations);
 		prd.init();
 		prd.dispatch(node);
-		variablesOnHeap.addAll(((PRCHandler) prd.cHandler).getVarsForHeap());
+		variablesOnHeap.addAll(prd.getVariablesOnHeap());
 	
 		indexToFunction = new LinkedHashMap<>();
 		for (Entry<String, Integer> en : mFunctionToIndex.entrySet()) {

@@ -303,6 +303,9 @@ public class SvComp14CHandler extends CHandler {
 			if (!mFunctionHandler.getCallGraph().containsKey(SFO.MEMCPY)) {
 				mFunctionHandler.getCallGraph().put(SFO.MEMCPY, new LinkedHashSet<String>());
 			}
+			if (!mFunctionHandler.getModifiedGlobals().containsKey(SFO.MEMCPY)) {
+				mFunctionHandler.getModifiedGlobals().put(SFO.MEMCPY, new LinkedHashSet<String>());
+			}
 			mFunctionHandler.getCallGraph().get(mFunctionHandler.getCurrentProcedureID()).add(SFO.MEMCPY);
 			
 			return new ExpressionResult(stmt, new RValue(new IdentifierExpression(loc, tId), 

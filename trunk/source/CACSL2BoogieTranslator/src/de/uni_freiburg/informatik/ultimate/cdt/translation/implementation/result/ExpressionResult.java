@@ -43,7 +43,6 @@ import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRCHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
@@ -264,7 +263,7 @@ public class ExpressionResult extends Result {
 						SymbolTableValue value = st.get(cid, loc);
 						CType type = value.getCVariable().getUnderlyingType();
 						if (type instanceof CArray || type instanceof CStruct) {
-							((PRCHandler) main.cHandler).getVarsForHeap().add(value.getDeclarationNode());
+							((PRDispatcher) main).getVariablesOnHeap().add(value.getDeclarationNode());
 						}
 						
 					}

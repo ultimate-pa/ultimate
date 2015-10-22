@@ -126,6 +126,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
@@ -156,6 +157,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalLTLInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieIdExpressionExtractor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
@@ -1104,17 +1106,41 @@ public class CHandler implements ICHandler {
 						rop.decl, rop.auxVars, rop.overappr);
 			}
 		}
-		case IASTUnaryExpression.op_amper:
+		case IASTUnaryExpression.op_amper: {
+			final RValue ad;
 			if (o.lrVal instanceof HeapLValue) {
-				Expression addr = ((HeapLValue) o.lrVal).getAddress();
-				return new ExpressionResult(o.stmt, new RValue(addr, new CPointer(o.lrVal.getCType())), o.decl, o.auxVars,
-						o.overappr);
-			} else if (o.lrVal instanceof RValue && o.lrVal.getValue() instanceof IntegerLiteral) {
-				assert node.getOperand() instanceof IASTIdExpression : "this is a function pointer, right??";
-				return o;
+				ad = new RValue(((HeapLValue) o.lrVal).getAddress(), new CPointer(o.lrVal.getCType()));
+			} else if (o.lrVal instanceof LocalLValue) {
+				if (main instanceof PRDispatcher){
+					// We are in the prerun mode.
+					// As a workaround, we (incorrectly) return the value
+					// instead of the address. But we add variables to the
+					// heapVars and hence in the non-prerun mode the input
+					// will be a HeapLValue instead of a LocalLValue.
+					Expression expr = o.lrVal.getValue();
+					assert expr != null : "value si null";
+					if (expr instanceof IdentifierExpression) {
+						String id = ((IdentifierExpression) expr).getIdentifier();
+						SymbolTable st = main.cHandler.getSymbolTable();
+						String cid = st.getCID4BoogieID(id, loc);
+						SymbolTableValue value = st.get(cid, loc);
+						((PRDispatcher) main).getVariablesOnHeap().add(value.getDeclarationNode());
+					} else {
+						// Do nothing. Yet, I don't know if this is a good idea.
+					}
+					ad = new RValue(o.lrVal.getValue(), new CPointer(o.lrVal.getCType()));
+				} else {
+					throw new AssertionError("cannot take address of LocalLValue: this is a on-heap/off-heap bug");
+				}
+			} else if (o.lrVal instanceof RValue) {
+				throw new AssertionError("cannot take address of RValue");
 			} else {
-				throw new AssertionError("Address of something that is not on the heap.");
+				throw new AssertionError("Unknown value");
 			}
+			ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(o);
+			result.lrVal = ad;
+			return result;
+		}
 		case IASTUnaryExpression.op_alignOf:
 		default:
 			String msg = "Unknown or unsupported unary operation: " + node.getOperator();
