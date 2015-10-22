@@ -1,8 +1,8 @@
 <project name="AutomataTestFileProject" default="build_parser" basedir=".">
 	<record name="${workspacedir}/antbuild-automatascriptparser.log" />
 	
-	<property name="cupDir" location="${workspacedir}JavaCup/bin"/>
-    <property name="flexJar" location="${workspacedir}JavaCup/JFlex.jar"/>
+	<property name="cupDir" location="${workspacedir}/JavaCup/bin"/>
+    <property name="flexJar" location="${workspacedir}/JavaCup/JFlex.jar"/>
     <description>
         Build File for Compiler Project
     </description>
