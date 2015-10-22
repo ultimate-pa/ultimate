@@ -31,6 +31,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container;
 
+import org.eclipse.cdt.core.dom.ast.IASTNode;
+
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -86,6 +88,8 @@ public class SymbolTableValue {
 //     * True iff this C variable has static storage class.
 //     */
 //    private final boolean isStatic;
+    
+    private final IASTNode m_DeclarationNode;
 
     /**
      * Constructor.
@@ -103,7 +107,7 @@ public class SymbolTableValue {
      *            whether the variable is static in the C program or not
      */
     public SymbolTableValue(String bId, Declaration boogieDecl, CDeclaration cdecl,
-            boolean isGlobal, StorageClass sc) {
+            boolean isGlobal, StorageClass sc, IASTNode declNode) {
 //            , boolean isStatic) {
         assert bId != null && !bId.equals(SFO.EMPTY);
         this.boogieName = bId;
@@ -114,6 +118,7 @@ public class SymbolTableValue {
         this.storageClass = sc;
 //        this.cvar = cvar;
 //        this.isStatic = isStatic;
+        m_DeclarationNode = declNode;
     }
 
     /**
@@ -159,4 +164,10 @@ public class SymbolTableValue {
     public boolean isStatic() {
     	return this.storageClass == StorageClass.STATIC;
     }
+
+	public IASTNode getDeclarationNode() {
+		return m_DeclarationNode;
+	}
+    
+    
 }

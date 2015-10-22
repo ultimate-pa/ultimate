@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.P
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.PRSymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
@@ -262,10 +261,10 @@ public class ExpressionResult extends Result {
 					for (IdentifierExpression idexpr : biee.getIdExpressions()) {
 						SymbolTable st = main.cHandler.getSymbolTable();
 						String cid = st.getCID4BoogieID(idexpr.getIdentifier(), loc);
-						PRSymbolTableValue value = (PRSymbolTableValue) st.get(cid, loc);
+						SymbolTableValue value = st.get(cid, loc);
 						CType type = value.getCVariable().getUnderlyingType();
 						if (type instanceof CArray || type instanceof CStruct) {
-							((PRCHandler) main.cHandler).getVarsForHeap().add(value.decl);
+							((PRCHandler) main.cHandler).getVarsForHeap().add(value.getDeclarationNode());
 						}
 						
 					}

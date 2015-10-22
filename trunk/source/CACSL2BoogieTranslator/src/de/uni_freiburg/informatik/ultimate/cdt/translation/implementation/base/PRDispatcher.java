@@ -436,7 +436,9 @@ public class PRDispatcher extends Dispatcher {
 		// TODO Auto-generated method stub
 		return false;
 	}
-	LinkedHashSet<IASTDeclaration> getReachableDeclarationsOrDeclarators() {
+	
+	@Override
+	public LinkedHashSet<IASTDeclaration> getReachableDeclarationsOrDeclarators() {
 		return reachableDeclarations;
 	}
 }

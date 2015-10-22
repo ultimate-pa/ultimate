@@ -956,7 +956,7 @@ public class FunctionHandler {
 			String paramId = main.nameHandler.getInParamIdentifier(paramDec.getName());
 			in[i] = new VarList(loc, new String[] { paramId }, type);
 			main.cHandler.getSymbolTable().put(paramDec.getName(),
-					new SymbolTableValue(paramId, null, paramDec, false, null));
+					new SymbolTableValue(paramId, null, paramDec, false, null, null));
 		}
 		updateCFunction(methodName, null, paramDecs, null, false);
 		return in;
@@ -1046,7 +1046,7 @@ public class FunctionHandler {
 				main.cHandler.getSymbolTable().put(
 						cId,
 						new SymbolTableValue(auxInvar, inVarDecl, new CDeclaration(cvar, cId), false,
-								StorageClass.UNSPECIFIED));
+								StorageClass.UNSPECIFIED, paramDec));
 			}
 		}
 	}
@@ -1262,7 +1262,7 @@ public class FunctionHandler {
 		// collect all functions that are addressoffed in the program and that
 		// match the signature
 		ArrayList<String> fittingFunctions = new ArrayList<>();
-		for (Entry<String, Integer> en : ((MainDispatcher) main).getFunctionToIndex().entrySet()) {
+		for (Entry<String, Integer> en : ((Dispatcher) main).getFunctionToIndex().entrySet()) {
 			CFunction ptdToFuncType = procedureToCFunctionType.get(en.getKey());
 //			if (ptdToFuncType.isCompatibleWith(calledFuncType)) {
 			if (new ProcedureSignature(main, ptdToFuncType).equals(funcSignature)) {

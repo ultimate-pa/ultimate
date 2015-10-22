@@ -288,7 +288,8 @@ public class MainDispatcher extends Dispatcher {
 		return isMMRequired;
 	}
 
-	LinkedHashSet<IASTDeclaration> getReachableDeclarationsOrDeclarators() {
+	@Override
+	public LinkedHashSet<IASTDeclaration> getReachableDeclarationsOrDeclarators() {
 		return reachableDeclarations;
 	}
 

@@ -402,7 +402,7 @@ public class CHandler implements ICHandler {
 		for (IASTPreprocessorStatement preS : node.getAllPreprocessorStatements()) {
 			Result r = main.dispatch(preS);
 			if (!(r instanceof SkipResult)) {
-				throw new UnsupportedOperationException("Not yet implemented");
+				throw new UnsupportedOperationException("Not yet implemented " + preS.toString());
 			}
 		}
 		ILocation loc = LocationFactory.createCLocation(node);
@@ -437,7 +437,7 @@ public class CHandler implements ICHandler {
 		}
 
 		//(alex:) new function pointers
-		for (Entry<String, Integer> en : ((MainDispatcher) main).getFunctionToIndex().entrySet()) {
+		for (Entry<String, Integer> en : ((Dispatcher) main).getFunctionToIndex().entrySet()) {
 			String funcId = SFO.FUNCTION_ADDRESS + en.getKey();
 			VarList varList = new VarList(loc, new String[]{ funcId }, main.typeHandler.constructPointerType(loc));
 			decl.add(new ConstDeclaration(loc, new Attribute[0], false, varList, null, false));//would unique make sense here?? -- would potentially add lots of axioms
@@ -507,7 +507,7 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(Dispatcher main, IASTFunctionDefinition node) {
-		LinkedHashSet<IASTDeclaration> reachableDecs = ((MainDispatcher) main).getReachableDeclarationsOrDeclarators();
+		LinkedHashSet<IASTDeclaration> reachableDecs = ((Dispatcher) main).getReachableDeclarationsOrDeclarators();
 		if (reachableDecs != null) {
 			if (!reachableDecs.contains(node))
 				return new SkipResult();
@@ -588,7 +588,7 @@ public class CHandler implements ICHandler {
 	 */
 	@Override
 	public Result visit(Dispatcher main, IASTSimpleDeclaration node) {
-		LinkedHashSet<IASTDeclaration> reachableDecs = ((MainDispatcher) main).getReachableDeclarationsOrDeclarators();
+		LinkedHashSet<IASTDeclaration> reachableDecs = ((Dispatcher) main).getReachableDeclarationsOrDeclarators();
 		if (reachableDecs != null) {
 			if (node.getParent() instanceof IASTTranslationUnit) {
 				if (!reachableDecs.contains(node)) {
@@ -693,7 +693,7 @@ public class CHandler implements ICHandler {
 				// (containing boogieID) for
 				// translation of the initializer
 				mSymbolTable.put(cDec.getName(),
-						new SymbolTableValue(bId, boogieDec, cDec, globalInBoogie, storageClass));
+						new SymbolTableValue(bId, boogieDec, cDec, globalInBoogie, storageClass, d));
 				cDec.translateInitializer(main);
 
 				ASTType translatedType = null;
@@ -803,7 +803,7 @@ public class CHandler implements ICHandler {
 
 				mSymbolTable.put(cDec.getName(), new SymbolTableValue(bId,
 						boogieDec, cDec, globalInBoogie,
-						storageClass)); 
+						storageClass, d)); 
 			}
 			mCurrentDeclaredTypes.pop();
 			
@@ -3741,7 +3741,7 @@ public class CHandler implements ICHandler {
 			enumDomain[i] = newValue;
 			mAxioms.add(new Axiom(loc, new Attribute[0], new BinaryExpression(loc, Operator.COMPEQ, l, newValue)));
 			mSymbolTable.put(fId, new SymbolTableValue(bId, cd, new CDeclaration(typeOfEnumIdentifiers, fId), true,
-					scConstant2StorageClass(node.getDeclSpecifier().getStorageClass()))); // FIXME
+					scConstant2StorageClass(node.getDeclSpecifier().getStorageClass()), node)); // FIXME
 																							// ??
 		}
 		//return result;
