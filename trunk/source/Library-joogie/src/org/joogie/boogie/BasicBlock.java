@@ -45,7 +45,7 @@ public class BasicBlock {
 	private LocationTag mLocationTag;
 
 	public BasicBlock(String prefix, LocationTag tag, String uid) {
-		this(prefix + "Block " + uid, tag);
+		this(prefix + "Block$" + uid, tag);
 	}
 
 	public BasicBlock(String prefix, String uid) {
@@ -55,10 +55,6 @@ public class BasicBlock {
 	public BasicBlock(LocationTag tag, String uid) {
 		this("", tag, uid);
 	}
-
-//	public BasicBlock(String uid) {
-//		this("", null, uid);
-//	}
 
 	private BasicBlock(String name, LocationTag tag) {
 		mLocationTag = tag;
@@ -95,7 +91,7 @@ public class BasicBlock {
 	}
 
 	public void disconnectFromSuccessor(BasicBlock succ) {
-		this.mSuccessors.remove(succ);
+		mSuccessors.remove(succ);
 		succ.mPredecessors.remove(this);
 	}
 
@@ -170,7 +166,7 @@ public class BasicBlock {
 
 	@Override
 	public String toString() {
-		return this.getName();
+		return getName();
 	}
 
 	public String toBoogie() {

@@ -398,5 +398,4 @@ public abstract class BoogieVisitor extends BoogieTransformer {
 
 	protected void visit(ArrayAccessExpression expr) {
 	}
-
 }
