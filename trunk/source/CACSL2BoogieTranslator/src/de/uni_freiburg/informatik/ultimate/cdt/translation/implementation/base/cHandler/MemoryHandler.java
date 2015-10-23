@@ -1045,12 +1045,7 @@ public class MemoryHandler {
         
         ASTType heapType = getHeapTypeOfLRVal(main, loc, resultType);
         
-        String heapTypeName;
-        if (InferredType.isPointerType(heapType)) {
-        	heapTypeName = SFO.POINTER;
-        } else {
-        	heapTypeName = ((PrimitiveType) heapType).getName();
-        }
+        final String heapTypeName = getHeapTypeName(resultType);
         
         String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD);
         VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, heapType, loc);
@@ -1070,6 +1065,27 @@ public class MemoryHandler {
         		decl, auxVars, overappr);
     }
     
+    
+    private String getHeapTypeName(CType cType) {
+    	CType underlyingType = cType.getUnderlyingType();
+    	if (underlyingType instanceof CPrimitive) {
+    		CPrimitive cPrimitive = (CPrimitive) underlyingType;
+    		if (cPrimitive.isIntegerType()) {
+    			return SFO.INT;
+    		} else if (cPrimitive.isFloatingType()) {
+    			throw new UnsupportedOperationException("I don't know the right String");
+    		} else {
+    			throw new UnsupportedOperationException("unknown type " + underlyingType);
+    		}
+    	} else if (underlyingType instanceof CEnum) {
+    		return SFO.INT;
+    	} else if (underlyingType instanceof CPointer) {
+    		return SFO.POINTER;
+    	} else {
+    		throw new AssertionError("unable to write " + cType + " to heap");
+    	}
+    }
+    
     ASTType getHeapTypeOfLRVal(Dispatcher main, ILocation loc, CType ct) {
     	
     	CType ut = ct;
@@ -1081,13 +1097,14 @@ public class MemoryHandler {
 			switch (cp.getGeneralType()) {
 			case INTTYPE:
 				isIntArrayRequiredInMM = true;
-				return new PrimitiveType(loc, SFO.INT);
+				break;
 			case FLOATTYPE:
 				isFloatArrayRequiredInMM = true;
-				return new PrimitiveType(loc, SFO.REAL);
+				break;
 			default:
 				throw new UnsupportedSyntaxException(null, "unsupported cType " + ct);
 			}
+			return main.typeHandler.ctype2asttype(loc, ct);
 		} else if (ut instanceof CPointer) {
 			isPointerArrayRequiredInMM = true;
 			return main.typeHandler.constructPointerType(loc);
@@ -1104,7 +1121,7 @@ public class MemoryHandler {
 		} else if (ut instanceof CEnum) { 
 			//enum is treated like an int
 			isIntArrayRequiredInMM = true;
-			return new PrimitiveType(loc, SFO.INT);
+			return main.typeHandler.ctype2asttype(loc, new CPrimitive(PRIMITIVE.INT));
 		} else {
 			throw new UnsupportedSyntaxException(null, "non-heap type?: " + ct);
 		}
