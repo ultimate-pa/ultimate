@@ -364,12 +364,15 @@ public class InitializationHandler {
 					rhs = initializer.lrVal.getValue();
 				} else if (initializerUnderlyingType instanceof CPrimitive 
 						&& ((CPrimitive) initializerUnderlyingType).getGeneralType() == GENERALPRIMITIVE.INTTYPE){
-					String offset = ((IntegerLiteral) initializer.lrVal.getValue()).getValue();
-					if (offset.equals("0")) {
+					BigInteger offsetValue = mExpressionTranslation.extractIntegerValue(initializer.lrVal.getValue());
+					if (offsetValue.equals(BigInteger.ZERO)) {
 						rhs = new IdentifierExpression(loc, SFO.NULL);
 					} else {
-						rhs = MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(loc, "0"), 
-								new IntegerLiteral(loc, offset), loc);
+						Expression base = mExpressionTranslation.constructLiteralForIntegerType(
+								loc, mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+						Expression offset = mExpressionTranslation.constructLiteralForIntegerType(
+								loc, mExpressionTranslation.getCTypeOfPointerComponents(), offsetValue);
+						rhs = MemoryHandler.constructPointerFromBaseAndOffset(base, offset, loc);
 					}
 				} else {
 					throw new AssertionError("trying to initialize a pointer with something different from int and pointer");

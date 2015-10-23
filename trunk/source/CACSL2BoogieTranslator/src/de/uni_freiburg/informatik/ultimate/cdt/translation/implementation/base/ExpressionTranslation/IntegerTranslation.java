@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IT
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
@@ -650,6 +651,13 @@ public class IntegerTranslation extends AExpressionTranslation {
 		}
 	}
 	
-	
+	@Override
+	public BigInteger extractIntegerValue(Expression expr) {
+		if (expr instanceof IntegerLiteral) {
+			return new BigInteger(((IntegerLiteral) expr).getValue());
+		} else {
+			return null;
+		}
+	}
 
 }

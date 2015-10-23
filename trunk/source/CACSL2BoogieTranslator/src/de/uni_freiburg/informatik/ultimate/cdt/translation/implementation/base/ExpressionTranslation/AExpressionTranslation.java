@@ -298,6 +298,15 @@ public abstract class AExpressionTranslation {
 		}
 	}
 	
+	/**
+	 * Try to get the value of Expression expr. Returns null if extraction
+	 * is impossible. Extraction might succeed if expr represents a constant
+	 * value. Extraction fails, e.g., if expr represents a variable.
+	 * @param expr
+	 * @return
+	 */
+	public abstract BigInteger extractIntegerValue(Expression expr);
+	
 	public CPrimitive determineResultOfIntegerPromotion(CPrimitive cPrimitive) {
 		int argBitLength = m_TypeSizes.getSize(cPrimitive.getType()) * 8;
 		int intLength = m_TypeSizes.getSize(CPrimitive.PRIMITIVE.INT) * 8;

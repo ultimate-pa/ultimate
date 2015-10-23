@@ -313,15 +313,12 @@ public class TypeSizeAndOffsetComputer {
 		}
 		
 		private SizeTValue extractSizeTValue(Expression expression) {
-			final SizeTValue result;
-			if (expression instanceof IntegerLiteral) {
-				result = new SizeTValue_Integer(new BigInteger(((IntegerLiteral) expression).getValue()));
-			} else if (expression instanceof BitvecLiteral) {
-				result = new SizeTValue_Integer(new BigInteger(((BitvecLiteral) expression).getValue()));
+			final BigInteger value = m_ExpressionTranslation.extractIntegerValue(expression);
+			if (value != null) {
+				return new SizeTValue_Integer(value);
 			} else {
-				result = new SizeTValue_Expression(expression);
+				return new SizeTValue_Expression(expression);
 			}
-			return result;
 		}
 
 		private abstract class SizeTValueAggregator {
