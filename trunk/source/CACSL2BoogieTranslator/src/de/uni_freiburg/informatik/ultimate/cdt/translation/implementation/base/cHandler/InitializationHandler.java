@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
@@ -272,7 +273,8 @@ public class InitializationHandler {
 			lrVal = new RValue(rhs, lCType);
 		} else if (lCType instanceof CEnum) {
 			if (initializer == null) {
-				rhs = new IntegerLiteral(loc, SFO.NR0);
+				rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, 
+						new CPrimitive(PRIMITIVE.INT), BigInteger.ZERO);
 			} else {
 				initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 				rhs = initializer.lrVal.getValue();
