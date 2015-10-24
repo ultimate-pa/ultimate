@@ -150,15 +150,15 @@ public class PostProcessor {
 			TypeHandler typeHandler, Set<String> undefinedTypes, 
 			LinkedHashMap<Declaration,CDeclaration> mDeclarationsGlobalInBoogie, AExpressionTranslation expressionTranslation) {
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
+		if (!typeHandler.useIntForAllIntegerTypes()) {
+			decl.addAll(declarePrimitiveDataTypeSynonyms(loc, main.getTypeSizes(), typeHandler));
+		}
 		decl.addAll(declareUndefinedTypes(loc, undefinedTypes));
 		decl.addAll(createUltimateInitProcedure(loc, main, memoryHandler, arrayHandler, functionHandler, structHandler,
 				mDeclarationsGlobalInBoogie, expressionTranslation));
 		decl.addAll(createUltimateStartProcedure(main, loc, functionHandler));
 		decl.addAll(declareFunctionPointerProcedures(main, functionHandler, memoryHandler, structHandler));
 		decl.addAll(declareConversionFunctions(main, functionHandler, memoryHandler, structHandler));
-		if (!typeHandler.useIntForAllIntegerTypes()) {
-			decl.addAll(declarePrimitiveDataTypeSynonyms(loc, main.getTypeSizes(), typeHandler));
-		}
 		return decl;
 	}
 	
