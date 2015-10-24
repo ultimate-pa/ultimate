@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
@@ -222,7 +223,7 @@ public class TypeSizeAndOffsetComputer {
 			List<SizeTValue> factors = new ArrayList<>();
 			SizeTValue valueSize = computeSize(loc, cArray.getValueType());
 			factors.add(valueSize);
-			for (Expression dim : cArray.getDimensions()) {
+			for (RValue dim : cArray.getDimensions()) {
 				SizeTValue dimSize = extractSizeTValue(dim);
 				factors.add(dimSize);
 			}
@@ -312,12 +313,12 @@ public class TypeSizeAndOffsetComputer {
 			return axiom;
 		}
 		
-		private SizeTValue extractSizeTValue(Expression expression) {
-			final BigInteger value = m_ExpressionTranslation.extractIntegerValue(expression);
+		private SizeTValue extractSizeTValue(RValue rvalue) {
+			final BigInteger value = m_ExpressionTranslation.extractIntegerValue(rvalue);
 			if (value != null) {
 				return new SizeTValue_Integer(value);
 			} else {
-				return new SizeTValue_Expression(expression);
+				return new SizeTValue_Expression(rvalue.getValue());
 			}
 		}
 

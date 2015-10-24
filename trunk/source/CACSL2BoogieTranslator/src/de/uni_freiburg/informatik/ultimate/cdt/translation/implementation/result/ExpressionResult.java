@@ -500,9 +500,13 @@ public class ExpressionResult extends Result {
 		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 		ArrayList<Overapprox> overApp = new ArrayList<>();
 
-		if (arrayType.getDimensions().length == 1
-				&& arrayType.getDimensions()[0] instanceof IntegerLiteral) {
-			int dim = Integer.parseInt(((IntegerLiteral) arrayType.getDimensions()[0]).getValue());
+    	if (arrayType.getDimensions().length == 1) {
+    		AExpressionTranslation exprTrans = ((CHandler) main.cHandler).getExpressionTranslation();
+			BigInteger dimBigInteger = exprTrans.extractIntegerValue(arrayType.getDimensions()[0]);
+			if (dimBigInteger == null) {
+				throw new UnsupportedSyntaxException(loc, "variable length arrays not yet supported by this method");
+			}
+			int dim = dimBigInteger.intValue();
 
 			String newArrayId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYCOPY);
 			VarList newArrayVl = new VarList(loc, new String[] { newArrayId }, 
@@ -555,7 +559,7 @@ public class ExpressionResult extends Result {
 				auxVars = assRex.auxVars;
 				overApp.addAll(assRex.overappr);
 				
-				AExpressionTranslation exprTrans = ((CHandler) main.cHandler).getExpressionTranslation();
+				
 				arrayEntryAddressOffset = exprTrans.constructArithmeticExpression(
 						loc, IASTBinaryExpression.op_plus, arrayEntryAddressOffset, exprTrans.getCTypeOfPointerComponents(), 
 						valueTypeSize, exprTrans.getCTypeOfPointerComponents()); 

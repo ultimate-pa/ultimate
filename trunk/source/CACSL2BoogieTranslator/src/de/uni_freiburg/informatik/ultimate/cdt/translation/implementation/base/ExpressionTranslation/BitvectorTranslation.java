@@ -375,9 +375,21 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public BigInteger extractIntegerValue(Expression expr) {
-		if (expr instanceof BitvecLiteral) {
-			return new BigInteger(((BitvecLiteral) expr).getValue());
+	public BigInteger extractIntegerValue(RValue rval) {
+		if (rval.getCType().isIntegerType()) {
+			if (rval.getValue() instanceof BitvecLiteral) {
+				BigInteger value =  new BigInteger(((BitvecLiteral) rval.getValue()).getValue());
+				if (((CPrimitive) rval.getCType()).isUnsigned()) {
+					if (value.signum() < 0) {
+						throw new UnsupportedOperationException("negative value");
+					}
+					return value;
+				} else {
+					return value;
+				}
+			} else {
+				return null;
+			}
 		} else {
 			return null;
 		}

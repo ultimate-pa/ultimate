@@ -849,7 +849,7 @@ public class CHandler implements ICHandler {
 		if (node instanceof IASTArrayDeclarator) {
 			IASTArrayDeclarator arrDecl = (IASTArrayDeclarator) node;
 			
-			final ArrayList<Expression> size = new ArrayList<Expression>();
+			final ArrayList<RValue> size = new ArrayList<RValue>();
 			// expression results of from array modifiers
 			final ArrayList<ExpressionResult> expressionResults = new ArrayList<ExpressionResult>();
 			
@@ -884,13 +884,13 @@ public class CHandler implements ICHandler {
 				} else {
 					throw new IncorrectSyntaxException(loc, "wrong array type in declaration");
 				}
-				size.add(sizeFactor.getValue());
+				size.add(sizeFactor);
 			}
 			ExpressionResult allResults = ExpressionResult.copyStmtDeclAuxvarOverapprox(expressionResults.toArray(new ExpressionResult[expressionResults.size()]));
 			if (!allResults.decl.isEmpty() || !allResults.stmt.isEmpty() || !allResults.auxVars.isEmpty()) {
 				throw new AssertionError("passing these results is not yet implemented");
 			}
-			CArray arrayType = new CArray(size.toArray(new Expression[size.size()]), newResType.cType);
+			CArray arrayType = new CArray(size.toArray(new RValue[size.size()]), newResType.cType);
 			newResType.cType = arrayType;
 
 		} else if (node instanceof CASTFunctionDeclarator) {

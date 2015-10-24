@@ -364,7 +364,7 @@ public class InitializationHandler {
 					rhs = initializer.lrVal.getValue();
 				} else if (initializerUnderlyingType instanceof CPrimitive 
 						&& ((CPrimitive) initializerUnderlyingType).getGeneralType() == GENERALPRIMITIVE.INTTYPE){
-					BigInteger offsetValue = mExpressionTranslation.extractIntegerValue(initializer.lrVal.getValue());
+					BigInteger offsetValue = mExpressionTranslation.extractIntegerValue((RValue) initializer.lrVal);
 					if (offsetValue.equals(BigInteger.ZERO)) {
 						rhs = new IdentifierExpression(loc, SFO.NULL);
 					} else {
@@ -526,13 +526,12 @@ public class InitializationHandler {
 		ArrayList<Overapprox> overApp = new ArrayList<>();
 
 		Expression sizeOfCell = mMemoryHandler.calculateSizeOf(loc, arrayType.getValueType()); 
-		Expression[] dimensions = arrayType.getDimensions();
-		Integer currentSizeInt = null;
-		try {
-			currentSizeInt = Integer.parseInt(((IntegerLiteral) dimensions[0]).getValue());
-		} catch (NumberFormatException nfe) {
-			throw new UnsupportedSyntaxException(loc, "trying to initialize an array whose size we don't know");
+		RValue[] dimensions = arrayType.getDimensions();
+		BigInteger dimBigInteger = mExpressionTranslation.extractIntegerValue(arrayType.getDimensions()[0]);
+		if (dimBigInteger == null) {
+			throw new UnsupportedSyntaxException(loc, "variable length arrays not yet supported by this method");
 		}
+		int currentSizeInt = dimBigInteger.intValue();
 
 		Expression newStartAddressBase = null;
 		Expression newStartAddressOffset = null;
@@ -605,7 +604,7 @@ public class InitializationHandler {
 				for (int j = 1; j < dimensions.length; j++) {
 					blockOffset = mExpressionTranslation.constructArithmeticExpression(
 							loc, IASTBinaryExpression.op_multiply, 
-							dimensions[j], mExpressionTranslation.getCTypeOfPointerComponents(), 
+							dimensions[j].getValue(), (CPrimitive) dimensions[j].getCType(), 
 							blockOffset, mExpressionTranslation.getCTypeOfPointerComponents()); 
 				}
 				Expression iAsExpression = mExpressionTranslation.constructLiteralForIntegerType(
@@ -620,9 +619,9 @@ public class InitializationHandler {
 						newStartAddressOffsetInner, mExpressionTranslation.getCTypeOfPointerComponents(), 
 						blockOffset, mExpressionTranslation.getCTypeOfPointerComponents()); 
 
-				ArrayList<Expression> innerDims = new ArrayList<Expression>(Arrays.asList(arrayType.getDimensions()));
+				ArrayList<RValue> innerDims = new ArrayList<RValue>(Arrays.asList(arrayType.getDimensions()));
 				innerDims.remove(0);//TODO ??
-				CArray innerArrayType = new CArray(innerDims.toArray(new Expression[0]), 
+				CArray innerArrayType = new CArray(innerDims.toArray(new RValue[0]), 
 						arrayType.getValueType());
 
 				ExpressionResult initRex = initArrayOnHeap(main, 
@@ -660,13 +659,12 @@ public class InitializationHandler {
 		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 		ArrayList<Overapprox> overApp = new ArrayList<>();
 
-		Expression[] dimensions = arrayType.getDimensions();
-		Integer currentSizeInt = null;
-		try {
-			currentSizeInt = Integer.parseInt(((IntegerLiteral) dimensions[0]).getValue());
-		} catch (NumberFormatException nfe) {
-			throw new UnsupportedSyntaxException(loc, "trying to initialize an array whose size we don't know");
+		RValue[] dimensions = arrayType.getDimensions();
+		BigInteger dimBigInteger = mExpressionTranslation.extractIntegerValue(arrayType.getDimensions()[0]);
+		if (dimBigInteger == null) {
+			throw new UnsupportedSyntaxException(loc, "variable length arrays not yet supported by this method");
 		}
+		int currentSizeInt = dimBigInteger.intValue();
 
 		if (dimensions.length == 1) {
 			RValue val = null;
@@ -737,9 +735,9 @@ public class InitializationHandler {
 					newLHS = innerArrayAccessLHS;
 				}
 
-				ArrayList<Expression> innerDims = new ArrayList<Expression>(Arrays.asList(arrayType.getDimensions()));
+				ArrayList<RValue> innerDims = new ArrayList<RValue>(Arrays.asList(arrayType.getDimensions()));
 				innerDims.remove(0);//TODO ??
-				CArray innerArrayType = new CArray(innerDims.toArray(new Expression[0]), 
+				CArray innerArrayType = new CArray(innerDims.toArray(new RValue[0]), 
 						arrayType.getValueType());
 
 				final ArrayList<ExpressionListRecResult> listRecCall;

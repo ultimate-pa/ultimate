@@ -1232,10 +1232,12 @@ public class MemoryHandler {
         	Expression arrayEntryAddressOffset = newStartAddressOffset;
 
         	//can we assume here, that we have a boogie array, right??
-        	if (arrayType.getDimensions().length == 1
-        			&& arrayType.getDimensions()[0] instanceof IntegerLiteral) {
-
-					int dim = Integer.parseInt(((IntegerLiteral) arrayType.getDimensions()[0]).getValue());
+        	if (arrayType.getDimensions().length == 1) {
+        			BigInteger dimBigInteger = m_ExpressionTranslation.extractIntegerValue(arrayType.getDimensions()[0]);
+        			if (dimBigInteger == null) {
+        				throw new UnsupportedSyntaxException(loc, "variable length arrays not yet supported by this method");
+        			}
+					int dim = dimBigInteger.intValue();
 
 //					Expression readArrayEntryAddressOffset = arrayType.isOnHeap() ? getPointerOffset(rval.getValue(), loc) : null;
 

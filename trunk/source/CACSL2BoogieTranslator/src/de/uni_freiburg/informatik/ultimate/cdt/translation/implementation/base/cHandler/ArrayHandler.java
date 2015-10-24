@@ -125,7 +125,7 @@ public class ArrayHandler {
 				assert isOutermostSubscriptExpression(node) : "not outermost";
 				resultCType = cArray.getValueType();
 			} else {
-				Expression[] newDimensions = Arrays.copyOfRange(
+				RValue[] newDimensions = Arrays.copyOfRange(
 						cArray.getDimensions(), 1, cArray.getDimensions().length);
 				assert newDimensions.length == cArray.getDimensions().length - 1;
 				resultCType = new CArray(newDimensions, cArray.getValueType());
@@ -202,7 +202,7 @@ public class ArrayHandler {
 	 */
 	private void addArrayBoundsCheckForCurrentIndex(Dispatcher main, 
 			ILocation loc, Expression currentIndex,
-			Expression currentDimension, ExpressionResult exprResult) {
+			RValue currentDimension, ExpressionResult exprResult) {
 		if (m_checkArrayAccessOffHeap  == POINTER_CHECKMODE.IGNORE) {
 			// do not check anything
 			return;
@@ -222,7 +222,7 @@ public class ArrayHandler {
 					currentIndex, indexType);
 			Expression notTooBig = cHandler.getExpressionTranslation().constructBinaryComparisonExpression(
 					loc, IASTBinaryExpression.op_lessThan, currentIndex, indexType, 
-					currentDimension, indexType);
+					currentDimension.getValue(), (CPrimitive) currentDimension.getCType());
 			inRange = new BinaryExpression(loc, Operator.LOGICAND, nonNegative, notTooBig);
 		}
 		switch (m_checkArrayAccessOffHeap) {
