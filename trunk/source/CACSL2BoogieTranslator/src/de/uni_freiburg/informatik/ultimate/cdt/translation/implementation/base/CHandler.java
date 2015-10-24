@@ -847,86 +847,87 @@ public class CHandler implements ICHandler {
 		ExpressionResult variableLengthArrayAuxVarInitializer = null;
 		if (node instanceof IASTArrayDeclarator) {
 			IASTArrayDeclarator arrDecl = (IASTArrayDeclarator) node;
-
-			boolean variableLength = false;
-			ArrayList<Expression> sizeConstants = new ArrayList<Expression>();
-			Expression overallSize = new IntegerLiteral(loc, "1");
+			
+			final ArrayList<Expression> size = new ArrayList<Expression>();
+			// expression results of from array modifiers
+			final ArrayList<ExpressionResult> expressionResults = new ArrayList<ExpressionResult>();
+			
 			for (IASTArrayModifier am : arrDecl.getArrayModifiers()) {
-				ExpressionResult constEx = null;
+				final RValue sizeFactor;
 				if (am.getConstantExpression() != null) {
-					constEx = (ExpressionResult) main.
-							dispatch(am.getConstantExpression());
-				//the innermost array modifier may be empty, if there is an initializer; like int a[1][2][] = {...}
+					// case where we have a number between the brackets,
+					// e.g., a[23] or a[n+1]
+					ExpressionResult er = (ExpressionResult) main.dispatch(am.getConstantExpression());
+					er = er.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+					expressionResults.add(er);
+					sizeFactor = (RValue) er.lrVal;
 				} else if (am.getConstantExpression() == null && 
 						arrDecl.getArrayModifiers()[arrDecl.getArrayModifiers().length - 1] == am) {
+					//the innermost array modifier may be empty, if there is an initializer; like int a[1][2][] = {...}
+					final int intSizeFactor;
 					if (arrDecl.getInitializer() != null) {
 						assert arrDecl.getInitializer() instanceof IASTEqualsInitializer;
 						IASTEqualsInitializer eqInit = ((IASTEqualsInitializer) arrDecl.getInitializer());
 						assert eqInit.getInitializerClause() instanceof IASTInitializerList;
 						IASTInitializerList initList = (IASTInitializerList) eqInit.getInitializerClause();
-						constEx = new ExpressionResult(new RValue(new IntegerLiteral(loc, new Integer(
-								initList.getSize()).toString()), new CPrimitive(PRIMITIVE.INT)));
-					} else { // we have an incomplete array type without an
-								// initializer -- this may happen in a function
-								// parameter..
-						variableLength = true;
-						constEx = new ExpressionResult(new RValue(new IntegerLiteral(loc, "-1"), new CPrimitive(
-								PRIMITIVE.INT)));
+						intSizeFactor = initList.getSize();
+					} else { 
+						// we have an incomplete array type without an initializer -- 
+						// this may happen in a function parameter..
+						intSizeFactor = -1234567;
 					}
+					CPrimitive ctype = new CPrimitive(PRIMITIVE.INT);
+					Expression sizeExpression = m_ExpressionTranslation.constructLiteralForIntegerType(loc, ctype, BigInteger.valueOf(intSizeFactor));
+					sizeFactor = new RValue(sizeExpression, ctype, false, false);
+
 				} else {
 					throw new IncorrectSyntaxException(loc, "wrong array type in declaration");
 				}
-
-				constEx = constEx.switchToRValueIfNecessary(main, // just to be
-																	// safe..
-						mMemoryHandler, mStructHandler, loc);
-				sizeConstants.add(constEx.lrVal.getValue());
-				overallSize = CHandler.createArithmeticExpression(IASTBinaryExpression.op_multiply, 
-						overallSize, constEx.lrVal.getValue(), loc);
-				//if all dimensions are given as integer literals, createArithmeticExpression(..) should return an integer literal
-				// otherwise we have a variable length array
-				if (!(overallSize instanceof IntegerLiteral))
-					variableLength = true;
+				size.add(sizeFactor.getValue());
 			}
-			CArray arrayType = null;
-
-			if (variableLength) {
-				if (!(overallSize instanceof IntegerLiteral)) { //size is given but variable --> a real variable length array
-					//introduce a new auxiliary variable storing the size of the array 
-					//(the variable used may change independently from the array)
-
-					ArrayList<Statement> initStmts = new ArrayList<>();
-					ArrayList<Declaration> initDecls = new ArrayList<>();
-					LinkedHashMap<VariableDeclaration, ILocation> initAuxVars = new LinkedHashMap<>();
-					
-					ArrayList<Expression> sizeExpressions = new ArrayList<>();
-
-					for (Expression sc : sizeConstants) {
-						if (!(sc instanceof IntegerLiteral)) {
-							String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYDIM);
-							VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, new PrimitiveType(loc, SFO.INT) , loc);
-
-							initStmts.add(new AssignmentStatement(loc, 
-									new LeftHandSide[] { new VariableLHS(loc, tmpName) }, new Expression[] { overallSize }));
-							initDecls.add(tmpVar);
-							initAuxVars.put(tmpVar, loc);					
-							sizeExpressions.add(new IdentifierExpression(loc, tmpName));
-						} else {
-							sizeExpressions.add(sc);
-						}
-					}
-
-
-					variableLengthArrayAuxVarInitializer = new ExpressionResult(initStmts, 
-							null, initDecls, initAuxVars);
-	
-					arrayType = new CArray(sizeExpressions.toArray(new Expression[sizeExpressions.size()]), newResType.cType);
-				} else { //something like int a[] -- no size given
-					arrayType = new CArray(sizeConstants.toArray(new Expression[sizeConstants.size()]), newResType.cType);
-				}
-			} else {
-				arrayType = new CArray(sizeConstants.toArray(new Expression[sizeConstants.size()]), newResType.cType);
+			ExpressionResult allResults = ExpressionResult.copyStmtDeclAuxvarOverapprox(expressionResults.toArray(new ExpressionResult[expressionResults.size()]));
+			if (!allResults.decl.isEmpty() || !allResults.stmt.isEmpty() || !allResults.auxVars.isEmpty()) {
+				throw new AssertionError("passing these results is not yet implemented");
 			}
+			CArray arrayType = new CArray(size.toArray(new Expression[size.size()]), newResType.cType);
+
+//			if (variableLength) {
+//				if (!(overallSize instanceof IntegerLiteral)) { //size is given but variable --> a real variable length array
+//					//introduce a new auxiliary variable storing the size of the array 
+//					//(the variable used may change independently from the array)
+//
+//					ArrayList<Statement> initStmts = new ArrayList<>();
+//					ArrayList<Declaration> initDecls = new ArrayList<>();
+//					LinkedHashMap<VariableDeclaration, ILocation> initAuxVars = new LinkedHashMap<>();
+//					
+//					ArrayList<Expression> sizeExpressions = new ArrayList<>();
+//
+//					for (Expression sc : sizeConstants) {
+//						if (!(sc instanceof IntegerLiteral)) {
+//							String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYDIM);
+//							VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, new PrimitiveType(loc, SFO.INT) , loc);
+//
+//							initStmts.add(new AssignmentStatement(loc, 
+//									new LeftHandSide[] { new VariableLHS(loc, tmpName) }, new Expression[] { overallSize }));
+//							initDecls.add(tmpVar);
+//							initAuxVars.put(tmpVar, loc);					
+//							sizeExpressions.add(new IdentifierExpression(loc, tmpName));
+//						} else {
+//							sizeExpressions.add(sc);
+//						}
+//					}
+//
+//
+//					variableLengthArrayAuxVarInitializer = new ExpressionResult(initStmts, 
+//							null, initDecls, initAuxVars);
+//	
+//					arrayType = new CArray(sizeExpressions.toArray(new Expression[sizeExpressions.size()]), newResType.cType);
+//				} else { //something like int a[] -- no size given
+//					arrayType = new CArray(sizeConstants.toArray(new Expression[sizeConstants.size()]), newResType.cType);
+//				}
+//			} else {
+//				arrayType = new CArray(sizeConstants.toArray(new Expression[sizeConstants.size()]), newResType.cType);
+//			}
 			newResType.cType = arrayType;
 
 		} else if (node instanceof CASTFunctionDeclarator) {
