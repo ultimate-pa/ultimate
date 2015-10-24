@@ -44,6 +44,7 @@ import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.BitvectorTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
@@ -1036,12 +1037,22 @@ public class MemoryHandler {
      */
     public ExpressionResult getReadCall(Dispatcher main, Expression address,
     		CType resultType) {
+    	ILocation loc = (ILocation) address.getLocation();
+    	if (((CHandler) main.cHandler).getExpressionTranslation() instanceof BitvectorTranslation
+    			&& !(resultType.getUnderlyingType() instanceof CPointer)) {
+    		CPrimitive cPrimitive = (CPrimitive) resultType;
+    		if (main.getTypeSizes().getSize(cPrimitive.getType()) != 
+    				main.getTypeSizes().getSize(PRIMITIVE.INT)) {
+    			throw new UnsupportedSyntaxException(loc, 
+    					"cannot read " + cPrimitive + " from heap"); 
+    		}
+    	}
         ArrayList<Statement> stmt = new ArrayList<Statement>();
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, ILocation> auxVars = 
 				new LinkedHashMap<VariableDeclaration, ILocation>();
 		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
-        ILocation loc = (ILocation) address.getLocation();
+        
         
         ASTType heapType = getHeapTypeOfLRVal(main, loc, resultType);
         
@@ -1139,9 +1150,17 @@ public class MemoryHandler {
      *            the value to write.
      * @return the required Statements to perform the write.
      */
-    public ArrayList<Statement> getWriteCall(ILocation loc, HeapLValue hlv, 
+    public ArrayList<Statement> getWriteCall(Dispatcher main, ILocation loc, HeapLValue hlv, 
     		Expression value, CType valueType) {
-//        ILocation loc = hlv.getAddress().getLocation();
+    	if (((CHandler) main.cHandler).getExpressionTranslation() instanceof BitvectorTranslation
+    			&& !(valueType.getUnderlyingType() instanceof CPointer)) {
+    		CPrimitive cPrimitive = (CPrimitive) valueType;
+    		if (main.getTypeSizes().getSize(cPrimitive.getType()) != 
+    				main.getTypeSizes().getSize(PRIMITIVE.INT)) {
+    			throw new UnsupportedSyntaxException(loc, 
+    					"cannot write " + cPrimitive + " to heap"); 
+    		}
+    	}
         ArrayList<Statement> stmt = new ArrayList<Statement>();
         
         if (valueType instanceof CNamed)
@@ -1204,7 +1223,7 @@ public class MemoryHandler {
         		HeapLValue fieldHlv = new HeapLValue(
         				constructPointerFromBaseAndOffset(newStartAddressBase,
         				newOffset, loc), fieldType);
-        		stmt.addAll(getWriteCall(loc, fieldHlv, sae, fieldType));
+        		stmt.addAll(getWriteCall(main, loc, fieldHlv, sae, fieldType));
         	}
         	
         } else if (valueType instanceof CArray) {
@@ -1257,7 +1276,7 @@ public class MemoryHandler {
 											value, 
 											new Expression[] { new IntegerLiteral(loc, new Integer(pos).toString()) }), arrayType.getValueType());
 //						}
-						stmt.addAll(getWriteCall(loc, 
+						stmt.addAll(getWriteCall(main, loc, 
 								new HeapLValue(constructPointerFromBaseAndOffset(newStartAddressBase, arrayEntryAddressOffset, loc), arrayType.getValueType()), 
 								arrayAccRVal.getValue(), arrayAccRVal.getCType()));
 						//TODO 2015-10-11 Matthias: Why is there an addition of value Type size

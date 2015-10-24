@@ -2462,9 +2462,6 @@ public class CHandler implements ICHandler {
 					cond = res.lrVal.getValue();
 
 				/*
-				decl.addAll(res.decl);
-				auxVars.putAll(res.auxVars);
-				overappr.addAll(res.overappr);
 				for (Statement s : res.stmt)
 					if (s instanceof BreakStatement)
 						ifBlock.add(new GotoStatement(locC, new String[] { breakLabelName }));
@@ -2943,7 +2940,7 @@ public class CHandler implements ICHandler {
 		if (lrVal instanceof HeapLValue) {
 			HeapLValue hlv = (HeapLValue) lrVal;
 
-			stmt.addAll(mMemoryHandler.getWriteCall(loc, hlv, rightHandSide.getValue(), rightHandSide.getCType()));
+			stmt.addAll(mMemoryHandler.getWriteCall(main, loc, hlv, rightHandSide.getValue(), rightHandSide.getCType()));
 
 			return new ExpressionResult(stmt, rightHandSide, decl, auxVars, overappr);
 		} else if (lrVal instanceof LocalLValue) {
