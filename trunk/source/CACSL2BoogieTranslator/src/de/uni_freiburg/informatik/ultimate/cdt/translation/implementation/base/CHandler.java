@@ -1044,66 +1044,10 @@ public class CHandler implements ICHandler {
 			return new ExpressionResult(new RValue(mMemoryHandler.calculateSizeOf(loc, oType), new CPrimitive(
 					PRIMITIVE.INT)), emptyAuxVars);
 		case IASTUnaryExpression.op_star: {
-			ExpressionResult rop = o.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-			Expression addr = rop.lrVal.getValue();
-			if (rop.lrVal.getCType() instanceof CArray) {
-				CArray arrayCType = (CArray) rop.lrVal.getCType();
-				// FIXME: type like this??
-				ArrayList<Expression> dims = new ArrayList<Expression>(Arrays.asList(arrayCType.getDimensions()));
-				dims.remove(0);
-				CType newCType = null;
-				if (dims.size() == 0)
-					newCType = arrayCType.getValueType();
-				else
-					newCType = new CArray(dims.toArray(new Expression[0]), arrayCType.getValueType());
-				return new ExpressionResult(rop.stmt, new HeapLValue(addr, newCType), rop.decl, rop.auxVars,
-						rop.overappr);
-			} else {
-				assert rop.lrVal.getCType().getUnderlyingType() instanceof CPointer : "type error: expected pointer , got "
-						+ rop.lrVal.getCType().toString();
-
-				CType pointedType = ((CPointer) rop.lrVal.getCType().getUnderlyingType()).pointsToType;
-				if (pointedType.isIncomplete())
-					throw new IncorrectSyntaxException(loc, "Pointer dereference of incomplete type");
-
-				return new ExpressionResult(rop.stmt, new HeapLValue(addr, pointedType),
-						rop.decl, rop.auxVars, rop.overappr);
-			}
+			return handleIndirectionOperator(main, o, loc);
 		}
 		case IASTUnaryExpression.op_amper: {
-			final RValue ad;
-			if (o.lrVal instanceof HeapLValue) {
-				ad = new RValue(((HeapLValue) o.lrVal).getAddress(), new CPointer(o.lrVal.getCType()));
-			} else if (o.lrVal instanceof LocalLValue) {
-				if (main instanceof PRDispatcher){
-					// We are in the prerun mode.
-					// As a workaround, we (incorrectly) return the value
-					// instead of the address. But we add variables to the
-					// heapVars and hence in the non-prerun mode the input
-					// will be a HeapLValue instead of a LocalLValue.
-					Expression expr = o.lrVal.getValue();
-					assert expr != null : "value si null";
-					if (expr instanceof IdentifierExpression) {
-						String id = ((IdentifierExpression) expr).getIdentifier();
-						SymbolTable st = main.cHandler.getSymbolTable();
-						String cid = st.getCID4BoogieID(id, loc);
-						SymbolTableValue value = st.get(cid, loc);
-						((PRDispatcher) main).getVariablesOnHeap().add(value.getDeclarationNode());
-					} else {
-						// Do nothing. Yet, I don't know if this is a good idea.
-					}
-					ad = new RValue(o.lrVal.getValue(), new CPointer(o.lrVal.getCType()));
-				} else {
-					throw new AssertionError("cannot take address of LocalLValue: this is a on-heap/off-heap bug");
-				}
-			} else if (o.lrVal instanceof RValue) {
-				throw new AssertionError("cannot take address of RValue");
-			} else {
-				throw new AssertionError("Unknown value");
-			}
-			ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(o);
-			result.lrVal = ad;
-			return result;
+			return handleAddressOfOperator(main, o, loc);
 		}
 		case IASTUnaryExpression.op_alignOf:
 		default:
@@ -1111,6 +1055,7 @@ public class CHandler implements ICHandler {
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 	}
+
 
 	/**
 	 * Handle prefix increment and decrement operators according to 
@@ -1269,6 +1214,64 @@ public class CHandler implements ICHandler {
 			throw new IllegalArgumentException("input has to be CPointer or CPrimitive");
 		}
 		return valueIncremented;
+	}
+	
+	/**
+	 * Handle the address operator according to Section 6.5.3.2 of C11.
+	 */
+	private Result handleAddressOfOperator(Dispatcher main, ExpressionResult er, ILocation loc) throws AssertionError {
+		final RValue ad;
+		if (er.lrVal instanceof HeapLValue) {
+			ad = new RValue(((HeapLValue) er.lrVal).getAddress(), new CPointer(er.lrVal.getCType()));
+		} else if (er.lrVal instanceof LocalLValue) {
+			if (main instanceof PRDispatcher){
+				// We are in the prerun mode.
+				// As a workaround, we (incorrectly) return the value
+				// instead of the address. But we add variables to the
+				// heapVars and hence in the non-prerun mode the input
+				// will be a HeapLValue instead of a LocalLValue.
+				Expression expr = er.lrVal.getValue();
+				assert expr != null : "value si null";
+				if (expr instanceof IdentifierExpression) {
+					String id = ((IdentifierExpression) expr).getIdentifier();
+					SymbolTable st = main.cHandler.getSymbolTable();
+					String cid = st.getCID4BoogieID(id, loc);
+					SymbolTableValue value = st.get(cid, loc);
+					((PRDispatcher) main).getVariablesOnHeap().add(value.getDeclarationNode());
+				} else {
+					// Do nothing. Yet, I don't know if this is a good idea.
+				}
+				ad = new RValue(er.lrVal.getValue(), new CPointer(er.lrVal.getCType()));
+			} else {
+				throw new AssertionError("cannot take address of LocalLValue: this is a on-heap/off-heap bug");
+			}
+		} else if (er.lrVal instanceof RValue) {
+			throw new AssertionError("cannot take address of RValue");
+		} else {
+			throw new AssertionError("Unknown value");
+		}
+		ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(er);
+		result.lrVal = ad;
+		return result;
+	}
+	
+	/**
+	 * Handle the indirection operator according to Section 6.5.3.2 of C11.
+	 * (The indirection operator is the star for pointer dereference.)
+	 */
+	private Result handleIndirectionOperator(Dispatcher main, ExpressionResult er, ILocation loc) {
+		ExpressionResult rop = er.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+		RValue rValue = (RValue) rop.lrVal;
+		if (!(rValue.getCType().getUnderlyingType() instanceof CPointer)) {
+			throw new IllegalArgumentException("dereference needs pointer but got " + rValue.getCType());
+		}
+		CPointer pointer = (CPointer) rValue.getCType().getUnderlyingType();
+		CType pointedType = pointer.pointsToType;
+		if (pointedType.isIncomplete())
+			throw new IncorrectSyntaxException(loc, "Pointer dereference of incomplete type");
+
+		return new ExpressionResult(rop.stmt, new HeapLValue(rValue.getValue(), pointedType),
+				rop.decl, rop.auxVars, rop.overappr);
 	}
 	
 	/**
