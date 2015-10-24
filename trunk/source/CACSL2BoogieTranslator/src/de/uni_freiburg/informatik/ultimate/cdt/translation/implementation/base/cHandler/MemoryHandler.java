@@ -1349,6 +1349,16 @@ public class MemoryHandler {
 	public Expression constructNullPointer(ILocation loc) {
 		return new IdentifierExpression(loc, SFO.NULL);
 	}
+	
+	public Expression constructPointerForIntegerValues(ILocation loc, BigInteger baseValue, BigInteger offsetValue) {
+		Expression base = m_ExpressionTranslation.constructLiteralForIntegerType(loc, 
+				m_ExpressionTranslation.getCTypeOfPointerComponents(), baseValue);
+		Expression offset = m_ExpressionTranslation.constructLiteralForIntegerType(loc, 
+				m_ExpressionTranslation.getCTypeOfPointerComponents(), offsetValue);
+		return constructPointerFromBaseAndOffset(base, offset, loc); 
+	}
+
+	
 
 
 	public TypeSizeAndOffsetComputer getTypeSizeAndOffsetComputer() {

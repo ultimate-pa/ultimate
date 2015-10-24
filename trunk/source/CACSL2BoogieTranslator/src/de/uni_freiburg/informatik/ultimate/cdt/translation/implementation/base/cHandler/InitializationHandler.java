@@ -217,14 +217,16 @@ public class InitializationHandler {
 						|| initializerUnderlyingType instanceof CArray) {
 					rhs = initializer.lrVal.getValue();
 				} else if (initializerUnderlyingType instanceof CPrimitive 
-						//						&& ((CPrimitive) initializerUnderlyingType).getType() == PRIMITIVE.INT){
 						&& ((CPrimitive) initializerUnderlyingType).getGeneralType() == GENERALPRIMITIVE.INTTYPE){
-					String offset = ((IntegerLiteral) initializer.lrVal.getValue()).getValue();
-					if (offset.equals("0")) {
-						rhs = new IdentifierExpression(loc, SFO.NULL);
+					BigInteger pointerOffsetValue = mExpressionTranslation.extractIntegerValue((RValue) initializer.lrVal);
+					if (pointerOffsetValue == null) {
+						throw new IllegalArgumentException("unable to understand " + initializer.lrVal);
+					}
+					if (pointerOffsetValue.equals(BigInteger.ZERO)) {
+						rhs = mMemoryHandler.constructNullPointer(loc);
 					} else {
-						rhs = MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(loc, "0"), 
-								new IntegerLiteral(loc, offset), loc);
+						BigInteger pointerBaseValue = BigInteger.ZERO;
+						rhs = mMemoryHandler.constructPointerForIntegerValues(loc, pointerBaseValue, pointerOffsetValue);
 					}
 				} else {
 					throw new AssertionError("trying to initialize a pointer with something different from int and pointer");

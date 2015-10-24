@@ -126,7 +126,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
@@ -157,7 +156,6 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalLTLInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieIdExpressionExtractor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
@@ -180,7 +178,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
@@ -439,16 +436,16 @@ public class CHandler implements ICHandler {
 		}
 
 		//(alex:) new function pointers
+		final BigInteger functionPointerPointerBaseValue = BigInteger.valueOf(-1);
 		for (Entry<String, Integer> en : ((Dispatcher) main).getFunctionToIndex().entrySet()) {
 			String funcId = SFO.FUNCTION_ADDRESS + en.getKey();
 			VarList varList = new VarList(loc, new String[]{ funcId }, main.typeHandler.constructPointerType(loc));
 			decl.add(new ConstDeclaration(loc, new Attribute[0], false, varList, null, false));//would unique make sense here?? -- would potentially add lots of axioms
+			BigInteger offsetValue = BigInteger.valueOf(en.getValue());
 			decl.add(new Axiom(loc, new Attribute[0], new BinaryExpression(loc, 
 					BinaryExpression.Operator.COMPEQ, 
-					new IdentifierExpression(loc, funcId), 
-					MemoryHandler.constructPointerFromBaseAndOffset(
-							new IntegerLiteral(loc, "-1"), 
-							new IntegerLiteral(loc, en.getValue().toString()), loc))));
+					new IdentifierExpression(loc, funcId),
+					mMemoryHandler.constructPointerForIntegerValues(loc, functionPointerPointerBaseValue, offsetValue))));
 		}
 
 		for (Declaration d : mDeclarationsGlobalInBoogie.keySet()) {
