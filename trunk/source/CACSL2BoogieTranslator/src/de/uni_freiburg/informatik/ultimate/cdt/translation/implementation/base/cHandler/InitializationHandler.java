@@ -66,7 +66,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
@@ -705,14 +704,16 @@ public class InitializationHandler {
 				}
 				Expression[] newIndices = null;
 				LeftHandSide newLHS = null;
+				CPrimitive indexType = (CPrimitive) dimensions[0].getCType();
+				Expression index = mExpressionTranslation.constructLiteralForIntegerType(loc, indexType, BigInteger.valueOf(i));
 				if (innerArrayAccessLHS instanceof ArrayLHS) {
 					ArrayList<Expression> innerIndices = 
 							new ArrayList<Expression>(Arrays.asList(((ArrayLHS) innerArrayAccessLHS).getIndices()));
-					innerIndices.add(new IntegerLiteral(loc, new Integer(i).toString()));
+					innerIndices.add(index);
 					newIndices = innerIndices.toArray(new Expression[0]);
 					newLHS = ((ArrayLHS) innerArrayAccessLHS).getArray();
 				} else {
-					newIndices = new Expression[] { new IntegerLiteral(loc, new Integer(i).toString()) };
+					newIndices = new Expression[] { index };
 					newLHS = innerArrayAccessLHS;
 				}
 
@@ -728,14 +729,19 @@ public class InitializationHandler {
 
 				Expression[] newIndices = null;
 				LeftHandSide newLHS = null;
+				
+				// 2015-10-24 Matthias: I don't understand where I can take the
+				// type of the index from. As a workaround I take signed int.
+				CPrimitive indexType = new CPrimitive(PRIMITIVE.INT);
+				Expression index = mExpressionTranslation.constructLiteralForIntegerType(loc, indexType, BigInteger.valueOf(i));
 				if (innerArrayAccessLHS instanceof ArrayLHS) {
 					ArrayList<Expression> innerIndices = 
 							new ArrayList<Expression>(Arrays.asList(((ArrayLHS) innerArrayAccessLHS).getIndices()));
-					innerIndices.add(new IntegerLiteral(loc, new Integer(i).toString()));
+					innerIndices.add(index);
 					newIndices = innerIndices.toArray(new Expression[0]);
 					newLHS = ((ArrayLHS) innerArrayAccessLHS).getArray();
 				} else { 
-					newIndices = new Expression[] { new IntegerLiteral(loc, new Integer(i).toString()) };
+					newIndices = new Expression[] { index };
 					newLHS = innerArrayAccessLHS;
 				}
 
