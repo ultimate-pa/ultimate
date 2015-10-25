@@ -412,6 +412,10 @@ public class CHandler implements ICHandler {
 			main.unsupportedSyntax(loc, msg);
 		}
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
+		
+		if (!((TypeHandler) mTypeHandler).useIntForAllIntegerTypes()) {
+			decl.addAll(PostProcessor.declarePrimitiveDataTypeSynonyms(loc, main.getTypeSizes()));
+		}
 
 		// TODO(thrax): Check if decl should be passed as null or not.
 		checkForACSL(main, null, decl, node, null);
@@ -460,7 +464,7 @@ public class CHandler implements ICHandler {
 		}
 
 
-		decl.addAll(mPostProcessor.postProcess(main, loc, mMemoryHandler, mArrayHandler, mFunctionHandler, mStructHandler, (TypeHandler) mTypeHandler,
+		decl.addAll(0, mPostProcessor.postProcess(main, loc, mMemoryHandler, mArrayHandler, mFunctionHandler, mStructHandler, (TypeHandler) mTypeHandler,
 				main.typeHandler.getUndefinedTypes(), mDeclarationsGlobalInBoogie, m_ExpressionTranslation));
 
 		// this has to happen after postprocessing as pping may add sizeof

@@ -150,9 +150,6 @@ public class PostProcessor {
 			TypeHandler typeHandler, Set<String> undefinedTypes, 
 			LinkedHashMap<Declaration,CDeclaration> mDeclarationsGlobalInBoogie, AExpressionTranslation expressionTranslation) {
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		if (!typeHandler.useIntForAllIntegerTypes()) {
-			decl.addAll(declarePrimitiveDataTypeSynonyms(loc, main.getTypeSizes(), typeHandler));
-		}
 		decl.addAll(declareUndefinedTypes(loc, undefinedTypes));
 		decl.addAll(createUltimateInitProcedure(loc, main, memoryHandler, arrayHandler, functionHandler, structHandler,
 				mDeclarationsGlobalInBoogie, expressionTranslation));
@@ -507,8 +504,18 @@ public class PostProcessor {
 		return decl;
 	}
 	
-	private ArrayList<Declaration> declarePrimitiveDataTypeSynonyms(ILocation loc, 
-			TypeSizes typeSizes, TypeHandler typeHandler) {
+	/**
+	 * Generate type declarations like, e.g., the following.   
+	 *     type { :isUnsigned true } { :bitsize 16 } C_USHORT = bv16;
+	 * This allow us to use type synonyms like C_USHORT during the translation.
+	 * This is yet not consequently implemented.
+	 * This is desired not only for bitvectors: it makes our translation more
+	 * modular and can ease debugging.
+	 * However, that this located in this class and fixed to bitvectors is a
+	 * workaround.
+	 */
+	public static ArrayList<Declaration> declarePrimitiveDataTypeSynonyms(ILocation loc, 
+			TypeSizes typeSizes) {
 		ArrayList<Declaration> decls = new ArrayList<Declaration>();
 		for (CPrimitive.PRIMITIVE cPrimitive: CPrimitive.PRIMITIVE.values()) {
 			CPrimitive cPrimitiveO = new CPrimitive(cPrimitive);
@@ -528,8 +535,6 @@ public class PostProcessor {
 			}
 		}
 		return decls;
-		
-		
 	}
 			
 }
