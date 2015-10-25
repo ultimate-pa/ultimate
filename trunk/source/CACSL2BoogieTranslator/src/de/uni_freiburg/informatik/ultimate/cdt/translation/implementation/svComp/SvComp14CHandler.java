@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
@@ -349,11 +350,11 @@ public class SvComp14CHandler extends CHandler {
 				(CPrimitive) lrValue.getCType().getUnderlyingType()).toString());
 		IntegerLiteral maxValue = new IntegerLiteral(loc, typeSizes.getMaxValueOfPrimitiveType(
 				(CPrimitive) lrValue.getCType().getUnderlyingType()).toString());
-		BinaryExpression biggerMinInt = new BinaryExpression(loc, 
+		Expression biggerMinInt = ExpressionFactory.newBinaryExpression(loc, 
 				BinaryExpression.Operator.COMPLEQ, minValue, lrValue.getValue());
-		BinaryExpression smallerMaxValue = new BinaryExpression(loc, 
+		Expression smallerMaxValue = ExpressionFactory.newBinaryExpression(loc, 
 				BinaryExpression.Operator.COMPLEQ, lrValue.getValue(), maxValue);
-		AssumeStatement inRange = new AssumeStatement(loc, new BinaryExpression(loc, 
+		AssumeStatement inRange = new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc, 
 				BinaryExpression.Operator.LOGICAND, biggerMinInt, smallerMaxValue));
 		return inRange;
 	}

@@ -79,6 +79,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
@@ -622,8 +623,8 @@ public class FunctionHandler {
 					Check check = new Check(Check.Spec.MEMORY_LEAK);
 					ILocation ensLoc = LocationFactory.createLocation(loc, check);
 					spec = Arrays.copyOf(spec, nrSpec + 1);
-					spec[nrSpec] = new EnsuresSpecification(ensLoc, false, new BinaryExpression(loc, Operator.COMPEQ,
-							vIe, new UnaryExpression(loc, UnaryExpression.Operator.OLD, vIe)));
+					spec[nrSpec] = new EnsuresSpecification(ensLoc, false, ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
+							vIe, ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.OLD, vIe)));
 					check.addToNodeAnnot(spec[nrSpec]);
 				}
 			}
@@ -1349,7 +1350,7 @@ public class FunctionHandler {
 					newStmts.add(assignment);
 				}
 
-				Expression condition = new BinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
+				Expression condition = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
 						new IdentifierExpression(loc, inParams[inParams.length - 1].getIdentifiers()[0]),
 						new IdentifierExpression(loc, SFO.FUNCTION_ADDRESS + fittingFunctions.get(i)));
 

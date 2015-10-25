@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.I
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
@@ -126,9 +127,9 @@ public abstract class AExpressionTranslation {
 	
 	public Expression constructBinaryEqualityExpression(ILocation loc, int nodeOperator, Expression exp1, CType type1, Expression exp2, CType type2) {
 		if (nodeOperator == IASTBinaryExpression.op_equals) {
-			return new BinaryExpression(loc, BinaryExpression.Operator.COMPEQ, exp1, exp2);
+			return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, exp1, exp2);
 		} else 	if (nodeOperator == IASTBinaryExpression.op_notequals) {
-			return new BinaryExpression(loc, BinaryExpression.Operator.COMPNEQ, exp1, exp2);
+			return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPNEQ, exp1, exp2);
 		} else {
 			throw new IllegalArgumentException("operator is neither equals nor not equals");
 		}

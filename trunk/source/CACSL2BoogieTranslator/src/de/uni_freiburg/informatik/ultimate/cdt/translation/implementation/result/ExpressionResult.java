@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieIdExpressionExtractor;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
@@ -654,25 +655,25 @@ public class ExpressionResult extends Result {
 			if (underlyingType instanceof CPrimitive) {
 				switch (((CPrimitive) underlyingType).getGeneralType()) {
 				case FLOATTYPE:
-					resultEx = new BinaryExpression(loc, 
+					resultEx = ExpressionFactory.newBinaryExpression(loc, 
 							BinaryExpression.Operator.COMPNEQ, e,
 							new RealLiteral(loc, SFO.NR0F));
 					break;
 				case INTTYPE:
 					Expression zero = expressionTranslation.constructLiteralForIntegerType(loc, 
 							(CPrimitive) underlyingType, BigInteger.ZERO);
-					resultEx = new BinaryExpression(loc, 
+					resultEx = ExpressionFactory.newBinaryExpression(loc, 
 							BinaryExpression.Operator.COMPNEQ, e, zero);
 					break;
 				case VOID:
 					default:
 				}
 			} else if (underlyingType instanceof CPointer) {
-				resultEx = new BinaryExpression(loc, 
+				resultEx = ExpressionFactory.newBinaryExpression(loc, 
 						BinaryExpression.Operator.COMPNEQ, e,
 						new IdentifierExpression(loc, SFO.NULL));
 			} else if (underlyingType instanceof CEnum) {
-				resultEx = new BinaryExpression(loc,
+				resultEx = ExpressionFactory.newBinaryExpression(loc,
 						BinaryExpression.Operator.COMPNEQ, e,
 						new IntegerLiteral(loc, SFO.NR0));
 			} else {
@@ -692,7 +693,7 @@ public class ExpressionResult extends Result {
 		Expression zero = expressionTranslation.constructLiteralForIntegerType(loc, 
 				new CPrimitive(PRIMITIVE.INT), BigInteger.ZERO);
 		return new RValue(
-				new IfThenElseExpression(loc, rVal.getValue(), one, zero), 
+				ExpressionFactory.newIfThenElseExpression(loc, rVal.getValue(), one, zero), 
 				rVal.getCType(), false);
 	}
 	

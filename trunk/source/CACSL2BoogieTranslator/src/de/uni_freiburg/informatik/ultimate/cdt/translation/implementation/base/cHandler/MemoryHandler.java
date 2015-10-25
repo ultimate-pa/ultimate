@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
@@ -308,7 +309,7 @@ public class MemoryHandler {
 				new Expression[] { zero }));
 		
 		IdentifierExpression ctrIdex = new IdentifierExpression(ignoreLoc, loopCtr);
-		BinaryExpression condition = new BinaryExpression(ignoreLoc, BinaryExpression.Operator.COMPLT, 
+		Expression condition = ExpressionFactory.newBinaryExpression(ignoreLoc, BinaryExpression.Operator.COMPLT, 
 				ctrIdex,
 				new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SIZE));
 		
@@ -583,13 +584,13 @@ public class MemoryHandler {
                     swrite.add(new EnsuresSpecification(
                             loc,
                             false,
-                            new BinaryExpression(
+                            ExpressionFactory.newBinaryExpression(
                                     loc,
                                     Operator.COMPEQ,
                                     memA,
                                     new ArrayStoreExpression(
                                             loc,
-                                            new UnaryExpression(
+                                            ExpressionFactory.newUnaryExpression(
                                                     loc,
                                                     UnaryExpression.Operator.OLD,
                                                     memA), idc, idVal))));
@@ -598,13 +599,13 @@ public class MemoryHandler {
                     swrite.add(new EnsuresSpecification(
                             loc,
                             false,
-                            new BinaryExpression(
+                            ExpressionFactory.newBinaryExpression(
                                     loc,
                                     Operator.COMPEQ,
                                     memA,
                                     new ArrayStoreExpression(
                                             loc,
-                                            new UnaryExpression(
+                                            ExpressionFactory.newUnaryExpression(
                                                     loc,
                                                     UnaryExpression.Operator.OLD,
                                                     memA), idc, aae))));
@@ -695,7 +696,7 @@ public class MemoryHandler {
            	Expression arr = new IdentifierExpression(loc, SFO.MEMORY + "_" + typeName);
            	Expression arrE = new ArrayAccessExpression(loc, arr, idc);
            	Expression valueE = new IdentifierExpression(loc, value);
-           	Expression equality = new BinaryExpression(loc, Operator.COMPEQ, valueE, arrE);
+           	Expression equality = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, valueE, arrE);
            	sread.add(new EnsuresSpecification(loc, false, equality));
 
             decl.add(new Procedure(loc, new Attribute[0], nread, new String[0],
@@ -762,7 +763,7 @@ public class MemoryHandler {
         	Check check = new Check(Spec.MEMORY_FREE);
         	boolean free = !m_CheckFreeValid;
         	RequiresSpecification offsetZero = new RequiresSpecification(
-        			tuLoc, free, new BinaryExpression(tuLoc, Operator.COMPEQ, 
+        			tuLoc, free, ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, 
         					addrOffset, nr0));
             check.addToNodeAnnot(offsetZero);
             specFree.add(offsetZero);
@@ -772,9 +773,9 @@ public class MemoryHandler {
                     new ArrayAccessExpression(tuLoc, valid, idcFree));
             check.addToNodeAnnot(baseValid);
             specFree.add(baseValid);
-            specFree.add(new EnsuresSpecification(tuLoc, free, new BinaryExpression(
+            specFree.add(new EnsuresSpecification(tuLoc, free, ExpressionFactory.newBinaryExpression(
                     tuLoc, Operator.COMPEQ, valid,
-                    new ArrayStoreExpression(tuLoc, new UnaryExpression(
+                    new ArrayStoreExpression(tuLoc, ExpressionFactory.newUnaryExpression(
                             tuLoc, UnaryExpression.Operator.OLD, valid),
                             idcFree, bLFalse))));
             specFree.add(new ModifiesSpecification(tuLoc, false,
@@ -844,32 +845,32 @@ public class MemoryHandler {
         List<Specification> specMalloc = new ArrayList<Specification>();
         if (m_CheckMallocNonNegative) {
         	RequiresSpecification nonNegative = new RequiresSpecification(tuLoc,
-        			false, new BinaryExpression(tuLoc, Operator.COMPGEQ, size, nr0));
+        			false, ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPGEQ, size, nr0));
         	nonNegative.getPayload().getAnnotations().put(
         		Check.getIdentifier(), new Check(Check.Spec.MALLOC_NONNEGATIVE));
         	specMalloc.add(nonNegative);
         }
         specMalloc.add(new EnsuresSpecification(tuLoc, false,
-                new BinaryExpression(tuLoc, Operator.COMPEQ,
-                        new ArrayAccessExpression(tuLoc, new UnaryExpression(
+                ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ,
+                        new ArrayAccessExpression(tuLoc, ExpressionFactory.newUnaryExpression(
                                 tuLoc, UnaryExpression.Operator.OLD, valid),
                                 idcMalloc), bLFalse)));
         specMalloc.add(new EnsuresSpecification(tuLoc, false,
-                new BinaryExpression(tuLoc, Operator.COMPEQ, valid,
-                        new ArrayStoreExpression(tuLoc, new UnaryExpression(
+                ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, valid,
+                        new ArrayStoreExpression(tuLoc, ExpressionFactory.newUnaryExpression(
                                 tuLoc, UnaryExpression.Operator.OLD, valid),
                                 idcMalloc, bLTrue))));
         specMalloc.add(new EnsuresSpecification(tuLoc, false,
-                new BinaryExpression(tuLoc, Operator.COMPEQ,
+                ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ,
                         new StructAccessExpression(tuLoc, res,
                                 SFO.POINTER_OFFSET), nr0)));
         specMalloc.add(new EnsuresSpecification(tuLoc, false,
-                new BinaryExpression(tuLoc, Operator.COMPNEQ,
+                ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPNEQ,
                         new StructAccessExpression(tuLoc, res,
                                 SFO.POINTER_BASE), nr0)));
         specMalloc.add(new EnsuresSpecification(tuLoc, false,
-                new BinaryExpression(tuLoc, Operator.COMPEQ, length,
-                        new ArrayStoreExpression(tuLoc, new UnaryExpression(
+                ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, length,
+                        new ArrayStoreExpression(tuLoc, ExpressionFactory.newUnaryExpression(
                                 tuLoc, UnaryExpression.Operator.OLD, length),
                                 idcMalloc, size))));
         specMalloc.add(new ModifiesSpecification(tuLoc, false, new VariableLHS[] {
@@ -898,11 +899,11 @@ public class MemoryHandler {
         			tuLoc, new Attribute[0], new VarList[] { new VarList(tuLoc,
         					new String[] { ADDR }, typeHandler.constructPointerType(tuLoc)) }) };
         	Statement[] block = new Statement[6];
-        	block[0] = new AssumeStatement(tuLoc, new BinaryExpression(tuLoc,
+        	block[0] = new AssumeStatement(tuLoc, ExpressionFactory.newBinaryExpression(tuLoc,
         			Operator.COMPEQ, addrOffset, nr0));
-        	block[1] = new AssumeStatement(tuLoc, new BinaryExpression(tuLoc,
+        	block[1] = new AssumeStatement(tuLoc, ExpressionFactory.newBinaryExpression(tuLoc,
         			Operator.COMPNEQ, addrBase, nr0));
-        	block[2] = new AssumeStatement(tuLoc, new UnaryExpression(tuLoc,
+        	block[2] = new AssumeStatement(tuLoc, ExpressionFactory.newUnaryExpression(tuLoc,
         			UnaryExpression.Operator.LOGICNEG, new ArrayAccessExpression(
         					tuLoc, valid, idcAddrBase)));
         	block[3] = new AssignmentStatement(tuLoc,

@@ -156,6 +156,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalLTLInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
@@ -446,7 +447,7 @@ public class CHandler implements ICHandler {
 			VarList varList = new VarList(loc, new String[]{ funcId }, main.typeHandler.constructPointerType(loc));
 			decl.add(new ConstDeclaration(loc, new Attribute[0], false, varList, null, false));//would unique make sense here?? -- would potentially add lots of axioms
 			BigInteger offsetValue = BigInteger.valueOf(en.getValue());
-			decl.add(new Axiom(loc, new Attribute[0], new BinaryExpression(loc, 
+			decl.add(new Axiom(loc, new Attribute[0], ExpressionFactory.newBinaryExpression(loc, 
 					BinaryExpression.Operator.COMPEQ, 
 					new IdentifierExpression(loc, funcId),
 					mMemoryHandler.constructPointerForIntegerValues(loc, functionPointerPointerBaseValue, offsetValue))));
@@ -862,7 +863,7 @@ public class CHandler implements ICHandler {
 					ExpressionResult er = (ExpressionResult) main.dispatch(am.getConstantExpression());
 					er = er.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
 //					FIXME: 2015-10-25 Matthias: uncomment once the simplification of Boogie expressions is implemented
-//					m_ExpressionTranslation.convert(loc, er, m_ExpressionTranslation.getCTypeOfPointerComponents());
+					m_ExpressionTranslation.convert(loc, er, m_ExpressionTranslation.getCTypeOfPointerComponents());
 					expressionResults.add(er);
 					sizeFactor = (RValue) er.lrVal;
 				} else if (am.getConstantExpression() == null && 
@@ -1296,7 +1297,7 @@ public class CHandler implements ICHandler {
 			final Expression negated;
 			if (operand.lrVal.isBoogieBool()) {
 				// in Boogie already represented by bool, we only negate
-				negated = new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, operand.lrVal.getValue());
+				negated = ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, operand.lrVal.getValue());
 			} else {
 				final Expression rhsOfComparison; 
 						if (inputType instanceof CPointer) {
@@ -1319,7 +1320,7 @@ public class CHandler implements ICHandler {
 						} else {
 							throw new AssertionError("illegal case");
 						}
-				 negated = new BinaryExpression(loc, Operator.COMPEQ, 
+				 negated = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, 
 						 operand.lrVal.getValue(), rhsOfComparison);
 			}
 			ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(operand);
@@ -1445,7 +1446,7 @@ public class CHandler implements ICHandler {
 				// no statements in right operands, hence no side effects in
 				// operand
 				// we can directly combine operands with LOGICAND
-				RValue newRVal = new RValue(new BinaryExpression(loc, BinaryExpression.Operator.LOGICAND,
+				RValue newRVal = new RValue(ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.LOGICAND,
 						rl.lrVal.getValue(), rr.lrVal.getValue()),
 						new CPrimitive(CPrimitive.PRIMITIVE.INT), true);
 
@@ -1500,7 +1501,7 @@ public class CHandler implements ICHandler {
 			if (rr.stmt.isEmpty()) {
 				// no auxVar in operands, hence no side effects in operands
 				// we can directly combine operands with LOGICOR
-				return new ExpressionResult(stmt, new RValue(new BinaryExpression(loc,
+				return new ExpressionResult(stmt, new RValue(ExpressionFactory.newBinaryExpression(loc,
 						BinaryExpression.Operator.LOGICOR, rl.lrVal.getValue(), rr.lrVal.getValue()),
 						new CPrimitive(CPrimitive.PRIMITIVE.INT), true), decl, auxVars, overappr);
 			}
@@ -1642,7 +1643,7 @@ public class CHandler implements ICHandler {
 				break;
 			case IGNORE:
 				// use conjunction
-				expr = new BinaryExpression(loc, Operator.LOGICAND, baseEquality, offsetRelation);
+				expr = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, baseEquality, offsetRelation);
 				// TODO: Do not use conjunction. Use nondeterministic value
 				// if baseEquality does not hold.
 				break;
@@ -2153,10 +2154,10 @@ public class CHandler implements ICHandler {
 			} else {
 				throw new AssertionError("no such operation");
 			}
-			AssertStatement smallerMaxInt = new AssertStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPLT, operationResult, 
+			AssertStatement smallerMaxInt = new AssertStatement(loc, ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT, operationResult, 
 					new IntegerLiteral(loc, main.getTypeSizes().getMaxValueOfPrimitiveType((CPrimitive) resultType).toString())));
 			check.addToNodeAnnot(smallerMaxInt);
-			AssertStatement biggerMinInt = new AssertStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, operationResult, 
+			AssertStatement biggerMinInt = new AssertStatement(loc, ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ, operationResult, 
 					new IntegerLiteral(loc, main.getTypeSizes().getMinValueOfPrimitiveType((CPrimitive) resultType).toString())));
 			check.addToNodeAnnot(biggerMinInt);
 			rex.stmt.add(smallerMaxInt);
@@ -2453,7 +2454,7 @@ public class CHandler implements ICHandler {
 						firstCond = false;
 					} else {
 						stmt.add(new AssignmentStatement(locC, new LeftHandSide[] {new VariableLHS(locC, switchFlag)}, 
-												new Expression[] { new BinaryExpression(locC, Operator.LOGICOR, new IdentifierExpression(locC, switchFlag), cond)}));
+												new Expression[] { ExpressionFactory.newBinaryExpression(locC, Operator.LOGICOR, new IdentifierExpression(locC, switchFlag), cond)}));
 					}
 					stmt.add(ifStmt);
 				}
@@ -2462,7 +2463,7 @@ public class CHandler implements ICHandler {
 				locC = LocationFactory.createCLocation(child);
 
 				if (child instanceof IASTCaseStatement)
-					cond = new BinaryExpression(locC, Operator.COMPEQ, switchArg, res.lrVal.getValue());
+					cond = ExpressionFactory.newBinaryExpression(locC, Operator.COMPEQ, switchArg, res.lrVal.getValue());
 				else
 					//default statement
 					cond = res.lrVal.getValue();
@@ -2515,7 +2516,7 @@ public class CHandler implements ICHandler {
 				firstCond = false;
 			} else {
 				stmt.add(new AssignmentStatement(locC, new LeftHandSide[] {new VariableLHS(locC, switchFlag)}, 
-										new Expression[] { new BinaryExpression(locC, Operator.LOGICOR, new IdentifierExpression(locC, switchFlag), cond)}));
+										new Expression[] { ExpressionFactory.newBinaryExpression(locC, Operator.LOGICOR, new IdentifierExpression(locC, switchFlag), cond)}));
 			}
 			stmt.add(ifStmt);
 		}
@@ -3358,7 +3359,7 @@ public class CHandler implements ICHandler {
 		RValue condRVal = (RValue) condResult.lrVal;
 		IfStatement ifStmt;
 		{
-			Expression cond = new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, condRVal.getValue());
+			Expression cond = ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, condRVal.getValue());
 			ArrayList<Statement> thenStmt = new ArrayList<Statement>(
 					createHavocsForAuxVars(condResult.auxVars));
 			thenStmt.add(new BreakStatement(loc));
@@ -3503,7 +3504,7 @@ public class CHandler implements ICHandler {
 			}
 			oldValue = newValue;
 			enumDomain[i] = newValue;
-			mAxioms.add(new Axiom(loc, new Attribute[0], new BinaryExpression(loc, Operator.COMPEQ, l, newValue)));
+			mAxioms.add(new Axiom(loc, new Attribute[0], ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, l, newValue)));
 			mSymbolTable.put(fId, new SymbolTableValue(bId, cd, new CDeclaration(typeOfEnumIdentifiers, fId), true,
 					scConstant2StorageClass(node.getDeclSpecifier().getStorageClass()), node)); // FIXME
 																							// ??

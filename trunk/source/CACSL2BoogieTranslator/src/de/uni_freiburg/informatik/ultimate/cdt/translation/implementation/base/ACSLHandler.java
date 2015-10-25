@@ -94,6 +94,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Requires;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ValidExpression;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
@@ -433,27 +434,27 @@ public class ACSLHandler implements IACSLHandler {
 	        if (op != null) {
 	        	left.rexIntToBoolIfNecessary(loc, ((CHandler) main.cHandler).getExpressionTranslation());
 	        	right.rexIntToBoolIfNecessary(loc, ((CHandler) main.cHandler).getExpressionTranslation());
-	        	BinaryExpression be = new BinaryExpression(loc, op, left.lrVal.getValue(), right.lrVal.getValue());
+	        	Expression be = ExpressionFactory.newBinaryExpression(loc, op, left.lrVal.getValue(), right.lrVal.getValue());
 	        	// TODO: Handle Ctype
 	            return new ExpressionResult(stmt, new RValue(be, new CPrimitive(PRIMITIVE.INT), true), decl, auxVars, overappr);
-	            //return new Result(new BinaryExpression(loc, op, left, right));
+	            //return new Result(ExpressionFactory.newBinaryExpression(loc, op, left, right));
 	        }
 		}
         
         case LOGICXOR:
         	// translate into (l | r)
         	// where l = left & !right
-        	UnaryExpression notRight = new UnaryExpression(loc,
+        	Expression notRight = ExpressionFactory.newUnaryExpression(loc,
         			UnaryExpression.Operator.LOGICNEG, right.lrVal.getValue());
-        	BinaryExpression l = new BinaryExpression(loc,
+        	Expression l = ExpressionFactory.newBinaryExpression(loc,
         			Operator.LOGICAND, left.lrVal.getValue(), notRight);
         	// and r = !left & right
-        	UnaryExpression notLeft = new UnaryExpression(loc,
+        	Expression notLeft = ExpressionFactory.newUnaryExpression(loc,
         			UnaryExpression.Operator.LOGICNEG, left.lrVal.getValue());
-        	BinaryExpression r = new BinaryExpression(loc,
+        	Expression r = ExpressionFactory.newBinaryExpression(loc,
         			Operator.LOGICAND, notLeft, right.lrVal.getValue());
-        	return new ExpressionResult(stmt, new RValue(new BinaryExpression(loc, Operator.LOGICOR, l, r), new CPrimitive(PRIMITIVE.INT), true), decl, auxVars, overappr);
-        	//return new Result(new BinaryExpression(loc, Operator.LOGICOR, l, r));
+        	return new ExpressionResult(stmt, new RValue(ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, l, r), new CPrimitive(PRIMITIVE.INT), true), decl, auxVars, overappr);
+        	//return new Result(ExpressionFactory.newBinaryExpression(loc, Operator.LOGICOR, l, r));
         case BITAND:
         case BITIFF:
         case BITIMPLIES:
@@ -495,15 +496,15 @@ public class ACSLHandler implements IACSLHandler {
         
         switch (node.getOperator()) {
             case LOGICNEG:
-            	return new ExpressionResult(stmt, new RValue(new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, res.lrVal.getValue()), res.lrVal.getCType()), decl, auxVars, overappr);
-                //return new Result(new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, expr));
+            	return new ExpressionResult(stmt, new RValue(ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, res.lrVal.getValue()), res.lrVal.getCType()), decl, auxVars, overappr);
+                //return new Result(ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, expr));
             case MINUS:
             	AExpressionTranslation expressionTranslation = 
     				((CHandler) main.cHandler).getExpressionTranslation();
             	Expression expr = expressionTranslation.constructUnaryExpression(loc, 
             			IASTUnaryExpression.op_minus, res.lrVal.getValue(), (CPrimitive) res.lrVal.getCType());
                 return new ExpressionResult(stmt, new RValue(expr, res.lrVal.getCType()), decl, auxVars, overappr);
-                //return new Result(new UnaryExpression(loc, UnaryExpression.Operator.ARITHNEGATIVE, expr));
+                //return new Result(ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.ARITHNEGATIVE, expr));
             case PLUS:
                 return new ExpressionResult(stmt, new RValue(res.lrVal.getValue(), res.lrVal.getCType()), decl, auxVars, overappr);
                 //return new Result(expr);
@@ -951,9 +952,9 @@ public class ACSLHandler implements IACSLHandler {
         Expression arr = new IdentifierExpression(loc, SFO.VALID);
         Expression valid = new de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression(
                 loc, it, arr, idc);
-        Expression e = new UnaryExpression(
+        Expression e = ExpressionFactory.newUnaryExpression(
                 loc,
-                it,
+//                it,
                 de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator.LOGICNEG,
                 valid);
         

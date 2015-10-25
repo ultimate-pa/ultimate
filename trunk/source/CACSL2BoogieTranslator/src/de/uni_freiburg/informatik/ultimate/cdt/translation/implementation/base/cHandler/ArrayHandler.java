@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
@@ -232,7 +233,7 @@ public class ArrayHandler {
 			Expression notTooBig = cHandler.getExpressionTranslation().constructBinaryComparisonExpression(
 					loc, IASTBinaryExpression.op_lessThan, currentIndex.getValue(), indexType, 
 					currentDimension.getValue(), (CPrimitive) currentDimension.getCType());
-			inRange = new BinaryExpression(loc, Operator.LOGICAND, nonNegative, notTooBig);
+			inRange = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, nonNegative, notTooBig);
 		}
 		switch (m_checkArrayAccessOffHeap) {
 		case ASSERTandASSUME:
