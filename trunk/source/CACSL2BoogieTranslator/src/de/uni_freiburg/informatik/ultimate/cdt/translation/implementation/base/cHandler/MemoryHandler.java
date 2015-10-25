@@ -1035,18 +1035,24 @@ public class MemoryHandler {
      * @return all declarations and statements required to perform the read,
      *         plus an identifierExpression holding the read value.
      */
+    // 2015-10
     public ExpressionResult getReadCall(Dispatcher main, Expression address,
     		CType resultType) {
     	ILocation loc = (ILocation) address.getLocation();
     	if (((CHandler) main.cHandler).getExpressionTranslation() instanceof BitvectorTranslation
-    			&& !(resultType.getUnderlyingType() instanceof CPointer)) {
-    		CPrimitive cPrimitive = (CPrimitive) resultType;
-    		if (main.getTypeSizes().getSize(cPrimitive.getType()) != 
+    			&& (resultType.getUnderlyingType() instanceof CPrimitive)) {
+    		CPrimitive cPrimitive = (CPrimitive) resultType.getUnderlyingType();
+    		if (main.getTypeSizes().getSize(cPrimitive.getType()) > 
     				main.getTypeSizes().getSize(PRIMITIVE.INT)) {
     			throw new UnsupportedSyntaxException(loc, 
     					"cannot read " + cPrimitive + " from heap"); 
     		}
     	}
+		boolean bitvectorConversionNeeded = (((CHandler) main.cHandler).getExpressionTranslation() instanceof BitvectorTranslation
+    			&& (resultType.getUnderlyingType() instanceof CPrimitive)
+    			&& main.getTypeSizes().getSize(((CPrimitive) resultType.getUnderlyingType()).getType()) < 
+				main.getTypeSizes().getSize(PRIMITIVE.INT));
+    	
         ArrayList<Statement> stmt = new ArrayList<Statement>();
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, ILocation> auxVars = 
@@ -1059,7 +1065,13 @@ public class MemoryHandler {
         final String heapTypeName = getHeapTypeName(resultType);
         
         String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD);
-        VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, heapType, loc);
+        final ASTType tmpAstType;
+        if (bitvectorConversionNeeded) {
+        	tmpAstType = main.typeHandler.ctype2asttype(loc, m_ExpressionTranslation.getCTypeOfIntArray());
+        } else {
+        	tmpAstType = heapType;
+        }
+        VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, tmpAstType, loc);
         auxVars.put(tVarDecl, loc);
         decl.add(tVarDecl);
         VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, tmpId) };
@@ -1071,9 +1083,27 @@ public class MemoryHandler {
         }
         stmt.add(call);
 		assert (CHandler.isAuxVarMapcomplete(main, decl, auxVars));
-        return new ExpressionResult(stmt, 
-        		new RValue(new IdentifierExpression(loc, tmpId), resultType),
-        		decl, auxVars, overappr);
+		
+		ExpressionResult result; 
+		if (bitvectorConversionNeeded) {
+			result = new ExpressionResult(stmt, 
+	        		new RValue(new IdentifierExpression(loc, tmpId), m_ExpressionTranslation.getCTypeOfIntArray()),
+	        		decl, auxVars, overappr);
+			m_ExpressionTranslation.convert(loc, result, (CPrimitive) resultType.getUnderlyingType());
+	        String bvtmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD);
+	        VariableDeclaration bvtVarDecl = SFO.getTempVarVariableDeclaration(bvtmpId, heapType, loc);
+	        auxVars.put(bvtVarDecl, loc);
+	        decl.add(bvtVarDecl);
+	        VariableLHS[] bvlhs = new VariableLHS[] { new VariableLHS(loc, bvtmpId) };
+	        AssignmentStatement as = new AssignmentStatement(loc, bvlhs, new Expression[] { result.lrVal.getValue() });
+	        stmt.add(as);
+	        result.lrVal = new RValue(new IdentifierExpression(loc, bvtmpId), resultType);
+		} else {
+			 result = new ExpressionResult(stmt, 
+		        		new RValue(new IdentifierExpression(loc, tmpId), resultType),
+		        		decl, auxVars, overappr);
+		}
+        return result;
     }
     
     
@@ -1153,14 +1183,26 @@ public class MemoryHandler {
     public ArrayList<Statement> getWriteCall(Dispatcher main, ILocation loc, HeapLValue hlv, 
     		Expression value, CType valueType) {
     	if (((CHandler) main.cHandler).getExpressionTranslation() instanceof BitvectorTranslation
-    			&& !(valueType.getUnderlyingType() instanceof CPointer)) {
-    		CPrimitive cPrimitive = (CPrimitive) valueType;
-    		if (main.getTypeSizes().getSize(cPrimitive.getType()) != 
+    			&& (valueType.getUnderlyingType() instanceof CPrimitive)) {
+    		CPrimitive cPrimitive = (CPrimitive) valueType.getUnderlyingType();
+    		if (main.getTypeSizes().getSize(cPrimitive.getType()) > 
     				main.getTypeSizes().getSize(PRIMITIVE.INT)) {
     			throw new UnsupportedSyntaxException(loc, 
     					"cannot write " + cPrimitive + " to heap"); 
     		}
     	}
+		boolean bitvectorConversionNeeded = (((CHandler) main.cHandler).getExpressionTranslation() instanceof BitvectorTranslation
+    			&& (valueType.getUnderlyingType() instanceof CPrimitive)
+    			&& main.getTypeSizes().getSize(((CPrimitive) valueType.getUnderlyingType()).getType()) < 
+				main.getTypeSizes().getSize(PRIMITIVE.INT));
+		if (bitvectorConversionNeeded) {
+			RValue tmpworkaroundrvalue = new RValue(value, valueType.getUnderlyingType(), false, false);
+			ExpressionResult tmpworkaround = new ExpressionResult(tmpworkaroundrvalue);
+			m_ExpressionTranslation.convert(loc, tmpworkaround, new CPrimitive(PRIMITIVE.INT));
+			value = tmpworkaround.lrVal.getValue();
+			valueType = tmpworkaround.lrVal.getCType();
+		}
+		
         ArrayList<Statement> stmt = new ArrayList<Statement>();
         
         if (valueType instanceof CNamed)
