@@ -34,49 +34,42 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.SIGNEDNESS;
 
 /**
  * Provides the information if we want to use fixed sizes for types.
  * If yes an object of this class also provides the bytesize for each type.
+ * 
+ * 
  * @author Matthias Heizmann
  */
 public class TypeSizes {
 	private final boolean m_UseFixedTypeSizes;
 	
-	public final int sizeOfIntType;
+	private final int sizeOfBoolType;
+	private final int sizeOfCharType;
+	private final int sizeOfShortType;
+	private final int sizeOfIntType;
+	private final int sizeOfLongType;
+	private final int sizeOfLongLongType;
+	private final int sizeOfFloatType;
+	private final int sizeOfDoubleType;
+	private final int sizeOfLongDoubleType;
 	public final int sizeOfPointerType;
-	public final int sizeOfFloatType;
-	public final int sizeOfCharType;
-
+	
+//	private final int sizeOfWCharType;
+//	private final int sizeOfChar16Type;
+//	private final int sizeOfChar32Type;
+	
 //	for pointer arithmetic on a void pointer -- c standard disallows that, but gcc does not..
 	private final int sizeOfVoidType; 
 
-	private final int sizeOfBoolType;
-	private final int sizeOfShortType;
-	private final int sizeOfLongType;
-	public final int sizeOfDoubleType;
-	private final int sizeOfSCharType;
-	private final int sizeOfUCharType;
-	private final int sizeOfWCharType;
-	private final int sizeOfChar16Type;
-	private final int sizeOfChar32Type;
-	private final int sizeOfUShortType;
-	private final int sizeOfUIntType;
-	private final int sizeOfULongType;
-	private final int sizeOfLongLongType;
-	private final int sizeOfULongLongType;
-	private final int sizeOfComplexFloatType;
-	private final int sizeOfComplexDoubleType;
-	private final int sizeOfLongDoubleType;
-	private final int sizeOfComplexLongDoubleType;
-	private final boolean charIsSigned = true;
-	final int sizeOfEnumType; //something like sizeof(enum s)
+
 	/**
-	 * Fixme: 2015-07-22 Matthias: I cannot find the default type size in the
-	 * C standard. Before I set it to 23042 it was 0.
+	 * is char (without modifier) schar or uchar?
 	 */
-	public final int defaultTypeSize = 23042;
-	
+	private final boolean charIsSigned = true;
+
 	private final LinkedHashMap<CPrimitive.PRIMITIVE, Integer> CPrimitiveToTypeSizeConstant = 
 			new LinkedHashMap<>();
 	
@@ -84,8 +77,7 @@ public class TypeSizes {
 	public TypeSizes(UltimatePreferenceStore ups) {
 		this. m_UseFixedTypeSizes = 
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_USE_EXPLICIT_TYPESIZES);
-		this.sizeOfVoidType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_VOID);
+		this.sizeOfVoidType = 1;
 		this.sizeOfBoolType = 
 				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_BOOL);
 		this.sizeOfCharType = 
@@ -96,65 +88,45 @@ public class TypeSizes {
 				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_INT);
 		this.sizeOfLongType = 
 				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONG);
+		this.sizeOfLongLongType = 
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONGLONG);
 		this.sizeOfFloatType = 
 				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_FLOAT);
 		this.sizeOfDoubleType = 
 				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_DOUBLE);
-		this.sizeOfPointerType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_POINTER);
-		this.sizeOfSCharType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_SCHAR);
-		this.sizeOfUCharType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_UCHAR);
-		this.sizeOfWCharType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_WCHAR);
-		this.sizeOfChar16Type = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_CHAR16);
-		this.sizeOfChar32Type = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_CHAR32);
-		this.sizeOfUShortType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_USHORT);
-		this.sizeOfUIntType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_UINT);
-		this.sizeOfULongType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_ULONG);
-		this.sizeOfLongLongType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONGLONG);
-		this.sizeOfULongLongType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_ULONGLONG);
-		this.sizeOfComplexFloatType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_COMPLEXFLOAT);
-		this.sizeOfComplexDoubleType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_COMPLEXDOUBLE);
 		this.sizeOfLongDoubleType = 
 				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE);
-		this.sizeOfComplexLongDoubleType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_COMPLEXLONGDOUBLE);
-		this.sizeOfEnumType = 
-				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_ENUM);
+		this.sizeOfPointerType = 
+				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_POINTER);
+		SIGNEDNESS signednessOfChar = ups.getEnum(CACSLPreferenceInitializer.LABEL_SIGNEDNESS_CHAR, SIGNEDNESS.class);
+		if (signednessOfChar == SIGNEDNESS.UNSIGNED) {
+			throw new UnsupportedOperationException("char == uchar is not supported yet");
+		}
+//		this.sizeOfChar16Type = 
+//				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_CHAR16);
+//		this.sizeOfChar32Type = 
+//				ups.getInt(CACSLPreferenceInitializer.LABEL_EXPLICIT_TYPESIZE_CHAR32);
 	
 		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.VOID, this.sizeOfVoidType);
 		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.BOOL, this.sizeOfBoolType);
 		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.CHAR, this.sizeOfCharType);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.CHAR16, this.sizeOfChar16Type);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.CHAR32, this.sizeOfChar32Type);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.COMPLEX_DOUBLE, this.sizeOfComplexDoubleType);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.COMPLEX_FLOAT, this.sizeOfComplexFloatType);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.COMPLEX_LONGDOUBLE, this.sizeOfComplexLongDoubleType);
+		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.SCHAR, this.sizeOfCharType);
+		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.UCHAR, this.sizeOfCharType);
+		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.SHORT, this.sizeOfShortType);
+		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.USHORT, this.sizeOfShortType);
+		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.INT, this.sizeOfIntType);
+		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.UINT, this.sizeOfIntType);
+		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.LONG, this.sizeOfLongType);
+		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.ULONG, this.sizeOfLongType);
+		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.LONGLONG, this.sizeOfLongLongType);		
+		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.ULONGLONG, this.sizeOfLongLongType);
 		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.DOUBLE, this.sizeOfDoubleType);
 		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.FLOAT, this.sizeOfFloatType);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.INT, this.sizeOfIntType);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.LONG, this.sizeOfLongType);
 		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.LONGDOUBLE, this.sizeOfLongDoubleType);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.LONGLONG, this.sizeOfLongLongType);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.SCHAR, this.sizeOfSCharType);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.SHORT, this.sizeOfShortType);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.UCHAR, this.sizeOfUCharType);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.UINT, this.sizeOfUIntType);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.ULONG, this.sizeOfULongType);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.ULONGLONG, this.sizeOfULongLongType);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.USHORT, this.sizeOfUShortType);
-		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.WCHAR, this.sizeOfWCharType);
+
+//		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.CHAR16, this.sizeOfChar16Type);
+//		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.CHAR32, this.sizeOfChar32Type);
+//		CPrimitiveToTypeSizeConstant.put(PRIMITIVE.WCHAR, this.sizeOfWCharType);
 	}
 	
 

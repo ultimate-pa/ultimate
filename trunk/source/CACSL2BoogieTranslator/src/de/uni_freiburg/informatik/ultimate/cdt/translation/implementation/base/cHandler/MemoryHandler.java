@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.BitvectorTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
@@ -83,7 +82,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.EnsuresSpecification
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
@@ -304,8 +302,10 @@ public class MemoryHandler {
 		VariableDeclaration loopCtrDec = new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] { lcvl });
 		decl.add(loopCtrDec);
 		//initialize the counter to 0
+		Expression zero = m_ExpressionTranslation.constructLiteralForIntegerType(
+				ignoreLoc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
 		stmt.add(new AssignmentStatement(ignoreLoc, new LeftHandSide[] { new VariableLHS(ignoreLoc, loopCtr)}, 
-				new Expression[] { new IntegerLiteral(ignoreLoc, SFO.NR0) }));
+				new Expression[] { zero }));
 		
 		IdentifierExpression ctrIdex = new IdentifierExpression(ignoreLoc, loopCtr);
 		BinaryExpression condition = new BinaryExpression(ignoreLoc, BinaryExpression.Operator.COMPLT, 
@@ -342,9 +342,11 @@ public class MemoryHandler {
 		
 		//increment counter
 		VariableLHS ctrLHS = new VariableLHS(ignoreLoc, loopCtr);
+		Expression one = m_ExpressionTranslation.constructLiteralForIntegerType(
+				ignoreLoc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
 		bodyStmt.add(new AssignmentStatement(ignoreLoc, new LeftHandSide[] { ctrLHS }, 
 				new Expression[] { constructPointerComponentAddition(ignoreLoc,
-						ctrIdex, new IntegerLiteral(ignoreLoc, SFO.NR1)) }));
+						ctrIdex, one) }));
 
 		
 		Statement[] whileBody = bodyStmt.toArray(new Statement[bodyStmt.size()]);
@@ -1313,10 +1315,12 @@ public class MemoryHandler {
 //							readArrayEntryAddressOffset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus, 
 //								readArrayEntryAddressOffset, valueTypeSize, loc);
 //						} else {
+							Expression position = m_ExpressionTranslation.constructLiteralForIntegerType(
+									loc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(pos));
 							arrayAccRVal = new RValue(
 									new ArrayAccessExpression(loc, 
 											value, 
-											new Expression[] { new IntegerLiteral(loc, new Integer(pos).toString()) }), arrayType.getValueType());
+											new Expression[] { position }), arrayType.getValueType());
 //						}
 						stmt.addAll(getWriteCall(main, loc, 
 								new HeapLValue(constructPointerFromBaseAndOffset(newStartAddressBase, arrayEntryAddressOffset, loc), arrayType.getValueType()), 

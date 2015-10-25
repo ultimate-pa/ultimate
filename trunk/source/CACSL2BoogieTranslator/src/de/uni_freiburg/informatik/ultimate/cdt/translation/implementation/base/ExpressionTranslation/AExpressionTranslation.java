@@ -288,10 +288,14 @@ public abstract class AExpressionTranslation {
 	public abstract void doIntegerPromotion(ILocation loc, ExpressionResult operand);
 	
 	public boolean integerPromotionNeeded(CPrimitive cPrimitive) {
-		if (cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR) || cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR16) ||
-			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR32) || cPrimitive.getType().equals(CPrimitive.PRIMITIVE.SCHAR) ||
-			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.SHORT) || cPrimitive.getType().equals(CPrimitive.PRIMITIVE.UCHAR) ||
-			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.USHORT) || cPrimitive.getType().equals(CPrimitive.PRIMITIVE.WCHAR)) {
+		if (cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR) || 
+//			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR16) ||
+//			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR32) || 
+			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.SCHAR) ||
+			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.SHORT) || 
+			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.UCHAR) ||
+//			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.WCHAR) || 
+			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.USHORT)) {
 			return true;
 		} else {
 			return false;

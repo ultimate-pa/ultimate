@@ -861,6 +861,8 @@ public class CHandler implements ICHandler {
 					// e.g., a[23] or a[n+1]
 					ExpressionResult er = (ExpressionResult) main.dispatch(am.getConstantExpression());
 					er = er.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+//					FIXME: 2015-10-25 Matthias: uncomment once the simplification of Boogie expressions is implemented
+//					m_ExpressionTranslation.convert(loc, er, m_ExpressionTranslation.getCTypeOfPointerComponents());
 					expressionResults.add(er);
 					sizeFactor = (RValue) er.lrVal;
 				} else if (am.getConstantExpression() == null && 
@@ -878,7 +880,7 @@ public class CHandler implements ICHandler {
 						// this may happen in a function parameter..
 						intSizeFactor = -1234567;
 					}
-					CPrimitive ctype = new CPrimitive(PRIMITIVE.INT);
+					CPrimitive ctype = m_ExpressionTranslation.getCTypeOfPointerComponents();
 					Expression sizeExpression = m_ExpressionTranslation.constructLiteralForIntegerType(loc, ctype, BigInteger.valueOf(intSizeFactor));
 					sizeFactor = new RValue(sizeExpression, ctype, false, false);
 
