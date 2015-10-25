@@ -381,25 +381,6 @@ public class SvComp14CHandler extends CHandler {
 		return super.visit(main, node);
 	}
 
-	//
-	// VERIFIER_nondet_X()
-	//
-	@Override
-	public Result visit(Dispatcher main, IASTBinaryExpression node) {
-		Result r = super.visit(main, node);
-		if (node.getOperator() == IASTBinaryExpression.op_divide
-				|| node.getOperator() == IASTBinaryExpression.op_divideAssign) {
-			// remove division by zero asserts
-			assert r instanceof ExpressionResult;
-			ExpressionResult rex = (ExpressionResult) r;
-			Iterator<Statement> it = rex.stmt.iterator();
-			while (it.hasNext())
-				if (it.next() instanceof AssertStatement)
-					it.remove();
-		}
-		return r;
-	}
-
 	@Override
 	public Result visit(Dispatcher main, IASTASMDeclaration node) {
 		//workaround for now: ignore inline assembler instructions
