@@ -129,7 +129,7 @@ public class CStruct extends CType {
     }
 
     /**
-     * Getter for all field types, orderd according to occurance in C code!
+     * Getter for all field types, ordered according to occurence in C code!
      * 
      * @return the types of this strut's fields.
      */
@@ -149,12 +149,15 @@ public class CStruct extends CType {
     @Override
     public String toString() {
 //    	if (isIncomplete) {
+    	String structOrUnionPrefix = this instanceof CUnion ? "UNION#" : "STRUCT#";
+    	
+    	
     	if (this.isIncomplete()) {
-    		return "STRUCT#~incomplete~" + incompleteName;
+    		return structOrUnionPrefix + "~incomplete~" + incompleteName;
     	} else if (toStringCached != null) { 
     		return toStringCached;
     	}else {
-    		StringBuilder id = new StringBuilder("STRUCT#");
+    		StringBuilder id = new StringBuilder(structOrUnionPrefix);
     		for (int i = 0; i < getFieldCount(); i++) {
     			id.append("?");
     			id.append(fNames[i]);
