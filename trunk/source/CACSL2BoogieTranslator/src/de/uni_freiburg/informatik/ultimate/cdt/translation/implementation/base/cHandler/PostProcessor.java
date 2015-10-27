@@ -396,22 +396,22 @@ public class PostProcessor {
 	private ArrayList<Declaration> createUltimateStartProcedure(
 			Dispatcher main, ILocation loc, FunctionHandler functionHandler) {
 		LinkedHashMap<String, Procedure> procedures = functionHandler.getProcedures();
-		LinkedHashMap<String, LinkedHashSet<String>> modifiedGlobals = functionHandler.getModifiedGlobals();
-
-		functionHandler.beginUltimateInit(main, loc, SFO.START);
-		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		String checkedMethod = main.getCheckedMethod();
-
-		Procedure startDeclaration = null;
-		Specification[] specsStart = new Specification[0];
-
-		if (!functionHandler.getCallGraph().containsKey(SFO.START))
-			functionHandler.getCallGraph().put(SFO.START, new LinkedHashSet<String>());
-		functionHandler.getCallGraph().get(SFO.START).add(SFO.INIT);
+		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 
 		if (!checkedMethod.equals(SFO.EMPTY)
 				&& procedures.containsKey(checkedMethod)) {
 			mLogger.info("Settings: Checked method=" + checkedMethod);
+
+			LinkedHashMap<String, LinkedHashSet<String>> modifiedGlobals = functionHandler.getModifiedGlobals();
+			functionHandler.beginUltimateInit(main, loc, SFO.START);
+			
+			Procedure startDeclaration = null;
+			Specification[] specsStart = new Specification[0];
+
+			if (!functionHandler.getCallGraph().containsKey(SFO.START))
+				functionHandler.getCallGraph().put(SFO.START, new LinkedHashSet<String>());
+			functionHandler.getCallGraph().get(SFO.START).add(SFO.INIT);
 
 			functionHandler.getCallGraph().get(SFO.START).add(checkedMethod);
 
@@ -490,6 +490,11 @@ public class PostProcessor {
 			//					+ checkMethod
 			//					+ "\n The program does not have this method. ULTIMATE will continue in library mode (i.e., each procedure can be starting procedure and global variables are not initialized).";
 			//			Dispatcher.warn(loc, msg);
+			
+			startDeclaration = new Procedure(loc, new Attribute[0], SFO.START,
+					new String[0], new VarList[0], new VarList[0], specsStart,
+					null);
+			functionHandler.endUltimateInit(main, startDeclaration, SFO.START);
 		} else {
 			mLogger.info("Settings: Library mode!");
 			if (procedures.containsKey("main")) {
@@ -497,10 +502,6 @@ public class PostProcessor {
 				mDispatcher.warn(loc, msg);
 			}
 		}
-		startDeclaration = new Procedure(loc, new Attribute[0], SFO.START,
-				new String[0], new VarList[0], new VarList[0], specsStart,
-				null);
-		functionHandler.endUltimateInit(main, startDeclaration, SFO.START);
 		return decl;
 	}
 	
