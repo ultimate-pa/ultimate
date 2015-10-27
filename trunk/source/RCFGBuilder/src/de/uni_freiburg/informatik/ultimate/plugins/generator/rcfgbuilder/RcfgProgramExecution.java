@@ -25,6 +25,7 @@
  * licensors of the ULTIMATE RCFGBuilder plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;
 
 import java.util.ArrayList;
@@ -32,39 +33,44 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.UnprovabilityReason;
 
+/**
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class RcfgProgramExecution implements IProgramExecution<CodeBlock, Expression> {
 
-	private final List<AtomicTraceElement<CodeBlock>> m_Trace;
-	private final Map<Integer, ProgramState<Expression>> m_PartialProgramStateMapping;
-	private final Map<TermVariable, Boolean>[] m_BranchEncoders;
-	private final Map<String, ILocation> m_Overapproximations;
+	private final List<AtomicTraceElement<CodeBlock>> mTrace;
+	private final Map<Integer, ProgramState<Expression>> mPartialProgramStateMapping;
+	private final Map<TermVariable, Boolean>[] mBranchEncoders;
+	private final Map<String, ILocation> mOverapproximations;
 
 	@SuppressWarnings("unchecked")
-	public RcfgProgramExecution(List<CodeBlock> trace, Map<Integer, ProgramState<Expression>> partialProgramStateMapping) {
+	public RcfgProgramExecution(final List<CodeBlock> trace,
+			final Map<Integer, ProgramState<Expression>> partialProgramStateMapping) {
 		this(trace, partialProgramStateMapping, new ArrayList<Map<TermVariable, Boolean>>().toArray(new Map[0]));
 	}
 
-	public RcfgProgramExecution(List<CodeBlock> trace,
-			Map<Integer, ProgramState<Expression>> partialProgramStateMapping,
-			Map<TermVariable, Boolean>[] branchEncoders) {
+	public RcfgProgramExecution(final List<CodeBlock> trace,
+			final Map<Integer, ProgramState<Expression>> partialProgramStateMapping,
+			final Map<TermVariable, Boolean>[] branchEncoders) {
 		assert trace != null;
 		assert partialProgramStateMapping != null;
 		assert branchEncoders != null;
@@ -82,45 +88,45 @@ public class RcfgProgramExecution implements IProgramExecution<CodeBlock, Expres
 			}
 		}
 
-		m_Trace = atomictrace;
+		mTrace = atomictrace;
 
-		m_PartialProgramStateMapping = partialProgramStateMapping;
-		m_BranchEncoders = branchEncoders;
-		m_Overapproximations = getOverapproximations(trace);
+		mPartialProgramStateMapping = partialProgramStateMapping;
+		mBranchEncoders = branchEncoders;
+		mOverapproximations = getOverapproximations(trace);
 	}
 
 	/**
 	 * Returns all overapproximations that were done on this trace.
 	 */
 	public Map<String, ILocation> getOverapproximations() {
-		return m_Overapproximations;
+		return mOverapproximations;
 	}
 
 	public Map<TermVariable, Boolean>[] getBranchEncoders() {
-		return m_BranchEncoders;
+		return mBranchEncoders;
 	}
 
 	@Override
 	public int getLength() {
-		return m_Trace.size();
+		return mTrace.size();
 	}
 
 	@Override
 	public AtomicTraceElement<CodeBlock> getTraceElement(int i) {
-		return m_Trace.get(i);
+		return mTrace.get(i);
 	}
 
 	@Override
 	public ProgramState<Expression> getProgramState(int i) {
-		if (i < 0 || i >= m_Trace.size()) {
+		if (i < 0 || i >= mTrace.size()) {
 			throw new IllegalArgumentException("out of range");
 		}
-		return m_PartialProgramStateMapping.get(i);
+		return mPartialProgramStateMapping.get(i);
 	}
 
 	@Override
 	public ProgramState<Expression> getInitialProgramState() {
-		return m_PartialProgramStateMapping.get(-1);
+		return mPartialProgramStateMapping.get(-1);
 	}
 
 	public static Map<String, ILocation> getOverapproximations(List<CodeBlock> trace) {
@@ -130,8 +136,9 @@ public class RcfgProgramExecution implements IProgramExecution<CodeBlock, Expres
 				HashMap<String, IAnnotations> annotations = cb.getPayload().getAnnotations();
 				if (annotations.containsKey(Overapprox.getIdentifier())) {
 					Overapprox overapprox = (Overapprox) annotations.get(Overapprox.getIdentifier());
-					Map<String, ILocation> reason2Location = (Map<String, ILocation>) 
-							overapprox.getAnnotationsAsMap().get(Overapprox.s_LOCATION_MAPPING);
+					@SuppressWarnings("unchecked")
+					Map<String, ILocation> reason2Location = (Map<String, ILocation>) overapprox.getAnnotationsAsMap()
+							.get(Overapprox.s_LOCATION_MAPPING);
 					for (Entry<String, ILocation> entry : reason2Location.entrySet()) {
 						result.put(entry.getKey(), entry.getValue());
 					}
@@ -152,7 +159,7 @@ public class RcfgProgramExecution implements IProgramExecution<CodeBlock, Expres
 				sb.append("  ");
 				String var = BoogiePrettyPrinter.print(variable);
 				String val = BoogiePrettyPrinter.print(value);
-				sb.append(var + "=" + val);
+				sb.append(var).append("=").append(val);
 			}
 			result = sb.toString();
 		}
@@ -165,18 +172,17 @@ public class RcfgProgramExecution implements IProgramExecution<CodeBlock, Expres
 		String valuation = ppstoString(getInitialProgramState());
 		String lineSeparator = CoreUtil.getPlatformLineSeparator();
 
-		sb.append("=== Start of program execution ===");
-		sb.append(lineSeparator);
+		sb.append("=== Start of program execution ===").append(lineSeparator);
 		if (valuation != null) {
 			sb.append("initial values:");
 			sb.append(valuation);
 			sb.append(lineSeparator);
 		}
-		for (int i = 0; i < m_Trace.size(); i++) {
+		for (int i = 0; i < mTrace.size(); i++) {
 			sb.append("statement");
 			sb.append(i);
 			sb.append(": ");
-			sb.append(m_Trace.get(i).toString());
+			sb.append(mTrace.get(i).toString());
 			sb.append(lineSeparator);
 			valuation = ppstoString(getProgramState(i));
 			if (valuation != null) {
@@ -199,7 +205,7 @@ public class RcfgProgramExecution implements IProgramExecution<CodeBlock, Expres
 	@Deprecated
 	public List<ILocation> getLocationList() {
 		List<ILocation> result = new ArrayList<ILocation>();
-		for (AtomicTraceElement<CodeBlock> cb : m_Trace) {
+		for (AtomicTraceElement<CodeBlock> cb : mTrace) {
 			result.add(cb.getTraceElement().getPayload().getLocation());
 		}
 		return result;
@@ -219,10 +225,10 @@ public class RcfgProgramExecution implements IProgramExecution<CodeBlock, Expres
 	public String getSVCOMPWitnessString() {
 		return null;
 	}
-	
+
 	public List<UnprovabilityReason> getUnprovabilityReasons() {
 		List<UnprovabilityReason> unproabilityReasons = new ArrayList<UnprovabilityReason>();
-		for (Entry<String, ILocation> entry : m_Overapproximations.entrySet()) {
+		for (Entry<String, ILocation> entry : mOverapproximations.entrySet()) {
 			unproabilityReasons.add(new UnprovabilityReason(entry.getKey(), entry.getValue()));
 		}
 		return unproabilityReasons;
