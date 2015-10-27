@@ -30,8 +30,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 
 /**
  * The merge operator for the interval domain.

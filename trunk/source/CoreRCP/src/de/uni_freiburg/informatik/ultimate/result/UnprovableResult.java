@@ -32,14 +32,11 @@ package de.uni_freiburg.informatik.ultimate.result;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
-import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 /**
  * Result to store that we are not able to determine if a specification given at
@@ -75,6 +72,11 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 	private final List<ILocation> mFailurePath;
 	private final List<UnprovabilityReason> mUnprovabilityReasons;
 
+	public UnprovableResult(String plugin, ELEM position, IBacktranslationService translatorSequence,
+			IProgramExecution<TE, E> programExecution) {
+		this(plugin, position, translatorSequence, programExecution, new ArrayList<UnprovabilityReason>());
+	}
+
 	/**
 	 * Constructor.
 	 * 
@@ -84,6 +86,8 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 	public UnprovableResult(String plugin, ELEM position, IBacktranslationService translatorSequence,
 			IProgramExecution<TE, E> programExecution, List<UnprovabilityReason> unprovabilityReasons) {
 		super(position, plugin, translatorSequence);
+		assert unprovabilityReasons != null;
+		assert programExecution != null;
 		Check check = ResultUtil.getCheckedSpecification(position);
 		if (check == null) {
 			mCheckedSpecification = new Check(Spec.UNKNOWN);
@@ -94,7 +98,7 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 		mFailurePath = ResultUtil.getLocationSequence(programExecution);
 		mUnprovabilityReasons = unprovabilityReasons;
 	}
-	
+
 	public Check getCheckedSpecification() {
 		return mCheckedSpecification;
 	}
@@ -121,17 +125,17 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 	public IProgramExecution<TE, E> getProgramExecution() {
 		return mProgramExecution;
 	}
-	
+
 	/**
 	 * @return a description of the reasons for unprovability.
 	 */
 	public String getReasons() {
 		StringBuilder sb = new StringBuilder();
 		sb.append(" Reason:");
-		for (int i=0; i<mUnprovabilityReasons.size(); i++) {
+		for (int i = 0; i < mUnprovabilityReasons.size(); i++) {
 			sb.append(" overapproximation of ");
 			sb.append(mUnprovabilityReasons.get(i));
-			if (i==mUnprovabilityReasons.size()-1) {
+			if (i == mUnprovabilityReasons.size() - 1) {
 				sb.append(". ");
 			} else {
 				sb.append(", ");

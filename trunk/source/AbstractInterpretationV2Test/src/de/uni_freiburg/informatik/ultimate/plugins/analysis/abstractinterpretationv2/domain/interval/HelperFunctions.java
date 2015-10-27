@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.math.BigDecimal;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluationResult;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.IEvaluationResult;
 
 public class HelperFunctions {
 	protected static IntervalDomainValue createInterval(int lower, int upper) {

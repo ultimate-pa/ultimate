@@ -25,22 +25,27 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain;
+
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator;
+
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 
 /**
+ * Extends the IEvaluator by the function computeLogicalResult which is used to return new abstract states based on the
+ * logical evaluation of the evaluator.
  * 
- * @author dietsch@informatik.uni-freiburg.de
  * @author greitsch@informatik.uni-freiburg.de
  *
+ * @param <T>
+ *            Any type.
+ * @param <ACTION>
+ *            Any action.
+ * @param <VARDECL>
+ *            Any variable declaration.
  */
-public interface IAbstractDomain<STATE extends IAbstractState<ACTION, VARDECL>, ACTION, VARDECL> {
-	IAbstractState<ACTION, VARDECL> createFreshState();
+public interface ILogicalEvaluator<T, ACTION, VARDECL> extends INAryEvaluator<T, ACTION, VARDECL> {
 
-	IAbstractStateBinaryOperator<ACTION, VARDECL> getWideningOperator();
-
-	IAbstractStateBinaryOperator<ACTION, VARDECL> getMergeOperator();
-
-	IAbstractPostOperator<ACTION, VARDECL> getPostOperator();
-
-	Class<STATE> getAbstractStateClass();
+	public IAbstractState<ACTION, VARDECL> logicallyInterpret(IAbstractState<ACTION, VARDECL> currentState);
+	
+	public boolean logicalEvaluation(IAbstractState<ACTION, VARDECL> currentState);
 }

@@ -25,17 +25,18 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator;
 
 /**
+ * Interface type that is returned by every call of {@link IEvaluator#evaluate(IAbstractState)} of an {@link IEvaluator}
+ * .
  * 
- * @author dietsch@informatik.uni-freiburg.de
  * @author greitsch@informatik.uni-freiburg.de
- * 
+ *
+ * @param <T>
+ *            Any type.
  */
-public interface IAbstractStateBinaryOperator<ACTION, VARDECL> {
+public interface IEvaluationResult<T> {
 
-	IAbstractState<ACTION, VARDECL> apply(IAbstractState<ACTION, VARDECL> first,
-			IAbstractState<ACTION, VARDECL> second);
-
+	public T getResult();
 }
