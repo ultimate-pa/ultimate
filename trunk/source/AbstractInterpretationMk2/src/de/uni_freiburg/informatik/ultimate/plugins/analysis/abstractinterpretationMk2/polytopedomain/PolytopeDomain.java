@@ -60,6 +60,8 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 	 */
 	private final PolytopeExpressionVisitor mExpressionVisitor;
 
+	private static boolean sPolyhedraLibraryInitialized = false;
+
 	private static boolean sParmaPolyhedraLibraryLoaded = false;
 
 	/**
@@ -77,7 +79,7 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 				case "Linux":
 					System.loadLibrary("gmp"); // libgmp version >= 10 is needed.
 					System.loadLibrary("gmpxx"); // libgmpxx version >= 4 is needed.
-					System.loadLibrary("ppl"); // libppl version >= 13 is needed. 
+					System.loadLibrary("ppl"); // libppl version >= 13 is needed.
 					break;
 				case "Windows":
 					System.loadLibrary("libgmp-10");
@@ -96,6 +98,7 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 				System.loadLibrary("ppl_java");
 
 				logger.info("Loaded PPL");
+				sParmaPolyhedraLibraryLoaded = true;
 			} catch (UnsatisfiedLinkError e) {
 				final String errorMsg = "Unable to load PPL: " + e.getMessage();
 				logger.fatal(errorMsg);
@@ -103,7 +106,8 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 				throw new RuntimeException(errorMsg, e);
 			}
 
-			sParmaPolyhedraLibraryLoaded = true;
+			Parma_Polyhedra_Library.initialize_library();
+			sPolyhedraLibraryInitialized = true;
 		}
 		mLogger = logger;
 		mExpressionVisitor = new PolytopeExpressionVisitor(logger);
@@ -415,13 +419,17 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 
 	@Override
 	public void initializeDomain() {
-		mLogger.info("Parma-Library: Initializing (Version" + Parma_Polyhedra_Library.version() + ")");
-		Parma_Polyhedra_Library.initialize_library();
+		if (!sPolyhedraLibraryInitialized) {
+			mLogger.info("Parma-Library: Initializing (Version" + Parma_Polyhedra_Library.version() + ")");
+			Parma_Polyhedra_Library.initialize_library();
+			sPolyhedraLibraryInitialized = true;
+		}
 	}
 
 	@Override
 	public void finalizeDomain() {
 		Parma_Polyhedra_Library.finalize_library();
+		sPolyhedraLibraryInitialized = false;
 	}
 
 }
