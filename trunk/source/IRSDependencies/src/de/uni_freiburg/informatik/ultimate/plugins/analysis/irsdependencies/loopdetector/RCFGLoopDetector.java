@@ -151,7 +151,7 @@ public class RCFGLoopDetector extends BaseObserver {
 
 		List<RCFGEdge> path = walker.findPath();
 		if (path == null || path.isEmpty()) {
-			// throw new RuntimeException();
+			throw new RuntimeException(loopHead + " is not a valid loop head");
 		}
 
 		// got first path, add it to the results and get the edge starting this
