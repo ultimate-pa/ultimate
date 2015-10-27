@@ -569,7 +569,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 			RValue newRValue = new RValue(newExpression, resultType, false, false);
 			operand.lrVal = newRValue;
 		} else {
-			throw new UnsupportedOperationException("not yet supported");
+			throw new UnsupportedOperationException("not yet supported: conversion from " + oldType);
 		}
 	}
 
