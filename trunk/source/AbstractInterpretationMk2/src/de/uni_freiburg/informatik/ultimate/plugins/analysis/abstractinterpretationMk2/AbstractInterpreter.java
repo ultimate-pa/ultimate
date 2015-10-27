@@ -182,6 +182,7 @@ public class AbstractInterpreter {
 		// create the domain
 		AbstractDomainFactory domainFactory = new AbstractDomainFactory(mLogger);
 		mDomain = domainFactory.createDomain(mPreferences, numbersForWidening);
+		mDomain.initializeDomain();
 
 		mLogger.info("Using Domain: " + mDomain.toString());
 
@@ -281,6 +282,8 @@ public class AbstractInterpreter {
 				reportSafeResult();
 			}
 		}
+		
+		mDomain.finalizeDomain();
 	}
 
 	/**
@@ -673,6 +676,18 @@ public class AbstractInterpreter {
 	 */
 	public boolean removeStateChangeListener(IAbstractStateChangeListener listener) {
 		return mStateChangeListeners.remove(listener);
+	}
+	
+	/**
+	 * Initializes the abstract interpreter.
+	 */
+	public void init() {
+		mDomain.initializeDomain();
+	}
+	
+	
+	public void finalize(){
+		
 	}
 
 	/**

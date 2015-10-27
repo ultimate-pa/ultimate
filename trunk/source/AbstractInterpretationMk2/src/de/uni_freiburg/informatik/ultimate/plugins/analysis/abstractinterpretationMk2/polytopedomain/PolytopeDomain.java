@@ -60,7 +60,7 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 	 */
 	private final PolytopeExpressionVisitor mExpressionVisitor;
 
-	private static boolean sParmaLibraryInitialized = false;
+	private static boolean sParmaPolyhedraLibraryLoaded = false;
 
 	/**
 	 * Constructor
@@ -68,7 +68,7 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 	 * @param logger
 	 */
 	public PolytopeDomain(Logger logger) {
-		if (!sParmaLibraryInitialized) {
+		if (!sParmaPolyhedraLibraryLoaded) {
 			try {
 				// because of OSGi, we have to load all dependent libraries
 				// manually
@@ -103,9 +103,7 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 				throw new RuntimeException(errorMsg, e);
 			}
 
-			logger.info("Parma-Library: Initializing (Version" + Parma_Polyhedra_Library.version() + ")");
-			Parma_Polyhedra_Library.initialize_library();
-			sParmaLibraryInitialized = true;
+			sParmaPolyhedraLibraryLoaded = true;
 		}
 		mLogger = logger;
 		mExpressionVisitor = new PolytopeExpressionVisitor(logger);
@@ -413,6 +411,17 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 	 */
 	public static String getDomainID() {
 		return s_domainID;
+	}
+
+	@Override
+	public void initializeDomain() {
+		mLogger.info("Parma-Library: Initializing (Version" + Parma_Polyhedra_Library.version() + ")");
+		Parma_Polyhedra_Library.initialize_library();
+	}
+
+	@Override
+	public void finalizeDomain() {
+		Parma_Polyhedra_Library.finalize_library();
 	}
 
 }
