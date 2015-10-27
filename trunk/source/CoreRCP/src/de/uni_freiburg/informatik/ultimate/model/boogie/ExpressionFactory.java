@@ -302,7 +302,7 @@ public class ExpressionFactory extends BoogieTransformer {
 			boolean result = (leftValue.equals(rightValue));
 			return new BooleanLiteral(loc, result);
 		}
-		case COMPGEQ: {
+		case COMPNEQ: {
 			if (leftLength != rightLength) {
 				throw new IllegalArgumentException("type error: cannot compare bitvectors of differnt lengths");
 			}
@@ -317,10 +317,10 @@ public class ExpressionFactory extends BoogieTransformer {
 		case ARITHMOD:
 		case ARITHMUL:
 		case ARITHPLUS:
+		case COMPGEQ: 
 		case COMPGT:
 		case COMPLEQ:
 		case COMPLT:
-		case COMPNEQ:
 		case COMPPO:
 		case LOGICAND:
 		case LOGICIFF:
