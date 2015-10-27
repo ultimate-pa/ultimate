@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 /**
  * Unites several domains to be one And
  * 
- * @author Jan Hättig
+ * @author Jan Hï¿½ttig
  *
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -191,5 +191,17 @@ public class CompoundDomain implements IAbstractDomain<CompoundState> {
 
 	public static String getDomainID() {
 		return s_domainID;
+	}
+
+	@Override
+	public void initializeDomain() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void finalizeDomain() {
+		// TODO Auto-generated method stub
+		
 	}
 }

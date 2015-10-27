@@ -673,4 +673,15 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 		}
 	}
 
+	@Override
+	public void initializeDomain() {
+		// TODO Restructure and move initialization code here
+	}
+
+	@Override
+	public void finalizeDomain() {
+		// TODO Restructure and move finalization code here
+		
+	}
+
 }

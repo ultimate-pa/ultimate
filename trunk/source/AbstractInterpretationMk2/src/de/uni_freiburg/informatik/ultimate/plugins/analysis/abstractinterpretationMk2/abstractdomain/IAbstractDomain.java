@@ -105,4 +105,14 @@ public interface IAbstractDomain<T> {
 	 * @return
 	 */
 	boolean checkAssert(IAbstractState<T> state, Expression exp);
+	
+	/**
+	 * Initializes the abstract domain.
+	 */
+	public void initializeDomain();
+	
+	/**
+	 * Finalizes the abstract domain.
+	 */
+	public void finalizeDomain();
 }

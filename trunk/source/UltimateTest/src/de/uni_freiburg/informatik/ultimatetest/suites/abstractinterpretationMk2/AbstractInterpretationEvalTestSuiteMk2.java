@@ -150,7 +150,7 @@ public class AbstractInterpretationEvalTestSuiteMk2 extends
 					m_Timeout);
 			addTestCases(
 					"AutomizerC.xml",
-					"ai/automizer.epf",
+					"ai/Automizer.epf",
 					// "ai/AI2.epf",
 					m_directories,
 					new String[] { ".c" },
