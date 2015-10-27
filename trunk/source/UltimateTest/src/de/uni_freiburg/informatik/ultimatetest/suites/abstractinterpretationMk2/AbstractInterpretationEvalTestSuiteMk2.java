@@ -5,11 +5,9 @@ package de.uni_freiburg.informatik.ultimatetest.suites.abstractinterpretationMk2
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.reporting.ITestSummary;
-import de.uni_freiburg.informatik.ultimatetest.suites.abstractinterpretation.AbstractAbstractInterpretationTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.summaries.AbstractInterpretationMk2ComparisonTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.AbstractInterpretationMk2LaTeXTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.AbstractInterpretationTestSummary;
@@ -55,20 +53,23 @@ public class AbstractInterpretationEvalTestSuiteMk2 extends
 	}
 
 	private static final String[] m_directories = {
-		"examples/programs/abstractInterpretation/",
+//		"examples/programs/abstractInterpretation/",
 		//"examples/programs/abstractInterpretationNoRec/",
 			/* ULTIMATE repo */
 			// "examples/programs/regression/bpl/",
 			// "examples/programs/regression/c/",
 			// "examples/programs/recursivePrograms",
 			/* SV-COMP repo */
-			 "examples/svcomp/loops/", // SPLIT
+//			 "examples/svcomp/loops/", // SPLIT
 			// "examples/svcomp/loopsSelection/",
 			// "examples/svcomp/eca/", // SPLIT
 			// "examples/svcomp/ecaSelection/",
 			// "examples/svcomp/systemc/", // SPLIT
 			// "examples/svcomp/systemc1/",
 			// "examples/svcomp/systemc2/",
+		
+		"examples/svcomp/loops/eureka_01_false-unreach-call.c"
+		
 	};
 
 	// Time out for each test case in milliseconds

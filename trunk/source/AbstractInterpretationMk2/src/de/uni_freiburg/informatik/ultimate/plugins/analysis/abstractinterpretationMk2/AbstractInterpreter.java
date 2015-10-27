@@ -195,7 +195,7 @@ public class AbstractInterpreter {
 		try {
 			loopDetector.process(root);
 		} catch (Throwable e1) {
-			e1.printStackTrace();
+			throw new RuntimeException(e1);
 		}
 		mLoopEntryNodes = loopDetector.getResult();
 
@@ -720,7 +720,7 @@ public class AbstractInterpreter {
 			StackState state) {
 
 		RcfgProgramExecution programExecution = new RcfgProgramExecution(state.getTrace(),
-				new HashMap<Integer, ProgramState<Expression>>(), null);
+				new HashMap<Integer, ProgramState<Expression>>());
 
 		UnprovableResult<RcfgElement, CodeBlock, Expression> result = new UnprovableResult<RcfgElement, CodeBlock, Expression>(
 				AIActivator.s_PLUGIN_NAME, location, mServices.getBacktranslationService(), programExecution,
