@@ -76,8 +76,8 @@ public class CachingHoareTripleChecker implements IHoareTripleChecker {
 	private Validity extendedCacheCheckInternal(IPredicate pre, CodeBlock cb, IPredicate succ) {
 		boolean someResultWasUnknown = false;
 		{
-			Set<IPredicate> strongerThanPre = m_PredicateUnifer.getCoverageRelation().getCoveredPredicates(succ);
-			Set<IPredicate> weakerThanSucc = m_PredicateUnifer.getCoverageRelation().getCoveringPredicates(pre);
+			Set<IPredicate> strongerThanPre = m_PredicateUnifer.getCoverageRelation().getCoveredPredicates(pre);
+			Set<IPredicate> weakerThanSucc = m_PredicateUnifer.getCoverageRelation().getCoveringPredicates(succ);
 			for (IPredicate strengthenedPre : strongerThanPre) {
 				for (IPredicate weakenedSucc : weakerThanSucc) {
 					Validity result = m_InternalCache.get(strengthenedPre, cb, weakenedSucc);
