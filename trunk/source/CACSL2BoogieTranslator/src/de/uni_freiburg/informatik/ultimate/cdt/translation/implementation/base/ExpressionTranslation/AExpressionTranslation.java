@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.I
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
@@ -126,9 +127,9 @@ public abstract class AExpressionTranslation {
 	
 	public Expression constructBinaryEqualityExpression(ILocation loc, int nodeOperator, Expression exp1, CType type1, Expression exp2, CType type2) {
 		if (nodeOperator == IASTBinaryExpression.op_equals) {
-			return new BinaryExpression(loc, BinaryExpression.Operator.COMPEQ, exp1, exp2);
+			return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, exp1, exp2);
 		} else 	if (nodeOperator == IASTBinaryExpression.op_notequals) {
-			return new BinaryExpression(loc, BinaryExpression.Operator.COMPNEQ, exp1, exp2);
+			return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPNEQ, exp1, exp2);
 		} else {
 			throw new IllegalArgumentException("operator is neither equals nor not equals");
 		}
@@ -288,15 +289,28 @@ public abstract class AExpressionTranslation {
 	public abstract void doIntegerPromotion(ILocation loc, ExpressionResult operand);
 	
 	public boolean integerPromotionNeeded(CPrimitive cPrimitive) {
-		if (cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR) || cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR16) ||
-			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR32) || cPrimitive.getType().equals(CPrimitive.PRIMITIVE.SCHAR) ||
-			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.SHORT) || cPrimitive.getType().equals(CPrimitive.PRIMITIVE.UCHAR) ||
-			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.USHORT) || cPrimitive.getType().equals(CPrimitive.PRIMITIVE.WCHAR)) {
+		if (cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR) || 
+//			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR16) ||
+//			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR32) || 
+			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.SCHAR) ||
+			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.SHORT) || 
+			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.UCHAR) ||
+//			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.WCHAR) || 
+			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.USHORT)) {
 			return true;
 		} else {
 			return false;
 		}
 	}
+	
+	/**
+	 * Try to get the value of RValue rval. Returns null if extraction
+	 * is impossible. Extraction might succeed if rval represents a constant
+	 * value. Extraction fails, e.g., if rval represents a variable.
+	 * @param expr
+	 * @return
+	 */
+	public abstract BigInteger extractIntegerValue(RValue rval);
 	
 	public CPrimitive determineResultOfIntegerPromotion(CPrimitive cPrimitive) {
 		int argBitLength = m_TypeSizes.getSize(cPrimitive.getType()) * 8;

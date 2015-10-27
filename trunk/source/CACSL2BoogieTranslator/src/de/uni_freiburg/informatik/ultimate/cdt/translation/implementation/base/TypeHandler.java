@@ -538,7 +538,7 @@ public class TypeHandler implements ITypeHandler {
 			ASTType[] indexTypes = new ASTType[cart.getDimensions().length];
 			String[] typeParams = new String[0]; //new String[cart.getDimensions().length];
 			for (int i = 0; i < cart.getDimensions().length; i++) {
-				indexTypes[i] = new PrimitiveType(loc, SFO.INT);//C only allows integer indices
+				indexTypes[i] = ctype2asttype(loc, cart.getDimensions()[i].getCType());
 			}
 			return new ArrayType(loc, typeParams, indexTypes, this.ctype2asttype(loc, cart.getValueType()));
 		} else if (cType instanceof CStruct) {

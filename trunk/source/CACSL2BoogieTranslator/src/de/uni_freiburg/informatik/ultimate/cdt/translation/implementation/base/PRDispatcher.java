@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 import java.text.ParseException;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
@@ -115,7 +116,8 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.SvComp14PRCHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.SvComp14CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.cHandler.SVCompTypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
@@ -126,21 +128,34 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 
 public class PRDispatcher extends Dispatcher {
 	
-	LinkedHashSet<IASTDeclaration> reachableDeclarations;
+	private final LinkedHashSet<IASTDeclaration> reachableDeclarations;
+	
+    private final LinkedHashSet<IASTNode> m_VariablesOnHeap;
 
 	public PRDispatcher(CACSL2BoogieBacktranslator backtranslator,
 			IUltimateServiceProvider services, Logger logger, LinkedHashMap<String,Integer> functionToIndex, LinkedHashSet<IASTDeclaration> reachableDeclarations) {
 		super(backtranslator, services, logger);
 		mFunctionToIndex = functionToIndex;
 		this.reachableDeclarations = reachableDeclarations;
+		this.m_VariablesOnHeap = new LinkedHashSet<>();
 	}
+	
+	/**
+	 * Set variables that should be "on-Heap" in our implementation.
+	 * For each such variable the set contains the IASTNode of the last
+	 * variable declaration ("last" in case the variable has several 
+	 * declarations).
+	 */
+    public Set<IASTNode> getVariablesOnHeap() {
+    	return m_VariablesOnHeap;
+    }	
 
 	@Override
 	protected void init() {
 		boolean bitvectorTranslation = mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
 		nameHandler = new NameHandler(backtranslator);
 		typeHandler = new SVCompTypeHandler(!bitvectorTranslation);
-		cHandler = new SvComp14PRCHandler(this, backtranslator, false, mLogger, typeHandler, bitvectorTranslation);
+		cHandler = new SvComp14CHandler(this, backtranslator, mLogger, typeHandler, bitvectorTranslation);
 	}
 
 	@Override
@@ -395,8 +410,7 @@ public class PRDispatcher extends Dispatcher {
 
 	@Override
 	public Result dispatch(IASTPreprocessorStatement node) {
-		// TODO Auto-generated method stub
-		return null;
+        return new SkipResult();
 	}
 
 	@Override
@@ -436,7 +450,9 @@ public class PRDispatcher extends Dispatcher {
 		// TODO Auto-generated method stub
 		return false;
 	}
-	LinkedHashSet<IASTDeclaration> getReachableDeclarationsOrDeclarators() {
+	
+	@Override
+	public LinkedHashSet<IASTDeclaration> getReachableDeclarationsOrDeclarators() {
 		return reachableDeclarations;
 	}
 }

@@ -4,12 +4,12 @@
 
 NestedLassoWord nlw = [  "y := 0;" "assume y < k;" "call rec(y);"< "y := 0;" "assume y >= k;assume true;" >"return;" "y := y + 1;" "assume y < k;" "call rec(y);"< "y := 0;" "assume y < k;" "call rec(y);"< "y := 0;" "assume y >= k;assume true;" >"return;" "y := y + 1;" "assume y < k;" "call rec(y);"< "y := 0;" "assume y < k;" "call rec(y);"< "y := 0;" "assume y >= k;assume true;" >"return;" "y := y + 1;" "assume y >= k;assume true;" >"return;" "y := y + 1;" "assume y < k;" "call rec(y);"<  , "y := 0;" "assume y < k;" "call rec(y);"< "y := 0;" "assume y >= k;assume true;" >"return;" "y := y + 1;" "assume y < k;" "call rec(y);"< "y := 0;" "assume y < k;" "call rec(y);"< "y := 0;" "assume y >= k;assume true;" >"return;" "y := y + 1;" "assume y >= k;assume true;" >"return;" "y := y + 1;" "assume y < k;" "call rec(y);"<  ];
 boolean accepted = buchiAccepts(ia, nlw);
-NestedWordAutomaton complementBS = buchiComplementBS(ia);
-boolean acceptedComplementBS = buchiAccepts(complementBS, nlw);
+NestedWordAutomaton complementNCSB = buchiComplementNCSB(ia);
+boolean acceptedComplementNCSB = buchiAccepts(complementNCSB, nlw);
 NestedWordAutomaton complementFKV = buchiComplementFKV(ia);
 boolean acceptedComplementFKV = buchiAccepts(complementFKV, nlw);
 assert(!accepted);
-assert(acceptedComplementBS);
+assert(acceptedComplementNCSB);
 assert(acceptedComplementFKV);
 
 

@@ -160,7 +160,7 @@ public class SmtManager {
 	protected Term m_EmptyStackTerm;
 	protected String[] m_NoProcedure;
 
-	public SmtManager(Boogie2SMT boogie2smt, ModifiableGlobalVariableManager modifiableGlobals,
+	public SmtManager(Script script, Boogie2SMT boogie2smt, ModifiableGlobalVariableManager modifiableGlobals,
 			IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
@@ -169,7 +169,7 @@ public class SmtManager {
 		m_DontCareTerm = new AuxilliaryTerm("don't care");
 		m_EmptyStackTerm = new AuxilliaryTerm("emptyStack");
 		m_Boogie2Smt = boogie2smt;
-		m_Script = boogie2smt.getScript();
+		m_Script = script;
 		m_ModifiableGlobals = modifiableGlobals;
 	}
 

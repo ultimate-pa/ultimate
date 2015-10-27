@@ -47,7 +47,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Axiom;
@@ -222,7 +224,7 @@ public class TypeSizeAndOffsetComputer {
 			List<SizeTValue> factors = new ArrayList<>();
 			SizeTValue valueSize = computeSize(loc, cArray.getValueType());
 			factors.add(valueSize);
-			for (Expression dim : cArray.getDimensions()) {
+			for (RValue dim : cArray.getDimensions()) {
 				SizeTValue dimSize = extractSizeTValue(dim);
 				factors.add(dimSize);
 			}
@@ -312,16 +314,13 @@ public class TypeSizeAndOffsetComputer {
 			return axiom;
 		}
 		
-		private SizeTValue extractSizeTValue(Expression expression) {
-			final SizeTValue result;
-			if (expression instanceof IntegerLiteral) {
-				result = new SizeTValue_Integer(new BigInteger(((IntegerLiteral) expression).getValue()));
-			} else if (expression instanceof BitvecLiteral) {
-				result = new SizeTValue_Integer(new BigInteger(((BitvecLiteral) expression).getValue()));
+		private SizeTValue extractSizeTValue(RValue rvalue) {
+			final BigInteger value = m_ExpressionTranslation.extractIntegerValue(rvalue);
+			if (value != null) {
+				return new SizeTValue_Integer(value);
 			} else {
-				result = new SizeTValue_Expression(expression);
+				return new SizeTValue_Expression(rvalue.getValue());
 			}
-			return result;
 		}
 
 		private abstract class SizeTValueAggregator {
@@ -423,7 +422,7 @@ public class TypeSizeAndOffsetComputer {
 				Expression firstIsGreater = m_ExpressionTranslation.constructBinaryComparisonExpression(
 						loc, IASTBinaryExpression.op_greaterEqual, 
 						op1, getSize_T(), op2, getSize_T());
-				Expression result = new IfThenElseExpression(loc, firstIsGreater, op1, op2);
+				Expression result = ExpressionFactory.newIfThenElseExpression(loc, firstIsGreater, op1, op2);
 				return result;
 			}
 

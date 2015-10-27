@@ -73,13 +73,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.TarjanSCC;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
@@ -419,7 +419,7 @@ public class FunctionHandler {
 		} else if (node.getReturnValue() != null) {
 			ExpressionResult exprResult = ((ExpressionResult) main.dispatch(node.getReturnValue()))
 					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-			exprResult = ConvExpr.rexBoolToIntIfNecessary(loc, exprResult, m_ExpressionTranslation);
+			exprResult.rexBoolToIntIfNecessary(loc, m_ExpressionTranslation);
 
 			// do some implicit casts
 			CType functionResultType = this.procedureToCFunctionType.get(currentProcedure.getIdentifier())
@@ -623,8 +623,8 @@ public class FunctionHandler {
 					Check check = new Check(Check.Spec.MEMORY_LEAK);
 					ILocation ensLoc = LocationFactory.createLocation(loc, check);
 					spec = Arrays.copyOf(spec, nrSpec + 1);
-					spec[nrSpec] = new EnsuresSpecification(ensLoc, false, new BinaryExpression(loc, Operator.COMPEQ,
-							vIe, new UnaryExpression(loc, UnaryExpression.Operator.OLD, vIe)));
+					spec[nrSpec] = new EnsuresSpecification(ensLoc, false, ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
+							vIe, ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.OLD, vIe)));
 					check.addToNodeAnnot(spec[nrSpec]);
 				}
 			}
@@ -721,7 +721,7 @@ public class FunctionHandler {
 				// bool/int conversion
 				if (expectedParamType instanceof CPrimitive
 						&& ((CPrimitive) expectedParamType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-					in = ConvExpr.rexBoolToIntIfNecessary(loc, in, m_ExpressionTranslation);
+					in.rexBoolToIntIfNecessary(loc, m_ExpressionTranslation);
 				}
 				if (expectedParamType instanceof CFunction) {
 					// workaround - better: make this conversion already in declaration
@@ -957,7 +957,7 @@ public class FunctionHandler {
 			String paramId = main.nameHandler.getInParamIdentifier(paramDec.getName());
 			in[i] = new VarList(loc, new String[] { paramId }, type);
 			main.cHandler.getSymbolTable().put(paramDec.getName(),
-					new SymbolTableValue(paramId, null, paramDec, false, null));
+					new SymbolTableValue(paramId, null, paramDec, false, null, null));
 		}
 		updateCFunction(methodName, null, paramDecs, null, false);
 		return in;
@@ -1047,7 +1047,7 @@ public class FunctionHandler {
 				main.cHandler.getSymbolTable().put(
 						cId,
 						new SymbolTableValue(auxInvar, inVarDecl, new CDeclaration(cvar, cId), false,
-								StorageClass.UNSPECIFIED));
+								StorageClass.UNSPECIFIED, paramDec));
 			}
 		}
 	}
@@ -1263,7 +1263,7 @@ public class FunctionHandler {
 		// collect all functions that are addressoffed in the program and that
 		// match the signature
 		ArrayList<String> fittingFunctions = new ArrayList<>();
-		for (Entry<String, Integer> en : ((MainDispatcher) main).getFunctionToIndex().entrySet()) {
+		for (Entry<String, Integer> en : ((Dispatcher) main).getFunctionToIndex().entrySet()) {
 			CFunction ptdToFuncType = procedureToCFunctionType.get(en.getKey());
 //			if (ptdToFuncType.isCompatibleWith(calledFuncType)) {
 			if (new ProcedureSignature(main, ptdToFuncType).equals(funcSignature)) {
@@ -1350,7 +1350,7 @@ public class FunctionHandler {
 					newStmts.add(assignment);
 				}
 
-				Expression condition = new BinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
+				Expression condition = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
 						new IdentifierExpression(loc, inParams[inParams.length - 1].getIdentifiers()[0]),
 						new IdentifierExpression(loc, SFO.FUNCTION_ADDRESS + fittingFunctions.get(i)));
 

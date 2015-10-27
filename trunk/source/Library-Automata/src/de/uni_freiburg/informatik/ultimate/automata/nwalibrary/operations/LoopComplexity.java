@@ -51,10 +51,12 @@ import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvide
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
 /**
- * TODO: comment
+ * Operation that computes the loop complexity of an automaton.
+ * We define the loop complexity of an automaton as the loop complexity of
+ * the underlying graph representation. This number is also called cycle rank.
+ * https://en.wikipedia.org/wiki/Cycle_rank
  * 
- * 
- * @author Thomas Lang
+ * @author Thomas Lang, Matthias Heizmann
  *
  * @param <LETTER>
  * @param <STATE>
@@ -84,51 +86,54 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 			m_Operand = (new RemoveUnreachable<LETTER, STATE>(m_Services, operand)).getResult();
 		}
 		
-		// Build graph from m_Operand.
-		HashSet<LETTER> singletonLetter = new HashSet<LETTER>();
-		LETTER internalLetter = m_Operand.getInternalAlphabet().iterator().next();
-		singletonLetter.add(internalLetter);
-		NestedWordAutomaton<LETTER, STATE> graph = new NestedWordAutomaton<LETTER, STATE>(m_Services, singletonLetter, singletonLetter, singletonLetter, m_Operand.getStateFactory());
-		Set<STATE> states = m_Operand.getStates();
-				
-		for (STATE q : states) {
-			graph.addState(true, true, q);
-		}
-				
-		for (LETTER l : m_Operand.getInternalAlphabet()) {
-			for (STATE q1 : states) {
-				// Check for cancel button.
-				if (!m_Services.getProgressMonitorService().continueProcessing()) {
-					throw new OperationCanceledException(this.getClass());
-				}
-				for (STATE q2 : states) {
-					if (m_Operand.containsInternalTransition(q1, l, q2)) {
-						if (!graph.containsInternalTransition(q1, internalLetter, q2)) {
-							graph.addInternalTransition(q1, internalLetter, q2);
-						}
-					}
-				}
-			}
-		}
-				
-		m_Graph = (new RemoveUnreachable<LETTER, STATE>(m_Services, graph)).getResult();
+		m_Graph = constructGraph(m_Operand);
 		
 		m_Logger.info(this.startMessage());
 		
-		m_Result = compute(m_Graph.getStates());
+		m_Result = computeLoopComplexityOfSubgraph(m_Graph.getStates());
 		m_Logger.info(this.exitMessage());
 	}
 
-	// Compute the loop complexity of the subgraph of m_Graph specified by 'states'.
-	private Integer compute(Set<STATE> states) throws AutomataLibraryException {
-
-		AutomatonSccComputation<LETTER, STATE> sccComputer = new AutomatonSccComputation<LETTER, STATE>(m_Graph, m_Services, states, states);
-
-		Collection<StronglyConnectedComponent<STATE>> balls = sccComputer.getBalls();
-
-		for (StronglyConnectedComponent<STATE> scc : balls) {
-			scc.getNodes();
+	/**
+	 * Construct an automaton that represents the graph structure of
+	 * the operand. The Result is a copy of the operand where each edge
+	 * has the same label. As label we us some letter form the alphabet.
+	 */
+	private NestedWordAutomatonReachableStates<LETTER, STATE> constructGraph(
+			INestedWordAutomaton<LETTER, STATE> automaton) throws OperationCanceledException {
+		LETTER letter = automaton.getInternalAlphabet().iterator().next();
+		Set<LETTER> singletonAlphabet = Collections.singleton(letter);
+		NestedWordAutomaton<LETTER, STATE> graph = new NestedWordAutomaton<LETTER, STATE>(
+				m_Services, singletonAlphabet, singletonAlphabet, singletonAlphabet, 
+				automaton.getStateFactory());
+				
+		for (STATE q : automaton.getStates()) {
+			graph.addState(true, true, q);
 		}
+		
+		for (STATE q1 : automaton.getStates()) {
+			for ( OutgoingInternalTransition<LETTER, STATE> outTrans : automaton.internalSuccessors(q1)) {
+				STATE q2 = outTrans.getSucc();
+				if (!graph.containsInternalTransition(q1, letter, q2)) {
+					graph.addInternalTransition(q1, letter, q2);
+				}
+			}
+		}
+		return (new RemoveUnreachable<LETTER, STATE>(m_Services, graph)).getResult();
+	}
+	
+
+	/**
+	 * Compute the loop complexity of the subgraph that is obtained by
+	 * projecting m_Graph to a subgraph. 
+	 * @throws AutomataLibraryException
+	 */
+	private Integer computeLoopComplexityOfSubgraph(Set<STATE> statesOfSubgraph) 
+			throws AutomataLibraryException {
+
+		AutomatonSccComputation<LETTER, STATE> sccComputation = 
+				new AutomatonSccComputation<LETTER, STATE>(m_Graph, m_Services, statesOfSubgraph, statesOfSubgraph);
+		Collection<StronglyConnectedComponent<STATE>> balls = sccComputation.getBalls();
 
 		// Graph contains no balls.
 		if (balls.isEmpty()) {
@@ -136,48 +141,22 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 		} else if (balls.size() == 1) { // Graph itself is a ball.
 			// Consider all subgraphs differing from original graph by one vertex.
 
-			Collection<STATE> peakStates = new ArrayList<STATE>();
+
 			Set<STATE> ballStates = balls.iterator().next().getNodes();
 
-			// Determine number of predecessors and successors for each state.
-			for (STATE q : ballStates) {
-				int pCount = 0;
-				int sCount = 0;
-
-				Iterable<IncomingInternalTransition<LETTER, STATE>> preds = m_Graph.internalPredecessors(q);
-				Iterable<OutgoingInternalTransition<LETTER, STATE>> succs = m_Graph.internalSuccessors(q);
-
-				for (@SuppressWarnings("unused") IncomingInternalTransition<LETTER, STATE> p : preds) {
-					if (!ballStates.contains(p.getPred())) {
-						continue;
-					}
-					++pCount;
-				}
-
-				for (@SuppressWarnings("unused") OutgoingInternalTransition<LETTER, STATE> s : succs) {
-					if (!ballStates.contains(s.getSucc())) {
-						continue;
-					}
-					++sCount;
-				}
-
-				// Add all those states with the maximum number of edges to peakStates.
-				if (pCount != 1 || sCount != 1) {
-					peakStates.add(q);
-				}
-			}
+			Collection<STATE> nonchainStates = extractNonchainStates(ballStates);
 
 			// If every state has one predecessor and one successor, the ball is a cycle.
-			if (peakStates.isEmpty()) {
+			if (nonchainStates.isEmpty()) {
 				return 1;
 			}
 
 			Collection<Integer> subGraphLoopComplexities = new ArrayList<Integer>();
 
-			// Create a copy since 'peakStates' itself should not be modified.
-			Set<STATE> copyStates = new HashSet<STATE>(states);
+			// Create a copy since 'nonchainStates' itself should not be modified.
+			Set<STATE> copyStates = new HashSet<STATE>(statesOfSubgraph);
 
-			for (STATE stateOut : peakStates) {
+			for (STATE stateOut : nonchainStates) {
 				// Check for cancel button.
 				if (!m_Services.getProgressMonitorService().continueProcessing()) {
 					throw new OperationCanceledException(this.getClass());
@@ -188,7 +167,7 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 				if (statesToLC.containsKey(copyStates)) {
 					subGraphLoopComplexities.add(statesToLC.get(copyStates));
 				} else {
-					Integer i = this.compute(copyStates);
+					Integer i = this.computeLoopComplexityOfSubgraph(copyStates);
 
 					// Create another copy to prevent HashMap from not
 					// recognizing sets of states after they have been modified.
@@ -210,7 +189,7 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 				if (statesToLC.containsKey(scc.getNodes())) {
 					ballLoopComplexities.add(statesToLC.get(scc.getNodes()));
 				} else {
-					Integer i = this.compute(scc.getNodes());
+					Integer i = this.computeLoopComplexityOfSubgraph(scc.getNodes());
 
 					Set<STATE> keyStates = new HashSet<STATE>(scc.getNodes());
 					statesToLC.put(keyStates, i);
@@ -221,6 +200,46 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 
 			return Collections.max(ballLoopComplexities);
 		}
+	}
+
+	
+	/**
+	 * Returns a new collection that contains only the non-chain states.
+	 * We call a state a non-chain state if it has not exactly one predecessor
+	 * or not exactly one successor. 
+	 */
+	private Collection<STATE> extractNonchainStates(Set<STATE> states) {
+		Collection<STATE> peakStates = new ArrayList<STATE>();
+		// Determine number of predecessors and successors for each state.
+		for (STATE q : states) {
+			int pCount = 0;
+			int sCount = 0;
+
+			Iterable<IncomingInternalTransition<LETTER, STATE>> preds = m_Graph.internalPredecessors(q);
+			Iterable<OutgoingInternalTransition<LETTER, STATE>> succs = m_Graph.internalSuccessors(q);
+
+			for (IncomingInternalTransition<LETTER, STATE> p : preds) {
+				if (!states.contains(p.getPred())) {
+					continue;
+				}
+				++pCount;
+			}
+
+			for (OutgoingInternalTransition<LETTER, STATE> s : succs) {
+				if (!states.contains(s.getSucc())) {
+					continue;
+				}
+				++sCount;
+			}
+
+			assert pCount > 0 : "must have at least one predecessor";
+			assert sCount > 0 : "must have at least one successor";
+			// Add all those states with the maximum number of edges to peakStates.
+			if (pCount != 1 || sCount != 1) {
+				peakStates.add(q);
+			}
+		}
+		return peakStates;
 	}
 
 	@Override
@@ -236,7 +255,9 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 
 	@Override
 	public String exitMessage() {
-		return "test";
+		return "Finished " + operationName() + ". Operand with " + 
+				m_Operand.getStates().size() + " states hast loop complexity " 
+				+ m_Result;
 	}
 
 	@Override

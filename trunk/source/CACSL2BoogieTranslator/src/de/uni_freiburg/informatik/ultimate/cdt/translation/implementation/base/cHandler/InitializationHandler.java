@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
@@ -55,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
@@ -66,7 +66,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
@@ -192,7 +191,7 @@ public class InitializationHandler {
 				if (initializer == null) {
 					rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, (CPrimitive) lCType, BigInteger.ZERO);
 				} else {
-					initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer, mExpressionTranslation);
+					initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 					rhs = initializer.lrVal.getValue();
 				}
 				break;
@@ -218,14 +217,16 @@ public class InitializationHandler {
 						|| initializerUnderlyingType instanceof CArray) {
 					rhs = initializer.lrVal.getValue();
 				} else if (initializerUnderlyingType instanceof CPrimitive 
-						//						&& ((CPrimitive) initializerUnderlyingType).getType() == PRIMITIVE.INT){
 						&& ((CPrimitive) initializerUnderlyingType).getGeneralType() == GENERALPRIMITIVE.INTTYPE){
-					String offset = ((IntegerLiteral) initializer.lrVal.getValue()).getValue();
-					if (offset.equals("0")) {
-						rhs = new IdentifierExpression(loc, SFO.NULL);
+					BigInteger pointerOffsetValue = mExpressionTranslation.extractIntegerValue((RValue) initializer.lrVal);
+					if (pointerOffsetValue == null) {
+						throw new IllegalArgumentException("unable to understand " + initializer.lrVal);
+					}
+					if (pointerOffsetValue.equals(BigInteger.ZERO)) {
+						rhs = mMemoryHandler.constructNullPointer(loc);
 					} else {
-						rhs = MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(loc, "0"), 
-								new IntegerLiteral(loc, offset), loc);
+						BigInteger pointerBaseValue = BigInteger.ZERO;
+						rhs = mMemoryHandler.constructPointerForIntegerValues(loc, pointerBaseValue, pointerOffsetValue);
 					}
 				} else {
 					throw new AssertionError("trying to initialize a pointer with something different from int and pointer");
@@ -271,9 +272,10 @@ public class InitializationHandler {
 			lrVal = new RValue(rhs, lCType);
 		} else if (lCType instanceof CEnum) {
 			if (initializer == null) {
-				rhs = new IntegerLiteral(loc, SFO.NR0);
+				rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, 
+						new CPrimitive(PRIMITIVE.INT), BigInteger.ZERO);
 			} else {
-				initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer, mExpressionTranslation);
+				initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 				rhs = initializer.lrVal.getValue();
 			}		
 			lrVal = new RValue(rhs, lCType);
@@ -326,7 +328,7 @@ public class InitializationHandler {
 				if (initializer == null) {
 					rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, (CPrimitive) lCType, BigInteger.ZERO);
 				} else {
-					initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer, mExpressionTranslation);
+					initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 					main.cHandler.castToType(main, loc, initializer, lCType);
 					rhs = initializer.lrVal.getValue();
 				}
@@ -344,7 +346,7 @@ public class InitializationHandler {
 				throw new AssertionError("unknown type to init");
 			}
 			if (onHeap) {
-				stmt.addAll(mMemoryHandler.getWriteCall(loc,
+				stmt.addAll(mMemoryHandler.getWriteCall(main, loc,
 						(HeapLValue) var,
 						rhs, cType));
 			} else {
@@ -365,19 +367,22 @@ public class InitializationHandler {
 					rhs = initializer.lrVal.getValue();
 				} else if (initializerUnderlyingType instanceof CPrimitive 
 						&& ((CPrimitive) initializerUnderlyingType).getGeneralType() == GENERALPRIMITIVE.INTTYPE){
-					String offset = ((IntegerLiteral) initializer.lrVal.getValue()).getValue();
-					if (offset.equals("0")) {
+					BigInteger offsetValue = mExpressionTranslation.extractIntegerValue((RValue) initializer.lrVal);
+					if (offsetValue.equals(BigInteger.ZERO)) {
 						rhs = new IdentifierExpression(loc, SFO.NULL);
 					} else {
-						rhs = MemoryHandler.constructPointerFromBaseAndOffset(new IntegerLiteral(loc, "0"), 
-								new IntegerLiteral(loc, offset), loc);
+						Expression base = mExpressionTranslation.constructLiteralForIntegerType(
+								loc, mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+						Expression offset = mExpressionTranslation.constructLiteralForIntegerType(
+								loc, mExpressionTranslation.getCTypeOfPointerComponents(), offsetValue);
+						rhs = MemoryHandler.constructPointerFromBaseAndOffset(base, offset, loc);
 					}
 				} else {
 					throw new AssertionError("trying to initialize a pointer with something different from int and pointer");
 				}
 			}
 			if (onHeap) {
-				stmt.addAll(mMemoryHandler.getWriteCall(loc, (HeapLValue) var, rhs, lCType));
+				stmt.addAll(mMemoryHandler.getWriteCall(main, loc, (HeapLValue) var, rhs, lCType));
 			} else {
 				assert lhs != null;
 				AssignmentStatement assignment = new AssignmentStatement(loc, 
@@ -475,11 +480,11 @@ public class InitializationHandler {
 				rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, 
 						new CPrimitive(CPrimitive.PRIMITIVE.INT), BigInteger.ZERO);
 			} else {
-				initializer = ConvExpr.rexBoolToIntIfNecessary(loc, initializer, mExpressionTranslation);
+				initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
 				rhs = initializer.lrVal.getValue();
 			}		
 			if (onHeap) {
-				stmt.addAll(mMemoryHandler.getWriteCall(loc,
+				stmt.addAll(mMemoryHandler.getWriteCall(main, loc,
 						(HeapLValue) var,
 						rhs, cType));
 			} else {
@@ -524,13 +529,12 @@ public class InitializationHandler {
 		ArrayList<Overapprox> overApp = new ArrayList<>();
 
 		Expression sizeOfCell = mMemoryHandler.calculateSizeOf(loc, arrayType.getValueType()); 
-		Expression[] dimensions = arrayType.getDimensions();
-		Integer currentSizeInt = null;
-		try {
-			currentSizeInt = Integer.parseInt(((IntegerLiteral) dimensions[0]).getValue());
-		} catch (NumberFormatException nfe) {
-			throw new UnsupportedSyntaxException(loc, "trying to initialize an array whose size we don't know");
+		RValue[] dimensions = arrayType.getDimensions();
+		BigInteger dimBigInteger = mExpressionTranslation.extractIntegerValue(arrayType.getDimensions()[0]);
+		if (dimBigInteger == null) {
+			throw new UnsupportedSyntaxException(loc, "variable length arrays not yet supported by this method");
 		}
+		int currentSizeInt = dimBigInteger.intValue();
 
 		Expression newStartAddressBase = null;
 		Expression newStartAddressOffset = null;
@@ -572,7 +576,7 @@ public class InitializationHandler {
 					auxVars.putAll(list.get(i).auxVars);
 					stmt.addAll(list.get(i).stmt);
 					overApp.addAll(list.get(i).overappr);
-					stmt.addAll(mMemoryHandler.getWriteCall(loc, new HeapLValue(writeLocation, valueType), val.getValue(), val.getCType()));
+					stmt.addAll(mMemoryHandler.getWriteCall(main, loc, new HeapLValue(writeLocation, valueType), val.getValue(), val.getCType()));
 				} else {
 					if (valueType instanceof CArray) {
 						throw new AssertionError("this should not be the case as we are in the inner/outermost array right??");
@@ -588,7 +592,7 @@ public class InitializationHandler {
 								(VariableLHS) null, valueType, null);
 						assert pInit.stmt.isEmpty() && pInit.decl.isEmpty() && pInit.auxVars.isEmpty();
 						RValue val = (RValue) pInit.lrVal;
-						stmt.addAll(mMemoryHandler.getWriteCall(loc, new HeapLValue(writeLocation, valueType), val.getValue(), val.getCType()));
+						stmt.addAll(mMemoryHandler.getWriteCall(main, loc, new HeapLValue(writeLocation, valueType), val.getValue(), val.getCType()));
 					} else {
 						throw new UnsupportedSyntaxException(loc, "trying to init unknown type");
 					}
@@ -603,7 +607,7 @@ public class InitializationHandler {
 				for (int j = 1; j < dimensions.length; j++) {
 					blockOffset = mExpressionTranslation.constructArithmeticExpression(
 							loc, IASTBinaryExpression.op_multiply, 
-							dimensions[j], mExpressionTranslation.getCTypeOfPointerComponents(), 
+							dimensions[j].getValue(), (CPrimitive) dimensions[j].getCType(), 
 							blockOffset, mExpressionTranslation.getCTypeOfPointerComponents()); 
 				}
 				Expression iAsExpression = mExpressionTranslation.constructLiteralForIntegerType(
@@ -618,9 +622,9 @@ public class InitializationHandler {
 						newStartAddressOffsetInner, mExpressionTranslation.getCTypeOfPointerComponents(), 
 						blockOffset, mExpressionTranslation.getCTypeOfPointerComponents()); 
 
-				ArrayList<Expression> innerDims = new ArrayList<Expression>(Arrays.asList(arrayType.getDimensions()));
+				ArrayList<RValue> innerDims = new ArrayList<RValue>(Arrays.asList(arrayType.getDimensions()));
 				innerDims.remove(0);//TODO ??
-				CArray innerArrayType = new CArray(innerDims.toArray(new Expression[0]), 
+				CArray innerArrayType = new CArray(innerDims.toArray(new RValue[0]), 
 						arrayType.getValueType());
 
 				ExpressionResult initRex = initArrayOnHeap(main, 
@@ -658,13 +662,12 @@ public class InitializationHandler {
 		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 		ArrayList<Overapprox> overApp = new ArrayList<>();
 
-		Expression[] dimensions = arrayType.getDimensions();
-		Integer currentSizeInt = null;
-		try {
-			currentSizeInt = Integer.parseInt(((IntegerLiteral) dimensions[0]).getValue());
-		} catch (NumberFormatException nfe) {
-			throw new UnsupportedSyntaxException(loc, "trying to initialize an array whose size we don't know");
+		RValue[] dimensions = arrayType.getDimensions();
+		BigInteger dimBigInteger = mExpressionTranslation.extractIntegerValue(arrayType.getDimensions()[0]);
+		if (dimBigInteger == null) {
+			throw new UnsupportedSyntaxException(loc, "variable length arrays not yet supported by this method");
 		}
+		int currentSizeInt = dimBigInteger.intValue();
 
 		if (dimensions.length == 1) {
 			RValue val = null;
@@ -701,14 +704,16 @@ public class InitializationHandler {
 				}
 				Expression[] newIndices = null;
 				LeftHandSide newLHS = null;
+				CPrimitive indexType = (CPrimitive) dimensions[0].getCType();
+				Expression index = mExpressionTranslation.constructLiteralForIntegerType(loc, indexType, BigInteger.valueOf(i));
 				if (innerArrayAccessLHS instanceof ArrayLHS) {
 					ArrayList<Expression> innerIndices = 
 							new ArrayList<Expression>(Arrays.asList(((ArrayLHS) innerArrayAccessLHS).getIndices()));
-					innerIndices.add(new IntegerLiteral(loc, new Integer(i).toString()));
+					innerIndices.add(index);
 					newIndices = innerIndices.toArray(new Expression[0]);
 					newLHS = ((ArrayLHS) innerArrayAccessLHS).getArray();
 				} else {
-					newIndices = new Expression[] { new IntegerLiteral(loc, new Integer(i).toString()) };
+					newIndices = new Expression[] { index };
 					newLHS = innerArrayAccessLHS;
 				}
 
@@ -724,20 +729,25 @@ public class InitializationHandler {
 
 				Expression[] newIndices = null;
 				LeftHandSide newLHS = null;
+				
+				// 2015-10-24 Matthias: I don't understand where I can take the
+				// type of the index from. As a workaround I take signed int.
+				CPrimitive indexType = new CPrimitive(PRIMITIVE.INT);
+				Expression index = mExpressionTranslation.constructLiteralForIntegerType(loc, indexType, BigInteger.valueOf(i));
 				if (innerArrayAccessLHS instanceof ArrayLHS) {
 					ArrayList<Expression> innerIndices = 
 							new ArrayList<Expression>(Arrays.asList(((ArrayLHS) innerArrayAccessLHS).getIndices()));
-					innerIndices.add(new IntegerLiteral(loc, new Integer(i).toString()));
+					innerIndices.add(index);
 					newIndices = innerIndices.toArray(new Expression[0]);
 					newLHS = ((ArrayLHS) innerArrayAccessLHS).getArray();
 				} else { 
-					newIndices = new Expression[] { new IntegerLiteral(loc, new Integer(i).toString()) };
+					newIndices = new Expression[] { index };
 					newLHS = innerArrayAccessLHS;
 				}
 
-				ArrayList<Expression> innerDims = new ArrayList<Expression>(Arrays.asList(arrayType.getDimensions()));
+				ArrayList<RValue> innerDims = new ArrayList<RValue>(Arrays.asList(arrayType.getDimensions()));
 				innerDims.remove(0);//TODO ??
-				CArray innerArrayType = new CArray(innerDims.toArray(new Expression[0]), 
+				CArray innerArrayType = new CArray(innerDims.toArray(new RValue[0]), 
 						arrayType.getValueType());
 
 				final ArrayList<ExpressionListRecResult> listRecCall;
@@ -775,7 +785,7 @@ public class InitializationHandler {
 
 		if (rerl.lrVal != null) {//we have an identifier (or sth else too?)
 			ExpressionResult writes = new ExpressionResult((RValue) null);
-			ArrayList<Statement> writeCalls = mMemoryHandler.getWriteCall(loc,
+			ArrayList<Statement> writeCalls = mMemoryHandler.getWriteCall(main, loc,
 					new HeapLValue(startAddress, rerl.lrVal.getCType()), ((RValue) rerl.lrVal).getValue(), rerl.lrVal.getCType());
 			writes.stmt.addAll(writeCalls);
 			return writes;
@@ -839,7 +849,7 @@ public class InitializationHandler {
 					String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.UNION);
 
 					fieldWrites = new ExpressionResult((RValue) null);
-					fieldWrites.stmt.addAll(mMemoryHandler.getWriteCall(loc,
+					fieldWrites.stmt.addAll(mMemoryHandler.getWriteCall(main, loc,
 							fieldHlv,
 							new IdentifierExpression(loc, tmpId), underlyingFieldType));
 					VariableDeclaration auxVarDec = new VariableDeclaration(loc, new Attribute[0], 

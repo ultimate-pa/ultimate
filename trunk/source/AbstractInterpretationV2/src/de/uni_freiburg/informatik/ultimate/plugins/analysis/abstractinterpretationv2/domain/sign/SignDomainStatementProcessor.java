@@ -116,14 +116,14 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 	protected void visit(AssignmentStatement statement) {
 		mEvaluatorFactory = new SignEvaluatorFactory(mServices, mStateConverter);
 
-		mExpressionEvaluator = new ExpressionEvaluator<Values, CodeBlock, BoogieVar>();
-
 		// super.visit(statement);
 
 		final LeftHandSide[] lhs = statement.getLhs();
 		final Expression[] rhs = statement.getRhs();
 
 		for (int i = 0; i < lhs.length; i++) {
+			mExpressionEvaluator = new ExpressionEvaluator<Values, CodeBlock, BoogieVar>();
+
 			assert mLhsVariable == null;
 			processLeftHandSide(lhs[i]);
 			assert mLhsVariable != null;

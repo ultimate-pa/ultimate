@@ -54,11 +54,11 @@ public class CPrimitive extends CType {
     	/* unsigned char */
     	UCHAR,
     	/* ?? */
-        WCHAR,
+//        WCHAR,
     	/* ?? */
-        CHAR32,
+//        CHAR32,
     	/* ?? */
-        CHAR16,
+//        CHAR16,
     	/* short, short int, signed short, signed short int */
         SHORT,
         /* unsigned short, unsigned short int */
@@ -142,14 +142,14 @@ public class CPrimitive extends CType {
 		case ULONGLONG:
 		case USHORT:
 		case CHAR:
-		case CHAR16:
-		case CHAR32:
+//		case CHAR16:
+//		case CHAR32:
 		case INT:
 		case LONG:
 		case LONGLONG:
 		case SCHAR:
 		case SHORT:
-		case WCHAR:
+//		case WCHAR:
 			generalType = GENERALPRIMITIVE.INTTYPE;
 			break;
 		case VOID:
@@ -179,14 +179,14 @@ public class CPrimitive extends CType {
 		case FLOAT:
 		case DOUBLE:
 		case LONGDOUBLE:
-		case CHAR16:
-		case CHAR32:
+//		case CHAR16:
+//		case CHAR32:
 		case INT:
 		case LONG:
 		case LONGLONG:
 		case SCHAR:
 		case SHORT:
-		case WCHAR:
+//		case WCHAR:
 		case VOID:
 			return false;
 		default:
@@ -216,12 +216,12 @@ public class CPrimitive extends CType {
                 	else
                 		this.type = PRIMITIVE.CHAR;
                     break;
-                case IASTSimpleDeclSpecifier.t_char16_t:
-                    this.type = PRIMITIVE.CHAR16;
-                    break;
-                case IASTSimpleDeclSpecifier.t_char32_t:
-                    this.type = PRIMITIVE.CHAR32;
-                    break;
+//                case IASTSimpleDeclSpecifier.t_char16_t:
+//                    this.type = PRIMITIVE.CHAR16;
+//                    break;
+//                case IASTSimpleDeclSpecifier.t_char32_t:
+//                    this.type = PRIMITIVE.CHAR32;
+//                    break;
                 case IASTSimpleDeclSpecifier.t_double:
                 	if (sds.isComplex())
                 		this.type = PRIMITIVE.COMPLEX_DOUBLE;
@@ -277,9 +277,9 @@ public class CPrimitive extends CType {
                 case IASTSimpleDeclSpecifier.t_void:
                     this.type = PRIMITIVE.VOID;
                     break;
-                case IASTSimpleDeclSpecifier.t_wchar_t:
-                    this.type = PRIMITIVE.WCHAR;
-                    break;
+//                case IASTSimpleDeclSpecifier.t_wchar_t:
+//                    this.type = PRIMITIVE.WCHAR;
+//                    break;
                 default:
                     throw new IllegalArgumentException(
                             "Unknown C Decklaration!");

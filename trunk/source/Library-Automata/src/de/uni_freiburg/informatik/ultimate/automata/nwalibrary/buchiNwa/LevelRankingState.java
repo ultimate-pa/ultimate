@@ -73,6 +73,15 @@ public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE
 		m_Operand = lrs.getOperand();
 	}
 	
+	/**
+	 * Constructor for the non-accepting sink state.
+	 */
+	public LevelRankingState() {
+		m_LevelRanking = null;
+		m_O = null;
+		m_Operand = null;
+	}
+	
 	Map<StateWithRankInfo<STATE>,HashMap<STATE,Integer>> copyLevelRanking(Map<StateWithRankInfo<STATE>,HashMap<STATE,Integer>> lr) {
 		Map<StateWithRankInfo<STATE>,HashMap<STATE,Integer>> result = new HashMap<StateWithRankInfo<STATE>,HashMap<STATE,Integer>>();
 		for (Entry<StateWithRankInfo<STATE>, HashMap<STATE, Integer>> entry  : lr.entrySet()) {
@@ -160,7 +169,11 @@ public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE
 	
 	@Override
 	public String toString() {
-		return m_LevelRanking.toString() +" O"+m_O;
+		if (m_LevelRanking == null) {
+			return "NON_ACCEPTING_SINK";
+		} else {
+			return m_LevelRanking.toString() +" O"+m_O;
+		}
 	}
 
 	/* (non-Javadoc)
@@ -252,5 +265,9 @@ public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE
 
 	public boolean isEmpty() {
 		return m_LevelRanking.isEmpty();
+	}
+	
+	public boolean isNonAcceptingSink() {
+		return m_LevelRanking == null;
 	}
 }

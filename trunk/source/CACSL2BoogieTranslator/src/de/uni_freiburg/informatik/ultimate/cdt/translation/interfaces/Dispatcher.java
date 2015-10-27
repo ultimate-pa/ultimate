@@ -35,9 +35,11 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces;
 
 import java.text.ParseException;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorStatement;
 import org.eclipse.cdt.core.dom.ast.IType;
@@ -353,6 +355,8 @@ public abstract class Dispatcher {
 		
 		
 	}
+
+	public abstract LinkedHashSet<IASTDeclaration> getReachableDeclarationsOrDeclarators();
 	
 	
 }

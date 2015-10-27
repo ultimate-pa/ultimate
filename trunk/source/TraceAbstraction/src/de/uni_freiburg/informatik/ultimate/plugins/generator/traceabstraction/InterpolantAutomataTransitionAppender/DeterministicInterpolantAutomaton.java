@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.I
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -235,8 +236,11 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 	protected void addInputAutomatonSuccs(
 			IPredicate resPred, IPredicate resHier, CodeBlock letter,
 			SuccessorComputationHelper sch, Set<IPredicate> inputSuccs) {
-		final Set<IPredicate> resPredConjuncts = m_ResPred2InputPreds.getImage(resPred);
+		Set<IPredicate> resPredConjuncts = m_ResPred2InputPreds.getImage(resPred);
 		assert m_Cannibalize || resPredConjuncts != null;
+		if (resPredConjuncts == null) {
+			resPredConjuncts = Collections.emptySet();
+		}
 		final IterableWithAdditionalElement<IPredicate> resPredConjunctsWithTrue = 
 				new IterableWithAdditionalElement<IPredicate>(resPredConjuncts, m_IaTrueState);
 		final IterableWithAdditionalElement<IPredicate> resHierConjunctsWithTrue;

@@ -54,7 +54,8 @@ public class FunctionTableBuilder extends ASTVisitor {
             for (IASTDeclarator d : cd.getDeclarators()) {
                 String key = d.getName().toString();
                 if (d instanceof IASTFunctionDeclarator) {
-                	fT.put(key, d);
+                	if (!fT.containsKey(key))
+                		fT.put(key, d);
                 }
 
             }

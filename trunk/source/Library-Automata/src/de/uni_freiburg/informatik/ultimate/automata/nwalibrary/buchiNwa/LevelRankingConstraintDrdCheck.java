@@ -26,8 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
+import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation3;
 
@@ -41,39 +43,61 @@ import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation3;
 public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingConstraint<LETTER, STATE> {
 	
 	
-	HashRelation3<StateWithRankInfo<STATE>, STATE, Integer> m_RankConstraintsOfNonFinalPredecessors;
+	private final HashRelation3<StateWithRankInfo<STATE>, STATE, Integer> m_RanksOfNonFinalPredecessorsWithEvenRank;
 
 	public LevelRankingConstraintDrdCheck(INestedWordAutomatonSimple<LETTER, STATE> operand,
 			int userDefinedMaxRank, boolean useDoubleDeckers) {
 		super(operand, userDefinedMaxRank, useDoubleDeckers);
-		m_RankConstraintsOfNonFinalPredecessors = new HashRelation3<>();
+		m_RanksOfNonFinalPredecessorsWithEvenRank = new HashRelation3<>();
+	}
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	public LevelRankingConstraintDrdCheck() {
+		super();
+		m_RanksOfNonFinalPredecessorsWithEvenRank = null;
 	}
 
 	@Override
 	protected void addConstaint(StateWithRankInfo<STATE> down, STATE up, Integer rank, boolean oCandidate,
 			boolean predecessorWasAccepting) {
-		if (!predecessorWasAccepting) {
-			m_RankConstraintsOfNonFinalPredecessors.addTriple(down, up, rank);
+		if (isEven(rank) && !predecessorWasAccepting) {
+			m_RanksOfNonFinalPredecessorsWithEvenRank.addTriple(down, up, rank);
 		}
 		super.addConstaint(down, up, rank, oCandidate, predecessorWasAccepting);
 	}
 	
 	public boolean aroseFromDelayedRankDecrease() {
-		for (StateWithRankInfo<STATE> down : m_RankConstraintsOfNonFinalPredecessors.projectToFst()) {
-			for (STATE up : m_RankConstraintsOfNonFinalPredecessors.projectToSnd(down)) {
-				Set<Integer> ranks = m_RankConstraintsOfNonFinalPredecessors.projectToTrd(down, up);
-				for (Integer rank : ranks) {
-					// return true if ranks contains two successive numbers
-					// x and x+1 such that x is odd.
-					if (isOdd(rank)) {
-						if (ranks.contains(rank + 1)) {
-							return true;
-						}
-					}
+		for (StateWithRankInfo<STATE> down : m_RanksOfNonFinalPredecessorsWithEvenRank.projectToFst()) {
+			for (STATE up : m_RanksOfNonFinalPredecessorsWithEvenRank.projectToSnd(down)) {
+				Integer constraint = getRank(down, up);
+				Set<Integer> nonAcceptingEvenranks = m_RanksOfNonFinalPredecessorsWithEvenRank.projectToTrd(down, up);
+				if (isOdd(constraint) && !nonAcceptingEvenranks.isEmpty()) {
+					return true;
 				}
 			}
 		}
 		return false;
+	}
+	
+	private boolean isEligibleForVoluntaryRankDecrease(StateWithRankInfo<STATE> down, STATE up) {
+		Integer constraint = getRank(down, up);
+		Set<Integer> nonAcceptingEvenranks = m_RanksOfNonFinalPredecessorsWithEvenRank.projectToTrd(down, up);
+		return (isEven(constraint) && !m_Operand.isFinal(up) && nonAcceptingEvenranks.isEmpty());
+	}
+
+	@Override
+	public Set<DoubleDecker<StateWithRankInfo<STATE>>> getPredecessorWasAccepting() {
+		Set<DoubleDecker<StateWithRankInfo<STATE>>> result = new HashSet<>();
+		for (StateWithRankInfo<STATE> down : getDownStates()) {
+			for (StateWithRankInfo<STATE> up : getUpStates(down)) {
+				if (isEligibleForVoluntaryRankDecrease(down, up.getState())) {
+					result.add(new DoubleDecker<StateWithRankInfo<STATE>>(down, up));
+				}
+			}
+		}
+		return result;
 	}
 	
 	

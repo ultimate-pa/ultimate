@@ -27,15 +27,20 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.interval;
 
+import java.math.BigDecimal;
+
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ExpressionEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluationResult;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
@@ -87,16 +92,36 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 		final Expression[] rhs = statement.getRhs();
 
 		for (int i = 0; i < lhs.length; i++) {
-//			assert mLhsVariable == null;
-//			processLeftHandSide(lhs[i]);
-//			assert mLhsVariable != null;
-//
-//			processExpression(rhs[i]);
+			mExpressionEvaluator = new ExpressionEvaluator<IntervalDomainValue, CodeBlock, BoogieVar>();
+
+			assert mLhsVariable == null;
+			processLeftHandSide(lhs[i]);
+			assert mLhsVariable != null;
+			final String varname = mLhsVariable;
+			mLhsVariable = null;
+
+			processExpression(rhs[i]);
+			assert mExpressionEvaluator.isFinished();
+			final IEvaluationResult<IntervalDomainValue> result = mExpressionEvaluator.getRootEvaluator()
+			        .evaluate(mOldState);
+
+			final IntervalDomainValue newValue = result.getResult();
+			mNewState.setValue(varname, newValue);
 		}
 	}
 
 	@Override
 	protected void visit(VariableLHS lhs) {
 		mLhsVariable = lhs.getIdentifier();
+	}
+
+	@Override
+	protected void visit(IntegerLiteral expr) {
+		final IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> evaluator = mEvaluatorFactory
+		        .createSingletonValueExpressionEvaluator(expr.getValue(), BigDecimal.class);
+
+		mExpressionEvaluator.addEvaluator(evaluator);
+
+		super.visit(expr);
 	}
 }

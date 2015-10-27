@@ -334,12 +334,14 @@ public class PredicateUnifier {
 		assert !SmtUtils.isTrue(term) : "illegal predicate: true";
 		assert !SmtUtils.isFalse(term) : "illegal predicate: false";
 		assert !m_Term2Predicates.containsKey(term);
-		Term simplifiedTerm = term;
-		if (!pc.isIntricatePredicate()) {
+		Term simplifiedTerm;
+		if (pc.isIntricatePredicate()) {
+			simplifiedTerm = term;
+		} else {
 			simplifiedTerm = SmtUtils.simplify(m_SmtManager.getScript(), term, mServices);
 		}
 		if (m_BringTermsToCommuhashNormalForm) {
-			simplifiedTerm = (new CommuhashNormalForm(mServices, m_SmtManager.getScript())).transform(term);
+			simplifiedTerm = (new CommuhashNormalForm(mServices, m_SmtManager.getScript())).transform(simplifiedTerm);
 		}
 		if (simplifiedTerm == term) {
 			result = m_SmtManager.newPredicate(term, procs, vars, pc.getClosedTerm());
@@ -446,7 +448,6 @@ public class PredicateUnifier {
 			if (m_EquivalantPredicate != null) {
 				throw new IllegalAccessError("not accessible, we found an equivalent predicate");
 			}
-
 			return m_ImpliedPredicates;
 		}
 
@@ -454,7 +455,6 @@ public class PredicateUnifier {
 			if (m_EquivalantPredicate != null) {
 				throw new IllegalAccessError("not accessible, we found an equivalent predicate");
 			}
-
 			return m_ExpliedPredicates;
 		}
 
@@ -469,7 +469,6 @@ public class PredicateUnifier {
 			if (m_EquivalantPredicate != null) {
 				throw new IllegalAccessError("not accessible, we found an equivalent predicate");
 			}
-
 			return m_IsIntricatePredicate;
 		}
 		
@@ -566,6 +565,7 @@ public class PredicateUnifier {
 					m_ExpliedPredicates.put(other, Validity.NOT_CHECKED);
 					continue;
 				}
+				m_PredicateUnifierBenchmarkGenerator.incrementIntricatePredicates();
 				return null;
 			}
 			

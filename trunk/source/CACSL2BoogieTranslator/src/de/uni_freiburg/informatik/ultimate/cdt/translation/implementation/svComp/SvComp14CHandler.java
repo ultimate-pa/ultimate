@@ -62,12 +62,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.cHandler.SVCompArrayHandler;
-//import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.cHandler.SVCompFunctionHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
@@ -174,7 +173,7 @@ public class SvComp14CHandler extends CHandler {
 					String msg = "Incorrect or invalid in-parameter! " + loc.toString();
 					throw new IncorrectSyntaxException(loc, msg);
 				}
-				in = ConvExpr.rexIntToBoolIfNecessary(loc, in, m_ExpressionTranslation);
+				in.rexIntToBoolIfNecessary(loc, m_ExpressionTranslation);
 				args.add(in.lrVal.getValue());
 				stmt.addAll(in.stmt);
 				decl.addAll(in.decl);
@@ -305,6 +304,9 @@ public class SvComp14CHandler extends CHandler {
 			if (!mFunctionHandler.getCallGraph().containsKey(SFO.MEMCPY)) {
 				mFunctionHandler.getCallGraph().put(SFO.MEMCPY, new LinkedHashSet<String>());
 			}
+			if (!mFunctionHandler.getModifiedGlobals().containsKey(SFO.MEMCPY)) {
+				mFunctionHandler.getModifiedGlobals().put(SFO.MEMCPY, new LinkedHashSet<String>());
+			}
 			mFunctionHandler.getCallGraph().get(mFunctionHandler.getCurrentProcedureID()).add(SFO.MEMCPY);
 			
 			return new ExpressionResult(stmt, new RValue(new IdentifierExpression(loc, tId), 
@@ -322,8 +324,11 @@ public class SvComp14CHandler extends CHandler {
 		 * triggers the processor to load something into cache, does nothing else
 		 * is void thus has no return value
 		 */
-		if (methodName.equals("__builtin_prefetch")) {
-			main.warn(loc, "ignored call to __builtin_prefetch");
+		if (methodName.equals("__builtin_prefetch") || 
+				methodName.equals("__builtin_va_start") ||
+				methodName.equals("__builtin_va_end") ||
+				methodName.equals("__builtin_return_address")) {
+			main.warn(loc, "ignored call to " + methodName);
 			return new SkipResult();
 		}
 
@@ -345,11 +350,11 @@ public class SvComp14CHandler extends CHandler {
 				(CPrimitive) lrValue.getCType().getUnderlyingType()).toString());
 		IntegerLiteral maxValue = new IntegerLiteral(loc, typeSizes.getMaxValueOfPrimitiveType(
 				(CPrimitive) lrValue.getCType().getUnderlyingType()).toString());
-		BinaryExpression biggerMinInt = new BinaryExpression(loc, 
+		Expression biggerMinInt = ExpressionFactory.newBinaryExpression(loc, 
 				BinaryExpression.Operator.COMPLEQ, minValue, lrValue.getValue());
-		BinaryExpression smallerMaxValue = new BinaryExpression(loc, 
+		Expression smallerMaxValue = ExpressionFactory.newBinaryExpression(loc, 
 				BinaryExpression.Operator.COMPLEQ, lrValue.getValue(), maxValue);
-		AssumeStatement inRange = new AssumeStatement(loc, new BinaryExpression(loc, 
+		AssumeStatement inRange = new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc, 
 				BinaryExpression.Operator.LOGICAND, biggerMinInt, smallerMaxValue));
 		return inRange;
 	}
@@ -375,25 +380,6 @@ public class SvComp14CHandler extends CHandler {
 			return new ExpressionResult(new ArrayList<Statement>(), rvalue, decls, auxVars);
 		}
 		return super.visit(main, node);
-	}
-
-	//
-	// VERIFIER_nondet_X()
-	//
-	@Override
-	public Result visit(Dispatcher main, IASTBinaryExpression node) {
-		Result r = super.visit(main, node);
-		if (node.getOperator() == IASTBinaryExpression.op_divide
-				|| node.getOperator() == IASTBinaryExpression.op_divideAssign) {
-			// remove division by zero asserts
-			assert r instanceof ExpressionResult;
-			ExpressionResult rex = (ExpressionResult) r;
-			Iterator<Statement> it = rex.stmt.iterator();
-			while (it.hasNext())
-				if (it.next() instanceof AssertStatement)
-					it.remove();
-		}
-		return r;
 	}
 
 	@Override

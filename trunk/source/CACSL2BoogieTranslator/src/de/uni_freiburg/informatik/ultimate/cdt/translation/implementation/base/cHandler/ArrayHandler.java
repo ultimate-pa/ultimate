@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
@@ -125,7 +126,7 @@ public class ArrayHandler {
 				assert isOutermostSubscriptExpression(node) : "not outermost";
 				resultCType = cArray.getValueType();
 			} else {
-				Expression[] newDimensions = Arrays.copyOfRange(
+				RValue[] newDimensions = Arrays.copyOfRange(
 						cArray.getDimensions(), 1, cArray.getDimensions().length);
 				assert newDimensions.length == cArray.getDimensions().length - 1;
 				resultCType = new CArray(newDimensions, cArray.getValueType());
@@ -158,23 +159,29 @@ public class ArrayHandler {
 				// we return a copy of this LocalLValue where we added the
 				// current index.
 				final LeftHandSide oldInnerArrayLHS = ((LocalLValue) leftExpRes.lrVal).getLHS();
-				final Expression index = subscript.lrVal.getValue();
+				RValue currentDimension = cArray.getDimensions()[0];
+				// The following is not in the standard, since there everything 
+				// is defined via pointers. However, we have to make the subscript
+				// compatible to the type of the dimension of the array
+				AExpressionTranslation et = ((CHandler) main.cHandler).getExpressionTranslation();
+				et.convert(loc, subscript, (CPrimitive) currentDimension.getCType());
+				final RValue index = (RValue) subscript.lrVal;
 				final ArrayLHS newInnerArrayLHS;
 				if (oldInnerArrayLHS instanceof ArrayLHS) {
 					Expression[] oldIndices = ((ArrayLHS) oldInnerArrayLHS).getIndices();
 					Expression[] newIndices = new Expression[oldIndices.length + 1];
 					System.arraycopy(oldIndices, 0, newIndices, 0, oldIndices.length);
-					newIndices[newIndices.length-1] = index;
+					newIndices[newIndices.length-1] = index.getValue();
 					newInnerArrayLHS = new ArrayLHS(loc, 
 							((ArrayLHS) oldInnerArrayLHS).getArray(), newIndices);
 				} else {
 					assert isInnermostSubscriptExpression(node) : "not innermost";
-					newInnerArrayLHS = new ArrayLHS(loc, oldInnerArrayLHS, new Expression[] { index });	
+					newInnerArrayLHS = new ArrayLHS(loc, oldInnerArrayLHS, new Expression[] { index.getValue() });	
 				}
 				LocalLValue lValue = new LocalLValue(newInnerArrayLHS, resultCType, false, false);
 				result = ExpressionResult.copyStmtDeclAuxvarOverapprox(leftExpRes, subscript);
 				result.lrVal = lValue;
-				addArrayBoundsCheckForCurrentIndex(main, loc, index, cArray.getDimensions()[0], result);
+				addArrayBoundsCheckForCurrentIndex(main, loc, index, currentDimension, result);
 			} else {
 				throw new AssertionError("result.lrVal has to be either HeapLValue or LocalLValue");
 			}
@@ -201,8 +208,8 @@ public class ArrayHandler {
 	 * 		that corresponds to the index
 	 */
 	private void addArrayBoundsCheckForCurrentIndex(Dispatcher main, 
-			ILocation loc, Expression currentIndex,
-			Expression currentDimension, ExpressionResult exprResult) {
+			ILocation loc, RValue currentIndex,
+			RValue currentDimension, ExpressionResult exprResult) {
 		if (m_checkArrayAccessOffHeap  == POINTER_CHECKMODE.IGNORE) {
 			// do not check anything
 			return;
@@ -213,17 +220,20 @@ public class ArrayHandler {
 		// This check will fail in the bitvector translation if the typesize 
 		// of the index is different than the typesize of the dimension.
 		// as a workaround we assume int for both.
+		// 2015-10-24 Matthias:
+		// Probably solved. Now the input is already converted to the type
+		// of the dimension.
 		{
-			CPrimitive indexType = new CPrimitive(PRIMITIVE.INT);
+			CPrimitive indexType = (CPrimitive) currentIndex.getCType();
 			Expression zero = cHandler.getExpressionTranslation().constructLiteralForIntegerType(
 					loc, indexType, BigInteger.ZERO);
 			Expression nonNegative = cHandler.getExpressionTranslation().constructBinaryComparisonExpression(
 					loc, IASTBinaryExpression.op_lessEqual, zero, indexType, 
-					currentIndex, indexType);
+					currentIndex.getValue(), indexType);
 			Expression notTooBig = cHandler.getExpressionTranslation().constructBinaryComparisonExpression(
-					loc, IASTBinaryExpression.op_lessThan, currentIndex, indexType, 
-					currentDimension, indexType);
-			inRange = new BinaryExpression(loc, Operator.LOGICAND, nonNegative, notTooBig);
+					loc, IASTBinaryExpression.op_lessThan, currentIndex.getValue(), indexType, 
+					currentDimension.getValue(), (CPrimitive) currentDimension.getCType());
+			inRange = ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, nonNegative, notTooBig);
 		}
 		switch (m_checkArrayAccessOffHeap) {
 		case ASSERTandASSUME:

@@ -44,7 +44,7 @@ import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.BitvectorTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
@@ -82,7 +83,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.EnsuresSpecification
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
@@ -303,11 +303,13 @@ public class MemoryHandler {
 		VariableDeclaration loopCtrDec = new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] { lcvl });
 		decl.add(loopCtrDec);
 		//initialize the counter to 0
+		Expression zero = m_ExpressionTranslation.constructLiteralForIntegerType(
+				ignoreLoc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
 		stmt.add(new AssignmentStatement(ignoreLoc, new LeftHandSide[] { new VariableLHS(ignoreLoc, loopCtr)}, 
-				new Expression[] { new IntegerLiteral(ignoreLoc, SFO.NR0) }));
+				new Expression[] { zero }));
 		
 		IdentifierExpression ctrIdex = new IdentifierExpression(ignoreLoc, loopCtr);
-		BinaryExpression condition = new BinaryExpression(ignoreLoc, BinaryExpression.Operator.COMPLT, 
+		Expression condition = ExpressionFactory.newBinaryExpression(ignoreLoc, BinaryExpression.Operator.COMPLT, 
 				ctrIdex,
 				new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SIZE));
 		
@@ -341,9 +343,11 @@ public class MemoryHandler {
 		
 		//increment counter
 		VariableLHS ctrLHS = new VariableLHS(ignoreLoc, loopCtr);
+		Expression one = m_ExpressionTranslation.constructLiteralForIntegerType(
+				ignoreLoc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
 		bodyStmt.add(new AssignmentStatement(ignoreLoc, new LeftHandSide[] { ctrLHS }, 
 				new Expression[] { constructPointerComponentAddition(ignoreLoc,
-						ctrIdex, new IntegerLiteral(ignoreLoc, SFO.NR1)) }));
+						ctrIdex, one) }));
 
 		
 		Statement[] whileBody = bodyStmt.toArray(new Statement[bodyStmt.size()]);
@@ -580,13 +584,13 @@ public class MemoryHandler {
                     swrite.add(new EnsuresSpecification(
                             loc,
                             false,
-                            new BinaryExpression(
+                            ExpressionFactory.newBinaryExpression(
                                     loc,
                                     Operator.COMPEQ,
                                     memA,
                                     new ArrayStoreExpression(
                                             loc,
-                                            new UnaryExpression(
+                                            ExpressionFactory.newUnaryExpression(
                                                     loc,
                                                     UnaryExpression.Operator.OLD,
                                                     memA), idc, idVal))));
@@ -595,13 +599,13 @@ public class MemoryHandler {
                     swrite.add(new EnsuresSpecification(
                             loc,
                             false,
-                            new BinaryExpression(
+                            ExpressionFactory.newBinaryExpression(
                                     loc,
                                     Operator.COMPEQ,
                                     memA,
                                     new ArrayStoreExpression(
                                             loc,
-                                            new UnaryExpression(
+                                            ExpressionFactory.newUnaryExpression(
                                                     loc,
                                                     UnaryExpression.Operator.OLD,
                                                     memA), idc, aae))));
@@ -692,7 +696,7 @@ public class MemoryHandler {
            	Expression arr = new IdentifierExpression(loc, SFO.MEMORY + "_" + typeName);
            	Expression arrE = new ArrayAccessExpression(loc, arr, idc);
            	Expression valueE = new IdentifierExpression(loc, value);
-           	Expression equality = new BinaryExpression(loc, Operator.COMPEQ, valueE, arrE);
+           	Expression equality = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, valueE, arrE);
            	sread.add(new EnsuresSpecification(loc, false, equality));
 
             decl.add(new Procedure(loc, new Attribute[0], nread, new String[0],
@@ -759,7 +763,7 @@ public class MemoryHandler {
         	Check check = new Check(Spec.MEMORY_FREE);
         	boolean free = !m_CheckFreeValid;
         	RequiresSpecification offsetZero = new RequiresSpecification(
-        			tuLoc, free, new BinaryExpression(tuLoc, Operator.COMPEQ, 
+        			tuLoc, free, ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, 
         					addrOffset, nr0));
             check.addToNodeAnnot(offsetZero);
             specFree.add(offsetZero);
@@ -769,9 +773,9 @@ public class MemoryHandler {
                     new ArrayAccessExpression(tuLoc, valid, idcFree));
             check.addToNodeAnnot(baseValid);
             specFree.add(baseValid);
-            specFree.add(new EnsuresSpecification(tuLoc, free, new BinaryExpression(
+            specFree.add(new EnsuresSpecification(tuLoc, free, ExpressionFactory.newBinaryExpression(
                     tuLoc, Operator.COMPEQ, valid,
-                    new ArrayStoreExpression(tuLoc, new UnaryExpression(
+                    new ArrayStoreExpression(tuLoc, ExpressionFactory.newUnaryExpression(
                             tuLoc, UnaryExpression.Operator.OLD, valid),
                             idcFree, bLFalse))));
             specFree.add(new ModifiesSpecification(tuLoc, false,
@@ -841,32 +845,32 @@ public class MemoryHandler {
         List<Specification> specMalloc = new ArrayList<Specification>();
         if (m_CheckMallocNonNegative) {
         	RequiresSpecification nonNegative = new RequiresSpecification(tuLoc,
-        			false, new BinaryExpression(tuLoc, Operator.COMPGEQ, size, nr0));
+        			false, ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPGEQ, size, nr0));
         	nonNegative.getPayload().getAnnotations().put(
         		Check.getIdentifier(), new Check(Check.Spec.MALLOC_NONNEGATIVE));
         	specMalloc.add(nonNegative);
         }
         specMalloc.add(new EnsuresSpecification(tuLoc, false,
-                new BinaryExpression(tuLoc, Operator.COMPEQ,
-                        new ArrayAccessExpression(tuLoc, new UnaryExpression(
+                ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ,
+                        new ArrayAccessExpression(tuLoc, ExpressionFactory.newUnaryExpression(
                                 tuLoc, UnaryExpression.Operator.OLD, valid),
                                 idcMalloc), bLFalse)));
         specMalloc.add(new EnsuresSpecification(tuLoc, false,
-                new BinaryExpression(tuLoc, Operator.COMPEQ, valid,
-                        new ArrayStoreExpression(tuLoc, new UnaryExpression(
+                ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, valid,
+                        new ArrayStoreExpression(tuLoc, ExpressionFactory.newUnaryExpression(
                                 tuLoc, UnaryExpression.Operator.OLD, valid),
                                 idcMalloc, bLTrue))));
         specMalloc.add(new EnsuresSpecification(tuLoc, false,
-                new BinaryExpression(tuLoc, Operator.COMPEQ,
+                ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ,
                         new StructAccessExpression(tuLoc, res,
                                 SFO.POINTER_OFFSET), nr0)));
         specMalloc.add(new EnsuresSpecification(tuLoc, false,
-                new BinaryExpression(tuLoc, Operator.COMPNEQ,
+                ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPNEQ,
                         new StructAccessExpression(tuLoc, res,
                                 SFO.POINTER_BASE), nr0)));
         specMalloc.add(new EnsuresSpecification(tuLoc, false,
-                new BinaryExpression(tuLoc, Operator.COMPEQ, length,
-                        new ArrayStoreExpression(tuLoc, new UnaryExpression(
+                ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, length,
+                        new ArrayStoreExpression(tuLoc, ExpressionFactory.newUnaryExpression(
                                 tuLoc, UnaryExpression.Operator.OLD, length),
                                 idcMalloc, size))));
         specMalloc.add(new ModifiesSpecification(tuLoc, false, new VariableLHS[] {
@@ -895,11 +899,11 @@ public class MemoryHandler {
         			tuLoc, new Attribute[0], new VarList[] { new VarList(tuLoc,
         					new String[] { ADDR }, typeHandler.constructPointerType(tuLoc)) }) };
         	Statement[] block = new Statement[6];
-        	block[0] = new AssumeStatement(tuLoc, new BinaryExpression(tuLoc,
+        	block[0] = new AssumeStatement(tuLoc, ExpressionFactory.newBinaryExpression(tuLoc,
         			Operator.COMPEQ, addrOffset, nr0));
-        	block[1] = new AssumeStatement(tuLoc, new BinaryExpression(tuLoc,
+        	block[1] = new AssumeStatement(tuLoc, ExpressionFactory.newBinaryExpression(tuLoc,
         			Operator.COMPNEQ, addrBase, nr0));
-        	block[2] = new AssumeStatement(tuLoc, new UnaryExpression(tuLoc,
+        	block[2] = new AssumeStatement(tuLoc, ExpressionFactory.newUnaryExpression(tuLoc,
         			UnaryExpression.Operator.LOGICNEG, new ArrayAccessExpression(
         					tuLoc, valid, idcAddrBase)));
         	block[3] = new AssignmentStatement(tuLoc,
@@ -1034,26 +1038,43 @@ public class MemoryHandler {
      * @return all declarations and statements required to perform the read,
      *         plus an identifierExpression holding the read value.
      */
+    // 2015-10
     public ExpressionResult getReadCall(Dispatcher main, Expression address,
     		CType resultType) {
+    	ILocation loc = (ILocation) address.getLocation();
+    	if (((CHandler) main.cHandler).getExpressionTranslation() instanceof BitvectorTranslation
+    			&& (resultType.getUnderlyingType() instanceof CPrimitive)) {
+    		CPrimitive cPrimitive = (CPrimitive) resultType.getUnderlyingType();
+    		if (main.getTypeSizes().getSize(cPrimitive.getType()) > 
+    				main.getTypeSizes().getSize(PRIMITIVE.INT)) {
+    			throw new UnsupportedSyntaxException(loc, 
+    					"cannot read " + cPrimitive + " from heap"); 
+    		}
+    	}
+		boolean bitvectorConversionNeeded = (((CHandler) main.cHandler).getExpressionTranslation() instanceof BitvectorTranslation
+    			&& (resultType.getUnderlyingType() instanceof CPrimitive)
+    			&& main.getTypeSizes().getSize(((CPrimitive) resultType.getUnderlyingType()).getType()) < 
+				main.getTypeSizes().getSize(PRIMITIVE.INT));
+    	
         ArrayList<Statement> stmt = new ArrayList<Statement>();
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, ILocation> auxVars = 
 				new LinkedHashMap<VariableDeclaration, ILocation>();
 		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
-        ILocation loc = (ILocation) address.getLocation();
+        
         
         ASTType heapType = getHeapTypeOfLRVal(main, loc, resultType);
         
-        String heapTypeName;
-        if (InferredType.isPointerType(heapType)) {
-        	heapTypeName = SFO.POINTER;
-        } else {
-        	heapTypeName = ((PrimitiveType) heapType).getName();
-        }
+        final String heapTypeName = getHeapTypeName(resultType);
         
         String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD);
-        VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, heapType, loc);
+        final ASTType tmpAstType;
+        if (bitvectorConversionNeeded) {
+        	tmpAstType = main.typeHandler.ctype2asttype(loc, m_ExpressionTranslation.getCTypeOfIntArray());
+        } else {
+        	tmpAstType = heapType;
+        }
+        VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, tmpAstType, loc);
         auxVars.put(tVarDecl, loc);
         decl.add(tVarDecl);
         VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, tmpId) };
@@ -1065,9 +1086,48 @@ public class MemoryHandler {
         }
         stmt.add(call);
 		assert (CHandler.isAuxVarMapcomplete(main, decl, auxVars));
-        return new ExpressionResult(stmt, 
-        		new RValue(new IdentifierExpression(loc, tmpId), resultType),
-        		decl, auxVars, overappr);
+		
+		ExpressionResult result; 
+		if (bitvectorConversionNeeded) {
+			result = new ExpressionResult(stmt, 
+	        		new RValue(new IdentifierExpression(loc, tmpId), m_ExpressionTranslation.getCTypeOfIntArray()),
+	        		decl, auxVars, overappr);
+			m_ExpressionTranslation.convert(loc, result, (CPrimitive) resultType.getUnderlyingType());
+	        String bvtmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD);
+	        VariableDeclaration bvtVarDecl = SFO.getTempVarVariableDeclaration(bvtmpId, heapType, loc);
+	        auxVars.put(bvtVarDecl, loc);
+	        decl.add(bvtVarDecl);
+	        VariableLHS[] bvlhs = new VariableLHS[] { new VariableLHS(loc, bvtmpId) };
+	        AssignmentStatement as = new AssignmentStatement(loc, bvlhs, new Expression[] { result.lrVal.getValue() });
+	        stmt.add(as);
+	        result.lrVal = new RValue(new IdentifierExpression(loc, bvtmpId), resultType);
+		} else {
+			 result = new ExpressionResult(stmt, 
+		        		new RValue(new IdentifierExpression(loc, tmpId), resultType),
+		        		decl, auxVars, overappr);
+		}
+        return result;
+    }
+    
+    
+    private String getHeapTypeName(CType cType) {
+    	CType underlyingType = cType.getUnderlyingType();
+    	if (underlyingType instanceof CPrimitive) {
+    		CPrimitive cPrimitive = (CPrimitive) underlyingType;
+    		if (cPrimitive.isIntegerType()) {
+    			return SFO.INT;
+    		} else if (cPrimitive.isFloatingType()) {
+    			throw new UnsupportedOperationException("I don't know the right String");
+    		} else {
+    			throw new UnsupportedOperationException("unknown type " + underlyingType);
+    		}
+    	} else if (underlyingType instanceof CEnum) {
+    		return SFO.INT;
+    	} else if (underlyingType instanceof CPointer) {
+    		return SFO.POINTER;
+    	} else {
+    		throw new AssertionError("unable to write " + cType + " to heap");
+    	}
     }
     
     ASTType getHeapTypeOfLRVal(Dispatcher main, ILocation loc, CType ct) {
@@ -1081,13 +1141,14 @@ public class MemoryHandler {
 			switch (cp.getGeneralType()) {
 			case INTTYPE:
 				isIntArrayRequiredInMM = true;
-				return new PrimitiveType(loc, SFO.INT);
+				break;
 			case FLOATTYPE:
 				isFloatArrayRequiredInMM = true;
-				return new PrimitiveType(loc, SFO.REAL);
+				break;
 			default:
 				throw new UnsupportedSyntaxException(null, "unsupported cType " + ct);
 			}
+			return main.typeHandler.ctype2asttype(loc, ct);
 		} else if (ut instanceof CPointer) {
 			isPointerArrayRequiredInMM = true;
 			return main.typeHandler.constructPointerType(loc);
@@ -1104,7 +1165,7 @@ public class MemoryHandler {
 		} else if (ut instanceof CEnum) { 
 			//enum is treated like an int
 			isIntArrayRequiredInMM = true;
-			return new PrimitiveType(loc, SFO.INT);
+			return main.typeHandler.ctype2asttype(loc, new CPrimitive(PRIMITIVE.INT));
 		} else {
 			throw new UnsupportedSyntaxException(null, "non-heap type?: " + ct);
 		}
@@ -1122,9 +1183,29 @@ public class MemoryHandler {
      *            the value to write.
      * @return the required Statements to perform the write.
      */
-    public ArrayList<Statement> getWriteCall(ILocation loc, HeapLValue hlv, 
+    public ArrayList<Statement> getWriteCall(Dispatcher main, ILocation loc, HeapLValue hlv, 
     		Expression value, CType valueType) {
-//        ILocation loc = hlv.getAddress().getLocation();
+    	if (((CHandler) main.cHandler).getExpressionTranslation() instanceof BitvectorTranslation
+    			&& (valueType.getUnderlyingType() instanceof CPrimitive)) {
+    		CPrimitive cPrimitive = (CPrimitive) valueType.getUnderlyingType();
+    		if (main.getTypeSizes().getSize(cPrimitive.getType()) > 
+    				main.getTypeSizes().getSize(PRIMITIVE.INT)) {
+    			throw new UnsupportedSyntaxException(loc, 
+    					"cannot write " + cPrimitive + " to heap"); 
+    		}
+    	}
+		boolean bitvectorConversionNeeded = (((CHandler) main.cHandler).getExpressionTranslation() instanceof BitvectorTranslation
+    			&& (valueType.getUnderlyingType() instanceof CPrimitive)
+    			&& main.getTypeSizes().getSize(((CPrimitive) valueType.getUnderlyingType()).getType()) < 
+				main.getTypeSizes().getSize(PRIMITIVE.INT));
+		if (bitvectorConversionNeeded) {
+			RValue tmpworkaroundrvalue = new RValue(value, valueType.getUnderlyingType(), false, false);
+			ExpressionResult tmpworkaround = new ExpressionResult(tmpworkaroundrvalue);
+			m_ExpressionTranslation.convert(loc, tmpworkaround, new CPrimitive(PRIMITIVE.INT));
+			value = tmpworkaround.lrVal.getValue();
+			valueType = tmpworkaround.lrVal.getCType();
+		}
+		
         ArrayList<Statement> stmt = new ArrayList<Statement>();
         
         if (valueType instanceof CNamed)
@@ -1187,7 +1268,7 @@ public class MemoryHandler {
         		HeapLValue fieldHlv = new HeapLValue(
         				constructPointerFromBaseAndOffset(newStartAddressBase,
         				newOffset, loc), fieldType);
-        		stmt.addAll(getWriteCall(loc, fieldHlv, sae, fieldType));
+        		stmt.addAll(getWriteCall(main, loc, fieldHlv, sae, fieldType));
         	}
         	
         } else if (valueType instanceof CArray) {
@@ -1215,10 +1296,12 @@ public class MemoryHandler {
         	Expression arrayEntryAddressOffset = newStartAddressOffset;
 
         	//can we assume here, that we have a boogie array, right??
-        	if (arrayType.getDimensions().length == 1
-        			&& arrayType.getDimensions()[0] instanceof IntegerLiteral) {
-
-					int dim = Integer.parseInt(((IntegerLiteral) arrayType.getDimensions()[0]).getValue());
+        	if (arrayType.getDimensions().length == 1) {
+        			BigInteger dimBigInteger = m_ExpressionTranslation.extractIntegerValue(arrayType.getDimensions()[0]);
+        			if (dimBigInteger == null) {
+        				throw new UnsupportedSyntaxException(loc, "variable length arrays not yet supported by this method");
+        			}
+					int dim = dimBigInteger.intValue();
 
 //					Expression readArrayEntryAddressOffset = arrayType.isOnHeap() ? getPointerOffset(rval.getValue(), loc) : null;
 
@@ -1233,12 +1316,14 @@ public class MemoryHandler {
 //							readArrayEntryAddressOffset = CHandler.createArithmeticExpression(IASTBinaryExpression.op_plus, 
 //								readArrayEntryAddressOffset, valueTypeSize, loc);
 //						} else {
+							Expression position = m_ExpressionTranslation.constructLiteralForIntegerType(
+									loc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(pos));
 							arrayAccRVal = new RValue(
 									new ArrayAccessExpression(loc, 
 											value, 
-											new Expression[] { new IntegerLiteral(loc, new Integer(pos).toString()) }), arrayType.getValueType());
+											new Expression[] { position }), arrayType.getValueType());
 //						}
-						stmt.addAll(getWriteCall(loc, 
+						stmt.addAll(getWriteCall(main, loc, 
 								new HeapLValue(constructPointerFromBaseAndOffset(newStartAddressBase, arrayEntryAddressOffset, loc), arrayType.getValueType()), 
 								arrayAccRVal.getValue(), arrayAccRVal.getCType()));
 						//TODO 2015-10-11 Matthias: Why is there an addition of value Type size
@@ -1330,6 +1415,16 @@ public class MemoryHandler {
 	public Expression constructNullPointer(ILocation loc) {
 		return new IdentifierExpression(loc, SFO.NULL);
 	}
+	
+	public Expression constructPointerForIntegerValues(ILocation loc, BigInteger baseValue, BigInteger offsetValue) {
+		Expression base = m_ExpressionTranslation.constructLiteralForIntegerType(loc, 
+				m_ExpressionTranslation.getCTypeOfPointerComponents(), baseValue);
+		Expression offset = m_ExpressionTranslation.constructLiteralForIntegerType(loc, 
+				m_ExpressionTranslation.getCTypeOfPointerComponents(), offsetValue);
+		return constructPointerFromBaseAndOffset(base, offset, loc); 
+	}
+
+	
 
 
 	public TypeSizeAndOffsetComputer getTypeSizeAndOffsetComputer() {

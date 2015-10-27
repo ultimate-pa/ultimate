@@ -782,7 +782,9 @@ public class CfgBuilder {
 				mLogger.debug("GotoEdge was selfloop");
 				return true;
 			} else {
-				if (child.getIncomingEdges().isEmpty() || mother.getOutgoingEdges().isEmpty()) {
+				assert !child.getIncomingEdges().isEmpty() : "there should be at least the goto that might be removed";
+				assert !mother.getOutgoingEdges().isEmpty() : "there should be at least the goto that might be removed";
+				if (child.getIncomingEdges().size() == 1 || mother.getOutgoingEdges().size() == 1) {
 					mother.removeOutgoing(gotoEdge);
 					gotoEdge.setSource(null);
 					gotoEdge.setTarget(null);

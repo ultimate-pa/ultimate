@@ -33,6 +33,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -40,11 +41,13 @@ import java.util.Map;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
@@ -58,15 +61,21 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieIdExpressionExtractor;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
@@ -79,6 +88,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  * @author Markus Lindenmann
  * @author Oleksii Saukh
  * @author Stefan Wissert
+ * @author Matthias Heizmann
  * @date 01.02.2012
  */
 public class ExpressionResult extends Result {
@@ -241,8 +251,28 @@ public class ExpressionResult extends Result {
 			replaceEnumByInt();
 			result = this;
 		} else if (lrVal instanceof LocalLValue) {
-			if (!(main instanceof PRDispatcher) && (lrVal.getCType() instanceof CArray)) {
-				throw new AssertionError("on-heap/off-heap bug: array " + lrVal.toString() + " has to be on-heap");
+			if (main instanceof PRDispatcher) {
+				// we are in prerun mode
+				if (lrVal.getCType().getUnderlyingType() instanceof CArray) {
+					// move it on-heap
+					Expression expr = lrVal.getValue();
+					BoogieIdExpressionExtractor biee = new BoogieIdExpressionExtractor();
+					biee.processExpression(expr);
+					for (IdentifierExpression idexpr : biee.getIdExpressions()) {
+						SymbolTable st = main.cHandler.getSymbolTable();
+						String cid = st.getCID4BoogieID(idexpr.getIdentifier(), loc);
+						SymbolTableValue value = st.get(cid, loc);
+						CType type = value.getCVariable().getUnderlyingType();
+						if (type instanceof CArray || type instanceof CStruct) {
+							((PRDispatcher) main).getVariablesOnHeap().add(value.getDeclarationNode());
+						}
+						
+					}
+				}
+			} else {
+				if (lrVal.getCType().getUnderlyingType() instanceof CArray) {
+					throw new AssertionError("on-heap/off-heap bug: array " + lrVal.toString() + " has to be on-heap");
+				}
 			}
 			final CType underlyingType = this.lrVal.getCType().getUnderlyingType();
 			final CType resultType;
@@ -471,9 +501,13 @@ public class ExpressionResult extends Result {
 		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 		ArrayList<Overapprox> overApp = new ArrayList<>();
 
-		if (arrayType.getDimensions().length == 1
-				&& arrayType.getDimensions()[0] instanceof IntegerLiteral) {
-			int dim = Integer.parseInt(((IntegerLiteral) arrayType.getDimensions()[0]).getValue());
+    	if (arrayType.getDimensions().length == 1) {
+    		AExpressionTranslation exprTrans = ((CHandler) main.cHandler).getExpressionTranslation();
+			BigInteger dimBigInteger = exprTrans.extractIntegerValue(arrayType.getDimensions()[0]);
+			if (dimBigInteger == null) {
+				throw new UnsupportedSyntaxException(loc, "variable length arrays not yet supported by this method");
+			}
+			int dim = dimBigInteger.intValue();
 
 			String newArrayId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYCOPY);
 			VarList newArrayVl = new VarList(loc, new String[] { newArrayId }, 
@@ -526,7 +560,7 @@ public class ExpressionResult extends Result {
 				auxVars = assRex.auxVars;
 				overApp.addAll(assRex.overappr);
 				
-				AExpressionTranslation exprTrans = ((CHandler) main.cHandler).getExpressionTranslation();
+				
 				arrayEntryAddressOffset = exprTrans.constructArithmeticExpression(
 						loc, IASTBinaryExpression.op_plus, arrayEntryAddressOffset, exprTrans.getCTypeOfPointerComponents(), 
 						valueTypeSize, exprTrans.getCTypeOfPointerComponents()); 
@@ -590,6 +624,105 @@ public class ExpressionResult extends Result {
 			}
 		} else {
 			throw new UnsupportedOperationException("replaceEnumByInt only applicable for RValues");
+		}
+	}
+	
+	/**
+	 * Convert Expression of some type to an expression of boolean type.
+	 * If the expression expr
+	 * <ul>
+	 * <li> has type boolean we return expr
+	 * <li> has type int we return <i>expr != 0</i>
+	 * <li> has type real we return <i>expr != 0.0</i>
+	 * <li> has type $Pointer$ we return <i>expr != #NULL</i>
+	 * </ul> 
+	 * Other types are not supported.
+	 * If the expression was obtained by a conversion from bool to int, we try
+	 * to get rid of the former conversion instead of applying a new one.
+	 */
+	private static RValue toBoolean(final ILocation loc, final RValue rVal, 
+			AExpressionTranslation expressionTranslation) {
+		assert !rVal.isBoogieBool();
+		CType underlyingType = rVal.getCType().getUnderlyingType();
+		Expression resultEx = null;
+		Expression e = rVal.getValue();
+		if (e instanceof IntegerLiteral) {
+			if (Integer.parseInt(((IntegerLiteral) e).getValue()) == 0)
+				resultEx = new BooleanLiteral(loc,  false);
+			else
+				resultEx = new BooleanLiteral(loc, true);
+		} else {
+			if (underlyingType instanceof CPrimitive) {
+				switch (((CPrimitive) underlyingType).getGeneralType()) {
+				case FLOATTYPE:
+					resultEx = ExpressionFactory.newBinaryExpression(loc, 
+							BinaryExpression.Operator.COMPNEQ, e,
+							new RealLiteral(loc, SFO.NR0F));
+					break;
+				case INTTYPE:
+					Expression zero = expressionTranslation.constructLiteralForIntegerType(loc, 
+							(CPrimitive) underlyingType, BigInteger.ZERO);
+					resultEx = ExpressionFactory.newBinaryExpression(loc, 
+							BinaryExpression.Operator.COMPNEQ, e, zero);
+					break;
+				case VOID:
+					default:
+				}
+			} else if (underlyingType instanceof CPointer) {
+				resultEx = ExpressionFactory.newBinaryExpression(loc, 
+						BinaryExpression.Operator.COMPNEQ, e,
+						new IdentifierExpression(loc, SFO.NULL));
+			} else if (underlyingType instanceof CEnum) {
+				resultEx = ExpressionFactory.newBinaryExpression(loc,
+						BinaryExpression.Operator.COMPNEQ, e,
+						new IntegerLiteral(loc, SFO.NR0));
+			} else {
+				String msg = "Don't know the type of this expression. Line: "
+						+ e.getLocation().getStartLine();
+				throw new AssertionError(msg);
+			}
+		}
+		return new RValue(resultEx, new CPrimitive(PRIMITIVE.INT), true);
+	}
+
+	private static RValue boolToInt(ILocation loc, RValue rVal, 
+			AExpressionTranslation expressionTranslation) {
+		assert rVal.isBoogieBool();
+		Expression one = expressionTranslation.constructLiteralForIntegerType(loc, 
+				new CPrimitive(PRIMITIVE.INT), BigInteger.ONE);
+		Expression zero = expressionTranslation.constructLiteralForIntegerType(loc, 
+				new CPrimitive(PRIMITIVE.INT), BigInteger.ZERO);
+		return new RValue(
+				ExpressionFactory.newIfThenElseExpression(loc, rVal.getValue(), one, zero), 
+				rVal.getCType(), false);
+	}
+	
+	/**
+	 * int <code>x</code> of form <code>y ? 1 : 0</code> becomes
+	 * <code>!y ? 1 : 0</code>
+	/** int <code>x</code> becomes <code>x == 0 ? 1 : 0</code> */	
+	public void rexIntToBoolIfNecessary(ILocation loc, 
+			AExpressionTranslation expressionTranslation) {
+		if (!(lrVal instanceof RValue)) {
+			throw new UnsupportedOperationException("only RValue can switch");
+		}
+		if (lrVal.isBoogieBool()) {
+			// do nothing
+		} else {
+			lrVal = toBoolean(loc, (RValue) lrVal, expressionTranslation);
+		}
+	}
+
+	/** boolean <code>p</code> becomes <code>!p ? 1 : 0</code> */
+	public void rexBoolToIntIfNecessary(ILocation loc, 
+			AExpressionTranslation expressionTranslation) {
+		if (!(lrVal instanceof RValue)) {
+			throw new UnsupportedOperationException("only RValue can switch");
+		}
+		if (lrVal.isBoogieBool()) {
+			lrVal = boolToInt(loc, (RValue) lrVal, expressionTranslation);
+		} else {
+			// do nothing
 		}
 	}
 }

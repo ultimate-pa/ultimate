@@ -373,4 +373,27 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			throw new IllegalArgumentException("integer promotions not applicable to " + inputType);
 		}
 	}
+
+	@Override
+	public BigInteger extractIntegerValue(RValue rval) {
+		if (rval.getCType().isIntegerType()) {
+			if (rval.getValue() instanceof BitvecLiteral) {
+				BigInteger value =  new BigInteger(((BitvecLiteral) rval.getValue()).getValue());
+				if (((CPrimitive) rval.getCType()).isUnsigned()) {
+					if (value.signum() < 0) {
+						throw new UnsupportedOperationException("negative value");
+					}
+					return value;
+				} else {
+					return value;
+				}
+			} else {
+				return null;
+			}
+		} else {
+			return null;
+		}
+	}
+	
+	
 }

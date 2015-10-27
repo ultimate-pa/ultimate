@@ -49,9 +49,6 @@ public class IntervalValue implements Comparable<IntervalValue> {
 
 	/**
 	 * Constructor for a new {@link IntervalValue}. The value is set to infinity initially.
-	 * 
-	 * @param clazz
-	 *            The backing field type.
 	 */
 	protected IntervalValue() {
 		mIsInfty = true;
@@ -62,12 +59,21 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	 * 
 	 * @param val
 	 *            The value to set.
-	 * @param clazz
-	 *            The backing field type.
 	 */
 	protected IntervalValue(BigDecimal val) {
 		mValue = val;
 		mIsInfty = false;
+	}
+
+	/**
+	 * Constructor for a new {@link IntervalValue} that sets the value to a provided value of type string. May throw an
+	 * exception if the provided string is not parsable.
+	 * 
+	 * @param val
+	 *            The value to set.
+	 */
+	protected IntervalValue(String val) {
+		this(new BigDecimal(val));
 	}
 
 	/**
