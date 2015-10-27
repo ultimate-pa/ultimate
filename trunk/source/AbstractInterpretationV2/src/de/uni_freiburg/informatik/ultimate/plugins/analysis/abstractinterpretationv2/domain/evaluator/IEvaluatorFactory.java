@@ -25,16 +25,19 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator;
 
 /**
+ * Interface to create IEvaluators for different abstract domains.
  * 
- * @author dietsch@informatik.uni-freiburg.de
  * @author greitsch@informatik.uni-freiburg.de
- * 
+ *
  */
-public interface IAbstractPostOperator<ACTION, VARDECL> {
+public interface IEvaluatorFactory<T, ACTION, VARDECL> {
 
-	IAbstractState<ACTION, VARDECL> apply(IAbstractState<ACTION, VARDECL> oldstate, ACTION concrete);
+	public INAryEvaluator<T, ACTION, VARDECL> createNAryExpressionEvaluator(int arity);
 
+	public IEvaluator<T, ACTION, VARDECL> createSingletonValueExpressionEvaluator(String value, Class<?> valueType);
+
+	public IEvaluator<T, ACTION, VARDECL> createSingletonVariableExpressionEvaluator(String variableName);
 }

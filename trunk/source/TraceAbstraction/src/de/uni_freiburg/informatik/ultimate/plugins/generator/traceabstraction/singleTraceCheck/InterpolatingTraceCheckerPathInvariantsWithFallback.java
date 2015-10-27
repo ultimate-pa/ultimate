@@ -66,7 +66,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 			PredicateUnifier predicateUnifier) {
 		super(precondition, postcondition, pendingContexts, run.getWord(), smtManager,
 				modifiedGlobals, assertCodeBlocksIncrementally, services,
-				computeRcfgProgramExecution, predicateUnifier);
+				computeRcfgProgramExecution, predicateUnifier, smtManager);
 		m_Storage = storage;
 		m_NestedRun = run;
 		if (super.isCorrect() == LBool.UNSAT) {

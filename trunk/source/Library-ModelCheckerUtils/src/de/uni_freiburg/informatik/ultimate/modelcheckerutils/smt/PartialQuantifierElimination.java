@@ -188,7 +188,7 @@ public class PartialQuantifierElimination {
 		if (result instanceof QuantifiedFormula) {
 			QuantifiedFormula qf = (QuantifiedFormula) result;
 			if (qf.getQuantifier() != quantifier) {
-				throw new UnsupportedOperationException("quantifier alternation unsupported");
+				throw new UnsupportedOperationException("quantifier alternation unsupported! input: " + result);
 			}
 			eliminatees.addAll(Arrays.asList(qf.getVariables()));
 			result = qf.getSubformula();

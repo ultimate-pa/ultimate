@@ -25,23 +25,16 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain;
-
-import java.util.Set;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model;
 
 /**
- * Default interface for an expression evaluator. Each Evaluator should implement this interface in order to allow for
- * expressions to be evaluated.
  * 
+ * @author dietsch@informatik.uni-freiburg.de
  * @author greitsch@informatik.uni-freiburg.de
+ * 
  */
-public interface IEvaluator<T, ACTION, VARDECL> {
+public interface IAbstractPostOperator<ACTION, VARDECL> {
 
-	public IEvaluationResult<T> evaluate(IAbstractState<ACTION, VARDECL> currentState);
+	IAbstractState<ACTION, VARDECL> apply(IAbstractState<ACTION, VARDECL> oldstate, ACTION concrete);
 
-	public void addSubEvaluator(IEvaluator<T, ACTION, VARDECL> evaluator);
-
-	public Set<String> getVarIdentifiers();
-
-	public boolean hasFreeOperands();
 }

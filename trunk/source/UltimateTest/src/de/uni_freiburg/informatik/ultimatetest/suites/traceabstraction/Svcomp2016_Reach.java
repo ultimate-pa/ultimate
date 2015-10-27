@@ -122,7 +122,7 @@ public class Svcomp2016_Reach extends AbstractTraceAbstractionTestSuite {
 	 * 
 	 */
 	private static final String[] m_Settings = {
-		"svcomp2016/svcomp-64bit-Automizer.epf",
+		"svcomp2016/svcomp-reach-64bit-Automizer.epf",
 	};
 	
 	

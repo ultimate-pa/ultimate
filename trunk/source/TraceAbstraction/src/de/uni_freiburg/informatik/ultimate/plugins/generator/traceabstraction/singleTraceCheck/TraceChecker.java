@@ -39,6 +39,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.lassoranker.SMTSolver;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -118,6 +119,7 @@ public class TraceChecker {
 	 * Interface for query the SMT solver.
 	 */
 	protected final SmtManager m_SmtManager;
+	protected final SmtManager m_TcSmtManager;
 	/**
 	 * Maps a procedure name to the set of global variables which may be
 	 * modified by the procedure. The set of variables is represented as a map
@@ -346,6 +348,16 @@ public class TraceChecker {
 				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, true);
 	}
 	
+	protected TraceChecker(IPredicate precondition, IPredicate postcondition,
+			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace, SmtManager smtManager,
+			ModifiableGlobalVariableManager modifiedGlobals, NestedFormulas<TransFormula, IPredicate> rv,
+			AssertCodeBlockOrder assertCodeBlocksIncrementally, IUltimateServiceProvider services,
+			boolean computeRcfgProgramExecution, boolean unlockSmtSolverAlsoIfUnsat) {
+		this(precondition, postcondition, pendingContexts, trace, smtManager, 
+				modifiedGlobals, rv, assertCodeBlocksIncrementally, services, 
+				computeRcfgProgramExecution, unlockSmtSolverAlsoIfUnsat, smtManager);
+	}
+	
 	
 	
 	/**
@@ -358,10 +370,11 @@ public class TraceChecker {
 			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals, NestedFormulas<TransFormula, IPredicate> rv,
 			AssertCodeBlockOrder assertCodeBlocksIncrementally, IUltimateServiceProvider services,
-			boolean computeRcfgProgramExecution, boolean unlockSmtSolverAlsoIfUnsat) {
+			boolean computeRcfgProgramExecution, boolean unlockSmtSolverAlsoIfUnsat, SmtManager tcSmtManager) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		m_SmtManager = smtManager;
+		m_TcSmtManager = tcSmtManager;
 		m_ModifiedGlobals = modifiedGlobals;
 		m_Trace = trace;
 		m_Precondition = precondition;

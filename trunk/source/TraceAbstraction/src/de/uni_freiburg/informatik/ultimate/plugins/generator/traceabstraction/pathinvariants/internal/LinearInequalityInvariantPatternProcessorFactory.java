@@ -111,8 +111,8 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	 * @return SMT solver settings to use
 	 */
 	protected Settings produceSolverSettings() {
-		boolean dumpSmtScriptToFile = !true;
-		String pathOfDumpedScript = "~";
+		boolean dumpSmtScriptToFile = true;
+		String pathOfDumpedScript = ".";
 		String baseNameOfDumpedScript = "contraintSolving";
 		final String solverCommand;
 		if (m_UseNonlinearConstraints) {

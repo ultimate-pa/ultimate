@@ -80,6 +80,9 @@ public final class LocationIndependentLinearInequalityInvariantPatternStrategy
 	public int[] getDimensions(final Location location, final int round) {
 		return new int[] { baseDisjuncts + round * disjunctsPerRound,
 				baseConjuncts + round * conjunctsPerRound };
+		// 2015-10-27: Use the following instead to obtain two disjuncts
+		// consisting of one strict-nonstrict conjunction pair each. 
+//		return new int[] { 2, 1};
 	}
 
 	/**

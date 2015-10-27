@@ -1099,7 +1099,7 @@ public class PredicateTransformer {
 			QuantifiedFormula quantifiedFormula = (QuantifiedFormula) callerPredRenamed;
 			if (quantifiedFormula.getQuantifier() != QuantifiedFormula.EXISTS) {
 //			if (quantifiedFormula.getQuantifier() != QuantifiedFormula.FORALL) {
-				throw new UnsupportedOperationException("only existentially quantified callerPred supported");
+				throw new UnsupportedOperationException("only existentially quantified callerPred supported, but obtained " + callerPred);
 			}
 			varsToQuantify.addAll(Arrays.asList(quantifiedFormula.getVariables()));
 			callerPredRenamed = ((QuantifiedFormula) callerPredRenamed).getSubformula();
@@ -1107,7 +1107,7 @@ public class PredicateTransformer {
 		if (returnPredRenamed instanceof QuantifiedFormula) {
 			QuantifiedFormula quantifiedFormula = (QuantifiedFormula) returnPredRenamed;
 			if (quantifiedFormula.getQuantifier() != QuantifiedFormula.FORALL) {
-				throw new UnsupportedOperationException("only universally quantified returnPred supported");
+				throw new UnsupportedOperationException("only universally quantified returnPred supported, but obtained " + returnerPred);
 			}
 			varsToQuantify.addAll(Arrays.asList(quantifiedFormula.getVariables()));
 			returnPredRenamed = ((QuantifiedFormula) returnPredRenamed).getSubformula();

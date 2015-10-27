@@ -25,24 +25,46 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model;
+
+import java.util.Map;
 
 /**
- * Extends the IEvaluator by the function computeLogicalResult which is used to return new abstract states based on the
- * logical evaluation of the evaluator.
  * 
+ * @author dietsch@informatik.uni-freiburg.de
  * @author greitsch@informatik.uni-freiburg.de
  *
- * @param <T>
- *            Any type.
  * @param <ACTION>
- *            Any action.
  * @param <VARDECL>
- *            Any variable declaration.
  */
-public interface ILogicalEvaluator<T, ACTION, VARDECL> extends INAryEvaluator<T, ACTION, VARDECL> {
+public interface IAbstractState<ACTION, VARDECL> {
 
-	public IAbstractState<ACTION, VARDECL> logicallyInterpret(IAbstractState<ACTION, VARDECL> currentState);
-	
-	public boolean logicalEvaluation(IAbstractState<ACTION, VARDECL> currentState);
+	IAbstractState<ACTION, VARDECL> addVariable(String name, VARDECL variables);
+
+	IAbstractState<ACTION, VARDECL> removeVariable(String name, VARDECL variables);
+
+	IAbstractState<ACTION, VARDECL> addVariables(Map<String, VARDECL> variables);
+
+	IAbstractState<ACTION, VARDECL> removeVariables(Map<String, VARDECL> variables);
+
+	boolean containsVariable(String name);
+
+	/**
+	 * An abstract state is empty when it does not contain any variable.
+	 * 
+	 * @return true iff this abstract state is empty
+	 */
+	boolean isEmpty();
+
+	boolean isBottom();
+
+	boolean isFixpoint();
+
+	IAbstractState<ACTION, VARDECL> setFixpoint(boolean value);
+
+	String toLogString();
+
+	boolean isEqualTo(IAbstractState<ACTION, VARDECL> other);
+
+	IAbstractState<ACTION, VARDECL> copy();
 }

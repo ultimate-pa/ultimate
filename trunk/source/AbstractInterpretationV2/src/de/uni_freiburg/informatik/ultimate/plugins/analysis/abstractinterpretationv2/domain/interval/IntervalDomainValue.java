@@ -25,11 +25,12 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.interval;
 
 import java.awt.dnd.InvalidDnDOperationException;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IEvaluationResult;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.IEvaluationResult;
 
 /**
  * Representation of an interval value in the interval domain.
@@ -45,19 +46,23 @@ public class IntervalDomainValue implements IEvaluationResult<IntervalDomainValu
 	private boolean mIsBottom;
 
 	/**
-	 * Constructor for a new {@link IntervalDomainValue}. The interval created will be (-&infin; ; &infin;).
+	 * Constructor for a new {@link IntervalDomainValue}. The interval created
+	 * will be (-&infin; ; &infin;).
 	 */
 	protected IntervalDomainValue() {
 		this(false);
 	}
 
 	/**
-	 * Constructor for a new {@link IntervalDomainValue}. The interval created is dependent on the value of the
-	 * parameter. If {@code isBottom} is set to <code>false</code>, the created interval will be (-&infin; ; &infin;).
-	 * If {@code isBottom} is set to <code>true</code>, the created interval will be &bot;.
+	 * Constructor for a new {@link IntervalDomainValue}. The interval created
+	 * is dependent on the value of the parameter. If {@code isBottom} is set to
+	 * <code>false</code>, the created interval will be (-&infin; ; &infin;). If
+	 * {@code isBottom} is set to <code>true</code>, the created interval will
+	 * be &bot;.
 	 * 
 	 * @param isBottom
-	 *            Specifies whether the interval should be &bot; or an actual interval.
+	 *            Specifies whether the interval should be &bot; or an actual
+	 *            interval.
 	 */
 	protected IntervalDomainValue(boolean isBottom) {
 		if (isBottom) {
@@ -75,8 +80,8 @@ public class IntervalDomainValue implements IEvaluationResult<IntervalDomainValu
 		if (!lower.isInfinity() && !upper.isInfinity()) {
 			if (lower.getValue().compareTo(upper.getValue()) > 0) {
 				throw new UnsupportedOperationException(
-				        "The lower value must be smaller than or qual to the upper value. Lower: " + lower.getValue()
-				                + ", Upper: " + upper.getValue());
+						"The lower value must be smaller than or qual to the upper value. Lower: " + lower.getValue()
+								+ ", Upper: " + upper.getValue());
 			}
 		}
 
@@ -97,18 +102,19 @@ public class IntervalDomainValue implements IEvaluationResult<IntervalDomainValu
 	}
 
 	/**
-	 * Returns <code>true</code> if the current interval is &bot;, <code>false</code> otherwise. Note that a return
-	 * value of <code>false</code> may also mean that one or both of the interval bounds is -&infin; or &infin;.
+	 * Note that a return value of <code>false</code> may also mean that one or
+	 * both of the interval bounds is -&infin; or &infin;.
 	 * 
-	 * @return
+	 * @return <code>true</code> if the current interval is &bot;,
+	 *         <code>false</code> otherwise.
 	 */
 	protected boolean isBottom() {
 		return mIsBottom;
 	}
 
 	/**
-	 * Returns <code>true</code> if the interval is unbounded, i.e. if one bound of the interval is -&infin; or &infin;,
-	 * respectively.
+	 * Returns <code>true</code> if the interval is unbounded, i.e. if one bound
+	 * of the interval is -&infin; or &infin;, respectively.
 	 * 
 	 * @return <code>true</code> or <code>false</code>.
 	 */
@@ -120,9 +126,8 @@ public class IntervalDomainValue implements IEvaluationResult<IntervalDomainValu
 	}
 
 	/**
-	 * Returns <code>true</code> if the interval is infinity, i.e. if the interval is (-&infin; ; &infin;).
-	 * 
-	 * @return
+	 * @return <code>true</code> if the interval is infinity, i.e. if the
+	 *         interval is (-&infin; ; &infin;).
 	 */
 	protected boolean isInfinity() {
 		if (mIsBottom) {
@@ -150,9 +155,11 @@ public class IntervalDomainValue implements IEvaluationResult<IntervalDomainValu
 	}
 
 	/**
-	 * Returns <code>true</code> if and only if <code>0</code> is part of the interval.
+	 * Returns <code>true</code> if and only if <code>0</code> is part of the
+	 * interval.
 	 * 
-	 * @return <code>true</code> if 0 is part of the interval, <code>false</code> otherwise.
+	 * @return <code>true</code> if 0 is part of the interval,
+	 *         <code>false</code> otherwise.
 	 */
 	protected boolean containsZero() {
 		if (mIsBottom) {
@@ -174,7 +181,7 @@ public class IntervalDomainValue implements IEvaluationResult<IntervalDomainValu
 	@Override
 	public int compareTo(IntervalDomainValue o) {
 		throw new InvalidDnDOperationException(
-		        "The compareTo operation is not defined on arbitrary intervals and can therefore not be used.");
+				"The compareTo operation is not defined on arbitrary intervals and can therefore not be used.");
 	}
 
 	@Override

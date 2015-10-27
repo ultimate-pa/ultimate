@@ -309,11 +309,11 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	@Override
 	public void convert(ILocation loc, ExpressionResult operand, CPrimitive resultType) {
 		if (!(resultType instanceof CPrimitive)) {
-			throw new UnsupportedOperationException("non-primitive types not supported yet");
+			throw new UnsupportedOperationException("non-primitive types not supported yet " + resultType);
 		}
 		CPrimitive resultPrimitive = (CPrimitive) resultType;
 		if (!(resultPrimitive.getGeneralType() == GENERALPRIMITIVE.INTTYPE)) {
-			throw new UnsupportedOperationException("non-integer types not supported yet");
+			throw new UnsupportedOperationException("non-integer types not supported yet " + resultType);
 		}
 		
 		int resultLength = m_TypeSizes.getSize(resultPrimitive.getType()) * 8;

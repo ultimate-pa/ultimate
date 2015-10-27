@@ -103,7 +103,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			IUltimateServiceProvider services, boolean computeRcfgProgramExecution, 
 			PredicateUnifier predicateUnifier, INTERPOLATION interpolation) {
 		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals,
-				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, predicateUnifier);
+				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, predicateUnifier, smtManager);
 		m_UnsatCores = unsatCores;
 		m_LiveVariables = useLiveVariables;
 		m_PredicateTransformer = new PredicateTransformer(m_SmtManager, m_ModifiedGlobals, mServices);
