@@ -4,6 +4,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.BoogiePreprocessorBacktranslator;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
@@ -18,9 +19,11 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 public class TypeFlattenerObserver implements IUnmanagedObserver {
 
 	private final Logger mLogger;
+	private final BoogiePreprocessorBacktranslator mBackTranslator;
 
-	public TypeFlattenerObserver(final Logger logger) {
+	public TypeFlattenerObserver(final BoogiePreprocessorBacktranslator backTranslator, final Logger logger) {
 		mLogger = logger;
+		mBackTranslator = backTranslator;
 	}
 
 	@Override
@@ -51,7 +54,7 @@ public class TypeFlattenerObserver implements IUnmanagedObserver {
 
 		final Unit unit = (Unit) root;
 
-		final TypeFlattener tc = new TypeFlattener(mLogger);
+		final TypeFlattener tc = new TypeFlattener(mBackTranslator, mLogger);
 		tc.run(unit);
 
 		return false;

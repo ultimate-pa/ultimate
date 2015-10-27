@@ -103,7 +103,7 @@ public class BoogiePreprocessor implements IAnalysis {
 		// observers.add(new DebugObserver(logger));
 		observers.add(new TypeChecker(mServices));
 		observers.add(new ConstExpander(backTranslator));
-		observers.add(new TypeFlattenerObserver(logger));
+		observers.add(new TypeFlattenerObserver(backTranslator,logger));
 		
 		observers.add(new StructExpander(backTranslator, logger));
 		observers.add(new UnstructureCode(backTranslator));

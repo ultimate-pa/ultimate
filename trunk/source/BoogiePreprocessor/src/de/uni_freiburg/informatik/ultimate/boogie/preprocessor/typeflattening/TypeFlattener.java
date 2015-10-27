@@ -10,6 +10,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.BoogiePreprocessorBacktranslator;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayBoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedBoogieType;
@@ -66,8 +67,9 @@ class TypeFlattener {
 	private final Map<BoogieType, BoogieType> mOld2NewBoogieTypes;
 
 	private final Map<String, TypeConstructor> mTypeCache;
+	private final BoogiePreprocessorBacktranslator mBackTranslator;
 
-	TypeFlattener(final Logger logger) {
+	TypeFlattener(final BoogiePreprocessorBacktranslator backTranslator, final Logger logger) {
 		mLogger = logger;
 		mGenericType2InstantiatedTypes = new LinkedHashMap<BoogieType, Set<BoogieType>>();
 		mStructConsts2BoogieTypes = new LinkedHashMap<StructConstructor, BoogieType>();
@@ -76,6 +78,7 @@ class TypeFlattener {
 		mOld2NewBoogieTypes = new LinkedHashMap<>();
 		mOld2NewAstTypes = new LinkedHashMap<>();
 		mTypeCache = new LinkedHashMap<String, TypeConstructor>();
+		mBackTranslator = backTranslator;
 	}
 
 	void run(final Unit unit) {
@@ -191,7 +194,7 @@ class TypeFlattener {
 				return ntype;
 			}
 
-			final Set<ASTType> types = new LinkedHashSet<ASTType>();
+			final List<ASTType> types = new ArrayList<ASTType>();
 			for (final ASTType arg : ntype.getTypeArgs()) {
 				final ASTType flattened = flatten(arg);
 				if (flattened == null) {
@@ -220,7 +223,7 @@ class TypeFlattener {
 		return rtr;
 	}
 
-	private String getNewTypeName(final Set<ASTType> types) {
+	private String getNewTypeName(final List<ASTType> types) {
 		final StringBuilder sb = new StringBuilder();
 		for (ASTType type : types) {
 			if (type instanceof NamedType) {
@@ -234,7 +237,7 @@ class TypeFlattener {
 		return sb.toString();
 	}
 
-	private Set<BoogieType> getInstantiatedTypes(final BoogieType genericType) {
+	private Set<BoogieType> getAndCreateInstantiatedTypes(final BoogieType genericType) {
 		final BoogieType realGenericType = genericType.getUnderlyingType();
 		Set<BoogieType> rtr = mGenericType2InstantiatedTypes.get(realGenericType);
 		if (rtr == null) {
@@ -320,6 +323,8 @@ class TypeFlattener {
 		if (newtype == null) {
 			return null;
 		}
+		assert newtype != null;
+		assert newtype.getBoogieType() != null;
 		mLogger.info(
 				"Replaced type " + BoogiePrettyPrinter.print(oldtype) + " with " + BoogiePrettyPrinter.print(newtype));
 		return newtype;
@@ -447,7 +452,7 @@ class TypeFlattener {
 				final ArrayAccessExpression aaexpr = (ArrayAccessExpression) expr;
 				final BoogieType atype = (BoogieType) aaexpr.getArray().getType();
 				if (isGeneric(atype)) {
-					final Set<BoogieType> set = getInstantiatedTypes(atype);
+					final Set<BoogieType> set = getAndCreateInstantiatedTypes(atype);
 					final ArrayBoogieType genericType = (ArrayBoogieType) atype;
 					final Expression[] idxExpr = aaexpr.getIndices().clone();
 					final BoogieType[] idxTypes = new BoogieType[idxExpr.length];
@@ -463,6 +468,7 @@ class TypeFlattener {
 
 					final Expression arrayExpr = processExpression(aaexpr.getArray());
 					assert arrayExpr instanceof IdentifierExpression;
+					assert arrayExpr.getType() != null;
 
 					// we have to set the struct type later as we currently not
 					// know it
@@ -482,16 +488,19 @@ class TypeFlattener {
 				final BoogieType atype = (BoogieType) asexpr.getArray().getType();
 
 				if (isGeneric(atype)) {
-					final Set<BoogieType> set = getInstantiatedTypes(atype);
+					final Set<BoogieType> set = getAndCreateInstantiatedTypes(atype);
 					final Expression[] newIdxExpr = new Expression[asexpr.getIndices().length];
 					final BoogieType[] idxTypes = new BoogieType[asexpr.getIndices().length];
 					for (int i = 0; i < newIdxExpr.length; ++i) {
 						newIdxExpr[i] = processExpression(asexpr.getIndices()[i]);
+						assert newIdxExpr[i] != null;
 						idxTypes[i] = (BoogieType) newIdxExpr[i].getType();
+						assert idxTypes[i] != null;
 					}
 					final ArrayBoogieType btype = (ArrayBoogieType) atype;
 					final ArrayBoogieType newArrayType = btype.instantiate(idxTypes,
 							(BoogieType) asexpr.getValue().getType());
+					assert newArrayType != null;
 					assert newArrayType.getUnderlyingType().equals(newArrayType);
 					// remember the instantiation later
 					mLogger.info("Instantiated " + btype + " with " + newArrayType);
@@ -499,6 +508,7 @@ class TypeFlattener {
 
 					final Expression newArrayExpr = processExpression(asexpr.getArray());
 					assert newArrayExpr instanceof IdentifierExpression;
+					assert newArrayExpr.getType() != null;
 
 					final Expression newValueExpr = processExpression(asexpr.getValue());
 					final Expression arrayFromStructExpression = new StructAccessExpression(expr.getLocation(),
@@ -568,6 +578,7 @@ class TypeFlattener {
 
 						int i = 0;
 						for (final BoogieType newBoogieType : set) {
+							assert newBoogieType != null;
 							ASTType newType = newBoogieType.toASTType(decl.getLocation());
 							fNames[i] = getStructFieldName(newType);
 							fTypes[i] = newBoogieType;
@@ -576,7 +587,8 @@ class TypeFlattener {
 						}
 
 						final StructBoogieType boogieType = BoogieType.createStructType(fNames, fTypes);
-
+						assert boogieType != null;
+						
 						final ASTType synonym = processType(new StructType(loc, boogieType, fields));
 						final TypeDeclaration newdecl = new TypeDeclaration(loc, tdecl.getAttributes(),
 								tdecl.isFinite(), tdecl.getIdentifier(), new String[0], synonym);
@@ -619,6 +631,7 @@ class TypeFlattener {
 
 					int i = 0;
 					for (final BoogieType newBoogieType : set) {
+						assert newBoogieType != null;
 						ASTType newType = newBoogieType.toASTType(loc);
 						fNames[i] = getStructFieldName(newType);
 						fTypes[i] = newBoogieType;
@@ -646,6 +659,7 @@ class TypeFlattener {
 			if (newtype == null) {
 				return super.processType(oldtype);
 			}
+			assert newtype.getBoogieType() != null;
 			ModelUtils.mergeAnnotations(oldtype, newtype);
 			return newtype;
 		}
@@ -670,6 +684,7 @@ class TypeFlattener {
 					final IType oldType = saexpr.getStruct().getType();
 					if (oldType instanceof ArrayBoogieType) {
 						final BoogieType newType = mOld2NewBoogieTypes.get(oldType);
+						assert newType != null;
 						saexpr.getStruct().setType(newType);
 						mLogger.info("Finalized struct access " + BoogiePrettyPrinter.print(saexpr)
 								+ " by changing type from " + oldType + " to " + newType);
@@ -690,6 +705,7 @@ class TypeFlattener {
 			final BoogieType oldBoogieType = mStructConsts2BoogieTypes.get(sconst);
 			if (oldBoogieType == null) {
 				// was non-generic struct, just ignore it
+				assert sconst.getType() != null;
 				return sconst;
 			}
 
@@ -706,6 +722,7 @@ class TypeFlattener {
 			assert sconst.getFieldValues().length == 1;
 			final String tmpField = sconst.getFieldIdentifiers()[0];
 			final Expression tmpFieldValue = processExpression(sconst.getFieldValues()[0]);
+			assert tmpFieldValue.getType() != null;
 
 			// we also know that this one fieldvalue is an ArrayStoreExpression
 			// that
@@ -713,11 +730,13 @@ class TypeFlattener {
 			// the struct we want to use for the identity here
 			final Expression struct = ((StructAccessExpression) ((ArrayStoreExpression) tmpFieldValue).getArray())
 					.getStruct();
+			assert struct.getType() != null;
 
 			final ILocation loc = sconst.getLocation();
 			for (int i = 0; i < fcount; ++i) {
 				final String id = newBoogieType.getFieldIds()[i];
 				final BoogieType type = newBoogieType.getFieldType(i);
+				assert type != null;
 				fieldIdentifiers[i] = id;
 				if (id.equals(tmpField)) {
 					fieldValues[i] = tmpFieldValue;
@@ -764,6 +783,8 @@ class TypeFlattener {
 			if (newtype == null) {
 				return super.processVarList(vl);
 			}
+			assert newtype != null;
+			assert newtype.getBoogieType() != null;
 
 			final VarList rtr = new VarList(vl.getLocation(), vl.getIdentifiers(), newtype, vl.getWhereClause());
 			ModelUtils.mergeAnnotations(vl, rtr);
@@ -802,6 +823,7 @@ class TypeFlattener {
 			if (newtype == null) {
 				return super.processType(oldtype);
 			}
+			assert newtype.getBoogieType() != null;
 			ModelUtils.mergeAnnotations(oldtype, newtype);
 			return newtype;
 		}
