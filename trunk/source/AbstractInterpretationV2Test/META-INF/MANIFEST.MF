@@ -3,14 +3,14 @@ Bundle-ManifestVersion: 2
 Bundle-Name: AbstractInterpretationV2Test
 Bundle-SymbolicName: AbstractInterpretationV2Test
 Bundle-Version: 0.0.1
+Fragment-Host: de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Require-Bundle: UltimateCore,
  Library-UltimateUtil,
  Library-junit-helper,
  Library-log4j,
  org.junit,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
- de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
 Import-Package: org.junit,
  org.junit.experimental.categories,
  org.junit.runner,
