@@ -78,15 +78,22 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals, AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			IUltimateServiceProvider services, boolean computeRcfgProgramExecution, 
-			PredicateUnifier predicateUnifier, INTERPOLATION interpolation) {
+			PredicateUnifier predicateUnifier, INTERPOLATION interpolation, SmtManager tcSmtManager) {
 		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals,
-				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, predicateUnifier);
+				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, predicateUnifier, tcSmtManager);
 		if (isCorrect() == LBool.UNSAT) {
 			computeInterpolants(new AllIntegers(), interpolation);
 		}
 	}
 
-
+	public InterpolatingTraceCheckerCraig(IPredicate precondition, IPredicate postcondition,
+			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace, SmtManager smtManager,
+			ModifiableGlobalVariableManager modifiedGlobals, AssertCodeBlockOrder assertCodeBlocksIncrementally,
+			IUltimateServiceProvider services, boolean computeRcfgProgramExecution, 
+			PredicateUnifier predicateUnifier, INTERPOLATION interpolation) {
+		this(precondition, postcondition, pendingContexts, trace, smtManager, 
+				modifiedGlobals, assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, predicateUnifier, interpolation, smtManager);
+	}
 
 
 //	protected int[] getSizeOfPredicates(INTERPOLATION interpolation) {
@@ -255,7 +262,8 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			// Compute interpolants for subsequence and add them to interpolants
 			// computed by this TraceChecker
 			InterpolatingTraceCheckerCraig tc = new InterpolatingTraceCheckerCraig(precondition, interpolantAtReturnPosition, pendingContexts, subtrace,
-					m_SmtManager, m_ModifiedGlobals, m_assertCodeBlocksIncrementally, mServices, false, m_PredicateUnifier, INTERPOLATION.Craig_NestedInterpolation);
+					m_SmtManager, m_ModifiedGlobals, m_assertCodeBlocksIncrementally, mServices, false, m_PredicateUnifier, 
+					INTERPOLATION.Craig_NestedInterpolation, m_TcSmtManager);
 			LBool isSafe = tc.isCorrect();
 			if (isSafe == LBool.SAT) {
 				throw new AssertionError("has to be unsat by construction, we do check only for interpolant computation");

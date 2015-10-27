@@ -88,10 +88,10 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals, AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			IUltimateServiceProvider services, boolean computeRcfgProgramExecution, 
-			PredicateUnifier predicateUnifier) {
+			PredicateUnifier predicateUnifier, SmtManager tcSmtManager) {
 		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals,
 				new DefaultTransFormulas(trace, precondition, postcondition, pendingContexts, modifiedGlobals, false),
-				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, false);
+				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, false, tcSmtManager);
 		m_PredicateUnifier = predicateUnifier;
 	}
 

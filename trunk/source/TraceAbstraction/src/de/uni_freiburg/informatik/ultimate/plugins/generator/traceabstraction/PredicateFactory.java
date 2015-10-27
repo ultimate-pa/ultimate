@@ -131,6 +131,12 @@ public class PredicateFactory extends StateFactory<IPredicate> {
 	public IPredicate buchiComplementFKV(LevelRankingState compl) {
 		return m_SmtManager.newDebugPredicate(compl.toString());
 	}
+	
+
+	@Override
+	public IPredicate buchiComplementNCSB(LevelRankingState<?, IPredicate> compl) {
+		return buchiComplementFKV(compl);
+	}
 
 
 	@Override
