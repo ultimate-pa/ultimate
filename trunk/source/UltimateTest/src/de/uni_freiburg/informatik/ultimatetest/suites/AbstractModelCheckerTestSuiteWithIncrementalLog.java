@@ -32,6 +32,11 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.logs.IncrementalLogWithVMParameters;
 import de.uni_freiburg.informatik.ultimatetest.reporting.IIncrementalLog;
 
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public abstract class AbstractModelCheckerTestSuiteWithIncrementalLog extends AbstractModelCheckerTestSuite {
 	private IncrementalLogWithVMParameters mIncrementalLog;
 
