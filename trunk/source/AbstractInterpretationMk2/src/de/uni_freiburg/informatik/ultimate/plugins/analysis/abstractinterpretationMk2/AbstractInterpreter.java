@@ -60,7 +60,7 @@ public class AbstractInterpreter {
 	/**
 	 * Caches all loop entry points.
 	 */
-	private HashMap<ProgramPoint, HashMap<RCFGEdge, RCFGEdge>> mLoopEntryNodes;
+	private Map<ProgramPoint, Map<RCFGEdge, RCFGEdge>> mLoopEntryNodes;
 
 	/**
 	 * Lists of call statements to check if there is any node with a summary
@@ -191,11 +191,12 @@ public class AbstractInterpreter {
 		mRCFGWalker = new RCFGWalker(mVisitor);
 
 		// fetch loop nodes with their entry/exit edges
-		RCFGLoopDetector loopDetector = new RCFGLoopDetector(mServices);
+		final RCFGLoopDetector loopDetector = new RCFGLoopDetector(mServices);
 		try {
 			loopDetector.process(root);
-		} catch (Throwable e1) {
-			throw new RuntimeException(e1);
+		} catch (final Throwable ex) {
+			mLogger.fatal("Loop detector failed: " + ex.getMessage());
+			throw new RuntimeException(ex);
 		}
 		mLoopEntryNodes = loopDetector.getResult();
 
@@ -282,7 +283,7 @@ public class AbstractInterpreter {
 				reportSafeResult();
 			}
 		}
-		
+
 		mDomain.finalizeDomain();
 	}
 
@@ -677,17 +678,16 @@ public class AbstractInterpreter {
 	public boolean removeStateChangeListener(IAbstractStateChangeListener listener) {
 		return mStateChangeListeners.remove(listener);
 	}
-	
+
 	/**
 	 * Initializes the abstract interpreter.
 	 */
 	public void init() {
 		mDomain.initializeDomain();
 	}
-	
-	
-	public void finalize(){
-		
+
+	public void finalize() {
+
 	}
 
 	/**

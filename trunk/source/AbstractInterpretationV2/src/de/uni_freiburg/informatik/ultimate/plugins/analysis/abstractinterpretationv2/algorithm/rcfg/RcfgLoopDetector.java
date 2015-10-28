@@ -24,9 +24,10 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
 
-import java.util.HashMap;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.RCFGLoopDetector;
@@ -37,12 +38,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 
 /**
  * 
- * @author dietsch@informatik.uni-freiburg.de
- *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * 
  */
 public class RcfgLoopDetector implements ILoopDetector<CodeBlock> {
 
-	private HashMap<ProgramPoint, HashMap<RCFGEdge, RCFGEdge>> mLoops;
+	private Map<ProgramPoint, Map<RCFGEdge, RCFGEdge>> mLoops;
 
 	public RcfgLoopDetector(RCFGLoopDetector loopDetector) {
 		mLoops = loopDetector.getResult();
@@ -52,7 +53,7 @@ public class RcfgLoopDetector implements ILoopDetector<CodeBlock> {
 	public CodeBlock getLoopExit(CodeBlock transition) {
 		assert transition != null;
 		final RCFGNode source = transition.getSource();
-		final HashMap<RCFGEdge, RCFGEdge> loops = mLoops.get(source);
+		final Map<RCFGEdge, RCFGEdge> loops = mLoops.get(source);
 		if (loops == null) {
 			return null;
 		}
