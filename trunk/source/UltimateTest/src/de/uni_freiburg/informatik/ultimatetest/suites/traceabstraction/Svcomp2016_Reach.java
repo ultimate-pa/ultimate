@@ -105,6 +105,17 @@ public class Svcomp2016_Reach extends AbstractTraceAbstractionTestSuite {
 		new DirectoryFileEndingsPair("examples/svcomp/busybox-1.22.0/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
 		
 	};
+	
+	
+	private static final String[] m_CurrentBugs = {
+			"examples/svcomp/ntdrivers-simplified/cdaudio_simpl1_true-unreach-call_true-termination.cil.c",
+			"examples/svcomp/ntdrivers-simplified/diskperf_simpl1_true-unreach-call_true-termination.cil.c",
+			"examples/svcomp/ntdrivers-simplified/floppy_simpl3_true-unreach-call_true-termination.cil.c",
+			"examples/ntdrivers-simplified/floppy_simpl4_true-unreach-call_true-termination.cil.c",
+			"examples/seq-pthread/cs_dekker_true-unreach-call.i",
+			"examples/seq-pthread/cs_lamport_true-unreach-call.i",
+			"examples/svcomp/eca-rers2012/Problem16_label30_false-unreach-call.c",
+		};
 
 	/**
 	 * {@inheritDoc}
@@ -140,6 +151,7 @@ public class Svcomp2016_Reach extends AbstractTraceAbstractionTestSuite {
 		for (String setting : m_Settings) {
 			for (String toolchain : m_CToolchains) {
 				addTestCases(toolchain, setting, m_DirectoryFileEndingsPairs);
+				addTestCases(toolchain, setting, m_CurrentBugs, new String[] {".c", ".i"});
 			}
 		}
 		return super.createTestCases();
