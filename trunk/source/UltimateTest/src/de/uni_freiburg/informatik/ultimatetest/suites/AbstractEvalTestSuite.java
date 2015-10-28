@@ -50,6 +50,11 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.LatexDetailedSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.LatexOverviewSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.TraceAbstractionTestSummary;
 
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public abstract class AbstractEvalTestSuite extends AbstractModelCheckerTestSuiteWithIncrementalLog {
 
 	@Override

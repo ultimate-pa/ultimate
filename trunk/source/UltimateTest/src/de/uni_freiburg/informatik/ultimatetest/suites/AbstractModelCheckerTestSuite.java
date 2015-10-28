@@ -40,6 +40,11 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 	private static final long PSEUDO_RANDOM_FILE_SELECTION_SEED = 19120623;
 	private static final String SETTINGS_PATH = "examples/settings/";
