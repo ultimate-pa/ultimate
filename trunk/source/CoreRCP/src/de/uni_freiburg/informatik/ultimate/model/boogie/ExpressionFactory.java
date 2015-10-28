@@ -158,6 +158,10 @@ public class ExpressionFactory extends BoogieTransformer {
 		BigInteger rightValue = new BigInteger(rightLiteral.getValue());
 		switch (operator) {
 		case ARITHDIV: {
+			if (leftValue.compareTo(BigInteger.ZERO) < 0) {
+				throw new UnsupportedOperationException(
+						"negative divident not yet implemented; semantics of Java and SMT-LIB differ");
+			}
 			BigInteger result = leftValue.divide(rightValue);
 			assert checkDivisionResult(leftValue, rightValue, result);
 			return new IntegerLiteral(loc, result.toString());
@@ -167,7 +171,8 @@ public class ExpressionFactory extends BoogieTransformer {
 			return new IntegerLiteral(loc, result.toString());
 		}
 		case ARITHMOD: {
-			BigInteger result = leftValue.remainder(rightValue);
+			BigInteger result = leftValue.mod(rightValue);
+			assert result.compareTo(BigInteger.ZERO) >= 0;
 			return new IntegerLiteral(loc, result.toString());
 		}
 		case ARITHMUL: {
@@ -215,8 +220,8 @@ public class ExpressionFactory extends BoogieTransformer {
 	}
 	
 	private static boolean checkDivisionResult(BigInteger divisor, BigInteger divident, BigInteger result) {
-		BigInteger remainder = divisor.remainder(divident);
-		return divisor.equals(divident.multiply(result).add(remainder));
+		BigInteger mod = divisor.mod(divident);
+		return divisor.equals(divident.multiply(result).add(mod));
 	}
 	
 	private static Expression constructBinaryExpression_Real(ILocation loc, Operator operator, RealLiteral leftLiteral,
