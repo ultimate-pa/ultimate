@@ -110,8 +110,8 @@ public class AStar<V, E> {
 				new Comparator<OpenItem<V, E>>() {
 					@Override
 					public int compare(OpenItem<V, E> o1, OpenItem<V, E> o2) {
-						return Integer.compare(o1.getAnnotation().getExpectedCostToTarget(), o2.getAnnotation()
-								.getExpectedCostToTarget());
+						return Integer.compare(o1.getAnnotation().getExpectedCostToTarget(),
+								o2.getAnnotation().getExpectedCostToTarget());
 					}
 				});
 
@@ -188,8 +188,8 @@ public class AStar<V, E> {
 				successorAnnotation.setCostSoFar(costSoFar);
 				open.add(successorItem);
 				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(INDENT + "Considering [" + nextEdge.hashCode() + "]["
-							+ successorAnnotation.hashCode() + "] " + nextEdge + " --> " + successor);
+					mLogger.debug(INDENT + "Considering [" + nextEdge.hashCode() + "][" + successorAnnotation.hashCode()
+							+ "] " + nextEdge + " --> " + successor);
 				}
 				continue;
 			} else {
@@ -226,8 +226,12 @@ public class AStar<V, E> {
 		if (mGraph.beginScope(successor)) {
 			rtr.getAnnotations().beginScope();
 		} else if (mGraph.endScope(successor)) {
-			assert rtr.getAnnotations().getScopesCount() > 0 : "If this happens, your edge denier does not handle call/return correctly";
-			rtr.getAnnotations().endScope();
+			if (rtr.getAnnotations().getScopesCount() == 0) {
+				mLogger.warn("Allowing successor \"" + successor
+						+ "\" although there is no preceeding beginScope (e.g., a call) on this path");
+			} else {
+				rtr.getAnnotations().endScope();
+			}
 		}
 		AstarAnnotation<E> annot = rtr.getAnnotations().get(target);
 		if (annot == null) {
