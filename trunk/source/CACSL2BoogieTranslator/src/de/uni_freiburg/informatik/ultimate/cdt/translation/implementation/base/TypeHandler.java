@@ -378,22 +378,26 @@ public class TypeHandler implements ITypeHandler {
             }
         }
         structCounter--;
+
         String cId = node.getName().toString();
-        String name = "STRUCT~" + cId;
-        NamedType namedType = new NamedType(loc, name,
-                new ASTType[0]);
-       
-        ASTType type = namedType;
+
         CStruct cvar;
+        String name = null;
         if (node.getKey() == IASTCompositeTypeSpecifier.k_struct) {
+        	name = "STRUCT~" + cId;
         	cvar = new CStruct(fNames.toArray(new String[0]),
                     fTypes.toArray(new CType[0]));
         } else if (node.getKey() == IASTCompositeTypeSpecifier.k_union) {
+        	name = "UNION~" + cId;
         	cvar = new CUnion(fNames.toArray(new String[0]),
                     fTypes.toArray(new CType[0]));
         } else {
         	throw new UnsupportedOperationException();
         }
+        
+        NamedType namedType = new NamedType(loc, name,
+                new ASTType[0]);
+        ASTType type = namedType;
         TypesResult result = new TypesResult(type, false, false, cvar);
        
         if (m_IncompleteType.contains(name)) {
