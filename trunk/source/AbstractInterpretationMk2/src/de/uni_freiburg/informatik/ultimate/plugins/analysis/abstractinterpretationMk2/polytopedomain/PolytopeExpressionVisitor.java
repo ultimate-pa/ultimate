@@ -42,7 +42,7 @@ import parma_polyhedra_library.Variable;
  * expressions. Top is represented by returning null. So if null is returned, we
  * say, we do not know anything about the expression (top)
  * 
- * @author GROSS-JAN
+ * @author Jan Hättig
  *
  */
 public class PolytopeExpressionVisitor extends ExpressionWalker<Linear_Expression>
@@ -91,14 +91,6 @@ public class PolytopeExpressionVisitor extends ExpressionWalker<Linear_Expressio
 	public void visitedExpression(Expression expr, Linear_Expression result) {
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IExpressionVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.ArrayAccessExpression)
-	 */
 	@Override
 	public Linear_Expression visit(ArrayAccessExpression expr) {
 		// TODO: Do something better with the array
@@ -122,28 +114,11 @@ public class PolytopeExpressionVisitor extends ExpressionWalker<Linear_Expressio
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IExpressionVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.ArrayStoreExpression)
-	 */
 	@Override
 	public Linear_Expression visit(ArrayStoreExpression expr) {
-		// This visitor must only be called for pure right hand side expressions
-		throw new RuntimeException();
+		throw new RuntimeException("This visitor must only be called for pure right hand side expressions");
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.ExpressionWalker#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.BinaryExpression)
-	 */
 	@Override
 	protected Linear_Expression visit(BinaryExpression expr) {
 		// evaluate both sides first and call the visiting function
@@ -155,22 +130,16 @@ public class PolytopeExpressionVisitor extends ExpressionWalker<Linear_Expressio
 		return visit(expr, left, right);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IExpressionVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.BinaryExpression, java.lang.Object,
-	 * java.lang.Object)
-	 */
 	@Override
 	public Linear_Expression visit(BinaryExpression expr, Linear_Expression left, Linear_Expression right) {
 		BinaryExpression.Operator op = expr.getOperator();
 		switch (op) {
 		case ARITHMUL:
 			// we can only make linear expressions, otherwise we do not know
-			if (left instanceof Linear_Expression_Coefficient) {
+			if (left == null || right == null) {
+				//propagate top
+				return null;
+			} else if (left instanceof Linear_Expression_Coefficient) {
 				Linear_Expression_Coefficient leftCoef = (Linear_Expression_Coefficient) left;
 				if (leftCoef.is_zero() || (right instanceof Linear_Expression_Coefficient
 						&& ((Linear_Expression_Coefficient) right).is_zero())) {
@@ -327,67 +296,26 @@ public class PolytopeExpressionVisitor extends ExpressionWalker<Linear_Expressio
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IExpressionVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.BitvecLiteral)
-	 */
 	@Override
 	public Linear_Expression visit(BitvecLiteral expr) {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IExpressionVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.BitVectorAccessExpression, java.lang.Object,
-	 * int, int)
-	 */
 	@Override
 	public Linear_Expression visit(BitVectorAccessExpression expr, Linear_Expression val, int start, int end) {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IExpressionVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.BooleanLiteral)
-	 */
 	@Override
 	public Linear_Expression visit(BooleanLiteral expr) {
 		return new Linear_Expression_Coefficient(new Coefficient(expr.getValue() ? 1 : 0));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IExpressionVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.IntegerLiteral)
-	 */
 	@Override
 	public Linear_Expression visit(IntegerLiteral expr) {
 		return new Linear_Expression_Coefficient(new Coefficient(expr.getValue()));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IExpressionVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.RealLiteral)
-	 */
 	@Override
 	public Linear_Expression visit(RealLiteral expr) {
 		return null; // TODO?
@@ -395,27 +323,11 @@ public class PolytopeExpressionVisitor extends ExpressionWalker<Linear_Expressio
 		// Coefficient(expr.getValue()));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IExpressionVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.StringLiteral)
-	 */
 	@Override
 	public Linear_Expression visit(StringLiteral expr) {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IExpressionVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.IdentifierExpression)
-	 */
 	@Override
 	public Linear_Expression visit(IdentifierExpression expr) {
 		String ident = mPrefix + expr.getIdentifier();
@@ -430,14 +342,6 @@ public class PolytopeExpressionVisitor extends ExpressionWalker<Linear_Expressio
 		return new Linear_Expression_Variable(variable);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.ExpressionWalker#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.UnaryExpression)
-	 */
 	@Override
 	protected Linear_Expression visit(UnaryExpression expr) {
 		Linear_Expression value = walk(expr.getExpr());
@@ -455,14 +359,6 @@ public class PolytopeExpressionVisitor extends ExpressionWalker<Linear_Expressio
 		throw new UnsupportedOperationException();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IExpressionVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.UnaryExpression, java.lang.Object)
-	 */
 	@Override
 	public Linear_Expression visit(UnaryExpression expr, Linear_Expression value) {
 		// this may not be called (since visit(UnaryExpression(...) is
@@ -470,32 +366,14 @@ public class PolytopeExpressionVisitor extends ExpressionWalker<Linear_Expressio
 		throw new RuntimeException();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IExpressionVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.FunctionApplication, java.util.List)
-	 */
 	@Override
 	public Linear_Expression visit(FunctionApplication expr, List<Linear_Expression> args) {
 		return null; // TODO: is this a case which can happen?
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IExpressionVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.IfThenElseExpression, java.lang.Object,
-	 * java.lang.Object, java.lang.Object)
-	 */
 	@Override
 	public Linear_Expression visit(IfThenElseExpression expr, Linear_Expression ifValue, Linear_Expression thenValue,
 			Linear_Expression elseValue) {
 		return null; // TODO: is this a case which can happen?
 	}
-
 }

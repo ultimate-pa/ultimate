@@ -50,17 +50,19 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String, String>[] TOOLCHAINS = new Triple[] {
-			new Triple<>("AbstractInterpretationMk2CInline.xml", ".c", "ai/AI2_INT.epf"),
-			new Triple<>("AbstractInterpretationMk2C.xml", ".c", "ai/AI2_INT.epf"),
-			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_INT.epf"),
+//			new Triple<>("AbstractInterpretationMk2CInline.xml", ".c", "ai/AI2_INT.epf"),
+//			new Triple<>("AbstractInterpretationMk2C.xml", ".c", "ai/AI2_INT.epf"),
+//			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_INT.epf"),
 			new Triple<>("AbstractInterpretationMk2CInline.xml", ".c", "ai/AI2_PLT.epf"),
-			new Triple<>("AbstractInterpretationMk2C.xml", ".c", "ai/AI2_PLT.epf"),
-			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_PLT.epf"),
+//			new Triple<>("AbstractInterpretationMk2C.xml", ".c", "ai/AI2_PLT.epf"),
+//			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_PLT.epf"),
+//			new Triple<>("AbstractInterpretationMk2CInline.xml", ".c", "ai/AI2_CMP.epf"),
 //			new Triple<>("AbstractInterpretationMk2C.xml", ".c", "ai/AI2_CMP.epf"),
 //			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_CMP.epf"),
-			new Triple<>("AutomizerCInline.xml", ".c", "EmptySettings.epf"),
-			new Triple<>("AutomizerC.xml", ".c", "EmptySettings.epf"),
-			new Triple<>("AutomizerBpl.xml", ".bpl", "EmptySettings.epf"), };
+//			new Triple<>("AutomizerCInline.xml", ".c", "EmptySettings.epf"),
+//			new Triple<>("AutomizerC.xml", ".c", "EmptySettings.epf"),
+//			new Triple<>("AutomizerBpl.xml", ".bpl", "EmptySettings.epf"), 
+			};
 
 	// @formatter:off
 
@@ -85,13 +87,16 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 
 			// problems with loop detector
 			// "examples/svcomp/loops/eureka_01_false-unreach-call.c",
-			"examples/svcomp/loops/matrix_false-unreach-call_true-termination.c", 
+//			"examples/svcomp/loops/matrix_false-unreach-call_true-termination.c", 
 			
 			// unsoundness
 
 			// problems with unsupportedops
-			"examples/svcomp/loops/sum01_true-unreach-call_true-termination.c",
-			"examples/svcomp/loops/string_false-unreach-call.c",
+//			"examples/svcomp/loops/sum01_true-unreach-call_true-termination.c",
+//			"examples/svcomp/loops/string_false-unreach-call.c",
+			"examples/svcomp/loops/terminator_01_false-unreach-call_false-termination.c",
+			"examples/svcomp/loops/linear_sea.ch_true-unreach-call.c",
+			
 	};
 
 	// @formatter:on
