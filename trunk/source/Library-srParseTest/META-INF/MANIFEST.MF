@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Library-srParseTest
+Bundle-SymbolicName: Library-srParseTest
+Bundle-Version: 0.0.1
+Fragment-Host: Library-srParse
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Import-Package: org.junit,
+ org.junit.runner,
+ org.junit.runners,
+ srParse
