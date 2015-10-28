@@ -679,7 +679,9 @@ public class CHandler implements ICHandler {
 				
 				// if the same variable is declared multiple times (within the same scope), we only keep one declaration
 				// if one of them has an initializer, we keep that one.
-				if (mSymbolTable.existsInCurrentScope(cDec.getName())) {
+				// if we are inside a struct declaration however, this does not apply, we proceed as normal, as the result
+				// is needed to build the struct type
+				if (!mTypeHandler.isStructDeclaration() && mSymbolTable.existsInCurrentScope(cDec.getName()) ) {
 					if (cDec.hasInitializer()) {
 						// undo the effects of the old declaration
 						if (mFunctionHandler.noCurrentProcedure() && !mTypeHandler.isStructDeclaration()) {
