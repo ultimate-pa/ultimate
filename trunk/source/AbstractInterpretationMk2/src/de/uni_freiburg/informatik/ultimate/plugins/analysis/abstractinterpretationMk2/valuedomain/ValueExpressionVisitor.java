@@ -562,17 +562,9 @@ public class ValueExpressionVisitor extends ExpressionVisitor<IAbstractValue<?>>
 		return mergeOp.apply(thenValue, elseValue);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.ExpressionVisitor#visited(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.FunctionApplication, java.util.List)
-	 */
 	@Override
 	public IAbstractValue<?> visited(FunctionApplication expr, List<IAbstractValue<?>> args) {
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("This domain does not support function applications: " + expr);
 	}
 
 	/*
@@ -591,7 +583,7 @@ public class ValueExpressionVisitor extends ExpressionVisitor<IAbstractValue<?>>
 	private IAbstractValue<?> booleanFromAbstractValue(IAbstractValue<?> value) {
 		IAbstractValueFactory<?> boolFactory = mDomain.getBoolValueFactory();
 		if (value == null) {
-			throw new RuntimeException("depricated code");
+			throw new RuntimeException("Deprecated code");
 			// mLogger.warn("Encountered a boolean value of null, using UNKNOWN
 			// instead.");
 			// return boolFactory.makeTopValue();
