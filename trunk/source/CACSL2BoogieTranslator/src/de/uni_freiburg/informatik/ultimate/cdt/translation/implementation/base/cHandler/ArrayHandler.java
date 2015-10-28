@@ -93,7 +93,9 @@ public class ArrayHandler {
 		
 		ExpressionResult subscript = (ExpressionResult) main.dispatch(node.getArgument());
 		subscript = subscript.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+		subscript.rexBoolToIntIfNecessary(loc, ((CHandler) main.cHandler).getExpressionTranslation());
 		assert subscript.lrVal.getCType().isIntegerType();
+
 		ExpressionResult leftExpRes = ((ExpressionResult) main.dispatch(node.getArrayExpression()));
 		
 		final ExpressionResult result;
