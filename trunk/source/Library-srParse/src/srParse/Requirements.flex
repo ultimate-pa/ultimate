@@ -41,11 +41,12 @@ Comment = {TraditionalComment} | {EndOfLineComment}
 
 TraditionalComment   = "/*" ~"*/" 
 EndOfLineComment     = "//" {InputCharacter}* {LineTerminator}?
-Letter = [:letter:] | [_-]
-LetterDigit = {Letter} | [:digit:]
-Identifier = {Letter} {LetterDigit}*
+BoogieLetter = [:letter:] | ['~#$\^_?\\]
+BoogieLetterDigit = {BoogieLetter} | [:digit:]
+Identifier = {BoogieLetter} {BoogieLetterDigit}*
 
 DecIntegerLiteral = 0 | [1-9][0-9]*
+RealIntegerLiteral = {DecIntegerLiteral} "." [0-9]+
 
 %%
 
@@ -116,14 +117,25 @@ DecIntegerLiteral = 0 | [1-9][0-9]*
   ")"             { return symbol(ReqSymbols.RPAR); }
   ","             { return symbol(ReqSymbols.COMMA); }
   "."             { return symbol(ReqSymbols.DOT); }
-  ";"             { return symbol(ReqSymbols.SEMI); }
-  "="             { return symbol(ReqSymbols.BINOP, "_EQ_"); }
-  "<"             { return symbol(ReqSymbols.BINOP, "_LT_"); }
-  ">"             { return symbol(ReqSymbols.BINOP, "_GT_"); }
-  "<="            { return symbol(ReqSymbols.BINOP, "_LTEQ_"); }
-  "\u2264"        { return symbol(ReqSymbols.BINOP, "_LTEQ_"); }
-  ">="            { return symbol(ReqSymbols.BINOP, "_GTEQ_"); }
-  "\u2265"        { return symbol(ReqSymbols.BINOP, "_GTEQ_"); }
+  
+  "true"             { return symbol(ReqSymbols.TRUE); }
+  "false"             { return symbol(ReqSymbols.FALSE); }
+  
+  "<"             { return symbol(ReqSymbols.LE); }
+  ">"             { return symbol(ReqSymbols.GREATER); }
+  "<="            { return symbol(ReqSymbols.LTEQ); }
+  "\u2264"        { return symbol(ReqSymbols.LTEQ); }
+  ">="            { return symbol(ReqSymbols.GTEQ); }
+  "\u2265"        { return symbol(ReqSymbols.GTEQ); }
+  "!="            { return symbol(ReqSymbols.NEQ); }
+  "\u2260"        { return symbol(ReqSymbols.NEQ); }
+  "=="            { return symbol(ReqSymbols.EQ); }
+  
+  "+"             { return symbol(ReqSymbols.PLUS); }
+  "-"             { return symbol(ReqSymbols.MINUS); }
+  "*"             { return symbol(ReqSymbols.TIMES); }
+  "/"             { return symbol(ReqSymbols.DIVIDE); }
+  "%"             { return symbol(ReqSymbols.MOD); }
   
   "!"             { return symbol(ReqSymbols.LNOT); }
   "\u00ac"        { return symbol(ReqSymbols.LNOT); }
@@ -140,8 +152,9 @@ DecIntegerLiteral = 0 | [1-9][0-9]*
   {Identifier}                   { return symbol(ReqSymbols.ID, yytext().intern()); }
  
   /* literals */
-  {DecIntegerLiteral}            { return number(yytext().intern()); }
-
+  {DecIntegerLiteral}            { return symbol(ReqSymbols.NUMBER, yytext().intern()); }
+  {RealIntegerLiteral}           { return symbol(ReqSymbols.REALNUMBER, yytext().intern()); }
+  
   /* comments */
   {Comment}                      { /* ignore */ }
  

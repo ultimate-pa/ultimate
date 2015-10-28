@@ -17,4 +17,6 @@ Export-Package: pea,
 Require-Bundle: Library-log4j,
  Library-jdom,
  Library-xerces,
- Library-CZT
+ Library-CZT,
+ BoogiePreprocessor,
+ UltimateCore

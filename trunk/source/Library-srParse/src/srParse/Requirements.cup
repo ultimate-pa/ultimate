@@ -8,6 +8,17 @@ import java_cup.runtime.Symbol;
 import pea.CDD;
 import pea.BooleanDecision;
 
+import pea.BoogieBooleanExpressionDecision;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 parser ReqParser;
 option symbols = ReqSymbols;
@@ -63,6 +74,9 @@ parser code {:
 		}
 		return token;
 	}
+	
+
+	
 :}
 
 action code {:
@@ -77,7 +91,16 @@ action code {:
     	  result.add(v);
     	}
     	return result;
-    }
+    }	
+    
+    public ILocation getLocation(Symbol sBegin, Symbol sEnd, boolean isLoop) {
+	    int startLine = sBegin.left;
+	    int endLine = sEnd.right;
+	    int startColumn = 0;
+	    int endColumn = 0;
+	    return new BoogieLocation("",
+	                   startLine, endLine, startColumn, endColumn, isLoop);
+	}
 :}
 
 /*init with {: getScanner().init(); :} */
@@ -97,12 +120,17 @@ terminal MOST, LEAST, LESS, THAN;
 terminal TIME, UNITS, SEC, USEC, MSEC;
 terminal THERE, ONE, EXECUTION, SEQUENCE, SUCH;
 /* Other Symbols */
-terminal IDDOT, DOT, COMMA, COLON, SEMI;
+terminal IDDOT, DOT, COMMA;
 terminal LAND, LOR, LNOT;
 terminal LPAR, RPAR, QUOTE;
-terminal String BINOP;
+terminal LE, GREATER, LTEQ, GTEQ, NEQ, EQ, PARTORDER;
+terminal PLUS, MINUS;
+terminal TIMES, DIVIDE, MOD;
+terminal TRUE, FALSE;
 terminal String ID;
-terminal Integer NUMBER;
+terminal String NUMBER;
+terminal String BOOGIENUMBER;
+terminal String REALNUMBER;
 
 /* Non-terminals */
 non terminal CDD expression, expr;
@@ -112,12 +140,15 @@ non terminal srParsePattern pattern, orderpattern, realtimepattern;
 non terminal srParseScope scope;
 non terminal srParsePattern[] patternset;
 non terminal Integer duration, num;
+non terminal boolean bool;
+non terminal Expression expr3NI, expr5NI; 
+non terminal Expression expr6NI, expr7NI, expr9NI;
 
 precedence left LOR;
 precedence left LAND;
 precedence nonassoc LNOT;
 
-/* The grammar */
+/* The grammar */ 
 
 patternset ::=
 	property*:set {: RESULT = set; :}
@@ -268,27 +299,74 @@ realtimepattern ::=
 
 expression ::= QUOTE expr:e QUOTE {: RESULT = e; :}
              | expr;
+             
 expr ::= LPAR expr:e RPAR {: RESULT = e; :}
        | expr:e1 LAND expr:e2 {: RESULT = e1.and(e2); :}
        | expr:e1 LOR  expr:e2 {: RESULT = e1.or(e2); :}
        | LNOT expr:e {: RESULT = e.negate(); :}
        | atom:a {: RESULT = BooleanDecision.create(rename(a)); :}
+       | expr3NI:e {: RESULT = BoogieBooleanExpressionDecision.create(e); :}
        ;
-       
-atom ::= cid:lhs BINOP:op cid:rhs {: RESULT = lhs + op + rhs; :}
-       | cid:lhs BINOP:op NUMBER:rhs {: RESULT = lhs + op + rhs; :}
-       | cid
-       ;
-       
+
+
+expr3NI ::= expr5NI:e1 LE expr5NI:e2
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.COMPLT, e1, e2);:}
+        | expr5NI:e1 GREATER expr5NI:e2
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.COMPGT, e1, e2);:}
+        | expr5NI:e1 LTEQ expr5NI:e2
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.COMPLEQ, e1, e2);:}
+        | expr5NI:e1 GTEQ expr5NI:e2
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.COMPGEQ, e1, e2);:}
+        | expr5NI:e1 EQ expr5NI:e2
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.COMPEQ, e1, e2);:}
+        | expr5NI:e1 NEQ expr5NI:e2
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.COMPNEQ, e1, e2);:}
+        | expr5NI:e {:RESULT = e;:}
+        ;
+
+expr5NI ::= expr5NI:e1 PLUS expr6NI:e2
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.ARITHPLUS, e1, e2);:}
+        | expr5NI:e1 MINUS expr6NI:e2
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.ARITHMINUS, e1, e2);:}
+        | expr6NI:e {:RESULT = e;:}
+        ;
+        
+expr6NI ::= expr6NI:e1 TIMES expr7NI:e2
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.ARITHMUL, e1, e2);:}
+        | expr6NI:e1 DIVIDE expr7NI:e2
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.ARITHDIV, e1, e2);:}
+        | expr6NI:e1 MOD expr7NI:e2
+           {:RESULT = new BinaryExpression(getLocation(e1$,e2$,false), BinaryExpression.Operator.ARITHMOD, e1, e2);:}
+        | expr7NI:e {:RESULT = e;:}
+        ;
+expr7NI ::= MINUS expr7NI:e
+           {:RESULT = new UnaryExpression(getLocation(e$,e$,false), UnaryExpression.Operator.ARITHNEGATIVE, e);:}
+        | expr9NI:e {:RESULT = e;:}
+        ;
+
+expr9NI ::= NUMBER:n
+	  {: RESULT = new IntegerLiteral(getLocation(n$,n$,false), n); :}
+	| REALNUMBER:n
+	  {: RESULT = new RealLiteral(getLocation(n$,n$,false), n); :}
+	| cid:i
+	  {: RESULT = new IdentifierExpression(getLocation(i$,i$,false), i); :}
+	| bool:b 
+	  {:RESULT = new BooleanLiteral(getLocation(b$,b$,false),b);:}
+	;
+	
 cid ::= ID
       | cid:c IDDOT ID:id {: RESULT= c + "." + id; :}
       ;
-
+      
+bool ::= TRUE {: RESULT = true; :}
+		|FALSE {: RESULT = false; :}
+		;
+		
 duration ::= num:n TIME UNITS {: RESULT = n; :}
            | num:n USEC {: RESULT = n; :}
            | num:n MSEC {: RESULT = n*1000; :}
            | num:n SEC {: RESULT = n*1000000; :}
            ;
            
-num ::= NUMBER
-      | QUOTE NUMBER:n QUOTE {: RESULT = n; :};
+num ::= NUMBER:n {: RESULT = Integer.parseInt(n); :}
+      | QUOTE NUMBER:n QUOTE {: RESULT = Integer.parseInt(n); :};

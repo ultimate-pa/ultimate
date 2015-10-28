@@ -48,6 +48,7 @@ public class CDDTranslator {
 	    	if (cdd == CDD.FALSE) return new BooleanLiteral(bl, false);
 	    	childs = cdd.getChilds();
 	    	decision = cdd.getDecision();
+	    	
 	        for (int i = 0; i < childs.length; i++) {
 
 	        	if (childs[i] == CDD.FALSE) {
@@ -56,13 +57,20 @@ public class CDDTranslator {
 	        	Expression childExpr = CDD_To_Boogie(childs[i],fileName, bl);
 	            if (!cdd.childDominates(i)) {
 	            	Expression decisionExpr;
+	            	
 	            	if (decision instanceof RangeDecision) {
 	            		decisionExpr = 
 		            			 toExpressionForRange(i,decision.getVar(), ((RangeDecision) decision).getLimits(),
 		         		            			fileName, bl);
+	            	} else if(decision instanceof BoogieBooleanExpressionDecision){
+	            		decisionExpr = ((BoogieBooleanExpressionDecision)decision).getExpression();
+	            		if (i == 1){
+	            			decisionExpr = new UnaryExpression(decisionExpr.getLocation() ,
+	            					UnaryExpression.Operator.LOGICNEG, 
+	            					decisionExpr);
+	            		}
 	            	} else {
 	            		String varName;
-	            		
 	            		if (decision instanceof BooleanDecision) {
 	            			varName = ((BooleanDecision)decision).getVar();
 	            		}
@@ -74,15 +82,17 @@ public class CDDTranslator {
 	            			decisionExpr = new UnaryExpression(bl, 
 	            					UnaryExpression.Operator.LOGICNEG, decisionExpr);
 	            	}
+	            	
 	            	if (childExpr instanceof BooleanLiteral
 	            		&& ((BooleanLiteral)childExpr).getValue() == true) {
 	            		childExpr = decisionExpr;
-	            	}
-	            	else
+	            	} else {
 		            	childExpr = new BinaryExpression(bl, 
 		            			BinaryExpression.Operator.LOGICAND,
 		            			decisionExpr, childExpr);
+	            	}
 	            }
+	            //del with self
             	if (expr == falseExpr)
             		expr = childExpr;
             	else
@@ -92,6 +102,7 @@ public class CDDTranslator {
 	        }
 	        return expr;	        
 	    }
+		
 	    public Expression toExpressionForRange(int childs, String var, int[] limits, 
 	    		String fileName, BoogieLocation bl ) {
 	    	if (childs == 0) {

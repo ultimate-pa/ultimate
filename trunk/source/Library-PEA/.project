@@ -3,6 +3,7 @@
 	<name>PEA_r089</name>
 	<comment></comment>
 	<projects>
+		<project>CoreRCP</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
