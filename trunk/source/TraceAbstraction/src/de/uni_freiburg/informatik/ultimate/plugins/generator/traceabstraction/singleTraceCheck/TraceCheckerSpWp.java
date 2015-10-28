@@ -85,6 +85,12 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	private final static boolean m_LogInformation = true;
 	private final static boolean m_CollectInformationAboutQuantifiedPredicates = true;
 	private final static boolean m_CollectInformationAboutSizeOfPredicates = true;
+	
+	// We may post-process the forwards predicates, after the backwards predicates has been computed in order 
+	// to potentially eliminate quantifiers. The idea is the following:
+	// If there is a predicate p in the forwards predicates that contains quantifiers and there is an equivalent predicate p' in the backwards 
+	// predicates that is quantifier-free, then we may replace p by p'.
+	private final static boolean m_PostProcess_FP_Predicates = false;
 
 	private boolean m_ComputeInterpolantsSp;
 	private boolean m_ComputeInterpolantsFp;
@@ -189,13 +195,13 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			return m_InterpolantsBp[i];
 		}
 	}
-	
+
 	public IPredicate[] getForwardPredicates() {
 		assert m_InterpolantsFp != null : "Forwards predicates has not been computed!";
 		return m_InterpolantsFp;
 	}
 
-	
+
 	public IPredicate[] getBackwardPredicates() {
 		assert m_InterpolantsBp != null : "Backwards predicates has not been computed!";
 		return m_InterpolantsBp;
@@ -283,7 +289,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 						 */
 						transformulasToComputeSummaryFor.addLast(TransFormula.sequentialCompositionWithCallAndReturn(
 								m_SmtManager.getBoogie2Smt(), true, false, s_TransformToCNF, trace.getSymbol(i)
-										.getTransitionFormula(), rv.getOldVarAssignment(i),
+								.getTransitionFormula(), rv.getOldVarAssignment(i),
 								summaryBetweenCallAndReturn, trace.getSymbol(returnPosition).getTransitionFormula(),
 								mLogger, mServices));
 						i = returnPosition;
@@ -389,13 +395,13 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			LiveVariables lvar = new LiveVariables(m_Nsb.getVariable2Constant(), m_Nsb.getConstants2BoogieVar(),
 					m_Nsb.getIndexedVarRepresentative(), m_SmtManager, m_ModifiedGlobals);
 			relevantVarsToUseForFPBP = lvar.getLiveVariables();
-//			RelevantVariables rvar = new RelevantVariables(rtf, m_ModifiedGlobals);
-//			rvar.toString();
+			//			RelevantVariables rvar = new RelevantVariables(rtf, m_ModifiedGlobals);
+			//			rvar.toString();
 		} else {
 			RelevantVariables rvar = new RelevantVariables(rtf, m_ModifiedGlobals);
 			relevantVarsToUseForFPBP = rvar.getRelevantVariables();
 		}
-		
+
 
 
 		if (m_ComputeInterpolantsFp) {
@@ -403,10 +409,10 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			computeForwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePrecondition, true,
 					numberOfQuantifiedPredicates);
 			mLogger.debug("Checking inductivity of forward relevant predicates...");
-//			if (!TraceCheckerUtils.checkInterpolantsInductivityForward(m_InterpolantsFp, 
-//					trace, tracePrecondition, tracePostcondition, m_PendingContexts, "FP", m_SmtManager, m_ModifiedGlobals, mLogger)) {
-//				throw new AssertionError("invalid Hoare triple in FP");
-//			}
+			//			if (!TraceCheckerUtils.checkInterpolantsInductivityForward(m_InterpolantsFp, 
+			//					trace, tracePrecondition, tracePostcondition, m_PendingContexts, "FP", m_SmtManager, m_ModifiedGlobals, mLogger)) {
+			//				throw new AssertionError("invalid Hoare triple in FP");
+			//			}
 			assert TraceCheckerUtils.checkInterpolantsInductivityForward(m_InterpolantsFp, 
 					trace, tracePrecondition, tracePostcondition, m_PendingContexts, "FP", 
 					m_SmtManager, m_ModifiedGlobals, mLogger) : "invalid Hoare triple in FP";
@@ -449,7 +455,9 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					trace, tracePrecondition, tracePostcondition, m_PendingContexts, "BP", 
 					m_SmtManager, m_ModifiedGlobals, mLogger) : "invalid Hoare triple in BP";
 		}
+		
 
+		
 		((TraceCheckerBenchmarkSpWpGenerator) super.m_TraceCheckerBenchmarkGenerator).setPredicateData(
 				numberOfQuantifiedPredicates, sizeOfPredicatesFP, sizeOfPredicatesBP);
 
@@ -457,6 +465,26 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			mLogger.debug("Length of trace:" + trace.length());
 			mLogger.debug("#quantifiedPredicates in WP: " + numberOfQuantifiedPredicates[2]);
 			mLogger.debug("#quantifiedPredicates in BP: " + numberOfQuantifiedPredicates[3]);
+		}
+		
+		if (m_ComputeInterpolantsFp && m_ComputeInterpolantsBp) {
+			// Post-process forwards predicates			
+			if (m_PostProcess_FP_Predicates) {
+				for (int i = 0; i < m_InterpolantsFp.length; i++) {
+					IPredicate p_old = m_InterpolantsFp[i];
+					IPredicate p_new = m_PredicateUnifier.getOrConstructPredicate(p_old.getFormula(), p_old.getVars(), p_old.getProcedures());
+					m_InterpolantsFp[i] = p_new;
+					// Update number of quantified predicates counter
+					if (!(p_new instanceof BasicPredicateExplicitQuantifier) && (p_old instanceof BasicPredicateExplicitQuantifier))  {
+						numberOfQuantifiedPredicates[1]--;
+					} else if ((p_new instanceof BasicPredicateExplicitQuantifier) && !(p_old instanceof BasicPredicateExplicitQuantifier))  {
+						numberOfQuantifiedPredicates[1]++; // This case should not occur, we try to avoid it through the post-process step!
+					}
+				}
+				if (m_CollectInformationAboutSizeOfPredicates) {
+					sizeOfPredicatesFP = m_SmtManager.computeDagSizeOfPredicates(m_InterpolantsFp);
+				}
+			}
 		}
 
 		// Check the validity of the computed interpolants.
@@ -490,7 +518,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		m_Interpolants = new IPredicate[m_InterpolantsBp.length];
 		int i = 0; // position of predicate computed by strongest post-condition
 		int j = m_InterpolantsBp.length; // position of predicate computed by
-											// weakest precondition
+		// weakest precondition
 		while (i != j) {
 			if (!(m_InterpolantsBp[j - 1] instanceof BasicPredicateExplicitQuantifier)) {
 				m_Interpolants[j - 1] = m_InterpolantsBp[j - 1];
@@ -602,11 +630,11 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 								getForwardPredicateAtPosition(i - 1, tracePrecondition, true),
 								rv.getGlobalVarAssignment(i),
 								m_ModifiedGlobals.getModifiedBoogieVars(((Call) trace.getSymbol(i)).getCallStatement().getMethodName()));
-//						IPredicate spOld = m_PredicateTransformer.strongestPostcondition(
-//								getForwardPredicateAtPosition(i - 1, tracePrecondition, true), rv.getLocalVarAssignment(i),
-//								rv.getGlobalVarAssignment(i), rv.getOldVarAssignment(i),
-//								((NestedWord<CodeBlock>) trace).isPendingCall(i));
-//						spOld.toString();
+						//						IPredicate spOld = m_PredicateTransformer.strongestPostcondition(
+						//								getForwardPredicateAtPosition(i - 1, tracePrecondition, true), rv.getLocalVarAssignment(i),
+						//								rv.getGlobalVarAssignment(i), rv.getOldVarAssignment(i),
+						//								((NestedWord<CodeBlock>) trace).isPendingCall(i));
+						//						spOld.toString();
 					}
 					m_InterpolantsSp[i] = m_PredicateUnifier.getOrConstructPredicate(sp.getFormula(), sp.getVars(),
 							sp.getProcedures());
@@ -1008,7 +1036,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 * size of predicates obtained via interpolation.
 	 */
 	public class TraceCheckerBenchmarkSpWpGenerator extends TraceCheckerBenchmarkGenerator implements
-			IBenchmarkDataProvider {
+	IBenchmarkDataProvider {
 		// m_NumberOfQuantifierFreePredicates[0] : #quantified predicates of SP
 		// m_NumberOfQuantifierFreePredicates[1] : #quantified predicates of FP
 		// m_NumberOfQuantifierFreePredicates[2] : #quantified predicates of WP
