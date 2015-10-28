@@ -561,16 +561,29 @@ public class CHandler implements ICHandler {
 		}
 		checkForACSL(main, stmt, decl, null, node);
 		if (isNewScopeRequired(parent)) {
-			stmt = mMemoryHandler.insertMallocs(main, stmt);
-			for (SymbolTableValue stv : mSymbolTable.currentScopeValues()) {
-				if (!stv.isBoogieGlobalVar()) {
-					decl.add(stv.getBoogieDecl());
-				}
-			}
+			stmt = updateStmtsAndDeclsAtScopeEnd(main, decl, stmt);
 
 			this.endScope();
 		}
 		return new Result(new Body(loc, decl.toArray(new VariableDeclaration[0]), stmt.toArray(new Statement[0])));
+	}
+
+	/**
+	 * At the end of a scope, typically a C compound statement, we need to insert some mallocs and frees surrounding
+	 * the stmt block, and we need to insert all the declarations that are needed for that block, according to the symbol table.
+	 * (at the dispatch of a simple declaration, the declarations are stored in the symbol table)
+	 */
+	public ArrayList<Statement> updateStmtsAndDeclsAtScopeEnd(Dispatcher main, ArrayList<Declaration> decl,
+			ArrayList<Statement> stmt) {
+		stmt = mMemoryHandler.insertMallocs(main, stmt);
+		for (SymbolTableValue stv : mSymbolTable.currentScopeValues()) {
+			// there may be a null declaration in case of foo(void) -- therefore we need to check the second conjunct
+			// (case where this is called from FunctionHandler.handleFunctionDefinition)
+			if (!stv.isBoogieGlobalVar() && stv.getBoogieDecl() != null) {
+				decl.add(stv.getBoogieDecl());
+			}
+		}
+		return stmt;
 	}
 
 	/**
@@ -2397,23 +2410,24 @@ public class CHandler implements ICHandler {
 		return new SkipResult();
 	}
 
+	/**
+	 * Translate a switch statement as described in C99: 6.8.4.2
+	 */
 	@Override
 	public Result visit(Dispatcher main, IASTSwitchStatement node) {
-		// FIXME : This is not exactly as described in C99 standard!
-		// declarations are allowed like this:
-		// switch ([COND])
-		// { [DECL]* [[CASE|DEFAULT]+ [STMT]+ [DECL|STMT]* [BREAK]?] }
-		// we allow DECLS after case|default atm but no decls at the beginning!
 		ILocation loc = LocationFactory.createCLocation(node);
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
 		List<Overapprox> overappr = new ArrayList<Overapprox>();
-		Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
+
+		// dispatch the controlling expression, convert it to int
+		// 6.8.4.2-1: "The controlling expression of a switch statement shall have integer type."
 		Result switchParam = main.dispatch(node.getControllerExpression());
 		assert switchParam instanceof ExpressionResult;
 		ExpressionResult l = ((ExpressionResult) switchParam).switchToRValueIfNecessary(main, mMemoryHandler,
 				mStructHandler, loc);
+		m_ExpressionTranslation.convert(loc, l, new CPrimitive(PRIMITIVE.INT));
 		stmt.addAll(l.stmt);
 		decl.addAll(l.decl);
 		auxVars.putAll(l.auxVars);
@@ -2424,7 +2438,11 @@ public class CHandler implements ICHandler {
 		String breakLabelName = main.nameHandler.getGloballyUniqueIdentifier("SWITCH~BREAK~");
         String switchFlag = main.nameHandler.getTempVarUID(SFO.AUXVAR.SWITCH);
         ASTType flagType = new PrimitiveType(loc, SFO.BOOL);
-        decl.add(SFO.getTempVarVariableDeclaration(switchFlag, flagType, loc));
+
+        VariableDeclaration switchAuxVarDec = SFO.getTempVarVariableDeclaration(switchFlag, flagType, loc);
+        decl.add(switchAuxVarDec);
+        auxVars.put(switchAuxVarDec, loc);
+
 
         boolean isFirst = true;
         boolean firstCond = true;
@@ -2434,10 +2452,18 @@ public class CHandler implements ICHandler {
 		ArrayList<Statement> ifBlock = new ArrayList<Statement>();
 		this.beginScope();
 		for (IASTNode child : node.getBody().getChildren()) {
-			if (isFirst && !(child instanceof IASTCaseStatement || child instanceof IASTDefaultStatement))
+			if (isFirst && !(child instanceof IASTCaseStatement || child instanceof IASTDefaultStatement)) {
+				// declarations in the beginning of a switch body (i.e. before the first case/default) are used, statements are dropped
+				// see example 6.8.4.2-7
+				
+				// we need to dispatch the child in order to fill the symbol table with declarations accordingly
+				// the result can only contain statements, which we drop.
+				main.dispatch(child);
+
 				continue;
+			}
 			isFirst = false;
-			//ILocation locC = LocationFactory.createCLocation(child);
+
 			checkForACSL(main, ifBlock, decl, child, null);
 			if (child instanceof IASTCaseStatement || child instanceof IASTDefaultStatement) {
 				ExpressionResult res = (ExpressionResult) main.dispatch(child);
@@ -2445,6 +2471,7 @@ public class CHandler implements ICHandler {
 					IfStatement ifStmt = new IfStatement(locC, new IdentifierExpression(locC, switchFlag), ifBlock.toArray(new Statement[0]),
 									new Statement[0]);
 					Map<String, IAnnotations> annots = ifStmt.getPayload().getAnnotations();
+
 					for (Overapprox overapprItem : res.overappr) {
 						annots.put(Overapprox.getIdentifier(), overapprItem);
 					}
@@ -2462,11 +2489,16 @@ public class CHandler implements ICHandler {
 				ifBlock = new ArrayList<Statement>();
 				locC = LocationFactory.createCLocation(child);
 
-				if (child instanceof IASTCaseStatement)
+				if (child instanceof IASTCaseStatement) {
 					cond = ExpressionFactory.newBinaryExpression(locC, Operator.COMPEQ, switchArg, res.lrVal.getValue());
-				else
+					decl.addAll(res.decl);
+					stmt.addAll(res.stmt);
+					auxVars.putAll(res.auxVars);
+					overappr.addAll(res.overappr);
+				} else {
 					//default statement
 					cond = res.lrVal.getValue();
+				}
 
 				/*
 				for (Statement s : res.stmt)
@@ -2521,18 +2553,30 @@ public class CHandler implements ICHandler {
 			stmt.add(ifStmt);
 		}
 		checkForACSL(main, stmt, decl, null, node);
+
 		stmt.add(new Label(loc, breakLabelName));
 		stmt.addAll(createHavocsForAuxVars(auxVars));
-		// TODO: Havoc the switchFlag
-
+		
+		
+		stmt = updateStmtsAndDeclsAtScopeEnd(main, decl, stmt);
 		this.endScope();
-		return new ExpressionResult(stmt, null, decl, emptyAuxVars, overappr);
+		
+		return new ExpressionResult(stmt, null, decl, new LinkedHashMap<VariableDeclaration, ILocation>(), overappr);
 	}	
 
+	/**
+	 * Translate a case statement for use inside a switch statement.
+	 * C99:6.8.4.2-3: "The expression of each case label shall be an integer constant expression and no two
+	 *   of the case constant expressions in  the same switch statement shall have the same value after conversion."
+	 * 
+	 */
 	@Override
 	public Result visit(Dispatcher main, IASTCaseStatement node) {
+		ILocation loc = LocationFactory.createCLocation(node);
 		ExpressionResult c = (ExpressionResult) main.dispatch(node.getExpression());
-		return c.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, LocationFactory.createCLocation(node));
+		c = c.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, LocationFactory.createCLocation(node));
+		m_ExpressionTranslation.convert(loc, c, new CPrimitive(PRIMITIVE.INT));
+		return c;
 	}
 
 	@Override
@@ -3072,7 +3116,9 @@ public class CHandler implements ICHandler {
 				} //TODO: deal with other global ACSL stuff
 			} else if (mAcsl.mSuccessorCNode == null) {
 				if (parent != null && stmt != null && next == null) {
-					// ACSL at the end of a function
+					// ACSL at the end of a function or at the end of the last statement in a switch that is not terminated by a break
+					// TODO: the latter case needs fixing, the ACSL is inserted outside the corresponding if-scope right now 
+					//       example: int s = 1; switch (s) { case 0: s++; //@ assert \false; } will yield a unsafe boogie program
 					for (ACSLNode acslNode : mAcsl.mAcsl) {
 						if (parent.getFileLocation().getEndingLineNumber() <= acslNode.getStartingLineNumber()) {
 							return;// handle later ...
@@ -3406,11 +3452,8 @@ public class CHandler implements ICHandler {
 		
 		if (node instanceof IASTForStatement) {
 			if (((IASTForStatement) node).getInitializerStatement() != null) {
-				bodyBlock = mMemoryHandler.insertMallocs(main, bodyBlock);
-				for (SymbolTableValue stv : mSymbolTable.currentScopeValues())
-					if (!stv.isBoogieGlobalVar()) {
-						decl.add(stv.getBoogieDecl());
-					}
+				bodyBlock = updateStmtsAndDeclsAtScopeEnd(main, decl, bodyBlock);
+
 				this.endScope();
 			}
 		}

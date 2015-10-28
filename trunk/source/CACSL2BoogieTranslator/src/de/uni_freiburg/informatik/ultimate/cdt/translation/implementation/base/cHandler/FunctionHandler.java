@@ -340,16 +340,9 @@ public class FunctionHandler {
 		for (VariableDeclaration declaration : body.getLocalVars()) {
 			decls.add(declaration);
 		}
-		// 3)
-		stmts = memoryHandler.insertMallocs(main, stmts);
-		// 4)
-		for (SymbolTableValue stv : main.cHandler.getSymbolTable().currentScopeValues()) {
-			// there may be a null declaration in case of foo(void)
-			if (!stv.isBoogieGlobalVar() && stv.getBoogieDecl() != null) {
-				decls.add(stv.getBoogieDecl());
-			}
-		}
-
+		// 3) ,4)
+		stmts = ((CHandler) main.cHandler).updateStmtsAndDeclsAtScopeEnd(main, decls, stmts);
+	
 		body = new Body(loc, decls.toArray(new VariableDeclaration[decls.size()]), stmts.toArray(new Statement[stmts
 				.size()]));
 
