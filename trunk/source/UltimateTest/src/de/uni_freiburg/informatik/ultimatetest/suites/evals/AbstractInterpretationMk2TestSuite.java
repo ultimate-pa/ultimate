@@ -61,7 +61,7 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 //			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_CMP.epf"),
 //			new Triple<>("AutomizerCInline.xml", ".c", "EmptySettings.epf"),
 //			new Triple<>("AutomizerC.xml", ".c", "EmptySettings.epf"),
-//			new Triple<>("AutomizerBpl.xml", ".bpl", "EmptySettings.epf"), 
+//			new Triple<>("AutomizerBpl.xml", ".bpl", "EmptySettings.epf"),
 			};
 
 	// @formatter:off
@@ -76,20 +76,20 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 				// "examples/programs/regression/c/",
 				// "examples/programs/recursivePrograms",
 				/* SV-COMP repo */
-				 "examples/svcomp/loops/", // SPLIT
+//				 "examples/svcomp/loops/", // SPLIT
 				// "examples/svcomp/loopsSelection/",
 				// "examples/svcomp/eca/", // SPLIT
 				// "examples/svcomp/ecaSelection/",
 				// "examples/svcomp/systemc/", // SPLIT
 				// "examples/svcomp/systemc1/",
 				// "examples/svcomp/systemc2/",
-				 "examples/svcomp/eca-rers2012/",
-				 "examples/svcomp/recursive/",
-				 "examples/svcomp/ssh-simplified/",
-				 "examples/svcomp/ssh/",
+//				 "examples/svcomp/eca-rers2012/",
+//				 "examples/svcomp/recursive/",
+//				 "examples/svcomp/ssh-simplified/",
+//				 "examples/svcomp/ssh/",
 
 			// problems with loop detector
-			// "examples/svcomp/loops/eureka_01_false-unreach-call.c",
+			 "examples/svcomp/loops/eureka_01_false-unreach-call.c",
 //			"examples/svcomp/loops/matrix_false-unreach-call_true-termination.c", 
 			
 			// unsoundness
