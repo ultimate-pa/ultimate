@@ -26,6 +26,7 @@
  * licensors of the ULTIMATE AbstractInterpretation plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation;
 
 import java.io.File;
@@ -48,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -117,7 +117,7 @@ public class AbstractInterpreter extends RCFGEdgeVisitor {
 	private final Set<ProgramPoint> mErrorLocs = new HashSet<ProgramPoint>();
 	private final Set<ProgramPoint> mReachedErrorLocs = new HashSet<ProgramPoint>();
 
-	private HashMap<ProgramPoint, HashMap<RCFGEdge, RCFGEdge>> mLoopEntryNodes;
+	private Map<ProgramPoint, Map<RCFGEdge, RCFGEdge>> mLoopEntryNodes;
 
 	private final Set<ProgramPoint> mRecursionEntryNodes = new HashSet<ProgramPoint>();
 

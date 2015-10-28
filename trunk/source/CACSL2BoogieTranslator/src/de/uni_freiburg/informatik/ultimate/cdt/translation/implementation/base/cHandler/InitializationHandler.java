@@ -594,7 +594,7 @@ public class InitializationHandler {
 						RValue val = (RValue) pInit.lrVal;
 						stmt.addAll(mMemoryHandler.getWriteCall(main, loc, new HeapLValue(writeLocation, valueType), val.getValue(), val.getCType()));
 					} else {
-						throw new UnsupportedSyntaxException(loc, "trying to init unknown type");
+						throw new UnsupportedSyntaxException(loc, "trying to init unknown type " + valueType);
 					}
 				}
 			}
@@ -699,7 +699,7 @@ public class InitializationHandler {
 						val = (RValue) (main.cHandler.getInitHandler().initVar(loc, main, 
 								(VariableLHS) null, valueType, null)).lrVal;
 					} else {
-						throw new UnsupportedSyntaxException(loc, "trying to init unknown type");
+						throw new UnsupportedSyntaxException(loc, "trying to init unknown type " + valueType);
 					}
 				}
 				Expression[] newIndices = null;

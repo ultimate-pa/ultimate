@@ -278,9 +278,18 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
 		{
-			if (true) {
+			if (false) {
 				Settings settings = new Settings(false, null, 60 * 1000, null, false, "", "");
 				Script tcSolver = SolverBuilder.buildScript(m_Services, m_ToolchainStorage, settings );
+				tcSolver.setOption(":produce-unsat-cores", true);
+				tcSolver.setOption(":produce-interpolants", true);
+				tcSolver.setOption(":interpolant-check-mode", true);
+				tcSolver.setOption(":proof-transformation", "LU");
+				// m_Script.setOption(":proof-transformation", "RPI");
+				// m_Script.setOption(":proof-transformation", "LURPI");
+				// m_Script.setOption(":proof-transformation", "RPILU");
+				// m_Script.setOption(":verbosity", 0);
+				tcSolver.setLogic("QF_AUFLIRA");
 				SmtManager tcSmtManager = new SmtManager(tcSolver, m_RootNode.getRootAnnot().getBoogie2SMT(), 
 						m_RootNode.getRootAnnot().getModGlobVarManager(), m_Services);
 				interpolatingTraceChecker = new InterpolatingTraceCheckerCraig(truePredicate, falsePredicate,

@@ -39,6 +39,7 @@ public class ScopedHashMap<K, V> implements Map<K, V> {
 
 	public ScopedHashMap() {
 		clear();
+		assert !mScopes.isEmpty();
 	}
 
 	public ScopedHashMap(ScopedHashMap<K, V> otherMap) {
@@ -46,6 +47,7 @@ public class ScopedHashMap<K, V> implements Map<K, V> {
 		for (Map<K, V> map : otherMap.mScopes) {
 			mScopes.addLast(new HashMap<>(map));
 		}
+		assert !mScopes.isEmpty();
 	}
 
 	@Override
@@ -136,6 +138,7 @@ public class ScopedHashMap<K, V> implements Map<K, V> {
 
 	public void endScope() {
 		mScopes.removeFirst();
+		assert !mScopes.isEmpty() : "You ended a scope you did not begin";
 	}
 
 	public int getScopesCount() {

@@ -31,7 +31,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.Stack;
 
 import org.apache.log4j.Logger;
@@ -73,22 +75,22 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  * You should call {@link #process(IElement)} on the root element of your RCFG
  * and then get the resulting map via {@link #getResult()}.
  * 
- * @author dietsch
- * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *  
  */
 public class RCFGLoopDetector extends BaseObserver {
 
 	private final IUltimateServiceProvider mServices;
 	private final Logger mLogger;
-	private final HashMap<ProgramPoint, HashMap<RCFGEdge, RCFGEdge>> mLoopEntryExit;
+	private final Map<ProgramPoint, Map<RCFGEdge, RCFGEdge>> mLoopEntryExit;
 
-	public RCFGLoopDetector(IUltimateServiceProvider services) {
+	public RCFGLoopDetector(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mLoopEntryExit = new HashMap<>();
 	}
 
-	public HashMap<ProgramPoint, HashMap<RCFGEdge, RCFGEdge>> getResult() {
+	public Map<ProgramPoint, Map<RCFGEdge, RCFGEdge>> getResult() {
 		return mLoopEntryExit;
 	}
 
@@ -97,20 +99,20 @@ public class RCFGLoopDetector extends BaseObserver {
 		if (!(root instanceof RootNode)) {
 			return true;
 		}
-		RootNode rootNode = (RootNode) root;
-		RootAnnot annot = rootNode.getRootAnnot();
+		final RootNode rootNode = (RootNode) root;
+		final RootAnnot annot = rootNode.getRootAnnot();
 
 		// get a hashset of all loop heads
-		HashSet<ProgramPoint> loopHeadsSet = new HashSet<>(annot.getLoopLocations().keySet());
+		final Set<ProgramPoint> loopHeadsSet = new HashSet<>(annot.getLoopLocations().keySet());
 
 		// order the loopheads after their occurance in the program
-		List<ProgramPoint> loopHeads = orderLoopHeads(loopHeadsSet, rootNode);
+		final List<ProgramPoint> loopHeads = orderLoopHeads(loopHeadsSet, rootNode);
 
 		// compute the edges that constitute the loop for one loophead while
 		// ignoring loops that result from nesting
 		List<RCFGEdge> forbiddenEdges = new ArrayList<>();
-		for (ProgramPoint p : loopHeads) {
-			HashMap<RCFGEdge, RCFGEdge> map = new HashMap<>();
+		for (final ProgramPoint p : loopHeads) {
+			final Map<RCFGEdge, RCFGEdge> map = new HashMap<>();
 			mLoopEntryExit.put(p, map);
 			process(p, map, forbiddenEdges);
 			forbiddenEdges = new ArrayList<>();
@@ -121,7 +123,7 @@ public class RCFGLoopDetector extends BaseObserver {
 		return false;
 	}
 
-	private List<ProgramPoint> orderLoopHeads(HashSet<ProgramPoint> loopHeads, RootNode programStart) {
+	private List<ProgramPoint> orderLoopHeads(Set<ProgramPoint> loopHeads, RootNode programStart) {
 		List<ProgramPoint> rtr = new ArrayList<>();
 
 		Stack<RCFGNode> open = new Stack<>();
@@ -145,13 +147,13 @@ public class RCFGLoopDetector extends BaseObserver {
 		return rtr;
 	}
 
-	private void process(ProgramPoint loopHead, HashMap<RCFGEdge, RCFGEdge> map, List<RCFGEdge> forbiddenEdges) {
+	private void process(ProgramPoint loopHead, Map<RCFGEdge, RCFGEdge> map, List<RCFGEdge> forbiddenEdges) {
 		AStar<RCFGNode, RCFGEdge> walker = new AStar<>(mLogger, loopHead, loopHead, new ZeroHeuristic(),
 				new RcfgWrapper(), forbiddenEdges);
 
 		List<RCFGEdge> path = walker.findPath();
-		if (path == null || path.isEmpty()) {
-			// throw new RuntimeException();
+		if (forbiddenEdges.isEmpty() && (path == null || path.isEmpty())) {
+			throw new RuntimeException(loopHead + " is not a valid loop head");
 		}
 
 		// got first path, add it to the results and get the edge starting this
@@ -173,7 +175,7 @@ public class RCFGLoopDetector extends BaseObserver {
 		return new CompositEdgeDenier<>(rtr);
 	}
 
-	private RCFGEdge addToResult(List<RCFGEdge> path, HashMap<RCFGEdge, RCFGEdge> map) {
+	private RCFGEdge addToResult(List<RCFGEdge> path, Map<RCFGEdge, RCFGEdge> map) {
 		RCFGEdge first = path.get(0);
 		RCFGEdge last = path.get(path.size() - 1);
 		assert first.getSource().equals(last.getTarget());
@@ -181,15 +183,15 @@ public class RCFGLoopDetector extends BaseObserver {
 		return first;
 	}
 
-	private void printResult(HashMap<ProgramPoint, HashMap<RCFGEdge, RCFGEdge>> result) {
+	private void printResult(final Map<ProgramPoint, Map<RCFGEdge, RCFGEdge>> result) {
 		if (!mLogger.isDebugEnabled()) {
 			return;
 		}
 		mLogger.debug("---------------");
-		for (ProgramPoint p : result.keySet()) {
+		for (final ProgramPoint p : result.keySet()) {
 			mLogger.debug("Loophead " + p);
-			HashMap<RCFGEdge, RCFGEdge> map = result.get(p);
-			for (Entry<RCFGEdge, RCFGEdge> entry : map.entrySet()) {
+			final Map<RCFGEdge, RCFGEdge> map = result.get(p);
+			for (final Entry<RCFGEdge, RCFGEdge> entry : map.entrySet()) {
 				mLogger.debug("* " + entry.getKey().hashCode() + " >< " + entry.getValue().hashCode());
 			}
 		}
