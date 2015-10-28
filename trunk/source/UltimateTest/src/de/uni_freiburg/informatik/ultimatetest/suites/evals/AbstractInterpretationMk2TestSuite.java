@@ -69,21 +69,24 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 	private static final String[] INPUT = new String[] { 
 			
 			
-//			"examples/Backtranslation/regression/c/standard",
-			// "examples/programs/abstractInterpretation/",
-			// "examples/programs/abstractInterpretationNoRec/",
-			/* ULTIMATE repo */
-			// "examples/programs/regression/bpl/",
-			// "examples/programs/regression/c/",
-			// "examples/programs/recursivePrograms",
-			/* SV-COMP repo */
-//			"examples/svcomp/loops/", // SPLIT
-			// "examples/svcomp/loopsSelection/",
-			// "examples/svcomp/eca/", // SPLIT
-			// "examples/svcomp/ecaSelection/",
-			// "examples/svcomp/systemc/", // SPLIT
-			// "examples/svcomp/systemc1/",
-			// "examples/svcomp/systemc2/",
+//			"examples/programs/abstractInterpretation/",
+			//"examples/programs/abstractInterpretationNoRec/",
+				/* ULTIMATE repo */
+				// "examples/programs/regression/bpl/",
+				// "examples/programs/regression/c/",
+				// "examples/programs/recursivePrograms",
+				/* SV-COMP repo */
+				 "examples/svcomp/loops/", // SPLIT
+				// "examples/svcomp/loopsSelection/",
+				// "examples/svcomp/eca/", // SPLIT
+				// "examples/svcomp/ecaSelection/",
+				// "examples/svcomp/systemc/", // SPLIT
+				// "examples/svcomp/systemc1/",
+				// "examples/svcomp/systemc2/",
+				 "examples/svcomp/eca-rers2012/",
+				 "examples/svcomp/recursive/",
+				 "examples/svcomp/ssh-simplified/",
+				 "examples/svcomp/ssh/",
 
 			// problems with loop detector
 			// "examples/svcomp/loops/eureka_01_false-unreach-call.c",
@@ -94,9 +97,6 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 			// problems with unsupportedops
 //			"examples/svcomp/loops/sum01_true-unreach-call_true-termination.c",
 //			"examples/svcomp/loops/string_false-unreach-call.c",
-			"examples/svcomp/loops/terminator_01_false-unreach-call_false-termination.c",
-			"examples/svcomp/loops/linear_sea.ch_true-unreach-call.c",
-			
 	};
 
 	// @formatter:on
