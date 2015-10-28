@@ -422,18 +422,18 @@ public class TraceChecker {
 		m_SmtManager.startTraceCheck(this);
 	
 		m_TraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_SsaConstruction);
-		m_Nsb = new NestedSsaBuilder(m_Trace, m_SmtManager, m_NestedFormulas,
+		m_Nsb = new NestedSsaBuilder(m_Trace, m_TcSmtManager, m_NestedFormulas,
 				m_ModifiedGlobals, mLogger);
 		NestedFormulas<Term, Term> ssa = m_Nsb.getSsa();
 		m_TraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_SsaConstruction);
 	
 		m_TraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_SatisfiabilityAnalysis);
 		if (m_assertCodeBlocksIncrementally != AssertCodeBlockOrder.NOT_INCREMENTALLY) {
-			m_AAA = new AnnotateAndAsserterWithStmtOrderPrioritization(m_SmtManager, ssa,
+			m_AAA = new AnnotateAndAsserterWithStmtOrderPrioritization(m_TcSmtManager, ssa,
 					getAnnotateAndAsserterCodeBlocks(ssa), m_TraceCheckerBenchmarkGenerator,
 					m_assertCodeBlocksIncrementally, mLogger);
 		} else {
-			m_AAA = new AnnotateAndAsserter(m_SmtManager, ssa, getAnnotateAndAsserterCodeBlocks(ssa),
+			m_AAA = new AnnotateAndAsserter(m_TcSmtManager, ssa, getAnnotateAndAsserterCodeBlocks(ssa),
 					m_TraceCheckerBenchmarkGenerator, mLogger);
 			// Report the asserted code blocks
 //			m_TraceCheckerBenchmarkGenerator.reportnewAssertedCodeBlocks(m_Trace.length());
