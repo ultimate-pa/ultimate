@@ -126,10 +126,11 @@ public class Inliner implements IUnmanagedObserver {
 	private void inline() throws CancelToolchainException {
 		buildCallGraph();
 
-		GlobalScopeManager globalScopeManager = new GlobalScopeManager(mNonProcedureDeclarations);
+		GlobalScopeManager globalMgr = new GlobalScopeManager(mNonProcedureDeclarations);
+		InlinerStatistic inlinerStat = new InlinerStatistic(mCallGraph);
 		for (CallGraphNode proc : proceduresToBeProcessed()) {
 			if (proc.hasInlineFlags()) { // implies that the procedure is implemented
-				InlineVersionTransformer transformer = new InlineVersionTransformer(mServices, globalScopeManager);
+				InlineVersionTransformer transformer = new InlineVersionTransformer(mServices, globalMgr, inlinerStat);
 				mNewProceduresWithBody.put(proc.getId(), transformer.inlineCallsInside(proc));
 				mBacktranslator.addBacktranslation(transformer);
 			}

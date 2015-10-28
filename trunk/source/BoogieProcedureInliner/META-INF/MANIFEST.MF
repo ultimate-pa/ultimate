@@ -5,8 +5,9 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.boogie.procedureinliner
 Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.Activator
 Require-Bundle: Library-log4j,
+ Library-UltimateUtil,
  UltimateCore,
  BoogiePreprocessor,
- de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator
+ de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator 
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
