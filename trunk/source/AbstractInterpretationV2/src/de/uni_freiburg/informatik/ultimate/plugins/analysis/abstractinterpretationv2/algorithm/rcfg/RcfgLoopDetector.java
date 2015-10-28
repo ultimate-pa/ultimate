@@ -43,14 +43,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
  */
 public class RcfgLoopDetector implements ILoopDetector<CodeBlock> {
 
-	private Map<ProgramPoint, Map<RCFGEdge, RCFGEdge>> mLoops;
+	private final Map<ProgramPoint, Map<RCFGEdge, RCFGEdge>> mLoops;
 
-	public RcfgLoopDetector(RCFGLoopDetector loopDetector) {
+	public RcfgLoopDetector(final RCFGLoopDetector loopDetector) {
 		mLoops = loopDetector.getResult();
 	}
 
 	@Override
-	public CodeBlock getLoopExit(CodeBlock transition) {
+	public CodeBlock getLoopExit(final CodeBlock transition) {
 		assert transition != null;
 		final RCFGNode source = transition.getSource();
 		final Map<RCFGEdge, RCFGEdge> loops = mLoops.get(source);
@@ -64,5 +64,4 @@ public class RcfgLoopDetector implements ILoopDetector<CodeBlock> {
 		assert exit == null;
 		return null;
 	}
-
 }

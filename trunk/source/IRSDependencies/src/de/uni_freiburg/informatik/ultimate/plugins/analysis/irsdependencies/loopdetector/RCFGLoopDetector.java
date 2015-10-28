@@ -152,7 +152,7 @@ public class RCFGLoopDetector extends BaseObserver {
 				new RcfgWrapper(), forbiddenEdges);
 
 		List<RCFGEdge> path = walker.findPath();
-		if (path == null || path.isEmpty()) {
+		if (forbiddenEdges.isEmpty() && (path == null || path.isEmpty())) {
 			throw new RuntimeException(loopHead + " is not a valid loop head");
 		}
 
