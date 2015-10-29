@@ -108,13 +108,15 @@ public class Svcomp2016_Reach extends AbstractTraceAbstractionTestSuite {
 	
 	
 	private static final String[] m_CurrentBugs = {
-			"examples/svcomp/ntdrivers-simplified/cdaudio_simpl1_true-unreach-call_true-termination.cil.c",
-			"examples/svcomp/ntdrivers-simplified/diskperf_simpl1_true-unreach-call_true-termination.cil.c",
-			"examples/svcomp/ntdrivers-simplified/floppy_simpl3_true-unreach-call_true-termination.cil.c",
-			"examples/ntdrivers-simplified/floppy_simpl4_true-unreach-call_true-termination.cil.c",
-			"examples/seq-pthread/cs_dekker_true-unreach-call.i",
-			"examples/seq-pthread/cs_lamport_true-unreach-call.i",
-			"examples/svcomp/eca-rers2012/Problem16_label30_false-unreach-call.c",
+//			"examples/svcomp/ntdrivers-simplified/cdaudio_simpl1_true-unreach-call_true-termination.cil.c",
+//			"examples/svcomp/ntdrivers-simplified/diskperf_simpl1_true-unreach-call_true-termination.cil.c",
+//			"examples/svcomp/ntdrivers-simplified/floppy_simpl3_true-unreach-call_true-termination.cil.c",
+//			"examples/svcomp/ntdrivers-simplified/floppy_simpl4_true-unreach-call_true-termination.cil.c",
+//			"examples/svcomp/seq-pthread/cs_dekker_true-unreach-call.i",
+//			"examples/svcomp/seq-pthread/cs_lamport_true-unreach-call.i",
+//			"examples/svcomp/svcomp/eca-rers2012/Problem16_label30_false-unreach-call.c",
+			"examples/svcomp/seq-pthread/cs_dekker_true-unreach-call.i",
+			"examples/svcomp/seq-pthread/cs_lamport_true-unreach-call.i",
 		};
 
 	/**
