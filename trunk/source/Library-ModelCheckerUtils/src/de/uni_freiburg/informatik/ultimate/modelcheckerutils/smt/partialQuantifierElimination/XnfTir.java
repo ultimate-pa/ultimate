@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Bin
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
  * Transitive inequality resolution (TIR) for terms in XNF.
@@ -352,6 +353,10 @@ public class XnfTir extends XnfPartialQuantifierElimination {
 					}
 				}
 				resultXJuncts.add(PartialQuantifierElimination.composeXjunctsInner(m_Script, m_quantifier, resultAtoms.toArray(new Term[resultAtoms.size()])));
+				if (!m_Services.getProgressMonitorService().continueProcessing()) {
+					throw new ToolchainCanceledException(this.getClass(),
+							"TIR is building " + Math.pow(2,m_antiDer.size()) + " xjuncts");
+				}
 			}
 			return PartialQuantifierElimination.composeXjunctsOuter(m_Script, m_quantifier, resultXJuncts.toArray(new Term[resultXJuncts.size()]));
 		}
