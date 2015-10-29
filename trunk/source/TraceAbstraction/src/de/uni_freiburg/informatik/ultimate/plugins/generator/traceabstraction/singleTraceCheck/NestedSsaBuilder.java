@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -156,10 +157,20 @@ public class NestedSsaBuilder {
 	 * positions of pending contexts are -2,-3,-4,...
 	 */
 	protected final Map<Integer, Integer> m_PendingContext2PendingReturn = new HashMap<Integer, Integer>();
+	
+	/**
+	 * True iff the NestedSsaBuilder has to use a different Script than the
+	 * Script that was used to construct the Term that occur in the 
+	 * NestedFormulas that are the input for the SSA construction.
+	 */
+	private final boolean m_TransferToScriptNeeded;
+	private final TermTransferrer m_TermTransferrer;
+	
 
 	public NestedSsaBuilder(NestedWord<CodeBlock> trace, SmtManager smtManager,
 			NestedFormulas<TransFormula, IPredicate> nestedTransFormulas, 
-			ModifiableGlobalVariableManager globModVarManager, Logger logger) {
+			ModifiableGlobalVariableManager globModVarManager, Logger logger,
+			boolean transferToScriptNeeded) {
 		mLogger = logger;
 		m_Script = smtManager.getScript();
 		m_SmtManager = smtManager;
@@ -168,6 +179,12 @@ public class NestedSsaBuilder {
 		m_Ssa = new ModifiableNestedFormulas<Term, Term>(trace, new TreeMap<Integer, Term>());
 		m_Variable2Constant = new ModifiableNestedFormulas<Map<TermVariable, Term>, Map<TermVariable, Term>>(trace,
 				new TreeMap<Integer, Map<TermVariable, Term>>());
+		m_TransferToScriptNeeded = transferToScriptNeeded;
+		if (m_TransferToScriptNeeded) {
+			m_TermTransferrer = new TermTransferrer(m_Script);
+		} else {
+			m_TermTransferrer = null;
+		}
 		buildSSA();
 	}
 
@@ -376,18 +393,18 @@ public class NestedSsaBuilder {
 		public VariableVersioneer(TransFormula tf) {
 			m_TF = tf;
 			m_Pred = null;
-			m_formula = tf.getFormula();
+			m_formula = transferToCurrentScriptIfNecessary(tf.getFormula());
 		}
 
 		public VariableVersioneer(IPredicate pred) {
 			m_TF = null;
 			m_Pred = pred;
-			m_formula = pred.getFormula();
+			m_formula = transferToCurrentScriptIfNecessary(pred.getFormula());
 		}
 
 		public void versionInVars() {
 			for (BoogieVar bv : m_TF.getInVars().keySet()) {
-				TermVariable tv = m_TF.getInVars().get(bv);
+				TermVariable tv = transferToCurrentScriptIfNecessary(m_TF.getInVars().get(bv));
 				Term versioneered = getCurrentVarVersion(bv);
 				m_Constants2BoogieVar.put(versioneered, bv);
 				m_SubstitutionMapping.put(tv, versioneered);
@@ -396,7 +413,7 @@ public class NestedSsaBuilder {
 
 		public void versionAssignedVars(int currentPos) {
 			for (BoogieVar bv : m_TF.getAssignedVars()) {
-				TermVariable tv = m_TF.getOutVars().get(bv);
+				TermVariable tv = transferToCurrentScriptIfNecessary(m_TF.getOutVars().get(bv));
 				Term versioneered = setCurrentVarVersion(bv, currentPos);
 				m_Constants2BoogieVar.put(versioneered, bv);
 				m_SubstitutionMapping.put(tv, versioneered);
@@ -420,7 +437,7 @@ public class NestedSsaBuilder {
 
 		public void versionPredicate() {
 			for (BoogieVar bv : m_Pred.getVars()) {
-				TermVariable tv = bv.getTermVariable();
+				TermVariable tv = transferToCurrentScriptIfNecessary(bv.getTermVariable());
 				Term versioneered = getCurrentVarVersion(bv);
 				m_Constants2BoogieVar.put(versioneered, bv);
 				m_SubstitutionMapping.put(tv, versioneered);
@@ -430,6 +447,9 @@ public class NestedSsaBuilder {
 		public Term getVersioneeredTerm() {
 			Substitution subst = new Substitution(m_SubstitutionMapping, m_Script);
 			Term result = subst.transform(m_formula);
+			if (true) {
+				result = new TermTransferrer(m_Script).transform(result);
+			}
 			assert result.getFreeVars().length == 0 : "free vars in versioneered term";
 			return result;
 		}
@@ -522,6 +542,7 @@ public class NestedSsaBuilder {
 		}
 		assert !index2constant.containsKey(index) : "version was already constructed";
 		Term constant = PredicateUtils.getIndexedConstant(bv, index, m_IndexedConstants, m_Script);
+		constant = transferToCurrentScriptIfNecessary(constant);
 		index2constant.put(index, constant);
 		return constant;
 	}
@@ -554,5 +575,21 @@ public class NestedSsaBuilder {
 			isModified = oldVarAssignment.getInVars().keySet().contains(bv);
 		}
 		return isModified;
+	}
+	
+	private Term transferToCurrentScriptIfNecessary(Term term) {
+		if (m_TransferToScriptNeeded) {
+			return m_TermTransferrer.transform(term);
+		} else {
+			return term;
+		}
+	}
+	
+	private TermVariable transferToCurrentScriptIfNecessary(TermVariable tv) {
+		if (m_TransferToScriptNeeded) {
+			return (TermVariable) m_TermTransferrer.transform(tv);
+		} else {
+			return tv;
+		}
 	}
 }

@@ -420,10 +420,10 @@ public class TraceChecker {
 	protected LBool checkTrace() {
 		LBool isSafe;
 		m_SmtManager.startTraceCheck(this);
-	
+		boolean transferToDifferentScript = (m_TcSmtManager != m_SmtManager);
 		m_TraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_SsaConstruction);
 		m_Nsb = new NestedSsaBuilder(m_Trace, m_TcSmtManager, m_NestedFormulas,
-				m_ModifiedGlobals, mLogger);
+				m_ModifiedGlobals, mLogger, transferToDifferentScript);
 		NestedFormulas<Term, Term> ssa = m_Nsb.getSsa();
 		m_TraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_SsaConstruction);
 	
