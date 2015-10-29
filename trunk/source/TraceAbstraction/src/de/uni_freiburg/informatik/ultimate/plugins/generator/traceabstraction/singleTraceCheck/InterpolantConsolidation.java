@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -41,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.InCaReCounter;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -49,6 +52,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
@@ -102,8 +111,10 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	private final Logger m_Logger;
 
 	protected final InterpolantConsolidationBenchmarkGenerator m_InterpolantConsolidationBenchmarkGenerator;
-	private boolean m_printDebugInformation = false;
+	private boolean m_printDebugInformation = !false;
+	private boolean m_printAutomataOfDifference = !false;
 	private boolean m_InterpolantsConsolidationSuccessful = false;
+	private boolean useConsolidationInNonEmptyCase = false;
 	
 	public InterpolantConsolidation(IPredicate precondition,
 			IPredicate postcondition,
@@ -138,8 +149,6 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		// Start the stopwatch to measure the time we need for interpolant consolidation
 		m_InterpolantConsolidationBenchmarkGenerator.start(InterpolantConsolidationBenchmarkType.s_TimeOfConsolidation);
 		
-		int disjunctionsGreaterOneCounter = 0;
-		
 		// 1. Build the path automaton for the given trace m_Trace
 		PathProgramAutomatonConstructor ppc = new PathProgramAutomatonConstructor();
 		INestedWordAutomaton<CodeBlock, IPredicate> pathprogramautomaton = ppc.constructAutomatonFromGivenPath(m_Trace, m_Services, m_SmtManager, m_TaPrefs);
@@ -150,7 +159,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		
 		
 		// 2. Build the finite automaton (former interpolant path automaton) for the given Floyd-Hoare annotation
-		NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton = constructInterpolantAutomaton(m_Trace, m_SmtManager, m_TaPrefs, m_Services, m_InterpolatingTraceChecker); // siehe BasicCegarLoop
+		NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton = constructInterpolantAutomaton(m_Trace, m_SmtManager, m_TaPrefs, m_Services, m_InterpolatingTraceChecker); 
 		// 3. Determinize the finite automaton from step 2.
 		DeterministicInterpolantAutomaton interpolantAutomatonDeterminized = new DeterministicInterpolantAutomaton(
 				m_Services, m_SmtManager, m_ModifiedGlobals, htc, pathprogramautomaton, interpolantAutomaton,
@@ -159,7 +168,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 				); 
 		
 		 
-	PredicateFactoryForInterpolantConsolidation pfconsol = new PredicateFactoryForInterpolantConsolidation(m_SmtManager, m_TaPrefs);
+		PredicateFactoryForInterpolantConsolidation pfconsol = new PredicateFactoryForInterpolantConsolidation(m_SmtManager, m_TaPrefs);
 		
 		PredicateFactory predicateFactoryInterpolantAutomata = new PredicateFactory(m_SmtManager, m_TaPrefs);
 		
@@ -174,17 +183,31 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 					(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) pathprogramautomaton,
 					interpolantAutomatonDeterminized, psd2,
 					pfconsol /* PredicateFactory for Refinement */, false /*explointSigmaStarConcatOfIA*/ );
-			
-//			INestedWordAutomatonOldApi<CodeBlock, IPredicate> testAutomaton = diff.getResult();
+			if (m_printAutomataOfDifference) {
+				AutomatonDefinitionPrinter<CodeBlock, IPredicate> pathAutomatonPrinter = new AutomatonDefinitionPrinter<>(m_Services, "PathAutomaton", Format.ATS, pathprogramautomaton);
+				AutomatonDefinitionPrinter<CodeBlock, IPredicate> interpolantAutomatonPrinter = new AutomatonDefinitionPrinter<>(m_Services, "InterpolantAutomatonNonDet", Format.ATS, interpolantAutomaton);
+				AutomatonDefinitionPrinter<CodeBlock, IPredicate> interpolantAutomatonPrinterDet = new AutomatonDefinitionPrinter<>(m_Services, "InterpolantAutomatonDet", Format.ATS, interpolantAutomatonDeterminized);
+				INestedWordAutomatonOldApi<CodeBlock, IPredicate> diffAutomaton = diff.getResult();
+				AutomatonDefinitionPrinter<CodeBlock, IPredicate> diffAutomatonPrinter = new AutomatonDefinitionPrinter<>(m_Services, "DifferenceAutomaton", Format.ATS, diffAutomaton);
+				m_Logger.debug(pathAutomatonPrinter.getDefinitionAsString());
+				m_Logger.debug(interpolantAutomatonPrinter.getDefinitionAsString());
+				m_Logger.debug(interpolantAutomatonPrinterDet.getDefinitionAsString());
+				m_Logger.debug(diffAutomatonPrinter.getDefinitionAsString());
+			}
 			htc.releaseLock();
 			// 5. Check if difference is empty
 			IsEmpty<CodeBlock, IPredicate> empty = new IsEmpty<CodeBlock, IPredicate>(m_Services, diff.getResult());
 			if (!empty.getResult()) {
-				// If the difference is not empty, we are not allowed to consolidate interpolants (at least by now) 
-				m_ConsolidatedInterpolants = m_InterpolatingTraceChecker.getInterpolants();
-				// Stop the time for interpolant consolidation
-				m_InterpolantConsolidationBenchmarkGenerator.stop(InterpolantConsolidationBenchmarkType.s_TimeOfConsolidation);
-				return;
+
+				Set<IPredicate> badStates = getDiffAutomatonBadStates(diff.getResult());
+				pfconsol.removeBadPredicates(badStates);
+				if (!useConsolidationInNonEmptyCase) {
+					m_ConsolidatedInterpolants = m_InterpolatingTraceChecker.getInterpolants();
+					// Stop the time for interpolant consolidation
+					m_InterpolantConsolidationBenchmarkGenerator.stop(InterpolantConsolidationBenchmarkType.s_TimeOfConsolidation);
+					return;
+				}
+				
 			}
 			
 		} catch (AutomataLibraryException e) {
@@ -197,58 +220,17 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		// 6. Interpolant Consolidation step
 		List<IPredicate> pathPositionsToLocations = ppc.getPositionsToStates();
 		Map<IPredicate, Set<IPredicate>> locationsToSetOfPredicates = pfconsol.getLocationsToSetOfPredicates();
-		Map<IPredicate, IPredicate> locationsToConsolidatedInterpolants = new HashMap<>();
+		
 		Set<IPredicate> interpolantsBeforeConsolidation = interpolantAutomaton.getStates();
 		Set<IPredicate> interpolantsAfterConsolidation = new HashSet<IPredicate>();
-		
-		int newlyCreatedInterpolants = 0;
-		int interpolantsDropped = interpolantsBeforeConsolidation.size();
+
 		m_InterpolantConsolidationBenchmarkGenerator.incrementDiffAutomatonEmpty_Counter();
 		
 		m_ConsolidatedInterpolants = new IPredicate[m_Trace.length() - 1];
-		for (int i = 0; i < m_ConsolidatedInterpolants.length; i++) {
-			IPredicate loc = pathPositionsToLocations.get(i+1);
-			if (!locationsToConsolidatedInterpolants.containsKey(loc)) {
-				// Compute the disjunction of the predicates for location i
-				Set<IPredicate> predicatesForThisLocation = locationsToSetOfPredicates.get(loc);
-				
-				
-				assert (predicatesForThisLocation != null) : "The set of predicates for the current location is null!";
-				
-				IPredicate[] predicatesForThisLocationAsArray = predicatesForThisLocation.toArray(new IPredicate[predicatesForThisLocation.size()]);
-
-
-				if (predicatesForThisLocation.size() > 1) {
-					// Update benchmarks
-					disjunctionsGreaterOneCounter++;
-					
-					TermVarsProc predicatesForThisLocationConsolidated = m_SmtManager.or(predicatesForThisLocationAsArray);
-					// Store the consolidated (the disjunction of the predicates for the current location)
-					m_ConsolidatedInterpolants[i] = m_PredicateUnifier.getOrConstructPredicate(predicatesForThisLocationConsolidated);
-					
-					if (!interpolantsBeforeConsolidation.contains(m_ConsolidatedInterpolants[i])) {
-						// If the consolidated interpolant is not contained in the interpolants before consolidation, then
-						// the consolidated interpolant is new.
-						newlyCreatedInterpolants++;
-					}
-					
-				} else {
-					m_ConsolidatedInterpolants[i] = predicatesForThisLocationAsArray[0];
-				}
-				if (interpolantsBeforeConsolidation.contains(m_ConsolidatedInterpolants[i]) && 
-						!interpolantsAfterConsolidation.contains(m_ConsolidatedInterpolants[i]))  {
-					// If current interpolant is contained in the interpolants before consolidation, then the number of
-					// interpolants dropped decreases.
-					interpolantsDropped--;
-					interpolantsAfterConsolidation.add(m_ConsolidatedInterpolants[i]);
-				}
-				
-				locationsToConsolidatedInterpolants.put(loc, m_ConsolidatedInterpolants[i]);
-			} else {
-				m_ConsolidatedInterpolants[i] = locationsToConsolidatedInterpolants.get(loc);
-			}
-			
-		}
+		
+		computeConsolidatedInterpolants(pathPositionsToLocations, locationsToSetOfPredicates, interpolantsBeforeConsolidation, 
+				interpolantsAfterConsolidation, htc);
+		
 		assert TraceCheckerUtils.checkInterpolantsInductivityForward(m_ConsolidatedInterpolants, 
 				m_Trace, m_Precondition, m_Postcondition, m_PendingContexts, "CP", 
 				m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in consolidated interpolants";
@@ -260,15 +242,125 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			m_Logger.debug("Interpolants after consolidation:");
 			printArray(interpolantsAfterConsolidation.toArray(new IPredicate[interpolantsAfterConsolidation.size()]));
 		}
-		int differenceOfInterpolantsBeforeAfter = interpolantsBeforeConsolidation.size() - interpolantsAfterConsolidation.size();
-		
 	
+	}
+	
+	
+	private Set<IPredicate> getDiffAutomatonBadStates(INestedWordAutomaton<CodeBlock, IPredicate> diffAutomaton) {
+		LinkedList<IPredicate> successors = new LinkedList<IPredicate>();
+		Set<IPredicate> badStates = new HashSet<IPredicate>();
+		Set<IPredicate> allSuccessors = new HashSet<IPredicate>();
+		successors.addAll(diffAutomaton.getFinalStates());
+		allSuccessors.addAll(diffAutomaton.getFinalStates());
+		badStates.addAll(diffAutomaton.getFinalStates());
+		
+		while(!successors.isEmpty()) {
+			IPredicate currentState = successors.removeFirst();
+			Set<IPredicate> predecessors = getPredecessorsOfState(diffAutomaton, currentState);
+			for (IPredicate p : predecessors) {
+				if (!diffAutomaton.isInitial(p) && !p.equals(currentState)) {
+					Set<IPredicate> successorsOfP = getSuccessors(diffAutomaton, p);
+					if (allSuccessors.containsAll(successorsOfP)) {
+						badStates.add(p);
+						successors.addLast(p);
+						allSuccessors.add(p);
+					}
+				}
+			}
+		}
+		return badStates;
+	}
+	
+	private Set<IPredicate> getSuccessors(INestedWordAutomaton<CodeBlock, IPredicate> diffAutomaton, IPredicate p) {
+		Set<IPredicate> successors = new HashSet<IPredicate>();
+		for (OutgoingInternalTransition<CodeBlock, IPredicate> it: diffAutomaton.internalSuccessors(p)) {
+			successors.add(it.getSucc());
+		}
+		
+		for (OutgoingCallTransition<CodeBlock, IPredicate> ict: diffAutomaton.callSuccessors(p)) {
+			successors.add(ict.getSucc());
+		}
+		
+		for (OutgoingReturnTransition<CodeBlock, IPredicate> irt: diffAutomaton.returnSuccessors(p)) {
+			successors.add(irt.getSucc());
+		}
+		return successors;
+	}
+
+	private Set<IPredicate> getPredecessorsOfState(INestedWordAutomaton<CodeBlock, IPredicate> diffAutomaton,
+			IPredicate currentState) {
+		Set<IPredicate> preds = new HashSet<IPredicate>();
+		for (IncomingInternalTransition<CodeBlock, IPredicate> it: diffAutomaton.internalPredecessors(currentState)) {
+			preds.add(it.getPred());
+		}
+		for (IncomingCallTransition<CodeBlock, IPredicate> ict: diffAutomaton.callPredecessors(currentState)) {
+			preds.add(ict.getPred());
+		}
+		for (IncomingReturnTransition<CodeBlock, IPredicate> irt: diffAutomaton.returnPredecessors(currentState)) {
+			preds.add(irt.getLinPred());
+		}
+		return preds;
+	}
+
+	private void computeConsolidatedInterpolants(List<IPredicate> pathPositionsToLocations, 
+			Map<IPredicate, Set<IPredicate>> locationsToSetOfPredicates, Set<IPredicate> interpolantsBeforeConsolidation, 
+			Set<IPredicate> interpolantsAfterConsolidation, IHoareTripleChecker htc) {
+		Map<IPredicate, IPredicate> locationsToConsolidatedInterpolants = new HashMap<>();
+		
+		int disjunctionsGreaterOneCounter = 0;
+		int newlyCreatedInterpolants = 0;
+		// Init it with max. number of interpolants and decrement it every time you encounter an interpolant that
+		// has existed before consolidation.
+		int interpolantsDropped = m_Trace.length() - 1; 
+		for (int i = 0; i < m_ConsolidatedInterpolants.length; i++) {
+			IPredicate loc = pathPositionsToLocations.get(i+1);
+			if (!locationsToConsolidatedInterpolants.containsKey(loc)) {
+				// Compute the disjunction of the predicates for location i
+				Set<IPredicate> predicatesForThisLocation = locationsToSetOfPredicates.get(loc);
+				
+				
+				assert (predicatesForThisLocation != null) : "The set of predicates for the current location is null!";
+				
+				IPredicate[] predicatesForThisLocationAsArray = predicatesForThisLocation.toArray(new IPredicate[predicatesForThisLocation.size()]);
+
+				if (predicatesForThisLocation.size() > 1) {
+					
+					// Case: consolidation is successful. We have at least 2 predicates which are connected by disjunction.
+					// Update benchmarks
+					disjunctionsGreaterOneCounter++;
+					
+					TermVarsProc predicatesForThisLocationConsolidated = m_SmtManager.or(predicatesForThisLocationAsArray);
+					// Store the consolidated (the disjunction of the predicates for the current location)
+					m_ConsolidatedInterpolants[i] = m_PredicateUnifier.getOrConstructPredicate(predicatesForThisLocationConsolidated);
+					
+					if (!interpolantsBeforeConsolidation.contains(m_ConsolidatedInterpolants[i])) {
+						
+						// If the consolidated interpolant is not contained in the interpolants before consolidation, then
+						// the consolidated interpolant is new.
+						newlyCreatedInterpolants++;
+					}
+					
+				} else {
+					m_ConsolidatedInterpolants[i] = predicatesForThisLocationAsArray[0];
+				}
+				if (interpolantsBeforeConsolidation.contains(m_ConsolidatedInterpolants[i]))  {
+					// If current interpolant is contained in the interpolants before consolidation, then the number of
+					// interpolants dropped decreases.
+					interpolantsDropped--;
+				}
+				interpolantsAfterConsolidation.add(m_ConsolidatedInterpolants[i]);
+				locationsToConsolidatedInterpolants.put(loc, m_ConsolidatedInterpolants[i]);
+			} else {
+				m_ConsolidatedInterpolants[i] = locationsToConsolidatedInterpolants.get(loc);
+			}
+			
+		}
+		int differenceOfInterpolantsBeforeAfter = interpolantsBeforeConsolidation.size() - interpolantsAfterConsolidation.size();
 		m_InterpolantConsolidationBenchmarkGenerator.setInterpolantConsolidationData(disjunctionsGreaterOneCounter, newlyCreatedInterpolants, interpolantsDropped, differenceOfInterpolantsBeforeAfter,
-													 htc.getEdgeCheckerBenchmark());
+				 htc.getEdgeCheckerBenchmark());
 		// Stop the time for interpolant consolidation
 		m_InterpolantConsolidationBenchmarkGenerator.stop(InterpolantConsolidationBenchmarkType.s_TimeOfConsolidation);
 	}
-	
 	
 	private void printArray(IPredicate[] interpolants) {
 		for (int i = 0; i < interpolants.length; i++) {
