@@ -120,7 +120,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<Integer>(
 						LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE, 16, PreferenceType.Integer),
 				new UltimatePreferenceItem<Integer>(
-						LABEL_EXPLICIT_TYPESIZE_POINTER, 4,	PreferenceType.Integer),
+						LABEL_EXPLICIT_TYPESIZE_POINTER, 8,	PreferenceType.Integer),
 				// more exotic types
 //				new UltimatePreferenceItem<Integer>(
 //						LABEL_EXPLICIT_TYPESIZE_CHAR16, 2, PreferenceType.Integer),
