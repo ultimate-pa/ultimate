@@ -271,7 +271,7 @@ public class AbstractInterpretationPreferenceInitializer extends
 
 	@Override
 	protected String getPlugID() {
-		return AIActivator.s_PLUGIN_ID;
+		return AIActivator.PLUGIN_ID;
 	}
 
 	@Override

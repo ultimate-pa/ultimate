@@ -115,7 +115,10 @@ import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
  * @author Christopher Dillo
  * @author Fabian Schillinger
  * 
+ * @deprecated This is very untested and does not work right. It will be
+ *             replaced in AIv2.
  */
+@Deprecated
 @SuppressWarnings({ "unused" })
 public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 
@@ -458,7 +461,8 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 	 * @param b2smtst
 	 * @param script
 	 */
-	private void extractTerms(INestedWordAutomaton<CodeBlock, Object> nwa, Boogie2SmtSymbolTable b2smtst, Script script) {
+	private void extractTerms(INestedWordAutomaton<CodeBlock, Object> nwa, Boogie2SmtSymbolTable b2smtst,
+			Script script) {
 		mLogger.debug("Extracting terms...");
 		for (Object currentState : nwa.getStates()) {
 			List<AbstractState> abstractStatesAtNode = mAnnotations.get(currentState);
@@ -579,8 +583,8 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 				m_callStatementsAtSummaries.clear();
 
 				List<AbstractState> statesAtNode = m_states.get(currentNWAState);
-				mLogger.debug(String.format("---- PROCESSING NODE %S %S----", currentNWAState, currentNWAState
-						.getClass().getSimpleName()));
+				mLogger.debug(String.format("---- PROCESSING NODE %S %S----", currentNWAState,
+						currentNWAState.getClass().getSimpleName()));
 				// process all unprocessed states at the node
 				boolean hasUnprocessed = true;
 				while (hasUnprocessed && m_continueProcessing) {
@@ -642,8 +646,6 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 		}
 		return;
 	}
-
-	
 
 	@SuppressWarnings("unchecked")
 	protected void visit(Object transition) {
@@ -939,8 +941,7 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 		m_widening_autoNumbers = prefs
 				.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_WIDENING_AUTONUMBERS);
 
-		m_contractAnnotations = prefs
-				.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_CODE_ANNOTATION);
+		m_contractAnnotations = prefs.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_CODE_ANNOTATION);
 		m_generateStateAnnotations = prefs
 				.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_STATE_ANNOTATIONS);
 		m_stateChangeLogConsole = prefs.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_LOGSTATES_CONSOLE);
@@ -955,34 +956,34 @@ public class AbstractInterpreterTA extends RCFGEdgeVisitor {
 				.equals(AbstractInterpretationPreferenceInitializer.OPTION_STOPAFTER_ALLERRORS));
 
 		m_intDomainID = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_INTDOMAIN);
-		m_intWideningOpName = prefs.getString(String.format(
-				AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP, m_intDomainID));
-		m_intMergeOpName = prefs.getString(String.format(AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP,
-				m_intDomainID));
+		m_intWideningOpName = prefs
+				.getString(String.format(AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP, m_intDomainID));
+		m_intMergeOpName = prefs
+				.getString(String.format(AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP, m_intDomainID));
 
 		m_realDomainID = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_REALDOMAIN);
-		m_realWideningOpName = prefs.getString(String.format(
-				AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP, m_realDomainID));
-		m_realMergeOpName = prefs.getString(String.format(AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP,
-				m_realDomainID));
+		m_realWideningOpName = prefs
+				.getString(String.format(AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP, m_realDomainID));
+		m_realMergeOpName = prefs
+				.getString(String.format(AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP, m_realDomainID));
 
 		m_boolDomainID = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_BOOLDOMAIN);
-		m_boolWideningOpName = prefs.getString(String.format(
-				AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP, m_boolDomainID));
-		m_boolMergeOpName = prefs.getString(String.format(AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP,
-				m_boolDomainID));
+		m_boolWideningOpName = prefs
+				.getString(String.format(AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP, m_boolDomainID));
+		m_boolMergeOpName = prefs
+				.getString(String.format(AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP, m_boolDomainID));
 
 		m_bitVectorDomainID = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_BITVECTORDOMAIN);
-		m_bitVectorWideningOpName = prefs.getString(String.format(
-				AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP, m_bitVectorDomainID));
-		m_bitVectorMergeOpName = prefs.getString(String.format(
-				AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP, m_bitVectorDomainID));
+		m_bitVectorWideningOpName = prefs.getString(
+				String.format(AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP, m_bitVectorDomainID));
+		m_bitVectorMergeOpName = prefs.getString(
+				String.format(AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP, m_bitVectorDomainID));
 
 		m_stringDomainID = prefs.getString(AbstractInterpretationPreferenceInitializer.LABEL_STRINGDOMAIN);
-		m_stringWideningOpName = prefs.getString(String.format(
-				AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP, m_stringDomainID));
-		m_stringMergeOpName = prefs.getString(String.format(AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP,
-				m_stringDomainID));
+		m_stringWideningOpName = prefs.getString(
+				String.format(AbstractInterpretationPreferenceInitializer.LABEL_WIDENINGOP, m_stringDomainID));
+		m_stringMergeOpName = prefs
+				.getString(String.format(AbstractInterpretationPreferenceInitializer.LABEL_MERGEOP, m_stringDomainID));
 	}
 
 	/**

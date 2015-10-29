@@ -1,6 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.polytopedomain;
 
 import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.AbstractVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.TypedAbstractVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractState;
@@ -11,9 +14,15 @@ import parma_polyhedra_library.Linear_Expression;
 import parma_polyhedra_library.NNC_Polyhedron;
 import parma_polyhedra_library.Variable;
 
+/**
+ * 
+ * @author Jan Hättig
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class PolytopeState implements IAbstractState<PolytopeState> {
-	
-	private static final long MAX_MEMORY = Runtime.getRuntime().maxMemory();
+
+	private static final long MAX_MEMORY = (long) (Runtime.getRuntime().maxMemory() * 0.2);
 
 	/**
 	 * Logger for debug output
@@ -50,66 +59,33 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 		mIsBottom = false;
 		mPolyhedron = new NNC_Polyhedron(0, Degenerate_Element.UNIVERSE);
 		mVariableTranslation = new VariableTranslation();
-
 		mUID = sNextUID++;
 	}
-	
+
 	private PolytopeState(PolytopeState old) {
 		mLogger = old.mLogger;
 		mIsBottom = old.mIsBottom;
-		
 		mPolyhedron = new NNC_Polyhedron(old.mPolyhedron);
 		mVariableTranslation = old.mVariableTranslation;
-
 		mUID = sNextUID++;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractState#hasVariable(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .AbstractVariable)
-	 */
 	@Override
 	public boolean hasVariable(AbstractVariable variable) {
 		return mVariableTranslation.getVariables().containsKey(variable);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractState#declareVariable(de
-	 * .uni_freiburg.informatik.
-	 * ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.TypedAbstractVariable)
-	 */
 	@Override
 	public void declareVariable(TypedAbstractVariable variable) {
 		if (variable.getDeclaration() == null && variable.getType() == null) {
 			throw new RuntimeException();
 		}
-//		Variable x = 
 		mVariableTranslation.addVariable(variable);
 		updateDimensions();
 		// mLogger.debug("Declare variable: " + variable.toString() +
 		// " [value: " + x.toString() + "]");
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractState#getTypedVariable(de
-	 * .uni_freiburg.informatik
-	 * .ultimate.plugins.analysis.abstractinterpretationMk2.AbstractVariable)
-	 */
 	public TypedAbstractVariable getTypedVariable(AbstractVariable variable) {
 		for (TypedAbstractVariable tav : mVariableTranslation.getVariables().keySet()) {
 			if (tav.equals(variable)) {
@@ -119,16 +95,6 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractState#removeVariable(de.
-	 * uni_freiburg.informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.AbstractVariable)
-	 */
 	@Override
 	public void removeVariable(AbstractVariable variable) {
 		updateDimensions();
@@ -225,18 +191,8 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 		mPolyhedron.add_constraint(constraint);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractState#isSuper(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractState)
-	 */
 	@Override
-	public boolean isSuperOrEqual(IAbstractState<PolytopeState> state) {
+	public boolean isSuperOrEqual(IAbstractState<?> state) {
 		if (state.isBottom()) {
 			return true;
 		}
@@ -245,38 +201,24 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 			return false;
 		}
 
-		PolytopeState pState = state.getConcrete();
+		if (!(state instanceof PolytopeState)) {
+			return false;
+		}
 
+		final PolytopeState pState = (PolytopeState) state;
 		synchroniseDimensions(pState);
 
 		return mPolyhedron.contains(pState.mPolyhedron);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.IAbstractState#copy()
-	 */
 	@Override
 	public PolytopeState copy() {
-//		PolytopeState copy = new PolytopeState(mLogger);
-//		copy.mIsBottom = mIsBottom;
-//		copy.mPolyhedron = new NNC_Polyhedron(mPolyhedron);
-//		copy.mVariableTranslation = mVariableTranslation;
-//		return copy;
-		if (mPolyhedron.external_memory_in_bytes() > MAX_MEMORY * 0.2) {
+		if (mPolyhedron.external_memory_in_bytes() > MAX_MEMORY) {
 			throw new OutOfMemoryError("Not enough heap space available to represent the polyhedron.");
 		}
 		return new PolytopeState(this);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.IAbstractState#isBottom()
-	 */
 	@Override
 	public boolean isBottom() {
 		if (mIsBottom || mPolyhedron.is_empty()) {
@@ -294,7 +236,7 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 	}
 
 	/**
-	 * Checkse whether this polytope is the universal poytope (no constraints)
+	 * Checks whether this polytope is the universal polytope (no constraints)
 	 * 
 	 * @return
 	 */
@@ -302,22 +244,11 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 		return mPolyhedron.is_universe();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.IAbstractState#getConcrete()
-	 */
 	@Override
 	public PolytopeState getConcrete() {
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		String output = "[UID_" + mUID + " ";
@@ -349,4 +280,11 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 		mVariableTranslation = variableTranslation;
 	}
 
+	@Override
+	public Term getTerm(Script script, Boogie2SMT bpl2smt) {
+		// for(Constraint con : mPolyhedron.constraints()){
+		// con.
+		// }
+		throw new UnsupportedOperationException();
+	}
 }

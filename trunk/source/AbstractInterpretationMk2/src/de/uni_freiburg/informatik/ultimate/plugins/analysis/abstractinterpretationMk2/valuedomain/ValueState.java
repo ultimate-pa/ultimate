@@ -6,23 +6,27 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.AbstractVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.TypedAbstractVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.*;
 
+/**
+ * @author Jan Hättig
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class ValueState implements IAbstractState<ValueState> {
 	private final ValueDomain mDomain;
-	private final HashMap<TypedAbstractVariable, IAbstractValue<?>> mMapping;
-
+	private final Map<TypedAbstractVariable, IAbstractValue<?>> mMapping;
 	private boolean mIsBottom;
-
-	// private boolean mIsTop;
 
 	public ValueState(ValueDomain domain, boolean isBottom) {
 		mDomain = domain;
 		mMapping = new HashMap<TypedAbstractVariable, IAbstractValue<?>>();
 		mIsBottom = isBottom;
-		// mIsTop = isTop;
 	}
 
 	public Set<Entry<TypedAbstractVariable, IAbstractValue<?>>> getEntries() {
@@ -30,19 +34,27 @@ public class ValueState implements IAbstractState<ValueState> {
 	}
 
 	@Override
-	public boolean isSuperOrEqual(IAbstractState<ValueState> other) {
+	public boolean isSuperOrEqual(IAbstractState<?> other) {
+		if (other.isBottom()) {
+			return true;
+		}
+
 		if (mIsBottom) {
+			return false;
+		}
+		
+		if(!(other instanceof ValueState)){
 			return false;
 		}
 
 		ValueState otherState = (ValueState) other;
 		Set<TypedAbstractVariable> otherKeys = otherState.mMapping.keySet();
 		for (AbstractVariable var : otherKeys) {
-			IAbstractValue thisValue = mMapping.get(var);
+			IAbstractValue<?> thisValue = mMapping.get(var);
 			if (thisValue == null) {
 				return false;
 			}
-			IAbstractValue otherValue = otherState.mMapping.get(var);
+			IAbstractValue<?> otherValue = otherState.mMapping.get(var);
 			if (otherValue != null && !thisValue.isSuperOrEqual(otherValue)) {
 				return false;
 			}
@@ -55,16 +67,6 @@ public class ValueState implements IAbstractState<ValueState> {
 		return mMapping.containsKey(variable);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractState#declareVariable(de
-	 * .uni_freiburg.informatik.
-	 * ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .TypedAbstractVariable)
-	 */
 	@Override
 	public void declareVariable(TypedAbstractVariable variable) {
 		if (variable.getDeclaration() == null && variable.getType() == null) {
@@ -79,15 +81,6 @@ public class ValueState implements IAbstractState<ValueState> {
 				mDomain.getTopBottomValueForType(variable.getType(), true));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractState#getTypedVariable(de
-	 * .uni_freiburg.informatik
-	 * .ultimate.plugins.analysis.abstractinterpretationMk2.AbstractVariable)
-	 */
 	public TypedAbstractVariable getTypedVariable(AbstractVariable variable) {
 		for (TypedAbstractVariable tav : mMapping.keySet()) {
 			if (tav.equals(variable)) {
@@ -97,15 +90,6 @@ public class ValueState implements IAbstractState<ValueState> {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractState#removeVariable(de.
-	 * uni_freiburg.informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.AbstractVariable)
-	 */
 	@Override
 	public void removeVariable(AbstractVariable variable) {
 		if (!mMapping.containsKey(variable)) {
@@ -142,10 +126,6 @@ public class ValueState implements IAbstractState<ValueState> {
 	 */
 	public void writeValue(TypedAbstractVariable variable,
 			IAbstractValue<?> value) {
-		// if(variable.getDeclaration() == null || variable.getType() == null)
-		// {
-		// //throw new RuntimeException();
-		// }
 		mMapping.put(variable, value);
 	}
 
@@ -159,9 +139,6 @@ public class ValueState implements IAbstractState<ValueState> {
 	public IAbstractValue<?> getValue(TypedAbstractVariable variable) {
 		IAbstractValue<?> result = mMapping.get(variable);
 		if (result == null) {
-			// throw new RuntimeException();
-			// mDomain.getLogger().warn("Acessing declared but undefined variable: "
-			// + variable);
 			return mDomain.getTopBottomValueForType(variable.getType(), true);
 		}
 		return result;
@@ -209,7 +186,6 @@ public class ValueState implements IAbstractState<ValueState> {
 
 	@Override
 	public String toString()
-
 	{
 		String s = "";
 		for (Entry<TypedAbstractVariable, IAbstractValue<?>> entry : mMapping
@@ -220,6 +196,13 @@ public class ValueState implements IAbstractState<ValueState> {
 			s += entry.getKey().toString() + ": " + entry.getValue().toString();
 		}
 		return "[" + s + "]";
+	}
+
+	@Override
+	public Term getTerm(Script script, Boogie2SMT bpl2smt) {
+		
+		
+		throw new UnsupportedOperationException();
 	}
 
 }

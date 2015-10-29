@@ -19,7 +19,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 
 /**
  * 
- * @author GROSS-JAN
+ * @author Jan Hättig
  *
  * @param <T>
  *            concrete type of abstract states

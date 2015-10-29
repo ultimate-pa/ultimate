@@ -46,45 +46,21 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		mLogger = logger;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.IAbstractValue#getValue()
-	 */
 	@Override
 	public Interval getValue() {
 		return mValue;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.valuedomain.IAbstractValue#getFactory()
-	 */
 	@Override
 	public IAbstractValueFactory<?> getFactory() {
 		return mFactory;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.valuedomain.IAbstractValue#isTrue()
-	 */
 	@Override
 	public boolean isTrue() {
 		return mValue.equals(Rational.ONE);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.valuedomain.IAbstractValue#isFalse()
-	 */
 	@Override
 	public boolean isFalse() {
 		assert (!isBottom()); // this should not be asked if bottom
@@ -93,12 +69,6 @@ public class IntervalValue implements IAbstractValue<Interval> {
 				|| (mValue.getLowerBound().compareTo(Rational.ONE) > 0);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.IAbstractValue#isTop()
-	 */
 	@Override
 	public boolean isTop() {
 		return (mValue.getLowerBound().compareTo(Rational.NEGATIVE_INFINITY) <= 0)
@@ -106,39 +76,16 @@ public class IntervalValue implements IAbstractValue<Interval> {
 						.compareTo(Rational.POSITIVE_INFINITY) >= 0);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.IAbstractValue#isBottom()
-	 */
 	@Override
 	public boolean isBottom() {
 		return mValue.isEmpty();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#representsSingleConcreteValue()
-	 */
 	@Override
 	public boolean representsSingleConcreteValue() {
 		return mValue.isSingleValueInterval();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#isEqual(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public boolean isEqual(IAbstractValue<?> value) {
 		IntervalValue intVal = (IntervalValue) value;
@@ -148,16 +95,6 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		return (mValue.isEqual(intVal.getValue()));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#isSuper(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public boolean isSuperOrEqual(IAbstractValue<?> value) {
 		IntervalValue intVal = (IntervalValue) value;
@@ -179,15 +116,6 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		return lowerIsLessEq && upperIsGreaterEq;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#isSub(de.uni_freiburg
-	 * .informatik.ultimate.plugins
-	 * .analysis.abstractinterpretationMk2.abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public boolean isSub(IAbstractValue<?> value) {
 		IntervalValue intVal = (IntervalValue) value;
@@ -209,26 +137,11 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		return lowerIsGreaterEq && upperIsLessEq;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.IAbstractValue#copy()
-	 */
 	@Override
 	public IntervalValue copy() {
 		return mFactory.makeValue(mValue.copy());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#add(de.uni_freiburg
-	 * .informatik.ultimate.plugins
-	 * .analysis.abstractinterpretationMk2.abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public IntervalValue add(IAbstractValue<?> value) {
 		/*
@@ -251,16 +164,6 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		return mFactory.makeValue(new Interval(resultLower, resultUpper));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#subtract(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public IntervalValue subtract(IAbstractValue<?> value) {
 		/*
@@ -283,16 +186,6 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		return mFactory.makeValue(new Interval(resultLower, resultUpper));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#multiply(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public IntervalValue multiply(IAbstractValue<?> value) {
 		/*
@@ -450,15 +343,6 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		return mFactory.makeValue(new Interval(resultLower, resultUpper));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#divide(de.uni_freiburg
-	 * .informatik.ultimate.
-	 * plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public IntervalValue divide(IAbstractValue<?> value) {
 		/*
@@ -579,15 +463,6 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		return mFactory.makeValue(new Interval(resultLower, resultUpper));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#modulo(de.uni_freiburg
-	 * .informatik.ultimate.
-	 * plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public IntervalValue modulo(IAbstractValue<?> value) {
 		/*
@@ -650,28 +525,12 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		return mFactory.makeValue(new Interval(Rational.ZERO, max2));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.IAbstractValue#negative()
-	 */
 	@Override
 	public IntervalValue negative() {
 		return mFactory.makeValue(new Interval(mValue.getUpperBound().negate(),
 				mValue.getLowerBound().negate()));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsEqual(de.
-	 * uni_freiburg.informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public IntervalValue compareIsEqual(IAbstractValue<?> value) {
 		/*
@@ -698,16 +557,6 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		return mFactory.makeValue(new Interval(resultLower, resultUpper));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsNotEqual(
-	 * de.uni_freiburg.informatik
-	 * .ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public IntervalValue compareIsNotEqual(IAbstractValue<?> value) {
 		/*
@@ -755,16 +604,6 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		return mFactory.makeValue(new Interval(resultLower, resultUpper));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsLess(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public IntervalValue compareIsLess(IAbstractValue<?> value) {
 		/*
@@ -788,16 +627,6 @@ public class IntervalValue implements IAbstractValue<Interval> {
 				resultUpper));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsGreater(de
-	 * .uni_freiburg.informatik
-	 * .ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public IntervalValue compareIsGreater(IAbstractValue<?> value) {
 		/*
@@ -821,16 +650,6 @@ public class IntervalValue implements IAbstractValue<Interval> {
 				.getUpperBound()));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsLessEqual
-	 * (de.uni_freiburg.informatik
-	 * .ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public IntervalValue compareIsLessEqual(IAbstractValue<?> value) {
 		/*
@@ -854,16 +673,6 @@ public class IntervalValue implements IAbstractValue<Interval> {
 				resultUpper));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsGreaterEqual
-	 * (de.uni_freiburg.informatik
-	 * .ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public IntervalValue compareIsGreaterEqual(IAbstractValue<?> value) {
 		/*
@@ -887,16 +696,6 @@ public class IntervalValue implements IAbstractValue<Interval> {
 				.getUpperBound()));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#logicIff(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public IntervalValue logicIff(IAbstractValue<?> value) {
 		// return isBottom() && value.isBottom()
@@ -906,16 +705,6 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#logicImplies(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public IntervalValue logicImplies(IAbstractValue<?> value) {
 		// A => B
@@ -925,69 +714,26 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#logicAnd(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public IntervalValue logicAnd(IAbstractValue<?> value) {
 		return null; // TODO: interpret int as boolean
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#logicOr(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public IntervalValue logicOr(IAbstractValue<?> value) {
 		return null; // TODO: interpret int as boolean
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.IAbstractValue#logicNot()
-	 */
 	@Override
 	public IntervalValue logicNot() {
 		return null; // TODO: interpret int as boolean
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#bitVectorConcat(de
-	 * .uni_freiburg.informatik.
-	 * ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public IntervalValue bitVectorConcat(IAbstractValue<?> value) {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#bitVectorAccess(int, int)
-	 */
 	@Override
 	public IntervalValue bitVectorAccess(int start, int end) {
 		return null;

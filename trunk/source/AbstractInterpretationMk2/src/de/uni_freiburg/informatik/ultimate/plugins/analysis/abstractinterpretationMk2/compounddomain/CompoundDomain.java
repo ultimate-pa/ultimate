@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 /**
  * Unites several domains to be one And
  * 
- * @author Jan H�ttig
+ * @author Jan Hättig
  *
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
@@ -64,7 +64,7 @@ public class CompoundDomain implements IAbstractDomain<CompoundState> {
 
 	@Override
 	public IAbstractState<CompoundState> createState() {
-		List<IAbstractState> states = new ArrayList<IAbstractState>();
+		List<IAbstractState<?>> states = new ArrayList<IAbstractState<?>>();
 		for (IAbstractDomain domain : mDomains) {
 			states.add(domain.createState());
 		}
@@ -128,7 +128,7 @@ public class CompoundDomain implements IAbstractDomain<CompoundState> {
 		int index = 0;
 		while (index < digits.length) {
 			// -- build the state --
-			List<IAbstractState> statesForActual = new ArrayList<IAbstractState>();
+			List<IAbstractState<?>> statesForActual = new ArrayList<IAbstractState<?>>();
 			boolean bottom = false;
 			for (int i = 0; i < digits.length; i++) {
 				IAbstractState actual = statesFromDomains.get(i).get(digits[i]);

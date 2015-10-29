@@ -3,25 +3,27 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.AbstractVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.TypedAbstractVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractState;
 
 /**
  * 
- * @author GROSS-JAN
+ * @author Jan Hättig
  *
  */
-@SuppressWarnings("rawtypes")
 public class CompoundState implements IAbstractState<CompoundState> {
-	private final List<IAbstractState> mStates;
+	private final List<IAbstractState<?>> mStates;
 
 	/**
 	 * Constructor
 	 * 
 	 * @param initialStates
 	 */
-	public CompoundState(List<IAbstractState> initialStates) {
+	public CompoundState(List<IAbstractState<?>> initialStates) {
 		mStates = initialStates;
 	}
 
@@ -31,7 +33,7 @@ public class CompoundState implements IAbstractState<CompoundState> {
 	 * @param original
 	 */
 	public CompoundState(CompoundState original) {
-		mStates = new ArrayList<IAbstractState>(original.mStates);
+		mStates = new ArrayList<IAbstractState<?>>(original.mStates);
 	}
 
 	/**
@@ -40,7 +42,7 @@ public class CompoundState implements IAbstractState<CompoundState> {
 	 * @param index
 	 * @return
 	 */
-	public IAbstractState getState(int index) {
+	public IAbstractState<?> getState(int index) {
 		return mStates.get(index);
 	}
 
@@ -50,15 +52,26 @@ public class CompoundState implements IAbstractState<CompoundState> {
 	 * @param index
 	 * @param newState
 	 */
-	public void setState(int index, IAbstractState newState) {
+	public void setState(int index, IAbstractState<?> newState) {
 		mStates.set(index, newState);
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
-	public boolean isSuperOrEqual(IAbstractState<CompoundState> state) {
+	public boolean isSuperOrEqual(IAbstractState<?> state) {
+		if (state.isBottom()) {
+			return true;
+		}
+
+		if (isBottom()) {
+			return false;
+		}
+
+		if (!(state instanceof CompoundState)) {
+			return false;
+		}
+		final CompoundState cstate = (CompoundState) state;
 		for (int i = 0; i < mStates.size(); i++) {
-			if (!mStates.get(i).isSuperOrEqual(state.getConcrete().getState(i))) {
+			if (!mStates.get(i).isSuperOrEqual(cstate.getConcrete().getState(i))) {
 				return false;
 			}
 		}
@@ -67,7 +80,7 @@ public class CompoundState implements IAbstractState<CompoundState> {
 
 	@Override
 	public boolean hasVariable(AbstractVariable variable) {
-		for (IAbstractState state : mStates) {
+		for (IAbstractState<?> state : mStates) {
 			if (state.hasVariable(variable)) {
 				return true;
 			}
@@ -77,14 +90,14 @@ public class CompoundState implements IAbstractState<CompoundState> {
 
 	@Override
 	public void declareVariable(TypedAbstractVariable variable) {
-		for (IAbstractState state : mStates) {
+		for (IAbstractState<?> state : mStates) {
 			state.declareVariable(variable);
 		}
 	}
 
 	@Override
 	public TypedAbstractVariable getTypedVariable(AbstractVariable variable) {
-		for (IAbstractState state : mStates) {
+		for (IAbstractState<?> state : mStates) {
 			if (state.hasVariable(variable)) {
 				return state.getTypedVariable(variable);
 			}
@@ -95,15 +108,15 @@ public class CompoundState implements IAbstractState<CompoundState> {
 
 	@Override
 	public void removeVariable(AbstractVariable variable) {
-		for (IAbstractState state : mStates) {
+		for (IAbstractState<?> state : mStates) {
 			state.removeVariable(variable);
 		}
 	}
 
 	@Override
 	public IAbstractState<CompoundState> copy() {
-		List<IAbstractState> copies = new ArrayList<IAbstractState>();
-		for (IAbstractState state : mStates) {
+		List<IAbstractState<?>> copies = new ArrayList<IAbstractState<?>>();
+		for (IAbstractState<?> state : mStates) {
 			copies.add(state.copy());
 		}
 		return new CompoundState(copies);
@@ -111,7 +124,7 @@ public class CompoundState implements IAbstractState<CompoundState> {
 
 	@Override
 	public boolean isBottom() {
-		for (IAbstractState state : mStates) {
+		for (IAbstractState<?> state : mStates) {
 			if (state.isBottom()) {
 				return true;
 			}
@@ -124,8 +137,8 @@ public class CompoundState implements IAbstractState<CompoundState> {
 	 */
 	public void refine(List<IRefinement> refs) {
 		for (IRefinement ref : refs) {
-			for (IAbstractState s1 : mStates) {
-				for (IAbstractState s2 : mStates) {
+			for (IAbstractState<?> s1 : mStates) {
+				for (IAbstractState<?> s2 : mStates) {
 					if (s1 == s2) {
 						// only one way, no mirror
 						continue;
@@ -149,10 +162,19 @@ public class CompoundState implements IAbstractState<CompoundState> {
 	public String toString() {
 		String s = "GC(";
 		String comma = "";
-		for (IAbstractState state : mStates) {
+		for (IAbstractState<?> state : mStates) {
 			s += comma + state.toString();
 			comma = " && ";
 		}
 		return s + ")";
+	}
+
+	@Override
+	public Term getTerm(Script script, Boogie2SMT bpl2smt) {
+		Term acc = script.term("true");
+		for (final IAbstractState<?> state : mStates) {
+			acc = script.term("and", acc, state.getTerm(script, bpl2smt));
+		}
+		return acc;
 	}
 }

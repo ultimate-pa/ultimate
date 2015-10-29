@@ -27,7 +27,7 @@ public class AbstractInterpretation implements IAnalysis {
 
 	@Override
 	public GraphType getOutputDefinition() {
-		return new GraphType(AIActivator.s_PLUGIN_ID, m_InputDefinition.getType(), m_InputDefinition.getFileNames());
+		return new GraphType(AIActivator.PLUGIN_ID, m_InputDefinition.getType(), m_InputDefinition.getFileNames());
 	}
 
 	@Override
@@ -63,12 +63,12 @@ public class AbstractInterpretation implements IAnalysis {
 
 	@Override
 	public String getPluginName() {
-		return AIActivator.s_PLUGIN_NAME;
+		return AIActivator.PLUGIN_NAME;
 	}
 
 	@Override
 	public String getPluginID() {
-		return AIActivator.s_PLUGIN_ID;
+		return AIActivator.PLUGIN_ID;
 	}
 
 	@Override

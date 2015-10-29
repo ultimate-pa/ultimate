@@ -24,7 +24,7 @@ import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 
 /**
- * @author Jan H�ttig
+ * @author Jan Hättig
  * 
  */
 @SuppressWarnings("rawtypes")
@@ -98,7 +98,7 @@ public class AbstractInterpreter {
 	 */
 	public AbstractInterpreter(IUltimateServiceProvider services) {
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(AIActivator.s_PLUGIN_ID);
+		mLogger = mServices.getLoggingService().getLogger(AIActivator.PLUGIN_ID);
 
 		mPreferences = new AIPreferences();
 		mPreferences.fetchPreferences();
@@ -121,6 +121,9 @@ public class AbstractInterpreter {
 	 *            The states at the given location
 	 */
 	private void annotateElement(IElement element, List<StackState> states) {
+		if(!mPreferences.getGenerateStateAnnotations()){
+			return;
+		}
 		AbstractInterpretationAnnotations anno = new AbstractInterpretationAnnotations(states);
 		anno.annotate(element);
 	}
@@ -645,12 +648,9 @@ public class AbstractInterpreter {
 		newState.setProcessed(false);
 		statesAtNode.add(newState);
 
-		// mLogger.debug("Yes!!");
 		notifyStateChangeListeners(edge, statesAtNodeBackup, state, newState);
+		annotateElement(targetNode, statesAtNode);
 
-		if (mPreferences.getGenerateStateAnnotations()) {
-			annotateElement(targetNode, statesAtNode);
-		}
 		return true;
 	}
 
@@ -723,10 +723,10 @@ public class AbstractInterpreter {
 				new HashMap<Integer, ProgramState<Expression>>());
 
 		UnprovableResult<RcfgElement, CodeBlock, Expression> result = new UnprovableResult<RcfgElement, CodeBlock, Expression>(
-				AIActivator.s_PLUGIN_NAME, location, mServices.getBacktranslationService(), programExecution,
+				AIActivator.PLUGIN_NAME, location, mServices.getBacktranslationService(), programExecution,
 				Collections.emptyList());
 
-		mServices.getResultService().reportResult(AIActivator.s_PLUGIN_ID, result);
+		mServices.getResultService().reportResult(AIActivator.PLUGIN_ID, result);
 
 		if (mPreferences.getStopAfterAnyError()) {
 			mContinueProcessing = false;
@@ -743,9 +743,9 @@ public class AbstractInterpreter {
 
 	private void reportUnsupportedSyntaxResult(IElement location, String message) {
 		UnsupportedSyntaxResult<IElement> result = new UnsupportedSyntaxResult<IElement>(location,
-				AIActivator.s_PLUGIN_NAME, mServices.getBacktranslationService(), message);
+				AIActivator.PLUGIN_NAME, mServices.getBacktranslationService(), message);
 
-		mServices.getResultService().reportResult(AIActivator.s_PLUGIN_ID, result);
+		mServices.getResultService().reportResult(AIActivator.PLUGIN_ID, result);
 
 		mContinueProcessing = false;
 	}
@@ -754,23 +754,23 @@ public class AbstractInterpreter {
 	 * Reports safety of the program as the plugin's result
 	 */
 	private void reportSafeResult() {
-		mServices.getResultService().reportResult(AIActivator.s_PLUGIN_ID,
-				new AllSpecificationsHoldResult(AIActivator.s_PLUGIN_NAME, "No error locations were reached."));
+		mServices.getResultService().reportResult(AIActivator.PLUGIN_ID,
+				new AllSpecificationsHoldResult(AIActivator.PLUGIN_NAME, "No error locations were reached."));
 	}
 
 	/*
 	 * Reports non-safety of the program as the plugin's result
 	 */
 	private void reportUnSafeResult(String message) {
-		mServices.getResultService().reportResult(AIActivator.s_PLUGIN_ID,
-				new GenericResult(AIActivator.s_PLUGIN_NAME, "assert violation", message, Severity.INFO));
+		mServices.getResultService().reportResult(AIActivator.PLUGIN_ID,
+				new GenericResult(AIActivator.PLUGIN_NAME, "assert violation", message, Severity.INFO));
 	}
 
 	/**
 	 * Reports a timeout of the analysis
 	 */
 	private void reportTimeoutResult() {
-		mServices.getResultService().reportResult(AIActivator.s_PLUGIN_ID,
-				new TimeoutResult(AIActivator.s_PLUGIN_NAME, "Analysis aborted."));
+		mServices.getResultService().reportResult(AIActivator.PLUGIN_ID,
+				new TimeoutResult(AIActivator.PLUGIN_NAME, "Analysis aborted."));
 	}
 }
