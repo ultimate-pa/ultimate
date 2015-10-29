@@ -90,7 +90,7 @@ public class ExpressionFactory extends BoogieTransformer {
 		Expression rightLiteral = filterLiteral(right);
 		Expression result;
 		if ((leftLiteral != null) && (rightLiteral != null)) {
-			assert leftLiteral.getClass().equals(rightLiteral.getClass()) : "type error";
+			assert leftLiteral.getClass().equals(rightLiteral.getClass()) : "incompatible literals: " + leftLiteral.getClass() + " and " + rightLiteral.getClass();
 			if (leftLiteral instanceof BooleanLiteral) {
 				result = constructBinaryExpression_Bool(loc, operator, (BooleanLiteral) leftLiteral, (BooleanLiteral) rightLiteral);
 			} else if (leftLiteral instanceof IntegerLiteral) {
