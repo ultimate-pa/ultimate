@@ -287,4 +287,18 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 		// }
 		throw new UnsupportedOperationException();
 	}
+
+	@Override
+	protected void finalize() throws Throwable {
+		mPolyhedron.free();
+		
+		super.finalize();
+	}
+	
+	/**
+	 * Minimizes the polyhedron representation.
+	 */
+	protected void minimize() {
+		mPolyhedron = new NNC_Polyhedron(mPolyhedron.minimized_generators());
+	}
 }

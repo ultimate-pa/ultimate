@@ -55,7 +55,7 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 //			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_INT.epf"),
 			new Triple<>("AbstractInterpretationMk2CInline.xml", ".c", "ai/AI2_PLT.epf"),
 //			new Triple<>("AbstractInterpretationMk2C.xml", ".c", "ai/AI2_PLT.epf"),
-			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_PLT.epf"),
+//			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_PLT.epf"),
 //			new Triple<>("AbstractInterpretationMk2CInline.xml", ".c", "ai/AI2_CMP.epf"),
 //			new Triple<>("AbstractInterpretationMk2C.xml", ".c", "ai/AI2_CMP.epf"),
 //			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_CMP.epf"),
@@ -72,7 +72,7 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 //			"examples/programs/abstractInterpretation/",
 			//"examples/programs/abstractInterpretationNoRec/",
 				/* ULTIMATE repo */
-				 "examples/programs/regression/bpl/",
+//				 "examples/programs/regression/bpl/",
 				// "examples/programs/regression/c/",
 				// "examples/programs/recursivePrograms",
 				/* SV-COMP repo */
