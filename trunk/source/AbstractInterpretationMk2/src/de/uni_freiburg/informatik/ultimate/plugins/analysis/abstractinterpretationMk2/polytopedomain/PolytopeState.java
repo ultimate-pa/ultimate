@@ -1,8 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.polytopedomain;
 
 import org.apache.log4j.Logger;
-import org.osgi.service.application.ApplicationAdminPermission;
-
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.AbstractVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.TypedAbstractVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractState;
@@ -11,7 +9,6 @@ import parma_polyhedra_library.Constraint;
 import parma_polyhedra_library.Degenerate_Element;
 import parma_polyhedra_library.Linear_Expression;
 import parma_polyhedra_library.NNC_Polyhedron;
-import parma_polyhedra_library.Parma_Polyhedra_Library;
 import parma_polyhedra_library.Variable;
 
 public class PolytopeState implements IAbstractState<PolytopeState> {
@@ -97,7 +94,8 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 		if (variable.getDeclaration() == null && variable.getType() == null) {
 			throw new RuntimeException();
 		}
-		Variable x = mVariableTranslation.addVariable(variable);
+//		Variable x = 
+		mVariableTranslation.addVariable(variable);
 		updateDimensions();
 		// mLogger.debug("Declare variable: " + variable.toString() +
 		// " [value: " + x.toString() + "]");
