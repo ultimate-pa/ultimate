@@ -583,10 +583,10 @@ public class ValueExpressionVisitor extends ExpressionVisitor<IAbstractValue<?>>
 	private IAbstractValue<?> booleanFromAbstractValue(IAbstractValue<?> value) {
 		IAbstractValueFactory<?> boolFactory = mDomain.getBoolValueFactory();
 		if (value == null) {
-			throw new RuntimeException("Deprecated code");
+//			throw new RuntimeException("Deprecated code");
 			// mLogger.warn("Encountered a boolean value of null, using UNKNOWN
 			// instead.");
-			// return boolFactory.makeTopValue();
+			 return boolFactory.makeTopValue();
 		}
 
 		if (boolFactory.valueBelongsToDomainSystem(value)) {

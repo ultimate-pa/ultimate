@@ -22,6 +22,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loop
 import de.uni_freiburg.informatik.ultimate.result.*;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
  * @author Jan Hättig
@@ -281,7 +282,7 @@ public class AbstractInterpreter {
 		 */
 		if (mReachedErrorLocs.isEmpty()) {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
-				reportTimeoutResult();
+				throwTimeout();
 			} else {
 				reportSafeResult();
 			}
@@ -295,6 +296,10 @@ public class AbstractInterpreter {
 	 */
 	protected void visitNodes() {
 		while (!mNodesToVisit.isEmpty()) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throwTimeout();
+			}
+			
 			// mLogger.debug("Nodes to process:");
 			// for (RCFGNode node : mNodesToVisit)
 			// {
@@ -418,6 +423,10 @@ public class AbstractInterpreter {
 				}
 			}
 		}
+	}
+
+	private void throwTimeout() {
+		throw new ToolchainCanceledException(getClass(), "Abstract interpretation timeout.");
 	}
 
 	private void increaseLoopCount(RCFGNode node, RCFGEdge edge, StackState resultingState) {
@@ -764,13 +773,5 @@ public class AbstractInterpreter {
 	private void reportUnSafeResult(String message) {
 		mServices.getResultService().reportResult(AIActivator.PLUGIN_ID,
 				new GenericResult(AIActivator.PLUGIN_NAME, "assert violation", message, Severity.INFO));
-	}
-
-	/**
-	 * Reports a timeout of the analysis
-	 */
-	private void reportTimeoutResult() {
-		mServices.getResultService().reportResult(AIActivator.PLUGIN_ID,
-				new TimeoutResult(AIActivator.PLUGIN_NAME, "Analysis aborted."));
 	}
 }
