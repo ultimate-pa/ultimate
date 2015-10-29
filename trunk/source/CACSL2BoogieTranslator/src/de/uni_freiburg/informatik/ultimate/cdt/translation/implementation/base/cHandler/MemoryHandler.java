@@ -319,11 +319,11 @@ public class MemoryHandler {
 		//make the assigments on the arrays
 		Expression currentDest = ((CHandler) main.cHandler).doPointerArithmetic(main, IASTBinaryExpression.op_plus, ignoreLoc, 
 					new IdentifierExpression(ignoreLoc, SFO.MEMCPY_DEST), 
-					new RValue(ctrIdex, new CPrimitive(PRIMITIVE.INT)), 
+					new RValue(ctrIdex, m_ExpressionTranslation.getCTypeOfPointerComponents()), 
 					new CPrimitive(PRIMITIVE.VOID));
 		Expression currentSrc = ((CHandler) main.cHandler).doPointerArithmetic(main, IASTBinaryExpression.op_plus, ignoreLoc, 
 					new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SRC), 
-					new RValue(ctrIdex, new CPrimitive(PRIMITIVE.INT)), 
+					new RValue(ctrIdex, m_ExpressionTranslation.getCTypeOfPointerComponents()), 
 					new CPrimitive(PRIMITIVE.VOID));
 
 		// handle modifies

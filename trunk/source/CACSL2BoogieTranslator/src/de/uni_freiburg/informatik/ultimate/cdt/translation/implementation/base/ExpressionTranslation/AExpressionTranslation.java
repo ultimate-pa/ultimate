@@ -347,9 +347,7 @@ public abstract class AExpressionTranslation {
 	 * integer data types. This method returns the CType of the structs
 	 * components.
 	 */
-	public CPrimitive getCTypeOfPointerComponents() {
-		return new CPrimitive(PRIMITIVE.INT);
-	}
+	public abstract CPrimitive getCTypeOfPointerComponents();
 
 	public void convertPointerToInt(Dispatcher main, ILocation loc, ExpressionResult rexp,
 			CPrimitive newType) {
