@@ -107,9 +107,9 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			ModifiableGlobalVariableManager modifiedGlobals, AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			UnsatCores unsatCores, boolean useLiveVariables, 
 			IUltimateServiceProvider services, boolean computeRcfgProgramExecution, 
-			PredicateUnifier predicateUnifier, INTERPOLATION interpolation) {
+			PredicateUnifier predicateUnifier, INTERPOLATION interpolation, SmtManager smtManagerTc) {
 		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals,
-				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, predicateUnifier, smtManager);
+				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, predicateUnifier, smtManagerTc);
 		m_UnsatCores = unsatCores;
 		m_LiveVariables = useLiveVariables;
 		m_PredicateTransformer = new PredicateTransformer(m_SmtManager, m_ModifiedGlobals, mServices);
@@ -348,7 +348,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		int[] sizeOfPredicatesFP = null;
 		int[] sizeOfPredicatesBP = null;
 
-		Term[] unsat_core = m_SmtManager.getScript().getUnsatCore();
+		Term[] unsat_core = m_TcSmtManager.getScript().getUnsatCore();
 
 		Set<Term> unsat_coresAsSet = new HashSet<Term>(Arrays.asList(unsat_core));
 
@@ -919,8 +919,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	@Override
 	protected AnnotateAndAssertCodeBlocks getAnnotateAndAsserterCodeBlocks(NestedFormulas<Term, Term> ssa) {
 		if (m_AnnotateAndAsserterConjuncts == null) {
-			m_AnnotateAndAsserterConjuncts = new AnnotateAndAssertConjunctsOfCodeBlocks(m_SmtManager, ssa,
-					m_NestedFormulas, mLogger);
+			m_AnnotateAndAsserterConjuncts = new AnnotateAndAssertConjunctsOfCodeBlocks(m_TcSmtManager, ssa,
+					m_NestedFormulas, mLogger, m_SmtManager);
 		}
 		return m_AnnotateAndAsserterConjuncts;
 	}

@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
@@ -430,6 +429,7 @@ public class NestedSsaBuilder {
 
 		public void replaceAuxVars() {
 			for (TermVariable tv : m_TF.getAuxVars()) {
+				tv = transferToCurrentScriptIfNecessary(tv);
 				Term freshConst = m_SmtManager.getVariableManager().constructFreshConstant(tv);
 				m_SubstitutionMapping.put(tv, freshConst);
 			}
@@ -447,10 +447,7 @@ public class NestedSsaBuilder {
 		public Term getVersioneeredTerm() {
 			Substitution subst = new Substitution(m_SubstitutionMapping, m_Script);
 			Term result = subst.transform(m_formula);
-			if (true) {
-				result = new TermTransferrer(m_Script).transform(result);
-			}
-			assert result.getFreeVars().length == 0 : "free vars in versioneered term";
+			assert result.getFreeVars().length == 0 : "free vars in versioneered term: " + String.valueOf(result.getFreeVars());
 			return result;
 		}
 
@@ -541,8 +538,9 @@ public class NestedSsaBuilder {
 			m_IndexedVarRepresentative.put(bv, index2constant);
 		}
 		assert !index2constant.containsKey(index) : "version was already constructed";
-		Term constant = PredicateUtils.getIndexedConstant(bv, index, m_IndexedConstants, m_Script);
-		constant = transferToCurrentScriptIfNecessary(constant);
+		Sort sort = transferToCurrentScriptIfNecessary(bv.getTermVariable()).getSort();
+		Term constant = PredicateUtils.getIndexedConstant(bv.getGloballyUniqueId(), 
+				sort, index, m_IndexedConstants, m_Script);
 		index2constant.put(index, constant);
 		return constant;
 	}

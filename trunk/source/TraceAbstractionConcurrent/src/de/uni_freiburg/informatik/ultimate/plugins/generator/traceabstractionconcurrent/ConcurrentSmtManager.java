@@ -40,8 +40,8 @@ public class ConcurrentSmtManager extends SmtManager {
 
 	
 	public ConcurrentSmtManager(Boogie2SMT boogie2smt,
-			ModifiableGlobalVariableManager modifiableGlobals, IUltimateServiceProvider services) {
-		super(boogie2smt.getScript(), boogie2smt, modifiableGlobals, services);
+			ModifiableGlobalVariableManager modifiableGlobals, IUltimateServiceProvider services, boolean interpolationModeSwitchNeeded) {
+		super(boogie2smt.getScript(), boogie2smt, modifiableGlobals, services, interpolationModeSwitchNeeded);
 		// TODO Auto-generated constructor stub
 	}
 

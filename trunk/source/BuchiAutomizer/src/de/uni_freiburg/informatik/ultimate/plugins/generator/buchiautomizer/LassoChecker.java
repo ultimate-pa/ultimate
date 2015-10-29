@@ -480,7 +480,7 @@ public class LassoChecker {
 						 * Check if you want to set this
 						 * to a different value.
 						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, 
-						 UnsatCores.CONJUNCT_LEVEL, true, mServices, false, m_PredicateUnifier, m_Interpolation);
+						 UnsatCores.CONJUNCT_LEVEL, true, mServices, false, m_PredicateUnifier, m_Interpolation, m_SmtManager);
 				break;
 			default:
 				throw new UnsupportedOperationException("unsupported interpolation");

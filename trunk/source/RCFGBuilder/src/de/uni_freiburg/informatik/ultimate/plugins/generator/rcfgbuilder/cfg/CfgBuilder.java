@@ -29,14 +29,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -48,10 +45,8 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
@@ -81,11 +76,8 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2TransFormula.TranslationResult;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.LoggingScriptForMainTrackBenchmarks;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.LoggingScriptForUnsatCoreBenchmarks;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
@@ -94,9 +86,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Weakest
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.CodeBlockSize;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.Solver;
 import de.uni_freiburg.informatik.ultimate.result.Check;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.ScriptorWithGetInterpolants.ExternalInterpolator;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
@@ -167,15 +157,7 @@ public class CfgBuilder {
 		m_RootAnnot = new RootAnnot(mServices, m_BoogieDeclarations, m_Boogie2smt, m_Backtranslator);
 		m_Cbf = m_RootAnnot.getCodeBlockFactory();
 		storage.putStorable(CodeBlockFactory.s_CodeBlockFactoryKeyInToolchainStorage, m_Cbf);
-		storage.putStorable("CfgBuilderScript", new IStorable() {
 
-			final Script theScript = m_Script;
-			
-			@Override
-			public void destroy() {
-				theScript.exit();
-			}
-		});
 
 	}
 
@@ -186,127 +168,34 @@ public class CfgBuilder {
 	 */
 	private Script constructAndInitializeSolver(
 			IUltimateServiceProvider services, IToolchainStorage storage, String filename) {
-		Solver solver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, Solver.class);
-		final boolean useExternalSolver;
-		final String commandExternalSolver;
-		final int timeoutSmtInterpol;
-		final ExternalInterpolator externalInterpolator;
-		switch (solver) {
-		case External_DefaultMode:
-		{
-			useExternalSolver = true;
-			commandExternalSolver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
-			timeoutSmtInterpol = -1;
-			externalInterpolator = null;
-		}
-		break;
-		case External_PrincessInterpolationMode:
-		{
-			useExternalSolver = true;
-			commandExternalSolver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
-			timeoutSmtInterpol = -1;
-			externalInterpolator = ExternalInterpolator.PRINCESS;
-		}
-		break;
-		case External_SMTInterpolInterpolationMode:
-		{
-			useExternalSolver = true;
-			commandExternalSolver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
-			timeoutSmtInterpol = -1;
-			externalInterpolator = ExternalInterpolator.SMTINTERPOL;
-		}
-		break;
-		case External_Z3InterpolationMode:
-		{
-			useExternalSolver = true;
-			commandExternalSolver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
-			timeoutSmtInterpol = -1;
-			externalInterpolator = ExternalInterpolator.IZ3;
-		}
-		break;
-		case Internal_SMTInterpol:
-		{
-			useExternalSolver = false;
-			commandExternalSolver = null;
-			timeoutSmtInterpol = 30 * 1000;
-			externalInterpolator = null;
-		}
-		break;
-		default:
-			throw new AssertionError("unknown solver");
-		}
-		
+		SolverMode solverMode = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
+
 		final boolean dumpSmtScriptToFile = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpToFile);
-		String pathOfDumpedScript  = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+		final String pathOfDumpedScript  = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
 				.getString(RcfgPreferenceInitializer.LABEL_Path);
 
-		Settings solverSettings = new Settings(useExternalSolver, 
-				commandExternalSolver, timeoutSmtInterpol, externalInterpolator, 
-				dumpSmtScriptToFile, pathOfDumpedScript, filename);
-		Script result = SolverBuilder.buildScript(mServices, storage, solverSettings);
+		final String commandExternalSolver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+		.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
+		
 		final boolean dumpUsatCoreTrackBenchmark = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpUnsatCoreTrackBenchmark);
-		if (dumpUsatCoreTrackBenchmark) {
-			result = new LoggingScriptForUnsatCoreBenchmarks(result, solverSettings.getBaseNameOfDumpedScript(), solverSettings.getPathOfDumpedScript());
-		}
+		
 		final boolean dumpMainTrackBenchmark = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpMainTrackBenchmark);
-		if (dumpMainTrackBenchmark) {
-			result = new LoggingScriptForMainTrackBenchmarks(result, solverSettings.getBaseNameOfDumpedScript(), solverSettings.getPathOfDumpedScript());
-		}
 		
 		String logicForExternalSolver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
 				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);
-		result.setOption(":produce-models", true);
-		switch (solver) {
-		case External_DefaultMode:
-			result.setOption(":produce-unsat-cores", true);
-			result.setLogic(logicForExternalSolver);
-		break;
-		case External_PrincessInterpolationMode:
-		case External_SMTInterpolInterpolationMode:
-			result.setOption(":produce-interpolants", true);
-			result.setLogic(logicForExternalSolver);
-		break;
-		case External_Z3InterpolationMode:
-			result.setOption(":produce-interpolants", true);
-			result.setLogic(logicForExternalSolver);
-//			add array-ext function
-//			Sort intSort = result.sort("Int");
-//			Sort boolSort = result.sort("Bool");
-//			Sort arraySort = result.sort("Array", intSort, boolSort);
-//			result.declareFun("array-ext", new Sort[]{arraySort, arraySort}, intSort);
-		break;
-		case Internal_SMTInterpol:
-			result.setOption(":produce-unsat-cores", true);
-			result.setOption(":produce-interpolants", true);
-			result.setOption(":interpolant-check-mode", true);
-			result.setOption(":proof-transformation", "LU");
-			// m_Script.setOption(":proof-transformation", "RPI");
-			// m_Script.setOption(":proof-transformation", "LURPI");
-			// m_Script.setOption(":proof-transformation", "RPILU");
-			// m_Script.setOption(":verbosity", 0);
-			result.setLogic("QF_AUFLIRA");
-		break;
-		default:
-			throw new AssertionError("unknown solver");
-		}
 
-		String advertising = "|" + System.lineSeparator() + "    SMT script generated on " + 
-				(new SimpleDateFormat("yyyy/MM/dd")).format(new Date()) + 
-				" by Ultimate. http://ultimate.informatik.uni-freiburg.de/" + 
-				System.lineSeparator() + "|";
-		result.setInfo(":source", advertising);
-		result.setInfo(":smt-lib-version", "2.0");
-		result.setInfo(":category", new QuotedObject("industrial"));
-		return result;
+		return SolverBuilder.buildAndInitializeSolver(services, storage, filename, solverMode, dumpSmtScriptToFile,
+				pathOfDumpedScript, commandExternalSolver, dumpUsatCoreTrackBenchmark, dumpMainTrackBenchmark,
+				logicForExternalSolver, "CfgBuilderScript");
 	}
+
+
+
+
 	
 
 	/**

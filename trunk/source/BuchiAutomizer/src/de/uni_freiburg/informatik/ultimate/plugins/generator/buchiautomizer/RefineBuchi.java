@@ -461,7 +461,7 @@ public class RefineBuchi {
 					 * Check if you want to set this
 					 * to a different value.
 					 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
-					 UnsatCores.CONJUNCT_LEVEL, true, m_Services, false, pu, interpolation);
+					 UnsatCores.CONJUNCT_LEVEL, true, m_Services, false, pu, interpolation, m_SmtManager);
 			break;
 		}
 		default:

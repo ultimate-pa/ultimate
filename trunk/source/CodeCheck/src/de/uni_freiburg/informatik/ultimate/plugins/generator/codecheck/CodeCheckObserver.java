@@ -170,7 +170,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 		m_originalRoot = (RootNode) root;
 		RootAnnot rootAnnot = m_originalRoot.getRootAnnot();
-		m_smtManager = new SmtManager(rootAnnot.getScript(), rootAnnot.getBoogie2SMT(), rootAnnot.getModGlobVarManager(), mServices);
+		m_smtManager = new SmtManager(rootAnnot.getScript(), rootAnnot.getBoogie2SMT(), rootAnnot.getModGlobVarManager(), mServices, false);
 
 		_predicateUnifier = new PredicateUnifier(mServices, m_smtManager);
 
@@ -392,7 +392,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 								 */
 								AssertCodeBlockOrder.NOT_INCREMENTALLY,
 								UnsatCores.CONJUNCT_LEVEL, true, mServices, true, _predicateUnifier,
-								GlobalSettings._instance._interpolationMode);
+								GlobalSettings._instance._interpolationMode, m_smtManager);
 						break;
 					}
 					if (traceChecker.getToolchainCancelledExpection() != null) {

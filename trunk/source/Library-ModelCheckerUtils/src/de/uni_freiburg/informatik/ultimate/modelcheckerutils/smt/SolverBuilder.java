@@ -29,14 +29,20 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.IProgressMonitorService;
+import de.uni_freiburg.informatik.ultimate.core.services.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.TerminationRequest;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
@@ -50,6 +56,9 @@ import de.uni_freiburg.informatik.ultimate.smtsolver.external.ScriptorWithGetInt
  * 
  */
 public class SolverBuilder {
+	
+	public enum SolverMode { Internal_SMTInterpol, External_PrincessInterpolationMode, 
+		External_SMTInterpolInterpolationMode, External_Z3InterpolationMode, External_DefaultMode };
 
 	private static final String sSolverLoggerName = "SolverLogger";
 	private static final boolean s_UseWrapperScriptWithTermConstructionChecks = false;
@@ -226,5 +235,132 @@ public class SolverBuilder {
 			}
 			
 		}
+	}
+	
+	private static Settings constructSolverSettings(final String filename, 
+			final SolverMode solverMode,
+			final String commandExternalSolver, 
+			final boolean dumpSmtScriptToFile,
+			final String pathOfDumpedScript) throws AssertionError {
+		final boolean useExternalSolver;
+
+		final int timeoutSmtInterpol;
+		final ExternalInterpolator externalInterpolator;
+		switch (solverMode) {
+		case External_DefaultMode:
+		{
+			useExternalSolver = true;
+			timeoutSmtInterpol = -1;
+			externalInterpolator = null;
+		}
+		break;
+		case External_PrincessInterpolationMode:
+		{
+			useExternalSolver = true;
+			timeoutSmtInterpol = -1;
+			externalInterpolator = ExternalInterpolator.PRINCESS;
+		}
+		break;
+		case External_SMTInterpolInterpolationMode:
+		{
+			useExternalSolver = true;
+			timeoutSmtInterpol = -1;
+			externalInterpolator = ExternalInterpolator.SMTINTERPOL;
+		}
+		break;
+		case External_Z3InterpolationMode:
+		{
+			useExternalSolver = true;
+			timeoutSmtInterpol = -1;
+			externalInterpolator = ExternalInterpolator.IZ3;
+		}
+		break;
+		case Internal_SMTInterpol:
+		{
+			useExternalSolver = false;
+			timeoutSmtInterpol = 30 * 1000;
+			externalInterpolator = null;
+		}
+		break;
+		default:
+			throw new AssertionError("unknown solver mode");
+		}
+		final Settings solverSettings = new Settings(useExternalSolver, 
+				commandExternalSolver, timeoutSmtInterpol, externalInterpolator, 
+				dumpSmtScriptToFile, pathOfDumpedScript, filename);
+		return solverSettings;
+	}
+	
+	
+	public static Script buildAndInitializeSolver(IUltimateServiceProvider services, IToolchainStorage storage,
+			String filename, SolverMode solverMode, final boolean dumpSmtScriptToFile, final String pathOfDumpedScript,
+			final String commandExternalSolver, final boolean dumpUsatCoreTrackBenchmark,
+			final boolean dumpMainTrackBenchmark, String logicForExternalSolver, String solverId) throws AssertionError {
+		final Settings solverSettings = SolverBuilder.constructSolverSettings(
+				filename, solverMode, commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
+		
+		Script script = SolverBuilder.buildScript(services, storage, solverSettings);
+		if (dumpUsatCoreTrackBenchmark) {
+			script = new LoggingScriptForUnsatCoreBenchmarks(script, solverSettings.getBaseNameOfDumpedScript(), solverSettings.getPathOfDumpedScript());
+		}
+		if (dumpMainTrackBenchmark) {
+			script = new LoggingScriptForMainTrackBenchmarks(script, solverSettings.getBaseNameOfDumpedScript(), solverSettings.getPathOfDumpedScript());
+		}
+		final Script result = script;
+		
+
+		result.setOption(":produce-models", true);
+		switch (solverMode) {
+		case External_DefaultMode:
+			result.setOption(":produce-unsat-cores", true);
+			result.setLogic(logicForExternalSolver);
+		break;
+		case External_PrincessInterpolationMode:
+		case External_SMTInterpolInterpolationMode:
+			result.setOption(":produce-interpolants", true);
+			result.setLogic(logicForExternalSolver);
+		break;
+		case External_Z3InterpolationMode:
+			result.setOption(":produce-interpolants", true);
+			result.setLogic(logicForExternalSolver);
+//			add array-ext function
+//			Sort intSort = result.sort("Int");
+//			Sort boolSort = result.sort("Bool");
+//			Sort arraySort = result.sort("Array", intSort, boolSort);
+//			result.declareFun("array-ext", new Sort[]{arraySort, arraySort}, intSort);
+		break;
+		case Internal_SMTInterpol:
+			result.setOption(":produce-unsat-cores", true);
+			result.setOption(":produce-interpolants", true);
+			result.setOption(":interpolant-check-mode", true);
+			result.setOption(":proof-transformation", "LU");
+			// m_Script.setOption(":proof-transformation", "RPI");
+			// m_Script.setOption(":proof-transformation", "LURPI");
+			// m_Script.setOption(":proof-transformation", "RPILU");
+			// m_Script.setOption(":verbosity", 0);
+			result.setLogic("QF_AUFLIRA");
+		break;
+		default:
+			throw new AssertionError("unknown solver");
+		}
+
+		String advertising = "|" + System.lineSeparator() + "    SMT script generated on " + 
+				(new SimpleDateFormat("yyyy/MM/dd")).format(new Date()) + 
+				" by Ultimate. http://ultimate.informatik.uni-freiburg.de/" + 
+				System.lineSeparator() + "|";
+		result.setInfo(":source", advertising);
+		result.setInfo(":smt-lib-version", "2.0");
+		result.setInfo(":category", new QuotedObject("industrial"));
+		
+		storage.putStorable(solverId, new IStorable() {
+
+			final Script theScript = result;
+			
+			@Override
+			public void destroy() {
+				theScript.exit();
+			}
+		});
+		return result;
 	}
 }

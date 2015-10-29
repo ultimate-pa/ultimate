@@ -488,7 +488,7 @@ public class TraceChecker {
 				if (tc.getToolchainCancelledExpection() != null) {
 					throw tc.getToolchainCancelledExpection();
 				}
-				assert tc.isCorrect() == LBool.SAT;
+				assert tc.isCorrect() == LBool.SAT : "result of second trace check is different";
 				m_RcfgProgramExecution = tc.getRcfgProgramExecution();
 			} else {
 				m_RcfgProgramExecution = computeRcfgProgramExecutionCaseSAT(m_Nsb);
@@ -555,7 +555,7 @@ public class TraceChecker {
 	}
 
 	protected AnnotateAndAssertCodeBlocks getAnnotateAndAsserterCodeBlocks(NestedFormulas<Term, Term> ssa) {
-		return new AnnotateAndAssertCodeBlocks(m_SmtManager, ssa, mLogger);
+		return new AnnotateAndAssertCodeBlocks(m_TcSmtManager, ssa, mLogger);
 	
 		// AnnotateAndAssertCodeBlocks aaacb =
 		// return new AnnotateAndAsserter(m_SmtManager, ssa, aaacb);

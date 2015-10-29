@@ -294,7 +294,7 @@ public class TotalInterpolationAutomatonBuilder {
 			tc = new TraceCheckerSpWp(precondition, postcondition, pendingContexts,
 					run.getWord(), m_SmtManager, m_ModifiedGlobals, 
 					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true,
-					mServices, true, m_PredicateUnifier, m_Interpolation);
+					mServices, true, m_PredicateUnifier, m_Interpolation, m_SmtManager);
 			
 			break;
 		case PathInvariants:

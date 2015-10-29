@@ -162,7 +162,7 @@ public class LoopCannibalizer {
 					 * to a different value.
 					 */AssertCodeBlockOrder.NOT_INCREMENTALLY,
 					 UnsatCores.CONJUNCT_LEVEL, true, mServices, false, m_PredicateUnifier,
-						interpolation);
+						interpolation, m_SmtManager);
 			break;
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");

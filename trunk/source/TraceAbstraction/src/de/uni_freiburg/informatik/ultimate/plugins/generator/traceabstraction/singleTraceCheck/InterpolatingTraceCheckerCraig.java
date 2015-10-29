@@ -181,7 +181,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			throw new AssertionError("You already computed interpolants");
 		}
 		NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(m_SmtManager, m_AAA.getAnnotatedSsa(),
-				m_Nsb.getConstants2BoogieVar(), m_PredicateUnifier, interpolatedPositions, true, mLogger, this);
+				m_Nsb.getConstants2BoogieVar(), m_PredicateUnifier, interpolatedPositions, true, mLogger, this, m_SmtManager);
 		m_Interpolants = nib.getNestedInterpolants();
 		assert !inductivityOfSequenceCanBeRefuted();
 		assert m_Interpolants != null;
@@ -208,8 +208,8 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 		Set<Integer> newInterpolatedPositions = interpolatedPositionsForSubtraces(interpolatedPositions,
 				nonPendingCallPositions);
 
-		NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(m_SmtManager, m_AAA.getAnnotatedSsa(),
-				m_Nsb.getConstants2BoogieVar(), m_PredicateUnifier, newInterpolatedPositions, false, mLogger, this);
+		NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(m_TcSmtManager, m_AAA.getAnnotatedSsa(),
+				m_Nsb.getConstants2BoogieVar(), m_PredicateUnifier, newInterpolatedPositions, false, mLogger, this, m_SmtManager);
 		m_Interpolants = nib.getNestedInterpolants();
 		IPredicate oldPrecondition = m_Precondition;
 		IPredicate oldPostcondition = m_Postcondition;

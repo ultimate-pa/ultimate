@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class TraceAbstraction implements IGenerator {
 
 	private static final String s_PLUGIN_NAME = Activator.s_PLUGIN_NAME;
-	private static final String s_PLUGIN_ID = Activator.s_PLUGIN_ID;
+	static final String s_PLUGIN_ID = Activator.s_PLUGIN_ID;
 
 	private TraceAbstractionObserver m_Observer;
 	private List<IObserver> m_Observers;

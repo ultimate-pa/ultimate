@@ -30,9 +30,9 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.Solver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 
 /**
@@ -45,28 +45,28 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class InterpolationPreferenceChecker {
 	
 	public static void check (String pluginName, INTERPOLATION interpolation) {
-		Solver solver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, Solver.class);
-		Set<Solver> legalSolverSettings = new HashSet<Solver>();
+		SolverMode solver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
+		Set<SolverMode> legalSolverSettings = new HashSet<SolverMode>();
 		switch (interpolation) {
 		case Craig_TreeInterpolation:
-			legalSolverSettings.add(Solver.Internal_SMTInterpol);
-			legalSolverSettings.add(Solver.External_PrincessInterpolationMode);
-			legalSolverSettings.add(Solver.External_SMTInterpolInterpolationMode);
-			legalSolverSettings.add(Solver.External_Z3InterpolationMode);
+			legalSolverSettings.add(SolverMode.Internal_SMTInterpol);
+			legalSolverSettings.add(SolverMode.External_PrincessInterpolationMode);
+			legalSolverSettings.add(SolverMode.External_SMTInterpolInterpolationMode);
+			legalSolverSettings.add(SolverMode.External_Z3InterpolationMode);
 			break;
 		case Craig_NestedInterpolation:
-			legalSolverSettings.add(Solver.Internal_SMTInterpol);
-			legalSolverSettings.add(Solver.External_PrincessInterpolationMode);
-			legalSolverSettings.add(Solver.External_SMTInterpolInterpolationMode);
-			legalSolverSettings.add(Solver.External_Z3InterpolationMode);
+			legalSolverSettings.add(SolverMode.Internal_SMTInterpol);
+			legalSolverSettings.add(SolverMode.External_PrincessInterpolationMode);
+			legalSolverSettings.add(SolverMode.External_SMTInterpolInterpolationMode);
+			legalSolverSettings.add(SolverMode.External_Z3InterpolationMode);
 			break;
 		case BackwardPredicates:
 		case FPandBP:
 		case ForwardPredicates:
 		case PathInvariants:
-			legalSolverSettings.add(Solver.Internal_SMTInterpol);
-			legalSolverSettings.add(Solver.External_DefaultMode);
+			legalSolverSettings.add(SolverMode.Internal_SMTInterpol);
+			legalSolverSettings.add(SolverMode.External_DefaultMode);
 			break;
 		default:
 			throw new AssertionError("unknown option " + interpolation);

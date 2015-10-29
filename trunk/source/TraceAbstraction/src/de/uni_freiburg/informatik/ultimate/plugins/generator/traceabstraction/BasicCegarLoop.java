@@ -73,7 +73,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -271,37 +271,35 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
 		
 		InterpolatingTraceChecker interpolatingTraceChecker = null;
+		final SmtManager smtMangerTracechecks;
+		if (m_Pref.useSeparateSolverForTracechecks()) {
+			Script tcSolver = SolverBuilder.buildAndInitializeSolver(m_Services, m_ToolchainStorage,
+					m_RootNode.getFilename() + "_TraceCheck_Iteration" + m_Iteration,
+					m_Pref.solverMode(),
+					m_Pref.dumpSmtScriptToFile(), 
+					m_Pref.pathOfDumpedScript(), 
+					m_Pref.commandExternalSolver(), 
+					false, false, m_Pref.logicForExternalSolver(), 
+					"TraceCheck_Iteration" + m_Iteration);
+			smtMangerTracechecks = new SmtManager(tcSolver, m_RootNode.getRootAnnot().getBoogie2SMT(), 
+					m_RootNode.getRootAnnot().getModGlobVarManager(), m_Services, false);
+			TermTransferrer tt = new TermTransferrer(tcSolver);
+			for (Term axiom : m_RootNode.getRootAnnot().getBoogie2SMT().getAxioms()) {
+				tcSolver.assertTerm(tt.transform(axiom));
+			}
+		} else {
+			smtMangerTracechecks = m_SmtManager;
+		}
+		
 		final LBool feasibility;
 		switch (m_Interpolation) {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
 		{
-			if (false) {
-				Settings settings = new Settings(false, null, 60 * 1000, null, false, "", "");
-				Script tcSolver = SolverBuilder.buildScript(m_Services, m_ToolchainStorage, settings );
-				tcSolver.setOption(":produce-unsat-cores", true);
-				tcSolver.setOption(":produce-interpolants", true);
-				tcSolver.setOption(":interpolant-check-mode", true);
-				tcSolver.setOption(":proof-transformation", "LU");
-				// m_Script.setOption(":proof-transformation", "RPI");
-				// m_Script.setOption(":proof-transformation", "LURPI");
-				// m_Script.setOption(":proof-transformation", "RPILU");
-				// m_Script.setOption(":verbosity", 0);
-				tcSolver.setLogic("QF_AUFLIRA");
-				SmtManager tcSmtManager = new SmtManager(tcSolver, m_RootNode.getRootAnnot().getBoogie2SMT(), 
-						m_RootNode.getRootAnnot().getModGlobVarManager(), m_Services);
-				interpolatingTraceChecker = new InterpolatingTraceCheckerCraig(truePredicate, falsePredicate,
-						new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(m_Counterexample.getWord()),
-						m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager(), m_AssertCodeBlocksIncrementally,
-						m_Services, true, predicateUnifier, m_Interpolation, tcSmtManager);
-
-			} else {
-				interpolatingTraceChecker = new InterpolatingTraceCheckerCraig(truePredicate, falsePredicate,
-						new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(m_Counterexample.getWord()),
-						m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager(), m_AssertCodeBlocksIncrementally,
-						m_Services, true, predicateUnifier, m_Interpolation);
-
-			}
+			interpolatingTraceChecker = new InterpolatingTraceCheckerCraig(truePredicate, falsePredicate,
+					new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(m_Counterexample.getWord()),
+					m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager(), m_AssertCodeBlocksIncrementally,
+					m_Services, true, predicateUnifier, m_Interpolation, smtMangerTracechecks);
 		}
 			break;
 		case ForwardPredicates:
@@ -310,7 +308,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			interpolatingTraceChecker = new TraceCheckerSpWp(truePredicate, falsePredicate, new TreeMap<Integer, IPredicate>(),
 					NestedWord.nestedWord(m_Counterexample.getWord()), m_SmtManager, m_RootNode.getRootAnnot()
 					.getModGlobVarManager(), m_AssertCodeBlocksIncrementally, m_UnsatCores, m_UseLiveVariables,
-					m_Services, true, predicateUnifier, m_Interpolation);
+					m_Services, true, predicateUnifier, m_Interpolation, smtMangerTracechecks);
 
 			break;
 		case PathInvariants:
