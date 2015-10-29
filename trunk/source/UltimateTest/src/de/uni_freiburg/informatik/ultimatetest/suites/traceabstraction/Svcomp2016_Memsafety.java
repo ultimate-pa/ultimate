@@ -43,22 +43,29 @@ public class Svcomp2016_Memsafety extends AbstractTraceAbstractionTestSuite {
 	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
 //	private static int m_FilesPerDirectoryLimit = 5;
 	
-	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs = {
+	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs_Deref = {
 		/*** Category 1. Arrays ***/
 		new DirectoryFileEndingsPair("examples/svcomp/array-memsafety/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		
-		
-		/*** Category 3. Heap Data Structures ***/
-		new DirectoryFileEndingsPair("examples/svcomp/memsafety/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/list-ext-properties/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/memory-alloca/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/ldv-memsafety/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		
 	};
 	
+	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs_DerefFreeMemtrack = {
+			/*** Category 3. Heap Data Structures ***/
+			new DirectoryFileEndingsPair("examples/svcomp/memsafety/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+			new DirectoryFileEndingsPair("examples/svcomp/list-ext-properties/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+			new DirectoryFileEndingsPair("examples/svcomp/memory-alloca/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+			new DirectoryFileEndingsPair("examples/svcomp/ldv-memsafety/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+	};
+
 	
-	private static final String[] m_CurrentBugs = {
+	
+	private static final String[] m_CurrentBugs_Deref = {
+//			"examples/svcomp/array-memsafety/openbsd_cbzero-alloca_true-valid-memsafety.i"
 		};
+	
+	private static final String[] m_CurrentBugs_DerefFreeMemtrack = {
+//			"examples/svcomp/array-memsafety/openbsd_cbzero-alloca_true-valid-memsafety.i"
+		};
+
 
 	/**
 	 * {@inheritDoc}
@@ -68,16 +75,14 @@ public class Svcomp2016_Memsafety extends AbstractTraceAbstractionTestSuite {
 		return 300 * 1000;
 	}
 
-	/**
-	 * List of path to setting files. 
-	 * Ultimate will run on each program with each setting that is defined here.
-	 * The path are defined relative to the folder "trunk/examples/settings/",
-	 * because we assume that all settings files are in this folder.
-	 * 
-	 */
-	private static final String[] m_Settings = {
-		"svcomp2016/svcomp-memsafety-64bit-Automizer.epf",
+	private static final String[] m_Settings_Deref = {
+		"svcomp2016/svcomp-Deref-32bit-Automizer.epf",
 	};
+	
+	private static final String[] m_Settings_DerefFreeMemtrack = {
+		"svcomp2016/svcomp-DerefFreeMemtrack-32bit-Automizer.epf",
+	};
+
 	
 	
 	private static final String[] m_CToolchains = {
@@ -91,10 +96,16 @@ public class Svcomp2016_Memsafety extends AbstractTraceAbstractionTestSuite {
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String setting : m_Settings) {
+		for (String setting : m_Settings_Deref) {
 			for (String toolchain : m_CToolchains) {
-				addTestCases(toolchain, setting, m_DirectoryFileEndingsPairs);
-				addTestCases(toolchain, setting, m_CurrentBugs, new String[] {".c", ".i"});
+				addTestCases(toolchain, setting, m_DirectoryFileEndingsPairs_Deref);
+				addTestCases(toolchain, setting, m_CurrentBugs_Deref, new String[] {".c", ".i"});
+			}
+		}
+		for (String setting : m_Settings_DerefFreeMemtrack) {
+			for (String toolchain : m_CToolchains) {
+				addTestCases(toolchain, setting, m_DirectoryFileEndingsPairs_DerefFreeMemtrack);
+				addTestCases(toolchain, setting, m_CurrentBugs_DerefFreeMemtrack, new String[] {".c", ".i"});
 			}
 		}
 		return super.createTestCases();
