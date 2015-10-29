@@ -4,10 +4,11 @@ import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 
 /**
- * @author GROSS-JAN
+ * @author Jan Hättig
  *
  */
 public class TypedAbstractVariable extends AbstractVariable {
+
 	private final DeclarationInformation mDeclaration;
 	private final IType mType;
 
@@ -28,19 +29,29 @@ public class TypedAbstractVariable extends AbstractVariable {
 	public DeclarationInformation getDeclaration() {
 		return mDeclaration;
 	}
+	
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((mDeclaration == null) ? 0 : mDeclaration.hashCode());
+		return result;
+	}
 
 	@Override
-	public String toString() {
-		String s = super.toString();
-		// if(mDeclaration != null)
-		// {
-		// s += "+".concat(mDeclaration.toString());
-		// }
-		// if(mType != null)
-		// {
-		// s += ":".concat(mType.toString());
-		// }
-
-		return s;
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (!super.equals(obj))
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		TypedAbstractVariable other = (TypedAbstractVariable) obj;
+		if (mDeclaration == null) {
+			if (other.mDeclaration != null)
+				return false;
+		} else if (!mDeclaration.equals(other.mDeclaration))
+			return false;
+		return true;
 	}
 }

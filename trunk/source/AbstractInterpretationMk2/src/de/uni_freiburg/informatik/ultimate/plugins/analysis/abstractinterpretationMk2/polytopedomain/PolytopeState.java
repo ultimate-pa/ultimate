@@ -1,8 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.polytopedomain;
 
 import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.AbstractVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.TypedAbstractVariable;
@@ -11,7 +14,14 @@ import parma_polyhedra_library.Coefficient;
 import parma_polyhedra_library.Constraint;
 import parma_polyhedra_library.Degenerate_Element;
 import parma_polyhedra_library.Linear_Expression;
+import parma_polyhedra_library.Linear_Expression_Coefficient;
+import parma_polyhedra_library.Linear_Expression_Difference;
+import parma_polyhedra_library.Linear_Expression_Sum;
+import parma_polyhedra_library.Linear_Expression_Times;
+import parma_polyhedra_library.Linear_Expression_Unary_Minus;
+import parma_polyhedra_library.Linear_Expression_Variable;
 import parma_polyhedra_library.NNC_Polyhedron;
+import parma_polyhedra_library.Relation_Symbol;
 import parma_polyhedra_library.Variable;
 
 /**
@@ -72,7 +82,7 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 
 	@Override
 	public boolean hasVariable(AbstractVariable variable) {
-		return mVariableTranslation.getVariables().containsKey(variable);
+		return getTypedVariable(variable) != null;
 	}
 
 	@Override
@@ -87,12 +97,7 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 	}
 
 	public TypedAbstractVariable getTypedVariable(AbstractVariable variable) {
-		for (TypedAbstractVariable tav : mVariableTranslation.getVariables().keySet()) {
-			if (tav.equals(variable)) {
-				return tav;
-			}
-		}
-		return null;
+		return mVariableTranslation.checkVar(variable);
 	}
 
 	@Override
@@ -101,7 +106,7 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 		// TODO: remove all related constrains from the polyhedron
 		// mLogger.debug("Remove variable: " + variable.toString() +
 		// " (implementation not finished)");
-		mVariableTranslation.getVariables().remove(variable);
+		mVariableTranslation.removeVariable((TypedAbstractVariable) variable);
 		throw new UnsupportedOperationException();
 	}
 
@@ -139,7 +144,7 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 	 * @return
 	 */
 	public Variable getVariable(AbstractVariable variable) {
-		return mVariableTranslation.getVariables().get(variable);
+		return mVariableTranslation.getPPLVar(variable);
 	}
 
 	/**
@@ -148,7 +153,7 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 	 * @param pState
 	 */
 	public void updateDimensions() {
-		int missingDimensions = mVariableTranslation.nofVariables() - (int) mPolyhedron.space_dimension();
+		int missingDimensions = mVariableTranslation.size() - (int) mPolyhedron.space_dimension();
 		if (missingDimensions > 0) {
 			mPolyhedron.add_space_dimensions_and_embed(missingDimensions);
 		} else if (missingDimensions < 0) {
@@ -282,12 +287,124 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 
 	@Override
 	public Term getTerm(Script script, Boogie2SMT bpl2smt) {
-		// for(Constraint con : mPolyhedron.constraints()){
-		// con.
-		// }
-		throw new UnsupportedOperationException();
+		if (isBottom()) {
+			return script.term("false");
+		}
+
+		final ConstraintWalker cwalker = new ConstraintWalker(script, bpl2smt, mVariableTranslation);
+		Term acc = script.term("true");
+		for (final Constraint con : mPolyhedron.constraints()) {
+			final Term left = cwalker.process(con.left_hand_side());
+			final Term right = cwalker.process(con.right_hand_side());
+			final Relation_Symbol kind = con.kind();
+			final String op;
+
+			switch (kind) {
+			case EQUAL:
+				op = "==";
+				break;
+			case GREATER_OR_EQUAL:
+				op = ">=";
+				break;
+			case GREATER_THAN:
+				op = ">";
+				break;
+			case LESS_OR_EQUAL:
+				op = "<=";
+				break;
+			case LESS_THAN:
+				op = "<";
+				break;
+			case NOT_EQUAL:
+				op = "!=";
+				break;
+			default:
+				throw new UnsupportedOperationException("Unknown \"kind\" of constraint: " + kind);
+			}
+
+			acc = script.term("and", acc, script.term(op, left, right));
+		}
+
+		return acc;
 	}
-	
+
+	private static final class ConstraintWalker {
+		private final Boogie2SMT mBoogie2SMT;
+		private final Script mScript;
+		private final VariableTranslation mTrans;
+
+		private ConstraintWalker(final Script script, final Boogie2SMT bpl2smt, final VariableTranslation trans) {
+			mScript = script;
+			mBoogie2SMT = bpl2smt;
+			mTrans = trans;
+		}
+
+		private Term process(final Linear_Expression expr) {
+			if (expr instanceof Linear_Expression_Coefficient) {
+				return process((Linear_Expression_Coefficient) expr);
+			} else if (expr instanceof Linear_Expression_Difference) {
+				return process((Linear_Expression_Difference) expr);
+			} else if (expr instanceof Linear_Expression_Sum) {
+				return process((Linear_Expression_Sum) expr);
+			} else if (expr instanceof Linear_Expression_Times) {
+				return process((Linear_Expression_Times) expr);
+			} else if (expr instanceof Linear_Expression_Unary_Minus) {
+				return process((Linear_Expression_Unary_Minus) expr);
+			} else if (expr instanceof Linear_Expression_Variable) {
+				return process((Linear_Expression_Variable) expr);
+			} else {
+				throw new UnsupportedOperationException("Dont know " + (expr == null ? "null" : expr.ascii_dump()));
+			}
+		}
+
+		private Term process(final Linear_Expression_Coefficient expr) {
+			return process(expr.argument());
+		}
+
+		private Term process(final Linear_Expression_Times expr) {
+			final Term coeff = process(expr.coefficient());
+			final Term inner = process(expr.linear_expression());
+			return mScript.term("*", coeff, inner);
+		}
+
+		private Term process(final Coefficient expr) {
+			return mScript.numeral(expr.getBigInteger());
+		}
+
+		private Term process(final Linear_Expression_Difference expr) {
+			final Term left = process(expr.left_hand_side());
+			final Term right = process(expr.right_hand_side());
+			return mScript.term("-", left, right);
+		}
+
+		private Term process(final Linear_Expression_Sum expr) {
+			final Term left = process(expr.left_hand_side());
+			final Term right = process(expr.right_hand_side());
+			return mScript.term("+", left, right);
+		}
+
+		private Term process(final Linear_Expression_Unary_Minus expr) {
+			final Term arg = process(expr.argument());
+			return mScript.term("-", arg);
+		}
+
+		private Term process(final Linear_Expression_Variable expr) {
+			final Variable arg = expr.argument();
+			final TypedAbstractVariable var = mTrans.getVar(arg);
+			final BoogieVar bplvar = mBoogie2SMT.getBoogie2SmtSymbolTable().getBoogieVar(var.getString(),
+					var.getDeclaration(), false);
+			final TermVariable termvar = bplvar.getTermVariable();
+			return termvar;
+		}
+	}
+
+	@Override
+	protected void finalize() throws Throwable {
+		mPolyhedron.free();
+
+		super.finalize();
+	}
+
 	/**
 	 * Minimizes the polyhedron representation.
 	 */

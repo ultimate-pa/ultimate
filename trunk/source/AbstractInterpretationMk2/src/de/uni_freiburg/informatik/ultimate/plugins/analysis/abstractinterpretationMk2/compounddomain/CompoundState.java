@@ -171,6 +171,10 @@ public class CompoundState implements IAbstractState<CompoundState> {
 
 	@Override
 	public Term getTerm(Script script, Boogie2SMT bpl2smt) {
+		if(isBottom()){
+			return script.term("false");
+		}
+		
 		Term acc = script.term("true");
 		for (final IAbstractState<?> state : mStates) {
 			acc = script.term("and", acc, state.getTerm(script, bpl2smt));

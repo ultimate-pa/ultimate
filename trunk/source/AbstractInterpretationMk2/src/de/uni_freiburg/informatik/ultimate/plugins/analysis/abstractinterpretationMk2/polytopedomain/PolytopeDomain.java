@@ -91,8 +91,7 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 					System.loadLibrary("libgmpxx-4");
 					System.loadLibrary("libppl-13");
 				} else {
-					throw new UnsatisfiedLinkError(
-							"The operating system \"" + osname + "\" is not supported.");
+					throw new UnsatisfiedLinkError("The operating system \"" + osname + "\" is not supported.");
 				}
 
 				// now we load the real deal
@@ -376,13 +375,13 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 
 		// TODO: add a prefix to the old variables
 		// add the variables as additional dimensions
-		vtOld.nofVariables();
-		long existingDimensions = vtTarget.nofVariables();
-		for (Entry<TypedAbstractVariable, Variable> entry : vtOld.getVariables().entrySet()) {
+		vtOld.size();
+		long existingDimensions = vtTarget.size();
+		for (Entry<TypedAbstractVariable, Variable> entry : vtOld.entries()) {
 			TypedAbstractVariable normal = entry.getKey();
 			TypedAbstractVariable prefixed = new TypedAbstractVariable(prefixOld + normal.getString(),
 					normal.getDeclaration(), normal.getType());
-			vtRenamed.getVariables().put(prefixed, new Variable(existingDimensions + entry.getValue().id()));
+			vtRenamed.addShiftedVariable(prefixed, existingDimensions + entry.getValue().id());
 		}
 
 		// pTarget.add_space_dimensions_and_embed(additionalDimensions);

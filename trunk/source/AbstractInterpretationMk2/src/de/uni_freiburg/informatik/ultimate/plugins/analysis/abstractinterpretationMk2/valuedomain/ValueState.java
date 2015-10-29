@@ -200,7 +200,9 @@ public class ValueState implements IAbstractState<ValueState> {
 
 	@Override
 	public Term getTerm(Script script, Boogie2SMT bpl2smt) {
-		
+		if(isBottom()){
+			return script.term("false");
+		}
 		
 		throw new UnsupportedOperationException();
 	}
