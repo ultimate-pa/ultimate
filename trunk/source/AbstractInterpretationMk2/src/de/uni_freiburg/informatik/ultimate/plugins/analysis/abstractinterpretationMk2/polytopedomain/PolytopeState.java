@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.polytopedomain;
 
 import org.apache.log4j.Logger;
+import org.osgi.service.application.ApplicationAdminPermission;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.AbstractVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.TypedAbstractVariable;
@@ -10,9 +11,13 @@ import parma_polyhedra_library.Constraint;
 import parma_polyhedra_library.Degenerate_Element;
 import parma_polyhedra_library.Linear_Expression;
 import parma_polyhedra_library.NNC_Polyhedron;
+import parma_polyhedra_library.Parma_Polyhedra_Library;
 import parma_polyhedra_library.Variable;
 
 public class PolytopeState implements IAbstractState<PolytopeState> {
+	
+	private static final long MAX_MEMORY = Runtime.getRuntime().maxMemory();
+
 	/**
 	 * Logger for debug output
 	 */
@@ -48,6 +53,16 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 		mIsBottom = false;
 		mPolyhedron = new NNC_Polyhedron(0, Degenerate_Element.UNIVERSE);
 		mVariableTranslation = new VariableTranslation();
+
+		mUID = sNextUID++;
+	}
+	
+	private PolytopeState(PolytopeState old) {
+		mLogger = old.mLogger;
+		mIsBottom = old.mIsBottom;
+		
+		mPolyhedron = new NNC_Polyhedron(old.mPolyhedron);
+		mVariableTranslation = old.mVariableTranslation;
 
 		mUID = sNextUID++;
 	}
@@ -247,11 +262,15 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 	 */
 	@Override
 	public PolytopeState copy() {
-		PolytopeState copy = new PolytopeState(mLogger);
-		copy.mIsBottom = mIsBottom;
-		copy.mPolyhedron = new NNC_Polyhedron(mPolyhedron);
-		copy.mVariableTranslation = mVariableTranslation;
-		return copy;
+//		PolytopeState copy = new PolytopeState(mLogger);
+//		copy.mIsBottom = mIsBottom;
+//		copy.mPolyhedron = new NNC_Polyhedron(mPolyhedron);
+//		copy.mVariableTranslation = mVariableTranslation;
+//		return copy;
+		if (mPolyhedron.external_memory_in_bytes() > MAX_MEMORY * 0.2) {
+			throw new OutOfMemoryError("Not enough heap space available to represent the polyhedron.");
+		}
+		return new PolytopeState(this);
 	}
 
 	/*
@@ -331,4 +350,5 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 	public void setVariableTranslation(VariableTranslation variableTranslation) {
 		mVariableTranslation = variableTranslation;
 	}
+
 }

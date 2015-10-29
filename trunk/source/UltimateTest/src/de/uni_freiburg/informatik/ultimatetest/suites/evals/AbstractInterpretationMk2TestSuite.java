@@ -76,7 +76,7 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 				// "examples/programs/regression/c/",
 				// "examples/programs/recursivePrograms",
 				/* SV-COMP repo */
-//				 "examples/svcomp/loops/", // SPLIT
+				 "examples/svcomp/loops/", // SPLIT
 				// "examples/svcomp/loopsSelection/",
 				// "examples/svcomp/eca/", // SPLIT
 				// "examples/svcomp/ecaSelection/",
@@ -89,7 +89,7 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 //				 "examples/svcomp/ssh/",
 
 			// problems with loop detector
-			 "examples/svcomp/loops/eureka_01_false-unreach-call.c",
+//			 "examples/svcomp/loops/eureka_01_false-unreach-call.c",
 //			"examples/svcomp/loops/matrix_false-unreach-call_true-termination.c", 
 			
 			// unsoundness
