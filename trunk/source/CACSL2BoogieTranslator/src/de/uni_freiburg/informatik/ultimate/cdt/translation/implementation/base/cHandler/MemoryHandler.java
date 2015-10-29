@@ -83,6 +83,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.EnsuresSpecification
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
@@ -758,34 +759,58 @@ public class MemoryHandler {
         Expression[] idcFree = new Expression[] { addrBase };
         
         ArrayList<Specification> specFree = new ArrayList<Specification>();
+
+        /* 
+         * creating the specification according to C99:7.20.3.2-2:
+         * The free function causes the space pointed to by ptr to be deallocated, that is, made
+         * available for further allocation. If ptr is a null pointer, no action occurs. Otherwise, if
+         * the argument does not match a pointer earlier returned by the calloc, malloc, or
+         * realloc function, or if the space has been deallocated by a call to free or realloc,
+         * the behavior is undefined.
+         */
+        Check check = new Check(Spec.MEMORY_FREE);
+        boolean free = !m_CheckFreeValid;
+        RequiresSpecification offsetZero = new RequiresSpecification(
+        		tuLoc, free, ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, 
+        				addrOffset, nr0));
+        check.addToNodeAnnot(offsetZero);
+        specFree.add(offsetZero);
+
+        // ~addr!base == 0
+        Expression isNullPtr = ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, addrBase, new IntegerLiteral(tuLoc, "0"));
+
+        //requires ~addr!base == 0 || #valid[~addr!base];
+        RequiresSpecification baseValid = new RequiresSpecification(tuLoc, free,
+        		ExpressionFactory.newBinaryExpression(tuLoc, Operator.LOGICOR,
+        				isNullPtr,
+        				new ArrayAccessExpression(tuLoc, valid, idcFree)));
+
+        check.addToNodeAnnot(baseValid);
+        specFree.add(baseValid);
+
+        //ensures (if ~addr!base == 0 then #valid == old(#valid)[~addr!base := false] else #valid == old(#valid))
+        Expression updateValidArray = 
+        		ExpressionFactory.newIfThenElseExpression(tuLoc, isNullPtr, 
+        				ExpressionFactory.newBinaryExpression(
+        						tuLoc, Operator.COMPEQ, valid,
+        						ExpressionFactory.newUnaryExpression(
+        								tuLoc, UnaryExpression.Operator.OLD, valid)),
+        				ExpressionFactory.newBinaryExpression(
+        						tuLoc, Operator.COMPEQ, valid,
+        						new ArrayStoreExpression(tuLoc, ExpressionFactory.newUnaryExpression(
+        								tuLoc, UnaryExpression.Operator.OLD, valid),
+        								idcFree, bLFalse))
+        				);
+
+        specFree.add(new EnsuresSpecification(tuLoc, free, updateValidArray));
+        specFree.add(new ModifiesSpecification(tuLoc, false,
+        		new VariableLHS[] { new VariableLHS(tuLoc, SFO.VALID) }));
         
-//        if (m_CheckFreeValid) {
-        	Check check = new Check(Spec.MEMORY_FREE);
-        	boolean free = !m_CheckFreeValid;
-        	RequiresSpecification offsetZero = new RequiresSpecification(
-        			tuLoc, free, ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, 
-        					addrOffset, nr0));
-            check.addToNodeAnnot(offsetZero);
-            specFree.add(offsetZero);
-            RequiresSpecification baseValid = new RequiresSpecification(
-                    tuLoc,
-                    free,
-                    new ArrayAccessExpression(tuLoc, valid, idcFree));
-            check.addToNodeAnnot(baseValid);
-            specFree.add(baseValid);
-            specFree.add(new EnsuresSpecification(tuLoc, free, ExpressionFactory.newBinaryExpression(
-                    tuLoc, Operator.COMPEQ, valid,
-                    new ArrayStoreExpression(tuLoc, ExpressionFactory.newUnaryExpression(
-                            tuLoc, UnaryExpression.Operator.OLD, valid),
-                            idcFree, bLFalse))));
-            specFree.add(new ModifiesSpecification(tuLoc, false,
-                    new VariableLHS[] { new VariableLHS(tuLoc, SFO.VALID) }));
-//        }
         decl.add(new Procedure(tuLoc, new Attribute[0], SFO.FREE,
-                new String[0], new VarList[] { new VarList(tuLoc,
-                        new String[] { ADDR }, main.typeHandler.constructPointerType(tuLoc)) }, new VarList[0],
-                specFree.toArray(new Specification[0]), null));
-        
+        		new String[0], new VarList[] { new VarList(tuLoc,
+        				new String[] { ADDR }, main.typeHandler.constructPointerType(tuLoc)) }, new VarList[0],
+        		specFree.toArray(new Specification[0]), null));
+
         if (m_AddImplementation) {
         	// procedure ~free(~addr:$Pointer$) returns() {
         	// #valid[~addr!base] := false;
