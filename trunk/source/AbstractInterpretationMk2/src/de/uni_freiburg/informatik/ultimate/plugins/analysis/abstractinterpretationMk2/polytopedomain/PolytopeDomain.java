@@ -241,7 +241,8 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 			// declare the variable anew
 			pState.declareVariable(target);
 			Variable var = pState.getVariable(target);
-
+			assert var != null;
+			
 			// Put it into to the polytope
 			pState.addConstraint(new Constraint(new Linear_Expression_Variable(var), Relation_Symbol.EQUAL, right));
 		} else {

@@ -107,6 +107,7 @@ public class PolytopeExpressionVisitor extends ExpressionWalker<Linear_Expressio
 				mCurrentState.declareVariable(abst);
 			}
 			Variable variable = mCurrentState.getVariable(abst);
+			assert variable != null;
 
 			return new Linear_Expression_Variable(variable);
 		} else {
@@ -137,7 +138,7 @@ public class PolytopeExpressionVisitor extends ExpressionWalker<Linear_Expressio
 		case ARITHMUL:
 			// we can only make linear expressions, otherwise we do not know
 			if (left == null || right == null) {
-				//propagate top
+				// propagate top
 				return null;
 			} else if (left instanceof Linear_Expression_Coefficient) {
 				Linear_Expression_Coefficient leftCoef = (Linear_Expression_Coefficient) left;
@@ -334,11 +335,12 @@ public class PolytopeExpressionVisitor extends ExpressionWalker<Linear_Expressio
 		AbstractVariable abst = new AbstractVariable(ident);
 		if (!mCurrentState.hasVariable(abst)) {
 			mLogger.warn("Variable " + abst.toString() + " was not found in state " + mCurrentState.toString());
+			mCurrentState.hasVariable(abst);
 			mCurrentState.declareVariable(
 					new TypedAbstractVariable(ident, expr.getDeclarationInformation(), expr.getType()));
 		}
 		Variable variable = mCurrentState.getVariable(abst);
-
+		assert variable != null;
 		return new Linear_Expression_Variable(variable);
 	}
 

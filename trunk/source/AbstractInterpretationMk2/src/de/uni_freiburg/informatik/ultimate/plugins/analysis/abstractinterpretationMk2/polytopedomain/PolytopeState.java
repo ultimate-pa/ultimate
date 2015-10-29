@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
@@ -153,7 +154,7 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 	 * @param pState
 	 */
 	public void updateDimensions() {
-		int missingDimensions = mVariableTranslation.size() - (int) mPolyhedron.space_dimension();
+		int missingDimensions = mVariableTranslation.size() + 1 - (int) mPolyhedron.space_dimension();
 		if (missingDimensions > 0) {
 			mPolyhedron.add_space_dimensions_and_embed(missingDimensions);
 		} else if (missingDimensions < 0) {
@@ -294,35 +295,40 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 		final ConstraintWalker cwalker = new ConstraintWalker(script, bpl2smt, mVariableTranslation);
 		Term acc = script.term("true");
 		for (final Constraint con : mPolyhedron.constraints()) {
-			final Term left = cwalker.process(con.left_hand_side());
-			final Term right = cwalker.process(con.right_hand_side());
-			final Relation_Symbol kind = con.kind();
-			final String op;
+			try {
+				final Term left = cwalker.process(con.left_hand_side());
+				final Term right = cwalker.process(con.right_hand_side());
+				final Relation_Symbol kind = con.kind();
+				final String op;
 
-			switch (kind) {
-			case EQUAL:
-				op = "==";
-				break;
-			case GREATER_OR_EQUAL:
-				op = ">=";
-				break;
-			case GREATER_THAN:
-				op = ">";
-				break;
-			case LESS_OR_EQUAL:
-				op = "<=";
-				break;
-			case LESS_THAN:
-				op = "<";
-				break;
-			case NOT_EQUAL:
-				op = "!=";
-				break;
-			default:
-				throw new UnsupportedOperationException("Unknown \"kind\" of constraint: " + kind);
+				switch (kind) {
+				case EQUAL:
+					op = "=";
+					break;
+				case GREATER_OR_EQUAL:
+					op = ">=";
+					break;
+				case GREATER_THAN:
+					op = ">";
+					break;
+				case LESS_OR_EQUAL:
+					op = "<=";
+					break;
+				case LESS_THAN:
+					op = "<";
+					break;
+				case NOT_EQUAL:
+					op = "!=";
+					break;
+				default:
+					throw new UnsupportedOperationException("Unknown \"kind\" of constraint: " + kind);
+				}
+
+				acc = script.term("and", acc, script.term(op, left, right));
+			} catch (IgnoreTermException ex) {
+				// we really just ignore the term
+				mLogger.warn("We do not support constraints over arrays: " + con);
 			}
-
-			acc = script.term("and", acc, script.term(op, left, right));
 		}
 
 		return acc;
@@ -339,7 +345,7 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 			mTrans = trans;
 		}
 
-		private Term process(final Linear_Expression expr) {
+		private Term process(final Linear_Expression expr) throws IgnoreTermException {
 			if (expr instanceof Linear_Expression_Coefficient) {
 				return process((Linear_Expression_Coefficient) expr);
 			} else if (expr instanceof Linear_Expression_Difference) {
@@ -361,7 +367,7 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 			return process(expr.argument());
 		}
 
-		private Term process(final Linear_Expression_Times expr) {
+		private Term process(final Linear_Expression_Times expr) throws IgnoreTermException {
 			final Term coeff = process(expr.coefficient());
 			final Term inner = process(expr.linear_expression());
 			return mScript.term("*", coeff, inner);
@@ -371,38 +377,41 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 			return mScript.numeral(expr.getBigInteger());
 		}
 
-		private Term process(final Linear_Expression_Difference expr) {
+		private Term process(final Linear_Expression_Difference expr) throws IgnoreTermException {
 			final Term left = process(expr.left_hand_side());
 			final Term right = process(expr.right_hand_side());
 			return mScript.term("-", left, right);
 		}
 
-		private Term process(final Linear_Expression_Sum expr) {
+		private Term process(final Linear_Expression_Sum expr) throws IgnoreTermException {
 			final Term left = process(expr.left_hand_side());
 			final Term right = process(expr.right_hand_side());
 			return mScript.term("+", left, right);
 		}
 
-		private Term process(final Linear_Expression_Unary_Minus expr) {
+		private Term process(final Linear_Expression_Unary_Minus expr) throws IgnoreTermException {
 			final Term arg = process(expr.argument());
 			return mScript.term("-", arg);
 		}
 
-		private Term process(final Linear_Expression_Variable expr) {
+		private Term process(final Linear_Expression_Variable expr) throws IgnoreTermException {
 			final Variable arg = expr.argument();
 			final TypedAbstractVariable var = mTrans.getVar(arg);
+			assert var != null;
 			final BoogieVar bplvar = mBoogie2SMT.getBoogie2SmtSymbolTable().getBoogieVar(var.getString(),
 					var.getDeclaration(), false);
 			final TermVariable termvar = bplvar.getTermVariable();
+
+			final Sort sort = termvar.getSort().getRealSort();
+			if (!sort.getName().equals("Int")) {
+				throw new IgnoreTermException();
+			}
 			return termvar;
 		}
 	}
 
-	@Override
-	protected void finalize() throws Throwable {
-		mPolyhedron.free();
-
-		super.finalize();
+	private static final class IgnoreTermException extends Exception {
+		private static final long serialVersionUID = 1L;
 	}
 
 	/**

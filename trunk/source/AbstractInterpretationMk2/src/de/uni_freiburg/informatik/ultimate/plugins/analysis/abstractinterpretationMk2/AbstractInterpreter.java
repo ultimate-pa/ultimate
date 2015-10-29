@@ -11,8 +11,11 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.*;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.preferences.*;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.util.RCFGWalker;
@@ -122,7 +125,7 @@ public class AbstractInterpreter {
 	 *            The states at the given location
 	 */
 	private void annotateElement(IElement element, List<StackState> states) {
-		if(!mPreferences.getGenerateStateAnnotations()){
+		if (!mPreferences.getGenerateStateAnnotations()) {
 			return;
 		}
 		AbstractInterpretationAnnotations anno = new AbstractInterpretationAnnotations(states);
@@ -287,7 +290,13 @@ public class AbstractInterpreter {
 				reportSafeResult();
 			}
 		}
-
+		
+		final Map<RCFGNode, Term> predicates = getPredicates(root);
+		if(mLogger.isDebugEnabled()){
+			printPredicatesDebug(predicates);
+		}
+		new AbstractInterpretationPredicates(predicates).annotate(root);
+		mLogger.info("Annotated "+predicates.size()+" predicates");
 		mDomain.finalizeDomain();
 	}
 
@@ -299,7 +308,7 @@ public class AbstractInterpreter {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				throwTimeout();
 			}
-			
+
 			// mLogger.debug("Nodes to process:");
 			// for (RCFGNode node : mNodesToVisit)
 			// {
@@ -688,15 +697,42 @@ public class AbstractInterpreter {
 		return mStateChangeListeners.remove(listener);
 	}
 
-	/**
-	 * Initializes the abstract interpreter.
-	 */
-	public void init() {
-		mDomain.initializeDomain();
+	private void printPredicatesDebug(Map<RCFGNode, Term> predicates) {
+		if (predicates == null) {
+			return;
+		}
+
+		for (final Entry<RCFGNode, Term> entry : predicates.entrySet()) {
+			mLogger.debug(entry.getKey() + " has " + entry.getValue());
+		}
 	}
 
-	public void finalize() {
+	private Map<RCFGNode, Term> getPredicates(RootNode root) {
+		if (root == null) {
+			mLogger.error("Cannot create predicates because root is null");
+			return Collections.emptyMap();
+		}
 
+		final Map<RCFGNode, Term> rtr = new HashMap<>();
+		final Script script = root.getRootAnnot().getScript();
+		final Boogie2SMT bpl2smt = root.getRootAnnot().getBoogie2SMT();
+
+		for (final Entry<RCFGNode, List<StackState>> entry : mStates.entrySet()) {
+			final List<StackState> states = entry.getValue();
+			if (states.size() != 1) {
+				continue;
+			}
+			final StackState currentStackState = states.get(0);
+			if (currentStackState.getStackSize() != 1) {
+				continue;
+			}
+			IAbstractState currentState = currentStackState.getCurrentState();
+			if (currentState == null) {
+				continue;
+			}
+			rtr.put(entry.getKey(), currentState.getTerm(script, bpl2smt));
+		}
+		return rtr;
 	}
 
 	/**

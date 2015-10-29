@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.decider.NoTimeoutTestResultDecider;
+import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.suites.AbstractEvalTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
@@ -50,53 +50,60 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String, String>[] TOOLCHAINS = new Triple[] {
-//			new Triple<>("AbstractInterpretationMk2CInline.xml", ".c", "ai/AI2_INT.epf"),
-//			new Triple<>("AbstractInterpretationMk2C.xml", ".c", "ai/AI2_INT.epf"),
-//			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_INT.epf"),
-//			new Triple<>("AbstractInterpretationMk2CInline.xml", ".c", "ai/AI2_PLT.epf"),
-//			new Triple<>("AbstractInterpretationMk2C.xml", ".c", "ai/AI2_PLT.epf"),
-//			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_PLT.epf"),
-			new Triple<>("AbstractInterpretationMk2CInline.xml", ".c", "ai/AI2_CMP.epf"),
-//			new Triple<>("AbstractInterpretationMk2C.xml", ".c", "ai/AI2_CMP.epf"),
-//			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_CMP.epf"),
-//			new Triple<>("AutomizerCInline.xml", ".c", "EmptySettings.epf"),
-//			new Triple<>("AutomizerC.xml", ".c", "EmptySettings.epf"),
-//			new Triple<>("AutomizerBpl.xml", ".bpl", "EmptySettings.epf"),
-			};
+			// new Triple<>("AbstractInterpretationMk2CInline.xml", ".c",
+			// "ai/AI2_INT.epf"),
+			// new Triple<>("AbstractInterpretationMk2C.xml", ".c",
+			// "ai/AI2_INT.epf"),
+			// new Triple<>("AbstractInterpretationMk2.xml", ".bpl",
+			// "ai/AI2_INT.epf"),
+			new Triple<>("AbstractInterpretationMk2CInline.xml", ".c", "ai/AI2_PLT.epf"),
+			// new Triple<>("AbstractInterpretationMk2C.xml", ".c",
+			// "ai/AI2_PLT.epf"),
+			// new Triple<>("AbstractInterpretationMk2.xml", ".bpl",
+			// "ai/AI2_PLT.epf"),
+			// new Triple<>("AbstractInterpretationMk2CInline.xml", ".c",
+			// "ai/AI2_CMP.epf"),
+			// new Triple<>("AbstractInterpretationMk2C.xml", ".c",
+			// "ai/AI2_CMP.epf"),
+			// new Triple<>("AbstractInterpretationMk2.xml", ".bpl",
+			// "ai/AI2_CMP.epf"),
+			// new Triple<>("AutomizerCInline.xml", ".c", "EmptySettings.epf"),
+			// new Triple<>("AutomizerC.xml", ".c", "EmptySettings.epf"),
+			// new Triple<>("AutomizerBpl.xml", ".bpl", "EmptySettings.epf"),
+	};
 
 	// @formatter:off
 
-	private static final String[] INPUT = new String[] { 
-			
-			
-//			"examples/programs/abstractInterpretation/",
-			//"examples/programs/abstractInterpretationNoRec/",
-				/* ULTIMATE repo */
-//				 "examples/programs/regression/bpl/",
-				// "examples/programs/regression/c/",
-				// "examples/programs/recursivePrograms",
-				/* SV-COMP repo */
-				 "examples/svcomp/loops/", // SPLIT
-				// "examples/svcomp/loopsSelection/",
-				// "examples/svcomp/eca/", // SPLIT
-				// "examples/svcomp/ecaSelection/",
-				// "examples/svcomp/systemc/", // SPLIT
-				// "examples/svcomp/systemc1/",
-				// "examples/svcomp/systemc2/",
-//				 "examples/svcomp/eca-rers2012/",
-//				 "examples/svcomp/recursive/",
-//				 "examples/svcomp/ssh-simplified/",
-//				 "examples/svcomp/ssh/",
+	private static final String[] INPUT = new String[] {
+
+			// "examples/programs/abstractInterpretation/",
+			// "examples/programs/abstractInterpretationNoRec/",
+			/* ULTIMATE repo */
+			// "examples/programs/regression/bpl/",
+			// "examples/programs/regression/c/",
+			// "examples/programs/recursivePrograms",
+			/* SV-COMP repo */
+			"examples/svcomp/loops/", // SPLIT
+			// "examples/svcomp/loopsSelection/",
+			// "examples/svcomp/eca/", // SPLIT
+			// "examples/svcomp/ecaSelection/",
+			// "examples/svcomp/systemc/", // SPLIT
+			// "examples/svcomp/systemc1/",
+			// "examples/svcomp/systemc2/",
+			// "examples/svcomp/eca-rers2012/",
+			// "examples/svcomp/recursive/",
+			// "examples/svcomp/ssh-simplified/",
+			// "examples/svcomp/ssh/",
 
 			// problems with loop detector
-//			 "examples/svcomp/loops/eureka_01_false-unreach-call.c",
-//			"examples/svcomp/loops/matrix_false-unreach-call_true-termination.c", 
-			
+			// "examples/svcomp/loops/eureka_01_false-unreach-call.c",
+			// "examples/svcomp/loops/matrix_false-unreach-call_true-termination.c",
+
 			// unsoundness
 
 			// problems with unsupportedops
-//			"examples/svcomp/loops/sum01_true-unreach-call_true-termination.c",
-//			"examples/svcomp/loops/string_false-unreach-call.c",
+			// "examples/svcomp/loops/sum01_true-unreach-call_true-termination.c",
+			// "examples/svcomp/loops/string_false-unreach-call.c",
 	};
 
 	// @formatter:on
@@ -121,7 +128,7 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 
 	@Override
 	public ITestResultDecider constructITestResultDecider(UltimateRunDefinition urd) {
-		return new NoTimeoutTestResultDecider(urd);
+		return new SafetyCheckTestResultDecider(urd, false);
 	}
 
 	@Override

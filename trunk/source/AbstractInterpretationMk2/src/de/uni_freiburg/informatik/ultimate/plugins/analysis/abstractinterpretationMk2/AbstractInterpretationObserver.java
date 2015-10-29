@@ -16,8 +16,7 @@ public class AbstractInterpretationObserver implements IUnmanagedObserver {
 	}
 
 	@Override
-	public void init(GraphType modelType, int currentModelIndex,
-			int numberOfModels) throws Throwable {
+	public void init(GraphType modelType, int currentModelIndex, int numberOfModels) throws Throwable {
 		// TODO Auto-generated method stub
 
 	}
@@ -43,10 +42,8 @@ public class AbstractInterpretationObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(IElement root) throws Throwable {
 		if (root instanceof RootNode) {
-			AbstractInterpreter abstractInterpreter = new AbstractInterpreter(
-					mServices);
+			AbstractInterpreter abstractInterpreter = new AbstractInterpreter(mServices);
 			abstractInterpreter.processRcfg((RootNode) root);
-
 			return false;
 		}
 		return true;

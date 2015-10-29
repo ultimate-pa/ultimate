@@ -25,7 +25,7 @@ public class VariableTranslation {
 	/**
 	 * To enumerate the variables
 	 */
-	private long mNextIndex;
+	private long mLastIndex;
 
 	/**
 	 * ID for debugging
@@ -40,7 +40,7 @@ public class VariableTranslation {
 	public VariableTranslation() {
 		mVars2PPLVars = new HashMap<>();
 		mPPLVars2Vars = new HashMap<>();
-		mNextIndex = 0;
+		mLastIndex = 0;
 		mUID = sNextUID++;
 	}
 
@@ -48,7 +48,7 @@ public class VariableTranslation {
 	 * Copy Constructor. Creates a copy of this (with no shared references
 	 */
 	public VariableTranslation(VariableTranslation vt) {
-		mNextIndex = vt.mNextIndex;
+		mLastIndex = vt.mLastIndex;
 		mVars2PPLVars = new HashMap<>(vt.mVars2PPLVars);
 		mPPLVars2Vars = new HashMap<>(vt.mPPLVars2Vars);
 		mUID = sNextUID++;
@@ -65,18 +65,11 @@ public class VariableTranslation {
 	 * @return
 	 */
 	public Variable addVariable(TypedAbstractVariable variable) {
-		final Variable x = new Variable(mNextIndex++);
-		add(variable, x);
-		return x;
+		return add(variable, mLastIndex + 1);
 	}
 
 	public Variable addShiftedVariable(TypedAbstractVariable variable, long dimension) {
-		assert dimension > mNextIndex;
-		mNextIndex = dimension + 1;
-		final Variable x = new Variable(dimension);
-
-		add(variable, x);
-		return x;
+		return add(variable, dimension);
 	}
 
 	public Set<Entry<TypedAbstractVariable, Variable>> entries() {
@@ -120,7 +113,7 @@ public class VariableTranslation {
 
 	@Override
 	public String toString() {
-		String output = "[VT_" + mUID + " (#var: " + mNextIndex + ") ";
+		String output = "[VT_" + mUID + " (#var: " + mLastIndex + ") ";
 		String comma = "";
 		for (Entry<TypedAbstractVariable, Variable> entry : mVars2PPLVars.entrySet()) {
 			output += comma + entry.getKey().getString() + " -> " + entry.getValue().toString();
@@ -164,7 +157,7 @@ public class VariableTranslation {
 			Variable otherVar = other.mVars2PPLVars.get(entry.getKey());
 			// if not existing
 			if (otherVar == null) {
-				other.add(entry.getKey(), entry.getValue());
+				other.add(entry.getKey(), entry.getValue().id());
 			} else if (entry.getValue().id() != otherVar.id()) {
 				return false;
 			}
@@ -175,7 +168,7 @@ public class VariableTranslation {
 			Variable thisVar = mVars2PPLVars.get(entry.getKey());
 			// if not existing
 			if (thisVar == null) {
-				add(entry.getKey(), entry.getValue());
+				add(entry.getKey(), entry.getValue().id());
 			} else if (entry.getValue().id() != thisVar.id()) {
 				return false;
 			}
@@ -184,8 +177,13 @@ public class VariableTranslation {
 	}
 
 	public TypedAbstractVariable checkVar(Object variable) {
-		if (mVars2PPLVars.containsKey(variable)) {
-			return (TypedAbstractVariable) variable;
+		// TODO: This construct is here because JH handles scoping in a
+		// monstrous way (and wrong). Ask DD if you want to hear him rant for
+		// 30mins.
+		for (TypedAbstractVariable tav : mVars2PPLVars.keySet()) {
+			if (tav.equals(variable)) {
+				return tav;
+			}
 		}
 		return null;
 	}
@@ -194,15 +192,33 @@ public class VariableTranslation {
 		return mVars2PPLVars.get(variable);
 	}
 
-	private void add(TypedAbstractVariable var, Variable pplvar) {
-		if (mVars2PPLVars.containsKey(var)) {
-			throw new RuntimeException("Variable must not be declared twice");
+	private Variable add(TypedAbstractVariable var, long index) {
+		assert index == mLastIndex + 1;
+		Variable pplvar = mVars2PPLVars.get(var);
+		if (pplvar == null) {
+			assert index > mLastIndex;
+			pplvar = new Variable(index);
+			mLastIndex = index;
+			mVars2PPLVars.put(var, pplvar);
+			mPPLVars2Vars.put(pplvar, var);
 		}
-		mVars2PPLVars.put(var, pplvar);
-		mPPLVars2Vars.put(pplvar, var);
+		assert mLastIndex == size() : "Index=" + mLastIndex + " Size=" + size();
+		return pplvar;
 	}
 
 	public TypedAbstractVariable getVar(Object arg) {
-		return mPPLVars2Vars.get(arg);
+		TypedAbstractVariable rtr = mPPLVars2Vars.get(arg);
+		if (rtr != null) {
+			return rtr;
+		}
+		String str = arg.toString();
+		for (Entry<Variable, TypedAbstractVariable> entry : mPPLVars2Vars.entrySet()) {
+			if (entry.getKey().equals(arg)) {
+				return entry.getValue();
+			} else if (entry.getKey().toString().equals(str)) {
+				return entry.getValue();
+			}
+		}
+		return null;
 	}
 }
