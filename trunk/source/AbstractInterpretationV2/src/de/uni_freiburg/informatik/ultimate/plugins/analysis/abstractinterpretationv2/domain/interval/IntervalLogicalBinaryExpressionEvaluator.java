@@ -28,46 +28,43 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.interval;
 
-import static org.junit.Assert.*;
-
-import org.junit.Test;
-
-import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.ILogicalEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.logic.*;
 
-public class IntervalDomainAssignmentTest {
+public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpressionEvaluator
+        implements ILogicalEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> {
 
-	@Test
-	public void testSimpleAssignment() {
+	@Override
+	public IAbstractState<CodeBlock, BoogieVar> logicallyInterpret(IAbstractState<CodeBlock, BoogieVar> currentState) {
+		assert currentState != null;
+		
+		final ILogicalEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> left = (ILogicalEvaluator<IntervalDomainValue, CodeBlock, BoogieVar>) mLeftSubEvaluator;
+		final ILogicalEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> right = (ILogicalEvaluator<IntervalDomainValue, CodeBlock, BoogieVar>) mRightSubEvaluator;
+		
+		final IAbstractState<CodeBlock, BoogieVar> leftResult = left.logicallyInterpret(currentState);
+		final IAbstractState<CodeBlock, BoogieVar> rightResult = right.logicallyInterpret(currentState);
+		
+		switch (mOperator) {
+		case LOGICAND:
+			// TODO intersect
+			break;
+		case LOGICOR:
+			// TODO merge
+			break;
+		default:
+			throw new UnsupportedOperationException("The operator " + mOperator + " is not implemented.");
+		}
+		
+		// TODO Auto-generated method stub
+		return null;
+	}
 
-		// Build the statement "x := 1"
-		ILocation loc = new BoogieLocation("null", 0, 0, 0, 0, false);
-		LeftHandSide[] lhs = { new VariableLHS(loc, "x") };
-		Expression[] rhs = { new IntegerLiteral(loc, "1") };
-
-		AssignmentStatement assign = new AssignmentStatement(loc, lhs, rhs);
-
-		IntervalDomainStatementProcessor processor = new IntervalDomainStatementProcessor(null, null);
-
-		IntervalDomainState<CodeBlock, BoogieVar> oldstate = new IntervalDomainState<>();
-
-		oldstate = (IntervalDomainState<CodeBlock, BoogieVar>) oldstate.addVariable("x", null);
-
-		IntervalDomainState<CodeBlock, BoogieVar> state = processor.process(oldstate, assign);
-
-		System.out.println("Huae?");
-		System.out.println(state);
+	@Override
+	public boolean logicalEvaluation(IAbstractState<CodeBlock, BoogieVar> currentState) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 }

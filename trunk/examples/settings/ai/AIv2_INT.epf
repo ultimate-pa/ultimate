@@ -1,0 +1,27 @@
+#Thu Oct 29 17:01:28 CET 2015
+@de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2=0.0.1
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Domain=POLYTOPE
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Log\ state\ changes\ to\ console=true
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2=
+#Thu Oct 29 17:01:28 CET 2015
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2=0.0.1
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Abstract\ domain=IntervalDomain
+#Thu Oct 29 17:01:28 CET 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SingleStatement
+@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+#Thu Oct 29 17:01:28 CET 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization=
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization/Default\ graph\ layout\:=FRLayout2
+@de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization=0.0.1
+#Thu Oct 29 17:01:28 CET 2015
+file_export_version=3.0
+\!/instance/de.uni_freiburg.informatik.ultimate.gui=
+@de.uni_freiburg.informatik.ultimate.gui=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.gui/LASTPATH=/home/greitsch/tmp/abstractinterpretation/assignment_test.c
+/instance/de.uni_freiburg.informatik.ultimate.gui/LASTTOOLCHAINPATH=/tmp/lastUltimateToolchain.xml

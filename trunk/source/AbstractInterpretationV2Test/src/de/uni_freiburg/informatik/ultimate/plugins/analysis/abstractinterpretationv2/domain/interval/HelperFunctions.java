@@ -29,27 +29,30 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.math.BigDecimal;
 
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.IEvaluationResult;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class HelperFunctions {
 	protected static IntervalDomainValue createInterval(int lower, int upper) {
 		return new IntervalDomainValue(new IntervalValue(new BigDecimal(lower)),
 		        new IntervalValue(new BigDecimal(upper)));
 	}
-	
+
 	protected static IntervalDomainValue createInterval() {
 		return new IntervalDomainValue();
 	}
 
-	protected static IntervalBinaryExpressionEvaluator createBinaryEvaluator(IntervalDomainValue first,
+	protected static IntervalLogicalBinaryExpressionEvaluator createBinaryEvaluator(IntervalDomainValue first,
 	        IntervalDomainValue second, Operator operator) {
 		IntervalSingletonValueExpressionEvaluator value1Evaluator = new IntervalSingletonValueExpressionEvaluator(
 		        first);
 		IntervalSingletonValueExpressionEvaluator value2Evaluator = new IntervalSingletonValueExpressionEvaluator(
 		        second);
 
-		IntervalBinaryExpressionEvaluator binaryExpressionEvaluator = new IntervalBinaryExpressionEvaluator();
+		IntervalLogicalBinaryExpressionEvaluator binaryExpressionEvaluator = new IntervalLogicalBinaryExpressionEvaluator();
 
 		binaryExpressionEvaluator.setOperator(operator);
 		binaryExpressionEvaluator.addSubEvaluator(value1Evaluator);
@@ -76,12 +79,16 @@ public class HelperFunctions {
 			return evaluatorResult.equals(expectedResult);
 		}
 
+		if (evaluatorResult.getResult().isBottom() && expectedResult.isBottom()) {
+			return true;
+		}
+		
 		final boolean lowerResult = evaluatorResult.getResult().getLower().equals(expectedResult.getLower());
 		final boolean upperResult = evaluatorResult.getResult().getUpper().equals(expectedResult.getUpper());
 
 		return lowerResult && upperResult;
 	}
-
+	
 	protected static boolean computeAdditionResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
 	        IntervalDomainValue expectedResult) {
 
@@ -106,6 +113,14 @@ public class HelperFunctions {
 		final IEvaluationResult<IntervalDomainValue> result = createBinaryEvaluator(interval1, interval2,
 		        Operator.ARITHMUL).evaluate(null);
 
+		return computeResult(interval1, interval2, expectedResult, result);
+	}
+
+	protected static boolean computeIntersectionResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
+	        IntervalDomainValue expectedResult) {
+
+		final IntervalDomainValue result = interval1.intersect(interval2);
+		
 		return computeResult(interval1, interval2, expectedResult, result);
 	}
 }

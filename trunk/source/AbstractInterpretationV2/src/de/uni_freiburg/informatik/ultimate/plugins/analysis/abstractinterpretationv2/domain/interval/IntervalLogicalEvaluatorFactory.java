@@ -28,46 +28,48 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.interval;
 
-import static org.junit.Assert.*;
-
-import org.junit.Test;
-
-import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.IEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.IEvaluatorFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.INAryEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.logic.*;
 
-public class IntervalDomainAssignmentTest {
+/**
+ * Evaluator factory for logical evaluators in the {@link IntervalDomain}.
+ * 
+ * @author greitsch@informatik.uni-freiburg.de
+ *
+ */
+public class IntervalLogicalEvaluatorFactory implements IEvaluatorFactory<IntervalDomainValue, CodeBlock, BoogieVar> {
 
-	@Test
-	public void testSimpleAssignment() {
+	@Override
+	public INAryEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> createNAryExpressionEvaluator(int arity) {
 
-		// Build the statement "x := 1"
-		ILocation loc = new BoogieLocation("null", 0, 0, 0, 0, false);
-		LeftHandSide[] lhs = { new VariableLHS(loc, "x") };
-		Expression[] rhs = { new IntegerLiteral(loc, "1") };
+		assert arity >= 1 && arity <= 2;
 
-		AssignmentStatement assign = new AssignmentStatement(loc, lhs, rhs);
+		switch (arity) {
+		case 1:
+			return new IntervalLogicalUnaryExpressionEvaluator();
+		case 2:
+			return new IntervalLogicalBinaryExpressionEvaluator();
+		default:
+			throw new UnsupportedOperationException(
+			        "The arity " + arity + " is not implemented for logical evaluators.");
+		}
+	}
 
-		IntervalDomainStatementProcessor processor = new IntervalDomainStatementProcessor(null, null);
+	@Override
+	public IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> createSingletonValueExpressionEvaluator(String value,
+	        Class<?> valueType) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
-		IntervalDomainState<CodeBlock, BoogieVar> oldstate = new IntervalDomainState<>();
-
-		oldstate = (IntervalDomainState<CodeBlock, BoogieVar>) oldstate.addVariable("x", null);
-
-		IntervalDomainState<CodeBlock, BoogieVar> state = processor.process(oldstate, assign);
-
-		System.out.println("Huae?");
-		System.out.println(state);
+	@Override
+	public IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> createSingletonVariableExpressionEvaluator(
+	        String variableName) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
