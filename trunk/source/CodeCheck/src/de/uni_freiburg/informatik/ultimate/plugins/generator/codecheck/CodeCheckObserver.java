@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.AbstractInterpretationPredicates;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppHyperEdge;
@@ -74,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.kojak.UltimateCheck
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
@@ -193,8 +195,18 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		_graphWriter = new GraphWriter(GlobalSettings._instance._dotGraphPath, true, true, true, false,
 				m_smtManager.getScript());
 
-		RCFG2AnnotatedRCFG r2ar = new RCFG2AnnotatedRCFG(m_smtManager, mLogger);
-		m_graphRoot = r2ar.convert(mServices, m_originalRoot, _predicateUnifier.getTruePredicate());
+		boolean usePredicatesFromAbstractInterpretation = true; //TODO make a Pref
+		Map<RCFGNode, Term> initialPredicates = null;
+		if (usePredicatesFromAbstractInterpretation)  {
+			try {
+				initialPredicates = AbstractInterpretationPredicates.getAnnotation(m_originalRoot).getPredicates();
+			} catch (NullPointerException npe) {
+				mLogger.warn("was not able to retrieve initial predicates from abstract interpretation --> wrong toolchain?? (using \"true\")");
+				initialPredicates = null;
+			}
+		}
+		RCFG2AnnotatedRCFG r2ar = new RCFG2AnnotatedRCFG(m_smtManager, mLogger, _predicateUnifier.getTruePredicate(), initialPredicates);
+		m_graphRoot = r2ar.convert(mServices, m_originalRoot);
 
 		_graphWriter.writeGraphAsImage(m_graphRoot,
 				String.format("graph_%s_originalAfterConversion", _graphWriter._graphCounter));

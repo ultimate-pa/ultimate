@@ -1,25 +1,24 @@
-#Thu Oct 29 22:35:27 CET 2015
+#Thu Oct 29 22:42:58 CET 2015
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=
 file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Rating-Boundary\ (empty\ for\ LBE)=1000
 @de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=0.0.1
-#Thu Oct 29 22:35:27 CET 2015
+#Thu Oct 29 22:42:58 CET 2015
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolants\ consolidation=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolant\ automaton=TWOTRACK
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Interpolants\ along\ a\ Counterexample=FPandBP
-#Thu Oct 29 22:35:27 CET 2015
+#Thu Oct 29 22:42:58 CET 2015
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Command\ for\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in -t\:12000
 file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Dump\ SMT\ script\ to\ file=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/To\ the\ following\ directory=./dump/
 @de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
-#Thu Oct 29 22:35:27 CET 2015
+#Thu Oct 29 22:42:58 CET 2015
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ if\ freed\ pointer\ was\ valid=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Pointer\ to\ allocated\ memory\ at\ dereference=IGNORE
@@ -32,26 +31,26 @@ file_export_version=3.0
 file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
 @de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
-#Thu Oct 29 22:35:27 CET 2015
+#Thu Oct 29 22:42:58 CET 2015
 file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/tree\ interpolation\ mode\ for\ smtinterpol\ \n\ (internal\:\ tree,\ a\ la\ matthias\:\ nested)=FPandBP
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck=
 @de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck=0.0.1
-#Thu Oct 29 22:35:27 CET 2015
+#Thu Oct 29 22:42:58 CET 2015
 \!/instance/de.uni_freiburg.informatik.ultimate.boogie.printer=
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.boogie.printer=0.0.1
 /instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Dump\ path\:=C\:\\data\\bin\\svcompC
-#Thu Oct 29 22:35:27 CET 2015
+#Thu Oct 29 22:42:58 CET 2015
 file_export_version=3.0
 /instance/UltimateCore/Log\ level\ for\ plugins=info
 /instance/UltimateCore/Write\ witness\ as\ "witness.graphml"\ to\ working\ directory=true
 \!/instance/UltimateCore=
 @UltimateCore=0.0.1
 /instance/UltimateCore/Generate\ witness\ from\ each\ counter\ example\ result=true
-#Thu Oct 29 22:35:27 CET 2015
+#Thu Oct 29 22:42:58 CET 2015
 file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.gui=
 @de.uni_freiburg.informatik.ultimate.gui=0.0.1
 /instance/de.uni_freiburg.informatik.ultimate.gui/LASTPATH=C\:\\data\\sv-benchmarks\\c\\loops\\array_false-unreach-call.i
-/instance/de.uni_freiburg.informatik.ultimate.gui/LASTTOOLCHAINPATH=C\:\\Users\\alex\\AppData\\Local\\Temp\\lastUltimateToolchain.xml
+/instance/de.uni_freiburg.informatik.ultimate.gui/LASTTOOLCHAINPATH=C\:\\data\\ultimate-pa\\trunk\\examples\\toolchains\\KojakC.xml

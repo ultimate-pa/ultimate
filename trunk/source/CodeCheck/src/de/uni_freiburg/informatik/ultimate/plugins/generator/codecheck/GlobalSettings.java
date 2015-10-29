@@ -64,6 +64,8 @@ public class GlobalSettings {
 	public boolean removeFalseNodes = false;
 	
 	public boolean checkSatisfiability = false;
+	
+	public boolean useInterpolantconsolidation = true;
 
 	public static void init() {
 		_instance = new GlobalSettings();
