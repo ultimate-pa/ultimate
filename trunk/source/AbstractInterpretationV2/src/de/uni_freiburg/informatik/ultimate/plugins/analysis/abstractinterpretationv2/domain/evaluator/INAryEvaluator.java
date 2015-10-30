@@ -25,12 +25,13 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator;
 
 /**
  * Interface for NAry evaluators that have some operator.
  * 
- * @author greitsch@informatik.uni-freiburg.de
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
 public interface INAryEvaluator<T, ACTION, VARDECL> extends IEvaluator<T, ACTION, VARDECL>{
 	

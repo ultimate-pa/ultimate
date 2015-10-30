@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 /**
  * Factory for evaluators of the interval domain.
  * 
- * @author greitsch@informatik.uni-freiburg.de
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
 public class IntervalEvaluatorFactory implements IEvaluatorFactory<IntervalDomainValue, CodeBlock, BoogieVar> {
@@ -82,8 +82,7 @@ public class IntervalEvaluatorFactory implements IEvaluatorFactory<IntervalDomai
 	@Override
 	public IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> createSingletonValueExpressionEvaluator(String value,
 	        Class<?> valueType) {
-
-
+		assert value != null;
 
 		return new IntervalSingletonValueExpressionEvaluator(
 		        new IntervalDomainValue(new IntervalValue(value), new IntervalValue(value)));
@@ -92,6 +91,8 @@ public class IntervalEvaluatorFactory implements IEvaluatorFactory<IntervalDomai
 	@Override
 	public IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> createSingletonVariableExpressionEvaluator(
 	        String variableName) {
+		assert variableName != null;
+
 		return new IntervalSingletonVariableExpressionEvaluator(variableName, mStateConverter);
 	}
 }

@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * Extends the IEvaluator by the function computeLogicalResult which is used to return new abstract states based on the
  * logical evaluation of the evaluator.
  * 
- * @author greitsch@informatik.uni-freiburg.de
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  * @param <T>
  *            Any type.

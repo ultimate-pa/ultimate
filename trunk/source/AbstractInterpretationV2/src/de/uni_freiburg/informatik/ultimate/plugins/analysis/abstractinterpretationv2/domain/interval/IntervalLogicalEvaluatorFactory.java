@@ -37,11 +37,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 /**
  * Evaluator factory for logical evaluators in the {@link IntervalDomain}.
  * 
- * @author greitsch@informatik.uni-freiburg.de
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
 public class IntervalLogicalEvaluatorFactory implements IEvaluatorFactory<IntervalDomainValue, CodeBlock, BoogieVar> {
-
+	
+	private final IntervalStateConverter<CodeBlock, BoogieVar> mStateConverter;
+	
+	public IntervalLogicalEvaluatorFactory(IntervalStateConverter<CodeBlock, BoogieVar> stateConverter) {
+		mStateConverter = stateConverter;
+	}
+	
 	@Override
 	public INAryEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> createNAryExpressionEvaluator(int arity) {
 
@@ -61,15 +67,18 @@ public class IntervalLogicalEvaluatorFactory implements IEvaluatorFactory<Interv
 	@Override
 	public IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> createSingletonValueExpressionEvaluator(String value,
 	        Class<?> valueType) {
-		// TODO Auto-generated method stub
-		return null;
+		assert value != null;
+		
+		return new IntervalLogicalSingletonValueExpressionEvaluator(
+		        new IntervalDomainValue(new IntervalValue(value), new IntervalValue(value)));
 	}
 
 	@Override
 	public IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> createSingletonVariableExpressionEvaluator(
 	        String variableName) {
-		// TODO Auto-generated method stub
-		return null;
+		assert variableName != null;
+
+		return new IntervalLogicalSingletonVariableExpressionEvaluator(variableName, mStateConverter);
 	}
 
 }

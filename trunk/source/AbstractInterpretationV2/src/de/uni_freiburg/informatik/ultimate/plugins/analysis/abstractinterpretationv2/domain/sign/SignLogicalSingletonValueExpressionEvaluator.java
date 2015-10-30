@@ -25,6 +25,7 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
@@ -39,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * literals "True" or "False". If "True" is read, the value of {@link this} is <code>true</code>, otherwise
  * <code>false</code>.
  * 
- * @author greitsch@informatik.uni-freiburg.de
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
 public class SignLogicalSingletonValueExpressionEvaluator extends SignSingletonValueExpressionEvaluator<Boolean>

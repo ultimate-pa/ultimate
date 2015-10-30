@@ -25,6 +25,7 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.IEvaluationResult;
@@ -43,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * The default value is always T.
  * </p>
  * 
- * @author greitsch@informatik.uni-freiburg.de
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
 public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values>, Comparable<SignDomainValue> {
@@ -55,7 +56,7 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values
 	/**
 	 * The possible values of one {@link SignDomainValue}.
 	 * 
-	 * @author greitsch@informatik.uni-freiburg.de
+	 * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
 	 *
 	 */
 	public enum Values {

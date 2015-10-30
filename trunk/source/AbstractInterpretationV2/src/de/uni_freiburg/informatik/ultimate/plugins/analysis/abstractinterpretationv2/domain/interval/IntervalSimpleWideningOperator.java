@@ -25,6 +25,7 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.interval;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
@@ -35,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 /**
  * Implementation of a simple widening operator that just returns a new interval of the form (-&infin; ; &infin;).
  * 
- * @author greitsch@informatik.uni-freiburg.de
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
 public class IntervalSimpleWideningOperator implements IAbstractStateBinaryOperator<CodeBlock, BoogieVar> {

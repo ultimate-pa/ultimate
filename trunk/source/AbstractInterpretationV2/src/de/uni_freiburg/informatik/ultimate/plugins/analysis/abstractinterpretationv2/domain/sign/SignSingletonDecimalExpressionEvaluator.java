@@ -25,6 +25,7 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign;
 
 import java.math.BigDecimal;
@@ -32,7 +33,7 @@ import java.math.BigDecimal;
 /**
  * Represents a single decimal expression in the {@link SignDomain}.
  * 
- * @author greitsch@informatik.uni-freiburg.de
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
 public class SignSingletonDecimalExpressionEvaluator extends SignSingletonValueExpressionEvaluator<BigDecimal> {

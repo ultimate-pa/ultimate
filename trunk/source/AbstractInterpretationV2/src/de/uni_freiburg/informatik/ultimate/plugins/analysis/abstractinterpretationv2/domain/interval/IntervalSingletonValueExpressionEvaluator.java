@@ -25,6 +25,7 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.interval;
 
 import java.util.HashSet;
@@ -39,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 /**
  * Represents an expression corresponding to a single {@link IntervalDomainValue} in the {@link IntervalDomain}.
  * 
- * @author greitsch@informatik.uni-freiburg.de
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
 public class IntervalSingletonValueExpressionEvaluator implements IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> {

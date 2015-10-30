@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 /**
  * Representation of an interval value in the interval domain.
  * 
- * @author greitsch@informatik.uni-freiburg.de
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
 public class IntervalDomainValue implements IEvaluationResult<IntervalDomainValue>, Comparable<IntervalDomainValue> {

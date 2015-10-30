@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 /**
  * Implementation of an abstract state of the {@link IntervalDomain}.
  * 
- * @author greitsch@informatik.uni-freiburg.de
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  * @param <T>
  *            The type of the intervals. May be any Java-defined {@link Number}.
@@ -46,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <VARDECL>
  *            Any variable declaration.
  */
-public class IntervalDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, VARDECL>,
-        IEvaluationResult<IntervalDomainState<ACTION, VARDECL>> {
+public class IntervalDomainState<ACTION, VARDECL>
+        implements IAbstractState<ACTION, VARDECL>, IEvaluationResult<IntervalDomainState<ACTION, VARDECL>> {
 
 	private static int sId;
 	private final int mId;
@@ -112,8 +112,8 @@ public class IntervalDomainState<ACTION, VARDECL> implements IAbstractState<ACTI
 		final VARDECL old = newVarMap.put(name, variable);
 
 		if (old != null) {
-			throw new UnsupportedOperationException("Variable names must be disjoint. Variable " + name
-			        + " is already present.");
+			throw new UnsupportedOperationException(
+			        "Variable names must be disjoint. Variable " + name + " is already present.");
 		}
 
 		final Map<String, IntervalDomainValue> newValMap = new HashMap<String, IntervalDomainValue>(mValuesMap);
@@ -145,8 +145,8 @@ public class IntervalDomainState<ACTION, VARDECL> implements IAbstractState<ACTI
 		for (final Entry<String, VARDECL> entry : variables.entrySet()) {
 			final VARDECL old = newVarMap.put(entry.getKey(), entry.getValue());
 			if (old != null) {
-				throw new UnsupportedOperationException("Variable names must be disjoint. The variable "
-				        + entry.getKey() + " is already present.");
+				throw new UnsupportedOperationException(
+				        "Variable names must be disjoint. The variable " + entry.getKey() + " is already present.");
 			}
 			newValMap.put(entry.getKey(), new IntervalDomainValue());
 		}
@@ -308,5 +308,27 @@ public class IntervalDomainState<ACTION, VARDECL> implements IAbstractState<ACTI
 		}
 
 		return true;
+	}
+
+	/**
+	 * Intersects <code>this</code> with another {@link IntervalDomainState} by piecewise intersecting all occurring
+	 * variable intervals.
+	 * 
+	 * @param other
+	 *            The other state to intersect with.
+	 * @return A new {@link IAbstractState} that corresponds to the intersection of
+	 */
+	protected IAbstractState<ACTION, VARDECL> intersect(IntervalDomainState<ACTION, VARDECL> other) {
+		assert other != null;
+
+		assert hasSameVariables(other);
+
+		final IntervalDomainState<ACTION, VARDECL> returnState = (IntervalDomainState<ACTION, VARDECL>) copy();
+
+		for (Entry<String, IntervalDomainValue> entry : mValuesMap.entrySet()) {
+			returnState.setValue(entry.getKey(), entry.getValue().intersect(other.mValuesMap.get(entry.getKey())));
+		}
+
+		return returnState;
 	}
 }

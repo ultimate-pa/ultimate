@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2015 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
@@ -24,6 +25,7 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2;
 
 import java.util.ArrayList;
@@ -96,7 +98,7 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 
 		final Boogie2SmtSymbolTable boogieVarTable = root.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable();
 
-		final IAbstractDomain<?, CodeBlock, BoogieVar> domain = selectDomain();
+		final IAbstractDomain<?, CodeBlock, BoogieVar> domain = selectDomain(symbolTable);
 		final AbstractInterpreter<CodeBlock, BoogieVar> interpreter = createAbstractInterpreter(domain, symbolTable,
 		        boogieVarTable);
 		interpreter.process(initial);
@@ -111,7 +113,7 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 		return pa.getSymbolTable();
 	}
 
-	private IAbstractDomain<?, CodeBlock, BoogieVar> selectDomain() {
+	private IAbstractDomain<?, CodeBlock, BoogieVar> selectDomain(BoogieSymbolTable symbolTable) {
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		final String selectedDomain = ups.getString(AbstractInterpretationPreferenceInitializer.LABEL_ABSTRACT_DOMAIN);
 
@@ -120,7 +122,7 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 		} else if (SignDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new SignDomain(mServices);
 		} else if (IntervalDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new IntervalDomain(mServices);
+			return new IntervalDomain(mServices, symbolTable);
 		}
 		throw new UnsupportedOperationException("The value \"" + selectedDomain + "\" of preference \""
 		        + AbstractInterpretationPreferenceInitializer.LABEL_ABSTRACT_DOMAIN + "\" was not considered before! ");

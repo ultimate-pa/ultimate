@@ -34,7 +34,7 @@ import java.util.Stack;
  * abstract syntax tree is traversed to build the different evaluators is pre-order depth-first search where the
  * left-most child element is being evaluated first.
  * 
- * @author greitsch@informatik.uni-freiburg.de
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
 public class ExpressionEvaluator<T, ACTION, VARDECL> {

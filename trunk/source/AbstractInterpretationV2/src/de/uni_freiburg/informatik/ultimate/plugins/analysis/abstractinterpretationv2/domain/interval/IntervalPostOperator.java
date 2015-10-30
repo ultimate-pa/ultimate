@@ -25,11 +25,13 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.interval;
 
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
@@ -40,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 /**
  * The post operator of the interval domain.
  * 
- * @author greitsch@informatik.uni-freiburg.de
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
 public class IntervalPostOperator implements IAbstractPostOperator<CodeBlock, BoogieVar> {
 
@@ -50,11 +52,11 @@ public class IntervalPostOperator implements IAbstractPostOperator<CodeBlock, Bo
 	private final IntervalDomainStatementProcessor mStatementProcessor;
 
 	public IntervalPostOperator(IUltimateServiceProvider services,
-	        IntervalStateConverter<CodeBlock, BoogieVar> stateConverter) {
+	        IntervalStateConverter<CodeBlock, BoogieVar> stateConverter, BoogieSymbolTable symbolTable) {
 		mServices = services;
 		mStateConverter = stateConverter;
 		mStatementExtractor = new RcfgStatementExtractor();
-		mStatementProcessor = new IntervalDomainStatementProcessor(services, mStateConverter);
+		mStatementProcessor = new IntervalDomainStatementProcessor(services, mStateConverter, symbolTable);
 	}
 
 	@Override

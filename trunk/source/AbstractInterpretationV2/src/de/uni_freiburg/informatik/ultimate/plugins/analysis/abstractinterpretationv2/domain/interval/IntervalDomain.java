@@ -25,10 +25,12 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.interval;
 
 import java.math.BigDecimal;
 
+import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
@@ -42,18 +44,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * is of type {@link BigDecimal}, or of type -&infin; or &infin;, respectively. An interval may also be "{}" which
  * corresponds to the abstract state of &bot;.
  * 
- * @author greitsch@informatik.uni-freiburg.de
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
 public class IntervalDomain implements IAbstractDomain<IntervalDomainState<CodeBlock, BoogieVar>, CodeBlock, BoogieVar> {
 
 	private final IntervalStateConverter<CodeBlock, BoogieVar> mStateConverter;
 	private final IUltimateServiceProvider mServices;
+	private final BoogieSymbolTable mSymbolTable;
 
-	public IntervalDomain(IUltimateServiceProvider services) {
+	public IntervalDomain(IUltimateServiceProvider services, BoogieSymbolTable symbolTable) {
 		mServices = services;
 		mStateConverter = new IntervalStateConverter<CodeBlock, BoogieVar>(
 		        new IntervalDomainState<CodeBlock, BoogieVar>());
+		mSymbolTable = symbolTable;
 	}
 
 	@Override
@@ -75,7 +79,7 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState<CodeB
 
 	@Override
 	public IAbstractPostOperator<CodeBlock, BoogieVar> getPostOperator() {
-		return new IntervalPostOperator(mServices, mStateConverter);
+		return new IntervalPostOperator(mServices, mStateConverter, mSymbolTable);
 	}
 
 	@Override

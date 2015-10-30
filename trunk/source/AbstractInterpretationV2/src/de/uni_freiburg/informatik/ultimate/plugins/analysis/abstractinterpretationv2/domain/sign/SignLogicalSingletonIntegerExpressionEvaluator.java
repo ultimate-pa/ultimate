@@ -25,6 +25,7 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
@@ -36,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 /**
  * Representation of a logical singleton expression evaluator for integer values of the {@link SignDomain}.
  * 
- * @author greitsch@informatik.uni-freiburg.de
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
 public class SignLogicalSingletonIntegerExpressionEvaluator extends SignSingletonIntegerExpressionEvaluator implements

@@ -25,6 +25,7 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.interval;
 
 import java.math.BigDecimal;
@@ -38,7 +39,7 @@ import java.math.BigDecimal;
  * <code>true</code>, the value obtained through {@link #getValue()} must be ignored as it is unsound.
  * </p>
  * 
- * @author greitsch@informatik.uni-freiburg.de
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * 
  */
 public class IntervalValue implements Comparable<IntervalValue> {

@@ -25,22 +25,27 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.interval;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
@@ -54,13 +59,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 /**
  * Processes Boogie {@link Statement}s and returns a new {@link IntervalDomainState} for the given statement.
  * 
- * @author greitsch@informatik.uni-freiburg.de
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
 public class IntervalDomainStatementProcessor extends BoogieVisitor {
 
 	private final IntervalStateConverter<CodeBlock, BoogieVar> mStateConverter;
 	private final IUltimateServiceProvider mServices;
+	private final BoogieSymbolTable mSymbolTable;
 
 	private IntervalDomainState<CodeBlock, BoogieVar> mOldState;
 	private IntervalDomainState<CodeBlock, BoogieVar> mNewState;
@@ -69,16 +75,17 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	ExpressionEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> mExpressionEvaluator;
 
 	private String mLhsVariable;
-	
+
 	private final Logger mLogger;
 
 	protected IntervalDomainStatementProcessor(IUltimateServiceProvider services,
-	        IntervalStateConverter<CodeBlock, BoogieVar> stateConverter) {
+	        IntervalStateConverter<CodeBlock, BoogieVar> stateConverter, BoogieSymbolTable symbolTable) {
 		mStateConverter = stateConverter;
 		mServices = services;
-		
+		mSymbolTable = symbolTable;
+
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		
+
 		mLhsVariable = null;
 	}
 
@@ -90,6 +97,8 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 
 		mOldState = oldState;
 		mNewState = (IntervalDomainState<CodeBlock, BoogieVar>) mOldState.copy();
+
+		mLhsVariable = null;
 
 		processStatement(statement);
 
@@ -107,7 +116,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 		for (int i = 0; i < lhs.length; i++) {
 			mExpressionEvaluator = new ExpressionEvaluator<IntervalDomainValue, CodeBlock, BoogieVar>();
 
-//			assert mLhsVariable == null;
+			assert mLhsVariable == null;
 			processLeftHandSide(lhs[i]);
 			assert mLhsVariable != null;
 			final String varname = mLhsVariable;
@@ -134,7 +143,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	@Override
 	protected void visit(IntegerLiteral expr) {
 		assert mEvaluatorFactory != null;
-		
+
 		final IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> evaluator = mEvaluatorFactory
 		        .createSingletonValueExpressionEvaluator(expr.getValue(), BigDecimal.class);
 
@@ -148,15 +157,56 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 		mLogger.fatal(expr.getOperator().toString());
 		mLogger.fatal(expr.getLeft());
 		mLogger.fatal(expr.getRight());
-		
+
 		super.visit(expr);
 	}
 
 	@Override
 	protected void visit(AssumeStatement statement) {
-		mEvaluatorFactory = new IntervalLogicalEvaluatorFactory();
-		
+		mEvaluatorFactory = new IntervalLogicalEvaluatorFactory(mStateConverter);
+
+		mExpressionEvaluator = new ExpressionEvaluator<IntervalDomainValue, CodeBlock, BoogieVar>();
+
 		super.visit(statement);
+	}
+
+	@Override
+	protected void visit(FunctionApplication expr) {
+		IntervalSingletonValueExpressionEvaluator evaluator;
+
+		List<Declaration> decls = mSymbolTable.getFunctionOrProcedureDeclaration(expr.getIdentifier());
+
+		// If we don't have a specification for the function, we return top.
+		if (decls == null || decls.isEmpty()) {
+			evaluator = new IntervalSingletonValueExpressionEvaluator(new IntervalDomainValue());
+		} else {
+
+			assert decls.get(0) instanceof FunctionDeclaration;
+
+			FunctionDeclaration fun = (FunctionDeclaration) decls.get(0);
+
+			// If the body is empty (as in undefined), we return top.
+			if (fun.getBody() == null) {
+				evaluator = new IntervalSingletonValueExpressionEvaluator(new IntervalDomainValue());
+			} else {
+				// TODO Handle bitshifts, bitwise and, bitwise or, etc.
+
+				throw new UnsupportedOperationException(
+				        "The function application for not inlined functions is not yet supported.");
+			}
+		}
+
+		mExpressionEvaluator.addEvaluator(evaluator);
+	}
+
+	@Override
+	protected void visit(HavocStatement statement) {
+
+		mEvaluatorFactory = new IntervalEvaluatorFactory(mServices, mStateConverter);
+
+		for (VariableLHS var : statement.getIdentifiers()) {
+			mNewState.setValue(var.getIdentifier(), new IntervalDomainValue());
+		}
 	}
 
 }

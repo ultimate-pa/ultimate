@@ -25,6 +25,7 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2;
 
 import org.eclipse.core.runtime.Plugin;
@@ -32,8 +33,8 @@ import org.eclipse.core.runtime.Plugin;
 /**
  * The activator class controls the plug-in life cycle.
  * 
- * @author dietsch@informatik.uni-freiburg.de
- * @author greitsch@informatik.uni-freiburg.de
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
 public class Activator extends Plugin {
 

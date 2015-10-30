@@ -31,7 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
  * Interface type that is returned by every call of {@link IEvaluator#evaluate(IAbstractState)} of an {@link IEvaluator}
  * .
  * 
- * @author greitsch@informatik.uni-freiburg.de
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  * @param <T>
  *            Any type.

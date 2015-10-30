@@ -25,6 +25,7 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator;
 
 import java.util.Set;
@@ -36,7 +37,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * expressions to be evaluated.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * @author greitsch@informatik.uni-freiburg.de
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ * 
+ * @param <T>
+ *            The value type of the abstract domain.
+ * @param <ACTION>
+ *            Any action type.
+ * @param <VARDECL>
+ *            Any variable declaration type.
  */
 public interface IEvaluator<T, ACTION, VARDECL> {
 

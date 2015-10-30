@@ -25,17 +25,20 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model;
 
 import java.util.Map;
 
 /**
  * 
- * @author dietsch@informatik.uni-freiburg.de
- * @author greitsch@informatik.uni-freiburg.de
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  * @param <ACTION>
+ *            Any action type.
  * @param <VARDECL>
+ *            Any variable declaration type.
  */
 public interface IAbstractState<ACTION, VARDECL> {
 

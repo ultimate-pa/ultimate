@@ -38,30 +38,28 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class IntervalLogicalUnaryExpressionEvaluator extends IntervalUnaryExpressionEvaluator
+public class IntervalLogicalSingletonValueExpressionEvaluator extends IntervalSingletonValueExpressionEvaluator
         implements ILogicalEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> {
+
+	protected IntervalLogicalSingletonValueExpressionEvaluator(IntervalDomainValue value) {
+		super(value);
+	}
+
+	@Override
+	public void setOperator(Object operator) {
+		throw new UnsupportedOperationException("Setting an operator is not allowed for this kind of evaluator.");
+	}
 
 	@Override
 	public IAbstractState<CodeBlock, BoogieVar> logicallyInterpret(IAbstractState<CodeBlock, BoogieVar> currentState) {
-		assert currentState != null;
-
-		final ILogicalEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> sub = (ILogicalEvaluator<IntervalDomainValue, CodeBlock, BoogieVar>) mSubEvaluator;
-
-		// TODO fill with sense. Think about the operator.
-		return sub.logicallyInterpret(currentState);
+		// TODO Think about whether this is correct.
+		return currentState;
 	}
 
 	@Override
 	public boolean logicalEvaluation(IAbstractState<CodeBlock, BoogieVar> currentState) {
-		assert currentState != null;
-
-		final ILogicalEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> sub = (ILogicalEvaluator<IntervalDomainValue, CodeBlock, BoogieVar>) mSubEvaluator;
-
-		switch (mOperator) {
-		case LOGICNEG:
-			return !sub.logicalEvaluation(currentState);
-		default:
-			return sub.logicalEvaluation(currentState);
-		}
+		// TODO Think about whether this is correct.
+		return false;
 	}
+
 }

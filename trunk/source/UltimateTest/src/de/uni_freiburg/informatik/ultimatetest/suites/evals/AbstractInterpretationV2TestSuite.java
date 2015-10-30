@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggreg
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * @author greitsch@informatik.uni-freiburg.de
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
 public class AbstractInterpretationV2TestSuite extends AbstractEvalTestSuite {
@@ -103,7 +103,8 @@ public class AbstractInterpretationV2TestSuite extends AbstractEvalTestSuite {
 
 	@Override
 	protected long getTimeout() {
-		return 10 * 1000;
+//		return 10 * 1000;
+		return 0;
 	}
 	
 	@Override

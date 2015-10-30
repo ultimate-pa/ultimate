@@ -33,32 +33,35 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
+/**
+ * The logical evaluator for binary expressions in the {@link IntervalDomain}.
+ * 
+ * @author Marius Greitschus <greitsch@informatik.uni-freiburg.de>
+ *
+ */
 public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpressionEvaluator
         implements ILogicalEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> {
 
 	@Override
 	public IAbstractState<CodeBlock, BoogieVar> logicallyInterpret(IAbstractState<CodeBlock, BoogieVar> currentState) {
 		assert currentState != null;
-		
+
 		final ILogicalEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> left = (ILogicalEvaluator<IntervalDomainValue, CodeBlock, BoogieVar>) mLeftSubEvaluator;
 		final ILogicalEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> right = (ILogicalEvaluator<IntervalDomainValue, CodeBlock, BoogieVar>) mRightSubEvaluator;
-		
-		final IAbstractState<CodeBlock, BoogieVar> leftResult = left.logicallyInterpret(currentState);
-		final IAbstractState<CodeBlock, BoogieVar> rightResult = right.logicallyInterpret(currentState);
-		
+
+		final IntervalDomainState<CodeBlock, BoogieVar> leftResult = (IntervalDomainState<CodeBlock, BoogieVar>) left
+		        .logicallyInterpret(currentState);
+		final IntervalDomainState<CodeBlock, BoogieVar> rightResult = (IntervalDomainState<CodeBlock, BoogieVar>) right
+		        .logicallyInterpret(currentState);
+
 		switch (mOperator) {
 		case LOGICAND:
-			// TODO intersect
-			break;
+			return leftResult.intersect(rightResult);
 		case LOGICOR:
 			// TODO merge
-			break;
 		default:
 			throw new UnsupportedOperationException("The operator " + mOperator + " is not implemented.");
 		}
-		
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override

@@ -25,6 +25,7 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
@@ -37,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * Represents a logical unary expression evaluator in the {@link SignDomain} that exposes the method
  * {@link #logicallyInterpret(IAbstractState)} to return an abstract state when dealing with {@link ILogicalEvaluator}s.
  * 
- * @author greitsch@informatik.uni-freiburg.de
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
 public class SignLogicalUnaryExpressionEvaluator extends SignUnaryExpressionEvaluator implements

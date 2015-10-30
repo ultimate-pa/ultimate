@@ -25,6 +25,7 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign;
 
 import java.util.HashSet;
@@ -40,8 +41,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 /**
  * Represents an expression corresponding to a single value in the {@link SignDomain}.
  * 
- * @author greitsch@informatik.uni-freiburg.de
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
+ * @param <T>
+ *            The type of the value stored in this class.
  */
 public abstract class SignSingletonValueExpressionEvaluator<T> implements IEvaluator<Values, CodeBlock, BoogieVar> {
 

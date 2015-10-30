@@ -25,13 +25,20 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator;
 
 /**
  * Interface to create IEvaluators for different abstract domains.
  * 
- * @author greitsch@informatik.uni-freiburg.de
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
+ * @param <T>
+ *            The type of the domain's values.
+ * @param <ACTION>
+ *            Any action type.
+ * @param <VARDECL>
+ *            Any declaration type.
  */
 public interface IEvaluatorFactory<T, ACTION, VARDECL> {
 
