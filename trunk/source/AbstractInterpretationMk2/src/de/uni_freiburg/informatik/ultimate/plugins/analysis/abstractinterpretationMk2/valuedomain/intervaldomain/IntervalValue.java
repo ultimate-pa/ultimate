@@ -4,6 +4,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.valuedomain.intervaldomain;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 import java.math.BigInteger;
 
@@ -39,8 +41,7 @@ public class IntervalValue implements IAbstractValue<Interval> {
 	 * @param factory
 	 * @param logger
 	 */
-	protected IntervalValue(Interval value, IntervalValueFactory factory,
-			Logger logger) {
+	protected IntervalValue(Interval value, IntervalValueFactory factory, Logger logger) {
 		mValue = value;
 		mFactory = factory;
 		mLogger = logger;
@@ -72,8 +73,7 @@ public class IntervalValue implements IAbstractValue<Interval> {
 	@Override
 	public boolean isTop() {
 		return (mValue.getLowerBound().compareTo(Rational.NEGATIVE_INFINITY) <= 0)
-				&& (mValue.getUpperBound()
-						.compareTo(Rational.POSITIVE_INFINITY) >= 0);
+				&& (mValue.getUpperBound().compareTo(Rational.POSITIVE_INFINITY) >= 0);
 	}
 
 	@Override
@@ -107,11 +107,9 @@ public class IntervalValue implements IAbstractValue<Interval> {
 
 		boolean lowerIsLessEq, upperIsGreaterEq;
 
-		lowerIsLessEq = mValue.getLowerBound().compareTo(
-				interval.getLowerBound()) <= 0;
+		lowerIsLessEq = mValue.getLowerBound().compareTo(interval.getLowerBound()) <= 0;
 
-		upperIsGreaterEq = mValue.getUpperBound().compareTo(
-				interval.getUpperBound()) >= 0;
+		upperIsGreaterEq = mValue.getUpperBound().compareTo(interval.getUpperBound()) >= 0;
 
 		return lowerIsLessEq && upperIsGreaterEq;
 	}
@@ -128,11 +126,9 @@ public class IntervalValue implements IAbstractValue<Interval> {
 
 		boolean lowerIsGreaterEq, upperIsLessEq;
 
-		lowerIsGreaterEq = mValue.getLowerBound().compareTo(
-				interval.getLowerBound()) >= 0;
+		lowerIsGreaterEq = mValue.getLowerBound().compareTo(interval.getLowerBound()) >= 0;
 
-		upperIsLessEq = mValue.getUpperBound().compareTo(
-				interval.getUpperBound()) <= 0;
+		upperIsLessEq = mValue.getUpperBound().compareTo(interval.getUpperBound()) <= 0;
 
 		return lowerIsGreaterEq && upperIsLessEq;
 	}
@@ -155,11 +151,9 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		if (mValue.isEmpty() || interval.isEmpty())
 			return mFactory.makeBottomValue();
 
-		Rational resultLower = mValue.getLowerBound().add(
-				interval.getLowerBound());
+		Rational resultLower = mValue.getLowerBound().add(interval.getLowerBound());
 
-		Rational resultUpper = mValue.getUpperBound().add(
-				interval.getUpperBound());
+		Rational resultUpper = mValue.getUpperBound().add(interval.getUpperBound());
 
 		return mFactory.makeValue(new Interval(resultLower, resultUpper));
 	}
@@ -177,11 +171,9 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		if (mValue.isEmpty() || interval.isEmpty())
 			return mFactory.makeBottomValue();
 
-		Rational resultLower = mValue.getLowerBound().sub(
-				interval.getUpperBound());
+		Rational resultLower = mValue.getLowerBound().sub(interval.getUpperBound());
 
-		Rational resultUpper = mValue.getUpperBound().sub(
-				interval.getLowerBound());
+		Rational resultUpper = mValue.getUpperBound().sub(interval.getLowerBound());
 
 		return mFactory.makeValue(new Interval(resultLower, resultUpper));
 	}
@@ -373,9 +365,8 @@ public class IntervalValue implements IAbstractValue<Interval> {
 
 		// check for division by zero
 		if ((l2.signum() <= 0) && (u2.signum() >= 0)) {
-			mLogger.warn(String.format(
-					"Potential division by zero: %s / %s, returning TOP",
-					mValue.toString(), interval.toString()));
+			mLogger.warn(String.format("Potential division by zero: %s / %s, returning TOP", mValue.toString(),
+					interval.toString()));
 			return mFactory.makeTopValue();
 		}
 
@@ -387,8 +378,7 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		// [a, a] / [x, x]
 		if (mValue.isSingleValueInterval() && interval.isSingleValueInterval()) {
 			Rational d = l1.div(l2);
-			return mFactory.makeValue(new Interval(lu2_g0 ? d.floor() : d
-					.ceil()));
+			return mFactory.makeValue(new Interval(lu2_g0 ? d.floor() : d.ceil()));
 		}
 
 		if (l1_geq0) {
@@ -482,9 +472,8 @@ public class IntervalValue implements IAbstractValue<Interval> {
 			Rational x = interval.getLowerBound();
 
 			if (x.compareTo(Rational.ZERO) == 0) {
-				mLogger.error(String.format(
-						"Modulo division by zero: %s %% %s", mValue.toString(),
-						interval.toString()));
+				mLogger.error(
+						String.format("Modulo division by zero: %s %% %s", mValue.toString(), interval.toString()));
 				return mFactory.makeBottomValue();
 			}
 
@@ -493,8 +482,7 @@ public class IntervalValue implements IAbstractValue<Interval> {
 			BigInteger xInt = x.numerator().divide(x.denominator());
 
 			BigInteger[] dr = aInt.divideAndRemainder(xInt);
-			BigInteger r = dr[1].compareTo(BigInteger.ZERO) >= 0 ? dr[1] : xInt
-					.abs().add(dr[1]);
+			BigInteger r = dr[1].compareTo(BigInteger.ZERO) >= 0 ? dr[1] : xInt.abs().add(dr[1]);
 
 			return mFactory.makeIntegerValue(r.toString());
 		}
@@ -507,11 +495,9 @@ public class IntervalValue implements IAbstractValue<Interval> {
 
 		// check for division by zero
 		if ((l2.signum() <= 0) && (u2.signum() >= 0)) {
-			mLogger.warn(String
-					.format("Potential modulo division by zero: %s %% %s, returning [0, infty)",
-							mValue.toString(), interval.toString()));
-			return mFactory.makeValue(new Interval(Rational.ZERO,
-					Rational.POSITIVE_INFINITY));
+			mLogger.warn(String.format("Potential modulo division by zero: %s %% %s, returning [0, infty)",
+					mValue.toString(), interval.toString()));
+			return mFactory.makeValue(new Interval(Rational.ZERO, Rational.POSITIVE_INFINITY));
 		}
 
 		Rational max1 = l1.compareTo(u1) > 0 ? l1 : u1;
@@ -527,8 +513,7 @@ public class IntervalValue implements IAbstractValue<Interval> {
 
 	@Override
 	public IntervalValue negative() {
-		return mFactory.makeValue(new Interval(mValue.getUpperBound().negate(),
-				mValue.getLowerBound().negate()));
+		return mFactory.makeValue(new Interval(mValue.getUpperBound().negate(), mValue.getLowerBound().negate()));
 	}
 
 	@Override
@@ -623,8 +608,7 @@ public class IntervalValue implements IAbstractValue<Interval> {
 
 		Rational resultUpper = u1.compareTo(u2m1) < 0 ? u1 : u2m1;
 
-		return mFactory.makeValue(new Interval(mValue.getLowerBound(),
-				resultUpper));
+		return mFactory.makeValue(new Interval(mValue.getLowerBound(), resultUpper));
 	}
 
 	@Override
@@ -646,8 +630,7 @@ public class IntervalValue implements IAbstractValue<Interval> {
 
 		Rational resultLower = l1.compareTo(l2p1) > 0 ? l1 : l2p1;
 
-		return mFactory.makeValue(new Interval(resultLower, mValue
-				.getUpperBound()));
+		return mFactory.makeValue(new Interval(resultLower, mValue.getUpperBound()));
 	}
 
 	@Override
@@ -669,8 +652,7 @@ public class IntervalValue implements IAbstractValue<Interval> {
 
 		Rational resultUpper = u1.compareTo(u2) < 0 ? u1 : u2;
 
-		return mFactory.makeValue(new Interval(mValue.getLowerBound(),
-				resultUpper));
+		return mFactory.makeValue(new Interval(mValue.getLowerBound(), resultUpper));
 	}
 
 	@Override
@@ -692,8 +674,7 @@ public class IntervalValue implements IAbstractValue<Interval> {
 
 		Rational resultLower = l1.compareTo(l2) > 0 ? l1 : l2;
 
-		return mFactory.makeValue(new Interval(resultLower, mValue
-				.getUpperBound()));
+		return mFactory.makeValue(new Interval(resultLower, mValue.getUpperBound()));
 	}
 
 	@Override
@@ -744,5 +725,37 @@ public class IntervalValue implements IAbstractValue<Interval> {
 	 */
 	public String toString() {
 		return "Interval: " + mValue.toString();
+	}
+
+	@Override
+	public Term getTerm(Script script, Term variable) {
+		//TODO: Review this code by Fabian
+		
+		Term lowerBound = null;
+		Term upperBound = null;
+		Rational lower = getValue().getLowerBound();
+		Rational upper = getValue().getUpperBound();
+		if (lower.isRational() && upper.isRational()) {
+			if (!lower.equals(upper)) {
+				lowerBound = lower.toTerm(variable.getSort());
+				lowerBound = script.term("<=", lowerBound, variable);
+				upperBound = upper.toTerm(variable.getSort());
+				upperBound = script.term(">=", upperBound, variable);
+				return script.term("and", lowerBound, upperBound);
+			} else {
+				lowerBound = lower.toTerm(variable.getSort());
+				return script.term("=", lowerBound, variable);
+			}
+		} else if ((lower == Rational.NEGATIVE_INFINITY) && (upper == Rational.POSITIVE_INFINITY)) {
+			return script.term("true");
+		} else if ((lower == Rational.NEGATIVE_INFINITY) && (upper.isRational())) {
+			upperBound = upper.toTerm(variable.getSort());
+			return script.term(">=", upperBound, variable);
+		} else if ((lower.isRational()) && (upper == Rational.POSITIVE_INFINITY)) {
+			lowerBound = lower.toTerm(variable.getSort());
+			return script.term("<=", lowerBound, variable);
+		} else {
+			return script.term("false");
+		}
 	}
 }

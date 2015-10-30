@@ -141,6 +141,55 @@ public class AbstractInterpreter {
 	 */
 	@SuppressWarnings({ "unchecked" })
 	public void processRcfg(RootNode root) {
+		ProgramPoint mainEntry = initialize(root);
+
+		// add entry node of Main procedure / any if no Main() exists
+		for (final RCFGEdge edge : root.getOutgoingEdges()) {
+			if (edge instanceof RootEdge) {
+				final RCFGNode target = edge.getTarget();
+				if ((mainEntry == null) || (target == mainEntry)) {
+					mLogger.warn("There was no entry node specified!");
+					final StackState state = new StackState(mDomain, mLogger);
+
+					if (target instanceof ProgramPoint) {
+						final CallStatement mainProcMockStatement = new CallStatement(null, false, null,
+								((ProgramPoint) target).getProcedure(), null);
+						// layer for main method
+						state.pushStackLayer(mainProcMockStatement, mDomain.createState());
+					}
+					putStateToNode(state, edge, target);
+					mNodesToVisit.add(target);
+				}
+			}
+		}
+
+		visitNodes();
+
+		mLogger.info(String.format(
+				"Executed operations: #Steps: %s,  #Merge: %s,  #Widening: %s,  #RecMerge: %s,  #RecWidening: %s",
+				mNofSteps, mNofMerging, mNofWidening, mNofRecMerging, mNofRecWidening));
+		/*
+		 * report as safe if the analysis terminated after having explored the
+		 * whole reachable state space without finding an error
+		 */
+		if (mReachedErrorLocs.isEmpty()) {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throwTimeout();
+			} else {
+				reportSafeResult();
+			}
+		}
+
+		final Map<RCFGNode, Term> predicates = getPredicates(root);
+		if (mLogger.isDebugEnabled()) {
+			printPredicatesDebug(predicates);
+		}
+		new AbstractInterpretationPredicates(predicates).annotate(root);
+		mLogger.info("Annotated " + predicates.size() + " predicates");
+		mDomain.finalizeDomain();
+	}
+
+	private ProgramPoint initialize(RootNode root) {
 		mErrorLocs.clear();
 		mReachedErrorLocs.clear();
 		mRecursionEntryNodes.clear();
@@ -169,22 +218,14 @@ public class AbstractInterpreter {
 			this.registerStateChangeListener(scl);
 		}
 
-		// numbers for widening
-		Set<String> numbersForWidening = new HashSet<String>();
-		numbersForWidening.addAll(mPreferences.getNumbersForWidening());
-		// collect literals if preferences say so
-		if (mPreferences.getWideningAutoNumbers()) {
-			LiteralCollector literalCollector = new LiteralCollector(root, mLogger);
-			numbersForWidening.addAll(literalCollector.getResult());
-		}
-
 		// preprocessor annotation: get symbol table
 		PreprocessorAnnotation pa = PreprocessorAnnotation.getAnnotation(root);
 		if (pa == null) {
-			mLogger.error("No symbol table found on given RootNode.");
-			return;
+			throw new AssertionError("No symbol table found on given RootNode.");
 		}
 		mSymbolTable = pa.getSymbolTable();
+
+		Set<String> numbersForWidening = findWideningLiterals(root);
 
 		// create the domain
 		AbstractDomainFactory domainFactory = new AbstractDomainFactory(mLogger);
@@ -207,12 +248,14 @@ public class AbstractInterpreter {
 		}
 		mLoopEntryNodes = loopDetector.getResult();
 
-		mLogger.debug("Loop information:");
-		for (ProgramPoint pp : mLoopEntryNodes.keySet()) {
-			Map<RCFGEdge, RCFGEdge> loopsie = mLoopEntryNodes.get(pp);
-			for (Entry<RCFGEdge, RCFGEdge> e : loopsie.entrySet()) {
-				mLogger.debug(String.format("Loop: %s -> %s -> ... -> %s -> %s", pp,
-						(ProgramPoint) e.getKey().getTarget(), (ProgramPoint) e.getValue().getSource(), pp));
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Loop information:");
+			for (ProgramPoint pp : mLoopEntryNodes.keySet()) {
+				Map<RCFGEdge, RCFGEdge> loopsie = mLoopEntryNodes.get(pp);
+				for (Entry<RCFGEdge, RCFGEdge> e : loopsie.entrySet()) {
+					mLogger.debug(String.format("Loop: %s -> %s -> ... -> %s -> %s", pp,
+							(ProgramPoint) e.getKey().getTarget(), (ProgramPoint) e.getValue().getSource(), pp));
+				}
 			}
 		}
 
@@ -254,50 +297,19 @@ public class AbstractInterpreter {
 			mErrorLocs.addAll(errorLocMap.get(s));
 		}
 
-		// add entry node of Main procedure / any if no Main() exists
-		for (RCFGEdge e : root.getOutgoingEdges()) {
-			if (e instanceof RootEdge) {
-				RCFGNode target = e.getTarget();
-				if ((mainEntry == null) || (target == mainEntry)) {
-					mLogger.warn("There was no entry node specified!");
-					StackState state = new StackState(mDomain, mLogger);
+		return mainEntry;
+	}
 
-					if (target instanceof ProgramPoint) {
-						CallStatement mainProcMockStatement = new CallStatement(null, false, null,
-								((ProgramPoint) target).getProcedure(), null);
-						// layer for main method
-						state.pushStackLayer(mainProcMockStatement, mDomain.createState());
-					}
-					putStateToNode(state, e, target);
-					mNodesToVisit.add(target);
-				}
-			}
+	private Set<String> findWideningLiterals(RootNode root) {
+		// numbers for widening
+		Set<String> numbersForWidening = new HashSet<String>();
+		numbersForWidening.addAll(mPreferences.getNumbersForWidening());
+		// collect literals if preferences say so
+		if (mPreferences.getWideningAutoNumbers()) {
+			LiteralCollector literalCollector = new LiteralCollector(root, mLogger);
+			numbersForWidening.addAll(literalCollector.getResult());
 		}
-
-		visitNodes();
-
-		mLogger.info(String.format(
-				"Executed operations: #Steps: %s,  #Merge: %s,  #Widening: %s,  #RecMerge: %s,  #RecWidening: %s",
-				mNofSteps, mNofMerging, mNofWidening, mNofRecMerging, mNofRecWidening));
-		/*
-		 * report as safe if the analysis terminated after having explored the
-		 * whole reachable state space without finding an error
-		 */
-		if (mReachedErrorLocs.isEmpty()) {
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
-				throwTimeout();
-			} else {
-				reportSafeResult();
-			}
-		}
-
-		final Map<RCFGNode, Term> predicates = getPredicates(root);
-		if (mLogger.isDebugEnabled()) {
-			printPredicatesDebug(predicates);
-		}
-		new AbstractInterpretationPredicates(predicates).annotate(root);
-		mLogger.info("Annotated " + predicates.size() + " predicates");
-		mDomain.finalizeDomain();
+		return numbersForWidening;
 	}
 
 	/**

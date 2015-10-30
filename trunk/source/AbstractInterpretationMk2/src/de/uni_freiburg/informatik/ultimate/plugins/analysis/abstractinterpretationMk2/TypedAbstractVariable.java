@@ -1,7 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2;
 
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.IType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 
 /**
  * @author Jan Hättig
@@ -56,4 +60,13 @@ public class TypedAbstractVariable extends AbstractVariable {
 //			return false;
 //		return true;
 //	}
+	
+	public Term getTermVar(final Boogie2SMT bpl2smt){
+		final BoogieVar bplvar = bpl2smt.getBoogie2SmtSymbolTable().getBoogieVar(getString(),
+				getDeclaration(), false);
+		assert bplvar != null : "There is no BoogieVar for this constaint (maybe an old value?)";
+		final TermVariable termvar = bplvar.getTermVariable();
+		assert termvar != null : "There seems to be no termvar for this BoogieVar";
+		return termvar;
+	}
 }

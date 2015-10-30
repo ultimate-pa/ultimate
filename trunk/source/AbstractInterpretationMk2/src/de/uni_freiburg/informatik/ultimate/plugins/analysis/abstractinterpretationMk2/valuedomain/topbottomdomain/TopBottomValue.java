@@ -5,6 +5,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.valuedomain.IAbstractValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.valuedomain.IAbstractValueFactory;
 
@@ -40,8 +42,7 @@ public class TopBottomValue implements IAbstractValue<TopBottomValue.TopBottom> 
 	 * @param factory
 	 * @param logger
 	 */
-	protected TopBottomValue(TopBottom value, TopBottomValueFactory factory,
-			Logger logger) {
+	protected TopBottomValue(TopBottom value, TopBottomValueFactory factory, Logger logger) {
 		mValue = value;
 		mFactory = factory;
 		mLogger = logger;
@@ -466,6 +467,18 @@ public class TopBottomValue implements IAbstractValue<TopBottomValue.TopBottom> 
 			return "TOP";
 		default:
 			return "ERROR";
+		}
+	}
+
+	@Override
+	public Term getTerm(Script script, Term variable) {
+		switch (mValue) {
+		case BOTTOM:
+			return script.term("false");
+		case TOP:
+			return script.term("true");
+		default:
+			throw new UnsupportedOperationException("Unknown value " + mValue);
 		}
 	}
 }

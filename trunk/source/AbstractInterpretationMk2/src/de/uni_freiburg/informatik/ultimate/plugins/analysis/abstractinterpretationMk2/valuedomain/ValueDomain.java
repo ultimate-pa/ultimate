@@ -117,19 +117,6 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 		return new ValueState(this, false);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractDomain#ApplyExpression(de
-	 * .uni_freiburg.informatik
-	 * .ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractState,
-	 * de.uni_freiburg.informatik.ultimate.plugins
-	 * .analysis.abstractinterpretationMk2.abstractdomain.TypedAbstractVariable,
-	 * de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression)
-	 */
 	@Override
 	public IAbstractState<ValueState> applyExpression(
 			IAbstractState<ValueState> state, TypedAbstractVariable target,
@@ -152,7 +139,7 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 
 		if (value == null) {
 			value = mExpressionVisitor.visit(exp);
-			throw new RuntimeException();
+			throw new RuntimeException("WTF");
 		}
 
 		// write the result to the variable
@@ -164,17 +151,6 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 		return state;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractDomain#ApplyHavoc(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractState, de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.TypedAbstractVariable)
-	 */
 	@Override
 	public IAbstractState<ValueState> applyHavoc(
 			IAbstractState<ValueState> state, TypedAbstractVariable target) {
@@ -188,17 +164,6 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 		return state;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractDomain#ApplyAssume(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractState,
-	 * de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression)
-	 */
 	@Override
 	public List<IAbstractState<ValueState>> applyAssume(
 			IAbstractState<ValueState> state, Expression exp) {
@@ -225,17 +190,6 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 		return new ArrayList<IAbstractState<ValueState>>();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractDomain#ApplyAssert(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractState,
-	 * de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression)
-	 */
 	@Override
 	public boolean checkAssert(IAbstractState<ValueState> state, Expression exp) {
 		// TODO: this is not tested, since asserts are implemented as Assumes
@@ -250,18 +204,6 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 				formulaResult, exp)));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractDomain#ApplyCall(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractState, de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.IAbstractState, java.util.List,
-	 * java.util.List)
-	 */
 	@Override
 	public void applyExpressionScoped(IAbstractState<ValueState> newState,
 			IAbstractState<ValueState> oldState,
@@ -683,5 +625,4 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 		// TODO Restructure and move finalization code here
 		
 	}
-
 }

@@ -8,9 +8,9 @@ import java.math.BigInteger;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.valuedomain.booldomain.BoolValue.Bool;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.valuedomain.IAbstractValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.valuedomain.IAbstractValueFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.valuedomain.booldomain.BoolValue.Bool;
 
 /**
  * @author Christopher Dillo

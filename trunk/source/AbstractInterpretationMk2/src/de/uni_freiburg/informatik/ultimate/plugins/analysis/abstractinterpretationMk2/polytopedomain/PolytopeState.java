@@ -399,13 +399,10 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 			final Variable arg = expr.argument();
 			final TypedAbstractVariable var = mTrans.getVar(arg);
 			assert var != null : "Unknown variable in constraint";
-			final BoogieVar bplvar = mBoogie2SMT.getBoogie2SmtSymbolTable().getBoogieVar(var.getString(),
-					var.getDeclaration(), false);
-			assert bplvar != null : "There is no BoogieVar for this constaint (maybe an old value?)";
-			final TermVariable termvar = bplvar.getTermVariable();
-
+			final Term termvar = var.getTermVar(mBoogie2SMT);
 			final Sort sort = termvar.getSort().getRealSort();
 			if (!sort.getName().equals("Int")) {
+				//ignore array sorts for now
 				throw new IgnoreTermException();
 			}
 			return termvar;

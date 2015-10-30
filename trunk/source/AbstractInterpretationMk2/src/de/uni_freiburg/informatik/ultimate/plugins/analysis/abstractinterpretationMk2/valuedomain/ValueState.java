@@ -7,11 +7,12 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.AbstractVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.TypedAbstractVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.*;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractState;
 
 /**
  * @author Jan Hättig
@@ -42,8 +43,8 @@ public class ValueState implements IAbstractState<ValueState> {
 		if (mIsBottom) {
 			return false;
 		}
-		
-		if(!(other instanceof ValueState)){
+
+		if (!(other instanceof ValueState)) {
 			return false;
 		}
 
@@ -77,8 +78,7 @@ public class ValueState implements IAbstractState<ValueState> {
 			return;
 		}
 
-		mMapping.put(variable,
-				mDomain.getTopBottomValueForType(variable.getType(), true));
+		mMapping.put(variable, mDomain.getTopBottomValueForType(variable.getType(), true));
 	}
 
 	public TypedAbstractVariable getTypedVariable(AbstractVariable variable) {
@@ -106,8 +106,7 @@ public class ValueState implements IAbstractState<ValueState> {
 			copy.mIsBottom = true;
 			return copy;
 		}
-		for (Entry<TypedAbstractVariable, IAbstractValue<?>> entry : mMapping
-				.entrySet()) {
+		for (Entry<TypedAbstractVariable, IAbstractValue<?>> entry : mMapping.entrySet()) {
 			copy.mMapping.put(entry.getKey(), entry.getValue());
 		}
 
@@ -124,8 +123,7 @@ public class ValueState implements IAbstractState<ValueState> {
 	 * @return True iff a layer with the given identifier exists so the value
 	 *         could be written
 	 */
-	public void writeValue(TypedAbstractVariable variable,
-			IAbstractValue<?> value) {
+	public void writeValue(TypedAbstractVariable variable, IAbstractValue<?> value) {
 		mMapping.put(variable, value);
 	}
 
@@ -161,8 +159,7 @@ public class ValueState implements IAbstractState<ValueState> {
 			return true;
 		}
 
-		Iterator<Entry<TypedAbstractVariable, IAbstractValue<?>>> it = mMapping
-				.entrySet().iterator();
+		Iterator<Entry<TypedAbstractVariable, IAbstractValue<?>>> it = mMapping.entrySet().iterator();
 		while (it.hasNext()) {
 			Map.Entry<TypedAbstractVariable, IAbstractValue<?>> pair = (Map.Entry<TypedAbstractVariable, IAbstractValue<?>>) it
 					.next();
@@ -185,11 +182,9 @@ public class ValueState implements IAbstractState<ValueState> {
 	}
 
 	@Override
-	public String toString()
-	{
+	public String toString() {
 		String s = "";
-		for (Entry<TypedAbstractVariable, IAbstractValue<?>> entry : mMapping
-				.entrySet()) {
+		for (Entry<TypedAbstractVariable, IAbstractValue<?>> entry : mMapping.entrySet()) {
 			if (s.length() > 0) {
 				s += ", ";
 			}
@@ -199,12 +194,23 @@ public class ValueState implements IAbstractState<ValueState> {
 	}
 
 	@Override
-	public Term getTerm(Script script, Boogie2SMT bpl2smt) {
-		if(isBottom()){
+	public Term getTerm(final Script script, final Boogie2SMT bpl2smt) {
+		if (isBottom()) {
 			return script.term("false");
 		}
-		
-		throw new UnsupportedOperationException();
-	}
 
+		Term acc = script.term("true");
+		for (final Entry<TypedAbstractVariable, IAbstractValue<?>> entry : mMapping.entrySet()) {
+			Term termvar = entry.getKey().getTermVar(bpl2smt);
+			final Sort sort = termvar.getSort().getRealSort();
+			if (!sort.getName().equals("Int")) {
+				//ignore array sorts for now
+				continue;
+			}
+			
+			Term newterm = entry.getValue().getTerm(script, termvar);
+			acc = script.term("and", acc, newterm);
+		}
+		return acc;
+	}
 }

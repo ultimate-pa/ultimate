@@ -5,8 +5,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.valuedomain.booldomain.BoolValueFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.valuedomain.booldomain.BoolValue.Bool;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.valuedomain.IAbstractValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.valuedomain.IAbstractValueFactory;
 
@@ -117,8 +118,7 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	 */
 	@Override
 	public boolean representsSingleConcreteValue() {
-		return (mValue == Sign.PLUS) || (mValue == Sign.MINUS)
-				|| (mValue == Sign.ZERO);
+		return (mValue == Sign.PLUS) || (mValue == Sign.MINUS) || (mValue == Sign.ZERO);
 	}
 
 	/*
@@ -381,10 +381,8 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 		if (value == null)
 			return mFactory.makeBottomValue();
 
-		if ((value.getValue() == Sign.ZERO)
-				|| (value.getValue() == Sign.PLUSMINUS)) {
-			mLogger.warn(String.format("Potential division by zero: %s / %s",
-					this, value));
+		if ((value.getValue() == Sign.ZERO) || (value.getValue() == Sign.PLUSMINUS)) {
+			mLogger.warn(String.format("Potential division by zero: %s / %s", this, value));
 			return mFactory.makeBottomValue();
 		}
 
@@ -405,10 +403,8 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 		if (value == null)
 			return mFactory.makeBottomValue();
 
-		if ((value.getValue() == Sign.ZERO)
-				|| (value.getValue() == Sign.PLUSMINUS)) {
-			mLogger.warn(String.format(
-					"Potential modulo division by zero: %s %% %s", this, value));
+		if ((value.getValue() == Sign.ZERO) || (value.getValue() == Sign.PLUSMINUS)) {
+			mLogger.warn(String.format("Potential modulo division by zero: %s %% %s", this, value));
 			return mFactory.makeBottomValue();
 		}
 
@@ -586,8 +582,7 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 				return mFactory.makeBottomValue();
 			}
 		case MINUS:
-			return mFactory.makeValue((otherSign == Sign.EMPTY) ? Sign.EMPTY
-					: Sign.MINUS);
+			return mFactory.makeValue((otherSign == Sign.EMPTY) ? Sign.EMPTY : Sign.MINUS);
 		case PLUSMINUS:
 			switch (otherSign) {
 			case ZERO:
@@ -633,8 +628,7 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 				return mFactory.makeBottomValue();
 			}
 		case PLUS:
-			return mFactory.makeValue((otherSign == Sign.EMPTY) ? Sign.EMPTY
-					: Sign.PLUS);
+			return mFactory.makeValue((otherSign == Sign.EMPTY) ? Sign.EMPTY : Sign.PLUS);
 		case MINUS:
 			switch (otherSign) {
 			case MINUS:
@@ -700,8 +694,7 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 				return mFactory.makeBottomValue();
 			}
 		case MINUS:
-			return mFactory.makeValue((otherSign == Sign.EMPTY) ? Sign.EMPTY
-					: Sign.MINUS);
+			return mFactory.makeValue((otherSign == Sign.EMPTY) ? Sign.EMPTY : Sign.MINUS);
 		case PLUSMINUS:
 			switch (otherSign) {
 			case ZERO:
@@ -747,8 +740,7 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 				return mFactory.makeBottomValue();
 			}
 		case PLUS:
-			return mFactory.makeValue((otherSign == Sign.EMPTY) ? Sign.EMPTY
-					: Sign.PLUS);
+			return mFactory.makeValue((otherSign == Sign.EMPTY) ? Sign.EMPTY : Sign.PLUS);
 		case MINUS:
 			switch (otherSign) {
 			case MINUS:
@@ -886,6 +878,29 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 			return "Sign: +-";
 		default:
 			return "Sign: empty";
+		}
+	}
+
+	@Override
+	public Term getTerm(Script script, Term variable) {
+		//TODO: Review this code by Fabian
+		
+		Term signTerm = null;
+		if (getValue() == Sign.EMPTY) {
+			signTerm = script.term("false");
+			return script.term("=", signTerm, variable);
+		} else if (getValue() == Sign.MINUS) {
+			signTerm = Rational.valueOf(0, 0).toTerm(variable.getSort());
+			return script.term("<", signTerm, variable);
+		} else if (getValue() == Sign.PLUS) {
+			signTerm = Rational.valueOf(0, 0).toTerm(variable.getSort());
+			return script.term(">", signTerm, variable);
+		} else if (getValue() == Sign.PLUSMINUS) {
+			signTerm = script.term("true");
+			return script.term("=", signTerm, variable);
+		} else {
+			signTerm = Rational.valueOf(0, 0).toTerm(variable.getSort());
+			return script.term("=", signTerm, variable);
 		}
 	}
 }

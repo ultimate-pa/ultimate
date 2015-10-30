@@ -51,13 +51,13 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 	
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String, String>[] TOOLCHAINS = new Triple[] {
-//			new Triple<>("AbstractInterpretationMk2CInline.xml", ".c", "ai/AI2_INT.epf"),
+			new Triple<>("AbstractInterpretationMk2CInline.xml", ".i", "ai/AI2_INT.epf"),
 //			new Triple<>("AbstractInterpretationMk2C.xml", ".c", "ai/AI2_INT.epf"),
-//			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_INT.epf"),
+			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_INT.epf"),
 			
-			new Triple<>("AbstractInterpretationMk2CInline.xml", ".i", "ai/AI2_PLT.epf"),
-			new Triple<>("AbstractInterpretationMk2C.xml", ".i", "ai/AI2_PLT.epf"),
-			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_PLT.epf"),
+//			new Triple<>("AbstractInterpretationMk2CInline.xml", ".i", "ai/AI2_PLT.epf"),
+//			new Triple<>("AbstractInterpretationMk2C.xml", ".i", "ai/AI2_PLT.epf"),
+//			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_PLT.epf"),
 			
 //			new Triple<>("AbstractInterpretationMk2CInline.xml", ".c", "ai/AI2_CMP.epf"),
 //			new Triple<>("AbstractInterpretationMk2C.xml", ".c", "ai/AI2_CMP.epf"),

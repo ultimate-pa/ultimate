@@ -17,25 +17,21 @@ public class AbstractInterpretationObserver implements IUnmanagedObserver {
 
 	@Override
 	public void init(GraphType modelType, int currentModelIndex, int numberOfModels) throws Throwable {
-		// TODO Auto-generated method stub
 
 	}
 
 	@Override
 	public void finish() throws Throwable {
-		// TODO Auto-generated method stub
 
 	}
 
 	@Override
 	public WalkerOptions getWalkerOptions() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public boolean performedChanges() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
