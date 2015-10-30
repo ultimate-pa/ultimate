@@ -290,13 +290,13 @@ public class AbstractInterpreter {
 				reportSafeResult();
 			}
 		}
-		
+
 		final Map<RCFGNode, Term> predicates = getPredicates(root);
-		if(mLogger.isDebugEnabled()){
+		if (mLogger.isDebugEnabled()) {
 			printPredicatesDebug(predicates);
 		}
 		new AbstractInterpretationPredicates(predicates).annotate(root);
-		mLogger.info("Annotated "+predicates.size()+" predicates");
+		mLogger.info("Annotated " + predicates.size() + " predicates");
 		mDomain.finalizeDomain();
 	}
 

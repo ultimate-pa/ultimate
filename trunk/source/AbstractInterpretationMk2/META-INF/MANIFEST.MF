@@ -13,7 +13,7 @@ Require-Bundle: UltimateCore,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies,
  de.uni_freiburg.informatik.ultimate.automata
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2
 Bundle-NativeCode: native_lib/ppl_java.dll; native_lib/libgcc_s_seh-1.dll; native_lib/libgmp-10.dll; native_lib/libgmpxx-4.dll; native_lib/libppl-13.dll; native_lib/libstdc++-6.dll; native_lib/libwinpthread-1.dll

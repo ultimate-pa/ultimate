@@ -46,7 +46,7 @@
 
 		<!-- Sonar parameters -->
 		<sonar.language>java</sonar.language>
-		<sonar.java.source>1.7</sonar.java.source>
+		<sonar.java.source>1.8</sonar.java.source>
 		<sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
 		<!-- sonar.dynamicAnalysis is deprecated and the reuseReports behavior 
 			is the new default -->
@@ -69,9 +69,9 @@
 
 	<repositories>
 		<repository>
-			<id>eclipse-indigo</id>
+			<id>eclipse-mars</id>
 			<layout>p2</layout>
-			<url>http://download.eclipse.org/releases/indigo</url>
+			<url>http://download.eclipse.org/releases/mars</url>
 		</repository>
 		<repository>
 			<id>eclipse-luna</id>
@@ -264,6 +264,7 @@
 		<module>../BoogieProcedureInliner</module>
 		<module>../SpaceExParser</module>
 		<module>../AbstractInterpretationV2</module>
+		<module>../AbstractInterpretationMk2</module>
 	</modules>
 
 	<profiles>
@@ -464,7 +465,8 @@
 								maven/junit bugs, you may want to set it to true to have all the test output 
 								written to file -->
 							<redirectTestOutputToFile>false</redirectTestOutputToFile>
-							<!-- if you want to change the argLine, use the global property; Note: for some reason, in this profile we cannot use ${tycho.testArgLine} -->
+							<!-- if you want to change the argLine, use the global property; Note: 
+								for some reason, in this profile we cannot use ${tycho.testArgLine} -->
 							<argLine>${manualtest-argline}</argLine>
 
 							<systemProperties>
