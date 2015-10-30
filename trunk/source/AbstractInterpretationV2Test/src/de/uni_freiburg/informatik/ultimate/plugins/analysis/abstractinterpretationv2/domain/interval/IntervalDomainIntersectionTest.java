@@ -29,6 +29,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.interval;
 
 import static org.junit.Assert.*;
+
+import java.math.BigDecimal;
+
 import org.junit.Test;
 
 /**
@@ -42,59 +45,80 @@ public class IntervalDomainIntersectionTest {
 	public void testIntervalIntersectionIncluded() {
 		// Interval: [10, 20]
 		final IntervalDomainValue interval1 = HelperFunctions.createInterval(10, 20);
-		
+
 		// Interval: [13, 15]
 		final IntervalDomainValue interval2 = HelperFunctions.createInterval(13, 15);
-		
+
 		// Expected: [13, 15]
 		assertTrue(HelperFunctions.computeIntersectionResult(interval1, interval2, interval2));
-		
+
 		assertTrue(HelperFunctions.computeIntersectionResult(interval2, interval1, interval2));
 	}
-	
+
 	@Test
 	public void testIntervalIntersectionHalfOutsideUp() {
 		// Interval: [10, 20]
 		final IntervalDomainValue interval1 = HelperFunctions.createInterval(10, 20);
-		
+
 		// Interval: [15, 30]
 		final IntervalDomainValue interval2 = HelperFunctions.createInterval(15, 30);
-		
+
 		// Expected: [15, 20]
 		final IntervalDomainValue expected = HelperFunctions.createInterval(15, 20);
-		
+
 		assertTrue(HelperFunctions.computeIntersectionResult(interval1, interval2, expected));
 		assertTrue(HelperFunctions.computeIntersectionResult(interval2, interval1, expected));
 	}
-	
+
 	@Test
 	public void testIntervalIntersectionHalfOutsideDown() {
 		// Interval: [10, 20]
 		final IntervalDomainValue interval1 = HelperFunctions.createInterval(10, 20);
-		
+
 		// Interval: [5, 15]
 		final IntervalDomainValue interval2 = HelperFunctions.createInterval(5, 15);
-		
+
 		// Expected: [15, 20]
 		final IntervalDomainValue expected = HelperFunctions.createInterval(10, 15);
-		
+
 		assertTrue(HelperFunctions.computeIntersectionResult(interval1, interval2, expected));
 		assertTrue(HelperFunctions.computeIntersectionResult(interval2, interval1, expected));
 	}
-	
+
 	@Test
 	public void testIntervalIntersectionDisjoint() {
 		// Interval: [10, 20]
 		final IntervalDomainValue interval1 = HelperFunctions.createInterval(10, 20);
-		
+
 		// Interval: [30, 40]
 		final IntervalDomainValue interval2 = HelperFunctions.createInterval(30, 40);
-		
+
 		// Expected: \bot
 		final IntervalDomainValue expected = HelperFunctions.createInterval();
 		expected.setToBottom();
-		
+
 		assertTrue(HelperFunctions.computeIntersectionResult(interval1, interval2, expected));
 		assertTrue(HelperFunctions.computeIntersectionResult(interval2, interval1, expected));
+	}
+
+	@Test
+	public void testInfiniteIntervalIntersection() {
+		// Interval: (-\infty, \infty)
+		final IntervalDomainValue interval1 = new IntervalDomainValue();
+
+		// Interval: [1, 1]
+		final IntervalDomainValue oneone = HelperFunctions.createInterval(1, 1);
+
+		// Expected: [1, 1]
+		assertTrue(HelperFunctions.computeIntersectionResult(interval1, oneone, oneone));
+		assertTrue(HelperFunctions.computeIntersectionResult(oneone, interval1, oneone));
+
+		// Interval: [-10, \infty)
+		final IntervalDomainValue interval2 = new IntervalDomainValue(new IntervalValue(new BigDecimal(-10)),
+		        new IntervalValue());
+		
+		// Expected: [1, 1]
+		assertTrue(HelperFunctions.computeIntersectionResult(interval2, oneone, oneone));
+		assertTrue(HelperFunctions.computeIntersectionResult(oneone, interval2, oneone));
 	}
 }

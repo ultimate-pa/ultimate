@@ -240,22 +240,42 @@ public class IntervalDomainValue implements IEvaluationResult<IntervalDomainValu
 
 		IntervalValue newLower, newUpper;
 
-		if (mLower.compareTo(other.mLower) > 0 || mLower.compareTo(other.mLower) == 0) {
-			newLower = new IntervalValue(mLower.getValue());
+		if (mLower.compareTo(other.mLower) > 0) {
+			if (mLower.isInfinity()) {
+				newLower = new IntervalValue(other.mLower.getValue());
+			} else {
+				newLower = new IntervalValue(mLower.getValue());
+			}
+		} else if (mLower.compareTo(other.mLower) == 0) {
+			if (mLower.isInfinity()) {
+				newLower = new IntervalValue();
+			} else {
+				newLower = new IntervalValue(mLower.getValue());
+			}
 		} else {
-			newLower = new IntervalValue(other.mLower.getValue());
+			if (other.mLower.isInfinity()) {
+				newLower = new IntervalValue(mLower.getValue());
+			} else {
+				newLower = new IntervalValue(other.mLower.getValue());
+			}
 		}
 		
-		if (mUpper.compareTo(other.mUpper) < 0 || mUpper.compareTo(other.mUpper) == 0) {
-			newUpper = new IntervalValue(mUpper.getValue());
+		if (mUpper.compareTo(other.mUpper) < 0) {
+				newUpper = new IntervalValue(mUpper.getValue());
+		} else if (mUpper.compareTo(other.mUpper) == 0) {
+			if (mUpper.isInfinity()) {
+				newUpper = new IntervalValue();
+			} else {
+				newUpper = new IntervalValue(mUpper.getValue());
+			}
 		} else {
-			newUpper = new IntervalValue(other.mUpper.getValue());
+				newUpper = new IntervalValue(other.mUpper.getValue());
 		}
-		
+
 		if (!newLower.isInfinity() && newLower.compareTo(newUpper) > 0) {
 			return new IntervalDomainValue(true);
 		}
-		
+
 		if (!newUpper.isInfinity() && newUpper.compareTo(newLower) < 0) {
 			return new IntervalDomainValue(true);
 		}

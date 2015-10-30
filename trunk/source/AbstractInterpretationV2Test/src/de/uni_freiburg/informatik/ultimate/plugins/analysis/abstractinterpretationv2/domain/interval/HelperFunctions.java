@@ -29,11 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.math.BigDecimal;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.IEvaluationResult;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class HelperFunctions {
 	protected static IntervalDomainValue createInterval(int lower, int upper) {
@@ -83,8 +80,14 @@ public class HelperFunctions {
 			return true;
 		}
 		
-		final boolean lowerResult = evaluatorResult.getResult().getLower().equals(expectedResult.getLower());
-		final boolean upperResult = evaluatorResult.getResult().getUpper().equals(expectedResult.getUpper());
+		if (evaluatorResult.getResult().isBottom() && !expectedResult.isBottom()) {
+			return false;
+		}
+		
+		final boolean lowerResult, upperResult;
+		
+		lowerResult = evaluatorResult.getResult().getLower().equals(expectedResult.getLower());
+		upperResult = evaluatorResult.getResult().getUpper().equals(expectedResult.getUpper());
 
 		return lowerResult && upperResult;
 	}
