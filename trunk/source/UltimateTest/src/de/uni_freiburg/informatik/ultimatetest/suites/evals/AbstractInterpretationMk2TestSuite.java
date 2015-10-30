@@ -47,39 +47,35 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 
 	private static final int DEFAULT_LIMIT = Integer.MAX_VALUE;
-
+	// @formatter:off
+	
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String, String>[] TOOLCHAINS = new Triple[] {
-			// new Triple<>("AbstractInterpretationMk2CInline.xml", ".c",
-			// "ai/AI2_INT.epf"),
-			// new Triple<>("AbstractInterpretationMk2C.xml", ".c",
-			// "ai/AI2_INT.epf"),
-			// new Triple<>("AbstractInterpretationMk2.xml", ".bpl",
-			// "ai/AI2_INT.epf"),
-			new Triple<>("AbstractInterpretationMk2CInline.xml", ".c", "ai/AI2_PLT.epf"),
-			// new Triple<>("AbstractInterpretationMk2C.xml", ".c",
-			// "ai/AI2_PLT.epf"),
-			// new Triple<>("AbstractInterpretationMk2.xml", ".bpl",
-			// "ai/AI2_PLT.epf"),
-			// new Triple<>("AbstractInterpretationMk2CInline.xml", ".c",
-			// "ai/AI2_CMP.epf"),
-			// new Triple<>("AbstractInterpretationMk2C.xml", ".c",
-			// "ai/AI2_CMP.epf"),
-			// new Triple<>("AbstractInterpretationMk2.xml", ".bpl",
-			// "ai/AI2_CMP.epf"),
-			// new Triple<>("AutomizerCInline.xml", ".c", "EmptySettings.epf"),
-			// new Triple<>("AutomizerC.xml", ".c", "EmptySettings.epf"),
-			// new Triple<>("AutomizerBpl.xml", ".bpl", "EmptySettings.epf"),
+//			new Triple<>("AbstractInterpretationMk2CInline.xml", ".c", "ai/AI2_INT.epf"),
+//			new Triple<>("AbstractInterpretationMk2C.xml", ".c", "ai/AI2_INT.epf"),
+//			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_INT.epf"),
+			
+			new Triple<>("AbstractInterpretationMk2CInline.xml", ".i", "ai/AI2_PLT.epf"),
+			new Triple<>("AbstractInterpretationMk2C.xml", ".i", "ai/AI2_PLT.epf"),
+			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_PLT.epf"),
+			
+//			new Triple<>("AbstractInterpretationMk2CInline.xml", ".c", "ai/AI2_CMP.epf"),
+//			new Triple<>("AbstractInterpretationMk2C.xml", ".c", "ai/AI2_CMP.epf"),
+//			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_CMP.epf"),
+			
+//			new Triple<>("AutomizerCInline.xml", ".c", "EmptySettings.epf"),
+//			new Triple<>("AutomizerC.xml", ".c", "EmptySettings.epf"),
+//			new Triple<>("AutomizerBpl.xml", ".bpl", "EmptySettings.epf"), 
 	};
 
-	// @formatter:off
+
 
 	private static final String[] INPUT = new String[] {
 
 			// "examples/programs/abstractInterpretation/",
 			// "examples/programs/abstractInterpretationNoRec/",
 			/* ULTIMATE repo */
-			// "examples/programs/regression/bpl/",
+			 "examples/programs/regression/bpl/",
 			// "examples/programs/regression/c/",
 			// "examples/programs/recursivePrograms",
 			/* SV-COMP repo */
@@ -91,7 +87,7 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 			// "examples/svcomp/systemc1/",
 			// "examples/svcomp/systemc2/",
 			// "examples/svcomp/eca-rers2012/",
-			// "examples/svcomp/recursive/",
+			 "examples/svcomp/recursive/",
 			// "examples/svcomp/ssh-simplified/",
 			// "examples/svcomp/ssh/",
 

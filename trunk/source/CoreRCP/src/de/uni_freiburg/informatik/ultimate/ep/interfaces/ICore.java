@@ -27,7 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.ep.interfaces;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.CommandLineParser;
-import de.uni_freiburg.informatik.ultimate.core.services.ILoggingService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILoggingService;
 
 /**
  * This interface describes the object that is passed to

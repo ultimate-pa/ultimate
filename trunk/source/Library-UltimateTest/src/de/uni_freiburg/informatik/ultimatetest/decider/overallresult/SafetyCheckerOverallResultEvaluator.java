@@ -25,13 +25,14 @@
  * licensors of the ULTIMATE UnitTest Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimatetest.decider.overallResult;
+
+package de.uni_freiburg.informatik.ultimatetest.decider.overallresult;
 
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
 import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
@@ -59,15 +60,15 @@ import de.uni_freiburg.informatik.ultimate.util.HashRelation;
  */
 public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvaluator<SafetyCheckerOverallResult> {
 
-	private final HashRelation<SafetyCheckerOverallResult, IResult> m_Category2Results = new HashRelation<SafetyCheckerOverallResult, IResult>();
-	private SafetyCheckerOverallResult m_OverallResult;
-	private Set<IResult> m_MostSignificantResults;
+	private final HashRelation<SafetyCheckerOverallResult, IResult> mCategory2Results = new HashRelation<SafetyCheckerOverallResult, IResult>();
+	private SafetyCheckerOverallResult mOverallResult;
+	private Set<IResult> mMostSignificantResults;
 
 	public void evaluateOverallResult(IResultService resultService) {
 		for (Entry<String, List<IResult>> entry : resultService.getResults().entrySet()) {
 			for (IResult result : entry.getValue()) {
 				SafetyCheckerOverallResult category = detectResultCategory(result);
-				m_Category2Results.addPair(category, result);
+				mCategory2Results.addPair(category, result);
 			}
 		}
 		//@formatter:off
@@ -87,15 +88,15 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 		//@formatter:on
 
 		for (SafetyCheckerOverallResult category : categoriesOrderedBySignificance) {
-			if (m_Category2Results.getDomain().contains(category)) {
-				m_OverallResult = category;
+			if (mCategory2Results.getDomain().contains(category)) {
+				mOverallResult = category;
 			}
 		}
 
-		if (m_OverallResult == null) {
-			m_OverallResult = SafetyCheckerOverallResult.NO_RESULT;
+		if (mOverallResult == null) {
+			mOverallResult = SafetyCheckerOverallResult.NO_RESULT;
 		} else {
-			m_MostSignificantResults = m_Category2Results.getImage(m_OverallResult);
+			mMostSignificantResults = mCategory2Results.getImage(mOverallResult);
 		}
 	}
 
@@ -144,7 +145,7 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 
 	@Override
 	public SafetyCheckerOverallResult getOverallResult() {
-		return m_OverallResult;
+		return mOverallResult;
 	}
 
 	@Override
@@ -176,7 +177,7 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 
 	@Override
 	public Set<IResult> getMostSignificantResults() {
-		return m_MostSignificantResults;
+		return mMostSignificantResults;
 	}
 
 	

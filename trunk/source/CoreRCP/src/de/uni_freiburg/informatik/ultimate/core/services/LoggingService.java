@@ -54,6 +54,9 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences.PreferenceChange
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILoggingService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IStorable;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 
 /**
  * UltimateLoggers

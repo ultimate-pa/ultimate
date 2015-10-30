@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.AbstractVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.TypedAbstractVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.util.ExpressionWalker;
@@ -292,7 +293,8 @@ public class PolytopeExpressionVisitor extends ExpressionWalker<Linear_Expressio
 			}
 
 		default:
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException(
+					"We do not support expressions like this: " + BoogiePrettyPrinter.print(expr));
 
 		}
 	}
@@ -358,7 +360,8 @@ public class PolytopeExpressionVisitor extends ExpressionWalker<Linear_Expressio
 			return new Linear_Expression_Difference(new Linear_Expression_Coefficient(new Coefficient(1)), value);
 		}
 
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException(
+				"We do not support expressions like this: " + BoogiePrettyPrinter.print(expr));
 	}
 
 	@Override

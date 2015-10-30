@@ -25,15 +25,16 @@
  * licensors of the ULTIMATE UnitTest Library grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimatetest.decider;
 
 import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.decider.expectedResult.IExpectedResultFinder;
-import de.uni_freiburg.informatik.ultimatetest.decider.expectedResult.KeywordBasedExpectedResultFinder;
-import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.IOverallResultEvaluator;
-import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.SafetyCheckerOverallResult;
-import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.SafetyCheckerOverallResultEvaluator;
+import de.uni_freiburg.informatik.ultimatetest.decider.expectedresult.IExpectedResultFinder;
+import de.uni_freiburg.informatik.ultimatetest.decider.expectedresult.KeywordBasedExpectedResultFinder;
+import de.uni_freiburg.informatik.ultimatetest.decider.overallresult.IOverallResultEvaluator;
+import de.uni_freiburg.informatik.ultimatetest.decider.overallresult.SafetyCheckerOverallResult;
+import de.uni_freiburg.informatik.ultimatetest.decider.overallresult.SafetyCheckerOverallResultEvaluator;
 import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
@@ -41,6 +42,7 @@ import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
  * checker results.
  * 
  * @author heizmann@informatik.uni-freiburg.de
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
 public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<SafetyCheckerOverallResult> {
@@ -75,13 +77,13 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 	}
 
 	public class SafetyCheckerTestResultEvaluation implements ITestResultEvaluation<SafetyCheckerOverallResult> {
-		String m_Category;
-		String m_Message;
-		TestResult m_TestResult;
+		private String mCategory;
+		private String mMessage;
+		private TestResult mTestResult;
 
 		@Override
-		public void evaluateTestResult(IExpectedResultFinder<SafetyCheckerOverallResult> expectedResultFinder,
-				IOverallResultEvaluator<SafetyCheckerOverallResult> overallResultDeterminer) {
+		public void evaluateTestResult(final IExpectedResultFinder<SafetyCheckerOverallResult> expectedResultFinder,
+				final IOverallResultEvaluator<SafetyCheckerOverallResult> overallResultDeterminer) {
 			evaluateExpectedResult(expectedResultFinder);
 			switch (expectedResultFinder.getExpectedResultFinderStatus()) {
 			case ERROR:
@@ -97,14 +99,17 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 		}
 
 		private void evaluateOverallResultWithoutExpectedResult(
-				IOverallResultEvaluator<SafetyCheckerOverallResult> overallResultDeterminer) {
-			m_Category = overallResultDeterminer.getOverallResult() + "(Expected:UNKNOWN)";
-			m_Message += " UltimateResult: " + overallResultDeterminer.generateOverallResultMessage();
-			switch (overallResultDeterminer.getOverallResult()) {
+				final IOverallResultEvaluator<SafetyCheckerOverallResult> overallResultDeterminer) {
+			final SafetyCheckerOverallResult overallResult = overallResultDeterminer.getOverallResult();
+			final String overallResultMsg = overallResultDeterminer.generateOverallResultMessage();
+
+			mCategory = overallResult + " (Expected:UNKNOWN)";
+			mMessage += " UltimateResult: " + overallResultMsg;
+			switch (overallResult) {
 			case EXCEPTION_OR_ERROR:
 			case UNSUPPORTED_SYNTAX:
 			case NO_RESULT:
-				m_TestResult = TestResult.FAIL;
+				mTestResult = TestResult.FAIL;
 				break;
 			case SAFE:
 			case UNSAFE:
@@ -114,97 +119,101 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 			case UNKNOWN:
 			case SYNTAX_ERROR:
 			case TIMEOUT:
-				m_TestResult = TestResult.UNKNOWN;
+				mTestResult = TestResult.UNKNOWN;
 				break;
 			default:
-				throw new AssertionError("case not implemented: " + overallResultDeterminer.getOverallResult());
+				throw new AssertionError("case not implemented: " + overallResult);
 			}
 		}
 
-		private void compareToOverallResult(SafetyCheckerOverallResult expectedResult,
-				IOverallResultEvaluator<SafetyCheckerOverallResult> overallResultDeterminer) {
-			m_Category = overallResultDeterminer.getOverallResult() + "(Expected:" + expectedResult + ")";
-			m_Message += " UltimateResult: " + overallResultDeterminer.getOverallResult() + "   "
-					+ overallResultDeterminer.generateOverallResultMessage();
-			switch (overallResultDeterminer.getOverallResult()) {
+		private void compareToOverallResult(final SafetyCheckerOverallResult expectedResult,
+				final IOverallResultEvaluator<SafetyCheckerOverallResult> overallResultDeterminer) {
+			final SafetyCheckerOverallResult overallResult = overallResultDeterminer.getOverallResult();
+			final String overallResultMsg = overallResultDeterminer.generateOverallResultMessage();
+
+			mCategory = overallResult + " (Expected:" + expectedResult + ")";
+			mMessage += " UltimateResult: " + overallResult + "   " + overallResultMsg;
+			switch (overallResult) {
 			case EXCEPTION_OR_ERROR:
-				m_TestResult = TestResult.FAIL;
+				mCategory = overallResult + " (Expected:" + expectedResult + ") " + overallResultMsg;
+				mTestResult = TestResult.FAIL;
 				break;
 			case SAFE:
 				if (expectedResult == SafetyCheckerOverallResult.SAFE) {
-					m_TestResult = TestResult.SUCCESS;
+					mTestResult = TestResult.SUCCESS;
 				} else {
-					m_TestResult = TestResult.FAIL;
+					mTestResult = TestResult.FAIL;
 				}
 				break;
 			case UNSAFE:
 			case UNSAFE_DEREF:
 			case UNSAFE_FREE:
 			case UNSAFE_MEMTRACK:
-				if (expectedResult == overallResultDeterminer.getOverallResult()) {
-					m_TestResult = TestResult.SUCCESS;
+				if (expectedResult == overallResult) {
+					mTestResult = TestResult.SUCCESS;
 				} else if (expectedResult == SafetyCheckerOverallResult.UNSAFE) {
-					m_TestResult = TestResult.SUCCESS;
+					mTestResult = TestResult.SUCCESS;
 				} else {
-					m_TestResult = TestResult.FAIL;
+					mTestResult = TestResult.FAIL;
 				}
 				break;
 			case UNKNOWN:
 				// syntax error should always have been found
 				if (expectedResult == SafetyCheckerOverallResult.SYNTAX_ERROR) {
-					m_TestResult = TestResult.FAIL;
+					mTestResult = TestResult.FAIL;
 				} else {
-					m_TestResult = TestResult.UNKNOWN;
+					mTestResult = TestResult.UNKNOWN;
 				}
 				break;
 			case SYNTAX_ERROR:
 				if (expectedResult == SafetyCheckerOverallResult.SYNTAX_ERROR) {
-					m_TestResult = TestResult.SUCCESS;
+					mTestResult = TestResult.SUCCESS;
 				} else {
-					m_TestResult = TestResult.FAIL;
+					mTestResult = TestResult.FAIL;
 				}
 				break;
 			case TIMEOUT:
 				// syntax error should always have been found
 				if (expectedResult == SafetyCheckerOverallResult.SYNTAX_ERROR) {
-					m_TestResult = TestResult.FAIL;
+					mTestResult = TestResult.FAIL;
 				} else {
-					m_TestResult = TestResult.UNKNOWN;
+					mTestResult = TestResult.UNKNOWN;
 				}
 				break;
 			case UNSUPPORTED_SYNTAX:
-				m_TestResult = TestResult.FAIL;
+				mTestResult = TestResult.FAIL;
 				break;
 			case NO_RESULT:
-				m_TestResult = TestResult.FAIL;
+				mTestResult = TestResult.FAIL;
 				break;
 			default:
-				throw new AssertionError("case not implemented: " + overallResultDeterminer.getOverallResult());
+				throw new AssertionError("case not implemented: " + overallResult);
 			}
 		}
 
-		private void evaluateExpectedResult(IExpectedResultFinder<SafetyCheckerOverallResult> expectedResultFinder)
-				throws AssertionError {
+		private void evaluateExpectedResult(
+				final IExpectedResultFinder<SafetyCheckerOverallResult> expectedResultFinder) throws AssertionError {
 			switch (expectedResultFinder.getExpectedResultFinderStatus()) {
 			case ERROR:
-				m_Category = "Inkonsistent keywords";
-				m_Message = expectedResultFinder.getExpectedResultFinderMessage();
-				m_TestResult = TestResult.FAIL;
+				mCategory = "Inconsistent keywords";
+				mMessage = expectedResultFinder.getExpectedResultFinderMessage();
+				mTestResult = TestResult.FAIL;
 				break;
 			case EXPECTED_RESULT_FOUND:
-				m_Message = "ExpectedResult: " + expectedResultFinder.getExpectedResult();
+				mMessage = "ExpectedResult: " + expectedResultFinder.getExpectedResult();
 				break;
 			case NO_EXPECTED_RESULT_FOUND:
-				m_Message = expectedResultFinder.getExpectedResultFinderMessage();
+				mMessage = expectedResultFinder.getExpectedResultFinderMessage();
 				break;
 			default:
-				throw new AssertionError("case not implemented: " + expectedResultFinder.getExpectedResultFinderStatus());
+				throw new AssertionError(
+						"case not implemented: " + expectedResultFinder.getExpectedResultFinderStatus());
 			}
 		}
 
 		@Override
-		public void evaluateTestResult(IExpectedResultFinder<SafetyCheckerOverallResult> expectedResultFinder,
-				Throwable e) {
+		public void evaluateTestResult(final IExpectedResultFinder<SafetyCheckerOverallResult> expectedResultFinder,
+				final Throwable e) {
 			evaluateExpectedResult(expectedResultFinder);
 			switch (expectedResultFinder.getExpectedResultFinderStatus()) {
 			case ERROR:
@@ -212,29 +221,29 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 				return;
 			case EXPECTED_RESULT_FOUND:
 			case NO_EXPECTED_RESULT_FOUND:
-				m_Category += "/UltimateResult:" + SafetyCheckerOverallResult.EXCEPTION_OR_ERROR;
-				ExceptionOrErrorResult res = new ExceptionOrErrorResult("Unknown", e);
-				m_Message += " UltimateResult: " + res.getLongDescription();
+				mCategory += "UltimateResult: " + SafetyCheckerOverallResult.EXCEPTION_OR_ERROR + " " + e.getMessage();
+				final ExceptionOrErrorResult res = new ExceptionOrErrorResult("Unknown", e);
+				mMessage += " UltimateResult: " + res.getLongDescription();
+				return;
 			default:
-				break;
+				throw new AssertionError(
+						"case not implemented: " + expectedResultFinder.getExpectedResultFinderStatus());
 			}
 		}
 
 		@Override
 		public TestResult getTestResult() {
-			return m_TestResult;
+			return mTestResult;
 		}
 
 		@Override
 		public String getTestResultCategory() {
-			return m_Category;
+			return mCategory;
 		}
 
 		@Override
 		public String getTestResultMessage() {
-			return m_Message;
+			return mMessage;
 		}
-
 	}
-
 }

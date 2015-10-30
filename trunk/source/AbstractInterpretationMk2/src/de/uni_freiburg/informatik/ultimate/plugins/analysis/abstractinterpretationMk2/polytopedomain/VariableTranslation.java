@@ -193,7 +193,6 @@ public class VariableTranslation {
 	}
 
 	private Variable add(TypedAbstractVariable var, long index) {
-		assert index == mLastIndex + 1;
 		Variable pplvar = mVars2PPLVars.get(var);
 		if (pplvar == null) {
 			assert index > mLastIndex;
@@ -202,7 +201,6 @@ public class VariableTranslation {
 			mVars2PPLVars.put(var, pplvar);
 			mPPLVars2Vars.put(pplvar, var);
 		}
-		assert mLastIndex == size() : "Index=" + mLastIndex + " Size=" + size();
 		return pplvar;
 	}
 

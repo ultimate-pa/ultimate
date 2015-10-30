@@ -29,6 +29,17 @@ package de.uni_freiburg.informatik.ultimate.core.services;
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 
+import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressMonitorService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IStorable;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainCancel;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
+
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class ProgressMonitorService implements IStorable, IToolchainCancel, IProgressMonitorService {
 
 	private static final String sKey = "CancelNotificationService";
@@ -48,13 +59,6 @@ public class ProgressMonitorService implements IStorable, IToolchainCancel, IPro
 		mCancelRequest = false;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.core.services.IProgressMonitorService
-	 * #continueProcessing()
-	 */
 	@Override
 	public boolean continueProcessing() {
 		boolean cancel = mMonitor.isCanceled() || mCancelRequest || System.currentTimeMillis() > mDeadline;
@@ -64,30 +68,16 @@ public class ProgressMonitorService implements IStorable, IToolchainCancel, IPro
 		return !cancel;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.core.services.IProgressMonitorService
-	 * #setSubtask(java.lang.String)
-	 */
 	@Override
 	public void setSubtask(String task) {
 		mMonitor.subTask(task);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.core.services.IProgressMonitorService
-	 * #setDeadline(long)
-	 */
 	@Override
 	public void setDeadline(long date) {
 		if (System.currentTimeMillis() >= date) {
-			mLogger.warn(String
-					.format("Deadline was set to a date in the past, " + "effectively stopping the toolchain. "
+			mLogger.warn(
+					String.format("Deadline was set to a date in the past, " + "effectively stopping the toolchain. "
 							+ "Is this what you intended? Value of date was %,d", date));
 
 		}
@@ -115,6 +105,11 @@ public class ProgressMonitorService implements IStorable, IToolchainCancel, IPro
 	public void cancelToolchain() {
 		mToolchainCancel.cancelToolchain();
 		mCancelRequest = true;
+	}
+
+	@Override
+	public IProgressAwareTimer getChildTimer(long timeout) {
+		return new ProgressAwareTimer(this, timeout);
 	}
 
 }

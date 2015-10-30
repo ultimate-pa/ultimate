@@ -382,7 +382,7 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 			TypedAbstractVariable normal = entry.getKey();
 			TypedAbstractVariable prefixed = new TypedAbstractVariable(prefixOld + normal.getString(),
 					normal.getDeclaration(), normal.getType());
-			vtRenamed.addShiftedVariable(prefixed, existingDimensions + entry.getValue().id());
+			vtRenamed.addVariable(prefixed);
 		}
 
 		// pTarget.add_space_dimensions_and_embed(additionalDimensions);

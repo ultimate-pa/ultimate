@@ -10,7 +10,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
@@ -720,14 +720,17 @@ public class AbstractInterpreter {
 		for (final Entry<RCFGNode, List<StackState>> entry : mStates.entrySet()) {
 			final List<StackState> states = entry.getValue();
 			if (states.size() != 1) {
+				mLogger.warn("Ignoring multiple stack states");
 				continue;
 			}
 			final StackState currentStackState = states.get(0);
 			if (currentStackState.getStackSize() != 1) {
+				mLogger.warn("Ignoring stack states with more or less than 1 abstract state");
 				continue;
 			}
 			IAbstractState currentState = currentStackState.getCurrentState();
 			if (currentState == null) {
+				mLogger.error("Stack state has no abstract state although it should have");
 				continue;
 			}
 			rtr.put(entry.getKey(), currentState.getTerm(script, bpl2smt));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE Core.
@@ -24,9 +24,41 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.core.services;
 
-public interface IToolchainCancel {
-	
-	public void cancelToolchain();
+import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
+
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
+public final class ProgressAwareTimer implements IProgressAwareTimer {
+
+	private final IProgressAwareTimer mParent;
+	private final long mDeadline;
+
+	protected ProgressAwareTimer(final IProgressAwareTimer parent, final long timeout) {
+		assert parent != null;
+		assert timeout > 0;
+		final long deadline = System.currentTimeMillis() + timeout;
+		mParent = parent;
+		mDeadline = deadline;
+	}
+
+	@Override
+	public boolean continueProcessing() {
+		return mParent.continueProcessing() && check();
+	}
+
+	@Override
+	public IProgressAwareTimer getChildTimer(long timeout) {
+		return new ProgressAwareTimer(this, timeout);
+	}
+
+	private boolean check() {
+		return System.currentTimeMillis() > mDeadline;
+	}
+
 }

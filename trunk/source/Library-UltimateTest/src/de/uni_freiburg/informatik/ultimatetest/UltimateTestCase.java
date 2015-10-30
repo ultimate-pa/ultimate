@@ -35,7 +35,7 @@ import org.eclipse.core.runtime.IStatus;
 
 import de.uni_freiburg.informatik.junit_helper.testfactory.FactoryTestMethod;
 import de.uni_freiburg.informatik.ultimate.core.controllers.LivecycleException;
-import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
 import de.uni_freiburg.informatik.ultimate.util.ExceptionUtils;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;

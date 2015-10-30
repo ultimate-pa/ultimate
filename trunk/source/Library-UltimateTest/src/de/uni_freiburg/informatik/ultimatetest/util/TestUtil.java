@@ -44,13 +44,13 @@ import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
-import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.SafetyCheckerOverallResult;
-import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.TerminationAnalysisOverallResult;
+import de.uni_freiburg.informatik.ultimatetest.decider.overallresult.SafetyCheckerOverallResult;
+import de.uni_freiburg.informatik.ultimatetest.decider.overallresult.TerminationAnalysisOverallResult;
 import de.uni_freiburg.informatik.ultimatetest.reporting.ITestLogfile;
 import de.uni_freiburg.informatik.ultimatetest.reporting.ITestSummary;
 

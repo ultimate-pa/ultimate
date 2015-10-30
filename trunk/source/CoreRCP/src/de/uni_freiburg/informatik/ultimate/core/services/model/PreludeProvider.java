@@ -24,25 +24,47 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
-/*
- * Project:	CoreRCP
- * Package:	de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain
- * File:	IStorable.java created on Mar 8, 2010 by Björn Buchhold
- *
- */
-package de.uni_freiburg.informatik.ultimate.core.services;
+package de.uni_freiburg.informatik.ultimate.core.services.model;
+
+import java.io.File;
+import org.apache.log4j.Logger;
 
 /**
- * {@link IStorable} should be implemented by all services or storables that are
- * distributed through {@link IToolchainStorage}.
  * 
- * @author dietsch
- * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @deprecated We do not use preludes anymore, but various controller still
+ *             incorporate this.
  */
-public interface IStorable {
+@Deprecated
+public class PreludeProvider {
 
-	/**
-	 * Method to destroy the external tool and free the occupied memory.
-	 */
-	void destroy();
+	private File mPrelude;
+
+	public PreludeProvider(String preludefile, Logger logger) {
+		// get the logger of the core
+		if (preludefile != null) {
+			File foo = new File(preludefile);
+			// prelude file must exist and must be readable
+			if (!foo.exists()) {
+				logger.error("Prelude file " + preludefile
+						+ " doesn't exist! It will be ignored when processing the toolchain!");
+				mPrelude = null;
+			} else {
+				if (!foo.canRead()) {
+					logger.error("Prelude file " + preludefile
+							+ " is not readable! It will be ignored when processing the toolchain!");
+					mPrelude = null;
+				} else {
+					this.mPrelude = foo;
+				}
+			}
+		} else {
+			this.mPrelude = null;
+		}
+	}
+
+	public File getPreludeFile() {
+		return this.mPrelude;
+	}
+
 }

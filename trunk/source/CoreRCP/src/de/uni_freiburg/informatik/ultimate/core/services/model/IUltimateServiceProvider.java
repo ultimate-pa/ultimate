@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.core.services;
+package de.uni_freiburg.informatik.ultimate.core.services.model;
 
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IServiceFactory;
 

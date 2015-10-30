@@ -24,11 +24,11 @@
  * licensors of the ULTIMATE UnitTest Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimatetest.decider.overallResult;
+package de.uni_freiburg.informatik.ultimatetest.decider.overallresult;
 
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 
 /**

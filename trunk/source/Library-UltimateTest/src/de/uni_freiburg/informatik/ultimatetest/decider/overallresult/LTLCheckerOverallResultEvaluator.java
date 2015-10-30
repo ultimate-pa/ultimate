@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE UnitTest Library.
@@ -24,25 +24,31 @@
  * licensors of the ULTIMATE UnitTest Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimatetest.decider.overallResult;
+package de.uni_freiburg.informatik.ultimatetest.decider.overallresult;
 
-/**
- * The possible overall results of a software model checker that analyzes 
- * termination (e.g., BüchiAutomizer) are these enum's elements.
- * 
- * We may extends this enum in the future.
- * 
- * @author heizmann@informatik.uni-freiburg.de
- *
- */
-public enum TerminationAnalysisOverallResult {
-	TERMINATING, 
-	NONTERMINATING, 
-	UNKNOWN, 
-	SYNTAX_ERROR, 
-	TIMEOUT, 
-	UNSUPPORTED_SYNTAX, 
-	EXCEPTION_OR_ERROR, 
-	NO_RESULT;
+import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
+import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.result.LTLFiniteCounterExampleResult;
+import de.uni_freiburg.informatik.ultimate.result.LTLInfiniteCounterExampleResult;
+
+public class LTLCheckerOverallResultEvaluator extends SafetyCheckerOverallResultEvaluator {
+
+	private int mAllSaveCounter = 0;
+
+	@Override
+	protected SafetyCheckerOverallResult detectResultCategory(IResult result) {
+		if (result instanceof AllSpecificationsHoldResult) {
+			mAllSaveCounter++;
+			if (mAllSaveCounter < 2) {
+				return SafetyCheckerOverallResult.NO_RESULT;
+			} else {
+				return SafetyCheckerOverallResult.SAFE;
+			}
+		} else if (result instanceof LTLInfiniteCounterExampleResult<?, ?, ?>) {
+			return SafetyCheckerOverallResult.UNSAFE;
+		} else if (result instanceof LTLFiniteCounterExampleResult<?, ?, ?>) {
+			return SafetyCheckerOverallResult.UNSAFE;
+		}
+		return super.detectResultCategory(result);
+	}
 }
-

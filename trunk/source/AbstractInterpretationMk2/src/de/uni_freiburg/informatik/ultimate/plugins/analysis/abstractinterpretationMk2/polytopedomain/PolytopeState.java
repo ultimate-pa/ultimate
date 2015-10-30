@@ -154,12 +154,13 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 	 * @param pState
 	 */
 	public void updateDimensions() {
-		int missingDimensions = mVariableTranslation.size() + 1 - (int) mPolyhedron.space_dimension();
+		int polyDims = (int) mPolyhedron.space_dimension();
+		int missingDimensions = mVariableTranslation.size() + 1 - polyDims;
 		if (missingDimensions > 0) {
 			mPolyhedron.add_space_dimensions_and_embed(missingDimensions);
 		} else if (missingDimensions < 0) {
 			// too many dimensions
-			throw new UnsupportedOperationException();
+			mLogger.warn("Poly has " + polyDims + " but we need only " + mVariableTranslation.size());
 		}
 	}
 
@@ -397,9 +398,10 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 		private Term process(final Linear_Expression_Variable expr) throws IgnoreTermException {
 			final Variable arg = expr.argument();
 			final TypedAbstractVariable var = mTrans.getVar(arg);
-			assert var != null;
+			assert var != null : "Unknown variable in constraint";
 			final BoogieVar bplvar = mBoogie2SMT.getBoogie2SmtSymbolTable().getBoogieVar(var.getString(),
 					var.getDeclaration(), false);
+			assert bplvar != null : "There is no BoogieVar for this constaint (maybe an old value?)";
 			final TermVariable termvar = bplvar.getTermVariable();
 
 			final Sort sort = termvar.getSort().getRealSort();

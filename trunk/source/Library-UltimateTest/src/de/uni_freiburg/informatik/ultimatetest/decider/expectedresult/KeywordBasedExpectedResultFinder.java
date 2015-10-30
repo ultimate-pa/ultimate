@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE UnitTest Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimatetest.decider.expectedResult;
+package de.uni_freiburg.informatik.ultimatetest.decider.expectedresult;
 
 import java.io.File;
 import java.util.Collections;

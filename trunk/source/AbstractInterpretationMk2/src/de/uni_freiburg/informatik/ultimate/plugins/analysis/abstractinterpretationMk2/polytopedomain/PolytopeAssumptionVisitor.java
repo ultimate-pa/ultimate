@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import parma_polyhedra_library.Coefficient;
 import parma_polyhedra_library.Constraint;
 import parma_polyhedra_library.Linear_Expression;
@@ -163,7 +164,8 @@ public class PolytopeAssumptionVisitor {
 					integer = ptLeft.getTypeCode() == PrimitiveType.INT && ptRight.getTypeCode() == PrimitiveType.INT;
 				} else {
 					// handle this type of type
-					throw new UnsupportedOperationException();
+					throw new UnsupportedOperationException(
+							"We do not support expressions like this: " + BoogiePrettyPrinter.print(expr));
 				}
 
 				List<PolytopeState> newStates = new ArrayList<PolytopeState>();

@@ -39,7 +39,7 @@ import java.util.Stack;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -76,7 +76,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  * and then get the resulting map via {@link #getResult()}.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- *  
+ * 
  */
 public class RCFGLoopDetector extends BaseObserver {
 
@@ -153,7 +153,8 @@ public class RCFGLoopDetector extends BaseObserver {
 
 		List<RCFGEdge> path = walker.findPath();
 		if (forbiddenEdges.isEmpty() && (path == null || path.isEmpty())) {
-			throw new RuntimeException(loopHead + " is not a valid loop head");
+			mLogger.warn(
+					"RCFGNode " + loopHead + " is not a valid loop head, because there is no cycle leading back to it");
 		}
 
 		// got first path, add it to the results and get the edge starting this
