@@ -56,14 +56,14 @@ public class RCFG2AnnotatedRCFG {
 	private final SmtManager m_smtManager;
 	private final IPredicate m_truePredicate;
 	private final Map<RCFGNode, Term> m_initialPredicates;
-	private final boolean useInitialPredicates;
+	private final boolean m_useInitialPredicates;
 
 	public RCFG2AnnotatedRCFG(SmtManager smtMan, Logger logger, IPredicate truePredicate, Map<RCFGNode, Term> initialPredicates) {
 		mLogger = logger;
 		m_smtManager = smtMan;
 		m_truePredicate = truePredicate;
 		m_initialPredicates = initialPredicates;
-		useInitialPredicates = initialPredicates != null;
+		m_useInitialPredicates = initialPredicates != null;
 	}
 
 	public ImpRootNode convert(IUltimateServiceProvider mServices, RootNode oldRoot) {
@@ -77,7 +77,7 @@ public class RCFG2AnnotatedRCFG {
 
 		for (RCFGEdge rootEdge : oldRoot.getOutgoingEdges()) {
 			ProgramPoint oldNode = (ProgramPoint) rootEdge.getTarget();
-			AnnotatedProgramPoint newNode = copyNode(oldNode);
+			AnnotatedProgramPoint newNode = createAnnotatedProgramPoint(oldNode);
 
 			newRoot.connectOutgoing(new DummyCodeBlock(mLogger), newNode);
 			openNodes.add(oldNode);
@@ -94,13 +94,13 @@ public class RCFG2AnnotatedRCFG {
 				ProgramPoint newNode = (ProgramPoint) outEdge.getTarget();
 				if (m_oldPpTonew.containsKey(newNode))
 					continue;
-				m_oldPpTonew.put(newNode, copyNode(newNode));
+				m_oldPpTonew.put(newNode, createAnnotatedProgramPoint(newNode));
 				openNodes.add(newNode);
 				if (outEdge instanceof Return) {
 					ProgramPoint hier = ((Return) outEdge).getCallerProgramPoint();
 					if (m_oldPpTonew.containsKey(hier))
 						continue;
-					m_oldPpTonew.put(hier, copyNode(hier));
+					m_oldPpTonew.put(hier, createAnnotatedProgramPoint(hier));
 					openNodes.add(hier);
 				}
 			}
@@ -116,20 +116,30 @@ public class RCFG2AnnotatedRCFG {
 				if (outEdge instanceof Return) {
 					AnnotatedProgramPoint callPred = m_oldPpTonew.get(((Return) outEdge).getCallerProgramPoint());
 					entry.getValue().connectOutgoingReturn(callPred, (Return) outEdge, annotatedTarget);
-					// updateCallPredToReturnPreds(callPred, entry.getValue());
 				} else {
 					entry.getValue().connectOutgoing((CodeBlock) outEdge, annotatedTarget);
 				}
-
-
 			}
 		}
 		return newRoot;
 	}
 
-	private AnnotatedProgramPoint copyNode(ProgramPoint pp) {
-		if (useInitialPredicates) {
-			return new AnnotatedProgramPoint(m_smtManager.constructPredicate(m_initialPredicates.get(pp), 0, Collections.EMPTY_SET), pp);
+	/**
+	 * Creates an AnnotatedProgramPoint from a ProgramPoint.
+	 * The annotation is an IPredicate.
+	 * If we have a Term from AbstractInterpretation for that ProgramPoint, we annotate it
+	 * with the corresponding Predicate. Otherwise the annotation is "true".
+	 */
+	private AnnotatedProgramPoint createAnnotatedProgramPoint(ProgramPoint pp) {
+		if (m_useInitialPredicates) {
+			Term aiTerm = m_initialPredicates.get(pp);
+			IPredicate aiPredicate;
+			if (aiTerm != null) {
+				aiPredicate = m_smtManager.constructPredicate(aiTerm, 0, Collections.emptySet());
+			} else {
+				aiPredicate = m_truePredicate;
+			}
+			return new AnnotatedProgramPoint(aiPredicate, pp);
 		} else {
 			return  new AnnotatedProgramPoint(m_truePredicate, pp);
 		}
