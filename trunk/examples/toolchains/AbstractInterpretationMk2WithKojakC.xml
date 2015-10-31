@@ -1,0 +1,7 @@
+﻿<toolchain>
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor.BoogiePreprocessor"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2"/>
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck"/>
+</toolchain>
