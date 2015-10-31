@@ -18,6 +18,7 @@ settingsFileTermination = 'termination'
 settingsFileReach = 'reach'
 
 settingsFileBitprecise = 'Bitvector'
+settingsFileDefault = 'Default'
 settingsFile32 = '32bit'
 settingsFile64 = '64bit'
 
@@ -42,13 +43,17 @@ if ((len(sys.argv) == 2) and (sys.argv[1] == '--version')):
 	print(version)
 	sys.exit(0)
 
-if (len(sys.argv) != 3):
+if (len(sys.argv) != 4):
     print('Wrong number of arguments: use ./Ultimate.py <propertyfile> <C file> [default|bitprecise]')
     sys.exit(0)
 
 propertyFileName = sys.argv[1]
 cFile = sys.argv[2]
 bit = sys.argv[3]
+
+if(not bit in ['default','bitprecise']):
+    print('Wrong argument:'+bit+' has to be [default|bitprecise]')
+    sys.exit(1)
 
 memSafetyMode = False
 terminationMode = False
@@ -60,8 +65,9 @@ for line in propFile:
         memSafetyMode = True
     if line.find('LTL(F end)') != -1:
         terminationMode = True
-    if line.find('overflow') != 1:
-        overflowMode = True	
+    if line.find('overflow') != -1:
+        overflowMode = True
+
 
 settingsSearchString = ''
 
@@ -80,7 +86,12 @@ else:
 	
 if bit == 'bitprecise': 
     print('Using bit-precise analysis')
-    settingsSearchString = settingsSearchString + '_' + settingsFileBitprecise
+    settingsSearchString = settingsSearchString + '*_' + settingsFileBitprecise
+else:
+    print('Using default analysis')
+    settingsSearchString = settingsSearchString + '*_' + settingsFileDefault
+
+print('Using search string matching '+settingsSearchString)
 
 settingsArgument = ''
 for root, dirs, files in os.walk('./'):
@@ -119,7 +130,7 @@ ultimateCall += ' ' + toolchain
 ultimateCall += ' ' +  cFile
 ultimateCall += ' ' +  settingsArgument
 
-print('Rev ' + svnRevNumber)
+print('Version ' + version)
 print('Calling Ultimate with: ' + ultimateCall)
 
 try:
