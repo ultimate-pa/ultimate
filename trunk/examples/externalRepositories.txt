@@ -40,4 +40,4 @@ so:
 ln -s /storage/svcomp/c /storage/ultimate/trunk/examples/svcomp
 
 Under Windows, open "cmd" as Administrator and use mklink:
-mklink /D Drive:\path\to\svcomp-repo\c Drive:\path\to\ultimate-repo\examples\svcomp
+mklink /D Drive:\path\to\ultimate-repo\examples\svcomp Drive:\path\to\svcomp-repo\c
