@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 TOOLNAME=Automizer
 TARGETDIR=Ultimate${TOOLNAME}
 TOOLCHAIN=../../trunk/examples/toolchains/AutomizerC.xml
