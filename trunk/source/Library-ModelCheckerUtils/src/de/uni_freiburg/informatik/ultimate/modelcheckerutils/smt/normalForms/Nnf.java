@@ -130,7 +130,7 @@ public class Nnf {
 					convert(Util.or(m_Script, negateAllButLast(params)));
 					return;
 				} else if (functionName.equals("=") && 
-						SmtUtils.hasBooleanParams(appTerm)) {
+						SmtUtils.firstParamIsBool(appTerm)) {
 					Term[] params = appTerm.getParameters();
 					if (params.length > 2) {
 						Term binarized = SmtUtils.binarize(m_Script, appTerm);
@@ -162,6 +162,19 @@ public class Nnf {
 						convert(SmtUtils.binaryBooleanNotEquals(
 								m_Script, params[0], params[1]));
 					}
+				} else if (functionName.equals("ite") && SmtUtils.allParamsAreBool(appTerm)) {
+					Term[] params = appTerm.getParameters();
+					assert params.length == 3;
+					Term condTerm = params[0];
+					Term ifTerm = params[1];
+					Term elseTerm = params[2];
+					Term condImpliesIf = Util.or(m_Script, Util.not(m_Script, condTerm), ifTerm);
+					Term notCondImpliesElse = Util.or(m_Script, condTerm, elseTerm);
+					// we deliberately call convert() instead of super.convert()
+					// the argument of this call might have been simplified
+					// to a term whose function symbol is neither "and" nor "or"
+					convert(Util.and(m_Script, condImpliesIf, notCondImpliesElse));
+					return;
 				} else {
 					//consider term as atom
 					setResult(term);
@@ -214,7 +227,7 @@ public class Nnf {
 		 */
 		private boolean isXor(ApplicationTerm appTerm, String functionName) {
 			return functionName.equals("xor") || 
-					(functionName.equals("distinct") && SmtUtils.hasBooleanParams(appTerm));
+					(functionName.equals("distinct") && SmtUtils.firstParamIsBool(appTerm));
 		}
 		
 		private void convertNot(Term notParam, Term notTerm) {
@@ -250,7 +263,7 @@ public class Nnf {
 					convert(Util.and(m_Script, negateLast(params)));
 					return;
 				} else if (functionName.equals("=") && 
-						SmtUtils.hasBooleanParams(appTerm)) {
+						SmtUtils.firstParamIsBool(appTerm)) {
 					Term[] notParams = appTerm.getParameters();
 					if (notParams.length > 2) {
 						Term binarized = SmtUtils.binarize(m_Script, appTerm);

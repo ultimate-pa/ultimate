@@ -131,10 +131,19 @@ public class SmtUtils {
 		return Util.and(script, conjuncts.toArray(new Term[conjuncts.size()]));
 	}
 	
-	public static boolean hasBooleanParams(ApplicationTerm term) {
+	public static boolean firstParamIsBool(ApplicationTerm term) {
 		Term[] params = term.getParameters();
 		boolean result = params[0].getSort().getName().equals("Bool");
 		return result;
+	}
+	
+	public static boolean allParamsAreBool(ApplicationTerm term) {
+		for (Term param : term.getParameters()) {
+			if (!param.getSort().getName().equals("Bool")) {
+				return false;
+			}
+		}
+		return true;
 	}
 	
 	
