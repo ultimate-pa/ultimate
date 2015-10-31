@@ -46,18 +46,20 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
  */
 public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 
+	private static final String[] ALL_C = new String[] { ".c", ".i" };
+	private static final String[] BPL = new String[] { ".bpl" };
 	private static final int DEFAULT_LIMIT = Integer.MAX_VALUE;
 	// @formatter:off
 	
 	@SuppressWarnings("unchecked")
-	private static final Triple<String, String, String>[] TOOLCHAINS = new Triple[] {
-			new Triple<>("AbstractInterpretationMk2CInline.xml", ".i", "ai/AI2_INT.epf"),
-//			new Triple<>("AbstractInterpretationMk2C.xml", ".c", "ai/AI2_INT.epf"),
-			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_INT.epf"),
+	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
+			new Triple<>("AbstractInterpretationMk2CInline.xml", ALL_C, "ai/AI2_INT.epf"),
+			new Triple<>("AbstractInterpretationMk2C.xml", ALL_C, "ai/AI2_INT.epf"),
+			new Triple<>("AbstractInterpretationMk2.xml", BPL, "ai/AI2_INT.epf"),
 			
-//			new Triple<>("AbstractInterpretationMk2CInline.xml", ".i", "ai/AI2_PLT.epf"),
-//			new Triple<>("AbstractInterpretationMk2C.xml", ".i", "ai/AI2_PLT.epf"),
-//			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_PLT.epf"),
+			new Triple<>("AbstractInterpretationMk2CInline.xml", ALL_C, "ai/AI2_PLT.epf"),
+			new Triple<>("AbstractInterpretationMk2C.xml", ALL_C, "ai/AI2_PLT.epf"),
+			new Triple<>("AbstractInterpretationMk2.xml", BPL, "ai/AI2_PLT.epf"),
 			
 //			new Triple<>("AbstractInterpretationMk2CInline.xml", ".c", "ai/AI2_CMP.epf"),
 //			new Triple<>("AbstractInterpretationMk2C.xml", ".c", "ai/AI2_CMP.epf"),
@@ -75,11 +77,11 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 			// "examples/programs/abstractInterpretation/",
 			// "examples/programs/abstractInterpretationNoRec/",
 			/* ULTIMATE repo */
-			 "examples/programs/regression/bpl/",
+//			 "examples/programs/regression/bpl/",
 			// "examples/programs/regression/c/",
 			// "examples/programs/recursivePrograms",
 			/* SV-COMP repo */
-			"examples/svcomp/loops/", // SPLIT
+//			"examples/svcomp/loops/", // SPLIT
 			// "examples/svcomp/loopsSelection/",
 			// "examples/svcomp/eca/", // SPLIT
 			// "examples/svcomp/ecaSelection/",
@@ -87,7 +89,7 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 			// "examples/svcomp/systemc1/",
 			// "examples/svcomp/systemc2/",
 			// "examples/svcomp/eca-rers2012/",
-			 "examples/svcomp/recursive/",
+//			 "examples/svcomp/recursive/",
 			// "examples/svcomp/ssh-simplified/",
 			// "examples/svcomp/ssh/",
 
@@ -96,7 +98,7 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 			// "examples/svcomp/loops/matrix_false-unreach-call_true-termination.c",
 
 			// unsoundness
-
+			 "examples/svcomp/loops/count_up_down_false-unreach-call_true-termination.c",
 			// problems with unsupportedops
 			// "examples/svcomp/loops/sum01_true-unreach-call_true-termination.c",
 			// "examples/svcomp/loops/string_false-unreach-call.c",
@@ -129,10 +131,10 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (final Triple<String, String, String> triple : TOOLCHAINS) {
+		for (final Triple<String, String[], String> triple : TOOLCHAINS) {
 			final DirectoryFileEndingsPair[] pairs = new DirectoryFileEndingsPair[INPUT.length];
 			for (int i = 0; i < INPUT.length; ++i) {
-				pairs[i] = new DirectoryFileEndingsPair(INPUT[i], new String[] { triple.getSecond() }, DEFAULT_LIMIT);
+				pairs[i] = new DirectoryFileEndingsPair(INPUT[i], triple.getSecond(), DEFAULT_LIMIT);
 			}
 			addTestCases(triple.getFirst(), triple.getThird(), pairs);
 		}

@@ -13,7 +13,6 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
@@ -44,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
@@ -54,14 +52,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 /**
  * Used to evaluate boogie statements during abstract interpretation
  * 
- * @author GROSS-JAN
+ * @author Jan Hättig
  */
 @SuppressWarnings("rawtypes")
 public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
-	/**
-	 * Ultimate service
-	 */
-	private final IUltimateServiceProvider mServices;
 
 	/**
 	 * The logger object for printing
@@ -77,11 +71,6 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 	 * chosen domain
 	 */
 	private final IAbstractDomain mDomain;
-
-	/**
-	 * Where we are at the moment, and where to put the resulting state
-	 */
-	private RCFGNode mCurrentNode;
 
 	/**
 	 * Holds the states before entering a code block. This should begin with one
@@ -107,12 +96,6 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 	private LinkedList<AIVisitorStackElement> mCompositions;
 
 	/**
-	 * Stores information about where we can find the declaration of an
-	 * IdentifierExpression of a VariableLeftHandSide
-	 */
-	private DeclarationInformation mDeclarationInformation;
-
-	/**
 	 * Can be set to false to interrupt processing
 	 */
 	private boolean mContinueProcessing;
@@ -135,11 +118,6 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 	 */
 	private String mResult;
 
-	// /**
-	// * Only used for debug output indentation.
-	// */
-	// private String mDebugOuputNesting = "";
-
 	/**
 	 * Determines if the pr
 	 * 
@@ -158,15 +136,6 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 	public void setCurrentState(StackState state) {
 		mCurrentStates = new ArrayList<StackState>();
 		mCurrentStates.add(state);
-	}
-
-	/**
-	 * 
-	 * @param node
-	 *            The state to be used as the outgoing state
-	 */
-	public void setCurrentNode(RCFGNode node) {
-		mCurrentNode = node;
 	}
 
 	/**
@@ -215,7 +184,6 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 	public AIVisitor(Logger logger, IUltimateServiceProvider services, BoogieSymbolTable symbolTable,
 			IAbstractDomain<?> domain) {
 		mLogger = logger;
-		mServices = services;
 		mSymbolTable = symbolTable;
 		mDomain = domain;
 		mResult = null;
@@ -226,14 +194,6 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		mResultingStates = null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IRCFGVisitor#visitEdge(de.uni_freiburg.informatik
-	 * .ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge)
-	 */
 	@Override
 	public void visitEdge(RCFGEdge e) {
 		/**
@@ -256,26 +216,10 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		mCompositions.push(new AIVisitorStackElement(false, null));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IRCFGVisitor#visitedEdge(de.uni_freiburg.informatik
-	 * .ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge)
-	 */
 	@Override
 	public void visitedEdge(RCFGEdge e) {
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IRCFGVisitor#visitCodeBlock(de.uni_freiburg
-	 * .informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock)
-	 */
 	@Override
 	public void visitCodeBlock(CodeBlock c) {
 		/**
@@ -289,14 +233,6 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		// mResultingStates.toString());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IRCFGVisitor#visitedCodeBlock(de.uni_freiburg
-	 * .informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock)
-	 */
 	@Override
 	public void visitedCodeBlock(CodeBlock c) {
 		// if processing in parallel merge the resulting
@@ -325,14 +261,6 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		// mLogger.debug(mDebugOuputNesting + "< CodeBlock END");
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IRCFGVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition)
-	 */
 	@Override
 	public void visit(ParallelComposition c) {
 		/**
@@ -354,14 +282,6 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		// mCompositions.size());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IRCFGVisitor#visited(de.uni_freiburg.informatik
-	 * .ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition)
-	 */
 	@Override
 	public void visited(ParallelComposition c) {
 		/**
@@ -379,14 +299,6 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		// mLogger.debug(mDebugOuputNesting + "< ParallelComposition END");
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IRCFGVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition)
-	 */
 	@Override
 	public void visit(SequentialComposition c) {
 		/**
@@ -404,21 +316,13 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		// mCompositions.size());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IRCFGVisitor#visited(de.uni_freiburg.informatik
-	 * .ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition)
-	 */
 	@Override
 	public void visited(SequentialComposition c) {
 		/**
 		 * After visiting a sequential composition only the stack element has to
 		 * be popped out.
 		 */
-		AIVisitorStackElement seq = mCompositions.pop();
+		mCompositions.pop();
 
 		// mLogger.debug(mDebugOuputNesting + " States:\n" +
 		// mResultingStates.toString());
@@ -429,95 +333,40 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		// mLogger.debug(mDebugOuputNesting + "< SequentialComposition END");
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IRCFGVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge)
-	 */
 	@Override
 	public void visit(RootEdge c) {
-		/**
-		 * This should not happen
-		 */
-		// mLogger.debug(mDebugOuputNesting + "> RootEdge");
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException("This should not happen");
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IRCFGVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge)
-	 */
 	@Override
 	public void visit(GotoEdge c) {
 		// A goto edge means nothing. The state will be copied anyways
-		// mLogger.debug(mDebugOuputNesting + "> GotoEdge");
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IRCFGVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.plugins.generator.rcfgbuilder.cfg.Call)
-	 */
 	@Override
 	public void visit(Call c) {
-		CallStatement stmt = c.getCallStatement();
 		// mLogger.debug("> CALL " + stmt.getMethodName());
 	}
 
 	@Override
 	public void visited(Call c) {
-		CallStatement stmt = c.getCallStatement();
 		// mLogger.debug("< CALL " + stmt.getMethodName());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IRCFGVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.plugins.generator.rcfgbuilder.cfg.Return)
-	 */
 	@Override
 	public void visit(Return c) {
 		// mLogger.debug("> RETURN " + c.getCallStatement().getMethodName());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IRCFGVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.plugins.generator.rcfgbuilder.cfg.Return)
-	 */
 	@Override
 	public void visited(Return c) {
 		// mLogger.debug("< RETURN " + c.getCallStatement().getMethodName());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IRCFGVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence)
-	 */
 	@Override
 	public void visit(StatementSequence c) {
 		/**
-		 * A statement sequence does not need any stack informatino, since there
+		 * A statement sequence does not need any stack information, since there
 		 * is no nesting.
 		 */
 		// mLogger.debug(mDebugOuputNesting + "> StatementSequence START (" +
@@ -528,14 +377,6 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		// mCompositions.push(new AIVisitorStackElement(false));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IRCFGVisitor#visited(de.uni_freiburg.informatik
-	 * .ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence)
-	 */
 	@Override
 	public void visited(StatementSequence c) {
 		// mLogger.debug(mDebugOuputNesting + " States:\n" +
@@ -545,14 +386,6 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		// mLogger.debug(mDebugOuputNesting + "< StatementSequence END");
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IRCFGVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.plugins.generator.rcfgbuilder.cfg.Summary)
-	 */
 	@Override
 	public void visit(Summary c) {
 		// summaries are not supported, instead the call
@@ -561,12 +394,6 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		mResultingStates = new ArrayList<StackState>();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.util.IRCFGVisitor#getStatementVisitor()
-	 */
 	@Override
 	public IStatementVisitor getStatementVisitor() {
 		/**
@@ -580,14 +407,6 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 	/* ----- ----- ----- Statements ----- ----- ----- */
 	/* ----- ----- ----- ---------- ----- ----- ----- */
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IStatementVisitor#visitStatement(de.uni_freiburg
-	 * .informatik.ultimate.model.boogie.ast.Statement)
-	 */
 	@Override
 	public boolean visitStatement(Statement e) {
 		if (mResultingStates.size() == 0) {
@@ -601,14 +420,6 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		return true;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IStatementVisitor#visitedStatement(de.uni_freiburg
-	 * .informatik.ultimate.model.boogie.ast.Statement)
-	 */
 	@Override
 	public void visitedStatement(Statement e) {
 		// mLogger.debug("States afterwards:\n" +
@@ -618,14 +429,6 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		// mLogger.debug(mDebugOuputNesting + "< Statement END");
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IStatementVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.AssertStatement)
-	 */
 	@Override
 	public void visit(AssertStatement s) {
 		// mLogger("Applying assert: " + s.toString());
@@ -643,14 +446,6 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IStatementVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.AssignmentStatement)
-	 */
 	@Override
 	public void visit(AssignmentStatement s) {
 		// apply the assignment on every available state
@@ -690,14 +485,6 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		mResultingStates = newResultingStates;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IStatementVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.AssumeStatement)
-	 */
 	@Override
 	public void visit(AssumeStatement s) {
 		// apply the assume statement on every available state
@@ -719,14 +506,6 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		mResultingStates = newResultingStates;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IStatementVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.HavocStatement)
-	 */
 	@Override
 	public void visit(HavocStatement s) {
 		// apply the assume statement on every available state
@@ -750,27 +529,11 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		mResultingStates = newResultingStates;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IStatementVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.BreakStatement)
-	 */
 	@Override
 	public void visit(BreakStatement s) {
 		// nothing to do
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IStatementVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.CallStatement)
-	 */
 	@Override
 	public void visit(CallStatement s) {
 		String procedureName = s.getMethodName();
@@ -828,14 +591,6 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IStatementVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.ReturnStatement)
-	 */
 	@Override
 	public void visitReturn(CallStatement callStatement) {
 		String procedureName = callStatement.getMethodName();
@@ -1004,14 +759,6 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		return;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IStatementVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.GotoStatement)
-	 */
 	@Override
 	public void visit(GotoStatement s) {
 		/**
@@ -1020,14 +767,6 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		throw new UnsupportedOperationException();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IStatementVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.IfStatement)
-	 */
 	@Override
 	public void visit(IfStatement s) {
 		/**
@@ -1036,27 +775,11 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		throw new UnsupportedOperationException();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IStatementVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.Label)
-	 */
 	@Override
 	public void visit(Label s) {
 		// mLogger("Label : " + s.getName());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.IStatementVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.WhileStatement)
-	 */
 	@Override
 	public void visit(WhileStatement s) {
 		/**

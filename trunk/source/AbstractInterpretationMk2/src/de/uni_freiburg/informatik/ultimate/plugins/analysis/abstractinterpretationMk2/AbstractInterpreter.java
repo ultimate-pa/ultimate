@@ -360,7 +360,6 @@ public class AbstractInterpreter {
 					// }
 
 					unprocessedState.setProcessed(true);
-					mVisitor.setCurrentNode(node);
 
 					RCFGEdge exclusiveEdge = unprocessedState.getExclusiveEdgeAt(pp);
 					RCFGEdge ignoredEdge = unprocessedState.getIgnoreEdgeAt(pp);
@@ -731,13 +730,19 @@ public class AbstractInterpreter {
 
 		for (final Entry<RCFGNode, List<StackState>> entry : mStates.entrySet()) {
 			final List<StackState> states = entry.getValue();
-			if (states.size() != 1) {
-				mLogger.warn("Ignoring multiple stack states");
+
+			if (states.isEmpty()) {
+				mLogger.warn("No abstract state at location");
 				continue;
 			}
-			final StackState currentStackState = states.get(0);
-			if (currentStackState.getStackSize() != 1) {
-				mLogger.warn("Ignoring stack states with more or less than 1 abstract state");
+			StackState currentStackState = states.get(0);
+
+			for (int i = 1; i < states.size(); ++i) {
+				currentStackState = currentStackState.merge(states.get(i), false);
+			}
+
+			if (currentStackState.getStackSize() == 0) {
+				mLogger.warn("Ignoring stack states without abstract states");
 				continue;
 			}
 			IAbstractState currentState = currentStackState.getCurrentState();

@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
@@ -18,10 +19,10 @@ public class AbstractInterpretationAnnotations extends AbstractAnnotations {
 	private static final String ANNOTATION_NAME = "Abstract Interpretation";
 	private static final String FIELD_NAME_STATES = "Abstract states";
 
-	private final List<StackState> mStates;
+	private final List<String> mStates;
 
 	public AbstractInterpretationAnnotations(List<StackState> states) {
-		mStates = states;
+		mStates = states.stream().map(a -> a.toString()).collect(Collectors.toList());
 	}
 
 	@Override
