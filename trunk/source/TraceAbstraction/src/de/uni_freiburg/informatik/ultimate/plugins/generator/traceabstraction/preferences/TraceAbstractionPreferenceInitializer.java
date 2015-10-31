@@ -162,8 +162,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String DEF_ARTIFACT = VALUE_RCFG;
 	public static final int DEF_WATCHITERATION = 1000000;
 	public static final boolean DEF_HOARE = false;
-	public static final boolean DEF_SEPARATE_SOLVER = false;
-	public static final SolverMode DEF_Solver = SolverMode.External_DefaultMode;
+	public static final boolean DEF_SEPARATE_SOLVER = true;
+	public static final SolverMode DEF_Solver = SolverMode.Internal_SMTInterpol;
 	public static final String DEF_ExtSolverCommand = RcfgPreferenceInitializer.Z3_DEFAULT;
 	public static final INTERPOLATION DEF_INTERPOLANTS = INTERPOLATION.ForwardPredicates;
 	public static final String DEF_ADDITIONAL_EDGES = VALUE_InterpolantAutomaton_Canonical;
