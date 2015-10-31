@@ -43,21 +43,19 @@ if ((len(sys.argv) == 2) and (sys.argv[1] == '--version')):
 	print(version)
 	sys.exit(0)
 
-if (len(sys.argv) != 4):
-    print('Wrong number of arguments: use ./Ultimate.py <propertyfile> <C file> [default|bitprecise]')
+if (len(sys.argv) != 5):
+    print('Wrong number of arguments: use ./Ultimate.py <propertyfile> <C file> [32bit|64bit] [simple|precise]')
     sys.exit(0)
 
 propertyFileName = sys.argv[1]
 cFile = sys.argv[2]
-bit = sys.argv[3]
-
-if(not bit in ['default','bitprecise']):
-    print('Wrong argument:'+bit+' has to be [default|bitprecise]')
-    sys.exit(1)
+architecture = sys.argv[3]
+memorymodel = sys.argv[4]
 
 memSafetyMode = False
 terminationMode = False
 overflowMode = False
+bitprecise = False
 
 propFile = open(propertyFileName, 'r')
 for line in propFile:
@@ -83,15 +81,20 @@ elif overflowMode:
 else: 
     print('Checking for ERROR reachability')
     settingsSearchString = settingsFileReach
+
+if architecture in ("32bit", "64bit"): 
+    settingsSearchString = settingsSearchString+'*'+architecture
+else:
+    print('Architecture has to be either 32bit or 64bit')
+    sys.exit(0)
 	
-if bit == 'bitprecise': 
+if bitprecise: 
     print('Using bit-precise analysis')
     settingsSearchString = settingsSearchString + '*_' + settingsFileBitprecise
 else:
     print('Using default analysis')
     settingsSearchString = settingsSearchString + '*_' + settingsFileDefault
 
-print('Using search string matching '+settingsSearchString)
 
 settingsArgument = ''
 for root, dirs, files in os.walk('./'):
