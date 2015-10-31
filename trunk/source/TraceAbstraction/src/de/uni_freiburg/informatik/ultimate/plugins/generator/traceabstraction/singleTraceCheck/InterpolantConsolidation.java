@@ -111,8 +111,8 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	private final Logger m_Logger;
 
 	protected final InterpolantConsolidationBenchmarkGenerator m_InterpolantConsolidationBenchmarkGenerator;
-	private boolean m_printDebugInformation = !false;
-	private boolean m_printAutomataOfDifference = !false;
+	private boolean m_printDebugInformation = false;
+	private boolean m_printAutomataOfDifference = false;
 	private boolean m_InterpolantsConsolidationSuccessful = false;
 	private boolean useConsolidationInNonEmptyCase = false;
 	
