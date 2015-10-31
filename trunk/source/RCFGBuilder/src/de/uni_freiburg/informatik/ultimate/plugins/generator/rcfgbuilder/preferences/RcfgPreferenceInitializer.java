@@ -95,7 +95,7 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final SolverMode DEF_Solver = SolverMode.External_DefaultMode;
 //	public static final Solver DEF_Solver = Solver.Internal_SMTInterpol;
 	public static final String LABEL_ExtSolverCommand = "Command for external solver";
-	public static final String DEF_ExtSolverCommand = Z3_LOW_TIMEOUT;
+	public static final String DEF_ExtSolverCommand = Z3_DEFAULT;
 
 	public static final String LABEL_ExtSolverLogic = "Logic for external solver";
 	public static final String DEF_ExtSolverLogic = "AUFNIRA";
