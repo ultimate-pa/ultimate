@@ -26,5 +26,10 @@ cp README "$TARGETDIR"/
 # change Z3 memory settings for buchiautomizer
 #awk '/@de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer=0.0.1/ { print; print "/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Command\\ for\\ external\\ solver\\ (rank\\ synthesis)=z3 SMTLIB2_COMPLIANT\\=true -memory\\:2500 -smt2 -in -t\\:12000"; next }1' $TERMSETTINGS > $TERMSETTINGS.tmp && mv $TERMSETTINGS.tmp $TERMSETTINGS
 
+# set version 
+VERSION=`git rev-parse HEAD | cut -c1-8`
+echo $VERSION
+sed "s/version =.*/version = \'$VERSION\'/g" "$TARGETDIR"/Ultimate.py > "$TARGETDIR"/Ultimate.py.tmp && mv "$TARGETDIR"/Ultimate.py.tmp "$TARGETDIR"/Ultimate.py && chmod a+x "$TARGETDIR"/Ultimate.py
+
 zip -q Ultimate"$TOOLNAME".zip -r "$TARGETDIR"/*
 

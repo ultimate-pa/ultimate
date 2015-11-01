@@ -5,14 +5,15 @@ import subprocess
 import os
 import fnmatch
 
-version = '12950'
+version = 'f286451a'
 ultimateBin = './Ultimate'
 writeUltimateOutputToFile = True
 outputFileName = 'Ultimate.log'
 errorPathFileName = 'UltimateCounterExample.errorpath'
 
 # various settings file strings 
-settingsFileMemSafety = 'DerefFreeMemtrack'
+settingsFileMemSafetyDerefMemtrack = 'DerefFreeMemtrack'
+settingsFileMemSafetyDeref = 'Deref'
 settingsFileOverflow = 'Overflow'
 settingsFileTermination = 'Termination'
 settingsFileReach = 'Reach'
@@ -45,33 +46,38 @@ if ((len(sys.argv) == 2) and (sys.argv[1] == '--version')):
 
 if (len(sys.argv) != 5):
     print('Wrong number of arguments: use ./Ultimate.py <propertyfile> <C file> [32bit|64bit] [simple|precise]')
-    sys.exit(0)
+    sys.exit(1)
 
 propertyFileName = sys.argv[1]
 cFile = sys.argv[2]
 architecture = sys.argv[3]
 memorymodel = sys.argv[4]
 
-memSafetyMode = False
+memDeref = False
+memDerefMemtrack = False
 terminationMode = False
 overflowMode = False
 bitprecise = False
 
 propFile = open(propertyFileName, 'r')
 for line in propFile:
-    if line.find('valid-') != -1:
-        memSafetyMode = True
+    if line.find('valid-deref') != -1:
+        memDeref = True
+    if line.find('valid-memtrack') != -1:
+        memDerefMemtrack = True
     if line.find('LTL(F end)') != -1:
         terminationMode = True
     if line.find('overflow') != -1:
         overflowMode = True
 
-
 settingsSearchString = ''
 
-if memSafetyMode:
-    print('Checking for memory safety')
-    settingsSearchString = settingsFileMemSafety
+if memDeref and memDerefMemtrack:
+    print('Checking for memory safety (deref-memtrack)')
+    settingsSearchString = settingsFileMemSafetyDerefMemtrack
+elif memDeref: 
+    print('Checking for memory safety (deref)')
+    settingsSearchString = settingsFileMemSafetyDeref
 elif terminationMode: 
     print('Checking for termination')
     settingsSearchString = settingsFileTermination
@@ -121,10 +127,10 @@ else:
 
 if settingsArgument == '':
     print('No suitable settings file found using ' + settingsSearchString)
-    sys.exit(0)
+    sys.exit(1)
 if toolchain == '':
     print('No suitable toolchain file found')
-    sys.exit(0)
+    sys.exit(1)
     
 
 #execute ultimate
@@ -200,7 +206,7 @@ if safetyResult == 'FALSE':
     errOutputFile = open(errorPathFileName, 'wb')
     errOutputFile.write(errorPath.encode('utf-8'))
 
-if (memSafetyMode and safetyResult == 'FALSE'):
+if (memDeref and safetyResult == 'FALSE'):
     result = 'FALSE({})'.format(memResult)
 else:
     result = safetyResult
