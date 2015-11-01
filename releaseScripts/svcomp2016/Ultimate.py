@@ -13,9 +13,9 @@ errorPathFileName = 'UltimateCounterExample.errorpath'
 
 # various settings file strings 
 settingsFileMemSafety = 'DerefFreeMemtrack'
-settingsFileOverflow = 'overflow'
-settingsFileTermination = 'termination'
-settingsFileReach = 'reach'
+settingsFileOverflow = 'Overflow'
+settingsFileTermination = 'Termination'
+settingsFileReach = 'Reach'
 
 settingsFileBitprecise = 'Bitvector'
 settingsFileDefault = 'Default'
@@ -120,7 +120,7 @@ else:
         break
 
 if settingsArgument == '':
-    print('No suitable settings file found')
+    print('No suitable settings file found using ' + settingsSearchString)
     sys.exit(0)
 if toolchain == '':
     print('No suitable toolchain file found')
