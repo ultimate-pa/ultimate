@@ -13,26 +13,32 @@ wget --no-check-certificate https://ultimate.informatik.uni-freiburg.de/download
 unzip UltimateAutomizer.zip
 cd UltimateAutomizer
 Tests=( \
-### Memsafety
-"https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/memory-alloca/ALL.prp;https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/memory-alloca/knapsack_alloca_unsafe_false-valid-deref.i;32bit;precise;FALSE(valid-deref)" \
-"https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/memsafety/ALL.prp;https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/memsafety/test-0158_false-valid-free.i;32bit;precise;FALSE(valid-free)" \
-"https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/list-ext-properties/ALL.prp;https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/list-ext-properties/test-0158_1_false-valid-memtrack.i;32bit;precise;FALSE(valid-memtrack)" \
+# "https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/;32bit;precise;FALSE(valid-deref)" \
+### Memsafety Deref
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/array-memsafety/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/array-memsafety/diff_usafe_false-valid-deref.i;32bit;precise;FALSE(valid-deref)" \
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/array-memsafety/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/array-memsafety/array02-alloca_true-valid-memsafety.i;32bit;precise;TRUE(valid-deref)" \
+### Memsafety DerefFreeMemtrack
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/memsafety/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/memsafety/test-0158_false-valid-free.i;32bit;precise;FALSE(valid-free)" \
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/list-ext-properties/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/list-ext-properties/test-0158_1_false-valid-memtrack.i;32bit;precise;FALSE(valid-memtrack)" \
+### Integer Overflow
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/signedintegeroverflow-regression/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/signedintegeroverflow-regression/ConversionToSignedInt_true-no-overflow.c.i;64bit;precise;TRUE" \
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/signedintegeroverflow-regression/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/signedintegeroverflow-regression/AdditionIntMin_false-no-overflow.c.i;64bit;precise;FALSE" \
 ### Control flow and integers
-"https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/ssh-simplified/ALL.prp;https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/ssh-simplified/s3_clnt_1_true-unreach-call.cil.c;32bit;precise;TRUE" \
-"https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/ssh-simplified/ALL.prp;https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/ssh-simplified/s3_clnt_1_false-unreach-call.cil.c;32bit;precise;FALSE" \
-"https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/loop-acceleration/ALL.prp;https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/loop-acceleration/array_true-unreach-call3.i;32bit;precise;TRUE" \
-"https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/loop-acceleration/ALL.prp;https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/loop-acceleration/simple_false-unreach-call2.i;32bit;precise;FALSE" \
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/ssh-simplified/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/ssh-simplified/s3_clnt_1_true-unreach-call.cil.c;32bit;precise;TRUE" \
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/ssh-simplified/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/ssh-simplified/s3_clnt_1_false-unreach-call.cil.c;32bit;precise;FALSE" \
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/loop-acceleration/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/loop-acceleration/array_true-unreach-call3.i;32bit;precise;TRUE" \
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/loop-acceleration/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/loop-acceleration/simple_false-unreach-call2.i;32bit;precise;FALSE" \
 ### Bitvectors
-"https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/bitvector/ALL.prp;https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/bitvector/byte_add_1_true-unreach-call.i;32bit;precise;UNKNOWN" \
-"https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/bitvector/ALL.prp;https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/bitvector/jain_1_true-unreach-call.i;32bit;precise;TRUE" \
-"https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/bitvector/ALL.prp;https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/bitvector-regression/implicitunsignedconversion_false-unreach-call.i;32bit;precise;FALSE" \
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/bitvector/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/bitvector/byte_add_1_true-unreach-call.i;32bit;precise;UNKNOWN" \
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/bitvector/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/bitvector/jain_1_true-unreach-call.i;32bit;precise;TRUE" \
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/bitvector/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/bitvector-regression/implicitunsignedconversion_false-unreach-call.i;32bit;precise;FALSE" \
 ### Recursive
-"https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/recursive/ALL.prp;https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/recursive/recHanoi02_true-unreach-call_true-termination.c;32bit;precise;TRUE" \
-"https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/recursive/ALL.prp;https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/recursive/McCarthy91_false-unreach-call_false-termination.c;32bit;precise;FALSE" \
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/recursive/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/recursive/recHanoi02_true-unreach-call_true-termination.c;32bit;precise;TRUE" \
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/recursive/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/recursive/McCarthy91_false-unreach-call_false-termination.c;32bit;precise;FALSE" \
 ### Termination
-"https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/termination-memory-alloca/ALL.prp;https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/termination-memory-alloca/a.04-alloca_true-termination.c.i;64bit;precise;TRUE" \
-"https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/termination-memory-alloca/ALL.prp;https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/termination-memory-alloca/Velroyen-alloca_false-termination.c.i;64bit;precise;FALSE" \
-"https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/termination-memory-alloca/ALL.prp;https://svn.sosy-lab.org/software/sv-benchmarks/trunk/c/termination-crafted/Collatz_unknown-termination.c;64bit;precise;UNKNOWN" \
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-memory-alloca/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-memory-alloca/a.04-alloca_true-termination.c.i;64bit;precise;TRUE" \
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-memory-alloca/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-restricted-stroeder-15/ConvLower_false-termination.c;64bit;precise;FALSE" \
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-memory-alloca/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-crafted/Collatz_unknown-termination.c;64bit;precise;UNKNOWN" \
 )
 
 for quintuple in "${Tests[@]}"
