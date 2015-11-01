@@ -9,7 +9,7 @@ function checkResult {
 }
 
 
-wget --no-check-certificate https://ultimate.informatik.uni-freiburg.de/downloads/svcomp2015/UltimateAutomizer.zip
+wget --no-check-certificate https://ultimate.informatik.uni-freiburg.de/downloads/svcomp2016/UltimateAutomizer.zip
 unzip UltimateAutomizer.zip
 cd UltimateAutomizer
 Tests=( \

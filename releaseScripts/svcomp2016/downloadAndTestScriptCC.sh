@@ -9,7 +9,7 @@ function checkResult {
 }
 
 
-wget --no-check-certificate https://ultimate.informatik.uni-freiburg.de/downloads/svcomp2015/UltimateKojak.zip
+wget --no-check-certificate https://ultimate.informatik.uni-freiburg.de/downloads/svcomp2016/UltimateKojak.zip
 unzip UltimateKojak.zip
 cd UltimateKojak
 Tests=( \
