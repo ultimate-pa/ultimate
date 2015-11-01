@@ -6,7 +6,7 @@ TARGETDIR=Ultimate${TOOLNAME}
 TOOLCHAIN=../../trunk/examples/toolchains/AutomizerC.xml
 TERMTOOLCHAIN=../../trunk/examples/toolchains/BuchiAutomizerCWithBlockEncoding.xml
 SETTINGS=../../trunk/examples/settings/svcomp2016/*${TOOLNAME}*
-TERMSETTINGS="$TARGETDIR"/svComp-64bit-termination-Automizer.epf
+TERMSETTINGS="$TARGETDIR"/svcomp-Termination-64bit-Automizer.epf
 
 rm -r "$TARGETDIR"
 rm Ultimate"$TOOLNAME".zip
