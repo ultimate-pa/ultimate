@@ -56,6 +56,9 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 				new UltimatePreferenceItem<INTERPOLATION>(
 						LABEL_INTERPOLATIONMODE, DEF_INTERPOLATIONMODE,
 						PreferenceType.Combo, INTERPOLATION.values()),
+				new UltimatePreferenceItem<Boolean>(
+						LABEL_INTERPOLANTCONSOLIDATION, DEF_INTERPOLANTCONSOLIDATION,
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<PredicateUnification>(
 						LABEL_PREDICATEUNIFICATION, DEF_PREDICATEUNIFICATION,
 						PreferenceType.Combo, PredicateUnification.values()),
@@ -135,6 +138,7 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 
 	public static final String LABEL_SOLVERANDINTERPOLATOR = "Interpolating solver";
 	public static final String LABEL_INTERPOLATIONMODE = "tree interpolation mode for smtinterpol \n (internal: tree, a la matthias: nested)";
+	public static final String LABEL_INTERPOLANTCONSOLIDATION = "use interpolant consolidation (only useful for interpolationmode fp+bp)";
 	public static final String LABEL_PREDICATEUNIFICATION = "Predicate Unification Mode";
 	public static final String LABEL_EDGECHECKOPTIMIZATION = "EdgeCheck Optimization Mode";
 
@@ -162,6 +166,7 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 
 	public static final SolverAndInterpolator DEF_SOLVERANDINTERPOLATOR = SolverAndInterpolator.Z3SPWP;
 	public static final INTERPOLATION DEF_INTERPOLATIONMODE = INTERPOLATION.Craig_TreeInterpolation;
+	public static final boolean DEF_INTERPOLANTCONSOLIDATION = true;
 	public static final PredicateUnification DEF_PREDICATEUNIFICATION = PredicateUnification.PER_ITERATION;
 	public static final EdgeCheckOptimization DEF_EDGECHECKOPTIMIZATION = EdgeCheckOptimization.NONE;
 

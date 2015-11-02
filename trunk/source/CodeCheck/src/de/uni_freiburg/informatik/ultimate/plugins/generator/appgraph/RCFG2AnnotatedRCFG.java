@@ -37,6 +37,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -135,7 +136,7 @@ public class RCFG2AnnotatedRCFG {
 			Term aiTerm = m_initialPredicates.get(pp);
 			IPredicate aiPredicate;
 			if (aiTerm != null) {
-				aiPredicate = m_smtManager.constructPredicate(aiTerm, 0, Collections.emptySet());
+				aiPredicate = m_smtManager.constructPredicate(aiTerm, 0, Collections.<TermVariable>emptySet());
 			} else {
 				aiPredicate = m_truePredicate;
 			}

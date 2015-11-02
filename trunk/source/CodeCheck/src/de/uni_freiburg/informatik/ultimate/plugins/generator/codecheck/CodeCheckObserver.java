@@ -40,10 +40,13 @@ import java.util.Stack;
 import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
+import org.omg.stub.java.rmi._Remote_Stub;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -89,6 +92,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceCheckerCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
@@ -153,7 +157,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 	boolean loop_forever = true; // for DEBUG
 	int iterationsLimit = -1; // for DEBUG
-	private boolean outputHoareAnnotation = true;
+	private boolean outputHoareAnnotation = false;
+	private boolean m_UseInterpolantConsolidation = true;
 
 
 	CodeCheckObserver(IUltimateServiceProvider services) {
@@ -432,8 +437,33 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 							conjsInUC += (Integer) traceChecker.getTraceCheckerBenchmark().getValue(s_ConjunctsInUnsatCore);	
 						}
 						
+						IPredicate[] interpolants = null;
 
-						IPredicate[] interpolants = traceChecker.getInterpolants();
+						if (m_UseInterpolantConsolidation) {
+							try {
+
+								InterpolantConsolidation interpConsoli = new InterpolantConsolidation(
+										_predicateUnifier.getTruePredicate(), 
+										_predicateUnifier.getFalsePredicate(), 
+										new TreeMap<Integer, IPredicate>(),
+										NestedWord.nestedWord(errorRun.getWord()), m_smtManager, m_originalRoot.getRootAnnot().getModGlobVarManager(), 
+										mServices,
+										mLogger, 
+										_predicateUnifier, 
+										traceChecker, 
+										m_taPrefs);
+								// Add benchmark data of interpolant consolidation
+								//m_CegarLoopBenchmark.addInterpolationConsolidationData(interpConsoli.getInterpolantConsolidationBenchmarks());
+								//m_InterpolantGenerator = interpConsoli;
+								interpolants = interpConsoli.getInterpolants();
+							} catch (OperationCanceledException e) {
+								// Timeout
+								e.printStackTrace();
+							}
+						} else {
+							interpolants = traceChecker.getInterpolants();
+						}
+
 						if (GlobalSettings._instance._memoizeNormalEdgeChecks
 								&& GlobalSettings._instance._memoizeReturnEdgeChecks)
 							codeChecker.codeCheck(errorRun, interpolants, procedureRoot, _satTriples, _unsatTriples,
