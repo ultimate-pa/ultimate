@@ -33,7 +33,7 @@ errorPathBeginString = 'We found a FailurePath:'
 terminationFalse = 'Found a nonterminating execution for the following lasso shaped sequence of statements'
 terminationPathEnd = 'End of lasso representation.'
 terminationTrue = 'TerminationAnalysisResult: Termination proven'
-
+overflowString = 'overflow possible'
 
 
 def setBinary():
@@ -122,6 +122,8 @@ def runUltimate(ultimateCall, terminationMode):
                 memResult = 'valid-free'
             if (line.find(memMemtrackUltimateString) != -1):
                 memResult = 'valid-memtrack'
+            if(line.find(overflowString) != -1):
+                safetyResult = 'FALSE(overflow)'
             if (line.find(errorPathBeginString) != -1):
                 readingErrorPath = True
             if (readingErrorPath and line.strip() == ''):
@@ -153,7 +155,7 @@ def getSettingsFile(bitprecise, settingsSearchString):
         print 'Using default analysis'
         settingsSearchString = settingsSearchString + '*_' + settingsFileDefault
     settingsArgument = searchCurrentDir('*' + settingsSearchString + '*.epf')
-    if settingsArgument == '':
+    if settingsArgument == '' or settingsArgument == None:
         print 'No suitable settings file found using ' + settingsSearchString
         sys.exit(1)
     return settingsArgument
