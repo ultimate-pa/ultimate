@@ -158,8 +158,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	boolean loop_forever = true; // for DEBUG
 	int iterationsLimit = -1; // for DEBUG
 	private boolean outputHoareAnnotation = false;
-	private boolean m_UseInterpolantConsolidation = true;
-
 
 	CodeCheckObserver(IUltimateServiceProvider services) {
 		mServices = services;
@@ -254,6 +252,10 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		GlobalSettings._instance._interpolationMode = prefs.getEnum(
 				CodeCheckPreferenceInitializer.LABEL_INTERPOLATIONMODE, INTERPOLATION.class);
 
+		GlobalSettings._instance.useInterpolantconsolidation = prefs.getBoolean(
+					CodeCheckPreferenceInitializer.LABEL_INTERPOLANTCONSOLIDATION,
+				CodeCheckPreferenceInitializer.DEF_INTERPOLANTCONSOLIDATION);
+				
 		GlobalSettings._instance._predicateUnification = prefs.getEnum(
 				CodeCheckPreferenceInitializer.LABEL_PREDICATEUNIFICATION, PredicateUnification.class);
 
@@ -439,7 +441,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						
 						IPredicate[] interpolants = null;
 
-						if (m_UseInterpolantConsolidation) {
+						if (GlobalSettings._instance.useInterpolantconsolidation) {
 							try {
 
 								InterpolantConsolidation interpConsoli = new InterpolantConsolidation(
