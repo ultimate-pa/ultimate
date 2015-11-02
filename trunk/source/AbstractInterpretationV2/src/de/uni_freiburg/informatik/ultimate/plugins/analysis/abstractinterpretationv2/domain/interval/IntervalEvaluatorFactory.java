@@ -71,7 +71,9 @@ public class IntervalEvaluatorFactory implements IEvaluatorFactory<IntervalDomai
 
 		switch (arity) {
 		case ARITY_MIN:
+			return new IntervalUnaryExpressionEvaluator();
 		case ARITY_MAX:
+			return new IntervalBinaryExpressionEvaluator();
 		default:
 			final StringBuilder stringBuilder = new StringBuilder(BUFFER_MAX);
 			stringBuilder.append("Arity of ").append(arity).append(" is not implemented.");

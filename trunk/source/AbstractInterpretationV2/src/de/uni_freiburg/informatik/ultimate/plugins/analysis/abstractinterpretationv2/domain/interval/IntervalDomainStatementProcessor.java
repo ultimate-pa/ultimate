@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.IEvaluatorFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.INAryEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -154,10 +155,12 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	@Override
 	protected void visit(BinaryExpression expr) {
 
-		mLogger.fatal(expr);
-		mLogger.fatal(expr.getOperator().toString());
-		mLogger.fatal(expr.getLeft());
-		mLogger.fatal(expr.getRight());
+		final INAryEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> evaluator = mEvaluatorFactory
+		        .createNAryExpressionEvaluator(2);
+		
+		evaluator.setOperator(expr.getOperator());
+		
+		mExpressionEvaluator.addEvaluator(evaluator);
 
 		super.visit(expr);
 	}
