@@ -30,9 +30,6 @@ memDerefUltimateString = 'pointer dereference may fail'
 memFreeUltimateString = 'free of unallocated memory possible'
 memMemtrackUltimateString = 'not all allocated memory was freed' 
 errorPathBeginString = 'We found a FailurePath:'
-memDerefResult = 'valid-deref'
-memFreeResult = 'valid-free'
-memMemtrackResult = 'valid-memtrack'
 terminationFalse = 'Found a nonterminating execution for the following lasso shaped sequence of statements'
 terminationPathEnd = 'End of lasso representation.'
 terminationTrue = 'TerminationAnalysisResult: Termination proven'
@@ -109,9 +106,9 @@ def runUltimate(ultimateCall, terminationMode):
             overapprox = True
         if (terminationMode):
             if (line.find(terminationTrue) != -1):
-                safetyResult = 'TRUE'
+                safetyResult = 'TRUE(TERM)'
             if (line.find(terminationFalse) != -1):
-                safetyResult = 'FALSE'
+                safetyResult = 'FALSE(TERM)'
                 readingErrorPath = True
             if (line.find(terminationPathEnd) != -1):
                 readingErrorPath = False
@@ -121,11 +118,11 @@ def runUltimate(ultimateCall, terminationMode):
             if (line.find(unsafetyString) != -1):
                 safetyResult = 'FALSE'
             if (line.find(memDerefUltimateString) != -1):
-                memResult = memDerefResult
+                memResult = 'valid-deref'
             if (line.find(memFreeUltimateString) != -1):
-                memResult = memFreeResult
+                memResult = 'valid-free'
             if (line.find(memMemtrackUltimateString) != -1):
-                memResult = memMemtrackResult
+                memResult = 'valid-memtrack'
             if (line.find(errorPathBeginString) != -1):
                 readingErrorPath = True
             if (readingErrorPath and line.strip() == ''):
@@ -163,6 +160,77 @@ def getSettingsFile(bitprecise, settingsSearchString):
     return settingsArgument
 
 
+
+def parseArgs():
+# parse command line arguments
+    if ((len(sys.argv) == 2) and (sys.argv[1] == '--version')):
+        print version
+        sys.exit(0)
+    if (len(sys.argv) < 5):
+        print 'Wrong number of arguments: use ./Ultimate.py <propertyfile> <C file> [32bit|64bit] [simple|precise]'
+        sys.exit(1)
+    
+    propertyFileName = sys.argv[1]
+    if not os.path.isfile(propertyFileName):
+        print("Property file not found at " + propertyFileName)
+        sys.exit(1)
+    
+    cFile = sys.argv[2]
+    if not os.path.isfile(cFile):
+        print("Input file not found at " + cFile)
+        sys.exit(1)
+    
+    architecture = sys.argv[3]
+    if not architecture in ("32bit", "64bit"): 
+        print('Architecture has to be either 32bit or 64bit')
+        sys.exit(0)
+    
+    # we currently ignore the memory model
+    memorymodel = sys.argv[4]
+    if not memorymodel in ("simple", "precise"): 
+        print('Memory model has to be either simple or precise')
+        sys.exit(0)
+    
+    verbose = (len(sys.argv) > 5 and sys.argv[5] == '--full-output')
+    
+    return propertyFileName, architecture, cFile, verbose
+
+
+def createSettingsSearchString(memDeref, memDerefMemtrack, terminationMode, overflowMode, architecture):
+    settingsSearchString = ''
+    if memDeref and memDerefMemtrack:
+        print 'Checking for memory safety (deref-memtrack)'
+        settingsSearchString = settingsFileMemSafetyDerefMemtrack
+    elif memDeref:
+        print 'Checking for memory safety (deref)'
+        settingsSearchString = settingsFileMemSafetyDeref
+    elif terminationMode:
+        print 'Checking for termination'
+        settingsSearchString = settingsFileTermination
+    elif overflowMode:
+        print 'Checking for overflows'
+        settingsSearchString = settingsFileOverflow
+    else:
+        print 'Checking for ERROR reachability'
+        settingsSearchString = settingsFileReach
+    settingsSearchString = settingsSearchString + '*' + architecture
+    return settingsSearchString
+
+
+def createToolchainString(terminationMode):
+    if terminationMode:
+        return searchCurrentDir('*Termination.xml')
+    else:
+        for root, dirs, files in os.walk('.'):
+            for name in files:
+                if fnmatch.fnmatch(name, '*.xml') and not fnmatch.fnmatch(name, 'artifacts.xml') and not fnmatch.fnmatch(name, '*Termination.xml'):
+                    return os.path.join(root, name)
+            break
+    print('No suitable toolchain file found')
+    sys.exit(1)
+    return 
+
+
 def main():
     # different modes 
     memDeref = False
@@ -172,21 +240,7 @@ def main():
     
     ultimateBin = setBinary()
     
-    # parse command line arguments
-    if ((len(sys.argv) == 2) and (sys.argv[1] == '--version')):
-        print(version)
-        sys.exit(0)
-    
-    if (len(sys.argv) != 5):
-        print('Wrong number of arguments: use ./Ultimate.py <propertyfile> <C file> [32bit|64bit] [simple|precise]')
-        sys.exit(1)
-    
-    propertyFileName = sys.argv[1]
-    cFile = sys.argv[2]
-    architecture = sys.argv[3]
-    
-    # we currently ignore the memory model 
-    memorymodel = sys.argv[4]
+    propertyFileName, architecture, cFile, verbose = parseArgs()
     
     propFile = open(propertyFileName, 'r')
     for line in propFile:
@@ -199,49 +253,10 @@ def main():
         if line.find('overflow') != -1:
             overflowMode = True
     
-    settingsSearchString = ''
-    
-    if memDeref and memDerefMemtrack:
-        print('Checking for memory safety (deref-memtrack)')
-        settingsSearchString = settingsFileMemSafetyDerefMemtrack
-    elif memDeref: 
-        print('Checking for memory safety (deref)')
-        settingsSearchString = settingsFileMemSafetyDeref
-    elif terminationMode: 
-        print('Checking for termination')
-        settingsSearchString = settingsFileTermination
-    elif overflowMode: 
-        print('Checking for overflows')
-        settingsSearchString = settingsFileOverflow
-    else: 
-        print('Checking for ERROR reachability')
-        settingsSearchString = settingsFileReach
-    
-    if architecture in ("32bit", "64bit"): 
-        settingsSearchString = settingsSearchString + '*' + architecture
-    else:
-        print('Architecture has to be either 32bit or 64bit')
-        sys.exit(0)
-    
+    settingsSearchString = createSettingsSearchString(memDeref, memDerefMemtrack, terminationMode, overflowMode, architecture)
     settingsArgument = getSettingsFile(False, settingsSearchString)
-        
-    toolchain = ''
-    if terminationMode:
-        toolchain = searchCurrentDir('*Termination.xml')
-    else:
-        for root, dirs, files in os.walk('.'):
-            for name in files:
-                if fnmatch.fnmatch(name, '*.xml') and not fnmatch.fnmatch(name, 'artifacts.xml') and not fnmatch.fnmatch(name, '*Termination.xml'):
-                    toolchain = os.path.join(root, name)
-                    break
-            break
-    
+    toolchain = createToolchainString(terminationMode)
 
-    if toolchain == '':
-        print('No suitable toolchain file found')
-        sys.exit(1)
-        
-    
     # execute ultimate
     print('Version ' + version)
     ultimateCall = createUltimateCall(ultimateBin, [toolchain, cFile, settingsArgument])
@@ -255,7 +270,8 @@ def main():
         print('Retrying with bit-precise analysis')
         settingsArgument = getSettingsFile(True, settingsSearchString)
         ultimateCall = createUltimateCall(ultimateBin, [toolchain, cFile, settingsArgument])
-        safetyResult, memResult, overaprox, ultimateOutput, errorPath = runUltimate(ultimateCall, terminationMode)
+        safetyResult, memResult, overaprox, ultimate2Output, errorPath = runUltimate(ultimateCall, terminationMode)
+        ultimateOutput = ultimateOutput + '\n### Bit-precise run ###\n' + ultimate2Output
     
     # summarize results
     if writeUltimateOutputToFile:
@@ -263,17 +279,25 @@ def main():
         outputFile = open(outputFileName, 'wb')
         outputFile.write(ultimateOutput.encode('utf-8'))
     
-    if safetyResult == 'FALSE':
+    if safetyResult.startswith('FALSE'):
         print('Writing human readable error path to file {}'.format(errorPathFileName))
         errOutputFile = open(errorPathFileName, 'wb')
         errOutputFile.write(errorPath.encode('utf-8'))
     
-    if (memDeref and safetyResult == 'FALSE'):
-        result = 'FALSE({})'.format(memResult)
+    if memDeref:
+        if(safetyResult.startswith('FALSE')):
+            result = 'FALSE({})'.format(memResult)
+        elif safetyResult.startswith('TRUE'):
+            result = 'TRUE({})'.format(memResult)
     else:
         result = safetyResult
+        
     print('Result:') 
     print(result)
+    if(verbose):
+        print('--- Real Ultimate output ---')
+        print(ultimateOutput)
+        
     return
 
 if __name__ == "__main__":
