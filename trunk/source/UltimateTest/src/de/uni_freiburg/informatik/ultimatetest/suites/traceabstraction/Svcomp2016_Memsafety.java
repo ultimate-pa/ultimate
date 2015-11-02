@@ -49,11 +49,11 @@ public class Svcomp2016_Memsafety extends AbstractTraceAbstractionTestSuite {
 	};
 	
 	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs_DerefFreeMemtrack = {
-			/*** Category 3. Heap Data Structures ***/
-			new DirectoryFileEndingsPair("examples/svcomp/memsafety/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-			new DirectoryFileEndingsPair("examples/svcomp/list-ext-properties/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-			new DirectoryFileEndingsPair("examples/svcomp/memory-alloca/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-			new DirectoryFileEndingsPair("examples/svcomp/ldv-memsafety/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+		/*** Category 3. Heap Data Structures ***/
+		new DirectoryFileEndingsPair("examples/svcomp/memsafety/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/list-ext-properties/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/memory-alloca/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/ldv-memsafety/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
 	};
 
 	
@@ -76,11 +76,11 @@ public class Svcomp2016_Memsafety extends AbstractTraceAbstractionTestSuite {
 	}
 
 	private static final String[] m_Settings_Deref = {
-		"svcomp2016/svcomp-Deref-32bit-Automizer.epf",
+		"svcomp2016/svcomp-Deref-32bit-Automizer_Default.epf",
 	};
 	
 	private static final String[] m_Settings_DerefFreeMemtrack = {
-		"svcomp2016/svcomp-DerefFreeMemtrack-32bit-Automizer.epf",
+		"svcomp2016/svcomp-DerefFreeMemtrack-32bit-Automizer_Default.epf",
 	};
 
 	
