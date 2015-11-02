@@ -307,7 +307,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public void convert(ILocation loc, ExpressionResult operand, CPrimitive resultType) {
+	public void convertIntToInt(ILocation loc, ExpressionResult operand, CPrimitive resultType) {
 		if (!(resultType instanceof CPrimitive)) {
 			throw new UnsupportedOperationException("non-primitive types not supported yet " + resultType);
 		}

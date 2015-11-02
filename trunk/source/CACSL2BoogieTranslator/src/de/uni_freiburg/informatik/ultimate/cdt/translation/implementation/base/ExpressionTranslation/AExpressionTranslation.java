@@ -226,7 +226,7 @@ public abstract class AExpressionTranslation {
 		if (operand.lrVal.getCType().equals(resultType)) {
 			// do nothing
 		} else {
-			convert(loc, operand, resultType);
+			convertIntToInt(loc, operand, resultType);
 		}
 	}
 
@@ -280,7 +280,7 @@ public abstract class AExpressionTranslation {
 		}
 	}
 
-	public abstract void convert(ILocation loc, ExpressionResult operand, CPrimitive resultType);
+	public abstract void convertIntToInt(ILocation loc, ExpressionResult operand, CPrimitive resultType);
 	
 	/**
 	 * Perform the integer promotions a specified in C11 6.3.1.1.2 on the
@@ -394,6 +394,16 @@ public abstract class AExpressionTranslation {
 		return prefixedFunctionName;
 	}
 
+	public void convertFloatToInt(ILocation loc, ExpressionResult rexp, CPrimitive newType) {
+		throw new UnsupportedSyntaxException(loc, "conversion from float to int not yet implemented");
+	}
 
+	public void convertIntToFloat(ILocation loc, ExpressionResult rexp, CPrimitive newType) {
+		throw new UnsupportedSyntaxException(loc, "conversion from int to float not yet implemented");
+	}
+	
+	public void convertFloatToFloat(ILocation loc, ExpressionResult rexp, CPrimitive newType) {
+		throw new UnsupportedSyntaxException(loc, "conversion from float to float not yet implemented");
+	}
 	
 }

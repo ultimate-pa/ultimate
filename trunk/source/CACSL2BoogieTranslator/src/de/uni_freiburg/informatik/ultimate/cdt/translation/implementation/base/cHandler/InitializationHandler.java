@@ -329,7 +329,7 @@ public class InitializationHandler {
 					rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, (CPrimitive) lCType, BigInteger.ZERO);
 				} else {
 					initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
-					main.cHandler.castToType(main, loc, initializer, lCType);
+					main.cHandler.convert(main, loc, initializer, lCType);
 					rhs = initializer.lrVal.getValue();
 				}
 				break;
@@ -338,7 +338,7 @@ public class InitializationHandler {
 					rhs = new RealLiteral(loc, SFO.NR0F);
 				} else {
 					rhs = initializer.lrVal.getValue();
-					main.cHandler.castToType(main, loc, initializer, lCType);
+					main.cHandler.convert(main, loc, initializer, lCType);
 				}
 				break;
 			case VOID:

@@ -1117,7 +1117,7 @@ public class MemoryHandler {
 			result = new ExpressionResult(stmt, 
 	        		new RValue(new IdentifierExpression(loc, tmpId), m_ExpressionTranslation.getCTypeOfIntArray()),
 	        		decl, auxVars, overappr);
-			m_ExpressionTranslation.convert(loc, result, (CPrimitive) resultType.getUnderlyingType());
+			m_ExpressionTranslation.convertIntToInt(loc, result, (CPrimitive) resultType.getUnderlyingType());
 	        String bvtmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD);
 	        VariableDeclaration bvtVarDecl = SFO.getTempVarVariableDeclaration(bvtmpId, heapType, loc);
 	        auxVars.put(bvtVarDecl, loc);
@@ -1226,7 +1226,7 @@ public class MemoryHandler {
 		if (bitvectorConversionNeeded) {
 			RValue tmpworkaroundrvalue = new RValue(value, valueType.getUnderlyingType(), false, false);
 			ExpressionResult tmpworkaround = new ExpressionResult(tmpworkaroundrvalue);
-			m_ExpressionTranslation.convert(loc, tmpworkaround, new CPrimitive(PRIMITIVE.INT));
+			m_ExpressionTranslation.convertIntToInt(loc, tmpworkaround, new CPrimitive(PRIMITIVE.INT));
 			value = tmpworkaround.lrVal.getValue();
 			valueType = tmpworkaround.lrVal.getCType();
 		}

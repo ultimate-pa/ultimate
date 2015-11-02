@@ -491,7 +491,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 	
 
 	@Override
-	public void convert(ILocation loc, ExpressionResult operand,
+	public void convertIntToInt(ILocation loc, ExpressionResult operand,
 			CPrimitive resultType) {
 		if (resultType.isIntegerType()) {
 			convertToIntegerType(loc, operand, resultType);

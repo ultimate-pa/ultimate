@@ -166,7 +166,7 @@ public class ArrayHandler {
 				// is defined via pointers. However, we have to make the subscript
 				// compatible to the type of the dimension of the array
 				AExpressionTranslation et = ((CHandler) main.cHandler).getExpressionTranslation();
-				et.convert(loc, subscript, (CPrimitive) currentDimension.getCType());
+				et.convertIntToInt(loc, subscript, (CPrimitive) currentDimension.getCType());
 				final RValue index = (RValue) subscript.lrVal;
 				final ArrayLHS newInnerArrayLHS;
 				if (oldInnerArrayLHS instanceof ArrayLHS) {
