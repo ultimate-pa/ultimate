@@ -101,6 +101,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 
 	private AnnotateAndAssertConjunctsOfCodeBlocks m_AnnotateAndAsserterConjuncts;
 	private final PredicateTransformer m_PredicateTransformer;
+	private boolean m_TakeCallerPredFromForwardSequence = false;
 
 	public TraceCheckerSpWp(IPredicate precondition, IPredicate postcondition,
 			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace, SmtManager smtManager,
@@ -754,16 +755,20 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 						globalVarsAssignments = rv.getGlobalVarAssignment(call_pos);
 						oldVarAssignments = rv.getOldVarAssignment(call_pos);
 						// TODO: Documentation!
-						ProcedureSummary summary = computeProcedureSummary(trace, callTF,
-								rv.getFormulaFromNonCallPos(i + 1), oldVarAssignments, rv, call_pos, i + 1);
-						varsOccurringBetweenCallAndReturn = summary.computeVariableInInnerSummary();
-						callerPred = m_PredicateTransformer.weakestPrecondition(
-								getBackwardPredicateAtPosition(i + 1, tracePostcondition, true),
-								summary.getWithCallAndReturn());
-						callerPredicatesComputed.put(
-								call_pos,
-								m_PredicateUnifier.getOrConstructPredicate(callerPred.getFormula(),
-										callerPred.getVars(), callerPred.getProcedures()));
+						if (m_TakeCallerPredFromForwardSequence ) {
+							callerPred = m_InterpolantsSp[call_pos];
+						} else {
+							ProcedureSummary summary = computeProcedureSummary(trace, callTF,
+									rv.getFormulaFromNonCallPos(i + 1), oldVarAssignments, rv, call_pos, i + 1);
+							varsOccurringBetweenCallAndReturn = summary.computeVariableInInnerSummary();
+							callerPred = m_PredicateTransformer.weakestPrecondition(
+									getBackwardPredicateAtPosition(i + 1, tracePostcondition, true),
+									summary.getWithCallAndReturn());
+							callerPredicatesComputed.put(
+									call_pos,
+									m_PredicateUnifier.getOrConstructPredicate(callerPred.getFormula(),
+											callerPred.getVars(), callerPred.getProcedures()));
+						}
 					}
 					wp = m_PredicateTransformer.weakestPrecondition(
 							getBackwardPredicateAtPosition(i + 1, tracePostcondition, true),
