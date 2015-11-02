@@ -26,11 +26,4 @@
 		<nature>org.eclipse.pde.PluginNature</nature>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>ppl_java.jar</name>
-			<type>1</type>
-			<locationURI>PARENT-3-PROJECT_LOC/ppl-1.1/ppl-test-64/ppl_java.jar</locationURI>
-		</link>
-	</linkedResources>
 </projectDescription>
