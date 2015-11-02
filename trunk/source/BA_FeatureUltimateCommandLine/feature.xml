@@ -227,7 +227,7 @@
          install-size="0"
          version="0.0.0"
          unpack="false"/>
-         
+
    <plugin
          id="de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies"
          download-size="0"
@@ -241,9 +241,23 @@
          install-size="0"
          version="0.0.0"
          unpack="false"/>
-         
+
    <plugin
          id="BoogieModSetAnnotator"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.boogie.procedureinliner"
          download-size="0"
          install-size="0"
          version="0.0.0"

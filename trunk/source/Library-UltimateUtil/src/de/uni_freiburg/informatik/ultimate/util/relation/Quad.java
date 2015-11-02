@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE Util Library.
@@ -27,43 +27,49 @@
 package de.uni_freiburg.informatik.ultimate.util.relation;
 
 /**
- * Generic Triple.
+ * Generic Quadruple.
  * 
- * @author Matthias Heizmann
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class Triple<E1, E2, E3> {
+public class Quad<E1, E2, E3, E4> {
+	private final E1 mFirst;
+	private final E2 mSecond;
+	private final E3 mThird;
+	private final E4 mFourth;
 
-	private final E1 m_FirstElement;
-	private final E2 m_SecondElement;
-	private final E3 m_ThirdElement;
-
-	public Triple(E1 first, E2 second, E3 third) {
+	public Quad(final E1 first, final E2 second, final E3 third, final E4 fourth) {
 		super();
-		m_FirstElement = first;
-		m_SecondElement = second;
-		m_ThirdElement = third;
+		mFirst = first;
+		mSecond = second;
+		mThird = third;
+		mFourth = fourth;
 	}
 
 	public E1 getFirst() {
-		return m_FirstElement;
+		return mFirst;
 	}
 
 	public E2 getSecond() {
-		return m_SecondElement;
+		return mSecond;
 	}
 
 	public E3 getThird() {
-		return m_ThirdElement;
+		return mThird;
+	}
+
+	public E4 getFourth() {
+		return mFourth;
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + m_FirstElement.hashCode();
-		result = prime * result + m_SecondElement.hashCode();
-		result = prime * result + m_ThirdElement.hashCode();
+		result = prime * result + ((mFirst == null) ? 0 : mFirst.hashCode());
+		result = prime * result + ((mFourth == null) ? 0 : mFourth.hashCode());
+		result = prime * result + ((mSecond == null) ? 0 : mSecond.hashCode());
+		result = prime * result + ((mThird == null) ? 0 : mThird.hashCode());
 		return result;
 	}
 
@@ -75,28 +81,33 @@ public class Triple<E1, E2, E3> {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		Triple other = (Triple) obj;
-		if (m_FirstElement == null) {
-			if (other.m_FirstElement != null)
+		final Quad<?, ?, ?, ?> other = (Quad<?, ?, ?, ?>) obj;
+		if (mFirst == null) {
+			if (other.mFirst != null)
 				return false;
-		} else if (!m_FirstElement.equals(other.m_FirstElement))
+		} else if (!mFirst.equals(other.mFirst))
 			return false;
-		if (m_SecondElement == null) {
-			if (other.m_SecondElement != null)
+		if (mFourth == null) {
+			if (other.mFourth != null)
 				return false;
-		} else if (!m_SecondElement.equals(other.m_SecondElement))
+		} else if (!mFourth.equals(other.mFourth))
 			return false;
-		if (m_ThirdElement == null) {
-			if (other.m_ThirdElement != null)
+		if (mSecond == null) {
+			if (other.mSecond != null)
 				return false;
-		} else if (!m_ThirdElement.equals(other.m_ThirdElement))
+		} else if (!mSecond.equals(other.mSecond))
+			return false;
+		if (mThird == null) {
+			if (other.mThird != null)
+				return false;
+		} else if (!mThird.equals(other.mThird))
 			return false;
 		return true;
 	}
 
 	@Override
 	public String toString() {
-		return "[" + m_FirstElement + ", " + m_SecondElement + ", " + m_ThirdElement + "]";
+		return "[" + mFirst + ", " + mSecond + ", " + mThird + ", " + mFourth + "]";
 	}
 
 }

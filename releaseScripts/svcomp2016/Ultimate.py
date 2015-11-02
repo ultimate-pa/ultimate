@@ -53,7 +53,6 @@ def setBinary():
         ultimateBin = './' + ultimateBin
     
     ultimateBin = ultimateBin + ' --console'
-    
     return ultimateBin
 
 
@@ -153,7 +152,7 @@ def getSettingsFile(bitprecise, settingsSearchString):
     else:
         print 'Using default analysis'
         settingsSearchString = settingsSearchString + '*_' + settingsFileDefault
-    settingsArgument = '--settings ' + searchCurrentDir('*' + settingsSearchString + '*.epf')
+    settingsArgument = searchCurrentDir('*' + settingsSearchString + '*.epf')
     if settingsArgument == '':
         print 'No suitable settings file found using ' + settingsSearchString
         sys.exit(1)
@@ -259,7 +258,7 @@ def main():
 
     # execute ultimate
     print('Version ' + version)
-    ultimateCall = createUltimateCall(ultimateBin, [toolchain, cFile, settingsArgument])
+    ultimateCall = createUltimateCall(ultimateBin, [toolchain, cFile, "--settings", settingsArgument])
  
 
     # actually run Ultimate 
@@ -269,7 +268,7 @@ def main():
         # we did fail because we had to overaproximate. Lets rerun with bit-precision 
         print('Retrying with bit-precise analysis')
         settingsArgument = getSettingsFile(True, settingsSearchString)
-        ultimateCall = createUltimateCall(ultimateBin, [toolchain, cFile, settingsArgument])
+        ultimateCall = createUltimateCall(ultimateBin, [toolchain, cFile, '--settings', settingsArgument])
         safetyResult, memResult, overaprox, ultimate2Output, errorPath = runUltimate(ultimateCall, terminationMode)
         ultimateOutput = ultimateOutput + '\n### Bit-precise run ###\n' + ultimate2Output
     
