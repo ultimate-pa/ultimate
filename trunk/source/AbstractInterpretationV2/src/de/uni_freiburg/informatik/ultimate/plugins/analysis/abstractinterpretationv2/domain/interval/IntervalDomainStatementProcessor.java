@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
@@ -207,6 +208,17 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 		for (VariableLHS var : statement.getIdentifiers()) {
 			mNewState.setValue(var.getIdentifier(), new IntervalDomainValue());
 		}
+	}
+
+	@Override
+	protected void visit(IdentifierExpression expr) {
+
+		final IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> evaluator = mEvaluatorFactory
+		        .createSingletonVariableExpressionEvaluator(expr.getIdentifier());
+
+		mExpressionEvaluator.addEvaluator(evaluator);
+
+		super.visit(expr);
 	}
 
 }
