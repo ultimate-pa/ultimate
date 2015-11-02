@@ -115,6 +115,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessProductAutomaton;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
@@ -129,6 +130,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	private final static boolean m_DifferenceInsteadOfIntersection = true;
 	protected final static boolean m_RemoveDeadEnds = true;
+	protected final static boolean m_TraceHistogrammBailout = true;
 
 	protected HoareAnnotationFragments m_Haf;
 
@@ -232,9 +234,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(m_Counterexample.getWord());
 			}
+			HistogramOfIterable<CodeBlock> traceHistogram = new HistogramOfIterable<CodeBlock>(m_Counterexample.getWord());
 			if (mLogger.isInfoEnabled()) {
-				mLogger.info("trace histogram "
-						+ new HistogramOfIterable<CodeBlock>(m_Counterexample.getWord()));
+				mLogger.info("trace histogram "	+ traceHistogram.toString());
+			}
+			if (m_TraceHistogrammBailout && traceHistogram.getVisualizationArray()[0] > traceHistogram.getVisualizationArray().length) {
+				throw new ToolchainCanceledException(getClass(), "bail out with trace histogram " + traceHistogram.toString());
 			}
 			// s_Logger.info("Cutpoints: " + m_RunAnalyzer.getCutpoints());
 			// s_Logger.debug(m_RunAnalyzer.getOccurence());
