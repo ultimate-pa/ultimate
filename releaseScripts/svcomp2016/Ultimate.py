@@ -123,7 +123,7 @@ def runUltimate(ultimateCall, terminationMode):
             if (line.find(memMemtrackUltimateString) != -1):
                 memResult = 'valid-memtrack'
             if(line.find(overflowString) != -1):
-                safetyResult = 'FALSE(overflow)'
+                safetyResult = 'FALSE(OVERFLOW)'
             if (line.find(errorPathBeginString) != -1):
                 readingErrorPath = True
             if (readingErrorPath and line.strip() == ''):
