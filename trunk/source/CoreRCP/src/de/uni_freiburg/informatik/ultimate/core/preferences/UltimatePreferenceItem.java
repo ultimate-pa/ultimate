@@ -26,18 +26,20 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.preferences;
 
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
+
 /**
  * An UltimatePReferenceItem describes exactly one setting of a preference.
  * Based on its {@link PreferenceType}, the active {@link IController} will
  * present it to users for modification.
  * 
- * @author dietsch
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  * @param <T>
  *            The type of the preference. Usually a primitive, an enum, or
  *            something that can be easily constructed from a String.
  */
-public class UltimatePreferenceItem<T> {
+public final class UltimatePreferenceItem<T> {
 
 	/**
 	 * PreferenceType describes, how a preference item should be presented to
@@ -113,39 +115,48 @@ public class UltimatePreferenceItem<T> {
 		Color
 	}
 
-	private String mLabel;
-	private T mDefaultValue;
-	private PreferenceType mType;
-	private T[] mChoices;
-	private boolean mUseCustomPreferencePage;
-	private IUltimatePreferenceItemValidator<T> mPreferenceValidator;
+	private final String mLabel;
+	private final T mDefaultValue;
+	private final PreferenceType mType;
+	private final T[] mChoices;
+	private final boolean mUseCustomPreferencePage;
+	private final IUltimatePreferenceItemValidator<T> mPreferenceValidator;
+	private final String mToolTip;
 
-	public UltimatePreferenceItem(String label, T defaultValue, PreferenceType type) {
-		this(label, defaultValue, type, false, null, null);
+	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type) {
+		this(label, defaultValue, type, null, false, null, null);
 	}
 
-	public UltimatePreferenceItem(String label, T defaultValue, PreferenceType type, T[] choices,
-			IUltimatePreferenceItemValidator<T> preferenceValidator) {
-		this(label, defaultValue, type, false, choices, preferenceValidator);
+	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type,
+			final T[] choices, IUltimatePreferenceItemValidator<T> preferenceValidator) {
+		this(label, defaultValue, type, null, false, choices, preferenceValidator);
 	}
 
-	public UltimatePreferenceItem(String label, T defaultValue, PreferenceType type, T[] choices) {
-		this(label, defaultValue, type, false, choices, null);
+	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type,
+			final T[] choices) {
+		this(label, defaultValue, type, null, false, choices, null);
 	}
 
-	public UltimatePreferenceItem(String label, T defaultValue, PreferenceType type,
-			IUltimatePreferenceItemValidator<T> preferenceValidator) {
-		this(label, defaultValue, type, false, null, preferenceValidator);
+	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type,
+			final IUltimatePreferenceItemValidator<T> preferenceValidator) {
+		this(label, defaultValue, type, null, false, null, preferenceValidator);
 	}
 
-	public UltimatePreferenceItem(String label, T defaultValue, PreferenceType type, boolean useCustomPreferencePage,
-			T[] choices, IUltimatePreferenceItemValidator<T> preferenceValidator) {
+	public UltimatePreferenceItem(final String label, final T defaultValue, final String tooltip,
+			final PreferenceType type) {
+		this(label, defaultValue, type, tooltip, false, null, null);
+	}
+
+	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type,
+			final String tooltip, final boolean useCustomPreferencePage, final T[] choices,
+			final IUltimatePreferenceItemValidator<T> preferenceValidator) {
 		mLabel = label;
 		mDefaultValue = defaultValue;
 		mType = type;
 		mChoices = choices;
 		mUseCustomPreferencePage = useCustomPreferencePage;
 		mPreferenceValidator = preferenceValidator;
+		mToolTip = tooltip;
 
 		if (mType == PreferenceType.Radio || mType == PreferenceType.Combo) {
 			if (mChoices == null) {
@@ -159,44 +170,24 @@ public class UltimatePreferenceItem<T> {
 		return mLabel;
 	}
 
-	public void setLabel(String label) {
-		mLabel = label;
-	}
-
 	public T getDefaultValue() {
 		return mDefaultValue;
-	}
-
-	public void setDefaultValue(T defaultValue) {
-		mDefaultValue = defaultValue;
 	}
 
 	public PreferenceType getType() {
 		return mType;
 	}
 
-	public void setType(PreferenceType type) {
-		mType = type;
-	}
-
 	public boolean getUseCustomPreferencePage() {
 		return mUseCustomPreferencePage;
-	}
-
-	public void setUseCustomPreferencePage(boolean useCustomPreferencePage) {
-		mUseCustomPreferencePage = useCustomPreferencePage;
 	}
 
 	public T[] getChoices() {
 		return mChoices;
 	}
 
-	public void setChoices(T[] choices) {
-		mChoices = choices;
-	}
-
 	public String[][] getComboFieldEntries() {
-		String[][] rtr = new String[mChoices.length][2];
+		final String[][] rtr = new String[mChoices.length][2];
 
 		for (int i = 0; i < mChoices.length; ++i) {
 			rtr[i][0] = mChoices[i].toString();
@@ -204,7 +195,11 @@ public class UltimatePreferenceItem<T> {
 		}
 		return rtr;
 	}
-	
+
+	public String getToolTip() {
+		return mToolTip;
+	}
+
 	@Override
 	public String toString() {
 		return "Pref: " + mLabel + " Type=" + mType + ", Default=" + mDefaultValue;
@@ -214,10 +209,6 @@ public class UltimatePreferenceItem<T> {
 		return mPreferenceValidator;
 	}
 
-	public void setPreferenceValidator(IUltimatePreferenceItemValidator<T> preferenceValidator) {
-		mPreferenceValidator = preferenceValidator;
-	}
-
 	public interface IUltimatePreferenceItemValidator<T> {
 		public boolean isValid(T value);
 
@@ -225,8 +216,8 @@ public class UltimatePreferenceItem<T> {
 
 		public class IntegerValidator implements IUltimatePreferenceItemValidator<Integer> {
 
-			private int mMin;
-			private int mMax;
+			private final int mMin;
+			private final int mMax;
 
 			public IntegerValidator(int min, int max) {
 				mMin = min;
@@ -242,8 +233,6 @@ public class UltimatePreferenceItem<T> {
 			public String getInvalidValueErrorMessage(Integer value) {
 				return "Valid range is " + mMin + " <= value <= " + mMax;
 			}
-
 		}
 	}
-
 }

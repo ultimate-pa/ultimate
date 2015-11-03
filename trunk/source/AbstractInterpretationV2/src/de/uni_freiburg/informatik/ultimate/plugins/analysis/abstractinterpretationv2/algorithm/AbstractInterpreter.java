@@ -98,9 +98,22 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 	}
 
 	// TODO: Recursion
-	// TODO: Refactoring (not one process method)
-
 	public void process(Collection<ACTION> initialElements) {
+		boolean errorReached = false;
+
+		final Collection<ACTION> filteredInitialElements = mTransitionProvider.filterInitialElements(initialElements);
+		for (final ACTION elem : filteredInitialElements) {
+			if (process(elem)) {
+				errorReached = true;
+			}
+		}
+
+		if (!errorReached) {
+			mReporter.reportSafe();
+		}
+	}
+
+	private boolean process(final ACTION start) {
 		final Deque<WorklistItem<ACTION, VARDECL>> worklist = new ArrayDeque<WorklistItem<ACTION, VARDECL>>();
 		final Deque<Pair<ACTION, ACTION>> activeLoops = new ArrayDeque<>();
 		final Map<Pair<ACTION, ACTION>, Integer> loopCounters = new HashMap<>();
@@ -109,9 +122,7 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 		final Set<ACTION> reachedErrors = new HashSet<>();
 
 		boolean errorReached = false;
-
-		// add the initial state
-		final ACTION arbitraryStartElement = addInitialWorklistItems(initialElements, worklist);
+		worklist.add(createWorklistItem(start));
 
 		while (!worklist.isEmpty()) {
 			checkTimeout();
@@ -130,8 +141,8 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 			// calculate the (abstract) effect of the current action by first
 			// declaring variables in the prestate, and then calculating their
 			// values
-			final IAbstractState<ACTION, VARDECL> preStateWithFreshVariables = mVarProvider.defineVariablesPost(
-					current, preState);
+			final IAbstractState<ACTION, VARDECL> preStateWithFreshVariables = mVarProvider.defineVariablesPost(current,
+					preState);
 			IAbstractState<ACTION, VARDECL> newPostState = post.apply(preStateWithFreshVariables, current);
 
 			// check if this action leaves a loop
@@ -148,8 +159,8 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 				// execute the action (i.e., we do not enter loops, do not add
 				// new actions to the worklist, etc.)
 				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(new StringBuilder().append(INDENT).append(
-							" Skipping all successors because post is bottom"));
+					mLogger.debug(new StringBuilder().append(INDENT)
+							.append(" Skipping all successors because post is bottom"));
 				}
 				continue;
 			}
@@ -178,14 +189,14 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 					mLogger.debug(new StringBuilder().append(INDENT).append(" Error state reached"));
 				}
 				errorReached = true;
-				mReporter.reportPossibleError(arbitraryStartElement, current);
+				mReporter.reportPossibleError(start, current);
 			}
 
 			if (newPostState.isFixpoint() && preState.isFixpoint()) {
 				// if our post state is a fixpoint, we do not add successors
 				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(new StringBuilder().append(INDENT).append(
-							" Skipping successors because pre and post states are fixpoints"));
+					mLogger.debug(new StringBuilder().append(INDENT)
+							.append(" Skipping successors because pre and post states are fixpoints"));
 				}
 				continue;
 			}
@@ -193,10 +204,7 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 			// now add successors
 			addSuccessors(worklist, currentItem);
 		}
-
-		if (!errorReached) {
-			mReporter.reportSafe(arbitraryStartElement);
-		}
+		return errorReached;
 	}
 
 	private void loopEnter(final Deque<Pair<ACTION, ACTION>> activeLoops,
@@ -234,25 +242,16 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 		return pendingPostState;
 	}
 
-	private ACTION addInitialWorklistItems(Collection<ACTION> initialElements,
-			final Deque<WorklistItem<ACTION, VARDECL>> worklist) {
-		final Collection<ACTION> filteredInitialElements = mTransitionProvider.filterInitialElements(initialElements);
-		for (final ACTION elem : filteredInitialElements) {
-			final ACTION successor = elem;
-			final WorklistItem<ACTION, VARDECL> startItem = new WorklistItem<ACTION, VARDECL>(
-					getCurrentAbstractPreState(elem, mStateStorage), successor, mStateStorage);
-			if (mTransitionProvider.isEnteringScope(elem)) {
-				startItem.addScope(elem);
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(new StringBuilder().append(INDENT).append(" Entering (initial) scope"));
-				}
+	private WorklistItem<ACTION, VARDECL> createWorklistItem(final ACTION elem) {
+		final WorklistItem<ACTION, VARDECL> startItem = new WorklistItem<ACTION, VARDECL>(
+				getCurrentAbstractPreState(elem, mStateStorage), elem, mStateStorage);
+		if (mTransitionProvider.isEnteringScope(elem)) {
+			startItem.addScope(elem);
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(new StringBuilder().append(INDENT).append(" Entering (initial) scope"));
 			}
-			worklist.add(startItem);
 		}
-
-		// TODO: We should think about reducing this to really distinct start
-		// elements; for now, we just pick one
-		return filteredInitialElements.iterator().next();
+		return startItem;
 	}
 
 	private IAbstractState<ACTION, VARDECL> applyWidening(final IAbstractStateBinaryOperator<ACTION, VARDECL> widening,
@@ -320,24 +319,24 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 		if (mTransitionProvider.isEnteringScope(successor)) {
 			successorItem.addScope(successor);
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(new StringBuilder().append(INDENT).append(INDENT)
-						.append(" Successor enters scope (new depth=").append(successorItem.getCallStackDepth())
-						.append(")"));
+				mLogger.debug(
+						new StringBuilder().append(INDENT).append(INDENT).append(" Successor enters scope (new depth=")
+								.append(successorItem.getCallStackDepth()).append(")"));
 			}
 		} else if (mTransitionProvider.isLeavingScope(successor, currentItem.getCurrentScope())) {
 			successorItem.removeCurrentScope();
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(new StringBuilder().append(INDENT).append(INDENT)
-						.append(" Successor leaves scope (new depth=").append(successorItem.getCallStackDepth())
-						.append(")"));
+				mLogger.debug(
+						new StringBuilder().append(INDENT).append(INDENT).append(" Successor leaves scope (new depth=")
+								.append(successorItem.getCallStackDepth()).append(")"));
 			}
 		}
 	}
 
 	private IAbstractState<ACTION, VARDECL> setFixpoint(Deque<WorklistItem<ACTION, VARDECL>> worklist,
 			final WorklistItem<ACTION, VARDECL> currentItem, IAbstractState<ACTION, VARDECL> oldPostState) {
-		final IAbstractState<ACTION, VARDECL> newPostState = currentItem.getCurrentStorage().setPostStateIsFixpoint(
-				currentItem.getAction(), oldPostState, true);
+		final IAbstractState<ACTION, VARDECL> newPostState = currentItem.getCurrentStorage()
+				.setPostStateIsFixpoint(currentItem.getAction(), oldPostState, true);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(getLogMessageFixpointFound(oldPostState, newPostState));
 		}
@@ -410,8 +409,9 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 
 	private StringBuilder getLogMessageCurrentTransition(final IAbstractState<ACTION, VARDECL> preState,
 			final ACTION current) {
-		final String preStateString = preState == null ? "NULL" : addHashCodeString(new StringBuilder(), preState)
-				.append(" ").append(preState.toLogString()).toString();
+		final String preStateString = preState == null ? "NULL"
+				: addHashCodeString(new StringBuilder(), preState).append(" ").append(preState.toLogString())
+						.toString();
 		return addHashCodeString(new StringBuilder(), current).append(" ")
 				.append(mTransitionProvider.toLogString(current)).append(" processing for pre state ")
 				.append(preStateString);

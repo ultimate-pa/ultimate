@@ -54,8 +54,8 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
 //			new Triple<>("AbstractInterpretationMk2CInline.xml", ALL_C, "ai/AI2_INT.epf"),
-			new Triple<>("AbstractInterpretationMk2C.xml", ALL_C, "ai/AI2_INT.epf"),
-			new Triple<>("AbstractInterpretationMk2.xml", BPL, "ai/AI2_INT.epf"),
+//			new Triple<>("AbstractInterpretationMk2C.xml", ALL_C, "ai/AI2_INT.epf"),
+//			new Triple<>("AbstractInterpretationMk2.xml", BPL, "ai/AI2_INT.epf"),
 			
 //			new Triple<>("AbstractInterpretationMk2CInline.xml", ALL_C, "ai/AI2_PLT.epf"),
 //			new Triple<>("AbstractInterpretationMk2C.xml", ALL_C, "ai/AI2_PLT.epf"),
@@ -68,6 +68,9 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 //			new Triple<>("AbstractInterpretationv2CInline.xml", ALL_C, "ai/AIv2_INT.epf"),
 			new Triple<>("AbstractInterpretationv2C.xml", ALL_C, "ai/AIv2_INT.epf"),
 			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/AIv2_INT.epf"),
+
+//			new Triple<>("AbstractInterpretationC.xml", ALL_C, "ai/AI.epf"),
+//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/AI.epf"),
 			
 //			new Triple<>("AutomizerCInline.xml", ".c", "EmptySettings.epf"),
 //			new Triple<>("AutomizerC.xml", ".c", "EmptySettings.epf"),
@@ -77,36 +80,31 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 
 
 	private static final String[] INPUT = new String[] {
-
+			/* ULTIMATE repo */
 			// "examples/programs/abstractInterpretation/",
 			// "examples/programs/abstractInterpretationNoRec/",
-			/* ULTIMATE repo */
 			 "examples/programs/regression/bpl/",
 			 "examples/programs/regression/c/",
 			// "examples/programs/recursivePrograms",
-			/* SV-COMP repo */
-			"examples/svcomp/loops/", // SPLIT
+			
+			 /* SV-COMP repo */
+			"examples/svcomp/loops/", 
 			// "examples/svcomp/loopsSelection/",
-			// "examples/svcomp/eca/", // SPLIT
+			// "examples/svcomp/eca/", 
 			// "examples/svcomp/ecaSelection/",
-			// "examples/svcomp/systemc/", // SPLIT
+			// "examples/svcomp/systemc/", 
 			// "examples/svcomp/systemc1/",
 			// "examples/svcomp/systemc2/",
 			// "examples/svcomp/eca-rers2012/",
-//			 "examples/svcomp/recursive/",
+			// "examples/svcomp/recursive/",
 			 "examples/svcomp/ssh-simplified/",
 			 "examples/svcomp/ntdrivers-simplified/",
 			// "examples/svcomp/ssh/",
-
-			// problems with loop detector
-			// "examples/svcomp/loops/eureka_01_false-unreach-call.c",
-			// "examples/svcomp/loops/matrix_false-unreach-call_true-termination.c",
-
-			// unsoundness
-//			 "examples/svcomp/loops/count_up_down_false-unreach-call_true-termination.c",
-			// problems with unsupportedops
-			// "examples/svcomp/loops/sum01_true-unreach-call_true-termination.c",
-			// "examples/svcomp/loops/string_false-unreach-call.c",
+			 
+			 //single files 
+//			 "examples/programs/regression/c/NondeterministicLocalVarInitialValues.c",
+//			 "examples/programs/regression/c/Enums03-Unsafe.c",
+//			 "examples/svcomp/loops/bubble_sort_true-unreach-call.c",
 	};
 
 	// @formatter:on

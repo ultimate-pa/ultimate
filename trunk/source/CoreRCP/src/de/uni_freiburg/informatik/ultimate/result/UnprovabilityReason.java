@@ -24,36 +24,38 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.result;
 
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 /**
  * Objects of this class represent one reason why we were not able to prove
- * something. Such a reason is given as a String (its description) and 
+ * something. Such a reason is given as a String (its description) and
  * optionally a {@link ILocation}.
- * @author Matthias Heizmann
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public class UnprovabilityReason {
-	final String m_StringRepresentation;
-	final ILocation m_Location;
-	
-	public UnprovabilityReason(String mStringRepresentation, ILocation mLocation) {
-		super();
-		this.m_StringRepresentation = mStringRepresentation;
-		this.m_Location = mLocation;
+	private final String mDescription;
+	private final ILocation mLocation;
+
+	public UnprovabilityReason(String description) {
+		this(description, null);
+	}
+
+	public UnprovabilityReason(final String description, final ILocation location) {
+		mDescription = description;
+		mLocation = location;
 	}
 
 	@Override
 	public String toString() {
-		if (m_Location == null) {
-			return m_StringRepresentation;
+		if (mLocation == null) {
+			return mDescription;
 		} else {
-			return m_StringRepresentation + " at line " + m_Location.getStartLine();
+			return mDescription + " at line " + mLocation.getStartLine();
 		}
 	}
-	
-	
-	
 }

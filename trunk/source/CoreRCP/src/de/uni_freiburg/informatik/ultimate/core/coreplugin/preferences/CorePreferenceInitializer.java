@@ -90,7 +90,7 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 						PreferenceType.String, null, new LogLevelValidator()),
 				new UltimatePreferenceItem<String>(LABEL_TOOLS_PREF, DEFAULT_VALUE_TOOLS_PREF, PreferenceType.String,
 						null, new LogLevelValidator()),
-				new UltimatePreferenceItem<String>(PREFID_DETAILS, "", PreferenceType.String, true, null, null),
+				new UltimatePreferenceItem<String>(PREFID_DETAILS, "", PreferenceType.String, null, true, null, null),
 
 				// Log colours
 				new UltimatePreferenceItem<String>(LABEL_COLOR_DEBUG, DEFAULT_VALUE_COLOR_DEBUG, PreferenceType.Color),

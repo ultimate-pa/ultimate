@@ -207,8 +207,8 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 
 		mResultingStates = new ArrayList<StackState>();
 
-		assert(mCurrentStates.size() == 1); // must start with exactly one
-											// state
+		assert (mCurrentStates.size() == 1); // must start with exactly one
+												// state
 		mResultingStates.add(mCurrentStates.get(0).incrementTop());
 
 		// add a root stack element
@@ -696,7 +696,6 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 			mLogger.warn(String.format("Parameters of not found."));
 			return false;
 		}
-
 		int nofVariables = arguments == null ? lhsVariables.length : arguments.length;
 
 		int currentExpression = 0;

@@ -89,7 +89,8 @@ public class CommentParser {
 	 *            Map with line ranges of functions. Can be determined with
 	 *            FunctionLineVisitor.
 	 */
-	public CommentParser(IASTComment[] comments, HashMap<Integer, Integer> lineRange, Logger logger, Dispatcher dispatch) {
+	public CommentParser(IASTComment[] comments, HashMap<Integer, Integer> lineRange, Logger logger,
+			Dispatcher dispatch) {
 		this.commentList = comments;
 		this.functionLineRange = lineRange;
 		this.pattern = Pattern.compile(ACSL_PATTERN, Pattern.DOTALL);
@@ -129,13 +130,15 @@ public class CommentParser {
 				try {
 					ACSLNode acslNode;
 					try {
-						acslNode = Parser.parseComment(input.toString(), comment.getFileLocation()
-								.getStartingLineNumber(), comment.getFileLocation().getEndingLineNumber(), mLogger);
+						acslNode = Parser.parseComment(input.toString(),
+								comment.getFileLocation().getStartingLineNumber(),
+								comment.getFileLocation().getEndingLineNumber(), mLogger);
 					} catch (ExceptionInInitializerError e) { // ignore
 					} catch (NoClassDefFoundError e) { // ignore
 					} finally {
-						acslNode = Parser.parseComment(input.toString(), comment.getFileLocation()
-								.getStartingLineNumber(), comment.getFileLocation().getEndingLineNumber());
+						acslNode = Parser.parseComment(input.toString(),
+								comment.getFileLocation().getStartingLineNumber(),
+								comment.getFileLocation().getEndingLineNumber(), mLogger);
 					}
 					if (acslNode != null) {
 						acslNode.setFileName(comment.getContainingFilename());

@@ -31,6 +31,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
@@ -68,12 +70,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  */
 public class AbstractInterpretationRcfgObserver extends BaseObserver {
 
+	private static final String ULTIMATE_START = "ULTIMATE.start";
 	private final IUltimateServiceProvider mServices;
 	private final RCFGLoopDetector mLoopDetector;
+	private final Logger mLogger;
 
 	public AbstractInterpretationRcfgObserver(IUltimateServiceProvider services, RCFGLoopDetector loopDetector) {
 		mServices = services;
 		mLoopDetector = loopDetector;
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override
@@ -93,14 +98,14 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 
 		final List<CodeBlock> initial = getInitialEdges(root);
 		if (initial == null) {
-			throw new IllegalArgumentException("Could not find initial edge");
+			throw new IllegalArgumentException("Could not find an initial edge");
 		}
 
 		final Boogie2SmtSymbolTable boogieVarTable = root.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable();
 
 		final IAbstractDomain<?, CodeBlock, BoogieVar> domain = selectDomain(symbolTable);
 		final AbstractInterpreter<CodeBlock, BoogieVar> interpreter = createAbstractInterpreter(domain, symbolTable,
-		        boogieVarTable);
+				boogieVarTable);
 		interpreter.process(initial);
 		return false;
 	}
@@ -125,39 +130,49 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 			return new IntervalDomain(mServices, symbolTable);
 		}
 		throw new UnsupportedOperationException("The value \"" + selectedDomain + "\" of preference \""
-		        + AbstractInterpretationPreferenceInitializer.LABEL_ABSTRACT_DOMAIN + "\" was not considered before! ");
+				+ AbstractInterpretationPreferenceInitializer.LABEL_ABSTRACT_DOMAIN + "\" was not considered before! ");
 	}
 
-	private List<CodeBlock> getInitialEdges(RootNode root) {
+	private List<CodeBlock> getInitialEdges(final RootNode root) {
 		for (final RCFGEdge initialEdge : root.getOutgoingEdges()) {
 			final ProgramPoint initialNode = (ProgramPoint) initialEdge.getTarget();
-			if (initialNode.getProcedure().equals("ULTIMATE.start")) {
-				List<RCFGEdge> edges = initialNode.getOutgoingEdges();
-				List<CodeBlock> codeblocks = new ArrayList<CodeBlock>(edges.size());
-				for (RCFGEdge edge : edges) {
+			if (initialNode.getProcedure().equals(ULTIMATE_START)) {
+				final List<RCFGEdge> edges = initialNode.getOutgoingEdges();
+				final List<CodeBlock> codeblocks = new ArrayList<CodeBlock>(edges.size());
+				for (final RCFGEdge edge : edges) {
 					codeblocks.add((CodeBlock) edge);
 				}
+				mLogger.info("Found entry method " + ULTIMATE_START);
 				return codeblocks;
 			}
 		}
-		return null;
+		mLogger.info("Did not find entry method " + ULTIMATE_START + ", using library mode");
+		final List<CodeBlock> codeblocks = new ArrayList<CodeBlock>();
+		for (final RCFGEdge initialEdge : root.getOutgoingEdges()) {
+			final ProgramPoint initialNode = (ProgramPoint) initialEdge.getTarget();
+			final List<RCFGEdge> edges = initialNode.getOutgoingEdges();
+			for (final RCFGEdge edge : edges) {
+				codeblocks.add((CodeBlock) edge);
+			}
+		}
+		return codeblocks;
 	}
 
 	private AbstractInterpreter<CodeBlock, BoogieVar> createAbstractInterpreter(
-	        IAbstractDomain<?, CodeBlock, BoogieVar> domain, BoogieSymbolTable table,
-	        Boogie2SmtSymbolTable boogieVarTable) {
+			IAbstractDomain<?, CodeBlock, BoogieVar> domain, BoogieSymbolTable table,
+			Boogie2SmtSymbolTable boogieVarTable) {
 		assert domain != null;
 		assert table != null;
 		assert boogieVarTable != null;
 
 		ITransitionProvider<CodeBlock> transitionProvider = new RcfgTransitionProvider();
 		BaseRcfgAbstractStateStorageProvider storage = new AnnotatingRcfgAbstractStateStorageProvider(
-		        domain.getMergeOperator(), mServices);
+				domain.getMergeOperator(), mServices);
 		IVariableProvider<CodeBlock, BoogieVar> varProvider = new RcfgVariableProvider(table, boogieVarTable);
 		ILoopDetector<CodeBlock> loopDetector = new RcfgLoopDetector(mLoopDetector);
 		IResultReporter<CodeBlock> reporter = new RcfgResultReporter(mServices, storage);
 		return new AbstractInterpreter<CodeBlock, BoogieVar>(mServices, transitionProvider, storage, domain,
-		        varProvider, loopDetector, reporter);
+				varProvider, loopDetector, reporter);
 	}
 
 }

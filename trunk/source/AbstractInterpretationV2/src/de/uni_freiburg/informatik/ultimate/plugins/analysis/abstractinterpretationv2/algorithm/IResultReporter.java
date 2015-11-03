@@ -40,5 +40,5 @@ public interface IResultReporter<ACTION> {
 	
 	void reportPossibleError(ACTION start, ACTION end);
 
-	void reportSafe(ACTION start);
+	void reportSafe();
 }

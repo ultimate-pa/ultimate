@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -10,9 +12,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 public class AbstractInterpretationObserver implements IUnmanagedObserver {
 
 	private final IUltimateServiceProvider mServices;
+	private final Logger mLogger;
 
 	public AbstractInterpretationObserver(IUltimateServiceProvider services) {
 		mServices = services;
+		mLogger = services.getLoggingService().getLogger(AIActivator.PLUGIN_ID);
 	}
 
 	@Override
@@ -38,8 +42,14 @@ public class AbstractInterpretationObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(IElement root) throws Throwable {
 		if (root instanceof RootNode) {
-			AbstractInterpreter abstractInterpreter = new AbstractInterpreter(mServices);
-			abstractInterpreter.processRcfg((RootNode) root);
+			final AbstractInterpreter abstractInterpreter = new AbstractInterpreter(mServices);
+			try {
+				abstractInterpreter.processRcfg((RootNode) root);
+			} catch (OutOfMemoryError oom) {
+				throw oom;
+			} catch (Throwable t) {
+				mLogger.fatal("Exception during AIMK2 run: " + t.getMessage());
+			}
 			return false;
 		}
 		return true;

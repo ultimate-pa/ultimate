@@ -24,6 +24,7 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
 
 import java.util.Map;
@@ -132,13 +133,15 @@ public class RcfgVariableProvider implements IVariableProvider<CodeBlock, Boogie
 		if (procedure != null) {
 			final Map<String, Declaration> locals = mSymbolTable.getLocalVariables(procedure);
 			for (final Entry<String, Declaration> local : locals.entrySet()) {
-				state = state.addVariable(local.getKey(), getLocalVariable(local.getKey(), procedure));
+				final BoogieVar localVar = getLocalVariable(local.getKey(), procedure);
+				assert localVar != null;
+				state = state.addVariable(local.getKey(), localVar);
 			}
 		}
 		return state;
 	}
 
-	private BoogieVar getLocalVariable(String key, String procedure) {
+	private BoogieVar getLocalVariable(final String key, final String procedure) {
 		for (final StorageClass storageClass : LOCAL_STORAGE_CLASSES) {
 			final BoogieVar var = getLocalVariable(key, procedure, storageClass);
 			if (var != null) {
