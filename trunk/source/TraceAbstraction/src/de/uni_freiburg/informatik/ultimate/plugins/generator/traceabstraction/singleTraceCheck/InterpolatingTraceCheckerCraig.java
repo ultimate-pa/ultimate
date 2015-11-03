@@ -180,7 +180,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 		if (m_Interpolants != null) {
 			throw new AssertionError("You already computed interpolants");
 		}
-		NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(m_SmtManager, m_AAA.getAnnotatedSsa(),
+		NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(m_TcSmtManager, m_AAA.getAnnotatedSsa(),
 				m_Nsb.getConstants2BoogieVar(), m_PredicateUnifier, interpolatedPositions, true, mLogger, this, m_SmtManager);
 		m_Interpolants = nib.getNestedInterpolants();
 		assert !inductivityOfSequenceCanBeRefuted();

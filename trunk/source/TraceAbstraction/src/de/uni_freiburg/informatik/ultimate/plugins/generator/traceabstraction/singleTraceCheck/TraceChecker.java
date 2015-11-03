@@ -48,6 +48,8 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -419,7 +421,7 @@ public class TraceChecker {
 	 */
 	protected LBool checkTrace() {
 		LBool isSafe;
-		m_SmtManager.startTraceCheck(this);
+		m_TcSmtManager.startTraceCheck(this);
 		boolean transferToDifferentScript = (m_TcSmtManager != m_SmtManager);
 		m_TraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_SsaConstruction);
 		m_Nsb = new NestedSsaBuilder(m_Trace, m_TcSmtManager, m_NestedFormulas,
@@ -484,7 +486,7 @@ public class TraceChecker {
 				TraceChecker tc = new TraceChecker(m_NestedFormulas.getPrecondition(),
 						m_NestedFormulas.getPostcondition(), m_PendingContexts,
 						m_NestedFormulas.getTrace(), m_SmtManager, m_ModifiedGlobals, withBE,
-						AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, true);
+						AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, true, m_TcSmtManager);
 				if (tc.getToolchainCancelledExpection() != null) {
 					throw tc.getToolchainCancelledExpection();
 				}
@@ -545,6 +547,9 @@ public class TraceChecker {
 				for (Integer index : nsb.getIndexedVarRepresentative().get(bv).keySet()) {
 					Term indexedVar = nsb.getIndexedVarRepresentative().get(bv).get(index);
 					Term valueT = getValue(indexedVar);
+					if (m_SmtManager != m_TcSmtManager) {
+						valueT = new TermTransferrer(m_SmtManager.getScript()).transform(valueT);
+					}
 					Expression valueE = m_SmtManager.getBoogie2Smt().getTerm2Expression().translate(valueT);
 					rpeb.addValueAtVarAssignmentPosition(bv, index, valueE);
 				}
@@ -563,19 +568,17 @@ public class TraceChecker {
 
 	private Term getValue(Term term) {
 		Term[] arr = { term };
-		Map<Term, Term> map = m_SmtManager.getScript().getValue(arr);
+		Map<Term, Term> map = m_TcSmtManager.getScript().getValue(arr);
 		Term value = map.get(term);
 		return value;
 	}
 
 	private Boolean getBooleanValue(Term term) {
 		Boolean result;
-		Term trueTerm = m_SmtManager.getScript().term("true");
-		if (term.equals(trueTerm)) {
+		if (SmtUtils.isTrue(term)) {
 			result = true;
 		} else {
-			Term falseTerm = m_SmtManager.getScript().term("false");
-			if (term.equals(falseTerm)) {
+			if (SmtUtils.isFalse(term)) {
 				result = false;
 			} else {
 				throw new AssertionError();
@@ -612,7 +615,7 @@ public class TraceChecker {
 	}
 
 	protected void unlockSmtManager() {
-		m_SmtManager.endTraceCheck(this);
+		m_TcSmtManager.endTraceCheck(this);
 	}
 
 
