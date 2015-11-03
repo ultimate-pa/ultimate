@@ -328,7 +328,20 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 					}
 				}
 			} else { //local declaration
-				//if we use a globally defined type, this introduces a dependency 
+				/*
+				 * if we use a globally defined type, this introduces a dependency 
+				 * for example in the program
+				 * ----
+				 * typedef int _int;
+				 * struct s {
+				 *  _int i; 
+				 * };
+				 * ---- 
+				 * this code section will introduce a dependency
+				 * struct s {...}; --> typedef int _int;
+				 * 
+				 * when we visit the declaration _int i;
+				 */
 				if (declSpec instanceof IASTElaboratedTypeSpecifier) {//i.e. sth like struct/union/enum typename varname
 					IASTElaboratedTypeSpecifier elts = (IASTElaboratedTypeSpecifier) declSpec;
 					String name = getKindStringFromCompositeOrElaboratedTS(elts) + elts.getName().toString();
@@ -338,8 +351,6 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 					} else { //.. or it may reference a global declaration that we haven't seen yet (this may overapproximate, as we declare shadowed decls reachable, right?? //TODO: not entirely clear..
 						dependencyGraphPreliminaryInverse.put(name, currentFunOrStructOrEnumDefOrInitializer.peek());
 					}
-
-
 				} else if (declSpec instanceof IASTNamedTypeSpecifier) {
 					IASTNamedTypeSpecifier nts = (IASTNamedTypeSpecifier) declSpec;
 					String name = nts.getName().toString();
@@ -349,7 +360,10 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 					} else { //.. or it may reference a global declaration that we haven't seen yet (this may overapproximate, as we declare shadowed decls reachable, right?? //TODO: not entirely clear..
 						dependencyGraphPreliminaryInverse.put(name, currentFunOrStructOrEnumDefOrInitializer.peek());
 					}
-				} 
+				} else if (declSpec instanceof IASTCompositeTypeSpecifier) {
+					// declaration is no global declaration but it may contain declarations that are global..
+					addDependency(currentFunOrStructOrEnumDefOrInitializer.peek(), declaration);
+				}
 			}
 			/////////////////////////////
 			//global or local
