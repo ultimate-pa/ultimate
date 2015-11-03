@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggreg
 import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimatetest.summaries.KingOfTheHillSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.LatexOverviewSummary;
+import de.uni_freiburg.informatik.ultimatetest.summaries.StandingsSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.TraceAbstractionTestSummary;
 
 public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelCheckerTestSuite {
@@ -117,6 +118,7 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 //				new CsvSummary(getClass(), benchmarks, columnDef),
 //				new HTMLSummary(getClass(), benchmarks, columnDef),
 				new KingOfTheHillSummary(this.getClass()),
+				new StandingsSummary(this.getClass()),
 		};
 	}
 
