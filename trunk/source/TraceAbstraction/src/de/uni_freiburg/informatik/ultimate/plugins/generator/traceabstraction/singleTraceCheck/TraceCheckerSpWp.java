@@ -726,10 +726,11 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 						m_InterpolantsWp[i] = m_PredicateUnifier.getOrConstructPredicate(wp.getFormula(), wp.getVars(),
 								wp.getProcedures());
 					} else {
+						String procName = ((Call) trace.getSymbol(i + 1)).getCallStatement().getMethodName();
 						wp = m_PredicateTransformer.weakestPrecondition(
 								getBackwardPredicateAtPosition(i + 1, tracePostcondition, true),
 								rv.getLocalVarAssignment(i + 1), rv.getGlobalVarAssignment(i + 1),
-								rv.getOldVarAssignment(i + 1), true);
+								rv.getOldVarAssignment(i + 1), m_ModifiedGlobals.getModifiedBoogieVars(procName));
 						m_InterpolantsWp[i] = m_PredicateUnifier.getOrConstructPredicate(wp.getFormula(), wp.getVars(),
 								wp.getProcedures());
 
