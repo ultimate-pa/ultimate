@@ -59,11 +59,29 @@ public class Svcomp2016_Memsafety extends AbstractTraceAbstractionTestSuite {
 	
 	
 	private static final String[] m_CurrentBugs_Deref = {
-//			"examples/svcomp/array-memsafety/openbsd_cbzero-alloca_true-valid-memsafety.i"
 		};
 	
 	private static final String[] m_CurrentBugs_DerefFreeMemtrack = {
 //			"examples/svcomp/array-memsafety/openbsd_cbzero-alloca_true-valid-memsafety.i"
+
+			
+//			////////////////////////////////////////////////////////////////
+//			// Soundness problems detected on 2015-11-03
+//			// UNSAFE_FREE (Expected:SAFE)
+//			"svcomp/list-ext-properties/test-0158_1_true-valid-memsafety.i",
+//			
+//			// UNSAFE_DEREF (Expected:UNSAFE_MEMTRACK)
+//			"svcomp/memsafety/20020406-1_false-valid-memtrack.i",
+//			
+//			//UNSAFE_MEMTRACK (Expected:SAFE)
+//			"svcomp/ldv-memsafety/memleaks_test20_true-valid-memsafety.i",
+//			"svcomp/ldv-memsafety/memleaks_test21_true-valid-memsafety.i",
+//			
+//			//UNSAFE_DEREF (Expected:SAFE)
+//			"svcomp/ldv-memsafety/memleaks_test22_1_true-valid-memsafety.i",
+//			"svcomp/ldv-memsafety/memleaks_test22_2_true-valid-memsafety.i",
+//			"svcomp/ldv-memsafety/memleaks_test22_3_true-valid-memsafety.i",
+//			////////////////////////////////////////////////////////////////
 		};
 
 
