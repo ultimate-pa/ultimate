@@ -1000,7 +1000,7 @@ public class PredicateUnifier {
 		}
 		public void incrementDeprecatedPredicates() {
 			m_DeprecatedPredicates++;
-			assert m_DeclaredPredicates == PredicateUnifier.this.m_DeprecatedPredicates.size() 
+			assert m_DeprecatedPredicates == PredicateUnifier.this.m_DeprecatedPredicates.size() 
 					: "number of deprecated predicates inconsistent";
 		}
 		public void incrementImplicationChecksByTransitivity() {
