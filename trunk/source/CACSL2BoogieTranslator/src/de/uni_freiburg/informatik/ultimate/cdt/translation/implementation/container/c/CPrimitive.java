@@ -282,7 +282,7 @@ public class CPrimitive extends CType {
 //                    break;
                 default:
                     throw new IllegalArgumentException(
-                            "Unknown C Decklaration!");
+                            "Unknown C Declaration!");
             }
         } else {
             throw new IllegalArgumentException("Unknown C Declaration!");

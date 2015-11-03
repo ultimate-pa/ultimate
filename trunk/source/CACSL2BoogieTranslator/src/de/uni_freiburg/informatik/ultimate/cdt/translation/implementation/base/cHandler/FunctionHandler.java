@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CompoundStatementExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ContractResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
@@ -335,15 +336,19 @@ public class FunctionHandler {
 		// 1)
 		handleFunctionsInParams(main, loc, memoryHandler, decls, stmts, node);
 		// 2)
-		Body body = ((Body) main.dispatch(node.getBody()).node);
-		stmts.addAll(Arrays.asList(body.getBlock()));
-		for (VariableDeclaration declaration : body.getLocalVars()) {
-			decls.add(declaration);
-		}
+//		Body body = ((Body) main.dispatch(node.getBody()).node);
+//		stmts.addAll(Arrays.asList(body.getBlock()));
+//		for (VariableDeclaration declaration : body.getLocalVars()) {
+//			decls.add(declaration);
+//		}
+		CompoundStatementExpressionResult cser = (CompoundStatementExpressionResult) main.dispatch(node.getBody());
+		stmts.addAll(cser.stmt);
+		decls.addAll(cser.decl);
+
 		// 3) ,4)
 		stmts = ((CHandler) main.cHandler).updateStmtsAndDeclsAtScopeEnd(main, decls, stmts);
 	
-		body = new Body(loc, decls.toArray(new VariableDeclaration[decls.size()]), stmts.toArray(new Statement[stmts
+		Body body = new Body(loc, decls.toArray(new VariableDeclaration[decls.size()]), stmts.toArray(new Statement[stmts
 				.size()]));
 
 		proc = currentProcedure;

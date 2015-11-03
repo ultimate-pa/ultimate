@@ -107,6 +107,7 @@ import org.eclipse.cdt.core.dom.ast.IArrayType;
 import org.eclipse.cdt.core.dom.ast.IBasicType;
 import org.eclipse.cdt.core.dom.ast.IType;
 import org.eclipse.cdt.core.dom.ast.ITypedef;
+import org.eclipse.cdt.core.dom.ast.gnu.IGNUASTCompoundStatementExpression;
 import org.eclipse.cdt.internal.core.dom.parser.IASTAmbiguousExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.IASTAmbiguousCondition;
@@ -338,6 +339,9 @@ public class PRDispatcher extends Dispatcher {
 			}
 			if (n instanceof IASTProblemExpression) {
 				return cHandler.visit(this, (IASTProblemExpression) n);
+			}
+			if (n instanceof IGNUASTCompoundStatementExpression) {
+				return cHandler.visit(this, (IGNUASTCompoundStatementExpression) n);
 			}
 			return cHandler.visit(this, (IASTExpression) n);
 		}

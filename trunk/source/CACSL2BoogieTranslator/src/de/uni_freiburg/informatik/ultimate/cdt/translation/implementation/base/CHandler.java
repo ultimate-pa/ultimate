@@ -40,6 +40,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -47,6 +48,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Stack;
 
+import org.apache.commons.collections15.iterators.EmptyListIterator;
 import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
@@ -100,6 +102,7 @@ import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.IASTTypeIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
+import org.eclipse.cdt.core.dom.ast.gnu.IGNUASTCompoundStatementExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
@@ -133,6 +136,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CompoundStatementExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ContractResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.DeclarationResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListRecResult;
@@ -531,8 +535,8 @@ public class CHandler implements ICHandler {
 	public Result visit(Dispatcher main, IASTCompoundStatement node) {
 		ILocation loc = LocationFactory.createCLocation(node);
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
-		ArrayList<VariableDeclaration> lVarDecl = new ArrayList<VariableDeclaration>();
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
+		LRValue expr = null;
 		IASTNode parent = node.getParent();
 
 		if (isNewScopeRequired(parent)) {
@@ -545,19 +549,26 @@ public class CHandler implements ICHandler {
 			if (r instanceof ExpressionResult) {
 				ExpressionResult res = (ExpressionResult) r;
 				// assert (res.auxVars.isEmpty()) : "unhavoced auxvars";
-				for (Declaration d : res.decl) {
-					if (d instanceof VariableDeclaration) {
-						lVarDecl.add((VariableDeclaration) d);
-					}
-				}
 				decl.addAll(res.decl);
 				stmt.addAll(res.stmt);
-			}
-			if (r.node != null && r.node instanceof Body) {
+				expr = res.lrVal;
+			} else if (r instanceof CompoundStatementExpressionResult) {
+				CompoundStatementExpressionResult res = (CompoundStatementExpressionResult) r;
+				decl.addAll(res.decl);
+				stmt.addAll(res.stmt);
+				expr = res.lrVal;
+			} else if (r.node != null && r.node instanceof Body) {
+				assert false : "should not happen, as CompoundStatement now yields an "
+						+ "ExpressionResult or a CompoundStatementExpressionResult";
 				// already have a unique naming for variables! --> unfold
 				Body b = ((Body) r.node);
 				decl.addAll(Arrays.asList(b.getLocalVars()));
 				stmt.addAll(Arrays.asList(b.getBlock()));
+			} else if (r instanceof SkipResult) {
+				//skip
+			} else {
+				assert false : "should not happen, as CompoundStatement now yields an "
+						+ "ExpressionResult or a CompoundStatementExpressionResult";
 			}
 		}
 		checkForACSL(main, stmt, decl, null, node);
@@ -566,7 +577,9 @@ public class CHandler implements ICHandler {
 
 			this.endScope();
 		}
-		return new Result(new Body(loc, decl.toArray(new VariableDeclaration[0]), stmt.toArray(new Statement[0])));
+//		return new Result(new Body(loc, decl.toArray(new VariableDeclaration[0]), stmt.toArray(new Statement[0])));
+		return new CompoundStatementExpressionResult(stmt, expr, decl, Collections.emptyMap(), Collections.emptyList());
+
 	}
 
 	/**
@@ -2201,20 +2214,20 @@ public class CHandler implements ICHandler {
 		Result r = main.dispatch(node.getExpression());
 		if (r instanceof ExpressionResult) {
 			ExpressionResult rExp = (ExpressionResult) r;
-			if (!rExp.stmt.isEmpty()) {
+//			if (!rExp.stmt.isEmpty()) {
 				ArrayList<Statement> stmt = new ArrayList<Statement>(rExp.stmt);
 				ArrayList<Declaration> decl = new ArrayList<Declaration>(rExp.decl);
 				List<Overapprox> overappr = new ArrayList<Overapprox>();
-				assert (isAuxVarMapcomplete(main, rExp.decl, rExp.auxVars));
+//				assert (isAuxVarMapcomplete(main, rExp.decl, rExp.auxVars));
 				stmt.addAll(createHavocsForAuxVars(rExp.auxVars));
 				overappr.addAll(rExp.overappr);
 				Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<VariableDeclaration, ILocation>(0);
-				return new ExpressionResult(stmt, null, decl, emptyAuxVars, overappr);
-			} else {
-				String msg = "This statement has no effect and will be dropped: " + node.getRawSignature();
-				main.warn(LocationFactory.createCLocation(node), msg);
-				return new SkipResult();
-			}
+				return new ExpressionResult(stmt, rExp.lrVal, decl, emptyAuxVars, overappr);
+//			} else {
+//				String msg = "This statement has no effect and will be dropped: " + node.getRawSignature();
+//				main.warn(LocationFactory.createCLocation(node), msg);
+//				return new SkipResult();
+//			}
 		} else if (r instanceof ExpressionListResult) {
 			ArrayList<Statement> stmt = new ArrayList<Statement>();
 			ArrayList<Declaration> decl = new ArrayList<Declaration>();
@@ -2888,12 +2901,23 @@ public class CHandler implements ICHandler {
 		throw new UnsupportedSyntaxException(loc, msg);
 	}
 	
-	@Override
-	public Result visit(Dispatcher main, IASTExpression node) {
-//		ArrayList<Statement> stmt = new ArrayList<>();
-		return null;
-	}
 
+    public Result visit(Dispatcher main, IGNUASTCompoundStatementExpression node) {
+//    	ArrayList<Statement> stmt = new ArrayList<>();
+//    	ArrayList<Declaration> decl = new ArrayList<>();
+//    	Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
+//    	ArrayList<Overapprox> overApp = new ArrayList<>();
+//    	
+//    	LRValue finalResult = null;
+    	
+//    	CompoundStatementExpressionResult childRes = (CompoundStatementExpressionResult) main.dispatch(node.getCompoundStatement());
+    	return main.dispatch(node.getCompoundStatement());
+//    	stmt.addAll(childRes.stmt);
+//    	decl.addAll(childRes.decl);
+
+//    	return new ExpressionResult(stmt, childRes.lrVal, decl, Collections.<VariableDeclaration, ILocation>emptyMap(), Collections.<Overapprox>emptyList());
+//    	return new ExpressionResult(stmt, finalResult, decl, auxVars, overApp);
+    }
 
 	/**
 		 * Create a havoc statement for each variable in auxVars. (Does not modify
