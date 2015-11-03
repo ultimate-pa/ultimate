@@ -68,19 +68,19 @@ public class Svcomp2016_Memsafety extends AbstractTraceAbstractionTestSuite {
 //			////////////////////////////////////////////////////////////////
 //			// Soundness problems detected on 2015-11-03
 //			// UNSAFE_FREE (Expected:SAFE)
-//			"svcomp/list-ext-properties/test-0158_1_true-valid-memsafety.i",
+//			"examples/svcomp/list-ext-properties/test-0158_1_true-valid-memsafety.i",
 //			
 //			// UNSAFE_DEREF (Expected:UNSAFE_MEMTRACK)
-//			"svcomp/memsafety/20020406-1_false-valid-memtrack.i",
+//			"examples/svcomp/memsafety/20020406-1_false-valid-memtrack.i",
 //			
 //			//UNSAFE_MEMTRACK (Expected:SAFE)
-//			"svcomp/ldv-memsafety/memleaks_test20_true-valid-memsafety.i",
-//			"svcomp/ldv-memsafety/memleaks_test21_true-valid-memsafety.i",
+//			"examples/svcomp/ldv-memsafety/memleaks_test20_true-valid-memsafety.i",
+//			"examples/svcomp/ldv-memsafety/memleaks_test21_true-valid-memsafety.i",
 //			
 //			//UNSAFE_DEREF (Expected:SAFE)
-//			"svcomp/ldv-memsafety/memleaks_test22_1_true-valid-memsafety.i",
-//			"svcomp/ldv-memsafety/memleaks_test22_2_true-valid-memsafety.i",
-//			"svcomp/ldv-memsafety/memleaks_test22_3_true-valid-memsafety.i",
+//			"examples/svcomp/ldv-memsafety/memleaks_test22_1_true-valid-memsafety.i",
+//			"examples/svcomp/ldv-memsafety/memleaks_test22_2_true-valid-memsafety.i",
+//			"examples/svcomp/ldv-memsafety/memleaks_test22_3_true-valid-memsafety.i",
 //			////////////////////////////////////////////////////////////////
 		};
 
