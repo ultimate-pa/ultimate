@@ -82,12 +82,11 @@ public class TermTransferrer extends TermTransformer {
 			setResult(mappingResult);
 			return;
 		}
-		Sort sort = transferSort(term.getSort());
 		if (term instanceof TermVariable) {
-			TermVariable tv = (TermVariable) term;
-			Term result = m_Script.variable(tv.getName(), sort);
+			Term result = transferTermVariable((TermVariable) term);
 			setResult(result);
 		} else if (term instanceof ConstantTerm) {
+			Sort sort = transferSort(term.getSort());
 			ConstantTerm ct = (ConstantTerm) term;
 			final Term result;
 			if (ct.getValue() instanceof BigInteger) {
@@ -103,6 +102,19 @@ public class TermTransferrer extends TermTransformer {
 		} else {
 			super.convert(term);
 		}
+	}
+	
+	TermVariable transferTermVariable(TermVariable tv) {
+//		final Term mappingResult = m_TransferMapping.get(tv);
+		final TermVariable transferResult;
+//		if (mappingResult == null) {
+			Sort sort = transferSort(tv.getSort());
+			transferResult = m_Script.variable(tv.getName(), sort);
+//			m_TransferMapping.put(tv, transferResult);
+//		} else {
+//			transferResult = (TermVariable) mappingResult;
+//		}
+		return transferResult;
 	}
 
 	private Sort declareSortIfNeeded(Sort sort) {
@@ -169,7 +181,12 @@ public class TermTransferrer extends TermTransformer {
 
 	@Override
 	public void postConvertQuantifier(QuantifiedFormula old, Term newBody) {
-		throw new UnsupportedOperationException("not yet implemented");
+		TermVariable[] vars = new TermVariable[old.getFreeVars().length];
+		for (int i=0; old.getVariables().length<i; i++) {
+			vars[i] = transferTermVariable(old.getVariables()[i]);
+		}
+		Term result = m_Script.quantifier(old.getQuantifier(), vars, newBody);
+		setResult(result);
 	}
 
 	@Override
