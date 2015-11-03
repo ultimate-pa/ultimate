@@ -499,7 +499,7 @@ public class InitializationHandler {
 			String msg = "Unknown type - don't know how to initialize!";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		assert (CHandler.isAuxVarMapcomplete(main, decl, auxVars));
+//		assert (CHandler.isAuxVarMapcomplete(main, decl, auxVars));
 
 		return new ExpressionResult(stmt, null, decl, auxVars, overappr);
 	}
