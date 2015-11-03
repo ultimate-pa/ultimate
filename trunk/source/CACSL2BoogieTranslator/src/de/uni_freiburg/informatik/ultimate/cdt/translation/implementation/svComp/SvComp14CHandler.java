@@ -191,38 +191,54 @@ public class SvComp14CHandler extends CHandler {
 		for (String t : NONDET_TYPE_STRINGS)
 			if (methodName.equals(NONDET_STRING + t)) {
 				
-				final ASTType type;
-				final CType cType;
+				CType cType;
 				switch (t) {
-				case "int":
-					cType = new CPrimitive(PRIMITIVE.INT);
-					type = mTypeHandler.ctype2asttype(loc, cType);
-					break;
-				case "long":
-					cType = new CPrimitive(PRIMITIVE.LONG);
-					type = mTypeHandler.ctype2asttype(loc, cType);
-					break;
-				case "float":
-					cType = new CPrimitive(PRIMITIVE.FLOAT);
-					type = mTypeHandler.ctype2asttype(loc, cType);
+				case "_Bool":
+				case "bool":
+					cType = new CPrimitive(PRIMITIVE.BOOL);
 					break;
 				case "char":
 					cType = new CPrimitive(PRIMITIVE.CHAR);
-					type = mTypeHandler.ctype2asttype(loc, cType);
+					break;
+				case "float":
+					cType = new CPrimitive(PRIMITIVE.FLOAT);
+					break;
+				case "size_t":
+				case "int":
+					cType = new CPrimitive(PRIMITIVE.INT);
+				case "loff_t":
+				case "long":
+					cType = new CPrimitive(PRIMITIVE.LONG);
 					break;
 				case "short":
 					cType = new CPrimitive(PRIMITIVE.SHORT);
-					type = mTypeHandler.ctype2asttype(loc, cType);
+					break;
+				case "pchar":
+					cType = new CPointer(new CPrimitive(PRIMITIVE.CHAR));
 					break;
 				case "pointer":
-					NamedType boogiePointerType = new NamedType(null, new InferredType(Type.Struct), SFO.POINTER,
-							new ASTType[0]);
-					type = boogiePointerType;
+//					NamedType boogiePointerType = new NamedType(null, new InferredType(Type.Struct), SFO.POINTER,
+//							new ASTType[0]);
+//					type = boogiePointerType;
 					cType = new CPointer(new CPrimitive(PRIMITIVE.VOID));
+					break;
+				case "uchar":
+					cType = new CPrimitive(PRIMITIVE.UCHAR);
+					break;
+				case "unsigned":
+				case "uint":
+					cType = new CPrimitive(PRIMITIVE.UINT);
+					break;
+				case "ulong":
+					cType = new CPrimitive(PRIMITIVE.ULONG);
+					break;
+				case "ushort":
+					cType = new CPrimitive(PRIMITIVE.USHORT);
 					break;
 				default:
 					throw new AssertionError("unknown type " + t);
 				}
+				ASTType type = mTypeHandler.ctype2asttype(loc, cType);
 				String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
 				VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpName, type, loc);
 				decl.add(tVarDecl);
