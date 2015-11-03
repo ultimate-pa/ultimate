@@ -160,13 +160,13 @@ public class TAPreferences {
 	}
 	
 	public boolean dumpSmtScriptToFile() {
-		final boolean dumpSmtScriptToFile = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+		final boolean dumpSmtScriptToFile = m_Prefs
 				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpToFile);
 		return dumpSmtScriptToFile;
 	}
 
 	public String pathOfDumpedScript() {
-		final String pathOfDumpedScript  = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+		final String pathOfDumpedScript  = m_Prefs
 				.getString(RcfgPreferenceInitializer.LABEL_Path);
 		return pathOfDumpedScript;
 	}
