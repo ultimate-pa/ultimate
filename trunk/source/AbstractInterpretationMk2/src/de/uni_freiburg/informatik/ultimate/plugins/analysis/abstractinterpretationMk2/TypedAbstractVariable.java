@@ -22,6 +22,8 @@ public class TypedAbstractVariable extends AbstractVariable {
 	public TypedAbstractVariable(String ident,
 			DeclarationInformation declaration, IType type) {
 		super(ident);
+		assert ident != null;
+		assert declaration != null;
 		mDeclaration = declaration;
 		mType = type;
 	}
@@ -62,8 +64,12 @@ public class TypedAbstractVariable extends AbstractVariable {
 //	}
 	
 	public Term getTermVar(final Boogie2SMT bpl2smt){
-		final BoogieVar bplvar = bpl2smt.getBoogie2SmtSymbolTable().getBoogieVar(getString(),
-				getDeclaration(), false);
+		final String id = getString();
+		final DeclarationInformation declInfo = getDeclaration();
+		assert id != null;
+		assert declInfo != null;
+		final BoogieVar bplvar = bpl2smt.getBoogie2SmtSymbolTable().getBoogieVar(id,
+				declInfo, false);
 		assert bplvar != null : "There is no BoogieVar for this constaint (maybe an old value?)";
 		final TermVariable termvar = bplvar.getTermVariable();
 		assert termvar != null : "There seems to be no termvar for this BoogieVar";
