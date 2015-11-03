@@ -24,6 +24,7 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty;
 
 import java.util.HashMap;
@@ -37,9 +38,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 
 /**
  * 
- * This is an abstract state of the {@link EmptyDomain}. It does save variable
- * declarations, but no values or value representations. It is equal to other
- * {@link EmptyDomainState} instances with the same variable declarations.
+ * This is an abstract state of the {@link EmptyDomain}. It does save variable declarations, but no values or value
+ * representations. It is equal to other {@link EmptyDomainState} instances with the same variable declarations.
  * 
  * This state is never bottom but always a fixpoint.
  * 
@@ -138,8 +138,7 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 
 	@Override
 	public String toLogString() {
-		final StringBuilder sb = new StringBuilder().append(mIsFixpoint)
-				.append(" ");
+		final StringBuilder sb = new StringBuilder().append(mIsFixpoint).append(" ");
 		for (Entry<String, VARDECL> entry : mVarDecls.entrySet()) {
 			sb.append(entry.getKey()).append("; ");
 		}
@@ -185,8 +184,7 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 	}
 
 	/**
-	 * This method compares if this state contains the same variable
-	 * declarations than the other state.
+	 * This method compares if this state contains the same variable declarations than the other state.
 	 * 
 	 * @param other
 	 *            another state
@@ -201,12 +199,17 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 	}
 
 	@Override
-    public boolean containsVariable(String name) {
+	public boolean containsVariable(String name) {
 		return mVarDecls.containsKey(name);
     }
 	
 	@Override
 	public Term getTerm(Script script, Boogie2SMT bpl2smt) {
 		return script.term("true");
+	}
+
+	@Override
+	public void setToBottom() {
+		// This method does nothing here.
 	}
 }

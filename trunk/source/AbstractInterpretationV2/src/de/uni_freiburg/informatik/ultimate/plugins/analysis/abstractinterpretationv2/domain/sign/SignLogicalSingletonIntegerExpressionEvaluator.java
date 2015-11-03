@@ -64,4 +64,9 @@ public class SignLogicalSingletonIntegerExpressionEvaluator extends SignSingleto
 		return false;
     }
 
+	@Override
+	public int getArity() {
+		return 0;
+	}
+
 }

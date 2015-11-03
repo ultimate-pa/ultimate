@@ -47,4 +47,6 @@ public interface IEvaluatorFactory<T, ACTION, VARDECL> {
 	public IEvaluator<T, ACTION, VARDECL> createSingletonValueExpressionEvaluator(String value, Class<?> valueType);
 
 	public IEvaluator<T, ACTION, VARDECL> createSingletonVariableExpressionEvaluator(String variableName);
+	
+	public IEvaluator<T, ACTION, VARDECL> createSingletonLogicalValueExpressionEvaluator(boolean value);
 }

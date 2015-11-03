@@ -45,6 +45,9 @@ public class IntervalDomainValue implements IEvaluationResult<IntervalDomainValu
 	private IntervalValue mUpper;
 
 	private boolean mIsBottom;
+	private boolean mKeepState;
+
+	private boolean mLogicalInterpretation;
 
 	/**
 	 * Constructor for a new {@link IntervalDomainValue}. The interval created will be (-&infin; ; &infin;).
@@ -71,6 +74,8 @@ public class IntervalDomainValue implements IEvaluationResult<IntervalDomainValu
 			mUpper = new IntervalValue();
 			mIsBottom = false;
 		}
+		
+		mLogicalInterpretation = false;
 	}
 
 	protected IntervalDomainValue(IntervalValue lower, IntervalValue upper) {
@@ -86,6 +91,8 @@ public class IntervalDomainValue implements IEvaluationResult<IntervalDomainValu
 		mUpper = upper;
 
 		mIsBottom = false;
+		
+		mLogicalInterpretation = false;
 	}
 
 	@Override
@@ -225,7 +232,7 @@ public class IntervalDomainValue implements IEvaluationResult<IntervalDomainValu
 	 * 
 	 * @param other
 	 *            The other interval to intersect with.
-	 * @return The intersected interval.
+	 * @return A new {@link IntervalDomainValue} representing the result of the intersection.
 	 */
 	protected IntervalDomainValue intersect(IntervalDomainValue other) {
 		assert other != null;
@@ -259,9 +266,9 @@ public class IntervalDomainValue implements IEvaluationResult<IntervalDomainValu
 				newLower = new IntervalValue(other.mLower.getValue());
 			}
 		}
-		
+
 		if (mUpper.compareTo(other.mUpper) < 0) {
-				newUpper = new IntervalValue(mUpper.getValue());
+			newUpper = new IntervalValue(mUpper.getValue());
 		} else if (mUpper.compareTo(other.mUpper) == 0) {
 			if (mUpper.isInfinity()) {
 				newUpper = new IntervalValue();
@@ -269,7 +276,7 @@ public class IntervalDomainValue implements IEvaluationResult<IntervalDomainValu
 				newUpper = new IntervalValue(mUpper.getValue());
 			}
 		} else {
-				newUpper = new IntervalValue(other.mUpper.getValue());
+			newUpper = new IntervalValue(other.mUpper.getValue());
 		}
 
 		if (!newLower.isInfinity() && newLower.compareTo(newUpper) > 0) {
@@ -397,6 +404,64 @@ public class IntervalDomainValue implements IEvaluationResult<IntervalDomainValu
 		}
 
 		return new IntervalDomainValue(lowerBound, upperBound);
+	}
+
+	/**
+	 * Negates the given interval.
+	 * 
+	 * @param interval
+	 *            The interval to negate.
+	 * @return A new interval which corresponds to the negated input interval.
+	 */
+	protected IntervalDomainValue negate() {
+
+		if (isBottom()) {
+			return new IntervalDomainValue(true);
+		}
+
+		if (getLower().isInfinity() && getUpper().isInfinity()) {
+			return new IntervalDomainValue();
+		}
+
+		if (getLower().isInfinity()) {
+			return new IntervalDomainValue(new IntervalValue(getUpper().getValue().negate()), new IntervalValue());
+		}
+
+		if (getUpper().isInfinity()) {
+			return new IntervalDomainValue(new IntervalValue(), new IntervalValue(getLower().getValue().negate()));
+		}
+
+		return new IntervalDomainValue(new IntervalValue(getUpper().getValue().negate()),
+		        new IntervalValue(getLower().getValue().negate()));
+	}
+
+	/**
+	 * Sets an indicator that specifies that the current abstract state should be kept without modifying it.
+	 */
+	protected void setKeepState() {
+		mKeepState = true;
+	}
+
+	/**
+	 * @return <code>true</code> if and only if the current abstract state should not be modified no matter the value in
+	 *         <code>this</code>. <code>false</code> otherwise.
+	 */
+	protected boolean keepState() {
+		return mKeepState;
+	}
+
+	/**
+	 * Sets the logical interpretation of this state, if it is being analyzed in a logical expression.
+	 * 
+	 * @param interpretation
+	 *            The boolean value of the interpretation.
+	 */
+	protected void setLogicalInterpretation(boolean interpretation) {
+		mLogicalInterpretation = interpretation;
+	}
+	
+	protected boolean getLogicalInterpretation() {
+		return mLogicalInterpretation;
 	}
 
 	/**

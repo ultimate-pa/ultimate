@@ -30,6 +30,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
@@ -49,56 +51,35 @@ public class IntervalUnaryExpressionEvaluator implements INAryEvaluator<Interval
 
 	private final static int BUFFER_MAX = 100;
 
+	private final Logger mLogger;
+
 	protected IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> mSubEvaluator;
 	protected UnaryExpression.Operator mOperator;
+
+	public IntervalUnaryExpressionEvaluator(Logger logger) {
+		mLogger = logger;
+	}
 
 	@Override
 	public IEvaluationResult<IntervalDomainValue> evaluate(IAbstractState<CodeBlock, BoogieVar> currentState) {
 
 		IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> castedSubEvaluator = (IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar>) mSubEvaluator;
 
+		@SuppressWarnings("unchecked")
 		final IEvaluationResult<IntervalDomainValue> subEvaluatorResult = (IEvaluationResult<IntervalDomainValue>) castedSubEvaluator;
 
 		switch (mOperator) {
 		case ARITHNEGATIVE:
-			return negateValue(subEvaluatorResult.getResult());
+			return subEvaluatorResult.getResult().negate();
+		case LOGICNEG:
+			mLogger.warn("Operator application: Logic Negation. Possible loss of precision. Returning Top.");
+			return new IntervalDomainValue();
 		default:
 			StringBuilder stringBuilder = new StringBuilder(BUFFER_MAX);
 			stringBuilder.append("The operator ").append(mOperator).append(" is not implemented.");
 			throw new UnsupportedOperationException(stringBuilder.toString());
 
 		}
-	}
-
-	/**
-	 * Negates the given interval.
-	 * 
-	 * @param interval
-	 *            The interval to negate.
-	 * @return A new interval which corresponds to the negated input interval.
-	 */
-	private IEvaluationResult<IntervalDomainValue> negateValue(IntervalDomainValue interval) {
-
-		if (interval.isBottom()) {
-			return new IntervalDomainValue(true);
-		}
-
-		if (interval.getLower().isInfinity() && interval.getUpper().isInfinity()) {
-			return new IntervalDomainValue();
-		}
-
-		if (interval.getLower().isInfinity()) {
-			return new IntervalDomainValue(new IntervalValue(interval.getUpper().getValue().negate()),
-			        new IntervalValue());
-		}
-
-		if (interval.getUpper().isInfinity()) {
-			return new IntervalDomainValue(new IntervalValue(), new IntervalValue(interval.getLower().getValue()
-			        .negate()));
-		}
-
-		return new IntervalDomainValue(new IntervalValue(interval.getUpper().getValue().negate()), new IntervalValue(
-		        interval.getLower().getValue().negate()));
 	}
 
 	@Override
@@ -126,6 +107,11 @@ public class IntervalUnaryExpressionEvaluator implements INAryEvaluator<Interval
 		assert operator != null;
 		assert operator instanceof Operator;
 		mOperator = (Operator) operator;
+	}
+
+	@Override
+	public int getArity() {
+		return 1;
 	}
 
 }

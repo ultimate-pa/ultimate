@@ -42,14 +42,14 @@ public class HelperFunctions {
 		return new IntervalDomainValue();
 	}
 
-	protected static IntervalLogicalBinaryExpressionEvaluator createBinaryEvaluator(IntervalDomainValue first,
+	protected static IntervalBinaryExpressionEvaluator createBinaryEvaluator(IntervalDomainValue first,
 	        IntervalDomainValue second, Operator operator) {
 		IntervalSingletonValueExpressionEvaluator value1Evaluator = new IntervalSingletonValueExpressionEvaluator(
 		        first);
 		IntervalSingletonValueExpressionEvaluator value2Evaluator = new IntervalSingletonValueExpressionEvaluator(
 		        second);
 
-		IntervalLogicalBinaryExpressionEvaluator binaryExpressionEvaluator = new IntervalLogicalBinaryExpressionEvaluator();
+		IntervalBinaryExpressionEvaluator binaryExpressionEvaluator = new IntervalBinaryExpressionEvaluator();
 
 		binaryExpressionEvaluator.setOperator(operator);
 		binaryExpressionEvaluator.addSubEvaluator(value1Evaluator);

@@ -49,7 +49,8 @@ public class SignLogicalEvaluatorFactory implements IEvaluatorFactory<Values, Co
 	SignStateConverter<CodeBlock, BoogieVar> mStateConverter;
 	private final IUltimateServiceProvider mServices;
 
-	public SignLogicalEvaluatorFactory(IUltimateServiceProvider services, SignStateConverter<CodeBlock, BoogieVar> stateConverter) {
+	public SignLogicalEvaluatorFactory(IUltimateServiceProvider services,
+	        SignStateConverter<CodeBlock, BoogieVar> stateConverter) {
 		mServices = services;
 		mStateConverter = stateConverter;
 	}
@@ -91,6 +92,11 @@ public class SignLogicalEvaluatorFactory implements IEvaluatorFactory<Values, Co
 	@Override
 	public IEvaluator<Values, CodeBlock, BoogieVar> createSingletonVariableExpressionEvaluator(String variableName) {
 		return new SignLogicalSingletonVariableExpressionEvaluator(variableName, mStateConverter);
+	}
+
+	@Override
+	public IEvaluator<Values, CodeBlock, BoogieVar> createSingletonLogicalValueExpressionEvaluator(boolean value) {
+		return null;
 	}
 
 }

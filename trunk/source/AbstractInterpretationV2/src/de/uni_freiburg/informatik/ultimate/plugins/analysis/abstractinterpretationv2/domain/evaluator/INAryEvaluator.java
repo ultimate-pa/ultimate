@@ -33,7 +33,20 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
  * 
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
-public interface INAryEvaluator<T, ACTION, VARDECL> extends IEvaluator<T, ACTION, VARDECL>{
-	
+public interface INAryEvaluator<T, ACTION, VARDECL> extends IEvaluator<T, ACTION, VARDECL> {
+
+	/**
+	 * Sets the operator of the evaluator. Note that for some evaluators, the operator cannot be set.
+	 * 
+	 * @param operator
+	 *            The operator to set.
+	 */
 	public void setOperator(Object operator);
+
+	/**
+	 * Returns the arity of the evaluator.
+	 * 
+	 * @return An integer corresponding to the arity of the evaluator.
+	 */
+	public int getArity();
 }

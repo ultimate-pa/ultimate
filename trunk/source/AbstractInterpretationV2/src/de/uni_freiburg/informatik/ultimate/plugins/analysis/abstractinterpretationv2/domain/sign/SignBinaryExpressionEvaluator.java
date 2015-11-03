@@ -356,4 +356,9 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Cod
 	public Set<String> getVarIdentifiers() {
 		return mVariableSet;
 	}
+
+	@Override
+	public int getArity() {
+		return 2;
+	}
 }

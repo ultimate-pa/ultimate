@@ -104,6 +104,14 @@ public class IntervalBinaryExpressionEvaluator implements INAryEvaluator<Interva
 			return firstResult.getResult().subtract(secondResult.getResult());
 		case ARITHMUL:
 			return firstResult.getResult().multiply(secondResult.getResult());
+		case COMPEQ:
+			if (mLeftSubEvaluator instanceof IntervalSingletonVariableExpressionEvaluator
+			        && mRightSubEvaluator instanceof IntervalSingletonVariableExpressionEvaluator) {
+				return firstResult.getResult().intersect(secondResult.getResult());
+			}
+			IntervalDomainValue returnValue = new IntervalDomainValue();
+			returnValue.setKeepState();
+			return returnValue;
 		default:
 			throw new UnsupportedOperationException("The operator " + mOperator.toString() + " is not implemented.");
 		}
@@ -140,5 +148,10 @@ public class IntervalBinaryExpressionEvaluator implements INAryEvaluator<Interva
 		assert operator instanceof Operator;
 
 		mOperator = (Operator) operator;
+	}
+
+	@Override
+	public int getArity() {
+		return 2;
 	}
 }

@@ -54,8 +54,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <VARDECL>
  *            Any variable declaration.
  */
-public class SignDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, VARDECL>,
-        IEvaluationResult<SignDomainState<ACTION, VARDECL>> {
+public class SignDomainState<ACTION, VARDECL>
+        implements IAbstractState<ACTION, VARDECL>, IEvaluationResult<SignDomainState<ACTION, VARDECL>> {
 
 	private static int sId;
 	private final int mId;
@@ -320,9 +320,7 @@ public class SignDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, 
 		return newState;
 	}
 
-	/**
-	 * Sets all variables to &bot;.
-	 */
+	@Override
 	public void setToBottom() {
 		for (final Entry<String, SignDomainValue> entry : mValuesMap.entrySet()) {
 			entry.setValue(new SignDomainValue(Values.BOTTOM));

@@ -87,4 +87,9 @@ public class SignLogicalSingletonValueExpressionEvaluator extends SignSingletonV
 	    return false;
     }
 
+	@Override
+	public int getArity() {
+		return 0;
+	}
+
 }

@@ -136,9 +136,15 @@ public interface IAbstractState<ACTION, VARDECL> {
 	 */
 	boolean isBottom();
 
+         /**
+	 * Sets the whole abstract state to &bot;.
+	 */
+	void setToBottom();
+
 	/**
 	 * An abstract state is a fixpoint if {@link AbstractInterpreter} called
 	 * {@link #setFixpoint(boolean)} with true.
+	 * @return <code>true</code> if and only if the current abstract state is a fix point, <code>false</code> otherwise.
 	 */
 	boolean isFixpoint();
 

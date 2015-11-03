@@ -113,4 +113,9 @@ public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, Code
 	public Set<String> getVarIdentifiers() {
 		return mSubEvaluator.getVarIdentifiers();
 	}
+
+	@Override
+	public int getArity() {
+		return 1;
+	}
 }

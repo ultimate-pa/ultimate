@@ -28,40 +28,50 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.interval;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.ILogicalEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.IEvaluationResult;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
+ * Class for boolean singleton values in the {@link IntervalDomain}.
  * 
- * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ * @author Marius Greitschus <greitsch@informatik.uni-freiburg.de>
  *
  */
-public class IntervalLogicalUnaryExpressionEvaluator extends IntervalUnaryExpressionEvaluator
-        implements ILogicalEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> {
+public class IntervalSingletonBooleanExpressionEvaluator
+        implements IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> {
 
-	@Override
-	public IAbstractState<CodeBlock, BoogieVar> logicallyInterpret(IAbstractState<CodeBlock, BoogieVar> currentState) {
-		assert currentState != null;
+	private final boolean mBooleanValue;
 
-		final ILogicalEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> sub = (ILogicalEvaluator<IntervalDomainValue, CodeBlock, BoogieVar>) mSubEvaluator;
-
-		// TODO fill with sense. Think about the operator.
-		return sub.logicallyInterpret(currentState);
+	protected IntervalSingletonBooleanExpressionEvaluator(boolean value) {
+		mBooleanValue = value;
 	}
 
 	@Override
-	public boolean logicalEvaluation(IAbstractState<CodeBlock, BoogieVar> currentState) {
-		assert currentState != null;
-
-		final ILogicalEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> sub = (ILogicalEvaluator<IntervalDomainValue, CodeBlock, BoogieVar>) mSubEvaluator;
-
-		switch (mOperator) {
-		case LOGICNEG:
-			return !sub.logicalEvaluation(currentState);
-		default:
-			return sub.logicalEvaluation(currentState);
-		}
+	public IEvaluationResult<IntervalDomainValue> evaluate(IAbstractState<CodeBlock, BoogieVar> currentState) {
+		final IntervalDomainValue returnState = new IntervalDomainValue();
+		returnState.setLogicalInterpretation(mBooleanValue);
+		return returnState;
 	}
+
+	@Override
+	public void addSubEvaluator(IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> evaluator) {
+		throw new UnsupportedOperationException("Adding a subevaluator to this kind of evaluator is not permitted.");
+	}
+
+	@Override
+	public Set<String> getVarIdentifiers() {
+		return new HashSet<String>();
+	}
+
+	@Override
+	public boolean hasFreeOperands() {
+		return false;
+	}
+
 }

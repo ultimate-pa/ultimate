@@ -28,7 +28,8 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.interval;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.IEvaluatorFactory;
@@ -48,7 +49,7 @@ public class IntervalEvaluatorFactory implements IEvaluatorFactory<IntervalDomai
 	private static final int BUFFER_MAX = 100;
 
 	private final IntervalStateConverter<CodeBlock, BoogieVar> mStateConverter;
-	private final IUltimateServiceProvider mServices;
+	private final Logger mLogger;
 
 	/**
 	 * Creates a new evaluator factory for the interval domain.
@@ -58,9 +59,8 @@ public class IntervalEvaluatorFactory implements IEvaluatorFactory<IntervalDomai
 	 * @param stateConverter
 	 *            The state converter in the interval domain.
 	 */
-	public IntervalEvaluatorFactory(IUltimateServiceProvider services,
-	        IntervalStateConverter<CodeBlock, BoogieVar> stateConverter) {
-		mServices = services;
+	public IntervalEvaluatorFactory(Logger logger, IntervalStateConverter<CodeBlock, BoogieVar> stateConverter) {
+		mLogger = logger;
 		mStateConverter = stateConverter;
 	}
 
@@ -71,7 +71,7 @@ public class IntervalEvaluatorFactory implements IEvaluatorFactory<IntervalDomai
 
 		switch (arity) {
 		case ARITY_MIN:
-			return new IntervalUnaryExpressionEvaluator();
+			return new IntervalUnaryExpressionEvaluator(mLogger);
 		case ARITY_MAX:
 			return new IntervalBinaryExpressionEvaluator();
 		default:
@@ -96,5 +96,11 @@ public class IntervalEvaluatorFactory implements IEvaluatorFactory<IntervalDomai
 		assert variableName != null;
 
 		return new IntervalSingletonVariableExpressionEvaluator(variableName, mStateConverter);
+	}
+
+	@Override
+	public IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> createSingletonLogicalValueExpressionEvaluator(
+	        boolean value) {
+		return new IntervalSingletonBooleanExpressionEvaluator(value);
 	}
 }

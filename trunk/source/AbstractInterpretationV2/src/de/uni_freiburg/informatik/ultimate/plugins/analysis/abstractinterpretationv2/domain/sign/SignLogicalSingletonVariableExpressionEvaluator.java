@@ -112,4 +112,9 @@ public class SignLogicalSingletonVariableExpressionEvaluator extends SignSinglet
 		}
     }
 
+	@Override
+	public int getArity() {
+		return 0;
+	}
+
 }

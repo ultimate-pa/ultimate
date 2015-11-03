@@ -104,4 +104,9 @@ public class SignEvaluatorFactory implements IEvaluatorFactory<Values, CodeBlock
 	public IEvaluator<Values, CodeBlock, BoogieVar> createSingletonVariableExpressionEvaluator(String variableName) {
 		return new SignSingletonVariableExpressionEvaluator(variableName, mStateConverter);
 	}
+
+	@Override
+	public IEvaluator<Values, CodeBlock, BoogieVar> createSingletonLogicalValueExpressionEvaluator(boolean value) {
+		return null;
+	}
 }

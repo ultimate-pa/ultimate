@@ -63,6 +63,7 @@ public class IntervalSingletonVariableExpressionEvaluator implements
 		mVariableName = variableName;
 		mStateConverter = stateConverter;
 		mVariableSet = new HashSet<String>();
+		mVariableSet.add(variableName);
 	}
 
 	@Override
