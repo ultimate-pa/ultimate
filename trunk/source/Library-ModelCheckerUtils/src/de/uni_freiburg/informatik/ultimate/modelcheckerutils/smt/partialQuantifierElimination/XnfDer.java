@@ -69,27 +69,34 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 	@Override
 	public Term[] tryToEliminate(int quantifier, Term[] inputAtoms,
 			Set<TermVariable> eliminatees) {
-		Iterator<TermVariable> it = eliminatees.iterator();
 		Term[] resultAtoms = inputAtoms;
-		while (it.hasNext()) {
-			if (!m_Services.getProgressMonitorService().continueProcessing()) {
-				throw new ToolchainCanceledException(this.getClass(),
-						"eliminating " + eliminatees.size() + 
-						" quantified variables from " + inputAtoms.length + " xjuncts");
-			}
-			TermVariable tv = it.next();
-			if (!SmtUtils.getFreeVars(Arrays.asList(resultAtoms)).contains(tv)) {
-				// case where var does not occur
-				it.remove();
-				continue;
-			} else {
-				Term[] withoutTv = derSimple(m_Script, quantifier, resultAtoms, tv, m_Logger);
-				if (withoutTv != null) {
-					resultAtoms = withoutTv;
+		boolean someVariableWasEliminated;
+		// an elimination may allow further eliminations
+		// repeat the following until no variable was eliminated
+		do {
+			someVariableWasEliminated = false;
+			Iterator<TermVariable> it = eliminatees.iterator();
+			while (it.hasNext()) {
+				if (!m_Services.getProgressMonitorService().continueProcessing()) {
+					throw new ToolchainCanceledException(this.getClass(),
+							"eliminating " + eliminatees.size() + 
+							" quantified variables from " + inputAtoms.length + " xjuncts");
+				}
+				TermVariable tv = it.next();
+				if (!SmtUtils.getFreeVars(Arrays.asList(resultAtoms)).contains(tv)) {
+					// case where var does not occur
 					it.remove();
+					continue;
+				} else {
+					Term[] withoutTv = derSimple(m_Script, quantifier, resultAtoms, tv, m_Logger);
+					if (withoutTv != null) {
+						resultAtoms = withoutTv;
+						it.remove();
+						someVariableWasEliminated = true;
+					}
 				}
 			}
-		}
+		} while (someVariableWasEliminated);
 		return resultAtoms;
 	}
 
