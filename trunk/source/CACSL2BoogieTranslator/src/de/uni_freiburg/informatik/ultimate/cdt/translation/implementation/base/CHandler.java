@@ -2884,14 +2884,27 @@ public class CHandler implements ICHandler {
 	public Result visit(Dispatcher main, IASTTypeIdExpression node) {
 		ILocation loc = LocationFactory.createCLocation(node);
 		switch (node.getOperator()) {
-		case IASTTypeIdExpression.op_sizeof:
+		case IASTTypeIdExpression.op_sizeof: {
 			TypesResult rt = (TypesResult) main.dispatch(node.getTypeId().getDeclSpecifier());
-			TypesResult checked = checkForPointer(main, node.getTypeId().getAbstractDeclarator().getPointerOperators(),
-					rt, false);
+			mCurrentDeclaredTypes.push(rt);
+//			main.dispatch(node.getTypeId().getAbstractDeclarator());
+			DeclarationResult dr = (DeclarationResult) main.dispatch(node.getTypeId().getAbstractDeclarator());
+			mCurrentDeclaredTypes.pop();
+//			TypesResult checked = checkForPointer(main, node.getTypeId().getAbstractDeclarator().getPointerOperators(),
+//					rt, false);
 
-			return new ExpressionResult(new RValue(mMemoryHandler.calculateSizeOf(loc, checked.cType), new CPrimitive(
+			return new ExpressionResult(new RValue(mMemoryHandler.calculateSizeOf(loc, dr.getDeclarations().get(0).getType()), new CPrimitive(
 					PRIMITIVE.INT)));
-			// }
+		}
+		case IASTTypeIdExpression.op_typeof: {
+			TypesResult rt = (TypesResult) main.dispatch(node.getTypeId().getDeclSpecifier());
+
+			mCurrentDeclaredTypes.push(rt);
+			DeclarationResult dr = (DeclarationResult) main.dispatch(node.getTypeId().getAbstractDeclarator());
+			mCurrentDeclaredTypes.pop();
+
+			return dr;
+		}
 		default:
 			break;
 		}
