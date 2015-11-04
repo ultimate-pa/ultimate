@@ -35,6 +35,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.EvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.INAryEvaluator;
@@ -47,13 +48,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class IntervalUnaryExpressionEvaluator implements INAryEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> {
+public class IntervalUnaryExpressionEvaluator implements
+        INAryEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>, CodeBlock, BoogieVar> {
 
 	private final static int BUFFER_MAX = 100;
 
 	private final Logger mLogger;
 
-	protected IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> mSubEvaluator;
+	protected IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>, CodeBlock, BoogieVar> mSubEvaluator;
 	protected UnaryExpression.Operator mOperator;
 
 	public IntervalUnaryExpressionEvaluator(Logger logger) {
@@ -61,19 +63,17 @@ public class IntervalUnaryExpressionEvaluator implements INAryEvaluator<Interval
 	}
 
 	@Override
-	public IEvaluationResult<IntervalDomainValue> evaluate(IAbstractState<CodeBlock, BoogieVar> currentState) {
+	public IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>> evaluate(
+	        IAbstractState<CodeBlock, BoogieVar> currentState) {
 
-		IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> castedSubEvaluator = (IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar>) mSubEvaluator;
-
-		@SuppressWarnings("unchecked")
-		final IEvaluationResult<IntervalDomainValue> subEvaluatorResult = (IEvaluationResult<IntervalDomainValue>) castedSubEvaluator;
+		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>> subEvaluatorResult = mSubEvaluator
+		        .evaluate(currentState);
 
 		switch (mOperator) {
 		case ARITHNEGATIVE:
-			return subEvaluatorResult.getResult().negate();
+			return new EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>(
+			        subEvaluatorResult.getResult().getEvaluatedValue().negate(), currentState);
 		case LOGICNEG:
-			mLogger.warn("Operator application: Logic Negation. Possible loss of precision. Returning Top.");
-			return new IntervalDomainValue();
 		default:
 			StringBuilder stringBuilder = new StringBuilder(BUFFER_MAX);
 			stringBuilder.append("The operator ").append(mOperator).append(" is not implemented.");
@@ -83,7 +83,8 @@ public class IntervalUnaryExpressionEvaluator implements INAryEvaluator<Interval
 	}
 
 	@Override
-	public void addSubEvaluator(IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> evaluator) {
+	public void addSubEvaluator(
+	        IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>, CodeBlock, BoogieVar> evaluator) {
 		assert mSubEvaluator == null;
 		assert evaluator != null;
 

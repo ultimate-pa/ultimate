@@ -186,7 +186,7 @@ public class IntervalDomainState<ACTION, VARDECL>
 	@Override
 	public boolean isBottom() {
 		for (final Entry<String, IntervalDomainValue> entry : mValuesMap.entrySet()) {
-			if (entry.getValue().getResult().isBottom()) {
+			if (entry.getValue().isBottom()) {
 				return true;
 			}
 		}
@@ -215,7 +215,7 @@ public class IntervalDomainState<ACTION, VARDECL>
 		final StringBuilder stringBuilder = new StringBuilder();
 		for (final Entry<String, VARDECL> entry : mVariablesMap.entrySet()) {
 			stringBuilder.append(entry.getKey()).append(':').append(entry.getValue()).append(" = ")
-			        .append(mValuesMap.get(entry.getKey()).getResult().toString()).append("; ");
+			        .append(mValuesMap.get(entry.getKey()).toString()).append("; ");
 		}
 		return stringBuilder.toString();
 	}
@@ -235,7 +235,7 @@ public class IntervalDomainState<ACTION, VARDECL>
 
 		for (final Entry<String, IntervalDomainValue> entry : mValuesMap.entrySet()) {
 			final IntervalDomainValue otherValue = comparableOther.mValuesMap.get(entry.getKey());
-			if (!mValuesMap.get(entry.getKey()).getResult().equals(otherValue.getResult())) {
+			if (!mValuesMap.get(entry.getKey()).equals(otherValue)) {
 				return false;
 			}
 		}

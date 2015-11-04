@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.EvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
@@ -44,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class IntervalSingletonBooleanExpressionEvaluator
-        implements IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> {
+        implements IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>, CodeBlock, BoogieVar> {
 
 	private final boolean mBooleanValue;
 
@@ -53,14 +54,16 @@ public class IntervalSingletonBooleanExpressionEvaluator
 	}
 
 	@Override
-	public IEvaluationResult<IntervalDomainValue> evaluate(IAbstractState<CodeBlock, BoogieVar> currentState) {
+	public IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>> evaluate(
+	        IAbstractState<CodeBlock, BoogieVar> currentState) {
 		final IntervalDomainValue returnState = new IntervalDomainValue();
-		returnState.setLogicalInterpretation(mBooleanValue);
-		return returnState;
+		// TODO
+		return null;
 	}
 
 	@Override
-	public void addSubEvaluator(IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> evaluator) {
+	public void addSubEvaluator(
+	        IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>, CodeBlock, BoogieVar> evaluator) {
 		throw new UnsupportedOperationException("Adding a subevaluator to this kind of evaluator is not permitted.");
 	}
 

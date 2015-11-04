@@ -31,7 +31,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.awt.dnd.InvalidDnDOperationException;
 import java.math.BigDecimal;
 
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.IEvaluationResult;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  * Representation of an interval value in the interval domain.
@@ -39,15 +41,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class IntervalDomainValue implements IEvaluationResult<IntervalDomainValue>, Comparable<IntervalDomainValue> {
+public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 
 	private IntervalValue mLower;
 	private IntervalValue mUpper;
 
 	private boolean mIsBottom;
-	private boolean mKeepState;
-
-	private boolean mLogicalInterpretation;
 
 	/**
 	 * Constructor for a new {@link IntervalDomainValue}. The interval created will be (-&infin; ; &infin;).
@@ -74,8 +73,6 @@ public class IntervalDomainValue implements IEvaluationResult<IntervalDomainValu
 			mUpper = new IntervalValue();
 			mIsBottom = false;
 		}
-		
-		mLogicalInterpretation = false;
 	}
 
 	protected IntervalDomainValue(IntervalValue lower, IntervalValue upper) {
@@ -91,8 +88,6 @@ public class IntervalDomainValue implements IEvaluationResult<IntervalDomainValu
 		mUpper = upper;
 
 		mIsBottom = false;
-		
-		mLogicalInterpretation = false;
 	}
 
 	@Override
@@ -126,11 +121,6 @@ public class IntervalDomainValue implements IEvaluationResult<IntervalDomainValu
 		}
 
 		return false;
-	}
-
-	@Override
-	public IntervalDomainValue getResult() {
-		return this;
 	}
 
 	@Override
@@ -433,35 +423,6 @@ public class IntervalDomainValue implements IEvaluationResult<IntervalDomainValu
 
 		return new IntervalDomainValue(new IntervalValue(getUpper().getValue().negate()),
 		        new IntervalValue(getLower().getValue().negate()));
-	}
-
-	/**
-	 * Sets an indicator that specifies that the current abstract state should be kept without modifying it.
-	 */
-	protected void setKeepState() {
-		mKeepState = true;
-	}
-
-	/**
-	 * @return <code>true</code> if and only if the current abstract state should not be modified no matter the value in
-	 *         <code>this</code>. <code>false</code> otherwise.
-	 */
-	protected boolean keepState() {
-		return mKeepState;
-	}
-
-	/**
-	 * Sets the logical interpretation of this state, if it is being analyzed in a logical expression.
-	 * 
-	 * @param interpretation
-	 *            The boolean value of the interpretation.
-	 */
-	protected void setLogicalInterpretation(boolean interpretation) {
-		mLogicalInterpretation = interpretation;
-	}
-	
-	protected boolean getLogicalInterpretation() {
-		return mLogicalInterpretation;
 	}
 
 	/**

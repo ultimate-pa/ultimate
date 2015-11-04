@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.EvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.INAryEvaluator;
@@ -49,10 +50,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class IntervalBinaryExpressionEvaluator implements INAryEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> {
+public class IntervalBinaryExpressionEvaluator
+        implements INAryEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>, CodeBlock, BoogieVar> {
 
-	protected IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> mLeftSubEvaluator;
-	protected IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> mRightSubEvaluator;
+	protected IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>, CodeBlock, BoogieVar> mLeftSubEvaluator;
+	protected IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>, CodeBlock, BoogieVar> mRightSubEvaluator;
 
 	protected final Set<String> mVariableSet;
 
@@ -64,8 +66,8 @@ public class IntervalBinaryExpressionEvaluator implements INAryEvaluator<Interva
 	 * 
 	 * @param services
 	 */
-	protected IntervalBinaryExpressionEvaluator(IUltimateServiceProvider services) {
-		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+	protected IntervalBinaryExpressionEvaluator(Logger logger) {
+		mLogger = logger;
 		mVariableSet = new HashSet<String>();
 	}
 
@@ -83,7 +85,8 @@ public class IntervalBinaryExpressionEvaluator implements INAryEvaluator<Interva
 	}
 
 	@Override
-	public IEvaluationResult<IntervalDomainValue> evaluate(IAbstractState<CodeBlock, BoogieVar> currentState) {
+	public IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>> evaluate(
+	        IAbstractState<CodeBlock, BoogieVar> currentState) {
 
 		assert currentState != null;
 
@@ -94,31 +97,35 @@ public class IntervalBinaryExpressionEvaluator implements INAryEvaluator<Interva
 			mVariableSet.add(var);
 		}
 
-		final IEvaluationResult<IntervalDomainValue> firstResult = mLeftSubEvaluator.evaluate(currentState);
-		final IEvaluationResult<IntervalDomainValue> secondResult = mRightSubEvaluator.evaluate(currentState);
+		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>> firstResult = mLeftSubEvaluator
+		        .evaluate(currentState);
+		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>> secondResult = mRightSubEvaluator
+		        .evaluate(currentState);
 
 		switch (mOperator) {
 		case ARITHPLUS:
-			return firstResult.getResult().add(secondResult.getResult());
+			return new EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>(
+			        firstResult.getResult().getEvaluatedValue().add(secondResult.getResult().getEvaluatedValue()),
+			        currentState);
 		case ARITHMINUS:
-			return firstResult.getResult().subtract(secondResult.getResult());
+			return new EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>(
+			        firstResult.getResult().getEvaluatedValue().subtract(secondResult.getResult().getEvaluatedValue()),
+			        currentState);
 		case ARITHMUL:
-			return firstResult.getResult().multiply(secondResult.getResult());
+			return new EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>(
+			        firstResult.getResult().getEvaluatedValue().multiply(secondResult.getResult().getEvaluatedValue()),
+			        currentState);
 		case COMPEQ:
-			if (mLeftSubEvaluator instanceof IntervalSingletonVariableExpressionEvaluator
-			        && mRightSubEvaluator instanceof IntervalSingletonVariableExpressionEvaluator) {
-				return firstResult.getResult().intersect(secondResult.getResult());
-			}
-			IntervalDomainValue returnValue = new IntervalDomainValue();
-			returnValue.setKeepState();
-			return returnValue;
 		default:
-			throw new UnsupportedOperationException("The operator " + mOperator.toString() + " is not implemented.");
+			mLogger.warn(
+			        "Possible loss of precision: cannot handle operator " + mOperator + ". Returning current state.");
+			return new EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>(null, currentState);
 		}
 	}
 
 	@Override
-	public void addSubEvaluator(IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> evaluator) {
+	public void addSubEvaluator(
+	        IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>, CodeBlock, BoogieVar> evaluator) {
 		if (mLeftSubEvaluator != null && mRightSubEvaluator != null) {
 			throw new UnsupportedOperationException("There are no free sub evaluators left to be assigned.");
 		}

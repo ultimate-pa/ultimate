@@ -29,8 +29,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.math.BigDecimal;
 
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.EvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.IEvaluationResult;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class HelperFunctions {
 	protected static IntervalDomainValue createInterval(int lower, int upper) {
@@ -65,7 +68,7 @@ public class HelperFunctions {
 	}
 
 	protected static boolean computeResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
-	        IntervalDomainValue expectedResult, IEvaluationResult<IntervalDomainValue> evaluatorResult) {
+	        IntervalDomainValue expectedResult, IntervalDomainValue evaluatorResult) {
 
 		System.out.println(getMethodName());
 		System.out.println("Result  : " + evaluatorResult.toString());
@@ -76,54 +79,54 @@ public class HelperFunctions {
 			return evaluatorResult.equals(expectedResult);
 		}
 
-		if (evaluatorResult.getResult().isBottom() && expectedResult.isBottom()) {
+		if (evaluatorResult.isBottom() && expectedResult.isBottom()) {
 			return true;
 		}
-		
-		if (evaluatorResult.getResult().isBottom() && !expectedResult.isBottom()) {
+
+		if (evaluatorResult.isBottom() && !expectedResult.isBottom()) {
 			return false;
 		}
-		
+
 		final boolean lowerResult, upperResult;
-		
-		lowerResult = evaluatorResult.getResult().getLower().equals(expectedResult.getLower());
-		upperResult = evaluatorResult.getResult().getUpper().equals(expectedResult.getUpper());
+
+		lowerResult = evaluatorResult.getLower().equals(expectedResult.getLower());
+		upperResult = evaluatorResult.getUpper().equals(expectedResult.getUpper());
 
 		return lowerResult && upperResult;
 	}
-	
+
 	protected static boolean computeAdditionResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
 	        IntervalDomainValue expectedResult) {
 
-		final IEvaluationResult<IntervalDomainValue> result = createBinaryEvaluator(interval1, interval2,
-		        Operator.ARITHPLUS).evaluate(null);
+		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>> result = createBinaryEvaluator(
+		        interval1, interval2, Operator.ARITHPLUS).evaluate(null);
 
-		return computeResult(interval1, interval2, expectedResult, result);
+		return computeResult(interval1, interval2, expectedResult, result.getResult().getEvaluatedValue());
 	}
 
 	protected static boolean computeSubtractionResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
 	        IntervalDomainValue expectedResult) {
 
-		final IEvaluationResult<IntervalDomainValue> result = createBinaryEvaluator(interval1, interval2,
-		        Operator.ARITHMINUS).evaluate(null);
+		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>> result = createBinaryEvaluator(
+		        interval1, interval2, Operator.ARITHMINUS).evaluate(null);
 
-		return computeResult(interval1, interval2, expectedResult, result);
+		return computeResult(interval1, interval2, expectedResult, result.getResult().getEvaluatedValue());
 	}
 
 	protected static boolean computeMultiplicationResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
 	        IntervalDomainValue expectedResult) {
 
-		final IEvaluationResult<IntervalDomainValue> result = createBinaryEvaluator(interval1, interval2,
-		        Operator.ARITHMUL).evaluate(null);
+		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>> result = createBinaryEvaluator(
+		        interval1, interval2, Operator.ARITHMUL).evaluate(null);
 
-		return computeResult(interval1, interval2, expectedResult, result);
+		return computeResult(interval1, interval2, expectedResult, result.getResult().getEvaluatedValue());
 	}
 
 	protected static boolean computeIntersectionResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
 	        IntervalDomainValue expectedResult) {
 
 		final IntervalDomainValue result = interval1.intersect(interval2);
-		
+
 		return computeResult(interval1, interval2, expectedResult, result);
 	}
 }

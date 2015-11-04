@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.EvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
@@ -43,21 +44,24 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class IntervalSingletonValueExpressionEvaluator implements IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> {
+public class IntervalSingletonValueExpressionEvaluator implements
+        IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>, CodeBlock, BoogieVar> {
 
-	private final IntervalDomainValue mValue;
+	private final EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar> mValue;
 
 	protected IntervalSingletonValueExpressionEvaluator(IntervalDomainValue value) {
-		mValue = value;
+		mValue = new EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>(value, null);
 	}
 
 	@Override
-	public IEvaluationResult<IntervalDomainValue> evaluate(IAbstractState<CodeBlock, BoogieVar> currentState) {
+	public IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>> evaluate(
+	        IAbstractState<CodeBlock, BoogieVar> currentState) {
 		return mValue;
 	}
 
 	@Override
-	public void addSubEvaluator(IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> evaluator) {
+	public void addSubEvaluator(
+	        IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>, CodeBlock, BoogieVar> evaluator) {
 		throw new UnsupportedOperationException(
 		        "A sub evaluator cannot be added to a singleton expression value evaluator.");
 	}

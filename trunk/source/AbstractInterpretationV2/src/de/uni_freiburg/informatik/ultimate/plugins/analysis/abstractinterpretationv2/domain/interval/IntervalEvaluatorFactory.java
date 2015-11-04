@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.EvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.IEvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.INAryEvaluator;
@@ -42,7 +43,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class IntervalEvaluatorFactory implements IEvaluatorFactory<IntervalDomainValue, CodeBlock, BoogieVar> {
+public class IntervalEvaluatorFactory implements
+        IEvaluatorFactory<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>, CodeBlock, BoogieVar> {
 
 	private static final int ARITY_MIN = 1;
 	private static final int ARITY_MAX = 2;
@@ -65,7 +67,8 @@ public class IntervalEvaluatorFactory implements IEvaluatorFactory<IntervalDomai
 	}
 
 	@Override
-	public INAryEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> createNAryExpressionEvaluator(int arity) {
+	public INAryEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>, CodeBlock, BoogieVar> createNAryExpressionEvaluator(
+	        int arity) {
 
 		assert arity >= ARITY_MIN && arity <= ARITY_MAX;
 
@@ -73,7 +76,7 @@ public class IntervalEvaluatorFactory implements IEvaluatorFactory<IntervalDomai
 		case ARITY_MIN:
 			return new IntervalUnaryExpressionEvaluator(mLogger);
 		case ARITY_MAX:
-			return new IntervalBinaryExpressionEvaluator();
+			return new IntervalBinaryExpressionEvaluator(mLogger);
 		default:
 			final StringBuilder stringBuilder = new StringBuilder(BUFFER_MAX);
 			stringBuilder.append("Arity of ").append(arity).append(" is not implemented.");
@@ -82,8 +85,8 @@ public class IntervalEvaluatorFactory implements IEvaluatorFactory<IntervalDomai
 	}
 
 	@Override
-	public IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> createSingletonValueExpressionEvaluator(String value,
-	        Class<?> valueType) {
+	public IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>, CodeBlock, BoogieVar> createSingletonValueExpressionEvaluator(
+	        String value, Class<?> valueType) {
 		assert value != null;
 
 		return new IntervalSingletonValueExpressionEvaluator(
@@ -91,7 +94,7 @@ public class IntervalEvaluatorFactory implements IEvaluatorFactory<IntervalDomai
 	}
 
 	@Override
-	public IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> createSingletonVariableExpressionEvaluator(
+	public IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>, CodeBlock, BoogieVar> createSingletonVariableExpressionEvaluator(
 	        String variableName) {
 		assert variableName != null;
 
@@ -99,7 +102,7 @@ public class IntervalEvaluatorFactory implements IEvaluatorFactory<IntervalDomai
 	}
 
 	@Override
-	public IEvaluator<IntervalDomainValue, CodeBlock, BoogieVar> createSingletonLogicalValueExpressionEvaluator(
+	public IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>, CodeBlock, BoogieVar> createSingletonLogicalValueExpressionEvaluator(
 	        boolean value) {
 		return new IntervalSingletonBooleanExpressionEvaluator(value);
 	}

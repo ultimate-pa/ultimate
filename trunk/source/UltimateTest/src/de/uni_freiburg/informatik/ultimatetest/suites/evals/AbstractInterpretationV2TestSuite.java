@@ -60,10 +60,10 @@ public class AbstractInterpretationV2TestSuite extends AbstractEvalTestSuite {
 //	         "examples/programs/abstractInterpretationNoRec/",
 	        /* ULTIMATE repo */
 	        // "examples/programs/regression/bpl/",
-//	         "examples/programs/regression/c/",
+	         "examples/programs/regression/c/",
 	        // "examples/programs/recursivePrograms",
 	        /* SV-COMP repo */
-	        "examples/svcomp/loops/", // SPLIT
+//	        "examples/svcomp/loops/", // SPLIT
 			// "examples/svcomp/loopsSelection/",
 			// "examples/svcomp/eca/", // SPLIT
 			// "examples/svcomp/ecaSelection/",
@@ -71,7 +71,7 @@ public class AbstractInterpretationV2TestSuite extends AbstractEvalTestSuite {
 			// "examples/svcomp/systemc1/",
 			// "examples/svcomp/systemc2/",
 			// "examples/svcomp/eca-rers2012/",
-			 "examples/svcomp/recursive/",
+//			 "examples/svcomp/recursive/",
 			// "examples/svcomp/ssh-simplified/",
 			// "examples/svcomp/ssh/",
 //			"examples/programs/toy/",
