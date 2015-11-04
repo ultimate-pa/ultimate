@@ -49,16 +49,16 @@ final class ProgressAwareTimer implements IDeadlineProvider {
 		mDeadline = deadline;
 	}
 	
-	private boolean check() {
+	private boolean isTimeout() {
 		return System.currentTimeMillis() > mDeadline;
 	}
 
 	@Override
 	public boolean continueProcessing() {
 		if (mParent == null) {
-			return check();
+			return !isTimeout();
 		}
-		return check() && mParent.continueProcessing();
+		return !isTimeout() && mParent.continueProcessing();
 	}
 
 	@Override

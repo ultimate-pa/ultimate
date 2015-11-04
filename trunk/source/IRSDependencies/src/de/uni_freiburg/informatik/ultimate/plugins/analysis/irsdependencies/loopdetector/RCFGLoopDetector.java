@@ -38,7 +38,6 @@ import java.util.Stack;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.Activator;
@@ -78,7 +77,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
-public class RCFGLoopDetector extends BaseObserver {
+public class RCFGLoopDetector {
 
 	private final IUltimateServiceProvider mServices;
 	private final Logger mLogger;
@@ -94,12 +93,7 @@ public class RCFGLoopDetector extends BaseObserver {
 		return mLoopEntryExit;
 	}
 
-	@Override
-	public boolean process(IElement root) throws Throwable {
-		if (!(root instanceof RootNode)) {
-			return true;
-		}
-		final RootNode rootNode = (RootNode) root;
+	public void process(RootNode rootNode) throws Throwable {
 		final RootAnnot annot = rootNode.getRootAnnot();
 
 		// get a hashset of all loop heads
@@ -120,7 +114,6 @@ public class RCFGLoopDetector extends BaseObserver {
 		}
 		// print result if debug is enabled
 		printResult(mLoopEntryExit);
-		return false;
 	}
 
 	private List<ProgramPoint> orderLoopHeads(Set<ProgramPoint> loopHeads, RootNode programStart) {
