@@ -138,6 +138,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CompoundStatementExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ContractResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.DeclarationResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.DeclaratorResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListRecResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
@@ -523,9 +524,9 @@ public class CHandler implements ICHandler {
 		TypesResult resType = (TypesResult) main.dispatch(node.getDeclSpecifier());
 
 		mCurrentDeclaredTypes.push(resType);
-		DeclarationResult declResult = (DeclarationResult) main.dispatch(node.getDeclarator());
+		DeclaratorResult declResult = (DeclaratorResult) main.dispatch(node.getDeclarator());
 		mCurrentDeclaredTypes.pop();
-		return mFunctionHandler.handleFunctionDefinition(main, mMemoryHandler, node, declResult.getDeclarations().get(0),
+		return mFunctionHandler.handleFunctionDefinition(main, mMemoryHandler, node, declResult.getDeclaration(),
 				mContract);
 	}
 
@@ -669,13 +670,9 @@ public class CHandler implements ICHandler {
 //				if (d instanceof IASTFieldDeclarator)
 //					throw new UnsupportedSyntaxException(loc, "bitfields are not supported at the moment");
 	
-				DeclarationResult declResult = (DeclarationResult) main.dispatch(d);
+				DeclaratorResult declResult = (DeclaratorResult) main.dispatch(d);
 
-				// the ResultDeclaration from one Declarator always only
-				// contains one CDeclaration, right?
-				// or at most one??
-				assert declResult.getDeclarations().size() == 1;
-				CDeclaration cDec = declResult.getDeclarations().get(0);
+				CDeclaration cDec = declResult.getDeclaration();
 
 				///////////////////
 				// update symbol table
@@ -854,7 +851,7 @@ public class CHandler implements ICHandler {
 		TypesResult resType = (TypesResult) main.dispatch(node.getDeclSpecifier());
 
 		mCurrentDeclaredTypes.push(resType);
-		DeclarationResult declResult = (DeclarationResult) main.dispatch(node.getDeclarator());
+		DeclaratorResult declResult = (DeclaratorResult) main.dispatch(node.getDeclarator());
 		mCurrentDeclaredTypes.pop();
 		return declResult;
 	}
@@ -930,17 +927,15 @@ public class CHandler implements ICHandler {
 			IASTParameterDeclaration[] paramDecls = funcDecl.getParameters();
 			CDeclaration[] paramsParsed = new CDeclaration[paramDecls.length];
 			for (int i = 0; i < paramDecls.length; i++) {
-				DeclarationResult decl = (DeclarationResult) main.dispatch(paramDecls[i]);
-				if (decl.getDeclarations().size() != 1)
-					throw new UnsupportedSyntaxException(loc, "Multiple names in parameter declaration");
-				if (decl.getDeclarations().get(0).getName() == ""
-						&& decl.getDeclarations().get(0).getType() instanceof CPrimitive
-						&& ((CPrimitive) decl.getDeclarations().get(0).getType()).getType().equals(PRIMITIVE.VOID)) {
+				DeclaratorResult decl = (DeclaratorResult) main.dispatch(paramDecls[i]);
+				if (decl.getDeclaration().getName() == ""
+						&& decl.getDeclaration().getType() instanceof CPrimitive
+						&& ((CPrimitive) decl.getDeclaration().getType()).getType().equals(PRIMITIVE.VOID)) {
 					assert paramDecls.length == 1;
 					paramsParsed = new CDeclaration[0];
 					break;
 				}
-				paramsParsed[i] = decl.getDeclarations().get(0);
+				paramsParsed[i] = decl.getDeclaration();
 			}
 			CFunction funcType = new CFunction(newResType.cType, paramsParsed, funcDecl.takesVarArgs());
 			newResType.cType = funcType;
@@ -951,25 +946,16 @@ public class CHandler implements ICHandler {
 		}
 		if (node.getNestedDeclarator() != null) {
 			mCurrentDeclaredTypes.push(newResType);
-			DeclarationResult result = (DeclarationResult) main.dispatch(node.getNestedDeclarator());
+			DeclaratorResult result = (DeclaratorResult) main.dispatch(node.getNestedDeclarator());
 			mCurrentDeclaredTypes.pop();
 			if (node.getInitializer() != null) {
-				assert result.getDeclarations().size() == 1;
-				CDeclaration cdec = result.getDeclarations().remove(0);// have
-																		// to do
-																		// this,
-																		// because
-																		// CDeclaration
-																		// is
-																		// immutable,
-																		// right?
-				result.addDeclaration(cdec.getType(), cdec.getName(),
+				CDeclaration cdec = result.getDeclaration();
+				result = new DeclaratorResult(cdec.getType(), cdec.getName(),
 						node.getInitializer(), variableLengthArrayAuxVarInitializer, cdec.isOnHeap());
 			}
 			return result;
 		} else {
-			DeclarationResult result = new DeclarationResult();
-			result.addDeclaration(newResType.cType, node.getName().toString(), node.getInitializer(),
+			DeclaratorResult result = new DeclaratorResult(newResType.cType, node.getName().toString(), node.getInitializer(),
 					variableLengthArrayAuxVarInitializer, newResType.isOnHeap);
 			return result;
 		}
@@ -2663,9 +2649,8 @@ public class CHandler implements ICHandler {
 		TypesResult resTypes = (TypesResult) main.dispatch(node.getTypeId().getDeclSpecifier());
 
 		mCurrentDeclaredTypes.push(resTypes);
-		DeclarationResult declResult = (DeclarationResult) main.dispatch(node.getTypeId().getAbstractDeclarator());
-		assert declResult.getDeclarations().size() == 1;
-		CType newCType = declResult.getDeclarations().get(0).getType();
+		DeclaratorResult declResult = (DeclaratorResult) main.dispatch(node.getTypeId().getAbstractDeclarator());
+		CType newCType = declResult.getDeclaration().getType();
 		mCurrentDeclaredTypes.pop();
 		
 		ExpressionResult expr = (ExpressionResult) main.dispatch(node.getOperand()); 
@@ -2888,19 +2873,19 @@ public class CHandler implements ICHandler {
 			TypesResult rt = (TypesResult) main.dispatch(node.getTypeId().getDeclSpecifier());
 			mCurrentDeclaredTypes.push(rt);
 //			main.dispatch(node.getTypeId().getAbstractDeclarator());
-			DeclarationResult dr = (DeclarationResult) main.dispatch(node.getTypeId().getAbstractDeclarator());
+			DeclaratorResult dr = (DeclaratorResult) main.dispatch(node.getTypeId().getAbstractDeclarator());
 			mCurrentDeclaredTypes.pop();
 //			TypesResult checked = checkForPointer(main, node.getTypeId().getAbstractDeclarator().getPointerOperators(),
 //					rt, false);
 
-			return new ExpressionResult(new RValue(mMemoryHandler.calculateSizeOf(loc, dr.getDeclarations().get(0).getType()), new CPrimitive(
+			return new ExpressionResult(new RValue(mMemoryHandler.calculateSizeOf(loc, dr.getDeclaration().getType()), new CPrimitive(
 					PRIMITIVE.INT)));
 		}
 		case IASTTypeIdExpression.op_typeof: {
 			TypesResult rt = (TypesResult) main.dispatch(node.getTypeId().getDeclSpecifier());
 
 			mCurrentDeclaredTypes.push(rt);
-			DeclarationResult dr = (DeclarationResult) main.dispatch(node.getTypeId().getAbstractDeclarator());
+			DeclaratorResult dr = (DeclaratorResult) main.dispatch(node.getTypeId().getAbstractDeclarator());
 			mCurrentDeclaredTypes.pop();
 
 			return dr;

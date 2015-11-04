@@ -71,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.DeclarationResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.DeclaratorResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
@@ -231,8 +232,8 @@ public class TypeHandler implements ITypeHandler {
     		if (opRes instanceof ExpressionResult) {
     			CType cType = ((ExpressionResult) opRes).lrVal.getCType();
     			return new TypesResult(ctype2asttype(loc,  cType), node.isConst(), false, cType);
-    		} else if (opRes instanceof DeclarationResult) {
-    			CType cType = ((DeclarationResult) opRes).getDeclarations().get(0).getType();
+    		} else if (opRes instanceof DeclaratorResult) {
+    			CType cType = ((DeclaratorResult) opRes).getDeclaration().getType();
     			return new TypesResult(ctype2asttype(loc,  cType), node.isConst(), false, cType);
     		}
     	}
