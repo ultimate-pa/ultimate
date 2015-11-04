@@ -158,7 +158,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider implements IAbstractS
 		}
 		assert current != null;
 		for (CodeBlock trans : transitions) {
-			states.addFirst(new Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>(trans, current.copy()));
+			states.addFirst(new Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>(trans, current));
 		}
 		assert states.size() == transitions.size();
 		return current;

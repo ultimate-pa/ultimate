@@ -69,7 +69,7 @@ public class RcfgVariableProvider implements IVariableProvider<CodeBlock, Boogie
 		assert state != null;
 		assert state.isEmpty();
 
-		IAbstractState<CodeBlock, BoogieVar> newState = state.copy();
+		IAbstractState<CodeBlock, BoogieVar> newState = state;
 		final RCFGNode source = current.getSource();
 		if (source instanceof ProgramPoint) {
 			final ProgramPoint programPoint = (ProgramPoint) source;
@@ -95,15 +95,13 @@ public class RcfgVariableProvider implements IVariableProvider<CodeBlock, Boogie
 		// introduced or removed by this edge
 		// so, only call or return can do this
 
-		final IAbstractState<CodeBlock, BoogieVar> newstate = state.copy();
-
 		if (current instanceof Call) {
-			return updateLocals(newstate, current.getSource(), current.getTarget());
+			return updateLocals(state, current.getSource(), current.getTarget());
 		} else if (current instanceof Return) {
-			return updateLocals(newstate, current.getSource(), current.getTarget());
+			return updateLocals(state, current.getSource(), current.getTarget());
 		} else {
 			// nothing changes
-			return newstate;
+			return state;
 		}
 	}
 
