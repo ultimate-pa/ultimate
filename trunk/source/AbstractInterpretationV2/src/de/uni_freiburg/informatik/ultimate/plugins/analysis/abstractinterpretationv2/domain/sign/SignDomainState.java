@@ -32,6 +32,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign.SignDomainValue.Values;
@@ -44,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * </p>
  * 
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  * @param <ACTION>
  *            Any action.
@@ -328,5 +332,10 @@ public class SignDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, 
 	@Override
 	public SignDomainState<ACTION, VARDECL> getResult() {
 		return this;
+	}
+
+	@Override
+	public Term getTerm(Script script, Boogie2SMT bpl2smt) {
+		return script.term("true");
 	}
 }
