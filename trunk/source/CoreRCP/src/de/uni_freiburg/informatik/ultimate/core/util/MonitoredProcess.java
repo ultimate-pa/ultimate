@@ -37,6 +37,7 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.lang.Thread.State;
 import java.nio.charset.Charset;
+import java.nio.file.Paths;
 import java.util.ConcurrentModificationException;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -152,6 +153,17 @@ public final class MonitoredProcess implements IStorable {
 		final String oneLineCmd = StringUtils.join(command, " ");
 
 		if (workingDir == null) {
+			if (command.length > 0) {
+				File f = new File(command[0]);
+				if (!f.exists()) {
+					f = new File(Paths.get(System.getProperty("user.dir"), command[0]).toString());
+					if (f.exists()) {
+						command[0] = f.getAbsolutePath();
+					}
+				} else {
+					command[0] = f.getAbsolutePath();
+				}
+			}
 			final Logger logger = services.getLoggingService().getControllerLogger();
 			logger.info("No working directory specified, using " + System.getProperty("user.dir"));
 			newMonitoredProcess = new MonitoredProcess(Runtime.getRuntime().exec(command), oneLineCmd, exitCommand,
