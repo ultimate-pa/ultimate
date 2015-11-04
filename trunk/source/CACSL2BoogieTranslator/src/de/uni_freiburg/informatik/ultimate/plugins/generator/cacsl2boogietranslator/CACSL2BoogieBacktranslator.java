@@ -236,7 +236,7 @@ public class CACSL2BoogieBacktranslator extends
 		}
 
 		// replace all expr eval occurences with the right atomictraceelements
-		CheckForSubtreeInclusion2 check = new CheckForSubtreeInclusion2();
+		CheckForSubtreeInclusion check = new CheckForSubtreeInclusion();
 		translatedAtomicTraceElements = check.check(translatedAtomicTraceElements);
 
 		return new CACSLProgramExecution(initialState, translatedAtomicTraceElements, translatedProgramStates);
@@ -732,64 +732,6 @@ public class CACSL2BoogieBacktranslator extends
 	}
 
 	/**
-	 * Kept around until I am sure {@link CheckForSubtreeInclusion2} is better in all cases
-	 * @author dietsch@informatik.uni-freiburg.de
-	 *
-	 */
-	private class CheckForSubtreeInclusion {
-
-		protected List<AtomicTraceElement<CACSLLocation>> check(
-				List<AtomicTraceElement<CACSLLocation>> translatedAtomicTraceElements) {
-			List<AtomicTraceElement<CACSLLocation>> rtr = new ArrayList<>();
-			for (int i = 0; i < translatedAtomicTraceElements.size(); ++i) {
-				AtomicTraceElement<CACSLLocation> ate = translatedAtomicTraceElements.get(i);
-				rtr.add(check(ate, translatedAtomicTraceElements, i + 1, StepInfo.EXPR_EVAL));
-			}
-			return rtr;
-		}
-
-		private AtomicTraceElement<CACSLLocation> check(AtomicTraceElement<CACSLLocation> ate,
-				List<AtomicTraceElement<CACSLLocation>> translatedAtomicTraceElements, int start, StepInfo newSi) {
-
-			if (!(ate.getStep() instanceof CLocation)) {
-				// not implemented for ACSL
-				return ate;
-			}
-			IASTNode origNode = ((CLocation) ate.getStep()).getNode();
-
-			if (!(origNode instanceof IASTExpression)) {
-				// do nothing for statements
-				return ate;
-			}
-
-			for (int j = start; j < translatedAtomicTraceElements.size(); ++j) {
-				AtomicTraceElement<CACSLLocation> current = translatedAtomicTraceElements.get(j);
-				if (!(current.getStep() instanceof CLocation)) {
-					// skip acsl nodes
-					continue;
-				}
-				IASTNode candidateParent = ((CLocation) current.getStep()).getNode();
-
-				IASTNode searchTarget = origNode.getParent();
-				while (searchTarget != null) {
-
-					if (searchTarget == candidateParent) {
-						EnumSet<StepInfo> set = ate.getStepInfo();
-						if (set.isEmpty() || set.contains(StepInfo.NONE)) {
-							set = EnumSet.of(newSi);
-						} else {
-							set.add(newSi);
-						}
-						return new AtomicTraceElement<CACSLLocation>(current.getStep(), ate.getStep(), set);
-					}
-					searchTarget = searchTarget.getParent();
-				}
-			}
-			return ate;
-		}
-	}
-
-	/**
 	 * A subtree check that sacrifices memory consumption for speed. It is about
 	 * 20x faster, but uses a lookup table.
 	 * 
@@ -803,7 +745,7 @@ public class CACSL2BoogieBacktranslator extends
 	 * @author dietsch@informatik.uni-freiburg.de
 	 * 
 	 */
-	private class CheckForSubtreeInclusion2 {
+	private class CheckForSubtreeInclusion {
 
 		protected List<AtomicTraceElement<CACSLLocation>> check(
 				List<AtomicTraceElement<CACSLLocation>> translatedAtomicTraceElements) {
