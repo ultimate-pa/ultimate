@@ -126,7 +126,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 
 			processExpression(rhs[i]);
 
-			assert mExpressionEvaluator.isFinished();
+			assert mExpressionEvaluator.isFinished() : "Expression evaluator is not finished";
 			assert mExpressionEvaluator.getRootEvaluator() != null;
 
 			final IEvaluationResult<IntervalDomainValue> result = mExpressionEvaluator.getRootEvaluator()

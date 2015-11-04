@@ -83,28 +83,35 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 			/* ULTIMATE repo */
 			// "examples/programs/abstractInterpretation/",
 			// "examples/programs/abstractInterpretationNoRec/",
-			 "examples/programs/regression/bpl/",
-			 "examples/programs/regression/c/",
-			// "examples/programs/recursivePrograms",
-			
-			 /* SV-COMP repo */
-			"examples/svcomp/loops/", 
-			// "examples/svcomp/loopsSelection/",
-			// "examples/svcomp/eca/", 
-			// "examples/svcomp/ecaSelection/",
-			// "examples/svcomp/systemc/", 
-			// "examples/svcomp/systemc1/",
-			// "examples/svcomp/systemc2/",
-			// "examples/svcomp/eca-rers2012/",
-			// "examples/svcomp/recursive/",
-			 "examples/svcomp/ssh-simplified/",
-			 "examples/svcomp/ntdrivers-simplified/",
+//			 "examples/programs/regression/bpl/",
+//			 "examples/programs/regression/c/",
+//			// "examples/programs/recursivePrograms",
+//			
+//			 /* SV-COMP repo */
+//			"examples/svcomp/loops/", 
+//			// "examples/svcomp/loopsSelection/",
+//			// "examples/svcomp/eca/", 
+//			// "examples/svcomp/ecaSelection/",
+//			// "examples/svcomp/systemc/", 
+//			// "examples/svcomp/systemc1/",
+//			// "examples/svcomp/systemc2/",
+//			// "examples/svcomp/eca-rers2012/",
+//			// "examples/svcomp/recursive/",
+//			 "examples/svcomp/ssh-simplified/",
+//			 "examples/svcomp/ntdrivers-simplified/",
 			// "examples/svcomp/ssh/",
 			 
 			 //single files 
-//			 "examples/programs/regression/c/NondeterministicLocalVarInitialValues.c",
-//			 "examples/programs/regression/c/Enums03-Unsafe.c",
-//			 "examples/svcomp/loops/bubble_sort_true-unreach-call.c",
+			 "examples/programs/regression/bpl/BugFreshConstantInSSA.bpl",
+			 "examples/programs/regression/c/Enums01-Safe.c",
+			 "examples/programs/regression/c/Enums02-Safe.c",
+			 "examples/programs/regression/c/Enums04-Safe.c",
+			 "examples/programs/regression/bpl/BugModifiesChecker.bpl",
+//			 
+//			 //soundness
+//			 "examples/programs/regression/bpl/interprocedural/BugBackwardPredicates04.bpl",
+//			 "examples/programs/regression/c/NondeterministicLocalVarInitialValues.c"
+			 
 	};
 
 	// @formatter:on
