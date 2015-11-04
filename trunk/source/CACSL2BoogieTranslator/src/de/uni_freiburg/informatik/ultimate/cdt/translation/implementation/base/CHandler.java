@@ -48,7 +48,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Stack;
 
-import org.apache.commons.collections15.iterators.EmptyListIterator;
 import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
@@ -178,7 +177,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BreakStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
