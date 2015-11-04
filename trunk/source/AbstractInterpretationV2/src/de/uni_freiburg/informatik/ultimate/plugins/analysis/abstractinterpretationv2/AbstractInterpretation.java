@@ -84,9 +84,7 @@ public class AbstractInterpretation implements IAnalysis {
 		switch (creator) {
 		case "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder":
 			mObserver = new ArrayList<IObserver>();
-			final RCFGLoopDetector externalLoopDetector = new RCFGLoopDetector(mServices);
-			mObserver.add(externalLoopDetector);
-			mObserver.add(new AbstractInterpretationRcfgObserver(mServices, externalLoopDetector));
+			mObserver.add(new AbstractInterpretationRcfgObserver(mServices));
 			break;
 		default:
 			mObserver = null;

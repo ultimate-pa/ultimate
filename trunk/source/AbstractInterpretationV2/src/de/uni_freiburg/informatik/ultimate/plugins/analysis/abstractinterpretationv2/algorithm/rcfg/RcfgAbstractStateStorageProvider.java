@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
@@ -66,7 +67,7 @@ public class RcfgAbstractStateStorageProvider extends BaseRcfgAbstractStateStora
 	}
 
 	@Override
-	public IAbstractStateStorage<CodeBlock, BoogieVar> createStorage() {
+	public IAbstractStateStorage<CodeBlock, BoogieVar, ProgramPoint> createStorage() {
 		return new RcfgAbstractStateStorageProvider(getMergeOperator(), getServices());
 	}
 }

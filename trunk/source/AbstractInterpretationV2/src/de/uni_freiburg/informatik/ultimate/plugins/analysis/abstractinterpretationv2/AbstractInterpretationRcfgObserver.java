@@ -34,30 +34,12 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
-import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbstractInterpreter;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILoopDetector;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IResultReporter;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IVariableProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.AnnotatingRcfgAbstractStateStorageProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.BaseRcfgAbstractStateStorageProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgLoopDetector;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgResultReporter;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgVariableProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty.EmptyDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.interval.IntervalDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.sign.SignDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbstractInterpretationPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.RCFGLoopDetector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -65,72 +47,44 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 
 /**
  * 
- * @author dietsch@informatik.uni-freiburg.de
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
 public class AbstractInterpretationRcfgObserver extends BaseObserver {
 
 	private static final String ULTIMATE_START = "ULTIMATE.start";
 	private final IUltimateServiceProvider mServices;
-	private final RCFGLoopDetector mLoopDetector;
 	private final Logger mLogger;
 
-	public AbstractInterpretationRcfgObserver(IUltimateServiceProvider services, RCFGLoopDetector loopDetector) {
+	public AbstractInterpretationRcfgObserver(final IUltimateServiceProvider services) {
 		mServices = services;
-		mLoopDetector = loopDetector;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override
 	public boolean process(IElement elem) throws Throwable {
-		// TODO: Library mode or main method mode? Currently, we only have main
-		// method mode
-
 		if (!(elem instanceof RootNode)) {
 			throw new IllegalArgumentException("You cannot use this observer for " + elem.getClass().getSimpleName());
 		}
 		final RootNode root = (RootNode) elem;
-
-		final BoogieSymbolTable symbolTable = getSymbolTable(root);
-		if (symbolTable == null) {
-			throw new IllegalArgumentException("Could not get BoogieSymbolTable");
-		}
 
 		final List<CodeBlock> initial = getInitialEdges(root);
 		if (initial == null) {
 			throw new IllegalArgumentException("Could not find an initial edge");
 		}
 
-		final Boogie2SmtSymbolTable boogieVarTable = root.getRootAnnot().getBoogie2SMT().getBoogie2SmtSymbolTable();
-
-		final IAbstractDomain<?, CodeBlock, BoogieVar> domain = selectDomain(symbolTable);
-		final AbstractInterpreter<CodeBlock, BoogieVar> interpreter = createAbstractInterpreter(domain, symbolTable,
-				boogieVarTable);
-		interpreter.process(initial);
-		return false;
-	}
-
-	private BoogieSymbolTable getSymbolTable(RootNode root) {
-		final PreprocessorAnnotation pa = PreprocessorAnnotation.getAnnotation(root);
-		if (pa == null) {
-			return null;
-		}
-		return pa.getSymbolTable();
-	}
-
-	private IAbstractDomain<?, CodeBlock, BoogieVar> selectDomain(BoogieSymbolTable symbolTable) {
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
-		final String selectedDomain = ups.getString(AbstractInterpretationPreferenceInitializer.LABEL_ABSTRACT_DOMAIN);
-
-		if (EmptyDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new EmptyDomain<>();
-		} else if (SignDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new SignDomain(mServices);
-		} else if (IntervalDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new IntervalDomain(mServices, symbolTable);
+		final IProgressAwareTimer timer;
+		if (ups.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_RUN_AS_PRE_ANALYSIS)) {
+			timer = mServices.getProgressMonitorService().getChildTimer(0.2);
+		} else {
+			timer = mServices.getProgressMonitorService();
 		}
-		throw new UnsupportedOperationException("The value \"" + selectedDomain + "\" of preference \""
-				+ AbstractInterpretationPreferenceInitializer.LABEL_ABSTRACT_DOMAIN + "\" was not considered before! ");
+
+		AbstractInterpreter.run(root, initial, timer, mServices);
+
+		// do not descend, this is already the root
+		return false;
 	}
 
 	private List<CodeBlock> getInitialEdges(final RootNode root) {
@@ -157,22 +111,4 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 		}
 		return codeblocks;
 	}
-
-	private AbstractInterpreter<CodeBlock, BoogieVar> createAbstractInterpreter(
-			IAbstractDomain<?, CodeBlock, BoogieVar> domain, BoogieSymbolTable table,
-			Boogie2SmtSymbolTable boogieVarTable) {
-		assert domain != null;
-		assert table != null;
-		assert boogieVarTable != null;
-
-		ITransitionProvider<CodeBlock> transitionProvider = new RcfgTransitionProvider();
-		BaseRcfgAbstractStateStorageProvider storage = new AnnotatingRcfgAbstractStateStorageProvider(
-				domain.getMergeOperator(), mServices);
-		IVariableProvider<CodeBlock, BoogieVar> varProvider = new RcfgVariableProvider(table, boogieVarTable);
-		ILoopDetector<CodeBlock> loopDetector = new RcfgLoopDetector(mLoopDetector);
-		IResultReporter<CodeBlock> reporter = new RcfgResultReporter(mServices, storage);
-		return new AbstractInterpreter<CodeBlock, BoogieVar>(mServices, transitionProvider, storage, domain,
-				varProvider, loopDetector, reporter);
-	}
-
 }

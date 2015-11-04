@@ -26,17 +26,23 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IAbstractStateStorage;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
@@ -47,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loop
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.RcfgWrapper;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -58,7 +65,8 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public abstract class BaseRcfgAbstractStateStorageProvider implements IAbstractStateStorage<CodeBlock, BoogieVar> {
+public abstract class BaseRcfgAbstractStateStorageProvider
+		implements IAbstractStateStorage<CodeBlock, BoogieVar, ProgramPoint> {
 
 	private final IAbstractStateBinaryOperator<CodeBlock, BoogieVar> mMergeOperator;
 	private final IUltimateServiceProvider mServices;
@@ -164,6 +172,47 @@ public abstract class BaseRcfgAbstractStateStorageProvider implements IAbstractS
 		return current;
 	}
 
+	@Override
+	public Map<ProgramPoint, Term> getTerms(final CodeBlock initialTransition, final Script script,
+			final Boogie2SMT bpl2smt) {
+		final Map<ProgramPoint, Term> rtr = new HashMap<>();
+		final Deque<ProgramPoint> worklist = new ArrayDeque<>();
+		final Set<ProgramPoint> closed = new HashSet<>();
+
+		while (!worklist.isEmpty()) {
+			final ProgramPoint current = worklist.remove();
+			if (!closed.add(current)) {
+				continue;
+			}
+			final Set<IAbstractState<CodeBlock, BoogieVar>> currentStates = new HashSet<IAbstractState<CodeBlock, BoogieVar>>();
+			for (final RCFGEdge outgoing : current.getOutgoingEdges()) {
+				if (!(outgoing instanceof CodeBlock)) {
+					continue;
+				}
+				final CodeBlock succTrans = (CodeBlock) outgoing;
+				final RCFGNode target = outgoing.getTarget();
+				if (!(target instanceof ProgramPoint)) {
+					continue;
+				}
+				final ProgramPoint targetpp = (ProgramPoint) target;
+				worklist.add(targetpp);
+				currentStates.add(getCurrentState(succTrans, targetpp));
+			}
+
+			// TODO: and or or ???
+			Term currentTerm = rtr.get(current);
+			if (currentTerm == null) {
+				currentTerm = script.term("true");
+			}
+			for (IAbstractState<CodeBlock, BoogieVar> state : currentStates) {
+				currentTerm = script.term("and", currentTerm, state.getTerm(script, bpl2smt));
+			}
+			rtr.put(current, currentTerm);
+		}
+
+		return rtr;
+	}
+
 	protected List<CodeBlock> getErrorTrace(CodeBlock start, CodeBlock end) {
 		// get the trace from the entry codeblock to this codeblock via all the
 		// states in between
@@ -173,8 +222,9 @@ public abstract class BaseRcfgAbstractStateStorageProvider implements IAbstractS
 		final List<CodeBlock> trace = new ArrayList<>();
 		final IHeuristic<RCFGNode, RCFGEdge> heuristic = new ErrorPathHeuristic();
 		final IEdgeDenier<RCFGEdge> denier = new RcfgEdgeDenier();
-		final AStar<RCFGNode, RCFGEdge> search = new AStar<RCFGNode, RCFGEdge>(mServices.getLoggingService().getLogger(
-				Activator.PLUGIN_ID), start.getSource(), end.getTarget(), heuristic, new RcfgWrapper(), denier);
+		final AStar<RCFGNode, RCFGEdge> search = new AStar<RCFGNode, RCFGEdge>(
+				mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), start.getSource(), end.getTarget(),
+				heuristic, new RcfgWrapper(), denier);
 		final List<RCFGEdge> path = search.findPath();
 
 		if (path == null) {

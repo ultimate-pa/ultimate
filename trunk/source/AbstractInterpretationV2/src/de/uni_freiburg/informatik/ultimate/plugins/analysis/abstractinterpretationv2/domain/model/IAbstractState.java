@@ -33,13 +33,13 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbstractInterpreter;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngine;
 
 /**
  * An abstract state is an abstraction of all program variables at a certain
  * program location.
  * 
- * Note that {@link AbstractInterpreter} assumes that all operations on an
+ * Note that {@link FixpointEngine} assumes that all operations on an
  * instance of {@link IAbstractState} do not change this instance.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public interface IAbstractState<ACTION, VARDECL> {
 
 	/**
-	 * {@link AbstractInterpreter} will call this method to add a variable to
+	 * {@link FixpointEngine} will call this method to add a variable to
 	 * the set of variables of an abstract state s.t. they match the current
 	 * scope.
 	 * 
@@ -69,7 +69,7 @@ public interface IAbstractState<ACTION, VARDECL> {
 	IAbstractState<ACTION, VARDECL> addVariable(final String name, final VARDECL variables);
 
 	/**
-	 * {@link AbstractInterpreter} will call this method to remove a variable
+	 * {@link FixpointEngine} will call this method to remove a variable
 	 * from the set of variables of an abstract state s.t. they match the
 	 * current scope.
 	 * 
@@ -142,14 +142,14 @@ public interface IAbstractState<ACTION, VARDECL> {
 	void setToBottom();
 
 	/**
-	 * An abstract state is a fixpoint if {@link AbstractInterpreter} called
+	 * An abstract state is a fixpoint if {@link FixpointEngine} called
 	 * {@link #setFixpoint(boolean)} with true.
 	 * @return <code>true</code> if and only if the current abstract state is a fix point, <code>false</code> otherwise.
 	 */
 	boolean isFixpoint();
 
 	/**
-	 * {@link AbstractInterpreter} will call this method to save whether this
+	 * {@link FixpointEngine} will call this method to save whether this
 	 * abstract state is considered a fixpoint or not.
 	 * 
 	 * @return A new abstract state that is a {@link #copy()} of this instance

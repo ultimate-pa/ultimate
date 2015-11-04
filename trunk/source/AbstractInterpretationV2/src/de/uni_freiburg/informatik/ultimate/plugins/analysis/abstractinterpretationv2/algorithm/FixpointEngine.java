@@ -39,6 +39,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
@@ -55,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class AbstractInterpreter<ACTION, VARDECL> {
+public class FixpointEngine<ACTION, VARDECL, LOCATION> {
 
 	private static final String INDENT = "   ";
 
@@ -63,18 +64,19 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 	private final int mMaxParallelStates;
 
 	private final ITransitionProvider<ACTION> mTransitionProvider;
-	private final Logger mLogger;
-	private final IAbstractStateStorage<ACTION, VARDECL> mStateStorage;
+	private final IAbstractStateStorage<ACTION, VARDECL, LOCATION> mStateStorage;
 	private final IAbstractDomain<?, ACTION, VARDECL> mDomain;
 	private final IVariableProvider<ACTION, VARDECL> mVarProvider;
 	private final ILoopDetector<ACTION> mLoopDetector;
 	private final IResultReporter<ACTION> mReporter;
-	private final IUltimateServiceProvider mServices;
+	private final IProgressAwareTimer mTimer;
+	private final Logger mLogger;
 
-	public AbstractInterpreter(IUltimateServiceProvider services, ITransitionProvider<ACTION> post,
-			IAbstractStateStorage<ACTION, VARDECL> storage, IAbstractDomain<?, ACTION, VARDECL> domain,
-			IVariableProvider<ACTION, VARDECL> varProvider, ILoopDetector<ACTION> loopDetector,
-			IResultReporter<ACTION> reporter) {
+	public FixpointEngine(final IUltimateServiceProvider services, final IProgressAwareTimer timer,
+			final ITransitionProvider<ACTION> post, final IAbstractStateStorage<ACTION, VARDECL, LOCATION> storage,
+			final IAbstractDomain<?, ACTION, VARDECL> domain, final IVariableProvider<ACTION, VARDECL> varProvider,
+			final ILoopDetector<ACTION> loopDetector, final IResultReporter<ACTION> reporter) {
+		assert timer != null;
 		assert services != null;
 		assert post != null;
 		assert storage != null;
@@ -83,7 +85,7 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 		assert loopDetector != null;
 		assert reporter != null;
 
-		mServices = services;
+		mTimer = timer;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mTransitionProvider = post;
 		mStateStorage = storage;
@@ -97,24 +99,15 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 		mMaxParallelStates = ups.getInt(AbstractInterpretationPreferenceInitializer.LABEL_STATES_UNTIL_MERGE);
 	}
 
-	// TODO: Recursion
-	public void process(Collection<ACTION> initialElements) {
-		boolean errorReached = false;
-
-		final Collection<ACTION> filteredInitialElements = mTransitionProvider.filterInitialElements(initialElements);
-		for (final ACTION elem : filteredInitialElements) {
-			if (process(elem)) {
-				errorReached = true;
-			}
-		}
-
-		if (!errorReached) {
+	public void run(ACTION start) {
+		if (!runInternal(start)) {
 			mReporter.reportSafe();
 		}
 	}
 
-	private boolean process(final ACTION start) {
-		final Deque<WorklistItem<ACTION, VARDECL>> worklist = new ArrayDeque<WorklistItem<ACTION, VARDECL>>();
+	// TODO: Recursion
+	private boolean runInternal(final ACTION start) {
+		final Deque<WorklistItem<ACTION, VARDECL, LOCATION>> worklist = new ArrayDeque<WorklistItem<ACTION, VARDECL, LOCATION>>();
 		final Deque<Pair<ACTION, ACTION>> activeLoops = new ArrayDeque<>();
 		final Map<Pair<ACTION, ACTION>, Integer> loopCounters = new HashMap<>();
 		final IAbstractPostOperator<ACTION, VARDECL> post = mDomain.getPostOperator();
@@ -127,10 +120,11 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 		while (!worklist.isEmpty()) {
 			checkTimeout();
 
-			final WorklistItem<ACTION, VARDECL> currentItem = worklist.removeFirst();
+			final WorklistItem<ACTION, VARDECL, LOCATION> currentItem = worklist.removeFirst();
 			final IAbstractState<ACTION, VARDECL> preState = currentItem.getPreState();
 			final ACTION current = currentItem.getAction();
-			final IAbstractStateStorage<ACTION, VARDECL> currentStateStorage = currentItem.getCurrentStorage();
+			final IAbstractStateStorage<ACTION, VARDECL, LOCATION> currentStateStorage = currentItem
+					.getCurrentStorage();
 			final IAbstractState<ACTION, VARDECL> oldPostState = currentStateStorage
 					.getCurrentAbstractPostState(current);
 
@@ -242,8 +236,8 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 		return pendingPostState;
 	}
 
-	private WorklistItem<ACTION, VARDECL> createWorklistItem(final ACTION elem) {
-		final WorklistItem<ACTION, VARDECL> startItem = new WorklistItem<ACTION, VARDECL>(
+	private WorklistItem<ACTION, VARDECL, LOCATION> createWorklistItem(final ACTION elem) {
+		final WorklistItem<ACTION, VARDECL, LOCATION> startItem = new WorklistItem<ACTION, VARDECL, LOCATION>(
 				getCurrentAbstractPreState(elem, mStateStorage), elem, mStateStorage);
 		if (mTransitionProvider.isEnteringScope(elem)) {
 			startItem.addScope(elem);
@@ -266,8 +260,8 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 		return newPostState;
 	}
 
-	private void addSuccessors(final Deque<WorklistItem<ACTION, VARDECL>> worklist,
-			final WorklistItem<ACTION, VARDECL> currentItem) {
+	private void addSuccessors(final Deque<WorklistItem<ACTION, VARDECL, LOCATION>> worklist,
+			final WorklistItem<ACTION, VARDECL, LOCATION> currentItem) {
 		final ACTION current = currentItem.getAction();
 		final Collection<ACTION> successors = mTransitionProvider.getSuccessors(current, currentItem.getCurrentScope());
 
@@ -278,7 +272,7 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 			return;
 		}
 
-		final IAbstractStateStorage<ACTION, VARDECL> currentStateStorage = currentItem.getCurrentStorage();
+		final IAbstractStateStorage<ACTION, VARDECL, LOCATION> currentStateStorage = currentItem.getCurrentStorage();
 		final Collection<IAbstractState<ACTION, VARDECL>> availablePostStates = currentStateStorage
 				.getAbstractPostStates(current);
 		final int availablePostStatesCount = availablePostStates.size();
@@ -299,12 +293,12 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 		}
 	}
 
-	private void addSuccessorsForPostState(final Deque<WorklistItem<ACTION, VARDECL>> worklist,
-			final WorklistItem<ACTION, VARDECL> currentItem, final Collection<ACTION> successors,
+	private void addSuccessorsForPostState(final Deque<WorklistItem<ACTION, VARDECL, LOCATION>> worklist,
+			final WorklistItem<ACTION, VARDECL, LOCATION> currentItem, final Collection<ACTION> successors,
 			final IAbstractState<ACTION, VARDECL> postState) {
 		for (final ACTION successor : successors) {
-			final WorklistItem<ACTION, VARDECL> successorItem = new WorklistItem<ACTION, VARDECL>(postState, successor,
-					currentItem);
+			final WorklistItem<ACTION, VARDECL, LOCATION> successorItem = new WorklistItem<ACTION, VARDECL, LOCATION>(
+					postState, successor, currentItem);
 
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageAddTransition(successorItem));
@@ -314,8 +308,8 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 		}
 	}
 
-	private void scopeEnterOrLeave(final WorklistItem<ACTION, VARDECL> currentItem, final ACTION successor,
-			final WorklistItem<ACTION, VARDECL> successorItem) {
+	private void scopeEnterOrLeave(final WorklistItem<ACTION, VARDECL, LOCATION> currentItem, final ACTION successor,
+			final WorklistItem<ACTION, VARDECL, LOCATION> successorItem) {
 		if (mTransitionProvider.isEnteringScope(successor)) {
 			successorItem.addScope(successor);
 			if (mLogger.isDebugEnabled()) {
@@ -333,8 +327,8 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 		}
 	}
 
-	private IAbstractState<ACTION, VARDECL> setFixpoint(Deque<WorklistItem<ACTION, VARDECL>> worklist,
-			final WorklistItem<ACTION, VARDECL> currentItem, IAbstractState<ACTION, VARDECL> oldPostState) {
+	private IAbstractState<ACTION, VARDECL> setFixpoint(Deque<WorklistItem<ACTION, VARDECL, LOCATION>> worklist,
+			final WorklistItem<ACTION, VARDECL, LOCATION> currentItem, IAbstractState<ACTION, VARDECL> oldPostState) {
 		final IAbstractState<ACTION, VARDECL> newPostState = currentItem.getCurrentStorage()
 				.setPostStateIsFixpoint(currentItem.getAction(), oldPostState, true);
 		if (mLogger.isDebugEnabled()) {
@@ -343,7 +337,7 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 
 		// now, replace all occurences of oldPostState as prestate in worklist
 		// with newPostState
-		for (final WorklistItem<ACTION, VARDECL> entry : worklist) {
+		for (final WorklistItem<ACTION, VARDECL, LOCATION> entry : worklist) {
 			if (oldPostState.equals(entry.getPreState())) {
 				entry.setPreState(newPostState);
 			}
@@ -353,7 +347,7 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 	}
 
 	private IAbstractState<ACTION, VARDECL> getCurrentAbstractPreState(final ACTION current,
-			IAbstractStateStorage<ACTION, VARDECL> stateStorage) {
+			IAbstractStateStorage<ACTION, VARDECL, LOCATION> stateStorage) {
 		IAbstractState<ACTION, VARDECL> preState = stateStorage.getCurrentAbstractPreState(current);
 		if (preState == null) {
 			preState = mDomain.createFreshState();
@@ -364,7 +358,7 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 	}
 
 	private void checkTimeout() {
-		if (!mServices.getProgressMonitorService().continueProcessing()) {
+		if (!mTimer.continueProcessing()) {
 			throw new ToolchainCanceledException(getClass(), "Got cancel request during abstract interpretation");
 		}
 	}
@@ -417,7 +411,7 @@ public class AbstractInterpreter<ACTION, VARDECL> {
 				.append(preStateString);
 	}
 
-	private StringBuilder getLogMessageAddTransition(final WorklistItem<ACTION, VARDECL> newTransition) {
+	private StringBuilder getLogMessageAddTransition(final WorklistItem<ACTION, VARDECL, LOCATION> newTransition) {
 		return new StringBuilder().append(INDENT).append(" Adding [").append(newTransition.getPreState().hashCode())
 				.append("]").append(" --[").append(newTransition.getAction().hashCode()).append("]->");
 	}

@@ -62,10 +62,14 @@ public class AbstractInterpretationPreferenceInitializer extends UltimatePrefere
 	public static final String LABEL_RUN_AS_PRE_ANALYSIS = "Run as pre-analysis";
 	public static final String TOOLTIP_RUN_AS_PRE_ANALYSIS = "Do not report any results, suppress all exceptions except OOM, use 20% of available time";
 
+	public static final String LABEL_PERSIST_ABS_STATES = "Save abstract states as RCFG annotation";
+
 	public static final String LABEL_INTERVAL_DOMAIN_SEPARATOR = "   ---   Interval Domain   ---   ";
 
 	public static final int DEF_ITERATIONS_UNTIL_WIDENING = 10;
 	public static final int DEF_STATES_UNTIL_MERGE = 2;
+	public static final boolean DEF_RUN_AS_PRE_ANALYSIS = true;
+	private static final boolean DEF_PERSIST_ABS_STATES = false;
 	public static final String DEF_ABSTRACT_DOMAIN = VALUES_ABSTRACT_DOMAIN[0];
 	public static final String DEF_WIDENING_OPERATOR = VALUES_WIDENING_OPERATOR[0];
 
@@ -78,7 +82,10 @@ public class AbstractInterpretationPreferenceInitializer extends UltimatePrefere
 				PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
 		rtr.add(new UltimatePreferenceItem<String>(LABEL_ABSTRACT_DOMAIN, DEF_ABSTRACT_DOMAIN, PreferenceType.Combo,
 				VALUES_ABSTRACT_DOMAIN));
-		rtr.add(new UltimatePreferenceItem<Boolean>(LABEL_RUN_AS_PRE_ANALYSIS, false, TOOLTIP_RUN_AS_PRE_ANALYSIS,PreferenceType.Boolean));
+		rtr.add(new UltimatePreferenceItem<Boolean>(LABEL_RUN_AS_PRE_ANALYSIS, DEF_RUN_AS_PRE_ANALYSIS,
+				TOOLTIP_RUN_AS_PRE_ANALYSIS, PreferenceType.Boolean));
+		rtr.add(new UltimatePreferenceItem<Boolean>(LABEL_PERSIST_ABS_STATES, DEF_PERSIST_ABS_STATES,
+				PreferenceType.Boolean));
 
 		rtr.add(new UltimatePreferenceItem<String>(LABEL_INTERVAL_DOMAIN_SEPARATOR, null, PreferenceType.Label));
 
