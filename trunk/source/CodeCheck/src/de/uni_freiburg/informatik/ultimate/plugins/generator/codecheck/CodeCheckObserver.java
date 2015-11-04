@@ -201,9 +201,10 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		boolean usePredicatesFromAbstractInterpretation = true; //TODO make a Pref
 		Map<RCFGNode, Term> initialPredicates = null;
 		if (usePredicatesFromAbstractInterpretation)  {
-			try {
-				initialPredicates = AbstractInterpretationPredicates.getAnnotation(m_originalRoot).getPredicates();
-			} catch (NullPointerException npe) {
+			AbstractInterpretationPredicates annot = AbstractInterpretationPredicates.getAnnotation(m_originalRoot);
+			if (annot != null) {
+				initialPredicates = annot.getPredicates();
+			} else {
 				mLogger.warn("was not able to retrieve initial predicates from abstract interpretation --> wrong toolchain?? (using \"true\")");
 				initialPredicates = null;
 			}
