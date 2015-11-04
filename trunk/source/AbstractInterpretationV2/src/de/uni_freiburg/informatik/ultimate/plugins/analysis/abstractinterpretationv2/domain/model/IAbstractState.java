@@ -153,9 +153,16 @@ public interface IAbstractState<ACTION, VARDECL> {
 	IAbstractState<ACTION, VARDECL> setFixpoint(final boolean value);
 
 	/**
+	 * Check whether this instance is equal to <code>other</code> or not.
+	 * Instances are equal if they have the same set of variables and describe
+	 * the same abstract state.
+	 * 
+	 * Note that the {@link #isFixpoint()} property should not be considered.
 	 * 
 	 * @param other
-	 * @return
+	 *            The other instance.
+	 * @return true if both instances have the same set of variables and
+	 *         describe the same abstract state, false otherwise.
 	 */
 	boolean isEqualTo(final IAbstractState<ACTION, VARDECL> other);
 
