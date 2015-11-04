@@ -390,6 +390,13 @@ public class Boogie2SmtSymbolTable {
 		return Collections.unmodifiableMap(m_Globals);
 	}
 	
+	/**
+	 * Return global constants;
+	 */
+	public Map<String, BoogieConst> getConsts() {
+		return Collections.unmodifiableMap(m_Constants);
+	}
+	
 	private void declareSpecImpl(Procedure spec, Procedure impl) {
 		String procId = spec.getIdentifier();
 		assert procId.equals(impl.getIdentifier());

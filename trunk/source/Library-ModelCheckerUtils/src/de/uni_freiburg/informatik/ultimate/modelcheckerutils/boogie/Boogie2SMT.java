@@ -190,7 +190,7 @@ public class Boogie2SMT {
 			if (declInfo.getStorageClass() != StorageClass.GLOBAL) {
 				throw new AssertionError();
 			}
-			Term result = m_Boogie2SmtSymbolTable.getBoogieConst(id).getSmtConstant();
+			Term result = m_Boogie2SmtSymbolTable.getBoogieConst(id).getDefaultConstant();
 			if (result == null) {
 				throw new AssertionError();
 			}
