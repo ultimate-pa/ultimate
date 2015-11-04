@@ -72,24 +72,24 @@ public class RcfgVariableProvider implements IVariableProvider<CodeBlock, IBoogi
 		assert state.isEmpty();
 
 		final RCFGNode source = current.getSource();
-		
-		//first, create a map of the current scope
-		Map<String,IBoogieVar> vars = new HashMap<String, IBoogieVar>();
+
+		// first, create a map of the current scope
+		Map<String, IBoogieVar> vars = new HashMap<String, IBoogieVar>();
 
 		// add global variables
 		final Map<String, BoogieNonOldVar> globals = mBoogieVarTable.getGlobals();
 		for (final Entry<String, BoogieNonOldVar> entry : globals.entrySet()) {
 			vars.put(entry.getKey(), entry.getValue());
 		}
-		
-		//add global constants 
+
+		// add global constants
 		final Map<String, BoogieConst> consts = mBoogieVarTable.getConsts();
 		for (final Entry<String, BoogieConst> entry : consts.entrySet()) {
 			vars.put(entry.getKey(), entry.getValue());
 		}
-		
-		//add locals if applicable, thereby overriding globals  
-		if(source instanceof ProgramPoint){
+
+		// add locals if applicable, thereby overriding globals
+		if (source instanceof ProgramPoint) {
 			final ProgramPoint programPoint = (ProgramPoint) source;
 			final String procedure = programPoint.getProcedure();
 
@@ -101,6 +101,9 @@ public class RcfgVariableProvider implements IVariableProvider<CodeBlock, IBoogi
 			}
 		}
 		
+		if (vars.isEmpty()) {
+			return state;
+		}
 		return state.addVariables(vars);
 	}
 
