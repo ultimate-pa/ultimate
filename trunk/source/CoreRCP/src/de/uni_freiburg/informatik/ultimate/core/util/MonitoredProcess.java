@@ -152,6 +152,8 @@ public final class MonitoredProcess implements IStorable {
 		final String oneLineCmd = StringUtils.join(command, " ");
 
 		if (workingDir == null) {
+			final Logger logger = services.getLoggingService().getControllerLogger();
+			logger.info("No working directory specified, using " + System.getProperty("user.dir"));
 			newMonitoredProcess = new MonitoredProcess(Runtime.getRuntime().exec(command), oneLineCmd, exitCommand,
 					services, storage);
 		} else {
@@ -274,8 +276,8 @@ public final class MonitoredProcess implements IStorable {
 			// context anyways.
 		}
 		if (mps == null || mps.isRunning()) {
-			mLogger.warn(String.format("Timeout reached for monitored process %s with %s, terminating...", mID,
-					mCommand));
+			mLogger.warn(
+					String.format("Timeout reached for monitored process %s with %s, terminating...", mID, mCommand));
 			forceShutdown();
 			return new MonitoredProcessState(mMonitor.getState() != State.TERMINATED, true, mReturnCode);
 		}
@@ -320,8 +322,9 @@ public final class MonitoredProcess implements IStorable {
 			// context anyways.
 		}
 
-		mLogger.warn(String.format(
-				"Toolchain was canceled while waiting for monitored process %s with %s, terminating...", mID, mCommand));
+		mLogger.warn(
+				String.format("Toolchain was canceled while waiting for monitored process %s with %s, terminating...",
+						mID, mCommand));
 		forceShutdown();
 		return new MonitoredProcessState(mMonitor.getState() != State.TERMINATED, true, mReturnCode);
 	}
@@ -433,8 +436,8 @@ public final class MonitoredProcess implements IStorable {
 							+ "was killed and before we wanted to kill it manually");
 				}
 			} catch (IOException ex) {
-				mLogger.fatal(String.format("Something unexpected happened: %s%n%s", ex,
-						ExceptionUtils.getStackTrace(ex)));
+				mLogger.fatal(
+						String.format("Something unexpected happened: %s%n%s", ex, ExceptionUtils.getStackTrace(ex)));
 
 			}
 
@@ -603,16 +606,16 @@ public final class MonitoredProcess implements IStorable {
 					}
 				} catch (IOException e) {
 					if (mMonitoredProcess.mLogger.getLevel().isGreaterOrEqual(Level.WARN)) {
-						mMonitoredProcess.mLogger.warn("The stream was forcibly closed (" + mMonitoredProcess.mCommand
-								+ ")");
+						mMonitoredProcess.mLogger
+								.warn("The stream was forcibly closed (" + mMonitoredProcess.mCommand + ")");
 					}
 				} finally {
 					try {
 						mOutputStream.flush();
 						mOutputStream.close();
 					} catch (IOException e) {
-						mMonitoredProcess.mLogger.fatal("During closing of the streams, an error occured ("
-								+ mMonitoredProcess.mCommand + ")");
+						mMonitoredProcess.mLogger.fatal(
+								"During closing of the streams, an error occured (" + mMonitoredProcess.mCommand + ")");
 					}
 					mEndOfPumps.release();
 				}
