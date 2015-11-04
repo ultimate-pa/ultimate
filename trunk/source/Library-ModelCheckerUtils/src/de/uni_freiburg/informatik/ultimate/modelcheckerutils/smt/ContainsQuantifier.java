@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 public class ContainsQuantifier extends NonRecursive {
 	
 	private boolean m_QuantifierFound;
+	private int m_FirstQuantifierFound = -1;
 	
 	class QuantifierFinder extends TermWalker {
 		QuantifierFinder(Term term) { super(term); }
@@ -68,6 +69,7 @@ public class ContainsQuantifier extends NonRecursive {
 		@Override
 		public void walk(NonRecursive walker, QuantifiedFormula term) {
 			m_QuantifierFound = true;
+			m_FirstQuantifierFound = term.getQuantifier();
 			reset();
 		}
 		@Override
@@ -85,8 +87,17 @@ public class ContainsQuantifier extends NonRecursive {
 	 * object.
 	 */
 	public boolean containsQuantifier(Term term) {
+		m_FirstQuantifierFound = -1;
 		m_QuantifierFound = false;
 		run(new QuantifierFinder(term));
 		return m_QuantifierFound;
+	}
+	
+	public int getFirstQuantifierFound() {
+		if (m_FirstQuantifierFound == -1) {
+			throw new IllegalStateException("no quantifier found");
+		} else {
+			return m_FirstQuantifierFound;
+		}
 	}
 }
