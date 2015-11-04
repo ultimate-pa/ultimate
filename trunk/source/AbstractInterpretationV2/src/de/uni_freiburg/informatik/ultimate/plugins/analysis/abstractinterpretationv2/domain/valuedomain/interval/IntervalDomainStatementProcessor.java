@@ -36,6 +36,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
+import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
@@ -58,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluatorFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.ILogicalEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.INAryEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
@@ -138,7 +140,23 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 			if (newValue == null) {
 				mNewState.setValue(varname, new IntervalDomainValue());
 			} else {
-				mNewState.setValue(varname, newValue);
+				final IBoogieVar type = mOldState.getVariableType(varname);
+				if (type instanceof PrimitiveType) {
+					final PrimitiveType primitiveType = (PrimitiveType) type;
+
+					if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
+						if (ILogicalEvaluator.class
+						        .isAssignableFrom(mExpressionEvaluator.getRootEvaluator().getClass())) {
+							ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> logicalEvaluator = (ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar>) mExpressionEvaluator
+							        .getRootEvaluator();
+
+							mNewState.setBooleanValue(varname, logicalEvaluator.booleanValue());
+						}
+					}
+				} else {
+
+					mNewState.setValue(varname, newValue);
+				}
 			}
 		}
 	}
@@ -175,7 +193,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	protected void visit(AssumeStatement statement) {
 
 		mEvaluatorFactory = new IntervalLogicalEvaluatorFactory(mLogger, mStateConverter);
-		
+
 		mExpressionEvaluator = new ExpressionEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar>();
 
 		Expression formula = statement.getFormula();
@@ -196,7 +214,8 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> evaluationResult = mExpressionEvaluator
 		        .getRootEvaluator().evaluate(mOldState);
 
-		mNewState = (IntervalDomainState<CodeBlock, IBoogieVar>) evaluationResult.getResult().getEvaluatedState().copy();
+		mNewState = (IntervalDomainState<CodeBlock, IBoogieVar>) evaluationResult.getResult().getEvaluatedState()
+		        .copy();
 
 	}
 
