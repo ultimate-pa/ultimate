@@ -73,6 +73,11 @@ public class AffineTermTransformer extends TermTransformer {
 				AffineTerm result = new AffineTerm(appTerm);
 				setResult(result);
 				return;
+			} else if (appTerm.getParameters().length == 0) {
+				// appTerm is a constant (0-ary function)
+				AffineTerm result = new AffineTerm(appTerm);
+				setResult(result);
+				return;
 			} else {
 				resultIsNotAffine();
 				return;
