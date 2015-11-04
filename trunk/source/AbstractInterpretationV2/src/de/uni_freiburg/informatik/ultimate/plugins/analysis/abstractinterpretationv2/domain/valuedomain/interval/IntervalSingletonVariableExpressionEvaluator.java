@@ -74,31 +74,15 @@ public class IntervalSingletonVariableExpressionEvaluator
 
 		final IntervalDomainState<CodeBlock, IBoogieVar> concreteState = mStateConverter.getCheckedState(currentState);
 
-		final IBoogieVar variableType = currentState.getVariableType(mVariableName);
-		if (variableType.getIType() instanceof PrimitiveType) {
-			final PrimitiveType primitiveType = (PrimitiveType) variableType.getIType();
+		final IntervalDomainValue val = concreteState.getValues().get(mVariableName);
 
-			switch (primitiveType.getTypeCode()) {
-			case PrimitiveType.BOOL:
-				throw new UnsupportedOperationException(
-				        "Type BOOL is not allowed when dealing with evaluators that don't support logical evaluation.");
-			default:
-				final IntervalDomainValue val = concreteState.getValues().get(mVariableName);
-
-				if (val == null) {
-					throw new UnsupportedOperationException("The variable with name " + mVariableName
-					        + " has not been found in the current abstract state.");
-				}
-
-				return new EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>(
-				        new IntervalDomainValue(val.getLower(), val.getUpper()), currentState);
-
-			}
-		} else {
+		if (val == null) {
 			throw new UnsupportedOperationException(
-			        "The type " + variableType.getIType().getClass().toString() + " is not implemented.");
+			        "The variable with name " + mVariableName + " has not been found in the current abstract state.");
 		}
 
+		return new EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>(
+		        new IntervalDomainValue(val.getLower(), val.getUpper()), currentState);
 	}
 
 	@Override
