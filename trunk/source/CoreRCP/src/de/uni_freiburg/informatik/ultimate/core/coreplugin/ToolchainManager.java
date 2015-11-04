@@ -173,7 +173,7 @@ public class ToolchainManager {
 					new GenericServiceProvider(mPluginFactory));
 
 			// install new ProgressMonitorService
-			ProgressMonitorService monitorService = new ProgressMonitorService(monitor, Long.MAX_VALUE, mLogger,
+			ProgressMonitorService monitorService = new ProgressMonitorService(monitor, mLogger,
 					mToolchainWalker);
 			mToolchainData.getStorage().putStorable(ProgressMonitorService.getServiceKey(), monitorService);
 

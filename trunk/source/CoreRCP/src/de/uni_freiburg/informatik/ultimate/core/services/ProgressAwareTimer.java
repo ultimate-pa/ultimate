@@ -34,31 +34,62 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTim
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class ProgressAwareTimer implements IProgressAwareTimer {
+final class ProgressAwareTimer implements IDeadlineProvider {
 
-	private final IProgressAwareTimer mParent;
+	private final IDeadlineProvider mParent;
 	private final long mDeadline;
 
-	protected ProgressAwareTimer(final IProgressAwareTimer parent, final long timeout) {
-		assert parent != null;
-		assert timeout > 0;
-		final long deadline = System.currentTimeMillis() + timeout;
+	private ProgressAwareTimer(final long deadline) {
+		this(null, deadline);
+	}
+
+	private ProgressAwareTimer(final IDeadlineProvider parent, final long deadline) {
+		assert deadline > 0;
 		mParent = parent;
 		mDeadline = deadline;
 	}
-
-	@Override
-	public boolean continueProcessing() {
-		return mParent.continueProcessing() && check();
-	}
-
-	@Override
-	public IProgressAwareTimer getChildTimer(long timeout) {
-		return new ProgressAwareTimer(this, timeout);
-	}
-
+	
 	private boolean check() {
 		return System.currentTimeMillis() > mDeadline;
 	}
 
+	@Override
+	public boolean continueProcessing() {
+		if (mParent == null) {
+			return check();
+		}
+		return check() && mParent.continueProcessing();
+	}
+
+	@Override
+	public IProgressAwareTimer getChildTimer(long timeout) {
+		return createWithTimeout(this, timeout);
+	}
+
+	@Override
+	public IProgressAwareTimer getChildTimer(double percentage) {
+		return createWithPercentage(this, percentage);
+	}
+
+	@Override
+	public long getDeadline() {
+		return mDeadline;
+	}
+
+	static IDeadlineProvider createWithTimeout(final IDeadlineProvider parent, final long timeout) {
+		return createWithDeadline(parent, System.currentTimeMillis() + timeout);
+	}
+
+	static IDeadlineProvider createWithDeadline(final IDeadlineProvider parent, final long deadline) {
+		return new ProgressAwareTimer(parent, deadline);
+	}
+
+	static IDeadlineProvider createWithPercentage(final IDeadlineProvider parent, final double percentage) {
+		assert parent != null;
+		assert percentage > 0 && percentage <= 1.0;
+		long current = System.currentTimeMillis();
+		long currenttimeout = parent.getDeadline() - current;
+		long newtimeout = (long) (currenttimeout * percentage);
+		return createWithDeadline(parent, current + newtimeout);
+	}
 }

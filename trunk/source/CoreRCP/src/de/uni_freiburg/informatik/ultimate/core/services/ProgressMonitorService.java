@@ -40,20 +40,19 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class ProgressMonitorService implements IStorable, IToolchainCancel, IProgressMonitorService {
+public class ProgressMonitorService implements IStorable, IToolchainCancel, IProgressMonitorService, IDeadlineProvider {
 
 	private static final String sKey = "CancelNotificationService";
 
 	private IProgressMonitor mMonitor;
-	private long mDeadline;
+	private IDeadlineProvider mTimer;
 	private Logger mLogger;
 	private IToolchainCancel mToolchainCancel;
 	private boolean mCancelRequest;
 
-	public ProgressMonitorService(IProgressMonitor monitor, long deadline, Logger logger, IToolchainCancel cancel) {
+	public ProgressMonitorService(final IProgressMonitor monitor, final Logger logger, final IToolchainCancel cancel) {
 		assert monitor != null;
 		mMonitor = monitor;
-		mDeadline = deadline;
 		mLogger = logger;
 		mToolchainCancel = cancel;
 		mCancelRequest = false;
@@ -61,7 +60,7 @@ public class ProgressMonitorService implements IStorable, IToolchainCancel, IPro
 
 	@Override
 	public boolean continueProcessing() {
-		boolean cancel = mMonitor.isCanceled() || mCancelRequest || System.currentTimeMillis() > mDeadline;
+		boolean cancel = mMonitor.isCanceled() || mCancelRequest || (mTimer != null && !mTimer.continueProcessing());
 		if (cancel) {
 			mLogger.debug("Do not continue processing!");
 		}
@@ -74,14 +73,17 @@ public class ProgressMonitorService implements IStorable, IToolchainCancel, IPro
 	}
 
 	@Override
-	public void setDeadline(long date) {
-		if (System.currentTimeMillis() >= date) {
+	public void setDeadline(long deadline) {
+		if (System.currentTimeMillis() >= deadline) {
 			mLogger.warn(
 					String.format("Deadline was set to a date in the past, " + "effectively stopping the toolchain. "
-							+ "Is this what you intended? Value of date was %,d", date));
+							+ "Is this what you intended? Value of date was %,d", deadline));
 
 		}
-		mDeadline = date;
+		if (mTimer != null) {
+			mLogger.warn("Replacing old deadline");
+		}
+		mTimer = ProgressAwareTimer.createWithDeadline(null, deadline);
 	}
 
 	static ProgressMonitorService getService(IToolchainStorage storage) {
@@ -109,7 +111,16 @@ public class ProgressMonitorService implements IStorable, IToolchainCancel, IPro
 
 	@Override
 	public IProgressAwareTimer getChildTimer(long timeout) {
-		return new ProgressAwareTimer(this, timeout);
+		return ProgressAwareTimer.createWithTimeout(this, timeout);
 	}
 
+	@Override
+	public IProgressAwareTimer getChildTimer(double percentage) {
+		return ProgressAwareTimer.createWithPercentage(this, percentage);
+	}
+
+	@Override
+	public long getDeadline() {
+		return mTimer.getDeadline();
+	}
 }
