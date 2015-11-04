@@ -18,4 +18,9 @@ public final class DummyReporter<ACTION> implements IResultReporter<ACTION> {
 	public void reportSafe() {
 
 	}
+
+	@Override
+	public void reportSafe(String msg) {
+		
+	}
 }

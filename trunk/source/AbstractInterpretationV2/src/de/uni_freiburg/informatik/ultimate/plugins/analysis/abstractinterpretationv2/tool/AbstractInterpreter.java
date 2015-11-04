@@ -63,18 +63,21 @@ public final class AbstractInterpreter {
 			final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
 			final IUltimateServiceProvider services) {
 		final Logger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		final Map<CodeBlock, Map<ProgramPoint, Term>> rtr = new HashMap<CodeBlock, Map<ProgramPoint, Term>>();
 		try {
-			return runInternal(root, initials, timer, services, (a, b) -> new DummyReporter<>());
+			runInternal(root, initials, timer, services, (a, b) -> new DummyReporter<>(), rtr);
 		} catch (OutOfMemoryError oom) {
 			throw oom;
 		} catch (IllegalArgumentException iae) {
 			throw iae;
 		} catch (ToolchainCanceledException tce) {
-			throw tce;
+			// suppress timeouts
+			return rtr;
 		} catch (Throwable t) {
 			logger.fatal("Suppressed exception in AIv2: " + t.getMessage());
 			return Collections.emptyMap();
 		}
+		return rtr;
 	}
 
 	/**
@@ -83,15 +86,16 @@ public final class AbstractInterpreter {
 	 */
 	public static Map<CodeBlock, Map<ProgramPoint, Term>> run(final RootNode root, final Collection<CodeBlock> initials,
 			final IProgressAwareTimer timer, final IUltimateServiceProvider services) throws Throwable {
-		return runInternal(root, initials, timer, services, (a, b) -> new RcfgResultReporter(a, b));
+		final Map<CodeBlock, Map<ProgramPoint, Term>> rtr = new HashMap<CodeBlock, Map<ProgramPoint, Term>>();
+		runInternal(root, initials, timer, services, (a, b) -> new RcfgResultReporter(a, b), rtr);
+		return rtr;
 	}
 
-	private static Map<CodeBlock, Map<ProgramPoint, Term>> runInternal(final RootNode root,
-			final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
-			final IUltimateServiceProvider services,
-			BiFunction<IUltimateServiceProvider, BaseRcfgAbstractStateStorageProvider, IResultReporter<CodeBlock>> funCreateReporter)
-					throws Throwable {
-		if (initials == null || initials.isEmpty()) {
+	private static void runInternal(final RootNode root, final Collection<CodeBlock> initials,
+			final IProgressAwareTimer timer, final IUltimateServiceProvider services,
+			BiFunction<IUltimateServiceProvider, BaseRcfgAbstractStateStorageProvider, IResultReporter<CodeBlock>> funCreateReporter,
+			Map<CodeBlock, Map<ProgramPoint, Term>> predicates) throws Throwable {
+		if (initials == null) {
 			throw new IllegalArgumentException("No initial edges provided");
 		}
 		if (timer == null) {
@@ -121,16 +125,26 @@ public final class AbstractInterpreter {
 
 		final Collection<CodeBlock> filteredInitialElements = transitionProvider.filterInitialElements(initials);
 		final boolean persist = ups.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_PERSIST_ABS_STATES);
-		final Map<CodeBlock, Map<ProgramPoint, Term>> rtr = new HashMap<CodeBlock, Map<ProgramPoint, Term>>();
+
+		if (filteredInitialElements.isEmpty()) {
+			final BaseRcfgAbstractStateStorageProvider storage = createStorage(services, domain, persist);
+			final IResultReporter<CodeBlock> reporter = funCreateReporter.apply(services, storage);
+			reporter.reportSafe("The program is empty");
+			return;
+		}
+
 		for (CodeBlock initial : filteredInitialElements) {
 			final BaseRcfgAbstractStateStorageProvider storage = createStorage(services, domain, persist);
 			final IResultReporter<CodeBlock> reporter = funCreateReporter.apply(services, storage);
 			final FixpointEngine<CodeBlock, BoogieVar, ProgramPoint> interpreter = new FixpointEngine<CodeBlock, BoogieVar, ProgramPoint>(
 					services, timer, transitionProvider, storage, domain, varProvider, loopDetector, reporter);
-			interpreter.run(initial);
-			rtr.put(initial, storage.getTerms(initial, script, bpl2smt));
+			try {
+				interpreter.run(initial);
+			} catch (ToolchainCanceledException c) {
+				predicates.put(initial, storage.getTerms(initial, script, bpl2smt));
+				throw c;
+			}
 		}
-		return rtr;
 	}
 
 	private static BaseRcfgAbstractStateStorageProvider createStorage(final IUltimateServiceProvider services,

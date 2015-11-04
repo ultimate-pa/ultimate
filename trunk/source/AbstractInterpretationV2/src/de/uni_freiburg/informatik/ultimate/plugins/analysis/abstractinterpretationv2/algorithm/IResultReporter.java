@@ -41,4 +41,6 @@ public interface IResultReporter<ACTION> {
 	void reportPossibleError(ACTION start, ACTION end);
 
 	void reportSafe();
+	
+	void reportSafe(String msg);
 }

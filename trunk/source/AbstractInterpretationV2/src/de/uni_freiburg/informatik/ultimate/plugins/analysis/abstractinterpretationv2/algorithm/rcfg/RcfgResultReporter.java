@@ -79,4 +79,10 @@ public class RcfgResultReporter implements IResultReporter<CodeBlock> {
 				new AllSpecificationsHoldResult(Activator.PLUGIN_NAME, "No error locations were reached."));
 	}
 
+	@Override
+	public void reportSafe(String msg) {
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+				new AllSpecificationsHoldResult(Activator.PLUGIN_NAME, msg));
+	}
+
 }

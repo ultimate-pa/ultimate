@@ -195,10 +195,19 @@ public abstract class BaseRcfgAbstractStateStorageProvider
 					continue;
 				}
 				final ProgramPoint targetpp = (ProgramPoint) target;
-				worklist.add(targetpp);
-				currentStates.add(getCurrentState(succTrans, targetpp));
+
+				IAbstractState<CodeBlock, BoogieVar> states = getCurrentState(succTrans, targetpp);
+				if (states != null) {
+					currentStates.add(states);
+					// only continue if there are states at this node
+					worklist.add(targetpp);
+				}
 			}
 
+			if(currentStates.isEmpty()){
+				continue;
+			}
+			
 			// TODO: and or or ???
 			Term currentTerm = rtr.get(current);
 			if (currentTerm == null) {
@@ -209,7 +218,6 @@ public abstract class BaseRcfgAbstractStateStorageProvider
 			}
 			rtr.put(current, currentTerm);
 		}
-
 		return rtr;
 	}
 
