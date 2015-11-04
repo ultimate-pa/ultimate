@@ -33,12 +33,12 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVisitor;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
@@ -286,6 +286,20 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 		        .createSingletonLogicalValueExpressionEvaluator(expr.getValue());
 
 		mExpressionEvaluator.addEvaluator(evaluator);
+	}
+
+	@Override
+	protected void visit(ArrayStoreExpression expr) {
+
+		// TODO Implement proper handling of arrays.
+		mExpressionEvaluator.addEvaluator(new IntervalLogicalSingletonValueExpressionEvaluator(new IntervalDomainValue()));
+	}
+
+	@Override
+	protected void visit(ArrayAccessExpression expr) {
+		
+		// TODO Implement proper handling of arrays.
+		mExpressionEvaluator.addEvaluator(new IntervalLogicalSingletonValueExpressionEvaluator(new IntervalDomainValue()));
 	}
 
 }

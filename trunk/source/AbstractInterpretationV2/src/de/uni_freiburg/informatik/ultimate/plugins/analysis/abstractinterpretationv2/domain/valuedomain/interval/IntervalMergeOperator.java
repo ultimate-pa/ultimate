@@ -96,6 +96,9 @@ public class IntervalMergeOperator<ACTION, VARDECL> implements IAbstractStateBin
 	 * @return A new interval which is the result of merging the first and the second interval.
 	 */
 	private IntervalDomainValue computeMergedValue(IntervalDomainValue value1, IntervalDomainValue value2) {
+		assert value1 != null;
+		assert value2 != null;
+		
 		if (value1.equals(value2)) {
 			return value1;
 		}

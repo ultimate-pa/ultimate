@@ -34,6 +34,7 @@ import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -73,7 +74,7 @@ public class IntervalDomainState<ACTION, VARDECL>
 	protected IntervalDomainState() {
 		this(null, null);
 	}
-	
+
 	protected IntervalDomainState(IntervalStateConverter<ACTION, VARDECL> stateConverter, Logger logger) {
 		mStateConverter = stateConverter;
 		mVariablesMap = new HashMap<String, VARDECL>();
@@ -117,8 +118,10 @@ public class IntervalDomainState<ACTION, VARDECL>
 	protected void setValue(String name, IntervalDomainValue value) {
 		assert name != null;
 		assert value != null;
-		assert mVariablesMap.containsKey(name);
-		assert mValuesMap.containsKey(name);
+		final VARDECL key = mVariablesMap.get(name);
+		assert key != null;
+		final IntervalDomainValue valKey = mValuesMap.get(name);
+		assert valKey != null;
 
 		mValuesMap.put(name, value);
 	}
@@ -217,6 +220,10 @@ public class IntervalDomainState<ACTION, VARDECL>
 						newValMap.put(entry.getKey(), new IntervalDomainValue());
 					}
 
+				} else if (boogieVar.getIType() instanceof ArrayType) {
+					// TODO:
+					// We treat Arrays as normal variables for the time being.
+					newValMap.put(entry.getKey(), new IntervalDomainValue());
 				} else {
 					throw new UnsupportedOperationException("The IBoogieVar type "
 					        + boogieVar.getIType().getClass().toString() + " is not implemented.");
