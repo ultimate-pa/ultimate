@@ -36,11 +36,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngine;
 
 /**
- * An abstract state is an abstraction of all program variables at a certain
- * program location.
+ * An abstract state is an abstraction of all program variables at a certain program location.
  * 
- * Note that {@link FixpointEngine} assumes that all operations on an
- * instance of {@link IAbstractState} do not change this instance.
+ * Note that {@link FixpointEngine} assumes that all operations on an instance of {@link IAbstractState} do not change
+ * this instance.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
@@ -53,9 +52,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public interface IAbstractState<ACTION, VARDECL> {
 
 	/**
-	 * {@link FixpointEngine} will call this method to add a variable to
-	 * the set of variables of an abstract state s.t. they match the current
-	 * scope.
+	 * {@link FixpointEngine} will call this method to add a variable to the set of variables of an abstract state s.t.
+	 * they match the current scope.
 	 * 
 	 * All variable names are unique.
 	 * 
@@ -63,15 +61,23 @@ public interface IAbstractState<ACTION, VARDECL> {
 	 *            The name of the variable that should be added.
 	 * @param variables
 	 *            An object that describes the type of the variable.
-	 * @return A new abstract state that is a {@link #copy()} of this instance
-	 *         except that it contains the freshly added variable.
+	 * @return A new abstract state that is a {@link #copy()} of this instance except that it contains the freshly added
+	 *         variable.
 	 */
 	IAbstractState<ACTION, VARDECL> addVariable(final String name, final VARDECL variables);
 
 	/**
-	 * {@link FixpointEngine} will call this method to remove a variable
-	 * from the set of variables of an abstract state s.t. they match the
-	 * current scope.
+	 * Returns the declaration type of the given variable.
+	 * 
+	 * @param name
+	 *            The variable to get the type of.
+	 * @return The variable declaration type of the variable.
+	 */
+	VARDECL getVariableType(final String name);
+
+	/**
+	 * {@link FixpointEngine} will call this method to remove a variable from the set of variables of an abstract state
+	 * s.t. they match the current scope.
 	 * 
 	 * All variable names should be unique.
 	 * 
@@ -80,35 +86,30 @@ public interface IAbstractState<ACTION, VARDECL> {
 	 * @param name
 	 *            The name of the variable that should be removed.
 	 * @param variables
-	 *            An object that describes the type of the variable. This should
-	 *            be equal to the object that was added previously.
-	 * @return A new abstract state that is a {@link #copy()} of this instance
-	 *         except that the removed variable is missing.
+	 *            An object that describes the type of the variable. This should be equal to the object that was added
+	 *            previously.
+	 * @return A new abstract state that is a {@link #copy()} of this instance except that the removed variable is
+	 *         missing.
 	 */
 	IAbstractState<ACTION, VARDECL> removeVariable(final String name, final VARDECL variables);
 
 	/**
-	 * Adds multiple variables at once (see {@link #addVariable(String, Object)}
-	 * for details).
+	 * Adds multiple variables at once (see {@link #addVariable(String, Object)} for details).
 	 * 
 	 * @param variables
-	 *            A {@link Map} describing all the variables that have to be
-	 *            added.
-	 * @return A new abstract state that is a {@link #copy()} of this instance
-	 *         except that it contains the freshly added variables.
+	 *            A {@link Map} describing all the variables that have to be added.
+	 * @return A new abstract state that is a {@link #copy()} of this instance except that it contains the freshly added
+	 *         variables.
 	 */
 	IAbstractState<ACTION, VARDECL> addVariables(final Map<String, VARDECL> variables);
 
 	/**
-	 * Remove multiple variables at once (see
-	 * {@link #removeVariable(String, Object)} for details).
+	 * Remove multiple variables at once (see {@link #removeVariable(String, Object)} for details).
 	 * 
 	 * @param variables
-	 *            A {@link Map} describing all the variables that have to be
-	 *            removed.
-	 * @return A new abstract state that is a {@link #copy()} of this instance
-	 *         except that all the variables defined by <code>variables</code>
-	 *         are missing.
+	 *            A {@link Map} describing all the variables that have to be removed.
+	 * @return A new abstract state that is a {@link #copy()} of this instance except that all the variables defined by
+	 *         <code>variables</code> are missing.
 	 */
 	IAbstractState<ACTION, VARDECL> removeVariables(final Map<String, VARDECL> variables);
 
@@ -129,60 +130,55 @@ public interface IAbstractState<ACTION, VARDECL> {
 	boolean isEmpty();
 
 	/**
-	 * An abstract state is bottom when it represents the smallest element of
-	 * the lattice. This should be equivalent to a predicate stating false.
+	 * An abstract state is bottom when it represents the smallest element of the lattice. This should be equivalent to
+	 * a predicate stating false.
 	 * 
 	 * @return true if this abstract state is bottom, false otherwise.
 	 */
 	boolean isBottom();
 
-         /**
+	/**
 	 * Sets the whole abstract state to &bot;.
 	 */
 	void setToBottom();
 
 	/**
-	 * An abstract state is a fixpoint if {@link FixpointEngine} called
-	 * {@link #setFixpoint(boolean)} with true.
+	 * An abstract state is a fixpoint if {@link FixpointEngine} called {@link #setFixpoint(boolean)} with true.
+	 * 
 	 * @return <code>true</code> if and only if the current abstract state is a fix point, <code>false</code> otherwise.
 	 */
 	boolean isFixpoint();
 
 	/**
-	 * {@link FixpointEngine} will call this method to save whether this
-	 * abstract state is considered a fixpoint or not.
+	 * {@link FixpointEngine} will call this method to save whether this abstract state is considered a fixpoint or not.
 	 * 
-	 * @return A new abstract state that is a {@link #copy()} of this instance
-	 *         except that {@link #isFixpoint()} returns a different value OR
-	 *         this instance.
+	 * @return A new abstract state that is a {@link #copy()} of this instance except that {@link #isFixpoint()} returns
+	 *         a different value OR this instance.
 	 */
 	IAbstractState<ACTION, VARDECL> setFixpoint(final boolean value);
 
 	/**
-	 * Check whether this instance is equal to <code>other</code> or not.
-	 * Instances are equal if they have the same set of variables and describe
-	 * the same abstract state.
+	 * Check whether this instance is equal to <code>other</code> or not. Instances are equal if they have the same set
+	 * of variables and describe the same abstract state.
 	 * 
 	 * Note that the {@link #isFixpoint()} property should not be considered.
 	 * 
 	 * @param other
 	 *            The other instance.
-	 * @return true if both instances have the same set of variables and
-	 *         describe the same abstract state, false otherwise.
+	 * @return true if both instances have the same set of variables and describe the same abstract state, false
+	 *         otherwise.
 	 */
 	boolean isEqualTo(final IAbstractState<ACTION, VARDECL> other);
 
 	/**
-	 * Create an SMT constraint that represents this abstract state. If you do
-	 * not want to implement this right away, just return
-	 * <code>script.term("true")</code>.
+	 * Create an SMT constraint that represents this abstract state. If you do not want to implement this right away,
+	 * just return <code>script.term("true")</code>.
 	 * 
 	 * @param script
 	 *            The {@link Script} instance of the current RCFG.
 	 * @param bpl2smt
 	 *            The {@link Boogie2SMT} instance of the current RCFG.
-	 * @return A {@link Term} instance representing this abstract state. Must be
-	 *         false if isBottom is true.
+	 * @return A {@link Term} instance representing this abstract state. Must be false if isBottom is true.
 	 */
 	Term getTerm(final Script script, final Boogie2SMT bpl2smt);
 

@@ -212,4 +212,12 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 	public void setToBottom() {
 		// This method does nothing here.
 	}
+
+	@Override
+	public VARDECL getVariableType(String name) {
+		assert name != null;
+		assert mVarDecls.containsKey(name);
+		
+		return mVarDecls.get(name);
+	}
 }
