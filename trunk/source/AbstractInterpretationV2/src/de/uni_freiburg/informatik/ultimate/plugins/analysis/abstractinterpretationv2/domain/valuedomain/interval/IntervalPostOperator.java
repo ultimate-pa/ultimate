@@ -30,7 +30,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
@@ -46,17 +47,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  */
 public class IntervalPostOperator implements IAbstractPostOperator<CodeBlock, BoogieVar> {
 
-	private final IUltimateServiceProvider mServices;
+	private final Logger mLogger;
 	private final IntervalStateConverter<CodeBlock, BoogieVar> mStateConverter;
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final IntervalDomainStatementProcessor mStatementProcessor;
 
-	public IntervalPostOperator(IUltimateServiceProvider services,
+	public IntervalPostOperator(Logger logger,
 	        IntervalStateConverter<CodeBlock, BoogieVar> stateConverter, BoogieSymbolTable symbolTable) {
-		mServices = services;
+		mLogger = logger;
 		mStateConverter = stateConverter;
 		mStatementExtractor = new RcfgStatementExtractor();
-		mStatementProcessor = new IntervalDomainStatementProcessor(services, mStateConverter, symbolTable);
+		mStatementProcessor = new IntervalDomainStatementProcessor(mLogger, mStateConverter, symbolTable);
 	}
 
 	@Override

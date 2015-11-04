@@ -32,6 +32,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -62,15 +64,17 @@ public class IntervalDomainState<ACTION, VARDECL>
 	private final Map<String, IntervalDomainValue> mValuesMap;
 	private final Map<String, Boolean> mBooleanValuesMap;
 
+	private final Logger mLogger;
+
 	private boolean mIsFixpoint;
 
 	private IntervalStateConverter<ACTION, VARDECL> mStateConverter;
 
 	protected IntervalDomainState() {
-		this(null);
+		this(null, null);
 	}
-
-	protected IntervalDomainState(IntervalStateConverter<ACTION, VARDECL> stateConverter) {
+	
+	protected IntervalDomainState(IntervalStateConverter<ACTION, VARDECL> stateConverter, Logger logger) {
 		mStateConverter = stateConverter;
 		mVariablesMap = new HashMap<String, VARDECL>();
 		mValuesMap = new HashMap<String, IntervalDomainValue>();
@@ -78,9 +82,10 @@ public class IntervalDomainState<ACTION, VARDECL>
 		mIsFixpoint = false;
 		sId++;
 		mId = sId;
+		mLogger = logger;
 	}
 
-	protected IntervalDomainState(IntervalStateConverter<ACTION, VARDECL> stateConverter,
+	protected IntervalDomainState(IntervalStateConverter<ACTION, VARDECL> stateConverter, Logger logger,
 	        Map<String, VARDECL> variablesMap, Map<String, IntervalDomainValue> valuesMap,
 	        Map<String, Boolean> booleanValuesMap, boolean isFixpoint) {
 		mStateConverter = stateConverter;
@@ -90,6 +95,7 @@ public class IntervalDomainState<ACTION, VARDECL>
 		mIsFixpoint = isFixpoint;
 		sId++;
 		mId = sId;
+		mLogger = logger;
 	}
 
 	protected void setStateConverter(IntervalStateConverter<ACTION, VARDECL> stateConverter) {
@@ -154,16 +160,17 @@ public class IntervalDomainState<ACTION, VARDECL>
 				}
 
 			} else {
-				throw new UnsupportedOperationException(
-				        "The BoogieVar type " + boogieVar.getIType().getClass().toString() + " is not implemented.");
+				mLogger.warn("The BoogieVar type " + boogieVar.getIType().getClass().toString()
+				        + " is not implemented. Assuming top.");
+				newValMap.put(name, new IntervalDomainValue());
 			}
 		} else {
 			throw new UnsupportedOperationException(
 			        "The type " + variable.getClass().toString() + " for variables is not implemented.");
 		}
 
-		return new IntervalDomainState<ACTION, VARDECL>(mStateConverter, newVarMap, newValMap, newBooleanValMap,
-		        mIsFixpoint);
+		return new IntervalDomainState<ACTION, VARDECL>(mStateConverter, mLogger, newVarMap, newValMap,
+		        newBooleanValMap, mIsFixpoint);
 	}
 
 	@Override
@@ -178,8 +185,8 @@ public class IntervalDomainState<ACTION, VARDECL>
 		final Map<String, Boolean> newBooleanValMap = new HashMap<String, Boolean>(mBooleanValuesMap);
 		newBooleanValMap.remove(name);
 
-		return new IntervalDomainState<ACTION, VARDECL>(mStateConverter, newVarMap, newValMap, newBooleanValMap,
-		        mIsFixpoint);
+		return new IntervalDomainState<ACTION, VARDECL>(mStateConverter, mLogger, newVarMap, newValMap,
+		        newBooleanValMap, mIsFixpoint);
 	}
 
 	@Override
@@ -220,8 +227,8 @@ public class IntervalDomainState<ACTION, VARDECL>
 			}
 		}
 
-		return new IntervalDomainState<ACTION, VARDECL>(mStateConverter, newVarMap, newValMap, newBooleanValMap,
-		        mIsFixpoint);
+		return new IntervalDomainState<ACTION, VARDECL>(mStateConverter, mLogger, newVarMap, newValMap,
+		        newBooleanValMap, mIsFixpoint);
 	}
 
 	@Override
@@ -238,8 +245,8 @@ public class IntervalDomainState<ACTION, VARDECL>
 			newBooleanValMap.remove(entry.getKey());
 		}
 
-		return new IntervalDomainState<ACTION, VARDECL>(mStateConverter, newVarMap, newValMap, newBooleanValMap,
-		        mIsFixpoint);
+		return new IntervalDomainState<ACTION, VARDECL>(mStateConverter, mLogger, newVarMap, newValMap,
+		        newBooleanValMap, mIsFixpoint);
 	}
 
 	@Override
@@ -270,8 +277,8 @@ public class IntervalDomainState<ACTION, VARDECL>
 
 	@Override
 	public IAbstractState<ACTION, VARDECL> setFixpoint(boolean value) {
-		return new IntervalDomainState<ACTION, VARDECL>(mStateConverter, mVariablesMap, mValuesMap, mBooleanValuesMap,
-		        value);
+		return new IntervalDomainState<ACTION, VARDECL>(mStateConverter, mLogger, mVariablesMap, mValuesMap,
+		        mBooleanValuesMap, value);
 	}
 
 	/**
@@ -315,9 +322,9 @@ public class IntervalDomainState<ACTION, VARDECL>
 
 	@Override
 	public IAbstractState<ACTION, VARDECL> copy() {
-		return new IntervalDomainState<ACTION, VARDECL>(mStateConverter, new HashMap<String, VARDECL>(mVariablesMap),
-		        new HashMap<String, IntervalDomainValue>(mValuesMap), new HashMap<String, Boolean>(mBooleanValuesMap),
-		        mIsFixpoint);
+		return new IntervalDomainState<ACTION, VARDECL>(mStateConverter, mLogger,
+		        new HashMap<String, VARDECL>(mVariablesMap), new HashMap<String, IntervalDomainValue>(mValuesMap),
+		        new HashMap<String, Boolean>(mBooleanValuesMap), mIsFixpoint);
 	}
 
 	@Override

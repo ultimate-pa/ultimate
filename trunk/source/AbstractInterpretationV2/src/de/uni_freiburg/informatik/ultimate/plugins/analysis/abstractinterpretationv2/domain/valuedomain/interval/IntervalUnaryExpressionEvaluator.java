@@ -76,7 +76,8 @@ public class IntervalUnaryExpressionEvaluator
 		default:
 			mLogger.warn(
 			        "Possible loss of precision: cannot handle operator " + mOperator + ". Returning current state.");
-			return new EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>(null, currentState);
+			return new EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>(new IntervalDomainValue(),
+			        currentState);
 
 		}
 	}

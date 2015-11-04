@@ -69,8 +69,15 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 		case LOGICIFF:
 			mBooleanValue = (logicLeft.booleanValue() && logicRight.booleanValue())
 			        || (!logicLeft.booleanValue() && !logicRight.booleanValue());
-		default:
+		case COMPEQ:
+		case COMPGEQ:
+		case COMPGT:
+		case COMPLEQ:
+		case COMPLT:
+		case COMPNEQ:
+		case COMPPO:
 			mLogger.warn("Operator " + mOperator + " not handled.");
+		default:
 			mBooleanValue = false;
 		}
 

@@ -30,8 +30,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.math.BigDecimal;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
@@ -50,11 +51,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class IntervalDomain implements IAbstractDomain<IntervalDomainState<CodeBlock, BoogieVar>, CodeBlock, BoogieVar> {
 
 	private final IntervalStateConverter<CodeBlock, BoogieVar> mStateConverter;
-	private final IUltimateServiceProvider mServices;
 	private final BoogieSymbolTable mSymbolTable;
+	private final Logger mLogger;
 
-	public IntervalDomain(IUltimateServiceProvider services, BoogieSymbolTable symbolTable) {
-		mServices = services;
+	public IntervalDomain(Logger logger, BoogieSymbolTable symbolTable) {
+		mLogger = logger;
 		mStateConverter = new IntervalStateConverter<CodeBlock, BoogieVar>(
 		        new IntervalDomainState<CodeBlock, BoogieVar>());
 		mSymbolTable = symbolTable;
@@ -62,7 +63,7 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState<CodeB
 
 	@Override
 	public IAbstractState<CodeBlock, BoogieVar> createFreshState() {
-		return new IntervalDomainState<CodeBlock, BoogieVar>(mStateConverter);
+		return new IntervalDomainState<CodeBlock, BoogieVar>(mStateConverter, mLogger);
 	}
 
 	@Override
@@ -79,7 +80,7 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState<CodeB
 
 	@Override
 	public IAbstractPostOperator<CodeBlock, BoogieVar> getPostOperator() {
-		return new IntervalPostOperator(mServices, mStateConverter, mSymbolTable);
+		return new IntervalPostOperator(mLogger, mStateConverter, mSymbolTable);
 	}
 
 	@Override

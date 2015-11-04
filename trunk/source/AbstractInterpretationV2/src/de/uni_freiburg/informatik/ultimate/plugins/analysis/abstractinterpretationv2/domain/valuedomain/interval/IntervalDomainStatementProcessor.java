@@ -70,7 +70,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class IntervalDomainStatementProcessor extends BoogieVisitor {
 
 	private final IntervalStateConverter<CodeBlock, BoogieVar> mStateConverter;
-	private final IUltimateServiceProvider mServices;
 	private final BoogieSymbolTable mSymbolTable;
 
 	private IntervalDomainState<CodeBlock, BoogieVar> mOldState;
@@ -83,13 +82,12 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 
 	private final Logger mLogger;
 
-	protected IntervalDomainStatementProcessor(IUltimateServiceProvider services,
+	protected IntervalDomainStatementProcessor(Logger logger,
 	        IntervalStateConverter<CodeBlock, BoogieVar> stateConverter, BoogieSymbolTable symbolTable) {
 		mStateConverter = stateConverter;
-		mServices = services;
 		mSymbolTable = symbolTable;
 
-		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mLogger = logger;
 
 		mEvaluatorFactory = new IntervalEvaluatorFactory(mLogger, mStateConverter);
 

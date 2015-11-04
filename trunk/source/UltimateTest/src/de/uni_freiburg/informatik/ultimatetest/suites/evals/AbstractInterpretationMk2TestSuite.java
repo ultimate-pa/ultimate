@@ -88,7 +88,7 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 //			// "examples/programs/recursivePrograms",
 //			
 //			 /* SV-COMP repo */
-//			"examples/svcomp/loops/", 
+			"examples/svcomp/loops/", 
 //			// "examples/svcomp/loopsSelection/",
 //			// "examples/svcomp/eca/", 
 //			// "examples/svcomp/ecaSelection/",
@@ -99,14 +99,14 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 //			// "examples/svcomp/recursive/",
 //			 "examples/svcomp/ssh-simplified/",
 //			 "examples/svcomp/ntdrivers-simplified/",
-			// "examples/svcomp/ssh/",
+//			// "examples/svcomp/ssh/",
 			 
 			 //single files 
-			 "examples/programs/regression/bpl/BugFreshConstantInSSA.bpl",
-			 "examples/programs/regression/c/Enums01-Safe.c",
-			 "examples/programs/regression/c/Enums02-Safe.c",
-			 "examples/programs/regression/c/Enums04-Safe.c",
-			 "examples/programs/regression/bpl/BugModifiesChecker.bpl",
+//			 "examples/programs/regression/bpl/BugFreshConstantInSSA.bpl",
+//			 "examples/programs/regression/c/Enums01-Safe.c",
+//			 "examples/programs/regression/c/Enums02-Safe.c",
+//			 "examples/programs/regression/c/Enums04-Safe.c",
+//			 "examples/programs/regression/bpl/BugModifiesChecker.bpl",
 //			 
 //			 //soundness
 //			 "examples/programs/regression/bpl/interprocedural/BugBackwardPredicates04.bpl",

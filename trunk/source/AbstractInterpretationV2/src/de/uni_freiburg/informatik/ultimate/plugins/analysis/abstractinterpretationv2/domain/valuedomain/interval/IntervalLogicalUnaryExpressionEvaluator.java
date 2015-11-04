@@ -37,6 +37,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.ILogicalEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
+/**
+ * Class that handles unary logical expression evaluators in the {@link IntervalDomain}.
+ * 
+ * @author Marius Greitschus <greitsch@informatik.uni-freiburg.de>
+ *
+ */
 public class IntervalLogicalUnaryExpressionEvaluator extends IntervalUnaryExpressionEvaluator implements
         ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>, CodeBlock, BoogieVar> {
 
@@ -60,7 +66,10 @@ public class IntervalLogicalUnaryExpressionEvaluator extends IntervalUnaryExpres
 			mBooleanValue = !boolSubEvaluator.booleanValue();
 			break;
 		default:
-			throw new UnsupportedOperationException("The operator " + mOperator + " is not implemented.");
+			mLogger.warn("Operator " + mOperator + " not implemented. Assuming logical interpretation to be false.");
+			mBooleanValue = false;
+			return new EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>(new IntervalDomainValue(),
+			        currentState);
 		}
 
 		return evaluated;

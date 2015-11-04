@@ -117,9 +117,10 @@ public class IntervalBinaryExpressionEvaluator
 			        currentState);
 		case COMPEQ:
 		default:
-			mLogger.warn(
-			        "Possible loss of precision: cannot handle operator " + mOperator + ". Returning current state.");
-			return new EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>(null, currentState);
+			mLogger.warn("Possible loss of precision: cannot handle operator " + mOperator
+			        + ". Assuming top and returning current state.");
+			return new EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>(new IntervalDomainValue(),
+			        currentState);
 		}
 	}
 

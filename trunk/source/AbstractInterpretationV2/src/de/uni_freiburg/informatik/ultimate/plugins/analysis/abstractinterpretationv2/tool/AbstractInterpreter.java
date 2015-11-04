@@ -73,8 +73,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
- * Should be used by other tools to run abstract interpretation on various parts
- * of the RCFG.
+ * Should be used by other tools to run abstract interpretation on various parts of the RCFG.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
@@ -83,13 +82,12 @@ public final class AbstractInterpreter {
 	/**
 	 * Run abstract interpretation on the whole RCFG.
 	 * 
-	 * Suppress all exceptions except {@link OutOfMemoryError},
-	 * {@link ToolchainCanceledException}, {@link IllegalArgumentException}.
-	 * Produce no results.
+	 * Suppress all exceptions except {@link OutOfMemoryError}, {@link ToolchainCanceledException},
+	 * {@link IllegalArgumentException}. Produce no results.
 	 */
 	public static Map<CodeBlock, Map<ProgramPoint, Term>> runSilently(final RootNode root,
-			final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
-			final IUltimateServiceProvider services) {
+	        final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
+	        final IUltimateServiceProvider services) {
 		final Logger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final Map<CodeBlock, Map<ProgramPoint, Term>> rtr = new HashMap<CodeBlock, Map<ProgramPoint, Term>>();
 		try {
@@ -113,16 +111,16 @@ public final class AbstractInterpreter {
 	 * 
 	 */
 	public static Map<CodeBlock, Map<ProgramPoint, Term>> run(final RootNode root, final Collection<CodeBlock> initials,
-			final IProgressAwareTimer timer, final IUltimateServiceProvider services) throws Throwable {
+	        final IProgressAwareTimer timer, final IUltimateServiceProvider services) throws Throwable {
 		final Map<CodeBlock, Map<ProgramPoint, Term>> rtr = new HashMap<CodeBlock, Map<ProgramPoint, Term>>();
 		runInternal(root, initials, timer, services, (a, b) -> new RcfgResultReporter(a, b), rtr);
 		return rtr;
 	}
 
 	private static void runInternal(final RootNode root, final Collection<CodeBlock> initials,
-			final IProgressAwareTimer timer, final IUltimateServiceProvider services,
-			BiFunction<IUltimateServiceProvider, BaseRcfgAbstractStateStorageProvider, IResultReporter<CodeBlock>> funCreateReporter,
-			Map<CodeBlock, Map<ProgramPoint, Term>> predicates) throws Throwable {
+	        final IProgressAwareTimer timer, final IUltimateServiceProvider services,
+	        BiFunction<IUltimateServiceProvider, BaseRcfgAbstractStateStorageProvider, IResultReporter<CodeBlock>> funCreateReporter,
+	        Map<CodeBlock, Map<ProgramPoint, Term>> predicates) throws Throwable {
 		if (initials == null) {
 			throw new IllegalArgumentException("No initial edges provided");
 		}
@@ -148,7 +146,7 @@ public final class AbstractInterpreter {
 		final ITransitionProvider<CodeBlock> transitionProvider = new RcfgTransitionProvider();
 
 		final IVariableProvider<CodeBlock, BoogieVar> varProvider = new RcfgVariableProvider(symbolTable,
-				boogieVarTable);
+		        boogieVarTable);
 		final ILoopDetector<CodeBlock> loopDetector = new RcfgLoopDetector(externalLoopDetector);
 
 		final Collection<CodeBlock> filteredInitialElements = transitionProvider.filterInitialElements(initials);
@@ -165,7 +163,7 @@ public final class AbstractInterpreter {
 			final BaseRcfgAbstractStateStorageProvider storage = createStorage(services, domain, persist);
 			final IResultReporter<CodeBlock> reporter = funCreateReporter.apply(services, storage);
 			final FixpointEngine<CodeBlock, BoogieVar, ProgramPoint> interpreter = new FixpointEngine<CodeBlock, BoogieVar, ProgramPoint>(
-					services, timer, transitionProvider, storage, domain, varProvider, loopDetector, reporter);
+			        services, timer, transitionProvider, storage, domain, varProvider, loopDetector, reporter);
 			try {
 				interpreter.run(initial);
 			} catch (ToolchainCanceledException c) {
@@ -176,7 +174,7 @@ public final class AbstractInterpreter {
 	}
 
 	private static BaseRcfgAbstractStateStorageProvider createStorage(final IUltimateServiceProvider services,
-			final IAbstractDomain<?, CodeBlock, BoogieVar> domain, final boolean persist) {
+	        final IAbstractDomain<?, CodeBlock, BoogieVar> domain, final boolean persist) {
 		final BaseRcfgAbstractStateStorageProvider storage;
 		if (persist) {
 			storage = new AnnotatingRcfgAbstractStateStorageProvider(domain.getMergeOperator(), services);
@@ -195,7 +193,7 @@ public final class AbstractInterpreter {
 	}
 
 	private static IAbstractDomain<?, CodeBlock, BoogieVar> selectDomain(final BoogieSymbolTable symbolTable,
-			final IUltimateServiceProvider services) {
+	        final IUltimateServiceProvider services) {
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		final String selectedDomain = ups.getString(AbstractInterpretationPreferenceInitializer.LABEL_ABSTRACT_DOMAIN);
 
@@ -204,9 +202,9 @@ public final class AbstractInterpreter {
 		} else if (SignDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new SignDomain(services);
 		} else if (IntervalDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new IntervalDomain(services, symbolTable);
+			return new IntervalDomain(services.getLoggingService().getLogger(Activator.PLUGIN_ID), symbolTable);
 		}
 		throw new UnsupportedOperationException("The value \"" + selectedDomain + "\" of preference \""
-				+ AbstractInterpretationPreferenceInitializer.LABEL_ABSTRACT_DOMAIN + "\" was not considered before! ");
+		        + AbstractInterpretationPreferenceInitializer.LABEL_ABSTRACT_DOMAIN + "\" was not considered before! ");
 	}
 }
