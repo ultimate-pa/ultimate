@@ -59,6 +59,9 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 				new UltimatePreferenceItem<Boolean>(
 						LABEL_INTERPOLANTCONSOLIDATION, DEF_INTERPOLANTCONSOLIDATION,
 						PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(
+						LABEL_USESEPARATETRACECHECKSOLVER, DEF_USESEPARATETRACECHECKSOLVER,
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<PredicateUnification>(
 						LABEL_PREDICATEUNIFICATION, DEF_PREDICATEUNIFICATION,
 						PreferenceType.Combo, PredicateUnification.values()),
@@ -141,6 +144,7 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 	public static final String LABEL_INTERPOLANTCONSOLIDATION = "use interpolant consolidation (only useful for interpolationmode fp+bp)";
 	public static final String LABEL_PREDICATEUNIFICATION = "Predicate Unification Mode";
 	public static final String LABEL_EDGECHECKOPTIMIZATION = "EdgeCheck Optimization Mode";
+	public static final String LABEL_USESEPARATETRACECHECKSOLVER = "Use separate solver for tracechecks (currently hardcoded to be SMTInterpol)";
 
 	public static final String LABEL_GRAPHWRITERPATH = "write dot graph files here (empty for don't write)";
 
@@ -160,19 +164,20 @@ public class CodeCheckPreferenceInitializer extends UltimatePreferenceInitialize
 	// */
 	public static final Checker DEF_CHECKER = Checker.ULTIMATE;
 	
-	public static final boolean DEF_ONLYMAINPROCEDURE = false;
+//	public static final boolean DEF_ONLYMAINPROCEDURE = false;
 	public static final boolean DEF_MEMOIZENORMALEDGECHECKS = true;
 	public static final boolean DEF_MEMOIZERETURNEDGECHECKS = true;
 
 	public static final SolverAndInterpolator DEF_SOLVERANDINTERPOLATOR = SolverAndInterpolator.Z3SPWP;
 	public static final INTERPOLATION DEF_INTERPOLATIONMODE = INTERPOLATION.Craig_TreeInterpolation;
-	public static final boolean DEF_INTERPOLANTCONSOLIDATION = true;
+	public static final boolean DEF_INTERPOLANTCONSOLIDATION = false;
 	public static final PredicateUnification DEF_PREDICATEUNIFICATION = PredicateUnification.PER_ITERATION;
 	public static final EdgeCheckOptimization DEF_EDGECHECKOPTIMIZATION = EdgeCheckOptimization.NONE;
+	public static final boolean DEF_USESEPARATETRACECHECKSOLVER = true;
 
 	public static final String DEF_GRAPHWRITERPATH = "";
 
-	public static final int DEF_TIMEOUT = 1000;
+	public static final int DEF_TIMEOUT = 10000000;
 	
 	public static final int DEF_ITERATIONS = -1;
 	

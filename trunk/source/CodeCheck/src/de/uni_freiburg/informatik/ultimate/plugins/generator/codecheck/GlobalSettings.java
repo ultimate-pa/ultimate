@@ -67,6 +67,8 @@ public class GlobalSettings {
 	
 	public boolean useInterpolantconsolidation = true;
 
+	public boolean useSeparateSolverForTracechecks = true;
+
 	public static void init() {
 		_instance = new GlobalSettings();
 	}

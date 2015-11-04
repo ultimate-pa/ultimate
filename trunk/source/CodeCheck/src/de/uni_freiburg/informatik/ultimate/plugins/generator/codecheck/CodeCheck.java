@@ -57,6 +57,8 @@ public class CodeCheck implements IGenerator {
 
 	EdgeCheckOptimization edgeCheckOptimization = EdgeCheckOptimization.SDEC;
 	private IUltimateServiceProvider mServices;
+	private IToolchainStorage m_toolchainStorage;
+	private List<IObserver> m_Observers;
 
 	@Override
 	public String getPluginName() {
@@ -70,6 +72,8 @@ public class CodeCheck implements IGenerator {
 
 	@Override
 	public void init() {
+		m_Observer = new CodeCheckObserver(mServices, m_toolchainStorage);
+		m_Observers =  Collections.singletonList((IObserver) m_Observer);
 	}
 
 	@Override
@@ -90,8 +94,7 @@ public class CodeCheck implements IGenerator {
 
 	@Override
 	public List<IObserver> getObservers() {
-		m_Observer = new CodeCheckObserver(mServices);
-		return Collections.singletonList((IObserver) m_Observer);
+		return m_Observers;
 	}
 
 	public GraphType getOutputDefinition() {
@@ -118,9 +121,8 @@ public class CodeCheck implements IGenerator {
 	}
 
 	@Override
-	public void setToolchainStorage(IToolchainStorage services) {
-		// TODO Auto-generated method stub
-
+	public void setToolchainStorage(IToolchainStorage tcStorage) {
+		m_toolchainStorage = tcStorage;
 	}
 
 	@Override
