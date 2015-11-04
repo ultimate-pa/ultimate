@@ -37,7 +37,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluationResult;
@@ -147,8 +147,8 @@ public class IntervalDomainState<ACTION, VARDECL>
 		final Map<String, IntervalDomainValue> newValMap = new HashMap<String, IntervalDomainValue>(mValuesMap);
 		final Map<String, Boolean> newBooleanValMap = new HashMap<String, Boolean>(mBooleanValuesMap);
 
-		if (variable instanceof BoogieVar) {
-			final BoogieVar boogieVar = (BoogieVar) variable;
+		if (variable instanceof IBoogieVar) {
+			final IBoogieVar boogieVar = (IBoogieVar) variable;
 
 			if (boogieVar.getIType() instanceof PrimitiveType) {
 				final PrimitiveType primitiveType = (PrimitiveType) boogieVar.getIType();
@@ -160,7 +160,7 @@ public class IntervalDomainState<ACTION, VARDECL>
 				}
 
 			} else {
-				mLogger.warn("The BoogieVar type " + boogieVar.getIType().getClass().toString()
+				mLogger.warn("The IBoogieVar type " + boogieVar.getIType().getClass().toString()
 				        + " is not implemented. Assuming top.");
 				newValMap.put(name, new IntervalDomainValue());
 			}
@@ -205,8 +205,8 @@ public class IntervalDomainState<ACTION, VARDECL>
 			}
 			newValMap.put(entry.getKey(), new IntervalDomainValue());
 
-			if (entry instanceof BoogieVar) {
-				final BoogieVar boogieVar = (BoogieVar) entry;
+			if (entry.getValue() instanceof IBoogieVar) {
+				final IBoogieVar boogieVar = (IBoogieVar) entry.getValue();
 
 				if (boogieVar.getIType() instanceof PrimitiveType) {
 					final PrimitiveType primitiveType = (PrimitiveType) boogieVar.getIType();
@@ -218,12 +218,12 @@ public class IntervalDomainState<ACTION, VARDECL>
 					}
 
 				} else {
-					throw new UnsupportedOperationException("The BoogieVar type "
+					throw new UnsupportedOperationException("The IBoogieVar type "
 					        + boogieVar.getIType().getClass().toString() + " is not implemented.");
 				}
 			} else {
 				throw new UnsupportedOperationException(
-				        "The type " + entry.getClass().toString() + " for variables is not implemented.");
+				        "The type " + entry.getValue().getClass().toString() + " for variables is not implemented.");
 			}
 		}
 
@@ -435,8 +435,7 @@ public class IntervalDomainState<ACTION, VARDECL>
 	public VARDECL getVariableType(String name) {
 		assert name != null;
 		final VARDECL var = mVariablesMap.get(name);
-		assert var != null;
-
+		assert var != null : "Unknown variable";
 		return var;
 	}
 }

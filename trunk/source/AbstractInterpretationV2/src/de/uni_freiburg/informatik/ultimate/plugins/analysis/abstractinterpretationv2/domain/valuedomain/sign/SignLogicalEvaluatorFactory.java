@@ -32,7 +32,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.INAryEvaluator;
@@ -44,19 +44,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class SignLogicalEvaluatorFactory implements IEvaluatorFactory<Values, CodeBlock, BoogieVar> {
+public class SignLogicalEvaluatorFactory implements IEvaluatorFactory<Values, CodeBlock, IBoogieVar> {
 
-	SignStateConverter<CodeBlock, BoogieVar> mStateConverter;
+	SignStateConverter<CodeBlock, IBoogieVar> mStateConverter;
 	private final IUltimateServiceProvider mServices;
 
 	public SignLogicalEvaluatorFactory(IUltimateServiceProvider services,
-	        SignStateConverter<CodeBlock, BoogieVar> stateConverter) {
+	        SignStateConverter<CodeBlock, IBoogieVar> stateConverter) {
 		mServices = services;
 		mStateConverter = stateConverter;
 	}
 
 	@Override
-	public INAryEvaluator<Values, CodeBlock, BoogieVar> createNAryExpressionEvaluator(int arity) {
+	public INAryEvaluator<Values, CodeBlock, IBoogieVar> createNAryExpressionEvaluator(int arity) {
 
 		assert arity >= 1 && arity <= 2;
 
@@ -71,7 +71,7 @@ public class SignLogicalEvaluatorFactory implements IEvaluatorFactory<Values, Co
 	}
 
 	@Override
-	public IEvaluator<Values, CodeBlock, BoogieVar> createSingletonValueExpressionEvaluator(String value,
+	public IEvaluator<Values, CodeBlock, IBoogieVar> createSingletonValueExpressionEvaluator(String value,
 	        Class<?> valueType) {
 
 		if (valueType.equals(BigInteger.class)) {
@@ -90,12 +90,12 @@ public class SignLogicalEvaluatorFactory implements IEvaluatorFactory<Values, Co
 	}
 
 	@Override
-	public IEvaluator<Values, CodeBlock, BoogieVar> createSingletonVariableExpressionEvaluator(String variableName) {
+	public IEvaluator<Values, CodeBlock, IBoogieVar> createSingletonVariableExpressionEvaluator(String variableName) {
 		return new SignLogicalSingletonVariableExpressionEvaluator(variableName, mStateConverter);
 	}
 
 	@Override
-	public IEvaluator<Values, CodeBlock, BoogieVar> createSingletonLogicalValueExpressionEvaluator(boolean value) {
+	public IEvaluator<Values, CodeBlock, IBoogieVar> createSingletonLogicalValueExpressionEvaluator(boolean value) {
 		return null;
 	}
 

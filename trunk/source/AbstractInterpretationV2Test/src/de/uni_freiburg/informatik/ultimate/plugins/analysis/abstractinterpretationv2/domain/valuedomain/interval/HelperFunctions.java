@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.math.BigDecimal;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.EvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluationResult;
@@ -102,7 +102,7 @@ public class HelperFunctions {
 	protected static boolean computeAdditionResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
 	        IntervalDomainValue expectedResult) {
 
-		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>> result = createBinaryEvaluator(
+		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> result = createBinaryEvaluator(
 		        interval1, interval2, Operator.ARITHPLUS).evaluate(null);
 
 		return computeResult(interval1, interval2, expectedResult, result.getResult().getEvaluatedValue());
@@ -111,7 +111,7 @@ public class HelperFunctions {
 	protected static boolean computeSubtractionResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
 	        IntervalDomainValue expectedResult) {
 
-		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>> result = createBinaryEvaluator(
+		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> result = createBinaryEvaluator(
 		        interval1, interval2, Operator.ARITHMINUS).evaluate(null);
 
 		return computeResult(interval1, interval2, expectedResult, result.getResult().getEvaluatedValue());
@@ -120,7 +120,7 @@ public class HelperFunctions {
 	protected static boolean computeMultiplicationResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
 	        IntervalDomainValue expectedResult) {
 
-		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>> result = createBinaryEvaluator(
+		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> result = createBinaryEvaluator(
 		        interval1, interval2, Operator.ARITHMUL).evaluate(null);
 
 		return computeResult(interval1, interval2, expectedResult, result.getResult().getEvaluatedValue());

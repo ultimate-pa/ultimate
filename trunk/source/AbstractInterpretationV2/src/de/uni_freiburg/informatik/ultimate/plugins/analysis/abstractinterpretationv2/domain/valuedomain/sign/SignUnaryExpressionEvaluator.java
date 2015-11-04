@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
@@ -46,13 +46,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, CodeBlock, BoogieVar> {
+public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, CodeBlock, IBoogieVar> {
 
-	protected IEvaluator<Values, CodeBlock, BoogieVar> mSubEvaluator;
+	protected IEvaluator<Values, CodeBlock, IBoogieVar> mSubEvaluator;
 	protected UnaryExpression.Operator mOperator;
 
 	@Override
-	public void addSubEvaluator(IEvaluator<Values, CodeBlock, BoogieVar> evaluator) {
+	public void addSubEvaluator(IEvaluator<Values, CodeBlock, IBoogieVar> evaluator) {
 
 		assert mSubEvaluator == null;
 		assert evaluator != null;
@@ -68,9 +68,9 @@ public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, Code
 	}
 
 	@Override
-	public IEvaluationResult<Values> evaluate(IAbstractState<CodeBlock, BoogieVar> oldState) {
+	public IEvaluationResult<Values> evaluate(IAbstractState<CodeBlock, IBoogieVar> oldState) {
 
-		IEvaluator<Values, CodeBlock, BoogieVar> castedSubEvaluator = (IEvaluator<Values, CodeBlock, BoogieVar>) mSubEvaluator;
+		IEvaluator<Values, CodeBlock, IBoogieVar> castedSubEvaluator = (IEvaluator<Values, CodeBlock, IBoogieVar>) mSubEvaluator;
 		final IEvaluationResult<Values> subEvalResult = (IEvaluationResult<Values>) castedSubEvaluator
 		        .evaluate(oldState);
 

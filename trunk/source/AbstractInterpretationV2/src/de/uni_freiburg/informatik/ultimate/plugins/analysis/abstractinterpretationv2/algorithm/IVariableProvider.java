@@ -24,6 +24,7 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
@@ -36,8 +37,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <VARDECL>
  */
 public interface IVariableProvider<ACTION, VARDECL> {
-	
+
+	/**
+	 * Defines global and local variables according to the position of <code>current</code>.
+	 * 
+	 * Assumes state is fresh.
+	 */
 	IAbstractState<ACTION, VARDECL> defineVariablesPre(ACTION current, IAbstractState<ACTION, VARDECL> state);
-	
+
 	IAbstractState<ACTION, VARDECL> defineVariablesPost(ACTION current, IAbstractState<ACTION, VARDECL> state);
 }

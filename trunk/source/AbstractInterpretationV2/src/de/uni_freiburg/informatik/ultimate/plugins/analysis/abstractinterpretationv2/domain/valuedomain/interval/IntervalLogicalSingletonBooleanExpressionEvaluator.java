@@ -31,7 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.EvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluationResult;
@@ -46,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class IntervalLogicalSingletonBooleanExpressionEvaluator
-        implements IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>, CodeBlock, BoogieVar>,
-        ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>, CodeBlock, BoogieVar> {
+        implements IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar>,
+        ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> {
 
 	private final boolean mBooleanValue;
 
@@ -56,24 +56,24 @@ public class IntervalLogicalSingletonBooleanExpressionEvaluator
 	}
 
 	@Override
-	public IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>> evaluate(
-	        IAbstractState<CodeBlock, BoogieVar> currentState) {
+	public IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> evaluate(
+	        IAbstractState<CodeBlock, IBoogieVar> currentState) {
 
-		IAbstractState<CodeBlock, BoogieVar> returnState;
+		IAbstractState<CodeBlock, IBoogieVar> returnState;
 
 		if (mBooleanValue) {
 			returnState = currentState;
 		} else {
-			returnState = new IntervalDomainState<CodeBlock, BoogieVar>();
+			returnState = new IntervalDomainState<CodeBlock, IBoogieVar>();
 			returnState.setToBottom();
 		}
 
-		return new EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>(null, returnState);
+		return new EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>(null, returnState);
 	}
 
 	@Override
 	public void addSubEvaluator(
-	        IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>, CodeBlock, BoogieVar> evaluator) {
+	        IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> evaluator) {
 		throw new UnsupportedOperationException("Adding a subevaluator to this kind of evaluator is not permitted.");
 	}
 

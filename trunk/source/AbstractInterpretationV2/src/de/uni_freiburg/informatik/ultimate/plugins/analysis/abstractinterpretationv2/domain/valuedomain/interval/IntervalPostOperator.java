@@ -33,7 +33,7 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
@@ -45,15 +45,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * 
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
-public class IntervalPostOperator implements IAbstractPostOperator<CodeBlock, BoogieVar> {
+public class IntervalPostOperator implements IAbstractPostOperator<CodeBlock, IBoogieVar> {
 
 	private final Logger mLogger;
-	private final IntervalStateConverter<CodeBlock, BoogieVar> mStateConverter;
+	private final IntervalStateConverter<CodeBlock, IBoogieVar> mStateConverter;
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final IntervalDomainStatementProcessor mStatementProcessor;
 
 	public IntervalPostOperator(Logger logger,
-	        IntervalStateConverter<CodeBlock, BoogieVar> stateConverter, BoogieSymbolTable symbolTable) {
+	        IntervalStateConverter<CodeBlock, IBoogieVar> stateConverter, BoogieSymbolTable symbolTable) {
 		mLogger = logger;
 		mStateConverter = stateConverter;
 		mStatementExtractor = new RcfgStatementExtractor();
@@ -61,10 +61,10 @@ public class IntervalPostOperator implements IAbstractPostOperator<CodeBlock, Bo
 	}
 
 	@Override
-	public IAbstractState<CodeBlock, BoogieVar> apply(IAbstractState<CodeBlock, BoogieVar> oldstate, CodeBlock codeBlock) {
-		final IntervalDomainState<CodeBlock, BoogieVar> concreteOldState = mStateConverter.getCheckedState(oldstate);
+	public IAbstractState<CodeBlock, IBoogieVar> apply(IAbstractState<CodeBlock, IBoogieVar> oldstate, CodeBlock codeBlock) {
+		final IntervalDomainState<CodeBlock, IBoogieVar> concreteOldState = mStateConverter.getCheckedState(oldstate);
 
-		IntervalDomainState<CodeBlock, BoogieVar> currentState = (IntervalDomainState<CodeBlock, BoogieVar>) concreteOldState
+		IntervalDomainState<CodeBlock, IBoogieVar> currentState = (IntervalDomainState<CodeBlock, IBoogieVar>) concreteOldState
 		        .copy();
 
 		final List<Statement> statements = mStatementExtractor.process(codeBlock);

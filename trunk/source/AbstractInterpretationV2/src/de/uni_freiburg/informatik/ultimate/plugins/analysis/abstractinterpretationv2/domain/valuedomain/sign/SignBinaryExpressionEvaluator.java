@@ -35,7 +35,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluationResult;
@@ -50,10 +50,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, CodeBlock, BoogieVar> {
+public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, CodeBlock, IBoogieVar> {
 
-	protected IEvaluator<Values, CodeBlock, BoogieVar> mLeftSubEvaluator;
-	protected IEvaluator<Values, CodeBlock, BoogieVar> mRightSubEvaluator;
+	protected IEvaluator<Values, CodeBlock, IBoogieVar> mLeftSubEvaluator;
+	protected IEvaluator<Values, CodeBlock, IBoogieVar> mRightSubEvaluator;
 	protected BinaryExpression.Operator mOperator;
 	protected final Set<String> mVariableSet;
 	protected final Logger mLogger;
@@ -83,7 +83,7 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Cod
 	}
 
 	@Override
-	public IEvaluationResult<Values> evaluate(IAbstractState<CodeBlock, BoogieVar> currentState) {
+	public IEvaluationResult<Values> evaluate(IAbstractState<CodeBlock, IBoogieVar> currentState) {
 
 		for (String var : mLeftSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
@@ -304,7 +304,7 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Cod
 	 * Adds a subevaluator to {@link this} if possible.
 	 */
 	@Override
-	public void addSubEvaluator(IEvaluator<Values, CodeBlock, BoogieVar> evaluator) {
+	public void addSubEvaluator(IEvaluator<Values, CodeBlock, IBoogieVar> evaluator) {
 		if (mLeftSubEvaluator != null && mRightSubEvaluator != null) {
 			throw new UnsupportedOperationException("There are no free sub evaluators left to be assigned.");
 		}

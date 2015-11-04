@@ -29,7 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.interval;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.EvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluationResult;
@@ -44,22 +44,22 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  */
 public class IntervalLogicalSingletonVariableExpressionEvaluator extends IntervalSingletonVariableExpressionEvaluator
         implements
-        ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>, CodeBlock, BoogieVar> {
+        ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> {
 
 	private boolean mBooleanValue = false;
 
 	public IntervalLogicalSingletonVariableExpressionEvaluator(String variableName,
-	        IntervalStateConverter<CodeBlock, BoogieVar> stateConverter) {
+	        IntervalStateConverter<CodeBlock, IBoogieVar> stateConverter) {
 		super(variableName, stateConverter);
 	}
 
 	@Override
-	public IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>> evaluate(
-	        IAbstractState<CodeBlock, BoogieVar> currentState) {
+	public IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> evaluate(
+	        IAbstractState<CodeBlock, IBoogieVar> currentState) {
 
-		final IntervalDomainState<CodeBlock, BoogieVar> concreteState = mStateConverter.getCheckedState(currentState);
+		final IntervalDomainState<CodeBlock, IBoogieVar> concreteState = mStateConverter.getCheckedState(currentState);
 		
-		final BoogieVar type = currentState.getVariableType(mVariableName);
+		final IBoogieVar type = currentState.getVariableType(mVariableName);
 		if (type.getIType() instanceof PrimitiveType) {
 			final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
 

@@ -28,7 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.sign;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.ILogicalEvaluator;
@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEvaluator
-        implements ILogicalEvaluator<Values, CodeBlock, BoogieVar> {
+        implements ILogicalEvaluator<Values, CodeBlock, IBoogieVar> {
 
 	private boolean mBooleanValue;
 
@@ -45,7 +45,7 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 	}
 
 	@Override
-	public IEvaluationResult<Values> evaluate(IAbstractState<CodeBlock, BoogieVar> currentState) {
+	public IEvaluationResult<Values> evaluate(IAbstractState<CodeBlock, IBoogieVar> currentState) {
 		for (String var : mLeftSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
 		}
@@ -95,19 +95,19 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 		}
 	}
 
-	public IAbstractState<CodeBlock, BoogieVar> logicallyInterpret(IAbstractState<CodeBlock, BoogieVar> currentState) {
+	public IAbstractState<CodeBlock, IBoogieVar> logicallyInterpret(IAbstractState<CodeBlock, IBoogieVar> currentState) {
 
 		final SignDomainValue firstResult = (SignDomainValue) mLeftSubEvaluator.evaluate(currentState);
 		final SignDomainValue secondResult = (SignDomainValue) mRightSubEvaluator.evaluate(currentState);
 
 		if (firstResult.getResult().equals(Values.BOTTOM) || secondResult.getResult().equals(Values.BOTTOM)) {
-			SignDomainState<CodeBlock, BoogieVar> newState = (SignDomainState<CodeBlock, BoogieVar>) currentState
+			SignDomainState<CodeBlock, IBoogieVar> newState = (SignDomainState<CodeBlock, IBoogieVar>) currentState
 			        .copy();
 			newState.setToBottom();
 			return newState;
 		}
 
-		SignDomainState<CodeBlock, BoogieVar> newState = (SignDomainState<CodeBlock, BoogieVar>) currentState.copy();
+		SignDomainState<CodeBlock, IBoogieVar> newState = (SignDomainState<CodeBlock, IBoogieVar>) currentState.copy();
 
 		boolean compResult = evaluateComparisonOperators(firstResult, secondResult);
 
@@ -142,9 +142,9 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 				if (mLeftSubEvaluator instanceof SignLogicalSingletonVariableExpressionEvaluator
 				        && !(mRightSubEvaluator instanceof SignLogicalSingletonVariableExpressionEvaluator)) {
 					SignLogicalSingletonVariableExpressionEvaluator leftie = (SignLogicalSingletonVariableExpressionEvaluator) mLeftSubEvaluator;
-					SignDomainState<CodeBlock, BoogieVar> intersecterino = (SignDomainState<CodeBlock, BoogieVar>) currentState
+					SignDomainState<CodeBlock, IBoogieVar> intersecterino = (SignDomainState<CodeBlock, IBoogieVar>) currentState
 					        .copy();
-					// SignDomainState<CodeBlock, BoogieVar> rightState = (SignDomainState<CodeBlock, BoogieVar>)
+					// SignDomainState<CodeBlock, IBoogieVar> rightState = (SignDomainState<CodeBlock, IBoogieVar>)
 					// secondLogicalInterpretation;
 					// intersecterino.setValue(leftie.mVariableName, rightState.getValues().get(leftie.mVariableName));
 
@@ -152,9 +152,9 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 				} else if (!(mLeftSubEvaluator instanceof SignLogicalSingletonVariableExpressionEvaluator)
 				        && mRightSubEvaluator instanceof SignLogicalSingletonVariableExpressionEvaluator) {
 					SignLogicalSingletonVariableExpressionEvaluator rightie = (SignLogicalSingletonVariableExpressionEvaluator) mRightSubEvaluator;
-					SignDomainState<CodeBlock, BoogieVar> intersecterino = (SignDomainState<CodeBlock, BoogieVar>) currentState
+					SignDomainState<CodeBlock, IBoogieVar> intersecterino = (SignDomainState<CodeBlock, IBoogieVar>) currentState
 					        .copy();
-					// SignDomainState<CodeBlock, BoogieVar> leftState = (SignDomainState<CodeBlock, BoogieVar>)
+					// SignDomainState<CodeBlock, IBoogieVar> leftState = (SignDomainState<CodeBlock, IBoogieVar>)
 					// firstLogicalInterpretation;
 					// intersecterino.setValue(rightie.mVariableName, leftState.getValues().get(rightie.mVariableName));
 
@@ -243,10 +243,10 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 		return false;
 	}
 
-	protected boolean logicalEvaluation(IAbstractState<CodeBlock, BoogieVar> currentState) {
+	protected boolean logicalEvaluation(IAbstractState<CodeBlock, IBoogieVar> currentState) {
 
-		final ILogicalEvaluator<Values, CodeBlock, BoogieVar> left = (ILogicalEvaluator<SignDomainValue.Values, CodeBlock, BoogieVar>) mLeftSubEvaluator;
-		final ILogicalEvaluator<Values, CodeBlock, BoogieVar> right = (ILogicalEvaluator<SignDomainValue.Values, CodeBlock, BoogieVar>) mRightSubEvaluator;
+		final ILogicalEvaluator<Values, CodeBlock, IBoogieVar> left = (ILogicalEvaluator<SignDomainValue.Values, CodeBlock, IBoogieVar>) mLeftSubEvaluator;
+		final ILogicalEvaluator<Values, CodeBlock, IBoogieVar> right = (ILogicalEvaluator<SignDomainValue.Values, CodeBlock, IBoogieVar>) mRightSubEvaluator;
 
 		switch (mOperator) {
 		case COMPEQ:

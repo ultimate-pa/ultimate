@@ -32,7 +32,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.INAryEvaluator;
@@ -45,13 +45,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class SignEvaluatorFactory implements IEvaluatorFactory<Values, CodeBlock, BoogieVar> {
+public class SignEvaluatorFactory implements IEvaluatorFactory<Values, CodeBlock, IBoogieVar> {
 
 	private static final int ARITY_MIN = 1;
 	private static final int ARITY_MAX = 2;
 	private static final int BUFFER_MAX = 100;
 
-	private final SignStateConverter<CodeBlock, BoogieVar> mStateConverter;
+	private final SignStateConverter<CodeBlock, IBoogieVar> mStateConverter;
 	private final IUltimateServiceProvider mServices;
 
 	/**
@@ -63,13 +63,13 @@ public class SignEvaluatorFactory implements IEvaluatorFactory<Values, CodeBlock
 	 *            The state converter in the sign domain.
 	 */
 	public SignEvaluatorFactory(IUltimateServiceProvider services,
-	        SignStateConverter<CodeBlock, BoogieVar> stateConverter) {
+	        SignStateConverter<CodeBlock, IBoogieVar> stateConverter) {
 		mStateConverter = stateConverter;
 		mServices = services;
 	}
 
 	@Override
-	public INAryEvaluator<Values, CodeBlock, BoogieVar> createNAryExpressionEvaluator(int arity) {
+	public INAryEvaluator<Values, CodeBlock, IBoogieVar> createNAryExpressionEvaluator(int arity) {
 
 		assert arity >= ARITY_MIN && arity <= ARITY_MAX;
 
@@ -86,7 +86,7 @@ public class SignEvaluatorFactory implements IEvaluatorFactory<Values, CodeBlock
 	}
 
 	@Override
-	public IEvaluator<Values, CodeBlock, BoogieVar> createSingletonValueExpressionEvaluator(String value,
+	public IEvaluator<Values, CodeBlock, IBoogieVar> createSingletonValueExpressionEvaluator(String value,
 	        Class<?> valueType) {
 
 		if (valueType.equals(BigInteger.class)) {
@@ -101,12 +101,12 @@ public class SignEvaluatorFactory implements IEvaluatorFactory<Values, CodeBlock
 	}
 
 	@Override
-	public IEvaluator<Values, CodeBlock, BoogieVar> createSingletonVariableExpressionEvaluator(String variableName) {
+	public IEvaluator<Values, CodeBlock, IBoogieVar> createSingletonVariableExpressionEvaluator(String variableName) {
 		return new SignSingletonVariableExpressionEvaluator(variableName, mStateConverter);
 	}
 
 	@Override
-	public IEvaluator<Values, CodeBlock, BoogieVar> createSingletonLogicalValueExpressionEvaluator(boolean value) {
+	public IEvaluator<Values, CodeBlock, IBoogieVar> createSingletonLogicalValueExpressionEvaluator(boolean value) {
 		return null;
 	}
 }

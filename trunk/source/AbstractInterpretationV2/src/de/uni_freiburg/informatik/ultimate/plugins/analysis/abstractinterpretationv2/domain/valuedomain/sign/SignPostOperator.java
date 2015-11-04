@@ -31,7 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
@@ -43,9 +43,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * 
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
-public class SignPostOperator implements IAbstractPostOperator<CodeBlock, BoogieVar> {
+public class SignPostOperator implements IAbstractPostOperator<CodeBlock, IBoogieVar> {
 
-	private final SignStateConverter<CodeBlock, BoogieVar> mStateConverter;
+	private final SignStateConverter<CodeBlock, IBoogieVar> mStateConverter;
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final SignDomainStatementProcessor mStatementProcessor;
 
@@ -56,7 +56,7 @@ public class SignPostOperator implements IAbstractPostOperator<CodeBlock, Boogie
 	 *            The state converter used to identify {@link SignDomainState}s.
 	 */
 	protected SignPostOperator(IUltimateServiceProvider services,
-	        SignStateConverter<CodeBlock, BoogieVar> stateConverter) {
+	        SignStateConverter<CodeBlock, IBoogieVar> stateConverter) {
 		mStateConverter = stateConverter;
 		mStatementExtractor = new RcfgStatementExtractor();
 		mStatementProcessor = new SignDomainStatementProcessor(services, mStateConverter);
@@ -72,9 +72,9 @@ public class SignPostOperator implements IAbstractPostOperator<CodeBlock, Boogie
 	 * @return A new abstract state which is the result of applying the post operator to a given abstract state.
 	 */
 	@Override
-	public IAbstractState<CodeBlock, BoogieVar> apply(IAbstractState<CodeBlock, BoogieVar> oldstate, CodeBlock codeBlock) {
-		final SignDomainState<CodeBlock, BoogieVar> concreteOldState = mStateConverter.getCheckedState(oldstate);
-		SignDomainState<CodeBlock, BoogieVar> currentState = (SignDomainState<CodeBlock, BoogieVar>) concreteOldState
+	public IAbstractState<CodeBlock, IBoogieVar> apply(IAbstractState<CodeBlock, IBoogieVar> oldstate, CodeBlock codeBlock) {
+		final SignDomainState<CodeBlock, IBoogieVar> concreteOldState = mStateConverter.getCheckedState(oldstate);
+		SignDomainState<CodeBlock, IBoogieVar> currentState = (SignDomainState<CodeBlock, IBoogieVar>) concreteOldState
 		        .copy();
 		final List<Statement> statements = mStatementExtractor.process(codeBlock);
 		for (final Statement stmt : statements) {

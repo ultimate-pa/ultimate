@@ -29,7 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.sign;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
@@ -43,38 +43,38 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * 
  */
-public class SignDomain implements IAbstractDomain<SignDomainState<CodeBlock, BoogieVar>, CodeBlock, BoogieVar> {
+public class SignDomain implements IAbstractDomain<SignDomainState<CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> {
 
-	private final SignStateConverter<CodeBlock, BoogieVar> mStateConverter;
+	private final SignStateConverter<CodeBlock, IBoogieVar> mStateConverter;
 	private final IUltimateServiceProvider mServices;
 
 	public SignDomain(IUltimateServiceProvider services) {
 		mServices = services;
-		mStateConverter = new SignStateConverter<CodeBlock, BoogieVar>(new SignDomainState<CodeBlock, BoogieVar>());
+		mStateConverter = new SignStateConverter<CodeBlock, IBoogieVar>(new SignDomainState<CodeBlock, IBoogieVar>());
 	}
 
 	@Override
-	public IAbstractState<CodeBlock, BoogieVar> createFreshState() {
-		return new SignDomainState<CodeBlock, BoogieVar>(mStateConverter);
+	public IAbstractState<CodeBlock, IBoogieVar> createFreshState() {
+		return new SignDomainState<CodeBlock, IBoogieVar>(mStateConverter);
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<CodeBlock, BoogieVar> getWideningOperator() {
-		return new SignMergeOperator<CodeBlock, BoogieVar>(mStateConverter);
+	public IAbstractStateBinaryOperator<CodeBlock, IBoogieVar> getWideningOperator() {
+		return new SignMergeOperator<CodeBlock, IBoogieVar>(mStateConverter);
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<CodeBlock, BoogieVar> getMergeOperator() {
-		return new SignMergeOperator<CodeBlock, BoogieVar>(mStateConverter);
+	public IAbstractStateBinaryOperator<CodeBlock, IBoogieVar> getMergeOperator() {
+		return new SignMergeOperator<CodeBlock, IBoogieVar>(mStateConverter);
 	}
 
 	@Override
-	public IAbstractPostOperator<CodeBlock, BoogieVar> getPostOperator() {
+	public IAbstractPostOperator<CodeBlock, IBoogieVar> getPostOperator() {
 		return new SignPostOperator(mServices, mStateConverter);
 	}
 
 	@Override
-	public Class<SignDomainState<CodeBlock, BoogieVar>> getAbstractStateClass() {
+	public Class<SignDomainState<CodeBlock, IBoogieVar>> getAbstractStateClass() {
 		return mStateConverter.getAbstractStateClass();
 	}
 

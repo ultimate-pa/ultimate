@@ -28,7 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.interval;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -39,12 +39,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class IntervalSimpleWideningOperator implements IAbstractStateBinaryOperator<CodeBlock, BoogieVar> {
+public class IntervalSimpleWideningOperator implements IAbstractStateBinaryOperator<CodeBlock, IBoogieVar> {
 
 	@Override
-	public IAbstractState<CodeBlock, BoogieVar> apply(IAbstractState<CodeBlock, BoogieVar> first,
-	        IAbstractState<CodeBlock, BoogieVar> second) {
-		return new IntervalDomainState<CodeBlock, BoogieVar>();
+	public IAbstractState<CodeBlock, IBoogieVar> apply(IAbstractState<CodeBlock, IBoogieVar> first,
+	        IAbstractState<CodeBlock, IBoogieVar> second) {
+		return new IntervalDomainState<CodeBlock, IBoogieVar>();
 	}
 
 }

@@ -41,7 +41,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IAbstractStateStorage;
@@ -66,12 +66,12 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
  *
  */
 public abstract class BaseRcfgAbstractStateStorageProvider
-		implements IAbstractStateStorage<CodeBlock, BoogieVar, ProgramPoint> {
+		implements IAbstractStateStorage<CodeBlock, IBoogieVar, ProgramPoint> {
 
-	private final IAbstractStateBinaryOperator<CodeBlock, BoogieVar> mMergeOperator;
+	private final IAbstractStateBinaryOperator<CodeBlock, IBoogieVar> mMergeOperator;
 	private final IUltimateServiceProvider mServices;
 
-	public BaseRcfgAbstractStateStorageProvider(IAbstractStateBinaryOperator<CodeBlock, BoogieVar> mergeOperator,
+	public BaseRcfgAbstractStateStorageProvider(IAbstractStateBinaryOperator<CodeBlock, IBoogieVar> mergeOperator,
 			IUltimateServiceProvider services) {
 		assert mergeOperator != null;
 		assert services != null;
@@ -80,56 +80,56 @@ public abstract class BaseRcfgAbstractStateStorageProvider
 	}
 
 	@Override
-	public Collection<IAbstractState<CodeBlock, BoogieVar>> getAbstractPreStates(CodeBlock transition) {
+	public Collection<IAbstractState<CodeBlock, IBoogieVar>> getAbstractPreStates(CodeBlock transition) {
 		assert transition != null;
 		return getAbstractStates(transition, transition.getSource());
 	}
 
 	@Override
-	public Collection<IAbstractState<CodeBlock, BoogieVar>> getAbstractPostStates(CodeBlock transition) {
+	public Collection<IAbstractState<CodeBlock, IBoogieVar>> getAbstractPostStates(CodeBlock transition) {
 		assert transition != null;
 		return getAbstractStates(transition, transition.getTarget());
 	}
 
 	@Override
-	public IAbstractState<CodeBlock, BoogieVar> getCurrentAbstractPreState(CodeBlock transition) {
+	public IAbstractState<CodeBlock, IBoogieVar> getCurrentAbstractPreState(CodeBlock transition) {
 		assert transition != null;
 		assert transition != null;
 		return getCurrentState(transition, transition.getSource());
 	}
 
 	@Override
-	public IAbstractState<CodeBlock, BoogieVar> getCurrentAbstractPostState(CodeBlock transition) {
+	public IAbstractState<CodeBlock, IBoogieVar> getCurrentAbstractPostState(CodeBlock transition) {
 		assert transition != null;
 		return getCurrentState(transition, transition.getTarget());
 	}
 
 	@Override
-	public void addAbstractPreState(CodeBlock transition, IAbstractState<CodeBlock, BoogieVar> state) {
+	public void addAbstractPreState(CodeBlock transition, IAbstractState<CodeBlock, IBoogieVar> state) {
 		assert transition != null;
 		assert state != null;
 		addState(transition, state, transition.getSource());
 	}
 
 	@Override
-	public void addAbstractPostState(CodeBlock transition, IAbstractState<CodeBlock, BoogieVar> state) {
+	public void addAbstractPostState(CodeBlock transition, IAbstractState<CodeBlock, IBoogieVar> state) {
 		assert transition != null;
 		assert state != null;
 		addState(transition, state, transition.getTarget());
 	}
 
 	@Override
-	public IAbstractState<CodeBlock, BoogieVar> setPostStateIsFixpoint(CodeBlock transition,
-			IAbstractState<CodeBlock, BoogieVar> state, boolean value) {
+	public IAbstractState<CodeBlock, IBoogieVar> setPostStateIsFixpoint(CodeBlock transition,
+			IAbstractState<CodeBlock, IBoogieVar> state, boolean value) {
 		assert transition != null;
 		assert state != null;
-		final Deque<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>> states = getStates(transition.getTarget());
+		final Deque<Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>>> states = getStates(transition.getTarget());
 		assert !states.isEmpty();
 
-		final Iterator<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>> iterator = states.iterator();
+		final Iterator<Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>>> iterator = states.iterator();
 		boolean removed = false;
 		while (iterator.hasNext()) {
-			final Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>> next = iterator.next();
+			final Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>> next = iterator.next();
 			if (state.equals(next.getSecond())) {
 				iterator.remove();
 				removed = true;
@@ -137,26 +137,26 @@ public abstract class BaseRcfgAbstractStateStorageProvider
 			}
 		}
 		assert removed;
-		final IAbstractState<CodeBlock, BoogieVar> rtr = state.setFixpoint(value);
-		states.addFirst(new Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>(transition, rtr));
+		final IAbstractState<CodeBlock, IBoogieVar> rtr = state.setFixpoint(value);
+		states.addFirst(new Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>>(transition, rtr));
 		return rtr;
 	}
 
 	@Override
-	public IAbstractState<CodeBlock, BoogieVar> mergePostStates(CodeBlock transition) {
+	public IAbstractState<CodeBlock, IBoogieVar> mergePostStates(CodeBlock transition) {
 		assert transition != null;
-		final Deque<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>> states = getStates(transition.getTarget());
+		final Deque<Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>>> states = getStates(transition.getTarget());
 		if (states.isEmpty()) {
 			return null;
 		}
-		final Iterator<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>> iterator = states.iterator();
+		final Iterator<Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>>> iterator = states.iterator();
 		final Set<CodeBlock> transitions = new HashSet<>();
 
-		Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>> pair = iterator.next();
+		Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>> pair = iterator.next();
 		iterator.remove();
 		transitions.add(pair.getFirst());
-		IAbstractState<CodeBlock, BoogieVar> last;
-		IAbstractState<CodeBlock, BoogieVar> current = pair.getSecond();
+		IAbstractState<CodeBlock, IBoogieVar> last;
+		IAbstractState<CodeBlock, IBoogieVar> current = pair.getSecond();
 		while (iterator.hasNext()) {
 			pair = iterator.next();
 			iterator.remove();
@@ -166,7 +166,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider
 		}
 		assert current != null;
 		for (CodeBlock trans : transitions) {
-			states.addFirst(new Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>(trans, current));
+			states.addFirst(new Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>>(trans, current));
 		}
 		assert states.size() == transitions.size();
 		return current;
@@ -184,7 +184,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider
 			if (!closed.add(current)) {
 				continue;
 			}
-			final Set<IAbstractState<CodeBlock, BoogieVar>> currentStates = new HashSet<IAbstractState<CodeBlock, BoogieVar>>();
+			final Set<IAbstractState<CodeBlock, IBoogieVar>> currentStates = new HashSet<IAbstractState<CodeBlock, IBoogieVar>>();
 			for (final RCFGEdge outgoing : current.getOutgoingEdges()) {
 				if (!(outgoing instanceof CodeBlock)) {
 					continue;
@@ -196,7 +196,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider
 				}
 				final ProgramPoint targetpp = (ProgramPoint) target;
 
-				IAbstractState<CodeBlock, BoogieVar> states = getCurrentState(succTrans, targetpp);
+				IAbstractState<CodeBlock, IBoogieVar> states = getCurrentState(succTrans, targetpp);
 				if (states != null) {
 					currentStates.add(states);
 					// only continue if there are states at this node
@@ -213,7 +213,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider
 			if (currentTerm == null) {
 				currentTerm = script.term("true");
 			}
-			for (IAbstractState<CodeBlock, BoogieVar> state : currentStates) {
+			for (IAbstractState<CodeBlock, IBoogieVar> state : currentStates) {
 				currentTerm = script.term("and", currentTerm, state.getTerm(script, bpl2smt));
 			}
 			rtr.put(current, currentTerm);
@@ -248,30 +248,30 @@ public abstract class BaseRcfgAbstractStateStorageProvider
 		return trace;
 	}
 
-	private Collection<IAbstractState<CodeBlock, BoogieVar>> getAbstractStates(CodeBlock transition, RCFGNode node) {
+	private Collection<IAbstractState<CodeBlock, IBoogieVar>> getAbstractStates(CodeBlock transition, RCFGNode node) {
 		assert node != null;
-		final Deque<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>> states = getStates(node);
-		final Collection<IAbstractState<CodeBlock, BoogieVar>> rtr = new ArrayList<IAbstractState<CodeBlock, BoogieVar>>(
+		final Deque<Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>>> states = getStates(node);
+		final Collection<IAbstractState<CodeBlock, IBoogieVar>> rtr = new ArrayList<IAbstractState<CodeBlock, IBoogieVar>>(
 				states.size());
-		for (final Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>> state : states) {
+		for (final Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>> state : states) {
 			rtr.add(state.getSecond());
 		}
 		return rtr;
 	}
 
-	private void addState(CodeBlock transition, IAbstractState<CodeBlock, BoogieVar> state, RCFGNode node) {
+	private void addState(CodeBlock transition, IAbstractState<CodeBlock, IBoogieVar> state, RCFGNode node) {
 		assert node != null;
-		final Deque<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>> states = getStates(node);
+		final Deque<Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>>> states = getStates(node);
 		// TODO: Optimize by removing lower states if they are equal to this one
-		states.addFirst(new Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>(transition, state));
+		states.addFirst(new Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>>(transition, state));
 	}
 
-	private IAbstractState<CodeBlock, BoogieVar> getCurrentState(CodeBlock transition, RCFGNode node) {
+	private IAbstractState<CodeBlock, IBoogieVar> getCurrentState(CodeBlock transition, RCFGNode node) {
 		assert node != null;
-		final Deque<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>> states = getStates(node);
-		final Iterator<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>> iterator = states.iterator();
+		final Deque<Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>>> states = getStates(node);
+		final Iterator<Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>>> iterator = states.iterator();
 		while (iterator.hasNext()) {
-			final Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>> current = iterator.next();
+			final Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>> current = iterator.next();
 			if (current.getFirst().equals(transition)) {
 				return current.getSecond();
 			}
@@ -279,9 +279,9 @@ public abstract class BaseRcfgAbstractStateStorageProvider
 		return null;
 	}
 
-	protected abstract Deque<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>> getStates(RCFGNode node);
+	protected abstract Deque<Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>>> getStates(RCFGNode node);
 
-	protected IAbstractStateBinaryOperator<CodeBlock, BoogieVar> getMergeOperator() {
+	protected IAbstractStateBinaryOperator<CodeBlock, IBoogieVar> getMergeOperator() {
 		return mMergeOperator;
 	}
 
@@ -292,7 +292,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider
 	private final class ErrorPathHeuristic implements IHeuristic<RCFGNode, RCFGEdge> {
 		@Override
 		public int getHeuristicValue(RCFGNode from, RCFGEdge over, RCFGNode to) {
-			for (Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>> pair : getStates(over.getTarget())) {
+			for (Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>> pair : getStates(over.getTarget())) {
 				if (pair.getFirst().equals(over)) {
 					return 0;
 				}
@@ -302,7 +302,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider
 
 		@Override
 		public int getConcreteCost(RCFGEdge edge) {
-			for (Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>> pair : getStates(edge.getTarget())) {
+			for (Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>> pair : getStates(edge.getTarget())) {
 				if (pair.getFirst().equals(edge)) {
 					return 1;
 				}

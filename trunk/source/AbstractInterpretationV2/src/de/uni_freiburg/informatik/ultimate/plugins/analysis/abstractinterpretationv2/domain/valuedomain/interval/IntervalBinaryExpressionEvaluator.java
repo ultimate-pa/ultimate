@@ -33,9 +33,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.EvaluationResult;
@@ -51,10 +49,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class IntervalBinaryExpressionEvaluator
-        implements INAryEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>, CodeBlock, BoogieVar> {
+        implements INAryEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> {
 
-	protected IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>, CodeBlock, BoogieVar> mLeftSubEvaluator;
-	protected IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>, CodeBlock, BoogieVar> mRightSubEvaluator;
+	protected IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> mLeftSubEvaluator;
+	protected IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> mRightSubEvaluator;
 
 	protected final Set<String> mVariableSet;
 
@@ -85,8 +83,8 @@ public class IntervalBinaryExpressionEvaluator
 	}
 
 	@Override
-	public IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>> evaluate(
-	        IAbstractState<CodeBlock, BoogieVar> currentState) {
+	public IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> evaluate(
+	        IAbstractState<CodeBlock, IBoogieVar> currentState) {
 
 		assert currentState != null;
 
@@ -97,36 +95,36 @@ public class IntervalBinaryExpressionEvaluator
 			mVariableSet.add(var);
 		}
 
-		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>> firstResult = mLeftSubEvaluator
+		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> firstResult = mLeftSubEvaluator
 		        .evaluate(currentState);
-		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>> secondResult = mRightSubEvaluator
+		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> secondResult = mRightSubEvaluator
 		        .evaluate(currentState);
 
 		switch (mOperator) {
 		case ARITHPLUS:
-			return new EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>(
+			return new EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>(
 			        firstResult.getResult().getEvaluatedValue().add(secondResult.getResult().getEvaluatedValue()),
 			        currentState);
 		case ARITHMINUS:
-			return new EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>(
+			return new EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>(
 			        firstResult.getResult().getEvaluatedValue().subtract(secondResult.getResult().getEvaluatedValue()),
 			        currentState);
 		case ARITHMUL:
-			return new EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>(
+			return new EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>(
 			        firstResult.getResult().getEvaluatedValue().multiply(secondResult.getResult().getEvaluatedValue()),
 			        currentState);
 		case COMPEQ:
 		default:
 			mLogger.warn("Possible loss of precision: cannot handle operator " + mOperator
 			        + ". Assuming top and returning current state.");
-			return new EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>(new IntervalDomainValue(),
+			return new EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>(new IntervalDomainValue(),
 			        currentState);
 		}
 	}
 
 	@Override
 	public void addSubEvaluator(
-	        IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>, CodeBlock, BoogieVar> evaluator) {
+	        IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> evaluator) {
 		if (mLeftSubEvaluator != null && mRightSubEvaluator != null) {
 			throw new UnsupportedOperationException("There are no free sub evaluators left to be assigned.");
 		}

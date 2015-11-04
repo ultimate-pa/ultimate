@@ -32,7 +32,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.EvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluationResult;
@@ -46,10 +46,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class IntervalSingletonVariableExpressionEvaluator
-        implements IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>, CodeBlock, BoogieVar> {
+        implements IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> {
 
 	protected String mVariableName;
-	protected final IntervalStateConverter<CodeBlock, BoogieVar> mStateConverter;
+	protected final IntervalStateConverter<CodeBlock, IBoogieVar> mStateConverter;
 	private final Set<String> mVariableSet;
 
 	/**
@@ -61,7 +61,7 @@ public class IntervalSingletonVariableExpressionEvaluator
 	 *            The interval domain state converter.
 	 */
 	public IntervalSingletonVariableExpressionEvaluator(String variableName,
-	        IntervalStateConverter<CodeBlock, BoogieVar> stateConverter) {
+	        IntervalStateConverter<CodeBlock, IBoogieVar> stateConverter) {
 		mVariableName = variableName;
 		mStateConverter = stateConverter;
 		mVariableSet = new HashSet<String>();
@@ -69,12 +69,12 @@ public class IntervalSingletonVariableExpressionEvaluator
 	}
 
 	@Override
-	public IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>> evaluate(
-	        IAbstractState<CodeBlock, BoogieVar> currentState) {
+	public IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> evaluate(
+	        IAbstractState<CodeBlock, IBoogieVar> currentState) {
 
-		final IntervalDomainState<CodeBlock, BoogieVar> concreteState = mStateConverter.getCheckedState(currentState);
+		final IntervalDomainState<CodeBlock, IBoogieVar> concreteState = mStateConverter.getCheckedState(currentState);
 
-		final BoogieVar variableType = currentState.getVariableType(mVariableName);
+		final IBoogieVar variableType = currentState.getVariableType(mVariableName);
 		if (variableType.getIType() instanceof PrimitiveType) {
 			final PrimitiveType primitiveType = (PrimitiveType) variableType.getIType();
 
@@ -90,7 +90,7 @@ public class IntervalSingletonVariableExpressionEvaluator
 					        + " has not been found in the current abstract state.");
 				}
 
-				return new EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>(
+				return new EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>(
 				        new IntervalDomainValue(val.getLower(), val.getUpper()), currentState);
 
 			}
@@ -103,7 +103,7 @@ public class IntervalSingletonVariableExpressionEvaluator
 
 	@Override
 	public void addSubEvaluator(
-	        IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, BoogieVar>, CodeBlock, BoogieVar> evaluator) {
+	        IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> evaluator) {
 		throw new UnsupportedOperationException(
 		        "A sub evaluator cannot be added to a singleton variable expression evaluator.");
 	}

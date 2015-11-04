@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTim
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
@@ -141,11 +141,11 @@ public final class AbstractInterpreter {
 		final RCFGLoopDetector externalLoopDetector = new RCFGLoopDetector(services);
 		externalLoopDetector.process(root);
 
-		final IAbstractDomain<?, CodeBlock, BoogieVar> domain = selectDomain(symbolTable, services);
+		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain = selectDomain(symbolTable, services);
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		final ITransitionProvider<CodeBlock> transitionProvider = new RcfgTransitionProvider();
 
-		final IVariableProvider<CodeBlock, BoogieVar> varProvider = new RcfgVariableProvider(symbolTable,
+		final IVariableProvider<CodeBlock, IBoogieVar> varProvider = new RcfgVariableProvider(symbolTable,
 		        boogieVarTable);
 		final ILoopDetector<CodeBlock> loopDetector = new RcfgLoopDetector(externalLoopDetector);
 
@@ -162,7 +162,7 @@ public final class AbstractInterpreter {
 		for (CodeBlock initial : filteredInitialElements) {
 			final BaseRcfgAbstractStateStorageProvider storage = createStorage(services, domain, persist);
 			final IResultReporter<CodeBlock> reporter = funCreateReporter.apply(services, storage);
-			final FixpointEngine<CodeBlock, BoogieVar, ProgramPoint> interpreter = new FixpointEngine<CodeBlock, BoogieVar, ProgramPoint>(
+			final FixpointEngine<CodeBlock, IBoogieVar, ProgramPoint> interpreter = new FixpointEngine<CodeBlock, IBoogieVar, ProgramPoint>(
 			        services, timer, transitionProvider, storage, domain, varProvider, loopDetector, reporter);
 			try {
 				interpreter.run(initial);
@@ -174,7 +174,7 @@ public final class AbstractInterpreter {
 	}
 
 	private static BaseRcfgAbstractStateStorageProvider createStorage(final IUltimateServiceProvider services,
-	        final IAbstractDomain<?, CodeBlock, BoogieVar> domain, final boolean persist) {
+	        final IAbstractDomain<?, CodeBlock, IBoogieVar> domain, final boolean persist) {
 		final BaseRcfgAbstractStateStorageProvider storage;
 		if (persist) {
 			storage = new AnnotatingRcfgAbstractStateStorageProvider(domain.getMergeOperator(), services);
@@ -192,7 +192,7 @@ public final class AbstractInterpreter {
 		return pa.getSymbolTable();
 	}
 
-	private static IAbstractDomain<?, CodeBlock, BoogieVar> selectDomain(final BoogieSymbolTable symbolTable,
+	private static IAbstractDomain<?, CodeBlock, IBoogieVar> selectDomain(final BoogieSymbolTable symbolTable,
 	        final IUltimateServiceProvider services) {
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		final String selectedDomain = ups.getString(AbstractInterpretationPreferenceInitializer.LABEL_ABSTRACT_DOMAIN);

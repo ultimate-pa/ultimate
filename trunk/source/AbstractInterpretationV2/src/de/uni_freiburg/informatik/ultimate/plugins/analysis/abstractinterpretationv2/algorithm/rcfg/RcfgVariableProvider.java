@@ -27,16 +27,18 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -47,10 +49,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 
 /**
  * 
- * @author dietsch@informatik.uni-freiburg.de
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class RcfgVariableProvider implements IVariableProvider<CodeBlock, BoogieVar> {
+public class RcfgVariableProvider implements IVariableProvider<CodeBlock, IBoogieVar> {
 
 	private static final StorageClass[] LOCAL_STORAGE_CLASSES = new StorageClass[] { StorageClass.LOCAL,
 			StorageClass.IMPLEMENTATION_INPARAM, StorageClass.IMPLEMENTATION_OUTPARAM };
@@ -63,31 +65,48 @@ public class RcfgVariableProvider implements IVariableProvider<CodeBlock, Boogie
 	}
 
 	@Override
-	public IAbstractState<CodeBlock, BoogieVar> defineVariablesPre(CodeBlock current,
-			IAbstractState<CodeBlock, BoogieVar> state) {
+	public IAbstractState<CodeBlock, IBoogieVar> defineVariablesPre(CodeBlock current,
+			IAbstractState<CodeBlock, IBoogieVar> state) {
 		assert current != null;
 		assert state != null;
 		assert state.isEmpty();
 
-		IAbstractState<CodeBlock, BoogieVar> newState = state;
 		final RCFGNode source = current.getSource();
-		if (source instanceof ProgramPoint) {
-			final ProgramPoint programPoint = (ProgramPoint) source;
-			final String procedure = programPoint.getProcedure();
-			newState = addLocals(newState, procedure);
-		}
+		
+		//first, create a map of the current scope
+		Map<String,IBoogieVar> vars = new HashMap<String, IBoogieVar>();
 
 		// add global variables
 		final Map<String, BoogieNonOldVar> globals = mBoogieVarTable.getGlobals();
 		for (final Entry<String, BoogieNonOldVar> entry : globals.entrySet()) {
-			newState = newState.addVariable(entry.getKey(), entry.getValue());
+			vars.put(entry.getKey(), entry.getValue());
 		}
-		return newState;
+		
+		//add global constants 
+		final Map<String, BoogieConst> consts = mBoogieVarTable.getConsts();
+		for (final Entry<String, BoogieConst> entry : consts.entrySet()) {
+			vars.put(entry.getKey(), entry.getValue());
+		}
+		
+		//add locals if applicable, thereby overriding globals  
+		if(source instanceof ProgramPoint){
+			final ProgramPoint programPoint = (ProgramPoint) source;
+			final String procedure = programPoint.getProcedure();
+
+			final Map<String, Declaration> locals = mSymbolTable.getLocalVariables(procedure);
+			for (final Entry<String, Declaration> local : locals.entrySet()) {
+				final IBoogieVar localVar = getLocalVariable(local.getKey(), procedure);
+				assert localVar != null;
+				vars.put(local.getKey(), localVar);
+			}
+		}
+		
+		return state.addVariables(vars);
 	}
 
 	@Override
-	public IAbstractState<CodeBlock, BoogieVar> defineVariablesPost(CodeBlock current,
-			IAbstractState<CodeBlock, BoogieVar> state) {
+	public IAbstractState<CodeBlock, IBoogieVar> defineVariablesPost(CodeBlock current,
+			IAbstractState<CodeBlock, IBoogieVar> state) {
 		assert current != null;
 		assert state != null;
 
@@ -105,17 +124,17 @@ public class RcfgVariableProvider implements IVariableProvider<CodeBlock, Boogie
 		}
 	}
 
-	private IAbstractState<CodeBlock, BoogieVar> updateLocals(IAbstractState<CodeBlock, BoogieVar> state,
+	private IAbstractState<CodeBlock, IBoogieVar> updateLocals(IAbstractState<CodeBlock, IBoogieVar> state,
 			RCFGNode removeNode, RCFGNode addNode) {
 		final ProgramPoint remove = (ProgramPoint) removeNode;
 		final ProgramPoint add = (ProgramPoint) addNode;
-		IAbstractState<CodeBlock, BoogieVar> rtr = state;
+		IAbstractState<CodeBlock, IBoogieVar> rtr = state;
 		rtr = removeLocals(rtr, remove.getProcedure());
 		rtr = addLocals(rtr, add.getProcedure());
 		return rtr;
 	}
 
-	private IAbstractState<CodeBlock, BoogieVar> removeLocals(IAbstractState<CodeBlock, BoogieVar> state,
+	private IAbstractState<CodeBlock, IBoogieVar> removeLocals(IAbstractState<CodeBlock, IBoogieVar> state,
 			final String procedure) {
 		if (procedure != null) {
 			final Map<String, Declaration> locals = mSymbolTable.getLocalVariables(procedure);
@@ -126,12 +145,12 @@ public class RcfgVariableProvider implements IVariableProvider<CodeBlock, Boogie
 		return state;
 	}
 
-	private IAbstractState<CodeBlock, BoogieVar> addLocals(IAbstractState<CodeBlock, BoogieVar> state,
+	private IAbstractState<CodeBlock, IBoogieVar> addLocals(IAbstractState<CodeBlock, IBoogieVar> state,
 			final String procedure) {
 		if (procedure != null) {
 			final Map<String, Declaration> locals = mSymbolTable.getLocalVariables(procedure);
 			for (final Entry<String, Declaration> local : locals.entrySet()) {
-				final BoogieVar localVar = getLocalVariable(local.getKey(), procedure);
+				final IBoogieVar localVar = getLocalVariable(local.getKey(), procedure);
 				assert localVar != null;
 				state = state.addVariable(local.getKey(), localVar);
 			}
@@ -139,9 +158,9 @@ public class RcfgVariableProvider implements IVariableProvider<CodeBlock, Boogie
 		return state;
 	}
 
-	private BoogieVar getLocalVariable(final String key, final String procedure) {
+	private IBoogieVar getLocalVariable(final String key, final String procedure) {
 		for (final StorageClass storageClass : LOCAL_STORAGE_CLASSES) {
-			final BoogieVar var = getLocalVariable(key, procedure, storageClass);
+			final IBoogieVar var = getLocalVariable(key, procedure, storageClass);
 			if (var != null) {
 				return var;
 			}
@@ -149,7 +168,7 @@ public class RcfgVariableProvider implements IVariableProvider<CodeBlock, Boogie
 		return null;
 	}
 
-	private BoogieVar getLocalVariable(String key, String procedure, StorageClass sclass) {
+	private IBoogieVar getLocalVariable(String key, String procedure, StorageClass sclass) {
 		return mBoogieVarTable.getBoogieVar(key, new DeclarationInformation(sclass, procedure), false);
 	}
 }

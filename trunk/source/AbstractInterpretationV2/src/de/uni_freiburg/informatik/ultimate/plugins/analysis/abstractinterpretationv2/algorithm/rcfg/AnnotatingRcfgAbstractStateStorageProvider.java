@@ -33,7 +33,7 @@ import java.util.Deque;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IAbstractStateStorage;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
@@ -52,13 +52,13 @@ public class AnnotatingRcfgAbstractStateStorageProvider extends BaseRcfgAbstract
 	private static int sSuffix;
 	private final String mSuffix;
 
-	public AnnotatingRcfgAbstractStateStorageProvider(IAbstractStateBinaryOperator<CodeBlock, BoogieVar> mergeOperator,
+	public AnnotatingRcfgAbstractStateStorageProvider(IAbstractStateBinaryOperator<CodeBlock, IBoogieVar> mergeOperator,
 			IUltimateServiceProvider services) {
 		super(mergeOperator, services);
 		mSuffix = String.valueOf(sSuffix++);
 	}
 
-	protected Deque<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>> getStates(RCFGNode node) {
+	protected Deque<Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>>> getStates(RCFGNode node) {
 		assert node != null;
 		AbsIntAnnotation rtr = AbsIntAnnotation.getAnnotation(node, mSuffix);
 		if (rtr == null) {
@@ -73,7 +73,7 @@ public class AnnotatingRcfgAbstractStateStorageProvider extends BaseRcfgAbstract
 		private static final String KEY = AbsIntAnnotation.class.getSimpleName();
 		private static final String[] FIELD_NAMES = new String[] { "States" };
 		private static final long serialVersionUID = 1L;
-		private final Deque<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>> mStates;
+		private final Deque<Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>>> mStates;
 
 		private AbsIntAnnotation() {
 			mStates = new ArrayDeque<>();
@@ -89,7 +89,7 @@ public class AnnotatingRcfgAbstractStateStorageProvider extends BaseRcfgAbstract
 			if (FIELD_NAMES[0].equals(field)) {
 				// states
 				final ArrayList<String> rtr = new ArrayList<>();
-				for (final Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>> entry : mStates) {
+				for (final Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>> entry : mStates) {
 					rtr.add(new StringBuilder().append("[").append(entry.getSecond().hashCode()).append("] ")
 							.append(entry.getSecond().toLogString()).append(" (from ")
 							.append(entry.getFirst().getPrettyPrintedStatements()).append(")").toString());
@@ -115,7 +115,7 @@ public class AnnotatingRcfgAbstractStateStorageProvider extends BaseRcfgAbstract
 	}
 
 	@Override
-	public IAbstractStateStorage<CodeBlock, BoogieVar, ProgramPoint> createStorage() {
+	public IAbstractStateStorage<CodeBlock, IBoogieVar, ProgramPoint> createStorage() {
 		return new AnnotatingRcfgAbstractStateStorageProvider(getMergeOperator(), getServices());
 	}
 }

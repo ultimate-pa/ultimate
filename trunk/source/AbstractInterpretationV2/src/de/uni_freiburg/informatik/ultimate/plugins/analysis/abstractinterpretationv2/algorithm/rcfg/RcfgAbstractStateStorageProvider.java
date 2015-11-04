@@ -32,7 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IAbstractStateStorage;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
@@ -48,26 +48,26 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
  */
 public class RcfgAbstractStateStorageProvider extends BaseRcfgAbstractStateStorageProvider {
 
-	private final Map<RCFGNode, Deque<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>>> mStorage;
+	private final Map<RCFGNode, Deque<Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>>>> mStorage;
 
-	public RcfgAbstractStateStorageProvider(IAbstractStateBinaryOperator<CodeBlock, BoogieVar> mergeOperator,
+	public RcfgAbstractStateStorageProvider(IAbstractStateBinaryOperator<CodeBlock, IBoogieVar> mergeOperator,
 			IUltimateServiceProvider services) {
 		super(mergeOperator, services);
-		mStorage = new HashMap<RCFGNode, Deque<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>>>();
+		mStorage = new HashMap<RCFGNode, Deque<Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>>>>();
 	}
 
-	protected Deque<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>> getStates(RCFGNode node) {
+	protected Deque<Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>>> getStates(RCFGNode node) {
 		assert node != null;
-		Deque<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>> rtr = mStorage.get(node);
+		Deque<Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>>> rtr = mStorage.get(node);
 		if (rtr == null) {
-			rtr = new ArrayDeque<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>>();
+			rtr = new ArrayDeque<Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>>>();
 			mStorage.put(node, rtr);
 		}
 		return rtr;
 	}
 
 	@Override
-	public IAbstractStateStorage<CodeBlock, BoogieVar, ProgramPoint> createStorage() {
+	public IAbstractStateStorage<CodeBlock, IBoogieVar, ProgramPoint> createStorage() {
 		return new RcfgAbstractStateStorageProvider(getMergeOperator(), getServices());
 	}
 }

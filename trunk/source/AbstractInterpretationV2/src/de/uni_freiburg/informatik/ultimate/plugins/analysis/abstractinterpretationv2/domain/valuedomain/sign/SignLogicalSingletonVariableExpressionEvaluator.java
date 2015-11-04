@@ -27,28 +27,28 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.sign;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.ILogicalEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.sign.SignDomainValue.Values;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class SignLogicalSingletonVariableExpressionEvaluator extends SignSingletonVariableExpressionEvaluator implements
-        ILogicalEvaluator<Values, CodeBlock, BoogieVar> {
+        ILogicalEvaluator<Values, CodeBlock, IBoogieVar> {
 
 	private boolean mBooleanValue;
 
 	public SignLogicalSingletonVariableExpressionEvaluator(String variableName,
-	        SignStateConverter<CodeBlock, BoogieVar> stateConverter) {
+	        SignStateConverter<CodeBlock, IBoogieVar> stateConverter) {
 		super(variableName, stateConverter);
 	}
 
-	private IAbstractState<CodeBlock, BoogieVar> logicallyInterpret(IAbstractState<CodeBlock, BoogieVar> currentState) {
+	private IAbstractState<CodeBlock, IBoogieVar> logicallyInterpret(IAbstractState<CodeBlock, IBoogieVar> currentState) {
 		assert currentState.containsVariable(mVariableName);
 
-		final SignDomainState<CodeBlock, BoogieVar> convertedState = mStateConverter.getCheckedState(currentState);
+		final SignDomainState<CodeBlock, IBoogieVar> convertedState = mStateConverter.getCheckedState(currentState);
 
-		final BoogieVar var = convertedState.getVariables().get(mVariableName);
+		final IBoogieVar var = convertedState.getVariables().get(mVariableName);
 
 		final BoogieType varType = (BoogieType) var.getIType();
 
@@ -56,16 +56,16 @@ public class SignLogicalSingletonVariableExpressionEvaluator extends SignSinglet
 
 		final SignDomainValue value = convertedState.getValues().get(mVariableName);
 
-		IAbstractState<CodeBlock, BoogieVar> newState = currentState.copy();
+		IAbstractState<CodeBlock, IBoogieVar> newState = currentState.copy();
 
 		return newState;
 	}
 
-	protected final SignDomainValue getBooleanValue(IAbstractState<CodeBlock, BoogieVar> currentState) {
+	protected final SignDomainValue getBooleanValue(IAbstractState<CodeBlock, IBoogieVar> currentState) {
 
 		assert currentState.containsVariable(mVariableName);
 
-		final SignDomainState<CodeBlock, BoogieVar> convertedState = mStateConverter.getCheckedState(currentState);
+		final SignDomainState<CodeBlock, IBoogieVar> convertedState = mStateConverter.getCheckedState(currentState);
 
 		final SignDomainValue value = convertedState.getValues().get(mVariableName);
 
@@ -84,11 +84,11 @@ public class SignLogicalSingletonVariableExpressionEvaluator extends SignSinglet
 		}
 	}
 
-    private boolean logicalEvaluation(IAbstractState<CodeBlock, BoogieVar> currentState) {
+    private boolean logicalEvaluation(IAbstractState<CodeBlock, IBoogieVar> currentState) {
 		
 		assert currentState.containsVariable(mVariableName);
 		
-		final SignDomainState<CodeBlock, BoogieVar> convertedState = mStateConverter.getCheckedState(currentState);
+		final SignDomainState<CodeBlock, IBoogieVar> convertedState = mStateConverter.getCheckedState(currentState);
 
 		final SignDomainValue value = convertedState.getValues().get(mVariableName);
 
