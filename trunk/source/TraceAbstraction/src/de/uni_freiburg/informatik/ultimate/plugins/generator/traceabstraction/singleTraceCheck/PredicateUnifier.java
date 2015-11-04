@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.CheckClosedTerm;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -685,7 +686,8 @@ public class PredicateUnifier {
 				if (implies == Validity.VALID && explies == Validity.VALID) {
 					boolean otherContainsQuantifiers = 
 							(new ContainsQuantifier()).containsQuantifier(other.getFormula());
-					if (m_TermContainsQuantifiers || !otherContainsQuantifiers) {
+					if (!otherContainsQuantifiers || 
+							(m_TermContainsQuantifiers && !thisIsLessQuantifiedThanOther(m_closedTerm, otherClosedTerm))) {
 						return other;
 					} else {
 						if (m_EquivalentGtQuantifiedPredicate == null) {
@@ -699,6 +701,18 @@ public class PredicateUnifier {
 			// no predicate was equivalent
 			return null;
 		}
+	}
+	
+	// Matthias 2016-11-4: at the moment we believe that for the backward
+	// predicates universal quantification is better than existential 
+	// quantification.
+	private boolean thisIsLessQuantifiedThanOther(Term thisTerm, Term otherTerm) {
+		final ContainsQuantifier thisQuantifierCheck = new ContainsQuantifier();
+		thisQuantifierCheck.containsQuantifier(thisTerm);
+		final ContainsQuantifier otherQuantifierCheck = new ContainsQuantifier();
+		otherQuantifierCheck.containsQuantifier(otherTerm);
+		return thisQuantifierCheck.getFirstQuantifierFound() == QuantifiedFormula.FORALL &&
+				otherQuantifierCheck.getFirstQuantifierFound() == QuantifiedFormula.EXISTS;
 	}
 	
 	public String collectPredicateUnifierStatistics() {
