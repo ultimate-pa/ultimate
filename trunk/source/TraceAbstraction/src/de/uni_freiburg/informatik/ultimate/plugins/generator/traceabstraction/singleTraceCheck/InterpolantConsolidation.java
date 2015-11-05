@@ -198,30 +198,30 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			// 5. Check if difference is empty
 			IsEmpty<CodeBlock, IPredicate> empty = new IsEmpty<CodeBlock, IPredicate>(m_Services, diff.getResult());
 			if (!empty.getResult()) {
-				Collection<IPredicate> pathautomatonFinalStates = pathprogramautomaton.getFinalStates();
-				if (pathautomatonFinalStates.size() > 1) {
-					throw new AssertionError("path automaton has more than 1 final state");
-				}
-				Collection<IPredicate> interpolantautomatonFinalStates = interpolantAutomaton.getFinalStates();
-				if (interpolantautomatonFinalStates.size() > 1) {
-					throw new AssertionError("interpolant automaton has more than 1 final state");
-				}
-				IPredicate[] pathautomatonFinalState = pathautomatonFinalStates.toArray(new IPredicate[1]);
-				IPredicate[] interpolantautomatonFinalState = interpolantautomatonFinalStates.toArray(new IPredicate[1]);
-				
-				IPredicate specialState = pfconsol.getIntersectedPredicate(pathautomatonFinalState[0], interpolantautomatonFinalState[0]);
-				Set<IPredicate> goodStates = getDiffAutomatonGoodStates(diff.getResult(), specialState);
-				Set<IPredicate> badStates = diff.getResult().getStates();
-				badStates.removeAll(goodStates); // Bad states are the result of the set-difference of all states and the good states.
-				// Delete bad predicates from consolidation
-				pfconsol.removeBadPredicates(badStates);
 				if (!useConsolidationInNonEmptyCase) {
 					m_ConsolidatedInterpolants = m_InterpolatingTraceChecker.getInterpolants();
 					// Stop the time for interpolant consolidation
 					m_InterpolantConsolidationBenchmarkGenerator.stop(InterpolantConsolidationBenchmarkType.s_TimeOfConsolidation);
 					return;
+				} else {
+					Collection<IPredicate> pathautomatonFinalStates = pathprogramautomaton.getFinalStates();
+					if (pathautomatonFinalStates.size() > 1) {
+						throw new AssertionError("path automaton has more than 1 final state");
+					}
+					Collection<IPredicate> interpolantautomatonFinalStates = interpolantAutomaton.getFinalStates();
+					if (interpolantautomatonFinalStates.size() > 1) {
+						throw new AssertionError("interpolant automaton has more than 1 final state");
+					}
+					IPredicate[] pathautomatonFinalState = pathautomatonFinalStates.toArray(new IPredicate[1]);
+					IPredicate[] interpolantautomatonFinalState = interpolantautomatonFinalStates.toArray(new IPredicate[1]);
+
+					IPredicate specialState = pfconsol.getIntersectedPredicate(pathautomatonFinalState[0], interpolantautomatonFinalState[0]);
+					Set<IPredicate> goodStates = getDiffAutomatonGoodStates(diff.getResult(), specialState);
+					Set<IPredicate> badStates = diff.getResult().getStates();
+					badStates.removeAll(goodStates); // Bad states are the result of the set-difference of all states and the good states.
+					// Delete bad predicates from consolidation
+					pfconsol.removeBadPredicates(badStates);
 				}
-				
 			}
 			
 		} catch (AutomataLibraryException e) {
@@ -268,51 +268,16 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		while(!statesToVisit.isEmpty()) {
 			IPredicate currentState = statesToVisit.removeFirst();
 			Set<IPredicate> predecessors = getPredecessorsOfState(diffAutomaton, currentState);
-			goodStates.addAll(predecessors);
 			for (IPredicate p : predecessors) {
-				statesToVisit.addLast(p);
+				if (!goodStates.contains(p)) {
+					statesToVisit.addLast(p);
+				}
 			}
+			goodStates.addAll(predecessors);
 		}
 		return goodStates;
 	}
 	
-	private Set<IPredicate> getDiffAutomatonBadStates(INestedWordAutomaton<CodeBlock, IPredicate> diffAutomaton) {
-		LinkedList<IPredicate> successors = new LinkedList<IPredicate>();
-		Set<IPredicate> badStates = new HashSet<IPredicate>();
-		successors.addAll(diffAutomaton.getFinalStates());
-		badStates.addAll(diffAutomaton.getFinalStates());
-		
-		while(!successors.isEmpty()) {
-			IPredicate currentState = successors.removeFirst();
-			Set<IPredicate> predecessors = getPredecessorsOfState(diffAutomaton, currentState);
-			for (IPredicate p : predecessors) {
-				if (!diffAutomaton.isInitial(p) && !p.equals(currentState)) {
-					Set<IPredicate> successorsOfP = getSuccessors(diffAutomaton, p);
-					if (badStates.containsAll(successorsOfP)) {
-						badStates.add(p);
-						successors.addLast(p);
-					}
-				}
-			}
-		}
-		return badStates;
-	}
-	
-	private Set<IPredicate> getSuccessors(INestedWordAutomaton<CodeBlock, IPredicate> diffAutomaton, IPredicate p) {
-		Set<IPredicate> successors = new HashSet<IPredicate>();
-		for (OutgoingInternalTransition<CodeBlock, IPredicate> it: diffAutomaton.internalSuccessors(p)) {
-			successors.add(it.getSucc());
-		}
-		
-		for (OutgoingCallTransition<CodeBlock, IPredicate> ict: diffAutomaton.callSuccessors(p)) {
-			successors.add(ict.getSucc());
-		}
-		
-		for (OutgoingReturnTransition<CodeBlock, IPredicate> irt: diffAutomaton.returnSuccessors(p)) {
-			successors.add(irt.getSucc());
-		}
-		return successors;
-	}
 
 	private Set<IPredicate> getPredecessorsOfState(INestedWordAutomaton<CodeBlock, IPredicate> diffAutomaton,
 			IPredicate currentState) {
