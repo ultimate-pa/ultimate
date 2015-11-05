@@ -334,7 +334,7 @@ public class PolytopeExpressionVisitor extends ExpressionWalker<Linear_Expressio
 	@Override
 	public Linear_Expression visit(IdentifierExpression expr) {
 		String ident = mPrefix + expr.getIdentifier();
-		AbstractVariable abst = new AbstractVariable(ident);
+		AbstractVariable abst = new AbstractVariable(ident, expr.getDeclarationInformation());
 		if (!mCurrentState.hasVariable(abst)) {
 			mLogger.warn("Variable " + abst.toString() + " was not found in state " + mCurrentState.toString());
 			mCurrentState.hasVariable(abst);

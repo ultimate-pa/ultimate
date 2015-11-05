@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2;
 
@@ -13,6 +13,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
@@ -20,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BreakStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.GotoStatement;
@@ -28,7 +30,11 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LoopInvariantSpecification;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RequiresSpecification;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
@@ -51,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 
 /**
  * Used to evaluate boogie statements during abstract interpretation
- * 
+ *
  * @author Jan Hättig
  */
 @SuppressWarnings("rawtypes")
@@ -83,7 +89,7 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 	 * This state will be manipulated in a code block. This should begin with
 	 * one state. If any assume returns more than one state the states will be
 	 * processed in parallel.
-	 * 
+	 *
 	 * !! Only add non-bottom states if this is am empty list, that means there
 	 * have only been resulting bottom-states
 	 */
@@ -120,7 +126,7 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 
 	/**
 	 * Determines if the pr
-	 * 
+	 *
 	 * @return
 	 */
 	public boolean getContinueProcessing() {
@@ -130,7 +136,7 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 	/**
 	 * Sets the current state. The state which will be used at the beginning of
 	 * the edge.
-	 * 
+	 *
 	 * @param state
 	 */
 	public void setCurrentState(StackState state) {
@@ -155,7 +161,7 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 
 	/**
 	 * When an assert was violated this is set to true
-	 * 
+	 *
 	 * @return
 	 */
 	public boolean violatedAssert() {
@@ -164,7 +170,7 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 
 	/**
 	 * The result of the last analysis
-	 * 
+	 *
 	 * @return
 	 */
 	public String getResult() {
@@ -173,8 +179,8 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 
 	/**
 	 * Constructor
-	 * 
-	 * 
+	 *
+	 *
 	 * @param logger
 	 * @param services
 	 * @param symbolTable
@@ -227,7 +233,7 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		 * state It will be merged into mMergedState. So in case we are in a
 		 * parallel sequence the merged state can be extracted from there
 		 */
-		// mLogger.debug("### CodeBlock: " + c.toString());
+		mLogger.debug("### CodeBlock: " + c.toString());
 		// mDebugOuputNesting += " ";
 		// mLogger.debug(mDebugOuputNesting + "States:\n" +
 		// mResultingStates.toString());
@@ -388,10 +394,74 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 
 	@Override
 	public void visit(Summary c) {
-		// summaries are not supported, instead the call
-		// must be processed
-		// so this edge may not yield any states
-		mResultingStates = new ArrayList<StackState>();
+
+		//mResultingStates = new ArrayList<StackState>();
+
+		if (!c.calledProcedureHasImplementation()) {
+			List<Declaration> funcs = mSymbolTable
+					.getFunctionOrProcedureDeclaration(c.getCallStatement().getMethodName());
+			if (funcs.size() != 1 || !(funcs.get(0) instanceof Procedure)) {
+				throw new UnsupportedOperationException();
+			}
+			Specification[] specs = ((Procedure) funcs.get(0)).getSpecification();
+
+			for (Specification spec : specs) {
+				if (spec instanceof ModifiesSpecification) {
+					ModifiesSpecification modSpec = (ModifiesSpecification) spec;
+					mLogger.debug("Spec, modifies: " + modSpec.toString());
+					List<StackState> newResultingStates = new ArrayList<StackState>();
+					for (StackState state : mResultingStates) {
+						IAbstractState resultingState = state.getCurrentScope().getState();
+
+						for (VariableLHS lhs : modSpec.getIdentifiers()) {
+							TypedAbstractVariable variable = new TypedAbstractVariable(lhs.getIdentifier(),
+									lhs.getDeclarationInformation(), lhs.getType());
+							resultingState = mDomain.applyHavoc(resultingState, variable);
+						}
+						newResultingStates.add(state.increment(resultingState));
+					}
+					mResultingStates = newResultingStates;
+				} else if (spec instanceof EnsuresSpecification) {
+					EnsuresSpecification ensSpec = (EnsuresSpecification) spec;
+					mLogger.debug("Spec, modifies: " + ensSpec.toString());
+					List<StackState> newResultingStates = new ArrayList<StackState>();
+					for (StackState state : mResultingStates) {
+						IAbstractState resultingState = state.getCurrentScope().getState();
+
+						List<IAbstractState> res = mDomain.applyAssume(state.getCurrentScope().getState(),
+								ensSpec.getFormula());
+						// there can be more than one resulting state (due
+						// to
+						// or-expressions)
+						for (IAbstractState r : res) {
+							if (!r.isBottom()) {
+								// set the result to a copy of the state
+								newResultingStates.add(state.increment(r));
+							}
+						}
+					}
+					mResultingStates = newResultingStates;
+					//throw new UnsupportedOperationException(); // not debugged yet
+				} else if (spec instanceof RequiresSpecification) {
+					RequiresSpecification recSpec = (RequiresSpecification) spec;
+					mLogger.debug("Spec, modifies: " + recSpec.toString());
+
+					List<StackState> newResultingStates = new ArrayList<StackState>();
+					for (StackState state : mResultingStates) {
+						if (!mDomain.checkAssert(state.getCurrentScope().getState(), recSpec.getFormula())) {
+							mViolatedAssert = true;
+							mResult = "requirement was not fulfilled: " + recSpec.getFormula() + " for ss";
+						}
+					}
+					throw new UnsupportedOperationException(); // not debugged yet
+				} else if (spec instanceof LoopInvariantSpecification) {
+					throw new UnsupportedOperationException();
+				} else {
+					throw new UnsupportedOperationException();
+				}
+
+			}
+		}
 	}
 
 	@Override
@@ -566,7 +636,7 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		// match arguments and expressions
 		List<TypedAbstractVariable> targetVariables = new ArrayList<TypedAbstractVariable>();
 		List<Expression> argumentExpressions = new ArrayList<Expression>();
-		if (!matchArguments(parameters, arguments, null, targetVariables, argumentExpressions)) {
+		if (!matchArguments(parameters, arguments, null, targetVariables, argumentExpressions, procedureName)) {
 			return;
 		}
 
@@ -629,7 +699,7 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 		// match arguments and expressions
 		List<TypedAbstractVariable> targetVariables = new ArrayList<TypedAbstractVariable>();
 		List<Expression> argumentExpressions = new ArrayList<Expression>();
-		if (!matchArguments(parameters, null, lhsVariables, targetVariables, argumentExpressions)) {
+		if (!matchArguments(parameters, null, lhsVariables, targetVariables, argumentExpressions, procedureName)) {
 			return;
 		}
 
@@ -656,12 +726,14 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 			List<Expression> allArgumentExpressions) {
 		// Add global variables
 		for (Entry<String, Declaration> entry : mSymbolTable.getGlobalVariables().entrySet()) {
-			if (allTargetVariables.contains(new AbstractVariable(entry.getKey()))) {
+			if (allTargetVariables.contains(
+					new AbstractVariable(entry.getKey(), new DeclarationInformation(StorageClass.GLOBAL, null)))) {
 				continue; // do not override global variables if they are a left
 							// hand side variable
 			}
 
-			AbstractVariable abstGlobal = new AbstractVariable(entry.getKey());
+			AbstractVariable abstGlobal = new AbstractVariable(entry.getKey(),
+					new DeclarationInformation(StorageClass.GLOBAL, null));
 			if (state.getCurrentState().hasVariable(abstGlobal)) {
 				TypedAbstractVariable global = state.getCurrentState().getTypedVariable(abstGlobal);
 
@@ -681,17 +753,17 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 	 * Matches arguments and expressions. Into two lists. Two possibilities:
 	 * expressions of "arguments" into variables of "parameters" or:
 	 * "parameters" as expressions into variables of lhsVariables
-	 * 
+	 *
 	 * @param parameters
 	 * @param arguments
 	 * @param targetVariables
 	 * @param argumentExpressions
 	 * @param callStatement
-	 * 
+	 *
 	 * @return
 	 */
 	private boolean matchArguments(VarList[] parameters, Expression[] arguments, VariableLHS[] lhsVariables,
-			List<TypedAbstractVariable> targetVariables, List<Expression> argumentExpressions) {
+			List<TypedAbstractVariable> targetVariables, List<Expression> argumentExpressions, String procedureName) {
 		if (parameters == null) {
 			mLogger.warn(String.format("Parameters of not found."));
 			return false;
@@ -715,11 +787,13 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 				{
 					// match the argument expression pair
 					argumentExpressions.add(arguments[currentExpression]);
-					targetVariables.add(new TypedAbstractVariable(identifiers[i], null, type));
+					targetVariables.add(new TypedAbstractVariable(identifiers[i],
+							new DeclarationInformation(StorageClass.PROC_FUNC_INPARAM, procedureName), type));
 				} else if (lhsVariables != null) // return
 				{
 					// match the argument expression pair
-					argumentExpressions.add(new IdentifierExpression(null, type, identifiers[i], null));
+					argumentExpressions.add(new IdentifierExpression(null, type, identifiers[i],
+							new DeclarationInformation(StorageClass.PROC_FUNC_OUTPARAM, procedureName)));
 					targetVariables.add(evaluateLeftHandSide(lhsVariables[currentExpression]));
 				} else {
 					throw new RuntimeException();

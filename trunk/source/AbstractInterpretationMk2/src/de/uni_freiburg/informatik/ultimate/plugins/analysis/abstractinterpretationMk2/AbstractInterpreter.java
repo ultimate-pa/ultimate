@@ -263,6 +263,8 @@ public class AbstractInterpreter {
 		RootAnnot ra = root.getRootAnnot();
 		Map<String, ProgramPoint> entryNodes = ra.getEntryNodes();
 
+		
+		
 		// find the main method entry
 		String[] mainMethodNames = mPreferences.getMainMethodNames().split(",");
 		ProgramPoint mainEntry = null;
@@ -295,6 +297,11 @@ public class AbstractInterpreter {
 		Map<String, Collection<ProgramPoint>> errorLocMap = ra.getErrorNodes();
 		for (String s : errorLocMap.keySet()) {
 			mErrorLocs.addAll(errorLocMap.get(s));
+		}
+		
+		if (mainEntry == null)
+		{
+			mLogger.warn("There was no entry node specified!");
 		}
 
 		return mainEntry;
@@ -334,8 +341,7 @@ public class AbstractInterpreter {
 				mCallStatementsAtSummaries.clear();
 
 				List<StackState> statesAtNode = mStates.get(node);
-				// mLogger.debug(String.format("---- PROCESSING NODE %S ----",
-				// pp));
+				mLogger.debug(String.format("---- PROCESSING NODE %S ----", pp));
 
 				// process all unprocessed states at the node
 				mContinueProcessing = true;
@@ -352,12 +358,12 @@ public class AbstractInterpreter {
 						break;
 					}
 
-					// mLogger.debug("States at node:");
-					// for (StackState s : statesAtNode)
-					// {
-					// mLogger.debug("\n" + (s.isProcessed() ? "(D)" : "(*)") +
-					// s.toString());
-					// }
+					mLogger.debug("States at node:");
+					for (StackState s : statesAtNode)
+					{
+					  mLogger.debug("\n" + (s.isProcessed() ? "(D)" : "(*)") +
+					  s.toString());
+                    }
 
 					unprocessedState.setProcessed(true);
 
@@ -365,14 +371,12 @@ public class AbstractInterpreter {
 					RCFGEdge ignoredEdge = unprocessedState.getIgnoreEdgeAt(pp);
 					// process the state using each outgoing edge
 					for (RCFGEdge edge : node.getOutgoingEdges()) {
-						// mLogger.debug("Unprocessed state: \n" +
-						// unprocessedState.toString());
+						mLogger.debug("Unprocessed state: \n" + unprocessedState.toString());
 
 						// do not take the outwards edge directly after widening
 
 						if ((exclusiveEdge != null && exclusiveEdge != edge) || ignoredEdge == edge) {
-							// mLogger.debug("postponed/ignored (" + edge +
-							// ")");
+							mLogger.debug("postponed/ignored (" + edge + ")");
 							// mPostponeEdge.remove(unprocessedState);
 							continue;
 						}

@@ -64,10 +64,8 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 	 * @param bitVectorValueFactory
 	 * @param stringValueFactory
 	 */
-	public ValueDomain(IAbstractValueFactory<?> intValueFactory,
-			IAbstractValueFactory<?> realValueFactory,
-			IAbstractValueFactory<?> boolValueFactory,
-			IAbstractValueFactory<?> bitVectorValueFactory,
+	public ValueDomain(IAbstractValueFactory<?> intValueFactory, IAbstractValueFactory<?> realValueFactory,
+			IAbstractValueFactory<?> boolValueFactory, IAbstractValueFactory<?> bitVectorValueFactory,
 			IAbstractValueFactory<?> stringValueFactory, Logger logger) {
 		mIntValueFactory = intValueFactory;
 		mRealValueFactory = realValueFactory;
@@ -81,14 +79,12 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 
 	// IAbstractDomain
 	@Override
-	public void setMergeOperator(
-			IAbstractMergeOperator<ValueState> mergeOperator) {
+	public void setMergeOperator(IAbstractMergeOperator<ValueState> mergeOperator) {
 		mMergeOperator = mergeOperator;
 	}
 
 	@Override
-	public void setWideningOperator(
-			IAbstractWideningOperator<ValueState> wideningOperator) {
+	public void setWideningOperator(IAbstractWideningOperator<ValueState> wideningOperator) {
 		mWideningOperator = wideningOperator;
 	}
 
@@ -118,19 +114,20 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 	}
 
 	@Override
-	public IAbstractState<ValueState> applyExpression(
-			IAbstractState<ValueState> state, TypedAbstractVariable target,
+	public IAbstractState<ValueState> applyExpression(IAbstractState<ValueState> state, TypedAbstractVariable target,
 			Expression exp) {
 		mExpressionVisitor.prepare(state);
 		IAbstractValue<?> value = null;
 
 		if (exp instanceof ArrayStoreExpression) {
 			ArrayStoreExpression ase = (ArrayStoreExpression) exp;
-			IAbstractValue<?> oldValue = state.getConcrete().getValue(target);
-			value = mExpressionVisitor.visit(ase.getValue());
-
-			// merge with the old value, to only increase array states
-			value = mergeOperatorForDomainOfValue(value).apply(oldValue, value);
+			// IAbstractValue<?> oldValue =
+			// state.getConcrete().getValue(target);
+			value = mExpressionVisitor.visit(ase.getArray());
+			value = mergeOperatorForDomainOfValue(value).apply(
+					value,
+					mExpressionVisitor.visit(ase.getValue()));
+			
 
 			// TODO: do something better with arrays (using the indices)
 		} else {
@@ -152,10 +149,8 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 	}
 
 	@Override
-	public IAbstractState<ValueState> applyHavoc(
-			IAbstractState<ValueState> state, TypedAbstractVariable target) {
-		IAbstractValue<?> undef = getTopBottomValueForType(target.getType(),
-				true);
+	public IAbstractState<ValueState> applyHavoc(IAbstractState<ValueState> state, TypedAbstractVariable target) {
+		IAbstractValue<?> undef = getTopBottomValueForType(target.getType(), true);
 
 		if (undef != null) {
 			// mLogger.debug(String.format("Havocing: %s", target.getString()));
@@ -165,20 +160,17 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 	}
 
 	@Override
-	public List<IAbstractState<ValueState>> applyAssume(
-			IAbstractState<ValueState> state, Expression exp) {
+	public List<IAbstractState<ValueState>> applyAssume(IAbstractState<ValueState> state, Expression exp) {
 		mExpressionVisitor.prepare(state);
 		IAbstractValue<?> formulaResult = mExpressionVisitor.visit(exp);
 
-		String formulaResultStr = formulaResult == null ? "null"
-				: formulaResult.toString();
+		String formulaResultStr = formulaResult == null ? "null" : formulaResult.toString();
 		// mLogger.debug(String.format("ASSUME \"%s\" => %s", exp,
 		// formulaResultStr));
 
 		// only apply when the assumption can be true
 		// null means it is some con-/disjunction and not bottom
-		if (formulaResult == null
-				|| !assumptionValueIsFalse(formulaResult, exp)) {
+		if (formulaResult == null || !assumptionValueIsFalse(formulaResult, exp)) {
 			// put the state in a list
 			List<IAbstractState<ValueState>> states = new ArrayList<IAbstractState<ValueState>>();
 			states.add(state);
@@ -196,17 +188,14 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 		mLogger.warn("Untested code in ValueDomain.ApplyAssert(...)!");
 		mExpressionVisitor.prepare(state);
 		IAbstractValue<?> formulaResult = mExpressionVisitor.visit(exp);
-		String formulaResultStr = formulaResult == null ? "null"
-				: formulaResult.toString();
+		String formulaResultStr = formulaResult == null ? "null" : formulaResult.toString();
 		// mLogger.debug(String.format("ASSERT \"%s\" => %s", exp,
 		// formulaResultStr));
-		return (!(formulaResult == null || !assumptionValueIsFalse(
-				formulaResult, exp)));
+		return (!(formulaResult == null || !assumptionValueIsFalse(formulaResult, exp)));
 	}
 
 	@Override
-	public void applyExpressionScoped(IAbstractState<ValueState> newState,
-			IAbstractState<ValueState> oldState,
+	public void applyExpressionScoped(IAbstractState<ValueState> newState, IAbstractState<ValueState> oldState,
 			List<TypedAbstractVariable> targets, List<Expression> arguments) {
 		mExpressionVisitor.prepare(oldState);
 
@@ -261,8 +250,7 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 	 * @param negate
 	 * @return
 	 */
-	private List<IAbstractState<ValueState>> applyAssumption(Expression exp,
-			List<IAbstractState<ValueState>> states,
+	private List<IAbstractState<ValueState>> applyAssumption(Expression exp, List<IAbstractState<ValueState>> states,
 			IAbstractValue<?> assumeResult, boolean negate) {
 		// get the actual result of the expression
 		if (assumeResult == null) {
@@ -292,24 +280,19 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 					// a NOR b = not(a) AND not(b)
 					// do each side if it is not a unary expression
 					if (applyLeft) {
-						states = applyAssumption(binOp.getLeft(), states, null,
-								negate);
+						states = applyAssumption(binOp.getLeft(), states, null, negate);
 					}
 					if (applyRight) {
-						states = applyAssumption(binOp.getRight(), states,
-								null, negate);
+						states = applyAssumption(binOp.getRight(), states, null, negate);
 					}
 					return states;
-				} else if ((oper == BinaryExpression.Operator.LOGICIMPLIES)
-						&& negate) {
+				} else if ((oper == BinaryExpression.Operator.LOGICIMPLIES) && negate) {
 					// a NIMPL b = a AND not(b)
 					if (applyLeft) {
-						states = applyAssumption(binOp.getLeft(), states, null,
-								false);
+						states = applyAssumption(binOp.getLeft(), states, null, false);
 					}
 					if (applyRight) {
-						states = applyAssumption(binOp.getRight(), states,
-								null, true);
+						states = applyAssumption(binOp.getRight(), states, null, true);
 					}
 					return states;
 				} else if (((oper == BinaryExpression.Operator.LOGICAND) && negate)
@@ -324,29 +307,24 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 					// apply the assumption result for left and right on two
 					// copies
 					if (applyLeft) {
-						newStates
-								.addAll(applyAssumption(binOp.getLeft(),
-										copyStatesIf(states, applyRight), null,
-										negate));
+						newStates.addAll(
+								applyAssumption(binOp.getLeft(), copyStatesIf(states, applyRight), null, negate));
 					}
 					if (applyRight) {
-						newStates.addAll(applyAssumption(binOp.getRight(),
-								states, null, negate));
+						newStates.addAll(applyAssumption(binOp.getRight(), states, null, negate));
 					}
 					return newStates;
-				} else if ((oper == BinaryExpression.Operator.LOGICIMPLIES)
-						&& !negate) {
+				} else if ((oper == BinaryExpression.Operator.LOGICIMPLIES) && !negate) {
 					// a IMPL b = not(a) OR b
 					// here is where the number of resulting states doubles
 					List<IAbstractState<ValueState>> newStates = new ArrayList<IAbstractState<ValueState>>();
 
 					if (applyLeft) {
-						newStates.addAll(applyAssumption(binOp.getLeft(),
-								copyStatesIf(states, applyRight), null, true));
+						newStates
+								.addAll(applyAssumption(binOp.getLeft(), copyStatesIf(states, applyRight), null, true));
 					}
 					if (applyRight) {
-						newStates.addAll(applyAssumption(binOp.getRight(),
-								states, null, false));
+						newStates.addAll(applyAssumption(binOp.getRight(), states, null, false));
 					}
 					return newStates;
 				} else if ((oper == BinaryExpression.Operator.LOGICIFF)) {
@@ -358,16 +336,12 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 					List<IAbstractState<ValueState>> negStates = new ArrayList<IAbstractState<ValueState>>();
 
 					// 'pos' (a AND b)
-					posStates.addAll(applyAssumption(binOp.getLeft(),
-							copyStatesIf(states, true), null, true));
-					posStates = applyAssumption(binOp.getRight(), posStates,
-							null, !negate);
+					posStates.addAll(applyAssumption(binOp.getLeft(), copyStatesIf(states, true), null, true));
+					posStates = applyAssumption(binOp.getRight(), posStates, null, !negate);
 
 					// 'neg' (not(a) AND not(b))
-					states = applyAssumption(binOp.getLeft(), states, null,
-							false);
-					states = applyAssumption(binOp.getRight(), states, null,
-							negate);
+					states = applyAssumption(binOp.getLeft(), states, null, false);
+					states = applyAssumption(binOp.getRight(), states, null, negate);
 
 					states.addAll(posStates);
 
@@ -383,14 +357,10 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 			case COMPNEQ:
 				boolean applied = false;
 				if (binOp.getLeft() instanceof IdentifierExpression) {
-					IdentifierExpression ieLeft = (IdentifierExpression) binOp
-							.getLeft();
+					IdentifierExpression ieLeft = (IdentifierExpression) binOp.getLeft();
 
-					states = applyAssumptionResult(
-							states,
-							new TypedAbstractVariable(ieLeft.getIdentifier(),
-									ieLeft.getDeclarationInformation(), ieLeft
-											.getType()), assumeResult);
+					states = applyAssumptionResult(states, new TypedAbstractVariable(ieLeft.getIdentifier(),
+							ieLeft.getDeclarationInformation(), ieLeft.getType()), assumeResult);
 					applied = true;
 				}
 
@@ -401,32 +371,26 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 				 * result
 				 */
 				if (binOp.getRight() instanceof IdentifierExpression) {
-					IAbstractValue<?> leftValue = mExpressionVisitor.getResult(
-							binOp.getLeft(), false);
-					IAbstractValue<?> rightValue = mExpressionVisitor
-							.getResult(binOp.getRight(), false);
+					IAbstractValue<?> leftValue = mExpressionVisitor.getResult(binOp.getLeft(), false);
+					IAbstractValue<?> rightValue = mExpressionVisitor.getResult(binOp.getRight(), false);
 
 					IAbstractValue<?> rightHandAssumeResult = null;
 					switch (binOp.getOperator()) {
 					case COMPLT:
-						rightHandAssumeResult = negate ? rightValue
-								.compareIsLessEqual(leftValue) : rightValue
-								.compareIsGreater(leftValue);
+						rightHandAssumeResult = negate ? rightValue.compareIsLessEqual(leftValue)
+								: rightValue.compareIsGreater(leftValue);
 						break;
 					case COMPGT:
-						rightHandAssumeResult = negate ? rightValue
-								.compareIsGreaterEqual(leftValue) : rightValue
-								.compareIsLess(leftValue);
+						rightHandAssumeResult = negate ? rightValue.compareIsGreaterEqual(leftValue)
+								: rightValue.compareIsLess(leftValue);
 						break;
 					case COMPLEQ:
-						rightHandAssumeResult = negate ? rightValue
-								.compareIsLess(leftValue) : rightValue
-								.compareIsGreaterEqual(leftValue);
+						rightHandAssumeResult = negate ? rightValue.compareIsLess(leftValue)
+								: rightValue.compareIsGreaterEqual(leftValue);
 						break;
 					case COMPGEQ:
-						rightHandAssumeResult = negate ? rightValue
-								.compareIsGreater(leftValue) : rightValue
-								.compareIsLessEqual(leftValue);
+						rightHandAssumeResult = negate ? rightValue.compareIsGreater(leftValue)
+								: rightValue.compareIsLessEqual(leftValue);
 						break;
 
 					case COMPEQ:
@@ -439,15 +403,10 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 					}
 
 					if (rightHandAssumeResult != null) {
-						IdentifierExpression ieRight = (IdentifierExpression) binOp
-								.getRight();
+						IdentifierExpression ieRight = (IdentifierExpression) binOp.getRight();
 
-						states = applyAssumptionResult(
-								states,
-								new TypedAbstractVariable(ieRight
-										.getIdentifier(), ieRight
-										.getDeclarationInformation(), ieRight
-										.getType()), rightHandAssumeResult);
+						states = applyAssumptionResult(states, new TypedAbstractVariable(ieRight.getIdentifier(),
+								ieRight.getDeclarationInformation(), ieRight.getType()), rightHandAssumeResult);
 						applied = true;
 					}
 				}
@@ -462,8 +421,7 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 		} else if (exp instanceof UnaryExpression) {
 			UnaryExpression unaryExpression = (UnaryExpression) exp;
 			if (unaryExpression.getOperator() == UnaryExpression.Operator.LOGICNEG) {
-				return applyAssumption(unaryExpression.getExpr(), states, null,
-						!negate);
+				return applyAssumption(unaryExpression.getExpr(), states, null, !negate);
 			} else {
 				throw new UnsupportedOperationException();
 			}
@@ -475,12 +433,12 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 			} else {
 				// "assume false;" or "assume !true";
 				// return createBottom();
-				throw new RuntimeException(
-						"If the formula evaluates to false, applyAssumption must not be called");
+				throw new RuntimeException("If the formula evaluates to false, applyAssumption must not be called");
 			}
 		}
 
-		// mLogger.warn(String.format("Could not reduce value range at assume statement \"%s\"",
+		// mLogger.warn(String.format("Could not reduce value range at assume
+		// statement \"%s\"",
 		// exp));
 		return states;
 	}
@@ -493,8 +451,7 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 	 * @param assumeResult
 	 * @return
 	 */
-	private List<IAbstractState<ValueState>> applyAssumptionResult(
-			List<IAbstractState<ValueState>> states,
+	private List<IAbstractState<ValueState>> applyAssumptionResult(List<IAbstractState<ValueState>> states,
 			TypedAbstractVariable variable, IAbstractValue<?> assumeResult) {
 		List<IAbstractState<ValueState>> result = new ArrayList<IAbstractState<ValueState>>();
 		for (IAbstractState<ValueState> state : states) {
@@ -505,7 +462,8 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 			}
 			// shrink the range to the variables original range
 			IAbstractValue<?> newValue = oldValue.compareIsEqual(assumeResult);
-			// mLogger.debug(String.format("ASSUME for \"%s\": old=[%s], assume=[%s] => new[%s]",
+			// mLogger.debug(String.format("ASSUME for \"%s\": old=[%s],
+			// assume=[%s] => new[%s]",
 			// variable.getString(), oldValue, assumeResult, newValue));
 			if (newValue != null && !newValue.isBottom()) {
 				state.getConcrete().writeValue(variable, newValue);
@@ -522,8 +480,7 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 	 * @param copy
 	 * @return
 	 */
-	protected List<IAbstractState<ValueState>> copyStatesIf(
-			List<IAbstractState<ValueState>> states, boolean copy) {
+	protected List<IAbstractState<ValueState>> copyStatesIf(List<IAbstractState<ValueState>> states, boolean copy) {
 		if (!copy) {
 			return states;
 		}
@@ -553,35 +510,30 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 		IAbstractValue<?> returnValue = null;
 
 		if (type instanceof de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType) {
-			type = ((de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType) type)
-					.getValueType();
+			type = ((de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType) type).getValueType();
 		}
 
 		if (type instanceof PrimitiveType) {
 			PrimitiveType pt = (PrimitiveType) type;
 			if (pt.getTypeCode() == PrimitiveType.BOOL) {
-				returnValue = top ? mBoolValueFactory.makeTopValue()
-						: mBoolValueFactory.makeBottomValue();
+				returnValue = top ? mBoolValueFactory.makeTopValue() : mBoolValueFactory.makeBottomValue();
 			} else if (pt.getTypeCode() == PrimitiveType.INT) {
-				returnValue = top ? mIntValueFactory.makeTopValue()
-						: mIntValueFactory.makeBottomValue();
+				returnValue = top ? mIntValueFactory.makeTopValue() : mIntValueFactory.makeBottomValue();
 			} else if (pt.getTypeCode() == PrimitiveType.REAL) {
-				returnValue = top ? mRealValueFactory.makeTopValue()
-						: mRealValueFactory.makeBottomValue();
+				returnValue = top ? mRealValueFactory.makeTopValue() : mRealValueFactory.makeBottomValue();
 			} else {
-				mLogger.error(String.format(
-						"Unsupported primitive type \"%s\"", pt));
+				mLogger.error(String.format("Unsupported primitive type \"%s\"", pt));
 			}
 			return returnValue;
 		}
 
-		// mLogger.error(String.format("Unsupported non-primitive type \"%s\" of %s",
+		// mLogger.error(String.format("Unsupported non-primitive type \"%s\" of
+		// %s",
 		// type, type.getClass()));
 		return null;
 	}
 
-	public IValueMergeOperator<?> mergeOperatorForDomainOfValue(
-			IAbstractValue<?> value) {
+	public IValueMergeOperator<?> mergeOperatorForDomainOfValue(IAbstractValue<?> value) {
 		ValueMergeOperator mop = (ValueMergeOperator) mMergeOperator;
 
 		if (mIntValueFactory.valueBelongsToDomainSystem(value)) {
@@ -606,8 +558,7 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 	 * @param exp
 	 * @return
 	 */
-	private boolean assumptionValueIsFalse(IAbstractValue<?> assumptionValue,
-			Expression exp) {
+	private boolean assumptionValueIsFalse(IAbstractValue<?> assumptionValue, Expression exp) {
 		if (mBoolValueFactory.valueBelongsToDomainSystem(assumptionValue)) {
 			return assumptionValue.isFalse();
 		} else {
@@ -623,6 +574,6 @@ public class ValueDomain implements IAbstractDomain<ValueState> {
 	@Override
 	public void finalizeDomain() {
 		// TODO Restructure and move finalization code here
-		
+
 	}
 }

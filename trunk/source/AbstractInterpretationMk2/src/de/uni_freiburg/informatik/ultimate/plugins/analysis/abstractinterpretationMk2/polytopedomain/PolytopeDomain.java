@@ -210,12 +210,16 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 
 		mExpressionVisitor.prepare(pState, prefix);
 		Linear_Expression right = null;
-		IAbstractState<PolytopeState> stateCopy = null;
+		
+		PolytopeState stateCopy = null;
+		Linear_Expression rightArrayValue = null;
+		
 		if (exp instanceof ArrayStoreExpression) {
-			stateCopy = state.copy();
+			stateCopy = state.copy().getConcrete();
 			ArrayStoreExpression ase = (ArrayStoreExpression) exp;
-			right = mExpressionVisitor.walk(ase.getValue());
-
+			right = mExpressionVisitor.walk(ase.getArray());
+			rightArrayValue = mExpressionVisitor.walk(ase.getValue());
+			
 			// TODO: do something better with arrays
 			// like creating a 2D-polytope as value representation
 		} else {
@@ -252,8 +256,8 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 			pState.writeVariable(target, right);
 
 			// For Arrays we only increase the state
-			// (since the
-			if (exp instanceof ArrayStoreExpression) {
+			if (exp instanceof ArrayStoreExpression) {				
+				stateCopy.writeVariable(target, rightArrayValue);				
 				return mMergeOperator.apply(pState, stateCopy);
 			}
 		}

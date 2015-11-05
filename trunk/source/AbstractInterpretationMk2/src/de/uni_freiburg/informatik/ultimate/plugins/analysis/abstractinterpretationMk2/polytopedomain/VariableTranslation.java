@@ -25,7 +25,7 @@ public class VariableTranslation {
 	/**
 	 * To enumerate the variables
 	 */
-	private long mLastIndex;
+	private long mNextIndex;
 
 	/**
 	 * ID for debugging
@@ -40,7 +40,7 @@ public class VariableTranslation {
 	public VariableTranslation() {
 		mVars2PPLVars = new HashMap<>();
 		mPPLVars2Vars = new HashMap<>();
-		mLastIndex = 0;
+		mNextIndex = 0;
 		mUID = sNextUID++;
 	}
 
@@ -48,7 +48,7 @@ public class VariableTranslation {
 	 * Copy Constructor. Creates a copy of this (with no shared references
 	 */
 	public VariableTranslation(VariableTranslation vt) {
-		mLastIndex = vt.mLastIndex;
+		mNextIndex = vt.mNextIndex;
 		mVars2PPLVars = new HashMap<>(vt.mVars2PPLVars);
 		mPPLVars2Vars = new HashMap<>(vt.mPPLVars2Vars);
 		mUID = sNextUID++;
@@ -65,7 +65,7 @@ public class VariableTranslation {
 	 * @return
 	 */
 	public Variable addVariable(TypedAbstractVariable variable) {
-		return add(variable, mLastIndex + 1);
+		return add(variable, mNextIndex);
 	}
 
 	public Variable addShiftedVariable(TypedAbstractVariable variable, long dimension) {
@@ -113,7 +113,7 @@ public class VariableTranslation {
 
 	@Override
 	public String toString() {
-		String output = "[VT_" + mUID + " (#var: " + mLastIndex + ") ";
+		String output = "[VT_" + mUID + " (#var: " + mNextIndex + ") ";
 		String comma = "";
 		for (Entry<TypedAbstractVariable, Variable> entry : mVars2PPLVars.entrySet()) {
 			output += comma + entry.getKey().getString() + " -> " + entry.getValue().toString();
@@ -195,9 +195,9 @@ public class VariableTranslation {
 	private Variable add(TypedAbstractVariable var, long index) {
 		Variable pplvar = mVars2PPLVars.get(var);
 		if (pplvar == null) {
-			assert index > mLastIndex;
+			assert index >= mNextIndex;
 			pplvar = new Variable(index);
-			mLastIndex = index;
+			mNextIndex = index + 1;
 			mVars2PPLVars.put(var, pplvar);
 			mPPLVars2Vars.put(pplvar, var);
 		}

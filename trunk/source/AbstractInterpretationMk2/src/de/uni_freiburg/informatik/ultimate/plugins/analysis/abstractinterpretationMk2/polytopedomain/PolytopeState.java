@@ -154,8 +154,9 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 	 * @param pState
 	 */
 	public void updateDimensions() {
-		int polyDims = (int) mPolyhedron.space_dimension();
-		int missingDimensions = mVariableTranslation.size() + 1 - polyDims;
+		int needed = mVariableTranslation.size();
+		int existing = (int) mPolyhedron.space_dimension();
+		int missingDimensions = needed - existing;
 		if (missingDimensions > 0) {
 			mPolyhedron.add_space_dimensions_and_embed(missingDimensions);
 		} else if (missingDimensions < 0) {

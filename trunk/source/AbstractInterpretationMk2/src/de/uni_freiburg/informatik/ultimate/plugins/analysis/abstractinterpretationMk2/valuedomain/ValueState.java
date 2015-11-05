@@ -149,8 +149,8 @@ public class ValueState implements IAbstractState<ValueState> {
 	 * @param identifier
 	 * @return
 	 */
-	public IAbstractValue<?> getValue(String identifier) {
-		return mMapping.get(new AbstractVariable(identifier));
+	public IAbstractValue<?> getValue(AbstractVariable var) {
+		return mMapping.get(var);
 	}
 
 	@Override
