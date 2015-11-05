@@ -122,12 +122,10 @@ public class Svcomp2016_Reach extends AbstractTraceAbstractionTestSuite {
 			new DirectoryFileEndingsPair("examples/svcomp/ldv-challenges/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
 			
 			new DirectoryFileEndingsPair("examples/svcomp/busybox-1.22.0/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-			
-			new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.0/usb_urb-drivers-video-arkfb.ko_true-unreach-call.cil.out.i.pp.cil.c", 
-					new String[]{ ".c" }, m_FilesPerDirectoryLimit)//onheap/offheap bug, added by alex ,
 	};
 	
 	private static final String[] m_CurrentBugs_64bit = {
+//			"examples/svcomp/ldv-linux-3.0/usb_urb-drivers-video-arkfb.ko_true-unreach-call.cil.out.i.pp.cil.c",
 	};
 
 	/**
