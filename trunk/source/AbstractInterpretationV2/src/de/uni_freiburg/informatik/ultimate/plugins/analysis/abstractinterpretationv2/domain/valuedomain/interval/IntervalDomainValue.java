@@ -77,8 +77,8 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		if (!lower.isInfinity() && !upper.isInfinity()) {
 			if (lower.getValue().compareTo(upper.getValue()) > 0) {
 				throw new UnsupportedOperationException(
-						"The lower value must be smaller than or qual to the upper value. Lower: " + lower.getValue()
-								+ ", Upper: " + upper.getValue());
+				        "The lower value must be smaller than or qual to the upper value. Lower: " + lower.getValue()
+				                + ", Upper: " + upper.getValue());
 			}
 		}
 
@@ -91,7 +91,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 	@Override
 	public int compareTo(IntervalDomainValue o) {
 		throw new UnsupportedOperationException(
-				"The compareTo operation is not defined on arbitrary intervals and can therefore not be used.");
+		        "The compareTo operation is not defined on arbitrary intervals and can therefore not be used.");
 	}
 
 	@Override
@@ -279,6 +279,55 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 	}
 
 	/**
+	 * Computes the merger of this with another {@link IntervalDomainValue}.
+	 * 
+	 * @param other
+	 *            The other interval to merge with.
+	 * @return A new interval which is the result of merging this with other.
+	 */
+	protected IntervalDomainValue merge(IntervalDomainValue other) {
+		assert other != null;
+
+		if (isBottom() || other.isBottom()) {
+			return new IntervalDomainValue(true);
+		}
+
+		if (equals(other)) {
+			if (isBottom()) {
+				return new IntervalDomainValue(true);
+			} else {
+				return new IntervalDomainValue(new IntervalValue(mLower.getValue()),
+				        new IntervalValue(mUpper.getValue()));
+			}
+		}
+
+		IntervalValue lower;
+		IntervalValue upper;
+
+		if (getLower().isInfinity() || other.getLower().isInfinity()) {
+			lower = new IntervalValue();
+		} else {
+			if (getLower().compareTo(other.getLower()) < 0) {
+				lower = new IntervalValue(getLower().getValue());
+			} else {
+				lower = new IntervalValue(other.getLower().getValue());
+			}
+		}
+
+		if (getUpper().isInfinity() || other.getUpper().isInfinity()) {
+			upper = new IntervalValue();
+		} else {
+			if (getUpper().compareTo(other.getUpper()) < 0) {
+				upper = new IntervalValue(getUpper().getValue());
+			} else {
+				upper = new IntervalValue(other.getUpper().getValue());
+			}
+		}
+
+		return new IntervalDomainValue(lower, upper);
+	}
+
+	/**
 	 * Note that a return value of <code>false</code> may also mean that one or both of the interval bounds is -&infin;
 	 * or &infin;.
 	 * 
@@ -420,10 +469,10 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		}
 
 		return new IntervalDomainValue(new IntervalValue(getUpper().getValue().negate()),
-				new IntervalValue(getLower().getValue().negate()));
+		        new IntervalValue(getLower().getValue().negate()));
 	}
-	
-	protected Term getTerm(){
+
+	protected Term getTerm() {
 		return null;
 	}
 
@@ -482,7 +531,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 				}
 			} else {
 				returnValue = updateIfLarger(returnValue, getLower().getValue().multiply(other.getLower().getValue()),
-						valuePresent);
+				        valuePresent);
 				valuePresent = true;
 			}
 		}
@@ -516,7 +565,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 				}
 			} else {
 				returnValue = updateIfLarger(returnValue, getLower().getValue().multiply(other.getUpper().getValue()),
-						valuePresent);
+				        valuePresent);
 				valuePresent = true;
 			}
 		}
@@ -549,7 +598,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 				}
 			} else {
 				returnValue = updateIfLarger(returnValue, getUpper().getValue().multiply(other.getLower().getValue()),
-						valuePresent);
+				        valuePresent);
 				valuePresent = true;
 			}
 		}
@@ -585,7 +634,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 				}
 			} else {
 				returnValue = updateIfLarger(returnValue, getUpper().getValue().multiply(other.getUpper().getValue()),
-						valuePresent);
+				        valuePresent);
 				valuePresent = true;
 			}
 		}
@@ -647,7 +696,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 					}
 				} else {
 					returnValue = updateIfSmaller(returnValue,
-							getLower().getValue().multiply(other.getLower().getValue()), valuePresent);
+					        getLower().getValue().multiply(other.getLower().getValue()), valuePresent);
 					valuePresent = true;
 				}
 			}
@@ -686,7 +735,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 					}
 				} else {
 					returnValue = updateIfSmaller(returnValue,
-							getLower().getValue().multiply(other.getUpper().getValue()), valuePresent);
+					        getLower().getValue().multiply(other.getUpper().getValue()), valuePresent);
 					valuePresent = true;
 				}
 			}
@@ -724,7 +773,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 				}
 			} else {
 				returnValue = updateIfSmaller(returnValue, getUpper().getValue().multiply(other.getLower().getValue()),
-						valuePresent);
+				        valuePresent);
 				valuePresent = true;
 			}
 		}
@@ -757,7 +806,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 				}
 			} else {
 				returnValue = updateIfSmaller(returnValue, getUpper().getValue().multiply(other.getLower().getValue()),
-						valuePresent);
+				        valuePresent);
 				valuePresent = true;
 			}
 		}

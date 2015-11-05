@@ -31,9 +31,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Map;
 import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.BooleanValue;
 
 /**
  * The merge operator for the interval domain.
@@ -60,7 +62,7 @@ public class IntervalMergeOperator<ACTION, VARDECL> implements IAbstractStateBin
 	@SuppressWarnings("unchecked")
 	@Override
 	public IAbstractState<ACTION, VARDECL> apply(IAbstractState<ACTION, VARDECL> first,
-			IAbstractState<ACTION, VARDECL> second) {
+	        IAbstractState<ACTION, VARDECL> second) {
 		assert first != null;
 		assert second != null;
 
@@ -69,70 +71,36 @@ public class IntervalMergeOperator<ACTION, VARDECL> implements IAbstractStateBin
 
 		if (!firstState.hasSameVariables(secondState)) {
 			throw new UnsupportedOperationException(
-					"Cannot merge the two states as their sets of variables in the states are disjoint.");
+			        "Cannot merge the two states as their sets of variables in the states are disjoint.");
 		}
 
 		final IntervalDomainState newState = (IntervalDomainState) first.copy();
 
 		final Map<String, IBoogieVar> variables = firstState.getVariables();
 		final Map<String, IntervalDomainValue> firstValues = firstState.getValues();
+		final Map<String, BooleanValue> firstBoolValues = firstState.getBooleanValues();
 		final Map<String, IntervalDomainValue> secondValues = secondState.getValues();
+		final Map<String, BooleanValue> secondBoolValues = secondState.getBooleanValues();
 
 		for (final Entry<String, IBoogieVar> entry : variables.entrySet()) {
-			final IntervalDomainValue value1 = firstValues.get(entry.getKey());
-			final IntervalDomainValue value2 = secondValues.get(entry.getKey());
 
-			newState.setValue(entry.getKey(), computeMergedValue(value1, value2));
+			if (entry.getValue() instanceof PrimitiveType) {
+
+				final PrimitiveType primitiveType = (PrimitiveType) entry.getValue();
+				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
+					final BooleanValue value1 = firstBoolValues.get(entry.getKey());
+					final BooleanValue value2 = secondBoolValues.get(entry.getKey());
+
+					newState.setBooleanValue(entry.getKey(), value1.merge(value2));
+				} else {
+					final IntervalDomainValue value1 = firstValues.get(entry.getKey());
+					final IntervalDomainValue value2 = secondValues.get(entry.getKey());
+
+					newState.setValue(entry.getKey(), value1.merge(value2));
+				}
+			}
 		}
 
 		return (IAbstractState<ACTION, VARDECL>) newState;
 	}
-
-	/**
-	 * Computes the merger of two {@link IntervalDomainValue}s.
-	 * 
-	 * @param value1
-	 *            The first Interval.
-	 * @param value2
-	 *            The second interval.
-	 * @return A new interval which is the result of merging the first and the second interval.
-	 */
-	private IntervalDomainValue computeMergedValue(IntervalDomainValue value1, IntervalDomainValue value2) {
-		assert value1 != null;
-		assert value2 != null;
-
-		if (value1.equals(value2)) {
-			return value1;
-		}
-
-		if (value1.isBottom() || value2.isBottom()) {
-			return new IntervalDomainValue(true);
-		}
-
-		IntervalValue lower;
-		IntervalValue upper;
-
-		if (value1.getLower().isInfinity() || value2.getLower().isInfinity()) {
-			lower = new IntervalValue();
-		} else {
-			if (value1.getLower().compareTo(value2.getLower()) < 0) {
-				lower = new IntervalValue(value1.getLower().getValue());
-			} else {
-				lower = new IntervalValue(value2.getLower().getValue());
-			}
-		}
-
-		if (value1.getUpper().isInfinity() || value2.getUpper().isInfinity()) {
-			upper = new IntervalValue();
-		} else {
-			if (value1.getUpper().compareTo(value2.getUpper()) < 0) {
-				upper = new IntervalValue(value1.getUpper().getValue());
-			} else {
-				upper = new IntervalValue(value2.getUpper().getValue());
-			}
-		}
-
-		return new IntervalDomainValue(lower, upper);
-	}
-
 }

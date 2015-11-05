@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.EvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.ILogicalEvaluator;
@@ -46,7 +47,8 @@ public class IntervalLogicalSingletonVariableExpressionEvaluator extends Interva
         implements
         ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> {
 
-	private boolean mBooleanValue = false;
+	private BooleanValue mBooleanValue = new BooleanValue();
+	private boolean mContainsBoolean = false;
 
 	public IntervalLogicalSingletonVariableExpressionEvaluator(String variableName,
 	        IntervalStateConverter<CodeBlock, IBoogieVar> stateConverter) {
@@ -58,13 +60,14 @@ public class IntervalLogicalSingletonVariableExpressionEvaluator extends Interva
 	        IAbstractState<CodeBlock, IBoogieVar> currentState) {
 
 		final IntervalDomainState concreteState = mStateConverter.getCheckedState(currentState);
-		
+
 		final IBoogieVar type = currentState.getVariableType(mVariableName);
 		if (type.getIType() instanceof PrimitiveType) {
 			final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
 
 			if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-				mBooleanValue = concreteState.getBooleanValues().get(mVariableName);
+				mBooleanValue = new BooleanValue(concreteState.getBooleanValues().get(mVariableName));
+				mContainsBoolean = true;
 			}
 		} else {
 			throw new UnsupportedOperationException("The type " + type.getIType().toString() + " is not implemented.");
@@ -74,8 +77,13 @@ public class IntervalLogicalSingletonVariableExpressionEvaluator extends Interva
 	}
 
 	@Override
-	public boolean booleanValue() {
+	public BooleanValue booleanValue() {
 		return mBooleanValue;
+	}
+
+	@Override
+	public boolean containsBool() {
+		return mContainsBoolean;
 	}
 
 }

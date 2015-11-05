@@ -96,7 +96,7 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 //			// "examples/svcomp/systemc1/",
 //			// "examples/svcomp/systemc2/",
 //			// "examples/svcomp/eca-rers2012/",
-			"examples/svcomp/recursive/",
+//			"examples/svcomp/recursive/",
 //			 "examples/svcomp/ssh-simplified/",
 //			 "examples/svcomp/ntdrivers-simplified/",
 //			// "examples/svcomp/ssh/",
@@ -113,13 +113,14 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 //			 
 //			 //constructed type
 //			 "examples/programs/regression/bpl/Typedef-safe.bpl",
+			"examples/programs/abstractInterpretation/boolean.c",
 	};
 
 	// @formatter:on
 
 	@Override
 	protected long getTimeout() {
-		return 10 * 1000 * 1000  ;
+		return 10 * 1000;
 	}
 
 	@Override

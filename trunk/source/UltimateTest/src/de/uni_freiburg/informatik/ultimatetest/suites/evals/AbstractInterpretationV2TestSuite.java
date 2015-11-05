@@ -61,7 +61,7 @@ public class AbstractInterpretationV2TestSuite extends AbstractEvalTestSuite {
 	        /* ULTIMATE repo */
 //	         "examples/programs/regression/bpl/",
 //	         "examples/programs/regression/c/",
-	         "examples/programs/recursivePrograms",
+//	         "examples/programs/recursivePrograms",
 	        /* SV-COMP repo */
 //	        "examples/svcomp/loops/", // SPLIT
 			// "examples/svcomp/loopsSelection/",

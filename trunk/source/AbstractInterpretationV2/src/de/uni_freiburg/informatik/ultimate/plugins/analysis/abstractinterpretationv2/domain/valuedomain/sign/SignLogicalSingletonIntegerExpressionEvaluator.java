@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.ILogicalEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.sign.SignDomainValue.Values;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -43,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class SignLogicalSingletonIntegerExpressionEvaluator extends SignSingletonIntegerExpressionEvaluator implements
         ILogicalEvaluator<Values, CodeBlock, IBoogieVar> {
 
-	private boolean mBooleanValue;
+	private BooleanValue mBooleanValue;
 
 	protected SignLogicalSingletonIntegerExpressionEvaluator(String value) {
 		super(value);
@@ -59,8 +60,14 @@ public class SignLogicalSingletonIntegerExpressionEvaluator extends SignSingleto
     }
 
 	@Override
-	public boolean booleanValue() {
+	public BooleanValue booleanValue() {
 		return mBooleanValue;
+	}
+
+	@Override
+	public boolean containsBool() {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 }

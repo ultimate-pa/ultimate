@@ -32,6 +32,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.EvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.ILogicalEvaluator;
@@ -46,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class IntervalLogicalUnaryExpressionEvaluator extends IntervalUnaryExpressionEvaluator implements
         ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> {
 
-	private boolean mBooleanValue;
+	private BooleanValue mBooleanValue;
 
 	protected IntervalLogicalUnaryExpressionEvaluator(Logger logger) {
 		super(logger);
@@ -63,11 +64,11 @@ public class IntervalLogicalUnaryExpressionEvaluator extends IntervalUnaryExpres
 
 		switch (mOperator) {
 		case LOGICNEG:
-			mBooleanValue = !boolSubEvaluator.booleanValue();
+			mBooleanValue = boolSubEvaluator.booleanValue().neg();
 			break;
 		default:
 			mLogger.warn("Operator " + mOperator + " not implemented. Assuming logical interpretation to be false.");
-			mBooleanValue = false;
+			mBooleanValue = new BooleanValue(false);
 			return new EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>(new IntervalDomainValue(),
 			        currentState);
 		}
@@ -76,8 +77,14 @@ public class IntervalLogicalUnaryExpressionEvaluator extends IntervalUnaryExpres
 	}
 
 	@Override
-	public boolean booleanValue() {
+	public BooleanValue booleanValue() {
 		return mBooleanValue;
+	}
+
+	@Override
+	public boolean containsBool() {
+		final ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> logicSub = (ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar>) mSubEvaluator;
+		return logicSub.containsBool();
 	}
 
 }

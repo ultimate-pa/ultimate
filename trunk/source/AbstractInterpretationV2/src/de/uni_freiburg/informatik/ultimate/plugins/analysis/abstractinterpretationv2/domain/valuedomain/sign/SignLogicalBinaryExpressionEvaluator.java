@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.ILogicalEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.sign.SignDomainValue.Values;
@@ -38,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEvaluator
         implements ILogicalEvaluator<Values, CodeBlock, IBoogieVar> {
 
-	private boolean mBooleanValue;
+	private BooleanValue mBooleanValue;
 
 	public SignLogicalBinaryExpressionEvaluator(IUltimateServiceProvider services) {
 		super(services);
@@ -95,7 +96,8 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 		}
 	}
 
-	public IAbstractState<CodeBlock, IBoogieVar> logicallyInterpret(IAbstractState<CodeBlock, IBoogieVar> currentState) {
+	public IAbstractState<CodeBlock, IBoogieVar> logicallyInterpret(
+	        IAbstractState<CodeBlock, IBoogieVar> currentState) {
 
 		final SignDomainValue firstResult = (SignDomainValue) mLeftSubEvaluator.evaluate(currentState);
 		final SignDomainValue secondResult = (SignDomainValue) mRightSubEvaluator.evaluate(currentState);
@@ -243,22 +245,23 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 		return false;
 	}
 
-	protected boolean logicalEvaluation(IAbstractState<CodeBlock, IBoogieVar> currentState) {
+	protected BooleanValue logicalEvaluation(IAbstractState<CodeBlock, IBoogieVar> currentState) {
 
 		final ILogicalEvaluator<Values, CodeBlock, IBoogieVar> left = (ILogicalEvaluator<SignDomainValue.Values, CodeBlock, IBoogieVar>) mLeftSubEvaluator;
 		final ILogicalEvaluator<Values, CodeBlock, IBoogieVar> right = (ILogicalEvaluator<SignDomainValue.Values, CodeBlock, IBoogieVar>) mRightSubEvaluator;
 
 		switch (mOperator) {
 		case COMPEQ:
-			return left.booleanValue() == right.booleanValue();
+			return new BooleanValue(left.booleanValue().equals(right.booleanValue()));
 		case COMPNEQ:
-			return left.booleanValue() != right.booleanValue();
+			return new BooleanValue(left.booleanValue().equals(right.booleanValue().neg()));
 		case LOGICIMPLIES:
-			return !left.booleanValue() || right.booleanValue();
+			return left.booleanValue().or(right.booleanValue());
 		case LOGICIFF:
-			return (left.booleanValue() && right.booleanValue()) || (!left.booleanValue() && !right.booleanValue());
+			return (left.booleanValue().and(right.booleanValue())
+			        .or((left.booleanValue().neg().and(right.booleanValue().neg()))));
 		case LOGICOR:
-			return left.booleanValue() || right.booleanValue();
+			return left.booleanValue().or(right.booleanValue());
 		default:
 			throw new UnsupportedOperationException("Operator " + mOperator + " not yet implemented.");
 			// TODO: implement other cases
@@ -266,7 +269,13 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 	}
 
 	@Override
-	public boolean booleanValue() {
+	public BooleanValue booleanValue() {
 		return mBooleanValue;
+	}
+
+	@Override
+	public boolean containsBool() {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

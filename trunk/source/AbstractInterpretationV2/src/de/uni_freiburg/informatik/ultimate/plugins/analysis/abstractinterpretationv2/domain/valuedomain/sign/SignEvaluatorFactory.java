@@ -33,6 +33,7 @@ import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.INAryEvaluator;
@@ -106,7 +107,8 @@ public class SignEvaluatorFactory implements IEvaluatorFactory<Values, CodeBlock
 	}
 
 	@Override
-	public IEvaluator<Values, CodeBlock, IBoogieVar> createSingletonLogicalValueExpressionEvaluator(boolean value) {
+	public IEvaluator<Values, CodeBlock, IBoogieVar> createSingletonLogicalValueExpressionEvaluator(
+	        BooleanValue value) {
 		return null;
 	}
 }

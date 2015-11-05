@@ -33,6 +33,8 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.EvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluator;
@@ -45,13 +47,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus <greitsch@informatik.uni-freiburg.de>
  *
  */
-public class IntervalLogicalSingletonBooleanExpressionEvaluator
-        implements IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar>,
+public class IntervalLogicalSingletonBooleanExpressionEvaluator implements
         ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> {
 
-	private final boolean mBooleanValue;
+	private final BooleanValue mBooleanValue;
 
-	protected IntervalLogicalSingletonBooleanExpressionEvaluator(boolean value) {
+	protected IntervalLogicalSingletonBooleanExpressionEvaluator(BooleanValue value) {
 		mBooleanValue = value;
 	}
 
@@ -61,7 +62,7 @@ public class IntervalLogicalSingletonBooleanExpressionEvaluator
 
 		IAbstractState<CodeBlock, IBoogieVar> returnState;
 
-		if (mBooleanValue) {
+		if (mBooleanValue.getValue() == Value.TRUE || mBooleanValue.getValue() == Value.TOP) {
 			returnState = currentState;
 		} else {
 			returnState = new IntervalDomainState();
@@ -88,7 +89,12 @@ public class IntervalLogicalSingletonBooleanExpressionEvaluator
 	}
 
 	@Override
-	public boolean booleanValue() {
+	public BooleanValue booleanValue() {
 		return mBooleanValue;
+	}
+
+	@Override
+	public boolean containsBool() {
+		return true;
 	}
 }

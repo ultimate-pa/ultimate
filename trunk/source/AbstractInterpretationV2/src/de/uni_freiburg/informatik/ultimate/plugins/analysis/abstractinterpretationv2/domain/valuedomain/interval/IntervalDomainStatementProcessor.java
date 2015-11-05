@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.EvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.ExpressionEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluationResult;
@@ -96,8 +97,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 		mLhsVariable = null;
 	}
 
-	public IntervalDomainState process(IntervalDomainState oldState,
-	        Statement statement) {
+	public IntervalDomainState process(IntervalDomainState oldState, Statement statement) {
 
 		assert oldState != null;
 		assert statement != null;
@@ -214,8 +214,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> evaluationResult = mExpressionEvaluator
 		        .getRootEvaluator().evaluate(mOldState);
 
-		mNewState = (IntervalDomainState) evaluationResult.getResult().getEvaluatedState()
-		        .copy();
+		mNewState = (IntervalDomainState) evaluationResult.getResult().getEvaluatedState().copy();
 
 	}
 
@@ -283,7 +282,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	@Override
 	protected void visit(BooleanLiteral expr) {
 		final IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> evaluator = mEvaluatorFactory
-		        .createSingletonLogicalValueExpressionEvaluator(expr.getValue());
+		        .createSingletonLogicalValueExpressionEvaluator(new BooleanValue(expr.getValue()));
 
 		mExpressionEvaluator.addEvaluator(evaluator);
 	}
@@ -292,14 +291,16 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	protected void visit(ArrayStoreExpression expr) {
 
 		// TODO Implement proper handling of arrays.
-		mExpressionEvaluator.addEvaluator(new IntervalLogicalSingletonValueExpressionEvaluator(new IntervalDomainValue()));
+		mExpressionEvaluator
+		        .addEvaluator(new IntervalLogicalSingletonValueExpressionEvaluator(new IntervalDomainValue()));
 	}
 
 	@Override
 	protected void visit(ArrayAccessExpression expr) {
-		
+
 		// TODO Implement proper handling of arrays.
-		mExpressionEvaluator.addEvaluator(new IntervalLogicalSingletonValueExpressionEvaluator(new IntervalDomainValue()));
+		mExpressionEvaluator
+		        .addEvaluator(new IntervalLogicalSingletonValueExpressionEvaluator(new IntervalDomainValue()));
 	}
 
 }

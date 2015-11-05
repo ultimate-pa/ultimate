@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.EvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluatorFactory;
@@ -47,7 +48,8 @@ public class IntervalLogicalEvaluatorFactory implements
 	private final Logger mLogger;
 	private final IntervalStateConverter<CodeBlock, IBoogieVar> mStateConverter;
 
-	public IntervalLogicalEvaluatorFactory(Logger logger, IntervalStateConverter<CodeBlock, IBoogieVar> stateConverter) {
+	public IntervalLogicalEvaluatorFactory(Logger logger,
+	        IntervalStateConverter<CodeBlock, IBoogieVar> stateConverter) {
 		mLogger = logger;
 		mStateConverter = stateConverter;
 	}
@@ -89,7 +91,7 @@ public class IntervalLogicalEvaluatorFactory implements
 
 	@Override
 	public IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> createSingletonLogicalValueExpressionEvaluator(
-	        boolean value) {
+	        BooleanValue value) {
 		return new IntervalLogicalSingletonBooleanExpressionEvaluator(value);
 	}
 

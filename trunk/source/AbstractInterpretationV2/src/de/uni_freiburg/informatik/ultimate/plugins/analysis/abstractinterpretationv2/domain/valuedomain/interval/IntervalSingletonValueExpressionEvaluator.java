@@ -44,19 +44,25 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class IntervalSingletonValueExpressionEvaluator implements
-        IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> {
+public class IntervalSingletonValueExpressionEvaluator
+        implements IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> {
 
-	private final EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar> mValue;
+	private final IntervalDomainValue mValue;
 
+	/**
+	 * Constructor for a singleton value expression evaluator in the {@link IntervalDomain}.
+	 * 
+	 * @param value
+	 *            The value of the evaluator.
+	 */
 	protected IntervalSingletonValueExpressionEvaluator(IntervalDomainValue value) {
-		mValue = new EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>(value, null);
+		mValue = value;
 	}
 
 	@Override
 	public IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> evaluate(
 	        IAbstractState<CodeBlock, IBoogieVar> currentState) {
-		return mValue;
+		return new EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>(mValue, currentState);
 	}
 
 	@Override

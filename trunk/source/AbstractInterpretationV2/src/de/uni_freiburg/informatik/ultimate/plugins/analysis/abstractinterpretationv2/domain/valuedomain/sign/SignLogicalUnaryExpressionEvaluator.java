@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.ILogicalEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.sign.SignDomainValue.Values;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -44,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class SignLogicalUnaryExpressionEvaluator extends SignUnaryExpressionEvaluator
         implements ILogicalEvaluator<Values, CodeBlock, IBoogieVar> {
 
-	private boolean mBooleanValue;
+	private BooleanValue mBooleanValue;
 
 	private IAbstractState<CodeBlock, IBoogieVar> logicallyInterpret(IAbstractState<CodeBlock, IBoogieVar> currentState) {
 		final ILogicalEvaluator<Values, CodeBlock, IBoogieVar> castedEvaluator = (ILogicalEvaluator<Values, CodeBlock, IBoogieVar>) mSubEvaluator;
@@ -57,15 +58,21 @@ public class SignLogicalUnaryExpressionEvaluator extends SignUnaryExpressionEval
 
 		switch (mOperator) {
 		case LOGICNEG:
-			return !castedEvaluator.booleanValue();
+			return false; // TODO
 		default:
 			throw new UnsupportedOperationException("The operator " + mOperator + " is not yet implemented.");
 		}
 	}
 
 	@Override
-	public boolean booleanValue() {
+	public BooleanValue booleanValue() {
 		return mBooleanValue;
+	}
+
+	@Override
+	public boolean containsBool() {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 }

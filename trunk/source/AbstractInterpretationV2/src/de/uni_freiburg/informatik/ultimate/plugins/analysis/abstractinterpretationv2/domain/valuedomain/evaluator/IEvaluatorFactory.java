@@ -28,6 +28,8 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator;
 
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.BooleanValue;
+
 /**
  * Interface to create IEvaluators for different abstract domains.
  * 
@@ -48,5 +50,5 @@ public interface IEvaluatorFactory<T, ACTION, VARDECL> {
 
 	public IEvaluator<T, ACTION, VARDECL> createSingletonVariableExpressionEvaluator(String variableName);
 	
-	public IEvaluator<T, ACTION, VARDECL> createSingletonLogicalValueExpressionEvaluator(boolean value);
+	public IEvaluator<T, ACTION, VARDECL> createSingletonLogicalValueExpressionEvaluator(BooleanValue value);
 }

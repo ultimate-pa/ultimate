@@ -28,6 +28,8 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator;
 
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.BooleanValue;
+
 /**
  * Extends the IEvaluator by the function computeLogicalResult which is used to return new abstract states based on the
  * logical evaluation of the evaluator.
@@ -43,5 +45,19 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
  */
 public interface ILogicalEvaluator<T, ACTION, VARDECL> extends IEvaluator<T, ACTION, VARDECL> {
 
-	public boolean booleanValue();
+	/**
+	 * @return The boolean value of the logical interpretation of the current expression.
+	 */
+	public BooleanValue booleanValue();
+
+	/**
+	 * States whether somewhere in the evaluator occurs a boolean value. This is needed to determine if the boolean
+	 * value should be used instead of the returned abstract value. Note: This is needed in the handling of logical
+	 * operators in evaluators and is only valid, if there exists 0 or 1 variable identifier in each subtree of the
+	 * evaluator.
+	 * 
+	 * @return <code>true</code> if and only if in the sub-tree is a boolean literal or interpretation present,
+	 *         <code>false</code> otherwise.
+	 */
+	public boolean containsBool();
 }

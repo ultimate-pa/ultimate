@@ -28,10 +28,15 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.interval;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.EvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.ILogicalEvaluator;
@@ -40,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpressionEvaluator implements
         ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> {
 
-	private boolean mBooleanValue;
+	private BooleanValue mBooleanValue;
 
 	protected IntervalLogicalBinaryExpressionEvaluator(Logger logger) {
 		super(logger);
@@ -50,26 +55,189 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 	public IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> evaluate(
 	        IAbstractState<CodeBlock, IBoogieVar> currentState) {
 
-		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> evaluationResult = super.evaluate(
-		        currentState);
+		assert currentState != null;
+
+		for (String var : mLeftSubEvaluator.getVarIdentifiers()) {
+			mVariableSet.add(var);
+		}
+		for (String var : mRightSubEvaluator.getVarIdentifiers()) {
+			mVariableSet.add(var);
+		}
+
+		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> firstResult = mLeftSubEvaluator
+		        .evaluate(currentState);
+		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> secondResult = mRightSubEvaluator
+		        .evaluate(currentState);
+
+		IntervalDomainState returnState = (IntervalDomainState) currentState.copy();
+		IntervalDomainValue returnValue = new IntervalDomainValue();
 
 		ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> logicLeft = (ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar>) mLeftSubEvaluator;
 		ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> logicRight = (ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar>) mRightSubEvaluator;
 
+		boolean setToBottom = false;
+
 		switch (mOperator) {
+		case ARITHPLUS:
+			returnValue = firstResult.getResult().getEvaluatedValue().add(secondResult.getResult().getEvaluatedValue());
+			mBooleanValue = new BooleanValue(false);
+			break;
+		case ARITHMINUS:
+			returnValue = firstResult.getResult().getEvaluatedValue()
+			        .subtract(secondResult.getResult().getEvaluatedValue());
+			mBooleanValue = new BooleanValue(false);
+			break;
+		case ARITHMUL:
+			returnValue = firstResult.getResult().getEvaluatedValue()
+			        .multiply(secondResult.getResult().getEvaluatedValue());
+			mBooleanValue = new BooleanValue(false);
+			break;
 		case LOGICAND:
-			mBooleanValue = logicLeft.booleanValue() && logicRight.booleanValue();
+			mBooleanValue = logicLeft.booleanValue().and(logicRight.booleanValue());
+			if (mBooleanValue.getValue() == Value.FALSE) {
+				setToBottom = true;
+			}
 			break;
 		case LOGICOR:
-			mBooleanValue = logicLeft.booleanValue() || logicRight.booleanValue();
+			mBooleanValue = logicLeft.booleanValue().or(logicRight.booleanValue());
+			if (mBooleanValue.getValue() == Value.FALSE) {
+				setToBottom = true;
+			}
 			break;
 		case LOGICIMPLIES:
-			mBooleanValue = !logicLeft.booleanValue() || logicRight.booleanValue();
+			mBooleanValue = logicLeft.booleanValue().neg().or(logicRight.booleanValue());
+			if (mBooleanValue.getValue() == Value.FALSE) {
+				setToBottom = true;
+			}
 			break;
 		case LOGICIFF:
-			mBooleanValue = (logicLeft.booleanValue() && logicRight.booleanValue())
-			        || (!logicLeft.booleanValue() && !logicRight.booleanValue());
+			mBooleanValue = (logicLeft.booleanValue().and(logicRight.booleanValue())
+			        .or((logicLeft.booleanValue().neg().and(logicRight.booleanValue().neg()))));
+			if (mBooleanValue.getValue() == Value.FALSE) {
+				setToBottom = true;
+			}
+			break;
 		case COMPEQ:
+			if (mLeftSubEvaluator.getVarIdentifiers().size() == 0
+			        && mRightSubEvaluator.getVarIdentifiers().size() == 0) {
+
+				if (logicLeft.containsBool() && logicRight.containsBool()) {
+					mBooleanValue = new BooleanValue(logicLeft.booleanValue().equals(logicRight.booleanValue()));
+				} else {
+					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
+					        .equals(secondResult.getResult().getEvaluatedValue()));
+				}
+
+				if (mBooleanValue.getValue() == Value.FALSE) {
+					setToBottom = true;
+				}
+
+			} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 0
+			        && mRightSubEvaluator.getVarIdentifiers().size() == 1) {
+
+				String varName = null;
+
+				for (String var : mRightSubEvaluator.getVarIdentifiers()) {
+					varName = var;
+				}
+
+				assert varName != null;
+
+				if (logicLeft.containsBool() || logicRight.containsBool()) {
+					mBooleanValue = new BooleanValue(logicLeft.booleanValue().equals(logicRight.booleanValue()));
+				} else {
+					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
+					        .equals(secondResult.getResult().getEvaluatedValue()));
+				}
+
+				if (mBooleanValue.getValue() == Value.FALSE) {
+					setToBottom = true;
+				} else {
+					if (logicLeft.containsBool()) {
+						returnState.setBooleanValue(varName, logicLeft.booleanValue());
+					} else {
+						returnState.setValue(varName, firstResult.getResult().getEvaluatedValue());
+					}
+
+					returnState = (IntervalDomainState) returnState.intersect((IntervalDomainState) currentState);
+				}
+
+			} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 1
+			        && mRightSubEvaluator.getVarIdentifiers().size() == 0) {
+
+				String varName = null;
+
+				for (String var : mLeftSubEvaluator.getVarIdentifiers()) {
+					varName = var;
+				}
+
+				assert varName != null;
+
+				if (logicLeft.containsBool() || logicRight.containsBool()) {
+					mBooleanValue = new BooleanValue(logicLeft.booleanValue().equals(logicRight.booleanValue()));
+				} else {
+					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
+					        .equals(secondResult.getResult().getEvaluatedValue()));
+				}
+
+				if (mBooleanValue.getValue() == Value.FALSE) {
+					setToBottom = true;
+				} else {
+					if (logicRight.containsBool()) {
+						returnState.setBooleanValue(varName, logicRight.booleanValue());
+					} else {
+						returnState.setValue(varName, secondResult.getResult().getEvaluatedValue());
+					}
+
+					returnState = (IntervalDomainState) returnState.intersect((IntervalDomainState) currentState);
+				}
+
+			} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 1
+			        && mRightSubEvaluator.getVarIdentifiers().size() == 1) {
+
+				String leftVar = null;
+				String rightVar = null;
+
+				for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
+					leftVar = var;
+				}
+				for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
+					rightVar = var;
+				}
+
+				assert leftVar != null;
+				assert rightVar != null;
+
+				if (logicLeft.containsBool() || logicRight.containsBool()) {
+					mBooleanValue = new BooleanValue(logicLeft.booleanValue().equals(logicRight.booleanValue()));
+				} else {
+					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
+					        .equals(secondResult.getResult().getEvaluatedValue()));
+				}
+
+				if (mBooleanValue.getValue() == Value.FALSE) {
+					setToBottom = true;
+				} else {
+					if (logicLeft.containsBool()) {
+						returnState.setBooleanValue(rightVar, logicLeft.booleanValue());
+					} else {
+						returnState.setValue(rightVar, firstResult.getResult().getEvaluatedValue());
+					}
+
+					if (logicRight.containsBool()) {
+						returnState.setBooleanValue(leftVar, logicRight.booleanValue());
+					} else {
+						returnState.setValue(leftVar, secondResult.getResult().getEvaluatedValue());
+					}
+
+					returnState = (IntervalDomainState) returnState.intersect((IntervalDomainState) currentState);
+				}
+
+			} else {
+				mLogger.warn(
+				        "Cannot handle more than one variables in a sub-tree of an expression. Returning current state.");
+			}
+			break;
 		case COMPGEQ:
 		case COMPGT:
 		case COMPLEQ:
@@ -78,14 +246,28 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 		case COMPPO:
 			mLogger.warn("Operator " + mOperator + " not handled.");
 		default:
-			mBooleanValue = false;
+			mBooleanValue = new BooleanValue(false);
+			mLogger.warn(
+			        "Possible loss of precision: cannot handle operator " + mOperator + ". Returning current state.");
+			returnValue = new IntervalDomainValue();
 		}
 
-		return evaluationResult;
+		if (setToBottom) {
+			returnState.setToBottom();
+		}
+
+		return new EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>(returnValue, returnState);
 	}
 
 	@Override
-	public boolean booleanValue() {
+	public BooleanValue booleanValue() {
 		return mBooleanValue;
+	}
+
+	@Override
+	public boolean containsBool() {
+		final ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> logicLeft = (ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar>) mLeftSubEvaluator;
+		final ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> logicRight = (ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar>) mRightSubEvaluator;
+		return logicLeft.containsBool() || logicRight.containsBool();
 	}
 }

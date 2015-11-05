@@ -51,8 +51,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class IntervalUnaryExpressionEvaluator
         implements INAryEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> {
 
-	private final static int BUFFER_MAX = 100;
-
 	protected final Logger mLogger;
 
 	protected IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> mSubEvaluator;
@@ -78,7 +76,6 @@ public class IntervalUnaryExpressionEvaluator
 			        "Possible loss of precision: cannot handle operator " + mOperator + ". Returning current state.");
 			return new EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>(new IntervalDomainValue(),
 			        currentState);
-
 		}
 	}
 
