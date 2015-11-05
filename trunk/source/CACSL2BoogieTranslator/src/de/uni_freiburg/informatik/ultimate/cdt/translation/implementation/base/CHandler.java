@@ -2732,8 +2732,6 @@ public class CHandler implements ICHandler {
 			m_ExpressionTranslation.usualArithmeticConversions(main, loc, rePositive, reNegative);
 		}
 		
-		CastAndConversionHandler.doPrimitiveVsPointerConversions(main, loc, mMemoryHandler, rePositive, reNegative);
-
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>(0);
