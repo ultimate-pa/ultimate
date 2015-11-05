@@ -48,11 +48,13 @@ public class PredicateFactoryForInterpolantConsolidation extends PredicateFactor
 	
 	private Map<IPredicate, Set<IPredicate>> m_LocationsToSetOfPredicates;
 	private Map<IPredicate, AbstractMap.SimpleEntry<IPredicate, IPredicate>> m_IntersectedPredicateToArgumentPredicates;
+	private Map<AbstractMap.SimpleEntry<IPredicate, IPredicate>, IPredicate> m_ArgumentPredicatesToIntersectedPredicate;
 	public PredicateFactoryForInterpolantConsolidation(SmtManager smtManager,
 			TAPreferences taPrefs) {
 		super(smtManager, taPrefs);
 		m_LocationsToSetOfPredicates = new HashMap<IPredicate, Set<IPredicate>>();
 		m_IntersectedPredicateToArgumentPredicates = new HashMap<IPredicate, AbstractMap.SimpleEntry<IPredicate, IPredicate>>();
+		m_ArgumentPredicatesToIntersectedPredicate = new HashMap<AbstractMap.SimpleEntry<IPredicate, IPredicate>, IPredicate>();
 	}
 
 	public Map<IPredicate, Set<IPredicate>> getLocationsToSetOfPredicates() {
@@ -71,6 +73,11 @@ public class PredicateFactoryForInterpolantConsolidation extends PredicateFactor
 		}
 	}
 	
+	public IPredicate getIntersectedPredicate(IPredicate argumentPredicate1, IPredicate argumentPredicate2) {
+		AbstractMap.SimpleEntry<IPredicate, IPredicate> predicateArguments = new AbstractMap.SimpleEntry<IPredicate, IPredicate>(argumentPredicate1, argumentPredicate2);
+		return m_ArgumentPredicatesToIntersectedPredicate.get(predicateArguments);
+	}
+	
 	@Override
 	public IPredicate intersection(IPredicate p1, IPredicate p2) {
 		// 1. Do the intersection
@@ -86,7 +93,7 @@ public class PredicateFactoryForInterpolantConsolidation extends PredicateFactor
 		}
 		AbstractMap.SimpleEntry<IPredicate, IPredicate> predicateArguments = new AbstractMap.SimpleEntry<IPredicate, IPredicate>(p1, p2);
 		m_IntersectedPredicateToArgumentPredicates.put(result, predicateArguments);
-		
+		m_ArgumentPredicatesToIntersectedPredicate.put(predicateArguments, result);
 		
 		// 2. Store the predicates in the map
 		if (m_LocationsToSetOfPredicates.containsKey(p1)) {

@@ -198,8 +198,22 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			// 5. Check if difference is empty
 			IsEmpty<CodeBlock, IPredicate> empty = new IsEmpty<CodeBlock, IPredicate>(m_Services, diff.getResult());
 			if (!empty.getResult()) {
-
-				Set<IPredicate> badStates = getDiffAutomatonBadStates(diff.getResult());
+				Collection<IPredicate> pathautomatonFinalStates = pathprogramautomaton.getFinalStates();
+				if (pathautomatonFinalStates.size() > 1) {
+					throw new AssertionError("path automaton has more than 1 final state");
+				}
+				Collection<IPredicate> interpolantautomatonFinalStates = interpolantAutomaton.getFinalStates();
+				if (interpolantautomatonFinalStates.size() > 1) {
+					throw new AssertionError("interpolant automaton has more than 1 final state");
+				}
+				IPredicate[] pathautomatonFinalState = pathautomatonFinalStates.toArray(new IPredicate[1]);
+				IPredicate[] interpolantautomatonFinalState = interpolantautomatonFinalStates.toArray(new IPredicate[1]);
+				
+				IPredicate specialState = pfconsol.getIntersectedPredicate(pathautomatonFinalState[0], interpolantautomatonFinalState[0]);
+				Set<IPredicate> goodStates = getDiffAutomatonGoodStates(diff.getResult(), specialState);
+				Set<IPredicate> badStates = diff.getResult().getStates();
+				badStates.removeAll(goodStates); // Bad states are the result of the set-difference of all states and the good states.
+				// Delete bad predicates from consolidation
 				pfconsol.removeBadPredicates(badStates);
 				if (!useConsolidationInNonEmptyCase) {
 					m_ConsolidatedInterpolants = m_InterpolatingTraceChecker.getInterpolants();
@@ -245,13 +259,27 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	
 	}
 	
+	private Set<IPredicate> getDiffAutomatonGoodStates(INestedWordAutomaton<CodeBlock, IPredicate> diffAutomaton, IPredicate specialState) {
+		Set<IPredicate> goodStates = new HashSet<IPredicate>();
+		LinkedList<IPredicate> statesToVisit = new LinkedList<IPredicate>();
+		goodStates.add(specialState);
+		statesToVisit.add(specialState);
+		
+		while(!statesToVisit.isEmpty()) {
+			IPredicate currentState = statesToVisit.removeFirst();
+			Set<IPredicate> predecessors = getPredecessorsOfState(diffAutomaton, currentState);
+			goodStates.addAll(predecessors);
+			for (IPredicate p : predecessors) {
+				statesToVisit.addLast(p);
+			}
+		}
+		return goodStates;
+	}
 	
 	private Set<IPredicate> getDiffAutomatonBadStates(INestedWordAutomaton<CodeBlock, IPredicate> diffAutomaton) {
 		LinkedList<IPredicate> successors = new LinkedList<IPredicate>();
 		Set<IPredicate> badStates = new HashSet<IPredicate>();
-		Set<IPredicate> allSuccessors = new HashSet<IPredicate>();
 		successors.addAll(diffAutomaton.getFinalStates());
-		allSuccessors.addAll(diffAutomaton.getFinalStates());
 		badStates.addAll(diffAutomaton.getFinalStates());
 		
 		while(!successors.isEmpty()) {
@@ -260,10 +288,9 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			for (IPredicate p : predecessors) {
 				if (!diffAutomaton.isInitial(p) && !p.equals(currentState)) {
 					Set<IPredicate> successorsOfP = getSuccessors(diffAutomaton, p);
-					if (allSuccessors.containsAll(successorsOfP)) {
+					if (badStates.containsAll(successorsOfP)) {
 						badStates.add(p);
 						successors.addLast(p);
-						allSuccessors.add(p);
 					}
 				}
 			}
