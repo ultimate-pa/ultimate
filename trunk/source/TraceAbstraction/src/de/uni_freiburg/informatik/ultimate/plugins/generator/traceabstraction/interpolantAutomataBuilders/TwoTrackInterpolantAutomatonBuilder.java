@@ -124,6 +124,9 @@ public class TwoTrackInterpolantAutomatonBuilder {
 			if (m_TotalTransitions) {
 				addTotalTransitionsNaively(nwa);
 			}
+		} else {
+			assert m_NestedWord.length() == 1;
+			nwa.addInternalTransition(m_Precondition, m_NestedWord.getSymbol(0), m_Postcondition);
 		}
 		return nwa;
 	}
