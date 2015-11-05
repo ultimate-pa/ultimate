@@ -65,8 +65,8 @@ public class AffineRelation {
 	
 	public enum TrivialityStatus { EQUIVALENT_TO_TRUE, EQUIVALENT_TO_FALSE, NONTRIVIAL };
 	
-	public AffineRelation(Term term) throws NotAffineException {
-		this(term, TransformInequality.NO_TRANFORMATION);
+	public AffineRelation(Script script, Term term) throws NotAffineException {
+		this(script, term, TransformInequality.NO_TRANFORMATION);
 	}
 
 	/**
@@ -76,7 +76,7 @@ public class AffineRelation {
 	 * inequalities and vice versa
 	 * @throws NotAffineException Thrown if Term is not affine.
 	 */
-	public AffineRelation(Term term, TransformInequality transformInequality) throws NotAffineException {
+	public AffineRelation(Script script, Term term, TransformInequality transformInequality) throws NotAffineException {
 		m_OriginalTerm = term;
 		BinaryNumericRelation bnr = null;
 		try {
@@ -87,8 +87,8 @@ public class AffineRelation {
 		
 		Term lhs = bnr.getLhs();
 		Term rhs = bnr.getRhs();
-		AffineTerm affineLhs = (AffineTerm) (new AffineTermTransformer()).transform(lhs);
-		AffineTerm affineRhs = (AffineTerm) (new AffineTermTransformer()).transform(rhs);
+		AffineTerm affineLhs = (AffineTerm) (new AffineTermTransformer(script)).transform(lhs);
+		AffineTerm affineRhs = (AffineTerm) (new AffineTermTransformer(script)).transform(rhs);
 		AffineTerm difference;
 		if (affineLhs.isErrorTerm() || affineRhs.isErrorTerm()) {
 			throw new NotAffineException("Relation is not affine");

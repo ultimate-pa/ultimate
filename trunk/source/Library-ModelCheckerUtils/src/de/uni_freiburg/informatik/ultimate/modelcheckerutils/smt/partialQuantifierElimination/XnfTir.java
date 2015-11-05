@@ -147,7 +147,7 @@ public class XnfTir extends XnfPartialQuantifierElimination {
 					} else {
 						throw new AssertionError("unknown quantifier");
 					}
-					 rel = new AffineRelation(term, transform);
+					 rel = new AffineRelation(m_Script, term, transform);
 				} catch (NotAffineException e) {
 					// no chance to eliminate the variable
 					return null;
@@ -267,7 +267,7 @@ public class XnfTir extends XnfPartialQuantifierElimination {
 		Term term = m_Script.term(symbol, lhs, rhs);
 		AffineRelation rel;
 		try {
-			rel = new AffineRelation(term);
+			rel = new AffineRelation(m_Script, term);
 		} catch (NotAffineException e) {
 			throw new AssertionError("should be affine");
 		}
@@ -291,7 +291,7 @@ public class XnfTir extends XnfPartialQuantifierElimination {
 		Term term = m_Script.term(symbol, lowerBound.getTerm(), upperBound.getTerm());
 		AffineRelation rel;
 		try {
-			rel = new AffineRelation(term);
+			rel = new AffineRelation(m_Script, term);
 		} catch (NotAffineException e) {
 			throw new AssertionError("should be affine");
 		}

@@ -69,7 +69,7 @@ public class AffineSubtermNormalizer extends TermTransformer {
 		if (isBinaryNumericRelation(term)) {
 			AffineRelation affRel = null;
 			try {
-				affRel = new AffineRelation(term);
+				affRel = new AffineRelation(m_Script, term);
 			} catch (NotAffineException e) {
 				setResult(term);
 				return;

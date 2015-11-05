@@ -45,18 +45,20 @@ import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
-import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
+import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTerm;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 public class SmtUtils {
@@ -598,7 +600,7 @@ public class SmtUtils {
 			break;
 		case "mod":
 			if (params.length != 2) {
-				throw new IllegalArgumentException("no div");
+				throw new IllegalArgumentException("no mod");
 			} else {
 				result = mod(script, params[0], params[1]);
 			}
@@ -633,23 +635,46 @@ public class SmtUtils {
 	/**
 	 * Returns a possibly simplified version of the Term (mod dividend divisor).
 	 * If dividend and divisor are both literals the returned Term is a literal 
-	 * which is equivalent to the result of the operation
+	 * which is equivalent to the result of the operation.
+	 * If only the divisor is a literal we apply modulo to all coefficients of
+	 * the dividend (helpful simplification in case where coefficient becomes zero).
 	 */
 	public static Term mod(Script script, Term divident, Term divisor) {
-		//FIXME: implement this
-//		if ((divident instanceof ConstantTerm) &&
-//				divident.getSort().isNumericSort() &&
-//				(divisor instanceof ConstantTerm) &&
-//				divisor.getSort().isNumericSort()) {
-//			final Rational dividentAsRational = convertConstantTermToRational((ConstantTerm) divident);
-//			final Rational divisorAsRational = convertConstantTermToRational((ConstantTerm) divident);
-//			Rational modAsRational = 
-//			return quotientAsRational.toTerm(divident.getSort());
-//		} else {
+		final AffineTerm affineDivident = (AffineTerm) (new AffineTermTransformer(script)).transform(divident);
+		final AffineTerm affineDivisor = (AffineTerm) (new AffineTermTransformer(script)).transform(divisor);
+		if (affineDivident.isErrorTerm() || affineDivisor.isErrorTerm()) {
 			return script.term("mod", divident, divisor);
-//		}
+		}
+		if (affineDivisor.isConstant()) {
+			BigInteger bigIntDivisor = toInt(affineDivisor.getConstant());
+			if (affineDivident.isConstant()) {
+				BigInteger bigIntDivident = toInt(affineDivisor.getConstant());
+				BigInteger modulus = bigIntDivisor.mod(bigIntDivident);
+				return script.numeral(modulus);
+			} else {
+				AffineTerm moduloApplied = AffineTerm.applyModuloToAllCoefficients(
+						script, affineDivident, bigIntDivisor);
+				return moduloApplied.toTerm(script);
+			}
+		} else {
+			return script.term("mod", affineDivident.toTerm(script), affineDivisor.toTerm(script));
+		}
 	}
-
+	
+	public static BigInteger toInt(Rational integralRational) {
+		if (!integralRational.isIntegral()) {
+			throw new IllegalArgumentException("divident has to be integral");
+		}
+		if (!integralRational.denominator().equals(BigInteger.ONE)) {
+			throw new IllegalArgumentException("denominator has to be zero");
+		}
+		return integralRational.numerator();
+	}
+	
+	public static Rational toRational(BigInteger bigInt) {
+		return Rational.valueOf(bigInt, BigInteger.ONE);
+	}
+	
 	/**
 	 * Check if {@link Term} which may contain free {@link TermVariable}s is
 	 * satisfiable with respect to the current assertion stack of 
