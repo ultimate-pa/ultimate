@@ -210,7 +210,7 @@ public class InitializationHandler {
 			lrVal = new RValue(rhs, lCType);
 		} else if (lCType instanceof CPointer) {
 			if (initializer == null) {
-				rhs = new IdentifierExpression(loc, SFO.NULL);
+				rhs = mMemoryHandler.constructNullPointer(loc);
 			} else {
 				CType initializerUnderlyingType = initializer.lrVal.getCType().getUnderlyingType();
 				if (initializerUnderlyingType instanceof CPointer
@@ -359,7 +359,7 @@ public class InitializationHandler {
 			}
 		} else if (lCType instanceof CPointer) {
 			if (initializer == null) {
-				rhs = new IdentifierExpression(loc, SFO.NULL);
+				rhs = mMemoryHandler.constructNullPointer(loc);
 			} else {
 				CType initializerUnderlyingType = initializer.lrVal.getCType().getUnderlyingType();
 				if (initializerUnderlyingType instanceof CPointer
@@ -369,7 +369,7 @@ public class InitializationHandler {
 						&& ((CPrimitive) initializerUnderlyingType).getGeneralType() == GENERALPRIMITIVE.INTTYPE){
 					BigInteger offsetValue = mExpressionTranslation.extractIntegerValue((RValue) initializer.lrVal);
 					if (offsetValue.equals(BigInteger.ZERO)) {
-						rhs = new IdentifierExpression(loc, SFO.NULL);
+						rhs = mMemoryHandler.constructNullPointer(loc);
 					} else {
 						Expression base = mExpressionTranslation.constructLiteralForIntegerType(
 								loc, mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);

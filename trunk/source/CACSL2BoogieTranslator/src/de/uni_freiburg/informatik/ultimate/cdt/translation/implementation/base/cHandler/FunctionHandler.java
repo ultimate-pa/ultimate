@@ -426,7 +426,7 @@ public class FunctionHandler {
 				if (functionResultType instanceof CPointer && exprResult.lrVal.getCType() instanceof CPrimitive
 						&& exprResult.lrVal.getValue() instanceof IntegerLiteral
 						&& ((IntegerLiteral) exprResult.lrVal.getValue()).getValue().equals("0")) {
-					exprResult.lrVal = new RValue(new IdentifierExpression(loc, SFO.NULL), functionResultType);
+					exprResult.lrVal = new RValue(memoryHandler.constructNullPointer(loc), functionResultType);
 				}
 			}
 

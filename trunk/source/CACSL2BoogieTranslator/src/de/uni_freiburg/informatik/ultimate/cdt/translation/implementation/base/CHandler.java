@@ -972,7 +972,7 @@ public class CHandler implements ICHandler {
 
 		//deal with builtin constants
 		if (cId.equals("NULL")) {
-			return new ExpressionResult(new RValue(new IdentifierExpression(loc, SFO.NULL), 
+			return new ExpressionResult(new RValue(mMemoryHandler.constructNullPointer(loc), 
 					new CPointer(new CPrimitive(PRIMITIVE.VOID))));
 		} else if (node.getName().toString().equals("__func__")){
 			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
