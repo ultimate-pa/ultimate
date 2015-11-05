@@ -104,7 +104,6 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 			 //single files 
 			 "examples/programs/regression/bpl/interprocedural/BugHoareAnnotation2.bpl",
 			 "examples/programs/regression/bpl/interprocedural/BugHoareAnnotation.bpl",
-			 "examples/programs/regression/c/ShortCircuit-SideEffect-DoStatement-Unsafe.c",
 			 "examples/svcomp/loops/n.c40_true-unreach-call.c",
 			 "examples/svcomp/loops/s3_false-unreach-call.i",
 			 "examples/svcomp/loops/nec40_true-unreach-call.i",
@@ -114,16 +113,13 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 			 
 			 //constructed type
 			 "examples/programs/regression/bpl/Typedef-safe.bpl",
-			 
-			 //value unknown
-			 "examples/programs/regression/c/ShortCircuit-SideEffect-DoStatement-Safe.c",
 	};
 
 	// @formatter:on
 
 	@Override
 	protected long getTimeout() {
-		return 10 * 1000  ;
+		return 10 * 1000 * 1000  ;
 	}
 
 	@Override
