@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 public class IntegerTranslation extends AExpressionTranslation {
 
 	private UNSIGNED_TREATMENT m_UnsignedTreatment;
-	private boolean m_OverapproximateIntPointerConversion;
+	private final boolean m_OverapproximateIntPointerConversion = true;
 
 	public IntegerTranslation(TypeSizes m_TypeSizeConstants, ITypeHandler typeHandler, UNSIGNED_TREATMENT unsignedTreatment) {
 		super(m_TypeSizeConstants, typeHandler);
