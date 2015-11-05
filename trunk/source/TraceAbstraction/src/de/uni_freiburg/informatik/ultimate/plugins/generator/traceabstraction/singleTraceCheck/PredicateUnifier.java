@@ -684,6 +684,9 @@ public class PredicateUnifier {
 					m_ExpliedPredicates.put(other, explies);
 				}
 				if (implies == Validity.VALID && explies == Validity.VALID) {
+					if (m_DeprecatedPredicates.containsKey(other)) {
+						return m_DeprecatedPredicates.get(other);
+					}
 					boolean otherContainsQuantifiers = 
 							(new ContainsQuantifier()).containsQuantifier(other.getFormula());
 					if (!otherContainsQuantifiers || 
