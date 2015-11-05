@@ -1,4 +1,4 @@
-//#Unsafe
+//#Safe
 
 int main() {
 
@@ -14,7 +14,7 @@ int main() {
 	if (b) {
 		i--;
 	}
-	
-	__VERIFIER_assert( a == b );
+
+	__VERIFIER_assert( a != b );
 	return 0;
 }

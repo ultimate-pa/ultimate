@@ -57,7 +57,7 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 //			new Triple<>("AbstractInterpretationMk2C.xml", ALL_C, "ai/AI2_INT.epf"),
 //			new Triple<>("AbstractInterpretationMk2.xml", BPL, "ai/AI2_INT.epf"),
 			
-			new Triple<>("AbstractInterpretationMk2CInline.xml", ALL_C, "ai/AI2_PLT.epf"),
+//			new Triple<>("AbstractInterpretationMk2CInline.xml", ALL_C, "ai/AI2_PLT.epf"),
 //			new Triple<>("AbstractInterpretationMk2C.xml", ALL_C, "ai/AI2_PLT.epf"),
 //			new Triple<>("AbstractInterpretationMk2.xml", BPL, "ai/AI2_PLT.epf"),
 			
@@ -65,7 +65,7 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 //			new Triple<>("AbstractInterpretationMk2C.xml", ".c", "ai/AI2_CMP.epf"),
 //			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_CMP.epf"),
 
-//			new Triple<>("AbstractInterpretationv2CInline.xml", ALL_C, "ai/AIv2_INT.epf"),
+			new Triple<>("AbstractInterpretationv2CInline.xml", ALL_C, "ai/AIv2_INT.epf"),
 //			new Triple<>("AbstractInterpretationv2C.xml", ALL_C, "ai/AIv2_INT.epf"),
 //			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/AIv2_INT.epf"),
 
@@ -88,7 +88,7 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 //			// "examples/programs/recursivePrograms",
 //			
 //			 /* SV-COMP repo */
-			"examples/svcomp/loops/", 
+//			"examples/svcomp/loops/", 
 //			// "examples/svcomp/loopsSelection/",
 //			// "examples/svcomp/eca/", 
 //			// "examples/svcomp/ecaSelection/",
@@ -114,13 +114,14 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 //			 //constructed type
 //			 "examples/programs/regression/bpl/Typedef-safe.bpl",
 			"examples/programs/abstractInterpretation/boolean.c",
+			"examples/programs/abstractInterpretation/boolean-safe.c",
 	};
 
 	// @formatter:on
 
 	@Override
 	protected long getTimeout() {
-		return 10 * 1000;
+		return 10 * 1000 * 100;
 	}
 
 	@Override
