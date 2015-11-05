@@ -57,7 +57,7 @@ public class IntervalLogicalSingletonVariableExpressionEvaluator extends Interva
 	public IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> evaluate(
 	        IAbstractState<CodeBlock, IBoogieVar> currentState) {
 
-		final IntervalDomainState<CodeBlock, IBoogieVar> concreteState = mStateConverter.getCheckedState(currentState);
+		final IntervalDomainState concreteState = mStateConverter.getCheckedState(currentState);
 		
 		final IBoogieVar type = currentState.getVariableType(mVariableName);
 		if (type.getIType() instanceof PrimitiveType) {

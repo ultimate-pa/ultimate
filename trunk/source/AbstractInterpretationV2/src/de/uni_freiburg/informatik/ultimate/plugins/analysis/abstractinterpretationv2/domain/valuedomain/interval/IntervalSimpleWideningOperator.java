@@ -44,7 +44,7 @@ public class IntervalSimpleWideningOperator implements IAbstractStateBinaryOpera
 	@Override
 	public IAbstractState<CodeBlock, IBoogieVar> apply(IAbstractState<CodeBlock, IBoogieVar> first,
 	        IAbstractState<CodeBlock, IBoogieVar> second) {
-		return new IntervalDomainState<CodeBlock, IBoogieVar>();
+		return new IntervalDomainState();
 	}
 
 }

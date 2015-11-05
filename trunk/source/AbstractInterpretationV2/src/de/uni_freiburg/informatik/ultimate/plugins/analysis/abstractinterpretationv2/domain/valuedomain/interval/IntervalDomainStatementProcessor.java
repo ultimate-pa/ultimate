@@ -74,8 +74,8 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	private final IntervalStateConverter<CodeBlock, IBoogieVar> mStateConverter;
 	private final BoogieSymbolTable mSymbolTable;
 
-	private IntervalDomainState<CodeBlock, IBoogieVar> mOldState;
-	private IntervalDomainState<CodeBlock, IBoogieVar> mNewState;
+	private IntervalDomainState mOldState;
+	private IntervalDomainState mNewState;
 
 	IEvaluatorFactory<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> mEvaluatorFactory;
 	ExpressionEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> mExpressionEvaluator;
@@ -96,14 +96,14 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 		mLhsVariable = null;
 	}
 
-	public IntervalDomainState<CodeBlock, IBoogieVar> process(IntervalDomainState<CodeBlock, IBoogieVar> oldState,
+	public IntervalDomainState process(IntervalDomainState oldState,
 	        Statement statement) {
 
 		assert oldState != null;
 		assert statement != null;
 
 		mOldState = oldState;
-		mNewState = (IntervalDomainState<CodeBlock, IBoogieVar>) mOldState.copy();
+		mNewState = (IntervalDomainState) mOldState.copy();
 
 		mLhsVariable = null;
 
@@ -214,7 +214,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> evaluationResult = mExpressionEvaluator
 		        .getRootEvaluator().evaluate(mOldState);
 
-		mNewState = (IntervalDomainState<CodeBlock, IBoogieVar>) evaluationResult.getResult().getEvaluatedState()
+		mNewState = (IntervalDomainState) evaluationResult.getResult().getEvaluatedState()
 		        .copy();
 
 	}

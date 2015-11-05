@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class IntervalDomain implements IAbstractDomain<IntervalDomainState<CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> {
+public class IntervalDomain implements IAbstractDomain<IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	private final IntervalStateConverter<CodeBlock, IBoogieVar> mStateConverter;
 	private final BoogieSymbolTable mSymbolTable;
@@ -57,13 +57,13 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState<CodeB
 	public IntervalDomain(Logger logger, BoogieSymbolTable symbolTable) {
 		mLogger = logger;
 		mStateConverter = new IntervalStateConverter<CodeBlock, IBoogieVar>(
-		        new IntervalDomainState<CodeBlock, IBoogieVar>());
+		        new IntervalDomainState());
 		mSymbolTable = symbolTable;
 	}
 
 	@Override
 	public IAbstractState<CodeBlock, IBoogieVar> createFreshState() {
-		return new IntervalDomainState<CodeBlock, IBoogieVar>(mStateConverter, mLogger);
+		return new IntervalDomainState(mStateConverter, mLogger);
 	}
 
 	@Override
@@ -84,7 +84,7 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState<CodeB
 	}
 
 	@Override
-	public Class<IntervalDomainState<CodeBlock, IBoogieVar>> getAbstractStateClass() {
+	public Class<IntervalDomainState> getAbstractStateClass() {
 		return mStateConverter.getAbstractStateClass();
 	}
 

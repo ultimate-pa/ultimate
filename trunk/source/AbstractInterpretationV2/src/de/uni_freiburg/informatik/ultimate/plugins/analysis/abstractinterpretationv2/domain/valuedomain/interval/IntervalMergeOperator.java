@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Map;
 import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 
@@ -56,34 +57,35 @@ public class IntervalMergeOperator<ACTION, VARDECL> implements IAbstractStateBin
 	 * Merges two {@link IntervalState}s, first and second, into one new abstract state. All variables that occur in
 	 * first must also occur in second.
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public IAbstractState<ACTION, VARDECL> apply(IAbstractState<ACTION, VARDECL> first,
-	        IAbstractState<ACTION, VARDECL> second) {
+			IAbstractState<ACTION, VARDECL> second) {
 		assert first != null;
 		assert second != null;
 
-		final IntervalDomainState<ACTION, VARDECL> firstState = mStateConverter.getCheckedState(first);
-		final IntervalDomainState<ACTION, VARDECL> secondState = mStateConverter.getCheckedState(second);
+		final IntervalDomainState firstState = mStateConverter.getCheckedState(first);
+		final IntervalDomainState secondState = mStateConverter.getCheckedState(second);
 
 		if (!firstState.hasSameVariables(secondState)) {
 			throw new UnsupportedOperationException(
-			        "Cannot merge the two states as their sets of variables in the states are disjoint.");
+					"Cannot merge the two states as their sets of variables in the states are disjoint.");
 		}
 
-		final IntervalDomainState<ACTION, VARDECL> newState = (IntervalDomainState<ACTION, VARDECL>) first.copy();
+		final IntervalDomainState newState = (IntervalDomainState) first.copy();
 
-		final Map<String, VARDECL> variables = firstState.getVariables();
+		final Map<String, IBoogieVar> variables = firstState.getVariables();
 		final Map<String, IntervalDomainValue> firstValues = firstState.getValues();
 		final Map<String, IntervalDomainValue> secondValues = secondState.getValues();
 
-		for (final Entry<String, VARDECL> entry : variables.entrySet()) {
+		for (final Entry<String, IBoogieVar> entry : variables.entrySet()) {
 			final IntervalDomainValue value1 = firstValues.get(entry.getKey());
 			final IntervalDomainValue value2 = secondValues.get(entry.getKey());
 
 			newState.setValue(entry.getKey(), computeMergedValue(value1, value2));
 		}
 
-		return newState;
+		return (IAbstractState<ACTION, VARDECL>) newState;
 	}
 
 	/**
@@ -98,7 +100,7 @@ public class IntervalMergeOperator<ACTION, VARDECL> implements IAbstractStateBin
 	private IntervalDomainValue computeMergedValue(IntervalDomainValue value1, IntervalDomainValue value2) {
 		assert value1 != null;
 		assert value2 != null;
-		
+
 		if (value1.equals(value2)) {
 			return value1;
 		}

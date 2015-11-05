@@ -64,7 +64,7 @@ public class IntervalLogicalSingletonBooleanExpressionEvaluator
 		if (mBooleanValue) {
 			returnState = currentState;
 		} else {
-			returnState = new IntervalDomainState<CodeBlock, IBoogieVar>();
+			returnState = new IntervalDomainState();
 			returnState.setToBottom();
 		}
 

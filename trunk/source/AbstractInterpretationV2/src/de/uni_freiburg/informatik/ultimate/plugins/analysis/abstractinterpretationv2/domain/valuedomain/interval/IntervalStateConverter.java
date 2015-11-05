@@ -40,23 +40,23 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <VARDECL>
  */
 public class IntervalStateConverter<ACTION, VARDECL> {
-	private final Class<IntervalDomainState<ACTION, VARDECL>> mStateType;
+	private final Class<IntervalDomainState> mStateType;
 
 	@SuppressWarnings("unchecked")
-	protected IntervalStateConverter(IntervalDomainState<ACTION, VARDECL> sampleState) {
-		mStateType = (Class<IntervalDomainState<ACTION, VARDECL>>) sampleState.getClass();
+	protected IntervalStateConverter(IntervalDomainState sampleState) {
+		mStateType = (Class<IntervalDomainState>) sampleState.getClass();
 	}
 
-	public IntervalDomainState<ACTION, VARDECL> getCheckedState(IAbstractState<ACTION, VARDECL> state) {
+	public IntervalDomainState getCheckedState(IAbstractState<ACTION, VARDECL> state) {
 		if (!(mStateType.isInstance(state))) {
 			throw new IllegalArgumentException(
 			        "The interval domain can only process IntervalDomainState types as abstract states.");
 		}
 
-		return (IntervalDomainState<ACTION, VARDECL>) state;
+		return (IntervalDomainState) state;
 	}
 
-	protected Class<IntervalDomainState<ACTION, VARDECL>> getAbstractStateClass() {
+	protected Class<IntervalDomainState> getAbstractStateClass() {
 		return mStateType;
 	}
 }

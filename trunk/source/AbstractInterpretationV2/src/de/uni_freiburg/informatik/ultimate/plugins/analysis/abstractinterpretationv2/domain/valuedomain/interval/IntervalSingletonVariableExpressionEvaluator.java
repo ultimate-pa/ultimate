@@ -71,7 +71,7 @@ public class IntervalSingletonVariableExpressionEvaluator
 	public IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> evaluate(
 			IAbstractState<CodeBlock, IBoogieVar> currentState) {
 
-		final IntervalDomainState<CodeBlock, IBoogieVar> concreteState = mStateConverter.getCheckedState(currentState);
+		final IntervalDomainState concreteState = mStateConverter.getCheckedState(currentState);
 
 		final IntervalDomainValue val = concreteState.getValues().get(mVariableName);
 		assert val != null : "The variable with name " + mVariableName

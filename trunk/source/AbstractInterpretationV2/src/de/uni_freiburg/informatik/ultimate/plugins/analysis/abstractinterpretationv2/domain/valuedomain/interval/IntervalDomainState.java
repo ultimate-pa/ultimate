@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluationResult;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  * Implementation of an abstract state of the {@link IntervalDomain}.
@@ -50,18 +51,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  * @param <T>
  *            The type of the intervals. May be any Java-defined {@link Number}.
- * @param <ACTION>
+ * @param <CodeBlock>
  *            Any action type.
- * @param <VARDECL>
+ * @param <IBoogieVar>
  *            Any variable declaration.
  */
-public class IntervalDomainState<ACTION, VARDECL>
-        implements IAbstractState<ACTION, VARDECL>, IEvaluationResult<IntervalDomainState<ACTION, VARDECL>> {
+public class IntervalDomainState
+		implements IAbstractState<CodeBlock, IBoogieVar>, IEvaluationResult<IntervalDomainState> {
 
 	private static int sId;
 	private final int mId;
 
-	private final Map<String, VARDECL> mVariablesMap;
+	private final Map<String, IBoogieVar> mVariablesMap;
 	private final Map<String, IntervalDomainValue> mValuesMap;
 	private final Map<String, Boolean> mBooleanValuesMap;
 
@@ -69,15 +70,15 @@ public class IntervalDomainState<ACTION, VARDECL>
 
 	private boolean mIsFixpoint;
 
-	private IntervalStateConverter<ACTION, VARDECL> mStateConverter;
+	private IntervalStateConverter<CodeBlock, IBoogieVar> mStateConverter;
 
 	protected IntervalDomainState() {
 		this(null, null);
 	}
 
-	protected IntervalDomainState(IntervalStateConverter<ACTION, VARDECL> stateConverter, Logger logger) {
+	protected IntervalDomainState(IntervalStateConverter<CodeBlock, IBoogieVar> stateConverter, Logger logger) {
 		mStateConverter = stateConverter;
-		mVariablesMap = new HashMap<String, VARDECL>();
+		mVariablesMap = new HashMap<String, IBoogieVar>();
 		mValuesMap = new HashMap<String, IntervalDomainValue>();
 		mBooleanValuesMap = new HashMap<String, Boolean>();
 		mIsFixpoint = false;
@@ -86,11 +87,11 @@ public class IntervalDomainState<ACTION, VARDECL>
 		mLogger = logger;
 	}
 
-	protected IntervalDomainState(IntervalStateConverter<ACTION, VARDECL> stateConverter, Logger logger,
-	        Map<String, VARDECL> variablesMap, Map<String, IntervalDomainValue> valuesMap,
-	        Map<String, Boolean> booleanValuesMap, boolean isFixpoint) {
+	protected IntervalDomainState(IntervalStateConverter<CodeBlock, IBoogieVar> stateConverter, Logger logger,
+			Map<String, IBoogieVar> variablesMap, Map<String, IntervalDomainValue> valuesMap,
+			Map<String, Boolean> booleanValuesMap, boolean isFixpoint) {
 		mStateConverter = stateConverter;
-		mVariablesMap = new HashMap<String, VARDECL>(variablesMap);
+		mVariablesMap = new HashMap<String, IBoogieVar>(variablesMap);
 		mValuesMap = new HashMap<String, IntervalDomainValue>(valuesMap);
 		mBooleanValuesMap = new HashMap<String, Boolean>(booleanValuesMap);
 		mIsFixpoint = isFixpoint;
@@ -99,12 +100,12 @@ public class IntervalDomainState<ACTION, VARDECL>
 		mLogger = logger;
 	}
 
-	protected void setStateConverter(IntervalStateConverter<ACTION, VARDECL> stateConverter) {
+	protected void setStateConverter(IntervalStateConverter<CodeBlock, IBoogieVar> stateConverter) {
 		mStateConverter = stateConverter;
 	}
 
-	protected Map<String, VARDECL> getVariables() {
-		return new HashMap<String, VARDECL>(mVariablesMap);
+	protected Map<String, IBoogieVar> getVariables() {
+		return new HashMap<String, IBoogieVar>(mVariablesMap);
 	}
 
 	protected Map<String, IntervalDomainValue> getValues() {
@@ -131,125 +132,108 @@ public class IntervalDomainState<ACTION, VARDECL>
 	}
 
 	@Override
-	public IAbstractState<ACTION, VARDECL> addVariable(String name, VARDECL variable) {
+	public IAbstractState<CodeBlock, IBoogieVar> addVariable(String name, IBoogieVar variable) {
 		assert name != null;
 		assert variable != null;
 
-		final Map<String, VARDECL> newVarMap = new HashMap<String, VARDECL>(mVariablesMap);
-		final VARDECL old = newVarMap.put(name, variable);
+		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(mVariablesMap);
+		final IBoogieVar old = newVarMap.put(name, variable);
 
 		if (old != null) {
 			throw new UnsupportedOperationException(
-			        "Variable names must be disjoint. Variable " + name + " is already present.");
+					"Variable names must be disjoint. Variable " + name + " is already present.");
 		}
 
 		final Map<String, IntervalDomainValue> newValMap = new HashMap<String, IntervalDomainValue>(mValuesMap);
 		final Map<String, Boolean> newBooleanValMap = new HashMap<String, Boolean>(mBooleanValuesMap);
 
-		if (variable instanceof IBoogieVar) {
-			final IBoogieVar boogieVar = (IBoogieVar) variable;
+		if (variable.getIType() instanceof PrimitiveType) {
+			final PrimitiveType primitiveType = (PrimitiveType) variable.getIType();
 
-			if (boogieVar.getIType() instanceof PrimitiveType) {
-				final PrimitiveType primitiveType = (PrimitiveType) boogieVar.getIType();
-
-				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-					newBooleanValMap.put(name, false);
-				} else {
-					newValMap.put(name, new IntervalDomainValue());
-				}
-
+			if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
+				newBooleanValMap.put(name, false);
 			} else {
-				mLogger.warn("The IBoogieVar type " + boogieVar.getIType().getClass().toString()
-				        + " is not implemented. Assuming top.");
 				newValMap.put(name, new IntervalDomainValue());
 			}
 		} else {
-			throw new UnsupportedOperationException(
-			        "The type " + variable.getClass().toString() + " for variables is not implemented.");
+			mLogger.warn("The IBoogieVar type " + variable.getIType().getClass().toString()
+					+ " is not implemented. Assuming top.");
+			newValMap.put(name, new IntervalDomainValue());
 		}
 
-		return new IntervalDomainState<ACTION, VARDECL>(mStateConverter, mLogger, newVarMap, newValMap,
-		        newBooleanValMap, mIsFixpoint);
+		return new IntervalDomainState(mStateConverter, mLogger, newVarMap, newValMap, newBooleanValMap, mIsFixpoint);
 	}
 
 	@Override
-	public IAbstractState<ACTION, VARDECL> removeVariable(String name, VARDECL variable) {
+	public IAbstractState<CodeBlock, IBoogieVar> removeVariable(String name, IBoogieVar variable) {
 		assert name != null;
 		assert variable != null;
 
-		final Map<String, VARDECL> newVarMap = new HashMap<String, VARDECL>(mVariablesMap);
+		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(mVariablesMap);
 		newVarMap.remove(name);
 		final Map<String, IntervalDomainValue> newValMap = new HashMap<String, IntervalDomainValue>(mValuesMap);
 		newValMap.remove(name);
 		final Map<String, Boolean> newBooleanValMap = new HashMap<String, Boolean>(mBooleanValuesMap);
 		newBooleanValMap.remove(name);
 
-		return new IntervalDomainState<ACTION, VARDECL>(mStateConverter, mLogger, newVarMap, newValMap,
-		        newBooleanValMap, mIsFixpoint);
+		return new IntervalDomainState(mStateConverter, mLogger, newVarMap, newValMap, newBooleanValMap, mIsFixpoint);
 	}
 
 	@Override
-	public IAbstractState<ACTION, VARDECL> addVariables(Map<String, VARDECL> variables) {
+	public IAbstractState<CodeBlock, IBoogieVar> addVariables(Map<String, IBoogieVar> variables) {
 		assert variables != null;
 		assert !variables.isEmpty();
 
-		final Map<String, VARDECL> newVarMap = new HashMap<String, VARDECL>(mVariablesMap);
+		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(mVariablesMap);
 		final Map<String, IntervalDomainValue> newValMap = new HashMap<String, IntervalDomainValue>(mValuesMap);
 		final Map<String, Boolean> newBooleanValMap = new HashMap<String, Boolean>(mBooleanValuesMap);
-		for (final Entry<String, VARDECL> entry : variables.entrySet()) {
-			final VARDECL old = newVarMap.put(entry.getKey(), entry.getValue());
+		for (final Entry<String, IBoogieVar> entry : variables.entrySet()) {
+			final String id = entry.getKey();
+			final IBoogieVar var = entry.getValue();
+			final IBoogieVar old = newVarMap.put(id, var);
 			if (old != null) {
 				throw new UnsupportedOperationException(
-				        "Variable names must be disjoint. The variable " + entry.getKey() + " is already present.");
+						"Variable names must be disjoint. The variable " + id + " is already present.");
 			}
-			newValMap.put(entry.getKey(), new IntervalDomainValue());
+			newValMap.put(id, new IntervalDomainValue());
 
-			if (entry.getValue() instanceof IBoogieVar) {
-				final IBoogieVar boogieVar = (IBoogieVar) entry.getValue();
+			if (var.getIType() instanceof PrimitiveType) {
+				final PrimitiveType primitiveType = (PrimitiveType) var.getIType();
 
-				if (boogieVar.getIType() instanceof PrimitiveType) {
-					final PrimitiveType primitiveType = (PrimitiveType) boogieVar.getIType();
-
-					if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-						newBooleanValMap.put(entry.getKey(), false);
-					} else {
-						newValMap.put(entry.getKey(), new IntervalDomainValue());
-					}
-
-				} else if (boogieVar.getIType() instanceof ArrayType) {
-					// TODO:
-					// We treat Arrays as normal variables for the time being.
-					newValMap.put(entry.getKey(), new IntervalDomainValue());
+				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
+					newBooleanValMap.put(id, false);
 				} else {
-					throw new UnsupportedOperationException("The IBoogieVar type "
-					        + boogieVar.getIType().getClass().toString() + " is not implemented.");
+					newValMap.put(id, new IntervalDomainValue());
 				}
+
+			} else if (var.getIType() instanceof ArrayType) {
+				// TODO:
+				// We treat Arrays as normal variables for the time being.
+				newValMap.put(id, new IntervalDomainValue());
 			} else {
 				throw new UnsupportedOperationException(
-				        "The type " + entry.getValue().getClass().toString() + " for variables is not implemented.");
+						"The IBoogieVar type " + var.getIType().getClass().toString() + " is not implemented.");
 			}
 		}
 
-		return new IntervalDomainState<ACTION, VARDECL>(mStateConverter, mLogger, newVarMap, newValMap,
-		        newBooleanValMap, mIsFixpoint);
+		return new IntervalDomainState(mStateConverter, mLogger, newVarMap, newValMap, newBooleanValMap, mIsFixpoint);
 	}
 
 	@Override
-	public IAbstractState<ACTION, VARDECL> removeVariables(Map<String, VARDECL> variables) {
+	public IAbstractState<CodeBlock, IBoogieVar> removeVariables(Map<String, IBoogieVar> variables) {
 		assert variables != null;
 		assert !variables.isEmpty();
 
-		final Map<String, VARDECL> newVarMap = new HashMap<String, VARDECL>(mVariablesMap);
+		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(mVariablesMap);
 		final Map<String, IntervalDomainValue> newValMap = new HashMap<String, IntervalDomainValue>(mValuesMap);
 		final Map<String, Boolean> newBooleanValMap = new HashMap<String, Boolean>(mBooleanValuesMap);
-		for (final Entry<String, VARDECL> entry : variables.entrySet()) {
+		for (final Entry<String, IBoogieVar> entry : variables.entrySet()) {
 			newVarMap.remove(entry.getKey());
 			newValMap.remove(entry.getKey());
 			newBooleanValMap.remove(entry.getKey());
 		}
 
-		return new IntervalDomainState<ACTION, VARDECL>(mStateConverter, mLogger, newVarMap, newValMap,
-		        newBooleanValMap, mIsFixpoint);
+		return new IntervalDomainState(mStateConverter, mLogger, newVarMap, newValMap, newBooleanValMap, mIsFixpoint);
 	}
 
 	@Override
@@ -279,9 +263,8 @@ public class IntervalDomainState<ACTION, VARDECL>
 	}
 
 	@Override
-	public IAbstractState<ACTION, VARDECL> setFixpoint(boolean value) {
-		return new IntervalDomainState<ACTION, VARDECL>(mStateConverter, mLogger, mVariablesMap, mValuesMap,
-		        mBooleanValuesMap, value);
+	public IAbstractState<CodeBlock, IBoogieVar> setFixpoint(boolean value) {
+		return new IntervalDomainState(mStateConverter, mLogger, mVariablesMap, mValuesMap, mBooleanValuesMap, value);
 	}
 
 	/**
@@ -293,9 +276,9 @@ public class IntervalDomainState<ACTION, VARDECL>
 	@Override
 	public String toLogString() {
 		final StringBuilder stringBuilder = new StringBuilder();
-		for (final Entry<String, VARDECL> entry : mVariablesMap.entrySet()) {
+		for (final Entry<String, IBoogieVar> entry : mVariablesMap.entrySet()) {
 			stringBuilder.append(entry.getKey()).append(':').append(entry.getValue()).append(" = ")
-			        .append(mValuesMap.get(entry.getKey()).toString()).append("; ");
+					.append(mValuesMap.get(entry.getKey()).toString()).append("; ");
 		}
 		return stringBuilder.toString();
 	}
@@ -306,12 +289,12 @@ public class IntervalDomainState<ACTION, VARDECL>
 	}
 
 	@Override
-	public boolean isEqualTo(IAbstractState<ACTION, VARDECL> other) {
+	public boolean isEqualTo(IAbstractState<CodeBlock, IBoogieVar> other) {
 		if (!hasSameVariables(other)) {
 			return false;
 		}
 
-		final IntervalDomainState<ACTION, VARDECL> comparableOther = mStateConverter.getCheckedState(other);
+		final IntervalDomainState comparableOther = mStateConverter.getCheckedState(other);
 
 		for (final Entry<String, IntervalDomainValue> entry : mValuesMap.entrySet()) {
 			final IntervalDomainValue otherValue = comparableOther.mValuesMap.get(entry.getKey());
@@ -324,14 +307,14 @@ public class IntervalDomainState<ACTION, VARDECL>
 	}
 
 	@Override
-	public IAbstractState<ACTION, VARDECL> copy() {
-		return new IntervalDomainState<ACTION, VARDECL>(mStateConverter, mLogger,
-		        new HashMap<String, VARDECL>(mVariablesMap), new HashMap<String, IntervalDomainValue>(mValuesMap),
-		        new HashMap<String, Boolean>(mBooleanValuesMap), mIsFixpoint);
+	public IAbstractState<CodeBlock, IBoogieVar> copy() {
+		return new IntervalDomainState(mStateConverter, mLogger, new HashMap<String, IBoogieVar>(mVariablesMap),
+				new HashMap<String, IntervalDomainValue>(mValuesMap), new HashMap<String, Boolean>(mBooleanValuesMap),
+				mIsFixpoint);
 	}
 
 	@Override
-	public IntervalDomainState<ACTION, VARDECL> getResult() {
+	public IntervalDomainState getResult() {
 		return this;
 	}
 
@@ -345,18 +328,13 @@ public class IntervalDomainState<ACTION, VARDECL>
 		if (other == null) {
 			return false;
 		}
-
 		if (other == this) {
 			return true;
 		}
-
 		if (this.getClass() != other.getClass()) {
 			return false;
 		}
-
-		@SuppressWarnings("unchecked")
-		final IntervalDomainState<ACTION, VARDECL> comparableOther = (IntervalDomainState<ACTION, VARDECL>) other;
-
+		final IntervalDomainState comparableOther = (IntervalDomainState) other;
 		return isEqualTo(comparableOther);
 	}
 
@@ -367,7 +345,7 @@ public class IntervalDomainState<ACTION, VARDECL>
 	 *            The other state to check for same variables.
 	 * @return <code>true</code> iff the variables are the same, <code>false</code> otherwise.
 	 */
-	protected boolean hasSameVariables(IAbstractState<ACTION, VARDECL> other) {
+	protected boolean hasSameVariables(IAbstractState<CodeBlock, IBoogieVar> other) {
 		if (other == null) {
 			return false;
 		}
@@ -380,13 +358,13 @@ public class IntervalDomainState<ACTION, VARDECL>
 			return false;
 		}
 
-		final IntervalDomainState<ACTION, VARDECL> comparableOther = mStateConverter.getCheckedState(other);
+		final IntervalDomainState comparableOther = mStateConverter.getCheckedState(other);
 		if (comparableOther.mVariablesMap.size() != mVariablesMap.size()) {
 			return false;
 		}
 
-		for (final Entry<String, VARDECL> entry : mVariablesMap.entrySet()) {
-			final VARDECL otherType = comparableOther.mVariablesMap.get(entry.getKey());
+		for (final Entry<String, IBoogieVar> entry : mVariablesMap.entrySet()) {
+			final IBoogieVar otherType = comparableOther.mVariablesMap.get(entry.getKey());
 			if (!entry.getValue().equals(otherType)) {
 				return false;
 			}
@@ -403,12 +381,11 @@ public class IntervalDomainState<ACTION, VARDECL>
 	 *            The other state to intersect with.
 	 * @return A new {@link IAbstractState} that corresponds to the intersection of
 	 */
-	protected IAbstractState<ACTION, VARDECL> intersect(IntervalDomainState<ACTION, VARDECL> other) {
+	protected IAbstractState<CodeBlock, IBoogieVar> intersect(IntervalDomainState other) {
 		assert other != null;
-
 		assert hasSameVariables(other);
 
-		final IntervalDomainState<ACTION, VARDECL> returnState = (IntervalDomainState<ACTION, VARDECL>) copy();
+		final IntervalDomainState returnState = (IntervalDomainState) copy();
 
 		for (Entry<String, IntervalDomainValue> entry : mValuesMap.entrySet()) {
 			returnState.setValue(entry.getKey(), entry.getValue().intersect(other.mValuesMap.get(entry.getKey())));
@@ -416,7 +393,7 @@ public class IntervalDomainState<ACTION, VARDECL>
 
 		for (Entry<String, Boolean> entry : mBooleanValuesMap.entrySet()) {
 			returnState.setBooleanValue(entry.getKey(),
-			        entry.getValue() && other.mBooleanValuesMap.get(entry.getKey()));
+					entry.getValue() && other.mBooleanValuesMap.get(entry.getKey()));
 		}
 
 		return returnState;
@@ -424,6 +401,25 @@ public class IntervalDomainState<ACTION, VARDECL>
 
 	@Override
 	public Term getTerm(Script script, Boogie2SMT bpl2smt) {
+		if (isBottom()) {
+			return script.term("false");
+		}
+
+		// Term acc = script.term("true");
+		// for (final Entry<String, IntervalDomainValue> entry : mValuesMap.entrySet()) {
+		// IBoogieVar boogievar = mVariablesMap.get(entry.getKey());
+		// Term termvar = entry.getKey().getTermVar(bpl2smt);
+		// final Sort sort = termvar.getSort().getRealSort();
+		// if (!sort.getName().equals("Int")) {
+		// //ignore array sorts for now
+		// continue;
+		// }
+		//
+		// Term newterm = entry.getValue().getTerm(script, termvar);
+		// acc = script.term("and", acc, newterm);
+		// }
+		// return acc;
+
 		return script.term("true");
 	}
 
@@ -435,9 +431,9 @@ public class IntervalDomainState<ACTION, VARDECL>
 	}
 
 	@Override
-	public VARDECL getVariableType(String name) {
+	public IBoogieVar getVariableType(String name) {
 		assert name != null;
-		final VARDECL var = mVariablesMap.get(name);
+		final IBoogieVar var = mVariablesMap.get(name);
 		assert var != null : "Unknown variable";
 		return var;
 	}

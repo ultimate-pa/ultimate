@@ -62,9 +62,9 @@ public class IntervalPostOperator implements IAbstractPostOperator<CodeBlock, IB
 
 	@Override
 	public IAbstractState<CodeBlock, IBoogieVar> apply(IAbstractState<CodeBlock, IBoogieVar> oldstate, CodeBlock codeBlock) {
-		final IntervalDomainState<CodeBlock, IBoogieVar> concreteOldState = mStateConverter.getCheckedState(oldstate);
+		final IntervalDomainState concreteOldState = mStateConverter.getCheckedState(oldstate);
 
-		IntervalDomainState<CodeBlock, IBoogieVar> currentState = (IntervalDomainState<CodeBlock, IBoogieVar>) concreteOldState
+		IntervalDomainState currentState = (IntervalDomainState) concreteOldState
 		        .copy();
 
 		final List<Statement> statements = mStatementExtractor.process(codeBlock);
