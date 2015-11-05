@@ -624,9 +624,15 @@ public class SmtUtils {
 				(divisor instanceof ConstantTerm) &&
 				divisor.getSort().isNumericSort()) {
 			Rational dividentAsRational = convertConstantTermToRational((ConstantTerm) dividend);
-			Rational divisorAsRational = convertConstantTermToRational((ConstantTerm) dividend);
+			Rational divisorAsRational = convertConstantTermToRational((ConstantTerm) divisor);
 			Rational quotientAsRational = dividentAsRational.div(divisorAsRational);
-			return quotientAsRational.toTerm(dividend.getSort());
+			Rational result;
+			if (divisorAsRational.isNegative()) {
+				result = quotientAsRational.ceil();
+			} else {
+				result = quotientAsRational.floor();
+			}
+			return result.toTerm(dividend.getSort());
 		} else {
 			return script.term("div", dividend, divisor);
 		}
@@ -648,13 +654,13 @@ public class SmtUtils {
 		if (affineDivisor.isConstant()) {
 			BigInteger bigIntDivisor = toInt(affineDivisor.getConstant());
 			if (affineDivident.isConstant()) {
-				BigInteger bigIntDivident = toInt(affineDivisor.getConstant());
-				BigInteger modulus = bigIntDivisor.mod(bigIntDivident);
+				BigInteger bigIntDivident = toInt(affineDivident.getConstant());
+				BigInteger modulus = bigIntDivident.mod(bigIntDivisor.abs());
 				return script.numeral(modulus);
 			} else {
 				AffineTerm moduloApplied = AffineTerm.applyModuloToAllCoefficients(
 						script, affineDivident, bigIntDivisor);
-				return moduloApplied.toTerm(script);
+				return script.term("mod", moduloApplied.toTerm(script), affineDivisor.toTerm(script));
 			}
 		} else {
 			return script.term("mod", affineDivident.toTerm(script), affineDivisor.toTerm(script));
