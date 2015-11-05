@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 
@@ -343,10 +344,10 @@ public class AffineTerm extends Term {
 		int offset = 0;
 		for (Entry<Term, Rational> entry : map.entrySet()) {
 			terms[offset] = entry.getKey();
-			coefficients[offset] = SmtUtils.toRational(SmtUtils.toInt(entry.getValue()).mod(divident));
+			coefficients[offset] = SmtUtils.toRational(BoogieUtils.euclideanMod(SmtUtils.toInt(entry.getValue()),divident));
 			offset++;
 		}
-		Rational constant = SmtUtils.toRational(SmtUtils.toInt(affineTerm.getConstant()).mod(divident));
+		Rational constant = SmtUtils.toRational(BoogieUtils.euclideanMod(SmtUtils.toInt(affineTerm.getConstant()),divident));
 		return new AffineTerm(affineTerm.getSort(), terms, coefficients, constant );
 	}
 }

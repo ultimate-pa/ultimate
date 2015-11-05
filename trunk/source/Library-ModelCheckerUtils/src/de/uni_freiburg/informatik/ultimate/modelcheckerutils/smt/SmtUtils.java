@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
@@ -655,7 +656,7 @@ public class SmtUtils {
 			BigInteger bigIntDivisor = toInt(affineDivisor.getConstant());
 			if (affineDivident.isConstant()) {
 				BigInteger bigIntDivident = toInt(affineDivident.getConstant());
-				BigInteger modulus = bigIntDivident.mod(bigIntDivisor.abs());
+				BigInteger modulus = BoogieUtils.euclideanMod(bigIntDivident, bigIntDivisor);
 				return script.numeral(modulus);
 			} else {
 				AffineTerm moduloApplied = AffineTerm.applyModuloToAllCoefficients(
