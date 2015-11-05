@@ -1247,8 +1247,14 @@ public class CHandler implements ICHandler {
 				// instead of the address. But we add variables to the
 				// heapVars and hence in the non-prerun mode the input
 				// will be a HeapLValue instead of a LocalLValue.
-				((PRDispatcher) main).moveIdsOnHeap(loc, er.lrVal.getValue());
-				ad = new RValue(er.lrVal.getValue(), new CPointer(er.lrVal.getCType()));
+				Expression expr = er.lrVal.getValue();
+				if (expr instanceof IdentifierExpression) {
+					IdentifierExpression idExpr = (IdentifierExpression) expr;
+					((PRDispatcher) main).moveIdOnHeap(loc, idExpr);
+				} else {
+					((PRDispatcher) main).moveArrayAndStructIdsOnHeap(loc, expr);
+				}
+				ad = new RValue(expr, new CPointer(er.lrVal.getCType()));
 			} else {
 				throw new AssertionError("cannot take address of LocalLValue: this is a on-heap/off-heap bug");
 			}

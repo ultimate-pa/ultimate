@@ -130,6 +130,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieIdExtractor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
@@ -468,7 +469,7 @@ public class PRDispatcher extends Dispatcher {
 	}
 	
 	
-	public void moveIdsOnHeap(ILocation loc, Expression expr) {
+	public void moveArrayAndStructIdsOnHeap(ILocation loc, Expression expr) {
 		BoogieIdExtractor bie = new BoogieIdExtractor();
 		bie.processExpression(expr);
 		for (String id : bie.getIds()) {
@@ -480,5 +481,13 @@ public class PRDispatcher extends Dispatcher {
 				this.getVariablesOnHeap().add(value.getDeclarationNode());
 			}
 		}
+	}
+	
+	public void moveIdOnHeap(ILocation loc, IdentifierExpression idExpr) {
+		String id = idExpr.getIdentifier();
+		SymbolTable st = this.cHandler.getSymbolTable();
+		String cid = st.getCID4BoogieID(id, loc);
+		SymbolTableValue value = st.get(cid, loc);
+		this.getVariablesOnHeap().add(value.getDeclarationNode());
 	}
 }
