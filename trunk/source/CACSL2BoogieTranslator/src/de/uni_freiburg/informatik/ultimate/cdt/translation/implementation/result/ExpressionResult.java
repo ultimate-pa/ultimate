@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieIdExpressionExtractor;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieIdExtractor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
@@ -255,19 +255,7 @@ public class ExpressionResult extends Result {
 				// we are in prerun mode
 				if (lrVal.getCType().getUnderlyingType() instanceof CArray) {
 					// move it on-heap
-					Expression expr = lrVal.getValue();
-					BoogieIdExpressionExtractor biee = new BoogieIdExpressionExtractor();
-					biee.processExpression(expr);
-					for (IdentifierExpression idexpr : biee.getIdExpressions()) {
-						SymbolTable st = main.cHandler.getSymbolTable();
-						String cid = st.getCID4BoogieID(idexpr.getIdentifier(), loc);
-						SymbolTableValue value = st.get(cid, loc);
-						CType type = value.getCVariable().getUnderlyingType();
-						if (type instanceof CArray || type instanceof CStruct) {
-							((PRDispatcher) main).getVariablesOnHeap().add(value.getDeclarationNode());
-						}
-						
-					}
+					((PRDispatcher) main).moveIdsOnHeap(loc, lrVal.getValue());
 				}
 			} else {
 				if (lrVal.getCType().getUnderlyingType() instanceof CArray) {

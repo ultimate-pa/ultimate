@@ -32,27 +32,38 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 
 /**
- * Class that computes all IdentifierExpression contained in a given Expression
+ * Class that computes all IDs of all IdentifierExpression and all
+ * VariableLeftHandSides contained in a given Expression.
  * 
  * @author Matthias Heizmann
  *
  */
-public final class BoogieIdExpressionExtractor extends BoogieTransformer{
+public final class BoogieIdExtractor extends BoogieTransformer {
 
-		private final Set<IdentifierExpression> m_IdExpr = new HashSet<>();
+		private final Set<String> m_Ids = new HashSet<>();
 
 		@Override
 		public Expression processExpression(Expression expr) {
 			if(expr instanceof IdentifierExpression){
-				m_IdExpr.add((IdentifierExpression) expr);
+				m_Ids.add(((IdentifierExpression) expr).getIdentifier());
 			}
 			return super.processExpression(expr);
 		}
 
-		public Set<IdentifierExpression> getIdExpressions() {
-			return m_IdExpr;
+		@Override
+		protected LeftHandSide processLeftHandSide(LeftHandSide lhs) {
+			if (lhs instanceof VariableLHS) {
+				m_Ids.add(((VariableLHS) lhs).getIdentifier());
+			}
+			return super.processLeftHandSide(lhs);
+		}
+
+		public Set<String> getIds() {
+			return m_Ids;
 		}
 	
 }
