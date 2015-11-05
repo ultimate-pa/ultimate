@@ -104,7 +104,6 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 			 //single files 
 			 "examples/programs/regression/bpl/interprocedural/BugHoareAnnotation2.bpl",
 			 "examples/programs/regression/bpl/interprocedural/BugHoareAnnotation.bpl",
-			 "examples/programs/regression/bpl/interprocedural/BugBackwardPredicates05.bpl",
 			 "examples/programs/regression/c/ShortCircuit-SideEffect-DoStatement-Unsafe.c",
 			 "examples/svcomp/loops/n.c40_true-unreach-call.c",
 			 "examples/svcomp/loops/s3_false-unreach-call.i",

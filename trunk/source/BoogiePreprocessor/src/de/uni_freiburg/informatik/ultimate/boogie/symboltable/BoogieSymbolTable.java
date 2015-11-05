@@ -63,9 +63,8 @@ public class BoogieSymbolTable {
 	}
 
 	/**
-	 * Add a procedure or function declaration to the symbol map. The symbol map
-	 * will decide if this is an implementation, procedure, or function and
-	 * store it accordingly.
+	 * Add a procedure or function declaration to the symbol map. The symbol map will decide if this is an
+	 * implementation, procedure, or function and store it accordingly.
 	 * 
 	 * @param symbolName
 	 * @param decl
@@ -207,10 +206,9 @@ public class BoogieSymbolTable {
 	 * Returns a list of declarations for the name of a function or procedure.
 	 * <ul>
 	 * <li>The list is emtpy if the symbol is not in the program</li>
-	 * <li>The list contains one function declaration if the symbol is for a
-	 * function</li>
-	 * <li>For procedures, the list may contain up to two procedure
-	 * declarations: One for the implementation, one for the specification.</li>
+	 * <li>The list contains one function declaration if the symbol is for a function</li>
+	 * <li>For procedures, the list may contain up to two procedure declarations: One for the implementation, one for
+	 * the specification.</li>
 	 * </ul>
 	 * 
 	 * @param symbolname
@@ -238,6 +236,8 @@ public class BoogieSymbolTable {
 		rtr.putAll(getMap(StorageClass.LOCAL, procedureName));
 		rtr.putAll(getMap(StorageClass.IMPLEMENTATION_INPARAM, procedureName));
 		rtr.putAll(getMap(StorageClass.IMPLEMENTATION_OUTPARAM, procedureName));
+		rtr.putAll(getMap(StorageClass.PROC_FUNC_INPARAM, procedureName));
+		rtr.putAll(getMap(StorageClass.PROC_FUNC_OUTPARAM, procedureName));
 		return rtr;
 	}
 
@@ -253,8 +253,8 @@ public class BoogieSymbolTable {
 	}
 
 	public Declaration getDeclaration(IdentifierExpression exp) {
-		return getDeclaration(exp.getIdentifier(), exp.getDeclarationInformation().getStorageClass(), exp
-				.getDeclarationInformation().getProcedure());
+		return getDeclaration(exp.getIdentifier(), exp.getDeclarationInformation().getStorageClass(),
+				exp.getDeclarationInformation().getProcedure());
 	}
 
 	public IType getTypeForVariableSymbol(String symbolname, StorageClass scope, String scopeName) {
@@ -267,11 +267,26 @@ public class BoogieSymbolTable {
 
 	private IType findType(Declaration decl, String symbolname) {
 		if (decl instanceof VariableDeclaration) {
-			for (VarList vl : ((VariableDeclaration) decl).getVariables()) {
-				for (String s : vl.getIdentifiers()) {
-					if (s.equals(symbolname)) {
-						return vl.getType().getBoogieType();
-					}
+			return findType(((VariableDeclaration) decl).getVariables(), symbolname);
+		} else if (decl instanceof Procedure) {
+			final Procedure proc = (Procedure) decl;
+			IType type = findType(proc.getInParams(), symbolname);
+			if (type != null) {
+				return type;
+			}
+			type = findType(proc.getOutParams(), symbolname);
+			if (type != null) {
+				return type;
+			}
+		}
+		return null;
+	}
+
+	private IType findType(VarList[] vlists, String symbolname) {
+		for (final VarList vl : vlists) {
+			for (final String s : vl.getIdentifiers()) {
+				if (s.equals(symbolname)) {
+					return vl.getType().getBoogieType();
 				}
 			}
 		}
@@ -290,8 +305,8 @@ public class BoogieSymbolTable {
 		// global variables
 		Map<String, Declaration> globalsMap = getMap(StorageClass.GLOBAL, null);
 		for (String s : globalsMap.keySet()) {
-			globals.append(" * ").append(s).append(" : ")
-					.append(getTypeForVariableSymbol(s, StorageClass.GLOBAL, null)).append("\n");
+			globals.append(" * ").append(s).append(" : ").append(getTypeForVariableSymbol(s, StorageClass.GLOBAL, null))
+					.append("\n");
 		}
 
 		HashSet<String> functionSymbols = new HashSet<>();
@@ -316,7 +331,8 @@ public class BoogieSymbolTable {
 				} else {
 					Procedure proc = (Procedure) decl;
 					if (isImplementation(proc)) {
-						// implementations.append(" * ").append(functionSymbol).append(" := ").append(decl).append("\n");
+						// implementations.append(" * ").append(functionSymbol).append(" :=
+						// ").append(decl).append("\n");
 						implementations.append(" * ").append(prettyPrintProcedureSignature(decl)).append("\n");
 						appendLocals(implementations, functionSymbol);
 					} else {
@@ -362,13 +378,47 @@ public class BoogieSymbolTable {
 	}
 
 	private void appendLocals(StringBuilder builder, String currentFunctionSymbol) {
-		Collection<String> localSymbols = getSymbolNames(StorageClass.LOCAL, currentFunctionSymbol);
+		appendLocals(StorageClass.PROC_FUNC_INPARAM, builder, currentFunctionSymbol);
+		appendLocals(StorageClass.PROC_FUNC_OUTPARAM, builder, currentFunctionSymbol);
+		appendLocals(StorageClass.IMPLEMENTATION_INPARAM, builder, currentFunctionSymbol);
+		appendLocals(StorageClass.IMPLEMENTATION_OUTPARAM, builder, currentFunctionSymbol);
+		appendLocals(StorageClass.LOCAL, builder, currentFunctionSymbol);
+	}
+
+	private void appendLocals(StorageClass scClass, StringBuilder builder, String currentFunctionSymbol) {
+		final Collection<String> localSymbols = getSymbolNames(scClass, currentFunctionSymbol);
 		if (localSymbols.size() == 0) {
 			return;
 		}
-		for (String symbol : localSymbols) {
-			IType type = getTypeForVariableSymbol(symbol, StorageClass.LOCAL, currentFunctionSymbol);
-			builder.append("  * ").append(symbol).append(" : ").append(type).append("\n");
+		for (final String symbol : localSymbols) {
+			final IType type = getTypeForVariableSymbol(symbol, scClass, currentFunctionSymbol);
+			builder.append("  * ").append(shorten(scClass)).append(" ").append(symbol).append(" : ").append(type)
+					.append("\n");
+		}
+	}
+
+	private String shorten(final StorageClass scClass) {
+		switch (scClass) {
+		case GLOBAL:
+			return "G";
+		case IMPLEMENTATION:
+			return "IMPL";
+		case IMPLEMENTATION_INPARAM:
+			return "I_IN";
+		case IMPLEMENTATION_OUTPARAM:
+			return "I_OUT";
+		case LOCAL:
+			return "LOC";
+		case PROC_FUNC:
+			return "PF";
+		case PROC_FUNC_INPARAM:
+			return "PF_IN";
+		case PROC_FUNC_OUTPARAM:
+			return "PF_OUT";
+		case QUANTIFIED:
+			return "Q";
+		default:
+			return "UNKNOWN";
 		}
 	}
 
@@ -382,37 +432,37 @@ public class BoogieSymbolTable {
 		}
 	}
 
-	private class PrettyPrinter extends BoogieVisitor {
-		private StringBuilder sb;
+	private static final class PrettyPrinter extends BoogieVisitor {
+		private StringBuilder mBuilder;
 
 		public StringBuilder process(Declaration node) {
-			sb = new StringBuilder();
+			mBuilder = new StringBuilder();
 			processDeclaration(node);
 			// replace the superfluous " returns " at the end (from
 			// processVarLists)
-			sb.replace(sb.length() - 9, sb.length(), "");
-			return sb;
+			mBuilder.replace(mBuilder.length() - 9, mBuilder.length(), "");
+			return mBuilder;
 		}
 
 		@Override
 		protected void visit(Procedure decl) {
-			sb.append(decl.getIdentifier());
+			mBuilder.append(decl.getIdentifier());
 		}
 
 		@Override
 		protected void visit(FunctionDeclaration decl) {
-			sb.append(decl.getIdentifier());
+			mBuilder.append(decl.getIdentifier());
 		}
 
 		@Override
 		protected VarList[] processVarLists(VarList[] vls) {
-			sb.append("(");
+			mBuilder.append("(");
 			VarList[] rtr = super.processVarLists(vls);
 			if (vls.length > 0) {
 				// replace the superfluous ", "
-				sb.replace(sb.length() - 2, sb.length(), "");
+				mBuilder.replace(mBuilder.length() - 2, mBuilder.length(), "");
 			}
-			sb.append(") returns ");
+			mBuilder.append(") returns ");
 			return rtr;
 		}
 
@@ -421,7 +471,7 @@ public class BoogieSymbolTable {
 			String[] identifiers = vl.getIdentifiers();
 			if (identifiers.length > 0) {
 				for (String name : identifiers) {
-					sb.append(name).append(" : ").append(vl.getType().getBoogieType()).append(", ");
+					mBuilder.append(name).append(" : ").append(vl.getType().getBoogieType()).append(", ");
 				}
 			}
 			return super.processVarList(vl);
