@@ -1438,7 +1438,8 @@ public class MemoryHandler {
 	}
 	
 	public Expression constructNullPointer(ILocation loc) {
-		return new IdentifierExpression(loc, SFO.NULL);
+//		return new IdentifierExpression(loc, SFO.NULL);
+		return constructPointerForIntegerValues(loc, BigInteger.ZERO, BigInteger.ZERO);
 	}
 	
 	public Expression constructPointerForIntegerValues(ILocation loc, BigInteger baseValue, BigInteger offsetValue) {
