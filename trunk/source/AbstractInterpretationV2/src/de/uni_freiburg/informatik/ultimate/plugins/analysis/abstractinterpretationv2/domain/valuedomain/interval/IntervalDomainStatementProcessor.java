@@ -228,6 +228,8 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 		        .getRootEvaluator().evaluate(mOldState);
 
 		mNewState = (IntervalDomainState) evaluationResult.getResult().getEvaluatedState().copy();
+		
+		
 
 	}
 

@@ -46,13 +46,10 @@ public class Cnf extends Xnf {
 		super(script,services, freshTermVariableConstructor);
 	}
 	
-	
 	@Override
 	protected NnfTransformerHelper getNnfTransformerHelper(IUltimateServiceProvider services) {
 		return new CnfTransformerHelper(services);
 	}
-
-
 
 	protected class CnfTransformerHelper extends XnfTransformerHelper {
 		

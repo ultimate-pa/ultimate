@@ -1,5 +1,4 @@
 /*
- * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
@@ -25,6 +24,7 @@
  * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
 import java.util.ArrayDeque;

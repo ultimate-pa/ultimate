@@ -37,7 +37,11 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
@@ -452,22 +456,38 @@ public class IntervalDomainState
 			return script.term("false");
 		}
 
-		// Term acc = script.term("true");
-		// for (final Entry<String, IntervalDomainValue> entry : mValuesMap.entrySet()) {
-		// IBoogieVar boogievar = mVariablesMap.get(entry.getKey());
-		// Term termvar = entry.getKey().getTermVar(bpl2smt);
-		// final Sort sort = termvar.getSort().getRealSort();
-		// if (!sort.getName().equals("Int")) {
-		// //ignore array sorts for now
-		// continue;
-		// }
-		//
-		// Term newterm = entry.getValue().getTerm(script, termvar);
-		// acc = script.term("and", acc, newterm);
-		// }
-		// return acc;
+		Term acc = script.term("true");
+		for (final Entry<String, IntervalDomainValue> entry : mValuesMap.entrySet()) {
+			final IBoogieVar boogievar = mVariablesMap.get(entry.getKey());
+			final Term var = getTermVar(boogievar);
+			assert var != null : "Error during TermVar creation";
+			final Sort sort = var.getSort().getRealSort();
+			if (!sort.isNumericSort()) {
+				mLogger.warn("Unfinished term transformation: Unsupported sort " + sort + " for variable " + var);
+				continue;
+			}
+			final Term newterm = entry.getValue().getTerm(script, sort, var);
+			acc = Util.and(script, acc, newterm);
+		}
+		for (final Entry<String, Boolean> entry : mBooleanValuesMap.entrySet()) {
+			final IBoogieVar boogievar = mVariablesMap.get(entry.getKey());
+			final Term var = getTermVar(boogievar);
+			assert var != null : "Error during TermVar creation";
+			final Term newterm = script.term("=", var, script.term(entry.getValue().toString()));
+			acc = Util.and(script, acc, newterm);
+		}
+		// TODO: Simplify?
+		return acc;
+	}
 
-		return script.term("true");
+	private Term getTermVar(IBoogieVar var) {
+		assert var != null : "Cannot get TermVariable from null";
+		if (var instanceof BoogieVar) {
+			final TermVariable termvar = ((BoogieVar) var).getTermVariable();
+			assert termvar != null : "There seems to be no termvar for this BoogieVar";
+			return termvar;
+		}
+		return null;
 	}
 
 	@Override

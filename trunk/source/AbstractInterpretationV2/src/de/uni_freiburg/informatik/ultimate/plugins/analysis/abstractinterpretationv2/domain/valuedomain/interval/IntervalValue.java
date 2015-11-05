@@ -30,6 +30,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.math.BigDecimal;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+
 /**
  * A value in the interval domain for abstract interpretation. This value can be of any numbered type or can be
  * infinity.
@@ -179,5 +183,18 @@ public class IntervalValue implements Comparable<IntervalValue> {
 		}
 
 		return mValue.toString();
+	}
+
+	public Term getTerm(final Sort sort, final Script script) {
+		assert !isInfinity() : "Cannot convert infinity to Term";
+		assert sort.isNumericSort() : "Sort has to be numeric";
+		if (sort.getName().equals("Int")) {
+			return script.numeral(mValue.toBigIntegerExact());
+		} else {
+			assert sort.getName()
+					.equals("Real") : "Seems that numeric sort now has something different then Int or Real";
+			// has to be real
+			return script.decimal(mValue);
+		}
 	}
 }

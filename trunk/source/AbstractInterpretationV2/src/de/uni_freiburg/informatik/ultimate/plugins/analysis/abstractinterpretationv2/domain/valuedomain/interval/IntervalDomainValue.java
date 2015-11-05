@@ -30,7 +30,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.math.BigDecimal;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 
 /**
  * Representation of an interval value in the interval domain.
@@ -474,8 +477,34 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		        new IntervalValue(getLower().getValue().negate()));
 	}
 
-	protected Term getTerm() {
-		return null;
+	protected Term getTerm(final Script script, final Sort sort, final Term var) {
+		assert sort.isNumericSort();
+		if (isBottom()) {
+			return script.term("false");
+		} else if (mLower.isInfinity() && mUpper.isInfinity()) {
+			return script.term("true");
+		} else if (mLower.isInfinity()) {
+			final Term value = mUpper.getTerm(sort, script);
+			return script.term("<=", var, value);
+		} else if (mUpper.isInfinity()) {
+			final Term value = mLower.getTerm(sort, script);
+			return script.term(">=", var, value);
+		} else {
+			int cmp = mUpper.compareTo(mLower);
+			if (cmp == 0) {
+				// point-interval
+				final Term value = mLower.getTerm(sort, script);
+				return script.term("=", var, value);
+			} else if (cmp < 0) {
+				// upper less than lower, i.e. empty intervall
+				return script.term("false");
+			} else {
+				// its a normal interval
+				final Term upper = script.term("<=", var, mUpper.getTerm(sort, script));
+				final Term lower = script.term(">=", var, mLower.getTerm(sort, script));
+				return Util.and(script, lower,upper);
+			}
+		}
 	}
 
 	/**

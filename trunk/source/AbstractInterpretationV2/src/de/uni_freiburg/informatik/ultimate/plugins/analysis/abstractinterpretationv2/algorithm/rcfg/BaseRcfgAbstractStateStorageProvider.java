@@ -41,6 +41,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
@@ -178,6 +179,9 @@ public abstract class BaseRcfgAbstractStateStorageProvider
 		final Map<ProgramPoint, Term> rtr = new HashMap<>();
 		final Deque<ProgramPoint> worklist = new ArrayDeque<>();
 		final Set<ProgramPoint> closed = new HashSet<>();
+		final Term constTrue = script.term("true");
+
+		worklist.add((ProgramPoint) initialTransition.getTarget());
 
 		while (!worklist.isEmpty()) {
 			final ProgramPoint current = worklist.remove();
@@ -195,26 +199,25 @@ public abstract class BaseRcfgAbstractStateStorageProvider
 					continue;
 				}
 				final ProgramPoint targetpp = (ProgramPoint) target;
-
-				IAbstractState<CodeBlock, IBoogieVar> states = getCurrentState(succTrans, targetpp);
+				worklist.add(targetpp);
+				
+				final IAbstractState<CodeBlock, IBoogieVar> states = getCurrentState(succTrans, targetpp);
 				if (states != null) {
 					currentStates.add(states);
-					// only continue if there are states at this node
-					worklist.add(targetpp);
 				}
 			}
 
-			if(currentStates.isEmpty()){
+			if (currentStates.isEmpty()) {
 				continue;
 			}
-			
+
 			// TODO: and or or ???
 			Term currentTerm = rtr.get(current);
 			if (currentTerm == null) {
-				currentTerm = script.term("true");
+				currentTerm = constTrue;
 			}
-			for (IAbstractState<CodeBlock, IBoogieVar> state : currentStates) {
-				currentTerm = script.term("and", currentTerm, state.getTerm(script, bpl2smt));
+			for (final IAbstractState<CodeBlock, IBoogieVar> state : currentStates) {
+				currentTerm = Util.and(script, currentTerm, state.getTerm(script, bpl2smt));
 			}
 			rtr.put(current, currentTerm);
 		}

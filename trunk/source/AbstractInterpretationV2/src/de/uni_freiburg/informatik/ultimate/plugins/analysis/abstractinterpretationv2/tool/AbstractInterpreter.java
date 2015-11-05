@@ -29,7 +29,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -61,8 +60,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty.EmptyDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.interval.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.interval.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.sign.SignDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbstractInterpretationPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.RCFGLoopDetector;
@@ -97,11 +96,11 @@ public final class AbstractInterpreter {
 		} catch (IllegalArgumentException iae) {
 			throw iae;
 		} catch (ToolchainCanceledException tce) {
-			// suppress timeouts
+			// suppress timeout results / timeouts
 			return rtr;
 		} catch (Throwable t) {
 			logger.fatal("Suppressed exception in AIv2: " + t.getMessage());
-			return Collections.emptyMap();
+			return rtr;
 		}
 		return rtr;
 	}
@@ -159,7 +158,7 @@ public final class AbstractInterpreter {
 			return;
 		}
 
-		for (CodeBlock initial : filteredInitialElements) {
+		for (final CodeBlock initial : filteredInitialElements) {
 			final BaseRcfgAbstractStateStorageProvider storage = createStorage(services, domain, persist);
 			final IResultReporter<CodeBlock> reporter = funCreateReporter.apply(services, storage);
 			final FixpointEngine<CodeBlock, IBoogieVar, ProgramPoint> interpreter = new FixpointEngine<CodeBlock, IBoogieVar, ProgramPoint>(
@@ -170,6 +169,7 @@ public final class AbstractInterpreter {
 				predicates.put(initial, storage.getTerms(initial, script, bpl2smt));
 				throw c;
 			}
+			predicates.put(initial, storage.getTerms(initial, script, bpl2smt));
 		}
 	}
 
