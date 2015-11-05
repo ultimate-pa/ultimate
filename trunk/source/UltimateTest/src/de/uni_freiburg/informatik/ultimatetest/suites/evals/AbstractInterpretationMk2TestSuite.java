@@ -88,7 +88,7 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 //			// "examples/programs/recursivePrograms",
 //			
 //			 /* SV-COMP repo */
-			"examples/svcomp/loops/", 
+//			"examples/svcomp/loops/", 
 //			// "examples/svcomp/loopsSelection/",
 //			// "examples/svcomp/eca/", 
 //			// "examples/svcomp/ecaSelection/",
@@ -102,23 +102,29 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 //			// "examples/svcomp/ssh/",
 			 
 			 //single files 
-//			 "examples/programs/regression/bpl/BugFreshConstantInSSA.bpl",
-//			 "examples/programs/regression/c/Enums01-Safe.c",
-//			 "examples/programs/regression/c/Enums02-Safe.c",
-//			 "examples/programs/regression/c/Enums04-Safe.c",
-//			 "examples/programs/regression/bpl/BugModifiesChecker.bpl",
-//			 
-//			 //soundness
-//			 "examples/programs/regression/bpl/interprocedural/BugBackwardPredicates04.bpl",
-//			 "examples/programs/regression/c/NondeterministicLocalVarInitialValues.c"
+			 "examples/programs/regression/bpl/interprocedural/BugHoareAnnotation2.bpl",
+			 "examples/programs/regression/bpl/interprocedural/BugHoareAnnotation.bpl",
+			 "examples/programs/regression/bpl/interprocedural/BugBackwardPredicates05.bpl",
+			 "examples/programs/regression/c/ShortCircuit-SideEffect-DoStatement-Unsafe.c",
+			 "examples/svcomp/loops/n.c40_true-unreach-call.c",
+			 "examples/svcomp/loops/s3_false-unreach-call.i",
+			 "examples/svcomp/loops/nec40_true-unreach-call.i",
 			 
+			 //modulus not positive 
+			 "examples/programs/regression/c/TestIntegerDivision01.c",
+			 
+			 //constructed type
+			 "examples/programs/regression/bpl/Typedef-safe.bpl",
+			 
+			 //value unknown
+			 "examples/programs/regression/c/ShortCircuit-SideEffect-DoStatement-Safe.c",
 	};
 
 	// @formatter:on
 
 	@Override
 	protected long getTimeout() {
-		return 10 * 1000;
+		return 10 * 1000  ;
 	}
 
 	@Override

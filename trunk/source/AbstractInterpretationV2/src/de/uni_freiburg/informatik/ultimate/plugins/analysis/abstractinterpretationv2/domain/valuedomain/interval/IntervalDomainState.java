@@ -119,9 +119,9 @@ public class IntervalDomainState<ACTION, VARDECL>
 		assert name != null;
 		assert value != null;
 		final VARDECL key = mVariablesMap.get(name);
-		assert key != null;
+		assert key != null : "Variable unknown";
 		final IntervalDomainValue valKey = mValuesMap.get(name);
-		assert valKey != null;
+		assert valKey != null : "Value unknown";
 
 		mValuesMap.put(name, value);
 	}
