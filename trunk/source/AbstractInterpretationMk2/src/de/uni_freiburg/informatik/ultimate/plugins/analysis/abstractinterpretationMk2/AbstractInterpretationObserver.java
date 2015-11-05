@@ -43,13 +43,13 @@ public class AbstractInterpretationObserver implements IUnmanagedObserver {
 	public boolean process(IElement root) throws Throwable {
 		if (root instanceof RootNode) {
 			final AbstractInterpreter abstractInterpreter = new AbstractInterpreter(mServices);
-			try {
+//			try {
 				abstractInterpreter.processRcfg((RootNode) root);
-			} catch (OutOfMemoryError oom) {
-				throw oom;
-			} catch (Throwable t) {
-				mLogger.fatal("Exception during AIMK2 run: " + t.getMessage());
-			}
+//			} catch (OutOfMemoryError oom) {
+//				throw oom;
+//			} catch (Throwable t) {
+//				mLogger.fatal("Exception during AIMK2 run: " + t.getMessage());
+//			}
 			return false;
 		}
 		return true;

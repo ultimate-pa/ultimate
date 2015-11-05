@@ -57,7 +57,7 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 //			new Triple<>("AbstractInterpretationMk2C.xml", ALL_C, "ai/AI2_INT.epf"),
 //			new Triple<>("AbstractInterpretationMk2.xml", BPL, "ai/AI2_INT.epf"),
 			
-//			new Triple<>("AbstractInterpretationMk2CInline.xml", ALL_C, "ai/AI2_PLT.epf"),
+			new Triple<>("AbstractInterpretationMk2CInline.xml", ALL_C, "ai/AI2_PLT.epf"),
 //			new Triple<>("AbstractInterpretationMk2C.xml", ALL_C, "ai/AI2_PLT.epf"),
 //			new Triple<>("AbstractInterpretationMk2.xml", BPL, "ai/AI2_PLT.epf"),
 			
@@ -66,8 +66,8 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 //			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_CMP.epf"),
 
 //			new Triple<>("AbstractInterpretationv2CInline.xml", ALL_C, "ai/AIv2_INT.epf"),
-			new Triple<>("AbstractInterpretationv2C.xml", ALL_C, "ai/AIv2_INT.epf"),
-			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/AIv2_INT.epf"),
+//			new Triple<>("AbstractInterpretationv2C.xml", ALL_C, "ai/AIv2_INT.epf"),
+//			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/AIv2_INT.epf"),
 
 //			new Triple<>("AbstractInterpretationC.xml", ALL_C, "ai/AI.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/AI.epf"),
@@ -88,7 +88,7 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 //			// "examples/programs/recursivePrograms",
 //			
 //			 /* SV-COMP repo */
-//			"examples/svcomp/loops/", 
+			"examples/svcomp/loops/", 
 //			// "examples/svcomp/loopsSelection/",
 //			// "examples/svcomp/eca/", 
 //			// "examples/svcomp/ecaSelection/",
@@ -96,23 +96,23 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 //			// "examples/svcomp/systemc1/",
 //			// "examples/svcomp/systemc2/",
 //			// "examples/svcomp/eca-rers2012/",
-//			// "examples/svcomp/recursive/",
+			"examples/svcomp/recursive/",
 //			 "examples/svcomp/ssh-simplified/",
 //			 "examples/svcomp/ntdrivers-simplified/",
 //			// "examples/svcomp/ssh/",
 			 
 			 //single files 
-			 "examples/programs/regression/bpl/interprocedural/BugHoareAnnotation2.bpl",
-			 "examples/programs/regression/bpl/interprocedural/BugHoareAnnotation.bpl",
-			 "examples/svcomp/loops/n.c40_true-unreach-call.c",
-			 "examples/svcomp/loops/s3_false-unreach-call.i",
-			 "examples/svcomp/loops/nec40_true-unreach-call.i",
-			 
-			 //modulus not positive 
-			 "examples/programs/regression/c/TestIntegerDivision01.c",
-			 
-			 //constructed type
-			 "examples/programs/regression/bpl/Typedef-safe.bpl",
+//			 "examples/programs/regression/bpl/interprocedural/BugHoareAnnotation2.bpl",
+//			 "examples/programs/regression/bpl/interprocedural/BugHoareAnnotation.bpl",
+//			 "examples/svcomp/loops/n.c40_true-unreach-call.c",
+//			 "examples/svcomp/loops/s3_false-unreach-call.i",
+//			 "examples/svcomp/loops/nec40_true-unreach-call.i",
+//			 
+//			 //modulus not positive 
+//			 "examples/programs/regression/c/TestIntegerDivision01.c",
+//			 
+//			 //constructed type
+//			 "examples/programs/regression/bpl/Typedef-safe.bpl",
 	};
 
 	// @formatter:on

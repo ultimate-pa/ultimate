@@ -18,10 +18,9 @@ public class TypedAbstractVariable extends AbstractVariable {
 	 */
 	public TypedAbstractVariable(String ident,
 			DeclarationInformation declaration, IType type) {
-		super(ident);
+		super(ident, declaration);
 		assert ident != null;
-		assert declaration != null;
-		mDeclaration = declaration;
+		assert declaration != null;		
 		mType = type;
 	}
 

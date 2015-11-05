@@ -161,7 +161,7 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 			mPolyhedron.add_space_dimensions_and_embed(missingDimensions);
 		} else if (missingDimensions < 0) {
 			// too many dimensions
-			mLogger.warn("Poly has " + polyDims + " but we need only " + mVariableTranslation.size());
+			mLogger.warn("Poly has " + existing + " but we need only " + needed);
 		}
 	}
 
