@@ -96,9 +96,6 @@ public class IntervalDomainState
 		mVariablesMap = new HashMap<String, IBoogieVar>(variablesMap);
 		mValuesMap = new HashMap<String, IntervalDomainValue>(valuesMap);
 		mBooleanValuesMap = new HashMap<String, BooleanValue>(booleanValuesMap);
-		if (mVariablesMap.size() == 0) {
-			System.err.println("HURZ");
-		}
 		mIsFixpoint = isFixpoint;
 		sId++;
 		mId = sId;
@@ -216,9 +213,6 @@ public class IntervalDomainState
 
 		for (final Entry<String, IBoogieVar> entry : variables.entrySet()) {
 			final String id = entry.getKey();
-			if (id.contains("~malloc_#res")) {
-				System.err.println("hurz");
-			}
 			final IBoogieVar var = entry.getValue();
 			final IBoogieVar old = newVarMap.put(id, var);
 			if (old != null) {

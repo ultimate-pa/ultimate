@@ -295,6 +295,8 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		if (equals(other)) {
 			if (isBottom()) {
 				return new IntervalDomainValue(true);
+			} else if (isInfinity()) {
+				return new IntervalDomainValue(new IntervalValue(), new IntervalValue());
 			} else {
 				return new IntervalDomainValue(new IntervalValue(mLower.getValue()),
 				        new IntervalValue(mUpper.getValue()));
