@@ -37,6 +37,7 @@ import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -374,11 +375,19 @@ public abstract class AExpressionTranslation {
 	
 	public void convertIntToPointer(Dispatcher main, ILocation loc, ExpressionResult rexp,
 			CPointer newType) {
-		String prefixedFunctionName = declareConvertIntToPointerFunction(main, loc, (CPrimitive) rexp.lrVal.getCType());
-		Expression intExpression = rexp.lrVal.getValue();
-		Expression pointerExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {intExpression});
-		RValue rValue = new RValue(pointerExpression, newType, false, false);
-		rexp.lrVal = rValue;
+		boolean overapproximate = false;
+		if (overapproximate) {
+			String prefixedFunctionName = declareConvertIntToPointerFunction(main, loc, (CPrimitive) rexp.lrVal.getCType());
+			Expression intExpression = rexp.lrVal.getValue();
+			Expression pointerExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {intExpression});
+			RValue rValue = new RValue(pointerExpression, newType, false, false);
+			rexp.lrVal = rValue;
+		} else {
+			convertIntToInt(loc, rexp, getCTypeOfPointerComponents());
+			Expression zero = constructLiteralForIntegerType(loc, getCTypeOfPointerComponents(), BigInteger.ZERO);
+			RValue rValue = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(zero, rexp.lrVal.getValue(), loc), newType, false, false);
+			rexp.lrVal = rValue;
+		}
 	}
 	
 	private String declareConvertIntToPointerFunction(Dispatcher main, ILocation loc, CPrimitive newType) {
