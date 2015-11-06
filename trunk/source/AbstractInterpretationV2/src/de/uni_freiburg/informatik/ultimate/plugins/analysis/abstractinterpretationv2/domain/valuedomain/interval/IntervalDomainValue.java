@@ -545,6 +545,83 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 	}
 
 	/**
+	 * Computes the modulus operation of two {@link IntervalDomainValue}s following the scheme:
+	 * <p>
+	 * <ul>
+	 * <li>[a, b] % [c, d] = [0, min(max(|a|, |b|), max(|c|, |d|) - 1)]</li>
+	 * </ul>
+	 * </p>
+	 * 
+	 * @param other
+	 *            The other value to compute the modulus for.
+	 * @return A new {@link IntervalDomainValue} which corresponds to the application of the modulus operator.
+	 */
+	protected IntervalDomainValue modulus(IntervalDomainValue other) {
+
+		assert other != null;
+
+		if (isBottom() || other.isBottom()) {
+			return new IntervalDomainValue(true);
+		}
+
+		// If both intervals are infinite, the minimum is also infinite.
+		if (isInfinity() && other.isInfinity()) {
+			return new IntervalDomainValue(new IntervalValue(new BigDecimal(0)), new IntervalValue());
+		}
+
+		// If we are dealing with point intervals, the modulo computation is easy.
+		if (!isInfinity() && !other.isInfinity()) {
+			if (mLower.equals(mUpper) && other.mLower.equals(other.mUpper)) {
+				if (other.mLower.getValue().signum() == 0) {
+					return new IntervalDomainValue(true);
+				}
+			}
+
+			BigDecimal remainder = mLower.getValue().remainder(other.mLower.getValue());
+			if (remainder.signum() >= 0) {
+				remainder = other.mLower.getValue().abs().add(remainder);
+			}
+
+			return new IntervalDomainValue(new IntervalValue(remainder), new IntervalValue(remainder));
+		}
+
+		// Compute max(|a|, |b|)
+		IntervalValue maxAB;
+		if (isInfinity()) {
+			maxAB = new IntervalValue();
+		} else {
+			if (mLower.getValue().abs().compareTo(mUpper.getValue().abs()) > 0) {
+				maxAB = new IntervalValue(mLower.getValue().abs());
+			} else {
+				maxAB = new IntervalValue(mUpper.getValue().abs());
+			}
+		}
+
+		// Division by zero: return [0, \infty].
+		if (other.containsZero()) {
+			return new IntervalDomainValue(new IntervalValue(new BigDecimal(0)), new IntervalValue());
+		}
+
+		// Compute max(|c|, |d|)
+		IntervalValue maxCD;
+		if (other.isInfinity()) {
+			maxCD = new IntervalValue();
+		} else {
+			if (other.mLower.getValue().abs().compareTo(other.mUpper.getValue().abs()) > 0) {
+				maxCD = new IntervalValue(other.mLower.getValue().abs());
+			} else {
+				maxCD = new IntervalValue(other.mUpper.getValue().abs());
+			}
+		}
+
+		if (maxAB.compareTo(maxCD) < 0) {
+			return new IntervalDomainValue(new IntervalValue(new BigDecimal(0)), new IntervalValue(maxAB));
+		} else {
+			return new IntervalDomainValue(new IntervalValue(new BigDecimal(0)), new IntervalValue(maxCD));
+		}
+	}
+
+	/**
 	 * Negates the given interval.
 	 * 
 	 * @param interval

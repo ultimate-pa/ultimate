@@ -113,7 +113,10 @@ public class IntervalBinaryExpressionEvaluator
 			return new EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>(
 			        firstResult.getResult().getEvaluatedValue().multiply(secondResult.getResult().getEvaluatedValue()),
 			        currentState);
-		case COMPEQ:
+		case ARITHMOD:
+			return new EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>(
+			        firstResult.getResult().getEvaluatedValue().modulus(secondResult.getResult().getEvaluatedValue()),
+			        currentState);
 		default:
 			mLogger.warn("Possible loss of precision: cannot handle operator " + mOperator
 			        + ". Assuming top and returning current state.");

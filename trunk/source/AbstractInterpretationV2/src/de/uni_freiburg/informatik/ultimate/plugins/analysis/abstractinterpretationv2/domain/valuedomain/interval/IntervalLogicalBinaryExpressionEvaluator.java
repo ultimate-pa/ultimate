@@ -89,6 +89,11 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 			        .multiply(secondResult.getResult().getEvaluatedValue());
 			mBooleanValue = new BooleanValue(false);
 			break;
+		case ARITHMOD:
+			returnValue = firstResult.getResult().getEvaluatedValue()
+			        .modulus(secondResult.getResult().getEvaluatedValue());
+			mBooleanValue = new BooleanValue(false);
+			break;
 		case LOGICAND:
 			mBooleanValue = logicLeft.booleanValue().and(logicRight.booleanValue());
 			if (mBooleanValue.getValue() == Value.FALSE) {
