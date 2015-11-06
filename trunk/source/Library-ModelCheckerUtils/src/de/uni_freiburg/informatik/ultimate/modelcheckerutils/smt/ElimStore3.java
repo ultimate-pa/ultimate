@@ -142,6 +142,8 @@ public class ElimStore3 {
 		ArrayUpdate writtenFrom = null;
 		Term[] conjuncts;
 		Term othersT;
+		
+		term = eliminateSelfUpdates(m_Script, quantifier, term);
 
 		while (true) {
 			assert eliminatee.getSort().isArraySort();
@@ -661,5 +663,72 @@ public class ElimStore3 {
 	// return 0;
 	// }
 	// }
+	
+	private Term eliminateSelfUpdates(Script script, int quantifier, Term term) {
+		final Term[] conjuncts;
+		if (quantifier == QuantifiedFormula.EXISTS) {
+			conjuncts = SmtUtils.getConjuncts(term);
+		} else {
+			assert quantifier == QuantifiedFormula.FORALL;
+			conjuncts = SmtUtils.getDisjuncts(term);
+		}
+//		ArrayUpdateExtractor aue = new ArrayUpdateExtractor(quantifier == QuantifiedFormula.FORALL, false, conjuncts);
+		ArrayList<Term> resultConjuncts = new ArrayList<>();
+		boolean someSelfUpdate = false;
+		for (Term conjunct : conjuncts) {
+			ArrayUpdate au;
+			try {
+				au = new ArrayUpdate(conjunct, false, false);
+			} catch (ArrayUpdateException aue1) {
+				try {
+					au = new ArrayUpdate(conjunct, true, false);
+				} catch (ArrayUpdateException aue2) {
+					resultConjuncts.add(conjunct);
+					continue;
+				}
+			}
+			if (isSelfUpdate(au)) {
+				someSelfUpdate = true;
+				Term select = buildEquivalentSelect(script, au);
+				resultConjuncts.add(select);
+			} else {
+				resultConjuncts.add(au.getArrayUpdateTerm());
+			}
+		}
+		if (someSelfUpdate) {
+			if (quantifier == QuantifiedFormula.EXISTS) {
+				return SmtUtils.and(script, resultConjuncts);
+			} else {
+				assert quantifier == QuantifiedFormula.FORALL;
+				return SmtUtils.or(script, resultConjuncts);
+			}
+		} else {
+			return term;
+		}
+	}
+
+	private Term buildEquivalentSelect(Script script, ArrayUpdate au) {
+		assert isSelfUpdate(au) : "no self-update";
+		Term selectTerm = SmtUtils.multiDimensionalSelect(m_Script, au.getNewArray(), au.getIndex());
+		final String fun;
+		if (au.isNegatedEquality()) {
+			fun = "distinct";
+		} else {
+			fun = "=";
+		}
+		return script.term(fun, selectTerm, au.getValue());
+	}
+
+	private boolean isSelfUpdate(ArrayUpdate au) {
+		if (au.getOldArray().equals(au.getNewArray())) {
+			return true;
+		} else {
+			if (Arrays.asList(au.getOldArray().getFreeVars()).contains(au.getNewArray())) {
+				throw new UnsupportedOperationException("nested self-update " + au.getArrayUpdateTerm());
+			} else {
+				return false;
+			}
+		}
+	}
 
 }
