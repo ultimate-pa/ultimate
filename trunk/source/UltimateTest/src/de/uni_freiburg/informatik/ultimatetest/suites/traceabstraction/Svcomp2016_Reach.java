@@ -126,6 +126,8 @@ public class Svcomp2016_Reach extends AbstractTraceAbstractionTestSuite {
 	
 	private static final String[] m_CurrentBugs_64bit = {
 //			"examples/svcomp/ldv-linux-3.0/usb_urb-drivers-video-arkfb.ko_true-unreach-call.cil.out.i.pp.cil.c",
+			// 2015-11-06: Matthias
+//			"examples/svcomp/seq-mthreaded/pals_STARTPALS_ActiveStandby_false-unreach-call.4_1.ufo.BOUNDED-10.pals.c"
 	};
 
 	/**
