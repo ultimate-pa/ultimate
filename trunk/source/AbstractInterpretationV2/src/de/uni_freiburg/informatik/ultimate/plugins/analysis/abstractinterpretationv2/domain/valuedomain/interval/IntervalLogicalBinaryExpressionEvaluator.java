@@ -232,7 +232,12 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 				}
 
 			} else {
-				mBooleanValue = new BooleanValue(false);
+				if (logicLeft.containsBool() && logicRight.containsBool()) {
+					mBooleanValue = new BooleanValue(logicLeft.booleanValue().equals(logicRight.booleanValue()));
+				} else {
+					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
+					        .equals(secondResult.getResult().getEvaluatedValue()));
+				}
 				mLogger.warn(
 				        "Cannot handle more than one variables in a sub-tree of an expression. Returning current state.");
 			}
@@ -353,7 +358,12 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 					returnState = (IntervalDomainState) returnState.intersect((IntervalDomainState) currentState);
 				}
 			} else {
-				mBooleanValue = new BooleanValue(false);
+				if (logicLeft.containsBool() && logicRight.containsBool()) {
+					mBooleanValue = new BooleanValue(logicLeft.booleanValue().equals(logicRight.booleanValue())).neg();
+				} else {
+					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
+					        .equals(secondResult.getResult().getEvaluatedValue())).neg();
+				}
 				mLogger.warn(
 				        "Cannot handle more than one variables in a sub-tree of an expression. Returning current state.");
 			}
@@ -363,16 +373,18 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 			        "Cannot handle greater than operations precisely. Using greater or equal over-approximation instead.");
 		case COMPGEQ:
 			if (logicLeft.containsBool() || logicRight.containsBool()) {
-				throw new UnsupportedOperationException("Boolean values are not allowed in an COMPGEQ expression.");
+				throw new UnsupportedOperationException("Boolean values are not allowed in a COMPGEQ expression.");
 			}
 
 			if (mLeftSubEvaluator.getVarIdentifiers().size() == 0
 			        && mRightSubEvaluator.getVarIdentifiers().size() == 0) {
 
 				if (firstResult.getResult().getEvaluatedValue()
-				        .compareTo(secondResult.getResult().getEvaluatedValue()) < 0) {
+				        .greaterOrEqual(secondResult.getResult().getEvaluatedValue()).isBottom()) {
 					mBooleanValue = new BooleanValue(false);
 					setToBottom = true;
+				} else {
+					mBooleanValue = new BooleanValue(true);
 				}
 
 			} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 0
@@ -450,13 +462,115 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 				}
 
 			} else {
-				mBooleanValue = new BooleanValue(false);
+				if (firstResult.getResult().getEvaluatedValue()
+				        .greaterOrEqual(secondResult.getResult().getEvaluatedValue()).isBottom()) {
+					mBooleanValue = new BooleanValue(false);
+				} else {
+					mBooleanValue = new BooleanValue(true);
+				}
 				mLogger.warn(
 				        "Cannot handle more than one variables in a sub-tree of an expression. Returning current state.");
 			}
 			break;
 		case COMPLT:
+			mLogger.warn(
+			        "Cannot handle less than operations precisely. Using less or equal over-approximation instead.");
 		case COMPLEQ:
+			if (logicLeft.containsBool() || logicRight.containsBool()) {
+				throw new UnsupportedOperationException("Boolean values are not allowed in a COMPLEQ expression.");
+			}
+
+			if (mLeftSubEvaluator.getVarIdentifiers().size() == 0
+			        && mRightSubEvaluator.getVarIdentifiers().size() == 0) {
+
+				if (firstResult.getResult().getEvaluatedValue()
+				        .lessOrEqual(secondResult.getResult().getEvaluatedValue()).isBottom()) {
+					mBooleanValue = new BooleanValue(false);
+					setToBottom = true;
+				} else {
+					mBooleanValue = new BooleanValue(true);
+				}
+			} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 0
+			        && mRightSubEvaluator.getVarIdentifiers().size() == 1) {
+
+				String varName = null;
+
+				for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
+					varName = var;
+				}
+
+				assert varName != null;
+
+				final IntervalDomainValue computationResult = firstResult.getResult().getEvaluatedValue()
+				        .lessOrEqual(secondResult.getResult().getEvaluatedValue());
+
+				returnState.setValue(varName, computationResult);
+
+				if (computationResult.isBottom()) {
+					mBooleanValue = new BooleanValue(false);
+				} else {
+					mBooleanValue = new BooleanValue(true);
+				}
+			} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 1
+			        && mRightSubEvaluator.getVarIdentifiers().size() == 0) {
+
+				String varName = null;
+
+				for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
+					varName = var;
+				}
+
+				assert varName != null;
+
+				final IntervalDomainValue computationResult = firstResult.getResult().getEvaluatedValue()
+				        .lessOrEqual(secondResult.getResult().getEvaluatedValue());
+
+				returnState.setValue(varName, computationResult);
+
+				if (computationResult.isBottom()) {
+					mBooleanValue = new BooleanValue(false);
+				} else {
+					mBooleanValue = new BooleanValue(true);
+				}
+			} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 1
+			        && mRightSubEvaluator.getVarIdentifiers().size() == 1) {
+
+				String leftVar = null;
+				String rightVar = null;
+
+				for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
+					leftVar = var;
+				}
+				for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
+					rightVar = var;
+				}
+
+				assert leftVar != null;
+				assert rightVar != null;
+
+				final IntervalDomainValue leftComputationResult = firstResult.getResult().getEvaluatedValue()
+				        .lessOrEqual(secondResult.getResult().getEvaluatedValue());
+				returnState.setValue(leftVar, leftComputationResult);
+
+				final IntervalDomainValue rightComputationResult = firstResult.getResult().getEvaluatedValue()
+				        .greaterOrEqual(secondResult.getResult().getEvaluatedValue());
+				returnState.setValue(rightVar, rightComputationResult);
+
+				if (leftComputationResult.isBottom() || rightComputationResult.isBottom()) {
+					mBooleanValue = new BooleanValue(false);
+				} else {
+					mBooleanValue = new BooleanValue(true);
+				}
+			} else {
+				if (firstResult.getResult().getEvaluatedValue()
+				        .lessOrEqual(secondResult.getResult().getEvaluatedValue()).isBottom()) {
+					mBooleanValue = new BooleanValue(false);
+				} else {
+					mBooleanValue = new BooleanValue(true);
+				}
+				mLogger.warn(
+				        "Cannot handle more than one variables in a sub-tree of an expression. Returning current state.");
+			}
 		case COMPPO:
 		default:
 			mBooleanValue = new BooleanValue(false);
