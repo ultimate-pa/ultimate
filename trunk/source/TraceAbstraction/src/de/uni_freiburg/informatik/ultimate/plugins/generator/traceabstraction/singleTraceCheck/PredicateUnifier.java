@@ -600,8 +600,9 @@ public class PredicateUnifier {
 				return null;
 			}
 			
-			for (IPredicate other : m_Term2Predicates.values()) {
-				if (other == m_TruePredicate || other == m_FalsePredicate) {
+			for (IPredicate other : m_KnownPredicates) {
+				if (other == m_TruePredicate || other == m_FalsePredicate || 
+						m_DeprecatedPredicates.containsKey(other)) {
 					continue;
 				}
 				// we do not compare against intricate predicates
