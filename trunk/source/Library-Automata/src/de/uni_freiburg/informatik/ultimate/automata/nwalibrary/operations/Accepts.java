@@ -79,7 +79,7 @@ public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 
 	@Override
 	public String operationName() {
-		return "accptance";
+		return "acceptance";
 	}
 
 	@Override
