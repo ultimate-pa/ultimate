@@ -2731,6 +2731,14 @@ public class CHandler implements ICHandler {
 			m_ExpressionTranslation.usualArithmeticConversions(main, loc, rePositive, reNegative);
 		}
 		
+		if ((rePositive.lrVal.getCType().getUnderlyingType() instanceof CPointer) && reNegative.lrVal.getCType().getUnderlyingType().isIntegerType()) {
+			m_ExpressionTranslation.convertIntToPointer(main, loc, reNegative, (CPointer) rePositive.lrVal.getCType().getUnderlyingType());
+		}
+		if ((reNegative.lrVal.getCType().getUnderlyingType() instanceof CPointer) && rePositive.lrVal.getCType().getUnderlyingType().isIntegerType()) {
+			m_ExpressionTranslation.convertIntToPointer(main, loc, rePositive, (CPointer) reNegative.lrVal.getCType().getUnderlyingType());
+		}
+		
+		
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>(0);
