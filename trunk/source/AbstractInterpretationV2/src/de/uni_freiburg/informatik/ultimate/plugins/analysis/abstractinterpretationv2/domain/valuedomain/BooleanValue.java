@@ -28,6 +28,10 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+
 /**
  * Represents a boolean value in abstract interpretation. The value can either be <code>true</code>, <code>false</code>,
  * &top;, or &bot;.
@@ -112,21 +116,13 @@ public class BooleanValue {
 		}
 
 		if (other instanceof Boolean) {
-			final Boolean o = (Boolean) other;
+			final Boolean otherBool = (Boolean) other;
 
 			switch (mValue) {
 			case FALSE:
-				if (!o) {
-					return true;
-				} else {
-					return false;
-				}
+				return !otherBool;
 			case TRUE:
-				if (o) {
-					return true;
-				} else {
-					return false;
-				}
+				return otherBool;
 			case TOP:
 			case BOTTOM:
 				return false;
@@ -279,5 +275,20 @@ public class BooleanValue {
 		}
 
 		return stringBuilder.toString();
+	}
+
+	public Term getTerm(final Script script, final Sort sort, final Term var) {
+		switch (mValue) {
+		case BOTTOM:
+			return script.term("false");
+		case TOP:
+			return script.term("true");
+		case FALSE:
+			return script.term("=", var, script.term("false"));
+		case TRUE:
+			return script.term("=", var, script.term("true"));
+		default:
+			throw new UnsupportedOperationException("The boolean value type " + mValue + " is not implemented.");
+		}
 	}
 }
