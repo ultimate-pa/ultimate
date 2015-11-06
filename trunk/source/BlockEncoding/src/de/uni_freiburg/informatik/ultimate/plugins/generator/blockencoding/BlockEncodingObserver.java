@@ -45,20 +45,18 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 
 	private IElement mRoot;
 	private final Logger mLogger;
-	private final IUltimateServiceProvider m_Services;
+	private final IUltimateServiceProvider mServices;
 
 	public BlockEncodingObserver(Logger logger, IUltimateServiceProvider services) {
 		mLogger = logger;
-		m_Services = services;
+		mServices = services;
 	}
 
 	@Override
 	public boolean process(IElement root) {
-		long time = System.currentTimeMillis();
-		RootNode rootNode = (RootNode) root;
-		new BlockEncoder(mLogger, m_Services).startMinimization(rootNode);
-		mLogger.info("Time (in ms) spend in BlockEncoding: " + (System.currentTimeMillis() - time));
-		this.mRoot = root;
+		final RootNode rootNode = (RootNode) root;
+		new BlockEncoder(mLogger, mServices).startMinimization(rootNode);
+		mRoot = root;
 		return false;
 	}
 
