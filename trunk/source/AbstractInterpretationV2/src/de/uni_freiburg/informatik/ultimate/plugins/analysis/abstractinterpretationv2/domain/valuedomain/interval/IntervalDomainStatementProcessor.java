@@ -34,6 +34,7 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
+import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVisitor;
@@ -138,23 +139,35 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 			final IntervalDomainValue newValue = result.getResult().getEvaluatedValue();
 
 			if (newValue == null) {
-				mNewState.setValue(varname, new IntervalDomainValue());
+				// If the value is null, it should be a boolean. If not, throw exception.
+				if (ILogicalEvaluator.class.isAssignableFrom(mExpressionEvaluator.getRootEvaluator().getClass())) {
+					final ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> logicalEvaluator = (ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar>) mExpressionEvaluator
+					        .getRootEvaluator();
+
+					mNewState.setBooleanValue(varname, logicalEvaluator.booleanValue());
+				} else {
+					throw new UnsupportedOperationException("The evaluator should be a logical one.");
+				}
+				// mNewState.setValue(varname, new IntervalDomainValue());
 			} else {
 				final IBoogieVar type = mOldState.getVariableType(varname);
-				if (type instanceof PrimitiveType) {
-					final PrimitiveType primitiveType = (PrimitiveType) type;
+				if (type.getIType() instanceof PrimitiveType) {
+					final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
 
 					if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
 						if (ILogicalEvaluator.class
 						        .isAssignableFrom(mExpressionEvaluator.getRootEvaluator().getClass())) {
-							ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> logicalEvaluator = (ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar>) mExpressionEvaluator
+							final ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> logicalEvaluator = (ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar>) mExpressionEvaluator
 							        .getRootEvaluator();
 
 							mNewState.setBooleanValue(varname, logicalEvaluator.booleanValue());
 						}
 					}
+				} else if (type.getIType() instanceof ArrayType) {
+					// TODO:
+					// We treat Arrays as normal variables for the time being.
+					mNewState.setValue(varname, newValue);
 				} else {
-
 					mNewState.setValue(varname, newValue);
 				}
 			}
@@ -251,7 +264,23 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	protected void visit(HavocStatement statement) {
 
 		for (VariableLHS var : statement.getIdentifiers()) {
-			mNewState.setValue(var.getIdentifier(), new IntervalDomainValue());
+			final IBoogieVar type = mOldState.getVariables().get(var.getIdentifier());
+
+			if (type.getIType() instanceof PrimitiveType) {
+				final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
+
+				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
+					mNewState.setBooleanValue(var.getIdentifier(), new BooleanValue());
+				} else {
+					mNewState.setValue(var.getIdentifier(), new IntervalDomainValue());
+				}
+			} else if (type.getIType() instanceof ArrayType) {
+				// TODO:
+				// Implement better handling of arrays.
+				mNewState.setValue(var.getIdentifier(), new IntervalDomainValue());
+			} else {
+				mNewState.setValue(var.getIdentifier(), new IntervalDomainValue());
+			}
 		}
 	}
 

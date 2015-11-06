@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Map;
 import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
@@ -84,9 +85,9 @@ public class IntervalMergeOperator<ACTION, VARDECL> implements IAbstractStateBin
 
 		for (final Entry<String, IBoogieVar> entry : variables.entrySet()) {
 
-			if (entry.getValue() instanceof PrimitiveType) {
+			if (entry.getValue().getIType() instanceof PrimitiveType) {
 
-				final PrimitiveType primitiveType = (PrimitiveType) entry.getValue();
+				final PrimitiveType primitiveType = (PrimitiveType) entry.getValue().getIType();
 				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
 					final BooleanValue value1 = firstBoolValues.get(entry.getKey());
 					final BooleanValue value2 = secondBoolValues.get(entry.getKey());
@@ -98,6 +99,18 @@ public class IntervalMergeOperator<ACTION, VARDECL> implements IAbstractStateBin
 
 					newState.setValue(entry.getKey(), value1.merge(value2));
 				}
+			} else if (entry.getValue().getIType() instanceof ArrayType) {
+				// TODO:
+				// Implement better handling of arrays.
+				final IntervalDomainValue value1 = firstValues.get(entry.getKey());
+				final IntervalDomainValue value2 = secondValues.get(entry.getKey());
+
+				newState.setValue(entry.getKey(), value1.merge(value2));
+			} else {
+				final IntervalDomainValue value1 = firstValues.get(entry.getKey());
+				final IntervalDomainValue value2 = secondValues.get(entry.getKey());
+
+				newState.setValue(entry.getKey(), value1.merge(value2));
 			}
 		}
 

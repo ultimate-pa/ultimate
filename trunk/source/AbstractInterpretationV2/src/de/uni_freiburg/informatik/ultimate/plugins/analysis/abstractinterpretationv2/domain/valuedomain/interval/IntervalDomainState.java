@@ -96,6 +96,9 @@ public class IntervalDomainState
 		mVariablesMap = new HashMap<String, IBoogieVar>(variablesMap);
 		mValuesMap = new HashMap<String, IntervalDomainValue>(valuesMap);
 		mBooleanValuesMap = new HashMap<String, BooleanValue>(booleanValuesMap);
+		if (mVariablesMap.size() == 0) {
+			System.err.println("HURZ");
+		}
 		mIsFixpoint = isFixpoint;
 		sId++;
 		mId = sId;
@@ -171,6 +174,10 @@ public class IntervalDomainState
 
 			if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
 				newBooleanValMap.put(name, new BooleanValue(false));
+			} else if (variable.getIType() instanceof ArrayType) {
+				// TODO:
+				// We treat Arrays as normal variables for the time being.
+				newValMap.put(name, new IntervalDomainValue());
 			} else {
 				newValMap.put(name, new IntervalDomainValue());
 			}
@@ -206,8 +213,12 @@ public class IntervalDomainState
 		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(mVariablesMap);
 		final Map<String, IntervalDomainValue> newValMap = new HashMap<String, IntervalDomainValue>(mValuesMap);
 		final Map<String, BooleanValue> newBooleanValMap = new HashMap<String, BooleanValue>(mBooleanValuesMap);
+
 		for (final Entry<String, IBoogieVar> entry : variables.entrySet()) {
 			final String id = entry.getKey();
+			if (id.contains("~malloc_#res")) {
+				System.err.println("hurz");
+			}
 			final IBoogieVar var = entry.getValue();
 			final IBoogieVar old = newVarMap.put(id, var);
 			if (old != null) {
@@ -228,8 +239,9 @@ public class IntervalDomainState
 				// We treat Arrays as normal variables for the time being.
 				newValMap.put(id, new IntervalDomainValue());
 			} else {
-				throw new UnsupportedOperationException(
-				        "The IBoogieVar type " + var.getIType().getClass().toString() + " is not implemented.");
+				mLogger.warn("The IBoogieVar type " + var.getIType().getClass().toString()
+				        + " is not implemented. Assuming top.");
+				newValMap.put(id, new IntervalDomainValue());
 			}
 		}
 
@@ -350,9 +362,8 @@ public class IntervalDomainState
 
 	@Override
 	public IAbstractState<CodeBlock, IBoogieVar> copy() {
-		return new IntervalDomainState(mStateConverter, mLogger, new HashMap<String, IBoogieVar>(mVariablesMap),
-		        new HashMap<String, IntervalDomainValue>(mValuesMap),
-		        new HashMap<String, BooleanValue>(mBooleanValuesMap), mIsFixpoint);
+		return new IntervalDomainState(mStateConverter, mLogger, mVariablesMap, mValuesMap, mBooleanValuesMap,
+		        mIsFixpoint);
 	}
 
 	@Override

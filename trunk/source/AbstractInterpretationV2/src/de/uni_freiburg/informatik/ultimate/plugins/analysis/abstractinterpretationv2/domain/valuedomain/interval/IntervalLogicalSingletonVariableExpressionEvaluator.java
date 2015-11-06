@@ -69,8 +69,6 @@ public class IntervalLogicalSingletonVariableExpressionEvaluator extends Interva
 				mBooleanValue = new BooleanValue(concreteState.getBooleanValues().get(mVariableName));
 				mContainsBoolean = true;
 			}
-		} else {
-			throw new UnsupportedOperationException("The type " + type.getIType().toString() + " is not implemented.");
 		}
 
 		return super.evaluate(currentState);
