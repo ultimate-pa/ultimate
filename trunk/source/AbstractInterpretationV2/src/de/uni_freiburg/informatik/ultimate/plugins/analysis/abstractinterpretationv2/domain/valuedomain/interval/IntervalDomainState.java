@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *            Any variable declaration.
  */
 public class IntervalDomainState
-        implements IAbstractState<CodeBlock, IBoogieVar>, IEvaluationResult<IntervalDomainState> {
+		implements IAbstractState<CodeBlock, IBoogieVar>, IEvaluationResult<IntervalDomainState> {
 
 	private static int sId;
 	private final int mId;
@@ -94,8 +94,8 @@ public class IntervalDomainState
 	}
 
 	protected IntervalDomainState(IntervalStateConverter<CodeBlock, IBoogieVar> stateConverter, Logger logger,
-	        Map<String, IBoogieVar> variablesMap, Map<String, IntervalDomainValue> valuesMap,
-	        Map<String, BooleanValue> booleanValuesMap, boolean isFixpoint) {
+			Map<String, IBoogieVar> variablesMap, Map<String, IntervalDomainValue> valuesMap,
+			Map<String, BooleanValue> booleanValuesMap, boolean isFixpoint) {
 		mStateConverter = stateConverter;
 		mVariablesMap = new HashMap<String, IBoogieVar>(variablesMap);
 		mValuesMap = new HashMap<String, IntervalDomainValue>(valuesMap);
@@ -164,7 +164,7 @@ public class IntervalDomainState
 
 		if (old != null) {
 			throw new UnsupportedOperationException(
-			        "Variable names must be disjoint. Variable " + name + " is already present.");
+					"Variable names must be disjoint. Variable " + name + " is already present.");
 		}
 
 		final Map<String, IntervalDomainValue> newValMap = new HashMap<String, IntervalDomainValue>(mValuesMap);
@@ -184,7 +184,7 @@ public class IntervalDomainState
 			}
 		} else {
 			mLogger.warn("The IBoogieVar type " + variable.getIType().getClass().toString()
-			        + " is not implemented. Assuming top.");
+					+ " is not implemented. Assuming top.");
 			newValMap.put(name, new IntervalDomainValue());
 		}
 
@@ -221,7 +221,7 @@ public class IntervalDomainState
 			final IBoogieVar old = newVarMap.put(id, var);
 			if (old != null) {
 				throw new UnsupportedOperationException(
-				        "Variable names must be disjoint. The variable " + id + " is already present.");
+						"Variable names must be disjoint. The variable " + id + " is already present.");
 			}
 			if (var.getIType() instanceof PrimitiveType) {
 				final PrimitiveType primitiveType = (PrimitiveType) var.getIType();
@@ -238,7 +238,7 @@ public class IntervalDomainState
 				newValMap.put(id, new IntervalDomainValue());
 			} else {
 				mLogger.warn("The IBoogieVar type " + var.getIType().getClass().toString()
-				        + " is not implemented. Assuming top.");
+						+ " is not implemented. Assuming top.");
 				newValMap.put(id, new IntervalDomainValue());
 			}
 		}
@@ -361,7 +361,7 @@ public class IntervalDomainState
 	@Override
 	public IAbstractState<CodeBlock, IBoogieVar> copy() {
 		return new IntervalDomainState(mStateConverter, mLogger, mVariablesMap, mValuesMap, mBooleanValuesMap,
-		        mIsFixpoint);
+				mIsFixpoint);
 	}
 
 	@Override
@@ -444,7 +444,7 @@ public class IntervalDomainState
 
 		for (Entry<String, BooleanValue> entry : mBooleanValuesMap.entrySet()) {
 			returnState.setBooleanValue(entry.getKey(),
-			        new BooleanValue(entry.getValue().intersect(other.mBooleanValuesMap.get(entry.getKey()))));
+					new BooleanValue(entry.getValue().intersect(other.mBooleanValuesMap.get(entry.getKey()))));
 		}
 
 		return returnState;
@@ -463,7 +463,8 @@ public class IntervalDomainState
 			assert var != null : "Error during TermVar creation";
 			final Sort sort = var.getSort().getRealSort();
 			if (!sort.isNumericSort()) {
-				mLogger.warn("Unfinished term transformation: Unsupported sort " + sort + " for variable " + var);
+				mLogger.warn("Unfinished term transformation: Unsupported sort " + sort + " for variable " + var + ": "
+						+ this);
 				continue;
 			}
 			final Term newterm = entry.getValue().getTerm(script, sort, var);

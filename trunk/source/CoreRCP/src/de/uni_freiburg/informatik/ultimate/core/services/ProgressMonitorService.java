@@ -121,6 +121,9 @@ public class ProgressMonitorService implements IStorable, IToolchainCancel, IPro
 
 	@Override
 	public long getDeadline() {
+		if(mTimer == null){
+			mTimer = ProgressAwareTimer.createWithDeadline(null, Long.MAX_VALUE); 
+		}
 		return mTimer.getDeadline();
 	}
 }
