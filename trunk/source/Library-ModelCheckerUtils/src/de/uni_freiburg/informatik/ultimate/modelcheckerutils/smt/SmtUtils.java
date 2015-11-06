@@ -770,5 +770,28 @@ public class SmtUtils {
 		}
 		return rational;
 	}
+	
+	/**
+	 * @return true iff tv does not occur in appTerm, or appTerm has two 
+	 * parameters, tv is the left parameter and tv does not occur in the right
+	 * prarameter. 
+	 */
+	public static boolean occursAtMostAsLhs(TermVariable tv, ApplicationTerm appTerm) {
+		if (appTerm.getParameters().length != 2) {
+			return !Arrays.asList(appTerm.getFreeVars()).contains(tv);
+		} else {
+			if (Arrays.asList(appTerm.getParameters()[1].getFreeVars()).contains(tv)) {
+				// occurs on rhs
+				return false;
+			} else {
+				if (appTerm.getParameters()[0].equals(tv)) {
+					return true;
+				} else {
+					return !Arrays.asList(appTerm.getParameters()[0].getFreeVars()).contains(tv);
+				}
+			}
+		}
+		
+	}
 
 }

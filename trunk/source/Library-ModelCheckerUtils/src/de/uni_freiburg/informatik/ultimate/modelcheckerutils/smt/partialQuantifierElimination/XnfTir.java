@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -42,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryNumericRelation;
@@ -136,7 +138,7 @@ public class XnfTir extends XnfPartialQuantifierElimination {
 			if (!Arrays.asList(term.getFreeVars()).contains(eliminatee)) {
 				termsWithoutEliminatee.add(term);
 			} else {
-				Term eliminateeOnLhs;
+				ApplicationTerm eliminateeOnLhs;
 				AffineRelation rel;
 				try {
 					TransformInequality transform;
@@ -160,6 +162,11 @@ public class XnfTir extends XnfPartialQuantifierElimination {
 					eliminateeOnLhs = rel.onLeftHandSideOnly(m_Script, eliminatee);
 				} catch (NotAffineException e) {
 					// no chance to eliminate the variable
+					return null;
+				}
+				if (!SmtUtils.occursAtMostAsLhs(eliminatee, eliminateeOnLhs)) {
+					// eliminatee occurs additionally in rhs e.g., inside a
+					// select or modulo term.
 					return null;
 				}
 				try {
