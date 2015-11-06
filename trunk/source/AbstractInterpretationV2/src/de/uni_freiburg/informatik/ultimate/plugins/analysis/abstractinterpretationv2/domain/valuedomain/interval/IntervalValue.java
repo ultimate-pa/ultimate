@@ -71,6 +71,17 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	}
 
 	/**
+	 * Constructor for a new {@link IntervalValue} that sets the value to a provided value.
+	 * 
+	 * @param val
+	 *            The value to set.
+	 */
+	protected IntervalValue(IntervalValue val) {
+		mValue = val.mValue;
+		mIsInfty = val.mIsInfty;
+	}
+
+	/**
 	 * Constructor for a new {@link IntervalValue} that sets the value to a provided value of type string. May throw an
 	 * exception if the provided string is not parsable.
 	 * 
@@ -192,7 +203,7 @@ public class IntervalValue implements Comparable<IntervalValue> {
 			return script.numeral(mValue.toBigIntegerExact());
 		} else {
 			assert sort.getName()
-					.equals("Real") : "Seems that numeric sort now has something different then Int or Real";
+			        .equals("Real") : "Seems that numeric sort now has something different then Int or Real";
 			// has to be real
 			return script.decimal(mValue);
 		}

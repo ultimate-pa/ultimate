@@ -91,6 +91,90 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		mIsBottom = false;
 	}
 
+	/**
+	 * Computes the result of a greater or equal operation with another interval:
+	 * <p>
+	 * [a, b] &gt;= [c, d] results in [max(a, c), b]
+	 * </p>
+	 * 
+	 * @param other
+	 *            The value to compare against.
+	 * @return A new {@link IntervalDomainValue} that is the result of the greater or equal operation.
+	 */
+	protected IntervalDomainValue greaterOrEqual(IntervalDomainValue other) {
+		assert other != null;
+
+		if (mIsBottom || other.mIsBottom) {
+			return new IntervalDomainValue(true);
+		}
+
+		IntervalValue lowerMax;
+
+		if (mLower.isInfinity() && other.mLower.isInfinity()) {
+			lowerMax = new IntervalValue();
+		} else {
+			if (mLower.isInfinity()) {
+				lowerMax = new IntervalValue(other.mLower);
+			} else if (other.mLower.isInfinity()) {
+				lowerMax = new IntervalValue(mLower);
+			} else {
+				if (mLower.getValue().compareTo(other.mLower.getValue()) > 0) {
+					lowerMax = new IntervalValue(mLower);
+				} else {
+					lowerMax = new IntervalValue(other.mLower);
+				}
+			}
+		}
+
+		if (!lowerMax.isInfinity()) {
+			if (lowerMax.compareTo(mUpper) > 0) {
+				return new IntervalDomainValue(true);
+			}
+		}
+
+		return new IntervalDomainValue(lowerMax, new IntervalValue(mUpper));
+	}
+
+	/**
+	 * Computes the result of a less or equal operation with another interval:
+	 * <p>
+	 * [a, b] &lt;= [c, d] results in [a, min(b, d)]
+	 * </p>
+	 * 
+	 * @param other
+	 *            The value to compare against.
+	 * @return A new {@link IntervalDomainValue} that is the result of the less or equal operation.
+	 */
+	protected IntervalDomainValue lessOrEqual(IntervalDomainValue other) {
+		assert other != null;
+
+		if (mIsBottom || other.mIsBottom) {
+			return new IntervalDomainValue(true);
+		}
+
+		IntervalValue upperMin;
+
+		if (mUpper.isInfinity()) {
+			upperMin = new IntervalValue(other.mUpper);
+		} else if (other.mUpper.isInfinity()) {
+			upperMin = new IntervalValue(mUpper);
+		} else {
+			if (mUpper.getValue().compareTo(other.mUpper.getValue()) < 0) {
+				upperMin = new IntervalValue(mUpper);
+			} else {
+				upperMin = new IntervalValue(other.mUpper);
+			}
+		}
+
+		if (!mLower.isInfinity()) {
+			if (mLower.compareTo(upperMin) > 0) {
+				return new IntervalDomainValue(true);
+			}
+		}
+
+		return new IntervalDomainValue(new IntervalValue(mLower), upperMin);
+	}
+
 	@Override
 	public int compareTo(IntervalDomainValue o) {
 		throw new UnsupportedOperationException(
@@ -502,7 +586,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 				// its a normal interval
 				final Term upper = script.term("<=", var, mUpper.getTerm(sort, script));
 				final Term lower = script.term(">=", var, mLower.getTerm(sort, script));
-				return Util.and(script, lower,upper);
+				return Util.and(script, lower, upper);
 			}
 		}
 	}

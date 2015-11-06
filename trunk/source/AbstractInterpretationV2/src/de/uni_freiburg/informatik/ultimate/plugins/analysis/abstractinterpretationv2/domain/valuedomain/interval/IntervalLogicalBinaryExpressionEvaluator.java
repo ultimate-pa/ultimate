@@ -232,6 +232,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 				}
 
 			} else {
+				mBooleanValue = new BooleanValue(false);
 				mLogger.warn(
 				        "Cannot handle more than one variables in a sub-tree of an expression. Returning current state.");
 			}
@@ -351,14 +352,112 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 
 					returnState = (IntervalDomainState) returnState.intersect((IntervalDomainState) currentState);
 				}
+			} else {
+				mBooleanValue = new BooleanValue(false);
+				mLogger.warn(
+				        "Cannot handle more than one variables in a sub-tree of an expression. Returning current state.");
 			}
 			break;
-		case COMPGEQ:
 		case COMPGT:
-		case COMPLEQ:
+			mLogger.warn(
+			        "Cannot handle greater than operations precisely. Using greater or equal over-approximation instead.");
+		case COMPGEQ:
+			if (logicLeft.containsBool() || logicRight.containsBool()) {
+				throw new UnsupportedOperationException("Boolean values are not allowed in an COMPGEQ expression.");
+			}
+
+			if (mLeftSubEvaluator.getVarIdentifiers().size() == 0
+			        && mRightSubEvaluator.getVarIdentifiers().size() == 0) {
+
+				if (firstResult.getResult().getEvaluatedValue()
+				        .compareTo(secondResult.getResult().getEvaluatedValue()) < 0) {
+					mBooleanValue = new BooleanValue(false);
+					setToBottom = true;
+				}
+
+			} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 0
+			        && mRightSubEvaluator.getVarIdentifiers().size() == 1) {
+
+				String varName = null;
+
+				for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
+					varName = var;
+				}
+
+				assert varName != null;
+
+				final IntervalDomainValue computationResult = firstResult.getResult().getEvaluatedValue()
+				        .greaterOrEqual(secondResult.getResult().getEvaluatedValue());
+
+				returnState.setValue(varName, computationResult);
+
+				if (computationResult.isBottom()) {
+					mBooleanValue = new BooleanValue(false);
+				} else {
+					mBooleanValue = new BooleanValue(true);
+				}
+
+			} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 1
+			        && mRightSubEvaluator.getVarIdentifiers().size() == 0) {
+
+				String varName = null;
+
+				for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
+					varName = var;
+				}
+
+				assert varName != null;
+
+				final IntervalDomainValue computationResult = firstResult.getResult().getEvaluatedValue()
+				        .greaterOrEqual(secondResult.getResult().getEvaluatedValue());
+
+				returnState.setValue(varName, computationResult);
+
+				if (computationResult.isBottom()) {
+					mBooleanValue = new BooleanValue(false);
+				} else {
+					mBooleanValue = new BooleanValue(true);
+				}
+
+			} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 1
+			        && mRightSubEvaluator.getVarIdentifiers().size() == 1) {
+
+				String leftVar = null;
+				String rightVar = null;
+
+				for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
+					leftVar = var;
+				}
+				for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
+					rightVar = var;
+				}
+
+				assert leftVar != null;
+				assert rightVar != null;
+
+				final IntervalDomainValue leftComputationResult = firstResult.getResult().getEvaluatedValue()
+				        .greaterOrEqual(secondResult.getResult().getEvaluatedValue());
+				returnState.setValue(leftVar, leftComputationResult);
+
+				final IntervalDomainValue rightComputationResult = firstResult.getResult().getEvaluatedValue()
+				        .lessOrEqual(secondResult.getResult().getEvaluatedValue());
+				returnState.setValue(rightVar, rightComputationResult);
+
+				if (leftComputationResult.isBottom() || rightComputationResult.isBottom()) {
+					mBooleanValue = new BooleanValue(false);
+				} else {
+					mBooleanValue = new BooleanValue(true);
+				}
+
+			} else {
+				mBooleanValue = new BooleanValue(false);
+				mLogger.warn(
+				        "Cannot handle more than one variables in a sub-tree of an expression. Returning current state.");
+			}
+			break;
 		case COMPLT:
+		case COMPLEQ:
 		case COMPPO:
-			mLogger.warn("Operator " + mOperator + " not handled.");
 		default:
 			mBooleanValue = new BooleanValue(false);
 			mLogger.warn(
