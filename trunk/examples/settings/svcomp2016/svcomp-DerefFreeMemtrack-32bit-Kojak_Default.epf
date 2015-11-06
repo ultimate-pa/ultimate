@@ -1,3 +1,15 @@
+#Thu Nov 05 18:27:51 CET 2015
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Parallel\ states\ before\ merging=4
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Use\ source\ directory\ for\ state\ change\ logs=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Postpone\ execution\ of\ widened\ states=false
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Set\ of\ numbers\ for\ widening\ (comma-separated\ list)=0, 1, -128, 127
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Names\ of\ the\ program's\ main\ method\ (cs)=ULTIMATE.start
+@de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/INTERVAL\ -\ Widening\ operator=Nearest In Set
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Collect\ literals\ from\ the\ RCFG's\ expressions=true
+
 #Sat Oct 31 18:29:54 CET 2015
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=0.0.1
@@ -9,11 +21,13 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Domain=POLYTOPE
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Names\ of\ the\ program's\ main\ method\ (cs)=Main, main, ULTIMATE.start
+
 #Sat Oct 31 18:29:54 CET 2015
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=
 file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding/Rating-Boundary\ (empty\ for\ LBE)=1000
 @de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=0.0.1
+
 #Sat Oct 31 18:29:54 CET 2015
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
 file_export_version=3.0
@@ -21,6 +35,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolants\ consolidation=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolant\ automaton=TWOTRACK
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Interpolants\ along\ a\ Counterexample=FPandBP
+
 #Sat Oct 31 18:29:54 CET 2015
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Command\ for\ external\ solver=z3 SMTLIB2_COMPLIANT\=true -memory\:2024 -smt2 -in -t\:12000
@@ -29,6 +44,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
 @de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Convert\ code\ blocks\ to\ CNF=false
+
 #Sat Oct 31 18:29:54 CET 2015
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ division\ by\ zero=IGNORE
@@ -41,16 +57,19 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/sizeof\ long=4
 @de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
+
 #Sat Oct 31 18:29:54 CET 2015
 file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck/tree\ interpolation\ mode\ for\ smtinterpol\ \n\ (internal\:\ tree,\ a\ la\ matthias\:\ nested)=FPandBP
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck=
 @de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck=0.0.1
+
 #Sat Oct 31 18:29:54 CET 2015
 \!/instance/de.uni_freiburg.informatik.ultimate.boogie.printer=
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.boogie.printer=0.0.1
 /instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Dump\ path\:=C\:\\data\\bin\\svcompC
+
 #Sat Oct 31 18:29:54 CET 2015
 file_export_version=3.0
 /instance/UltimateCore/Log\ level\ for\ plugins=info
@@ -58,6 +77,7 @@ file_export_version=3.0
 \!/instance/UltimateCore=
 @UltimateCore=0.0.1
 /instance/UltimateCore/Generate\ witness\ from\ each\ counter\ example\ result=true
+
 #Sat Oct 31 18:29:54 CET 2015
 file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.gui=

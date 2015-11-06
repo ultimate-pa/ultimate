@@ -1,3 +1,14 @@
+#Thu Nov 05 18:27:51 CET 2015
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Parallel\ states\ before\ merging=4
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Use\ source\ directory\ for\ state\ change\ logs=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Postpone\ execution\ of\ widened\ states=false
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Set\ of\ numbers\ for\ widening\ (comma-separated\ list)=0, 1, -128, 127
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Names\ of\ the\ program's\ main\ method\ (cs)=ULTIMATE.start
+@de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/INTERVAL\ -\ Widening\ operator=Nearest In Set
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Collect\ literals\ from\ the\ RCFG's\ expressions=true
 #Mon Nov 02 18:45:59 CET 2015
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=0.0.1
