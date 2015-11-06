@@ -5,6 +5,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.AbstractVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.TypedAbstractVariable;
@@ -171,13 +172,13 @@ public class CompoundState implements IAbstractState<CompoundState> {
 
 	@Override
 	public Term getTerm(Script script, Boogie2SMT bpl2smt) {
-		if(isBottom()){
+		if (isBottom()) {
 			return script.term("false");
 		}
-		
+
 		Term acc = script.term("true");
 		for (final IAbstractState<?> state : mStates) {
-			acc = script.term("and", acc, state.getTerm(script, bpl2smt));
+			acc = Util.and(script, acc, state.getTerm(script, bpl2smt));
 		}
 		return acc;
 	}

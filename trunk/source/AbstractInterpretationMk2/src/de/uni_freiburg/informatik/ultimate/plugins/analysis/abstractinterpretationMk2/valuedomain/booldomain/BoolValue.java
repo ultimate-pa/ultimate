@@ -4,7 +4,6 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.valuedomain.IAbstractValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.valuedomain.IAbstractValueFactory;
 
@@ -530,7 +529,7 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 
 	@Override
 	public Term getTerm(Script script, Term variable) {
-		Term value;
+		final Term value;
 		if (getValue() == Bool.TRUE) {
 			value = script.term("true");
 		} else if (getValue() == Bool.FALSE) {

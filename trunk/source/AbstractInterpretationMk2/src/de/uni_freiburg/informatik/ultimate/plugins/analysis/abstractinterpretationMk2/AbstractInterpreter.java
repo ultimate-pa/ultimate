@@ -3,28 +3,53 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.io.File;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.*;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.preferences.*;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.AbstractDomainFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.preferences.AIPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.util.RCFGWalker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.*;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.*;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.RCFGLoopDetector;
-import de.uni_freiburg.informatik.ultimate.result.*;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
+import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
+import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
@@ -67,8 +92,7 @@ public class AbstractInterpreter {
 	private Map<ProgramPoint, Map<RCFGEdge, RCFGEdge>> mLoopEntryNodes;
 
 	/**
-	 * Lists of call statements to check if there is any node with a summary
-	 * that has no corresponding regular call
+	 * Lists of call statements to check if there is any node with a summary that has no corresponding regular call
 	 */
 	private List<CallStatement> mCallStatementsAtCalls = new LinkedList<CallStatement>();
 	private List<CallStatement> mCallStatementsAtSummaries = new LinkedList<CallStatement>();
@@ -76,15 +100,13 @@ public class AbstractInterpreter {
 	private AIPreferences mPreferences;
 
 	/**
-	 * Visits the edges and statements to apply the actions on the states using
-	 * the domain
+	 * Visits the edges and statements to apply the actions on the states using the domain
 	 */
 	private AIVisitor mVisitor;
 	private RCFGWalker mRCFGWalker;
 
 	/**
-	 * Execution will stop if there is a syntax error or after each edge the
-	 * visitor can stop the execution
+	 * Execution will stop if there is a syntax error or after each edge the visitor can stop the execution
 	 */
 	private boolean mContinueProcessing;
 
@@ -94,15 +116,21 @@ public class AbstractInterpreter {
 	private int mNofRecWidening;
 	private int mNofSteps;
 	private boolean mPostponeWidenedStates;
+	private final IProgressAwareTimer mTimer;
+	private final boolean mCompMode;
 
 	/**
 	 * Constructor
 	 * 
 	 * @param services
+	 * @param timer
+	 * @param compmode
 	 */
-	public AbstractInterpreter(IUltimateServiceProvider services) {
+	public AbstractInterpreter(IUltimateServiceProvider services, IProgressAwareTimer timer, boolean compmode) {
 		mServices = services;
+		mTimer = timer;
 		mLogger = mServices.getLoggingService().getLogger(AIActivator.PLUGIN_ID);
+		mCompMode = compmode;
 
 		mPreferences = new AIPreferences();
 		mPreferences.fetchPreferences();
@@ -116,8 +144,7 @@ public class AbstractInterpreter {
 	}
 
 	/**
-	 * Adds an AbstractInterpretationAnnotation with states at the given
-	 * location IElement
+	 * Adds an AbstractInterpretationAnnotation with states at the given location IElement
 	 * 
 	 * @param element
 	 *            The location of the given states
@@ -136,8 +163,7 @@ public class AbstractInterpreter {
 	 * Provide the RootNode from where to start and the RCFG will be processed.
 	 * 
 	 * @param root
-	 *            The node to start from. RootAnnotations are required for loop
-	 *            detection etc.
+	 *            The node to start from. RootAnnotations are required for loop detection etc.
 	 */
 	@SuppressWarnings({ "unchecked" })
 	public void processRcfg(RootNode root) {
@@ -148,7 +174,6 @@ public class AbstractInterpreter {
 			if (edge instanceof RootEdge) {
 				final RCFGNode target = edge.getTarget();
 				if ((mainEntry == null) || (target == mainEntry)) {
-					mLogger.warn("There was no entry node specified!");
 					final StackState state = new StackState(mDomain, mLogger);
 
 					if (target instanceof ProgramPoint) {
@@ -169,11 +194,11 @@ public class AbstractInterpreter {
 				"Executed operations: #Steps: %s,  #Merge: %s,  #Widening: %s,  #RecMerge: %s,  #RecWidening: %s",
 				mNofSteps, mNofMerging, mNofWidening, mNofRecMerging, mNofRecWidening));
 		/*
-		 * report as safe if the analysis terminated after having explored the
-		 * whole reachable state space without finding an error
+		 * report as safe if the analysis terminated after having explored the whole reachable state space without
+		 * finding an error
 		 */
 		if (mReachedErrorLocs.isEmpty()) {
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
+			if (isTimeout()) {
 				throwTimeout();
 			} else {
 				reportSafeResult();
@@ -187,6 +212,10 @@ public class AbstractInterpreter {
 		new AbstractInterpretationPredicates(predicates).annotate(root);
 		mLogger.info("Annotated " + predicates.size() + " predicates");
 		mDomain.finalizeDomain();
+	}
+
+	private boolean isTimeout() {
+		return !mTimer.continueProcessing();
 	}
 
 	private ProgramPoint initialize(RootNode root) {
@@ -263,8 +292,6 @@ public class AbstractInterpreter {
 		RootAnnot ra = root.getRootAnnot();
 		Map<String, ProgramPoint> entryNodes = ra.getEntryNodes();
 
-		
-		
 		// find the main method entry
 		String[] mainMethodNames = mPreferences.getMainMethodNames().split(",");
 		ProgramPoint mainEntry = null;
@@ -298,9 +325,8 @@ public class AbstractInterpreter {
 		for (String s : errorLocMap.keySet()) {
 			mErrorLocs.addAll(errorLocMap.get(s));
 		}
-		
-		if (mainEntry == null)
-		{
+
+		if (mainEntry == null) {
 			mLogger.warn("There was no entry node specified!");
 		}
 
@@ -324,7 +350,7 @@ public class AbstractInterpreter {
 	 */
 	protected void visitNodes() {
 		while (!mNodesToVisit.isEmpty()) {
-			if (!mServices.getProgressMonitorService().continueProcessing()) {
+			if (isTimeout()) {
 				throwTimeout();
 			}
 
@@ -359,11 +385,9 @@ public class AbstractInterpreter {
 					}
 
 					mLogger.debug("States at node:");
-					for (StackState s : statesAtNode)
-					{
-					  mLogger.debug("\n" + (s.isProcessed() ? "(D)" : "(*)") +
-					  s.toString());
-                    }
+					for (StackState s : statesAtNode) {
+						mLogger.debug("\n" + (s.isProcessed() ? "(D)" : "(*)") + s.toString());
+					}
 
 					unprocessedState.setProcessed(true);
 
@@ -429,8 +453,7 @@ public class AbstractInterpreter {
 							}
 						}
 					}
-					mContinueProcessing = mContinueProcessing && mVisitor.getContinueProcessing()
-							&& mServices.getProgressMonitorService().continueProcessing();
+					mContinueProcessing = mContinueProcessing && mVisitor.getContinueProcessing() && !isTimeout();
 				} // hasUnprocessed
 
 				// remove states if they aren't needed for possible widening
@@ -482,8 +505,7 @@ public class AbstractInterpreter {
 	 *            The node that state belongs to
 	 * @param state
 	 *            The program state to put on the node
-	 * @return True if the state was added, false if not (when a superstate is
-	 *         at the node)
+	 * @return True if the state was added, false if not (when a superstate is at the node)
 	 */
 	@SuppressWarnings({ "unchecked" })
 	private boolean putStateToNode(StackState state, RCFGEdge edge, RCFGNode targetNode) {
@@ -693,8 +715,7 @@ public class AbstractInterpreter {
 	 * 
 	 * @param listener
 	 *            The listener to notify
-	 * @return True if it has been added, false if not, i.e. if it was already
-	 *         registered
+	 * @return True if it has been added, false if not, i.e. if it was already registered
 	 */
 	public boolean registerStateChangeListener(IAbstractStateChangeListener listener) {
 		return mStateChangeListeners.add(listener);
@@ -705,8 +726,7 @@ public class AbstractInterpreter {
 	 * 
 	 * @param listener
 	 *            The listener to remove
-	 * @return True if it was in the list and has been removed, false if it
-	 *         wasn't there to begin with
+	 * @return True if it was in the list and has been removed, false if it wasn't there to begin with
 	 */
 	public boolean removeStateChangeListener(IAbstractStateChangeListener listener) {
 		return mStateChangeListeners.remove(listener);
@@ -785,9 +805,10 @@ public class AbstractInterpreter {
 	 *            The abstract state at the error location
 	 */
 	@SuppressWarnings("unchecked")
-	private UnprovableResult<RcfgElement, CodeBlock, Expression> reportErrorResult(ProgramPoint location,
-			StackState state) {
-
+	private void reportErrorResult(ProgramPoint location, StackState state) {
+		if (mCompMode) {
+			return;
+		}
 		RcfgProgramExecution programExecution = new RcfgProgramExecution(state.getTrace(),
 				new HashMap<Integer, ProgramState<Expression>>());
 
@@ -807,10 +828,12 @@ public class AbstractInterpreter {
 			}
 			mLogger.info("Abstract interpretation finished after reaching all error locations");
 		}
-		return result;
 	}
 
 	private void reportUnsupportedSyntaxResult(IElement location, String message) {
+		if (mCompMode) {
+			return;
+		}
 		UnsupportedSyntaxResult<IElement> result = new UnsupportedSyntaxResult<IElement>(location,
 				AIActivator.PLUGIN_NAME, mServices.getBacktranslationService(), message);
 
@@ -823,14 +846,20 @@ public class AbstractInterpreter {
 	 * Reports safety of the program as the plugin's result
 	 */
 	private void reportSafeResult() {
+		if (mCompMode) {
+			return;
+		}
 		mServices.getResultService().reportResult(AIActivator.PLUGIN_ID,
 				new AllSpecificationsHoldResult(AIActivator.PLUGIN_NAME, "No error locations were reached."));
 	}
 
-	/*
+	/**
 	 * Reports non-safety of the program as the plugin's result
 	 */
 	private void reportUnSafeResult(String message) {
+		if (mCompMode) {
+			return;
+		}
 		mServices.getResultService().reportResult(AIActivator.PLUGIN_ID,
 				new GenericResult(AIActivator.PLUGIN_NAME, "assert violation", message, Severity.INFO));
 	}

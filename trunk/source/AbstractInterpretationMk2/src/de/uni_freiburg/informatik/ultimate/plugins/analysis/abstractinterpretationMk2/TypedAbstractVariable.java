@@ -30,17 +30,7 @@ public class TypedAbstractVariable extends AbstractVariable {
 
 	@Override
 	public String toString() {
-		String s = super.toString();
-		// if(mDeclaration != null)
-		// {
-		// s += "+".concat(mDeclaration.toString());
-		// }
-		// if(mType != null)
-		// {
-		// s += ":".concat(mType.toString());
-		// }
-
-		return s;
+		return super.toString();
 	}
 	
 	public Term getTermVar(final Boogie2SMT bpl2smt){

@@ -59,7 +59,7 @@ public class AbstractInterpretationPreferenceInitializer extends
 	/* --- default values for the different preferences --- */
 
 	public static final String DEF_MAIN_METHOD_NAME = "Main, main";
-	public static final int DEF_ITERATIONS_UNTIL_WIDENING = 3;
+	public static final int DEF_ITERATIONS_UNTIL_WIDENING = 10;
 	public static final boolean DEF_POSTPONE_WIDENING = true;
 	public static final int DEF_STATES_UNTIL_MERGE = 5;
 	public static final String DEF_WIDENING_FIXEDNUMBERS = "0, 1, 3.14, -128, 127";

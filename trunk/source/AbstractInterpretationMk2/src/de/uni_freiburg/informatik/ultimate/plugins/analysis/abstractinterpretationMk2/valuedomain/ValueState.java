@@ -9,6 +9,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.AbstractVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.TypedAbstractVariable;
@@ -120,16 +121,14 @@ public class ValueState implements IAbstractState<ValueState> {
 	 *            An existing identifier
 	 * @param value
 	 *            The new value
-	 * @return True iff a layer with the given identifier exists so the value
-	 *         could be written
+	 * @return True iff a layer with the given identifier exists so the value could be written
 	 */
 	public void writeValue(TypedAbstractVariable variable, IAbstractValue<?> value) {
 		mMapping.put(variable, value);
 	}
 
 	/**
-	 * Returns the value of a given variable or top, if the variable was not
-	 * declared yet
+	 * Returns the value of a given variable or top, if the variable was not declared yet
 	 * 
 	 * @param variable
 	 * @return
@@ -143,8 +142,7 @@ public class ValueState implements IAbstractState<ValueState> {
 	}
 
 	/**
-	 * Returns the value of an identifier or null if no variable was declared
-	 * for that identifier
+	 * Returns the value of an identifier or null if no variable was declared for that identifier
 	 * 
 	 * @param identifier
 	 * @return
@@ -201,15 +199,15 @@ public class ValueState implements IAbstractState<ValueState> {
 
 		Term acc = script.term("true");
 		for (final Entry<TypedAbstractVariable, IAbstractValue<?>> entry : mMapping.entrySet()) {
-			Term termvar = entry.getKey().getTermVar(bpl2smt);
+			final Term termvar = entry.getKey().getTermVar(bpl2smt);
 			final Sort sort = termvar.getSort().getRealSort();
-			if (!sort.getName().equals("Int")) {
-				//ignore array sorts for now
+			if (sort.isArraySort()) {
+				// ignore array sorts for now
 				continue;
 			}
-			
-			Term newterm = entry.getValue().getTerm(script, termvar);
-			acc = script.term("and", acc, newterm);
+
+			final Term newterm = entry.getValue().getTerm(script, termvar);
+			acc = Util.and(script, acc, newterm);
 		}
 		return acc;
 	}

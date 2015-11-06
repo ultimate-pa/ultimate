@@ -181,14 +181,11 @@ public class IntervalValue implements IAbstractValue<Interval> {
 	@Override
 	public IntervalValue multiply(IAbstractValue<?> value) {
 		/*
-		 * [a, b] * [x, y] = [min(a * x, a * y, b * x, b * y), max(a * x, a * y,
-		 * b * x, b * y)] Optimisations by taking signs into account (and [a, b]
-		 * * [x, y] = [x, y] * [a, b]): a >= 0, b >= 0, x >= 0, y >= 0 => [a *
-		 * x, b * y] a >= 0, b >= 0, x <= 0, y >= 0 => [b * x, b * y] a >= 0, b
-		 * >= 0, x <= 0, y <= 0 => [b * x, a * y] a <= 0, b >= 0, x <= 0, y >= 0
-		 * => [min(a * y, b * x), max(a * x, b * y)] a <= 0, b >= 0, x <= 0, y
-		 * <= 0 => [b * x, a * x] a <= 0, b <= 0, x <= 0, y <= 0 => [b * y, a *
-		 * x]
+		 * [a, b] * [x, y] = [min(a * x, a * y, b * x, b * y), max(a * x, a * y, b * x, b * y)] Optimisations by taking
+		 * signs into account (and [a, b] * [x, y] = [x, y] * [a, b]): a >= 0, b >= 0, x >= 0, y >= 0 => [a * x, b * y]
+		 * a >= 0, b >= 0, x <= 0, y >= 0 => [b * x, b * y] a >= 0, b >= 0, x <= 0, y <= 0 => [b * x, a * y] a <= 0, b
+		 * >= 0, x <= 0, y >= 0 => [min(a * y, b * x), max(a * x, b * y)] a <= 0, b >= 0, x <= 0, y <= 0 => [b * x, a *
+		 * x] a <= 0, b <= 0, x <= 0, y <= 0 => [b * y, a * x]
 		 */
 		IntervalValue intVal = (IntervalValue) value;
 		if (intVal == null)
@@ -214,9 +211,8 @@ public class IntervalValue implements IAbstractValue<Interval> {
 
 		if (l1_geq0) {
 			/*
-			 * a >= 0, b >= 0, x >= 0, y >= 0 => [a * x, b * y] a >= 0, b >= 0,
-			 * x <= 0, y >= 0 => [b * x, b * y] a >= 0, b >= 0, x <= 0, y <= 0
-			 * => [b * x, a * y]
+			 * a >= 0, b >= 0, x >= 0, y >= 0 => [a * x, b * y] a >= 0, b >= 0, x <= 0, y >= 0 => [b * x, b * y] a >= 0,
+			 * b >= 0, x <= 0, y <= 0 => [b * x, a * y]
 			 */
 			if (l2_geq0) {
 				/*
@@ -226,8 +222,7 @@ public class IntervalValue implements IAbstractValue<Interval> {
 				resultUpper = u1.mul(u2);
 			} else {
 				/*
-				 * a >= 0, b >= 0, x <= 0, y >= 0 => [b * x, b * y] a >= 0, b >=
-				 * 0, x <= 0, y <= 0 => [b * x, a * y]
+				 * a >= 0, b >= 0, x <= 0, y >= 0 => [b * x, b * y] a >= 0, b >= 0, x <= 0, y <= 0 => [b * x, a * y]
 				 */
 				resultLower = u1.mul(l2);
 				if (u2_geq0) {
@@ -244,18 +239,15 @@ public class IntervalValue implements IAbstractValue<Interval> {
 			}
 		} else {
 			/*
-			 * a <= 0, b >= 0, x >= 0, y >= 0 => [a * y, b * y] a <= 0, b >= 0,
-			 * x <= 0, y >= 0 => [min(a * y, b * x), max(a * x, b * y)] a <= 0,
-			 * b >= 0, x <= 0, y <= 0 => [b * x, a * x] a <= 0, b <= 0, x >= 0,
-			 * y >= 0 => [a * y, b * x] a <= 0, b <= 0, x <= 0, y >= 0 => [a *
-			 * y, max(a * x, b * y)] a <= 0, b <= 0, x <= 0, y <= 0 => [b * y, a
-			 * * x]
+			 * a <= 0, b >= 0, x >= 0, y >= 0 => [a * y, b * y] a <= 0, b >= 0, x <= 0, y >= 0 => [min(a * y, b * x),
+			 * max(a * x, b * y)] a <= 0, b >= 0, x <= 0, y <= 0 => [b * x, a * x] a <= 0, b <= 0, x >= 0, y >= 0 => [a
+			 * * y, b * x] a <= 0, b <= 0, x <= 0, y >= 0 => [a * y, max(a * x, b * y)] a <= 0, b <= 0, x <= 0, y <= 0
+			 * => [b * y, a * x]
 			 */
 			if (u1_geq0) {
 				/*
-				 * a <= 0, b >= 0, x >= 0, y >= 0 => [a * y, b * y] a <= 0, b >=
-				 * 0, x <= 0, y >= 0 => [min(a * y, b * x), max(a * x, b * y)] a
-				 * <= 0, b >= 0, x <= 0, y <= 0 => [b * x, a * x]
+				 * a <= 0, b >= 0, x >= 0, y >= 0 => [a * y, b * y] a <= 0, b >= 0, x <= 0, y >= 0 => [min(a * y, b *
+				 * x), max(a * x, b * y)] a <= 0, b >= 0, x <= 0, y <= 0 => [b * x, a * x]
 				 */
 				if (l2_geq0) {
 					/*
@@ -265,14 +257,12 @@ public class IntervalValue implements IAbstractValue<Interval> {
 					resultUpper = u1.mul(u2);
 				} else {
 					/*
-					 * a <= 0, b >= 0, x <= 0, y >= 0 => [min(a * y, b * x),
-					 * max(a * x, b * y)] a <= 0, b >= 0, x <= 0, y <= 0 => [b *
-					 * x, a * x]
+					 * a <= 0, b >= 0, x <= 0, y >= 0 => [min(a * y, b * x), max(a * x, b * y)] a <= 0, b >= 0, x <= 0,
+					 * y <= 0 => [b * x, a * x]
 					 */
 					if (u2_geq0) {
 						/*
-						 * a <= 0, b >= 0, x <= 0, y >= 0 => [min(a * y, b * x),
-						 * max(a * x, b * y)]
+						 * a <= 0, b >= 0, x <= 0, y >= 0 => [min(a * y, b * x), max(a * x, b * y)]
 						 */
 						Rational l1u2 = l1.mul(u2);
 						Rational u1l2 = u1.mul(l2);
@@ -290,9 +280,8 @@ public class IntervalValue implements IAbstractValue<Interval> {
 				}
 			} else {
 				/*
-				 * a <= 0, b <= 0, x >= 0, y >= 0 => [a * y, b * x] a <= 0, b <=
-				 * 0, x <= 0, y >= 0 => [a * y, max(a * x, b * y)] a <= 0, b <=
-				 * 0, x <= 0, y <= 0 => [b * y, a * x]
+				 * a <= 0, b <= 0, x >= 0, y >= 0 => [a * y, b * x] a <= 0, b <= 0, x <= 0, y >= 0 => [a * y, max(a * x,
+				 * b * y)] a <= 0, b <= 0, x <= 0, y <= 0 => [b * y, a * x]
 				 */
 				if (l2_geq0) {
 					/*
@@ -302,13 +291,12 @@ public class IntervalValue implements IAbstractValue<Interval> {
 					resultUpper = u1.mul(l2);
 				} else {
 					/*
-					 * a <= 0, b <= 0, x <= 0, y >= 0 => [a * y, max(a * x, b *
-					 * y)] a <= 0, b <= 0, x <= 0, y <= 0 => [b * y, a * x]
+					 * a <= 0, b <= 0, x <= 0, y >= 0 => [a * y, max(a * x, b * y)] a <= 0, b <= 0, x <= 0, y <= 0 => [b
+					 * * y, a * x]
 					 */
 					if (u2_geq0) {
 						/*
-						 * a <= 0, b <= 0, x <= 0, y >= 0 => [a * y, max(a * x,
-						 * b * y)]
+						 * a <= 0, b <= 0, x <= 0, y >= 0 => [a * y, max(a * x, b * y)]
 						 */
 						resultLower = l1.mul(u2);
 
@@ -338,15 +326,12 @@ public class IntervalValue implements IAbstractValue<Interval> {
 	@Override
 	public IntervalValue divide(IAbstractValue<?> value) {
 		/*
-		 * [a, b] / [x, y] = [min(a / x, a / y, b / x, b / y), max(a / x, a / y,
-		 * b / x, b / y)] Important: Euclidean division!! Potential division by
-		 * zero -> Warning/Error, value to (-infty, infty) ///// BOTTOM!!
-		 * Optimisations by taking signs into account: a >= 0, b >= 0, x > 0, y
-		 * > 0 => [a / y, b / x] a >= 0, b >= 0, x < 0, y < 0 => [b / y, a / x]
-		 * a <= 0, b >= 0, x > 0, y > 0 => [a / x, b / x] a <= 0, b >= 0, x < 0,
-		 * y < 0 => [b / y, a / y] a <= 0, b <= 0, x > 0, y > 0 => [a / x, b /
-		 * y] a <= 0, b <= 0, x < 0, y < 0 => [b / x, a / y] x <= 0, y >= 0 =>
-		 * (-infty, infty), Warning/Error
+		 * [a, b] / [x, y] = [min(a / x, a / y, b / x, b / y), max(a / x, a / y, b / x, b / y)] Important: Euclidean
+		 * division!! Potential division by zero -> Warning/Error, value to (-infty, infty) ///// BOTTOM!! Optimisations
+		 * by taking signs into account: a >= 0, b >= 0, x > 0, y > 0 => [a / y, b / x] a >= 0, b >= 0, x < 0, y < 0 =>
+		 * [b / y, a / x] a <= 0, b >= 0, x > 0, y > 0 => [a / x, b / x] a <= 0, b >= 0, x < 0, y < 0 => [b / y, a / y]
+		 * a <= 0, b <= 0, x > 0, y > 0 => [a / x, b / y] a <= 0, b <= 0, x < 0, y < 0 => [b / x, a / y] x <= 0, y >= 0
+		 * => (-infty, infty), Warning/Error
 		 */
 		IntervalValue intVal = (IntervalValue) value;
 		if (intVal == null)
@@ -383,8 +368,7 @@ public class IntervalValue implements IAbstractValue<Interval> {
 
 		if (l1_geq0) {
 			/*
-			 * a >= 0, b >= 0, x > 0, y > 0 => [a / y, b / x] a >= 0, b >= 0, x
-			 * < 0, y < 0 => [b / y, a / x]
+			 * a >= 0, b >= 0, x > 0, y > 0 => [a / y, b / x] a >= 0, b >= 0, x < 0, y < 0 => [b / y, a / x]
 			 */
 			if (lu2_g0) {
 				/*
@@ -401,14 +385,12 @@ public class IntervalValue implements IAbstractValue<Interval> {
 			}
 		} else {
 			/*
-			 * a <= 0, b >= 0, x > 0, y > 0 => [a / x, b / x] a <= 0, b >= 0, x
-			 * < 0, y < 0 => [b / y, a / y] a <= 0, b <= 0, x > 0, y > 0 => [a /
-			 * x, b / y] a <= 0, b <= 0, x < 0, y < 0 => [b / x, a / y]
+			 * a <= 0, b >= 0, x > 0, y > 0 => [a / x, b / x] a <= 0, b >= 0, x < 0, y < 0 => [b / y, a / y] a <= 0, b
+			 * <= 0, x > 0, y > 0 => [a / x, b / y] a <= 0, b <= 0, x < 0, y < 0 => [b / x, a / y]
 			 */
 			if (u1_geq0) {
 				/*
-				 * a <= 0, b >= 0, x > 0, y > 0 => [a / x, b / x] a <= 0, b >=
-				 * 0, x < 0, y < 0 => [b / y, a / y]
+				 * a <= 0, b >= 0, x > 0, y > 0 => [a / x, b / x] a <= 0, b >= 0, x < 0, y < 0 => [b / y, a / y]
 				 */
 				if (lu2_g0) {
 					/*
@@ -425,8 +407,7 @@ public class IntervalValue implements IAbstractValue<Interval> {
 				}
 			} else {
 				/*
-				 * a <= 0, b <= 0, x > 0, y > 0 => [a / x, b / y] a <= 0, b <=
-				 * 0, x < 0, y < 0 => [b / x, a / y]
+				 * a <= 0, b <= 0, x > 0, y > 0 => [a / x, b / y] a <= 0, b <= 0, x < 0, y < 0 => [b / x, a / y]
 				 */
 				if (lu2_g0) {
 					/*
@@ -547,9 +528,8 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		/*
 		 * [a, b] != [x, y] => [min(a, x), max(b, y)] [a, a] != [a, a] => empty
 		 * 
-		 * // the following 4 cases are only valid for integers [a, a] != [a, y]
-		 * => [a+1, y] [a, a] != [x, a] => [x, a-1] [a, y] != [a, a] => [a+1, y]
-		 * [x, a] != [a, a] => [x, a-1]
+		 * // the following 4 cases are only valid for integers [a, a] != [a, y] => [a+1, y] [a, a] != [x, a] => [x,
+		 * a-1] [a, y] != [a, a] => [a+1, y] [x, a] != [a, a] => [x, a-1]
 		 */
 		IntervalValue intVal = (IntervalValue) value;
 		if (intVal == null) {
@@ -729,33 +709,35 @@ public class IntervalValue implements IAbstractValue<Interval> {
 
 	@Override
 	public Term getTerm(Script script, Term variable) {
-		//TODO: Review this code by Fabian
-		
-		Term lowerBound = null;
-		Term upperBound = null;
-		Rational lower = getValue().getLowerBound();
-		Rational upper = getValue().getUpperBound();
-		if (lower.isRational() && upper.isRational()) {
-			if (!lower.equals(upper)) {
-				lowerBound = lower.toTerm(variable.getSort());
-				lowerBound = script.term("<=", lowerBound, variable);
-				upperBound = upper.toTerm(variable.getSort());
-				upperBound = script.term(">=", upperBound, variable);
+		if (isBottom()) {
+			return script.term("false");
+		}
+		final Rational lower = getValue().getLowerBound();
+		final Rational upper = getValue().getUpperBound();
+
+		if (lower.equals(Rational.NEGATIVE_INFINITY) && upper.equals(Rational.POSITIVE_INFINITY)) {
+			return script.term("true");
+		} else if (lower.equals(Rational.NEGATIVE_INFINITY) && upper.isRational()) {
+			return script.term(">=", upper.toTerm(variable.getSort()), variable);
+		} else if (lower.isRational() && upper.equals(Rational.POSITIVE_INFINITY)) {
+			return script.term("<=", lower.toTerm(variable.getSort()), variable);
+		} else if (lower.isRational() && upper.isRational()) {
+			final int cmp = lower.compareTo(upper);
+			if (cmp == 0) {
+				// point-interval
+				return script.term("=", lower.toTerm(variable.getSort()), variable);
+			} else if (cmp < 0) {
+				// normal interval
+				final Term lowerBound = script.term("<=", lower.toTerm(variable.getSort()), variable);
+				final Term upperBound = script.term(">=", upper.toTerm(variable.getSort()), variable);
 				return script.term("and", lowerBound, upperBound);
 			} else {
-				lowerBound = lower.toTerm(variable.getSort());
-				return script.term("=", lowerBound, variable);
+				// broken interval aka false
+				assert false : "Broken interval";
+				return script.term("false");
 			}
-		} else if ((lower == Rational.NEGATIVE_INFINITY) && (upper == Rational.POSITIVE_INFINITY)) {
-			return script.term("true");
-		} else if ((lower == Rational.NEGATIVE_INFINITY) && (upper.isRational())) {
-			upperBound = upper.toTerm(variable.getSort());
-			return script.term(">=", upperBound, variable);
-		} else if ((lower.isRational()) && (upper == Rational.POSITIVE_INFINITY)) {
-			lowerBound = lower.toTerm(variable.getSort());
-			return script.term("<=", lowerBound, variable);
 		} else {
-			return script.term("false");
+			throw new AssertionError("Missed a case");
 		}
 	}
 }

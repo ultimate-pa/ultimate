@@ -324,13 +324,15 @@ public class ValueExpressionVisitor extends ExpressionVisitor<IAbstractValue<?>>
 				IAbstractValue<?> b = visit(expr.getRight());
 				mNegate = false;
 
-				if (resultIsBoolean(a)) {
-					return a.logicAnd(b);
-				}
 				// AND: Both must be non-bottom
 				if (isBottom(a) || isBottom(b)) {
 					return mDomain.getTopBottomValueForType(expr.getType(), false);
 				}
+				if (resultIsBoolean(a) && resultIsBoolean(b)) {
+					return a.logicAnd(b);
+				}
+				
+				
 				return null;
 			} else {
 				// OR(a, b)
@@ -340,12 +342,16 @@ public class ValueExpressionVisitor extends ExpressionVisitor<IAbstractValue<?>>
 				IAbstractValue<?> b = visit(expr.getRight());
 				mNegate = false;
 
-				if (resultIsBoolean(a)) {
-					return a.logicOr(b);
-				}
 				// OR: not both may be bottom
 				if (isBottom(a) && isBottom(b)) {
 					return mDomain.getTopBottomValueForType(expr.getType(), false);
+				} else if (isBottom(a)) {
+					return b;
+				} else if (isBottom(b)) {
+					return a;
+				}
+				if (resultIsBoolean(a) && resultIsBoolean(b)) {
+					return a.logicOr(b);
 				}
 				return null;
 			}
@@ -415,7 +421,7 @@ public class ValueExpressionVisitor extends ExpressionVisitor<IAbstractValue<?>>
 
 		case COMPPO:
 		default:
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("COMPPO");
 		}
 	}
 
@@ -443,7 +449,7 @@ public class ValueExpressionVisitor extends ExpressionVisitor<IAbstractValue<?>>
 
 	@Override
 	public IAbstractValue<?> visited(FunctionApplication expr, List<IAbstractValue<?>> args) {
-		//uninterpreted functions are treated as top 
+		// uninterpreted functions are treated as top
 		return mDomain.getTopBottomValueForType(expr.getType(), true);
 	}
 
@@ -455,10 +461,8 @@ public class ValueExpressionVisitor extends ExpressionVisitor<IAbstractValue<?>>
 	 * @param value
 	 *            An abstract value to get a boolean value for
 	 * @return A value in the boolean domain representing the given value: <br>
-	 *         If it already is a value in the boolean domain, a copy is
-	 *         returned. <br>
-	 *         Else, a boolean value of FALSE is returned iff the given value is
-	 *         bottom.
+	 *         If it already is a value in the boolean domain, a copy is returned. <br>
+	 *         Else, a boolean value of FALSE is returned iff the given value is bottom.
 	 */
 	private IAbstractValue<?> booleanFromAbstractValue(IAbstractValue<?> value) {
 		IAbstractValueFactory<?> boolFactory = mDomain.getBoolValueFactory();
