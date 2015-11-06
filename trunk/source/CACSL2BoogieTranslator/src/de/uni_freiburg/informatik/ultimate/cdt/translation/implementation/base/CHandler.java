@@ -709,7 +709,7 @@ public class CHandler implements ICHandler {
 
 				boolean onHeap = cDec.isOnHeap();
 				String bId = main.nameHandler.getUniqueIdentifier(node, cDec.getName(),
-						mSymbolTable.getCompoundCounter(), onHeap);
+						mSymbolTable.getCompoundCounter(), onHeap, cDec.getType());
 				if (onHeap)
 					mBoogieIdsOfHeapVars.add(bId);
 
@@ -975,10 +975,11 @@ public class CHandler implements ICHandler {
 			return new ExpressionResult(new RValue(mMemoryHandler.constructNullPointer(loc), 
 					new CPointer(new CPrimitive(PRIMITIVE.VOID))));
 		} else if (node.getName().toString().equals("__func__")){
-			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
+			CType cType = new CPointer(new CPrimitive(PRIMITIVE.CHAR));
+			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET, cType);
 			VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
 					loc, new String[] { tId }, main.typeHandler.constructPointerType(loc)) });
-			RValue rvalue = new RValue(new IdentifierExpression(loc, tId), new CPointer(new CPrimitive(PRIMITIVE.CHAR)));
+			RValue rvalue = new RValue(new IdentifierExpression(loc, tId), cType);
 			ArrayList<Declaration> decls = new ArrayList<Declaration>();
 			decls.add(tVarDecl);
 			Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
@@ -1099,7 +1100,7 @@ public class CHandler implements ICHandler {
 		final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(exprRes);
 		
 		// In this case we need a temporary variable for the new value
-		final String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.PRE_MOD);
+		final String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.PRE_MOD, exprRes.lrVal.getCType());
 		final ASTType tmpIType = mTypeHandler.ctype2asttype(loc, exprRes.lrVal.getCType());
 		final VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, tmpIType, loc);
 		result.auxVars.put(tmpVar, loc);                                                                                                                      
@@ -1155,7 +1156,7 @@ public class CHandler implements ICHandler {
 		final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(exprRes);
 
 		// In this case we need a temporary variable for the old value
-		final String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.POST_MOD);
+		final String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.POST_MOD, exprRes.lrVal.getCType());
 		final ASTType tmpIType = mTypeHandler.ctype2asttype(loc, exprRes.lrVal.getCType());
 		final VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, tmpIType, loc);
 		result.auxVars.put(tmpVar, loc);                                                                                                                      
@@ -1461,13 +1462,14 @@ public class CHandler implements ICHandler {
 				return new ExpressionResult(stmt, newRVal, decl, auxVars, overappr);
 			}
 			// create and add tmp var #t~AND~UID
-			String resName = main.nameHandler.getTempVarUID(SFO.AUXVAR.SHORTCIRCUIT);
+			CPrimitive intType = new CPrimitive(PRIMITIVE.INT);
+			String resName = main.nameHandler.getTempVarUID(SFO.AUXVAR.SHORTCIRCUIT, intType);
 			VarList tempVar = new VarList(loc, new String[] { resName }, new PrimitiveType(loc, SFO.BOOL));
 			VariableDeclaration tmpVar = new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
 			auxVars.put(tmpVar, loc);
 			decl.add(tmpVar);
 			VariableLHS lhs = new VariableLHS(loc, resName);
-			RValue tmpRval = new RValue(new IdentifierExpression(loc, resName), new CPrimitive(PRIMITIVE.INT), true);
+			RValue tmpRval = new RValue(new IdentifierExpression(loc, resName), intType, true);
 			RValue resRval = tmpRval;
 			// #t~AND~UID = left
 
@@ -1514,13 +1516,14 @@ public class CHandler implements ICHandler {
 						new CPrimitive(CPrimitive.PRIMITIVE.INT), true), decl, auxVars, overappr);
 			}
 			// create and add tmp var #t~OR~UID
-			String resName = main.nameHandler.getTempVarUID(SFO.AUXVAR.SHORTCIRCUIT);
+			CPrimitive intType = new CPrimitive(PRIMITIVE.INT);
+			String resName = main.nameHandler.getTempVarUID(SFO.AUXVAR.SHORTCIRCUIT, intType);
 			VarList tempVar = new VarList(loc, new String[] { resName }, new PrimitiveType(loc, SFO.BOOL));
 			VariableDeclaration tmpVar = new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
 			auxVars.put(tmpVar, loc);
 			decl.add(tmpVar);
 			VariableLHS lhs = new VariableLHS(loc, resName);
-			RValue tmpRval = new RValue(new IdentifierExpression(loc, resName), new CPrimitive(PRIMITIVE.INT), true);
+			RValue tmpRval = new RValue(new IdentifierExpression(loc, resName), intType, true);
 			RValue resRval = tmpRval;
 			// #t~OR~UID = left
 			AssignmentStatement aStat = new AssignmentStatement(loc, new LeftHandSide[] { lhs },
@@ -2422,7 +2425,8 @@ public class CHandler implements ICHandler {
 		assert switchParam instanceof ExpressionResult;
 		ExpressionResult l = ((ExpressionResult) switchParam).switchToRValueIfNecessary(main, mMemoryHandler,
 				mStructHandler, loc);
-		m_ExpressionTranslation.convertIntToInt(loc, l, new CPrimitive(PRIMITIVE.INT));
+		CPrimitive intType = new CPrimitive(PRIMITIVE.INT);
+		m_ExpressionTranslation.convertIntToInt(loc, l, intType);
 		stmt.addAll(l.stmt);
 		decl.addAll(l.decl);
 		auxVars.putAll(l.auxVars);
@@ -2431,7 +2435,7 @@ public class CHandler implements ICHandler {
 
 
 		String breakLabelName = main.nameHandler.getGloballyUniqueIdentifier("SWITCH~BREAK~");
-        String switchFlag = main.nameHandler.getTempVarUID(SFO.AUXVAR.SWITCH);
+        String switchFlag = main.nameHandler.getTempVarUID(SFO.AUXVAR.SWITCH, intType);
         ASTType flagType = new PrimitiveType(loc, SFO.BOOL);
 
         VariableDeclaration switchAuxVarDec = SFO.getTempVarVariableDeclaration(switchFlag, flagType, loc);
@@ -2749,7 +2753,7 @@ public class CHandler implements ICHandler {
 		stmt.addAll(reLocCond.stmt);
 		overappr.addAll(reLocCond.overappr);
 
-		String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.ITE);
+		String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.ITE, new CPrimitive(PRIMITIVE.INT));
 		ASTType tmpType = mTypeHandler.ctype2asttype(loc, rePositive.lrVal.getCType());
 		VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpName, tmpType, loc);
 
@@ -3076,7 +3080,7 @@ public class CHandler implements ICHandler {
 
 					} else { //otherwise we consider the value undefined, thus havoc it
 						// TODO: maybe not use auxiliary variables so lavishly
-						String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.UNION);
+						String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.UNION, en.getValue());
 						VariableDeclaration tVarDec = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(loc,
 								new String[] { tmpId }, main.typeHandler.ctype2asttype(loc, en.getValue())) });
 						decl.add(tVarDec);

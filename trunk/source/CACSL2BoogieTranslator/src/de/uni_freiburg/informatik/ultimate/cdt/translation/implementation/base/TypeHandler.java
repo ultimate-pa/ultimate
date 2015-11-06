@@ -272,8 +272,10 @@ public class TypeHandler implements ITypeHandler {
     public Result visit(Dispatcher main, IASTEnumerationSpecifier node) {
         ILocation loc = LocationFactory.createCLocation(node);
         String cId = node.getName().toString();
+        // values of enum have type int
+        CPrimitive intType = new CPrimitive(PRIMITIVE.INT);
         String enumId = main.nameHandler.getUniqueIdentifier(node, node.getName().toString(),
-        		main.cHandler.getSymbolTable().getCompoundCounter(), false);
+        		main.cHandler.getSymbolTable().getCompoundCounter(), false, intType);
         int nrFields = node.getEnumerators().length;
         String[] fNames = new String[nrFields];
         Expression[] fValues = new Expression[nrFields];
@@ -291,7 +293,6 @@ public class TypeHandler implements ITypeHandler {
             }
         }
         CEnum cEnum = new CEnum(enumId, fNames, fValues);
-        CPrimitive intType = new CPrimitive(PRIMITIVE.INT);
         ASTType at = cPrimitive2asttype(loc, intType); 
         TypesResult result = new TypesResult(at, false, false, cEnum);
        

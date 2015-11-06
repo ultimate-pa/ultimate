@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.ACSLLo
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
@@ -715,15 +716,15 @@ public class CACSL2BoogieBacktranslator extends
 		mBoogie2C.putFunction(boogieId, cId);
 	}
 
-	public void putVar(String boogieId, String cId) {
+	public void putVar(String boogieId, String cId, CType cType) {
 		mBoogie2C.putVar(boogieId, cId);
 	}
 
-	public void putInVar(String boogieId, String cId) {
+	public void putInVar(String boogieId, String cId, CType cType) {
 		mBoogie2C.putInVar(boogieId, cId);
 	}
 
-	public void putTempVar(String boogieId, Object obj) {
+	public void putTempVar(String boogieId, Object obj, CType cType) {
 		mBoogie2C.putTempVar(boogieId, obj);
 	}
 

@@ -300,8 +300,10 @@ public class MemoryHandler {
     	ArrayList<VariableDeclaration> decl = new ArrayList<>();
     	ArrayList<Statement> stmt = new ArrayList<>();
     	
-    	String loopCtr = main.nameHandler.getTempVarUID(SFO.AUXVAR.LOOPCTR);
-		VarList lcvl = new VarList(ignoreLoc, new String[] { loopCtr }, new PrimitiveType(ignoreLoc, SFO.INT));
+    	CPrimitive intType = new CPrimitive(PRIMITIVE.INT);
+    	String loopCtr = main.nameHandler.getTempVarUID(SFO.AUXVAR.LOOPCTR, intType);
+    	ASTType astType = new PrimitiveType(ignoreLoc, SFO.INT); //TODO: translate via type handler
+		VarList lcvl = new VarList(ignoreLoc, new String[] { loopCtr }, astType);
 		VariableDeclaration loopCtrDec = new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] { lcvl });
 		decl.add(loopCtrDec);
 		//initialize the counter to 0
@@ -620,7 +622,7 @@ public class MemoryHandler {
             	VariableDeclaration[] writeDecl = new VariableDeclaration[astTypesOfAllMemoryArrayTypes.length];
             	Statement[] writeBlock = new Statement[2 * astTypesOfAllMemoryArrayTypes.length - 1];
             	for (int j = 0, k = 0; j < astTypesOfAllMemoryArrayTypes.length; j++, k++) {
-            		String tmpVar = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);	
+            		String tmpVar = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET, null);	
             		writeDecl[j] = new VariableDeclaration(loc, new Attribute[0],
             				new VarList[] { new VarList(loc, new String[] { tmpVar },
             						astTypesOfAllMemoryArrayTypes[j]) });
@@ -1053,10 +1055,11 @@ public class MemoryHandler {
      */
     public ExpressionResult getMallocCall(Dispatcher main, FunctionHandler fh,
             Expression size, ILocation loc) {
-    	String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC);
+    	CPointer voidPointer = new CPointer(new CPrimitive(PRIMITIVE.VOID));
+    	String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC, voidPointer);
         VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, main.typeHandler.constructPointerType(loc), loc);
         
-        LocalLValue llVal = new LocalLValue(new VariableLHS(loc, tmpId), new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+        LocalLValue llVal = new LocalLValue(new VariableLHS(loc, tmpId), voidPointer);
         ExpressionResult mallocRex = new ExpressionResult(llVal);
         
         mallocRex.stmt.add(getMallocCall(main, fh, size, llVal, loc));
@@ -1138,7 +1141,7 @@ public class MemoryHandler {
         
         final String heapTypeName = getHeapTypeName(resultType);
         
-        String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD);
+        String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD, m_ExpressionTranslation.getCTypeOfIntArray());
         final ASTType tmpAstType;
         if (bitvectorConversionNeeded) {
         	tmpAstType = main.typeHandler.ctype2asttype(loc, m_ExpressionTranslation.getCTypeOfIntArray());
@@ -1164,7 +1167,7 @@ public class MemoryHandler {
 	        		new RValue(new IdentifierExpression(loc, tmpId), m_ExpressionTranslation.getCTypeOfIntArray()),
 	        		decl, auxVars, overappr);
 			m_ExpressionTranslation.convertIntToInt(loc, result, (CPrimitive) resultType.getUnderlyingType());
-	        String bvtmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD);
+	        String bvtmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD, resultType);
 	        VariableDeclaration bvtVarDecl = SFO.getTempVarVariableDeclaration(bvtmpId, heapType, loc);
 	        auxVars.put(bvtVarDecl, loc);
 	        decl.add(bvtVarDecl);

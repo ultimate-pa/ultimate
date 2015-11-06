@@ -846,7 +846,7 @@ public class InitializationHandler {
 					unionAlreadyInitialized = true;
 				} else {
 					//fill in the uninitialized aux variable
-					String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.UNION);
+					String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.UNION, underlyingFieldType);
 
 					fieldWrites = new ExpressionResult((RValue) null);
 					fieldWrites.stmt.addAll(mMemoryHandler.getWriteCall(main, loc,
@@ -966,7 +966,7 @@ public class InitializationHandler {
 			if (isUnion) {
 				assert rerl.list.size() == 0 || rerl.list.size() == 1 : "union initializers must have only one field";
 				//TODO: maybe not use auxiliary variables so lavishly
-				String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.UNION);
+				String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.UNION, underlyingFieldType);
 				if (!unionAlreadyInitialized
 						&& rerl.list.size() == 1 
 						&& (rerl.list.get(0).field == null || rerl.list.get(0).field.equals("")
@@ -1005,7 +1005,7 @@ public class InitializationHandler {
 							new LinkedHashMap<VariableDeclaration, ILocation>();
 					ArrayList<Overapprox> fieldOverApp = new ArrayList<>();
 
-					String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYINIT);
+					String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYINIT, underlyingFieldType);
 
 					ExpressionListRecResult arrayInitRerl = null;
 					if (i < rerl.list.size())

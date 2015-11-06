@@ -239,7 +239,7 @@ public class SvComp14CHandler extends CHandler {
 					throw new AssertionError("unknown type " + t);
 				}
 				ASTType type = mTypeHandler.ctype2asttype(loc, cType);
-				String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
+				String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET, cType);
 				VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpName, type, loc);
 				decl.add(tVarDecl);
 				auxVars.put(tVarDecl, loc);
@@ -265,8 +265,10 @@ public class SvComp14CHandler extends CHandler {
 			if (node.getParent().getParent() instanceof IASTCompoundStatement) {
 				return new SkipResult();
 			}
-			ASTType tempType = new PrimitiveType(loc, SFO.INT);
-			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
+			// 2015-11-05 Matthias: TODO check if int is reasonable here
+			CType returnType = new CPrimitive(PRIMITIVE.INT);
+			ASTType tempType = mTypeHandler.ctype2asttype(loc, returnType);
+			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET, null);
 			VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
 					loc, new String[] { tId }, tempType) });
 			auxVars.put(tVarDecl, loc);
@@ -306,7 +308,7 @@ public class SvComp14CHandler extends CHandler {
 			overappr.addAll(srcRex.overappr);
 			overappr.addAll(sizeRex.overappr);		
 
-			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMCPYRES);
+			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMCPYRES, destRex.lrVal.getCType());
 			VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
 					loc, new String[] { tId }, main.typeHandler.constructPointerType(loc)) });
 			decl.add(tVarDecl);
@@ -385,10 +387,11 @@ public class SvComp14CHandler extends CHandler {
 		}
 		if (node.getName().toString().equals("__PRETTY_FUNCTION__")
 				|| node.getName().toString().equals("__FUNCTION__")){
-			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
+			CType returnType = new CPointer(new CPrimitive(PRIMITIVE.CHAR));
+			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET, returnType);
 			VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
 					loc, new String[] { tId }, main.typeHandler.constructPointerType(loc)) });
-			RValue rvalue = new RValue(new IdentifierExpression(loc, tId), new CPointer(new CPrimitive(PRIMITIVE.CHAR)));
+			RValue rvalue = new RValue(new IdentifierExpression(loc, tId), returnType);
 			ArrayList<Declaration> decls = new ArrayList<Declaration>();
 			decls.add(tVarDecl);
 			Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();

@@ -447,7 +447,7 @@ public class PostProcessor {
 				assert checkedMethodOutParams.length == 1;
 				// there is 1(!) return value
 				String checkMethodRet = main.nameHandler
-						.getTempVarUID(SFO.AUXVAR.RETURNED);
+						.getTempVarUID(SFO.AUXVAR.RETURNED, null);
 				main.cHandler.getSymbolTable().addToReverseMap(checkMethodRet,
 						SFO.NO_REAL_C_VAR + checkMethodRet, loc);
 				VarList tempVar = new VarList(loc,

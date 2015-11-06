@@ -658,7 +658,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 				if (((CPrimitive) rval.getCType()).isUnsigned()) {
 					BigInteger maxValue = m_TypeSizes.getMaxValueOfPrimitiveType((CPrimitive) rval.getCType());
 					BigInteger maxValuePlusOne = maxValue.add(BigInteger.ONE);
-					return value.remainder(maxValuePlusOne);
+					return value.mod(maxValuePlusOne);
 				} else {
 					return value;
 				}

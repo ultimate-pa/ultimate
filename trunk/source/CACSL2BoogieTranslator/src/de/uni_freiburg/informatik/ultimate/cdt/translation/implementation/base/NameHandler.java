@@ -37,6 +37,7 @@ import org.eclipse.cdt.core.dom.ast.IASTCompositeTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -81,7 +82,7 @@ public class NameHandler implements INameHandler {
 	}
 
 	@Override
-	public String getUniqueIdentifier(IASTNode scope, String cId, int compCnt, boolean isOnHeap) {
+	public String getUniqueIdentifier(IASTNode scope, String cId, int compCnt, boolean isOnHeap, CType cType) {
 		if (cId.isEmpty()) cId = getGloballyUniqueIdentifier("unnamed");
 		final String boogieId;
 		{
@@ -94,7 +95,7 @@ public class NameHandler implements INameHandler {
 			while (curr != null && !(curr.getParent() instanceof IASTTranslationUnit)) {
 				if (curr instanceof IASTCompositeTypeSpecifier) {
 					boogieId = cId;
-					mBacktranslator.putVar(boogieId, cId);
+					mBacktranslator.putVar(boogieId, cId, cType);
 					return boogieId;
 				}
 				curr = curr.getParent();
@@ -115,25 +116,25 @@ public class NameHandler implements INameHandler {
 		} else {
 			boogieId = "~" + onHeapStr + cId;
 		}
-		mBacktranslator.putVar(boogieId, cId);
+		mBacktranslator.putVar(boogieId, cId, cType);
 		return boogieId;
 	}
 
 	@Override
-	public String getInParamIdentifier(String cId) {
+	public String getInParamIdentifier(String cId, CType cType) {
 		// (alex:) in case of several unnamed parameters we need uniqueness
 		// (still a little bit overkill, to make it precise we would need to
 		// check whether
 		// the current method has more than one unnamed parameter)
 		final String boogieId = SFO.IN_PARAM + cId + (cId.isEmpty() ? mTmpUID++ : "");
-		mBacktranslator.putInVar(boogieId, cId);
+		mBacktranslator.putInVar(boogieId, cId, cType);
 		return boogieId;
 	}
 
 	@Override
-	public String getTempVarUID(SFO.AUXVAR purpose) {
+	public String getTempVarUID(SFO.AUXVAR purpose, CType cType) {
 		final String boogieId = SFO.TEMP + purpose.getId() + mTmpUID++;
-		mBacktranslator.putTempVar(boogieId, purpose);
+		mBacktranslator.putTempVar(boogieId, purpose, cType);
 		return boogieId;
 	}
 

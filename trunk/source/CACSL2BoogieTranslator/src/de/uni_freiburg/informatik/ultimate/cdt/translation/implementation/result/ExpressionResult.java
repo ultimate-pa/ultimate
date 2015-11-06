@@ -497,7 +497,7 @@ public class ExpressionResult extends Result {
 			}
 			int dim = dimBigInteger.intValue();
 
-			String newArrayId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYCOPY);
+			String newArrayId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYCOPY, arrayType);
 			VarList newArrayVl = new VarList(loc, new String[] { newArrayId }, 
 					new ArrayType(loc, new String[0], new ASTType[] { new PrimitiveType(loc, SFO.INT) }, 
 							main.typeHandler.ctype2asttype(loc, arrayType.getValueType())));

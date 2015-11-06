@@ -952,7 +952,7 @@ public class FunctionHandler {
 				type = main.typeHandler.ctype2asttype(loc, paramDec.getType());
 			}
 
-			String paramId = main.nameHandler.getInParamIdentifier(paramDec.getName());
+			String paramId = main.nameHandler.getInParamIdentifier(paramDec.getName(), paramDec.getType());
 			in[i] = new VarList(loc, new String[] { paramId }, type);
 			main.cHandler.getSymbolTable().put(paramDec.getName(),
 					new SymbolTableValue(paramId, null, paramDec, false, null, null));
@@ -1007,7 +1007,7 @@ public class FunctionHandler {
 						isOnHeap = ((MainDispatcher) main).getVariablesForHeap().contains(paramDec);
 
 				// Copy of inparam that is writeable
-				String auxInvar = main.nameHandler.getUniqueIdentifier(parent, cId, 0, isOnHeap);
+				String auxInvar = main.nameHandler.getUniqueIdentifier(parent, cId, 0, isOnHeap, cvar);
 
 				if (isOnHeap || cvar instanceof CArray) {
 					type = main.typeHandler.constructPointerType(loc);
@@ -1305,7 +1305,7 @@ public class FunctionHandler {
 			String tmpId = null;
 
 			if (!resultTypeIsVoid) {
-				tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.FUNCPTRRES);
+				tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.FUNCPTRRES, null);
 				VariableDeclaration tmpVarDec = new VariableDeclaration(loc, new Attribute[0],
 						new VarList[] { new VarList(loc, new String[] { tmpId }, 
 								//main.typeHandler.ctype2asttype(loc,
@@ -1384,7 +1384,7 @@ public class FunctionHandler {
 				// C has only one return statement -> no need for forall
 				call = new CallStatement(loc, false, new VariableLHS[0], methodName, args.toArray(new Expression[0]));
 			} else if (type.length == 1) { // one return value
-				String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.RETURNED);
+				String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.RETURNED, null);
 				expr = new IdentifierExpression(loc, tmpId);
 				VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpId, type[0].getType(), loc);
 				auxVars.put(tmpVar, loc);
@@ -1403,7 +1403,7 @@ public class FunctionHandler {
 			String longDescription = "Return value of method '" + methodName
 					+ "' unknown! Methods should be declared, before they are used! Return value assumed to be int ...";
 			main.warn(loc, longDescription);
-			String ident = main.nameHandler.getTempVarUID(SFO.AUXVAR.RETURNED);
+			String ident = main.nameHandler.getTempVarUID(SFO.AUXVAR.RETURNED, null);
 			expr = new IdentifierExpression(loc, ident);
 			
 			// we don't know the CType of the returned value 

@@ -100,10 +100,11 @@ public abstract class AExpressionTranslation {
 		}
 		case IASTLiteralExpression.lk_string_literal:
 			// Translate string to uninitialized char pointer
-			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
+			CPointer pointerType = new CPointer(new CPrimitive(PRIMITIVE.CHAR));
+			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET, pointerType);
 			VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
 					loc, new String[] { tId }, main.typeHandler.constructPointerType(loc)) });
-			RValue rvalue = new RValue(new IdentifierExpression(loc, tId), new CPointer(new CPrimitive(PRIMITIVE.CHAR)));
+			RValue rvalue = new RValue(new IdentifierExpression(loc, tId), pointerType);
 			ArrayList<Declaration> decls = new ArrayList<Declaration>();
 			decls.add(tVarDecl);
 			Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
