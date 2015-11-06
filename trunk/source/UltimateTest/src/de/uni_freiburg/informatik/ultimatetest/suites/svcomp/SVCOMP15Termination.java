@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimatetest.decider.TerminationAnalysisTestRe
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public class SVCOMP15Termination extends AbstractSVCOMP15TestSuite {
+public class SVCOMP15Termination extends AbstractSVCOMPTestSuite {
 
 	@Override
 	protected long getTimeout() {

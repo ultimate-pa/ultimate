@@ -49,7 +49,7 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 	private static final String[] ALL_C = new String[] { ".c", ".i" };
 	private static final String[] BPL = new String[] { ".bpl" };
 //	private static final int DEFAULT_LIMIT = Integer.MAX_VALUE;
-	private static final int DEFAULT_LIMIT = 3;
+	private static final int DEFAULT_LIMIT = 10;
 	// @formatter:off
 	
 	@SuppressWarnings("unchecked")
@@ -86,21 +86,21 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 	private static final String[] INPUT = new String[] {
 			/* ULTIMATE repo */
 			// "examples/programs/abstractInterpretation/",
-			// "examples/programs/abstractInterpretationNoRec/",
-//			 "examples/programs/regression/bpl/",
+//			// "examples/programs/abstractInterpretationNoRec/",
+////			 "examples/programs/regression/bpl/",
 //			 "examples/programs/regression/c/",
-			// "examples/programs/recursivePrograms",
-			
-			 /* SV-COMP repo */
-			"examples/svcomp/loops/", 
-			// "examples/svcomp/loopsSelection/",
-			// "examples/svcomp/eca/", 
-			// "examples/svcomp/ecaSelection/",
-			// "examples/svcomp/systemc/", 
-			// "examples/svcomp/systemc1/",
-			// "examples/svcomp/systemc2/",
-			// "examples/svcomp/eca-rers2012/",
-			// "examples/svcomp/recursive/",
+//			// "examples/programs/recursivePrograms",
+//			
+//			 /* SV-COMP repo */
+//			"examples/svcomp/loops/", 
+//			// "examples/svcomp/loopsSelection/",
+////			 "examples/svcomp/eca-rers2012/", 
+//			// "examples/svcomp/ecaSelection/",
+//			// "examples/svcomp/systemc/", 
+//			// "examples/svcomp/systemc1/",
+//			// "examples/svcomp/systemc2/",
+//			// "examples/svcomp/eca-rers2012/",
+//			// "examples/svcomp/recursive/",
 //			 "examples/svcomp/ssh-simplified/",
 //			 "examples/svcomp/ntdrivers-simplified/",
 //			 "examples/svcomp/ssh/",
@@ -119,6 +119,8 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 //			 "examples/programs/regression/bpl/Typedef-safe.bpl",
 //			 "examples/svcomp/loops/while_infinite_loop_1_true-unreach-call_false-termination.c"
 //			 "examples/svcomp/loops/n.c24_false-unreach-call.i"
+			 
+				"examples/svcomp/ntdrivers-simplified/kbfiltr_simpl2_false-unreach-call_true-termination.cil.c"
 	};
 
 	// @formatter:on

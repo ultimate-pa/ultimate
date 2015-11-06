@@ -34,7 +34,7 @@ import java.util.List;
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public class SVCOMP15Witness extends AbstractSVCOMP15TestSuite {
+public class SVCOMPWitness extends AbstractSVCOMPTestSuite {
 
 	@Override
 	protected long getTimeout() {
@@ -53,14 +53,14 @@ public class SVCOMP15Witness extends AbstractSVCOMP15TestSuite {
 		List<TestDefinition> rtr = new ArrayList<>();
 
 		/* Automizer */
-		rtr.add(getTestDefinitionFromExamples("ControlFlowInteger.false-unreach-label", "AutomizerC.xml",
-				"witness/svComp-32bit-precise-Automizer-Witness.epf", getTimeout()));
-		rtr.add(getTestDefinitionFromExamples("Loops.false-unreach-label", "AutomizerC.xml",
-				"witness/svComp-32bit-precise-Automizer-Witness.epf", getTimeout()));
-		rtr.add(getTestDefinitionFromExamples("ProductLines.false-unreach-label", "AutomizerC.xml",
-				"witness/svComp-32bit-precise-Automizer-Witness.epf", getTimeout()));
-		rtr.add(getTestDefinitionFromExamples("Sequentialized.false-unreach-label", "AutomizerC.xml",
-				"witness/svComp-32bit-precise-Automizer-Witness.epf", getTimeout()));
+		rtr.add(getTestDefinitionFromExamples("ControlFlow.false-unreach-call", "AutomizerC.xml",
+				"svcomp2016/witness-verif/svcomp-Reach-32bit-Automizer_Default-Witness.epf", getTimeout()));
+		rtr.add(getTestDefinitionFromExamples("Loops.false-unreach-call", "AutomizerC.xml",
+				"svcomp2016/witness-verif/svcomp-Reach-32bit-Automizer_Default-Witness.epf", getTimeout()));
+		rtr.add(getTestDefinitionFromExamples("ProductLines.false-unreach-call", "AutomizerC.xml",
+				"svcomp2016/witness-verif/svcomp-Reach-32bit-Automizer_Default-Witness.epf", getTimeout()));
+		rtr.add(getTestDefinitionFromExamples("Sequentialized.false-unreach-call", "AutomizerC.xml",
+				"svcomp2016/witness-verif/svcomp-Reach-32bit-Automizer_Default-Witness.epf", getTimeout()));
 
 
 //		/* Kojak */

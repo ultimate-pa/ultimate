@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public abstract class AbstractSVCOMP15TestSuite extends UltimateTestSuite {
+public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 
 	private IncrementalLogWithVMParameters mIncrementalLog;
 
