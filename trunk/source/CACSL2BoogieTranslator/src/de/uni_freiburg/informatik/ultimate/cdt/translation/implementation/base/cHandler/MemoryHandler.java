@@ -777,7 +777,9 @@ public class MemoryHandler {
         specFree.add(offsetZero);
 
         // ~addr!base == 0
-        Expression isNullPtr = ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, addrBase, new IntegerLiteral(tuLoc, "0"));
+        Expression ptrBaseZero = m_ExpressionTranslation.constructLiteralForIntegerType(
+        		tuLoc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+        Expression isNullPtr = ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, addrBase, ptrBaseZero);
 
         //requires ~addr!base == 0 || #valid[~addr!base];
         RequiresSpecification baseValid = new RequiresSpecification(tuLoc, free,
