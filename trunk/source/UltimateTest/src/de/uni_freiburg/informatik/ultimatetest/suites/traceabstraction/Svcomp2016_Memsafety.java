@@ -82,6 +82,11 @@ public class Svcomp2016_Memsafety extends AbstractTraceAbstractionTestSuite {
 //			"examples/svcomp/ldv-memsafety/memleaks_test22_2_true-valid-memsafety.i",
 //			"examples/svcomp/ldv-memsafety/memleaks_test22_3_true-valid-memsafety.i",
 //			////////////////////////////////////////////////////////////////
+			
+			// some other problems
+//			"examples/svcomp/ldv-memsafety/memleaks_test18_true-valid-memsafety.i",
+//			"examples/svcomp/array-memsafety/cstrncat-alloca_true-valid-memsafety.i",
+//			"examples/svcomp/array-memsafety/cstrchr_unsafe_false-valid-deref.i",
 		};
 
 
