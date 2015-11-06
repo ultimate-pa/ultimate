@@ -273,6 +273,7 @@ public class MemoryHandler {
         decl.add(new VariableDeclaration(tuLoc, new Attribute[0],
                 new VarList[] { vlL }));
         decl.addAll(declareFree(main, tuLoc));
+        decl.addAll(declareDeallocation(main, tuLoc));
         decl.addAll(declareMalloc(main.typeHandler, tuLoc));
         if (declareMemCpy) {
         	decl.addAll(declareMemCpy(main, namesOfAllMemoryArrayTypes, astTypesOfAllMemoryArrayTypes));
@@ -790,7 +791,7 @@ public class MemoryHandler {
         check.addToNodeAnnot(baseValid);
         specFree.add(baseValid);
 
-        //ensures (if ~addr!base == 0 then #valid == old(#valid)[~addr!base := false] else #valid == old(#valid))
+        //ensures (if ~addr!base == 0 then #valid == old(#valid) else #valid == old(#valid)[~addr!base := false])
         Expression updateValidArray = 
         		ExpressionFactory.newIfThenElseExpression(tuLoc, isNullPtr, 
         				ExpressionFactory.newBinaryExpression(
@@ -830,6 +831,49 @@ public class MemoryHandler {
         					new String[] { ADDR }, main.typeHandler.constructPointerType(tuLoc)) }, new VarList[0],
         					null, bodyFree));
         }
+        return decl;
+    }
+    
+    /**
+     * Generate <code>procedure ULTIMATE.dealloc(~addr:$Pointer$) returns()</code>'s
+     * declaration and implementation.
+     * This procedure should be used for deallocations where do not want to
+     * check if given memory area is valid (because we already know this)
+     * which is the case, e.g., for arrays that we store on the heap or for
+     * alloca.
+     * 
+     * @param tuLoc
+     *            the location for the new nodes.
+     * @return declaration and implementation of procedure <code>~free</code>
+     */
+    private ArrayList<Declaration> declareDeallocation(Dispatcher main, final ILocation tuLoc) {
+        ArrayList<Declaration> decl = new ArrayList<Declaration>();
+        // ensures #valid = old(valid)[~addr!base := false];
+        Expression bLFalse = new BooleanLiteral(tuLoc, false);
+        Expression addr = new IdentifierExpression(tuLoc, ADDR);
+        Expression valid = new IdentifierExpression(tuLoc, SFO.VALID);
+        Expression addrBase = new StructAccessExpression(tuLoc, addr,
+                SFO.POINTER_BASE);
+        Expression[] idcFree = new Expression[] { addrBase };
+        
+        ArrayList<Specification> specFree = new ArrayList<Specification>();
+
+        Expression updateValidArray = 
+        				ExpressionFactory.newBinaryExpression(
+        						tuLoc, Operator.COMPEQ, valid,
+        						new ArrayStoreExpression(tuLoc, ExpressionFactory.newUnaryExpression(
+        								tuLoc, UnaryExpression.Operator.OLD, valid),
+        								idcFree, bLFalse));
+
+        specFree.add(new EnsuresSpecification(tuLoc, true, updateValidArray));
+        specFree.add(new ModifiesSpecification(tuLoc, false,
+        		new VariableLHS[] { new VariableLHS(tuLoc, SFO.VALID) }));
+        
+        decl.add(new Procedure(tuLoc, new Attribute[0], SFO.DEALLOC,
+        		new String[0], new VarList[] { new VarList(tuLoc,
+        				new String[] { ADDR }, main.typeHandler.constructPointerType(tuLoc)) }, new VarList[0],
+        		specFree.toArray(new Specification[0]), null));
+
         return decl;
     }
 

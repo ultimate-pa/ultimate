@@ -116,6 +116,10 @@ public final class SFO {
 	 */
 	public static final String FREE = "~free";
 	/**
+	 * Identifier of free procedure.
+	 */
+	public static final String DEALLOC = "ULTIMATE.dealloc";
+	/**
 	 * The "#length" array identifier.
 	 */
 	public static final String LENGTH = "#length";
