@@ -88,7 +88,7 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 //			// "examples/programs/recursivePrograms",
 //			
 //			 /* SV-COMP repo */
-//			"examples/svcomp/loops/", 
+			"examples/svcomp/loops/", 
 //			// "examples/svcomp/loopsSelection/",
 //			// "examples/svcomp/eca/", 
 //			// "examples/svcomp/ecaSelection/",
@@ -113,8 +113,8 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 //			 
 //			 //constructed type
 //			 "examples/programs/regression/bpl/Typedef-safe.bpl",
-			"examples/programs/abstractInterpretation/boolean.c",
-			"examples/programs/abstractInterpretation/boolean-safe.c",
+//			"examples/programs/abstractInterpretation/boolean.c",
+//			"examples/programs/abstractInterpretation/boolean-safe.c",
 	};
 
 	// @formatter:on

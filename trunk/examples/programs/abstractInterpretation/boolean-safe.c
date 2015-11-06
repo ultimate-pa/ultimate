@@ -15,6 +15,6 @@ int main() {
 		i--;
 	}
 
-	__VERIFIER_assert( a != b );
+	//@assert ( a != b );
 	return 0;
 }

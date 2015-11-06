@@ -115,6 +115,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 			}
 			break;
 		case COMPEQ:
+			// TODO: Make better, make shorter, move to separate method s.t. it can be called when handling NEQ as well.
 			if (mLeftSubEvaluator.getVarIdentifiers().size() == 0
 			        && mRightSubEvaluator.getVarIdentifiers().size() == 0) {
 
@@ -134,7 +135,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 
 				String varName = null;
 
-				for (String var : mRightSubEvaluator.getVarIdentifiers()) {
+				for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
 					varName = var;
 				}
 
@@ -164,7 +165,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 
 				String varName = null;
 
-				for (String var : mLeftSubEvaluator.getVarIdentifiers()) {
+				for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
 					varName = var;
 				}
 
@@ -235,11 +236,127 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 				        "Cannot handle more than one variables in a sub-tree of an expression. Returning current state.");
 			}
 			break;
+		case COMPNEQ:
+			// TODO: Make better, make shorter, move to separate method s.t. it can be called when handling CMPEQ.
+			if (mLeftSubEvaluator.getVarIdentifiers().size() == 0
+			        && mRightSubEvaluator.getVarIdentifiers().size() == 0) {
+				if (logicLeft.containsBool() && logicRight.containsBool()) {
+					mBooleanValue = new BooleanValue(logicLeft.booleanValue().equals(logicRight.booleanValue())).neg();
+				} else {
+					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
+					        .equals(secondResult.getResult().getEvaluatedValue())).neg();
+				}
+
+				if (mBooleanValue.getValue() == Value.FALSE) {
+					setToBottom = true;
+				}
+			} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 0
+			        && mRightSubEvaluator.getVarIdentifiers().size() == 1) {
+				String varName = null;
+
+				for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
+					varName = var;
+				}
+
+				assert varName != null;
+
+				if (logicLeft.containsBool() || logicRight.containsBool()) {
+					mBooleanValue = new BooleanValue(logicLeft.booleanValue().equals(logicRight.booleanValue())).neg();
+				} else {
+					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
+					        .equals(secondResult.getResult().getEvaluatedValue())).neg();
+				}
+
+				if (mBooleanValue.getValue() == Value.FALSE) {
+					setToBottom = true;
+				} else {
+					if (logicLeft.containsBool()) {
+						returnState.setBooleanValue(varName, logicLeft.booleanValue().neg());
+					} else {
+						returnState.setValue(varName, returnState.getValues().get(varName)
+						        .intersect(firstResult.getResult().getEvaluatedValue()));
+					}
+
+					returnState = (IntervalDomainState) returnState.intersect((IntervalDomainState) currentState);
+				}
+			} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 1
+			        && mRightSubEvaluator.getVarIdentifiers().size() == 0) {
+
+				String varName = null;
+
+				for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
+					varName = var;
+				}
+
+				assert varName != null;
+
+				if (logicLeft.containsBool() || logicRight.containsBool()) {
+					mBooleanValue = new BooleanValue(logicLeft.booleanValue().equals(logicRight.booleanValue())).neg();
+				} else {
+					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
+					        .equals(secondResult.getResult().getEvaluatedValue())).neg();
+				}
+
+				if (mBooleanValue.getValue() == Value.FALSE) {
+					setToBottom = true;
+				} else {
+					if (logicRight.containsBool()) {
+						returnState.setBooleanValue(varName, logicRight.booleanValue().neg());
+					} else {
+						returnState.setValue(varName, returnState.getValues().get(varName)
+						        .intersect(secondResult.getResult().getEvaluatedValue()));
+					}
+
+					returnState = (IntervalDomainState) returnState.intersect((IntervalDomainState) currentState);
+				}
+			} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 1
+			        && mRightSubEvaluator.getVarIdentifiers().size() == 1) {
+				String leftVar = null;
+				String rightVar = null;
+
+				for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
+					leftVar = var;
+				}
+
+				for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
+					rightVar = var;
+				}
+
+				assert leftVar != null;
+				assert rightVar != null;
+
+				if (logicLeft.containsBool() || logicRight.containsBool()) {
+					mBooleanValue = new BooleanValue(logicLeft.booleanValue().equals(logicRight.booleanValue())).neg();
+				} else {
+					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
+					        .equals(secondResult.getResult().getEvaluatedValue())).neg();
+				}
+
+				if (mBooleanValue.getValue() == Value.FALSE) {
+					setToBottom = true;
+				} else {
+					if (logicLeft.containsBool()) {
+						returnState.setBooleanValue(rightVar, logicLeft.booleanValue().neg());
+					} else {
+						returnState.setValue(rightVar, returnState.getValues().get(rightVar)
+						        .intersect(firstResult.getResult().getEvaluatedValue()));
+					}
+
+					if (logicRight.containsBool()) {
+						returnState.setBooleanValue(leftVar, logicRight.booleanValue().neg());
+					} else {
+						returnState.setValue(leftVar, returnState.getValues().get(leftVar)
+						        .intersect(secondResult.getResult().getEvaluatedValue()));
+					}
+
+					returnState = (IntervalDomainState) returnState.intersect((IntervalDomainState) currentState);
+				}
+			}
+			break;
 		case COMPGEQ:
 		case COMPGT:
 		case COMPLEQ:
 		case COMPLT:
-		case COMPNEQ:
 		case COMPPO:
 			mLogger.warn("Operator " + mOperator + " not handled.");
 		default:
