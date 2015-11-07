@@ -86,24 +86,24 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 	private static final String[] INPUT = new String[] {
 			/* ULTIMATE repo */
 			// "examples/programs/abstractInterpretation/",
-//			// "examples/programs/abstractInterpretationNoRec/",
-////			 "examples/programs/regression/bpl/",
-//			 "examples/programs/regression/c/",
-//			// "examples/programs/recursivePrograms",
-//			
-//			 /* SV-COMP repo */
-//			"examples/svcomp/loops/", 
-//			// "examples/svcomp/loopsSelection/",
-////			 "examples/svcomp/eca-rers2012/", 
-//			// "examples/svcomp/ecaSelection/",
-//			// "examples/svcomp/systemc/", 
-//			// "examples/svcomp/systemc1/",
-//			// "examples/svcomp/systemc2/",
-//			// "examples/svcomp/eca-rers2012/",
-//			// "examples/svcomp/recursive/",
-//			 "examples/svcomp/ssh-simplified/",
-//			 "examples/svcomp/ntdrivers-simplified/",
-//			 "examples/svcomp/ssh/",
+			// "examples/programs/abstractInterpretationNoRec/",
+//			 "examples/programs/regression/bpl/",
+			 "examples/programs/regression/c/",
+			// "examples/programs/recursivePrograms",
+			
+			 /* SV-COMP repo */
+			"examples/svcomp/loops/", 
+			// "examples/svcomp/loopsSelection/",
+//			 "examples/svcomp/eca-rers2012/", 
+			// "examples/svcomp/ecaSelection/",
+			// "examples/svcomp/systemc/", 
+			// "examples/svcomp/systemc1/",
+			// "examples/svcomp/systemc2/",
+			// "examples/svcomp/eca-rers2012/",
+			// "examples/svcomp/recursive/",
+			 "examples/svcomp/ssh-simplified/",
+			 "examples/svcomp/ntdrivers-simplified/",
+			 "examples/svcomp/ssh/",
 //			 
 			 //single files 
 //			 "examples/programs/regression/bpl/interprocedural/BugHoareAnnotation2.bpl",
@@ -120,7 +120,7 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 //			 "examples/svcomp/loops/while_infinite_loop_1_true-unreach-call_false-termination.c"
 //			 "examples/svcomp/loops/n.c24_false-unreach-call.i"
 			 
-				"examples/svcomp/ntdrivers-simplified/kbfiltr_simpl2_false-unreach-call_true-termination.cil.c"
+//				"examples/svcomp/ntdrivers-simplified/kbfiltr_simpl2_false-unreach-call_true-termination.cil.c"
 	};
 
 	// @formatter:on
