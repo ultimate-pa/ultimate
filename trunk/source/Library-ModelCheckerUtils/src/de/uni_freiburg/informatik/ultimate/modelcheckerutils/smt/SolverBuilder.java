@@ -278,7 +278,7 @@ public class SolverBuilder {
 		case Internal_SMTInterpol:
 		{
 			useExternalSolver = false;
-			timeoutSmtInterpol = 30 * 1000;
+			timeoutSmtInterpol = 900 * 1000;
 			externalInterpolator = null;
 		}
 		break;
