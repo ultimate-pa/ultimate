@@ -1224,6 +1224,31 @@ public class MemoryHandler {
         return freeCall;
     }
     
+    /*
+     * 2015-11-07 Matthias: This is copy&paste from getFreeCall
+     */
+    public CallStatement getDeallocCall(Dispatcher main, FunctionHandler fh,
+            LRValue lrVal, ILocation loc) {
+    	assert lrVal instanceof RValue || lrVal instanceof LocalLValue;
+//    	assert lrVal.cType instanceof CPointer;//TODO -> must be a pointer or onHeap -- add a complicated assertion or let it be??
+    	
+        // Further checks are done in the precondition of ~free()!
+        // ~free(E);
+        CallStatement freeCall = new CallStatement(loc, false, new VariableLHS[0], SFO.DEALLOC,
+                new Expression[] { lrVal.getValue() });
+        // add required information to function handler.
+        if (fh.getCurrentProcedureID() != null) {
+            LinkedHashSet<String> mgM = new LinkedHashSet<String>();
+            mgM.add(SFO.VALID);
+            if (!fh.getModifiedGlobals().containsKey(SFO.DEALLOC)) {
+                fh.getModifiedGlobals().put(SFO.DEALLOC, mgM);
+                fh.getCallGraph().put(SFO.DEALLOC, new LinkedHashSet<String>());
+            }
+            fh.getCallGraph().get(fh.getCurrentProcedureID()).add(SFO.DEALLOC);
+        }
+        return freeCall;
+    }
+    
     /**
      * Creates a function call expression for the ~malloc(size) function!
      * 
@@ -1644,7 +1669,7 @@ public class MemoryHandler {
 					llvp.llv, llvp.loc));
 		ArrayList<Statement> frees = new ArrayList<Statement>();
 		for (LocalLValueILocationPair llvp : this.variablesToBeFreed.currentScopeKeys()) {  //frees are inserted in handleReturnStm
-			frees.add(this.getFreeCall(main, m_functionHandler, llvp.llv, llvp.loc));
+			frees.add(this.getDeallocCall(main, m_functionHandler, llvp.llv, llvp.loc));
 			frees.add(new HavocStatement(llvp.loc, new VariableLHS[] { (VariableLHS) llvp.llv.getLHS() }));
 		}
 		ArrayList<Statement> newBlockAL = new ArrayList<Statement>();

@@ -463,7 +463,7 @@ public class FunctionHandler {
 																										// in
 																										// handleReturnStm
 			if (entry.getValue() >= 1) {
-				stmt.add(memoryHandler.getFreeCall(main, this, entry.getKey().llv, entry.getKey().loc));
+				stmt.add(memoryHandler.getDeallocCall(main, this, entry.getKey().llv, entry.getKey().loc));
 				stmt.add(new HavocStatement(loc, new VariableLHS[] { (VariableLHS) entry.getKey().llv.getLHS() }));
 			}
 		}
