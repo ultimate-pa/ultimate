@@ -118,7 +118,8 @@ public class PolytopeExpressionVisitor extends ExpressionWalker<Linear_Expressio
 
 	@Override
 	public Linear_Expression visit(ArrayStoreExpression expr) {
-		throw new RuntimeException("This visitor must only be called for pure right hand side expressions");
+		//throw new RuntimeException("This visitor must only be called for pure right hand side expressions");
+		return null;
 	}
 
 	@Override

@@ -7,6 +7,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.AbstractVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.TypedAbstractVariable;
@@ -22,6 +23,7 @@ import parma_polyhedra_library.Linear_Expression_Times;
 import parma_polyhedra_library.Linear_Expression_Unary_Minus;
 import parma_polyhedra_library.Linear_Expression_Variable;
 import parma_polyhedra_library.NNC_Polyhedron;
+import parma_polyhedra_library.Partial_Function;
 import parma_polyhedra_library.Relation_Symbol;
 import parma_polyhedra_library.Variable;
 
@@ -154,9 +156,9 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 	 * @param pState
 	 */
 	public void updateDimensions() {
-		int needed = mVariableTranslation.size();
-		int existing = (int) mPolyhedron.space_dimension();
-		int missingDimensions = needed - existing;
+		long needed = mVariableTranslation.size();
+		long existing = mPolyhedron.space_dimension();
+		long missingDimensions = needed - existing;
 		if (missingDimensions > 0) {
 			mPolyhedron.add_space_dimensions_and_embed(missingDimensions);
 		} else if (missingDimensions < 0) {
@@ -174,17 +176,38 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 	public void synchroniseDimensions(PolytopeState state) {
 		// the two polytopes must be of the same scope
 		// and hence have the same variable translation instance
-		if (mVariableTranslation != state.mVariableTranslation) {
+		if (mVariableTranslation != state.mVariableTranslation) 
+		{			
 			if (mVariableTranslation.union(state.mVariableTranslation)) {
 				// mLogger.debug("Uniting tables of " + this.toString());
-				state.mVariableTranslation = mVariableTranslation;
+				mVariableTranslation = state.mVariableTranslation;
 			} else {
-				// fold the dimensions of one poytope to match the table of the
+				// fold the dimensions of one polytope to match the table of the
 				// other state
-				throw new RuntimeException("The two states must have the same variable tanslation");
+				// make a copy
+				mVariableTranslation = new VariableTranslation(mVariableTranslation);
+				mLogger.debug("asdf_: " + mPolyhedron.space_dimension());
+				mLogger.debug("before remap: " + mVariableTranslation.toString());
+				mLogger.debug("other: " + state.mVariableTranslation.toString());
+				Partial_Function mapping = mVariableTranslation.remap(state.mVariableTranslation, mLogger);				
+				mLogger.debug("after remap: " + mVariableTranslation.toString());
+
+				updateDimensions();
+				//mPolyhedron.add_space_dimensions_and_embed(1);
+				mLogger.debug("asdf_: " + mPolyhedron.space_dimension());
+				
+				mPolyhedron.map_space_dimensions(mapping);
+				// now try again
+				if (mVariableTranslation.union(state.mVariableTranslation)) {
+					// mLogger.debug("Uniting tables of " + this.toString());
+					mVariableTranslation = state.mVariableTranslation;
+				} else {
+					throw new RuntimeException("The two states must have the same variable tanslation");
+				}
 			}
 		}
 		updateDimensions();
+		
 		state.updateDimensions();
 	}
 
@@ -195,7 +218,7 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 	 */
 	public void addConstraint(Constraint constraint) {
 		updateDimensions();
-		// mLogger.debug("Adding Constraint: " + constraint.toString());
+		mLogger.debug("Adding Constraint: " + constraint.toString());
 		mPolyhedron.add_constraint(constraint);
 	}
 

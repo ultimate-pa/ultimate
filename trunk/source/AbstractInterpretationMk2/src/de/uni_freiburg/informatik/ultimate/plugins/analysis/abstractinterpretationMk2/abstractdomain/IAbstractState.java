@@ -81,5 +81,5 @@ public interface IAbstractState<T> {
 	 * @param bpl2smt
 	 * @return
 	 */
-	Term getTerm(Script script, Boogie2SMT bpl2smt);
+	Term getTerm(Script script, Boogie2SMT bpl2smt);	
 }

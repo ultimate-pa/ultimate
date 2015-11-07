@@ -454,7 +454,7 @@ public class AIVisitor implements IRCFGVisitor, IStatementVisitor {
 							mResult = "requirement was not fulfilled: " + recSpec.getFormula() + " for ss";
 						}
 					}
-					throw new UnsupportedOperationException(); // not debugged yet
+					//throw new UnsupportedOperationException(); // not debugged yet
 				} else if (spec instanceof LoopInvariantSpecification) {
 					throw new UnsupportedOperationException();
 				} else {

@@ -11,6 +11,8 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.TypedAbstractVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractMergeOperator;
@@ -224,6 +226,14 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 			// like creating a 2D-polytope as value representation
 		} else {
 			right = mExpressionVisitor.walk(exp);
+			
+			if (right == null) {
+				// If we cannot process the expression, we assume
+				// we know nothing about the target variable
+				// mLogger.debug("Cannot create ppl expression for: " +
+				// exp.toString());
+				return applyHavoc(state, target);
+			}
 		}
 
 		if (right == null) {
@@ -329,10 +339,24 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 	 * de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression)
 	 */
 	@Override
-	public boolean checkAssert(IAbstractState<PolytopeState> state, Expression exp) {
-		mLogger.warn("PolytopeDomain: ApplyAssert not implemented");
+	public boolean checkAssert(IAbstractState<PolytopeState> state, Expression expr) {
+		List<PolytopeState> states = new ArrayList<PolytopeState>();
+		states.add(state.getConcrete());
+		
+		// compute the cut with the negated expression
+		Expression negExpr = new UnaryExpression(null, Operator.LOGICNEG, expr);
+		List<PolytopeState> resultingState = mAssumptionVisitor.applyAssumption(negExpr, states, false);
 
-		return false;
+		for (PolytopeState s : resultingState) {
+			if (s == null) {
+				throw new RuntimeException("States may not be null here");
+			}
+			// if the cut is not empty/bottom, the assert may be violated
+			if(!s.isBottom()) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/*
@@ -380,7 +404,7 @@ public class PolytopeDomain implements IAbstractDomain<PolytopeState> {
 
 		// TODO: add a prefix to the old variables
 		// add the variables as additional dimensions
-		vtOld.size();
+		// additionalDimensions = vtOld.size();
 		long existingDimensions = vtTarget.size();
 		for (Entry<TypedAbstractVariable, Variable> entry : vtOld.entries()) {
 			TypedAbstractVariable normal = entry.getKey();
