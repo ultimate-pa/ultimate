@@ -105,6 +105,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolantConsolidation;
@@ -138,7 +139,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected final PredicateFactory m_PredicateFactoryInterpolantAutomata;
 	protected final PredicateFactoryResultChecking m_PredicateFactoryResultChecking;
 
+	protected boolean m_FallbackToFpIfInterprocedural = true;
 	protected final INTERPOLATION m_Interpolation;
+	protected final InterpolantAutomaton m_InterpolantAutomatonConstructionProcedure;
 	protected final UnsatCores m_UnsatCores;
 	protected final boolean m_UseLiveVariables;
 
@@ -152,6 +155,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	private Map<Object, Term> m_AITermMap;
 	private NestedWordAutomaton<WitnessEdge, WitnessNode> m_WitnessAutomaton;
 	private IHoareTripleChecker m_HoareTripleChecker;
+	
 
 	public BasicCegarLoop(String name, RootNode rootNode, SmtManager smtManager, TAPreferences taPrefs,
 			Collection<ProgramPoint> errorLocs, INTERPOLATION interpolation, boolean computeHoareAnnotation,
@@ -163,7 +167,22 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_USE_ABSTRACT_INTERPRETATION);
 		m_UseInterpolantConsolidation = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
 		.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLANTS_CONSOLIDATION);
-		m_Interpolation = interpolation;
+		if (m_FallbackToFpIfInterprocedural && rootNode.getRootAnnot().getEntryNodes().size() > 1) {
+			if (interpolation == INTERPOLATION.FPandBP) {
+				mLogger.info("fallback from FPandBP to FP because CFG is interprocedural");
+				m_Interpolation = INTERPOLATION.ForwardPredicates;
+			} else {
+				m_Interpolation = interpolation;
+			}
+			if (m_Pref.interpolantAutomaton() == InterpolantAutomaton.TWOTRACK) {
+				m_InterpolantAutomatonConstructionProcedure = InterpolantAutomaton.CANONICAL;
+			} else {
+				m_InterpolantAutomatonConstructionProcedure = m_Pref.interpolantAutomaton();
+			}
+		} else {
+			m_Interpolation = interpolation;
+			m_InterpolantAutomatonConstructionProcedure = m_Pref.interpolantAutomaton();
+		}
 		InterpolationPreferenceChecker.check(Activator.s_PLUGIN_NAME, interpolation);
 		m_ComputeHoareAnnotation = computeHoareAnnotation;
 		m_Haf = new HoareAnnotationFragments(mLogger);
@@ -377,7 +396,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	@Override
 	protected void constructInterpolantAutomaton() throws OperationCanceledException {
 		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
-		switch (m_Pref.interpolantAutomaton()) {
+		switch (m_InterpolantAutomatonConstructionProcedure) {
 		case CANONICAL: {
 			List<ProgramPoint> programPoints = CoverageAnalysis.extractProgramPoints(m_Counterexample);
 			CanonicalInterpolantAutomatonBuilder iab = new CanonicalInterpolantAutomatonBuilder(m_Services,
