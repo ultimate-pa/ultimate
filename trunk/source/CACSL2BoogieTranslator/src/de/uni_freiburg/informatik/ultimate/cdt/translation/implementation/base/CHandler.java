@@ -131,6 +131,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
@@ -672,6 +673,15 @@ public class CHandler implements ICHandler {
 				DeclaratorResult declResult = (DeclaratorResult) main.dispatch(d);
 
 				CDeclaration cDec = declResult.getDeclaration();
+				
+				
+				// are we in prerun mode?
+				if (main instanceof PRDispatcher) {
+					// all unions should be on heap
+					if (cDec.getType() instanceof CUnion) {
+						((PRDispatcher) main).getVariablesOnHeap().add(d);
+					}
+				}
 
 				///////////////////
 				// update symbol table
