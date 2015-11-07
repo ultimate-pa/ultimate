@@ -29,6 +29,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -774,14 +775,13 @@ public class FunctionHandler {
 		if (methodName.equals("malloc") || methodName.equals("alloca") || methodName.equals("__builtin_alloca")) {//TODO: add calloc
 			assert arguments.length == 1;
 			Result sizeRes = main.dispatch(arguments[0]);
-			assert sizeRes instanceof ExpressionResult;
-			ExpressionResult rex = ((ExpressionResult) sizeRes).switchToRValueIfNecessary(main, memoryHandler,
+			ExpressionResult er = ((ExpressionResult) sizeRes).switchToRValueIfNecessary(main, memoryHandler,
 					structHandler, loc);
 
-			ExpressionResult mallocRex = memoryHandler.getMallocCall(main, this, rex.lrVal.getValue(), loc);
+			ExpressionResult mallocRex = memoryHandler.getMallocCall(main, this, er.lrVal.getValue(), loc);
 
-			rex.addAll(mallocRex);
-			rex.lrVal = mallocRex.lrVal;
+			er.addAll(mallocRex);
+			er.lrVal = mallocRex.lrVal;
 
 			// for alloc a we have to free the variable ourselves when the
 			// stackframe is closed, i.e. at a return
@@ -791,9 +791,9 @@ public class FunctionHandler {
 								LocationFactory.createIgnoreLocation(loc)));
 				//we need to clear auxVars because otherwise the malloc auxvar is havocced after 
 				//this, and free (triggered by the statement before) would fail.
-				rex.auxVars.clear();
+				er.auxVars.clear();
 			}
-			return rex;
+			return er;
 		} else if (methodName.equals("free")) {
 			assert arguments.length == 1;
 			Result pRes = main.dispatch(arguments[0]);
@@ -802,9 +802,76 @@ public class FunctionHandler {
 					structHandler, loc);
 			pRex.stmt.add(memoryHandler.getFreeCall(main, this, pRex.lrVal, loc));
 			return pRex;
+		} else if (methodName.equals("calloc")) {
+			memoryHandler.setDeclareMemset();
+
+			assert arguments.length == 2;
+			ExpressionResult noItems = ((ExpressionResult) main.dispatch(arguments[0])).switchToRValueIfNecessary(
+					main, memoryHandler,
+					structHandler, loc);
+			ExpressionResult er = new ExpressionResult(noItems);
+			ExpressionResult sizeRes = ((ExpressionResult) main.dispatch(arguments[1])).switchToRValueIfNecessary(main, memoryHandler,
+					structHandler, loc);
+			er.addAll((ExpressionResult) sizeRes);
+
+			ExpressionResult mallocRex = memoryHandler.getMallocCall(
+					main, 
+					this, 
+					ExpressionFactory.newBinaryExpression(loc, 
+							Operator.ARITHMUL, 
+							noItems.lrVal.getValue(), 
+							sizeRes.lrVal.getValue()),
+					loc);
+
+			er.addAll(mallocRex);
+			er.lrVal = mallocRex.lrVal;
+			
+			
+			Expression nr0 = m_ExpressionTranslation.constructLiteralForIntegerType(
+        		loc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+			er.stmt.add(new CallStatement(loc, 
+					false, 
+					new VariableLHS[0], 
+					SFO.MEMSET,
+					new Expression[] {
+							mallocRex.lrVal.getValue(),	//ptr
+							noItems.lrVal.getValue(),	//noFields
+							sizeRes.lrVal.getValue(),	//sizeofFields
+							nr0							//value
+					}));
+
+			return er;
 		} else if (methodName.equals("memset")) {
-			//TODO: this is a workaround, replace with a complete call to memset and provide implementation/specification
-			return main.dispatch(arguments[0]);
+			// void *memset(void *str, int c, size_t n)
+			// void *memset(void *ptr, int value size_t size
+			memoryHandler.setDeclareMemset();
+			
+			ExpressionResult ptr = ((ExpressionResult) main.dispatch(arguments[0])).switchToRValueIfNecessary(
+					main, memoryHandler,
+					structHandler, loc);
+			ExpressionResult er = new ExpressionResult(ptr);
+			ExpressionResult value = ((ExpressionResult) main.dispatch(arguments[1])).switchToRValueIfNecessary(main, memoryHandler,
+					structHandler, loc);
+			er.addAll((ExpressionResult) value);
+			ExpressionResult size = ((ExpressionResult) main.dispatch(arguments[2])).switchToRValueIfNecessary(main, memoryHandler,
+					structHandler, loc);
+			er.addAll((ExpressionResult) size);
+			Expression nr1 = m_ExpressionTranslation.constructLiteralForIntegerType(
+        		loc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
+
+
+			er.stmt.add(new CallStatement(loc, 
+					false, 
+					new VariableLHS[0], 
+					SFO.MEMSET,
+					new Expression[] {
+							ptr.lrVal.getValue(),		//ptr
+							size.lrVal.getValue(),		//noFields
+							nr1,						//sizeofFields (here, 1 byte -- really: sizeof(char)
+							value.lrVal.getValue()		//value TODO: char conversion
+			}));
+
+			return er;
 		} else {
 			return null;
 		}

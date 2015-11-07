@@ -186,6 +186,7 @@ public final class SFO {
 	public static final String MEMCPY = "#memcpy";
 
 	public static final String TO_INT = "#to_int";
+	public static final String MEMSET = "ULTIMATE.memset";
 
 	/**
 	 * Specifies purpose of an auxiliary temporary variable.
