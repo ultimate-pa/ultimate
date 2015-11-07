@@ -59,7 +59,7 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 //			new Triple<>("AbstractInterpretationMk2.xml", BPL, "ai/AI2_INT.epf"),
 			
 			new Triple<>("KojakAIC.xml", ALL_C, "svcomp2016/svcomp-Reach-32bit-Kojak_Default.epf"),
-			new Triple<>("KojakC.xml", ALL_C, "svcomp2016/svcomp-Reach-32bit-Kojak_Default.epf"),
+			new Triple<>("KojakCInline.xml", ALL_C, "svcomp2016/svcomp-Reach-32bit-Kojak_Default.epf"),
 			
 //			new Triple<>("AbstractInterpretationMk2CInline.xml", ALL_C, "ai/AI2_PLT.epf"),
 //			new Triple<>("AbstractInterpretationMk2C.xml", ALL_C, "ai/AI2_PLT.epf"),
