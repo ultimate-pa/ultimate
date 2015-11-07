@@ -193,7 +193,7 @@ public class PolytopeState implements IAbstractState<PolytopeState> {
 				mLogger.debug("after remap: " + mVariableTranslation.toString());
 
 				updateDimensions();
-				//mPolyhedron.add_space_dimensions_and_embed(1);
+				mPolyhedron.add_space_dimensions_and_embed(1);
 				mLogger.debug("asdf_: " + mPolyhedron.space_dimension());
 				
 				mPolyhedron.map_space_dimensions(mapping);
