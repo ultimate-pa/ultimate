@@ -127,7 +127,7 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 
 	@Override
 	protected long getTimeout() {
-		return 60 * 1000 ;
+		return 120 * 1000 ;
 	}
 
 	@Override
