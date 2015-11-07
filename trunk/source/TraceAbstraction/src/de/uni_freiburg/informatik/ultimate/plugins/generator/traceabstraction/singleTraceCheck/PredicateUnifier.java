@@ -805,9 +805,12 @@ public class PredicateUnifier {
 		
 		void addPredicate(IPredicate pred, Map<IPredicate, Validity> implied, Map<IPredicate, Validity> explied) {
 			assert !m_KnownPredicates.contains(pred) : "predicate already known";
+			assert coverageMapIsComplete();
 			for (IPredicate known : m_KnownPredicates) {
 				Validity implies = implied.get(known);
+				assert implies != null : "unknown implies for " + known;
 				Validity explies = explied.get(known);
+				assert explies != null : "unknown explies for " + known;
 				Validity oldimpl = m_Lhs2RhsValidity.put(pred, known, implies);
 				assert oldimpl == null : "entry existed !";
 				Validity oldexpl = m_Lhs2RhsValidity.put(known, pred, explies);
@@ -823,6 +826,7 @@ public class PredicateUnifier {
 			}
 			m_ImpliedPredicates.addPair(pred, pred);
 			m_ExpliedPredicates.addPair(pred, pred);
+			assert coverageMapIsComplete();
 		}
 
 		@Override
@@ -851,6 +855,22 @@ public class PredicateUnifier {
 		
 		public CoverageRelationStatistics getCoverageRelationStatistics() {
 			return new CoverageRelationStatistics(m_Lhs2RhsValidity);
+		}
+		
+		private boolean coverageMapIsComplete() {
+			boolean nothingMissing = true;
+			for (IPredicate p1 : m_KnownPredicates) {
+				for (IPredicate p2 : m_KnownPredicates) {
+					if (p1 != p2) {
+						Validity validity = m_Lhs2RhsValidity.get(p1, p2);
+						assert (validity != null) : "value missing for pair " + p1 + ", " + p2;
+						if (validity == null) {
+							nothingMissing = false;
+						}
+					}
+				}
+			}
+			return nothingMissing;
 		}
 	}
 	
