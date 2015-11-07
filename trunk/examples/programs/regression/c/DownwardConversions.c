@@ -8,7 +8,8 @@
  * Using the Nutz Transformation, we always use -1 as representative for the
  * value. This examples is used to check if we output reasonable values in
  * the failure path or in a witness.
- * Yet, we have to inspect values manually.
+ * Yet, this cannot be checked by our testframework and we have to inspect 
+ * values manually.
  */
 
 extern __VERIFIER_nondet_int();
