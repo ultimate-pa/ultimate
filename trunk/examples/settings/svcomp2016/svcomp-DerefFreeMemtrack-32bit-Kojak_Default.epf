@@ -15,12 +15,6 @@ file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=0.0.1
 \!/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=
 /instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/to\ procedures,\ called\ more\ than\ once=true
-#Sat Oct 31 18:29:54 CET 2015
-@de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2=0.0.1
-file_export_version=3.0
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Domain=POLYTOPE
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Names\ of\ the\ program's\ main\ method\ (cs)=Main, main, ULTIMATE.start
 
 #Sat Oct 31 18:29:54 CET 2015
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding=
@@ -65,22 +59,9 @@ file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck=0.0.1
 
 #Sat Oct 31 18:29:54 CET 2015
-\!/instance/de.uni_freiburg.informatik.ultimate.boogie.printer=
 file_export_version=3.0
-@de.uni_freiburg.informatik.ultimate.boogie.printer=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.boogie.printer/Dump\ path\:=C\:\\data\\bin\\svcompC
-
-#Sat Oct 31 18:29:54 CET 2015
-file_export_version=3.0
-/instance/UltimateCore/Log\ level\ for\ plugins=info
+/instance/UltimateCore/Log\ level\ for\ plugins=INFO
 /instance/UltimateCore/Write\ witness\ as\ "witness.graphml"\ to\ working\ directory=true
 \!/instance/UltimateCore=
 @UltimateCore=0.0.1
 /instance/UltimateCore/Generate\ witness\ from\ each\ counter\ example\ result=true
-
-#Sat Oct 31 18:29:54 CET 2015
-file_export_version=3.0
-\!/instance/de.uni_freiburg.informatik.ultimate.gui=
-@de.uni_freiburg.informatik.ultimate.gui=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.gui/LASTPATH=C\:\\data\\sv-benchmarks\\c\\ssh-simplified\\s3_clnt_3_true-unreach-call.cil.c
-/instance/de.uni_freiburg.informatik.ultimate.gui/LASTTOOLCHAINPATH=C\:\\data\\ultimate-pa\\trunk\\examples\\toolchains\\AbstractInterpretationMk2WithKojakC.xml

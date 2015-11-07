@@ -40,7 +40,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -576,8 +576,8 @@ public class CHandler implements ICHandler {
 			this.endScope();
 		}
 //		return new Result(new Body(loc, decl.toArray(new VariableDeclaration[0]), stmt.toArray(new Statement[0])));
-		return new CompoundStatementExpressionResult(stmt, expr, decl, Collections.emptyMap(), Collections.emptyList());
-
+		return new CompoundStatementExpressionResult(stmt, expr, decl, new HashMap<VariableDeclaration, ILocation>(),
+				new ArrayList<Overapprox>());
 	}
 
 	/**

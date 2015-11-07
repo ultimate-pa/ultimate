@@ -6,7 +6,7 @@ Bundle-Version: 0.0.1
 Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator
 Require-Bundle: Library-log4j,
  UltimateCore,
- org.eclipse.cdt.core;bundle-version="5.3.1",
+ org.eclipse.cdt.core,
  ACSLParser,
  Library-UltimateUtil,
  Library-Jung,
