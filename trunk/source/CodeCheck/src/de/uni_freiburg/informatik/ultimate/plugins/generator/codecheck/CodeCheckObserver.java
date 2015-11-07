@@ -420,17 +420,26 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					traceChecker = null;
 					switch (GlobalSettings._instance._solverAndInterpolator) {
 					case SMTINTERPOL:
-						traceChecker = new InterpolatingTraceCheckerCraig(_predicateUnifier.getTruePredicate(),
-								_predicateUnifier.getFalsePredicate(), // return LBool.UNSAT if trace
-								// is infeasible
-								new TreeMap<Integer, IPredicate>(), errorRun.getWord(), m_smtManager,
-								m_originalRoot.getRootAnnot().getModGlobVarManager(),
-								/*
-								 * TODO : When Matthias introduced this parameter he set the argument to
-								 * AssertCodeBlockOrder.NOT_INCREMENTALLY . Check if you want to set this to a different
-								 * value.
-								 */AssertCodeBlockOrder.NOT_INCREMENTALLY, m_services, true, _predicateUnifier,
-								GlobalSettings._instance._interpolationMode, smtManagerTracechecks);
+						try {
+							traceChecker = new InterpolatingTraceCheckerCraig(_predicateUnifier.getTruePredicate(),
+									_predicateUnifier.getFalsePredicate(), // return LBool.UNSAT if trace
+									// is infeasible
+									new TreeMap<Integer, IPredicate>(), errorRun.getWord(), m_smtManager,
+									m_originalRoot.getRootAnnot().getModGlobVarManager(),
+									/*
+									 * TODO : When Matthias introduced this parameter he set the argument to
+									 * AssertCodeBlockOrder.NOT_INCREMENTALLY . Check if you want to set this to a different
+									 * value.
+									 */AssertCodeBlockOrder.NOT_INCREMENTALLY, m_services, true, _predicateUnifier,
+									 GlobalSettings._instance._interpolationMode, smtManagerTracechecks);
+						} catch (UnsupportedOperationException uoe) {
+							traceChecker = new TraceCheckerSpWp(_predicateUnifier.getTruePredicate(),
+								_predicateUnifier.getFalsePredicate(), new TreeMap<Integer, IPredicate>(),
+								errorRun.getWord(), m_smtManager, m_originalRoot.getRootAnnot().getModGlobVarManager(),
+								AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, m_services,
+								true, _predicateUnifier, INTERPOLATION.ForwardPredicates, //fallback interpolation mode hardcoded for now
+								m_smtManager);
+						}
 						break;
 					case Z3SPWP:
 						// return LBool.UNSAT if trace is infeasible
@@ -441,7 +450,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						traceChecker = new TraceCheckerSpWp(_predicateUnifier.getTruePredicate(),
 								_predicateUnifier.getFalsePredicate(), new TreeMap<Integer, IPredicate>(),
 								errorRun.getWord(), m_smtManager, m_originalRoot.getRootAnnot().getModGlobVarManager(),
-
 								AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, m_services,
 								true, _predicateUnifier, GlobalSettings._instance._interpolationMode,
 								smtManagerTracechecks);
