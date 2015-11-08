@@ -8,9 +8,9 @@ else
 fi
 
 #svn up ../../.
-#pushd ../../trunk/source/BA_MavenParentUltimate/
-#mvn clean install -Pmaterialize
-#popd
+pushd ../../trunk/source/BA_MavenParentUltimate/
+mvn clean install -Pmaterialize
+popd
 
 #svn info ../../. > revision
 #REVISION=`svn info ../../. | grep '^Revision:' | sed -e 's/^Revision: //'`
