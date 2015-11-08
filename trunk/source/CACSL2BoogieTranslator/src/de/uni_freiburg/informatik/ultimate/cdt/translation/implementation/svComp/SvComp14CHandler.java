@@ -114,7 +114,9 @@ public class SvComp14CHandler extends CHandler {
 	/**
 	 * Nondet_X | X in {int, float, char, short, long, pointer}
 	 */
-	private static final String[] NONDET_TYPE_STRINGS = { "int", "long", "float", "char", "short", "pointer" };
+	private static final String[] NONDET_TYPE_STRINGS = { 
+			"_Bool","bool","char","float","double","size_t","int","loff_t",
+			"long","short","pchar","pointer","uchar","unsigned","uint","ulong","ushort" };
 	/**
 	 * The string representing SV-Comp's assert method.
 	 */
