@@ -550,16 +550,17 @@ public class MemoryHandler {
     					ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.ARITHMUL, ctr, sizeofFields)),
     			ignoreLoc);
 
+    	if (m_functionHandler.getModifiedGlobals().get(SFO.MEMSET) == null)
+    		m_functionHandler.getModifiedGlobals().put(SFO.MEMSET, new LinkedHashSet<>());
+    	if (m_functionHandler.getCallGraph().get(SFO.MEMSET) == null)
+    		m_functionHandler.getCallGraph().put(SFO.MEMSET, new LinkedHashSet<String>());
+
     	//TODO: this is designed to work only for the memory arrays for int and pointer, if we want to support others, 
     	// like floats or so, we have to add a case here
     	if (namesOfAllMemoryArrayTypes.contains(SFO.INT)) {
     		//   write~int(valueToBeWritten, { startPointer!Base, startPointer!Offset + (ctr * sizeOfFields) });
     		isIntArrayRequiredInMM = true;
 
-    		if (m_functionHandler.getModifiedGlobals().get(SFO.MEMSET) == null)
-    			m_functionHandler.getModifiedGlobals().put(SFO.MEMSET, new LinkedHashSet<>());
-    		if (m_functionHandler.getCallGraph().get(SFO.MEMSET) == null)
-    			m_functionHandler.getCallGraph().put(SFO.MEMSET, new LinkedHashSet<String>());
     		m_functionHandler.getModifiedGlobals().get(SFO.MEMSET).add(SFO.MEMORY_INT);
 
     		whileBody.add(new CallStatement(ignoreLoc, false, new VariableLHS[0], "write~" + SFO.INT,
@@ -569,10 +570,10 @@ public class MemoryHandler {
     		//   write~Pointer(valueToBeWritten, { startPointer!Base, startPointer!Offset + (ctr * sizeOfFields) });
     		isPointerArrayRequiredInMM = true;
 
-    		if (m_functionHandler.getModifiedGlobals().get(SFO.MEMSET) == null)
-    			m_functionHandler.getModifiedGlobals().put(SFO.MEMSET, new LinkedHashSet<>());
-    		if (m_functionHandler.getCallGraph().get(SFO.MEMSET) == null)
-    			m_functionHandler.getCallGraph().put(SFO.MEMSET, new LinkedHashSet<String>());
+//    		if (m_functionHandler.getModifiedGlobals().get(SFO.MEMSET) == null)
+//    			m_functionHandler.getModifiedGlobals().put(SFO.MEMSET, new LinkedHashSet<>());
+//    		if (m_functionHandler.getCallGraph().get(SFO.MEMSET) == null)
+//    			m_functionHandler.getCallGraph().put(SFO.MEMSET, new LinkedHashSet<String>());
     		m_functionHandler.getModifiedGlobals().get(SFO.MEMSET).add(SFO.MEMORY_POINTER);
 
     		whileBody.add(new CallStatement(ignoreLoc, false, new VariableLHS[0], "write~" + SFO.POINTER,
