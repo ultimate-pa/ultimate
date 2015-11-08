@@ -251,6 +251,9 @@ public class IntegerTranslation extends AExpressionTranslation {
 	@Override
 	public Expression constructArithmeticExpression(ILocation loc, int nodeOperator, Expression exp1,
 			CPrimitive type1, Expression exp2, CPrimitive type2) {
+		if (type1.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE || type2.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
+			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
+		}
 		BinaryExpression.Operator operator;
 		if (type1.isIntegerType() && type1.isUnsigned()) {
 			assert type2.isIntegerType() && type2.isUnsigned() : "incompatible types";

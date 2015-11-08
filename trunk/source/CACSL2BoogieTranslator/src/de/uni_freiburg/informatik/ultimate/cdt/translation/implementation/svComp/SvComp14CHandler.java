@@ -205,7 +205,12 @@ public class SvComp14CHandler extends CHandler {
 					break;
 				case "float":
 					cType = new CPrimitive(PRIMITIVE.FLOAT);
-					break;
+					throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
+//					break;
+				case "double":
+					cType = new CPrimitive(PRIMITIVE.DOUBLE);
+					throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
+//					break;
 				case "size_t":
 				case "int":
 					cType = new CPrimitive(PRIMITIVE.INT);

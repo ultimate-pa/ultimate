@@ -138,8 +138,8 @@ public class CPrimitive extends CType {
 		case DOUBLE:
 		case LONGDOUBLE:
 			generalType = GENERALPRIMITIVE.FLOATTYPE;
-			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
-//			break;
+//			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
+			break;
 		case BOOL:
 		case UCHAR:
 		case UINT:
