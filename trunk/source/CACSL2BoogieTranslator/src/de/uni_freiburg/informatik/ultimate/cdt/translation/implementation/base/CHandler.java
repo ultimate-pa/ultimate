@@ -481,8 +481,11 @@ public class CHandler implements ICHandler {
 		// add type declarations introduced by the translation, e.g., $Pointer$
 		decl.addAll(((TypeHandler) main.typeHandler).constructTranslationDefiniedDelarations(loc, m_ExpressionTranslation));
 
-		// handle proc. declaration & resolve their transitive modified globals
-		decl.addAll(mFunctionHandler.calculateTransitiveModifiesClause(main, mMemoryHandler));
+		//have to block this in prerun, because there, Memorymodel is not declared which may make probelms with the callgraph computation
+		if (!(main instanceof PRDispatcher)) {
+			// handle proc. declaration & resolve their transitive modified globals
+			decl.addAll(mFunctionHandler.calculateTransitiveModifiesClause(main, mMemoryHandler));
+		}
 
 		Collection<FunctionDeclaration> declaredFunctions = 
 				m_ExpressionTranslation.getFunctionDeclarations().getDeclaredFunctions().values();
@@ -2229,7 +2232,7 @@ public class CHandler implements ICHandler {
 				if (!res.stmt.isEmpty()) {
 					stmt.addAll(res.stmt);
 					decl.addAll(res.decl);
-					assert (isAuxVarMapcomplete(main, res.decl, res.auxVars));
+//					assert (isAuxVarMapcomplete(main, res.decl, res.auxVars));
 					stmt.addAll(createHavocsForAuxVars(res.auxVars));
 					overappr.addAll(res.overappr);
 				}
@@ -3421,7 +3424,7 @@ public class CHandler implements ICHandler {
 				for (ExpressionResult el : ((ExpressionListResult) iterator).list) {
 					bodyBlock.addAll(el.stmt);
 					decl.addAll(el.decl);
-					assert (isAuxVarMapcomplete(main, el.decl, el.auxVars));
+//					assert (isAuxVarMapcomplete(main, el.decl, el.auxVars));
 					bodyBlock.addAll(createHavocsForAuxVars(el.auxVars));
 				}
 			} else if (iterator instanceof ExpressionResult) {

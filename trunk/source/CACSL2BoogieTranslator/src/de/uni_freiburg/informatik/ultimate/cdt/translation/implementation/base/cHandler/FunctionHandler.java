@@ -183,6 +183,7 @@ public class FunctionHandler {
 		this.functionSignaturesThatHaveAFunctionPointer = new LinkedHashSet<>();
 	}
 
+	
 	/**
 	 * This is called from SimpleDeclaration and handles a C function
 	 * declaration.
@@ -826,7 +827,6 @@ public class FunctionHandler {
 			er.addAll(mallocRex);
 			er.lrVal = mallocRex.lrVal;
 			
-			
 			Expression nr0 = m_ExpressionTranslation.constructLiteralForIntegerType(
         		loc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
 			er.stmt.add(new CallStatement(loc, 
@@ -839,6 +839,11 @@ public class FunctionHandler {
 							sizeRes.lrVal.getValue(),	//sizeofFields
 							nr0							//value
 					}));
+			
+			if (this.callGraph.get(this.currentProcedure.getIdentifier()) == null)
+				this.callGraph.put(this.currentProcedure.getIdentifier(), new LinkedHashSet<String>());
+			this.callGraph.get(this.currentProcedure.getIdentifier()).add(SFO.MEMSET);
+			this.callGraph.get(this.currentProcedure.getIdentifier()).add(SFO.MALLOC);
 
 			return er;
 		} else if (methodName.equals("memset")) {
@@ -870,6 +875,10 @@ public class FunctionHandler {
 							nr1,						//sizeofFields (here, 1 byte -- really: sizeof(char)
 							value.lrVal.getValue()		//value TODO: char conversion
 			}));
+
+			if (this.callGraph.get(this.currentProcedure.getIdentifier()) == null)
+				this.callGraph.put(this.currentProcedure.getIdentifier(), new LinkedHashSet<String>());
+			this.callGraph.get(this.currentProcedure.getIdentifier()).add(SFO.MEMSET);
 
 			return er;
 		} else {
