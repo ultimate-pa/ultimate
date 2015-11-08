@@ -33,7 +33,10 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.conta
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
@@ -135,7 +138,8 @@ public class CPrimitive extends CType {
 		case DOUBLE:
 		case LONGDOUBLE:
 			generalType = GENERALPRIMITIVE.FLOATTYPE;
-			break;
+			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
+//			break;
 		case BOOL:
 		case UCHAR:
 		case UINT:
