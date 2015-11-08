@@ -421,6 +421,7 @@ public class NestedSsaBuilder {
 
 		public void versionBranchEncoders(int currentPos) {
 			for (TermVariable tv : m_TF.getBranchEncoders()) {
+				tv = transferToCurrentScriptIfNecessary(tv);
 				String name = branchEncoderConstantName(tv, currentPos);
 				m_Script.declareFun(name, new Sort[0], tv.getSort());
 				m_SubstitutionMapping.put(tv, m_Script.term(name));

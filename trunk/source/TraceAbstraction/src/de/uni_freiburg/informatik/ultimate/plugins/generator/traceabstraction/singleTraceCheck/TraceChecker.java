@@ -532,7 +532,7 @@ public class TraceChecker {
 				Map<TermVariable, Boolean> beMapping = new HashMap<TermVariable, Boolean>();
 				for (TermVariable tv : tf.getBranchEncoders()) {
 					String nameOfConstant = NestedSsaBuilder.branchEncoderConstantName(tv, i);
-					Term indexedBe = m_SmtManager.getScript().term(nameOfConstant);
+					Term indexedBe = m_TcSmtManager.getScript().term(nameOfConstant);
 					Term value = getValue(indexedBe);
 					Boolean booleanValue = getBooleanValue(value);
 					beMapping.put(tv, booleanValue);
