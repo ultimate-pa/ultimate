@@ -55,6 +55,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLL
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -617,6 +620,9 @@ public class CACSL2BoogieBacktranslator extends
 			if (cType == null) {
 				value = ((IntegerLiteral) expression).getValue();
 			} else {
+				if (cType instanceof CEnum) {
+					cType = new CPrimitive(PRIMITIVE.INT);
+				}
 				BigInteger extractedValue = 
 						mExpressionTranslation.extractIntegerValue(expression, cType);
 				value = String.valueOf(extractedValue);
