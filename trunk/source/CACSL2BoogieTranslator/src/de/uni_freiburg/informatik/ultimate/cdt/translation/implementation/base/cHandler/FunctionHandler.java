@@ -840,7 +840,7 @@ public class FunctionHandler {
 							nr0							//value
 					}));
 			
-			if (this.callGraph.get(this.currentProcedure) == null)
+			if (this.callGraph.get(this.currentProcedure.getIdentifier()) == null)
 				this.callGraph.put(this.currentProcedure.getIdentifier(), new LinkedHashSet<String>());
 			this.callGraph.get(this.currentProcedure.getIdentifier()).add(SFO.MEMSET);
 			this.callGraph.get(this.currentProcedure.getIdentifier()).add(SFO.MALLOC);
@@ -876,7 +876,7 @@ public class FunctionHandler {
 							value.lrVal.getValue()		//value TODO: char conversion
 			}));
 
-			if (this.callGraph.get(this.currentProcedure) == null)
+			if (this.callGraph.get(this.currentProcedure.getIdentifier()) == null)
 				this.callGraph.put(this.currentProcedure.getIdentifier(), new LinkedHashSet<String>());
 			this.callGraph.get(this.currentProcedure.getIdentifier()).add(SFO.MEMSET);
 
