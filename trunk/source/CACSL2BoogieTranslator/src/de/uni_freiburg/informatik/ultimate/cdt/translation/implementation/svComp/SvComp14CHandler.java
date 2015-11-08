@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
@@ -151,7 +152,9 @@ public class SvComp14CHandler extends CHandler {
 		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
 		LRValue returnValue = null;
 		
-
+		if (methodName.equals("pthread_create")) {
+			throw new UnsupportedSyntaxException(loc, "we do not support pthread");
+		}
 		if (methodName.equals(ERROR_STRING)) {
 			boolean checkSvcompErrorfunction = 
 					main.mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SVCOMP_ERRORFUNCTION);
