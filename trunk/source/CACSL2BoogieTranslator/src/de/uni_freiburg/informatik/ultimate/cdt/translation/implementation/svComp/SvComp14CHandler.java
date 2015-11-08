@@ -209,6 +209,7 @@ public class SvComp14CHandler extends CHandler {
 				case "size_t":
 				case "int":
 					cType = new CPrimitive(PRIMITIVE.INT);
+					break;
 				case "loff_t":
 				case "long":
 					cType = new CPrimitive(PRIMITIVE.LONG);
