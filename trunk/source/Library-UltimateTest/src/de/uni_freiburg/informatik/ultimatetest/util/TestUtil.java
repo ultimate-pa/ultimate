@@ -472,8 +472,8 @@ public class TestUtil {
 		map.put(".*_false-valid-memtrack.*", SafetyCheckerOverallResult.UNSAFE_MEMTRACK);
 		{
 			// no-signed-integer-overflow might become the SV-COMP annotation for integer overflow checks
-			map.put(".*_true-NoSignedIntegerOverflow.*", SafetyCheckerOverallResult.SAFE);
-			map.put(".*_false-NoSignedIntegerOverflow.*", SafetyCheckerOverallResult.UNSAFE);
+			map.put(".*_true-no-overflow.*", SafetyCheckerOverallResult.SAFE);
+			map.put(".*_false-no-overflow.*", SafetyCheckerOverallResult.UNSAFE);
 		}
 		return map;
 	}
