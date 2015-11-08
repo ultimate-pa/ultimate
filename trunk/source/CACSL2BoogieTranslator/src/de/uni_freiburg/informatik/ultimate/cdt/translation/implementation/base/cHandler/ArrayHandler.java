@@ -102,8 +102,6 @@ public class ArrayHandler {
 		final CType cTypeLeft = leftExpRes.lrVal.getCType();
 		if (cTypeLeft instanceof CPointer) {
 			// if p is a pointer, then p[42] is equivalent to *(p + 42)
-			assert (isInnermostSubscriptExpression(node) && isOutermostSubscriptExpression(node))
-					: "in this case nested subscript expressions are impossible"; 
 			leftExpRes = leftExpRes.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 			assert cTypeLeft.equals(leftExpRes.lrVal.getCType());
 			Expression oldAddress = leftExpRes.lrVal.getValue();
