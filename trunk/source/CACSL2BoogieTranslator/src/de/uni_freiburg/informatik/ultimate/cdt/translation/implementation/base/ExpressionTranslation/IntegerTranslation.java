@@ -654,12 +654,12 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 	
 	@Override
-	public BigInteger extractIntegerValue(RValue rval) {
-		if (rval.getCType().isIntegerType()) {
-			if (rval.getValue() instanceof IntegerLiteral) {
-				BigInteger value =  new BigInteger(((IntegerLiteral) rval.getValue()).getValue());
-				if (((CPrimitive) rval.getCType()).isUnsigned()) {
-					BigInteger maxValue = m_TypeSizes.getMaxValueOfPrimitiveType((CPrimitive) rval.getCType());
+	public BigInteger extractIntegerValue(Expression expr, CType cType) {
+		if (cType.isIntegerType()) {
+			if (expr instanceof IntegerLiteral) {
+				BigInteger value =  new BigInteger(((IntegerLiteral) expr).getValue());
+				if (((CPrimitive) cType).isUnsigned()) {
+					BigInteger maxValue = m_TypeSizes.getMaxValueOfPrimitiveType((CPrimitive) cType);
 					BigInteger maxValuePlusOne = maxValue.add(BigInteger.ONE);
 					return value.mod(maxValuePlusOne);
 				} else {

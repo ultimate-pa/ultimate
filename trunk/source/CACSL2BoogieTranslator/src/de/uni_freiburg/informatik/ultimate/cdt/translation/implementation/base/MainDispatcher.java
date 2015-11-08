@@ -364,6 +364,7 @@ public class MainDispatcher extends Dispatcher {
 		acslHandler = new ACSLHandler();
 		nameHandler = new NameHandler(backtranslator);
 		cHandler = new CHandler(this, backtranslator, true, mLogger, typeHandler, m_BitvectorTranslation);
+		this.backtranslator.setExpressionTranslation(((CHandler) cHandler).getExpressionTranslation());
 		preprocessorHandler = new PreprocessorHandler();
 		REPORT_WARNINGS = true;
 	}

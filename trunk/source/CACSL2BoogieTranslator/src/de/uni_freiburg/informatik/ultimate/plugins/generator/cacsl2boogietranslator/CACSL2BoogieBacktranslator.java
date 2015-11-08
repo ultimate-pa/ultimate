@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.ACSLLo
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -82,6 +83,7 @@ import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 /**
  * Translation from Boogie to C for traces and expressions.
@@ -99,12 +101,17 @@ public class CACSL2BoogieBacktranslator extends
 	private IUltimateServiceProvider mServices;
 	private Logger mLogger;
 	private static final String sUnfinishedBacktranslation = "Unfinished Backtranslation";
+	private AExpressionTranslation mExpressionTranslation;
 
 	public CACSL2BoogieBacktranslator(IUltimateServiceProvider services) {
 		super(BoogieASTNode.class, CACSLLocation.class, Expression.class, IASTExpression.class);
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		mBoogie2C = new Boogie2C();
+	}
+	
+	public void setExpressionTranslation(AExpressionTranslation expressionTranslation) {
+		mExpressionTranslation = expressionTranslation;
 	}
 
 	@Override
@@ -412,11 +419,17 @@ public class CACSL2BoogieBacktranslator extends
 				if (newVarName == null) {
 					continue;
 				}
+				final CType cType;
+				if (newVarName instanceof FakeExpression) {
+					cType = ((FakeExpression) newVarName).getCType();
+				} else {
+					cType = null;
+				}
 
 				Collection<Expression> varValues = programState.getValues(varName);
 				Collection<IASTExpression> newVarValues = new ArrayList<>();
 				for (Expression varValue : varValues) {
-					IASTExpression newVarValue = translateExpression(varValue);
+					IASTExpression newVarValue = translateExpression(varValue, cType);
 					if (newVarValue != null) {
 						newVarValues.add(newVarValue);
 					}
@@ -519,6 +532,10 @@ public class CACSL2BoogieBacktranslator extends
 
 	@Override
 	public IASTExpression translateExpression(Expression expression) {
+		return translateExpression(expression, null);
+	}
+	
+	public IASTExpression translateExpression(Expression expression, CType cType) {
 		if (expression instanceof UnaryExpression) {
 			// handle old vars
 			UnaryExpression uexp = (UnaryExpression) expression;
@@ -527,7 +544,10 @@ public class CACSL2BoogieBacktranslator extends
 				if (innerTrans == null) {
 					return null;
 				}
-				FakeExpression fexp = new FakeExpression(innerTrans, "\\old(" + innerTrans.getRawSignature() + ")");
+				if (innerTrans instanceof FakeExpression) {
+					cType = ((FakeExpression) innerTrans).getCType();
+				}
+				FakeExpression fexp = new FakeExpression(innerTrans, "\\old(" + innerTrans.getRawSignature() + ")", cType);
 				return fexp;
 			}
 		}
@@ -576,9 +596,9 @@ public class CACSL2BoogieBacktranslator extends
 			} else if (cnode instanceof CASTFunctionDefinition) {
 				if (expression instanceof IdentifierExpression) {
 					IdentifierExpression orgidexp = (IdentifierExpression) expression;
-					String origName = translateIdentifierExpression(orgidexp);
+					Pair<String,CType> origName = translateIdentifierExpression(orgidexp);
 					if (origName != null) {
-						return new FakeExpression(cnode, origName);
+						return new FakeExpression(cnode, origName.getFirst(), origName.getSecond());
 					}
 				}
 				reportUnfinishedBacktranslation(sUnfinishedBacktranslation + ": Expression "
@@ -593,8 +613,15 @@ public class CACSL2BoogieBacktranslator extends
 				return null;
 			}
 		} else if (expression instanceof IntegerLiteral) {
-			IntegerLiteral lit = (IntegerLiteral) expression;
-			FakeExpression clit = new FakeExpression(lit.getValue());
+			final String value;
+			if (cType == null) {
+				value = ((IntegerLiteral) expression).getValue();
+			} else {
+				BigInteger extractedValue = 
+						mExpressionTranslation.extractIntegerValue(expression, cType);
+				value = String.valueOf(extractedValue);
+			}
+			FakeExpression clit = new FakeExpression(value);
 			return clit;
 		} else if (expression instanceof BooleanLiteral) {
 			// TODO: I am not sure if we should convert this to integer_constant
@@ -608,18 +635,15 @@ public class CACSL2BoogieBacktranslator extends
 			FakeExpression clit = new FakeExpression(lit.getValue());
 			return clit;
 		} else if (expression instanceof BitvecLiteral) {
-			BitvecLiteral lit = (BitvecLiteral) expression;
-			String value = lit.getValue();
-			BigInteger decimalValue = new BigInteger(value);
-			boolean isSigned = true;
-			if (isSigned ) {
-				BigInteger maxRepresentablePositiveValuePlusOne = (new BigInteger("2")).pow(lit.getLength() - 1);
-				if (decimalValue.compareTo(maxRepresentablePositiveValuePlusOne) >= 0) {
-					BigInteger numberOfValues = (new BigInteger("2")).pow(lit.getLength());
-					decimalValue = decimalValue.subtract(numberOfValues);
-				}
+			final String value;
+			if (cType == null) {
+				value = naiveBitvecLiteralValueExtraction((BitvecLiteral) expression);
+			} else {
+				BigInteger extractedValue = 
+						mExpressionTranslation.extractIntegerValue(expression, cType);
+				value = String.valueOf(extractedValue);
 			}
-			FakeExpression clit = new FakeExpression(String.valueOf(decimalValue));
+			FakeExpression clit = new FakeExpression(value);
 			return clit;
 		} else {
 			// things that land here are typically synthesized contracts or
@@ -633,6 +657,20 @@ public class CACSL2BoogieBacktranslator extends
 			return null;
 		}
 
+	}
+	
+	private String naiveBitvecLiteralValueExtraction(BitvecLiteral lit) {
+		String value = lit.getValue();
+		BigInteger decimalValue = new BigInteger(value);
+		boolean isSigned = true;
+		if (isSigned ) {
+			BigInteger maxRepresentablePositiveValuePlusOne = (new BigInteger("2")).pow(lit.getLength() - 1);
+			if (decimalValue.compareTo(maxRepresentablePositiveValuePlusOne) >= 0) {
+				BigInteger numberOfValues = (new BigInteger("2")).pow(lit.getLength());
+				decimalValue = decimalValue.subtract(numberOfValues);
+			}
+		}
+		return String.valueOf(decimalValue);
 	}
 
 	private IASTExpression handleExpressionCASTSimpleDeclaration(Expression expression, CASTSimpleDeclaration decls) {
@@ -650,19 +688,26 @@ public class CACSL2BoogieBacktranslator extends
 		}
 
 		if (decls.getDeclarators().length == 1) {
-			return new FakeExpression(decls, decls.getDeclarators()[0].getName().getRawSignature());
+			IdentifierExpression orgidexp = (IdentifierExpression) expression;
+			Pair<String,CType> origName = translateIdentifierExpression(orgidexp);
+			if (origName == null) {
+				reportUnfinishedBacktranslation(sUnfinishedBacktranslation + ": No BoogieVar found for "
+						+ BoogiePrettyPrinter.print(expression));
+				return null;
+			}
+			return new FakeExpression(decls, decls.getDeclarators()[0].getName().getRawSignature(), origName.getSecond());
 		} else {
 			// ok, this is a declaration ala "int a,b;", so we use
 			// our backtranslation map to get the real name
 			IdentifierExpression orgidexp = (IdentifierExpression) expression;
-			String origName = translateIdentifierExpression(orgidexp);
+			Pair<String,CType> origName = translateIdentifierExpression(orgidexp);
 			if (origName == null) {
 				reportUnfinishedBacktranslation(sUnfinishedBacktranslation + ": No BoogieVar found for "
 						+ BoogiePrettyPrinter.print(expression));
 				return null;
 			}
 			for (IASTDeclarator decl : decls.getDeclarators()) {
-				if (origName.indexOf(decl.getName().getRawSignature()) != -1) {
+				if (origName.getFirst().indexOf(decl.getName().getRawSignature()) != -1) {
 					return new FakeExpression(decl.getName().getRawSignature());
 				}
 			}
@@ -680,36 +725,39 @@ public class CACSL2BoogieBacktranslator extends
 				new GenericResult(Activator.s_PLUGIN_ID, sUnfinishedBacktranslation, message, Severity.WARNING));
 	}
 
-	private String translateIdentifierExpression(IdentifierExpression expr) {
+	private Pair<String,CType> translateIdentifierExpression(IdentifierExpression expr) {
 		return translateBoogieIdentifier(expr.getIdentifier());
 	}
 
-	private String translateBoogieIdentifier(String boogieId) {
-		String cId = null;
-
+	private Pair<String,CType> translateBoogieIdentifier(String boogieId) {
+		final Pair<String,CType> result;
 		if (boogieId.equals(SFO.RES)) {
-			cId = "\\result";
+			result = new Pair<String,CType>("\\result", null);
 		} else if (mBoogie2C.getVar2CVar().containsKey(boogieId)) {
-			cId = mBoogie2C.getVar2CVar().get(boogieId);
+			result = mBoogie2C.getVar2CVar().get(boogieId);
 		} else if (mBoogie2C.getInVar2CVar().containsKey(boogieId)) {
-			cId = "\\old(" + mBoogie2C.getInVar2CVar().get(boogieId) + ")";
+			Pair<String, CType> inVar = mBoogie2C.getInVar2CVar().get(boogieId);
+			String cNameWithOld = "\\old(" + inVar.getFirst() + ")";
+			result = new Pair<String,CType>(cNameWithOld, inVar.getSecond());
 		} else if (mBoogie2C.getTempVar2Obj().containsKey(boogieId)) {
+			result = null;
 			reportUnfinishedBacktranslation("auxilliary boogie variable " + boogieId);
 		} else if (boogieId.equals(SFO.VALID)) {
-			cId = "\\valid";
+			result = new Pair<String,CType>("\\valid", null);
 		} else {
 			// if its base or offset, try again with them stripped
 			if (boogieId.endsWith(SFO.POINTER_BASE)) {
-				return translateBoogieIdentifier(boogieId.substring(0, boogieId.length() - SFO.POINTER_BASE.length()
+				result = translateBoogieIdentifier(boogieId.substring(0, boogieId.length() - SFO.POINTER_BASE.length()
 						- 1));
 			} else if (boogieId.endsWith(SFO.POINTER_OFFSET)) {
-				return translateBoogieIdentifier(boogieId.substring(0, boogieId.length() - SFO.POINTER_OFFSET.length()
+				result = translateBoogieIdentifier(boogieId.substring(0, boogieId.length() - SFO.POINTER_OFFSET.length()
 						- 1));
 			} else {
+				result = null;
 				reportUnfinishedBacktranslation("unknown boogie variable " + boogieId);
 			}
 		}
-		return cId;
+		return result;
 	}
 
 	void putFunction(String boogieId, String cId) {
@@ -717,15 +765,15 @@ public class CACSL2BoogieBacktranslator extends
 	}
 
 	public void putVar(String boogieId, String cId, CType cType) {
-		mBoogie2C.putVar(boogieId, cId);
+		mBoogie2C.putVar(boogieId, cId, cType);
 	}
 
 	public void putInVar(String boogieId, String cId, CType cType) {
-		mBoogie2C.putInVar(boogieId, cId);
+		mBoogie2C.putInVar(boogieId, cId, cType);
 	}
 
-	public void putTempVar(String boogieId, Object obj, CType cType) {
-		mBoogie2C.putTempVar(boogieId, obj);
+	public void putTempVar(String boogieId, SFO.AUXVAR purpose, CType cType) {
+		mBoogie2C.putTempVar(boogieId, purpose, cType);
 	}
 
 	public boolean isTempVar(String boogieId) {
@@ -878,23 +926,23 @@ public class CACSL2BoogieBacktranslator extends
 	 */
 	private static class Boogie2C {
 
-		private final Map<String, String> mInVar2CVar;
-		private final Map<String, String> mVar2CVar;
+		private final Map<String, Pair<String, CType>> mInVar2CVar;
+		private final Map<String, Pair<String, CType>> mVar2CVar;
 		private final Map<String, Object> mTempVar2Obj;
 		private final Map<String, String> mFunctionId2Operator;
 
 		private Boogie2C() {
-			mInVar2CVar = new HashMap<String, String>();
-			mVar2CVar = new HashMap<String, String>();
+			mInVar2CVar = new HashMap<String, Pair<String, CType>>();
+			mVar2CVar = new HashMap<String, Pair<String, CType>>();
 			mTempVar2Obj = new HashMap<String, Object>();
 			mFunctionId2Operator = new HashMap<String, String>();
 		}
 
-		private Map<String, String> getInVar2CVar() {
+		private Map<String, Pair<String, CType>> getInVar2CVar() {
 			return mInVar2CVar;
 		}
 
-		private Map<String, String> getVar2CVar() {
+		private Map<String, Pair<String, CType>> getVar2CVar() {
 			return mVar2CVar;
 		}
 
@@ -910,16 +958,16 @@ public class CACSL2BoogieBacktranslator extends
 			mFunctionId2Operator.put(boogieId, cId);
 		}
 
-		private void putVar(String boogieId, String cId) {
-			mVar2CVar.put(boogieId, cId);
+		private void putVar(String boogieId, String cId, CType cType) {
+			mVar2CVar.put(boogieId, new Pair<String, CType>(cId, cType));
 		}
 
-		private void putInVar(String boogieId, String cId) {
-			mInVar2CVar.put(boogieId, cId);
+		private void putInVar(String boogieId, String cId, CType cType) {
+			mInVar2CVar.put(boogieId, new Pair<String, CType>(cId, cType));
 		}
 
-		private void putTempVar(String boogieId, Object obj) {
-			mTempVar2Obj.put(boogieId, obj);
+		private void putTempVar(String boogieId, SFO.AUXVAR purpose, CType cType) {
+			mTempVar2Obj.put(boogieId, purpose);
 		}
 	}
 
@@ -937,7 +985,7 @@ public class CACSL2BoogieBacktranslator extends
 				// some kind of value
 				IASTExpression base = translateExpression(mBase);
 				IASTExpression offset = translateExpression(mOffset);
-				return new FakeExpression(base, "{" + base.getRawSignature() + ":" + offset.getRawSignature() + "}");
+				return new FakeExpression(base, "{" + base.getRawSignature() + ":" + offset.getRawSignature() + "}", null);
 			}
 		}
 
@@ -981,5 +1029,7 @@ public class CACSL2BoogieBacktranslator extends
 			return oldValue;
 		}
 	}
+
+
 
 }

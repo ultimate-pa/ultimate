@@ -34,6 +34,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svCom
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ACSLHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.SideEffectHandler;
@@ -60,6 +61,7 @@ public class SvComp14MainDispatcher extends MainDispatcher {
 		acslHandler = new ACSLHandler();
 		nameHandler = new NameHandler(backtranslator);
 		cHandler = new SvComp14CHandler(this, backtranslator, mLogger, typeHandler, m_BitvectorTranslation);
+		this.backtranslator.setExpressionTranslation(((SvComp14CHandler) cHandler).getExpressionTranslation());
 		preprocessorHandler = new SvComp14PreprocessorHandler();
 		REPORT_WARNINGS = false;
 	}

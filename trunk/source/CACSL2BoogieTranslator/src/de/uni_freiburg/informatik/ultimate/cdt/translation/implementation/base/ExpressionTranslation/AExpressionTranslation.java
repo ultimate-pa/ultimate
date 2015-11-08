@@ -312,8 +312,13 @@ public abstract class AExpressionTranslation {
 	 * @param expr
 	 * @return
 	 */
-	public abstract BigInteger extractIntegerValue(RValue rval);
+	public BigInteger extractIntegerValue(RValue rval) {
+		return extractIntegerValue(rval.getValue(), rval.getCType());
+	}
 	
+	public abstract BigInteger extractIntegerValue(Expression expr, CType cType);
+	
+		
 	public CPrimitive determineResultOfIntegerPromotion(CPrimitive cPrimitive) {
 		int argBitLength = m_TypeSizes.getSize(cPrimitive.getType()) * 8;
 		int intLength = m_TypeSizes.getSize(CPrimitive.PRIMITIVE.INT) * 8;
