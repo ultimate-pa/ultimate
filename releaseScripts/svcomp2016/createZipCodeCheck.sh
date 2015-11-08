@@ -1,9 +1,9 @@
 #!/bin/bash
 
 TOOLNAME=Kojak
-TARGETDIR=Ultimate${TOOLNAME}
+TARGETDIR=U${TOOLNAME}
 TOOLCHAIN=../../trunk/examples/toolchains/KojakC.xml
-SETTINGS=../../trunk/examples/settings/svcomp2016/*Kojak*
+SETTINGS=../../trunk/examples/settings/svcomp2016/kojak/*Kojak*
 
 rm -r "$TARGETDIR"
 rm Ultimate"$TOOLNAME".zip

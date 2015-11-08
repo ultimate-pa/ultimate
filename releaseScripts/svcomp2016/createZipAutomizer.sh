@@ -2,7 +2,7 @@
 
 
 TOOLNAME=Automizer
-TARGETDIR=Ultimate${TOOLNAME}
+TARGETDIR=U${TOOLNAME}
 TOOLCHAIN=../../trunk/examples/toolchains/AutomizerC.xml
 TERMTOOLCHAIN=../../trunk/examples/toolchains/BuchiAutomizerCWithBlockEncoding.xml
 SETTINGS=../../trunk/examples/settings/svcomp2016/*${TOOLNAME}*
