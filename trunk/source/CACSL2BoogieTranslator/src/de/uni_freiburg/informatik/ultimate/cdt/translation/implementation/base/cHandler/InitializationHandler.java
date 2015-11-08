@@ -695,7 +695,8 @@ public class InitializationHandler {
 						overApp.addAll(sInit.overappr);
 						val = (RValue) sInit.lrVal;
 					} else if (valueType instanceof CPrimitive 
-							|| valueType instanceof CPointer) {
+							|| valueType instanceof CPointer
+							|| valueType instanceof CEnum) {
 						val = (RValue) (main.cHandler.getInitHandler().initVar(loc, main, 
 								(VariableLHS) null, valueType, null)).lrVal;
 					} else {
