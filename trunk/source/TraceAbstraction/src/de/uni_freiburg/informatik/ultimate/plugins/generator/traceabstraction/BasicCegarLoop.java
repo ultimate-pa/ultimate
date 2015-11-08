@@ -131,7 +131,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	private final static boolean m_DifferenceInsteadOfIntersection = true;
 	protected final static boolean m_RemoveDeadEnds = true;
-	protected final static boolean m_TraceHistogrammBailout = true;
+	protected final static boolean m_TraceHistogrammBailout = false;
 
 	protected HoareAnnotationFragments m_Haf;
 
