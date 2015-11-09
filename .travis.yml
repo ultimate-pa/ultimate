@@ -11,6 +11,14 @@ env:
    - JAVA_OPTS="-enableassertions -Xmx1g"
    - _JAVA_OPTIONS="-enableassertions -Xmx1g"
 
+before_script:
+  - wget https://ultimate.informatik.uni-freiburg.de/downloads/z3.zip -O /tmp/z3.zip
+  - wget http://www.lsv.ens-cachan.fr/~gastin/ltl2ba/ltl2ba-1.2b1.tar.gz -O /tmp/ltl2ba.tar.gz
+  - unzip /tmp/z3.zip -d z3
+  - tar -xvf /tmp/ltl2ba.tar.gz
+  - cd ltl2ba-1.2b1 && make
+  - export PATH=$PATH:$PWD/z3:$PWD/ltl2ba-1.2b1
+   
 script: cd trunk/source/BA_MavenParentUltimate && mvn clean install -q -Pcoverage -Dmaven.test.failure.ignore=true
 
 branches:
