@@ -276,10 +276,7 @@
 							<threadCount>1</threadCount>
 							<failIfNoTests>false</failIfNoTests>
 							<trimStackTrace>false</trimStackTrace>
-							<!-- redirectTestOutputToFile=false is the default, but to debug strange 
-								maven/junit bugs, you may want to set it to true to have all the test output 
-								written to file -->
-							<redirectTestOutputToFile>false</redirectTestOutputToFile>
+							<redirectTestOutputToFile>true</redirectTestOutputToFile>
 							<!-- if you want to change the argLine, use the global property -->
 							<argLine>${tycho.testArgLine} ${coverage-argline}</argLine>
 
