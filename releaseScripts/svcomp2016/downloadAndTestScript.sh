@@ -11,7 +11,7 @@ function checkResult {
 
 wget --no-check-certificate https://ultimate.informatik.uni-freiburg.de/downloads/svcomp2016/UltimateAutomizer.zip
 unzip UltimateAutomizer.zip
-cd UltimateAutomizer
+cd UAutomizer
 Tests=( \
 # "https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/;32bit;precise;FALSE(valid-deref)" \
 ### Memsafety Deref
@@ -29,7 +29,7 @@ Tests=( \
 "https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/loop-acceleration/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/loop-acceleration/array_true-unreach-call3.i;32bit;precise;TRUE" \
 "https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/loop-acceleration/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/loop-acceleration/simple_false-unreach-call2.i;32bit;precise;FALSE" \
 ### Bitvectors
-"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/bitvector/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/bitvector/byte_add_1_true-unreach-call.i;32bit;precise;UNKNOWN" \
+# "https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/bitvector/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/bitvector/byte_add_1_true-unreach-call.i;32bit;precise;UNKNOWN" \
 "https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/bitvector/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/bitvector/jain_1_true-unreach-call.i;32bit;precise;TRUE" \
 "https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/bitvector/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/bitvector-regression/implicitunsignedconversion_false-unreach-call.i;32bit;precise;FALSE" \
 ### Recursive
@@ -37,7 +37,17 @@ Tests=( \
 "https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/recursive/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/recursive/McCarthy91_false-unreach-call_false-termination.c;32bit;precise;FALSE" \
 ### Termination
 "https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-memory-alloca/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-memory-alloca/a.04-alloca_true-termination.c.i;64bit;precise;TRUE" \
-"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-memory-alloca/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-restricted-stroeder-15/ConvLower_false-termination.c;64bit;precise;FALSE" \
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-memory-alloca/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/svcomp/termination-15/array06_alloca_true-termination.c.i;64bit;precise;TRUE" \
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-memory-alloca/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-15/cstrcat_mixed_alloca_true-termination.c.i;64bit;precise;TRUE" \
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-memory-alloca/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-15/cstrncat_malloc_true-termination.c.i;64bit;precise;TRUE" \
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-memory-alloca/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-crafted-lit/ChenFlurMukhopadhyay-SAS2012-Ex3.02_false-termination.c;64bit;precise;FALSE" \
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-memory-alloca/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-memory-alloca/b.12-alloca_true-termination.c.i;64bit;precise;TRUE" \
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-memory-alloca/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-memory-alloca/openbsd_cstrcpy-alloca_true-termination.c.i;64bit;precise;TRUE" \
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-memory-alloca/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-restricted-15/AlternKonv_false-termination.c;64bit;precise;FALSE" \
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-memory-alloca/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-restricted-15/DivMinus2_true-termination.c;64bit;precise;TRUE" \
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-memory-alloca/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-libowfat/atoi_true-termination.c.i;64bit;precise;TRUE" \
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-memory-alloca/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-libowfat/strcasecmp_true-termination.c.i;64bit;precise;TRUE" \
+"https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-memory-alloca/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-crafted/NonTermination2_false-termination.c;64bit;precise;FALSE" \
 "https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-memory-alloca/ALL.prp;https://raw.githubusercontent.com/dbeyer/sv-benchmarks/master/c/termination-crafted/Collatz_unknown-termination.c;64bit;precise;UNKNOWN" \
 )
 
