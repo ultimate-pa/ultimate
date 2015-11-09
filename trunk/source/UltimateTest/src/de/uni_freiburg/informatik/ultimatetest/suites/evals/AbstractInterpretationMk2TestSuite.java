@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
  */
 public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 
-	private static final String[] ALL_C = new String[] { ".c", ".i" };
+	private static final String[] I = new String[] { ".i" };
 	private static final String[] BPL = new String[] { ".bpl" };
 	private static final int DEFAULT_LIMIT = Integer.MAX_VALUE;
 //	private static final int DEFAULT_LIMIT = 10;
@@ -70,7 +70,7 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 //			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_CMP.epf"),
 
 //			new Triple<>("AbstractInterpretationv2CInline.xml", ALL_C, "ai/AIv2_INT.epf"),
-			new Triple<>("AbstractInterpretationv2C.xml", ALL_C, "ai/AIv2_INT.epf"),
+			new Triple<>("AbstractInterpretationv2C.xml", I, "ai/AIv2_INT.epf"),
 //			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/AIv2_INT.epf"),
 
 //			new Triple<>("AbstractInterpretationC.xml", ALL_C, "ai/AI.epf"),
@@ -92,7 +92,7 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 			// "examples/programs/recursivePrograms",
 			
 			 /* SV-COMP repo */
-			"examples/svcomp/loops/", 
+//			"examples/svcomp/loops/", 
 			// "examples/svcomp/loopsSelection/",
 //			 "examples/svcomp/eca-rers2012/", 
 			// "examples/svcomp/ecaSelection/",
@@ -104,6 +104,10 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 //			 "examples/svcomp/ssh-simplified/",
 //			 "examples/svcomp/ntdrivers-simplified/",
 //			 "examples/svcomp/ssh/",
+			
+			//unsoundness
+			"examples/svcomp/loops/array_false-unreach-call.i",
+			"examples/svcomp/loops/eureka_01_false-unreach-call.i"
 	};
 
 	// @formatter:on
