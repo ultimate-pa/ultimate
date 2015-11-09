@@ -3432,7 +3432,9 @@ public class CHandler implements ICHandler {
 				bodyBlock.addAll(iteratorRE.stmt);
 				decl.addAll(iteratorRE.decl);
 				overappr.addAll(iteratorRE.overappr);
-				assert (isAuxVarMapcomplete(main, iteratorRE.decl, iteratorRE.auxVars));
+				// 2015-11-08 Matthias: assert seems to be wrong here
+				// auxVars have already been havoced
+//				assert (isAuxVarMapcomplete(main, iteratorRE.decl, iteratorRE.auxVars));
 				bodyBlock.addAll(createHavocsForAuxVars(iteratorRE.auxVars));
 			} else {
 				String msg = "Uninplemented type of loop iterator: " + iterator.getClass();
