@@ -8,10 +8,10 @@ os:
  
 env:
   global:
-   - JAVA_OPTS="-enableassertions"
-   - _JAVA_OPTIONS="-enableassertions"
+   - JAVA_OPTS="-enableassertions -Xmx1g"
+   - _JAVA_OPTIONS="-enableassertions -Xmx1g"
 
-script: cd $HOME/trunk/source/BA_MavenParentUltimate && mvn clean install -Pcoverage
+script: cd trunk/source/BA_MavenParentUltimate && mvn clean install -Pcoverage
 
 branches:
   only:
