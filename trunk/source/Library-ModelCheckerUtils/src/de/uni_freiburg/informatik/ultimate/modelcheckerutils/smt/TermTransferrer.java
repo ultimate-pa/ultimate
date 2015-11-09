@@ -95,8 +95,17 @@ public class TermTransferrer extends TermTransformer {
 				result = m_Script.decimal((BigDecimal) ct.getValue());
 			} else if (ct.getValue() instanceof Rational) {
 				result = ((Rational) ct.getValue()).toTerm(sort);
+			} else if (ct.getValue() instanceof String) {
+				String value = (String) ct.getValue();
+				if (value.startsWith("#x")) {
+					result = m_Script.hexadecimal(value);
+				} else if (value.startsWith("#b")) {
+					result = m_Script.binary(value);
+				} else {
+					throw new AssertionError("unexpected ConstantTerm (maybe not yet implemented)" + term);
+				}
 			} else {
-				throw new AssertionError("unexpected ConstantTerm (maybe not yet implemented)");
+				throw new AssertionError("unexpected ConstantTerm (maybe not yet implemented)" + term);
 			}
 			setResult(result);
 		} else {
@@ -132,9 +141,10 @@ public class TermTransferrer extends TermTransformer {
 	
 	private Sort transferSort(Sort sort) {
 		Sort[] arguments = transferSorts(sort.getArguments());
+		BigInteger[] indices = sort.getIndices();
 		Sort result;
 		try {
-			result = m_Script.sort(sort.getName(), arguments);
+			result = m_Script.sort(sort.getName(), indices, arguments);
 		} catch (SMTLIBException e) {
 			if (e.getMessage().equals("Sort " + sort.getName() + " not declared")) {
 				m_Script.declareSort(sort.getName(), sort.getArguments().length);
