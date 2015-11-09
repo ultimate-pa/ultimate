@@ -5,7 +5,6 @@ jdk:
 
 os:
  - linux
- - osx
  
 env:
   global:
@@ -13,7 +12,7 @@ env:
    - _JAVA_OPTIONS="-enableassertions"
 
 script: cd $HOME/trunk/source/BA_MavenParentUltimate && mvn clean install -Pcoverage
-	
+
 branches:
   only:
     - dev
