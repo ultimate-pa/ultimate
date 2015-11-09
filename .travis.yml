@@ -11,7 +11,7 @@ env:
    - JAVA_OPTS="-enableassertions -Xmx1g"
    - _JAVA_OPTIONS="-enableassertions -Xmx1g"
 
-script: cd trunk/source/BA_MavenParentUltimate && mvn clean install -Pcoverage
+script: cd trunk/source/BA_MavenParentUltimate && mvn clean install -Pcoverage -Dmaven.test.failure.ignore=true
 
 branches:
   only:
