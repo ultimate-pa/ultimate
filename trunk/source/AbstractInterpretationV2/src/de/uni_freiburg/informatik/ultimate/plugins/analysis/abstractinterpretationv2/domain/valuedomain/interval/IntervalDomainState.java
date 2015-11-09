@@ -313,7 +313,7 @@ public class IntervalDomainState
 		final StringBuilder stringBuilder = new StringBuilder();
 		for (final Entry<String, IBoogieVar> entry : mVariablesMap.entrySet()) {
 
-			stringBuilder.append(entry.getKey()).append(':').append(entry.getValue()).append(" = ");
+			stringBuilder.append(entry.getKey()).append(" = ");
 
 			final IntervalDomainValue val = mValuesMap.get(entry.getKey());
 
