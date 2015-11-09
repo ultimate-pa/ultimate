@@ -275,7 +275,7 @@
 							<showEclipseLog>true</showEclipseLog>
 							<threadCount>1</threadCount>
 							<failIfNoTests>false</failIfNoTests>
-							<trimStackTrace>false</trimStackTrace>
+							<trimStackTrace>true</trimStackTrace>
 							<redirectTestOutputToFile>true</redirectTestOutputToFile>
 							<!-- if you want to change the argLine, use the global property -->
 							<argLine>${tycho.testArgLine} ${coverage-argline}</argLine>
