@@ -1,0 +1,35 @@
+language: java
+jdk:
+ - oraclejdk8
+# - openjdk8
+
+os:
+ - linux
+ - osx
+ 
+env:
+  global:
+   - JAVA_OPTS="-enableassertions"
+   - _JAVA_OPTIONS="-enableassertions"
+
+script: cd $HOME/trunk/source/BA_MavenParentUltimate && mvn clean install -Pcoverage
+	
+branches:
+  only:
+    - dev
+    - stable
+
+notifications:
+  irc:
+    channels:
+      - "irc.quakenet.org#sopra-crew"
+    on_success: change
+    on_failure: always
+    template:
+      - "%{repository} (%{branch}:%{commit} by %{author}): %{message} (%{build_url})"
+    skip_join: true	
+  # do not annoy people	
+  email: 
+  - dietsch@informatik.uni-freiburg.de
+
+sudo: false
