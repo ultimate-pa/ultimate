@@ -601,8 +601,7 @@ public class PredicateUnifier {
 			}
 			
 			for (IPredicate other : m_KnownPredicates) {
-				if (other == m_TruePredicate || other == m_FalsePredicate || 
-						m_DeprecatedPredicates.containsKey(other)) {
+				if (other == m_TruePredicate || other == m_FalsePredicate) {
 					continue;
 				}
 				// we do not compare against intricate predicates
