@@ -12,7 +12,7 @@ env:
    - _JAVA_OPTIONS="-enableassertions -Xmx1g"
 
 before_script:
-  - wget https://ultimate.informatik.uni-freiburg.de/downloads/z3.zip -O /tmp/z3.zip
+  - wget http://ultimate.informatik.uni-freiburg.de/downloads/z3.zip -O /tmp/z3.zip
   - wget http://www.lsv.ens-cachan.fr/~gastin/ltl2ba/ltl2ba-1.2b1.tar.gz -O /tmp/ltl2ba.tar.gz
   - unzip /tmp/z3.zip -d z3
   - tar -xvf /tmp/ltl2ba.tar.gz
@@ -34,7 +34,7 @@ notifications:
     on_failure: always
     template:
       - "%{repository} (%{branch}:%{commit} by %{author}): %{message} (%{build_url})"
-  # skip_join: true	
+  skip_join: true	
   # do not annoy people	
   email: 
   - dietsch@informatik.uni-freiburg.de
