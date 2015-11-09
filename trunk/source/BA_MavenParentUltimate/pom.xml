@@ -13,8 +13,12 @@
 	</scm>
 
 	<properties>
-		<!-- maven tool versions -->
-		<tycho-version>0.21.0</tycho-version>
+		<!-- maven plugin versions -->
+		<tycho-version>0.24.0</tycho-version>
+		<sonar-version>2.7.1</sonar-version>
+		<jacoco-version>0.7.5.201505241946</jacoco-version>
+		<m2e-version>1.0.0</m2e-version>
+		<maven-antrun-plugin-version>1.8</maven-antrun-plugin-version>
 
 		<!-- reference to workspace root -->
 		<workspaceDir>${basedir}/..</workspaceDir>
@@ -55,10 +59,6 @@
 		<!-- we currently do not use integration tests -->
 		<!-- <sonar.jacoco.itReportPath>${jacoco.reportDir}/jacoco-it.exec</sonar.jacoco.itReportPath> -->
 
-		<!-- Jacoco version -->
-		<!-- Old: <jacoco.version>0.7.2.201409121644</jacoco.version> -->
-		<jacoco.version>0.7.5.201505241946</jacoco.version>
-
 		<!-- Global arguments for the VM used during junit tests depending on profile -->
 		<!-- use -XX:+HeapDumpOnOutOfMemoryError if you want to generate dumps 
 			on OutOfMemory exceptions -->
@@ -72,17 +72,26 @@
 			<id>eclipse-mars</id>
 			<layout>p2</layout>
 			<url>http://download.eclipse.org/releases/mars</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
 		</repository>
 		<repository>
 			<id>eclipse-luna</id>
 			<layout>p2</layout>
 			<url>http://download.eclipse.org/releases/luna</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
 		</repository>
 		<repository>
 			<id>javaxRepository</id>
 			<name>Java.net Repository for Maven</name>
 			<url>https://maven.java.net/content/repositories/releases/javax/</url>
 			<layout>default</layout>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
 		</repository>
 	</repositories>
 
@@ -126,11 +135,10 @@
 				</configuration>
 			</plugin>
 
-			<!-- fix sonar plugin version -->
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>sonar-maven-plugin</artifactId>
-				<version>2.6</version>
+				<version>${sonar-version}</version>
 			</plugin>
 		</plugins>
 
@@ -141,21 +149,15 @@
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
 					<artifactId>lifecycle-mapping</artifactId>
-					<version>1.0.0</version>
+					<version>${m2e-version}</version>
 					<configuration>
 						<lifecycleMappingMetadata>
 							<pluginExecutions>
 								<pluginExecution>
 									<pluginExecutionFilter>
-										<groupId>
-											org.apache.maven.plugins
-										</groupId>
-										<artifactId>
-											maven-antrun-plugin
-										</artifactId>
-										<versionRange>
-											[1.7,)
-										</versionRange>
+										<groupId>org.apache.maven.plugins</groupId>
+										<artifactId>maven-antrun-plugin</artifactId>
+										<version>${maven-antrun-plugin-version}</version>
 										<goals>
 											<goal>run</goal>
 										</goals>
@@ -167,12 +169,8 @@
 								<pluginExecution>
 									<pluginExecutionFilter>
 										<groupId>org.jacoco</groupId>
-										<artifactId>
-											jacoco-maven-plugin
-										</artifactId>
-										<versionRange>
-											[0.5.3.201107060350,)
-										</versionRange>
+										<artifactId>jacoco-maven-plugin</artifactId>
+										<versionRange>${jacoco-version}</versionRange>
 										<goals>
 											<goal>prepare-agent</goal>
 										</goals>
@@ -185,17 +183,6 @@
 						</lifecycleMappingMetadata>
 					</configuration>
 				</plugin>
-				<!-- <plugin> -->
-				<!-- <artifactId>maven-clean-plugin</artifactId> -->
-				<!-- <configuration> -->
-				<!-- <filesets> -->
-				<!-- <fileset> -->
-				<!-- <directory>${jacoco.reportDir}</directory> -->
-				<!-- <followSymlinks>false</followSymlinks> -->
-				<!-- </fileset> -->
-				<!-- </filesets> -->
-				<!-- </configuration> -->
-				<!-- </plugin> -->
 			</plugins>
 		</pluginManagement>
 	</build>
@@ -313,7 +300,7 @@
 					<plugin>
 						<groupId>org.jacoco</groupId>
 						<artifactId>jacoco-maven-plugin</artifactId>
-						<version>${jacoco.version}</version>
+						<version>${jacoco-version}</version>
 						<executions>
 							<execution>
 								<goals>
@@ -388,7 +375,7 @@
 					<plugin>
 						<groupId>org.jacoco</groupId>
 						<artifactId>jacoco-maven-plugin</artifactId>
-						<version>${jacoco.version}</version>
+						<version>${jacoco-version}</version>
 						<executions>
 							<execution>
 								<goals>
