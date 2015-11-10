@@ -154,7 +154,7 @@ public class TAPreferences {
 	}
 	
 	public String logicForExternalSolver() {
-		String logicForExternalSolver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+		String logicForExternalSolver = m_Prefs
 				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);
 		return logicForExternalSolver;
 	}
