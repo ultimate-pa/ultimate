@@ -191,8 +191,8 @@ public class TermTransferrer extends TermTransformer {
 
 	@Override
 	public void postConvertQuantifier(QuantifiedFormula old, Term newBody) {
-		TermVariable[] vars = new TermVariable[old.getFreeVars().length];
-		for (int i=0; old.getVariables().length<i; i++) {
+		TermVariable[] vars = new TermVariable[old.getVariables().length];
+		for (int i=0; i<old.getVariables().length; i++) {
 			vars[i] = transferTermVariable(old.getVariables()[i]);
 		}
 		Term result = m_Script.quantifier(old.getQuantifier(), vars, newBody);
