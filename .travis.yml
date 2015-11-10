@@ -19,7 +19,7 @@ before_script:
   - cd ltl2ba-1.2b1 && make && cd ..
   - export PATH=$PATH:$PWD/z3:$PWD/ltl2ba-1.2b1
    
-script: cd trunk/source/BA_MavenParentUltimate && travis_wait mvn clean install -q -Pcoverage -Dmaven.test.failure.ignore=true
+script: cd trunk/source/BA_MavenParentUltimate && mvn clean install -Pcoverage -Dmaven.test.failure.ignore=true
 
 branches:
   only:
