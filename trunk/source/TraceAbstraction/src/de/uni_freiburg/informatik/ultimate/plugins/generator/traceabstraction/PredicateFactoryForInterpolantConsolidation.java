@@ -27,10 +27,14 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
@@ -105,5 +109,42 @@ public class PredicateFactoryForInterpolantConsolidation extends PredicateFactor
 			m_LocationsToSetOfPredicates.put(p1, predicatesForThisLocation);
 		}
 		return result;
+	}
+
+	public void removeConsolidatedPredicatesOnDifferentLevels(Map<IPredicate, Integer> stateToLevel) {
+		int maxLevel = Collections.max(stateToLevel.values());
+		for (IPredicate loc : m_LocationsToSetOfPredicates.keySet()) {
+			Set<IPredicate> consolidatedPreds = m_LocationsToSetOfPredicates.get(loc);
+			if (!consolidatedPreds.isEmpty()) {
+				Set<IPredicate> predsToRemove = new HashSet<IPredicate>();
+				int[] levelOccurrencesOfPredicates = new int[maxLevel];
+				for (IPredicate p : consolidatedPreds) {
+					IPredicate diffAutomatonState = getIntersectedPredicate(loc, p);
+					int lvlOfState = stateToLevel.get(diffAutomatonState);
+					levelOccurrencesOfPredicates[lvlOfState-1]++;
+				}
+				int lvlThatOccursMost = getIndexOfMaxValue(levelOccurrencesOfPredicates);
+				if (levelOccurrencesOfPredicates[lvlThatOccursMost-1] <= 1) predsToRemove = consolidatedPreds;
+				else {
+					for (IPredicate p : consolidatedPreds) {
+						IPredicate diffAutomatonState = getIntersectedPredicate(loc, p);
+						int lvlOfState = stateToLevel.get(diffAutomatonState);
+						if (lvlOfState != lvlThatOccursMost) {
+							predsToRemove.add(p);
+						}
+					}
+				}
+				// Remove states that occur on different levels than lvlThatOccursMost from consolidated predicates
+				consolidatedPreds.removeAll(predsToRemove);
+			}
+		}
+	}
+
+	private int getIndexOfMaxValue(int[] levelOccurrencesOfPredicates) {
+		int indexOfMaxValue = 0;
+		for (int i = 1; i < levelOccurrencesOfPredicates.length; i++) {
+			if (levelOccurrencesOfPredicates[i] > levelOccurrencesOfPredicates[indexOfMaxValue]) indexOfMaxValue = i;
+		}
+		return indexOfMaxValue;
 	}
 }
