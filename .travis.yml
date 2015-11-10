@@ -12,7 +12,7 @@ env:
    - _JAVA_OPTIONS="-enableassertions -Xmx1g"
 
 before_script:
-  - free -h
+  - free -g
   - uname -a
   - cat /proc/cpuinfo
   - wget http://ultimate.informatik.uni-freiburg.de/downloads/z3.zip -O /tmp/z3.zip
