@@ -5,6 +5,7 @@ import subprocess
 import os
 import fnmatch
 import platform
+import argparse
 
 version = 'f286451a'
 writeUltimateOutputToFile = True
@@ -26,14 +27,14 @@ settingsFile64 = '64bit'
 safetyString = 'Ultimate proved your program to be correct'
 allSpecString = 'AllSpecificationsHoldResult'
 unsafetyString = 'Ultimate proved your program to be incorrect'
-memDerefUltimateString = 'pointer dereference may fail'
-memFreeUltimateString = 'free of unallocated memory possible'
-memMemtrackUltimateString = 'not all allocated memory was freed' 
+memDerefFalseString = 'pointer dereference may fail'
+memFreeFalseString = 'free of unallocated memory possible'
+memMemtrackFalseString = 'not all allocated memory was freed'
+terminationFalseString = 'Found a nonterminating execution for the following lasso shaped sequence of statements'
+terminationTrueString = 'TerminationAnalysisResult: Termination proven'
 errorPathBeginString = 'We found a FailurePath:'
-terminationFalse = 'Found a nonterminating execution for the following lasso shaped sequence of statements'
 terminationPathEnd = 'End of lasso representation.'
-terminationTrue = 'TerminationAnalysisResult: Termination proven'
-overflowString = 'overflow possible'
+overflowFalseString = 'overflow possible'
 
 
 def setBinary():
@@ -94,7 +95,7 @@ def runUltimate(ultimateCall, terminationMode):
     ultimateOutput = ''
     errorPath = ''
     while True:
-        line = ultimateProcess.stdout.readline().decode('utf-8')
+        line = ultimateProcess.stdout.readline().decode('utf-8', 'ignore')
         if readingErrorPath:
             errorPath += line
         ultimateOutput += line
@@ -104,9 +105,9 @@ def runUltimate(ultimateCall, terminationMode):
         if(not overapprox and containsOverapproximationResult(line)):
             overapprox = True
         if (terminationMode):
-            if (line.find(terminationTrue) != -1):
-                safetyResult = 'TRUE(TERM)'
-            if (line.find(terminationFalse) != -1):
+            if (line.find(terminationTrueString) != -1):
+                safetyResult = 'TRUE'
+            if (line.find(terminationFalseString) != -1):
                 safetyResult = 'FALSE(TERM)'
                 readingErrorPath = True
             if (line.find(terminationPathEnd) != -1):
@@ -116,13 +117,13 @@ def runUltimate(ultimateCall, terminationMode):
                 safetyResult = 'TRUE'
             if (line.find(unsafetyString) != -1):
                 safetyResult = 'FALSE'
-            if (line.find(memDerefUltimateString) != -1):
+            if (line.find(memDerefFalseString) != -1):
                 memResult = 'valid-deref'
-            if (line.find(memFreeUltimateString) != -1):
+            if (line.find(memFreeFalseString) != -1):
                 memResult = 'valid-free'
-            if (line.find(memMemtrackUltimateString) != -1):
+            if (line.find(memMemtrackFalseString) != -1):
                 memResult = 'valid-memtrack'
-            if(line.find(overflowString) != -1):
+            if(line.find(overflowFalseString) != -1):
                 safetyResult = 'FALSE(OVERFLOW)'
             if (line.find(errorPathBeginString) != -1):
                 readingErrorPath = True
@@ -163,7 +164,22 @@ def getSettingsFile(bitprecise, settingsSearchString):
 
 
 def parseArgs():
-# parse command line arguments
+    # parse command line arguments
+    
+#     parser = argparse.ArgumentParser(description='Ultimate wrapper script')
+#     parser.add_argument('32bit', action='store_true')
+#     parser.add_argument('64bit', action='store_true')
+#     parser.add_argument('simple', action='store_true')
+#     parser.add_argument('precise', action='store_true')
+#     parser.add_argument('--version', action='store_true')
+#     parser.add_argument('--full-output', action='store_true')
+#     
+#     parser.add_argument('integers', metavar='N', type=int, nargs='+', help='an integer for the accumulator')
+#     parser.add_argument('--sum', dest='accumulate', action='store_const', const=sum, default=max, help='sum the integers (default: find the max)')
+#     args = parser.parse_args()
+#     print args.accumulate(args.integers)
+    
+    
     if ((len(sys.argv) == 2) and (sys.argv[1] == '--version')):
         print version
         sys.exit(0)
@@ -220,7 +236,11 @@ def createSettingsSearchString(memDeref, memDerefMemtrack, terminationMode, over
 
 def createToolchainString(terminationMode):
     if terminationMode:
-        return searchCurrentDir('*Termination.xml')
+        toolchain = searchCurrentDir('*Termination.xml');
+        if toolchain == '' or toolchain == None:
+            print 'No suitable settings file found using *Termination.xml'
+            sys.exit(1)
+        return toolchain
     else:
         for root, dirs, files in os.walk('.'):
             for name in files:
@@ -285,11 +305,8 @@ def main():
         errOutputFile = open(errorPathFileName, 'wb')
         errOutputFile.write(errorPath.encode('utf-8'))
     
-    if memDeref:
-        if(safetyResult.startswith('FALSE')):
-            result = 'FALSE({})'.format(memResult)
-        elif safetyResult.startswith('TRUE'):
-            result = 'TRUE({})'.format(memResult)
+    if memDeref and safetyResult.startswith('FALSE'):
+        result = 'FALSE({})'.format(memResult)
     else:
         result = safetyResult
         
