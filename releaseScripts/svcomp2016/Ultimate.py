@@ -25,6 +25,7 @@ settingsFile64 = '64bit'
 
 # special strings in ultimate output
 unsupportedSyntaxString = 'UnsupportedSyntaxResult'
+typeErrorString = 'Type Error'
 safetyString = 'Ultimate proved your program to be correct'
 allSpecString = 'AllSpecificationsHoldResult'
 unsafetyString = 'Ultimate proved your program to be incorrect'
@@ -105,6 +106,8 @@ def runUltimate(ultimateCall, terminationMode):
         sys.stdout.flush()
         if (line.find(unsupportedSyntaxString) != -1):
             safetyResult = 'ERROR: UNSUPPORTED SYNTAX'
+        elif (line.find(typeErrorString) != -1):
+            safetyResult = 'ERROR: TYPE ERROR'
         if(not overapprox and containsOverapproximationResult(line)):
             overapprox = True
         if (terminationMode):
