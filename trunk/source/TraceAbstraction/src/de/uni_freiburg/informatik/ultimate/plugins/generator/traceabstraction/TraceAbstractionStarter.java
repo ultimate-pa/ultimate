@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.result.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
@@ -251,7 +252,7 @@ public class TraceAbstractionStarter {
 			break;
 		}
 		case TIMEOUT:
-			reportTimeoutResult(errorLocs);
+			reportTimeoutResult(errorLocs, basicCegarLoop.getToolchainCancelledException());
 			if (m_OverallResult != Result.UNSAFE) {
 				m_OverallResult = result;
 			}
@@ -322,12 +323,13 @@ public class TraceAbstractionStarter {
 				m_Services.getBacktranslationService(), pe));
 	}
 
-	private void reportTimeoutResult(Collection<ProgramPoint> errorLocs) {
+	private void reportTimeoutResult(Collection<ProgramPoint> errorLocs, 
+					ToolchainCanceledException toolchainCanceledException) {
 		for (ProgramPoint errorLoc : errorLocs) {
 			ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
 			String timeOutMessage = "Unable to prove that "
 					+ ResultUtil.getCheckedSpecification(errorLoc).getPositiveMessage();
-			timeOutMessage += " (line " + origin.getStartLine() + ")";
+			timeOutMessage += " (line " + origin.getStartLine() + "). " + toolchainCanceledException.prettyPrint();
 			TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<RcfgElement>(errorLoc,
 					Activator.s_PLUGIN_NAME, m_Services.getBacktranslationService(),
 					timeOutMessage);

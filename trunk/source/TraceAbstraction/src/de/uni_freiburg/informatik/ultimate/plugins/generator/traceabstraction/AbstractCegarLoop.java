@@ -178,6 +178,12 @@ public abstract class AbstractCegarLoop {
 	protected final IToolchainStorage m_ToolchainStorage;
 
 	
+	private ToolchainCanceledException m_ToolchainCancelledException;
+	
+	public ToolchainCanceledException getToolchainCancelledException() {
+		return m_ToolchainCancelledException;
+	}
+	
 	public AbstractCegarLoop(IUltimateServiceProvider services, IToolchainStorage storage, String name, RootNode rootNode, SmtManager smtManager,
 			TAPreferences taPrefs, Collection<ProgramPoint> errorLocs, Logger logger) {
 		m_Services = services;
@@ -350,6 +356,7 @@ public abstract class AbstractCegarLoop {
 					return Result.UNKNOWN;
 				}
 			} catch (ToolchainCanceledException e) {
+				m_ToolchainCancelledException = e;
 				mLogger.warn("Verification cancelled");
 				m_CegarLoopBenchmark.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
@@ -362,6 +369,7 @@ public abstract class AbstractCegarLoop {
 				m_CegarLoopBenchmark.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
 			} catch (ToolchainCanceledException e) {
+				m_ToolchainCancelledException = e;
 				mLogger.warn("Verification cancelled");
 				m_CegarLoopBenchmark.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
@@ -388,6 +396,7 @@ public abstract class AbstractCegarLoop {
 				m_CegarLoopBenchmark.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
 			} catch (ToolchainCanceledException e) {
+				m_ToolchainCancelledException = e;
 				mLogger.warn("Verification cancelled");
 				m_CegarLoopBenchmark.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
