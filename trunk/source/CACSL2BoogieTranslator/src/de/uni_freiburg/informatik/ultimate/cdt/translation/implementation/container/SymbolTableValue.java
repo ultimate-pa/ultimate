@@ -165,6 +165,10 @@ public class SymbolTableValue {
     	return this.storageClass == StorageClass.STATIC;
     }
 
+    public boolean isExtern() {
+    	return this.storageClass == StorageClass.EXTERN;
+    }
+
 	public IASTNode getDeclarationNode() {
 		return m_DeclarationNode;
 	}
