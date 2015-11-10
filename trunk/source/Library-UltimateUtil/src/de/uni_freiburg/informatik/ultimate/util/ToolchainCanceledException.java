@@ -77,5 +77,11 @@ public class ToolchainCanceledException extends RuntimeException {
 		return m_RunningTaskInfo;
 	}
 	
+	public String prettyPrint() {
+		return "(Timeout occurred in class " + getClassOfThrower().getSimpleName()
+				+ (getRunningTaskInfo() == null ? "" : " during the following task: "+ getRunningTaskInfo())
+				+ ")";
+	}
+	
 	
 }
