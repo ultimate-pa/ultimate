@@ -326,10 +326,13 @@ public class TraceAbstractionStarter {
 	private void reportTimeoutResult(Collection<ProgramPoint> errorLocs, 
 					ToolchainCanceledException toolchainCanceledException) {
 		for (ProgramPoint errorLoc : errorLocs) {
-			ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
-			String timeOutMessage = "Unable to prove that "
-					+ ResultUtil.getCheckedSpecification(errorLoc).getPositiveMessage();
-			timeOutMessage += " (line " + origin.getStartLine() + "). " + toolchainCanceledException.prettyPrint();
+			final ILocation origin = errorLoc.getBoogieASTNode().getLocation().getOrigin();
+			String timeOutMessage = "Unable to prove that ";
+			timeOutMessage += ResultUtil.getCheckedSpecification(errorLoc).getPositiveMessage();
+			timeOutMessage += " (line " + origin.getStartLine() + ").";
+			if (toolchainCanceledException != null) {
+				timeOutMessage += " " + toolchainCanceledException.prettyPrint();
+			}
 			TimeoutResultAtElement<RcfgElement> timeOutRes = new TimeoutResultAtElement<RcfgElement>(errorLoc,
 					Activator.s_PLUGIN_NAME, m_Services.getBacktranslationService(),
 					timeOutMessage);
