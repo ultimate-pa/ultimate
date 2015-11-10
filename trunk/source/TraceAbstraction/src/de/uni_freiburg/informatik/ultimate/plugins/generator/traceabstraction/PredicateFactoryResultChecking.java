@@ -51,37 +51,30 @@ public class PredicateFactoryResultChecking extends StateFactory<IPredicate> {
 	public PredicateFactoryResultChecking(SmtManager smtManager) {
 		m_SmtManager = smtManager;
 	}
-
 	
 	public IPredicate intersection(IPredicate p1, IPredicate p2) {
 		return m_SmtManager.newDebugPredicate(s_StateLabel);
 	}
 	
-
-
 	@Override
 	public IPredicate determinize(Map<IPredicate, Set<IPredicate>> down2up) {
 		return m_SmtManager.newDebugPredicate(s_StateLabel);
 	}
-
 	
 	public IPredicate createSinkStateContent() {
 		return m_SmtManager.newDebugPredicate(s_StateLabel);
 	}
 
-	
 	@Override
 	public IPredicate createEmptyStackState(){
 		return m_SmtManager.newDebugPredicate(s_StateLabel);
 	}
-
 
 	@Override
 	public IPredicate createDoubleDeckerContent(IPredicate down,
 			IPredicate up) {
 		throw new UnsupportedOperationException();
 	}
-
 	
 	@Override
 	public IPredicate minimize(Collection<IPredicate> states) {
@@ -94,12 +87,10 @@ public class PredicateFactoryResultChecking extends StateFactory<IPredicate> {
 		return m_SmtManager.newDontCarePredicate(((SPredicate) state).getProgramPoint());
 	}
 
-
 	@Override
 	public IPredicate buchiComplementFKV(LevelRankingState compl) {
 		return m_SmtManager.newDebugPredicate(s_StateLabel);
 	}
-
 
 	@Override
 	public IPredicate intersectBuchi(IPredicate s1, IPredicate s2, int track) {
@@ -111,6 +102,4 @@ public class PredicateFactoryResultChecking extends StateFactory<IPredicate> {
 			IPredicate c2) {
 		return m_SmtManager.newDebugPredicate(s_StateLabel);
 	}
-	
-	
 }

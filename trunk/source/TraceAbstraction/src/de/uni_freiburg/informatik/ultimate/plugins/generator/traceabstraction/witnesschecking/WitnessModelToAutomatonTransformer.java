@@ -39,19 +39,13 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNodeAnnotation;
 
 public class WitnessModelToAutomatonTransformer {
-	private final IUltimateServiceProvider m_Services;
 	private final NestedWordAutomaton<WitnessEdge, WitnessNode> m_Result;
 	private final WitnessNode m_WitnessRoot;
 	private final ArrayDeque<WitnessNode> worklist = new ArrayDeque<WitnessNode>();
 	
-	
-	
-	
 	public WitnessModelToAutomatonTransformer(WitnessNode witnessRoot, IUltimateServiceProvider services) {
 		super();
 		m_WitnessRoot = witnessRoot;
-		m_Services = services;
-		
 		Set<WitnessEdge> internalAlphabet = new LinkedHashSet<WitnessEdge>();
 		Set<WitnessEdge> callAlphabet = Collections.emptySet();
 		Set<WitnessEdge> returnAlphabet = Collections.emptySet();
@@ -87,5 +81,4 @@ public class WitnessModelToAutomatonTransformer {
 	public NestedWordAutomaton<WitnessEdge, WitnessNode> getResult() {
 		return m_Result;
 	}
-	
 }

@@ -56,10 +56,8 @@ public class CodeBlockFactory implements IStorable {
 	private final ModifiableGlobalVariableManager m_MgvManager;
 	
 	public final static String s_CodeBlockFactoryKeyInToolchainStorage = "CodeBlockFactory";
-
 	
 	private int m_SerialNumberCounter = 0;	
-
 	
 	public CodeBlockFactory(IUltimateServiceProvider services,
 			Boogie2SMT boogie2smt, ModifiableGlobalVariableManager mgvManager) {
@@ -69,9 +67,6 @@ public class CodeBlockFactory implements IStorable {
 		m_Boogie2smt = boogie2smt;
 		m_MgvManager = mgvManager;
 	}
-
-
-	
 	
 	public Call constructCall(ProgramPoint source, ProgramPoint target, 
 			CallStatement call) {

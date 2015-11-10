@@ -69,22 +69,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck.CheckableExpression;
 
 /**
- * Never2Automaton converts the never claim description of an automaton into an
- * an NWA automaton of the AutomataLibrary.
+ * Never2Automaton converts the never claim description of an automaton into an an NWA automaton of the AutomataLibrary.
  * 
  * @author Langenfeld
- * @note the transformation from Ast to Automaton also bringst a transformation
- *       from Promela Ast to Boogie Ast nodes.
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @note the transformation from Ast to Automaton also brings a transformation from Promela Ast to Boogie Ast nodes.
  */
 public class Never2Automaton {
 
-	private final IUltimateServiceProvider m_Services;
+	private final IUltimateServiceProvider mServices;
 	private final AstNode mNeverClaim;
 	private final Logger mLogger;
 	private final Map<String, CheckableExpression> mIRS;
-	private final CodeBlockFactory mCbf;
+	private final CodeBlockFactory mCodeblockFactory;
 
-	private NestedWordAutomaton<CodeBlock, String> mAutomaton;
+	private final NestedWordAutomaton<CodeBlock, String> mAutomaton;
 
 	private final boolean mUseSBE;
 	private final boolean mRewriteAssumeDuringSBE;
@@ -95,23 +94,23 @@ public class Never2Automaton {
 	 * @param ast
 	 * @param irs
 	 * @param services
-	 * @param cbf 
+	 * @param cbf
 	 * @throws Exception
 	 */
 	public Never2Automaton(AstNode ast, BoogieSymbolTable boogieSymbolTable, Map<String, CheckableExpression> irs,
 			Logger logger, IUltimateServiceProvider services, CodeBlockFactory cbf) throws Exception {
-		m_Services = services;
+		mServices = services;
 		mLogger = logger;
 		mNeverClaim = ast;
 		mIRS = irs;
-		mCbf = cbf;
+		mCodeblockFactory = cbf;
 
-		UltimatePreferenceStore ups = new UltimatePreferenceStore(
+		final UltimatePreferenceStore ups = new UltimatePreferenceStore(
 				de.uni_freiburg.informatik.ultimate.ltl2aut.Activator.PLUGIN_ID);
 		mUseSBE = ups.getBoolean(PreferenceInitializer.LABEL_OPTIMIZE_SBE);
 		mRewriteAssumeDuringSBE = ups.getBoolean(PreferenceInitializer.LABEL_OPTIMIZE_REWRITEASSUME);
 
-		mAutomaton = new NestedWordAutomaton<CodeBlock, String>(m_Services, collectAlphabet(), null, // call
+		mAutomaton = new NestedWordAutomaton<CodeBlock, String>(mServices, collectAlphabet(), null, // call
 				null, // return
 				new DummyStateFactory<String>());
 
@@ -130,30 +129,27 @@ public class Never2Automaton {
 	}
 
 	/**
-	 * Walks the AST for labeled blocks and extracts the names as Nodes in the
-	 * automaton. Nodes starting with "accept" are accepting nodes, the one
-	 * called init is the initial one.
+	 * Walks the AST for labeled blocks and extracts the names as Nodes in the automaton. Nodes starting with "accept"
+	 * are accepting nodes, the one called init is the initial one.
 	 * 
 	 * @see LTL2BA, LTL3BA output format
 	 * @param branch
 	 *            Ast of the Automaton description in Promela
 	 * @throws Exception
 	 */
-	private void collectStates(AstNode branch, String pred) throws Exception {
+	private void collectStates(final AstNode branch, final String preState) throws Exception {
 		if (branch instanceof LabeledBlock) // add nodes
 		{
-			String n = ((Name) ((LabeledBlock) branch).getValue()).getIdent();
-			if (!mAutomaton.getStates().contains(n)) {
-				mAutomaton.addState(n.endsWith("init"), n.startsWith("accept"), n);
-			}
+			String state = ((Name) ((LabeledBlock) branch).getValue()).getIdent();
+			addState(state);
 			for (AstNode a : branch.getOutgoingNodes()) {
-				collectStates(a, n);
+				collectStates(a, state);
 			}
 		} else if (branch instanceof BoolLiteral) {
 			return;
 		} else if (branch instanceof SkipStatement) {
 			// case " accept_all: skip
-			mAutomaton.addInternalTransition(pred, getAssumeTrue(), pred);
+			addTransition(preState, getAssumeTrue(), preState);
 			return;
 		} else if (branch instanceof Name) {
 			return;
@@ -162,25 +158,23 @@ public class Never2Automaton {
 			// option.body .goto .name
 			String succ = ((Name) branch.getOutgoingNodes().get(0).getOutgoingNodes().get(0)).getIdent();
 
-			if (!mAutomaton.getStates().contains(succ)) {
-				mAutomaton.addState(succ.endsWith("init"), succ.startsWith("accept"), succ);
-			}
+			addState(succ);
 
 			// add transitions
 			for (CodeBlock cond : getAssume(((OptionStatement) branch).getCondition())) {
-				mAutomaton.addInternalTransition(pred, cond, succ);
+				addTransition(preState, cond, succ);
 			}
-
 		} else {
 			for (AstNode a : branch.getOutgoingNodes()) {
-				collectStates(a, pred);
+				collectStates(a, preState);
 			}
 		}
 	}
 
+
+
 	/**
-	 * Collect all symbols that the automaton will have from the AST which will
-	 * be all conditions found in the AST.
+	 * Collect all symbols that the automaton will have from the AST which will be all conditions found in the AST.
 	 * 
 	 * @param mNeverClaim
 	 *            Ast of the Automaton description in Promela
@@ -188,10 +182,8 @@ public class Never2Automaton {
 	 * @throws Exception
 	 */
 	public Set<CodeBlock> collectAlphabet() throws Exception {
-		Set<CodeBlock> symbols = new HashSet<CodeBlock>();
-
+		final Set<CodeBlock> symbols = new HashSet<CodeBlock>();
 		visitAstForSymbols(mNeverClaim, symbols);
-
 		return symbols;
 	}
 
@@ -213,13 +205,12 @@ public class Never2Automaton {
 
 	private CodeBlock getAssumeTrue() {
 		ILocation loc = null;
-		StatementSequence ss = mCbf.constructStatementSequence(null, null,
+		StatementSequence ss = mCodeblockFactory.constructStatementSequence(null, null,
 				new AssumeStatement(loc, new BooleanLiteral(loc, true)));
 		return ss;
 	}
 
 	private List<CodeBlock> getAssume(AstNode condition) throws Exception {
-
 		if (condition instanceof Name) {
 			// this may be already translated by the IRS
 			Name name = (Name) condition;
@@ -248,7 +239,7 @@ public class Never2Automaton {
 		for (Expression expr : simplify(checkExpr.getExpression())) {
 			List<Statement> stmts = new ArrayList<>(preStmts);
 			stmts.add(new AssumeStatement(loc, expr));
-			rtr.add(mCbf.constructStatementSequence(null, null, stmts, Origin.ASSERT));
+			rtr.add(mCodeblockFactory.constructStatementSequence(null, null, stmts, Origin.ASSERT));
 		}
 		return rtr;
 	}
@@ -266,8 +257,7 @@ public class Never2Automaton {
 	}
 
 	/**
-	 * Translates the atomic propositions from LTL2Aut.AstNode into Boogie
-	 * ASTNode for further processing.
+	 * Translates the atomic propositions from LTL2Aut.AstNode into Boogie ASTNode for further processing.
 	 * 
 	 * @return root node of the proposition as Boogie ASTNodes
 	 * @throws Exception
@@ -301,14 +291,16 @@ public class Never2Automaton {
 
 			CheckableExpression left = toBoogieAst(branch.getOutgoingNodes().get(0));
 			CheckableExpression right = toBoogieAst(branch.getOutgoingNodes().get(1));
-			CheckableExpression expr = new CheckableExpression(new BinaryExpression(null, op, left.getExpression(),
-					right.getExpression()), mergeStatements(left, right));
+			CheckableExpression expr = new CheckableExpression(
+					new BinaryExpression(null, op, left.getExpression(), right.getExpression()),
+					mergeStatements(left, right));
 
 			if (branch.getOutgoingNodes().size() > 2) {
 				for (int i = 2; i < branch.getOutgoingNodes().size(); i++) {
 					right = toBoogieAst(branch.getOutgoingNodes().get(i));
-					expr = new CheckableExpression(new BinaryExpression(null, op, expr.getExpression(),
-							right.getExpression()), mergeStatements(expr, right));
+					expr = new CheckableExpression(
+							new BinaryExpression(null, op, expr.getExpression(), right.getExpression()),
+							mergeStatements(expr, right));
 				}
 			}
 			return expr;
@@ -332,12 +324,13 @@ public class Never2Automaton {
 			}
 			CheckableExpression left = toBoogieAst(branch.getOutgoingNodes().get(0));
 			CheckableExpression right = toBoogieAst(branch.getOutgoingNodes().get(1));
-			CheckableExpression expr = new CheckableExpression(new BinaryExpression(null, op, left.getExpression(),
-					right.getExpression()), mergeStatements(left, right));
+			CheckableExpression expr = new CheckableExpression(
+					new BinaryExpression(null, op, left.getExpression(), right.getExpression()),
+					mergeStatements(left, right));
 			return expr;
 		} else if (branch instanceof IntLiteral) {
-			return new CheckableExpression(
-					new IntegerLiteral(null, Integer.toString(((IntLiteral) branch).getValue())), null);
+			return new CheckableExpression(new IntegerLiteral(null, Integer.toString(((IntLiteral) branch).getValue())),
+					null);
 		} else if (branch instanceof Name) {
 			Name name = (Name) branch;
 			CheckableExpression checkExpr = mIRS.get(name.getIdent().toUpperCase());
@@ -346,23 +339,33 @@ public class Never2Automaton {
 			}
 		} else if (branch instanceof Not) {
 			CheckableExpression right = toBoogieAst(branch.getOutgoingNodes().get(0));
-			return new CheckableExpression(new UnaryExpression(null, UnaryExpression.Operator.LOGICNEG,
-					right.getExpression()), right.getStatements());
+			return new CheckableExpression(
+					new UnaryExpression(null, UnaryExpression.Operator.LOGICNEG, right.getExpression()),
+					right.getStatements());
 		}
 
-		throw new Exception(String.format("Type %s should not occur as part of a atomic Proposition in LTL", branch
-				.getClass().toString()));
+		throw new Exception(String.format("Type %s should not occur as part of a atomic Proposition in LTL",
+				branch.getClass().toString()));
 	}
 
 	private List<Statement> mergeStatements(CheckableExpression... exprs) {
-		List<Statement> rtr = new ArrayList<>();
-
-		for (CheckableExpression expr : exprs) {
+		final List<Statement> rtr = new ArrayList<>();
+		for (final CheckableExpression expr : exprs) {
 			if (expr.getStatements() != null) {
 				rtr.addAll(expr.getStatements());
 			}
 		}
-
 		return rtr;
+	}
+
+	private void addTransition(final String predecessor, final CodeBlock letter, final String successor) {
+		mAutomaton.getAlphabet().add(letter);
+		mAutomaton.addInternalTransition(predecessor, letter, successor);
+	}
+	
+	private void addState(String state) {
+		if (!mAutomaton.getStates().contains(state)) {
+			mAutomaton.addState(state.endsWith("init"), state.startsWith("accept"), state);
+		}
 	}
 }

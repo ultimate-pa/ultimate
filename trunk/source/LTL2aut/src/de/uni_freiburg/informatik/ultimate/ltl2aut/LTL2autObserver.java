@@ -30,21 +30,16 @@ package de.uni_freiburg.informatik.ultimate.ltl2aut;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.boogie.parser.Lexer;
-import de.uni_freiburg.informatik.ultimate.boogie.parser.Parser;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
@@ -68,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck.CheckableExpr
  * description of the LTL formula as a Buchi automaton.
  * 
  * @author Langenfeld
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
 public class LTL2autObserver implements IUnmanagedObserver {
