@@ -42,7 +42,7 @@ public class InterpolationTest_Reach extends AbstractTraceAbstractionTestSuite {
 
 	/** Limit the number of files per directory. */
 //	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
-	private static int m_FilesPerDirectoryLimit = 4;
+	private static int m_FilesPerDirectoryLimit = 5;
 	
 	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs = {
 		/*** Category 1. Arrays ***/
@@ -73,7 +73,7 @@ public class InterpolationTest_Reach extends AbstractTraceAbstractionTestSuite {
 
 		new DirectoryFileEndingsPair("examples/svcomp/eca-rers2012/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
 		
-		new DirectoryFileEndingsPair("examples/svcomp/loops/", new String[]{".i"}) ,
+		new DirectoryFileEndingsPair("examples/svcomp/loops/", new String[]{".i"}, m_FilesPerDirectoryLimit) ,
 		new DirectoryFileEndingsPair("examples/svcomp/loop-acceleration/", new String[]{".i" }, m_FilesPerDirectoryLimit) ,
 		new DirectoryFileEndingsPair("examples/svcomp/loop-invgen/", new String[]{".i"}, m_FilesPerDirectoryLimit) ,
 		new DirectoryFileEndingsPair("examples/svcomp/loop-lit/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
@@ -126,16 +126,17 @@ public class InterpolationTest_Reach extends AbstractTraceAbstractionTestSuite {
 	 */
 	@Override
 	public long getTimeout() {
-		return 120 * 1000;
+		return 60 * 1000;
 	}
 
 	private static final String[] m_Settings = {
 		"automizer/interpolation/Reach-32bit-iZ3-NestedInterpolation.epf",
 		"automizer/interpolation/Reach-32bit-Princess-TreeInterpolation.epf",
 		"automizer/interpolation/Reach-32bit-SMTInterpol-FPandBP.epf",
+		"automizer/interpolation/Reach-32bit-SMTInterpol-FPandBP-cannibalize.epf",
 		"automizer/interpolation/Reach-32bit-SMTInterpol-TreeInterpolation.epf",
-		"automizer/interpolation/Reach-32bit-Z3-FPandBP.epf",
-		"automizer/interpolation/Reach-32bit-Z3-FP.epf",
+//		"automizer/interpolation/Reach-32bit-Z3-FPandBP.epf",
+//		"automizer/interpolation/Reach-32bit-Z3-FP.epf",
 	};
 	
 	private static final String[] m_CToolchains = {
