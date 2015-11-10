@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
  * This class implements an Eclipse Job processing a Ultimate toolchain using
  * the methods publicly available from ICore.
  * 
- * @author dietsch
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
 public class DefaultToolchainJob extends BasicToolchainJob {
