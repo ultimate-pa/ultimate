@@ -106,7 +106,6 @@ public class DPLLEngine {
 	private int mNumRandomSplits;
 	
 	private boolean mHasModel;
-	private boolean mStopEngine;
 
 	double mAtomScale = 1 - 1.0 / Config.ATOM_ACTIVITY_FACTOR;
 	double mClsScale = 1 - 1.0 / Config.CLS_ACTIVITY_FACTOR;
@@ -969,7 +968,6 @@ public class DPLLEngine {
 	 */
 	public boolean solve() {
 		mHasModel = false;
-		mStopEngine = mCompleteness == INCOMPLETE_CANCELLED;
 		if (mUnsatClause != null) {
 			mLogger.debug("Using cached unsatisfiability");
 			return false;
@@ -1022,12 +1020,11 @@ public class DPLLEngine {
 			int iteration = 1;
 			int nextRestart = Config.RESTART_FACTOR;
 			long time; 
-			while (!mStopEngine && !isTerminationRequested()) {
+			while (!isTerminationRequested()) {
 				Clause conflict;
 				do {
 					conflict = propagateInternal();
-					if (conflict != null || mStopEngine // NOPMD
-							|| isTerminationRequested())
+					if (conflict != null || isTerminationRequested())
 						break;
 					if (Config.PROFILE_TIME) {
 						time = System.nanoTime();
@@ -1073,8 +1070,7 @@ public class DPLLEngine {
 						mDecides++;
 						conflict = setLiteral(literal);
 					}
-				} while (conflict == null && !mStopEngine
-						&& !isTerminationRequested());
+				} while (conflict == null && !isTerminationRequested());
 				if (Config.PROFILE_TIME) {
 					time = System.nanoTime();
 					mPropTime += time - lastTime - mSetTime - mBacktrackTime;
@@ -1349,9 +1345,6 @@ public class DPLLEngine {
 
 	public boolean hasModel() {
 		return mHasModel && mCompleteness == COMPLETE;
-	}
-	public void stop() {
-		mStopEngine = true;
 	}
 	public void setProofGeneration(boolean enablePG) {
 		mPGenabled = enablePG;
