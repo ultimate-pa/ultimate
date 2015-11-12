@@ -48,6 +48,7 @@ import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.IntegerTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
@@ -102,7 +103,7 @@ public class SvComp14CHandler extends CHandler {
 	 * Add assume statements that state that the nondeterministic values are
 	 * in the range of the values of the data type.
 	 */
-	private static final boolean mAssumeThatNondeterministicValuesAreInRange = false;
+	private final boolean m_AssumeThatNondeterministicValuesAreInRange;
 	/**
 	 * The string representing SV-Comp's error method.
 	 */
@@ -133,6 +134,8 @@ public class SvComp14CHandler extends CHandler {
 			Logger logger, ITypeHandler typeHandler, boolean bitvectorTranslation) {
 		super(main, backtranslator, false, logger, typeHandler, bitvectorTranslation);
 		super.mArrayHandler = new SVCompArrayHandler();
+		m_AssumeThatNondeterministicValuesAreInRange = 
+				main.mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_ASSUME_NONDET_VALUES_IN_RANGE);
 	}
 
 	//
@@ -257,15 +260,9 @@ public class SvComp14CHandler extends CHandler {
 
 				returnValue = new RValue(new IdentifierExpression(loc, tmpName), cType);
 				
-				if (mAssumeThatNondeterministicValuesAreInRange) {
-					switch (t) {
-					case "int":
-					case "long":
-					case "char":
-					case "short":
+				if (m_AssumeThatNondeterministicValuesAreInRange && (m_ExpressionTranslation instanceof IntegerTranslation)) {
 						AssumeStatement inRange = constructAssumeInRangeStatement(main.getTypeSizes(), loc, returnValue);
 						stmt.add(inRange);
-					}
 				}
 				assert (isAuxVarMapcomplete(main, decl, auxVars));
 				return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
@@ -375,14 +372,15 @@ public class SvComp14CHandler extends CHandler {
 	private AssumeStatement constructAssumeInRangeStatement(TypeSizes typeSizes, 
 			ILocation loc,
 			LRValue lrValue) {
-		IntegerLiteral minValue = new IntegerLiteral(loc, typeSizes.getMinValueOfPrimitiveType(
-				(CPrimitive) lrValue.getCType().getUnderlyingType()).toString());
-		IntegerLiteral maxValue = new IntegerLiteral(loc, typeSizes.getMaxValueOfPrimitiveType(
-				(CPrimitive) lrValue.getCType().getUnderlyingType()).toString());
-		Expression biggerMinInt = ExpressionFactory.newBinaryExpression(loc, 
-				BinaryExpression.Operator.COMPLEQ, minValue, lrValue.getValue());
-		Expression smallerMaxValue = ExpressionFactory.newBinaryExpression(loc, 
-				BinaryExpression.Operator.COMPLEQ, lrValue.getValue(), maxValue);
+		CPrimitive type = (CPrimitive) lrValue.getCType().getUnderlyingType();
+		
+		Expression minValue = m_ExpressionTranslation.constructLiteralForIntegerType(loc, type, typeSizes.getMinValueOfPrimitiveType(type)); 
+		Expression maxValue = m_ExpressionTranslation.constructLiteralForIntegerType(loc, type, typeSizes.getMaxValueOfPrimitiveType(type));
+				
+		Expression biggerMinInt = m_ExpressionTranslation.constructBinaryComparisonExpression(
+				loc, IASTBinaryExpression.op_lessEqual, minValue, type, lrValue.getValue(), type);
+		Expression smallerMaxValue = m_ExpressionTranslation.constructBinaryComparisonExpression(
+				loc, IASTBinaryExpression.op_lessEqual, lrValue.getValue(), type, maxValue, type); 
 		AssumeStatement inRange = new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc, 
 				BinaryExpression.Operator.LOGICAND, biggerMinInt, smallerMaxValue));
 		return inRange;
