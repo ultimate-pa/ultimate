@@ -8,7 +8,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-int main(void) {
+int nonMain(void) {
 	int **pp = malloc(25*sizeof(int*));
 	int *p = malloc(7*sizeof(int));
 	pp[19] = p;
