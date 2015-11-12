@@ -260,7 +260,9 @@ public class SvComp14CHandler extends CHandler {
 
 				returnValue = new RValue(new IdentifierExpression(loc, tmpName), cType);
 				
-				if (m_AssumeThatNondeterministicValuesAreInRange && (m_ExpressionTranslation instanceof IntegerTranslation)) {
+				if (m_AssumeThatNondeterministicValuesAreInRange 
+						&& (m_ExpressionTranslation instanceof IntegerTranslation)
+						&& (returnValue.getCType().getUnderlyingType() instanceof CPrimitive)) {
 						AssumeStatement inRange = constructAssumeInRangeStatement(main.getTypeSizes(), loc, returnValue);
 						stmt.add(inRange);
 				}
