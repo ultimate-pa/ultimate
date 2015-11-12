@@ -183,7 +183,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			m_Interpolation = interpolation;
 			m_InterpolantAutomatonConstructionProcedure = m_Pref.interpolantAutomaton();
 		}
-		InterpolationPreferenceChecker.check(Activator.s_PLUGIN_NAME, interpolation);
+//		InterpolationPreferenceChecker.check(Activator.s_PLUGIN_NAME, interpolation);
 		m_ComputeHoareAnnotation = computeHoareAnnotation;
 		m_Haf = new HoareAnnotationFragments(mLogger);
 		m_StateFactoryForRefinement = new PredicateFactoryRefinement(m_RootNode.getRootAnnot().getProgramPoints(),
