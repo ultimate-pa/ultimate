@@ -91,7 +91,7 @@ public class AffineTermTransformer extends TermTransformer {
 				}
 				setResult(result);
 				return;
-			} else if (appTerm.getParameters().length == 0) {
+			} else if (appTerm.getParameters().length == 0 && appTerm.getSort().isNumericSort()) {
 				// appTerm is a constant (0-ary function)
 				AffineTerm result = new AffineTerm(appTerm);
 				setResult(result);
