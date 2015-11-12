@@ -1,4 +1,4 @@
-//#Unafe
+//#Unsafe
 /* 
  * Author: heizmann@informatik.uni-freiburg.de
  * Date: 2015-11-06
@@ -12,7 +12,7 @@
  * values manually.
  */
 
-extern __VERIFIER_nondet_int();
+extern int __VERIFIER_nondet_int();
 
 int main() {
 	long long a = -1;
