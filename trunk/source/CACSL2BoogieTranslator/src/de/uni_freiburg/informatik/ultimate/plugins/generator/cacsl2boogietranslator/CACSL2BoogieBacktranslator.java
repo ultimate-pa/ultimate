@@ -620,11 +620,11 @@ public class CACSL2BoogieBacktranslator extends
 			if (cType == null) {
 				value = ((IntegerLiteral) expression).getValue();
 			} else {
-				if (cType instanceof CEnum) {
+				if (cType.getUnderlyingType() instanceof CEnum) {
 					cType = new CPrimitive(PRIMITIVE.INT);
 				}
 				BigInteger extractedValue = 
-						mExpressionTranslation.extractIntegerValue(expression, cType);
+						mExpressionTranslation.extractIntegerValue(expression, cType.getUnderlyingType());
 				value = String.valueOf(extractedValue);
 			}
 			FakeExpression clit = new FakeExpression(value);
