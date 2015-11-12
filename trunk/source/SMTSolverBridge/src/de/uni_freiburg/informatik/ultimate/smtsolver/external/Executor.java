@@ -120,7 +120,10 @@ class Executor {
 	public void exit() {
 
 		input("(exit)");
-		parseSuccess();
+//		2015-11-12 Matthias: Do not parse "success" after exit.
+//		Some solvers do return success (Barcelogic, CVC4, Z3) some solvers
+//		don't do it (Princess, SMTInterpol).
+//		parseSuccess();
 		mProcess.forceShutdown();
 		mProcess = null;
 
