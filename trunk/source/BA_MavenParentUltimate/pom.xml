@@ -385,6 +385,7 @@
 							<!-- We should not publish the repo token, but I dont know any other 
 								way of telling travis. Its either here or in .travis.yml -->
 							<repoToken>EfXcoEYdCZRch9bAt6OULUTnGEz43OyEw</repoToken>
+							<jacocoReports>${sonar.jacoco.reportPath}</jacocoReports>
 						</configuration>
 					</plugin>
 				</plugins>
@@ -404,12 +405,9 @@
 		</profile>
 
 		<profile>
-			<!-- The profile coverage is used to generate junit test case coverage 
-				through jenkins and sonar. It uses all regression tests, but not UltimateTest, 
-				as those tests are very slow and should be executed manually via profile 
-				manualtest. You should not need to run this profile manually. -->
+			<!-- The profile coveragemanual can be used to generate jacoco reports 
+				for your local machine. It is mostly used for debug purposes. -->
 			<id>coveragemanual</id>
-
 			<build>
 				<plugins>
 					<plugin>
