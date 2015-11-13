@@ -1416,9 +1416,10 @@ public class MemoryHandler {
     		if (cPrimitive.isIntegerType()) {
     			return SFO.INT;
     		} else if (cPrimitive.isFloatingType()) {
-    			throw new UnsupportedOperationException("I don't know the right String");
+    			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), 
+    					"unsupported to write " + cType + " to heap");
     		} else {
-    			throw new UnsupportedOperationException("unknown type " + underlyingType);
+    			throw new AssertionError("unable to write " + cType + " to heap");
     		}
     	} else if (underlyingType instanceof CEnum) {
     		return SFO.INT;
