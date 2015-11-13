@@ -184,7 +184,7 @@ public class IntervalDomainState
 			}
 		} else {
 			mLogger.warn("The IBoogieVar type " + variable.getIType().getClass().toString()
-					+ " is not implemented. Assuming top.");
+					+ " of variable " + name + " is not implemented. Assuming top.");
 			newValMap.put(name, new IntervalDomainValue());
 		}
 
@@ -238,7 +238,7 @@ public class IntervalDomainState
 				newValMap.put(id, new IntervalDomainValue());
 			} else {
 				mLogger.warn("The IBoogieVar type " + var.getIType().getClass().toString()
-						+ " is not implemented. Assuming top.");
+						+ " of variable " + id + " is not implemented. Assuming top.");
 				newValMap.put(id, new IntervalDomainValue());
 			}
 		}
