@@ -56,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.P
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue.StorageClass;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -1031,7 +1030,7 @@ public class FunctionHandler {
 			String paramId = main.nameHandler.getInParamIdentifier(paramDec.getName(), paramDec.getType());
 			in[i] = new VarList(loc, new String[] { paramId }, type);
 			main.cHandler.getSymbolTable().put(paramDec.getName(),
-					new SymbolTableValue(paramId, null, paramDec, false, null, null));
+					new SymbolTableValue(paramId, null, paramDec, false, null));
 		}
 		updateCFunction(methodName, null, paramDecs, null, false);
 		return in;
@@ -1120,8 +1119,7 @@ public class FunctionHandler {
 				// points to the locally declared variable.
 				main.cHandler.getSymbolTable().put(
 						cId,
-						new SymbolTableValue(auxInvar, inVarDecl, new CDeclaration(cvar, cId), false,
-								StorageClass.UNSPECIFIED, paramDec));
+						new SymbolTableValue(auxInvar, inVarDecl, new CDeclaration(cvar, cId), false, paramDec));
 			}
 		}
 	}
@@ -1240,7 +1238,7 @@ public class FunctionHandler {
 		String cId = currentProcedure.getIdentifier();
 		SymbolTableValue stValue = main.cHandler.getSymbolTable().get(cName, errLoc);
 		CType cvar = stValue.getCVariable();
-		if (cvar != null && stValue.isStatic()) {
+		if (cvar != null && stValue.getCDecl().isStatic()) {
 			modifiedGlobals.get(cId).add(searchString);
 			return;
 		}

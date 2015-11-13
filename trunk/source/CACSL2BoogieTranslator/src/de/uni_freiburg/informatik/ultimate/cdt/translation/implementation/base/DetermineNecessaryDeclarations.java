@@ -188,6 +188,10 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 			symbolName = getKindStringFromCompositeOrElaboratedTS(elts) + elts.getName().toString();
 //		} else if (typeId.getDeclSpecifier() instanceof IASTCompositeTypeSpecifier) {
 		}
+		
+		if (symbolName.isEmpty())
+			return super.visit(typeId);
+		
     	IASTDeclaration symbolDec = sT.get(symbolName);
     	if (symbolDec != null)
     		addDependency(currentFunOrStructOrEnumDefOrInitializer.peek(), symbolDec);

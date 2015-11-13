@@ -325,7 +325,8 @@ public class PostProcessor {
 			 * global variables with external linkage are not implicitly initialized. (They are initialized by 
 			 * the module that provides them..)
 			 */
-			if (main.cHandler.getSymbolTable().get(en.getValue().getName(), currentDeclsLoc).isExtern())
+//			if (main.cHandler.getSymbolTable().get(en.getValue().getName(), currentDeclsLoc).isExtern())
+			if (en.getValue().isExtern())
 				continue;
 
 			for (VarList vl  : ((VariableDeclaration) en.getKey()).getVariables()) {

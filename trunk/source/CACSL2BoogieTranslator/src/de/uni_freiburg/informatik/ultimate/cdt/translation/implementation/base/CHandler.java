@@ -120,7 +120,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizeAndOffsetComputer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue.StorageClass;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
@@ -135,6 +134,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CStorageClass;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CompoundStatementExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ContractResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.DeclarationResult;
@@ -162,6 +162,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
@@ -660,7 +661,7 @@ public class CHandler implements ICHandler {
 												// case of a global or a local
 												// initialized variable
 
-			StorageClass storageClass = scConstant2StorageClass(node.getDeclSpecifier().getStorageClass());
+			CStorageClass storageClass = scConstant2StorageClass(node.getDeclSpecifier().getStorageClass());
 
 			mCurrentDeclaredTypes.push(resType);
 			/**
@@ -677,13 +678,14 @@ public class CHandler implements ICHandler {
 				DeclaratorResult declResult = (DeclaratorResult) main.dispatch(d);
 
 				CDeclaration cDec = declResult.getDeclaration();
+				cDec.setStorageClass(storageClass);
 				
 				
 				// are we in prerun mode?
 				if (main instanceof PRDispatcher) {
 					// all unions should be on heap
 					if (cDec.getType() instanceof CUnion 
-							&& storageClass != StorageClass.TYPEDEF) {
+							&& storageClass != CStorageClass.TYPEDEF) {
 						((PRDispatcher) main).getVariablesOnHeap().add(d);
 					}
 				}
@@ -694,7 +696,7 @@ public class CHandler implements ICHandler {
 				// functions keep their cId, and their declaration is not stored
 				// in the symbolTable but in
 				// FunctionHandler.procedures.
-				if (cDec.getType() instanceof CFunction && storageClass != StorageClass.TYPEDEF) {
+				if (cDec.getType() instanceof CFunction && storageClass != CStorageClass.TYPEDEF) {
 					// update functionHandler.procedures instead of symbol table
 					mFunctionHandler.handleFunctionDeclarator(main, LocationFactory.createCLocation(d), mContract, cDec);
 					continue;
@@ -735,7 +737,7 @@ public class CHandler implements ICHandler {
 				// (containing boogieID) for
 				// translation of the initializer
 				mSymbolTable.put(cDec.getName(),
-						new SymbolTableValue(bId, boogieDec, cDec, globalInBoogie, storageClass, d));
+						new SymbolTableValue(bId, boogieDec, cDec, globalInBoogie, d));
 				cDec.translateInitializer(main);
 
 				ASTType translatedType = null;
@@ -744,14 +746,14 @@ public class CHandler implements ICHandler {
 				else
 					translatedType = main.typeHandler.ctype2asttype(loc, cDec.getType());
 
-				if (storageClass == StorageClass.TYPEDEF) {
+				if (storageClass == CStorageClass.TYPEDEF) {
 					boogieDec = new TypeDeclaration(loc, new Attribute[0], false, bId, new String[0], translatedType);
 					main.typeHandler.addDefinedType(bId, new TypesResult(new NamedType(loc, cDec.getName(), null),
 							false, false, cDec.getType()));
 					// TODO: add a sizeof-constant for the type??
 					globalInBoogie = true;
 					mDeclarationsGlobalInBoogie.put(boogieDec, cDec);
-				} else if (storageClass == StorageClass.STATIC && !mFunctionHandler.noCurrentProcedure()) {
+				} else if (storageClass == CStorageClass.STATIC && !mFunctionHandler.noCurrentProcedure()) {
 					// we have a local static variable -> special treatment
 					// global static variables are treated like normal global variables..
 					boogieDec = new VariableDeclaration(loc, new Attribute[0],
@@ -844,8 +846,7 @@ public class CHandler implements ICHandler {
 				}
 
 				mSymbolTable.put(cDec.getName(), new SymbolTableValue(bId,
-						boogieDec, cDec, globalInBoogie,
-						storageClass, d)); 
+						boogieDec, cDec, globalInBoogie, d)); 
 			}
 			mCurrentDeclaredTypes.pop();
 			
@@ -964,13 +965,15 @@ public class CHandler implements ICHandler {
 			mCurrentDeclaredTypes.pop();
 			if (node.getInitializer() != null) {
 				CDeclaration cdec = result.getDeclaration();
-				result = new DeclaratorResult(cdec.getType(), cdec.getName(),
-						node.getInitializer(), variableLengthArrayAuxVarInitializer, cdec.isOnHeap());
+				result = new DeclaratorResult(
+						new CDeclaration(cdec.getType(), cdec.getName(),
+						node.getInitializer(), variableLengthArrayAuxVarInitializer, cdec.isOnHeap(), CStorageClass.UNSPECIFIED));
 			}
 			return result;
 		} else {
-			DeclaratorResult result = new DeclaratorResult(newResType.cType, node.getName().toString(), node.getInitializer(),
-					variableLengthArrayAuxVarInitializer, newResType.isOnHeap);
+			DeclaratorResult result = new DeclaratorResult(
+					new CDeclaration(newResType.cType, node.getName().toString(), node.getInitializer(),
+							variableLengthArrayAuxVarInitializer, newResType.isOnHeap, CStorageClass.UNSPECIFIED));
 			return result;
 		}
 	}
@@ -3519,25 +3522,26 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public boolean isHeapVar(String boogieId) {
+		CStorageClass c;
 		return mBoogieIdsOfHeapVars.contains(boogieId);
 	}
 
-	protected StorageClass scConstant2StorageClass(int storageClass) {
+	protected CStorageClass scConstant2StorageClass(int storageClass) {
 		switch (storageClass) {
 		case IASTDeclSpecifier.sc_auto:
-			return StorageClass.AUTO;
+			return CStorageClass.AUTO;
 		case IASTDeclSpecifier.sc_extern:
-			return StorageClass.EXTERN;
+			return CStorageClass.EXTERN;
 		case IASTDeclSpecifier.sc_mutable:
-			return StorageClass.MUTABLE;
+			return CStorageClass.MUTABLE;
 		case IASTDeclSpecifier.sc_register:
-			return StorageClass.REGISTER;
+			return CStorageClass.REGISTER;
 		case IASTDeclSpecifier.sc_static:
-			return StorageClass.STATIC;
+			return CStorageClass.STATIC;
 		case IASTDeclSpecifier.sc_typedef:
-			return StorageClass.TYPEDEF;
+			return CStorageClass.TYPEDEF;
 		case IASTDeclSpecifier.sc_unspecified:
-			return StorageClass.UNSPECIFIED;
+			return CStorageClass.UNSPECIFIED;
 		default:
 			throw new AssertionError("should not happen");
 		}
@@ -3593,9 +3597,9 @@ public class CHandler implements ICHandler {
 			oldValue = newValue;
 			enumDomain[i] = newValue;
 			mAxioms.add(new Axiom(loc, new Attribute[0], ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, l, newValue)));
-			mSymbolTable.put(fId, new SymbolTableValue(bId, cd, new CDeclaration(typeOfEnumIdentifiers, fId), true,
-					scConstant2StorageClass(node.getDeclSpecifier().getStorageClass()), node)); // FIXME
-																							// ??
+			mSymbolTable.put(fId, new SymbolTableValue(bId, cd, 
+					new CDeclaration(typeOfEnumIdentifiers, fId, scConstant2StorageClass(node.getDeclSpecifier().getStorageClass())),
+					true, node)); // FIXME ??
 		}
 		//return result;
 	}
@@ -3944,6 +3948,4 @@ public class CHandler implements ICHandler {
 	public InitializationHandler getInitHandler() {
 		return mInitHandler;
 	}
-
-
-}
+}	

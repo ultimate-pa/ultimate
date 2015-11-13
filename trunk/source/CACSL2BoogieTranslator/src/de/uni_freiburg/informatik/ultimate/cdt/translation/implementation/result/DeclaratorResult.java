@@ -43,9 +43,13 @@ public class DeclaratorResult extends Result {
 
 	CDeclaration mDecl;
 	
-	public DeclaratorResult(CType type, String name, IASTInitializer cAstInitializer, ExpressionResult initializer, boolean onHeap) {
+//	public DeclaratorResult(CType type, String name, IASTInitializer cAstInitializer, ExpressionResult initializer, boolean onHeap) {
+//		super(null);
+//		mDecl = new CDeclaration(type, name, cAstInitializer, initializer, onHeap);
+//	}
+	public DeclaratorResult(CDeclaration cd) {
 		super(null);
-		mDecl = new CDeclaration(type, name, cAstInitializer, initializer, onHeap);
+		mDecl = cd;
 	}
 	
 	public CDeclaration getDeclaration() {
