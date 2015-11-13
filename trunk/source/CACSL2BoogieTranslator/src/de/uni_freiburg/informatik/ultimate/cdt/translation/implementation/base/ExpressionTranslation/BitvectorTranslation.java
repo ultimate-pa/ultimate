@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation;
 
 import java.math.BigInteger;
+import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
@@ -54,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
@@ -403,5 +405,13 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		// is never a problem in the SV-COMP and most other code
 		return new CPrimitive(PRIMITIVE.INT);
 	}
+
+	@Override
+	public void addAssumeValueInRangeStatements(ILocation loc, Expression expr, CType ctype, List<Statement> stmt) {
+		// do nothing. not needed for bitvectors
+		
+	}
+	
+	
 	
 }

@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation;
 
 import java.math.BigInteger;
+import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
@@ -37,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
@@ -44,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -59,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
@@ -68,10 +72,17 @@ public class IntegerTranslation extends AExpressionTranslation {
 
 	private UNSIGNED_TREATMENT m_UnsignedTreatment;
 	private final boolean m_OverapproximateIntPointerConversion = true;
+	
+	/**
+	 * Add assume statements that state that values of signed integer types are 
+	 * in range.
+	 */
+	private final boolean m_AssumeThatSignedValuesAreInRange;
 
-	public IntegerTranslation(TypeSizes m_TypeSizeConstants, ITypeHandler typeHandler, UNSIGNED_TREATMENT unsignedTreatment) {
+	public IntegerTranslation(TypeSizes m_TypeSizeConstants, ITypeHandler typeHandler, UNSIGNED_TREATMENT unsignedTreatment, boolean assumeSignedInRange) {
 		super(m_TypeSizeConstants, typeHandler);
 		m_UnsignedTreatment = unsignedTreatment;
+		m_AssumeThatSignedValuesAreInRange = assumeSignedInRange;
 	}
 
 	@Override
@@ -676,6 +687,38 @@ public class IntegerTranslation extends AExpressionTranslation {
 	@Override
 	public CPrimitive getCTypeOfPointerComponents() {
 		return new CPrimitive(PRIMITIVE.LONG);
+	}
+
+	@Override
+	public void addAssumeValueInRangeStatements(ILocation loc, Expression expr, CType ctype, List<Statement> stmt) {
+		if (m_AssumeThatSignedValuesAreInRange) {
+			if (ctype.getUnderlyingType().isIntegerType()) {
+				if (ctype.getUnderlyingType() instanceof CEnum) {
+					ctype = new CPrimitive(PRIMITIVE.INT);
+				}
+				CPrimitive cPrimitive = (CPrimitive) ctype;
+				if (!cPrimitive.isUnsigned()) {
+					stmt.add(constructAssumeInRangeStatement(m_TypeSizes, loc, expr, cPrimitive));
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Returns "assume (minValue <= lrValue && lrValue <= maxValue)"
+	 */
+	private AssumeStatement constructAssumeInRangeStatement(TypeSizes typeSizes, 
+			ILocation loc, Expression expr, CPrimitive type) {
+		Expression minValue = constructLiteralForIntegerType(loc, type, typeSizes.getMinValueOfPrimitiveType(type)); 
+		Expression maxValue = constructLiteralForIntegerType(loc, type, typeSizes.getMaxValueOfPrimitiveType(type));
+				
+		Expression biggerMinInt = constructBinaryComparisonExpression(
+				loc, IASTBinaryExpression.op_lessEqual, minValue, type, expr, type);
+		Expression smallerMaxValue = constructBinaryComparisonExpression(
+				loc, IASTBinaryExpression.op_lessEqual, expr, type, maxValue, type); 
+		AssumeStatement inRange = new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc, 
+				BinaryExpression.Operator.LOGICAND, biggerMinInt, smallerMaxValue));
+		return inRange;
 	}
 
 }

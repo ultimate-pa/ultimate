@@ -366,7 +366,8 @@ public class CHandler implements ICHandler {
 		if (bitvectorTranslation) {
 			m_ExpressionTranslation = new BitvectorTranslation(main.getTypeSizes(), typeHandler);
 		} else {
-			m_ExpressionTranslation = new IntegerTranslation(main.getTypeSizes(), typeHandler, mUnsignedTreatment);
+			boolean inRange = main.mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_ASSUME_NONDET_VALUES_IN_RANGE);
+			m_ExpressionTranslation = new IntegerTranslation(main.getTypeSizes(), typeHandler, mUnsignedTreatment, inRange);
 		}
 		this.mPostProcessor = new PostProcessor(main, mLogger, m_ExpressionTranslation);
 		this.mFunctionHandler = new FunctionHandler(m_ExpressionTranslation);

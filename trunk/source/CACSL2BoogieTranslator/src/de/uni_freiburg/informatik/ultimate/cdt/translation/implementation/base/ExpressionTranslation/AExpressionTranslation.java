@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -73,6 +74,7 @@ public abstract class AExpressionTranslation {
 	
 	protected final FunctionDeclarations m_FunctionDeclarations;
 	protected final TypeSizes m_TypeSizes;
+
 
 	public AExpressionTranslation(TypeSizes typeSizeConstants, ITypeHandler typeHandler) {
 		super();
@@ -420,5 +422,8 @@ public abstract class AExpressionTranslation {
 	public void convertFloatToFloat(ILocation loc, ExpressionResult rexp, CPrimitive newType) {
 		throw new UnsupportedSyntaxException(loc, "conversion from float to float not yet implemented");
 	}
+	
+	
+	public abstract void addAssumeValueInRangeStatements(ILocation loc, Expression expr, CType ctype, List<Statement> stmt);
 	
 }

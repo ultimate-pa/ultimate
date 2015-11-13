@@ -96,11 +96,6 @@ import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
 public class SvComp14CHandler extends CHandler {
 	
 	/**
-	 * Add assume statements that state that the nondeterministic values are
-	 * in the range of the values of the data type.
-	 */
-	private final boolean m_AssumeThatNondeterministicValuesAreInRange;
-	/**
 	 * The string representing SV-Comp's error method.
 	 */
 	private static final String ERROR_STRING = "__VERIFIER_error";
@@ -129,8 +124,6 @@ public class SvComp14CHandler extends CHandler {
 	public SvComp14CHandler(Dispatcher main, CACSL2BoogieBacktranslator backtranslator, 
 			Logger logger, ITypeHandler typeHandler, boolean bitvectorTranslation) {
 		super(main, backtranslator, false, logger, typeHandler, bitvectorTranslation);
-		m_AssumeThatNondeterministicValuesAreInRange = 
-				main.mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_ASSUME_NONDET_VALUES_IN_RANGE);
 	}
 
 	//
@@ -254,13 +247,8 @@ public class SvComp14CHandler extends CHandler {
 				auxVars.put(tVarDecl, loc);
 
 				returnValue = new RValue(new IdentifierExpression(loc, tmpName), cType);
+				m_ExpressionTranslation.addAssumeValueInRangeStatements(loc, returnValue.getValue(), returnValue.getCType(), stmt);
 				
-				if (m_AssumeThatNondeterministicValuesAreInRange 
-						&& (m_ExpressionTranslation instanceof IntegerTranslation)
-						&& (returnValue.getCType().getUnderlyingType() instanceof CPrimitive)) {
-						AssumeStatement inRange = constructAssumeInRangeStatement(main.getTypeSizes(), loc, returnValue);
-						stmt.add(inRange);
-				}
 				assert (isAuxVarMapcomplete(main, decl, auxVars));
 				return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
 			}
@@ -363,25 +351,7 @@ public class SvComp14CHandler extends CHandler {
 		return super.visit(main, node);
 	}
 
-	/**
-	 * Returns "assume (minValue <= lrValue && lrValue <= maxValue)"
-	 */
-	private AssumeStatement constructAssumeInRangeStatement(TypeSizes typeSizes, 
-			ILocation loc,
-			LRValue lrValue) {
-		CPrimitive type = (CPrimitive) lrValue.getCType().getUnderlyingType();
-		
-		Expression minValue = m_ExpressionTranslation.constructLiteralForIntegerType(loc, type, typeSizes.getMinValueOfPrimitiveType(type)); 
-		Expression maxValue = m_ExpressionTranslation.constructLiteralForIntegerType(loc, type, typeSizes.getMaxValueOfPrimitiveType(type));
-				
-		Expression biggerMinInt = m_ExpressionTranslation.constructBinaryComparisonExpression(
-				loc, IASTBinaryExpression.op_lessEqual, minValue, type, lrValue.getValue(), type);
-		Expression smallerMaxValue = m_ExpressionTranslation.constructBinaryComparisonExpression(
-				loc, IASTBinaryExpression.op_lessEqual, lrValue.getValue(), type, maxValue, type); 
-		AssumeStatement inRange = new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc, 
-				BinaryExpression.Operator.LOGICAND, biggerMinInt, smallerMaxValue));
-		return inRange;
-	}
+
 	
 	@Override
 	public Result visit(Dispatcher main, IASTIdExpression node) {
