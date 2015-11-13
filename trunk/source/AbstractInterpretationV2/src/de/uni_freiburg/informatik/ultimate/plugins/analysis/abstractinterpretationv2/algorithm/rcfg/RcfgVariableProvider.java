@@ -52,7 +52,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class RcfgVariableProvider implements IVariableProvider<CodeBlock, IBoogieVar> {
+public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
+		implements IVariableProvider<STATE, CodeBlock, IBoogieVar> {
 
 	private static final StorageClass[] LOCAL_STORAGE_CLASSES = new StorageClass[] { StorageClass.LOCAL,
 			StorageClass.IMPLEMENTATION_INPARAM, StorageClass.IMPLEMENTATION_OUTPARAM };
@@ -65,8 +66,7 @@ public class RcfgVariableProvider implements IVariableProvider<CodeBlock, IBoogi
 	}
 
 	@Override
-	public IAbstractState<CodeBlock, IBoogieVar> defineVariablesPre(CodeBlock current,
-			IAbstractState<CodeBlock, IBoogieVar> state) {
+	public STATE defineVariablesPre(CodeBlock current, STATE state) {
 		assert current != null;
 		assert state != null;
 		assert state.isEmpty();
@@ -100,7 +100,7 @@ public class RcfgVariableProvider implements IVariableProvider<CodeBlock, IBoogi
 				vars.put(local.getKey(), localVar);
 			}
 		}
-		
+
 		if (vars.isEmpty()) {
 			return state;
 		}
@@ -108,8 +108,7 @@ public class RcfgVariableProvider implements IVariableProvider<CodeBlock, IBoogi
 	}
 
 	@Override
-	public IAbstractState<CodeBlock, IBoogieVar> defineVariablesPost(CodeBlock current,
-			IAbstractState<CodeBlock, IBoogieVar> state) {
+	public STATE defineVariablesPost(CodeBlock current, STATE state) {
 		assert current != null;
 		assert state != null;
 
@@ -127,18 +126,16 @@ public class RcfgVariableProvider implements IVariableProvider<CodeBlock, IBoogi
 		}
 	}
 
-	private IAbstractState<CodeBlock, IBoogieVar> updateLocals(IAbstractState<CodeBlock, IBoogieVar> state,
-			RCFGNode removeNode, RCFGNode addNode) {
+	private STATE updateLocals(STATE state, RCFGNode removeNode, RCFGNode addNode) {
 		final ProgramPoint remove = (ProgramPoint) removeNode;
 		final ProgramPoint add = (ProgramPoint) addNode;
-		IAbstractState<CodeBlock, IBoogieVar> rtr = state;
+		STATE rtr = state;
 		rtr = removeLocals(rtr, remove.getProcedure());
 		rtr = addLocals(rtr, add.getProcedure());
 		return rtr;
 	}
 
-	private IAbstractState<CodeBlock, IBoogieVar> removeLocals(IAbstractState<CodeBlock, IBoogieVar> state,
-			final String procedure) {
+	private STATE removeLocals(STATE state, final String procedure) {
 		if (procedure != null) {
 			final Map<String, Declaration> locals = mSymbolTable.getLocalVariables(procedure);
 			for (final Entry<String, Declaration> local : locals.entrySet()) {
@@ -148,8 +145,7 @@ public class RcfgVariableProvider implements IVariableProvider<CodeBlock, IBoogi
 		return state;
 	}
 
-	private IAbstractState<CodeBlock, IBoogieVar> addLocals(IAbstractState<CodeBlock, IBoogieVar> state,
-			final String procedure) {
+	private STATE addLocals(STATE state, final String procedure) {
 		if (procedure != null) {
 			final Map<String, Declaration> locals = mSymbolTable.getLocalVariables(procedure);
 			for (final Entry<String, Declaration> local : locals.entrySet()) {

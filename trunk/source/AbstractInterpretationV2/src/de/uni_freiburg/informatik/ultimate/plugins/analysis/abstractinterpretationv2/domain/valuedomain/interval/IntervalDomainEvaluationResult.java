@@ -26,54 +26,44 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.interval;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluationResult;
 
 /**
  * Class for evaluation results used to return both, a new abstract state and an evaluated value for evaluators.
  * 
  * @author Marius Greitschus <greitsch@informatik.uni-freiburg.de>
  *
- * @param <T>
- *            The domain type.
- * @param <ACTION>
- *            Any action type.
- * @param <VARDECL>
- *            Any variable declaration type.
  */
-public class EvaluationResult<T, ACTION, VARDECL> implements IEvaluationResult<EvaluationResult<T, ACTION, VARDECL>> {
+public class IntervalDomainEvaluationResult implements IEvaluationResult<IntervalDomainEvaluationResult> {
 
-	private T mValue;
-	private IAbstractState<ACTION, VARDECL> mAbstractState;
+	private IntervalDomainValue mValue;
+	private IntervalDomainState mAbstractState;
 
-	public EvaluationResult() {
-
-	}
-
-	public EvaluationResult(T value, IAbstractState<ACTION, VARDECL> state) {
+	public IntervalDomainEvaluationResult(IntervalDomainValue value, IntervalDomainState state) {
 		mValue = value;
 		mAbstractState = state;
 	}
 
-	public IAbstractState<ACTION, VARDECL> getEvaluatedState() {
+	public IntervalDomainState getEvaluatedState() {
 		return mAbstractState;
 	}
 
-	public T getEvaluatedValue() {
+	public IntervalDomainValue getEvaluatedValue() {
 		return mValue;
 	}
 
-	public void setEvaluatedState(IAbstractState<ACTION, VARDECL> state) {
+	public void setEvaluatedState(IntervalDomainState state) {
 		mAbstractState = state;
 	}
 
-	public void setEvaluatedValue(T value) {
+	public void setEvaluatedValue(IntervalDomainValue value) {
 		mValue = value;
 	}
 
 	@Override
-	public EvaluationResult<T, ACTION, VARDECL> getResult() {
+	public IntervalDomainEvaluationResult getResult() {
 		return this;
 	}
 }

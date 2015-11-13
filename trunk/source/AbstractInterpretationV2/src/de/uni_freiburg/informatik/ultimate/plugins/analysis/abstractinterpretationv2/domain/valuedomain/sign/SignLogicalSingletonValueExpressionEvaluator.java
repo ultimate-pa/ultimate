@@ -29,7 +29,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.sign;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.ILogicalEvaluator;
@@ -45,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class SignLogicalSingletonValueExpressionEvaluator extends SignSingletonValueExpressionEvaluator<Boolean>
-        implements ILogicalEvaluator<Values, CodeBlock, IBoogieVar> {
+		implements ILogicalEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> {
 
 	private BooleanValue mBooleanValue;
 
@@ -54,7 +53,7 @@ public class SignLogicalSingletonValueExpressionEvaluator extends SignSingletonV
 	}
 
 	@Override
-	public IEvaluationResult<Values> evaluate(IAbstractState<CodeBlock, IBoogieVar> currentState) {
+	public IEvaluationResult<Values> evaluate(SignDomainState currentState) {
 		if (mValue) {
 			return new SignDomainValue(Values.POSITIVE);
 		} else {
@@ -62,7 +61,7 @@ public class SignLogicalSingletonValueExpressionEvaluator extends SignSingletonV
 		}
 	}
 
-	private IAbstractState<CodeBlock, IBoogieVar> logicallyInterpret(IAbstractState<CodeBlock, IBoogieVar> currentState) {
+	private SignDomainState logicallyInterpret(SignDomainState currentState) {
 		return currentState;
 	}
 
@@ -78,10 +77,10 @@ public class SignLogicalSingletonValueExpressionEvaluator extends SignSingletonV
 		return 0;
 	}
 
-    private boolean logicalEvaluation(IAbstractState<CodeBlock, IBoogieVar> currentState) {
-	    // TODO Think about if this is right here.
-	    return false;
-    }
+	private boolean logicalEvaluation(SignDomainState currentState) {
+		// TODO Think about if this is right here.
+		return false;
+	}
 
 	@Override
 	public BooleanValue booleanValue() {

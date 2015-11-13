@@ -28,12 +28,15 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator;
 
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+
 /**
  * Interface for NAry evaluators that have some operator.
  * 
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
-public interface INAryEvaluator<T, ACTION, VARDECL> extends IEvaluator<T, ACTION, VARDECL> {
+public interface INAryEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL>
+		extends IEvaluator<VALUE, STATE, ACTION, VARDECL> {
 
 	/**
 	 * Sets the operator of the evaluator. Note that for some evaluators, the operator cannot be set.

@@ -34,10 +34,12 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.sign.SignDomainValue.Values;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  * Implementation of an abstract state of the {@link SignDomain}.
@@ -51,56 +53,44 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  * @param <ACTION>
  *            Any action.
- * @param <VARDECL>
+ * @param <IBoogieVar>
  *            Any variable declaration.
  */
-public class SignDomainState<ACTION, VARDECL>
-        implements IAbstractState<ACTION, VARDECL>, IEvaluationResult<SignDomainState<ACTION, VARDECL>> {
+public class SignDomainState
+		implements IAbstractState<SignDomainState, CodeBlock, IBoogieVar>, IEvaluationResult<SignDomainState> {
 
 	private static int sId;
 	private final int mId;
 
-	private final Map<String, VARDECL> mVariablesMap;
+	private final Map<String, IBoogieVar> mVariablesMap;
 	private final Map<String, SignDomainValue> mValuesMap;
 
 	private boolean mIsFixpoint;
 
-	private SignStateConverter<ACTION, VARDECL> mStateConverter;
-
 	protected SignDomainState() {
-		this(null);
-	}
-
-	protected SignDomainState(SignStateConverter<ACTION, VARDECL> stateConverter) {
-		mStateConverter = stateConverter;
-		mVariablesMap = new HashMap<String, VARDECL>();
+		mVariablesMap = new HashMap<String, IBoogieVar>();
 		mValuesMap = new HashMap<String, SignDomainValue>();
 		mIsFixpoint = false;
 		sId++;
 		mId = sId;
 	}
 
-	protected SignDomainState(SignStateConverter<ACTION, VARDECL> stateConverter, Map<String, VARDECL> variablesMap,
-	        Map<String, SignDomainValue> valuesMap, boolean isFixpoint) {
-		mStateConverter = stateConverter;
-		mVariablesMap = new HashMap<String, VARDECL>(variablesMap);
+	protected SignDomainState(Map<String, IBoogieVar> variablesMap, Map<String, SignDomainValue> valuesMap,
+			boolean isFixpoint) {
+		mVariablesMap = new HashMap<String, IBoogieVar>(variablesMap);
 		mValuesMap = new HashMap<String, SignDomainValue>(valuesMap);
 		mIsFixpoint = isFixpoint;
 		sId++;
 		mId = sId;
 	}
 
-	protected void setStateConverter(SignStateConverter<ACTION, VARDECL> stateConverter) {
-		mStateConverter = stateConverter;
-	}
-
 	@Override
-	public IAbstractState<ACTION, VARDECL> addVariable(String name, VARDECL variable) {
+	public SignDomainState addVariable(String name, IBoogieVar variable) {
 		assert name != null;
 		assert variable != null;
 
-		final Map<String, VARDECL> newVarMap = new HashMap<String, VARDECL>(mVariablesMap);
-		final VARDECL old = newVarMap.put(name, variable);
+		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(mVariablesMap);
+		final IBoogieVar old = newVarMap.put(name, variable);
 		if (old != null) {
 			throw new UnsupportedOperationException("Variable names must be disjoint.");
 		}
@@ -108,53 +98,53 @@ public class SignDomainState<ACTION, VARDECL>
 		final Map<String, SignDomainValue> newValMap = new HashMap<String, SignDomainValue>(mValuesMap);
 		newValMap.put(name, new SignDomainValue(Values.TOP));
 
-		return new SignDomainState<ACTION, VARDECL>(mStateConverter, newVarMap, newValMap, mIsFixpoint);
+		return new SignDomainState(newVarMap, newValMap, mIsFixpoint);
 	}
 
 	@Override
-	public IAbstractState<ACTION, VARDECL> removeVariable(String name, VARDECL variable) {
+	public SignDomainState removeVariable(String name, IBoogieVar variable) {
 		assert name != null;
 		assert variable != null;
 
-		final Map<String, VARDECL> newVarMap = new HashMap<String, VARDECL>(mVariablesMap);
+		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(mVariablesMap);
 		newVarMap.remove(name);
 		final Map<String, SignDomainValue> newValMap = new HashMap<String, SignDomainValue>(mValuesMap);
 		newValMap.remove(name);
 
-		return new SignDomainState<ACTION, VARDECL>(mStateConverter, newVarMap, newValMap, mIsFixpoint);
+		return new SignDomainState(newVarMap, newValMap, mIsFixpoint);
 	}
 
 	@Override
-	public IAbstractState<ACTION, VARDECL> addVariables(Map<String, VARDECL> variables) {
+	public SignDomainState addVariables(Map<String, IBoogieVar> variables) {
 		assert variables != null;
 		assert !variables.isEmpty();
 
-		final Map<String, VARDECL> newVarMap = new HashMap<String, VARDECL>(mVariablesMap);
+		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(mVariablesMap);
 		final Map<String, SignDomainValue> newValMap = new HashMap<String, SignDomainValue>(mValuesMap);
-		for (final Entry<String, VARDECL> entry : variables.entrySet()) {
-			final VARDECL old = newVarMap.put(entry.getKey(), entry.getValue());
+		for (final Entry<String, IBoogieVar> entry : variables.entrySet()) {
+			final IBoogieVar old = newVarMap.put(entry.getKey(), entry.getValue());
 			if (old != null) {
 				throw new UnsupportedOperationException("Variable names must be disjoint.");
 			}
 			newValMap.put(entry.getKey(), new SignDomainValue(Values.TOP));
 		}
 
-		return new SignDomainState<ACTION, VARDECL>(mStateConverter, newVarMap, newValMap, mIsFixpoint);
+		return new SignDomainState(newVarMap, newValMap, mIsFixpoint);
 	}
 
 	@Override
-	public IAbstractState<ACTION, VARDECL> removeVariables(Map<String, VARDECL> variables) {
+	public SignDomainState removeVariables(Map<String, IBoogieVar> variables) {
 		assert variables != null;
 		assert !variables.isEmpty();
 
-		final Map<String, VARDECL> newVarMap = new HashMap<String, VARDECL>(mVariablesMap);
+		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(mVariablesMap);
 		final Map<String, SignDomainValue> newValMap = new HashMap<String, SignDomainValue>(mValuesMap);
-		for (final Entry<String, VARDECL> entry : variables.entrySet()) {
+		for (final Entry<String, IBoogieVar> entry : variables.entrySet()) {
 			newVarMap.remove(entry.getKey());
 			newValMap.remove(entry.getKey());
 		}
 
-		return new SignDomainState<ACTION, VARDECL>(mStateConverter, newVarMap, newValMap, mIsFixpoint);
+		return new SignDomainState(newVarMap, newValMap, mIsFixpoint);
 	}
 
 	@Override
@@ -183,8 +173,8 @@ public class SignDomainState<ACTION, VARDECL>
 	}
 
 	@Override
-	public IAbstractState<ACTION, VARDECL> setFixpoint(boolean value) {
-		return new SignDomainState<ACTION, VARDECL>(mStateConverter, mVariablesMap, mValuesMap, value);
+	public SignDomainState setFixpoint(boolean value) {
+		return new SignDomainState(mVariablesMap, mValuesMap, value);
 	}
 
 	/**
@@ -195,9 +185,9 @@ public class SignDomainState<ACTION, VARDECL>
 	@Override
 	public String toLogString() {
 		final StringBuilder stringBuffer = new StringBuilder();
-		for (final Entry<String, VARDECL> entry : mVariablesMap.entrySet()) {
+		for (final Entry<String, IBoogieVar> entry : mVariablesMap.entrySet()) {
 			stringBuffer.append(entry.getKey()).append(':').append(entry.getValue()).append(" = ")
-			        .append(mValuesMap.get(entry.getKey()).getResult().toString()).append("; ");
+					.append(mValuesMap.get(entry.getKey()).getResult().toString()).append("; ");
 		}
 		return stringBuffer.toString();
 	}
@@ -226,30 +216,24 @@ public class SignDomainState<ACTION, VARDECL>
 			return false;
 		}
 
-		@SuppressWarnings("unchecked")
-		final SignDomainState<ACTION, VARDECL> comparableOther = (SignDomainState<ACTION, VARDECL>) other;
-
-		return isEqualTo(comparableOther);
+		return isEqualTo((SignDomainState) other);
 	}
 
 	@Override
-	public boolean isEqualTo(IAbstractState<ACTION, VARDECL> other) {
+	public boolean isEqualTo(SignDomainState other) {
 		if (!hasSameVariables(other)) {
 			return false;
 		}
-
-		final SignDomainState<ACTION, VARDECL> comparableOther = mStateConverter.getCheckedState(other);
 		for (final Entry<String, SignDomainValue> entry : mValuesMap.entrySet()) {
-			final SignDomainValue otherValue = comparableOther.mValuesMap.get(entry.getKey());
+			final SignDomainValue otherValue = other.mValuesMap.get(entry.getKey());
 			if (!mValuesMap.get(entry.getKey()).getResult().equals(otherValue.getResult())) {
 				return false;
 			}
 		}
-
 		return true;
 	}
 
-	protected boolean hasSameVariables(IAbstractState<ACTION, VARDECL> other) {
+	protected boolean hasSameVariables(SignDomainState other) {
 		if (other == null) {
 			return false;
 		}
@@ -262,13 +246,12 @@ public class SignDomainState<ACTION, VARDECL>
 			return false;
 		}
 
-		final SignDomainState<ACTION, VARDECL> comparableOther = mStateConverter.getCheckedState(other);
-		if (comparableOther.mVariablesMap.size() != mVariablesMap.size()) {
+		if (other.mVariablesMap.size() != mVariablesMap.size()) {
 			return false;
 		}
 
-		for (final Entry<String, VARDECL> entry : mVariablesMap.entrySet()) {
-			final VARDECL otherType = comparableOther.mVariablesMap.get(entry.getKey());
+		for (final Entry<String, IBoogieVar> entry : mVariablesMap.entrySet()) {
+			final IBoogieVar otherType = other.mVariablesMap.get(entry.getKey());
 			if (!entry.getValue().equals(otherType)) {
 				return false;
 			}
@@ -278,13 +261,13 @@ public class SignDomainState<ACTION, VARDECL>
 	}
 
 	@Override
-	public IAbstractState<ACTION, VARDECL> copy() {
-		return new SignDomainState<ACTION, VARDECL>(mStateConverter, new HashMap<String, VARDECL>(mVariablesMap),
-		        new HashMap<String, SignDomainValue>(mValuesMap), mIsFixpoint);
+	public SignDomainState copy() {
+		return new SignDomainState(new HashMap<String, IBoogieVar>(mVariablesMap),
+				new HashMap<String, SignDomainValue>(mValuesMap), mIsFixpoint);
 	}
 
-	protected Map<String, VARDECL> getVariables() {
-		return new HashMap<String, VARDECL>(mVariablesMap);
+	protected Map<String, IBoogieVar> getVariables() {
+		return new HashMap<String, IBoogieVar>(mVariablesMap);
 	}
 
 	protected Map<String, SignDomainValue> getValues() {
@@ -307,12 +290,12 @@ public class SignDomainState<ACTION, VARDECL>
 	 *            The other state to intersect with.
 	 * @return A new state which corresponds to the intersection.
 	 */
-	protected SignDomainState<ACTION, VARDECL> intersect(SignDomainState<ACTION, VARDECL> other) {
+	protected SignDomainState intersect(SignDomainState other) {
 		assert hasSameVariables(other);
 
-		final SignDomainState<ACTION, VARDECL> newState = (SignDomainState<ACTION, VARDECL>) this.copy();
+		final SignDomainState newState = (SignDomainState) this.copy();
 
-		for (final Entry<String, VARDECL> variable : mVariablesMap.entrySet()) {
+		for (final Entry<String, IBoogieVar> variable : mVariablesMap.entrySet()) {
 			final String key = variable.getKey();
 			newState.setValue(key, mValuesMap.get(key).intersect(other.mValuesMap.get(key)));
 		}
@@ -320,7 +303,6 @@ public class SignDomainState<ACTION, VARDECL>
 		return newState;
 	}
 
-	@Override
 	public void setToBottom() {
 		for (final Entry<String, SignDomainValue> entry : mValuesMap.entrySet()) {
 			entry.setValue(new SignDomainValue(Values.BOTTOM));
@@ -328,7 +310,7 @@ public class SignDomainState<ACTION, VARDECL>
 	}
 
 	@Override
-	public SignDomainState<ACTION, VARDECL> getResult() {
+	public SignDomainState getResult() {
 		return this;
 	}
 
@@ -338,10 +320,10 @@ public class SignDomainState<ACTION, VARDECL>
 	}
 
 	@Override
-	public VARDECL getVariableType(String name) {
+	public IBoogieVar getVariableType(String name) {
 		assert name != null;
 		assert mVariablesMap.containsKey(name);
-		
+
 		return mVariablesMap.get(name);
 	}
 }

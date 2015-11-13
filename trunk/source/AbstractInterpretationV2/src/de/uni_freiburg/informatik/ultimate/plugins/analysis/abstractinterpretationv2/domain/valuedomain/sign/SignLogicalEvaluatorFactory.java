@@ -45,19 +45,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class SignLogicalEvaluatorFactory implements IEvaluatorFactory<Values, CodeBlock, IBoogieVar> {
+public class SignLogicalEvaluatorFactory implements IEvaluatorFactory<Values, SignDomainState, CodeBlock, IBoogieVar> {
 
-	SignStateConverter<CodeBlock, IBoogieVar> mStateConverter;
 	private final IUltimateServiceProvider mServices;
 
-	public SignLogicalEvaluatorFactory(IUltimateServiceProvider services,
-	        SignStateConverter<CodeBlock, IBoogieVar> stateConverter) {
+	public SignLogicalEvaluatorFactory(IUltimateServiceProvider services) {
 		mServices = services;
-		mStateConverter = stateConverter;
 	}
 
 	@Override
-	public INAryEvaluator<Values, CodeBlock, IBoogieVar> createNAryExpressionEvaluator(int arity) {
+	public INAryEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createNAryExpressionEvaluator(int arity) {
 
 		assert arity >= 1 && arity <= 2;
 
@@ -72,8 +69,8 @@ public class SignLogicalEvaluatorFactory implements IEvaluatorFactory<Values, Co
 	}
 
 	@Override
-	public IEvaluator<Values, CodeBlock, IBoogieVar> createSingletonValueExpressionEvaluator(String value,
-	        Class<?> valueType) {
+	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createSingletonValueExpressionEvaluator(
+			String value, Class<?> valueType) {
 
 		if (valueType.equals(BigInteger.class)) {
 			return new SignLogicalSingletonIntegerExpressionEvaluator(value);
@@ -91,13 +88,14 @@ public class SignLogicalEvaluatorFactory implements IEvaluatorFactory<Values, Co
 	}
 
 	@Override
-	public IEvaluator<Values, CodeBlock, IBoogieVar> createSingletonVariableExpressionEvaluator(String variableName) {
-		return new SignLogicalSingletonVariableExpressionEvaluator(variableName, mStateConverter);
+	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createSingletonVariableExpressionEvaluator(
+			String variableName) {
+		return new SignLogicalSingletonVariableExpressionEvaluator(variableName);
 	}
 
 	@Override
-	public IEvaluator<Values, CodeBlock, IBoogieVar> createSingletonLogicalValueExpressionEvaluator(
-	        BooleanValue value) {
+	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createSingletonLogicalValueExpressionEvaluator(
+			BooleanValue value) {
 		return null;
 	}
 

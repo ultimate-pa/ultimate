@@ -31,9 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.BooleanValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.EvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.ILogicalEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -44,8 +42,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus <greitsch@informatik.uni-freiburg.de>
  *
  */
-public class IntervalLogicalUnaryExpressionEvaluator extends IntervalUnaryExpressionEvaluator implements
-        ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> {
+public class IntervalLogicalUnaryExpressionEvaluator extends IntervalUnaryExpressionEvaluator
+		implements ILogicalEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	private BooleanValue mBooleanValue;
 
@@ -54,13 +52,11 @@ public class IntervalLogicalUnaryExpressionEvaluator extends IntervalUnaryExpres
 	}
 
 	@Override
-	public IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> evaluate(
-	        IAbstractState<CodeBlock, IBoogieVar> currentState) {
+	public IEvaluationResult<IntervalDomainEvaluationResult> evaluate(IntervalDomainState currentState) {
 
-		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> evaluated = super.evaluate(
-		        currentState);
+		final IEvaluationResult<IntervalDomainEvaluationResult> evaluated = super.evaluate(currentState);
 
-		ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> boolSubEvaluator = (ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar>) mSubEvaluator;
+		ILogicalEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> boolSubEvaluator = (ILogicalEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar>) mSubEvaluator;
 
 		switch (mOperator) {
 		case LOGICNEG:
@@ -69,8 +65,7 @@ public class IntervalLogicalUnaryExpressionEvaluator extends IntervalUnaryExpres
 		default:
 			mLogger.warn("Operator " + mOperator + " not implemented. Assuming logical interpretation to be false.");
 			mBooleanValue = new BooleanValue(false);
-			return new EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>(new IntervalDomainValue(),
-			        currentState);
+			return new IntervalDomainEvaluationResult(new IntervalDomainValue(), currentState);
 		}
 
 		return evaluated;
@@ -83,7 +78,7 @@ public class IntervalLogicalUnaryExpressionEvaluator extends IntervalUnaryExpres
 
 	@Override
 	public boolean containsBool() {
-		final ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> logicSub = (ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar>) mSubEvaluator;
+		final ILogicalEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> logicSub = (ILogicalEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar>) mSubEvaluator;
 		return logicSub.containsBool();
 	}
 

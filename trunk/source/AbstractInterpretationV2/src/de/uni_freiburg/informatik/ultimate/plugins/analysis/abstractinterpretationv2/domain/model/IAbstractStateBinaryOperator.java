@@ -39,9 +39,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
  * @param <VARDECL>
  *            Any variable declaration type.
  */
-public interface IAbstractStateBinaryOperator<ACTION, VARDECL> {
+public interface IAbstractStateBinaryOperator<STATE> {
 
-	IAbstractState<ACTION, VARDECL> apply(IAbstractState<ACTION, VARDECL> first,
-	        IAbstractState<ACTION, VARDECL> second);
+	STATE apply(STATE first, STATE second);
 
 }

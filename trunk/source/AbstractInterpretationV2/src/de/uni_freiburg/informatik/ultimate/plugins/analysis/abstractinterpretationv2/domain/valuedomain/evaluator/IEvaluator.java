@@ -39,14 +39,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * 
- * @param <T>
+ * @param <VALUE>
  *            The value type of the abstract domain.
  * @param <ACTION>
  *            Any action type.
  * @param <VARDECL>
  *            Any variable declaration type.
  */
-public interface IEvaluator<T, ACTION, VARDECL> {
+public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
 
 	/**
 	 * Evaluates the evaluator with all its sub-evaluators according to the given state.
@@ -55,7 +55,7 @@ public interface IEvaluator<T, ACTION, VARDECL> {
 	 *            The originating state to evaluate from.
 	 * @return A new evaluation result that contains the result of the evaluation.
 	 */
-	public IEvaluationResult<T> evaluate(IAbstractState<ACTION, VARDECL> currentState);
+	public IEvaluationResult<VALUE> evaluate(STATE currentState);
 
 	/**
 	 * Adds a sub-evaluator to the evaluator.
@@ -63,7 +63,7 @@ public interface IEvaluator<T, ACTION, VARDECL> {
 	 * @param evaluator
 	 *            The evaluator to add.
 	 */
-	public void addSubEvaluator(IEvaluator<T, ACTION, VARDECL> evaluator);
+	public void addSubEvaluator(IEvaluator<VALUE, STATE, ACTION, VARDECL> evaluator);
 
 	public Set<String> getVarIdentifiers();
 

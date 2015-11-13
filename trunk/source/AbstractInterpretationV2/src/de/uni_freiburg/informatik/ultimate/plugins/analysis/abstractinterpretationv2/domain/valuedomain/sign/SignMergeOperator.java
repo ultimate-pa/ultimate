@@ -31,7 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.sign.SignDomainValue.Values;
 
@@ -43,17 +43,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  * @param <ACTION>
  *            Any action.
- * @param <VARDECL>
+ * @param <IBoogieVar>
  *            Any variable declaration.
  */
-public class SignMergeOperator<ACTION, VARDECL> implements IAbstractStateBinaryOperator<ACTION, VARDECL> {
+public class SignMergeOperator implements IAbstractStateBinaryOperator<SignDomainState> {
 
 	private static final int BUFFER_SIZE = 100;
 
-	private final SignStateConverter<ACTION, VARDECL> mStateConverter;
-
-	protected SignMergeOperator(SignStateConverter<ACTION, VARDECL> stateConverter) {
-		mStateConverter = stateConverter;
+	protected SignMergeOperator() {
 	}
 
 	/**
@@ -85,25 +82,22 @@ public class SignMergeOperator<ACTION, VARDECL> implements IAbstractStateBinaryO
 	 *            The second state to merge.
 	 */
 	@Override
-	public IAbstractState<ACTION, VARDECL> apply(IAbstractState<ACTION, VARDECL> first,
-	        IAbstractState<ACTION, VARDECL> second) {
+	public SignDomainState apply(SignDomainState first,
+			SignDomainState second) {
 		assert first != null;
 		assert second != null;
 
-		final SignDomainState<ACTION, VARDECL> firstState = mStateConverter.getCheckedState(first);
-		final SignDomainState<ACTION, VARDECL> secondState = mStateConverter.getCheckedState(second);
-
-		if (!firstState.hasSameVariables(secondState)) {
+		if (!first.hasSameVariables(second)) {
 			throw new UnsupportedOperationException("Cannot merge two states with a disjoint set of variables.");
 		}
 
-		final SignDomainState<ACTION, VARDECL> newState = (SignDomainState<ACTION, VARDECL>) first.copy();
+		final SignDomainState newState = (SignDomainState) first.copy();
 
-		final Map<String, VARDECL> variables = firstState.getVariables();
-		final Map<String, SignDomainValue> firstValues = firstState.getValues();
-		final Map<String, SignDomainValue> secondValues = secondState.getValues();
+		final Map<String, IBoogieVar> variables = first.getVariables();
+		final Map<String, SignDomainValue> firstValues = first.getValues();
+		final Map<String, SignDomainValue> secondValues = second.getValues();
 
-		for (final Entry<String, VARDECL> entry : variables.entrySet()) {
+		for (final Entry<String, IBoogieVar> entry : variables.entrySet()) {
 			final SignDomainValue value1 = firstValues.get(entry.getKey());
 			final SignDomainValue value2 = secondValues.get(entry.getKey());
 
@@ -132,7 +126,7 @@ public class SignMergeOperator<ACTION, VARDECL> implements IAbstractStateBinaryO
 		}
 
 		if ((value1.getResult() == Values.POSITIVE && value2.getResult() == Values.NEGATIVE)
-		        || (value1.getResult() == Values.NEGATIVE && value2.getResult() == Values.POSITIVE)) {
+				|| (value1.getResult() == Values.NEGATIVE && value2.getResult() == Values.POSITIVE)) {
 			return new SignDomainValue(Values.TOP);
 		}
 
@@ -143,7 +137,7 @@ public class SignMergeOperator<ACTION, VARDECL> implements IAbstractStateBinaryO
 		final StringBuilder stringBuilder = new StringBuilder(BUFFER_SIZE);
 
 		stringBuilder.append("Unable to handle value1 = ").append(value1.getResult()).append(" and value2 = ")
-		        .append(value2.getResult()).append('.');
+				.append(value2.getResult()).append('.');
 
 		throw new UnsupportedOperationException(stringBuilder.toString());
 	}

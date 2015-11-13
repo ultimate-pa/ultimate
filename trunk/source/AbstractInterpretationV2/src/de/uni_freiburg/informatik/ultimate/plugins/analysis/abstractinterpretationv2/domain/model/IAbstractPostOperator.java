@@ -34,8 +34,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * 
  */
-public interface IAbstractPostOperator<ACTION, VARDECL> {
+public interface IAbstractPostOperator<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
 
-	IAbstractState<ACTION, VARDECL> apply(IAbstractState<ACTION, VARDECL> oldstate, ACTION concrete);
+	STATE apply(STATE oldstate, ACTION concrete);
 
 }

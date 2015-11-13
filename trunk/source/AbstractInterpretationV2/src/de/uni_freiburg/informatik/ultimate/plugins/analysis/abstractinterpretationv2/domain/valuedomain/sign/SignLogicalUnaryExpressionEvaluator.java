@@ -43,18 +43,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class SignLogicalUnaryExpressionEvaluator extends SignUnaryExpressionEvaluator
-        implements ILogicalEvaluator<Values, CodeBlock, IBoogieVar> {
+		implements ILogicalEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> {
 
 	private BooleanValue mBooleanValue;
 
-	private IAbstractState<CodeBlock, IBoogieVar> logicallyInterpret(IAbstractState<CodeBlock, IBoogieVar> currentState) {
-		final ILogicalEvaluator<Values, CodeBlock, IBoogieVar> castedEvaluator = (ILogicalEvaluator<Values, CodeBlock, IBoogieVar>) mSubEvaluator;
+	private SignDomainState logicallyInterpret(SignDomainState currentState) {
+		final ILogicalEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> castedEvaluator = (ILogicalEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar>) mSubEvaluator;
 		// return castedEvaluator.logicallyInterpret(currentState);
 		return null;
 	}
 
-	private boolean logicalEvaluation(IAbstractState<CodeBlock, IBoogieVar> currentState) {
-		final ILogicalEvaluator<Values, CodeBlock, IBoogieVar> castedEvaluator = (ILogicalEvaluator<Values, CodeBlock, IBoogieVar>) mSubEvaluator;
+	private boolean logicalEvaluation(SignDomainState currentState) {
+		final ILogicalEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> castedEvaluator = (ILogicalEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar>) mSubEvaluator;
 
 		switch (mOperator) {
 		case LOGICNEG:

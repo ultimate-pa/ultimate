@@ -31,16 +31,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.BooleanValue.Value;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.EvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.ILogicalEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
-public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpressionEvaluator implements
-		ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> {
+public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpressionEvaluator
+		implements ILogicalEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	private BooleanValue mBooleanValue;
 
@@ -49,8 +47,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 	}
 
 	@Override
-	public IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> evaluate(
-			IAbstractState<CodeBlock, IBoogieVar> currentState) {
+	public IEvaluationResult<IntervalDomainEvaluationResult> evaluate(IntervalDomainState currentState) {
 
 		assert currentState != null;
 
@@ -61,16 +58,14 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 			mVariableSet.add(var);
 		}
 
-		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> firstResult = mLeftSubEvaluator
-				.evaluate(currentState);
-		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> secondResult = mRightSubEvaluator
-				.evaluate(currentState);
+		final IEvaluationResult<IntervalDomainEvaluationResult> firstResult = mLeftSubEvaluator.evaluate(currentState);
+		final IEvaluationResult<IntervalDomainEvaluationResult> secondResult = mRightSubEvaluator.evaluate(currentState);
 
 		IntervalDomainState returnState = (IntervalDomainState) currentState.copy();
 		IntervalDomainValue returnValue = new IntervalDomainValue();
 
-		ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> logicLeft = (ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar>) mLeftSubEvaluator;
-		ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> logicRight = (ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar>) mRightSubEvaluator;
+		ILogicalEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> logicLeft = (ILogicalEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar>) mLeftSubEvaluator;
+		ILogicalEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> logicRight = (ILogicalEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar>) mRightSubEvaluator;
 
 		boolean setToBottom = false;
 
@@ -126,8 +121,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 			}
 			break;
 		case COMPEQ:
-			// TODO: Make better, make shorter, move to separate method s.t. it
-			// can be called when handling NEQ as well.
+			// TODO: Make better, make shorter, move to separate method s.t. it can be called when handling NEQ as well.
 			if (mLeftSubEvaluator.getVarIdentifiers().size() == 0
 					&& mRightSubEvaluator.getVarIdentifiers().size() == 0) {
 
@@ -255,8 +249,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 			}
 			break;
 		case COMPNEQ:
-			// TODO: Make better, make shorter, move to separate method s.t. it
-			// can be called when handling CMPEQ.
+			// TODO: Make better, make shorter, move to separate method s.t. it can be called when handling CMPEQ.
 			if (mLeftSubEvaluator.getVarIdentifiers().size() == 0
 					&& mRightSubEvaluator.getVarIdentifiers().size() == 0) {
 				if (logicLeft.containsBool() && logicRight.containsBool()) {
@@ -597,7 +590,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 			returnState.setToBottom();
 		}
 
-		return new EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>(returnValue, returnState);
+		return new IntervalDomainEvaluationResult(returnValue, returnState);
 	}
 
 	@Override
@@ -607,8 +600,8 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 
 	@Override
 	public boolean containsBool() {
-		final ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> logicLeft = (ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar>) mLeftSubEvaluator;
-		final ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> logicRight = (ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar>) mRightSubEvaluator;
+		final ILogicalEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> logicLeft = (ILogicalEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar>) mLeftSubEvaluator;
+		final ILogicalEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> logicRight = (ILogicalEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar>) mRightSubEvaluator;
 		return logicLeft.containsBool() || logicRight.containsBool();
 	}
 }

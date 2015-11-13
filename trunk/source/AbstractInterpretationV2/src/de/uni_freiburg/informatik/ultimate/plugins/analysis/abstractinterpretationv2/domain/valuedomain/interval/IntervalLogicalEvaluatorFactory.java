@@ -32,31 +32,27 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.BooleanValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.EvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.INAryEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
-public class IntervalLogicalEvaluatorFactory implements
-        IEvaluatorFactory<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> {
+public class IntervalLogicalEvaluatorFactory
+		implements IEvaluatorFactory<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	private static final int ARITY_MIN = 1;
 	private static final int ARITY_MAX = 2;
 	private static final int BUFFER_MAX = 100;
 
 	private final Logger mLogger;
-	private final IntervalStateConverter<CodeBlock, IBoogieVar> mStateConverter;
 
-	public IntervalLogicalEvaluatorFactory(Logger logger,
-	        IntervalStateConverter<CodeBlock, IBoogieVar> stateConverter) {
+	public IntervalLogicalEvaluatorFactory(Logger logger) {
 		mLogger = logger;
-		mStateConverter = stateConverter;
 	}
 
 	@Override
-	public INAryEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> createNAryExpressionEvaluator(
-	        int arity) {
+	public INAryEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> createNAryExpressionEvaluator(
+			int arity) {
 
 		assert arity >= ARITY_MIN && arity <= ARITY_MAX;
 
@@ -73,25 +69,23 @@ public class IntervalLogicalEvaluatorFactory implements
 	}
 
 	@Override
-	public IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> createSingletonValueExpressionEvaluator(
-	        String value, Class<?> valueType) {
+	public IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> createSingletonValueExpressionEvaluator(
+			String value, Class<?> valueType) {
 		assert value != null;
-
 		return new IntervalLogicalSingletonValueExpressionEvaluator(
-		        new IntervalDomainValue(new IntervalValue(value), new IntervalValue(value)));
+				new IntervalDomainValue(new IntervalValue(value), new IntervalValue(value)));
 	}
 
 	@Override
-	public IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> createSingletonVariableExpressionEvaluator(
-	        String variableName) {
+	public IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> createSingletonVariableExpressionEvaluator(
+			String variableName) {
 		assert variableName != null;
-
-		return new IntervalLogicalSingletonVariableExpressionEvaluator(variableName, mStateConverter);
+		return new IntervalLogicalSingletonVariableExpressionEvaluator(variableName);
 	}
 
 	@Override
-	public IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> createSingletonLogicalValueExpressionEvaluator(
-	        BooleanValue value) {
+	public IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> createSingletonLogicalValueExpressionEvaluator(
+			BooleanValue value) {
 		return new IntervalLogicalSingletonBooleanExpressionEvaluator(value);
 	}
 

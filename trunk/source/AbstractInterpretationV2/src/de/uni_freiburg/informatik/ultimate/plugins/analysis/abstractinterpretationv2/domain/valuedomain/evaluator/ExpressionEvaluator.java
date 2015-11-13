@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Stack;
 
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+
 /**
  * Enables the construction and evaluation of multiple {@link IEvaluator}s. It is assumed that the order, in which an
  * abstract syntax tree is traversed to build the different evaluators is pre-order depth-first search where the
@@ -37,16 +39,16 @@ import java.util.Stack;
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class ExpressionEvaluator<T, ACTION, VARDECL> {
+public class ExpressionEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
 
-	private Stack<IEvaluator<T, ACTION, VARDECL>> mEvaluators;
-	private IEvaluator<T, ACTION, VARDECL> mRootEvaluator;
+	private Stack<IEvaluator<VALUE, STATE, ACTION, VARDECL>> mEvaluators;
+	private IEvaluator<VALUE, STATE, ACTION, VARDECL> mRootEvaluator;
 
 	/**
 	 * The default constructor.
 	 */
 	public ExpressionEvaluator() {
-		mEvaluators = new Stack<IEvaluator<T, ACTION, VARDECL>>();
+		mEvaluators = new Stack<IEvaluator<VALUE, STATE, ACTION, VARDECL>>();
 		mRootEvaluator = null;
 	}
 
@@ -57,13 +59,13 @@ public class ExpressionEvaluator<T, ACTION, VARDECL> {
 	 * 
 	 * @param evaluator
 	 */
-	public void addEvaluator(IEvaluator<T, ACTION, VARDECL> evaluator) {
+	public void addEvaluator(IEvaluator<VALUE, STATE, ACTION, VARDECL> evaluator) {
 
 		// TODO Insert sanity checks to be on the safe side.
 
 		if (mEvaluators.isEmpty()) {
-			mEvaluators.push((IEvaluator<T, ACTION, VARDECL>) evaluator);
-			mRootEvaluator = (IEvaluator<T, ACTION, VARDECL>) evaluator;
+			mEvaluators.push((IEvaluator<VALUE, STATE, ACTION, VARDECL>) evaluator);
+			mRootEvaluator = (IEvaluator<VALUE, STATE, ACTION, VARDECL>) evaluator;
 		} else {
 			if (mEvaluators.peek().hasFreeOperands()) {
 				mEvaluators.peek().addSubEvaluator(evaluator);
@@ -88,7 +90,7 @@ public class ExpressionEvaluator<T, ACTION, VARDECL> {
 	 * 
 	 * @return
 	 */
-	public IEvaluator<T, ACTION, VARDECL> getRootEvaluator() {
+	public IEvaluator<VALUE, STATE, ACTION, VARDECL> getRootEvaluator() {
 		return mRootEvaluator;
 	}
 

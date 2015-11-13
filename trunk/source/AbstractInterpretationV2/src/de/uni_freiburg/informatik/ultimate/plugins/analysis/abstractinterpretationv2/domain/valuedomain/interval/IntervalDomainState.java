@@ -55,15 +55,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * 
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
- * @param <T>
- *            The type of the intervals. May be any Java-defined {@link Number}.
- * @param <CodeBlock>
- *            Any action type.
- * @param <IBoogieVar>
- *            Any variable declaration.
  */
 public class IntervalDomainState
-		implements IAbstractState<CodeBlock, IBoogieVar>, IEvaluationResult<IntervalDomainState> {
+		implements IAbstractState<IntervalDomainState, CodeBlock, IBoogieVar>, IEvaluationResult<IntervalDomainState> {
 
 	private static int sId;
 	private final int mId;
@@ -76,14 +70,11 @@ public class IntervalDomainState
 
 	private boolean mIsFixpoint;
 
-	private IntervalStateConverter<CodeBlock, IBoogieVar> mStateConverter;
-
 	protected IntervalDomainState() {
-		this(null, null);
+		this(null);
 	}
 
-	protected IntervalDomainState(IntervalStateConverter<CodeBlock, IBoogieVar> stateConverter, Logger logger) {
-		mStateConverter = stateConverter;
+	protected IntervalDomainState(Logger logger) {
 		mVariablesMap = new HashMap<String, IBoogieVar>();
 		mValuesMap = new HashMap<String, IntervalDomainValue>();
 		mBooleanValuesMap = new HashMap<String, BooleanValue>();
@@ -93,10 +84,9 @@ public class IntervalDomainState
 		mLogger = logger;
 	}
 
-	protected IntervalDomainState(IntervalStateConverter<CodeBlock, IBoogieVar> stateConverter, Logger logger,
-			Map<String, IBoogieVar> variablesMap, Map<String, IntervalDomainValue> valuesMap,
-			Map<String, BooleanValue> booleanValuesMap, boolean isFixpoint) {
-		mStateConverter = stateConverter;
+	protected IntervalDomainState(Logger logger, Map<String, IBoogieVar> variablesMap,
+			Map<String, IntervalDomainValue> valuesMap, Map<String, BooleanValue> booleanValuesMap,
+			boolean isFixpoint) {
 		mVariablesMap = new HashMap<String, IBoogieVar>(variablesMap);
 		mValuesMap = new HashMap<String, IntervalDomainValue>(valuesMap);
 		mBooleanValuesMap = new HashMap<String, BooleanValue>(booleanValuesMap);
@@ -104,10 +94,6 @@ public class IntervalDomainState
 		sId++;
 		mId = sId;
 		mLogger = logger;
-	}
-
-	protected void setStateConverter(IntervalStateConverter<CodeBlock, IBoogieVar> stateConverter) {
-		mStateConverter = stateConverter;
 	}
 
 	protected Map<String, IBoogieVar> getVariables() {
@@ -155,7 +141,7 @@ public class IntervalDomainState
 	}
 
 	@Override
-	public IAbstractState<CodeBlock, IBoogieVar> addVariable(String name, IBoogieVar variable) {
+	public IntervalDomainState addVariable(String name, IBoogieVar variable) {
 		assert name != null;
 		assert variable != null;
 
@@ -188,11 +174,11 @@ public class IntervalDomainState
 			newValMap.put(name, new IntervalDomainValue());
 		}
 
-		return new IntervalDomainState(mStateConverter, mLogger, newVarMap, newValMap, newBooleanValMap, mIsFixpoint);
+		return new IntervalDomainState(mLogger, newVarMap, newValMap, newBooleanValMap, mIsFixpoint);
 	}
 
 	@Override
-	public IAbstractState<CodeBlock, IBoogieVar> removeVariable(String name, IBoogieVar variable) {
+	public IntervalDomainState removeVariable(String name, IBoogieVar variable) {
 		assert name != null;
 		assert variable != null;
 
@@ -203,11 +189,11 @@ public class IntervalDomainState
 		final Map<String, BooleanValue> newBooleanValMap = new HashMap<String, BooleanValue>(mBooleanValuesMap);
 		newBooleanValMap.remove(name);
 
-		return new IntervalDomainState(mStateConverter, mLogger, newVarMap, newValMap, newBooleanValMap, mIsFixpoint);
+		return new IntervalDomainState(mLogger, newVarMap, newValMap, newBooleanValMap, mIsFixpoint);
 	}
 
 	@Override
-	public IAbstractState<CodeBlock, IBoogieVar> addVariables(Map<String, IBoogieVar> variables) {
+	public IntervalDomainState addVariables(Map<String, IBoogieVar> variables) {
 		assert variables != null;
 		assert !variables.isEmpty();
 
@@ -243,11 +229,11 @@ public class IntervalDomainState
 			}
 		}
 
-		return new IntervalDomainState(mStateConverter, mLogger, newVarMap, newValMap, newBooleanValMap, mIsFixpoint);
+		return new IntervalDomainState(mLogger, newVarMap, newValMap, newBooleanValMap, mIsFixpoint);
 	}
 
 	@Override
-	public IAbstractState<CodeBlock, IBoogieVar> removeVariables(Map<String, IBoogieVar> variables) {
+	public IntervalDomainState removeVariables(Map<String, IBoogieVar> variables) {
 		assert variables != null;
 		assert !variables.isEmpty();
 
@@ -260,7 +246,7 @@ public class IntervalDomainState
 			newBooleanValMap.remove(entry.getKey());
 		}
 
-		return new IntervalDomainState(mStateConverter, mLogger, newVarMap, newValMap, newBooleanValMap, mIsFixpoint);
+		return new IntervalDomainState(mLogger, newVarMap, newValMap, newBooleanValMap, mIsFixpoint);
 	}
 
 	@Override
@@ -297,8 +283,8 @@ public class IntervalDomainState
 	}
 
 	@Override
-	public IAbstractState<CodeBlock, IBoogieVar> setFixpoint(boolean value) {
-		return new IntervalDomainState(mStateConverter, mLogger, mVariablesMap, mValuesMap, mBooleanValuesMap, value);
+	public IntervalDomainState setFixpoint(boolean value) {
+		return new IntervalDomainState(mLogger, mVariablesMap, mValuesMap, mBooleanValuesMap, value);
 	}
 
 	/**
@@ -334,22 +320,20 @@ public class IntervalDomainState
 	}
 
 	@Override
-	public boolean isEqualTo(IAbstractState<CodeBlock, IBoogieVar> other) {
+	public boolean isEqualTo(IntervalDomainState other) {
 		if (!hasSameVariables(other)) {
 			return false;
 		}
 
-		final IntervalDomainState comparableOther = mStateConverter.getCheckedState(other);
-
 		for (final Entry<String, IntervalDomainValue> entry : mValuesMap.entrySet()) {
-			final IntervalDomainValue otherValue = comparableOther.mValuesMap.get(entry.getKey());
+			final IntervalDomainValue otherValue = other.mValuesMap.get(entry.getKey());
 			if (!mValuesMap.get(entry.getKey()).equals(otherValue)) {
 				return false;
 			}
 		}
 
 		for (final Entry<String, BooleanValue> entry : mBooleanValuesMap.entrySet()) {
-			final BooleanValue otherValue = comparableOther.mBooleanValuesMap.get(entry.getKey());
+			final BooleanValue otherValue = other.mBooleanValuesMap.get(entry.getKey());
 			if (!mBooleanValuesMap.get(entry.getKey()).equals(otherValue)) {
 				return false;
 			}
@@ -359,9 +343,8 @@ public class IntervalDomainState
 	}
 
 	@Override
-	public IAbstractState<CodeBlock, IBoogieVar> copy() {
-		return new IntervalDomainState(mStateConverter, mLogger, mVariablesMap, mValuesMap, mBooleanValuesMap,
-				mIsFixpoint);
+	public IntervalDomainState copy() {
+		return new IntervalDomainState(mLogger, mVariablesMap, mValuesMap, mBooleanValuesMap, mIsFixpoint);
 	}
 
 	@Override
@@ -396,7 +379,7 @@ public class IntervalDomainState
 	 *            The other state to check for same variables.
 	 * @return <code>true</code> iff the variables are the same, <code>false</code> otherwise.
 	 */
-	protected boolean hasSameVariables(IAbstractState<CodeBlock, IBoogieVar> other) {
+	protected boolean hasSameVariables(IntervalDomainState other) {
 		if (other == null) {
 			return false;
 		}
@@ -409,13 +392,12 @@ public class IntervalDomainState
 			return false;
 		}
 
-		final IntervalDomainState comparableOther = mStateConverter.getCheckedState(other);
-		if (comparableOther.mVariablesMap.size() != mVariablesMap.size()) {
+		if (other.mVariablesMap.size() != mVariablesMap.size()) {
 			return false;
 		}
 
 		for (final Entry<String, IBoogieVar> entry : mVariablesMap.entrySet()) {
-			final IBoogieVar otherType = comparableOther.mVariablesMap.get(entry.getKey());
+			final IBoogieVar otherType = other.mVariablesMap.get(entry.getKey());
 			if (!entry.getValue().equals(otherType)) {
 				return false;
 			}
@@ -432,7 +414,7 @@ public class IntervalDomainState
 	 *            The other state to intersect with.
 	 * @return A new {@link IAbstractState} that corresponds to the intersection of
 	 */
-	protected IAbstractState<CodeBlock, IBoogieVar> intersect(IntervalDomainState other) {
+	protected IntervalDomainState intersect(IntervalDomainState other) {
 		assert other != null;
 		assert hasSameVariables(other);
 
@@ -491,7 +473,6 @@ public class IntervalDomainState
 		return null;
 	}
 
-	@Override
 	public void setToBottom() {
 		for (final Entry<String, IntervalDomainValue> entry : mValuesMap.entrySet()) {
 			entry.setValue(new IntervalDomainValue(true));

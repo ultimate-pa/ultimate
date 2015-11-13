@@ -32,7 +32,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.sign.SignDomainValue.Values;
@@ -44,10 +43,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class SignSingletonVariableExpressionEvaluator implements IEvaluator<Values, CodeBlock, IBoogieVar> {
+public class SignSingletonVariableExpressionEvaluator
+		implements IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> {
 
 	protected String mVariableName;
-	protected final SignStateConverter<CodeBlock, IBoogieVar> mStateConverter;
 	private final Set<String> mVariableSet;
 
 	/**
@@ -58,15 +57,13 @@ public class SignSingletonVariableExpressionEvaluator implements IEvaluator<Valu
 	 * @param stateConverter
 	 *            The interval domain state converter.
 	 */
-	public SignSingletonVariableExpressionEvaluator(String variableName,
-	        SignStateConverter<CodeBlock, IBoogieVar> stateConverter) {
+	public SignSingletonVariableExpressionEvaluator(String variableName) {
 		mVariableName = variableName;
-		mStateConverter = stateConverter;
 		mVariableSet = new HashSet<String>();
 	}
 
 	@Override
-	public final void addSubEvaluator(IEvaluator<Values, CodeBlock, IBoogieVar> evaluator) {
+	public final void addSubEvaluator(IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> evaluator) {
 		throw new UnsupportedOperationException("A sub evaluator cannot be added to a singleton expression type.");
 	}
 
@@ -76,14 +73,12 @@ public class SignSingletonVariableExpressionEvaluator implements IEvaluator<Valu
 	}
 
 	@Override
-	public final IEvaluationResult<Values> evaluate(IAbstractState<CodeBlock, IBoogieVar> currentState) {
-		final SignDomainState<CodeBlock, IBoogieVar> concreteState = mStateConverter.getCheckedState(currentState);
-
-		final SignDomainValue val = concreteState.getValues().get(mVariableName);
+	public final IEvaluationResult<Values> evaluate(SignDomainState currentState) {
+		final SignDomainValue val = currentState.getValues().get(mVariableName);
 
 		if (val == null) {
-			throw new UnsupportedOperationException("The variable with name " + mVariableName
-			        + " has not been found in the current abstract state.");
+			throw new UnsupportedOperationException(
+					"The variable with name " + mVariableName + " has not been found in the current abstract state.");
 		}
 
 		return new SignDomainValue(val.getResult());

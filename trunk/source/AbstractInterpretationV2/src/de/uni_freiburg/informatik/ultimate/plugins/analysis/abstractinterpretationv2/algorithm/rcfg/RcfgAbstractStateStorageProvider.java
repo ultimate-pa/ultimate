@@ -46,28 +46,29 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public class RcfgAbstractStateStorageProvider extends BaseRcfgAbstractStateStorageProvider {
+public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
+		extends BaseRcfgAbstractStateStorageProvider<STATE> {
 
-	private final Map<RCFGNode, Deque<Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>>>> mStorage;
+	private final Map<RCFGNode, Deque<Pair<CodeBlock, STATE>>> mStorage;
 
-	public RcfgAbstractStateStorageProvider(IAbstractStateBinaryOperator<CodeBlock, IBoogieVar> mergeOperator,
+	public RcfgAbstractStateStorageProvider(IAbstractStateBinaryOperator<STATE> mergeOperator,
 			IUltimateServiceProvider services) {
 		super(mergeOperator, services);
-		mStorage = new HashMap<RCFGNode, Deque<Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>>>>();
+		mStorage = new HashMap<RCFGNode, Deque<Pair<CodeBlock, STATE>>>();
 	}
 
-	protected Deque<Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>>> getStates(RCFGNode node) {
+	protected Deque<Pair<CodeBlock, STATE>> getStates(RCFGNode node) {
 		assert node != null;
-		Deque<Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>>> rtr = mStorage.get(node);
+		Deque<Pair<CodeBlock, STATE>> rtr = mStorage.get(node);
 		if (rtr == null) {
-			rtr = new ArrayDeque<Pair<CodeBlock, IAbstractState<CodeBlock, IBoogieVar>>>();
+			rtr = new ArrayDeque<Pair<CodeBlock, STATE>>();
 			mStorage.put(node, rtr);
 		}
 		return rtr;
 	}
 
 	@Override
-	public IAbstractStateStorage<CodeBlock, IBoogieVar, ProgramPoint> createStorage() {
-		return new RcfgAbstractStateStorageProvider(getMergeOperator(), getServices());
+	public IAbstractStateStorage<STATE, CodeBlock, IBoogieVar,ProgramPoint> createStorage() {
+		return new RcfgAbstractStateStorageProvider<STATE>(getMergeOperator(), getServices());
 	}
 }

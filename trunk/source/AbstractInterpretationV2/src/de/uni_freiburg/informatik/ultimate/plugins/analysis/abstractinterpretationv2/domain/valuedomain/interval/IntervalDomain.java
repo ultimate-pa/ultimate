@@ -36,7 +36,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
@@ -50,42 +49,32 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  */
 public class IntervalDomain implements IAbstractDomain<IntervalDomainState, CodeBlock, IBoogieVar> {
 
-	private final IntervalStateConverter<CodeBlock, IBoogieVar> mStateConverter;
 	private final BoogieSymbolTable mSymbolTable;
 	private final Logger mLogger;
 
 	public IntervalDomain(Logger logger, BoogieSymbolTable symbolTable) {
 		mLogger = logger;
-		mStateConverter = new IntervalStateConverter<CodeBlock, IBoogieVar>(
-		        new IntervalDomainState());
 		mSymbolTable = symbolTable;
 	}
 
 	@Override
-	public IAbstractState<CodeBlock, IBoogieVar> createFreshState() {
-		return new IntervalDomainState(mStateConverter, mLogger);
+	public IntervalDomainState createFreshState() {
+		return new IntervalDomainState(mLogger);
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<CodeBlock, IBoogieVar> getWideningOperator() {
-		
+	public IAbstractStateBinaryOperator<IntervalDomainState> getWideningOperator() {
 		// TODO Implement better widening and add appropriate options
 		return new IntervalSimpleWideningOperator();
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<CodeBlock, IBoogieVar> getMergeOperator() {
-		return new IntervalMergeOperator<CodeBlock, IBoogieVar>(mStateConverter);
+	public IAbstractStateBinaryOperator<IntervalDomainState> getMergeOperator() {
+		return new IntervalMergeOperator();
 	}
 
 	@Override
-	public IAbstractPostOperator<CodeBlock, IBoogieVar> getPostOperator() {
-		return new IntervalPostOperator(mLogger, mStateConverter, mSymbolTable);
+	public IAbstractPostOperator<IntervalDomainState, CodeBlock, IBoogieVar> getPostOperator() {
+		return new IntervalPostOperator(mLogger, mSymbolTable);
 	}
-
-	@Override
-	public Class<IntervalDomainState> getAbstractStateClass() {
-		return mStateConverter.getAbstractStateClass();
-	}
-
 }

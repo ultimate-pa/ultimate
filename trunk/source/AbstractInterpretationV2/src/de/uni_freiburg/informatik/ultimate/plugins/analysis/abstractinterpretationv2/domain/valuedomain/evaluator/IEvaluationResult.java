@@ -33,10 +33,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
  * 
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
- * @param <T>
+ * @param <VALUE>
  *            Any type.
  */
-public interface IEvaluationResult<T> {
+public interface IEvaluationResult<VALUE> {
 
-	public T getResult();
+	public VALUE getResult();
 }

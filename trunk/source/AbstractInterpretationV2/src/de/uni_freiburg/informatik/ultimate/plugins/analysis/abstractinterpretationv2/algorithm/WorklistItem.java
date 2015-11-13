@@ -35,27 +35,27 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * 
  * @author dietsch@informatik.uni-freiburg.de
  */
-final class WorklistItem<ACTION, VARDECL, LOCATION> {
+final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
 
-	private IAbstractState<ACTION, VARDECL> mPreState;
+	private STATE mPreState;
 	private ACTION mAction;
 	private Deque<ACTION> mScopes;
-	private Deque<IAbstractStateStorage<ACTION, VARDECL, LOCATION>> mScopedStorages;
+	private Deque<IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>> mScopedStorages;
 
-	protected WorklistItem(final IAbstractState<ACTION, VARDECL> pre, final ACTION action,
-			IAbstractStateStorage<ACTION, VARDECL, LOCATION> globalStorage) {
+	protected WorklistItem(final STATE pre, final ACTION action,
+			IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> globalStorage) {
 		assert action != null;
 		assert pre != null;
 		assert globalStorage != null;
 
 		mPreState = pre;
 		mAction = action;
-		mScopedStorages = new ArrayDeque<IAbstractStateStorage<ACTION, VARDECL, LOCATION>>();
+		mScopedStorages = new ArrayDeque<IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>();
 		mScopedStorages.addFirst(globalStorage);
 	}
 
-	protected WorklistItem(final IAbstractState<ACTION, VARDECL> pre, final ACTION action,
-			WorklistItem<ACTION, VARDECL, LOCATION> oldItem) {
+	protected WorklistItem(final STATE pre, final ACTION action,
+			WorklistItem<STATE, ACTION, VARDECL, LOCATION> oldItem) {
 		assert pre != null;
 		assert action != null;
 		assert oldItem != null;
@@ -75,11 +75,11 @@ final class WorklistItem<ACTION, VARDECL, LOCATION> {
 		mAction = action;
 	}
 
-	public IAbstractState<ACTION, VARDECL> getPreState() {
+	public STATE getPreState() {
 		return mPreState;
 	}
 
-	public void setPreState(IAbstractState<ACTION, VARDECL> preState) {
+	public void setPreState(STATE preState) {
 		assert preState != null;
 		mPreState = preState;
 	}
@@ -108,7 +108,7 @@ final class WorklistItem<ACTION, VARDECL, LOCATION> {
 		return mScopes.removeFirst();
 	}
 
-	public IAbstractStateStorage<ACTION, VARDECL, LOCATION> getCurrentStorage() {
+	public IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> getCurrentStorage() {
 		assert !mScopedStorages.isEmpty();
 		return mScopedStorages.peek();
 	}
@@ -127,7 +127,7 @@ final class WorklistItem<ACTION, VARDECL, LOCATION> {
 		return new ArrayDeque<>(mScopes);
 	}
 
-	private Deque<IAbstractStateStorage<ACTION, VARDECL, LOCATION>> getStorages() {
+	private Deque<IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>> getStorages() {
 		assert !mScopedStorages.isEmpty();
 		return new ArrayDeque<>(mScopedStorages);
 	}

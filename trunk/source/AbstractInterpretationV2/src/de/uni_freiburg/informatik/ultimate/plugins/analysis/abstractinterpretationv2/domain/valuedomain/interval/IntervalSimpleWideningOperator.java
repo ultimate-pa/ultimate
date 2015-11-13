@@ -28,10 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.interval;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  * Implementation of a simple widening operator that just returns a new interval of the form (-&infin; ; &infin;).
@@ -39,11 +36,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class IntervalSimpleWideningOperator implements IAbstractStateBinaryOperator<CodeBlock, IBoogieVar> {
+public class IntervalSimpleWideningOperator implements IAbstractStateBinaryOperator<IntervalDomainState> {
 
 	@Override
-	public IAbstractState<CodeBlock, IBoogieVar> apply(IAbstractState<CodeBlock, IBoogieVar> first,
-	        IAbstractState<CodeBlock, IBoogieVar> second) {
+	public IntervalDomainState apply(IntervalDomainState first, IntervalDomainState second) {
 		return new IntervalDomainState();
 	}
 

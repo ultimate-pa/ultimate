@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.INAryEvaluator;
@@ -50,10 +49,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, CodeBlock, IBoogieVar> {
+public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> {
 
-	protected IEvaluator<Values, CodeBlock, IBoogieVar> mLeftSubEvaluator;
-	protected IEvaluator<Values, CodeBlock, IBoogieVar> mRightSubEvaluator;
+	protected IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> mLeftSubEvaluator;
+	protected IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> mRightSubEvaluator;
 	protected BinaryExpression.Operator mOperator;
 	protected final Set<String> mVariableSet;
 	protected final Logger mLogger;
@@ -83,7 +82,7 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Cod
 	}
 
 	@Override
-	public IEvaluationResult<Values> evaluate(IAbstractState<CodeBlock, IBoogieVar> currentState) {
+	public IEvaluationResult<Values> evaluate(SignDomainState currentState) {
 
 		for (String var : mLeftSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
@@ -129,7 +128,8 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Cod
 		case ARITHPLUS:
 			return performAddition((IEvaluationResult<Values>) firstResult, (IEvaluationResult<Values>) secondResult);
 		case ARITHMINUS:
-			return performSubtraction((IEvaluationResult<Values>) firstResult, (IEvaluationResult<Values>) secondResult);
+			return performSubtraction((IEvaluationResult<Values>) firstResult,
+					(IEvaluationResult<Values>) secondResult);
 		default:
 			throw new UnsupportedOperationException("The operator " + mOperator.toString() + " is not implemented.");
 		}
@@ -176,7 +176,8 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Cod
 	 *            The second evaluation result to be added.
 	 * @return A new evaluation result corresponding to the result of the addition operation.
 	 */
-	private IEvaluationResult<Values> performAddition(IEvaluationResult<Values> first, IEvaluationResult<Values> second) {
+	private IEvaluationResult<Values> performAddition(IEvaluationResult<Values> first,
+			IEvaluationResult<Values> second) {
 
 		assert first != null;
 		assert second != null;
@@ -216,8 +217,8 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Cod
 
 		// We should have covered all cases. If not, throw exception.
 		throw new UnsupportedOperationException(
-		        "There is one case which has not been covered in the addition of SignedDomain values. first: "
-		                + first.getResult().toString() + ", second: " + second.getResult().toString());
+				"There is one case which has not been covered in the addition of SignedDomain values. first: "
+						+ first.getResult().toString() + ", second: " + second.getResult().toString());
 	}
 
 	/**
@@ -262,7 +263,7 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Cod
 	 * @return A new evaluation result corresponding to the result of the subtract operation.
 	 */
 	private IEvaluationResult<Values> performSubtraction(IEvaluationResult<Values> first,
-	        IEvaluationResult<Values> second) {
+			IEvaluationResult<Values> second) {
 
 		assert first != null;
 		assert second != null;
@@ -296,15 +297,15 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Cod
 
 		// We should have covered all cases. If not, throw exception.
 		throw new UnsupportedOperationException(
-		        "There is one case which has not been covered in the subtraction of SignedDomain values. first: "
-		                + first.getResult().toString() + ", second: " + second.getResult().toString());
+				"There is one case which has not been covered in the subtraction of SignedDomain values. first: "
+						+ first.getResult().toString() + ", second: " + second.getResult().toString());
 	}
 
 	/**
 	 * Adds a subevaluator to {@link this} if possible.
 	 */
 	@Override
-	public void addSubEvaluator(IEvaluator<Values, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> evaluator) {
 		if (mLeftSubEvaluator != null && mRightSubEvaluator != null) {
 			throw new UnsupportedOperationException("There are no free sub evaluators left to be assigned.");
 		}
@@ -347,8 +348,8 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Cod
 		case ZERO:
 			return new SignDomainValue(Values.ZERO);
 		default:
-			throw new UnsupportedOperationException("The sign domain value " + value.toString()
-			        + " is not implemented.");
+			throw new UnsupportedOperationException(
+					"The sign domain value " + value.toString() + " is not implemented.");
 		}
 	}
 

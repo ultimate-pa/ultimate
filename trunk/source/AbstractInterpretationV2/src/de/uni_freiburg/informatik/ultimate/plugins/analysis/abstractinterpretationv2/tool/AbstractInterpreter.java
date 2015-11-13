@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty.EmptyDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.interval.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.sign.SignDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbstractInterpretationPreferenceInitializer;
@@ -85,8 +86,8 @@ public final class AbstractInterpreter {
 	 * {@link IllegalArgumentException}. Produce no results.
 	 */
 	public static Map<CodeBlock, Map<ProgramPoint, Term>> runSilently(final RootNode root,
-	        final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
-	        final IUltimateServiceProvider services) {
+			final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
+			final IUltimateServiceProvider services) {
 		final Logger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final Map<CodeBlock, Map<ProgramPoint, Term>> rtr = new HashMap<CodeBlock, Map<ProgramPoint, Term>>();
 		try {
@@ -110,16 +111,16 @@ public final class AbstractInterpreter {
 	 * 
 	 */
 	public static Map<CodeBlock, Map<ProgramPoint, Term>> run(final RootNode root, final Collection<CodeBlock> initials,
-	        final IProgressAwareTimer timer, final IUltimateServiceProvider services) throws Throwable {
+			final IProgressAwareTimer timer, final IUltimateServiceProvider services) throws Throwable {
 		final Map<CodeBlock, Map<ProgramPoint, Term>> rtr = new HashMap<CodeBlock, Map<ProgramPoint, Term>>();
 		runInternal(root, initials, timer, services, (a, b) -> new RcfgResultReporter(a, b), rtr);
 		return rtr;
 	}
 
 	private static void runInternal(final RootNode root, final Collection<CodeBlock> initials,
-	        final IProgressAwareTimer timer, final IUltimateServiceProvider services,
-	        BiFunction<IUltimateServiceProvider, BaseRcfgAbstractStateStorageProvider, IResultReporter<CodeBlock>> funCreateReporter,
-	        Map<CodeBlock, Map<ProgramPoint, Term>> predicates) throws Throwable {
+			final IProgressAwareTimer timer, final IUltimateServiceProvider services,
+			BiFunction<IUltimateServiceProvider, BaseRcfgAbstractStateStorageProvider<?>, IResultReporter<CodeBlock>> funCreateReporter,
+			Map<CodeBlock, Map<ProgramPoint, Term>> predicates) throws Throwable {
 		if (initials == null) {
 			throw new IllegalArgumentException("No initial edges provided");
 		}
@@ -141,28 +142,39 @@ public final class AbstractInterpreter {
 		externalLoopDetector.process(root);
 
 		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain = selectDomain(symbolTable, services);
+		runInternal(initials, timer, services, funCreateReporter, predicates, symbolTable, bpl2smt, script,
+				boogieVarTable, externalLoopDetector, domain);
+	}
+
+	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>> void runInternal(
+			final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
+			final IUltimateServiceProvider services,
+			BiFunction<IUltimateServiceProvider, BaseRcfgAbstractStateStorageProvider<?>, IResultReporter<CodeBlock>> funCreateReporter,
+			Map<CodeBlock, Map<ProgramPoint, Term>> predicates, final BoogieSymbolTable symbolTable,
+			final Boogie2SMT bpl2smt, final Script script, final Boogie2SmtSymbolTable boogieVarTable,
+			final RCFGLoopDetector externalLoopDetector, final IAbstractDomain<STATE, CodeBlock, IBoogieVar> domain) {
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		final ITransitionProvider<CodeBlock> transitionProvider = new RcfgTransitionProvider();
 
-		final IVariableProvider<CodeBlock, IBoogieVar> varProvider = new RcfgVariableProvider(symbolTable,
-		        boogieVarTable);
+		final IVariableProvider<STATE, CodeBlock, IBoogieVar> varProvider = new RcfgVariableProvider<STATE>(symbolTable,
+				boogieVarTable);
 		final ILoopDetector<CodeBlock> loopDetector = new RcfgLoopDetector(externalLoopDetector);
 
 		final Collection<CodeBlock> filteredInitialElements = transitionProvider.filterInitialElements(initials);
 		final boolean persist = ups.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_PERSIST_ABS_STATES);
 
 		if (filteredInitialElements.isEmpty()) {
-			final BaseRcfgAbstractStateStorageProvider storage = createStorage(services, domain, persist);
+			final BaseRcfgAbstractStateStorageProvider<?> storage = createStorage(services, domain, persist);
 			final IResultReporter<CodeBlock> reporter = funCreateReporter.apply(services, storage);
 			reporter.reportSafe("The program is empty");
 			return;
 		}
 
 		for (final CodeBlock initial : filteredInitialElements) {
-			final BaseRcfgAbstractStateStorageProvider storage = createStorage(services, domain, persist);
+			final BaseRcfgAbstractStateStorageProvider<STATE> storage = createStorage(services, domain, persist);
 			final IResultReporter<CodeBlock> reporter = funCreateReporter.apply(services, storage);
-			final FixpointEngine<CodeBlock, IBoogieVar, ProgramPoint> interpreter = new FixpointEngine<CodeBlock, IBoogieVar, ProgramPoint>(
-			        services, timer, transitionProvider, storage, domain, varProvider, loopDetector, reporter);
+			final FixpointEngine<STATE, CodeBlock, IBoogieVar, ProgramPoint> interpreter = new FixpointEngine<STATE, CodeBlock, IBoogieVar, ProgramPoint>(
+					services, timer, transitionProvider, storage, domain, varProvider, loopDetector, reporter);
 			try {
 				interpreter.run(initial);
 			} catch (ToolchainCanceledException c) {
@@ -173,13 +185,14 @@ public final class AbstractInterpreter {
 		}
 	}
 
-	private static BaseRcfgAbstractStateStorageProvider createStorage(final IUltimateServiceProvider services,
-	        final IAbstractDomain<?, CodeBlock, IBoogieVar> domain, final boolean persist) {
-		final BaseRcfgAbstractStateStorageProvider storage;
+	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>> BaseRcfgAbstractStateStorageProvider<STATE> createStorage(
+			final IUltimateServiceProvider services, final IAbstractDomain<STATE, CodeBlock, IBoogieVar> domain,
+			final boolean persist) {
+		final BaseRcfgAbstractStateStorageProvider<STATE> storage;
 		if (persist) {
-			storage = new AnnotatingRcfgAbstractStateStorageProvider(domain.getMergeOperator(), services);
+			storage = new AnnotatingRcfgAbstractStateStorageProvider<STATE>(domain.getMergeOperator(), services);
 		} else {
-			storage = new RcfgAbstractStateStorageProvider(domain.getMergeOperator(), services);
+			storage = new RcfgAbstractStateStorageProvider<STATE>(domain.getMergeOperator(), services);
 		}
 		return storage;
 	}
@@ -193,7 +206,7 @@ public final class AbstractInterpreter {
 	}
 
 	private static IAbstractDomain<?, CodeBlock, IBoogieVar> selectDomain(final BoogieSymbolTable symbolTable,
-	        final IUltimateServiceProvider services) {
+			final IUltimateServiceProvider services) {
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		final String selectedDomain = ups.getString(AbstractInterpretationPreferenceInitializer.LABEL_ABSTRACT_DOMAIN);
 
@@ -205,6 +218,6 @@ public final class AbstractInterpreter {
 			return new IntervalDomain(services.getLoggingService().getLogger(Activator.PLUGIN_ID), symbolTable);
 		}
 		throw new UnsupportedOperationException("The value \"" + selectedDomain + "\" of preference \""
-		        + AbstractInterpretationPreferenceInitializer.LABEL_ABSTRACT_DOMAIN + "\" was not considered before! ");
+				+ AbstractInterpretationPreferenceInitializer.LABEL_ABSTRACT_DOMAIN + "\" was not considered before! ");
 	}
 }

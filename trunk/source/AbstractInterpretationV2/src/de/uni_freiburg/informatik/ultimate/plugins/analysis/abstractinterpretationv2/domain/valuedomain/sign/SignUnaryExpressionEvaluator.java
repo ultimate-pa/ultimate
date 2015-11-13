@@ -33,7 +33,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.INAryEvaluator;
@@ -46,17 +45,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, CodeBlock, IBoogieVar> {
+public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> {
 
-	protected IEvaluator<Values, CodeBlock, IBoogieVar> mSubEvaluator;
+	protected IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> mSubEvaluator;
 	protected UnaryExpression.Operator mOperator;
 
 	@Override
-	public void addSubEvaluator(IEvaluator<Values, CodeBlock, IBoogieVar> evaluator) {
-
+	public void addSubEvaluator(IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> evaluator) {
 		assert mSubEvaluator == null;
 		assert evaluator != null;
-
 		mSubEvaluator = evaluator;
 	}
 
@@ -68,11 +65,11 @@ public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, Code
 	}
 
 	@Override
-	public IEvaluationResult<Values> evaluate(IAbstractState<CodeBlock, IBoogieVar> oldState) {
+	public IEvaluationResult<Values> evaluate(SignDomainState oldState) {
 
-		IEvaluator<Values, CodeBlock, IBoogieVar> castedSubEvaluator = (IEvaluator<Values, CodeBlock, IBoogieVar>) mSubEvaluator;
+		IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> castedSubEvaluator = (IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar>) mSubEvaluator;
 		final IEvaluationResult<Values> subEvalResult = (IEvaluationResult<Values>) castedSubEvaluator
-		        .evaluate(oldState);
+				.evaluate(oldState);
 
 		switch (mOperator) {
 		case LOGICNEG:
@@ -99,8 +96,8 @@ public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, Code
 		case ZERO:
 			return new SignDomainValue(Values.ZERO);
 		default:
-			throw new UnsupportedOperationException("The sign domain value " + value.toString()
-			        + " is not implemented.");
+			throw new UnsupportedOperationException(
+					"The sign domain value " + value.toString() + " is not implemented.");
 		}
 	}
 

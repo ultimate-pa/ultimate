@@ -32,10 +32,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.BooleanValue.Value;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.EvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.ILogicalEvaluator;
@@ -47,8 +45,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus <greitsch@informatik.uni-freiburg.de>
  *
  */
-public class IntervalLogicalSingletonBooleanExpressionEvaluator implements
-        ILogicalEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> {
+public class IntervalLogicalSingletonBooleanExpressionEvaluator
+		implements ILogicalEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	private final BooleanValue mBooleanValue;
 
@@ -57,10 +55,9 @@ public class IntervalLogicalSingletonBooleanExpressionEvaluator implements
 	}
 
 	@Override
-	public IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> evaluate(
-	        IAbstractState<CodeBlock, IBoogieVar> currentState) {
+	public IEvaluationResult<IntervalDomainEvaluationResult> evaluate(IntervalDomainState currentState) {
 
-		IAbstractState<CodeBlock, IBoogieVar> returnState;
+		IntervalDomainState returnState;
 
 		if (mBooleanValue.getValue() == Value.TRUE || mBooleanValue.getValue() == Value.TOP) {
 			returnState = currentState;
@@ -69,12 +66,11 @@ public class IntervalLogicalSingletonBooleanExpressionEvaluator implements
 			returnState.setToBottom();
 		}
 
-		return new EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>(null, returnState);
+		return new IntervalDomainEvaluationResult(null, returnState);
 	}
 
 	@Override
-	public void addSubEvaluator(
-	        IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
 		throw new UnsupportedOperationException("Adding a subevaluator to this kind of evaluator is not permitted.");
 	}
 

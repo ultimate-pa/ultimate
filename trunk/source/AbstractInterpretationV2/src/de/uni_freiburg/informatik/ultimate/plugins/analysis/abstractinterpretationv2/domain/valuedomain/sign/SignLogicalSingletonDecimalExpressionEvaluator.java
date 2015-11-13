@@ -41,28 +41,28 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class SignLogicalSingletonDecimalExpressionEvaluator extends SignSingletonDecimalExpressionEvaluator implements
-        ILogicalEvaluator<Values, CodeBlock, IBoogieVar> {
+public class SignLogicalSingletonDecimalExpressionEvaluator extends SignSingletonDecimalExpressionEvaluator
+		implements ILogicalEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> {
 
 	private BooleanValue mBooleanValue;
-	
+
 	public SignLogicalSingletonDecimalExpressionEvaluator(String value) {
 		super(value);
 	}
 
-	private IAbstractState<CodeBlock, IBoogieVar> logicallyInterpret(IAbstractState<CodeBlock, IBoogieVar> currentState) {
+	private SignDomainState logicallyInterpret(SignDomainState currentState) {
 		return currentState.copy();
 	}
 
-    private boolean logicalEvaluation(IAbstractState<CodeBlock, IBoogieVar> currentState) {
+	private boolean logicalEvaluation(SignDomainState currentState) {
 		// TODO think about this. Is this right in this case?
-		
+
 		if (mValue.equals(Values.BOTTOM)) {
 			return false;
 		}
-		
-	    return true;
-    }
+
+		return true;
+	}
 
 	@Override
 	public BooleanValue booleanValue() {

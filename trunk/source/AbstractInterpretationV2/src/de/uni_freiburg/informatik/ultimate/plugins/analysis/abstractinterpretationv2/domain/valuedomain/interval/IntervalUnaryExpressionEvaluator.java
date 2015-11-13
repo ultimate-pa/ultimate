@@ -35,8 +35,6 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.EvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.INAryEvaluator;
@@ -49,11 +47,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class IntervalUnaryExpressionEvaluator
-        implements INAryEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> {
+		implements INAryEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	protected final Logger mLogger;
 
-	protected IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> mSubEvaluator;
+	protected IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> mSubEvaluator;
 	protected UnaryExpression.Operator mOperator;
 
 	protected IntervalUnaryExpressionEvaluator(Logger logger) {
@@ -61,27 +59,22 @@ public class IntervalUnaryExpressionEvaluator
 	}
 
 	@Override
-	public IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> evaluate(
-	        IAbstractState<CodeBlock, IBoogieVar> currentState) {
+	public IEvaluationResult<IntervalDomainEvaluationResult> evaluate(IntervalDomainState currentState) {
 
-		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> subEvaluatorResult = mSubEvaluator
-		        .evaluate(currentState);
+		final IEvaluationResult<IntervalDomainEvaluationResult> subEvaluatorResult = mSubEvaluator.evaluate(currentState);
 
 		switch (mOperator) {
 		case ARITHNEGATIVE:
-			return new EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>(
-			        subEvaluatorResult.getResult().getEvaluatedValue().negate(), currentState);
+			return new IntervalDomainEvaluationResult(subEvaluatorResult.getResult().getEvaluatedValue().negate(), currentState);
 		default:
 			mLogger.warn(
-			        "Possible loss of precision: cannot handle operator " + mOperator + ". Returning current state.");
-			return new EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>(new IntervalDomainValue(),
-			        currentState);
+					"Possible loss of precision: cannot handle operator " + mOperator + ". Returning current state.");
+			return new IntervalDomainEvaluationResult(new IntervalDomainValue(), currentState);
 		}
 	}
 
 	@Override
-	public void addSubEvaluator(
-	        IEvaluator<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
 		assert mSubEvaluator == null;
 		assert evaluator != null;
 

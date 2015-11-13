@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <VARDECL>
  *            Any variable declaration type.
  */
-public interface IAbstractState<ACTION, VARDECL> {
+public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
 
 	/**
 	 * {@link FixpointEngine} will call this method to add a variable to the set of variables of an abstract state s.t.
@@ -57,14 +57,16 @@ public interface IAbstractState<ACTION, VARDECL> {
 	 * 
 	 * All variable names are unique.
 	 * 
+	 * @param <T>
+	 * 
 	 * @param name
 	 *            The name of the variable that should be added.
-	 * @param variables
+	 * @param variable
 	 *            An object that describes the type of the variable.
 	 * @return A new abstract state that is a {@link #copy()} of this instance except that it contains the freshly added
 	 *         variable.
 	 */
-	IAbstractState<ACTION, VARDECL> addVariable(final String name, final VARDECL variables);
+	STATE addVariable(final String name, final VARDECL variable);
 
 	/**
 	 * Returns the declaration type of the given variable.
@@ -85,13 +87,13 @@ public interface IAbstractState<ACTION, VARDECL> {
 	 * 
 	 * @param name
 	 *            The name of the variable that should be removed.
-	 * @param variables
+	 * @param variable
 	 *            An object that describes the type of the variable. This should be equal to the object that was added
 	 *            previously.
 	 * @return A new abstract state that is a {@link #copy()} of this instance except that the removed variable is
 	 *         missing.
 	 */
-	IAbstractState<ACTION, VARDECL> removeVariable(final String name, final VARDECL variables);
+	STATE removeVariable(final String name, final VARDECL variable);
 
 	/**
 	 * Adds multiple variables at once (see {@link #addVariable(String, Object)} for details).
@@ -101,7 +103,7 @@ public interface IAbstractState<ACTION, VARDECL> {
 	 * @return A new abstract state that is a {@link #copy()} of this instance except that it contains the freshly added
 	 *         variables.
 	 */
-	IAbstractState<ACTION, VARDECL> addVariables(final Map<String, VARDECL> variables);
+	STATE addVariables(final Map<String, VARDECL> variables);
 
 	/**
 	 * Remove multiple variables at once (see {@link #removeVariable(String, Object)} for details).
@@ -111,7 +113,7 @@ public interface IAbstractState<ACTION, VARDECL> {
 	 * @return A new abstract state that is a {@link #copy()} of this instance except that all the variables defined by
 	 *         <code>variables</code> are missing.
 	 */
-	IAbstractState<ACTION, VARDECL> removeVariables(final Map<String, VARDECL> variables);
+	STATE removeVariables(final Map<String, VARDECL> variables);
 
 	/**
 	 * Check if a given variable exists in the abstract state.
@@ -138,11 +140,6 @@ public interface IAbstractState<ACTION, VARDECL> {
 	boolean isBottom();
 
 	/**
-	 * Sets the whole abstract state to &bot;.
-	 */
-	void setToBottom();
-
-	/**
 	 * An abstract state is a fixpoint if {@link FixpointEngine} called {@link #setFixpoint(boolean)} with true.
 	 * 
 	 * @return <code>true</code> if and only if the current abstract state is a fix point, <code>false</code> otherwise.
@@ -155,7 +152,7 @@ public interface IAbstractState<ACTION, VARDECL> {
 	 * @return A new abstract state that is a {@link #copy()} of this instance except that {@link #isFixpoint()} returns
 	 *         a different value OR this instance.
 	 */
-	IAbstractState<ACTION, VARDECL> setFixpoint(final boolean value);
+	STATE setFixpoint(final boolean value);
 
 	/**
 	 * Check whether this instance is equal to <code>other</code> or not. Instances are equal if they have the same set
@@ -168,7 +165,7 @@ public interface IAbstractState<ACTION, VARDECL> {
 	 * @return true if both instances have the same set of variables and describe the same abstract state, false
 	 *         otherwise.
 	 */
-	boolean isEqualTo(final IAbstractState<ACTION, VARDECL> other);
+	boolean isEqualTo(final STATE other);
 
 	/**
 	 * Create an SMT constraint that represents this abstract state. If you do not want to implement this right away,
@@ -187,7 +184,7 @@ public interface IAbstractState<ACTION, VARDECL> {
 	 * 
 	 * @return An {@link IAbstractState} that is a copy of this instance.
 	 */
-	IAbstractState<ACTION, VARDECL> copy();
+	STATE copy();
 
 	/**
 	 * Is used for debug output.

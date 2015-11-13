@@ -29,7 +29,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.sign;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.ILogicalEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.sign.SignDomainValue.Values;
@@ -41,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class SignLogicalSingletonIntegerExpressionEvaluator extends SignSingletonIntegerExpressionEvaluator implements
-        ILogicalEvaluator<Values, CodeBlock, IBoogieVar> {
+public class SignLogicalSingletonIntegerExpressionEvaluator extends SignSingletonIntegerExpressionEvaluator
+		implements ILogicalEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> {
 
 	private BooleanValue mBooleanValue;
 
@@ -50,14 +49,14 @@ public class SignLogicalSingletonIntegerExpressionEvaluator extends SignSingleto
 		super(value);
 	}
 
-	private IAbstractState<CodeBlock, IBoogieVar> logicallyInterpret(IAbstractState<CodeBlock, IBoogieVar> currentState) {
+	private SignDomainState logicallyInterpret(SignDomainState currentState) {
 		return currentState.copy();
 	}
 
-    private boolean logicalEvaluation(IAbstractState<CodeBlock, IBoogieVar> currentState) {
+	private boolean logicalEvaluation(SignDomainState currentState) {
 		// TODO Think about this if this is right.
 		return false;
-    }
+	}
 
 	@Override
 	public BooleanValue booleanValue() {

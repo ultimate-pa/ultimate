@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator;
 
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.BooleanValue;
 
 /**
@@ -35,20 +36,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * 
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
- * @param <T>
+ * @param <VALUE>
  *            The type of the domain's values.
  * @param <ACTION>
  *            Any action type.
  * @param <VARDECL>
  *            Any declaration type.
  */
-public interface IEvaluatorFactory<T, ACTION, VARDECL> {
+public interface IEvaluatorFactory<VALUE, STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
 
-	public INAryEvaluator<T, ACTION, VARDECL> createNAryExpressionEvaluator(int arity);
+	public INAryEvaluator<VALUE, STATE, ACTION, VARDECL> createNAryExpressionEvaluator(int arity);
 
-	public IEvaluator<T, ACTION, VARDECL> createSingletonValueExpressionEvaluator(String value, Class<?> valueType);
+	public IEvaluator<VALUE, STATE, ACTION, VARDECL> createSingletonValueExpressionEvaluator(String value,
+			Class<?> valueType);
 
-	public IEvaluator<T, ACTION, VARDECL> createSingletonVariableExpressionEvaluator(String variableName);
-	
-	public IEvaluator<T, ACTION, VARDECL> createSingletonLogicalValueExpressionEvaluator(BooleanValue value);
+	public IEvaluator<VALUE, STATE, ACTION, VARDECL> createSingletonVariableExpressionEvaluator(String variableName);
+
+	public IEvaluator<VALUE, STATE, ACTION, VARDECL> createSingletonLogicalValueExpressionEvaluator(BooleanValue value);
 }

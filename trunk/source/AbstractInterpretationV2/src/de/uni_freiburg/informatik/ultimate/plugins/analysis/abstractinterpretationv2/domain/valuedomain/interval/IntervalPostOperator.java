@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -45,33 +44,25 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * 
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
-public class IntervalPostOperator implements IAbstractPostOperator<CodeBlock, IBoogieVar> {
+public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomainState,CodeBlock, IBoogieVar> {
 
 	private final Logger mLogger;
-	private final IntervalStateConverter<CodeBlock, IBoogieVar> mStateConverter;
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final IntervalDomainStatementProcessor mStatementProcessor;
 
-	public IntervalPostOperator(Logger logger,
-	        IntervalStateConverter<CodeBlock, IBoogieVar> stateConverter, BoogieSymbolTable symbolTable) {
+	public IntervalPostOperator(Logger logger, BoogieSymbolTable symbolTable) {
 		mLogger = logger;
-		mStateConverter = stateConverter;
 		mStatementExtractor = new RcfgStatementExtractor();
-		mStatementProcessor = new IntervalDomainStatementProcessor(mLogger, mStateConverter, symbolTable);
+		mStatementProcessor = new IntervalDomainStatementProcessor(mLogger, symbolTable);
 	}
 
 	@Override
-	public IAbstractState<CodeBlock, IBoogieVar> apply(IAbstractState<CodeBlock, IBoogieVar> oldstate, CodeBlock codeBlock) {
-		final IntervalDomainState concreteOldState = mStateConverter.getCheckedState(oldstate);
-
-		IntervalDomainState currentState = (IntervalDomainState) concreteOldState
-		        .copy();
-
+	public IntervalDomainState apply(IntervalDomainState oldstate, CodeBlock codeBlock) {
+		IntervalDomainState currentState = oldstate;
 		final List<Statement> statements = mStatementExtractor.process(codeBlock);
 		for (final Statement stmt : statements) {
 			currentState = mStatementProcessor.process(currentState, stmt);
 		}
-		
 		return currentState;
 	}
 }

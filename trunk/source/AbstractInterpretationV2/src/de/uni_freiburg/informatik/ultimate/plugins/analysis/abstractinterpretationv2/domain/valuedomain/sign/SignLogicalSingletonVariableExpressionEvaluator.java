@@ -28,47 +28,41 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.ILogicalEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.sign.SignDomainValue.Values;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
-public class SignLogicalSingletonVariableExpressionEvaluator extends SignSingletonVariableExpressionEvaluator implements
-        ILogicalEvaluator<Values, CodeBlock, IBoogieVar> {
+public class SignLogicalSingletonVariableExpressionEvaluator extends SignSingletonVariableExpressionEvaluator
+		implements ILogicalEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> {
 
 	private BooleanValue mBooleanValue;
 
-	public SignLogicalSingletonVariableExpressionEvaluator(String variableName,
-	        SignStateConverter<CodeBlock, IBoogieVar> stateConverter) {
-		super(variableName, stateConverter);
+	public SignLogicalSingletonVariableExpressionEvaluator(String variableName) {
+		super(variableName);
 	}
 
-	private IAbstractState<CodeBlock, IBoogieVar> logicallyInterpret(IAbstractState<CodeBlock, IBoogieVar> currentState) {
+	private SignDomainState logicallyInterpret(SignDomainState currentState) {
 		assert currentState.containsVariable(mVariableName);
 
-		final SignDomainState<CodeBlock, IBoogieVar> convertedState = mStateConverter.getCheckedState(currentState);
-
-		final IBoogieVar var = convertedState.getVariables().get(mVariableName);
+		final IBoogieVar var = currentState.getVariables().get(mVariableName);
 
 		final BoogieType varType = (BoogieType) var.getIType();
 
 		// TODO: Check type for bool. How to do that?
 
-		final SignDomainValue value = convertedState.getValues().get(mVariableName);
+		final SignDomainValue value = currentState.getValues().get(mVariableName);
 
-		IAbstractState<CodeBlock, IBoogieVar> newState = currentState.copy();
+		SignDomainState newState = currentState.copy();
 
 		return newState;
 	}
 
-	protected final SignDomainValue getBooleanValue(IAbstractState<CodeBlock, IBoogieVar> currentState) {
+	protected final SignDomainValue getBooleanValue(SignDomainState currentState) {
 
 		assert currentState.containsVariable(mVariableName);
 
-		final SignDomainState<CodeBlock, IBoogieVar> convertedState = mStateConverter.getCheckedState(currentState);
-
-		final SignDomainValue value = convertedState.getValues().get(mVariableName);
+		final SignDomainValue value = currentState.getValues().get(mVariableName);
 
 		SignDomainValue newValue;
 
@@ -80,18 +74,16 @@ public class SignLogicalSingletonVariableExpressionEvaluator extends SignSinglet
 		case BOTTOM:
 			return new SignDomainValue(Values.BOTTOM);
 		default:
-			throw new UnsupportedOperationException("The value " + value.getResult().toString()
-			        + " is no valid boolean sign domain value.");
+			throw new UnsupportedOperationException(
+					"The value " + value.getResult().toString() + " is no valid boolean sign domain value.");
 		}
 	}
 
-    private boolean logicalEvaluation(IAbstractState<CodeBlock, IBoogieVar> currentState) {
-		
-		assert currentState.containsVariable(mVariableName);
-		
-		final SignDomainState<CodeBlock, IBoogieVar> convertedState = mStateConverter.getCheckedState(currentState);
+	private boolean logicalEvaluation(SignDomainState currentState) {
 
-		final SignDomainValue value = convertedState.getValues().get(mVariableName);
+		assert currentState.containsVariable(mVariableName);
+
+		final SignDomainValue value = currentState.getValues().get(mVariableName);
 
 		SignDomainValue newValue;
 
@@ -103,10 +95,10 @@ public class SignLogicalSingletonVariableExpressionEvaluator extends SignSinglet
 		case BOTTOM:
 			return false;
 		default:
-			throw new UnsupportedOperationException("The value " + value.getResult().toString()
-			        + " is no valid boolean sign domain value.");
+			throw new UnsupportedOperationException(
+					"The value " + value.getResult().toString() + " is no valid boolean sign domain value.");
 		}
-    }
+	}
 
 	@Override
 	public BooleanValue booleanValue() {

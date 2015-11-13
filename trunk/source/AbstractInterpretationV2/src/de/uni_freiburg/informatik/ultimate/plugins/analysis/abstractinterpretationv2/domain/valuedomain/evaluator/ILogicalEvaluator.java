@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator;
 
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.BooleanValue;
 
 /**
@@ -36,14 +37,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * 
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
- * @param <T>
+ * @param <VALUE>
  *            Any type.
  * @param <ACTION>
  *            Any action.
  * @param <VARDECL>
  *            Any variable declaration.
  */
-public interface ILogicalEvaluator<T, ACTION, VARDECL> extends IEvaluator<T, ACTION, VARDECL> {
+public interface ILogicalEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL>
+		extends IEvaluator<VALUE, STATE, ACTION, VARDECL> {
 
 	/**
 	 * @return The boolean value of the logical interpretation of the current expression.

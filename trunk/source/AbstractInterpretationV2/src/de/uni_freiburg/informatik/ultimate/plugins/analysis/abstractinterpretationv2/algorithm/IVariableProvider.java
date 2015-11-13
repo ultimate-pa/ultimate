@@ -36,14 +36,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <ACTION>
  * @param <VARDECL>
  */
-public interface IVariableProvider<ACTION, VARDECL> {
+public interface IVariableProvider<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
 
 	/**
 	 * Defines global and local variables according to the position of <code>current</code>.
 	 * 
 	 * Assumes state is fresh.
 	 */
-	IAbstractState<ACTION, VARDECL> defineVariablesPre(ACTION current, IAbstractState<ACTION, VARDECL> state);
+	STATE defineVariablesPre(ACTION current, STATE state);
 
-	IAbstractState<ACTION, VARDECL> defineVariablesPost(ACTION current, IAbstractState<ACTION, VARDECL> state);
+	STATE defineVariablesPost(ACTION current, STATE state);
 }

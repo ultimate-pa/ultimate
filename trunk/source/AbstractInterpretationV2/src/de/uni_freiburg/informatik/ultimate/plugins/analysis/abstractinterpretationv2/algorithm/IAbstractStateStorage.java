@@ -41,27 +41,26 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <ACTION>
  * @param <VARDECL>
  */
-public interface IAbstractStateStorage<ACTION, VARDECL, LOCATION> {
+public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
 
-	Collection<IAbstractState<ACTION, VARDECL>> getAbstractPreStates(ACTION transition);
+	Collection<STATE> getAbstractPreStates(ACTION transition);
 
-	Collection<IAbstractState<ACTION, VARDECL>> getAbstractPostStates(ACTION transition);
+	Collection<STATE> getAbstractPostStates(ACTION transition);
 
-	IAbstractState<ACTION, VARDECL> getCurrentAbstractPreState(ACTION transition);
+	STATE getCurrentAbstractPreState(ACTION transition);
 
-	IAbstractState<ACTION, VARDECL> getCurrentAbstractPostState(ACTION transition);
+	STATE getCurrentAbstractPostState(ACTION transition);
 
-	void addAbstractPreState(ACTION transition, IAbstractState<ACTION, VARDECL> state);
+	void addAbstractPreState(ACTION transition, STATE state);
 
-	void addAbstractPostState(ACTION transition, IAbstractState<ACTION, VARDECL> state);
+	void addAbstractPostState(ACTION transition, STATE state);
 
-	IAbstractState<ACTION, VARDECL> setPostStateIsFixpoint(ACTION transition, IAbstractState<ACTION, VARDECL> state,
-			boolean value);
+	STATE setPostStateIsFixpoint(ACTION transition, STATE state, boolean value);
 
-	IAbstractState<ACTION, VARDECL> mergePostStates(ACTION transition);
+	STATE mergePostStates(ACTION transition);
 
-	IAbstractStateStorage<ACTION, VARDECL, LOCATION> createStorage();
+	IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> createStorage();
 
-	Map<LOCATION, Term> getTerms(final ACTION initialTransition,final Script script, final Boogie2SMT bpl2smt);
+	Map<LOCATION, Term> getTerms(final ACTION initialTransition, final Script script, final Boogie2SMT bpl2smt);
 
 }

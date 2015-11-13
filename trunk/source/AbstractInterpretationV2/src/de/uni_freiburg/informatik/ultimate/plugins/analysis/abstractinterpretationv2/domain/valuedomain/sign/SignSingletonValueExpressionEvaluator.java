@@ -32,7 +32,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.sign.SignDomainValue.Values;
@@ -46,18 +45,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @param <T>
  *            The type of the value stored in this class.
  */
-public abstract class SignSingletonValueExpressionEvaluator<T> implements IEvaluator<Values, CodeBlock, IBoogieVar> {
+public abstract class SignSingletonValueExpressionEvaluator<T>
+		implements IEvaluator<SignDomainValue.Values, SignDomainState, CodeBlock, IBoogieVar> {
 
 	protected final T mValue;
 
 	public SignSingletonValueExpressionEvaluator(String value) {
 		T number = instantiate(value);
-
 		mValue = number;
 	}
 
 	@Override
-	public IEvaluationResult<Values> evaluate(IAbstractState<CodeBlock, IBoogieVar> currentState) {
+	public IEvaluationResult<SignDomainValue.Values> evaluate(SignDomainState currentState) {
 		int num = getSignum();
 
 		if (num > 0) {
@@ -72,9 +71,9 @@ public abstract class SignSingletonValueExpressionEvaluator<T> implements IEvalu
 	}
 
 	@Override
-	public final void addSubEvaluator(IEvaluator<Values, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(IEvaluator<SignDomainValue.Values, SignDomainState, CodeBlock, IBoogieVar> evaluator) {
 		throw new UnsupportedOperationException(
-		        "A sub evaluator cannot be added to a singleton expression value evaluator.");
+				"A sub evaluator cannot be added to a singleton expression value evaluator.");
 	}
 
 	@Override

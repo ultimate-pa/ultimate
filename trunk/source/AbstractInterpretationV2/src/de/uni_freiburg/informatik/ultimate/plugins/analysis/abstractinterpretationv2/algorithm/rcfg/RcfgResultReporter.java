@@ -52,9 +52,9 @@ import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
 public class RcfgResultReporter implements IResultReporter<CodeBlock> {
 
 	private final IUltimateServiceProvider mServices;
-	private final BaseRcfgAbstractStateStorageProvider mStorageProvider;
+	private final BaseRcfgAbstractStateStorageProvider<?> mStorageProvider;
 
-	public RcfgResultReporter(IUltimateServiceProvider services, BaseRcfgAbstractStateStorageProvider storageProvider) {
+	public RcfgResultReporter(IUltimateServiceProvider services, BaseRcfgAbstractStateStorageProvider<?> storageProvider) {
 		mServices = services;
 		mStorageProvider = storageProvider;
 	}

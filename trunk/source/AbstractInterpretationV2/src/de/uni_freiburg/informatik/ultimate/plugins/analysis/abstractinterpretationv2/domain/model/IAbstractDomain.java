@@ -34,14 +34,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public interface IAbstractDomain<STATE extends IAbstractState<ACTION, VARDECL>, ACTION, VARDECL> {
-	IAbstractState<ACTION, VARDECL> createFreshState();
+public interface IAbstractDomain<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
+	STATE createFreshState();
 
-	IAbstractStateBinaryOperator<ACTION, VARDECL> getWideningOperator();
+	IAbstractStateBinaryOperator<STATE> getWideningOperator();
 
-	IAbstractStateBinaryOperator<ACTION, VARDECL> getMergeOperator();
+	IAbstractStateBinaryOperator<STATE> getMergeOperator();
 
-	IAbstractPostOperator<ACTION, VARDECL> getPostOperator();
-
-	Class<STATE> getAbstractStateClass();
+	IAbstractPostOperator<STATE, ACTION, VARDECL> getPostOperator();
 }

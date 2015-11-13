@@ -46,7 +46,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<ACTION, VARDECL> {
+public final class EmptyDomainState<ACTION, VARDECL>
+		implements IAbstractState<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL> {
 
 	private static int sId;
 	private final Map<String, VARDECL> mVarDecls;
@@ -66,7 +67,7 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 	}
 
 	@Override
-	public IAbstractState<ACTION, VARDECL> addVariable(String name, VARDECL variable) {
+	public EmptyDomainState<ACTION, VARDECL> addVariable(String name, VARDECL variable) {
 		assert name != null;
 		assert variable != null;
 
@@ -79,7 +80,7 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 	}
 
 	@Override
-	public IAbstractState<ACTION, VARDECL> removeVariable(String name, VARDECL variable) {
+	public EmptyDomainState<ACTION, VARDECL> removeVariable(String name, VARDECL variable) {
 		assert name != null;
 		assert variable != null;
 
@@ -90,7 +91,7 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 	}
 
 	@Override
-	public IAbstractState<ACTION, VARDECL> addVariables(Map<String, VARDECL> variables) {
+	public EmptyDomainState<ACTION, VARDECL> addVariables(Map<String, VARDECL> variables) {
 		assert variables != null;
 		assert !variables.isEmpty();
 
@@ -105,7 +106,7 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 	}
 
 	@Override
-	public IAbstractState<ACTION, VARDECL> removeVariables(Map<String, VARDECL> variables) {
+	public EmptyDomainState<ACTION, VARDECL> removeVariables(Map<String, VARDECL> variables) {
 		assert variables != null;
 		assert !variables.isEmpty();
 
@@ -132,7 +133,7 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 	}
 
 	@Override
-	public IAbstractState<ACTION, VARDECL> setFixpoint(boolean value) {
+	public EmptyDomainState<ACTION, VARDECL> setFixpoint(boolean value) {
 		return new EmptyDomainState<ACTION, VARDECL>(mVarDecls, value);
 	}
 
@@ -146,7 +147,7 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 	}
 
 	@Override
-	public boolean isEqualTo(IAbstractState<ACTION, VARDECL> other) {
+	public boolean isEqualTo(EmptyDomainState<ACTION, VARDECL> other) {
 		if (other == null) {
 			return false;
 		}
@@ -179,7 +180,7 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 	}
 
 	@Override
-	public IAbstractState<ACTION, VARDECL> copy() {
+	public EmptyDomainState<ACTION, VARDECL> copy() {
 		return new EmptyDomainState<>(new HashMap<String, VARDECL>(mVarDecls), mIsFixpoint);
 	}
 
@@ -190,7 +191,7 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 	 *            another state
 	 * @return true iff this state has the same variables than other
 	 */
-	protected boolean hasSameVariables(IAbstractState<ACTION, VARDECL> other) {
+	protected boolean hasSameVariables(EmptyDomainState<ACTION, VARDECL> other) {
 		return isEqualTo(other);
 	}
 
@@ -201,23 +202,18 @@ public final class EmptyDomainState<ACTION, VARDECL> implements IAbstractState<A
 	@Override
 	public boolean containsVariable(String name) {
 		return mVarDecls.containsKey(name);
-    }
-	
+	}
+
 	@Override
 	public Term getTerm(Script script, Boogie2SMT bpl2smt) {
 		return script.term("true");
 	}
 
 	@Override
-	public void setToBottom() {
-		// This method does nothing here.
-	}
-
-	@Override
 	public VARDECL getVariableType(String name) {
 		assert name != null;
 		assert mVarDecls.containsKey(name);
-		
+
 		return mVarDecls.get(name);
 	}
 }

@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class FixpointEngine<ACTION, VARDECL, LOCATION> {
+public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
 
 	private static final String INDENT = "   ";
 
@@ -64,18 +64,20 @@ public class FixpointEngine<ACTION, VARDECL, LOCATION> {
 	private final int mMaxParallelStates;
 
 	private final ITransitionProvider<ACTION> mTransitionProvider;
-	private final IAbstractStateStorage<ACTION, VARDECL, LOCATION> mStateStorage;
-	private final IAbstractDomain<?, ACTION, VARDECL> mDomain;
-	private final IVariableProvider<ACTION, VARDECL> mVarProvider;
+	private final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> mStateStorage;
+	private final IAbstractDomain<STATE, ACTION, VARDECL> mDomain;
+	private final IVariableProvider<STATE, ACTION, VARDECL> mVarProvider;
 	private final ILoopDetector<ACTION> mLoopDetector;
 	private final IResultReporter<ACTION> mReporter;
 	private final IProgressAwareTimer mTimer;
 	private final Logger mLogger;
 
 	public FixpointEngine(final IUltimateServiceProvider services, final IProgressAwareTimer timer,
-			final ITransitionProvider<ACTION> post, final IAbstractStateStorage<ACTION, VARDECL, LOCATION> storage,
-			final IAbstractDomain<?, ACTION, VARDECL> domain, final IVariableProvider<ACTION, VARDECL> varProvider,
-			final ILoopDetector<ACTION> loopDetector, final IResultReporter<ACTION> reporter) {
+			final ITransitionProvider<ACTION> post,
+			final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> storage,
+			final IAbstractDomain<STATE, ACTION, VARDECL> domain,
+			final IVariableProvider<STATE, ACTION, VARDECL> varProvider, final ILoopDetector<ACTION> loopDetector,
+			final IResultReporter<ACTION> reporter) {
 		assert timer != null;
 		assert services != null;
 		assert post != null;
@@ -107,11 +109,11 @@ public class FixpointEngine<ACTION, VARDECL, LOCATION> {
 
 	// TODO: Recursion
 	private boolean runInternal(final ACTION start) {
-		final Deque<WorklistItem<ACTION, VARDECL, LOCATION>> worklist = new ArrayDeque<WorklistItem<ACTION, VARDECL, LOCATION>>();
+		final Deque<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> worklist = new ArrayDeque<WorklistItem<STATE, ACTION, VARDECL, LOCATION>>();
 		final Deque<Pair<ACTION, ACTION>> activeLoops = new ArrayDeque<>();
 		final Map<Pair<ACTION, ACTION>, Integer> loopCounters = new HashMap<>();
-		final IAbstractPostOperator<ACTION, VARDECL> post = mDomain.getPostOperator();
-		final IAbstractStateBinaryOperator<ACTION, VARDECL> widening = mDomain.getWideningOperator();
+		final IAbstractPostOperator<STATE, ACTION, VARDECL> post = mDomain.getPostOperator();
+		final IAbstractStateBinaryOperator<STATE> widening = mDomain.getWideningOperator();
 		final Set<ACTION> reachedErrors = new HashSet<>();
 
 		boolean errorReached = false;
@@ -120,12 +122,12 @@ public class FixpointEngine<ACTION, VARDECL, LOCATION> {
 		while (!worklist.isEmpty()) {
 			checkTimeout();
 
-			final WorklistItem<ACTION, VARDECL, LOCATION> currentItem = worklist.removeFirst();
-			final IAbstractState<ACTION, VARDECL> preState = currentItem.getPreState();
+			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem = worklist.removeFirst();
+			final STATE preState = currentItem.getPreState();
 			final ACTION current = currentItem.getAction();
-			final IAbstractStateStorage<ACTION, VARDECL, LOCATION> currentStateStorage = currentItem
+			final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> currentStateStorage = currentItem
 					.getCurrentStorage();
-			final IAbstractState<ACTION, VARDECL> oldPostState = currentStateStorage
+			final STATE oldPostState = currentStateStorage
 					.getCurrentAbstractPostState(current);
 
 			if (mLogger.isDebugEnabled()) {
@@ -135,9 +137,8 @@ public class FixpointEngine<ACTION, VARDECL, LOCATION> {
 			// calculate the (abstract) effect of the current action by first
 			// declaring variables in the prestate, and then calculating their
 			// values
-			final IAbstractState<ACTION, VARDECL> preStateWithFreshVariables = mVarProvider.defineVariablesPost(current,
-					preState);
-			IAbstractState<ACTION, VARDECL> newPostState = post.apply(preStateWithFreshVariables, current);
+			final STATE preStateWithFreshVariables = mVarProvider.defineVariablesPost(current, preState);
+			STATE newPostState = post.apply(preStateWithFreshVariables, current);
 
 			// check if this action leaves a loop
 			if (!activeLoops.isEmpty()) {
@@ -214,11 +215,10 @@ public class FixpointEngine<ACTION, VARDECL, LOCATION> {
 		}
 	}
 
-	private IAbstractState<ACTION, VARDECL> loopLeave(final Deque<Pair<ACTION, ACTION>> activeLoops,
+	private STATE loopLeave(final Deque<Pair<ACTION, ACTION>> activeLoops,
 			final Map<Pair<ACTION, ACTION>, Integer> loopCounters,
-			final IAbstractStateBinaryOperator<ACTION, VARDECL> widening,
-			final IAbstractState<ACTION, VARDECL> oldPostState, final IAbstractState<ACTION, VARDECL> pendingPostState,
-			final Pair<ACTION, ACTION> lastPair) {
+			final IAbstractStateBinaryOperator<STATE> widening, final STATE oldPostState,
+			final STATE pendingPostState, final Pair<ACTION, ACTION> lastPair) {
 		// yes, we are leaving a loop
 		activeLoops.pop();
 		Integer loopCounterValue = loopCounters.get(lastPair);
@@ -236,8 +236,8 @@ public class FixpointEngine<ACTION, VARDECL, LOCATION> {
 		return pendingPostState;
 	}
 
-	private WorklistItem<ACTION, VARDECL, LOCATION> createWorklistItem(final ACTION elem) {
-		final WorklistItem<ACTION, VARDECL, LOCATION> startItem = new WorklistItem<ACTION, VARDECL, LOCATION>(
+	private WorklistItem<STATE, ACTION, VARDECL, LOCATION> createWorklistItem(final ACTION elem) {
+		final WorklistItem<STATE, ACTION, VARDECL, LOCATION> startItem = new WorklistItem<STATE, ACTION, VARDECL, LOCATION>(
 				getCurrentAbstractPreState(elem, mStateStorage), elem, mStateStorage);
 		if (mTransitionProvider.isEnteringScope(elem)) {
 			startItem.addScope(elem);
@@ -248,20 +248,20 @@ public class FixpointEngine<ACTION, VARDECL, LOCATION> {
 		return startItem;
 	}
 
-	private IAbstractState<ACTION, VARDECL> applyWidening(final IAbstractStateBinaryOperator<ACTION, VARDECL> widening,
-			final IAbstractState<ACTION, VARDECL> oldPostState, IAbstractState<ACTION, VARDECL> pendingPostState) {
+	private STATE applyWidening(final IAbstractStateBinaryOperator<STATE> widening, final STATE oldPostState,
+			STATE pendingPostState) {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(getLogMessageUnwinding(oldPostState, pendingPostState));
 		}
-		final IAbstractState<ACTION, VARDECL> newPostState = widening.apply(oldPostState, pendingPostState);
+		final STATE newPostState = widening.apply(oldPostState, pendingPostState);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(getLogMessageUnwindingResult(newPostState));
 		}
 		return newPostState;
 	}
 
-	private void addSuccessors(final Deque<WorklistItem<ACTION, VARDECL, LOCATION>> worklist,
-			final WorklistItem<ACTION, VARDECL, LOCATION> currentItem) {
+	private void addSuccessors(final Deque<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> worklist,
+			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem) {
 		final ACTION current = currentItem.getAction();
 		final Collection<ACTION> successors = mTransitionProvider.getSuccessors(current, currentItem.getCurrentScope());
 
@@ -272,32 +272,32 @@ public class FixpointEngine<ACTION, VARDECL, LOCATION> {
 			return;
 		}
 
-		final IAbstractStateStorage<ACTION, VARDECL, LOCATION> currentStateStorage = currentItem.getCurrentStorage();
-		final Collection<IAbstractState<ACTION, VARDECL>> availablePostStates = currentStateStorage
-				.getAbstractPostStates(current);
+		final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> currentStateStorage = currentItem
+				.getCurrentStorage();
+		final Collection<STATE> availablePostStates = currentStateStorage.getAbstractPostStates(current);
 		final int availablePostStatesCount = availablePostStates.size();
 
 		if (availablePostStatesCount > mMaxParallelStates) {
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageMergeStates(availablePostStatesCount));
 			}
-			final IAbstractState<ACTION, VARDECL> newPostState = currentStateStorage.mergePostStates(current);
+			final STATE newPostState = currentStateStorage.mergePostStates(current);
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageMergeResult(newPostState));
 			}
 			addSuccessorsForPostState(worklist, currentItem, successors, newPostState);
 		} else {
-			for (final IAbstractState<ACTION, VARDECL> postState : availablePostStates) {
+			for (final STATE postState : availablePostStates) {
 				addSuccessorsForPostState(worklist, currentItem, successors, postState);
 			}
 		}
 	}
 
-	private void addSuccessorsForPostState(final Deque<WorklistItem<ACTION, VARDECL, LOCATION>> worklist,
-			final WorklistItem<ACTION, VARDECL, LOCATION> currentItem, final Collection<ACTION> successors,
-			final IAbstractState<ACTION, VARDECL> postState) {
+	private void addSuccessorsForPostState(final Deque<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> worklist,
+			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem, final Collection<ACTION> successors,
+			final STATE postState) {
 		for (final ACTION successor : successors) {
-			final WorklistItem<ACTION, VARDECL, LOCATION> successorItem = new WorklistItem<ACTION, VARDECL, LOCATION>(
+			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> successorItem = new WorklistItem<STATE, ACTION, VARDECL, LOCATION>(
 					postState, successor, currentItem);
 
 			if (mLogger.isDebugEnabled()) {
@@ -308,8 +308,8 @@ public class FixpointEngine<ACTION, VARDECL, LOCATION> {
 		}
 	}
 
-	private void scopeEnterOrLeave(final WorklistItem<ACTION, VARDECL, LOCATION> currentItem, final ACTION successor,
-			final WorklistItem<ACTION, VARDECL, LOCATION> successorItem) {
+	private void scopeEnterOrLeave(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem,
+			final ACTION successor, final WorklistItem<STATE, ACTION, VARDECL, LOCATION> successorItem) {
 		if (mTransitionProvider.isEnteringScope(successor)) {
 			successorItem.addScope(successor);
 			if (mLogger.isDebugEnabled()) {
@@ -327,17 +327,17 @@ public class FixpointEngine<ACTION, VARDECL, LOCATION> {
 		}
 	}
 
-	private IAbstractState<ACTION, VARDECL> setFixpoint(Deque<WorklistItem<ACTION, VARDECL, LOCATION>> worklist,
-			final WorklistItem<ACTION, VARDECL, LOCATION> currentItem, IAbstractState<ACTION, VARDECL> oldPostState) {
-		final IAbstractState<ACTION, VARDECL> newPostState = currentItem.getCurrentStorage()
-				.setPostStateIsFixpoint(currentItem.getAction(), oldPostState, true);
+	private STATE setFixpoint(Deque<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> worklist,
+			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem, STATE oldPostState) {
+		final STATE newPostState = currentItem.getCurrentStorage().setPostStateIsFixpoint(currentItem.getAction(),
+				oldPostState, true);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(getLogMessageFixpointFound(oldPostState, newPostState));
 		}
 
 		// now, replace all occurences of oldPostState as prestate in worklist
 		// with newPostState
-		for (final WorklistItem<ACTION, VARDECL, LOCATION> entry : worklist) {
+		for (final WorklistItem<STATE, ACTION, VARDECL, LOCATION> entry : worklist) {
 			if (oldPostState.equals(entry.getPreState())) {
 				entry.setPreState(newPostState);
 			}
@@ -346,9 +346,9 @@ public class FixpointEngine<ACTION, VARDECL, LOCATION> {
 		return newPostState;
 	}
 
-	private IAbstractState<ACTION, VARDECL> getCurrentAbstractPreState(final ACTION current,
-			IAbstractStateStorage<ACTION, VARDECL, LOCATION> stateStorage) {
-		IAbstractState<ACTION, VARDECL> preState = stateStorage.getCurrentAbstractPreState(current);
+	private STATE getCurrentAbstractPreState(final ACTION current,
+			IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> stateStorage) {
+		STATE preState = stateStorage.getCurrentAbstractPreState(current);
 		if (preState == null) {
 			preState = mDomain.createFreshState();
 			preState = mVarProvider.defineVariablesPre(current, preState);
@@ -363,13 +363,12 @@ public class FixpointEngine<ACTION, VARDECL, LOCATION> {
 		}
 	}
 
-	private StringBuilder getLogMessageFixpointFound(IAbstractState<ACTION, VARDECL> oldPostState,
-			final IAbstractState<ACTION, VARDECL> newPostState) {
+	private StringBuilder getLogMessageFixpointFound(STATE oldPostState, final STATE newPostState) {
 		return new StringBuilder().append(INDENT).append(" post state ").append(oldPostState.hashCode())
 				.append(" is fixpoint, replacing with ").append(newPostState.hashCode());
 	}
 
-	private StringBuilder getLogMessageMergeResult(IAbstractState<ACTION, VARDECL> newPostState) {
+	private StringBuilder getLogMessageMergeResult(STATE newPostState) {
 		return new StringBuilder().append(INDENT).append(" Merging resulted in [").append(newPostState.hashCode())
 				.append("]");
 	}
@@ -379,7 +378,7 @@ public class FixpointEngine<ACTION, VARDECL, LOCATION> {
 				.append(" states at target location");
 	}
 
-	private StringBuilder getLogMessageNewPostState(IAbstractState<ACTION, VARDECL> newPostState) {
+	private StringBuilder getLogMessageNewPostState(STATE newPostState) {
 		return new StringBuilder().append(INDENT).append(" adding post state [").append(newPostState.hashCode())
 				.append("] ").append(newPostState.toLogString());
 	}
@@ -389,20 +388,18 @@ public class FixpointEngine<ACTION, VARDECL, LOCATION> {
 		return new StringBuilder().append(INDENT).append(" Entering loop (").append(loopCounters.get(pair)).append(")");
 	}
 
-	private StringBuilder getLogMessageUnwindingResult(IAbstractState<ACTION, VARDECL> newPostState) {
+	private StringBuilder getLogMessageUnwindingResult(STATE newPostState) {
 		return new StringBuilder().append(INDENT).append(" Widening resulted in post state [")
 				.append(newPostState.hashCode()).append("]");
 	}
 
-	private StringBuilder getLogMessageUnwinding(final IAbstractState<ACTION, VARDECL> oldPostState,
-			IAbstractState<ACTION, VARDECL> newPostState) {
+	private StringBuilder getLogMessageUnwinding(final STATE oldPostState, STATE newPostState) {
 		return new StringBuilder().append(INDENT).append(" Widening with old post state [")
 				.append(oldPostState.hashCode()).append("] and new post state [").append(newPostState.hashCode())
 				.append("]");
 	}
 
-	private StringBuilder getLogMessageCurrentTransition(final IAbstractState<ACTION, VARDECL> preState,
-			final ACTION current) {
+	private StringBuilder getLogMessageCurrentTransition(final STATE preState, final ACTION current) {
 		final String preStateString = preState == null ? "NULL"
 				: addHashCodeString(new StringBuilder(), preState).append(" ").append(preState.toLogString())
 						.toString();
@@ -411,7 +408,8 @@ public class FixpointEngine<ACTION, VARDECL, LOCATION> {
 				.append(preStateString);
 	}
 
-	private StringBuilder getLogMessageAddTransition(final WorklistItem<ACTION, VARDECL, LOCATION> newTransition) {
+	private StringBuilder getLogMessageAddTransition(
+			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> newTransition) {
 		return new StringBuilder().append(INDENT).append(" Adding [").append(newTransition.getPreState().hashCode())
 				.append("]").append(" --[").append(newTransition.getAction().hashCode()).append("]->");
 	}

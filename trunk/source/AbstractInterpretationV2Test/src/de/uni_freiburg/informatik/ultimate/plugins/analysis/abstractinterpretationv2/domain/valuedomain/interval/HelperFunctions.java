@@ -29,20 +29,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.math.BigDecimal;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.EvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluationResult;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.interval.IntervalBinaryExpressionEvaluator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.interval.IntervalDomainValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.interval.IntervalSingletonValueExpressionEvaluator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.interval.IntervalValue;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class HelperFunctions {
 	protected static IntervalDomainValue createInterval(int lower, int upper) {
 		return new IntervalDomainValue(new IntervalValue(new BigDecimal(lower)),
-		        new IntervalValue(new BigDecimal(upper)));
+				new IntervalValue(new BigDecimal(upper)));
 	}
 
 	protected static IntervalDomainValue createInterval() {
@@ -50,11 +43,11 @@ public class HelperFunctions {
 	}
 
 	protected static IntervalBinaryExpressionEvaluator createBinaryEvaluator(IntervalDomainValue first,
-	        IntervalDomainValue second, Operator operator) {
+			IntervalDomainValue second, Operator operator) {
 		IntervalSingletonValueExpressionEvaluator value1Evaluator = new IntervalSingletonValueExpressionEvaluator(
-		        first);
+				first);
 		IntervalSingletonValueExpressionEvaluator value2Evaluator = new IntervalSingletonValueExpressionEvaluator(
-		        second);
+				second);
 
 		IntervalBinaryExpressionEvaluator binaryExpressionEvaluator = new IntervalBinaryExpressionEvaluator();
 
@@ -72,7 +65,7 @@ public class HelperFunctions {
 	}
 
 	protected static boolean computeResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
-	        IntervalDomainValue expectedResult, IntervalDomainValue evaluatorResult) {
+			IntervalDomainValue expectedResult, IntervalDomainValue evaluatorResult) {
 
 		System.out.println(getMethodName());
 		System.out.println("Result  : " + evaluatorResult.toString());
@@ -100,34 +93,34 @@ public class HelperFunctions {
 	}
 
 	protected static boolean computeAdditionResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
-	        IntervalDomainValue expectedResult) {
+			IntervalDomainValue expectedResult) {
 
-		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> result = createBinaryEvaluator(
-		        interval1, interval2, Operator.ARITHPLUS).evaluate(null);
+		final IEvaluationResult<IntervalDomainEvaluationResult> result = createBinaryEvaluator(interval1, interval2,
+				Operator.ARITHPLUS).evaluate(null);
 
 		return computeResult(interval1, interval2, expectedResult, result.getResult().getEvaluatedValue());
 	}
 
 	protected static boolean computeSubtractionResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
-	        IntervalDomainValue expectedResult) {
+			IntervalDomainValue expectedResult) {
 
-		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> result = createBinaryEvaluator(
-		        interval1, interval2, Operator.ARITHMINUS).evaluate(null);
+		final IEvaluationResult<IntervalDomainEvaluationResult> result = createBinaryEvaluator(interval1, interval2,
+				Operator.ARITHMINUS).evaluate(null);
 
 		return computeResult(interval1, interval2, expectedResult, result.getResult().getEvaluatedValue());
 	}
 
 	protected static boolean computeMultiplicationResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
-	        IntervalDomainValue expectedResult) {
+			IntervalDomainValue expectedResult) {
 
-		final IEvaluationResult<EvaluationResult<IntervalDomainValue, CodeBlock, IBoogieVar>> result = createBinaryEvaluator(
-		        interval1, interval2, Operator.ARITHMUL).evaluate(null);
+		final IEvaluationResult<IntervalDomainEvaluationResult> result = createBinaryEvaluator(interval1, interval2,
+				Operator.ARITHMUL).evaluate(null);
 
 		return computeResult(interval1, interval2, expectedResult, result.getResult().getEvaluatedValue());
 	}
 
 	protected static boolean computeIntersectionResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
-	        IntervalDomainValue expectedResult) {
+			IntervalDomainValue expectedResult) {
 
 		final IntervalDomainValue result = interval1.intersect(interval2);
 
