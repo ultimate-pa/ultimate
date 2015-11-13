@@ -19,6 +19,7 @@
 		<jacoco-version>0.7.5.201505241946</jacoco-version>
 		<m2e-version>1.0.0</m2e-version>
 		<maven-antrun-plugin-version>1.8</maven-antrun-plugin-version>
+		<coveralls-version>4.0.0</coveralls-version>
 
 		<!-- reference to workspace root -->
 		<workspaceDir>${basedir}/..</workspaceDir>
@@ -309,6 +310,82 @@
 								</configuration>
 							</execution>
 						</executions>
+					</plugin>
+				</plugins>
+			</build>
+
+			<modules>
+				<!-- modules containing test utilities -->
+				<module>../Library-junit-helper</module>
+				<module>../Library-UltimateTest</module>
+
+				<!-- modules containing actual tests -->
+				<module>../Library-UltimateUtilTest</module>
+				<module>../Library-UltimateTestTest</module>
+				<module>../CoreRCPTest</module>
+				<module>../UltimateRegressionTest</module>
+			</modules>
+		</profile>
+
+		<profile>
+			<!-- The profile travis is used to generate junit test case coverage through 
+				travis and coveralls. It uses all regression tests, but not UltimateTest, 
+				as those tests are very slow and should be executed manually via profile 
+				manualtest. You should not need to run this profile manually. -->
+			<id>travis</id>
+
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.eclipse.tycho</groupId>
+						<artifactId>tycho-surefire-plugin</artifactId>
+						<version>${tycho-version}</version>
+						<configuration>
+							<providerHint>junit47</providerHint>
+							<useUIHarness>false</useUIHarness>
+							<useUIThread>false</useUIThread>
+							<reuseForks>false</reuseForks>
+							<showEclipseLog>true</showEclipseLog>
+							<threadCount>1</threadCount>
+							<failIfNoTests>false</failIfNoTests>
+							<trimStackTrace>true</trimStackTrace>
+							<redirectTestOutputToFile>true</redirectTestOutputToFile>
+							<argLine>${tycho.testArgLine} ${coverage-argline}</argLine>
+
+							<includes>
+								<include>**/*.java</include>
+							</includes>
+						</configuration>
+					</plugin>
+
+					<!-- Code Coverage Analysis -->
+					<plugin>
+						<groupId>org.jacoco</groupId>
+						<artifactId>jacoco-maven-plugin</artifactId>
+						<version>${jacoco-version}</version>
+						<executions>
+							<execution>
+								<goals>
+									<goal>prepare-agent</goal>
+								</goals>
+								<configuration>
+									<destFile>${sonar.jacoco.reportPath}</destFile>
+									<append>true</append>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+
+					<!-- Coveralls connector -->
+					<plugin>
+						<groupId>org.eluder.coveralls</groupId>
+						<artifactId>coveralls-maven-plugin</artifactId>
+						<version>${coveralls-version}</version>
+						<configuration>
+							<!-- We should not publish the repo token, but I dont know any other 
+								way of telling travis. Its either here or in .travis.yml -->
+							<repoToken>EfXcoEYdCZRch9bAt6OULUTnGEz43OyEw</repoToken>
+						</configuration>
 					</plugin>
 				</plugins>
 			</build>

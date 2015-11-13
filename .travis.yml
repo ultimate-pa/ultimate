@@ -24,9 +24,12 @@ before_script:
    
 script: 
   - while true; do sleep 10 && echo -n "."; done &
-  - cd trunk/source/BA_MavenParentUltimate && mvn clean install -Pcoverage -Dmaven.test.failure.ignore=true
+  - cd trunk/source/BA_MavenParentUltimate && mvn clean install -Ptravis -Dmaven.test.failure.ignore=true 
   - kill $!
 
+after_success:
+  - mvn clean test jacoco:report coveralls:report
+  
 branches:
   only:
     - dev
