@@ -95,7 +95,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 
 
 	@Override
-	public Expression constructBinaryComparisonExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
+	public Expression constructBinaryComparisonIntegerExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
 		if(!m_FunctionDeclarations.checkParameters(type1, type2)) {
 			throw new IllegalArgumentException("incompatible types " + type1 + " " + type2);
 		}
@@ -171,7 +171,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 	
 	@Override
-	public Expression constructBinaryBitwiseExpression(ILocation loc,
+	public Expression constructBinaryBitwiseIntegerExpression(ILocation loc,
 			int op, Expression left, CPrimitive typeLeft,
 			Expression right, CPrimitive typeRight) {
 		if(!m_FunctionDeclarations.checkParameters(typeLeft, typeRight)) {
@@ -213,7 +213,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 	
 	@Override
-	public Expression constructUnaryExpression(ILocation loc,
+	public Expression constructUnaryIntegerExpression(ILocation loc,
 			int op, Expression expr, CPrimitive type) {
 		final String funcname;
 		switch (op) {
@@ -233,7 +233,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 	
 	@Override
-	public Expression constructArithmeticExpression(ILocation loc, int nodeOperator, Expression exp1,
+	public Expression constructArithmeticIntegerExpression(ILocation loc, int nodeOperator, Expression exp1,
 			CPrimitive type1, Expression exp2, CPrimitive type2) {
 		FunctionApplication func;
 		if(!m_FunctionDeclarations.checkParameters(type1, type2)) {

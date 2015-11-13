@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -137,7 +136,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public Expression constructBinaryComparisonExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
+	public Expression constructBinaryComparisonIntegerExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
 		if (!type1.equals(type2)) {
 			throw new IllegalArgumentException("incompatible types " + type1 + " and " + type2);
 		}
@@ -189,7 +188,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public Expression constructBinaryBitwiseExpression(ILocation loc,
+	public Expression constructBinaryBitwiseIntegerExpression(ILocation loc,
 			int op, Expression left, CPrimitive typeLeft,
 			Expression right, CPrimitive typeRight) {
 		final String funcname;
@@ -224,7 +223,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 	
 	@Override
-	public Expression constructUnaryExpression(ILocation loc,
+	public Expression constructUnaryIntegerExpression(ILocation loc,
 			int op, Expression expr, CPrimitive type) {
 		final Expression result;
 		switch (op) {
@@ -260,11 +259,10 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public Expression constructArithmeticExpression(ILocation loc, int nodeOperator, Expression exp1,
+	public Expression constructArithmeticIntegerExpression(ILocation loc, int nodeOperator, Expression exp1,
 			CPrimitive type1, Expression exp2, CPrimitive type2) {
-		if (type1.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE || type2.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
-			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
-		}
+		assert (type1.getGeneralType() == GENERALPRIMITIVE.INTTYPE);
+		assert (type2.getGeneralType() == GENERALPRIMITIVE.INTTYPE);
 		BinaryExpression.Operator operator;
 		if (type1.isIntegerType() && type1.isUnsigned()) {
 			assert type2.isIntegerType() && type2.isUnsigned() : "incompatible types";

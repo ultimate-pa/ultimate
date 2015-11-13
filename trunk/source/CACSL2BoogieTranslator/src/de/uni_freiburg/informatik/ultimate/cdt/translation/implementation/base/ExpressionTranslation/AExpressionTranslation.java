@@ -123,10 +123,42 @@ public abstract class AExpressionTranslation {
 	}
 	
 	
-	public abstract Expression constructBinaryComparisonExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
-	public abstract Expression constructBinaryBitwiseExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
-	public abstract Expression constructUnaryExpression(ILocation loc, int nodeOperator, Expression exp, CPrimitive type);
-	public abstract Expression constructArithmeticExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
+	public final Expression constructBinaryComparisonExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
+		//TODO: Check that types coincide
+		if (type1.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE || type2.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
+			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
+		} else {
+			return constructBinaryComparisonIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2);
+		}
+	}
+	public final Expression constructBinaryBitwiseExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
+		//TODO: Check that types coincide
+		if (type1.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE || type2.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
+			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
+		} else {
+			return constructBinaryBitwiseIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2);
+		}
+	}
+	public final Expression constructUnaryExpression(ILocation loc, int nodeOperator, Expression exp, CPrimitive type) {
+		if (type.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
+			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
+		} else {
+			return constructUnaryIntegerExpression(loc, nodeOperator, exp, type);
+		}
+	}
+	public final Expression constructArithmeticExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
+		//TODO: Check that types coincide
+		if (type1.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE || type2.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
+			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
+		} else {
+			return constructArithmeticIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2);
+		}
+	}
+	
+	public abstract Expression constructBinaryComparisonIntegerExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
+	public abstract Expression constructBinaryBitwiseIntegerExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
+	public abstract Expression constructUnaryIntegerExpression(ILocation loc, int nodeOperator, Expression exp, CPrimitive type);
+	public abstract Expression constructArithmeticIntegerExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
 	
 	
 	public Expression constructBinaryEqualityExpression(ILocation loc, int nodeOperator, Expression exp1, CType type1, Expression exp2, CType type2) {
