@@ -682,7 +682,8 @@ public class CHandler implements ICHandler {
 				// are we in prerun mode?
 				if (main instanceof PRDispatcher) {
 					// all unions should be on heap
-					if (cDec.getType() instanceof CUnion) {
+					if (cDec.getType() instanceof CUnion 
+							&& storageClass != StorageClass.TYPEDEF) {
 						((PRDispatcher) main).getVariablesOnHeap().add(d);
 					}
 				}
