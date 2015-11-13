@@ -385,7 +385,9 @@
 							<!-- We should not publish the repo token, but I dont know any other 
 								way of telling travis. Its either here or in .travis.yml -->
 							<repoToken>EfXcoEYdCZRch9bAt6OULUTnGEz43OyEw</repoToken>
-							<jacocoReports>${sonar.jacoco.reportPath}</jacocoReports>
+							<jacocoReports>
+								<jacocoReport>${sonar.jacoco.reportPath}</jacocoReport>
+							</jacocoReports>
 						</configuration>
 					</plugin>
 				</plugins>
