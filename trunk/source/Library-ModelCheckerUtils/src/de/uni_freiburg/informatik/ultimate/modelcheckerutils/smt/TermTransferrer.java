@@ -168,7 +168,8 @@ public class TermTransferrer extends TermTransformer {
 	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
 		Term result;
 		try {
-			result = m_Script.term(appTerm.getFunction().getName(), newArgs);
+			BigInteger[] indices = appTerm.getFunction().getIndices();
+			result = m_Script.term(appTerm.getFunction().getName(), indices, null, newArgs);
 		} catch (SMTLIBException e) {
 			if (e.getMessage().startsWith("Undeclared function symbol")) {
 				FunctionSymbol fsymb = appTerm.getFunction();
