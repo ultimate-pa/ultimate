@@ -3773,7 +3773,7 @@ public class CHandler implements ICHandler {
 			if (cPrimitive.isIntegerType()) {
 				m_ExpressionTranslation.convertIntToInt(loc, rexp, newType);
 			} else if (cPrimitive.isRealFloatingType()) {
-				m_ExpressionTranslation.convertFloatToInt(main, loc, rexp, newType);
+				m_ExpressionTranslation.convertFloatToInt(loc, rexp, newType);
 			} else if (cPrimitive.getType().equals(PRIMITIVE.VOID)) {
 				throw new IncorrectSyntaxException(loc, "cannot convert from void");
 			} else {
@@ -3801,9 +3801,9 @@ public class CHandler implements ICHandler {
 		if (oldType instanceof CPrimitive) {
 			CPrimitive cPrimitive = (CPrimitive) oldType;
 			if (cPrimitive.isIntegerType()) {
-				m_ExpressionTranslation.convertIntToFloat(main, loc, rexp, newType);
+				m_ExpressionTranslation.convertIntToFloat(loc, rexp, newType);
 			} else if (cPrimitive.isRealFloatingType()) {
-				m_ExpressionTranslation.convertFloatToFloat(main, loc, rexp, newType);
+				m_ExpressionTranslation.convertFloatToFloat(loc, rexp, newType);
 			} else if (cPrimitive.getType().equals(PRIMITIVE.VOID)) {
 				throw new IncorrectSyntaxException(loc, "cannot convert from void");
 			} else {
@@ -3812,7 +3812,7 @@ public class CHandler implements ICHandler {
 		} else if (oldType instanceof CPointer) {
 			throw new IncorrectSyntaxException(loc, "cannot convert pointer to float");
 		} else if (oldType instanceof CEnum) {
-			m_ExpressionTranslation.convertIntToFloat(main, loc, rexp, newType);
+			m_ExpressionTranslation.convertIntToFloat(loc, rexp, newType);
 		} else if (oldType instanceof CArray) {
 			throw new AssertionError("cannot convert from CArray");
 		} else if (oldType instanceof CFunction) {

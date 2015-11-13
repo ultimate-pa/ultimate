@@ -38,6 +38,7 @@ import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
@@ -63,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
@@ -74,12 +76,14 @@ public abstract class AExpressionTranslation {
 	
 	protected final FunctionDeclarations m_FunctionDeclarations;
 	protected final TypeSizes m_TypeSizes;
+	protected final ITypeHandler m_TypeHandler;
 
 
 	public AExpressionTranslation(TypeSizes typeSizeConstants, ITypeHandler typeHandler) {
 		super();
 		this.m_TypeSizes = typeSizeConstants;
 		this.m_FunctionDeclarations = new FunctionDeclarations(typeHandler, m_TypeSizes);
+		this.m_TypeHandler = typeHandler;
 	}
 
 	public ExpressionResult translateLiteral(Dispatcher main, IASTLiteralExpression node) {
@@ -126,7 +130,8 @@ public abstract class AExpressionTranslation {
 	public final Expression constructBinaryComparisonExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
 		//TODO: Check that types coincide
 		if (type1.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE || type2.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
-			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
+			String prefixedFunctionName = declareBinaryFloatComparisonOperation(loc, type1);
+			return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp1, exp2});
 		} else {
 			return constructBinaryComparisonIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2);
 		}
@@ -141,7 +146,8 @@ public abstract class AExpressionTranslation {
 	}
 	public final Expression constructUnaryExpression(ILocation loc, int nodeOperator, Expression exp, CPrimitive type) {
 		if (type.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
-			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
+			String prefixedFunctionName = declareUnaryFloatOperation(loc, type);
+			return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp});
 		} else {
 			return constructUnaryIntegerExpression(loc, nodeOperator, exp, type);
 		}
@@ -149,7 +155,8 @@ public abstract class AExpressionTranslation {
 	public final Expression constructArithmeticExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
 		//TODO: Check that types coincide
 		if (type1.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE || type2.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
-			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
+			String prefixedFunctionName = declareBinaryArithmeticFloatOperation(loc, type1);
+			return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp1, exp2});
 		} else {
 			return constructArithmeticIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2);
 		}
@@ -262,7 +269,25 @@ public abstract class AExpressionTranslation {
 		if (operand.lrVal.getCType().equals(resultType)) {
 			// do nothing
 		} else {
-			convertIntToInt(loc, operand, resultType);
+			if (operand.lrVal.getCType().isIntegerType()) {
+				if (resultType.isIntegerType()) {
+					convertIntToInt(loc, operand, resultType);
+				} else if (resultType.isRealFloatingType()) {
+					convertIntToFloat(loc, operand, resultType);
+				} else {
+					throw new UnsupportedSyntaxException(loc, "conversion from " + operand.lrVal.getCType() + " to " + resultType);
+				}
+			} else if (operand.lrVal.getCType().isRealFloatingType()) {
+				if (resultType.isIntegerType()) {
+					convertFloatToInt(loc, operand, resultType);
+				} else if (resultType.isRealFloatingType()) {
+					convertFloatToFloat(loc, operand, resultType);
+				} else {
+					throw new UnsupportedSyntaxException(loc, "conversion from " + operand.lrVal.getCType() + " to " + resultType);
+				}
+			} else {
+				throw new UnsupportedSyntaxException(loc, "conversion from " + operand.lrVal.getCType() + " to " + resultType);
+			}
 		}
 	}
 
@@ -413,15 +438,52 @@ public abstract class AExpressionTranslation {
 		return prefixedFunctionName;
 	}
 	
-	private String declareConversionFunction(Dispatcher main, ILocation loc, CPrimitive oldType, CPrimitive newType) {
+	private String declareConversionFunction(ILocation loc, CPrimitive oldType, CPrimitive newType) {
 		String functionName = "convert" + oldType.toString() +"To" + newType.toString();
 		String prefixedFunctionName = "~" + functionName;
 		if (!m_FunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
 			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
 			Attribute[] attributes = new Attribute[] { attribute };
-			ASTType resultASTType = main.typeHandler.ctype2asttype(loc, newType);
-			ASTType paramASTType = main.typeHandler.ctype2asttype(loc, oldType);
+			ASTType resultASTType = m_TypeHandler.ctype2asttype(loc, newType);
+			ASTType paramASTType = m_TypeHandler.ctype2asttype(loc, oldType);
 			m_FunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTType);
+		}
+		return prefixedFunctionName;
+	}
+	
+	private String declareBinaryFloatComparisonOperation(ILocation loc, CPrimitive type) {
+		String functionName = "someBinary" + type.toString() +"ComparisonOperation";
+		String prefixedFunctionName = "~" + functionName;
+		if (!m_FunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
+			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
+			Attribute[] attributes = new Attribute[] { attribute };
+			ASTType paramAstType = m_TypeHandler.ctype2asttype(loc, type);
+			ASTType resultAstType = new PrimitiveType(loc, SFO.BOOL);
+			m_FunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultAstType, paramAstType, paramAstType);
+		}
+		return prefixedFunctionName;
+	}
+	
+	private String declareBinaryArithmeticFloatOperation(ILocation loc, CPrimitive type) {
+		String functionName = "someBinaryArithmetic" + type.toString() +"operation";
+		String prefixedFunctionName = "~" + functionName;
+		if (!m_FunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
+			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
+			Attribute[] attributes = new Attribute[] { attribute };
+			ASTType astType = m_TypeHandler.ctype2asttype(loc, type);
+			m_FunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType, astType);
+		}
+		return prefixedFunctionName;
+	}
+	
+	private String declareUnaryFloatOperation(ILocation loc, CPrimitive type) {
+		String functionName = "someUnary" + type.toString() +"operation";
+		String prefixedFunctionName = "~" + functionName;
+		if (!m_FunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
+			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
+			Attribute[] attributes = new Attribute[] { attribute };
+			ASTType astType = m_TypeHandler.ctype2asttype(loc, type);
+			m_FunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType);
 		}
 		return prefixedFunctionName;
 	}
@@ -456,18 +518,18 @@ public abstract class AExpressionTranslation {
 		return prefixedFunctionName;
 	}
 
-	public void convertFloatToInt(Dispatcher main, ILocation loc, ExpressionResult rexp, CPrimitive newType) {
+	public void convertFloatToInt(ILocation loc, ExpressionResult rexp, CPrimitive newType) {
 //		throw new UnsupportedSyntaxException(loc, "conversion from float to int not yet implemented");
-		String prefixedFunctionName = declareConversionFunction(main, loc, (CPrimitive) rexp.lrVal.getCType(), newType);
+		String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
 		Expression oldExpression = rexp.lrVal.getValue();
 		Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {oldExpression});
 		RValue rValue = new RValue(resultExpression, newType, false, false);
 		rexp.lrVal = rValue;
 	}
 
-	public void convertIntToFloat(Dispatcher main, ILocation loc, ExpressionResult rexp, CPrimitive newType) {
+	public void convertIntToFloat(ILocation loc, ExpressionResult rexp, CPrimitive newType) {
 //		throw new UnsupportedSyntaxException(loc, "conversion from int to float not yet implemented");
-		String prefixedFunctionName = declareConversionFunction(main, loc, (CPrimitive) rexp.lrVal.getCType(), newType);
+		String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
 		Expression oldExpression = rexp.lrVal.getValue();
 		Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {oldExpression});
 		RValue rValue = new RValue(resultExpression, newType, false, false);
@@ -475,9 +537,9 @@ public abstract class AExpressionTranslation {
 
 	}
 	
-	public void convertFloatToFloat(Dispatcher main, ILocation loc, ExpressionResult rexp, CPrimitive newType) {
+	public void convertFloatToFloat(ILocation loc, ExpressionResult rexp, CPrimitive newType) {
 //		throw new UnsupportedSyntaxException(loc, "conversion from float to float not yet implemented");
-		String prefixedFunctionName = declareConversionFunction(main, loc, (CPrimitive) rexp.lrVal.getCType(), newType);
+		String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
 		Expression oldExpression = rexp.lrVal.getValue();
 		Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {oldExpression});
 		RValue rValue = new RValue(resultExpression, newType, false, false);
