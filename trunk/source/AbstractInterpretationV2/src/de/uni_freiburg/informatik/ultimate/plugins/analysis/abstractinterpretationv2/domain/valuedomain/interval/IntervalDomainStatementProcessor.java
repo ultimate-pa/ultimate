@@ -93,7 +93,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 
 		mLogger = logger;
 
-		mEvaluatorFactory = new IntervalEvaluatorFactory(mLogger, mStateConverter);
+//		mEvaluatorFactory = new IntervalEvaluatorFactory(mLogger, mStateConverter);
 
 		mLhsVariable = null;
 	}
@@ -116,6 +116,8 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	@Override
 	protected void visit(AssignmentStatement statement) {
 
+		mEvaluatorFactory = new IntervalEvaluatorFactory(mLogger, mStateConverter);
+		
 		final LeftHandSide[] lhs = statement.getLhs();
 		final Expression[] rhs = statement.getRhs();
 
@@ -162,6 +164,8 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 
 							mNewState.setBooleanValue(varname, logicalEvaluator.booleanValue());
 						}
+					} else  {
+						mNewState.setValue(varname, newValue);
 					}
 				} else if (type.getIType() instanceof ArrayType) {
 					// TODO:
@@ -265,6 +269,8 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	@Override
 	protected void visit(HavocStatement statement) {
 
+		mEvaluatorFactory = new IntervalEvaluatorFactory(mLogger, mStateConverter);
+		
 		for (VariableLHS var : statement.getIdentifiers()) {
 			final IBoogieVar type = mOldState.getVariables().get(var.getIdentifier());
 
@@ -331,7 +337,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 
 		// TODO Implement proper handling of arrays.
 		mExpressionEvaluator
-		        .addEvaluator(new IntervalLogicalSingletonValueExpressionEvaluator(new IntervalDomainValue()));
+				.addEvaluator(new IntervalLogicalSingletonValueExpressionEvaluator(new IntervalDomainValue()));
 	}
 
 }

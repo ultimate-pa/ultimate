@@ -576,6 +576,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 				mLogger.warn(
 				        "Cannot handle more than one variables in a sub-tree of an expression. Returning current state.");
 			}
+			break;
 		case COMPPO:
 		default:
 			mBooleanValue = new BooleanValue(false);
