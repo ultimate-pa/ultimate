@@ -33,6 +33,8 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -113,6 +115,12 @@ public class SvComp14CHandler extends CHandler {
 	 * The string representing SV-Comp's assert method.
 	 */
 	private static final String ASSUME_STRING = "__VERIFIER_assume";
+	
+	private static final String[] s_UNSUPPORTED_FLOAT_OPERATIONS = {
+		"__isinff","__finitef","__fpclassifyf","__fpclassifyf","__isinfl","__finitel","__isnanl", "sin"
+	};
+	private final HashSet<String> m_UnsupportedFloatOperations = 
+			new HashSet<>(Arrays.asList(s_UNSUPPORTED_FLOAT_OPERATIONS));
 
 	/**
 	 * Constructor.
@@ -147,6 +155,9 @@ public class SvComp14CHandler extends CHandler {
 		
 		if (methodName.equals("pthread_create")) {
 			throw new UnsupportedSyntaxException(loc, "we do not support pthread");
+		}
+		if (m_UnsupportedFloatOperations.contains(methodName)) {
+			throw new UnsupportedSyntaxException(loc, "unsupported float operation " + methodName);
 		}
 		if (methodName.equals(ERROR_STRING)) {
 			boolean checkSvcompErrorfunction = 
