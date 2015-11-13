@@ -169,6 +169,10 @@ public abstract class AExpressionTranslation {
 	
 	
 	public Expression constructBinaryEqualityExpression(ILocation loc, int nodeOperator, Expression exp1, CType type1, Expression exp2, CType type2) {
+		if (type1.isRealFloatingType() || type2.isRealFloatingType()) {
+			String prefixedFunctionName = declareBinaryFloatComparisonOperation(loc, (CPrimitive) type1);
+			return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp1, exp2});
+		}
 		if (nodeOperator == IASTBinaryExpression.op_equals) {
 			return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, exp1, exp2);
 		} else 	if (nodeOperator == IASTBinaryExpression.op_notequals) {
