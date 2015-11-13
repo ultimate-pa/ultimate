@@ -203,7 +203,8 @@ public class TermTransferrer extends TermTransformer {
 	@Override
 	public void postConvertAnnotation(AnnotatedTerm old,
 			Annotation[] newAnnots, Term newBody) {
-		throw new UnsupportedOperationException("not yet implemented");
+		Term result = m_Script.annotate(newBody, newAnnots);
+		setResult(result);
 	}
 	
 	
