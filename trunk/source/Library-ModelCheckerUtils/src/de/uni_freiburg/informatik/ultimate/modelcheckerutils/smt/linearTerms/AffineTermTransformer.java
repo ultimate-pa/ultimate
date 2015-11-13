@@ -106,6 +106,10 @@ public class AffineTermTransformer extends TermTransformer {
 				AffineTerm result = convertConstantNumericTerm(constTerm);
 				setResult(result);
 				return;
+			} else {
+				AffineTerm errorTerm = new AffineTerm(); 
+				setResult(errorTerm);
+				return;
 			}
 		}
 		super.convert(term);
