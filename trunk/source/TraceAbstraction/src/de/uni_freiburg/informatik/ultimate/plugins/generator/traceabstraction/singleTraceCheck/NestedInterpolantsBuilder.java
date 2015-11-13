@@ -104,7 +104,7 @@ public class NestedInterpolantsBuilder {
 	
 	private final TermTransformer m_Const2RepTvSubst;
 
-	private final boolean m_KenMcMillanWorkaround = false;
+	private final boolean m_KenMcMillanWorkaround = true;
 
 	public NestedInterpolantsBuilder(SmtManager smtManagerTc, NestedFormulas<Term, Term> annotatdSsa,
 			Map<Term, BoogieVar> m_constants2BoogieVar, PredicateUnifier predicateBuilder,
