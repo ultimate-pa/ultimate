@@ -381,6 +381,19 @@ public abstract class AExpressionTranslation {
 		return prefixedFunctionName;
 	}
 	
+	private String declareConversionFunction(Dispatcher main, ILocation loc, CPrimitive oldType, CPrimitive newType) {
+		String functionName = "convert" + oldType.toString() +"To" + newType.toString();
+		String prefixedFunctionName = "~" + functionName;
+		if (!m_FunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
+			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
+			Attribute[] attributes = new Attribute[] { attribute };
+			ASTType resultASTType = main.typeHandler.ctype2asttype(loc, newType);
+			ASTType paramASTType = main.typeHandler.ctype2asttype(loc, oldType);
+			m_FunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTType);
+		}
+		return prefixedFunctionName;
+	}
+	
 	public void convertIntToPointer(Dispatcher main, ILocation loc, ExpressionResult rexp,
 			CPointer newType) {
 		boolean overapproximate = false;
@@ -411,16 +424,33 @@ public abstract class AExpressionTranslation {
 		return prefixedFunctionName;
 	}
 
-	public void convertFloatToInt(ILocation loc, ExpressionResult rexp, CPrimitive newType) {
-		throw new UnsupportedSyntaxException(loc, "conversion from float to int not yet implemented");
+	public void convertFloatToInt(Dispatcher main, ILocation loc, ExpressionResult rexp, CPrimitive newType) {
+//		throw new UnsupportedSyntaxException(loc, "conversion from float to int not yet implemented");
+		String prefixedFunctionName = declareConversionFunction(main, loc, (CPrimitive) rexp.lrVal.getCType(), newType);
+		Expression oldExpression = rexp.lrVal.getValue();
+		Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {oldExpression});
+		RValue rValue = new RValue(resultExpression, newType, false, false);
+		rexp.lrVal = rValue;
 	}
 
-	public void convertIntToFloat(ILocation loc, ExpressionResult rexp, CPrimitive newType) {
-		throw new UnsupportedSyntaxException(loc, "conversion from int to float not yet implemented");
+	public void convertIntToFloat(Dispatcher main, ILocation loc, ExpressionResult rexp, CPrimitive newType) {
+//		throw new UnsupportedSyntaxException(loc, "conversion from int to float not yet implemented");
+		String prefixedFunctionName = declareConversionFunction(main, loc, (CPrimitive) rexp.lrVal.getCType(), newType);
+		Expression oldExpression = rexp.lrVal.getValue();
+		Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {oldExpression});
+		RValue rValue = new RValue(resultExpression, newType, false, false);
+		rexp.lrVal = rValue;
+
 	}
 	
-	public void convertFloatToFloat(ILocation loc, ExpressionResult rexp, CPrimitive newType) {
-		throw new UnsupportedSyntaxException(loc, "conversion from float to float not yet implemented");
+	public void convertFloatToFloat(Dispatcher main, ILocation loc, ExpressionResult rexp, CPrimitive newType) {
+//		throw new UnsupportedSyntaxException(loc, "conversion from float to float not yet implemented");
+		String prefixedFunctionName = declareConversionFunction(main, loc, (CPrimitive) rexp.lrVal.getCType(), newType);
+		Expression oldExpression = rexp.lrVal.getValue();
+		Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {oldExpression});
+		RValue rValue = new RValue(resultExpression, newType, false, false);
+		rexp.lrVal = rValue;
+
 	}
 	
 	
