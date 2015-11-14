@@ -325,10 +325,15 @@ public class SolverBuilder {
 			result.setOption(":produce-interpolants", true);
 			result.setLogic(logicForExternalSolver);
 			// add array-ext function
-			Sort intSort = result.sort("Int");
-			Sort boolSort = result.sort("Bool");
-			Sort arraySort = result.sort("Array", intSort, boolSort);
-			result.declareFun("array-ext", new Sort[]{arraySort, arraySort}, intSort);
+			final Sort indexSort;
+			if (logicForExternalSolver.endsWith("A")) {
+				indexSort = result.sort("Int");
+				Sort boolSort = result.sort("Bool");
+				Sort arraySort = result.sort("Array", indexSort, boolSort);
+				result.declareFun("array-ext", new Sort[]{arraySort, arraySort}, indexSort);
+			} else if (logicForExternalSolver.endsWith("BV")) {
+				// do nothing. several have to be added here
+			}
 		break;
 		case Internal_SMTInterpol:
 			result.setOption(":produce-unsat-cores", true);
