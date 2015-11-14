@@ -37,6 +37,7 @@ import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
@@ -379,6 +380,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	@Override
 	public BigInteger extractIntegerValue(Expression expr, CType cType) {
 		if (cType.isIntegerType()) {
+			cType = CEnum.replaceEnumWithInt(cType);
 			if (expr instanceof BitvecLiteral) {
 				BigInteger value =  new BigInteger(((BitvecLiteral) expr).getValue());
 				if (((CPrimitive) cType).isUnsigned()) {

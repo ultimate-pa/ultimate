@@ -239,8 +239,10 @@ public abstract class AExpressionTranslation {
 	 */
 	public void usualArithmeticConversions(Dispatcher main, ILocation loc, 
 			ExpressionResult leftRex, ExpressionResult rightRex) {
-		final CPrimitive leftPrimitive = getCorrespondingPrimitiveType(leftRex.lrVal.getCType());
-		final CPrimitive rightPrimitive = getCorrespondingPrimitiveType(rightRex.lrVal.getCType());
+		final CPrimitive leftPrimitive = (CPrimitive) 
+				CEnum.replaceEnumWithInt(leftRex.lrVal.getCType()); 
+		final CPrimitive rightPrimitive = (CPrimitive) 
+				CEnum.replaceEnumWithInt(leftRex.lrVal.getCType()); 
 		if (leftPrimitive.isIntegerType()) {
 			doIntegerPromotion(loc, leftRex);
 		}
@@ -327,22 +329,6 @@ public abstract class AExpressionTranslation {
 			throw new AssertionError("unsupported combination of CPrimitives: " 
 					+ leftPrimitive + " and " + rightPrimitive);
 		} 
-	}
-
-	/**
-	 * If CType is CEnum return int (since C standard 6.4.4.3.2 says 
-	 * "An identifier declared as an enumeration constant has type int.")
-	 * If CType is CPrimitive return it.
-	 * Otherwise throw an Exception that conversion will be impossible.  
-	 */
-	private CPrimitive getCorrespondingPrimitiveType(CType cType) {
-		if (cType instanceof CPrimitive) {
-			return (CPrimitive) cType; 
-		} else if (cType instanceof CEnum) {
-			return new CPrimitive(PRIMITIVE.INT);
-		} else {
-			throw new UnsupportedOperationException("unable to apply usual arithmetic conversions to " + cType);
-		}
 	}
 
 	public abstract void convertIntToInt(ILocation loc, ExpressionResult operand, CPrimitive resultType);

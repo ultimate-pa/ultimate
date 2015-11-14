@@ -688,13 +688,10 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public void addAssumeValueInRangeStatements(ILocation loc, Expression expr, CType ctype, List<Statement> stmt) {
+	public void addAssumeValueInRangeStatements(ILocation loc, Expression expr, CType cType, List<Statement> stmt) {
 		if (m_AssumeThatSignedValuesAreInRange) {
-			if (ctype.getUnderlyingType().isIntegerType()) {
-				if (ctype.getUnderlyingType() instanceof CEnum) {
-					ctype = new CPrimitive(PRIMITIVE.INT);
-				}
-				CPrimitive cPrimitive = (CPrimitive) ctype;
+			if (cType.getUnderlyingType().isIntegerType()) {
+				CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType);
 				if (!cPrimitive.isUnsigned()) {
 					stmt.add(constructAssumeInRangeStatement(m_TypeSizes, loc, expr, cPrimitive));
 				}
