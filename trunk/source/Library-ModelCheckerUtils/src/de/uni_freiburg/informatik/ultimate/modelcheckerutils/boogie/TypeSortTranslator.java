@@ -114,6 +114,9 @@ public class TypeSortTranslator {
 	 * @param BoogieASTNode BoogieASTNode for which Sort is computed 
 	 */
 	public Sort getSort(IType type, BoogieASTNode BoogieASTNode) {
+		if (type instanceof BoogieType) {
+			type = ((BoogieType) type).getUnderlyingType();
+		}
 		if (m_type2sort.containsKey(type)) {
 			return m_type2sort.get(type);
 		} else {
