@@ -57,8 +57,6 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 * 
 	 * All variable names are unique.
 	 * 
-	 * @param <T>
-	 * 
 	 * @param name
 	 *            The name of the variable that should be added.
 	 * @param variable
