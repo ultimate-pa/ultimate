@@ -62,6 +62,8 @@ public class InterpolationTest_Memsafety extends AbstractTraceAbstractionTestSui
 		};
 	
 	private static final String[] m_CurrentBugs_DerefFreeMemtrack = {
+//			"examples/programs/regression",
+//			"examples/programs/quantifier/regression",
 		};
 
 
@@ -75,7 +77,7 @@ public class InterpolationTest_Memsafety extends AbstractTraceAbstractionTestSui
 
 	private static final String[] m_Settings = {
 		"automizer/interpolation/DerefFreeMemtrack-32bit-Princess-TreeInterpolation-Integer.epf",
-		"automizer/interpolation/DerefFreeMemtrack-32bit-SMTInterpol-FPandBP-Integer.epf",
+//		"automizer/interpolation/DerefFreeMemtrack-32bit-SMTInterpol-FPandBP-Integer.epf",
 		"automizer/interpolation/DerefFreeMemtrack-32bit-SMTInterpol-TreeInterpolation-Integer.epf",
 		"automizer/interpolation/DerefFreeMemtrack-32bit-Z3-BP-Integer.epf",
 		"automizer/interpolation/DerefFreeMemtrack-32bit-Z3-FP-Integer.epf",
