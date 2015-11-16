@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
  */
 public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 
-
+	private final boolean m_InstantiateArrayExt;
 	/**
 	 * Check if trace fulfills specification given by precondition,
 	 * postcondition and pending contexts. The pendingContext maps the positions
@@ -73,14 +73,16 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 	 * @param services
 	 * @param predicateUnifier 
 	 * @param interpolation 
+	 * @param instanticateArrayExt 
 	 */
 	public InterpolatingTraceCheckerCraig(IPredicate precondition, IPredicate postcondition,
 			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals, AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			IUltimateServiceProvider services, boolean computeRcfgProgramExecution, 
-			PredicateUnifier predicateUnifier, INTERPOLATION interpolation, SmtManager tcSmtManager) {
+			PredicateUnifier predicateUnifier, INTERPOLATION interpolation, SmtManager tcSmtManager, boolean instanticateArrayExt) {
 		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals,
 				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, predicateUnifier, tcSmtManager);
+		m_InstantiateArrayExt = instanticateArrayExt;
 		if (isCorrect() == LBool.UNSAT) {
 			computeInterpolants(new AllIntegers(), interpolation);
 		}
@@ -90,9 +92,9 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals, AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			IUltimateServiceProvider services, boolean computeRcfgProgramExecution, 
-			PredicateUnifier predicateUnifier, INTERPOLATION interpolation) {
+			PredicateUnifier predicateUnifier, INTERPOLATION interpolation, boolean instanticateArrayExt) {
 		this(precondition, postcondition, pendingContexts, trace, smtManager, 
-				modifiedGlobals, assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, predicateUnifier, interpolation, smtManager);
+				modifiedGlobals, assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, predicateUnifier, interpolation, smtManager, instanticateArrayExt);
 	}
 
 
@@ -146,11 +148,11 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			Set<BoogieVar> frel = rv.getForwardRelevantVariables()[i + 1];
 			Set<BoogieVar> brel = rv.getBackwardRelevantVariables()[i + 1];
 			if (!frel.containsAll(vars)) {
-				mLogger.warn("forward relevant variables wrong");
+				m_Logger.warn("forward relevant variables wrong");
 				result = false;
 			}
 			if (!brel.containsAll(vars)) {
-				mLogger.warn("backward relevant variables wrong");
+				m_Logger.warn("backward relevant variables wrong");
 				result = false;
 			}
 		}
@@ -181,7 +183,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			throw new AssertionError("You already computed interpolants");
 		}
 		NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(m_TcSmtManager, m_AAA.getAnnotatedSsa(),
-				m_Nsb.getConstants2BoogieVar(), m_PredicateUnifier, interpolatedPositions, true, mLogger, this, m_SmtManager);
+				m_Nsb.getConstants2BoogieVar(), m_PredicateUnifier, interpolatedPositions, true, m_Services, this, m_SmtManager, m_InstantiateArrayExt);
 		m_Interpolants = nib.getNestedInterpolants();
 		assert !inductivityOfSequenceCanBeRefuted();
 		assert m_Interpolants != null;
@@ -209,7 +211,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 				nonPendingCallPositions);
 
 		NestedInterpolantsBuilder nib = new NestedInterpolantsBuilder(m_TcSmtManager, m_AAA.getAnnotatedSsa(),
-				m_Nsb.getConstants2BoogieVar(), m_PredicateUnifier, newInterpolatedPositions, false, mLogger, this, m_SmtManager);
+				m_Nsb.getConstants2BoogieVar(), m_PredicateUnifier, newInterpolatedPositions, false, m_Services, this, m_SmtManager, m_InstantiateArrayExt);
 		m_Interpolants = nib.getNestedInterpolants();
 		IPredicate oldPrecondition = m_Precondition;
 		IPredicate oldPostcondition = m_Postcondition;
@@ -262,13 +264,13 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 			// Compute interpolants for subsequence and add them to interpolants
 			// computed by this TraceChecker
 			InterpolatingTraceCheckerCraig tc = new InterpolatingTraceCheckerCraig(precondition, interpolantAtReturnPosition, pendingContexts, subtrace,
-					m_SmtManager, m_ModifiedGlobals, m_assertCodeBlocksIncrementally, mServices, false, m_PredicateUnifier, 
-					INTERPOLATION.Craig_NestedInterpolation, m_TcSmtManager);
+					m_SmtManager, m_ModifiedGlobals, m_assertCodeBlocksIncrementally, m_Services, false, m_PredicateUnifier, 
+					INTERPOLATION.Craig_NestedInterpolation, m_TcSmtManager, m_InstantiateArrayExt);
 			LBool isSafe = tc.isCorrect();
 			if (isSafe == LBool.SAT) {
 				throw new AssertionError("has to be unsat by construction, we do check only for interpolant computation");
 			} else if (isSafe == LBool.UNKNOWN) {
-				if(mServices.getProgressMonitorService().continueProcessing()) {
+				if(m_Services.getProgressMonitorService().continueProcessing()) {
 					throw new AssertionError("UNKNOWN during nested interpolation. I don't know how to continue");
 				} else {
 					throw new ToolchainCanceledException(this.getClass(),

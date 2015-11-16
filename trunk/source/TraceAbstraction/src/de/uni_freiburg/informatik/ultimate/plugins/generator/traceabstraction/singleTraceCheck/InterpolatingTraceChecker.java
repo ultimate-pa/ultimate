@@ -148,11 +148,11 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 			Set<BoogieVar> frel = rv.getForwardRelevantVariables()[i + 1];
 			Set<BoogieVar> brel = rv.getBackwardRelevantVariables()[i + 1];
 			if (!frel.containsAll(vars)) {
-				mLogger.warn("forward relevant variables wrong");
+				m_Logger.warn("forward relevant variables wrong");
 				result = false;
 			}
 			if (!brel.containsAll(vars)) {
-				mLogger.warn("backward relevant variables wrong");
+				m_Logger.warn("backward relevant variables wrong");
 				result = false;
 			}
 		}

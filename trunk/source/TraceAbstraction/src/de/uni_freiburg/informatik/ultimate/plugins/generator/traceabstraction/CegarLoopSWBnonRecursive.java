@@ -592,7 +592,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 										 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this
 										 * to another value.
 										 */AssertCodeBlockOrder.NOT_INCREMENTALLY,m_Services, false, m_PredicateUnifier,
-											m_Pref.interpolation());
+											m_Pref.interpolation(), true);
 
 		this.m_InterpolantGenerator = traceChecker;
 		if (traceChecker.isCorrect() == LBool.UNSAT) {

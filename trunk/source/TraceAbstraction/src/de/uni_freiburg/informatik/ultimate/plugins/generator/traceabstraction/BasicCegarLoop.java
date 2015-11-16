@@ -323,7 +323,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			interpolatingTraceChecker = new InterpolatingTraceCheckerCraig(truePredicate, falsePredicate,
 					new TreeMap<Integer, IPredicate>(), NestedWord.nestedWord(m_Counterexample.getWord()),
 					m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager(), m_AssertCodeBlocksIncrementally,
-					m_Services, true, predicateUnifier, m_Interpolation, smtMangerTracechecks);
+					m_Services, true, predicateUnifier, m_Interpolation, smtMangerTracechecks, true);
 		}
 			break;
 		case ForwardPredicates:

@@ -80,7 +80,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 	protected void computeInterpolants(Set<Integer> interpolatedPositions,
 			INTERPOLATION interpolation) {
 		PathInvariantsGenerator pathInvariantsGenerator = new PathInvariantsGenerator(
-				super.mServices, m_Storage, m_NestedRun, super.getPrecondition(), 
+				super.m_Services, m_Storage, m_NestedRun, super.getPrecondition(), 
 				super.getPostcondition(), m_PredicateUnifier, super.m_SmtManager,
 				m_ModifiedGlobals);
 		IPredicate[] interpolants = pathInvariantsGenerator.getInterpolants();
@@ -94,7 +94,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends
 		}
 		assert TraceCheckerUtils.checkInterpolantsInductivityForward(interpolants, 
 				m_Trace, m_Precondition, m_Postcondition, m_PendingContexts, "invariant map", 
-				m_SmtManager, m_ModifiedGlobals, mLogger) : "invalid Hoare triple in invariant map";
+				m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in invariant map";
 		m_Interpolants = interpolants;
 	}
 

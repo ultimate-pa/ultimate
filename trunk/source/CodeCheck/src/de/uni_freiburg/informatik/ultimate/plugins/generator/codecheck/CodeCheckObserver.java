@@ -435,7 +435,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 										 * AssertCodeBlockOrder.NOT_INCREMENTALLY . Check if you want to set this to a different
 										 * value.
 										 */AssertCodeBlockOrder.NOT_INCREMENTALLY, m_services, true, _predicateUnifier,
-										 GlobalSettings._instance._interpolationMode, smtManagerTracechecks);
+										 GlobalSettings._instance._interpolationMode, smtManagerTracechecks, true);
 //							} catch (UnsupportedOperationException uoe) {
 							} catch (Exception e) {
 								traceChecker = new TraceCheckerSpWp(_predicateUnifier.getTruePredicate(),

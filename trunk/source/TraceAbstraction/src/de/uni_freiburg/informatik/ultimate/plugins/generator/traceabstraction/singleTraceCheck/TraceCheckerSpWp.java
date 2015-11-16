@@ -113,7 +113,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, predicateUnifier, smtManagerTc);
 		m_UnsatCores = unsatCores;
 		m_LiveVariables = useLiveVariables;
-		m_PredicateTransformer = new PredicateTransformer(m_SmtManager, m_ModifiedGlobals, mServices);
+		m_PredicateTransformer = new PredicateTransformer(m_SmtManager, m_ModifiedGlobals, m_Services);
 		if (isCorrect() == LBool.UNSAT) {
 			try {
 				computeInterpolants(new AllIntegers(), interpolation);
@@ -157,7 +157,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		try {
 			computeInterpolantsUsingUnsatCore(interpolatedPositions);
 		} catch (ToolchainCanceledException e) {
-			mLogger.info("Timeout while computing interpolants");
+			m_Logger.info("Timeout while computing interpolants");
 			throw e;
 		} finally {
 			m_TraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_InterpolantComputation);
@@ -253,7 +253,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 				return_pos);
 		TransFormula summaryWithCallAndReturn = TransFormula.sequentialCompositionWithCallAndReturn(
 				m_SmtManager.getBoogie2Smt(), true, false, s_TransformToCNF, Call, oldVarsAssignment,
-				summaryOfInnerStatements, Return, mLogger, mServices);
+				summaryOfInnerStatements, Return, m_Logger, m_Services);
 		return new ProcedureSummary(summaryWithCallAndReturn, summaryOfInnerStatements);
 	}
 
@@ -292,7 +292,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 								m_SmtManager.getBoogie2Smt(), true, false, s_TransformToCNF, trace.getSymbol(i)
 								.getTransitionFormula(), rv.getOldVarAssignment(i),
 								summaryBetweenCallAndReturn, trace.getSymbol(returnPosition).getTransitionFormula(),
-								mLogger, mServices));
+								m_Logger, m_Services));
 						i = returnPosition;
 					} else {
 						// If the position of the corresponding Return is >=
@@ -305,7 +305,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 						return TransFormula.sequentialCompositionWithPendingCall(m_SmtManager.getBoogie2Smt(), true,
 								false, s_TransformToCNF, transformulasToComputeSummaryFor.toArray(new TransFormula[0]),
 								rv.getLocalVarAssignment(i), rv.getOldVarAssignment(i), summaryAfterPendingCall,
-								mLogger, mServices, modifiableGlobalsOfEndProcedure);
+								m_Logger, m_Services, modifiableGlobalsOfEndProcedure);
 					}
 				} else {
 					TransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(trace, rv, i + 1, end);
@@ -313,8 +313,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					Set<BoogieVar> modifiableGlobalsOfEndProcedure = m_ModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
 					return TransFormula.sequentialCompositionWithPendingCall(m_SmtManager.getBoogie2Smt(), true, false,
 							s_TransformToCNF, transformulasToComputeSummaryFor.toArray(new TransFormula[0]),
-							rv.getLocalVarAssignment(i), rv.getOldVarAssignment(i), summaryAfterPendingCall, mLogger,
-							mServices, modifiableGlobalsOfEndProcedure);
+							rv.getLocalVarAssignment(i), rv.getOldVarAssignment(i), summaryAfterPendingCall, m_Logger,
+							m_Services, modifiableGlobalsOfEndProcedure);
 				}
 			} else if (trace.getSymbol(i) instanceof Return) {
 				// Nothing to do
@@ -322,7 +322,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 				transformulasToComputeSummaryFor.addLast(rv.getFormulaFromNonCallPos(i));
 			}
 		}
-		return TransFormula.sequentialComposition(mLogger, mServices, m_SmtManager.getBoogie2Smt(), true, false,
+		return TransFormula.sequentialComposition(m_Logger, m_Services, m_SmtManager.getBoogie2Smt(), true, false,
 				s_TransformToCNF, transformulasToComputeSummaryFor.toArray(new TransFormula[0]));
 
 	}
@@ -364,8 +364,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 
 		if (m_LogInformation) {
 			int totalNumberOfConjunctsInTrace = m_AnnotateAndAsserterConjuncts.getAnnotated2Original().keySet().size();
-			mLogger.debug("Total number of conjuncts in trace: " + totalNumberOfConjunctsInTrace);
-			mLogger.debug("Number of conjuncts in unsatisfiable core: " + unsat_coresAsSet.size());
+			m_Logger.debug("Total number of conjuncts in trace: " + totalNumberOfConjunctsInTrace);
+			m_Logger.debug("Number of conjuncts in unsatisfiable core: " + unsat_coresAsSet.size());
 			((TraceCheckerBenchmarkSpWpGenerator) m_TraceCheckerBenchmarkGenerator).setConjunctsInSSA(
 					totalNumberOfConjunctsInTrace, unsat_coresAsSet.size());
 		}
@@ -406,55 +406,55 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 
 
 		if (m_ComputeInterpolantsFp) {
-			mLogger.debug("Computing forward relevant predicates...");
+			m_Logger.debug("Computing forward relevant predicates...");
 			computeForwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePrecondition, true,
 					numberOfQuantifiedPredicates);
-			mLogger.debug("Checking inductivity of forward relevant predicates...");
+			m_Logger.debug("Checking inductivity of forward relevant predicates...");
 			//			if (!TraceCheckerUtils.checkInterpolantsInductivityForward(m_InterpolantsFp, 
 			//					trace, tracePrecondition, tracePostcondition, m_PendingContexts, "FP", m_SmtManager, m_ModifiedGlobals, mLogger)) {
 			//				throw new AssertionError("invalid Hoare triple in FP");
 			//			}
 			assert TraceCheckerUtils.checkInterpolantsInductivityForward(m_InterpolantsFp, 
 					trace, tracePrecondition, tracePostcondition, m_PendingContexts, "FP", 
-					m_SmtManager, m_ModifiedGlobals, mLogger) : "invalid Hoare triple in FP";
+					m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in FP";
 			if (m_CollectInformationAboutSizeOfPredicates) {
 				sizeOfPredicatesFP = m_SmtManager.computeDagSizeOfPredicates(m_InterpolantsFp);
 			}
 		} else if (m_ComputeInterpolantsSp && !m_ComputeInterpolantsFp) {
-			mLogger.debug("Computing forward relevant predicates...");
+			m_Logger.debug("Computing forward relevant predicates...");
 			computeForwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePrecondition, false,
 					numberOfQuantifiedPredicates);
-			mLogger.debug("Checking inductivity of forward relevant predicates...");
+			m_Logger.debug("Checking inductivity of forward relevant predicates...");
 			assert TraceCheckerUtils.checkInterpolantsInductivityForward(m_InterpolantsFp, 
 					trace, tracePrecondition, tracePostcondition, m_PendingContexts, "FP", 
-					m_SmtManager, m_ModifiedGlobals, mLogger) : "invalid Hoare triple in FP";
+					m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in FP";
 		}
 
 		if (m_LogInformation) {
-			mLogger.debug("Length of trace:" + trace.length());
-			mLogger.debug("#quantifiedPredicates in SP: " + numberOfQuantifiedPredicates[0]);
-			mLogger.debug("#quantifiedPredicates in FP: " + numberOfQuantifiedPredicates[1]);
+			m_Logger.debug("Length of trace:" + trace.length());
+			m_Logger.debug("#quantifiedPredicates in SP: " + numberOfQuantifiedPredicates[0]);
+			m_Logger.debug("#quantifiedPredicates in FP: " + numberOfQuantifiedPredicates[1]);
 		}
 
 		if (m_ComputeInterpolantsBp) {
-			mLogger.debug("Computing backward relevant predicates...");
+			m_Logger.debug("Computing backward relevant predicates...");
 			computeBackwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePostcondition,
 					true, numberOfQuantifiedPredicates);
-			mLogger.debug("Checking inductivity of backward relevant predicates...");
+			m_Logger.debug("Checking inductivity of backward relevant predicates...");
 			assert TraceCheckerUtils.checkInterpolantsInductivityBackward(m_InterpolantsBp, 
 					trace, tracePrecondition, tracePostcondition, m_PendingContexts, "BP", 
-					m_SmtManager, m_ModifiedGlobals, mLogger) : "invalid Hoare triple in BP";
+					m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in BP";
 			if (m_CollectInformationAboutSizeOfPredicates) {
 				sizeOfPredicatesBP = m_SmtManager.computeDagSizeOfPredicates(m_InterpolantsBp);
 			}
 		} else if (m_ComputeInterpolantsWp && !m_ComputeInterpolantsBp) {
-			mLogger.debug("Computing backward relevant predicates...");
+			m_Logger.debug("Computing backward relevant predicates...");
 			computeBackwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePostcondition, false,
 					numberOfQuantifiedPredicates);
-			mLogger.debug("Checking inductivity of backward relevant predicates...");
+			m_Logger.debug("Checking inductivity of backward relevant predicates...");
 			assert TraceCheckerUtils.checkInterpolantsInductivityBackward(m_InterpolantsBp, 
 					trace, tracePrecondition, tracePostcondition, m_PendingContexts, "BP", 
-					m_SmtManager, m_ModifiedGlobals, mLogger) : "invalid Hoare triple in BP";
+					m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in BP";
 		}
 		
 
@@ -463,9 +463,9 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 				numberOfQuantifiedPredicates, sizeOfPredicatesFP, sizeOfPredicatesBP);
 
 		if (m_LogInformation) {
-			mLogger.debug("Length of trace:" + trace.length());
-			mLogger.debug("#quantifiedPredicates in WP: " + numberOfQuantifiedPredicates[2]);
-			mLogger.debug("#quantifiedPredicates in BP: " + numberOfQuantifiedPredicates[3]);
+			m_Logger.debug("Length of trace:" + trace.length());
+			m_Logger.debug("#quantifiedPredicates in WP: " + numberOfQuantifiedPredicates[2]);
+			m_Logger.debug("#quantifiedPredicates in BP: " + numberOfQuantifiedPredicates[3]);
 		}
 		
 		if (m_ComputeInterpolantsFp && m_ComputeInterpolantsBp) {
@@ -551,7 +551,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	private boolean stillInfeasible(NestedFormulas<TransFormula, IPredicate> rv) {
 		TraceChecker tc = new TraceChecker(rv.getPrecondition(), rv.getPostcondition(),
 				new TreeMap<Integer, IPredicate>(), rv.getTrace(), m_SmtManager, m_ModifiedGlobals, rv,
-				AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, true);
+				AssertCodeBlockOrder.NOT_INCREMENTALLY, m_Services, false, true);
 		if (tc.getToolchainCancelledExpection() != null) {
 			throw tc.getToolchainCancelledExpection();
 		}
@@ -913,10 +913,10 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 * the predicates.
 	 */
 	private void checkSPImpliesWP(IPredicate[] interpolantsSP, IPredicate[] interpolantsWP) {
-		mLogger.debug("Checking implication of SP and WP...");
+		m_Logger.debug("Checking implication of SP and WP...");
 		for (int i = 0; i < interpolantsSP.length; i++) {
 			LBool result = m_SmtManager.isCovered(interpolantsSP[i], interpolantsWP[i]);
-			mLogger.debug("SP {" + interpolantsSP[i] + "} ==> WP {" + interpolantsWP[i] + "} is "
+			m_Logger.debug("SP {" + interpolantsSP[i] + "} ==> WP {" + interpolantsWP[i] + "} is "
 					+ (result == LBool.UNSAT ? "valid" : (result == LBool.SAT ? "not valid" : result)));
 			assert (result == LBool.UNSAT || result == LBool.UNKNOWN) : "checkSPImpliesWP failed";
 		}
@@ -926,7 +926,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	protected AnnotateAndAssertCodeBlocks getAnnotateAndAsserterCodeBlocks(NestedFormulas<Term, Term> ssa) {
 		if (m_AnnotateAndAsserterConjuncts == null) {
 			m_AnnotateAndAsserterConjuncts = new AnnotateAndAssertConjunctsOfCodeBlocks(m_TcSmtManager, ssa,
-					m_NestedFormulas, mLogger, m_SmtManager);
+					m_NestedFormulas, m_Logger, m_SmtManager);
 		}
 		return m_AnnotateAndAsserterConjuncts;
 	}

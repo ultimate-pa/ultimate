@@ -286,7 +286,7 @@ public class TotalInterpolationAutomatonBuilder {
 			tc = new InterpolatingTraceCheckerCraig(precondition, postcondition,
 					pendingContexts, run.getWord(),
 					m_SmtManager, m_ModifiedGlobals, AssertCodeBlockOrder.NOT_INCREMENTALLY,
-					mServices, true, m_PredicateUnifier, m_Interpolation);
+					mServices, true, m_PredicateUnifier, m_Interpolation, true);
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:

@@ -108,7 +108,8 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
  */
 public class TraceChecker {
 
-	protected final Logger mLogger;
+	protected final Logger m_Logger;
+	protected final IUltimateServiceProvider m_Services;
 	/**
 	 * After constructing a new TraceChecker satisfiability of the trace was
 	 * checked. However, the trace check is not yet finished, and the SmtManager
@@ -151,7 +152,6 @@ public class TraceChecker {
 	protected NestedSsaBuilder m_Nsb;
 	protected final TraceCheckerBenchmarkGenerator m_TraceCheckerBenchmarkGenerator;
 	protected final AssertCodeBlockOrder m_assertCodeBlocksIncrementally;
-	protected final IUltimateServiceProvider mServices;
 	protected ToolchainCanceledException m_ToolchainCanceledException;
 
 	/**
@@ -375,8 +375,8 @@ public class TraceChecker {
 			ModifiableGlobalVariableManager modifiedGlobals, NestedFormulas<TransFormula, IPredicate> rv,
 			AssertCodeBlockOrder assertCodeBlocksIncrementally, IUltimateServiceProvider services,
 			boolean computeRcfgProgramExecution, boolean unlockSmtSolverAlsoIfUnsat, SmtManager tcSmtManager) {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		m_Services = services;
+		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		m_SmtManager = smtManager;
 		m_TcSmtManager = tcSmtManager;
 		m_ModifiedGlobals = modifiedGlobals;
@@ -427,7 +427,7 @@ public class TraceChecker {
 		boolean transferToDifferentScript = (m_TcSmtManager != m_SmtManager);
 		m_TraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_SsaConstruction);
 		m_Nsb = new NestedSsaBuilder(m_Trace, m_TcSmtManager, m_NestedFormulas,
-				m_ModifiedGlobals, mLogger, transferToDifferentScript);
+				m_ModifiedGlobals, m_Logger, transferToDifferentScript);
 		NestedFormulas<Term, Term> ssa = m_Nsb.getSsa();
 		m_TraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_SsaConstruction);
 	
@@ -435,10 +435,10 @@ public class TraceChecker {
 		if (m_assertCodeBlocksIncrementally != AssertCodeBlockOrder.NOT_INCREMENTALLY) {
 			m_AAA = new AnnotateAndAsserterWithStmtOrderPrioritization(m_TcSmtManager, ssa,
 					getAnnotateAndAsserterCodeBlocks(ssa), m_TraceCheckerBenchmarkGenerator,
-					m_assertCodeBlocksIncrementally, mLogger);
+					m_assertCodeBlocksIncrementally, m_Logger);
 		} else {
 			m_AAA = new AnnotateAndAsserter(m_TcSmtManager, ssa, getAnnotateAndAsserterCodeBlocks(ssa),
-					m_TraceCheckerBenchmarkGenerator, mLogger);
+					m_TraceCheckerBenchmarkGenerator, m_Logger);
 			// Report the asserted code blocks
 //			m_TraceCheckerBenchmarkGenerator.reportnewAssertedCodeBlocks(m_Trace.length());
 		}
@@ -488,7 +488,7 @@ public class TraceChecker {
 				TraceChecker tc = new TraceChecker(m_NestedFormulas.getPrecondition(),
 						m_NestedFormulas.getPostcondition(), m_PendingContexts,
 						m_NestedFormulas.getTrace(), m_SmtManager, m_ModifiedGlobals, withBE,
-						AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, true, m_TcSmtManager);
+						AssertCodeBlockOrder.NOT_INCREMENTALLY, m_Services, true, true, m_TcSmtManager);
 				if (tc.getToolchainCancelledExpection() != null) {
 					throw tc.getToolchainCancelledExpection();
 				}
@@ -562,7 +562,7 @@ public class TraceChecker {
 	}
 
 	protected AnnotateAndAssertCodeBlocks getAnnotateAndAsserterCodeBlocks(NestedFormulas<Term, Term> ssa) {
-		return new AnnotateAndAssertCodeBlocks(m_TcSmtManager, ssa, mLogger);
+		return new AnnotateAndAssertCodeBlocks(m_TcSmtManager, ssa, m_Logger);
 	
 		// AnnotateAndAssertCodeBlocks aaacb =
 		// return new AnnotateAndAsserter(m_SmtManager, ssa, aaacb);

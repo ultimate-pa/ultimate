@@ -446,7 +446,7 @@ public class RefineBuchi {
 					 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
 					 * Check if you want to set this
 					 * to a different value.
-					 */AssertCodeBlockOrder.NOT_INCREMENTALLY, m_Services, false, pu, interpolation);
+					 */AssertCodeBlockOrder.NOT_INCREMENTALLY, m_Services, false, pu, interpolation, true);
 			break;
 		}
 		case ForwardPredicates:

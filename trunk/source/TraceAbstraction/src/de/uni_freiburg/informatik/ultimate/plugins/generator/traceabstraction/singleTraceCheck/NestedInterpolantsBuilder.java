@@ -42,6 +42,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -55,9 +56,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTerm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.PrenexNormalForm;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -65,7 +71,8 @@ import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 public class NestedInterpolantsBuilder {
 
-	private final Logger mLogger;
+	private final  IUltimateServiceProvider m_Services;
+	private final Logger m_Logger;
 
 	final Script m_ScriptTc;
 	final SmtManager m_SmtManagerTc;
@@ -104,13 +111,17 @@ public class NestedInterpolantsBuilder {
 	
 	private final TermTransformer m_Const2RepTvSubst;
 
-	private final boolean m_KenMcMillanWorkaround = true;
+	private final boolean m_InstantiateArrayExt;
+
+
 
 	public NestedInterpolantsBuilder(SmtManager smtManagerTc, NestedFormulas<Term, Term> annotatdSsa,
 			Map<Term, BoogieVar> m_constants2BoogieVar, PredicateUnifier predicateBuilder,
-			Set<Integer> interpolatedPositions, boolean treeInterpolation, Logger logger, 
-			TraceChecker traceChecker, SmtManager smtManagerPredicates) {
-		mLogger = logger;
+			Set<Integer> interpolatedPositions, boolean treeInterpolation,
+			IUltimateServiceProvider services,
+			TraceChecker traceChecker, SmtManager smtManagerPredicates, boolean instantiateArrayExt) {
+		m_Services = services;
+		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		m_TreeInterpolation = treeInterpolation;
 		m_ScriptTc = smtManagerTc.getScript();
 		m_SmtManagerTc = smtManagerTc;
@@ -120,6 +131,7 @@ public class NestedInterpolantsBuilder {
 		m_CraigInterpolants = new Term[m_AnnotSSA.getTrace().length() - 1];
 		m_InterpolatedPositions = interpolatedPositions;
 		m_Trace = annotatdSsa.getTrace();
+		m_InstantiateArrayExt = instantiateArrayExt;
 		HashMap<Term, Term> const2RepTv = new HashMap<Term, Term>();
 		for (Entry<Term, BoogieVar> entry : m_constants2BoogieVar.entrySet()) {
 			const2RepTv.put(entry.getKey(), entry.getValue().getTermVariable());
@@ -133,7 +145,7 @@ public class NestedInterpolantsBuilder {
 		computeCraigInterpolants();
 		traceChecker.unlockSmtManager();
 		for (int i = 0; i < m_CraigInterpolants.length; i++) {
-			logger.debug(new DebugMessage("NestedInterpolant {0}: {1}", i, m_CraigInterpolants[i]));
+			m_Logger.debug(new DebugMessage("NestedInterpolant {0}: {1}", i, m_CraigInterpolants[i]));
 		}
 		m_Interpolants = computePredicates();
 		assert m_Interpolants != null;
@@ -315,7 +327,7 @@ public class NestedInterpolantsBuilder {
 
 	public IPredicate[] getNestedInterpolants() {
 		for (int j = 0; j < m_Interpolants.length; j++) {
-			mLogger.debug(new DebugMessage("Interpolant {0}: {1}", j, m_Interpolants[j]));
+			m_Logger.debug(new DebugMessage("Interpolant {0}: {1}", j, m_Interpolants[j]));
 		}
 		return m_Interpolants;
 	}
@@ -538,8 +550,8 @@ public class NestedInterpolantsBuilder {
 					 */
 					withIndices = (new FormulaUnLet()).transform(withIndices);
 					Term withoutIndices = m_Const2RepTvSubst.transform(withIndices);
-					if (m_KenMcMillanWorkaround ) {
-						withoutIndices = z3ArrayExtPostProcessing(withoutIndices);
+					if (m_InstantiateArrayExt ) {
+						withoutIndices = instantiateArrayExt(withoutIndices);
 					}
 					TermVarsProc tvp = TermVarsProc.computeTermVarsProc(withoutIndices, m_SmtManagerPredicates.getBoogie2Smt());
 					result[resultPos] = m_PredicateBuilder.getOrConstructPredicate(tvp);
@@ -553,11 +565,26 @@ public class NestedInterpolantsBuilder {
 		return result;
 	}
 
-	private Term z3ArrayExtPostProcessing(Term withoutIndices) {
+	/**
+	 * The interpolating Z3 generates Craig interpolants that contain the
+	 * array-ext function whose semantics is defined by the following axiom
+	 * ∀a∀b∃k. array-ext(a,b)=k <--> (a=b \/ a[k] != b[k]).
+	 * The theory of arrays does not contain this axiom, hence we instantiate
+	 * it for each occurrence.
+	 */
+	private Term instantiateArrayExt(Term interpolantWithoutIndices) {
+		Term nnf = (new Nnf(m_SmtManagerPredicates.getScript(), m_Services, m_SmtManagerPredicates.getVariableManager())).transform(interpolantWithoutIndices);
+//		not needed, at the moment our NNF transformation also produces 		
+//		Term prenex = (new PrenexNormalForm(m_SmtManagerPredicates.getScript(), m_SmtManagerPredicates.getVariableManager())).transform(nnf);
+		QuantifierSequence qs = new QuantifierSequence(m_SmtManagerPredicates.getScript());
+//		The quantifier-free part of of formula in prenex normal form is called
+//		matrix
+		Term matrix = qs.extractQuantifiers(nnf, false, null);
+
 		ApplicationTermFinder atf = new ApplicationTermFinder("array-ext", false);
-		Set<ApplicationTerm> arrayExtAppTerms = atf.findMatchingSubterms(withoutIndices);
+		Set<ApplicationTerm> arrayExtAppTerms = atf.findMatchingSubterms(matrix);
 		if (arrayExtAppTerms.isEmpty()) {
-			return withoutIndices;
+			return interpolantWithoutIndices;
 		}
 		Term[] implications = new Term[arrayExtAppTerms.size()];
 		TermVariable[] replacingTermVariable = new TermVariable[arrayExtAppTerms.size()];
@@ -570,9 +597,11 @@ public class NestedInterpolantsBuilder {
 			substitutionMapping.put(aet.getArrayExtTerm(), aet.getReplacementTermVariable());
 			offset++;
 		}
-		Term result = (new SafeSubstitution(m_SmtManagerPredicates.getScript(), substitutionMapping)).transform(withoutIndices);
+		Term result = (new SafeSubstitution(m_SmtManagerPredicates.getScript(), substitutionMapping)).transform(matrix);
 		result = Util.and(m_SmtManagerPredicates.getScript(), result, Util.and(m_SmtManagerPredicates.getScript(), implications));
 		result = m_SmtManagerPredicates.getScript().quantifier(QuantifiedFormula.EXISTS, replacingTermVariable, result);
+		result = qs.prependQuantifierSequence(result);
+//		Term pushed = new QuantifierPusher(m_SmtManagerPredicates.getScript(), m_Services).transform(result);
 		return result;
 	}
 	

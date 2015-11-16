@@ -469,7 +469,7 @@ public class LassoChecker {
 						 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
 						 * Check if you want to set this
 						 * to a different value.
-						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, m_PredicateUnifier, m_Interpolation);
+						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, m_PredicateUnifier, m_Interpolation, true);
 				break;
 			case ForwardPredicates:
 			case BackwardPredicates:
