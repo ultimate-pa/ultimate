@@ -42,7 +42,7 @@ public class InterpolationTest_Reach extends AbstractTraceAbstractionTestSuite {
 
 	/** Limit the number of files per directory. */
 //	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
-	private static int m_FilesPerDirectoryLimit = 5;
+	private static int m_FilesPerDirectoryLimit = 8;
 	
 	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs = {
 		/*** Category 1. Arrays ***/
@@ -132,11 +132,12 @@ public class InterpolationTest_Reach extends AbstractTraceAbstractionTestSuite {
 	private static final String[] m_Settings = {
 		"automizer/interpolation/Reach-32bit-iZ3-NestedInterpolation.epf",
 		"automizer/interpolation/Reach-32bit-Princess-TreeInterpolation.epf",
-		"automizer/interpolation/Reach-32bit-SMTInterpol-FPandBP.epf",
-		"automizer/interpolation/Reach-32bit-SMTInterpol-FPandBP-cannibalize.epf",
+//		"automizer/interpolation/Reach-32bit-SMTInterpol-FPandBP.epf",
+//		"automizer/interpolation/Reach-32bit-SMTInterpol-FPandBP-cannibalize.epf",
 		"automizer/interpolation/Reach-32bit-SMTInterpol-TreeInterpolation.epf",
 //		"automizer/interpolation/Reach-32bit-Z3-FPandBP.epf",
-//		"automizer/interpolation/Reach-32bit-Z3-FP.epf",
+		"automizer/interpolation/Reach-32bit-Z3-FP.epf",
+		"automizer/interpolation/Reach-32bit-Z3-BP.epf",
 	};
 	
 	private static final String[] m_CToolchains = {
