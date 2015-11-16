@@ -130,7 +130,7 @@ public class InterpolationTest_Reach extends AbstractTraceAbstractionTestSuite {
 	}
 
 	private static final String[] m_Settings = {
-		"automizer/interpolation/Reach-32bit-iZ3-NestedInterpolation.epf",
+		"automizer/interpolation/Reach-32bit-Z3-NestedInterpolation.epf",
 		"automizer/interpolation/Reach-32bit-Princess-TreeInterpolation.epf",
 //		"automizer/interpolation/Reach-32bit-SMTInterpol-FPandBP.epf",
 //		"automizer/interpolation/Reach-32bit-SMTInterpol-FPandBP-cannibalize.epf",
