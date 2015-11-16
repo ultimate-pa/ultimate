@@ -791,7 +791,27 @@ public class SmtUtils {
 				}
 			}
 		}
-		
+	}
+
+	/**
+	 * Returns quantified formula. Drops quantifiers for variables that do not
+	 * occur in formula.
+	 */
+	public static Term quantifier(Script script, int quantifier, TermVariable[] vars, Term body) {
+		if (vars.length == 0) {
+			return body;
+		}
+		ArrayList<TermVariable> resultVars = new ArrayList<>();
+		for (TermVariable tv : Arrays.asList(body.getFreeVars())) {
+			if (Arrays.asList(vars).contains(tv)) {
+				resultVars.add(tv);
+			}
+		}
+		if (resultVars.isEmpty()) {
+			return body;
+		} else {
+			return script.quantifier(quantifier, resultVars.toArray(new TermVariable[resultVars.size()]), body);
+		}
 	}
 
 }
