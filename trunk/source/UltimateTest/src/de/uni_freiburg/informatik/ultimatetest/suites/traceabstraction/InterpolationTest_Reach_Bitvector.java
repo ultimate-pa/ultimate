@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 public class InterpolationTest_Reach_Bitvector extends AbstractTraceAbstractionTestSuite {
 
 	/** Limit the number of files per directory. */
-	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
-//	private static int m_FilesPerDirectoryLimit = 4;
+//	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
+	private static int m_FilesPerDirectoryLimit = 12;
 	
 	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs = {
 		/*** Category 1. Arrays ***/
@@ -106,7 +106,9 @@ public class InterpolationTest_Reach_Bitvector extends AbstractTraceAbstractionT
 	
 	
 	private static final String[] m_CurrentBugs = {
-		};
+//		"examples/programs/regression",
+//		"examples/programs/quantifier/regression",
+	};
 	
 	
 	/**
@@ -121,6 +123,7 @@ public class InterpolationTest_Reach_Bitvector extends AbstractTraceAbstractionT
 		"automizer/interpolation/Reach-32bit-Z3-NestedInterpolation-Bitvector.epf",
 		"automizer/interpolation/Reach-32bit-Z3-FPandBP-Bitvector.epf",
 		"automizer/interpolation/Reach-32bit-Z3-FP-Bitvector.epf",
+		"automizer/interpolation/Reach-32bit-Z3-BP-Bitvector.epf",
 	};
 	
 	private static final String[] m_CToolchains = {
