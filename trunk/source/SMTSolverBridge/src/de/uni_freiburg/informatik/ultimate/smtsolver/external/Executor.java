@@ -50,11 +50,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
- * This class runs an external SMT solver. The main methods are
- * <code>input</code>, which gives an input to the SMT solver, and the
- * <code>parse...</code> methods, which parse the output from the SMT solver.
+ * This class runs an external SMT solver. The main methods are <code>input</code>, which gives an input to the SMT
+ * solver, and the <code>parse...</code> methods, which parse the output from the SMT solver.
  * 
  * @author Oday Jubran
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * 
  */
 class Executor {
 
@@ -68,26 +69,29 @@ class Executor {
 	private final Logger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
+	private final String mName;
 
-	Executor(String solverCommand, Script script, Logger logger, IUltimateServiceProvider services,
-			IToolchainStorage storage) throws IOException {
+	Executor(final String solverCommand, final Script script, final Logger logger,
+			final IUltimateServiceProvider services, final IToolchainStorage storage, final String solverName)
+					throws IOException {
 		mServices = services;
 		mStorage = storage;
 		mSolverCmd = solverCommand;
 		mScript = script;
 		mLogger = logger;
+		mName = solverName;
 		createProcess();
 	}
 
 	private void createProcess() throws IOException {
 		// m_Logger = Logger.getRootLogger();
 		mProcess = MonitoredProcess.exec(mSolverCmd, "(exit)", mServices, mStorage);
-		//TODO: 
-		//Let all processes terminate when the toolchain terminates
+		// TODO:
+		// Let all processes terminate when the toolchain terminates
 		mProcess.setTerminationAfterToolchainTimeout(20 * 1000);
 
 		if (mProcess == null) {
-			String errorMsg = "Could not create process \"" + mSolverCmd + "\", terminating... ";
+			final String errorMsg = getLogStringPrefix() + " Could not create process, terminating... ";
 			mLogger.fatal(errorMsg);
 			throw new IllegalStateException(errorMsg);
 		}
@@ -108,22 +112,24 @@ class Executor {
 	}
 
 	public void input(String in) {
-		mLogger.debug(in + "\n");
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(getLogStringPrefix() + " " + in);
+		}
 		try {
 			mWriter.write(in + "\n");
 			mWriter.flush();
 		} catch (IOException e) {
-			throw new SMTLIBException("Connection to SMT solver broken", e);
+			throw new SMTLIBException(getLogStringPrefix() + " Connection to SMT solver broken", e);
 		}
 	}
 
 	public void exit() {
 
 		input("(exit)");
-//		2015-11-12 Matthias: Do not parse "success" after exit.
-//		Some solvers do return success (Barcelogic, CVC4, Z3) some solvers
-//		don't do it (Princess, SMTInterpol).
-//		parseSuccess();
+		// 2015-11-12 Matthias: Do not parse "success" after exit.
+		// Some solvers do return success (Barcelogic, CVC4, Z3) some solvers
+		// don't do it (Princess, SMTInterpol).
+		// parseSuccess();
 		mProcess.forceShutdown();
 		mProcess = null;
 
@@ -145,12 +151,15 @@ class Executor {
 
 	private List<Symbol> readAnswer() {
 		try {
-			List<Symbol> result = parseSexpr(mLexer);
-			for (Symbol s : result)
-				mLogger.debug(s.toString() + "\n");
+			final List<Symbol> result = parseSexpr(mLexer);
+			if (mLogger.isDebugEnabled()) {
+				for (Symbol s : result) {
+					mLogger.debug(s.toString() + "\n");
+				}
+			}
 			return result;
 		} catch (IOException e) {
-			throw new SMTLIBException("Connection to SMT solver broken", e);
+			throw new SMTLIBException(getLogStringPrefix() + " Connection to SMT solver broken", e);
 		}
 	}
 
@@ -166,41 +175,42 @@ class Executor {
 	}
 
 	public Symbol parse(int what) {
-		List<Symbol> answer = readAnswer();
+		final List<Symbol> answer = readAnswer();
 		String stderr = "";
 
 		// clear the std error buffer as it blocks when it runs full
 		try {
 			if (mStdErr.available() > 0) {
-				StringBuilder sb = new StringBuilder();
+				final StringBuilder sb = new StringBuilder();
 				while (mStdErr.available() > 0) {
 					int i = mStdErr.read();
 					char c = (char) i;
 					sb.append(c);
 				}
 				stderr = sb.toString();
-				mLogger.warn("stderr output of " + mSolverCmd + ": " + stderr);
+				mLogger.warn(getLogStringPrefix() + " stderr output: " + stderr);
 			}
 		} catch (IOException e) {
 			// we don't care what happens on stdErr
 		}
 
-		Parser m_Parser = new Parser();
-		m_Parser.setScript(mScript);
+		final Parser parser = new Parser();
+		parser.setScript(mScript);
 		answer.add(0, new Symbol(what));
-		m_Parser.setAnswer(answer);
+		parser.setAnswer(answer);
 		try {
-			return m_Parser.parse();
+			return parser.parse();
 		} catch (SMTLIBException ex) {
 			if (ex.getMessage().equals(Parser.s_EOF)) {
-				throw new SMTLIBException("stderr output of " + mSolverCmd + ": " + stderr, ex);
+				throw new SMTLIBException(getLogStringPrefix() + " stderr output: " + stderr, ex);
 			} else {
 				throw ex;
 			}
 		} catch (UnsupportedOperationException ex) {
 			throw ex;
 		} catch (Exception ex) {
-			throw new SMTLIBException("Unexpected Exception while parsing. stderr output of " + mSolverCmd + ": " + stderr, ex);
+			throw new SMTLIBException(
+					getLogStringPrefix() + "Unexpected Exception while parsing. stderr output: " + stderr, ex);
 		}
 	}
 
@@ -239,6 +249,10 @@ class Executor {
 
 	public Term parseTerm() {
 		return (Term) parse(LexerSymbols.GETTERM).value;
+	}
+
+	private String getLogStringPrefix() {
+		return mName + " (" + mSolverCmd + ")";
 	}
 
 }

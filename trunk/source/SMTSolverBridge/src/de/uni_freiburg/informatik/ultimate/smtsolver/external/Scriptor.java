@@ -46,43 +46,41 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
- * Create a script that connects to an external SMT solver. The solver must be
- * SMTLIB-2 compliant and expect commands on standard input. It must return its
- * output on standard output.
+ * Create a script that connects to an external SMT solver. The solver must be SMTLIB-2 compliant and expect commands on
+ * standard input. It must return its output on standard output.
  * 
- * Some commands are only partially supported. For example getProof does not
- * return a useful proof object. Also commands, for which the output format is
- * not fully specified, e.g. (get-model), may not return useful return values.
+ * Some commands are only partially supported. For example getProof does not return a useful proof object. Also
+ * commands, for which the output format is not fully specified, e.g. (get-model), may not return useful return values.
  * 
  * @author Oday Jubran
  */
 public class Scriptor extends NoopScript {
 
-	protected Executor m_Executor;
-	private LBool m_Status = LBool.UNKNOWN;
+	protected Executor mExecutor;
+	private LBool mStatus = LBool.UNKNOWN;
 
 	/**
 	 * Create a script connecting to an external SMT solver.
 	 * 
 	 * @param command
-	 *            the command that starts the external SMT solver. The solver is
-	 *            expected to read smtlib 2 commands on stdin.
+	 *            the command that starts the external SMT solver. The solver is expected to read smtlib 2 commands on
+	 *            stdin.
 	 * @param services
 	 * @param storage
 	 * @throws IOExceptionO
 	 *             If the solver is not installed
 	 */
-	public Scriptor(String command, Logger logger, IUltimateServiceProvider services, IToolchainStorage storage)
-			throws IOException {
-		m_Executor = new Executor(command, this, logger, services, storage);
+	public Scriptor(String command, Logger logger, IUltimateServiceProvider services, IToolchainStorage storage,
+			String solverName) throws IOException {
+		mExecutor = new Executor(command, this, logger, services, storage, solverName);
 		super.setOption(":print-success", true);
 	}
 
 	@Override
 	public void setLogic(Logics logic) throws UnsupportedOperationException, SMTLIBException {
 		super.setLogic(logic);
-		m_Executor.input("(set-logic " + logic + ")");
-		m_Executor.parseSuccess();
+		mExecutor.input("(set-logic " + logic + ")");
+		mExecutor.parseSuccess();
 	}
 
 	@Override
@@ -103,8 +101,8 @@ public class Scriptor extends NoopScript {
 				}
 			}
 			sb.append(")");
-			m_Executor.input(sb.toString());
-			m_Executor.parseSuccess();
+			mExecutor.input(sb.toString());
+			mExecutor.parseSuccess();
 		}
 	}
 
@@ -117,8 +115,8 @@ public class Scriptor extends NoopScript {
 		sb.append(value);
 		sb.append(")");
 		sb.append(System.lineSeparator());
-		m_Executor.input(sb.toString());
-		m_Executor.parseSuccess();
+		mExecutor.input(sb.toString());
+		mExecutor.parseSuccess();
 	}
 
 	@Override
@@ -126,8 +124,8 @@ public class Scriptor extends NoopScript {
 		super.declareSort(sort, arity);
 		StringBuilder sb = new StringBuilder("(declare-sort ").append(PrintTerm.quoteIdentifier(sort));
 		sb.append(" ").append(arity).append(")");
-		m_Executor.input(sb.toString());
-		m_Executor.parseSuccess();
+		mExecutor.input(sb.toString());
+		mExecutor.parseSuccess();
 	}
 
 	@Override
@@ -147,8 +145,8 @@ public class Scriptor extends NoopScript {
 		sb.append(") ");
 		pt.append(sb, definition);
 		sb.append(")");
-		m_Executor.input(sb.toString());
-		m_Executor.parseSuccess();
+		mExecutor.input(sb.toString());
+		mExecutor.parseSuccess();
 	}
 
 	@Override
@@ -168,8 +166,8 @@ public class Scriptor extends NoopScript {
 		sb.append(") ");
 		pt.append(sb, resultSort);
 		sb.append(")");
-		m_Executor.input(sb.toString());
-		m_Executor.parseSuccess();
+		mExecutor.input(sb.toString());
+		mExecutor.parseSuccess();
 	}
 
 	@Override
@@ -192,43 +190,43 @@ public class Scriptor extends NoopScript {
 		pt.append(sb, resultSort);
 		pt.append(sb, definition);
 		sb.append(")");
-		m_Executor.input(sb.toString());
-		m_Executor.parseSuccess();
+		mExecutor.input(sb.toString());
+		mExecutor.parseSuccess();
 	}
 
 	@Override
 	public void push(int levels) throws SMTLIBException {
 		super.push(levels);
-		m_Executor.input("(push " + levels + ")");
-		m_Executor.parseSuccess();
+		mExecutor.input("(push " + levels + ")");
+		mExecutor.parseSuccess();
 	}
 
 	@Override
 	public void pop(int levels) throws SMTLIBException {
 		super.pop(levels);
-		m_Executor.input("(pop " + levels + ")");
-		m_Executor.parseSuccess();
+		mExecutor.input("(pop " + levels + ")");
+		mExecutor.parseSuccess();
 	}
 
 	@Override
 	public LBool assertTerm(Term term) throws SMTLIBException {
 		// super.assertTerm(term);
-		m_Executor.input("(assert " + term.toStringDirect() + ")");
-		m_Executor.parseSuccess();
+		mExecutor.input("(assert " + term.toStringDirect() + ")");
+		mExecutor.parseSuccess();
 		return LBool.UNKNOWN;
 	}
 
 	@Override
 	public LBool checkSat() throws SMTLIBException {
-		m_Executor.input("(check-sat)");
-		m_Status = m_Executor.parseCheckSatResult();
-		return m_Status;
+		mExecutor.input("(check-sat)");
+		mStatus = mExecutor.parseCheckSatResult();
+		return mStatus;
 	}
 
 	@Override
 	public Term[] getAssertions() throws SMTLIBException {
-		m_Executor.input("(get-assertions)");
-		return m_Executor.parseGetAssertionsResult();
+		mExecutor.input("(get-assertions)");
+		return mExecutor.parseGetAssertionsResult();
 	}
 
 	/** Proofs are not supported, since they are not standardized **/
@@ -239,16 +237,15 @@ public class Scriptor extends NoopScript {
 
 	@Override
 	public Term[] getUnsatCore() throws SMTLIBException, UnsupportedOperationException {
-		m_Executor.input("(get-unsat-core)");
-		return m_Executor.parseGetUnsatCoreResult();
+		mExecutor.input("(get-unsat-core)");
+		return mExecutor.parseGetUnsatCoreResult();
 	}
 
 	@Override
 	public Map<Term, Term> getValue(Term[] terms) throws SMTLIBException, UnsupportedOperationException {
 		for (Term t : terms) {
-			if (!t.getSort().isNumericSort() 
-					&& t.getSort() != getTheory().getBooleanSort()
-				    && !t.getSort().getRealSort().getName().equals("BitVec"))
+			if (!t.getSort().isNumericSort() && t.getSort() != getTheory().getBooleanSort()
+					&& !t.getSort().getRealSort().getName().equals("BitVec"))
 				throw new UnsupportedOperationException();
 		}
 		StringBuilder command = new StringBuilder();
@@ -261,26 +258,26 @@ public class Scriptor extends NoopScript {
 			sep = " ";
 		}
 		command.append("))");
-		m_Executor.input(command.toString());
-		return m_Executor.parseGetValueResult();
+		mExecutor.input(command.toString());
+		return mExecutor.parseGetValueResult();
 	}
 
 	@Override
 	public Assignments getAssignment() throws SMTLIBException, UnsupportedOperationException {
-		m_Executor.input("(get-assignment)");
-		return m_Executor.parseGetAssignmentResult();
+		mExecutor.input("(get-assignment)");
+		return mExecutor.parseGetAssignmentResult();
 	}
 
 	@Override
 	public Object getOption(String opt) throws UnsupportedOperationException {
-		m_Executor.input("(get-option " + opt + ")");
-		return m_Executor.parseGetOptionResult();
+		mExecutor.input("(get-option " + opt + ")");
+		return mExecutor.parseGetOptionResult();
 	}
 
 	@Override
 	public Object getInfo(String info) throws UnsupportedOperationException {
-		m_Executor.input("(get-info " + info + ")");
-		Object[] result = m_Executor.parseGetInfoResult();
+		mExecutor.input("(get-info " + info + ")");
+		Object[] result = mExecutor.parseGetInfoResult();
 		if (result.length == 1)
 			return result[0];
 		return result;
@@ -288,7 +285,7 @@ public class Scriptor extends NoopScript {
 
 	@Override
 	public void exit() {
-		m_Executor.exit();
+		mExecutor.exit();
 
 	}
 
@@ -301,7 +298,7 @@ public class Scriptor extends NoopScript {
 	public void reset() {
 		super.reset();
 		try {
-			m_Executor.reset();
+			mExecutor.reset();
 		} catch (IOException e) {
 			// this should only happen if the solver executable is removed
 			// between creating executor and calling reset.
@@ -316,6 +313,6 @@ public class Scriptor extends NoopScript {
 
 	/** This method is used in the output parser, to support (get-info :status) **/
 	public LBool getStatus() {
-		return m_Status;
+		return mStatus;
 	}
 }
