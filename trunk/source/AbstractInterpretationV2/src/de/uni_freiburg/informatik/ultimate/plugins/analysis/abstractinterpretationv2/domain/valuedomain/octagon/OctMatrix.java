@@ -10,18 +10,18 @@ public class OctMatrix {
 
 	// Only some parts of the matrix are stored: upper (U) and lower (L).
 	//
-	// \ U U U U U   <= OctagonMatrix for 3 variables
-	// L \ U U U U      Each variable comes in two flavors: + and -
-	// . . \ U U U      Matrix is divided into 2x2 blocks
-	// . . L \ U U      Variables (names, type, ...) aren't stored in OctMatrix
-	// . . . . \ U
-	// . . . . L \
+	// \ U . . . .   <= OctagonMatrix for 3 variables
+	// L \ . . . .      Each variable comes in two flavors: + and -
+	// L L \ U . .      Matrix is divided into 2x2 blocks
+	// L L L \ . .      Variables (names, type, ...) aren't stored in OctMatrix
+	// L L L L \ U
+	// L L L L L \
 
-	// upper triangular part of the matrix, without the main diagonal
-	// stored row-wise from top to bottom, left to right
+	// part above the main diagonal, not coherent to any elements from mLower
 	private OctValue[] mUpper;
 	
-	// part below the main diagonal
+	// lower triangular part of the matrix, without the main diagonal
+	// stored row-wise from top to bottom, left to right
 	private OctValue[] mLower;
 	
 	private int mSize;
@@ -36,39 +36,38 @@ public class OctMatrix {
 	
 	public OctMatrix(int size) {
 		mSize = size;
-		mUpper = new OctValue[size * (size - 1) / 2];
-		mLower = new OctValue[size / 2];
+		mUpper = new OctValue[size / 2];
+		mLower = new OctValue[size * (size - 1) / 2];
 		Arrays.fill(mUpper, OctValue.INFINITY);
 		Arrays.fill(mLower, OctValue.INFINITY);
 	}
-
+	
 	public OctValue get(int row, int col) {
-		if (row < col)
-			return mUpper[upperIndex(row, col)];
+		if (row > col)
+			return mLower[lowerIndex(row, col)];
 		if (row == col)
 			return OctValue.ZERO;
-		if ((row ^ col) == 1) // && row > col
-			return mLower[col / 2];
-		return mUpper[upperIndex(col ^ 1, row ^ 1)];
+		if ((row ^ col) == 1) // && row < col
+			return mUpper[col / 2];
+		return mLower[lowerIndex(col ^ 1, row ^ 1)];
 	}
 	
 	protected void set(int row, int col, OctValue value) {
 		assert value != null : "null is not a valid matrix element.";
-		if (row < col) {
-			mUpper[upperIndex(row, col)] = value;
+		if (row > col) {
+			mLower[lowerIndex(row, col)] = value;
 		} else if (row == col) {
 			throw new UnsupportedOperationException("Elements on main diagonal are constant and cannot be set.");
-		} else if ((row ^ col) == 1) { // && row > col
-			mLower[col / 2] = value;
+		} else if ((row ^ col) == 1) { // && row < col
+			mUpper[col / 2] = value;
 		} else {
-			mUpper[upperIndex(col ^ 1, row ^ 1)] = value;
+			mLower[lowerIndex(col ^ 1, row ^ 1)] = value;
 		}
 	}
 
-	private int upperIndex(int row, int col) {
-		int rectIndex = row * mSize + col; // index if the complete rectangular matrix was stored row-wise
-		int skipped = (row + 1) * (row + 2) / 2; // skipped fields from the complete matrix
-		return rectIndex - skipped;
+	private int lowerIndex(int row, int col) {
+		//       pyramid above row + offset in row
+		return (row - 1) * row / 2 + col;
 	}
 	
 	public OctMatrix elementwise(OctMatrix other, BiFunction<OctValue, OctValue, OctValue> operator) {
@@ -78,7 +77,7 @@ public class OctMatrix {
 		for (int i = 0; i < mUpper.length; ++i)
 			result.mUpper[i] = operator.apply(mUpper[i], other.mUpper[i]);
 		for (int i = 0; i < mLower.length; ++i)
-			result.mUpper[i] = operator.apply(mUpper[i], other.mUpper[i]);
+			result.mLower[i] = operator.apply(mLower[i], other.mLower[i]);
 		return result;
 	}
 
