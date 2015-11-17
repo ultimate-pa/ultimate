@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.core.util;
 
 import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -38,8 +39,11 @@ import java.io.PipedOutputStream;
 import java.lang.Thread.State;
 import java.nio.charset.Charset;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
+import java.util.List;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -394,7 +398,8 @@ public final class MonitoredProcess implements IStorable {
 					stdWriter.write(mExitCommand);
 					stdWriter.close();
 				} catch (IOException e) {
-					mLogger.error(getLogStringPrefix() + " Did not receive the exit command " + mExitCommand, e);
+					mLogger.error(getLogStringPrefix() + " Exception during sending of exit command " + mExitCommand
+							+ ": " + e.getMessage());
 				}
 				try {
 					mLogger.debug(getLogStringPrefix() + " About to join with the monitor thread... ");
@@ -410,6 +415,7 @@ public final class MonitoredProcess implements IStorable {
 				}
 			}
 			mLogger.warn(getLogStringPrefix() + " Forcibly destroying the process");
+			List<InputStream> tobeclosed = new ArrayList<>(5);
 			try {
 				// mProcess.destroyForcibly();
 				// mStorage.removeStorable(getKey(mID, mCommand));
@@ -418,6 +424,10 @@ public final class MonitoredProcess implements IStorable {
 				// mProcess.getOutputStream().flush();
 				// mProcess.getOutputStream().close();
 				// mProcess = null;
+				tobeclosed.add(mProcess.getInputStream());
+				tobeclosed.add(mProcess.getErrorStream());
+				tobeclosed.add(mStdInStreamPipe);
+				tobeclosed.add(mStdErrStreamPipe);
 				killProcess();
 			} catch (NullPointerException ex) {
 				if (mLogger.getLevel().isGreaterOrEqual(Level.WARN)) {
@@ -430,19 +440,20 @@ public final class MonitoredProcess implements IStorable {
 						ExceptionUtils.getStackTrace(t)));
 			}
 
-			try {
-				mStdInStreamPipe.close();
-			} catch (IOException e) {
-				mLogger.warn(getLogStringPrefix() + " An error occured during closing a pipe", e);
+			for (final InputStream stream : tobeclosed) {
+				close(stream);
 			}
 
-			try {
-				mStdErrStreamPipe.close();
-			} catch (IOException e) {
-				mLogger.warn(getLogStringPrefix() + " An error occured during closing a pipe", e);
-			}
 			mProcessCompleted = true;
 			mLogger.debug(getLogStringPrefix() + " Forcibly destroyed the process");
+		}
+	}
+
+	private void close(Closeable pipe) {
+		try {
+			pipe.close();
+		} catch (IOException e) {
+			mLogger.warn(getLogStringPrefix() + " An error occured during closing: " + e.getMessage());
 		}
 	}
 
@@ -482,12 +493,19 @@ public final class MonitoredProcess implements IStorable {
 	}
 
 	private void killProcess() {
-		if(mProcess == null){
+		if (mProcess == null) {
 			return;
 		}
 		mProcess.destroyForcibly();
 		mProcess = null;
-		mStorage.removeStorable(getKey(mID, mCommand));
+		removeFromStorage();
+	}
+
+	private void removeFromStorage() {
+		final IStorable storable = mStorage.removeStorable(getKey(mID, mCommand));
+		if (storable != null && mLogger.isDebugEnabled()) {
+			mLogger.debug(getLogStringPrefix() + " was removed from storage");
+		}
 	}
 
 	private void logUnreadPipeContent() {
@@ -512,11 +530,11 @@ public final class MonitoredProcess implements IStorable {
 	}
 
 	private void setUpStreamBuffer(final InputStream inputStream, final OutputStream outputStream,
-			final Semaphore endOfPumps) {
+			final Semaphore endOfPumps, final String name) {
 		endOfPumps.acquireUninterruptibly();
 		final InputStreamReader streamReader = new InputStreamReader(inputStream, Charset.defaultCharset());
-		final String threadName = "MonitoredProcess " + mID + " StreamBuffer";
-		new Thread(new PipePump(outputStream, streamReader, endOfPumps), threadName).start();
+		final String threadName = "MonitoredProcess " + mID + " StreamBuffer " + name;
+		new Thread(new PipePump(outputStream, streamReader, endOfPumps, name), threadName).start();
 	}
 
 	/**
@@ -569,8 +587,8 @@ public final class MonitoredProcess implements IStorable {
 			try {
 				stdInBufferPipe = new PipedOutputStream(mStdInStreamPipe);
 				stdErrBufferPipe = new PipedOutputStream(mStdErrStreamPipe);
-				setUpStreamBuffer(mMonitoredProcess.mProcess.getInputStream(), stdInBufferPipe, endOfPumps);
-				setUpStreamBuffer(mMonitoredProcess.mProcess.getErrorStream(), stdErrBufferPipe, endOfPumps);
+				setUpStreamBuffer(mMonitoredProcess.mProcess.getInputStream(), stdInBufferPipe, endOfPumps, "stdIn");
+				setUpStreamBuffer(mMonitoredProcess.mProcess.getErrorStream(), stdErrBufferPipe, endOfPumps, "stdErr");
 
 			} catch (IOException e) {
 				if (mMonitoredProcess.mLogger.getLevel().isGreaterOrEqual(Level.ERROR)) {
@@ -587,12 +605,17 @@ public final class MonitoredProcess implements IStorable {
 				mWaitForSetup.release();
 				mMonitoredProcess.mReturnCode = mMonitoredProcess.mProcess.waitFor();
 				mMonitoredProcess.mLogger.debug(getLogStringPrefix() + " Finished waiting for process!");
-				endOfPumps.acquireUninterruptibly(-INITIAL_SEMAPHORE_COUNT);
-				mMonitoredProcess.mLogger.debug(getLogStringPrefix() + " Finished waiting for pump threads!");
-				if (mMonitoredProcess.mLogger.isDebugEnabled()) {
-					logUnreadPipeContent();
-				}
 				mMonitoredProcess.mProcessCompleted = true;
+				if (!endOfPumps.tryAcquire(-INITIAL_SEMAPHORE_COUNT, WAIT_FOR_EXIT_COMMAND_MILLIS,
+						TimeUnit.MILLISECONDS)) {
+					mMonitoredProcess.mLogger
+							.warn(getLogStringPrefix() + " Abandoning pump threads because process wont die!");
+				} else {
+					mMonitoredProcess.mLogger.debug(getLogStringPrefix() + " Finished waiting for pump threads!");
+					if (mMonitoredProcess.mLogger.isDebugEnabled()) {
+						logUnreadPipeContent();
+					}
+				}
 			} catch (InterruptedException e) {
 				if (mMonitoredProcess.mLogger.getLevel().isGreaterOrEqual(Level.ERROR)) {
 					mMonitoredProcess.mLogger.error(getLogStringPrefix() + " Interrupted. Terminating abnormally.", e);
@@ -612,44 +635,61 @@ public final class MonitoredProcess implements IStorable {
 		private final OutputStream mOutputStream;
 		private final InputStreamReader mStreamReader;
 		private final Semaphore mEndOfPumps;
+		private final String mPumpName;
 
 		private PipePump(final OutputStream outputStream, final InputStreamReader streamReader,
-				final Semaphore endOfPumps) {
+				final Semaphore endOfPumps, final String pumpName) {
 			mOutputStream = outputStream;
 			mStreamReader = streamReader;
 			mEndOfPumps = endOfPumps;
+			mPumpName = pumpName;
 		}
 
 		@Override
 		public void run() {
 			mWaitForSetup.release();
-			try (final BufferedReader reader = new BufferedReader(mStreamReader)) {
-				while (!mProcessCompleted) {
-					if (reader.ready()) {
-						while (reader.ready()) {
-							int chunk = reader.read();
-							if (chunk == -1) {
-								// Note that the finally block will be executed
-								return;
-							}
-							mOutputStream.write(chunk);
-						}
-						mOutputStream.flush();
-					} else {
-						//TODO: This may lead to busy waiting
-//						Thread.sleep(WAIT_BETWEEN_CHECKS_MILLIS);
-					}
+			try {
+				int chunk = -1;
+				while ((chunk = mStreamReader.read()) != -1) {
+					mOutputStream.write(chunk);
+					mOutputStream.flush();
 				}
-			} catch (IOException e/*| InterruptedException e*/) {
+				// int busywaits = 0;
+				// while (isRunning()) {
+				// if (reader.ready()) {
+				// while (reader.ready()) {
+				// int chunk = reader.read();
+				// if (chunk == -1) {
+				// // Note that the finally block will be executed
+				// return;
+				// }
+				// mOutputStream.write(chunk);
+				// }
+				// mOutputStream.flush();
+				// } else if (!mProcess.isAlive()) {
+				// // we also die here if the process is already dead or presumed dead
+				// mLogger.warn(getLogStringPrefix() + " pump " + mPumpName
+				// + " is ending because process is not alive");
+				// return;
+				// } else if (busywaits > 10000) {
+				// busywaits = 0;
+				// Thread.sleep(WAIT_BETWEEN_CHECKS_MILLIS);
+				// mLogger.warn(getLogStringPrefix() + " waiting for pump " + mPumpName);
+				// } else {
+				// busywaits++;
+				// }
+				// }
+			} catch (IOException /* | InterruptedException */ e) {
 				if (mLogger.getLevel().isGreaterOrEqual(Level.WARN)) {
-					mLogger.warn(getLogStringPrefix() + " The stream was forcibly closed.");
+					mLogger.warn(getLogStringPrefix() + " The stream was forcibly closed: " + mPumpName);
 				}
 			} finally {
 				try {
 					mOutputStream.flush();
 					mOutputStream.close();
 				} catch (IOException e) {
-					mLogger.fatal(getLogStringPrefix() + " During closing of the streams, an error occured");
+					mLogger.fatal(getLogStringPrefix() + " During closing of the streams " + mPumpName
+							+ ", an error occured");
 				}
 				mEndOfPumps.release();
 			}

@@ -124,7 +124,6 @@ class Executor {
 	}
 
 	public void exit() {
-
 		input("(exit)");
 		// 2015-11-12 Matthias: Do not parse "success" after exit.
 		// Some solvers do return success (Barcelogic, CVC4, Z3) some solvers
