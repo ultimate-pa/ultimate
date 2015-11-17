@@ -247,9 +247,9 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 
 		switch (mOperator) {
 		case COMPEQ:
-			return new BooleanValue(left.booleanValue().equals(right.booleanValue()));
+			return left.booleanValue().intersect(right.booleanValue());
 		case COMPNEQ:
-			return new BooleanValue(left.booleanValue().equals(right.booleanValue().neg()));
+			return left.booleanValue().intersect(right.booleanValue().neg());
 		case LOGICIMPLIES:
 			return left.booleanValue().or(right.booleanValue());
 		case LOGICIFF:

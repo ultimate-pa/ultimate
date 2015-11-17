@@ -126,7 +126,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 					&& mRightSubEvaluator.getVarIdentifiers().size() == 0) {
 
 				if (logicLeft.containsBool() && logicRight.containsBool()) {
-					mBooleanValue = new BooleanValue(logicLeft.booleanValue().equals(logicRight.booleanValue()));
+					mBooleanValue = logicLeft.booleanValue().intersect(logicRight.booleanValue());
 				} else {
 					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
 							.equals(secondResult.getResult().getEvaluatedValue()));
@@ -148,7 +148,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 				assert varName != null;
 
 				if (logicLeft.containsBool() || logicRight.containsBool()) {
-					mBooleanValue = new BooleanValue(logicLeft.booleanValue().equals(logicRight.booleanValue()));
+					mBooleanValue = logicLeft.booleanValue().intersect(logicRight.booleanValue());
 				} else {
 					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
 							.equals(secondResult.getResult().getEvaluatedValue()));
@@ -178,7 +178,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 				assert varName != null;
 
 				if (logicLeft.containsBool() || logicRight.containsBool()) {
-					mBooleanValue = new BooleanValue(logicLeft.booleanValue().equals(logicRight.booleanValue()));
+					mBooleanValue = logicLeft.booleanValue().intersect(logicRight.booleanValue());
 				} else {
 					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
 							.equals(secondResult.getResult().getEvaluatedValue()));
@@ -213,7 +213,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 				assert rightVar != null;
 
 				if (logicLeft.containsBool() || logicRight.containsBool()) {
-					mBooleanValue = new BooleanValue(logicLeft.booleanValue().equals(logicRight.booleanValue()));
+					mBooleanValue = logicLeft.booleanValue().intersect(logicRight.booleanValue());
 				} else {
 					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
 							.equals(secondResult.getResult().getEvaluatedValue()));
@@ -239,7 +239,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 
 			} else {
 				if (logicLeft.containsBool() && logicRight.containsBool()) {
-					mBooleanValue = new BooleanValue(logicLeft.booleanValue().equals(logicRight.booleanValue()));
+					mBooleanValue = logicLeft.booleanValue().intersect(logicRight.booleanValue());
 				} else {
 					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
 							.equals(secondResult.getResult().getEvaluatedValue()));
@@ -253,7 +253,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 			if (mLeftSubEvaluator.getVarIdentifiers().size() == 0
 					&& mRightSubEvaluator.getVarIdentifiers().size() == 0) {
 				if (logicLeft.containsBool() && logicRight.containsBool()) {
-					mBooleanValue = new BooleanValue(logicLeft.booleanValue().equals(logicRight.booleanValue())).neg();
+					mBooleanValue = logicLeft.booleanValue().intersect(logicRight.booleanValue()).neg();
 				} else {
 					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
 							.equals(secondResult.getResult().getEvaluatedValue())).neg();
@@ -273,7 +273,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 				assert varName != null;
 
 				if (logicLeft.containsBool() || logicRight.containsBool()) {
-					mBooleanValue = new BooleanValue(logicLeft.booleanValue().equals(logicRight.booleanValue())).neg();
+					mBooleanValue = logicLeft.booleanValue().intersect(logicRight.booleanValue()).neg();
 				} else {
 					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
 							.equals(secondResult.getResult().getEvaluatedValue())).neg();
@@ -303,7 +303,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 				assert varName != null;
 
 				if (logicLeft.containsBool() || logicRight.containsBool()) {
-					mBooleanValue = new BooleanValue(logicLeft.booleanValue().equals(logicRight.booleanValue())).neg();
+					mBooleanValue = logicLeft.booleanValue().intersect(logicRight.booleanValue()).neg();
 				} else {
 					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
 							.equals(secondResult.getResult().getEvaluatedValue())).neg();
@@ -338,7 +338,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 				assert rightVar != null;
 
 				if (logicLeft.containsBool() || logicRight.containsBool()) {
-					mBooleanValue = new BooleanValue(logicLeft.booleanValue().equals(logicRight.booleanValue())).neg();
+					mBooleanValue = logicLeft.booleanValue().intersect(logicRight.booleanValue()).neg();
 				} else {
 					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
 							.equals(secondResult.getResult().getEvaluatedValue())).neg();
@@ -365,7 +365,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 				}
 			} else {
 				if (logicLeft.containsBool() && logicRight.containsBool()) {
-					mBooleanValue = new BooleanValue(logicLeft.booleanValue().equals(logicRight.booleanValue())).neg();
+					mBooleanValue = logicLeft.booleanValue().intersect(logicRight.booleanValue()).neg();
 				} else {
 					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
 							.equals(secondResult.getResult().getEvaluatedValue())).neg();

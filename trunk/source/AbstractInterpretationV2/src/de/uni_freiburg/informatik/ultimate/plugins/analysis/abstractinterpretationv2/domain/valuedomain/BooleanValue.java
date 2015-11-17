@@ -111,24 +111,8 @@ public class BooleanValue {
 			return false;
 		}
 
-		if (!(other instanceof BooleanValue) && !(other instanceof Boolean)) {
+		if (!(other instanceof BooleanValue)) {
 			return false;
-		}
-
-		if (other instanceof Boolean) {
-			final Boolean otherBool = (Boolean) other;
-
-			switch (mValue) {
-			case FALSE:
-				return !otherBool;
-			case TRUE:
-				return otherBool;
-			case TOP:
-			case BOTTOM:
-				return false;
-			default:
-				throw new UnsupportedOperationException("The boolean value type " + mValue + " is not implemented.");
-			}
 		}
 
 		final BooleanValue o = (BooleanValue) other;

@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class IntervalDomainState
-		implements IAbstractState<IntervalDomainState, CodeBlock, IBoogieVar>, IEvaluationResult<IntervalDomainState> {
+        implements IAbstractState<IntervalDomainState, CodeBlock, IBoogieVar>, IEvaluationResult<IntervalDomainState> {
 
 	private static int sId;
 	private final int mId;
@@ -85,8 +85,8 @@ public class IntervalDomainState
 	}
 
 	protected IntervalDomainState(Logger logger, Map<String, IBoogieVar> variablesMap,
-			Map<String, IntervalDomainValue> valuesMap, Map<String, BooleanValue> booleanValuesMap,
-			boolean isFixpoint) {
+	        Map<String, IntervalDomainValue> valuesMap, Map<String, BooleanValue> booleanValuesMap,
+	        boolean isFixpoint) {
 		mVariablesMap = new HashMap<String, IBoogieVar>(variablesMap);
 		mValuesMap = new HashMap<String, IntervalDomainValue>(valuesMap);
 		mBooleanValuesMap = new HashMap<String, BooleanValue>(booleanValuesMap);
@@ -150,7 +150,7 @@ public class IntervalDomainState
 
 		if (old != null) {
 			throw new UnsupportedOperationException(
-					"Variable names must be disjoint. Variable " + name + " is already present.");
+			        "Variable names must be disjoint. Variable " + name + " is already present.");
 		}
 
 		final Map<String, IntervalDomainValue> newValMap = new HashMap<String, IntervalDomainValue>(mValuesMap);
@@ -169,8 +169,8 @@ public class IntervalDomainState
 				newValMap.put(name, new IntervalDomainValue());
 			}
 		} else {
-			mLogger.warn("The IBoogieVar type " + variable.getIType().getClass().toString()
-					+ " of variable " + name + " is not implemented. Assuming top.");
+			mLogger.warn("The IBoogieVar type " + variable.getIType().getClass().toString() + " of variable " + name
+			        + " is not implemented. Assuming top.");
 			newValMap.put(name, new IntervalDomainValue());
 		}
 
@@ -207,7 +207,7 @@ public class IntervalDomainState
 			final IBoogieVar old = newVarMap.put(id, var);
 			if (old != null) {
 				throw new UnsupportedOperationException(
-						"Variable names must be disjoint. The variable " + id + " is already present.");
+				        "Variable names must be disjoint. The variable " + id + " is already present.");
 			}
 			if (var.getIType() instanceof PrimitiveType) {
 				final PrimitiveType primitiveType = (PrimitiveType) var.getIType();
@@ -223,8 +223,8 @@ public class IntervalDomainState
 				// We treat Arrays as normal variables for the time being.
 				newValMap.put(id, new IntervalDomainValue());
 			} else {
-				mLogger.warn("The IBoogieVar type " + var.getIType().getClass().toString()
-						+ " of variable " + id + " is not implemented. Assuming top.");
+				mLogger.warn("The IBoogieVar type " + var.getIType().getClass().toString() + " of variable " + id
+				        + " is not implemented. Assuming top.");
 				newValMap.put(id, new IntervalDomainValue());
 			}
 		}
@@ -357,21 +357,6 @@ public class IntervalDomainState
 		return mId;
 	}
 
-	@Override
-	public boolean equals(Object other) {
-		if (other == null) {
-			return false;
-		}
-		if (other == this) {
-			return true;
-		}
-		if (this.getClass() != other.getClass()) {
-			return false;
-		}
-		final IntervalDomainState comparableOther = (IntervalDomainState) other;
-		return isEqualTo(comparableOther);
-	}
-
 	/**
 	 * Returns <code>true</code> if and only if {@link this} has the same variables as other.
 	 * 
@@ -426,7 +411,7 @@ public class IntervalDomainState
 
 		for (Entry<String, BooleanValue> entry : mBooleanValuesMap.entrySet()) {
 			returnState.setBooleanValue(entry.getKey(),
-					new BooleanValue(entry.getValue().intersect(other.mBooleanValuesMap.get(entry.getKey()))));
+			        new BooleanValue(entry.getValue().intersect(other.mBooleanValuesMap.get(entry.getKey()))));
 		}
 
 		return returnState;
@@ -446,7 +431,7 @@ public class IntervalDomainState
 			final Sort sort = var.getSort().getRealSort();
 			if (!sort.isNumericSort()) {
 				mLogger.warn("Unfinished term transformation: Unsupported sort " + sort + " for variable " + var + ": "
-						+ this);
+				        + this);
 				continue;
 			}
 			final Term newterm = entry.getValue().getTerm(script, sort, var);
