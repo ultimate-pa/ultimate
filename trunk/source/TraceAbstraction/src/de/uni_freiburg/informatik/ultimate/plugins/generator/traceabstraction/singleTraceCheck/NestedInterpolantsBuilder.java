@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ba
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 public class NestedInterpolantsBuilder {
 
@@ -526,6 +527,7 @@ public class NestedInterpolantsBuilder {
 
 		int craigInterpolPos = 0;
 		for (int resultPos = 0; resultPos < m_Trace.length() - 1; resultPos++) {
+			checkTimeout();
 			int positionOfThisCraigInterpolant;
 			if (craigInterpolPos == m_CraigInterpolants.length) {
 				// special case where trace ends with return
@@ -563,6 +565,14 @@ public class NestedInterpolantsBuilder {
 		}
 		assert craigInterpolPos == m_CraigInterpolants.length;
 		return result;
+	}
+
+	private void checkTimeout() {
+		if (!m_Services.getProgressMonitorService().continueProcessing()) {
+			throw new ToolchainCanceledException(this.getClass(),
+					"constructing predicates for " + (m_Trace.length() - 1) 
+					+ " interpolants");
+		}
 	}
 
 	/**
