@@ -15,14 +15,14 @@ import java.util.function.BiFunction;
  * This class ensures that all elements on the main diagonal are 0
  * and each matrix is coherent (as seen in the following ASCII art).
  * <pre>
- *     \ .   D B   L J  
- *     . \   C A   K I  
+ *     \ .   D B   L J
+ *     . \   C A   K I
  *                 
- *     A B   \ .   W Y  
- *     C D   . \   Z X  
+ *     A B   \ .   W Y
+ *     C D   . \   Z X
  *                 
- *     I J   X Y   \ .  
- *     K L   Z W   . \ 
+ *     I J   X Y   \ .
+ *     K L   Z W   . \
  * </pre>
  * 
  * @author schaetzc@informatik.uni-freiburg.de
@@ -67,14 +67,17 @@ public class OctMatrix {
 		System.arraycopy(octMatrix.mElements, 0, mElements, 0, mElements.length);
 	}
 	
-	public OctMatrix(int size) {
-		assert (size & 1) == 0 : "Octagon matrices must have an even numbered size.";
-		mSize = size;
-		mOffsetLower = size / 2;
-		mElements = new OctValue[mOffsetLower + size * (size - 1) / 2];
+	public OctMatrix(int variables) {
+		mSize = variables * 2;
+		mOffsetLower = variables;
+		mElements = new OctValue[mOffsetLower + mSize * (mSize - 1) / 2];
 		Arrays.fill(mElements, OctValue.INFINITY);
 	}
 
+	public int getSize() {
+		return mSize;
+	}
+	
 	public OctValue get(int row, int col) {
 		if (row == col)
 			return OctValue.ZERO;
@@ -82,11 +85,14 @@ public class OctMatrix {
 	}
 	
 	protected void set(int row, int col, OctValue value) {
-		assert value != null : "null is not a valid matrix element.";
+		if(value == null)
+			throw new IllegalArgumentException("null is not a valid matrix element.");
 		mElements[indexOf(row, col)] = value;
 	}
 
 	private int indexOf(int row, int col) {
+		if (row >= mSize || col >= mSize)
+			throw new IndexOutOfBoundsException(row + "," + col + " is not an index for matrix of size " + mSize + ".");
 		if (row > col)
 			return indexOfLower(row, col);
 		if (row == col)
@@ -102,7 +108,8 @@ public class OctMatrix {
 	}
 	
 	public OctMatrix elementwise(OctMatrix other, BiFunction<OctValue, OctValue, OctValue> operator) {
-		assert other.mSize == mSize : "Incompatible matrices";
+		if (other.mSize != mSize)
+			throw new IllegalArgumentException("Incompatible matrices");
 		OctMatrix result = new OctMatrix(mSize);
 		for (int i = 0; i < mElements.length; ++i) // a loop is faster than a stream
 			result.mElements[i] = operator.apply(mElements[i], other.mElements[i]);
@@ -110,7 +117,7 @@ public class OctMatrix {
 	}
 
 	public OctMatrix add(OctMatrix other) {
-		return elementwise(other, (x, y) -> x.add(y));
+		return elementwise(other, OctValue::add);
 	}
 	
 	public OctMatrix min(OctMatrix other) {

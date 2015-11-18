@@ -6,6 +6,16 @@ import org.eclipse.osgi.internal.messages.Msg;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.disinterval.DisIntervallDomain;
 
+/**
+ * Values for {@link OctMatrix}.
+ * <p>
+ * This is an extension of the real numbers by the symbol "+infinity".
+ * <p>
+ * Octagons are represented by constraints of the form "(+/-) x (+/-) y <= c" where c is a constant
+ * and can be represented by objects of this class.
+ * 
+ * @author schaetzc@informatik.uni-freiburg.de
+ */
 public class OctValue implements Comparable<OctValue> {
 	
 	public final static OctValue INFINITY = new OctValue();
