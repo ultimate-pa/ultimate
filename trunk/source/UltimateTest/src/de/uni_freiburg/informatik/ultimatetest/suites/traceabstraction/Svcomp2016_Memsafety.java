@@ -45,15 +45,15 @@ public class Svcomp2016_Memsafety extends AbstractTraceAbstractionTestSuite {
 	
 	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs_Deref = {
 		/*** Category 1. Arrays ***/
-		new DirectoryFileEndingsPair("examples/svcomp/array-memsafety/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/array-memsafety/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
 	};
 	
 	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs_DerefFreeMemtrack = {
-		/*** Category 3. Heap Data Structures ***/
-		new DirectoryFileEndingsPair("examples/svcomp/memsafety/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/list-ext-properties/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/memory-alloca/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/ldv-memsafety/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+//		/*** Category 3. Heap Data Structures ***/
+//		new DirectoryFileEndingsPair("examples/svcomp/memsafety/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/list-ext-properties/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/memory-alloca/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/ldv-memsafety/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
 	};
 
 	
@@ -87,6 +87,9 @@ public class Svcomp2016_Memsafety extends AbstractTraceAbstractionTestSuite {
 //			"examples/svcomp/ldv-memsafety/memleaks_test18_true-valid-memsafety.i",
 //			"examples/svcomp/array-memsafety/cstrncat-alloca_true-valid-memsafety.i",
 //			"examples/svcomp/array-memsafety/cstrchr_unsafe_false-valid-deref.i",
+//			"examples/svcomp/ldv-memsafety/memleaks_test19_true-valid-memsafety.i",
+//			"examples/svcomp/ldv-memsafety/memleaks_test17_2_true-valid-memsafety.i",
+			"examples/svcomp/array-memsafety/openbsd_cstrstr-alloca_true-valid-memsafety.i",
 		};
 
 
@@ -95,7 +98,7 @@ public class Svcomp2016_Memsafety extends AbstractTraceAbstractionTestSuite {
 	 */
 	@Override
 	public long getTimeout() {
-		return 300 * 1000;
+		return 300999 * 1000;
 	}
 
 	private static final String[] m_Settings_Deref = {
