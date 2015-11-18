@@ -808,6 +808,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 							numberOfQuantifiedPredicates[3]++;
 						}
 					}
+				} else {
+					m_InterpolantsBp[i] = m_InterpolantsWp[i];
 				}
 			}
 		}
