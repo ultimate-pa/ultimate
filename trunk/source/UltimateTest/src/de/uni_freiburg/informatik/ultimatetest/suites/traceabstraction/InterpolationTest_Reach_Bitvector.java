@@ -42,7 +42,7 @@ public class InterpolationTest_Reach_Bitvector extends AbstractTraceAbstractionT
 
 	/** Limit the number of files per directory. */
 //	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
-	private static int m_FilesPerDirectoryLimit = 12;
+	private static int m_FilesPerDirectoryLimit = 8;
 	
 	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs = {
 		/*** Category 1. Arrays ***/
@@ -120,11 +120,17 @@ public class InterpolationTest_Reach_Bitvector extends AbstractTraceAbstractionT
 	}
 
 	private static final String[] m_Settings = {
-		"automizer/interpolation/Reach-32bit-Z3-NestedInterpolation-Bitvector.epf",
-		"automizer/interpolation/Reach-32bit-Z3-FPandBP-Bitvector.epf",
-		"automizer/interpolation/Reach-32bit-Z3-FP-Bitvector.epf",
-		"automizer/interpolation/Reach-32bit-Z3-BP-Bitvector.epf",
+		"automizer/interpolation/bitvector/Reach-32bit-Z3-NestedInterpolation-Bitvector.epf",
+		"automizer/interpolation/bitvector/Reach-32bit-Z3-IcSpLv-Bitvector.epf",
+		"automizer/interpolation/bitvector/Reach-32bit-Z3-IcSp-Bitvector.epf",
+		"automizer/interpolation/bitvector/Reach-32bit-Z3-SpLv-Bitvector.epf",
+		"automizer/interpolation/bitvector/Reach-32bit-Z3-Sp-Bitvector.epf",
+		"automizer/interpolation/bitvector/Reach-32bit-Z3-IcWpLv-Bitvector.epf",
+		"automizer/interpolation/bitvector/Reach-32bit-Z3-IcWp-Bitvector.epf",
+		"automizer/interpolation/bitvector/Reach-32bit-Z3-WpLv-Bitvector.epf",
+		"automizer/interpolation/bitvector/Reach-32bit-Z3-Wp-Bitvector.epf",
 	};
+//	"automizer/interpolation/Reach-32bit-Z3-FPandBP-Bitvector.epf",
 	
 	private static final String[] m_CToolchains = {
 //		"AutomizerC.xml",
