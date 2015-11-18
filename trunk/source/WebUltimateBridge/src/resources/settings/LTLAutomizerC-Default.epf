@@ -61,6 +61,10 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/ScroogeNondeterminism\ stem=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/ScroogeNondeterminism\ loop=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Bouncer\ loop=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Use\ external\ solver\ (rank\ synthesis)=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Use\ external\ solver\ (GNTA\ synthesis)=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/GNTA\ analysis=Linear_with_guesses
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Rank\ analysis=Linear_with_guesses
 #Thu Jan 29 10:39:03 CET 2015
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ if\ freed\ pointer\ was\ valid=false
