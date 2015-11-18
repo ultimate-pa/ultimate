@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsQuantifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -132,11 +133,12 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 		default:
 			throw new UnsupportedOperationException("unsupportedInterpolation");
 		}
+		m_TraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(m_Interpolants);
 		m_TraceCheckFinished = true;
 
 		m_TraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_InterpolantComputation);
 		// TODO: remove this if relevant variables are definitely correct.
-		// assert testRelevantVars() : "bug in relevant varialbes";
+		// assert testRelevantVars() : "bug in relevant variables";
 	}
 
 	private boolean testRelevantVars() {

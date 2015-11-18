@@ -36,10 +36,8 @@ import java.util.SortedMap;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lassoranker.SMTSolver;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -48,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsQuantifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTerm;
@@ -172,6 +171,8 @@ public class TraceChecker {
 		protected final static String s_NumberOfCodeBlocks = "NumberOfCodeBlocks";
 		protected final static String s_NumberOfCodeBlocksAsserted = "NumberOfCodeBlocksAsserted";
 		protected final static String s_NumberOfCheckSat = "NumberOfCheckSat";
+		protected final static String s_ConstructedInterpolants = "ConstructedInterpolants";
+		protected final static String s_QuantifiedInterpolants = "QuantifiedInterpolants";
 	
 		public static TraceCheckerBenchmarkType getInstance() {
 			return s_Instance;
@@ -179,8 +180,10 @@ public class TraceChecker {
 	
 		@Override
 		public Collection<String> getKeys() {
-			return Arrays.asList(new String[] { s_SsaConstruction, s_SatisfiabilityAnalysis, s_InterpolantComputation,
-					s_NumberOfCodeBlocks, s_NumberOfCodeBlocksAsserted, s_NumberOfCheckSat });
+			return Arrays.asList(new String[] { s_SsaConstruction, s_SatisfiabilityAnalysis, 
+					s_InterpolantComputation,
+					s_NumberOfCodeBlocks, s_NumberOfCodeBlocksAsserted, s_NumberOfCheckSat, 
+					s_ConstructedInterpolants, s_QuantifiedInterpolants });
 		}
 	
 		@Override
@@ -195,6 +198,8 @@ public class TraceChecker {
 			case s_NumberOfCodeBlocks:
 			case s_NumberOfCodeBlocksAsserted:
 			case s_NumberOfCheckSat:
+			case s_ConstructedInterpolants:
+			case s_QuantifiedInterpolants:
 				Integer number1 = (Integer) value1;
 				Integer number2 = (Integer) value2;
 				return number1 + number2;
@@ -232,6 +237,23 @@ public class TraceChecker {
 			sb.append(s_NumberOfCheckSat);
 			sb.append(": ");
 			sb.append(benchmarkData.getValue(s_NumberOfCheckSat));
+			sb.append(" ");
+			Integer quantifiedInterpolants = (Integer) benchmarkData.getValue(s_QuantifiedInterpolants);
+			Integer constructedInterpolants = (Integer) benchmarkData.getValue(s_ConstructedInterpolants);
+			sb.append(s_QuantifiedInterpolants);
+			sb.append(": ");
+			sb.append(benchmarkData.getValue(s_QuantifiedInterpolants));
+			sb.append("/");
+			sb.append(benchmarkData.getValue(s_ConstructedInterpolants));
+			sb.append("=");
+			final double percent;
+			if (constructedInterpolants == 0) {
+				percent = 0;
+			} else {
+				percent = (((double) quantifiedInterpolants) / ((double) constructedInterpolants))*100; 
+			}
+			sb.append(percent);
+			sb.append("%");
 			return sb.toString();
 		}
 	}
@@ -248,6 +270,8 @@ public class TraceChecker {
 		int m_NumberOfCodeBlocks = 0;
 		int m_NumberOfCodeBlocksAsserted = 0;
 		int m_NumberOfCheckSat = 0;
+		int m_ConstructedInterpolants = 0;
+		int m_QuantifiedInterpolants = 0;
 
 		@Override
 		public String[] getStopwatches() {
@@ -278,6 +302,10 @@ public class TraceChecker {
 				return m_NumberOfCodeBlocksAsserted;
 			case TraceCheckerBenchmarkType.s_NumberOfCheckSat:
 				return m_NumberOfCheckSat;
+			case TraceCheckerBenchmarkType.s_ConstructedInterpolants:
+				return m_ConstructedInterpolants;
+			case TraceCheckerBenchmarkType.s_QuantifiedInterpolants:
+				return m_QuantifiedInterpolants;
 			default:
 				throw new AssertionError("unknown data");
 			}
@@ -307,6 +335,20 @@ public class TraceChecker {
 		 */
 		public void reportnewCheckSat() {
 			m_NumberOfCheckSat++;
+		}
+		
+		public void reportNewInterpolant(boolean isQuantified) {
+			m_ConstructedInterpolants++;
+			if (isQuantified) {
+				m_QuantifiedInterpolants++;
+			}
+		}
+		
+		public void reportSequenceOfInterpolants(IPredicate[] interpolants) {
+			for (IPredicate pred : interpolants) {
+				boolean isQuantified = new ContainsQuantifier().containsQuantifier(pred.getFormula());
+				m_TraceCheckerBenchmarkGenerator.reportNewInterpolant(isQuantified);
+			}
 		}
 
 	}

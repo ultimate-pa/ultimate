@@ -417,6 +417,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			assert TraceCheckerUtils.checkInterpolantsInductivityForward(m_InterpolantsFp, 
 					trace, tracePrecondition, tracePostcondition, m_PendingContexts, "FP", 
 					m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in FP";
+			m_TraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(m_InterpolantsFp);
 			if (m_CollectInformationAboutSizeOfPredicates) {
 				sizeOfPredicatesFP = m_SmtManager.computeDagSizeOfPredicates(m_InterpolantsFp);
 			}
@@ -428,6 +429,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			assert TraceCheckerUtils.checkInterpolantsInductivityForward(m_InterpolantsFp, 
 					trace, tracePrecondition, tracePostcondition, m_PendingContexts, "FP", 
 					m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in FP";
+			m_TraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(m_InterpolantsFp);
 		}
 
 		if (m_LogInformation) {
@@ -444,6 +446,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			assert TraceCheckerUtils.checkInterpolantsInductivityBackward(m_InterpolantsBp, 
 					trace, tracePrecondition, tracePostcondition, m_PendingContexts, "BP", 
 					m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in BP";
+			m_TraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(m_InterpolantsBp);
 			if (m_CollectInformationAboutSizeOfPredicates) {
 				sizeOfPredicatesBP = m_SmtManager.computeDagSizeOfPredicates(m_InterpolantsBp);
 			}
@@ -455,6 +458,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			assert TraceCheckerUtils.checkInterpolantsInductivityBackward(m_InterpolantsBp, 
 					trace, tracePrecondition, tracePostcondition, m_PendingContexts, "BP", 
 					m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in BP";
+			m_TraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(m_InterpolantsBp);
 		}
 		
 
