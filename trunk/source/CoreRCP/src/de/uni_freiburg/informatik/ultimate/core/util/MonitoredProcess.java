@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.util;
 
-import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -128,6 +127,11 @@ public final class MonitoredProcess implements IStorable {
 	/**
 	 * Start a new monitored process. The process will be terminated at the end of the toolchain.
 	 * 
+	 * Note that you should not start an external process through some wrapper script, because Java will have trouble
+	 * terminating this processes due to bug
+	 * <a href="http://bugs.java.com/bugdatabase/view_bug.do?bug_id=4770092">JDK-4770092</a>. If this occurs, Ultimate
+	 * may deadlock because it cannot close input and output streams of the unresponsive process reliably.
+	 * 
 	 * @param command
 	 *            A string array containing the command and its possible arguments that will be used to start a new
 	 *            process.
@@ -178,6 +182,11 @@ public final class MonitoredProcess implements IStorable {
 
 	/**
 	 * Start a new monitored process. The process will be terminated at the end of the toolchain.
+	 * 
+	 * Note that you should not start an external process through some wrapper script, because Java will have trouble
+	 * terminating this processes due to bug
+	 * <a href="http://bugs.java.com/bugdatabase/view_bug.do?bug_id=4770092">JDK-4770092</a>. If this occurs, Ultimate
+	 * may deadlock because it cannot close input and output streams of the unresponsive process reliably.
 	 * 
 	 * @param command
 	 *            A command without arguments that will be used to start a new process.
@@ -457,14 +466,28 @@ public final class MonitoredProcess implements IStorable {
 		}
 	}
 
+	/**
+	 * @return the output stream connected to the normal input of the subprocess. Output to the stream is piped into the
+	 *         standard input of the process represented by this Process object.
+	 */
 	public OutputStream getOutputStream() {
 		return mProcess.getOutputStream();
 	}
 
+	/**
+	 * @return the input stream connected to the error output of the subprocess. The stream obtains data piped from the
+	 *         error output of the process represented by this Process object. This stream is already pumped to deal
+	 *         with OS buffering.
+	 */
 	public InputStream getErrorStream() {
 		return mStdErrStreamPipe;
 	}
 
+	/**
+	 * @return the input stream connected to the normal output of the subprocess. The stream obtains data piped
+	 *         from the standard output of the process represented by this Process object. This stream is already
+	 *         pumped to deal with OS buffering.
+	 */
 	public InputStream getInputStream() {
 		return mStdInStreamPipe;
 	}
