@@ -407,7 +407,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 
 		if (m_ComputeInterpolantsFp) {
 			m_Logger.debug("Computing forward relevant predicates...");
-			computeForwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePrecondition, true,
+			computeForwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePrecondition, m_LiveVariables,
 					numberOfQuantifiedPredicates);
 			m_Logger.debug("Checking inductivity of forward relevant predicates...");
 			//			if (!TraceCheckerUtils.checkInterpolantsInductivityForward(m_InterpolantsFp, 
@@ -423,7 +423,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			}
 		} else if (m_ComputeInterpolantsSp && !m_ComputeInterpolantsFp) {
 			m_Logger.debug("Computing forward relevant predicates...");
-			computeForwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePrecondition, false,
+			computeForwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePrecondition, m_LiveVariables,
 					numberOfQuantifiedPredicates);
 			m_Logger.debug("Checking inductivity of forward relevant predicates...");
 			assert TraceCheckerUtils.checkInterpolantsInductivityForward(m_InterpolantsFp, 
@@ -441,7 +441,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		if (m_ComputeInterpolantsBp) {
 			m_Logger.debug("Computing backward relevant predicates...");
 			computeBackwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePostcondition,
-					true, numberOfQuantifiedPredicates);
+					m_LiveVariables, numberOfQuantifiedPredicates);
 			m_Logger.debug("Checking inductivity of backward relevant predicates...");
 			assert TraceCheckerUtils.checkInterpolantsInductivityBackward(m_InterpolantsBp, 
 					trace, tracePrecondition, tracePostcondition, m_PendingContexts, "BP", 
@@ -452,7 +452,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			}
 		} else if (m_ComputeInterpolantsWp && !m_ComputeInterpolantsBp) {
 			m_Logger.debug("Computing backward relevant predicates...");
-			computeBackwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePostcondition, false,
+			computeBackwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePostcondition, m_LiveVariables,
 					numberOfQuantifiedPredicates);
 			m_Logger.debug("Checking inductivity of backward relevant predicates...");
 			assert TraceCheckerUtils.checkInterpolantsInductivityBackward(m_InterpolantsBp, 
