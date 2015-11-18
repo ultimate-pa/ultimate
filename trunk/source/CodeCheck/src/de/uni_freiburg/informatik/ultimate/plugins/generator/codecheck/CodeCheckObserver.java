@@ -73,7 +73,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferenc
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.EdgeCheckOptimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.PredicateUnification;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.RedirectionStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.SolverAndInterpolator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.emptinesscheck.IEmptinessCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.emptinesscheck.NWAEmptinessCheck;
 //import de.uni_freiburg.informatik.ultimate.plugins.generator.impulse.ImpulsChecker;
@@ -161,8 +160,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	boolean loop_forever = true; // for DEBUG
 	int iterationsLimit = -1; // for DEBUG
 	private boolean outputHoareAnnotation = false;
-
-	boolean noArrayOrNIRAsofar = true;
 
 	CodeCheckObserver(IUltimateServiceProvider services, IToolchainStorage toolchainStorage) {
 		m_services = services;
@@ -257,8 +254,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				CodeCheckPreferenceInitializer.LABEL_MEMOIZERETURNEDGECHECKS,
 				CodeCheckPreferenceInitializer.DEF_MEMOIZERETURNEDGECHECKS);
 
-		GlobalSettings._instance._solverAndInterpolator = prefs
-				.getEnum(CodeCheckPreferenceInitializer.LABEL_SOLVERANDINTERPOLATOR, SolverAndInterpolator.class);
+//		GlobalSettings._instance._solverAndInterpolator = prefs
+//				.getEnum(CodeCheckPreferenceInitializer.LABEL_SOLVERANDINTERPOLATOR, SolverAndInterpolator.class);
 
 		GlobalSettings._instance._interpolationMode = prefs
 				.getEnum(CodeCheckPreferenceInitializer.LABEL_INTERPOLATIONMODE, INTERPOLATION.class);
@@ -289,9 +286,40 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		GlobalSettings._instance.checkSatisfiability = prefs.getBoolean(CodeCheckPreferenceInitializer.LABEL_CHK_SAT,
 				CodeCheckPreferenceInitializer.DEF_CHK_SAT);
 
+		/*
+		 * Settings concerning the solver for trace checks
+		 */
 		GlobalSettings._instance.useSeparateSolverForTracechecks = prefs.getBoolean(
 				CodeCheckPreferenceInitializer.LABEL_USESEPARATETRACECHECKSOLVER,
 				CodeCheckPreferenceInitializer.DEF_USESEPARATETRACECHECKSOLVER);
+
+		GlobalSettings._instance.useFallbackForSeparateSolverForTracechecks = prefs.getBoolean(
+				CodeCheckPreferenceInitializer.LABEL_USEFALLBACKFORSEPARATETRACECHECKSOLVER,
+				CodeCheckPreferenceInitializer.DEF_USEFALLBACKFORSEPARATETRACECHECKSOLVER);
+		
+		GlobalSettings._instance.chooseSeparateSolverForTracechecks = prefs.getEnum(
+				CodeCheckPreferenceInitializer.LABEL_CHOOSESEPARATETRACECHECKSOLVER,
+				SolverMode.class);
+
+		GlobalSettings._instance.separateSolverForTracechecksCommand = prefs.getString(
+				CodeCheckPreferenceInitializer.LABEL_SEPARATETRACECHECKSOLVERCOMMAND,
+				CodeCheckPreferenceInitializer.DEF_SEPARATETRACECHECKSOLVERCOMMAND);
+
+		GlobalSettings._instance.separateSolverForTracechecksTheory = prefs.getString(
+				CodeCheckPreferenceInitializer.LABEL_SEPARATETRACECHECKSOLVERTHEORY,
+				CodeCheckPreferenceInitializer.DEF_SEPARATETRACECHECKSOLVERTHEORY);
+
+		/*
+		 * Settings concerning betim interpolation
+		 */
+		GlobalSettings._instance.useLiveVariables = prefs.getBoolean(
+				CodeCheckPreferenceInitializer.LABEL_LIVE_VARIABLES,
+				true);
+		GlobalSettings._instance.useUnsatCores = prefs.getEnum(
+				CodeCheckPreferenceInitializer.LABEL_UNSAT_CORES,
+				UnsatCores.class);
+
+
 	}
 
 	private void removeSummaryEdges() {
@@ -349,7 +377,10 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		int iterationsCount = 0;
 		long startTime = System.nanoTime();
 		BackwardCoveringInformation bwCoveringInfo = null;
-		boolean weHaveSPWPInterpolation = GlobalSettings._instance._solverAndInterpolator == SolverAndInterpolator.Z3SPWP;
+		boolean weHaveSPWPInterpolation = 
+				GlobalSettings._instance._interpolationMode == INTERPOLATION.BackwardPredicates
+				|| GlobalSettings._instance._interpolationMode == INTERPOLATION.ForwardPredicates
+				|| GlobalSettings._instance._interpolationMode == INTERPOLATION.FPandBP;
 		long noCBs = 0;
 		long soPredsFP = 0;
 		long soPredsBP = 0;
@@ -404,12 +435,15 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					if (GlobalSettings._instance.useSeparateSolverForTracechecks) {
 						Script tcSolver = SolverBuilder.buildAndInitializeSolver(m_services, m_toolchainStorage,
 								m_originalRoot.getFilename() + "_TraceCheck_Iteration" + iterationsCount,
-								SolverMode.Internal_SMTInterpol, // m_taPrefs.solverMode(),
+								GlobalSettings._instance.chooseSeparateSolverForTracechecks, 
 								false, // m_taPrefs.dumpSmtScriptToFile(),
 								"", // m_taPrefs.pathOfDumpedScript(),
-								"z3 SMTLIB2_COMPLIANT=true -memory:2024 -smt2 -in -t:12000", // m_taPrefs.commandExternalSolver(),
-								false, false, "AUFNIRA", // m_taPrefs.logicForExternalSolver(),
+								GlobalSettings._instance.separateSolverForTracechecksCommand,
+								false, 
+								false, 
+								GlobalSettings._instance.separateSolverForTracechecksTheory,
 								"TraceCheck_Iteration" + iterationsCount);
+
 						smtManagerTracechecks = new SmtManager(tcSolver, m_originalRoot.getRootAnnot().getBoogie2SMT(),
 								m_originalRoot.getRootAnnot().getModGlobVarManager(), m_services, false);
 						TermTransferrer tt = new TermTransferrer(tcSolver);
@@ -421,54 +455,71 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					}
 
 					traceChecker = null;
-					switch (GlobalSettings._instance._solverAndInterpolator) {
-					case SMTINTERPOL:
-//						if (noArrayOrNIRAsofar) {
-							try {
-								traceChecker = new InterpolatingTraceCheckerCraig(_predicateUnifier.getTruePredicate(),
-										_predicateUnifier.getFalsePredicate(), // return LBool.UNSAT if trace
-										// is infeasible
-										new TreeMap<Integer, IPredicate>(), errorRun.getWord(), m_smtManager,
-										m_originalRoot.getRootAnnot().getModGlobVarManager(),
-										/*
-										 * TODO : When Matthias introduced this parameter he set the argument to
-										 * AssertCodeBlockOrder.NOT_INCREMENTALLY . Check if you want to set this to a different
-										 * value.
-										 */AssertCodeBlockOrder.NOT_INCREMENTALLY, m_services, true, _predicateUnifier,
-										 GlobalSettings._instance._interpolationMode, smtManagerTracechecks, true);
-//							} catch (UnsupportedOperationException uoe) {
-							} catch (Exception e) {
-								traceChecker = new TraceCheckerSpWp(_predicateUnifier.getTruePredicate(),
-										_predicateUnifier.getFalsePredicate(), new TreeMap<Integer, IPredicate>(),
-										errorRun.getWord(), m_smtManager, m_originalRoot.getRootAnnot().getModGlobVarManager(),
-										AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, m_services,
-										true, _predicateUnifier, INTERPOLATION.ForwardPredicates, //fallback interpolation mode hardcoded for now
-										m_smtManager);
-								noArrayOrNIRAsofar = false;
-							}
-//						} else {
-//							// if we have used the fallback solver once in a verification run, we are doing it always from then on
-//							traceChecker = new TraceCheckerSpWp(_predicateUnifier.getTruePredicate(),
-//									_predicateUnifier.getFalsePredicate(), new TreeMap<Integer, IPredicate>(),
-//									errorRun.getWord(), m_smtManager, m_originalRoot.getRootAnnot().getModGlobVarManager(),
-//									AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, m_services,
-//									true, _predicateUnifier, INTERPOLATION.ForwardPredicates, //fallback interpolation mode hardcoded for now
-//									m_smtManager);
-//						}
+					switch (GlobalSettings._instance._interpolationMode) {
+					case Craig_TreeInterpolation:
+					case Craig_NestedInterpolation:
+						try {
+							traceChecker = new InterpolatingTraceCheckerCraig(_predicateUnifier.getTruePredicate(),
+									_predicateUnifier.getFalsePredicate(), // return LBool.UNSAT if trace
+									// is infeasible
+									new TreeMap<Integer, IPredicate>(), errorRun.getWord(), m_smtManager,
+									m_originalRoot.getRootAnnot().getModGlobVarManager(),
+									/*
+									 * TODO : When Matthias introduced this parameter he set the argument to
+									 * AssertCodeBlockOrder.NOT_INCREMENTALLY . Check if you want to set this to a different
+									 * value.
+									 */AssertCodeBlockOrder.NOT_INCREMENTALLY, m_services, true, _predicateUnifier,
+									 GlobalSettings._instance._interpolationMode, smtManagerTracechecks, true);
+							//							} catch (UnsupportedOperationException uoe) {
+						} catch (Exception e) {
+							if (!GlobalSettings._instance.useFallbackForSeparateSolverForTracechecks)
+								throw e;
+							/*
+							 * The fallback tracechecker is always the normal solver (i.e. the smtManager that was set in RCFGBuilder settings
+							 * with forward predicates betim interpolation.
+							 */
+							traceChecker = new TraceCheckerSpWp(_predicateUnifier.getTruePredicate(),
+									_predicateUnifier.getFalsePredicate(), new TreeMap<Integer, IPredicate>(),
+									errorRun.getWord(), m_smtManager, m_originalRoot.getRootAnnot().getModGlobVarManager(),
+									AssertCodeBlockOrder.NOT_INCREMENTALLY, 
+									UnsatCores.CONJUNCT_LEVEL, 
+									true, m_services,
+									true, _predicateUnifier, INTERPOLATION.ForwardPredicates, //fallback interpolation mode hardcoded for now
+									m_smtManager);
+						}
 						break;
-					case Z3SPWP:
+					case ForwardPredicates:
+					case BackwardPredicates:
+					case FPandBP:
 						// return LBool.UNSAT if trace is infeasible
 						/*
 						 * TODO : When Matthias introduced this parameter he set the argument to
 						 * AssertCodeBlockOrder.NOT_INCREMENTALLY . Check if you want to set this to a different value.
 						 */
-						traceChecker = new TraceCheckerSpWp(_predicateUnifier.getTruePredicate(),
-								_predicateUnifier.getFalsePredicate(), new TreeMap<Integer, IPredicate>(),
-								errorRun.getWord(), m_smtManager, m_originalRoot.getRootAnnot().getModGlobVarManager(),
-								AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, m_services,
-								true, _predicateUnifier, GlobalSettings._instance._interpolationMode,
-								smtManagerTracechecks);
+						try {
+							traceChecker = new TraceCheckerSpWp(_predicateUnifier.getTruePredicate(),
+									_predicateUnifier.getFalsePredicate(), new TreeMap<Integer, IPredicate>(),
+									errorRun.getWord(), m_smtManager, m_originalRoot.getRootAnnot().getModGlobVarManager(),
+									AssertCodeBlockOrder.NOT_INCREMENTALLY, 
+									GlobalSettings._instance.useUnsatCores,
+									GlobalSettings._instance.useLiveVariables,
+									m_services,
+									true, _predicateUnifier, GlobalSettings._instance._interpolationMode,
+									smtManagerTracechecks);
+						} catch (Exception e) {
+							if (!GlobalSettings._instance.useFallbackForSeparateSolverForTracechecks)
+								throw e;
+
+							traceChecker = new TraceCheckerSpWp(_predicateUnifier.getTruePredicate(),
+									_predicateUnifier.getFalsePredicate(), new TreeMap<Integer, IPredicate>(),
+									errorRun.getWord(), m_smtManager, m_originalRoot.getRootAnnot().getModGlobVarManager(),
+									AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, m_services,
+									true, _predicateUnifier, GlobalSettings._instance._interpolationMode,
+									m_smtManager);
+						}
 						break;
+					case PathInvariants:
+						throw new UnsupportedOperationException("alex: i don't know what this setting is for");
 					}
 
 					if (GlobalSettings._instance.useSeparateSolverForTracechecks) {
