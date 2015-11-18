@@ -12,8 +12,7 @@ import java.util.function.BiFunction;
  * TODO Variables (names, type, ...) aren't stored
  * TODO Matrix is divided into 2x2 blocks
  * 
- * This class ensures that all elements on the main diagonal are 0
- * and each matrix is coherent (as seen in the following ASCII art).
+ * This class ensures coherence (as seen in the following ASCII art).
  * <pre>
  *     \ .   D B   L J
  *     . \   C A   K I
@@ -29,49 +28,46 @@ import java.util.function.BiFunction;
  */
 public class OctMatrix {
 
-	/** Size of this matrix (size = #rows = #columns). */
+	/**
+	 * Size of this matrix (size = #rows = #columns).
+	 * Size is always an even number.
+	 */
 	private final int mSize;
-
-	/** Offset of the strictly lower triangular matrix in {@link #mElements}. */
-	private final int mOffsetLower;
 	
 	/**
 	 * Stores the elements of this matrix.
-	 * <p>
-	 * Some elements are neglected because they are constant or coherent to
-	 * other elements (see documentation of this class). The remaining
-	 * elements are either part of "lower" (L) or "upper" (U) as seen in the
-	 * following ASCII art.
-	 * 
+	 * <p> 
+	 * Some elements are neglected because they are coherent to other elements
+	 * (see documentation of this class). The stored elements and their
+	 * indices are shown in the following ASCII art.
 	 * <pre>
-	 *     \ U - - - -            \ 0 - - - - 
-	 *     L \ - - - -            3 \ - - - - 
-	 *     L L \ U - -            4 5 \ 1 - - 
-	 *     L L L \ - -            6 7 8 \ - - 
-	 *     L L L L \ U            9 . . . \ 2 
-	 *     L L L L L \            . . . . . \
-	 *     stored parts             indexing
-	 *    (only L and U)
-	 *
-	 * mElements: [ 0 1 2 3 4 5 6 7 8 9 ... ]
-	 *              `-U-´ `-------L-------´
+	 *     0 1 . . . .    legend
+	 *     2 3 . . . .    -----------------
+	 *     4 5 6 7 . .    .      not stored
+	 *     8 9 # # . .    0-9 #  stored    
+	 *     # # # # # #
+	 *     # # # # # #    m_0,0 is top left
 	 * </pre>
+	 * The matrix is divided into 2x2 blocks. Every block that contains
+	 * at least one element from the lower triangular matrix is completely
+	 * stored. Elements are stored row-wise from top to bottom, left to right.
+	 * 
+	 * @see #indexOf(int, int)
 	 */
 	private final OctValue[] mElements;
 
 
 	public OctMatrix(OctMatrix octMatrix) {
 		mSize = octMatrix.mSize;
-		mOffsetLower = octMatrix.mOffsetLower;
 		mElements = new OctValue[octMatrix.mElements.length];
 		System.arraycopy(octMatrix.mElements, 0, mElements, 0, mElements.length);
 	}
 	
 	public OctMatrix(int variables) {
 		mSize = variables * 2;
-		mOffsetLower = variables;
-		mElements = new OctValue[mOffsetLower + mSize * (mSize - 1) / 2];
+		mElements = new OctValue[2 * variables * (variables + 1)];
 		Arrays.fill(mElements, OctValue.INFINITY);
+		setMainDiagonal(OctValue.ZERO);
 	}
 
 	public int getSize() {
@@ -79,8 +75,6 @@ public class OctMatrix {
 	}
 	
 	public OctValue get(int row, int col) {
-		if (row == col)
-			return OctValue.ZERO;
 		return mElements[indexOf(row, col)];
 	}
 	
@@ -89,24 +83,24 @@ public class OctMatrix {
 			throw new IllegalArgumentException("null is not a valid matrix element.");
 		mElements[indexOf(row, col)] = value;
 	}
+	
+	protected void setMainDiagonal(OctValue value) {
+		for (int i = 0; i < mSize; ++i)
+			mElements[indexOfLower(i, i)] = value;
+	}
 
 	private int indexOf(int row, int col) {
 		if (row >= mSize || col >= mSize)
 			throw new IndexOutOfBoundsException(row + "," + col + " is not an index for matrix of size " + mSize + ".");
-		if (row > col)
-			return indexOfLower(row, col);
-		if (row == col)
-			return -1;
-		if ((row ^ col) == 1) // && row < col
-			return col / 2;
-		return indexOfLower(col ^ 1, row ^ 1);
+		if (row < col)
+			return indexOfLower(col ^ 1, row ^ 1);
+		return indexOfLower(row, col);
 	}
 
 	private int indexOfLower(int row, int col) {
-		//                      triangle above row   +  offset in row
-		return mOffsetLower  +  (row - 1) * row / 2  +  col;
+		return col + (row + 1) * (row + 1) / 2;
 	}
-	
+
 	public OctMatrix elementwise(OctMatrix other, BiFunction<OctValue, OctValue, OctValue> operator) {
 		if (other.mSize != mSize)
 			throw new IllegalArgumentException("Incompatible matrices");
