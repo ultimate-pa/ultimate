@@ -3,6 +3,40 @@ import argparse
 import csv 
 import re
 import os
+import sys
+import codecs
+
+
+mLatexSettingsMappings = {
+'DerefFreeMemtrack-32bit-Z3-Sp-Integer.epf' :'\\zzzsp',
+'DerefFreeMemtrack-32bit-Z3-IcSp-Integer.epf' :'\\zzzspic',
+'DerefFreeMemtrack-32bit-Z3-SpLv-Integer.epf' :'\\zzzsplv',
+'DerefFreeMemtrack-32bit-SMTInterpol-TreeInterpolation-Integer.epf' :'\\smtinterpolip',
+'DerefFreeMemtrack-32bit-Z3-NestedInterpolation-Integer.epf' :'\\zzzip',
+'DerefFreeMemtrack-32bit-Princess-TreeInterpolation-Integer.epf' :'\\princessip',
+'DerefFreeMemtrack-32bit-Z3-FPandBP-Integer.epf' :'FP+BP',
+'DerefFreeMemtrack-32bit-Z3-BP-Integer.epf' :'\\zzzspiclv BP',
+'DerefFreeMemtrack-32bit-Z3-IcSpLv-Integer.epf' : '\\zzzspiclv',
+'Reach-32bit-Z3-BP-Bitvector.epf':'\\zzzspiclv BP',
+'Reach-32bit-Z3-FPandBP-Bitvector.epf':'FP+BP',
+'Reach-32bit-Z3-NestedInterpolation-Bitvector.epf':'\\zzzip',
+'Reach-32bit-Z3-FP-Bitvector.epf':'\\zzzspiclv FP',
+'Reach-32bit-Princess-TreeInterpolation.epf':'\\princessip',
+'Reach-32bit-Z3-FP.epf':'\\zzzspiclv FP',
+'Reach-32bit-SMTInterpol-TreeInterpolation.epf':'\\smtinterpolip',
+'Reach-32bit-Z3-BP.epf':'\\zzzspiclv BP',
+'Reach-32bit-Z3-NestedInterpolation.epf':'\\zzzip',
+}
+
+mLatexColors = ['Apricot', 'Aquamarine', 'Bittersweet', 'Black', 'Blue', 'BlueGreen', 'BlueViolet',
+                'BrickRed', 'Brown', 'BurntOrange', 'CadetBlue', 'CarnationPink', 'Cerulean', 'CornflowerBlue',
+                'Cyan', 'Dandelion', 'DarkOrchid', 'Emerald', 'ForestGreen', 'Fuchsia', 'Goldenrod', 'Gray',
+                'Green', 'GreenYellow', 'JungleGreen', 'Lavender', 'LimeGreen', 'Magenta', 'Mahogany', 'Maroon',
+                'Melon', 'MidnightBlue', 'Mulberry', 'NavyBlue', 'OliveGreen', 'Orange', 'OrangeRed', 'Orchid',
+                'Peach', 'Periwinkle', 'PineGreen', 'Plum', 'ProcessBlue', 'Purple', 'RawSienna', 'Red',
+                'RedOrange', 'RedViolet', 'Rhodamine', 'RoyalBlue', 'RoyalPurple', 'RubineRed', 'Salmon',
+                'SeaGreen', 'Sepia', 'SkyBlue', 'SpringGreen', 'Tan', 'TealBlue', 'Thistle', 'Turquoise',
+                'Violet', 'VioletRed', 'White', 'WildStrawberry', 'Yellow', 'YellowGreen', 'YellowOrange' ]
 
 mUltimateHeader = ['File',
                    'Settings',
@@ -47,7 +81,7 @@ def toFloat(row, a):
 mRowFuns = { 'Time' : lambda r : timeInNanosToSeconds(r, 'Overall time'),
             'Iter' : lambda r : toInt(r, 'Overall iterations'),
             'InterpolantTime' : lambda r : timeInNanosToSeconds(r, 'TraceCheckerBenchmark_InterpolantComputationTime'),
-            'SizeReduction%':lambda r : toPercent(r, 'TraceCheckerBenchmark_Conjuncts in UnsatCore', 'TraceCheckerBenchmark_Conjuncts in SSA')}
+            'SizeReduction':lambda r : toPercent(r, 'TraceCheckerBenchmark_Conjuncts in UnsatCore', 'TraceCheckerBenchmark_Conjuncts in SSA')}
 
 def parseArgs():
     # parse command line arguments
@@ -227,27 +261,89 @@ def mapKeys(fun, dicti):
 def mapValues(fun, dicti):
     return dict(map(lambda (k, v): (k, fun(v)), dicti.iteritems()))
 
+def writeLatexFigure(filename, xlabel, ylabel, plotnames, plotfiles, caption):
+    
+    if len(plotnames) > len(mLatexColors):
+        sys.stderr.write('Warning: There are not enough colors, so I will drop some plot lines (but who plots more than 63 plots anyways?') 
+    
+    plots = zip(mLatexColors, plotfiles)
 
-def writePlots(successrows, uniqueSettings, outputDir):
+    f = codecs.open(filename, 'a', 'utf-8')
+    f.write('\\begin{figure}\n')
+    f.write('\\begin{tikzpicture}\n')
+    f.write('\\begin{axis}[%\n')
+    f.write('xmin=0, ymin=0,%\n')
+    f.write('xlabel={' + xlabel + '},%\n')
+    f.write('ylabel={' + ylabel + '},grid=both,axis lines=left,%\n')
+    f.write('legend style={at={(0.1,0.9)},anchor=north west,legend cell align=left},%\n')
+    f.write('legend entries={')
+    for name in plotnames:
+        if name in mLatexSettingsMappings:
+            f.write(mLatexSettingsMappings[name] + ',',)
+        else:
+            f.write(name + ',',)
+    f.write('},%\n')
+    f.write(']\n')
+    
+    for color, plotfile in plots:
+        f.write('\\addplot+[' + color + '!80!black,no marks,opacity=1] table {plots/' + plotfile + '};\n')
+    f.write('\\end{axis}\n')
+    f.write('\\end{tikzpicture}\n')
+    f.write('\\caption{' + caption + '}\n')
+    f.write('\\end{figure}\n\n')
+    f.close()
+    return
+
+def writePlots(successrows, uniqueSettings, outputDir, name):
+    plotsfile = os.path.join(outputDir, 'plots.tex')
+    if os.path.isfile(plotsfile):
+        os.remove(plotsfile)
+
     for funName, fun in mRowFuns.iteritems():
         plottable = getPlottable(successrows, fun, map(lambda x : (x), uniqueSettings))
+        plotfiles = []
+        plotnames = []
         for setting, values in plottable.iteritems():
-            f = open(os.path.join(outputDir, funName + '-' + os.path.basename(setting) + '.plot'), 'w')
-            print 'Writing', os.path.realpath(f.name)
+            friendlySetting = os.path.basename(setting)
+            filename = funName + '-' + friendlySetting + '.plot'
+            f = codecs.open(os.path.join(outputDir, filename), 'w', 'utf-8')
             i = 0
             for val in values:
                 f.write(str(i) + ' ' + str(val) + '\n')
                 i = i + 1
+            f.close()
+            if os.stat(f.name).st_size == 0:
+                os.remove(f.name)
+            else:
+                plotfiles.append(filename)
+                plotnames.append(friendlySetting)
+        if name != '':
+            funName = name + ' ' + funName
+        writeLatexFigure(plotsfile, 'x', 'y', plotnames, plotfiles, funName)
                 
     return
 
-def main():
+def getArgs():
     args = parseArgs()
     file = args.input[0]
+    
+    if not os.path.isfile(file):
+        print file, 'does not exist'
+        sys.exit(1)
+        return
     
     output = args.output
     if output == None:
         output = os.getcwd()
+    
+    name = args.name
+    if name == None:
+        name = ''
+        
+    return file, output, name              
+
+def main():
+    file, output, name = getArgs()
     
     rows = list(parseCsvFile(file))
     uniqueSettings = applyOnCsvFile(rows, lambda x, y : getUniqueSet('Settings', x, y))
@@ -255,7 +351,8 @@ def main():
     
     if len(uniqueToolchains) > 1:
         print 'We only support 1 toolchain per .csv so far, sorry'
-        SystemExit(1)
+        sys.exit(1)
+        return
     
     crashed = getCrashedInputs(rows, uniqueSettings)
     rows = addRowsForCrashedInputs(rows, crashed, next(iter(uniqueToolchains)))
@@ -279,7 +376,7 @@ def main():
     remPathD = lambda x : mapKeys(lambda y : getSuffix('settings/automizer/interpolation/', y), x)
     remPathS = lambda x : map(lambda y : getSuffix('settings/automizer/interpolation/', y), x)
 
-    print 'Settings:         ', uniqueSettings
+    print 'Settings:         ', remPathS(uniqueSettings)
     print 'Total inputs:     ', len(uniqueFiles)
     # print 'Crashed inputs #: ', len(crashed)
     # print 'Crashed inputs:   ', crashed
@@ -289,13 +386,11 @@ def main():
     print 'not us Portfolio: ', otherPortfolio
     print 'Mixed:            ', mixed
     print 'Mixed Count:      ', len(mixed)
+    print 
     
     # # gnuplot and stuff 
-    
     successrows = filter(lambda x : x['Result'] in successResults , rows)
-    writePlots(successrows, uniqueSettings, output)
-    
-
+    writePlots(successrows, uniqueSettings, output, name)
             
     # applyOnCsvFile(rows, printFields)
     # applyOnCsvFile(rows, lambda x, y : printFields2('haha', x, y))
