@@ -62,7 +62,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 		final IEvaluationResult<IntervalDomainEvaluationResult> secondResult = mRightSubEvaluator
 		        .evaluate(currentState);
 
-		IntervalDomainState returnState = (IntervalDomainState) currentState.copy();
+		IntervalDomainState returnState = currentState.copy();
 		IntervalDomainValue returnValue = new IntervalDomainValue();
 
 		ILogicalEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> logicLeft = (ILogicalEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar>) mLeftSubEvaluator;
@@ -95,11 +95,9 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 			if (mBooleanValue.getValue() == Value.FALSE) {
 				setToBottom = true;
 			} else {
-				final IntervalDomainState firstIntervalState = (IntervalDomainState) firstResult.getResult()
-				        .getEvaluatedState();
-				final IntervalDomainState secondIntervalState = (IntervalDomainState) secondResult.getResult()
-				        .getEvaluatedState();
-				returnState = (IntervalDomainState) firstIntervalState.intersect(secondIntervalState);
+				final IntervalDomainState firstIntervalState = firstResult.getResult().getEvaluatedState();
+				final IntervalDomainState secondIntervalState = secondResult.getResult().getEvaluatedState();
+				returnState = firstIntervalState.intersect(secondIntervalState);
 			}
 			break;
 		case LOGICOR:
@@ -164,7 +162,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 						returnState.setValue(varName, firstResult.getResult().getEvaluatedValue());
 					}
 
-					returnState = (IntervalDomainState) returnState.intersect((IntervalDomainState) currentState);
+					returnState = returnState.intersect(currentState);
 				}
 
 			} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 1
@@ -194,7 +192,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 						returnState.setValue(varName, secondResult.getResult().getEvaluatedValue());
 					}
 
-					returnState = (IntervalDomainState) returnState.intersect((IntervalDomainState) currentState);
+					returnState = returnState.intersect(currentState);
 				}
 
 			} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 1
@@ -235,7 +233,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 						returnState.setValue(leftVar, secondResult.getResult().getEvaluatedValue());
 					}
 
-					returnState = (IntervalDomainState) returnState.intersect((IntervalDomainState) currentState);
+					returnState = returnState.intersect(currentState);
 				}
 
 			} else {
@@ -290,7 +288,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 						        .intersect(firstResult.getResult().getEvaluatedValue()));
 					}
 
-					returnState = (IntervalDomainState) returnState.intersect((IntervalDomainState) currentState);
+					returnState = returnState.intersect(currentState);
 				}
 			} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 1
 			        && mRightSubEvaluator.getVarIdentifiers().size() == 0) {
@@ -320,7 +318,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 						        .intersect(secondResult.getResult().getEvaluatedValue()));
 					}
 
-					returnState = (IntervalDomainState) returnState.intersect((IntervalDomainState) currentState);
+					returnState = returnState.intersect(currentState);
 				}
 			} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 1
 			        && mRightSubEvaluator.getVarIdentifiers().size() == 1) {
@@ -362,7 +360,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 						        .intersect(secondResult.getResult().getEvaluatedValue()));
 					}
 
-					returnState = (IntervalDomainState) returnState.intersect((IntervalDomainState) currentState);
+					returnState = returnState.intersect(currentState);
 				}
 			} else {
 				if (logicLeft.containsBool() && logicRight.containsBool()) {
@@ -377,7 +375,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 			break;
 		case COMPGT:
 			mLogger.warn(
-			        "Cannot handle greater than operations precisely. Using greater or equal over-approximation instead.");
+			        "Cannot handle greater than operators precisely. Using greater or equal over-approximation instead.");
 		case COMPGEQ:
 			if (logicLeft.containsBool() || logicRight.containsBool()) {
 				throw new UnsupportedOperationException("Boolean values are not allowed in a COMPGEQ expression.");
@@ -501,7 +499,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 			break;
 		case COMPLT:
 			mLogger.warn(
-			        "Cannot handle less than operations precisely. Using less or equal over-approximation instead.");
+			        "Cannot handle less than operators precisely. Using less or equal over-approximation instead.");
 		case COMPLEQ:
 			if (logicLeft.containsBool() || logicRight.containsBool()) {
 				throw new UnsupportedOperationException("Boolean values are not allowed in a COMPLEQ expression.");
