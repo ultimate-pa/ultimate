@@ -32,6 +32,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.evaluator.ILogicalEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -43,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class IntervalLogicalUnaryExpressionEvaluator extends IntervalUnaryExpressionEvaluator
-		implements ILogicalEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
+        implements ILogicalEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	private BooleanValue mBooleanValue;
 
@@ -54,13 +55,25 @@ public class IntervalLogicalUnaryExpressionEvaluator extends IntervalUnaryExpres
 	@Override
 	public IEvaluationResult<IntervalDomainEvaluationResult> evaluate(IntervalDomainState currentState) {
 
-		final IEvaluationResult<IntervalDomainEvaluationResult> evaluated = super.evaluate(currentState);
+		final IEvaluationResult<IntervalDomainEvaluationResult> subEvaluatorResult = mSubEvaluator
+		        .evaluate(currentState);
 
 		ILogicalEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> boolSubEvaluator = (ILogicalEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar>) mSubEvaluator;
 
+		IntervalDomainState returnState = currentState.copy();
+		IntervalDomainValue returnValue = new IntervalDomainValue();
+		boolean setToBottom = false;
+
 		switch (mOperator) {
+		case ARITHNEGATIVE:
+			mBooleanValue = new BooleanValue(false);
+			returnValue = subEvaluatorResult.getResult().getEvaluatedValue().negate();
+			break;
 		case LOGICNEG:
 			mBooleanValue = boolSubEvaluator.booleanValue().neg();
+			if (mBooleanValue.getValue() == Value.FALSE || mBooleanValue.getValue() == Value.BOTTOM) {
+				setToBottom = true;
+			}
 			break;
 		default:
 			mLogger.warn("Operator " + mOperator + " not implemented. Assuming logical interpretation to be false.");
@@ -68,7 +81,11 @@ public class IntervalLogicalUnaryExpressionEvaluator extends IntervalUnaryExpres
 			return new IntervalDomainEvaluationResult(new IntervalDomainValue(), currentState);
 		}
 
-		return evaluated;
+		if (setToBottom) {
+			returnState.setToBottom();
+		}
+		
+		return new IntervalDomainEvaluationResult(returnValue, returnState);
 	}
 
 	@Override

@@ -458,6 +458,7 @@ public class IntervalDomainState
 		return null;
 	}
 
+	// TODO: This breaks immutability. Return a new object here.
 	public void setToBottom() {
 		for (final Entry<String, IntervalDomainValue> entry : mValuesMap.entrySet()) {
 			entry.setValue(new IntervalDomainValue(true));
