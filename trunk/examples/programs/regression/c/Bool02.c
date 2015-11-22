@@ -4,7 +4,10 @@
 //
 // 6.3.1.2 of C11 says:
 // When any scalar value is converted to _Bool, the result is 0 if the value 
-// compares equal to 0; otherwise, the result is 1.59)
+// compares equal to 0; otherwise, the result is 1.
+//
+// This means expecially that fancy modulo operations lead to unsound results
+// in this case.
 
 
 #include <stdio.h>
