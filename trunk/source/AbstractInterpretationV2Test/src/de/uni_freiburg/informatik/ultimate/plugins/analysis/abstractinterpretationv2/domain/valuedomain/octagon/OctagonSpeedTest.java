@@ -38,7 +38,7 @@ public class OctagonSpeedTest {
 	}
 	
 	public void runTest(Consumer<OctMatrix> test) {
-		OctMatrix a = new OctMatrix(mVars);
+		OctMatrix a = OctMatrix.top(mVars);
 		
 		System.out.println("\twarm up ...");
 		for (int i = 0; i < 1000; ++i)
@@ -54,7 +54,6 @@ public class OctagonSpeedTest {
 	
 	public void testGet(OctMatrix a) {
 		int size = a.getSize();
-		int sum = 0;
 		for (int i = 0; i < size; ++i)
 			for (int j = 0; j < size; ++j)
 				a.get(i, j);

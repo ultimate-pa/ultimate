@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.octagon;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 import org.eclipse.osgi.internal.messages.Msg;
 
@@ -31,23 +32,29 @@ public class OctValue implements Comparable<OctValue> {
 	/**
 	 * Creates a new OctagonValue with a value less than infinity.
 	 * Use {@link #INFINITY} to represent infinity.
-	 * @param value Value less than infinity
+	 * @param value value less than infinity
 	 */
 	public OctValue(BigDecimal value) {
-		assert value != null : "Use constant to represent \\infty";
+		if (value == null)
+			throw new IllegalArgumentException("Use constant INFINITY to represent infinity.");
 		mValue = value;
 	}
-
+	
 	public OctValue(int i) {
 		mValue = new BigDecimal(i);
 	}
-
+	
+	public static OctValue parse(String s) {
+		if ("inf".equals(s))
+			return INFINITY;
+		return new OctValue(new BigDecimal(s));
+	}
+	
 	public boolean isInfinity() {
 		return mValue == null;
 	}
 	
 	public BigDecimal getValue() {
-		assert mValue != null : "\\infty has no value";
 		return mValue;
 	}
 
@@ -55,6 +62,30 @@ public class OctValue implements Comparable<OctValue> {
 		if (mValue == null || other.mValue == null)
 			return OctValue.INFINITY;
 		return new OctValue(mValue.add(other.mValue));
+	}
+	
+	/**
+	 * Returns an {@linkplain OctValue} equal to {@code this / 2}.
+	 * {@code  infinity / 2 = infinity}.
+	 * @return {@code this / 2}
+	 */
+	public OctValue half() {
+		if (mValue == null)
+			return OctValue.INFINITY;
+		// x has a finite decimal expansion <=> x/2 has a finite decimal expansion
+		// (BigDecimal uses finite decimal expansions)
+		return new OctValue(mValue.divide(new BigDecimal(2)));
+	}
+	
+	/**
+	 * Returns an {@linkplain OctValue} rounded towards {@code -infinity}.
+	 * {@code infinity} is already rounded.
+	 * @return floored {@linkplain OctValue}
+	 */
+	public OctValue floor() {
+		if (mValue == null)
+			return OctValue.INFINITY;
+		return new OctValue(mValue.setScale(0, RoundingMode.FLOOR));
 	}
 	
 	@Override
@@ -69,12 +100,11 @@ public class OctValue implements Comparable<OctValue> {
 		if (obj == null || getClass() != obj.getClass())
 			return false;
 		OctValue other = (OctValue) obj;
-		return mValue == null && other.mValue == null || mValue.equals(other.mValue);
+		return mValue == null && other.mValue == null || mValue.compareTo(other.mValue) == 0;
 	}
 
 	@Override
 	public int compareTo(OctValue other) {
-		assert other != null : "Cannot compare to null";
 		if (this == other || mValue == other.mValue)
 			return 0;
 		if (mValue == null)
@@ -87,7 +117,7 @@ public class OctValue implements Comparable<OctValue> {
 	@Override
 	public String toString() {
 		if (mValue == null)
-			return "\\infty";
+			return "inf";
 		return mValue.toString();
 	}
 

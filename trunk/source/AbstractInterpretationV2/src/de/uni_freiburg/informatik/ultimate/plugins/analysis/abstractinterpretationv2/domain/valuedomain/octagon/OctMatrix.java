@@ -11,6 +11,7 @@ import java.util.function.BiFunction;
  * TODO Stores entries for variables +v1, -v1, ..., +vn, -vn
  * TODO Variables (names, type, ...) aren't stored
  * TODO Matrix is divided into 2x2 blocks
+ * TODO Different matrices, same octagon -> closures
  * 
  * This class ensures coherence (as seen in the following ASCII art).
  * <pre>
@@ -49,29 +50,49 @@ public class OctMatrix {
 	 *     # # # # # #    m_0,0 is top left
 	 * </pre>
 	 * The matrix is divided into 2x2 blocks. Every block that contains
-	 * at least one element from the lower triangular matrix is completely
+	 * at least one element from the block lower triangular matrix is completely
 	 * stored. Elements are stored row-wise from top to bottom, left to right.
 	 * 
 	 * @see #indexOf(int, int)
 	 */
 	private final OctValue[] mElements;
 
-
-	public OctMatrix(OctMatrix octMatrix) {
-		mSize = octMatrix.mSize;
-		mElements = new OctValue[octMatrix.mElements.length];
-		System.arraycopy(octMatrix.mElements, 0, mElements, 0, mElements.length);
+	@Override
+	public OctMatrix clone() {
+		OctMatrix clone = new OctMatrix(mSize);
+		System.arraycopy(this.mElements, 0, clone.mElements, 0, mElements.length);
+		return clone;
 	}
 	
-	public OctMatrix(int variables) {
-		mSize = variables * 2;
-		mElements = new OctValue[2 * variables * (variables + 1)];
-		Arrays.fill(mElements, OctValue.INFINITY);
-		setMainDiagonal(OctValue.ZERO);
+	public static OctMatrix top(int variables) {
+		OctMatrix top = new OctMatrix(variables * 2);
+		Arrays.fill(top.mElements, OctValue.INFINITY);
+		top.setMainDiagonal(OctValue.ZERO);
+		return top;
 	}
 
+	public static OctMatrix parseBlockLowerTriangular(String m) {
+		String[] elements = m.trim().split("\\s+");
+		int size = (int) (Math.sqrt(2 * elements.length + 1) - 1);
+		if (size % 2 != 0)
+			throw new IllegalArgumentException("Number of elements does not match any 2x2 block lower triangular matrix.");
+		OctMatrix oct = new OctMatrix(size);
+		for (int i = 0; i < elements.length; ++i)
+			oct.mElements[i] = OctValue.parse(elements[i]);
+		return oct;
+	}
+	
+	private OctMatrix(int size) {
+		mSize = size;
+		mElements = new OctValue[size * size / 2 + size];
+	}
+	
 	public int getSize() {
 		return mSize;
+	}
+	
+	public int variables() {
+		return mSize / 2;
 	}
 	
 	public OctValue get(int row, int col) {
@@ -101,27 +122,111 @@ public class OctMatrix {
 		return col + (row + 1) * (row + 1) / 2;
 	}
 
-	public OctMatrix elementwise(OctMatrix other, BiFunction<OctValue, OctValue, OctValue> operator) {
+	public OctMatrix elementwiseOperation(OctMatrix other, BiFunction<OctValue, OctValue, OctValue> operator) {
 		if (other.mSize != mSize)
 			throw new IllegalArgumentException("Incompatible matrices");
 		OctMatrix result = new OctMatrix(mSize);
-		for (int i = 0; i < mElements.length; ++i) // a loop is faster than a stream
+		for (int i = 0; i < mElements.length; ++i)
 			result.mElements[i] = operator.apply(mElements[i], other.mElements[i]);
 		return result;
 	}
+	
+	public boolean elementwiseRelation(OctMatrix other, BiFunction<OctValue, OctValue, Boolean> relation) {
+		if (other.mSize != mSize)
+			throw new IllegalArgumentException("Incompatible matrices");
+		for (int i = 0; i < mElements.length; ++i) {
+			if (!relation.apply(mElements[i], other.mElements[i]))
+				return false;
+		}
+		return true;
+	}
 
 	public OctMatrix add(OctMatrix other) {
-		return elementwise(other, OctValue::add);
+		return elementwiseOperation(other, OctValue::add);
 	}
 	
 	public OctMatrix min(OctMatrix other) {
-		return elementwise(other, OctValue::min);
+		return elementwiseOperation(other, OctValue::min);
 	}
 	
 	public OctMatrix max(OctMatrix other) {
-		return elementwise(other, OctValue::max);
+		return elementwiseOperation(other, OctValue::max);
+	}
+
+	// TODO document: Different matrices may represent the same octagon.
+	public boolean equalTo(OctMatrix other) {
+		return elementwiseRelation(other, (x, y) -> x.compareTo(y) == 0);
 	}
 	
+	public boolean lessEqualThan(OctMatrix other) {
+		return elementwiseRelation(other, (x, y) -> x.compareTo(y) <= 0);		
+	}
+	
+	public OctMatrix strongClosure() {
+		OctMatrix sc = this.clone();
+		sc.shortestPathClosureInPlace();
+		sc.strengtheningInPlace();
+		return sc;
+	}
+	
+	public OctMatrix tightClosure() {
+		OctMatrix tc = this.clone();
+		tc.shortestPathClosureInPlace();
+		tc.tighteningInPlace();
+		return tc;
+	}
+
+	private void shortestPathClosureInPlace() {
+		setMainDiagonal(OctValue.ZERO);
+		for (int k = 0; k < mSize; ++k) {
+			for (int i = 0; i < mSize; ++i) {
+				OctValue ik = get(i, k);
+				for (int j = 0; j < mSize; ++j) {
+					OctValue indirectRoute = ik.add(get(k, j));
+					if (get(i, j).compareTo(indirectRoute) > 0)
+						set(i, j, indirectRoute);
+				}
+			}
+		}
+	}
+
+	private void strengtheningInPlace() {
+		for (int i = 0; i < mSize; ++i) {
+			for (int j = 0; j < mSize; ++j) {
+				OctValue b = get(i, i^1).half().add(get(j^1, j).half());
+				if (get(i, j).compareTo(b) > 0)
+					set(i, j, b);
+			}
+		}
+	}
+	
+	private void tighteningInPlace() {
+		for (int i = 0; i < mSize; ++i) {
+			for (int j = 0; j < mSize; ++j) {
+				OctValue b = get(i, i^1).half().floor().add(get(j^1, j).half().floor());
+				if (get(i, j).compareTo(b) > 0)
+					set(i, j, b);
+			}
+		}
+	}
+	
+	/**
+	 * Checks for negative self loops in the graph represented by this adjacency matrix.
+	 * Self loops are represented by this matrix' diagonal elements.
+	 * <p>
+	 * <b>m</b> is strongly closed and has a negative self loop <=> <b>m</b> is empty in <b>R</b><br>
+	 * <b>m</b> is tightly closed and has a negative self loop <=> <b>m</b> is empty in <b>Z</b>
+	 * 
+	 * @return a negative self loop exists
+	 */
+	public boolean hasNegativeSelfLoop() {
+		for (int i = 0; i < mSize; ++i) {
+			if (get(i, i).compareTo(OctValue.ZERO) < 0)
+				return true;
+		}
+		return false;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
