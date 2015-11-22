@@ -1347,8 +1347,9 @@ public class CHandler implements ICHandler {
 						} else {
 							throw new AssertionError("illegal case");
 						}
-				 negated = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, 
-						 operand.lrVal.getValue(), rhsOfComparison);
+				 negated = m_ExpressionTranslation.constructBinaryEqualityExpression(loc, 
+						 IASTBinaryExpression.op_equals, operand.lrVal.getValue(), inputType, rhsOfComparison, inputType); 
+						 
 			}
 			ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(operand);
 			// C11 6.5.3.3.5 The result has type int.
@@ -1456,8 +1457,8 @@ public class CHandler implements ICHandler {
 		}
 
 		case IASTBinaryExpression.op_logicalAnd: {
-			rl.rexIntToBoolIfNecessary(loc, m_ExpressionTranslation);
-			rr.rexIntToBoolIfNecessary(loc, m_ExpressionTranslation);
+			rl.rexIntToBoolIfNecessary(loc, m_ExpressionTranslation, mMemoryHandler);
+			rr.rexIntToBoolIfNecessary(loc, m_ExpressionTranslation, mMemoryHandler);
 			
 
 			stmt.addAll(rl.stmt);
@@ -1514,8 +1515,8 @@ public class CHandler implements ICHandler {
 			return new ExpressionResult(stmt, resRval, decl, auxVars, overappr);
 		}
 		case IASTBinaryExpression.op_logicalOr: {
-			rl.rexIntToBoolIfNecessary(loc, m_ExpressionTranslation);
-			rr.rexIntToBoolIfNecessary(loc, m_ExpressionTranslation);
+			rl.rexIntToBoolIfNecessary(loc, m_ExpressionTranslation, mMemoryHandler);
+			rr.rexIntToBoolIfNecessary(loc, m_ExpressionTranslation, mMemoryHandler);
 
 			stmt.addAll(rl.stmt);
 			// NOTE: no rr.stmt
@@ -2262,7 +2263,7 @@ public class CHandler implements ICHandler {
 
 		ExpressionResult condResult = (ExpressionResult) main.dispatch(node.getConditionExpression());
 		condResult = condResult.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-		condResult.rexIntToBoolIfNecessary(loc, m_ExpressionTranslation);
+		condResult.rexIntToBoolIfNecessary(loc, m_ExpressionTranslation, mMemoryHandler);
 		RValue cond = (RValue) condResult.lrVal;
 		decl.addAll(condResult.decl);
 		stmt.addAll(condResult.stmt);
@@ -2733,7 +2734,7 @@ public class CHandler implements ICHandler {
 		assert resLocCond instanceof ExpressionResult;
 		ExpressionResult reLocCond = (ExpressionResult) resLocCond;
 		reLocCond = reLocCond.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-		reLocCond.rexIntToBoolIfNecessary(loc, m_ExpressionTranslation);
+		reLocCond.rexIntToBoolIfNecessary(loc, m_ExpressionTranslation, mMemoryHandler);
 
 		Result rPositive = main.dispatch(node.getPositiveResultExpression());
 		assert rPositive instanceof ExpressionResult;
@@ -3448,7 +3449,7 @@ public class CHandler implements ICHandler {
 		}
 
 		condResult = condResult.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-		condResult.rexIntToBoolIfNecessary(loc, m_ExpressionTranslation);
+		condResult.rexIntToBoolIfNecessary(loc, m_ExpressionTranslation, mMemoryHandler);
 		decl.addAll(condResult.decl);
 		RValue condRVal = (RValue) condResult.lrVal;
 		IfStatement ifStmt;

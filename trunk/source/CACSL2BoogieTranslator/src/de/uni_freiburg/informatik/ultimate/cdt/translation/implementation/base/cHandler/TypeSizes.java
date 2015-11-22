@@ -157,9 +157,9 @@ public class TypeSizes {
 	}
 	
 	public BigInteger getMaxValueOfPrimitiveType(CPrimitive cPrimitive) {
-//		if (cPrimitive.getType() == PRIMITIVE.BOOL) {
-//			return BigInteger.ONE;
-//		}
+		if (cPrimitive.getType() == PRIMITIVE.BOOL) {
+			return BigInteger.ONE;
+		}
 		int byteSize = getSize(cPrimitive.getType());
 		BigInteger maxValue;
 		if (cPrimitive.isUnsigned()) {

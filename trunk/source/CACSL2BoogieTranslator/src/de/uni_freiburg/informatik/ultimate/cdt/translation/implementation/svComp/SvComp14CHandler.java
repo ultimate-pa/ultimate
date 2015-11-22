@@ -180,7 +180,7 @@ public class SvComp14CHandler extends CHandler {
 					String msg = "Incorrect or invalid in-parameter! " + loc.toString();
 					throw new IncorrectSyntaxException(loc, msg);
 				}
-				in.rexIntToBoolIfNecessary(loc, m_ExpressionTranslation);
+				in.rexIntToBoolIfNecessary(loc, m_ExpressionTranslation, mMemoryHandler);
 				args.add(in.lrVal.getValue());
 				stmt.addAll(in.stmt);
 				decl.addAll(in.decl);
