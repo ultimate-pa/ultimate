@@ -330,7 +330,18 @@ public abstract class AExpressionTranslation {
 		} 
 	}
 
-	public abstract void convertIntToInt(ILocation loc, ExpressionResult operand, CPrimitive resultType);
+	/**
+	 * Conversion from some integer type to some integer type which is not _Bool.
+	 */
+	public abstract void convertIntToInt_NonBool(ILocation loc, ExpressionResult operand, CPrimitive resultType);
+	
+	public final void convertIntToInt(ILocation loc, ExpressionResult rexp, CPrimitive newType) {
+		if (newType.getType() == PRIMITIVE.BOOL) {
+			convertToBool(loc, rexp);
+		} else {
+			convertIntToInt_NonBool(loc, rexp, newType);
+		}
+	}
 	
 	/**
 	 * Perform the integer promotions a specified in C11 6.3.1.1.2 on the
@@ -406,12 +417,16 @@ public abstract class AExpressionTranslation {
 
 	public void convertPointerToInt(Dispatcher main, ILocation loc, ExpressionResult rexp,
 			CPrimitive newType) {
-		String prefixedFunctionName = declareConvertPointerToIntFunction(main,
-				loc, newType);
-		Expression pointerExpression = rexp.lrVal.getValue();
-		Expression intExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {pointerExpression});
-		RValue rValue = new RValue(intExpression, newType, false, false);
-		rexp.lrVal = rValue;
+		if (newType.getType() == PRIMITIVE.BOOL) {
+			convertToBool(loc, rexp);
+		} else {
+			String prefixedFunctionName = declareConvertPointerToIntFunction(main,
+					loc, newType);
+			Expression pointerExpression = rexp.lrVal.getValue();
+			Expression intExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {pointerExpression});
+			RValue rValue = new RValue(intExpression, newType, false, false);
+			rexp.lrVal = rValue;
+		}
 	}
 
 	private String declareConvertPointerToIntFunction(Dispatcher main, ILocation loc, CPrimitive newType) {
@@ -506,8 +521,16 @@ public abstract class AExpressionTranslation {
 		}
 		return prefixedFunctionName;
 	}
-
+	
 	public void convertFloatToInt(ILocation loc, ExpressionResult rexp, CPrimitive newType) {
+		if (newType.getType() == PRIMITIVE.BOOL) {
+			convertToBool(loc, rexp);
+		} else {
+			convertFloatToInt_NonBool(loc, rexp, newType);
+		}
+	}
+
+	public void convertFloatToInt_NonBool(ILocation loc, ExpressionResult rexp, CPrimitive newType) {
 //		throw new UnsupportedSyntaxException(loc, "conversion from float to int not yet implemented");
 		String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
 		Expression oldExpression = rexp.lrVal.getValue();
@@ -533,7 +556,33 @@ public abstract class AExpressionTranslation {
 		Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {oldExpression});
 		RValue rValue = new RValue(resultExpression, newType, false, false);
 		rexp.lrVal = rValue;
-
+	}
+	
+	/**
+	 * Convert any scalar type to _Bool. Section 6.3.1.2 of C11 says:
+ 	 * When any scalar value is converted to _Bool, the result is 0 if the value 
+     * compares equal to 0; otherwise, the result is 1.
+	 */
+	private void convertToBool(ILocation loc, ExpressionResult rexp) {
+		CType underlyingType = rexp.lrVal.getCType();
+		underlyingType = CEnum.replaceEnumWithInt(underlyingType);
+		final Expression zeroInputType = constructZero(loc, underlyingType);
+		final Expression isZero;
+		if (underlyingType instanceof CPointer) {
+			isZero = ExpressionFactory.newBinaryExpression(loc, 
+					BinaryExpression.Operator.COMPEQ, rexp.lrVal.getValue(), zeroInputType);
+		} else if (underlyingType instanceof CPrimitive) {
+			isZero = constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_equals, 
+					rexp.lrVal.getValue(), (CPrimitive) underlyingType, 
+					zeroInputType, (CPrimitive) underlyingType);
+		} else {
+			throw new UnsupportedOperationException("unsupported: conversion from " + underlyingType + " to _Bool");
+		}
+		Expression zeroBool = constructLiteralForIntegerType(loc, new CPrimitive(PRIMITIVE.BOOL), BigInteger.ZERO);
+		Expression oneBool = constructLiteralForIntegerType(loc, new CPrimitive(PRIMITIVE.BOOL), BigInteger.ONE);
+		Expression resultExpression = ExpressionFactory.newIfThenElseExpression(loc, isZero, zeroBool, oneBool);
+		RValue rValue = new RValue(resultExpression, new CPrimitive(PRIMITIVE.BOOL), false, false);
+		rexp.lrVal = rValue;
 	}
 	
 	
@@ -551,6 +600,31 @@ public abstract class AExpressionTranslation {
 		Expression offset = constructLiteralForIntegerType(loc, 
 				getCTypeOfPointerComponents(), offsetValue);
 		return MemoryHandler.constructPointerFromBaseAndOffset(base, offset, loc); 
+	}
+	
+	public Expression constructZero(ILocation loc, CType cType) {
+		final Expression result;
+		if (cType instanceof CPrimitive) {
+			switch (((CPrimitive) cType).getGeneralType()) {
+			case FLOATTYPE:
+				result = constructLiteralForFloatingType(loc,
+						(CPrimitive) cType, BigInteger.ZERO);
+				break;
+			case INTTYPE:
+				result = constructLiteralForIntegerType(loc, 
+						(CPrimitive) cType, BigInteger.ZERO);
+				break;
+			case VOID:
+				throw new UnsupportedSyntaxException(loc, "no 0 value of type VOID");
+			default:
+				throw new AssertionError("illegal type");
+			}
+		} else if (cType instanceof CPointer) {
+			result = constructNullPointer(loc);
+		} else {
+			throw new UnsupportedSyntaxException(loc, "don't know 0 value for type " + cType);
+		}
+		return result;
 	}
 	
 }

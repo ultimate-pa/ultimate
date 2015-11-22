@@ -634,30 +634,15 @@ public class ExpressionResult extends Result {
 		assert !rVal.isBoogieBool();
 		CType underlyingType = rVal.getCType().getUnderlyingType();
 		underlyingType = CEnum.replaceEnumWithInt(underlyingType);
+		Expression zero = expressionTranslation.constructZero(loc, underlyingType);
 		final Expression resultEx;
 		if (underlyingType instanceof CPrimitive) {
-			final Expression zero;
-			switch (((CPrimitive) underlyingType).getGeneralType()) {
-			case FLOATTYPE:
-				zero = expressionTranslation.constructLiteralForFloatingType(loc,
-						(CPrimitive) underlyingType, BigInteger.ZERO);
-				break;
-			case INTTYPE:
-				zero = expressionTranslation.constructLiteralForIntegerType(loc, 
-						(CPrimitive) underlyingType, BigInteger.ZERO);
-				break;
-			case VOID:
-				throw new UnsupportedSyntaxException(loc, "comparison of void and zero");
-				default:
-				throw new AssertionError("illegal type");
-			}
 			resultEx = expressionTranslation.constructBinaryEqualityExpression(loc, 
 					IASTBinaryExpression.op_notequals, rVal.getValue(), rVal.getCType(), zero, underlyingType);
-
 		} else if (underlyingType instanceof CPointer) {
 			resultEx = ExpressionFactory.newBinaryExpression(loc, 
 					BinaryExpression.Operator.COMPNEQ, rVal.getValue(),
-					expressionTranslation.constructNullPointer(loc));
+					zero);
 		} else {
 			throw new UnsupportedSyntaxException(loc, "unsupported type " + underlyingType);
 		}
