@@ -8,30 +8,39 @@
 //        larger size, and
 //  - before division and modulo operations.
 // Author: heizmann@informatik.uni-freiburg.de
-// Date: 2015-08-31
+// Date: 2015-11-22
 
 #include <stdio.h>
 
 int main() {
-	if (sizeof(long long) > 4 && sizeof(int) == 4) {
-		unsigned int x = 2147483648U;
-		printf("%u\n",x);
-		x += 2147483648U;
-		printf("%u\n",x);
-		// now, due to the wraparound the value of x is 0, however we
-		// store 2^32 and take this value modulo 2^32 in comparisons
-		// if the operands of the comparison are unsigned ints.
-		if (x != 0) {
+	if (sizeof(short) == 2) {
+		unsigned short a = (unsigned short) -65536;
+		// a is 0 but -65536 in our representation
+		printf("%u\n",a);
+		int b = !a;
+		//@ assert b == 1;
+		int c = a && 1;
+		//@ assert c == 0;
+		int d = a || 0;
+		//@ assert d == 0;
+		int e = (a ? 5 : 17);
+		//@ assert e == 17;
+		if (a) {
 			//@ assert \false;
 		}
-		signed long long y = x;
-		printf("%lld\n",y);
-		// now the type of the expression is not unsigned any more
-		// it was important that we did the modulo 2^32 at the
-		// cast from unsigned to signed
-		if (y != 0) {
+		while(a) {
 			//@ assert \false;
+			break;
 		}
+// 		for (;;a) {
+// 			//@ assert \false;
+// 			break;
+// 		}
+		int i=0;
+		do {
+			i++;
+		} while (a);
+		//@ assert i == 1;
 	}
 	return 0;
 }
