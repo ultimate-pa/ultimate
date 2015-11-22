@@ -369,7 +369,7 @@ public class SvComp14CHandler extends CHandler {
 		ILocation loc = LocationFactory.createCLocation(node);
 		if (node.getName().toString().equals("null")) {
 			return new ExpressionResult(
-					new RValue(mMemoryHandler.constructNullPointer(loc),
+					new RValue(m_ExpressionTranslation.constructNullPointer(loc),
 					new CPointer(new CPrimitive(PRIMITIVE.VOID))));
 		}
 		if (node.getName().toString().equals("__PRETTY_FUNCTION__")

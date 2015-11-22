@@ -38,7 +38,6 @@ import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
@@ -539,5 +538,19 @@ public abstract class AExpressionTranslation {
 	
 	
 	public abstract void addAssumeValueInRangeStatements(ILocation loc, Expression expr, CType ctype, List<Statement> stmt);
+	
+	
+	public Expression constructNullPointer(ILocation loc) {
+//		return new IdentifierExpression(loc, SFO.NULL);
+		return constructPointerForIntegerValues(loc, BigInteger.ZERO, BigInteger.ZERO);
+	}
+	
+	public Expression constructPointerForIntegerValues(ILocation loc, BigInteger baseValue, BigInteger offsetValue) {
+		Expression base = constructLiteralForIntegerType(loc, 
+				getCTypeOfPointerComponents(), baseValue);
+		Expression offset = constructLiteralForIntegerType(loc, 
+				getCTypeOfPointerComponents(), offsetValue);
+		return MemoryHandler.constructPointerFromBaseAndOffset(base, offset, loc); 
+	}
 	
 }

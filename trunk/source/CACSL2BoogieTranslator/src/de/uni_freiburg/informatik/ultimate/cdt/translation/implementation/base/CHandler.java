@@ -456,7 +456,7 @@ public class CHandler implements ICHandler {
 			decl.add(new Axiom(loc, new Attribute[0], ExpressionFactory.newBinaryExpression(loc, 
 					BinaryExpression.Operator.COMPEQ, 
 					new IdentifierExpression(loc, funcId),
-					mMemoryHandler.constructPointerForIntegerValues(loc, functionPointerPointerBaseValue, offsetValue))));
+					m_ExpressionTranslation.constructPointerForIntegerValues(loc, functionPointerPointerBaseValue, offsetValue))));
 		}
 
 		for (Declaration d : mDeclarationsGlobalInBoogie.keySet()) {
@@ -990,7 +990,7 @@ public class CHandler implements ICHandler {
 
 		//deal with builtin constants
 		if (cId.equals("NULL")) {
-			return new ExpressionResult(new RValue(mMemoryHandler.constructNullPointer(loc), 
+			return new ExpressionResult(new RValue(m_ExpressionTranslation.constructNullPointer(loc), 
 					new CPointer(new CPrimitive(PRIMITIVE.VOID))));
 		} else if (node.getName().toString().equals("__func__")){
 			CType cType = new CPointer(new CPrimitive(PRIMITIVE.CHAR));
@@ -1328,7 +1328,7 @@ public class CHandler implements ICHandler {
 			} else {
 				final Expression rhsOfComparison; 
 						if (inputType instanceof CPointer) {
-							rhsOfComparison = mMemoryHandler.constructNullPointer(loc);
+							rhsOfComparison = m_ExpressionTranslation.constructNullPointer(loc);
 						} else if (inputType instanceof CEnum) {
 							CPrimitive intType = new CPrimitive(PRIMITIVE.INT);
 							rhsOfComparison = m_ExpressionTranslation.constructLiteralForIntegerType(

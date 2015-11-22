@@ -657,7 +657,7 @@ public class ExpressionResult extends Result {
 		} else if (underlyingType instanceof CPointer) {
 			resultEx = ExpressionFactory.newBinaryExpression(loc, 
 					BinaryExpression.Operator.COMPNEQ, rVal.getValue(),
-					memoryHandler.constructNullPointer(loc));
+					expressionTranslation.constructNullPointer(loc));
 		} else {
 			throw new UnsupportedSyntaxException(loc, "unsupported type " + underlyingType);
 		}
