@@ -34,13 +34,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * 
- * @param <ACTION>
- *            Any action type.
- * @param <VARDECL>
- *            Any variable declaration type.
  */
 public interface IAbstractStateBinaryOperator<STATE> {
 
 	STATE apply(STATE first, STATE second);
-
 }

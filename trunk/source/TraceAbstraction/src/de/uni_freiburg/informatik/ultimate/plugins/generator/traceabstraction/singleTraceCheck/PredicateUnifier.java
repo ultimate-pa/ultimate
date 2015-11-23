@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.util.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 
@@ -610,6 +611,7 @@ public class PredicateUnifier {
 					m_ExpliedPredicates.put(other, Validity.NOT_CHECKED);
 					continue;
 				}
+				checkTimeout();
 				Term otherClosedTerm = other.getClosedFormula();
 				Validity implies = m_ImpliedPredicates.get(other);
 				if (implies == null) {
@@ -703,6 +705,14 @@ public class PredicateUnifier {
 			}
 			// no predicate was equivalent
 			return null;
+		}
+
+		private void checkTimeout() {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(this.getClass(),
+						"PredicateUnifier was comparing new predicate to " + 
+						m_KnownPredicates.size() + " known predicates");
+			}
 		}
 	}
 	
