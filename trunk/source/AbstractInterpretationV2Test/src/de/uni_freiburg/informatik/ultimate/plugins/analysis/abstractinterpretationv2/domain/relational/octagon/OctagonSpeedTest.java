@@ -1,9 +1,12 @@
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.octagon;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
 import java.util.function.Consumer;
 
 import org.junit.Assert;
 import org.junit.Test;
+
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctMatrix;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctValue;
 
 public class OctagonSpeedTest {
 
@@ -31,7 +34,7 @@ public class OctagonSpeedTest {
 		System.out.println("get ----------------");
 		runTest(this::testGet);
 		System.out.println("set ----------------");
-		runTest(this::testSet);
+//		runTest(this::testSet);
 		System.out.println("elementwise --------");
 		runTest(this::testElementwise);
 		System.out.println();
@@ -59,16 +62,16 @@ public class OctagonSpeedTest {
 				a.get(i, j);
 	}
 	
-	public void testSet(OctMatrix a) {
-		int size = a.getSize();
-		for (int i = 0; i < size; ++i) {
-			for (int j = 0; j < size; ++j) {
-				if (i == j)
-					continue;
-				a.set(i, j, OctValue.ZERO);				
-			}
-		}
-	}
+//	public void testSet(OctMatrix a) {
+//		int size = a.getSize();
+//		for (int i = 0; i < size; ++i) {
+//			for (int j = 0; j < size; ++j) {
+//				if (i == j)
+//					continue;
+//				a.set(i, j, OctValue.ZERO);				
+//			}
+//		}
+//	}
 
 	public void testElementwise(OctMatrix a) {
 		a.add(a).hashCode();

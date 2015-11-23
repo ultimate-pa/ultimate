@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.valuedomain.octagon;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -100,7 +100,7 @@ public class OctValue implements Comparable<OctValue> {
 		if (obj == null || getClass() != obj.getClass())
 			return false;
 		OctValue other = (OctValue) obj;
-		return mValue == null && other.mValue == null || mValue.compareTo(other.mValue) == 0;
+		return (mValue == null && other.mValue == null) || (mValue.compareTo(other.mValue) == 0);
 	}
 
 	@Override
