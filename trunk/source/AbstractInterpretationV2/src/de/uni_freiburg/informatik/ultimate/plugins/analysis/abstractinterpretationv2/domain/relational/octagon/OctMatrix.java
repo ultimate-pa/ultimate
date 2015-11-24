@@ -153,12 +153,12 @@ public class OctMatrix {
 		return elementwiseOperation(other, OctValue::add);
 	}
 	
-	public OctMatrix min(OctMatrix other) {
-		return elementwiseOperation(other, OctValue::min);
+	public static OctMatrix min(OctMatrix a, OctMatrix b) {
+		return a.elementwiseOperation(b, OctValue::min);
 	}
 	
-	public OctMatrix max(OctMatrix other) {
-		return elementwiseOperation(other, OctValue::max);
+	public static OctMatrix max(OctMatrix a, OctMatrix b) {
+		return a.elementwiseOperation(b, OctValue::max);
 	}
 
 	// TODO document: Different matrices may represent the same octagon.
