@@ -41,7 +41,7 @@ public class InterpolationTest_Memsafety extends AbstractTraceAbstractionTestSui
 
 	/** Limit the number of files per directory. */
 	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
-//	private static int m_FilesPerDirectoryLimit = 5;
+//	private static int m_FilesPerDirectoryLimit = 1;
 	
 	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs_Deref = {
 		/*** Category 1. Arrays ***/
@@ -76,14 +76,20 @@ public class InterpolationTest_Memsafety extends AbstractTraceAbstractionTestSui
 	}
 
 	private static final String[] m_Settings = {
-		"automizer/interpolation/DerefFreeMemtrack-32bit-Princess-TreeInterpolation-Integer.epf",
-//		"automizer/interpolation/DerefFreeMemtrack-32bit-SMTInterpol-FPandBP-Integer.epf",
-		"automizer/interpolation/DerefFreeMemtrack-32bit-SMTInterpol-TreeInterpolation-Integer.epf",
-		"automizer/interpolation/DerefFreeMemtrack-32bit-Z3-BP-Integer.epf",
-		"automizer/interpolation/DerefFreeMemtrack-32bit-Z3-FP-Integer.epf",
-		"automizer/interpolation/DerefFreeMemtrack-32bit-Z3-FPandBP-Integer.epf",
-		"automizer/interpolation/DerefFreeMemtrack-32bit-Z3-NestedInterpolation-Integer.epf",
+		"automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Princess-TreeInterpolation-Integer.epf",
+		"automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-SMTInterpol-TreeInterpolation-Integer.epf",
+		"automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-NestedInterpolation-Integer.epf",
+		"automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-IcSpLv-Integer.epf",
+		"automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-IcSp-Integer.epf",
+		"automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-SpLv-Integer.epf",
+		"automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-Sp-Integer.epf",
+		"automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-IcWpLv-Integer.epf",
+		"automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-IcWp-Integer.epf",
+		"automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-WpLv-Integer.epf",
+		"automizer/interpolation/memsafety/DerefFreeMemtrack-32bit-Z3-Wp-Integer.epf",
 	};
+//	"automizer/interpolation/DerefFreeMemtrack-32bit-SMTInterpol-FPandBP-Integer.epf",
+//	"automizer/interpolation/DerefFreeMemtrack-32bit-Z3-FPandBP-Integer.epf",
 	
 	
 	

@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
@@ -354,7 +355,12 @@ public class SolverBuilder {
 
 			@Override
 			public void destroy() {
-				theScript.exit();
+				try {
+					theScript.exit();
+				} catch (SMTLIBException ex) {
+					// DD 2015-11-18: If we store all created solvers during a toolchain execution, we should also
+					// suppress broken solver exceptions if the solver was already killed by the user
+				}
 			}
 		});
 		return result;

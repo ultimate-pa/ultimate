@@ -402,7 +402,7 @@ public class NoopScript implements Script {
 		if (mTheory == null)
 			throw new SMTLIBException("No logic set!");
 		if (mTheory.getStringSort() == null)
-			throw new SMTLIBException("Logic does not allow strings");
+			throw new SMTLIBException("Logic does not allow strings " + str);
 		return mTheory.string(str);
 	}
 

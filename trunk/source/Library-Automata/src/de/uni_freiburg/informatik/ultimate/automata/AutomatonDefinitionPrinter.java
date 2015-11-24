@@ -887,10 +887,10 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 							sb.append(" &");
 						}
 						if (otherLetter == letter) {
-							sb.append(" p");
+							sb.append(" ");
 							sb.append(m_AlphabetMapping.get(otherLetter));
 						} else {
-							sb.append(" !p");
+							sb.append(" !");
 							sb.append(m_AlphabetMapping.get(otherLetter));
 
 						}

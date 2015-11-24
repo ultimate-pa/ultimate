@@ -210,7 +210,7 @@ public class InitializationHandler {
 			lrVal = new RValue(rhs, lCType);
 		} else if (lCType instanceof CPointer) {
 			if (initializer == null) {
-				rhs = mMemoryHandler.constructNullPointer(loc);
+				rhs = mExpressionTranslation.constructNullPointer(loc);
 			} else {
 				CType initializerUnderlyingType = initializer.lrVal.getCType().getUnderlyingType();
 				if (initializerUnderlyingType instanceof CPointer
@@ -223,10 +223,10 @@ public class InitializationHandler {
 						throw new IllegalArgumentException("unable to understand " + initializer.lrVal);
 					}
 					if (pointerOffsetValue.equals(BigInteger.ZERO)) {
-						rhs = mMemoryHandler.constructNullPointer(loc);
+						rhs = mExpressionTranslation.constructNullPointer(loc);
 					} else {
 						BigInteger pointerBaseValue = BigInteger.ZERO;
-						rhs = mMemoryHandler.constructPointerForIntegerValues(loc, pointerBaseValue, pointerOffsetValue);
+						rhs = mExpressionTranslation.constructPointerForIntegerValues(loc, pointerBaseValue, pointerOffsetValue);
 					}
 				} else {
 					throw new AssertionError("trying to initialize a pointer with something different from int and pointer");
@@ -359,7 +359,7 @@ public class InitializationHandler {
 			}
 		} else if (lCType instanceof CPointer) {
 			if (initializer == null) {
-				rhs = mMemoryHandler.constructNullPointer(loc);
+				rhs = mExpressionTranslation.constructNullPointer(loc);
 			} else {
 				CType initializerUnderlyingType = initializer.lrVal.getCType().getUnderlyingType();
 				if (initializerUnderlyingType instanceof CPointer
@@ -369,7 +369,7 @@ public class InitializationHandler {
 						&& ((CPrimitive) initializerUnderlyingType).getGeneralType() == GENERALPRIMITIVE.INTTYPE){
 					BigInteger offsetValue = mExpressionTranslation.extractIntegerValue((RValue) initializer.lrVal);
 					if (offsetValue.equals(BigInteger.ZERO)) {
-						rhs = mMemoryHandler.constructNullPointer(loc);
+						rhs = mExpressionTranslation.constructNullPointer(loc);
 					} else {
 						Expression base = mExpressionTranslation.constructLiteralForIntegerType(
 								loc, mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);

@@ -345,11 +345,12 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			throw new UnsupportedOperationException("unsupported interpolation");
 		}
 		m_CegarLoopBenchmark.addTraceCheckerData(interpolatingTraceChecker.getTraceCheckerBenchmark());
-		if (m_Pref.useSeparateSolverForTracechecks()) {
-			smtMangerTracechecks.getScript().exit();
-		}
 		if (interpolatingTraceChecker.getToolchainCancelledExpection() != null) {
 			throw interpolatingTraceChecker.getToolchainCancelledExpection();
+		} else {
+			if (m_Pref.useSeparateSolverForTracechecks()) {
+				smtMangerTracechecks.getScript().exit();
+			}
 		}
 
 		feasibility = interpolatingTraceChecker.isCorrect();

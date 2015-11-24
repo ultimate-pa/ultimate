@@ -140,10 +140,12 @@ public class Svcomp2016_Reach extends AbstractTraceAbstractionTestSuite {
 
 	private static final String[] m_Settings_32bit = {
 		"svcomp2016/svcomp-Reach-32bit-Automizer_Default.epf",
+		"svcomp2016/svcomp-Reach-32bit-Automizer_Bitvector.epf",
 	};
 	
 	private static final String[] m_Settings_64bit = {
 		"svcomp2016/svcomp-Reach-64bit-Automizer_Default.epf",
+		"svcomp2016/svcomp-Reach-64bit-Automizer_Bitvector.epf",
 	};
 
 	

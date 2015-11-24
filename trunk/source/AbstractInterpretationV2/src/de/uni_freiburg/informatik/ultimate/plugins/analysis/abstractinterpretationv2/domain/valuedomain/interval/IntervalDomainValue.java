@@ -358,7 +358,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 			return new IntervalDomainValue(true);
 		}
 
-		if (!newUpper.isInfinity() && newUpper.compareTo(newLower) < 0) {
+		if (!newUpper.isInfinity() && !newLower.isInfinity() && newUpper.compareTo(newLower) < 0) {
 			return new IntervalDomainValue(true);
 		}
 

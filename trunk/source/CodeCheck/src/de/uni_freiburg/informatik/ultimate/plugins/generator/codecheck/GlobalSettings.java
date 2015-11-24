@@ -27,12 +27,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.Checker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.EdgeCheckOptimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.PredicateUnification;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.RedirectionStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.SolverAndInterpolator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 
 public class GlobalSettings {
 	
@@ -47,7 +48,7 @@ public class GlobalSettings {
 	public String _dotGraphPath = "";
 //	String _dotGraphPath = "C:/temp/codeCheckGraphs";
 //	SolverAndInterpolator _solverAndInterpolator = SolverAndInterpolator.SMTINTERPOL;
-	public SolverAndInterpolator _solverAndInterpolator = SolverAndInterpolator.Z3SPWP;
+//	public SolverAndInterpolator _solverAndInterpolator = SolverAndInterpolator.Z3SPWP;
 //	INTERPOLATION _interpolationMode = INTERPOLATION.Craig_TreeInterpolation;
 	public INTERPOLATION _interpolationMode = INTERPOLATION.ForwardPredicates;
 	public PredicateUnification _predicateUnification = PredicateUnification.PER_VERIFICATION;
@@ -68,6 +69,18 @@ public class GlobalSettings {
 	public boolean useInterpolantconsolidation = true;
 
 	public boolean useSeparateSolverForTracechecks = true;
+
+	public SolverMode chooseSeparateSolverForTracechecks;
+
+	public String separateSolverForTracechecksCommand;
+
+	public String separateSolverForTracechecksTheory;
+
+	public boolean useLiveVariables;
+
+	public UnsatCores useUnsatCores;
+
+	public boolean useFallbackForSeparateSolverForTracechecks;
 
 	public static void init() {
 		_instance = new GlobalSettings();

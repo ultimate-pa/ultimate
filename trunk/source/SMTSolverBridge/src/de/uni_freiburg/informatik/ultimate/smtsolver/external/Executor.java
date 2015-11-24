@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * 
  * @author Oday Jubran
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Matthias Heizmann
  * 
  */
 class Executor {
@@ -70,6 +71,8 @@ class Executor {
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
 	private final String mName;
+	
+	private static final String sEofErrorMessage = "Received EOF on stdin.";
 
 	Executor(final String solverCommand, final Script script, final Logger logger,
 			final IUltimateServiceProvider services, final IToolchainStorage storage, final String solverName)
@@ -124,7 +127,6 @@ class Executor {
 	}
 
 	public void exit() {
-
 		input("(exit)");
 		// 2015-11-12 Matthias: Do not parse "success" after exit.
 		// Some solvers do return success (Barcelogic, CVC4, Z3) some solvers
@@ -188,7 +190,7 @@ class Executor {
 					sb.append(c);
 				}
 				stderr = sb.toString();
-				mLogger.warn(getLogStringPrefix() + " stderr output: " + stderr);
+				mLogger.warn(getLogStringPrefix() + " " + generateStderrMessage(stderr));
 			}
 		} catch (IOException e) {
 			// we don't care what happens on stdErr
@@ -202,7 +204,8 @@ class Executor {
 			return parser.parse();
 		} catch (SMTLIBException ex) {
 			if (ex.getMessage().equals(Parser.s_EOF)) {
-				throw new SMTLIBException(getLogStringPrefix() + " stderr output: " + stderr, ex);
+				throw new SMTLIBException(
+						getLogStringPrefix() + sEofErrorMessage + " " + generateStderrMessage(stderr), ex);
 			} else {
 				throw ex;
 			}
@@ -210,7 +213,8 @@ class Executor {
 			throw ex;
 		} catch (Exception ex) {
 			throw new SMTLIBException(
-					getLogStringPrefix() + "Unexpected Exception while parsing. stderr output: " + stderr, ex);
+					getLogStringPrefix() + "Unexpected Exception while parsing. " + 
+					generateStderrMessage(stderr), ex);
 		}
 	}
 
@@ -253,6 +257,14 @@ class Executor {
 
 	private String getLogStringPrefix() {
 		return mName + " (" + mSolverCmd + ")";
+	}
+	
+	private static String generateStderrMessage(String stderr) {
+		if (stderr.isEmpty()) {
+			return "No stderr output.";
+		} else {
+			return "stderr output: " + stderr;
+		}
 	}
 
 }

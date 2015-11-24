@@ -407,7 +407,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 
 		if (m_ComputeInterpolantsFp) {
 			m_Logger.debug("Computing forward relevant predicates...");
-			computeForwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePrecondition, true,
+			computeForwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePrecondition, m_LiveVariables,
 					numberOfQuantifiedPredicates);
 			m_Logger.debug("Checking inductivity of forward relevant predicates...");
 			//			if (!TraceCheckerUtils.checkInterpolantsInductivityForward(m_InterpolantsFp, 
@@ -417,17 +417,19 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			assert TraceCheckerUtils.checkInterpolantsInductivityForward(m_InterpolantsFp, 
 					trace, tracePrecondition, tracePostcondition, m_PendingContexts, "FP", 
 					m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in FP";
+			m_TraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(m_InterpolantsFp);
 			if (m_CollectInformationAboutSizeOfPredicates) {
 				sizeOfPredicatesFP = m_SmtManager.computeDagSizeOfPredicates(m_InterpolantsFp);
 			}
 		} else if (m_ComputeInterpolantsSp && !m_ComputeInterpolantsFp) {
 			m_Logger.debug("Computing forward relevant predicates...");
-			computeForwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePrecondition, false,
+			computeForwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePrecondition, m_LiveVariables,
 					numberOfQuantifiedPredicates);
 			m_Logger.debug("Checking inductivity of forward relevant predicates...");
 			assert TraceCheckerUtils.checkInterpolantsInductivityForward(m_InterpolantsFp, 
 					trace, tracePrecondition, tracePostcondition, m_PendingContexts, "FP", 
 					m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in FP";
+			m_TraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(m_InterpolantsFp);
 		}
 
 		if (m_LogInformation) {
@@ -439,22 +441,24 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		if (m_ComputeInterpolantsBp) {
 			m_Logger.debug("Computing backward relevant predicates...");
 			computeBackwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePostcondition,
-					true, numberOfQuantifiedPredicates);
+					m_LiveVariables, numberOfQuantifiedPredicates);
 			m_Logger.debug("Checking inductivity of backward relevant predicates...");
 			assert TraceCheckerUtils.checkInterpolantsInductivityBackward(m_InterpolantsBp, 
 					trace, tracePrecondition, tracePostcondition, m_PendingContexts, "BP", 
 					m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in BP";
+			m_TraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(m_InterpolantsBp);
 			if (m_CollectInformationAboutSizeOfPredicates) {
 				sizeOfPredicatesBP = m_SmtManager.computeDagSizeOfPredicates(m_InterpolantsBp);
 			}
 		} else if (m_ComputeInterpolantsWp && !m_ComputeInterpolantsBp) {
 			m_Logger.debug("Computing backward relevant predicates...");
-			computeBackwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePostcondition, false,
+			computeBackwardRelevantPredicates(relevantVarsToUseForFPBP, rtf, trace, tracePostcondition, m_LiveVariables,
 					numberOfQuantifiedPredicates);
 			m_Logger.debug("Checking inductivity of backward relevant predicates...");
 			assert TraceCheckerUtils.checkInterpolantsInductivityBackward(m_InterpolantsBp, 
 					trace, tracePrecondition, tracePostcondition, m_PendingContexts, "BP", 
 					m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in BP";
+			m_TraceCheckerBenchmarkGenerator.reportSequenceOfInterpolants(m_InterpolantsBp);
 		}
 		
 
@@ -804,6 +808,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 							numberOfQuantifiedPredicates[3]++;
 						}
 					}
+				} else {
+					m_InterpolantsBp[i] = m_InterpolantsWp[i];
 				}
 			}
 		}

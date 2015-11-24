@@ -34,6 +34,7 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.buchiprogramproduct"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.ltl2aut"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter"/>
@@ -117,6 +118,7 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.buchiprogramproduct" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.ltl2aut" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation" autoStart="true" startLevel="0" />
+      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter" autoStart="true" startLevel="0" />

@@ -87,6 +87,9 @@ public class Svcomp2016_Memsafety extends AbstractTraceAbstractionTestSuite {
 //			"examples/svcomp/ldv-memsafety/memleaks_test18_true-valid-memsafety.i",
 //			"examples/svcomp/array-memsafety/cstrncat-alloca_true-valid-memsafety.i",
 //			"examples/svcomp/array-memsafety/cstrchr_unsafe_false-valid-deref.i",
+//			"examples/svcomp/ldv-memsafety/memleaks_test19_true-valid-memsafety.i",
+//			"examples/svcomp/ldv-memsafety/memleaks_test17_2_true-valid-memsafety.i",
+//			"examples/svcomp/array-memsafety/openbsd_cstrstr-alloca_true-valid-memsafety.i",
 		};
 
 
@@ -100,10 +103,12 @@ public class Svcomp2016_Memsafety extends AbstractTraceAbstractionTestSuite {
 
 	private static final String[] m_Settings_Deref = {
 		"svcomp2016/svcomp-Deref-32bit-Automizer_Default.epf",
+		"svcomp2016/svcomp-Deref-32bit-Automizer_Bitvector.epf",
 	};
 	
 	private static final String[] m_Settings_DerefFreeMemtrack = {
 		"svcomp2016/svcomp-DerefFreeMemtrack-32bit-Automizer_Default.epf",
+		"svcomp2016/svcomp-DerefFreeMemtrack-32bit-Automizer_Bitvector.epf",
 	};
 
 	

@@ -132,13 +132,21 @@ public class InterpolationTest_Reach extends AbstractTraceAbstractionTestSuite {
 	private static final String[] m_Settings = {
 		"automizer/interpolation/Reach-32bit-Z3-NestedInterpolation.epf",
 		"automizer/interpolation/Reach-32bit-Princess-TreeInterpolation.epf",
-//		"automizer/interpolation/Reach-32bit-SMTInterpol-FPandBP.epf",
-//		"automizer/interpolation/Reach-32bit-SMTInterpol-FPandBP-cannibalize.epf",
 		"automizer/interpolation/Reach-32bit-SMTInterpol-TreeInterpolation.epf",
-//		"automizer/interpolation/Reach-32bit-Z3-FPandBP.epf",
-		"automizer/interpolation/Reach-32bit-Z3-FP.epf",
-		"automizer/interpolation/Reach-32bit-Z3-BP.epf",
+		"automizer/interpolation/Reach-32bit-Z3-IcSpLv.epf",
+		"automizer/interpolation/Reach-32bit-Z3-IcSp.epf",
+		"automizer/interpolation/Reach-32bit-Z3-SpLv.epf",
+		"automizer/interpolation/Reach-32bit-Z3-Sp.epf",
+		"automizer/interpolation/Reach-32bit-Z3-IcWpLv.epf",
+		"automizer/interpolation/Reach-32bit-Z3-IcWp.epf",
+		"automizer/interpolation/Reach-32bit-Z3-WpLv.epf",
+		"automizer/interpolation/Reach-32bit-Z3-Wp.epf",
 	};
+// settings that we do not use
+//	"automizer/interpolation/Reach-32bit-SMTInterpol-FPandBP.epf",
+//	"automizer/interpolation/Reach-32bit-SMTInterpol-FPandBP-cannibalize.epf",
+//	"automizer/interpolation/Reach-32bit-Z3-FPandBP.epf",
+
 	
 	private static final String[] m_CToolchains = {
 //		"AutomizerC.xml",
