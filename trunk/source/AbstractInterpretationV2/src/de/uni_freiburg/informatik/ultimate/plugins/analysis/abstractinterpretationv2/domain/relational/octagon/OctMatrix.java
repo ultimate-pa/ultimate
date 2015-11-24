@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Arrays;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * Matrix for octagons (as presented by Antoine Mine).
@@ -200,27 +201,35 @@ public class OctMatrix {
 	}
 
 	private void strengtheningInPlace() {
-		for (int i = 0; i < mSize; ++i) {
-			for (int j = 0; j < mSize; ++j) {
-				OctValue b = get(i, i^1).half().add(get(j^1, j).half());
+		// blocks on the diagonal (upper, lower bounds) won't change by strengthening
+		// => iterate only 2x2 blocks that are _strictly_ below the main diagonal
+		for (int i = 2; i < mSize; ++i) {
+			int maxCol = (i - 2) | 1;
+			OctValue ib = get(i, i^1).half();
+			for (int j = 0; j <= maxCol; ++j) {
+				OctValue jb = get(j^1, j).half();
+				OctValue b = ib.add(jb);
 				if (get(i, j).compareTo(b) > 0) {
 					set(i, j, b);
 				}
 			}
-		}
+		}		
 	}
-	
+
 	private void tighteningInPlace() {
 		for (int i = 0; i < mSize; ++i) {
-			for (int j = 0; j < mSize; ++j) {
-				OctValue b = get(i, i^1).half().floor().add(get(j^1, j).half().floor());
+			int maxCol = i | 1;
+			OctValue ib = get(i, i^1).half().floor();
+			for (int j = 0; j <= maxCol; ++j) {
+				OctValue jb = get(j^1, j).half().floor();
+				OctValue b = ib.add(jb);
 				if (get(i, j).compareTo(b) > 0) {
 					set(i, j, b);
 				}
 			}
-		}
+		}		
 	}
-	
+
 	/**
 	 * Checks for negative self loops in the graph represented by this adjacency matrix.
 	 * Self loops are represented by this matrix' diagonal elements.

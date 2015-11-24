@@ -60,12 +60,36 @@ public class OctMatrixTest {
 	}
 	
 	@Test
-	public void testClosuresSingelton() {
-		OctMatrix m = OctMatrix.parseBlockLowerTriangular("0 2.0000\n" + "-2 0");
+	public void testStrongClosure4() {
+		OctMatrix m = OctMatrix.parseBlockLowerTriangular(
+			  "  0 inf\n"
+			+ "  2   0\n"
+			+ "inf inf   0 inf\n"
+			+ "inf inf   4   0\n");
+		OctMatrix mStrongClosure = OctMatrix.parseBlockLowerTriangular(
+			  "  0 inf\n"
+			+ "  2   0\n"
+			+ "inf inf   0 inf\n"
+			+ "  3 inf   4   0\n");
+		assertIsEqualTo(mStrongClosure, m.strongClosure());
+		assertIsEqualTo(mStrongClosure, mStrongClosure.strongClosure());
+	}
+
+	@Test
+	public void testTightClosure1() {
+		OctMatrix m = OctMatrix.parseBlockLowerTriangular("0 5.2 \n 2.8 0"); // v_0 \in [-2.6, 1.4]
+		OctMatrix t = OctMatrix.parseBlockLowerTriangular("0 4   \n 2   0");
+		assertIsEqualTo(m, m.strongClosure());
+		assertIsEqualTo(t, m.tightClosure());
+	}
+	
+	@Test
+	public void testClosuresSingeltonReals() {
+		OctMatrix m = OctMatrix.parseBlockLowerTriangular("0 2.0000 \n -2 0"); // v_0 \in [-1, -1]
 		Assert.assertFalse(m.strongClosure().hasNegativeSelfLoop());
 		Assert.assertFalse(m.tightClosure().hasNegativeSelfLoop());
 	}
-	
+
 	@Test
 	public void testClosuresBottomReals() {
 		OctMatrix m = OctMatrix.parseBlockLowerTriangular("0 2 \n -3 0");
