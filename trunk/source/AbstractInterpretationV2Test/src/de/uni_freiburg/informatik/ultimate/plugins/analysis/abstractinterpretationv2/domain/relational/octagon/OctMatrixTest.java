@@ -23,8 +23,8 @@ public class OctMatrixTest {
 			+ "0 2 0 0\n"
 			+ "4 4 4 4 0 8\n"
 			+ "0 3 0 3 0 0\n");
-		assertEqualTo(mStrongClosure, m.strongClosure());
-		assertEqualTo(mStrongClosure, mStrongClosure.strongClosure());
+		assertIsEqualTo(mStrongClosure, m.strongClosure());
+		assertIsEqualTo(mStrongClosure, mStrongClosure.strongClosure());
 	}
 
 	@Test
@@ -39,8 +39,8 @@ public class OctMatrixTest {
 			+ "inf  0.0\n"
 			+ "inf  1.3 0.0 inf\n"
 			+ "inf -1.5 4.9 0.0\n");
-		assertEqualTo(mStrongClosure, m.strongClosure());
-		assertEqualTo(mStrongClosure, mStrongClosure.strongClosure());
+		assertIsEqualTo(mStrongClosure, m.strongClosure());
+		assertIsEqualTo(mStrongClosure, mStrongClosure.strongClosure());
 	}
 	
 	@Test
@@ -55,36 +55,81 @@ public class OctMatrixTest {
 			+ "  2   0\n"
 			+ "inf inf   0 inf\n"
 			+ "  3 inf   4   0\n");
-		assertEqualTo(mStrongClosure, m.strongClosure());
-		assertEqualTo(mStrongClosure, mStrongClosure.strongClosure());
+		assertIsEqualTo(mStrongClosure, m.strongClosure());
+		assertIsEqualTo(mStrongClosure, mStrongClosure.strongClosure());
 	}
 	
 	@Test
-	public void testSingelton() {
+	public void testClosuresSingelton() {
 		OctMatrix m = OctMatrix.parseBlockLowerTriangular("0 2.0000\n" + "-2 0");
 		Assert.assertFalse(m.strongClosure().hasNegativeSelfLoop());
 		Assert.assertFalse(m.tightClosure().hasNegativeSelfLoop());
 	}
 	
 	@Test
-	public void testBottomReals() {
+	public void testClosuresBottomReals() {
 		OctMatrix m = OctMatrix.parseBlockLowerTriangular("0 2 \n -3 0");
 		Assert.assertTrue(m.strongClosure().hasNegativeSelfLoop());
 		Assert.assertTrue(m.tightClosure().hasNegativeSelfLoop());
 	}
 	
 	@Test
-	public void testBottomIntegers() {
+	public void testClosuresBottomIntegers() {
 		OctMatrix m = OctMatrix.parseBlockLowerTriangular(
-				  "  0 inf\n"
-				+ "inf   0\n"
-				+ "inf inf   0  -3\n"
-				+ "  3   0 inf   0\n");
+			  "  0 inf\n"
+			+ "inf   0\n"
+			+ "inf inf   0  -3\n"
+			+ "  3   0 inf   0\n");
 		Assert.assertFalse(m.strongClosure().hasNegativeSelfLoop());
 		Assert.assertTrue(m.tightClosure().hasNegativeSelfLoop());
 	}
 	
-	private void assertEqualTo(OctMatrix expected, OctMatrix actual) {
+	@Test
+	public void testSumMinMax() {
+		OctMatrix m = OctMatrix.parseBlockLowerTriangular("-7 inf    1000000000000.0000000000000 inf");
+		OctMatrix n = OctMatrix.parseBlockLowerTriangular(" 9 -2e308 0000000000000.0000000000001 inf");
+		OctMatrix sum = OctMatrix.parseBlockLowerTriangular("2 inf 1000000000000.0000000000001 inf");
+		OctMatrix min = OctMatrix.parseBlockLowerTriangular("-7 -2e308 0.0000000000001 inf");
+		OctMatrix max = OctMatrix.parseBlockLowerTriangular("9 inf 1000000000000 inf");
+
+		assertIsEqualTo(sum, m.add(n));
+		assertIsEqualTo(sum, n.add(m));
+
+		assertIsEqualTo(min, OctMatrix.min(m, n));
+		assertIsEqualTo(min, OctMatrix.min(n, m));
+
+		assertIsEqualTo(max, OctMatrix.max(m, n));
+		assertIsEqualTo(max, OctMatrix.max(n, m));
+	}
+	
+	@Test
+	public void testRelations() {
+		OctMatrix e1 = OctMatrix.parseBlockLowerTriangular("0 inf -2.5e80 9");
+		OctMatrix e2 = OctMatrix.parseBlockLowerTriangular("-0e-1 inf -25e79  9.00000000000000000000");
+		OctMatrix g1 = OctMatrix.parseBlockLowerTriangular("0 inf -2.5e80 9.000000000000000000001");
+		OctMatrix g2 = OctMatrix.parseBlockLowerTriangular("inf inf inf inf");
+		OctMatrix l1 = OctMatrix.parseBlockLowerTriangular("-0.000000000000000000001 inf -2.5e80 9");
+		OctMatrix l2 = OctMatrix.parseBlockLowerTriangular("0 2e308 -2.5e80 9");
+		
+		Assert.assertTrue(e1.isEqualTo(e1));
+		Assert.assertTrue(e1.isEqualTo(e2));
+		Assert.assertTrue(e2.isEqualTo(e1));
+		Assert.assertTrue(e1.isLessEqualThan(e1));
+		Assert.assertTrue(e1.isLessEqualThan(e2));
+		Assert.assertTrue(e2.isLessEqualThan(e1));
+		
+		Assert.assertTrue(e1.isLessEqualThan(g1) && !e1.isEqualTo(g1) && !g1.isEqualTo(e1));
+		Assert.assertTrue(!g1.isLessEqualThan(e1));
+		Assert.assertTrue(e1.isLessEqualThan(g2) && !e1.isEqualTo(g2) && !g2.isEqualTo(e1));
+		Assert.assertTrue(!g2.isLessEqualThan(e1));
+		
+		Assert.assertTrue(l1.isLessEqualThan(e1) && !l1.isEqualTo(e1) && !e1.isEqualTo(l1));
+		Assert.assertTrue(!e1.isLessEqualThan(l1));
+		Assert.assertTrue(l2.isLessEqualThan(e1) && !l2.isEqualTo(e1) && !e1.isEqualTo(l2));
+		Assert.assertTrue(!e1.isLessEqualThan(l2));
+	}
+	
+	private void assertIsEqualTo(OctMatrix expected, OctMatrix actual) {
 		String msg = "expected:\n" + expected + "acutal:\n" + actual;
 		Assert.assertTrue(msg, expected.isEqualTo(actual));
 	}
