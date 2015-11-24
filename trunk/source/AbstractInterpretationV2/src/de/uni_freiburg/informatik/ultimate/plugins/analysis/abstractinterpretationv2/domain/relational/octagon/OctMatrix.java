@@ -74,11 +74,13 @@ public class OctMatrix {
 	public static OctMatrix parseBlockLowerTriangular(String m) {
 		String[] elements = m.trim().split("\\s+");
 		int size = (int) (Math.sqrt(2 * elements.length + 1) - 1);
-		if (size % 2 != 0)
+		if (size % 2 != 0) {
 			throw new IllegalArgumentException("Number of elements does not match any 2x2 block lower triangular matrix.");
+		}
 		OctMatrix oct = new OctMatrix(size);
-		for (int i = 0; i < elements.length; ++i)
+		for (int i = 0; i < elements.length; ++i) {
 			oct.mElements[i] = OctValue.parse(elements[i]);
+		}
 		return oct;
 	}
 	
@@ -100,21 +102,24 @@ public class OctMatrix {
 	}
 	
 	protected void set(int row, int col, OctValue value) {
-		if(value == null)
+		if(value == null) {
 			throw new IllegalArgumentException("null is not a valid matrix element.");
+		}
 		mElements[indexOf(row, col)] = value;
 	}
 	
 	protected void setMainDiagonal(OctValue value) {
-		for (int i = 0; i < mSize; ++i)
+		for (int i = 0; i < mSize; ++i) {
 			mElements[indexOfLower(i, i)] = value;
+		}
 	}
 
 	private int indexOf(int row, int col) {
-		if (row >= mSize || col >= mSize)
+		if (row >= mSize || col >= mSize) {
 			throw new IndexOutOfBoundsException(row + "," + col + " is not an index for matrix of size " + mSize + ".");
-		if (row < col)
+		} else if (row < col) {
 			return indexOfLower(col ^ 1, row ^ 1);
+		}
 		return indexOfLower(row, col);
 	}
 
@@ -123,11 +128,13 @@ public class OctMatrix {
 	}
 
 	public OctMatrix elementwiseOperation(OctMatrix other, BiFunction<OctValue, OctValue, OctValue> operator) {
-		if (other.mSize != mSize)
+		if (other.mSize != mSize) {
 			throw new IllegalArgumentException("Incompatible matrices");
+		}
 		OctMatrix result = new OctMatrix(mSize);
-		for (int i = 0; i < mElements.length; ++i)
+		for (int i = 0; i < mElements.length; ++i) {
 			result.mElements[i] = operator.apply(mElements[i], other.mElements[i]);
+		}
 		return result;
 	}
 	
@@ -135,8 +142,9 @@ public class OctMatrix {
 		if (other.mSize != mSize)
 			throw new IllegalArgumentException("Incompatible matrices");
 		for (int i = 0; i < mElements.length; ++i) {
-			if (!relation.apply(mElements[i], other.mElements[i]))
+			if (!relation.apply(mElements[i], other.mElements[i])) {
 				return false;
+			}
 		}
 		return true;
 	}
@@ -183,8 +191,9 @@ public class OctMatrix {
 				OctValue ik = get(i, k);
 				for (int j = 0; j < mSize; ++j) {
 					OctValue indirectRoute = ik.add(get(k, j));
-					if (get(i, j).compareTo(indirectRoute) > 0)
+					if (get(i, j).compareTo(indirectRoute) > 0) {
 						set(i, j, indirectRoute);
+					}
 				}
 			}
 		}
@@ -194,8 +203,9 @@ public class OctMatrix {
 		for (int i = 0; i < mSize; ++i) {
 			for (int j = 0; j < mSize; ++j) {
 				OctValue b = get(i, i^1).half().add(get(j^1, j).half());
-				if (get(i, j).compareTo(b) > 0)
+				if (get(i, j).compareTo(b) > 0) {
 					set(i, j, b);
+				}
 			}
 		}
 	}
@@ -204,8 +214,9 @@ public class OctMatrix {
 		for (int i = 0; i < mSize; ++i) {
 			for (int j = 0; j < mSize; ++j) {
 				OctValue b = get(i, i^1).half().floor().add(get(j^1, j).half().floor());
-				if (get(i, j).compareTo(b) > 0)
+				if (get(i, j).compareTo(b) > 0) {
 					set(i, j, b);
+				}
 			}
 		}
 	}
@@ -221,8 +232,9 @@ public class OctMatrix {
 	 */
 	public boolean hasNegativeSelfLoop() {
 		for (int i = 0; i < mSize; ++i) {
-			if (get(i, i).compareTo(OctValue.ZERO) < 0)
+			if (get(i, i).compareTo(OctValue.ZERO) < 0) {
 				return true;
+			}
 		}
 		return false;
 	}

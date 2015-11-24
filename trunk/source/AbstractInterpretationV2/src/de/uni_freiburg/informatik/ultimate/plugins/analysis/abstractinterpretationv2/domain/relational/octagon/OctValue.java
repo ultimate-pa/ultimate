@@ -35,8 +35,9 @@ public class OctValue implements Comparable<OctValue> {
 	 * @param value value less than infinity
 	 */
 	public OctValue(BigDecimal value) {
-		if (value == null)
+		if (value == null) {			
 			throw new IllegalArgumentException("Use constant INFINITY to represent infinity.");
+		}
 		mValue = value;
 	}
 	
@@ -45,8 +46,9 @@ public class OctValue implements Comparable<OctValue> {
 	}
 	
 	public static OctValue parse(String s) {
-		if ("inf".equals(s))
+		if ("inf".equals(s)) {
 			return INFINITY;
+		}
 		return new OctValue(new BigDecimal(s));
 	}
 	
@@ -59,8 +61,9 @@ public class OctValue implements Comparable<OctValue> {
 	}
 
 	public OctValue add(OctValue other) {
-		if (mValue == null || other.mValue == null)
+		if (mValue == null || other.mValue == null) {
 			return OctValue.INFINITY;
+		}
 		return new OctValue(mValue.add(other.mValue));
 	}
 	
@@ -70,10 +73,11 @@ public class OctValue implements Comparable<OctValue> {
 	 * @return {@code this / 2}
 	 */
 	public OctValue half() {
-		if (mValue == null)
+		if (mValue == null) {
 			return OctValue.INFINITY;
+		}
 		// x has a finite decimal expansion <=> x/2 has a finite decimal expansion
-		// (BigDecimal uses finite decimal expansions)
+		// (BigDecimal requires a finite decimal expansions)
 		return new OctValue(mValue.divide(new BigDecimal(2)));
 	}
 	
@@ -83,26 +87,29 @@ public class OctValue implements Comparable<OctValue> {
 	 * @return floored {@linkplain OctValue}
 	 */
 	public OctValue floor() {
-		if (mValue == null)
+		if (mValue == null) {
 			return OctValue.INFINITY;
+		}
 		return new OctValue(mValue.setScale(0, RoundingMode.FLOOR));
 	}
 
 	@Override
 	public int compareTo(OctValue other) {
-		if (this == other || mValue == other.mValue)
+		if (this == other || mValue == other.mValue) {
 			return 0;
-		if (mValue == null)
+		} else if (mValue == null) {			
 			return 1;
-		if (other.mValue == null)
+		} else if (other.mValue == null) {
 			return -1;
+		}
 		return mValue.compareTo(other.mValue);
 	}
 	
 	@Override
 	public String toString() {
-		if (mValue == null)
+		if (mValue == null) {
 			return "inf";
+		}
 		return mValue.toString();
 	}
 

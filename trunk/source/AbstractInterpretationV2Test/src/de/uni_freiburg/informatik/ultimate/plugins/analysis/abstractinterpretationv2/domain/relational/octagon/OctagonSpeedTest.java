@@ -44,37 +44,42 @@ public class OctagonSpeedTest {
 		OctMatrix a = OctMatrix.top(mVars);
 		
 		System.out.println("\twarm up ...");
-		for (int i = 0; i < 1000; ++i)
+		for (int i = 0; i < 1000; ++i) {
 			test.accept(a);
+		}
 		
 		System.out.println("\trun test ...");
 		long time = System.nanoTime();
-		for (int i = 0; i < 1000; ++i)
+		for (int i = 0; i < 1000; ++i) {
 			test.accept(a);
+		}
 		time = System.nanoTime() - time;
 		System.out.printf("\ttest took %f s%n", time * 1e-9);
 	}
 	
 	public void testGet(OctMatrix a) {
 		int size = a.getSize();
-		for (int i = 0; i < size; ++i)
-			for (int j = 0; j < size; ++j)
+		for (int i = 0; i < size; ++i) {
+			for (int j = 0; j < size; ++j) {
 				a.get(i, j);
+			}
+		}
 	}
 	
 //	public void testSet(OctMatrix a) {
 //		int size = a.getSize();
 //		for (int i = 0; i < size; ++i) {
 //			for (int j = 0; j < size; ++j) {
-//				if (i == j)
+//				if (i == j) {
 //					continue;
+//				}
 //				a.set(i, j, OctValue.ZERO);				
 //			}
 //		}
 //	}
 
 	public void testElementwise(OctMatrix a) {
-		a.add(a).hashCode();
+		a.add(a);
 	}
 
 }
