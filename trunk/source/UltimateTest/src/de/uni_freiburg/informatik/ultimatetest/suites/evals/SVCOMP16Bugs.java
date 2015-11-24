@@ -49,22 +49,12 @@ public class SVCOMP16Bugs extends AbstractEvalTestSuite {
 	private static final String[] BPL = new String[] { ".bpl" };
 	private static final int DEFAULT_LIMIT = Integer.MAX_VALUE;
 
-	private static final String OVERFLOW = "svcomp2016/svcomp-Overflow-64bit-Automizer_Default.epf";
-	private static final String BIT = "svcomp2016/svcomp-Reach-32bit-Automizer_Bitvector.epf";
-	private static final String AUTOMIZER = "AutomizerC.xml";
-	private static final String TERMAUTOMIZER = "BuchiAutomizerCWithBlockEncoding.xml";
-
 	// @formatter:off
 	@SuppressWarnings("unchecked")
 	private static final Quad<String, String[], String,String[]>[] DEFS = new Quad[] {
-			new Quad<>(AUTOMIZER, ALL_C, BIT, sv("bitvector-regression/integerpromotion_false-unreach-call.i")),
-			new Quad<>(AUTOMIZER, ALL_C, OVERFLOW, sv("signedintegeroverflow-regression/AdditionIntMin_false-no-overflow.c.i")),
+			new Quad<>("AutomizerCInline.xml", ALL_C, "automizer/interpolation/Reach-32bit-SMTInterpol-TreeInterpolation.epf", sv("loops/linear_sea.ch_true-unreach-call.i")),
 	};
 	// @formatter:on
-
-	private static String[] sv(final String path) {
-		return new String[] { "examples/svcomp/" + path };
-	}
 
 	@Override
 	protected long getTimeout() {
@@ -101,4 +91,9 @@ public class SVCOMP16Bugs extends AbstractEvalTestSuite {
 		}
 		return super.createTestCases();
 	}
+	
+	private static String[] sv(final String path) {
+		return new String[] { "examples/svcomp/" + path };
+	}
+
 }
