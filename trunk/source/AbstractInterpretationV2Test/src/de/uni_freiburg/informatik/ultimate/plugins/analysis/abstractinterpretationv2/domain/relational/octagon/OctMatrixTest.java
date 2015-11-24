@@ -86,7 +86,7 @@ public class OctMatrixTest {
 	
 	private void assertEqualTo(OctMatrix expected, OctMatrix actual) {
 		String msg = "expected:\n" + expected + "acutal:\n" + actual;
-		Assert.assertTrue(msg, expected.equalTo(actual));
+		Assert.assertTrue(msg, expected.isEqualTo(actual));
 	}
 	
 }

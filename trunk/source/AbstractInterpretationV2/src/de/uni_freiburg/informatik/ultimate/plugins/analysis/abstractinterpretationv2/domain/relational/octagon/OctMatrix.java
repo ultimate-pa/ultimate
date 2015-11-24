@@ -154,11 +154,11 @@ public class OctMatrix {
 	}
 
 	// TODO document: Different matrices may represent the same octagon.
-	public boolean equalTo(OctMatrix other) {
+	public boolean isEqualTo(OctMatrix other) {
 		return elementwiseRelation(other, (x, y) -> x.compareTo(y) == 0);
 	}
 	
-	public boolean lessEqualThan(OctMatrix other) {
+	public boolean isLessEqualThan(OctMatrix other) {
 		return elementwiseRelation(other, (x, y) -> x.compareTo(y) <= 0);		
 	}
 	

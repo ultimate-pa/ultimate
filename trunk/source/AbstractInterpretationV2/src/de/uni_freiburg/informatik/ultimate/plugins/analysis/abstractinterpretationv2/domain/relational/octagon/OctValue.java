@@ -87,21 +87,6 @@ public class OctValue implements Comparable<OctValue> {
 			return OctValue.INFINITY;
 		return new OctValue(mValue.setScale(0, RoundingMode.FLOOR));
 	}
-	
-	@Override
-	public int hashCode() {
-		return (mValue == null) ? 0 : mValue.hashCode();
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null || getClass() != obj.getClass())
-			return false;
-		OctValue other = (OctValue) obj;
-		return (mValue == null && other.mValue == null) || (mValue.compareTo(other.mValue) == 0);
-	}
 
 	@Override
 	public int compareTo(OctValue other) {
