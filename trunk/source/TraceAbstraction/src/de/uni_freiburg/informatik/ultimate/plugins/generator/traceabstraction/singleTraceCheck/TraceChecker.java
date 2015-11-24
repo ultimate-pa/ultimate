@@ -477,10 +477,10 @@ public class TraceChecker {
 		if (m_assertCodeBlocksIncrementally != AssertCodeBlockOrder.NOT_INCREMENTALLY) {
 			m_AAA = new AnnotateAndAsserterWithStmtOrderPrioritization(m_TcSmtManager, ssa,
 					getAnnotateAndAsserterCodeBlocks(ssa), m_TraceCheckerBenchmarkGenerator,
-					m_assertCodeBlocksIncrementally, m_Logger);
+					m_assertCodeBlocksIncrementally, m_Services);
 		} else {
 			m_AAA = new AnnotateAndAsserter(m_TcSmtManager, ssa, getAnnotateAndAsserterCodeBlocks(ssa),
-					m_TraceCheckerBenchmarkGenerator, m_Logger);
+					m_TraceCheckerBenchmarkGenerator, m_Services);
 			// Report the asserted code blocks
 //			m_TraceCheckerBenchmarkGenerator.reportnewAssertedCodeBlocks(m_Trace.length());
 		}
