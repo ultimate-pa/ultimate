@@ -369,10 +369,6 @@ public class IntervalDomainState
 			return false;
 		}
 
-		if (!(other instanceof IntervalDomainState)) {
-			return false;
-		}
-
 		if (!getClass().isInstance(other)) {
 			return false;
 		}
@@ -403,7 +399,7 @@ public class IntervalDomainState
 		assert other != null;
 		assert hasSameVariables(other);
 
-		final IntervalDomainState returnState = (IntervalDomainState) copy();
+		final IntervalDomainState returnState = copy();
 
 		for (Entry<String, IntervalDomainValue> entry : mValuesMap.entrySet()) {
 			returnState.setValue(entry.getKey(), entry.getValue().intersect(other.mValuesMap.get(entry.getKey())));
