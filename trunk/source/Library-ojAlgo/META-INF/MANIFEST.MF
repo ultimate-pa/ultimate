@@ -1,0 +1,15 @@
+Manifest-Version: 1.0
+Bundle-Name: Library-ojAlgo
+Bundle-SymbolicName: Library-ojAlgo
+Bundle-Version: 35.17.0
+Bundle-ManifestVersion: 2
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Ant-Version: Apache Ant 1.9.2
+Created-By: 1.8.0_11-b12 (Oracle Corporation)
+Specification-Title: ojAlgo
+Specification-Version: 2014-08-19
+Specification-Vendor: Optimatika
+Implementation-Title: ojAlgo
+Implementation-Version: 35.17
+Implementation-Vendor: Optimatika
+

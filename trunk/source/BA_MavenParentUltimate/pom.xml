@@ -249,6 +249,7 @@
 		<module>../WitnessParser</module>
 		<module>../BoogieProcedureInliner</module>
 		<module>../SpaceExParser</module>
+		<module>../Library-ojAlgo</module>
 		<module>../AbstractInterpretationV2</module>
 		<module>../AbstractInterpretationMk2</module>
 	</modules>

@@ -1,0 +1,629 @@
+/*
+ * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+package org.ojalgo.array;
+
+import java.io.Serializable;
+import java.math.BigDecimal;
+import java.util.AbstractList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
+import java.util.RandomAccess;
+
+import org.ojalgo.access.Access1D;
+import org.ojalgo.access.Iterator1D;
+import org.ojalgo.array.BasicArray.BasicFactory;
+import org.ojalgo.function.BinaryFunction;
+import org.ojalgo.function.UnaryFunction;
+import org.ojalgo.function.VoidFunction;
+import org.ojalgo.random.RandomNumber;
+import org.ojalgo.scalar.ComplexNumber;
+import org.ojalgo.scalar.RationalNumber;
+import org.ojalgo.scalar.Scalar;
+
+/**
+ * Array1D
+ *
+ * @author apete
+ */
+public final class Array1D<N extends Number> extends AbstractList<N> implements Access1D<N>, Access1D.Elements, Access1D.Fillable<N>, Access1D.Modifiable<N>,
+        Access1D.Visitable<N>, RandomAccess, Serializable {
+
+    public static abstract class Factory<N extends Number> implements Access1D.Factory<Array1D<N>> {
+
+        public Array1D<N> copy(final Access1D<?> source) {
+
+            final long tmpCount = source.count();
+
+            final BasicArray<N> tmpDelegate = this.delegate().makeToBeFilled(tmpCount);
+
+            for (long i = 0L; i < tmpCount; i++) {
+                tmpDelegate.set(i, source.get(i));
+            }
+
+            return tmpDelegate.asArray1D();
+        }
+
+        public Array1D<N> copy(final double... source) {
+
+            final int tmpLength = source.length;
+
+            final BasicArray<N> tmpDelegate = this.delegate().makeToBeFilled(tmpLength);
+
+            for (int i = 0; i < tmpLength; i++) {
+                tmpDelegate.set(i, source[i]);
+            }
+
+            return tmpDelegate.asArray1D();
+        }
+
+        public final Array1D<N> copy(final List<? extends Number> source) {
+
+            final int tmpSize = source.size();
+
+            final BasicArray<N> tmpDelegate = this.delegate().makeToBeFilled(tmpSize);
+
+            for (int i = 0; i < tmpSize; i++) {
+                tmpDelegate.set(i, source.get(i));
+            }
+
+            return tmpDelegate.asArray1D();
+        }
+
+        public final Array1D<N> copy(final Number... source) {
+
+            final int tmpLength = source.length;
+
+            final BasicArray<N> tmpDelegate = this.delegate().makeToBeFilled(tmpLength);
+
+            for (int i = 0; i < tmpLength; i++) {
+                tmpDelegate.set(i, source[i]);
+            }
+
+            return tmpDelegate.asArray1D();
+        }
+
+        public final Array1D<N> makeRandom(final long count, final RandomNumber distribution) {
+
+            final BasicArray<N> tmpDelegate = this.delegate().makeToBeFilled(count);
+
+            for (int i = 0; i < count; i++) {
+                tmpDelegate.set(i, distribution);
+            }
+
+            return tmpDelegate.asArray1D();
+        }
+
+        public final Array1D<N> makeZero(final long count) {
+            return this.delegate().makeZero(count).asArray1D();
+        }
+
+        public final Array1D<N> wrap(final BasicArray<N> array) {
+            return array.asArray1D();
+        }
+
+        abstract BasicArray.BasicFactory<N> delegate();
+
+    }
+
+    public static final Factory<BigDecimal> BIG = new Factory<BigDecimal>() {
+
+        @Override
+        BasicFactory<BigDecimal> delegate() {
+            return BasicArray.BIG;
+        }
+
+    };
+
+    public static final Factory<ComplexNumber> COMPLEX = new Factory<ComplexNumber>() {
+
+        @Override
+        BasicFactory<ComplexNumber> delegate() {
+            return BasicArray.COMPLEX;
+        }
+
+    };
+
+    public static final Factory<Double> PRIMITIVE = new Factory<Double>() {
+
+        @Override
+        public Array1D<Double> copy(final Access1D<?> source) {
+
+            final long tmpCount = source.count();
+
+            final BasicArray<Double> tmpDelegate = this.delegate().makeToBeFilled(tmpCount);
+
+            for (long i = 0L; i < tmpCount; i++) {
+                tmpDelegate.set(i, source.doubleValue(i));
+            }
+
+            return tmpDelegate.asArray1D();
+        }
+
+        @Override
+        public Array1D<Double> copy(final double... source) {
+            return new PrimitiveArray(source).asArray1D();
+        }
+
+        @Override
+        BasicFactory<Double> delegate() {
+            return BasicArray.PRIMITIVE;
+        }
+
+    };
+
+    public static final Factory<RationalNumber> RATIONAL = new Factory<RationalNumber>() {
+
+        @Override
+        BasicFactory<RationalNumber> delegate() {
+            return BasicArray.RATIONAL;
+        }
+
+    };
+
+    @SuppressWarnings("unchecked")
+    private static <T extends Number> T[] copyAndSort(final Array1D<T> anArray) {
+
+        final int tmpLength = (int) anArray.length;
+        final T[] retVal = (T[]) new Number[tmpLength];
+
+        for (int i = 0; i < tmpLength; i++) {
+            retVal[i] = anArray.get(i);
+        }
+
+        Arrays.sort(retVal);
+
+        return retVal;
+    }
+
+    public final long length;
+
+    private final BasicArray<N> myDelegate;
+
+    private final long myFirst;
+    private final long myLimit;
+    private final long myStep;
+
+    @SuppressWarnings("unused")
+    private Array1D() {
+        this(null);
+    }
+
+    Array1D(final BasicArray<N> delegate) {
+        this(delegate, 0L, delegate.count(), 1L);
+    }
+
+    Array1D(final BasicArray<N> delegate, final long first, final long limit, final long step) {
+
+        super();
+
+        myDelegate = delegate;
+
+        myFirst = first;
+        myLimit = limit;
+        myStep = step;
+
+        length = (myLimit - myFirst) / myStep;
+    }
+
+    @Override
+    public boolean contains(final Object obj) {
+        return this.indexOf(obj) != -1;
+    }
+
+    @SuppressWarnings("unchecked")
+    public Array1D<N> copy() {
+
+        BasicArray<N> retVal = null;
+
+        if (myDelegate instanceof PrimitiveArray) {
+
+            retVal = (BasicArray<N>) new PrimitiveArray((int) length);
+
+            for (long i = 0; i < length; i++) {
+                retVal.set(i, this.doubleValue(i));
+            }
+
+            return new Array1D<N>(retVal);
+
+        } else if (myDelegate instanceof ComplexArray) {
+
+            retVal = (BasicArray<N>) new ComplexArray((int) length);
+
+            for (long i = 0; i < length; i++) {
+                retVal.set(i, this.get(i));
+            }
+
+            return new Array1D<N>(retVal);
+
+        } else if (myDelegate instanceof BigArray) {
+
+            retVal = (BasicArray<N>) new BigArray((int) length);
+
+            for (long i = 0; i < length; i++) {
+                retVal.set(i, this.get(i));
+            }
+
+            return new Array1D<N>(retVal);
+
+        } else {
+
+            return null;
+        }
+    }
+
+    /**
+     * Creates a copy of this containing only the selected elements, in the specified order.
+     */
+    @SuppressWarnings("unchecked")
+    public Array1D<N> copy(final int... indices) {
+
+        BasicArray<N> retVal = null;
+
+        final int tmpLength = indices.length;
+
+        if (myDelegate instanceof PrimitiveArray) {
+
+            retVal = (BasicArray<N>) new PrimitiveArray(tmpLength);
+
+            for (int i = 0; i < tmpLength; i++) {
+                retVal.set(i, this.doubleValue(indices[i]));
+            }
+
+            return new Array1D<N>(retVal);
+
+        } else if (myDelegate instanceof ComplexArray) {
+
+            retVal = (BasicArray<N>) new ComplexArray(tmpLength);
+
+            for (int i = 0; i < tmpLength; i++) {
+                retVal.set(i, this.get(indices[i]));
+            }
+
+            return new Array1D<N>(retVal);
+
+        } else if (myDelegate instanceof BigArray) {
+
+            retVal = (BasicArray<N>) new BigArray(tmpLength);
+
+            for (int i = 0; i < tmpLength; i++) {
+                retVal.set(i, this.get(indices[i]));
+            }
+
+            return new Array1D<N>(retVal);
+
+        } else {
+
+            return null;
+        }
+    }
+
+    public long count() {
+        return length;
+    }
+
+    public double doubleValue(final long index) {
+        return myDelegate.doubleValue(myFirst + (myStep * index));
+    }
+
+    public void fillAll(final N value) {
+        myDelegate.fill(myFirst, myLimit, myStep, value);
+    }
+
+    public void fillRange(final long first, final long limit, final N value) {
+        final long tmpFirst = myFirst + (myStep * first);
+        final long tmpLimit = myFirst + (myStep * limit);
+        myDelegate.fill(tmpFirst, tmpLimit, myStep, value);
+    }
+
+    @Override
+    public N get(final int index) {
+        return myDelegate.get(myFirst + (myStep * index));
+    }
+
+    public N get(final long index) {
+        return myDelegate.get(myFirst + (myStep * index));
+    }
+
+    /**
+     * @deprecated v36 Use {@link #indexOfLargestInRange(long,long)} instead
+     */
+    @Deprecated
+    public long getIndexOfLargestInRange(final long first, final long limit) {
+        return this.indexOfLargestInRange(first, limit);
+    }
+
+    @Override
+    public int indexOf(final Object obj) {
+        final int tmpLength = (int) length;
+        if (obj == null) {
+            for (int i = 0; i < tmpLength; i++) {
+                if (this.get(i) == null) {
+                    return i;
+                }
+            }
+        } else if (obj instanceof Number) {
+            for (int i = 0; i < tmpLength; i++) {
+                if (obj.equals(this.get(i))) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
+
+    public long indexOfLargest() {
+        return this.indexOfLargestInRange(myFirst, myLimit);
+    }
+
+    public long indexOfLargestInRange(final long first, final long limit) {
+        return (myDelegate.indexOfLargest(myFirst + (myStep * first), myFirst + (myStep * limit), myStep) - myFirst) / myStep;
+    }
+
+    /**
+     * @see Scalar#isAbsolute()
+     */
+    public boolean isAbsolute(final long index) {
+        return myDelegate.isAbsolute(myFirst + (myStep * index));
+    }
+
+    public boolean isAllZeros() {
+        return myDelegate.isZeros(myFirst, myLimit, myStep);
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return length == 0;
+    }
+
+    public boolean isInfinite(final long index) {
+        return myDelegate.isInfinite(myFirst + (myStep * index));
+    }
+
+    public boolean isNaN(final long index) {
+        return myDelegate.isNaN(myFirst + (myStep * index));
+    }
+
+    /**
+     * @see Scalar#isPositive()
+     */
+    public boolean isPositive(final long index) {
+        return myDelegate.isPositive(myFirst + (myStep * index));
+    }
+
+    public boolean isRangeZeros(final long first, final long limit) {
+        return myDelegate.isZeros((myFirst + (myStep * first)), (myFirst + (myStep * limit)), myStep);
+    }
+
+    /**
+     * @see Scalar#isReal()
+     */
+    public boolean isReal(final long index) {
+        return myDelegate.isReal(myFirst + (myStep * index));
+    }
+
+    /**
+     * @see Scalar#isZero()
+     */
+    public boolean isZero(final long index) {
+        return myDelegate.isZero(myFirst + (myStep * index));
+    }
+
+    @Override
+    public final Iterator<N> iterator() {
+        return new Iterator1D<N>(this);
+    }
+
+    public void modifyAll(final UnaryFunction<N> function) {
+        myDelegate.modify(myFirst, myLimit, myStep, function);
+    }
+
+    public void modifyMatching(final Access1D<N> left, final BinaryFunction<N> function) {
+        final long tmpLength = Math.min(length, left.count());
+        if (myDelegate instanceof PrimitiveArray) {
+            for (long i = 0L; i < tmpLength; i++) {
+                this.set(i, function.invoke(left.doubleValue(i), this.doubleValue(i)));
+            }
+        } else {
+            for (long i = 0L; i < tmpLength; i++) {
+                this.set(i, function.invoke(left.get(i), this.get(i)));
+            }
+        }
+    }
+
+    public void modifyMatching(final BinaryFunction<N> function, final Access1D<N> right) {
+        final long tmpLength = Math.min(length, right.count());
+        if (myDelegate instanceof PrimitiveArray) {
+            for (long i = 0; i < tmpLength; i++) {
+                this.set(i, function.invoke(this.doubleValue(i), right.doubleValue(i)));
+            }
+        } else {
+            for (long i = 0; i < tmpLength; i++) {
+                this.set(i, function.invoke(this.get(i), right.get(i)));
+            }
+        }
+    }
+
+    public void modifyRange(final long first, final long limit, final UnaryFunction<N> function) {
+        final long tmpFirst = myFirst + (myStep * first);
+        final long tmpLimit = myFirst + (myStep * limit);
+        myDelegate.modify(tmpFirst, tmpLimit, myStep, function);
+    }
+
+    /**
+     * Assumes you have first called {@linkplain #sortAscending()}.
+     */
+    public int searchAscending(final N key) {
+
+        if (myDelegate instanceof DenseArray<?>) {
+
+            if (this.count() != myDelegate.count()) {
+
+                final int tmpLength = (int) length;
+
+                final Number[] tmpArray = new Number[tmpLength];
+
+                for (int i = 0; i < tmpLength; i++) {
+                    tmpArray[i] = this.get(i);
+                }
+
+                return Arrays.binarySearch(tmpArray, key);
+
+            } else {
+
+                return ((DenseArray<N>) myDelegate).searchAscending(key);
+            }
+
+        } else {
+
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    /**
+     * Asssumes you have first called {@linkplain #sortDescending()}.
+     */
+    public int searchDescending(final N key) {
+
+        if (myDelegate instanceof DenseArray<?>) {
+
+            final int tmpLength = (int) length;
+            final Number[] tmpArray = new Number[tmpLength];
+
+            for (int i = 0; i < tmpLength; i++) {
+                tmpArray[i] = this.get(tmpLength - 1 - i);
+            }
+
+            final int tmpInd = Arrays.binarySearch(tmpArray, key);
+
+            if (tmpInd >= 0) {
+                return tmpLength - 1 - tmpInd;
+            } else if (tmpInd < -1) {
+                return -tmpLength - tmpInd - 1;
+            } else {
+                return -1;
+            }
+
+        } else {
+
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    @Override
+    public N set(final int index, final Number value) {
+        final long tmpIndex = myFirst + (myStep * index);
+        final N retVal = myDelegate.get(tmpIndex);
+        myDelegate.set(tmpIndex, value);
+        return retVal;
+    }
+
+    public void set(final long index, final double value) {
+        myDelegate.set(myFirst + (myStep * index), value);
+    }
+
+    public void set(final long index, final Number value) {
+        myDelegate.set(myFirst + (myStep * index), value);
+    }
+
+    @Override
+    public int size() {
+        return (int) length;
+    }
+
+    public void sortAscending() {
+
+        if (myDelegate instanceof DenseArray<?>) {
+
+            if (this.count() != myDelegate.count()) {
+
+                final N[] tmpArray = Array1D.copyAndSort(this);
+
+                final int tmpLength = (int) length;
+                for (int i = 0; i < tmpLength; i++) {
+                    this.set(i, tmpArray[i]);
+                }
+
+            } else {
+
+                ((DenseArray<N>) myDelegate).sortAscending();
+            }
+
+        } else {
+
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    public void sortDescending() {
+
+        if (myDelegate instanceof DenseArray<?>) {
+
+            final N[] tmpArray = Array1D.copyAndSort(this);
+
+            final int tmpLength = (int) length;
+            for (int i = 0; i < tmpLength; i++) {
+                this.set(i, tmpArray[tmpLength - 1 - i]);
+            }
+
+        } else {
+
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    @Override
+    public Array1D<N> subList(final int first, final int limit) {
+        return new Array1D<N>(myDelegate, myFirst + (myStep * first), myFirst + (myStep * limit), myStep);
+    }
+
+    public double[] toRawCopy() {
+
+        final int tmpLength = (int) length;
+        final double[] retVal = new double[tmpLength];
+
+        for (int i = 0; i < tmpLength; i++) {
+            retVal[i] = this.doubleValue(i);
+        }
+
+        return retVal;
+    }
+
+    public Scalar<N> toScalar(final int index) {
+        return myDelegate.toScalar(myFirst + (myStep * index));
+    }
+
+    public void visitAll(final VoidFunction<N> visitor) {
+        myDelegate.visit(myFirst, myLimit, myStep, visitor);
+    }
+
+    public void visitRange(final long first, final long limit, final VoidFunction<N> visitor) {
+        final long tmpFirst = myFirst + (myStep * first);
+        final long tmpLimit = myFirst + (myStep * limit);
+        myDelegate.visit(tmpFirst, tmpLimit, myStep, visitor);
+    }
+
+    BasicArray<N> getDelegate() {
+        return myDelegate;
+    }
+
+}
