@@ -105,8 +105,15 @@ public class BooleanValue {
 		return mValue;
 	}
 
-	@Override
-	public boolean equals(Object other) {
+	/**
+	 * Returns <code>true</code> if and only if the other object is equal to <code>this</code>.
+	 * 
+	 * @param other
+	 *            The other object to compare.
+	 * @return <code>true</code> if and only if the value of the other Boolean is equal to the value of
+	 *         <code>this</code>.
+	 */
+	public boolean isEqualTo(Object other) {
 		if (other == null) {
 			return false;
 		}

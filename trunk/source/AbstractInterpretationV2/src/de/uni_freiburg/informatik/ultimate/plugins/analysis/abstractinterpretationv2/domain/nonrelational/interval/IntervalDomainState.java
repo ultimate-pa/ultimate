@@ -334,7 +334,7 @@ public class IntervalDomainState
 
 		for (final Entry<String, BooleanValue> entry : mBooleanValuesMap.entrySet()) {
 			final BooleanValue otherValue = other.mBooleanValuesMap.get(entry.getKey());
-			if (!mBooleanValuesMap.get(entry.getKey()).equals(otherValue)) {
+			if (!mBooleanValuesMap.get(entry.getKey()).isEqualTo(otherValue)) {
 				return false;
 			}
 		}
