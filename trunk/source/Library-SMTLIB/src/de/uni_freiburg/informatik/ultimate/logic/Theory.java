@@ -1098,7 +1098,7 @@ public class Theory {
 		if (mBitVecConstCache == null)
 			mBitVecConstCache = new UnifyHash<FunctionSymbol>();
 		int hash = HashUtils.hashJenkins(name.hashCode(), (Object[]) indices);
-		for (FunctionSymbol symb : mModelValueCache.iterateHashCode(hash)) {
+		for (FunctionSymbol symb : mBitVecConstCache.iterateHashCode(hash)) {
 			if (symb.getName().equals(name) && symb.getIndices()[0].equals(indices[0]))
 				return symb;
 		}
