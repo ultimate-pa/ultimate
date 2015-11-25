@@ -48,6 +48,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public class IntervalValue implements Comparable<IntervalValue> {
 
+	private static int sId = 0;
+	private final int mId;
+	
 	private BigDecimal mValue;
 
 	private boolean mIsInfty;
@@ -57,6 +60,8 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	 */
 	protected IntervalValue() {
 		mIsInfty = true;
+		sId++;
+		mId = sId;
 	}
 
 	/**
@@ -68,6 +73,8 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	protected IntervalValue(BigDecimal val) {
 		mValue = val;
 		mIsInfty = false;
+		sId++;
+		mId = sId;
 	}
 
 	/**
@@ -79,6 +86,8 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	protected IntervalValue(IntervalValue val) {
 		mValue = val.mValue;
 		mIsInfty = val.mIsInfty;
+		sId++;
+		mId = sId;
 	}
 
 	/**
@@ -162,7 +171,7 @@ public class IntervalValue implements Comparable<IntervalValue> {
 
 	@Override
 	public int hashCode() {
-		return mValue.hashCode();
+		return mId;
 	}
 
 	@Override
