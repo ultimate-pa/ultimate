@@ -12,4 +12,8 @@ Specification-Vendor: Optimatika
 Implementation-Title: ojAlgo
 Implementation-Version: 35.17
 Implementation-Vendor: Optimatika
+Export-Package: org.ojalgo,
+ org.ojalgo.array,
+ org.ojalgo.optimisation,
+ org.ojalgo.scalar
 

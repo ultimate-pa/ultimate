@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IDomainValue;
 
 /**
  * Representation of an interval value in the interval domain.
@@ -42,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
+public class IntervalDomainValue implements Comparable<IntervalDomainValue>, IDomainValue<IntervalDomainValue> {
 
 	private IntervalValue mLower;
 	private IntervalValue mUpper;
@@ -1041,5 +1042,10 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		} else {
 			return new IntervalValue(newValue);
 		}
+	}
+
+	@Override
+	public IntervalDomainValue get() {
+		return this;
 	}
 }
