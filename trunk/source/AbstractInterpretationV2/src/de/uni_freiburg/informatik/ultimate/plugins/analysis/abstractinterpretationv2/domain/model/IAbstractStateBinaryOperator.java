@@ -38,4 +38,5 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 public interface IAbstractStateBinaryOperator<STATE> {
 
 	STATE apply(STATE first, STATE second);
+
 }

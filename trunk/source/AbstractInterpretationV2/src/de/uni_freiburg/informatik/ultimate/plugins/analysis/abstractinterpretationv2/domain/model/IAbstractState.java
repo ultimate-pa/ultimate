@@ -67,15 +67,6 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	STATE addVariable(final String name, final VARDECL variable);
 
 	/**
-	 * Returns the declaration type of the given variable.
-	 * 
-	 * @param name
-	 *            The variable to get the type of.
-	 * @return The variable declaration type of the variable.
-	 */
-	VARDECL getVariableType(final String name);
-
-	/**
 	 * {@link FixpointEngine} will call this method to remove a variable from the set of variables of an abstract state
 	 * s.t. they match the current scope.
 	 * 
@@ -113,6 +104,15 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 */
 	STATE removeVariables(final Map<String, VARDECL> variables);
 
+	/**
+	 * Returns the declaration type of the given variable.
+	 * 
+	 * @param name
+	 *            The variable to get the type of.
+	 * @return The variable declaration type of the variable.
+	 */
+	VARDECL getVariableType(final String name);
+	
 	/**
 	 * Check if a given variable exists in the abstract state.
 	 * 

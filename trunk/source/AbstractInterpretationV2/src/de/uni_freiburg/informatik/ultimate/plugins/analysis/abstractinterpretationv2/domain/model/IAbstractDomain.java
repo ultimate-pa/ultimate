@@ -35,6 +35,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
  *
  */
 public interface IAbstractDomain<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
+
 	STATE createFreshState();
 
 	IAbstractStateBinaryOperator<STATE> getWideningOperator();
