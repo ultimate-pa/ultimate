@@ -338,6 +338,13 @@ public class SmtUtils {
 		if (!fst.getSort().equals(snd.getSort())) {
 			throw new UnsupportedOperationException("arguments sort different");
 		}
+		BitvectorConstant fstbw = new BitvectorConstant(fst);
+		if (fstbw.isBitvectorConstant()) {
+			BitvectorConstant sndbw = new BitvectorConstant(snd);
+			if (sndbw.isBitvectorConstant()) {
+				return !fstbw.equals(sndbw);
+			}
+		}
 		if (!(fst instanceof ConstantTerm)) {
 			return false;
 		}
