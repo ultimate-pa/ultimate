@@ -559,7 +559,7 @@ public class SmtUtils {
 	 * techniques if applicable.
 	 */
 	public static Term termWithLocalSimplification(Script script, 
-			String funcname, Term... params) {
+			String funcname, BigInteger[] indices, Term... params) {
 		final Term result;
 		switch (funcname) {
 		case "and":
@@ -614,7 +614,7 @@ public class SmtUtils {
 			}
 			break;
 		default:
-			result = script.term(funcname, params);
+			result = script.term(funcname, indices, null, params);
 			break;
 		}
 		return result;

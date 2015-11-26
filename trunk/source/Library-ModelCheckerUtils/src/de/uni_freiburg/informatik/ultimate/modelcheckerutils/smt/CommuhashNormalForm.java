@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -108,7 +109,8 @@ public class CommuhashNormalForm {
 		public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
 			String funcname = appTerm.getFunction().getApplicationString();
 			if (isKnownToBeCommutative(funcname)) {
-				Term simplified = constructTermWithSortedParams(funcname, newArgs);
+				Term simplified = constructTermWithSortedParams(
+						funcname, appTerm.getSort().getIndices(), newArgs);
 				setResult(simplified);
 			} else {
 				super.convertApplicationTerm(appTerm, newArgs);
@@ -144,10 +146,11 @@ public class CommuhashNormalForm {
 			return sortedParams;
 		}
 		
-		private Term constructTermWithSortedParams(String funcname, Term[] params) {
+		private Term constructTermWithSortedParams(String funcname, 
+									BigInteger[] indices, Term[] params) {
 			Term[] sortedParams = sortByHashCode(params);
 			Term simplified = SmtUtils.termWithLocalSimplification(
-					m_Script, funcname, sortedParams);
+					m_Script, funcname, indices, sortedParams);
 			return simplified;
 		}
 
