@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
@@ -306,7 +307,7 @@ public class Expression2Term {
 			Term cond = translate(ite.getCondition());
 			Term thenPart = translate(ite.getThenPart());
 			Term elsePart = translate(ite.getElsePart());
-			Term result = m_Script.term("ite", cond, thenPart, elsePart);
+			Term result = Util.ite(m_Script, cond, thenPart, elsePart);
 			assert result != null;
 			return result;
 
