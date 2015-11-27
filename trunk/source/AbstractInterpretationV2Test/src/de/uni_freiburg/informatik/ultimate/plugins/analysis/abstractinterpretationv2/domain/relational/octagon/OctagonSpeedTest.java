@@ -17,16 +17,17 @@ public class OctagonSpeedTest {
 	public static void main(String[] args) {
 		OctagonSpeedTest st = new OctagonSpeedTest();
 		st.addWarmUp(20, 3000);
-		st.addTest(20, 5000);
+		st.addTest(20, 8000);
 		st.addTest(50, 600);
-		st.addTest(100, 100);
-		st.addTest(150, 10);
+		st.addTest(100, 80);
+		st.addTest(150, 20);
 		st.addFunction("naiv", OctMatrix::strongClosureNaiv);
 		st.addFunction("apron", OctMatrix::strongClosureApron);
 		st.addFunction("fsparse", OctMatrix::strongClosureFullSparse);
+		st.addFunction("sparse", OctMatrix::strongClosureSparse);
 		st.run();
 	}
-	
+
 	private static class Scenario {
 		int vars;
 		int cycles;

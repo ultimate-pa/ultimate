@@ -169,7 +169,7 @@ public class OctMatrixTest {
 			int variables = (int) (Math.random() * 10) + 1;
 			OctMatrix m = OctMatrix.random(variables);
 			OctMatrix cNaiv = m.strongClosureNaiv();
-			OctMatrix cOther = m.strongClosurePerm();
+			OctMatrix cOther = m.strongClosureSparse();
 			if (cNaiv.hasNegativeSelfLoop() && cOther.hasNegativeSelfLoop()) {
 				// test passed
 			} else if (!cNaiv.isEqualTo(cOther)) {
@@ -177,7 +177,7 @@ public class OctMatrixTest {
 				System.out.println(m);
 				System.out.println("strong closure (naiv)");
 				System.out.println(cNaiv);
-				System.out.println("strong closure (full sparse)");
+				System.out.println("strong closure (other)");
 				System.out.println(cOther);
 				Assert.fail();
 			}

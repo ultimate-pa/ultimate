@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.function.BiFunction;
 
@@ -199,14 +198,7 @@ public class OctMatrix {
 		sc.strengtheningInPlace();
 		return sc;
 	}
-	
-	public OctMatrix strongClosurePerm() {
-		OctMatrix sc = this.clone();
-		sc.shortestPathClosureInPlacePerm();
-		sc.strengtheningInPlace();
-		return sc;
-	}
-	
+
 	public OctMatrix strongClosureSparse() {
 		OctMatrix sc = this.clone();
 		sc.shortestPathClosureInPlaceSparse();
@@ -250,28 +242,6 @@ public class OctMatrix {
 		}
 	}
 	
-	private void shortestPathClosureInPlacePerm() {
-		setMainDiagonal(OctValue.ZERO);
-		List<Integer> ip = new ArrayList<>(mSize);
-		List<Integer> jp = new ArrayList<>(mSize);
-		for (int i = 0; i < mSize; ++i) {
-			ip.add(i);
-			jp.add(i);
-		}
-		for (int k = 0; k < mSize; ++k) {
-			Collections.shuffle(ip);
-			Collections.shuffle(jp);
-			for (int i : ip) {
-				for (int j : jp) {
-					OctValue indirectRoute = get(i, k).add(get(k, j));
-					if (get(i, j).compareTo(indirectRoute) > 0) {
-						set(i, j, indirectRoute);
-					}
-				}
-			}
-		}
-	}
-	
 	private void shortestPathClosureInPlaceFullSparse() {
 		setMainDiagonal(OctValue.ZERO);
 		List<Integer> ck = null; // indices of finite elements in columns k and k^1
@@ -291,7 +261,8 @@ public class OctMatrix {
 			}
 		}
 	}
-	
+
+	// incoming edges of k
 	private List<Integer> indexFiniteElementsInColumn(int k) {
 		List<Integer> index = new ArrayList<Integer>(mSize);
 		for (int i = 0; i < mSize; ++i) {
@@ -302,6 +273,7 @@ public class OctMatrix {
 		return index;
 	}
 	
+	// outgoing edges of k
 	private List<Integer> indexFiniteElementsInRow(int k) {
 		List<Integer> index = new ArrayList<Integer>(mSize);
 		for (int j = 0; j < mSize; ++j) {
@@ -314,7 +286,6 @@ public class OctMatrix {
 	
 	private void shortestPathClosureInPlaceSparse() {
 		setMainDiagonal(OctValue.ZERO);
-
 		List<Integer> ck = null; // indices of finite elements in columns k and k^1
 		List<Integer> rk = null; // indices of finite elements in rows k and k^1
 		for (int k = 0; k < mSize; ++k) {
@@ -326,7 +297,11 @@ public class OctMatrix {
 			for (int i : ck) {
 				OctValue ik = get(i, k);
 				OctValue ikk = get(i, kk);
+				int maxCol = i | 1;
 				for (int j : rk) {
+					if (j > maxCol) {
+						break;
+					}
 					OctValue kj = get(k, j);
 					OctValue kkj = get(kk, j);
 					OctValue indirectRoute = OctValue.min(ik.add(kj), ikk.add(kkj));
@@ -341,7 +316,7 @@ public class OctMatrix {
 	private List<Integer> indexFiniteElementsInBlockColumn(int k) {
 		List<Integer> index = new ArrayList<Integer>(mSize);
 		int kk = k ^ 1;
-		for (int i = Math.min(k, kk); i < mSize; ++i) {
+		for (int i = 0; i < mSize; ++i) {
 			if (!get(i, k).isInfinity() || !get(i, kk).isInfinity()) {
 				index.add(i);
 			}
@@ -352,8 +327,7 @@ public class OctMatrix {
 	private List<Integer> indexFiniteElementsInBlockRow(int k) {
 		List<Integer> index = new ArrayList<Integer>(mSize);
 		int kk = k ^ 1;
-		int maxCol = Math.max(k, kk);
-		for (int j = 0; j < maxCol; ++j) {
+		for (int j = 0; j < mSize; ++j) {
 			if (!get(k, j).isInfinity() || !get(kk, j).isInfinity()) {
 				index.add(j);
 			}
@@ -372,7 +346,6 @@ public class OctMatrix {
 				for (int j = 0; j <= maxCol; ++j) {
 					OctValue kj = get(k, j);
 					OctValue kkj = get(k^1, j);
-//					OctValue indirectRoute = ik.add(kj);
 					OctValue indirectRoute = OctValue.min(ik.add(kj), ikk.add(kkj));
 					if (get(i, j).compareTo(indirectRoute) > 0) {
 						set(i, j, indirectRoute);
