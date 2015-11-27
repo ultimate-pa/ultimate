@@ -167,7 +167,6 @@ public class LinearConstraint<N extends Number> {
 	public void addCoefficient(String varName, N coefficient) {
 		assert varName != null;
 		assert coefficient != null;
-		assert mVariables.contains(varName);
 		assert mVariables.size() == mCoefficients.size();
 		mVariables.add(varName);
 		mCoefficients.add(coefficient);

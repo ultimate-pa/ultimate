@@ -34,6 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.log4j.Logger;
 import org.ojalgo.array.Array1D;
 import org.ojalgo.optimisation.Expression;
 import org.ojalgo.optimisation.ExpressionsBasedModel;
@@ -49,6 +50,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class OjAlgoSolver<T extends Number> implements ILpSolver<T> {
 
+	private final Logger mLogger;
+
 	private ExpressionsBasedModel mModel;
 
 	private boolean mModelIsPresent = false;
@@ -58,14 +61,15 @@ public class OjAlgoSolver<T extends Number> implements ILpSolver<T> {
 	private Result mMaximizationResult;
 	private Result mMinimizationResult;
 
+	private List<Variable> mVariableList;
+
 	private Map<String, Integer> mVariableIndexMap;
 	private Map<Integer, String> mVariableNameMap;
 
-	public OjAlgoSolver(Class<T> type) {
+	public OjAlgoSolver(Logger logger, Class<T> type) {
+		mLogger = logger;
 		mModelIsPresent = false;
 		mType = type;
-		mVariableIndexMap = new HashMap<>();
-		mVariableNameMap = new HashMap<>();
 	}
 
 	@Override
@@ -75,7 +79,9 @@ public class OjAlgoSolver<T extends Number> implements ILpSolver<T> {
 			        "A linear program model is already present. Delete the model first.");
 		}
 
-		List<Variable> varList = new ArrayList<>();
+		mVariableList = new ArrayList<>();
+		mVariableIndexMap = new HashMap<>();
+		mVariableNameMap = new HashMap<>();
 
 		int index = 0;
 		for (String var : variables) {
@@ -86,21 +92,24 @@ public class OjAlgoSolver<T extends Number> implements ILpSolver<T> {
 				        "The variable " + var + " is already present and cannot be added again.");
 			}
 
-			varList.add(Variable.make(var));
+			mVariableList.add(Variable.make(var));
 		}
 
-		if (varList.isEmpty()) {
+		if (mVariableList.isEmpty()) {
 			throw new UnsupportedOperationException("The variable list to be added to the model must not be empty.");
 		}
 
-		mModel = new ExpressionsBasedModel(varList);
+		mModel = new ExpressionsBasedModel(mVariableList);
 		mModelIsPresent = true;
+		mLogger.debug("Created new linear program instance.");
 	}
 
 	@Override
 	public void addVariableConstraint(LinearConstraint<T> constraint) {
 		assert mModelIsPresent : "The model has not been initialized, yet. You need to call createNewLpInstance first.";
 		assert constraint != null;
+
+		mLogger.debug("Adding constraint: " + constraint.toLogString());
 
 		final String expressionName = constraint.getName();
 
@@ -131,13 +140,16 @@ public class OjAlgoSolver<T extends Number> implements ILpSolver<T> {
 
 			factors.set(index, coeff);
 		}
+
+		exp.setLinearFactors(mVariableList, factors);
 	}
 
 	@Override
 	public void deleteLpInstance() {
-		mModel.destroy();
+		mModel.dispose();
 		mModel = null;
 		mModelIsPresent = false;
+		mLogger.debug("Linear program instance deleted.");
 	}
 
 	@Override
@@ -148,11 +160,15 @@ public class OjAlgoSolver<T extends Number> implements ILpSolver<T> {
 	}
 
 	private void maximize() {
+		mLogger.debug("Starting maximization...");
 		mMaximizationResult = mModel.maximise();
+		mLogger.debug("Optimization result for maximization: " + mMaximizationResult.getState());
 	}
 
 	private void minimize() {
+		mLogger.debug("Starting minimization...");
 		mMinimizationResult = mModel.minimise();
+		mLogger.debug("Optimization result for minimization: " + mMinimizationResult.getState());
 	}
 
 	@Override
