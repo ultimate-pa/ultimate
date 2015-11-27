@@ -8,6 +8,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class OctMatrixTest {
 	
 	@Test
+	public void testEmpty() {
+		OctMatrix m = OctMatrix.top(0);
+		assertIsEqualTo(m, m.strongClosureNaiv());
+		assertIsEqualTo(m, m.tightClosure());
+		assertIsEqualTo(m, m.add(m));
+		assertIsEqualTo(m, OctMatrix.min(m, m));
+		assertIsEqualTo(m, OctMatrix.max(m, m));
+	}
+	
+	@Test
 	public void testStrongClosure1() {
 		 OctMatrix m = OctMatrix.parseBlockLowerTriangular(
 			  "0 9\n"
@@ -23,8 +33,8 @@ public class OctMatrixTest {
 			+ "0 2 0 0\n"
 			+ "4 4 4 4 0 8\n"
 			+ "0 3 0 3 0 0\n");
-		assertIsEqualTo(mStrongClosure, m.strongClosure());
-		assertIsEqualTo(mStrongClosure, mStrongClosure.strongClosure());
+		assertIsEqualTo(mStrongClosure, m.strongClosureNaiv());
+		assertIsEqualTo(mStrongClosure, mStrongClosure.strongClosureNaiv());
 	}
 
 	@Test
@@ -39,8 +49,8 @@ public class OctMatrixTest {
 			+ "inf  0.0\n"
 			+ "inf  1.3 0.0 inf\n"
 			+ "inf -1.5 4.9 0.0\n");
-		assertIsEqualTo(mStrongClosure, m.strongClosure());
-		assertIsEqualTo(mStrongClosure, mStrongClosure.strongClosure());
+		assertIsEqualTo(mStrongClosure, m.strongClosureNaiv());
+		assertIsEqualTo(mStrongClosure, mStrongClosure.strongClosureNaiv());
 	}
 	
 	@Test
@@ -55,8 +65,8 @@ public class OctMatrixTest {
 			+ "  2   0\n"
 			+ "inf inf   0 inf\n"
 			+ "  3 inf   4   0\n");
-		assertIsEqualTo(mStrongClosure, m.strongClosure());
-		assertIsEqualTo(mStrongClosure, mStrongClosure.strongClosure());
+		assertIsEqualTo(mStrongClosure, m.strongClosureNaiv());
+		assertIsEqualTo(mStrongClosure, mStrongClosure.strongClosureNaiv());
 	}
 	
 	@Test
@@ -71,29 +81,29 @@ public class OctMatrixTest {
 			+ "  2   0\n"
 			+ "inf inf   0 inf\n"
 			+ "  3 inf   4   0\n");
-		assertIsEqualTo(mStrongClosure, m.strongClosure());
-		assertIsEqualTo(mStrongClosure, mStrongClosure.strongClosure());
+		assertIsEqualTo(mStrongClosure, m.strongClosureNaiv());
+		assertIsEqualTo(mStrongClosure, mStrongClosure.strongClosureNaiv());
 	}
 
 	@Test
 	public void testTightClosure1() {
 		OctMatrix m = OctMatrix.parseBlockLowerTriangular("0 5.2 \n 2.8 0"); // v_0 \in [-2.6, 1.4]
 		OctMatrix t = OctMatrix.parseBlockLowerTriangular("0 4   \n 2   0");
-		assertIsEqualTo(m, m.strongClosure());
+		assertIsEqualTo(m, m.strongClosureNaiv());
 		assertIsEqualTo(t, m.tightClosure());
 	}
 	
 	@Test
 	public void testClosuresSingeltonReals() {
 		OctMatrix m = OctMatrix.parseBlockLowerTriangular("0 2.0000 \n -2 0"); // v_0 \in [-1, -1]
-		Assert.assertFalse(m.strongClosure().hasNegativeSelfLoop());
+		Assert.assertFalse(m.strongClosureNaiv().hasNegativeSelfLoop());
 		Assert.assertFalse(m.tightClosure().hasNegativeSelfLoop());
 	}
 
 	@Test
 	public void testClosuresBottomReals() {
 		OctMatrix m = OctMatrix.parseBlockLowerTriangular("0 2 \n -3 0");
-		Assert.assertTrue(m.strongClosure().hasNegativeSelfLoop());
+		Assert.assertTrue(m.strongClosureNaiv().hasNegativeSelfLoop());
 		Assert.assertTrue(m.tightClosure().hasNegativeSelfLoop());
 	}
 	
@@ -104,7 +114,7 @@ public class OctMatrixTest {
 			+ "inf   0\n"
 			+ "inf inf   0  -3\n"
 			+ "  3   0 inf   0\n");
-		Assert.assertFalse(m.strongClosure().hasNegativeSelfLoop());
+		Assert.assertFalse(m.strongClosureNaiv().hasNegativeSelfLoop());
 		Assert.assertTrue(m.tightClosure().hasNegativeSelfLoop());
 	}
 	
@@ -153,9 +163,30 @@ public class OctMatrixTest {
 		Assert.assertTrue(!e1.isLessEqualThan(l2));
 	}
 	
+	@Test
+	public void testByComparingRandom() {
+		for (int i = 0; i < 2000; ++i) {
+			int variables = (int) (Math.random() * 10) + 1;
+			OctMatrix m = OctMatrix.random(variables);
+			OctMatrix cNaiv = m.strongClosureNaiv();
+			OctMatrix cOther = m.strongClosurePerm();
+			if (cNaiv.hasNegativeSelfLoop() && cOther.hasNegativeSelfLoop()) {
+				// test passed
+			} else if (!cNaiv.isEqualTo(cOther)) {
+				System.out.println("original matrix");
+				System.out.println(m);
+				System.out.println("strong closure (naiv)");
+				System.out.println(cNaiv);
+				System.out.println("strong closure (full sparse)");
+				System.out.println(cOther);
+				Assert.fail();
+			}
+		}
+	}
+	
 	private void assertIsEqualTo(OctMatrix expected, OctMatrix actual) {
 		String msg = "expected:\n" + expected + "acutal:\n" + actual;
 		Assert.assertTrue(msg, expected.isEqualTo(actual));
 	}
-	
+
 }

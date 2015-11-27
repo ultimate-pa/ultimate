@@ -3,10 +3,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-import org.eclipse.osgi.internal.messages.Msg;
-
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.disinterval.DisIntervallDomain;
-
 /**
  * Values for {@link OctMatrix}.
  * <p>

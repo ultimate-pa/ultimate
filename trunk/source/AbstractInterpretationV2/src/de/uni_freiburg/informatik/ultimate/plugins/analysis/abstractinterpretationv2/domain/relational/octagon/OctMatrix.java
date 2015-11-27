@@ -1,8 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 
 /**
  * Matrix for octagons (as presented by Antoine Mine).
@@ -73,7 +75,8 @@ public class OctMatrix {
 	}
 
 	public static OctMatrix parseBlockLowerTriangular(String m) {
-		String[] elements = m.trim().split("\\s+");
+		m = m.trim();
+		String[] elements = "".equals(m) ? new String[0] : m.split("\\s+");
 		int size = (int) (Math.sqrt(2 * elements.length + 1) - 1);
 		if (size % 2 != 0) {
 			throw new IllegalArgumentException("Number of elements does not match any 2x2 block lower triangular matrix.");
@@ -83,6 +86,25 @@ public class OctMatrix {
 			oct.mElements[i] = OctValue.parse(elements[i]);
 		}
 		return oct;
+	}
+	
+	public static OctMatrix random(int variables) {
+		OctMatrix m = new OctMatrix(variables * 2);
+		for (int i = 0; i < m.mSize; ++i) {
+			int maxCol = i | 1;
+			for (int j = 0; j <= maxCol; ++j) {
+				OctValue v;
+				if (i == j) {
+					v = OctValue.ZERO;
+				} else if (Math.random() >= 0.5) {
+					v = OctValue.INFINITY;
+				} else {
+					v = new OctValue((int) (Math.random() * 20 - 10));
+				}
+				m.set(i, j , v);
+			}
+		}
+		return m;
 	}
 	
 	private OctMatrix(int size) {
@@ -171,21 +193,49 @@ public class OctMatrix {
 		return elementwiseRelation(other, (x, y) -> x.compareTo(y) <= 0);		
 	}
 	
-	public OctMatrix strongClosure() {
+	public OctMatrix strongClosureNaiv() {
 		OctMatrix sc = this.clone();
-		sc.shortestPathClosureInPlace();
+		sc.shortestPathClosureInPlaceNaiv();
+		sc.strengtheningInPlace();
+		return sc;
+	}
+	
+	public OctMatrix strongClosurePerm() {
+		OctMatrix sc = this.clone();
+		sc.shortestPathClosureInPlacePerm();
+		sc.strengtheningInPlace();
+		return sc;
+	}
+	
+	public OctMatrix strongClosureSparse() {
+		OctMatrix sc = this.clone();
+		sc.shortestPathClosureInPlaceSparse();
+		sc.strengtheningInPlace();
+		return sc;
+	}
+	
+	public OctMatrix strongClosureFullSparse() {
+		OctMatrix sc = this.clone();
+		sc.shortestPathClosureInPlaceFullSparse();
+		sc.strengtheningInPlace();
+		return sc;
+	}
+	
+	public OctMatrix strongClosureApron() {
+		OctMatrix sc = this.clone();
+		sc.shortestPathClosureInPlaceApron();
 		sc.strengtheningInPlace();
 		return sc;
 	}
 	
 	public OctMatrix tightClosure() {
 		OctMatrix tc = this.clone();
-		tc.shortestPathClosureInPlace();
+		tc.shortestPathClosureInPlaceNaiv();
 		tc.tighteningInPlace();
 		return tc;
 	}
 
-	private void shortestPathClosureInPlace() {
+	private void shortestPathClosureInPlaceNaiv() {
 		setMainDiagonal(OctValue.ZERO);
 		for (int k = 0; k < mSize; ++k) {
 			for (int i = 0; i < mSize; ++i) {
@@ -199,13 +249,145 @@ public class OctMatrix {
 			}
 		}
 	}
+	
+	private void shortestPathClosureInPlacePerm() {
+		setMainDiagonal(OctValue.ZERO);
+		List<Integer> ip = new ArrayList<>(mSize);
+		List<Integer> jp = new ArrayList<>(mSize);
+		for (int i = 0; i < mSize; ++i) {
+			ip.add(i);
+			jp.add(i);
+		}
+		for (int k = 0; k < mSize; ++k) {
+			Collections.shuffle(ip);
+			Collections.shuffle(jp);
+			for (int i : ip) {
+				for (int j : jp) {
+					OctValue indirectRoute = get(i, k).add(get(k, j));
+					if (get(i, j).compareTo(indirectRoute) > 0) {
+						set(i, j, indirectRoute);
+					}
+				}
+			}
+		}
+	}
+	
+	private void shortestPathClosureInPlaceFullSparse() {
+		setMainDiagonal(OctValue.ZERO);
+		List<Integer> ck = null; // indices of finite elements in columns k and k^1
+		List<Integer> rk = null; // indices of finite elements in rows k and k^1
+		for (int k = 0; k < mSize; ++k) {
+			ck = indexFiniteElementsInColumn(k);
+			rk = indexFiniteElementsInRow(k);
+			for (int i : ck) {
+				OctValue ik = get(i, k);
+				for (int j : rk) {
+					OctValue kj = get(k, j);
+					OctValue indirectRoute = ik.add(kj);
+					if (get(i, j).compareTo(indirectRoute) > 0) {
+						set(i, j, indirectRoute);
+					}
+				}
+			}
+		}
+	}
+	
+	private List<Integer> indexFiniteElementsInColumn(int k) {
+		List<Integer> index = new ArrayList<Integer>(mSize);
+		for (int i = 0; i < mSize; ++i) {
+			if (!get(i, k).isInfinity()) {
+				index.add(i);
+			}
+		}
+		return index;
+	}
+	
+	private List<Integer> indexFiniteElementsInRow(int k) {
+		List<Integer> index = new ArrayList<Integer>(mSize);
+		for (int j = 0; j < mSize; ++j) {
+			if (!get(k, j).isInfinity()) {
+				index.add(j);
+			}
+		}
+		return index;
+	}
+	
+	private void shortestPathClosureInPlaceSparse() {
+		setMainDiagonal(OctValue.ZERO);
+
+		List<Integer> ck = null; // indices of finite elements in columns k and k^1
+		List<Integer> rk = null; // indices of finite elements in rows k and k^1
+		for (int k = 0; k < mSize; ++k) {
+			int kk = k ^ 1;
+			if (k < kk) { // k is even => entered new 2x2 block
+				ck = indexFiniteElementsInBlockColumn(k);
+				rk = indexFiniteElementsInBlockRow(k);
+			}
+			for (int i : ck) {
+				OctValue ik = get(i, k);
+				OctValue ikk = get(i, kk);
+				for (int j : rk) {
+					OctValue kj = get(k, j);
+					OctValue kkj = get(kk, j);
+					OctValue indirectRoute = OctValue.min(ik.add(kj), ikk.add(kkj));
+					if (get(i, j).compareTo(indirectRoute) > 0) {
+						set(i, j, indirectRoute);
+					}
+				}
+			}
+		}
+	}
+	
+	private List<Integer> indexFiniteElementsInBlockColumn(int k) {
+		List<Integer> index = new ArrayList<Integer>(mSize);
+		int kk = k ^ 1;
+		for (int i = Math.min(k, kk); i < mSize; ++i) {
+			if (!get(i, k).isInfinity() || !get(i, kk).isInfinity()) {
+				index.add(i);
+			}
+		}
+		return index;
+	}
+	
+	private List<Integer> indexFiniteElementsInBlockRow(int k) {
+		List<Integer> index = new ArrayList<Integer>(mSize);
+		int kk = k ^ 1;
+		int maxCol = Math.max(k, kk);
+		for (int j = 0; j < maxCol; ++j) {
+			if (!get(k, j).isInfinity() || !get(kk, j).isInfinity()) {
+				index.add(j);
+			}
+		}
+		return index;
+	}
+	
+
+	private void shortestPathClosureInPlaceApron() {
+		setMainDiagonal(OctValue.ZERO);
+		for (int k = 0; k < mSize; ++k) {
+			for (int i = 0; i < mSize; ++i) {
+				OctValue ik = get(i, k);
+				OctValue ikk = get(i, k^1);
+				int maxCol = i | 1;
+				for (int j = 0; j <= maxCol; ++j) {
+					OctValue kj = get(k, j);
+					OctValue kkj = get(k^1, j);
+//					OctValue indirectRoute = ik.add(kj);
+					OctValue indirectRoute = OctValue.min(ik.add(kj), ikk.add(kkj));
+					if (get(i, j).compareTo(indirectRoute) > 0) {
+						set(i, j, indirectRoute);
+					}
+				}
+			}
+		}
+	}
 
 	private void strengtheningInPlace() {
 		// blocks on the diagonal (upper, lower bounds) won't change by strengthening
 		// => iterate only 2x2 blocks that are _strictly_ below the main diagonal
 		for (int i = 2; i < mSize; ++i) {
-			int maxCol = (i - 2) | 1;
 			OctValue ib = get(i, i^1).half();
+			int maxCol = (i - 2) | 1;
 			for (int j = 0; j <= maxCol; ++j) {
 				OctValue jb = get(j^1, j).half();
 				OctValue b = ib.add(jb);
@@ -218,8 +400,8 @@ public class OctMatrix {
 
 	private void tighteningInPlace() {
 		for (int i = 0; i < mSize; ++i) {
-			int maxCol = i | 1;
 			OctValue ib = get(i, i^1).half().floor();
+			int maxCol = i | 1;
 			for (int j = 0; j <= maxCol; ++j) {
 				OctValue jb = get(j^1, j).half().floor();
 				OctValue b = ib.add(jb);
