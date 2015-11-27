@@ -88,6 +88,13 @@ public class OctMatrix {
 	}
 	
 	public static OctMatrix random(int variables) {
+		return random(variables, Math.random());
+	}
+	
+	/**
+	 * @param infProbability probability that an element will be infinity
+	 */
+	public static OctMatrix random(int variables, double infProbability) {
 		OctMatrix m = new OctMatrix(variables * 2);
 		for (int i = 0; i < m.mSize; ++i) {
 			int maxCol = i | 1;
@@ -95,7 +102,7 @@ public class OctMatrix {
 				OctValue v;
 				if (i == j) {
 					v = OctValue.ZERO;
-				} else if (Math.random() >= 0.5) {
+				} else if (Math.random() < infProbability) {
 					v = OctValue.INFINITY;
 				} else {
 					v = new OctValue((int) (Math.random() * 20 - 10));
