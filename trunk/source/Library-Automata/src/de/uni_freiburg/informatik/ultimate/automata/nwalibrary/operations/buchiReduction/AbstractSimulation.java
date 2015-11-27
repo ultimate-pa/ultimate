@@ -482,7 +482,7 @@ public abstract class AbstractSimulation<LETTER,STATE> {
         
         /**
          * @return List of SCCs of the game graph in reverse topological order.
-         * (This means: If scc1 occurs in this list before scc2 then ss2 is not
+         * (This means: If scc1 occurs in this list before scc2 then scc2 is not
          * reachable from scc1).
          */
         public List<SCC> getSCCs() {
