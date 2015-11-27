@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,92 +21,15 @@
  */
 package org.ojalgo.matrix.decomposition;
 
-import java.math.BigDecimal;
-
 import org.ojalgo.access.Access2D;
 import org.ojalgo.array.Array1D;
 import org.ojalgo.matrix.MatrixUtils;
-import org.ojalgo.matrix.jama.JamaEigenvalue;
+import org.ojalgo.matrix.store.ElementsSupplier;
 import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.netio.BasicLogger;
 import org.ojalgo.scalar.ComplexNumber;
 
-/**
- * You create instances of (some subclass of) this class by calling one of the static factory methods:
- * {@linkplain #makeBig()}, {@linkplain #makePrimitive()} or {@linkplain #makeJama()}.
- * 
- * @author apete
- */
-public abstract class EigenvalueDecomposition<N extends Number> extends AbstractDecomposition<N> implements Eigenvalue<N> {
-
-    @SuppressWarnings("unchecked")
-    public static final <N extends Number> Eigenvalue<N> make(final Access2D<N> template) {
-
-        final N tmpNumber = template.get(0L, 0L);
-        final long tmpDim = template.countColumns();
-
-        if (tmpNumber instanceof BigDecimal) {
-
-            final boolean tmpSymmetric = MatrixUtils.isHermitian(template);
-
-            return (Eigenvalue<N>) EigenvalueDecomposition.makeBig(tmpSymmetric);
-
-        } else if (tmpNumber instanceof ComplexNumber) {
-
-            final boolean tmpHermitian = MatrixUtils.isHermitian(template);
-
-            return (Eigenvalue<N>) EigenvalueDecomposition.makeComplex(tmpHermitian);
-
-        } else if (tmpNumber instanceof Double) {
-
-            final boolean tmpSymmetric = MatrixUtils.isHermitian(template);
-
-            if ((tmpDim > 128L) && (tmpDim < 46340L)) {
-
-                return (Eigenvalue<N>) EigenvalueDecomposition.makePrimitive(tmpSymmetric);
-
-            } else {
-
-                return (Eigenvalue<N>) EigenvalueDecomposition.makeJama(tmpSymmetric);
-            }
-
-        } else {
-
-            throw new IllegalArgumentException();
-        }
-    }
-
-    public static final Eigenvalue<BigDecimal> makeBig() {
-        return EigenvalueDecomposition.makeBig(true);
-    }
-
-    public static final Eigenvalue<BigDecimal> makeBig(final boolean symmetric) {
-        return symmetric ? new HermitianEvD32.Big() : null;
-    }
-
-    public static final Eigenvalue<ComplexNumber> makeComplex() {
-        return EigenvalueDecomposition.makeComplex(true);
-    }
-
-    public static final Eigenvalue<ComplexNumber> makeComplex(final boolean hermitian) {
-        return hermitian ? new HermitianEvD32.Complex() : null;
-    }
-
-    public static final Eigenvalue<Double> makeJama() {
-        return new JamaEigenvalue.General();
-    }
-
-    public static final Eigenvalue<Double> makeJama(final boolean symmetric) {
-        return symmetric ? new JamaEigenvalue.Symmetric() : new JamaEigenvalue.Nonsymmetric();
-    }
-
-    public static final Eigenvalue<Double> makePrimitive() {
-        return new GeneralEvD.Primitive();
-    }
-
-    public static final Eigenvalue<Double> makePrimitive(final boolean symmetric) {
-        return symmetric ? new HermitianEvD32.Primitive() : new NonsymmetricEvD.Primitive();
-    }
+abstract class EigenvalueDecomposition<N extends Number> extends GenericDecomposition<N> implements Eigenvalue<N> {
 
     private MatrixStore<N> myD = null;
     private Array1D<ComplexNumber> myEigenvalues = null;
@@ -117,13 +40,21 @@ public abstract class EigenvalueDecomposition<N extends Number> extends Abstract
         super(aFactory);
     }
 
-    public final N calculateDeterminant(final Access2D<N> matrix) {
-        this.compute(matrix);
+    public N calculateDeterminant(final Access2D<?> matrix) {
+        this.decompose(this.wrap(matrix));
         return this.getDeterminant();
     }
 
-    public final boolean compute(final Access2D<?> matrix) {
-        return this.compute(matrix, false);
+    public final boolean checkAndCompute(final MatrixStore<N> matrix) {
+        return this.compute(matrix, MatrixUtils.isHermitian(matrix), false);
+    }
+
+    public boolean computeValuesOnly(final ElementsSupplier<N> matrix) {
+        return this.compute(matrix, this.isHermitian(), true);
+    }
+
+    public final boolean decompose(final ElementsSupplier<N> matrix) {
+        return this.compute(matrix.get(), this.isHermitian(), false);
     }
 
     public final MatrixStore<N> getD() {
@@ -153,14 +84,6 @@ public abstract class EigenvalueDecomposition<N extends Number> extends Abstract
         return myV;
     }
 
-    public DecompositionStore<N> preallocate(final Access2D<N> templateBody, final Access2D<N> templateRHS) {
-        return this.makeZero((int) templateBody.countColumns(), (int) templateRHS.countColumns());
-    }
-
-    public final MatrixStore<N> reconstruct() {
-        return MatrixUtils.reconstruct(this);
-    }
-
     @Override
     public void reset() {
 
@@ -173,16 +96,17 @@ public abstract class EigenvalueDecomposition<N extends Number> extends Abstract
         myEigenvaluesOnly = false;
     }
 
-    public final MatrixStore<N> solve(final Access2D<N> rhs) {
-        return this.getInverse().multiplyRight(rhs);
-    }
+    protected abstract boolean doNonsymmetric(final ElementsSupplier<N> aMtrx, final boolean eigenvaluesOnly);
 
-    public final MatrixStore<N> solve(final Access2D<N> rhs, final DecompositionStore<N> preallocated) {
-        preallocated.fillByMultiplying(this.getInverse(), rhs);
-        return preallocated;
-    }
+    protected abstract boolean doSymmetric(final ElementsSupplier<N> aMtrx, final boolean eigenvaluesOnly);
 
-    protected final boolean compute(final Access2D<?> aMtrx, final boolean symmetric, final boolean eigenvaluesOnly) {
+    protected abstract MatrixStore<N> makeD();
+
+    protected abstract Array1D<ComplexNumber> makeEigenvalues();
+
+    protected abstract MatrixStore<N> makeV();
+
+    final boolean compute(final ElementsSupplier<N> matrix, final boolean symmetric, final boolean eigenvaluesOnly) {
 
         this.reset();
 
@@ -194,16 +118,16 @@ public abstract class EigenvalueDecomposition<N extends Number> extends Abstract
 
             if (symmetric) {
 
-                retVal = this.doSymmetric(aMtrx, eigenvaluesOnly);
+                retVal = this.doSymmetric(matrix, eigenvaluesOnly);
 
             } else {
 
-                retVal = this.doNonsymmetric(aMtrx, eigenvaluesOnly);
+                retVal = this.doNonsymmetric(matrix, eigenvaluesOnly);
             }
 
-        } catch (final Exception anException) {
+        } catch (final Exception exc) {
 
-            BasicLogger.error(anException.toString());
+            BasicLogger.error(exc.toString());
 
             this.reset();
 
@@ -212,16 +136,6 @@ public abstract class EigenvalueDecomposition<N extends Number> extends Abstract
 
         return this.computed(retVal);
     }
-
-    protected abstract boolean doNonsymmetric(final Access2D<?> aMtrx, final boolean eigenvaluesOnly);
-
-    protected abstract boolean doSymmetric(final Access2D<?> aMtrx, final boolean eigenvaluesOnly);
-
-    protected abstract MatrixStore<N> makeD();
-
-    protected abstract Array1D<ComplexNumber> makeEigenvalues();
-
-    protected abstract MatrixStore<N> makeV();
 
     final void setD(final MatrixStore<N> newD) {
         myD = newD;

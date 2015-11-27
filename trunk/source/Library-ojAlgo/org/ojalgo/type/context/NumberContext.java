@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,23 +35,24 @@ import org.ojalgo.constant.PrimitiveMath;
 import org.ojalgo.function.PrimitiveFunction;
 import org.ojalgo.function.UnaryFunction;
 import org.ojalgo.scalar.ComplexNumber;
+import org.ojalgo.scalar.Quaternion;
 import org.ojalgo.scalar.RationalNumber;
-import org.ojalgo.type.TypeUtils;
 import org.ojalgo.type.format.NumberStyle;
 
 /**
  * <p>
  * Think of this as a {@linkplain MathContext} that specifies both precision and scale. Numeric data types
- * (non-integers) in databases are specified using precison and scale. While doing maths the precision is all that
- * matters, but before sending a number to a database, or printing/displaying it, rounding to a specified scale is
- * desireable.
+ * (non-integers) in databases are specified using precison and scale. While doing maths the precision is all
+ * that matters, but before sending a number to a database, or printing/displaying it, rounding to a specified
+ * scale is desireable.
  * </p>
  * <p>
- * The enforce methods first enforce the precision and then set the scale. It is possible that this will create a number
- * with trailing zeros and more digits than the precision allows. It is also possible to define a context with a scale
- * that is larger than the precision. This is NOT how precision and scale is used with numeric types in databases.
+ * The enforce methods first enforce the precision and then set the scale. It is possible that this will
+ * create a number with trailing zeros and more digits than the precision allows. It is also possible to
+ * define a context with a scale that is larger than the precision. This is NOT how precision and scale is
+ * used with numeric types in databases.
  * </p>
- * 
+ *
  * @author apete
  */
 public final class NumberContext extends FormatContext<Number> {
@@ -71,7 +72,7 @@ public final class NumberContext extends FormatContext<Number> {
     }
 
     private static final MathContext DEFAULT_MATH = MathContext.DECIMAL64;
-
+    private static final int DEFAULT_SCALE = Integer.MIN_VALUE;
     private static final NumberStyle DEFAULT_STYLE = NumberStyle.GENERAL;
 
     public static NumberContext getCurrency(final Locale locale) {
@@ -148,13 +149,13 @@ public final class NumberContext extends FormatContext<Number> {
     }
 
     /**
-     * The scale will be set to the same as the precision.
+     * The scale will be undefined/unlimited.
      */
     public static NumberContext getMath(final MathContext context) {
 
         final NumberFormat tmpFormat = NumberStyle.GENERAL.getFormat();
         final int tmpPrecision = context.getPrecision();
-        final int tmpScale = tmpPrecision;
+        final int tmpScale = DEFAULT_SCALE;
         final RoundingMode tmpRoundingMode = context.getRoundingMode();
 
         return new NumberContext(tmpFormat, tmpPrecision, tmpScale, tmpRoundingMode);
@@ -178,108 +179,106 @@ public final class NumberContext extends FormatContext<Number> {
         return style != null ? style.getFormat(locale) : DEFAULT_STYLE.getFormat(locale);
     }
 
-    private static double error(final int exponent) {
-        return (PrimitiveMath.HALF * Math.pow(PrimitiveMath.TEN, -exponent)) + PrimitiveMath.MACHINE_DOUBLE_ERROR;
+    private static boolean isZero(final double value, final double tolerance) {
+        return (Math.abs(value) <= tolerance);
     }
 
-    private final double myError;
+    private final double myEpsilon;
     private final MathContext myMathContext;
-    private final int myPrecision;
-    private final double myPrecisionError;
-    private final RoundingMode myRoundingMode;
+    private final double myRoundingFactor;
     private final int myScale;
-    private final double myScaleError;
 
-    private final double myScaleFactor;
+    private final double myZeroError;
 
     public NumberContext() {
-        this(DEFAULT_STYLE.getFormat(), DEFAULT_MATH.getPrecision(), DEFAULT_MATH.getPrecision(), DEFAULT_MATH.getRoundingMode());
+        this(DEFAULT_STYLE.getFormat(), DEFAULT_MATH.getPrecision(), DEFAULT_SCALE, DEFAULT_MATH.getRoundingMode());
     }
 
-    public NumberContext(final Format format, final int precision, final int scale, final RoundingMode roundingMode) {
+    public NumberContext(final Format format, final int precision, final int scale, final RoundingMode mode) {
 
         super(format);
 
-        myPrecision = precision;
-        myPrecisionError = NumberContext.error(precision);
+        myMathContext = new MathContext(precision, mode);
+
+        if (precision > 0) {
+            myEpsilon = Math.max(PrimitiveMath.MACHINE_EPSILON, Math.pow(PrimitiveMath.TEN, 1 - precision));
+        } else {
+            myEpsilon = PrimitiveMath.MACHINE_EPSILON;
+        }
 
         myScale = scale;
-        myScaleError = NumberContext.error(scale);
-        myScaleFactor = PrimitiveFunction.POWER.invoke(PrimitiveMath.TEN, scale);
 
-        myRoundingMode = roundingMode;
+        if (scale > Integer.MIN_VALUE) {
+            myZeroError = Math.max(PrimitiveMath.MACHINE_SMALLEST, PrimitiveMath.HALF * Math.pow(PrimitiveMath.TEN, -scale));
+            myRoundingFactor = PrimitiveFunction.POWER.invoke(PrimitiveMath.TEN, scale);
+        } else {
+            myZeroError = PrimitiveMath.MACHINE_SMALLEST;
+            myRoundingFactor = PrimitiveMath.ONE;
+        }
 
-        myMathContext = new MathContext(precision, roundingMode);
-
-        final int tmpMax = Math.max(precision, scale);
-        final int tmpMin = Math.min(precision, scale);
-        final int tmpErrExp = Math.min((tmpMax + 2) / 2, tmpMin);
-        myError = NumberContext.error(tmpErrExp);
     }
 
-    public NumberContext(final int precision, final int scale, final RoundingMode roundingMode) {
-        this(DEFAULT_STYLE.getFormat(), precision, scale, roundingMode);
+    public NumberContext(final int precision, final int scale) {
+        this(DEFAULT_STYLE.getFormat(), precision, scale, DEFAULT_MATH.getRoundingMode());
     }
 
-    public NumberContext(final int scale, final RoundingMode roundingMode) {
-        this(DEFAULT_STYLE.getFormat(), DEFAULT_MATH.getPrecision(), scale, roundingMode);
+    public NumberContext(final int precision, final int scale, final RoundingMode mode) {
+        this(DEFAULT_STYLE.getFormat(), precision, scale, mode);
     }
 
-    public NumberContext(final NumberContext aNumberContextToCopy, final RoundingMode aDifferentRoundingMode) {
-        this(aNumberContextToCopy.getFormat(), aNumberContextToCopy.getPrecision(), aNumberContextToCopy.getScale(), aDifferentRoundingMode);
+    public NumberContext(final int scale, final RoundingMode mode) {
+        this(DEFAULT_STYLE.getFormat(), DEFAULT_MATH.getPrecision(), scale, mode);
     }
 
-    public NumberContext(final RoundingMode aRoundingMode) {
-        this(DEFAULT_STYLE.getFormat(), DEFAULT_MATH.getPrecision(), DEFAULT_MATH.getPrecision(), aRoundingMode);
+    public NumberContext(final RoundingMode mode) {
+        this(DEFAULT_STYLE.getFormat(), DEFAULT_MATH.getPrecision(), DEFAULT_SCALE, mode);
     }
 
-    @SuppressWarnings("unused")
     private NumberContext(final Format format) {
-        this(format, DEFAULT_MATH.getPrecision(), DEFAULT_MATH.getPrecision(), DEFAULT_MATH.getRoundingMode());
+        this(format, DEFAULT_MATH.getPrecision(), DEFAULT_SCALE, DEFAULT_MATH.getRoundingMode());
         ProgrammingError.throwForIllegalInvocation();
     }
 
     /**
-     * Will first enforce the precision, and then the scale. Both operations will comply with the rounding mode.
+     * Will first enforce the precision, and then the scale. Both operations will comply with the rounding
+     * mode.
      */
     public BigDecimal enforce(final BigDecimal number) {
 
-        BigDecimal retVal = number;
+        BigDecimal tmpDecimal = number;
 
-        if (myPrecision > 0) {
-            retVal = retVal.plus(this.getMathContext());
+        if (myMathContext.getPrecision() > 0) {
+            tmpDecimal = tmpDecimal.plus(this.getMathContext());
         }
 
-        if (myScale > Integer.MIN_VALUE) {
-            retVal = retVal.setScale(myScale, myRoundingMode);
-        }
-
-        if (retVal.signum() == 0) {
-            return BigMath.ZERO;
-        } else {
-            return retVal;
-        }
+        return this.scale(tmpDecimal);
     }
 
     /**
-     * Does not enforce the precision and does not use the specified rounding mode. The precision is given by the type
-     * double and the rounding mode is always "half even" as given by {@linkplain StrictMath#rint(double)}.
+     * Does not enforce the precision and does not use the specified rounding mode. The precision is given by
+     * the type double and the rounding mode is always "half even" as given by
+     * {@linkplain StrictMath#rint(double)}.
      */
     public double enforce(final double number) {
-        return Math.rint(myScaleFactor * number) / myScaleFactor;
+        return Math.rint(myRoundingFactor * number) / myRoundingFactor;
     }
 
     @Override
     public Number enforce(final Number object) {
-        if (object instanceof Double) {
-            return this.enforce(object.doubleValue());
-        } else if (object instanceof BigDecimal) {
+        if (object instanceof BigDecimal) {
             return this.enforce((BigDecimal) object);
         } else if (object instanceof Enforceable<?>) {
             return ((Enforceable<?>) object).enforce(this);
         } else {
             return this.enforce(object.doubleValue());
         }
+    }
+
+    /**
+     * @return the epsilon
+     */
+    public double epsilon() {
+        return myEpsilon;
     }
 
     /**
@@ -290,7 +289,7 @@ public final class NumberContext extends FormatContext<Number> {
         if (this == obj) {
             return true;
         }
-        if (obj == null) {
+        if (!super.equals(obj)) {
             return false;
         }
         if (!(obj instanceof NumberContext)) {
@@ -304,34 +303,16 @@ public final class NumberContext extends FormatContext<Number> {
         } else if (!myMathContext.equals(other.myMathContext)) {
             return false;
         }
-        if (myPrecision != other.myPrecision) {
-            return false;
-        }
-        if (myRoundingMode == null) {
-            if (other.myRoundingMode != null) {
-                return false;
-            }
-        } else if (!myRoundingMode.equals(other.myRoundingMode)) {
-            return false;
-        }
         if (myScale != other.myScale) {
-            return false;
-        }
-        if (Double.doubleToLongBits(myScaleFactor) != Double.doubleToLongBits(other.myScaleFactor)) {
             return false;
         }
         return true;
     }
 
     /**
-     * @deprecated v35
+     * "big" enforce(...)
      */
-    @Deprecated
-    public double error() {
-        return myError;
-    }
-
-    public UnaryFunction<BigDecimal> getBigEnforceFunction() {
+    public UnaryFunction<BigDecimal> getBigFunction() {
         return new UnaryFunction<BigDecimal>() {
 
             public BigDecimal invoke(final BigDecimal arg) {
@@ -344,33 +325,10 @@ public final class NumberContext extends FormatContext<Number> {
         };
     }
 
-    public UnaryFunction<BigDecimal> getBigRoundFunction() {
-        return new UnaryFunction<BigDecimal>() {
-
-            public BigDecimal invoke(final BigDecimal arg) {
-                return NumberContext.this.enforce(arg);
-            }
-
-            public double invoke(final double arg) {
-                return NumberContext.this.enforce(arg);
-            }
-        };
-    }
-
-    public UnaryFunction<ComplexNumber> getComplexEnforceFunction() {
-        return new UnaryFunction<ComplexNumber>() {
-
-            public ComplexNumber invoke(final ComplexNumber arg) {
-                return arg.enforce(NumberContext.this);
-            }
-
-            public double invoke(final double arg) {
-                return NumberContext.this.enforce(arg);
-            }
-        };
-    }
-
-    public UnaryFunction<ComplexNumber> getComplexRoundFunction() {
+    /**
+     * "complex" enforce(...)
+     */
+    public UnaryFunction<ComplexNumber> getComplexFunction() {
         return new UnaryFunction<ComplexNumber>() {
 
             public ComplexNumber invoke(final ComplexNumber arg) {
@@ -388,10 +346,13 @@ public final class NumberContext extends FormatContext<Number> {
     }
 
     public int getPrecision() {
-        return myPrecision;
+        return myMathContext.getPrecision();
     }
 
-    public UnaryFunction<Double> getPrimitiveEnforceFunction() {
+    /**
+     * "primitive" enforce(...)
+     */
+    public UnaryFunction<Double> getPrimitiveFunction() {
         return new UnaryFunction<Double>() {
 
             public double invoke(final double arg) {
@@ -404,33 +365,26 @@ public final class NumberContext extends FormatContext<Number> {
         };
     }
 
-    public UnaryFunction<Double> getPrimitiveRoundFunction() {
-        return new UnaryFunction<Double>() {
+    /**
+     * "quaternion" enforce(...)
+     */
+    public UnaryFunction<Quaternion> getQuaternionFunction() {
+        return new UnaryFunction<Quaternion>() {
 
             public double invoke(final double arg) {
                 return NumberContext.this.enforce(arg);
             }
 
-            public Double invoke(final Double arg) {
-                return NumberContext.this.enforce(arg.doubleValue());
-            }
-        };
-    }
-
-    public UnaryFunction<RationalNumber> getRationalEnforceFunction() {
-        return new UnaryFunction<RationalNumber>() {
-
-            public double invoke(final double arg) {
-                return NumberContext.this.enforce(arg);
-            }
-
-            public RationalNumber invoke(final RationalNumber arg) {
+            public Quaternion invoke(final Quaternion arg) {
                 return arg.enforce(NumberContext.this);
             }
         };
     }
 
-    public UnaryFunction<RationalNumber> getRationalRoundFunction() {
+    /**
+     * "rational" enforce(...)
+     */
+    public UnaryFunction<RationalNumber> getRationalFunction() {
         return new UnaryFunction<RationalNumber>() {
 
             public double invoke(final double arg) {
@@ -444,7 +398,7 @@ public final class NumberContext extends FormatContext<Number> {
     }
 
     public RoundingMode getRoundingMode() {
-        return myRoundingMode;
+        return myMathContext.getRoundingMode();
     }
 
     public int getScale() {
@@ -457,31 +411,27 @@ public final class NumberContext extends FormatContext<Number> {
     @Override
     public int hashCode() {
         final int prime = 31;
-        int result = 1;
+        int result = super.hashCode();
         result = (prime * result) + ((myMathContext == null) ? 0 : myMathContext.hashCode());
-        result = (prime * result) + myPrecision;
-        result = (prime * result) + ((myRoundingMode == null) ? 0 : myRoundingMode.hashCode());
         result = (prime * result) + myScale;
-        long temp;
-        temp = Double.doubleToLongBits(myScaleFactor);
-        result = (prime * result) + (int) (temp ^ (temp >>> 32));
         return result;
     }
 
-    public boolean isSmallComparedTo(final double reference, final double value) {
-        if (TypeUtils.isZero(reference, myScaleError)) {
-            return TypeUtils.isZero(value, myScaleError);
+    public boolean isDifferent(final double expected, final double actual) {
+        return !this.isSmall(expected, actual - expected);
+    }
+
+    public boolean isSmall(final double comparedTo, final double value) {
+        final double tmpComparedTo = Math.abs(comparedTo);
+        if (NumberContext.isZero(tmpComparedTo, myZeroError)) {
+            return NumberContext.isZero(value, myZeroError);
         } else {
-            return TypeUtils.isZero(value / reference, myPrecisionError);
+            return NumberContext.isZero(value / tmpComparedTo, myEpsilon);
         }
     }
 
-    public boolean isSmallError(final double expected, final double actual) {
-        return this.isSmallComparedTo(expected, actual - expected);
-    }
-
     public boolean isZero(final double value) {
-        return TypeUtils.isZero(value, myScaleError);
+        return NumberContext.isZero(value, myZeroError);
     }
 
     public NumberContext newFormat(final NumberStyle style, final Locale locale) {
@@ -508,12 +458,15 @@ public final class NumberContext extends FormatContext<Number> {
      * Will create an "enforced" BigDecimal instance.
      */
     public BigDecimal toBigDecimal(final double number) {
-        return new BigDecimal(number, this.getMathContext()).setScale(myScale, myRoundingMode);
+
+        final BigDecimal tmpDecimal = myMathContext.getPrecision() > 0 ? new BigDecimal(number, myMathContext) : new BigDecimal(number);
+
+        return this.scale(tmpDecimal);
     }
 
     /**
-     * Works with {@linkplain DecimalFormat} and {@linkplain FormatPattern} implementations. In other cases it returns
-     * null.
+     * Works with {@linkplain DecimalFormat} and {@linkplain FormatPattern} implementations. In other cases it
+     * returns null.
      */
     public String toLocalizedPattern() {
 
@@ -529,8 +482,8 @@ public final class NumberContext extends FormatContext<Number> {
     }
 
     /**
-     * Works with {@linkplain DecimalFormat} and {@linkplain FormatPattern} implementations. In other cases it returns
-     * null.
+     * Works with {@linkplain DecimalFormat} and {@linkplain FormatPattern} implementations. In other cases it
+     * returns null.
      */
     public String toPattern() {
 
@@ -547,7 +500,22 @@ public final class NumberContext extends FormatContext<Number> {
 
     @Override
     public String toString() {
-        return this.getClass().getSimpleName() + " " + myPrecision + ":" + myScale + " " + myRoundingMode.toString();
+        return this.getClass().getSimpleName() + " " + myMathContext.getPrecision() + ":" + myScale + " " + myMathContext.getRoundingMode().toString();
+    }
+
+    private BigDecimal scale(final BigDecimal number) {
+
+        BigDecimal retVal = number;
+
+        if (myScale > Integer.MIN_VALUE) {
+            retVal = retVal.setScale(myScale, myMathContext.getRoundingMode());
+        }
+
+        if (retVal.signum() == 0) {
+            return BigMath.ZERO;
+        } else {
+            return retVal;
+        }
     }
 
     @Override

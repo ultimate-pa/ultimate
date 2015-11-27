@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -56,12 +56,40 @@ public final class ComplexMatrix extends AbstractMatrix<ComplexNumber, ComplexMa
         super(aStore);
     }
 
-    public ComplexMatrix enforce(final NumberContext aContext) {
-        return this.modify(aContext.getComplexEnforceFunction());
+    public ComplexMatrix enforce(final NumberContext context) {
+        return this.modify(context.getComplexFunction());
     }
 
-    public ComplexMatrix round(final NumberContext aContext) {
-        return this.modify(aContext.getComplexRoundFunction());
+    /**
+     * @return A primitive double valued matrix containg this matrix' element arguments
+     */
+    @SuppressWarnings("unchecked")
+    public PrimitiveMatrix getArgument() {
+        return ((MatrixFactory<Double, PrimitiveMatrix>) PrimitiveMatrix.FACTORY).instantiate(MatrixUtils.getComplexArgument(this.getStore()));
+    }
+
+    /**
+     * @return A primitive double valued matrix containg this matrix' element imaginary parts
+     */
+    @SuppressWarnings("unchecked")
+    public PrimitiveMatrix getImaginary() {
+        return ((MatrixFactory<Double, PrimitiveMatrix>) PrimitiveMatrix.FACTORY).instantiate(MatrixUtils.getComplexImaginary(this.getStore()));
+    }
+
+    /**
+     * @return A primitive double valued matrix containg this matrix' element modulus
+     */
+    @SuppressWarnings("unchecked")
+    public PrimitiveMatrix getModulus() {
+        return ((MatrixFactory<Double, PrimitiveMatrix>) PrimitiveMatrix.FACTORY).instantiate(MatrixUtils.getComplexModulus(this.getStore()));
+    }
+
+    /**
+     * @return A primitive double valued matrix containg this matrix' element real parts
+     */
+    @SuppressWarnings("unchecked")
+    public PrimitiveMatrix getReal() {
+        return ((MatrixFactory<Double, PrimitiveMatrix>) PrimitiveMatrix.FACTORY).instantiate(MatrixUtils.getComplexReal(this.getStore()));
     }
 
     public BigDecimal toBigDecimal(final int row, final int column) {
@@ -77,8 +105,8 @@ public final class ComplexMatrix extends AbstractMatrix<ComplexNumber, ComplexMa
         return this.getStore().copy();
     }
 
-    public String toString(final int row, final int column) {
-        return this.toComplexNumber(row, column).toString();
+    public String toString(final int row, final int col) {
+        return this.toComplexNumber(row, col).toString();
     }
 
     @SuppressWarnings("unchecked")

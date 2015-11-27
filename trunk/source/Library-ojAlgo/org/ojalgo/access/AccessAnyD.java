@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,15 +21,18 @@
  */
 package org.ojalgo.access;
 
-import org.ojalgo.random.RandomNumber;
+import org.ojalgo.constant.PrimitiveMath;
+import org.ojalgo.function.NullaryFunction;
+import org.ojalgo.function.UnaryFunction;
+import org.ojalgo.function.VoidFunction;
 import org.ojalgo.scalar.Scalar;
 
 public interface AccessAnyD<N extends Number> extends StructureAnyD, Access1D<N> {
 
     /**
-     * This interface mimics {@linkplain Fillable}, but methods return the builder instance instead, and then adds the
-     * {@link #build()} method.
-     * 
+     * This interface mimics {@linkplain Fillable}, but methods return the builder instance instead, and then
+     * adds the {@link #build()} method.
+     *
      * @author apete
      */
     public interface Builder<I extends AccessAnyD<?>> extends StructureAnyD, Access1D.Builder<I> {
@@ -50,37 +53,13 @@ public interface AccessAnyD<N extends Number> extends StructureAnyD, Access1D<N>
         boolean isAbsolute(long[] reference);
 
         /**
-         * @see Scalar#isInfinite()
-         * @deprecated v36 Only plan to keep {@link #isAbsolute(long[])} and {@link #isZero(long[])}.
+         * @see Scalar#isSmall(double)
          */
-        @Deprecated
-        boolean isInfinite(long[] reference);
+        boolean isSmall(long[] reference, double comparedTo);
 
-        /**
-         * @see Scalar#isNaN()
-         * @deprecated v36 Only plan to keep {@link #isAbsolute(long[])} and {@link #isZero(long[])}.
-         */
-        @Deprecated
-        boolean isNaN(long[] reference);
-
-        /**
-         * @see Scalar#isPositive()
-         * @deprecated v36 Only plan to keep {@link #isAbsolute(long[])} and {@link #isZero(long[])}.
-         */
-        @Deprecated
-        boolean isPositive(long[] reference);
-
-        /**
-         * @see Scalar#isReal()
-         * @deprecated v36 Only plan to keep {@link #isAbsolute(long[])} and {@link #isZero(long[])}.
-         */
-        @Deprecated
-        boolean isReal(long[] reference);
-
-        /**
-         * @see Scalar#isZero()
-         */
-        boolean isZero(long[] reference);
+        default boolean isZero(final long[] reference) {
+            return this.isSmall(reference, PrimitiveMath.ONE);
+        }
 
     }
 
@@ -88,13 +67,65 @@ public interface AccessAnyD<N extends Number> extends StructureAnyD, Access1D<N>
 
         I copy(AccessAnyD<?> source);
 
-        I makeRandom(long[] structure, RandomNumber distribution);
+        I makeFilled(long[] structure, NullaryFunction<?> supplier);
 
         I makeZero(long... structure);
 
     }
 
-    public interface Fillable<N extends Number> extends StructureAnyD, Access1D.Fillable<N> {
+    public interface Fillable<N extends Number> extends Settable<N>, Access1D.Fillable<N> {
+
+        void fillOne(long[] reference, N value);
+
+        void fillOne(long[] reference, NullaryFunction<N> supplier);
+
+        default void fillRange(final long first, final long limit, final N value) {
+            for (long i = first; i < limit; i++) {
+                this.fillOne(i, value);
+            }
+        }
+
+        default void fillRange(final long first, final long limit, final NullaryFunction<N> supplier) {
+            for (long i = first; i < limit; i++) {
+                this.fillOne(i, supplier);
+            }
+        }
+
+    }
+
+    public interface Modifiable<N extends Number> extends Settable<N>, Access1D.Modifiable<N> {
+
+        void modifyOne(long[] reference, UnaryFunction<N> function);
+
+        default void modifyRange(final long first, final long limit, final UnaryFunction<N> function) {
+            for (long i = first; i < limit; i++) {
+                this.modifyOne(i, function);
+            }
+        }
+
+    }
+
+    public interface Settable<N extends Number> extends StructureAnyD, Access1D.Settable<N> {
+
+        default void add(final long index, final double addend) {
+            this.add(AccessUtils.reference(index, this.shape()), addend);
+        }
+
+        default void add(final long index, final Number addend) {
+            this.add(AccessUtils.reference(index, this.shape()), addend);
+        }
+
+        void add(long[] reference, double addend);
+
+        void add(long[] reference, Number addend);
+
+        default void set(final long index, final double value) {
+            this.set(AccessUtils.reference(index, this.shape()), value);
+        }
+
+        default void set(final long index, final Number value) {
+            this.set(AccessUtils.reference(index, this.shape()), value);
+        }
 
         void set(long[] reference, double value);
 
@@ -102,15 +133,31 @@ public interface AccessAnyD<N extends Number> extends StructureAnyD, Access1D<N>
 
     }
 
-    public interface Modifiable<N extends Number> extends StructureAnyD, Access1D.Modifiable<N> {
+    public interface IndexOf extends StructureAnyD, Access1D.IndexOf {
 
     }
 
     public interface Visitable<N extends Number> extends StructureAnyD, Access1D.Visitable<N> {
 
+        void visitOne(long[] reference, VoidFunction<N> visitor);
+
+    }
+
+    public interface Sliceable<N extends Number> extends StructureAnyD, Access1D.Sliceable<N> {
+
+        Access1D<N> slice(final long[] first, final int dimension);
+
+    }
+
+    default double doubleValue(final long index) {
+        return this.doubleValue(AccessUtils.reference(index, this.shape()));
     }
 
     double doubleValue(long[] reference);
+
+    default N get(final long index) {
+        return this.get(AccessUtils.reference(index, this.shape()));
+    }
 
     N get(long[] reference);
 

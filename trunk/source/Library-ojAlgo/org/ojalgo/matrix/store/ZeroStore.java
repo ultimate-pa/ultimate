@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,81 +21,26 @@
  */
 package org.ojalgo.matrix.store;
 
-import java.math.BigDecimal;
-
-import org.ojalgo.ProgrammingError;
 import org.ojalgo.access.Access1D;
 import org.ojalgo.constant.PrimitiveMath;
-import org.ojalgo.scalar.ComplexNumber;
 import org.ojalgo.scalar.Scalar;
 
 /**
  * ZeroStore
- * 
+ *
  * @author apete
  */
-public final class ZeroStore<N extends Number> extends FactoryStore<N> {
-
-    public static interface Factory<N extends Number> {
-
-        ZeroStore<N> make(int rows, int columns);
-
-    }
-
-    public static final ZeroStore.Factory<Double> PRIMITIVE = new ZeroStore.Factory<Double>() {
-
-        public ZeroStore<Double> make(final int rows, final int columns) {
-            return ZeroStore.makePrimitive(rows, columns);
-        }
-
-    };
-
-    public static final ZeroStore.Factory<BigDecimal> BIG = new ZeroStore.Factory<BigDecimal>() {
-
-        public ZeroStore<BigDecimal> make(final int rows, final int columns) {
-            return ZeroStore.makeBig(rows, columns);
-        }
-
-    };
-
-    public static final ZeroStore.Factory<ComplexNumber> COMPLEX = new ZeroStore.Factory<ComplexNumber>() {
-
-        public ZeroStore<ComplexNumber> make(final int rows, final int columns) {
-            return ZeroStore.makeComplex(rows, columns);
-        }
-
-    };
-
-    public static ZeroStore<BigDecimal> makeBig(final int rows, final int columns) {
-        return new ZeroStore<>(BigDenseStore.FACTORY, rows, columns);
-    }
-
-    public static ZeroStore<ComplexNumber> makeComplex(final int rows, final int columns) {
-        return new ZeroStore<>(ComplexDenseStore.FACTORY, rows, columns);
-
-    }
-
-    public static ZeroStore<Double> makePrimitive(final int rows, final int columns) {
-        return new ZeroStore<>(PrimitiveDenseStore.FACTORY, rows, columns);
-    }
+final class ZeroStore<N extends Number> extends FactoryStore<N> {
 
     private final N myNumberZero;
     private final Scalar<N> myScalarZero;
 
-    public ZeroStore(final PhysicalStore.Factory<N, ?> factory, final int rows, final int columns) {
+    ZeroStore(final PhysicalStore.Factory<N, ?> factory, final int rowsCount, final int columnsCount) {
 
-        super(rows, columns, factory);
+        super(factory, rowsCount, columnsCount);
 
         myScalarZero = factory.scalar().zero();
         myNumberZero = myScalarZero.getNumber();
-    }
-
-    @SuppressWarnings("unused")
-    private ZeroStore(final PhysicalStore.Factory<N, ?> aFactory) {
-
-        this(aFactory, 0, 0);
-
-        ProgrammingError.throwForIllegalInvocation();
     }
 
     @Override
@@ -104,13 +49,8 @@ public final class ZeroStore<N extends Number> extends FactoryStore<N> {
     }
 
     @Override
-    public PhysicalStore<N> conjugate() {
-        return this.factory().makeZero(this.getColDim(), this.getRowDim());
-    }
-
-    @Override
-    public PhysicalStore<N> copy() {
-        return this.factory().makeZero(this.getRowDim(), this.getColDim());
+    public MatrixStore<N> conjugate() {
+        return new ZeroStore<N>(this.factory(), this.getColDim(), this.getRowDim());
     }
 
     @Override
@@ -122,26 +62,31 @@ public final class ZeroStore<N extends Number> extends FactoryStore<N> {
         return PrimitiveMath.ZERO;
     }
 
+    public int firstInColumn(final int col) {
+        return this.getRowDim();
+    }
+
+    public int firstInRow(final int row) {
+        return this.getColDim();
+    }
+
     public N get(final long aRow, final long aCol) {
         return myNumberZero;
     }
 
-    public boolean isLowerLeftShaded() {
-        return true;
-    }
-
-    public boolean isUpperRightShaded() {
-        return true;
+    @Override
+    public int limitOfColumn(final int col) {
+        return 0;
     }
 
     @Override
-    public ZeroStore<N> multiplyLeft(final Access1D<N> leftMtrx) {
-        return new ZeroStore<N>(this.factory(), (int) (leftMtrx.count() / this.getRowDim()), this.getColDim());
+    public int limitOfRow(final int row) {
+        return 0;
     }
 
     @Override
-    public ZeroStore<N> multiplyRight(final Access1D<N> rightMtrx) {
-        return new ZeroStore<N>(this.factory(), this.getRowDim(), (int) (rightMtrx.count() / this.getColDim()));
+    public ZeroStore<N> multiply(final Access1D<N> right) {
+        return new ZeroStore<N>(this.factory(), this.getRowDim(), (int) (right.count() / this.getColDim()));
     }
 
     @Override
@@ -154,8 +99,12 @@ public final class ZeroStore<N extends Number> extends FactoryStore<N> {
     }
 
     @Override
-    public PhysicalStore<N> transpose() {
-        return this.factory().makeZero(this.getColDim(), this.getRowDim());
+    public MatrixStore<N> transpose() {
+        return new ZeroStore<N>(this.factory(), this.getColDim(), this.getRowDim());
+    }
+
+    @Override
+    protected void supplyNonZerosTo(final ElementsConsumer<N> consumer) {
     }
 
 }

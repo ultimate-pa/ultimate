@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,7 @@ package org.ojalgo.function.aggregator;
 import static org.ojalgo.function.RationalFunction.*;
 
 import org.ojalgo.ProgrammingError;
+import org.ojalgo.constant.PrimitiveMath;
 import org.ojalgo.function.RationalFunction;
 import org.ojalgo.scalar.RationalNumber;
 import org.ojalgo.scalar.Scalar;
@@ -44,7 +45,7 @@ public abstract class RationalAggregator {
                 }
 
                 public RationalNumber getNumber() {
-                    return new RationalNumber(myCount);
+                    return RationalNumber.valueOf(myCount);
                 }
 
                 public int intValue() {
@@ -52,7 +53,7 @@ public abstract class RationalAggregator {
                 }
 
                 public void invoke(final double anArg) {
-                    this.invoke(new RationalNumber(anArg));
+                    this.invoke(RationalNumber.valueOf(anArg));
                 }
 
                 public void invoke(final RationalNumber anArg) {
@@ -61,12 +62,12 @@ public abstract class RationalAggregator {
                     }
                 }
 
-                public void merge(final RationalNumber anArg) {
-                    myCount += anArg.intValue();
+                public void merge(final RationalNumber result) {
+                    myCount += result.intValue();
                 }
 
-                public RationalNumber merge(final RationalNumber aResult1, final RationalNumber aResult2) {
-                    return ADD.invoke(aResult1, aResult2);
+                public RationalNumber merge(final RationalNumber result1, final RationalNumber result2) {
+                    return ADD.invoke(result1, result2);
                 }
 
                 public AggregatorFunction<RationalNumber> reset() {
@@ -103,19 +104,19 @@ public abstract class RationalAggregator {
                 }
 
                 public void invoke(final double anArg) {
-                    this.invoke(new RationalNumber(anArg));
+                    this.invoke(RationalNumber.valueOf(anArg));
                 }
 
                 public void invoke(final RationalNumber anArg) {
                     myNumber = RationalFunction.MAX.invoke(myNumber, ABS.invoke(anArg));
                 }
 
-                public void merge(final RationalNumber anArg) {
-                    this.invoke(anArg);
+                public void merge(final RationalNumber result) {
+                    this.invoke(result);
                 }
 
-                public RationalNumber merge(final RationalNumber aResult1, final RationalNumber aResult2) {
-                    return RationalFunction.MAX.invoke(aResult1, aResult2);
+                public RationalNumber merge(final RationalNumber result1, final RationalNumber result2) {
+                    return RationalFunction.MAX.invoke(result1, result2);
                 }
 
                 public AggregatorFunction<RationalNumber> reset() {
@@ -150,23 +151,75 @@ public abstract class RationalAggregator {
                 }
 
                 public void invoke(final double anArg) {
-                    this.invoke(new RationalNumber(anArg));
+                    this.invoke(RationalNumber.valueOf(anArg));
                 }
 
                 public void invoke(final RationalNumber anArg) {
                     myNumber = RationalFunction.MAX.invoke(myNumber, anArg);
                 }
 
-                public void merge(final RationalNumber anArg) {
-                    this.invoke(anArg);
+                public void merge(final RationalNumber result) {
+                    this.invoke(result);
                 }
 
-                public RationalNumber merge(final RationalNumber aResult1, final RationalNumber aResult2) {
-                    return RationalFunction.MAX.invoke(aResult1, aResult2);
+                public RationalNumber merge(final RationalNumber result1, final RationalNumber result2) {
+                    return RationalFunction.MAX.invoke(result1, result2);
                 }
 
                 public AggregatorFunction<RationalNumber> reset() {
                     myNumber = RationalNumber.ZERO;
+                    return this;
+                }
+
+                public Scalar<RationalNumber> toScalar() {
+                    return this.getNumber();
+                }
+            };
+        }
+    };
+
+    public static final ThreadLocal<AggregatorFunction<RationalNumber>> MIN = new ThreadLocal<AggregatorFunction<RationalNumber>>() {
+
+        @Override
+        protected AggregatorFunction<RationalNumber> initialValue() {
+            return new AggregatorFunction<RationalNumber>() {
+
+                private RationalNumber myNumber = RationalNumber.POSITIVE_INFINITY;
+
+                public double doubleValue() {
+                    return this.getNumber().doubleValue();
+                }
+
+                public RationalNumber getNumber() {
+                    if (RationalNumber.isInfinite(myNumber)) {
+                        return RationalNumber.ZERO;
+                    } else {
+                        return myNumber;
+                    }
+                }
+
+                public int intValue() {
+                    return this.getNumber().intValue();
+                }
+
+                public void invoke(final double anArg) {
+                    this.invoke(RationalNumber.valueOf(anArg));
+                }
+
+                public void invoke(final RationalNumber anArg) {
+                    myNumber = RationalFunction.MIN.invoke(myNumber, anArg);
+                }
+
+                public void merge(final RationalNumber result) {
+                    this.invoke(result);
+                }
+
+                public RationalNumber merge(final RationalNumber result1, final RationalNumber result2) {
+                    return RationalFunction.MIN.invoke(result1, result2);
+                }
+
+                public AggregatorFunction<RationalNumber> reset() {
+                    myNumber = RationalNumber.POSITIVE_INFINITY;
                     return this;
                 }
 
@@ -198,19 +251,19 @@ public abstract class RationalAggregator {
                 }
 
                 public void invoke(final double anArg) {
-                    this.invoke(new RationalNumber(anArg));
+                    this.invoke(RationalNumber.valueOf(anArg));
                 }
 
                 public void invoke(final RationalNumber anArg) {
                     myNumber = myNumber.add(Math.abs(anArg.doubleValue()));
                 }
 
-                public void merge(final RationalNumber anArg) {
-                    this.invoke(anArg);
+                public void merge(final RationalNumber result) {
+                    this.invoke(result);
                 }
 
-                public RationalNumber merge(final RationalNumber aResult1, final RationalNumber aResult2) {
-                    return ADD.invoke(aResult1, aResult2);
+                public RationalNumber merge(final RationalNumber result1, final RationalNumber result2) {
+                    return ADD.invoke(result1, result2);
                 }
 
                 public AggregatorFunction<RationalNumber> reset() {
@@ -238,7 +291,7 @@ public abstract class RationalAggregator {
                 }
 
                 public RationalNumber getNumber() {
-                    return new RationalNumber(Math.sqrt(Math.abs(myNumber.doubleValue())));
+                    return RationalNumber.valueOf(Math.sqrt(Math.abs(myNumber.doubleValue())));
                 }
 
                 public int intValue() {
@@ -246,7 +299,7 @@ public abstract class RationalAggregator {
                 }
 
                 public void invoke(final double anArg) {
-                    this.invoke(new RationalNumber(anArg));
+                    this.invoke(RationalNumber.valueOf(anArg));
                 }
 
                 public void invoke(final RationalNumber anArg) {
@@ -254,12 +307,12 @@ public abstract class RationalAggregator {
                     myNumber = myNumber.add(tmpMod * tmpMod);
                 }
 
-                public void merge(final RationalNumber anArg) {
-                    this.invoke(anArg);
+                public void merge(final RationalNumber result) {
+                    this.invoke(result);
                 }
 
-                public RationalNumber merge(final RationalNumber aResult1, final RationalNumber aResult2) {
-                    return HYPOT.invoke(aResult1, aResult2);
+                public RationalNumber merge(final RationalNumber result1, final RationalNumber result2) {
+                    return HYPOT.invoke(result1, result2);
                 }
 
                 public AggregatorFunction<RationalNumber> reset() {
@@ -295,19 +348,19 @@ public abstract class RationalAggregator {
                 }
 
                 public void invoke(final double anArg) {
-                    this.invoke(new RationalNumber(anArg));
+                    this.invoke(RationalNumber.valueOf(anArg));
                 }
 
                 public void invoke(final RationalNumber anArg) {
                     myNumber = myNumber.multiply(anArg);
                 }
 
-                public void merge(final RationalNumber anArg) {
-                    this.invoke(anArg);
+                public void merge(final RationalNumber result) {
+                    this.invoke(result);
                 }
 
-                public RationalNumber merge(final RationalNumber aResult1, final RationalNumber aResult2) {
-                    return MULTIPLY.invoke(aResult1, aResult2);
+                public RationalNumber merge(final RationalNumber result1, final RationalNumber result2) {
+                    return MULTIPLY.invoke(result1, result2);
                 }
 
                 public AggregatorFunction<RationalNumber> reset() {
@@ -343,19 +396,19 @@ public abstract class RationalAggregator {
                 }
 
                 public void invoke(final double anArg) {
-                    this.invoke(new RationalNumber(anArg));
+                    this.invoke(RationalNumber.valueOf(anArg));
                 }
 
                 public void invoke(final RationalNumber anArg) {
                     myNumber = myNumber.multiply(anArg.multiply(anArg));
                 }
 
-                public void merge(final RationalNumber anArg) {
-                    myNumber = myNumber.multiply(anArg);
+                public void merge(final RationalNumber result) {
+                    myNumber = myNumber.multiply(result);
                 }
 
-                public RationalNumber merge(final RationalNumber aResult1, final RationalNumber aResult2) {
-                    return MULTIPLY.invoke(aResult1, aResult2);
+                public RationalNumber merge(final RationalNumber result1, final RationalNumber result2) {
+                    return MULTIPLY.invoke(result1, result2);
                 }
 
                 public AggregatorFunction<RationalNumber> reset() {
@@ -383,7 +436,7 @@ public abstract class RationalAggregator {
                 }
 
                 public RationalNumber getNumber() {
-                    if (myNumber.isInfinite()) {
+                    if (RationalNumber.isInfinite(myNumber)) {
                         return RationalNumber.ZERO;
                     } else {
                         return myNumber;
@@ -395,73 +448,21 @@ public abstract class RationalAggregator {
                 }
 
                 public void invoke(final double anArg) {
-                    this.invoke(new RationalNumber(anArg));
+                    this.invoke(RationalNumber.valueOf(anArg));
                 }
 
                 public void invoke(final RationalNumber anArg) {
-                    if (!anArg.isZero()) {
+                    if (!RationalNumber.isSmall(PrimitiveMath.ONE, anArg)) {
                         myNumber = RationalFunction.MIN.invoke(myNumber, ABS.invoke(anArg));
                     }
                 }
 
-                public void merge(final RationalNumber anArg) {
-                    this.invoke(anArg);
+                public void merge(final RationalNumber result) {
+                    this.invoke(result);
                 }
 
-                public RationalNumber merge(final RationalNumber aResult1, final RationalNumber aResult2) {
-                    return RationalFunction.MIN.invoke(aResult1, aResult2);
-                }
-
-                public AggregatorFunction<RationalNumber> reset() {
-                    myNumber = RationalNumber.POSITIVE_INFINITY;
-                    return this;
-                }
-
-                public Scalar<RationalNumber> toScalar() {
-                    return this.getNumber();
-                }
-            };
-        }
-    };
-
-    public static final ThreadLocal<AggregatorFunction<RationalNumber>> MIN = new ThreadLocal<AggregatorFunction<RationalNumber>>() {
-
-        @Override
-        protected AggregatorFunction<RationalNumber> initialValue() {
-            return new AggregatorFunction<RationalNumber>() {
-
-                private RationalNumber myNumber = RationalNumber.POSITIVE_INFINITY;
-
-                public double doubleValue() {
-                    return this.getNumber().doubleValue();
-                }
-
-                public RationalNumber getNumber() {
-                    if (myNumber.isInfinite()) {
-                        return RationalNumber.ZERO;
-                    } else {
-                        return myNumber;
-                    }
-                }
-
-                public int intValue() {
-                    return this.getNumber().intValue();
-                }
-
-                public void invoke(final double anArg) {
-                    this.invoke(new RationalNumber(anArg));
-                }
-
-                public void invoke(final RationalNumber anArg) {
-                    myNumber = RationalFunction.MIN.invoke(myNumber, anArg);
-                }
-
-                public void merge(final RationalNumber anArg) {
-                    this.invoke(anArg);
-                }
-
-                public RationalNumber merge(final RationalNumber aResult1, final RationalNumber aResult2) {
-                    return RationalFunction.MIN.invoke(aResult1, aResult2);
+                public RationalNumber merge(final RationalNumber result1, final RationalNumber result2) {
+                    return RationalFunction.MIN.invoke(result1, result2);
                 }
 
                 public AggregatorFunction<RationalNumber> reset() {
@@ -497,19 +498,19 @@ public abstract class RationalAggregator {
                 }
 
                 public void invoke(final double anArg) {
-                    this.invoke(new RationalNumber(anArg));
+                    this.invoke(RationalNumber.valueOf(anArg));
                 }
 
                 public void invoke(final RationalNumber anArg) {
                     myNumber = myNumber.add(anArg);
                 }
 
-                public void merge(final RationalNumber anArg) {
-                    this.invoke(anArg);
+                public void merge(final RationalNumber result) {
+                    this.invoke(result);
                 }
 
-                public RationalNumber merge(final RationalNumber aResult1, final RationalNumber aResult2) {
-                    return ADD.invoke(aResult1, aResult2);
+                public RationalNumber merge(final RationalNumber result1, final RationalNumber result2) {
+                    return ADD.invoke(result1, result2);
                 }
 
                 public AggregatorFunction<RationalNumber> reset() {
@@ -545,19 +546,19 @@ public abstract class RationalAggregator {
                 }
 
                 public void invoke(final double anArg) {
-                    this.invoke(new RationalNumber(anArg));
+                    this.invoke(RationalNumber.valueOf(anArg));
                 }
 
                 public void invoke(final RationalNumber anArg) {
                     myNumber = myNumber.add(anArg.multiply(anArg));
                 }
 
-                public void merge(final RationalNumber anArg) {
-                    myNumber = myNumber.add(anArg);
+                public void merge(final RationalNumber result) {
+                    myNumber = myNumber.add(result);
                 }
 
-                public RationalNumber merge(final RationalNumber aResult1, final RationalNumber aResult2) {
-                    return ADD.invoke(aResult1, aResult2);
+                public RationalNumber merge(final RationalNumber result1, final RationalNumber result2) {
+                    return ADD.invoke(result1, result2);
                 }
 
                 public AggregatorFunction<RationalNumber> reset() {
@@ -572,7 +573,7 @@ public abstract class RationalAggregator {
         }
     };
 
-    private static final AggregatorCollection<RationalNumber> COLLECTION = new AggregatorCollection<RationalNumber>() {
+    private static final AggregatorSet<RationalNumber> SET = new AggregatorSet<RationalNumber>() {
 
         @Override
         public AggregatorFunction<RationalNumber> cardinality() {
@@ -631,8 +632,16 @@ public abstract class RationalAggregator {
 
     };
 
-    public static AggregatorCollection<RationalNumber> getCollection() {
-        return COLLECTION;
+    /**
+     * @deprecated v38 Use {@link #getSet()} instead
+     */
+    @Deprecated
+    public static AggregatorSet<RationalNumber> getCollection() {
+        return RationalAggregator.getSet();
+    }
+
+    public static AggregatorSet<RationalNumber> getSet() {
+        return SET;
     }
 
     private RationalAggregator() {

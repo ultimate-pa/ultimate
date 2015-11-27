@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,12 +21,16 @@
  */
 package org.ojalgo.matrix.decomposition;
 
+import java.math.BigDecimal;
+
 import org.ojalgo.access.Access2D;
+import org.ojalgo.matrix.MatrixUtils;
 import org.ojalgo.matrix.store.MatrixStore;
+import org.ojalgo.scalar.ComplexNumber;
 
 /**
- * A general matrix [A] can be factorized by similarity
- * transformations into the form [A]=[Q1][D][Q2]<sup>-1</sup> where:
+ * A general matrix [A] can be factorized by similarity transformations into the form
+ * [A]=[Q1][D][Q2]<sup>-1</sup> where:
  * <ul>
  * <li>[A] (m-by-n) is any, real or complex, matrix</li>
  * <li>[D] (r-by-r) or (m-by-n) is, upper or lower, bidiagonal</li>
@@ -37,13 +41,35 @@ import org.ojalgo.matrix.store.MatrixStore;
  *
  * @author apete
  */
-public interface Bidiagonal<N extends Number> extends MatrixDecomposition<N> {
+public interface Bidiagonal<N extends Number> extends MatrixDecomposition<N>, MatrixDecomposition.EconomySize<N> {
 
-    /**
-     * @param matrix A matrix to decompose
-     * @return true if the computation suceeded; false if not
-     */
-    boolean compute(Access2D<?> matrix, boolean fullSize);
+    @SuppressWarnings("unchecked")
+    public static <N extends Number> Bidiagonal<N> make(final Access2D<N> typical) {
+
+        final N tmpNumber = typical.get(0, 0);
+
+        if (tmpNumber instanceof BigDecimal) {
+            return (Bidiagonal<N>) new BidiagonalDecomposition.Big();
+        } else if (tmpNumber instanceof ComplexNumber) {
+            return (Bidiagonal<N>) new BidiagonalDecomposition.Complex();
+        } else if (tmpNumber instanceof Double) {
+            return (Bidiagonal<N>) new BidiagonalDecomposition.Primitive();
+        } else {
+            throw new IllegalArgumentException();
+        }
+    }
+
+    public static Bidiagonal<BigDecimal> makeBig() {
+        return new BidiagonalDecomposition.Big();
+    }
+
+    public static Bidiagonal<ComplexNumber> makeComplex() {
+        return new BidiagonalDecomposition.Complex();
+    }
+
+    public static Bidiagonal<Double> makePrimitive() {
+        return new BidiagonalDecomposition.Primitive();
+    }
 
     MatrixStore<N> getD();
 
@@ -52,5 +78,9 @@ public interface Bidiagonal<N extends Number> extends MatrixDecomposition<N> {
     MatrixStore<N> getQ2();
 
     boolean isUpper();
+
+    default MatrixStore<N> reconstruct() {
+        return MatrixUtils.reconstruct(this);
+    }
 
 }

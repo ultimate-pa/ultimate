@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,8 @@ import org.ojalgo.scalar.ComplexNumber;
 
 public final class ApplyLU extends MatrixOperation {
 
+    public static final ApplyLU SETUP = new ApplyLU();
+
     public static int THRESHOLD = 256;
 
     public static void invoke(final BigDecimal[] data, final int structure, final int firstColumn, final int columnLimit, final BigDecimal[] multipliers,
@@ -52,6 +54,11 @@ public final class ApplyLU extends MatrixOperation {
 
     private ApplyLU() {
         super();
+    }
+
+    @Override
+    public int threshold() {
+        return THRESHOLD;
     }
 
 }

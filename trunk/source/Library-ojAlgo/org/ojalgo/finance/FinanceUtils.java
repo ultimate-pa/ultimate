@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -40,7 +40,6 @@ import org.ojalgo.function.PrimitiveFunction;
 import org.ojalgo.matrix.BasicMatrix;
 import org.ojalgo.matrix.PrimitiveMatrix;
 import org.ojalgo.matrix.decomposition.Eigenvalue;
-import org.ojalgo.matrix.decomposition.EigenvalueDecomposition;
 import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.matrix.store.PhysicalStore;
 import org.ojalgo.random.Deterministic;
@@ -124,7 +123,7 @@ public abstract class FinanceUtils {
      * @param timeSeriesCollection
      * @return Annualised covariances
      */
-    public static <V extends Number> BasicMatrix<?> makeCovarianceMatrix(final Collection<CalendarDateSeries<V>> timeSeriesCollection) {
+    public static <V extends Number> BasicMatrix makeCovarianceMatrix(final Collection<CalendarDateSeries<V>> timeSeriesCollection) {
 
         final CoordinationSet<V> tmpCoordinator = new CoordinationSet<V>(timeSeriesCollection).prune();
 
@@ -177,8 +176,8 @@ public abstract class FinanceUtils {
 
     /**
      * @param aPriceSeries A series of prices
-     * @param aRiskFreeInterestRateSeries A series of interest rates (risk free return expressed in %, 5.0 means 5.0%
-     *        annualized risk free return)
+     * @param aRiskFreeInterestRateSeries A series of interest rates (risk free return expressed in %, 5.0
+     *        means 5.0% annualized risk free return)
      * @return A sample set of price growth rates adjusted for risk free return
      */
     public static SampleSet makeExcessGrowthRateSampleSet(final CalendarDateSeries<?> aPriceSeries, final CalendarDateSeries<?> aRiskFreeInterestRateSeries) {
@@ -201,7 +200,8 @@ public abstract class FinanceUtils {
         final Array1D<Double> retVal = Array1D.PRIMITIVE.makeZero(tmpPrices.length - 1);
 
         final CalendarDateUnit tmpUnit = aPriceSeries.getResolution();
-        double tmpThisRiskFree, tmpNextRiskFree, tmpAvgRiskFree, tmpRiskFreeGrowthRate, tmpThisPrice, tmpNextPrice, tmpPriceGrowthFactor, tmpPriceGrowthRate, tmpAdjustedPriceGrowthRate;
+        double tmpThisRiskFree, tmpNextRiskFree, tmpAvgRiskFree, tmpRiskFreeGrowthRate, tmpThisPrice, tmpNextPrice, tmpPriceGrowthFactor, tmpPriceGrowthRate,
+                tmpAdjustedPriceGrowthRate;
 
         for (int i = 0; i < retVal.size(); i++) {
 
@@ -225,8 +225,8 @@ public abstract class FinanceUtils {
 
     /**
      * @param aPriceSeries A series of prices
-     * @param aRiskFreeInterestRateSeries A series of interest rates (risk free return expressed in %, 5.0 means 5.0%
-     *        annualized risk free return)
+     * @param aRiskFreeInterestRateSeries A series of interest rates (risk free return expressed in %, 5.0
+     *        means 5.0% annualized risk free return)
      * @return A sample set of price growth rates adjusted for risk free return
      */
     public static CalendarDateSeries<Double> makeNormalisedExcessPrice(final CalendarDateSeries<?> aPriceSeries,
@@ -252,7 +252,8 @@ public abstract class FinanceUtils {
 
         final CalendarDateSeries<Double> retVal = new CalendarDateSeries<Double>(tmpResolution);
 
-        double tmpThisRiskFree, tmpLastRiskFree, tmpAvgRiskFree, tmpRiskFreeGrowthFactor, tmpThisPrice, tmpLastPrice, tmpPriceGrowthFactor, tmpAdjustedPriceGrowthFactor;
+        double tmpThisRiskFree, tmpLastRiskFree, tmpAvgRiskFree, tmpRiskFreeGrowthFactor, tmpThisPrice, tmpLastPrice, tmpPriceGrowthFactor,
+                tmpAdjustedPriceGrowthFactor;
 
         double tmpAggregatedExcessPrice = PrimitiveMath.ONE;
         retVal.put(new CalendarDate(tmpDates[0]), tmpAggregatedExcessPrice);
@@ -279,7 +280,7 @@ public abstract class FinanceUtils {
 
     /**
      * GrowthRate = ln(GrowthFactor)
-     * 
+     *
      * @param growthFactor A growth factor per unit (day, week, month, year...)
      * @param growthFactorUnit A growth factor unit
      * @return Annualised return (percentage per year)
@@ -291,7 +292,7 @@ public abstract class FinanceUtils {
 
     /**
      * AnnualReturn = exp(GrowthRate * GrowthRateUnitsPerYear) - 1.0
-     * 
+     *
      * @param growthRate A growth rate per unit (day, week, month, year...)
      * @param growthRateUnit A growth rate unit
      * @return Annualised return (percentage per year)
@@ -318,18 +319,18 @@ public abstract class FinanceUtils {
 
         final int tmpSize = (int) Math.min(covariances.countRows(), covariances.countColumns());
 
-        Access2D<?> tmpCovariances = covariances;
+        MatrixStore<Double> tmpCovariances = MatrixStore.PRIMITIVE.makeWrapper(covariances).get();
 
         if (clean) {
 
-            final Eigenvalue<Double> tmpEvD = EigenvalueDecomposition.makePrimitive(true);
-            tmpEvD.compute(tmpCovariances, false);
+            final Eigenvalue<Double> tmpEvD = Eigenvalue.makePrimitive(true);
+            tmpEvD.decompose(tmpCovariances);
 
             final MatrixStore<Double> tmpV = tmpEvD.getV();
             final PhysicalStore<Double> tmpD = tmpEvD.getD().copy();
 
             final double tmpLargest = tmpD.doubleValue(0, 0);
-            final double tmpLimit = Math.max(PrimitiveMath.MACHINE_DOUBLE_ERROR * tmpLargest, 1E-12);
+            final double tmpLimit = Math.max(PrimitiveMath.MACHINE_EPSILON * tmpLargest, 1E-12);
 
             for (int ij = 0; ij < tmpSize; ij++) {
                 if (tmpD.doubleValue(ij, ij) < tmpLimit) {
@@ -339,9 +340,9 @@ public abstract class FinanceUtils {
 
             final MatrixStore<Double> tmpLeft = tmpV;
             final MatrixStore<Double> tmpMiddle = tmpD;
-            final MatrixStore<Double> tmpRight = tmpLeft.builder().transpose().build();
+            final MatrixStore<Double> tmpRight = tmpLeft.transpose();
 
-            tmpCovariances = tmpMiddle.multiplyLeft(tmpLeft).multiplyRight(tmpRight);
+            tmpCovariances = tmpLeft.multiply(tmpMiddle).multiply(tmpRight);
         }
 
         final Builder<PrimitiveMatrix> retVal = PrimitiveMatrix.getBuilder(tmpSize, tmpSize);
@@ -386,7 +387,7 @@ public abstract class FinanceUtils {
 
     /**
      * GrowthFactor = exp(GrowthRate)
-     * 
+     *
      * @param annualReturn Annualised return (percentage per year)
      * @param growthFactorUnit A growth factor unit
      * @return A growth factor per unit (day, week, month, year...)
@@ -399,7 +400,7 @@ public abstract class FinanceUtils {
 
     /**
      * GrowthRate = ln(1.0 + InterestRate) / GrowthRateUnitsPerYear
-     * 
+     *
      * @param annualReturn Annualised return (percentage per year)
      * @param growthRateUnit A growth rate unit
      * @return A growth rate per unit (day, week, month, year...)

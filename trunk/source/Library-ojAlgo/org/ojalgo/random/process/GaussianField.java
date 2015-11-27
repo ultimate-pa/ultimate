@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,10 +31,8 @@ import java.util.TreeSet;
 
 import org.ojalgo.constant.PrimitiveMath;
 import org.ojalgo.matrix.decomposition.Eigenvalue;
-import org.ojalgo.matrix.decomposition.EigenvalueDecomposition;
 import org.ojalgo.matrix.decomposition.MatrixDecomposition;
 import org.ojalgo.matrix.decomposition.SingularValue;
-import org.ojalgo.matrix.decomposition.SingularValueDecomposition;
 import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.matrix.store.PhysicalStore;
 import org.ojalgo.matrix.store.PhysicalStore.Factory;
@@ -43,15 +41,16 @@ import org.ojalgo.random.Normal1D;
 import org.ojalgo.type.keyvalue.ComparableToDouble;
 
 /**
- * A Gaussian process is a stochastic process whose realizations consist of random values associated with every point in
- * a range of times (or of space) such that each such random variable has a normal distribution. Moreover, every finite
- * collection of those random variables has a multivariate normal distribution. A random field is a generalization of a
- * stochastic process such that the underlying parameter need no longer be a simple real or integer valued "time", but
- * can instead take values that are multidimensional vectors, or points on some manifold. This GaussianField class is a
- * generalization, as well as the underlying implementation, of {@linkplain GaussianProcess}. Prior to calling
- * {@linkplain #getDistribution(boolean, double)} you must call {@linkplain #addObservation(double, double)} one or more
- * times.
- * 
+ * A Gaussian process is a stochastic process whose realizations consist of random values associated with
+ * every point in a range of times (or of space) such that each such random variable has a normal
+ * distribution. Moreover, every finite collection of those random variables has a multivariate normal
+ * distribution. A random field is a generalization of a stochastic process such that the underlying parameter
+ * need no longer be a simple real or integer valued "time", but can instead take values that are
+ * multidimensional vectors, or points on some manifold. This GaussianField class is a generalization, as well
+ * as the underlying implementation, of {@linkplain GaussianProcess}. Prior to calling
+ * {@linkplain #getDistribution(Comparable...)} you must call {@linkplain #addObservation(Comparable, double)}
+ * one or more times.
+ *
  * @author apete
  */
 public final class GaussianField<K extends Comparable<K>> {
@@ -137,24 +136,24 @@ public final class GaussianField<K extends Comparable<K>> {
         final MatrixStore<Double> tmpM2differenses = this.getM2differenses();
 
         final PrimitiveDenseStore tmpLocations = FACTORY.makeZero(tmpM1.countRows(), tmpM1.countColumns());
-        tmpLocations.fillMatching(tmpM1, ADD, tmpRegCoef.multiplyRight(tmpM2differenses));
+        tmpLocations.fillMatching(tmpM1, ADD, tmpRegCoef.multiply(tmpM2differenses));
 
         final MatrixStore<Double> tmpC11 = this.getC11(evaluationPoint);
         final MatrixStore<Double> tmpC21 = this.getC21(evaluationPoint);
 
         final PrimitiveDenseStore tmpCovariances = FACTORY.makeZero(tmpC11.countRows(), tmpC11.countColumns());
-        tmpCovariances.fillMatching(tmpC11, SUBTRACT, tmpRegCoef.multiplyRight(tmpC21));
+        tmpCovariances.fillMatching(tmpC11, SUBTRACT, tmpRegCoef.multiply(tmpC21));
 
         if (cleanCovariances) {
 
-            final Eigenvalue<Double> tmpEvD = EigenvalueDecomposition.makePrimitive(true);
-            tmpEvD.compute(tmpCovariances, false);
+            final Eigenvalue<Double> tmpEvD = Eigenvalue.makePrimitive(true);
+            tmpEvD.decompose(tmpCovariances);
 
             final MatrixStore<Double> tmpV = tmpEvD.getV();
             final PhysicalStore<Double> tmpD = tmpEvD.getD().copy();
 
             final double tmpLargest = tmpD.doubleValue(0, 0);
-            final double tmpLimit = Math.max(PrimitiveMath.MACHINE_DOUBLE_ERROR * tmpLargest, 1E-12);
+            final double tmpLimit = Math.max(PrimitiveMath.MACHINE_EPSILON * tmpLargest, 1E-12);
 
             final int tmpLength = (int) Math.min(tmpD.countRows(), tmpD.countColumns());
             for (int ij = 0; ij < tmpLength; ij++) {
@@ -163,7 +162,7 @@ public final class GaussianField<K extends Comparable<K>> {
                 }
             }
 
-            tmpCovariances.fillMatching(tmpD.multiplyLeft(tmpV).multiplyRight(tmpV.builder().transpose().build()));
+            tmpCovariances.fillMatching(tmpV.multiply(tmpD).multiply(tmpV.builder().transpose().build()));
         }
 
         return new Normal1D(tmpLocations, tmpCovariances);
@@ -224,7 +223,7 @@ public final class GaussianField<K extends Comparable<K>> {
         return retVal;
     }
 
-    MatrixDecomposition<Double> getC22() {
+    MatrixDecomposition.Solver<Double> getC22() {
 
         final List<ComparableToDouble<K>> tmpObservations = this.getObservations();
 
@@ -239,9 +238,9 @@ public final class GaussianField<K extends Comparable<K>> {
             }
         }
 
-        final SingularValue<Double> retVal = SingularValueDecomposition.makePrimitive();
+        final SingularValue<Double> retVal = SingularValue.makePrimitive();
 
-        retVal.compute(tmpMatrix);
+        retVal.decompose(tmpMatrix);
 
         return retVal;
     }

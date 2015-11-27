@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,12 +23,17 @@ package org.ojalgo.optimisation.integer;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.ojalgo.matrix.store.ZeroStore;
+import org.ojalgo.access.Access1D;
+import org.ojalgo.access.AccessUtils;
+import org.ojalgo.function.multiary.MultiaryFunction;
+import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.optimisation.ExpressionsBasedModel;
 import org.ojalgo.optimisation.GenericSolver;
 import org.ojalgo.optimisation.Optimisation;
 
 public abstract class IntegerSolver extends GenericSolver {
+
+    private final MultiaryFunction.TwiceDifferentiable<Double> myFunction;
 
     final class NodeStatistics {
 
@@ -75,8 +80,8 @@ public abstract class IntegerSolver extends GenericSolver {
         }
 
         /**
-         * Node evaluated, but solution not integer. Estimate still possible to find better integer solution. Created 2
-         * new branches.
+         * Node evaluated, but solution not integer. Estimate still possible to find better integer solution.
+         * Created 2 new branches.
          */
         boolean branched() {
             myBranched.incrementAndGet();
@@ -126,11 +131,23 @@ public abstract class IntegerSolver extends GenericSolver {
     private final boolean myMinimisation;
     private final NodeStatistics myNodeStatistics = new NodeStatistics();
 
-    public IntegerSolver(final ExpressionsBasedModel model, final Options solverOptions) {
+    @SuppressWarnings("unused")
+    private IntegerSolver(final Options solverOptions) {
+        this(null, solverOptions);
+    }
 
-        super(model, solverOptions);
+    protected IntegerSolver(final ExpressionsBasedModel model, final Options solverOptions) {
+
+        super(solverOptions);
+
+        myModel = model;
+        myFunction = model.objective().toFunction();
 
         myMinimisation = model.isMinimisation();
+    }
+
+    protected final boolean isFunctionSet() {
+        return myFunction != null;
     }
 
     protected int countIntegerSolutions() {
@@ -149,17 +166,27 @@ public abstract class IntegerSolver extends GenericSolver {
 
             final State tmpSate = State.INVALID;
             final double tmpValue = myMinimisation ? Double.POSITIVE_INFINITY : Double.NEGATIVE_INFINITY;
-            final ZeroStore<Double> tmpSolution = ZeroStore.PRIMITIVE.make(this.getModel().countVariables(), 1);
+            final MatrixStore<Double> tmpSolution = MatrixStore.PRIMITIVE.makeZero(this.getModel().countVariables(), 1).get();
 
             return new Optimisation.Result(tmpSate, tmpValue, tmpSolution);
         }
+    }
+
+    private final ExpressionsBasedModel myModel;
+
+    protected final ExpressionsBasedModel getModel() {
+        return myModel;
+    }
+
+    protected final boolean isModelSet() {
+        return myModel != null;
     }
 
     protected boolean isGoodEnoughToContinueBranching(final double nonIntegerValue) {
 
         final Result tmpCurrentlyTheBest = myBestResultSoFar;
 
-        if (tmpCurrentlyTheBest == null) {
+        if ((tmpCurrentlyTheBest == null) || Double.isNaN(nonIntegerValue)) {
 
             return true;
 
@@ -214,6 +241,24 @@ public abstract class IntegerSolver extends GenericSolver {
         }
 
         myIntegerSolutionsCount.incrementAndGet();
+    }
+
+    protected final MatrixStore<Double> getGradient(final Access1D<Double> solution) {
+        return myFunction.getGradient(solution);
+    }
+
+    @Override
+    protected final double evaluateFunction(final Access1D<?> solution) {
+        if ((myFunction != null) && (solution != null) && (myFunction.arity() == solution.count())) {
+            return myFunction.invoke(AccessUtils.asPrimitive1D(solution));
+        } else {
+            return Double.NaN;
+        }
+    }
+
+    public static OldIntegerSolver make(final ExpressionsBasedModel model) {
+        return new OldIntegerSolver(model, model.options);
+        //return new NewIntegerSolver(model, model.options);
     }
 
 }

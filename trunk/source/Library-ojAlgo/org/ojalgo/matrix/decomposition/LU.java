@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,12 +21,14 @@
  */
 package org.ojalgo.matrix.decomposition;
 
+import java.math.BigDecimal;
+
 import org.ojalgo.access.Access2D;
-import org.ojalgo.matrix.decomposition.task.DeterminantTask;
-import org.ojalgo.matrix.store.ColumnsStore;
-import org.ojalgo.matrix.store.IdentityStore;
+import org.ojalgo.array.BasicArray;
+import org.ojalgo.matrix.MatrixUtils;
+import org.ojalgo.matrix.store.ElementsSupplier;
 import org.ojalgo.matrix.store.MatrixStore;
-import org.ojalgo.matrix.store.RowsStore;
+import org.ojalgo.scalar.ComplexNumber;
 
 /**
  * LU: [A] = [L][U]
@@ -34,8 +36,8 @@ import org.ojalgo.matrix.store.RowsStore;
  * Decomposes [this] into [L] and [U] (with pivot order information in an int[]) where:
  * </p>
  * <ul>
- * <li>[L] is a unit lower (left) triangular matrix. It has the same number of rows as [this], and ones on the diagonal.
- * </li>
+ * <li>[L] is a unit lower (left) triangular matrix. It has the same number of rows as [this], and ones on the
+ * diagonal.</li>
  * <li>[U] is an upper (right) triangular matrix. It has the same number of columns as [this].</li>
  * <li>[this] = [L][U] (with reordered rows according to the pivot order)</li>
  * </ul>
@@ -43,46 +45,78 @@ import org.ojalgo.matrix.store.RowsStore;
  * Note: The number of columns in [L] and the number of rows in [U] is not specified by this interface.
  * </p>
  * <p>
- * The LU decomposition always exists - the compute method should always succeed - even for non-square and/or singular
- * matrices. The primary use of the LU decomposition is in the solution of systems of simultaneous linear equations.
- * That will, however, only work for square non-singular matrices.
+ * The LU decomposition always exists - the compute method should always succeed - even for non-square and/or
+ * singular matrices. The primary use of the LU decomposition is in the solution of systems of simultaneous
+ * linear equations. That will, however, only work for square non-singular matrices.
  * </p>
- * 
+ *
  * @author apete
  */
-public interface LU<N extends Number> extends MatrixDecomposition<N>, DeterminantTask<N> {
+public interface LU<N extends Number> extends LDU<N> {
+
+    @SuppressWarnings("unchecked")
+    public static <N extends Number> LU<N> make(final Access2D<N> typical) {
+
+        final N tmpNumber = typical.get(0, 0);
+
+        if (tmpNumber instanceof BigDecimal) {
+            return (LU<N>) new LUDecomposition.Big();
+        } else if (tmpNumber instanceof ComplexNumber) {
+            return (LU<N>) new LUDecomposition.Complex();
+        } else if (tmpNumber instanceof Double) {
+            if ((16L < typical.countColumns()) && (typical.count() <= BasicArray.MAX_ARRAY_SIZE)) {
+                return (LU<N>) new LUDecomposition.Primitive();
+            } else {
+                return (LU<N>) new RawLU();
+            }
+        } else {
+            throw new IllegalArgumentException();
+        }
+    }
+
+    public static LU<BigDecimal> makeBig() {
+        return new LUDecomposition.Big();
+    }
+
+    public static LU<ComplexNumber> makeComplex() {
+        return new LUDecomposition.Complex();
+    }
+
+    public static LU<Double> makePrimitive() {
+        return new LUDecomposition.Primitive();
+    }
 
     /**
-     * The normal {@link #compute(Access2D)} method must handle cases where pivoting is required. If you know that
-     * pivoting is not needed you may call this method instead - it's faster.
+     * The normal {@link #decompose(ElementsSupplier)} method must handle cases where pivoting is required. If
+     * you know that pivoting is not needed you may call this method instead - it may be faster. Note that the
+     * algorithm implementation may still pivot. Pivoting is optional not forbidden (or required).
      */
-    boolean computeWithoutPivoting(MatrixStore<?> matrix);
-
-    N getDeterminant();
+    boolean computeWithoutPivoting(ElementsSupplier<N> matrix);
 
     MatrixStore<N> getL();
 
     /**
-     * This can be used to create a [P] matrix using {@linkplain IdentityStore} in combination with
-     * {@linkplain RowsStore} or {@linkplain ColumnsStore}.
+     * This can be used to create a [P] matrix..
      */
     int[] getPivotOrder();
 
     int getRank();
 
-    int[] getReducedPivots();
-
     /**
      * http://en.wikipedia.org/wiki/Row_echelon_form <br>
      * <br>
-     * This is the same as [D][U]. Together with the pivotOrder and [L] this constitutes an alternative, more compact,
-     * way to express the decomposition.
-     * 
+     * This is the same as [D][U]. Together with the pivotOrder and [L] this constitutes an alternative, more
+     * compact, way to express the decomposition.
+     *
      * @see #getPivotOrder()
      * @see #getL()
      */
     MatrixStore<N> getU();
 
     boolean isSquareAndNotSingular();
+
+    default MatrixStore<N> reconstruct() {
+        return MatrixUtils.reconstruct(this);
+    }
 
 }

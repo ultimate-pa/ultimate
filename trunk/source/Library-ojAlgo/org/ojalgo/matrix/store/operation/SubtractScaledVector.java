@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,42 +28,52 @@ import org.ojalgo.scalar.ComplexNumber;
 
 /**
  * y -= ax
- * 
- * @param data y-data
- * @param dataBaseIndex y-column base index
- * @param vector x-data
- * @param vectorBaseIndex x-column base index
- * @param scalar a
- * @param first First index
- * @param limit Index limit
  */
 public final class SubtractScaledVector extends MatrixOperation {
 
+    public static final SubtractScaledVector SETUP = new SubtractScaledVector();
+
     public static int THRESHOLD = 128;
 
-    public static void invoke(final BigDecimal[] data, final int dataBaseIndex, final BigDecimal[] vector, final int vectorBaseIndex, final BigDecimal scalar,
+    /**
+     * y -= ax
+     *
+     * @param data y-data
+     * @param dataIndexBase y-column base index
+     * @param vector x-data
+     * @param vectorIndexBase x-column base index
+     * @param scalar a
+     * @param first First index
+     * @param limit Index limit
+     */
+    public static void invoke(final BigDecimal[] data, final int dataIndexBase, final BigDecimal[] vector, final int vectorIndexBase, final BigDecimal scalar,
             final int first, final int limit) {
         for (int i = first; i < limit; i++) {
-            data[dataBaseIndex + i] = BigFunction.SUBTRACT.invoke(data[dataBaseIndex + i], BigFunction.MULTIPLY.invoke(scalar, vector[vectorBaseIndex + i])); // y -= ax
+            data[dataIndexBase + i] = BigFunction.SUBTRACT.invoke(data[dataIndexBase + i], BigFunction.MULTIPLY.invoke(scalar, vector[vectorIndexBase + i])); // y -= ax
         }
     }
 
-    public static void invoke(final ComplexNumber[] data, final int dataBaseIndex, final ComplexNumber[] vector, final int vectorBaseIndex,
+    public static void invoke(final ComplexNumber[] data, final int dataIndexBase, final ComplexNumber[] vector, final int vectorIndexBase,
             final ComplexNumber scalar, final int first, final int limit) {
         for (int i = first; i < limit; i++) {
-            data[dataBaseIndex + i] = data[dataBaseIndex + i].subtract(scalar.multiply(vector[vectorBaseIndex + i])); // y -= ax
+            data[dataIndexBase + i] = data[dataIndexBase + i].subtract(scalar.multiply(vector[vectorIndexBase + i])); // y -= ax
         }
     }
 
-    public static void invoke(final double[] data, final int dataBaseIndex, final double[] vector, final int vectorBaseIndex, final double scalar,
+    public static void invoke(final double[] data, final int dataIndexBase, final double[] vector, final int vectorIndexBase, final double scalar,
             final int first, final int limit) {
         for (int i = first; i < limit; i++) {
-            data[dataBaseIndex + i] -= scalar * vector[vectorBaseIndex + i]; // y -= ax
+            data[dataIndexBase + i] -= scalar * vector[vectorIndexBase + i]; // y -= ax
         }
     }
 
     private SubtractScaledVector() {
         super();
+    }
+
+    @Override
+    public int threshold() {
+        return THRESHOLD;
     }
 
 }

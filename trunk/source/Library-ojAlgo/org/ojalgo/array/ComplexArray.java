@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,21 +26,17 @@ import static org.ojalgo.constant.PrimitiveMath.*;
 import java.util.Arrays;
 
 import org.ojalgo.access.Access1D;
-import org.ojalgo.function.BinaryFunction;
-import org.ojalgo.function.ParameterFunction;
-import org.ojalgo.function.UnaryFunction;
-import org.ojalgo.function.VoidFunction;
+import org.ojalgo.function.FunctionUtils;
 import org.ojalgo.machine.MemoryEstimator;
 import org.ojalgo.scalar.ComplexNumber;
 import org.ojalgo.scalar.Scalar;
-import org.ojalgo.type.TypeUtils;
 
 /**
  * A one- and/or arbitrary-dimensional array of {@linkplain org.ojalgo.scalar.ComplexNumber}.
  *
  * @author apete
  */
-public class ComplexArray extends DenseArray<ComplexNumber> {
+public class ComplexArray extends ReferenceTypeArray<ComplexNumber> {
 
     static final long ELEMENT_SIZE = MemoryEstimator.estimateObject(ComplexNumber.class);
 
@@ -68,99 +64,23 @@ public class ComplexArray extends DenseArray<ComplexNumber> {
     }
 
     public static final SegmentedArray<ComplexNumber> makeSegmented(final long count) {
-        return SegmentedArray.COMPLEX.makeSegmented(FACTORY, count);
+        return SegmentedArray.make(FACTORY, count);
     }
 
     public static final ComplexArray wrap(final ComplexNumber[] data) {
         return new ComplexArray(data);
     }
 
-    protected static void exchange(final ComplexNumber[] data, final int firstA, final int firstB, final int step, final int aCount) {
-
-        int tmpIndexA = firstA;
-        int tmpIndexB = firstB;
-
-        ComplexNumber tmpVal;
-
-        for (int i = 0; i < aCount; i++) {
-
-            tmpVal = data[tmpIndexA];
-            data[tmpIndexA] = data[tmpIndexB];
-            data[tmpIndexB] = tmpVal;
-
-            tmpIndexA += step;
-            tmpIndexB += step;
-        }
-    }
-
-    protected static void fill(final ComplexNumber[] data, final Access1D<?> value) {
-        final int tmpLimit = (int) Math.min(data.length, value.count());
-        for (int i = 0; i < tmpLimit; i++) {
-            data[i] = TypeUtils.toComplexNumber(value.get(i));
-        }
-    }
-
-    protected static void fill(final ComplexNumber[] data, final int first, final int limit, final int step, final ComplexNumber value) {
-        for (int i = first; i < limit; i += step) {
-            data[i] = value;
-        }
-    }
-
-    protected static void invoke(final ComplexNumber[] data, final int first, final int limit, final int step, final Access1D<ComplexNumber> left,
-            final BinaryFunction<ComplexNumber> function, final Access1D<ComplexNumber> right) {
-        for (int i = first; i < limit; i += step) {
-            data[i] = function.invoke(left.get(i), right.get(i));
-        }
-    }
-
-    protected static void invoke(final ComplexNumber[] data, final int first, final int limit, final int step, final Access1D<ComplexNumber> left,
-            final BinaryFunction<ComplexNumber> function, final ComplexNumber right) {
-        for (int i = first; i < limit; i += step) {
-            data[i] = function.invoke(left.get(i), right);
-        }
-    }
-
-    protected static void invoke(final ComplexNumber[] data, final int first, final int limit, final int step, final Access1D<ComplexNumber> value,
-            final ParameterFunction<ComplexNumber> function, final int aParam) {
-        for (int i = first; i < limit; i += step) {
-            data[i] = function.invoke(value.get(i), aParam);
-        }
-    }
-
-    protected static void invoke(final ComplexNumber[] data, final int first, final int limit, final int step, final Access1D<ComplexNumber> value,
-            final UnaryFunction<ComplexNumber> function) {
-        for (int i = first; i < limit; i += step) {
-            data[i] = function.invoke(value.get(i));
-        }
-    }
-
-    protected static void invoke(final ComplexNumber[] data, final int first, final int limit, final int step, final ComplexNumber left,
-            final BinaryFunction<ComplexNumber> function, final Access1D<ComplexNumber> right) {
-        for (int i = first; i < limit; i += step) {
-            data[i] = function.invoke(left, right.get(i));
-        }
-    }
-
-    protected static void invoke(final ComplexNumber[] data, final int first, final int limit, final int step, final VoidFunction<ComplexNumber> aVisitor) {
-        for (int i = first; i < limit; i += step) {
-            aVisitor.invoke(data[i]);
-        }
-    }
-
-    public final ComplexNumber[] data;
-
     protected ComplexArray(final ComplexNumber[] data) {
 
-        super();
+        super(data);
 
-        this.data = data;
     }
 
     protected ComplexArray(final int size) {
 
-        super();
+        super(new ComplexNumber[size]);
 
-        data = new ComplexNumber[size];
         this.fill(0, size, 1, ComplexNumber.ZERO);
     }
 
@@ -173,59 +93,30 @@ public class ComplexArray extends DenseArray<ComplexNumber> {
         }
     }
 
+    public final void fillMatching(final Access1D<?> values) {
+        final int tmpLimit = (int) FunctionUtils.min(this.count(), values.count());
+        for (int i = 0; i < tmpLimit; i++) {
+            data[i] = ComplexNumber.valueOf(values.get(i));
+        }
+    }
+
     @Override
     public int hashCode() {
         return Arrays.hashCode(data);
     }
 
-    protected final ComplexNumber[] copyOfData() {
-        return ArrayUtils.copyOf(data);
+    @Override
+    protected final void add(final int index, final double addend) {
+        this.fillOne(index, this.get(index).add(this.valueOf(addend)));
     }
 
     @Override
-    protected double doubleValue(final int index) {
-        return data[index].doubleValue();
+    protected final void add(final int index, final Number addend) {
+        this.fillOne(index, this.get(index).add(this.valueOf(addend)));
     }
 
     @Override
-    protected final void exchange(final int firstA, final int firstB, final int step, final int count) {
-        ComplexArray.exchange(data, firstA, firstB, step, count);
-    }
-
-    protected void fill(final Access1D<?> value) {
-        ComplexArray.fill(data, value);
-    }
-
-    @Override
-    protected final void fill(final int first, final int limit, final Access1D<ComplexNumber> left, final BinaryFunction<ComplexNumber> function,
-            final Access1D<ComplexNumber> right) {
-        ComplexArray.invoke(data, first, limit, 1, left, function, right);
-    }
-
-    @Override
-    protected final void fill(final int first, final int limit, final Access1D<ComplexNumber> left, final BinaryFunction<ComplexNumber> function,
-            final ComplexNumber right) {
-        ComplexArray.invoke(data, first, limit, 1, left, function, right);
-    }
-
-    @Override
-    protected final void fill(final int first, final int limit, final ComplexNumber left, final BinaryFunction<ComplexNumber> function,
-            final Access1D<ComplexNumber> right) {
-        ComplexArray.invoke(data, first, limit, 1, left, function, right);
-    }
-
-    @Override
-    protected final void fill(final int first, final int limit, final int step, final ComplexNumber value) {
-        ComplexArray.fill(data, first, limit, step, value);
-    }
-
-    @Override
-    protected final ComplexNumber get(final int index) {
-        return data[index];
-    }
-
-    @Override
-    protected final int indexOfLargest(final int first, final int limit, final int step) {
+    protected int indexOfLargest(final int first, final int limit, final int step) {
 
         int retVal = first;
         double tmpLargest = ZERO;
@@ -243,145 +134,28 @@ public class ComplexArray extends DenseArray<ComplexNumber> {
     }
 
     @Override
-    protected final boolean isAbsolute(final int index) {
+    protected boolean isAbsolute(final int index) {
         return ComplexNumber.isAbsolute(data[index]);
     }
 
     @Override
-    protected final boolean isInfinite(final int index) {
-        return ComplexNumber.isInfinite(data[index]);
-    }
-
-    @Override
-    protected final boolean isNaN(final int index) {
-        return ComplexNumber.isNaN(data[index]);
-    }
-
-    @Override
-    protected final boolean isPositive(final int index) {
-        return ComplexNumber.isPositive(data[index]);
-    }
-
-    @Override
-    protected final boolean isReal(final int index) {
-        return ComplexNumber.isReal(data[index]);
-    }
-
-    @Override
-    protected final boolean isZero(final int index) {
-        return data[index].isZero();
-    }
-
-    @Override
-    protected final boolean isZeros(final int first, final int limit, final int step) {
-
-        boolean retVal = true;
-
-        for (int i = first; retVal && (i < limit); i += step) {
-            retVal &= this.isZero(i);
-        }
-
-        return retVal;
-    }
-
-    @Override
-    protected void modify(final int index, final Access1D<ComplexNumber> left, final BinaryFunction<ComplexNumber> function) {
-        // TODO Auto-generated method stub
-    }
-
-    @Override
-    protected void modify(final int index, final BinaryFunction<ComplexNumber> function, final Access1D<ComplexNumber> right) {
-        // TODO Auto-generated method stub
-    }
-
-    @Override
-    protected final void modify(final int first, final int limit, final int step, final Access1D<ComplexNumber> left,
-            final BinaryFunction<ComplexNumber> function) {
-        ComplexArray.invoke(data, first, limit, step, left, function, this);
-    }
-
-    @Override
-    protected final void modify(final int first, final int limit, final int step, final BinaryFunction<ComplexNumber> function,
-            final Access1D<ComplexNumber> right) {
-        ComplexArray.invoke(data, first, limit, step, this, function, right);
-    }
-
-    @Override
-    protected final void modify(final int first, final int limit, final int step, final BinaryFunction<ComplexNumber> function, final ComplexNumber right) {
-        ComplexArray.invoke(data, first, limit, step, this, function, right);
-    }
-
-    @Override
-    protected final void modify(final int first, final int limit, final int step, final ComplexNumber left, final BinaryFunction<ComplexNumber> function) {
-        ComplexArray.invoke(data, first, limit, step, left, function, this);
-    }
-
-    @Override
-    protected final void modify(final int first, final int limit, final int step, final ParameterFunction<ComplexNumber> function, final int parameter) {
-        ComplexArray.invoke(data, first, limit, step, this, function, parameter);
-    }
-
-    @Override
-    protected final void modify(final int first, final int limit, final int step, final UnaryFunction<ComplexNumber> function) {
-        ComplexArray.invoke(data, first, limit, step, this, function);
-    }
-
-    @Override
-    protected void modify(final int index, final UnaryFunction<ComplexNumber> function) {
-        data[index] = function.invoke(data[index]);
-    }
-
-    /**
-     * @see org.ojalgo.array.BasicArray#searchAscending(java.lang.Number)
-     */
-    @Override
-    protected final int searchAscending(final ComplexNumber value) {
-        return Arrays.binarySearch(data, value);
-    }
-
-    @Override
-    protected final void set(final int index, final double value) {
-        data[index] = ComplexNumber.makeReal(value);
-    }
-
-    @Override
-    protected final void set(final int index, final Number value) {
-        data[index] = TypeUtils.toComplexNumber(value);
-    }
-
-    @Override
-    protected int size() {
-        return data.length;
-    }
-
-    @Override
-    protected final void sortAscending() {
-        Arrays.sort(data);
-    }
-
-    @Override
-    protected final ComplexNumber toScalar(final long index) {
-        return data[(int) index];
-    }
-
-    @Override
-    protected final void visit(final int first, final int limit, final int step, final VoidFunction<ComplexNumber> visitor) {
-        ComplexArray.invoke(data, first, limit, step, visitor);
-    }
-
-    @Override
-    protected final void visit(final int index, final VoidFunction<ComplexNumber> visitor) {
-        visitor.invoke(data[index]);
-    }
-
-    @Override
-    boolean isPrimitive() {
-        return false;
+    protected boolean isSmall(final int index, final double comparedTo) {
+        return ComplexNumber.isSmall(comparedTo, data[index]);
     }
 
     @Override
     DenseArray<ComplexNumber> newInstance(final int capacity) {
         return new ComplexArray(capacity);
+    }
+
+    @Override
+    ComplexNumber valueOf(final double value) {
+        return ComplexNumber.valueOf(value);
+    }
+
+    @Override
+    ComplexNumber valueOf(final Number number) {
+        return ComplexNumber.valueOf(number);
     }
 
 }

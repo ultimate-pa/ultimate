@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,15 +26,15 @@ import java.math.BigDecimal;
 import org.ojalgo.scalar.ComplexNumber;
 
 /**
- * [A] -= ([a][b]<sup>c</sup>+[b][a]<sup>c</sup>)
- * <br>
- * [A] is assumed to be hermitian (square symmetric) [A] = [A]<sup>C</sup>.
- * <br>
+ * [A] -= ([a][b]<sup>c</sup>+[b][a]<sup>c</sup>) <br>
+ * [A] is assumed to be hermitian (square symmetric) [A] = [A]<sup>C</sup>. <br>
  * <sup>C</sup> == conjugate transpose
  *
  * @author apete
  */
 public final class HermitianRank2Update extends MatrixOperation {
+
+    public static final HermitianRank2Update SETUP = new HermitianRank2Update();
 
     public static int THRESHOLD = 64;
 
@@ -103,6 +103,11 @@ public final class HermitianRank2Update extends MatrixOperation {
 
     private HermitianRank2Update() {
         super();
+    }
+
+    @Override
+    public int threshold() {
+        return THRESHOLD;
     }
 
 }

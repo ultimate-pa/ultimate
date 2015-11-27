@@ -1,16 +1,16 @@
-/* 
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
- * 
+/*
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -25,14 +25,14 @@ import static org.ojalgo.constant.BigMath.*;
 
 import java.math.BigDecimal;
 
-import org.ojalgo.function.aggregator.AggregatorCollection;
-import org.ojalgo.function.aggregator.AggregatorFunction;
-import org.ojalgo.function.aggregator.BigAggregator;
+import org.ojalgo.access.IntIndex;
+import org.ojalgo.netio.BasicLogger;
+import org.ojalgo.type.TypeUtils;
 import org.ojalgo.type.context.NumberContext;
 
 /**
  * Variable
- * 
+ *
  * @author apete
  */
 public final class Variable extends ModelEntity<Variable> {
@@ -45,9 +45,7 @@ public final class Variable extends ModelEntity<Variable> {
         return Variable.make(name).binary();
     }
 
-    private transient int myAdjustmentExponent = Integer.MIN_VALUE;
-
-    private Expression.Index myIndex = null;
+    private IntIndex myIndex = null;
     private boolean myInteger = false;
     private BigDecimal myValue = null;
 
@@ -55,13 +53,13 @@ public final class Variable extends ModelEntity<Variable> {
         super(name);
     }
 
-    protected Variable(final Variable entityToCopy) {
+    protected Variable(final Variable variableToCopy) {
 
-        super(entityToCopy);
+        super(variableToCopy);
 
         myIndex = null;
-        myInteger = entityToCopy.isInteger();
-        myValue = entityToCopy.getValue();
+        myInteger = variableToCopy.isInteger();
+        myValue = variableToCopy.getValue();
     }
 
     public Variable binary() {
@@ -122,8 +120,8 @@ public final class Variable extends ModelEntity<Variable> {
         return myValue;
     }
 
-    public Variable integer(final boolean aBool) {
-        this.setInteger(aBool);
+    public Variable integer(final boolean integer) {
+        this.setInteger(integer);
         return this;
     }
 
@@ -131,15 +129,23 @@ public final class Variable extends ModelEntity<Variable> {
 
         boolean retVal = this.isInteger();
 
-        retVal &= this.isLowerConstraint() && this.getLowerLimit().equals(ZERO);
+        retVal &= this.isLowerConstraint() && (this.getLowerLimit().compareTo(ZERO) == 0);
 
-        retVal &= this.isUpperConstraint() && this.getUpperLimit().equals(ONE);
+        retVal &= this.isUpperConstraint() && (this.getUpperLimit().compareTo(ONE) == 0);
 
         return retVal;
     }
 
     public boolean isInteger() {
         return myInteger;
+    }
+
+    public boolean isNegative() {
+        return !this.isLowerLimitSet() || (this.getLowerLimit().signum() < 0);
+    }
+
+    public boolean isPositive() {
+        return !this.isUpperLimitSet() || (this.getUpperLimit().signum() > 0);
     }
 
     public boolean isValueSet() {
@@ -162,26 +168,12 @@ public final class Variable extends ModelEntity<Variable> {
         return this.integer(false);
     }
 
-    public void setInteger(final boolean aBool) {
-        myInteger = aBool;
-        myAdjustmentExponent = Integer.MIN_VALUE;
+    public void setInteger(final boolean integer) {
+        myInteger = integer;
     }
 
-    public void setValue(final BigDecimal aValue) {
-        myValue = aValue;
-        myAdjustmentExponent = Integer.MIN_VALUE;
-    }
-
-    public boolean validate(final NumberContext context) {
-
-        if (myValue != null) {
-
-            return this.validate(myValue, context);
-
-        } else {
-
-            return false;
-        }
+    public void setValue(final Number value) {
+        myValue = TypeUtils.toBigDecimal(value);
     }
 
     @Override
@@ -211,45 +203,17 @@ public final class Variable extends ModelEntity<Variable> {
     }
 
     @Override
-    protected int getAdjustmentExponent() {
+    protected boolean validate(final BigDecimal value, final NumberContext context, final BasicLogger.Printer appender) {
 
-        if (myAdjustmentExponent == Integer.MIN_VALUE) {
-
-            final AggregatorCollection<BigDecimal> tmpCollection = BigAggregator.getCollection();
-            final AggregatorFunction<BigDecimal> tmpLargestAggr = tmpCollection.largest();
-            final AggregatorFunction<BigDecimal> tmpSmallestAggr = tmpCollection.smallest();
-
-            tmpLargestAggr.invoke(ONE);
-            tmpSmallestAggr.invoke(ONE);
-
-            final BigDecimal tmpLowerLimit = this.getLowerLimit();
-            if (tmpLowerLimit != null) {
-                tmpLargestAggr.invoke(tmpLowerLimit);
-                tmpSmallestAggr.invoke(tmpLowerLimit);
-            }
-
-            final BigDecimal tmpUpperLimit = this.getUpperLimit();
-            if (tmpUpperLimit != null) {
-                tmpLargestAggr.invoke(tmpUpperLimit);
-                tmpSmallestAggr.invoke(tmpUpperLimit);
-            }
-
-            myAdjustmentExponent = OptimisationUtils.getAdjustmentFactorExponent(tmpLargestAggr, tmpSmallestAggr);
-        }
-
-        return myAdjustmentExponent;
-    }
-
-    @Override
-    protected boolean validate(final BigDecimal value, final NumberContext context) {
-
-        boolean retVal = super.validate(value, context);
+        boolean retVal = super.validate(value, context, appender);
 
         if (retVal && myInteger) {
             try {
                 context.enforce(value).longValueExact();
             } catch (final ArithmeticException ex) {
-                //BasicLogger.logError(value + " ! Integer: " + this.getName());
+                if (appender != null) {
+                    appender.println(value + " ! Integer: " + this.getName());
+                }
                 retVal = false;
             }
         }
@@ -257,15 +221,27 @@ public final class Variable extends ModelEntity<Variable> {
         return retVal;
     }
 
-    Expression.Index getIndex() {
+    protected boolean validate(final NumberContext context, final BasicLogger.Printer appender) {
+
+        if (myValue != null) {
+
+            return this.validate(myValue, context, appender);
+
+        } else {
+
+            return false;
+        }
+    }
+
+    IntIndex getIndex() {
         return myIndex;
     }
 
-    void setIndex(final Expression.Index index) {
+    void setIndex(final IntIndex index) {
         if (index == null) {
             throw new IllegalArgumentException("The index cannot be null!");
         } else if ((myIndex != null) && (myIndex.index != index.index)) {
-            throw new IllegalStateException("Cannot change a variable's index, or add it to more than one model!");
+            throw new IllegalStateException("Cannot change a variable's index, or add a variable to more than one model!");
         }
         myIndex = index;
     }

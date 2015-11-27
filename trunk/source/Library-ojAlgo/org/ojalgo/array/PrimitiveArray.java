@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,11 +24,17 @@ package org.ojalgo.array;
 import static org.ojalgo.constant.PrimitiveMath.*;
 
 import java.util.Arrays;
+import java.util.Spliterator.OfDouble;
+import java.util.Spliterators;
+import java.util.stream.DoubleStream;
+import java.util.stream.StreamSupport;
 
 import org.ojalgo.access.Access1D;
 import org.ojalgo.function.BinaryFunction;
 import org.ojalgo.function.BinaryFunction.FixedFirst;
 import org.ojalgo.function.BinaryFunction.FixedSecond;
+import org.ojalgo.function.FunctionUtils;
+import org.ojalgo.function.NullaryFunction;
 import org.ojalgo.function.ParameterFunction;
 import org.ojalgo.function.ParameterFunction.FixedParameter;
 import org.ojalgo.function.PrimitiveFunction;
@@ -37,7 +43,6 @@ import org.ojalgo.function.VoidFunction;
 import org.ojalgo.machine.JavaType;
 import org.ojalgo.scalar.PrimitiveScalar;
 import org.ojalgo.scalar.Scalar;
-import org.ojalgo.type.TypeUtils;
 
 /**
  * A one- and/or arbitrary-dimensional array of double.
@@ -49,6 +54,16 @@ public class PrimitiveArray extends DenseArray<Double> {
     static final long ELEMENT_SIZE = JavaType.DOUBLE.memory();
 
     static final DenseFactory<Double> FACTORY = new DenseFactory<Double>() {
+
+        @Override
+        public final BasicArray<Double> makeFilled(final long count, final NullaryFunction<?> supplier) {
+            final int tmpSize = (int) count;
+            final double[] tmpData = new double[tmpSize];
+            for (int i = 0; i < tmpSize; i++) {
+                tmpData[i] = supplier.doubleValue();
+            }
+            return new PrimitiveArray(tmpData);
+        }
 
         @Override
         long getElementSize() {
@@ -72,11 +87,11 @@ public class PrimitiveArray extends DenseArray<Double> {
     }
 
     public static final SegmentedArray<Double> makeSegmented(final int size) {
-        return SegmentedArray.PRIMITIVE.makeSegmented(FACTORY, size);
+        return SegmentedArray.make(FACTORY, size);
     }
 
     public static final SegmentedArray<Double> makeSegmented(final long count) {
-        return SegmentedArray.PRIMITIVE.makeSegmented(FACTORY, count);
+        return SegmentedArray.make(FACTORY, count);
     }
 
     public static final PrimitiveArray wrap(final double[] data) {
@@ -186,9 +201,15 @@ public class PrimitiveArray extends DenseArray<Double> {
         }
     }
 
-    protected static void fill(final double[] data, final int first, final int limit, final int step, final double aVal) {
+    protected static void fill(final double[] data, final int first, final int limit, final int step, final double value) {
         for (int i = first; i < limit; i += step) {
-            data[i] = aVal;
+            data[i] = value;
+        }
+    }
+
+    protected static void fill(final double[] data, final int first, final int limit, final int step, final NullaryFunction<Double> supplier) {
+        for (int i = first; i < limit; i += step) {
+            data[i] = supplier.doubleValue();
         }
     }
 
@@ -316,13 +337,13 @@ public class PrimitiveArray extends DenseArray<Double> {
             PrimitiveArray.negate(data, first, limit, step, values);
         } else if (function instanceof FixedFirst<?>) {
             final FixedFirst<Double> tmpFunc = (FixedFirst<Double>) function;
-            PrimitiveArray.invoke(data, first, limit, step, tmpFunc.doubleValue(), tmpFunc.getFunction(), data);
+            PrimitiveArray.invoke(data, first, limit, step, tmpFunc.doubleValue(), tmpFunc.getFunction(), values);
         } else if (function instanceof FixedSecond<?>) {
             final FixedSecond<Double> tmpFunc = (FixedSecond<Double>) function;
-            PrimitiveArray.invoke(data, first, limit, step, data, tmpFunc.getFunction(), tmpFunc.doubleValue());
+            PrimitiveArray.invoke(data, first, limit, step, values, tmpFunc.getFunction(), tmpFunc.doubleValue());
         } else if (function instanceof FixedParameter<?>) {
             final FixedParameter<Double> tmpFunc = (FixedParameter<Double>) function;
-            PrimitiveArray.invoke(data, first, limit, step, data, tmpFunc.getFunction(), tmpFunc.getParameter());
+            PrimitiveArray.invoke(data, first, limit, step, values, tmpFunc.getFunction(), tmpFunc.getParameter());
         } else {
             for (int i = first; i < limit; i += step) {
                 data[i] = function.invoke(values[i]);
@@ -358,9 +379,41 @@ public class PrimitiveArray extends DenseArray<Double> {
         }
     }
 
+    public final void fillMatching(final Access1D<?> values) {
+        PrimitiveArray.fill(data, values);
+    }
+
+    public final void fillMatching(final Access1D<Double> left, final BinaryFunction<Double> function, final Access1D<Double> right) {
+        final int tmpLimit = (int) FunctionUtils.min(this.count(), left.count(), right.count());
+        PrimitiveArray.invoke(data, 0, tmpLimit, 1, left, function, right);
+    }
+
+    public final void fillMatching(final UnaryFunction<Double> function, final Access1D<Double> arguments) {
+        final int tmpLimit = (int) FunctionUtils.min(this.count(), arguments.count());
+        PrimitiveArray.invoke(data, 0, tmpLimit, 1, arguments, function);
+    }
+
     @Override
     public int hashCode() {
         return Arrays.hashCode(data);
+    }
+
+    public OfDouble spliterator() {
+        return Spliterators.spliterator(data, 0, data.length, DenseArray.CHARACTERISTICS);
+    }
+
+    public DoubleStream stream(final boolean parallel) {
+        return StreamSupport.doubleStream(this.spliterator(), parallel);
+    }
+
+    @Override
+    protected void add(final int index, final double addend) {
+        data[index] += addend;
+    }
+
+    @Override
+    protected void add(final int index, final Number addend) {
+        data[index] += addend.doubleValue();
     }
 
     protected final double[] copyOfData() {
@@ -377,12 +430,9 @@ public class PrimitiveArray extends DenseArray<Double> {
         PrimitiveArray.exchange(data, firstA, firstB, step, count);
     }
 
-    protected void fill(final Access1D<?> values) {
-        PrimitiveArray.fill(data, values);
-    }
-
     @Override
-    protected final void fill(final int first, final int limit, final Access1D<Double> left, final BinaryFunction<Double> function, final Access1D<Double> right) {
+    protected final void fill(final int first, final int limit, final Access1D<Double> left, final BinaryFunction<Double> function,
+            final Access1D<Double> right) {
         PrimitiveArray.invoke(data, first, limit, 1, left, function, right);
     }
 
@@ -399,6 +449,26 @@ public class PrimitiveArray extends DenseArray<Double> {
     @Override
     protected final void fill(final int first, final int limit, final int step, final Double value) {
         PrimitiveArray.fill(data, first, limit, step, value);
+    }
+
+    @Override
+    protected final void fill(final int first, final int limit, final int step, final NullaryFunction<Double> supplier) {
+        PrimitiveArray.fill(data, first, limit, step, supplier);
+    }
+
+    @Override
+    protected void fillOne(final int index, final Double value) {
+        data[index] = value;
+    }
+
+    @Override
+    protected void fillOne(final int index, final NullaryFunction<Double> supplier) {
+        data[index] = supplier.doubleValue();
+    }
+
+    @Override
+    protected void fillOneMatching(final int index, final Access1D<?> values, final long valueIndex) {
+        data[index] = values.doubleValue(valueIndex);
     }
 
     @Override
@@ -425,57 +495,23 @@ public class PrimitiveArray extends DenseArray<Double> {
     }
 
     @Override
-    protected final boolean isAbsolute(final int index) {
+    protected boolean isAbsolute(final int index) {
         return PrimitiveScalar.isAbsolute(data[index]);
     }
 
     @Override
-    protected final boolean isInfinite(final int index) {
-        return PrimitiveScalar.isInfinite(data[index]);
-    }
-
-    @Override
-    protected final boolean isNaN(final int index) {
-        return PrimitiveScalar.isNaN(data[index]);
-    }
-
-    @Override
-    protected final boolean isPositive(final int index) {
-        return PrimitiveScalar.isPositive(data[index]);
-    }
-
-    @Override
-    protected final boolean isReal(final int index) {
-        return PrimitiveScalar.IS_REAL;
-    }
-
-    @Override
-    protected final boolean isZero(final int index) {
-        return TypeUtils.isZero(data[index]);
-    }
-
-    @Override
-    protected final boolean isZeros(final int first, final int limit, final int step) {
-
-        boolean retVal = true;
-
-        for (int i = first; retVal && (i < limit); i += step) {
-            retVal &= TypeUtils.isZero(data[i]);
-        }
-
-        return retVal;
+    protected boolean isSmall(final int index, final double comparedTo) {
+        return PrimitiveScalar.isSmall(comparedTo, data[index]);
     }
 
     @Override
     protected void modify(final int index, final Access1D<Double> left, final BinaryFunction<Double> function) {
-        // TODO Auto-generated method stub
-
+        data[index] = function.invoke(left.doubleValue(index), data[index]);
     }
 
     @Override
     protected void modify(final int index, final BinaryFunction<Double> function, final Access1D<Double> right) {
-        // TODO Auto-generated method stub
-
+        data[index] = function.invoke(data[index], right.doubleValue(index));
     }
 
     @Override
@@ -539,17 +575,12 @@ public class PrimitiveArray extends DenseArray<Double> {
     }
 
     @Override
-    protected final Scalar<Double> toScalar(final long index) {
-        return new PrimitiveScalar(data[(int) index]);
-    }
-
-    @Override
     protected final void visit(final int first, final int limit, final int step, final VoidFunction<Double> visitor) {
         PrimitiveArray.invoke(data, first, limit, step, visitor);
     }
 
     @Override
-    protected final void visit(final int index, final VoidFunction<Double> visitor) {
+    protected void visitOne(final int index, final VoidFunction<Double> visitor) {
         visitor.invoke(data[index]);
     }
 
@@ -561,6 +592,10 @@ public class PrimitiveArray extends DenseArray<Double> {
     @Override
     DenseArray<Double> newInstance(final int capacity) {
         return new PrimitiveArray(capacity);
+    }
+
+    OfDouble split() {
+        return Spliterators.spliterator(data, 0);
     }
 
 }

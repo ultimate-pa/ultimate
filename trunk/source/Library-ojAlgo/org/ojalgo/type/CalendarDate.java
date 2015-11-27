@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,10 @@
  */
 package org.ojalgo.type;
 
-import java.io.Serializable;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneOffset;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -31,148 +34,28 @@ import java.util.TimeZone;
 /**
  * Corresponds to a {@linkplain Calendar} AND a {@linkplain Date}. It is immutable and interacts with
  * {@linkplain CalendarDateUnit}.
- * 
+ *
  * @author apete
  */
 public final class CalendarDate implements Comparable<CalendarDate> {
 
-    public static final class DateAndTime implements Comparable<DateAndTime>, Serializable {
+    static final int NANOS_PER_SECOND = 1_000_000_000;
+    static final long SECONDS_PER_DAY = 24L * 60L * 60L;
 
-        private final java.sql.Timestamp myDelegate;
-
-        public DateAndTime(final String timestamp) {
-
-            super();
-
-            myDelegate = java.sql.Timestamp.valueOf(timestamp);
-        }
-
-        DateAndTime(final long millis) {
-
-            super();
-
-            myDelegate = TypeUtils.makeSqlTimestamp(millis);
-        }
-
-        public boolean after(final DateAndTime when) {
-            return myDelegate.after(when.getDelegate());
-        }
-
-        public boolean before(final DateAndTime when) {
-            return myDelegate.before(when.getDelegate());
-        }
-
-        public int compareTo(final DateAndTime o) {
-            return myDelegate.compareTo(o.getDelegate());
-        }
-
-        @Override
-        public String toString() {
-            return myDelegate.toString();
-        }
-
-        java.sql.Timestamp getDelegate() {
-            return myDelegate;
-        }
-
+    public static CalendarDate make(final Calendar aCalendar, final CalendarDateUnit resolution) {
+        return new CalendarDate(resolution.toTimeInMillis(aCalendar));
     }
 
-    public static final class DateOnly implements Comparable<DateOnly>, Serializable {
-
-        private final java.sql.Date myDelegate;
-
-        public DateOnly(final String date) {
-
-            super();
-
-            myDelegate = java.sql.Date.valueOf(date);
-        }
-
-        DateOnly(final long millis) {
-
-            super();
-
-            myDelegate = TypeUtils.makeSqlDate(millis);
-        }
-
-        public boolean after(final DateOnly when) {
-            return myDelegate.after(when.getDelegate());
-        }
-
-        public boolean before(final DateOnly when) {
-            return myDelegate.before(when.getDelegate());
-        }
-
-        public int compareTo(final DateOnly o) {
-            return myDelegate.compareTo(o.getDelegate());
-        }
-
-        @Override
-        public String toString() {
-            return myDelegate.toString();
-        }
-
-        java.sql.Date getDelegate() {
-            return myDelegate;
-        }
-
+    public static CalendarDate make(final CalendarDateUnit resolution) {
+        return new CalendarDate(resolution.toTimeInMillis(System.currentTimeMillis()));
     }
 
-    public static final class TimeOnly implements Comparable<TimeOnly>, Serializable {
-
-        private final java.sql.Time myDelegate;
-
-        public TimeOnly(final String time) {
-
-            super();
-
-            myDelegate = java.sql.Time.valueOf(time);
-        }
-
-        TimeOnly(final long millis) {
-
-            super();
-
-            myDelegate = TypeUtils.makeSqlTime(millis);
-        }
-
-        public boolean after(final TimeOnly when) {
-            return myDelegate.after(when.getDelegate());
-        }
-
-        public boolean before(final TimeOnly when) {
-            return myDelegate.before(when.getDelegate());
-        }
-
-        public int compareTo(final TimeOnly o) {
-            return myDelegate.compareTo(o.getDelegate());
-        }
-
-        @Override
-        public String toString() {
-            return myDelegate.toString();
-        }
-
-        java.sql.Time getDelegate() {
-            return myDelegate;
-        }
-
+    public static CalendarDate make(final Date aDate, final CalendarDateUnit resolution) {
+        return new CalendarDate(resolution.toTimeInMillis(aDate));
     }
 
-    public static CalendarDate make(final Calendar aCalendar, final CalendarDateUnit aResolution) {
-        return new CalendarDate(aResolution.toTimeInMillis(aCalendar));
-    }
-
-    public static CalendarDate make(final CalendarDateUnit aResolution) {
-        return new CalendarDate(aResolution.toTimeInMillis(System.currentTimeMillis()));
-    }
-
-    public static CalendarDate make(final Date aDate, final CalendarDateUnit aResolution) {
-        return new CalendarDate(aResolution.toTimeInMillis(aDate));
-    }
-
-    public static CalendarDate make(final long aTimeInMIllis, final CalendarDateUnit aResolution) {
-        return new CalendarDate(aResolution.toTimeInMillis(aTimeInMIllis));
+    public static CalendarDate make(final long aTimeInMIllis, final CalendarDateUnit resolution) {
+        return new CalendarDate(resolution.toTimeInMillis(aTimeInMIllis));
     }
 
     public final long millis;
@@ -245,11 +128,11 @@ public final class CalendarDate implements Comparable<CalendarDate> {
         return true;
     }
 
-    public CalendarDate filter(final CalendarDateUnit aResolution) {
-        if (aResolution.isCalendarUnit()) {
-            return new CalendarDate(aResolution.toTimeInMillis(this.getCalendar()));
+    public CalendarDate filter(final CalendarDateUnit resolution) {
+        if (resolution.isCalendarUnit()) {
+            return new CalendarDate(resolution.toTimeInMillis(this.getCalendar()));
         } else {
-            return new CalendarDate(aResolution.toTimeInMillis(millis));
+            return new CalendarDate(resolution.toTimeInMillis(millis));
         }
     }
 
@@ -305,24 +188,51 @@ public final class CalendarDate implements Comparable<CalendarDate> {
         }
     }
 
-    public DateAndTime toDateAndTime() {
-        return new DateAndTime(millis);
+    public LocalDateTime toDateAndTime() {
+        return this.toDateAndTime(ZoneOffset.UTC);
     }
 
-    public DateOnly toDateOnly() {
-        return new DateOnly(millis);
+    public LocalDateTime toDateAndTime(final ZoneOffset offset) {
+        final long tmpSeconds = Math.floorDiv(millis, 1000L);
+        final int tmpNanos = (int) Math.floorMod(millis, 1000L);
+        return LocalDateTime.ofEpochSecond(tmpSeconds, tmpNanos, offset);
     }
 
-    public java.sql.Date toSqlDate() {
-        return TypeUtils.makeSqlDate(millis);
+    public LocalDate toDateOnly() {
+        return this.toDateOnly(ZoneOffset.UTC);
     }
 
-    public java.sql.Time toSqlTime() {
-        return TypeUtils.makeSqlTime(millis);
+    public LocalDate toDateOnly(final ZoneOffset offset) {
+        final long tmpSeconds = Math.floorDiv(millis, 1000L);
+        final long tmpLocalSeconds = tmpSeconds + offset.getTotalSeconds();
+        final long tmpLocalDay = Math.floorDiv(tmpLocalSeconds, CalendarDate.SECONDS_PER_DAY);
+        return LocalDate.ofEpochDay(tmpLocalDay);
     }
 
-    public java.sql.Timestamp toSqlTimestamp() {
-        return TypeUtils.makeSqlTimestamp(millis);
+    /**
+     * @deprecated v39
+     */
+    @Deprecated
+    public Date toSqlDate() {
+        final LocalDate tmpDateOnly = this.toDateOnly();
+        return new Date(tmpDateOnly.getYear() - 1970, tmpDateOnly.getMonthValue() - 1, tmpDateOnly.getDayOfMonth());
+    }
+
+    /**
+     * @deprecated v39
+     */
+    @Deprecated
+    public Date toSqlTime() {
+        final LocalTime tmpTimeOnly = this.toTimeOnly();
+        return new Date(70, 0, 1, tmpTimeOnly.getHour(), tmpTimeOnly.getMinute(), tmpTimeOnly.getSecond());
+    }
+
+    /**
+     * @deprecated v39
+     */
+    @Deprecated
+    public Date toSqlTimestamp() {
+        return new Date(millis);
     }
 
     @Override
@@ -330,16 +240,32 @@ public final class CalendarDate implements Comparable<CalendarDate> {
         return StandardType.SQL_DATETIME.format(this.getDate());
     }
 
-    public long toTimeInMillis(final CalendarDateUnit aResolution) {
-        if (aResolution.isCalendarUnit()) {
-            return aResolution.toTimeInMillis(this.getCalendar());
+    public long toTimeInMillis(final CalendarDateUnit resolution) {
+        if (resolution.isCalendarUnit()) {
+            return resolution.toTimeInMillis(this.getCalendar());
         } else {
-            return aResolution.toTimeInMillis(millis);
+            return resolution.toTimeInMillis(millis);
         }
     }
 
-    public TimeOnly toTimeOnly() {
-        return new TimeOnly(millis);
+    public LocalTime toTimeOnly() {
+        return this.toTimeOnly(ZoneOffset.UTC);
+    }
+
+    public LocalTime toTimeOnly(final ZoneOffset offset) {
+
+        final long tmpSeconds = Math.floorDiv(millis, 1000L);
+
+        final int tmpNanos = (int) Math.floorMod(millis, 1000L);
+
+        final long tmpLocalSeconds = tmpSeconds + offset.getTotalSeconds();
+
+        final int tmpSecondOfDay = (int) Math.floorMod(tmpLocalSeconds, CalendarDate.SECONDS_PER_DAY);
+
+        final int tmpNanoOfDay = (tmpSecondOfDay * CalendarDate.NANOS_PER_SECOND) + tmpNanos;
+
+        return LocalTime.ofNanoOfDay(tmpNanoOfDay);
+
     }
 
 }

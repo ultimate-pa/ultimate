@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,12 +26,12 @@ import org.ojalgo.scalar.Scalar;
 
 /**
  * ConjugatedStore
- * 
+ *
  * @author apete
  */
-public final class ConjugatedStore<N extends Number> extends TransjugatedStore<N> {
+final class ConjugatedStore<N extends Number> extends TransjugatedStore<N> {
 
-    public ConjugatedStore(final MatrixStore<N> aBase) {
+    ConjugatedStore(final MatrixStore<N> aBase) {
         super(aBase);
     }
 
@@ -45,38 +45,19 @@ public final class ConjugatedStore<N extends Number> extends TransjugatedStore<N
     }
 
     @Override
-    public MatrixStore<N> multiplyLeft(final Access1D<N> leftMtrx) {
+    public MatrixStore<N> multiply(final Access1D<N> right) {
 
         MatrixStore<N> retVal;
 
-        if (leftMtrx instanceof ConjugatedStore<?>) {
+        if (right instanceof ConjugatedStore<?>) {
 
-            retVal = this.getBase().multiplyRight(((ConjugatedStore<N>) leftMtrx).getOriginal());
+            retVal = ((ConjugatedStore<N>) right).getOriginal().multiply(this.getBase());
 
             retVal = new ConjugatedStore<N>(retVal);
 
         } else {
 
-            retVal = super.multiplyLeft(leftMtrx);
-        }
-
-        return retVal;
-    }
-
-    @Override
-    public MatrixStore<N> multiplyRight(final Access1D<N> rightMtrx) {
-
-        MatrixStore<N> retVal;
-
-        if (rightMtrx instanceof ConjugatedStore<?>) {
-
-            retVal = this.getBase().multiplyLeft(((ConjugatedStore<N>) rightMtrx).getOriginal());
-
-            retVal = new ConjugatedStore<N>(retVal);
-
-        } else {
-
-            retVal = super.multiplyRight(rightMtrx);
+            retVal = super.multiply(right);
         }
 
         return retVal;

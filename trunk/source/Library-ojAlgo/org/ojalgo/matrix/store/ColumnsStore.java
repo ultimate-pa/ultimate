@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,29 +26,13 @@ import org.ojalgo.scalar.Scalar;
 
 /**
  * A selection (re-ordering) of columns.
- * 
+ *
  * @author apete
  */
-public final class ColumnsStore<N extends Number> extends SelectingStore<N> {
+final class ColumnsStore<N extends Number> extends SelectingStore<N> {
 
     private final int[] myColumns;
     private final int myFirst;
-
-    public ColumnsStore(final int aFirst, final int aLimit, final MatrixStore<N> aBase) {
-
-        super((int) aBase.countRows(), aLimit - aFirst, aBase);
-
-        myColumns = null;
-        myFirst = aFirst;
-    }
-
-    public ColumnsStore(final MatrixStore<N> aBase, final int... someColumns) {
-
-        super((int) aBase.countRows(), someColumns.length, aBase);
-
-        myColumns = someColumns;
-        myFirst = 0;
-    }
 
     @SuppressWarnings("unused")
     private ColumnsStore(final MatrixStore<N> aBase) {
@@ -56,6 +40,22 @@ public final class ColumnsStore<N extends Number> extends SelectingStore<N> {
         this(aBase, null);
 
         ProgrammingError.throwForIllegalInvocation();
+    }
+
+    ColumnsStore(final int aFirst, final int aLimit, final MatrixStore<N> aBase) {
+
+        super((int) aBase.countRows(), aLimit - aFirst, aBase);
+
+        myColumns = null;
+        myFirst = aFirst;
+    }
+
+    ColumnsStore(final MatrixStore<N> aBase, final int... someColumns) {
+
+        super((int) aBase.countRows(), someColumns.length, aBase);
+
+        myColumns = someColumns;
+        myFirst = 0;
     }
 
     /**
@@ -75,14 +75,6 @@ public final class ColumnsStore<N extends Number> extends SelectingStore<N> {
         } else {
             return this.getBase().get(row, myFirst + column);
         }
-    }
-
-    public boolean isLowerLeftShaded() {
-        return false;
-    }
-
-    public boolean isUpperRightShaded() {
-        return false;
     }
 
     public Scalar<N> toScalar(final long row, final long column) {

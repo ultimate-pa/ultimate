@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -56,12 +56,8 @@ public final class PrimitiveMatrix extends AbstractMatrix<Double, PrimitiveMatri
         super(aStore);
     }
 
-    public PrimitiveMatrix enforce(final NumberContext aContext) {
-        return this.modify(aContext.getPrimitiveEnforceFunction());
-    }
-
-    public PrimitiveMatrix round(final NumberContext aContext) {
-        return this.modify(aContext.getPrimitiveRoundFunction());
+    public PrimitiveMatrix enforce(final NumberContext context) {
+        return this.modify(context.getPrimitiveFunction());
     }
 
     public BigDecimal toBigDecimal(final int row, final int column) {
@@ -69,7 +65,7 @@ public final class PrimitiveMatrix extends AbstractMatrix<Double, PrimitiveMatri
     }
 
     public ComplexNumber toComplexNumber(final int row, final int column) {
-        return ComplexNumber.makeReal(this.getStore().doubleValue(row, column));
+        return ComplexNumber.valueOf(this.getStore().doubleValue(row, column));
     }
 
     @Override
@@ -77,8 +73,8 @@ public final class PrimitiveMatrix extends AbstractMatrix<Double, PrimitiveMatri
         return this.getStore().copy();
     }
 
-    public String toString(final int row, final int column) {
-        return Double.toString(this.doubleValue(row, column));
+    public String toString(final int row, final int col) {
+        return Double.toString(this.doubleValue(row, col));
     }
 
     @SuppressWarnings("unchecked")
@@ -89,17 +85,17 @@ public final class PrimitiveMatrix extends AbstractMatrix<Double, PrimitiveMatri
 
     @SuppressWarnings("unchecked")
     @Override
-    MatrixStore<Double> getStoreFrom(final Access1D<?> aMtrx) {
-        if (aMtrx instanceof PrimitiveMatrix) {
-            return ((PrimitiveMatrix) aMtrx).getStore();
-        } else if (aMtrx instanceof PrimitiveDenseStore) {
-            return (PrimitiveDenseStore) aMtrx;
-        } else if ((aMtrx instanceof MatrixStore) && !this.isEmpty() && (aMtrx.get(0) instanceof Double)) {
-            return (MatrixStore<Double>) aMtrx;
-        } else if (aMtrx instanceof Access2D<?>) {
-            return this.getPhysicalFactory().copy((Access2D<?>) aMtrx);
+    MatrixStore<Double> getStoreFrom(final Access1D<?> matrix) {
+        if (matrix instanceof PrimitiveMatrix) {
+            return ((PrimitiveMatrix) matrix).getStore();
+        } else if (matrix instanceof PrimitiveDenseStore) {
+            return (PrimitiveDenseStore) matrix;
+        } else if ((matrix instanceof MatrixStore) && !this.isEmpty() && (matrix.get(0) instanceof Double)) {
+            return (MatrixStore<Double>) matrix;
+        } else if (matrix instanceof Access2D<?>) {
+            return this.getPhysicalFactory().copy((Access2D<?>) matrix);
         } else {
-            return this.getPhysicalFactory().columns(aMtrx);
+            return this.getPhysicalFactory().columns(matrix);
         }
     }
 

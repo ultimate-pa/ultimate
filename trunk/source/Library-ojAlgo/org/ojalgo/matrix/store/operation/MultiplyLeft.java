@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,9 +25,7 @@ import java.math.BigDecimal;
 
 import org.ojalgo.access.Access1D;
 import org.ojalgo.concurrent.DivideAndConquer;
-import org.ojalgo.constant.BigMath;
 import org.ojalgo.constant.PrimitiveMath;
-import org.ojalgo.function.BigFunction;
 import org.ojalgo.matrix.store.BigDenseStore.BigMultiplyLeft;
 import org.ojalgo.matrix.store.ComplexDenseStore.ComplexMultiplyLeft;
 import org.ojalgo.matrix.store.PrimitiveDenseStore.PrimitiveMultiplyLeft;
@@ -35,12 +33,14 @@ import org.ojalgo.scalar.ComplexNumber;
 
 public final class MultiplyLeft extends MatrixOperation {
 
+    public static final MultiplyLeft SETUP = new MultiplyLeft();
+
     public static int THRESHOLD = 32;
 
     static final BigMultiplyLeft BIG = new BigMultiplyLeft() {
 
         public void invoke(final BigDecimal[] product, final Access1D<BigDecimal> left, final int complexity, final BigDecimal[] right) {
-            MultiplyLeft.invoke(product, 0, ((int) left.count()) / complexity, left, complexity, right);
+            MultiplyLeft.invoke(product, 0, (int) (left.count() / complexity), left, complexity, right);
         }
 
     };
@@ -57,7 +57,7 @@ public final class MultiplyLeft extends MatrixOperation {
                 }
             };
 
-            tmpConquerer.invoke(0, ((int) left.count()) / complexity, THRESHOLD);
+            tmpConquerer.invoke(0, (int) (left.count() / complexity), THRESHOLD);
         }
 
     };
@@ -65,7 +65,7 @@ public final class MultiplyLeft extends MatrixOperation {
     static final ComplexMultiplyLeft COMPLEX = new ComplexMultiplyLeft() {
 
         public void invoke(final ComplexNumber[] product, final Access1D<ComplexNumber> left, final int complexity, final ComplexNumber[] right) {
-            MultiplyLeft.invoke(product, 0, ((int) left.count()) / complexity, left, complexity, right);
+            MultiplyLeft.invoke(product, 0, (int) (left.count() / complexity), left, complexity, right);
         }
 
     };
@@ -82,7 +82,7 @@ public final class MultiplyLeft extends MatrixOperation {
                 }
             };
 
-            tmpConquerer.invoke(0, ((int) left.count()) / complexity, THRESHOLD);
+            tmpConquerer.invoke(0, (int) (left.count() / complexity), THRESHOLD);
         }
 
     };
@@ -90,7 +90,7 @@ public final class MultiplyLeft extends MatrixOperation {
     static final PrimitiveMultiplyLeft PRIMITIVE = new PrimitiveMultiplyLeft() {
 
         public void invoke(final double[] product, final Access1D<?> left, final int complexity, final double[] right) {
-            MultiplyLeft.invoke(product, 0, ((int) left.count()) / complexity, left, complexity, right);
+            MultiplyLeft.invoke(product, 0, (int) (left.count() / complexity), left, complexity, right);
         }
 
     };
@@ -151,7 +151,7 @@ public final class MultiplyLeft extends MatrixOperation {
 
             double tmp00 = PrimitiveMath.ZERO;
 
-            final int tmpLeftStruct = ((int) left.count()) / complexity; // The number of rows in the product- and left-matrix.
+            final int tmpLeftStruct = (int) (left.count() / complexity); // The number of rows in the product- and left-matrix.
 
             for (int c = 0; c < complexity; c++) {
                 tmp00 += left.doubleValue(c * tmpLeftStruct) * right[c];
@@ -643,7 +643,7 @@ public final class MultiplyLeft extends MatrixOperation {
                 }
             };
 
-            tmpConquerer.invoke(0, ((int) left.count()) / complexity, THRESHOLD);
+            tmpConquerer.invoke(0, (int) (left.count() / complexity), THRESHOLD);
         }
 
     };
@@ -695,12 +695,10 @@ public final class MultiplyLeft extends MatrixOperation {
     static void invoke(final BigDecimal[] product, final int firstRow, final int rowLimit, final Access1D<BigDecimal> left, final int complexity,
             final BigDecimal[] right) {
 
-        final int tmpRowDim = ((int) left.count()) / complexity;
         final int tmpColDim = right.length / complexity;
+        final int tmpRowDim = product.length / tmpColDim;
 
         final BigDecimal[] tmpLeftRow = new BigDecimal[complexity];
-        int tmpIndex;
-        BigDecimal tmpVal;
 
         for (int i = firstRow; i < rowLimit; i++) {
 
@@ -708,13 +706,8 @@ public final class MultiplyLeft extends MatrixOperation {
                 tmpLeftRow[c] = left.get(i + (c * tmpRowDim));
             }
 
-            tmpIndex = 0;
             for (int j = 0; j < tmpColDim; j++) {
-                tmpVal = BigMath.ZERO;
-                for (int c = 0; c < complexity; c++) {
-                    tmpVal = BigFunction.ADD.invoke(tmpVal, BigFunction.MULTIPLY.invoke(tmpLeftRow[c], right[tmpIndex++]));
-                }
-                product[i + (j * tmpRowDim)] = tmpVal;
+                product[i + (j * tmpRowDim)] = DotProduct.invoke(tmpLeftRow, 0, right, j * complexity, 0, complexity);
             }
         }
     }
@@ -722,12 +715,10 @@ public final class MultiplyLeft extends MatrixOperation {
     static void invoke(final ComplexNumber[] product, final int firstRow, final int rowLimit, final Access1D<ComplexNumber> left, final int complexity,
             final ComplexNumber[] right) {
 
-        final int tmpRowDim = ((int) left.count()) / complexity;
         final int tmpColDim = right.length / complexity;
+        final int tmpRowDim = product.length / tmpColDim;
 
         final ComplexNumber[] tmpLeftRow = new ComplexNumber[complexity];
-        int tmpIndex;
-        ComplexNumber tmpVal;
 
         for (int i = firstRow; i < rowLimit; i++) {
 
@@ -735,25 +726,18 @@ public final class MultiplyLeft extends MatrixOperation {
                 tmpLeftRow[c] = left.get(i + (c * tmpRowDim));
             }
 
-            tmpIndex = 0;
             for (int j = 0; j < tmpColDim; j++) {
-                tmpVal = ComplexNumber.ZERO;
-                for (int c = 0; c < complexity; c++) {
-                    tmpVal = tmpVal.add(tmpLeftRow[c].multiply(right[tmpIndex++]));
-                }
-                product[i + (j * tmpRowDim)] = tmpVal;
+                product[i + (j * tmpRowDim)] = DotProduct.invoke(tmpLeftRow, 0, right, j * complexity, 0, complexity);
             }
         }
     }
 
     static void invoke(final double[] product, final int firstRow, final int rowLimit, final Access1D<?> left, final int complexity, final double[] right) {
 
-        final int tmpRowDim = (int) (left.count() / complexity);
         final int tmpColDim = right.length / complexity;
+        final int tmpRowDim = product.length / tmpColDim;
 
         final double[] tmpLeftRow = new double[complexity];
-        int tmpIndex;
-        double tmpVal;
 
         for (int i = firstRow; i < rowLimit; i++) {
 
@@ -761,19 +745,19 @@ public final class MultiplyLeft extends MatrixOperation {
                 tmpLeftRow[c] = left.doubleValue(i + (c * tmpRowDim));
             }
 
-            tmpIndex = 0;
             for (int j = 0; j < tmpColDim; j++) {
-                tmpVal = PrimitiveMath.ZERO;
-                for (int c = 0; c < complexity; c++) {
-                    tmpVal += tmpLeftRow[c] * right[tmpIndex++];
-                }
-                product[i + (j * tmpRowDim)] = tmpVal;
+                product[i + (j * tmpRowDim)] = DotProduct.invoke(tmpLeftRow, 0, right, j * complexity, 0, complexity);
             }
         }
     }
 
     private MultiplyLeft() {
         super();
+    }
+
+    @Override
+    public int threshold() {
+        return THRESHOLD;
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -36,21 +36,20 @@ import org.ojalgo.concurrent.DivideAndConquer;
 import org.ojalgo.function.BinaryFunction;
 import org.ojalgo.function.ComplexFunction;
 import org.ojalgo.function.FunctionSet;
+import org.ojalgo.function.NullaryFunction;
 import org.ojalgo.function.UnaryFunction;
 import org.ojalgo.function.VoidFunction;
 import org.ojalgo.function.aggregator.Aggregator;
-import org.ojalgo.function.aggregator.AggregatorCollection;
 import org.ojalgo.function.aggregator.AggregatorFunction;
+import org.ojalgo.function.aggregator.AggregatorSet;
 import org.ojalgo.function.aggregator.ComplexAggregator;
 import org.ojalgo.matrix.MatrixUtils;
 import org.ojalgo.matrix.decomposition.DecompositionStore;
 import org.ojalgo.matrix.store.operation.*;
 import org.ojalgo.matrix.transformation.Householder;
 import org.ojalgo.matrix.transformation.Rotation;
-import org.ojalgo.random.RandomNumber;
 import org.ojalgo.scalar.ComplexNumber;
 import org.ojalgo.scalar.Scalar;
-import org.ojalgo.type.TypeUtils;
 import org.ojalgo.type.context.NumberContext;
 
 /**
@@ -60,9 +59,7 @@ import org.ojalgo.type.context.NumberContext;
  */
 public final class ComplexDenseStore extends ComplexArray implements PhysicalStore<ComplexNumber>, DecompositionStore<ComplexNumber> {
 
-    public static interface ComplexMultiplyBoth {
-
-        void invoke(ComplexNumber[] product, Access1D<ComplexNumber> left, int complexity, Access1D<ComplexNumber> right);
+    public static interface ComplexMultiplyBoth extends FillByMultiplying<ComplexNumber> {
 
     }
 
@@ -77,6 +74,298 @@ public final class ComplexDenseStore extends ComplexArray implements PhysicalSto
         void invoke(ComplexNumber[] product, ComplexNumber[] left, int complexity, Access1D<ComplexNumber> right);
 
     }
+
+    public static final PhysicalStore.Factory<ComplexNumber, ComplexDenseStore> FACTORY = new PhysicalStore.Factory<ComplexNumber, ComplexDenseStore>() {
+
+        public AggregatorSet<ComplexNumber> aggregator() {
+            return ComplexAggregator.getSet();
+        }
+
+        public MatrixStore.Factory<ComplexNumber> builder() {
+            return MatrixStore.COMPLEX;
+        }
+
+        public ComplexDenseStore columns(final Access1D<?>... source) {
+
+            final int tmpRowDim = (int) source[0].count();
+            final int tmpColDim = source.length;
+
+            final ComplexNumber[] tmpData = new ComplexNumber[tmpRowDim * tmpColDim];
+
+            Access1D<?> tmpColumn;
+            for (int j = 0; j < tmpColDim; j++) {
+                tmpColumn = source[j];
+                for (int i = 0; i < tmpRowDim; i++) {
+                    tmpData[i + (tmpRowDim * j)] = ComplexNumber.valueOf(tmpColumn.get(i));
+                }
+            }
+
+            return new ComplexDenseStore(tmpRowDim, tmpColDim, tmpData);
+        }
+
+        public ComplexDenseStore columns(final double[]... source) {
+
+            final int tmpRowDim = source[0].length;
+            final int tmpColDim = source.length;
+
+            final ComplexNumber[] tmpData = new ComplexNumber[tmpRowDim * tmpColDim];
+
+            double[] tmpColumn;
+            for (int j = 0; j < tmpColDim; j++) {
+                tmpColumn = source[j];
+                for (int i = 0; i < tmpRowDim; i++) {
+                    tmpData[i + (tmpRowDim * j)] = ComplexNumber.valueOf((Number) tmpColumn[i]);
+                }
+            }
+
+            return new ComplexDenseStore(tmpRowDim, tmpColDim, tmpData);
+        }
+
+        public ComplexDenseStore columns(final List<? extends Number>... source) {
+
+            final int tmpRowDim = source[0].size();
+            final int tmpColDim = source.length;
+
+            final ComplexNumber[] tmpData = new ComplexNumber[tmpRowDim * tmpColDim];
+
+            List<? extends Number> tmpColumn;
+            for (int j = 0; j < tmpColDim; j++) {
+                tmpColumn = source[j];
+                for (int i = 0; i < tmpRowDim; i++) {
+                    tmpData[i + (tmpRowDim * j)] = ComplexNumber.valueOf(tmpColumn.get(i));
+                }
+            }
+
+            return new ComplexDenseStore(tmpRowDim, tmpColDim, tmpData);
+        }
+
+        public ComplexDenseStore columns(final Number[]... source) {
+
+            final int tmpRowDim = source[0].length;
+            final int tmpColDim = source.length;
+
+            final ComplexNumber[] tmpData = new ComplexNumber[tmpRowDim * tmpColDim];
+
+            Number[] tmpColumn;
+            for (int j = 0; j < tmpColDim; j++) {
+                tmpColumn = source[j];
+                for (int i = 0; i < tmpRowDim; i++) {
+                    tmpData[i + (tmpRowDim * j)] = ComplexNumber.valueOf(tmpColumn[i]);
+                }
+            }
+
+            return new ComplexDenseStore(tmpRowDim, tmpColDim, tmpData);
+        }
+
+        public ComplexDenseStore conjugate(final Access2D<?> source) {
+
+            final ComplexDenseStore retVal = new ComplexDenseStore((int) source.countColumns(), (int) source.countRows());
+
+            final int tmpRowDim = retVal.getRowDim();
+            final int tmpColDim = retVal.getColDim();
+
+            if (tmpColDim > FillConjugated.THRESHOLD) {
+
+                final DivideAndConquer tmpConquerer = new DivideAndConquer() {
+
+                    @Override
+                    public void conquer(final int aFirst, final int aLimit) {
+                        FillConjugated.invoke(retVal.data, tmpRowDim, aFirst, aLimit, source);
+                    }
+
+                };
+
+                tmpConquerer.invoke(0, tmpColDim, FillConjugated.THRESHOLD);
+
+            } else {
+
+                FillConjugated.invoke(retVal.data, tmpRowDim, 0, tmpColDim, source);
+            }
+
+            return retVal;
+        }
+
+        public ComplexDenseStore copy(final Access2D<?> source) {
+
+            final int tmpRowDim = (int) source.countRows();
+            final int tmpColDim = (int) source.countColumns();
+
+            final ComplexDenseStore retVal = new ComplexDenseStore(tmpRowDim, tmpColDim);
+
+            if (tmpColDim > FillMatchingSingle.THRESHOLD) {
+
+                final DivideAndConquer tmpConquerer = new DivideAndConquer() {
+
+                    @Override
+                    public void conquer(final int aFirst, final int aLimit) {
+                        FillMatchingSingle.invoke(retVal.data, tmpRowDim, aFirst, aLimit, source);
+                    }
+
+                };
+
+                tmpConquerer.invoke(0, tmpColDim, FillMatchingSingle.THRESHOLD);
+
+            } else {
+
+                FillMatchingSingle.invoke(retVal.data, tmpRowDim, 0, tmpColDim, source);
+            }
+
+            return retVal;
+        }
+
+        public FunctionSet<ComplexNumber> function() {
+            return ComplexFunction.getSet();
+        }
+
+        public ComplexArray makeArray(final int length) {
+            return ComplexArray.make(length);
+        }
+
+        public ComplexDenseStore makeEye(final long rows, final long columns) {
+
+            final ComplexDenseStore retVal = this.makeZero(rows, columns);
+
+            retVal.myUtility.fillDiagonal(0, 0, ComplexNumber.ONE);
+
+            return retVal;
+        }
+
+        public ComplexDenseStore makeFilled(final long rows, final long columns, final NullaryFunction<?> supplier) {
+
+            final int tmpRowDim = (int) rows;
+            final int tmpColDim = (int) columns;
+
+            final int tmpLength = tmpRowDim * tmpColDim;
+
+            final ComplexNumber[] tmpData = new ComplexNumber[tmpLength];
+
+            for (int i = 0; i < tmpLength; i++) {
+                tmpData[i] = ComplexNumber.valueOf(supplier.get());
+            }
+
+            return new ComplexDenseStore(tmpRowDim, tmpColDim, tmpData);
+        }
+
+        public Householder.Complex makeHouseholder(final int length) {
+            return new Householder.Complex(length);
+        }
+
+        public Rotation.Complex makeRotation(final int low, final int high, final ComplexNumber cos, final ComplexNumber sin) {
+            return new Rotation.Complex(low, high, cos, sin);
+        }
+
+        public Rotation.Complex makeRotation(final int low, final int high, final double cos, final double sin) {
+            return this.makeRotation(low, high, ComplexNumber.valueOf(cos), ComplexNumber.valueOf(sin));
+        }
+
+        public ComplexDenseStore makeZero(final long rows, final long columns) {
+            return new ComplexDenseStore((int) rows, (int) columns);
+        }
+
+        public ComplexDenseStore rows(final Access1D<?>... source) {
+
+            final int tmpRowDim = source.length;
+            final int tmpColDim = (int) source[0].count();
+
+            final ComplexNumber[] tmpData = new ComplexNumber[tmpRowDim * tmpColDim];
+
+            Access1D<?> tmpRow;
+            for (int i = 0; i < tmpRowDim; i++) {
+                tmpRow = source[i];
+                for (int j = 0; j < tmpColDim; j++) {
+                    tmpData[i + (tmpRowDim * j)] = ComplexNumber.valueOf(tmpRow.get(j));
+                }
+            }
+
+            return new ComplexDenseStore(tmpRowDim, tmpColDim, tmpData);
+        }
+
+        public ComplexDenseStore rows(final double[]... source) {
+
+            final int tmpRowDim = source.length;
+            final int tmpColDim = source[0].length;
+
+            final ComplexNumber[] tmpData = new ComplexNumber[tmpRowDim * tmpColDim];
+
+            double[] tmpRow;
+            for (int i = 0; i < tmpRowDim; i++) {
+                tmpRow = source[i];
+                for (int j = 0; j < tmpColDim; j++) {
+                    tmpData[i + (tmpRowDim * j)] = ComplexNumber.valueOf((Number) tmpRow[j]);
+                }
+            }
+
+            return new ComplexDenseStore(tmpRowDim, tmpColDim, tmpData);
+        }
+
+        public ComplexDenseStore rows(final List<? extends Number>... source) {
+
+            final int tmpRowDim = source.length;
+            final int tmpColDim = source[0].size();
+
+            final ComplexNumber[] tmpData = new ComplexNumber[tmpRowDim * tmpColDim];
+
+            List<? extends Number> tmpRow;
+            for (int i = 0; i < tmpRowDim; i++) {
+                tmpRow = source[i];
+                for (int j = 0; j < tmpColDim; j++) {
+                    tmpData[i + (tmpRowDim * j)] = ComplexNumber.valueOf(tmpRow.get(j));
+                }
+            }
+
+            return new ComplexDenseStore(tmpRowDim, tmpColDim, tmpData);
+        }
+
+        public ComplexDenseStore rows(final Number[]... source) {
+
+            final int tmpRowDim = source.length;
+            final int tmpColDim = source[0].length;
+
+            final ComplexNumber[] tmpData = new ComplexNumber[tmpRowDim * tmpColDim];
+
+            Number[] tmpRow;
+            for (int i = 0; i < tmpRowDim; i++) {
+                tmpRow = source[i];
+                for (int j = 0; j < tmpColDim; j++) {
+                    tmpData[i + (tmpRowDim * j)] = ComplexNumber.valueOf(tmpRow[j]);
+                }
+            }
+
+            return new ComplexDenseStore(tmpRowDim, tmpColDim, tmpData);
+        }
+
+        public Scalar.Factory<ComplexNumber> scalar() {
+            return ComplexNumber.FACTORY;
+        }
+
+        public ComplexDenseStore transpose(final Access2D<?> source) {
+
+            final ComplexDenseStore retVal = new ComplexDenseStore((int) source.countColumns(), (int) source.countRows());
+
+            final int tmpRowDim = retVal.getRowDim();
+            final int tmpColDim = retVal.getColDim();
+
+            if (tmpColDim > FillTransposed.THRESHOLD) {
+
+                final DivideAndConquer tmpConquerer = new DivideAndConquer() {
+
+                    @Override
+                    public void conquer(final int aFirst, final int aLimit) {
+                        FillTransposed.invoke(retVal.data, tmpRowDim, aFirst, aLimit, source);
+                    }
+
+                };
+
+                tmpConquerer.invoke(0, tmpColDim, FillTransposed.THRESHOLD);
+
+            } else {
+
+                FillTransposed.invoke(retVal.data, tmpRowDim, 0, tmpColDim, source);
+            }
+
+            return retVal;
+        }
+    };
 
     static ComplexDenseStore cast(final Access1D<ComplexNumber> matrix) {
         if (matrix instanceof ComplexDenseStore) {
@@ -106,245 +395,10 @@ public final class ComplexDenseStore extends ComplexArray implements PhysicalSto
         }
     }
 
-    public static final DecompositionStore.Factory<ComplexNumber, ComplexDenseStore> FACTORY = new DecompositionStore.Factory<ComplexNumber, ComplexDenseStore>() {
-
-        public AggregatorCollection<ComplexNumber> aggregator() {
-            return ComplexAggregator.getCollection();
-        }
-
-        public ComplexDenseStore columns(final Access1D<?>... source) {
-
-            final int tmpRowDim = (int) source[0].count();
-            final int tmpColDim = source.length;
-
-            final ComplexNumber[] tmpData = new ComplexNumber[tmpRowDim * tmpColDim];
-
-            Access1D<?> tmpColumn;
-            for (int j = 0; j < tmpColDim; j++) {
-                tmpColumn = source[j];
-                for (int i = 0; i < tmpRowDim; i++) {
-                    tmpData[i + (tmpRowDim * j)] = TypeUtils.toComplexNumber(tmpColumn.get(i));
-                }
-            }
-
-            return new ComplexDenseStore(tmpRowDim, tmpColDim, tmpData);
-        }
-
-        public ComplexDenseStore columns(final double[]... source) {
-
-            final int tmpRowDim = source[0].length;
-            final int tmpColDim = source.length;
-
-            final ComplexNumber[] tmpData = new ComplexNumber[tmpRowDim * tmpColDim];
-
-            double[] tmpColumn;
-            for (int j = 0; j < tmpColDim; j++) {
-                tmpColumn = source[j];
-                for (int i = 0; i < tmpRowDim; i++) {
-                    tmpData[i + (tmpRowDim * j)] = TypeUtils.toComplexNumber(tmpColumn[i]);
-                }
-            }
-
-            return new ComplexDenseStore(tmpRowDim, tmpColDim, tmpData);
-        }
-
-        public ComplexDenseStore columns(final List<? extends Number>... source) {
-
-            final int tmpRowDim = source[0].size();
-            final int tmpColDim = source.length;
-
-            final ComplexNumber[] tmpData = new ComplexNumber[tmpRowDim * tmpColDim];
-
-            List<? extends Number> tmpColumn;
-            for (int j = 0; j < tmpColDim; j++) {
-                tmpColumn = source[j];
-                for (int i = 0; i < tmpRowDim; i++) {
-                    tmpData[i + (tmpRowDim * j)] = TypeUtils.toComplexNumber(tmpColumn.get(i));
-                }
-            }
-
-            return new ComplexDenseStore(tmpRowDim, tmpColDim, tmpData);
-        }
-
-        public ComplexDenseStore columns(final Number[]... source) {
-
-            final int tmpRowDim = source[0].length;
-            final int tmpColDim = source.length;
-
-            final ComplexNumber[] tmpData = new ComplexNumber[tmpRowDim * tmpColDim];
-
-            Number[] tmpColumn;
-            for (int j = 0; j < tmpColDim; j++) {
-                tmpColumn = source[j];
-                for (int i = 0; i < tmpRowDim; i++) {
-                    tmpData[i + (tmpRowDim * j)] = TypeUtils.toComplexNumber(tmpColumn[i]);
-                }
-            }
-
-            return new ComplexDenseStore(tmpRowDim, tmpColDim, tmpData);
-        }
-
-        public ComplexDenseStore conjugate(final Access2D<?> source) {
-
-            final ComplexDenseStore retVal = new ComplexDenseStore((int) source.countColumns(), (int) source.countRows());
-
-            retVal.fillConjugated(source);
-
-            return retVal;
-        }
-
-        public ComplexDenseStore copy(final Access2D<?> source) {
-
-            final ComplexDenseStore retVal = new ComplexDenseStore((int) source.countRows(), (int) source.countColumns());
-
-            retVal.fillMatching(source);
-
-            return retVal;
-        }
-
-        public FunctionSet<ComplexNumber> function() {
-            return ComplexFunction.getSet();
-        }
-
-        public ComplexArray makeArray(final int length) {
-            return ComplexArray.make(length);
-        }
-
-        public ComplexDenseStore makeEye(final long rows, final long columns) {
-
-            final ComplexDenseStore retVal = this.makeZero(rows, columns);
-
-            retVal.myUtility.fillDiagonal(0, 0, ComplexNumber.ONE);
-
-            return retVal;
-        }
-
-        public Householder.Complex makeHouseholder(final int length) {
-            return new Householder.Complex(length);
-        }
-
-        public ComplexDenseStore makeRandom(final long rows, final long columns, final RandomNumber distribution) {
-
-            final int tmpRowDim = (int) rows;
-            final int tmpColDim = (int) columns;
-
-            final int tmpLength = tmpRowDim * tmpColDim;
-
-            final ComplexNumber[] tmpData = new ComplexNumber[tmpLength];
-
-            for (int i = 0; i < tmpLength; i++) {
-                tmpData[i] = TypeUtils.toComplexNumber(distribution.doubleValue());
-            }
-
-            return new ComplexDenseStore(tmpRowDim, tmpColDim, tmpData);
-        }
-
-        public Rotation.Complex makeRotation(final int low, final int high, final ComplexNumber cos, final ComplexNumber sin) {
-            return new Rotation.Complex(low, high, cos, sin);
-        }
-
-        public Rotation.Complex makeRotation(final int low, final int high, final double cos, final double sin) {
-            return this.makeRotation(low, high, ComplexNumber.makeReal(cos), ComplexNumber.makeReal(sin));
-        }
-
-        public ComplexDenseStore makeZero(final long rows, final long columns) {
-            return new ComplexDenseStore((int) rows, (int) columns);
-        }
-
-        public ComplexDenseStore rows(final Access1D<?>... source) {
-
-            final int tmpRowDim = source.length;
-            final int tmpColDim = (int) source[0].count();
-
-            final ComplexNumber[] tmpData = new ComplexNumber[tmpRowDim * tmpColDim];
-
-            Access1D<?> tmpRow;
-            for (int i = 0; i < tmpRowDim; i++) {
-                tmpRow = source[i];
-                for (int j = 0; j < tmpColDim; j++) {
-                    tmpData[i + (tmpRowDim * j)] = TypeUtils.toComplexNumber(tmpRow.get(j));
-                }
-            }
-
-            return new ComplexDenseStore(tmpRowDim, tmpColDim, tmpData);
-        }
-
-        public ComplexDenseStore rows(final double[]... source) {
-
-            final int tmpRowDim = source.length;
-            final int tmpColDim = source[0].length;
-
-            final ComplexNumber[] tmpData = new ComplexNumber[tmpRowDim * tmpColDim];
-
-            double[] tmpRow;
-            for (int i = 0; i < tmpRowDim; i++) {
-                tmpRow = source[i];
-                for (int j = 0; j < tmpColDim; j++) {
-                    tmpData[i + (tmpRowDim * j)] = TypeUtils.toComplexNumber(tmpRow[j]);
-                }
-            }
-
-            return new ComplexDenseStore(tmpRowDim, tmpColDim, tmpData);
-        }
-
-        public ComplexDenseStore rows(final List<? extends Number>... source) {
-
-            final int tmpRowDim = source.length;
-            final int tmpColDim = source[0].size();
-
-            final ComplexNumber[] tmpData = new ComplexNumber[tmpRowDim * tmpColDim];
-
-            List<? extends Number> tmpRow;
-            for (int i = 0; i < tmpRowDim; i++) {
-                tmpRow = source[i];
-                for (int j = 0; j < tmpColDim; j++) {
-                    tmpData[i + (tmpRowDim * j)] = TypeUtils.toComplexNumber(tmpRow.get(j));
-                }
-            }
-
-            return new ComplexDenseStore(tmpRowDim, tmpColDim, tmpData);
-        }
-
-        public ComplexDenseStore rows(final Number[]... source) {
-
-            final int tmpRowDim = source.length;
-            final int tmpColDim = source[0].length;
-
-            final ComplexNumber[] tmpData = new ComplexNumber[tmpRowDim * tmpColDim];
-
-            Number[] tmpRow;
-            for (int i = 0; i < tmpRowDim; i++) {
-                tmpRow = source[i];
-                for (int j = 0; j < tmpColDim; j++) {
-                    tmpData[i + (tmpRowDim * j)] = TypeUtils.toComplexNumber(tmpRow[j]);
-                }
-            }
-
-            return new ComplexDenseStore(tmpRowDim, tmpColDim, tmpData);
-        }
-
-        public Scalar.Factory<ComplexNumber> scalar() {
-            return ComplexNumber.FACTORY;
-        }
-
-        public ComplexDenseStore transpose(final Access2D<?> source) {
-
-            final ComplexDenseStore retVal = new ComplexDenseStore((int) source.countColumns(), (int) source.countRows());
-
-            retVal.fillTransposed(source);
-
-            return retVal;
-        }
-    };
-
     private final ComplexMultiplyBoth multiplyBoth;
-
     private final ComplexMultiplyLeft multiplyLeft;
-
     private final ComplexMultiplyRight multiplyRight;
-
     private final int myColDim;
-
     private final int myRowDim;
     private final Array2D<ComplexNumber> myUtility;
 
@@ -404,8 +458,20 @@ public final class ComplexDenseStore extends ComplexArray implements PhysicalSto
         multiplyRight = MultiplyRight.getComplex(myRowDim, myColDim);
     }
 
-    public MatrixStore<ComplexNumber> add(final MatrixStore<ComplexNumber> addend) {
-        return new SuperimposedStore<>(this, addend);
+    public void accept(final Access2D<ComplexNumber> supplied) {
+        for (long j = 0; j < supplied.countColumns(); j++) {
+            for (long i = 0; i < supplied.countRows(); i++) {
+                this.set(i, j, supplied.get(i, j));
+            }
+        }
+    }
+
+    public void add(final long row, final long column, final double addend) {
+        myUtility.add(row, column, addend);
+    }
+
+    public void add(final long row, final long column, final Number addend) {
+        myUtility.add(row, column, addend);
     }
 
     public ComplexNumber aggregateAll(final Aggregator aggregator) {
@@ -465,6 +531,29 @@ public final class ComplexDenseStore extends ComplexArray implements PhysicalSto
         }
     }
 
+    public void applyLDL(final int iterationPoint, final BasicArray<ComplexNumber> multipliers) {
+
+        final ComplexNumber[] tmpData = data;
+        final ComplexNumber[] tmpColumn = ((ComplexArray) multipliers).data;
+
+        if ((myColDim - iterationPoint - 1) > ApplyLDL.THRESHOLD) {
+
+            final DivideAndConquer tmpConquerer = new DivideAndConquer() {
+
+                @Override
+                protected void conquer(final int first, final int limit) {
+                    ApplyLDL.invoke(tmpData, myRowDim, first, limit, tmpColumn, iterationPoint);
+                }
+            };
+
+            tmpConquerer.invoke(iterationPoint + 1, myColDim, ApplyLDL.THRESHOLD);
+
+        } else {
+
+            ApplyLDL.invoke(tmpData, myRowDim, iterationPoint + 1, myColDim, tmpColumn, iterationPoint);
+        }
+    }
+
     public void applyLU(final int iterationPoint, final BasicArray<ComplexNumber> multipliers) {
 
         final ComplexNumber[] tmpData = data;
@@ -500,11 +589,11 @@ public final class ComplexDenseStore extends ComplexArray implements PhysicalSto
         return new MatrixStore.Builder<ComplexNumber>(this);
     }
 
-    public void caxpy(final ComplexNumber aSclrA, final int aColX, final int aColY, final int aFirstRow) {
-        CAXPY.invoke(data, aColY * myRowDim, data, aColX * myRowDim, aSclrA, aFirstRow, myRowDim);
+    public void caxpy(final ComplexNumber scalarA, final int columnX, final int columnY, final int firstRow) {
+        AXPY.invoke(data, (columnY * myRowDim) + firstRow, 1, scalarA, data, (columnX * myRowDim) + firstRow, 1, myRowDim - firstRow);
     }
 
-    public Array1D<ComplexNumber> computeInPlaceSchur(final PhysicalStore<ComplexNumber> aTransformationCollector, final boolean eigenvalue) {
+    public Array1D<ComplexNumber> computeInPlaceSchur(final PhysicalStore<ComplexNumber> transformationCollector, final boolean eigenvalue) {
         throw new UnsupportedOperationException();
     }
 
@@ -524,17 +613,17 @@ public final class ComplexDenseStore extends ComplexArray implements PhysicalSto
         return myRowDim;
     }
 
-    public void divideAndCopyColumn(final int aRow, final int aCol, final BasicArray<ComplexNumber> aDestination) {
+    public void divideAndCopyColumn(final int row, final int column, final BasicArray<ComplexNumber> destination) {
 
         final ComplexNumber[] tmpData = data;
         final int tmpRowDim = myRowDim;
 
-        final ComplexNumber[] tmpDestination = ((ComplexArray) aDestination).data;
+        final ComplexNumber[] tmpDestination = ((ComplexArray) destination).data;
 
-        int tmpIndex = aRow + (aCol * tmpRowDim);
+        int tmpIndex = row + (column * tmpRowDim);
         final ComplexNumber tmpDenominator = tmpData[tmpIndex];
 
-        for (int i = aRow + 1; i < tmpRowDim; i++) {
+        for (int i = row + 1; i < tmpRowDim; i++) {
             tmpIndex++;
             tmpDestination[i] = tmpData[tmpIndex] = tmpData[tmpIndex].divide(tmpDenominator);
         }
@@ -558,12 +647,41 @@ public final class ComplexDenseStore extends ComplexArray implements PhysicalSto
         }
     }
 
-    public void exchangeColumns(final int aColA, final int aColB) {
-        myUtility.exchangeColumns(aColA, aColB);
+    public void exchangeColumns(final long colA, final long colB) {
+        myUtility.exchangeColumns(colA, colB);
     }
 
-    public void exchangeRows(final int aRowA, final int aRowB) {
-        myUtility.exchangeRows(aRowA, aRowB);
+    public void exchangeHermitian(final int indexA, final int indexB) {
+
+        final int tmpMin = Math.min(indexA, indexB);
+        final int tmpMax = Math.max(indexA, indexB);
+
+        ComplexNumber tmpVal;
+        for (int j = 0; j < tmpMin; j++) {
+            tmpVal = this.get(tmpMin, j);
+            this.set(tmpMin, j, this.get(tmpMax, j));
+            this.set(tmpMax, j, tmpVal);
+        }
+
+        tmpVal = this.get(tmpMin, tmpMin);
+        this.set(tmpMin, tmpMin, this.get(tmpMax, tmpMax));
+        this.set(tmpMax, tmpMax, tmpVal);
+
+        for (int ij = tmpMin + 1; ij < tmpMax; ij++) {
+            tmpVal = this.get(ij, tmpMin);
+            this.set(ij, tmpMin, this.get(tmpMax, ij).conjugate());
+            this.set(tmpMax, ij, tmpVal.conjugate());
+        }
+
+        for (int i = tmpMax + 1; i < myRowDim; i++) {
+            tmpVal = this.get(i, tmpMin);
+            this.set(i, tmpMin, this.get(i, tmpMax));
+            this.set(i, tmpMax, tmpVal);
+        }
+    }
+
+    public void exchangeRows(final long rowA, final long rowB) {
+        myUtility.exchangeRows(rowA, rowB);
     }
 
     public PhysicalStore.Factory<ComplexNumber, ComplexDenseStore> factory() {
@@ -574,95 +692,29 @@ public final class ComplexDenseStore extends ComplexArray implements PhysicalSto
 
         final int tmpComplexity = ((int) left.count()) / myRowDim;
 
-        final ComplexNumber[] tmpProductData = data;
-
         if (right instanceof ComplexDenseStore) {
-            multiplyLeft.invoke(tmpProductData, left, tmpComplexity, ComplexDenseStore.cast(right).data);
+            multiplyLeft.invoke(data, left, tmpComplexity, ComplexDenseStore.cast(right).data);
         } else if (left instanceof ComplexDenseStore) {
-            multiplyRight.invoke(tmpProductData, ComplexDenseStore.cast(left).data, tmpComplexity, right);
+            multiplyRight.invoke(data, ComplexDenseStore.cast(left).data, tmpComplexity, right);
         } else {
-            multiplyBoth.invoke(tmpProductData, left, tmpComplexity, right);
+            multiplyBoth.invoke(this, left, tmpComplexity, right);
         }
     }
 
-    public void fillColumn(final long aRow, final long aCol, final ComplexNumber aNmbr) {
-        myUtility.fillColumn(aRow, aCol, aNmbr);
+    public void fillColumn(final long row, final long column, final ComplexNumber value) {
+        myUtility.fillColumn(row, column, value);
     }
 
-    public void fillConjugated(final Access2D<? extends Number> source) {
-
-        final int tmpRowDim = myRowDim;
-        final int tmpColDim = myColDim;
-
-        if (tmpColDim > FillConjugated.THRESHOLD) {
-
-            final DivideAndConquer tmpConquerer = new DivideAndConquer() {
-
-                @Override
-                public void conquer(final int aFirst, final int aLimit) {
-                    FillConjugated.invoke(ComplexDenseStore.this.data, tmpRowDim, aFirst, aLimit, source);
-                }
-
-            };
-
-            tmpConquerer.invoke(0, tmpColDim, FillConjugated.THRESHOLD);
-
-        } else {
-
-            FillConjugated.invoke(data, tmpRowDim, 0, tmpColDim, source);
-        }
+    public void fillColumn(final long row, final long column, final NullaryFunction<ComplexNumber> supplier) {
+        myUtility.fillColumn(row, column, supplier);
     }
 
-    public void fillDiagonal(final long aRow, final long aCol, final ComplexNumber aNmbr) {
-        myUtility.fillDiagonal(aRow, aCol, aNmbr);
+    public void fillDiagonal(final long row, final long column, final ComplexNumber value) {
+        myUtility.fillDiagonal(row, column, value);
     }
 
-    public void fillMatching(final Access1D<? extends Number> source) {
-
-        final int tmpRowDim = myRowDim;
-        final int tmpColDim = myColDim;
-
-        if (tmpColDim > FillMatchingSingle.THRESHOLD) {
-
-            final DivideAndConquer tmpConquerer = new DivideAndConquer() {
-
-                @Override
-                public void conquer(final int aFirst, final int aLimit) {
-                    FillMatchingSingle.invoke(ComplexDenseStore.this.data, tmpRowDim, aFirst, aLimit, source);
-                }
-
-            };
-
-            tmpConquerer.invoke(0, tmpColDim, FillMatchingSingle.THRESHOLD);
-
-        } else {
-
-            FillMatchingSingle.invoke(data, tmpRowDim, 0, tmpColDim, source);
-        }
-    }
-
-    public void fillMatching(final Access1D<ComplexNumber> leftArg, final BinaryFunction<ComplexNumber> func, final Access1D<ComplexNumber> rightArg) {
-
-        final int tmpRowDim = myRowDim;
-        final int tmpColDim = myColDim;
-
-        if (tmpColDim > FillMatchingBoth.THRESHOLD) {
-
-            final DivideAndConquer tmpConquerer = new DivideAndConquer() {
-
-                @Override
-                protected void conquer(final int aFirst, final int aLimit) {
-                    ComplexDenseStore.this.fill(tmpRowDim * aFirst, tmpRowDim * aLimit, leftArg, func, rightArg);
-                }
-
-            };
-
-            tmpConquerer.invoke(0, tmpColDim, FillMatchingBoth.THRESHOLD);
-
-        } else {
-
-            this.fill(0, tmpRowDim * tmpColDim, leftArg, func, rightArg);
-        }
+    public void fillDiagonal(final long row, final long column, final NullaryFunction<ComplexNumber> supplier) {
+        myUtility.fillDiagonal(row, column, supplier);
     }
 
     public void fillMatching(final Access1D<ComplexNumber> aLeftArg, final BinaryFunction<ComplexNumber> aFunc, final ComplexNumber aRightArg) {
@@ -713,64 +765,40 @@ public final class ComplexDenseStore extends ComplexArray implements PhysicalSto
         }
     }
 
-    public void fillRow(final long aRow, final long aCol, final ComplexNumber aNmbr) {
-        myUtility.fillRow(aRow, aCol, aNmbr);
+    public void fillOne(final long row, final long column, final ComplexNumber value) {
+        myUtility.fillOne(row, column, value);
     }
 
-    public void fillTransposed(final Access2D<? extends Number> source) {
-
-        final int tmpRowDim = myRowDim;
-        final int tmpColDim = myColDim;
-
-        if (tmpColDim > FillTransposed.THRESHOLD) {
-
-            final DivideAndConquer tmpConquerer = new DivideAndConquer() {
-
-                @Override
-                public void conquer(final int aFirst, final int aLimit) {
-                    FillTransposed.invoke(ComplexDenseStore.this.data, tmpRowDim, aFirst, aLimit, source);
-                }
-
-            };
-
-            tmpConquerer.invoke(0, tmpColDim, FillTransposed.THRESHOLD);
-
-        } else {
-
-            FillTransposed.invoke(data, tmpRowDim, 0, tmpColDim, source);
-        }
+    public void fillOne(final long row, final long column, final NullaryFunction<ComplexNumber> supplier) {
+        myUtility.fillOne(row, column, supplier);
     }
 
-    public boolean generateApplyAndCopyHouseholderColumn(final int aRow, final int aCol, final Householder<ComplexNumber> aDestination) {
-        return GenerateApplyAndCopyHouseholderColumn.invoke(data, myRowDim, aRow, aCol, (Householder.Complex) aDestination);
+    public void fillOneMatching(final long row, final long column, final Access1D<?> values, final long valueIndex) {
+        this.set(row, column, values.get(valueIndex));
     }
 
-    public boolean generateApplyAndCopyHouseholderRow(final int aRow, final int aCol, final Householder<ComplexNumber> aDestination) {
-        return GenerateApplyAndCopyHouseholderRow.invoke(data, myRowDim, aRow, aCol, (Householder.Complex) aDestination);
+    public void fillRow(final long row, final long column, final ComplexNumber value) {
+        myUtility.fillRow(row, column, value);
+    }
+
+    public void fillRow(final long row, final long column, final NullaryFunction<ComplexNumber> supplier) {
+        myUtility.fillRow(row, column, supplier);
+    }
+
+    public boolean generateApplyAndCopyHouseholderColumn(final int row, final int column, final Householder<ComplexNumber> destination) {
+        return GenerateApplyAndCopyHouseholderColumn.invoke(data, myRowDim, row, column, (Householder.Complex) destination);
+    }
+
+    public boolean generateApplyAndCopyHouseholderRow(final int row, final int column, final Householder<ComplexNumber> destination) {
+        return GenerateApplyAndCopyHouseholderRow.invoke(data, myRowDim, row, column, (Householder.Complex) destination);
+    }
+
+    public final MatrixStore<ComplexNumber> get() {
+        return this;
     }
 
     public ComplexNumber get(final long aRow, final long aCol) {
         return myUtility.get(aRow, aCol);
-    }
-
-    public int getColDim() {
-        return myColDim;
-    }
-
-    public int getIndexOfLargestInColumn(final int aRow, final int aCol) {
-        return (int) myUtility.indexOfLargestInColumn(aRow, aCol);
-    }
-
-    public int getMaxDim() {
-        return Math.max(myRowDim, myColDim);
-    }
-
-    public int getMinDim() {
-        return Math.min(myRowDim, myColDim);
-    }
-
-    public int getRowDim() {
-        return myRowDim;
     }
 
     @Override
@@ -778,36 +806,32 @@ public final class ComplexDenseStore extends ComplexArray implements PhysicalSto
         return MatrixUtils.hashCode(this);
     }
 
+    public int indexOfLargestInColumn(final int row, final int column) {
+        return (int) myUtility.indexOfLargestInColumn(row, column);
+    }
+
+    public long indexOfLargestInColumn(final long row, final long column) {
+        return myUtility.indexOfLargestInColumn(row, column);
+    }
+
+    public int indexOfLargestInDiagonal(final int row, final int column) {
+        return (int) myUtility.indexOfLargestInDiagonal(row, column);
+    }
+
+    public long indexOfLargestInDiagonal(final long row, final long column) {
+        return myUtility.indexOfLargestInDiagonal(row, column);
+    }
+
+    public long indexOfLargestInRow(final long row, final long column) {
+        return myUtility.indexOfLargestInRow(row, column);
+    }
+
     public boolean isAbsolute(final long row, final long column) {
         return myUtility.isAbsolute(row, column);
     }
 
-    public boolean isInfinite(final long row, final long column) {
-        return myUtility.isInfinite(row, column);
-    }
-
-    public boolean isLowerLeftShaded() {
-        return false;
-    }
-
-    public boolean isNaN(final long row, final long column) {
-        return myUtility.isNaN(row, column);
-    }
-
-    public boolean isPositive(final long row, final long column) {
-        return myUtility.isPositive(row, column);
-    }
-
-    public boolean isReal(final long row, final long column) {
-        return myUtility.isReal(row, column);
-    }
-
-    public boolean isUpperRightShaded() {
-        return false;
-    }
-
-    public boolean isZero(final long row, final long column) {
-        return myUtility.isZero(row, column);
+    public boolean isSmall(final long row, final long column, final double comparedTo) {
+        return myUtility.isSmall(row, column, comparedTo);
     }
 
     public void maxpy(final ComplexNumber aSclrA, final MatrixStore<ComplexNumber> aMtrxX) {
@@ -867,11 +891,11 @@ public final class ComplexDenseStore extends ComplexArray implements PhysicalSto
         myUtility.modifyDiagonal(row, column, function);
     }
 
-    public void modifyOne(final long row, final long column, final UnaryFunction<ComplexNumber> func) {
+    public void modifyOne(final long row, final long column, final UnaryFunction<ComplexNumber> function) {
 
         ComplexNumber tmpValue = this.get(row, column);
 
-        tmpValue = func.invoke(tmpValue);
+        tmpValue = function.invoke(tmpValue);
 
         this.set(row, column, tmpValue);
     }
@@ -880,42 +904,64 @@ public final class ComplexDenseStore extends ComplexArray implements PhysicalSto
         myUtility.modifyRow(row, column, function);
     }
 
-    public MatrixStore<ComplexNumber> multiplyLeft(final Access1D<ComplexNumber> left) {
-
-        final ComplexDenseStore retVal = FACTORY.makeZero(left.count() / myRowDim, myColDim);
-
-        retVal.multiplyLeft.invoke(retVal.data, left, myRowDim, data);
-
-        return retVal;
-    }
-
-    public MatrixStore<ComplexNumber> multiplyRight(final Access1D<ComplexNumber> right) {
+    public MatrixStore<ComplexNumber> multiply(final Access1D<ComplexNumber> right) {
 
         final ComplexDenseStore retVal = FACTORY.makeZero(myRowDim, right.count() / myColDim);
 
-        retVal.multiplyRight.invoke(retVal.data, data, myColDim, right);
+        if (right instanceof ComplexDenseStore) {
+            retVal.multiplyLeft.invoke(retVal.data, this, myColDim, ((ComplexDenseStore) right).data);
+        } else {
+            retVal.multiplyRight.invoke(retVal.data, data, myColDim, right);
+        }
 
         return retVal;
     }
 
-    public MatrixStore<ComplexNumber> negate() {
-        return new ModificationStore<>(this, FACTORY.function().negate());
+    public ComplexNumber multiplyBoth(final Access1D<ComplexNumber> leftAndRight) {
+
+        final PhysicalStore<ComplexNumber> tmpStep1 = FACTORY.makeZero(1L, leftAndRight.count());
+        final PhysicalStore<ComplexNumber> tmpStep2 = FACTORY.makeZero(1L, 1L);
+
+        final PhysicalStore<ComplexNumber> tmpLeft = FACTORY.rows(leftAndRight);
+        tmpLeft.fillMatching(FACTORY.function().conjugate(), leftAndRight);
+        tmpStep1.fillByMultiplying(tmpLeft, this);
+
+        tmpStep2.fillByMultiplying(tmpStep1, leftAndRight);
+
+        return tmpStep2.get(0L);
     }
 
-    public void negateColumn(final int aCol) {
-        myUtility.modifyColumn(0, aCol, ComplexFunction.NEGATE);
+    public void negateColumn(final int column) {
+        myUtility.modifyColumn(0, column, ComplexFunction.NEGATE);
     }
 
-    public void raxpy(final ComplexNumber aSclrA, final int aRowX, final int aRowY, final int aFirstCol) {
-        RAXPY.invoke(data, aRowY, data, aRowX, aSclrA, aFirstCol, myColDim);
+    public void raxpy(final ComplexNumber scalarA, final int rowX, final int rowY, final int firstColumn) {
+        AXPY.invoke(data, rowY + (firstColumn * (data.length / myColDim)), data.length / myColDim, scalarA, data,
+                rowX + (firstColumn * (data.length / myColDim)), data.length / myColDim, myColDim - firstColumn);
+    }
+
+    public final ElementsConsumer<ComplexNumber> regionByColumns(final int... columns) {
+        return new ColumnsRegion<ComplexNumber>(this, multiplyBoth, columns);
+    }
+
+    public final ElementsConsumer<ComplexNumber> regionByLimits(final int rowLimit, final int columnLimit) {
+        return new LimitRegion<ComplexNumber>(this, multiplyBoth, rowLimit, columnLimit);
+    }
+
+    public final ElementsConsumer<ComplexNumber> regionByOffsets(final int rowOffset, final int columnOffset) {
+        return new OffsetRegion<ComplexNumber>(this, multiplyBoth, rowOffset, columnOffset);
+    }
+
+    public final ElementsConsumer<ComplexNumber> regionByRows(final int... rows) {
+        return new RowsRegion<ComplexNumber>(this, multiplyBoth, rows);
+    }
+
+    public final ElementsConsumer<ComplexNumber> regionByTransposing() {
+        return new TransposedRegion<ComplexNumber>(this, multiplyBoth);
     }
 
     public void rotateRight(final int aLow, final int aHigh, final double aCos, final double aSin) {
         RotateRight.invoke(data, myRowDim, aLow, aHigh, FACTORY.scalar().cast(aCos), FACTORY.scalar().cast(aSin));
-    }
-
-    public MatrixStore<ComplexNumber> scale(final ComplexNumber scalar) {
-        return new ModificationStore<>(this, FACTORY.function().multiply().first(scalar));
     }
 
     public void set(final long aRow, final long aCol, final double aNmbr) {
@@ -931,7 +977,23 @@ public final class ComplexDenseStore extends ComplexArray implements PhysicalSto
         myUtility.fillColumn(aCol + 1, aCol, ComplexNumber.ZERO);
     }
 
-    public void substituteBackwards(final Access2D<ComplexNumber> aBody, final boolean conjugated) {
+    public Array1D<ComplexNumber> sliceColumn(final long row, final long column) {
+        return myUtility.sliceColumn(row, column);
+    }
+
+    public Array1D<ComplexNumber> sliceDiagonal(final long row, final long column) {
+        return myUtility.sliceDiagonal(row, column);
+    }
+
+    public Array1D<ComplexNumber> sliceRange(final long first, final long limit) {
+        return myUtility.sliceRange(first, limit);
+    }
+
+    public Array1D<ComplexNumber> sliceRow(final long row, final long column) {
+        return myUtility.sliceRow(row, column);
+    }
+
+    public void substituteBackwards(final Access2D<ComplexNumber> body, final boolean unitDiagonal, final boolean conjugated, final boolean hermitian) {
 
         final int tmpRowDim = myRowDim;
         final int tmpColDim = myColDim;
@@ -942,7 +1004,7 @@ public final class ComplexDenseStore extends ComplexArray implements PhysicalSto
 
                 @Override
                 public void conquer(final int aFirst, final int aLimit) {
-                    SubstituteBackwards.invoke(ComplexDenseStore.this.data, tmpRowDim, aFirst, aLimit, aBody, conjugated);
+                    SubstituteBackwards.invoke(ComplexDenseStore.this.data, tmpRowDim, aFirst, aLimit, body, unitDiagonal, conjugated, hermitian);
                 }
 
             };
@@ -951,11 +1013,11 @@ public final class ComplexDenseStore extends ComplexArray implements PhysicalSto
 
         } else {
 
-            SubstituteBackwards.invoke(data, tmpRowDim, 0, tmpColDim, aBody, conjugated);
+            SubstituteBackwards.invoke(data, tmpRowDim, 0, tmpColDim, body, unitDiagonal, conjugated, hermitian);
         }
     }
 
-    public void substituteForwards(final Access2D<ComplexNumber> aBody, final boolean onesOnDiagonal, final boolean zerosAboveDiagonal) {
+    public void substituteForwards(final Access2D<ComplexNumber> body, final boolean unitDiagonal, final boolean conjugated, final boolean identity) {
 
         final int tmpRowDim = myRowDim;
         final int tmpColDim = myColDim;
@@ -966,7 +1028,7 @@ public final class ComplexDenseStore extends ComplexArray implements PhysicalSto
 
                 @Override
                 public void conquer(final int aFirst, final int aLimit) {
-                    SubstituteForwards.invoke(ComplexDenseStore.this.data, tmpRowDim, aFirst, aLimit, aBody, onesOnDiagonal, zerosAboveDiagonal);
+                    SubstituteForwards.invoke(ComplexDenseStore.this.data, tmpRowDim, aFirst, aLimit, body, unitDiagonal, conjugated, identity);
                 }
 
             };
@@ -975,16 +1037,16 @@ public final class ComplexDenseStore extends ComplexArray implements PhysicalSto
 
         } else {
 
-            SubstituteForwards.invoke(data, tmpRowDim, 0, tmpColDim, aBody, onesOnDiagonal, zerosAboveDiagonal);
+            SubstituteForwards.invoke(data, tmpRowDim, 0, tmpColDim, body, unitDiagonal, conjugated, identity);
         }
     }
 
-    public MatrixStore<ComplexNumber> subtract(final MatrixStore<ComplexNumber> subtrahend) {
-        return this.add(subtrahend.negate());
+    public void supplyTo(final ElementsConsumer<ComplexNumber> consumer) {
+        consumer.fillMatching(this);
     }
 
     public Scalar<ComplexNumber> toScalar(final long row, final long column) {
-        return myUtility.toScalar(row, column);
+        return myUtility.get(row, column);
     }
 
     @Override
@@ -1123,6 +1185,22 @@ public final class ComplexDenseStore extends ComplexArray implements PhysicalSto
 
     public void visitRow(final long row, final long column, final VoidFunction<ComplexNumber> visitor) {
         myUtility.visitRow(row, column, visitor);
+    }
+
+    int getColDim() {
+        return myColDim;
+    }
+
+    int getMaxDim() {
+        return Math.max(myRowDim, myColDim);
+    }
+
+    int getMinDim() {
+        return Math.min(myRowDim, myColDim);
+    }
+
+    int getRowDim() {
+        return myRowDim;
     }
 
 }

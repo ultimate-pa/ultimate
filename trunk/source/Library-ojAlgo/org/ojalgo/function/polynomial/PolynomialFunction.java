@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,12 +24,13 @@ package org.ojalgo.function.polynomial;
 import java.util.List;
 
 import org.ojalgo.access.Access1D;
-import org.ojalgo.function.Function.Differentiable;
-import org.ojalgo.function.Function.Integratable;
+import org.ojalgo.function.BasicFunction.Differentiable;
+import org.ojalgo.function.BasicFunction.Integratable;
 import org.ojalgo.function.UnaryFunction;
 import org.ojalgo.series.NumberSeries;
 
-public interface PolynomialFunction<N extends Number> extends UnaryFunction<N>, Access1D<N>, Differentiable<N, PolynomialFunction<N>>, Integratable<N, PolynomialFunction<N>> {
+public interface PolynomialFunction<N extends Number> extends UnaryFunction<N>, Access1D<N>, Differentiable<N, PolynomialFunction<N>>,
+        Integratable<N, PolynomialFunction<N>> {
 
     int degree();
 

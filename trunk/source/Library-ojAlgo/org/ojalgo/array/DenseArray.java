@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,10 +22,12 @@
 package org.ojalgo.array;
 
 import java.util.RandomAccess;
+import java.util.Spliterator;
 
 import org.ojalgo.access.Access1D;
 import org.ojalgo.access.AccessUtils;
 import org.ojalgo.function.BinaryFunction;
+import org.ojalgo.function.NullaryFunction;
 import org.ojalgo.function.ParameterFunction;
 import org.ojalgo.function.UnaryFunction;
 import org.ojalgo.function.VoidFunction;
@@ -39,8 +41,6 @@ import org.ojalgo.scalar.Scalar;
 abstract class DenseArray<N extends Number> extends BasicArray<N> implements RandomAccess {
 
     static abstract class DenseFactory<N extends Number> extends ArrayFactory<N> {
-
-        abstract long getElementSize();
 
         abstract DenseArray<N> make(int size);
 
@@ -58,8 +58,18 @@ abstract class DenseArray<N extends Number> extends BasicArray<N> implements Ran
 
     }
 
+    static final int CHARACTERISTICS = Spliterator.ORDERED | Spliterator.IMMUTABLE;
+
     DenseArray() {
         super();
+    }
+
+    public void add(final long index, final double addend) {
+        this.add((int) index, addend);
+    }
+
+    public void add(final long index, final Number addend) {
+        this.add((int) index, addend);
     }
 
     public final long count() {
@@ -74,8 +84,28 @@ abstract class DenseArray<N extends Number> extends BasicArray<N> implements Ran
         this.fill(0, this.size(), 1, number);
     }
 
+    public final void fillAll(final NullaryFunction<N> supplier) {
+        this.fill(0, this.size(), 1, supplier);
+    }
+
+    public void fillOne(final long index, final N value) {
+        this.fillOne((int) index, value);
+    }
+
+    public void fillOne(final long index, final NullaryFunction<N> supplier) {
+        this.fillOne((int) index, supplier);
+    }
+
+    public final void fillOneMatching(final long index, final Access1D<?> values, final long valueIndex) {
+        this.fillOneMatching((int) index, values, valueIndex);
+    }
+
     public final void fillRange(final long first, final long limit, final N number) {
         this.fill(first, limit, 1L, number);
+    }
+
+    public final void fillRange(final long first, final long limit, final NullaryFunction<N> supplier) {
+        this.fill(first, limit, 1L, supplier);
     }
 
     public final N get(final long index) {
@@ -86,42 +116,18 @@ abstract class DenseArray<N extends Number> extends BasicArray<N> implements Ran
      * @see Scalar#isAbsolute()
      */
     public final boolean isAbsolute(final long index) {
-        return this.isZero((int) index);
+        return this.isAbsolute((int) index);
     }
 
     /**
-     * @see Scalar#isInfinite()
+     * @see Scalar#isSmall(double)
      */
-    public final boolean isInfinite(final long index) {
-        return this.isInfinite((int) index);
+    public final boolean isSmall(final long index, final double comparedTo) {
+        return this.isSmall((int) index, comparedTo);
     }
 
-    /**
-     * @see Scalar#isNaN()
-     */
-    public final boolean isNaN(final long index) {
-        return this.isNaN((int) index);
-    }
-
-    /**
-     * @see Scalar#isPositive()
-     */
-    public final boolean isPositive(final long index) {
-        return this.isPositive((int) index);
-    }
-
-    /**
-     * @see Scalar#isReal()
-     */
-    public final boolean isReal(final long index) {
-        return this.isReal((int) index);
-    }
-
-    /**
-     * @see Scalar#isZero()
-     */
-    public final boolean isZero(final long index) {
-        return this.isZero((int) index);
+    public final void modifyOne(final long index, final UnaryFunction<N> function) {
+        this.modify((int) index, function);
     }
 
     public final void set(final long index, final double value) {
@@ -131,6 +137,25 @@ abstract class DenseArray<N extends Number> extends BasicArray<N> implements Ran
     public final void set(final long index, final Number number) {
         this.set((int) index, number);
     }
+
+    public void visitOne(final long index, final VoidFunction<N> visitor) {
+        this.visitOne((int) index, visitor);
+    }
+
+    private final boolean isSmall(final int first, final int limit, final int step, final double comparedTo) {
+
+        boolean retVal = true;
+
+        for (int i = first; retVal && (i < limit); i += step) {
+            retVal &= this.isSmall(i, comparedTo);
+        }
+
+        return retVal;
+    }
+
+    protected abstract void add(int index, double addend);
+
+    protected abstract void add(int index, Number addend);
 
     protected abstract double doubleValue(final int index);
 
@@ -147,12 +172,25 @@ abstract class DenseArray<N extends Number> extends BasicArray<N> implements Ran
 
     protected abstract void fill(int first, int limit, int step, N value);
 
+    protected abstract void fill(int first, int limit, int step, NullaryFunction<N> supplier);
+
     protected abstract void fill(final int first, final int limit, final N left, final BinaryFunction<N> function, final Access1D<N> right);
 
     @Override
     protected final void fill(final long first, final long limit, final long step, final N value) {
         this.fill((int) first, (int) limit, (int) step, value);
     }
+
+    @Override
+    protected final void fill(final long first, final long limit, final long step, final NullaryFunction<N> supplier) {
+        this.fill((int) first, (int) limit, (int) step, supplier);
+    }
+
+    protected abstract void fillOne(int index, N value);
+
+    protected abstract void fillOne(int index, NullaryFunction<N> supplier);
+
+    protected abstract void fillOneMatching(final int index, final Access1D<?> values, final long valueIndex);
 
     protected abstract N get(final int index);
 
@@ -169,35 +207,13 @@ abstract class DenseArray<N extends Number> extends BasicArray<N> implements Ran
     protected abstract boolean isAbsolute(int index);
 
     /**
-     * @see Scalar#isInfinite()
+     * @see Scalar#isSmall(double)
      */
-    protected abstract boolean isInfinite(int index);
-
-    /**
-     * @see Scalar#isNaN()
-     */
-    protected abstract boolean isNaN(int index);
-
-    /**
-     * @see Scalar#isPositive()
-     */
-    protected abstract boolean isPositive(int index);
-
-    /**
-     * @see Scalar#isReal()
-     */
-    protected abstract boolean isReal(int index);
-
-    /**
-     * @see Scalar#isZero()
-     */
-    protected abstract boolean isZero(int index);
-
-    protected abstract boolean isZeros(int first, int limit, int step);
+    protected abstract boolean isSmall(int index, double comparedTo);
 
     @Override
-    protected final boolean isZeros(final long first, final long limit, final long step) {
-        return this.isZeros((int) first, (int) limit, (int) step);
+    protected final boolean isSmall(final long first, final long limit, final long step, final double comparedTo) {
+        return this.isSmall((int) first, (int) limit, (int) step, comparedTo);
     }
 
     protected abstract void modify(int index, Access1D<N> left, BinaryFunction<N> function);
@@ -236,7 +252,8 @@ abstract class DenseArray<N extends Number> extends BasicArray<N> implements Ran
     /**
      * @see java.util.Arrays#binarySearch(Object[], Object)
      * @see #sortAscending()
-     * @throws UnsupportedOperationException if the this operation is not supported by this implementation/subclass
+     * @throws UnsupportedOperationException if the this operation is not supported by this
+     *         implementation/subclass
      */
     protected abstract int searchAscending(N number);
 
@@ -249,18 +266,19 @@ abstract class DenseArray<N extends Number> extends BasicArray<N> implements Ran
     /**
      * @see java.util.Arrays#sort(Object[])
      * @see #searchAscending(Number)
-     * @throws UnsupportedOperationException if the this operation is not supported by this implementation/subclass
+     * @throws UnsupportedOperationException if the this operation is not supported by this
+     *         implementation/subclass
      */
     protected abstract void sortAscending();
 
     protected abstract void visit(int first, int limit, int step, VoidFunction<N> visitor);
 
-    protected abstract void visit(int index, VoidFunction<N> visitor);
-
     @Override
     protected final void visit(final long first, final long limit, final long step, final VoidFunction<N> visitor) {
         this.visit((int) first, (int) limit, (int) step, visitor);
     }
+
+    protected abstract void visitOne(final int index, final VoidFunction<N> visitor);
 
     abstract DenseArray<N> newInstance(int capacity);
 

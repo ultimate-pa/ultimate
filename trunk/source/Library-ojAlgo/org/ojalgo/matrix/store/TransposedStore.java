@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,9 +24,9 @@ package org.ojalgo.matrix.store;
 import org.ojalgo.access.Access1D;
 import org.ojalgo.scalar.Scalar;
 
-public final class TransposedStore<N extends Number> extends TransjugatedStore<N> {
+final class TransposedStore<N extends Number> extends TransjugatedStore<N> {
 
-    public TransposedStore(final MatrixStore<N> aBase) {
+    TransposedStore(final MatrixStore<N> aBase) {
         super(aBase);
     }
 
@@ -34,45 +34,19 @@ public final class TransposedStore<N extends Number> extends TransjugatedStore<N
         return this.getBase().get(aCol, aRow);
     }
 
-    /**
-     * @see org.ojalgo.matrix.store.MatrixStore#multiplyLeft(org.ojalgo.matrix.store.MatrixStore)
-     */
-    @Override
-    public MatrixStore<N> multiplyLeft(final Access1D<N> leftMtrx) {
+    public MatrixStore<N> multiply(final Access1D<N> right) {
 
         MatrixStore<N> retVal;
 
-        if (leftMtrx instanceof TransposedStore<?>) {
+        if (right instanceof TransposedStore<?>) {
 
-            retVal = this.getBase().multiplyRight(((TransposedStore<N>) leftMtrx).getOriginal());
+            retVal = ((TransposedStore<N>) right).getOriginal().multiply(this.getBase());
 
             retVal = new TransposedStore<N>(retVal);
 
         } else {
 
-            retVal = super.multiplyLeft(leftMtrx);
-        }
-
-        return retVal;
-    }
-
-    /**
-     * @see org.ojalgo.matrix.store.MatrixStore#multiplyRight(org.ojalgo.matrix.store.MatrixStore)
-     */
-    @Override
-    public MatrixStore<N> multiplyRight(final Access1D<N> rightMtrx) {
-
-        MatrixStore<N> retVal;
-
-        if (rightMtrx instanceof TransposedStore<?>) {
-
-            retVal = this.getBase().multiplyLeft(((TransposedStore<N>) rightMtrx).getOriginal());
-
-            retVal = new TransposedStore<N>(retVal);
-
-        } else {
-
-            retVal = super.multiplyRight(rightMtrx);
+            retVal = super.multiply(right);
         }
 
         return retVal;

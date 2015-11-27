@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,9 @@
  */
 package org.ojalgo.function;
 
-public abstract class ParameterFunction<N extends Number> implements Function<N> {
+import java.util.function.BiFunction;
+
+public interface ParameterFunction<N extends Number> extends BasicFunction<N>, BiFunction<N, Integer, N> {
 
     /**
      * A {@linkplain ParameterFunction} with a set/fixed parameter.
@@ -38,12 +40,12 @@ public abstract class ParameterFunction<N extends Number> implements Function<N>
             this(null, 0);
         }
 
-        FixedParameter(final ParameterFunction<N> aFunc, final int aParam) {
+        FixedParameter(final ParameterFunction<N> function, final int param) {
 
             super();
 
-            myFunction = aFunc;
-            myParameter = aParam;
+            myFunction = function;
+            myParameter = param;
         }
 
         public final ParameterFunction<N> getFunction() {
@@ -54,25 +56,32 @@ public abstract class ParameterFunction<N extends Number> implements Function<N>
             return myParameter;
         }
 
-        public final double invoke(final double aFirstArg) {
-            return myFunction.invoke(aFirstArg, myParameter);
+        public final double invoke(final double arg) {
+            return myFunction.invoke(arg, myParameter);
         }
 
-        public final N invoke(final N aFirstArg) {
-            return myFunction.invoke(aFirstArg, myParameter);
+        public final N invoke(final N arg) {
+            return myFunction.invoke(arg, myParameter);
         }
 
-    }
-
-    protected ParameterFunction() {
-        super();
     }
 
     public abstract double invoke(double arg, int param);
 
     public abstract N invoke(N arg, int param);
 
-    public final UnaryFunction<N> parameter(final int param) {
+    default N apply(final N arg, final Integer param) {
+        return this.invoke(arg, param);
+    }
+
+    /**
+     * Turns this parameter function into a unary function with the parameter fixed/locked to the specified
+     * value.
+     *
+     * @param param The parameter of the parameter function.
+     * @return The resulting unary function.
+     */
+    default UnaryFunction<N> parameter(final int param) {
         return new FixedParameter<N>(this, param);
     }
 

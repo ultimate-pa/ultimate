@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,7 @@ import org.ojalgo.type.TypeUtils;
 import org.ojalgo.type.context.NumberContext;
 import org.ojalgo.type.context.NumberContext.Enforceable;
 
-public final class BigScalar extends AbstractScalar<BigDecimal> implements Enforceable<BigScalar> {
+public final class BigScalar extends Number implements Scalar<BigDecimal>, Enforceable<BigScalar> {
 
     public static final Scalar.Factory<BigDecimal> FACTORY = new Scalar.Factory<BigDecimal>() {
 
@@ -43,11 +43,11 @@ public final class BigScalar extends AbstractScalar<BigDecimal> implements Enfor
         }
 
         public BigScalar convert(final double value) {
-            return new BigScalar(value);
+            return BigScalar.valueOf(value);
         }
 
         public BigScalar convert(final Number number) {
-            return new BigScalar(TypeUtils.toBigDecimal(number));
+            return BigScalar.valueOf(number);
         }
 
         public BigScalar one() {
@@ -60,46 +60,60 @@ public final class BigScalar extends AbstractScalar<BigDecimal> implements Enfor
 
     };
 
-    public static final boolean IS_INFINITE = false;
-    public static final boolean IS_NOT_A_NUMBER = false;
-    public static final boolean IS_REAL = true;
     public static final BigScalar ONE = new BigScalar(BigMath.ONE);
-    public static final NumberContext PRECISION = NumberContext.getMath(MathContext.DECIMAL128).newScale(32);
     public static final BigScalar ZERO = new BigScalar();
+
+    static final NumberContext CONTEXT = NumberContext.getMath(MathContext.DECIMAL128);
 
     public static boolean isAbsolute(final BigDecimal value) {
         return value.signum() >= 0;
     }
 
-    public static boolean isPositive(final BigDecimal value) {
-        return (value.signum() > 0) && !BigScalar.isZero(value);
+    public static boolean isSmall(final double comparedTo, final BigDecimal value) {
+        return (value.signum() == 0) || BigScalar.CONTEXT.isSmall(comparedTo, value.doubleValue());
     }
 
-    public static boolean isZero(final BigDecimal value) {
-        return PRECISION.enforce(value).signum() == 0;
+    public static BigScalar of(final BigDecimal value) {
+        return new BigScalar(value);
+    }
+
+    public static BigScalar valueOf(final double value) {
+        return new BigScalar(BigDecimal.valueOf(value));
+    }
+
+    public static BigScalar valueOf(final Number number) {
+
+        if (number != null) {
+
+            if (number instanceof BigScalar) {
+
+                return (BigScalar) number;
+
+            } else {
+
+                return new BigScalar(TypeUtils.toBigDecimal(number));
+            }
+
+        } else {
+
+            return ZERO;
+        }
     }
 
     private final BigDecimal myNumber;
-
-    public BigScalar(final BigDecimal aNmbr) {
-
-        super();
-
-        myNumber = aNmbr;
-    }
-
-    public BigScalar(final Number aNmbr) {
-
-        super();
-
-        myNumber = TypeUtils.toBigDecimal(aNmbr);
-    }
 
     private BigScalar() {
 
         super();
 
         myNumber = BigMath.ZERO;
+    }
+
+    private BigScalar(final BigDecimal number) {
+
+        super();
+
+        myNumber = number;
     }
 
     public BigScalar add(final BigDecimal arg) {
@@ -119,10 +133,10 @@ public final class BigScalar extends AbstractScalar<BigDecimal> implements Enfor
     }
 
     public BigScalar divide(final BigDecimal arg) {
-        return new BigScalar(myNumber.divide(arg, PRECISION.getMathContext()));
+        return new BigScalar(myNumber.divide(arg, BigScalar.CONTEXT.getMathContext()));
     }
 
-    public Scalar<BigDecimal> divide(final double arg) {
+    public BigScalar divide(final double arg) {
         return this.divide(new BigDecimal(arg));
     }
 
@@ -187,24 +201,8 @@ public final class BigScalar extends AbstractScalar<BigDecimal> implements Enfor
         return BigScalar.isAbsolute(myNumber);
     }
 
-    public boolean isInfinite() {
-        return BigScalar.IS_INFINITE;
-    }
-
-    public boolean isNaN() {
-        return BigScalar.IS_NOT_A_NUMBER;
-    }
-
-    public boolean isPositive() {
-        return BigScalar.isPositive(myNumber);
-    }
-
-    public boolean isReal() {
-        return BigScalar.IS_REAL;
-    }
-
-    public boolean isZero() {
-        return BigScalar.isZero(myNumber);
+    public boolean isSmall(final double comparedTo) {
+        return BigScalar.CONTEXT.isSmall(comparedTo, this.doubleValue());
     }
 
     @Override
@@ -216,7 +214,7 @@ public final class BigScalar extends AbstractScalar<BigDecimal> implements Enfor
         return new BigScalar(myNumber.multiply(arg));
     }
 
-    public Scalar<BigDecimal> multiply(final double arg) {
+    public BigScalar multiply(final double arg) {
         return this.multiply(new BigDecimal(arg));
     }
 
@@ -236,7 +234,7 @@ public final class BigScalar extends AbstractScalar<BigDecimal> implements Enfor
         return new BigScalar(myNumber.subtract(arg));
     }
 
-    public Scalar<BigDecimal> subtract(final double arg) {
+    public BigScalar subtract(final double arg) {
         return this.subtract(new BigDecimal(arg));
     }
 
@@ -252,4 +250,5 @@ public final class BigScalar extends AbstractScalar<BigDecimal> implements Enfor
     public String toString(final NumberContext context) {
         return context.enforce(myNumber).toString();
     }
+
 }

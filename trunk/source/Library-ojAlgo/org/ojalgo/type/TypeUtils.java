@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,12 +21,9 @@
  */
 package org.ojalgo.type;
 
-import java.awt.Color;
 import java.math.BigDecimal;
-import java.sql.Date;
-import java.sql.Time;
-import java.sql.Timestamp;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.GregorianCalendar;
 
 import org.ojalgo.constant.BigMath;
@@ -109,30 +106,50 @@ public abstract class TypeUtils {
         return retVal;
     }
 
+    /**
+     * @deprecated v37
+     */
+    @Deprecated
     public static boolean isZero(final double value) {
         return TypeUtils.isZero(value, PrimitiveMath.IS_ZERO);
     }
 
+    /**
+     * @deprecated v37
+     */
+    @Deprecated
     public static boolean isZero(final double value, final double tolerance) {
         return (Math.abs(value) <= tolerance);
     }
 
+    /**
+     * @deprecated v39
+     */
+    @Deprecated
     public static Date makeSqlDate(final long aTimeInMillis) {
-        return Date.valueOf(new Date(aTimeInMillis).toString());
-    }
-
-    public static Time makeSqlTime(final long aTimeInMillis) {
-        return Time.valueOf(new Time(aTimeInMillis).toString());
-    }
-
-    public static Timestamp makeSqlTimestamp(final long aTimeInMillis) {
-        return Timestamp.valueOf(new Timestamp(aTimeInMillis).toString());
+        return new CalendarDate(aTimeInMillis).toSqlDate();
     }
 
     /**
-     * If the input {@linkplain java.lang.Number} is a {@linkplain java.math.BigDecimal} it is passed through unaltered.
-     * Otherwise an equivalent BigDecimal is created.
-     * 
+     * @deprecated v39
+     */
+    @Deprecated
+    public static Date makeSqlTime(final long aTimeInMillis) {
+        return new CalendarDate(aTimeInMillis).toSqlTime();
+    }
+
+    /**
+     * @deprecated v39
+     */
+    @Deprecated
+    public static Date makeSqlTimestamp(final long aTimeInMillis) {
+        return new CalendarDate(aTimeInMillis).toSqlTimestamp();
+    }
+
+    /**
+     * If the input {@linkplain java.lang.Number} is a {@linkplain java.math.BigDecimal} it is passed through
+     * unaltered. Otherwise an equivalent BigDecimal is created.
+     *
      * @param number Any Number
      * @return A corresponding BigDecimal
      */
@@ -180,72 +197,35 @@ public abstract class TypeUtils {
         return context.enforce(TypeUtils.toBigDecimal(number));
     }
 
+    /**
+     * @deprecated v38 Use {@link ComplexNumber#valueOf(Number)} instead.
+     */
+    @Deprecated
     public static ComplexNumber toComplexNumber(final Number number) {
-
-        ComplexNumber retVal = ComplexNumber.ZERO;
-
-        if (number != null) {
-
-            if (number instanceof ComplexNumber) {
-
-                retVal = (ComplexNumber) number;
-
-            } else {
-
-                retVal = ComplexNumber.makeReal(number.doubleValue());
-            }
-        }
-
-        return retVal;
+        return ComplexNumber.valueOf(number);
     }
 
     /**
      * The way colours are specified in html pages.
      */
-    public static String toHexString(final Color aColor) {
-        return HEX + Integer.toHexString(aColor.getRGB()).substring(2);
+    public static String toHexString(final int colour) {
+        return HEX + Integer.toHexString(colour).substring(2);
     }
 
+    /**
+     * @deprecated v38 Use {@link Quaternion#valueOf(Number)} instead.
+     */
+    @Deprecated
     public static Quaternion toQuaternion(final Number number) {
-
-        Quaternion retVal = Quaternion.ZERO;
-
-        if (number != null) {
-
-            if (number instanceof Quaternion) {
-
-                retVal = (Quaternion) number;
-
-            } else if (number instanceof ComplexNumber) {
-
-                retVal = new Quaternion(number.doubleValue(), ((ComplexNumber) number).i);
-
-            } else {
-
-                retVal = new Quaternion(number.doubleValue());
-            }
-        }
-
-        return retVal;
+        return Quaternion.valueOf(number);
     }
 
+    /**
+     * @deprecated v38 Use {@link RationalNumber#valueOf(Number)} instead.
+     */
+    @Deprecated
     public static RationalNumber toRationalNumber(final Number number) {
-
-        RationalNumber retVal = RationalNumber.ZERO;
-
-        if (number != null) {
-
-            if (number instanceof RationalNumber) {
-
-                retVal = (RationalNumber) number;
-
-            } else {
-
-                retVal = new RationalNumber(TypeUtils.toBigDecimal(number));
-            }
-        }
-
-        return retVal;
+        return RationalNumber.valueOf(number);
     }
 
     static boolean isSameDate(final Calendar aCal1, final Calendar aCal2) {
@@ -273,4 +253,5 @@ public abstract class TypeUtils {
     protected TypeUtils() {
         super();
     }
+
 }

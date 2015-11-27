@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@ package org.ojalgo.array;
 import java.util.List;
 
 import org.ojalgo.access.Access1D;
-import org.ojalgo.random.RandomNumber;
+import org.ojalgo.function.NullaryFunction;
 
 abstract class ArrayFactory<N extends Number> extends Object implements Access1D.Factory<BasicArray<N>> {
 
@@ -64,10 +64,10 @@ abstract class ArrayFactory<N extends Number> extends Object implements Access1D
         return retVal;
     }
 
-    public final BasicArray<N> makeRandom(final long count, final RandomNumber distribution) {
+    public BasicArray<N> makeFilled(final long count, final NullaryFunction<?> supplier) {
         final BasicArray<N> retVal = this.makeToBeFilled(count);
         for (long i = 0L; i < count; i++) {
-            retVal.set(i, distribution.doubleValue());
+            retVal.set(i, supplier.get());
         }
         return retVal;
     }
@@ -75,6 +75,8 @@ abstract class ArrayFactory<N extends Number> extends Object implements Access1D
     public final BasicArray<N> makeZero(final long count) {
         return this.makeStructuredZero(count);
     }
+
+    abstract long getElementSize();
 
     abstract BasicArray<N> makeStructuredZero(final long... structure);
 

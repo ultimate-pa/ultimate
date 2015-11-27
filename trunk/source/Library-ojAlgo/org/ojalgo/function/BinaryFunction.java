@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,10 @@
  */
 package org.ojalgo.function;
 
-public abstract class BinaryFunction<N extends Number> implements Function<N> {
+import java.util.function.BinaryOperator;
+import java.util.function.DoubleBinaryOperator;
+
+public interface BinaryFunction<N extends Number> extends BasicFunction<N>, BinaryOperator<N>, DoubleBinaryOperator {
 
     /**
      * A {@linkplain BinaryFunction} with a set/fixed first argument.
@@ -40,24 +43,24 @@ public abstract class BinaryFunction<N extends Number> implements Function<N> {
         }
 
         @SuppressWarnings("unchecked")
-        FixedFirst(final double aFirstArg, final BinaryFunction<N> aFunc) {
+        FixedFirst(final double arg1, final BinaryFunction<N> function) {
 
             super();
 
-            myFunction = aFunc;
+            myFunction = function;
 
-            myNumber = (N) Double.valueOf(aFirstArg);
-            myValue = aFirstArg;
+            myNumber = (N) Double.valueOf(arg1);
+            myValue = arg1;
         }
 
-        FixedFirst(final N aFirstArg, final BinaryFunction<N> aFunc) {
+        FixedFirst(final N arg1, final BinaryFunction<N> function) {
 
             super();
 
-            myFunction = aFunc;
+            myFunction = function;
 
-            myNumber = aFirstArg;
-            myValue = aFirstArg.doubleValue();
+            myNumber = arg1;
+            myValue = arg1.doubleValue();
         }
 
         public final double doubleValue() {
@@ -72,12 +75,12 @@ public abstract class BinaryFunction<N extends Number> implements Function<N> {
             return myNumber;
         }
 
-        public final double invoke(final double aSecondArg) {
-            return myFunction.invoke(myValue, aSecondArg);
+        public final double invoke(final double arg2) {
+            return myFunction.invoke(myValue, arg2);
         }
 
-        public final N invoke(final N aSecondArg) {
-            return myFunction.invoke(myNumber, aSecondArg);
+        public final N invoke(final N arg2) {
+            return myFunction.invoke(myNumber, arg2);
         }
 
     }
@@ -99,24 +102,24 @@ public abstract class BinaryFunction<N extends Number> implements Function<N> {
         }
 
         @SuppressWarnings("unchecked")
-        FixedSecond(final BinaryFunction<N> aFunc, final double aSecondArg) {
+        FixedSecond(final BinaryFunction<N> function, final double arg2) {
 
             super();
 
-            myFunction = aFunc;
+            myFunction = function;
 
-            myNumber = (N) Double.valueOf(aSecondArg);
-            myValue = aSecondArg;
+            myNumber = (N) Double.valueOf(arg2);
+            myValue = arg2;
         }
 
-        FixedSecond(final BinaryFunction<N> aFunc, final N aSecondArg) {
+        FixedSecond(final BinaryFunction<N> function, final N arg2) {
 
             super();
 
-            myFunction = aFunc;
+            myFunction = function;
 
-            myNumber = aSecondArg;
-            myValue = aSecondArg.doubleValue();
+            myNumber = arg2;
+            myValue = arg2.doubleValue();
         }
 
         public final double doubleValue() {
@@ -131,37 +134,67 @@ public abstract class BinaryFunction<N extends Number> implements Function<N> {
             return myNumber;
         }
 
-        public final double invoke(final double aFirstArg) {
-            return myFunction.invoke(aFirstArg, myValue);
+        public final double invoke(final double arg1) {
+            return myFunction.invoke(arg1, myValue);
         }
 
-        public final N invoke(final N aFirstArg) {
-            return myFunction.invoke(aFirstArg, myNumber);
+        public final N invoke(final N arg1) {
+            return myFunction.invoke(arg1, myNumber);
         }
 
-    }
-
-    protected BinaryFunction() {
-        super();
-    }
-
-    public final UnaryFunction<N> first(final double arg1) {
-        return new FixedFirst<N>(arg1, this);
-    }
-
-    public final UnaryFunction<N> first(final N arg1) {
-        return new FixedFirst<N>(arg1, this);
     }
 
     public abstract double invoke(double arg1, double arg2);
 
     public abstract N invoke(N arg1, N arg2);
 
-    public final UnaryFunction<N> second(final double arg2) {
+    /**
+     * @see java.util.function.BiFunction#apply(java.lang.Object, java.lang.Object)
+     */
+    default N apply(final N arg1, final N arg2) {
+        return this.invoke(arg1, arg2);
+    }
+
+    /**
+     * @see java.util.function.DoubleBinaryOperator#applyAsDouble(double, double)
+     */
+    default double applyAsDouble(final double arg1, final double arg2) {
+        return this.invoke(arg1, arg2);
+    }
+
+    /**
+     * @see #first(Number)
+     */
+    default UnaryFunction<N> first(final double arg1) {
+        return new FixedFirst<N>(arg1, this);
+    }
+
+    /**
+     * Turns this binary function into a unary function with the first argument fixed/locked to the specified
+     * value.
+     *
+     * @param arg1 The first argument of the binary function.
+     * @return The resulting unary function.
+     */
+    default UnaryFunction<N> first(final N arg1) {
+        return new FixedFirst<N>(arg1, this);
+    }
+
+    /**
+     * @see #second(Number)
+     */
+    default UnaryFunction<N> second(final double arg2) {
         return new FixedSecond<N>(this, arg2);
     }
 
-    public final UnaryFunction<N> second(final N arg2) {
+    /**
+     * Turns this binary function into a unary function with the second argument fixed/locked to the specified
+     * value.
+     *
+     * @param arg2 The second argument of the binary function.
+     * @return The resulting unary function.
+     */
+    default UnaryFunction<N> second(final N arg2) {
         return new FixedSecond<N>(this, arg2);
     }
 

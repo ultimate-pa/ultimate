@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,11 +30,12 @@ import org.ojalgo.array.DenseArray.DenseFactory;
 import org.ojalgo.array.SparseArray.SparseFactory;
 import org.ojalgo.constant.PrimitiveMath;
 import org.ojalgo.function.BinaryFunction;
+import org.ojalgo.function.NullaryFunction;
 import org.ojalgo.function.UnaryFunction;
 import org.ojalgo.function.VoidFunction;
 import org.ojalgo.scalar.ComplexNumber;
+import org.ojalgo.scalar.Quaternion;
 import org.ojalgo.scalar.RationalNumber;
-import org.ojalgo.scalar.Scalar;
 
 /**
  * Huge array - only deals with long indices. Delegates to its segments, localises indices for them.
@@ -47,46 +48,21 @@ public final class SegmentedArray<N extends Number> extends BasicArray<N> {
 
         abstract DenseArray.DenseFactory<N> getDenseFactory();
 
-        abstract SparseArray.SparseFactory<N> getSparseFactory();
-
-        final SegmentedArray<N> makeSegmented(final ArrayFactory<N> segmentFactory, final long... structure) {
-
-            final long tmpCount = AccessUtils.count(structure);
-
-            int tmpNumberOfUniformSegments = 1; // NumberOfUniformSegments
-            long tmpUniformSegmentSize = tmpCount;
-
-            final long tmpMaxNumberOfSegments = (long) Math.min(Integer.MAX_VALUE - 1, Math.sqrt(tmpCount));
-
-            for (int i = 0; i < structure.length; i++) {
-                final long tmpNoS = (tmpNumberOfUniformSegments * structure[i]);
-                final long tmpSS = tmpUniformSegmentSize / structure[i];
-                if (tmpNoS <= tmpMaxNumberOfSegments) {
-                    tmpNumberOfUniformSegments = (int) tmpNoS;
-                    tmpUniformSegmentSize = tmpSS;
-                }
-            }
-
-            final long tmpCacheDim = OjAlgoUtils.ENVIRONMENT.getCacheDim1D(this.getDenseFactory().getElementSize());
-            final long tmpUnits = OjAlgoUtils.ENVIRONMENT.units;
-            while ((tmpUnits != 1L) && (tmpUniformSegmentSize >= tmpCacheDim) && ((tmpNumberOfUniformSegments * tmpUnits) <= tmpMaxNumberOfSegments)) {
-                tmpNumberOfUniformSegments = (int) (tmpNumberOfUniformSegments * tmpUnits);
-                tmpUniformSegmentSize = tmpUniformSegmentSize / tmpUnits;
-            }
-
-            final int tmpShift = (int) (Math.log(tmpUniformSegmentSize) / Math.log(2));
-
-            return new SegmentedArray<N>(tmpCount, tmpShift, segmentFactory);
+        @Override
+        long getElementSize() {
+            return this.getDenseFactory().getElementSize();
         }
+
+        abstract SparseArray.SparseFactory<N> getSparseFactory();
 
         @Override
         final SegmentedArray<N> makeStructuredZero(final long... structure) {
-            return this.makeSegmented(this.getSparseFactory(), structure);
+            return SegmentedArray.make(this.getSparseFactory(), structure);
         }
 
         @Override
         final SegmentedArray<N> makeToBeFilled(final long... structure) {
-            return this.makeSegmented(this.getDenseFactory(), structure);
+            return SegmentedArray.make(this.getDenseFactory(), structure);
         }
 
     }
@@ -133,6 +109,20 @@ public final class SegmentedArray<N extends Number> extends BasicArray<N> {
 
     };
 
+    static final SegmentedFactory<Quaternion> QUATERNION = new SegmentedFactory<Quaternion>() {
+
+        @Override
+        DenseFactory<Quaternion> getDenseFactory() {
+            return QuaternionArray.FACTORY;
+        }
+
+        @Override
+        SparseFactory<Quaternion> getSparseFactory() {
+            return SparseArray.QUATERNION;
+        }
+
+    };
+
     static final SegmentedFactory<RationalNumber> RATIONAL = new SegmentedFactory<RationalNumber>() {
 
         @Override
@@ -148,43 +138,82 @@ public final class SegmentedArray<N extends Number> extends BasicArray<N> {
     };
 
     public static SegmentedArray<BigDecimal> makeBigDense(final long count) {
-        return BIG.makeSegmented(BasicArray.BIG, count);
+        return SegmentedArray.make(BasicArray.BIG, count);
     }
 
     public static SegmentedArray<BigDecimal> makeBigSparse(final long count) {
-        return BIG.makeSegmented(SparseArray.BIG, count);
+        return SegmentedArray.make(SparseArray.BIG, count);
     }
 
     public static SegmentedArray<ComplexNumber> makeComplexDense(final long count) {
-        return COMPLEX.makeSegmented(BasicArray.COMPLEX, count);
+        return SegmentedArray.make(BasicArray.COMPLEX, count);
     }
 
     public static SegmentedArray<ComplexNumber> makeComplexSparse(final long count) {
-        return COMPLEX.makeSegmented(SparseArray.COMPLEX, count);
+        return SegmentedArray.make(SparseArray.COMPLEX, count);
     }
 
     public static SegmentedArray<Double> makePrimitiveDense(final long count) {
-        return PRIMITIVE.makeSegmented(BasicArray.PRIMITIVE, count);
+        return SegmentedArray.make(BasicArray.PRIMITIVE, count);
     }
 
     public static SegmentedArray<Double> makePrimitiveSparse(final long count) {
-        return PRIMITIVE.makeSegmented(SparseArray.PRIMITIVE, count);
+        return SegmentedArray.make(SparseArray.PRIMITIVE, count);
+    }
+
+    public static SegmentedArray<Quaternion> makeQuaternionDense(final long count) {
+        return SegmentedArray.make(BasicArray.QUATERNION, count);
+    }
+
+    public static SegmentedArray<Quaternion> makeQuaternionSparse(final long count) {
+        return SegmentedArray.make(SparseArray.QUATERNION, count);
     }
 
     public static SegmentedArray<RationalNumber> makeRationalDense(final long count) {
-        return RATIONAL.makeSegmented(BasicArray.RATIONAL, count);
+        return SegmentedArray.make(BasicArray.RATIONAL, count);
     }
 
     public static SegmentedArray<RationalNumber> makeRationalSparse(final long count) {
-        return RATIONAL.makeSegmented(SparseArray.RATIONAL, count);
+        return SegmentedArray.make(SparseArray.RATIONAL, count);
+    }
+
+    static <N extends Number> SegmentedArray<N> make(final ArrayFactory<N> segmentFactory, final long... structure) {
+
+        final long tmpCount = AccessUtils.count(structure);
+
+        int tmpNumberOfUniformSegments = 1; // NumberOfUniformSegments
+        long tmpUniformSegmentSize = tmpCount;
+
+        final long tmpMaxNumberOfSegments = (long) Math.min(Integer.MAX_VALUE - 1, Math.sqrt(tmpCount));
+
+        for (int i = 0; i < structure.length; i++) {
+            final long tmpNoS = (tmpNumberOfUniformSegments * structure[i]);
+            final long tmpSS = tmpUniformSegmentSize / structure[i];
+            if (tmpNoS <= tmpMaxNumberOfSegments) {
+                tmpNumberOfUniformSegments = (int) tmpNoS;
+                tmpUniformSegmentSize = tmpSS;
+            }
+        }
+
+        final long tmpCacheDim = OjAlgoUtils.ENVIRONMENT.getCacheDim1D(segmentFactory.getElementSize());
+        final long tmpUnits = OjAlgoUtils.ENVIRONMENT.units;
+        while ((tmpUnits != 1L) && (tmpUniformSegmentSize >= tmpCacheDim) && ((tmpNumberOfUniformSegments * tmpUnits) <= tmpMaxNumberOfSegments)) {
+            tmpNumberOfUniformSegments = (int) (tmpNumberOfUniformSegments * tmpUnits);
+            tmpUniformSegmentSize = tmpUniformSegmentSize / tmpUnits;
+        }
+
+        final int tmpShift = (int) (Math.log(tmpUniformSegmentSize) / Math.log(2));
+
+        return new SegmentedArray<N>(tmpCount, tmpShift, segmentFactory);
     }
 
     private final int myIndexBits;
     private final long myIndexMask;
     private final BasicArray<N>[] mySegments;
+
     /**
-     * All segments except the last one are assumed to (must) be of equal length. The last segment cannot be longer than
-     * the others.
+     * All segments except the last one are assumed to (must) be of equal length. The last segment cannot be
+     * longer than the others.
      */
     private final long mySegmentSize;
 
@@ -214,6 +243,14 @@ public final class SegmentedArray<N extends Number> extends BasicArray<N> {
         myIndexMask = tmpSegmentSize - 1L;
     }
 
+    public void add(final long index, final double addend) {
+        mySegments[(int) (index >> myIndexBits)].add(index & myIndexMask, addend);
+    }
+
+    public void add(final long index, final Number addend) {
+        mySegments[(int) (index >> myIndexBits)].add(index & myIndexMask, addend);
+    }
+
     @Override
     public long count() {
         final int tmpVal = mySegments.length - 1;
@@ -228,6 +265,24 @@ public final class SegmentedArray<N extends Number> extends BasicArray<N> {
         for (final BasicArray<N> tmpSegment : mySegments) {
             tmpSegment.fillAll(value);
         }
+    }
+
+    public void fillAll(final NullaryFunction<N> supplier) {
+        for (final BasicArray<N> tmpSegment : mySegments) {
+            tmpSegment.fillAll(supplier);
+        }
+    }
+
+    public void fillOne(final long index, final N value) {
+        mySegments[(int) (index >> myIndexBits)].fillOne(index & myIndexMask, value);
+    }
+
+    public void fillOneMatching(final long index, final Access1D<?> values, final long valueIndex) {
+        mySegments[(int) (index >> myIndexBits)].fillOneMatching(index & myIndexMask, values, valueIndex);
+    }
+
+    public void fillOne(final long index, final NullaryFunction<N> supplier) {
+        mySegments[(int) (index >> myIndexBits)].fillOne(index & myIndexMask, supplier);
     }
 
     public void fillRange(final long first, final long limit, final N value) {
@@ -245,6 +300,21 @@ public final class SegmentedArray<N extends Number> extends BasicArray<N> {
 
     }
 
+    public void fillRange(final long first, final long limit, final NullaryFunction<N> supplier) {
+
+        final int tmpFirstSegment = (int) (first / mySegmentSize);
+        final int tmpLastSegemnt = (int) ((limit - 1) / mySegmentSize);
+
+        long tmpFirstInSegment = (first % mySegmentSize);
+
+        for (int s = tmpFirstSegment; s < tmpLastSegemnt; s++) {
+            mySegments[s].fillRange(tmpFirstInSegment, mySegmentSize, supplier);
+            tmpFirstInSegment = 0L;
+        }
+        mySegments[tmpLastSegemnt].fillRange(tmpFirstInSegment, limit - (tmpLastSegemnt * mySegmentSize), supplier);
+
+    }
+
     public N get(final long index) {
         return mySegments[(int) (index >> myIndexBits)].get(index & myIndexMask);
     }
@@ -253,24 +323,14 @@ public final class SegmentedArray<N extends Number> extends BasicArray<N> {
         return mySegments[(int) (index >> myIndexBits)].isAbsolute(index & myIndexMask);
     }
 
-    public boolean isInfinite(final long index) {
-        return mySegments[(int) (index >> myIndexBits)].isInfinite(index & myIndexMask);
+    public boolean isSmall(final long index, final double comparedTo) {
+        return mySegments[(int) (index >> myIndexBits)].isSmall(index & myIndexMask, comparedTo);
     }
 
-    public boolean isNaN(final long index) {
-        return mySegments[(int) (index >> myIndexBits)].isNaN(index & myIndexMask);
-    }
-
-    public boolean isPositive(final long index) {
-        return mySegments[(int) (index >> myIndexBits)].isPositive(index & myIndexMask);
-    }
-
-    public boolean isReal(final long index) {
-        return mySegments[(int) (index >> myIndexBits)].isReal(index & myIndexMask);
-    }
-
-    public boolean isZero(final long index) {
-        return mySegments[(int) (index >> myIndexBits)].isZero(index & myIndexMask);
+    public void modifyOne(final long index, final UnaryFunction<N> function) {
+        final BasicArray<N> tmpSegment = mySegments[(int) (index >> myIndexBits)];
+        final long tmpIndex = index & myIndexMask;
+        tmpSegment.set(tmpIndex, function.invoke(tmpSegment.get(tmpIndex)));
     }
 
     public void set(final long index, final double value) {
@@ -279,6 +339,14 @@ public final class SegmentedArray<N extends Number> extends BasicArray<N> {
 
     public void set(final long index, final Number value) {
         mySegments[(int) (index >> myIndexBits)].set(index & myIndexMask, value);
+    }
+
+    public void visitOne(final long index, final VoidFunction<N> visitor) {
+        if (this.isPrimitive()) {
+            visitor.invoke(this.doubleValue(index));
+        } else {
+            visitor.invoke(this.get(index));
+        }
     }
 
     @Override
@@ -354,6 +422,38 @@ public final class SegmentedArray<N extends Number> extends BasicArray<N> {
     }
 
     @Override
+    protected void fill(final long first, final long limit, final long step, final NullaryFunction<N> supplier) {
+
+        if (step <= mySegmentSize) {
+            // Will use a continuous range of segements
+
+            final int tmpFirstSegment = (int) (first / mySegmentSize);
+            final int tmpLastSegemnt = (int) ((limit - 1L) / mySegmentSize);
+
+            long tmpFirstInSegment = (first % mySegmentSize);
+
+            for (int s = tmpFirstSegment; s < tmpLastSegemnt; s++) {
+                mySegments[s].fill(tmpFirstInSegment, mySegmentSize, step, supplier);
+                final long tmpRemainder = (mySegmentSize - tmpFirstInSegment) % step;
+                tmpFirstInSegment = tmpRemainder == 0L ? 0L : step - tmpRemainder;
+            }
+            mySegments[tmpLastSegemnt].fill(tmpFirstInSegment, limit - (tmpLastSegemnt * mySegmentSize), step, supplier);
+
+        } else if (this.isPrimitive()) {
+
+            for (long i = first; i < limit; i += step) {
+                this.set(i, supplier.doubleValue());
+            }
+
+        } else {
+
+            for (long i = first; i < limit; i += step) {
+                this.set(i, supplier.invoke());
+            }
+        }
+    }
+
+    @Override
     protected long indexOfLargest(final long first, final long limit, final long step) {
 
         double tmpVal = PrimitiveMath.ZERO;
@@ -370,10 +470,10 @@ public final class SegmentedArray<N extends Number> extends BasicArray<N> {
     }
 
     @Override
-    protected boolean isZeros(final long first, final long limit, final long step) {
+    protected boolean isSmall(final long first, final long limit, final long step, final double comparedTo) {
         boolean retVal = true;
         for (long i = first; retVal && (i < limit); i += step) {
-            retVal &= this.isZero(i);
+            retVal &= this.isSmall(i, comparedTo);
         }
         return retVal;
     }
@@ -434,11 +534,6 @@ public final class SegmentedArray<N extends Number> extends BasicArray<N> {
                 this.set(i, function.invoke(this.get(i)));
             }
         }
-    }
-
-    @Override
-    protected Scalar<N> toScalar(final long index) {
-        return mySegments[(int) (index >> myIndexBits)].toScalar(index & myIndexMask);
     }
 
     @Override

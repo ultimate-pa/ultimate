@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -116,13 +116,13 @@ public abstract class RandomUtils {
     }
 
     /**
-     * Lanczos approximation. The abritray constant is 7, and there are 9 coefficients used. Essentially the algorithm
-     * is taken from <a href="http://en.wikipedia.org/wiki/Lanczos_approximation">WikipediA</a> , but it's modified a
-     * bit and I found more exact coefficients somewhere else.
+     * Lanczos approximation. The abritray constant is 7, and there are 9 coefficients used. Essentially the
+     * algorithm is taken from <a href="http://en.wikipedia.org/wiki/Lanczos_approximation">WikipediA</a> ,
+     * but it's modified a bit and I found more exact coefficients somewhere else.
      */
     public static double gamma(final double arg) {
 
-        if ((arg <= ZERO) && (Math.abs(arg % ONE) < IS_ZERO)) {
+        if ((arg <= ZERO) && (Math.abs(arg % ONE) < MACHINE_EPSILON)) {
 
             return NaN;
 

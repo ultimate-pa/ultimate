@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,9 @@ import org.ojalgo.access.Access2D;
 import org.ojalgo.array.Array1D;
 import org.ojalgo.array.BasicArray;
 import org.ojalgo.array.PrimitiveArray;
+import org.ojalgo.constant.PrimitiveMath;
 import org.ojalgo.matrix.MatrixUtils;
+import org.ojalgo.matrix.store.ElementsSupplier;
 import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.matrix.store.PrimitiveDenseStore;
 import org.ojalgo.type.context.NumberContext;
@@ -35,18 +37,16 @@ class TridiagonalAltDecomp extends InPlaceDecomposition<Double> implements Tridi
     BasicArray<Double> myMain;
     BasicArray<Double> myOff;
 
-    public TridiagonalAltDecomp() {
+    TridiagonalAltDecomp() {
         super(PrimitiveDenseStore.FACTORY);
     }
 
-    public boolean compute(final Access2D<?> matrix) {
+    public boolean decompose(final ElementsSupplier<Double> matrix) {
 
         this.setInPlace(matrix);
 
-        final PrimitiveDenseStore tmpStore = (PrimitiveDenseStore) this.getInPlace();
-
-        myMain = PrimitiveArray.make(tmpStore.getMinDim());
-        myOff = PrimitiveArray.make(tmpStore.getMinDim());
+        myMain = PrimitiveArray.make(this.getMinDim());
+        myOff = PrimitiveArray.make(this.getMinDim());
 
         this.getInPlace().tred2(myMain, myOff, true);
 
@@ -62,9 +62,9 @@ class TridiagonalAltDecomp extends InPlaceDecomposition<Double> implements Tridi
         final Array1D<Double> tmpMain = Array1D.PRIMITIVE.wrap(myMain);
         final Array1D<Double> tmpOff = Array1D.PRIMITIVE.wrap(myOff).subList(1, (int) myOff.count());
 
-        final DiagonalAccess<Double> tmpAccess = DiagonalAccess.makePrimitive(tmpMain, tmpOff, tmpOff);
+        final DiagonalAccess<Double> tmpAccess = new DiagonalAccess<Double>(tmpMain, tmpOff, tmpOff, PrimitiveMath.ZERO);
 
-        return this.wrap(tmpAccess);
+        return this.wrap(tmpAccess).get();
     }
 
     public MatrixStore<Double> getQ() {
@@ -79,8 +79,8 @@ class TridiagonalAltDecomp extends InPlaceDecomposition<Double> implements Tridi
         return false;
     }
 
-    public MatrixStore<Double> reconstruct() {
-        return MatrixUtils.reconstruct(this);
+    public MatrixStore<Double> solve(final Access2D<Double> rhs, final DecompositionStore<Double> preallocated) {
+        throw new UnsupportedOperationException();
     }
 
 }

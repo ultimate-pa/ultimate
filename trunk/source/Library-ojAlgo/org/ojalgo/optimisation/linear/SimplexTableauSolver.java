@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,23 +25,17 @@ import static org.ojalgo.constant.PrimitiveMath.*;
 import static org.ojalgo.function.PrimitiveFunction.*;
 
 import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
 
 import org.ojalgo.ProgrammingError;
+import org.ojalgo.access.Access1D;
 import org.ojalgo.access.AccessUtils;
 import org.ojalgo.array.Array1D;
-import org.ojalgo.constant.PrimitiveMath;
 import org.ojalgo.function.aggregator.AggregatorFunction;
 import org.ojalgo.function.aggregator.PrimitiveAggregator;
 import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.matrix.store.PhysicalStore;
 import org.ojalgo.matrix.store.PrimitiveDenseStore;
-import org.ojalgo.matrix.store.ZeroStore;
-import org.ojalgo.optimisation.Expression.Index;
-import org.ojalgo.optimisation.ExpressionsBasedModel;
 import org.ojalgo.optimisation.Optimisation;
-import org.ojalgo.optimisation.Variable;
 
 /**
  * SimplexTableauSolver
@@ -114,15 +108,15 @@ final class SimplexTableauSolver extends LinearSolver {
     private final PivotPoint myPoint;
     private final PrimitiveDenseStore myTransposedTableau;
 
-    SimplexTableauSolver(final ExpressionsBasedModel aModel, final Optimisation.Options solverOptions, final LinearSolver.Builder matrices) {
+    SimplexTableauSolver(final LinearSolver.Builder matrices, final Optimisation.Options solverOptions) {
 
-        super(aModel, solverOptions, matrices);
+        super(matrices, solverOptions);
 
         myPoint = new PivotPoint(this);
 
         final int tmpConstraintsCount = this.countConstraints();
 
-        final MatrixStore.Builder<Double> tmpTableauBuilder = ZeroStore.makePrimitive(1, 1).builder();
+        final MatrixStore.Builder<Double> tmpTableauBuilder = MatrixStore.PRIMITIVE.makeZero(1, 1).get().builder();
         tmpTableauBuilder.left(matrices.getC().transpose());
 
         if (tmpConstraintsCount >= 1) {
@@ -132,8 +126,7 @@ final class SimplexTableauSolver extends LinearSolver {
         //myTransposedTableau = (PrimitiveDenseStore) tmpTableauBuilder.build().transpose().copy();
         myTransposedTableau = PrimitiveDenseStore.FACTORY.transpose(tmpTableauBuilder.build());
 
-        final Result tmpKickStarter = matrices.getKickStarter();
-        final int[] tmpBasis = tmpKickStarter != null ? tmpKickStarter.getBasis() : null;
+        final int[] tmpBasis = null;
         if ((tmpBasis != null) && (tmpBasis.length == tmpConstraintsCount)) {
             myBasis = tmpBasis;
             this.include(tmpBasis);
@@ -177,12 +170,27 @@ final class SimplexTableauSolver extends LinearSolver {
         return retVal;
     }
 
+    private boolean isBasicArtificials() {
+        final int tmpLength = myBasis.length;
+        for (int i = 0; i < tmpLength; i++) {
+            if (myBasis[i] < 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private final boolean isTableauPrintable() {
         return myTransposedTableau.count() <= 512L;
     }
 
     private final void logDebugTableau(final String message) {
         this.debug(message + "; Basics: " + Arrays.toString(myBasis), myTransposedTableau.transpose());
+    }
+
+    @Override
+    protected double evaluateFunction(final Access1D<?> solution) {
+        return myPoint.objective();
     }
 
     /**
@@ -204,48 +212,12 @@ final class SimplexTableauSolver extends LinearSolver {
         }
         final PhysicalStore<Double> tmpTableauSolution = this.getX();
 
-        final ExpressionsBasedModel tmpModel = this.getModel();
-
-        if (tmpModel != null) {
-
-            final List<Variable> tmpFreeVariables = tmpModel.getFreeVariables();
-            final Set<Index> tmpFixedVariables = tmpModel.getFixedVariables();
-
-            final PrimitiveDenseStore tmpModelSolution = PrimitiveDenseStore.FACTORY.makeZero(tmpFixedVariables.size() + tmpFreeVariables.size(), 1);
-
-            final int tmpModelSolutionSize = (int) tmpModelSolution.count();
-            final int tmpVariablesSize = tmpModel.getVariables().size();
-            if (tmpModelSolutionSize != tmpVariablesSize) {
-                throw new IllegalStateException();
-            }
-
-            for (final Index tmpFixed : tmpFixedVariables) {
-                tmpModelSolution.set(tmpFixed.index, 0, tmpModel.getVariable(tmpFixed.index).getValue().doubleValue());
-            }
-
-            final List<Variable> tmpPositive = tmpModel.getPositiveVariables();
-            for (int p = 0; p < tmpPositive.size(); p++) {
-                final int tmpIndex = tmpModel.indexOf(tmpPositive.get(p));
-                tmpModelSolution.set(tmpIndex, 0, tmpTableauSolution.doubleValue(p));
-            }
-
-            final List<Variable> tmpNegative = tmpModel.getNegativeVariables();
-            for (int n = 0; n < tmpNegative.size(); n++) {
-                final int tmpIndex = tmpModel.indexOf(tmpNegative.get(n));
-                tmpModelSolution.set(tmpIndex, 0, tmpModelSolution.doubleValue(tmpIndex) - tmpTableauSolution.doubleValue(tmpPositive.size() + n));
-            }
-
-            return tmpModelSolution;
-
-        } else {
-
-            return tmpTableauSolution;
-        }
+        return tmpTableauSolution;
 
     }
 
     @Override
-    protected boolean initialise(final Result kickStart) {
+    protected boolean initialise(final Result kickStarter) {
         return false;
         // TODO Auto-generated method stub
 
@@ -265,7 +237,7 @@ final class SimplexTableauSolver extends LinearSolver {
 
             final double tmpPhaseOneValue = myTransposedTableau.doubleValue(this.countVariables(), myPoint.getRowObjective());
 
-            if (options.objective.isZero(tmpPhaseOneValue)) {
+            if (!this.isBasicArtificials() || options.objective.isZero(tmpPhaseOneValue)) {
 
                 if (this.isDebug()) {
                     this.debug("\nSwitching to Phase2 with {} artificial variable(s) still in the basis.\n", this.countBasicArtificials());
@@ -350,7 +322,7 @@ final class SimplexTableauSolver extends LinearSolver {
         int retVal = -1;
 
         double tmpVal;
-        double tmpMinVal = myPoint.isPhase2() ? -options.problem.error() : ZERO;
+        double tmpMinVal = myPoint.isPhase2() ? -options.problem.epsilon() : ZERO;
         //double tmpMinVal = ZERO;
 
         int tmpCol;
@@ -390,7 +362,7 @@ final class SimplexTableauSolver extends LinearSolver {
 
         int retVal = -1;
         double tmpNumer = NaN, tmpDenom = NaN, tmpRatio = NaN;
-        double tmpMinRatio = MAX_VALUE;
+        double tmpMinRatio = MACHINE_LARGEST;
 
         final int tmpConstraintsCount = this.countConstraints();
 
@@ -398,24 +370,25 @@ final class SimplexTableauSolver extends LinearSolver {
 
         for (int i = 0; i < tmpConstraintsCount; i++) {
 
+            // Phase 2 with artificials still in the basis
             final boolean tmpSpecialCase = tmpPhase2 && (myBasis[i] < 0);
 
             tmpDenom = myTransposedTableau.doubleValue(tmpDenomCol, i);
 
-            if (options.problem.isZero(tmpDenom)) {
+            // Should always be >=0.0, but very small numbers may "accidentally" get a negative sign.
+            tmpNumer = Math.abs(myTransposedTableau.doubleValue(tmpNumerCol, i));
 
-                tmpRatio = MAX_VALUE;
+            if (options.problem.isSmall(tmpNumer, tmpDenom)) {
+
+                tmpRatio = MACHINE_LARGEST;
 
             } else {
 
-                // Should always be >=0.0, but very small numbers may "accidentally" get a negative sign.
-                tmpNumer = Math.abs(myTransposedTableau.doubleValue(tmpNumerCol, i));
-
                 if (tmpSpecialCase) {
-                    if (options.problem.isSmallComparedTo(tmpDenom, tmpNumer)) {
-                        tmpRatio = PrimitiveMath.MACHINE_DOUBLE_ERROR;
+                    if (options.problem.isSmall(tmpDenom, tmpNumer)) {
+                        tmpRatio = MACHINE_EPSILON;
                     } else {
-                        tmpRatio = MAX_VALUE;
+                        tmpRatio = MACHINE_LARGEST;
                     }
                 } else {
                     tmpRatio = tmpNumer / tmpDenom;
@@ -439,53 +412,53 @@ final class SimplexTableauSolver extends LinearSolver {
     /**
      * It's transposed for you!
      */
-    double getTableauElement(final int aRow, final int aCol) {
-        return myTransposedTableau.doubleValue(aCol, aRow);
+    double getTableauElement(final int row, final int col) {
+        return myTransposedTableau.doubleValue(col, row);
     }
 
-    void performIteration(final int aPivotRow, final int aPivotCol) {
+    void performIteration(final int pivotRow, final int pivotCol) {
 
-        final double tmpPivotElement = this.getTableauElement(aPivotRow, aPivotCol);
-        final double tmpPivotRHS = this.getTableauElement(aPivotRow, myPoint.getColRHS());
+        final double tmpPivotElement = this.getTableauElement(pivotRow, pivotCol);
+        final double tmpPivotRHS = this.getTableauElement(pivotRow, myPoint.getColRHS());
 
         for (int i = 0; i <= myPoint.getRowObjective(); i++) {
-            if (i != aPivotRow) {
+            if (i != pivotRow) {
 
-                final double tmpPivotColVal = this.getTableauElement(i, aPivotCol);
+                final double tmpPivotColVal = this.getTableauElement(i, pivotCol);
 
                 if (tmpPivotColVal != ZERO) {
-                    myTransposedTableau.caxpy(-tmpPivotColVal / tmpPivotElement, aPivotRow, i, 0);
+                    myTransposedTableau.caxpy(-tmpPivotColVal / tmpPivotElement, pivotRow, i, 0);
                 }
             }
         }
 
         if (Math.abs(tmpPivotElement) < ONE) {
-            myTransposedTableau.modifyColumn(0, aPivotRow, DIVIDE.second(tmpPivotElement));
+            myTransposedTableau.modifyColumn(0, pivotRow, DIVIDE.second(tmpPivotElement));
         } else if (tmpPivotElement != ONE) {
-            myTransposedTableau.modifyColumn(0, aPivotRow, MULTIPLY.second(ONE / tmpPivotElement));
+            myTransposedTableau.modifyColumn(0, pivotRow, MULTIPLY.second(ONE / tmpPivotElement));
         }
 
         if (this.isDebug()) {
-            this.debug("Iteration Point <{},{}>\tPivot: {} => {}\tRHS: {} => {}.", aPivotRow, aPivotCol, tmpPivotElement,
-                    this.getTableauElement(aPivotRow, aPivotCol), tmpPivotRHS, this.getTableauElement(aPivotRow, myPoint.getColRHS()));
+            this.debug("Iteration Point <{},{}>\tPivot: {} => {}\tRHS: {} => {}.", pivotRow, pivotCol, tmpPivotElement,
+                    this.getTableauElement(pivotRow, pivotCol), tmpPivotRHS, this.getTableauElement(pivotRow, myPoint.getColRHS()));
         }
 
-        final int tmpOld = myBasis[aPivotRow];
+        final int tmpOld = myBasis[pivotRow];
         if (tmpOld >= 0) {
             this.exclude(tmpOld);
         }
-        final int tmpNew = aPivotCol;
+        final int tmpNew = pivotCol;
         if (tmpNew >= 0) {
             this.include(tmpNew);
         }
-        myBasis[aPivotRow] = aPivotCol;
+        myBasis[pivotRow] = pivotCol;
 
         if (options.validate) {
 
             // Right-most column of the tableau
             final Array1D<Double> tmpRHS = this.sliceTableauColumn(myPoint.getColRHS());
 
-            final AggregatorFunction<Double> tmpMinAggr = PrimitiveAggregator.getCollection().minimum();
+            final AggregatorFunction<Double> tmpMinAggr = PrimitiveAggregator.getSet().minimum();
             tmpRHS.visitAll(tmpMinAggr);
             final double tmpMinVal = tmpMinAggr.doubleValue();
 
@@ -496,33 +469,46 @@ final class SimplexTableauSolver extends LinearSolver {
                 }
             }
 
-            final ExpressionsBasedModel tmpModel = this.getModel();
-
-            if ((tmpModel != null) && (myPoint.isPhase2())) {
-                final Result tmpResult = this.buildResult();
-                if (!tmpModel.validate(tmpResult, options.slack)) {
-                    if (this.isDebug()) {
-                        this.debug("Model validation failed!\n");
-                    }
-                    this.setState(State.FAILED);
-                }
-            }
         }
     }
 
     /**
-     * It's transposed for you, and only returns the part of the column corresponding to the constraints - not the
-     * objective(s).
+     * It's transposed for you, and only returns the part of the column corresponding to the constraints - not
+     * the objective(s).
      */
-    Array1D<Double> sliceTableauColumn(final int aCol) {
-        return myTransposedTableau.asArray2D().sliceRow(aCol, 0).subList(0, this.countConstraints());
+    Array1D<Double> sliceTableauColumn(final int col) {
+        return myTransposedTableau.asArray2D().sliceRow(col, 0).subList(0, this.countConstraints());
     }
 
     /**
-     * It's transposed for you, and only returns the part of the row corresponding to the variables - not the RHS.
+     * It's transposed for you, and only returns the part of the row corresponding to the variables - not the
+     * RHS.
      */
-    Array1D<Double> sliceTableauRow(final int aRow) {
-        return myTransposedTableau.asArray2D().sliceColumn(0, aRow).subList(0, this.countVariables());
+    Array1D<Double> sliceTableauRow(final int row) {
+        return myTransposedTableau.asArray2D().sliceColumn(0, row).subList(0, this.countVariables());
+    }
+
+    @Override
+    public int[] getBasis() {
+        return myBasis.clone();
+    }
+
+    @Override
+    public double[] getResidualCosts() {
+
+        this.logDebugTableau("Tableau extracted");
+
+        final double[] retVal = new double[this.countVariables()];
+
+        final int tmpRowObjective = this.countConstraints();
+
+        // final double tmpObjVal = myTransposedTableau.doubleValue(32, tmpRowObjective);
+
+        for (int j = 0; j < retVal.length; j++) {
+            retVal[j] = myTransposedTableau.doubleValue(j, tmpRowObjective);
+        }
+
+        return retVal;
     }
 
 }

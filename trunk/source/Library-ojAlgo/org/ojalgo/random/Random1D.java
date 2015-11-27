@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,6 @@ import java.util.Random;
 import org.ojalgo.access.Access2D;
 import org.ojalgo.array.Array1D;
 import org.ojalgo.matrix.decomposition.Cholesky;
-import org.ojalgo.matrix.decomposition.CholeskyDecomposition;
 import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.matrix.store.PrimitiveDenseStore;
 import org.ojalgo.type.Alternator;
@@ -42,8 +41,8 @@ public class Random1D {
 
         super();
 
-        final Cholesky<Double> tmpCholesky = CholeskyDecomposition.makePrimitive();
-        tmpCholesky.compute(aCorrelationsMatrix);
+        final Cholesky<Double> tmpCholesky = Cholesky.makePrimitive();
+        tmpCholesky.decompose(MatrixStore.PRIMITIVE.makeWrapper(aCorrelationsMatrix));
         myCholeskiedCorrelations = tmpCholesky.getL();
 
         tmpCholesky.reset();
@@ -80,7 +79,7 @@ public class Random1D {
         }
 
         if (myCholeskiedCorrelations != null) {
-            return ((PrimitiveDenseStore) tmpUncorrelated.multiplyLeft(myCholeskiedCorrelations)).asList();
+            return ((PrimitiveDenseStore) myCholeskiedCorrelations.multiply(tmpUncorrelated)).asList();
         } else {
             return tmpUncorrelated.asList();
         }
@@ -98,7 +97,7 @@ public class Random1D {
         }
 
         if (myCholeskiedCorrelations != null) {
-            return ((PrimitiveDenseStore) tmpUncorrelated.multiplyLeft(myCholeskiedCorrelations)).asList();
+            return ((PrimitiveDenseStore) myCholeskiedCorrelations.multiply(tmpUncorrelated)).asList();
         } else {
             return tmpUncorrelated.asList();
         }

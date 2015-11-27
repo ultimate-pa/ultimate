@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -48,7 +48,7 @@ abstract class DelegatingStore<N extends Number> extends LogicalStore<N> {
         }
 
         public MatrixStore<N> call() throws Exception {
-            return myThisStore.multiplyLeft(myLeftStore);
+            return ((MatrixStore<N>) myLeftStore).multiply(myThisStore);
         }
 
     }
@@ -72,21 +72,26 @@ abstract class DelegatingStore<N extends Number> extends LogicalStore<N> {
         }
 
         public MatrixStore<N> call() throws Exception {
-            return myThisStore.multiplyRight(myRightStore);
+            return myThisStore.multiply(myRightStore);
         }
 
     }
 
     protected DelegatingStore(final int rowsCount, final int columnsCount, final MatrixStore<N> base) {
-        super(rowsCount, columnsCount, base);
+        super(base, rowsCount, columnsCount);
+    }
+
+    @Override
+    public void supplyTo(final ElementsConsumer<N> consumer) {
+        this.supplyNonZerosTo(consumer);
     }
 
     protected final Future<MatrixStore<N>> executeMultiplyLeftOnBase(final Access1D<N> left) {
-        return DaemonPoolExecutor.INSTANCE.submit(new MultiplyLeft<N>(this.getBase(), left));
+        return DaemonPoolExecutor.invoke(new MultiplyLeft<N>(this.getBase(), left));
     }
 
     protected final Future<MatrixStore<N>> executeMultiplyRightOnBase(final Access1D<N> right) {
-        return DaemonPoolExecutor.INSTANCE.submit(new MultiplyRight<N>(this.getBase(), right));
+        return DaemonPoolExecutor.invoke(new MultiplyRight<N>(this.getBase(), right));
     }
 
 }

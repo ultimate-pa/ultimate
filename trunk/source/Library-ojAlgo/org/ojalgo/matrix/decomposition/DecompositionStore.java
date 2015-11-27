@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,10 +21,7 @@
  */
 package org.ojalgo.matrix.decomposition;
 
-import java.util.Iterator;
-
 import org.ojalgo.access.Access2D;
-import org.ojalgo.access.Iterator1D;
 import org.ojalgo.array.Array1D;
 import org.ojalgo.array.Array2D;
 import org.ojalgo.array.BasicArray;
@@ -35,13 +32,14 @@ import org.ojalgo.scalar.ComplexNumber;
 
 /**
  * <p>
- * Only classes that will act as a delegate to a {@linkplain MatrixDecomposition} implementation from this package
- * should implement this interface. The interface specifications are entirely dictated by the classes in this package.
+ * Only classes that will act as a delegate to a {@linkplain MatrixDecomposition} implementation from this
+ * package should implement this interface. The interface specifications are entirely dictated by the classes
+ * in this package.
  * </p>
  * <p>
  * Do not use it for anything else!
  * </p>
- * 
+ *
  * @author apete
  */
 public interface DecompositionStore<N extends Number> extends PhysicalStore<N> {
@@ -168,10 +166,6 @@ public interface DecompositionStore<N extends Number> extends PhysicalStore<N> {
             }
         }
 
-        public final Iterator<N> iterator() {
-            return new Iterator1D<N>(this);
-        }
-
         @Override
         public String toString() {
 
@@ -197,23 +191,32 @@ public interface DecompositionStore<N extends Number> extends PhysicalStore<N> {
     void applyCholesky(final int iterationPoint, final BasicArray<N> multipliers);
 
     /**
+     * LDL transformations
+     */
+    void applyLDL(final int iterationPoint, final BasicArray<N> multipliers);
+
+    /**
      * LU transformations
      */
     void applyLU(final int iterationPoint, final BasicArray<N> multipliers);
 
     Array2D<N> asArray2D();
 
-    Array1D<ComplexNumber> computeInPlaceSchur(PhysicalStore<N> aTransformationCollector, boolean eigenvalue);
+    Array1D<ComplexNumber> computeInPlaceSchur(PhysicalStore<N> transformationCollector, boolean eigenvalue);
 
-    void divideAndCopyColumn(int aRow, int aCol, BasicArray<N> aDestination);
+    void divideAndCopyColumn(int row, int column, BasicArray<N> destination);
 
-    boolean generateApplyAndCopyHouseholderColumn(final int aRow, final int aCol, final Householder<N> aDestination);
+    void exchangeHermitian(int indexA, int indexB);
 
-    boolean generateApplyAndCopyHouseholderRow(final int aRow, final int aCol, final Householder<N> aDestination);
+    boolean generateApplyAndCopyHouseholderColumn(final int row, final int column, final Householder<N> destination);
 
-    int getIndexOfLargestInColumn(final int aRow, final int aCol);
+    boolean generateApplyAndCopyHouseholderRow(final int row, final int column, final Householder<N> destination);
 
-    void negateColumn(int aCol);
+    int indexOfLargestInColumn(final int row, final int column);
+
+    int indexOfLargestInDiagonal(final int row, final int column);
+
+    void negateColumn(int column);
 
     void rotateRight(int aLow, int aHigh, double aCos, double aSin);
 
@@ -222,31 +225,35 @@ public interface DecompositionStore<N extends Number> extends PhysicalStore<N> {
     /**
      * Will solve the equation system [A][X]=[B] where:
      * <ul>
-     * <li>[aBody][this]=[this] is [A][X]=[B] ("this" is the right hand side, and it will be overwritten with the
-     * solution).</li>
+     * <li>[body][this]=[this] is [A][X]=[B] ("this" is the right hand side, and it will be overwritten with
+     * the solution).</li>
      * <li>[A] is upper/right triangular</li>
      * </ul>
-     * 
-     * @param aBody The equation system body parameters [A]
-     * @param conjugated true if the upper/right part of aBody is actually stored in the lower/left part of the matrix,
-     *        and the elements conjugated.
+     *
+     * @param body The equation system body parameters [A]
+     * @param unitDiagonal TODO
+     * @param conjugated true if the upper/right part of body is actually stored in the lower/left part of the
+     *        matrix, and the elements conjugated.
+     * @param hermitian TODO
      */
-    void substituteBackwards(Access2D<N> aBody, boolean conjugated);
+    void substituteBackwards(Access2D<N> body, boolean unitDiagonal, boolean conjugated, boolean hermitian);
 
     /**
      * Will solve the equation system [A][X]=[B] where:
      * <ul>
-     * <li>[aBody][this]=[this] is [A][X]=[B] ("this" is the right hand side, and it will be overwritten with the
-     * solution).</li>
+     * <li>[body][this]=[this] is [A][X]=[B] ("this" is the right hand side, and it will be overwritten with
+     * the solution).</li>
      * <li>[A] is lower/left triangular</li>
      * </ul>
-     * 
-     * @param aBody The equation system body parameters [A]
-     * @param onesOnDiagonal true if aBody as ones on the diagonal
+     *
+     * @param body The equation system body parameters [A]
+     * @param unitDiagonal true if body as ones on the diagonal
+     * @param conjugated TODO
+     * @param identity
      */
-    void substituteForwards(Access2D<N> aBody, boolean onesOnDiagonal, boolean zerosAboveDiagonal);
+    void substituteForwards(Access2D<N> body, boolean unitDiagonal, boolean conjugated, boolean identity);
 
-    void transformSymmetric(Householder<N> aTransf);
+    void transformSymmetric(Householder<N> transformation);
 
     void tred2(BasicArray<N> mainDiagonal, BasicArray<N> offDiagonal, boolean yesvecs);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,9 +30,13 @@ import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.matrix.store.PhysicalStore;
 import org.ojalgo.matrix.store.PhysicalStore.Factory;
 import org.ojalgo.matrix.store.PrimitiveDenseStore;
-import org.ojalgo.matrix.store.ZeroStore;
 import org.ojalgo.scalar.ComplexNumber;
 
+/**
+ * Constant valued function - always returns the same value.
+ *
+ * @author apete
+ */
 public final class ConstantFunction<N extends Number> extends AbstractMultiary<N, ConstantFunction<N>> {
 
     public static ConstantFunction<BigDecimal> makeBig(final int arity) {
@@ -82,15 +86,17 @@ public final class ConstantFunction<N extends Number> extends AbstractMultiary<N
         return myArity;
     }
 
-    public MatrixStore<N> getGradient(final Access1D<?> arg) {
-        return new ZeroStore<>(this.factory(), this.arity(), 1);
+    public MatrixStore<N> getGradient(final Access1D<N> arg) {
+        //return new ZeroStore<>(this.factory(), this.arity(), 1);
+        return this.factory().builder().makeZero(this.arity(), 1).get();
     }
 
-    public MatrixStore<N> getHessian(final Access1D<?> arg) {
-        return new ZeroStore<>(this.factory(), this.arity(), this.arity());
+    public MatrixStore<N> getHessian(final Access1D<N> arg) {
+        //return new ZeroStore<>(this.factory(), this.arity(), this.arity());
+        return this.factory().builder().makeZero(this.arity(), this.arity()).get();
     }
 
-    public N invoke(final Access1D<?> arg) {
+    public N invoke(final Access1D<N> arg) {
         return this.getConstant();
     }
 

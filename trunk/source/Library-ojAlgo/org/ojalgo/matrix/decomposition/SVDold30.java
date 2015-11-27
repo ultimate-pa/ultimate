@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import org.ojalgo.ProgrammingError;
-import org.ojalgo.access.Access2D;
 import org.ojalgo.array.Array1D;
 import org.ojalgo.array.Array2D;
 import org.ojalgo.concurrent.DaemonPoolExecutor;
@@ -41,6 +40,7 @@ import org.ojalgo.function.PrimitiveFunction;
 import org.ojalgo.matrix.MatrixUtils;
 import org.ojalgo.matrix.store.BigDenseStore;
 import org.ojalgo.matrix.store.ComplexDenseStore;
+import org.ojalgo.matrix.store.ElementsSupplier;
 import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.matrix.store.PhysicalStore;
 import org.ojalgo.matrix.store.PrimitiveDenseStore;
@@ -51,9 +51,9 @@ import org.ojalgo.type.TypeUtils;
 import org.ojalgo.type.context.NumberContext;
 
 /**
- * Samma som orginalet, but without QR. Instead Householder directly. Wasn't faster. Try going directly to bidiagonal
- * instead. Based SVDold2, but with GenericRotaion replaced with Rotation.
- * 
+ * Samma som orginalet, but without QR. Instead Householder directly. Wasn't faster. Try going directly to
+ * bidiagonal instead. Based SVDold2, but with GenericRotaion replaced with Rotation.
+ *
  * @author apete
  */
 abstract class SVDold30<N extends Number & Comparable<N>> extends SingularValueDecomposition<N> {
@@ -141,10 +141,10 @@ abstract class SVDold30<N extends Number & Comparable<N>> extends SingularValueD
             final ComplexNumber cg; // cos Givens
             final ComplexNumber sg; // sin Givens
 
-            if (y.isZero()) {
+            if (ComplexNumber.isSmall(PrimitiveMath.ONE, y)) {
                 cg = x.signum();
                 sg = ComplexNumber.ZERO;
-            } else if (x.isZero()) {
+            } else if (ComplexNumber.isSmall(PrimitiveMath.ONE, x)) {
                 sg = y.signum();
                 cg = ComplexNumber.ZERO;
             } else if (y.compareTo(x) == 1) {
@@ -243,7 +243,7 @@ abstract class SVDold30<N extends Number & Comparable<N>> extends SingularValueD
         super(aFactory, aBidiagonal);
     }
 
-    public final boolean equals(final MatrixStore<N> aStore, final NumberContext context) {
+    public boolean equals(final MatrixStore<N> aStore, final NumberContext context) {
         return MatrixUtils.equals(aStore, this, context);
     }
 
@@ -256,7 +256,7 @@ abstract class SVDold30<N extends Number & Comparable<N>> extends SingularValueD
     }
 
     @Override
-    public final void reset() {
+    public void reset() {
 
         super.reset();
 
@@ -268,13 +268,8 @@ abstract class SVDold30<N extends Number & Comparable<N>> extends SingularValueD
     }
 
     @Override
-    public final MatrixStore<N> solve(final Access2D<N> rhs) {
-        return this.getInverse().multiplyRight(rhs);
-    }
-
-    @Override
     @SuppressWarnings("unchecked")
-    protected final boolean doCompute(final Access2D<?> aStore, final boolean singularValuesOnly, final boolean fullSize) {
+    protected boolean doCompute(final ElementsSupplier<N> aStore, final boolean singularValuesOnly, final boolean fullSize) {
 
         final int tmpMinDim = (int) Math.min(aStore.countRows(), aStore.countColumns());
 
@@ -291,7 +286,7 @@ abstract class SVDold30<N extends Number & Comparable<N>> extends SingularValueD
         //        BasicLogger.logDebug(this.getClass().toString());
         //        BasicLogger.logDebug("Init D", myD);
 
-        final N tmpZero = this.getStaticZero();
+        final N tmpZero = this.scalar().zero().getNumber();
         boolean tmpNotAllZeros = true;
         for (int l = 0; tmpNotAllZeros && (l < tmpMinDim); l++) {
 
@@ -351,7 +346,7 @@ abstract class SVDold30<N extends Number & Comparable<N>> extends SingularValueD
 
         this.getSingularValues().sortDescending();
 
-        myFutureQ1 = DaemonPoolExecutor.INSTANCE.submit(new Callable<PhysicalStore<N>>() {
+        myFutureQ1 = DaemonPoolExecutor.invoke(new Callable<PhysicalStore<N>>() {
 
             public PhysicalStore<N> call() throws Exception {
 
@@ -368,7 +363,7 @@ abstract class SVDold30<N extends Number & Comparable<N>> extends SingularValueD
             }
         });
 
-        myFutureQ2 = DaemonPoolExecutor.INSTANCE.submit(new Callable<PhysicalStore<N>>() {
+        myFutureQ2 = DaemonPoolExecutor.invoke(new Callable<PhysicalStore<N>>() {
 
             public PhysicalStore<N> call() throws Exception {
 
@@ -388,7 +383,7 @@ abstract class SVDold30<N extends Number & Comparable<N>> extends SingularValueD
         return this.computed(true);
     }
 
-    protected final DiagonalAccess<N> extractSimilar(final PhysicalStore<N> aStore, final boolean aNormalAspectRatio) {
+    protected DiagonalAccess<N> extractSimilar(final PhysicalStore<N> aStore, final boolean aNormalAspectRatio) {
 
         final Array2D<N> tmpArray2D = ((DecompositionStore<N>) aStore).asArray2D();
 
@@ -398,18 +393,18 @@ abstract class SVDold30<N extends Number & Comparable<N>> extends SingularValueD
 
             final Array1D<N> tmpSuper = tmpArray2D.sliceDiagonal(0, 1);
 
-            return new DiagonalAccess<N>(tmpMain, tmpSuper, null, this.getStaticZero());
+            return new DiagonalAccess<N>(tmpMain, tmpSuper, null, this.scalar().zero().getNumber());
 
         } else {
 
             final Array1D<N> tmpSub = tmpArray2D.sliceDiagonal(1, 0);
 
-            return new DiagonalAccess<N>(tmpMain, null, tmpSub, this.getStaticZero());
+            return new DiagonalAccess<N>(tmpMain, null, tmpSub, this.scalar().zero().getNumber());
         }
     }
 
     @Override
-    protected final MatrixStore<N> makeD() {
+    protected MatrixStore<N> makeD() {
 
         //        final int tmpMinDim = this..getMinDim();
         //
@@ -423,7 +418,7 @@ abstract class SVDold30<N extends Number & Comparable<N>> extends SingularValueD
     }
 
     @Override
-    protected final MatrixStore<N> makeQ1() {
+    protected MatrixStore<N> makeQ1() {
         try {
             return myFutureQ1.get();
         } catch (final InterruptedException anException) {
@@ -434,7 +429,7 @@ abstract class SVDold30<N extends Number & Comparable<N>> extends SingularValueD
     }
 
     @Override
-    protected final MatrixStore<N> makeQ2() {
+    protected MatrixStore<N> makeQ2() {
         try {
             return myFutureQ2.get();
         } catch (final InterruptedException anException) {

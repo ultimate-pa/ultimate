@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,54 +26,60 @@ import org.ojalgo.constant.PrimitiveMath;
 import org.ojalgo.scalar.Scalar;
 
 /**
- * A Hessenberg matrix is one that is "almost" triangular. A lower Hessenberg matrix has zero entries above the first
- * superdiagonal.
- * 
+ * A Hessenberg matrix is one that is "almost" triangular. A lower Hessenberg matrix has zero entries above
+ * the first superdiagonal.
+ *
  * @author apete
  */
-public final class LowerHessenbergStore<N extends Number> extends ShadingStore<N> {
-
-    public LowerHessenbergStore(final MatrixStore<N> aBase) {
-        super((int) aBase.countRows(), (int) Math.min(aBase.countRows(), aBase.countColumns()), aBase);
-    }
+final class LowerHessenbergStore<N extends Number> extends ShadingStore<N> {
 
     @SuppressWarnings("unused")
-    private LowerHessenbergStore(final int aRowDim, final int aColDim, final MatrixStore<N> aBase) {
+    private LowerHessenbergStore(final int aRowDim, final int aColDim, final MatrixStore<N> base) {
 
-        this(aBase);
+        this(base);
 
         ProgrammingError.throwForIllegalInvocation();
     }
 
-    public double doubleValue(final long aRow, final long aCol) {
-        if ((aRow + 1) < aCol) {
+    LowerHessenbergStore(final MatrixStore<N> base) {
+        super((int) base.countRows(), (int) Math.min(base.countRows(), base.countColumns()), base);
+    }
+
+    public double doubleValue(final long row, final long col) {
+        if ((row + 1) < col) {
             return PrimitiveMath.ZERO;
         } else {
-            return this.getBase().doubleValue(aRow, aCol);
+            return this.getBase().doubleValue(row, col);
         }
     }
 
-    public N get(final long aRow, final long aCol) {
-        if ((aRow + 1) < aCol) {
+    public int firstInColumn(final int col) {
+        if (col == 0) {
+            return 0;
+        } else {
+            return col - 1;
+        }
+    }
+
+    public N get(final long row, final long col) {
+        if ((row + 1) < col) {
             return this.factory().scalar().zero().getNumber();
         } else {
-            return this.getBase().get(aRow, aCol);
+            return this.getBase().get(row, col);
         }
     }
 
-    public boolean isLowerLeftShaded() {
-        return false;
+    @Override
+    public int limitOfRow(final int row) {
+        return Math.min(row + 2, this.getColDim());
     }
 
-    public boolean isUpperRightShaded() {
-        return true;
-    }
-
-    public Scalar<N> toScalar(final long row, final long column) {
-        if ((row + 1) < column) {
+    public Scalar<N> toScalar(final long row, final long col) {
+        if ((row + 1) < col) {
             return this.factory().scalar().zero();
         } else {
-            return this.getBase().toScalar(row, column);
+            return this.getBase().toScalar(row, col);
         }
     }
+
 }

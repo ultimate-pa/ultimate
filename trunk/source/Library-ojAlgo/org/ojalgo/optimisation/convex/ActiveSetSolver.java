@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,23 +22,15 @@
 package org.ojalgo.optimisation.convex;
 
 import static org.ojalgo.constant.PrimitiveMath.*;
+import static org.ojalgo.function.PrimitiveFunction.*;
 
-import java.util.HashSet;
-
-import org.ojalgo.constant.PrimitiveMath;
-import org.ojalgo.function.PrimitiveFunction;
 import org.ojalgo.function.aggregator.Aggregator;
-import org.ojalgo.matrix.store.AboveBelowStore;
-import org.ojalgo.matrix.store.IdentityStore;
+import org.ojalgo.matrix.decomposition.DecompositionStore;
+import org.ojalgo.matrix.store.ElementsSupplier;
 import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.matrix.store.PhysicalStore;
-import org.ojalgo.matrix.store.RowsStore;
-import org.ojalgo.matrix.store.ZeroStore;
-import org.ojalgo.optimisation.ExpressionsBasedModel;
-import org.ojalgo.optimisation.ModelEntity;
+import org.ojalgo.matrix.store.PrimitiveDenseStore;
 import org.ojalgo.optimisation.Optimisation;
-import org.ojalgo.optimisation.convex.KKTSolver.Input;
-import org.ojalgo.optimisation.convex.KKTSolver.Output;
 import org.ojalgo.optimisation.linear.LinearSolver;
 import org.ojalgo.type.IndexSelector;
 
@@ -47,64 +39,70 @@ import org.ojalgo.type.IndexSelector;
  * <p>
  * min 1/2 [X]<sup>T</sup>[Q][X] - [C]<sup>T</sup>[X]<br>
  * when [AE][X] == [BE]<br>
- * and [AI][X] <= [BI]
+ * and [AI][X] &lt;= [BI]
  * </p>
+ * Where [AE] and [BE] are optinal.
  *
  * @author apete
  */
-final class ActiveSetSolver extends ConvexSolver {
+abstract class ActiveSetSolver extends ConstrainedSolver {
 
     private final IndexSelector myActivator;
-
     private int myConstraintToInclude = -1;
+    private final PrimitiveDenseStore myIterationX;
 
-    ActiveSetSolver(final ExpressionsBasedModel aModel, final Optimisation.Options solverOptions, final ConvexSolver.Builder aBuilder) {
+    MatrixStore<Double> myInvQC;
 
-        super(aModel, solverOptions, aBuilder);
+    ActiveSetSolver(final ConvexSolver.Builder matrices, final Optimisation.Options solverOptions) {
 
-        if (this.hasInequalityConstraints()) {
-            myActivator = new IndexSelector(this.countInequalityConstraints());
-        } else {
-            myActivator = new IndexSelector(0);
-        }
+        super(matrices, solverOptions);
 
-        int tmpIterationsLimit = (int) Math.max(this.getAI().countRows(), this.getAI().countColumns());
-        tmpIterationsLimit = (int) (9.0 + Math.sqrt(tmpIterationsLimit));
-        tmpIterationsLimit = tmpIterationsLimit * tmpIterationsLimit;
+        myActivator = new IndexSelector(this.countInequalityConstraints());
 
-        options.iterations_abort = tmpIterationsLimit;
+        myIterationX = PrimitiveDenseStore.FACTORY.makeZero(this.countVariables(), 1L);
 
-        // BasicLogger.logDebug("AS solver innequalities: " + this.countInequalityConstraints());
     }
 
-    private boolean isFeasible(final boolean onlyExcluded) {
+    private boolean checkFeasibility(final boolean onlyExcluded) {
 
         boolean retVal = true;
 
         if (!onlyExcluded) {
 
-            final MatrixStore<Double> tmpSE = this.getSE();
-            for (int i = 0; retVal && (i < tmpSE.countRows()); i++) {
-                final double tmpVal = tmpSE.doubleValue(i);
-                if (!options.slack.isZero(tmpVal)) {
-                    retVal = false;
+            if (this.hasEqualityConstraints()) {
+                final MatrixStore<Double> tmpAEX = this.getAEX();
+                final MatrixStore<Double> tmpBE = this.getBE();
+                for (int i = 0; retVal && (i < tmpBE.countRows()); i++) {
+                    if (options.slack.isDifferent(tmpBE.doubleValue(i), tmpAEX.doubleValue(i))) {
+                        retVal = false;
+                    }
                 }
             }
 
-            final MatrixStore<Double> tmpSIincl = this.getSI(myActivator.getIncluded());
-            for (int i = 0; retVal && (i < tmpSIincl.countRows()); i++) {
-                final double tmpVal = tmpSIincl.doubleValue(i);
-                if (!options.slack.isZero(tmpVal)) {
-                    retVal = false;
+            if (this.hasInequalityConstraints() && (myActivator.countIncluded() > 0)) {
+                final int[] tmpIncluded = myActivator.getIncluded();
+                final MatrixStore<Double> tmpAIX = this.getAIX(tmpIncluded);
+                final MatrixStore<Double> tmpBI = this.getBI(tmpIncluded);
+                for (int i = 0; retVal && (i < tmpIncluded.length); i++) {
+                    final double tmpBody = tmpAIX.doubleValue(i);
+                    final double tmpRHS = tmpBI.doubleValue(i);
+                    if ((tmpBody > tmpRHS) && options.slack.isDifferent(tmpRHS, tmpBody)) {
+                        retVal = false;
+                    }
                 }
             }
         }
 
-        final MatrixStore<Double> tmpSIexcl = this.getSI(myActivator.getExcluded());
-        for (int i = 0; retVal && (i < tmpSIexcl.countRows()); i++) {
-            final double tmpVal = tmpSIexcl.doubleValue(i);
-            if ((tmpVal < 0.0) && !options.slack.isZero(tmpVal)) {
-                retVal = false;
+        if (this.hasInequalityConstraints() && (myActivator.countExcluded() > 0)) {
+            final int[] tmpExcluded = myActivator.getExcluded();
+            final MatrixStore<Double> tmpAIX = this.getAIX(tmpExcluded);
+            final MatrixStore<Double> tmpBI = this.getBI(tmpExcluded);
+            for (int i = 0; retVal && (i < tmpExcluded.length); i++) {
+                final double tmpBody = tmpAIX.doubleValue(i);
+                final double tmpRHS = tmpBI.doubleValue(i);
+                if ((tmpBody > tmpRHS) && options.slack.isDifferent(tmpRHS, tmpBody)) {
+                    retVal = false;
+                }
             }
         }
 
@@ -129,7 +127,7 @@ final class ActiveSetSolver extends ConvexSolver {
         final MatrixStore<Double> tmpLI = this.getLI(tmpIncluded);
 
         if (this.isDebug() && (tmpLI.count() > 0L)) {
-            this.debug("Looking for the largest negative lagrange multiplier among these: {}.", tmpLI.copy().toString());
+            this.debug("Looking for the largest negative lagrange multiplier among these: {}.", tmpLI.copy().asList());
         }
 
         for (int i = 0; i < tmpLI.countRows(); i++) {
@@ -169,37 +167,11 @@ final class ActiveSetSolver extends ConvexSolver {
     }
 
     /**
-     * Find minimum (largest negative) slack - for the inactive inequalities - to potentially activate. Negative slack
-     * means the constraint is violated. Need to make sure it is enforced by activating it.
+     * Find minimum (largest negative) slack - for the inactive inequalities - to potentially activate.
+     * Negative slack means the constraint is violated. Need to make sure it is enforced by activating it.
      */
     private int suggestConstraintToInclude() {
         return myConstraintToInclude;
-    }
-
-    @Override
-    protected Result buildResult() {
-
-        final Result retVal = super.buildResult();
-
-        final ExpressionsBasedModel tmpModel = this.getModel();
-
-        if (tmpModel != null) {
-
-            // BasicLogger.logDebug("A S Iterations: " + this.countIterations());
-
-            final HashSet<ModelEntity<?>> tmpActiveInequalityEntities = new HashSet<>();
-
-            final ModelEntity<?>[] tmpInequalityEntities = this.getInequalityEnities();
-            final int[] tmpActiveIndeces = myActivator.getIncluded();
-
-            for (final int tmpIndexOfActive : tmpActiveIndeces) {
-                tmpActiveInequalityEntities.add(tmpInequalityEntities[tmpIndexOfActive]);
-            }
-
-            tmpModel.markActiveInequalityConstraints(tmpActiveInequalityEntities);
-        }
-
-        return retVal;
     }
 
     @Override
@@ -208,7 +180,31 @@ final class ActiveSetSolver extends ConvexSolver {
     }
 
     @Override
+    protected final MatrixStore<Double> getIterationKKT() {
+        return this.getIterationKKT(myActivator.getIncluded());
+    }
+
+    protected final MatrixStore<Double> getIterationKKT(final int[] included) {
+        final MatrixStore<Double> tmpIterationQ = this.getIterationQ();
+        final MatrixStore<Double> tmpIterationA = this.getIterationA(included);
+        return tmpIterationQ.builder().right(tmpIterationA.transpose()).below(tmpIterationA).build();
+    }
+
+    @Override
+    protected final MatrixStore<Double> getIterationRHS() {
+        return this.getIterationRHS(myActivator.getIncluded());
+    }
+
+    protected final MatrixStore<Double> getIterationRHS(final int[] included) {
+        final MatrixStore<Double> tmpIterationC = this.getIterationC();
+        final MatrixStore<Double> tmpIterationB = this.getIterationB(included);
+        return tmpIterationC.builder().below(tmpIterationB).build();
+    }
+
+    @Override
     protected boolean initialise(final Result kickStarter) {
+
+        super.initialise(kickStarter);
 
         final MatrixStore<Double> tmpQ = this.getQ();
         final MatrixStore<Double> tmpC = this.getC();
@@ -217,91 +213,80 @@ final class ActiveSetSolver extends ConvexSolver {
         final MatrixStore<Double> tmpAI = this.getAI();
         final MatrixStore<Double> tmpBI = this.getBI();
 
+        final int tmpNumVars = (int) tmpC.countRows();
+        final int tmpNumEqus = tmpAE != null ? (int) tmpAE.countRows() : 0;
+        final int tmpNumInes = tmpAI != null ? (int) tmpAI.countRows() : 0;
+
+        final DecompositionStore<Double> tmpX = this.getX();
+
         myActivator.excludeAll();
 
         boolean tmpFeasible = false;
+        final boolean tmpUsableKickStarter = (kickStarter != null) && kickStarter.getState().isApproximate();
 
-        if (kickStarter != null) {
-
+        if (tmpUsableKickStarter) {
             this.fillX(kickStarter);
-
-        } else {
-
-            final KKTSolver.Input tmpUnconstrInput = new KKTSolver.Input(tmpQ, tmpC, tmpAE, tmpBE);
-            final KKTSolver tmpUnconstrSolver = this.getDelegateSolver(tmpUnconstrInput);
-            final Output tmpUnconstrOutput = tmpUnconstrSolver.solve(tmpUnconstrInput);
-
-            if (tmpUnconstrOutput.isSolvable()) {
-                this.fillX(tmpUnconstrOutput.getX());
-                tmpFeasible = this.isFeasible(true);
-            } else {
-                //                for (int i = 0; i < tmpC.countRows(); i++) {
-                //                    final double tmpNumer = tmpC.doubleValue(i);
-                //                    final double tmpDenom = tmpQ.doubleValue(i, i);
-                //                    if (options.problem.isZero(tmpDenom)) {
-                //                        this.setX(i, 0.0);
-                //                    } else {
-                //                        this.setX(i, tmpNumer / tmpDenom);
-                //                    }
-                //                }
-                this.resetX();
-                tmpFeasible = this.isFeasible(false);
-            }
+            tmpFeasible = this.checkFeasibility(false);
         }
 
         if (!tmpFeasible) {
+            // Form LP to check feasibility
 
-            final MatrixStore<Double> tmpLinearC = tmpQ.multiplyRight(this.getX()).subtract(tmpC);
+            final MatrixStore<Double> tmpGradient = tmpUsableKickStarter ? tmpQ.multiply(tmpX).subtract(tmpC) : tmpC.negate();
 
-            final int tmpNumberOfVariables = (int) tmpC.countRows();
-            final int tmpNumberOfEqualities = tmpAE != null ? (int) tmpAE.countRows() : 0;
-            final int tmpNumberOfInequalities = tmpAI != null ? (int) tmpAI.countRows() : 0;
+            final MatrixStore<Double> tmpLinearC = tmpGradient.builder().below(tmpGradient.negate()).below(tmpNumInes).build();
 
-            final LinearSolver.Builder tmpLinBuilder = new LinearSolver.Builder(tmpLinearC.builder().below(tmpLinearC.negate()).below(tmpNumberOfInequalities)
-                    .build());
+            final LinearSolver.Builder tmpLinearBuilder = LinearSolver.getBuilder(tmpLinearC);
 
-            MatrixStore<Double> tmpLinearAE = null;
-            MatrixStore<Double> tmpLinearBE = null;
+            MatrixStore<Double> tmpAEpart = null;
+            MatrixStore<Double> tmpBEpart = null;
 
-            if (tmpNumberOfEqualities > 0) {
-                tmpLinearAE = tmpAE.builder().right(tmpAE.negate()).right(tmpNumberOfInequalities).build();
-                tmpLinearBE = tmpBE;
+            if (tmpNumEqus > 0) {
+                tmpAEpart = tmpAE.builder().right(tmpAE.negate()).right(tmpNumInes).build();
+                tmpBEpart = tmpBE;
             }
 
-            if (tmpNumberOfInequalities > 0) {
-                final MatrixStore<Double> tmpLinAI = tmpAI.builder().right(tmpAI.negate()).right(IdentityStore.makePrimitive(tmpNumberOfInequalities)).build();
-                if (tmpLinearAE != null) {
-                    tmpLinearAE = tmpLinearAE.builder().below(tmpLinAI).build();
-                    tmpLinearBE = tmpLinearBE.builder().below(tmpBI).build();
+            if (tmpNumInes > 0) {
+                final MatrixStore<Double> tmpAIpart = tmpAI.builder().right(tmpAI.negate()).right(MatrixStore.PRIMITIVE.makeIdentity(tmpNumInes).get()).build();
+                final MatrixStore<Double> tmpBIpart = tmpBI;
+                if (tmpAEpart != null) {
+                    tmpAEpart = tmpAEpart.builder().below(tmpAIpart).build();
+                    tmpBEpart = tmpBEpart.builder().below(tmpBIpart).build();
                 } else {
-                    tmpLinearAE = tmpLinAI;
-                    tmpLinearBE = tmpBI;
+                    tmpAEpart = tmpAIpart;
+                    tmpBEpart = tmpBIpart;
                 }
             }
 
-            if (tmpLinearAE != null) {
+            if (tmpAEpart != null) {
 
-                final PhysicalStore<Double> tmpCopyAE = tmpLinearAE.copy();
-                final PhysicalStore<Double> tmpCopyBE = tmpLinearBE.copy();
+                final PhysicalStore<Double> tmpLinearAE = tmpAEpart.copy();
+                final PhysicalStore<Double> tmpLinearBE = tmpBEpart.copy();
 
-                for (int i = 0; i < tmpCopyBE.countRows(); i++) {
-                    if (tmpCopyBE.doubleValue(i) < 0.0) {
-                        tmpCopyAE.modifyRow(i, 0, PrimitiveFunction.NEGATE);
-                        tmpCopyBE.modifyRow(i, 0, PrimitiveFunction.NEGATE);
+                for (int i = 0; i < tmpLinearBE.countRows(); i++) {
+                    if (tmpLinearBE.doubleValue(i) < 0.0) {
+                        tmpLinearAE.modifyRow(i, 0, NEGATE);
+                        tmpLinearBE.modifyRow(i, 0, NEGATE);
                     }
                 }
 
-                tmpLinBuilder.equalities(tmpCopyAE, tmpCopyBE);
+                tmpLinearBuilder.equalities(tmpLinearAE, tmpLinearBE);
             }
 
-            final LinearSolver tmpLinearSolver = tmpLinBuilder.build();
+            final LinearSolver tmpLinearSolver = tmpLinearBuilder.build();
 
             final Result tmpLinearResult = tmpLinearSolver.solve();
 
-            tmpFeasible = tmpLinearResult.getState().isFeasible();
-
-            for (int i = 0; tmpFeasible && (i < tmpNumberOfVariables); i++) {
-                this.setX(i, tmpLinearResult.doubleValue(i) - tmpLinearResult.doubleValue(tmpNumberOfVariables + i));
+            if (tmpFeasible = tmpLinearResult.getState().isFeasible()) {
+                for (int i = 0; i < tmpNumVars; i++) {
+                    this.setX(i, tmpLinearResult.doubleValue(i) - tmpLinearResult.doubleValue(tmpNumVars + i));
+                }
+                @SuppressWarnings("deprecation")
+                final double[] tmpResidual = tmpLinearSolver.getResidualCosts();
+                for (int i = tmpNumVars * 2; i < tmpResidual.length; i++) {
+                    final int tmpIndexToInclude = i - (2 * tmpNumVars);
+                    this.setLI(tmpIndexToInclude, tmpResidual[i]);
+                }
             }
         }
 
@@ -309,27 +294,29 @@ final class ActiveSetSolver extends ConvexSolver {
 
             this.setState(State.FEASIBLE);
 
-            if ((kickStarter != null) && kickStarter.isActiveSetDefined()) {
-                myActivator.include(kickStarter.getActiveSet());
-            }
+            if (this.hasInequalityConstraints()) {
 
-            final int[] tmpIncluded = myActivator.getIncluded();
-            final MatrixStore<Double> tmpSIincl = this.getSI(tmpIncluded);
-            for (int i = 0; i < tmpIncluded.length; i++) {
-                final double tmpVal = tmpSIincl.doubleValue(i);
-                if (!options.slack.isZero(tmpVal)) {
-                    myActivator.exclude(tmpIncluded[i]);
+                final int[] tmpExcluded = myActivator.getExcluded();
+
+                final MatrixStore<Double> tmpAIX = this.getAIX(tmpExcluded);
+                for (int i = 0; i < tmpExcluded.length; i++) {
+                    final double tmpBody = tmpAIX.doubleValue(i);
+                    final double tmpRHS = tmpBI.doubleValue(tmpExcluded[i]);
+                    if (!options.slack.isDifferent(tmpRHS, tmpBody)) {
+                        myActivator.include(tmpExcluded[i]);
+                    }
                 }
             }
 
-            final int[] tmpExcluded = myActivator.getExcluded();
-            final MatrixStore<Double> tmpSIexcl = this.getSI(tmpExcluded);
-            for (int i = 0; i < tmpExcluded.length; i++) {
-                final double tmpVal = tmpSIexcl.doubleValue(i);
-                if (options.slack.isZero(tmpVal)) {
-                    myActivator.include(tmpExcluded[i]);
-                }
+            while ((tmpNumEqus + myActivator.countIncluded()) > tmpNumVars) {
+                this.shrink();
             }
+
+            if (this.isDebug() && ((tmpNumEqus + myActivator.countIncluded()) > tmpNumVars)) {
+                this.debug("Redundant contraints!");
+            }
+
+            myInvQC = myCholesky.solve(this.getIterationC());
 
         } else {
 
@@ -339,13 +326,14 @@ final class ActiveSetSolver extends ConvexSolver {
         }
 
         if (this.isDebug()) {
-            this.debug("Initial solution: {}", this.getX().copy());
+
+            this.debug("Initial solution: {}", tmpX.copy().asList());
             if (tmpAE != null) {
-                this.debug("Initial E-slack: {}", this.getSE().copy());
+                this.debug("Initial E-slack: {}", this.getSE().copy().asList());
             }
             if (tmpAI != null) {
-                this.debug("Initial I-included-slack: {}", this.getSI(myActivator.getIncluded()).copy());
-                this.debug("Initial I-excluded-slack: {}", this.getSI(myActivator.getExcluded()).copy());
+                this.debug("Initial I-included-slack: {}", this.getSI(myActivator.getIncluded()).copy().asList());
+                this.debug("Initial I-excluded-slack: {}", this.getSI(myActivator.getExcluded()).copy().asList());
             }
         }
 
@@ -407,69 +395,121 @@ final class ActiveSetSolver extends ConvexSolver {
     protected void performIteration() {
 
         if (this.isDebug()) {
-            this.debug("\nPerformIteration");
+            this.debug("\nPerformIteration {}", 1 + this.countIterations());
             this.debug(myActivator.toString());
         }
 
         myConstraintToInclude = -1;
-
-        final Input tmpInput = this.buildDelegateSolverInput();
-        final KKTSolver tmpSolver = this.getDelegateSolver(tmpInput);
-        final Output tmpOutput = tmpSolver.solve(tmpInput, options.validate);
-
         final int[] tmpIncluded = myActivator.getIncluded();
 
-        final int tmpCountVariables = this.countVariables();
-        final int tmpCountEqualityConstraints = this.countEqualityConstraints();
-        final int tmpCountActiveInequalityConstraints = tmpIncluded.length;
+        final MatrixStore<Double> tmpIterQ = this.getIterationQ();
+        final MatrixStore<Double> tmpIterC = this.getIterationC();
+        final MatrixStore<Double> tmpIterA = this.getIterationA(tmpIncluded);
+        final MatrixStore<Double> tmpIterB = this.getIterationB(tmpIncluded);
 
-        if (tmpOutput.isSolvable()) {
+        boolean tmpSolvable = false;
+
+        final PrimitiveDenseStore tmpIterX = myIterationX;
+        final PrimitiveDenseStore tmpIterL = PrimitiveDenseStore.FACTORY.makeZero(tmpIterA.countRows(), 1L);
+
+        if ((tmpIterA.countRows() < tmpIterA.countColumns()) && (tmpSolvable = myCholesky.isSolvable())) {
+            // Q is SPD
+
+            if (tmpIterA.countRows() == 0L) {
+                // Unconstrained - can happen when PureASS and all inequalities are inactive
+
+                myCholesky.solve(tmpIterC, tmpIterX);
+
+            } else {
+                // Actual/normal optimisation problem
+
+                final MatrixStore<Double> tmpInvQAT = myCholesky.solve(tmpIterA.transpose());
+                // TODO Only 1 column change inbetween active set iterations (add or remove 1 column)
+
+                // Negated Schur complement
+                // final MatrixStore<Double> tmpS = tmpIterA.multiply(tmpInvQAT);
+                final ElementsSupplier<Double> tmpS = tmpInvQAT.multiplyLeft(tmpIterA);
+                // TODO Symmetric, only need to calculate halv the Schur complement
+
+                if (tmpSolvable = myLU.compute(tmpS)) {
+
+                    // tmpIterX temporarely used to store tmpInvQC
+                    // final MatrixStore<Double> tmpInvQC = myCholesky.solve(tmpIterC, tmpIterX);
+                    //TODO Constant if C doesn't change
+
+                    //tmpIterL = myLU.solve(tmpInvQC.multiplyLeft(tmpIterA));
+                    //myLU.solve(tmpIterA.multiply(myInvQC).subtract(tmpIterB), tmpIterL);
+                    myLU.solve(myInvQC.multiplyLeft(tmpIterA).operateOnMatching(SUBTRACT, tmpIterB), tmpIterL);
+
+                    //myCholesky.solve(tmpIterC.subtract(tmpIterA.transpose().multiply(tmpIterL)), tmpIterX);
+                    myCholesky.solve(tmpIterL.multiplyLeft(tmpIterA.transpose()).operateOnMatching(tmpIterC, SUBTRACT), tmpIterX);
+                }
+            }
+        }
+
+        if (!tmpSolvable && (tmpSolvable = myLU.compute(this.getIterationKKT(tmpIncluded)))) {
+            // The above failed, but the KKT system is solvable
+            // Try solving the full KKT system instaed
+
+            final MatrixStore<Double> tmpXL = myLU.solve(this.getIterationRHS(tmpIncluded));
+            tmpIterX.fillMatching(tmpXL.builder().rows(0, this.countVariables()).build());
+            tmpIterL.fillMatching(tmpXL.builder().rows(this.countVariables(), (int) tmpXL.count()).build());
+        }
+
+        if (!tmpSolvable && this.isDebug()) {
+            options.debug_appender.println("KKT system unsolvable!");
+            options.debug_appender.printmtrx("KKT", this.getIterationKKT());
+            options.debug_appender.printmtrx("RHS", this.getIterationRHS());
+        }
+
+        if (tmpSolvable) {
             // Subproblem solved successfully
 
-            final MatrixStore<Double> tmpSubX = tmpOutput.getX();
-            final MatrixStore<Double> tmpSubL = tmpOutput.getL();
+            tmpIterX.fillMatching(tmpIterX, SUBTRACT, this.getX());
 
             if (this.isDebug()) {
-                this.debug("Current: {}", this.getX());
-                this.debug("Step: {}", tmpSubX);
+                this.debug("Current: {}", this.getX().asList());
+                this.debug("Step: {}", tmpIterX.copy().asList());
             }
 
-            final double tmpFrobNormX = tmpSubX.aggregateAll(Aggregator.NORM2);
-            if (!options.solution.isZero(tmpFrobNormX)) {
+            final double tmpNormCurrentX = this.getX().aggregateAll(Aggregator.NORM2);
+            final double tmpNormStepX = tmpIterX.aggregateAll(Aggregator.NORM2);
+            if (!options.solution.isSmall(tmpNormCurrentX, tmpNormStepX)) {
                 // Non-zero solution
 
+                double tmpStepLength = ONE;
+
                 final int[] tmpExcluded = myActivator.getExcluded();
+                if (tmpExcluded.length > 0) {
 
-                final MatrixStore<Double> tmpNumer = this.getSI(tmpExcluded);
-                final MatrixStore<Double> tmpDenom = this.getAI().builder().row(tmpExcluded).build().multiplyRight(tmpSubX);
-                final PhysicalStore<Double> tmpStepLengths = tmpNumer.copy();
-                tmpStepLengths.fillMatching(tmpStepLengths, PrimitiveFunction.DIVIDE, tmpDenom);
+                    final MatrixStore<Double> tmpNumer = this.getSI(tmpExcluded);
+                    final MatrixStore<Double> tmpDenom = this.getAI().builder().row(tmpExcluded).build().multiply(tmpIterX);
+                    final PhysicalStore<Double> tmpStepLengths = tmpNumer.copy();
+                    tmpStepLengths.fillMatching(tmpStepLengths, DIVIDE, tmpDenom);
 
-                if (this.isDebug()) {
-                    this.debug("Slack (numerator): {}", tmpNumer);
-                    this.debug("Scaler (denominator): {}", tmpDenom);
-                    this.debug("Looking for the largest possible step length (smallest positive scalar) among these: {}).", tmpStepLengths.toString());
-                }
+                    if (this.isDebug()) {
+                        this.debug("Looking for the largest possible step length (smallest positive scalar) among these: {}).", tmpStepLengths.asList());
+                    }
 
-                double tmpStepLength = PrimitiveMath.ONE;
-                for (int i = 0; i < tmpExcluded.length; i++) {
+                    for (int i = 0; i < tmpExcluded.length; i++) {
 
-                    final double tmpN = tmpNumer.doubleValue(i);
-                    final double tmpD = tmpDenom.doubleValue(i);
-                    final double tmpVal = tmpN / tmpD;
+                        final double tmpN = tmpNumer.doubleValue(i); // Current slack
+                        final double tmpD = tmpDenom.doubleValue(i); // Proposed slack change
+                        final double tmpVal = options.slack.isSmall(tmpD, tmpN) ? ZERO : tmpN / tmpD;
 
-                    if ((tmpD > PrimitiveMath.ZERO) && (tmpVal >= PrimitiveMath.ZERO) && (tmpVal < tmpStepLength)
-                            && !options.solution.isSmallComparedTo(tmpFrobNormX, tmpD)) {
-                        tmpStepLength = tmpVal;
-                        myConstraintToInclude = tmpExcluded[i];
-                        if (this.isDebug()) {
-                            this.debug("Best so far: {} @ {} ({}).", tmpStepLength, i, myConstraintToInclude);
+                        if ((tmpD > ZERO) && (tmpVal >= ZERO) && (tmpVal < tmpStepLength) && !options.solution.isSmall(tmpNormStepX, tmpD)) {
+                            tmpStepLength = tmpVal;
+                            myConstraintToInclude = tmpExcluded[i];
+                            if (this.isDebug()) {
+                                this.debug("Best so far: {} @ {} ({}).", tmpStepLength, i, myConstraintToInclude);
+                            }
                         }
                     }
+
                 }
 
-                if (tmpStepLength > PrimitiveMath.ZERO) {
-                    this.getX().maxpy(tmpStepLength, tmpSubX);
+                if (tmpStepLength > ZERO) { // It is possible that it becomes == 0.0
+                    this.getX().maxpy(tmpStepLength, tmpIterX);
                 }
 
                 this.setState(State.APPROXIMATE);
@@ -477,32 +517,30 @@ final class ActiveSetSolver extends ConvexSolver {
             } else if (this.isDebug()) {
                 // Zero solution
 
-                this.debug("Step too small!");
+                if (this.isDebug()) {
+                    this.debug("Step too small!");
+                }
 
                 this.setState(State.FEASIBLE);
             }
 
-            for (int i = 0; i < tmpCountEqualityConstraints; i++) {
-                this.setLE(i, tmpSubL.doubleValue(i));
+            for (int i = 0; i < this.countEqualityConstraints(); i++) {
+                this.setLE(i, tmpIterL.doubleValue(i));
             }
 
-            for (int i = 0; i < tmpCountActiveInequalityConstraints; i++) {
-                this.setLI(tmpIncluded[i], tmpSubL.doubleValue(tmpCountEqualityConstraints + i));
+            for (int i = 0; i < tmpIncluded.length; i++) {
+                this.setLI(tmpIncluded[i], tmpIterL.doubleValue(this.countEqualityConstraints() + i));
             }
 
-        } else if (tmpCountActiveInequalityConstraints >= 1) {
+        } else if (tmpIncluded.length >= 1) {
             // Subproblem NOT solved successfully
             // At least 1 active inequality
 
-            myActivator.shrink();
-
-            if (this.isDebug()) {
-                this.debug("Did shrink!");
-            }
+            this.shrink();
 
             this.performIteration();
 
-        } else if (this.isFeasible(false)) {
+        } else if (this.checkFeasibility(false)) {
             // Subproblem NOT solved successfully
             // No active inequality
             // Feasible current solution
@@ -519,43 +557,64 @@ final class ActiveSetSolver extends ConvexSolver {
 
         if (this.isDebug()) {
             this.debug("Post iteration");
-            this.debug("\tSolution: {}", this.getX().copy());
-            if (this.getAE() != null) {
-                this.debug("\tE-slack: {}", this.getSE().copy());
+            this.debug("\tSolution: {}", this.getX().copy().asList());
+            if ((this.getAE() != null) && (this.getAE().count() > 0)) {
+                this.debug("\tE-slack: {}", this.getSE().copy().asList());
             }
-            if (this.getAI() != null) {
-                this.debug("\tI-included-slack: {}", this.getSI(myActivator.getIncluded()).copy());
-                this.debug("\tI-excluded-slack: {}", this.getSI(myActivator.getExcluded()).copy());
+            if ((this.getAI() != null) && (this.getAI().count() > 0)) {
+                if (tmpIncluded.length != 0) {
+                    this.debug("\tI-included-slack: {}", this.getSI(tmpIncluded).copy().asList());
+                }
+                if (myActivator.getExcluded().length != 0) {
+                    this.debug("\tI-excluded-slack: {}", this.getSI(myActivator.getExcluded()).copy().asList());
+                }
             }
         }
     }
 
     @Override
-    KKTSolver.Input buildDelegateSolverInput() {
+    final MatrixStore<Double> getIterationA() {
+        return this.getIterationA(myActivator.getIncluded());
+    }
 
-        MatrixStore<Double> tmpSubAE = null;
-        final MatrixStore<Double> tmpSubQ = this.getQ();
-        final MatrixStore<Double> tmpSubC = this.getC();
+    abstract MatrixStore<Double> getIterationA(int[] included);
 
-        final int[] tmpActivator = myActivator.getIncluded();
+    @Override
+    final MatrixStore<Double> getIterationB() {
+        return this.getIterationB(myActivator.getIncluded());
+    }
 
-        if (tmpActivator.length == 0) {
-            if (this.hasEqualityConstraints()) {
-                tmpSubAE = this.getAE();
-            } else {
-                tmpSubAE = ZeroStore.makePrimitive(0, (int) tmpSubC.countRows());
-            }
-        } else {
-            if (this.hasEqualityConstraints()) {
-                tmpSubAE = new AboveBelowStore<Double>(this.getAE(), new RowsStore<Double>(this.getAI(), tmpActivator));
-            } else {
-                tmpSubAE = new RowsStore<Double>(this.getAI(), tmpActivator);
+    abstract MatrixStore<Double> getIterationB(int[] included);
+
+    @Override
+    final MatrixStore<Double> getIterationC() {
+
+        //        final MatrixStore<Double> tmpQ = this.getQ();
+        //        final MatrixStore<Double> tmpC = this.getC();
+        //
+        //        final PhysicalStore<Double> tmpX = this.getX();
+        //
+        //        return tmpC.subtract(tmpQ.multiply(tmpX));
+
+        return this.getC();
+    }
+
+    void shrink() {
+
+        final int[] tmpIncluded = myActivator.getIncluded();
+
+        int tmpToExclude = -1;
+        double tmpMaxLagrange = ZERO;
+
+        final MatrixStore<Double> tmpLI = this.getLI(tmpIncluded);
+        for (int i = 0; i < tmpIncluded.length; i++) {
+            final double tmpVal = Math.abs(tmpLI.doubleValue(i));
+            if (tmpVal >= tmpMaxLagrange) {
+                tmpMaxLagrange = tmpVal;
+                tmpToExclude = tmpIncluded[i];
             }
         }
-
-        final PhysicalStore<Double> tmpX = this.getX();
-
-        return new KKTSolver.Input(tmpSubQ, tmpSubC.subtract(tmpSubQ.multiplyRight(tmpX)), tmpSubAE, ZeroStore.makePrimitive((int) tmpSubAE.countRows(), 1));
+        myActivator.exclude(tmpToExclude);
     }
 
 }

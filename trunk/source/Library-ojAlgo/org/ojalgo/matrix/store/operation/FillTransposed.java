@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,6 +29,8 @@ import org.ojalgo.type.TypeUtils;
 
 public final class FillTransposed extends MatrixOperation {
 
+    public static final FillTransposed SETUP = new FillTransposed();
+
     public static int THRESHOLD = 128;
 
     public static void invoke(final BigDecimal[] data, final int structure, final int firstColumn, final int limitColumn, final Access2D<?> source) {
@@ -44,7 +46,7 @@ public final class FillTransposed extends MatrixOperation {
         int tmpIndex = structure * firstColumn;
         for (int j = firstColumn; j < limitColumn; j++) {
             for (int i = 0; i < structure; i++) {
-                data[tmpIndex++] = TypeUtils.toComplexNumber(source.get(j, i));
+                data[tmpIndex++] = ComplexNumber.valueOf((Number) source.get(j, i));
             }
         }
     }
@@ -60,6 +62,11 @@ public final class FillTransposed extends MatrixOperation {
 
     private FillTransposed() {
         super();
+    }
+
+    @Override
+    public int threshold() {
+        return THRESHOLD;
     }
 
 }

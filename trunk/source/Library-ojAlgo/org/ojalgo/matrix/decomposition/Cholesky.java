@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,39 +21,92 @@
  */
 package org.ojalgo.matrix.decomposition;
 
+import java.math.BigDecimal;
+
 import org.ojalgo.access.Access2D;
-import org.ojalgo.matrix.decomposition.task.DeterminantTask;
+import org.ojalgo.array.BasicArray;
+import org.ojalgo.matrix.MatrixUtils;
 import org.ojalgo.matrix.store.MatrixStore;
+import org.ojalgo.scalar.ComplexNumber;
 
 /**
- * Cholesky: [A] = [L][L]<sup>T</sup>
+ * <p>
+ * Cholesky: [A] = [L][L]<sup>H</sup> (or [R]<sup>H</sup>[R])
+ * </p>
+ * <p>
+ * [A]<sup>H</sup> = [A] = [L][L]<sup>H</sup>
+ * </p>
  * <p>
  * If [A] is symmetric and positive definite then the general LU decomposition - [P][L][D][U] - becomes
- * [I][L][D][L]<sup>T</sup> (or [I][U]<sup>T</sup>[D][U]). [I] can be left out and [D] is normally split in halves and
- * merged with [L] (and/or [U]). We'll express it as [A] = [R]<sup>T</sup>[R].
+ * [I][L][D][L]<sup>T</sup> (or [I][U]<sup>T</sup>[D][U]). [I] can be left out and [D] is normally split in
+ * halves and merged with [L] (and/or [U]). We'll express it as [A] = [L][L]<sup>T</sup>.
  * </p>
  * <p>
- * A cholesky decomposition is still/also an LU decomposition where [P][L][D][U] => [R]<sup>T</sup>[R].
+ * A cholesky decomposition is still/also an LU decomposition where [P][L][D][U] =&gt; [L][L]<sup>T</sup>.
  * </p>
- * 
+ *
  * @author apete
  */
-public interface Cholesky<N extends Number> extends MatrixDecomposition<N>, DeterminantTask<N> {
+public interface Cholesky<N extends Number> extends LDU<N>, MatrixDecomposition.Hermitian<N> {
+
+    @SuppressWarnings("unchecked")
+    public static <N extends Number> Cholesky<N> make(final Access2D<N> typical) {
+
+        final N tmpNumber = typical.get(0, 0);
+
+        if (tmpNumber instanceof BigDecimal) {
+            return (Cholesky<N>) new CholeskyDecomposition.Big();
+        } else if (tmpNumber instanceof ComplexNumber) {
+            return (Cholesky<N>) new CholeskyDecomposition.Complex();
+        } else if (tmpNumber instanceof Double) {
+            if ((32L < typical.countColumns()) && (typical.count() <= BasicArray.MAX_ARRAY_SIZE)) {
+                return (Cholesky<N>) new CholeskyDecomposition.Primitive();
+            } else {
+                return (Cholesky<N>) new RawCholesky();
+            }
+        } else {
+            throw new IllegalArgumentException();
+        }
+    }
+
+    public static Cholesky<BigDecimal> makeBig() {
+        return new CholeskyDecomposition.Big();
+    }
+
+    public static Cholesky<ComplexNumber> makeComplex() {
+        return new CholeskyDecomposition.Complex();
+    }
+
+    public static Cholesky<Double> makePrimitive() {
+        return new CholeskyDecomposition.Primitive();
+    }
 
     /**
-     * To use the Cholesky decomposition rather than the LU decomposition the matrix must be symmetric and positive
-     * definite. It is recommended that the decomposition algorithm checks for this during calculation. Possibly the
-     * matrix could be assumed to be symmetric (to improve performance) but tests should be made to assure the matrix is
-     * positive definite.
-     * 
+     * To use the Cholesky decomposition rather than the LU decomposition the matrix must be symmetric and
+     * positive definite. It is recommended that the decomposition algorithm checks for this during
+     * calculation. Possibly the matrix could be assumed to be symmetric (to improve performance) but tests
+     * should be made to assure the matrix is positive definite.
+     *
      * @return true if the tests did not fail.
      */
     public boolean isSPD();
 
-    boolean compute(final Access2D<?> matrix, final boolean checkHermitian);
+    /**
+     * Must implement either {@link #getL()} or {@link #getR()}.
+     */
+    default MatrixStore<N> getL() {
+        return this.getR().conjugate();
+    }
 
-    N getDeterminant();
+    /**
+     * Must implement either {@link #getL()} or {@link #getR()}.
+     */
+    default MatrixStore<N> getR() {
+        return this.getL().conjugate();
+    }
 
-    MatrixStore<N> getL();
+    default MatrixStore<N> reconstruct() {
+        return MatrixUtils.reconstruct(this);
+    }
 
 }

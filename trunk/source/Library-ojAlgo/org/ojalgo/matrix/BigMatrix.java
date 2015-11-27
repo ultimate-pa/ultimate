@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -55,12 +55,8 @@ public final class BigMatrix extends AbstractMatrix<BigDecimal, BigMatrix> {
         super(aStore);
     }
 
-    public BigMatrix enforce(final NumberContext aContext) {
-        return this.modify(aContext.getBigEnforceFunction());
-    }
-
-    public BigMatrix round(final NumberContext aContext) {
-        return this.modify(aContext.getBigRoundFunction());
+    public BigMatrix enforce(final NumberContext context) {
+        return this.modify(context.getBigFunction());
     }
 
     public BigDecimal toBigDecimal(final int row, final int column) {
@@ -73,11 +69,11 @@ public final class BigMatrix extends AbstractMatrix<BigDecimal, BigMatrix> {
     }
 
     public ComplexNumber toComplexNumber(final int row, final int column) {
-        return ComplexNumber.makeReal(this.getStore().doubleValue(row, column));
+        return ComplexNumber.valueOf(this.getStore().doubleValue(row, column));
     }
 
-    public String toString(final int row, final int column) {
-        return this.toBigDecimal(row, column).toPlainString();
+    public String toString(final int row, final int col) {
+        return this.toBigDecimal(row, col).toPlainString();
     }
 
     @SuppressWarnings("unchecked")

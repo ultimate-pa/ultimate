@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,32 +25,51 @@ import org.ojalgo.ProgrammingError;
 
 abstract class TransjugatedStore<N extends Number> extends LogicalStore<N> {
 
-    @SuppressWarnings("unused")
-    private TransjugatedStore(final int aRowDim, final int aColDim, final MatrixStore<N> aBase) {
+    private TransjugatedStore(final int rows, final int columns, final MatrixStore<N> base) {
 
-        super(aRowDim, aColDim, aBase);
+        super(base, rows, columns);
 
         ProgrammingError.throwForIllegalInvocation();
     }
 
-    protected TransjugatedStore(final MatrixStore<N> aBase) {
-        super((int) aBase.countColumns(), (int) aBase.countRows(), aBase);
+    protected TransjugatedStore(final MatrixStore<N> base) {
+        super(base, (int) base.countColumns(), (int) base.countRows());
     }
 
     public final double doubleValue(final long aRow, final long aCol) {
         return this.getBase().doubleValue(aCol, aRow);
     }
 
+    public final int firstInColumn(final int col) {
+        return this.getBase().firstInRow(col);
+    }
+
+    public final int firstInRow(final int row) {
+        return this.getBase().firstInColumn(row);
+    }
+
     public final MatrixStore<N> getOriginal() {
         return this.getBase();
     }
 
-    public final boolean isLowerLeftShaded() {
-        return this.getBase().isUpperRightShaded();
+    @Override
+    public final int limitOfColumn(final int col) {
+        return this.getBase().limitOfRow(col);
     }
 
-    public final boolean isUpperRightShaded() {
-        return this.getBase().isLowerLeftShaded();
+    @Override
+    public final int limitOfRow(final int row) {
+        return this.getBase().limitOfColumn(row);
+    }
+
+    @Override
+    public void supplyTo(final ElementsConsumer<N> consumer) {
+        this.supplyNonZerosTo(consumer);
+    }
+
+    @Override
+    protected void supplyNonZerosTo(final ElementsConsumer<N> consumer) {
+        consumer.fillMatching(this);
     }
 
 }

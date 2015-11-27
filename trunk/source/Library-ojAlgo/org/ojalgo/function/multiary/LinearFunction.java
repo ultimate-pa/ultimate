@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,16 +30,15 @@ import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.matrix.store.PhysicalStore;
 import org.ojalgo.matrix.store.PhysicalStore.Factory;
 import org.ojalgo.matrix.store.PrimitiveDenseStore;
-import org.ojalgo.matrix.store.ZeroStore;
 import org.ojalgo.scalar.ComplexNumber;
 import org.ojalgo.scalar.Scalar;
 
 /**
- * [c]<sup>T</sup>[x]
- * 
+ * [l]<sup>T</sup>[x] + c
+ *
  * @author apete
  */
-public final class LinearFunction<N extends Number> extends AbstractMultiary<N, LinearFunction<N>> implements MultiaryFunction.Linear<N> {
+public final class LinearFunction<N extends Number> extends AbstractMultiary<N, LinearFunction<N>>implements MultiaryFunction.Linear<N> {
 
     public static LinearFunction<BigDecimal> makeBig(final Access1D<? extends Number> factors) {
         return new LinearFunction<BigDecimal>(BigDenseStore.FACTORY.rows(factors));
@@ -88,21 +87,22 @@ public final class LinearFunction<N extends Number> extends AbstractMultiary<N, 
     }
 
     @Override
-    public MatrixStore<N> getGradient(final Access1D<?> arg) {
-        return myFactors.builder().transpose().build();
+    public MatrixStore<N> getGradient(final Access1D<N> arg) {
+        return myFactors.transpose();
     }
 
     @Override
-    public MatrixStore<N> getHessian(final Access1D<?> arg) {
-        return new ZeroStore<N>(myFactors.factory(), this.arity(), this.arity());
+    public MatrixStore<N> getHessian(final Access1D<N> arg) {
+        //return new ZeroStore<N>(myFactors.factory(), this.arity(), this.arity());
+        return this.factory().builder().makeZero(this.arity(), this.arity()).get();
     }
 
     @Override
-    public N invoke(final Access1D<?> arg) {
+    public N invoke(final Access1D<N> arg) {
 
         Scalar<N> retVal = this.getScalarConstant();
 
-        retVal = retVal.add(myFactors.multiplyRight(myFactors.factory().columns(arg)).get(0, 0));
+        retVal = retVal.add(myFactors.multiply(arg).get(0, 0));
 
         return retVal.getNumber();
     }

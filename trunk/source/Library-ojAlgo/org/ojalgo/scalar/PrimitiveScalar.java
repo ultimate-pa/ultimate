@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,7 @@ import org.ojalgo.constant.PrimitiveMath;
 import org.ojalgo.type.context.NumberContext;
 import org.ojalgo.type.context.NumberContext.Enforceable;
 
-public final class PrimitiveScalar extends AbstractScalar<Double> implements Enforceable<PrimitiveScalar> {
+public final class PrimitiveScalar extends Number implements Scalar<Double>, Enforceable<PrimitiveScalar> {
 
     public static final Scalar.Factory<Double> FACTORY = new Scalar.Factory<Double>() {
 
@@ -41,11 +41,11 @@ public final class PrimitiveScalar extends AbstractScalar<Double> implements Enf
         }
 
         public PrimitiveScalar convert(final double value) {
-            return new PrimitiveScalar(value);
+            return PrimitiveScalar.of(value);
         }
 
         public PrimitiveScalar convert(final Number number) {
-            return new PrimitiveScalar(number.doubleValue());
+            return PrimitiveScalar.valueOf(number);
         }
 
         public PrimitiveScalar one() {
@@ -58,13 +58,13 @@ public final class PrimitiveScalar extends AbstractScalar<Double> implements Enf
 
     };
 
-    public static final boolean IS_REAL = true;
     public static final PrimitiveScalar NaN = new PrimitiveScalar(PrimitiveMath.NaN);
     public static final PrimitiveScalar NEGATIVE_INFINITY = new PrimitiveScalar(PrimitiveMath.NEGATIVE_INFINITY);
     public static final PrimitiveScalar ONE = new PrimitiveScalar(PrimitiveMath.ONE);
     public static final PrimitiveScalar POSITIVE_INFINITY = new PrimitiveScalar(PrimitiveMath.POSITIVE_INFINITY);
-    public static final NumberContext PRECISION = NumberContext.getMath(MathContext.DECIMAL64).newScale(15);
     public static final PrimitiveScalar ZERO = new PrimitiveScalar(PrimitiveMath.ZERO);
+
+    static final NumberContext CONTEXT = NumberContext.getMath(MathContext.DECIMAL64);
 
     public static boolean isAbsolute(final double value) {
         return value >= PrimitiveMath.ZERO;
@@ -78,31 +78,39 @@ public final class PrimitiveScalar extends AbstractScalar<Double> implements Enf
         return Double.isNaN(value);
     }
 
-    public static boolean isPositive(final double value) {
-        return (value > PrimitiveMath.ZERO) && !PRECISION.isZero(value);
+    public static boolean isSmall(final double comparedTo, final double value) {
+        return PrimitiveScalar.CONTEXT.isSmall(comparedTo, value);
     }
 
-    public static boolean isZero(final double value) {
-        return PRECISION.isZero(value);
+    public static PrimitiveScalar of(final double value) {
+        return new PrimitiveScalar(value);
+    }
+
+    public static PrimitiveScalar valueOf(final double value) {
+        return PrimitiveScalar.of(value);
+    }
+
+    public static PrimitiveScalar valueOf(final Number number) {
+
+        if (number != null) {
+
+            if (number instanceof PrimitiveScalar) {
+
+                return (PrimitiveScalar) number;
+
+            } else {
+
+                return new PrimitiveScalar(number.doubleValue());
+            }
+
+        } else {
+
+            return ZERO;
+        }
     }
 
     private final double myValue;
 
-    public PrimitiveScalar(final double aVal) {
-
-        super();
-
-        myValue = aVal;
-    }
-
-    public PrimitiveScalar(final Number aNmbr) {
-
-        super();
-
-        myValue = aNmbr.doubleValue();
-    }
-
-    @SuppressWarnings("unused")
     private PrimitiveScalar() {
 
         super();
@@ -110,7 +118,14 @@ public final class PrimitiveScalar extends AbstractScalar<Double> implements Enf
         myValue = PrimitiveMath.ZERO;
     }
 
-    public Scalar<Double> add(final double arg) {
+    private PrimitiveScalar(final double value) {
+
+        super();
+
+        myValue = value;
+    }
+
+    public PrimitiveScalar add(final double arg) {
         return new PrimitiveScalar(myValue + arg);
     }
 
@@ -193,24 +208,8 @@ public final class PrimitiveScalar extends AbstractScalar<Double> implements Enf
         return PrimitiveScalar.isAbsolute(myValue);
     }
 
-    public boolean isInfinite() {
-        return PrimitiveScalar.isInfinite(myValue);
-    }
-
-    public boolean isNaN() {
-        return PrimitiveScalar.isNaN(myValue);
-    }
-
-    public boolean isPositive() {
-        return PrimitiveScalar.isPositive(myValue);
-    }
-
-    public boolean isReal() {
-        return PrimitiveScalar.IS_REAL;
-    }
-
-    public boolean isZero() {
-        return PrimitiveScalar.isZero(myValue);
+    public boolean isSmall(final double comparedTo) {
+        return PrimitiveScalar.isSmall(comparedTo, myValue);
     }
 
     @Override
@@ -247,7 +246,7 @@ public final class PrimitiveScalar extends AbstractScalar<Double> implements Enf
     }
 
     public BigDecimal toBigDecimal() {
-        return new BigDecimal(myValue, PRECISION.getMathContext());
+        return new BigDecimal(myValue, PrimitiveScalar.CONTEXT.getMathContext());
     }
 
     @Override

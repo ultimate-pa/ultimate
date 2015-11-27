@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -65,11 +65,11 @@ public final class FirstOrderApproximation<N extends Number> extends Approximate
         return true;
     }
 
-    public MatrixStore<N> getGradient(final Access1D<?> arg) {
+    public MatrixStore<N> getGradient(final Access1D<N> arg) {
         return myDelegate.getGradient(null);
     }
 
-    public MatrixStore<N> getHessian(final Access1D<?> arg) {
+    public MatrixStore<N> getHessian(final Access1D<N> arg) {
         return myDelegate.getHessian(null);
     }
 
@@ -81,7 +81,7 @@ public final class FirstOrderApproximation<N extends Number> extends Approximate
         return result;
     }
 
-    public N invoke(final Access1D<?> arg) {
+    public N invoke(final Access1D<N> arg) {
         return myDelegate.invoke(this.shift(arg));
     }
 

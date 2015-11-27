@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,10 +23,17 @@ package org.ojalgo.matrix.store.operation;
 
 public final class AggregateAll extends MatrixOperation {
 
+    public static final AggregateAll SETUP = new AggregateAll();
+
     public static int THRESHOLD = 64;
 
     private AggregateAll() {
         super();
+    }
+
+    @Override
+    public int threshold() {
+        return THRESHOLD;
     }
 
 }

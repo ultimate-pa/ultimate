@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,6 +29,8 @@ import org.ojalgo.type.TypeUtils;
 
 public final class FillMatchingSingle extends MatrixOperation {
 
+    public static final FillMatchingSingle SETUP = new FillMatchingSingle();
+
     public static int THRESHOLD = 64;
 
     public static void invoke(final BigDecimal[] data, final int structure, final int firstColumn, final int limitColumn,
@@ -47,7 +49,7 @@ public final class FillMatchingSingle extends MatrixOperation {
         int tmpIndex = structure * firstColumn;
         for (int j = firstColumn; j < limitColumn; j++) {
             for (int i = 0; i < structure; i++) {
-                data[tmpIndex] = TypeUtils.toComplexNumber(source.get(tmpIndex));
+                data[tmpIndex] = ComplexNumber.valueOf(source.get(tmpIndex));
                 tmpIndex++;
             }
         }
@@ -65,6 +67,11 @@ public final class FillMatchingSingle extends MatrixOperation {
 
     private FillMatchingSingle() {
         super();
+    }
+
+    @Override
+    public int threshold() {
+        return THRESHOLD;
     }
 
 }

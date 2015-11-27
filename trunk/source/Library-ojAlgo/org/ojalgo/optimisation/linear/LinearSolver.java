@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,16 +25,16 @@ import static org.ojalgo.constant.PrimitiveMath.*;
 
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.ojalgo.access.AccessUtils;
+import org.ojalgo.access.IntIndex;
 import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.matrix.store.PhysicalStore;
 import org.ojalgo.matrix.store.PhysicalStore.Factory;
 import org.ojalgo.matrix.store.PrimitiveDenseStore;
-import org.ojalgo.matrix.store.ZeroStore;
 import org.ojalgo.optimisation.BaseSolver;
 import org.ojalgo.optimisation.Expression;
-import org.ojalgo.optimisation.Expression.Index;
 import org.ojalgo.optimisation.ExpressionsBasedModel;
 import org.ojalgo.optimisation.Optimisation;
 import org.ojalgo.optimisation.Variable;
@@ -45,8 +45,8 @@ import org.ojalgo.type.IndexSelector;
  * <p>
  * min [C]<sup>T</sup>[X]<br>
  * when [AE][X] == [BE]<br>
- * and 0 <= [X]<br>
- * and 0 <= [BE]
+ * and 0 &lt;= [X]<br>
+ * and 0 &lt;= [BE]
  * </p>
  * A Linear Program is in Standard Form if:
  * <ul>
@@ -54,15 +54,15 @@ import org.ojalgo.type.IndexSelector;
  * <li>All variables have a nonnegativity sign restriction.</li>
  * </ul>
  * <p>
- * Further it is required here that the constraint right hand sides are nonnegative (nonnegative elements in [BE]).
+ * Further it is required here that the constraint right hand sides are nonnegative (nonnegative elements in
+ * [BE]).
  * </p>
  * <p>
- * You construct instances by using the {@linkplain Builder} class. It will return an appropriate subclass for you. It's
- * recommended that you first create a {@linkplain ExpressionsBasedModel} and feed that to the {@linkplain Builder}.
- * Alternatively you can directly call {@linkplain ExpressionsBasedModel#getDefaultSolver()} or even
- * {@linkplain ExpressionsBasedModel#minimise()} or {@linkplain ExpressionsBasedModel#maximise()} on the model.
+ * The general recommendation is to construct optimisation problems using {@linkplain ExpressionsBasedModel}
+ * and not worry about solver details. If you do want to instantiate a linear solver directly use the
+ * {@linkplain Builder} class. It will return an appropriate subclass for you.
  * </p>
- * 
+ *
  * @author apete
  */
 public abstract class LinearSolver extends BaseSolver {
@@ -70,40 +70,23 @@ public abstract class LinearSolver extends BaseSolver {
     public static final class Builder extends AbstractBuilder<LinearSolver.Builder, LinearSolver> {
 
         public Builder(final MatrixStore<Double> C) {
-
             super(C);
-
         }
 
         Builder() {
-
             super();
-
         }
 
         Builder(final BaseSolver.AbstractBuilder<LinearSolver.Builder, LinearSolver> matrices) {
-
             super(matrices);
-
-        }
-
-        Builder(final ExpressionsBasedModel aModel) {
-
-            super(aModel);
-
-            LinearSolver.copy(aModel, this);
         }
 
         Builder(final MatrixStore<Double> Q, final MatrixStore<Double> C) {
-
             super(Q, C);
-
         }
 
         Builder(final MatrixStore<Double>[] aMtrxArr) {
-
             super(aMtrxArr);
-
         }
 
         @Override
@@ -111,9 +94,7 @@ public abstract class LinearSolver extends BaseSolver {
 
             this.validate();
 
-            final ExpressionsBasedModel tmpModel = this.getModel();
-
-            return new SimplexTableauSolver(tmpModel, options, this);
+            return new SimplexTableauSolver(this, options);
         }
 
         @Override
@@ -122,52 +103,45 @@ public abstract class LinearSolver extends BaseSolver {
         }
 
         @Override
-        protected Builder objective(final MatrixStore<Double> C) {
+        public Builder objective(final MatrixStore<Double> C) {
             return super.objective(C);
         }
     }
 
     static final Factory<Double, PrimitiveDenseStore> FACTORY = PrimitiveDenseStore.FACTORY;
 
-    public static LinearSolver make(final ExpressionsBasedModel aModel) {
-
-        final LinearSolver.Builder tmpBuilder = new LinearSolver.Builder(aModel);
-
-        return tmpBuilder.build();
-    }
-
-    static void copy(final ExpressionsBasedModel sourceModel, final LinearSolver.Builder destinationBuilder) {
+    public static void copy(final ExpressionsBasedModel sourceModel, final LinearSolver.Builder destinationBuilder) {
 
         final boolean tmpMaximisation = sourceModel.isMaximisation();
 
         final List<Variable> tmpPosVariables = sourceModel.getPositiveVariables();
         final List<Variable> tmpNegVariables = sourceModel.getNegativeVariables();
-        final Set<Index> tmpFixVariables = sourceModel.getFixedVariables();
+        final Set<IntIndex> tmpFixVariables = sourceModel.getFixedVariables();
 
-        final Expression tmpObjFunc = sourceModel.getObjectiveExpression();
+        final Expression tmpObjFunc = sourceModel.getObjectiveExpression().compensate(tmpFixVariables);
 
-        final List<Expression> tmpExprsEq = sourceModel.selectExpressionsLinearEquality();
-        final List<Expression> tmpExprsLo = sourceModel.selectExpressionsLinearLower();
-        final List<Expression> tmpExprsUp = sourceModel.selectExpressionsLinearUpper();
+        final List<Expression> tmpExprsEq = sourceModel.constraints().filter((final Expression c1) -> c1.isEqualityConstraint() && !c1.isAnyQuadraticFactorNonZero()).collect(Collectors.toList());
+        final List<Expression> tmpExprsLo = sourceModel.constraints().filter((final Expression c2) -> c2.isLowerConstraint() && !c2.isAnyQuadraticFactorNonZero()).collect(Collectors.toList());
+        final List<Expression> tmpExprsUp = sourceModel.constraints().filter((final Expression c3) -> c3.isUpperConstraint() && !c3.isAnyQuadraticFactorNonZero()).collect(Collectors.toList());
 
-        final List<Variable> tmpVarsPosLo = sourceModel.selectVariablesPositiveLower();
-        final List<Variable> tmpVarsPosUp = sourceModel.selectVariablesPositiveUpper();
+        final List<Variable> tmpVarsPosLo = sourceModel.bounds().filter((final Variable c6) -> c6.isPositive() && c6.isLowerConstraint() && (c6.getLowerLimit().signum() > 0))
+        .collect(Collectors.toList());
+        final List<Variable> tmpVarsPosUp = sourceModel.bounds().filter((final Variable c7) -> c7.isPositive() && c7.isUpperConstraint() && (c7.getUpperLimit().signum() > 0))
+        .collect(Collectors.toList());
 
-        final List<Variable> tmpVarsNegLo = sourceModel.selectVariablesNegativeLower();
-        final List<Variable> tmpVarsNegUp = sourceModel.selectVariablesNegativeUpper();
+        final List<Variable> tmpVarsNegLo = sourceModel.bounds().filter((final Variable c4) -> c4.isNegative() && c4.isLowerConstraint() && (c4.getLowerLimit().signum() < 0))
+        .collect(Collectors.toList());
+        final List<Variable> tmpVarsNegUp = sourceModel.bounds().filter((final Variable c5) -> c5.isNegative() && c5.isUpperConstraint() && (c5.getUpperLimit().signum() < 0))
+        .collect(Collectors.toList());
 
-        final int tmpConstraiCount = tmpExprsEq.size() + tmpExprsLo.size() + tmpExprsUp.size() + tmpVarsPosLo.size() + tmpVarsPosUp.size()
-                + tmpVarsNegLo.size() + tmpVarsNegUp.size();
+        final int tmpConstraiCount = tmpExprsEq.size() + tmpExprsLo.size() + tmpExprsUp.size() + tmpVarsPosLo.size() + tmpVarsPosUp.size() + tmpVarsNegLo.size()
+                + tmpVarsNegUp.size();
         final int tmpProblVarCount = tmpPosVariables.size() + tmpNegVariables.size();
         final int tmpSlackVarCount = tmpExprsLo.size() + tmpExprsUp.size() + tmpVarsPosLo.size() + tmpVarsPosUp.size() + tmpVarsNegLo.size()
                 + tmpVarsNegUp.size();
         final int tmpTotalVarCount = tmpProblVarCount + tmpSlackVarCount;
 
         final int[] tmpBasis = AccessUtils.makeIncreasingRange(-tmpConstraiCount, tmpConstraiCount);
-
-        final Optimisation.Result tmpKickStarter = new Optimisation.Result(Optimisation.State.UNEXPLORED, Double.NaN, ZeroStore.makePrimitive(tmpTotalVarCount,
-                1));
-        tmpKickStarter.basis(tmpBasis);
 
         final PhysicalStore<Double> tmpC = FACTORY.makeZero(tmpTotalVarCount, 1);
         final PhysicalStore<Double> tmpAE = FACTORY.makeZero(tmpConstraiCount, tmpTotalVarCount);
@@ -180,7 +154,7 @@ public abstract class LinearSolver extends BaseSolver {
         final int tmpNegVarsBaseIndex = tmpPosVarsBaseIndex + tmpPosVariables.size();
         final int tmpSlaVarsBaseIndex = tmpNegVarsBaseIndex + tmpNegVariables.size();
 
-        for (final Expression.Index tmpKey : tmpObjFunc.getLinearFactorKeys()) {
+        for (final IntIndex tmpKey : tmpObjFunc.getLinearKeySet()) {
 
             final double tmpFactor = tmpMaximisation ? -tmpObjFunc.getAdjustedLinearFactor(tmpKey) : tmpObjFunc.getAdjustedLinearFactor(tmpKey);
 
@@ -201,14 +175,14 @@ public abstract class LinearSolver extends BaseSolver {
         final int tmpExprsEqLength = tmpExprsEq.size();
         for (int c = 0; c < tmpExprsEqLength; c++) {
 
-            final Expression tmpExpr = tmpExprsEq.get(c);
-            final double tmpRHS = tmpExpr.getCompensatedLowerLimit(tmpFixVariables);
+            final Expression tmpExpr = tmpExprsEq.get(c).compensate(tmpFixVariables);
+            final double tmpRHS = tmpExpr.getAdjustedLowerLimit();
 
             if (tmpRHS < ZERO) {
 
                 tmpBE.set(tmpConstrBaseIndex + c, 0, -tmpRHS);
 
-                for (final Expression.Index tmpKey : tmpExpr.getLinearFactorKeys()) {
+                for (final IntIndex tmpKey : tmpExpr.getLinearKeySet()) {
 
                     final double tmpFactor = tmpExpr.getAdjustedLinearFactor(tmpKey);
 
@@ -227,7 +201,7 @@ public abstract class LinearSolver extends BaseSolver {
 
                 tmpBE.set(tmpConstrBaseIndex + c, 0, tmpRHS);
 
-                for (final Expression.Index tmpKey : tmpExpr.getLinearFactorKeys()) {
+                for (final IntIndex tmpKey : tmpExpr.getLinearKeySet()) {
 
                     final double tmpFactor = tmpExpr.getAdjustedLinearFactor(tmpKey);
 
@@ -248,8 +222,8 @@ public abstract class LinearSolver extends BaseSolver {
         final int tmpExprsLoLength = tmpExprsLo.size();
         for (int c = 0; c < tmpExprsLoLength; c++) {
 
-            final Expression tmpExpr = tmpExprsLo.get(c);
-            final double tmpRHS = tmpExpr.getCompensatedLowerLimit(tmpFixVariables);
+            final Expression tmpExpr = tmpExprsLo.get(c).compensate(tmpFixVariables);
+            final double tmpRHS = tmpExpr.getAdjustedLowerLimit();
 
             if (tmpRHS < ZERO) {
 
@@ -257,7 +231,7 @@ public abstract class LinearSolver extends BaseSolver {
                 tmpBasis[tmpConstrBaseIndex + c] = tmpCurrentSlackVarIndex;
                 tmpAE.set(tmpConstrBaseIndex + c, tmpCurrentSlackVarIndex++, ONE);
 
-                for (final Expression.Index tmpKey : tmpExpr.getLinearFactorKeys()) {
+                for (final IntIndex tmpKey : tmpExpr.getLinearKeySet()) {
 
                     final double tmpFactor = tmpExpr.getAdjustedLinearFactor(tmpKey);
 
@@ -277,7 +251,7 @@ public abstract class LinearSolver extends BaseSolver {
                 tmpBE.set(tmpConstrBaseIndex + c, 0, tmpRHS);
                 tmpAE.set(tmpConstrBaseIndex + c, tmpCurrentSlackVarIndex++, NEG);
 
-                for (final Expression.Index tmpKey : tmpExpr.getLinearFactorKeys()) {
+                for (final IntIndex tmpKey : tmpExpr.getLinearKeySet()) {
 
                     final double tmpFactor = tmpExpr.getAdjustedLinearFactor(tmpKey);
 
@@ -298,15 +272,15 @@ public abstract class LinearSolver extends BaseSolver {
         final int tmpExprsUpLength = tmpExprsUp.size();
         for (int c = 0; c < tmpExprsUpLength; c++) {
 
-            final Expression tmpExpr = tmpExprsUp.get(c);
-            final double tmpRHS = tmpExpr.getCompensatedUpperLimit(tmpFixVariables);
+            final Expression tmpExpr = tmpExprsUp.get(c).compensate(tmpFixVariables);
+            final double tmpRHS = tmpExpr.getAdjustedUpperLimit();
 
             if (tmpRHS < ZERO) {
 
                 tmpBE.set(tmpConstrBaseIndex + c, 0, -tmpRHS);
                 tmpAE.set(tmpConstrBaseIndex + c, tmpCurrentSlackVarIndex++, NEG);
 
-                for (final Expression.Index tmpKey : tmpExpr.getLinearFactorKeys()) {
+                for (final IntIndex tmpKey : tmpExpr.getLinearKeySet()) {
 
                     final double tmpFactor = tmpExpr.getAdjustedLinearFactor(tmpKey);
 
@@ -327,7 +301,7 @@ public abstract class LinearSolver extends BaseSolver {
                 tmpBasis[tmpConstrBaseIndex + c] = tmpCurrentSlackVarIndex;
                 tmpAE.set(tmpConstrBaseIndex + c, tmpCurrentSlackVarIndex++, ONE);
 
-                for (final Expression.Index tmpKey : tmpExpr.getLinearFactorKeys()) {
+                for (final IntIndex tmpKey : tmpExpr.getLinearKeySet()) {
 
                     final double tmpFactor = tmpExpr.getAdjustedLinearFactor(tmpKey);
 
@@ -447,18 +421,40 @@ public abstract class LinearSolver extends BaseSolver {
         }
         tmpConstrBaseIndex += tmpVarsNegUpLength;
 
-        destinationBuilder.setKickStarter(tmpKickStarter);
+    }
+
+    public static LinearSolver.Builder getBuilder() {
+        return new LinearSolver.Builder();
+    }
+
+    public static LinearSolver.Builder getBuilder(final MatrixStore<Double> C) {
+        return LinearSolver.getBuilder().objective(C);
     }
 
     private final IndexSelector mySelector;
 
-    protected LinearSolver(final ExpressionsBasedModel aModel, final Optimisation.Options solverOptions,
-            final BaseSolver.AbstractBuilder<LinearSolver.Builder, LinearSolver> matrices) {
+    protected LinearSolver(final BaseSolver.AbstractBuilder<LinearSolver.Builder, LinearSolver> matrices, final Optimisation.Options solverOptions) {
 
-        super(aModel, solverOptions, matrices);
+        super(matrices, solverOptions);
 
         mySelector = new IndexSelector(matrices.countVariables());
     }
+
+    /**
+     * Can only be called after a solve()
+     *
+     * @deprecated v38 Temporary api
+     */
+    @Deprecated
+    public abstract int[] getBasis();
+
+    /**
+     * Can only be called after a solve()
+     *
+     * @deprecated v38 Temporary api
+     */
+    @Deprecated
+    public abstract double[] getResidualCosts();
 
     protected final int countBasisDeficit() {
         return this.countEqualityConstraints() - mySelector.countIncluded();
@@ -495,5 +491,4 @@ public abstract class LinearSolver extends BaseSolver {
     protected final void include(final int[] someIndecesToInclude) {
         mySelector.include(someIndecesToInclude);
     }
-
 }

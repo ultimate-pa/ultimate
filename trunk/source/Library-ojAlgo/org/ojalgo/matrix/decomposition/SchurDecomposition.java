@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,18 +24,13 @@ package org.ojalgo.matrix.decomposition;
 import org.ojalgo.access.Access2D;
 import org.ojalgo.array.Array1D;
 import org.ojalgo.matrix.MatrixUtils;
+import org.ojalgo.matrix.store.ElementsSupplier;
 import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.matrix.store.PrimitiveDenseStore;
 import org.ojalgo.scalar.ComplexNumber;
 import org.ojalgo.type.context.NumberContext;
 
-/**
- * You create instances of (some subclass of) this class by calling
- * the static factory method {@linkplain #makePrimitive()}.
- *
- * @author apete
- */
-public abstract class SchurDecomposition<N extends Number> extends InPlaceDecomposition<N> implements Schur<N> {
+abstract class SchurDecomposition<N extends Number> extends InPlaceDecomposition<N> implements Schur<N> {
 
     public static final class SchurResult<N extends Number> extends Object {
 
@@ -73,22 +68,6 @@ public abstract class SchurDecomposition<N extends Number> extends InPlaceDecomp
 
     }
 
-    @SuppressWarnings("unchecked")
-    public static final <N extends Number> Schur<N> make(final Access2D<N> aTypical) {
-
-        final N tmpNumber = aTypical.get(0, 0);
-
-        if (tmpNumber instanceof Double) {
-            return (Schur<N>) SchurDecomposition.makePrimitive();
-        } else {
-            throw new IllegalArgumentException();
-        }
-    }
-
-    public static final Schur<Double> makePrimitive() {
-        return new Primitive();
-    }
-
     private Array1D<ComplexNumber> myDiagonal;
     private MatrixStore<N> myQ;
 
@@ -96,7 +75,7 @@ public abstract class SchurDecomposition<N extends Number> extends InPlaceDecomp
         super(aFactory);
     }
 
-    public boolean compute(final Access2D<?> matrix) {
+    public boolean decompose(final ElementsSupplier<N> matrix) {
 
         this.reset();
 
@@ -142,10 +121,6 @@ public abstract class SchurDecomposition<N extends Number> extends InPlaceDecomp
         return false;
     }
 
-    public MatrixStore<N> reconstruct() {
-        return MatrixUtils.reconstruct(this);
-    }
-
     @Override
     public void reset() {
 
@@ -153,6 +128,10 @@ public abstract class SchurDecomposition<N extends Number> extends InPlaceDecomp
 
         myDiagonal = null;
         myQ = null;
+    }
+
+    public MatrixStore<N> solve(final Access2D<N> rhs, final DecompositionStore<N> preallocated) {
+        throw new UnsupportedOperationException();
     }
 
     final void setDiagonal(final Array1D<ComplexNumber> newDiagonal) {

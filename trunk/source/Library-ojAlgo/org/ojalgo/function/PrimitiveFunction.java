@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,34 +28,36 @@ import org.ojalgo.type.TypeUtils;
 
 /**
  * Only the primitive parameter (double) methods are actually implemented. The methods with the reference type
- * parameters (Double) should delegate to the primitive methods (and do nothing else). The various implementations
- * should delegate as much as possible to {@link java.lang.Math} and/or built-in Java operators.
+ * parameters (Double) should delegate to the primitive methods (and do nothing else). The various
+ * implementations should delegate as much as possible to {@link java.lang.Math} and/or built-in Java
+ * operators.
  *
  * @author apete
  */
 public final class PrimitiveFunction extends FunctionSet<Double> {
 
-    static abstract class Binary extends BinaryFunction<Double> {
+    @FunctionalInterface
+    public static interface Binary extends BinaryFunction<Double> {
 
-        @Override
-        public final Double invoke(final Double arg1, final Double arg2) {
+        default Double invoke(final Double arg1, final Double arg2) {
             return this.invoke(arg1.doubleValue(), arg2.doubleValue());
         }
 
     }
 
-    static abstract class Parameter extends ParameterFunction<Double> {
+    @FunctionalInterface
+    public static interface Parameter extends ParameterFunction<Double> {
 
-        @Override
-        public final Double invoke(final Double arg, final int param) {
+        default Double invoke(final Double arg, final int param) {
             return this.invoke(arg.doubleValue(), param);
         }
 
     }
 
-    static abstract class Unary implements UnaryFunction<Double> {
+    @FunctionalInterface
+    public static interface Unary extends UnaryFunction<Double> {
 
-        public final Double invoke(final Double arg) {
+        default Double invoke(final Double arg) {
             return this.invoke(arg.doubleValue());
         }
 
@@ -138,14 +140,6 @@ public final class PrimitiveFunction extends FunctionSet<Double> {
 
         public final double invoke(final double arg) {
             return arg;
-        }
-
-    };
-
-    public static final UnaryFunction<Double> SQRT1PX2 = new Unary() {
-
-        public final double invoke(final double arg) {
-            return Math.sqrt(ONE + (arg * arg));
         }
 
     };
@@ -291,23 +285,21 @@ public final class PrimitiveFunction extends FunctionSet<Double> {
         @Override
         public final double invoke(final double arg, int param) {
 
-            double retVal = ONE;
-
             if (param < 0) {
 
-                retVal = INVERT.invoke(POWER.invoke(arg, -param));
+                return INVERT.invoke(POWER.invoke(arg, -param));
 
             } else {
 
+                double retVal = ONE;
+
                 while (param > 0) {
-
                     retVal = retVal * arg;
-
                     param--;
                 }
-            }
 
-            return retVal;
+                return retVal;
+            }
         }
 
     };
@@ -376,6 +368,14 @@ public final class PrimitiveFunction extends FunctionSet<Double> {
 
         public final double invoke(final double arg) {
             return Math.sqrt(arg);
+        }
+
+    };
+
+    public static final UnaryFunction<Double> SQRT1PX2 = new Unary() {
+
+        public final double invoke(final double arg) {
+            return Math.sqrt(ONE + (arg * arg));
         }
 
     };

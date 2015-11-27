@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,17 @@ package org.ojalgo.matrix.store;
 abstract class SelectingStore<N extends Number> extends LogicalStore<N> {
 
     protected SelectingStore(final int rowCount, final int columnCount, final MatrixStore<N> base) {
-        super(rowCount, columnCount, base);
+        super(base, rowCount, columnCount);
+    }
+
+    @Override
+    public void supplyTo(final ElementsConsumer<N> consumer) {
+        this.supplyNonZerosTo(consumer);
+    }
+
+    @Override
+    protected void supplyNonZerosTo(final ElementsConsumer<N> consumer) {
+        consumer.fillMatching(this);
     }
 
 }

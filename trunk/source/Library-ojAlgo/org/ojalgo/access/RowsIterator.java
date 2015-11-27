@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -40,21 +40,22 @@ public class RowsIterator<N extends Number> implements Access1D<N>, Iterator<Acc
         return new RowsIterator<S>(access).iterable;
     }
 
+    public long row = -1L;
+
     private final Access2D<N> myAccess2D;
-    private long myCurrentRow = -1L;
 
     final RowIterable iterable = new RowIterable();
 
-    @SuppressWarnings("unused")
-    private RowsIterator() {
-        this(null);
-    }
-
-    RowsIterator(final Access2D<N> access) {
+    public RowsIterator(final Access2D<N> access) {
 
         super();
 
         myAccess2D = access;
+    }
+
+    @SuppressWarnings("unused")
+    private RowsIterator() {
+        this(null);
     }
 
     public long count() {
@@ -62,23 +63,19 @@ public class RowsIterator<N extends Number> implements Access1D<N>, Iterator<Acc
     }
 
     public double doubleValue(final long index) {
-        return myAccess2D.doubleValue(myCurrentRow, index);
+        return myAccess2D.doubleValue(row, index);
     }
 
     public N get(final long index) {
-        return myAccess2D.get(myCurrentRow, index);
+        return myAccess2D.get(row, index);
     }
 
     public boolean hasNext() {
-        return (myCurrentRow + 1L) < myAccess2D.countRows();
-    }
-
-    public Iterator<N> iterator() {
-        return new Iterator1D<>(this);
+        return (row + 1L) < myAccess2D.countRows();
     }
 
     public Access1D<N> next() {
-        myCurrentRow++;
+        row++;
         return this;
     }
 

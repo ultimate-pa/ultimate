@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.ojalgo.access.Access1D;
 import org.ojalgo.access.Access2D;
-import org.ojalgo.function.multiary.MultiaryFunction;
 import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.netio.BasicLogger;
 
@@ -34,45 +33,27 @@ public abstract class GenericSolver implements Optimisation.Solver, Serializable
 
     public final Optimisation.Options options;
 
-    private final MultiaryFunction.TwiceDifferentiable<Double> myFunction;
     private final AtomicInteger myIterationsCount = new AtomicInteger(0);
-    private final ExpressionsBasedModel myModel;
     private long myResetTime;
     private State myState = State.UNEXPLORED;
 
     @SuppressWarnings("unused")
     private GenericSolver() {
-        this(null, null);
+        this(null);
     }
 
     /**
-     * @param model
      */
-    protected GenericSolver(final ExpressionsBasedModel model, final Optimisation.Options solverOptions) {
+    protected GenericSolver(final Optimisation.Options solverOptions) {
 
         super();
 
-        if (model != null) {
-            myModel = model;
-            myFunction = model.getObjectiveFunction();
-            if (solverOptions != null) {
-                options = solverOptions;
-            } else {
-                options = model.options;
-            }
+        if (solverOptions != null) {
+            options = solverOptions;
         } else {
-            myModel = model;
-            myFunction = null;
-            if (solverOptions != null) {
-                options = solverOptions;
-            } else {
-                options = new Optimisation.Options();
-            }
+            options = new Optimisation.Options();
         }
-    }
 
-    public Optimisation.Result solve() {
-        return this.solve(null);
     }
 
     protected Optimisation.Result buildResult() {
@@ -87,6 +68,8 @@ public abstract class GenericSolver implements Optimisation.Solver, Serializable
     protected final int countIterations() {
         return myIterationsCount.get();
     }
+
+    protected abstract double evaluateFunction(final Access1D<?> solution);
 
     protected final long countTime() {
         return System.currentTimeMillis() - myResetTime;
@@ -108,52 +91,33 @@ public abstract class GenericSolver implements Optimisation.Solver, Serializable
         BasicLogger.error(messagePattern, arguments);
     }
 
-    protected final double evaluateFunction(final Access1D<?> solution) {
-        if ((myFunction != null) && (solution != null) && (myFunction.arity() == solution.count())) {
-            return myFunction.invoke(solution);
-        } else {
-            return Double.NaN;
-        }
-    }
-
     /**
      * Should be able to feed this to {@link #evaluateFunction(Access1D)}.
      */
     protected abstract MatrixStore<Double> extractSolution();
-
-    protected final MatrixStore<Double> getGradient(final Access1D<?> solution) {
-        return myFunction.getGradient(solution);
-    }
-
-    protected final ExpressionsBasedModel getModel() {
-        return myModel;
-    }
 
     protected final State getState() {
         return myState;
     }
 
     /**
-     * Should be called after a completed iteration. The iterations count is not "1" untill the first iteration is
-     * completed.
+     * Should be called after a completed iteration. The iterations count is not "1" untill the first
+     * iteration is completed.
      */
     protected final int incrementIterationsCount() {
         return myIterationsCount.incrementAndGet();
     }
 
-    protected abstract boolean initialise(Result kickStart);
+    protected abstract boolean initialise(Result kickStarter);
 
     protected final boolean isDebug() {
-        return (options.debug_appender != null) && ((options.debug_solver == null) || options.debug_solver.isAssignableFrom(this.getClass()));
-    }
-
-    protected final boolean isFunctionSet() {
-        return myFunction != null;
+        return (options.debug_appender != null) && (options.debug_solver.isAssignableFrom(this.getClass()));
     }
 
     /**
-     * Should be called at the start of an iteration (before it actually starts) to check if you should abort instead.
-     * Will return false if either the iterations count or the execution time has reached their respective limits.
+     * Should be called at the start of an iteration (before it actually starts) to check if you should abort
+     * instead. Will return false if either the iterations count or the execution time has reached their
+     * respective limits.
      */
     protected final boolean isIterationAllowed() {
 
@@ -171,10 +135,6 @@ public abstract class GenericSolver implements Optimisation.Solver, Serializable
         return tmpTimeOk && tmpIterationOk;
     }
 
-    protected final boolean isModelSet() {
-        return myModel != null;
-    }
-
     protected abstract boolean needsAnotherIteration();
 
     protected final void resetIterationsCount() {
@@ -187,11 +147,12 @@ public abstract class GenericSolver implements Optimisation.Solver, Serializable
     }
 
     /**
-     * Should validate the solver data/input/structue. Even "expensive" validation can be performed as the method should
-     * only be called if {@linkplain Optimisation.Options#validate} is set to true. In addition to returning true or
-     * false the implementation should set the state to either {@linkplain Optimisation.State#VALID} or
-     * {@linkplain Optimisation.State#INVALID} (or possibly {@linkplain Optimisation.State#FAILED}). Typically the
-     * method should be called at the very beginning of the solve-method.
+     * Should validate the solver data/input/structue. Even "expensive" validation can be performed as the
+     * method should only be called if {@linkplain Optimisation.Options#validate} is set to true. In addition
+     * to returning true or false the implementation should set the state to either
+     * {@linkplain Optimisation.State#VALID} or {@linkplain Optimisation.State#INVALID} (or possibly
+     * {@linkplain Optimisation.State#FAILED}). Typically the method should be called at the very beginning of
+     * the solve-method.
      *
      * @return Is the solver instance valid?
      */

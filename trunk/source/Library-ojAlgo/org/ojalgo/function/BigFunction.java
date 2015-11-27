@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,44 +28,45 @@ import java.math.MathContext;
 import java.math.RoundingMode;
 
 /**
- * Only the reference type parameter (BigDecimal) methods are actually
- * implemented. The methods with the primitive parameters (double) should
- * create a BigDecimal and then delegate to the primitive methods
- * (and do nothing else).
- * 
- * If possible the implementations should be pure BigDecimal arithmatic
- * without rounding. If rounding is necessary MathContext.DECIMAL128
- * should be used. If BigDecimal arithmatic is not possible at all the
- * implementation should delegate to PrimitiveFunction.
+ * Only the reference type parameter (BigDecimal) methods are actually implemented. The methods with the
+ * primitive parameters (double) should create a BigDecimal and then delegate to the primitive methods (and do
+ * nothing else). If possible the implementations should be pure BigDecimal arithmatic without rounding. If
+ * rounding is necessary MathContext.DECIMAL128 should be used. If BigDecimal arithmatic is not possible at
+ * all the implementation should delegate to PrimitiveFunction.
  *
  * @author apete
  */
 public final class BigFunction extends FunctionSet<BigDecimal> {
 
-    static abstract class Binary extends BinaryFunction<BigDecimal> {
+    @FunctionalInterface
+    public static interface Binary extends BinaryFunction<BigDecimal> {
 
-        @Override
-        public final double invoke(final double arg1, final double arg2) {
+        default double invoke(final double arg1, final double arg2) {
             return this.invoke(BigDecimal.valueOf(arg1), BigDecimal.valueOf(arg2)).doubleValue();
         }
 
     }
 
-    static abstract class Parameter extends ParameterFunction<BigDecimal> {
+    @FunctionalInterface
+    public static interface Parameter extends ParameterFunction<BigDecimal> {
 
-        @Override
-        public final double invoke(final double arg, final int param) {
+        default double invoke(final double arg, final int param) {
             return this.invoke(BigDecimal.valueOf(arg), param).doubleValue();
         }
 
     }
 
-    static abstract class Unary implements UnaryFunction<BigDecimal> {
+    @FunctionalInterface
+    public static interface Unary extends UnaryFunction<BigDecimal> {
 
-        public final double invoke(final double arg) {
+        default double invoke(final double arg) {
             return this.invoke(BigDecimal.valueOf(arg)).doubleValue();
         }
 
+    }
+
+    public static BigFunction getSet() {
+        return SET;
     }
 
     public static final UnaryFunction<BigDecimal> ABS = new Unary() {
@@ -207,14 +208,6 @@ public final class BigFunction extends FunctionSet<BigDecimal> {
 
     };
 
-    public static final UnaryFunction<BigDecimal> SQRT1PX2 = new Unary() {
-
-        public final BigDecimal invoke(final BigDecimal arg) {
-            return SQRT.invoke(ONE.add(arg.multiply(arg)));
-        }
-
-    };
-
     public static final UnaryFunction<BigDecimal> LOG = new Unary() {
 
         public final BigDecimal invoke(final BigDecimal arg) {
@@ -278,7 +271,17 @@ public final class BigFunction extends FunctionSet<BigDecimal> {
 
         @Override
         public final BigDecimal invoke(final BigDecimal arg1, final BigDecimal arg2) {
-            return BigDecimal.valueOf(PrimitiveFunction.POW.invoke(arg1.doubleValue(), arg2.doubleValue()));
+            if (arg1.signum() == 0) {
+                return ZERO;
+            } else if (arg2.signum() == 0) {
+                return ONE;
+            } else if (arg2.compareTo(ONE) == 0) {
+                return arg1;
+            } else if (arg1.signum() == -1) {
+                throw new IllegalArgumentException();
+            } else {
+                return EXP.invoke(LOG.invoke(arg1).multiply(arg2));
+            }
         }
 
     };
@@ -372,6 +375,14 @@ public final class BigFunction extends FunctionSet<BigDecimal> {
 
     };
 
+    public static final UnaryFunction<BigDecimal> SQRT1PX2 = new Unary() {
+
+        public final BigDecimal invoke(final BigDecimal arg) {
+            return SQRT.invoke(ONE.add(arg.multiply(arg)));
+        }
+
+    };
+
     public static final BinaryFunction<BigDecimal> SUBTRACT = new Binary() {
 
         @Override
@@ -404,13 +415,9 @@ public final class BigFunction extends FunctionSet<BigDecimal> {
         }
 
     };
-
     private static final MathContext CONTEXT = MathContext.DECIMAL128;
-    private static final BigFunction SET = new BigFunction();
 
-    public static BigFunction getSet() {
-        return SET;
-    }
+    private static final BigFunction SET = new BigFunction();
 
     private BigFunction() {
         super();

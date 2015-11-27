@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,12 +31,14 @@ import org.ojalgo.scalar.ComplexNumber;
 
 public final class SubstituteForwards extends MatrixOperation {
 
-    public static int THRESHOLD = 16;
+    public static final SubstituteForwards SETUP = new SubstituteForwards();
 
-    public static void invoke(final BigDecimal[] aData, final int aRowDim, final int aFirstCol, final int aColLimit, final Access2D<BigDecimal> aBody,
-            final boolean onesOnDiagonal, final boolean zerosAboveDiagonal) {
+    public static int THRESHOLD = 64;
 
-        final int tmpDiagDim = (int) Math.min(aBody.countRows(), aBody.countColumns());
+    public static void invoke(final BigDecimal[] data, final int structure, final int firstColumn, final int columnLimit, final Access2D<BigDecimal> body,
+            final boolean unitDiagonal, final boolean conjugated, final boolean identity) {
+
+        final int tmpDiagDim = (int) Math.min(body.countRows(), body.countColumns());
         final BigDecimal[] tmpBodyRow = new BigDecimal[tmpDiagDim];
         BigDecimal tmpVal;
         int tmpColBaseIndex;
@@ -44,30 +46,35 @@ public final class SubstituteForwards extends MatrixOperation {
         for (int i = 0; i < tmpDiagDim; i++) {
 
             for (int j = 0; j <= i; j++) {
-                tmpBodyRow[j] = aBody.get(i, j);
+                tmpBodyRow[j] = conjugated ? body.get(j, i) : body.get(i, j);
             }
 
-            for (int s = aFirstCol; s < aColLimit; s++) {
-                tmpColBaseIndex = s * aRowDim;
+            for (int s = firstColumn; s < columnLimit; s++) {
+                tmpColBaseIndex = s * structure;
 
                 tmpVal = BigMath.ZERO;
-                for (int j = zerosAboveDiagonal ? s : 0; j < i; j++) {
-                    tmpVal = tmpVal.add(tmpBodyRow[j].multiply(aData[j + tmpColBaseIndex]));
+                for (int j = identity ? s : 0; j < i; j++) {
+                    tmpVal = tmpVal.add(tmpBodyRow[j].multiply(data[j + tmpColBaseIndex]));
                 }
-                tmpVal = aData[i + tmpColBaseIndex].subtract(tmpVal);
-                if (!onesOnDiagonal) {
+                if (identity) {
+                    tmpVal = i == s ? BigMath.ONE.subtract(tmpVal) : tmpVal.negate();
+                } else {
+                    tmpVal = data[i + tmpColBaseIndex].subtract(tmpVal);
+                }
+
+                if (!unitDiagonal) {
                     tmpVal = BigFunction.DIVIDE.invoke(tmpVal, tmpBodyRow[i]);
                 }
 
-                aData[i + tmpColBaseIndex] = tmpVal;
+                data[i + tmpColBaseIndex] = tmpVal;
             }
         }
     }
 
-    public static void invoke(final ComplexNumber[] aData, final int aRowDim, final int aFirstCol, final int aColLimit, final Access2D<ComplexNumber> aBody,
-            final boolean onesOnDiagonal, final boolean zerosAboveDiagonal) {
+    public static void invoke(final ComplexNumber[] data, final int structure, final int firstColumn, final int columnLimit,
+            final Access2D<ComplexNumber> body, final boolean unitDiagonal, final boolean conjugated, final boolean identity) {
 
-        final int tmpDiagDim = (int) Math.min(aBody.countRows(), aBody.countColumns());
+        final int tmpDiagDim = (int) Math.min(body.countRows(), body.countColumns());
         final ComplexNumber[] tmpBodyRow = new ComplexNumber[tmpDiagDim];
         ComplexNumber tmpVal;
         int tmpColBaseIndex;
@@ -75,30 +82,35 @@ public final class SubstituteForwards extends MatrixOperation {
         for (int i = 0; i < tmpDiagDim; i++) {
 
             for (int j = 0; j <= i; j++) {
-                tmpBodyRow[j] = aBody.get(i, j);
+                tmpBodyRow[j] = conjugated ? body.get(j, i).conjugate() : body.get(i, j);
             }
 
-            for (int s = aFirstCol; s < aColLimit; s++) {
-                tmpColBaseIndex = s * aRowDim;
+            for (int s = firstColumn; s < columnLimit; s++) {
+                tmpColBaseIndex = s * structure;
 
                 tmpVal = ComplexNumber.ZERO;
-                for (int j = zerosAboveDiagonal ? s : 0; j < i; j++) {
-                    tmpVal = tmpVal.add(tmpBodyRow[j].multiply(aData[j + tmpColBaseIndex]));
+                for (int j = identity ? s : 0; j < i; j++) {
+                    tmpVal = tmpVal.add(tmpBodyRow[j].multiply(data[j + tmpColBaseIndex]));
                 }
-                tmpVal = aData[i + tmpColBaseIndex].subtract(tmpVal);
-                if (!onesOnDiagonal) {
+                if (identity) {
+                    tmpVal = i == s ? ComplexNumber.ONE.subtract(tmpVal) : tmpVal.negate();
+                } else {
+                    tmpVal = data[i + tmpColBaseIndex].subtract(tmpVal);
+                }
+
+                if (!unitDiagonal) {
                     tmpVal = tmpVal.divide(tmpBodyRow[i]);
                 }
 
-                aData[i + tmpColBaseIndex] = tmpVal;
+                data[i + tmpColBaseIndex] = tmpVal;
             }
         }
     }
 
-    public static void invoke(final double[] aData, final int aRowDim, final int aFirstCol, final int aColLimit, final Access2D<Double> aBody,
-            final boolean onesOnDiagonal, final boolean zerosAboveDiagonal) {
+    public static void invoke(final double[] data, final int structure, final int firstColumn, final int columnLimit, final Access2D<Double> body,
+            final boolean unitDiagonal, final boolean conjugated, final boolean identity) {
 
-        final int tmpDiagDim = (int) Math.min(aBody.countRows(), aBody.countColumns());
+        final int tmpDiagDim = (int) Math.min(body.countRows(), body.countColumns());
         final double[] tmpBodyRow = new double[tmpDiagDim];
         double tmpVal;
         int tmpColBaseIndex;
@@ -106,28 +118,38 @@ public final class SubstituteForwards extends MatrixOperation {
         for (int i = 0; i < tmpDiagDim; i++) {
 
             for (int j = 0; j <= i; j++) {
-                tmpBodyRow[j] = aBody.doubleValue(i, j);
+                tmpBodyRow[j] = conjugated ? body.doubleValue(j, i) : body.doubleValue(i, j);
             }
 
-            for (int s = aFirstCol; s < aColLimit; s++) {
-                tmpColBaseIndex = s * aRowDim;
+            for (int s = firstColumn; s < columnLimit; s++) {
+                tmpColBaseIndex = s * structure;
 
                 tmpVal = PrimitiveMath.ZERO;
-                for (int j = zerosAboveDiagonal ? s : 0; j < i; j++) {
-                    tmpVal += tmpBodyRow[j] * aData[j + tmpColBaseIndex];
+                for (int j = identity ? s : 0; j < i; j++) {
+                    tmpVal += tmpBodyRow[j] * data[j + tmpColBaseIndex];
                 }
-                tmpVal = aData[i + tmpColBaseIndex] - tmpVal;
-                if (!onesOnDiagonal) {
+                if (identity) {
+                    tmpVal = i == s ? PrimitiveMath.ONE - tmpVal : -tmpVal;
+                } else {
+                    tmpVal = data[i + tmpColBaseIndex] - tmpVal;
+                }
+
+                if (!unitDiagonal) {
                     tmpVal /= tmpBodyRow[i];
                 }
 
-                aData[i + tmpColBaseIndex] = tmpVal;
+                data[i + tmpColBaseIndex] = tmpVal;
             }
         }
     }
 
     private SubstituteForwards() {
         super();
+    }
+
+    @Override
+    public int threshold() {
+        return THRESHOLD;
     }
 
 }

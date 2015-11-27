@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,13 +21,25 @@
  */
 package org.ojalgo.access;
 
-interface StructureAnyD extends Structure1D {
+public interface StructureAnyD extends Structure1D {
 
     /**
      * count() == count(0) * count(1) * count(2) * count(3) * ...
      */
+    default long count() {
+        return AccessUtils.count(this.shape());
+    }
+
     long count(int dimension);
 
-    long[] structure();
+    long[] shape();
+
+    /**
+     * @deprecated v39
+     */
+    @Deprecated
+    default long[] structure() {
+        return this.shape();
+    }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -40,21 +40,22 @@ public class ColumnsIterator<N extends Number> implements Access1D<N>, Iterator<
         return new ColumnsIterator<S>(access).iterable;
     }
 
+    public long column = -1L;
+
     private final Access2D<N> myAccess2D;
-    private long myCurrentColumn = -1L;
 
     final ColumnIterable iterable = new ColumnIterable();
 
-    @SuppressWarnings("unused")
-    private ColumnsIterator() {
-        this(null);
-    }
-
-    ColumnsIterator(final Access2D<N> access) {
+    public ColumnsIterator(final Access2D<N> access) {
 
         super();
 
         myAccess2D = access;
+    }
+
+    @SuppressWarnings("unused")
+    private ColumnsIterator() {
+        this(null);
     }
 
     public long count() {
@@ -62,23 +63,19 @@ public class ColumnsIterator<N extends Number> implements Access1D<N>, Iterator<
     }
 
     public double doubleValue(final long index) {
-        return myAccess2D.doubleValue(index, myCurrentColumn);
+        return myAccess2D.doubleValue(index, column);
     }
 
     public N get(final long index) {
-        return myAccess2D.get(index, myCurrentColumn);
+        return myAccess2D.get(index, column);
     }
 
     public boolean hasNext() {
-        return (myCurrentColumn + 1L) < myAccess2D.countColumns();
-    }
-
-    public Iterator<N> iterator() {
-        return new Iterator1D<>(this);
+        return (column + 1L) < myAccess2D.countColumns();
     }
 
     public Access1D<N> next() {
-        myCurrentColumn++;
+        column++;
         return this;
     }
 

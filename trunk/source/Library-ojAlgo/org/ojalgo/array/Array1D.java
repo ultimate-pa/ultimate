@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,18 +25,20 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.AbstractList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.RandomAccess;
+import java.util.Spliterator;
+import java.util.Spliterators;
 
 import org.ojalgo.access.Access1D;
-import org.ojalgo.access.Iterator1D;
 import org.ojalgo.array.BasicArray.BasicFactory;
+import org.ojalgo.constant.PrimitiveMath;
 import org.ojalgo.function.BinaryFunction;
+import org.ojalgo.function.NullaryFunction;
 import org.ojalgo.function.UnaryFunction;
 import org.ojalgo.function.VoidFunction;
-import org.ojalgo.random.RandomNumber;
 import org.ojalgo.scalar.ComplexNumber;
+import org.ojalgo.scalar.Quaternion;
 import org.ojalgo.scalar.RationalNumber;
 import org.ojalgo.scalar.Scalar;
 
@@ -45,8 +47,8 @@ import org.ojalgo.scalar.Scalar;
  *
  * @author apete
  */
-public final class Array1D<N extends Number> extends AbstractList<N> implements Access1D<N>, Access1D.Elements, Access1D.Fillable<N>, Access1D.Modifiable<N>,
-        Access1D.Visitable<N>, RandomAccess, Serializable {
+public final class Array1D<N extends Number> extends AbstractList<N> implements Access1D<N>, Access1D.Elements, Access1D.IndexOf, Access1D.Fillable<N>,
+        Access1D.Modifiable<N>, Access1D.Visitable<N>, Access1D.Sliceable<N>, RandomAccess, Serializable {
 
     public static abstract class Factory<N extends Number> implements Access1D.Factory<Array1D<N>> {
 
@@ -102,12 +104,12 @@ public final class Array1D<N extends Number> extends AbstractList<N> implements 
             return tmpDelegate.asArray1D();
         }
 
-        public final Array1D<N> makeRandom(final long count, final RandomNumber distribution) {
+        public final Array1D<N> makeFilled(final long count, final NullaryFunction<?> supplier) {
 
             final BasicArray<N> tmpDelegate = this.delegate().makeToBeFilled(count);
 
             for (int i = 0; i < count; i++) {
-                tmpDelegate.set(i, distribution);
+                tmpDelegate.set(i, supplier.get());
             }
 
             return tmpDelegate.asArray1D();
@@ -171,6 +173,15 @@ public final class Array1D<N extends Number> extends AbstractList<N> implements 
 
     };
 
+    public static final Factory<Quaternion> QUATERNION = new Factory<Quaternion>() {
+
+        @Override
+        BasicFactory<Quaternion> delegate() {
+            return BasicArray.QUATERNION;
+        }
+
+    };
+
     public static final Factory<RationalNumber> RATIONAL = new Factory<RationalNumber>() {
 
         @Override
@@ -223,6 +234,16 @@ public final class Array1D<N extends Number> extends AbstractList<N> implements 
         myStep = step;
 
         length = (myLimit - myFirst) / myStep;
+    }
+
+    public void add(final long index, final double addend) {
+        final long tmpIndex = myFirst + (myStep * index);
+        myDelegate.add(tmpIndex, addend);
+    }
+
+    public void add(final long index, final Number addend) {
+        final long tmpIndex = myFirst + (myStep * index);
+        myDelegate.add(tmpIndex, addend);
     }
 
     @Override
@@ -329,10 +350,34 @@ public final class Array1D<N extends Number> extends AbstractList<N> implements 
         myDelegate.fill(myFirst, myLimit, myStep, value);
     }
 
+    public void fillAll(final NullaryFunction<N> supplier) {
+        myDelegate.fill(myFirst, myLimit, myStep, supplier);
+    }
+
+    public void fillOne(final long index, final N value) {
+        final long tmpIndex = myFirst + (myStep * index);
+        myDelegate.fillOne(tmpIndex, value);
+    }
+
+    public void fillOne(final long index, final NullaryFunction<N> supplier) {
+        final long tmpIndex = myFirst + (myStep * index);
+        myDelegate.fillOne(tmpIndex, supplier);
+    }
+
+    public void fillOneMatching(final long index, final Access1D<?> values, final long valueIndex) {
+        myDelegate.fillOneMatching(myFirst + (myStep * index), values, valueIndex);
+    }
+
     public void fillRange(final long first, final long limit, final N value) {
         final long tmpFirst = myFirst + (myStep * first);
         final long tmpLimit = myFirst + (myStep * limit);
         myDelegate.fill(tmpFirst, tmpLimit, myStep, value);
+    }
+
+    public void fillRange(final long first, final long limit, final NullaryFunction<N> supplier) {
+        final long tmpFirst = myFirst + (myStep * first);
+        final long tmpLimit = myFirst + (myStep * limit);
+        myDelegate.fill(tmpFirst, tmpLimit, myStep, supplier);
     }
 
     @Override
@@ -342,14 +387,6 @@ public final class Array1D<N extends Number> extends AbstractList<N> implements 
 
     public N get(final long index) {
         return myDelegate.get(myFirst + (myStep * index));
-    }
-
-    /**
-     * @deprecated v36 Use {@link #indexOfLargestInRange(long,long)} instead
-     */
-    @Deprecated
-    public long getIndexOfLargestInRange(final long first, final long limit) {
-        return this.indexOfLargestInRange(first, limit);
     }
 
     @Override
@@ -386,8 +423,12 @@ public final class Array1D<N extends Number> extends AbstractList<N> implements 
         return myDelegate.isAbsolute(myFirst + (myStep * index));
     }
 
+    /**
+     * @deprecated v39
+     */
+    @Deprecated
     public boolean isAllZeros() {
-        return myDelegate.isZeros(myFirst, myLimit, myStep);
+        return myDelegate.isSmall(myFirst, myLimit, myStep, PrimitiveMath.ONE);
     }
 
     @Override
@@ -395,42 +436,19 @@ public final class Array1D<N extends Number> extends AbstractList<N> implements 
         return length == 0;
     }
 
-    public boolean isInfinite(final long index) {
-        return myDelegate.isInfinite(myFirst + (myStep * index));
-    }
-
-    public boolean isNaN(final long index) {
-        return myDelegate.isNaN(myFirst + (myStep * index));
-    }
-
     /**
-     * @see Scalar#isPositive()
+     * @deprecated v39
      */
-    public boolean isPositive(final long index) {
-        return myDelegate.isPositive(myFirst + (myStep * index));
-    }
-
+    @Deprecated
     public boolean isRangeZeros(final long first, final long limit) {
-        return myDelegate.isZeros((myFirst + (myStep * first)), (myFirst + (myStep * limit)), myStep);
+        return myDelegate.isSmall((myFirst + (myStep * first)), (myFirst + (myStep * limit)), myStep, PrimitiveMath.ONE);
     }
 
     /**
-     * @see Scalar#isReal()
+     * @see Scalar#isSmall(double)
      */
-    public boolean isReal(final long index) {
-        return myDelegate.isReal(myFirst + (myStep * index));
-    }
-
-    /**
-     * @see Scalar#isZero()
-     */
-    public boolean isZero(final long index) {
-        return myDelegate.isZero(myFirst + (myStep * index));
-    }
-
-    @Override
-    public final Iterator<N> iterator() {
-        return new Iterator1D<N>(this);
+    public boolean isSmall(final long index, final double comparedTo) {
+        return myDelegate.isSmall(myFirst + (myStep * index), comparedTo);
     }
 
     public void modifyAll(final UnaryFunction<N> function) {
@@ -463,6 +481,10 @@ public final class Array1D<N extends Number> extends AbstractList<N> implements 
         }
     }
 
+    public void modifyOne(final long index, final UnaryFunction<N> function) {
+        myDelegate.modifyOne(myFirst + (myStep * index), function);
+    }
+
     public void modifyRange(final long first, final long limit, final UnaryFunction<N> function) {
         final long tmpFirst = myFirst + (myStep * first);
         final long tmpLimit = myFirst + (myStep * limit);
@@ -471,7 +493,10 @@ public final class Array1D<N extends Number> extends AbstractList<N> implements 
 
     /**
      * Assumes you have first called {@linkplain #sortAscending()}.
+     *
+     * @deprecated v39
      */
+    @Deprecated
     public int searchAscending(final N key) {
 
         if (myDelegate instanceof DenseArray<?>) {
@@ -501,7 +526,10 @@ public final class Array1D<N extends Number> extends AbstractList<N> implements 
 
     /**
      * Asssumes you have first called {@linkplain #sortDescending()}.
+     *
+     * @deprecated v39
      */
+    @Deprecated
     public int searchDescending(final N key) {
 
         if (myDelegate instanceof DenseArray<?>) {
@@ -550,6 +578,14 @@ public final class Array1D<N extends Number> extends AbstractList<N> implements 
         return (int) length;
     }
 
+    public Array1D<N> sliceRange(final long first, final long limit) {
+        return new Array1D<N>(myDelegate, myFirst + (myStep * first), myFirst + (myStep * limit), myStep);
+    }
+
+    /**
+     * @deprecated v39
+     */
+    @Deprecated
     public void sortAscending() {
 
         if (myDelegate instanceof DenseArray<?>) {
@@ -574,6 +610,10 @@ public final class Array1D<N extends Number> extends AbstractList<N> implements 
         }
     }
 
+    /**
+     * @deprecated v39
+     */
+    @Deprecated
     public void sortDescending() {
 
         if (myDelegate instanceof DenseArray<?>) {
@@ -591,11 +631,19 @@ public final class Array1D<N extends Number> extends AbstractList<N> implements 
         }
     }
 
-    @Override
-    public Array1D<N> subList(final int first, final int limit) {
-        return new Array1D<N>(myDelegate, myFirst + (myStep * first), myFirst + (myStep * limit), myStep);
+    public Spliterator<N> spliterator() {
+        return Spliterators.spliterator(this, Spliterator.ORDERED | Spliterator.IMMUTABLE);
     }
 
+    @Override
+    public Array1D<N> subList(final int first, final int limit) {
+        return this.sliceRange(first, limit);
+    }
+
+    /**
+     * @deprecated v39 Use {@link #toRawCopy1D()} instead
+     */
+    @Deprecated
     public double[] toRawCopy() {
 
         final int tmpLength = (int) length;
@@ -608,12 +656,12 @@ public final class Array1D<N extends Number> extends AbstractList<N> implements 
         return retVal;
     }
 
-    public Scalar<N> toScalar(final int index) {
-        return myDelegate.toScalar(myFirst + (myStep * index));
-    }
-
     public void visitAll(final VoidFunction<N> visitor) {
         myDelegate.visit(myFirst, myLimit, myStep, visitor);
+    }
+
+    public void visitOne(final long index, final VoidFunction<N> visitor) {
+        myDelegate.visitOne(myFirst + (myStep * index), visitor);
     }
 
     public void visitRange(final long first, final long limit, final VoidFunction<N> visitor) {

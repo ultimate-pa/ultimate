@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,17 +24,18 @@ package org.ojalgo.array;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.util.Arrays;
-import java.util.Iterator;
 
+import org.ojalgo.access.Access1D;
 import org.ojalgo.access.AccessAnyD;
 import org.ojalgo.access.AccessUtils;
-import org.ojalgo.access.Iterator1D;
 import org.ojalgo.array.BasicArray.BasicFactory;
+import org.ojalgo.constant.PrimitiveMath;
 import org.ojalgo.function.BinaryFunction;
+import org.ojalgo.function.NullaryFunction;
 import org.ojalgo.function.UnaryFunction;
 import org.ojalgo.function.VoidFunction;
-import org.ojalgo.random.RandomNumber;
 import org.ojalgo.scalar.ComplexNumber;
+import org.ojalgo.scalar.Quaternion;
 import org.ojalgo.scalar.RationalNumber;
 import org.ojalgo.scalar.Scalar;
 
@@ -43,14 +44,14 @@ import org.ojalgo.scalar.Scalar;
  *
  * @author apete
  */
-public final class ArrayAnyD<N extends Number> implements AccessAnyD<N>, AccessAnyD.Elements, AccessAnyD.Fillable<N>, AccessAnyD.Modifiable<N>,
-        AccessAnyD.Visitable<N>, Serializable {
+public final class ArrayAnyD<N extends Number> implements AccessAnyD<N>, AccessAnyD.Elements, AccessAnyD.IndexOf, AccessAnyD.Fillable<N>,
+        AccessAnyD.Modifiable<N>, AccessAnyD.Visitable<N>, AccessAnyD.Sliceable<N>, Serializable {
 
     public static abstract class Factory<N extends Number> implements AccessAnyD.Factory<ArrayAnyD<N>> {
 
         public ArrayAnyD<N> copy(final AccessAnyD<?> source) {
 
-            final long[] tmpStructure = source.structure();
+            final long[] tmpStructure = source.shape();
 
             final BasicArray<N> tmpDelegate = this.delegate().makeToBeFilled(tmpStructure);
 
@@ -62,13 +63,13 @@ public final class ArrayAnyD<N extends Number> implements AccessAnyD<N>, AccessA
             return tmpDelegate.asArrayAnyD(tmpStructure);
         }
 
-        public final ArrayAnyD<N> makeRandom(final long[] structure, final RandomNumber distribution) {
+        public final ArrayAnyD<N> makeFilled(final long[] structure, final NullaryFunction<?> supplier) {
 
             final BasicArray<N> tmpDelegate = this.delegate().makeToBeFilled(structure);
 
             final long tmpCount = AccessUtils.count(structure);
             for (long index = 0L; index < tmpCount; index++) {
-                tmpDelegate.set(index, distribution);
+                tmpDelegate.set(index, supplier.get());
             }
 
             return tmpDelegate.asArrayAnyD(structure);
@@ -105,7 +106,7 @@ public final class ArrayAnyD<N extends Number> implements AccessAnyD<N>, AccessA
         @Override
         public ArrayAnyD<Double> copy(final AccessAnyD<?> source) {
 
-            final long[] tmpStructure = source.structure();
+            final long[] tmpStructure = source.shape();
 
             final BasicArray<Double> tmpDelegate = this.delegate().makeToBeFilled(tmpStructure);
 
@@ -120,6 +121,15 @@ public final class ArrayAnyD<N extends Number> implements AccessAnyD<N>, AccessA
         @Override
         BasicFactory<Double> delegate() {
             return BasicArray.PRIMITIVE;
+        }
+
+    };
+
+    public static final Factory<Quaternion> QUATERNION = new Factory<Quaternion>() {
+
+        @Override
+        BasicFactory<Quaternion> delegate() {
+            return BasicArray.QUATERNION;
         }
 
     };
@@ -149,10 +159,29 @@ public final class ArrayAnyD<N extends Number> implements AccessAnyD<N>, AccessA
         myStructure = structure;
     }
 
+    public void add(final long index, final double addend) {
+        myDelegate.add(index, addend);
+    }
+
+    public void add(final long index, final Number addend) {
+        myDelegate.add(index, addend);
+    }
+
+    public void add(final long[] reference, final double addend) {
+        myDelegate.add(AccessUtils.index(myStructure, reference), addend);
+    }
+
+    public void add(final long[] reference, final Number addend) {
+        myDelegate.add(AccessUtils.index(myStructure, reference), addend);
+    }
+
     /**
-     * Flattens this abitrary dimensional array to a one dimensional array. The (internal/actual) array is not copied,
-     * it is just accessed through a different adaptor.
+     * Flattens this abitrary dimensional array to a one dimensional array. The (internal/actual) array is not
+     * copied, it is just accessed through a different adaptor.
+     *
+     * @deprecated v39 Not needed
      */
+    @Deprecated
     public Array1D<N> asArray1D() {
         return myDelegate.asArray1D();
     }
@@ -178,18 +207,46 @@ public final class ArrayAnyD<N extends Number> implements AccessAnyD<N>, AccessA
     public boolean equals(final Object obj) {
         if (obj instanceof ArrayAnyD) {
             final ArrayAnyD<N> tmpObj = (ArrayAnyD<N>) obj;
-            return Arrays.equals(myStructure, tmpObj.structure()) && myDelegate.equals(tmpObj.getDelegate());
+            return Arrays.equals(myStructure, tmpObj.shape()) && myDelegate.equals(tmpObj.getDelegate());
         } else {
             return super.equals(obj);
         }
     }
 
-    public void fillAll(final N number) {
-        myDelegate.fill(0L, this.count(), 1L, number);
+    public void fillAll(final N value) {
+        myDelegate.fill(0L, this.count(), 1L, value);
+    }
+
+    public void fillAll(final NullaryFunction<N> supplier) {
+        myDelegate.fill(0L, this.count(), 1L, supplier);
+    }
+
+    public void fillOne(final long index, final N value) {
+        myDelegate.fillOne(index, value);
+    }
+
+    public void fillOne(final long index, final NullaryFunction<N> supplier) {
+        myDelegate.fillOne(index, supplier);
+    }
+
+    public void fillOne(final long[] reference, final N value) {
+        myDelegate.fillOne(AccessUtils.index(myStructure, reference), value);
+    }
+
+    public void fillOne(final long[] reference, final NullaryFunction<N> supplier) {
+        myDelegate.fillOne(AccessUtils.index(myStructure, reference), supplier);
+    }
+
+    public void fillOneMatching(final long index, final Access1D<?> values, final long valueIndex) {
+        myDelegate.fillOneMatching(index, values, valueIndex);
     }
 
     public void fillRange(final long first, final long limit, final N value) {
         myDelegate.fill(first, limit, 1L, value);
+    }
+
+    public void fillRange(final long first, final long limit, final NullaryFunction<N> supplier) {
+        myDelegate.fill(first, limit, 1L, supplier);
     }
 
     public void fillSet(final long[] first, final int dimension, final N number) {
@@ -198,7 +255,7 @@ public final class ArrayAnyD<N extends Number> implements AccessAnyD<N>, AccessA
 
         final long tmpFirst = AccessUtils.index(myStructure, first);
         final long tmpStep = AccessUtils.step(myStructure, dimension);
-        final long tmpLimit = tmpFirst * tmpStep * tmpCount;
+        final long tmpLimit = tmpFirst + (tmpStep * tmpCount);
 
         myDelegate.fill(tmpFirst, tmpLimit, tmpStep, number);
     }
@@ -227,81 +284,55 @@ public final class ArrayAnyD<N extends Number> implements AccessAnyD<N>, AccessA
         return myDelegate.isAbsolute(AccessUtils.index(myStructure, reference));
     }
 
+    /**
+     * @deprecated v39
+     */
+    @Deprecated
     public boolean isAllZeros() {
-        return myDelegate.isZeros(0L, myDelegate.count(), 1L);
+        return myDelegate.isSmall(0L, myDelegate.count(), 1L, PrimitiveMath.ONE);
     }
 
-    public boolean isInfinite(final long index) {
-        return myDelegate.isInfinite(index);
+    public boolean isSmall(final long index, final double comparedTo) {
+        return myDelegate.isSmall(index, comparedTo);
     }
 
-    public boolean isInfinite(final long[] reference) {
-        return myDelegate.isInfinite(AccessUtils.index(myStructure, reference));
-    }
-
-    public boolean isNaN(final long index) {
-        return myDelegate.isNaN(index);
-    }
-
-    public boolean isNaN(final long[] reference) {
-        return myDelegate.isNaN(AccessUtils.index(myStructure, reference));
-    }
-
-    public boolean isPositive(final long index) {
-        return myDelegate.isPositive(index);
-    }
-
-    public boolean isPositive(final long[] reference) {
-        return myDelegate.isPositive(AccessUtils.index(myStructure, reference));
-    }
-
-    public boolean isReal(final long index) {
-        return myDelegate.isReal(index);
+    public boolean isSmall(final long[] reference, final double comparedTo) {
+        return myDelegate.isSmall(AccessUtils.index(myStructure, reference), comparedTo);
     }
 
     /**
-     * @see Scalar#isReal()
+     * @deprecated v39
      */
-    public boolean isReal(final long[] reference) {
-        return myDelegate.isReal(AccessUtils.index(myStructure, reference));
-    }
-
-    public boolean isZero(final long index) {
-        return myDelegate.isZero(index);
-    }
-
-    /**
-     * @see Scalar#isZero()
-     */
-    public boolean isZero(final long[] reference) {
-        return myDelegate.isZero(AccessUtils.index(myStructure, reference));
-    }
-
+    @Deprecated
     public boolean isZeros(final long[] first, final int dimension) {
 
         final long tmpCount = AccessUtils.count(myStructure, dimension) - first[dimension];
 
         final long tmpFirst = AccessUtils.index(myStructure, first);
         final long tmpStep = AccessUtils.step(myStructure, dimension);
-        final long tmpLimit = tmpFirst * tmpStep * tmpCount;
+        final long tmpLimit = tmpFirst + (tmpStep * tmpCount);
 
-        return myDelegate.isZeros(tmpFirst, tmpLimit, tmpStep);
-    }
-
-    public Iterator<N> iterator() {
-        return new Iterator1D<N>(this);
+        return myDelegate.isSmall(tmpFirst, tmpLimit, tmpStep, PrimitiveMath.ONE);
     }
 
     public void modifyAll(final UnaryFunction<N> function) {
         myDelegate.modify(0L, this.count(), 1L, function);
     }
 
-    public void modifyMatching(final ArrayAnyD<N> left, final BinaryFunction<N> function) {
-        myDelegate.modify(0L, this.count(), 1L, left.getDelegate(), function);
+    public void modifyMatching(final Access1D<N> left, final BinaryFunction<N> function) {
+        myDelegate.modify(0L, this.count(), 1L, left, function);
     }
 
-    public void modifyMatching(final BinaryFunction<N> function, final ArrayAnyD<N> right) {
-        myDelegate.modify(0L, this.count(), 1L, function, right.getDelegate());
+    public void modifyMatching(final BinaryFunction<N> function, final Access1D<N> right) {
+        myDelegate.modify(0L, this.count(), 1L, function, right);
+    }
+
+    public void modifyOne(final long index, final UnaryFunction<N> function) {
+        myDelegate.modifyOne(index, function);
+    }
+
+    public void modifyOne(final long[] reference, final UnaryFunction<N> function) {
+        myDelegate.modifyOne(AccessUtils.index(myStructure, reference), function);
     }
 
     public void modifyRange(final long first, final long limit, final UnaryFunction<N> function) {
@@ -314,7 +345,7 @@ public final class ArrayAnyD<N extends Number> implements AccessAnyD<N>, AccessA
 
         final long tmpFirst = AccessUtils.index(myStructure, first);
         final long tmpStep = AccessUtils.step(myStructure, dimension);
-        final long tmpLimit = tmpFirst * tmpStep * tmpCount;
+        final long tmpLimit = tmpFirst + (tmpStep * tmpCount);
 
         myDelegate.modify(tmpFirst, tmpLimit, tmpStep, function);
     }
@@ -339,23 +370,23 @@ public final class ArrayAnyD<N extends Number> implements AccessAnyD<N>, AccessA
         myDelegate.set(AccessUtils.index(myStructure, reference), value);
     }
 
+    public long[] shape() {
+        return myStructure;
+    }
+
     public Array1D<N> slice(final long[] first, final int dimension) {
 
         final long tmpCount = AccessUtils.count(myStructure, dimension) - first[dimension];
 
         final long tmpFirst = AccessUtils.index(myStructure, first);
         final long tmpStep = AccessUtils.step(myStructure, dimension);
-        final long tmpLimit = tmpFirst * tmpStep * tmpCount;
+        final long tmpLimit = tmpFirst + (tmpStep * tmpCount);
 
         return new Array1D<N>(myDelegate, tmpFirst, tmpLimit, tmpStep);
     }
 
-    public long[] structure() {
-        return myStructure;
-    }
-
-    public Scalar<N> toScalar(final long... reference) {
-        return myDelegate.toScalar(AccessUtils.index(myStructure, reference));
+    public Array1D<N> sliceRange(final long first, final long limit) {
+        return myDelegate.asArray1D().sliceRange(first, limit);
     }
 
     @Override
@@ -384,6 +415,14 @@ public final class ArrayAnyD<N extends Number> implements AccessAnyD<N>, AccessA
         myDelegate.visit(0L, this.count(), 1L, visitor);
     }
 
+    public void visitOne(final long index, final VoidFunction<N> visitor) {
+        myDelegate.visitOne(index, visitor);
+    }
+
+    public void visitOne(final long[] reference, final VoidFunction<N> visitor) {
+        myDelegate.visitOne(AccessUtils.index(myStructure, reference), visitor);
+    }
+
     public void visitRange(final long first, final long limit, final VoidFunction<N> visitor) {
         myDelegate.visit(first, limit, 1L, visitor);
     }
@@ -394,13 +433,21 @@ public final class ArrayAnyD<N extends Number> implements AccessAnyD<N>, AccessA
 
         final long tmpFirst = AccessUtils.index(myStructure, first);
         final long tmpStep = AccessUtils.step(myStructure, dimension);
-        final long tmpLimit = tmpFirst * tmpStep * tmpCount;
+        final long tmpLimit = tmpFirst + (tmpStep * tmpCount);
 
         myDelegate.visit(tmpFirst, tmpLimit, tmpStep, visitor);
     }
 
     final BasicArray<N> getDelegate() {
         return myDelegate;
+    }
+
+    public long indexOfLargest() {
+        return myDelegate.indexOfLargest();
+    }
+
+    public long indexOfLargestInRange(final long first, final long limit) {
+        return myDelegate.indexOfLargestInRange(first, limit);
     }
 
 }

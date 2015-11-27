@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,8 @@ import org.ojalgo.function.BigFunction;
 import org.ojalgo.scalar.ComplexNumber;
 
 public final class RotateRight extends MatrixOperation {
+
+    public static final RotateRight SETUP = new RotateRight();
 
     public static int THRESHOLD = 128;
 
@@ -96,6 +98,11 @@ public final class RotateRight extends MatrixOperation {
 
     private RotateRight() {
         super();
+    }
+
+    @Override
+    public int threshold() {
+        return THRESHOLD;
     }
 
 }

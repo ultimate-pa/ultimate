@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,13 +23,13 @@ package org.ojalgo.matrix.decomposition;
 
 import java.math.BigDecimal;
 
-import org.ojalgo.access.Access2D;
 import org.ojalgo.array.Array1D;
 import org.ojalgo.array.Array2D;
 import org.ojalgo.constant.PrimitiveMath;
 import org.ojalgo.matrix.MatrixUtils;
 import org.ojalgo.matrix.store.BigDenseStore;
 import org.ojalgo.matrix.store.ComplexDenseStore;
+import org.ojalgo.matrix.store.ElementsSupplier;
 import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.matrix.store.PhysicalStore;
 import org.ojalgo.matrix.store.PrimitiveDenseStore;
@@ -38,13 +38,7 @@ import org.ojalgo.scalar.ComplexNumber;
 import org.ojalgo.type.TypeUtils;
 import org.ojalgo.type.context.NumberContext;
 
-/**
- * You create instances of (some subclass of) this class by calling one of the static factory methods:
- * {@linkplain #makeBig()}, {@linkplain #makeComplex()} or {@linkplain #makePrimitive()}.
- * 
- * @author apete
- */
-public abstract class BidiagonalDecomposition<N extends Number> extends InPlaceDecomposition<N> implements Bidiagonal<N> {
+abstract class BidiagonalDecomposition<N extends Number> extends InPlaceDecomposition<N> implements Bidiagonal<N> {
 
     static final class Big extends BidiagonalDecomposition<BigDecimal> {
 
@@ -70,10 +64,10 @@ public abstract class BidiagonalDecomposition<N extends Number> extends InPlaceD
 
             final DiagonalAccess<ComplexNumber> tmpDiagonalAccessD = this.getDiagonalAccessD();
 
-            final Array1D<ComplexNumber> tmpInitDiagQ1 = Array1D.COMPLEX.makeZero(tmpDiagonalAccessD.getMinDim());
+            final Array1D<ComplexNumber> tmpInitDiagQ1 = Array1D.COMPLEX.makeZero(tmpDiagonalAccessD.getDimension());
             tmpInitDiagQ1.fillAll(ComplexNumber.ONE);
 
-            final Array1D<ComplexNumber> tmpInitDiagQ2 = Array1D.COMPLEX.makeZero(tmpDiagonalAccessD.getMinDim());
+            final Array1D<ComplexNumber> tmpInitDiagQ2 = Array1D.COMPLEX.makeZero(tmpDiagonalAccessD.getDimension());
             tmpInitDiagQ2.fillAll(ComplexNumber.ONE);
 
             final boolean tmpUpper = this.isUpper();
@@ -86,14 +80,14 @@ public abstract class BidiagonalDecomposition<N extends Number> extends InPlaceD
                 final int tmpLimit = tmpSuperdiagonal.size();
                 for (int i = 0; i < tmpLimit; i++) {
 
-                    if (!tmpMainDiagonal.isReal(i)) {
+                    if (!tmpMainDiagonal.get(i).isReal()) {
                         final ComplexNumber tmpSignum = tmpMainDiagonal.get(i).signum();
                         tmpMainDiagonal.set(i, tmpMainDiagonal.get(i).divide(tmpSignum));
                         tmpSuperdiagonal.set(i, tmpSuperdiagonal.get(i).divide(tmpSignum));
                         tmpInitDiagQ1.set(i, tmpSignum);
                     }
 
-                    if (!tmpSuperdiagonal.isReal(i)) {
+                    if (!tmpSuperdiagonal.get(i).isReal()) {
                         final ComplexNumber tmpSignum = tmpSuperdiagonal.get(i).signum();
                         tmpSuperdiagonal.set(i, tmpSuperdiagonal.get(i).divide(tmpSignum));
                         tmpMainDiagonal.set(i + 1, tmpMainDiagonal.get(i + 1).divide(tmpSignum));
@@ -101,7 +95,7 @@ public abstract class BidiagonalDecomposition<N extends Number> extends InPlaceD
                     }
                 }
 
-                if (!tmpMainDiagonal.isReal(tmpLimit)) {
+                if (!tmpMainDiagonal.get(tmpLimit).isReal()) {
                     final ComplexNumber tmpSignum = tmpMainDiagonal.get(tmpLimit).signum();
                     tmpMainDiagonal.set(tmpLimit, tmpMainDiagonal.get(tmpLimit).divide(tmpSignum));
                     tmpInitDiagQ1.set(tmpLimit, tmpSignum);
@@ -115,14 +109,14 @@ public abstract class BidiagonalDecomposition<N extends Number> extends InPlaceD
                 final int tmpLimit = tmpSubdiagonal.size();
                 for (int i = 0; i < tmpLimit; i++) {
 
-                    if (!tmpMainDiagonal.isReal(i)) {
+                    if (!tmpMainDiagonal.get(i).isReal()) {
                         final ComplexNumber tmpSignum = tmpMainDiagonal.get(i).signum();
                         tmpMainDiagonal.set(i, tmpMainDiagonal.get(i).divide(tmpSignum));
                         tmpSubdiagonal.set(i, tmpSubdiagonal.get(i).divide(tmpSignum));
                         tmpInitDiagQ2.set(i, tmpSignum.conjugate());
                     }
 
-                    if (!tmpSubdiagonal.isReal(i)) {
+                    if (!tmpSubdiagonal.get(i).isReal()) {
                         final ComplexNumber tmpSignum = tmpSubdiagonal.get(i).signum();
                         tmpSubdiagonal.set(i, tmpSubdiagonal.get(i).divide(tmpSignum));
                         tmpMainDiagonal.set(i + 1, tmpMainDiagonal.get(i + 1).divide(tmpSignum));
@@ -130,7 +124,7 @@ public abstract class BidiagonalDecomposition<N extends Number> extends InPlaceD
                     }
                 }
 
-                if (!tmpMainDiagonal.isReal(tmpLimit)) {
+                if (!tmpMainDiagonal.get(tmpLimit).isReal()) {
                     final ComplexNumber tmpSignum = tmpMainDiagonal.get(tmpLimit).signum();
                     tmpMainDiagonal.set(tmpLimit, tmpMainDiagonal.get(tmpLimit).divide(tmpSignum));
                     tmpInitDiagQ2.set(tmpLimit, tmpSignum.conjugate());
@@ -156,34 +150,6 @@ public abstract class BidiagonalDecomposition<N extends Number> extends InPlaceD
 
     }
 
-    @SuppressWarnings("unchecked")
-    public static final <N extends Number> Bidiagonal<N> make(final Access2D<N> aTypical) {
-
-        final N tmpNumber = aTypical.get(0, 0);
-
-        if (tmpNumber instanceof BigDecimal) {
-            return (Bidiagonal<N>) BidiagonalDecomposition.makeBig();
-        } else if (tmpNumber instanceof ComplexNumber) {
-            return (Bidiagonal<N>) BidiagonalDecomposition.makeComplex();
-        } else if (tmpNumber instanceof Double) {
-            return (Bidiagonal<N>) BidiagonalDecomposition.makePrimitive();
-        } else {
-            throw new IllegalArgumentException();
-        }
-    }
-
-    public static final Bidiagonal<BigDecimal> makeBig() {
-        return new BidiagonalDecomposition.Big();
-    }
-
-    public static final Bidiagonal<ComplexNumber> makeComplex() {
-        return new BidiagonalDecomposition.Complex();
-    }
-
-    public static final Bidiagonal<Double> makePrimitive() {
-        return new BidiagonalDecomposition.Primitive();
-    }
-
     private transient DiagonalAccess<N> myDiagonalAccessD;
 
     private boolean myFullSize = false;
@@ -198,15 +164,9 @@ public abstract class BidiagonalDecomposition<N extends Number> extends InPlaceD
         super(aFactory);
     }
 
-    public final boolean compute(final Access2D<?> matrix) {
-        return this.compute(matrix, false);
-    }
-
-    public boolean compute(final Access2D<?> matrix, final boolean fullSize) {
+    public boolean decompose(final ElementsSupplier<N> matrix) {
 
         this.reset();
-
-        myFullSize = fullSize;
 
         final DecompositionStore<N> tmpStore = this.setInPlace(matrix);
 
@@ -261,46 +221,38 @@ public abstract class BidiagonalDecomposition<N extends Number> extends InPlaceD
         return this.computed(true);
     }
 
-    public final boolean equals(final MatrixStore<N> aStore, final NumberContext context) {
+    public boolean equals(final MatrixStore<N> aStore, final NumberContext context) {
         return MatrixUtils.equals(aStore, this, context);
     }
 
-    public final MatrixStore<N> getD() {
+    public MatrixStore<N> getD() {
         return this.getInPlace().builder().bidiagonal(this.isAspectRatioNormal(), false).build();
     }
 
-    public final MatrixStore<N> getQ1() {
+    public MatrixStore<N> getQ1() {
         if (myQ1 == null) {
             myQ1 = this.makeQ1();
         }
         return myQ1;
     }
 
-    public final MatrixStore<N> getQ2() {
+    public MatrixStore<N> getQ2() {
         if (myQ2 == null) {
             myQ2 = this.makeQ2();
         }
         return myQ2;
     }
 
-    public final boolean isFullSize() {
+    public boolean isFullSize() {
         return myFullSize;
     }
 
-    public final boolean isSolvable() {
-        return false;
-    }
-
-    public final boolean isUpper() {
+    public boolean isUpper() {
         return this.isAspectRatioNormal();
     }
 
-    public final MatrixStore<N> reconstruct() {
-        return MatrixUtils.reconstruct(this);
-    }
-
     @Override
-    public final void reset() {
+    public void reset() {
 
         super.reset();
 
@@ -310,11 +262,13 @@ public abstract class BidiagonalDecomposition<N extends Number> extends InPlaceD
 
         myInitDiagQ1 = null;
         myInitDiagQ2 = null;
-
-        myFullSize = false;
     }
 
-    private final DiagonalAccess<N> makeDiagonalAccessD() {
+    public void setFullSize(final boolean fullSize) {
+        myFullSize = fullSize;
+    }
+
+    private DiagonalAccess<N> makeDiagonalAccessD() {
 
         final Array2D<N> tmpArray2D = this.getInPlace().asArray2D();
 
@@ -330,14 +284,14 @@ public abstract class BidiagonalDecomposition<N extends Number> extends InPlaceD
             tmpSuper = null;
         }
 
-        return new DiagonalAccess<N>(tmpMain, tmpSuper, tmpSub, this.getStaticZero());
+        return new DiagonalAccess<N>(tmpMain, tmpSuper, tmpSub, this.scalar().zero().getNumber());
     }
 
     /**
-     * Will solve the equation system [aMtrxV][aMtrxD][X]=[aMtrxSimilar]<sup>T</sup> and overwrite the solution [X] to
-     * [aV].
+     * Will solve the equation system [aMtrxV][aMtrxD][X]=[aMtrxSimilar]<sup>T</sup> and overwrite the
+     * solution [X] to [aV].
      */
-    private final void solve(final PhysicalStore<N> aMtrxV, final MatrixStore<N> aMtrxD, final DiagonalAccess<N> aMtrxSimilar) {
+    private void solve(final PhysicalStore<N> aMtrxV, final MatrixStore<N> aMtrxD, final DiagonalAccess<N> aMtrxSimilar) {
 
         final int tmpDim = (int) aMtrxV.countRows();
         final int tmpLim = tmpDim - 1;
@@ -360,7 +314,7 @@ public abstract class BidiagonalDecomposition<N extends Number> extends InPlaceD
         }
     }
 
-    private final DecompositionStore<N> solve2(final PhysicalStore<N> aMtrxV, final MatrixStore<N> aMtrxD, final DiagonalAccess<N> aMtrxSimilar) {
+    private DecompositionStore<N> solve2(final PhysicalStore<N> aMtrxV, final MatrixStore<N> aMtrxD, final DiagonalAccess<N> aMtrxSimilar) {
 
         final int tmpDim = (int) aMtrxV.countRows();
         final int tmpLim = tmpDim - 1;
@@ -387,7 +341,7 @@ public abstract class BidiagonalDecomposition<N extends Number> extends InPlaceD
         return retVal;
     }
 
-    protected final DecompositionStore<N> makeQ1() {
+    protected DecompositionStore<N> makeQ1() {
 
         final DecompositionStore.HouseholderReference<N> tmpHouseholderReference = new DecompositionStore.HouseholderReference<N>(this.getInPlace(), true);
 
@@ -418,7 +372,7 @@ public abstract class BidiagonalDecomposition<N extends Number> extends InPlaceD
         return retVal;
     }
 
-    protected final DecompositionStore<N> makeQ2() {
+    protected DecompositionStore<N> makeQ2() {
 
         final DecompositionStore.HouseholderReference<N> tmpHouseholderReference = new DecompositionStore.HouseholderReference<N>(this.getInPlace(), false);
 
@@ -449,7 +403,7 @@ public abstract class BidiagonalDecomposition<N extends Number> extends InPlaceD
         return retVal;
     }
 
-    final DiagonalAccess<N> getDiagonalAccessD() {
+    DiagonalAccess<N> getDiagonalAccessD() {
         if (myDiagonalAccessD == null) {
             myDiagonalAccessD = this.makeDiagonalAccessD();
         }

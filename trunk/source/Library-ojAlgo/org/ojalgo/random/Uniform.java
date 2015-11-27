@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@ import static org.ojalgo.constant.PrimitiveMath.*;
 
 /**
  * Certain waiting times. Rounding errors.
- * 
+ *
  * @author apete
  */
 public class Uniform extends AbstractContinuous {
@@ -33,24 +33,24 @@ public class Uniform extends AbstractContinuous {
     private static final long serialVersionUID = -8198257914507986404L;
 
     /**
-     * @return An integer: 0 <= ? < aLimit
+     * @return An integer: 0 &lt;= ? &lt; limit
      */
-    public static int randomInteger(final int aLimit) {
-        return (int) Math.floor(aLimit * Math.random());
+    public static int randomInteger(final int limit) {
+        return (int) Math.floor(limit * Math.random());
     }
 
     /**
-     * @return An integer: aLower <= ? < aHigher
+     * @return An integer: lower &lt;= ? &lt; higher
      */
-    public static int randomInteger(final int aLower, final int aHigher) {
-        return aLower + Uniform.randomInteger(aHigher - aLower);
+    public static int randomInteger(final int lower, final int higher) {
+        return lower + Uniform.randomInteger(higher - lower);
     }
 
     /**
-     * @return An integer: 0 <= ? < aLimit
+     * @return An integer: 0 &lt;= ? &lt; limit
      */
-    public static long randomInteger(final long aLimit) {
-        return (long) Math.floor(aLimit * Math.random());
+    public static long randomInteger(final long limit) {
+        return (long) Math.floor(limit * Math.random());
     }
 
     private final double myLower;
@@ -60,16 +60,16 @@ public class Uniform extends AbstractContinuous {
         this(ZERO, ONE);
     }
 
-    public Uniform(final double aLower, final double aRange) {
+    public Uniform(final double lower, final double range) {
 
         super();
 
-        if (aRange <= ZERO) {
+        if (range <= ZERO) {
             throw new IllegalArgumentException("The range must be larger than 0.0!");
         }
 
-        myLower = aLower;
-        myRange = aRange;
+        myLower = lower;
+        myRange = range;
     }
 
     public double getDistribution(final double aValue) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,26 +24,19 @@ package org.ojalgo.matrix.decomposition;
 import java.math.BigDecimal;
 
 import org.ojalgo.access.Access2D;
+import org.ojalgo.access.Structure2D;
 import org.ojalgo.function.aggregator.AggregatorFunction;
 import org.ojalgo.matrix.MatrixUtils;
-import org.ojalgo.matrix.jama.JamaQR;
 import org.ojalgo.matrix.store.BigDenseStore;
 import org.ojalgo.matrix.store.ComplexDenseStore;
+import org.ojalgo.matrix.store.ElementsSupplier;
 import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.matrix.store.PrimitiveDenseStore;
-import org.ojalgo.matrix.store.UpperTriangularStore;
 import org.ojalgo.matrix.transformation.Householder;
 import org.ojalgo.scalar.ComplexNumber;
-import org.ojalgo.scalar.Scalar;
 import org.ojalgo.type.context.NumberContext;
 
-/**
- * You create instances of (some subclass of) this class by calling one of the static factory methods:
- * {@linkplain #makeBig()}, {@linkplain #makeComplex()}, {@linkplain #makePrimitive()} or {@linkplain #makeJama()}.
- *
- * @author apete
- */
-public abstract class QRDecomposition<N extends Number> extends InPlaceDecomposition<N> implements QR<N> {
+abstract class QRDecomposition<N extends Number> extends InPlaceDecomposition<N> implements QR<N> {
 
     static final class Big extends QRDecomposition<BigDecimal> {
 
@@ -69,65 +62,20 @@ public abstract class QRDecomposition<N extends Number> extends InPlaceDecomposi
 
     }
 
-    @SuppressWarnings("unchecked")
-    public static final <N extends Number> QR<N> make(final Access2D<N> aTypical) {
-
-        final N tmpNumber = aTypical.get(0, 0);
-
-        if (tmpNumber instanceof BigDecimal) {
-            return (QR<N>) QRDecomposition.makeBig();
-        } else if (tmpNumber instanceof ComplexNumber) {
-            return (QR<N>) QRDecomposition.makeComplex();
-        } else if (tmpNumber instanceof Double) {
-
-            final int tmpMaxDim = (int) Math.max(aTypical.countRows(), aTypical.countColumns());
-
-            if ((tmpMaxDim <= 16) || (tmpMaxDim >= 46340)) { //16,16,8
-                return (QR<N>) QRDecomposition.makeJama();
-            } else {
-                return (QR<N>) QRDecomposition.makePrimitive();
-            }
-        } else {
-            throw new IllegalArgumentException();
-        }
-    }
-
-    public static final QR<BigDecimal> makeBig() {
-        return new Big();
-    }
-
-    public static final QR<ComplexNumber> makeComplex() {
-        return new Complex();
-    }
-
-    public static final QR<Double> makeJama() {
-        return new JamaQR();
-    }
-
-    public static final QR<Double> makePrimitive() {
-        return new Primitive();
-    }
-
     private boolean myFullSize = false;
 
     protected QRDecomposition(final DecompositionStore.Factory<N, ? extends DecompositionStore<N>> aFactory) {
         super(aFactory);
     }
 
-    public final N calculateDeterminant(final Access2D<N> matrix) {
-        this.compute(matrix);
+    public N calculateDeterminant(final Access2D<?> matrix) {
+        this.decompose(this.wrap(matrix));
         return this.getDeterminant();
     }
 
-    public boolean compute(final Access2D<?> matrix) {
-        return this.compute(matrix, false);
-    }
-
-    public boolean compute(final Access2D<?> matrix, final boolean fullSize) {
+    public boolean decompose(final ElementsSupplier<N> matrix) {
 
         this.reset();
-
-        myFullSize = fullSize;
 
         final DecompositionStore<N> tmpStore = this.setInPlace(matrix);
 
@@ -153,7 +101,7 @@ public abstract class QRDecomposition<N extends Number> extends InPlaceDecomposi
 
     public N getDeterminant() {
 
-        final AggregatorFunction<N> tmpAggrFunc = this.getAggregatorCollection().product();
+        final AggregatorFunction<N> tmpAggrFunc = this.aggregator().product();
 
         this.getInPlace().visitDiagonal(0, 0, tmpAggrFunc);
 
@@ -161,13 +109,8 @@ public abstract class QRDecomposition<N extends Number> extends InPlaceDecomposi
     }
 
     @Override
-    public MatrixStore<N> getInverse() {
-        return this.solve(this.makeEye(this.getColDim(), this.getRowDim()));
-    }
-
-    @Override
     public MatrixStore<N> getInverse(final DecompositionStore<N> preallocated) {
-        return this.solve(this.makeEye(this.getColDim(), this.getRowDim()), preallocated);
+        return this.solve(this.makeIdentity(this.getRowDim()), preallocated);
     }
 
     public MatrixStore<N> getQ() {
@@ -191,10 +134,12 @@ public abstract class QRDecomposition<N extends Number> extends InPlaceDecomposi
 
     public MatrixStore<N> getR() {
 
-        MatrixStore<N> retVal = new UpperTriangularStore<N>(this.getInPlace(), false);
+        //MatrixStore<N> retVal = new UpperTriangularStore<N>(this.getInPlace(), false);
+        MatrixStore<N> retVal = this.getInPlace().builder().triangular(true, false).build();
 
-        if (myFullSize && (this.getRowDim() > this.getColDim())) {
-            retVal = retVal.builder().below(this.getRowDim() - this.getColDim()).build();
+        final int tmpPadding = this.getRowDim() - this.getColDim();
+        if (myFullSize && (tmpPadding < 0)) {
+            retVal = retVal.builder().below(tmpPadding).build();
         }
 
         return retVal;
@@ -204,17 +149,31 @@ public abstract class QRDecomposition<N extends Number> extends InPlaceDecomposi
 
         int retVal = 0;
 
-        final int tmpLength = (int) Math.min(this.getInPlace().countRows(), this.getInPlace().countColumns());
+        final DecompositionStore<N> tmpInPlace = this.getInPlace();
 
-        Scalar<N> tmpVal;
-        for (int ij = 0; ij < tmpLength; ij++) {
-            tmpVal = this.getInPlace().toScalar(ij, ij);
-            if (!tmpVal.isZero()) {
+        final AggregatorFunction<N> tmpLargest = this.aggregator().largest();
+        tmpInPlace.visitDiagonal(0L, 0L, tmpLargest);
+        final double tmpLargestValue = tmpLargest.doubleValue();
+
+        final int tmpMinDim = this.getMinDim();
+
+        for (int ij = 0; ij < tmpMinDim; ij++) {
+            if (!tmpInPlace.isSmall(ij, ij, tmpLargestValue)) {
                 retVal++;
             }
         }
 
         return retVal;
+    }
+
+    public MatrixStore<N> invert(final Access2D<?> original) {
+        this.decompose(this.wrap(original));
+        return this.getInverse();
+    }
+
+    public MatrixStore<N> invert(final Access2D<?> original, final DecompositionStore<N> preallocated) {
+        this.decompose(this.wrap(original));
+        return this.getInverse(preallocated);
     }
 
     /**
@@ -224,38 +183,55 @@ public abstract class QRDecomposition<N extends Number> extends InPlaceDecomposi
         return this.getRank() == this.getMinDim();
     }
 
-    public final boolean isFullSize() {
+    public boolean isFullSize() {
         return myFullSize;
     }
 
-    public final boolean isSolvable() {
+    public boolean isSolvable() {
         return this.isComputed() && this.isFullColumnRank();
     }
 
-    public MatrixStore<N> reconstruct() {
-        return MatrixUtils.reconstruct(this);
+    public DecompositionStore<N> preallocate(final Structure2D template) {
+        final long tmpCountRows = template.countRows();
+        return this.preallocate(tmpCountRows, tmpCountRows);
     }
 
-    @Override
-    public void reset() {
+    public DecompositionStore<N> preallocate(final Structure2D templateBody, final Structure2D templateRHS) {
+        return this.preallocate(templateRHS.countRows(), templateRHS.countColumns());
+    }
 
-        super.reset();
+    public void setFullSize(final boolean fullSize) {
+        myFullSize = fullSize;
+    }
 
-        myFullSize = false;
+    public MatrixStore<N> solve(final Access2D<?> body, final Access2D<?> rhs) {
+        this.decompose(this.wrap(body));
+        return this.solve(this.wrap(rhs));
+    }
+
+    public MatrixStore<N> solve(final Access2D<?> body, final Access2D<?> rhs, final DecompositionStore<N> preallocated) {
+        this.decompose(this.wrap(body));
+        return this.solve(rhs, preallocated);
+    }
+
+    public MatrixStore<N> solve(final ElementsSupplier<N> rhs) {
+        return this.solve(rhs, this.preallocate(this.getInPlace(), rhs));
     }
 
     /**
-     * Solve [A]*[X]=[B] by first solving [Q]*[Y]=[B] and then [R]*[X]=[Y]. [X] minimises the 2-norm of [Q]*[R]*[X]-[B].
+     * Solve [A]*[X]=[B] by first solving [Q]*[Y]=[B] and then [R]*[X]=[Y]. [X] minimises the 2-norm of
+     * [Q]*[R]*[X]-[B].
      *
      * @param rhs The right hand side [B]
-     * @return [X] "preallocated" is used to form the results, but the solution is in the returned MatrixStore.
-     * @see org.ojalgo.matrix.decomposition.AbstractDecomposition#solve(Access2D,
+     * @return [X] "preallocated" is used to form the results, but the solution is in the returned
+     *         MatrixStore.
+     * @see org.ojalgo.matrix.decomposition.GenericDecomposition#doSolve(ElementsSupplier,
      *      org.ojalgo.matrix.decomposition.DecompositionStore)
      */
     @Override
-    public MatrixStore<N> solve(final Access2D<N> rhs, final DecompositionStore<N> preallocated) {
+    public MatrixStore<N> solve(final ElementsSupplier<N> rhs, final DecompositionStore<N> preallocated) {
 
-        preallocated.fillMatching(rhs);
+        rhs.supplyTo(preallocated);
 
         final DecompositionStore<N> tmpStore = this.getInPlace();
         final int tmpRowDim = this.getRowDim();
@@ -274,7 +250,7 @@ public abstract class QRDecomposition<N extends Number> extends InPlaceDecomposi
             }
         }
 
-        preallocated.substituteBackwards(tmpStore, false);
+        preallocated.substituteBackwards(tmpStore, false, false, false);
 
         if (tmpColDim < tmpRowDim) {
             return preallocated.builder().rows(0, tmpColDim).build();
@@ -288,7 +264,7 @@ public abstract class QRDecomposition<N extends Number> extends InPlaceDecomposi
     /**
      * @return L as in R<sup>T</sup>.
      */
-    protected final DecompositionStore<N> getL() {
+    protected DecompositionStore<N> getL() {
 
         final int tmpRowDim = this.getColDim();
         final int tmpColDim = this.getMinDim();

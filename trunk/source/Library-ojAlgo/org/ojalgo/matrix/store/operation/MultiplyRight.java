@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,12 +34,14 @@ import org.ojalgo.scalar.ComplexNumber;
 
 public final class MultiplyRight extends MatrixOperation {
 
+    public static final MultiplyRight SETUP = new MultiplyRight();
+
     public static int THRESHOLD = 32;
 
     static final BigMultiplyRight BIG = new BigMultiplyRight() {
 
         public void invoke(final BigDecimal[] product, final BigDecimal[] left, final int complexity, final Access1D<BigDecimal> right) {
-            MultiplyRight.invoke(product, 0, ((int) right.count()) / complexity, left, complexity, right);
+            MultiplyRight.invoke(product, 0, (int) (right.count() / complexity), left, complexity, right);
         }
 
     };
@@ -56,7 +58,7 @@ public final class MultiplyRight extends MatrixOperation {
                 }
             };
 
-            tmpConquerer.invoke(0, ((int) right.count()) / complexity, THRESHOLD);
+            tmpConquerer.invoke(0, (int) (right.count() / complexity), THRESHOLD);
         }
 
     };
@@ -64,7 +66,7 @@ public final class MultiplyRight extends MatrixOperation {
     static final ComplexMultiplyRight COMPLEX = new ComplexMultiplyRight() {
 
         public void invoke(final ComplexNumber[] product, final ComplexNumber[] left, final int complexity, final Access1D<ComplexNumber> right) {
-            MultiplyRight.invoke(product, 0, ((int) right.count()) / complexity, left, complexity, right);
+            MultiplyRight.invoke(product, 0, (int) (right.count() / complexity), left, complexity, right);
         }
 
     };
@@ -81,7 +83,7 @@ public final class MultiplyRight extends MatrixOperation {
                 }
             };
 
-            tmpConquerer.invoke(0, ((int) right.count()) / complexity, THRESHOLD);
+            tmpConquerer.invoke(0, (int) (right.count() / complexity), THRESHOLD);
         }
 
     };
@@ -89,7 +91,7 @@ public final class MultiplyRight extends MatrixOperation {
     static final PrimitiveMultiplyRight PRIMITIVE = new PrimitiveMultiplyRight() {
 
         public void invoke(final double[] product, final double[] left, final int complexity, final Access1D<?> right) {
-            MultiplyRight.invoke(product, 0, ((int) right.count()) / complexity, left, complexity, right);
+            MultiplyRight.invoke(product, 0, (int) (right.count() / complexity), left, complexity, right);
         }
 
     };
@@ -99,7 +101,7 @@ public final class MultiplyRight extends MatrixOperation {
         public void invoke(final double[] product, final double[] left, final int complexity, final Access1D<?> right) {
 
             final int tmpRowDim = 10;
-            final int tmpColDim = (int) (right.count() / complexity);
+            final int tmpColDim = product.length / tmpRowDim;
 
             for (int j = 0; j < tmpColDim; j++) {
 
@@ -165,7 +167,7 @@ public final class MultiplyRight extends MatrixOperation {
 
         public void invoke(final double[] product, final double[] left, final int complexity, final Access1D<?> right) {
 
-            final int tmpColDim = (int) (right.count() / complexity);
+            final int tmpColDim = product.length;
 
             for (int j = 0; j < tmpColDim; j++) {
 
@@ -465,7 +467,7 @@ public final class MultiplyRight extends MatrixOperation {
         public void invoke(final double[] product, final double[] left, final int complexity, final Access1D<?> right) {
 
             final int tmpRowDim = 6;
-            final int tmpColDim = (int) (right.count() / complexity);
+            final int tmpColDim = product.length / tmpRowDim;
 
             for (int j = 0; j < tmpColDim; j++) {
 
@@ -503,7 +505,7 @@ public final class MultiplyRight extends MatrixOperation {
         public void invoke(final double[] product, final double[] left, final int complexity, final Access1D<?> right) {
 
             final int tmpRowDim = 7;
-            final int tmpColDim = (int) (right.count() / complexity);
+            final int tmpColDim = product.length / tmpRowDim;
 
             for (int j = 0; j < tmpColDim; j++) {
 
@@ -544,7 +546,7 @@ public final class MultiplyRight extends MatrixOperation {
         public void invoke(final double[] product, final double[] left, final int complexity, final Access1D<?> right) {
 
             final int tmpRowDim = 8;
-            final int tmpColDim = (int) (right.count() / complexity);
+            final int tmpColDim = product.length / tmpRowDim;
 
             for (int j = 0; j < tmpColDim; j++) {
 
@@ -588,7 +590,7 @@ public final class MultiplyRight extends MatrixOperation {
         public void invoke(final double[] product, final double[] left, final int complexity, final Access1D<?> right) {
 
             final int tmpRowDim = 9;
-            final int tmpColDim = (int) (right.count() / complexity);
+            final int tmpColDim = product.length / tmpRowDim;
 
             for (int j = 0; j < tmpColDim; j++) {
 
@@ -747,7 +749,7 @@ public final class MultiplyRight extends MatrixOperation {
 
         for (int j = firstColumn; j < columnLimit; j++) {
             for (int c = 0; c < complexity; c++) {
-                CAXPY.invoke(product, j * tmpRowDim, left, c * tmpRowDim, right.get(c + (j * complexity)), 0, tmpRowDim);
+                AXPY.invoke(product, j * tmpRowDim, 1, right.get(c + (j * complexity)), left, c * tmpRowDim, 1, tmpRowDim);
             }
         }
     }
@@ -764,7 +766,7 @@ public final class MultiplyRight extends MatrixOperation {
 
         for (int j = firstColumn; j < columnLimit; j++) {
             for (int c = 0; c < complexity; c++) {
-                CAXPY.invoke(product, j * tmpRowDim, left, c * tmpRowDim, right.get(c + (j * complexity)), 0, tmpRowDim);
+                AXPY.invoke(product, j * tmpRowDim, 1, right.get(c + (j * complexity)), left, c * tmpRowDim, 1, tmpRowDim);
             }
         }
     }
@@ -780,13 +782,18 @@ public final class MultiplyRight extends MatrixOperation {
 
         for (int j = firstColumn; j < columnLimit; j++) {
             for (int c = 0; c < complexity; c++) {
-                CAXPY.invoke(product, j * tmpRowDim, left, c * tmpRowDim, right.doubleValue(c + (j * complexity)), 0, tmpRowDim);
+                AXPY.invoke(product, j * tmpRowDim, 1, right.doubleValue(c + (j * complexity)), left, c * tmpRowDim, 1, tmpRowDim);
             }
         }
     }
 
     private MultiplyRight() {
         super();
+    }
+
+    @Override
+    public int threshold() {
+        return THRESHOLD;
     }
 
 }

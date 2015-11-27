@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,9 +21,9 @@
  */
 package org.ojalgo.optimisation.convex;
 
-import org.ojalgo.optimisation.ExpressionsBasedModel;
+import org.ojalgo.matrix.decomposition.DecompositionStore;
+import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.optimisation.Optimisation;
-import org.ojalgo.optimisation.convex.KKTSolver.Input;
 
 /**
  * Solves optimisation problems of the form:
@@ -35,12 +35,23 @@ import org.ojalgo.optimisation.convex.KKTSolver.Input;
  */
 final class UnconstrainedSolver extends ConvexSolver {
 
-    UnconstrainedSolver(final ExpressionsBasedModel aModel, final Optimisation.Options solverOptions, final ConvexSolver.Builder matrices) {
-        super(aModel, solverOptions, matrices);
+    UnconstrainedSolver(final ConvexSolver.Builder matrices, final Optimisation.Options solverOptions) {
+        super(matrices, solverOptions);
     }
 
     @Override
-    protected boolean initialise(final Result kickStart) {
+    protected MatrixStore<Double> getIterationKKT() {
+        return this.getIterationQ();
+    }
+
+    @Override
+    protected MatrixStore<Double> getIterationRHS() {
+        return this.getIterationC();
+    }
+
+    @Override
+    protected boolean initialise(final Result kickStarter) {
+        super.initialise(kickStarter);
         this.resetX();
         return true;
     }
@@ -53,27 +64,41 @@ final class UnconstrainedSolver extends ConvexSolver {
     @Override
     protected void performIteration() {
 
-        final KKTSolver.Input tmpInput = this.buildDelegateSolverInput();
+        final MatrixStore<Double> tmpQ = this.getIterationQ();
+        final MatrixStore<Double> tmpC = this.getIterationC();
+        final DecompositionStore<Double> tmpX = this.getX();
 
-        final KKTSolver tmpSolver = this.getDelegateSolver(tmpInput);
+        boolean tmpSolvable = true;
 
-        final KKTSolver.Output tmpOutput = tmpSolver.solve(tmpInput, options.validate);
+        if (tmpSolvable = myCholesky.isSolvable()) {
+            // Q is SPD
 
-        if (tmpOutput.isSolvable()) {
+            myCholesky.solve(tmpC, tmpX);
 
-            this.setState(State.OPTIMAL);
-            this.fillX(tmpOutput.getX());
+        } else if (tmpSolvable = myLU.compute(tmpQ)) {
+            // The above failed, but the KKT system is solvable
+            // Try solving the full KKT system instaed
 
+            myLU.solve(tmpC, tmpX);
+        }
+
+        if (!tmpSolvable && this.isDebug()) {
+            options.debug_appender.println("KKT system unsolvable!");
+            options.debug_appender.printmtrx("KKT", this.getIterationKKT());
+            options.debug_appender.printmtrx("RHS", this.getIterationRHS());
+        }
+
+        if (tmpSolvable) {
+            this.setState(State.DISTINCT);
         } else {
-
-            this.setState(State.INVALID);
+            this.setState(State.UNBOUNDED);
             this.resetX();
         }
     }
 
     @Override
-    Input buildDelegateSolverInput() {
-        return new KKTSolver.Input(this.getQ(), this.getC());
+    final MatrixStore<Double> getIterationC() {
+        return this.getC();
     }
 
 }

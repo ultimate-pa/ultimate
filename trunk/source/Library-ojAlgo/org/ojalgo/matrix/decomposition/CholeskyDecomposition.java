@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,25 +24,21 @@ package org.ojalgo.matrix.decomposition;
 import java.math.BigDecimal;
 
 import org.ojalgo.access.Access2D;
+import org.ojalgo.access.Structure2D;
 import org.ojalgo.array.BasicArray;
+import org.ojalgo.constant.PrimitiveMath;
 import org.ojalgo.function.UnaryFunction;
 import org.ojalgo.function.aggregator.AggregatorFunction;
 import org.ojalgo.matrix.MatrixUtils;
-import org.ojalgo.matrix.jama.JamaCholesky;
 import org.ojalgo.matrix.store.BigDenseStore;
 import org.ojalgo.matrix.store.ComplexDenseStore;
+import org.ojalgo.matrix.store.ElementsSupplier;
 import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.matrix.store.PrimitiveDenseStore;
 import org.ojalgo.scalar.ComplexNumber;
 import org.ojalgo.type.context.NumberContext;
 
-/**
- * You create instances of (some subclass of) this class by calling one of the static factory methods:
- * {@linkplain #makeBig()}, {@linkplain #makeComplex()}, {@linkplain #makePrimitive()} or {@linkplain #makeJama()}.
- * 
- * @author apete
- */
-public abstract class CholeskyDecomposition<N extends Number> extends InPlaceDecomposition<N> implements Cholesky<N> {
+abstract class CholeskyDecomposition<N extends Number> extends InPlaceDecomposition<N> implements Cholesky<N> {
 
     static final class Big extends CholeskyDecomposition<BigDecimal> {
 
@@ -68,58 +64,141 @@ public abstract class CholeskyDecomposition<N extends Number> extends InPlaceDec
 
     }
 
-    @SuppressWarnings("unchecked")
-    public static final <N extends Number> Cholesky<N> make(final Access2D<N> aTypical) {
-
-        final N tmpNumber = aTypical.get(0, 0);
-
-        if (tmpNumber instanceof BigDecimal) {
-            return (Cholesky<N>) CholeskyDecomposition.makeBig();
-        } else if (tmpNumber instanceof ComplexNumber) {
-            return (Cholesky<N>) CholeskyDecomposition.makeComplex();
-        } else if (tmpNumber instanceof Double) {
-            if ((aTypical.countColumns() <= 32) || (aTypical.countColumns() >= 46340)) { //64,16,16
-                return (Cholesky<N>) CholeskyDecomposition.makeJama();
-            } else {
-                return (Cholesky<N>) CholeskyDecomposition.makePrimitive();
-            }
-        } else {
-            throw new IllegalArgumentException();
-        }
-    }
-
-    public static final Cholesky<BigDecimal> makeBig() {
-        return new CholeskyDecomposition.Big();
-    }
-
-    public static final Cholesky<ComplexNumber> makeComplex() {
-        return new CholeskyDecomposition.Complex();
-    }
-
-    public static final Cholesky<Double> makeJama() {
-        return new JamaCholesky();
-    }
-
-    public static final Cholesky<Double> makePrimitive() {
-        return new CholeskyDecomposition.Primitive();
-    }
-
     private boolean mySPD = false;
 
     protected CholeskyDecomposition(final DecompositionStore.Factory<N, ? extends DecompositionStore<N>> aFactory) {
         super(aFactory);
     }
 
-    public final N calculateDeterminant(final Access2D<N> matrix) {
-        this.compute(matrix);
+    public N calculateDeterminant(final Access2D<?> matrix) {
+        this.decompose(this.wrap(matrix));
         return this.getDeterminant();
     }
 
-    public final boolean compute(final Access2D<?> aStore) {
+    public boolean checkAndCompute(final MatrixStore<N> matrix) {
+        return this.compute(matrix, true);
+    }
+
+    public final boolean decompose(final ElementsSupplier<N> aStore) {
         return this.compute(aStore, false);
     }
 
-    public final boolean compute(final Access2D<?> matrix, final boolean checkHermitian) {
+    public final boolean equals(final MatrixStore<N> aStore, final NumberContext context) {
+        return MatrixUtils.equals(aStore, this, context);
+    }
+
+    public N getDeterminant() {
+
+        final AggregatorFunction<N> tmpAggrFunc = this.aggregator().product2();
+
+        this.getInPlace().visitDiagonal(0, 0, tmpAggrFunc);
+
+        return tmpAggrFunc.getNumber();
+    }
+
+    @Override
+    public final MatrixStore<N> getInverse(final DecompositionStore<N> preallocated) {
+
+        final DecompositionStore<N> tmpBody = this.getInPlace();
+
+        preallocated.substituteForwards(tmpBody, false, false, true);
+        preallocated.substituteBackwards(tmpBody, false, true, true);
+
+        //return new LowerHermitianStore<>(preallocated);
+        return preallocated.builder().hermitian(false).build();
+    }
+
+    public MatrixStore<N> getL() {
+        return this.getInPlace().builder().triangular(false, false).build();
+    }
+
+    public MatrixStore<N> invert(final Access2D<?> original) {
+        this.decompose(this.wrap(original));
+        return this.getInverse();
+    }
+
+    public MatrixStore<N> invert(final Access2D<?> original, final DecompositionStore<N> preallocated) {
+        this.decompose(this.wrap(original));
+        return this.getInverse(preallocated);
+    }
+
+    public final boolean isFullSize() {
+        return true;
+    }
+
+    public boolean isSolvable() {
+        return this.isComputed() && mySPD;
+    }
+
+    public boolean isSPD() {
+        return mySPD;
+    }
+
+    public DecompositionStore<N> preallocate(final Structure2D template) {
+        final long tmpCountRows = template.countRows();
+        return this.preallocate(tmpCountRows, tmpCountRows);
+    }
+
+    public DecompositionStore<N> preallocate(final Structure2D templateBody, final Structure2D templateRHS) {
+        return this.preallocate(templateRHS.countRows(), templateRHS.countColumns());
+    }
+
+    @Override
+    public void reset() {
+
+        super.reset();
+
+        mySPD = false;
+    }
+
+    public MatrixStore<N> solve(final Access2D<?> body, final Access2D<?> rhs) {
+        this.decompose(this.wrap(body));
+        return this.solve(this.wrap(rhs));
+    }
+
+    public MatrixStore<N> solve(final Access2D<?> body, final Access2D<?> rhs, final DecompositionStore<N> preallocated) {
+        this.decompose(this.wrap(body));
+        return this.solve(rhs, preallocated);
+    }
+
+    public final MatrixStore<N> solve(final ElementsSupplier<N> rhs) {
+        return this.solve(rhs, this.preallocate(this.getInPlace(), rhs));
+    }
+
+    /**
+     * Solves [this][X] = [aRHS] by first solving
+     *
+     * <pre>
+     * [L][Y] = [RHS]
+     * </pre>
+     *
+     * and then
+     *
+     * <pre>
+     * [U][X] = [Y]
+     * </pre>
+     *
+     * .
+     *
+     * @param rhs The right hand side
+     * @return [X] The solution will be written to "preallocated" and then returned.
+     * @see org.ojalgo.matrix.decomposition.GenericDecomposition#doSolve(ElementsSupplier,
+     *      org.ojalgo.matrix.decomposition.DecompositionStore)
+     */
+    @Override
+    public final MatrixStore<N> solve(final ElementsSupplier<N> rhs, final DecompositionStore<N> preallocated) {
+
+        rhs.supplyTo(preallocated);
+
+        final DecompositionStore<N> tmpBody = this.getInPlace();
+
+        preallocated.substituteForwards(tmpBody, false, false, false);
+        preallocated.substituteBackwards(tmpBody, false, true, false);
+
+        return preallocated;
+    }
+
+    final boolean compute(final ElementsSupplier<N> matrix, final boolean checkHermitian) {
 
         this.reset();
 
@@ -129,7 +208,7 @@ public abstract class CholeskyDecomposition<N extends Number> extends InPlaceDec
         final int tmpColDim = this.getColDim();
         final int tmpMinDim = Math.min(tmpRowDim, tmpColDim);
 
-        // true if (Hermitian) Positive Definite 
+        // true if (Hermitian) Positive Definite
         boolean tmpPositiveDefinite = tmpRowDim == tmpColDim;
 
         final BasicArray<N> tmpMultipliers = this.makeArray(tmpRowDim);
@@ -139,13 +218,13 @@ public abstract class CholeskyDecomposition<N extends Number> extends InPlaceDec
             tmpPositiveDefinite &= MatrixUtils.isHermitian(tmpInPlace);
         }
 
-        final UnaryFunction<N> tmpSqrtFunc = this.getFunctionSet().sqrt();
+        final UnaryFunction<N> tmpSqrtFunc = this.function().sqrt();
 
         // Main loop - along the diagonal
         for (int ij = 0; tmpPositiveDefinite && (ij < tmpMinDim); ij++) {
 
             // Do the calculations...
-            if (tmpInPlace.isPositive(ij, ij)) {
+            if (tmpInPlace.doubleValue(ij, ij) > PrimitiveMath.ZERO) {
 
                 tmpInPlace.modifyOne(ij, ij, tmpSqrtFunc);
 
@@ -163,102 +242,6 @@ public abstract class CholeskyDecomposition<N extends Number> extends InPlaceDec
         }
 
         return this.computed(mySPD = tmpPositiveDefinite);
-    }
-
-    public final boolean equals(final MatrixStore<N> aStore, final NumberContext context) {
-        return MatrixUtils.equals(aStore, this, context);
-    }
-
-    public N getDeterminant() {
-
-        final AggregatorFunction<N> tmpAggrFunc = this.getAggregatorCollection().product2();
-
-        this.getInPlace().visitDiagonal(0, 0, tmpAggrFunc);
-
-        return tmpAggrFunc.getNumber();
-    }
-
-    @Override
-    public final MatrixStore<N> getInverse() {
-        return this.invert(this.makeEye(this.getColDim(), this.getRowDim()));
-    }
-
-    @Override
-    public final MatrixStore<N> getInverse(final DecompositionStore<N> preallocated) {
-        preallocated.fillAll(this.getStaticZero());
-        preallocated.fillDiagonal(0, 0, this.getStaticOne());
-        return this.invert(preallocated);
-    }
-
-    public MatrixStore<N> getL() {
-        return this.getInPlace().builder().triangular(false, false).build();
-    }
-
-    public final boolean isFullSize() {
-        return true;
-    }
-
-    public boolean isSolvable() {
-        return this.isComputed() && mySPD;
-    }
-
-    public boolean isSPD() {
-        return mySPD;
-    }
-
-    public MatrixStore<N> reconstruct() {
-        return MatrixUtils.reconstruct(this);
-    }
-
-    @Override
-    public void reset() {
-
-        super.reset();
-
-        mySPD = false;
-    }
-
-    /**
-     * Solves [this][X] = [aRHS] by first solving
-     * 
-     * <pre>
-     * [L][Y] = [aRHS]
-     * </pre>
-     * 
-     * and then
-     * 
-     * <pre>
-     * [U][X] = [Y]
-     * </pre>
-     * 
-     * .
-     * 
-     * @param rhs The right hand side
-     * @return [X] The solution will be written to "preallocated" and then returned.
-     * @see org.ojalgo.matrix.decomposition.AbstractDecomposition#solve(Access2D,
-     *      org.ojalgo.matrix.decomposition.DecompositionStore)
-     */
-    @Override
-    public final MatrixStore<N> solve(final Access2D<N> rhs, final DecompositionStore<N> preallocated) {
-
-        preallocated.fillMatching(rhs);
-
-        final DecompositionStore<N> tmpBody = this.getInPlace();
-
-        preallocated.substituteForwards(tmpBody, false, false);
-        preallocated.substituteBackwards(tmpBody, true);
-
-        return preallocated;
-    }
-
-    private final MatrixStore<N> invert(final DecompositionStore<N> retVal) {
-
-        final DecompositionStore<N> tmpBody = this.getInPlace();
-
-        retVal.substituteForwards(tmpBody, false, true);
-        retVal.substituteBackwards(tmpBody, true);
-
-        return retVal;
     }
 
 }

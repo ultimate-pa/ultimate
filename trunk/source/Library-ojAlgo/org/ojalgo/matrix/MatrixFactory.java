@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,26 +29,22 @@ import org.ojalgo.ProgrammingError;
 import org.ojalgo.access.Access1D;
 import org.ojalgo.access.Access2D;
 import org.ojalgo.access.Access2D.Builder;
-import org.ojalgo.matrix.store.AboveBelowStore;
-import org.ojalgo.matrix.store.IdentityStore;
-import org.ojalgo.matrix.store.LeftRightStore;
+import org.ojalgo.function.NullaryFunction;
 import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.matrix.store.PhysicalStore;
-import org.ojalgo.matrix.store.ZeroStore;
-import org.ojalgo.random.RandomNumber;
 
 /**
- * MatrixFactory creates instances of classes that implement the {@linkplain org.ojalgo.matrix.BasicMatrix} interface
- * and have a constructor that takes a MatrixStore as input.
+ * MatrixFactory creates instances of classes that implement the {@linkplain org.ojalgo.matrix.BasicMatrix}
+ * interface and have a constructor that takes a MatrixStore as input.
  *
  * @author apete
  */
-final class MatrixFactory<N extends Number, I extends BasicMatrix<N>> implements BasicMatrix.Factory<I> {
+final class MatrixFactory<N extends Number, I extends BasicMatrix> implements BasicMatrix.Factory<I> {
 
     final class MatrixBuilder implements Access2D.Builder<I> {
 
-        private final PhysicalStore<N> myPhysicalStore;
         private final PhysicalStore.Factory<N, ?> myFactory;
+        private final PhysicalStore<N> myPhysicalStore;
         private boolean mySafe = true;
 
         @SuppressWarnings("unused")
@@ -90,72 +86,72 @@ final class MatrixFactory<N extends Number, I extends BasicMatrix<N>> implements
             return myPhysicalStore.countRows();
         }
 
-        public final MatrixBuilder fillAll(final Number aNmbr) {
+        public final MatrixBuilder fillAll(final Number value) {
             if (mySafe) {
-                myPhysicalStore.fillAll(myFactory.scalar().cast(aNmbr));
+                myPhysicalStore.fillAll(myFactory.scalar().cast(value));
             } else {
                 throw new IllegalStateException();
             }
             return this;
         }
 
-        public final MatrixBuilder fillColumn(final long aRow, final long aCol, final Number aNmbr) {
+        public final MatrixBuilder fillColumn(final long row, final long column, final Number value) {
             if (mySafe) {
-                myPhysicalStore.fillColumn((int) aRow, (int) aCol, myFactory.scalar().cast(aNmbr));
+                myPhysicalStore.fillColumn((int) row, (int) column, myFactory.scalar().cast(value));
             } else {
                 throw new IllegalStateException();
             }
             return this;
         }
 
-        public final MatrixBuilder fillDiagonal(final long aRow, final long aCol, final Number aNmbr) {
+        public final MatrixBuilder fillDiagonal(final long row, final long column, final Number value) {
             if (mySafe) {
-                myPhysicalStore.fillDiagonal((int) aRow, (int) aCol, myFactory.scalar().cast(aNmbr));
+                myPhysicalStore.fillDiagonal((int) row, (int) column, myFactory.scalar().cast(value));
             } else {
                 throw new IllegalStateException();
             }
             return this;
         }
 
-        public final MatrixBuilder fillRow(final long aRow, final long aCol, final Number aNmbr) {
+        public final MatrixBuilder fillRow(final long row, final long column, final Number value) {
             if (mySafe) {
-                myPhysicalStore.fillRow((int) aRow, (int) aCol, myFactory.scalar().cast(aNmbr));
+                myPhysicalStore.fillRow((int) row, (int) column, myFactory.scalar().cast(value));
             } else {
                 throw new IllegalStateException();
             }
             return this;
         }
 
-        public final MatrixBuilder set(final long index, final double aNmbr) {
+        public final MatrixBuilder set(final long index, final double value) {
             if (mySafe) {
-                myPhysicalStore.set(index, aNmbr);
+                myPhysicalStore.set(index, value);
             } else {
                 throw new IllegalStateException();
             }
             return this;
         }
 
-        public final MatrixBuilder set(final long aRow, final long aCol, final double aNmbr) {
+        public final MatrixBuilder set(final long row, final long column, final double value) {
             if (mySafe) {
-                myPhysicalStore.set(aRow, aCol, aNmbr);
+                myPhysicalStore.set(row, column, value);
             } else {
                 throw new IllegalStateException();
             }
             return this;
         }
 
-        public final MatrixBuilder set(final long aRow, final long aCol, final Number aNmbr) {
+        public final MatrixBuilder set(final long row, final long column, final Number value) {
             if (mySafe) {
-                myPhysicalStore.set(aRow, aCol, myFactory.scalar().cast(aNmbr));
+                myPhysicalStore.set(row, column, myFactory.scalar().cast(value));
             } else {
                 throw new IllegalStateException();
             }
             return this;
         }
 
-        public final MatrixBuilder set(final long index, final Number aNmbr) {
+        public final MatrixBuilder set(final long index, final Number value) {
             if (mySafe) {
-                myPhysicalStore.set(index, myFactory.scalar().cast(aNmbr));
+                myPhysicalStore.set(index, myFactory.scalar().cast(value));
             } else {
                 throw new IllegalStateException();
             }
@@ -227,23 +223,26 @@ final class MatrixFactory<N extends Number, I extends BasicMatrix<N>> implements
 
         final int tmpMinDim = (int) Math.min(rows, columns);
 
-        MatrixStore<N> retVal = new IdentityStore<N>(myPhysicalFactory, tmpMinDim);
+        MatrixStore.Builder<N> retVal = myPhysicalFactory.builder().makeIdentity(tmpMinDim);
 
         if (rows > tmpMinDim) {
-            retVal = new AboveBelowStore<N>(retVal, new ZeroStore<N>(myPhysicalFactory, (int) rows - tmpMinDim, (int) columns));
+            //retVal = new AboveBelowStore<N>(retVal, new ZeroStore<N>(myPhysicalFactory, , (int) columns));
+            retVal = retVal.below((int) rows - tmpMinDim);
         } else if (columns > tmpMinDim) {
-            retVal = new LeftRightStore<N>(retVal, new ZeroStore<N>(myPhysicalFactory, (int) rows, (int) columns - tmpMinDim));
+            //retVal = new LeftRightStore<N>(retVal, new ZeroStore<N>(myPhysicalFactory, (int) rows, (int) columns - tmpMinDim));
+            retVal = retVal.right((int) columns - tmpMinDim);
         }
 
-        return this.instantiate(retVal);
+        return this.instantiate(retVal.get());
     }
 
-    public I makeRandom(final long rows, final long columns, final RandomNumber distribution) {
-        return this.instantiate(myPhysicalFactory.makeRandom(rows, columns, distribution));
+    public I makeFilled(final long rows, final long columns, final NullaryFunction<?> supplier) {
+        return this.instantiate(myPhysicalFactory.makeFilled(rows, columns, supplier));
     }
 
     public I makeZero(final long rows, final long columns) {
-        return this.instantiate(new ZeroStore<N>(myPhysicalFactory, (int) rows, (int) columns));
+        //return this.instantiate(new ZeroStore<N>(myPhysicalFactory, (int) rows, (int) columns));
+        return this.instantiate(myPhysicalFactory.builder().makeZero((int) rows, (int) columns).get());
     }
 
     public I rows(final Access1D<?>... source) {
@@ -254,6 +253,7 @@ final class MatrixFactory<N extends Number, I extends BasicMatrix<N>> implements
         return this.instantiate(myPhysicalFactory.rows(source));
     }
 
+    @SuppressWarnings("unchecked")
     public I rows(final List<? extends Number>... source) {
         return this.instantiate(myPhysicalFactory.rows(source));
     }

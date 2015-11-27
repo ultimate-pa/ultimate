@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,19 +27,14 @@ import org.ojalgo.access.Access2D;
 import org.ojalgo.matrix.MatrixUtils;
 import org.ojalgo.matrix.store.BigDenseStore;
 import org.ojalgo.matrix.store.ComplexDenseStore;
+import org.ojalgo.matrix.store.ElementsSupplier;
 import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.matrix.store.PrimitiveDenseStore;
 import org.ojalgo.matrix.transformation.Householder;
 import org.ojalgo.scalar.ComplexNumber;
 import org.ojalgo.type.context.NumberContext;
 
-/**
- * You create instances of (some subclass of) this class by calling one of the static factory methods:
- * {@linkplain #makeBig()}, {@linkplain #makeComplex()} or {@linkplain #makePrimitive()}.
- * 
- * @author apete
- */
-public abstract class HessenbergDecomposition<N extends Number> extends InPlaceDecomposition<N> implements Hessenberg<N> {
+abstract class HessenbergDecomposition<N extends Number> extends InPlaceDecomposition<N> implements Hessenberg<N> {
 
     static final class Big extends HessenbergDecomposition<BigDecimal> {
 
@@ -65,46 +60,15 @@ public abstract class HessenbergDecomposition<N extends Number> extends InPlaceD
 
     }
 
-    @SuppressWarnings("unchecked")
-    public static final <N extends Number> Hessenberg<N> make(final Access2D<N> aTypical) {
-
-        final N tmpNumber = aTypical.get(0, 0);
-
-        if (tmpNumber instanceof BigDecimal) {
-            return (Hessenberg<N>) HessenbergDecomposition.makeBig();
-        } else if (tmpNumber instanceof ComplexNumber) {
-            return (Hessenberg<N>) HessenbergDecomposition.makeComplex();
-        } else if (tmpNumber instanceof Double) {
-            return (Hessenberg<N>) HessenbergDecomposition.makePrimitive();
-        } else {
-            throw new IllegalArgumentException();
-        }
-    }
-
-    public static Hessenberg<BigDecimal> makeBig() {
-        return new HessenbergDecomposition.Big();
-    }
-
-    public static Hessenberg<ComplexNumber> makeComplex() {
-        return new HessenbergDecomposition.Complex();
-    }
-
-    public static Hessenberg<Double> makePrimitive() {
-        return new HessenbergDecomposition.Primitive();
-    }
+    private transient DecompositionStore<N> myQ = null;
 
     private boolean myUpper = true;
-    private transient DecompositionStore<N> myQ = null;
 
     protected HessenbergDecomposition(final DecompositionStore.Factory<N, ? extends DecompositionStore<N>> aFactory) {
         super(aFactory);
     }
 
-    public final boolean compute(final Access2D<?> matrix) {
-        return this.compute(matrix, true);
-    }
-
-    public final boolean compute(final Access2D<?> matrix, final boolean upper) {
+    public final boolean compute(final ElementsSupplier<N> matrix, final boolean upper) {
 
         this.reset();
 
@@ -145,6 +109,10 @@ public abstract class HessenbergDecomposition<N extends Number> extends InPlaceD
         return this.computed(true);
     }
 
+    public final boolean decompose(final ElementsSupplier<N> matrix) {
+        return this.compute(matrix, true);
+    }
+
     public final boolean equals(final MatrixStore<N> aStore, final NumberContext context) {
         return MatrixUtils.equals(aStore, this, context);
     }
@@ -172,10 +140,6 @@ public abstract class HessenbergDecomposition<N extends Number> extends InPlaceD
         return myUpper;
     }
 
-    public MatrixStore<N> reconstruct() {
-        return MatrixUtils.reconstruct(this);
-    }
-
     @Override
     public void reset() {
 
@@ -183,6 +147,10 @@ public abstract class HessenbergDecomposition<N extends Number> extends InPlaceD
 
         myQ = null;
         myUpper = true;
+    }
+
+    public MatrixStore<N> solve(final Access2D<N> rhs, final DecompositionStore<N> preallocated) {
+        throw new UnsupportedOperationException();
     }
 
     private final DecompositionStore<N> makeQ(final DecompositionStore<N> aStoreToTransform, final boolean tmpUpper, final boolean eye) {

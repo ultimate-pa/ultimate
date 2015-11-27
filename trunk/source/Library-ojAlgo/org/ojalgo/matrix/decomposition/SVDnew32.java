@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -23,22 +23,22 @@ package org.ojalgo.matrix.decomposition;
 
 import java.math.BigDecimal;
 
-import org.ojalgo.access.Access2D;
 import org.ojalgo.array.Array1D;
 import org.ojalgo.array.PrimitiveArray;
 import org.ojalgo.constant.PrimitiveMath;
 import org.ojalgo.matrix.MatrixUtils;
 import org.ojalgo.matrix.store.BigDenseStore;
 import org.ojalgo.matrix.store.ComplexDenseStore;
+import org.ojalgo.matrix.store.ElementsSupplier;
 import org.ojalgo.matrix.store.MatrixStore;
 import org.ojalgo.matrix.store.PrimitiveDenseStore;
 import org.ojalgo.scalar.ComplexNumber;
 import org.ojalgo.type.context.NumberContext;
 
 /**
- * Orginalet, sedan ett tag Based on SVDnew2, but with transposing so that calculations are always made on a matrix that
- * "isAspectRationNormal". Based on SVDnew5, but with Rotation replaced by the new alternative.
- * 
+ * Orginalet, sedan ett tag Based on SVDnew2, but with transposing so that calculations are always made on a
+ * matrix that "isAspectRationNormal". Based on SVDnew5, but with Rotation replaced by the new alternative.
+ *
  * @author apete
  */
 abstract class SVDnew32<N extends Number & Comparable<N>> extends SingularValueDecomposition<N> {
@@ -261,7 +261,7 @@ abstract class SVDnew32<N extends Number & Comparable<N>> extends SingularValueD
                 if (k == -1) {
                     break;
                 }
-                if (Math.abs(e[k]) <= (PrimitiveMath.TINY + (PrimitiveMath.MACHINE_DOUBLE_ERROR * (Math.abs(s[k]) + Math.abs(s[k + 1]))))) {
+                if (Math.abs(e[k]) <= (PrimitiveMath.TINY + (PrimitiveMath.MACHINE_EPSILON * (Math.abs(s[k]) + Math.abs(s[k + 1]))))) {
                     e[k] = PrimitiveMath.ZERO;
                     break;
                 }
@@ -275,7 +275,7 @@ abstract class SVDnew32<N extends Number & Comparable<N>> extends SingularValueD
                         break;
                     }
                     final double t = (ks != p ? Math.abs(e[ks]) : PrimitiveMath.ZERO) + (ks != (k + 1) ? Math.abs(e[ks - 1]) : PrimitiveMath.ZERO);
-                    if (Math.abs(s[ks]) <= (PrimitiveMath.TINY + (PrimitiveMath.MACHINE_DOUBLE_ERROR * t))) {
+                    if (Math.abs(s[ks]) <= (PrimitiveMath.TINY + (PrimitiveMath.MACHINE_EPSILON * t))) {
                         s[ks] = PrimitiveMath.ZERO;
                         break;
                     }
@@ -342,12 +342,7 @@ abstract class SVDnew32<N extends Number & Comparable<N>> extends SingularValueD
     }
 
     @Override
-    public final MatrixStore<N> solve(final Access2D<N> rhs) {
-        return this.getInverse().multiplyRight(rhs);
-    }
-
-    @Override
-    protected boolean doCompute(final Access2D<?> aMtrx, final boolean singularValuesOnly, final boolean fullSize) {
+    protected boolean doCompute(final ElementsSupplier<N> aMtrx, final boolean singularValuesOnly, final boolean fullSize) {
 
         this.computeBidiagonal(aMtrx, fullSize);
 
@@ -372,22 +367,22 @@ abstract class SVDnew32<N extends Number & Comparable<N>> extends SingularValueD
     }
 
     @Override
-    protected final MatrixStore<N> makeD() {
-        return this.wrap(new DiagonalAccess<Double>(this.getSingularValues(), null, null, PrimitiveMath.ZERO));
+    protected MatrixStore<N> makeD() {
+        return this.wrap(new DiagonalAccess<Double>(this.getSingularValues(), null, null, PrimitiveMath.ZERO)).get();
     }
 
     @Override
-    protected final MatrixStore<N> makeQ1() {
+    protected MatrixStore<N> makeQ1() {
         return this.getBidiagonalQ1();
     }
 
     @Override
-    protected final MatrixStore<N> makeQ2() {
+    protected MatrixStore<N> makeQ2() {
         return this.getBidiagonalQ2();
     }
 
     @Override
-    protected final Array1D<Double> makeSingularValues() {
+    protected Array1D<Double> makeSingularValues() {
         throw new IllegalStateException("Should never have to be called!");
     }
 }

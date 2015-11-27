@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -62,13 +62,13 @@ public class PortfolioContext implements FinancePortfolio.Context {
 
     @SuppressWarnings("unchecked")
     public double calculatePortfolioReturn(final FinancePortfolio weightsPortfolio) {
-        return FinancePortfolio.MATRIX_FACTORY.rows(weightsPortfolio.getWeights()).multiplyRight(this.getAssetReturns()).doubleValue(0);
+        return FinancePortfolio.MATRIX_FACTORY.rows(weightsPortfolio.getWeights()).multiply(this.getAssetReturns()).doubleValue(0);
     }
 
     @SuppressWarnings("unchecked")
     public double calculatePortfolioVariance(final FinancePortfolio weightsPortfolio) {
         final PrimitiveMatrix tmpWeights = FinancePortfolio.MATRIX_FACTORY.columns(weightsPortfolio.getWeights());
-        return this.getCovariances().multiplyRight(tmpWeights).multiplyLeft(tmpWeights.transpose()).doubleValue(0);
+        return this.getCovariances().multiply(tmpWeights).multiplyLeft(tmpWeights.transpose()).doubleValue(0);
     }
 
     public PrimitiveMatrix getAssetReturns() {
@@ -97,7 +97,7 @@ public class PortfolioContext implements FinancePortfolio.Context {
     }
 
     public int size() {
-        return myAssetReturns.size();
+        return (int) myAssetReturns.count();
     }
 
 }

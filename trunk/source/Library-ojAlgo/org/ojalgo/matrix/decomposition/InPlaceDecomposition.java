@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,10 +21,10 @@
  */
 package org.ojalgo.matrix.decomposition;
 
-import org.ojalgo.access.Access2D;
+import org.ojalgo.matrix.store.ElementsSupplier;
 import org.ojalgo.matrix.store.MatrixStore;
 
-abstract class InPlaceDecomposition<N extends Number> extends AbstractDecomposition<N> {
+abstract class InPlaceDecomposition<N extends Number> extends GenericDecomposition<N> {
 
     private int myColDim;
     private DecompositionStore<N> myInPlace;
@@ -34,23 +34,11 @@ abstract class InPlaceDecomposition<N extends Number> extends AbstractDecomposit
         super(aFactory);
     }
 
-    public MatrixStore<N> getInverse() {
-        throw new UnsupportedOperationException();
+    public final MatrixStore<N> getInverse() {
+        return this.getInverse(this.preallocate(this.getRowDim(), this.getRowDim()));
     }
 
     public MatrixStore<N> getInverse(final DecompositionStore<N> preallocated) {
-        throw new UnsupportedOperationException();
-    }
-
-    public DecompositionStore<N> preallocate(final Access2D<N> templateBody, final Access2D<N> templateRHS) {
-        return this.makeZero((int) templateRHS.countRows(), (int) templateRHS.countColumns());
-    }
-
-    public final MatrixStore<N> solve(final Access2D<N> rhs) {
-        return this.solve(rhs, this.preallocate(myInPlace, rhs));
-    }
-
-    public MatrixStore<N> solve(final Access2D<N> rhs, final DecompositionStore<N> preallocated) {
         throw new UnsupportedOperationException();
     }
 
@@ -62,6 +50,10 @@ abstract class InPlaceDecomposition<N extends Number> extends AbstractDecomposit
         return myInPlace;
     }
 
+    protected final int getMaxDim() {
+        return Math.max(myRowDim, myColDim);
+    }
+
     protected final int getMinDim() {
         return Math.min(myRowDim, myColDim);
     }
@@ -70,22 +62,22 @@ abstract class InPlaceDecomposition<N extends Number> extends AbstractDecomposit
         return myRowDim;
     }
 
-    final DecompositionStore<N> setInPlace(final Access2D<?> aStore) {
+    final DecompositionStore<N> setInPlace(final ElementsSupplier<N> matrix) {
 
-        final int tmpRowDim = (int) aStore.countRows();
-        final int tmpColDim = (int) aStore.countColumns();
+        final int tmpRowDim = (int) matrix.countRows();
+        final int tmpColDim = (int) matrix.countColumns();
 
         if ((myInPlace != null) && (myRowDim == tmpRowDim) && (myColDim == tmpColDim)) {
 
-            myInPlace.fillMatching(aStore);
-
         } else {
 
-            myInPlace = this.copy(aStore);
+            myInPlace = this.makeZero(tmpRowDim, tmpColDim);
 
             myRowDim = tmpRowDim;
             myColDim = tmpColDim;
         }
+
+        matrix.supplyTo(myInPlace);
 
         this.aspectRatioNormal(tmpRowDim >= tmpColDim);
         this.computed(false);

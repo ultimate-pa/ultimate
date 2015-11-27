@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,10 +26,10 @@ import org.ojalgo.scalar.Scalar;
 
 /**
  * SuperimposedStore
- * 
+ *
  * @author apete
  */
-public final class SuperimposedStore<N extends Number> extends DelegatingStore<N> {
+final class SuperimposedStore<N extends Number> extends DelegatingStore<N> {
 
     private final int myColFirst;
     private final int myColLimit;
@@ -37,7 +37,15 @@ public final class SuperimposedStore<N extends Number> extends DelegatingStore<N
     private final int myRowFirst;
     private final int myRowLimit;
 
-    public SuperimposedStore(final MatrixStore<N> base, final int row, final int column, final MatrixStore<N> diff) {
+    @SuppressWarnings("unused")
+    private SuperimposedStore(final int rowsCount, final int columnsCount, final MatrixStore<N> base) {
+
+        this(base, 0, 0, (MatrixStore<N>) null);
+
+        ProgrammingError.throwForIllegalInvocation();
+    }
+
+    SuperimposedStore(final MatrixStore<N> base, final int row, final int column, final MatrixStore<N> diff) {
 
         super((int) base.countRows(), (int) base.countColumns(), base);
 
@@ -51,14 +59,6 @@ public final class SuperimposedStore<N extends Number> extends DelegatingStore<N
         myColLimit = column + tmpDiffColDim;
 
         myDiff = diff;
-    }
-
-    @SuppressWarnings("unused")
-    private SuperimposedStore(final int rowsCount, final int columnsCount, final MatrixStore<N> base) {
-
-        this(base, 0, 0, (MatrixStore<N>) null);
-
-        ProgrammingError.throwForIllegalInvocation();
     }
 
     SuperimposedStore(final MatrixStore<N> base, final MatrixStore<N> diff) {
@@ -90,14 +90,6 @@ public final class SuperimposedStore<N extends Number> extends DelegatingStore<N
         return retVal;
     }
 
-    public boolean isLowerLeftShaded() {
-        return false;
-    }
-
-    public boolean isUpperRightShaded() {
-        return false;
-    }
-
     public Scalar<N> toScalar(final long row, final long column) {
 
         Scalar<N> retVal = this.getBase().toScalar(row, column);
@@ -111,6 +103,12 @@ public final class SuperimposedStore<N extends Number> extends DelegatingStore<N
 
     private final boolean isCovered(final int row, final int column) {
         return (myRowFirst <= row) && (myColFirst <= column) && (row < myRowLimit) && (column < myColLimit);
+    }
+
+    @Override
+    protected void supplyNonZerosTo(final ElementsConsumer<N> consumer) {
+        consumer.fillMatching(this.getBase());
+        consumer.regionByLimits(myRowLimit, myColLimit).regionByOffsets(myRowFirst, myColFirst).modifyMatching(this.factory().function().add(), myDiff);
     }
 
 }

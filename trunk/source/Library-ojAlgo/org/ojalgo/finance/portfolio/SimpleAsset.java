@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,7 +31,7 @@ import org.ojalgo.type.TypeUtils;
 
 /**
  * SimpleAsset is used to describe 1 asset (portfolio member).
- * 
+ *
  * @author apete
  */
 public final class SimpleAsset extends FinancePortfolio {

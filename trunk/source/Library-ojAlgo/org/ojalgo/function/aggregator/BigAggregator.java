@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -63,12 +63,12 @@ public abstract class BigAggregator {
                     this.invoke(new BigDecimal(anArg));
                 }
 
-                public void merge(final BigDecimal anArg) {
-                    myCount += anArg.intValue();
+                public void merge(final BigDecimal result) {
+                    myCount += result.intValue();
                 }
 
-                public BigDecimal merge(final BigDecimal aResult1, final BigDecimal aResult2) {
-                    return ADD.invoke(aResult1, aResult2);
+                public BigDecimal merge(final BigDecimal result1, final BigDecimal result2) {
+                    return ADD.invoke(result1, result2);
                 }
 
                 public AggregatorFunction<BigDecimal> reset() {
@@ -77,7 +77,7 @@ public abstract class BigAggregator {
                 }
 
                 public Scalar<BigDecimal> toScalar() {
-                    return new BigScalar(this.getNumber());
+                    return BigScalar.of(this.getNumber());
                 }
 
             };
@@ -112,12 +112,12 @@ public abstract class BigAggregator {
                     this.invoke(new BigDecimal(anArg));
                 }
 
-                public void merge(final BigDecimal anArg) {
-                    this.invoke(anArg);
+                public void merge(final BigDecimal result) {
+                    this.invoke(result);
                 }
 
-                public BigDecimal merge(final BigDecimal aResult1, final BigDecimal aResult2) {
-                    return aResult1.max(aResult2);
+                public BigDecimal merge(final BigDecimal result1, final BigDecimal result2) {
+                    return result1.max(result2);
                 }
 
                 public AggregatorFunction<BigDecimal> reset() {
@@ -126,7 +126,7 @@ public abstract class BigAggregator {
                 }
 
                 public Scalar<BigDecimal> toScalar() {
-                    return new BigScalar(this.getNumber());
+                    return BigScalar.of(this.getNumber());
                 }
             };
         }
@@ -160,12 +160,12 @@ public abstract class BigAggregator {
                     this.invoke(new BigDecimal(anArg));
                 }
 
-                public void merge(final BigDecimal anArg) {
-                    this.invoke(anArg);
+                public void merge(final BigDecimal result) {
+                    this.invoke(result);
                 }
 
-                public BigDecimal merge(final BigDecimal aResult1, final BigDecimal aResult2) {
-                    return aResult1.max(aResult2);
+                public BigDecimal merge(final BigDecimal result1, final BigDecimal result2) {
+                    return result1.max(result2);
                 }
 
                 public AggregatorFunction<BigDecimal> reset() {
@@ -174,7 +174,59 @@ public abstract class BigAggregator {
                 }
 
                 public Scalar<BigDecimal> toScalar() {
-                    return new BigScalar(this.getNumber());
+                    return BigScalar.of(this.getNumber());
+                }
+            };
+        }
+    };
+
+    public static final ThreadLocal<AggregatorFunction<BigDecimal>> MIN = new ThreadLocal<AggregatorFunction<BigDecimal>>() {
+
+        @Override
+        protected AggregatorFunction<BigDecimal> initialValue() {
+            return new AggregatorFunction<BigDecimal>() {
+
+                private BigDecimal myNumber = VERY_POSITIVE;
+
+                public double doubleValue() {
+                    return this.getNumber().doubleValue();
+                }
+
+                public BigDecimal getNumber() {
+                    if (myNumber.compareTo(VERY_POSITIVE) == 0) {
+                        return ZERO;
+                    } else {
+                        return myNumber;
+                    }
+                }
+
+                public int intValue() {
+                    return this.getNumber().intValue();
+                }
+
+                public void invoke(final BigDecimal anArg) {
+                    myNumber = BigFunction.MIN.invoke(myNumber, anArg);
+                }
+
+                public void invoke(final double anArg) {
+                    this.invoke(new BigDecimal(anArg));
+                }
+
+                public void merge(final BigDecimal result) {
+                    this.invoke(result);
+                }
+
+                public BigDecimal merge(final BigDecimal result1, final BigDecimal result2) {
+                    return BigFunction.MIN.invoke(result1, result2);
+                }
+
+                public AggregatorFunction<BigDecimal> reset() {
+                    myNumber = VERY_POSITIVE;
+                    return this;
+                }
+
+                public Scalar<BigDecimal> toScalar() {
+                    return BigScalar.of(this.getNumber());
                 }
             };
         }
@@ -208,12 +260,12 @@ public abstract class BigAggregator {
                     this.invoke(new BigDecimal(anArg));
                 }
 
-                public void merge(final BigDecimal anArg) {
-                    this.invoke(anArg);
+                public void merge(final BigDecimal result) {
+                    this.invoke(result);
                 }
 
-                public BigDecimal merge(final BigDecimal aResult1, final BigDecimal aResult2) {
-                    return ADD.invoke(aResult1, aResult2);
+                public BigDecimal merge(final BigDecimal result1, final BigDecimal result2) {
+                    return ADD.invoke(result1, result2);
                 }
 
                 public AggregatorFunction<BigDecimal> reset() {
@@ -222,7 +274,7 @@ public abstract class BigAggregator {
                 }
 
                 public Scalar<BigDecimal> toScalar() {
-                    return new BigScalar(this.getNumber());
+                    return BigScalar.of(this.getNumber());
                 }
             };
         }
@@ -256,12 +308,12 @@ public abstract class BigAggregator {
                     this.invoke(new BigDecimal(anArg));
                 }
 
-                public void merge(final BigDecimal anArg) {
-                    this.invoke(anArg);
+                public void merge(final BigDecimal result) {
+                    this.invoke(result);
                 }
 
-                public BigDecimal merge(final BigDecimal aResult1, final BigDecimal aResult2) {
-                    return HYPOT.invoke(aResult1, aResult2);
+                public BigDecimal merge(final BigDecimal result1, final BigDecimal result2) {
+                    return HYPOT.invoke(result1, result2);
                 }
 
                 public AggregatorFunction<BigDecimal> reset() {
@@ -270,7 +322,7 @@ public abstract class BigAggregator {
                 }
 
                 public Scalar<BigDecimal> toScalar() {
-                    return new BigScalar(this.getNumber());
+                    return BigScalar.of(this.getNumber());
                 }
             };
         }
@@ -304,12 +356,12 @@ public abstract class BigAggregator {
                     this.invoke(new BigDecimal(anArg));
                 }
 
-                public void merge(final BigDecimal anArg) {
-                    this.invoke(anArg);
+                public void merge(final BigDecimal result) {
+                    this.invoke(result);
                 }
 
-                public BigDecimal merge(final BigDecimal aResult1, final BigDecimal aResult2) {
-                    return MULTIPLY.invoke(aResult1, aResult2);
+                public BigDecimal merge(final BigDecimal result1, final BigDecimal result2) {
+                    return MULTIPLY.invoke(result1, result2);
                 }
 
                 public AggregatorFunction<BigDecimal> reset() {
@@ -318,7 +370,7 @@ public abstract class BigAggregator {
                 }
 
                 public Scalar<BigDecimal> toScalar() {
-                    return new BigScalar(this.getNumber());
+                    return BigScalar.of(this.getNumber());
                 }
             };
         }
@@ -352,12 +404,12 @@ public abstract class BigAggregator {
                     this.invoke(new BigDecimal(anArg));
                 }
 
-                public void merge(final BigDecimal anArg) {
-                    myNumber = MULTIPLY.invoke(myNumber, anArg);
+                public void merge(final BigDecimal result) {
+                    myNumber = MULTIPLY.invoke(myNumber, result);
                 }
 
-                public BigDecimal merge(final BigDecimal aResult1, final BigDecimal aResult2) {
-                    return MULTIPLY.invoke(aResult1, aResult2);
+                public BigDecimal merge(final BigDecimal result1, final BigDecimal result2) {
+                    return MULTIPLY.invoke(result1, result2);
                 }
 
                 public AggregatorFunction<BigDecimal> reset() {
@@ -366,7 +418,7 @@ public abstract class BigAggregator {
                 }
 
                 public Scalar<BigDecimal> toScalar() {
-                    return new BigScalar(this.getNumber());
+                    return BigScalar.of(this.getNumber());
                 }
             };
         }
@@ -406,64 +458,12 @@ public abstract class BigAggregator {
                     this.invoke(new BigDecimal(anArg));
                 }
 
-                public void merge(final BigDecimal anArg) {
-                    this.invoke(anArg);
+                public void merge(final BigDecimal result) {
+                    this.invoke(result);
                 }
 
-                public BigDecimal merge(final BigDecimal aResult1, final BigDecimal aResult2) {
-                    return BigFunction.MIN.invoke(aResult1, aResult2);
-                }
-
-                public AggregatorFunction<BigDecimal> reset() {
-                    myNumber = VERY_POSITIVE;
-                    return this;
-                }
-
-                public Scalar<BigDecimal> toScalar() {
-                    return new BigScalar(this.getNumber());
-                }
-            };
-        }
-    };
-
-    public static final ThreadLocal<AggregatorFunction<BigDecimal>> MIN = new ThreadLocal<AggregatorFunction<BigDecimal>>() {
-
-        @Override
-        protected AggregatorFunction<BigDecimal> initialValue() {
-            return new AggregatorFunction<BigDecimal>() {
-
-                private BigDecimal myNumber = VERY_POSITIVE;
-
-                public double doubleValue() {
-                    return this.getNumber().doubleValue();
-                }
-
-                public BigDecimal getNumber() {
-                    if (myNumber.compareTo(VERY_POSITIVE) == 0) {
-                        return ZERO;
-                    } else {
-                        return myNumber;
-                    }
-                }
-
-                public int intValue() {
-                    return this.getNumber().intValue();
-                }
-
-                public void invoke(final BigDecimal anArg) {
-                    myNumber = BigFunction.MIN.invoke(myNumber, anArg);
-                }
-
-                public void invoke(final double anArg) {
-                    this.invoke(new BigDecimal(anArg));
-                }
-
-                public void merge(final BigDecimal anArg) {
-                    this.invoke(anArg);
-                }
-
-                public BigDecimal merge(final BigDecimal aResult1, final BigDecimal aResult2) {
-                    return BigFunction.MIN.invoke(aResult1, aResult2);
+                public BigDecimal merge(final BigDecimal result1, final BigDecimal result2) {
+                    return BigFunction.MIN.invoke(result1, result2);
                 }
 
                 public AggregatorFunction<BigDecimal> reset() {
@@ -472,7 +472,7 @@ public abstract class BigAggregator {
                 }
 
                 public Scalar<BigDecimal> toScalar() {
-                    return new BigScalar(this.getNumber());
+                    return BigScalar.of(this.getNumber());
                 }
             };
         }
@@ -506,12 +506,12 @@ public abstract class BigAggregator {
                     this.invoke(new BigDecimal(anArg));
                 }
 
-                public void merge(final BigDecimal anArg) {
-                    this.invoke(anArg);
+                public void merge(final BigDecimal result) {
+                    this.invoke(result);
                 }
 
-                public BigDecimal merge(final BigDecimal aResult1, final BigDecimal aResult2) {
-                    return ADD.invoke(aResult1, aResult2);
+                public BigDecimal merge(final BigDecimal result1, final BigDecimal result2) {
+                    return ADD.invoke(result1, result2);
                 }
 
                 public AggregatorFunction<BigDecimal> reset() {
@@ -520,7 +520,7 @@ public abstract class BigAggregator {
                 }
 
                 public Scalar<BigDecimal> toScalar() {
-                    return new BigScalar(this.getNumber());
+                    return BigScalar.of(this.getNumber());
                 }
             };
         }
@@ -554,12 +554,12 @@ public abstract class BigAggregator {
                     this.invoke(new BigDecimal(anArg));
                 }
 
-                public void merge(final BigDecimal anArg) {
-                    myNumber = ADD.invoke(myNumber, anArg);
+                public void merge(final BigDecimal result) {
+                    myNumber = ADD.invoke(myNumber, result);
                 }
 
-                public BigDecimal merge(final BigDecimal aResult1, final BigDecimal aResult2) {
-                    return ADD.invoke(aResult1, aResult2);
+                public BigDecimal merge(final BigDecimal result1, final BigDecimal result2) {
+                    return ADD.invoke(result1, result2);
                 }
 
                 public AggregatorFunction<BigDecimal> reset() {
@@ -568,13 +568,13 @@ public abstract class BigAggregator {
                 }
 
                 public Scalar<BigDecimal> toScalar() {
-                    return new BigScalar(this.getNumber());
+                    return BigScalar.of(this.getNumber());
                 }
             };
         }
     };
 
-    private static final AggregatorCollection<BigDecimal> COLLECTION = new AggregatorCollection<BigDecimal>() {
+    private static final AggregatorSet<BigDecimal> SET = new AggregatorSet<BigDecimal>() {
 
         @Override
         public AggregatorFunction<BigDecimal> cardinality() {
@@ -633,8 +633,16 @@ public abstract class BigAggregator {
 
     };
 
-    public static AggregatorCollection<BigDecimal> getCollection() {
-        return COLLECTION;
+    /**
+     * @deprecated v38 Use {@link #getSet()} instead
+     */
+    @Deprecated
+    public static AggregatorSet<BigDecimal> getCollection() {
+        return BigAggregator.getSet();
+    }
+
+    public static AggregatorSet<BigDecimal> getSet() {
+        return SET;
     }
 
     private BigAggregator() {

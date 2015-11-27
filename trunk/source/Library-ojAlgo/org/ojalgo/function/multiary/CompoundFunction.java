@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,8 +32,8 @@ import org.ojalgo.scalar.ComplexNumber;
 import org.ojalgo.scalar.Scalar;
 
 /**
- * [x]<sup>T</sup>[Q][x] + [c]<sup>T</sup>[x] + b
- * 
+ * [x]<sup>T</sup>[Q][x] + [l]<sup>T</sup>[x] + c
+ *
  * @author apete
  */
 public final class CompoundFunction<N extends Number> extends AbstractMultiary<N, CompoundFunction<N>> implements MultiaryFunction.Linear<N>,
@@ -100,17 +100,17 @@ public final class CompoundFunction<N extends Number> extends AbstractMultiary<N
     }
 
     @Override
-    public MatrixStore<N> getGradient(final Access1D<?> arg) {
+    public MatrixStore<N> getGradient(final Access1D<N> arg) {
         return myQuadratic.getGradient(arg).builder().superimpose(0, 0, myLinear.getGradient(arg)).build();
     }
 
     @Override
-    public MatrixStore<N> getHessian(final Access1D<?> arg) {
+    public MatrixStore<N> getHessian(final Access1D<N> arg) {
         return myQuadratic.getHessian(arg);
     }
 
     @Override
-    public N invoke(final Access1D<?> arg) {
+    public N invoke(final Access1D<N> arg) {
 
         Scalar<N> retVal = this.getScalarConstant();
 

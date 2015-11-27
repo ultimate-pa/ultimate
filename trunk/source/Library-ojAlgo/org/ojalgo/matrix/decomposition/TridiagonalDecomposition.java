@@ -1,5 +1,5 @@
 /*
- * Copyright 1997-2014 Optimatika (www.optimatika.se)
+ * Copyright 1997-2015 Optimatika (www.optimatika.se)
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,23 +28,18 @@ import org.ojalgo.access.AccessUtils;
 import org.ojalgo.array.Array1D;
 import org.ojalgo.array.Array2D;
 import org.ojalgo.constant.PrimitiveMath;
-import org.ojalgo.matrix.MatrixUtils;
 import org.ojalgo.matrix.store.BigDenseStore;
 import org.ojalgo.matrix.store.ComplexDenseStore;
+import org.ojalgo.matrix.store.ElementsSupplier;
 import org.ojalgo.matrix.store.MatrixStore;
+import org.ojalgo.matrix.store.MatrixStore.Builder;
 import org.ojalgo.matrix.store.PrimitiveDenseStore;
 import org.ojalgo.matrix.transformation.Householder;
 import org.ojalgo.netio.BasicLogger;
 import org.ojalgo.scalar.ComplexNumber;
 import org.ojalgo.type.context.NumberContext;
 
-/**
- * You create instances of (some subclass of) this class by calling one of the static factory methods:
- * {@linkplain #makeBig()}, {@linkplain #makeComplex()} or {@linkplain #makePrimitive()}.
- * 
- * @author apete
- */
-public abstract class TridiagonalDecomposition<N extends Number> extends InPlaceDecomposition<N> implements Tridiagonal<N> {
+abstract class TridiagonalDecomposition<N extends Number> extends InPlaceDecomposition<N> implements Tridiagonal<N> {
 
     static final class Big extends TridiagonalDecomposition<BigDecimal> {
 
@@ -67,7 +62,7 @@ public abstract class TridiagonalDecomposition<N extends Number> extends InPlace
         @Override
         Array1D<ComplexNumber> makeReal(final DiagonalAccess<ComplexNumber> aDiagonalAccessD) {
 
-            final Array1D<ComplexNumber> retVal = Array1D.COMPLEX.makeZero(aDiagonalAccessD.getMinDim());
+            final Array1D<ComplexNumber> retVal = Array1D.COMPLEX.makeZero(aDiagonalAccessD.getDimension());
             retVal.fillAll(ComplexNumber.ONE);
 
             final Array1D<ComplexNumber> tmpSubdiagonal = aDiagonalAccessD.subdiagonal; // superDiagonal should be the conjugate of this but it is set to the saem value
@@ -106,34 +101,6 @@ public abstract class TridiagonalDecomposition<N extends Number> extends InPlace
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public static final <N extends Number> Tridiagonal<N> make(final Access2D<N> aTypical) {
-
-        final N tmpNumber = aTypical.get(0, 0);
-
-        if (tmpNumber instanceof BigDecimal) {
-            return (Tridiagonal<N>) TridiagonalDecomposition.makeBig();
-        } else if (tmpNumber instanceof ComplexNumber) {
-            return (Tridiagonal<N>) TridiagonalDecomposition.makeComplex();
-        } else if (tmpNumber instanceof Double) {
-            return (Tridiagonal<N>) TridiagonalDecomposition.makePrimitive();
-        } else {
-            throw new IllegalArgumentException();
-        }
-    }
-
-    public static final Tridiagonal<BigDecimal> makeBig() {
-        return new TridiagonalDecomposition.Big();
-    }
-
-    public static final Tridiagonal<ComplexNumber> makeComplex() {
-        return new TridiagonalDecomposition.Complex();
-    }
-
-    public static final Tridiagonal<Double> makePrimitive() {
-        return new TridiagonalDecomposition.Primitive();
-    }
-
     private transient MatrixStore<N> myD = null;
     private DiagonalAccess<N> myDiagonalAccessD = null;
     private Array1D<N> myInitDiagQ = null;
@@ -143,7 +110,7 @@ public abstract class TridiagonalDecomposition<N extends Number> extends InPlace
         super(aFactory);
     }
 
-    public final boolean compute(final Access2D<?> matrix) {
+    public final boolean decompose(final ElementsSupplier<N> matrix) {
 
         this.reset();
 
@@ -153,7 +120,7 @@ public abstract class TridiagonalDecomposition<N extends Number> extends InPlace
 
             final int tmpRowDim = (int) matrix.countRows(); // Which is also the col-dim.
 
-            final Access2D<N> aTriangularMtrx = this.wrap(matrix).builder().triangular(false, false).build();
+            final Builder<N> aTriangularMtrx = matrix.get().builder().triangular(false, false);
 
             final DecompositionStore<N> tmpInPlace = this.setInPlace(aTriangularMtrx);
 
@@ -170,7 +137,7 @@ public abstract class TridiagonalDecomposition<N extends Number> extends InPlace
             final Array1D<N> tmpMain = tmpArray2D.sliceDiagonal(0, 0).copy();
             final Array1D<N> tmpSub = tmpArray2D.sliceDiagonal(1, 0).copy(); // Super differs only in possible conjugate values
 
-            myDiagonalAccessD = new DiagonalAccess<N>(tmpMain, tmpSub, tmpSub, this.getStaticZero());
+            myDiagonalAccessD = new DiagonalAccess<N>(tmpMain, tmpSub, tmpSub, this.scalar().zero().getNumber());
             myInitDiagQ = this.makeReal(myDiagonalAccessD);
 
             retVal = true;
@@ -217,10 +184,6 @@ public abstract class TridiagonalDecomposition<N extends Number> extends InPlace
         return false;
     }
 
-    public MatrixStore<N> reconstruct() {
-        return MatrixUtils.reconstruct(this);
-    }
-
     @Override
     public void reset() {
 
@@ -233,6 +196,10 @@ public abstract class TridiagonalDecomposition<N extends Number> extends InPlace
         myInitDiagQ = null;
     }
 
+    public MatrixStore<N> solve(final Access2D<N> rhs, final DecompositionStore<N> preallocated) {
+        throw new UnsupportedOperationException();
+    }
+
     protected final DiagonalAccess<N> getDiagonalAccessD() {
         if (myDiagonalAccessD != null) {
             return myDiagonalAccessD;
@@ -242,7 +209,7 @@ public abstract class TridiagonalDecomposition<N extends Number> extends InPlace
     }
 
     protected final MatrixStore<N> makeD() {
-        return this.wrap(this.getDiagonalAccessD());
+        return this.wrap(this.getDiagonalAccessD()).get();
     }
 
     protected final DecompositionStore<N> makeQ() {
