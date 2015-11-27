@@ -130,16 +130,25 @@ public class OctMatrix {
 		return mElements[indexOf(row, col)];
 	}
 	
-	protected void set(int row, int col, OctValue value) {
+	private void set(int row, int col, OctValue value) {
 		if(value == null) {
 			throw new IllegalArgumentException("null is not a valid matrix element.");
 		}
 		mElements[indexOf(row, col)] = value;
 	}
 	
-	protected void setMainDiagonal(OctValue value) {
+	private void setMainDiagonal(OctValue value) {
 		for (int i = 0; i < mSize; ++i) {
 			mElements[indexOfLower(i, i)] = value;
+		}
+	}
+	
+	private void minimizeMainDiagonal() {
+		for (int i = 0; i < mSize; ++i) {
+			int ii = indexOfLower(i, i);
+			if (OctValue.ZERO.compareTo(mElements[ii]) < 0) {
+				mElements[ii] = OctValue.ZERO;
+			}
 		}
 	}
 
@@ -235,7 +244,7 @@ public class OctMatrix {
 	}
 
 	private void shortestPathClosureInPlaceNaiv() {
-		setMainDiagonal(OctValue.ZERO);
+		minimizeMainDiagonal();
 		for (int k = 0; k < mSize; ++k) {
 			for (int i = 0; i < mSize; ++i) {
 				OctValue ik = get(i, k);
@@ -250,7 +259,7 @@ public class OctMatrix {
 	}
 	
 	private void shortestPathClosureInPlaceFullSparse() {
-		setMainDiagonal(OctValue.ZERO);
+		minimizeMainDiagonal();
 		List<Integer> ck = null; // indices of finite elements in columns k and k^1
 		List<Integer> rk = null; // indices of finite elements in rows k and k^1
 		for (int k = 0; k < mSize; ++k) {
@@ -292,7 +301,7 @@ public class OctMatrix {
 	}
 	
 	private void shortestPathClosureInPlaceSparse() {
-		setMainDiagonal(OctValue.ZERO);
+		minimizeMainDiagonal();
 		List<Integer> ck = null; // indices of finite elements in columns k and k^1
 		List<Integer> rk = null; // indices of finite elements in rows k and k^1
 		for (int k = 0; k < mSize; ++k) {
@@ -344,7 +353,7 @@ public class OctMatrix {
 	
 
 	private void shortestPathClosureInPlaceApron() {
-		setMainDiagonal(OctValue.ZERO);
+		minimizeMainDiagonal();
 		for (int k = 0; k < mSize; ++k) {
 			for (int i = 0; i < mSize; ++i) {
 				OctValue ik = get(i, k);
