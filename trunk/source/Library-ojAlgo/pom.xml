@@ -11,6 +11,6 @@
   
   <groupId>Library-ojAlgo</groupId>
   <artifactId>Library-ojAlgo</artifactId>
-  <version>35.17.0</version>
+  <version>38.18.0</version>
   <packaging>eclipse-plugin</packaging>
 </project>
