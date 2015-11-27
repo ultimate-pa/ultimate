@@ -181,8 +181,15 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		        "The compareTo operation is not defined on arbitrary intervals and can therefore not be used.");
 	}
 
-	@Override
-	public boolean equals(Object other) {
+	/**
+	 * Compares <code>this</code> with another {@link IntervalDomainValue} for equality.
+	 * 
+	 * @param other
+	 *            The other value to compare to.
+	 * @return <code>true</code> if and only if <code>this</code> and other are both bottom, or if the lower and upper
+	 *         bounds are the same. <code>false</code> otherwise.
+	 */
+	protected boolean isEqualTo(IntervalDomainValue other) {
 		if (other == null) {
 			return false;
 		}
@@ -191,17 +198,11 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 			return true;
 		}
 
-		if (!(other instanceof IntervalDomainValue)) {
-			return false;
+		if (mIsBottom || other.mIsBottom) {
+			return mIsBottom == other.mIsBottom;
 		}
 
-		IntervalDomainValue castedOther = (IntervalDomainValue) other;
-
-		if (mIsBottom || castedOther.mIsBottom) {
-			return mIsBottom == castedOther.mIsBottom;
-		}
-
-		if (mLower.equals(castedOther.mLower) && mUpper.equals(castedOther.mUpper)) {
+		if (mLower.equals(other.mLower) && mUpper.equals(other.mUpper)) {
 			return true;
 		}
 

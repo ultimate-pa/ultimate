@@ -47,6 +47,7 @@ public class SignLogicalSingletonIntegerExpressionEvaluator extends SignSingleto
 
 	protected SignLogicalSingletonIntegerExpressionEvaluator(String value) {
 		super(value);
+		mBooleanValue = new BooleanValue(false);
 	}
 
 	private SignDomainState logicallyInterpret(SignDomainState currentState) {

@@ -50,6 +50,7 @@ public class SignLogicalSingletonValueExpressionEvaluator extends SignSingletonV
 
 	public SignLogicalSingletonValueExpressionEvaluator(String value) {
 		super(value);
+		mBooleanValue = new BooleanValue(false);
 	}
 
 	@Override

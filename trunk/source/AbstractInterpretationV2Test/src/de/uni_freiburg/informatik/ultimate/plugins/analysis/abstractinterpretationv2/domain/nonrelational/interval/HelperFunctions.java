@@ -79,7 +79,7 @@ public class HelperFunctions {
 		System.out.println();
 
 		if (interval1.isBottom() || interval2.isBottom()) {
-			return evaluatorResult.equals(expectedResult);
+			return evaluatorResult.isEqualTo(expectedResult);
 		}
 
 		if (evaluatorResult.isBottom() && expectedResult.isBottom()) {

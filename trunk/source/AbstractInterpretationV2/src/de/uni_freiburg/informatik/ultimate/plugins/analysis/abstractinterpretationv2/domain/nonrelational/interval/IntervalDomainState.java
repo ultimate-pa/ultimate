@@ -327,7 +327,7 @@ public class IntervalDomainState
 
 		for (final Entry<String, IntervalDomainValue> entry : mValuesMap.entrySet()) {
 			final IntervalDomainValue otherValue = other.mValuesMap.get(entry.getKey());
-			if (!mValuesMap.get(entry.getKey()).equals(otherValue)) {
+			if (!mValuesMap.get(entry.getKey()).isEqualTo(otherValue)) {
 				return false;
 			}
 		}

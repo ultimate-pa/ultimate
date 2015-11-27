@@ -48,6 +48,7 @@ public class SignLogicalSingletonDecimalExpressionEvaluator extends SignSingleto
 
 	public SignLogicalSingletonDecimalExpressionEvaluator(String value) {
 		super(value);
+		mBooleanValue = new BooleanValue(false);
 	}
 
 	private SignDomainState logicallyInterpret(SignDomainState currentState) {
@@ -57,7 +58,7 @@ public class SignLogicalSingletonDecimalExpressionEvaluator extends SignSingleto
 	private boolean logicalEvaluation(SignDomainState currentState) {
 		// TODO think about this. Is this right in this case?
 
-		if (mValue.equals(Values.BOTTOM)) {
+		if (mValue == null) {
 			return false;
 		}
 

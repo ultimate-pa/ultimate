@@ -128,7 +128,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 					mBooleanValue = logicLeft.booleanValue().intersect(logicRight.booleanValue());
 				} else {
 					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
-					        .equals(secondResult.getResult().getEvaluatedValue()));
+					        .isEqualTo(secondResult.getResult().getEvaluatedValue()));
 				}
 
 				if (mBooleanValue.getValue() == Value.FALSE) {
@@ -150,7 +150,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 					mBooleanValue = logicLeft.booleanValue().intersect(logicRight.booleanValue());
 				} else {
 					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
-					        .equals(secondResult.getResult().getEvaluatedValue()));
+					        .isEqualTo(secondResult.getResult().getEvaluatedValue()));
 				}
 
 				if (mBooleanValue.getValue() == Value.FALSE) {
@@ -180,7 +180,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 					mBooleanValue = logicLeft.booleanValue().intersect(logicRight.booleanValue());
 				} else {
 					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
-					        .equals(secondResult.getResult().getEvaluatedValue()));
+					        .isEqualTo(secondResult.getResult().getEvaluatedValue()));
 				}
 
 				if (mBooleanValue.getValue() == Value.FALSE) {
@@ -215,7 +215,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 					mBooleanValue = logicLeft.booleanValue().intersect(logicRight.booleanValue());
 				} else {
 					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
-					        .equals(secondResult.getResult().getEvaluatedValue()));
+					        .isEqualTo(secondResult.getResult().getEvaluatedValue()));
 				}
 
 				if (mBooleanValue.getValue() == Value.FALSE) {
@@ -241,7 +241,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 					mBooleanValue = logicLeft.booleanValue().intersect(logicRight.booleanValue());
 				} else {
 					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
-					        .equals(secondResult.getResult().getEvaluatedValue()));
+					        .isEqualTo(secondResult.getResult().getEvaluatedValue()));
 				}
 				mLogger.warn(
 				        "Cannot handle more than one variables in a sub-tree of an expression. Returning current state.");
@@ -255,7 +255,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 					mBooleanValue = logicLeft.booleanValue().intersect(logicRight.booleanValue()).neg();
 				} else {
 					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
-					        .equals(secondResult.getResult().getEvaluatedValue())).neg();
+					        .isEqualTo(secondResult.getResult().getEvaluatedValue())).neg();
 				}
 
 				if (mBooleanValue.getValue() == Value.FALSE) {
@@ -275,7 +275,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 					mBooleanValue = logicLeft.booleanValue().intersect(logicRight.booleanValue()).neg();
 				} else {
 					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
-					        .equals(secondResult.getResult().getEvaluatedValue())).neg();
+					        .isEqualTo(secondResult.getResult().getEvaluatedValue())).neg();
 				}
 
 				if (mBooleanValue.getValue() == Value.FALSE) {
@@ -305,7 +305,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 					mBooleanValue = logicLeft.booleanValue().intersect(logicRight.booleanValue()).neg();
 				} else {
 					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
-					        .equals(secondResult.getResult().getEvaluatedValue())).neg();
+					        .isEqualTo(secondResult.getResult().getEvaluatedValue())).neg();
 				}
 
 				if (mBooleanValue.getValue() == Value.FALSE) {
@@ -340,7 +340,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 					mBooleanValue = logicLeft.booleanValue().intersect(logicRight.booleanValue()).neg();
 				} else {
 					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
-					        .equals(secondResult.getResult().getEvaluatedValue())).neg();
+					        .isEqualTo(secondResult.getResult().getEvaluatedValue())).neg();
 				}
 
 				if (mBooleanValue.getValue() == Value.FALSE) {
@@ -367,7 +367,7 @@ public class IntervalLogicalBinaryExpressionEvaluator extends IntervalBinaryExpr
 					mBooleanValue = logicLeft.booleanValue().intersect(logicRight.booleanValue()).neg();
 				} else {
 					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
-					        .equals(secondResult.getResult().getEvaluatedValue())).neg();
+					        .isEqualTo(secondResult.getResult().getEvaluatedValue())).neg();
 				}
 				mLogger.warn(
 				        "Cannot handle more than one variables in a sub-tree of an expression. Returning current state.");

@@ -36,9 +36,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEvaluator
-		implements ILogicalEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> {
+        implements ILogicalEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> {
 
-	private BooleanValue mBooleanValue;
+	private BooleanValue mBooleanValue = new BooleanValue(false);
 
 	public SignLogicalBinaryExpressionEvaluator(IUltimateServiceProvider services) {
 		super(services);
@@ -139,7 +139,7 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 			if (compResult) {
 				// Compute new state, only of the form x == 3 or 3 == x for now.
 				if (mLeftSubEvaluator instanceof SignLogicalSingletonVariableExpressionEvaluator
-						&& !(mRightSubEvaluator instanceof SignLogicalSingletonVariableExpressionEvaluator)) {
+				        && !(mRightSubEvaluator instanceof SignLogicalSingletonVariableExpressionEvaluator)) {
 					SignLogicalSingletonVariableExpressionEvaluator leftie = (SignLogicalSingletonVariableExpressionEvaluator) mLeftSubEvaluator;
 					SignDomainState intersecterino = currentState.copy();
 					// SignDomainState<CodeBlock, IBoogieVar> rightState = (SignDomainState<CodeBlock, IBoogieVar>)
@@ -148,14 +148,14 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 
 					newState = newState.intersect(intersecterino);
 				} else if (!(mLeftSubEvaluator instanceof SignLogicalSingletonVariableExpressionEvaluator)
-						&& mRightSubEvaluator instanceof SignLogicalSingletonVariableExpressionEvaluator) {
+				        && mRightSubEvaluator instanceof SignLogicalSingletonVariableExpressionEvaluator) {
 					SignLogicalSingletonVariableExpressionEvaluator rightie = (SignLogicalSingletonVariableExpressionEvaluator) mRightSubEvaluator;
 					SignDomainState intersecterino = currentState.copy();
 					// SignDomainState<CodeBlock, IBoogieVar> leftState = (SignDomainState<CodeBlock, IBoogieVar>)
 					// firstLogicalInterpretation;
 					// intersecterino.setValue(rightie.mVariableName, leftState.getValues().get(rightie.mVariableName));
 
-					newState = newState.intersect(intersecterino);
+					return newState.intersect(intersecterino);
 				}
 			}
 		case COMPPO:
@@ -201,7 +201,7 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 	}
 
 	private boolean evaluateNEComparison(SignDomainValue firstResult, SignDomainValue secondResult) {
-		if (firstResult.equals(Values.ZERO) && secondResult.equals(Values.ZERO)) {
+		if (firstResult.getResult() == Values.ZERO && secondResult.getResult() == Values.ZERO) {
 			return false;
 		}
 
@@ -209,16 +209,17 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 	}
 
 	private boolean evaluateGTComparison(SignDomainValue firstResult, SignDomainValue secondResult) {
-		if (firstResult.equals(secondResult) || firstResult.equals(Values.BOTTOM) || secondResult.equals(Values.BOTTOM)
-				|| firstResult.equals(Values.TOP) || secondResult.equals(Values.TOP)) {
+		if (firstResult.getResult() == secondResult.getResult() || firstResult.getResult() == Values.BOTTOM
+		        || secondResult.getResult() == Values.BOTTOM || firstResult.getResult() == Values.TOP
+		        || secondResult.getResult() == Values.TOP) {
 			return false;
 		}
 
-		if (firstResult.equals(Values.POSITIVE) && !secondResult.equals(Values.POSITIVE)) {
+		if (firstResult.getResult() == Values.POSITIVE && !(secondResult.getResult() == Values.POSITIVE)) {
 			return true;
 		}
 
-		if (firstResult.equals(Values.ZERO) && secondResult.equals(Values.NEGATIVE)) {
+		if (firstResult.getResult() == Values.ZERO && secondResult.getResult() == Values.NEGATIVE) {
 			return true;
 		}
 
@@ -230,11 +231,11 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 			return false;
 		}
 
-		if (firstResult.equals(Values.NEGATIVE) && !secondResult.equals(Values.NEGATIVE)) {
+		if (firstResult.getResult() == Values.NEGATIVE && !(secondResult.getResult() == Values.NEGATIVE)) {
 			return true;
 		}
 
-		if (firstResult.equals(Values.ZERO) && secondResult.equals(Values.POSITIVE)) {
+		if (firstResult.getResult() == Values.ZERO && secondResult.getResult() == Values.POSITIVE) {
 			return true;
 		}
 		return false;
@@ -254,7 +255,7 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 			return left.booleanValue().or(right.booleanValue());
 		case LOGICIFF:
 			return (left.booleanValue().and(right.booleanValue())
-					.or((left.booleanValue().neg().and(right.booleanValue().neg()))));
+			        .or((left.booleanValue().neg().and(right.booleanValue().neg()))));
 		case LOGICOR:
 			return left.booleanValue().or(right.booleanValue());
 		default:
