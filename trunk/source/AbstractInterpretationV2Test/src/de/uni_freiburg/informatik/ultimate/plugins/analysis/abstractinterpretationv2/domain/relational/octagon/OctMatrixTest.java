@@ -212,11 +212,6 @@ public class OctMatrixTest {
 		 assertIsEqualTo(r012, m.removeVariables(asSet(0, 1, 2)));
 	}
 	
-	private Set<Integer> asSet(Integer... elements) {
-		return new HashSet<Integer>(Arrays.asList(elements));
-	}
-	
-	
 	@Test
 	public void testByComparingRandom() {
 		for (int i = 0; i < 2000; ++i) {
@@ -241,6 +236,10 @@ public class OctMatrixTest {
 	private void assertIsEqualTo(OctMatrix expected, OctMatrix actual) {
 		String msg = "expected:\n" + expected + "acutal:\n" + actual;
 		Assert.assertTrue(msg, expected.isEqualTo(actual));
+	}
+	
+	private Set<Integer> asSet(Integer... elements) {
+		return new HashSet<Integer>(Arrays.asList(elements));
 	}
 
 }

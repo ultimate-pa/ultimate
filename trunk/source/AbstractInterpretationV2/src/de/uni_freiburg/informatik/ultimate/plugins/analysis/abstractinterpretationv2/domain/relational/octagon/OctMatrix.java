@@ -552,7 +552,7 @@ public class OctMatrix {
 		return n;
 	}
 	
-	private OctMatrix removeLastVariables(int count) {
+	public OctMatrix removeLastVariables(int count) {
 		// note: a set cannot contain any duplicates
 		if (count > variables()) {
 			throw new IllegalArgumentException("Cannot remove more variables than exist.");
