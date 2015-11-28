@@ -215,6 +215,13 @@ public class OctMatrix {
 		return sc;
 	}
 
+	public OctMatrix strongClosurePrimitiveSparse() {
+		OctMatrix sc = this.clone();
+		sc.shortestPathClosureInPlacePrimitiveSparse();
+		sc.strengtheningInPlace();
+		return sc;
+	}
+	
 	public OctMatrix strongClosureSparse() {
 		OctMatrix sc = this.clone();
 		sc.shortestPathClosureInPlaceSparse();
@@ -348,6 +355,63 @@ public class OctMatrix {
 				index.add(j);
 			}
 		}
+		return index;
+	}
+	
+	private void shortestPathClosureInPlacePrimitiveSparse() {
+		minimizeMainDiagonal();
+		int[] ck = null; // indices of finite elements in columns k and k^1
+		int[] rk = null; // indices of finite elements in rows k and k^1
+		for (int k = 0; k < mSize; ++k) {
+			int kk = k ^ 1;
+			if (k < kk) { // k is even => entered new 2x2 block
+				ck = primitiveIndexFiniteElementsInBlockColumn(k);
+				rk = primitiveIndexFiniteElementsInBlockRow(k);
+			}
+			for (int _i = 1; _i <= ck[0]; ++_i) {
+				int i = ck[_i];
+				OctValue ik = get(i, k);
+				OctValue ikk = get(i, kk);
+				int maxCol = i | 1;
+				for (int _j = 1; _j <= rk[0]; ++_j) {
+					int j = rk[_j];
+					if (j > maxCol) {
+						break;
+					}
+					OctValue kj = get(k, j);
+					OctValue kkj = get(kk, j);
+					OctValue indirectRoute = OctValue.min(ik.add(kj), ikk.add(kkj));
+					if (get(i, j).compareTo(indirectRoute) > 0) {
+						set(i, j, indirectRoute);
+					}
+				}
+			}
+		}
+	}
+	
+	private int[] primitiveIndexFiniteElementsInBlockColumn(int k) {
+		int[] index = new int[mSize + 1];
+		int c = 0;
+		int kk = k ^ 1;
+		for (int i = 0; i < mSize; ++i) {
+			if (!get(i, k).isInfinity() || !get(i, kk).isInfinity()) {
+				index[++c] = i;
+			}
+		}
+		index[0] = c;
+		return index;
+	}
+	
+	private int[] primitiveIndexFiniteElementsInBlockRow(int k) {
+		int[] index = new int[mSize + 1];
+		int c = 0;
+		int kk = k ^ 1;
+		for (int j = 0; j < mSize; ++j) {
+			if (!get(k, j).isInfinity() || !get(kk, j).isInfinity()) {
+				index[++c] = j;
+			}
+		}
+		index[0] = c;
 		return index;
 	}
 	

@@ -169,7 +169,7 @@ public class OctMatrixTest {
 			int variables = (int) (Math.random() * 10) + 1;
 			OctMatrix m = OctMatrix.random(variables);
 			OctMatrix cNaiv = m.strongClosureNaiv();
-			OctMatrix cOther = m.strongClosureSparse();
+			OctMatrix cOther = m.strongClosurePrimitiveSparse();
 			if (cNaiv.hasNegativeSelfLoop() && cOther.hasNegativeSelfLoop()) {
 				// test passed
 			} else if (!cNaiv.isEqualTo(cOther)) {

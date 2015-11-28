@@ -24,6 +24,7 @@ public class OctagonSpeedTest {
 		st.addFunction("apron", OctMatrix::strongClosureApron);
 		st.addFunction("fsparse", OctMatrix::strongClosureFullSparse);
 		st.addFunction("sparse", OctMatrix::strongClosureSparse);
+		st.addFunction("psparse", OctMatrix::strongClosurePrimitiveSparse);
 		st.run();
 	}
 
