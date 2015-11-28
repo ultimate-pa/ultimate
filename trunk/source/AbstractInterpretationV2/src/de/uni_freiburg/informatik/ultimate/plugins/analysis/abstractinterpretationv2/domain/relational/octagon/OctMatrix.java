@@ -483,6 +483,26 @@ public class OctMatrix {
 		return false;
 	}
 
+	public OctMatrix widen(OctMatrix n, OctValue limit) {
+		return elementwiseOperation(n, (mij, nij) -> {
+				return nij.compareTo(mij) <= 0 ? mij : OctValue.INFINITY;
+			});
+	}
+
+	public OctMatrix widenDouble(OctMatrix n) {
+		return elementwiseOperation(n, (mij, nij) -> {
+				return nij.compareTo(mij) <= 0 ? mij : nij.add(nij);
+			});
+	}
+
+	public OctMatrix widenLimit(OctMatrix n, OctValue limit) {
+		return elementwiseOperation(n, (mij, nij) -> {
+				return nij.compareTo(mij) <= 0 ? mij : OctValue.max(nij, limit);
+			});
+	}
+	
+
+	
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
