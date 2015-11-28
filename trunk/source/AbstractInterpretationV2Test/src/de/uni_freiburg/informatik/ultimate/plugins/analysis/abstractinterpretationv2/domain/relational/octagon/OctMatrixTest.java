@@ -1,5 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -162,6 +166,56 @@ public class OctMatrixTest {
 		Assert.assertTrue(l2.isLessEqualThan(e1) && !l2.isEqualTo(e1) && !e1.isEqualTo(l2));
 		Assert.assertTrue(!e1.isLessEqualThan(l2));
 	}
+	
+	@Test
+	public void testAddVariables() {
+		 OctMatrix m = OctMatrix.parseBlockLowerTriangular(
+			  " 0  1\n"
+			+ " 2  3\n"
+			+ " 4  5  6  7\n"
+			+ " 8  9 10 11\n");
+		 OctMatrix a1 = OctMatrix.parseBlockLowerTriangular(
+			  "  0   1\n"
+			+ "  2   3\n"
+			+ "  4   5   6   7\n"
+			+ "  8   9  10  11\n"
+			+ "inf inf inf inf inf inf\n"
+			+ "inf inf inf inf inf inf\n");
+		 assertIsEqualTo(a1, m.addVariables(1));
+	}
+	
+	@Test
+	public void testRemoveVariables() {
+		 OctMatrix m = OctMatrix.parseBlockLowerTriangular(
+			  " 0  1\n"
+			+ " 2  3\n"
+			+ " 4  5  6  7\n"
+			+ " 8  9 10 11\n"
+			+ "12 13 14 15 16 17\n"
+			+ "18 19 20 21 22 23\n");
+		 OctMatrix r1 = OctMatrix.parseBlockLowerTriangular(
+			  " 0  1\n"
+			+ " 2  3\n"
+			+ "12 13 16 17\n"
+			+ "18 19 22 23\n");
+		 OctMatrix r12 = OctMatrix.parseBlockLowerTriangular("0 1 2 3");
+		 OctMatrix r02 = OctMatrix.parseBlockLowerTriangular("6 7 10 11");
+		 OctMatrix r01 = OctMatrix.parseBlockLowerTriangular("16 17 22 23");
+		 OctMatrix r012 = OctMatrix.parseBlockLowerTriangular("");
+		 assertIsEqualTo(r1, m.removeVariable(1));
+		 assertIsEqualTo(r12, m.removeVariables(asSet(1, 2)));
+		 assertIsEqualTo(r12, m.removeVariables(asSet(2, 1)));
+		 assertIsEqualTo(r02, m.removeVariables(asSet(0, 2)));
+		 assertIsEqualTo(r02, m.removeVariables(asSet(2, 0)));
+		 assertIsEqualTo(r01, m.removeVariables(asSet(0, 1)));
+		 assertIsEqualTo(r01, m.removeVariables(asSet(1, 0)));
+		 assertIsEqualTo(r012, m.removeVariables(asSet(0, 1, 2)));
+	}
+	
+	private Set<Integer> asSet(Integer... elements) {
+		return new HashSet<Integer>(Arrays.asList(elements));
+	}
+	
 	
 	@Test
 	public void testByComparingRandom() {

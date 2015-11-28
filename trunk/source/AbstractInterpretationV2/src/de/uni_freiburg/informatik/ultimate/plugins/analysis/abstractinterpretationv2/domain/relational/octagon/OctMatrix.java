@@ -540,7 +540,7 @@ public class OctMatrix {
 				continue;
 			}
 			int maxCol = i | 1;
-			for (int j = 0; j <= maxCol; ++i) {
+			for (int j = 0; j <= maxCol; ++j) {
 				if (vars.contains(j / 2)) {
 					// 2x2 block column shall be removed => continue in next 2x2 block
 					++j;
