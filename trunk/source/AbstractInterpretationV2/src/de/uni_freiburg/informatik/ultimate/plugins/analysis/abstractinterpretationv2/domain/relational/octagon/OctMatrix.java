@@ -2,8 +2,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.function.BiFunction;
+
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbol.Variable;
 
 /**
  * Matrix for octagons (as presented by Antoine Mine).
@@ -69,7 +73,6 @@ public class OctMatrix {
 	public static OctMatrix top(int variables) {
 		OctMatrix top = new OctMatrix(variables * 2);
 		Arrays.fill(top.mElements, OctValue.INFINITY);
-		top.setMainDiagonal(OctValue.ZERO);
 		return top;
 	}
 
@@ -113,7 +116,7 @@ public class OctMatrix {
 		return m;
 	}
 	
-	private OctMatrix(int size) {
+	protected OctMatrix(int size) {
 		mSize = size;
 		mElements = new OctValue[size * size / 2 + size];
 	}
@@ -135,12 +138,6 @@ public class OctMatrix {
 			throw new IllegalArgumentException("null is not a valid matrix element.");
 		}
 		mElements[indexOf(row, col)] = value;
-	}
-	
-	private void setMainDiagonal(OctValue value) {
-		for (int i = 0; i < mSize; ++i) {
-			mElements[indexOfLower(i, i)] = value;
-		}
 	}
 	
 	private void minimizeMainDiagonal() {
@@ -501,7 +498,69 @@ public class OctMatrix {
 			});
 	}
 	
-
+	public OctMatrix addVariables(int count) {
+		if (count <= 0) {
+			throw new IllegalArgumentException("Cannot add " + count + " variables.");
+		}
+		OctMatrix n = new OctMatrix(mSize + (2 * count));
+		System.arraycopy(mElements, 0, n.mElements, 0, mElements.length);
+		Arrays.fill(n.mElements, this.mElements.length, n.mElements.length, OctValue.INFINITY);
+		return n;
+	}
+	
+	public OctMatrix removeVariable(int v) {
+		return removeVariables(Collections.singleton(v));
+	}
+	
+	public OctMatrix removeVariables(Set<Integer> vars) {
+		// note: a set cannot contain any duplicates
+		List<Integer> varsDescending = new ArrayList<>(vars);
+		Collections.sort(varsDescending);
+		boolean removeOnlyAtEnd = true;
+		int vPrev = variables();
+		for (int v : varsDescending) {
+			if (v < 0 || v >= variables()) {
+				throw new IllegalArgumentException("Variable " + v + " does not exist.");
+			} else if (v + 1 == vPrev) {				
+				vPrev = v;
+			} else {
+				removeOnlyAtEnd = false;
+				break;
+			}
+		}
+		if (removeOnlyAtEnd) {
+			return removeLastVariables(variables() - vPrev);
+		}
+		OctMatrix n = new OctMatrix(mSize - (2 * vars.size()));
+		int in = 0;
+		for (int i = 0; i < mSize; ++i) {
+			if (vars.contains(i / 2)) {
+				// 2x2 block row shall be removed => continue in next 2x2 block row
+				++i;
+				continue;
+			}
+			int maxCol = i | 1;
+			for (int j = 0; j <= maxCol; ++i) {
+				if (vars.contains(j / 2)) {
+					// 2x2 block column shall be removed => continue in next 2x2 block
+					++j;
+					continue;
+				}
+				n.mElements[in++] = get(i, j);
+			}
+		}
+		return n;
+	}
+	
+	private OctMatrix removeLastVariables(int count) {
+		// note: a set cannot contain any duplicates
+		if (count > variables()) {
+			throw new IllegalArgumentException("Cannot remove more variables than exist.");
+		}
+		OctMatrix n = new OctMatrix(mSize - (2 * count));
+		System.arraycopy(mElements, 0, n.mElements, 0, n.mElements.length);
+		return n;
+	}
 	
 	@Override
 	public String toString() {
