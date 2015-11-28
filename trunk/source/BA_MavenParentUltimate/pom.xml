@@ -249,6 +249,7 @@
 		<module>../WitnessParser</module>
 		<module>../BoogieProcedureInliner</module>
 		<module>../SpaceExParser</module>
+		<module>../Library-ojAlgo</module>
 		<module>../AbstractInterpretationV2</module>
 		<module>../AbstractInterpretationMk2</module>
 	</modules>
@@ -386,7 +387,7 @@
 								way of telling travis. Its either here or in .travis.yml -->
 							<repoToken>EfXcoEYdCZRch9bAt6OULUTnGEz43OyEw</repoToken>
 							<jacocoReports>
-								<jacocoReport>${sonar.jacoco.reportPath}</jacocoReport>
+								<jacocoReport>${jacoco.reportDir}/report/jacoco.xml</jacocoReport>
 							</jacocoReports>
 						</configuration>
 					</plugin>

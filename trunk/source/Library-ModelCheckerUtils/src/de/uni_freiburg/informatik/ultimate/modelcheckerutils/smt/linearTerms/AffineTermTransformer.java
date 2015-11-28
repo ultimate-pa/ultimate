@@ -79,7 +79,7 @@ public class AffineTermTransformer extends TermTransformer {
 			} else if (funName.equals("mod")) {
 				final AffineTerm result;
 				Term simplified = SmtUtils.termWithLocalSimplification(
-						m_Script, "mod", appTerm.getParameters());
+						m_Script, "mod", appTerm.getSort().getIndices(), appTerm.getParameters());
 				if (simplified instanceof ApplicationTerm) {
 					result = new AffineTerm((ApplicationTerm) simplified);
 				} else if (simplified instanceof ConstantTerm) {

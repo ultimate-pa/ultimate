@@ -194,13 +194,6 @@
          unpack="false"/>
 
    <plugin
-         id="de.uni_freiburg.informatik.ultimate.gui"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction"
          download-size="0"
          install-size="0"
@@ -333,6 +326,20 @@
 
    <plugin
          id="Library-jdom"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="de.uni_freiburg.informatik.ultimate.gui"
          download-size="0"
          install-size="0"
          version="0.0.0"

@@ -338,6 +338,13 @@ public class SmtUtils {
 		if (!fst.getSort().equals(snd.getSort())) {
 			throw new UnsupportedOperationException("arguments sort different");
 		}
+		BitvectorConstant fstbw = new BitvectorConstant(fst);
+		if (fstbw.isBitvectorConstant()) {
+			BitvectorConstant sndbw = new BitvectorConstant(snd);
+			if (sndbw.isBitvectorConstant()) {
+				return !fstbw.equals(sndbw);
+			}
+		}
 		if (!(fst instanceof ConstantTerm)) {
 			return false;
 		}
@@ -552,7 +559,7 @@ public class SmtUtils {
 	 * techniques if applicable.
 	 */
 	public static Term termWithLocalSimplification(Script script, 
-			String funcname, Term... params) {
+			String funcname, BigInteger[] indices, Term... params) {
 		final Term result;
 		switch (funcname) {
 		case "and":
@@ -607,7 +614,7 @@ public class SmtUtils {
 			}
 			break;
 		default:
-			result = script.term(funcname, params);
+			result = script.term(funcname, indices, null, params);
 			break;
 		}
 		return result;

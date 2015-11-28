@@ -5,38 +5,67 @@ import re
 import os
 import sys
 import codecs
+import itertools
 
 
 mLatexSettingsMappings = {
-'DerefFreeMemtrack-32bit-Z3-Sp-Integer.epf' :'\\zzzsp',
-'DerefFreeMemtrack-32bit-Z3-IcSp-Integer.epf' :'\\zzzspic',
-'DerefFreeMemtrack-32bit-Z3-SpLv-Integer.epf' :'\\zzzsplv',
+'DerefFreeMemtrack-32bit-Z3-Sp-Integer.epf' :'\\sponly',
+'DerefFreeMemtrack-32bit-Z3-IcSp-Integer.epf' :'\\spic',
+'DerefFreeMemtrack-32bit-Z3-SpLv-Integer.epf' :'\\splv',
 'DerefFreeMemtrack-32bit-SMTInterpol-TreeInterpolation-Integer.epf' :'\\smtinterpolip',
 'DerefFreeMemtrack-32bit-Z3-NestedInterpolation-Integer.epf' :'\\zzzip',
 'DerefFreeMemtrack-32bit-Princess-TreeInterpolation-Integer.epf' :'\\princessip',
 'DerefFreeMemtrack-32bit-Z3-FPandBP-Integer.epf' :'FP+BP',
-'DerefFreeMemtrack-32bit-Z3-BP-Integer.epf' :'\\zzzspiclv BP',
-'DerefFreeMemtrack-32bit-Z3-IcSpLv-Integer.epf' : '\\zzzspiclv',
-'Reach-32bit-Z3-BP-Bitvector.epf':'\\zzzspiclv BP',
+'DerefFreeMemtrack-32bit-Z3-BP-Integer.epf' :'\\wpiclv',
+'DerefFreeMemtrack-32bit-Z3-IcSpLv-Integer.epf' : '\\spiclv',
+'Reach-32bit-Z3-BP-Bitvector.epf':'\\wpiclv',
 'Reach-32bit-Z3-FPandBP-Bitvector.epf':'FP+BP',
 'Reach-32bit-Z3-NestedInterpolation-Bitvector.epf':'\\zzzip',
-'Reach-32bit-Z3-FP-Bitvector.epf':'\\zzzspiclv FP',
+'Reach-32bit-Z3-FP-Bitvector.epf':'\\spiclv',
 'Reach-32bit-Princess-TreeInterpolation.epf':'\\princessip',
-'Reach-32bit-Z3-FP.epf':'\\zzzspiclv FP',
+'Reach-32bit-Z3-FP.epf':'\\spiclv',
 'Reach-32bit-SMTInterpol-TreeInterpolation.epf':'\\smtinterpolip',
-'Reach-32bit-Z3-BP.epf':'\\zzzspiclv BP',
+'Reach-32bit-Z3-BP.epf':'\\wpiclv',
 'Reach-32bit-Z3-NestedInterpolation.epf':'\\zzzip',
+'Reach-32bit-Z3-IcSp-Bitvector.epf':'\\spic',
+'Reach-32bit-Z3-IcSpLv-Bitvector.epf':'\\spiclv',
+'Reach-32bit-Z3-IcWp-Bitvector.epf':'\\wpic',
+'Reach-32bit-Z3-IcWpLv-Bitvector.epf':'\\wpiclv',
+'Reach-32bit-Z3-NestedInterpolation-Bitvector.epf':'\\zzzip',
+'Reach-32bit-Z3-Sp-Bitvector.epf':'\\sponly',
+'Reach-32bit-Z3-SpLv-Bitvector.epf':'\\splv',
+'Reach-32bit-Z3-Wp-Bitvector.epf':'\\wponly',
+'Reach-32bit-Z3-WpLv-Bitvector.epf':'\\wplv',
+'DerefFreeMemtrack-32bit-Z3-IcWp-Integer.epf':'\\wpic',
+'DerefFreeMemtrack-32bit-Z3-IcWpLv-Integer.epf':'\\wpiclv',
+'DerefFreeMemtrack-32bit-Z3-Wp-Integer.epf':'\\wponly',
+'DerefFreeMemtrack-32bit-Z3-WpLv-Integer.epf':'\\wplv',
+'Reach-32bit-Z3-IcSp.epf':'\\spic',
+'Reach-32bit-Z3-IcSpLv.epf':'\\spiclv',
+'Reach-32bit-Z3-IcWp.epf':'\\wpic',
+'Reach-32bit-Z3-IcWpLv.epf':'\\wpiclv',
+'Reach-32bit-Z3-Sp.epf':'\\sponly',
+'Reach-32bit-Z3-SpLv.epf':'\\splv',
+'Reach-32bit-Z3-Wp.epf':'\\wponly',
+'Reach-32bit-Z3-WpLv.epf':'\\wplv',
 }
 
-mLatexColors = ['Apricot', 'Aquamarine', 'Bittersweet', 'Black', 'Blue', 'BlueGreen', 'BlueViolet',
-                'BrickRed', 'Brown', 'BurntOrange', 'CadetBlue', 'CarnationPink', 'Cerulean', 'CornflowerBlue',
-                'Cyan', 'Dandelion', 'DarkOrchid', 'Emerald', 'ForestGreen', 'Fuchsia', 'Goldenrod', 'Gray',
-                'Green', 'GreenYellow', 'JungleGreen', 'Lavender', 'LimeGreen', 'Magenta', 'Mahogany', 'Maroon',
-                'Melon', 'MidnightBlue', 'Mulberry', 'NavyBlue', 'OliveGreen', 'Orange', 'OrangeRed', 'Orchid',
-                'Peach', 'Periwinkle', 'PineGreen', 'Plum', 'ProcessBlue', 'Purple', 'RawSienna', 'Red',
-                'RedOrange', 'RedViolet', 'Rhodamine', 'RoyalBlue', 'RoyalPurple', 'RubineRed', 'Salmon',
-                'SeaGreen', 'Sepia', 'SkyBlue', 'SpringGreen', 'Tan', 'TealBlue', 'Thistle', 'Turquoise',
-                'Violet', 'VioletRed', 'White', 'WildStrawberry', 'Yellow', 'YellowGreen', 'YellowOrange' ]
+# Those are the dvips colors of xcolor 
+# mLatexColors = ['Apricot', 'Aquamarine', 'Bittersweet', 'Black', 'Blue', 'BlueGreen', 'BlueViolet',
+#                 'BrickRed', 'Brown', 'BurntOrange', 'CadetBlue', 'CarnationPink', 'Cerulean', 'CornflowerBlue',
+#                 'Cyan', 'Dandelion', 'DarkOrchid', 'Emerald', 'ForestGreen', 'Fuchsia', 'Goldenrod', 'Gray',
+#                 'Green', 'GreenYellow', 'JungleGreen', 'Lavender', 'LimeGreen', 'Magenta', 'Mahogany', 'Maroon',
+#                 'Melon', 'MidnightBlue', 'Mulberry', 'NavyBlue', 'OliveGreen', 'Orange', 'OrangeRed', 'Orchid',
+#                 'Peach', 'Periwinkle', 'PineGreen', 'Plum', 'ProcessBlue', 'Purple', 'RawSienna', 'Red',
+#                 'RedOrange', 'RedViolet', 'Rhodamine', 'RoyalBlue', 'RoyalPurple', 'RubineRed', 'Salmon',
+#                 'SeaGreen', 'Sepia', 'SkyBlue', 'SpringGreen', 'Tan', 'TealBlue', 'Thistle', 'Turquoise',
+#                 'Violet', 'VioletRed', 'White', 'WildStrawberry', 'Yellow', 'YellowGreen', 'YellowOrange' ]
+
+mLatexColors = ['s1','s2','s3','s4','s5','s6','s7','s8','s9','black','OliveGreen']
+
+mLatexPlotMarks = ['star', 'triangle', 'diamond', 'x', '|', '10-pointed-star', 'pentagon','o']
+mLatexPlotMarkRepeat = 10
+mLatexPlotLines = ['solid', 'dotted', 'dashed' ]
 
 mUltimateHeader = ['File',
                    'Settings',
@@ -56,7 +85,7 @@ def toPercent(row, a, b):
         totalF = float(total);
         if totalF == 0:
             return 0.0
-        return float(part) / float(total) 
+        return 100.0 * (float(part) / float(total)) 
     return None
 
 def toInt(row, a):
@@ -81,7 +110,9 @@ def toFloat(row, a):
 mRowFuns = { 'Time' : lambda r : timeInNanosToSeconds(r, 'Overall time'),
             'Iter' : lambda r : toInt(r, 'Overall iterations'),
             'InterpolantTime' : lambda r : timeInNanosToSeconds(r, 'TraceCheckerBenchmark_InterpolantComputationTime'),
-            'SizeReduction':lambda r : toPercent(r, 'TraceCheckerBenchmark_Conjuncts in UnsatCore', 'TraceCheckerBenchmark_Conjuncts in SSA')}
+            'SizeReduction':lambda r : toPercent(r, 'TraceCheckerBenchmark_Conjuncts in UnsatCore', 'TraceCheckerBenchmark_Conjuncts in SSA'),
+            'QuantPreds':lambda r : toPercent(r, 'TraceCheckerBenchmark_QuantifiedInterpolants', 'TraceCheckerBenchmark_ConstructedInterpolants'),
+            }
 
 def parseArgs():
     # parse command line arguments
@@ -261,37 +292,115 @@ def mapKeys(fun, dicti):
 def mapValues(fun, dicti):
     return dict(map(lambda (k, v): (k, fun(v)), dicti.iteritems()))
 
-def writeLatexFigure(filename, xlabel, ylabel, plotnames, plotfiles, caption):
-    
-    if len(plotnames) > len(mLatexColors):
-        sys.stderr.write('Warning: There are not enough colors, so I will drop some plot lines (but who plots more than 63 plots anyways?') 
-    
-    plots = zip(mLatexColors, plotfiles)
+def getLatexPlotStyles():
+    plotstylesLines = zip(mLatexColors, mLatexPlotLines)
+    plotstylesMarks = zip(mLatexColors[len(mLatexPlotLines):], mLatexPlotMarks)
+    acc = []
+    for color, linestyle in plotstylesLines:
+        acc.append('draw=' + color + ',' + linestyle)
+    for color, markstyle in plotstylesMarks:
+        acc.append('mark repeat={' + str(mLatexPlotMarkRepeat) + '},draw=' + color + ',solid,mark=' + markstyle)
+    for color in mLatexColors[len(plotstylesLines) + len(plotstylesMarks):]:
+        acc.append('draw=' + color + ',solid')
+    return acc
 
-    f = codecs.open(filename, 'a', 'utf-8')
+def writeLatexPlotsPreamble(filename):
+    f = codecs.open(filename, 'w', 'utf-8')
+    f.write('%%%%%%%%%%% Commands for plots %%%%%%%%%%%\n')
+    f.write('% argument #1: any options\n')
+    f.write('\\newenvironment{customlegend}[1][]{%\n')
+    f.write('    \\begingroup\n')
+    f.write('    % inits/clears the lists (which might be populated from previous\n')
+    f.write('    % axes):\n')
+    f.write('    \\csname pgfplots@init@cleared@structures\\endcsname\n')
+    f.write('    \\pgfplotsset{#1}%\n')
+    f.write('}{%\n')
+    f.write('    % draws the legend:\n')
+    f.write('    \\csname pgfplots@createlegend\\endcsname\n')
+    f.write('    \\endgroup\n')
+    f.write('}%\n')
+    f.write('\n')
+    f.write('% makes \\addlegendimage available (typically only available within an\n')
+    f.write('% axis environment):\n')
+    f.write('\\def\\addlegendimage{\\csname pgfplots@addlegendimage\\endcsname}\n')
+    f.write('\n')
+    f.write('\\pgfplotsset{every axis/.append style={thick}}\n')
+    f.write('\n')
+    
+    f.write('\\definecolor{s1}{RGB}{228,26,28}')
+    f.write('\\definecolor{s2}{RGB}{55,126,184}')
+    f.write('\\definecolor{s3}{RGB}{77,175,74}')
+    f.write('\\definecolor{s4}{RGB}{152,78,163}')
+    f.write('\\definecolor{s5}{RGB}{255,127,0}')
+    f.write('\\definecolor{s6}{RGB}{255,255,51}')
+    f.write('\\definecolor{s7}{RGB}{166,86,40}')
+    f.write('\\definecolor{s8}{RGB}{247,129,191}')
+    f.write('\\definecolor{s9}{RGB}{153,153,153}')
+    
+    f.write('\\pgfplotsset{\n')
+    f.write('    mark repeat/.style={\n')
+    f.write('        scatter,\n')
+    f.write('        scatter src=x,\n')
+    f.write('        scatter/@pre marker code/.code={\n')
+    f.write('            \\pgfmathtruncatemacro\\usemark{\n')
+    f.write('                or(mod(\\coordindex,#1)==0, (\\coordindex==(\\numcoords-1))\n')
+    f.write('            }\n')
+    f.write('            \\ifnum\\usemark=0\n')
+    f.write('                \\pgfplotsset{mark=none}\n')
+    f.write('            \\fi\n')
+    f.write('        },\n')
+    f.write('        scatter/@post marker code/.code={}\n')
+    f.write('    }\n')
+    f.write('}\n')
+    
+    
+    f.write('\\pgfplotsset{cycle list={%\n')
+    for style in getLatexPlotStyles():
+        f.write('{' + style + '},\n')
+    f.write('}}\n')
+
+    f.write('%%%%%%%%%%%%% end commands for plots\n')
+    f.close()
+    return
+
+ 
+def writeLatexFigureBegin(f, namesAndStyles):
+    legendentriesstr = ''
+    for name, (file, style) in namesAndStyles:
+        legendentriesstr = legendentriesstr + name + ','
+    
+    f.write('\\onecolumn\n')
     f.write('\\begin{figure}\n')
+    f.write('\\centering\n')
+    f.write('    \\begin{tikzpicture}\n')
+    f.write('    \\begin{customlegend}[legend columns=' + str(len(namesAndStyles) / 2) + ',legend style={align=left,draw=none,column sep=2ex,thick},\n')
+    f.write('                          legend entries={' + legendentriesstr + '}]\n')
+    for name, (file, style) in namesAndStyles:
+        f.write('        \\addlegendimage{' + style + '}\n')
+    f.write('    \\end{customlegend}\n')
+    f.write('    \\end{tikzpicture}\n')
+    return
+
+def writeLatexFigureEnd(f, caption):
+    f.write('\\caption{' + caption + '}\n')
+    f.write('\\end{figure}\n')
+    f.write('\\twocolumn\n')
+    return
+
+def writeLatexFigure(f, xlabel, ylabel, files, namesAndStylesDict, caption):
     f.write('\\begin{tikzpicture}\n')
-    f.write('\\begin{axis}[%\n')
+    f.write('\\begin{semilogyaxis}[%\n')
+    f.write('log ticks with fixed point,%\n')
     f.write('xmin=0, ymin=0,%\n')
     f.write('xlabel={' + xlabel + '},%\n')
-    f.write('ylabel={' + ylabel + '},grid=both,axis lines=left,%\n')
-    f.write('legend style={at={(0.1,0.9)},anchor=north west,legend cell align=left},%\n')
-    f.write('legend entries={')
-    for name in plotnames:
-        if name in mLatexSettingsMappings:
-            f.write(mLatexSettingsMappings[name] + ',',)
-        else:
-            f.write(name + ',',)
-    f.write('},%\n')
-    f.write(']\n')
-    
-    for color, plotfile in plots:
-        f.write('\\addplot+[' + color + '!80!black,no marks,opacity=1] table {plots/' + plotfile + '};\n')
-    f.write('\\end{axis}\n')
+    f.write('ylabel={' + ylabel + '},grid=major,%\n')
+    f.write('legend style={at={(0.025,0.975)},anchor=north west,legend cell align=left}%\n')
+    f.write(']%\n')
+    f.write('\\addlegendimage{empty legend}\\addlegendentry{' + caption + '}\n')
+    for file, name in files:
+        f.write('\\addplot[' + namesAndStylesDict[name][1] + '] table {plots/' + file + '};\n')
+    f.write('\\end{semilogyaxis}\n')
     f.write('\\end{tikzpicture}\n')
-    f.write('\\caption{' + caption + '}\n')
-    f.write('\\end{figure}\n\n')
-    f.close()
     return
 
 def writePlots(successrows, uniqueSettings, outputDir, name):
@@ -299,6 +408,11 @@ def writePlots(successrows, uniqueSettings, outputDir, name):
     if os.path.isfile(plotsfile):
         os.remove(plotsfile)
 
+    plotspreamblefile = os.path.join(outputDir, 'plots-pre.tex')
+    writeLatexPlotsPreamble(plotspreamblefile)
+
+    latexFigures = []
+    
     for funName, fun in mRowFuns.iteritems():
         plottable = getPlottable(successrows, fun, map(lambda x : (x), uniqueSettings))
         plotfiles = []
@@ -316,11 +430,34 @@ def writePlots(successrows, uniqueSettings, outputDir, name):
                 os.remove(f.name)
             else:
                 plotfiles.append(filename)
-                plotnames.append(friendlySetting)
+                if friendlySetting in mLatexSettingsMappings:
+                    plotnames.append(mLatexSettingsMappings[friendlySetting])
+                else:
+                    plotnames.append(friendlySetting)
         if name != '':
             funName = name + ' ' + funName
-        writeLatexFigure(plotsfile, 'x', 'y', plotnames, plotfiles, funName)
-                
+        latexFigures.append((funName, zip(plotfiles, plotnames)))
+
+    namesAndStylesDict = {}
+    styles = iter(getLatexPlotStyles())    
+    for key, val in latexFigures:
+        for file, pname in val:
+            if not pname in namesAndStylesDict:
+                namesAndStylesDict[pname] = (file, next(styles))
+    
+    namesAndStyles = sorted(namesAndStylesDict.items())
+    
+    f = codecs.open(plotsfile, 'a', 'utf-8')
+    writeLatexFigureBegin(f, namesAndStyles)
+    figCounter = 1
+    figPerLine = 3    
+    for funName, filesAndNames in latexFigures:
+        sortedByName = sorted(filesAndNames, key=lambda x : x[1])
+        f.write('\\resizebox*{0.45\\textwidth}{!}{%\n')
+        writeLatexFigure(f, 'x', 'y', sortedByName, namesAndStylesDict, funName)
+        f.write('}\n')
+    writeLatexFigureEnd(f, name)    
+    f.close()        
     return
 
 def getArgs():
@@ -350,7 +487,8 @@ def main():
     uniqueToolchains = applyOnCsvFile(rows, lambda x, y : getUniqueSet('Toolchain', x, y))
     
     if len(uniqueToolchains) > 1:
-        print 'We only support 1 toolchain per .csv so far, sorry'
+        print 'We only support 1 toolchain per .csv so far, sorry. You had the following toolchains:'
+        print uniqueToolchains
         sys.exit(1)
         return
     
@@ -363,18 +501,21 @@ def main():
     #    print s, len(filter(lambda x : x['Settings'] == s, rows))
     
     successResults = ['SAFE', 'UNSAFE']
-    solversOnlySettings = filter(lambda x:re.match('.*FB.*|.*BP.*', x), uniqueSettings)
+    solversOnlySettings = filter(lambda x: not re.match('.*Sp.*|.*Wp.*', x), uniqueSettings)
+    championsSettings = solversOnlySettings + filter(lambda x: re.match('.*IcSp.*', x) and not re.match('.*Lv.*', x), uniqueSettings)
     
     # # one line of unique settings: total success
     success = applyOnCsvFile(rows, lambda x, y : getResultCountPerSetting(successResults, x, y))
     exclusive = getExclusiveCountPerSetting(rows, successResults)
     allPortfolio = getResultCountPerPortfolio(rows, uniqueSettings, successResults)
     otherPortfolio = getResultCountPerPortfolio(rows, solversOnlySettings, successResults)
+    championsPortfolio = getResultCountPerPortfolio(rows, championsSettings, successResults)
 
     mixed = getMixedInputs(rows, successResults)
 
-    remPathD = lambda x : mapKeys(lambda y : getSuffix('settings/automizer/interpolation/', y), x)
-    remPathS = lambda x : map(lambda y : getSuffix('settings/automizer/interpolation/', y), x)
+    renameSettings = lambda x : mLatexSettingsMappings[os.path.basename(x)] if os.path.basename(x) in mLatexSettingsMappings else getSuffix('settings/',x)
+    remPathD = lambda x : mapKeys(lambda y : renameSettings(y), x)
+    remPathS = lambda x : map(lambda y : renameSettings(y), x)
 
     print 'Settings:         ', remPathS(uniqueSettings)
     print 'Total inputs:     ', len(uniqueFiles)
@@ -382,9 +523,12 @@ def main():
     # print 'Crashed inputs:   ', crashed
     print 'Success:          ', remPathD(success)
     print 'Exclusive success:', remPathD(exclusive)
-    print 'Portfolio:        ', allPortfolio
-    print 'not us Portfolio: ', otherPortfolio
-    print 'Mixed:            ', mixed
+    print 'All Portfolio:        ', allPortfolio
+    print 'Craig Portfolio: ', otherPortfolio
+    print 'Craig Portfolio: ', remPathS(solversOnlySettings)
+    print 'Craig+IT-SP Portfolio: ', championsPortfolio
+    print 'Craig+IT-SP Portfolio: ', remPathS(championsSettings)
+    # print 'Mixed:            ', mixed
     print 'Mixed Count:      ', len(mixed)
     print 
     
