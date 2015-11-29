@@ -35,6 +35,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbol
  */
 public class OctMatrix {
 
+	public final static OctMatrix NEW = new OctMatrix(0);
+	
 	/**
 	 * Size of this matrix (size = #rows = #columns).
 	 * Size is always an even number.
@@ -133,7 +135,7 @@ public class OctMatrix {
 		return mElements[indexOf(row, col)];
 	}
 	
-	private void set(int row, int col, OctValue value) {
+	protected void set(int row, int col, OctValue value) {
 		if(value == null) {
 			throw new IllegalArgumentException("null is not a valid matrix element.");
 		}
@@ -203,6 +205,10 @@ public class OctMatrix {
 	
 	public boolean isLessEqualThan(OctMatrix other) {
 		return elementwiseRelation(other, (x, y) -> x.compareTo(y) <= 0);		
+	}
+	
+	public OctMatrix strongClosure() {
+		return strongClosurePrimitiveSparse();
 	}
 	
 	public OctMatrix strongClosureNaiv() {
