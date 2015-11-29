@@ -204,11 +204,8 @@ public class OctMatrixTest {
 		 OctMatrix r012 = OctMatrix.parseBlockLowerTriangular("");
 		 assertIsEqualTo(r1, m.removeVariable(1));
 		 assertIsEqualTo(r12, m.removeVariables(asSet(1, 2)));
-		 assertIsEqualTo(r12, m.removeVariables(asSet(2, 1)));
 		 assertIsEqualTo(r02, m.removeVariables(asSet(0, 2)));
-		 assertIsEqualTo(r02, m.removeVariables(asSet(2, 0)));
 		 assertIsEqualTo(r01, m.removeVariables(asSet(0, 1)));
-		 assertIsEqualTo(r01, m.removeVariables(asSet(1, 0)));
 		 assertIsEqualTo(r012, m.removeVariables(asSet(0, 1, 2)));
 	}
 	

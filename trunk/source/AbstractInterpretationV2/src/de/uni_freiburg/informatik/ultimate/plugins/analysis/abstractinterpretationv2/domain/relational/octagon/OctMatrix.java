@@ -486,12 +486,14 @@ public class OctMatrix {
 			});
 	}
 
+	// TODO document: widening operator may not stabilize. Other widening operators have to be used in that case.
 	public OctMatrix widenDouble(OctMatrix n) {
 		return elementwiseOperation(n, (mij, nij) -> {
 				return nij.compareTo(mij) <= 0 ? mij : nij.add(nij);
 			});
 	}
 
+	// TODO document: termination widening operators stabilization depends on user-given limit 
 	public OctMatrix widenLimit(OctMatrix n, OctValue limit) {
 		return elementwiseOperation(n, (mij, nij) -> {
 				return nij.compareTo(mij) <= 0 ? mij : OctValue.max(nij, limit);
