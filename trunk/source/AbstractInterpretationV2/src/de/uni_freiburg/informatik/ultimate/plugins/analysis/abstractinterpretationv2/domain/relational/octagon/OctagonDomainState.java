@@ -23,6 +23,8 @@ public class OctagonDomainState
 		implements IAbstractState<OctagonDomainState, CodeBlock, IBoogieVar> {
 	
 	private static int sId;
+	
+	/** A human-readable hash code, unique for every object. */
 	private final int mId;
 	
 	private boolean mIsFixpoint;
@@ -225,6 +227,11 @@ public class OctagonDomainState
 				&& mBooleanAbstraction.equals(other.mBooleanAbstraction) && numericAbstractionIsEqualTo(other);
 	}
 	
+	@Override
+	public int hashCode() {
+		return mId;
+	}
+	
 	private boolean numericAbstractionIsEqualTo(OctagonDomainState other) {
 		OctMatrix m = normalizedNumericAbstraction();
 		OctMatrix n = other.normalizedNumericAbstraction();
@@ -281,7 +288,7 @@ public class OctagonDomainState
 	
 	@Override
 	public OctagonDomainState copy() {
-		return this; // OctagonDomainStates are immutable
+		throw new UnsupportedOperationException();
 	}
 
 	@Override
