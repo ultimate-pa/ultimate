@@ -197,6 +197,36 @@ public class OctagonDomainState
 	}
 	
 
+	public OctagonDomainState meet(OctagonDomainState other) {
+		OctagonDomainState result = cloneWithoutNumericAbstraction();
+		for (Map.Entry<String, BooleanValue> entry : mBooleanAbstraction.entrySet()) {
+			String name = entry.getKey();
+			result.mBooleanAbstraction.put(name, entry.getValue().intersect(other.mBooleanAbstraction.get(name)));
+		}
+		result.mNumericAbstraction = OctMatrix.min(mNumericAbstraction, other.mNumericAbstraction);
+		return result;
+	}
+	
+	public OctagonDomainState join(OctagonDomainState other) {
+		OctagonDomainState result = cloneWithoutNumericAbstraction();
+		for (Map.Entry<String, BooleanValue> entry : mBooleanAbstraction.entrySet()) {
+			String name = entry.getKey();
+			result.mBooleanAbstraction.put(name, entry.getValue().merge(other.mBooleanAbstraction.get(name)));
+		}
+		result.mNumericAbstraction = OctMatrix.max(mNumericAbstraction, other.mNumericAbstraction);
+		return result;
+	}
+	
+	public OctagonDomainState widen(OctagonDomainState other) {
+		OctagonDomainState result = cloneWithoutNumericAbstraction();
+		for (Map.Entry<String, BooleanValue> entry : mBooleanAbstraction.entrySet()) {
+			String name = entry.getKey();
+			result.mBooleanAbstraction.put(name, entry.getValue().merge(other.mBooleanAbstraction.get(name)));
+		}
+		result.mNumericAbstraction = mNumericAbstraction.widen(other.mNumericAbstraction);
+		return result;
+	}
+	
 	@Override
 	public Term getTerm(Script script, Boogie2SMT bpl2smt) {
 		// TODO Auto-generated method stub

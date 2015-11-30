@@ -18,8 +18,7 @@ public class OctagonDomain implements IAbstractDomain<OctagonDomainState, CodeBl
 		return new IAbstractStateBinaryOperator<OctagonDomainState>() {
 			@Override
 			public OctagonDomainState apply(OctagonDomainState first, OctagonDomainState second) {
-				// TODO
-				return null;
+				return first.widen(second);
 			}
 		};
 	}
@@ -29,8 +28,7 @@ public class OctagonDomain implements IAbstractDomain<OctagonDomainState, CodeBl
 		return new IAbstractStateBinaryOperator<OctagonDomainState>() {
 			@Override
 			public OctagonDomainState apply(OctagonDomainState first, OctagonDomainState second) {
-				// TODO
-				return null;
+				return first.join(second);
 			}
 		};
 	}

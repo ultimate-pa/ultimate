@@ -486,7 +486,7 @@ public class OctMatrix {
 		return false;
 	}
 
-	public OctMatrix widen(OctMatrix n, OctValue limit) {
+	public OctMatrix widen(OctMatrix n) {
 		return elementwiseOperation(n, (mij, nij) -> {
 				return nij.compareTo(mij) <= 0 ? mij : OctValue.INFINITY;
 			});
