@@ -819,17 +819,6 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		return m_AnnotateAndAsserterConjuncts;
 	}
 
-	@Override
-	public int getTotalNumberOfPredicates(INTERPOLATION interpolation) {
-		switch (interpolation) {
-		case ForwardPredicates:
-			return m_InterpolantsFp != null ? m_InterpolantsFp.length : 0;
-		case BackwardPredicates:
-			return m_InterpolantsBp != null ? m_InterpolantsBp.length : 0;
-		default:
-			return super.getTotalNumberOfPredicates(interpolation);
-		}
-	}
 
 	public static class TraceCheckerSpWpBenchmarkType extends TraceCheckerBenchmarkType implements IBenchmarkType {
 
