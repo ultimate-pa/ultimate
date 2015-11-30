@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
@@ -45,12 +46,13 @@ public class OctagonDomainState
 		mId = sId++;
 	}
 	
-	private OctagonDomainState cloneWithoutNumericAbstraction() {
-		OctagonDomainState s = new OctagonDomainState();		
-		s.mMapVariableToType = new HashMap<>(mMapVariableToType);
-		s.mMapNumericVariableToIndex = new HashMap<>(mMapNumericVariableToIndex);
-		s.mNumericNonIntegerVariables = new HashSet<>(mNumericNonIntegerVariables);
-		s.mBooleanAbstraction = new HashMap<>(mBooleanAbstraction);
+	private OctagonDomainState shallowCopy() {
+		OctagonDomainState s = new OctagonDomainState();
+		s.mIsFixpoint = mIsFixpoint;
+		s.mMapVariableToType = mMapVariableToType;
+		s.mMapNumericVariableToIndex = mMapNumericVariableToIndex;
+		s.mNumericNonIntegerVariables = mNumericNonIntegerVariables;
+		s.mBooleanAbstraction = mBooleanAbstraction;
 		return s;
 	}
 
@@ -66,18 +68,22 @@ public class OctagonDomainState
 
 	@Override
 	public OctagonDomainState addVariables(Map<String, IBoogieVar> variables) {
-		OctagonDomainState newState = cloneWithoutNumericAbstraction();
+		OctagonDomainState newState = shallowCopy();
+		newState.mMapVariableToType = new HashMap<>(mMapVariableToType);
 		newState.mMapVariableToType.putAll(variables);
 		for (Map.Entry<String, IBoogieVar> entry : variables.entrySet()) {
 			String name = entry.getKey();
 			IBoogieVar var = entry.getValue();
 			IType type = var.getIType();
 			if (isNumeric(type)) {
+				unrefMapNumericVariableToIndex(newState);
 				newState.mMapNumericVariableToIndex.put(name, newState.mMapNumericVariableToIndex.size());
 				if (!isInteger(type)) {
+					unrefNumericNonIntegerVariables(newState);
 					newState.mNumericNonIntegerVariables.add(name);
 				}
 			} else if (type instanceof BooleanValue) {
+				unrefBooleanAbstraction(newState);
 				newState.mBooleanAbstraction.put(name, new BooleanValue());
 			} else {
 				throw new UnsupportedOperationException("Variables of type " + type + " are not supported.");
@@ -112,15 +118,21 @@ public class OctagonDomainState
 	
 	@Override
 	public OctagonDomainState removeVariables(Map<String, IBoogieVar> variables) {
-		OctagonDomainState newState = cloneWithoutNumericAbstraction();
+		OctagonDomainState newState = shallowCopy();
+		newState.mMapVariableToType = new HashMap<>(mMapVariableToType);
 		Set<Integer> indexRemovedNumericVars = new HashSet<>();
 		for (String name : variables.keySet()) {
 			newState.mMapVariableToType.remove(name);
-			Integer i = newState.mMapNumericVariableToIndex.remove(name);
-			if (i != null) {
+			if (newState.mMapNumericVariableToIndex.containsKey(name)) {
+				unrefMapNumericVariableToIndex(newState);
+				int i = newState.mMapNumericVariableToIndex.remove(name);
 				indexRemovedNumericVars.add(i);
-				newState.mNumericNonIntegerVariables.remove(name);
+				if (mNumericNonIntegerVariables.contains(name)) {
+					unrefNumericNonIntegerVariables(newState);
+					newState.mNumericNonIntegerVariables.remove(name);
+				}
 			} else {
+				unrefBooleanAbstraction(newState);
 				newState.mBooleanAbstraction.remove(name);
 			}
 		}
@@ -128,6 +140,24 @@ public class OctagonDomainState
 		return newState;
 	}
 
+	private void unrefMapNumericVariableToIndex(OctagonDomainState state) {
+		if (state.mMapNumericVariableToIndex == mMapNumericVariableToIndex) {
+			state.mMapNumericVariableToIndex = new HashMap<>(mMapNumericVariableToIndex);
+		}
+	}
+
+	private void unrefNumericNonIntegerVariables(OctagonDomainState state) {
+		if (state.mNumericNonIntegerVariables == mNumericNonIntegerVariables) {
+			state.mNumericNonIntegerVariables = new HashSet<>(mNumericNonIntegerVariables);
+		}		
+	}
+	
+	private void unrefBooleanAbstraction(OctagonDomainState state) {
+		if (state.mBooleanAbstraction == mBooleanAbstraction) {
+			state.mBooleanAbstraction = new HashMap<>(mBooleanAbstraction);
+		}
+	}
+	
 	@Override
 	public IBoogieVar getVariableType(String name) {
 		return mMapVariableToType.get(name);
@@ -180,7 +210,11 @@ public class OctagonDomainState
 
 	@Override
 	public OctagonDomainState setFixpoint(boolean value) {
-		OctagonDomainState newState = cloneWithoutNumericAbstraction();
+		if (value == mIsFixpoint) {
+			return this;
+		}	
+		OctagonDomainState newState = shallowCopy();
+		newState.mIsFixpoint = value;
 		return newState;
 	}
 
@@ -195,35 +229,30 @@ public class OctagonDomainState
 		OctMatrix n = other.normalizedNumericAbstraction();
 		return (m.hasNegativeSelfLoop() && n.hasNegativeSelfLoop()) || m.isEqualTo(n);
 	}
-	
 
 	public OctagonDomainState meet(OctagonDomainState other) {
-		OctagonDomainState result = cloneWithoutNumericAbstraction();
-		for (Map.Entry<String, BooleanValue> entry : mBooleanAbstraction.entrySet()) {
-			String name = entry.getKey();
-			result.mBooleanAbstraction.put(name, entry.getValue().intersect(other.mBooleanAbstraction.get(name)));
-		}
-		result.mNumericAbstraction = OctMatrix.min(mNumericAbstraction, other.mNumericAbstraction);
-		return result;
+		return operation(other, BooleanValue::intersect, OctMatrix::min);
 	}
 	
 	public OctagonDomainState join(OctagonDomainState other) {
-		OctagonDomainState result = cloneWithoutNumericAbstraction();
-		for (Map.Entry<String, BooleanValue> entry : mBooleanAbstraction.entrySet()) {
-			String name = entry.getKey();
-			result.mBooleanAbstraction.put(name, entry.getValue().merge(other.mBooleanAbstraction.get(name)));
-		}
-		result.mNumericAbstraction = OctMatrix.max(mNumericAbstraction, other.mNumericAbstraction);
-		return result;
+		return operation(other, BooleanValue::merge, OctMatrix::max);
 	}
 	
 	public OctagonDomainState widen(OctagonDomainState other) {
-		OctagonDomainState result = cloneWithoutNumericAbstraction();
+		return operation(other, BooleanValue::merge, OctMatrix::widen);
+	}
+	
+	private OctagonDomainState operation(OctagonDomainState other,
+			BiFunction<BooleanValue, BooleanValue, BooleanValue> booleanOperation,
+			BiFunction<OctMatrix, OctMatrix, OctMatrix> numericOperation) {		
+		OctagonDomainState result = shallowCopy();
+		unrefBooleanAbstraction(result);
 		for (Map.Entry<String, BooleanValue> entry : mBooleanAbstraction.entrySet()) {
 			String name = entry.getKey();
-			result.mBooleanAbstraction.put(name, entry.getValue().merge(other.mBooleanAbstraction.get(name)));
+			BooleanValue value = booleanOperation.apply(entry.getValue(),other.mBooleanAbstraction.get(name));
+			result.mBooleanAbstraction.put(name, value);
 		}
-		result.mNumericAbstraction = mNumericAbstraction.widen(other.mNumericAbstraction);
+		result.mNumericAbstraction = numericOperation.apply(mNumericAbstraction, other.mNumericAbstraction);
 		return result;
 	}
 	
