@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus <greitsch@informatik.uni-freiburg.de>
  *
  */
-public class IntervalLogicalUnaryExpressionEvaluator
+public class IntervalUnaryExpressionEvaluator
         implements INAryEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	private final Logger mLogger;
@@ -57,7 +57,7 @@ public class IntervalLogicalUnaryExpressionEvaluator
 
 	private BooleanValue mBooleanValue;
 
-	protected IntervalLogicalUnaryExpressionEvaluator(Logger logger) {
+	protected IntervalUnaryExpressionEvaluator(Logger logger) {
 		mLogger = logger;
 	}
 

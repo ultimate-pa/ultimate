@@ -108,7 +108,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	@Override
 	protected void visit(AssignmentStatement statement) {
 
-		mEvaluatorFactory = new IntervalLogicalEvaluatorFactory(mLogger);
+		mEvaluatorFactory = new IntervalEvaluatorFactory(mLogger);
 
 		final LeftHandSide[] lhs = statement.getLhs();
 		final Expression[] rhs = statement.getRhs();
@@ -185,7 +185,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 
 	@Override
 	protected void visit(AssumeStatement statement) {
-		mEvaluatorFactory = new IntervalLogicalEvaluatorFactory(mLogger);
+		mEvaluatorFactory = new IntervalEvaluatorFactory(mLogger);
 		mExpressionEvaluator = new ExpressionEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar>();
 
 		Expression formula = statement.getFormula();
@@ -214,13 +214,13 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	protected void visit(FunctionApplication expr) {
 		assert mEvaluatorFactory != null;
 
-		IntervalLogicalSingletonValueExpressionEvaluator evaluator;
+		IntervalSingletonValueExpressionEvaluator evaluator;
 
 		List<Declaration> decls = mSymbolTable.getFunctionOrProcedureDeclaration(expr.getIdentifier());
 
 		// If we don't have a specification for the function, we return top.
 		if (decls == null || decls.isEmpty()) {
-			evaluator = new IntervalLogicalSingletonValueExpressionEvaluator(new IntervalDomainValue());
+			evaluator = new IntervalSingletonValueExpressionEvaluator(new IntervalDomainValue());
 		} else {
 
 			assert decls.get(0) instanceof FunctionDeclaration;
@@ -229,7 +229,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 
 			// If the body is empty (as in undefined), we return top.
 			if (fun.getBody() == null) {
-				evaluator = new IntervalLogicalSingletonValueExpressionEvaluator(new IntervalDomainValue());
+				evaluator = new IntervalSingletonValueExpressionEvaluator(new IntervalDomainValue());
 			} else {
 				// TODO Handle bitshifts, bitwise and, bitwise or, etc.
 
@@ -243,7 +243,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 
 	@Override
 	protected void visit(HavocStatement statement) {
-		mEvaluatorFactory = new IntervalLogicalEvaluatorFactory(mLogger);
+		mEvaluatorFactory = new IntervalEvaluatorFactory(mLogger);
 
 		for (VariableLHS var : statement.getIdentifiers()) {
 			final IBoogieVar type = mOldState.getVariables().get(var.getIdentifier());
@@ -306,14 +306,14 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	protected void visit(ArrayStoreExpression expr) {
 		// TODO Implement proper handling of arrays.
 		mExpressionEvaluator
-		        .addEvaluator(new IntervalLogicalSingletonValueExpressionEvaluator(new IntervalDomainValue()));
+		        .addEvaluator(new IntervalSingletonValueExpressionEvaluator(new IntervalDomainValue()));
 	}
 
 	@Override
 	protected void visit(ArrayAccessExpression expr) {
 		// TODO Implement proper handling of arrays.
 		mExpressionEvaluator
-		        .addEvaluator(new IntervalLogicalSingletonValueExpressionEvaluator(new IntervalDomainValue()));
+		        .addEvaluator(new IntervalSingletonValueExpressionEvaluator(new IntervalDomainValue()));
 	}
 
 }

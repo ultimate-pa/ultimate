@@ -44,19 +44,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus <greitsch@informatik.uni-freiburg.de>
  *
  */
-public class IntervalLogicalSingletonBooleanExpressionEvaluator
+public class IntervalSingletonBooleanExpressionEvaluator
         implements IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	private final BooleanValue mBooleanValue;
 
 	/**
-	 * Default constructor that creates a new instance of the {@link IntervalLogicalSingletonBooleanExpressionEvaluator}
-	 * in the {@link IntervalDomain}.
+	 * Default constructor that creates a new instance of the {@link IntervalSingletonBooleanExpressionEvaluator} in the
+	 * {@link IntervalDomain}.
 	 * 
 	 * @param value
 	 *            The value to set.
 	 */
-	protected IntervalLogicalSingletonBooleanExpressionEvaluator(BooleanValue value) {
+	protected IntervalSingletonBooleanExpressionEvaluator(BooleanValue value) {
 		mBooleanValue = value;
 	}
 

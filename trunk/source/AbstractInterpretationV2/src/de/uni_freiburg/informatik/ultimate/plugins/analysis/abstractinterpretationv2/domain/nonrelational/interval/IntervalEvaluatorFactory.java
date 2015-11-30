@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
-public class IntervalLogicalEvaluatorFactory
+public class IntervalEvaluatorFactory
 		implements IEvaluatorFactory<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	private static final int ARITY_MIN = 1;
@@ -46,7 +46,7 @@ public class IntervalLogicalEvaluatorFactory
 
 	private final Logger mLogger;
 
-	public IntervalLogicalEvaluatorFactory(Logger logger) {
+	public IntervalEvaluatorFactory(Logger logger) {
 		mLogger = logger;
 	}
 
@@ -58,9 +58,9 @@ public class IntervalLogicalEvaluatorFactory
 
 		switch (arity) {
 		case ARITY_MIN:
-			return new IntervalLogicalUnaryExpressionEvaluator(mLogger);
+			return new IntervalUnaryExpressionEvaluator(mLogger);
 		case ARITY_MAX:
-			return new IntervalLogicalBinaryExpressionEvaluator(mLogger);
+			return new IntervalBinaryExpressionEvaluator(mLogger);
 		default:
 			final StringBuilder stringBuilder = new StringBuilder(BUFFER_MAX);
 			stringBuilder.append("Arity of ").append(arity).append(" is not implemented.");
@@ -72,7 +72,7 @@ public class IntervalLogicalEvaluatorFactory
 	public IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> createSingletonValueExpressionEvaluator(
 			String value, Class<?> valueType) {
 		assert value != null;
-		return new IntervalLogicalSingletonValueExpressionEvaluator(
+		return new IntervalSingletonValueExpressionEvaluator(
 				new IntervalDomainValue(new IntervalValue(value), new IntervalValue(value)));
 	}
 
@@ -80,13 +80,13 @@ public class IntervalLogicalEvaluatorFactory
 	public IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> createSingletonVariableExpressionEvaluator(
 			String variableName) {
 		assert variableName != null;
-		return new IntervalLogicalSingletonVariableExpressionEvaluator(variableName);
+		return new IntervalSingletonVariableExpressionEvaluator(variableName);
 	}
 
 	@Override
 	public IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> createSingletonLogicalValueExpressionEvaluator(
 			BooleanValue value) {
-		return new IntervalLogicalSingletonBooleanExpressionEvaluator(value);
+		return new IntervalSingletonBooleanExpressionEvaluator(value);
 	}
 
 }

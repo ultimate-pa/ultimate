@@ -31,59 +31,90 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
- * Represents the singleton value expression evaluator for logical values in the {@link IntervalDomain}.
+ * Class to represent the logical evaluator for singleton variable expressions in the {@link IntervalDomain}.
  * 
  * @author Marius Greitschus <greitsch@informatik.uni-freiburg.de>
  *
  */
-public class IntervalLogicalSingletonValueExpressionEvaluator
+public class IntervalSingletonVariableExpressionEvaluator
         implements IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
 
-	private final IntervalDomainValue mValue;
+	private final Set<String> mVariableSet;
 
-	/**
-	 * Constructor for a singleton value expression evaluator in the {@link IntervalDomain}.
-	 * 
-	 * @param value
-	 *            The value of the evaluator.
-	 */
-	protected IntervalLogicalSingletonValueExpressionEvaluator(IntervalDomainValue value) {
-		mValue = value;
-	}
+	private BooleanValue mBooleanValue = new BooleanValue();
+	private boolean mContainsBoolean = false;
 
-	@Override
-	public BooleanValue booleanValue() {
-		return new BooleanValue(Value.TOP);
-	}
+	private String mVariableName;
 
-	@Override
-	public boolean containsBool() {
-		return false;
+	public IntervalSingletonVariableExpressionEvaluator(String variableName) {
+		mVariableName = variableName;
+		mVariableSet = new HashSet<>();
+		mVariableSet.add(variableName);
 	}
 
 	@Override
 	public IEvaluationResult<IntervalDomainEvaluationResult> evaluate(IntervalDomainState currentState) {
-		return new IntervalDomainEvaluationResult(mValue, currentState);
+
+		IntervalDomainValue val;
+
+		final IBoogieVar type = currentState.getVariableType(mVariableName);
+		if (type.getIType() instanceof PrimitiveType) {
+			final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
+
+			if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
+				val = new IntervalDomainValue();
+				mBooleanValue = new BooleanValue(currentState.getBooleanValues().get(mVariableName));
+				mContainsBoolean = true;
+			} else {
+				val = currentState.getValues().get(mVariableName);
+
+				assert val != null : "The variable with name " + mVariableName
+				        + " has not been found in the current abstract state.";
+			}
+		} else if (type.getIType() instanceof ArrayType) {
+			// TODO: Implement better handling of arrays.
+			val = currentState.getValues().get(mVariableName);
+		} else {
+			val = currentState.getValues().get(mVariableName);
+		}
+
+		if (val.isBottom()) {
+			return new IntervalDomainEvaluationResult(new IntervalDomainValue(true), currentState);
+		}
+
+		return new IntervalDomainEvaluationResult(new IntervalDomainValue(val.getLower(), val.getUpper()),
+		        currentState);
+	}
+
+	@Override
+	public BooleanValue booleanValue() {
+		return mBooleanValue;
+	}
+
+	@Override
+	public boolean containsBool() {
+		return mContainsBoolean;
 	}
 
 	@Override
 	public void addSubEvaluator(
 	        IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
 		throw new UnsupportedOperationException(
-		        "A sub evaluator cannot be added to a singleton expression value evaluator.");
+		        "A sub evaluator cannot be added to a singleton variable expression evaluator.");
 	}
 
 	@Override
 	public Set<String> getVarIdentifiers() {
-		return new HashSet<String>();
+		return mVariableSet;
 	}
 
 	@Override

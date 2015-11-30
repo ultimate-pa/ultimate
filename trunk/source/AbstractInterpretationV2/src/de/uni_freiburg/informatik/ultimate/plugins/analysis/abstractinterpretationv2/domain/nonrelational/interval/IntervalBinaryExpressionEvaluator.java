@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
-public class IntervalLogicalBinaryExpressionEvaluator
+public class IntervalBinaryExpressionEvaluator
         implements INAryEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	private IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> mLeftSubEvaluator;
@@ -56,7 +56,7 @@ public class IntervalLogicalBinaryExpressionEvaluator
 
 	private BooleanValue mBooleanValue;
 
-	protected IntervalLogicalBinaryExpressionEvaluator(Logger logger) {
+	protected IntervalBinaryExpressionEvaluator(Logger logger) {
 		mLogger = logger;
 		mVariableSet = new HashSet<>();
 	}

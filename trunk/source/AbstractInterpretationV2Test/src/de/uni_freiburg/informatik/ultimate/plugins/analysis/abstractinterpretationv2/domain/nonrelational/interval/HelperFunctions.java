@@ -37,8 +37,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalLogicalBinaryExpressionEvaluator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalLogicalSingletonValueExpressionEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalBinaryExpressionEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalSingletonValueExpressionEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.LoggerInitializer;
 
@@ -52,18 +52,18 @@ public class HelperFunctions {
 		return new IntervalDomainValue();
 	}
 
-	protected static IntervalLogicalBinaryExpressionEvaluator createBinaryEvaluator(IntervalDomainValue first,
+	protected static IntervalBinaryExpressionEvaluator createBinaryEvaluator(IntervalDomainValue first,
 	        IntervalDomainValue second, Operator operator) {
 
 		final LoggerInitializer loggerInitializer = new LoggerInitializer();
 		final Logger logger = loggerInitializer.getLogger(HelperFunctions.class.toGenericString());
 
-		IntervalLogicalSingletonValueExpressionEvaluator value1Evaluator = new IntervalLogicalSingletonValueExpressionEvaluator(
+		IntervalSingletonValueExpressionEvaluator value1Evaluator = new IntervalSingletonValueExpressionEvaluator(
 		        first);
-		IntervalLogicalSingletonValueExpressionEvaluator value2Evaluator = new IntervalLogicalSingletonValueExpressionEvaluator(
+		IntervalSingletonValueExpressionEvaluator value2Evaluator = new IntervalSingletonValueExpressionEvaluator(
 		        second);
 
-		IntervalLogicalBinaryExpressionEvaluator binaryExpressionEvaluator = new IntervalLogicalBinaryExpressionEvaluator(
+		IntervalBinaryExpressionEvaluator binaryExpressionEvaluator = new IntervalBinaryExpressionEvaluator(
 		        logger);
 
 		binaryExpressionEvaluator.setOperator(operator);
