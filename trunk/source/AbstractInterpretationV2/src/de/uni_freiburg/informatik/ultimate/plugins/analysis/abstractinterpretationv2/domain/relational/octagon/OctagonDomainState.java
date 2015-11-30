@@ -27,17 +27,17 @@ public class OctagonDomainState
 	
 	private boolean mIsFixpoint;
 	
-	private Map<String, IBoogieVar> mMapVariableToType;
-	private Map<String, Integer> mMapNumericVariableToIndex;
-	private Set<String> mNumericNonIntegerVariables;
+	private Map<String, IBoogieVar> mMapVarToBoogieVar;
+	private Map<String, Integer> mMapNumericVarToIndex;
+	private Set<String> mNumericNonIntVars;
 	private OctMatrix mNumericAbstraction;
 	private Map<String, BooleanValue> mBooleanAbstraction;
 
 	public static OctagonDomainState createFreshState() {
 		OctagonDomainState s = new OctagonDomainState();
-		s.mMapVariableToType = new HashMap<>();
-		s.mMapNumericVariableToIndex = new HashMap<>();
-		s.mNumericNonIntegerVariables = new HashSet<>();
+		s.mMapVarToBoogieVar = new HashMap<>();
+		s.mMapNumericVarToIndex = new HashMap<>();
+		s.mNumericNonIntVars = new HashSet<>();
 		s.mNumericAbstraction = OctMatrix.NEW;
 		s.mBooleanAbstraction = new HashMap<>();
 		return s;
@@ -50,9 +50,9 @@ public class OctagonDomainState
 	private OctagonDomainState shallowCopy() {
 		OctagonDomainState s = new OctagonDomainState();
 		s.mIsFixpoint = mIsFixpoint;
-		s.mMapVariableToType = mMapVariableToType;
-		s.mMapNumericVariableToIndex = mMapNumericVariableToIndex;
-		s.mNumericNonIntegerVariables = mNumericNonIntegerVariables;
+		s.mMapVarToBoogieVar = mMapVarToBoogieVar;
+		s.mMapNumericVarToIndex = mMapNumericVarToIndex;
+		s.mNumericNonIntVars = mNumericNonIntVars;
 		s.mBooleanAbstraction = mBooleanAbstraction;
 		return s;
 	}
@@ -70,18 +70,18 @@ public class OctagonDomainState
 	@Override
 	public OctagonDomainState addVariables(Map<String, IBoogieVar> variables) {
 		OctagonDomainState newState = shallowCopy();
-		newState.mMapVariableToType = new HashMap<>(mMapVariableToType);
-		newState.mMapVariableToType.putAll(variables);
+		newState.mMapVarToBoogieVar = new HashMap<>(mMapVarToBoogieVar);
+		newState.mMapVarToBoogieVar.putAll(variables);
 		for (Map.Entry<String, IBoogieVar> entry : variables.entrySet()) {
 			String name = entry.getKey();
 			IBoogieVar var = entry.getValue();
 			IType type = var.getIType();
 			if (isNumeric(type)) {
-				unrefMapNumericVariableToIndex(newState);
-				newState.mMapNumericVariableToIndex.put(name, newState.mMapNumericVariableToIndex.size());
+				unrefMapNumericVarToIndex(newState);
+				newState.mMapNumericVarToIndex.put(name, newState.mMapNumericVarToIndex.size());
 				if (!isInteger(type)) {
-					unrefNumericNonIntegerVariables(newState);
-					newState.mNumericNonIntegerVariables.add(name);
+					unrefNumericNonIntVars(newState);
+					newState.mNumericNonIntVars.add(name);
 				}
 			} else if (type instanceof BooleanValue) {
 				unrefBooleanAbstraction(newState);
@@ -91,7 +91,7 @@ public class OctagonDomainState
 			}
 		}
 		newState.mNumericAbstraction =
-				mNumericAbstraction.addVariables(mMapNumericVariableToIndex.size() - mNumericAbstraction.variables());
+				mNumericAbstraction.addVariables(mMapNumericVarToIndex.size() - mNumericAbstraction.variables());
 		return newState;
 	}
 
@@ -120,17 +120,17 @@ public class OctagonDomainState
 	@Override
 	public OctagonDomainState removeVariables(Map<String, IBoogieVar> variables) {
 		OctagonDomainState newState = shallowCopy();
-		newState.mMapVariableToType = new HashMap<>(mMapVariableToType);
+		newState.mMapVarToBoogieVar = new HashMap<>(mMapVarToBoogieVar);
 		Set<Integer> indexRemovedNumericVars = new HashSet<>();
 		for (String name : variables.keySet()) {
-			newState.mMapVariableToType.remove(name);
-			if (newState.mMapNumericVariableToIndex.containsKey(name)) {
-				unrefMapNumericVariableToIndex(newState);
-				int i = newState.mMapNumericVariableToIndex.remove(name);
+			newState.mMapVarToBoogieVar.remove(name);
+			if (newState.mMapNumericVarToIndex.containsKey(name)) {
+				unrefMapNumericVarToIndex(newState);
+				int i = newState.mMapNumericVarToIndex.remove(name);
 				indexRemovedNumericVars.add(i);
-				if (mNumericNonIntegerVariables.contains(name)) {
-					unrefNumericNonIntegerVariables(newState);
-					newState.mNumericNonIntegerVariables.remove(name);
+				if (mNumericNonIntVars.contains(name)) {
+					unrefNumericNonIntVars(newState);
+					newState.mNumericNonIntVars.remove(name);
 				}
 			} else {
 				unrefBooleanAbstraction(newState);
@@ -141,15 +141,15 @@ public class OctagonDomainState
 		return newState;
 	}
 
-	private void unrefMapNumericVariableToIndex(OctagonDomainState state) {
-		if (state.mMapNumericVariableToIndex == mMapNumericVariableToIndex) {
-			state.mMapNumericVariableToIndex = new HashMap<>(mMapNumericVariableToIndex);
+	private void unrefMapNumericVarToIndex(OctagonDomainState state) {
+		if (state.mMapNumericVarToIndex == mMapNumericVarToIndex) {
+			state.mMapNumericVarToIndex = new HashMap<>(mMapNumericVarToIndex);
 		}
 	}
 
-	private void unrefNumericNonIntegerVariables(OctagonDomainState state) {
-		if (state.mNumericNonIntegerVariables == mNumericNonIntegerVariables) {
-			state.mNumericNonIntegerVariables = new HashSet<>(mNumericNonIntegerVariables);
+	private void unrefNumericNonIntVars(OctagonDomainState state) {
+		if (state.mNumericNonIntVars == mNumericNonIntVars) {
+			state.mNumericNonIntVars = new HashSet<>(mNumericNonIntVars);
 		}		
 	}
 	
@@ -161,17 +161,17 @@ public class OctagonDomainState
 	
 	@Override
 	public IBoogieVar getVariableType(String name) {
-		return mMapVariableToType.get(name);
+		return mMapVarToBoogieVar.get(name);
 	}
 
 	@Override
 	public boolean containsVariable(String name) {
-		return mMapVariableToType.containsKey(name);
+		return mMapVarToBoogieVar.containsKey(name);
 	}
 
 	@Override
 	public boolean isEmpty() {
-		return mMapVariableToType.isEmpty();
+		return mMapVarToBoogieVar.isEmpty();
 	}
 
 	@Override
@@ -201,7 +201,7 @@ public class OctagonDomainState
 	}
 	
 	private boolean isNumericAbstractionIntegral() {
-		return mNumericNonIntegerVariables.isEmpty();
+		return mNumericNonIntVars.isEmpty();
 	}
 	
 	@Override
@@ -221,7 +221,7 @@ public class OctagonDomainState
 
 	@Override
 	public boolean isEqualTo(OctagonDomainState other) {
-		return mMapVariableToType.equals(other.mMapVariableToType)
+		return mMapVarToBoogieVar.equals(other.mMapVarToBoogieVar)
 				&& mBooleanAbstraction.equals(other.mBooleanAbstraction) && numericAbstractionIsEqualTo(other);
 	}
 	
