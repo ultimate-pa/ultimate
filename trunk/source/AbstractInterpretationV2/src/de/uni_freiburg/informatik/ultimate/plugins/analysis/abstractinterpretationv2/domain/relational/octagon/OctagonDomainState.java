@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
@@ -258,10 +259,26 @@ public class OctagonDomainState
 	
 	@Override
 	public Term getTerm(Script script, Boogie2SMT bpl2smt) {
-		// TODO Auto-generated method stub
-		return null;
+		if (isBottom()) {
+			return script.term("false");
+		}
+		Term n = getTermNumericAbstraction(script, bpl2smt);
+		Term b = getTermNumericBooleanAbstraction(script, bpl2smt);
+		return Util.and(script, n, b);
 	}
-
+	
+	private Term getTermNumericAbstraction(Script script, Boogie2SMT bpl2smt) {		
+		Term acc = script.term("true");
+		// TODO implement
+		return acc;
+	}
+	
+	private Term getTermNumericBooleanAbstraction(Script script, Boogie2SMT bpl2smt) {
+		Term acc = script.term("true");
+		// TODO implement
+		return acc;
+	}
+	
 	@Override
 	public OctagonDomainState copy() {
 		return this; // OctagonDomainStates are immutable
