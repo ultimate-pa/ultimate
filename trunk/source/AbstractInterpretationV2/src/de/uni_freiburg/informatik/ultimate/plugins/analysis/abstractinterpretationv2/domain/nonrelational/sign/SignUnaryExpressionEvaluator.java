@@ -33,6 +33,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
@@ -69,7 +70,7 @@ public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, Sign
 
 		IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> castedSubEvaluator = (IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar>) mSubEvaluator;
 		final IEvaluationResult<Values> subEvalResult = (IEvaluationResult<Values>) castedSubEvaluator
-				.evaluate(oldState);
+		        .evaluate(oldState);
 
 		switch (mOperator) {
 		case LOGICNEG:
@@ -97,7 +98,7 @@ public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, Sign
 			return new SignDomainValue(Values.ZERO);
 		default:
 			throw new UnsupportedOperationException(
-					"The sign domain value " + value.toString() + " is not implemented.");
+			        "The sign domain value " + value.toString() + " is not implemented.");
 		}
 	}
 
@@ -114,5 +115,17 @@ public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, Sign
 	@Override
 	public int getArity() {
 		return 1;
+	}
+
+	@Override
+	public BooleanValue booleanValue() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean containsBool() {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

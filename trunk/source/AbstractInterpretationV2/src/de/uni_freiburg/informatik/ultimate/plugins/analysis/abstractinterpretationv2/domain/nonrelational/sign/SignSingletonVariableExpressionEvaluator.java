@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
@@ -44,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class SignSingletonVariableExpressionEvaluator
-		implements IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> {
+        implements IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> {
 
 	protected String mVariableName;
 	private final Set<String> mVariableSet;
@@ -78,7 +79,7 @@ public class SignSingletonVariableExpressionEvaluator
 
 		if (val == null) {
 			throw new UnsupportedOperationException(
-					"The variable with name " + mVariableName + " has not been found in the current abstract state.");
+			        "The variable with name " + mVariableName + " has not been found in the current abstract state.");
 		}
 
 		return new SignDomainValue(val.getResult());
@@ -87,5 +88,17 @@ public class SignSingletonVariableExpressionEvaluator
 	@Override
 	public Set<String> getVarIdentifiers() {
 		return mVariableSet;
+	}
+
+	@Override
+	public BooleanValue booleanValue() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean containsBool() {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 
 /**
  * Default interface for an expression evaluator. Each Evaluator should implement this interface in order to allow for
@@ -68,4 +69,20 @@ public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTION, V
 	public Set<String> getVarIdentifiers();
 
 	public boolean hasFreeOperands();
+
+	/**
+	 * @return The boolean value of the logical interpretation of the current expression.
+	 */
+	public BooleanValue booleanValue();
+
+	/**
+	 * States whether somewhere in the evaluator occurs a boolean value. This is needed to determine if the boolean
+	 * value should be used instead of the returned abstract value. Note: This is needed in the handling of logical
+	 * operators in evaluators and is only valid, if there exists 0 or 1 variable identifier in each subtree of the
+	 * evaluator.
+	 * 
+	 * @return <code>true</code> if and only if in the sub-tree is a boolean literal or interpretation present,
+	 *         <code>false</code> otherwise.
+	 */
+	public boolean containsBool();
 }

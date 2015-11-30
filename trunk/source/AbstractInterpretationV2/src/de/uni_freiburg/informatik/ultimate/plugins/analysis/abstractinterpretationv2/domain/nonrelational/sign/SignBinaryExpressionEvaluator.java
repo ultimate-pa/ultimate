@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
@@ -129,7 +130,7 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 			return performAddition((IEvaluationResult<Values>) firstResult, (IEvaluationResult<Values>) secondResult);
 		case ARITHMINUS:
 			return performSubtraction((IEvaluationResult<Values>) firstResult,
-					(IEvaluationResult<Values>) secondResult);
+			        (IEvaluationResult<Values>) secondResult);
 		default:
 			throw new UnsupportedOperationException("The operator " + mOperator.toString() + " is not implemented.");
 		}
@@ -177,7 +178,7 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 	 * @return A new evaluation result corresponding to the result of the addition operation.
 	 */
 	private IEvaluationResult<Values> performAddition(IEvaluationResult<Values> first,
-			IEvaluationResult<Values> second) {
+	        IEvaluationResult<Values> second) {
 
 		assert first != null;
 		assert second != null;
@@ -217,8 +218,8 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 
 		// We should have covered all cases. If not, throw exception.
 		throw new UnsupportedOperationException(
-				"There is one case which has not been covered in the addition of SignedDomain values. first: "
-						+ first.getResult().toString() + ", second: " + second.getResult().toString());
+		        "There is one case which has not been covered in the addition of SignedDomain values. first: "
+		                + first.getResult().toString() + ", second: " + second.getResult().toString());
 	}
 
 	/**
@@ -263,7 +264,7 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 	 * @return A new evaluation result corresponding to the result of the subtract operation.
 	 */
 	private IEvaluationResult<Values> performSubtraction(IEvaluationResult<Values> first,
-			IEvaluationResult<Values> second) {
+	        IEvaluationResult<Values> second) {
 
 		assert first != null;
 		assert second != null;
@@ -297,8 +298,8 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 
 		// We should have covered all cases. If not, throw exception.
 		throw new UnsupportedOperationException(
-				"There is one case which has not been covered in the subtraction of SignedDomain values. first: "
-						+ first.getResult().toString() + ", second: " + second.getResult().toString());
+		        "There is one case which has not been covered in the subtraction of SignedDomain values. first: "
+		                + first.getResult().toString() + ", second: " + second.getResult().toString());
 	}
 
 	/**
@@ -349,7 +350,7 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 			return new SignDomainValue(Values.ZERO);
 		default:
 			throw new UnsupportedOperationException(
-					"The sign domain value " + value.toString() + " is not implemented.");
+			        "The sign domain value " + value.toString() + " is not implemented.");
 		}
 	}
 
@@ -361,5 +362,17 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 	@Override
 	public int getArity() {
 		return 2;
+	}
+
+	@Override
+	public BooleanValue booleanValue() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean containsBool() {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

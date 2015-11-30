@@ -28,10 +28,14 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.ILogicalEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -40,11 +44,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus <greitsch@informatik.uni-freiburg.de>
  *
  */
-public class IntervalLogicalSingletonValueExpressionEvaluator extends IntervalSingletonValueExpressionEvaluator
-		implements ILogicalEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
+public class IntervalLogicalSingletonValueExpressionEvaluator
+        implements IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
 
+	private final IntervalDomainValue mValue;
+
+	/**
+	 * Constructor for a singleton value expression evaluator in the {@link IntervalDomain}.
+	 * 
+	 * @param value
+	 *            The value of the evaluator.
+	 */
 	protected IntervalLogicalSingletonValueExpressionEvaluator(IntervalDomainValue value) {
-		super(value);
+		mValue = value;
 	}
 
 	@Override
@@ -54,6 +66,28 @@ public class IntervalLogicalSingletonValueExpressionEvaluator extends IntervalSi
 
 	@Override
 	public boolean containsBool() {
+		return false;
+	}
+
+	@Override
+	public IEvaluationResult<IntervalDomainEvaluationResult> evaluate(IntervalDomainState currentState) {
+		return new IntervalDomainEvaluationResult(mValue, currentState);
+	}
+
+	@Override
+	public void addSubEvaluator(
+	        IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
+		throw new UnsupportedOperationException(
+		        "A sub evaluator cannot be added to a singleton expression value evaluator.");
+	}
+
+	@Override
+	public Set<String> getVarIdentifiers() {
+		return new HashSet<String>();
+	}
+
+	@Override
+	public boolean hasFreeOperands() {
 		return false;
 	}
 

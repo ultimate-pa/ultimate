@@ -30,6 +30,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.math.BigDecimal;
 
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+
 /**
  * Represents a single decimal expression in the {@link SignDomain}.
  * 
@@ -58,6 +60,18 @@ public class SignSingletonDecimalExpressionEvaluator extends SignSingletonValueE
 	@Override
 	protected int getSignum() {
 		return mValue.signum();
+	}
+
+	@Override
+	public BooleanValue booleanValue() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean containsBool() {
+		// TODO Auto-generated method stub
+		return false;
 	}
 
 }

@@ -31,12 +31,12 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.ILogicalEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEvaluator
-        implements ILogicalEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> {
+        implements IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> {
 
 	private BooleanValue mBooleanValue = new BooleanValue(false);
 
@@ -243,21 +243,18 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 
 	protected BooleanValue logicalEvaluation(SignDomainState currentState) {
 
-		final ILogicalEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> left = (ILogicalEvaluator<SignDomainValue.Values, SignDomainState, CodeBlock, IBoogieVar>) mLeftSubEvaluator;
-		final ILogicalEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> right = (ILogicalEvaluator<SignDomainValue.Values, SignDomainState, CodeBlock, IBoogieVar>) mRightSubEvaluator;
-
 		switch (mOperator) {
 		case COMPEQ:
-			return left.booleanValue().intersect(right.booleanValue());
+			return mLeftSubEvaluator.booleanValue().intersect(mRightSubEvaluator.booleanValue());
 		case COMPNEQ:
-			return left.booleanValue().intersect(right.booleanValue().neg());
+			return mLeftSubEvaluator.booleanValue().intersect(mRightSubEvaluator.booleanValue().neg());
 		case LOGICIMPLIES:
-			return left.booleanValue().or(right.booleanValue());
+			return mLeftSubEvaluator.booleanValue().or(mRightSubEvaluator.booleanValue());
 		case LOGICIFF:
-			return (left.booleanValue().and(right.booleanValue())
-			        .or((left.booleanValue().neg().and(right.booleanValue().neg()))));
+			return (mLeftSubEvaluator.booleanValue().and(mRightSubEvaluator.booleanValue())
+			        .or((mLeftSubEvaluator.booleanValue().neg().and(mRightSubEvaluator.booleanValue().neg()))));
 		case LOGICOR:
-			return left.booleanValue().or(right.booleanValue());
+			return mLeftSubEvaluator.booleanValue().or(mRightSubEvaluator.booleanValue());
 		default:
 			throw new UnsupportedOperationException("Operator " + mOperator + " not yet implemented.");
 			// TODO: implement other cases
