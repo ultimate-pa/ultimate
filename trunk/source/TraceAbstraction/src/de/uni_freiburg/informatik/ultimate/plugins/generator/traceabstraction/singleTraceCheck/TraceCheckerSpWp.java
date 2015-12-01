@@ -118,8 +118,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			m_ConstructBackwardInterpolantSequence = false;
 			break;
 		case BackwardPredicates:
-			m_ConstructForwardInterpolantSequence = true;
-			m_ConstructBackwardInterpolantSequence = false;
+			m_ConstructForwardInterpolantSequence = false;
+			m_ConstructBackwardInterpolantSequence = true;
 			break;
 		case FPandBP:
 			m_ConstructForwardInterpolantSequence = true;
