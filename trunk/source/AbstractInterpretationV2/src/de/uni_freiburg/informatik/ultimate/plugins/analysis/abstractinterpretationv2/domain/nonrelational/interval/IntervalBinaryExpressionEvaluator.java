@@ -636,7 +636,7 @@ public class IntervalBinaryExpressionEvaluator
 		}
 
 		if (setToBottom) {
-			returnState.setToBottom();
+			returnState = returnState.bottomState();
 		}
 
 		return new IntervalDomainEvaluationResult(returnValue, returnState);

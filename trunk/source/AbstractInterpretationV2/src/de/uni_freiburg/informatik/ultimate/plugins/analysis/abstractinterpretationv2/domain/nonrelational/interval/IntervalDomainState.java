@@ -454,11 +454,16 @@ public class IntervalDomainState
 		return null;
 	}
 
-	// TODO: This breaks immutability. Return a new object here.
-	public void setToBottom() {
-		for (final Entry<String, IntervalDomainValue> entry : mValuesMap.entrySet()) {
+	/**
+	 * @return A new {@link IntervalDomainState} containing the same set of variables but with values set to &bot;.
+	 */
+	protected IntervalDomainState bottomState() {
+		IntervalDomainState ret = copy();
+		for (final Entry<String, IntervalDomainValue> entry : ret.mValuesMap.entrySet()) {
 			entry.setValue(new IntervalDomainValue(true));
 		}
+
+		return ret;
 	}
 
 	@Override

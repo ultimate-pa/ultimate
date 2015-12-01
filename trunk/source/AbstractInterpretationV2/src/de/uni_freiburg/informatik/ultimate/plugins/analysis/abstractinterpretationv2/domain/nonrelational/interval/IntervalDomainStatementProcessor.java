@@ -193,7 +193,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 		if (formula instanceof BooleanLiteral) {
 			BooleanLiteral boolform = (BooleanLiteral) formula;
 			if (!boolform.getValue()) {
-				mNewState.setToBottom();
+				mNewState = mNewState.bottomState();
 			}
 			// We return since newState is a copy of the old state and the application of true is the old state.
 			return;

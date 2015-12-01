@@ -68,8 +68,7 @@ public class IntervalSingletonBooleanExpressionEvaluator
 		if (mBooleanValue.getValue() == Value.TRUE || mBooleanValue.getValue() == Value.TOP) {
 			returnState = currentState;
 		} else {
-			returnState = currentState.copy();
-			returnState.setToBottom();
+			returnState = currentState.bottomState();
 		}
 
 		return new IntervalDomainEvaluationResult(null, returnState);
