@@ -1,6 +1,6 @@
 //#rNonTerminationDerivable
 /*
- * Date: 2015-11-01
+ * Date: 2015-12-01
  * Author: Matthias Heizmann
  * 
  * we need two lambdas
