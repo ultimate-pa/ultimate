@@ -183,4 +183,12 @@ public enum Logics {
 	public boolean hasReals() {
 		return (mFeatures & Features.RA) != 0;
 	}
+	/**
+	 * Does this logic support floating point arithmetic?
+	 * @return <code>true</code> if and only if this logic supports floating 
+	 * point arithmetic.
+	 */
+	public boolean isFloatingPoint() {
+		return (mFeatures & Features.FP) != 0;
+	}
 }

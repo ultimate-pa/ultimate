@@ -841,6 +841,10 @@ public class Theory {
 		defineFunction(new RegularBitVecFunction("bvsge", 2, mBooleanSort));
 	}
 	
+	private void createFloatingPointOperators() {
+	
+	}
+	
 	private void setLogic(Logics logic) {
 		this.mLogic = logic;
 
@@ -868,6 +872,9 @@ public class Theory {
 
 		if (logic.isBitVector())
 			createBitVecOperators();
+		
+		if (logic.isFloatingPoint())
+			createFloatingPointOperators();
 
 		if (mSolverSetup != null)
 			mSolverSetup.setLogic(this, logic);
