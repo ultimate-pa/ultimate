@@ -99,21 +99,21 @@ public class AutomatonDebugger<LETTER, STATE> {
 		// loop through shrinkers until nothing has changed
 		boolean isReduced = true;
 		while (isReduced) {
-			isReduced = applyShrinker(shrinkersLoop);
+			isReduced = applyShrinkers(shrinkersLoop);
 		}
 		// final shrinkers (apply only once)
-		applyShrinker(shrinkersEnd);
+		applyShrinkers(shrinkersEnd);
 		return m_automaton;
 	}
 	
 	/**
-	 * Runs a binary search for each shrinkers in a list.
+	 * Runs a binary search for each shrinker in a list.
 	 * 
 	 * @see BinaryDebug
 	 * @param shrinkers list of shrinkers (shrinking rules)
 	 * @return true iff at least one shrinker was successful
 	 */
-	private boolean applyShrinker(
+	private boolean applyShrinkers(
 			final List<AShrinker<?, LETTER, STATE>> shrinkers) {
 		boolean isReduced = false;
 		for (final AShrinker<?, LETTER, STATE> shrinker : shrinkers) {
