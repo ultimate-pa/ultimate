@@ -63,6 +63,8 @@ public enum Logics {
 	AUFLIA    (Features.QU + Features.AX + Features.UF + Features.LA + Features.IA), //NOCHECKSTYLE
 	AUFLIRA   (Features.QU + Features.AX + Features.UF + Features.LA + Features.IA + Features.RA), //NOCHECKSTYLE
 	AUFNIRA   (Features.QU + Features.AX + Features.UF + Features.NA + Features.IA + Features.RA), //NOCHECKSTYLE
+	
+	FP        (Features.QU + Features.FP),
 	; //NOCHECKSTYLE
 	
 	static class Features {
@@ -84,6 +86,8 @@ public enum Logics {
 		static final int IA = (1 << 7);
 		/** flag for real arithmetic. */
 		static final int RA = (1 << 8);
+		/** flag for floating point arithmetic. */
+		static final int FP = (1 << 9);
 	}
 	
 	private final int mFeatures;
