@@ -1,20 +1,27 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.function.BiFunction;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.IType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -264,24 +271,43 @@ public class OctagonDomainState
 			return script.term("false");
 		}
 		Term n = getTermNumericAbstraction(script, bpl2smt);
-		Term b = getTermNumericBooleanAbstraction(script, bpl2smt);
+		Term b = getTermBooleanAbstraction(script, bpl2smt);
 		return Util.and(script, n, b);
 	}
 	
 	private Term getTermNumericAbstraction(Script script, Boogie2SMT bpl2smt) {		
+		List<Term> mapIndexToVar = new ArrayList<>(mMapNumericVarToIndex.size());
+		for (Map.Entry<String, Integer> entry : mMapNumericVarToIndex.entrySet()) {
+			Term termVar = getTermVar(entry.getKey());
+			mapIndexToVar.set(entry.getValue(), termVar);
+		}
+		return mNumericAbstraction.getTerm(script, mapIndexToVar);
+	}
+
+	private Term getTermBooleanAbstraction(Script script, Boogie2SMT bpl2smt) {
 		Term acc = script.term("true");
-		// TODO implement
+		for (Entry<String, BooleanValue> entry : mBooleanAbstraction.entrySet()) {
+			Term termVar = getTermVar(entry.getKey());
+			Sort sort = termVar.getSort().getRealSort();
+			Term newTerm = entry.getValue().getTerm(script, sort, termVar);
+			acc = Util.and(script, acc, newTerm);
+		}
 		return acc;
 	}
 	
-	private Term getTermNumericBooleanAbstraction(Script script, Boogie2SMT bpl2smt) {
-		Term acc = script.term("true");
-		// TODO implement
-		return acc;
+	private Term getTermVar(String varName) {
+		IBoogieVar var = mMapVarToBoogieVar.get(varName);
+		if (var instanceof BoogieVar) {
+			return ((BoogieVar) var).getTermVariable();
+		} else if (var instanceof BoogieConst) {
+			return ((BoogieConst) var).getDefaultConstant();
+		}
+		return null;
 	}
 	
 	@Override
 	public OctagonDomainState copy() {
+		// unused method of IAbstractState
 		throw new UnsupportedOperationException();
 	}
 

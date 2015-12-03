@@ -8,6 +8,10 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbol.Variable;
 
 /**
@@ -583,6 +587,36 @@ public class OctMatrix {
 		OctMatrix n = new OctMatrix(mSize - (2 * count));
 		System.arraycopy(mElements, 0, n.mElements, 0, n.mElements.length);
 		return n;
+	}
+	
+	public Term getTerm(Script script, List<Term> vars) {
+		Term acc = script.term("true");
+		for (int rowBlock = 0; rowBlock < variables(); ++rowBlock) {
+			Term rowVar = vars.get(rowBlock);
+			for (int colBlock = 0; colBlock <= rowBlock; ++colBlock) {
+				Term colVar = vars.get(colBlock);
+				Term blockTerm = getBlockTerm(script, rowBlock, colBlock, rowVar, colVar);
+				acc = Util.and(script, acc, blockTerm);
+			}
+		}
+		return acc;
+	}
+	
+	private Term getBlockTerm(Script script, int rowBlock, int colBlock, Term rowVar, Term colVar) {
+		Term acc = script.term("true");
+		// 0 = plus, 1 = minus
+		for (int i = 0; i < 2; ++i) { // row offset
+			for (int j = 0; j < 2; ++j) { // col offset
+				OctValue value = get(rowBlock + i, colBlock + j);
+				if (!value.isInfinity()) {
+					Term vj = j == 0 ? colVar : script.term("-", colVar);
+					Term vi = i == 0 ? rowVar : script.term("-", rowVar);
+					Term constraint = script.term("<=", script.term("-", vj, vi), script.decimal(value.getValue()));
+					acc = Util.and(script, acc, constraint);
+				}
+			}
+		}
+		return acc;
 	}
 	
 	@Override
