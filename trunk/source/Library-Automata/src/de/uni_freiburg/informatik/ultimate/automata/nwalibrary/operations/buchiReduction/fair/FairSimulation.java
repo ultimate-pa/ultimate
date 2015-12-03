@@ -35,11 +35,11 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.GameGraphSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Player0Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Player1Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
@@ -88,7 +88,7 @@ public final class FairSimulation<LETTER, STATE> {
 	private HashSet<Vertex<LETTER, STATE>> m_pokedFromNeighborSCC;
 
 	public FairSimulation(IUltimateServiceProvider services, INestedWordAutomatonOldApi<LETTER, STATE> buechi,
-			boolean useSCCs, StateFactory<STATE> stateFactory) throws AutomataLibraryException {
+			boolean useSCCs, StateFactory<STATE> stateFactory) {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_StateFactory = stateFactory;
@@ -182,7 +182,10 @@ public final class FairSimulation<LETTER, STATE> {
 		}
 	}
 
-	private void doSimulation() throws AutomataLibraryException {
+	private void doSimulation() {
+		// XXX Remove debugging information
+		System.out.println(">Starting minimization, useSCCs: " + m_UseSCCs);
+		
 		long startTime = System.currentTimeMillis();
 		long startTimeSCCCalc = 0;
 		long durationSCCCalc = 0;
@@ -191,27 +194,43 @@ public final class FairSimulation<LETTER, STATE> {
 		stepCounter = 0;
 
 		if (m_UseSCCs) {
+			// XXX Remove debugging information
+			System.out.println(">Calculating SCCs...");
+			
 			startTimeSCCCalc = System.currentTimeMillis();
 			m_pokedFromNeighborSCC = new HashSet<>();
 			m_SccFactory = new DefaultStronglyConnectedComponentFactory<>();
 			m_SuccessorProvider = new GameGraphSuccessorProvider<>(m_Game);
 			m_SccComp = new SccComputation<>(m_Logger, m_SuccessorProvider,
-					m_SccFactory, m_Game.getSize(), m_Game.getNodes());
+					m_SccFactory, m_Game.getSize(), m_Game.getStates());
 			durationSCCCalc = System.currentTimeMillis() - startTimeSCCCalc;
 			
-			System.out.println("Amount of SCCs: " + m_SccComp.getSCCs().size());
+			// XXX Remove debugging information
+			System.out.println("\tAmount of SCCs: " + m_SccComp.getSCCs().size());
 			
 			Iterator<StronglyConnectedComponent<Vertex<LETTER, STATE>>> iter =
 					new LinkedList<>(m_SccComp.getSCCs()).iterator();
+			
+			// XXX Remove debugging information
+			System.out.println(">Starting iterations...");
+			
 			while(iter.hasNext()) {
 				StronglyConnectedComponent<Vertex<LETTER, STATE>> scc =
 						iter.next();
 				iter.remove();
 				
-				efficientLiftingAlgorithm(
-						calculateInfinityOfSCC(scc), scc.getNodes());
+				int infinityOfSCC = calculateInfinityOfSCC(scc);
+				
+				// XXX Remove debugging information
+				System.out.println("Using SCC: " + sccToString(scc));
+				System.out.println("\tLocal infinity: " + infinityOfSCC);
+				
+				efficientLiftingAlgorithm(infinityOfSCC, scc.getNodes());
 			}
 		} else {
+			// XXX Remove debugging information
+			System.out.println(">Starting iterations...");
+			
 			efficientLiftingAlgorithm(globalInfinity, null);
 		}
 		// TODO Assign the reduced buechi
@@ -221,20 +240,18 @@ public final class FairSimulation<LETTER, STATE> {
 		m_Logger.info((m_UseSCCs ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds.");
 		
 		// XXX Remove debugging information
-		System.out.println("Simulation took " + stepCounter + " steps and " + duration + "ms.");
+		System.out.println(">Simulation took " + stepCounter + " steps and " + duration + "ms.");
 		if (m_UseSCCs) {
-			System.out.println("Calculating SCCs took " + durationSCCCalc + "ms.");
+			System.out.println(">Calculating SCCs took " + durationSCCCalc + "ms.");
 		}
+		System.out.println(">Ending minimization.");
 	}
 
-	private void efficientLiftingAlgorithm(int localInfinity, Set<Vertex<LETTER, STATE>> scc)
-			throws AutomataLibraryException {
+	private void efficientLiftingAlgorithm(int localInfinity, Set<Vertex<LETTER, STATE>> scc) {
 		initSimulation(false, localInfinity, scc);
 		
 		// XXX Remove debugging information
-		if (!workingList.isEmpty()) {
-			printWorkingList();
-		}
+		printWorkingList();
 		
 		while (!workingList.isEmpty()) {
 			stepCounter++;
@@ -243,27 +260,50 @@ public final class FairSimulation<LETTER, STATE> {
 			Vertex<LETTER, STATE> workingState = workingList.get(rnd.nextInt(workingList.size()));
 			removeStateFromWorkingList(workingState);
 			
+			// XXX Remove debugging information
+			System.out.println("\tWorkingState: " + workingState);
+			
 			Set<Vertex<LETTER, STATE>> usedSCCForNeighborCalculation = scc;
 			if (m_UseSCCs && m_pokedFromNeighborSCC.contains(workingState)) {
 				usedSCCForNeighborCalculation = null;
 				
 				// XXX Remove debugging information
-				System.out.println("Poking state " + workingState);
+				System.out.println("\t\tWorkingState is poked state: " + workingState);
 			}
 
 			// TODO Why globalInfinity?
 			int tempProgressMeasure = workingState.getPM(scc, globalInfinity);
 
+			// XXX Remove debugging information
+			System.out.print("\t\tBNM: " + workingState.getBEff());
+			
 			workingState.setBEff(calcBestNghbMeasure(workingState, localInfinity, usedSCCForNeighborCalculation));
+			
+			// XXX Remove debugging information
+			System.out.println(" -> " + workingState.getBEff());
+			System.out.print("\t\tNC: " + workingState.getC());
+			
 			workingState.setC(calcNghbCounter(workingState, localInfinity, usedSCCForNeighborCalculation));
+			
+			// XXX Remove debugging information
+			System.out.println(" -> " + workingState.getC());
+			System.out.print("\t\tPM: " + tempProgressMeasure);
+			
 			int currentProgressMeasure = increaseVector(workingState.getPriority(),
 					workingState.getBEff(), localInfinity);
 			workingState.setPM(currentProgressMeasure);
+			
+			// XXX Remove debugging information
+			System.out.println(" -> " + currentProgressMeasure);
 
-			HashSet<Vertex<LETTER, STATE>> predNodes = m_Game.getPredecessors(workingState);
+			Set<Vertex<LETTER, STATE>> predNodes = m_Game.getPredecessors(workingState);
 			if (predNodes == null || predNodes.isEmpty()) {
 				continue;
 			}
+			
+			// XXX Remove debugging information
+			System.out.println("\t\tWorking predecessors:");
+			
 			for (Vertex<LETTER, STATE> predecessor : predNodes) {
 				if (predecessor.isInWL()) {
 					continue;
@@ -274,7 +314,6 @@ public final class FairSimulation<LETTER, STATE> {
 				if (m_UseSCCs && !scc.contains(predecessor)) {
 					pokePossible = currentProgressMeasure >= localInfinity
 							&& !m_pokedFromNeighborSCC.contains(predecessor);
-					
 					if (!pokePossible) {
 						continue;
 					}
@@ -284,30 +323,56 @@ public final class FairSimulation<LETTER, STATE> {
 				if (decreaseVector(predecessor.getPriority(), workingState.getPM(scc, globalInfinity),
 						localInfinity) > predecessor.getBEff()) {
 
-					if (predecessor.isInV0() && decreaseVector(predecessor.getPriority(),
-							tempProgressMeasure, localInfinity) == predecessor.getBEff()) {
+					if (predecessor.isInV0() && (decreaseVector(predecessor.getPriority(),
+							tempProgressMeasure, localInfinity) == predecessor.getBEff()
+							|| (pokePossible && predecessor.getBEff() == 0))) {
 						
 						// If trying to use a state outside of the SCC make sure
-						// to initialize the neighbor counter before accessing it
+						// the neighbor counter was initialized before accessing it
 						if (pokePossible) {
-							predecessor.setC(m_Game.getSuccessors(predecessor).size());
+							if (predecessor.getC() == 0) {
+								// XXX Remove debugging information
+								System.out.println("\t\t\tInit C for pokePossible predecessor: " + predecessor);
+								System.out.print("\t\t\t\tC: " + predecessor.getC());
+								
+								predecessor.setC(m_Game.getSuccessors(predecessor).size());
+								
+								// XXX Remove debugging information
+								System.out.println(" -> " + predecessor.getC());
+							} else {
+								// XXX Remove debugging information
+								System.out.println("\t\t\tPokePossible predecessor was already initialized: " + predecessor);
+							}
 						}
 						
 						if (predecessor.getC() == 1) {
 							if (pokePossible) {
+								// XXX Remove debugging information
+								System.out.println("\t\t\tOnly one good neighbor, poking: " + predecessor);
+								
 								m_pokedFromNeighborSCC.add(predecessor);
-								System.err.println("Case: V_0 and C == 1");
 							} else {
+								// XXX Remove debugging information
+								System.out.println("\t\t\tOnly one good neighbor, adding to wL: " + predecessor);
+								
 								addStateToWorkingList(predecessor);
 							}
 						} else if (predecessor.getC() > 1) {
+							// XXX Remove debugging information
+							System.out.println("\t\t\tMore good neighbors, decreasing C: " + predecessor);
+							
 							predecessor.setC(predecessor.getC() - 1);
 						}
 					} else if (predecessor.isInV1()) {
 						if (pokePossible) {
+							// XXX Remove debugging information
+							System.out.println("\t\t\tIs spoiler state, poking: " + predecessor);
+							
 							m_pokedFromNeighborSCC.add(predecessor);
-							System.err.println("Case: V_1");
 						} else {
+							// XXX Remove debugging information
+							System.out.println("\t\t\tIs spoiler state, adding to wL: " + predecessor);
+							
 							addStateToWorkingList(predecessor);
 						}
 					}
@@ -321,12 +386,14 @@ public final class FairSimulation<LETTER, STATE> {
 	}
 
 	private int increaseVector(byte index, int vector, int localInfinity) {
-		// TODO Why globalInfinity, for safety?
 		if (vector >= localInfinity) {
 			return globalInfinity;
 		}
 		if (index == (byte) 1) {
 			vector++;
+			if (vector == localInfinity) {
+				return globalInfinity;
+			}
 			return vector;
 		} else {
 			return decreaseVector(index, vector, localInfinity);
@@ -344,6 +411,9 @@ public final class FairSimulation<LETTER, STATE> {
 	}
 
 	private void initSimulation(boolean reuseResults, int localInfinity, Set<Vertex<LETTER, STATE>> scc) {
+		// XXX Remove debugging information
+		System.out.println("\tInit:");
+				
 		workingList = new ArrayList<>();
 		if (m_UseSCCs) {
 			for (Vertex<LETTER, STATE> state : scc) {
@@ -366,6 +436,14 @@ public final class FairSimulation<LETTER, STATE> {
 		if (!m_Game.hasSuccessors(state) || state.getPriority() == (byte) 1
 				|| (m_UseSCCs && m_pokedFromNeighborSCC.contains(state))) {
 			addStateToWorkingList(state);
+			
+			// XXX Remove debugging information
+			if (!m_Game.hasSuccessors(state)) {
+				System.out.println("\t\tIs dead-end, adding to wL: " + state);
+			} else if (m_UseSCCs && m_pokedFromNeighborSCC.contains(state)) {
+				System.out.println("\t\tWas poked, adding to wL: " + state);
+			}
+			
 		}
 		if (m_UseSCCs) {
 			Set<Vertex<LETTER, STATE>> usedSCCForNeighborCalculation = scc;
@@ -458,22 +536,38 @@ public final class FairSimulation<LETTER, STATE> {
 	private void printWorkingList() {
 		StringBuilder result = new StringBuilder();
 		String lineSeparator = System.lineSeparator();
+		// Inline
+		if (workingList.size() <= 1) {
+			lineSeparator = "";
+		}
+		
 		// Header
-		result.append("wL = (");
+		result.append("\twL = (");
 		Iterator<Vertex<LETTER, STATE>> iter = workingList.iterator();
 		while (iter.hasNext()) {
-			Vertex<LETTER, STATE> state = iter.next();
-				result.append(lineSeparator + "\t(" + state.getQ0()
-			+ ", " + state.getQ1());
-			if (state instanceof Player0Vertex) {
-				Player0Vertex<LETTER, STATE> stateAsPlayer0 = (Player0Vertex<LETTER, STATE>) state;
-				result.append(", " + stateAsPlayer0.getLetter());
-			}
-			result.append(")");
+			result.append(lineSeparator + "\t\t" + iter.next());
 		}
 		// Footer
-		result.append(lineSeparator + ");");
+		result.append(lineSeparator + "\t);");
 		
 		System.out.println(result);
+	}
+	
+	private String sccToString(StronglyConnectedComponent<Vertex<LETTER, STATE>> scc) {
+		StringBuilder result = new StringBuilder();
+		
+		result.append("{");
+		for (Vertex<LETTER, STATE> state : scc.getNodes()) {
+			result.append("(" + state.getQ0()
+				+ ", " + state.getQ1());
+			if (state instanceof Player0Vertex) {
+				Player0Vertex<LETTER, STATE> stateAsPlayer0Vertex = (Player0Vertex<LETTER, STATE>) state;
+				result.append(", " + stateAsPlayer0Vertex.getLetter());
+			}
+			result.append("), ");
+		}
+		result.append("}");
+		
+		return result.toString();
 	}
 }
