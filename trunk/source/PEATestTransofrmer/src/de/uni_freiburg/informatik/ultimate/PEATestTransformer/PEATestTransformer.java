@@ -10,15 +10,15 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.SPLPatternParser.SPLPatternParser;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import pea.PhaseEventAutomata;
 import pea_to_boogie.translator.Translator;
-import srParse.pattern.PatternType;
+import srParse.pattern.PatternType; 
 
 public class PEATestTransformer implements ISource {
 	protected Logger mLogger;
@@ -118,5 +118,4 @@ public class PEATestTransformer implements ISource {
 	public UltimatePreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
 	}
-
 }

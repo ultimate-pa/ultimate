@@ -198,7 +198,7 @@ public class srParsePattern {
 				}
 				//CASE: AFTER Q UNTIL R
 					else 
-						if (scope instanceof srParseScopeAfter && ((srParseScopeAfter)scope).isUntil() ){
+						if (scope instanceof srParseScopeAfterUntil){
 						if (cdds.size() !=1){
 							//Das AbsentPattern besitzt nur zwei-drei nonLiteralTerminals!
 							System.out.println("ERROR: Wrong number of nonLiteralTerminals for the absentPattern");
