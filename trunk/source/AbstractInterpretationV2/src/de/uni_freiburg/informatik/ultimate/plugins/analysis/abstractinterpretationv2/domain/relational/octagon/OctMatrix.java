@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.function.Consumer;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbol.Variable;
 
@@ -36,7 +37,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonTheorySymbol
 public class OctMatrix {
 
 	public final static OctMatrix NEW = new OctMatrix(0);
-	
+
+	private final static Consumer<OctMatrix> sDefaultShortestPathClosure = OctMatrix::shortestPathClosureInPlacePrimitiveSparse;
+
 	/**
 	 * Size of this matrix (size = #rows = #columns).
 	 * Size is always an even number.
@@ -70,12 +73,6 @@ public class OctMatrix {
 		OctMatrix clone = new OctMatrix(mSize);
 		System.arraycopy(this.mElements, 0, clone.mElements, 0, mElements.length);
 		return clone;
-	}
-	
-	public static OctMatrix top(int variables) {
-		OctMatrix top = new OctMatrix(variables * 2);
-		Arrays.fill(top.mElements, OctValue.INFINITY);
-		return top;
 	}
 
 	public static OctMatrix parseBlockLowerTriangular(String m) {
@@ -152,9 +149,8 @@ public class OctMatrix {
 	}
 
 	private int indexOf(int row, int col) {
-		if (row >= mSize || col >= mSize) {
-			throw new IndexOutOfBoundsException(row + "," + col + " is not an index for matrix of size " + mSize + ".");
-		} else if (row < col) {
+		assert row < mSize && col < mSize : row + "," + col + " is not an index for matrix of size " + mSize + ".";
+		if (row < col) {
 			return indexOfLower(col ^ 1, row ^ 1);
 		}
 		return indexOfLower(row, col);
@@ -165,9 +161,7 @@ public class OctMatrix {
 	}
 
 	public OctMatrix elementwiseOperation(OctMatrix other, BiFunction<OctValue, OctValue, OctValue> operator) {
-		if (other.mSize != mSize) {
-			throw new IllegalArgumentException("Incompatible matrices");
-		}
+		checkCompatibility(other);
 		OctMatrix result = new OctMatrix(mSize);
 		for (int i = 0; i < mElements.length; ++i) {
 			result.mElements[i] = operator.apply(mElements[i], other.mElements[i]);
@@ -176,14 +170,19 @@ public class OctMatrix {
 	}
 	
 	public boolean elementwiseRelation(OctMatrix other, BiFunction<OctValue, OctValue, Boolean> relation) {
-		if (other.mSize != mSize)
-			throw new IllegalArgumentException("Incompatible matrices");
+		checkCompatibility(other);
 		for (int i = 0; i < mElements.length; ++i) {
 			if (!relation.apply(mElements[i], other.mElements[i])) {
 				return false;
 			}
 		}
 		return true;
+	}
+	
+	private void checkCompatibility(OctMatrix other) {
+		if (other.mSize != mSize) {			
+			throw new IllegalArgumentException("Incompatible matrices");
+		}
 	}
 
 	public OctMatrix add(OctMatrix other) {
@@ -208,47 +207,43 @@ public class OctMatrix {
 	}
 	
 	public OctMatrix strongClosure() {
-		return strongClosurePrimitiveSparse();
-	}
-	
-	public OctMatrix strongClosureNaiv() {
-		OctMatrix sc = this.clone();
-		sc.shortestPathClosureInPlaceNaiv();
-		sc.strengtheningInPlace();
-		return sc;
+		return strongClosure(sDefaultShortestPathClosure);
 	}
 
-	public OctMatrix strongClosurePrimitiveSparse() {
-		OctMatrix sc = this.clone();
-		sc.shortestPathClosureInPlacePrimitiveSparse();
-		sc.strengtheningInPlace();
-		return sc;
-	}
-	
-	public OctMatrix strongClosureSparse() {
-		OctMatrix sc = this.clone();
-		sc.shortestPathClosureInPlaceSparse();
-		sc.strengtheningInPlace();
-		return sc;
-	}
-	
-	public OctMatrix strongClosureFullSparse() {
-		OctMatrix sc = this.clone();
-		sc.shortestPathClosureInPlaceFullSparse();
-		sc.strengtheningInPlace();
-		return sc;
+	public OctMatrix strongClosureNaiv() {
+		return strongClosure(OctMatrix::shortestPathClosureInPlaceNaiv);
 	}
 	
 	public OctMatrix strongClosureApron() {
+		return strongClosure(OctMatrix::shortestPathClosureInPlaceApron);
+	}
+	
+	public OctMatrix strongClosureFullSparse() {
+		return strongClosure(OctMatrix::shortestPathClosureInPlaceFullSparse);
+	}
+	
+	public OctMatrix strongClosureSparse() {
+		return strongClosure(OctMatrix::shortestPathClosureInPlaceSparse);
+	}
+	
+	public OctMatrix strongClosurePrimitiveSparse() {
+		return strongClosure(OctMatrix::shortestPathClosureInPlacePrimitiveSparse);
+	}
+	
+	public OctMatrix strongClosure(Consumer<OctMatrix> shortestPathClosureAlgorithm) {		
 		OctMatrix sc = this.clone();
-		sc.shortestPathClosureInPlaceApron();
+		shortestPathClosureAlgorithm.accept(sc);
 		sc.strengtheningInPlace();
 		return sc;
 	}
 	
 	public OctMatrix tightClosure() {
+		return tightClosure(sDefaultShortestPathClosure);
+	}
+	
+	public OctMatrix tightClosure(Consumer<OctMatrix> shortestPathClosureAlgorithm) {
 		OctMatrix tc = this.clone();
-		tc.shortestPathClosureInPlaceNaiv();
+		shortestPathClosureAlgorithm.accept(tc);
 		tc.tighteningInPlace();
 		return tc;
 	}
