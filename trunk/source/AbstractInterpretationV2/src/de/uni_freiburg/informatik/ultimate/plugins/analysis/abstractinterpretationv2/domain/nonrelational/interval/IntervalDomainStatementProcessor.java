@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -55,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.ExpressionEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
@@ -106,8 +108,40 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	}
 
 	@Override
-	protected void visit(AssignmentStatement statement) {
+	protected Statement processStatement(Statement statement) {
+		if (statement instanceof AssignmentStatement) {
+			handleAssignment((AssignmentStatement) statement);
+			return statement;
+		} else if (statement instanceof AssumeStatement) {
+			handleAssumeStatement((AssumeStatement) statement);
+			return statement;
+		} else if (statement instanceof HavocStatement) {
+			handleHavocStatement((HavocStatement) statement);
+			return statement;
+		}
 
+		return super.processStatement(statement);
+	}
+
+	@Override
+	protected Expression processExpression(Expression expr) {
+
+		Expression newExpr = null;
+
+		if (expr instanceof BinaryExpression) {
+			newExpr = binaryExpressionHandling((BinaryExpression) expr);
+		} else if (expr instanceof UnaryExpression) {
+			newExpr = unaryExpressionHandling((UnaryExpression) expr);
+		}
+
+		if (newExpr == null || expr == newExpr) {
+			return super.processExpression(expr);
+		} else {
+			return processExpression(newExpr);
+		}
+	}
+
+	private void handleAssignment(AssignmentStatement statement) {
 		mEvaluatorFactory = new IntervalEvaluatorFactory(mLogger);
 
 		final LeftHandSide[] lhs = statement.getLhs();
@@ -170,8 +204,90 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 		mExpressionEvaluator.addEvaluator(evaluator);
 	}
 
+	private Expression binaryExpressionHandling(BinaryExpression expr) {
+		if (expr.getOperator() == Operator.COMPGT || expr.getOperator() == Operator.COMPLT) {
+			if (expr.getLeft().getType() instanceof PrimitiveType
+			        && expr.getRight().getType() instanceof PrimitiveType) {
+				final PrimitiveType primLeft = (PrimitiveType) expr.getLeft().getType();
+				final PrimitiveType primRight = (PrimitiveType) expr.getRight().getType();
+
+				if (primLeft.getTypeCode() == PrimitiveType.INT && primRight.getTypeCode() == PrimitiveType.INT) {
+					BinaryExpression newExp;
+
+					if (expr.getOperator() == Operator.COMPGT) {
+
+						final BinaryExpression newRight = new BinaryExpression(expr.getRight().getLocation(),
+						        Operator.ARITHPLUS, expr.getRight(),
+						        new IntegerLiteral(expr.getRight().getLocation(), "1"));
+
+						newExp = new BinaryExpression(expr.getLocation(), Operator.COMPGEQ, expr.getLeft(), newRight);
+					} else {
+						final BinaryExpression newRight = new BinaryExpression(expr.getRight().getLocation(),
+						        Operator.ARITHMINUS, expr.getRight(),
+						        new IntegerLiteral(expr.getRight().getLocation(), "1"));
+
+						newExp = new BinaryExpression(expr.getLocation(), Operator.COMPLEQ, expr.getLeft(), newRight);
+					}
+
+					mLogger.debug(BoogiePrettyPrinter.print(newExp));
+					return newExp;
+				}
+			}
+		}
+		return expr;
+	}
+
+	private Expression unaryExpressionHandling(UnaryExpression expr) {
+		if (expr.getOperator() == UnaryExpression.Operator.LOGICNEG) {
+			if (expr.getExpr() instanceof BinaryExpression) {
+				final BinaryExpression binexp = (BinaryExpression) expr.getExpr();
+
+				Operator newOp;
+
+				switch (binexp.getOperator()) {
+				case COMPEQ:
+					newOp = Operator.COMPNEQ;
+					break;
+				case COMPNEQ:
+					newOp = Operator.COMPEQ;
+					break;
+				case COMPGEQ:
+					newOp = Operator.COMPLT;
+					break;
+				case COMPGT:
+					newOp = Operator.COMPLEQ;
+					break;
+				case COMPLEQ:
+					newOp = Operator.COMPGT;
+					break;
+				case COMPLT:
+					newOp = Operator.COMPGEQ;
+					break;
+				case COMPPO:
+					mLogger.warn("The comparison operator " + binexp.getOperator() + " is not yet supported.");
+				default:
+					newOp = binexp.getOperator();
+				}
+
+				final BinaryExpression newExp = new BinaryExpression(binexp.getLocation(), newOp, binexp.getLeft(),
+				        binexp.getRight());
+
+				return newExp;
+			} else if (expr.getExpr() instanceof UnaryExpression) {
+				final UnaryExpression unexp = (UnaryExpression) expr.getExpr();
+				if (unexp.getOperator() == UnaryExpression.Operator.LOGICNEG) {
+					return unexp.getExpr();
+				}
+			}
+		}
+
+		return expr;
+	}
+
 	@Override
 	protected void visit(BinaryExpression expr) {
+
+		assert mEvaluatorFactory != null;
 
 		final INAryEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> evaluator = mEvaluatorFactory
 		        .createNAryExpressionEvaluator(2);
@@ -179,12 +295,9 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 		evaluator.setOperator(expr.getOperator());
 
 		mExpressionEvaluator.addEvaluator(evaluator);
-
-		super.visit(expr);
 	}
 
-	@Override
-	protected void visit(AssumeStatement statement) {
+	protected void handleAssumeStatement(AssumeStatement statement) {
 		mEvaluatorFactory = new IntervalEvaluatorFactory(mLogger);
 		mExpressionEvaluator = new ExpressionEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar>();
 
@@ -207,7 +320,6 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 		        .getRootEvaluator().evaluate(mOldState);
 
 		mNewState = (IntervalDomainState) evaluationResult.getResult().getEvaluatedState().copy();
-
 	}
 
 	@Override
@@ -241,8 +353,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 		mExpressionEvaluator.addEvaluator(evaluator);
 	}
 
-	@Override
-	protected void visit(HavocStatement statement) {
+	protected void handleHavocStatement(HavocStatement statement) {
 		mEvaluatorFactory = new IntervalEvaluatorFactory(mLogger);
 
 		for (VariableLHS var : statement.getIdentifiers()) {
@@ -305,15 +416,13 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	@Override
 	protected void visit(ArrayStoreExpression expr) {
 		// TODO Implement proper handling of arrays.
-		mExpressionEvaluator
-		        .addEvaluator(new IntervalSingletonValueExpressionEvaluator(new IntervalDomainValue()));
+		mExpressionEvaluator.addEvaluator(new IntervalSingletonValueExpressionEvaluator(new IntervalDomainValue()));
 	}
 
 	@Override
 	protected void visit(ArrayAccessExpression expr) {
 		// TODO Implement proper handling of arrays.
-		mExpressionEvaluator
-		        .addEvaluator(new IntervalSingletonValueExpressionEvaluator(new IntervalDomainValue()));
+		mExpressionEvaluator.addEvaluator(new IntervalSingletonValueExpressionEvaluator(new IntervalDomainValue()));
 	}
 
 }
