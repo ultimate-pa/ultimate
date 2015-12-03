@@ -178,7 +178,7 @@ public class OctagonDomainState
 
 	@Override
 	public boolean isBottom() {
-		return isBooleanAbstractionBottom() && isNumericAbstractionBottom();
+		return isBooleanAbstractionBottom() || isNumericAbstractionBottom();
 	}
 	
 	private boolean isNumericAbstractionBottom() {
