@@ -75,6 +75,8 @@ public class OctMatrix {
 	public OctMatrix clone() {
 		OctMatrix clone = new OctMatrix(mSize);
 		System.arraycopy(this.mElements, 0, clone.mElements, 0, mElements.length);
+		clone.mStrongClosure = mStrongClosure;
+		clone.mTightClosure = mTightClosure;
 		return clone;
 	}
 
@@ -240,7 +242,7 @@ public class OctMatrix {
 		OctMatrix sc = this.clone();
 		shortestPathClosureAlgorithm.accept(sc);
 		sc.strengtheningInPlace();
-		mStrongClosure = sc;
+		mStrongClosure = sc.mStrongClosure = sc;
 		return sc;
 	}
 	
@@ -260,7 +262,7 @@ public class OctMatrix {
 			shortestPathClosureAlgorithm.accept(tc);			
 		}
 		tc.tighteningInPlace();
-		mTightClosure = tc;
+		mTightClosure = tc.mTightClosure = tc;
 		return tc;
 	}
 
