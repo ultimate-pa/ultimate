@@ -68,6 +68,9 @@ public class OctMatrix {
 	 */
 	private final OctValue[] mElements;
 
+	private OctMatrix mStrongClosure;
+	private OctMatrix mTightClosure;
+
 	@Override
 	public OctMatrix clone() {
 		OctMatrix clone = new OctMatrix(mSize);
@@ -230,10 +233,14 @@ public class OctMatrix {
 		return strongClosure(OctMatrix::shortestPathClosureInPlacePrimitiveSparse);
 	}
 	
-	public OctMatrix strongClosure(Consumer<OctMatrix> shortestPathClosureAlgorithm) {		
+	public OctMatrix strongClosure(Consumer<OctMatrix> shortestPathClosureAlgorithm) {
+		if (mStrongClosure != null) {
+			return mStrongClosure;
+		} 
 		OctMatrix sc = this.clone();
 		shortestPathClosureAlgorithm.accept(sc);
 		sc.strengtheningInPlace();
+		mStrongClosure = sc;
 		return sc;
 	}
 	
@@ -242,9 +249,18 @@ public class OctMatrix {
 	}
 	
 	public OctMatrix tightClosure(Consumer<OctMatrix> shortestPathClosureAlgorithm) {
-		OctMatrix tc = this.clone();
-		shortestPathClosureAlgorithm.accept(tc);
+		if (mTightClosure != null) {
+			return mTightClosure;
+		}
+		OctMatrix tc;
+		if (mStrongClosure != null) {
+			tc = mStrongClosure.clone();
+		} else {
+			tc = this.clone();
+			shortestPathClosureAlgorithm.accept(tc);			
+		}
 		tc.tighteningInPlace();
+		mTightClosure = tc;
 		return tc;
 	}
 
