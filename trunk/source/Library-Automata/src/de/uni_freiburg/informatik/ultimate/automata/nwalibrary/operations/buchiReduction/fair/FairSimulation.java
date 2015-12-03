@@ -98,7 +98,7 @@ public final class FairSimulation<LETTER, STATE> {
 		m_SccFactory = null;
 		m_SuccessorProvider = null;
 		m_pokedFromNeighborSCC = null;
-		m_Game = new FairGameGraph<>(services, buechi);
+		m_Game = new FairGameGraph<LETTER, STATE>(services, buechi);
 		
 		doSimulation();
 	}
@@ -198,10 +198,10 @@ public final class FairSimulation<LETTER, STATE> {
 			System.out.println(">Calculating SCCs...");
 			
 			startTimeSCCCalc = System.currentTimeMillis();
-			m_pokedFromNeighborSCC = new HashSet<>();
-			m_SccFactory = new DefaultStronglyConnectedComponentFactory<>();
-			m_SuccessorProvider = new GameGraphSuccessorProvider<>(m_Game);
-			m_SccComp = new SccComputation<>(m_Logger, m_SuccessorProvider,
+			m_pokedFromNeighborSCC = new HashSet<Vertex<LETTER, STATE>>();
+			m_SccFactory = new DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>>();
+			m_SuccessorProvider = new GameGraphSuccessorProvider<LETTER, STATE>(m_Game);
+			m_SccComp = new SccComputation<Vertex<LETTER, STATE>, StronglyConnectedComponent<Vertex<LETTER, STATE>>>(m_Logger, m_SuccessorProvider,
 					m_SccFactory, m_Game.getSize(), m_Game.getStates());
 			durationSCCCalc = System.currentTimeMillis() - startTimeSCCCalc;
 			
@@ -209,7 +209,7 @@ public final class FairSimulation<LETTER, STATE> {
 			System.out.println("\tAmount of SCCs: " + m_SccComp.getSCCs().size());
 			
 			Iterator<StronglyConnectedComponent<Vertex<LETTER, STATE>>> iter =
-					new LinkedList<>(m_SccComp.getSCCs()).iterator();
+					new LinkedList<StronglyConnectedComponent<Vertex<LETTER, STATE>>>(m_SccComp.getSCCs()).iterator();
 			
 			// XXX Remove debugging information
 			System.out.println(">Starting iterations...");
@@ -414,7 +414,7 @@ public final class FairSimulation<LETTER, STATE> {
 		// XXX Remove debugging information
 		System.out.println("\tInit:");
 				
-		workingList = new ArrayList<>();
+		workingList = new ArrayList<Vertex<LETTER, STATE>>();
 		if (m_UseSCCs) {
 			for (Vertex<LETTER, STATE> state : scc) {
 				initWorkingListAndCWithState(state, localInfinity, scc);

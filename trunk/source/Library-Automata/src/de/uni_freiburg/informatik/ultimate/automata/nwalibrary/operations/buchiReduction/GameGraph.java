@@ -63,12 +63,12 @@ public abstract class GameGraph<LETTER, STATE> {
 	
 	public GameGraph(IUltimateServiceProvider services) {
 		m_Services = services;
-		vZeroStates = new HashSet<>();
-		vOneStates = new HashSet<>();
-		successors = new HashMap<>();
-		predecessors = new HashMap<>();
-		buechiStatesToGraphStateV1 = new HashMap<>();
-		buechiStatesToGraphStateV0 = new HashMap<>();
+		vZeroStates = new HashSet<Player0Vertex<LETTER, STATE>>();
+		vOneStates = new HashSet<Player1Vertex<LETTER, STATE>>();
+		successors = new HashMap<Vertex<LETTER, STATE>, HashSet<Vertex<LETTER, STATE>>>();
+		predecessors = new HashMap<Vertex<LETTER, STATE>, HashSet<Vertex<LETTER, STATE>>>();
+		buechiStatesToGraphStateV1 = new HashMap<STATE, HashMap<STATE, Player1Vertex<LETTER, STATE>>>();
+		buechiStatesToGraphStateV0 = new HashMap<STATE, HashMap<STATE, HashMap<LETTER, Player0Vertex<LETTER, STATE>>>>();
 	}
 
 	public Set<Player0Vertex<LETTER, STATE>> getPlayer0States() {
@@ -127,11 +127,11 @@ public abstract class GameGraph<LETTER, STATE> {
 
 	protected void addEdge(Vertex<LETTER, STATE> src, Vertex<LETTER, STATE> dest) {
 		if (!successors.containsKey(src)) {
-			successors.put(src, new HashSet<>());
+			successors.put(src, new HashSet<Vertex<LETTER, STATE>>());
 		}
 		successors.get(src).add(dest);
 		if (!predecessors.containsKey(dest)) {
-			predecessors.put(dest, new HashSet<>());
+			predecessors.put(dest, new HashSet<Vertex<LETTER, STATE>>());
 		}
 		predecessors.get(dest).add(src);
 	}
@@ -141,12 +141,12 @@ public abstract class GameGraph<LETTER, STATE> {
 		STATE q0 = state.getQ0();
 		HashMap<STATE, HashMap<LETTER, Player0Vertex<LETTER, STATE>>> leftMap = buechiStatesToGraphStateV0.get(q0);
 		if (leftMap == null) {
-			buechiStatesToGraphStateV0.put(q0, new HashMap<>());
+			buechiStatesToGraphStateV0.put(q0, new HashMap<STATE, HashMap<LETTER, Player0Vertex<LETTER, STATE>>>());
 		}
 		STATE q1 = state.getQ1();
 		HashMap<LETTER, Player0Vertex<LETTER, STATE>> rightMap = buechiStatesToGraphStateV0.get(q0).get(q1);
 		if (rightMap == null) {
-			buechiStatesToGraphStateV0.get(q0).put(q1, new HashMap<>());
+			buechiStatesToGraphStateV0.get(q0).put(q1, new HashMap<LETTER, Player0Vertex<LETTER, STATE>>());
 		}
 		buechiStatesToGraphStateV0.get(q0).get(q1).put(state.getLetter(), state);
 	}
@@ -156,7 +156,7 @@ public abstract class GameGraph<LETTER, STATE> {
 		STATE q0 = state.getQ0();
 		HashMap<STATE, Player1Vertex<LETTER, STATE>> leftMap = buechiStatesToGraphStateV1.get(q0);
 		if (leftMap == null) {
-			buechiStatesToGraphStateV1.put(q0, new HashMap<>());
+			buechiStatesToGraphStateV1.put(q0, new HashMap<STATE, Player1Vertex<LETTER, STATE>>());
 		}
 		buechiStatesToGraphStateV1.get(q0).put(state.getQ1(), state);
 	}
@@ -172,7 +172,7 @@ public abstract class GameGraph<LETTER, STATE> {
 	}
 	
 	public Set<Vertex<LETTER, STATE>> getStates() {
-		HashSet<Vertex<LETTER, STATE>> result = new HashSet<>(vOneStates);
+		HashSet<Vertex<LETTER, STATE>> result = new HashSet<Vertex<LETTER, STATE>>(vOneStates);
 		result.addAll(vZeroStates);
 		return result;
 	}
