@@ -9,7 +9,8 @@ Export-Package: srParse;
    pea,
    pea.reqCheck,
    org.antlr.runtime,
-   PatternLanguage"
+   PatternLanguage",
+ srParse.pattern
 Require-Bundle: Library-PEA,
  JavaCup,
  UltimateCore

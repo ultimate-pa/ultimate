@@ -874,13 +874,15 @@ public class Trace2PEACompiler {
         return pea;
     }
 
-    private void addVariables(CDD cdd,
+    private void addVariables(CDD cdd, 
             HashMap<String, String> variables, HashSet<String> events) {
         Decision dec = cdd.getDecision();
         if (dec instanceof EventDecision) {
             events.add(((EventDecision)dec).getEvent());
         } else if (dec instanceof BooleanDecision) {
             variables.put(((BooleanDecision)dec).getVar(), "boolean");
+        } else if (dec instanceof BoogieBooleanExpressionDecision) {
+            variables.putAll(((BoogieBooleanExpressionDecision)dec).getVars());
         }
         if (cdd.getChilds() != null) {
                 for (CDD child : cdd.getChilds()) {

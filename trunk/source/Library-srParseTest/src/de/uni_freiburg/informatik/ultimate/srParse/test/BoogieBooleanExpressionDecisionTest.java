@@ -1,13 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.srParse.test;
 
-import java.util.Map;
-
 import org.junit.Assert;
 import org.junit.Test;
 
-import pea.BoogieBooleanExpressionDecision;
-import pea.BooleanDecision;
-import pea.CDD;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -16,6 +11,8 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import pea.BoogieBooleanExpressionDecision;
+import pea.CDD;
 
 /**
  * 

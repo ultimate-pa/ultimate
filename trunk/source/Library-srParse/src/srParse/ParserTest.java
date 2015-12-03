@@ -3,6 +3,7 @@ package srParse;
 import java.io.StringReader;
 
 import java_cup.runtime.Symbol;
+import srParse.pattern.PatternType;
 
 public class ParserTest {
 	static String scopes[] = {
@@ -28,9 +29,9 @@ public class ParserTest {
 		ReqParser parser = new ReqParser(lexer);
 		
 		Symbol goal = parser.parse();
-		srParsePattern[] patterns = (srParsePattern[]) goal.value;
+		PatternType[] patterns = (PatternType[]) goal.value;
 		
-		for (srParsePattern pat : patterns) {
+		for (PatternType pat : patterns) {
 			System.out.println(pat);
 		}
 	}

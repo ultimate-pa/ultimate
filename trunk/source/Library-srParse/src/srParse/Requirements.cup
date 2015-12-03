@@ -7,6 +7,25 @@ import java_cup.runtime.Symbol;
 
 import pea.CDD;
 import pea.BooleanDecision;
+import srParse.pattern.BndEntryConditionPattern;
+import srParse.pattern.BndExistencePattern;
+import srParse.pattern.BndInvariancePattern;
+import srParse.pattern.BndPossResponsePattern;
+import srParse.pattern.BndReccurrencePattern;
+import srParse.pattern.BndResponsePattern;
+import srParse.pattern.ConstrainedChainPattern;
+import srParse.pattern.InstAbsPattern;
+import srParse.pattern.InvariantPattern;
+import srParse.pattern.MaxDurationPattern;
+import srParse.pattern.MinDurationPattern;
+import srParse.pattern.PatternType;
+import srParse.pattern.PrecedenceChain12Pattern;
+import srParse.pattern.PrecedenceChain21Pattern;
+import srParse.pattern.PrecedencePattern;
+import srParse.pattern.ResponseChain12Pattern;
+import srParse.pattern.ResponseChain21Pattern;
+import srParse.pattern.ResponsePattern;
+import srParse.pattern.UniversalityPattern;
 
 import pea.BoogieBooleanExpressionDecision;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
@@ -135,10 +154,10 @@ terminal String REALNUMBER;
 /* Non-terminals */
 non terminal CDD expression, expr;
 non terminal String atom, cid;
-non terminal srParsePattern property;
-non terminal srParsePattern pattern, orderpattern, realtimepattern;
+non terminal PatternType property;
+non terminal PatternType pattern, orderpattern, realtimepattern;
 non terminal srParseScope scope;
-non terminal srParsePattern[] patternset;
+non terminal PatternType[] patternset;
 non terminal Integer duration, num;
 non terminal boolean bool;
 non terminal Expression expr3NI, expr5NI; 
@@ -166,40 +185,37 @@ scope ::=
   | BEFORE expression:p
       {: RESULT = new srParseScopeBefore(p); :}
   | AFTER expression:p
-      {: RESULT = new srParseScopeAfter(p, null); :}
+      {: RESULT = new srParseScopeAfter(p); :}
   | BETWEEN expression:p AND expression:q 
       {: RESULT = new srParseScopeBetween(p,q); :}
   | AFTER expression:p UNTIL expression:q
-      {: RESULT = new srParseScopeAfter(p,q); :}
+      {: RESULT = new srParseScopeAfterUntil(p,q); :}
   ;
   
 pattern ::=
     /* qualitative - occurrence */
     IT IS NEVER THE CASE THAT expression:p HOLDS
-      {: RESULT = new srParsePattern();
-         RESULT.setPattern(RESULT.new InstAbsPattern());
+      {: RESULT = new InstAbsPattern();
          RESULT.mergeCDDs(buildVec(p));
       :}
   | IT IS ALWAYS THE CASE THAT expression:p HOLDS
-      {: RESULT = new srParsePattern();
-         RESULT.setPattern(RESULT.new UniversalityPattern());
+      {: RESULT = new UniversalityPattern();
          RESULT.mergeCDDs(buildVec(p));
       :}
   | IT IS ALWAYS THE CASE THAT IF expression:p HOLDS COMMA? THEN expression:q HOLDS AS WELL
-      {: RESULT = new srParsePattern();
-         RESULT.setPattern(RESULT.new InvariantPattern());
+      {: RESULT = new InvariantPattern();
          RESULT.mergeCDDs(buildVec(q,p));
       :}
 /* which PatternType should I use for this????
   | expression:p EVENTUALLY HOLDS
-      {: RESULT = new srParsePattern();
+      {: 
+	     RESULT = new PatternType();
          RESULT.setPattern(RESULT.new ());
          RESULT.mergeCDDs(buildVec(p));
-      :}
+      :} 
 */
   | TRANSITIONS TO STATES IN WHICH expression:p HOLDS OCCUR AT MOST TWICE
-      {: RESULT = new srParsePattern();
-         RESULT.setPattern(RESULT.new BndExistencePattern());
+      {: RESULT = new BndExistencePattern();
          RESULT.mergeCDDs(buildVec(p));
       :}
     /* qualitative - order */
@@ -210,90 +226,77 @@ pattern ::=
   
 orderpattern ::=
     IF expression:p HOLDS COMMA? THEN expression:q PREVIOUSLY HELD
-      {: RESULT = new srParsePattern();
-         RESULT.setPattern(RESULT.new PrecedencePattern());
+      {: RESULT = new PrecedencePattern();
          RESULT.mergeCDDs(buildVec(q,p));
       :}
   | IF expression:p HOLDS AND IS SUCCEEDED BY expression:q COMMA? THEN expression:r PREVIOUSLY HELD
-      {: RESULT = new srParsePattern();
-         RESULT.setPattern(RESULT.new PrecedenceChain12Pattern());
+      {: RESULT = new PrecedenceChain12Pattern();
          RESULT.mergeCDDs(buildVec(r,q,p));
       :}
   | IF expression:p HOLDS COMMA? THEN expression:q PREVIOUSLY HELD AND WAS PRECEDED BY expression:r
-      {: RESULT = new srParsePattern();
-         RESULT.setPattern(RESULT.new PrecedenceChain21Pattern());
+      {: RESULT = new PrecedenceChain21Pattern();
          RESULT.mergeCDDs(buildVec(r,q,p));
       :}
   | IF expression:p HOLDS COMMA? THEN expression:q EVENTUALLY HOLDS
-      {: RESULT = new srParsePattern();
-         RESULT.setPattern(RESULT.new ResponsePattern());
+      {: RESULT = new ResponsePattern();
          RESULT.mergeCDDs(buildVec(q,p));
       :}
   | IF expression:p HOLDS COMMA? THEN expression:q EVENTUALLY HOLDS AND IS SUCCEEDED BY expression:r
-      {: RESULT = new srParsePattern();
-         RESULT.setPattern(RESULT.new ResponseChain12Pattern());
+      {: RESULT = new ResponseChain12Pattern();
          RESULT.mergeCDDs(buildVec(r,q,p));
       :}
   | IF expression:p HOLDS AND IS SUCCEEDED BY expression:q COMMA? THEN expression:r EVENTUALLY HOLDS AFTER expression:s
-      {: RESULT = new srParsePattern();
-         RESULT.setPattern(RESULT.new ResponseChain21Pattern());
+      {: RESULT = new ResponseChain21Pattern();
          RESULT.mergeCDDs(buildVec(s,r,q,p));
       :}
   | IF expression:p HOLDS COMMA? THEN expression:q EVENTUALLY HOLDS AND IS SUCCEEDED BY expression:r WHERE expression:s DOES NOT HOLD BETWEEN expression:t AND expression:u
-      {: RESULT = new srParsePattern();
-         RESULT.setPattern(RESULT.new ConstrainedChainPattern());
+      {: RESULT = new ConstrainedChainPattern();
          RESULT.mergeCDDs(buildVec(u,s,t,r,q,p));
       :}
   ;
   
 realtimepattern ::=
     ONCE expression:p BECOMES SATISFIED COMMA? IT HOLDS FOR AT LEAST duration:d
-      {: RESULT = new srParsePattern();
-         RESULT.setPattern(RESULT.new MinDurationPattern());
+      {: RESULT = new MinDurationPattern();
          RESULT.mergeCDDs(buildVec(p));
          RESULT.setDuration(d);
       :}
   | ONCE expression:p BECOMES SATISFIED COMMA? IT HOLDS FOR LESS THAN duration:d
-      {: RESULT = new srParsePattern();
-         RESULT.setPattern(RESULT.new MaxDurationPattern());
+      {: RESULT = new MaxDurationPattern();
          RESULT.mergeCDDs(buildVec(p));
          RESULT.setDuration(d);
       :}
   | expression:p HOLDS AT LEAST EVERY duration:d
-      {: RESULT = new srParsePattern();
-         RESULT.setPattern(RESULT.new BndReccurrencePattern());
+      {: RESULT = new BndReccurrencePattern();
          RESULT.mergeCDDs(buildVec(p));
          RESULT.setDuration(d);
       :}
   | IF expression:p HOLDS COMMA? THEN expression:s HOLDS AFTER AT MOST duration:d
-      {: RESULT = new srParsePattern();
-         RESULT.setPattern(RESULT.new BndResponsePattern());
+      {: RESULT = new BndResponsePattern();
          RESULT.mergeCDDs(buildVec(s, p));
          RESULT.setDuration(d);
       :}
   | IF expression:p HOLDS COMMA? THEN expression:s HOLDS FOR AT LEAST duration:d
-      {: RESULT = new srParsePattern();
-         RESULT.setPattern(RESULT.new BndInvariancePattern());
+      {: RESULT = new BndInvariancePattern();
          RESULT.mergeCDDs(buildVec(s, p));
          RESULT.setDuration(d);
       :}
+/*
   | IF expression:p HOLDS COMMA? THEN THERE IS AT LEAST ONE EXECUTION SEQUENCE SUCH THAT expression:q HOLDS FOR AT LEAST duration:d
-      {: RESULT = new srParsePattern();
-         RESULT.setPattern(RESULT.new BndPossInvariancePattern());
+      {: RESULT = new BndPossInvariancePattern();
          RESULT.mergeCDDs(buildVec(q, p));
          RESULT.setDuration(d);
       :}
+*/
   | IF expression:p HOLDS COMMA? THEN THERE IS AT LEAST ONE EXECUTION SEQUENCE SUCH THAT expression:q HOLDS AFTER AT MOST duration:d
-      {: RESULT = new srParsePattern();
-         RESULT.setPattern(RESULT.new BndPossResponsePattern());
+      {: RESULT = new BndPossResponsePattern();
          RESULT.mergeCDDs(buildVec(q, p));
          RESULT.setDuration(d);
       :}
   | AFTER expression:p HOLDS FOR duration:d COMMA? THEN expression:q HOLDS
-      {: RESULT = new srParsePattern();
-         RESULT.setPattern(RESULT.new BndEntryConditionPattern());
-	 RESULT.mergeCDDs(buildVec(q, p));
-	 RESULT.setDuration(d);
+      {: RESULT = new BndEntryConditionPattern();
+	 	RESULT.mergeCDDs(buildVec(q, p));
+	 	RESULT.setDuration(d);
       :}
   ;
 

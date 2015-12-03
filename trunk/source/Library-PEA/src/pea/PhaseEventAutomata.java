@@ -66,7 +66,7 @@ public class PhaseEventAutomata implements Comparable {
     
     public PhaseEventAutomata(String name, 
 			      Phase[] phases, Phase[] init, List<String> clocks) { 
-	this(name,phases,init,clocks,null,null);
+    	this(name,phases,init,clocks,null,null);
     }
     
     
@@ -87,7 +87,7 @@ public class PhaseEventAutomata implements Comparable {
             this.clocks = new ArrayList<String>();
         else
             this.clocks = clocks;
-        this.events = events;
+        this.events = events; 
         this.declarations = declarations;
         this.init = init;
         this.name = name;
@@ -154,44 +154,40 @@ public class PhaseEventAutomata implements Comparable {
 	    CDD srcsinv = entry.p1.stateInv.and(entry.p2.stateInv);
 	    Iterator i = entry.p1.transitions.iterator();
 	    while (i.hasNext()) {
-		Transition t1 = (Transition) i.next();
-		Iterator j = entry.p2.transitions.iterator();
-		while (j.hasNext()) {
-		    Transition t2 = (Transition) j.next();
-
-		    CDD guard = t1.guard.and(t2.guard);
-		    if (guard == CDD.FALSE)
-			continue;
-		    CDD sinv = t1.dest.stateInv.and(t2.dest.stateInv);
-//          This leads to a serious bug - 
-//          if (sinv.and(guard) == CDD.FALSE)
-		    if (sinv == CDD.FALSE)
-			continue;
-		    if (guard != CDD.TRUE && srcsinv.and(guard).and(sinv.prime()) == CDD.FALSE)
-			continue;
-		    CDD cinv = t1.dest.clockInv.and(t2.dest.clockInv);
-		    String[] resets
-			= new String[t1.resets.length + t2.resets.length];
-		    System.arraycopy(t1.resets, 0, resets, 0, 
-				     t1.resets.length);
-		    System.arraycopy(t2.resets, 0, resets, t1.resets.length, 
-				     t2.resets.length);
-		    Set<String> stoppedClocks = 
-			new SimpleSet<String>(t1.dest.stoppedClocks.size()+
-					      t2.dest.stoppedClocks.size());
-		    stoppedClocks.addAll(t1.dest.stoppedClocks);
-		    stoppedClocks.addAll(t2.dest.stoppedClocks);
-		    
-		    String newname = t1.dest.getName()+TIMES+t2.dest.getName();
-		    Phase p = (Phase) newPhases.get(newname);
-
-		    if (p == null) {
-			p = new Phase(newname, sinv, cinv, stoppedClocks);
-			newPhases.put(newname, p);
-			todo.add(new TodoEntry(t1.dest, t2.dest, p));
-		    }
-		    entry.p.addTransition(p, guard, resets);
-		}
+			Transition t1 = (Transition) i.next();
+			Iterator j = entry.p2.transitions.iterator();
+			while (j.hasNext()) {
+			    Transition t2 = (Transition) j.next();
+	
+			    CDD guard = t1.guard.and(t2.guard);
+			    if (guard == CDD.FALSE)
+			    	continue;
+			    CDD sinv = t1.dest.stateInv.and(t2.dest.stateInv);
+	//          This leads to a serious bug - 
+	//          if (sinv.and(guard) == CDD.FALSE)
+			    if (sinv == CDD.FALSE)
+			    	continue;
+			    if (guard != CDD.TRUE && srcsinv.and(guard).and(sinv.prime()) == CDD.FALSE)
+			    	continue;
+			    CDD cinv = t1.dest.clockInv.and(t2.dest.clockInv);
+			    String[] resets = new String[t1.resets.length + t2.resets.length];
+			    System.arraycopy(t1.resets, 0, resets, 0, t1.resets.length);
+			    System.arraycopy(t2.resets, 0, resets, t1.resets.length, t2.resets.length);
+			    Set<String> stoppedClocks =  new SimpleSet<String>(
+			    		t1.dest.stoppedClocks.size()+ t2.dest.stoppedClocks.size());
+			    stoppedClocks.addAll(t1.dest.stoppedClocks);
+			    stoppedClocks.addAll(t2.dest.stoppedClocks);
+			    
+			    String newname = t1.dest.getName()+TIMES+t2.dest.getName();
+			    Phase p = (Phase) newPhases.get(newname);
+	
+			    if (p == null) {
+					p = new Phase(newname, sinv, cinv, stoppedClocks);
+					newPhases.put(newname, p);
+					todo.add(new TodoEntry(t1.dest, t2.dest, p));
+			    }
+			    entry.p.addTransition(p, guard, resets);
+			}
 	    }
 	}
 

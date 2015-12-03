@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Main-Class: pea_to_boogie.main.Main
+Class-Path: ./jarfiles/antlr-runtime-3.2.jar ./jarfiles/log4j-1.2.15.jar ./jarfiles/czt_1_5_0_bin.jar ./jarfiles/xerces.jar ./jarfiles/apache-log4j-extras-1.1.jar
+Bundle-ManifestVersion: 2
+Bundle-Name: PEATestTransformer
+Bundle-SymbolicName: PEATestTransformer;singleton:=true
+Bundle-Version: 0.0.1
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.PEATestTransformer.Activator
+Require-Bundle: UltimateCore,
+ Library-log4j,
+ Library-PEA,
+ Library-srParse,
+ JavaCup
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Export-Package: de.uni_freiburg.informatik.ultimate.PEATestTransformer.SPLPatternParser
+Import-Package: pea_to_boogie.translator

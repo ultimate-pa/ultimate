@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.srParse.test;
+package de.uni_freiburg.informatik.ultimate.PEATestTransformerTest.SPLPatternParser;
 
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -10,10 +10,13 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
+import de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer.PatternToPea;
 import java_cup.runtime.Symbol;
+import pea.PhaseEventAutomata;
 import srParse.ReqLexer;
 import srParse.ReqParser;
 import srParse.srParseScopeAfter;
+import srParse.srParseScopeAfterUntil;
 import srParse.srParseScopeBefore;
 import srParse.srParseScopeBetween;
 import srParse.srParseScopeGlob;
@@ -21,9 +24,10 @@ import srParse.pattern.PatternType;
 
 @RunWith(Parameterized.class)
 public class BoogieRequirementsParserTestAllPatterns {
-    
-    private Testpurpose t;
-   
+	
+	
+	private Testpurpose t;
+	   
     public BoogieRequirementsParserTestAllPatterns(Testpurpose t){
     	this.t = t;
 
@@ -32,7 +36,7 @@ public class BoogieRequirementsParserTestAllPatterns {
 	@Test
 	public void TestPatternParse() throws Exception{
 		PatternType[] parsedPatterns = GenPatterns(this.t.testString);
-		
+		//first  verify that pattern has been genrated correctly
 		Assert.assertNotNull( this.t.testString, parsedPatterns);
 		Assert.assertNotNull("failed parsing: "+this.t.testString,
 				parsedPatterns[0]);
@@ -41,7 +45,9 @@ public class BoogieRequirementsParserTestAllPatterns {
 		Assert.assertTrue("fail recognize: "+ parsedPatterns[0].getClass().toString()
 				+ "["+this.t.patternName+"]:\n"+this.t.testString,
 				parsedPatterns[0].getClass().toString().endsWith(this.t.patternName));
-	}
+		// Korrect parsing is checked per automaton as checking here is to complex
+		}
+
 	
 	/**
 	 * Use to supply a string (instead of file) to parser.
@@ -82,40 +88,42 @@ public class BoogieRequirementsParserTestAllPatterns {
 				"Globally,",
 				"Before \" x > 0 \", ",
 				"After \" x > 0\", ",
-				"Between \"x > 0\" and \" x < 0\", "};
+				"After \" x > 0\" until \" a < 0\", ",
+				"Between \"x > 0\" and \" a < 0\", "};
 				//TODO?:"After <Q> before <R>"
 		Class<?>[] scopezz = new Class<?>[]{
 				srParseScopeGlob.class,
 				srParseScopeBefore.class,
 				srParseScopeAfter.class,
+				srParseScopeAfterUntil.class,
 				srParseScopeBetween.class};
 		
 		
 		String[] pattern = new String[]{
 			"it is never the case that \"y >= 5\" holds.",
-			"it is always the case that \"y >= 5\" holds.",
-			"transitions to states in which \"y >= 5\" holds occur at most twice",
-			"it is always the case that if \"y >= 5\" holds, then \"y <= 5\" previously held",
+			//"it is always the case that \"y >= 5\" holds.",
+			//"transitions to states in which \"y >= 5\" holds occur at most twice",
+			//"it is always the case that if \"y >= 5\" holds, then \"z <= 5\" previously held",
 			//timed
-			"it is always the case that once \"y >= 5\" becomes satisfied, it holds for at least 2000 time units",
-			"it is always the case that once \"y >= 5\" becomes satisfied, it holds for less than 2000 time units",
-			"it is always the case that \"y >= 5\" holds at least every 2000 time units",
-			"it is always the case that if \"y >= 5\" holds, then \"y <= 5\" holds after at most 2000 time units",
-			"it is always the case that if \"y >= 5\" holds, then \"y <= 5\" holds for at least 2000 time units",
-			"it is always the case that after \"y >= 5\" holds for 2000 time units, then \"y <= 5\" holds",
-			"it is always the case that if \"y <= 5\" holds then \"y >= 5\" holds as well"
+			//"it is always the case that once \"y >= 5\" becomes satisfied, it holds for at least 2000 time units",
+			//"it is always the case that once \"y >= 5\" becomes satisfied, it holds for less than 2000 time units",
+			//"it is always the case that \"y >= 5\" holds at least every 2000 time units",
+			//"it is always the case that if \"y >= 5\" holds, then \"z <= 5\" holds after at most 2000 time units",
+			//"it is always the case that if \"y >= 5\" holds, then \"z <= 5\" holds for at least 2000 time units",
+			//"it is always the case that after \"y >= 5\" holds for 2000 time units, then \"z <= 5\" holds",
+			"it is always the case that if \"y >= 5\" holds then \"z <= 5\" holds as well"
 		};
 		String[] patternNames = new String[]{
 				"InstAbsPattern",
-				"UniversalityPattern",
-				"BndExistencePattern",
-				"PrecedencePattern",
-				"MinDurationPattern",
-				"MaxDurationPattern",
-				"BndReccurrencePattern",
-				"BndResponsePattern",
-				"BndInvariancePattern",
-				"BndEntryConditionPattern",
+				//"UniversalityPattern",
+				//"BndExistencePattern",
+				//"PrecedencePattern",
+				//"MinDurationPattern",
+				//"MaxDurationPattern",
+				//"BndReccurrencePattern",
+				//"BndResponsePattern",
+				//"BndInvariancePattern",
+				//"BndEntryConditionPattern",
 				"InvariantPattern"
 			};
 		
@@ -131,8 +139,5 @@ public class BoogieRequirementsParserTestAllPatterns {
 		
         return data;
     }
-	
-	
-	
 
 }

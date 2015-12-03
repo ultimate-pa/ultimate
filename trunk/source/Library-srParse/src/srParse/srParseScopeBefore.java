@@ -1,6 +1,7 @@
 package srParse;
 
-import pea.*;
+import pea.BooleanDecision;
+import pea.CDD;
 
 public class srParseScopeBefore extends srParseScope {
 	public srParseScopeBefore(CDD cdd)
