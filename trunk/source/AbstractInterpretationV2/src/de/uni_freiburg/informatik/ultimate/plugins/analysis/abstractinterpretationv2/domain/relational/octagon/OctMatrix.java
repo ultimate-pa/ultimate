@@ -498,26 +498,30 @@ public class OctMatrix {
 		return false;
 	}
 
-	public OctMatrix widen(OctMatrix n) {
-		return elementwiseOperation(n, (mij, nij) -> {
-				return nij.compareTo(mij) <= 0 ? mij : OctValue.INFINITY;
-			});
+	public OctMatrix widenSimple(OctMatrix n) {
+		return elementwiseOperation(n, (mij, nij) -> mij.compareTo(nij) > 0 ? mij : OctValue.INFINITY);
 	}
 
-	// TODO document: widening operator may not stabilize. Other widening operators have to be used in that case.
-	public OctMatrix widenDouble(OctMatrix n) {
+	// TODO document: stabilization depends on user-given threshold (stabilizes for threshold < inf)
+	public OctMatrix widenExponential(OctMatrix n, OctValue threshold) {
 		return elementwiseOperation(n, (mij, nij) -> {
-				return nij.compareTo(mij) <= 0 ? mij : nij.add(nij);
-			});
+			if (mij.compareTo(nij) >= 0) {
+				return mij;
+			}
+			OctValue v = OctValue.max(nij, OctValue.ONE); // TODO better handling of values < 1
+			if (v.compareTo(threshold) > 0) {
+				return OctValue.INFINITY;
+			}
+			return v;
+		});
 	}
 
-	// TODO document: termination widening operators stabilization depends on user-given limit 
+	// TODO document: stabilization depends on user-given limit (limit has to be inf after finite number of widenings)
+	// TODO: use list of literals instead of one fixed limit
 	public OctMatrix widenLimit(OctMatrix n, OctValue limit) {
-		return elementwiseOperation(n, (mij, nij) -> {
-				return nij.compareTo(mij) <= 0 ? mij : OctValue.max(nij, limit);
-			});
+		return elementwiseOperation(n, (mij, nij) -> mij.compareTo(nij) >= 0 ? mij : OctValue.max(nij, limit));
 	}
-	
+
 	public OctMatrix addVariables(int count) {
 		if (count <= 0) {
 			throw new IllegalArgumentException("Cannot add " + count + " variables.");
@@ -573,7 +577,6 @@ public class OctMatrix {
 	}
 	
 	public OctMatrix removeLastVariables(int count) {
-		// note: a set cannot contain any duplicates
 		if (count > variables()) {
 			throw new IllegalArgumentException("Cannot remove more variables than exist.");
 		}

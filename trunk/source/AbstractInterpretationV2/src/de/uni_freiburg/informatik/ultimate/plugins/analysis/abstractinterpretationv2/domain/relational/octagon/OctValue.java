@@ -16,13 +16,14 @@ import java.math.RoundingMode;
 public class OctValue implements Comparable<OctValue> {
 	
 	public final static OctValue INFINITY = new OctValue();
+	public final static OctValue ONE = new OctValue(1);
 	public final static OctValue ZERO = new OctValue(0);
 	
 	private BigDecimal mValue;
 	
 	/** Creates a new OctagonValue with value infinity. */
 	private OctValue() {
-		// mValue is already null
+		// mValue is already null => represents infinity
 	}
 	
 	/**

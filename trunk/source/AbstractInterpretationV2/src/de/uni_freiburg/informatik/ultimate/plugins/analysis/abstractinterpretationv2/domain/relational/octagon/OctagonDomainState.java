@@ -24,7 +24,7 @@ public class OctagonDomainState
 	
 	private static int sId;
 	
-	/** A human-readable hash code, unique for every object. */
+	/** A human-readable hash code, unique for each object. */
 	private final int mId;
 	
 	private boolean mIsFixpoint;
@@ -246,10 +246,10 @@ public class OctagonDomainState
 		return operation(other, BooleanValue::merge, OctMatrix::max);
 	}
 	
-	public OctagonDomainState widen(OctagonDomainState other) {
-		return operation(other, BooleanValue::merge, OctMatrix::widen);
+	public OctagonDomainState widen(OctagonDomainState other, BiFunction<OctMatrix, OctMatrix, OctMatrix> widenOp) {
+		return operation(other, BooleanValue::merge, widenOp);
 	}
-	
+
 	private OctagonDomainState operation(OctagonDomainState other,
 			BiFunction<BooleanValue, BooleanValue, BooleanValue> booleanOperation,
 			BiFunction<OctMatrix, OctMatrix, OctMatrix> numericOperation) {		

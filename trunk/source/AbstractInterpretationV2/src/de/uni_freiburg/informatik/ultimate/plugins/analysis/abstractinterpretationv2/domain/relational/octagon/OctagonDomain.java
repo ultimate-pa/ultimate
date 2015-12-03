@@ -15,12 +15,7 @@ public class OctagonDomain implements IAbstractDomain<OctagonDomainState, CodeBl
 
 	@Override
 	public IAbstractStateBinaryOperator<OctagonDomainState> getWideningOperator() {
-		return new IAbstractStateBinaryOperator<OctagonDomainState>() {
-			@Override
-			public OctagonDomainState apply(OctagonDomainState first, OctagonDomainState second) {
-				return first.widen(second);
-			}
-		};
+		return new OctExponentialWideningOperator(new OctValue(Integer.MAX_VALUE));
 	}
 
 	@Override
