@@ -106,7 +106,8 @@ public class QuantifierPusher extends TermTransformer {
 		Term[] oldParams = appTerm.getParameters();
 		Term[] newParams = new Term[oldParams.length];
 		for (int i=0; i<oldParams.length; i++) {
-			newParams[i] = SmtUtils.quantifier(m_Script, quantifiedFormula.getQuantifier(), quantifiedFormula.getVariables(), oldParams[i]);
+			newParams[i] = SmtUtils.quantifier(m_Script, quantifiedFormula.getQuantifier(), 
+					Arrays.asList(quantifiedFormula.getVariables()), oldParams[i]);
 		}
 		return m_Script.term(appTerm.getFunction().getName(), newParams);
 	}
