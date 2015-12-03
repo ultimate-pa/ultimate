@@ -313,8 +313,26 @@ public class OctagonDomainState
 
 	@Override
 	public String toLogString() {
-		// TODO Auto-generated method stub
-		return "log string not implemented";
+		StringBuilder log = new StringBuilder();
+		log.append("\n");
+		log.append(mNumericAbstraction);
+		log.append("numeric vars: ");
+		log.append(mMapNumericVarToIndex);
+		log.append("\n");
+		log.append("numeric non-int vars:");
+		log.append(mNumericNonIntVars);
+		log.append("\n");
+		for (Map.Entry<String, BooleanValue> entry : mBooleanAbstraction.entrySet()) {
+			log.append(entry.getKey());
+			log.append(" = ");
+			log.append(entry.getValue());
+			log.append("\n");
+		}
+		return log.toString();
 	}
 
+	@Override
+	public String toString() {
+		return toLogString();
+	}
 }
