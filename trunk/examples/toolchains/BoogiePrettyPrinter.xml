@@ -1,0 +1,3 @@
+<toolchain>
+	<plugin id="de.uni_freiburg.informatik.ultimate.boogie.printer"/>
+</toolchain>

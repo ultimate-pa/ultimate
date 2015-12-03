@@ -1,39 +1,74 @@
-/*
- * Copyright (C) 2013-2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
- * 
- * This file is part of the ULTIMATE PEAtoBoogie plug-in.
- * 
- * The ULTIMATE PEAtoBoogie plug-in is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- * 
- * The ULTIMATE PEAtoBoogie plug-in is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU Lesser General Public License for more details.
- * 
- * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE PEAtoBoogie plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
- * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE PEAtoBoogie plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE PEAtoBoogie plug-in grant you additional permission 
- * to convey the resulting work.
- */
-package pea_to_boogie.translator;
-import java.util.*;
 
-import pea.*;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+package pea_to_boogie.translator;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LoopInvariantSpecification;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WhileStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
-import pea_to_boogie.generator.*;
+import pea.Phase;
+import pea.PhaseBits;
+import pea.PhaseEventAutomata;
+import pea.Transition;
+import pea_to_boogie.generator.ConditionGenerator;
+import pea_to_boogie.generator.Permutation;
 import req_to_pea.ReqToPEA;
-import srParse.srParsePattern;
+import srParse.pattern.PatternType;
 /**
  * This class translates a phase event automaton to an equivalent Boogie code.
  */
@@ -67,9 +102,9 @@ public class Translator {
      */
     public List<String> pcIds = new ArrayList<String>();
     /**
-     * The list of state variables.
+     * The list of state variables and according types.
      */
-    public List<String> stateVars = new ArrayList<String>();
+    public Map<String,String> stateVars = new HashMap<String,String>();
     /**
      * The list of primed variables.
      */
@@ -85,7 +120,7 @@ public class Translator {
     /**
      * The array of input requirements.
      */
-    public srParsePattern[] mRequirements;
+    public PatternType[] mRequirements;
     
     
     /**
@@ -165,7 +200,8 @@ public class Translator {
           BoogieLocation blVar = blUnit;
           BoogieLocation blPrimType = blUnit;
          
-          for (int i = 0; i < this.automata.length; i++) {
+
+          for (int i = 0; i < this.automata.length; i++) { 
         	    List<String> tempClocks = this.automata[i].getClocks();
         	  for (int j = 0; j < tempClocks.size(); j++) {  
         	    this.clockIds.add(tempClocks.get(j));
@@ -175,6 +211,7 @@ public class Translator {
           VarList clockVars = new VarList(blVar, this.clockIds.toArray(new String[this.clockIds.size()]),
           		  astType); 
           
+          //generate program counters
           List<String> extraVars = new ArrayList<String>();
           for (int i = 0; i < this.automata.length; i++) {
         	  this.pcIds.add("pc"+i);
@@ -184,6 +221,7 @@ public class Translator {
           VarList pcVar = new VarList(blVar, extraVars.toArray(new String[extraVars.size()]),
         		  astType);
           
+          //collect global vars from system states
           boolean visited = false;
           for (int i = 0; i < this.automata.length; i++) {
         	  // System.out.println(this.automata[i].getVariables().size());
@@ -191,18 +229,21 @@ public class Translator {
         	  Map<String, String> map = this.automata[i].getVariables();
     	    
       		  for( String name: map.keySet() ) {
-    	    	  if (map.get(name).equals("boolean")){
+      			  //every var that is not an event var must be a state var, as clocks
+      			  //are stored seperately
+      			  if (!map.get(name).equals("event")){
     	    		  for (int j = 0; j < this.stateVars.size(); j++) { 
     	    			  if (name.equals(this.stateVars.get(j))) {
     	    				  visited = true;
-    	    				  break;
+    	    				  break; 
     	    			  }
     	    		  }
     	    		  if (!visited) {
-    	    			  this.stateVars.add(name);
+    	    			  this.stateVars.put(name, map.get(name));
     	    			  this.primedVars.add(name + "'");
     	    		  }
-    	    	  } else if (map.get(name).equals("event")) {
+
+    	    	  } else {
     	    		  for (int j = 0; j < this.eventVars.size(); j++) { 
     	    			  if (name.equals(this.eventVars.get(j))) {
     	    				  visited = true;
@@ -213,7 +254,7 @@ public class Translator {
     	    			  this.eventVars.add(name);
     	    		  }
     	    	  }
-    	    	  visited = false;
+    	    	  visited = false; 
     	      } 
           }                          
           extraVars.clear();
@@ -228,15 +269,22 @@ public class Translator {
           varList.add(deltaVar);
           
           if (this.stateVars.size() != 0) {
-              astType = new PrimitiveType(blPrimType, "bool"); 
-              List<String> stVarsList = new ArrayList<String>();
-              for (int i = 0; i < this.stateVars.size(); i++) {
-            	  stVarsList.add(this.stateVars.get(i));
-            	  stVarsList.add(this.primedVars.get(i));
-              }
-              VarList stVars = new VarList(blVar, stVarsList.toArray(new String[stVarsList.size()]),
-              		  astType); 
-        	  varList.add(stVars);
+        	  for(String name : this.stateVars.keySet()){
+	              astType = new PrimitiveType(blPrimType, this.stateVars.get(name)); 
+	              List<String> stVarsList = new ArrayList<String>();
+
+
+
+
+	              
+	            	  stVarsList.add(name);
+	            	  stVarsList.add(name + "'");
+	              
+	              VarList stVars = new VarList(blVar, stVarsList.toArray(new String[stVarsList.size()]),
+
+	              		  astType); 
+	        	  varList.add(stVars);
+        	  }
           }
           
           if (this.eventVars.size() != 0) {
@@ -545,9 +593,9 @@ public class Translator {
     }
     public List<Statement> genStateVarsAssign(BoogieLocation bl){
       List<Statement> statements = new ArrayList<Statement>();
-      for(int i = 0; i < this.stateVars.size(); i++) { 
- 	    VariableLHS lhsVar = new VariableLHS(bl, this.stateVars.get(i));
-    	IdentifierExpression rhs = new IdentifierExpression(bl, this.primedVars.get(i));
+      for(String name: this.stateVars.keySet()) { 
+ 	    VariableLHS lhsVar = new VariableLHS(bl, name);
+    	IdentifierExpression rhs = new IdentifierExpression(bl, name+"'");
  	    LeftHandSide[] lhs = new LeftHandSide[1];
  	    lhs[0] = lhsVar;
 	    Expression[] expr = new Expression[1];
@@ -794,9 +842,9 @@ public class Translator {
         }
         modifiedVarsList.add("delta");
         
-        for (int i = 0; i < this.stateVars.size(); i++) {
-        	modifiedVarsList.add(this.stateVars.get(i));
-        	modifiedVarsList.add(this.primedVars.get(i));
+        for (String name: this.stateVars.keySet()) {
+        	modifiedVarsList.add(name);
+        	modifiedVarsList.add(name+"'");
         }
         
         for (int i = 0; i < this.eventVars.size(); i++) {
@@ -832,11 +880,11 @@ public class Translator {
     	}
     }
     
-    public srParsePattern getRequirement(int i){
+    public PatternType getRequirement(int i){
     	return mRequirements[i];
     }
     
-    public Unit genBoogie (srParsePattern[] patterns) {
+    public Unit genBoogie (PatternType[] patterns) {
     	this.mRequirements = patterns;
 		return genBoogie(new ReqToPEA().genPEA(patterns));
     }
