@@ -101,22 +101,16 @@ public class OctagonDomainState
 		if (type instanceof PrimitiveType) {
 			int typeCode = ((PrimitiveType) type).getTypeCode();
 			return  typeCode == PrimitiveType.INT || typeCode == PrimitiveType.REAL;
-		} else if (type instanceof ArrayType) {
-			return isNumeric(((ArrayType) type).getValueType());
-		} else {
-			return false;
 		}
+		return false;
 	}
 
 	private boolean isInteger(IType type) {
 		if (type instanceof PrimitiveType) {
 			int typeCode = ((PrimitiveType) type).getTypeCode();
 			return  typeCode == PrimitiveType.INT;
-		} else if (type instanceof ArrayType) {
-			return isNumeric(((ArrayType) type).getValueType());
-		} else {
-			return false;
 		}
+		return false;
 	}
 	
 	@Override
