@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.fair;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -41,9 +41,9 @@ import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorPro
  */
 public final class GameGraphSuccessorProvider<LETTER, STATE> implements ISuccessorProvider<Vertex<LETTER, STATE>> {
 	
-	private FairGameGraph<LETTER, STATE> m_Graph;
+	private GameGraph<LETTER, STATE> m_Graph;
 	
-	public GameGraphSuccessorProvider(FairGameGraph<LETTER, STATE> game) {
+	public GameGraphSuccessorProvider(GameGraph<LETTER, STATE> game) {
 		m_Graph = game;
 	}
 

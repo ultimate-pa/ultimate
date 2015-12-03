@@ -26,14 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.fair;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.GameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Player0Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Player1Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
@@ -49,34 +46,14 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  * @param <LETTER>
  * @param <STATE>
  */
-public final class FairGameGraph<LETTER, STATE> {
+public final class FairGameGraph<LETTER, STATE> extends GameGraph<LETTER, STATE> {
 	
 	private INestedWordAutomatonOldApi<LETTER, STATE> buechi;
-	
-	private HashMap<STATE, HashMap<STATE, HashMap<LETTER, Player0Vertex<LETTER, STATE>>>> buechiStatesToGraphStateV0;
-
-	private HashMap<STATE, HashMap<STATE, Player1Vertex<LETTER, STATE>>> buechiStatesToGraphStateV1;
 
 	private int globalInfinity = 0;
 
-	private HashMap<Vertex<LETTER, STATE>, HashSet<Vertex<LETTER, STATE>>> predecessors;
-
-	private HashMap<Vertex<LETTER, STATE>, HashSet<Vertex<LETTER, STATE>>> successors;
-
-	private HashSet<Player1Vertex<LETTER, STATE>> vOneStates;
-
-	private HashSet<Player0Vertex<LETTER, STATE>> vZeroStates;
-
-	protected final IUltimateServiceProvider m_Services;
-
 	public FairGameGraph(IUltimateServiceProvider services, INestedWordAutomatonOldApi<LETTER, STATE> thatBuechi) {
-		m_Services = services;
-		vZeroStates = new HashSet<>();
-		vOneStates = new HashSet<>();
-		successors = new HashMap<>();
-		predecessors = new HashMap<>();
-		buechiStatesToGraphStateV1 = new HashMap<>();
-		buechiStatesToGraphStateV0 = new HashMap<>();
+		super(services);
 		buechi = thatBuechi;
 		generateGameGraphFromBuechi();
 	}
@@ -84,43 +61,9 @@ public final class FairGameGraph<LETTER, STATE> {
 	public int getGlobalInfinity() {
 		return globalInfinity;
 	}
-
-	public HashSet<Player0Vertex<LETTER, STATE>> getPlayer0States() {
-		return vZeroStates;
-	}
-
-	public HashSet<Player1Vertex<LETTER, STATE>> getPlayer1States() {
-		return vOneStates;
-	}
-
-	public HashSet<Vertex<LETTER, STATE>> getPredecessors(Vertex<LETTER, STATE> v) {
-		return predecessors.get(v);
-	}
-
-	public HashSet<Vertex<LETTER, STATE>> getSuccessors(Vertex<LETTER, STATE> v) {
-		return successors.get(v);
-	}
-
-	public boolean hasPredecessors(Vertex<LETTER, STATE> v) {
-		return predecessors.containsKey(v);
-	}
-
-	public boolean hasSuccessors(Vertex<LETTER, STATE> v) {
-		return successors.containsKey(v);
-	}
-
-	private void addEdge(Vertex<LETTER, STATE> src, Vertex<LETTER, STATE> dest) {
-		if (!successors.containsKey(src)) {
-			successors.put(src, new HashSet<>());
-		}
-		successors.get(src).add(dest);
-		if (!predecessors.containsKey(dest)) {
-			predecessors.put(dest, new HashSet<>());
-		}
-		predecessors.get(dest).add(src);
-	}
-
-	private byte calculatePriority(STATE leftState, STATE rightState) {
+	
+	@Override
+	protected byte calculatePriority(STATE leftState, STATE rightState) {
 		if (buechi.isFinal(rightState)) {
 			return (byte) 0;
 		} else if (buechi.isFinal(leftState)) {
@@ -129,12 +72,11 @@ public final class FairGameGraph<LETTER, STATE> {
 			return (byte) 2;
 		}
 	}
-
-	private void generateGameGraphFromBuechi() {
+	
+	@Override
+	protected void generateGameGraphFromBuechi() {
 		// Generate states
 		for (STATE leftState : buechi.getStates()) {
-			buechiStatesToGraphStateV1.put(leftState, new HashMap<>());
-			buechiStatesToGraphStateV0.put(leftState, new HashMap<>());
 			for (STATE rightState : buechi.getStates()) {
 				// Generate V_1 states
 				byte priority = calculatePriority(leftState, rightState);
@@ -143,16 +85,13 @@ public final class FairGameGraph<LETTER, STATE> {
 				}
 				Player1Vertex<LETTER, STATE> v1e =
 						new Player1Vertex<>(priority, false, leftState, rightState);
-				vOneStates.add(v1e);
-				buechiStatesToGraphStateV1.get(leftState).put(rightState, v1e);
-				buechiStatesToGraphStateV0.get(leftState).put(rightState, new HashMap<>());
-
+				addPlayer1State(v1e);
+				
 				// Generate V_0 states
 				for (LETTER letter : buechi.lettersInternalIncoming(leftState)) {
 					Player0Vertex<LETTER, STATE> v0e =
 							new Player0Vertex<>((byte) 2, false, leftState, rightState, letter);
-					vZeroStates.add(v0e);
-					buechiStatesToGraphStateV0.get(leftState).get(rightState).put(letter, v0e);
+					addPlayer0State(v0e);
 				}
 			}
 		}
@@ -164,17 +103,15 @@ public final class FairGameGraph<LETTER, STATE> {
 			for (IncomingInternalTransition<LETTER, STATE> transition : buechi.internalPredecessors(edgeDestination)) {
 				for (STATE fixState : buechi.getStates()) {
 					// Duplicator edges V_0 -> V_1
-					Vertex<LETTER, STATE> origin = buechiStatesToGraphStateV0.get(fixState).get(transition.getPred())
-							.get(transition.getLetter());
-					Vertex<LETTER, STATE> destination = buechiStatesToGraphStateV1.get(fixState).get(edgeDestination);
+					Vertex<LETTER, STATE> origin = getPlayer0State(fixState, transition.getPred(), transition.getLetter());
+					Vertex<LETTER, STATE> destination = getPlayer1State(fixState, edgeDestination);
 					if (origin != null && destination != null) {
 						addEdge(origin, destination);
 					}
 
 					// Spoiler edges V_1 -> V_0
-					origin = buechiStatesToGraphStateV1.get(transition.getPred()).get(fixState);
-					destination = buechiStatesToGraphStateV0.get(edgeDestination).get(fixState)
-							.get(transition.getLetter());
+					origin = getPlayer1State(transition.getPred(), fixState);
+					destination = getPlayer0State(edgeDestination, fixState, transition.getLetter());
 					if (origin != null && destination != null) {
 						addEdge(origin, destination);
 					}
@@ -186,7 +123,8 @@ public final class FairGameGraph<LETTER, STATE> {
 			}
 		}
 	}
-
+	
+	@Override
 	protected NestedWordAutomaton<LETTER, STATE> generateBuchiAutomatonFromGraph() {
 		// TODO Currently returns a copy of the buechi automata.
 		StateFactory<STATE> snf = (StateFactory<STATE>) new StringFactory();
@@ -218,13 +156,13 @@ public final class FairGameGraph<LETTER, STATE> {
 		
 		// States
 		result.append(lineSeparator + "\tplayer1Vertices = {");
-		for (Player1Vertex<LETTER, STATE> state : vOneStates) {
+		for (Player1Vertex<LETTER, STATE> state : getPlayer1States()) {
 			result.append(lineSeparator + "\t\t<(" + state.getQ0()
 				+ ", " + state.getQ1() + "), p:" + state.getPriority() + ">");
 		}
 		result.append(lineSeparator + "\t},");
 		result.append(lineSeparator + "\tplayer0Vertices = {");
-		for (Player0Vertex<LETTER, STATE> state : vZeroStates) {
+		for (Player0Vertex<LETTER, STATE> state : getPlayer0States()) {
 			result.append(lineSeparator + "\t\t<(" + state.getQ0()
 				+ ", " + state.getQ1() + ", " + state.getLetter()
 				+ "), p:" + state.getPriority() + ">");
@@ -233,8 +171,8 @@ public final class FairGameGraph<LETTER, STATE> {
 		
 		// Edges
 		result.append(lineSeparator + "\ttransitions = {");
-		for (Vertex<LETTER, STATE> state : successors.keySet()) {
-			for (Vertex<LETTER, STATE> successor : successors.get(state)) {
+		for (Vertex<LETTER, STATE> state : getNonDeadEndStates()) {
+			for (Vertex<LETTER, STATE> successor : getSuccessors(state)) {
 				result.append(lineSeparator + "\t\t(" + state.getQ0() + ", " + state.getQ1());
 				if (state instanceof Player0Vertex) {
 					Player0Vertex<LETTER, STATE> stateAsPlayer0 = (Player0Vertex<LETTER, STATE>) state;
@@ -254,15 +192,5 @@ public final class FairGameGraph<LETTER, STATE> {
 		result.append(lineSeparator + ");");
 		
 		return result.toString();
-	}
-	
-	public int getSize() {
-		return vOneStates.size() + vZeroStates.size();
-	}
-	
-	public Set<Vertex<LETTER, STATE>> getNodes() {
-		HashSet<Vertex<LETTER, STATE>> result = new HashSet<>(vOneStates);
-		result.addAll(vZeroStates);
-		return result;
 	}
 }

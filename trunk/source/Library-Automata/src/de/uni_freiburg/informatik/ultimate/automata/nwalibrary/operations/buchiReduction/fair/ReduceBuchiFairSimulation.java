@@ -161,7 +161,7 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE>
 //		buechi.addState(false, true, "q2");
 //		buechi.addState(false, false, "q3");
 //		buechi.addState(false, true, "q4");
-//		buechi.addInternalTransition("q0", "b", "q1");
+//		buechi.addInternalTransition("q0", "a", "q1");
 //		buechi.addInternalTransition("q1", "a", "q1");
 //		buechi.addInternalTransition("q1", "a", "q2");
 //		buechi.addInternalTransition("q2", "a", "q2");
@@ -239,15 +239,8 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE>
 		buechi.addInternalTransition("q10", "b", "q10");
 		
 		// Fair simulation
-		FairSimulation<String, String> simulation = null;
-		try {
-			simulation = new FairSimulation<>(service, buechi, true, snf);
-		} catch (AutomataLibraryException e) {
-			e.printStackTrace();
-		}
-		if (simulation != null) {
-			System.out.println(simulation);
-		}
+		FairSimulation<String, String> simulation = new FairSimulation<>(service, buechi, true, snf);
+		System.out.println(simulation);
 	}
 
 }
