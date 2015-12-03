@@ -320,6 +320,14 @@ public class PostProcessor {
 				continue;
 			ILocation currentDeclsLoc = en.getKey().getLocation();
 			ExpressionResult initializer = en.getValue().getInitializer();
+			
+			/*
+			 * global variables with external linkage are not implicitly initialized. (They are initialized by 
+			 * the module that provides them..)
+			 */
+//			if (main.cHandler.getSymbolTable().get(en.getValue().getName(), currentDeclsLoc).isExtern())
+			if (en.getValue().isExtern())
+				continue;
 
 			for (VarList vl  : ((VariableDeclaration) en.getKey()).getVariables()) {
 				for (String id : vl.getIdentifiers()) {
@@ -447,7 +455,7 @@ public class PostProcessor {
 				assert checkedMethodOutParams.length == 1;
 				// there is 1(!) return value
 				String checkMethodRet = main.nameHandler
-						.getTempVarUID(SFO.AUXVAR.RETURNED);
+						.getTempVarUID(SFO.AUXVAR.RETURNED, null);
 				main.cHandler.getSymbolTable().addToReverseMap(checkMethodRet,
 						SFO.NO_REAL_C_VAR + checkMethodRet, loc);
 				VarList tempVar = new VarList(loc,

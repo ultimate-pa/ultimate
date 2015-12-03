@@ -78,6 +78,7 @@ import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.IASTTypeIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
+import org.eclipse.cdt.core.dom.ast.gnu.IGNUASTCompoundStatementExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
@@ -591,15 +592,8 @@ public interface ICHandler extends IHandler {
      */
     public Result visit(Dispatcher main, IASTTypeIdExpression node);
     
-    /**
-     * FIXME: added by alex, 2014-10-08
-     * supposed to return a ResultExpression that does stuff that -additionally to
-     * the special treatment- has to be done for every Expression
-     * @param main
-     * @param node
-     * @return
-     */
-    public Result visit(Dispatcher main, IASTExpression node);
+    
+    public Result visit(Dispatcher main, IGNUASTCompoundStatementExpression node);
     
     /**
      * central methods for beginning a scope in all necessary ScopedThings
@@ -627,7 +621,7 @@ public interface ICHandler extends IHandler {
 	 * Method may exchange the {@link RValue} of the  {@link ExpressionResult}
 	 * and add additional objects (statements, auxVars, etc.).
 	 */
-	public void castToType(Dispatcher main, ILocation loc, ExpressionResult rexp, CType resultType);
+	public void convert(Dispatcher main, ILocation loc, ExpressionResult rexp, CType resultType);
 
 	public InitializationHandler getInitHandler();
 

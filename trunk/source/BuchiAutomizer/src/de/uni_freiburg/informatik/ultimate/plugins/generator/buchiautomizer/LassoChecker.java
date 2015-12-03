@@ -43,8 +43,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.AnalysisTechnique;
@@ -145,7 +145,8 @@ public class LassoChecker {
 	 */
 	private final String m_ExternalSolverCommand_GntaSynthesis;
 	
-	private final AnalysisType m_LassoRankerAnalysisType;
+	private final AnalysisType m_RankAnalysisType;
+	private final AnalysisType m_GntaAnalysisType;
 	private final boolean m_TrySimplificationTerminationArgument;
 
 	/**
@@ -260,7 +261,9 @@ public class LassoChecker {
 		m_ExternalSolverCommand_RankSynthesis = baPref.getString(PreferenceInitializer.LABEL_ExtSolverCommandRank);
 		m_ExternalSolver_GntaSynthesis = baPref.getBoolean(PreferenceInitializer.LABEL_ExtSolverGNTA);
 		m_ExternalSolverCommand_GntaSynthesis = baPref.getString(PreferenceInitializer.LABEL_ExtSolverCommandGNTA);
-		m_LassoRankerAnalysisType = baPref.getEnum(PreferenceInitializer.LABEL_AnalysisType, AnalysisType.class);
+		m_RankAnalysisType = baPref.getEnum(PreferenceInitializer.LABEL_AnalysisTypeRank, AnalysisType.class);
+		m_GntaAnalysisType = baPref.getEnum(PreferenceInitializer.LABEL_AnalysisTypeGNTA, AnalysisType.class);
+		
 		m_TemplateBenchmarkMode = baPref.getBoolean(PreferenceInitializer.LABEL_TemplateBenchmarkMode);
 		m_TrySimplificationTerminationArgument = baPref.getBoolean(PreferenceInitializer.LABEL_Simplify);
 		m_TryTwofoldRefinement = baPref.getBoolean(PreferenceInitializer.LABEL_TryTwofoldRefinement);
@@ -466,7 +469,7 @@ public class LassoChecker {
 						 * set the argument to AssertCodeBlockOrder.NOT_INCREMENTALLY.
 						 * Check if you want to set this
 						 * to a different value.
-						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, m_PredicateUnifier, m_Interpolation);
+						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, m_PredicateUnifier, m_Interpolation, true);
 				break;
 			case ForwardPredicates:
 			case BackwardPredicates:
@@ -480,7 +483,7 @@ public class LassoChecker {
 						 * Check if you want to set this
 						 * to a different value.
 						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, 
-						 UnsatCores.CONJUNCT_LEVEL, true, mServices, false, m_PredicateUnifier, m_Interpolation);
+						 UnsatCores.CONJUNCT_LEVEL, true, mServices, false, m_PredicateUnifier, m_Interpolation, m_SmtManager);
 				break;
 			default:
 				throw new UnsupportedOperationException("unsupported interpolation");
@@ -630,7 +633,7 @@ public class LassoChecker {
 
 	private TerminationAnalysisSettings constructTASettings() {
 		TerminationAnalysisSettings settings = new TerminationAnalysisSettings();
-		settings.analysis = m_LassoRankerAnalysisType;
+		settings.analysis = m_RankAnalysisType;
 		settings.num_non_strict_invariants = 1;
 		settings.num_strict_invariants = 0;
 		settings.nondecreasing_invariants = true;
@@ -641,7 +644,7 @@ public class LassoChecker {
 
 	private NonTerminationAnalysisSettings constructNTASettings() {
 		NonTerminationAnalysisSettings settings = new NonTerminationAnalysisSettings();
-		settings.analysis = m_LassoRankerAnalysisType;
+		settings.analysis = m_GntaAnalysisType;
 		return settings;
 	}
 

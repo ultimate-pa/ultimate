@@ -45,7 +45,8 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRati
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFactory.RatingStrategy;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding.preferences.PreferenceInitializer;
@@ -58,9 +59,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 
 /**
- * This class is like BlockEncoder, the start point where every function in the
- * program is converted back to an RCFG. An advantage is, that this can be
- * executed in parallel, which gives some performance gains.
+ * This class is like BlockEncoder, the start point where every function in the program is converted back to an RCFG. An
+ * advantage is, that this can be executed in parallel, which gives some performance gains.
  * 
  * @author Stefan Wissert
  * 
@@ -84,9 +84,8 @@ public class MinModelConverter {
 	}
 
 	/**
-	 * Starting point of the back conversion to an RCFG. Note: Due to changes of
-	 * data model, the minimized model belongs now as Annotation at the
-	 * RootEdges.
+	 * Starting point of the back conversion to an RCFG. Note: Due to changes of data model, the minimized model belongs
+	 * now as Annotation at the RootEdges.
 	 * 
 	 * @param root
 	 *            the rootNode to convert
@@ -94,6 +93,7 @@ public class MinModelConverter {
 	 */
 	public RootNode startConversion(RootNode root) {
 		RootNode newRoot = new RootNode(root.getPayload().getLocation(), root.getRootAnnot());
+		ModelUtils.mergeAnnotations(root, newRoot);
 		mBoogie2SMT = root.getRootAnnot().getBoogie2SMT();
 		boolean simplify = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_Simplify);
@@ -102,7 +102,7 @@ public class MinModelConverter {
 			if (edge instanceof RootEdge) {
 				BlockEncodingAnnotation annot = BlockEncodingAnnotation.getAnnotation(edge);
 				if (annot != null) {
-					new RootEdge(newRoot, convertFunction(annot.getNode()));
+					ModelUtils.mergeAnnotations(edge, new RootEdge(newRoot, convertFunction(annot.getNode())));
 				} else {
 					mLogger.warn("Conversion cancelled, illegal RCFG!");
 					throw new IllegalArgumentException("The target of an root edge is not a MinimizedNode");
@@ -160,8 +160,7 @@ public class MinModelConverter {
 	}
 
 	/**
-	 * Converts a function (given as MinimizedNode) by calling the
-	 * ConversionVisitor.
+	 * Converts a function (given as MinimizedNode) by calling the ConversionVisitor.
 	 * 
 	 * @param node
 	 *            function head
@@ -179,11 +178,10 @@ public class MinModelConverter {
 	}
 
 	/**
-	 * We have to update some Maps, which are stored in the RootAnnot. They are
-	 * needed for several computations afterwards. Most of the maps are usual
-	 * very small, so that iterating over them should be not that expensive. One
-	 * exception is the field "locNodes", there is every ProgramPoint stored,
-	 * with its name and the procedure name. We store during the conversion.
+	 * We have to update some Maps, which are stored in the RootAnnot. They are needed for several computations
+	 * afterwards. Most of the maps are usual very small, so that iterating over them should be not that expensive. One
+	 * exception is the field "locNodes", there is every ProgramPoint stored, with its name and the procedure name. We
+	 * store during the conversion.
 	 * 
 	 * @param rootAnnot
 	 */
@@ -214,8 +212,8 @@ public class MinModelConverter {
 				if (progPointMap.containsKey(oldVal)) {
 					newReferences.add(progPointMap.get(oldVal));
 				} else {
-					mLogger.warn("There is no correspondent node in the" + " new graph for the error location "
-							+ oldVal);
+					mLogger.warn(
+							"There is no correspondent node in the" + " new graph for the error location " + oldVal);
 				}
 			}
 			rootAnnot.getErrorNodes().put(key, newReferences);

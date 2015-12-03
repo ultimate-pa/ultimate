@@ -32,6 +32,8 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Concurrency;
@@ -52,6 +54,14 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<Integer>(LABEL_WATCHITERATION, DEF_WATCHITERATION, PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, 10000000)),
 				new UltimatePreferenceItem<Boolean>(LABEL_HOARE, DEF_HOARE, PreferenceType.Boolean),
+				
+				new UltimatePreferenceItem<Boolean>(LABEL_SEPARATE_SOLVER, DEF_SEPARATE_SOLVER, PreferenceType.Boolean),
+				new UltimatePreferenceItem<SolverMode>(RcfgPreferenceInitializer.LABEL_Solver, DEF_Solver, PreferenceType.Combo, SolverMode.values()),
+				new UltimatePreferenceItem<String>(RcfgPreferenceInitializer.LABEL_ExtSolverCommand, DEF_ExtSolverCommand, PreferenceType.String),
+				new UltimatePreferenceItem<String>(RcfgPreferenceInitializer.LABEL_ExtSolverLogic, RcfgPreferenceInitializer.DEF_ExtSolverLogic, PreferenceType.String),
+				new UltimatePreferenceItem<Boolean>(RcfgPreferenceInitializer.LABEL_DumpToFile, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<String>(RcfgPreferenceInitializer.LABEL_Path, RcfgPreferenceInitializer.DEF_Path, PreferenceType.Directory),
+				
 				new UltimatePreferenceItem<INTERPOLATION>(LABEL_INTERPOLATED_LOCS, DEF_INTERPOLANTS,
 						PreferenceType.Combo, INTERPOLATION.values()),
 				new UltimatePreferenceItem<Boolean>(LABEL_INTERPOLANTS_CONSOLIDATION, false,
@@ -106,6 +116,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_ARTIFACT = "Kind of artifact that is visualized";
 	public static final String LABEL_WATCHITERATION = "Number of iteration whose artifact is visualized";
 	public static final String LABEL_HOARE = "Compute Hoare Annotation of negated interpolant automaton, abstraction and CFG";
+	public static final String LABEL_SEPARATE_SOLVER = "Use separate solver for trace checks";
 	public static final String LABEL_INTERPOLATED_LOCS = "Compute Interpolants along a Counterexample";
 	public static final String LABEL_INTERPOLANTS_CONSOLIDATION = "Interpolants consolidation";
 	public static final String LABEL_INTERPOLANT_AUTOMATON = "Interpolant automaton";
@@ -151,6 +162,9 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String DEF_ARTIFACT = VALUE_RCFG;
 	public static final int DEF_WATCHITERATION = 1000000;
 	public static final boolean DEF_HOARE = false;
+	public static final boolean DEF_SEPARATE_SOLVER = true;
+	public static final SolverMode DEF_Solver = SolverMode.Internal_SMTInterpol;
+	public static final String DEF_ExtSolverCommand = RcfgPreferenceInitializer.Z3_DEFAULT;
 	public static final INTERPOLATION DEF_INTERPOLANTS = INTERPOLATION.ForwardPredicates;
 	public static final String DEF_ADDITIONAL_EDGES = VALUE_InterpolantAutomaton_Canonical;
 	public static final boolean DEF_DUMPAUTOMATA = false;

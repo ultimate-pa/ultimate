@@ -33,6 +33,10 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.conta
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
@@ -134,6 +138,7 @@ public class CPrimitive extends CType {
 		case DOUBLE:
 		case LONGDOUBLE:
 			generalType = GENERALPRIMITIVE.FLOATTYPE;
+//			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
 			break;
 		case BOOL:
 		case UCHAR:
@@ -171,8 +176,7 @@ public class CPrimitive extends CType {
 		case USHORT:
 			return true;
 		case CHAR :
-			//FIXME: this should be a setting
-			return true;
+			return !TypeSizes.isCharSigned();
 		case COMPLEX_FLOAT:
 		case COMPLEX_DOUBLE:
 		case COMPLEX_LONGDOUBLE:
@@ -282,7 +286,7 @@ public class CPrimitive extends CType {
 //                    break;
                 default:
                     throw new IllegalArgumentException(
-                            "Unknown C Decklaration!");
+                            "Unknown C Declaration!");
             }
         } else {
             throw new IllegalArgumentException("Unknown C Declaration!");
@@ -353,7 +357,12 @@ public class CPrimitive extends CType {
 		}
 		switch (this.getType()) {
 		case CHAR:
-			throw new UnsupportedOperationException("is char signed or not? implement this");
+			if (TypeSizes.isCharSigned()) {
+				return new CPrimitive(PRIMITIVE.UCHAR);
+			} else {
+				throw new UnsupportedOperationException(
+						"according to your settings, char is already unsigned");
+			}
 		case INT:
 			return new CPrimitive(PRIMITIVE.UINT);
 		case LONG:

@@ -36,10 +36,12 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object> {
 
 	private final BenchmarkData m_CegarLoopBenchmarkData;
+	private final int m_Procedures;
 	private final int m_Locations;
 	private final int m_ErrorLocations;
 
 	public TraceAbstractionBenchmarks(RootAnnot rootAnnot) {
+		m_Procedures = rootAnnot.getEntryNodes().size();
 		m_Locations = rootAnnot.getNumberOfProgramPoints();
 		m_ErrorLocations = rootAnnot.getNumberOfErrorNodes();
 		m_CegarLoopBenchmarkData = new BenchmarkData();
@@ -59,6 +61,8 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object> 
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
 		sb.append("CFG has ");
+		sb.append(m_Procedures);
+		sb.append(" procedures, ");
 		sb.append(m_Locations);
 		sb.append(" locations, ");
 		sb.append(m_ErrorLocations);

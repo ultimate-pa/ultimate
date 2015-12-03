@@ -7,7 +7,7 @@ necessary steps.
 0. Switch to the directory in which your source subdirectory is, e.g., trunk/
 
 1. Checkout clean smtinterpol git repository.
-   git clone https://github.com/juergenchrist/smtinterpol smtinterpol.git
+   git clone https://github.com/ultimate-pa/smtinterpol.git smtinterpol.git
 
 2. Find out the last merged version by looking into Version.properties
    cat source/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/Version.properties
@@ -39,8 +39,8 @@ necessary steps.
 8. svn commit.  The log message should say (version can be found by 
    executing "git describe" in smtinterpol.git)
 
-   Updated SMTInterpol to version 2.1-102-g04e1b50
-   from https://github.com/juergenchrist/smtinterpol
+   Updated SMTInterpol to version 2.1-228-g5118445
+   from https://github.com/ultimate-pa/smtinterpol.git
 
 
 

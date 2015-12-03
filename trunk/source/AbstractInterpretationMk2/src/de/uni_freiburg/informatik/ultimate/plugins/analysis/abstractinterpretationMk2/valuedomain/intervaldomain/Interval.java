@@ -13,7 +13,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
  * @author Christopher Dillo
  */
 public class Interval {
-	private Rational m_lower, m_upper;
+	private Rational mLower;
+	private Rational mUpper;
 
 	/**
 	 * [lowerBound, upperBound] lowerBound <= upperBound
@@ -24,8 +25,8 @@ public class Interval {
 	 *            Rational for the upper bound
 	 */
 	public Interval(Rational lowerBound, Rational upperBound) {
-		m_lower = lowerBound.floor();
-		m_upper = upperBound.ceil();
+		mLower = lowerBound.floor();
+		mUpper = upperBound.ceil();
 	}
 
 	/**
@@ -35,16 +36,16 @@ public class Interval {
 	 *            Rational for the lower and upper bound
 	 */
 	public Interval(Rational bound) {
-		m_lower = bound.floor();
-		m_upper = bound.ceil();
+		mLower = bound.floor();
+		mUpper = bound.ceil();
 	}
 
 	/**
 	 * Creates an empty interval [1, -1]
 	 */
 	public Interval() {
-		m_lower = Rational.ONE;
-		m_upper = Rational.MONE;
+		mLower = Rational.ONE;
+		mUpper = Rational.MONE;
 	}
 
 	/**
@@ -52,7 +53,7 @@ public class Interval {
 	 *         infinity
 	 */
 	public Rational getLowerBound() {
-		return m_lower;
+		return mLower;
 	}
 
 	/**
@@ -60,14 +61,14 @@ public class Interval {
 	 *         infinity
 	 */
 	public Rational getUpperBound() {
-		return m_upper;
+		return mUpper;
 	}
 
 	/**
 	 * @return True iff the interval is empty
 	 */
 	public boolean isEmpty() {
-		return m_lower.compareTo(m_upper) > 0;
+		return mLower.compareTo(mUpper) > 0;
 	}
 
 	/**
@@ -77,7 +78,7 @@ public class Interval {
 		if (isEmpty())
 			return new Interval();
 
-		return new Interval(m_lower, m_upper);
+		return new Interval(mLower, mUpper);
 	}
 
 	/**
@@ -86,7 +87,7 @@ public class Interval {
 	 */
 	public boolean isEqual(Interval interval) {
 		return (isEmpty() && interval.isEmpty())
-				|| (m_lower.compareTo(interval.getLowerBound()) == 0 && m_upper
+				|| (mLower.compareTo(interval.getLowerBound()) == 0 && mUpper
 						.compareTo(interval.getUpperBound()) == 0);
 	}
 
@@ -95,7 +96,7 @@ public class Interval {
 	 * @return True if this interval and the given interval are equal
 	 */
 	public boolean isEqual(Rational value) {
-		return m_lower.compareTo(value) == 0 && m_upper.compareTo(value) == 0;
+		return mLower.compareTo(value) == 0 && mUpper.compareTo(value) == 0;
 	}
 
 	/**
@@ -103,16 +104,16 @@ public class Interval {
 	 *         single integer value
 	 */
 	public boolean isSingleValueInterval() {
-		return m_lower.compareTo(m_upper) == 0;
+		return mLower.compareTo(mUpper) == 0;
 	}
 
 	public String toString() {
 		if (isEmpty())
 			return "{}";
-		String lower = (m_lower.compareTo(Rational.NEGATIVE_INFINITY) == 0) ? "(-infinity"
-				: "[" + m_lower.toString();
-		String upper = (m_upper.compareTo(Rational.POSITIVE_INFINITY) == 0) ? "infinity)"
-				: m_upper.toString() + "]";
+		String lower = (mLower.compareTo(Rational.NEGATIVE_INFINITY) == 0) ? "(-infinity"
+				: "[" + mLower.toString();
+		String upper = (mUpper.compareTo(Rational.POSITIVE_INFINITY) == 0) ? "infinity)"
+				: mUpper.toString() + "]";
 		return lower + ", " + upper;
 	}
 }

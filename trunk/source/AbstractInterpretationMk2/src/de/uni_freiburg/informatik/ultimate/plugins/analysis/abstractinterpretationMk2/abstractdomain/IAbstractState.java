@@ -1,5 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.AbstractVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.TypedAbstractVariable;
 
@@ -19,7 +22,7 @@ public interface IAbstractState<T> {
 	 * @param state
 	 * @return
 	 */
-	boolean isSuperOrEqual(IAbstractState<T> state);
+	boolean isSuperOrEqual(IAbstractState<?> state);
 
 	/**
 	 * Determines whether a variable is declared in this state or not.
@@ -70,4 +73,13 @@ public interface IAbstractState<T> {
 	 * @return
 	 */
 	T getConcrete();
+
+	/**
+	 * Create SMT constraint from this abstract state.
+	 * 
+	 * @param script
+	 * @param bpl2smt
+	 * @return
+	 */
+	Term getTerm(Script script, Boogie2SMT bpl2smt);	
 }

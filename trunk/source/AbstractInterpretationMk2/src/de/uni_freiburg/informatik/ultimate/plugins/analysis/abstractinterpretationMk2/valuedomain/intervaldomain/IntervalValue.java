@@ -4,6 +4,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.valuedomain.intervaldomain;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 import java.math.BigInteger;
 
@@ -39,52 +41,27 @@ public class IntervalValue implements IAbstractValue<Interval> {
 	 * @param factory
 	 * @param logger
 	 */
-	protected IntervalValue(Interval value, IntervalValueFactory factory,
-			Logger logger) {
+	protected IntervalValue(Interval value, IntervalValueFactory factory, Logger logger) {
 		mValue = value;
 		mFactory = factory;
 		mLogger = logger;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.IAbstractValue#getValue()
-	 */
 	@Override
 	public Interval getValue() {
 		return mValue;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.valuedomain.IAbstractValue#getFactory()
-	 */
 	@Override
 	public IAbstractValueFactory<?> getFactory() {
 		return mFactory;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.valuedomain.IAbstractValue#isTrue()
-	 */
 	@Override
 	public boolean isTrue() {
 		return mValue.equals(Rational.ONE);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.valuedomain.IAbstractValue#isFalse()
-	 */
 	@Override
 	public boolean isFalse() {
 		assert (!isBottom()); // this should not be asked if bottom
@@ -93,52 +70,22 @@ public class IntervalValue implements IAbstractValue<Interval> {
 				|| (mValue.getLowerBound().compareTo(Rational.ONE) > 0);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.IAbstractValue#isTop()
-	 */
 	@Override
 	public boolean isTop() {
 		return (mValue.getLowerBound().compareTo(Rational.NEGATIVE_INFINITY) <= 0)
-				&& (mValue.getUpperBound()
-						.compareTo(Rational.POSITIVE_INFINITY) >= 0);
+				&& (mValue.getUpperBound().compareTo(Rational.POSITIVE_INFINITY) >= 0);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.IAbstractValue#isBottom()
-	 */
 	@Override
 	public boolean isBottom() {
 		return mValue.isEmpty();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#representsSingleConcreteValue()
-	 */
 	@Override
 	public boolean representsSingleConcreteValue() {
 		return mValue.isSingleValueInterval();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#isEqual(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public boolean isEqual(IAbstractValue<?> value) {
 		IntervalValue intVal = (IntervalValue) value;
@@ -148,16 +95,6 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		return (mValue.isEqual(intVal.getValue()));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#isSuper(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public boolean isSuperOrEqual(IAbstractValue<?> value) {
 		IntervalValue intVal = (IntervalValue) value;
@@ -170,24 +107,13 @@ public class IntervalValue implements IAbstractValue<Interval> {
 
 		boolean lowerIsLessEq, upperIsGreaterEq;
 
-		lowerIsLessEq = mValue.getLowerBound().compareTo(
-				interval.getLowerBound()) <= 0;
+		lowerIsLessEq = mValue.getLowerBound().compareTo(interval.getLowerBound()) <= 0;
 
-		upperIsGreaterEq = mValue.getUpperBound().compareTo(
-				interval.getUpperBound()) >= 0;
+		upperIsGreaterEq = mValue.getUpperBound().compareTo(interval.getUpperBound()) >= 0;
 
 		return lowerIsLessEq && upperIsGreaterEq;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#isSub(de.uni_freiburg
-	 * .informatik.ultimate.plugins
-	 * .analysis.abstractinterpretationMk2.abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public boolean isSub(IAbstractValue<?> value) {
 		IntervalValue intVal = (IntervalValue) value;
@@ -200,35 +126,18 @@ public class IntervalValue implements IAbstractValue<Interval> {
 
 		boolean lowerIsGreaterEq, upperIsLessEq;
 
-		lowerIsGreaterEq = mValue.getLowerBound().compareTo(
-				interval.getLowerBound()) >= 0;
+		lowerIsGreaterEq = mValue.getLowerBound().compareTo(interval.getLowerBound()) >= 0;
 
-		upperIsLessEq = mValue.getUpperBound().compareTo(
-				interval.getUpperBound()) <= 0;
+		upperIsLessEq = mValue.getUpperBound().compareTo(interval.getUpperBound()) <= 0;
 
 		return lowerIsGreaterEq && upperIsLessEq;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.IAbstractValue#copy()
-	 */
 	@Override
 	public IntervalValue copy() {
 		return mFactory.makeValue(mValue.copy());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#add(de.uni_freiburg
-	 * .informatik.ultimate.plugins
-	 * .analysis.abstractinterpretationMk2.abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public IntervalValue add(IAbstractValue<?> value) {
 		/*
@@ -242,25 +151,13 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		if (mValue.isEmpty() || interval.isEmpty())
 			return mFactory.makeBottomValue();
 
-		Rational resultLower = mValue.getLowerBound().add(
-				interval.getLowerBound());
+		Rational resultLower = mValue.getLowerBound().add(interval.getLowerBound());
 
-		Rational resultUpper = mValue.getUpperBound().add(
-				interval.getUpperBound());
+		Rational resultUpper = mValue.getUpperBound().add(interval.getUpperBound());
 
 		return mFactory.makeValue(new Interval(resultLower, resultUpper));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#subtract(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public IntervalValue subtract(IAbstractValue<?> value) {
 		/*
@@ -274,36 +171,21 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		if (mValue.isEmpty() || interval.isEmpty())
 			return mFactory.makeBottomValue();
 
-		Rational resultLower = mValue.getLowerBound().sub(
-				interval.getUpperBound());
+		Rational resultLower = mValue.getLowerBound().sub(interval.getUpperBound());
 
-		Rational resultUpper = mValue.getUpperBound().sub(
-				interval.getLowerBound());
+		Rational resultUpper = mValue.getUpperBound().sub(interval.getLowerBound());
 
 		return mFactory.makeValue(new Interval(resultLower, resultUpper));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#multiply(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public IntervalValue multiply(IAbstractValue<?> value) {
 		/*
-		 * [a, b] * [x, y] = [min(a * x, a * y, b * x, b * y), max(a * x, a * y,
-		 * b * x, b * y)] Optimisations by taking signs into account (and [a, b]
-		 * * [x, y] = [x, y] * [a, b]): a >= 0, b >= 0, x >= 0, y >= 0 => [a *
-		 * x, b * y] a >= 0, b >= 0, x <= 0, y >= 0 => [b * x, b * y] a >= 0, b
-		 * >= 0, x <= 0, y <= 0 => [b * x, a * y] a <= 0, b >= 0, x <= 0, y >= 0
-		 * => [min(a * y, b * x), max(a * x, b * y)] a <= 0, b >= 0, x <= 0, y
-		 * <= 0 => [b * x, a * x] a <= 0, b <= 0, x <= 0, y <= 0 => [b * y, a *
-		 * x]
+		 * [a, b] * [x, y] = [min(a * x, a * y, b * x, b * y), max(a * x, a * y, b * x, b * y)] Optimisations by taking
+		 * signs into account (and [a, b] * [x, y] = [x, y] * [a, b]): a >= 0, b >= 0, x >= 0, y >= 0 => [a * x, b * y]
+		 * a >= 0, b >= 0, x <= 0, y >= 0 => [b * x, b * y] a >= 0, b >= 0, x <= 0, y <= 0 => [b * x, a * y] a <= 0, b
+		 * >= 0, x <= 0, y >= 0 => [min(a * y, b * x), max(a * x, b * y)] a <= 0, b >= 0, x <= 0, y <= 0 => [b * x, a *
+		 * x] a <= 0, b <= 0, x <= 0, y <= 0 => [b * y, a * x]
 		 */
 		IntervalValue intVal = (IntervalValue) value;
 		if (intVal == null)
@@ -329,9 +211,8 @@ public class IntervalValue implements IAbstractValue<Interval> {
 
 		if (l1_geq0) {
 			/*
-			 * a >= 0, b >= 0, x >= 0, y >= 0 => [a * x, b * y] a >= 0, b >= 0,
-			 * x <= 0, y >= 0 => [b * x, b * y] a >= 0, b >= 0, x <= 0, y <= 0
-			 * => [b * x, a * y]
+			 * a >= 0, b >= 0, x >= 0, y >= 0 => [a * x, b * y] a >= 0, b >= 0, x <= 0, y >= 0 => [b * x, b * y] a >= 0,
+			 * b >= 0, x <= 0, y <= 0 => [b * x, a * y]
 			 */
 			if (l2_geq0) {
 				/*
@@ -341,8 +222,7 @@ public class IntervalValue implements IAbstractValue<Interval> {
 				resultUpper = u1.mul(u2);
 			} else {
 				/*
-				 * a >= 0, b >= 0, x <= 0, y >= 0 => [b * x, b * y] a >= 0, b >=
-				 * 0, x <= 0, y <= 0 => [b * x, a * y]
+				 * a >= 0, b >= 0, x <= 0, y >= 0 => [b * x, b * y] a >= 0, b >= 0, x <= 0, y <= 0 => [b * x, a * y]
 				 */
 				resultLower = u1.mul(l2);
 				if (u2_geq0) {
@@ -359,18 +239,15 @@ public class IntervalValue implements IAbstractValue<Interval> {
 			}
 		} else {
 			/*
-			 * a <= 0, b >= 0, x >= 0, y >= 0 => [a * y, b * y] a <= 0, b >= 0,
-			 * x <= 0, y >= 0 => [min(a * y, b * x), max(a * x, b * y)] a <= 0,
-			 * b >= 0, x <= 0, y <= 0 => [b * x, a * x] a <= 0, b <= 0, x >= 0,
-			 * y >= 0 => [a * y, b * x] a <= 0, b <= 0, x <= 0, y >= 0 => [a *
-			 * y, max(a * x, b * y)] a <= 0, b <= 0, x <= 0, y <= 0 => [b * y, a
-			 * * x]
+			 * a <= 0, b >= 0, x >= 0, y >= 0 => [a * y, b * y] a <= 0, b >= 0, x <= 0, y >= 0 => [min(a * y, b * x),
+			 * max(a * x, b * y)] a <= 0, b >= 0, x <= 0, y <= 0 => [b * x, a * x] a <= 0, b <= 0, x >= 0, y >= 0 => [a
+			 * * y, b * x] a <= 0, b <= 0, x <= 0, y >= 0 => [a * y, max(a * x, b * y)] a <= 0, b <= 0, x <= 0, y <= 0
+			 * => [b * y, a * x]
 			 */
 			if (u1_geq0) {
 				/*
-				 * a <= 0, b >= 0, x >= 0, y >= 0 => [a * y, b * y] a <= 0, b >=
-				 * 0, x <= 0, y >= 0 => [min(a * y, b * x), max(a * x, b * y)] a
-				 * <= 0, b >= 0, x <= 0, y <= 0 => [b * x, a * x]
+				 * a <= 0, b >= 0, x >= 0, y >= 0 => [a * y, b * y] a <= 0, b >= 0, x <= 0, y >= 0 => [min(a * y, b *
+				 * x), max(a * x, b * y)] a <= 0, b >= 0, x <= 0, y <= 0 => [b * x, a * x]
 				 */
 				if (l2_geq0) {
 					/*
@@ -380,14 +257,12 @@ public class IntervalValue implements IAbstractValue<Interval> {
 					resultUpper = u1.mul(u2);
 				} else {
 					/*
-					 * a <= 0, b >= 0, x <= 0, y >= 0 => [min(a * y, b * x),
-					 * max(a * x, b * y)] a <= 0, b >= 0, x <= 0, y <= 0 => [b *
-					 * x, a * x]
+					 * a <= 0, b >= 0, x <= 0, y >= 0 => [min(a * y, b * x), max(a * x, b * y)] a <= 0, b >= 0, x <= 0,
+					 * y <= 0 => [b * x, a * x]
 					 */
 					if (u2_geq0) {
 						/*
-						 * a <= 0, b >= 0, x <= 0, y >= 0 => [min(a * y, b * x),
-						 * max(a * x, b * y)]
+						 * a <= 0, b >= 0, x <= 0, y >= 0 => [min(a * y, b * x), max(a * x, b * y)]
 						 */
 						Rational l1u2 = l1.mul(u2);
 						Rational u1l2 = u1.mul(l2);
@@ -405,9 +280,8 @@ public class IntervalValue implements IAbstractValue<Interval> {
 				}
 			} else {
 				/*
-				 * a <= 0, b <= 0, x >= 0, y >= 0 => [a * y, b * x] a <= 0, b <=
-				 * 0, x <= 0, y >= 0 => [a * y, max(a * x, b * y)] a <= 0, b <=
-				 * 0, x <= 0, y <= 0 => [b * y, a * x]
+				 * a <= 0, b <= 0, x >= 0, y >= 0 => [a * y, b * x] a <= 0, b <= 0, x <= 0, y >= 0 => [a * y, max(a * x,
+				 * b * y)] a <= 0, b <= 0, x <= 0, y <= 0 => [b * y, a * x]
 				 */
 				if (l2_geq0) {
 					/*
@@ -417,13 +291,12 @@ public class IntervalValue implements IAbstractValue<Interval> {
 					resultUpper = u1.mul(l2);
 				} else {
 					/*
-					 * a <= 0, b <= 0, x <= 0, y >= 0 => [a * y, max(a * x, b *
-					 * y)] a <= 0, b <= 0, x <= 0, y <= 0 => [b * y, a * x]
+					 * a <= 0, b <= 0, x <= 0, y >= 0 => [a * y, max(a * x, b * y)] a <= 0, b <= 0, x <= 0, y <= 0 => [b
+					 * * y, a * x]
 					 */
 					if (u2_geq0) {
 						/*
-						 * a <= 0, b <= 0, x <= 0, y >= 0 => [a * y, max(a * x,
-						 * b * y)]
+						 * a <= 0, b <= 0, x <= 0, y >= 0 => [a * y, max(a * x, b * y)]
 						 */
 						resultLower = l1.mul(u2);
 
@@ -450,27 +323,15 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		return mFactory.makeValue(new Interval(resultLower, resultUpper));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#divide(de.uni_freiburg
-	 * .informatik.ultimate.
-	 * plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public IntervalValue divide(IAbstractValue<?> value) {
 		/*
-		 * [a, b] / [x, y] = [min(a / x, a / y, b / x, b / y), max(a / x, a / y,
-		 * b / x, b / y)] Important: Euclidean division!! Potential division by
-		 * zero -> Warning/Error, value to (-infty, infty) ///// BOTTOM!!
-		 * Optimisations by taking signs into account: a >= 0, b >= 0, x > 0, y
-		 * > 0 => [a / y, b / x] a >= 0, b >= 0, x < 0, y < 0 => [b / y, a / x]
-		 * a <= 0, b >= 0, x > 0, y > 0 => [a / x, b / x] a <= 0, b >= 0, x < 0,
-		 * y < 0 => [b / y, a / y] a <= 0, b <= 0, x > 0, y > 0 => [a / x, b /
-		 * y] a <= 0, b <= 0, x < 0, y < 0 => [b / x, a / y] x <= 0, y >= 0 =>
-		 * (-infty, infty), Warning/Error
+		 * [a, b] / [x, y] = [min(a / x, a / y, b / x, b / y), max(a / x, a / y, b / x, b / y)] Important: Euclidean
+		 * division!! Potential division by zero -> Warning/Error, value to (-infty, infty) ///// BOTTOM!! Optimisations
+		 * by taking signs into account: a >= 0, b >= 0, x > 0, y > 0 => [a / y, b / x] a >= 0, b >= 0, x < 0, y < 0 =>
+		 * [b / y, a / x] a <= 0, b >= 0, x > 0, y > 0 => [a / x, b / x] a <= 0, b >= 0, x < 0, y < 0 => [b / y, a / y]
+		 * a <= 0, b <= 0, x > 0, y > 0 => [a / x, b / y] a <= 0, b <= 0, x < 0, y < 0 => [b / x, a / y] x <= 0, y >= 0
+		 * => (-infty, infty), Warning/Error
 		 */
 		IntervalValue intVal = (IntervalValue) value;
 		if (intVal == null)
@@ -489,9 +350,8 @@ public class IntervalValue implements IAbstractValue<Interval> {
 
 		// check for division by zero
 		if ((l2.signum() <= 0) && (u2.signum() >= 0)) {
-			mLogger.warn(String.format(
-					"Potential division by zero: %s / %s, returning TOP",
-					mValue.toString(), interval.toString()));
+			mLogger.warn(String.format("Potential division by zero: %s / %s, returning TOP", mValue.toString(),
+					interval.toString()));
 			return mFactory.makeTopValue();
 		}
 
@@ -503,14 +363,12 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		// [a, a] / [x, x]
 		if (mValue.isSingleValueInterval() && interval.isSingleValueInterval()) {
 			Rational d = l1.div(l2);
-			return mFactory.makeValue(new Interval(lu2_g0 ? d.floor() : d
-					.ceil()));
+			return mFactory.makeValue(new Interval(lu2_g0 ? d.floor() : d.ceil()));
 		}
 
 		if (l1_geq0) {
 			/*
-			 * a >= 0, b >= 0, x > 0, y > 0 => [a / y, b / x] a >= 0, b >= 0, x
-			 * < 0, y < 0 => [b / y, a / x]
+			 * a >= 0, b >= 0, x > 0, y > 0 => [a / y, b / x] a >= 0, b >= 0, x < 0, y < 0 => [b / y, a / x]
 			 */
 			if (lu2_g0) {
 				/*
@@ -527,14 +385,12 @@ public class IntervalValue implements IAbstractValue<Interval> {
 			}
 		} else {
 			/*
-			 * a <= 0, b >= 0, x > 0, y > 0 => [a / x, b / x] a <= 0, b >= 0, x
-			 * < 0, y < 0 => [b / y, a / y] a <= 0, b <= 0, x > 0, y > 0 => [a /
-			 * x, b / y] a <= 0, b <= 0, x < 0, y < 0 => [b / x, a / y]
+			 * a <= 0, b >= 0, x > 0, y > 0 => [a / x, b / x] a <= 0, b >= 0, x < 0, y < 0 => [b / y, a / y] a <= 0, b
+			 * <= 0, x > 0, y > 0 => [a / x, b / y] a <= 0, b <= 0, x < 0, y < 0 => [b / x, a / y]
 			 */
 			if (u1_geq0) {
 				/*
-				 * a <= 0, b >= 0, x > 0, y > 0 => [a / x, b / x] a <= 0, b >=
-				 * 0, x < 0, y < 0 => [b / y, a / y]
+				 * a <= 0, b >= 0, x > 0, y > 0 => [a / x, b / x] a <= 0, b >= 0, x < 0, y < 0 => [b / y, a / y]
 				 */
 				if (lu2_g0) {
 					/*
@@ -551,8 +407,7 @@ public class IntervalValue implements IAbstractValue<Interval> {
 				}
 			} else {
 				/*
-				 * a <= 0, b <= 0, x > 0, y > 0 => [a / x, b / y] a <= 0, b <=
-				 * 0, x < 0, y < 0 => [b / x, a / y]
+				 * a <= 0, b <= 0, x > 0, y > 0 => [a / x, b / y] a <= 0, b <= 0, x < 0, y < 0 => [b / x, a / y]
 				 */
 				if (lu2_g0) {
 					/*
@@ -579,15 +434,6 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		return mFactory.makeValue(new Interval(resultLower, resultUpper));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#modulo(de.uni_freiburg
-	 * .informatik.ultimate.
-	 * plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public IntervalValue modulo(IAbstractValue<?> value) {
 		/*
@@ -607,9 +453,8 @@ public class IntervalValue implements IAbstractValue<Interval> {
 			Rational x = interval.getLowerBound();
 
 			if (x.compareTo(Rational.ZERO) == 0) {
-				mLogger.error(String.format(
-						"Modulo division by zero: %s %% %s", mValue.toString(),
-						interval.toString()));
+				mLogger.error(
+						String.format("Modulo division by zero: %s %% %s", mValue.toString(), interval.toString()));
 				return mFactory.makeBottomValue();
 			}
 
@@ -618,8 +463,7 @@ public class IntervalValue implements IAbstractValue<Interval> {
 			BigInteger xInt = x.numerator().divide(x.denominator());
 
 			BigInteger[] dr = aInt.divideAndRemainder(xInt);
-			BigInteger r = dr[1].compareTo(BigInteger.ZERO) >= 0 ? dr[1] : xInt
-					.abs().add(dr[1]);
+			BigInteger r = dr[1].compareTo(BigInteger.ZERO) >= 0 ? dr[1] : xInt.abs().add(dr[1]);
 
 			return mFactory.makeIntegerValue(r.toString());
 		}
@@ -632,11 +476,9 @@ public class IntervalValue implements IAbstractValue<Interval> {
 
 		// check for division by zero
 		if ((l2.signum() <= 0) && (u2.signum() >= 0)) {
-			mLogger.warn(String
-					.format("Potential modulo division by zero: %s %% %s, returning [0, infty)",
-							mValue.toString(), interval.toString()));
-			return mFactory.makeValue(new Interval(Rational.ZERO,
-					Rational.POSITIVE_INFINITY));
+			mLogger.warn(String.format("Potential modulo division by zero: %s %% %s, returning [0, infty)",
+					mValue.toString(), interval.toString()));
+			return mFactory.makeValue(new Interval(Rational.ZERO, Rational.POSITIVE_INFINITY));
 		}
 
 		Rational max1 = l1.compareTo(u1) > 0 ? l1 : u1;
@@ -650,28 +492,11 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		return mFactory.makeValue(new Interval(Rational.ZERO, max2));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.IAbstractValue#negative()
-	 */
 	@Override
 	public IntervalValue negative() {
-		return mFactory.makeValue(new Interval(mValue.getUpperBound().negate(),
-				mValue.getLowerBound().negate()));
+		return mFactory.makeValue(new Interval(mValue.getUpperBound().negate(), mValue.getLowerBound().negate()));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsEqual(de.
-	 * uni_freiburg.informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public IntervalValue compareIsEqual(IAbstractValue<?> value) {
 		/*
@@ -698,24 +523,13 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		return mFactory.makeValue(new Interval(resultLower, resultUpper));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsNotEqual(
-	 * de.uni_freiburg.informatik
-	 * .ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public IntervalValue compareIsNotEqual(IAbstractValue<?> value) {
 		/*
 		 * [a, b] != [x, y] => [min(a, x), max(b, y)] [a, a] != [a, a] => empty
 		 * 
-		 * // the following 4 cases are only valid for integers [a, a] != [a, y]
-		 * => [a+1, y] [a, a] != [x, a] => [x, a-1] [a, y] != [a, a] => [a+1, y]
-		 * [x, a] != [a, a] => [x, a-1]
+		 * // the following 4 cases are only valid for integers [a, a] != [a, y] => [a+1, y] [a, a] != [x, a] => [x,
+		 * a-1] [a, y] != [a, a] => [a+1, y] [x, a] != [a, a] => [x, a-1]
 		 */
 		IntervalValue intVal = (IntervalValue) value;
 		if (intVal == null) {
@@ -755,16 +569,6 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		return mFactory.makeValue(new Interval(resultLower, resultUpper));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsLess(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public IntervalValue compareIsLess(IAbstractValue<?> value) {
 		/*
@@ -784,20 +588,9 @@ public class IntervalValue implements IAbstractValue<Interval> {
 
 		Rational resultUpper = u1.compareTo(u2m1) < 0 ? u1 : u2m1;
 
-		return mFactory.makeValue(new Interval(mValue.getLowerBound(),
-				resultUpper));
+		return mFactory.makeValue(new Interval(mValue.getLowerBound(), resultUpper));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsGreater(de
-	 * .uni_freiburg.informatik
-	 * .ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public IntervalValue compareIsGreater(IAbstractValue<?> value) {
 		/*
@@ -817,20 +610,9 @@ public class IntervalValue implements IAbstractValue<Interval> {
 
 		Rational resultLower = l1.compareTo(l2p1) > 0 ? l1 : l2p1;
 
-		return mFactory.makeValue(new Interval(resultLower, mValue
-				.getUpperBound()));
+		return mFactory.makeValue(new Interval(resultLower, mValue.getUpperBound()));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsLessEqual
-	 * (de.uni_freiburg.informatik
-	 * .ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public IntervalValue compareIsLessEqual(IAbstractValue<?> value) {
 		/*
@@ -850,20 +632,9 @@ public class IntervalValue implements IAbstractValue<Interval> {
 
 		Rational resultUpper = u1.compareTo(u2) < 0 ? u1 : u2;
 
-		return mFactory.makeValue(new Interval(mValue.getLowerBound(),
-				resultUpper));
+		return mFactory.makeValue(new Interval(mValue.getLowerBound(), resultUpper));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsGreaterEqual
-	 * (de.uni_freiburg.informatik
-	 * .ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public IntervalValue compareIsGreaterEqual(IAbstractValue<?> value) {
 		/*
@@ -883,20 +654,9 @@ public class IntervalValue implements IAbstractValue<Interval> {
 
 		Rational resultLower = l1.compareTo(l2) > 0 ? l1 : l2;
 
-		return mFactory.makeValue(new Interval(resultLower, mValue
-				.getUpperBound()));
+		return mFactory.makeValue(new Interval(resultLower, mValue.getUpperBound()));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#logicIff(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public IntervalValue logicIff(IAbstractValue<?> value) {
 		// return isBottom() && value.isBottom()
@@ -906,16 +666,6 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#logicImplies(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public IntervalValue logicImplies(IAbstractValue<?> value) {
 		// A => B
@@ -925,69 +675,26 @@ public class IntervalValue implements IAbstractValue<Interval> {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#logicAnd(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public IntervalValue logicAnd(IAbstractValue<?> value) {
 		return null; // TODO: interpret int as boolean
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#logicOr(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public IntervalValue logicOr(IAbstractValue<?> value) {
 		return null; // TODO: interpret int as boolean
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.IAbstractValue#logicNot()
-	 */
 	@Override
 	public IntervalValue logicNot() {
 		return null; // TODO: interpret int as boolean
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#bitVectorConcat(de
-	 * .uni_freiburg.informatik.
-	 * ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public IntervalValue bitVectorConcat(IAbstractValue<?> value) {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#bitVectorAccess(int, int)
-	 */
 	@Override
 	public IntervalValue bitVectorAccess(int start, int end) {
 		return null;
@@ -998,5 +705,39 @@ public class IntervalValue implements IAbstractValue<Interval> {
 	 */
 	public String toString() {
 		return "Interval: " + mValue.toString();
+	}
+
+	@Override
+	public Term getTerm(Script script, Term variable) {
+		if (isBottom()) {
+			return script.term("false");
+		}
+		final Rational lower = getValue().getLowerBound();
+		final Rational upper = getValue().getUpperBound();
+
+		if (lower.equals(Rational.NEGATIVE_INFINITY) && upper.equals(Rational.POSITIVE_INFINITY)) {
+			return script.term("true");
+		} else if (lower.equals(Rational.NEGATIVE_INFINITY) && upper.isRational()) {
+			return script.term(">=", upper.toTerm(variable.getSort()), variable);
+		} else if (lower.isRational() && upper.equals(Rational.POSITIVE_INFINITY)) {
+			return script.term("<=", lower.toTerm(variable.getSort()), variable);
+		} else if (lower.isRational() && upper.isRational()) {
+			final int cmp = lower.compareTo(upper);
+			if (cmp == 0) {
+				// point-interval
+				return script.term("=", lower.toTerm(variable.getSort()), variable);
+			} else if (cmp < 0) {
+				// normal interval
+				final Term lowerBound = script.term("<=", lower.toTerm(variable.getSort()), variable);
+				final Term upperBound = script.term(">=", upper.toTerm(variable.getSort()), variable);
+				return script.term("and", lowerBound, upperBound);
+			} else {
+				// broken interval aka false
+				assert false : "Broken interval";
+				return script.term("false");
+			}
+		} else {
+			throw new AssertionError("Missed a case");
+		}
 	}
 }

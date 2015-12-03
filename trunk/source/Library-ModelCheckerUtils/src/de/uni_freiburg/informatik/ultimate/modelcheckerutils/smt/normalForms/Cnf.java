@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms;
 
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
@@ -46,13 +46,10 @@ public class Cnf extends Xnf {
 		super(script,services, freshTermVariableConstructor);
 	}
 	
-	
 	@Override
 	protected NnfTransformerHelper getNnfTransformerHelper(IUltimateServiceProvider services) {
 		return new CnfTransformerHelper(services);
 	}
-
-
 
 	protected class CnfTransformerHelper extends XnfTransformerHelper {
 		

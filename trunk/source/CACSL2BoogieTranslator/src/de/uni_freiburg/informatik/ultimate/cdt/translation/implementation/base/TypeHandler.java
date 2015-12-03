@@ -71,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.except
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.DeclarationResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.DeclaratorResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
@@ -185,52 +186,72 @@ public class TypeHandler implements ITypeHandler {
 
     @Override
     public Result visit(Dispatcher main, IASTSimpleDeclSpecifier node) {
-        TypesResult result;
-        CPrimitive cvar = new CPrimitive(node);
-        // we have model.boogie.ast.PrimitiveType, which should
-        // only contain BOOL, INT, REAL ...
-        ILocation loc = LocationFactory.createCLocation(node);
-		switch (node.getType()) {
-            case IASTSimpleDeclSpecifier.t_void:
-                // there is no void in Boogie,
-                // so we simply have no result variable.
-                result = (new TypesResult(null, false, true, cvar));
-                break;
-            case IASTSimpleDeclSpecifier.t_unspecified:
-            {
-            	String msg = "unspecified type, defaulting to int";
-            	main.warn(loc, msg);
-            }
-            case IASTSimpleDeclSpecifier.t_bool:
-            case IASTSimpleDeclSpecifier.t_char:
-            case IASTSimpleDeclSpecifier.t_int:
-                // so int is also a primitive type
-                // NOTE: in a extended implementation we should
-                // handle here different types of int (short, long,...)
-                result = (new TypesResult(cPrimitive2asttype(loc, cvar), node.isConst(), false, cvar));
-                break;
-            case IASTSimpleDeclSpecifier.t_double:
-            case IASTSimpleDeclSpecifier.t_float:
-                // floating point number are not supported by Ultimate,
-                // somehow we treat it here as REALs
-                result = (new TypesResult(new PrimitiveType(loc, SFO.REAL), node.isConst(), false, cvar));
-                break;
-            default:
-                // long, long long, and short are the same as int, iff there are
-                // no restrictions / asserts in boogie
-                if (node.isLongLong() || node.isLong() || node.isShort()
-                        || node.isUnsigned()) {
-                    result = (new TypesResult(new PrimitiveType(
-                            loc, SFO.INT), node.isConst(),
-                            false, cvar));
-                    break;
-                }
-                // if we do not find a type we cancel with Exception
-                String msg = "TypeHandler: We do not support this type!"
-                        + node.getType();
-                throw new UnsupportedSyntaxException(loc, msg);
-        }
-        return result;
+    	// we have model.boogie.ast.PrimitiveType, which should
+    	// only contain BOOL, INT, REAL ...
+    	ILocation loc = LocationFactory.createCLocation(node);
+    	switch (node.getType()) {
+    	case IASTSimpleDeclSpecifier.t_void: {
+    		// there is no void in Boogie,
+    		// so we simply have no result variable.
+    		CPrimitive cvar = new CPrimitive(node);
+    		return (new TypesResult(null, false, true, cvar));
+    	}
+    	case IASTSimpleDeclSpecifier.t_unspecified:
+    	{
+    		String msg = "unspecified type, defaulting to int";
+    		main.warn(loc, msg);
+    	}
+    	case IASTSimpleDeclSpecifier.t_bool:
+    	case IASTSimpleDeclSpecifier.t_char:
+    	case IASTSimpleDeclSpecifier.t_int: {
+    		// so int is also a primitive type
+    		// NOTE: in a extended implementation we should
+    		// handle here different types of int (short, long,...)
+    		CPrimitive cvar = new CPrimitive(node);
+    		return (new TypesResult(cPrimitive2asttype(loc, cvar), node.isConst(), false, cvar));
+    	}
+    	case IASTSimpleDeclSpecifier.t_double:
+    	case IASTSimpleDeclSpecifier.t_float: {
+    		// floating point number are not supported by Ultimate,
+    		// somehow we treat it here as REALs
+    		CPrimitive cvar = new CPrimitive(node);
+    		return (new TypesResult(new PrimitiveType(loc, SFO.REAL), node.isConst(), false, cvar));
+    	}
+    	case IASTSimpleDeclSpecifier.t_typeof: {
+    		/*
+    		 * https://gcc.gnu.org/onlinedocs/gcc/Typeof.html :
+    		 * The syntax of using of this keyword looks like sizeof, but the construct acts semantically like a type name defined with typedef.
+    		 * There are two ways of writing the argument to typeof: with an expression or with a type. Here is an example with an expression:
+    		 *     typeof (x[0](1))
+    		 * This assumes that x is an array of pointers to functions; the type described is that of the values of the functions.
+    		 * Here is an example with a typename as the argument:
+    		 *     typeof (int *)
+    		 * Here the type described is that of pointers to int.  
+    		 */
+    		Result opRes = main.dispatch(node.getDeclTypeExpression());
+    		if (opRes instanceof ExpressionResult) {
+    			CType cType = ((ExpressionResult) opRes).lrVal.getCType();
+    			return new TypesResult(ctype2asttype(loc,  cType), node.isConst(), false, cType);
+    		} else if (opRes instanceof DeclaratorResult) {
+    			CType cType = ((DeclaratorResult) opRes).getDeclaration().getType();
+    			return new TypesResult(ctype2asttype(loc,  cType), node.isConst(), false, cType);
+    		}
+    	}
+    	default:
+    		// long, long long, and short are the same as int, iff there are
+    		// no restrictions / asserts in boogie
+    		if (node.isLongLong() || node.isLong() || node.isShort()
+    				|| node.isUnsigned()) {
+    			CPrimitive cvar = new CPrimitive(node);
+    			return (new TypesResult(new PrimitiveType(
+    					loc, SFO.INT), node.isConst(),
+    					false, cvar));
+    		}
+    		// if we do not find a type we cancel with Exception
+    		String msg = "TypeHandler: We do not support this type!"
+    				+ node.getType();
+    		throw new UnsupportedSyntaxException(loc, msg);
+    	}
     }
 
     @Override
@@ -251,8 +272,10 @@ public class TypeHandler implements ITypeHandler {
     public Result visit(Dispatcher main, IASTEnumerationSpecifier node) {
         ILocation loc = LocationFactory.createCLocation(node);
         String cId = node.getName().toString();
+        // values of enum have type int
+        CPrimitive intType = new CPrimitive(PRIMITIVE.INT);
         String enumId = main.nameHandler.getUniqueIdentifier(node, node.getName().toString(),
-        		main.cHandler.getSymbolTable().getCompoundCounter(), false);
+        		main.cHandler.getSymbolTable().getCompoundCounter(), false, intType);
         int nrFields = node.getEnumerators().length;
         String[] fNames = new String[nrFields];
         Expression[] fValues = new Expression[nrFields];
@@ -270,7 +293,6 @@ public class TypeHandler implements ITypeHandler {
             }
         }
         CEnum cEnum = new CEnum(enumId, fNames, fValues);
-        CPrimitive intType = new CPrimitive(PRIMITIVE.INT);
         ASTType at = cPrimitive2asttype(loc, intType); 
         TypesResult result = new TypesResult(at, false, false, cEnum);
        
@@ -378,22 +400,26 @@ public class TypeHandler implements ITypeHandler {
             }
         }
         structCounter--;
+
         String cId = node.getName().toString();
-        String name = "STRUCT~" + cId;
-        NamedType namedType = new NamedType(loc, name,
-                new ASTType[0]);
-       
-        ASTType type = namedType;
+
         CStruct cvar;
+        String name = null;
         if (node.getKey() == IASTCompositeTypeSpecifier.k_struct) {
+        	name = "STRUCT~" + cId;
         	cvar = new CStruct(fNames.toArray(new String[0]),
                     fTypes.toArray(new CType[0]));
         } else if (node.getKey() == IASTCompositeTypeSpecifier.k_union) {
+        	name = "UNION~" + cId;
         	cvar = new CUnion(fNames.toArray(new String[0]),
                     fTypes.toArray(new CType[0]));
         } else {
         	throw new UnsupportedOperationException();
         }
+        
+        NamedType namedType = new NamedType(loc, name,
+                new ASTType[0]);
+        ASTType type = namedType;
         TypesResult result = new TypesResult(type, false, false, cvar);
        
         if (m_IncompleteType.contains(name)) {

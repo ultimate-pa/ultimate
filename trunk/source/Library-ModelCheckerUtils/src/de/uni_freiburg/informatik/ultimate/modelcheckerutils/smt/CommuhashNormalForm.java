@@ -26,12 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Comparator;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -108,7 +109,8 @@ public class CommuhashNormalForm {
 		public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
 			String funcname = appTerm.getFunction().getApplicationString();
 			if (isKnownToBeCommutative(funcname)) {
-				Term simplified = constructTermWithSortedParams(funcname, newArgs);
+				Term simplified = constructTermWithSortedParams(
+						funcname, appTerm.getSort().getIndices(), newArgs);
 				setResult(simplified);
 			} else {
 				super.convertApplicationTerm(appTerm, newArgs);
@@ -127,7 +129,7 @@ public class CommuhashNormalForm {
 		}
 
 		private Term tryToTransformToPositiveNormalForm(Term simplified) throws NotAffineException {
-			AffineRelation affRel = new AffineRelation(simplified, TransformInequality.STRICT2NONSTRICT);
+			AffineRelation affRel = new AffineRelation(m_Script, simplified, TransformInequality.STRICT2NONSTRICT);
 			Term pnf = affRel.positiveNormalForm(m_Script);
 			return pnf;
 		}
@@ -144,10 +146,11 @@ public class CommuhashNormalForm {
 			return sortedParams;
 		}
 		
-		private Term constructTermWithSortedParams(String funcname, Term[] params) {
+		private Term constructTermWithSortedParams(String funcname, 
+									BigInteger[] indices, Term[] params) {
 			Term[] sortedParams = sortByHashCode(params);
 			Term simplified = SmtUtils.termWithLocalSimplification(
-					m_Script, funcname, sortedParams);
+					m_Script, funcname, indices, sortedParams);
 			return simplified;
 		}
 

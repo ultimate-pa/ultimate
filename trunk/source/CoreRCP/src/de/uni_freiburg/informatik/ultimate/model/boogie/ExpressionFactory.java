@@ -90,7 +90,7 @@ public class ExpressionFactory extends BoogieTransformer {
 		Expression rightLiteral = filterLiteral(right);
 		Expression result;
 		if ((leftLiteral != null) && (rightLiteral != null)) {
-			assert leftLiteral.getClass().equals(rightLiteral.getClass()) : "type error";
+			assert leftLiteral.getClass().equals(rightLiteral.getClass()) : "incompatible literals: " + leftLiteral.getClass() + " and " + rightLiteral.getClass();
 			if (leftLiteral instanceof BooleanLiteral) {
 				result = constructBinaryExpression_Bool(loc, operator, (BooleanLiteral) leftLiteral, (BooleanLiteral) rightLiteral);
 			} else if (leftLiteral instanceof IntegerLiteral) {
@@ -158,12 +158,7 @@ public class ExpressionFactory extends BoogieTransformer {
 		BigInteger rightValue = new BigInteger(rightLiteral.getValue());
 		switch (operator) {
 		case ARITHDIV: {
-			if (leftValue.compareTo(BigInteger.ZERO) < 0) {
-				throw new UnsupportedOperationException(
-						"negative divident not yet implemented; semantics of Java and SMT-LIB differ");
-			}
-			BigInteger result = leftValue.divide(rightValue);
-			assert checkDivisionResult(leftValue, rightValue, result);
+			BigInteger result = BoogieUtils.euclideanDiv(leftValue, rightValue);
 			return new IntegerLiteral(loc, result.toString());
 		}
 		case ARITHMINUS: {
@@ -171,8 +166,7 @@ public class ExpressionFactory extends BoogieTransformer {
 			return new IntegerLiteral(loc, result.toString());
 		}
 		case ARITHMOD: {
-			BigInteger result = leftValue.mod(rightValue);
-			assert result.compareTo(BigInteger.ZERO) >= 0;
+			BigInteger result = BoogieUtils.euclideanMod(leftValue, rightValue);
 			return new IntegerLiteral(loc, result.toString());
 		}
 		case ARITHMUL: {
@@ -219,11 +213,6 @@ public class ExpressionFactory extends BoogieTransformer {
 		}
 	}
 	
-	private static boolean checkDivisionResult(BigInteger divisor, BigInteger divident, BigInteger result) {
-		BigInteger mod = divisor.mod(divident);
-		return divisor.equals(divident.multiply(result).add(mod));
-	}
-	
 	private static Expression constructBinaryExpression_Real(ILocation loc, Operator operator, RealLiteral leftLiteral,
 			RealLiteral rightLiteral) {
 		BigDecimal leftValue = new BigDecimal(leftLiteral.getValue());
@@ -235,10 +224,6 @@ public class ExpressionFactory extends BoogieTransformer {
 		}
 		case ARITHMINUS: {
 			BigDecimal result = leftValue.subtract(rightValue);
-			return new RealLiteral(loc, result.toString());
-		}
-		case ARITHMOD: {
-			BigDecimal result = leftValue.remainder(rightValue);
 			return new RealLiteral(loc, result.toString());
 		}
 		case ARITHMUL: {
@@ -273,6 +258,7 @@ public class ExpressionFactory extends BoogieTransformer {
 			boolean result = (leftValue.compareTo(rightValue) >= 0);
 			return new BooleanLiteral(loc, result);
 		}
+		case ARITHMOD:
 		case BITVECCONCAT:
 		case COMPPO:
 		case LOGICAND:

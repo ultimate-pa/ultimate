@@ -68,7 +68,7 @@ public class TypeSizes {
 	/**
 	 * is char (without modifier) schar or uchar?
 	 */
-	private final boolean charIsSigned = true;
+	private static final boolean charIsSigned = true;
 
 	private final LinkedHashMap<CPrimitive.PRIMITIVE, Integer> CPrimitiveToTypeSizeConstant = 
 			new LinkedHashMap<>();
@@ -148,7 +148,11 @@ public class TypeSizes {
 		return this.sizeOfPointerType;
 	}
 	
-	public boolean isCharSigned() {
+	/**
+	 * The result is fixed to true. This is a workaround.
+	 * If you want so solve this you have to implement a factory for CTypes.
+	 */
+	public static boolean isCharSigned() {
 		return charIsSigned;
 	}
 	

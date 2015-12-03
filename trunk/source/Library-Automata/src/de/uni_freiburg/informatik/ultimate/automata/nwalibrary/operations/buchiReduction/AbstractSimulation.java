@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Player0Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Player1Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
@@ -169,12 +169,6 @@ public abstract class AbstractSimulation<LETTER,STATE> {
         eI.get(dest).add(src);
     }
 
-    /**
-     * Efficient implementation of the lifting algorithm. (see figure 2 in the
-     * paper.
-     * 
-     * 
-     */
     /**
      * Efficient implementation of the lifting algorithm extended with an SCC
      * approach. (see figure 2 in the paper).
@@ -482,7 +476,7 @@ public abstract class AbstractSimulation<LETTER,STATE> {
         
         /**
          * @return List of SCCs of the game graph in reverse topological order.
-         * (This means: If scc1 occurs in this list before scc2 then ss2 is not
+         * (This means: If scc1 occurs in this list before scc2 then scc2 is not
          * reachable from scc1).
          */
         public List<SCC> getSCCs() {

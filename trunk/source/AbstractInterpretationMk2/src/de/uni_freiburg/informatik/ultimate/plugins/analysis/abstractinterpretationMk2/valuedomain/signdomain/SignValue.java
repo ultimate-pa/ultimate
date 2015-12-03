@@ -5,8 +5,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.valuedomain.booldomain.BoolValueFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.valuedomain.booldomain.BoolValue.Bool;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.valuedomain.IAbstractValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.valuedomain.IAbstractValueFactory;
 
@@ -17,8 +18,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class SignValue implements IAbstractValue<SignValue.Sign> {
 
 	/**
-	 * Possible values for the sign domain. EMPTY < ZERO, PLUS, MINUS <
-	 * PLUSMINUS ZERO, PLUS, MINUS : no relation ZERO : 0 PLUS : > 0 MINUS : < 0
+	 * Possible values for the sign domain. EMPTY < ZERO, PLUS, MINUS < PLUSMINUS ZERO, PLUS, MINUS : no relation ZERO :
+	 * 0 PLUS : > 0 MINUS : < 0
 	 */
 	public enum Sign {
 		EMPTY, // Bottom
@@ -111,25 +112,20 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
 	 * .abstractdomain.IAbstractValue#representsSingleConcreteValue()
 	 */
 	@Override
 	public boolean representsSingleConcreteValue() {
-		return (mValue == Sign.PLUS) || (mValue == Sign.MINUS)
-				|| (mValue == Sign.ZERO);
+		return (mValue == Sign.PLUS) || (mValue == Sign.MINUS) || (mValue == Sign.ZERO);
 	}
 
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#isEqual(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
+	 * .abstractdomain.IAbstractValue#isEqual(de.uni_freiburg .informatik.ultimate
+	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain .IAbstractValue)
 	 */
 	@Override
 	public boolean isEqual(IAbstractValue<?> value) {
@@ -143,12 +139,9 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#isGreater(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
+	 * .abstractdomain.IAbstractValue#isGreater(de.uni_freiburg .informatik.ultimate
+	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain .IAbstractValue)
 	 */
 	@Override
 	public boolean isSuperOrEqual(IAbstractValue<?> value) {
@@ -171,12 +164,9 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#isLesser(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
+	 * .abstractdomain.IAbstractValue#isLesser(de.uni_freiburg .informatik.ultimate
+	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain .IAbstractValue)
 	 */
 	@Override
 	public boolean isSub(IAbstractValue<?> value) {
@@ -210,10 +200,8 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#add(de.uni_freiburg
-	 * .informatik.ultimate.plugins
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
+	 * .abstractdomain.IAbstractValue#add(de.uni_freiburg .informatik.ultimate.plugins
 	 * .analysis.abstractinterpretationMk2.abstractdomain.IAbstractValue)
 	 */
 	@Override
@@ -258,12 +246,9 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#subtract(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
+	 * .abstractdomain.IAbstractValue#subtract(de.uni_freiburg .informatik.ultimate
+	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain .IAbstractValue)
 	 */
 	@Override
 	public SignValue subtract(IAbstractValue<?> value) {
@@ -317,12 +302,9 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#multiply(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
+	 * .abstractdomain.IAbstractValue#multiply(de.uni_freiburg .informatik.ultimate
+	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain .IAbstractValue)
 	 */
 	@Override
 	public SignValue multiply(IAbstractValue<?> value) {
@@ -370,10 +352,8 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#divide(de.uni_freiburg
-	 * .informatik.ultimate.
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
+	 * .abstractdomain.IAbstractValue#divide(de.uni_freiburg .informatik.ultimate.
 	 * plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractValue)
 	 */
 	@Override
@@ -381,10 +361,8 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 		if (value == null)
 			return mFactory.makeBottomValue();
 
-		if ((value.getValue() == Sign.ZERO)
-				|| (value.getValue() == Sign.PLUSMINUS)) {
-			mLogger.warn(String.format("Potential division by zero: %s / %s",
-					this, value));
+		if ((value.getValue() == Sign.ZERO) || (value.getValue() == Sign.PLUSMINUS)) {
+			mLogger.warn(String.format("Potential division by zero: %s / %s", this, value));
 			return mFactory.makeBottomValue();
 		}
 
@@ -394,10 +372,8 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#modulo(de.uni_freiburg
-	 * .informatik.ultimate.
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
+	 * .abstractdomain.IAbstractValue#modulo(de.uni_freiburg .informatik.ultimate.
 	 * plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractValue)
 	 */
 	@Override
@@ -405,10 +381,8 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 		if (value == null)
 			return mFactory.makeBottomValue();
 
-		if ((value.getValue() == Sign.ZERO)
-				|| (value.getValue() == Sign.PLUSMINUS)) {
-			mLogger.warn(String.format(
-					"Potential modulo division by zero: %s %% %s", this, value));
+		if ((value.getValue() == Sign.ZERO) || (value.getValue() == Sign.PLUSMINUS)) {
+			mLogger.warn(String.format("Potential modulo division by zero: %s %% %s", this, value));
 			return mFactory.makeBottomValue();
 		}
 
@@ -438,12 +412,9 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsEqual(de.
-	 * uni_freiburg.informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
+	 * .abstractdomain.IAbstractValue#compareIsEqual(de. uni_freiburg.informatik.ultimate
+	 * .plugins.analysis.abstractinterpretationMk2 .abstractdomain.IAbstractValue)
 	 */
 	@Override
 	public SignValue compareIsEqual(IAbstractValue<?> value) {
@@ -496,12 +467,9 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsNotEqual(
-	 * de.uni_freiburg.informatik
-	 * .ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
+	 * .abstractdomain.IAbstractValue#compareIsNotEqual( de.uni_freiburg.informatik
+	 * .ultimate.plugins.analysis.abstractinterpretationMk2 .abstractdomain.IAbstractValue)
 	 */
 	@Override
 	public SignValue compareIsNotEqual(IAbstractValue<?> value) {
@@ -550,12 +518,9 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsLess(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
+	 * .abstractdomain.IAbstractValue#compareIsLess(de.uni_freiburg .informatik.ultimate
+	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain .IAbstractValue)
 	 */
 	@Override
 	public SignValue compareIsLess(IAbstractValue<?> value) {
@@ -586,8 +551,7 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 				return mFactory.makeBottomValue();
 			}
 		case MINUS:
-			return mFactory.makeValue((otherSign == Sign.EMPTY) ? Sign.EMPTY
-					: Sign.MINUS);
+			return mFactory.makeValue((otherSign == Sign.EMPTY) ? Sign.EMPTY : Sign.MINUS);
 		case PLUSMINUS:
 			switch (otherSign) {
 			case ZERO:
@@ -607,12 +571,9 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsGreater(de
-	 * .uni_freiburg.informatik
-	 * .ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
+	 * .abstractdomain.IAbstractValue#compareIsGreater(de .uni_freiburg.informatik
+	 * .ultimate.plugins.analysis.abstractinterpretationMk2 .abstractdomain.IAbstractValue)
 	 */
 	@Override
 	public SignValue compareIsGreater(IAbstractValue<?> value) {
@@ -633,8 +594,7 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 				return mFactory.makeBottomValue();
 			}
 		case PLUS:
-			return mFactory.makeValue((otherSign == Sign.EMPTY) ? Sign.EMPTY
-					: Sign.PLUS);
+			return mFactory.makeValue((otherSign == Sign.EMPTY) ? Sign.EMPTY : Sign.PLUS);
 		case MINUS:
 			switch (otherSign) {
 			case MINUS:
@@ -664,12 +624,9 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsLessEqual
-	 * (de.uni_freiburg.informatik
-	 * .ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
+	 * .abstractdomain.IAbstractValue#compareIsLessEqual (de.uni_freiburg.informatik
+	 * .ultimate.plugins.analysis.abstractinterpretationMk2 .abstractdomain.IAbstractValue)
 	 */
 	@Override
 	public SignValue compareIsLessEqual(IAbstractValue<?> value) {
@@ -700,8 +657,7 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 				return mFactory.makeBottomValue();
 			}
 		case MINUS:
-			return mFactory.makeValue((otherSign == Sign.EMPTY) ? Sign.EMPTY
-					: Sign.MINUS);
+			return mFactory.makeValue((otherSign == Sign.EMPTY) ? Sign.EMPTY : Sign.MINUS);
 		case PLUSMINUS:
 			switch (otherSign) {
 			case ZERO:
@@ -721,12 +677,9 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsGreaterEqual
-	 * (de.uni_freiburg.informatik
-	 * .ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
+	 * .abstractdomain.IAbstractValue#compareIsGreaterEqual (de.uni_freiburg.informatik
+	 * .ultimate.plugins.analysis.abstractinterpretationMk2 .abstractdomain.IAbstractValue)
 	 */
 	@Override
 	public SignValue compareIsGreaterEqual(IAbstractValue<?> value) {
@@ -747,8 +700,7 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 				return mFactory.makeBottomValue();
 			}
 		case PLUS:
-			return mFactory.makeValue((otherSign == Sign.EMPTY) ? Sign.EMPTY
-					: Sign.PLUS);
+			return mFactory.makeValue((otherSign == Sign.EMPTY) ? Sign.EMPTY : Sign.PLUS);
 		case MINUS:
 			switch (otherSign) {
 			case MINUS:
@@ -778,12 +730,9 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#logicIff(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
+	 * .abstractdomain.IAbstractValue#logicIff(de.uni_freiburg .informatik.ultimate
+	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain .IAbstractValue)
 	 */
 	@Override
 	public SignValue logicIff(IAbstractValue<?> value) {
@@ -793,12 +742,9 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#logicImplies(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
+	 * .abstractdomain.IAbstractValue#logicImplies(de.uni_freiburg .informatik.ultimate
+	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain .IAbstractValue)
 	 */
 	@Override
 	public SignValue logicImplies(IAbstractValue<?> value) {
@@ -808,12 +754,9 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#logicAnd(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
+	 * .abstractdomain.IAbstractValue#logicAnd(de.uni_freiburg .informatik.ultimate
+	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain .IAbstractValue)
 	 */
 	@Override
 	public SignValue logicAnd(IAbstractValue<?> value) {
@@ -823,12 +766,9 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#logicOr(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
+	 * .abstractdomain.IAbstractValue#logicOr(de.uni_freiburg .informatik.ultimate
+	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain .IAbstractValue)
 	 */
 	@Override
 	public SignValue logicOr(IAbstractValue<?> value) {
@@ -849,12 +789,9 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#bitVectorConcat(de
-	 * .uni_freiburg.informatik.
-	 * ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
+	 * .abstractdomain.IAbstractValue#bitVectorConcat(de .uni_freiburg.informatik.
+	 * ultimate.plugins.analysis.abstractinterpretationMk2 .abstractdomain.IAbstractValue)
 	 */
 	@Override
 	public SignValue bitVectorConcat(IAbstractValue<?> value) {
@@ -864,8 +801,7 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
+	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis. abstractinterpretationMk2
 	 * .abstractdomain.IAbstractValue#bitVectorAccess(int, int)
 	 */
 	@Override
@@ -886,6 +822,24 @@ public class SignValue implements IAbstractValue<SignValue.Sign> {
 			return "Sign: +-";
 		default:
 			return "Sign: empty";
+		}
+	}
+
+	@Override
+	public Term getTerm(Script script, Term variable) {
+		switch (getValue()) {
+		case EMPTY:
+			return script.term("false");
+		case MINUS:
+			return script.term(">", script.numeral("0"), variable);
+		case PLUS:
+			return script.term("<", script.numeral("0"), variable);
+		case PLUSMINUS:
+			return script.term("true");
+		case ZERO:
+			return script.term("=", script.numeral("0"), variable);
+		default:
+			throw new UnsupportedOperationException("Forgot a case");
 		}
 	}
 }

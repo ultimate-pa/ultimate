@@ -35,11 +35,12 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SafeSubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.NotAffineException;
@@ -69,27 +70,34 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 	@Override
 	public Term[] tryToEliminate(int quantifier, Term[] inputAtoms,
 			Set<TermVariable> eliminatees) {
-		Iterator<TermVariable> it = eliminatees.iterator();
 		Term[] resultAtoms = inputAtoms;
-		while (it.hasNext()) {
-			if (!m_Services.getProgressMonitorService().continueProcessing()) {
-				throw new ToolchainCanceledException(this.getClass(),
-						"eliminating " + eliminatees.size() + 
-						" quantified variables from " + inputAtoms.length + " xjuncts");
-			}
-			TermVariable tv = it.next();
-			if (!SmtUtils.getFreeVars(Arrays.asList(resultAtoms)).contains(tv)) {
-				// case where var does not occur
-				it.remove();
-				continue;
-			} else {
-				Term[] withoutTv = derSimple(m_Script, quantifier, resultAtoms, tv, m_Logger);
-				if (withoutTv != null) {
-					resultAtoms = withoutTv;
+		boolean someVariableWasEliminated;
+		// an elimination may allow further eliminations
+		// repeat the following until no variable was eliminated
+		do {
+			someVariableWasEliminated = false;
+			Iterator<TermVariable> it = eliminatees.iterator();
+			while (it.hasNext()) {
+				if (!m_Services.getProgressMonitorService().continueProcessing()) {
+					throw new ToolchainCanceledException(this.getClass(),
+							"eliminating " + eliminatees.size() + 
+							" quantified variables from " + inputAtoms.length + " xjuncts");
+				}
+				TermVariable tv = it.next();
+				if (!SmtUtils.getFreeVars(Arrays.asList(resultAtoms)).contains(tv)) {
+					// case where var does not occur
 					it.remove();
+					continue;
+				} else {
+					Term[] withoutTv = derSimple(m_Script, quantifier, resultAtoms, tv, m_Logger);
+					if (withoutTv != null) {
+						resultAtoms = withoutTv;
+						it.remove();
+						someVariableWasEliminated = true;
+					}
 				}
 			}
-		}
+		} while (someVariableWasEliminated);
 		return resultAtoms;
 	}
 
@@ -112,7 +120,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 			logger.debug(new DebugMessage("eliminated quantifier via DER for {0}", tv));
 			resultAtoms = new Term[inputAtoms.length - 1];
 			Map<Term, Term> substitutionMapping = Collections.singletonMap(eqInfo.getVariable(), eqInfo.getTerm());
-			SafeSubstitution substitution = new SafeSubstitution(script, substitutionMapping);
+			SafeSubstitution substitution = new SafeSubstitutionWithLocalSimplification(script, substitutionMapping);
 			for (int i = 0; i < eqInfo.getIndex(); i++) {
 				resultAtoms[i] = substituteAndNormalize(substitution, inputAtoms[i]);
 			}
@@ -130,7 +138,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 		Term result =  substitution.transform(term);
 		if (term != result) {
 			try {
-				AffineRelation afr = new AffineRelation(result);
+				AffineRelation afr = new AffineRelation(m_Script, result);
 				result = afr.positiveNormalForm(m_Script);
 			} catch (NotAffineException e) {
 				// Do nothing - we return result.

@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 
 /**
@@ -887,10 +887,10 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 							sb.append(" &");
 						}
 						if (otherLetter == letter) {
-							sb.append(" p");
+							sb.append(" ");
 							sb.append(m_AlphabetMapping.get(otherLetter));
 						} else {
-							sb.append(" !p");
+							sb.append(" !");
 							sb.append(m_AlphabetMapping.get(otherLetter));
 
 						}

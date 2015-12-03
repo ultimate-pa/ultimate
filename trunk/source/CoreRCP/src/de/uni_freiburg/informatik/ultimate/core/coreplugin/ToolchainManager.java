@@ -49,10 +49,10 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.SubchainTyp
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.GenericServiceProvider;
-import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.core.services.LoggingService;
-import de.uni_freiburg.informatik.ultimate.core.services.PreludeProvider;
 import de.uni_freiburg.informatik.ultimate.core.services.ProgressMonitorService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.PreludeProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
@@ -173,7 +173,7 @@ public class ToolchainManager {
 					new GenericServiceProvider(mPluginFactory));
 
 			// install new ProgressMonitorService
-			ProgressMonitorService monitorService = new ProgressMonitorService(monitor, Long.MAX_VALUE, mLogger,
+			ProgressMonitorService monitorService = new ProgressMonitorService(monitor, mLogger,
 					mToolchainWalker);
 			mToolchainData.getStorage().putStorable(ProgressMonitorService.getServiceKey(), monitorService);
 

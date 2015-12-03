@@ -49,9 +49,9 @@ public class DeclarationResult extends Result {
 	}
 	
 //	public void addDeclaration(CType type, String name, ResultExpression initializer, boolean onHeap) {
-	public void addDeclaration(CType type, String name, IASTInitializer cAstInitializer, ExpressionResult initializer, boolean onHeap) {
-		mDecls.add(new CDeclaration(type, name, cAstInitializer, initializer, onHeap));
-	}
+//	public void addDeclaration(CType type, String name, IASTInitializer cAstInitializer, ExpressionResult initializer, boolean onHeap) {
+//		mDecls.add(new CDeclaration(type, name, cAstInitializer, initializer, onHeap));
+//	}
 
 	public void addDeclaration(CDeclaration decl) {
 		mDecls.add(decl);

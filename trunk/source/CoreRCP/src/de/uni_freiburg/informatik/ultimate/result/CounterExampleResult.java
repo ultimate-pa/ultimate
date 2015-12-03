@@ -32,8 +32,8 @@ package de.uni_freiburg.informatik.ultimate.result;
 
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;

@@ -6,23 +6,29 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.AbstractVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.TypedAbstractVariable;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.*;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractState;
 
+/**
+ * @author Jan Hättig
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class ValueState implements IAbstractState<ValueState> {
 	private final ValueDomain mDomain;
-	private final HashMap<TypedAbstractVariable, IAbstractValue<?>> mMapping;
-
+	private final Map<TypedAbstractVariable, IAbstractValue<?>> mMapping;
 	private boolean mIsBottom;
-
-	// private boolean mIsTop;
 
 	public ValueState(ValueDomain domain, boolean isBottom) {
 		mDomain = domain;
 		mMapping = new HashMap<TypedAbstractVariable, IAbstractValue<?>>();
 		mIsBottom = isBottom;
-		// mIsTop = isTop;
 	}
 
 	public Set<Entry<TypedAbstractVariable, IAbstractValue<?>>> getEntries() {
@@ -30,19 +36,27 @@ public class ValueState implements IAbstractState<ValueState> {
 	}
 
 	@Override
-	public boolean isSuperOrEqual(IAbstractState<ValueState> other) {
+	public boolean isSuperOrEqual(IAbstractState<?> other) {
+		if (other.isBottom()) {
+			return true;
+		}
+
 		if (mIsBottom) {
+			return false;
+		}
+
+		if (!(other instanceof ValueState)) {
 			return false;
 		}
 
 		ValueState otherState = (ValueState) other;
 		Set<TypedAbstractVariable> otherKeys = otherState.mMapping.keySet();
 		for (AbstractVariable var : otherKeys) {
-			IAbstractValue thisValue = mMapping.get(var);
+			IAbstractValue<?> thisValue = mMapping.get(var);
 			if (thisValue == null) {
 				return false;
 			}
-			IAbstractValue otherValue = otherState.mMapping.get(var);
+			IAbstractValue<?> otherValue = otherState.mMapping.get(var);
 			if (otherValue != null && !thisValue.isSuperOrEqual(otherValue)) {
 				return false;
 			}
@@ -55,16 +69,6 @@ public class ValueState implements IAbstractState<ValueState> {
 		return mMapping.containsKey(variable);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractState#declareVariable(de
-	 * .uni_freiburg.informatik.
-	 * ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .TypedAbstractVariable)
-	 */
 	@Override
 	public void declareVariable(TypedAbstractVariable variable) {
 		if (variable.getDeclaration() == null && variable.getType() == null) {
@@ -75,19 +79,9 @@ public class ValueState implements IAbstractState<ValueState> {
 			return;
 		}
 
-		mMapping.put(variable,
-				mDomain.getTopBottomValueForType(variable.getType(), true));
+		mMapping.put(variable, mDomain.getTopBottomValueForType(variable.getType(), true));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractState#getTypedVariable(de
-	 * .uni_freiburg.informatik
-	 * .ultimate.plugins.analysis.abstractinterpretationMk2.AbstractVariable)
-	 */
 	public TypedAbstractVariable getTypedVariable(AbstractVariable variable) {
 		for (TypedAbstractVariable tav : mMapping.keySet()) {
 			if (tav.equals(variable)) {
@@ -97,15 +91,6 @@ public class ValueState implements IAbstractState<ValueState> {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractState#removeVariable(de.
-	 * uni_freiburg.informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.AbstractVariable)
-	 */
 	@Override
 	public void removeVariable(AbstractVariable variable) {
 		if (!mMapping.containsKey(variable)) {
@@ -122,8 +107,7 @@ public class ValueState implements IAbstractState<ValueState> {
 			copy.mIsBottom = true;
 			return copy;
 		}
-		for (Entry<TypedAbstractVariable, IAbstractValue<?>> entry : mMapping
-				.entrySet()) {
+		for (Entry<TypedAbstractVariable, IAbstractValue<?>> entry : mMapping.entrySet()) {
 			copy.mMapping.put(entry.getKey(), entry.getValue());
 		}
 
@@ -137,21 +121,14 @@ public class ValueState implements IAbstractState<ValueState> {
 	 *            An existing identifier
 	 * @param value
 	 *            The new value
-	 * @return True iff a layer with the given identifier exists so the value
-	 *         could be written
+	 * @return True iff a layer with the given identifier exists so the value could be written
 	 */
-	public void writeValue(TypedAbstractVariable variable,
-			IAbstractValue<?> value) {
-		// if(variable.getDeclaration() == null || variable.getType() == null)
-		// {
-		// //throw new RuntimeException();
-		// }
+	public void writeValue(TypedAbstractVariable variable, IAbstractValue<?> value) {
 		mMapping.put(variable, value);
 	}
 
 	/**
-	 * Returns the value of a given variable or top, if the variable was not
-	 * declared yet
+	 * Returns the value of a given variable or top, if the variable was not declared yet
 	 * 
 	 * @param variable
 	 * @return
@@ -159,23 +136,19 @@ public class ValueState implements IAbstractState<ValueState> {
 	public IAbstractValue<?> getValue(TypedAbstractVariable variable) {
 		IAbstractValue<?> result = mMapping.get(variable);
 		if (result == null) {
-			// throw new RuntimeException();
-			// mDomain.getLogger().warn("Acessing declared but undefined variable: "
-			// + variable);
 			return mDomain.getTopBottomValueForType(variable.getType(), true);
 		}
 		return result;
 	}
 
 	/**
-	 * Returns the value of an identifier or null if no variable was declared
-	 * for that identifier
+	 * Returns the value of an identifier or null if no variable was declared for that identifier
 	 * 
 	 * @param identifier
 	 * @return
 	 */
-	public IAbstractValue<?> getValue(String identifier) {
-		return mMapping.get(new AbstractVariable(identifier));
+	public IAbstractValue<?> getValue(AbstractVariable var) {
+		return mMapping.get(var);
 	}
 
 	@Override
@@ -184,8 +157,7 @@ public class ValueState implements IAbstractState<ValueState> {
 			return true;
 		}
 
-		Iterator<Entry<TypedAbstractVariable, IAbstractValue<?>>> it = mMapping
-				.entrySet().iterator();
+		Iterator<Entry<TypedAbstractVariable, IAbstractValue<?>>> it = mMapping.entrySet().iterator();
 		while (it.hasNext()) {
 			Map.Entry<TypedAbstractVariable, IAbstractValue<?>> pair = (Map.Entry<TypedAbstractVariable, IAbstractValue<?>>) it
 					.next();
@@ -208,12 +180,9 @@ public class ValueState implements IAbstractState<ValueState> {
 	}
 
 	@Override
-	public String toString()
-
-	{
+	public String toString() {
 		String s = "";
-		for (Entry<TypedAbstractVariable, IAbstractValue<?>> entry : mMapping
-				.entrySet()) {
+		for (Entry<TypedAbstractVariable, IAbstractValue<?>> entry : mMapping.entrySet()) {
 			if (s.length() > 0) {
 				s += ", ";
 			}
@@ -222,4 +191,24 @@ public class ValueState implements IAbstractState<ValueState> {
 		return "[" + s + "]";
 	}
 
+	@Override
+	public Term getTerm(final Script script, final Boogie2SMT bpl2smt) {
+		if (isBottom()) {
+			return script.term("false");
+		}
+
+		Term acc = script.term("true");
+		for (final Entry<TypedAbstractVariable, IAbstractValue<?>> entry : mMapping.entrySet()) {
+			final Term termvar = entry.getKey().getTermVar(bpl2smt);
+			final Sort sort = termvar.getSort().getRealSort();
+			if (sort.isArraySort()) {
+				// ignore array sorts for now
+				continue;
+			}
+
+			final Term newterm = entry.getValue().getTerm(script, termvar);
+			acc = Util.and(script, acc, newterm);
+		}
+		return acc;
+	}
 }

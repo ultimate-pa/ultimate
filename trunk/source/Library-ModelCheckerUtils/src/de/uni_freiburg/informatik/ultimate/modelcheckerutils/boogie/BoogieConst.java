@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.model.IType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 
 
 /**
@@ -35,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.model.IType;
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class BoogieConst {
+public class BoogieConst implements IBoogieVar {
 	private final String m_Identifier;
 	private final IType m_IType;
 	
@@ -45,15 +46,12 @@ public class BoogieConst {
 	 */
 	private final ApplicationTerm m_SmtConstant;
 
-	
-	
 	public BoogieConst(String identifier, IType iType,
 			ApplicationTerm smtConstant) {
 		m_Identifier = identifier;
 		m_IType = iType;
 		m_SmtConstant = smtConstant;
 	}
-	
 	
 	public String getIdentifier() {
 		return m_Identifier;
@@ -63,11 +61,9 @@ public class BoogieConst {
 		return m_IType;
 	}
 
-
-	public ApplicationTerm getSmtConstant() {
+	public ApplicationTerm getDefaultConstant() {
 		return m_SmtConstant;
 	}
-
 
 	@Override
 	public int hashCode() {

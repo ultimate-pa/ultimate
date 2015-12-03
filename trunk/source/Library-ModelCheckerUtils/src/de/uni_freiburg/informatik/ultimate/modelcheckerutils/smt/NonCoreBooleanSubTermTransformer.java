@@ -79,6 +79,13 @@ public abstract class NonCoreBooleanSubTermTransformer {
 			return false;
 		}
 	}
+	
+	public static boolean isCoreBoolean(ApplicationTerm appTerm) {
+		String funName = appTerm.getFunction().getName();
+		return isCoreBooleanConnective(funName) && 
+				hasBooleanParams(appTerm.getParameters());
+
+	}
 
 
 	private class NonCoreBooleanSubtermTransformerHelper extends TermTransformer {
@@ -88,9 +95,7 @@ public abstract class NonCoreBooleanSubTermTransformer {
 			assert term.getSort().getName().equals("Bool") : "not Bool";
 			if (term instanceof ApplicationTerm) {
 				ApplicationTerm appTerm = (ApplicationTerm) term;
-				String funName = appTerm.getFunction().getName();
-				if (isCoreBooleanConnective(funName) && 
-						hasBooleanParams(appTerm.getParameters())) {
+				if (isCoreBoolean(appTerm)) {
 					super.convert(term);
 				} else {
 					Term transformed = transformNonCoreBooleanSubterm(term);

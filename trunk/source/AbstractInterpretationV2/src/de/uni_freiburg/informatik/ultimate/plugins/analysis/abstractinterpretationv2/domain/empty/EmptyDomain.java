@@ -28,12 +28,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 
 /**
- * This domain does exactly nothing. It can be used to test various aspects of
- * the framework.
+ * This domain does exactly nothing. It can be used to test various aspects of the framework.
  * 
  * @author dietsch@informatik.uni-freiburg.de
  *
@@ -42,38 +40,26 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <VARDECL>
  *            Any variable declaration.
  */
-public class EmptyDomain<ACTION, VARDECL> implements
-		IAbstractDomain<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL> {
-
-	private EmptyStateConverter<ACTION, VARDECL> mStateConverter;
-
-	public EmptyDomain() {
-		mStateConverter = new EmptyStateConverter<ACTION, VARDECL>(new EmptyDomainState<ACTION, VARDECL>());
-	}
+public class EmptyDomain<ACTION, VARDECL>
+		implements IAbstractDomain<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL> {
 
 	@Override
-	public IAbstractState<ACTION, VARDECL> createFreshState() {
+	public EmptyDomainState<ACTION, VARDECL> createFreshState() {
 		return new EmptyDomainState<ACTION, VARDECL>();
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<ACTION, VARDECL> getWideningOperator() {
-		return new EmptyOperator<>(mStateConverter);
+	public IAbstractStateBinaryOperator<EmptyDomainState<ACTION, VARDECL>> getWideningOperator() {
+		return new EmptyOperator<>();
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<ACTION, VARDECL> getMergeOperator() {
-		return new EmptyOperator<>(mStateConverter);
+	public IAbstractStateBinaryOperator<EmptyDomainState<ACTION, VARDECL>> getMergeOperator() {
+		return new EmptyOperator<>();
 	}
 
 	@Override
-	public IAbstractPostOperator<ACTION, VARDECL> getPostOperator() {
-		return new EmptyPostOperator<>(mStateConverter);
+	public IAbstractPostOperator<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL> getPostOperator() {
+		return new EmptyPostOperator<>();
 	}
-
-	@Override
-	public Class<EmptyDomainState<ACTION, VARDECL>> getAbstractStateClass() {
-		return mStateConverter.getAbstractStateClass();
-	}
-
 }

@@ -210,7 +210,7 @@ public class InitializationHandler {
 			lrVal = new RValue(rhs, lCType);
 		} else if (lCType instanceof CPointer) {
 			if (initializer == null) {
-				rhs = new IdentifierExpression(loc, SFO.NULL);
+				rhs = mExpressionTranslation.constructNullPointer(loc);
 			} else {
 				CType initializerUnderlyingType = initializer.lrVal.getCType().getUnderlyingType();
 				if (initializerUnderlyingType instanceof CPointer
@@ -223,10 +223,10 @@ public class InitializationHandler {
 						throw new IllegalArgumentException("unable to understand " + initializer.lrVal);
 					}
 					if (pointerOffsetValue.equals(BigInteger.ZERO)) {
-						rhs = mMemoryHandler.constructNullPointer(loc);
+						rhs = mExpressionTranslation.constructNullPointer(loc);
 					} else {
 						BigInteger pointerBaseValue = BigInteger.ZERO;
-						rhs = mMemoryHandler.constructPointerForIntegerValues(loc, pointerBaseValue, pointerOffsetValue);
+						rhs = mExpressionTranslation.constructPointerForIntegerValues(loc, pointerBaseValue, pointerOffsetValue);
 					}
 				} else {
 					throw new AssertionError("trying to initialize a pointer with something different from int and pointer");
@@ -329,7 +329,7 @@ public class InitializationHandler {
 					rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, (CPrimitive) lCType, BigInteger.ZERO);
 				} else {
 					initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
-					main.cHandler.castToType(main, loc, initializer, lCType);
+					main.cHandler.convert(main, loc, initializer, lCType);
 					rhs = initializer.lrVal.getValue();
 				}
 				break;
@@ -338,7 +338,7 @@ public class InitializationHandler {
 					rhs = new RealLiteral(loc, SFO.NR0F);
 				} else {
 					rhs = initializer.lrVal.getValue();
-					main.cHandler.castToType(main, loc, initializer, lCType);
+					main.cHandler.convert(main, loc, initializer, lCType);
 				}
 				break;
 			case VOID:
@@ -359,7 +359,7 @@ public class InitializationHandler {
 			}
 		} else if (lCType instanceof CPointer) {
 			if (initializer == null) {
-				rhs = new IdentifierExpression(loc, SFO.NULL);
+				rhs = mExpressionTranslation.constructNullPointer(loc);
 			} else {
 				CType initializerUnderlyingType = initializer.lrVal.getCType().getUnderlyingType();
 				if (initializerUnderlyingType instanceof CPointer
@@ -369,7 +369,7 @@ public class InitializationHandler {
 						&& ((CPrimitive) initializerUnderlyingType).getGeneralType() == GENERALPRIMITIVE.INTTYPE){
 					BigInteger offsetValue = mExpressionTranslation.extractIntegerValue((RValue) initializer.lrVal);
 					if (offsetValue.equals(BigInteger.ZERO)) {
-						rhs = new IdentifierExpression(loc, SFO.NULL);
+						rhs = mExpressionTranslation.constructNullPointer(loc);
 					} else {
 						Expression base = mExpressionTranslation.constructLiteralForIntegerType(
 								loc, mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
@@ -499,7 +499,7 @@ public class InitializationHandler {
 			String msg = "Unknown type - don't know how to initialize!";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		assert (CHandler.isAuxVarMapcomplete(main, decl, auxVars));
+//		assert (CHandler.isAuxVarMapcomplete(main, decl, auxVars));
 
 		return new ExpressionResult(stmt, null, decl, auxVars, overappr);
 	}
@@ -695,7 +695,8 @@ public class InitializationHandler {
 						overApp.addAll(sInit.overappr);
 						val = (RValue) sInit.lrVal;
 					} else if (valueType instanceof CPrimitive 
-							|| valueType instanceof CPointer) {
+							|| valueType instanceof CPointer
+							|| valueType instanceof CEnum) {
 						val = (RValue) (main.cHandler.getInitHandler().initVar(loc, main, 
 								(VariableLHS) null, valueType, null)).lrVal;
 					} else {
@@ -846,7 +847,7 @@ public class InitializationHandler {
 					unionAlreadyInitialized = true;
 				} else {
 					//fill in the uninitialized aux variable
-					String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.UNION);
+					String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.UNION, underlyingFieldType);
 
 					fieldWrites = new ExpressionResult((RValue) null);
 					fieldWrites.stmt.addAll(mMemoryHandler.getWriteCall(main, loc,
@@ -966,7 +967,7 @@ public class InitializationHandler {
 			if (isUnion) {
 				assert rerl.list.size() == 0 || rerl.list.size() == 1 : "union initializers must have only one field";
 				//TODO: maybe not use auxiliary variables so lavishly
-				String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.UNION);
+				String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.UNION, underlyingFieldType);
 				if (!unionAlreadyInitialized
 						&& rerl.list.size() == 1 
 						&& (rerl.list.get(0).field == null || rerl.list.get(0).field.equals("")
@@ -1005,7 +1006,7 @@ public class InitializationHandler {
 							new LinkedHashMap<VariableDeclaration, ILocation>();
 					ArrayList<Overapprox> fieldOverApp = new ArrayList<>();
 
-					String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYINIT);
+					String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYINIT, underlyingFieldType);
 
 					ExpressionListRecResult arrayInitRerl = null;
 					if (i < rerl.list.size())

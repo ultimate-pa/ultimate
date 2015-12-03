@@ -164,7 +164,9 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 
 	}
 
-	/***************************** IUltimatePlugin Implementation *********************/
+	/*****************************
+	 * IUltimatePlugin Implementation
+	 *********************/
 	@Override
 	public String getPluginName() {
 		return Activator.s_PLUGIN_NAME;
@@ -180,7 +182,9 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		return new CorePreferenceInitializer();
 	}
 
-	/***************************** IApplication Implementation *********************/
+	/*****************************
+	 * IApplication Implementation
+	 *********************/
 
 	/**
 	 * Method which is called by Eclipse framework. Compare to "main"-method.
@@ -241,6 +245,8 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		if (settingsfile != null) {
 			mSettingsManager.loadPreferencesFromFile(this, settingsfile);
 			mLoggingService.refreshLoggingService();
+		} else {
+			mLogger.info("No settings file supplied");
 		}
 
 		try {

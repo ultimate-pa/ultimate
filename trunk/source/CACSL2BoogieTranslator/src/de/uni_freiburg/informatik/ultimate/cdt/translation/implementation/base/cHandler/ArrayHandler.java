@@ -93,15 +93,15 @@ public class ArrayHandler {
 		
 		ExpressionResult subscript = (ExpressionResult) main.dispatch(node.getArgument());
 		subscript = subscript.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+		subscript.rexBoolToIntIfNecessary(loc, ((CHandler) main.cHandler).getExpressionTranslation());
 		assert subscript.lrVal.getCType().isIntegerType();
+
 		ExpressionResult leftExpRes = ((ExpressionResult) main.dispatch(node.getArrayExpression()));
 		
 		final ExpressionResult result;
 		final CType cTypeLeft = leftExpRes.lrVal.getCType();
 		if (cTypeLeft instanceof CPointer) {
 			// if p is a pointer, then p[42] is equivalent to *(p + 42)
-			assert (isInnermostSubscriptExpression(node) && isOutermostSubscriptExpression(node))
-					: "in this case nested subscript expressions are impossible"; 
 			leftExpRes = leftExpRes.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 			assert cTypeLeft.equals(leftExpRes.lrVal.getCType());
 			Expression oldAddress = leftExpRes.lrVal.getValue();
@@ -164,7 +164,7 @@ public class ArrayHandler {
 				// is defined via pointers. However, we have to make the subscript
 				// compatible to the type of the dimension of the array
 				AExpressionTranslation et = ((CHandler) main.cHandler).getExpressionTranslation();
-				et.convert(loc, subscript, (CPrimitive) currentDimension.getCType());
+				et.convertIntToInt(loc, subscript, (CPrimitive) currentDimension.getCType());
 				final RValue index = (RValue) subscript.lrVal;
 				final ArrayLHS newInnerArrayLHS;
 				if (oldInnerArrayLHS instanceof ArrayLHS) {

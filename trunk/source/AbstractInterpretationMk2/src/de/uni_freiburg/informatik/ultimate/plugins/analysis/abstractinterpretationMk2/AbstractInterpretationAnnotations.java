@@ -1,90 +1,43 @@
-/**
- * 
- */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
 
 /**
  * @author Christopher Dillo
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
+@SuppressWarnings("rawtypes")
 public class AbstractInterpretationAnnotations extends AbstractAnnotations {
 
 	private static final long serialVersionUID = 1L;
 
-	public static final String s_annotationName = "Abstract Interpretation";
+	private static final String ANNOTATION_NAME = "Abstract Interpretation";
+	private static final String FIELD_NAME_STATES = "Abstract states";
 
-	private final List<StackState> m_states;
+	private final List<String> mStates;
 
 	public AbstractInterpretationAnnotations(List<StackState> states) {
-		m_states = states;
+		mStates = states.stream().map(a -> a.toString()).collect(Collectors.toList());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations
-	 * #getFieldNames()
-	 */
 	@Override
 	protected String[] getFieldNames() {
-		return new String[] { "Abstract states" };
+		return new String[] { FIELD_NAME_STATES };
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations
-	 * #getFieldValue(java.lang.String)
-	 */
 	@Override
-	protected Object getFieldValue(String field) {
-		throw new UnsupportedOperationException();
-		/*
-		 * switch (field) { case "Abstract states": if (m_states == null) return
-		 * "No states"; // state -> (scope -> (value, array -> (value, has
-		 * unclear // indices)), trace, loop stack) List<Object> states = new
-		 * ArrayList<Object>(m_states.size()); for (StackState state : m_states)
-		 * { // scope -> (value, array -> (value, has unclear indices))
-		 * Map<String, Object> callstackData = new LinkedHashMap<String,
-		 * Object>(2); List<ScopedAbstractState> callstack =
-		 * state.getCallStack(); for (ScopedAbstractState cse : callstack) { //
-		 * array -> (value, has unclear indices) Map<Pair, Map<String, Object>>
-		 * arrayInfo = new LinkedHashMap<Pair, Map<String, Object>>(2);
-		 * Map<Pair, ArrayData> arrays = cse.getArrays(); for (Pair ident :
-		 * arrays.keySet()) { ArrayData a = arrays.get(ident); Map<String,
-		 * Object> aInfo = new LinkedHashMap<String, Object>();
-		 * aInfo.put("Merged value", a.getValue());
-		 * aInfo.put("Has unclear indices", a.getIndicesUnclear());
-		 * arrayInfo.put(ident, aInfo); } // store (value, array -> (value, has
-		 * unclear indices)) Map<String, Object> scopeData = new
-		 * LinkedHashMap<String, Object>(); if (!cse.getValues().isEmpty())
-		 * scopeData.put("Values", cse.getValues()); if (!arrayInfo.isEmpty())
-		 * scopeData.put("Arrays", arrayInfo); CallStatement csmt =
-		 * cse.getCallStatement(); String functionName = (csmt == null) ?
-		 * "GLOBAL" : csmt.getMethodName();
-		 * callstackData.put(String.format("%s", functionName), scopeData); }
-		 * List<CodeBlock> passedCodeBlocks = state.getTrace(); List<String>
-		 * trace = new ArrayList<String>(passedCodeBlocks.size()); for
-		 * (CodeBlock block : passedCodeBlocks)
-		 * trace.add(block.getPrettyPrintedStatements()); List<LoopStackElement>
-		 * loopStackEntries = state.getLoopEntryNodes(); List<String> loopStack
-		 * = new ArrayList<String>(loopStackEntries.size()); for
-		 * (LoopStackElement lse : loopStackEntries) if (lse.getLoopNode() !=
-		 * null) loopStack.add(String.format("%s -> ... -> %s -> %s",
-		 * lse.getLoopNode(), (ProgramPoint) lse.getExitEdge().getSource(),
-		 * lse.getLoopNode())); Map<String, Object> stateData = new
-		 * LinkedHashMap<String, Object>(); stateData.put("Call stack",
-		 * callstackData); stateData.put("Trace", trace);
-		 * stateData.put("Loop stack", loopStack); states.add(stateData); }
-		 * return states; default: return null; }
-		 */
+	protected Object getFieldValue(final String field) {
+		switch (field) {
+		case FIELD_NAME_STATES:
+			return mStates;
+		default:
+			throw new UnsupportedOperationException("Field " + field + " unknown");
+		}
 	}
 
 	/**
@@ -94,7 +47,7 @@ public class AbstractInterpretationAnnotations extends AbstractAnnotations {
 	 *            The IElement object this annotation shall be added to
 	 */
 	public void annotate(IElement element) {
-		element.getPayload().getAnnotations().put(s_annotationName, this);
+		element.getPayload().getAnnotations().put(ANNOTATION_NAME, this);
 	}
 
 	/**
@@ -106,16 +59,14 @@ public class AbstractInterpretationAnnotations extends AbstractAnnotations {
 	 * @return An AbstractInterpretationAnnotation on the IElement or null if
 	 *         none is present
 	 */
-	public static AbstractInterpretationAnnotations getAnnotation(
-			IElement element) {
+	public static AbstractInterpretationAnnotations getAnnotation(IElement element) {
 		if (!element.hasPayload()) {
 			return null;
 		}
 		if (!element.getPayload().hasAnnotation()) {
 			return null;
 		}
-		return (AbstractInterpretationAnnotations) element.getPayload()
-				.getAnnotations().get(s_annotationName);
+		return (AbstractInterpretationAnnotations) element.getPayload().getAnnotations().get(ANNOTATION_NAME);
 	}
 
 	@Override

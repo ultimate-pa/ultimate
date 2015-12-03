@@ -44,7 +44,7 @@ public class Svcomp2016_Reach extends AbstractTraceAbstractionTestSuite {
 	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
 //	private static int m_FilesPerDirectoryLimit = 5;
 	
-	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs = {
+	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs_32bit = {
 		/*** Category 1. Arrays ***/
 		new DirectoryFileEndingsPair("examples/svcomp/array-examples/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
 		new DirectoryFileEndingsPair("examples/svcomp/reducercommutativity/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
@@ -73,10 +73,10 @@ public class Svcomp2016_Reach extends AbstractTraceAbstractionTestSuite {
 
 		new DirectoryFileEndingsPair("examples/svcomp/eca-rers2012/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
 		
-		new DirectoryFileEndingsPair("examples/svcomp/loops/", new String[]{".i"}) , // contains "n.c24_false-unreach-call.i", which's test doesn't terminate
-		new DirectoryFileEndingsPair("examples/svcomp/loop-acceleration/", new String[]{".c" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/loops/", new String[]{".i"}, m_FilesPerDirectoryLimit),
+		new DirectoryFileEndingsPair("examples/svcomp/loop-acceleration/", new String[]{".i" }, m_FilesPerDirectoryLimit) ,
 		new DirectoryFileEndingsPair("examples/svcomp/loop-invgen/", new String[]{".i"}, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/loop-lit/", new String[]{ ".i", ".c" }, m_FilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/loop-lit/", new String[]{ ".i"}, m_FilesPerDirectoryLimit) ,
 		new DirectoryFileEndingsPair("examples/svcomp/loop-new/", new String[]{".i"}, m_FilesPerDirectoryLimit) ,
 		
 		new DirectoryFileEndingsPair("examples/svcomp/recursive/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
@@ -88,34 +88,47 @@ public class Svcomp2016_Reach extends AbstractTraceAbstractionTestSuite {
 		new DirectoryFileEndingsPair("examples/svcomp/seq-mthreaded/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
 		new DirectoryFileEndingsPair("examples/svcomp/seq-pthread/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
 
-		
-		/*** Category 8. Software Systems ***/
-		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.0/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.4-simple/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.7.3/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/ldv-commit-tester/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/ldv-consumption/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.12-rc1/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.16-rc1/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/ldv-validator-v0.6/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/ldv-validator-v0.8/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-4.2-rc1/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/ldv-challenges/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
-		
-		new DirectoryFileEndingsPair("examples/svcomp/busybox-1.22.0/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		
 	};
 	
 	
-	private static final String[] m_CurrentBugs = {
-			"examples/svcomp/ntdrivers-simplified/cdaudio_simpl1_true-unreach-call_true-termination.cil.c",
-			"examples/svcomp/ntdrivers-simplified/diskperf_simpl1_true-unreach-call_true-termination.cil.c",
-			"examples/svcomp/ntdrivers-simplified/floppy_simpl3_true-unreach-call_true-termination.cil.c",
-			"examples/ntdrivers-simplified/floppy_simpl4_true-unreach-call_true-termination.cil.c",
-			"examples/seq-pthread/cs_dekker_true-unreach-call.i",
-			"examples/seq-pthread/cs_lamport_true-unreach-call.i",
-			"examples/svcomp/eca-rers2012/Problem16_label30_false-unreach-call.c",
+	private static final String[] m_CurrentBugs_32bit = {
+//			"examples/svcomp/ntdrivers-simplified/cdaudio_simpl1_true-unreach-call_true-termination.cil.c",
+//			"examples/svcomp/ntdrivers-simplified/diskperf_simpl1_true-unreach-call_true-termination.cil.c",
+//			"examples/svcomp/ntdrivers-simplified/floppy_simpl3_true-unreach-call_true-termination.cil.c",
+//			"examples/svcomp/ntdrivers-simplified/floppy_simpl4_true-unreach-call_true-termination.cil.c",
+//			"examples/svcomp/seq-pthread/cs_dekker_true-unreach-call.i",
+//			"examples/svcomp/seq-pthread/cs_lamport_true-unreach-call.i",
+//			"examples/svcomp/svcomp/eca-rers2012/Problem16_label30_false-unreach-call.c",
+//			"examples/svcomp/seq-pthread/cs_dekker_true-unreach-call.i",
+//			"examples/svcomp/seq-pthread/cs_lamport_true-unreach-call.i",
+			
+//			"examples/svcomp/loop-acceleration/diamond_false-unreach-call1.c",
+//			"examples/svcomp/loop-acceleration/phases_true-unreach-call2.c",
 		};
+	
+	
+	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs_64bit = {
+			/*** Category 8. Software Systems ***/
+			new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.0/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+			new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.4-simple/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+			new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.7.3/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+			new DirectoryFileEndingsPair("examples/svcomp/ldv-commit-tester/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+			new DirectoryFileEndingsPair("examples/svcomp/ldv-consumption/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+			new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.12-rc1/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+			new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.16-rc1/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+			new DirectoryFileEndingsPair("examples/svcomp/ldv-validator-v0.6/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+			new DirectoryFileEndingsPair("examples/svcomp/ldv-validator-v0.8/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+			new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-4.2-rc1/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+			new DirectoryFileEndingsPair("examples/svcomp/ldv-challenges/", new String[]{ ".c" }, m_FilesPerDirectoryLimit) ,
+			
+			new DirectoryFileEndingsPair("examples/svcomp/busybox-1.22.0/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
+	};
+	
+	private static final String[] m_CurrentBugs_64bit = {
+//			"examples/svcomp/ldv-linux-3.0/usb_urb-drivers-video-arkfb.ko_true-unreach-call.cil.out.i.pp.cil.c",
+			// 2015-11-06: Matthias
+//			"examples/svcomp/seq-mthreaded/pals_STARTPALS_ActiveStandby_false-unreach-call.4_1.ufo.BOUNDED-10.pals.c"
+	};
 
 	/**
 	 * {@inheritDoc}
@@ -125,33 +138,38 @@ public class Svcomp2016_Reach extends AbstractTraceAbstractionTestSuite {
 		return 300 * 1000;
 	}
 
-	/**
-	 * List of path to setting files. 
-	 * Ultimate will run on each program with each setting that is defined here.
-	 * The path are defined relative to the folder "trunk/examples/settings/",
-	 * because we assume that all settings files are in this folder.
-	 * 
-	 */
-	private static final String[] m_Settings = {
-		"svcomp2016/svcomp-reach-64bit-Automizer.epf",
+	private static final String[] m_Settings_32bit = {
+		"svcomp2016/svcomp-Reach-32bit-Automizer_Default.epf",
+		"svcomp2016/svcomp-Reach-32bit-Automizer_Bitvector.epf",
 	};
 	
+	private static final String[] m_Settings_64bit = {
+		"svcomp2016/svcomp-Reach-64bit-Automizer_Default.epf",
+		"svcomp2016/svcomp-Reach-64bit-Automizer_Bitvector.epf",
+	};
+
 	
 	private static final String[] m_CToolchains = {
 //		"AutomizerC.xml",
 		"AutomizerCInline.xml",
 	};
-
 	
 	
 	
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String setting : m_Settings) {
+		for (String setting : m_Settings_32bit) {
 			for (String toolchain : m_CToolchains) {
-				addTestCases(toolchain, setting, m_DirectoryFileEndingsPairs);
-				addTestCases(toolchain, setting, m_CurrentBugs, new String[] {".c", ".i"});
+				addTestCases(toolchain, setting, m_DirectoryFileEndingsPairs_32bit);
+				addTestCases(toolchain, setting, m_CurrentBugs_32bit, new String[] {".c", ".i"});
+			}
+		}
+		
+		for (String setting : m_Settings_64bit) {
+			for (String toolchain : m_CToolchains) {
+				addTestCases(toolchain, setting, m_DirectoryFileEndingsPairs_64bit);
+				addTestCases(toolchain, setting, m_CurrentBugs_64bit, new String[] {".c", ".i"});
 			}
 		}
 		return super.createTestCases();

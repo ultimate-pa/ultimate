@@ -1,49 +1,57 @@
-#Sun Sep 13 20:49:03 CEST 2015
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation=
-@de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/INTERVAL\ -\ Widening\ operator=Nearest In Set
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/Collect\ literals\ from\ the\ RCFG's\ expressions=true
-file_export_version=3.0
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/Abstract\ domain\ for\ numbers=INTERVAL
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/Stop\ abstract\ interpretation\ after...=any error location is reached
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/Log\ state\ changes\ to\ console=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/Set\ of\ numbers\ for\ widening\ (comma-separated\ list)=0, 1, -128, 127
-#Sun Sep 13 20:49:03 CEST 2015
+#Thu Nov 05 18:27:51 CET 2015
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Parallel\ states\ before\ merging=4
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/POLYTOPE\ -\ Widening\ operator=H79_WIDENING
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Use\ source\ directory\ for\ state\ change\ logs=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Postpone\ execution\ of\ widened\ states=false
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Stop\ abstract\ interpretation\ after...=any error location is reached
 file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Set\ of\ numbers\ for\ widening\ (comma-separated\ list)=0, 1, -128, 127
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Minimum\ iterations\ before\ widening=2
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Names\ of\ the\ program's\ main\ method\ (cs)=ULTIMATE.start
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Name\ of\ the\ program's\ main\ method=main
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Minimum\ iterations\ before\ recursive\ widening=2
 @de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2=0.0.1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/INTERVAL\ -\ Widening\ operator=Nearest In Set
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2/Collect\ literals\ from\ the\ RCFG's\ expressions=true
-#Sun Sep 13 20:49:03 CEST 2015
+#Thu Nov 05 18:27:51 CET 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation=
+@de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/INTERVAL\ -\ Widening\ operator=Nearest In Set
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/Minimum\ iterations\ before\ widening=3
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/Collect\ literals\ from\ the\ RCFG's\ expressions=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/Use\ source\ directory\ for\ state\ change\ logs=false
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/Name\ of\ the\ program's\ main\ method=ULTIMATE.start
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/Abstract\ domain\ for\ numbers=INTERVAL
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/Log\ state\ changes\ to\ console=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/Parallel\ states\ before\ merging=2
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/Set\ of\ numbers\ for\ widening\ (comma-separated\ list)=0, 1, -128, 127
+#Thu Nov 05 18:27:51 CET 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolants\ consolidation=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolant\ automaton=TWOTRACK
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Interpolants\ along\ a\ Counterexample=FPandBP
+#Thu Nov 05 18:27:51 CET 2015
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=Internal_SMTInterpol
+@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+#Thu Nov 05 18:27:51 CET 2015
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
 file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Translation\ Mode\:=SV_COMP14
 @de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=0.0.1
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Checked\ method.\ Library\ mode\ if\ empty.=main
-#Sun Sep 13 20:49:03 CEST 2015
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
-file_export_version=3.0
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=Internal_SMTInterpol
-@de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
-#Sun Sep 13 20:49:03 CEST 2015
+#Thu Nov 05 18:27:51 CET 2015
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization=
 file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization/Annotate\ edges=Text
 @de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization=0.0.1
-#Sun Sep 13 20:49:03 CEST 2015
+#Thu Nov 05 18:27:51 CET 2015
 file_export_version=3.0
 /instance/UltimateCore/Root\ log\ level=INFO
 \!/instance/UltimateCore=
 @UltimateCore=0.0.1
-#Sun Sep 13 20:49:03 CEST 2015
+#Thu Nov 05 18:27:51 CET 2015
 file_export_version=3.0
 \!/instance/de.uni_freiburg.informatik.ultimate.gui=
 @de.uni_freiburg.informatik.ultimate.gui=0.0.1

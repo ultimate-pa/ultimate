@@ -29,6 +29,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
@@ -141,7 +144,40 @@ public class TAPreferences {
 	public boolean allErrorLocsAtOnce() {
 		return m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ALL_ERRORS_AT_ONCE);
 	}
+	
+	public SolverMode solverMode() {
+		return m_Prefs.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
+	}
 
+	public String commandExternalSolver() {
+		return m_Prefs.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
+	}
+	
+	public String logicForExternalSolver() {
+		String logicForExternalSolver = m_Prefs
+				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);
+		return logicForExternalSolver;
+	}
+	
+	public boolean dumpSmtScriptToFile() {
+		final boolean dumpSmtScriptToFile = m_Prefs
+				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpToFile);
+		return dumpSmtScriptToFile;
+	}
+
+	public String pathOfDumpedScript() {
+		final String pathOfDumpedScript  = m_Prefs
+				.getString(RcfgPreferenceInitializer.LABEL_Path);
+		return pathOfDumpedScript;
+	}
+
+	
+//	final boolean dumpUsatCoreTrackBenchmark = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+//			.getBoolean(RcfgPreferenceInitializer.LABEL_DumpUnsatCoreTrackBenchmark);
+//	
+//	final boolean dumpMainTrackBenchmark = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+//			.getBoolean(RcfgPreferenceInitializer.LABEL_DumpMainTrackBenchmark);
+	
 
 	/**
 	 * @return the maxIterations
@@ -164,6 +200,12 @@ public class TAPreferences {
 		return m_Artifact;
 	}
 
+	public boolean useSeparateSolverForTracechecks() {
+		return m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SEPARATE_SOLVER);
+	}
+	
+	
+	
 	/**
 	 * @return the interpolatedLocs
 	 */

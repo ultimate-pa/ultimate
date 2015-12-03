@@ -31,7 +31,7 @@ package de.uni_freiburg.informatik.ultimate.result;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;

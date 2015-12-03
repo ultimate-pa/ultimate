@@ -1,10 +1,9 @@
-/**
- * 
- */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.valuedomain.booldomain;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.valuedomain.IAbstractValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.valuedomain.IAbstractValueFactory;
 
@@ -49,23 +48,11 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 		mLogger = logger;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.valuedomain.IAbstractValue#getFactory()
-	 */
 	@Override
 	public IAbstractValueFactory<?> getFactory() {
 		return mFactory;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.valuedomain.IAbstractValue#isTrue()
-	 */
 	@Override
 	public boolean isTrue() {
 		return mValue == Bool.TRUE;
@@ -78,60 +65,25 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 		return mValue == Bool.FALSE;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.IAbstractValue#getValue()
-	 */
 	public Bool getValue() {
 		return mValue;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.IAbstractValue#isTop()
-	 */
 	@Override
 	public boolean isTop() {
 		return mValue == Bool.UNKNOWN;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.IAbstractValue#isBottom()
-	 */
 	@Override
 	public boolean isBottom() {
 		return mValue == Bool.EMPTY;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#representsSingleConcreteValue()
-	 */
 	@Override
 	public boolean representsSingleConcreteValue() {
 		return (mValue == Bool.TRUE) || (mValue == Bool.FALSE);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#isEqual(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public boolean isEqual(IAbstractValue<?> value) {
 		BoolValue val = (BoolValue) value;
@@ -141,16 +93,6 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 		return (mValue == val.getValue());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#isSuper(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public boolean isSuperOrEqual(IAbstractValue<?> value) {
 		BoolValue val = (BoolValue) value;
@@ -169,15 +111,6 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 		return false;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#isSub(de.uni_freiburg
-	 * .informatik.ultimate.plugins
-	 * .analysis.abstractinterpretationMk2.abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public boolean isSub(IAbstractValue<?> value) {
 		BoolValue val = (BoolValue) value;
@@ -196,116 +129,47 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 		return false;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.IAbstractValue#copy()
-	 */
 	@Override
 	public BoolValue copy() {
 		return mFactory.makeValue(mValue);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#add(de.uni_freiburg
-	 * .informatik.ultimate.plugins
-	 * .analysis.abstractinterpretationMk2.abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public BoolValue add(IAbstractValue<?> value) {
 		mLogger.debug("Invalid operation ADD on BoolValue");
 		return mFactory.makeBottomValue();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#subtract(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public BoolValue subtract(IAbstractValue<?> value) {
 		mLogger.debug("Invalid operation SUBTRACT on BoolValue");
 		return mFactory.makeBottomValue();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#multiply(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public BoolValue multiply(IAbstractValue<?> value) {
 		mLogger.debug("Invalid operation MULTIPLY on BoolValue");
 		return mFactory.makeBottomValue();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#divide(de.uni_freiburg
-	 * .informatik.ultimate.
-	 * plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public BoolValue divide(IAbstractValue<?> value) {
 		mLogger.debug("Invalid operation DIVIDE on BoolValue");
 		return mFactory.makeBottomValue();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#modulo(de.uni_freiburg
-	 * .informatik.ultimate.
-	 * plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public BoolValue modulo(IAbstractValue<?> value) {
 		mLogger.debug("Invalid operation MODULO on BoolValue");
 		return mFactory.makeBottomValue();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.IAbstractValue#negative()
-	 */
 	@Override
 	public BoolValue negative() {
 		mLogger.debug("Invalid operation NEGATIVE on BoolValue");
 		return mFactory.makeBottomValue();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsEqual(de.
-	 * uni_freiburg.informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public BoolValue compareIsEqual(IAbstractValue<?> value) {
 		BoolValue boolVal = booleanFromAbstractValue(value);
@@ -347,16 +211,6 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsNotEqual(
-	 * de.uni_freiburg.informatik
-	 * .ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public BoolValue compareIsNotEqual(IAbstractValue<?> value) {
 		BoolValue boolVal = booleanFromAbstractValue(value);
@@ -398,61 +252,21 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsLess(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public BoolValue compareIsLess(IAbstractValue<?> value) {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsGreater(de
-	 * .uni_freiburg.informatik
-	 * .ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public BoolValue compareIsGreater(IAbstractValue<?> value) {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsLessEqual
-	 * (de.uni_freiburg.informatik
-	 * .ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public BoolValue compareIsLessEqual(IAbstractValue<?> value) {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsGreaterEqual
-	 * (de.uni_freiburg.informatik
-	 * .ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public BoolValue compareIsGreaterEqual(IAbstractValue<?> value) {
 		return null;
@@ -668,28 +482,11 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#bitVectorConcat(de
-	 * .uni_freiburg.informatik.
-	 * ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public BoolValue bitVectorConcat(IAbstractValue<?> value) {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#bitVectorAccess(int, int)
-	 */
 	@Override
 	public BoolValue bitVectorAccess(int start, int end) {
 		return null;
@@ -728,5 +525,18 @@ public class BoolValue implements IAbstractValue<BoolValue.Bool> {
 		default:
 			return "EMPTY";
 		}
+	}
+
+	@Override
+	public Term getTerm(Script script, Term variable) {
+		final Term value;
+		if (getValue() == Bool.TRUE) {
+			value = script.term("true");
+		} else if (getValue() == Bool.FALSE) {
+			value = script.term("false");
+		} else {
+			return script.term("true");
+		}
+		return script.term("=", variable, value);
 	}
 }

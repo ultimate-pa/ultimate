@@ -26,10 +26,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms;
 
+import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -37,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 
@@ -270,7 +273,12 @@ public class AffineTerm extends Term {
 	 * @param script Script for that this term is constructed.
 	 */
 	public Term toTerm(Script script) {
-		Term[] summands = new Term[m_Variable2Coefficient.size() + 1];
+		Term[] summands;
+		if (m_Constant.equals(Rational.ZERO)) {
+			summands = new Term[m_Variable2Coefficient.size()];
+		} else {
+			summands = new Term[m_Variable2Coefficient.size() + 1];
+		}
 		int i = 0;
 		for (Map.Entry<Term, Rational> entry :
 				m_Variable2Coefficient.entrySet()) {
@@ -284,8 +292,10 @@ public class AffineTerm extends Term {
 			}
 			++i;
 		}
-		assert m_Constant.isIntegral() || m_Sort.getName().equals("Real");
-		summands[i] = m_Constant.toTerm(m_Sort);
+		if (!m_Constant.equals(Rational.ZERO)) {
+			assert m_Constant.isIntegral() || m_Sort.getName().equals("Real");
+			summands[i] = m_Constant.toTerm(m_Sort);
+		}
 		Term result = SmtUtils.sum(script, m_Sort, summands);
 		return result;
 	}
@@ -324,5 +334,20 @@ public class AffineTerm extends Term {
 	public void toStringHelper(ArrayDeque<Object> m_Todo) {
 		throw new UnsupportedOperationException(
 				"This is an auxilliary Term and not supported by the solver");
+	}
+	
+	public static AffineTerm applyModuloToAllCoefficients(Script script, AffineTerm affineTerm, BigInteger divident) {
+		assert affineTerm.getSort().getName().equals("Int");
+		Map<Term, Rational> map = affineTerm.getVariable2Coefficient();
+		Term[] terms = new Term[map.size()];
+		Rational[] coefficients = new Rational[map.size()];
+		int offset = 0;
+		for (Entry<Term, Rational> entry : map.entrySet()) {
+			terms[offset] = entry.getKey();
+			coefficients[offset] = SmtUtils.toRational(BoogieUtils.euclideanMod(SmtUtils.toInt(entry.getValue()),divident));
+			offset++;
+		}
+		Rational constant = SmtUtils.toRational(BoogieUtils.euclideanMod(SmtUtils.toInt(affineTerm.getConstant()),divident));
+		return new AffineTerm(affineTerm.getSort(), terms, coefficients, constant );
 	}
 }

@@ -40,7 +40,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.BackTransValue;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.InlineVersionTransformer;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.util.IToString;
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieProgramExecution;

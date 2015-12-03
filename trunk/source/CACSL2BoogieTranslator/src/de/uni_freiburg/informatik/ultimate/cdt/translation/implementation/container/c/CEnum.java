@@ -210,4 +210,18 @@ public class CEnum extends CType {
 	public int hashCode() {
 		return HashUtils.hashJenkins(31, fNames, fValues, identifier);
 	}
+	
+	/**
+	 * Replace CEnum types by signed int, other types are untouched.
+	 * According to C11 6.4.4.3.2 an identifier declared as an enumeration 
+	 * constant has type int.
+	 * 
+	 */
+	public static CType replaceEnumWithInt(CType cType) {
+		if (cType.getUnderlyingType() instanceof CEnum) {
+			return new CPrimitive(PRIMITIVE.INT);
+		} else {
+			return cType;
+		}
+	}
 }

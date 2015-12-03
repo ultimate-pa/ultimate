@@ -25,16 +25,17 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model;
 
 /**
  * 
- * @author dietsch@informatik.uni-freiburg.de
- * @author greitsch@informatik.uni-freiburg.de
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * 
  */
-public interface IAbstractPostOperator<ACTION, VARDECL> {
+public interface IAbstractPostOperator<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
 
-	IAbstractState<ACTION, VARDECL> apply(IAbstractState<ACTION, VARDECL> oldstate, ACTION concrete);
+	STATE apply(STATE oldstate, ACTION concrete);
 
 }

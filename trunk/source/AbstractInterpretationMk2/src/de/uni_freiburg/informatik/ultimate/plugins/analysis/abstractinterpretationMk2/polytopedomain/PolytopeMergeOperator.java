@@ -31,7 +31,8 @@ public class PolytopeMergeOperator implements
 		// merge the polytope into the result state
 		NNC_Polyhedron pRes = result.getConcrete().getPolytope();
 		pRes.upper_bound_assign(b.getConcrete().getPolytope());
-
+		result.minimize();
+		
 		// mLogger.debug("Merging Polytopes: \n" + a.toString() +
 		// "\n -- and -- \n" + b.toString() + "\n -- result -- \n" +
 		// result.toString());

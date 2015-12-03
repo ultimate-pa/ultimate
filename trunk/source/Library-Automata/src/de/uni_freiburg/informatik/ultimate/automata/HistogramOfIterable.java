@@ -67,6 +67,10 @@ public class HistogramOfIterable<E> {
 		return Arrays.toString(m_VisualizationArray);
 	}
 
+	public Integer[] getVisualizationArray() {
+		return m_VisualizationArray;
+	}
+
 	public static <E> Map<E, Integer> generateHistogramMap(Iterable<E> iterable) {
 		Map<E, Integer> result = new HashMap<E, Integer>();
 		for (E e : iterable) {

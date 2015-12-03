@@ -34,6 +34,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO.AUXVAR;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.IHandler;
 
@@ -53,25 +54,29 @@ public interface INameHandler extends IHandler {
      *            the name of the C variable.
      * @param compCnt
      *            the counter value of the compoundCntUID
+     * @param cType
+     *            CType of the object for which we need an identifier
      * @return an unique identifier.
      */
-    public String getUniqueIdentifier(IASTNode scope, String cId, int compCnt, boolean isOnHeap);
+    public String getUniqueIdentifier(IASTNode scope, String cId, int compCnt, boolean isOnHeap, CType cType);
 
     /**
      * Creates a unique identifier for temporary variables.
      * 
      * @return a unique identifier for temporary variables.
      */
-    String getTempVarUID(AUXVAR purpose);
+    String getTempVarUID(AUXVAR purpose, CType cType);
 
     /**
      * Create identifier for in-parameter of Boogie procedure.
      * @param cid
      * 			 the name of the C procedure parameter
+     * @param cType 
+     * 			CType of the object for which we need an identifier
      * @return 
      *    		identifier for in-parameter of Boogie procedure.
      */
-	String getInParamIdentifier(String cid);
+	String getInParamIdentifier(String cid, CType cType);
 
 	public String getGloballyUniqueIdentifier(String looplabel);
 

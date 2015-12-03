@@ -33,7 +33,8 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp;
 
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -48,6 +49,7 @@ import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.IntegerTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
@@ -56,12 +58,12 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.cHandler.SVCompArrayHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -79,8 +81,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
@@ -98,11 +98,6 @@ import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
 public class SvComp14CHandler extends CHandler {
 	
 	/**
-	 * Add assume statements that state that the nondeterministic values are
-	 * in the range of the values of the data type.
-	 */
-	private static final boolean mAssumeThatNondeterministicValuesAreInRange = false;
-	/**
 	 * The string representing SV-Comp's error method.
 	 */
 	private static final String ERROR_STRING = "__VERIFIER_error";
@@ -113,11 +108,19 @@ public class SvComp14CHandler extends CHandler {
 	/**
 	 * Nondet_X | X in {int, float, char, short, long, pointer}
 	 */
-	private static final String[] NONDET_TYPE_STRINGS = { "int", "long", "float", "char", "short", "pointer" };
+	private static final String[] NONDET_TYPE_STRINGS = { 
+			"_Bool","bool","char","float","double","size_t","int","loff_t",
+			"long","short","pchar","pointer","uchar","unsigned","uint","ulong","ushort" };
 	/**
 	 * The string representing SV-Comp's assert method.
 	 */
 	private static final String ASSUME_STRING = "__VERIFIER_assume";
+	
+	private static final String[] s_UNSUPPORTED_FLOAT_OPERATIONS = {
+		"__isinff","__finitef","__fpclassifyf","__fpclassifyf","__isinfl","__finitel","__isnanl", "sin"
+	};
+	private final HashSet<String> m_UnsupportedFloatOperations = 
+			new HashSet<>(Arrays.asList(s_UNSUPPORTED_FLOAT_OPERATIONS));
 
 	/**
 	 * Constructor.
@@ -129,7 +132,6 @@ public class SvComp14CHandler extends CHandler {
 	public SvComp14CHandler(Dispatcher main, CACSL2BoogieBacktranslator backtranslator, 
 			Logger logger, ITypeHandler typeHandler, boolean bitvectorTranslation) {
 		super(main, backtranslator, false, logger, typeHandler, bitvectorTranslation);
-		super.mArrayHandler = new SVCompArrayHandler();
 	}
 
 	//
@@ -151,7 +153,12 @@ public class SvComp14CHandler extends CHandler {
 		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
 		LRValue returnValue = null;
 		
-
+		if (methodName.equals("pthread_create")) {
+			throw new UnsupportedSyntaxException(loc, "we do not support pthread");
+		}
+		if (m_UnsupportedFloatOperations.contains(methodName)) {
+			throw new UnsupportedSyntaxException(loc, "unsupported float operation " + methodName);
+		}
 		if (methodName.equals(ERROR_STRING)) {
 			boolean checkSvcompErrorfunction = 
 					main.mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_SVCOMP_ERRORFUNCTION);
@@ -173,7 +180,7 @@ public class SvComp14CHandler extends CHandler {
 					String msg = "Incorrect or invalid in-parameter! " + loc.toString();
 					throw new IncorrectSyntaxException(loc, msg);
 				}
-				in.rexIntToBoolIfNecessary(loc, m_ExpressionTranslation);
+				in.rexIntToBoolIfNecessary(loc, m_ExpressionTranslation, mMemoryHandler);
 				args.add(in.lrVal.getValue());
 				stmt.addAll(in.stmt);
 				decl.addAll(in.decl);
@@ -191,55 +198,68 @@ public class SvComp14CHandler extends CHandler {
 		for (String t : NONDET_TYPE_STRINGS)
 			if (methodName.equals(NONDET_STRING + t)) {
 				
-				final ASTType type;
-				final CType cType;
+				CType cType;
 				switch (t) {
-				case "int":
-					cType = new CPrimitive(PRIMITIVE.INT);
-					type = mTypeHandler.ctype2asttype(loc, cType);
-					break;
-				case "long":
-					cType = new CPrimitive(PRIMITIVE.LONG);
-					type = mTypeHandler.ctype2asttype(loc, cType);
-					break;
-				case "float":
-					cType = new CPrimitive(PRIMITIVE.FLOAT);
-					type = mTypeHandler.ctype2asttype(loc, cType);
+				case "_Bool":
+				case "bool":
+					cType = new CPrimitive(PRIMITIVE.BOOL);
 					break;
 				case "char":
 					cType = new CPrimitive(PRIMITIVE.CHAR);
-					type = mTypeHandler.ctype2asttype(loc, cType);
+					break;
+				case "float":
+					cType = new CPrimitive(PRIMITIVE.FLOAT);
+//					throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
+					break;
+				case "double":
+					cType = new CPrimitive(PRIMITIVE.DOUBLE);
+//					throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
+					break;
+				case "size_t":
+				case "int":
+					cType = new CPrimitive(PRIMITIVE.INT);
+					break;
+				case "loff_t":
+				case "long":
+					cType = new CPrimitive(PRIMITIVE.LONG);
 					break;
 				case "short":
 					cType = new CPrimitive(PRIMITIVE.SHORT);
-					type = mTypeHandler.ctype2asttype(loc, cType);
+					break;
+				case "pchar":
+					cType = new CPointer(new CPrimitive(PRIMITIVE.CHAR));
 					break;
 				case "pointer":
-					NamedType boogiePointerType = new NamedType(null, new InferredType(Type.Struct), SFO.POINTER,
-							new ASTType[0]);
-					type = boogiePointerType;
+//					NamedType boogiePointerType = new NamedType(null, new InferredType(Type.Struct), SFO.POINTER,
+//							new ASTType[0]);
+//					type = boogiePointerType;
 					cType = new CPointer(new CPrimitive(PRIMITIVE.VOID));
+					break;
+				case "uchar":
+					cType = new CPrimitive(PRIMITIVE.UCHAR);
+					break;
+				case "unsigned":
+				case "uint":
+					cType = new CPrimitive(PRIMITIVE.UINT);
+					break;
+				case "ulong":
+					cType = new CPrimitive(PRIMITIVE.ULONG);
+					break;
+				case "ushort":
+					cType = new CPrimitive(PRIMITIVE.USHORT);
 					break;
 				default:
 					throw new AssertionError("unknown type " + t);
 				}
-				String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
+				ASTType type = mTypeHandler.ctype2asttype(loc, cType);
+				String tmpName = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET, cType);
 				VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpName, type, loc);
 				decl.add(tVarDecl);
 				auxVars.put(tVarDecl, loc);
 
 				returnValue = new RValue(new IdentifierExpression(loc, tmpName), cType);
+				m_ExpressionTranslation.addAssumeValueInRangeStatements(loc, returnValue.getValue(), returnValue.getCType(), stmt);
 				
-				if (mAssumeThatNondeterministicValuesAreInRange) {
-					switch (t) {
-					case "int":
-					case "long":
-					case "char":
-					case "short":
-						AssumeStatement inRange = constructAssumeInRangeStatement(main.getTypeSizes(), loc, returnValue);
-						stmt.add(inRange);
-					}
-				}
 				assert (isAuxVarMapcomplete(main, decl, auxVars));
 				return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
 			}
@@ -249,8 +269,10 @@ public class SvComp14CHandler extends CHandler {
 			if (node.getParent().getParent() instanceof IASTCompoundStatement) {
 				return new SkipResult();
 			}
-			ASTType tempType = new PrimitiveType(loc, SFO.INT);
-			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
+			// 2015-11-05 Matthias: TODO check if int is reasonable here
+			CType returnType = new CPrimitive(PRIMITIVE.INT);
+			ASTType tempType = mTypeHandler.ctype2asttype(loc, returnType);
+			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET, null);
 			VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
 					loc, new String[] { tId }, tempType) });
 			auxVars.put(tVarDecl, loc);
@@ -290,7 +312,7 @@ public class SvComp14CHandler extends CHandler {
 			overappr.addAll(srcRex.overappr);
 			overappr.addAll(sizeRex.overappr);		
 
-			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMCPYRES);
+			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMCPYRES, destRex.lrVal.getCType());
 			VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
 					loc, new String[] { tId }, main.typeHandler.constructPointerType(loc)) });
 			decl.add(tVarDecl);
@@ -340,39 +362,23 @@ public class SvComp14CHandler extends CHandler {
 		return super.visit(main, node);
 	}
 
-	/**
-	 * Returns "assume (minValue <= lrValue && lrValue <= maxValue)"
-	 */
-	private AssumeStatement constructAssumeInRangeStatement(TypeSizes typeSizes, 
-			ILocation loc,
-			LRValue lrValue) {
-		IntegerLiteral minValue = new IntegerLiteral(loc, typeSizes.getMinValueOfPrimitiveType(
-				(CPrimitive) lrValue.getCType().getUnderlyingType()).toString());
-		IntegerLiteral maxValue = new IntegerLiteral(loc, typeSizes.getMaxValueOfPrimitiveType(
-				(CPrimitive) lrValue.getCType().getUnderlyingType()).toString());
-		Expression biggerMinInt = ExpressionFactory.newBinaryExpression(loc, 
-				BinaryExpression.Operator.COMPLEQ, minValue, lrValue.getValue());
-		Expression smallerMaxValue = ExpressionFactory.newBinaryExpression(loc, 
-				BinaryExpression.Operator.COMPLEQ, lrValue.getValue(), maxValue);
-		AssumeStatement inRange = new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc, 
-				BinaryExpression.Operator.LOGICAND, biggerMinInt, smallerMaxValue));
-		return inRange;
-	}
+
 	
 	@Override
 	public Result visit(Dispatcher main, IASTIdExpression node) {
 		ILocation loc = LocationFactory.createCLocation(node);
 		if (node.getName().toString().equals("null")) {
 			return new ExpressionResult(
-					new RValue(new IdentifierExpression(loc, SFO.NULL),
+					new RValue(m_ExpressionTranslation.constructNullPointer(loc),
 					new CPointer(new CPrimitive(PRIMITIVE.VOID))));
 		}
 		if (node.getName().toString().equals("__PRETTY_FUNCTION__")
 				|| node.getName().toString().equals("__FUNCTION__")){
-			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
+			CType returnType = new CPointer(new CPrimitive(PRIMITIVE.CHAR));
+			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET, returnType);
 			VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
 					loc, new String[] { tId }, main.typeHandler.constructPointerType(loc)) });
-			RValue rvalue = new RValue(new IdentifierExpression(loc, tId), new CPointer(new CPrimitive(PRIMITIVE.CHAR)));
+			RValue rvalue = new RValue(new IdentifierExpression(loc, tId), returnType);
 			ArrayList<Declaration> decls = new ArrayList<Declaration>();
 			decls.add(tVarDecl);
 			Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();

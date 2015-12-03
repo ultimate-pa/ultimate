@@ -296,6 +296,8 @@ public class ArrayValue {
 			return false;
 		if (this == DEFAULT_ARRAY)
 			return other == DEFAULT_ARRAY;
+		if (mValues.getSize() == 0)
+			return other == DEFAULT_ARRAY;
 		return mValues.equals(((ArrayValue) other).mValues);
 	}
 	

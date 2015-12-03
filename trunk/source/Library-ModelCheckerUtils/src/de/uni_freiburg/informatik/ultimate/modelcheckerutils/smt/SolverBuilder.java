@@ -29,14 +29,20 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.services.IProgressMonitorService;
-import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressMonitorService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IStorable;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.TerminationRequest;
 import de.uni_freiburg.informatik.ultimate.smtsolver.external.Scriptor;
@@ -51,6 +57,10 @@ import de.uni_freiburg.informatik.ultimate.smtsolver.external.ScriptorWithGetInt
  */
 public class SolverBuilder {
 
+	public enum SolverMode {
+		Internal_SMTInterpol, External_PrincessInterpolationMode, External_SMTInterpolInterpolationMode, External_Z3InterpolationMode, External_DefaultMode
+	};
+
 	private static final String sSolverLoggerName = "SolverLogger";
 	private static final boolean s_UseWrapperScriptWithTermConstructionChecks = false;
 
@@ -64,14 +74,15 @@ public class SolverBuilder {
 	private static Script createExternalSolver(IUltimateServiceProvider services, IToolchainStorage storage,
 			String command) throws IOException {
 		Logger solverLogger = services.getLoggingService().getLoggerForExternalTool(sSolverLoggerName);
-		Script script = new Scriptor(command, solverLogger, services, storage);
+		Script script = new Scriptor(command, solverLogger, services, storage, "External");
 		return script;
 	}
-	
-	private static Script createExternalSolverWithInterpolation(IUltimateServiceProvider services, IToolchainStorage storage,
-			String command, ExternalInterpolator externalInterpolator) throws IOException {
+
+	private static Script createExternalSolverWithInterpolation(IUltimateServiceProvider services,
+			IToolchainStorage storage, String command, ExternalInterpolator externalInterpolator) throws IOException {
 		Logger solverLogger = services.getLoggingService().getLoggerForExternalTool(sSolverLoggerName);
-		Script script = new ScriptorWithGetInterpolants(command, solverLogger, services, storage, externalInterpolator);
+		Script script = new ScriptorWithGetInterpolants(command, solverLogger, services, storage, externalInterpolator,
+				"ExternalInterpolator");
 		return script;
 	}
 
@@ -88,9 +99,10 @@ public class SolverBuilder {
 		}
 
 	}
-	
+
 	/**
 	 * Build an SMT solver.
+	 * 
 	 * @return A Script that represents an SMT solver which is defined by settings.
 	 */
 	public static Script buildScript(IUltimateServiceProvider services, IToolchainStorage storage, Settings settings) {
@@ -100,12 +112,12 @@ public class SolverBuilder {
 			solverLogger.info("constructing external solver with command" + settings.getCommandExternalSolver());
 			try {
 				if (settings.getExternalInterpolator() == null) {
-					result = createExternalSolver(
-							services, storage, settings.getCommandExternalSolver());
+					result = createExternalSolver(services, storage, settings.getCommandExternalSolver());
 				} else {
-					solverLogger.info("external solver will use " + settings.getExternalInterpolator() + " interpolation mode");
-					result = createExternalSolverWithInterpolation(
-							services, storage, settings.getCommandExternalSolver(), settings.getExternalInterpolator());
+					solverLogger.info(
+							"external solver will use " + settings.getExternalInterpolator() + " interpolation mode");
+					result = createExternalSolverWithInterpolation(services, storage,
+							settings.getCommandExternalSolver(), settings.getExternalInterpolator());
 				}
 			} catch (IOException e) {
 				solverLogger.fatal("Unable to construct solver");
@@ -137,11 +149,9 @@ public class SolverBuilder {
 	 * Settings that define how a solver is build.
 	 */
 	public static class Settings {
-		
-		public Settings(boolean useExternalSolver,
-				String commandExternalSolver, long timeoutSmtInterpol,
-				ExternalInterpolator externalInterpolator,
-				boolean dumpSmtScriptToFile, String pathOfDumpedScript,
+
+		public Settings(boolean useExternalSolver, String commandExternalSolver, long timeoutSmtInterpol,
+				ExternalInterpolator externalInterpolator, boolean dumpSmtScriptToFile, String pathOfDumpedScript,
 				String baseNameOfDumpedScript) {
 			super();
 			m_UseExternalSolver = useExternalSolver;
@@ -154,29 +164,28 @@ public class SolverBuilder {
 		}
 
 		private final boolean m_UseExternalSolver;
-		
+
 		/**
 		 * What shell command should be used to call the external smt solver?
 		 */
 		private final String m_CommandExternalSolver;
-		
+
 		private final long m_TimeoutSmtInterpol;
-		
+
 		private final ExternalInterpolator m_ExternalInterpolator;
-		
+
 		/**
 		 * Write SMT solver script to file.
 		 */
 		private final boolean m_DumpSmtScriptToFile;
-		
+
 		/**
 		 * Path to which the SMT solver script is written.
 		 */
 		private final String m_PathOfDumpedScript;
-		
+
 		/**
-		 * Base name (without path and without file ending) of the file to which the SMT solver script is 
-		 * written.
+		 * Base name (without path and without file ending) of the file to which the SMT solver script is written.
 		 */
 		private final String m_BaseNameOfDumpedScript;
 
@@ -207,14 +216,14 @@ public class SolverBuilder {
 		public String getBaseNameOfDumpedScript() {
 			return m_BaseNameOfDumpedScript;
 		}
-		
+
 		public String constructFullPathOfDumpedScript() {
 			String result = getPathOfDumpedScript();
 			result = addFileSeparator(result);
 			result += getBaseNameOfDumpedScript() + ".smt2";
 			return result;
 		}
-		
+
 		/**
 		 * Add file separator if last symbol is not already file separator.
 		 */
@@ -224,7 +233,136 @@ public class SolverBuilder {
 			} else {
 				return string + System.getProperty("file.separator");
 			}
-			
+
 		}
+	}
+
+	private static Settings constructSolverSettings(final String filename, final SolverMode solverMode,
+			final String commandExternalSolver, final boolean dumpSmtScriptToFile, final String pathOfDumpedScript)
+					throws AssertionError {
+		final boolean useExternalSolver;
+
+		final int timeoutSmtInterpol;
+		final ExternalInterpolator externalInterpolator;
+		switch (solverMode) {
+		case External_DefaultMode: {
+			useExternalSolver = true;
+			timeoutSmtInterpol = -1;
+			externalInterpolator = null;
+		}
+			break;
+		case External_PrincessInterpolationMode: {
+			useExternalSolver = true;
+			timeoutSmtInterpol = -1;
+			externalInterpolator = ExternalInterpolator.PRINCESS;
+		}
+			break;
+		case External_SMTInterpolInterpolationMode: {
+			useExternalSolver = true;
+			timeoutSmtInterpol = -1;
+			externalInterpolator = ExternalInterpolator.SMTINTERPOL;
+		}
+			break;
+		case External_Z3InterpolationMode: {
+			useExternalSolver = true;
+			timeoutSmtInterpol = -1;
+			externalInterpolator = ExternalInterpolator.IZ3;
+		}
+			break;
+		case Internal_SMTInterpol: {
+			useExternalSolver = false;
+			timeoutSmtInterpol = 900 * 1000;
+			externalInterpolator = null;
+		}
+			break;
+		default:
+			throw new AssertionError("unknown solver mode");
+		}
+		final Settings solverSettings = new Settings(useExternalSolver, commandExternalSolver, timeoutSmtInterpol,
+				externalInterpolator, dumpSmtScriptToFile, pathOfDumpedScript, filename);
+		return solverSettings;
+	}
+
+	public static Script buildAndInitializeSolver(IUltimateServiceProvider services, IToolchainStorage storage,
+			String filename, SolverMode solverMode, final boolean dumpSmtScriptToFile, final String pathOfDumpedScript,
+			final String commandExternalSolver, final boolean dumpUsatCoreTrackBenchmark,
+			final boolean dumpMainTrackBenchmark, String logicForExternalSolver, String solverId)
+					throws AssertionError {
+		final Settings solverSettings = SolverBuilder.constructSolverSettings(filename, solverMode,
+				commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);
+
+		Script script = SolverBuilder.buildScript(services, storage, solverSettings);
+		if (dumpUsatCoreTrackBenchmark) {
+			script = new LoggingScriptForUnsatCoreBenchmarks(script, solverSettings.getBaseNameOfDumpedScript(),
+					solverSettings.getPathOfDumpedScript());
+		}
+		if (dumpMainTrackBenchmark) {
+			script = new LoggingScriptForMainTrackBenchmarks(script, solverSettings.getBaseNameOfDumpedScript(),
+					solverSettings.getPathOfDumpedScript());
+		}
+		final Script result = script;
+
+		result.setOption(":produce-models", true);
+		switch (solverMode) {
+		case External_DefaultMode:
+			result.setOption(":produce-unsat-cores", true);
+			result.setLogic(logicForExternalSolver);
+			break;
+		case External_PrincessInterpolationMode:
+		case External_SMTInterpolInterpolationMode:
+			result.setOption(":produce-interpolants", true);
+			result.setLogic(logicForExternalSolver);
+			break;
+		case External_Z3InterpolationMode:
+			result.setOption(":produce-interpolants", true);
+			result.setLogic(logicForExternalSolver);
+			// add array-ext function
+			final Sort indexSort;
+			if (logicForExternalSolver.endsWith("A")) {
+				indexSort = result.sort("Int");
+				Sort boolSort = result.sort("Bool");
+				Sort arraySort = result.sort("Array", indexSort, boolSort);
+				result.declareFun("array-ext", new Sort[] { arraySort, arraySort }, indexSort);
+			} else if (logicForExternalSolver.endsWith("BV")) {
+				// do nothing. several have to be added here
+			}
+			break;
+		case Internal_SMTInterpol:
+			result.setOption(":produce-unsat-cores", true);
+			result.setOption(":produce-interpolants", true);
+			result.setOption(":interpolant-check-mode", true);
+			result.setOption(":proof-transformation", "LU");
+			// m_Script.setOption(":proof-transformation", "RPI");
+			// m_Script.setOption(":proof-transformation", "LURPI");
+			// m_Script.setOption(":proof-transformation", "RPILU");
+			// m_Script.setOption(":verbosity", 0);
+			result.setLogic("QF_AUFLIRA");
+			break;
+		default:
+			throw new AssertionError("unknown solver");
+		}
+
+		String advertising = "|" + System.lineSeparator() + "    SMT script generated on "
+				+ (new SimpleDateFormat("yyyy/MM/dd")).format(new Date())
+				+ " by Ultimate. http://ultimate.informatik.uni-freiburg.de/" + System.lineSeparator() + "|";
+		result.setInfo(":source", advertising);
+		result.setInfo(":smt-lib-version", "2.0");
+		result.setInfo(":category", new QuotedObject("industrial"));
+
+		storage.putStorable(solverId, new IStorable() {
+
+			final Script theScript = result;
+
+			@Override
+			public void destroy() {
+				try {
+					theScript.exit();
+				} catch (SMTLIBException ex) {
+					// DD 2015-11-18: If we store all created solvers during a toolchain execution, we should also
+					// suppress broken solver exceptions if the solver was already killed by the user
+				}
+			}
+		});
+		return result;
 	}
 }

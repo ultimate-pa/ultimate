@@ -157,7 +157,10 @@ public class CArray extends CType {
         	Expression dim = rvalueDim.getValue(); 
             if (dim instanceof BinaryExpression ||
                     dim instanceof UnaryExpression) {
-                dim = getArithmeticResultAsIntegerLiteral(dim);
+            	// 2015-11-08 Matthias: Use C representation or introduce a factory
+            	// for types.
+            	dimString.append(dim.toString());
+//                dim = getArithmeticResultAsIntegerLiteral(dim);
             }
             if (dim instanceof IntegerLiteral) {
                 dimString.append(((IntegerLiteral) dim).getValue());

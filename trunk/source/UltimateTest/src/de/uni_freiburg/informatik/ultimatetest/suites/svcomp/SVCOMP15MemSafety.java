@@ -34,7 +34,7 @@ import java.util.List;
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public class SVCOMP15MemSafety extends AbstractSVCOMP15TestSuite {
+public class SVCOMP15MemSafety extends AbstractSVCOMPTestSuite {
 
 	@Override
 	protected long getTimeout() {

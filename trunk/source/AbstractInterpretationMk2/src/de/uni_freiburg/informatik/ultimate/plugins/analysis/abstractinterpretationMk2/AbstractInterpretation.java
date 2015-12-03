@@ -5,8 +5,8 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.AIActivator;
@@ -20,14 +20,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class AbstractInterpretation implements IAnalysis {
 
-	private AbstractInterpretationObserver m_Observer;
-	private GraphType m_InputDefinition;
+	private AbstractInterpretationObserver mObserver;
+	private GraphType mInputDefinition;
 
 	private IUltimateServiceProvider mServices;
 
 	@Override
 	public GraphType getOutputDefinition() {
-		return new GraphType(AIActivator.s_PLUGIN_ID, m_InputDefinition.getType(), m_InputDefinition.getFileNames());
+		return new GraphType(AIActivator.PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
 	}
 
 	@Override
@@ -42,33 +42,32 @@ public class AbstractInterpretation implements IAnalysis {
 
 	@Override
 	public List<String> getDesiredToolID() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public void setInputDefinition(GraphType graphType) {
-		this.m_InputDefinition = graphType;
+		this.mInputDefinition = graphType;
 	}
 
 	@Override
 	public List<IObserver> getObservers() {
-		return Collections.singletonList((IObserver) m_Observer);
+		return Collections.singletonList((IObserver) mObserver);
 	}
 
 	@Override
 	public void init() {
-		m_Observer = new AbstractInterpretationObserver(mServices);
+		mObserver = new AbstractInterpretationObserver(mServices);
 	}
 
 	@Override
 	public String getPluginName() {
-		return AIActivator.s_PLUGIN_NAME;
+		return AIActivator.PLUGIN_NAME;
 	}
 
 	@Override
 	public String getPluginID() {
-		return AIActivator.s_PLUGIN_ID;
+		return AIActivator.PLUGIN_ID;
 	}
 
 	@Override
@@ -79,7 +78,6 @@ public class AbstractInterpretation implements IAnalysis {
 	@Override
 	public void setToolchainStorage(IToolchainStorage storage) {
 		// TODO Auto-generated method stub
-
 	}
 
 	@Override
@@ -90,7 +88,6 @@ public class AbstractInterpretation implements IAnalysis {
 	@Override
 	public void finish() {
 		// TODO Auto-generated method stub
-
 	}
 
 }

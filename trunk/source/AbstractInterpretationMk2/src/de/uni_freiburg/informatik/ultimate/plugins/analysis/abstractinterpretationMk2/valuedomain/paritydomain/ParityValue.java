@@ -5,11 +5,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.valuedomain.IAbstractValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.valuedomain.IAbstractValueFactory;
 
 /**
- * @author Jan Hättig
+ * @author Jan HÃ¤ttig
  *
  */
 public class ParityValue implements IAbstractValue<ParityValue.Parity> {
@@ -32,178 +34,81 @@ public class ParityValue implements IAbstractValue<ParityValue.Parity> {
 	private ParityValueFactory mFactory;
 
 	/**
-	 * The logger is needed in the operations
-	 */
-	private Logger mLogger;
-
-	/**
 	 * Generate a new ParityValue with the given value
 	 * 
 	 * @param value
 	 *            ZERO? PLUSMINUS?
 	 */
-	protected ParityValue(Parity value, ParityValueFactory factory,
-			Logger logger) {
+	protected ParityValue(Parity value, ParityValueFactory factory, Logger logger) {
 		mValue = value;
 		mFactory = factory;
-		mLogger = logger;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.IAbstractValue#getValue()
-	 */
 	@Override
 	public Parity getValue() {
 		return mValue;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.valuedomain.IAbstractValue#getFactory()
-	 */
 	@Override
 	public IAbstractValueFactory<?> getFactory() {
 		return mFactory;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.valuedomain.IAbstractValue#isTrue()
-	 */
 	@Override
 	public boolean isTrue() {
 		return false;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.valuedomain.IAbstractValue#isFalse()
-	 */
 	@Override
 	public boolean isFalse() {
 		// TODO Auto-generated method stub
 		return mValue == Parity.ODD;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.IAbstractValue#isTop()
-	 */
 	@Override
 	public boolean isTop() {
 		return (mValue == Parity.TOP);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.IAbstractValue#isBottom()
-	 */
 	@Override
 	public boolean isBottom() {
 		return (mValue == Parity.EMPTY);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#representsSingleConcreteValue()
-	 */
 	@Override
 	public boolean representsSingleConcreteValue() {
 		return false;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#isEqual(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public boolean isEqual(IAbstractValue<?> value) {
 		ParityValue parityVal = (ParityValue) value;
 		return (mValue == parityVal.getValue());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#isGreater(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public boolean isSuperOrEqual(IAbstractValue<?> value) {
 		ParityValue parityVal = (ParityValue) value;
 		if (parityVal == null)
 			return false;
 
-		return mValue == Parity.TOP || mValue == parityVal.getValue()
-				|| parityVal.getValue() == Parity.EMPTY;
+		return mValue == Parity.TOP || mValue == parityVal.getValue() || parityVal.getValue() == Parity.EMPTY;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#isLesser(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public boolean isSub(IAbstractValue<?> value) {
 		ParityValue parityVal = (ParityValue) value;
 		if (parityVal == null)
 			return false;
 
-		return mValue == Parity.EMPTY || mValue == parityVal.getValue()
-				|| parityVal.getValue() == Parity.TOP;
+		return mValue == Parity.EMPTY || mValue == parityVal.getValue() || parityVal.getValue() == Parity.TOP;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.IAbstractValue#copy()
-	 */
 	@Override
 	public ParityValue copy() {
 		return mFactory.makeValue(mValue);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#add(de.uni_freiburg
-	 * .informatik.ultimate.plugins
-	 * .analysis.abstractinterpretationMk2.abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public ParityValue add(IAbstractValue<?> value) {
 		ParityValue parityVal = (ParityValue) value;
@@ -234,31 +139,11 @@ public class ParityValue implements IAbstractValue<ParityValue.Parity> {
 		return mFactory.makeBottomValue();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#subtract(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public ParityValue subtract(IAbstractValue<?> value) {
 		return add(value);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#multiply(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public ParityValue multiply(IAbstractValue<?> value) {
 		ParityValue parityVal = (ParityValue) value;
@@ -279,15 +164,6 @@ public class ParityValue implements IAbstractValue<ParityValue.Parity> {
 		return mFactory.makeValue(Parity.TOP);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#divide(de.uni_freiburg
-	 * .informatik.ultimate.
-	 * plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public ParityValue divide(IAbstractValue<?> value) {
 		ParityValue parityVal = (ParityValue) value;
@@ -302,15 +178,6 @@ public class ParityValue implements IAbstractValue<ParityValue.Parity> {
 		return mFactory.makeTopValue();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#modulo(de.uni_freiburg
-	 * .informatik.ultimate.
-	 * plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public ParityValue modulo(IAbstractValue<?> value) {
 		ParityValue parityVal = (ParityValue) value;
@@ -332,27 +199,11 @@ public class ParityValue implements IAbstractValue<ParityValue.Parity> {
 		return mFactory.makeTopValue();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.IAbstractValue#negation()
-	 */
 	@Override
 	public ParityValue negative() {
 		return this;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsEqual(de.
-	 * uni_freiburg.informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public ParityValue compareIsEqual(IAbstractValue<?> value) {
 		ParityValue ParityVal = (ParityValue) value;
@@ -382,16 +233,6 @@ public class ParityValue implements IAbstractValue<ParityValue.Parity> {
 		return mFactory.makeBottomValue();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsNotEqual(
-	 * de.uni_freiburg.informatik
-	 * .ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public ParityValue compareIsNotEqual(IAbstractValue<?> value) {
 		ParityValue ParityVal = (ParityValue) value;
@@ -428,159 +269,56 @@ public class ParityValue implements IAbstractValue<ParityValue.Parity> {
 		return mFactory.makeBottomValue();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsLess(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public ParityValue compareIsLess(IAbstractValue<?> value) {
 		return compareIsNotEqual(value);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsGreater(de
-	 * .uni_freiburg.informatik
-	 * .ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public ParityValue compareIsGreater(IAbstractValue<?> value) {
 		return compareIsNotEqual(value);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsLessEqual
-	 * (de.uni_freiburg.informatik
-	 * .ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public ParityValue compareIsLessEqual(IAbstractValue<?> value) {
 		return compareIsNotEqual(value);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#compareIsGreaterEqual
-	 * (de.uni_freiburg.informatik
-	 * .ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public ParityValue compareIsGreaterEqual(IAbstractValue<?> value) {
 		return compareIsLessEqual(value);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#logicIff(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public ParityValue logicIff(IAbstractValue<?> value) {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#logicImplies(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public ParityValue logicImplies(IAbstractValue<?> value) {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#logicAnd(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public ParityValue logicAnd(IAbstractValue<?> value) {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#logicOr(de.uni_freiburg
-	 * .informatik.ultimate
-	 * .plugins.analysis.abstractinterpretationMk2.abstractdomain
-	 * .IAbstractValue)
-	 */
 	@Override
 	public ParityValue logicOr(IAbstractValue<?> value) {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2.abstractdomain.IAbstractValue#logicNot()
-	 */
 	@Override
 	public ParityValue logicNot() {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#bitVectorConcat(de
-	 * .uni_freiburg.informatik.
-	 * ultimate.plugins.analysis.abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue)
-	 */
 	@Override
 	public ParityValue bitVectorConcat(IAbstractValue<?> value) {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .abstractdomain.IAbstractValue#bitVectorAccess(int, int)
-	 */
 	@Override
 	public ParityValue bitVectorAccess(int start, int end) {
 		return null;
@@ -597,6 +335,22 @@ public class ParityValue implements IAbstractValue<ParityValue.Parity> {
 			return "Parity: unknown";
 		default:
 			return "Parity: empty";
+		}
+	}
+
+	@Override
+	public Term getTerm(Script script, Term variable) {
+		switch (mValue) {
+		case EMPTY:
+			return script.term("false");
+		case EVEN:
+			return script.term("=", script.term("mod", variable, script.numeral("2"), script.numeral("0")));
+		case ODD:
+			return script.term("=", script.term("mod", variable, script.numeral("2"), script.numeral("1")));
+		case TOP:
+			return script.term("true");
+		default:
+			throw new UnsupportedOperationException("Unknown parity value: " + mValue);
 		}
 	}
 }

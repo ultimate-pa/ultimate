@@ -8,8 +8,8 @@ import org.eclipse.core.runtime.Plugin;
 public class AIActivator extends Plugin {
 
 	// The plug-in ID
-	public static final String s_PLUGIN_ID = AbstractInterpretation.class.getPackage().getName();
+	public static final String PLUGIN_ID = AbstractInterpretation.class.getPackage().getName();
 
 	// The plug-in name
-	public static final String s_PLUGIN_NAME = "AbstractInterpretationMk2";
+	public static final String PLUGIN_NAME = "AbstractInterpretationMk2";
 }

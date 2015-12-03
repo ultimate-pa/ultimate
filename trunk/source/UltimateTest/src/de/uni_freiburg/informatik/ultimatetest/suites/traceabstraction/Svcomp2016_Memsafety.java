@@ -43,22 +43,55 @@ public class Svcomp2016_Memsafety extends AbstractTraceAbstractionTestSuite {
 	private static int m_FilesPerDirectoryLimit = Integer.MAX_VALUE;
 //	private static int m_FilesPerDirectoryLimit = 5;
 	
-	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs = {
+	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs_Deref = {
 		/*** Category 1. Arrays ***/
 		new DirectoryFileEndingsPair("examples/svcomp/array-memsafety/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		
-		
+	};
+	
+	private static final DirectoryFileEndingsPair[] m_DirectoryFileEndingsPairs_DerefFreeMemtrack = {
 		/*** Category 3. Heap Data Structures ***/
 		new DirectoryFileEndingsPair("examples/svcomp/memsafety/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
 		new DirectoryFileEndingsPair("examples/svcomp/list-ext-properties/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
 		new DirectoryFileEndingsPair("examples/svcomp/memory-alloca/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
 		new DirectoryFileEndingsPair("examples/svcomp/ldv-memsafety/", new String[]{ ".i" }, m_FilesPerDirectoryLimit) ,
-		
 	};
+
 	
 	
-	private static final String[] m_CurrentBugs = {
+	private static final String[] m_CurrentBugs_Deref = {
 		};
+	
+	private static final String[] m_CurrentBugs_DerefFreeMemtrack = {
+//			"examples/svcomp/array-memsafety/openbsd_cbzero-alloca_true-valid-memsafety.i"
+
+			
+//			////////////////////////////////////////////////////////////////
+//			// Soundness problems detected on 2015-11-03
+//			// UNSAFE_FREE (Expected:SAFE)
+//			"examples/svcomp/list-ext-properties/test-0158_1_true-valid-memsafety.i",
+//			
+//			// UNSAFE_DEREF (Expected:UNSAFE_MEMTRACK)
+//			"examples/svcomp/memsafety/20020406-1_false-valid-memtrack.i",
+//			
+//			//UNSAFE_MEMTRACK (Expected:SAFE)
+//			"examples/svcomp/ldv-memsafety/memleaks_test20_true-valid-memsafety.i",
+//			"examples/svcomp/ldv-memsafety/memleaks_test21_true-valid-memsafety.i",
+//			
+//			//UNSAFE_DEREF (Expected:SAFE)
+//			"examples/svcomp/ldv-memsafety/memleaks_test22_1_true-valid-memsafety.i",
+//			"examples/svcomp/ldv-memsafety/memleaks_test22_2_true-valid-memsafety.i",
+//			"examples/svcomp/ldv-memsafety/memleaks_test22_3_true-valid-memsafety.i",
+//			////////////////////////////////////////////////////////////////
+			
+			// some other problems
+//			"examples/svcomp/ldv-memsafety/memleaks_test18_true-valid-memsafety.i",
+//			"examples/svcomp/array-memsafety/cstrncat-alloca_true-valid-memsafety.i",
+//			"examples/svcomp/array-memsafety/cstrchr_unsafe_false-valid-deref.i",
+//			"examples/svcomp/ldv-memsafety/memleaks_test19_true-valid-memsafety.i",
+//			"examples/svcomp/ldv-memsafety/memleaks_test17_2_true-valid-memsafety.i",
+//			"examples/svcomp/array-memsafety/openbsd_cstrstr-alloca_true-valid-memsafety.i",
+		};
+
 
 	/**
 	 * {@inheritDoc}
@@ -68,16 +101,16 @@ public class Svcomp2016_Memsafety extends AbstractTraceAbstractionTestSuite {
 		return 300 * 1000;
 	}
 
-	/**
-	 * List of path to setting files. 
-	 * Ultimate will run on each program with each setting that is defined here.
-	 * The path are defined relative to the folder "trunk/examples/settings/",
-	 * because we assume that all settings files are in this folder.
-	 * 
-	 */
-	private static final String[] m_Settings = {
-		"svcomp2016/svcomp-memsafety-64bit-Automizer.epf",
+	private static final String[] m_Settings_Deref = {
+		"svcomp2016/svcomp-Deref-32bit-Automizer_Default.epf",
+		"svcomp2016/svcomp-Deref-32bit-Automizer_Bitvector.epf",
 	};
+	
+	private static final String[] m_Settings_DerefFreeMemtrack = {
+		"svcomp2016/svcomp-DerefFreeMemtrack-32bit-Automizer_Default.epf",
+		"svcomp2016/svcomp-DerefFreeMemtrack-32bit-Automizer_Bitvector.epf",
+	};
+
 	
 	
 	private static final String[] m_CToolchains = {
@@ -91,10 +124,16 @@ public class Svcomp2016_Memsafety extends AbstractTraceAbstractionTestSuite {
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (String setting : m_Settings) {
+		for (String setting : m_Settings_Deref) {
 			for (String toolchain : m_CToolchains) {
-				addTestCases(toolchain, setting, m_DirectoryFileEndingsPairs);
-				addTestCases(toolchain, setting, m_CurrentBugs, new String[] {".c", ".i"});
+				addTestCases(toolchain, setting, m_DirectoryFileEndingsPairs_Deref);
+				addTestCases(toolchain, setting, m_CurrentBugs_Deref, new String[] {".c", ".i"});
+			}
+		}
+		for (String setting : m_Settings_DerefFreeMemtrack) {
+			for (String toolchain : m_CToolchains) {
+				addTestCases(toolchain, setting, m_DirectoryFileEndingsPairs_DerefFreeMemtrack);
+				addTestCases(toolchain, setting, m_CurrentBugs_DerefFreeMemtrack, new String[] {".c", ".i"});
 			}
 		}
 		return super.createTestCases();

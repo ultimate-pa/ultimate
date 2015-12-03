@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation;
 
 import java.math.BigInteger;
+import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
@@ -36,6 +37,7 @@ import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
@@ -54,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
@@ -93,7 +96,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 
 
 	@Override
-	public Expression constructBinaryComparisonExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
+	public Expression constructBinaryComparisonIntegerExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
 		if(!m_FunctionDeclarations.checkParameters(type1, type2)) {
 			throw new IllegalArgumentException("incompatible types " + type1 + " " + type2);
 		}
@@ -169,7 +172,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 	
 	@Override
-	public Expression constructBinaryBitwiseExpression(ILocation loc,
+	public Expression constructBinaryBitwiseIntegerExpression(ILocation loc,
 			int op, Expression left, CPrimitive typeLeft,
 			Expression right, CPrimitive typeRight) {
 		if(!m_FunctionDeclarations.checkParameters(typeLeft, typeRight)) {
@@ -211,7 +214,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 	
 	@Override
-	public Expression constructUnaryExpression(ILocation loc,
+	public Expression constructUnaryIntegerExpression(ILocation loc,
 			int op, Expression expr, CPrimitive type) {
 		final String funcname;
 		switch (op) {
@@ -231,7 +234,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 	
 	@Override
-	public Expression constructArithmeticExpression(ILocation loc, int nodeOperator, Expression exp1,
+	public Expression constructArithmeticIntegerExpression(ILocation loc, int nodeOperator, Expression exp1,
 			CPrimitive type1, Expression exp2, CPrimitive type2) {
 		FunctionApplication func;
 		if(!m_FunctionDeclarations.checkParameters(type1, type2)) {
@@ -307,7 +310,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public void convert(ILocation loc, ExpressionResult operand, CPrimitive resultType) {
+	public void convertIntToInt_NonBool(ILocation loc, ExpressionResult operand, CPrimitive resultType) {
 		if (!(resultType instanceof CPrimitive)) {
 			throw new UnsupportedOperationException("non-primitive types not supported yet " + resultType);
 		}
@@ -375,11 +378,12 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public BigInteger extractIntegerValue(RValue rval) {
-		if (rval.getCType().isIntegerType()) {
-			if (rval.getValue() instanceof BitvecLiteral) {
-				BigInteger value =  new BigInteger(((BitvecLiteral) rval.getValue()).getValue());
-				if (((CPrimitive) rval.getCType()).isUnsigned()) {
+	public BigInteger extractIntegerValue(Expression expr, CType cType) {
+		if (cType.isIntegerType()) {
+			cType = CEnum.replaceEnumWithInt(cType);
+			if (expr instanceof BitvecLiteral) {
+				BigInteger value =  new BigInteger(((BitvecLiteral) expr).getValue());
+				if (((CPrimitive) cType).isUnsigned()) {
 					if (value.signum() < 0) {
 						throw new UnsupportedOperationException("negative value");
 					}
@@ -394,6 +398,22 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			return null;
 		}
 	}
+	
+	
+	@Override
+	public CPrimitive getCTypeOfPointerComponents() {
+		// 2015-10-29 Matthias: using int is unsound on 64bit systems, but it 
+		// probably saves a lot of conversions and I guess this unsoundness
+		// is never a problem in the SV-COMP and most other code
+		return new CPrimitive(PRIMITIVE.INT);
+	}
+
+	@Override
+	public void addAssumeValueInRangeStatements(ILocation loc, Expression expr, CType ctype, List<Statement> stmt) {
+		// do nothing. not needed for bitvectors
+		
+	}
+	
 	
 	
 }

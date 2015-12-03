@@ -53,6 +53,7 @@ public class ArrayUpdate {
 	private final TermVariable m_NewArray;
 	private final MultiDimensionalStore m_MultiDimensionalStore;
 	private final Term m_ArrayUpdateTerm;
+	private final boolean m_IsNegatedEquality;
 	
 	/**
 	 * Construct ArrayUpdate wrapper from term. Throw an ArrayUpdateException if
@@ -73,6 +74,7 @@ public class ArrayUpdate {
 			throw new ArrayUpdateException("no not negated array update");
 		}
 		m_ArrayUpdateTerm = term;
+		m_IsNegatedEquality = isNegated;
 		Term lhs = ber.getLhs();
 		Term rhs = ber.getRhs();
 		ApplicationTerm allegedStoreTerm;
@@ -170,6 +172,10 @@ public class ArrayUpdate {
 	}
 	public MultiDimensionalStore getMultiDimensionalStore() {
 		return m_MultiDimensionalStore;
+	}
+	
+	public boolean isNegatedEquality() {
+		return m_IsNegatedEquality;
 	}
 	
 	@Override

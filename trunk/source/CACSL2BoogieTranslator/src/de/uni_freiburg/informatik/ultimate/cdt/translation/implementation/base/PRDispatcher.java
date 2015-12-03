@@ -107,21 +107,30 @@ import org.eclipse.cdt.core.dom.ast.IArrayType;
 import org.eclipse.cdt.core.dom.ast.IBasicType;
 import org.eclipse.cdt.core.dom.ast.IType;
 import org.eclipse.cdt.core.dom.ast.ITypedef;
+import org.eclipse.cdt.core.dom.ast.gnu.IGNUASTCompoundStatementExpression;
 import org.eclipse.cdt.internal.core.dom.parser.IASTAmbiguousExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.IASTAmbiguousCondition;
 
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.SvComp14CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.cHandler.SVCompTypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieIdExtractor;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
@@ -339,6 +348,9 @@ public class PRDispatcher extends Dispatcher {
 			if (n instanceof IASTProblemExpression) {
 				return cHandler.visit(this, (IASTProblemExpression) n);
 			}
+			if (n instanceof IGNUASTCompoundStatementExpression) {
+				return cHandler.visit(this, (IGNUASTCompoundStatementExpression) n);
+			}
 			return cHandler.visit(this, (IASTExpression) n);
 		}
 		if (n instanceof IASTFunctionStyleMacroParameter) {
@@ -454,5 +466,28 @@ public class PRDispatcher extends Dispatcher {
 	@Override
 	public LinkedHashSet<IASTDeclaration> getReachableDeclarationsOrDeclarators() {
 		return reachableDeclarations;
+	}
+	
+	
+	public void moveArrayAndStructIdsOnHeap(ILocation loc, Expression expr) {
+		BoogieIdExtractor bie = new BoogieIdExtractor();
+		bie.processExpression(expr);
+		for (String id : bie.getIds()) {
+			SymbolTable st = this.cHandler.getSymbolTable();
+			String cid = st.getCID4BoogieID(id, loc);
+			SymbolTableValue value = st.get(cid, loc);
+			CType type = value.getCVariable().getUnderlyingType();
+			if (type instanceof CArray || type instanceof CStruct) {
+				this.getVariablesOnHeap().add(value.getDeclarationNode());
+			}
+		}
+	}
+	
+	public void moveIdOnHeap(ILocation loc, IdentifierExpression idExpr) {
+		String id = idExpr.getIdentifier();
+		SymbolTable st = this.cHandler.getSymbolTable();
+		String cid = st.getCID4BoogieID(id, loc);
+		SymbolTableValue value = st.get(cid, loc);
+		this.getVariablesOnHeap().add(value.getDeclarationNode());
 	}
 }

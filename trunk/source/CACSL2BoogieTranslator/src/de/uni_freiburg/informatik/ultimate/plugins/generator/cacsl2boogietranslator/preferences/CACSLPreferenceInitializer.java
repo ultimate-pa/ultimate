@@ -93,6 +93,10 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						false,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(
+						LABEL_ASSUME_NONDET_VALUES_IN_RANGE,
+						true,
+						PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(
 						LABEL_BITVECTOR_TRANSLATION,
 						false,
 						PreferenceType.Boolean),
@@ -120,7 +124,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<Integer>(
 						LABEL_EXPLICIT_TYPESIZE_LONGDOUBLE, 16, PreferenceType.Integer),
 				new UltimatePreferenceItem<Integer>(
-						LABEL_EXPLICIT_TYPESIZE_POINTER, 4,	PreferenceType.Integer),
+						LABEL_EXPLICIT_TYPESIZE_POINTER, 8,	PreferenceType.Integer),
 				// more exotic types
 //				new UltimatePreferenceItem<Integer>(
 //						LABEL_EXPLICIT_TYPESIZE_CHAR16, 2, PreferenceType.Integer),
@@ -169,6 +173,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_UNSIGNED_TREATMENT = "How to treat unsigned ints differently from normal ones";
 	public static final String LABEL_CHECK_DIVISION_BY_ZERO = "Check division by zero";
 	public static final String LABEL_CHECK_SIGNED_INTEGER_BOUNDS = "Check absence of signed integer overflows";
+	public static final String LABEL_ASSUME_NONDET_VALUES_IN_RANGE = "Assume nondeterminstic values are in range";
 	public static final String LABEL_BITVECTOR_TRANSLATION = "Use bitvectors instead of ints";
 						
 

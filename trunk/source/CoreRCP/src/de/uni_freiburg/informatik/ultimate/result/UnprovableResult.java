@@ -28,12 +28,14 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.result;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
@@ -55,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
  * @author Stefan Wissert
  * @author Oleksii Saukh
  * @author Matthias Heizmann
- * @date 02.01.2012
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  * @param <ELEM>
  *            Type of position
@@ -77,12 +79,12 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 		this(plugin, position, translatorSequence, programExecution, new ArrayList<UnprovabilityReason>());
 	}
 
-	/**
-	 * Constructor.
-	 * 
-	 * @param location
-	 *            the Location
-	 */
+	public UnprovableResult(String plugin, ELEM position, IBacktranslationService translatorSequence,
+			IProgramExecution<TE, E> programExecution, String unprovabilityReason) {
+		this(plugin, position, translatorSequence, programExecution,
+				Collections.singletonList(new UnprovabilityReason(unprovabilityReason)));
+	}
+
 	public UnprovableResult(String plugin, ELEM position, IBacktranslationService translatorSequence,
 			IProgramExecution<TE, E> programExecution, List<UnprovabilityReason> unprovabilityReasons) {
 		super(position, plugin, translatorSequence);

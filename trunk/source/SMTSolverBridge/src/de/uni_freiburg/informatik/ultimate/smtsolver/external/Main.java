@@ -52,7 +52,7 @@ public class Main {
 		int paramctr = 0;
 		Script benchmark;
 		if (!command.equals("SMTInterpol"))
-			benchmark = new Scriptor(command, logger, null, null);
+			benchmark = new Scriptor(command, logger, null, null, "external in solverbridge");
 		else
 			benchmark = new SMTInterpol(logger, true);
 

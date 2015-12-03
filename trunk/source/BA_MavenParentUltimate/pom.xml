@@ -13,8 +13,13 @@
 	</scm>
 
 	<properties>
-		<!-- maven tool versions -->
-		<tycho-version>0.21.0</tycho-version>
+		<!-- maven plugin versions -->
+		<tycho-version>0.24.0</tycho-version>
+		<sonar-version>2.7.1</sonar-version>
+		<jacoco-version>0.7.5.201505241946</jacoco-version>
+		<m2e-version>1.0.0</m2e-version>
+		<maven-antrun-plugin-version>1.8</maven-antrun-plugin-version>
+		<coveralls-version>4.0.0</coveralls-version>
 
 		<!-- reference to workspace root -->
 		<workspaceDir>${basedir}/..</workspaceDir>
@@ -46,7 +51,7 @@
 
 		<!-- Sonar parameters -->
 		<sonar.language>java</sonar.language>
-		<sonar.java.source>1.7</sonar.java.source>
+		<sonar.java.source>1.8</sonar.java.source>
 		<sonar.java.coveragePlugin>jacoco</sonar.java.coveragePlugin>
 		<!-- sonar.dynamicAnalysis is deprecated and the reuseReports behavior 
 			is the new default -->
@@ -54,10 +59,6 @@
 		<sonar.jacoco.reportPath>${jacoco.reportDir}/jacoco.exec</sonar.jacoco.reportPath>
 		<!-- we currently do not use integration tests -->
 		<!-- <sonar.jacoco.itReportPath>${jacoco.reportDir}/jacoco-it.exec</sonar.jacoco.itReportPath> -->
-
-		<!-- Jacoco version -->
-		<!-- Old: <jacoco.version>0.7.2.201409121644</jacoco.version> -->
-		<jacoco.version>0.7.5.201505241946</jacoco.version>
 
 		<!-- Global arguments for the VM used during junit tests depending on profile -->
 		<!-- use -XX:+HeapDumpOnOutOfMemoryError if you want to generate dumps 
@@ -69,20 +70,29 @@
 
 	<repositories>
 		<repository>
-			<id>eclipse-indigo</id>
+			<id>eclipse-mars</id>
 			<layout>p2</layout>
-			<url>http://download.eclipse.org/releases/indigo</url>
+			<url>http://download.eclipse.org/releases/mars</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
 		</repository>
 		<repository>
 			<id>eclipse-luna</id>
 			<layout>p2</layout>
 			<url>http://download.eclipse.org/releases/luna</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
 		</repository>
 		<repository>
 			<id>javaxRepository</id>
 			<name>Java.net Repository for Maven</name>
 			<url>https://maven.java.net/content/repositories/releases/javax/</url>
 			<layout>default</layout>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
 		</repository>
 	</repositories>
 
@@ -126,11 +136,10 @@
 				</configuration>
 			</plugin>
 
-			<!-- fix sonar plugin version -->
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>sonar-maven-plugin</artifactId>
-				<version>2.6</version>
+				<version>${sonar-version}</version>
 			</plugin>
 		</plugins>
 
@@ -141,21 +150,15 @@
 				<plugin>
 					<groupId>org.eclipse.m2e</groupId>
 					<artifactId>lifecycle-mapping</artifactId>
-					<version>1.0.0</version>
+					<version>${m2e-version}</version>
 					<configuration>
 						<lifecycleMappingMetadata>
 							<pluginExecutions>
 								<pluginExecution>
 									<pluginExecutionFilter>
-										<groupId>
-											org.apache.maven.plugins
-										</groupId>
-										<artifactId>
-											maven-antrun-plugin
-										</artifactId>
-										<versionRange>
-											[1.7,)
-										</versionRange>
+										<groupId>org.apache.maven.plugins</groupId>
+										<artifactId>maven-antrun-plugin</artifactId>
+										<versionRange>[0.0.0,)</versionRange>
 										<goals>
 											<goal>run</goal>
 										</goals>
@@ -167,12 +170,8 @@
 								<pluginExecution>
 									<pluginExecutionFilter>
 										<groupId>org.jacoco</groupId>
-										<artifactId>
-											jacoco-maven-plugin
-										</artifactId>
-										<versionRange>
-											[0.5.3.201107060350,)
-										</versionRange>
+										<artifactId>jacoco-maven-plugin</artifactId>
+										<versionRange>[0.0.0,)</versionRange>
 										<goals>
 											<goal>prepare-agent</goal>
 										</goals>
@@ -185,17 +184,6 @@
 						</lifecycleMappingMetadata>
 					</configuration>
 				</plugin>
-				<!-- <plugin> -->
-				<!-- <artifactId>maven-clean-plugin</artifactId> -->
-				<!-- <configuration> -->
-				<!-- <filesets> -->
-				<!-- <fileset> -->
-				<!-- <directory>${jacoco.reportDir}</directory> -->
-				<!-- <followSymlinks>false</followSymlinks> -->
-				<!-- </fileset> -->
-				<!-- </filesets> -->
-				<!-- </configuration> -->
-				<!-- </plugin> -->
 			</plugins>
 		</pluginManagement>
 	</build>
@@ -204,9 +192,7 @@
 		<module>../BA_SiteRepository</module>
 		<module>../BA_FeatureUltimateDebug</module>
 		<module>../BA_FeatureUltimateCommandLine</module>
-		<module>../BA_FeatureDependenciesCommandlineE3</module>
 		<module>../BA_FeatureDependenciesCommandlineE4</module>
-		<module>../BA_FeatureDependenciesDebugE3</module>
 		<module>../BA_FeatureDependenciesDebugE4</module>
 		<module>../BA_FeatureUltimateBOSCHReqAnalyzer</module>
 
@@ -263,7 +249,9 @@
 		<module>../WitnessParser</module>
 		<module>../BoogieProcedureInliner</module>
 		<module>../SpaceExParser</module>
+		<module>../Library-ojAlgo</module>
 		<module>../AbstractInterpretationV2</module>
+		<module>../AbstractInterpretationMk2</module>
 	</modules>
 
 	<profiles>
@@ -289,11 +277,8 @@
 							<showEclipseLog>true</showEclipseLog>
 							<threadCount>1</threadCount>
 							<failIfNoTests>false</failIfNoTests>
-							<trimStackTrace>false</trimStackTrace>
-							<!-- redirectTestOutputToFile=false is the default, but to debug strange 
-								maven/junit bugs, you may want to set it to true to have all the test output 
-								written to file -->
-							<redirectTestOutputToFile>false</redirectTestOutputToFile>
+							<trimStackTrace>true</trimStackTrace>
+							<redirectTestOutputToFile>true</redirectTestOutputToFile>
 							<!-- if you want to change the argLine, use the global property -->
 							<argLine>${tycho.testArgLine} ${coverage-argline}</argLine>
 
@@ -314,7 +299,7 @@
 					<plugin>
 						<groupId>org.jacoco</groupId>
 						<artifactId>jacoco-maven-plugin</artifactId>
-						<version>${jacoco.version}</version>
+						<version>${jacoco-version}</version>
 						<executions>
 							<execution>
 								<goals>
@@ -344,12 +329,88 @@
 		</profile>
 
 		<profile>
-			<!-- The profile coverage is used to generate junit test case coverage 
-				through jenkins and sonar. It uses all regression tests, but not UltimateTest, 
+			<!-- The profile travis is used to generate junit test case coverage through 
+				travis and coveralls. It uses all regression tests, but not UltimateTest, 
 				as those tests are very slow and should be executed manually via profile 
 				manualtest. You should not need to run this profile manually. -->
-			<id>coveragemanual</id>
+			<id>travis</id>
 
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.eclipse.tycho</groupId>
+						<artifactId>tycho-surefire-plugin</artifactId>
+						<version>${tycho-version}</version>
+						<configuration>
+							<providerHint>junit47</providerHint>
+							<useUIHarness>false</useUIHarness>
+							<useUIThread>false</useUIThread>
+							<reuseForks>false</reuseForks>
+							<showEclipseLog>true</showEclipseLog>
+							<threadCount>1</threadCount>
+							<failIfNoTests>false</failIfNoTests>
+							<trimStackTrace>true</trimStackTrace>
+							<redirectTestOutputToFile>true</redirectTestOutputToFile>
+							<argLine>${tycho.testArgLine} ${coverage-argline}</argLine>
+
+							<includes>
+								<include>**/*.java</include>
+							</includes>
+						</configuration>
+					</plugin>
+
+					<!-- Code Coverage Analysis -->
+					<plugin>
+						<groupId>org.jacoco</groupId>
+						<artifactId>jacoco-maven-plugin</artifactId>
+						<version>${jacoco-version}</version>
+						<executions>
+							<execution>
+								<goals>
+									<goal>prepare-agent</goal>
+								</goals>
+								<configuration>
+									<destFile>${sonar.jacoco.reportPath}</destFile>
+									<append>true</append>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+
+					<!-- Coveralls connector -->
+					<plugin>
+						<groupId>org.eluder.coveralls</groupId>
+						<artifactId>coveralls-maven-plugin</artifactId>
+						<version>${coveralls-version}</version>
+						<configuration>
+							<!-- We should not publish the repo token, but I dont know any other 
+								way of telling travis. Its either here or in .travis.yml -->
+							<repoToken>EfXcoEYdCZRch9bAt6OULUTnGEz43OyEw</repoToken>
+							<jacocoReports>
+								<jacocoReport>${jacoco.reportDir}/report/jacoco.xml</jacocoReport>
+							</jacocoReports>
+						</configuration>
+					</plugin>
+				</plugins>
+			</build>
+
+			<modules>
+				<!-- modules containing test utilities -->
+				<module>../Library-junit-helper</module>
+				<module>../Library-UltimateTest</module>
+
+				<!-- modules containing actual tests -->
+				<module>../Library-UltimateUtilTest</module>
+				<module>../Library-UltimateTestTest</module>
+				<module>../CoreRCPTest</module>
+				<module>../UltimateRegressionTest</module>
+			</modules>
+		</profile>
+
+		<profile>
+			<!-- The profile coveragemanual can be used to generate jacoco reports 
+				for your local machine. It is mostly used for debug purposes. -->
+			<id>coveragemanual</id>
 			<build>
 				<plugins>
 					<plugin>
@@ -389,7 +450,7 @@
 					<plugin>
 						<groupId>org.jacoco</groupId>
 						<artifactId>jacoco-maven-plugin</artifactId>
-						<version>${jacoco.version}</version>
+						<version>${jacoco-version}</version>
 						<executions>
 							<execution>
 								<goals>
@@ -464,7 +525,8 @@
 								maven/junit bugs, you may want to set it to true to have all the test output 
 								written to file -->
 							<redirectTestOutputToFile>false</redirectTestOutputToFile>
-							<!-- if you want to change the argLine, use the global property; Note: for some reason, in this profile we cannot use ${tycho.testArgLine} -->
+							<!-- if you want to change the argLine, use the global property; Note: 
+								for some reason, in this profile we cannot use ${tycho.testArgLine} -->
 							<argLine>${manualtest-argline}</argLine>
 
 							<systemProperties>

@@ -205,7 +205,7 @@ public class AIPreferences {
 	 */
 	public void fetchPreferences() {
 		UltimatePreferenceStore prefs = new UltimatePreferenceStore(
-				AIActivator.s_PLUGIN_ID);
+				AIActivator.PLUGIN_ID);
 
 		mMainMethodNames = prefs
 				.getString(AbstractInterpretationPreferenceInitializer.LABEL_MAIN_METHOD_NAMES);

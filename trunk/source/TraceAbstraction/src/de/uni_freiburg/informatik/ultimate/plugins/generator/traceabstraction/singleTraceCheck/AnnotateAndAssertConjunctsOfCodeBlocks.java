@@ -35,6 +35,7 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
@@ -58,14 +59,17 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	protected final NestedFormulas<TransFormula, IPredicate> m_NestedFormulas;
 	private final Map<Term,Term> m_Annotated2Original = new HashMap<Term,Term>();
 	private final SplitEqualityMapping m_SplitEqualityMapping = new SplitEqualityMapping();
+	private final SmtManager m_SmtManagerPredicates;
 	
 	private final static boolean m_SplitEqualities = true;
 
 	public AnnotateAndAssertConjunctsOfCodeBlocks(SmtManager smtManager, 
 			NestedFormulas<Term, Term> nestedSSA, 
-			NestedFormulas<TransFormula, IPredicate> nestedFormulas, Logger logger) {
+			NestedFormulas<TransFormula, IPredicate> nestedFormulas, Logger logger,
+			SmtManager smtManagerPredicates) {
 		super(smtManager, nestedSSA,logger);
 		m_NestedFormulas = nestedFormulas;
+		m_SmtManagerPredicates = smtManagerPredicates;
 	}
 	
 	
@@ -100,8 +104,8 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 				BinaryNumericRelation bnr_originalConjunct = convertToBinaryNumericEquality(originalConjunct);
 				if (bnr_originalConjunct != null) {
 					BinaryNumericRelation bnr_indexedConjunct = convertToBinaryNumericEquality(indexedConjunct);
-					Term[] conjunctAsInequalities_indexed =  transformEqualityToInequalities(bnr_indexedConjunct);
-					Term[] conjunctAsInequalities_original = transformEqualityToInequalities(bnr_originalConjunct);
+					Term[] conjunctAsInequalities_indexed =  transformEqualityToInequalities(bnr_indexedConjunct, m_SmtManager.getScript());
+					Term[] conjunctAsInequalities_original = transformEqualityToInequalities(bnr_originalConjunct, m_SmtManagerPredicates.getScript());
 					// Annotate and store the first inequality
 					annotatedConjuncts.add(annotateAndAssertTerm(conjunctAsInequalities_indexed[0], name, annotatedTermsCounter));
 					// Caution! The map m_Annotated2Original is only correct, if BinaryNumericRelation splits the original_conjunct and the indexed_conjunct, such
@@ -251,9 +255,9 @@ public class AnnotateAndAssertConjunctsOfCodeBlocks extends AnnotateAndAssertCod
 	}
 
 
-	private Term[] transformEqualityToInequalities(BinaryNumericRelation bnr) {
-		Term firstConjunct = m_Script.term("<=", bnr.getLhs(), bnr.getRhs());
-		Term secondConjunct = m_Script.term(">=", bnr.getLhs(), bnr.getRhs());
+	private Term[] transformEqualityToInequalities(BinaryNumericRelation bnr, Script script) {
+		Term firstConjunct = script.term("<=", bnr.getLhs(), bnr.getRhs());
+		Term secondConjunct = script.term(">=", bnr.getLhs(), bnr.getRhs());
 		return new Term[] {firstConjunct, secondConjunct};
 	}
 

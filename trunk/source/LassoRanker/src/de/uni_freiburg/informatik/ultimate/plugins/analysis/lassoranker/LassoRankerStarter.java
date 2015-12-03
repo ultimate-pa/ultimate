@@ -43,9 +43,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
-import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.AnalysisType;
 import de.uni_freiburg.informatik.ultimate.lassoranker.BacktranslationUtil;
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis;
@@ -123,7 +123,7 @@ public class LassoRankerStarter {
 		// Omit check to enable Stefans BlockEncoding
 		// checkRCFGBuilderSettings();
 		LassoRankerPreferences preferences = PreferencesInitializer.getLassoRankerPreferences();
-		m_SmtManager = new SmtManager(m_RootAnnot.getScript(), m_RootAnnot.getBoogie2SMT(), m_RootAnnot.getModGlobVarManager(), mServices);
+		m_SmtManager = new SmtManager(m_RootAnnot.getScript(), m_RootAnnot.getBoogie2SMT(), m_RootAnnot.getModGlobVarManager(), mServices, false);
 
 		AbstractLassoExtractor lassoExtractor;
 		boolean useNewExtraction = true;

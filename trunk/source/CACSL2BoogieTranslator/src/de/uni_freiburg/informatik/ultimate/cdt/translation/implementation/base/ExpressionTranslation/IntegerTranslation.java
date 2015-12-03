@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation;
 
 import java.math.BigInteger;
+import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
@@ -37,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
@@ -53,14 +55,13 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
@@ -69,11 +70,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 public class IntegerTranslation extends AExpressionTranslation {
 
 	private UNSIGNED_TREATMENT m_UnsignedTreatment;
-	private boolean m_OverapproximateIntPointerConversion;
+	private final boolean m_OverapproximateIntPointerConversion = true;
+	
+	/**
+	 * Add assume statements that state that values of signed integer types are 
+	 * in range.
+	 */
+	private final boolean m_AssumeThatSignedValuesAreInRange;
 
-	public IntegerTranslation(TypeSizes m_TypeSizeConstants, ITypeHandler typeHandler, UNSIGNED_TREATMENT unsignedTreatment) {
+	public IntegerTranslation(TypeSizes m_TypeSizeConstants, ITypeHandler typeHandler, UNSIGNED_TREATMENT unsignedTreatment, boolean assumeSignedInRange) {
 		super(m_TypeSizeConstants, typeHandler);
 		m_UnsignedTreatment = unsignedTreatment;
+		m_AssumeThatSignedValuesAreInRange = assumeSignedInRange;
 	}
 
 	@Override
@@ -128,7 +136,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public Expression constructBinaryComparisonExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
+	public Expression constructBinaryComparisonIntegerExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
 		if (!type1.equals(type2)) {
 			throw new IllegalArgumentException("incompatible types " + type1 + " and " + type2);
 		}
@@ -180,7 +188,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public Expression constructBinaryBitwiseExpression(ILocation loc,
+	public Expression constructBinaryBitwiseIntegerExpression(ILocation loc,
 			int op, Expression left, CPrimitive typeLeft,
 			Expression right, CPrimitive typeRight) {
 		final String funcname;
@@ -215,7 +223,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 	
 	@Override
-	public Expression constructUnaryExpression(ILocation loc,
+	public Expression constructUnaryIntegerExpression(ILocation loc,
 			int op, Expression expr, CPrimitive type) {
 		final Expression result;
 		switch (op) {
@@ -251,8 +259,10 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public Expression constructArithmeticExpression(ILocation loc, int nodeOperator, Expression exp1,
+	public Expression constructArithmeticIntegerExpression(ILocation loc, int nodeOperator, Expression exp1,
 			CPrimitive type1, Expression exp2, CPrimitive type2) {
+		assert (type1.getGeneralType() == GENERALPRIMITIVE.INTTYPE);
+		assert (type2.getGeneralType() == GENERALPRIMITIVE.INTTYPE);
 		BinaryExpression.Operator operator;
 		if (type1.isIntegerType() && type1.isUnsigned()) {
 			assert type2.isIntegerType() && type2.isUnsigned() : "incompatible types";
@@ -493,7 +503,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 	
 
 	@Override
-	public void convert(ILocation loc, ExpressionResult operand,
+	public void convertIntToInt_NonBool(ILocation loc, ExpressionResult operand,
 			CPrimitive resultType) {
 		if (resultType.isIntegerType()) {
 			convertToIntegerType(loc, operand, resultType);
@@ -653,14 +663,14 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 	
 	@Override
-	public BigInteger extractIntegerValue(RValue rval) {
-		if (rval.getCType().isIntegerType()) {
-			if (rval.getValue() instanceof IntegerLiteral) {
-				BigInteger value =  new BigInteger(((IntegerLiteral) rval.getValue()).getValue());
-				if (((CPrimitive) rval.getCType()).isUnsigned()) {
-					BigInteger maxValue = m_TypeSizes.getMaxValueOfPrimitiveType((CPrimitive) rval.getCType());
+	public BigInteger extractIntegerValue(Expression expr, CType cType) {
+		if (cType.isIntegerType()) {
+			if (expr instanceof IntegerLiteral) {
+				BigInteger value =  new BigInteger(((IntegerLiteral) expr).getValue());
+				if (((CPrimitive) cType).isUnsigned()) {
+					BigInteger maxValue = m_TypeSizes.getMaxValueOfPrimitiveType((CPrimitive) cType);
 					BigInteger maxValuePlusOne = maxValue.add(BigInteger.ONE);
-					return value.remainder(maxValuePlusOne);
+					return value.mod(maxValuePlusOne);
 				} else {
 					return value;
 				}
@@ -670,6 +680,40 @@ public class IntegerTranslation extends AExpressionTranslation {
 		} else {
 			return null;
 		}
+	}
+	
+	@Override
+	public CPrimitive getCTypeOfPointerComponents() {
+		return new CPrimitive(PRIMITIVE.LONG);
+	}
+
+	@Override
+	public void addAssumeValueInRangeStatements(ILocation loc, Expression expr, CType cType, List<Statement> stmt) {
+		if (m_AssumeThatSignedValuesAreInRange) {
+			if (cType.getUnderlyingType().isIntegerType()) {
+				CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType);
+				if (!cPrimitive.isUnsigned()) {
+					stmt.add(constructAssumeInRangeStatement(m_TypeSizes, loc, expr, cPrimitive));
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Returns "assume (minValue <= lrValue && lrValue <= maxValue)"
+	 */
+	private AssumeStatement constructAssumeInRangeStatement(TypeSizes typeSizes, 
+			ILocation loc, Expression expr, CPrimitive type) {
+		Expression minValue = constructLiteralForIntegerType(loc, type, typeSizes.getMinValueOfPrimitiveType(type)); 
+		Expression maxValue = constructLiteralForIntegerType(loc, type, typeSizes.getMaxValueOfPrimitiveType(type));
+				
+		Expression biggerMinInt = constructBinaryComparisonExpression(
+				loc, IASTBinaryExpression.op_lessEqual, minValue, type, expr, type);
+		Expression smallerMaxValue = constructBinaryComparisonExpression(
+				loc, IASTBinaryExpression.op_lessEqual, expr, type, maxValue, type); 
+		AssumeStatement inRange = new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc, 
+				BinaryExpression.Operator.LOGICAND, biggerMinInt, smallerMaxValue));
+		return inRange;
 	}
 
 }

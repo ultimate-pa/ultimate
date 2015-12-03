@@ -25,17 +25,18 @@
  * licensors of the ULTIMATE AbstractInterpretationV2 plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model;
 
 /**
+ * Interface for a binary operator on abstract states.
  * 
- * @author dietsch@informatik.uni-freiburg.de
- * @author greitsch@informatik.uni-freiburg.de
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * 
  */
-public interface IAbstractStateBinaryOperator<ACTION, VARDECL> {
+public interface IAbstractStateBinaryOperator<STATE> {
 
-	IAbstractState<ACTION, VARDECL> apply(IAbstractState<ACTION, VARDECL> first,
-			IAbstractState<ACTION, VARDECL> second);
+	STATE apply(STATE first, STATE second);
 
 }

@@ -49,8 +49,6 @@ public class SccComputationNonRecursive<NODE, COMP extends StronglyConnectedComp
 	}
 	
 	
-	
-	
 	@Override
 	protected void strongconnect(NODE v) {
 		Stack<TodoStackElement> todoStack = new Stack<>();
@@ -82,8 +80,6 @@ public class SccComputationNonRecursive<NODE, COMP extends StronglyConnectedComp
 	}
 
 
-
-
 	private void doSetLowlink(NODE node, NODE predecessor) {
 		if (m_LowLinks.get(node).equals(m_Indices.get(node))) {
 			establishNewComponent(node);
@@ -96,16 +92,11 @@ public class SccComputationNonRecursive<NODE, COMP extends StronglyConnectedComp
 	}
 
 
-
-
 	private void doGetSuccessors(NODE node, Stack<TodoStackElement> todoStack) {
 		Iterator<NODE> it = m_SuccessorProvider.getSuccessors(node);
 		while(it.hasNext()) {
 			NODE succ = it.next();
 			if (m_Indices.containsKey(succ)) {
-//				if (m_NoScc.size() >= 1000) {
-////					throw new AssertionError("contains on stack with 1000 elements is inefficient");
-//				}
 				if (m_NoScc.contains(succ)) {
 					updateLowlink(node, m_Indices.get(succ));
 				}
@@ -116,8 +107,6 @@ public class SccComputationNonRecursive<NODE, COMP extends StronglyConnectedComp
 	}
 
 
-
-
 	private void doIndex(NODE node) {
 		assert (!m_Indices.containsKey(node));
 		assert (!m_LowLinks.containsKey(node));
@@ -126,8 +115,6 @@ public class SccComputationNonRecursive<NODE, COMP extends StronglyConnectedComp
 		m_Index++;
 		m_NoScc.push(node);
 	}
-
-
 
 
 	enum NextTask { INDEX, GET_SUCCESSORS, SET_LOWLINK };
@@ -171,10 +158,5 @@ public class SccComputationNonRecursive<NODE, COMP extends StronglyConnectedComp
 					+ ", m_Predecessor=" + m_Predecessor + "]";
 		}
 		
-		
-		
 	}
-	
-	
-
 }

@@ -53,8 +53,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Transitionlet;
-import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -592,7 +592,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 										 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this
 										 * to another value.
 										 */AssertCodeBlockOrder.NOT_INCREMENTALLY,m_Services, false, m_PredicateUnifier,
-											m_Pref.interpolation());
+											m_Pref.interpolation(), true);
 
 		this.m_InterpolantGenerator = traceChecker;
 		if (traceChecker.isCorrect() == LBool.UNSAT) {

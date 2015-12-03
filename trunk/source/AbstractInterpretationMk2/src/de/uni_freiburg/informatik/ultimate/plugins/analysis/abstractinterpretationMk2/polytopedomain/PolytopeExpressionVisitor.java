@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.AbstractVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.TypedAbstractVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.util.ExpressionWalker;
@@ -107,6 +108,7 @@ public class PolytopeExpressionVisitor extends ExpressionWalker<Linear_Expressio
 				mCurrentState.declareVariable(abst);
 			}
 			Variable variable = mCurrentState.getVariable(abst);
+			assert variable != null;
 
 			return new Linear_Expression_Variable(variable);
 		} else {
@@ -116,7 +118,8 @@ public class PolytopeExpressionVisitor extends ExpressionWalker<Linear_Expressio
 
 	@Override
 	public Linear_Expression visit(ArrayStoreExpression expr) {
-		throw new RuntimeException("This visitor must only be called for pure right hand side expressions");
+		//throw new RuntimeException("This visitor must only be called for pure right hand side expressions");
+		return null;
 	}
 
 	@Override
@@ -137,7 +140,7 @@ public class PolytopeExpressionVisitor extends ExpressionWalker<Linear_Expressio
 		case ARITHMUL:
 			// we can only make linear expressions, otherwise we do not know
 			if (left == null || right == null) {
-				//propagate top
+				// propagate top
 				return null;
 			} else if (left instanceof Linear_Expression_Coefficient) {
 				Linear_Expression_Coefficient leftCoef = (Linear_Expression_Coefficient) left;
@@ -291,7 +294,8 @@ public class PolytopeExpressionVisitor extends ExpressionWalker<Linear_Expressio
 			}
 
 		default:
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException(
+					"We do not support expressions like this: " + BoogiePrettyPrinter.print(expr));
 
 		}
 	}
@@ -331,14 +335,15 @@ public class PolytopeExpressionVisitor extends ExpressionWalker<Linear_Expressio
 	@Override
 	public Linear_Expression visit(IdentifierExpression expr) {
 		String ident = mPrefix + expr.getIdentifier();
-		AbstractVariable abst = new AbstractVariable(ident);
+		AbstractVariable abst = new AbstractVariable(ident, expr.getDeclarationInformation());
 		if (!mCurrentState.hasVariable(abst)) {
 			mLogger.warn("Variable " + abst.toString() + " was not found in state " + mCurrentState.toString());
+			mCurrentState.hasVariable(abst);
 			mCurrentState.declareVariable(
 					new TypedAbstractVariable(ident, expr.getDeclarationInformation(), expr.getType()));
 		}
 		Variable variable = mCurrentState.getVariable(abst);
-
+		assert variable != null;
 		return new Linear_Expression_Variable(variable);
 	}
 
@@ -356,7 +361,8 @@ public class PolytopeExpressionVisitor extends ExpressionWalker<Linear_Expressio
 			return new Linear_Expression_Difference(new Linear_Expression_Coefficient(new Coefficient(1)), value);
 		}
 
-		throw new UnsupportedOperationException();
+		throw new UnsupportedOperationException(
+				"We do not support expressions like this: " + BoogiePrettyPrinter.print(expr));
 	}
 
 	@Override

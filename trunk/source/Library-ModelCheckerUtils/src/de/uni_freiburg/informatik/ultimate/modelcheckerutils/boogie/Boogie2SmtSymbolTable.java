@@ -54,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap2;
 
 /**
  * Stores a mapping from Boogie identifiers to BoogieVars and a mapping from
@@ -79,7 +78,7 @@ public class Boogie2SmtSymbolTable {
 	private final BoogieDeclarations m_BoogieDeclarations;
 	private final Script m_Script; 
 	private final TypeSortTranslator m_TypeSortTranslator;
-	private final Map<String, BoogieNonOldVar> m_Globals = 
+	private final Map<String, BoogieNonOldVar> mGlobals = 
 			new HashMap<String, BoogieNonOldVar>();
 	private final Map<String, BoogieVar> m_OldGlobals = 
 			new HashMap<String, BoogieVar>();
@@ -198,7 +197,7 @@ public class Boogie2SmtSymbolTable {
 			if (inOldContext) {
 				result = m_OldGlobals.get(varId);
 			} else {
-				result = m_Globals.get(varId);
+				result = mGlobals.get(varId);
 			}
 			break;
 		case PROC_FUNC_INPARAM:
@@ -377,7 +376,7 @@ public class Boogie2SmtSymbolTable {
 				IType type = vl.getType().getBoogieType();
 				BoogieNonOldVar global = constructGlobalBoogieVar(
 						id, type, vl);
-				putNew(id, global, m_Globals);
+				putNew(id, global, mGlobals);
 				BoogieVar oldGlobal = global.getOldVar();
 				putNew(id, oldGlobal, m_OldGlobals);
 			}
@@ -388,7 +387,14 @@ public class Boogie2SmtSymbolTable {
 	 * Return global variables;
 	 */
 	public Map<String, BoogieNonOldVar> getGlobals() {
-		return Collections.unmodifiableMap(m_Globals);
+		return Collections.unmodifiableMap(mGlobals);
+	}
+	
+	/**
+	 * Return global constants;
+	 */
+	public Map<String, BoogieConst> getConsts() {
+		return Collections.unmodifiableMap(m_Constants);
 	}
 	
 	private void declareSpecImpl(Procedure spec, Procedure impl) {
@@ -636,7 +642,7 @@ public class Boogie2SmtSymbolTable {
 	BoogieNonOldVar constructAuxiliaryGlobalBoogieVar(String identifier, String procedure,
 			IType iType, VarList varList) {
 		BoogieNonOldVar bv = constructGlobalBoogieVar(identifier, iType, varList);
-		m_Globals.put(identifier, bv);
+		mGlobals.put(identifier, bv);
 		m_OldGlobals.put(identifier, bv.getOldVar());
 		return bv;
 	}

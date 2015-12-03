@@ -23,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.TypedAbstractVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.abstractdomain.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.util.ExpressionVisitor;
@@ -69,14 +70,6 @@ public class ValueExpressionVisitor extends ExpressionVisitor<IAbstractValue<?>>
 		return negated ? mInterimResultsNegated.get(exp) : mInterimResultsNormal.get(exp);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.ExpressionVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.Expression)
-	 */
 	@Override
 	public IAbstractValue<?> visit(Expression expr) {
 		// mLogger.debug("Visiting expression: " + expr);
@@ -99,14 +92,6 @@ public class ValueExpressionVisitor extends ExpressionVisitor<IAbstractValue<?>>
 		return result;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.ExpressionVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.ArrayAccessExpression)
-	 */
 	@Override
 	public IAbstractValue<?> visit(ArrayAccessExpression expr) {
 		// TODO: Do something better with the array
@@ -129,54 +114,21 @@ public class ValueExpressionVisitor extends ExpressionVisitor<IAbstractValue<?>>
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.ExpressionVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.ArrayStoreExpression)
-	 */
 	@Override
 	public IAbstractValue<?> visit(ArrayStoreExpression expr) {
 		throw new UnsupportedOperationException();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.ExpressionVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.BitvecLiteral)
-	 */
 	@Override
 	public IAbstractValue<?> visit(BitvecLiteral expr) {
 		return mDomain.getBitVectorValueFactory().makeBitVectorValue(expr.getValue());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.ExpressionVisitor#visited(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.BitVectorAccessExpression, java.lang.Object,
-	 * int, int)
-	 */
 	@Override
 	public IAbstractValue<?> visited(BitVectorAccessExpression expr, IAbstractValue<?> bvVal, int start, int end) {
 		return bvVal.bitVectorAccess(start, end);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.ExpressionVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.BooleanLiteral)
-	 */
 	@Override
 	public IAbstractValue<?> visit(BooleanLiteral expr) {
 		boolean val = expr.getValue();
@@ -187,67 +139,27 @@ public class ValueExpressionVisitor extends ExpressionVisitor<IAbstractValue<?>>
 		return mDomain.getBoolValueFactory().makeBoolValue(val);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.ExpressionVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.IntegerLiteral)
-	 */
 	@Override
 	public IAbstractValue<?> visit(IntegerLiteral expr) {
 		return mDomain.getIntValueFactory().makeIntegerValue(expr.getValue());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.ExpressionVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.RealLiteral)
-	 */
 	@Override
 	public IAbstractValue<?> visit(RealLiteral expr) {
 		return mDomain.getRealValueFactory().makeRealValue(expr.getValue());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.ExpressionVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.StringLiteral)
-	 */
 	@Override
 	public IAbstractValue<?> visit(StringLiteral expr) {
 		return mDomain.getStringValueFactory().makeStringValue(expr.getValue());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.ExpressionVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.IdentifierExpression)
-	 */
 	@Override
 	public IAbstractValue<?> visit(IdentifierExpression expr) {
 		return mCurrentState.getValue(
 				new TypedAbstractVariable(expr.getIdentifier(), expr.getDeclarationInformation(), expr.getType()));
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.ExpressionVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.UnaryExpression)
-	 */
 	@Override
 	public IAbstractValue<?> visit(UnaryExpression expr) {
 		if (expr.getOperator() == Operator.LOGICNEG) {
@@ -256,14 +168,6 @@ public class ValueExpressionVisitor extends ExpressionVisitor<IAbstractValue<?>>
 		return super.visit(expr);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.ExpressionVisitor#visited(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.UnaryExpression, java.lang.Object)
-	 */
 	@Override
 	public IAbstractValue<?> visited(UnaryExpression expr, IAbstractValue<?> value) {
 		switch (expr.getOperator()) {
@@ -279,18 +183,11 @@ public class ValueExpressionVisitor extends ExpressionVisitor<IAbstractValue<?>>
 
 		case OLD:
 		default:
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException(
+					"We do not support the expression " + BoogiePrettyPrinter.print(expr));
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.ExpressionVisitor#visit(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.BinaryExpression)
-	 */
 	@Override
 	public IAbstractValue<?> visit(BinaryExpression expr) {
 		/*
@@ -427,13 +324,15 @@ public class ValueExpressionVisitor extends ExpressionVisitor<IAbstractValue<?>>
 				IAbstractValue<?> b = visit(expr.getRight());
 				mNegate = false;
 
-				if (resultIsBoolean(a)) {
-					return a.logicAnd(b);
-				}
 				// AND: Both must be non-bottom
 				if (isBottom(a) || isBottom(b)) {
 					return mDomain.getTopBottomValueForType(expr.getType(), false);
 				}
+				if (resultIsBoolean(a) && resultIsBoolean(b)) {
+					return a.logicAnd(b);
+				}
+				
+				
 				return null;
 			} else {
 				// OR(a, b)
@@ -443,12 +342,16 @@ public class ValueExpressionVisitor extends ExpressionVisitor<IAbstractValue<?>>
 				IAbstractValue<?> b = visit(expr.getRight());
 				mNegate = false;
 
-				if (resultIsBoolean(a)) {
-					return a.logicOr(b);
-				}
 				// OR: not both may be bottom
 				if (isBottom(a) && isBottom(b)) {
 					return mDomain.getTopBottomValueForType(expr.getType(), false);
+				} else if (isBottom(a)) {
+					return b;
+				} else if (isBottom(b)) {
+					return a;
+				}
+				if (resultIsBoolean(a) && resultIsBoolean(b)) {
+					return a.logicOr(b);
 				}
 				return null;
 			}
@@ -463,15 +366,6 @@ public class ValueExpressionVisitor extends ExpressionVisitor<IAbstractValue<?>>
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.ExpressionVisitor#visited(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.BinaryExpression, java.lang.Object,
-	 * java.lang.Object)
-	 */
 	@Override
 	public IAbstractValue<?> visited(BinaryExpression expr, IAbstractValue<?> left, IAbstractValue<?> right) {
 		switch (expr.getOperator()) {
@@ -527,19 +421,10 @@ public class ValueExpressionVisitor extends ExpressionVisitor<IAbstractValue<?>>
 
 		case COMPPO:
 		default:
-			throw new UnsupportedOperationException();
+			throw new UnsupportedOperationException("COMPPO");
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.plugins.analysis.
-	 * abstractinterpretationMk2
-	 * .util.ExpressionVisitor#visited(de.uni_freiburg.informatik
-	 * .ultimate.model.boogie.ast.IfThenElseExpression, java.lang.Object,
-	 * java.lang.Object, java.lang.Object)
-	 */
 	@Override
 	public IAbstractValue<?> visited(IfThenElseExpression expr, IAbstractValue<?> ifValue, IAbstractValue<?> thenValue,
 			IAbstractValue<?> elseValue) {
@@ -564,7 +449,8 @@ public class ValueExpressionVisitor extends ExpressionVisitor<IAbstractValue<?>>
 
 	@Override
 	public IAbstractValue<?> visited(FunctionApplication expr, List<IAbstractValue<?>> args) {
-		throw new UnsupportedOperationException("This domain does not support function applications: " + expr);
+		// uninterpreted functions are treated as top
+		return mDomain.getTopBottomValueForType(expr.getType(), true);
 	}
 
 	/*
@@ -575,18 +461,16 @@ public class ValueExpressionVisitor extends ExpressionVisitor<IAbstractValue<?>>
 	 * @param value
 	 *            An abstract value to get a boolean value for
 	 * @return A value in the boolean domain representing the given value: <br>
-	 *         If it already is a value in the boolean domain, a copy is
-	 *         returned. <br>
-	 *         Else, a boolean value of FALSE is returned iff the given value is
-	 *         bottom.
+	 *         If it already is a value in the boolean domain, a copy is returned. <br>
+	 *         Else, a boolean value of FALSE is returned iff the given value is bottom.
 	 */
 	private IAbstractValue<?> booleanFromAbstractValue(IAbstractValue<?> value) {
 		IAbstractValueFactory<?> boolFactory = mDomain.getBoolValueFactory();
 		if (value == null) {
-			throw new RuntimeException("Deprecated code");
+			// throw new RuntimeException("Deprecated code");
 			// mLogger.warn("Encountered a boolean value of null, using UNKNOWN
 			// instead.");
-			// return boolFactory.makeTopValue();
+			return boolFactory.makeTopValue();
 		}
 
 		if (boolFactory.valueBelongsToDomainSystem(value)) {

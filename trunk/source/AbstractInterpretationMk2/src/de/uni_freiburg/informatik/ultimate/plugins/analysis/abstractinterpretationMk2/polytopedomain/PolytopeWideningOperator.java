@@ -38,7 +38,7 @@ public class PolytopeWideningOperator implements
 		NNC_Polyhedron pA = a.getConcrete().getPolytope();
 		pRes.upper_bound_assign(pA);
 		pRes.widening_assign(pA, null);
-		// pA.widening_assign(pRes, null);
+		result.minimize();
 
 		// mLogger.debug("Widening Polytopes: \n" + a.toString() +
 		// "\n -- and -- \n" + b.toString() + "\n -- result -- \n" +

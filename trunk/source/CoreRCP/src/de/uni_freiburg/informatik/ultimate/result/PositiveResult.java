@@ -30,7 +30,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.result;
 
-import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 /**

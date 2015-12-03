@@ -1,12 +1,14 @@
-/**
- * 
- */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.valuedomain;
+
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * IAbstractValue stores the value of a variable in an abstract domain.
  * 
- * @author GROSS-JAN
+ * @author Jan Hättig
+ * @author Christopher Dillo
+ *
  *
  * @param <T>
  *            Concrete type of the value
@@ -91,7 +93,8 @@ public interface IAbstractValue<T> {
 	/**
 	 * @param value
 	 *            The value to subtract from this value
-	 * @return The difference of this value and the given value: this - value <br>
+	 * @return The difference of this value and the given value: this - value
+	 *         <br>
 	 *         null if the given abstract state is of an incompatible abstract
 	 *         domain system
 	 */
@@ -118,7 +121,8 @@ public interface IAbstractValue<T> {
 	/**
 	 * @param value
 	 *            The value to divide this value by
-	 * @return The remainder of this value and the given value: this % value <br>
+	 * @return The remainder of this value and the given value: this % value
+	 *         <br>
 	 *         If the given abstract state is of an incompatible abstract domain
 	 *         system, bottom should be returned
 	 */
@@ -240,8 +244,9 @@ public interface IAbstractValue<T> {
 	 */
 	public IAbstractValue<T> bitVectorAccess(int start, int end);
 
-	// /**
-	// * @return A string representation of the abstract value
-	// */
-	// public String toString();
+	/**
+	 * @return A term representing this abstract value.
+	 */
+	public Term getTerm(Script script, Term variable);
+
 }
