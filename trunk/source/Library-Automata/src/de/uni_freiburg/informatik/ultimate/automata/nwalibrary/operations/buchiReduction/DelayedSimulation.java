@@ -46,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Player0Vertex;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Player1Vertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
@@ -83,19 +83,19 @@ public class DelayedSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, 
      */
     protected void generateGameGraph(INestedWordAutomatonOldApi<LETTER,STATE> ba)
             throws AutomataLibraryException {
-        HashMap<STATE, HashMap<STATE, ArrayList<Player1Vertex<LETTER,STATE>>>> edgeH =
-                new HashMap<STATE, HashMap<STATE, ArrayList<Player1Vertex<LETTER,STATE>>>>();
+        HashMap<STATE, HashMap<STATE, ArrayList<SpoilerVertex<LETTER,STATE>>>> edgeH =
+                new HashMap<STATE, HashMap<STATE, ArrayList<SpoilerVertex<LETTER,STATE>>>>();
         // Calculate v1 [paper ref 10]
         for (STATE q0 : ba.getStates()) {
-            edgeH.put(q0, new HashMap<STATE, ArrayList<Player1Vertex<LETTER,STATE>>>());
+            edgeH.put(q0, new HashMap<STATE, ArrayList<SpoilerVertex<LETTER,STATE>>>());
             for (STATE q1 : ba.getStates()) {
-                edgeH.get(q0).put(q1, new ArrayList<Player1Vertex<LETTER,STATE>>(2));
-                Player1Vertex<LETTER,STATE> v1e = new Player1Vertex<LETTER, STATE>(
-                        (byte) 0, false, q0, q1);
+                edgeH.get(q0).put(q1, new ArrayList<SpoilerVertex<LETTER,STATE>>(2));
+                SpoilerVertex<LETTER,STATE> v1e = new SpoilerVertex<LETTER, STATE>(
+                        0, false, q0, q1);
                 v1.add(v1e);
                 edgeH.get(q0).get(q1).add(0, v1e);
                 if (!ba.isFinal(q1)) {
-                    v1e = new Player1Vertex<LETTER,STATE>((byte) 1, true, q0, q1);
+                    v1e = new SpoilerVertex<LETTER,STATE>(1, true, q0, q1);
                     v1.add(v1e);
                     edgeH.get(q0).get(q1).add(1, v1e);
                     infinity++;
@@ -111,8 +111,8 @@ public class DelayedSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, 
             for (STATE q1 : ba.getStates()) {
                 for (LETTER s : ba.lettersInternalIncoming(q0)) {
                     if (ba.predInternal(q0, s).iterator().hasNext()) {
-                        Player0Vertex<LETTER,STATE> v0e = new Player0Vertex<LETTER, STATE>(
-                                (byte) 2, false, q0, q1, s);
+                        DuplicatorVertex<LETTER,STATE> v0e = new DuplicatorVertex<LETTER, STATE>(
+                                2, false, q0, q1, s);
                         v0.add(v0e);
                         // V0 -> V1 edges [paper ref 11]
                         for (STATE q2 : ba.succInternal(q1, s))
@@ -121,7 +121,7 @@ public class DelayedSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, 
                         for (STATE q2 : ba.predInternal(q0, s))
                             if (!ba.isFinal(q0))
                                 addEdge(edgeH.get(q2).get(q1).get(0), v0e);
-                        v0e = new Player0Vertex<LETTER,STATE>((byte) 2, true, q0, q1, s);
+                        v0e = new DuplicatorVertex<LETTER,STATE>(2, true, q0, q1, s);
                         v0.add(v0e);
                         // V0 -> V1 edges [paper ref 11]
                         for (STATE q2 : ba.succInternal(q1, s)) {
@@ -174,7 +174,7 @@ public class DelayedSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, 
         ArrayList<STATE> states = new ArrayList<STATE>();
         states.addAll(m_Operand.getStates());
         boolean[][] table = new boolean[states.size()][states.size()];
-        for (Player1Vertex<LETTER,STATE> v : v1) {
+        for (SpoilerVertex<LETTER,STATE> v : v1) {
             // all the states we need are in V1...
             if ((m_Operand.isFinal(v.getQ0()) && m_Operand.isFinal(v.getQ1()))
                     ^ v.isB() ^ m_Operand.isFinal(v.getQ0())) {

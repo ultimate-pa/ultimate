@@ -53,8 +53,8 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Player0Vertex;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Player1Vertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
@@ -67,11 +67,11 @@ public abstract class AbstractSimulation<LETTER,STATE> {
     /**
      * Vertex set 0.
      */
-    protected HashSet<Player0Vertex<LETTER,STATE>> v0;
+    protected HashSet<DuplicatorVertex<LETTER,STATE>> v0;
     /**
      * Vertex set 1.
      */
-    protected HashSet<Player1Vertex<LETTER,STATE>> v1;
+    protected HashSet<SpoilerVertex<LETTER,STATE>> v1;
     /**
      * Set of edges.
      */
@@ -114,8 +114,8 @@ public abstract class AbstractSimulation<LETTER,STATE> {
             throws AutomataLibraryException {
     	m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-        this.v0 = new HashSet<Player0Vertex<LETTER,STATE>>();
-        this.v1 = new HashSet<Player1Vertex<LETTER,STATE>>();
+        this.v0 = new HashSet<DuplicatorVertex<LETTER,STATE>>();
+        this.v1 = new HashSet<SpoilerVertex<LETTER,STATE>>();
         this.e = new HashMap<Vertex<LETTER,STATE>, HashSet<Vertex<LETTER, STATE>>>();
         this.eI = new HashMap<Vertex<LETTER,STATE>, HashSet<Vertex<LETTER, STATE>>>();
         this.useSCCs = useSCCs;
@@ -198,7 +198,7 @@ public abstract class AbstractSimulation<LETTER,STATE> {
           wL.addAll(notDeadEnd);
         } else {
             HashSet<Vertex<LETTER,STATE>> notDeadEnd = new HashSet<Vertex<LETTER, STATE>>();
-            for (Player0Vertex<LETTER,STATE> v : v0) {
+            for (DuplicatorVertex<LETTER,STATE> v : v0) {
                 if (v.getPM(scc,infinity) != update(v, l_inf, scc)) {
                     if (!e.containsKey(v)) wL.push(v);
                     else notDeadEnd.add(v);
@@ -206,7 +206,7 @@ public abstract class AbstractSimulation<LETTER,STATE> {
                 }
                 if (e.containsKey(v)) v.setC(e.get(v).size());
             }
-            for (Player1Vertex<LETTER,STATE> v : v1) {
+            for (SpoilerVertex<LETTER,STATE> v : v1) {
                 if (v.getPM(scc,infinity) != update(v, l_inf, scc)) {
                     if (!e.containsKey(v)) wL.push(v);
                     else notDeadEnd.add(v);
@@ -231,7 +231,7 @@ public abstract class AbstractSimulation<LETTER,STATE> {
                         && decrVec(w.getPriority(), v.getPM(scc,infinity), l_inf) > w.getBEff()) {
                     /* w in L && <p(v)>_w > B(w) means: for each predecessor w
                      * of v which is not in L */
-                    if (w.isInV0()
+                    if (w.isDuplicatorVertex()
                             && decrVec(w.getPriority(), t, l_inf) == w.getBEff()) {
                         /* w in v0 && <l>_w==w.getB() */
                         if (w.getC() == 1) {
@@ -239,7 +239,7 @@ public abstract class AbstractSimulation<LETTER,STATE> {
                             w.setInWL(true);
                         }
                         if (w.getC() > 1) w.setC(w.getC() - 1);
-                    } else if (w.isInV1()) {
+                    } else if (w.isSpoilerVertex()) {
                         wL.push(w);
                         w.setInWL(true);
                     }
@@ -298,7 +298,7 @@ public abstract class AbstractSimulation<LETTER,STATE> {
      *            progress measure x
      * @return new vector
      */
-    private int decrVec(byte i, int x, int l_inf) {
+    private int decrVec(int i, int x, int l_inf) {
         if (x >= l_inf) return infinity;
         switch (i) {
             case 0: return 0;
@@ -322,7 +322,7 @@ public abstract class AbstractSimulation<LETTER,STATE> {
      */
     private int bestNghbMS(Vertex<LETTER,STATE> v, int l_inf, Set<Vertex<LETTER, STATE>> scc) {
         if (!e.containsKey(v)) return infinity; // there are no successors
-        if (v.isInV0()) {
+        if (v.isDuplicatorVertex()) {
             int min = infinity;
             for (Vertex<LETTER,STATE> w : e.get(v)) {
                 if (w.getPM(scc,infinity) < min) {
@@ -352,7 +352,7 @@ public abstract class AbstractSimulation<LETTER,STATE> {
      *            local infinity of SCC, if SCCs not used, param set to infinity
      * @return new progress measure
      */
-    private int incr(byte priority, int x, int l_inf) {
+    private int incr(int priority, int x, int l_inf) {
         if (x >= l_inf) return infinity;
         switch (priority) {
             case 0:
@@ -417,13 +417,13 @@ public abstract class AbstractSimulation<LETTER,STATE> {
     			new LinkedList<AbstractSimulation<LETTER,STATE>.SCC>();
     	
         public SccComputation() {
-            for (Player0Vertex<LETTER,STATE> v : v0) {
+            for (DuplicatorVertex<LETTER,STATE> v : v0) {
                 if (!m_Indices.containsKey(v)) {
                     strongconnect(v);
                 }
             }
 
-            for (Player1Vertex<LETTER,STATE> v : v1) {
+            for (SpoilerVertex<LETTER,STATE> v : v1) {
                 if (!m_Indices.containsKey(v)) {
                     strongconnect(v);
                 }

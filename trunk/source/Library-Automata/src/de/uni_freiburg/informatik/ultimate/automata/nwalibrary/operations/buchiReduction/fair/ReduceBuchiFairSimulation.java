@@ -50,30 +50,29 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  * @param <STATE>
  *
  */
-public final class ReduceBuchiFairSimulation<LETTER, STATE>
-	implements IOperation<LETTER, STATE> {
+public final class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETTER, STATE> {
 	
 	private final Logger m_Logger;
 	
-	private INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
+	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
 
-	private INestedWordAutomatonOldApi<LETTER, STATE> m_Result;
+	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Result;
 
 	private final IUltimateServiceProvider m_Services;
 
 	public ReduceBuchiFairSimulation(IUltimateServiceProvider services, StateFactory<STATE> stateFactory,
-			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataLibraryException {
+			INestedWordAutomatonOldApi<LETTER, STATE> operand) {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;
 		m_Logger.info(startMessage());
 
-		m_Result = new FairSimulation<LETTER, STATE>(m_Services, m_Operand, true, stateFactory).result;
+		m_Result = new FairSimulation<LETTER, STATE>(m_Services, m_Operand, true, stateFactory).m_Result;
 
 		boolean compareWithNonSccResult = false;
 		if (compareWithNonSccResult) {
 			NestedWordAutomaton<LETTER, STATE> nonSCCresult = new FairSimulation<LETTER, STATE>(m_Services, m_Operand,
-					false, stateFactory).result;
+					false, stateFactory).m_Result;
 			if (m_Result.size() != nonSCCresult.size()) {
 				throw new AssertionError();
 			}

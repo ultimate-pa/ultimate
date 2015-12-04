@@ -43,8 +43,8 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Player0Vertex;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Player1Vertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -80,12 +80,12 @@ public class DirectSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, S
      */
     protected void generateGameGraph(INestedWordAutomatonOldApi<LETTER,STATE> ba)
             throws AutomataLibraryException {
-    	NestedMap2<STATE, STATE, Player1Vertex<LETTER,STATE>> map1 = new NestedMap2<STATE, STATE, Player1Vertex<LETTER,STATE>>();
+    	NestedMap2<STATE, STATE, SpoilerVertex<LETTER,STATE>> map1 = new NestedMap2<STATE, STATE, SpoilerVertex<LETTER,STATE>>();
         // Calculate v1 [paper ref 10]
         for (STATE q0 : ba.getStates()) {
             for (STATE q1 : ba.getStates()) {
-                Player1Vertex<LETTER,STATE> v1e = new Player1Vertex<LETTER, STATE>(
-                        (byte) 0, false, q0, q1);
+                SpoilerVertex<LETTER,STATE> v1e = new SpoilerVertex<LETTER, STATE>(
+                        0, false, q0, q1);
                 v1.add(v1e);
                 map1.put(q0, q1, v1e);
             }
@@ -101,8 +101,8 @@ public class DirectSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, S
             	relevantLetters.addAll(ba.lettersInternalIncoming(q0));
             	relevantLetters.addAll(ba.lettersInternal(q1));
                 for (LETTER s : relevantLetters) {
-                    Player0Vertex<LETTER,STATE> v0e = new Player0Vertex<LETTER, STATE>(
-                            (byte) 0, false, q0, q1, s);
+                    DuplicatorVertex<LETTER,STATE> v0e = new DuplicatorVertex<LETTER, STATE>(
+                            0, false, q0, q1, s);
                     v0.add(v0e);
                     // V1 -> V0 edges [paper ref 11]
                     for (STATE pred0 : ba.predInternal(q0, s)) {
@@ -157,7 +157,7 @@ public class DirectSimulation<LETTER,STATE> extends AbstractSimulation<LETTER, S
     		uf.makeEquivalenceClass(state);
     	}
     	HashRelation<STATE, STATE> similarStates = new HashRelation<STATE, STATE>();
-        for (Player1Vertex<LETTER,STATE> v : v1) {
+        for (SpoilerVertex<LETTER,STATE> v : v1) {
             // all the states we need are in V1...
             if (v.getPM(null,infinity) < infinity) {
             	STATE state1 = v.getQ0();
