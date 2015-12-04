@@ -36,6 +36,8 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.junit.Test;
+
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.LoggerInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.lpsolver.ojalgo.OjAlgoSolver;
 
 /**

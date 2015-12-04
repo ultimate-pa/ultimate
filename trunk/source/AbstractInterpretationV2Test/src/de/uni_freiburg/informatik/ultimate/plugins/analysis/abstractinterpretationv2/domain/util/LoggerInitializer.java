@@ -26,35 +26,29 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util;
 
-import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.ILogicalEvaluator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
 
 /**
- * Represents the singleton value expression evaluator for logical values in the {@link IntervalDomain}.
+ * Initializes a logger for the testing framework without having to run through all of the Ultimate classes and
+ * initializers.
  * 
- * @author Marius Greitschus <greitsch@informatik.uni-freiburg.de>
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class IntervalLogicalSingletonValueExpressionEvaluator extends IntervalSingletonValueExpressionEvaluator
-		implements ILogicalEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
-
-	protected IntervalLogicalSingletonValueExpressionEvaluator(IntervalDomainValue value) {
-		super(value);
+public final class LoggerInitializer {
+	
+	public Logger getLogger(String name) {
+		LogManager.resetConfiguration();
+		final PatternLayout layout = new PatternLayout("%-5p %d{HH:mm:ss,SSSS} (%C{1}:%L): %m%n");
+		final ConsoleAppender appender = new ConsoleAppender(layout);
+		appender.setName(name);
+		appender.activateOptions();
+		Logger.getRootLogger().addAppender(appender);
+		return Logger.getLogger(name);
 	}
-
-	@Override
-	public BooleanValue booleanValue() {
-		return new BooleanValue(Value.TOP);
-	}
-
-	@Override
-	public boolean containsBool() {
-		return false;
-	}
-
 }

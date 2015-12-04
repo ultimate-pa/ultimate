@@ -84,38 +84,6 @@ public class PredicateTransformer {
 		m_VariableManager = smtManager.getVariableManager();
 	}
 
-	/**
-	 * Compute the irrelevant variables of the given predicate p. A variable is
-	 * irrelevant, if it isn't contained in the given set of relevantVars.
-	 * 
-	 * @see LiveVariables
-	 */
-	private Set<TermVariable> computeIrrelevantVariables(Set<BoogieVar> relevantVars, IPredicate p) {
-		Set<TermVariable> result = new HashSet<TermVariable>();
-		for (BoogieVar bv : p.getVars()) {
-			if (!relevantVars.contains(bv)) {
-				result.add(bv.getTermVariable());
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * Computes a predicate from the given predicate p, such that all irrelevant
-	 * variables are quantified by the given quantifier.
-	 */
-	private IPredicate computeRelevantPredicateHelper(IPredicate p, Set<BoogieVar> relevantVars, int quantifier) {
-		Set<TermVariable> irrelevantVars = computeIrrelevantVariables(relevantVars, p);
-		return m_SmtManager.constructPredicate(p.getFormula(), quantifier, irrelevantVars);
-	}
-
-	public IPredicate computeBackwardRelevantPredicate(IPredicate wp, Set<BoogieVar> relevantVars) {
-		return computeRelevantPredicateHelper(wp, relevantVars, Script.FORALL);
-	}
-
-	public IPredicate computeForwardRelevantPredicate(IPredicate sp, Set<BoogieVar> relevantVars) {
-		return computeRelevantPredicateHelper(sp, relevantVars, Script.EXISTS);
-	}
 
 	/**
 	 * Computes the strongest postcondition of the given predicate p and the

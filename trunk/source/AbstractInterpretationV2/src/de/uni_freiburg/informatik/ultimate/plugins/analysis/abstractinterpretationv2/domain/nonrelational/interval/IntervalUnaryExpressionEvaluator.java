@@ -33,26 +33,29 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
- * Expression evaluator for unary expressions in the interval domain.
+ * Class that handles unary logical expression evaluators in the {@link IntervalDomain}.
  * 
- * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ * @author Marius Greitschus <greitsch@informatik.uni-freiburg.de>
  *
  */
 public class IntervalUnaryExpressionEvaluator
-		implements INAryEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
+        implements INAryEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
 
-	protected final Logger mLogger;
+	private final Logger mLogger;
 
 	protected IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> mSubEvaluator;
-	protected UnaryExpression.Operator mOperator;
+	protected Operator mOperator;
+
+	private BooleanValue mBooleanValue;
 
 	protected IntervalUnaryExpressionEvaluator(Logger logger) {
 		mLogger = logger;
@@ -61,24 +64,51 @@ public class IntervalUnaryExpressionEvaluator
 	@Override
 	public IEvaluationResult<IntervalDomainEvaluationResult> evaluate(IntervalDomainState currentState) {
 
-		final IEvaluationResult<IntervalDomainEvaluationResult> subEvaluatorResult = mSubEvaluator.evaluate(currentState);
+		final IEvaluationResult<IntervalDomainEvaluationResult> subEvaluatorResult = mSubEvaluator
+		        .evaluate(currentState);
+
+		IntervalDomainState returnState = currentState.copy();
+		IntervalDomainValue returnValue = new IntervalDomainValue();
+		boolean setToBottom = false;
 
 		switch (mOperator) {
 		case ARITHNEGATIVE:
-			return new IntervalDomainEvaluationResult(subEvaluatorResult.getResult().getEvaluatedValue().negate(), currentState);
+			mBooleanValue = new BooleanValue(false);
+			returnValue = subEvaluatorResult.getResult().getEvaluatedValue().negate();
+			break;
+		case LOGICNEG:
+			mBooleanValue = mSubEvaluator.booleanValue().neg();
+			if (mBooleanValue.getValue() == Value.FALSE || mBooleanValue.getValue() == Value.BOTTOM) {
+				setToBottom = true;
+			}
+			break;
 		default:
-			mLogger.warn(
-					"Possible loss of precision: cannot handle operator " + mOperator + ". Returning current state.");
+			mLogger.warn("Operator " + mOperator + " not implemented. Assuming logical interpretation to be false.");
+			mBooleanValue = new BooleanValue(false);
+			mLogger.warn("Possible loss of precision: cannot handle operator " + mOperator
+			        + ". Returning current state. Returned value is top.");
 			return new IntervalDomainEvaluationResult(new IntervalDomainValue(), currentState);
 		}
+
+		if (setToBottom) {
+			returnState = returnState.bottomState();
+		}
+
+		return new IntervalDomainEvaluationResult(returnValue, returnState);
 	}
 
 	@Override
-	public void addSubEvaluator(IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(
+	        IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
 		assert mSubEvaluator == null;
 		assert evaluator != null;
 
 		mSubEvaluator = evaluator;
+	}
+
+	@Override
+	public BooleanValue booleanValue() {
+		return mBooleanValue;
 	}
 
 	@Override
@@ -89,6 +119,11 @@ public class IntervalUnaryExpressionEvaluator
 	@Override
 	public boolean hasFreeOperands() {
 		return mSubEvaluator == null;
+	}
+
+	@Override
+	public boolean containsBool() {
+		return mSubEvaluator.containsBool();
 	}
 
 	@Override

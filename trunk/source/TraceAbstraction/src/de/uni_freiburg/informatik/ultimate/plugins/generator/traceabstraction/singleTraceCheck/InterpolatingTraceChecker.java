@@ -97,15 +97,6 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 
 
 	/**
-	 * 
-	 * @param interpolation
-	 * @return
-	 */
-	protected int getTotalNumberOfPredicates(INTERPOLATION interpolation) {
-		return m_Interpolants != null ? m_Interpolants.length : 0;
-	}
-
-	/**
 	 * Return a sequence of nested interpolants φ_1,...,φ_{n-1} that is
 	 * inductive for the trace, precondition φ_0, and postcondition φ_n that
 	 * were checked last. Interpolants are only available if the trace fulfilled

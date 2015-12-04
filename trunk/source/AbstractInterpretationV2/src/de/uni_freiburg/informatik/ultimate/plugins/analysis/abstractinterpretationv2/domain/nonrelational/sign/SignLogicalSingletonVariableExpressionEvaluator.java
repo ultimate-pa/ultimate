@@ -29,12 +29,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.ILogicalEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class SignLogicalSingletonVariableExpressionEvaluator extends SignSingletonVariableExpressionEvaluator
-		implements ILogicalEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> {
+        implements IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> {
 
 	private BooleanValue mBooleanValue;
 
@@ -75,7 +75,7 @@ public class SignLogicalSingletonVariableExpressionEvaluator extends SignSinglet
 			return new SignDomainValue(Values.BOTTOM);
 		default:
 			throw new UnsupportedOperationException(
-					"The value " + value.getResult().toString() + " is no valid boolean sign domain value.");
+			        "The value " + value.getResult().toString() + " is no valid boolean sign domain value.");
 		}
 	}
 
@@ -96,7 +96,7 @@ public class SignLogicalSingletonVariableExpressionEvaluator extends SignSinglet
 			return false;
 		default:
 			throw new UnsupportedOperationException(
-					"The value " + value.getResult().toString() + " is no valid boolean sign domain value.");
+			        "The value " + value.getResult().toString() + " is no valid boolean sign domain value.");
 		}
 	}
 

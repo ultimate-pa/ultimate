@@ -37,12 +37,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
-/**
- * Factory for evaluators of the interval domain.
- * 
- * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
- *
- */
 public class IntervalEvaluatorFactory
 		implements IEvaluatorFactory<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
 
@@ -52,14 +46,6 @@ public class IntervalEvaluatorFactory
 
 	private final Logger mLogger;
 
-	/**
-	 * Creates a new evaluator factory for the interval domain.
-	 * 
-	 * @param services
-	 *            The Ultimate services.
-	 * @param stateConverter
-	 *            The state converter in the interval domain.
-	 */
 	public IntervalEvaluatorFactory(Logger logger) {
 		mLogger = logger;
 	}
@@ -86,7 +72,6 @@ public class IntervalEvaluatorFactory
 	public IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> createSingletonValueExpressionEvaluator(
 			String value, Class<?> valueType) {
 		assert value != null;
-
 		return new IntervalSingletonValueExpressionEvaluator(
 				new IntervalDomainValue(new IntervalValue(value), new IntervalValue(value)));
 	}
@@ -95,13 +80,13 @@ public class IntervalEvaluatorFactory
 	public IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> createSingletonVariableExpressionEvaluator(
 			String variableName) {
 		assert variableName != null;
-
 		return new IntervalSingletonVariableExpressionEvaluator(variableName);
 	}
 
 	@Override
 	public IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> createSingletonLogicalValueExpressionEvaluator(
 			BooleanValue value) {
-		return new IntervalLogicalSingletonBooleanExpressionEvaluator(value);
+		return new IntervalSingletonBooleanExpressionEvaluator(value);
 	}
+
 }

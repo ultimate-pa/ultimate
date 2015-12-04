@@ -28,43 +28,66 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import java.util.HashSet;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.ILogicalEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
- * Class to represent the logical evaluator for singleton variable expressions in the {@link IntervalDomain}.
+ * Class for boolean singleton values in the {@link IntervalDomain}.
  * 
  * @author Marius Greitschus <greitsch@informatik.uni-freiburg.de>
  *
  */
-public class IntervalLogicalSingletonVariableExpressionEvaluator extends IntervalSingletonVariableExpressionEvaluator
-		implements ILogicalEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
+public class IntervalSingletonBooleanExpressionEvaluator
+        implements IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
 
-	private BooleanValue mBooleanValue = new BooleanValue();
-	private boolean mContainsBoolean = false;
+	private final BooleanValue mBooleanValue;
 
-	public IntervalLogicalSingletonVariableExpressionEvaluator(String variableName) {
-		super(variableName);
+	/**
+	 * Default constructor that creates a new instance of the {@link IntervalSingletonBooleanExpressionEvaluator} in the
+	 * {@link IntervalDomain}.
+	 * 
+	 * @param value
+	 *            The value to set.
+	 */
+	protected IntervalSingletonBooleanExpressionEvaluator(BooleanValue value) {
+		mBooleanValue = value;
 	}
 
 	@Override
 	public IEvaluationResult<IntervalDomainEvaluationResult> evaluate(IntervalDomainState currentState) {
 
-		final IBoogieVar type = currentState.getVariableType(mVariableName);
-		if (type.getIType() instanceof PrimitiveType) {
-			final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
+		IntervalDomainState returnState;
 
-			if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-				mBooleanValue = new BooleanValue(currentState.getBooleanValues().get(mVariableName));
-				mContainsBoolean = true;
-			}
+		if (mBooleanValue.getValue() == Value.TRUE || mBooleanValue.getValue() == Value.TOP) {
+			returnState = currentState;
+		} else {
+			returnState = currentState.bottomState();
 		}
 
-		return super.evaluate(currentState);
+		return new IntervalDomainEvaluationResult(null, returnState);
+	}
+
+	@Override
+	public void addSubEvaluator(
+	        IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
+		throw new UnsupportedOperationException("Adding a subevaluator to this kind of evaluator is not permitted.");
+	}
+
+	@Override
+	public Set<String> getVarIdentifiers() {
+		return new HashSet<String>();
+	}
+
+	@Override
+	public boolean hasFreeOperands() {
+		return false;
 	}
 
 	@Override
@@ -74,7 +97,6 @@ public class IntervalLogicalSingletonVariableExpressionEvaluator extends Interva
 
 	@Override
 	public boolean containsBool() {
-		return mContainsBoolean;
+		return true;
 	}
-
 }
