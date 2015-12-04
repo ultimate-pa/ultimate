@@ -84,13 +84,13 @@ public final class FairGameGraph<LETTER, STATE> extends GameGraph<LETTER, STATE>
 					globalInfinity++;
 				}
 				Player1Vertex<LETTER, STATE> v1e =
-						new Player1Vertex<>(priority, false, leftState, rightState);
+						new Player1Vertex<LETTER, STATE>(priority, false, leftState, rightState);
 				addPlayer1State(v1e);
 				
 				// Generate V_0 states
 				for (LETTER letter : buechi.lettersInternalIncoming(leftState)) {
 					Player0Vertex<LETTER, STATE> v0e =
-							new Player0Vertex<>((byte) 2, false, leftState, rightState, letter);
+							new Player0Vertex<LETTER, STATE>((byte) 2, false, leftState, rightState, letter);
 					addPlayer0State(v0e);
 				}
 			}
@@ -128,7 +128,7 @@ public final class FairGameGraph<LETTER, STATE> extends GameGraph<LETTER, STATE>
 	protected NestedWordAutomaton<LETTER, STATE> generateBuchiAutomatonFromGraph() {
 		// TODO Currently returns a copy of the buechi automata.
 		StateFactory<STATE> snf = (StateFactory<STATE>) new StringFactory();
-		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<>(m_Services,
+		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<LETTER, STATE>(m_Services,
 				buechi.getInternalAlphabet(), null, null, snf);
 
 		// Add states

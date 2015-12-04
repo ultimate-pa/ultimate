@@ -68,11 +68,11 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE>
 		m_Operand = operand;
 		m_Logger.info(startMessage());
 
-		m_Result = new FairSimulation<>(m_Services, m_Operand, true, stateFactory).result;
+		m_Result = new FairSimulation<LETTER, STATE>(m_Services, m_Operand, true, stateFactory).result;
 
 		boolean compareWithNonSccResult = false;
 		if (compareWithNonSccResult) {
-			NestedWordAutomaton<LETTER, STATE> nonSCCresult = new FairSimulation<>(m_Services, m_Operand,
+			NestedWordAutomaton<LETTER, STATE> nonSCCresult = new FairSimulation<LETTER, STATE>(m_Services, m_Operand,
 					false, stateFactory).result;
 			if (m_Result.size() != nonSCCresult.size()) {
 				throw new AssertionError();
@@ -149,11 +149,11 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE>
 		StateFactory<String> snf = (StateFactory<String>) new StringFactory();
 		
 		// Buechi automaton
-		Set<String> alphabet = new HashSet<>();
+		Set<String> alphabet = new HashSet<String>();
 		alphabet.add("a");
 		alphabet.add("b");
 		NestedWordAutomaton<String, String> buechi =
-				new NestedWordAutomaton<>(service, alphabet, null, null, snf);
+				new NestedWordAutomaton<String, String>(service, alphabet, null, null, snf);
 		
 		// Big example from tutors cardboard
 //		buechi.addState(true, false, "q0");
@@ -239,7 +239,7 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE>
 		buechi.addInternalTransition("q10", "b", "q10");
 		
 		// Fair simulation
-		FairSimulation<String, String> simulation = new FairSimulation<>(service, buechi, true, snf);
+		FairSimulation<String, String> simulation = new FairSimulation<String, String>(service, buechi, true, snf);
 		System.out.println(simulation);
 	}
 
