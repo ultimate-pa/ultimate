@@ -8,7 +8,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.BoogieAstSnippet;
-import de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer.PatternToPea;
+import de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer.BasicTransformer;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
@@ -28,7 +28,7 @@ import srParse.pattern.PatternType;
  */
 public class PatternToPeaTest {
 	
-	private PatternToPea transformer = new PatternToPea();
+	private BasicTransformer transformer = new BasicTransformer();
 
 	@Test
 	public void GlobalInstAbsPatternTest(){

@@ -29,7 +29,7 @@ public class SystemInformation {
 
 	//TODO: this is a hack and should really check if the variable is not in the inputs
 	public boolean isInput(String ident) {
-		return ident.startsWith("I_");
+		return ident.startsWith("I:");
 	}
 	
 	

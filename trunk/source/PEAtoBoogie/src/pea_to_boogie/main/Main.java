@@ -36,6 +36,7 @@ import pea.modelchecking.PEAXML2JConverter;
 import pea_to_boogie.translator.Translator;
 import req_to_pea.ReqToPEA;
 import srParse.srParsePattern;
+import srParse.pattern.PatternType;
 public class Main{
 
 	public static void main (String args[]) {
@@ -50,7 +51,7 @@ public class Main{
 	    	 String reqFilePath = args[0];
 	         String boogieFilePath = args[1];
 	         int combinationNum = Integer.parseInt(args[2]);
-			 srParsePattern[] patterns = new ReqToPEA().genPatterns(reqFilePath);
+			 PatternType[] patterns = new ReqToPEA().genPatterns(reqFilePath);
 	         if (!(1 <= combinationNum & combinationNum <= patterns.length)) {
 	        	 throw new IllegalArgumentException("The valid range of combinationNum is integers in [1, pea.length].");
 	         }
@@ -69,7 +70,7 @@ public class Main{
 	     } else if (args[0].endsWith(".req") && args[1].endsWith(".xml")) {
 	    	 String reqFilePath = args[0];
 	    	 String xmlFilePath = args[1];
-			 srParsePattern[] patterns = new ReqToPEA().genPatterns(reqFilePath);
+			 PatternType[] patterns = new ReqToPEA().genPatterns(reqFilePath);
 	    	 new ReqToPEA().genPEAforUPPAAL(patterns, xmlFilePath);
 	    	 System.out.println("==================================================");
 	    	 System.out.println("Translation to Uppaal xml in "+args[1]+" is done!");

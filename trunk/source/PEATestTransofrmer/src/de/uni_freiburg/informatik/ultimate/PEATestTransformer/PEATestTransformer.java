@@ -8,7 +8,8 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.PEATestTransformer.SPLPatternParser.SPLPatternParser;
+import de.uni_freiburg.informatik.ultimate.PEATestTransformer.SplPatternParser.SplPatternParser;
+import de.uni_freiburg.informatik.ultimate.PeaToBoogieTranslator.Translator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -17,10 +18,9 @@ import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import pea.PhaseEventAutomata;
-import pea_to_boogie.translator.Translator;
 import srParse.pattern.PatternType; 
 
-public class PEATestTransformer implements ISource {
+public class PeaTestTransformer implements ISource {
 	protected Logger mLogger;
 	List<String> m_FileNames = new ArrayList<String>();
 	
@@ -78,7 +78,7 @@ public class PEATestTransformer implements ISource {
 
 	@Override
 	public IElement parseAST(File[] files) throws Exception {
-		SPLPatternParser parser = new SPLPatternParser();
+		SplPatternParser parser = new SplPatternParser();
 		//parse all files with reqs into one list of filled in patterns
 		ArrayList<PatternType> filledPatterns = new ArrayList<PatternType>();
 		for(File f: files){
@@ -92,8 +92,6 @@ public class PEATestTransformer implements ISource {
 		Translator translator = new Translator();
 		BitSet vacuityChecks = new BitSet(peas.length);
 		vacuityChecks.set(0, peas.length);
-		translator.setVacuityChecks(vacuityChecks);
-		translator.setCombinationNum(0);
 		translator.setInputFilePath("dummy");
 		Unit u = translator.genBoogie(peas);
 		return u; 

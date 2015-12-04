@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.PEATestTransformer.SPLPatternParser;
+package de.uni_freiburg.informatik.ultimate.PEATestTransformer.SplPatternParser;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -8,7 +8,7 @@ import de.uni_freiburg.informatik.ultimate.PEATestTransformer.Activator;
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.PreferenceInitializer.PatternTransformerTypes;
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.SystemInformation;
-import de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer.PatternToPea;
+import de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer.BasicTransformer;
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer.SimplePositiveTest;
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer.ClosedWorldTransformator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
@@ -24,7 +24,7 @@ import srParse.pattern.PatternType;
  * @author Langenfeld
  *
  */
-public class SPLPatternParser {
+public class SplPatternParser {
 	
 	/***
 	 * Parse requirements file to array of SPL pattern types.
@@ -52,9 +52,9 @@ public class SPLPatternParser {
 		PatternTransformerTypes ttype =  new UltimatePreferenceStore(Activator.PLUGIN_ID)
 			.getEnum(PreferenceInitializer.LABEL_TRANSFORMER, PreferenceInitializer.PatternTransformerTypes.class);
 		SystemInformation sysInfo = new SystemInformation(); //TODO: this will be parsed from elsewhere!
-		PatternToPea patternToPea;
+		BasicTransformer patternToPea;
 		switch(ttype){
-			case None: patternToPea = new PatternToPea(); 
+			case None: patternToPea = new BasicTransformer(); 
 					break;
 			case SimplePositiveTest: patternToPea = new SimplePositiveTest(sysInfo);
 				break;
@@ -65,6 +65,8 @@ public class SPLPatternParser {
 		}
 		List<PhaseEventAutomata> peas = patternToPea.translate(patterns);
 		return peas.toArray(new PhaseEventAutomata[peas.size()]);
+		//TODO: set parser for peas depending on ttype --> a tranlation type is a combination of pea transformations
+		// and boogie translation
 	}
 	
 

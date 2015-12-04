@@ -23,9 +23,11 @@ import srParse.pattern.PatternType;
  * @author Langenfeld
  *
  */
-public class ClosedWorldTransformator extends PatternToPea {
+public class ClosedWorldTransformator extends BasicTransformer {
 	
 	private SystemInformation sysInfo;
+	private final static String CLOSED_WORLD_PREFIX = "R_";
+	private final static String CLOSED_WORLD_SEPR = "_";
 	
 	public ClosedWorldTransformator(SystemInformation sysInfo){
 		this.sysInfo = sysInfo;
@@ -68,9 +70,9 @@ public class ClosedWorldTransformator extends PatternToPea {
 			//unless one automata allows it		
 			for(int i = 1; i <= this.closedWorldCounter.get(ident); i++){
 				closedWorldContition = closedWorldContition.or(BoogieBooleanExpressionDecision.create(
-							BoogieAstSnippet.createIdentifier("R_"+i+"_"+ident, "ClosedWorldAsumption")
+							BoogieAstSnippet.createIdentifier(CLOSED_WORLD_PREFIX+i+CLOSED_WORLD_SEPR+ident, "ClosedWorldAsumption")
 						));
-				variables.put("R_"+i+"_"+ident, "bool");
+				variables.put(CLOSED_WORLD_PREFIX+i+CLOSED_WORLD_SEPR+ident, "bool");
 			}
 			phase.addTransition(phase, closedWorldContition, new String[]{});
 			peas.add(new PhaseEventAutomata(
@@ -101,11 +103,11 @@ public class ClosedWorldTransformator extends PatternToPea {
 				CDD guard = transition.getGuard();
 				if (guard == CDD.TRUE){
 					transition.setGuard(BoogieBooleanExpressionDecision.create(
-								BoogieAstSnippet.createIdentifier("R_"+this.closedWorldCounter.get(ident)+"_"+ ident, "ClosedWorldAsumption")).negate());
+								BoogieAstSnippet.createIdentifier(CLOSED_WORLD_PREFIX+this.closedWorldCounter.get(ident)+CLOSED_WORLD_SEPR+ ident, "ClosedWorldAsumption")).negate());
 				} else {
 					transition.setGuard(
 							guard.and(BoogieBooleanExpressionDecision.create(
-								BoogieAstSnippet.createIdentifier("R_"+this.closedWorldCounter.get(ident)+"_"+ident, "ClosedWorldAsumption")
+								BoogieAstSnippet.createIdentifier(CLOSED_WORLD_PREFIX+this.closedWorldCounter.get(ident)+CLOSED_WORLD_SEPR+ ident, "ClosedWorldAsumption")
 							).negate()));	
 				}
 			}

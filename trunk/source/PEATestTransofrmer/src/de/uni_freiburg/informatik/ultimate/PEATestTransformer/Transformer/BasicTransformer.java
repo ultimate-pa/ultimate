@@ -26,7 +26,7 @@ import srParse.pattern.UniversalityPattern;
  * TODO: complete rewrite of pattern!
  *
  */
-public class PatternToPea {
+public class BasicTransformer {
 	Trace2PEACompiler compiler = new Trace2PEACompiler();
 	
 	/**

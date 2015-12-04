@@ -14,4 +14,4 @@ Require-Bundle: UltimateCore,
  PEAtoBoogie
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Export-Package: de.uni_freiburg.informatik.ultimate.PEATestTransformer.SPLPatternParser
+Export-Package: de.uni_freiburg.informatik.ultimate.PEATestTransformer.SplPatternParser
