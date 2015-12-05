@@ -28,6 +28,8 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
    org.apache.log4j,
    de.uni_freiburg.informatik.ultimate.core.api",
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction,
+ de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.delayed,
+ de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.direct,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.fair,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.old.vertex,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices,
