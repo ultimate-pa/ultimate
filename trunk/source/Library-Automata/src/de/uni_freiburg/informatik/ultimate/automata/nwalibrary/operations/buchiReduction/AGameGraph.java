@@ -63,11 +63,11 @@ public abstract class AGameGraph<LETTER, STATE> {
 
 	private final HashMap<Vertex<LETTER, STATE>, HashSet<Vertex<LETTER, STATE>>> m_Predecessors;
 
-	private final HashSet<SpoilerVertex<LETTER, STATE>> m_SpoilerVertices;
+	private final IUltimateServiceProvider m_Services;
 	
-	private final HashMap<Vertex<LETTER, STATE>, HashSet<Vertex<LETTER, STATE>>> m_Successors;
+	private final HashSet<SpoilerVertex<LETTER, STATE>> m_SpoilerVertices;
 
-	protected final IUltimateServiceProvider m_Services;
+	private final HashMap<Vertex<LETTER, STATE>, HashSet<Vertex<LETTER, STATE>>> m_Successors;
 	
 	public AGameGraph(final IUltimateServiceProvider services) {
 		m_Services = services;
@@ -186,10 +186,14 @@ public abstract class AGameGraph<LETTER, STATE> {
 	
 	protected abstract void generateGameGraphFromBuechi() throws OperationCanceledException ;
 	
+	protected IUltimateServiceProvider getServiceProvider() {
+		return m_Services;
+	}
+	
 	protected void increaseGlobalInfinity() {
 		m_GlobalInfinity++;
 	}
-	
+
 	protected void setGlobalInfinity(final int globalInfinity) {
 		m_GlobalInfinity = globalInfinity;
 	}

@@ -26,11 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.fair;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.Random;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -104,18 +102,18 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 		result.append("FairSimulationResults fsr = (");
 		
 		// Properties
-		result.append(lineSeparator + "\tuseSCCs = " + m_UseSCCs);
+		result.append(lineSeparator + "\tuseSCCs = " + isUsingSCCs());
 		result.append(lineSeparator + "\tglobalInfinity = " + m_GlobalInfinity);
 		result.append(lineSeparator + "\tstepCounter = " + m_StepCounter);
 		result.append(lineSeparator + "\tbuechi size before = " + m_Buechi.size() + " states");
-		result.append(lineSeparator + "\tbuechi size after = " + this.m_Result.size() + " states");
+		result.append(lineSeparator + "\tbuechi size after = " + getResult().size() + " states");
 		
 		// Progress Measure
 		result.append(lineSeparator + "\tprogress measure = {");
 		for (SpoilerVertex<LETTER, STATE> vertex : m_Game.getSpoilerVertices()) {
 			int localInfinity = m_GlobalInfinity;
-			if (m_UseSCCs) {
-				for (StronglyConnectedComponent<Vertex<LETTER, STATE>> scc : m_SccComp.getSCCs()) {
+			if (isUsingSCCs()) {
+				for (StronglyConnectedComponent<Vertex<LETTER, STATE>> scc : getSccComp().getSCCs()) {
 					if (scc.getNodes().contains(vertex)) {
 						localInfinity = calculateInfinityOfSCC(scc);
 					}
@@ -127,8 +125,8 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 		}
 		for (DuplicatorVertex<LETTER, STATE> vertex : m_Game.getDuplicatorVertices()) {
 			int localInfinity = m_GlobalInfinity;
-			if (m_UseSCCs) {
-				for (StronglyConnectedComponent<Vertex<LETTER, STATE>> scc : m_SccComp.getSCCs()) {
+			if (isUsingSCCs()) {
+				for (StronglyConnectedComponent<Vertex<LETTER, STATE>> scc : getSccComp().getSCCs()) {
 					if (scc.getNodes().contains(vertex)) {
 						localInfinity = calculateInfinityOfSCC(scc);
 					}
@@ -174,7 +172,7 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 	}
 	
 	private void addVertexToWorkingList(final Vertex<LETTER, STATE> vertex) {
-		m_WorkingList.add(vertex);
+		getWorkingList().add(vertex);
 		vertex.setInWL(true);
 	}
 	
@@ -183,8 +181,8 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 		// XXX Remove debugging information
 		if (useDeepDebugPrints) System.out.println("\tInit:");
 				
-		m_WorkingList = new ArrayList<Vertex<LETTER, STATE>>();
-		if (m_UseSCCs) {
+		createWorkingList();
+		if (isUsingSCCs()) {
 			for (Vertex<LETTER, STATE> vertex : scc) {
 				initWorkingListAndCWithVertex(vertex, localInfinity, scc);
 			}
@@ -203,18 +201,18 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 		// TODO Implement priority queue where big PM comes before small PM and
 		// dead end comes before everything
 		if (!m_Game.hasSuccessors(vertex) || vertex.getPriority() == 1
-				|| (m_UseSCCs && m_pokedFromNeighborSCC.contains(vertex))) {
+				|| (isUsingSCCs() && m_pokedFromNeighborSCC.contains(vertex))) {
 			addVertexToWorkingList(vertex);
 			
 			// XXX Remove debugging information
 			if (!m_Game.hasSuccessors(vertex)) {
 				if (useDeepDebugPrints) System.out.println("\t\tIs dead-end, adding to wL: " + vertex);
-			} else if (m_UseSCCs && m_pokedFromNeighborSCC.contains(vertex)) {
+			} else if (isUsingSCCs() && m_pokedFromNeighborSCC.contains(vertex)) {
 				if (useDeepDebugPrints) System.out.println("\t\tWas poked, adding to wL: " + vertex);
 			}
 			
 		}
-		if (m_UseSCCs) {
+		if (isUsingSCCs()) {
 			Set<Vertex<LETTER, STATE>> usedSCCForNeighborCalculation = scc;
 			if (m_pokedFromNeighborSCC.contains(vertex)) {
 				usedSCCForNeighborCalculation = null;
@@ -225,17 +223,23 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 		}
 	}
 
+	private Vertex<LETTER, STATE> pollVertexFromWorkingList() {
+		Vertex<LETTER, STATE> polledState = getWorkingList().poll();
+		polledState.setInWL(false);
+		return polledState;
+	}
+
 	private void printWorkingList() {
 		StringBuilder result = new StringBuilder();
 		String lineSeparator = System.lineSeparator();
 		// Inline
-		if (m_WorkingList.size() <= 1) {
+		if (getWorkingList().size() <= 1) {
 			lineSeparator = "";
 		}
 		
 		// Header
 		result.append("\twL = (");
-		Iterator<Vertex<LETTER, STATE>> iter = m_WorkingList.iterator();
+		Iterator<Vertex<LETTER, STATE>> iter = getWorkingList().iterator();
 		while (iter.hasNext()) {
 			result.append(lineSeparator + "\t\t" + iter.next());
 		}
@@ -243,11 +247,6 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 		result.append(lineSeparator + "\t);");
 		
 		if (useDeepDebugPrints) System.out.println(result);
-	}
-
-	private void removeVertexFromWorkingList(final Vertex<LETTER, STATE> vertex) {
-		m_WorkingList.remove(vertex);
-		vertex.setInWL(false);
 	}
 	
 	private String sccToString(final StronglyConnectedComponent<Vertex<LETTER, STATE>> scc) {
@@ -269,15 +268,9 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 	}
 	
 	@Override
-	protected void clear() {
-		super.clear();
-		m_pokedFromNeighborSCC.clear();
-	}
-	
-	@Override
 	protected void doSimulation() {
 		// XXX Remove debugging information
-		if (useDebugPrints) System.out.println(">Starting minimization, useSCCs: " + m_UseSCCs);
+		if (useDebugPrints) System.out.println(">Starting minimization, useSCCs: " + isUsingSCCs());
 		
 		long startTime = System.currentTimeMillis();
 		long startTimeSCCCalc = 0;
@@ -286,23 +279,25 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 		m_StepCounter = 0;
 		int stepsWorked = 0;
 
-		if (m_UseSCCs) {
+		if (isUsingSCCs()) {
 			// XXX Remove debugging information
 			if (useDebugPrints) System.out.println(">Calculating SCCs...");
 			
 			startTimeSCCCalc = System.currentTimeMillis();
 			m_pokedFromNeighborSCC = new HashSet<Vertex<LETTER, STATE>>();
-			m_SccFactory = new DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>>();
-			m_SuccProvider = new GameGraphSuccessorProvider<LETTER, STATE>(m_Game);
-			m_SccComp = new SccComputation<Vertex<LETTER, STATE>, StronglyConnectedComponent<Vertex<LETTER, STATE>>>(m_Logger, m_SuccProvider,
-					m_SccFactory, m_Game.getSize(), m_Game.getVertices());
+			DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>> sccFactory =
+        			new DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>>();
+        	GameGraphSuccessorProvider<LETTER, STATE> succProvider =
+        			new GameGraphSuccessorProvider<LETTER, STATE>(m_Game);
+			setSccComp(new SccComputation<Vertex<LETTER, STATE>, StronglyConnectedComponent<Vertex<LETTER, STATE>>>(getLogger(), succProvider,
+					sccFactory, m_Game.getSize(), m_Game.getVertices()));
 			durationSCCCalc = System.currentTimeMillis() - startTimeSCCCalc;
 			
 			// XXX Remove debugging information
-			if (useDebugPrints) System.out.println("\tAmount of SCCs: " + m_SccComp.getSCCs().size());
+			if (useDebugPrints) System.out.println("\tAmount of SCCs: " + getSccComp().getSCCs().size());
 			
 			Iterator<StronglyConnectedComponent<Vertex<LETTER, STATE>>> iter =
-					new LinkedList<StronglyConnectedComponent<Vertex<LETTER, STATE>>>(m_SccComp.getSCCs()).iterator();
+					new LinkedList<StronglyConnectedComponent<Vertex<LETTER, STATE>>>(getSccComp().getSCCs()).iterator();
 			
 			// XXX Remove debugging information
 			if (useDebugPrints) System.out.println(">Starting iterations...");
@@ -321,7 +316,7 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 				if (useDeepDebugPrints) System.out.println("Using SCC: " + sccToString(scc));
 				if (useDeepDebugPrints) System.out.println("\tLocal infinity: " + infinityOfSCC);
 				if (stepsWorked % 10_000 == 0) {
-					if (useDebugPrints) System.out.println("Worked " + stepsWorked + " SCCs of " + m_SccComp.getSCCs().size());
+					if (useDebugPrints) System.out.println("Worked " + stepsWorked + " SCCs of " + getSccComp().getSCCs().size());
 				}
 				
 				efficientLiftingAlgorithm(infinityOfSCC, scc.getNodes());
@@ -333,14 +328,14 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 			efficientLiftingAlgorithm(m_GlobalInfinity, null);
 		}
 		// TODO Assign the reduced buechi
-		m_Result = m_Game.generateBuchiAutomatonFromGraph();
+		setResult(m_Game.generateBuchiAutomatonFromGraph());
 
 		long duration = System.currentTimeMillis() - startTime;
-		m_Logger.info((m_UseSCCs ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds.");
+		getLogger().info((isUsingSCCs() ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds.");
 		
 		// XXX Remove debugging information
 		if (useDebugPrints) System.out.println(">Simulation took " + m_StepCounter + " steps and " + duration + "ms.");
-		if (m_UseSCCs) {
+		if (isUsingSCCs()) {
 			if (useDebugPrints) System.out.println(">Calculating SCCs took " + durationSCCCalc + "ms.");
 		}
 		if (useDebugPrints) System.out.println(">Ending minimization.");
@@ -354,18 +349,16 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 		// XXX Remove debugging information
 		printWorkingList();
 		
-		while (!m_WorkingList.isEmpty()) {
+		while (!getWorkingList().isEmpty()) {
 			m_StepCounter++;
 			
-			Random rnd = new Random();
-			Vertex<LETTER, STATE> workingVertex = m_WorkingList.get(rnd.nextInt(m_WorkingList.size()));
-			removeVertexFromWorkingList(workingVertex);
+			Vertex<LETTER, STATE> workingVertex = pollVertexFromWorkingList();
 			
 			// XXX Remove debugging information
 			if (useDeepDebugPrints) System.out.println("\tWorkingVertex: " + workingVertex);
 			
 			Set<Vertex<LETTER, STATE>> usedSCCForNeighborCalculation = scc;
-			if (m_UseSCCs && m_pokedFromNeighborSCC.contains(workingVertex)) {
+			if (isUsingSCCs() && m_pokedFromNeighborSCC.contains(workingVertex)) {
 				usedSCCForNeighborCalculation = null;
 				
 				// XXX Remove debugging information
@@ -412,7 +405,7 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 				// If vertex has newly reached localInfinity and predecessor,
 				// which is a 1-distance neighbor of SCC, is interested
 				boolean pokePossible = false;
-				if (m_UseSCCs && !scc.contains(pred)) {
+				if (isUsingSCCs() && !scc.contains(pred)) {
 					pokePossible = currentProgressMeasure >= localInfinity
 							&& tempProgressMeasure < localInfinity
 							&& !m_pokedFromNeighborSCC.contains(pred);
@@ -481,13 +474,13 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 				}
 			}
 			
-			if (m_UseSCCs && m_pokedFromNeighborSCC.contains(workingVertex)) {
+			if (isUsingSCCs() && m_pokedFromNeighborSCC.contains(workingVertex)) {
 				m_pokedFromNeighborSCC.remove(workingVertex);
 			}
 			
 			// XXX Remove debugging information
 			if (m_StepCounter % 1_000_000 == 0) {
-				if (useDebugPrints) System.out.println("Worked " + m_StepCounter + " steps, wL has size of " + m_WorkingList.size());
+				if (useDebugPrints) System.out.println("Worked " + m_StepCounter + " steps, wL has size of " + getWorkingList().size());
 			}
 		}
 	}

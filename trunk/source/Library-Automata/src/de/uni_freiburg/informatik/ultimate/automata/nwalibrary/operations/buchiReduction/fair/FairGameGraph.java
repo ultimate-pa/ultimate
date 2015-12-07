@@ -119,7 +119,7 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 		// TODO Currently returns a copy of the buechi automata.
 		@SuppressWarnings("unchecked")
 		StateFactory<STATE> snf = (StateFactory<STATE>) new StringFactory();
-		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<LETTER, STATE>(m_Services,
+		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<LETTER, STATE>(getServiceProvider(),
 				m_Buechi.getInternalAlphabet(), null, null, snf);
 
 		// Add states

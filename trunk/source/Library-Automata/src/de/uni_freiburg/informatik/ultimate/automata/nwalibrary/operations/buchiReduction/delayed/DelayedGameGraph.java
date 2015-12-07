@@ -33,14 +33,14 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 	
 	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Buechi;
 	
-	protected final Logger m_Logger;
+	private final Logger m_Logger;
 	
 	public DelayedGameGraph(final IUltimateServiceProvider services,
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi)
 					throws OperationCanceledException {
 		super(services);
 		m_Buechi = buechi;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = getServiceProvider().getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		generateGameGraphFromBuechi();
 	}
 	
@@ -78,8 +78,8 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
             }
         }
 
-        if (m_Services.getProgressMonitorService() != null
-        		&& !m_Services.getProgressMonitorService().continueProcessing()) {
+        if (getServiceProvider().getProgressMonitorService() != null
+        		&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
             m_Logger.debug("Stopped in generateBuchiAutomaton/table filled");
             throw new OperationCanceledException(this.getClass());
         }
@@ -91,7 +91,7 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
         @SuppressWarnings("unchecked")
         StateFactory<STATE> snf = (StateFactory<STATE>) new StringFactory();
         NestedWordAutomaton<LETTER,STATE> result = new NestedWordAutomaton<LETTER,STATE>(
-        		m_Services, m_Buechi.getInternalAlphabet(), null, null, snf);
+        		getServiceProvider(), m_Buechi.getInternalAlphabet(), null, null, snf);
         for (int i = 0; i < states.size(); i++) {
             if (marker[i]) continue;
             temp.clear();
@@ -113,8 +113,8 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
             marker[i] = true;
         }
 
-        if (m_Services.getProgressMonitorService() != null
-        		&& !m_Services.getProgressMonitorService().continueProcessing()) {
+        if (getServiceProvider().getProgressMonitorService() != null
+        		&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
             m_Logger.debug("Stopped in generateBuchiAutomaton/states added to result BA");
             throw new OperationCanceledException(this.getClass());
         }
@@ -145,8 +145,8 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
                     increaseGlobalInfinity();
                 }
             }
-            if (m_Services.getProgressMonitorService() != null &&
-            		!m_Services.getProgressMonitorService().continueProcessing()) {
+            if (getServiceProvider().getProgressMonitorService() != null &&
+            		!getServiceProvider().getProgressMonitorService().continueProcessing()) {
                 m_Logger.debug("Stopped in generateGameGraph/calculating v0 und v1");
                 throw new OperationCanceledException(this.getClass());
             }
@@ -187,8 +187,8 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
                     }
                 }
             }
-            if (m_Services.getProgressMonitorService() != null
-            		&& !m_Services.getProgressMonitorService().continueProcessing()) {
+            if (getServiceProvider().getProgressMonitorService() != null
+            		&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
                 m_Logger.debug("Stopped in generateGameGraph/calculating v0 und v1");
                 throw new OperationCanceledException(this.getClass());
             }

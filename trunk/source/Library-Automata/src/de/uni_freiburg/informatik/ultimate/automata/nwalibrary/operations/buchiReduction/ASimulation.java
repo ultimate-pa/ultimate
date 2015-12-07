@@ -35,10 +35,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.PriorityQueue;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.VertexPmReverseComparator;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.scc.DefaultStronglyConnectedComponentFactory;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation;
@@ -64,24 +65,22 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  */
 public abstract class ASimulation<LETTER,STATE> {
 	
-	protected final Logger m_Logger;
+	private final Logger m_Logger;
 	
-	protected NestedWordAutomaton<LETTER, STATE> m_Result;
+	private NestedWordAutomaton<LETTER, STATE> m_Result;
 	
-    protected SccComputation<Vertex<LETTER, STATE>,
+	private SccComputation<Vertex<LETTER, STATE>,
 		StronglyConnectedComponent<Vertex<LETTER, STATE>>> m_SccComp;
     
-    protected DefaultStronglyConnectedComponentFactory<Vertex<LETTER,STATE>> m_SccFactory;
-    
-    protected final IUltimateServiceProvider m_Services;
+	private final IUltimateServiceProvider m_Services;
 
-    protected final StateFactory<STATE> m_StateFactory;
+	private final StateFactory<STATE> m_StateFactory;
+
+	private final boolean m_UseSCCs;
+
+	private VertexPmReverseComparator<LETTER, STATE> m_VertexComp;
 	
-	protected GameGraphSuccessorProvider<LETTER, STATE> m_SuccProvider;
-
-	protected final boolean m_UseSCCs;
-
-	protected ArrayList<Vertex<LETTER, STATE>> m_WorkingList;
+	private PriorityQueue<Vertex<LETTER, STATE>> m_WorkingList;
     
     public ASimulation(final IUltimateServiceProvider services,
     		final boolean useSCCs, final StateFactory<STATE> stateFactory)
@@ -90,14 +89,17 @@ public abstract class ASimulation<LETTER,STATE> {
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_UseSCCs = useSCCs;
         m_StateFactory = stateFactory;
+        m_VertexComp = new VertexPmReverseComparator<LETTER, STATE>();
 		
 		m_SccComp = null;
-		m_SccFactory = null;
-		m_SuccProvider = null;
     }
     
     public NestedWordAutomaton<LETTER, STATE> getResult() {
 		return m_Result;
+	}
+    
+	public StateFactory<STATE> getStateFactory() {
+		return m_StateFactory;
 	}
     
 	protected int calcBestNghbMeasure(final Vertex<LETTER, STATE> vertex,
@@ -162,13 +164,8 @@ public abstract class ASimulation<LETTER,STATE> {
 		return localInfinity;
 	}
     
-	protected void clear() {
-		getGameGraph().clear();
-		m_WorkingList.clear();
-		m_Result = null;
-		m_SccComp = null;
-		m_SccFactory = null;
-		m_SuccProvider = null;
+	protected void createWorkingList() {
+		m_WorkingList = new PriorityQueue<Vertex<LETTER, STATE>>(m_VertexComp);
 	}
     
 	protected int decreaseVector(final int index, final int vector,
@@ -186,10 +183,12 @@ public abstract class ASimulation<LETTER,STATE> {
 	protected void doSimulation() throws OperationCanceledException {
     	long startTime = System.currentTimeMillis();
         if(m_UseSCCs) { // calculate reduction with SCC
-        	m_SccFactory = new DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>>();
-			m_SuccProvider = new GameGraphSuccessorProvider<LETTER, STATE>(getGameGraph());
-			m_SccComp = new SccComputation<Vertex<LETTER, STATE>, StronglyConnectedComponent<Vertex<LETTER, STATE>>>(m_Logger, m_SuccProvider,
-					m_SccFactory, getGameGraph().getSize(), getGameGraph().getVertices());
+        	DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>> sccFactory =
+        			new DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>>();
+        	GameGraphSuccessorProvider<LETTER, STATE> succProvider =
+        			new GameGraphSuccessorProvider<LETTER, STATE>(getGameGraph());
+			m_SccComp = new SccComputation<Vertex<LETTER, STATE>, StronglyConnectedComponent<Vertex<LETTER, STATE>>>(m_Logger, succProvider,
+					sccFactory, getGameGraph().getSize(), getGameGraph().getVertices());
 			
             Iterator<StronglyConnectedComponent<Vertex<LETTER, STATE>>> iter =
             		new LinkedList<StronglyConnectedComponent<Vertex<LETTER, STATE>>>(m_SccComp.getSCCs()).iterator();
@@ -202,19 +201,18 @@ public abstract class ASimulation<LETTER,STATE> {
             efficientLiftingAlgorithm(getGameGraph().getGlobalInfinity(), null);
         }
         m_Result = getGameGraph().generateBuchiAutomatonFromGraph();
-        clear();
         long duration = System.currentTimeMillis() - startTime;
         m_Logger.info((this.m_UseSCCs ? "SCC version" : "nonSCC version") + 
         		" took " + duration + " milliseconds.");
     }
-    
+	
 	protected void efficientLiftingAlgorithm(final int l_inf,
 			final Set<Vertex<LETTER,STATE>> scc) throws OperationCanceledException {
         // init STATE in all vertices and create the working list
 		AGameGraph<LETTER, STATE> game = getGameGraph();
 		int globalInfinity = game.getGlobalInfinity();
 		
-        m_WorkingList = new ArrayList<Vertex<LETTER, STATE>>();
+		createWorkingList();
         if(m_UseSCCs) {
           HashSet<Vertex<LETTER,STATE>> notDeadEnd = new HashSet<Vertex<LETTER, STATE>>();
           for (Vertex<LETTER,STATE> v : scc) {
@@ -247,7 +245,7 @@ public abstract class ASimulation<LETTER,STATE> {
             m_WorkingList.addAll(notDeadEnd);
         }
         while (!m_WorkingList.isEmpty()) {
-            Vertex<LETTER,STATE> v = m_WorkingList.remove(m_WorkingList.size() - 1);
+            Vertex<LETTER,STATE> v = m_WorkingList.poll();
             v.setInWL(false);
             int t = v.getPM(scc, globalInfinity);
             v.setBEff(calcBestNghbMeasure(v, l_inf, scc));
@@ -284,7 +282,19 @@ public abstract class ASimulation<LETTER,STATE> {
         }
     }
     
-	protected abstract AGameGraph<LETTER, STATE> getGameGraph();
+    protected abstract AGameGraph<LETTER, STATE> getGameGraph();
+
+	protected Logger getLogger() {
+		return m_Logger;
+	}
+
+	protected SccComputation<Vertex<LETTER, STATE>, StronglyConnectedComponent<Vertex<LETTER, STATE>>> getSccComp() {
+		return m_SccComp;
+	}
+
+	protected PriorityQueue<Vertex<LETTER, STATE>> getWorkingList() {
+		return m_WorkingList;
+	}
 	
 	protected int increaseVector(final int index, final int vector,
 			final int localInfinity) {
@@ -301,8 +311,21 @@ public abstract class ASimulation<LETTER,STATE> {
 			return decreaseVector(index, vector, localInfinity);
 		}
 	}
-    
-    protected int update(final Vertex<LETTER,STATE> v, final int l_inf,
+
+	protected boolean isUsingSCCs() {
+		return m_UseSCCs;
+	}
+
+	protected void setResult(final NestedWordAutomaton<LETTER, STATE> result) {
+		m_Result = result;
+	}
+	
+	protected void setSccComp(
+			final SccComputation<Vertex<LETTER, STATE>, StronglyConnectedComponent<Vertex<LETTER, STATE>>> sccComp) {
+		m_SccComp = sccComp;
+	}
+
+	protected int update(final Vertex<LETTER,STATE> v, final int l_inf,
 			final Set<Vertex<LETTER, STATE>> scc) {
         return increaseVector(v.getPriority(), calcBestNghbMeasure(v, l_inf, scc), l_inf);
     }
