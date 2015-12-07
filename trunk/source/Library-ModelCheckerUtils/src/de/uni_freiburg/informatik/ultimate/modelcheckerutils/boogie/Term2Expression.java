@@ -70,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Trigger;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
 /**
@@ -94,6 +95,8 @@ public class Term2Expression implements Serializable {
 	private final TypeSortTranslator m_TypeSortTranslator;
 	
 	private final Boogie2SmtSymbolTable m_Boogie2SmtSymbolTable;
+	
+
 	
 	
 	public Term2Expression(TypeSortTranslator tsTranslation, 
@@ -144,7 +147,7 @@ public class Term2Expression implements Serializable {
 			return translateSelect(term);
 		} else if (symb.isIntern() && symb.getName().equals("store")) {
 			return translateStore(term);
-		} else if (symb.isIntern() && symb.getName().startsWith("bv") && symb.getIndices().length == 1) {
+		} else if (BitvectorUtils.isBitvectorConstant(symb)) {
 			return translateBitvectorConstant(term);
 		}
 		Expression[] params = new Expression[termParams.length];

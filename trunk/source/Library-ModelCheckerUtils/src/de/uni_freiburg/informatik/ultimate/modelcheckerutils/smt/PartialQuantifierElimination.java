@@ -413,9 +413,27 @@ public class PartialQuantifierElimination {
 			Set<TermVariable> connectedVars = SmtUtils.getFreeVars(connectedTerms);
 			boolean isSuperfluous;
 			if (quantifier == QuantifiedFormula.EXISTS) {
-				isSuperfluous = isSuperfluousConjunction(script, connectedTerms, connectedVars, vars);
+				Term simplified = isSuperfluousConjunction(script, connectedTerms, connectedVars, vars);
+				if (SmtUtils.isTrue(simplified)) {
+					isSuperfluous = true;
+				} else if (SmtUtils.isFalse(simplified)) {
+					return simplified;
+				} else if (simplified == null) {
+					isSuperfluous = false;
+				} else {
+					throw new AssertionError("illegal case");
+				}
 			} else if (quantifier == QuantifiedFormula.FORALL) {
-				isSuperfluous = isSuperfluousDisjunction(script, connectedTerms, connectedVars, vars);
+				Term simplified = isSuperfluousDisjunction(script, connectedTerms, connectedVars, vars);
+				if (SmtUtils.isFalse(simplified)) {
+					isSuperfluous = true;
+				} else if (SmtUtils.isTrue(simplified)) {
+					return simplified;
+				} else if (simplified == null) {
+					isSuperfluous = false;
+				} else {
+					throw new AssertionError("illegal case");
+				}
 			} else {
 				throw new AssertionError("unknown quantifier");
 			}
@@ -473,33 +491,45 @@ public class PartialQuantifierElimination {
 	}
 
 	/**
-	 * Return true if connectedVars is a subset of quantifiedVars and the
+	 * Return "true" if connectedVars is a subset of quantifiedVars and the
 	 * conjunction of terms is satisfiable.
+	 * Return "false" if connectedVars is a subset of quantifiedVars and the
+	 * conjunction of terms is not satisfiable.
+	 * Return null otherwise
 	 */
-	public static boolean isSuperfluousConjunction(Script script, Set<Term> terms, Set<TermVariable> connectedVars,
+	public static Term isSuperfluousConjunction(Script script, Set<Term> terms, Set<TermVariable> connectedVars,
 			Set<TermVariable> quantifiedVars) {
 		if (quantifiedVars.containsAll(connectedVars)) {
 			Term conjunction = Util.and(script, terms.toArray(new Term[terms.size()]));
-			if (Util.checkSat(script, conjunction) == LBool.SAT) {
-				return true;
+			LBool isSat = Util.checkSat(script, conjunction);
+			if (isSat == LBool.SAT) {
+				return script.term("true");
+			} else if (isSat == LBool.UNSAT) {
+				return script.term("false");
 			}
 		}
-		return false;
+		return null;
 	}
 
 	/**
-	 * Return true if connectedVars is a subset of quantifiedVars and the
-	 * disjunction of terms is not valid.
+	 * Return "false" if connectedVars is a subset of quantifiedVars and the
+	 * conjunction of terms is not valid.
+	 * Return "true" if connectedVars is a subset of quantifiedVars and the
+	 * conjunction of terms is valid.
+	 * Return null otherwise
 	 */
-	public static boolean isSuperfluousDisjunction(Script script, Set<Term> terms, Set<TermVariable> connectedVars,
+	public static Term isSuperfluousDisjunction(Script script, Set<Term> terms, Set<TermVariable> connectedVars,
 			Set<TermVariable> quantifiedVars) {
 		if (quantifiedVars.containsAll(connectedVars)) {
 			Term disjunction = Util.or(script, terms.toArray(new Term[terms.size()]));
-			if (Util.checkSat(script, Util.not(script, disjunction)) == LBool.SAT) {
-				return true;
+			LBool isSat = Util.checkSat(script, Util.not(script, disjunction));
+			if (isSat == LBool.SAT) {
+				return script.term("false");
+			} else if (isSat == LBool.UNSAT) {
+				return script.term("true");
 			}
 		}
-		return false;
+		return null;
 	}
 
 

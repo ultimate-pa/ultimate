@@ -30,9 +30,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.GameGraph;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Player0Vertex;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Player1Vertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.AGameGraph;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
@@ -46,105 +46,15 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  * @param <LETTER>
  * @param <STATE>
  */
-public final class FairGameGraph<LETTER, STATE> extends GameGraph<LETTER, STATE> {
+public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	
-	private INestedWordAutomatonOldApi<LETTER, STATE> buechi;
-
-	private int globalInfinity = 0;
-
-	public FairGameGraph(IUltimateServiceProvider services, INestedWordAutomatonOldApi<LETTER, STATE> thatBuechi) {
+	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Buechi;
+	
+	public FairGameGraph(final IUltimateServiceProvider services,
+			final INestedWordAutomatonOldApi<LETTER, STATE> buechi) {
 		super(services);
-		buechi = thatBuechi;
+		m_Buechi = buechi;
 		generateGameGraphFromBuechi();
-	}
-
-	public int getGlobalInfinity() {
-		return globalInfinity;
-	}
-	
-	@Override
-	protected byte calculatePriority(STATE leftState, STATE rightState) {
-		if (buechi.isFinal(rightState)) {
-			return (byte) 0;
-		} else if (buechi.isFinal(leftState)) {
-			return (byte) 1;
-		} else {
-			return (byte) 2;
-		}
-	}
-	
-	@Override
-	protected void generateGameGraphFromBuechi() {
-		// Generate states
-		for (STATE leftState : buechi.getStates()) {
-			for (STATE rightState : buechi.getStates()) {
-				// Generate V_1 states
-				byte priority = calculatePriority(leftState, rightState);
-				if (priority == (byte) 1) {
-					globalInfinity++;
-				}
-				Player1Vertex<LETTER, STATE> v1e =
-						new Player1Vertex<LETTER, STATE>(priority, false, leftState, rightState);
-				addPlayer1State(v1e);
-				
-				// Generate V_0 states
-				for (LETTER letter : buechi.lettersInternalIncoming(leftState)) {
-					Player0Vertex<LETTER, STATE> v0e =
-							new Player0Vertex<LETTER, STATE>((byte) 2, false, leftState, rightState, letter);
-					addPlayer0State(v0e);
-				}
-			}
-		}
-
-		globalInfinity++;
-
-		// Generate edges
-		for (STATE edgeDestination : buechi.getStates()) {
-			for (IncomingInternalTransition<LETTER, STATE> transition : buechi.internalPredecessors(edgeDestination)) {
-				for (STATE fixState : buechi.getStates()) {
-					// Duplicator edges V_0 -> V_1
-					Vertex<LETTER, STATE> origin = getPlayer0State(fixState, transition.getPred(), transition.getLetter());
-					Vertex<LETTER, STATE> destination = getPlayer1State(fixState, edgeDestination);
-					if (origin != null && destination != null) {
-						addEdge(origin, destination);
-					}
-
-					// Spoiler edges V_1 -> V_0
-					origin = getPlayer1State(transition.getPred(), fixState);
-					destination = getPlayer0State(edgeDestination, fixState, transition.getLetter());
-					if (origin != null && destination != null) {
-						addEdge(origin, destination);
-					}
-					// TODO Can Null-Pointer occur? Can it link trivial edges
-					// like V_0 -> V_1 where origin has no predecessors?
-					// Can we generate edges at the same time we generate
-					// states?
-				}
-			}
-		}
-	}
-	
-	@Override
-	protected NestedWordAutomaton<LETTER, STATE> generateBuchiAutomatonFromGraph() {
-		// TODO Currently returns a copy of the buechi automata.
-		StateFactory<STATE> snf = (StateFactory<STATE>) new StringFactory();
-		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<LETTER, STATE>(m_Services,
-				buechi.getInternalAlphabet(), null, null, snf);
-
-		// Add states
-		for (STATE state : buechi.getStates()) {
-			result.addState(buechi.isInitial(state), buechi.isFinal(state), state);
-		}
-
-		// Add edges
-		for (STATE origin : buechi.getStates()) {
-			for (OutgoingInternalTransition<LETTER, STATE> edge : buechi.internalSuccessors(origin)) {
-				if (edge != null) {
-					result.addInternalTransition(origin, edge.getLetter(), edge.getSucc());
-				}
-			}
-		}
-		return result;
 	}
 	
 	@Override
@@ -155,33 +65,33 @@ public final class FairGameGraph<LETTER, STATE> extends GameGraph<LETTER, STATE>
 		result.append("FairGameGraph fgg = (");
 		
 		// States
-		result.append(lineSeparator + "\tplayer1Vertices = {");
-		for (Player1Vertex<LETTER, STATE> state : getPlayer1States()) {
-			result.append(lineSeparator + "\t\t<(" + state.getQ0()
-				+ ", " + state.getQ1() + "), p:" + state.getPriority() + ">");
+		result.append(lineSeparator + "\tSpoilerVertices = {");
+		for (SpoilerVertex<LETTER, STATE> vertex : getSpoilerVertices()) {
+			result.append(lineSeparator + "\t\t<(" + vertex.getQ0()
+				+ ", " + vertex.getQ1() + "), p:" + vertex.getPriority() + ">");
 		}
 		result.append(lineSeparator + "\t},");
-		result.append(lineSeparator + "\tplayer0Vertices = {");
-		for (Player0Vertex<LETTER, STATE> state : getPlayer0States()) {
-			result.append(lineSeparator + "\t\t<(" + state.getQ0()
-				+ ", " + state.getQ1() + ", " + state.getLetter()
-				+ "), p:" + state.getPriority() + ">");
+		result.append(lineSeparator + "\tDuplicatorVertices = {");
+		for (DuplicatorVertex<LETTER, STATE> vertex : getDuplicatorVertices()) {
+			result.append(lineSeparator + "\t\t<(" + vertex.getQ0()
+				+ ", " + vertex.getQ1() + ", " + vertex.getLetter()
+				+ "), p:" + vertex.getPriority() + ">");
 		}
 		result.append(lineSeparator + "\t},");
 		
 		// Edges
-		result.append(lineSeparator + "\ttransitions = {");
-		for (Vertex<LETTER, STATE> state : getNonDeadEndStates()) {
-			for (Vertex<LETTER, STATE> successor : getSuccessors(state)) {
-				result.append(lineSeparator + "\t\t(" + state.getQ0() + ", " + state.getQ1());
-				if (state instanceof Player0Vertex) {
-					Player0Vertex<LETTER, STATE> stateAsPlayer0 = (Player0Vertex<LETTER, STATE>) state;
-					result.append(", " + stateAsPlayer0.getLetter());
+		result.append(lineSeparator + "\tedges = {");
+		for (Vertex<LETTER, STATE> vertex : getNonDeadEndVertices()) {
+			for (Vertex<LETTER, STATE> succ : getSuccessors(vertex)) {
+				result.append(lineSeparator + "\t\t(" + vertex.getQ0() + ", " + vertex.getQ1());
+				if (vertex instanceof DuplicatorVertex) {
+					DuplicatorVertex<LETTER, STATE> vertexAsDuplicatorVertex = (DuplicatorVertex<LETTER, STATE>) vertex;
+					result.append(", " + vertexAsDuplicatorVertex.getLetter());
 				}
-				result.append(")\t--> (" + successor.getQ0() + ", " + successor.getQ1());
-				if (successor instanceof Player0Vertex) {
-					Player0Vertex<LETTER, STATE> successorAsPlayer0 = (Player0Vertex<LETTER, STATE>) successor;
-					result.append(", " + successorAsPlayer0.getLetter());
+				result.append(")\t--> (" + succ.getQ0() + ", " + succ.getQ1());
+				if (succ instanceof DuplicatorVertex) {
+					DuplicatorVertex<LETTER, STATE> vertexAsDuplicatorVertex = (DuplicatorVertex<LETTER, STATE>) succ;
+					result.append(", " + vertexAsDuplicatorVertex.getLetter());
 				}
 				result.append(")");
 			}
@@ -192,5 +102,89 @@ public final class FairGameGraph<LETTER, STATE> extends GameGraph<LETTER, STATE>
 		result.append(lineSeparator + ");");
 		
 		return result.toString();
+	}
+	
+	private int calculatePriority(final STATE leftState, final STATE rightState) {
+		if (m_Buechi.isFinal(rightState)) {
+			return 0;
+		} else if (m_Buechi.isFinal(leftState)) {
+			return 1;
+		} else {
+			return 2;
+		}
+	}
+	
+	@Override
+	protected NestedWordAutomaton<LETTER, STATE> generateBuchiAutomatonFromGraph() {
+		// TODO Currently returns a copy of the buechi automata.
+		@SuppressWarnings("unchecked")
+		StateFactory<STATE> snf = (StateFactory<STATE>) new StringFactory();
+		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<LETTER, STATE>(getServiceProvider(),
+				m_Buechi.getInternalAlphabet(), null, null, snf);
+
+		// Add states
+		for (STATE state : m_Buechi.getStates()) {
+			result.addState(m_Buechi.isInitial(state), m_Buechi.isFinal(state), state);
+		}
+
+		// Add edges
+		for (STATE src : m_Buechi.getStates()) {
+			for (OutgoingInternalTransition<LETTER, STATE> trans : m_Buechi.internalSuccessors(src)) {
+				if (trans != null) {
+					result.addInternalTransition(src, trans.getLetter(), trans.getSucc());
+				}
+			}
+		}
+		return result;
+	}
+	
+	@Override
+	protected void generateGameGraphFromBuechi() {
+		// Generate states
+		for (STATE leftState : m_Buechi.getStates()) {
+			for (STATE rightState : m_Buechi.getStates()) {
+				// Generate Spoiler vertices
+				int priority = calculatePriority(leftState, rightState);
+				if (priority == 1) {
+					increaseGlobalInfinity();
+				}
+				SpoilerVertex<LETTER, STATE> spoilerVertex =
+						new SpoilerVertex<LETTER, STATE>(priority, false, leftState, rightState);
+				addSpoilerVertex(spoilerVertex);
+				
+				// Generate Duplicator vertices
+				for (LETTER letter : m_Buechi.lettersInternalIncoming(leftState)) {
+					DuplicatorVertex<LETTER, STATE> duplicatorVertex =
+							new DuplicatorVertex<LETTER, STATE>(2, false, leftState, rightState, letter);
+					addDuplicatorVertex(duplicatorVertex);
+				}
+			}
+		}
+
+		increaseGlobalInfinity();
+
+		// Generate edges
+		for (STATE edgeDest : m_Buechi.getStates()) {
+			for (IncomingInternalTransition<LETTER, STATE> trans : m_Buechi.internalPredecessors(edgeDest)) {
+				for (STATE fixState : m_Buechi.getStates()) {
+					// Duplicator edges
+					Vertex<LETTER, STATE> src = getDuplicatorVertex(fixState, trans.getPred(), trans.getLetter(), false);
+					Vertex<LETTER, STATE> dest = getSpoilerVertex(fixState, edgeDest, false);
+					if (src != null && dest != null) {
+						addEdge(src, dest);
+					}
+
+					// Spoiler edges
+					src = getSpoilerVertex(trans.getPred(), fixState, false);
+					dest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(), false);
+					if (src != null && dest != null) {
+						addEdge(src, dest);
+					}
+					// TODO Can Null-Pointer occur? Can it link trivial edges
+					// like V_0 -> V_1 where origin has no predecessors?
+					// TODO Can we generate edges at the same time we generate states?
+				}
+			}
+		}
 	}
 }

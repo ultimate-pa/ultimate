@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2015 Christian Schilling (schillic@informatik.uni-freiburg.de)
- * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2011-2015 Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
+ * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2015 Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
@@ -30,7 +31,7 @@
  * "Fair simulation relations, parity games and state space reduction for
  * Buchi automata" - Etessami, Wilke and Schuller.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.delayed;
 
 import org.apache.log4j.Logger;
 
@@ -42,17 +43,20 @@ import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
- * @author heizmann@informatik.uni-freiburg.de
- * @author schillic@informatik.uni-freiburg.de
-
+ * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
+ * @author Oleksii Saukh (saukho@informatik.uni-freiburg.de)
+ * @date 10.12.2011
  */
-public class MinimizeDfaSimulation<LETTER,STATE> implements IOperation<LETTER,STATE> {
+public class BuchiReduce<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	private final IUltimateServiceProvider m_Services;
 	private final Logger m_Logger;
-
+    /**
+     * The resulting Buchi automaton.
+     */
     private INestedWordAutomatonOldApi<LETTER,STATE> m_Result;
     /**
      * The input automaton.
@@ -66,20 +70,28 @@ public class MinimizeDfaSimulation<LETTER,STATE> implements IOperation<LETTER,ST
      *            the automaton to reduce
      * @throws OperationCanceledException 
      */
-    public MinimizeDfaSimulation(IUltimateServiceProvider services, 
-    		StateFactory<STATE> stateFactory, INestedWordAutomatonOldApi<LETTER,STATE> operand)
-            throws AutomataLibraryException {
+    public BuchiReduce(IUltimateServiceProvider services, StateFactory<STATE> stateFactory, INestedWordAutomatonOldApi<LETTER,STATE> operand)
+            throws OperationCanceledException {
     	m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
     	m_Operand = operand;
         m_Logger.info(startMessage());
         
-        m_Result = new DirectSimulation<LETTER,STATE>(m_Services, m_Operand, true, stateFactory).result;
+        // Remove dead ends. 
+        // Removal of dead ends is no optimization but a requirement for
+        // correctness of the algorithm
+        m_Operand = new ReachableStatesCopy<LETTER,STATE>(m_Services, operand,false,false,true,false).getResult();
+    	if(m_Logger.isDebugEnabled()) {
+	    	StringBuilder msg = new StringBuilder();
+	        msg.append(" W/O dead ends ").append(m_Operand.sizeInformation());
+	        m_Logger.debug(msg.toString());
+    	}
+        m_Result = new DelayedSimulation<LETTER,STATE>(m_Services, m_Operand, true, stateFactory).getResult();
         
         boolean compareWithNonSccResult = false;
         if (compareWithNonSccResult) {
         	NestedWordAutomaton<LETTER,STATE> nonSCCresult = 
-        			new DirectSimulation<LETTER,STATE>(m_Services, m_Operand, false, stateFactory).result;
+        			new DelayedSimulation<LETTER,STATE>(m_Services, m_Operand, false, stateFactory).getResult();
         	if (m_Result.size() != nonSCCresult.size()) {
         		throw new AssertionError();
         	}
@@ -90,7 +102,7 @@ public class MinimizeDfaSimulation<LETTER,STATE> implements IOperation<LETTER,ST
     
     @Override
     public String operationName() {
-        return "minimizeDfaSimulation";
+        return "reduceBuchi";
     }
 
     @Override
@@ -113,14 +125,6 @@ public class MinimizeDfaSimulation<LETTER,STATE> implements IOperation<LETTER,ST
 	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		m_Logger.info("Start testing correctness of " + operationName());
-		boolean correct = true;
-		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Operand, m_Result, stateFactory) == null);
-		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Result, m_Operand, stateFactory) == null);
-		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(m_Services, operationName() + "Failed", "", m_Operand);
-		}
-		m_Logger.info("Finished testing correctness of " + operationName());
-		return correct;
+		return ResultChecker.reduceBuchi(m_Services, m_Operand, m_Result);
 	}
 }

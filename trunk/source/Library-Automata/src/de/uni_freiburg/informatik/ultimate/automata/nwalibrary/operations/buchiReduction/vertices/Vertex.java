@@ -45,7 +45,7 @@ public class Vertex<LETTER,STATE> {
     /**
      * The priority of this vertex.
      */
-    private byte priority;
+    private int priority;
     /**
      * The progressMeasure for Jurdzinski lifting function.
      */
@@ -75,7 +75,7 @@ public class Vertex<LETTER,STATE> {
      * @param q1
      *            label of the second Buchi automaton state
      */
-    public Vertex(byte priority, boolean b, STATE q0, STATE q1) {
+    public Vertex(int priority, boolean b, STATE q0, STATE q1) {
         this.q0 = q0;
         this.q1 = q1;
         this.b = b;
@@ -118,7 +118,7 @@ public class Vertex<LETTER,STATE> {
      * 
      * @return the priority
      */
-    public byte getPriority() {
+    public int getPriority() {
         return priority;
     }
 
@@ -199,21 +199,21 @@ public class Vertex<LETTER,STATE> {
     }
 
     /**
-     * Returns false if in v0 and true if in v1.
+     * Returns false if duplicator and true if in spoiler vertex.
      * 
-     * @return false if in v0 and true if in v1
+     * @return false if duplicator and true if in spoiler vertex
      */
-    public boolean isInV1() {
-        return !(this instanceof Player0Vertex);
+    public boolean isSpoilerVertex() {
+        return !(this instanceof DuplicatorVertex);
     }
     
     /**
-     * Returns true if in v0 and false if in v1.
+     * Returns true if duplicator and false if in spoiler vertex.
      * 
-     * @return true if in v0 and false if in v1
+     * @return true if duplicator and false if in spoiler vertex
      */
-    public boolean isInV0() {
-        return this instanceof Player0Vertex;
+    public boolean isDuplicatorVertex() {
+        return this instanceof DuplicatorVertex;
     }
 
     /**

@@ -24,37 +24,8 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction;
-
-import java.util.HashSet;
-import java.util.Iterator;
-
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
-import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorProvider;
-
 /**
- * Doc comes later.
- * 
- * @author Daniel Tischner
- *
- * @param <LETTER>
- * @param <STATE>
+ * This packages contains classes to reduce buechi automata using delayed
+ * simulation.
  */
-public final class GameGraphSuccessorProvider<LETTER, STATE> implements ISuccessorProvider<Vertex<LETTER, STATE>> {
-	
-	private final AGameGraph<LETTER, STATE> m_Graph;
-	
-	public GameGraphSuccessorProvider(final AGameGraph<LETTER, STATE> graph) {
-		m_Graph = graph;
-	}
-
-	@Override
-	public Iterator<Vertex<LETTER, STATE>> getSuccessors(final Vertex<LETTER, STATE> vertex) {
-		if (m_Graph.hasSuccessors(vertex)) {
-			return m_Graph.getSuccessors(vertex).iterator();
-		} else {
-			return new HashSet<Vertex<LETTER, STATE>>().iterator();
-		}
-	}
-
-}
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.delayed;
