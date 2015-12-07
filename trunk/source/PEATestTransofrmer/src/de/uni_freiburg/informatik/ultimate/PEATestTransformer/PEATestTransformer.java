@@ -9,6 +9,7 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.SplPatternParser.SplPatternParser;
+import de.uni_freiburg.informatik.ultimate.PeaToBoogieTranslator.BasicTranslator;
 import de.uni_freiburg.informatik.ultimate.PeaToBoogieTranslator.Translator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
@@ -89,11 +90,8 @@ public class PeaTestTransformer implements ISource {
 		PhaseEventAutomata[] peas = parser.generatePEA(filledPatterns);
 		//transform to boogie
 		//TODO:write more modifiable translator
-		Translator translator = new Translator();
-		BitSet vacuityChecks = new BitSet(peas.length);
-		vacuityChecks.set(0, peas.length);
-		translator.setInputFilePath("dummy");
-		Unit u = translator.genBoogie(peas);
+		BasicTranslator bt = new BasicTranslator(peas);
+		Unit u = bt.generateBoogieTranslation();
 		return u; 
 	}
 

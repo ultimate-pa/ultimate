@@ -7,6 +7,7 @@ import java.util.List;
 import java_cup.runtime.Symbol;
 import pea.PhaseEventAutomata;
 import pea.modelchecking.J2UPPAALConverter;
+import pea.reqCheck.PatternToPEA;
 import srParse.ReqParser;
 import srParse.pattern.PatternType;
 
@@ -25,12 +26,14 @@ public class ReqToPEA {
     
 	public PhaseEventAutomata[] genPEA(PatternType[] patterns){
 		List<PhaseEventAutomata> peaList = new ArrayList<PhaseEventAutomata>();
-			
+		
+		PatternToPEA peaTrans=new PatternToPEA();
 		for(PatternType pat : patterns)
 		{
 			// ignore patterns with syntax errors
 			if (pat == null)
 				continue;
+			pat.setPeaTransformator( peaTrans );
 			PhaseEventAutomata pea=pat.transformToPea();
 			peaList.add(pea);
 		}
