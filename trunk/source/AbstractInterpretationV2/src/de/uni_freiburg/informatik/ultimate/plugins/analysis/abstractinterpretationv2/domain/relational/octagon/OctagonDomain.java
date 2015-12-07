@@ -1,5 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
+import org.apache.log4j.Logger;
+
+import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
@@ -7,6 +10,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class OctagonDomain implements IAbstractDomain<OctagonDomainState, CodeBlock, IBoogieVar> {
+
+	private final BoogieSymbolTable mSymbolTable;
+	private final Logger mLogger;
+
+	public OctagonDomain(Logger logger, BoogieSymbolTable symbolTable) {
+		mLogger = logger;
+		mSymbolTable = symbolTable;
+	}
 
 	@Override
 	public OctagonDomainState createFreshState() {
@@ -30,8 +41,7 @@ public class OctagonDomain implements IAbstractDomain<OctagonDomainState, CodeBl
 
 	@Override
 	public IAbstractPostOperator<OctagonDomainState, CodeBlock, IBoogieVar> getPostOperator() {
-		throw new UnsupportedOperationException("Not yet implemented");
+		return new OctPostOperator(mLogger, mSymbolTable);
 	}
-
 	
 }
