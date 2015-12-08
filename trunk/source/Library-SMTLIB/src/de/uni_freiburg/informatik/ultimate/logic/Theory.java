@@ -484,6 +484,8 @@ public class Theory {
 	public Term string(String value) {
 		return constant(new QuotedObject(value), mStringSort);
 	}
+	
+	//TODO:fp: Term float 
 
 	/******************** LOGICS AND THEORIES ********************************/
 	public Logics getLogic() {
@@ -595,7 +597,7 @@ public class Theory {
 			public int getFlags(
 					BigInteger[] indices, Sort[] paramSorts, Sort resultSort) {
 				return mFlags;
-			}
+			} //XXX: for what are the params?
 
 			public Sort getResultSort(
 					BigInteger[] indices, Sort[] paramSorts, Sort resultSort) {
@@ -842,7 +844,7 @@ public class Theory {
 	}
 	
 	private void createFloatingPointOperators() {
-	
+		//TODO: implement operators, Rounding modes
 	}
 	
 	private void setLogic(Logics logic) {
