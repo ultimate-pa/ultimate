@@ -31,5 +31,5 @@ NestedWordAutomaton lcbautomaton01 = (
 );
 
 print(loopComplexity(lcbautomaton01));
-print(loopComplexityPeakOptimization(lcbautomaton01));
-assert(loopComplexity(lcbautomaton01) != loopComplexityPeakOptimization(lcbautomaton01));
+//print(loopComplexityPeakOptimization(lcbautomaton01));
+//assert(loopComplexity(lcbautomaton01) != loopComplexityPeakOptimization(lcbautomaton01));
