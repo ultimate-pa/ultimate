@@ -52,16 +52,16 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  * @date 10.12.2011
  */
 public class BuchiReduce<LETTER,STATE> implements IOperation<LETTER,STATE> {
-	private final IUltimateServiceProvider m_Services;
 	private final Logger m_Logger;
+	/**
+     * The input automaton.
+     */
+    private INestedWordAutomatonOldApi<LETTER,STATE> m_Operand;
     /**
      * The resulting Buchi automaton.
      */
     private INestedWordAutomatonOldApi<LETTER,STATE> m_Result;
-    /**
-     * The input automaton.
-     */
-    private INestedWordAutomatonOldApi<LETTER,STATE> m_Operand;
+    private final IUltimateServiceProvider m_Services;
 
     /**
      * Constructor.
@@ -101,15 +101,10 @@ public class BuchiReduce<LETTER,STATE> implements IOperation<LETTER,STATE> {
     }
     
     @Override
-    public String operationName() {
-        return "reduceBuchi";
-    }
-
-    @Override
-    public String startMessage() {
-		return "Start " + operationName() + ". Operand has " + 
-		m_Operand.sizeInformation();	
-    }
+	public boolean checkResult(StateFactory<STATE> stateFactory)
+			throws AutomataLibraryException {
+		return ResultChecker.reduceBuchi(m_Services, m_Operand, m_Result);
+	}
 
     @Override
     public String exitMessage() {
@@ -122,9 +117,14 @@ public class BuchiReduce<LETTER,STATE> implements IOperation<LETTER,STATE> {
         return m_Result;
     }
 
+    @Override
+    public String operationName() {
+        return "reduceBuchi";
+    }
+
 	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-		return ResultChecker.reduceBuchi(m_Services, m_Operand, m_Result);
-	}
+    public String startMessage() {
+		return "Start " + operationName() + ". Operand has " + 
+		m_Operand.sizeInformation();	
+    }
 }

@@ -47,7 +47,7 @@ public final class GameGraphSuccessorProvider<LETTER, STATE> implements ISuccess
 	public GameGraphSuccessorProvider(final AGameGraph<LETTER, STATE> graph) {
 		m_Graph = graph;
 	}
-
+	
 	@Override
 	public Iterator<Vertex<LETTER, STATE>> getSuccessors(final Vertex<LETTER, STATE> vertex) {
 		if (m_Graph.hasSuccessors(vertex)) {
@@ -56,5 +56,4 @@ public final class GameGraphSuccessorProvider<LETTER, STATE> implements ISuccess
 			return new HashSet<Vertex<LETTER, STATE>>().iterator();
 		}
 	}
-
 }

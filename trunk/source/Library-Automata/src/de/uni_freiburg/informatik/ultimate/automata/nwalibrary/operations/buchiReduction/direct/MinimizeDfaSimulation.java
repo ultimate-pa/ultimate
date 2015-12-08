@@ -50,14 +50,14 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
 
  */
 public class MinimizeDfaSimulation<LETTER,STATE> implements IOperation<LETTER,STATE> {
-	private final IUltimateServiceProvider m_Services;
 	private final Logger m_Logger;
-
-    private INestedWordAutomatonOldApi<LETTER,STATE> m_Result;
-    /**
+	/**
      * The input automaton.
      */
     private INestedWordAutomatonOldApi<LETTER,STATE> m_Operand;
+
+    private INestedWordAutomatonOldApi<LETTER,STATE> m_Result;
+    private final IUltimateServiceProvider m_Services;
 
     /**
      * Constructor.
@@ -89,28 +89,6 @@ public class MinimizeDfaSimulation<LETTER,STATE> implements IOperation<LETTER,ST
     }
     
     @Override
-    public String operationName() {
-        return "minimizeDfaSimulation";
-    }
-
-    @Override
-    public String startMessage() {
-		return "Start " + operationName() + ". Operand has " + 
-		m_Operand.sizeInformation();	
-    }
-
-    @Override
-    public String exitMessage() {
-		return "Finished " + operationName() + " Result " + 
-		m_Result.sizeInformation();
-    }
-
-    @Override
-    public INestedWordAutomatonOldApi<LETTER,STATE> getResult() {
-        return m_Result;
-    }
-
-	@Override
 	public boolean checkResult(StateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		m_Logger.info("Start testing correctness of " + operationName());
@@ -123,4 +101,26 @@ public class MinimizeDfaSimulation<LETTER,STATE> implements IOperation<LETTER,ST
 		m_Logger.info("Finished testing correctness of " + operationName());
 		return correct;
 	}
+
+    @Override
+    public String exitMessage() {
+		return "Finished " + operationName() + " Result " + 
+		m_Result.sizeInformation();
+    }
+
+    @Override
+    public INestedWordAutomatonOldApi<LETTER,STATE> getResult() {
+        return m_Result;
+    }
+
+    @Override
+    public String operationName() {
+        return "minimizeDfaSimulation";
+    }
+
+	@Override
+    public String startMessage() {
+		return "Start " + operationName() + ". Operand has " + 
+		m_Operand.sizeInformation();	
+    }
 }

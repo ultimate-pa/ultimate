@@ -31,25 +31,9 @@ import java.util.Set;
 
 public class Vertex<LETTER,STATE> {
     /**
-     * The label of the first Buchi automaton state.
-     */
-    private STATE q0;
-    /**
-     * The label of the second Buchi automaton state.
-     */
-    private STATE q1;
-    /**
      * The extra bit b.
      */
     private boolean b;
-    /**
-     * The priority of this vertex.
-     */
-    private int priority;
-    /**
-     * The progressMeasure for Jurdzinski lifting function.
-     */
-    protected int pm;
     /**
      * The b required for the efficient lifting algorithm implementation.
      */
@@ -62,6 +46,22 @@ public class Vertex<LETTER,STATE> {
      * Whether this vertex is in the working list or not.
      */
     private boolean inWL;
+    /**
+     * The priority of this vertex.
+     */
+    private int priority;
+    /**
+     * The label of the first Buchi automaton state.
+     */
+    private STATE q0;
+    /**
+     * The label of the second Buchi automaton state.
+     */
+    private STATE q1;
+    /**
+     * The progressMeasure for Jurdzinski lifting function.
+     */
+    protected int pm;
 
     /**
      * Constructor.
@@ -87,39 +87,21 @@ public class Vertex<LETTER,STATE> {
     }
 
     /**
-     * Getter for the label of the first Buchi automaton state.
-     * 
-     * @return the label of the first Buchi automaton state
-     */
-    public STATE getQ0() {
-        return q0;
-    }
-
-    /**
-     * Getter for the label of the first Buchi automaton state.
-     * 
-     * @return the label of the first Buchi automaton state
-     */
-    public STATE getQ1() {
-        return q1;
-    }
-
-    /**
-     * Getter for the extra bit b.
+     * Getter for b.
      * 
      * @return the b
      */
-    public boolean isB() {
-        return b;
+    public int getBEff() {
+        return bEff;
     }
 
     /**
-     * Getter for the priority of this vertex.
+     * Getter for c.
      * 
-     * @return the priority
+     * @return the c
      */
-    public int getPriority() {
-        return priority;
+    public int getC() {
+        return c;
     }
 
     /**
@@ -151,62 +133,41 @@ public class Vertex<LETTER,STATE> {
     }
 
     /**
-     * Setter for ProgressMeasure.
+     * Getter for the priority of this vertex.
      * 
-     * @param pm
-     *            the progress measure
+     * @return the priority
      */
-    public void setPM(int pm) {
-        this.pm = pm;
+    public int getPriority() {
+        return priority;
     }
 
     /**
-     * Getter for b.
+     * Getter for the label of the first Buchi automaton state.
+     * 
+     * @return the label of the first Buchi automaton state
+     */
+    public STATE getQ0() {
+        return q0;
+    }
+
+    /**
+     * Getter for the label of the second Buchi automaton state.
+     * 
+     * @return the label of the second Buchi automaton state
+     */
+    public STATE getQ1() {
+        return q1;
+    }
+
+    /**
+     * Getter for the extra bit b.
      * 
      * @return the b
      */
-    public int getBEff() {
-        return bEff;
+    public boolean isB() {
+        return b;
     }
 
-    /**
-     * Setter for b.
-     * 
-     * @param b
-     *            the b to set
-     */
-    public void setBEff(int b) {
-        this.bEff = b;
-    }
-
-    /**
-     * Getter for c.
-     * 
-     * @return the c
-     */
-    public int getC() {
-        return c;
-    }
-
-    /**
-     * Setter for c.
-     * 
-     * @param c
-     *            the c to set
-     */
-    public void setC(int c) {
-        this.c = c;
-    }
-
-    /**
-     * Returns false if duplicator and true if in spoiler vertex.
-     * 
-     * @return false if duplicator and true if in spoiler vertex
-     */
-    public boolean isSpoilerVertex() {
-        return !(this instanceof DuplicatorVertex);
-    }
-    
     /**
      * Returns true if duplicator and false if in spoiler vertex.
      * 
@@ -226,11 +187,50 @@ public class Vertex<LETTER,STATE> {
     }
 
     /**
+     * Returns false if duplicator and true if in spoiler vertex.
+     * 
+     * @return false if duplicator and true if in spoiler vertex
+     */
+    public boolean isSpoilerVertex() {
+        return !(this instanceof DuplicatorVertex);
+    }
+
+    /**
+     * Setter for b.
+     * 
+     * @param b
+     *            the b to set
+     */
+    public void setBEff(int b) {
+        this.bEff = b;
+    }
+    
+    /**
+     * Setter for c.
+     * 
+     * @param c
+     *            the c to set
+     */
+    public void setC(int c) {
+        this.c = c;
+    }
+
+    /**
      * Set flag, if in working list.
      * 
      * @param inWL the inWL to set
      */
     public void setInWL(boolean inWL) {
         this.inWL = inWL;
+    }
+
+    /**
+     * Setter for ProgressMeasure.
+     * 
+     * @param pm
+     *            the progress measure
+     */
+    public void setPM(int pm) {
+        this.pm = pm;
     }
 }
