@@ -37,12 +37,13 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 
 
@@ -884,6 +885,26 @@ public class NestedWordAutomatonCache<LETTER,STATE> implements INestedWordAutoma
 		succs.add(succ);
 	}
 	
+	public void addInternalTransitions(STATE pred, LETTER letter, Collection<STATE> succs) {
+		if (!contains(pred)) {
+			throw new IllegalArgumentException("State " + pred + " not in automaton");
+		}
+		assert contains(pred) : "State " + pred + " not in automaton";
+//		assert contains(succ) : "State " + succ + " not in automaton";
+		assert getInternalAlphabet().contains(letter);
+		Map<LETTER, Set<STATE>> letter2succs = m_InternalOut.get(pred);
+		if (letter2succs == null) {
+			letter2succs = new HashMap<LETTER, Set<STATE>>();
+			m_InternalOut.put(pred, letter2succs);
+		}
+		Set<STATE> oldSuccs = letter2succs.get(letter);
+		if (oldSuccs == null) {
+			oldSuccs = new HashSet<STATE>();
+			letter2succs.put(letter,oldSuccs);
+		}
+		oldSuccs.addAll(succs);
+	}
+	
 
 	public void addCallTransition(STATE pred, LETTER letter, STATE succ) {
 		assert contains(pred) : "State " + pred + " not in automaton";
@@ -900,6 +921,23 @@ public class NestedWordAutomatonCache<LETTER,STATE> implements INestedWordAutoma
 			letter2succs.put(letter,succs);
 		}
 		succs.add(succ);
+	}
+	
+	public void addCallTransitions(STATE pred, LETTER letter, Collection<STATE> succs) {
+		assert contains(pred) : "State " + pred + " not in automaton";
+//		assert contains(succ) : "State " + succ + " not in automaton";
+		assert getCallAlphabet().contains(letter);
+		Map<LETTER, Set<STATE>> letter2succs = m_CallOut.get(pred);
+		if (letter2succs == null) {
+			letter2succs = new HashMap<LETTER, Set<STATE>>();
+			m_CallOut.put(pred, letter2succs);
+		}
+		Set<STATE> oldSuccs = letter2succs.get(letter);
+		if (oldSuccs == null) {
+			oldSuccs = new HashSet<STATE>();
+			letter2succs.put(letter,oldSuccs);
+		}
+		oldSuccs.addAll(succs);
 	}
 	
 
@@ -926,7 +964,28 @@ public class NestedWordAutomatonCache<LETTER,STATE> implements INestedWordAutoma
 		succs.add(succ);
 	}
 	
-	
+	public void addReturnTransitions(STATE pred, STATE hier, LETTER letter, Collection<STATE> succs) {
+		assert contains(pred) : "State " + pred + " not in automaton";
+//		assert contains(succ) : "State " + succ + " not in automaton";
+		assert contains(hier) : "State " + hier + " not in automaton";
+		assert getReturnAlphabet().contains(letter);
+		Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2succs = m_ReturnOut.get(pred);
+		if (letter2hier2succs == null) {
+			letter2hier2succs = new HashMap<LETTER, Map<STATE, Set<STATE>>>();
+			m_ReturnOut.put(pred, letter2hier2succs);
+		}
+		Map<STATE, Set<STATE>> hier2succs = letter2hier2succs.get(letter);
+		if (hier2succs == null) {
+			hier2succs = new HashMap<STATE, Set<STATE>>();
+			letter2hier2succs.put(letter, hier2succs);
+		}
+		Set<STATE> oldSuccs = hier2succs.get(hier);
+		if (oldSuccs == null) {
+			oldSuccs = new HashSet<STATE>();
+			hier2succs.put(hier, oldSuccs);
+		}
+		oldSuccs.addAll(succs);
+	}
 	
 	
 	
@@ -1047,7 +1106,7 @@ public class NestedWordAutomatonCache<LETTER,STATE> implements INestedWordAutoma
 	
 	@Override
 	public String toString() {
-		return (new AtsDefinitionPrinter<String,String>(m_Services, "nwa", this)).getDefinitionAsString();
+		return (new AutomatonDefinitionPrinter<String,String>(m_Services, "nwa", Format.ATS, this)).getDefinitionAsString();
 	}
 
 

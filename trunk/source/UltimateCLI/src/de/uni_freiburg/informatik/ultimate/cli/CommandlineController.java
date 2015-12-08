@@ -46,11 +46,11 @@ import org.xml.sax.SAXException;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.CommandLineParser;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.services.ILoggingService;
-import de.uni_freiburg.informatik.ultimate.core.services.PreludeProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILoggingService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.PreludeProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
@@ -98,6 +98,7 @@ public class CommandlineController implements IController {
 		}
 
 		mLogger = loggingService.getLogger(sPLUGIN_ID);
+		mLogger.info("Initializing CommandlineController...");
 
 		CommandLineParser p = core.getCommandLineArguments();
 		try {
@@ -123,7 +124,7 @@ public class CommandlineController implements IController {
 			}
 			inputFiles.add(inputFile);
 		}
-
+		
 		// handle prelude file
 		PreludeProvider preludeFile = new PreludeProvider(p.getPreludeFile(), mLogger);
 

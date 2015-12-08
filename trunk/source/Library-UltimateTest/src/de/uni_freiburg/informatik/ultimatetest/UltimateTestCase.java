@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimatetest;
 
-import static org.junit.Assert.fail;
-
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -35,7 +33,7 @@ import org.eclipse.core.runtime.IStatus;
 
 import de.uni_freiburg.informatik.junit_helper.testfactory.FactoryTestMethod;
 import de.uni_freiburg.informatik.ultimate.core.controllers.LivecycleException;
-import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
 import de.uni_freiburg.informatik.ultimate.util.ExceptionUtils;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
@@ -43,7 +41,7 @@ import de.uni_freiburg.informatik.ultimatetest.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.reporting.ITestSummary;
 
 /**
- * @author dietsch@informatik.uni-freiburg.de
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
 public class UltimateTestCase {
@@ -91,7 +89,7 @@ public class UltimateTestCase {
 			updateLogsPreStart();
 			String deciderName = mDecider.getClass().getSimpleName();
 			IStatus returnCode = mStarter.runUltimate();
-			mLogger.info("Deciding this test: "+deciderName);
+			mLogger.info("Deciding this test: " + deciderName);
 			result = mDecider.getTestResult(mStarter.getServices().getResultService());
 			if (!returnCode.isOK() && result != TestResult.FAIL) {
 				mLogger.fatal("#################### Overwriting decision of " + deciderName
@@ -141,8 +139,10 @@ public class UltimateTestCase {
 				}
 				if (th != null) {
 					message += " (Ultimate threw an Exception: " + th.getMessage() + ")";
+					failTest(message, th);
+				} else {
+					failTest(message);
 				}
-				fail(message);
 			}
 		}
 	}
@@ -165,10 +165,10 @@ public class UltimateTestCase {
 	}
 
 	private void updateSummaries(TestResult result) {
-
 		IResultService rservice = null;
 		if (mStarter.getServices() != null) {
 			rservice = mStarter.getServices().getResultService();
+			assert rservice != null : "Could not retrieve ResultService";
 		}
 
 		if (mSummaries != null) {
@@ -186,5 +186,21 @@ public class UltimateTestCase {
 	@Override
 	public String toString() {
 		return mName;
+	}
+
+	private static void failTest(String message) throws UltimateTestFailureException {
+		final UltimateTestFailureException exception = new UltimateTestFailureException(message);
+		final StackTraceElement elem = new StackTraceElement(UltimateTestCase.class.getPackage().getName(), "test",
+				"UltimateTestCase.java", -1);
+		exception.setStackTrace(new StackTraceElement[] { elem });
+		throw exception;
+	}
+
+	private static void failTest(String message, Throwable th) throws UltimateTestFailureException {
+		final UltimateTestFailureException exception = new UltimateTestFailureException(message, th);
+		final StackTraceElement elem = new StackTraceElement(UltimateTestCase.class.getPackage().getName(), "test",
+				"UltimateTestCase.java", -1);
+		exception.setStackTrace(new StackTraceElement[] { elem });
+		throw exception;
 	}
 }

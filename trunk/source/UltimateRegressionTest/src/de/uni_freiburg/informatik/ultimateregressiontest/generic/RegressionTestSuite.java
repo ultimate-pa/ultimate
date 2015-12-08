@@ -52,6 +52,4 @@ public class RegressionTestSuite extends AbstractRegressionTestSuite {
 	protected ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition) {
 		return new SafetyCheckTestResultDecider(runDefinition, false);
 	}
-
-
 }

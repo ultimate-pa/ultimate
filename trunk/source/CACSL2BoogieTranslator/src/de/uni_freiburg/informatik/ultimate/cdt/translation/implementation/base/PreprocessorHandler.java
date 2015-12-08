@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultSkip;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IPreprocessorHandler;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
@@ -80,7 +80,7 @@ public class PreprocessorHandler implements IPreprocessorHandler {
         String msg = "PreprocessorHandler: Not yet implemented: " + node.toString();
         ILocation loc = LocationFactory.createCLocation(node);
         main.unsupportedSyntax(loc, msg);
-        return new ResultSkip();
+        return new SkipResult();
     }
 
     @Override
@@ -88,7 +88,7 @@ public class PreprocessorHandler implements IPreprocessorHandler {
         String msg = "PreprocessorHandler: Not yet implemented: " + node.toString();
         ILocation loc = LocationFactory.createCLocation(node);
         main.unsupportedSyntax(loc, msg);
-        return new ResultSkip();
+        return new SkipResult();
     }
 
     @Override
@@ -96,7 +96,7 @@ public class PreprocessorHandler implements IPreprocessorHandler {
         String msg = "PreprocessorHandler: Not yet implemented: " + node.toString();
         ILocation loc = LocationFactory.createCLocation(node);
         main.unsupportedSyntax(loc, msg);
-        return new ResultSkip();
+        return new SkipResult();
     }
 
     @Override
@@ -111,7 +111,7 @@ public class PreprocessorHandler implements IPreprocessorHandler {
         String msg = "PreprocessorHandler: Not yet implemented: " + node.toString();
         ILocation loc = LocationFactory.createCLocation(node);
         main.unsupportedSyntax(loc, msg);
-        return new ResultSkip();
+        return new SkipResult();
     }
 
     @Override
@@ -119,7 +119,7 @@ public class PreprocessorHandler implements IPreprocessorHandler {
         String msg = "PreprocessorHandler: Not yet implemented: " + node.toString();
         ILocation loc = LocationFactory.createCLocation(node);
         main.unsupportedSyntax(loc, msg);
-        return new ResultSkip();
+        return new SkipResult();
     }
 
     @Override
@@ -127,7 +127,7 @@ public class PreprocessorHandler implements IPreprocessorHandler {
         String msg = "PreprocessorHandler: Not yet implemented: " + node.toString();
         ILocation loc = LocationFactory.createCLocation(node);
         main.unsupportedSyntax(loc, msg);
-        return new ResultSkip();
+        return new SkipResult();
     }
 
     @Override
@@ -135,13 +135,13 @@ public class PreprocessorHandler implements IPreprocessorHandler {
 //        String msg = "PreprocessorHandler: Not yet implemented: " + node.toString();
 //        ILocation loc = new CACSLLocation(node);
 //        Dispatcher.unsupportedSyntax(loc, msg);
-        return new ResultSkip();
+        return new SkipResult();
     }
 
     @Override
     public Result visit(Dispatcher main, IASTPreprocessorMacroDefinition node) {
         // this was already handled by the CDT  parser...
-        return new ResultSkip();
+        return new SkipResult();
     }
 
     @Override
@@ -149,7 +149,7 @@ public class PreprocessorHandler implements IPreprocessorHandler {
         String msg = "PreprocessorHandler: Not yet implemented: " + node.toString();
         ILocation loc = LocationFactory.createCLocation(node);
         main.unsupportedSyntax(loc, msg);
-        return new ResultSkip();
+        return new SkipResult();
     }
 
     @Override
@@ -157,6 +157,6 @@ public class PreprocessorHandler implements IPreprocessorHandler {
         String msg = "PreprocessorHandler: Not yet implemented: " + node.toString();
         ILocation loc = LocationFactory.createCLocation(node);
         main.unsupportedSyntax(loc, msg);
-        return new ResultSkip();
+        return new SkipResult();
     }
 }

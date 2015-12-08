@@ -29,6 +29,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -55,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.P
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue.StorageClass;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -66,20 +66,21 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CompoundStatementExpressionResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ContractResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultContract;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultSkip;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ConvExpr;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.TarjanSCC;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
@@ -158,7 +159,8 @@ public class FunctionHandler {
 	 * boogie procedure has to be created in the postProcessor that deals with
 	 * the function pointer calls that can happen.
 	 */
-	LinkedHashSet<CFunction> functionSignaturesThatHaveAFunctionPointer;
+//	LinkedHashSet<CFunction> functionSignaturesThatHaveAFunctionPointer;
+	LinkedHashSet<ProcedureSignature> functionSignaturesThatHaveAFunctionPointer;
 	
 	private final AExpressionTranslation m_ExpressionTranslation;
 
@@ -180,6 +182,7 @@ public class FunctionHandler {
 		this.functionSignaturesThatHaveAFunctionPointer = new LinkedHashSet<>();
 	}
 
+	
 	/**
 	 * This is called from SimpleDeclaration and handles a C function
 	 * declaration.
@@ -202,7 +205,7 @@ public class FunctionHandler {
 
 		addAProcedure(main, loc, contract, methodName, funcType);
 
-		return new ResultSkip();
+		return new SkipResult();
 	}
 
 	/**
@@ -334,22 +337,19 @@ public class FunctionHandler {
 		// 1)
 		handleFunctionsInParams(main, loc, memoryHandler, decls, stmts, node);
 		// 2)
-		Body body = ((Body) main.dispatch(node.getBody()).node);
-		stmts.addAll(Arrays.asList(body.getBlock()));
-		for (VariableDeclaration declaration : body.getLocalVars()) {
-			decls.add(declaration);
-		}
-		// 3)
-		stmts = memoryHandler.insertMallocs(main, stmts);
-		// 4)
-		for (SymbolTableValue stv : main.cHandler.getSymbolTable().currentScopeValues()) {
-			// there may be a null declaration in case of foo(void)
-			if (!stv.isBoogieGlobalVar() && stv.getBoogieDecl() != null) {
-				decls.add(stv.getBoogieDecl());
-			}
-		}
+//		Body body = ((Body) main.dispatch(node.getBody()).node);
+//		stmts.addAll(Arrays.asList(body.getBlock()));
+//		for (VariableDeclaration declaration : body.getLocalVars()) {
+//			decls.add(declaration);
+//		}
+		CompoundStatementExpressionResult cser = (CompoundStatementExpressionResult) main.dispatch(node.getBody());
+		stmts.addAll(cser.stmt);
+		decls.addAll(cser.decl);
 
-		body = new Body(loc, decls.toArray(new VariableDeclaration[decls.size()]), stmts.toArray(new Statement[stmts
+		// 3) ,4)
+		stmts = ((CHandler) main.cHandler).updateStmtsAndDeclsAtScopeEnd(main, decls, stmts);
+	
+		Body body = new Body(loc, decls.toArray(new VariableDeclaration[decls.size()]), stmts.toArray(new Statement[stmts
 				.size()]));
 
 		proc = currentProcedure;
@@ -408,7 +408,7 @@ public class FunctionHandler {
 		// The ReturnValue could be empty!
 		ILocation loc = LocationFactory.createCLocation(node);
 		VarList[] outParams = this.currentProcedure.getOutParams();
-		ResultExpression rExp = new ResultExpression(stmt, null, decl, auxVars, overApp);
+		ExpressionResult rExp = new ExpressionResult(stmt, null, decl, auxVars, overApp);
 		if (methodsCalledBeforeDeclared.contains(currentProcedure.getIdentifier()) && currentProcedureIsVoid) {
 			// void method that was assumed to be returning int! -> return int
 			String id = outParams[0].getIdentifiers()[0];
@@ -416,9 +416,9 @@ public class FunctionHandler {
 			Statement havoc = new HavocStatement(loc, new VariableLHS[] { lhs });
 			stmt.add(havoc);
 		} else if (node.getReturnValue() != null) {
-			ResultExpression exprResult = ((ResultExpression) main.dispatch(node.getReturnValue()))
+			ExpressionResult exprResult = ((ExpressionResult) main.dispatch(node.getReturnValue()))
 					.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-			exprResult = ConvExpr.rexBoolToIntIfNecessary(loc, exprResult, m_ExpressionTranslation);
+			exprResult.rexBoolToIntIfNecessary(loc, m_ExpressionTranslation);
 
 			// do some implicit casts
 			CType functionResultType = this.procedureToCFunctionType.get(currentProcedure.getIdentifier())
@@ -427,7 +427,7 @@ public class FunctionHandler {
 				if (functionResultType instanceof CPointer && exprResult.lrVal.getCType() instanceof CPrimitive
 						&& exprResult.lrVal.getValue() instanceof IntegerLiteral
 						&& ((IntegerLiteral) exprResult.lrVal.getValue()).getValue().equals("0")) {
-					exprResult.lrVal = new RValue(new IdentifierExpression(loc, SFO.NULL), functionResultType);
+					exprResult.lrVal = new RValue(m_ExpressionTranslation.constructNullPointer(loc), functionResultType);
 				}
 			}
 
@@ -447,7 +447,7 @@ public class FunctionHandler {
 				String id = outParams[0].getIdentifiers()[0];
 				VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, id) };
 				rExp.lrVal = exprResult.lrVal;
-				main.cHandler.castToType(main, loc, rExp, functionResultType);
+				main.cHandler.convert(main, loc, rExp, functionResultType);
 				RValue castExprResultRVal = (RValue) rExp.lrVal;
 				stmt.add(new AssignmentStatement(loc, lhs, new Expression[] { castExprResultRVal.getValue() }));
 				// //assuming that we need no auxvars or overappr, here
@@ -463,7 +463,7 @@ public class FunctionHandler {
 																										// in
 																										// handleReturnStm
 			if (entry.getValue() >= 1) {
-				stmt.add(memoryHandler.getFreeCall(main, this, entry.getKey().llv, entry.getKey().loc));
+				stmt.add(memoryHandler.getDeallocCall(main, this, entry.getKey().llv, entry.getKey().loc));
 				stmt.add(new HavocStatement(loc, new VariableLHS[] { (VariableLHS) entry.getKey().llv.getLHS() }));
 			}
 		}
@@ -492,12 +492,13 @@ public class FunctionHandler {
 		// calculate SCCs and a mapping for each methodId to its SCC
 		// O(|edges| + |calls|)
 		LinkedHashSet<LinkedHashSet<String>> sccs = new TarjanSCC().getSCCs(callGraph);
-		LinkedHashMap<String, LinkedHashSet<String>> mapping = new LinkedHashMap<String, LinkedHashSet<String>>();
+		LinkedHashMap<String, LinkedHashSet<String>> functionNameToScc = new LinkedHashMap<String, LinkedHashSet<String>>();
 		for (LinkedHashSet<String> scc : sccs) { // O(|proc|)
 			for (String s : scc) {
-				mapping.put(s, scc);
+				functionNameToScc.put(s, scc);
 			}
 		}
+		// counts how many incoming edges an scc has in the updateGraph
 		LinkedHashMap<LinkedHashSet<String>, Integer> incomingEdges = new LinkedHashMap<LinkedHashSet<String>, Integer>();
 		for (LinkedHashSet<String> scc : sccs) {
 			incomingEdges.put(scc, 0);
@@ -505,59 +506,70 @@ public class FunctionHandler {
 		// calculate the SCC update graph without loops and dead ends
 		Queue<LinkedHashSet<String>> deadEnds = new LinkedList<LinkedHashSet<String>>();
 		deadEnds.addAll(sccs);
-		LinkedHashMap<LinkedHashSet<String>, LinkedHashSet<LinkedHashSet<String>>> updateGraph = new LinkedHashMap<LinkedHashSet<String>, LinkedHashSet<LinkedHashSet<String>>>();
-		for (String p : callGraph.keySet()) { // O(|calls|)
-			for (String s : callGraph.get(p)) { // foreach s : succ(p)
-				// edge (p, s), means p calls s
-				LinkedHashSet<String> sccP = mapping.get(p);
-				LinkedHashSet<String> sccS = mapping.get(s);
-				if (sccP == sccS)
-					continue; // skip self loops
-				if (updateGraph.containsKey(sccS)) {
-					updateGraph.get(sccS).add(sccP);
-				} else {
-					LinkedHashSet<LinkedHashSet<String>> predSCCs = new LinkedHashSet<LinkedHashSet<String>>();
-					predSCCs.add(sccP);
-					updateGraph.put(sccS, predSCCs);
-				}
-				incomingEdges.put(sccP, incomingEdges.get(sccP) + 1);
-				deadEnds.remove(sccP);
-			}
-		}
+
+		// updateGraph maps a calleeSCC to many callerSCCs
 		// This graph might not be complete! It is i.e. missing all procedures,
 		// that do not have incoming or outgoing edges!
 		// But: They don't need an update anyway!
-
+		LinkedHashMap<LinkedHashSet<String>, LinkedHashSet<LinkedHashSet<String>>> updateGraph = new LinkedHashMap<LinkedHashSet<String>, LinkedHashSet<LinkedHashSet<String>>>();
+		for (String caller : callGraph.keySet()) { // O(|calls|)
+			for (String callee : callGraph.get(caller)) { // foreach s : succ(p)
+				LinkedHashSet<String> sccCaller = functionNameToScc.get(caller);
+				LinkedHashSet<String> sccCallee = functionNameToScc.get(callee);
+				if (sccCaller == sccCallee)
+					continue; // skip self loops
+				if (updateGraph.containsKey(sccCallee)) {
+					updateGraph.get(sccCallee).add(sccCaller);
+				} else {
+					LinkedHashSet<LinkedHashSet<String>> predSCCs = new LinkedHashSet<LinkedHashSet<String>>();
+					predSCCs.add(sccCaller);
+					updateGraph.put(sccCallee, predSCCs);
+				}
+				deadEnds.remove(sccCaller);
+			}
+		}
+		
+		// incoming edges must be computed on a graph that has Sccs as nodes (updategraph), not just the functions (callgraph)
+		for (LinkedHashSet<String> calleeScc : updateGraph.keySet()) {
+			for (LinkedHashSet<String> callerScc : updateGraph.get(calleeScc)) {
+				incomingEdges.put(callerScc, incomingEdges.get(callerScc) + 1);
+			}
+		}
+		
 		// calculate transitive modifies clause
-		LinkedHashMap<LinkedHashSet<String>, LinkedHashSet<String>> modGlobals = new LinkedHashMap<LinkedHashSet<String>, LinkedHashSet<String>>();
+		LinkedHashMap<LinkedHashSet<String>, LinkedHashSet<String>> sccToModifiedGlobals = new LinkedHashMap<LinkedHashSet<String>, LinkedHashSet<String>>();
 		while (!deadEnds.isEmpty()) {
 			// O (|proc| + |edges in updateGraph|), where
 			// |edges in updateGraph| <= |calls|
-			LinkedHashSet<String> d = deadEnds.poll();
-			for (String p : d) {
-				if (!modGlobals.containsKey(d)) {
-					LinkedHashSet<String> n = new LinkedHashSet<String>();
-					n.addAll(modifiedGlobals.get(p));
-					modGlobals.put(d, n);
+			LinkedHashSet<String> deadEnd = deadEnds.poll();
+
+			// the modified globals of the scc is the union of the modified globals of all its functions
+			for (String func : deadEnd) {
+				if (!sccToModifiedGlobals.containsKey(deadEnd)) {
+					sccToModifiedGlobals.put(deadEnd, new LinkedHashSet<String>(modifiedGlobals.get(func)));
 				} else {
-					modGlobals.get(d).addAll(modifiedGlobals.get(p));
+					sccToModifiedGlobals.get(deadEnd).addAll(modifiedGlobals.get(func));
 				}
 			}
-			if (updateGraph.get(d) == null)
+
+			//if the scc has no callers, do nothing with it
+			if (updateGraph.get(deadEnd) == null)
 				continue;
-			for (LinkedHashSet<String> next : updateGraph.get(d)) {
-				if (!modGlobals.containsKey(next)) {
+
+			// for all callers of the scc, add the modified globals to them, make them deadends, if all their input has been processed
+			for (LinkedHashSet<String> caller : updateGraph.get(deadEnd)) {
+				if (!sccToModifiedGlobals.containsKey(caller)) {
 					LinkedHashSet<String> n = new LinkedHashSet<String>();
-					n.addAll(modGlobals.get(d));
-					modGlobals.put(next, n);
+					n.addAll(sccToModifiedGlobals.get(deadEnd));
+					sccToModifiedGlobals.put(caller, n);
 				} else {
-					modGlobals.get(next).addAll(modGlobals.get(d));
+					sccToModifiedGlobals.get(caller).addAll(sccToModifiedGlobals.get(deadEnd));
 				}
-				int remainingUpdates = incomingEdges.get(next) - 1;
+				int remainingUpdates = incomingEdges.get(caller) - 1;
 				if (remainingUpdates == 0) {
-					deadEnds.add(next);
+					deadEnds.add(caller);
 				}
-				incomingEdges.put(next, remainingUpdates);
+				incomingEdges.put(caller, remainingUpdates);
 			}
 		}
 		// update the modifies clauses!
@@ -567,18 +579,15 @@ public class FunctionHandler {
 			Specification[] spec = procDecl.getSpecification();
 			CACSLLocation loc = (CACSLLocation) procDecl.getLocation();
 			if (!modifiedGlobalsIsUserDefined.contains(mId)) {
-				assert mapping.get(mId) != null;
-				LinkedHashSet<String> currModClause = modGlobals.get(mapping.get(mId));
+				assert functionNameToScc.get(mId) != null;
+				LinkedHashSet<String> currModClause = sccToModifiedGlobals.get(functionNameToScc.get(mId));
 				assert currModClause != null : "No modifies clause proc " + mId;
-//				if (currModClause == null) {
-//					currModClause = new LinkedHashSet<>();
-//				}
-//				modifiedGlobals.put(mId, currModClause);
-				modifiedGlobals.get(mId).addAll(currModClause);//TODO Hack --> understand what's going on, makes a difference in ntdrivers/parport_false..
+
+				modifiedGlobals.get(mId).addAll(currModClause);
 				int nrSpec = spec.length;
 				spec = Arrays.copyOf(spec, nrSpec + 1);
 				LinkedHashSet<String> modifySet = new LinkedHashSet<>();
-//				for (String var : currModClause) {
+
 				for (String var : modifiedGlobals.get(mId)) {
 					modifySet.add(var);
 				}
@@ -613,8 +622,8 @@ public class FunctionHandler {
 					Check check = new Check(Check.Spec.MEMORY_LEAK);
 					ILocation ensLoc = LocationFactory.createLocation(loc, check);
 					spec = Arrays.copyOf(spec, nrSpec + 1);
-					spec[nrSpec] = new EnsuresSpecification(ensLoc, false, new BinaryExpression(loc, Operator.COMPEQ,
-							vIe, new UnaryExpression(loc, UnaryExpression.Operator.OLD, vIe)));
+					spec[nrSpec] = new EnsuresSpecification(ensLoc, false, ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ,
+							vIe, ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.OLD, vIe)));
 					check.addToNodeAnnot(spec[nrSpec]);
 				}
 			}
@@ -649,7 +658,7 @@ public class FunctionHandler {
 			}
 			// .. and if it is really called with more that its normal parameter
 			// number, we throw an exception, because we may be unsound
-			// (the code before this does not make so much sense, but maybe some
+			// (the code before this does not make that much sense, but maybe some
 			// day we want that solution again..
 			if (!(main.mPreferences.getEnum(CACSLPreferenceInitializer.LABEL_MODE, TranslationMode.class)
 					.equals(TranslationMode.SV_COMP14)) 
@@ -675,7 +684,7 @@ public class FunctionHandler {
 		ArrayList<Expression> args = new ArrayList<Expression>();
 		for (int i = 0; i < inParams.length; i++) {
 			IASTInitializerClause inParam = inParams[i];
-			ResultExpression in = ((ResultExpression) main.dispatch(inParam));
+			ExpressionResult in = ((ExpressionResult) main.dispatch(inParam));
 					
 			if (in.lrVal.getCType().getUnderlyingType() instanceof CArray) {
 				//arrays are passed as pointers --> switch to RValue would make a boogie array..
@@ -687,8 +696,6 @@ public class FunctionHandler {
 			} else {
 				in = in.switchToRValueIfNecessary(main,
 					memoryHandler, structHandler, loc);
-				in.replaceEnumByInt();
-				in.replaceCFunctionByCPointer();
 			}
 
 			
@@ -709,14 +716,22 @@ public class FunctionHandler {
 																			// the
 																			// parameters
 				// do implicit casts and bool/int conversion
-				CType expectedParamType = procedureToCFunctionType.get(methodName).getParameterTypes()[i].getType();
+				CType expectedParamType = procedureToCFunctionType.get(methodName).getParameterTypes()[i].getType().getUnderlyingType();
 				// bool/int conversion
 				if (expectedParamType instanceof CPrimitive
 						&& ((CPrimitive) expectedParamType).getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-					in = ConvExpr.rexBoolToIntIfNecessary(loc, in, m_ExpressionTranslation);
+					in.rexBoolToIntIfNecessary(loc, m_ExpressionTranslation);
+				}
+				if (expectedParamType instanceof CFunction) {
+					// workaround - better: make this conversion already in declaration
+					expectedParamType = new CPointer(expectedParamType);
+				}
+				if (expectedParamType instanceof CArray) {
+					// workaround - better: make this conversion already in declaration
+					expectedParamType = new CPointer(((CArray) expectedParamType).getValueType());
 				}
 				// implicit casts
-				main.cHandler.castToType(main, loc, in, expectedParamType);
+				main.cHandler.convert(main, loc, in, expectedParamType);
 			}
 			args.add(in.lrVal.getValue());
 			stmt.addAll(in.stmt);
@@ -760,14 +775,13 @@ public class FunctionHandler {
 		if (methodName.equals("malloc") || methodName.equals("alloca") || methodName.equals("__builtin_alloca")) {//TODO: add calloc
 			assert arguments.length == 1;
 			Result sizeRes = main.dispatch(arguments[0]);
-			assert sizeRes instanceof ResultExpression;
-			ResultExpression rex = ((ResultExpression) sizeRes).switchToRValueIfNecessary(main, memoryHandler,
+			ExpressionResult er = ((ExpressionResult) sizeRes).switchToRValueIfNecessary(main, memoryHandler,
 					structHandler, loc);
 
-			ResultExpression mallocRex = memoryHandler.getMallocCall(main, this, rex.lrVal.getValue(), loc);
+			ExpressionResult mallocRex = memoryHandler.getMallocCall(main, this, er.lrVal.getValue(), loc);
 
-			rex.addAll(mallocRex);
-			rex.lrVal = mallocRex.lrVal;
+			er.addAll(mallocRex);
+			er.lrVal = mallocRex.lrVal;
 
 			// for alloc a we have to free the variable ourselves when the
 			// stackframe is closed, i.e. at a return
@@ -777,32 +791,130 @@ public class FunctionHandler {
 								LocationFactory.createIgnoreLocation(loc)));
 				//we need to clear auxVars because otherwise the malloc auxvar is havocced after 
 				//this, and free (triggered by the statement before) would fail.
-				rex.auxVars.clear();
+				er.auxVars.clear();
 			}
-			return rex;
+			return er;
 		} else if (methodName.equals("free")) {
 			assert arguments.length == 1;
 			Result pRes = main.dispatch(arguments[0]);
-			assert pRes instanceof ResultExpression;
-			ResultExpression pRex = ((ResultExpression) pRes).switchToRValueIfNecessary(main, memoryHandler,
+			assert pRes instanceof ExpressionResult;
+			ExpressionResult pRex = ((ExpressionResult) pRes).switchToRValueIfNecessary(main, memoryHandler,
 					structHandler, loc);
 			pRex.stmt.add(memoryHandler.getFreeCall(main, this, pRex.lrVal, loc));
 			return pRex;
+		} else if (methodName.equals("calloc")) {
+			memoryHandler.setDeclareMemset();
+
+			assert arguments.length == 2;
+			ExpressionResult noItems = ((ExpressionResult) main.dispatch(arguments[0])).switchToRValueIfNecessary(
+					main, memoryHandler,
+					structHandler, loc);
+			ExpressionResult er = new ExpressionResult(noItems);
+			ExpressionResult sizeRes = ((ExpressionResult) main.dispatch(arguments[1])).switchToRValueIfNecessary(main, memoryHandler,
+					structHandler, loc);
+			er.addAll((ExpressionResult) sizeRes);
+
+			ExpressionResult mallocRex = memoryHandler.getMallocCall(
+					main, 
+					this, 
+					ExpressionFactory.newBinaryExpression(loc, 
+							Operator.ARITHMUL, 
+							noItems.lrVal.getValue(), 
+							sizeRes.lrVal.getValue()),
+					loc);
+
+			er.addAll(mallocRex);
+			er.lrVal = mallocRex.lrVal;
+			
+			Expression nr0 = m_ExpressionTranslation.constructLiteralForIntegerType(
+        		loc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+			er.stmt.add(new CallStatement(loc, 
+					false, 
+					new VariableLHS[0], 
+					SFO.MEMSET,
+					new Expression[] {
+							mallocRex.lrVal.getValue(),	//ptr
+							noItems.lrVal.getValue(),	//noFields
+							sizeRes.lrVal.getValue(),	//sizeofFields
+							nr0							//value
+					}));
+			
+			if (this.callGraph.get(this.currentProcedure.getIdentifier()) == null)
+				this.callGraph.put(this.currentProcedure.getIdentifier(), new LinkedHashSet<String>());
+			this.callGraph.get(this.currentProcedure.getIdentifier()).add(SFO.MEMSET);
+			this.callGraph.get(this.currentProcedure.getIdentifier()).add(SFO.MALLOC);
+
+			return er;
 		} else if (methodName.equals("memset")) {
-			//TODO: this is a workaround, replace with a complete call to memset and provide implementation/specification
-			return main.dispatch(arguments[0]);
+			// void *memset(void *str, int c, size_t n)
+			// void *memset(void *ptr, int value size_t size
+			memoryHandler.setDeclareMemset();
+			
+			ExpressionResult ptr = ((ExpressionResult) main.dispatch(arguments[0])).switchToRValueIfNecessary(
+					main, memoryHandler,
+					structHandler, loc);
+			ExpressionResult er = new ExpressionResult(ptr);
+			ExpressionResult value = ((ExpressionResult) main.dispatch(arguments[1])).switchToRValueIfNecessary(main, memoryHandler,
+					structHandler, loc);
+			er.addAll((ExpressionResult) value);
+			ExpressionResult size = ((ExpressionResult) main.dispatch(arguments[2])).switchToRValueIfNecessary(main, memoryHandler,
+					structHandler, loc);
+			er.addAll((ExpressionResult) size);
+			Expression nr1 = m_ExpressionTranslation.constructLiteralForIntegerType(
+        		loc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
+
+
+			er.stmt.add(new CallStatement(loc, 
+					false, 
+					new VariableLHS[0], 
+					SFO.MEMSET,
+					new Expression[] {
+							ptr.lrVal.getValue(),		//ptr
+							size.lrVal.getValue(),		//noFields
+							nr1,						//sizeofFields (here, 1 byte -- really: sizeof(char)
+							value.lrVal.getValue()		//value TODO: char conversion
+			}));
+
+			if (this.callGraph.get(this.currentProcedure.getIdentifier()) == null)
+				this.callGraph.put(this.currentProcedure.getIdentifier(), new LinkedHashSet<String>());
+			this.callGraph.get(this.currentProcedure.getIdentifier()).add(SFO.MEMSET);
+
+			return er;
 		} else {
 			return null;
 		}
 	}
 
+	/**
+	 * 
+	 * The plan for function pointers:
+	 *  - every function f, that is used as a pointer in the C code gets a number #f
+	 *  - a pointer variable that points to a function then has the value {base: -1, offset: #f}
+	 *  - for every function f, that is used as a pointer, and that has a signature s, we introduce a "dispatch-procedure" in Boogie for s
+	 *  - the dispatch function for s = t1 x t2 x ... x tn -> t has the signature t1 x t2 x ... x tn x fp -> t, i.e., it takes the normal arguments, and a function address. 
+	 *    When called, it calls the procedure that corresponds to the function address with the corresponding arguments and returns the returned value
+	 *  - a call to a function pointer is then translated to a call to the dispatch-procedure with fitting signature where the function pointer is given as additional argument
+	 *  - nb: when thinking about the function signatures, one has to keep in mind, the differences between C and Boogie, here. 
+	 *    For instance, different C-function-signatures may correspond to on Boogie procedure signature, because a Boogie pointer does not know what it points to.
+	 *    Also, void types need special treatment as any pointer can be used as a void-pointer 
+	 *    The special method CType.isCompatibleWith() is used for this.
+	 *      --> the  names of the different dispatch function have to match exactly the classification done by isCompatibleWith.
+	 *    
+	 * @param loc
+	 * @param main
+	 * @param memoryHandler
+	 * @param structHandler
+	 * @param functionName
+	 * @param arguments
+	 * @return
+	 */
 	private Result handleFunctionPointerCall(ILocation loc, Dispatcher main, MemoryHandler memoryHandler,
 			StructHandler structHandler, IASTExpression functionName, IASTInitializerClause[] arguments) {
 
 		assert (main instanceof PRDispatcher) || ((MainDispatcher) main).getFunctionToIndex().size() > 0;
-		ResultExpression funcNameRex = (ResultExpression) main.dispatch(functionName);
-		RValue calledFuncRVal = (RValue) funcNameRex.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc).lrVal;
-		CType calledFuncType = calledFuncRVal.getCType().getUnderlyingType();
+		ExpressionResult funcNameRex = (ExpressionResult) main.dispatch(functionName);
+//		RValue calledFuncRVal = (RValue) funcNameRex.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc).lrVal;
+		CType calledFuncType = funcNameRex.lrVal.getCType().getUnderlyingType();
 		if (!(calledFuncType instanceof CFunction)) {
 			// .. because function pointers don't need to be dereferenced in
 			// order to be called
@@ -818,7 +930,7 @@ public class FunctionHandler {
 		if (calledFuncCFunction.getParameterTypes().length == 0 && arguments.length > 0) {
 			CDeclaration[] paramDecsFromCall = new CDeclaration[arguments.length];
 			for (int i = 0; i < arguments.length; i++) {
-				ResultExpression rex = (ResultExpression) main.dispatch(arguments[i]);
+				ExpressionResult rex = (ExpressionResult) main.dispatch(arguments[i]);
 				paramDecsFromCall[i] = new CDeclaration(rex.lrVal.getCType(), "#param" + i); // TODO:
 																						// SFO?
 			}
@@ -826,9 +938,14 @@ public class FunctionHandler {
 					calledFuncCFunction.takesVarArgs());
 		}
 
-		functionSignaturesThatHaveAFunctionPointer.add(calledFuncCFunction);
+		//new Procedure()
+		//functionSignaturesThatHaveAFunctionPointer = null;
+//		TODO: use is compatible with instead of equals/set, make the name of the inserted procedure compatible to isCompatibleWith
+		ProcedureSignature procSig = new ProcedureSignature(main, calledFuncCFunction);
+		functionSignaturesThatHaveAFunctionPointer.add(procSig); 
 
-		String procName = calledFuncCFunction.functionSignatureAsProcedureName();
+//		String procName = calledFuncCFunction.functionSignatureAsProcedureName();
+		String procName = procSig.toString();
 
 		CFunction cFuncWithFP = addFPParamToCFunction(calledFuncCFunction);
 
@@ -865,8 +982,8 @@ public class FunctionHandler {
 				// where ids of function parameters differ from is in ACSL
 				// expression
 				Result retranslateRes = main.dispatch(contract.get(i));
-				assert (retranslateRes instanceof ResultContract);
-				ResultContract resContr = (ResultContract) retranslateRes;
+				assert (retranslateRes instanceof ContractResult);
+				ContractResult resContr = (ContractResult) retranslateRes;
 				specList.addAll(Arrays.asList(resContr.specs));
 			}
 			spec = specList.toArray(new Specification[0]);
@@ -907,10 +1024,10 @@ public class FunctionHandler {
 														// Boogie
 				type = main.typeHandler.constructPointerType(loc);
 			} else {
-				type = ((TypeHandler) main.typeHandler).ctype2asttype(loc, paramDec.getType());
+				type = main.typeHandler.ctype2asttype(loc, paramDec.getType());
 			}
 
-			String paramId = main.nameHandler.getInParamIdentifier(paramDec.getName());
+			String paramId = main.nameHandler.getInParamIdentifier(paramDec.getName(), paramDec.getType());
 			in[i] = new VarList(loc, new String[] { paramId }, type);
 			main.cHandler.getSymbolTable().put(paramDec.getName(),
 					new SymbolTableValue(paramId, null, paramDec, false, null));
@@ -965,7 +1082,7 @@ public class FunctionHandler {
 						isOnHeap = ((MainDispatcher) main).getVariablesForHeap().contains(paramDec);
 
 				// Copy of inparam that is writeable
-				String auxInvar = main.nameHandler.getUniqueIdentifier(parent, cId, 0, isOnHeap);
+				String auxInvar = main.nameHandler.getUniqueIdentifier(parent, cId, 0, isOnHeap, cvar);
 
 				if (isOnHeap || cvar instanceof CArray) {
 					type = main.typeHandler.constructPointerType(loc);
@@ -986,7 +1103,7 @@ public class FunctionHandler {
 					// dereference
 					HeapLValue hlv = new HeapLValue(llv.getValue(), cvar);
 
-					ResultExpression assign = ((CHandler) main.cHandler).makeAssignment(main, igLoc, stmt, hlv,
+					ExpressionResult assign = ((CHandler) main.cHandler).makeAssignment(main, igLoc, stmt, hlv,
 							// convention: if a variable is put on heap or not,
 							// its ctype stays the same
 							new RValue(rhsId, cvar), new ArrayList<Declaration>(), new LinkedHashMap<VariableDeclaration, ILocation>(),
@@ -1002,8 +1119,7 @@ public class FunctionHandler {
 				// points to the locally declared variable.
 				main.cHandler.getSymbolTable().put(
 						cId,
-						new SymbolTableValue(auxInvar, inVarDecl, new CDeclaration(cvar, cId), false,
-								StorageClass.UNSPECIFIED));
+						new SymbolTableValue(auxInvar, inVarDecl, new CDeclaration(cvar, cId), false, paramDec));
 			}
 		}
 	}
@@ -1065,17 +1181,7 @@ public class FunctionHandler {
 				&& !(funcType.getResultType() instanceof CPointer)) {
 			if (methodsCalledBeforeDeclared.contains(methodName)) {
 				// this method was assumed to return int -> return int
-				out[0] = new VarList(loc, new String[] { SFO.RES }, new PrimitiveType(loc, /*
-																							 * new
-																							 * InferredType
-																							 * (
-																							 * Type
-																							 * .
-																							 * Integer
-																							 * )
-																							 * ,
-																							 */
-				SFO.INT));
+				out[0] = new VarList(loc, new String[] { SFO.RES }, new PrimitiveType(loc, SFO.INT));
 			} else {
 				// void, so there are no out vars
 				out = new VarList[0];
@@ -1132,7 +1238,7 @@ public class FunctionHandler {
 		String cId = currentProcedure.getIdentifier();
 		SymbolTableValue stValue = main.cHandler.getSymbolTable().get(cName, errLoc);
 		CType cvar = stValue.getCVariable();
-		if (cvar != null && stValue.isStatic()) {
+		if (cvar != null && stValue.getCDecl().isStatic()) {
 			modifiedGlobals.get(cId).add(searchString);
 			return;
 		}
@@ -1199,12 +1305,14 @@ public class FunctionHandler {
 	}
 
 	public Body getFunctionPointerFunctionBody(ILocation loc, Dispatcher main, MemoryHandler memoryHandler,
-			StructHandler structHandler, String fpfName, CFunction funcSignature, VarList[] inParams, VarList[] outParam) {
-		CFunction calledFuncType = funcSignature;
+			//StructHandler structHandler, String fpfName, CFunction funcSignature, VarList[] inParams, VarList[] outParam) {
+			StructHandler structHandler, String fpfName, ProcedureSignature funcSignature, VarList[] inParams, VarList[] outParam) {
+		//CFunction calledFuncType = funcSignature;
 
-		boolean resultTypeIsVoid = calledFuncType.getResultType() instanceof CPrimitive
-				&& ((CPrimitive) calledFuncType.getResultType()).getType() == PRIMITIVE.VOID;
-
+//		boolean resultTypeIsVoid = calledFuncType.getResultType() instanceof CPrimitive
+//				&& ((CPrimitive) calledFuncType.getResultType()).getType() == PRIMITIVE.VOID;
+		boolean resultTypeIsVoid = funcSignature.returnType == null;
+				
 		ArrayList<Statement> stmt = new ArrayList<>();
 		ArrayList<VariableDeclaration> decl = new ArrayList<>();
 
@@ -1227,9 +1335,10 @@ public class FunctionHandler {
 		// collect all functions that are addressoffed in the program and that
 		// match the signature
 		ArrayList<String> fittingFunctions = new ArrayList<>();
-		for (Entry<String, Integer> en : ((MainDispatcher) main).getFunctionToIndex().entrySet()) {
-			CType ptdToFuncType = procedureToCFunctionType.get(en.getKey());
-			if (ptdToFuncType.isCompatibleWith(calledFuncType)) {
+		for (Entry<String, Integer> en : ((Dispatcher) main).getFunctionToIndex().entrySet()) {
+			CFunction ptdToFuncType = procedureToCFunctionType.get(en.getKey());
+//			if (ptdToFuncType.isCompatibleWith(calledFuncType)) {
+			if (new ProcedureSignature(main, ptdToFuncType).equals(funcSignature)) {
 				fittingFunctions.add(en.getKey());
 			}
 		}
@@ -1248,7 +1357,7 @@ public class FunctionHandler {
 			return new Body(loc, decl.toArray(new VariableDeclaration[decl.size()]), stmt.toArray(new Statement[stmt
 					.size()]));		
 		} else if (fittingFunctions.size() == 1) {
-			ResultExpression rex = (ResultExpression) makeTheFunctionCallItself(main, loc, fittingFunctions.get(0),
+			ExpressionResult rex = (ExpressionResult) makeTheFunctionCallItself(main, loc, fittingFunctions.get(0),
 					new ArrayList<Statement>(), new ArrayList<Declaration>(),
 					new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), args);
 			funcCallResult = (IdentifierExpression) rex.lrVal.getValue();
@@ -1270,16 +1379,18 @@ public class FunctionHandler {
 			String tmpId = null;
 
 			if (!resultTypeIsVoid) {
-				tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.FUNCPTRRES);
+				tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.FUNCPTRRES, null);
 				VariableDeclaration tmpVarDec = new VariableDeclaration(loc, new Attribute[0],
-						new VarList[] { new VarList(loc, new String[] { tmpId }, main.typeHandler.ctype2asttype(loc,
-								((CFunction) calledFuncType).getResultType())) });
+						new VarList[] { new VarList(loc, new String[] { tmpId }, 
+								//main.typeHandler.ctype2asttype(loc,
+//								((CFunction) calledFuncType).getResultType())) });
+								funcSignature.returnType )});
 				decl.add(tmpVarDec);
 				auxVars.put(tmpVarDec, loc);
 				funcCallResult = new IdentifierExpression(loc, tmpId);
 			}
 
-			ResultExpression firstElseRex = (ResultExpression) makeTheFunctionCallItself(main, loc,
+			ExpressionResult firstElseRex = (ExpressionResult) makeTheFunctionCallItself(main, loc,
 					fittingFunctions.get(0), new ArrayList<Statement>(), new ArrayList<Declaration>(),
 					new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), args);
 			for (Declaration dec : firstElseRex.decl)
@@ -1296,7 +1407,7 @@ public class FunctionHandler {
 			IfStatement currentIfStmt = null;
 
 			for (int i = 1; i < fittingFunctions.size(); i++) {
-				ResultExpression currentRex = (ResultExpression) makeTheFunctionCallItself(main, loc,
+				ExpressionResult currentRex = (ExpressionResult) makeTheFunctionCallItself(main, loc,
 						fittingFunctions.get(i), new ArrayList<Statement>(), new ArrayList<Declaration>(),
 						new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>(), args);
 				for (Declaration dec : currentRex.decl)
@@ -1311,7 +1422,7 @@ public class FunctionHandler {
 					newStmts.add(assignment);
 				}
 
-				Expression condition = new BinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
+				Expression condition = ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ,
 						new IdentifierExpression(loc, inParams[inParams.length - 1].getIdentifiers()[0]),
 						new IdentifierExpression(loc, SFO.FUNCTION_ADDRESS + fittingFunctions.get(i)));
 
@@ -1347,7 +1458,7 @@ public class FunctionHandler {
 				// C has only one return statement -> no need for forall
 				call = new CallStatement(loc, false, new VariableLHS[0], methodName, args.toArray(new Expression[0]));
 			} else if (type.length == 1) { // one return value
-				String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.RETURNED);
+				String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.RETURNED, null);
 				expr = new IdentifierExpression(loc, tmpId);
 				VariableDeclaration tmpVar = SFO.getTempVarVariableDeclaration(tmpId, type[0].getType(), loc);
 				auxVars.put(tmpVar, loc);
@@ -1366,7 +1477,7 @@ public class FunctionHandler {
 			String longDescription = "Return value of method '" + methodName
 					+ "' unknown! Methods should be declared, before they are used! Return value assumed to be int ...";
 			main.warn(loc, longDescription);
-			String ident = main.nameHandler.getTempVarUID(SFO.AUXVAR.RETURNED);
+			String ident = main.nameHandler.getTempVarUID(SFO.AUXVAR.RETURNED, null);
 			expr = new IdentifierExpression(loc, ident);
 			
 			// we don't know the CType of the returned value 
@@ -1381,9 +1492,10 @@ public class FunctionHandler {
 		}
 		stmt.add(call);
 		CType returnCType = methodsCalledBeforeDeclared.contains(methodName) ? new CPrimitive(PRIMITIVE.INT)
-				: procedureToCFunctionType.get(methodName).getResultType();
+				: procedureToCFunctionType.get(methodName).getResultType().getUnderlyingType();
+		m_ExpressionTranslation.addAssumeValueInRangeStatements(loc, expr, returnCType, stmt);
 		assert (CHandler.isAuxVarMapcomplete(main, decl, auxVars));
-		return new ResultExpression(stmt, new RValue(expr, returnCType), decl, auxVars, overappr);
+		return new ExpressionResult(stmt, new RValue(expr, returnCType), decl, auxVars, overappr);
 	}
 
 	/**

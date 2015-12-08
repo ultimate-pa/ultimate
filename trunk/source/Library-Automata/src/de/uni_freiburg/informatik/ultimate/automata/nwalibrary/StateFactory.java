@@ -30,7 +30,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKVNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.LevelRankingState;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Condition;
@@ -78,6 +77,10 @@ public abstract class StateFactory<STATE> {
 		return null;
 	}
 	
+	public STATE buchiComplementNCSB(LevelRankingState<?, STATE> compl) {
+		return null;
+	}
+	
 	public STATE complementBuchiDeterministicNonFinal(STATE c) {
 		return null;
 	}
@@ -85,10 +88,6 @@ public abstract class StateFactory<STATE> {
 	public STATE complementBuchiDeterministicFinal(STATE c) {
 		return null;
 	}
-	
-//	public void annouceNwaStateRemoval(INestedWordAutomaton<?, Content> nwa, Content down, Content up) {
-//		
-//	}
 	
 	public STATE minimize(Collection<STATE> states) {
 		return null;	
@@ -109,5 +108,4 @@ public abstract class StateFactory<STATE> {
 	public STATE senwa(STATE entry, STATE state) {
 		return null;
 	}
-
 }

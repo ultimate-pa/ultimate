@@ -36,7 +36,7 @@ import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.preferences.IScopeContext;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 
-import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter.Labeling;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 @Deprecated
 public class ResultChecker<LETTER,STATE> {
@@ -333,7 +333,7 @@ public class ResultChecker<LETTER,STATE> {
 //		boolean writeToFile = prefs.getBoolean(PreferenceInitializer.Name_Write);
 //		if (writeToFile) {
 			String filename = workingDirectory + File.separator+filenamePrefix + getDateTime() + ".ats";
-			new AtsDefinitionPrinter(services, filenamePrefix, filename, Labeling.NUMERATE, message, automata);
+			new AutomatonDefinitionPrinter(services, filenamePrefix, filename, Format.ATS_NUMERATE, message, automata);
 //		}
     }
     

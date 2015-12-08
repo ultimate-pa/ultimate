@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -46,12 +47,13 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
@@ -61,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedAttribute;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
@@ -72,14 +75,17 @@ public abstract class AExpressionTranslation {
 	
 	protected final FunctionDeclarations m_FunctionDeclarations;
 	protected final TypeSizes m_TypeSizes;
+	protected final ITypeHandler m_TypeHandler;
+
 
 	public AExpressionTranslation(TypeSizes typeSizeConstants, ITypeHandler typeHandler) {
 		super();
 		this.m_TypeSizes = typeSizeConstants;
 		this.m_FunctionDeclarations = new FunctionDeclarations(typeHandler, m_TypeSizes);
+		this.m_TypeHandler = typeHandler;
 	}
 
-	public ResultExpression translateLiteral(Dispatcher main, IASTLiteralExpression node) {
+	public ExpressionResult translateLiteral(Dispatcher main, IASTLiteralExpression node) {
 		ILocation loc = LocationFactory.createCLocation(node);
 
 		switch (node.getKind()) {
@@ -87,7 +93,7 @@ public abstract class AExpressionTranslation {
 		{
 			String val = new String(node.getValue());
 			val = ISOIEC9899TC3.handleFloatConstant(val, loc, main);
-			return new ResultExpression(new RValue(new RealLiteral(loc, val), new CPrimitive(PRIMITIVE.FLOAT)));
+			return new ExpressionResult(new RValue(new RealLiteral(loc, val), new CPrimitive(PRIMITIVE.FLOAT)));
 		}
 		case IASTLiteralExpression.lk_char_constant:
 			throw new AssertionError("To be handled by subclass");
@@ -95,23 +101,24 @@ public abstract class AExpressionTranslation {
 		{
 			String val = new String(node.getValue());
 			RValue rVal = translateIntegerLiteral(loc, val);
-			return new ResultExpression(rVal);
+			return new ExpressionResult(rVal);
 		}
 		case IASTLiteralExpression.lk_string_literal:
 			// Translate string to uninitialized char pointer
-			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET);
+			CPointer pointerType = new CPointer(new CPrimitive(PRIMITIVE.CHAR));
+			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET, pointerType);
 			VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
 					loc, new String[] { tId }, main.typeHandler.constructPointerType(loc)) });
-			RValue rvalue = new RValue(new IdentifierExpression(loc, tId), new CPointer(new CPrimitive(PRIMITIVE.CHAR)));
+			RValue rvalue = new RValue(new IdentifierExpression(loc, tId), pointerType);
 			ArrayList<Declaration> decls = new ArrayList<Declaration>();
 			decls.add(tVarDecl);
 			Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
 			auxVars.put(tVarDecl, loc);
-			return new ResultExpression(new ArrayList<Statement>(), rvalue, decls, auxVars);
+			return new ExpressionResult(new ArrayList<Statement>(), rvalue, decls, auxVars);
 		case IASTLiteralExpression.lk_false:
-			return new ResultExpression(new RValue(new BooleanLiteral(loc, false), new CPrimitive(PRIMITIVE.INT)));
+			return new ExpressionResult(new RValue(new BooleanLiteral(loc, false), new CPrimitive(PRIMITIVE.INT)));
 		case IASTLiteralExpression.lk_true:
-			return new ResultExpression(new RValue(new BooleanLiteral(loc, true), new CPrimitive(PRIMITIVE.INT)));
+			return new ExpressionResult(new RValue(new BooleanLiteral(loc, true), new CPrimitive(PRIMITIVE.INT)));
 		default:
 			String msg = "Unknown or unsupported kind of IASTLiteralExpression";
 			throw new UnsupportedSyntaxException(loc, msg);
@@ -119,17 +126,56 @@ public abstract class AExpressionTranslation {
 	}
 	
 	
-	public abstract Expression constructBinaryComparisonExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
-	public abstract Expression constructBinaryBitwiseExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
-	public abstract Expression constructUnaryExpression(ILocation loc, int nodeOperator, Expression exp, CPrimitive type);
-	public abstract Expression createArithmeticExpression(int op, Expression left, CPrimitive typeLeft, Expression right, CPrimitive typeRight, ILocation loc);
+	public final Expression constructBinaryComparisonExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
+		//TODO: Check that types coincide
+		if (type1.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE || type2.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
+			String prefixedFunctionName = declareBinaryFloatComparisonOperation(loc, type1);
+			return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp1, exp2});
+		} else {
+			return constructBinaryComparisonIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2);
+		}
+	}
+	public final Expression constructBinaryBitwiseExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
+		//TODO: Check that types coincide
+		if (type1.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE || type2.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
+			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
+		} else {
+			return constructBinaryBitwiseIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2);
+		}
+	}
+	public final Expression constructUnaryExpression(ILocation loc, int nodeOperator, Expression exp, CPrimitive type) {
+		if (type.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
+			String prefixedFunctionName = declareUnaryFloatOperation(loc, type);
+			return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp});
+		} else {
+			return constructUnaryIntegerExpression(loc, nodeOperator, exp, type);
+		}
+	}
+	public final Expression constructArithmeticExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
+		//TODO: Check that types coincide
+		if (type1.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE || type2.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
+			String prefixedFunctionName = declareBinaryArithmeticFloatOperation(loc, type1);
+			return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp1, exp2});
+		} else {
+			return constructArithmeticIntegerExpression(loc, nodeOperator, exp1, type1, exp2, type2);
+		}
+	}
+	
+	public abstract Expression constructBinaryComparisonIntegerExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
+	public abstract Expression constructBinaryBitwiseIntegerExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
+	public abstract Expression constructUnaryIntegerExpression(ILocation loc, int nodeOperator, Expression exp, CPrimitive type);
+	public abstract Expression constructArithmeticIntegerExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
 	
 	
 	public Expression constructBinaryEqualityExpression(ILocation loc, int nodeOperator, Expression exp1, CType type1, Expression exp2, CType type2) {
+		if (type1.isRealFloatingType() || type2.isRealFloatingType()) {
+			String prefixedFunctionName = declareBinaryFloatComparisonOperation(loc, (CPrimitive) type1);
+			return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp1, exp2});
+		}
 		if (nodeOperator == IASTBinaryExpression.op_equals) {
-			return new BinaryExpression(loc, BinaryExpression.Operator.COMPEQ, exp1, exp2);
+			return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, exp1, exp2);
 		} else 	if (nodeOperator == IASTBinaryExpression.op_notequals) {
-			return new BinaryExpression(loc, BinaryExpression.Operator.COMPNEQ, exp1, exp2);
+			return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPNEQ, exp1, exp2);
 		} else {
 			throw new IllegalArgumentException("operator is neither equals nor not equals");
 		}
@@ -191,11 +237,11 @@ public abstract class AExpressionTranslation {
 	 * Fixing this will be postponed until we want to support complex types.
 	 */
 	public void usualArithmeticConversions(Dispatcher main, ILocation loc, 
-			ResultExpression leftRex, ResultExpression rightRex) {
-		leftRex.replaceEnumByInt();
-		rightRex.replaceEnumByInt();
-		final CPrimitive leftPrimitive = getCorrespondingPrimitiveType(leftRex.lrVal.getCType());
-		final CPrimitive rightPrimitive = getCorrespondingPrimitiveType(rightRex.lrVal.getCType());
+			ExpressionResult leftRex, ExpressionResult rightRex) {
+		final CPrimitive leftPrimitive = (CPrimitive) 
+				CEnum.replaceEnumWithInt(leftRex.lrVal.getCType()); 
+		final CPrimitive rightPrimitive = (CPrimitive) 
+				CEnum.replaceEnumWithInt(leftRex.lrVal.getCType()); 
 		if (leftPrimitive.isIntegerType()) {
 			doIntegerPromotion(loc, leftRex);
 		}
@@ -223,12 +269,30 @@ public abstract class AExpressionTranslation {
 	 * Convert ResultExpression to resultType if its type is not already
 	 * resultType.
 	 */
-	private void convertIfNecessary(ILocation loc, ResultExpression operand,
+	private void convertIfNecessary(ILocation loc, ExpressionResult operand,
 			CPrimitive resultType) {
 		if (operand.lrVal.getCType().equals(resultType)) {
 			// do nothing
 		} else {
-			convert(loc, operand, resultType);
+			if (operand.lrVal.getCType().isIntegerType()) {
+				if (resultType.isIntegerType()) {
+					convertIntToInt(loc, operand, resultType);
+				} else if (resultType.isRealFloatingType()) {
+					convertIntToFloat(loc, operand, resultType);
+				} else {
+					throw new UnsupportedSyntaxException(loc, "conversion from " + operand.lrVal.getCType() + " to " + resultType);
+				}
+			} else if (operand.lrVal.getCType().isRealFloatingType()) {
+				if (resultType.isIntegerType()) {
+					convertFloatToInt(loc, operand, resultType);
+				} else if (resultType.isRealFloatingType()) {
+					convertFloatToFloat(loc, operand, resultType);
+				} else {
+					throw new UnsupportedSyntaxException(loc, "conversion from " + operand.lrVal.getCType() + " to " + resultType);
+				}
+			} else {
+				throw new UnsupportedSyntaxException(loc, "conversion from " + operand.lrVal.getCType() + " to " + resultType);
+			}
 		}
 	}
 
@@ -267,40 +331,53 @@ public abstract class AExpressionTranslation {
 	}
 
 	/**
-	 * If CType is CEnum return int (since C standard 6.4.4.3.2 says 
-	 * "An identifier declared as an enumeration constant has type int.")
-	 * If CType is CPrimitive return it.
-	 * Otherwise throw an Exception that conversion will be impossible.  
+	 * Conversion from some integer type to some integer type which is not _Bool.
 	 */
-	private CPrimitive getCorrespondingPrimitiveType(CType cType) {
-		if (cType instanceof CPrimitive) {
-			return (CPrimitive) cType; 
-		} else if (cType instanceof CEnum) {
-			return new CPrimitive(PRIMITIVE.INT);
+	public abstract void convertIntToInt_NonBool(ILocation loc, ExpressionResult operand, CPrimitive resultType);
+	
+	public final void convertIntToInt(ILocation loc, ExpressionResult rexp, CPrimitive newType) {
+		if (newType.getType() == PRIMITIVE.BOOL) {
+			convertToBool(loc, rexp);
 		} else {
-			throw new UnsupportedOperationException("unable to apply usual arithmetic conversions to " + cType);
+			convertIntToInt_NonBool(loc, rexp, newType);
 		}
 	}
-
-	public abstract void convert(ILocation loc, ResultExpression operand, CPrimitive resultType);
 	
 	/**
 	 * Perform the integer promotions a specified in C11 6.3.1.1.2 on the
 	 * operand.
 	 */
-	public abstract void doIntegerPromotion(ILocation loc, ResultExpression operand);
+	public abstract void doIntegerPromotion(ILocation loc, ExpressionResult operand);
 	
 	public boolean integerPromotionNeeded(CPrimitive cPrimitive) {
-		if (cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR) || cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR16) ||
-			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR32) || cPrimitive.getType().equals(CPrimitive.PRIMITIVE.SCHAR) ||
-			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.SHORT) || cPrimitive.getType().equals(CPrimitive.PRIMITIVE.UCHAR) ||
-			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.USHORT) || cPrimitive.getType().equals(CPrimitive.PRIMITIVE.WCHAR)) {
+		if (cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR) || 
+//			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR16) ||
+//			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR32) || 
+			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.SCHAR) ||
+			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.SHORT) || 
+			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.UCHAR) ||
+//			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.WCHAR) || 
+			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.USHORT)) {
 			return true;
 		} else {
 			return false;
 		}
 	}
 	
+	/**
+	 * Try to get the value of RValue rval. Returns null if extraction
+	 * is impossible. Extraction might succeed if rval represents a constant
+	 * value. Extraction fails, e.g., if rval represents a variable.
+	 * @param expr
+	 * @return
+	 */
+	public BigInteger extractIntegerValue(RValue rval) {
+		return extractIntegerValue(rval.getValue(), rval.getCType());
+	}
+	
+	public abstract BigInteger extractIntegerValue(Expression expr, CType cType);
+	
+		
 	public CPrimitive determineResultOfIntegerPromotion(CPrimitive cPrimitive) {
 		int argBitLength = m_TypeSizes.getSize(cPrimitive.getType()) * 8;
 		int intLength = m_TypeSizes.getSize(CPrimitive.PRIMITIVE.INT) * 8;
@@ -336,18 +413,20 @@ public abstract class AExpressionTranslation {
 	 * integer data types. This method returns the CType of the structs
 	 * components.
 	 */
-	public CPrimitive getCTypeOfPointerComponents() {
-		return new CPrimitive(PRIMITIVE.INT);
-	}
+	public abstract CPrimitive getCTypeOfPointerComponents();
 
-	public void convertPointerToInt(Dispatcher main, ILocation loc, ResultExpression rexp,
+	public void convertPointerToInt(Dispatcher main, ILocation loc, ExpressionResult rexp,
 			CPrimitive newType) {
-		String prefixedFunctionName = declareConvertPointerToIntFunction(main,
-				loc, newType);
-		Expression pointerExpression = rexp.lrVal.getValue();
-		Expression intExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {pointerExpression});
-		RValue rValue = new RValue(intExpression, newType, false, false);
-		rexp.lrVal = rValue;
+		if (newType.getType() == PRIMITIVE.BOOL) {
+			convertToBool(loc, rexp);
+		} else {
+			String prefixedFunctionName = declareConvertPointerToIntFunction(main,
+					loc, newType);
+			Expression pointerExpression = rexp.lrVal.getValue();
+			Expression intExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {pointerExpression});
+			RValue rValue = new RValue(intExpression, newType, false, false);
+			rexp.lrVal = rValue;
+		}
 	}
 
 	private String declareConvertPointerToIntFunction(Dispatcher main, ILocation loc, CPrimitive newType) {
@@ -363,13 +442,71 @@ public abstract class AExpressionTranslation {
 		return prefixedFunctionName;
 	}
 	
-	public void convertIntToPointer(Dispatcher main, ILocation loc, ResultExpression rexp,
+	private String declareConversionFunction(ILocation loc, CPrimitive oldType, CPrimitive newType) {
+		String functionName = "convert" + oldType.toString() +"To" + newType.toString();
+		String prefixedFunctionName = "~" + functionName;
+		if (!m_FunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
+			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
+			Attribute[] attributes = new Attribute[] { attribute };
+			ASTType resultASTType = m_TypeHandler.ctype2asttype(loc, newType);
+			ASTType paramASTType = m_TypeHandler.ctype2asttype(loc, oldType);
+			m_FunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTType);
+		}
+		return prefixedFunctionName;
+	}
+	
+	private String declareBinaryFloatComparisonOperation(ILocation loc, CPrimitive type) {
+		String functionName = "someBinary" + type.toString() +"ComparisonOperation";
+		String prefixedFunctionName = "~" + functionName;
+		if (!m_FunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
+			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
+			Attribute[] attributes = new Attribute[] { attribute };
+			ASTType paramAstType = m_TypeHandler.ctype2asttype(loc, type);
+			ASTType resultAstType = new PrimitiveType(loc, SFO.BOOL);
+			m_FunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultAstType, paramAstType, paramAstType);
+		}
+		return prefixedFunctionName;
+	}
+	
+	private String declareBinaryArithmeticFloatOperation(ILocation loc, CPrimitive type) {
+		String functionName = "someBinaryArithmetic" + type.toString() +"operation";
+		String prefixedFunctionName = "~" + functionName;
+		if (!m_FunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
+			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
+			Attribute[] attributes = new Attribute[] { attribute };
+			ASTType astType = m_TypeHandler.ctype2asttype(loc, type);
+			m_FunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType, astType);
+		}
+		return prefixedFunctionName;
+	}
+	
+	private String declareUnaryFloatOperation(ILocation loc, CPrimitive type) {
+		String functionName = "someUnary" + type.toString() +"operation";
+		String prefixedFunctionName = "~" + functionName;
+		if (!m_FunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
+			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
+			Attribute[] attributes = new Attribute[] { attribute };
+			ASTType astType = m_TypeHandler.ctype2asttype(loc, type);
+			m_FunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, astType, astType);
+		}
+		return prefixedFunctionName;
+	}
+	
+	public void convertIntToPointer(Dispatcher main, ILocation loc, ExpressionResult rexp,
 			CPointer newType) {
-		String prefixedFunctionName = declareConvertIntToPointerFunction(main, loc, (CPrimitive) rexp.lrVal.getCType());
-		Expression intExpression = rexp.lrVal.getValue();
-		Expression pointerExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {intExpression});
-		RValue rValue = new RValue(pointerExpression, newType, false, false);
-		rexp.lrVal = rValue;
+		boolean overapproximate = false;
+		if (overapproximate) {
+			String prefixedFunctionName = declareConvertIntToPointerFunction(main, loc, (CPrimitive) rexp.lrVal.getCType());
+			Expression intExpression = rexp.lrVal.getValue();
+			Expression pointerExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {intExpression});
+			RValue rValue = new RValue(pointerExpression, newType, false, false);
+			rexp.lrVal = rValue;
+		} else {
+			convertIntToInt(loc, rexp, getCTypeOfPointerComponents());
+			Expression zero = constructLiteralForIntegerType(loc, getCTypeOfPointerComponents(), BigInteger.ZERO);
+			RValue rValue = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(zero, rexp.lrVal.getValue(), loc), newType, false, false);
+			rexp.lrVal = rValue;
+		}
 	}
 	
 	private String declareConvertIntToPointerFunction(Dispatcher main, ILocation loc, CPrimitive newType) {
@@ -384,7 +521,110 @@ public abstract class AExpressionTranslation {
 		}
 		return prefixedFunctionName;
 	}
+	
+	public void convertFloatToInt(ILocation loc, ExpressionResult rexp, CPrimitive newType) {
+		if (newType.getType() == PRIMITIVE.BOOL) {
+			convertToBool(loc, rexp);
+		} else {
+			convertFloatToInt_NonBool(loc, rexp, newType);
+		}
+	}
 
+	public void convertFloatToInt_NonBool(ILocation loc, ExpressionResult rexp, CPrimitive newType) {
+//		throw new UnsupportedSyntaxException(loc, "conversion from float to int not yet implemented");
+		String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
+		Expression oldExpression = rexp.lrVal.getValue();
+		Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {oldExpression});
+		RValue rValue = new RValue(resultExpression, newType, false, false);
+		rexp.lrVal = rValue;
+	}
 
+	public void convertIntToFloat(ILocation loc, ExpressionResult rexp, CPrimitive newType) {
+//		throw new UnsupportedSyntaxException(loc, "conversion from int to float not yet implemented");
+		String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
+		Expression oldExpression = rexp.lrVal.getValue();
+		Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {oldExpression});
+		RValue rValue = new RValue(resultExpression, newType, false, false);
+		rexp.lrVal = rValue;
+
+	}
+	
+	public void convertFloatToFloat(ILocation loc, ExpressionResult rexp, CPrimitive newType) {
+//		throw new UnsupportedSyntaxException(loc, "conversion from float to float not yet implemented");
+		String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
+		Expression oldExpression = rexp.lrVal.getValue();
+		Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {oldExpression});
+		RValue rValue = new RValue(resultExpression, newType, false, false);
+		rexp.lrVal = rValue;
+	}
+	
+	/**
+	 * Convert any scalar type to _Bool. Section 6.3.1.2 of C11 says:
+ 	 * When any scalar value is converted to _Bool, the result is 0 if the value 
+     * compares equal to 0; otherwise, the result is 1.
+	 */
+	private void convertToBool(ILocation loc, ExpressionResult rexp) {
+		CType underlyingType = rexp.lrVal.getCType();
+		underlyingType = CEnum.replaceEnumWithInt(underlyingType);
+		final Expression zeroInputType = constructZero(loc, underlyingType);
+		final Expression isZero;
+		if (underlyingType instanceof CPointer) {
+			isZero = ExpressionFactory.newBinaryExpression(loc, 
+					BinaryExpression.Operator.COMPEQ, rexp.lrVal.getValue(), zeroInputType);
+		} else if (underlyingType instanceof CPrimitive) {
+			isZero = constructBinaryComparisonExpression(loc, IASTBinaryExpression.op_equals, 
+					rexp.lrVal.getValue(), (CPrimitive) underlyingType, 
+					zeroInputType, (CPrimitive) underlyingType);
+		} else {
+			throw new UnsupportedOperationException("unsupported: conversion from " + underlyingType + " to _Bool");
+		}
+		Expression zeroBool = constructLiteralForIntegerType(loc, new CPrimitive(PRIMITIVE.BOOL), BigInteger.ZERO);
+		Expression oneBool = constructLiteralForIntegerType(loc, new CPrimitive(PRIMITIVE.BOOL), BigInteger.ONE);
+		Expression resultExpression = ExpressionFactory.newIfThenElseExpression(loc, isZero, zeroBool, oneBool);
+		RValue rValue = new RValue(resultExpression, new CPrimitive(PRIMITIVE.BOOL), false, false);
+		rexp.lrVal = rValue;
+	}
+	
+	
+	public abstract void addAssumeValueInRangeStatements(ILocation loc, Expression expr, CType ctype, List<Statement> stmt);
+	
+	
+	public Expression constructNullPointer(ILocation loc) {
+//		return new IdentifierExpression(loc, SFO.NULL);
+		return constructPointerForIntegerValues(loc, BigInteger.ZERO, BigInteger.ZERO);
+	}
+	
+	public Expression constructPointerForIntegerValues(ILocation loc, BigInteger baseValue, BigInteger offsetValue) {
+		Expression base = constructLiteralForIntegerType(loc, 
+				getCTypeOfPointerComponents(), baseValue);
+		Expression offset = constructLiteralForIntegerType(loc, 
+				getCTypeOfPointerComponents(), offsetValue);
+		return MemoryHandler.constructPointerFromBaseAndOffset(base, offset, loc); 
+	}
+	
+	public Expression constructZero(ILocation loc, CType cType) {
+		final Expression result;
+		if (cType instanceof CPrimitive) {
+			switch (((CPrimitive) cType).getGeneralType()) {
+			case FLOATTYPE:
+				result = constructLiteralForFloatingType(loc,
+						(CPrimitive) cType, BigInteger.ZERO);
+				break;
+			case INTTYPE:
+				result = constructLiteralForIntegerType(loc, 
+						(CPrimitive) cType, BigInteger.ZERO);
+				break;
+			case VOID:
+				throw new UnsupportedSyntaxException(loc, "no 0 value of type VOID");
+			default:
+				throw new AssertionError("illegal type");
+			}
+		} else if (cType instanceof CPointer) {
+			result = constructNullPointer(loc);
+		} else {
+			throw new UnsupportedSyntaxException(loc, "don't know 0 value for type " + cType);
+		}
+		return result;
+	}
 	
 }

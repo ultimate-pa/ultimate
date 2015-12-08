@@ -40,23 +40,26 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
-import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
+import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTerm;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineTermTransformer;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 public class SmtUtils {
@@ -131,10 +134,19 @@ public class SmtUtils {
 		return Util.and(script, conjuncts.toArray(new Term[conjuncts.size()]));
 	}
 	
-	public static boolean hasBooleanParams(ApplicationTerm term) {
+	public static boolean firstParamIsBool(ApplicationTerm term) {
 		Term[] params = term.getParameters();
 		boolean result = params[0].getSort().getName().equals("Bool");
 		return result;
+	}
+	
+	public static boolean allParamsAreBool(ApplicationTerm term) {
+		for (Term param : term.getParameters()) {
+			if (!param.getSort().getName().equals("Bool")) {
+				return false;
+			}
+		}
+		return true;
 	}
 	
 	
@@ -325,6 +337,13 @@ public class SmtUtils {
 	private static boolean twoConstantTermsWithDifferentValue(Term fst, Term snd) {
 		if (!fst.getSort().equals(snd.getSort())) {
 			throw new UnsupportedOperationException("arguments sort different");
+		}
+		BitvectorConstant fstbw = BitvectorUtils.constructBitvectorConstant(fst);
+		if (fstbw != null) {
+			BitvectorConstant sndbw = BitvectorUtils.constructBitvectorConstant(snd);
+			if (sndbw != null) {
+				return !fstbw.equals(sndbw);
+			}
 		}
 		if (!(fst instanceof ConstantTerm)) {
 			return false;
@@ -540,7 +559,7 @@ public class SmtUtils {
 	 * techniques if applicable.
 	 */
 	public static Term termWithLocalSimplification(Script script, 
-			String funcname, Term... params) {
+			String funcname, BigInteger[] indices, Term... params) {
 		final Term result;
 		switch (funcname) {
 		case "and":
@@ -589,19 +608,33 @@ public class SmtUtils {
 			break;
 		case "mod":
 			if (params.length != 2) {
-				throw new IllegalArgumentException("no div");
+				throw new IllegalArgumentException("no mod");
 			} else {
 				result = mod(script, params[0], params[1]);
 			}
 			break;
+		case "zero_extend":
+		case "extract":
+		case "bvadd":
+		case "bvsub":
+		case "bvmul":
+		case "bvult":
+			result = BitvectorUtils.termWithLocalSimplification(script, funcname, indices, params);
+			break;
 		default:
-			result = script.term(funcname, params);
+//			if (BitvectorUtils.allTermsAreBitvectorConstants(params)) {
+//				throw new AssertionError("wasted optimization " + funcname);
+//			}
+			result = script.term(funcname, indices, null, params);
 			break;
 		}
 		return result;
 	}
 	
 	
+
+
+
 	/**
 	 * Returns a possibly simplified version of the Term (div dividend divisor).
 	 * If dividend and divisor are both literals the returned Term is a literal 
@@ -613,9 +646,15 @@ public class SmtUtils {
 				(divisor instanceof ConstantTerm) &&
 				divisor.getSort().isNumericSort()) {
 			Rational dividentAsRational = convertConstantTermToRational((ConstantTerm) dividend);
-			Rational divisorAsRational = convertConstantTermToRational((ConstantTerm) dividend);
+			Rational divisorAsRational = convertConstantTermToRational((ConstantTerm) divisor);
 			Rational quotientAsRational = dividentAsRational.div(divisorAsRational);
-			return quotientAsRational.toTerm(dividend.getSort());
+			Rational result;
+			if (divisorAsRational.isNegative()) {
+				result = quotientAsRational.ceil();
+			} else {
+				result = quotientAsRational.floor();
+			}
+			return result.toTerm(dividend.getSort());
 		} else {
 			return script.term("div", dividend, divisor);
 		}
@@ -624,23 +663,46 @@ public class SmtUtils {
 	/**
 	 * Returns a possibly simplified version of the Term (mod dividend divisor).
 	 * If dividend and divisor are both literals the returned Term is a literal 
-	 * which is equivalent to the result of the operation
+	 * which is equivalent to the result of the operation.
+	 * If only the divisor is a literal we apply modulo to all coefficients of
+	 * the dividend (helpful simplification in case where coefficient becomes zero).
 	 */
 	public static Term mod(Script script, Term divident, Term divisor) {
-		//FIXME: implement this
-//		if ((divident instanceof ConstantTerm) &&
-//				divident.getSort().isNumericSort() &&
-//				(divisor instanceof ConstantTerm) &&
-//				divisor.getSort().isNumericSort()) {
-//			final Rational dividentAsRational = convertConstantTermToRational((ConstantTerm) divident);
-//			final Rational divisorAsRational = convertConstantTermToRational((ConstantTerm) divident);
-//			Rational modAsRational = 
-//			return quotientAsRational.toTerm(divident.getSort());
-//		} else {
+		final AffineTerm affineDivident = (AffineTerm) (new AffineTermTransformer(script)).transform(divident);
+		final AffineTerm affineDivisor = (AffineTerm) (new AffineTermTransformer(script)).transform(divisor);
+		if (affineDivident.isErrorTerm() || affineDivisor.isErrorTerm()) {
 			return script.term("mod", divident, divisor);
-//		}
+		}
+		if (affineDivisor.isConstant()) {
+			BigInteger bigIntDivisor = toInt(affineDivisor.getConstant());
+			if (affineDivident.isConstant()) {
+				BigInteger bigIntDivident = toInt(affineDivident.getConstant());
+				BigInteger modulus = BoogieUtils.euclideanMod(bigIntDivident, bigIntDivisor);
+				return script.numeral(modulus);
+			} else {
+				AffineTerm moduloApplied = AffineTerm.applyModuloToAllCoefficients(
+						script, affineDivident, bigIntDivisor);
+				return script.term("mod", moduloApplied.toTerm(script), affineDivisor.toTerm(script));
+			}
+		} else {
+			return script.term("mod", affineDivident.toTerm(script), affineDivisor.toTerm(script));
+		}
 	}
-
+	
+	public static BigInteger toInt(Rational integralRational) {
+		if (!integralRational.isIntegral()) {
+			throw new IllegalArgumentException("divident has to be integral");
+		}
+		if (!integralRational.denominator().equals(BigInteger.ONE)) {
+			throw new IllegalArgumentException("denominator has to be zero");
+		}
+		return integralRational.numerator();
+	}
+	
+	public static Rational toRational(BigInteger bigInt) {
+		return Rational.valueOf(bigInt, BigInteger.ONE);
+	}
+	
 	/**
 	 * Check if {@link Term} which may contain free {@link TermVariable}s is
 	 * satisfiable with respect to the current assertion stack of 
@@ -728,6 +790,49 @@ public class SmtUtils {
 			throw new UnsupportedOperationException();
 		}
 		return rational;
+	}
+	
+	/**
+	 * @return true iff tv does not occur in appTerm, or appTerm has two 
+	 * parameters, tv is the left parameter and tv does not occur in the right
+	 * prarameter. 
+	 */
+	public static boolean occursAtMostAsLhs(TermVariable tv, ApplicationTerm appTerm) {
+		if (appTerm.getParameters().length != 2) {
+			return !Arrays.asList(appTerm.getFreeVars()).contains(tv);
+		} else {
+			if (Arrays.asList(appTerm.getParameters()[1].getFreeVars()).contains(tv)) {
+				// occurs on rhs
+				return false;
+			} else {
+				if (appTerm.getParameters()[0].equals(tv)) {
+					return true;
+				} else {
+					return !Arrays.asList(appTerm.getParameters()[0].getFreeVars()).contains(tv);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Returns quantified formula. Drops quantifiers for variables that do not
+	 * occur in formula.
+	 */
+	public static Term quantifier(Script script, int quantifier, Collection<TermVariable> vars, Term body) {
+		if (vars.size() == 0) {
+			return body;
+		}
+		ArrayList<TermVariable> resultVars = new ArrayList<>();
+		for (TermVariable tv : Arrays.asList(body.getFreeVars())) {
+			if (vars.contains(tv)) {
+				resultVars.add(tv);
+			}
+		}
+		if (resultVars.isEmpty()) {
+			return body;
+		} else {
+			return script.quantifier(quantifier, resultVars.toArray(new TermVariable[resultVars.size()]), body);
+		}
 	}
 
 }

@@ -1,5 +1,4 @@
 /*
- * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
@@ -25,6 +24,7 @@
  * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates;
 
 import java.util.ArrayDeque;
@@ -41,7 +41,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.VariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -80,7 +81,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer.Solver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
@@ -160,16 +160,16 @@ public class SmtManager {
 	protected Term m_EmptyStackTerm;
 	protected String[] m_NoProcedure;
 
-	public SmtManager(Boogie2SMT boogie2smt, ModifiableGlobalVariableManager modifiableGlobals,
-			IUltimateServiceProvider services) {
+	public SmtManager(Script script, Boogie2SMT boogie2smt, ModifiableGlobalVariableManager modifiableGlobals,
+			IUltimateServiceProvider services, boolean interpolationModeSwitchNeeded) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
-		m_InterpolationModeSwitchNeeded = interpolationModeSwitchNeeded();
+		m_InterpolationModeSwitchNeeded = interpolationModeSwitchNeeded;
 		m_NoProcedure = new String[0];
 		m_DontCareTerm = new AuxilliaryTerm("don't care");
 		m_EmptyStackTerm = new AuxilliaryTerm("emptyStack");
 		m_Boogie2Smt = boogie2smt;
-		m_Script = boogie2smt.getScript();
+		m_Script = script;
 		m_ModifiableGlobals = modifiableGlobals;
 	}
 
@@ -413,10 +413,10 @@ public class SmtManager {
 		unlock(lockOwner);
 	}
 	
-	public boolean interpolationModeSwitchNeeded() {
-		Solver solver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
-				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, Solver.class);
-		if (solver == Solver.External_PrincessInterpolationMode) {
+	private boolean interpolationModeSwitchNeeded() {
+		SolverMode solver = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
+		if (solver == SolverMode.External_PrincessInterpolationMode) {
 			return true;
 		} else {
 			return false;

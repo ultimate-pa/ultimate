@@ -31,6 +31,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container;
 
+import org.eclipse.cdt.core.dom.ast.IASTNode;
+
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
@@ -42,13 +44,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
  */
 public class SymbolTableValue {
 	
-	/**
-	 * Enum representing the C storageclass (e.g. typedef,..) of the SymbolTableValue
-	 * @author nutz
-	 */
-	public static enum StorageClass {
-		AUTO, EXTERN, /*LAST,*/ MUTABLE, REGISTER, STATIC, TYPEDEF, UNSPECIFIED
-	}
+
 	
     /**
      * The variable name in the Boogie program.
@@ -69,10 +65,10 @@ public class SymbolTableValue {
      */
     private final boolean isGlobalVar;
     
-    /**
-     * the storageClass of this symbol
-     */
-    StorageClass storageClass;
+//    /**
+//     * the storageClass of this symbol
+//     */
+//    StorageClass storageClass;
     
     
     public boolean isIntFromPointer;
@@ -86,6 +82,8 @@ public class SymbolTableValue {
 //     * True iff this C variable has static storage class.
 //     */
 //    private final boolean isStatic;
+    
+    private final IASTNode m_DeclarationNode;
 
     /**
      * Constructor.
@@ -103,7 +101,8 @@ public class SymbolTableValue {
      *            whether the variable is static in the C program or not
      */
     public SymbolTableValue(String bId, Declaration boogieDecl, CDeclaration cdecl,
-            boolean isGlobal, StorageClass sc) {
+//            boolean isGlobal, StorageClass sc, IASTNode declNode) {
+            boolean isGlobal, IASTNode declNode) {
 //            , boolean isStatic) {
         assert bId != null && !bId.equals(SFO.EMPTY);
         this.boogieName = bId;
@@ -111,9 +110,10 @@ public class SymbolTableValue {
         this.cDecl = cdecl;
         this.boogieDecl = boogieDecl;
         this.isGlobalVar = isGlobal;
-        this.storageClass = sc;
+//        this.storageClass = sc;
 //        this.cvar = cvar;
 //        this.isStatic = isStatic;
+        m_DeclarationNode = declNode;
     }
 
     /**
@@ -156,7 +156,17 @@ public class SymbolTableValue {
         return this.cDecl.getType();
     }
     
-    public boolean isStatic() {
-    	return this.storageClass == StorageClass.STATIC;
-    }
+//    public boolean isStatic() {
+//    	return this.storageClass == StorageClass.STATIC;
+//    }
+//
+//    public boolean isExtern() {
+//    	return this.storageClass == StorageClass.EXTERN;
+//    }
+
+	public IASTNode getDeclarationNode() {
+		return m_DeclarationNode;
+	}
+    
+    
 }

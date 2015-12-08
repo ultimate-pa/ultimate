@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation;
 
 import java.math.BigInteger;
+import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
@@ -37,29 +38,30 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.ISOIEC9899TC3;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ast.BaseAddrExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionApplication;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.NamedAttribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
@@ -68,28 +70,35 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 public class IntegerTranslation extends AExpressionTranslation {
 
 	private UNSIGNED_TREATMENT m_UnsignedTreatment;
-	private boolean m_OverapproximateIntPointerConversion;
+	private final boolean m_OverapproximateIntPointerConversion = true;
+	
+	/**
+	 * Add assume statements that state that values of signed integer types are 
+	 * in range.
+	 */
+	private final boolean m_AssumeThatSignedValuesAreInRange;
 
-	public IntegerTranslation(TypeSizes m_TypeSizeConstants, ITypeHandler typeHandler, UNSIGNED_TREATMENT unsignedTreatment) {
+	public IntegerTranslation(TypeSizes m_TypeSizeConstants, ITypeHandler typeHandler, UNSIGNED_TREATMENT unsignedTreatment, boolean assumeSignedInRange) {
 		super(m_TypeSizeConstants, typeHandler);
 		m_UnsignedTreatment = unsignedTreatment;
+		m_AssumeThatSignedValuesAreInRange = assumeSignedInRange;
 	}
 
 	@Override
-	public ResultExpression translateLiteral(Dispatcher main, IASTLiteralExpression node) {
+	public ExpressionResult translateLiteral(Dispatcher main, IASTLiteralExpression node) {
 		ILocation loc = LocationFactory.createCLocation(node);
 
 		switch (node.getKind()) {
 		case IASTLiteralExpression.lk_char_constant:
 		{
 			String val = ISOIEC9899TC3.handleCharConstant(new String(node.getValue()), loc, main);
-			return new ResultExpression(new RValue(new IntegerLiteral(loc, val), new CPrimitive(PRIMITIVE.CHAR)));
+			return new ExpressionResult(new RValue(new IntegerLiteral(loc, val), new CPrimitive(PRIMITIVE.CHAR)));
 		}
 		case IASTLiteralExpression.lk_integer_constant:
 		{
 			String val = new String(node.getValue());
 			RValue rVal = translateIntegerLiteral(loc, val);
-			return new ResultExpression(rVal);
+			return new ExpressionResult(rVal);
 		}
 		default:
 			return super.translateLiteral(main, node);
@@ -127,7 +136,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public Expression constructBinaryComparisonExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
+	public Expression constructBinaryComparisonIntegerExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2) {
 		if (!type1.equals(type2)) {
 			throw new IllegalArgumentException("incompatible types " + type1 + " and " + type2);
 		}
@@ -160,14 +169,14 @@ public class IntegerTranslation extends AExpressionTranslation {
 			throw new AssertionError("???");
 		}
 		
-		return new BinaryExpression(loc, op, exp1, exp2);
+		return ExpressionFactory.newBinaryExpression(loc, op, exp1, exp2);
 	}
 	
 	public static Expression applyWraparound(ILocation loc, TypeSizes typeSizes, CPrimitive cPrimitive, Expression operand) {
 		if (cPrimitive.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
 			if (cPrimitive.isUnsigned()) {
 				BigInteger maxValuePlusOne = typeSizes.getMaxValueOfPrimitiveType(cPrimitive).add(BigInteger.ONE);
-				return new BinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, 
+				return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.ARITHMOD, 
 						operand, 
 						new IntegerLiteral(loc, maxValuePlusOne.toString()));
 			} else {
@@ -179,7 +188,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public Expression constructBinaryBitwiseExpression(ILocation loc,
+	public Expression constructBinaryBitwiseIntegerExpression(ILocation loc,
 			int op, Expression left, CPrimitive typeLeft,
 			Expression right, CPrimitive typeRight) {
 		final String funcname;
@@ -214,7 +223,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 	
 	@Override
-	public Expression constructUnaryExpression(ILocation loc,
+	public Expression constructUnaryIntegerExpression(ILocation loc,
 			int op, Expression expr, CPrimitive type) {
 		final Expression result;
 		switch (op) {
@@ -225,10 +234,10 @@ public class IntegerTranslation extends AExpressionTranslation {
 			break;
 		case IASTUnaryExpression.op_minus: {
 			if (type.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-				result = new UnaryExpression(loc, UnaryExpression.Operator.ARITHNEGATIVE, expr);
+				result = ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.ARITHNEGATIVE, expr);
 			} else if (type.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
 				//TODO: having boogie deal with negative real literals would be the nice solution..
-				result = new BinaryExpression(loc, Operator.ARITHMINUS, new RealLiteral(loc, "0.0"), expr);		
+				result = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, new RealLiteral(loc, "0.0"), expr);		
 			} else {
 				throw new IllegalArgumentException("unsupported " + type);
 			}
@@ -250,33 +259,35 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public Expression createArithmeticExpression(int op, Expression left, CPrimitive typeLeft,
-			Expression right, CPrimitive typeRight, ILocation loc) {
+	public Expression constructArithmeticIntegerExpression(ILocation loc, int nodeOperator, Expression exp1,
+			CPrimitive type1, Expression exp2, CPrimitive type2) {
+		assert (type1.getGeneralType() == GENERALPRIMITIVE.INTTYPE);
+		assert (type2.getGeneralType() == GENERALPRIMITIVE.INTTYPE);
 		BinaryExpression.Operator operator;
-		if (typeLeft.isIntegerType() && typeLeft.isUnsigned()) {
-			assert typeRight.isIntegerType() && typeRight.isUnsigned() : "incompatible types";
-			if (op == IASTBinaryExpression.op_divide || 
-					op == IASTBinaryExpression.op_divide || 
-					op == IASTBinaryExpression.op_modulo || 
-					op == IASTBinaryExpression.op_moduloAssign) {
+		if (type1.isIntegerType() && type1.isUnsigned()) {
+			assert type2.isIntegerType() && type2.isUnsigned() : "incompatible types";
+			if (nodeOperator == IASTBinaryExpression.op_divide || 
+					nodeOperator == IASTBinaryExpression.op_divide || 
+					nodeOperator == IASTBinaryExpression.op_modulo || 
+					nodeOperator == IASTBinaryExpression.op_moduloAssign) {
 				// apply wraparound to ensure that Nutz transformation is sound
 				// (see examples/programs/regression/c/NutzTransformation02.c)
-				left = applyWraparound(loc, m_TypeSizes, typeLeft, left);
-				right = applyWraparound(loc, m_TypeSizes, typeRight, right);
+				exp1 = applyWraparound(loc, m_TypeSizes, type1, exp1);
+				exp2 = applyWraparound(loc, m_TypeSizes, type2, exp2);
 			}
 		}
-		boolean bothAreIntegerLiterals = left instanceof IntegerLiteral && right instanceof IntegerLiteral;
+		boolean bothAreIntegerLiterals = exp1 instanceof IntegerLiteral && exp2 instanceof IntegerLiteral;
 		BigInteger leftValue = null;
 		BigInteger rightValue = null;
 		//TODO: add checks for UnaryExpression (otherwise we don't catch negative constants, here) --> or remove all the cases 
 		//(if-then-else conditions are checked for being constant in RCFGBuilder anyway, so this is merely a decision of readability of Boogie code..)
-		if (left instanceof IntegerLiteral)
-			leftValue = new BigInteger(((IntegerLiteral) left).getValue());
-		if (right instanceof IntegerLiteral)
-			rightValue = new BigInteger(((IntegerLiteral) right).getValue());
+		if (exp1 instanceof IntegerLiteral)
+			leftValue = new BigInteger(((IntegerLiteral) exp1).getValue());
+		if (exp2 instanceof IntegerLiteral)
+			rightValue = new BigInteger(((IntegerLiteral) exp2).getValue());
 		//TODO: make this more general, (a + 4) + 4 may still occur this way..
 		String constantResult = "";
-		switch (op) {
+		switch (nodeOperator) {
 		case IASTBinaryExpression.op_minusAssign:
 		case IASTBinaryExpression.op_minus:
 			operator = Operator.ARITHMINUS;
@@ -286,7 +297,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 						.subtract(rightValue).toString();
 				return new IntegerLiteral(loc, constantResult);
 			} else {
-				return new BinaryExpression(loc, operator, left, right);
+				return ExpressionFactory.newBinaryExpression(loc, operator, exp1, exp2);
 			}
 		case IASTBinaryExpression.op_multiplyAssign:
 		case IASTBinaryExpression.op_multiply:
@@ -297,7 +308,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 							.multiply(rightValue).toString();
 				return new IntegerLiteral(loc, constantResult);
 			} else {
-				return new BinaryExpression(loc, operator, left, right);
+				return ExpressionFactory.newBinaryExpression(loc, operator, exp1, exp2);
 			}
 		case IASTBinaryExpression.op_divideAssign:
 		case IASTBinaryExpression.op_divide:
@@ -313,63 +324,63 @@ public class IntegerTranslation extends AExpressionTranslation {
 							.divide(rightValue).toString();
 				return new IntegerLiteral(loc, constantResult);
 			} else {
-				BinaryExpression leftSmallerZeroAndThereIsRemainder;
+				Expression leftSmallerZeroAndThereIsRemainder;
 				{
-					BinaryExpression leftModRight = new BinaryExpression(loc, Operator.ARITHMOD, left, right);
-					BinaryExpression thereIsRemainder = new BinaryExpression(loc, 
+					Expression leftModRight = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMOD, exp1, exp2);
+					Expression thereIsRemainder = ExpressionFactory.newBinaryExpression(loc, 
 							Operator.COMPNEQ, leftModRight, new IntegerLiteral(loc, SFO.NR0));
-					BinaryExpression leftSmallerZero = new BinaryExpression(loc, 
+					Expression leftSmallerZero = ExpressionFactory.newBinaryExpression(loc, 
 							BinaryExpression.Operator.COMPLT, 
-							left,
+							exp1,
 							new IntegerLiteral(loc, SFO.NR0));
 					leftSmallerZeroAndThereIsRemainder = 
-							new BinaryExpression(loc, Operator.LOGICAND, leftSmallerZero, thereIsRemainder);
+							ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, leftSmallerZero, thereIsRemainder);
 				}
-				BinaryExpression rightSmallerZero = new BinaryExpression(loc, 
+				Expression rightSmallerZero = ExpressionFactory.newBinaryExpression(loc, 
 						BinaryExpression.Operator.COMPLT, 
-						right,
+						exp2,
 						new IntegerLiteral(loc, SFO.NR0));
-				BinaryExpression normalDivision = new BinaryExpression(loc, operator, left, right);
-				if (left instanceof IntegerLiteral) {
+				Expression normalDivision = ExpressionFactory.newBinaryExpression(loc, operator, exp1, exp2);
+				if (exp1 instanceof IntegerLiteral) {
 					if (leftValue.signum() == 1) {
 						return normalDivision;
 					} else if (leftValue.signum() == -1) {
-						return new IfThenElseExpression(loc, rightSmallerZero, 
-									new BinaryExpression(loc, 
+						return ExpressionFactory.newIfThenElseExpression(loc, rightSmallerZero, 
+									ExpressionFactory.newBinaryExpression(loc, 
 											BinaryExpression.Operator.ARITHMINUS, 
 											normalDivision, 
 											new IntegerLiteral(loc, SFO.NR1)), 
-									new BinaryExpression(loc, 
+									ExpressionFactory.newBinaryExpression(loc, 
 											BinaryExpression.Operator.ARITHPLUS, 
 											normalDivision, 
 											new IntegerLiteral(loc, SFO.NR1)));
 					} else {
 						return new IntegerLiteral(loc, SFO.NR0);
 					}
-				} else if (right instanceof IntegerLiteral) {
+				} else if (exp2 instanceof IntegerLiteral) {
 					if (rightValue.signum() == 1 || rightValue.signum() == 0) {
-						return new IfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder, 
-								new BinaryExpression(loc, 
+						return ExpressionFactory.newIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder, 
+								ExpressionFactory.newBinaryExpression(loc, 
 										BinaryExpression.Operator.ARITHPLUS, 
 										normalDivision, 
 										new IntegerLiteral(loc, SFO.NR1)), 
 								normalDivision);
 					} else if (rightValue.signum() == -1) {
-						return new IfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder, 
-									new BinaryExpression(loc, 
+						return ExpressionFactory.newIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder, 
+									ExpressionFactory.newBinaryExpression(loc, 
 											BinaryExpression.Operator.ARITHMINUS, 
 											normalDivision, 
 											new IntegerLiteral(loc, SFO.NR1)), 
 									normalDivision);
 					} 
 				} else {
-					return new IfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder, 
-							new IfThenElseExpression(loc, rightSmallerZero, 
-									new BinaryExpression(loc, 
+					return ExpressionFactory.newIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder, 
+							ExpressionFactory.newIfThenElseExpression(loc, rightSmallerZero, 
+									ExpressionFactory.newBinaryExpression(loc, 
 											BinaryExpression.Operator.ARITHMINUS, 
 											normalDivision, 
 											new IntegerLiteral(loc, SFO.NR1)), 
-									new BinaryExpression(loc, 
+									ExpressionFactory.newBinaryExpression(loc, 
 											BinaryExpression.Operator.ARITHPLUS, 
 											normalDivision, 
 											new IntegerLiteral(loc, SFO.NR1))), 
@@ -409,66 +420,66 @@ public class IntegerTranslation extends AExpressionTranslation {
 				} 
 				return new IntegerLiteral(loc, constantResult);
 			} else {
-				BinaryExpression leftSmallerZeroAndThereIsRemainder;
+				Expression leftSmallerZeroAndThereIsRemainder;
 				{
-					BinaryExpression leftModRight = new BinaryExpression(loc, Operator.ARITHMOD, left, right);
-					BinaryExpression thereIsRemainder = new BinaryExpression(loc, 
+					Expression leftModRight = ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMOD, exp1, exp2);
+					Expression thereIsRemainder = ExpressionFactory.newBinaryExpression(loc, 
 							Operator.COMPNEQ, leftModRight, new IntegerLiteral(loc, SFO.NR0));
-					BinaryExpression leftSmallerZero = new BinaryExpression(loc, 
+					Expression leftSmallerZero = ExpressionFactory.newBinaryExpression(loc, 
 							BinaryExpression.Operator.COMPLT, 
-							left,
+							exp1,
 							new IntegerLiteral(loc, SFO.NR0));
 					leftSmallerZeroAndThereIsRemainder = 
-							new BinaryExpression(loc, Operator.LOGICAND, leftSmallerZero, thereIsRemainder);
+							ExpressionFactory.newBinaryExpression(loc, Operator.LOGICAND, leftSmallerZero, thereIsRemainder);
 				}
-				BinaryExpression rightSmallerZero = new BinaryExpression(loc, 
+				Expression rightSmallerZero = ExpressionFactory.newBinaryExpression(loc, 
 						BinaryExpression.Operator.COMPLT, 
-						right,
+						exp2,
 						new IntegerLiteral(loc, SFO.NR0));
-				BinaryExpression normalModulo = new BinaryExpression(loc, operator, left, right);
-				if (left instanceof IntegerLiteral) {
+				Expression normalModulo = ExpressionFactory.newBinaryExpression(loc, operator, exp1, exp2);
+				if (exp1 instanceof IntegerLiteral) {
 					if (leftValue.signum() == 1) {
 						return normalModulo;
 					} else if (leftValue.signum() == -1) {
-						return new IfThenElseExpression(loc, rightSmallerZero, 
-								new BinaryExpression(loc, 
+						return ExpressionFactory.newIfThenElseExpression(loc, rightSmallerZero, 
+								ExpressionFactory.newBinaryExpression(loc, 
 										BinaryExpression.Operator.ARITHPLUS, 
 										normalModulo, 
-										right), 
-										new BinaryExpression(loc, 
+										exp2), 
+										ExpressionFactory.newBinaryExpression(loc, 
 												BinaryExpression.Operator.ARITHMINUS, 
 												normalModulo, 
-												right));
+												exp2));
 					} else {
 						return new IntegerLiteral(loc, SFO.NR0);
 					}
-				} else if (right instanceof IntegerLiteral) {
+				} else if (exp2 instanceof IntegerLiteral) {
 					if (rightValue.signum() == 1 || rightValue.signum() == 0) {
-						return new IfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder, 
-								new BinaryExpression(loc, 
+						return ExpressionFactory.newIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder, 
+								ExpressionFactory.newBinaryExpression(loc, 
 										BinaryExpression.Operator.ARITHMINUS, 
 										normalModulo, 
-										right), 
+										exp2), 
 										normalModulo);
 					} else if (rightValue.signum() == -1) {
-						return new IfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder, 
-								new BinaryExpression(loc, 
+						return ExpressionFactory.newIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder, 
+								ExpressionFactory.newBinaryExpression(loc, 
 										BinaryExpression.Operator.ARITHPLUS, 
 										normalModulo, 
-										right), 
+										exp2), 
 										normalModulo);
 					}
 				} else {
-					return new IfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder, 
-							new IfThenElseExpression(loc, rightSmallerZero, 
-									new BinaryExpression(loc, 
+					return ExpressionFactory.newIfThenElseExpression(loc, leftSmallerZeroAndThereIsRemainder, 
+							ExpressionFactory.newIfThenElseExpression(loc, rightSmallerZero, 
+									ExpressionFactory.newBinaryExpression(loc, 
 											BinaryExpression.Operator.ARITHPLUS, 
 											normalModulo, 
-											right), 
-											new BinaryExpression(loc, 
+											exp2), 
+											ExpressionFactory.newBinaryExpression(loc, 
 													BinaryExpression.Operator.ARITHMINUS, 
 													normalModulo, 
-													right)), 
+													exp2)), 
 													normalModulo);
 				}
 			}
@@ -481,7 +492,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 							.add(rightValue).toString();
 				return new IntegerLiteral(loc, constantResult);
 			} else {
-				return new BinaryExpression(loc, operator, left, right);
+				return ExpressionFactory.newBinaryExpression(loc, operator, exp1, exp2);
 			}
 		default:
 			String msg = "Unknown or unsupported arithmetic expression";
@@ -492,52 +503,88 @@ public class IntegerTranslation extends AExpressionTranslation {
 	
 
 	@Override
-	public void convert(ILocation loc, ResultExpression operand,
+	public void convertIntToInt_NonBool(ILocation loc, ExpressionResult operand,
 			CPrimitive resultType) {
 		if (resultType.isIntegerType()) {
 			convertToIntegerType(loc, operand, resultType);
 		} else {
-			throw new UnsupportedOperationException("not yet supported");
+			throw new UnsupportedOperationException("not yet supported: conversion to " + resultType);
 		}
 		// set the type of the operand to resultType
 		operand.lrVal.setCType(resultType);
 	}
 
-	private void convertToIntegerType(ILocation loc, ResultExpression operand,
+	private void convertToIntegerType(ILocation loc, ExpressionResult operand,
 			CPrimitive resultType) {
 		assert resultType.isIntegerType();
 		CPrimitive oldType = (CPrimitive) operand.lrVal.getCType();
 		if (oldType.isIntegerType()) {
+			final Expression newExpression;
 			if (resultType.isUnsigned()) {
+				final Expression old_WrapedIfNeeded;
+				if (oldType.isUnsigned() && 
+						m_TypeSizes.getSize(resultType.getType()) > m_TypeSizes.getSize(oldType.getType())) {
+					// required for sound Nutz transformation 
+					// (see examples/programs/regression/c/NutzTransformation03.c)
+					old_WrapedIfNeeded = applyWraparound(loc, m_TypeSizes, oldType, operand.lrVal.getValue());
+				} else {
+					old_WrapedIfNeeded = operand.lrVal.getValue();
+				}
 				if (m_UnsignedTreatment == UNSIGNED_TREATMENT.ASSUME_ALL) {
 					BigInteger maxValuePlusOne = m_TypeSizes.getMaxValueOfPrimitiveType((CPrimitive) resultType).add(BigInteger.ONE);
-					AssumeStatement assumeGeq0 = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
-							operand.lrVal.getValue(), new IntegerLiteral(loc, SFO.NR0)));
+					AssumeStatement assumeGeq0 = new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPGEQ,
+							old_WrapedIfNeeded, new IntegerLiteral(loc, SFO.NR0)));
 					operand.stmt.add(assumeGeq0);
 
-					AssumeStatement assumeLtMax = new AssumeStatement(loc, new BinaryExpression(loc, BinaryExpression.Operator.COMPLT,
-							operand.lrVal.getValue(), new IntegerLiteral(loc, maxValuePlusOne.toString())));
+					AssumeStatement assumeLtMax = new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPLT,
+							old_WrapedIfNeeded, new IntegerLiteral(loc, maxValuePlusOne.toString())));
 					operand.stmt.add(assumeLtMax);
 				} else {
 					// do nothing
 				}
+				newExpression = old_WrapedIfNeeded;
 			} else {
-				// required for sound Nutz transformation 
-				// (see examples/programs/regression/c/NutzTransformation01.c)
-				if (oldType.isUnsigned() && !resultType.isUnsigned()) {
-					Expression oldExpr = operand.lrVal.getValue(); 
-					Expression newExpr = applyWraparound(loc, m_TypeSizes, oldType, oldExpr);
-					RValue newRValue = new RValue(newExpr, resultType, false, false);
-					operand.lrVal = newRValue;
+				assert !resultType.isUnsigned();
+				final Expression old_WrapedIfUnsigned;
+				if (oldType.isUnsigned()) {
+					// required for sound Nutz transformation 
+					// (see examples/programs/regression/c/NutzTransformation01.c)
+					old_WrapedIfUnsigned = applyWraparound(loc, m_TypeSizes, oldType, operand.lrVal.getValue());
+				} else {
+					old_WrapedIfUnsigned = operand.lrVal.getValue();
 				}
+				if (m_TypeSizes.getSize(resultType.getType()) > m_TypeSizes.getSize(oldType.getType()) || 
+						m_TypeSizes.getSize(resultType.getType()) == m_TypeSizes.getSize(oldType.getType()) && !oldType.isUnsigned() ) {
+					newExpression = old_WrapedIfUnsigned;
+				} else {
+					// According to C11 6.3.1.3.3 the result is implementation-defined
+					// it the value cannot be represented by the new type
+					// We have chosen an implementation that is similar to 
+					// taking the lowest bits in a two's complement representation:
+					// First we take the value modulo the cardinality of the
+					// data range (which is 2*(MAX_VALUE+1) for signed )
+					// If the number is strictly larger than MAX_VALUE we 
+					// subtract the cardinality of the data range.
+					CPrimitive correspondingUnsignedType = resultType.getCorrespondingUnsignedType(); 
+					Expression wrapped = applyWraparound(loc, m_TypeSizes, correspondingUnsignedType, old_WrapedIfUnsigned);
+					Expression maxValue = constructLiteralForIntegerType(loc, oldType, m_TypeSizes.getMaxValueOfPrimitiveType(resultType));
+					Expression condition = ExpressionFactory.newBinaryExpression(loc, Operator.COMPLEQ, wrapped, maxValue);
+					Expression range = constructLiteralForIntegerType(loc, oldType, m_TypeSizes.getMaxValueOfPrimitiveType(correspondingUnsignedType).add(BigInteger.ONE));
+					newExpression = ExpressionFactory.newIfThenElseExpression(loc, condition, 
+							wrapped, 
+							ExpressionFactory.newBinaryExpression(loc, Operator.ARITHMINUS, wrapped, range));
+				}
+
 			}
+			RValue newRValue = new RValue(newExpression, resultType, false, false);
+			operand.lrVal = newRValue;
 		} else {
-			throw new UnsupportedOperationException("not yet supported");
+			throw new UnsupportedOperationException("not yet supported: conversion from " + oldType);
 		}
 	}
 
 	@Override
-	public void doIntegerPromotion(ILocation loc, ResultExpression operand) {
+	public void doIntegerPromotion(ILocation loc, ExpressionResult operand) {
 		if (!integerPromotionNeeded((CPrimitive) operand.lrVal.getCType())) {
 			return;
 		}
@@ -559,7 +606,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 
 	@Override
 	public void convertPointerToInt(Dispatcher main, ILocation loc,
-			ResultExpression rexp, CPrimitive newType) {
+			ExpressionResult rexp, CPrimitive newType) {
 		assert (newType.isIntegerType());
 		assert (rexp.lrVal.getCType() instanceof CPointer);
 		if (m_OverapproximateIntPointerConversion) {
@@ -570,13 +617,13 @@ public class IntegerTranslation extends AExpressionTranslation {
 			if (main.getTypeSizes().useFixedTypeSizes()) {
 				BigInteger maxPtrValuePlusOne = main.getTypeSizes().getMaxValueOfPointer().add(BigInteger.ONE); 
 				IntegerLiteral max_Pointer = new IntegerLiteral(loc, maxPtrValuePlusOne.toString());
-				intExpression = createArithmeticExpression(IASTBinaryExpression.op_plus,
-						createArithmeticExpression(IASTBinaryExpression.op_multiply, 
-								MemoryHandler.getPointerBaseAddress(pointerExpression,  loc), 
-								newType, max_Pointer, 
-								newType, loc),
-						newType, MemoryHandler.getPointerOffset(pointerExpression, loc), 
-						newType, loc);
+				intExpression = constructArithmeticExpression(loc,
+						IASTBinaryExpression.op_plus,
+						constructArithmeticExpression(loc, 
+								IASTBinaryExpression.op_multiply, 
+								MemoryHandler.getPointerBaseAddress(pointerExpression,  loc), newType, 
+								max_Pointer, newType), newType, 
+						MemoryHandler.getPointerOffset(pointerExpression, loc), newType);
 			} else {
 				intExpression = MemoryHandler.getPointerOffset(pointerExpression, loc);
 			}
@@ -587,7 +634,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 
 	@Override
 	public void convertIntToPointer(Dispatcher main, ILocation loc,
-			ResultExpression rexp, CPointer newType) {
+			ExpressionResult rexp, CPointer newType) {
 		if (m_OverapproximateIntPointerConversion) {
 			super.convertIntToPointer(main, loc, rexp, newType);
 		} else {
@@ -597,14 +644,14 @@ public class IntegerTranslation extends AExpressionTranslation {
 			if (main.getTypeSizes().useFixedTypeSizes()) {
 				BigInteger maxPtrValuePlusOne = main.getTypeSizes().getMaxValueOfPointer().add(BigInteger.ONE); 
 				IntegerLiteral max_Pointer = new IntegerLiteral(loc, maxPtrValuePlusOne.toString());
-				baseAdress = createArithmeticExpression(IASTBinaryExpression.op_divide,
-								intExpression,
-								getCTypeOfPointerComponents(), max_Pointer, 
-								getCTypeOfPointerComponents(), loc);
-				offsetAdress = createArithmeticExpression(IASTBinaryExpression.op_modulo,
-										intExpression,
-										getCTypeOfPointerComponents(), max_Pointer, 
-										getCTypeOfPointerComponents(), loc);
+				baseAdress = constructArithmeticExpression(loc,
+								IASTBinaryExpression.op_divide,
+								intExpression, getCTypeOfPointerComponents(), 
+								max_Pointer, getCTypeOfPointerComponents());
+				offsetAdress = constructArithmeticExpression(loc,
+										IASTBinaryExpression.op_modulo,
+										intExpression, getCTypeOfPointerComponents(), 
+										max_Pointer, getCTypeOfPointerComponents());
 			} else {
 				baseAdress = constructLiteralForIntegerType(loc, getCTypeOfPointerComponents(), BigInteger.ZERO);
 				offsetAdress = intExpression;
@@ -615,6 +662,58 @@ public class IntegerTranslation extends AExpressionTranslation {
 		}
 	}
 	
+	@Override
+	public BigInteger extractIntegerValue(Expression expr, CType cType) {
+		if (cType.isIntegerType()) {
+			if (expr instanceof IntegerLiteral) {
+				BigInteger value =  new BigInteger(((IntegerLiteral) expr).getValue());
+				if (((CPrimitive) cType).isUnsigned()) {
+					BigInteger maxValue = m_TypeSizes.getMaxValueOfPrimitiveType((CPrimitive) cType);
+					BigInteger maxValuePlusOne = maxValue.add(BigInteger.ONE);
+					return value.mod(maxValuePlusOne);
+				} else {
+					return value;
+				}
+			} else {
+				return null;
+			}
+		} else {
+			return null;
+		}
+	}
 	
+	@Override
+	public CPrimitive getCTypeOfPointerComponents() {
+		return new CPrimitive(PRIMITIVE.LONG);
+	}
+
+	@Override
+	public void addAssumeValueInRangeStatements(ILocation loc, Expression expr, CType cType, List<Statement> stmt) {
+		if (m_AssumeThatSignedValuesAreInRange) {
+			if (cType.getUnderlyingType().isIntegerType()) {
+				CPrimitive cPrimitive = (CPrimitive) CEnum.replaceEnumWithInt(cType);
+				if (!cPrimitive.isUnsigned()) {
+					stmt.add(constructAssumeInRangeStatement(m_TypeSizes, loc, expr, cPrimitive));
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Returns "assume (minValue <= lrValue && lrValue <= maxValue)"
+	 */
+	private AssumeStatement constructAssumeInRangeStatement(TypeSizes typeSizes, 
+			ILocation loc, Expression expr, CPrimitive type) {
+		Expression minValue = constructLiteralForIntegerType(loc, type, typeSizes.getMinValueOfPrimitiveType(type)); 
+		Expression maxValue = constructLiteralForIntegerType(loc, type, typeSizes.getMaxValueOfPrimitiveType(type));
+				
+		Expression biggerMinInt = constructBinaryComparisonExpression(
+				loc, IASTBinaryExpression.op_lessEqual, minValue, type, expr, type);
+		Expression smallerMaxValue = constructBinaryComparisonExpression(
+				loc, IASTBinaryExpression.op_lessEqual, expr, type, maxValue, type); 
+		AssumeStatement inRange = new AssumeStatement(loc, ExpressionFactory.newBinaryExpression(loc, 
+				BinaryExpression.Operator.LOGICAND, biggerMinInt, smallerMaxValue));
+		return inRange;
+	}
 
 }

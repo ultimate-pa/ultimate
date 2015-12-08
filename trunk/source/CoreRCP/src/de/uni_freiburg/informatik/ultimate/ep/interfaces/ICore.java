@@ -27,7 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.ep.interfaces;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.CommandLineParser;
-import de.uni_freiburg.informatik.ultimate.core.services.ILoggingService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILoggingService;
 
 /**
  * This interface describes the object that is passed to
@@ -62,15 +62,17 @@ public interface ICore {
 	 * ICore will try to save all settings different from the default settings
 	 * to the given path. An existing file will be overwritten.
 	 * 
-	 * @return An absolute path to a (possibly existing) .epf file
+	 * @param absolutePath
+	 *            An absolute path to a (possibly existing) .epf file.
 	 */
 	void savePreferences(String absolutePath);
 
 	/**
 	 * ICore will try to load new settings from the given path.
 	 * 
-	 * @return An absolute path to a .epf settings file compatible with
-	 *         Ultimate's settings.
+	 * @param absolutePath
+	 *            An absolute path to a .epf settings file compatible with
+	 *            Ultimate's settings.
 	 */
 	void loadPreferences(String absolutePath);
 

@@ -116,6 +116,10 @@ public final class SFO {
 	 */
 	public static final String FREE = "~free";
 	/**
+	 * Identifier of free procedure.
+	 */
+	public static final String DEALLOC = "ULTIMATE.dealloc";
+	/**
 	 * The "#length" array identifier.
 	 */
 	public static final String LENGTH = "#length";
@@ -182,6 +186,7 @@ public final class SFO {
 	public static final String MEMCPY = "#memcpy";
 
 	public static final String TO_INT = "#to_int";
+	public static final String MEMSET = "ULTIMATE.memset";
 
 	/**
 	 * Specifies purpose of an auxiliary temporary variable.

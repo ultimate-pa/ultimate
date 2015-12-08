@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.core.services.IResultService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
 import de.uni_freiburg.informatik.ultimate.result.AutomataScriptInterpreterOverallResult;
 import de.uni_freiburg.informatik.ultimate.result.AutomataScriptInterpreterOverallResult.OverallResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.result.IResult;
 public class AutomataScriptTestResultDecider implements ITestResultDecider {
 	
 	private OverallResult m_Category;
+	private String m_ErrorMessage;
 
 	@Override
 	public TestResult getTestResult(IResultService resultService) {
@@ -54,6 +55,11 @@ public class AutomataScriptTestResultDecider implements ITestResultDecider {
 			throw new AssertionError("no overall result");
 		} else {
 			m_Category = asior.getOverallResult();
+			if(m_Category == OverallResult.EXCEPTION_OR_ERROR) {
+				m_ErrorMessage = asior.getErrorMessage();
+			} else {
+				m_ErrorMessage = null;
+			}
 		}
 		return getTestResultFromCategory(m_Category);
 	}
@@ -67,7 +73,11 @@ public class AutomataScriptTestResultDecider implements ITestResultDecider {
 
 	@Override
 	public String getResultMessage() {
-		return m_Category.toString();
+		if (m_Category == OverallResult.EXCEPTION_OR_ERROR) {
+			return m_Category.toString() + " " + m_ErrorMessage;
+		} else {
+			return m_Category.toString();
+		}
 	}
 
 	@Override

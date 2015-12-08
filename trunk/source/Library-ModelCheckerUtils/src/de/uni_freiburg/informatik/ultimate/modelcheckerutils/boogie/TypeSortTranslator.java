@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -114,6 +114,9 @@ public class TypeSortTranslator {
 	 * @param BoogieASTNode BoogieASTNode for which Sort is computed 
 	 */
 	public Sort getSort(IType type, BoogieASTNode BoogieASTNode) {
+		if (type instanceof BoogieType) {
+			type = ((BoogieType) type).getUnderlyingType();
+		}
 		if (m_type2sort.containsKey(type)) {
 			return m_type2sort.get(type);
 		} else {

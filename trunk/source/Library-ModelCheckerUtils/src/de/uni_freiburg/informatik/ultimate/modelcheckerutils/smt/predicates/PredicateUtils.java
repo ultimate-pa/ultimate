@@ -256,15 +256,20 @@ public class PredicateUtils {
 		return fTrans;		
 	}
 	
+	public static Term getIndexedConstant(BoogieVar bv, int index, 
+			Map<String, Term> indexedConstants, Script script) {
+		return getIndexedConstant(bv.getGloballyUniqueId(), 
+				bv.getTermVariable().getSort(), index, indexedConstants, script);
+	}
 	
-	public static Term getIndexedConstant(BoogieVar var, int index, Map<String, Term> indexedConstants, Script script) {
+	public static Term getIndexedConstant(String id, Sort sort, int index, 
+			Map<String, Term> indexedConstants, Script script) {
 		String indexString = String.valueOf(index);
-		String name = var.getGloballyUniqueId() + "_" + indexString;
+		String name = id + "_" + indexString;
 		Term constant = indexedConstants.get(name);
 		if (constant == null) {
-			Sort resultSort = var.getTermVariable().getSort();
 			Sort[] emptySorts = {};
-			script.declareFun(name, emptySorts, resultSort);
+			script.declareFun(name, emptySorts, sort);
 			Term[] emptyTerms = {};
 			constant = script.term(name, emptyTerms);
 			indexedConstants.put(name, constant);

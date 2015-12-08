@@ -27,8 +27,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences;
 
-import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter.Labeling;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
@@ -44,7 +47,7 @@ public class TAPreferences {
 	private final INTERPOLATION m_Interpolation;
 	private final InterpolantAutomaton m_InterpolantAutomaton;
 	private final boolean m_DumpAutomata;
-	private final Labeling m_AutomataFormat;
+	private final Format m_AutomataFormat;
 	private final String m_DumpPath;
 	private final InterpolantAutomatonEnhancement m_Determiniation;
 	private final Minimization m_Minimize;
@@ -62,7 +65,8 @@ public class TAPreferences {
 	public enum InterpolantAutomatonEnhancement {
 		NONE, BESTAPPROXIMATION_DEPRECATED, SELFLOOP, EAGER, EAGER_CONSERVATIVE, 
 		NO_SECOND_CHANCE, 
-		PREDICATE_ABSTRACTION, PREDICATE_ABSTRACTION_CONSERVATIVE,
+		PREDICATE_ABSTRACTION, PREDICATE_ABSTRACTION_CONSERVATIVE, 
+		PREDICATE_ABSTRACTION_CANNIBALIZE,
 	}
 
 
@@ -101,7 +105,7 @@ public class TAPreferences {
 		
 		m_AutomataFormat = m_Prefs.getEnum(
 				TraceAbstractionPreferenceInitializer.LABEL_AUTOMATAFORMAT,
-				Labeling.class);
+				Format.class);
 
 		m_DumpPath = m_Prefs.getString(TraceAbstractionPreferenceInitializer.LABEL_DUMPPATH);
 
@@ -140,7 +144,40 @@ public class TAPreferences {
 	public boolean allErrorLocsAtOnce() {
 		return m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_ALL_ERRORS_AT_ONCE);
 	}
+	
+	public SolverMode solverMode() {
+		return m_Prefs.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
+	}
 
+	public String commandExternalSolver() {
+		return m_Prefs.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
+	}
+	
+	public String logicForExternalSolver() {
+		String logicForExternalSolver = m_Prefs
+				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);
+		return logicForExternalSolver;
+	}
+	
+	public boolean dumpSmtScriptToFile() {
+		final boolean dumpSmtScriptToFile = m_Prefs
+				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpToFile);
+		return dumpSmtScriptToFile;
+	}
+
+	public String pathOfDumpedScript() {
+		final String pathOfDumpedScript  = m_Prefs
+				.getString(RcfgPreferenceInitializer.LABEL_Path);
+		return pathOfDumpedScript;
+	}
+
+	
+//	final boolean dumpUsatCoreTrackBenchmark = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+//			.getBoolean(RcfgPreferenceInitializer.LABEL_DumpUnsatCoreTrackBenchmark);
+//	
+//	final boolean dumpMainTrackBenchmark = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
+//			.getBoolean(RcfgPreferenceInitializer.LABEL_DumpMainTrackBenchmark);
+	
 
 	/**
 	 * @return the maxIterations
@@ -163,6 +200,12 @@ public class TAPreferences {
 		return m_Artifact;
 	}
 
+	public boolean useSeparateSolverForTracechecks() {
+		return m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_SEPARATE_SOLVER);
+	}
+	
+	
+	
 	/**
 	 * @return the interpolatedLocs
 	 */
@@ -184,7 +227,7 @@ public class TAPreferences {
 		return m_DumpAutomata;
 	}
 	
-	public Labeling getAutomataFormat() {
+	public Format getAutomataFormat() {
 		return m_AutomataFormat;
 	}
 

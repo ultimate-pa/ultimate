@@ -34,7 +34,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -42,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IFreshTermVariableConstructor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryNumericRelation;
@@ -50,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Bin
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.NotAffineException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
  * Transitive inequality resolution (TIR) for terms in XNF.
@@ -135,7 +138,7 @@ public class XnfTir extends XnfPartialQuantifierElimination {
 			if (!Arrays.asList(term.getFreeVars()).contains(eliminatee)) {
 				termsWithoutEliminatee.add(term);
 			} else {
-				Term eliminateeOnLhs;
+				ApplicationTerm eliminateeOnLhs;
 				AffineRelation rel;
 				try {
 					TransformInequality transform;
@@ -146,7 +149,7 @@ public class XnfTir extends XnfPartialQuantifierElimination {
 					} else {
 						throw new AssertionError("unknown quantifier");
 					}
-					 rel = new AffineRelation(term, transform);
+					 rel = new AffineRelation(m_Script, term, transform);
 				} catch (NotAffineException e) {
 					// no chance to eliminate the variable
 					return null;
@@ -159,6 +162,11 @@ public class XnfTir extends XnfPartialQuantifierElimination {
 					eliminateeOnLhs = rel.onLeftHandSideOnly(m_Script, eliminatee);
 				} catch (NotAffineException e) {
 					// no chance to eliminate the variable
+					return null;
+				}
+				if (!SmtUtils.occursAtMostAsLhs(eliminatee, eliminateeOnLhs)) {
+					// eliminatee occurs additionally in rhs e.g., inside a
+					// select or modulo term.
 					return null;
 				}
 				try {
@@ -266,7 +274,7 @@ public class XnfTir extends XnfPartialQuantifierElimination {
 		Term term = m_Script.term(symbol, lhs, rhs);
 		AffineRelation rel;
 		try {
-			rel = new AffineRelation(term);
+			rel = new AffineRelation(m_Script, term);
 		} catch (NotAffineException e) {
 			throw new AssertionError("should be affine");
 		}
@@ -290,7 +298,7 @@ public class XnfTir extends XnfPartialQuantifierElimination {
 		Term term = m_Script.term(symbol, lowerBound.getTerm(), upperBound.getTerm());
 		AffineRelation rel;
 		try {
-			rel = new AffineRelation(term);
+			rel = new AffineRelation(m_Script, term);
 		} catch (NotAffineException e) {
 			throw new AssertionError("should be affine");
 		}
@@ -352,6 +360,10 @@ public class XnfTir extends XnfPartialQuantifierElimination {
 					}
 				}
 				resultXJuncts.add(PartialQuantifierElimination.composeXjunctsInner(m_Script, m_quantifier, resultAtoms.toArray(new Term[resultAtoms.size()])));
+				if (!m_Services.getProgressMonitorService().continueProcessing()) {
+					throw new ToolchainCanceledException(this.getClass(),
+							"TIR is building " + Math.pow(2,m_antiDer.size()) + " xjuncts");
+				}
 			}
 			return PartialQuantifierElimination.composeXjunctsOuter(m_Script, m_quantifier, resultXJuncts.toArray(new Term[resultXJuncts.size()]));
 		}

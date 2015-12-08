@@ -33,6 +33,10 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.conta
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
@@ -54,11 +58,11 @@ public class CPrimitive extends CType {
     	/* unsigned char */
     	UCHAR,
     	/* ?? */
-        WCHAR,
+//        WCHAR,
     	/* ?? */
-        CHAR32,
+//        CHAR32,
     	/* ?? */
-        CHAR16,
+//        CHAR16,
     	/* short, short int, signed short, signed short int */
         SHORT,
         /* unsigned short, unsigned short int */
@@ -104,7 +108,7 @@ public class CPrimitive extends CType {
     	VOID
     }
     
-    private boolean isUnsigned = false;
+    private final boolean isUnsigned;
 
     /**
      * The C type of the variable.
@@ -115,15 +119,17 @@ public class CPrimitive extends CType {
      * more general type, i.e. inttype, floattype, void -- is derived from
      * type
      */
-    private GENERALPRIMITIVE generalType;
+    private final GENERALPRIMITIVE generalType;
     
     public CPrimitive(PRIMITIVE type) {
         super(false, false, false, false); //FIXME: integrate those flags
     	this.type = type;
-    	setGeneralType(type);
+    	generalType = getGeneralType(type);
+    	isUnsigned = isUnsigned(type);
     }
 
-	private void setGeneralType(PRIMITIVE type) throws AssertionError {
+	private GENERALPRIMITIVE getGeneralType(PRIMITIVE type) throws AssertionError {
+		final GENERALPRIMITIVE generalType;
 		switch (type) {
 		case COMPLEX_FLOAT:
 		case COMPLEX_DOUBLE:
@@ -132,29 +138,61 @@ public class CPrimitive extends CType {
 		case DOUBLE:
 		case LONGDOUBLE:
 			generalType = GENERALPRIMITIVE.FLOATTYPE;
+//			throw new UnsupportedSyntaxException(LocationFactory.createIgnoreCLocation(), "we do not support floats");
 			break;
+		case BOOL:
 		case UCHAR:
 		case UINT:
 		case ULONG:
 		case ULONGLONG:
 		case USHORT:
-			this.isUnsigned = true;
-			//fallthrough
-		case BOOL:
 		case CHAR:
-		case CHAR16:
-		case CHAR32:
+//		case CHAR16:
+//		case CHAR32:
 		case INT:
 		case LONG:
 		case LONGLONG:
 		case SCHAR:
 		case SHORT:
-		case WCHAR:
+//		case WCHAR:
 			generalType = GENERALPRIMITIVE.INTTYPE;
 			break;
 		case VOID:
 			generalType = GENERALPRIMITIVE.VOID;
 			break;
+		default:
+			throw new AssertionError("case missing");
+    	}
+		return generalType;
+	}
+	
+	private boolean isUnsigned(PRIMITIVE type) throws AssertionError {
+		switch (type) {
+		case BOOL:
+		case UCHAR:
+		case UINT:
+		case ULONG:
+		case ULONGLONG:
+		case USHORT:
+			return true;
+		case CHAR :
+			return !TypeSizes.isCharSigned();
+		case COMPLEX_FLOAT:
+		case COMPLEX_DOUBLE:
+		case COMPLEX_LONGDOUBLE:
+		case FLOAT:
+		case DOUBLE:
+		case LONGDOUBLE:
+//		case CHAR16:
+//		case CHAR32:
+		case INT:
+		case LONG:
+		case LONGLONG:
+		case SCHAR:
+		case SHORT:
+//		case WCHAR:
+		case VOID:
+			return false;
 		default:
 			throw new AssertionError("case missing");
     	}
@@ -182,12 +220,12 @@ public class CPrimitive extends CType {
                 	else
                 		this.type = PRIMITIVE.CHAR;
                     break;
-                case IASTSimpleDeclSpecifier.t_char16_t:
-                    this.type = PRIMITIVE.CHAR16;
-                    break;
-                case IASTSimpleDeclSpecifier.t_char32_t:
-                    this.type = PRIMITIVE.CHAR32;
-                    break;
+//                case IASTSimpleDeclSpecifier.t_char16_t:
+//                    this.type = PRIMITIVE.CHAR16;
+//                    break;
+//                case IASTSimpleDeclSpecifier.t_char32_t:
+//                    this.type = PRIMITIVE.CHAR32;
+//                    break;
                 case IASTSimpleDeclSpecifier.t_double:
                 	if (sds.isComplex())
                 		this.type = PRIMITIVE.COMPLEX_DOUBLE;
@@ -243,17 +281,18 @@ public class CPrimitive extends CType {
                 case IASTSimpleDeclSpecifier.t_void:
                     this.type = PRIMITIVE.VOID;
                     break;
-                case IASTSimpleDeclSpecifier.t_wchar_t:
-                    this.type = PRIMITIVE.WCHAR;
-                    break;
+//                case IASTSimpleDeclSpecifier.t_wchar_t:
+//                    this.type = PRIMITIVE.WCHAR;
+//                    break;
                 default:
                     throw new IllegalArgumentException(
-                            "Unknown C Decklaration!");
+                            "Unknown C Declaration!");
             }
         } else {
             throw new IllegalArgumentException("Unknown C Declaration!");
         }
-    	setGeneralType(type);
+    	generalType = getGeneralType(type);
+    	isUnsigned = isUnsigned(type);
     }
     
     public boolean isUnsigned() {
@@ -307,5 +346,36 @@ public class CPrimitive extends CType {
         } else {
             return false;
         }
+	}
+	
+	public CPrimitive getCorrespondingUnsignedType() {
+		if (!this.isIntegerType()) {
+			throw new IllegalArgumentException("no integer type " + this);
+		}
+		if (this.isUnsigned()) {
+			throw new IllegalArgumentException("already unsigned " + this);
+		}
+		switch (this.getType()) {
+		case CHAR:
+			if (TypeSizes.isCharSigned()) {
+				return new CPrimitive(PRIMITIVE.UCHAR);
+			} else {
+				throw new UnsupportedOperationException(
+						"according to your settings, char is already unsigned");
+			}
+		case INT:
+			return new CPrimitive(PRIMITIVE.UINT);
+		case LONG:
+			return new CPrimitive(PRIMITIVE.ULONG);
+		case LONGLONG:
+			return new CPrimitive(PRIMITIVE.ULONGLONG);
+		case SCHAR:
+			return new CPrimitive(PRIMITIVE.UCHAR);
+		case SHORT:
+			return new CPrimitive(PRIMITIVE.USHORT);
+		default:
+			throw new IllegalArgumentException("unsupported type " + this);
+		}
+		
 	}
 }

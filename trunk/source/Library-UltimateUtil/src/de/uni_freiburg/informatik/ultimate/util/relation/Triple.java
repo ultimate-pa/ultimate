@@ -27,16 +27,17 @@
 package de.uni_freiburg.informatik.ultimate.util.relation;
 
 /**
- * Generic Triple. 
+ * Generic Triple.
+ * 
  * @author Matthias Heizmann
  *
  */
-public class Triple<E1,E2,E3> {
-	
+public class Triple<E1, E2, E3> {
+
 	private final E1 m_FirstElement;
 	private final E2 m_SecondElement;
 	private final E3 m_ThirdElement;
-	
+
 	public Triple(E1 first, E2 second, E3 third) {
 		super();
 		m_FirstElement = first;
@@ -60,9 +61,9 @@ public class Triple<E1,E2,E3> {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result	+ m_FirstElement.hashCode();
-		result = prime * result	+ m_SecondElement.hashCode();
-		result = prime * result	+ m_ThirdElement.hashCode();
+		result = prime * result + m_FirstElement.hashCode();
+		result = prime * result + m_SecondElement.hashCode();
+		result = prime * result + m_ThirdElement.hashCode();
 		return result;
 	}
 
@@ -95,11 +96,7 @@ public class Triple<E1,E2,E3> {
 
 	@Override
 	public String toString() {
-		return "[" + m_FirstElement	+ ", " + m_SecondElement + ", "
-				+ m_ThirdElement + "]";
+		return "[" + m_FirstElement + ", " + m_SecondElement + ", " + m_ThirdElement + "]";
 	}
-	
-	
-	
 
 }

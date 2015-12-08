@@ -27,8 +27,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -85,9 +83,28 @@ import de.uni_freiburg.informatik.ultimate.util.ScopedArrayList;
  */
 public class SMTInterpol extends NoopScript {
 	
-	private static class NoUserCancellation implements TerminationRequest {
+	private static class TimeoutHandler implements TerminationRequest {
+		TerminationRequest mStackedCancellation;
+		long mTimeout;
+		
+		public TimeoutHandler(TerminationRequest stacked) {
+			mStackedCancellation = stacked;
+			clearTimeout();
+		}
+		
+		public void clearTimeout() {
+			mTimeout = Long.MAX_VALUE;
+		}
+		
+		public void setTimeout(long millis) {
+			mTimeout = System.currentTimeMillis() + millis;
+		}
+		
 		public boolean isTerminationRequested() {
-			return false; // NOPMD
+			if (mStackedCancellation != null
+				&& mStackedCancellation.isTerminationRequested())
+				return true;
+			return System.currentTimeMillis() >= mTimeout;
 		}
 	}
 	
@@ -406,25 +423,11 @@ public class SMTInterpol extends NoopScript {
 		}
 	}
 	
-	private static class TimeoutTask extends TimerTask {
-		private final DPLLEngine mEngine;
-		public TimeoutTask(DPLLEngine engine) {
-			mEngine = engine;
-		}
-		@Override
-		public void run() {
-			synchronized (mEngine) {
-				mEngine.setCompleteness(DPLLEngine.INCOMPLETE_TIMEOUT);
-				mEngine.stop();
-			}
-		}
-	}
-	
 	private CheckType mCheckType = CheckType.FULL;
 	private DPLLEngine mEngine;
 	private Clausifier mClausifier;
 	private ScopedArrayList<Term> mAssertions;
-	private final TerminationRequest mCancel;
+	private final TimeoutHandler mCancel;
 	
 	private String mOutName = "stdout";
 	private PrintWriter mErr = new PrintWriter(System.err);
@@ -487,12 +490,6 @@ public class SMTInterpol extends NoopScript {
 	private boolean mSimplifyInterpolants = false;
 	private CheckType mSimplifyCheckType = CheckType.QUICK;
 	private boolean mSimplifyRepeatedly = true;
-	
-	// Timeout handling
-//	private Timer mTimer;
-	private final static class TimerHolder {
-		public static Timer timer = new Timer("SMTInterpol timeout thread", true); // NOCHECKSTYLE
-	}
 	
 	// The option numbers
 	private final static int OPT_PRINT_SUCCESS = 0;
@@ -604,7 +601,7 @@ public class SMTInterpol extends NoopScript {
 	 * the logger.
 	 */
 	public SMTInterpol() {
-		this(Logger.getRootLogger(), true, new NoUserCancellation());
+		this(Logger.getRootLogger(), true, null);
 	}
 	
 	/**
@@ -614,7 +611,7 @@ public class SMTInterpol extends NoopScript {
 	 * @param logger The logger owned by the caller.
 	 */
 	public SMTInterpol(Logger logger) {
-		this(logger, false, new NoUserCancellation());
+		this(logger, false, null);
 	}
 	
 	/**
@@ -625,7 +622,7 @@ public class SMTInterpol extends NoopScript {
 	 * @param ownLogger Should SMTInterpol take ownership of the logger?
 	 */
 	public SMTInterpol(Logger logger, boolean ownLogger) {
-		this(logger, ownLogger, new NoUserCancellation());
+		this(logger, ownLogger, null);
 	}
 	
 	/**
@@ -658,8 +655,6 @@ public class SMTInterpol extends NoopScript {
 	 */
 	public SMTInterpol(
 			Logger logger, boolean ownLogger, TerminationRequest cancel) {
-		if (cancel == null)
-			cancel = new NoUserCancellation();
 		mLogger = logger;
 		if (ownLogger) {
 			mLayout = new SimpleLayout();
@@ -668,7 +663,7 @@ public class SMTInterpol extends NoopScript {
 			mLogger.setLevel(Config.DEFAULT_LOG_LEVEL);
 		}
 		mTimeout = 0;
-		mCancel = cancel;
+		mCancel = new TimeoutHandler(cancel);
 		reset();
 	}
 	/**
@@ -746,10 +741,8 @@ public class SMTInterpol extends NoopScript {
 			throw new SMTLIBException("No logic set!");
 		mModel = null;
 		mAssertionStackModified = false;
-		TimeoutTask timer = null;
 		if (mTimeout > 0) {
-			timer = new TimeoutTask(mEngine);
-			TimerHolder.timer.schedule(timer, mTimeout);
+			mCancel.setTimeout(mTimeout);
 		}
 		
 		LBool result = LBool.UNKNOWN;
@@ -845,8 +838,7 @@ public class SMTInterpol extends NoopScript {
 				System.exit(13);
 		}
 		mStatusSet = null;
-		if (timer != null)
-			timer.cancel();
+		mCancel.clearTimeout();
 		return result;
 	}
 	
@@ -1135,6 +1127,10 @@ public class SMTInterpol extends NoopScript {
 		if (!mProduceProofs && !mProduceInterpolants)
 			throw new SMTLIBException(
 					"Interpolant production not enabled.  Set either :produce-interpolants or :produce-proofs to true");
+		if (mTimeout > 0) {
+			mCancel.setTimeout(mTimeout);
+		}
+		try {
 		checkAssertionStackModified();
 		if (partition.length != startOfSubtree.length)
 			throw new SMTLIBException(
@@ -1323,6 +1319,9 @@ public class SMTInterpol extends NoopScript {
 				ipls[i] = simplifier.getSimplifiedTerm(ipls[i]);
 		}
 		return ipls;
+		} finally {
+			mCancel.clearTimeout();
+		}
 	}
 	
 	@Override
@@ -1884,21 +1883,8 @@ public class SMTInterpol extends NoopScript {
 					"SMTInterpol does not support Arrays with Boolean indices");
 		super.declareFun(fun, paramSorts, resultSort);
 	}
-	
-//	private Timer getTimer() {
-//		if (mTimer == null) {
-//			mTimer = new Timer("SMTInterpol Timeout Handler", true);
-//		}
-//		return mTimer;
-//	}
 
-//	@Override
-//	public void exit() {
-//		if (mTimer != null) {
-//			mTimer.cancel();
-//			mTimer = null;
-//		}
-//		super.exit();
-//	}
-
+	public boolean isTerminationRequested() {
+		return mCancel.isTerminationRequested();
+	}
 }

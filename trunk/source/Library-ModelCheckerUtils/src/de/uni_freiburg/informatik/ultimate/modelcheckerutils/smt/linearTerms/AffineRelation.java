@@ -65,8 +65,8 @@ public class AffineRelation {
 	
 	public enum TrivialityStatus { EQUIVALENT_TO_TRUE, EQUIVALENT_TO_FALSE, NONTRIVIAL };
 	
-	public AffineRelation(Term term) throws NotAffineException {
-		this(term, TransformInequality.NO_TRANFORMATION);
+	public AffineRelation(Script script, Term term) throws NotAffineException {
+		this(script, term, TransformInequality.NO_TRANFORMATION);
 	}
 
 	/**
@@ -76,7 +76,7 @@ public class AffineRelation {
 	 * inequalities and vice versa
 	 * @throws NotAffineException Thrown if Term is not affine.
 	 */
-	public AffineRelation(Term term, TransformInequality transformInequality) throws NotAffineException {
+	public AffineRelation(Script script, Term term, TransformInequality transformInequality) throws NotAffineException {
 		m_OriginalTerm = term;
 		BinaryNumericRelation bnr = null;
 		try {
@@ -87,8 +87,8 @@ public class AffineRelation {
 		
 		Term lhs = bnr.getLhs();
 		Term rhs = bnr.getRhs();
-		AffineTerm affineLhs = (AffineTerm) (new AffineTermTransformer()).transform(lhs);
-		AffineTerm affineRhs = (AffineTerm) (new AffineTermTransformer()).transform(rhs);
+		AffineTerm affineLhs = (AffineTerm) (new AffineTermTransformer(script)).transform(lhs);
+		AffineTerm affineRhs = (AffineTerm) (new AffineTermTransformer(script)).transform(rhs);
 		AffineTerm difference;
 		if (affineLhs.isErrorTerm() || affineRhs.isErrorTerm()) {
 			throw new NotAffineException("Relation is not affine");
@@ -108,16 +108,17 @@ public class AffineRelation {
 					m_RelationSymbol = bnr.getRelationSymbol();
 					break;
 				case LESS:
-					// decrement affine term by one
+					// increment affine term by one
 					m_RelationSymbol = RelationSymbol.LEQ;
 					m_AffineTerm = new AffineTerm(difference, 
 							new AffineTerm(difference.getSort(), Rational.ONE));
 					break;
 				case GREATER:
-					// increment affine term by one
+					// decrement affine term by one
 					m_RelationSymbol = RelationSymbol.GEQ;
 					m_AffineTerm = new AffineTerm(difference, 
 							new AffineTerm(difference.getSort(), Rational.MONE));
+
 					break;
 				default:
 					throw new AssertionError("unknown symbol");
@@ -133,13 +134,13 @@ public class AffineRelation {
 					m_RelationSymbol = bnr.getRelationSymbol();
 					break;
 				case GEQ:
-					// decrement affine term by one
+					// increment affine term by one
 					m_RelationSymbol = RelationSymbol.GREATER;
 					m_AffineTerm = new AffineTerm(difference, 
 							new AffineTerm(difference.getSort(), Rational.ONE));
 					break;
 				case LEQ:
-					// increment affine term by one
+					// decrement affine term by one
 					m_RelationSymbol = RelationSymbol.LESS;
 					m_AffineTerm = new AffineTerm(difference, 
 							new AffineTerm(difference.getSort(), Rational.MONE));
@@ -155,7 +156,7 @@ public class AffineRelation {
 			m_RelationSymbol = bnr.getRelationSymbol();
 		}
 		if (m_AffineTerm.isConstant()) {
-			switch (bnr.getRelationSymbol()) {
+			switch (m_RelationSymbol) {
 			case DISTINCT:
 				if (m_AffineTerm.getConstant().signum() != 0) {
 					m_TrivialityStatus = TrivialityStatus.EQUIVALENT_TO_TRUE;

@@ -70,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Trigger;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
 /**
@@ -94,6 +95,8 @@ public class Term2Expression implements Serializable {
 	private final TypeSortTranslator m_TypeSortTranslator;
 	
 	private final Boogie2SmtSymbolTable m_Boogie2SmtSymbolTable;
+	
+
 	
 	
 	public Term2Expression(TypeSortTranslator tsTranslation, 
@@ -144,6 +147,8 @@ public class Term2Expression implements Serializable {
 			return translateSelect(term);
 		} else if (symb.isIntern() && symb.getName().equals("store")) {
 			return translateStore(term);
+		} else if (BitvectorUtils.isBitvectorConstant(symb)) {
+			return translateBitvectorConstant(term);
 		}
 		Expression[] params = new Expression[termParams.length];
 		for (int i=0; i<termParams.length; i++) {
@@ -217,6 +222,20 @@ public class Term2Expression implements Serializable {
 		}
 	}
 	
+	/**
+	 * Translate term in case it is a bitvector constant as defined as an 
+	 * extension of the BV logic.
+	 */
+	private Expression translateBitvectorConstant(ApplicationTerm term) {
+		assert term.getSort().getIndices().length == 1;
+		String name = term.getFunction().getName();
+		assert name.startsWith("bv");
+		String decimalValue = name.substring(2, name.length());
+		IType type = m_TypeSortTranslator.getType(term.getSort());
+		BigInteger length = term.getSort().getIndices()[0];
+		return new BitvecLiteral(null, type , decimalValue, length.intValue());
+	}
+
 	private Expression mod(Expression[] params) {
 		if (params.length != 2) {
 			throw new AssertionError("mod has two parameters");

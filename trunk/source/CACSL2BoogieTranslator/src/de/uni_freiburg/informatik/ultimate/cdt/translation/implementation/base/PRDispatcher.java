@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 import java.text.ParseException;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
@@ -106,41 +107,64 @@ import org.eclipse.cdt.core.dom.ast.IArrayType;
 import org.eclipse.cdt.core.dom.ast.IBasicType;
 import org.eclipse.cdt.core.dom.ast.IType;
 import org.eclipse.cdt.core.dom.ast.ITypedef;
+import org.eclipse.cdt.core.dom.ast.gnu.IGNUASTCompoundStatementExpression;
 import org.eclipse.cdt.internal.core.dom.parser.IASTAmbiguousExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.IASTAmbiguousCondition;
 
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.SvComp14PRCHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.SvComp14CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.cHandler.SVCompTypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieIdExtractor;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 
 public class PRDispatcher extends Dispatcher {
 	
-	LinkedHashSet<IASTDeclaration> reachableDeclarations;
+	private final LinkedHashSet<IASTDeclaration> reachableDeclarations;
+	
+    private final LinkedHashSet<IASTNode> m_VariablesOnHeap;
 
 	public PRDispatcher(CACSL2BoogieBacktranslator backtranslator,
 			IUltimateServiceProvider services, Logger logger, LinkedHashMap<String,Integer> functionToIndex, LinkedHashSet<IASTDeclaration> reachableDeclarations) {
 		super(backtranslator, services, logger);
 		mFunctionToIndex = functionToIndex;
 		this.reachableDeclarations = reachableDeclarations;
+		this.m_VariablesOnHeap = new LinkedHashSet<>();
 	}
+	
+	/**
+	 * Set variables that should be "on-Heap" in our implementation.
+	 * For each such variable the set contains the IASTNode of the last
+	 * variable declaration ("last" in case the variable has several 
+	 * declarations).
+	 */
+    public Set<IASTNode> getVariablesOnHeap() {
+    	return m_VariablesOnHeap;
+    }	
 
 	@Override
 	protected void init() {
 		boolean bitvectorTranslation = mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
 		nameHandler = new NameHandler(backtranslator);
 		typeHandler = new SVCompTypeHandler(!bitvectorTranslation);
-		cHandler = new SvComp14PRCHandler(this, backtranslator, false, mLogger, typeHandler, bitvectorTranslation);
+		cHandler = new SvComp14CHandler(this, backtranslator, mLogger, typeHandler, bitvectorTranslation);
 	}
 
 	@Override
@@ -324,6 +348,9 @@ public class PRDispatcher extends Dispatcher {
 			if (n instanceof IASTProblemExpression) {
 				return cHandler.visit(this, (IASTProblemExpression) n);
 			}
+			if (n instanceof IGNUASTCompoundStatementExpression) {
+				return cHandler.visit(this, (IGNUASTCompoundStatementExpression) n);
+			}
 			return cHandler.visit(this, (IASTExpression) n);
 		}
 		if (n instanceof IASTFunctionStyleMacroParameter) {
@@ -395,8 +422,7 @@ public class PRDispatcher extends Dispatcher {
 
 	@Override
 	public Result dispatch(IASTPreprocessorStatement node) {
-		// TODO Auto-generated method stub
-		return null;
+        return new SkipResult();
 	}
 
 	@Override
@@ -436,7 +462,32 @@ public class PRDispatcher extends Dispatcher {
 		// TODO Auto-generated method stub
 		return false;
 	}
-	LinkedHashSet<IASTDeclaration> getReachableDeclarationsOrDeclarators() {
+	
+	@Override
+	public LinkedHashSet<IASTDeclaration> getReachableDeclarationsOrDeclarators() {
 		return reachableDeclarations;
+	}
+	
+	
+	public void moveArrayAndStructIdsOnHeap(ILocation loc, Expression expr) {
+		BoogieIdExtractor bie = new BoogieIdExtractor();
+		bie.processExpression(expr);
+		for (String id : bie.getIds()) {
+			SymbolTable st = this.cHandler.getSymbolTable();
+			String cid = st.getCID4BoogieID(id, loc);
+			SymbolTableValue value = st.get(cid, loc);
+			CType type = value.getCVariable().getUnderlyingType();
+			if (type instanceof CArray || type instanceof CStruct) {
+				this.getVariablesOnHeap().add(value.getDeclarationNode());
+			}
+		}
+	}
+	
+	public void moveIdOnHeap(ILocation loc, IdentifierExpression idExpr) {
+		String id = idExpr.getIdentifier();
+		SymbolTable st = this.cHandler.getSymbolTable();
+		String cid = st.getCID4BoogieID(id, loc);
+		SymbolTableValue value = st.get(cid, loc);
+		this.getVariablesOnHeap().add(value.getDeclarationNode());
 	}
 }

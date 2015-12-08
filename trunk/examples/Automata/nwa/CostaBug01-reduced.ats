@@ -11,7 +11,7 @@ print(numberOfStates(cfg6));
 print(numberOfStates(cfg7));
 
 //failes buchiDifferenceFKV(cfg3, ia);
-//failes buchiDifferenceBS(cfg3, ia);
+//failes buchiDifferenceNCSB(cfg3, ia);
 //print(numberOfStates(shrinkNwa(removeUnreachable(cfg6))));
 
 

@@ -36,20 +36,22 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.CheckClosedTerm;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormalForm;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsQuantifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineSubtermNormalizer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryNumericRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.NoRelationOfThisKindException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.RelationSymbol;
@@ -58,10 +60,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
+import de.uni_freiburg.informatik.ultimate.util.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 
@@ -74,10 +81,11 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
  * 
  */
 public class PredicateUnifier {
-
+	
 	private final SmtManager m_SmtManager;
 	private final Map<Term, IPredicate> m_Term2Predicates;
 	private final List<IPredicate> m_KnownPredicates = new ArrayList<IPredicate>();
+	private final Map<IPredicate, IPredicate> m_DeprecatedPredicates = new HashMap<>();
 	private final CoverageRelation m_CoverageRelation = new CoverageRelation();
 	private boolean m_BringTermsToCommuhashNormalForm = true;
 	private final Logger mLogger;
@@ -86,14 +94,10 @@ public class PredicateUnifier {
 	private final IPredicate m_TruePredicate;
 	private final IPredicate m_FalsePredicate;
 	
-	private int m_DeclaredPredicates;
-	private int m_GetRequests;
-	private int m_SyntacticMatches;
-	private int m_SemanticMatches;
-	private int m_ConstructedPredicates;
-	private int m_ImplicationChecksByTransitivity;
+	private final PredicateUnifierBenchmarkGenerator m_PredicateUnifierBenchmarkGenerator;
 
 	public PredicateUnifier(IUltimateServiceProvider services, SmtManager smtManager, IPredicate... initialPredicates) {
+		m_PredicateUnifierBenchmarkGenerator = new PredicateUnifierBenchmarkGenerator();
 		m_SmtManager = smtManager;
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
@@ -163,15 +167,19 @@ public class PredicateUnifier {
 	 */
 	void declarePredicate(IPredicate predicate) {
 		PredicateComparison pc = new PredicateComparison(predicate.getFormula(), predicate.getVars(), null, null);
-		if (pc.isEquivalentToExistingPredicate()) {
-			if (pc.getEquivalantPredicate() != predicate) {
+		if (pc.isEquivalentToExistingPredicateWithLeqQuantifiers()) {
+			if (pc.getEquivalantLeqQuantifiedPredicate() != predicate) {
+				throw new AssertionError("There is already an" + " equivalent predicate");
+			}
+		} else if (pc.isEquivalentToExistingPredicateWithGtQuantifiers()) {
+			if (pc.getEquivalantGtQuantifiedPredicate() != predicate) {
 				throw new AssertionError("There is already an" + " equivalent predicate");
 			}
 		} else {
 			addNewPredicate(predicate, predicate.getFormula(), predicate.getFormula(), 
 					pc.getImpliedPredicates(), pc.getExpliedPredicates());
 		}
-		m_DeclaredPredicates++;
+		m_PredicateUnifierBenchmarkGenerator.incrementDeclaredPredicates();
 	}
 
 	public IPredicate getOrConstructPredicate(TermVarsProc tvp) {
@@ -288,7 +296,8 @@ public class PredicateUnifier {
 			HashMap<IPredicate, Validity> impliedPredicates, 
 			HashMap<IPredicate, Validity> expliedPredicates) {
 
-		m_GetRequests++;
+		m_PredicateUnifierBenchmarkGenerator.continueTime();
+		m_PredicateUnifierBenchmarkGenerator.incrementGetRequests();
 		assert varsIsSupersetOfFreeTermVariables(term, vars);
 		if (term instanceof AnnotatedTerm) {
 			AnnotatedTerm annotatedTerm = (AnnotatedTerm) term;
@@ -307,7 +316,11 @@ public class PredicateUnifier {
 		{
 			IPredicate p = m_Term2Predicates.get(term);
 			if (p != null) {
-				m_SyntacticMatches++;
+				if (m_DeprecatedPredicates.containsKey(p)) {
+					p = m_DeprecatedPredicates.get(p);
+				}
+				m_PredicateUnifierBenchmarkGenerator.incrementSyntacticMatches();
+				m_PredicateUnifierBenchmarkGenerator.stopTime();
 				return p;
 			}
 		}
@@ -315,27 +328,34 @@ public class PredicateUnifier {
 		{
 			IPredicate p = m_Term2Predicates.get(term);
 			if (p != null) {
-				m_SyntacticMatches++;
+				if (m_DeprecatedPredicates.containsKey(p)) {
+					p = m_DeprecatedPredicates.get(p);
+				}
+				m_PredicateUnifierBenchmarkGenerator.incrementSyntacticMatches();
+				m_PredicateUnifierBenchmarkGenerator.stopTime();
 				return p;
 			}
 		}
 		
 		PredicateComparison pc = new PredicateComparison(term, vars, 
 				impliedPredicates, expliedPredicates);
-		if (pc.isEquivalentToExistingPredicate()) {
-			m_SemanticMatches++;
-			return pc.getEquivalantPredicate();
+		if (pc.isEquivalentToExistingPredicateWithLeqQuantifiers()) {
+			m_PredicateUnifierBenchmarkGenerator.incrementSemanticMatches();
+			m_PredicateUnifierBenchmarkGenerator.stopTime();
+			return pc.getEquivalantLeqQuantifiedPredicate();
 		}
 		final IPredicate result;
 		assert !SmtUtils.isTrue(term) : "illegal predicate: true";
 		assert !SmtUtils.isFalse(term) : "illegal predicate: false";
 		assert !m_Term2Predicates.containsKey(term);
-		Term simplifiedTerm = term;
-		if (!pc.isIntricatePredicate()) {
+		Term simplifiedTerm;
+		if (pc.isIntricatePredicate()) {
+			simplifiedTerm = term;
+		} else {
 			simplifiedTerm = SmtUtils.simplify(m_SmtManager.getScript(), term, mServices);
 		}
 		if (m_BringTermsToCommuhashNormalForm) {
-			simplifiedTerm = (new CommuhashNormalForm(mServices, m_SmtManager.getScript())).transform(term);
+			simplifiedTerm = (new CommuhashNormalForm(mServices, m_SmtManager.getScript())).transform(simplifiedTerm);
 		}
 		if (simplifiedTerm == term) {
 			result = m_SmtManager.newPredicate(term, procs, vars, pc.getClosedTerm());
@@ -358,10 +378,15 @@ public class PredicateUnifier {
 					newProcs.toArray(new String[newProcs.size()]), 
 					newVars, closedTerm);
 		}
+		if (pc.isEquivalentToExistingPredicateWithGtQuantifiers()) {
+			m_DeprecatedPredicates.put(pc.getEquivalantGtQuantifiedPredicate(), result);
+			m_PredicateUnifierBenchmarkGenerator.incrementDeprecatedPredicates();
+		}
 		addNewPredicate(result, term, simplifiedTerm, pc.getImpliedPredicates(), pc.getExpliedPredicates());
 		assert new CheckClosedTerm().isClosed(result.getClosedFormula());
 		assert varsIsSupersetOfFreeTermVariables(result.getFormula(), result.getVars());
-		m_ConstructedPredicates++;
+		m_PredicateUnifierBenchmarkGenerator.incrementConstructedPredicates();
+		m_PredicateUnifierBenchmarkGenerator.stopTime();
 		return result;
 	}
 
@@ -425,51 +450,61 @@ public class PredicateUnifier {
 	 */
 	private class PredicateComparison {
 		private final Term m_closedTerm;
+		private final boolean m_TermContainsQuantifiers;
 		private final HashMap<IPredicate, Validity> m_ImpliedPredicates;
 		private final HashMap<IPredicate, Validity> m_ExpliedPredicates;
-		private final IPredicate m_EquivalantPredicate;
+		private final IPredicate m_EquivalentLeqQuantifiedPredicate;
+		private IPredicate m_EquivalentGtQuantifiedPredicate;
 		private boolean m_IsIntricatePredicate;
 		
 		public Term getClosedTerm() {
-			if (m_EquivalantPredicate != null) {
+			if (m_EquivalentLeqQuantifiedPredicate != null) {
 				throw new IllegalAccessError("not accessible, we found an equivalent predicate");
 			}
 			return m_closedTerm;
 		}
 
 		public HashMap<IPredicate, Validity> getImpliedPredicates() {
-			if (m_EquivalantPredicate != null) {
+			if (m_EquivalentLeqQuantifiedPredicate != null) {
 				throw new IllegalAccessError("not accessible, we found an equivalent predicate");
 			}
-
 			return m_ImpliedPredicates;
 		}
 
 		public HashMap<IPredicate, Validity> getExpliedPredicates() {
-			if (m_EquivalantPredicate != null) {
+			if (m_EquivalentLeqQuantifiedPredicate != null) {
 				throw new IllegalAccessError("not accessible, we found an equivalent predicate");
 			}
-
 			return m_ExpliedPredicates;
 		}
 
-		public IPredicate getEquivalantPredicate() {
-			if (m_EquivalantPredicate == null) {
+		public IPredicate getEquivalantLeqQuantifiedPredicate() {
+			if (m_EquivalentLeqQuantifiedPredicate == null) {
 				throw new IllegalAccessError("accessible only if equivalent to existing predicate");
 			}
-			return m_EquivalantPredicate;
+			return m_EquivalentLeqQuantifiedPredicate;
+		}
+		
+		public IPredicate getEquivalantGtQuantifiedPredicate() {
+			if (m_EquivalentGtQuantifiedPredicate == null) {
+				throw new IllegalAccessError("accessible only if equivalent to existing predicate");
+			}
+			return m_EquivalentGtQuantifiedPredicate;
 		}
 
 		public boolean isIntricatePredicate() {
-			if (m_EquivalantPredicate != null) {
+			if (m_EquivalentLeqQuantifiedPredicate != null) {
 				throw new IllegalAccessError("not accessible, we found an equivalent predicate");
 			}
-
 			return m_IsIntricatePredicate;
 		}
 		
-		public boolean isEquivalentToExistingPredicate() {
-			return m_EquivalantPredicate != null;
+		public boolean isEquivalentToExistingPredicateWithLeqQuantifiers() {
+			return m_EquivalentLeqQuantifiedPredicate != null;
+		}
+		
+		public boolean isEquivalentToExistingPredicateWithGtQuantifiers() {
+			return m_EquivalentGtQuantifiedPredicate != null;
 		}
 
 
@@ -495,13 +530,14 @@ public class PredicateUnifier {
 			}
 			
 			m_closedTerm = PredicateUtils.computeClosedFormula(term, vars, m_SmtManager.getScript());
+			m_TermContainsQuantifiers = new ContainsQuantifier().containsQuantifier(term);
 			if (m_SmtManager.isLocked()) {
 				m_SmtManager.requestLockRelease();
 			}
 			m_SmtManager.lock(this);
 			m_SmtManager.getScript().echo(new QuotedObject("begin unification"));
 			
-			m_EquivalantPredicate = compare();
+			m_EquivalentLeqQuantifiedPredicate = compare();
 
 			m_SmtManager.getScript().echo(new QuotedObject("end unification"));
 			m_SmtManager.unlock(this);
@@ -561,10 +597,11 @@ public class PredicateUnifier {
 					m_ExpliedPredicates.put(other, Validity.NOT_CHECKED);
 					continue;
 				}
+				m_PredicateUnifierBenchmarkGenerator.incrementIntricatePredicates();
 				return null;
 			}
 			
-			for (IPredicate other : m_Term2Predicates.values()) {
+			for (IPredicate other : m_KnownPredicates) {
 				if (other == m_TruePredicate || other == m_FalsePredicate) {
 					continue;
 				}
@@ -574,6 +611,7 @@ public class PredicateUnifier {
 					m_ExpliedPredicates.put(other, Validity.NOT_CHECKED);
 					continue;
 				}
+				checkTimeout();
 				Term otherClosedTerm = other.getClosedFormula();
 				Validity implies = m_ImpliedPredicates.get(other);
 				if (implies == null) {
@@ -585,7 +623,7 @@ public class PredicateUnifier {
 							if (impliedByOther != other) {
 								Validity oldValue = m_ImpliedPredicates.put(impliedByOther, Validity.VALID);
 								if (oldValue == null || oldValue == Validity.UNKNOWN) {
-									m_ImplicationChecksByTransitivity++;
+									m_PredicateUnifierBenchmarkGenerator.incrementImplicationChecksByTransitivity();
 								} else {
 									assert oldValue == Validity.VALID : 
 										"implication result by transitivity: " + Validity.VALID +
@@ -600,7 +638,7 @@ public class PredicateUnifier {
 							if (expliedByOther != other) {
 								Validity oldValue = m_ImpliedPredicates.put(expliedByOther, Validity.INVALID);
 								if (oldValue == null || oldValue == Validity.UNKNOWN) {
-									m_ImplicationChecksByTransitivity++;
+									m_PredicateUnifierBenchmarkGenerator.incrementImplicationChecksByTransitivity();
 								} else {
 									assert oldValue == Validity.INVALID : 
 										"implication result by transitivity: " + Validity.INVALID +
@@ -621,7 +659,7 @@ public class PredicateUnifier {
 							if (expliedByOther != other) {
 								Validity oldValue = m_ExpliedPredicates.put(expliedByOther, Validity.VALID);
 								if (oldValue == null || oldValue == Validity.UNKNOWN) {
-									m_ImplicationChecksByTransitivity++;
+									m_PredicateUnifierBenchmarkGenerator.incrementImplicationChecksByTransitivity();
 								} else {
 									assert oldValue == Validity.VALID : 
 										"explication result by transitivity: " + Validity.VALID +
@@ -636,7 +674,7 @@ public class PredicateUnifier {
 							if (impliedByOther != other) {
 								Validity oldValue = m_ExpliedPredicates.put(impliedByOther, Validity.INVALID);
 								if (oldValue == null || oldValue == Validity.UNKNOWN) {
-									m_ImplicationChecksByTransitivity++;
+									m_PredicateUnifierBenchmarkGenerator.incrementImplicationChecksByTransitivity();
 								} else {
 									assert oldValue == Validity.INVALID : 
 										"explication result by transitivity: " + Validity.INVALID +
@@ -648,23 +686,53 @@ public class PredicateUnifier {
 					m_ExpliedPredicates.put(other, explies);
 				}
 				if (implies == Validity.VALID && explies == Validity.VALID) {
-					return other;
+					if (m_DeprecatedPredicates.containsKey(other)) {
+						return m_DeprecatedPredicates.get(other);
+					}
+					boolean otherContainsQuantifiers = 
+							(new ContainsQuantifier()).containsQuantifier(other.getFormula());
+					if (!otherContainsQuantifiers || 
+							(m_TermContainsQuantifiers && !thisIsLessQuantifiedThanOther(m_closedTerm, otherClosedTerm))) {
+						return other;
+					} else {
+						if (m_EquivalentGtQuantifiedPredicate == null) {
+							m_EquivalentGtQuantifiedPredicate = other;
+						} else {
+							throw new AssertionError("at most one deprecated predicate");
+						}
+					}
 				}
 			}
 			// no predicate was equivalent
 			return null;
 		}
+
+		private void checkTimeout() {
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(this.getClass(),
+						"PredicateUnifier was comparing new predicate to " + 
+						m_KnownPredicates.size() + " known predicates");
+			}
+		}
+	}
+	
+	// Matthias 2016-11-4: at the moment we believe that for the backward
+	// predicates universal quantification is better than existential 
+	// quantification.
+	private boolean thisIsLessQuantifiedThanOther(Term thisTerm, Term otherTerm) {
+		final ContainsQuantifier thisQuantifierCheck = new ContainsQuantifier();
+		thisQuantifierCheck.containsQuantifier(thisTerm);
+		final ContainsQuantifier otherQuantifierCheck = new ContainsQuantifier();
+		otherQuantifierCheck.containsQuantifier(otherTerm);
+		return thisQuantifierCheck.getFirstQuantifierFound() == QuantifiedFormula.FORALL &&
+				otherQuantifierCheck.getFirstQuantifierFound() == QuantifiedFormula.EXISTS;
 	}
 	
 	public String collectPredicateUnifierStatistics() {
 		StringBuilder builder = new StringBuilder();
-		builder.append("DeclaredPredicates=").append(m_DeclaredPredicates)
-				.append(" GetRequests=").append(m_GetRequests)
-				.append(" SyntacticMatches=").append(m_SyntacticMatches)
-				.append(" SemanticMatches=").append(m_SemanticMatches)
-				.append(" ConstructedPredicates=").append(m_ConstructedPredicates)
-				.append(" CoveringChecksByTransitivity=").append(m_ImplicationChecksByTransitivity)
-				.append(" ").append(m_CoverageRelation.getCoverageRelationStatistics());
+		builder.append(PredicateUnifierBenchmarkType.getInstance().
+				prettyprintBenchmarkData(m_PredicateUnifierBenchmarkGenerator));
+		builder.append(m_CoverageRelation.getCoverageRelationStatistics());
 		return builder.toString();
 	}
 	
@@ -746,9 +814,12 @@ public class PredicateUnifier {
 		
 		void addPredicate(IPredicate pred, Map<IPredicate, Validity> implied, Map<IPredicate, Validity> explied) {
 			assert !m_KnownPredicates.contains(pred) : "predicate already known";
+			assert coverageMapIsComplete();
 			for (IPredicate known : m_KnownPredicates) {
 				Validity implies = implied.get(known);
+				assert implies != null : "unknown implies for " + known;
 				Validity explies = explied.get(known);
+				assert explies != null : "unknown explies for " + known;
 				Validity oldimpl = m_Lhs2RhsValidity.put(pred, known, implies);
 				assert oldimpl == null : "entry existed !";
 				Validity oldexpl = m_Lhs2RhsValidity.put(known, pred, explies);
@@ -764,6 +835,7 @@ public class PredicateUnifier {
 			}
 			m_ImpliedPredicates.addPair(pred, pred);
 			m_ExpliedPredicates.addPair(pred, pred);
+			assert coverageMapIsComplete();
 		}
 
 		@Override
@@ -792,6 +864,22 @@ public class PredicateUnifier {
 		
 		public CoverageRelationStatistics getCoverageRelationStatistics() {
 			return new CoverageRelationStatistics(m_Lhs2RhsValidity);
+		}
+		
+		private boolean coverageMapIsComplete() {
+			boolean nothingMissing = true;
+			for (IPredicate p1 : m_KnownPredicates) {
+				for (IPredicate p2 : m_KnownPredicates) {
+					if (p1 != p2) {
+						Validity validity = m_Lhs2RhsValidity.get(p1, p2);
+						assert (validity != null) : "value missing for pair " + p1 + ", " + p2;
+						if (validity == null) {
+							nothingMissing = false;
+						}
+					}
+				}
+			}
+			return nothingMissing;
 		}
 	}
 	
@@ -841,4 +929,183 @@ public class PredicateUnifier {
 		
 		
 	}
+	
+	
+//	builder.append("DeclaredPredicates=").append(m_DeclaredPredicates)
+//	.append(" GetRequests=").append(m_GetRequests)
+//	.append(" SyntacticMatches=").append(m_SyntacticMatches)
+//	.append(" SemanticMatches=").append(m_SemanticMatches)
+//	.append(" ConstructedPredicates=").append(m_ConstructedPredicates)
+//	.append(" CoveringChecksByTransitivity=").append(m_ImplicationChecksByTransitivity)
+//	.append(" ").append(m_CoverageRelation.getCoverageRelationStatistics());
+	
+	public static class PredicateUnifierBenchmarkType implements IBenchmarkType {
+		
+		private static final PredicateUnifierBenchmarkType s_Instance = new PredicateUnifierBenchmarkType();
+		public final static String s_DeclaredPredicates = "DeclaredPredicates";
+		public final static String s_GetRequests = "GetRequests";
+		public final static String s_SyntacticMatches = "SyntacticMatches";
+		public final static String s_SemanticMatches = "SemanticMatches";
+		public final static String s_ConstructedPredicates = "ConstructedPredicates";
+		public final static String s_IntricatePredicates = "IntricatePredicates";
+		public final static String s_DeprecatedPredicates = "DeprecatedPredicates";
+		public final static String s_ImplicationChecksByTransitivity = "ImplicationChecksByTransitivity";
+		public final static String s_Time = "Time";
+		
+		public static PredicateUnifierBenchmarkType getInstance() {
+			return s_Instance;
+		}
+		
+		@Override
+		public Collection<String> getKeys() {
+			return Arrays.asList(new String[] { s_DeclaredPredicates, s_GetRequests, s_SyntacticMatches, 
+					s_SemanticMatches, 
+					s_ConstructedPredicates, s_IntricatePredicates, s_DeprecatedPredicates,
+					s_ImplicationChecksByTransitivity, s_Time });
+		}
+		
+		@Override
+		public Object aggregate(String key, Object value1, Object value2) {
+			switch (key) {
+			case s_DeclaredPredicates:
+			case s_GetRequests:
+			case s_SyntacticMatches:
+			case s_SemanticMatches:
+			case s_ConstructedPredicates: 
+			case s_IntricatePredicates:
+			case s_DeprecatedPredicates:
+			case s_ImplicationChecksByTransitivity:
+				Integer long1 = (Integer) value1;
+				Integer long2 = (Integer) value2;
+				return long1 + long2;
+			case s_Time:
+				Long time1 = (Long) value1;
+				Long time2 = (Long) value2;
+				return time1 + time2;
+			default:
+				throw new AssertionError("unknown key");
+			}
+		}
+
+		@Override
+		public String prettyprintBenchmarkData(IBenchmarkDataProvider benchmarkData) {
+			StringBuilder sb = new StringBuilder();
+			for (String key : getKeys()) {
+				if (key == s_Time) {
+					long time = (long) benchmarkData.getValue(s_Time);
+					sb.append(TraceAbstractionBenchmarks.prettyprintNanoseconds(time));
+					sb.append(s_Time);
+				} else {
+					sb.append(benchmarkData.getValue(key));
+					sb.append(" ");
+					sb.append(key);
+				}
+				sb.append(", ");
+			}
+			return sb.toString();
+		}
+	}
+	
+	
+	
+	public class PredicateUnifierBenchmarkGenerator implements IBenchmarkDataProvider {
+		
+		private int m_DeclaredPredicates = 0;
+		private int m_GetRequests = 0;
+		private int m_SyntacticMatches = 0;
+		private int m_SemanticMatches = 0;
+		private int m_ConstructedPredicates = 0;
+		private int m_IntricatePredicates = 0;
+		private int m_DeprecatedPredicates = 0;
+		private int m_ImplicationChecksByTransitivity = 0;
+		protected final Benchmark m_Benchmark;
+
+		protected boolean m_Running = false;
+
+		public PredicateUnifierBenchmarkGenerator() {
+			m_Benchmark = new Benchmark();
+			m_Benchmark.register(PredicateUnifierBenchmarkType.s_Time);
+		}
+
+		public void incrementDeclaredPredicates() {
+			m_DeclaredPredicates++;
+		}
+		public void incrementGetRequests() {
+			m_GetRequests++;
+		}
+		public void incrementSyntacticMatches() {
+			m_SyntacticMatches++;
+		}
+		public void incrementSemanticMatches() {
+			m_SemanticMatches++;
+		}
+		public void incrementConstructedPredicates() {
+			m_ConstructedPredicates++;
+		}
+		public void incrementIntricatePredicates() {
+			m_IntricatePredicates++;
+		}
+		public void incrementDeprecatedPredicates() {
+			m_DeprecatedPredicates++;
+			assert m_DeprecatedPredicates == PredicateUnifier.this.m_DeprecatedPredicates.size() 
+					: "number of deprecated predicates inconsistent";
+		}
+		public void incrementImplicationChecksByTransitivity() {
+			m_ImplicationChecksByTransitivity++;
+		}
+
+
+
+		public long getTime() {
+			return (long) m_Benchmark.getElapsedTime(PredicateUnifierBenchmarkType.s_Time, TimeUnit.NANOSECONDS);
+		}
+		public void continueTime() {
+			assert m_Running == false : "Timing already running";
+			m_Running = true;
+			m_Benchmark.unpause(PredicateUnifierBenchmarkType.s_Time);
+		}
+		public void stopTime() {
+			assert m_Running == true : "Timing not running";
+			m_Running = false;
+			m_Benchmark.pause(PredicateUnifierBenchmarkType.s_Time);
+		}
+		@Override
+		public Collection<String> getKeys() {
+			return PredicateUnifierBenchmarkType.getInstance().getKeys();
+		}
+		public Object getValue(String key) {
+			switch (key) {
+			case PredicateUnifierBenchmarkType.s_DeclaredPredicates:
+				return m_DeclaredPredicates;
+			case PredicateUnifierBenchmarkType.s_GetRequests:
+				return m_GetRequests;
+			case PredicateUnifierBenchmarkType.s_SyntacticMatches:
+				return m_SyntacticMatches;
+			case PredicateUnifierBenchmarkType.s_SemanticMatches:
+				return m_SemanticMatches;
+			case PredicateUnifierBenchmarkType.s_ConstructedPredicates:
+				return m_ConstructedPredicates;
+			case PredicateUnifierBenchmarkType.s_IntricatePredicates:
+				return m_IntricatePredicates;
+			case PredicateUnifierBenchmarkType.s_DeprecatedPredicates:
+				return m_DeprecatedPredicates;
+			case PredicateUnifierBenchmarkType.s_ImplicationChecksByTransitivity:
+				return m_ImplicationChecksByTransitivity;
+			case PredicateUnifierBenchmarkType.s_Time:
+				return getTime();
+			default:
+				throw new AssertionError("unknown key");
+			}
+		}
+
+		@Override
+		public IBenchmarkType getBenchmarkType() {
+			return PredicateUnifierBenchmarkType.getInstance();
+		}
+	}
+
+	public IBenchmarkDataProvider getPredicateUnifierBenchmark() {
+		return m_PredicateUnifierBenchmarkGenerator;
+	}
+
 }

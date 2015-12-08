@@ -25,9 +25,7 @@
  * licensors of the ULTIMATE AbstractInterpretation plug-in grant you additional permission 
  * to convey the resulting work.
  */
-/**
- * 
- */
+
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation.abstractdomain;
 
 import java.util.HashMap;

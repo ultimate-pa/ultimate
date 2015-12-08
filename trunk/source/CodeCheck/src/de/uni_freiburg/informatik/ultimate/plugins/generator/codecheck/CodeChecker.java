@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap4;
 public abstract class CodeChecker {
 
 	protected RootNode m_originalRoot;
-	protected TAPreferences m_taPrefs;
 	protected SmtManager m_smtManager;
 	protected ImpRootNode m_graphRoot;
 
@@ -78,11 +77,10 @@ public abstract class CodeChecker {
 
 	protected GraphWriter _graphWriter;
 
-	public CodeChecker(IElement root, SmtManager smtManager, TAPreferences taPrefs, RootNode originalRoot, ImpRootNode graphRoot, GraphWriter graphWriter,
+	public CodeChecker(IElement root, SmtManager smtManager, RootNode originalRoot, ImpRootNode graphRoot, GraphWriter graphWriter,
 			IHoareTripleChecker edgeChecker, PredicateUnifier predicateUnifier, Logger logger) {
 		mLogger = logger;
 		this.m_smtManager = smtManager;
-		this.m_taPrefs = taPrefs;
 		this.m_originalRoot = originalRoot;
 		this.m_graphRoot = graphRoot;
 

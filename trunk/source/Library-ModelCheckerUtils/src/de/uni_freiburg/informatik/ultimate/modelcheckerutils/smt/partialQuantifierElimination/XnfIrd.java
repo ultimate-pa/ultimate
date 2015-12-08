@@ -33,7 +33,8 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -111,7 +112,7 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 			} else {
 				AffineRelation affineRelation;
 				try {
-					affineRelation = new AffineRelation(oldParam);
+					affineRelation = new AffineRelation(script, oldParam);
 				} catch (NotAffineException e) {
 					// unable to eliminate quantifier
 					return null;
@@ -123,7 +124,13 @@ public class XnfIrd extends XjunctPartialQuantifierElimination {
 					return null;
 				}
 				try {
-					affineRelation.onLeftHandSideOnly(script, tv);
+					ApplicationTerm lhsonly = affineRelation.onLeftHandSideOnly(script, tv);
+					if (!SmtUtils.occursAtMostAsLhs(tv, lhsonly)) {
+						// eliminatee occurs additionally in rhs e.g., inside a
+						// select or modulo term.
+						return null;
+					}
+
 				} catch (NotAffineException e) {
 					// unable to eliminate quantifier
 					return null;

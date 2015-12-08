@@ -32,35 +32,31 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFieldDesignator;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CUnion;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListRecResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.HeapLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LRValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpressionListRec;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
@@ -71,11 +67,27 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 /**
  * Class that handles translation of Structs.
  * 
- * @authors Markus Lindenmann, Alexander Nutz
+ * @authors Markus Lindenmann, Alexander Nutz, Matthias Heizmann
  * @date 12.10.2012
  * modified (a lot) by Alexander Nutz in later 2013/early 2014
  */
 public class StructHandler {
+	
+	private final MemoryHandler m_MemoryHandler;
+	private final TypeSizeAndOffsetComputer m_TypeSizeAndOffsetComputer;
+	private final AExpressionTranslation m_ExpressionTranslation;
+	
+	
+
+	public StructHandler(MemoryHandler memoryHandler, 
+			TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, 
+			AExpressionTranslation expressionTranslation) {
+		super();
+		m_MemoryHandler = memoryHandler;
+		m_TypeSizeAndOffsetComputer = typeSizeAndOffsetComputer;
+		m_ExpressionTranslation = expressionTranslation;
+	}
+
 
 	/**
 	 * Handle IASTFieldReference.
@@ -84,14 +96,14 @@ public class StructHandler {
 	 *            a reference to the main dispatcher.
 	 * @param node
 	 *            the node to translate.
-	 * @param memoryHandler 
+	 * @param m_MemoryHandler 
 	 * @return the translation results.
 	 */
-	public Result handleFieldReference(Dispatcher main, IASTFieldReference node, MemoryHandler memoryHandler) {
+	public Result handleFieldReference(Dispatcher main, IASTFieldReference node) {
 		ILocation loc = LocationFactory.createCLocation(node);
 		String field = node.getFieldName().toString();
 		
-		ResultExpression fieldOwner = (ResultExpression) main.dispatch(node.getFieldOwner());
+		ExpressionResult fieldOwner = (ExpressionResult) main.dispatch(node.getFieldOwner());
 
 		LRValue newValue = null;
 		Map<StructLHS, CType> unionFieldToCType = fieldOwner.unionFieldIdToCType;
@@ -106,9 +118,9 @@ public class StructHandler {
 		CType cFieldType = cStructType.getFieldType(field);
 
 		if (node.isPointerDereference()) {
-			ResultExpression rFieldOwnerRex = fieldOwner.switchToRValueIfNecessary(main, memoryHandler, this, loc);
+			ExpressionResult rFieldOwnerRex = fieldOwner.switchToRValueIfNecessary(main, m_MemoryHandler, this, loc);
 			Expression address = rFieldOwnerRex.lrVal.getValue();
-			fieldOwner = new ResultExpression(rFieldOwnerRex.stmt, new HeapLValue(address, rFieldOwnerRex.lrVal.getCType()), 
+			fieldOwner = new ExpressionResult(rFieldOwnerRex.stmt, new HeapLValue(address, rFieldOwnerRex.lrVal.getCType()), 
 					rFieldOwnerRex.decl, rFieldOwnerRex.auxVars, rFieldOwnerRex.overappr);
 		}
 
@@ -126,12 +138,12 @@ public class StructHandler {
 				newStartAddressBase = MemoryHandler.getPointerBaseAddress(startAddress, loc);
 				newStartAddressOffset = MemoryHandler.getPointerOffset(startAddress, loc);
 			}
+			Expression fieldOffset = m_TypeSizeAndOffsetComputer.constructOffsetForField(loc, cStructType, field);
+			Expression sumOffset = m_ExpressionTranslation.constructArithmeticExpression(loc, 
+					IASTBinaryExpression.op_plus, newStartAddressOffset, 
+					m_ExpressionTranslation.getCTypeOfPointerComponents(), fieldOffset, m_ExpressionTranslation.getCTypeOfPointerComponents());
 			Expression newPointer = MemoryHandler.constructPointerFromBaseAndOffset(
-					newStartAddressBase,
-					new BinaryExpression(loc, new InferredType(Type.Integer), BinaryExpression.Operator.ARITHPLUS, 
-							newStartAddressOffset,
-							getStructOrUnionOffsetConstantExpression(loc, memoryHandler, field, cStructType)),
-							loc);
+					newStartAddressBase, sumOffset, loc);
 			newValue = new HeapLValue(newPointer, cFieldType);
 		} else if (fieldOwner.lrVal instanceof RValue) {
 			RValue rVal = (RValue) fieldOwner.lrVal;
@@ -157,38 +169,32 @@ public class StructHandler {
 			}
 		}
 	
-		return new ResultExpression(fieldOwner.stmt, newValue, fieldOwner.decl, fieldOwner.auxVars, 
+		return new ExpressionResult(fieldOwner.stmt, newValue, fieldOwner.decl, fieldOwner.auxVars, 
 				fieldOwner.overappr, unionFieldToCType);
 	}
 
 
 	public Result readFieldInTheStructAtAddress(Dispatcher main,
-			MemoryHandler memoryHandler, ILocation loc, String field,
-			RValue address) {
+			ILocation loc, int fieldIndex,
+			Expression structAddress, CStruct structType) {
 		Expression addressBaseOfFieldOwner;
 		Expression addressOffsetOfFieldOwner;
 		
-		Expression structAddress = address.getValue();
-		CStruct structType = (CStruct) address.getCType().getUnderlyingType();
-
 		addressBaseOfFieldOwner = new StructAccessExpression(loc, 
 				structAddress, SFO.POINTER_BASE);
 		addressOffsetOfFieldOwner = new StructAccessExpression(loc, 
 				structAddress, SFO.POINTER_OFFSET);
 
-		Expression newOffset = computeStructFieldOffset(memoryHandler, loc,
-				field, addressOffsetOfFieldOwner, structType);
+		Expression newOffset = computeStructFieldOffset(m_MemoryHandler, loc,
+				fieldIndex, addressOffsetOfFieldOwner, structType);
 		
 		StructConstructor newPointer = 
 				MemoryHandler.constructPointerFromBaseAndOffset(addressBaseOfFieldOwner, newOffset, loc);
 
-		CType resultType = structType.getFieldType(field);
+		CType resultType = structType.getFieldTypes()[fieldIndex];
 
-		RValue newAddress = new RValue(newPointer, resultType, false, false);
-		
-		ResultExpression call = 
-				memoryHandler.getReadCall(main, 
-					newAddress);	
+		ExpressionResult call = 
+				m_MemoryHandler.getReadCall(main, newPointer, resultType);
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, ILocation> auxVars = 
@@ -198,7 +204,7 @@ public class StructHandler {
 		decl.addAll(call.decl);
 		auxVars.putAll(call.auxVars);
 		overappr.addAll(call.overappr);
-		ResultExpression result = new ResultExpression(stmt,
+		ExpressionResult result = new ExpressionResult(stmt,
 		        new RValue(call.lrVal.getValue(), resultType), decl, auxVars,
 		        overappr);
 		return result;
@@ -206,43 +212,38 @@ public class StructHandler {
 
 
 	Expression computeStructFieldOffset(MemoryHandler memoryHandler,
-			ILocation loc, String field, Expression addressOffsetOfFieldOwner,
+			ILocation loc, int fieldIndex, Expression addressOffsetOfFieldOwner,
 			CStruct structType) {
 		if (structType == null || !(structType instanceof CStruct)) {
 			String msg = "Incorrect or unexpected field owner!";
 			throw new IncorrectSyntaxException(loc, msg);
 		}
-		IdentifierExpression additionalOffset = getStructOrUnionOffsetConstantExpression(
-				loc, memoryHandler, field, structType);
-		Expression newOffset;
-		if (isZero(addressOffsetOfFieldOwner)) {
-			newOffset = additionalOffset;
+		boolean fieldOffsetIsZero = isOffsetZero(structType, fieldIndex);
+		if (fieldOffsetIsZero) {
+			return addressOffsetOfFieldOwner;
 		} else {
-			newOffset = new BinaryExpression(loc, Operator.ARITHPLUS, 
-					addressOffsetOfFieldOwner, additionalOffset);
-		}
-		return newOffset;
-	}
-
-	public static IdentifierExpression getStructOrUnionOffsetConstantExpression(
-			ILocation loc, MemoryHandler memoryHandler, String fieldId, CType structCType) {
-		String offset = SFO.OFFSET + structCType.toString() + "~" + fieldId;
-		IdentifierExpression additionalOffset = new IdentifierExpression(loc, offset);
-		memoryHandler.calculateSizeOf(structCType, loc);//needed such that offset constants are declared
-		return additionalOffset;
-	}
-
-	/**
-	 * Returns true iff expr is IntegerLiteral "0".
-	 */
-	private boolean isZero(Expression expr) {
-		if (expr instanceof IntegerLiteral) {
-			IntegerLiteral il = (IntegerLiteral) expr;
-			return il.getValue().equals(SFO.NR0);
-		} else {
-			return false;
+			Expression fieldOffset = m_TypeSizeAndOffsetComputer.
+					constructOffsetForField(loc, structType, fieldIndex);
+			Expression result = m_ExpressionTranslation.constructArithmeticExpression(
+					loc, 
+					IASTBinaryExpression.op_plus, addressOffsetOfFieldOwner, 
+					m_TypeSizeAndOffsetComputer.getSize_T(), fieldOffset, m_TypeSizeAndOffsetComputer.getSize_T());
+			return result;
 		}
 	}
+
+	private boolean isOffsetZero(CStruct cStruct, int fieldIndex) {
+		return (fieldIndex == 0) || (cStruct instanceof CUnion);
+	}
+
+//
+//	public static IdentifierExpression getStructOrUnionOffsetConstantExpression(
+//			ILocation loc, MemoryHandler memoryHandler, String fieldId, CType structCType) {
+//		String offset = SFO.OFFSET + structCType.toString() + "~" + fieldId;
+//		IdentifierExpression additionalOffset = new IdentifierExpression(loc, offset);
+//		memoryHandler.calculateSizeOf(loc, structCType);//needed such that offset constants are declared
+//		return additionalOffset;
+//	}
 
 	/**
 	 * Handle IASTDesignatedInitializer.
@@ -262,22 +263,22 @@ public class StructHandler {
 		CASTFieldDesignator fr = (CASTFieldDesignator) node.getDesignators()[0];
 		String id = fr.getName().toString();
 		Result r = main.dispatch(node.getOperand());
-		if (r instanceof ResultExpressionListRec) {
-			ResultExpressionListRec relr = (ResultExpressionListRec) r;
+		if (r instanceof ExpressionListRecResult) {
+			ExpressionListRecResult relr = (ExpressionListRecResult) r;
 			if (!relr.list.isEmpty()) {
 				assert relr.stmt.isEmpty();
 				//                assert relr.expr == null;//TODO??
 				assert relr.lrVal == null;
 				assert relr.decl.isEmpty();
-				ResultExpressionListRec named = new ResultExpressionListRec(id);
+				ExpressionListRecResult named = new ExpressionListRecResult(id);
 				named.list.addAll(relr.list);
 				return named;
 			}
-			return new ResultExpressionListRec(id, relr.stmt, relr.lrVal,
+			return new ExpressionListRecResult(id, relr.stmt, relr.lrVal,
 					relr.decl, relr.auxVars, relr.overappr).switchToRValueIfNecessary(
 					        main, memoryHandler, structHandler, loc);
-		} else if (r instanceof ResultExpression) {
-			ResultExpression rex = (ResultExpression) r;
+		} else if (r instanceof ExpressionResult) {
+			ExpressionResult rex = (ExpressionResult) r;
 			return rex.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 		} else {
 			String msg = "Unexpected result";

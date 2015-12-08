@@ -110,6 +110,7 @@ public class BitvectorTranslationTest extends AbstractTraceAbstractionTestSuite 
 	
 	
 	private static final String[] m_UltimateRepository = {
+//		"examples/programs/MapReduce/single",
 		"examples/programs/regression",
 		"examples/programs/bitvector",
 //		"examples/programs/quantifier/regression",
@@ -128,6 +129,7 @@ public class BitvectorTranslationTest extends AbstractTraceAbstractionTestSuite 
 	 */
 	private static final String[] m_Settings = {
 		"automizer/BitvectorTranslation.epf",
+		"automizer/BitvectorTranslationCVC4.epf",
 		"svcomp2015/svComp-64bit-precise-Automizer.epf",
 	};
 	
@@ -136,17 +138,17 @@ public class BitvectorTranslationTest extends AbstractTraceAbstractionTestSuite 
 	 */
 	@Override
 	public long getTimeout() {
-		return 10 * 1000;
+		return 30 * 1000;
 	}
 	
 	private static final String[] m_BoogieToolchains = {
 //		"AutomizerBpl.xml",
-//		"AutomizerBplInline.xml",
+		"AutomizerBplInline.xml",
 	};
 	
 	private static final String[] m_CToolchains = {
-		"AutomizerC.xml",
-//		"AutomizerCInline.xml",
+//		"AutomizerC.xml",
+		"AutomizerCInline.xml",
 	};
 
 	@Override

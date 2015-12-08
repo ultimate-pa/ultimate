@@ -55,19 +55,19 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		ArrayList<UltimateTestCase> rtr = new ArrayList<UltimateTestCase>();
+		final ArrayList<UltimateTestCase> rtr = new ArrayList<UltimateTestCase>();
+		final Collection<Pair> runConfigurations = getRunConfiguration();
 
-		Collection<Pair> runConfigurations = getRunConfiguration();
+		for (final Pair runConfiguration : runConfigurations) {
+			final Collection<File> inputFiles = getInputFiles(runConfiguration);
 
-		for (Pair runConfiguration : runConfigurations) {
-			Collection<File> inputFiles = getInputFiles(runConfiguration);
-
-			for (File inputFile : inputFiles) {
-				UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, runConfiguration.getSettingsFile(),
-						runConfiguration.getToolchainFile());
-				UltimateStarter starter = new UltimateStarter(urd, mTimeout, null, null);
-				rtr.add(new UltimateTestCase(String.format("%s+%s: %s", runConfiguration.getToolchainFile().getName(),
-						runConfiguration.getSettingsFile().getName(), inputFile.getAbsolutePath()),
+			for (final File inputFile : inputFiles) {
+				final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile,
+						runConfiguration.getSettingsFile(), runConfiguration.getToolchainFile());
+				final UltimateStarter starter = new UltimateStarter(urd, mTimeout, null, null);
+				rtr.add(new UltimateTestCase(
+						String.format("%s+%s: %s", runConfiguration.getToolchainFile().getName(),
+								runConfiguration.getSettingsFile().getName(), inputFile.getAbsolutePath()),
 						getTestResultDecider(urd), starter, urd, null, null));
 			}
 		}
@@ -97,9 +97,8 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
 		for (File toolchain : toolchainFiles) {
 			String toolchainName = toolchain.getName().replaceAll("\\..*", "");
-			String localRegex = Matcher.quoteReplacement(toolchain.getParent())
-					+ ".*";
-			
+			String localRegex = Matcher.quoteReplacement(toolchain.getParent()) + ".*";
+
 			Collection<File> relevantSettings = TestUtil.filterFiles(settingsFiles, localRegex);
 
 			for (File settings : relevantSettings) {

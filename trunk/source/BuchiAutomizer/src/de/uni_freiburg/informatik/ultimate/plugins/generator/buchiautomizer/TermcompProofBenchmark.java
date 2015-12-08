@@ -31,9 +31,10 @@ import java.util.Map.Entry;
 import java.util.ArrayList;
 import java.util.TreeMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
@@ -57,13 +58,13 @@ public class TermcompProofBenchmark implements ICsvProviderProvider<Double> {
 	}
 
 	void reportFiniteModule(Integer iteration, INestedWordAutomatonSimple<CodeBlock, IPredicate> automaton) {
-		String stringRepresentation = (new AtsDefinitionPrinter<>(m_Services, "finiteAutomatonIteration" + iteration, automaton))
+		String stringRepresentation = (new AutomatonDefinitionPrinter<>(m_Services, "finiteAutomatonIteration" + iteration, Format.ATS, automaton))
 				.getDefinitionAsString();
 		m_ModuleFinite.put(iteration, stringRepresentation);
 	}
 
 	void reportBuchiModule(Integer iteration, INestedWordAutomatonSimple<CodeBlock, IPredicate> automaton) {
-		String stringRepresentation = (new AtsDefinitionPrinter<>(m_Services, "buchiAutomatonIteration" + iteration, automaton))
+		String stringRepresentation = (new AutomatonDefinitionPrinter<>(m_Services, "buchiAutomatonIteration" + iteration, Format.ATS, automaton))
 				.getDefinitionAsString();
 		m_ModuleBuchi.put(iteration, stringRepresentation);
 	}

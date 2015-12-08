@@ -24,6 +24,7 @@
  * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.boogie.symboltable;
 
 import org.apache.log4j.Logger;
@@ -35,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
@@ -44,16 +46,15 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 
 /**
  * 
- * @author dietsch
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
 public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnmanagedObserver {
 
-	private Logger mLogger;
+	private final Logger mLogger;
+	
 	private BoogieSymbolTable mSymbolTable;
-
 	private Unit mRootNode;
-
 	private StorageClass mCurrentScope;
 	private Declaration mCurrentDeclaration;
 	private String mCurrentScopeName;
@@ -108,7 +109,7 @@ public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnma
 	public Boolean process(Unit node) throws Throwable {
 		mRootNode = node;
 		for (Declaration decl : mRootNode.getDeclarations()) {
-			if (decl instanceof VariableDeclaration) {
+			if (decl instanceof VariableDeclaration || decl instanceof ConstDeclaration) {
 				mCurrentScope = StorageClass.GLOBAL;
 				mCurrentDeclaration = decl;
 			}
@@ -167,7 +168,7 @@ public class BoogieSymbolTableConstructor extends BoogieVisitor implements IUnma
 		// TODO What about type params?
 		super.visit(decl);
 	}
-
+	
 	@Override
 	protected VariableDeclaration processLocalVariableDeclaration(VariableDeclaration local) {
 		mCurrentDeclaration = local;

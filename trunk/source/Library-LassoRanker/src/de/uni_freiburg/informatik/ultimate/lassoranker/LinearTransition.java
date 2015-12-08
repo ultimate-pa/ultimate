@@ -87,9 +87,23 @@ public class LinearTransition implements Serializable {
 		m_polyhedra = polyhedra;
 		m_inVars = Collections.unmodifiableMap(inVars);
 		m_outVars = Collections.unmodifiableMap(outVars);
-		m_contains_integers = checkIfContainsIntegers();
+		m_contains_integers = checkIfContainsSort(m_inVars.keySet(), "Int") || 
+				checkIfContainsSort(m_outVars.keySet(), "Int");
 	}
-	
+
+	/**
+	 * @return true iff varSet contain one or more variables of {@link Sort} 
+	 * sortname.
+	 */
+	private boolean checkIfContainsSort(Set<RankVar> varSet, String sortname) {
+		for (RankVar rv : varSet) {
+			if (rv.getDefinition().getSort().getName().equals(sortname)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/**
 	 * @return true iff there is at least one integer variable in m_polyhedra
 	 */
@@ -105,6 +119,7 @@ public class LinearTransition implements Serializable {
 		}
 		return false;
 	}
+	
 	
 //	/**
 //	 * Check if a polyhedron is empty

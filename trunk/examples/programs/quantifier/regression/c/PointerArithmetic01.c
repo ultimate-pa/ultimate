@@ -7,8 +7,8 @@
 
 #include <stdlib.h>
 
-int main(void) {
-	int a[7] = { 23, 42, 1048, 7, 19, 27, 65 };
+int nonmain(void) {
+	int a[7] = { 23, 42, 1048, 7 };
 	int *p = &a[0];
 	int x;
 	
@@ -16,13 +16,13 @@ int main(void) {
 	x = *p;
 	//@ assert x == 1048;
 	
-	p = 3 + p;
+	p = 1 + p;
 	x = *p;
-	//@ assert x == 27;
+	//@ assert x == 7;
 	
 	int *q = p - 2;
 	x = *q;
-	//@ assert x == 7;
+	//@ assert x == 42;
 	
 	int d = p - q;
 	//@ assert d == 2;

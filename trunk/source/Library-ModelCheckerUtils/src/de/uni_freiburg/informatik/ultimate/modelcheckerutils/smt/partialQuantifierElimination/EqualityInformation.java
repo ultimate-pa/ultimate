@@ -124,7 +124,7 @@ public class EqualityInformation {
 			} else {
 				AffineRelation affRel;
 				try {
-					affRel = new AffineRelation(context[i]);
+					affRel = new AffineRelation(script, context[i]);
 				} catch (NotAffineException e1) {
 					continue;
 				}

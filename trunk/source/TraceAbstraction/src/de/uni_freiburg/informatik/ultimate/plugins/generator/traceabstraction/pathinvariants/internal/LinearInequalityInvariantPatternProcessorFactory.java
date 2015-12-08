@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ScriptWithTermConstructionChecks;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
@@ -111,8 +111,8 @@ public class LinearInequalityInvariantPatternProcessorFactory
 	 * @return SMT solver settings to use
 	 */
 	protected Settings produceSolverSettings() {
-		boolean dumpSmtScriptToFile = !true;
-		String pathOfDumpedScript = "~";
+		boolean dumpSmtScriptToFile = true;
+		String pathOfDumpedScript = ".";
 		String baseNameOfDumpedScript = "contraintSolving";
 		final String solverCommand;
 		if (m_UseNonlinearConstraints) {

@@ -32,12 +32,13 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * 
@@ -88,11 +89,11 @@ public class Jeffery_Test_4<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			bw.newLine();
 			bw.write("//IncrementalInclusionCheck4: Time:"+timeBuffer2+" Total states:"+IIC4.counter_total_nodes+" States in the end:"+IIC4.completeLeafSet.size()+" Run:"+IIC4.counter_run);
 			bw.newLine();
-			bw.write((new AtsDefinitionPrinter<String, String>(services, "A", a)).getDefinitionAsString());
+			bw.write((new AutomatonDefinitionPrinter<String, String>(services, "A", Format.ATS, a)).getDefinitionAsString());
 			bw.newLine();
 			int i;
 			for(i=0;i<b.size();i++){
-				bw.write((new AtsDefinitionPrinter<String, String>(services, "B"+i, b.get(i))).getDefinitionAsString());
+				bw.write((new AutomatonDefinitionPrinter<String, String>(services, "B"+i, Format.ATS, b.get(i))).getDefinitionAsString());
 				bw.newLine();
 			}
 			bw.close();
@@ -107,11 +108,11 @@ public class Jeffery_Test_4<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			bw.newLine();
 			bw.write("//IncrementalInclusionCheck4: Time:"+timeBuffer2+" Total states:"+IIC4.counter_total_nodes+" States in the end:"+IIC4.completeLeafSet.size()+" Run:"+IIC4.counter_run);
 			bw.newLine();
-			bw.write((new AtsDefinitionPrinter<String, String>(services, "A", a)).getDefinitionAsString());
+			bw.write((new AutomatonDefinitionPrinter<String, String>(services, "A", Format.ATS, a)).getDefinitionAsString());
 			bw.newLine();
 			int i;
 			for(i=0;i<b.size();i++){
-				bw.write((new AtsDefinitionPrinter<String, String>(services, "B"+i, b.get(i))).getDefinitionAsString());
+				bw.write((new AutomatonDefinitionPrinter<String, String>(services, "B"+i, Format.ATS, b.get(i))).getDefinitionAsString());
 				bw.newLine();
 			}
 			bw.close();
@@ -152,11 +153,11 @@ public class Jeffery_Test_4<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			bw.newLine();
 			bw.write("//IncrementalInclusionCheck4: Time:"+timeBuffer2+" Total states:"+IIC4.counter_total_nodes+" States in the end:"+IIC4.completeLeafSet.size()+" Run:"+IIC4.counter_run);
 			bw.newLine();
-			bw.write((new AtsDefinitionPrinter<String, String>(services, "A", a)).getDefinitionAsString());
+			bw.write((new AutomatonDefinitionPrinter<String, String>(services, "A", Format.ATS, a)).getDefinitionAsString());
 			bw.newLine();
 			int i;
 			for(i=0;i<b.size();i++){
-				bw.write((new AtsDefinitionPrinter<String, String>(services, "B"+i, b.get(i))).getDefinitionAsString());
+				bw.write((new AutomatonDefinitionPrinter<String, String>(services, "B"+i, Format.ATS, b.get(i))).getDefinitionAsString());
 				bw.newLine();
 			}
 			bw.close();
@@ -171,11 +172,11 @@ public class Jeffery_Test_4<LETTER,STATE> implements IOperation<LETTER,STATE>{
 			bw.newLine();
 			bw.write("//IncrementalInclusionCheck4: Time:"+timeBuffer2+" Total states:"+IIC4.counter_total_nodes+" States in the end:"+IIC4.completeLeafSet.size()+" Run:"+IIC4.counter_run);
 			bw.newLine();
-			bw.write((new AtsDefinitionPrinter<String, String>(services, "A", a)).getDefinitionAsString());
+			bw.write((new AutomatonDefinitionPrinter<String, String>(services, "A", Format.ATS, a)).getDefinitionAsString());
 			bw.newLine();
 			int i;
 			for(i=0;i<b.size();i++){
-				bw.write((new AtsDefinitionPrinter<String, String>(services, "B"+i, b.get(i))).getDefinitionAsString());
+				bw.write((new AutomatonDefinitionPrinter<String, String>(services, "B"+i, Format.ATS, b.get(i))).getDefinitionAsString());
 				bw.newLine();
 			}
 			bw.close();

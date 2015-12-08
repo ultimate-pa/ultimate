@@ -42,6 +42,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -52,7 +54,8 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.FileLocator;
 
-import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
@@ -61,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AtsASTNode;
@@ -379,7 +382,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			ILocation errorLocation = oe.getLocation();
 			String opName = oe.getOperationName().toLowerCase();
 			if (!mExistingOperations.containsKey(opName)) {
-				if (!opName.equals("assert") && !opName.equals("print")) {
+				if (!opName.equals("assert") && !opName.equals("print") && !opName.equals("write")) {
 					String shortDescr = "Unsupported operation \"" + oe.getOperationName() + "\"";
 					String shortDescription = shortDescr;
 					String allOperations = (new ListExistingOperations(mExistingOperations)).prettyPrint();
@@ -564,7 +567,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 				OperationInvocationExpressionAST oe = (OperationInvocationExpressionAST) n;
 				String opName = oe.getOperationName().toLowerCase();
 				Set<Class<?>> returnTypes = new HashSet<Class<?>>();
-				if (opName.equals("print") || opName.equals("assert")) {
+				if (opName.equals("print") || opName.equals("assert") || opName.equals("write")) {
 					return returnTypes;
 				}
 				if (mExistingOperations.containsKey(opName)) {
@@ -638,7 +641,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	private enum Finished {
 		FINISHED, TIMEOUT, ERROR, OUTOFMEMORY
 	};
-	
+
 	public static final String s_AssertionHoldsMessage = "Assertion holds.";
 	public static final String s_AssertionViolatedMessage = "Assertion violated!";
 
@@ -703,6 +706,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			ats = (AutomataTestFileAST) node;
 		}
 		Finished interpretationFinished = Finished.FINISHED;
+		String errorMessage = null;
 		reportToLogger(LoggerSeverity.DEBUG, "Interpreting automata definitions...");
 		// Interpret automata definitions
 		try {
@@ -713,6 +717,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			reportToLogger(LoggerSeverity.INFO, "Interpretation of testfile cancelled.");
 			reportToUltimate(Severity.ERROR, e.getMessage() + " Interpretation of testfile cancelled.", "Error", node);
 			interpretationFinished = Finished.ERROR;
+			errorMessage = e.getMessage();
 		}
 
 		if (interpretationFinished == Finished.FINISHED) {
@@ -731,6 +736,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 				}
 				reportToUltimate(Severity.ERROR, e.getLongDescription(), shortDescription, node);
 				interpretationFinished = Finished.ERROR;
+				errorMessage = e.getLongDescription();
 			}
 		}
 
@@ -751,6 +757,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 						interpretationFinished = Finished.OUTOFMEMORY;
 					} else {
 						interpretationFinished = Finished.ERROR;
+						errorMessage = e.getLongDescription();
 					}
 					printMessage(Severity.ERROR, LoggerSeverity.INFO, e.getLongDescription(),
 							"Interpretation of ats file failed", node);
@@ -758,7 +765,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			}
 		}
 		reportToLogger(LoggerSeverity.DEBUG, "Reporting results...");
-		reportResult(interpretationFinished);
+		reportResult(interpretationFinished, errorMessage);
 		if (mPrintAutomataToFile) {
 			mPrintWriter.close();
 		}
@@ -1065,14 +1072,13 @@ public class TestFileInterpreter implements IMessagePrinter {
 			result = arguments.get(0);
 			if (result instanceof Boolean) {
 				if ((Boolean) result) {
-
 					mResultOfAssertStatements.add(new GenericResultAtElement<AtsASTNode>(oe, Activator.s_PLUGIN_ID,
-							mServices.getBacktranslationService(), s_AssertionHoldsMessage , oe
-									.getAsString(), Severity.INFO));
+							mServices.getBacktranslationService(), s_AssertionHoldsMessage, oe.getAsString(),
+							Severity.INFO));
 				} else {
 					mResultOfAssertStatements.add(new GenericResultAtElement<AtsASTNode>(oe, Activator.s_PLUGIN_ID,
-							mServices.getBacktranslationService(), s_AssertionViolatedMessage, oe
-									.getAsString(), Severity.ERROR));
+							mServices.getBacktranslationService(), s_AssertionViolatedMessage, oe.getAsString(),
+							Severity.ERROR));
 				}
 			} else {
 				throw new AssertionError("assert expects boolean result, type checker should have found this");
@@ -1081,29 +1087,71 @@ public class TestFileInterpreter implements IMessagePrinter {
 			String argsAsString = children.get(0).getAsString();
 			// ILocation loc = children.get(0).getLocation();
 			reportToLogger(LoggerSeverity.INFO, "Printing " + argsAsString);
-			for (Object o : arguments) {
-				final String text;
-				if (o instanceof IAutomaton) {
-					mLastPrintedAutomaton = (IAutomaton<?, ?>) o;
-					text = (new AtsDefinitionPrinter<String, String>(mServices, "automaton", o)).getDefinitionAsString();
+			final String text;
+			if (arguments.get(0) instanceof IAutomaton) {
+				final Format format;
+				if (arguments.size() == 1) {
+					format = Format.ATS;
+				} else if (arguments.size() == 2) {
+					if (arguments.get(1) instanceof String) {
+						try {
+							format = Format.valueOf((String) arguments.get(1));
+						} catch (Exception e) {
+							throw new InterpreterException(oe.getLocation(), 
+									"unknown format " + (String) arguments.get(1));
+						}
+					} else {
+						throw new InterpreterException(oe.getLocation(), 
+								"if first argument of print command is an "
+								+ "automaton second argument has to be a string "
+								+ "that defines an output format");
+					}
 				} else {
-					text = String.valueOf(o);
+					throw new InterpreterException(oe.getLocation(), 
+							"if first argument of print command is an "
+							+ "automaton only two arguments are allowed");
 				}
-				printMessage(Severity.INFO, LoggerSeverity.INFO, text, oe.getAsString(), oe);
-				if (mPrintAutomataToFile) {
-					String comment = "/* " + oe.getAsString() + " */";
-					mPrintWriter.println(comment);
-					mPrintWriter.println(text);
+				mLastPrintedAutomaton = (IAutomaton<?, ?>) arguments.get(0);
+				text = (new AutomatonDefinitionPrinter<String, String>(mServices, "automaton", format, arguments.get(0)))
+							.getDefinitionAsString();
+			} else {
+				if (arguments.size() > 1) {
+					throw new InterpreterException(oe.getLocation(), 
+							"if first argument of print command is not an "
+							+ "automaton no second argument allowed");
+				} else {
+					text = String.valueOf(arguments.get(0));
 				}
-
 			}
-
+			printMessage(Severity.INFO, LoggerSeverity.INFO, text, oe.getAsString(), oe);
+			if (mPrintAutomataToFile) {
+				String comment = "/* " + oe.getAsString() + " */";
+				mPrintWriter.println(comment);
+				mPrintWriter.println(text);
+			}
+		} else if (oe.getOperationName().equalsIgnoreCase("write")) {
+			if (arguments.size() != 3) {
+				throw new InterpreterException(oe.getLocation(), "write needs three arguments");
+			}
+			IAutomaton<String, String> automaton = (IAutomaton<String, String>) arguments.get(0);
+			String filename = (String) arguments.get(1);
+			final Format format;
+			String formatAsString = (String) arguments.get(2);
+			try {
+				format = Format.valueOf((String) formatAsString);
+			} catch (Exception e) {
+				throw new InterpreterException(oe.getLocation(), 
+						"unknown format " + (String) arguments.get(1));
+			}
+			String argsAsString = children.get(0).getAsString();
+			reportToLogger(LoggerSeverity.INFO, "Writing " + argsAsString + " to file " + filename + " in " + format + " format.");
+			new AutomatonDefinitionPrinter<String, String>(mServices, "ats", filename, format, "hello", automaton);
 		} else {
 			IOperation<String, String> op = getAutomataOperation(oe, arguments);
 			if (op != null) {
 				try {
-					assert op.checkResult(new StringFactory()) : 
-						"Result of operation " + op.operationName() + " is wrong (according to its checkResult method)";
+					assert op.checkResult(new StringFactory()) : "Result of operation " + op.operationName()
+							+ " is wrong (according to its checkResult method)";
 					result = op.getResult();
 				} catch (AutomataLibraryException e) {
 					throw new InterpreterException(oe.getLocation(), e.getMessage());
@@ -1246,8 +1294,9 @@ public class TestFileInterpreter implements IMessagePrinter {
 	/**
 	 * Reports the results of assert statements to the Logger and to Ultimate as
 	 * a GenericResult.
+	 * @param errorMessage 
 	 */
-	private void reportResult(Finished finished) {
+	private void reportResult(Finished finished, String errorMessage) {
 		mLogger.info("----------------- Test Summary -----------------");
 		boolean oneOrMoreAssertionsFailed = false;
 		for (GenericResultAtElement<AtsASTNode> test : mResultOfAssertStatements) {
@@ -1281,7 +1330,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		} else {
 			throw new AssertionError();
 		}
-		IResult result = new AutomataScriptInterpreterOverallResult(Activator.s_PLUGIN_ID, overallResult);
+		IResult result = new AutomataScriptInterpreterOverallResult(Activator.s_PLUGIN_ID, overallResult, errorMessage);
 		mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
 		reportToLogger(loggerSeverity, result.getLongDescription());
 	}
@@ -1309,8 +1358,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 		if (node == null) {
 			result = new GenericResult(Activator.s_PLUGIN_ID, shortDescr, longDescr, sev);
 		} else {
-			result = new GenericResultAtElement<AtsASTNode>(node, Activator.s_PLUGIN_ID, mServices
-					.getBacktranslationService(), shortDescr, longDescr, sev);
+			result = new GenericResultAtElement<AtsASTNode>(node, Activator.s_PLUGIN_ID,
+					mServices.getBacktranslationService(), shortDescr, longDescr, sev);
 		}
 		mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
 	}
@@ -1358,6 +1407,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 *             if the operation does not exist
 	 */
 
+	@SuppressWarnings("unchecked")
 	private IOperation<String, String> getAutomataOperation(OperationInvocationExpressionAST oe,
 			ArrayList<Object> arguments) throws InterpreterException {
 		String operationName = oe.getOperationName().toLowerCase();
@@ -1367,7 +1417,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 			for (Class<?> operationClass : operationClasses) {
 				Constructor<?>[] operationConstructors = operationClass.getConstructors();
 				if (operationConstructors.length == 0) {
-					String description = "Error in automata library: operation " + operationName + " does not have a constructor";
+					String description = "Error in automata library: operation " + operationName
+							+ " does not have a constructor";
 					throw new InterpreterException(oe.getLocation(), description, description);
 				}
 				// Find the constructor which expects the correct arguments
@@ -1432,13 +1483,11 @@ public class TestFileInterpreter implements IMessagePrinter {
 
 	/**
 	 * Prepend mServices to args if IUltimateServiceProvider is the first
-	 * parameter of the constructor.
-	 * FIXME: This is only a workaround! In the future IUltimateServiceProvider
-	 * will be the first argument of each IOperation and we will always
-	 * prepend mServices
+	 * parameter of the constructor. FIXME: This is only a workaround! In the
+	 * future IUltimateServiceProvider will be the first argument of each
+	 * IOperation and we will always prepend mServices
 	 */
-	private Object[] prependIUltimateServiceProviderIfNecessary(
-			Constructor<?> c, Object[] args) {
+	private Object[] prependIUltimateServiceProviderIfNecessary(Constructor<?> c, Object[] args) {
 		boolean firstParameterIsIUltimateServiceProvider;
 		Class<?> fstParam = c.getParameterTypes()[0];
 		if (IUltimateServiceProvider.class.isAssignableFrom(fstParam)) {
@@ -1457,7 +1506,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Return args.toArray(), but prepend a new StringFactory if the first
 	 * parameter of the Constructor c is a StateFacotry.
@@ -1489,12 +1538,10 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	/**
-	 * TODO: get rid of this workaround 
-	 * Workaround that is necessary as long as not all operations use
-	 * Services as their first parameter.
+	 * TODO: get rid of this workaround Workaround that is necessary as long as
+	 * not all operations use Services as their first parameter.
 	 */
-	private boolean firstParameterIsServicesAndSecondParameterIsStateFactory(
-			Constructor<?> c, Class<?> fstParam) {
+	private boolean firstParameterIsServicesAndSecondParameterIsStateFactory(Constructor<?> c, Class<?> fstParam) {
 		boolean firstParameterIsServicesAndSecondParameterIsStateFactory;
 		if (c.getParameterTypes().length < 2) {
 			firstParameterIsServicesAndSecondParameterIsStateFactory = false;
@@ -1549,85 +1596,87 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 *         in the directories.
 	 */
 	private Map<String, Set<Class<?>>> getOperationClasses() {
-		Map<String, Set<Class<?>>> result = new HashMap<String, Set<Class<?>>>();
+		final Map<String, Set<Class<?>>> result = new HashMap<String, Set<Class<?>>>();
 		/*
-		 * NOTE: The following directories are scanned recursively.
-		 * Hence, do not add directories where one directory is a subdirectory
-		 * of another in the list to avoid unnecessary work.
+		 * NOTE: The following directories are scanned recursively. Hence, do
+		 * not add directories where one directory is a subdirectory of another
+		 * in the list to avoid unnecessary work.
 		 */
-		String[] baseDirs = {
-			"/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/operations",
-			"/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/operationsOldApi",
-			"/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/alternating",
-			"/de/uni_freiburg/informatik/ultimate/automata/nwalibrary/buchiNwa",
-			"/de/uni_freiburg/informatik/ultimate/automata/petrinet" };
-		for (String baseDir : baseDirs) {
-			ArrayDeque<String> dirs = new ArrayDeque<String>();
-			dirs.add("");
-			String baseDirInPackageFormat = baseDir.replaceAll(File.separator, ".");
-			if (baseDirInPackageFormat.charAt(0) == '.') {
-				baseDirInPackageFormat = baseDirInPackageFormat.substring(1);
-			}
-			while (!dirs.isEmpty()) {
-				String dir = dirs.removeFirst();
-				String[] files = filesInDirectory(baseDir + File.separator + dir);
-				for (String file : files) {
-					if (file.endsWith(".class")) {
-						String fileWithoutSuffix = file.substring(0, file.length() - 6);
-						String path;
-						if (dir.isEmpty()) {
-							path = baseDirInPackageFormat + "." +
-									fileWithoutSuffix;
-						} else {
-							path = baseDirInPackageFormat + "." +
-									dir.replaceAll(File.separator, ".") + "." +
-									fileWithoutSuffix;
-						}
-						Class<?> clazz = null;
-						try {
-							clazz = Class.forName(path);
-						} catch (ClassNotFoundException e) {
-							e.printStackTrace();
-							mLogger.error("Couldn't load/find class " + path);
-							break;
-						}
-						if ((clazz != null) &&
-								(classImplementsIOperationInterface(clazz))) {
-							String operationName = fileWithoutSuffix.toLowerCase();
-							if (result.containsKey(operationName)) {
-								Set<Class<?>> s = result.get(operationName);
-								s.add(clazz);
-							} else {
-								Set<Class<?>> s = new HashSet<Class<?>>();
-								s.add(clazz);
-								result.put(operationName, s);
-							}
+		final String[] packages = { "de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations",
+				"de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi",
+				"de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating",
+				"de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa",
+				"de.uni_freiburg.informatik.ultimate.automata.petrinet" };
+		for (final String packageName : packages) {
+			final Collection<File> files = filesInDirectory(getPathFromPackageName(packageName));
 
-						}
+			for (final File file : files) {
+				final String filename = file.getName();
+				if (filename.endsWith(".class")) {
+					final Class<?> clazz = getClassFromFile(packageName, file);
+					if (clazz != null && classImplementsIOperationInterface(clazz)) {
+						tryAdd(result, clazz);
+						continue;
 					}
-					// if the file has no ending, it may be a directory
-					else if (!file.contains(".")) {
-						String suffix;
-						if (dir.isEmpty()) {
-							// first subfolder
-							suffix = file;
-						}
-						else {
-							// already in a subfolder, append it
-							suffix = dir + File.separator + file;
-						}
-						
-						if (isDirectory(baseDir + File.separator + suffix)) {
-							// add subfolder
-							dirs.addLast(suffix);
-						} else {
-							mLogger.error("Invalid file or directory: " + suffix);
-						}
-					}
+				}
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Not considering " + file.getAbsolutePath());
 				}
 			}
 		}
 		return result;
+	}
+
+	private Class<?> getClassFromFile(final String packageName, final File file) {
+		final String qualifiedName = getQualifiedNameFromFile(packageName, file);
+		final Class<?> clazz;
+		try {
+			clazz = Class.forName(qualifiedName);
+		} catch (ClassNotFoundException e) {
+			mLogger.error("Couldn't load/find class " + qualifiedName);
+			throw new RuntimeException(e);
+		}
+		return clazz;
+	}
+
+	private boolean tryAdd(final Map<String, Set<Class<?>>> result, final Class<?> clazz) {
+		final String opName = clazz.getSimpleName().toLowerCase();
+		Set<Class<?>> set = result.get(opName);
+		if (set == null) {
+			set = new HashSet<>();
+			result.put(opName, set);
+		}
+		set.add(clazz);
+		return true;
+	}
+
+	/**
+	 * Tries to resolve the fully qualified name from the package name and the
+	 * found file.
+	 * 
+	 * If the package is a.b.c.d and we found a class with the path
+	 * /foo/bar/a/b/c/d/huh/OurClass.class, then the fully qualified name is
+	 * a.b.c.d.huh.OurClass
+	 * 
+	 * @param packageName
+	 * @param file
+	 * @return
+	 */
+	private String getQualifiedNameFromFile(final String packageName, final File file) {
+		assert file != null;
+		assert file.getName().endsWith(".class");
+
+		final String fullname = file.getAbsolutePath();
+		final String filenameWithoutSuffix = fullname.substring(0, fullname.length() - 6);
+		final String knownPath = getPathFromPackageName(packageName);
+		int validAfter = filenameWithoutSuffix.indexOf(knownPath);
+		assert validAfter != -1;
+
+		return filenameWithoutSuffix.substring(validAfter).replace(File.separatorChar, '.');
+	}
+
+	private String getPathFromPackageName(final String packageName) {
+		return packageName.replace(".", File.separator);
 	}
 
 	/**
@@ -1639,21 +1688,13 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 *         interface. Otherwise false.
 	 */
 	private static boolean classImplementsIOperationInterface(Class<?> c) {
-		Class<?>[] implementedInterfaces = c.getInterfaces();
-		for (Class<?> interFace : implementedInterfaces) {
+		final Class<?>[] implementedInterfaces = c.getInterfaces();
+		for (final Class<?> interFace : implementedInterfaces) {
 			if (interFace.equals(IOperation.class)) {
 				return true;
 			}
 		}
 		return false;
-	}
-
-	private static boolean isDirectory(String dir) {
-		URL dirURL = IOperation.class.getClassLoader().getResource(dir);
-		if (dirURL == null)
-			return false;
-		else
-			return dirURL.getProtocol().equals("bundleresource");
 	}
 
 	/**
@@ -1662,42 +1703,48 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 * protocol <i>file</i> and <i>bundleresource</i>. At the moment these are
 	 * the only ones that occur in Website and WebsiteEclipseBridge.
 	 */
-	private String[] filesInDirectory(String dir) {
-		URL dirURL = IOperation.class.getClassLoader().getResource(dir);
+	private Collection<File> filesInDirectory(String dir) {
+		final URL dirURL = IOperation.class.getClassLoader().getResource(dir);
 		if (dirURL == null) {
-			// throw new UnsupportedOperationException("Directory \"" + dir +
-			// "\" does not exist");
 			mLogger.error("Directory \"" + dir + "\" does not exist");
-			return new String[0];
+			return Collections.emptyList();
 		}
-		String protocol = dirURL.getProtocol();
-		File dirFile = null;
+		final String protocol = dirURL.getProtocol();
+		final File dirFile;
 		if (protocol.equals("file")) {
 			try {
 				dirFile = new File(dirURL.toURI());
 			} catch (URISyntaxException e) {
-				e.printStackTrace();
-				// throw new UnsupportedOperationException("Directory \"" + dir
-				// + "\" does not exist");
 				mLogger.error("Directory \"" + dir + "\" does not exist");
-				return new String[0];
+				return Collections.emptyList();
 			}
 		} else if (protocol.equals("bundleresource")) {
 			try {
 				URL fileURL = FileLocator.toFileURL(dirURL);
 				dirFile = new File(fileURL.getFile());
 			} catch (Exception e) {
-				e.printStackTrace();
-				// throw new UnsupportedOperationException("Directory \"" + dir
-				// + "\" does not exist");
 				mLogger.error("Directory \"" + dir + "\" does not exist");
-				return new String[0];
+				return Collections.emptyList();
 			}
 		} else {
 			throw new UnsupportedOperationException("unknown protocol");
 		}
-		String[] files = dirFile.list();
-		return files;
+		return resolveDirectories(Arrays.asList(dirFile));
+	}
+
+	private Collection<File> resolveDirectories(final Collection<File> files) {
+		final ArrayDeque<File> worklist = new ArrayDeque<File>();
+		final ArrayList<File> rtr = new ArrayList<File>();
+		worklist.addAll(files);
+		while (!worklist.isEmpty()) {
+			final File file = worklist.removeFirst();
+			if (file.isFile()) {
+				rtr.add(file);
+				continue;
+			}
+			worklist.addAll(Arrays.asList(file.listFiles()));
+		}
+		return rtr;
 	}
 
 	/**
@@ -1706,38 +1753,37 @@ public class TestFileInterpreter implements IMessagePrinter {
 	 * is provided.
 	 * 
 	 */
-	private class InterpreterException extends Exception {
+	private static class InterpreterException extends Exception {
 		private static final long serialVersionUID = -7514869048479460179L;
-		private final ILocation m_Location;
-		private final String m_ShortDescription;
-		private final String m_LongDescription;
+		private final ILocation mLocation;
+		private final String mShortDescription;
+		private final String mLongDescription;
 
-		public InterpreterException(ILocation m_Location, String longDescription) {
+		public InterpreterException(final ILocation location, final String longDescription) {
 			super();
-			this.m_Location = m_Location;
-			this.m_LongDescription = longDescription;
-			this.m_ShortDescription = null;
+			this.mLocation = location;
+			this.mLongDescription = longDescription;
+			this.mShortDescription = null;
 		}
 
-		public InterpreterException(ILocation m_Location, String longDescription, String shortDescription) {
+		public InterpreterException(final ILocation location, final String longDescription,
+				final String shortDescription) {
 			super();
-			this.m_Location = m_Location;
-			this.m_LongDescription = longDescription;
-			this.m_ShortDescription = shortDescription;
+			this.mLocation = location;
+			this.mLongDescription = longDescription;
+			this.mShortDescription = shortDescription;
 		}
 
 		public ILocation getLocation() {
-			return m_Location;
+			return mLocation;
 		}
 
 		public String getLongDescription() {
-			return m_LongDescription;
+			return mLongDescription;
 		}
 
 		public String getShortDescription() {
-			return m_ShortDescription;
+			return mShortDescription;
 		}
-
 	}
-
 }

@@ -64,7 +64,7 @@ public class TACAS2015AlgoComparisonArray extends TACAS2015 {
 
 	@Override
 	protected long getTimeout() {
-		return 60 * 1000;
+		return 600 * 1000;
 	}
 
 	@Override
@@ -88,6 +88,6 @@ public class TACAS2015AlgoComparisonArray extends TACAS2015 {
 
 	@Override
 	protected String[] getFileEndings() {
-		return new String[] { ".i" };
+		return new String[] { ".c" };
 	}
 }

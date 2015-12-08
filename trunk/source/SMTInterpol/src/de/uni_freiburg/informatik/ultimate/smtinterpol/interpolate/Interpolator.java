@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -453,6 +454,8 @@ public class Interpolator {
 	public Interpolant[] interpolate(Clause cl) {
 		if (mInterpolants.containsKey(cl))
 			return mInterpolants.get(cl);
+		if (mSmtSolver.getEngine().isTerminationRequested())
+			throw new SMTLIBException("Timeout exceeded");
 
 		Interpolant[] interpolants = null;
 		ProofNode proof = cl.getProof();
@@ -1214,6 +1217,8 @@ public class Interpolator {
 				sPlusOffset.add(theC.abs().add(Rational.MONE));
 			while (offset.compareTo(kc) <= 0) {
 				Term x;
+				if (mSmtSolver.getEngine().isTerminationRequested())
+					throw new SMTLIBException("Timeout exceeded");
 				x = sPlusOffset.toSMTLib(mTheory, true);
 				if (!cNum.equals(BigInteger.ONE))
 					x = mTheory.term("div", x, mTheory.numeral(cNum));

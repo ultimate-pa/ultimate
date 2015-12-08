@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.SummaryReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Transitionlet;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -286,7 +286,7 @@ public class TotalInterpolationAutomatonBuilder {
 			tc = new InterpolatingTraceCheckerCraig(precondition, postcondition,
 					pendingContexts, run.getWord(),
 					m_SmtManager, m_ModifiedGlobals, AssertCodeBlockOrder.NOT_INCREMENTALLY,
-					mServices, true, m_PredicateUnifier, m_Interpolation);
+					mServices, true, m_PredicateUnifier, m_Interpolation, true);
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
@@ -294,12 +294,16 @@ public class TotalInterpolationAutomatonBuilder {
 			tc = new TraceCheckerSpWp(precondition, postcondition, pendingContexts,
 					run.getWord(), m_SmtManager, m_ModifiedGlobals, 
 					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true,
-					mServices, true, m_PredicateUnifier, m_Interpolation);
+					mServices, true, m_PredicateUnifier, m_Interpolation, m_SmtManager);
 			
 			break;
 		case PathInvariants:
 		default:
 			throw new UnsupportedOperationException("unsupported interpolation");
+		}
+		m_BenchmarkGenerator.addTraceCheckerData(tc.getTraceCheckerBenchmark());
+		if (tc.getToolchainCancelledExpection() != null) {
+			throw tc.getToolchainCancelledExpection();
 		}
 		if (tc.isCorrect() == LBool.UNSAT) {
 			m_BenchmarkGenerator.incrementUsefullRunGeq2();
@@ -309,7 +313,6 @@ public class TotalInterpolationAutomatonBuilder {
 		} else {
 			m_BenchmarkGenerator.incrementUselessRunGeq2();
 		}
-		m_BenchmarkGenerator.addTraceCheckerData(tc.getTraceCheckerBenchmark());
 	}
 
 	private SortedMap<Integer, IPredicate> computePendingContexts(NestedRun<CodeBlock, IPredicate> run) {

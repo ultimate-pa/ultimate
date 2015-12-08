@@ -78,16 +78,17 @@ import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.IASTTypeIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
+import org.eclipse.cdt.core.dom.ast.gnu.IGNUASTCompoundStatementExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.FunctionHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.InitializationHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultTypes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.TypesResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.IHandler;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -133,8 +134,8 @@ public interface ICHandler extends IHandler {
      *            indicates whether we are dealing with a HeapVar
      * @return the checked ResultTypes object.
      */
-    public ResultTypes checkForPointer(Dispatcher main,
-            IASTPointerOperator[] pointerOps, ResultTypes resType, boolean putOnHeap);
+    public TypesResult checkForPointer(Dispatcher main,
+            IASTPointerOperator[] pointerOps, TypesResult resType, boolean putOnHeap);
 
     /**
      * Translates an IASTTranslationUnit.
@@ -591,15 +592,8 @@ public interface ICHandler extends IHandler {
      */
     public Result visit(Dispatcher main, IASTTypeIdExpression node);
     
-    /**
-     * FIXME: added by alex, 2014-10-08
-     * supposed to return a ResultExpression that does stuff that -additionally to
-     * the special treatment- has to be done for every Expression
-     * @param main
-     * @param node
-     * @return
-     */
-    public Result visit(Dispatcher main, IASTExpression node);
+    
+    public Result visit(Dispatcher main, IGNUASTCompoundStatementExpression node);
     
     /**
      * central methods for beginning a scope in all necessary ScopedThings
@@ -621,13 +615,13 @@ public interface ICHandler extends IHandler {
 	public BigInteger computeConstantValue(Expression value);
 
 	/**
-	 * Modifies a given {@link ResultExpression} such that the effect of
-	 * a cast from the current {@link CType} of the {@link ResultExpression} 
+	 * Modifies a given {@link ExpressionResult} such that the effect of
+	 * a cast from the current {@link CType} of the {@link ExpressionResult} 
 	 * to resultType is captured. 
-	 * Method may exchange the {@link RValue} of the  {@link ResultExpression}
+	 * Method may exchange the {@link RValue} of the  {@link ExpressionResult}
 	 * and add additional objects (statements, auxVars, etc.).
 	 */
-	public void castToType(Dispatcher main, ILocation loc, ResultExpression rexp, CType resultType);
+	public void convert(Dispatcher main, ILocation loc, ExpressionResult rexp, CType resultType);
 
 	public InitializationHandler getInitHandler();
 

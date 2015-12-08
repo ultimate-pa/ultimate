@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 struct _int
 {
 	int x;

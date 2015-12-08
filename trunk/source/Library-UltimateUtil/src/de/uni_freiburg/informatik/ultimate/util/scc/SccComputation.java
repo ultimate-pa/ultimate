@@ -28,9 +28,11 @@ package de.uni_freiburg.informatik.ultimate.util.scc;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
@@ -71,7 +73,8 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 	 */
 	protected final Map<NODE, Integer> m_Indices = new HashMap<NODE, Integer>();
 	protected final Map<NODE, Integer> m_LowLinks = new HashMap<NODE, Integer>();
-	protected final Collection<COMP> m_Balls = new ArrayList<COMP>();
+	protected final ArrayList<COMP> m_Balls = new ArrayList<COMP>();
+	protected final ArrayList<COMP> m_SCCs = new ArrayList<COMP>();
 	private int m_NumberOfNonBallSCCs = 0;
 
 	
@@ -110,7 +113,16 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 	}
 
 	public Collection<COMP> getBalls() {
-		return m_Balls;
+		return Collections.unmodifiableList(m_Balls);
+	}
+	
+	/**
+	 * @return a list of all SCCs (ball SCCs and non-ball SCCs). If SCC a is
+	 * reachable from SCC b, then SCC a occurs in this list before SCC b
+	 * (reverse topological order with respect to reachability).
+	 */
+	public List<COMP> getSCCs() {
+		return Collections.unmodifiableList(m_SCCs);
 	}
 
 	protected void strongconnect(NODE v) {
@@ -140,6 +152,7 @@ public class SccComputation<NODE, COMP extends StronglyConnectedComponent<NODE>>
 			scc.addNode(w);
 		} while (v != w);
 		scc.setRootNode(w);
+		m_SCCs.add(scc);
 		if (isBall(scc)) {
 			m_Balls.add(scc);
 		} else {

@@ -48,10 +48,18 @@ public class AutomataScriptInterpreterOverallResult extends AbstractResult
 	}
 	
 	private final OverallResult m_OverallResult;
+	private final String m_ErrorMessage;
 	
-	public AutomataScriptInterpreterOverallResult(String plugin, OverallResult overallResult) {
+	public AutomataScriptInterpreterOverallResult(String plugin, OverallResult overallResult, String errorMessage) {
 		super(plugin);
+		if (errorMessage == null && overallResult == OverallResult.EXCEPTION_OR_ERROR) {
+			throw new UnsupportedOperationException("provide error message if there was an error");
+		}
+		if (errorMessage != null && overallResult != OverallResult.EXCEPTION_OR_ERROR) {
+			throw new UnsupportedOperationException("provide error message only if there was an error");
+		}
 		m_OverallResult = overallResult;
+		m_ErrorMessage = errorMessage;
 	}
 
 	@Override
@@ -111,6 +119,14 @@ public class AutomataScriptInterpreterOverallResult extends AbstractResult
 
 	public OverallResult getOverallResult() {
 		return m_OverallResult;
+	}
+
+	public String getErrorMessage() {
+		if (m_ErrorMessage == null) {
+			throw new UnsupportedOperationException("there is no error message, because there was no error");
+		} else {
+			return m_ErrorMessage;
+		}
 	}
 	
 	

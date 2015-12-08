@@ -44,6 +44,7 @@ import java.util.TreeSet;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -98,8 +99,8 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 			AnnotateAndAssertCodeBlocks aaacb, 
 			TraceCheckerBenchmarkGenerator tcbg,
 			AssertCodeBlockOrder assertCodeBlocksOrder, 
-			Logger logger) {
-		super(smtManager, nestedSSA, aaacb, tcbg,logger);
+			IUltimateServiceProvider services) {
+		super(smtManager, nestedSSA, aaacb, tcbg, services);
 		m_AssertCodeBlocksOrder = assertCodeBlocksOrder;
 	}
 
@@ -260,7 +261,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		else {
 			throw new AssertionError("unknown heuristic " + m_AssertCodeBlocksOrder);
 		}
-		mLogger.info("Conjunction of SSA is " + m_Satisfiable);
+		m_Logger.info("Conjunction of SSA is " + m_Satisfiable);
 	}
 
 	/**

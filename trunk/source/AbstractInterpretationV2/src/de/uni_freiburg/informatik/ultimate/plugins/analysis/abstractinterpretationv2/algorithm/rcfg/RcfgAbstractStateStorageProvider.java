@@ -31,12 +31,13 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IAbstractStateStorage;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
@@ -45,28 +46,29 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public class RcfgAbstractStateStorageProvider extends BaseRcfgAbstractStateStorageProvider {
+public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
+		extends BaseRcfgAbstractStateStorageProvider<STATE> {
 
-	private final Map<RCFGNode, Deque<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>>> mStorage;
+	private final Map<RCFGNode, Deque<Pair<CodeBlock, STATE>>> mStorage;
 
-	public RcfgAbstractStateStorageProvider(IAbstractStateBinaryOperator<CodeBlock, BoogieVar> mergeOperator,
+	public RcfgAbstractStateStorageProvider(IAbstractStateBinaryOperator<STATE> mergeOperator,
 			IUltimateServiceProvider services) {
 		super(mergeOperator, services);
-		mStorage = new HashMap<RCFGNode, Deque<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>>>();
+		mStorage = new HashMap<RCFGNode, Deque<Pair<CodeBlock, STATE>>>();
 	}
 
-	protected Deque<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>> getStates(RCFGNode node) {
+	protected Deque<Pair<CodeBlock, STATE>> getStates(RCFGNode node) {
 		assert node != null;
-		Deque<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>> rtr = mStorage.get(node);
+		Deque<Pair<CodeBlock, STATE>> rtr = mStorage.get(node);
 		if (rtr == null) {
-			rtr = new ArrayDeque<Pair<CodeBlock, IAbstractState<CodeBlock, BoogieVar>>>();
+			rtr = new ArrayDeque<Pair<CodeBlock, STATE>>();
 			mStorage.put(node, rtr);
 		}
 		return rtr;
 	}
 
 	@Override
-	public IAbstractStateStorage<CodeBlock, BoogieVar> createStorage() {
-		return new RcfgAbstractStateStorageProvider(getMergeOperator(), getServices());
+	public IAbstractStateStorage<STATE, CodeBlock, IBoogieVar,ProgramPoint> createStorage() {
+		return new RcfgAbstractStateStorageProvider<STATE>(getMergeOperator(), getServices());
 	}
 }

@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 int n = 100;
 
 /*@ ensures n < 0;

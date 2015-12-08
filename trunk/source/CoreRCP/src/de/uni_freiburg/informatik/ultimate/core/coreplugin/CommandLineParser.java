@@ -134,9 +134,7 @@ public class CommandLineParser {
 					}
 				}
 			}
-
 		}
-
 	}
 
 	public String getToolFile() {

@@ -32,6 +32,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -43,6 +44,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Scanner;
 import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
 
@@ -278,6 +280,11 @@ public class CoreUtil {
 			}
 		}
 		return filteredList;
+	}
+	
+	public static String convertStreamToString(InputStream is) {
+	    final Scanner s = new Scanner(is).useDelimiter("\\A");
+	    return s.hasNext() ? s.next() : "";
 	}
 
 }

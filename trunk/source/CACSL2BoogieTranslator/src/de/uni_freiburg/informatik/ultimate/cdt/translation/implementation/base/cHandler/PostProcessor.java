@@ -43,12 +43,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.Locati
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -157,9 +156,6 @@ public class PostProcessor {
 		decl.addAll(createUltimateStartProcedure(main, loc, functionHandler));
 		decl.addAll(declareFunctionPointerProcedures(main, functionHandler, memoryHandler, structHandler));
 		decl.addAll(declareConversionFunctions(main, functionHandler, memoryHandler, structHandler));
-		if (!typeHandler.useIntForAllIntegerTypes()) {
-			decl.addAll(declarePrimitiveDataTypeSynonyms(loc, main.getTypeSizes(), typeHandler));
-		}
 		return decl;
 	}
 	
@@ -214,10 +210,11 @@ public class PostProcessor {
 			MemoryHandler memoryHandler, StructHandler structHandler) {
 		ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		ArrayList<Declaration> result = new ArrayList<>();
-		for (CFunction cFunc : functionHandler.functionSignaturesThatHaveAFunctionPointer) {
-			String procName = cFunc.functionSignatureAsProcedureName();
+//		for (CFunction cFunc : functionHandler.functionSignaturesThatHaveAFunctionPointer) {
+		for (ProcedureSignature cFunc : functionHandler.functionSignaturesThatHaveAFunctionPointer) {
+//			String procName = cFunc.functionSignatureAsProcedureName();
+			String procName = cFunc.toString();
 			
-
 			VarList[] inParams = functionHandler.getProcedures().get(procName).getInParams();
 			VarList[] outParams = functionHandler.getProcedures().get(procName).getOutParams();
 			assert outParams.length <= 1;
@@ -322,7 +319,15 @@ public class PostProcessor {
 			if (en.getKey() instanceof TypeDeclaration || en.getKey() instanceof ConstDeclaration)
 				continue;
 			ILocation currentDeclsLoc = en.getKey().getLocation();
-			ResultExpression initializer = en.getValue().getInitializer();
+			ExpressionResult initializer = en.getValue().getInitializer();
+			
+			/*
+			 * global variables with external linkage are not implicitly initialized. (They are initialized by 
+			 * the module that provides them..)
+			 */
+//			if (main.cHandler.getSymbolTable().get(en.getValue().getName(), currentDeclsLoc).isExtern())
+			if (en.getValue().isExtern())
+				continue;
 
 			for (VarList vl  : ((VariableDeclaration) en.getKey()).getVariables()) {
 				for (String id : vl.getIdentifiers()) {
@@ -335,7 +340,7 @@ public class PostProcessor {
 					//					if (initializer != null) {
 					//						assert ((VariableDeclaration)en.getKey()).getVariables().length == 1 
 					//								&& ((VariableDeclaration)en.getKey()).getVariables()[0].getIdentifiers().length == 1;
-					ResultExpression initRex = 
+					ExpressionResult initRex = 
 							main.cHandler.getInitHandler().initVar(currentDeclsLoc, main, 
 									new VariableLHS(currentDeclsLoc, id), en.getValue().getType(), initializer);
 					initStatements.addAll(initRex.stmt);
@@ -399,22 +404,22 @@ public class PostProcessor {
 	private ArrayList<Declaration> createUltimateStartProcedure(
 			Dispatcher main, ILocation loc, FunctionHandler functionHandler) {
 		LinkedHashMap<String, Procedure> procedures = functionHandler.getProcedures();
-		LinkedHashMap<String, LinkedHashSet<String>> modifiedGlobals = functionHandler.getModifiedGlobals();
-
-		functionHandler.beginUltimateInit(main, loc, SFO.START);
-		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		String checkedMethod = main.getCheckedMethod();
-
-		Procedure startDeclaration = null;
-		Specification[] specsStart = new Specification[0];
-
-		if (!functionHandler.getCallGraph().containsKey(SFO.START))
-			functionHandler.getCallGraph().put(SFO.START, new LinkedHashSet<String>());
-		functionHandler.getCallGraph().get(SFO.START).add(SFO.INIT);
+		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 
 		if (!checkedMethod.equals(SFO.EMPTY)
 				&& procedures.containsKey(checkedMethod)) {
 			mLogger.info("Settings: Checked method=" + checkedMethod);
+
+			LinkedHashMap<String, LinkedHashSet<String>> modifiedGlobals = functionHandler.getModifiedGlobals();
+			functionHandler.beginUltimateInit(main, loc, SFO.START);
+			
+			Procedure startDeclaration = null;
+			Specification[] specsStart = new Specification[0];
+
+			if (!functionHandler.getCallGraph().containsKey(SFO.START))
+				functionHandler.getCallGraph().put(SFO.START, new LinkedHashSet<String>());
+			functionHandler.getCallGraph().get(SFO.START).add(SFO.INIT);
 
 			functionHandler.getCallGraph().get(SFO.START).add(checkedMethod);
 
@@ -450,7 +455,7 @@ public class PostProcessor {
 				assert checkedMethodOutParams.length == 1;
 				// there is 1(!) return value
 				String checkMethodRet = main.nameHandler
-						.getTempVarUID(SFO.AUXVAR.RETURNED);
+						.getTempVarUID(SFO.AUXVAR.RETURNED, null);
 				main.cHandler.getSymbolTable().addToReverseMap(checkMethodRet,
 						SFO.NO_REAL_C_VAR + checkMethodRet, loc);
 				VarList tempVar = new VarList(loc,
@@ -493,6 +498,11 @@ public class PostProcessor {
 			//					+ checkMethod
 			//					+ "\n The program does not have this method. ULTIMATE will continue in library mode (i.e., each procedure can be starting procedure and global variables are not initialized).";
 			//			Dispatcher.warn(loc, msg);
+			
+			startDeclaration = new Procedure(loc, new Attribute[0], SFO.START,
+					new String[0], new VarList[0], new VarList[0], specsStart,
+					null);
+			functionHandler.endUltimateInit(main, startDeclaration, SFO.START);
 		} else {
 			mLogger.info("Settings: Library mode!");
 			if (procedures.containsKey("main")) {
@@ -500,15 +510,21 @@ public class PostProcessor {
 				mDispatcher.warn(loc, msg);
 			}
 		}
-		startDeclaration = new Procedure(loc, new Attribute[0], SFO.START,
-				new String[0], new VarList[0], new VarList[0], specsStart,
-				null);
-		functionHandler.endUltimateInit(main, startDeclaration, SFO.START);
 		return decl;
 	}
 	
-	private ArrayList<Declaration> declarePrimitiveDataTypeSynonyms(ILocation loc, 
-			TypeSizes typeSizes, TypeHandler typeHandler) {
+	/**
+	 * Generate type declarations like, e.g., the following.   
+	 *     type { :isUnsigned true } { :bitsize 16 } C_USHORT = bv16;
+	 * This allow us to use type synonyms like C_USHORT during the translation.
+	 * This is yet not consequently implemented.
+	 * This is desired not only for bitvectors: it makes our translation more
+	 * modular and can ease debugging.
+	 * However, that this located in this class and fixed to bitvectors is a
+	 * workaround.
+	 */
+	public static ArrayList<Declaration> declarePrimitiveDataTypeSynonyms(ILocation loc, 
+			TypeSizes typeSizes) {
 		ArrayList<Declaration> decls = new ArrayList<Declaration>();
 		for (CPrimitive.PRIMITIVE cPrimitive: CPrimitive.PRIMITIVE.values()) {
 			CPrimitive cPrimitiveO = new CPrimitive(cPrimitive);
@@ -528,8 +544,6 @@ public class PostProcessor {
 			}
 		}
 		return decls;
-		
-		
 	}
 			
 }

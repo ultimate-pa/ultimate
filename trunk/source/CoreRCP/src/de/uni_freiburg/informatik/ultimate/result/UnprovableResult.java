@@ -28,18 +28,17 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.result;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
-import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 /**
  * Result to store that we are not able to determine if a specification given at
@@ -57,7 +56,8 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
  * @author Markus Lindenmann
  * @author Stefan Wissert
  * @author Oleksii Saukh
- * @date 02.01.2012
+ * @author Matthias Heizmann
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  * @param <ELEM>
  *            Type of position
@@ -72,17 +72,24 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 	private final Check mCheckedSpecification;
 	private final IProgramExecution<TE, E> mProgramExecution;
 	private final List<ILocation> mFailurePath;
-	private final String mOverapproximationMessage;
+	private final List<UnprovabilityReason> mUnprovabilityReasons;
 
-	/**
-	 * Constructor.
-	 * 
-	 * @param location
-	 *            the Location
-	 */
 	public UnprovableResult(String plugin, ELEM position, IBacktranslationService translatorSequence,
-			IProgramExecution<TE, E> programExecution, Map<String, ILocation> overapproximations) {
+			IProgramExecution<TE, E> programExecution) {
+		this(plugin, position, translatorSequence, programExecution, new ArrayList<UnprovabilityReason>());
+	}
+
+	public UnprovableResult(String plugin, ELEM position, IBacktranslationService translatorSequence,
+			IProgramExecution<TE, E> programExecution, String unprovabilityReason) {
+		this(plugin, position, translatorSequence, programExecution,
+				Collections.singletonList(new UnprovabilityReason(unprovabilityReason)));
+	}
+
+	public UnprovableResult(String plugin, ELEM position, IBacktranslationService translatorSequence,
+			IProgramExecution<TE, E> programExecution, List<UnprovabilityReason> unprovabilityReasons) {
 		super(position, plugin, translatorSequence);
+		assert unprovabilityReasons != null;
+		assert programExecution != null;
 		Check check = ResultUtil.getCheckedSpecification(position);
 		if (check == null) {
 			mCheckedSpecification = new Check(Spec.UNKNOWN);
@@ -91,32 +98,7 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 		}
 		mProgramExecution = programExecution;
 		mFailurePath = ResultUtil.getLocationSequence(programExecution);
-		if (overapproximations == null || overapproximations.isEmpty()) {
-			mOverapproximationMessage = "";
-		} else {
-			mOverapproximationMessage = generateOverapproximationMessage(overapproximations);
-		}
-		
-	}
-	
-	private static String generateOverapproximationMessage(Map<String, ILocation> overapproximations) {
-		List<Pair<String, ILocation>> pairs = new ArrayList<>();
-		for (Entry<String, ILocation> entry : overapproximations.entrySet()) {
-			pairs.add(new Pair<String, ILocation>(entry.getKey(), entry.getValue()));
-		}
-		StringBuilder sb = new StringBuilder();
-		sb.append(" because the following operations were overapproximated: ");
-		for (int i=0; i<pairs.size(); i++) {
-			sb.append(pairs.get(i).getFirst());
-			sb.append(" in line ");
-			sb.append(pairs.get(i).getSecond().getStartLine());
-			if (i==pairs.size()-1) {
-				sb.append(". ");
-			} else {
-				sb.append(", ");
-			}
-		}
-		return sb.toString();
+		mUnprovabilityReasons = unprovabilityReasons;
 	}
 
 	public Check getCheckedSpecification() {
@@ -130,7 +112,7 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 
 	@Override
 	public String getLongDescription() {
-		return "Unable to prove that " + mCheckedSpecification.getPositiveMessage() + mOverapproximationMessage;
+		return "Unable to prove that " + mCheckedSpecification.getPositiveMessage() + getReasons();
 	}
 
 	/**
@@ -144,5 +126,23 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 
 	public IProgramExecution<TE, E> getProgramExecution() {
 		return mProgramExecution;
+	}
+
+	/**
+	 * @return a description of the reasons for unprovability.
+	 */
+	public String getReasons() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(" Reason:");
+		for (int i = 0; i < mUnprovabilityReasons.size(); i++) {
+			sb.append(" overapproximation of ");
+			sb.append(mUnprovabilityReasons.get(i));
+			if (i == mUnprovabilityReasons.size() - 1) {
+				sb.append(". ");
+			} else {
+				sb.append(", ");
+			}
+		}
+		return sb.toString();
 	}
 }

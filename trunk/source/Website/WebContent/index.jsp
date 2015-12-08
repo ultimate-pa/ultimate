@@ -383,9 +383,6 @@ Params:
 			</c:if>
 		</div>
 		<div class="right">
-			<c:if test="${ui eq 'home'}">
-				<div class="home" id="uni-logo"></div>
-			</c:if>
 			<c:if test="${ui eq 'tool'}">
 				<div class="tool" id="tool-logo"
 					style="background-image:url(<c:out value="${worker.get(tool).getLogoURL()}" />);"></div>

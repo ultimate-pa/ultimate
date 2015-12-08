@@ -5,7 +5,7 @@ print(minimizeSevpaSize);
 assert(minimizeSevpaSize == 859);
 int shrinkNwaSize = numberOfStates(shrinkNwa(removeDeadEnds(AbstractionBeforeMinimization_Iteration14)));
 print(shrinkNwaSize);
-assert(shrinkNwaSize == 375);
+assert(shrinkNwaSize == 383);
 
 
 NestedWordAutomaton AbstractionBeforeMinimization_Iteration14 = (

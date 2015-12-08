@@ -31,15 +31,17 @@ import org.eclipse.cdt.core.dom.ast.IASTInitializer;
 //import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
 
 public class CDeclaration {
 	CType  mType;
 	String mName;
-	ResultExpression mInitializer;
+	ExpressionResult mInitializer;
 	IASTInitializer mCAstInitializer;
 
 	boolean mIsOnHeap;
 	boolean mIsInitializerTranslated;
+	private CStorageClass m_storageClass;
 
 //	public CDeclaration(CType type, String name, ResultExpression initializer, boolean onHeap) {
 //		mType = type;
@@ -58,7 +60,8 @@ public class CDeclaration {
 	 * @param initializer
 	 * @param onHeap
 	 */
-	public CDeclaration(CType type, String name, IASTInitializer cAstInitializer, ResultExpression initializer, boolean onHeap) {
+	public CDeclaration(CType type, String name, IASTInitializer cAstInitializer, 
+			ExpressionResult initializer, boolean onHeap, CStorageClass storageClass) {
 		mType = type;
 		mName = name;
 		mCAstInitializer = cAstInitializer;
@@ -66,6 +69,7 @@ public class CDeclaration {
 		assert cAstInitializer == null || initializer == null;
 		mIsOnHeap = onHeap;//TODO actually make use of this flag
 		mIsInitializerTranslated = false;
+		m_storageClass = storageClass;
 	}
 	
 //	public CDeclaration(CType type, String name, ResultExpression initializer) {
@@ -76,12 +80,12 @@ public class CDeclaration {
 //		mIsInitializerTranslated = true;
 //    }
 
-	public CDeclaration(CType type, String name, IASTInitializer cAstInitializer) {
-		this(type, name, cAstInitializer, null, false);
+	public CDeclaration(CType type, String name, CStorageClass storageClass) {
+		this(type, name, null, null, false, storageClass);
 	}
 	
 	public CDeclaration(CType type, String name) {
-		this(type, name, (IASTInitializer) null);
+		this(type, name, (IASTInitializer) null, null, false, CStorageClass.UNSPECIFIED);
 	}
 
 	public CType getType() {
@@ -93,7 +97,7 @@ public class CDeclaration {
 	public String getName() {
 		return mName;
 	}
-	public ResultExpression getInitializer() {
+	public ExpressionResult getInitializer() {
 		if (!mIsInitializerTranslated)
 			throw new AssertionError("Initializer must have been translated (with method CDeclaration.translateInitializer()) before this is called.");
 		return mInitializer;
@@ -123,8 +127,20 @@ public class CDeclaration {
 		assert !mIsInitializerTranslated : "initializer has already been translated";
 		if (mCAstInitializer != null) {
 			assert mInitializer == null;
-			mInitializer = (ResultExpression) main.dispatch(mCAstInitializer);
+			mInitializer = (ExpressionResult) main.dispatch(mCAstInitializer);
 		}
 		mIsInitializerTranslated = true;
+	}
+	
+	public boolean isStatic() {
+    	return m_storageClass == CStorageClass.STATIC;
+    }
+
+    public boolean isExtern() {
+    	return m_storageClass == CStorageClass.EXTERN;
+    }
+
+	public void setStorageClass(CStorageClass storageClass) {
+		m_storageClass = storageClass;
 	}
 }

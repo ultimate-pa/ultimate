@@ -32,6 +32,7 @@ import java.math.BigInteger;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
@@ -46,8 +47,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
  * 
  */
 public class AffineTermTransformer extends TermTransformer {
+	private final Script m_Script;
 
-	public AffineTermTransformer() {
+	public AffineTermTransformer(Script script) {
+		m_Script = script;
 	}
 
 	@Override
@@ -73,6 +76,26 @@ public class AffineTermTransformer extends TermTransformer {
 				AffineTerm result = new AffineTerm(appTerm);
 				setResult(result);
 				return;
+			} else if (funName.equals("mod")) {
+				final AffineTerm result;
+				Term simplified = SmtUtils.termWithLocalSimplification(
+						m_Script, "mod", appTerm.getSort().getIndices(), appTerm.getParameters());
+				if (simplified instanceof ApplicationTerm) {
+					result = new AffineTerm((ApplicationTerm) simplified);
+				} else if (simplified instanceof ConstantTerm) {
+					result = new AffineTerm(simplified.getSort(), 
+							SmtUtils.convertConstantTermToRational((ConstantTerm) simplified));
+				} else {
+					throw new AssertionError(
+							"should be either ApplicationTerm or ConstantTerm " + simplified);
+				}
+				setResult(result);
+				return;
+			} else if (appTerm.getParameters().length == 0 && appTerm.getSort().isNumericSort()) {
+				// appTerm is a constant (0-ary function)
+				AffineTerm result = new AffineTerm(appTerm);
+				setResult(result);
+				return;
 			} else {
 				resultIsNotAffine();
 				return;
@@ -82,6 +105,10 @@ public class AffineTermTransformer extends TermTransformer {
 			if (constTerm.getSort().isNumericSort()) {
 				AffineTerm result = convertConstantNumericTerm(constTerm);
 				setResult(result);
+				return;
+			} else {
+				AffineTerm errorTerm = new AffineTerm(); 
+				setResult(errorTerm);
 				return;
 			}
 		}

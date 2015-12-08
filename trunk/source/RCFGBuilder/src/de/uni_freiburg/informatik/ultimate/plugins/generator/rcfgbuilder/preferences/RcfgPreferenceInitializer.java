@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.prefer
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 
 public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
@@ -39,10 +40,10 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 		return new UltimatePreferenceItem<?>[] {
 				new UltimatePreferenceItem<Boolean>(LABEL_ASSUME_FOR_ASSERT,
 						DEF_ASSUME_FOR_ASSERT, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Solver>(LABEL_Solver,
-						DEF_Solver, PreferenceType.Combo, Solver.values()),
+				new UltimatePreferenceItem<SolverMode>(LABEL_Solver,
+						DEF_Solver, PreferenceType.Combo, SolverMode.values()),
 				new UltimatePreferenceItem<String>(LABEL_ExtSolverCommand,
-						DEF_ExtSolverCommand_Z3, PreferenceType.String),
+						DEF_ExtSolverCommand, PreferenceType.String),
 				new UltimatePreferenceItem<String>(LABEL_ExtSolverLogic,
 						DEF_ExtSolverLogic, PreferenceType.String),
 				new UltimatePreferenceItem<Boolean>(LABEL_BitvectorWorkaround,
@@ -76,26 +77,28 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 		return "RCFG Builder";
 	}
 	
-	public enum Solver { Internal_SMTInterpol, External_PrincessInterpolationMode, External_SMTInterpolInterpolationMode, External_Z3InterpolationMode, External_DefaultMode };
+	// some solver commands
+	public static final String Z3_NO_EXTENSIONAL_ARRAYS = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000 auto_config=false smt.array.extensional=false";
+	public static final String Z3_NO_MBQI = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000 auto_config=false smt.mbqi=false";
+	public static final String Z3_DEFAULT = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000";
+	public static final String Z3_LOW_TIMEOUT = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:2000";
+	public static final String CVC4 = "cvc4 --tear-down-incremental --print-success --lang smt --tlimit-per=12000";
+	public static final String Princess = "princess +incremental +stdin -timeout=12000";
+	
+	
 	/*
 	 * new preferences that belong to the RCFG Builder 
 	 */
 	public static final String LABEL_ASSUME_FOR_ASSERT = "Add additional assume for each assert";
 	public static final boolean DEF_ASSUME_FOR_ASSERT = false;
 	public static final String LABEL_Solver = "SMT solver";
-	public static final Solver DEF_Solver = Solver.External_DefaultMode;
+	public static final SolverMode DEF_Solver = SolverMode.External_DefaultMode;
 //	public static final Solver DEF_Solver = Solver.Internal_SMTInterpol;
 	public static final String LABEL_ExtSolverCommand = "Command for external solver";
-//	public static final String DEF_ExtSolverCommand_Z3 = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000 auto_config=false smt.array.extensional=false";
-//	public static final String DEF_ExtSolverCommand_Z3 = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000 auto_config=false smt.mbqi=false";
-	public static final String DEF_ExtSolverCommand_Z3 = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000";
-//	public static final String DEF_ExtSolverCommand_CVC4 = "cvc4-2014-07-03-x86_64-linux-opt --incremental --print-success";
-	public static final String DEF_ExtSolverCommand_CVC4 = "cvc4-2015-03-15-x86_64-linux-opt-proofs --tear-down-incremental --print-success --lang smt --tlimit-per=12000";
-	public static final String DEF_ExtSolverCommand_Princess = "princess +incremental +stdin -timeout=12000";
+	public static final String DEF_ExtSolverCommand = Z3_DEFAULT;
+
 	public static final String LABEL_ExtSolverLogic = "Logic for external solver";
 	public static final String DEF_ExtSolverLogic = "AUFNIRA";
-
-	
 	
 	public static final String LABEL_CodeBlockSize = "Size of a code block";
 	public enum CodeBlockSize { SingleStatement, SequenceOfStatements, LoopFreeBlock };
@@ -109,5 +112,9 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_Path = "To the following directory";
 	public static final String DEF_Path = "";
 	public static final String LABEL_BitvectorWorkaround = "Translate Boogie integers to SMT bitvectors";
+	
+	
+
+	
 	
 }

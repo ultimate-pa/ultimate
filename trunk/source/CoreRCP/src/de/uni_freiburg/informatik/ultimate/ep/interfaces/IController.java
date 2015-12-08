@@ -31,8 +31,8 @@ import java.util.Collection;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
-import de.uni_freiburg.informatik.ultimate.core.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.core.services.LoggingService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILoggingService;
 
 /**
  * This is the interface that all plugins providing a user interface to Ultimate

@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.I
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -37,7 +38,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
@@ -77,7 +78,7 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 	 * First experiments on few examples showed that this is decreasing the
 	 * performance.
 	 */
-	private final boolean m_Cannibalize = false;
+	private final boolean m_Cannibalize;
 	private final boolean m_SplitNumericEqualities = true;
 	private final boolean m_DivisibilityPredicates = false;
 	private final boolean m_ConservativeSuccessorCandidateSelection;
@@ -90,10 +91,12 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, 
 			NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton, 
 			PredicateUnifier predicateUnifier, Logger logger, 
-			boolean conservativeSuccessorCandidateSelection) {
+			boolean conservativeSuccessorCandidateSelection,
+			boolean cannibalize) {
 		super(services, smtManager, hoareTripleChecker, true, abstraction, 
 				predicateUnifier, 
 				interpolantAutomaton, logger);
+		m_Cannibalize = cannibalize;
 		m_ConservativeSuccessorCandidateSelection = conservativeSuccessorCandidateSelection;
 		if (m_ConservativeSuccessorCandidateSelection && m_Cannibalize) {
 			throw new IllegalArgumentException("ConservativeSuccessorCandidateSelection and Cannibalize are incompatible");
@@ -233,8 +236,11 @@ public class DeterministicInterpolantAutomaton extends BasicAbstractInterpolantA
 	protected void addInputAutomatonSuccs(
 			IPredicate resPred, IPredicate resHier, CodeBlock letter,
 			SuccessorComputationHelper sch, Set<IPredicate> inputSuccs) {
-		final Set<IPredicate> resPredConjuncts = m_ResPred2InputPreds.getImage(resPred);
+		Set<IPredicate> resPredConjuncts = m_ResPred2InputPreds.getImage(resPred);
 		assert m_Cannibalize || resPredConjuncts != null;
+		if (resPredConjuncts == null) {
+			resPredConjuncts = Collections.emptySet();
+		}
 		final IterableWithAdditionalElement<IPredicate> resPredConjunctsWithTrue = 
 				new IterableWithAdditionalElement<IPredicate>(resPredConjuncts, m_IaTrueState);
 		final IterableWithAdditionalElement<IPredicate> resHierConjunctsWithTrue;

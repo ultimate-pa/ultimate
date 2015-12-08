@@ -1,6 +1,9 @@
 //#Safe
 // Author: heizmann@informatik.uni-freiburg.de
 // Date: 27.7.2012
+//
+// example tests several things at one,
+// should maybe splittet into several files
 
 void procWithArray();
 

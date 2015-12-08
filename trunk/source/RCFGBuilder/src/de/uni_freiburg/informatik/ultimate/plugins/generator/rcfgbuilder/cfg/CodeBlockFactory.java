@@ -31,8 +31,8 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
-import de.uni_freiburg.informatik.ultimate.core.services.IStorable;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IStorable;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
@@ -56,10 +56,8 @@ public class CodeBlockFactory implements IStorable {
 	private final ModifiableGlobalVariableManager m_MgvManager;
 	
 	public final static String s_CodeBlockFactoryKeyInToolchainStorage = "CodeBlockFactory";
-
 	
 	private int m_SerialNumberCounter = 0;	
-
 	
 	public CodeBlockFactory(IUltimateServiceProvider services,
 			Boogie2SMT boogie2smt, ModifiableGlobalVariableManager mgvManager) {
@@ -69,9 +67,6 @@ public class CodeBlockFactory implements IStorable {
 		m_Boogie2smt = boogie2smt;
 		m_MgvManager = mgvManager;
 	}
-
-
-	
 	
 	public Call constructCall(ProgramPoint source, ProgramPoint target, 
 			CallStatement call) {

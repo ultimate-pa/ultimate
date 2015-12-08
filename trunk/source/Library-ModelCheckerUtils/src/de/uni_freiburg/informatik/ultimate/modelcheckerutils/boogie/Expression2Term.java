@@ -33,12 +33,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
@@ -208,16 +209,24 @@ public class Expression2Term {
 			BinaryExpression.Operator op = binexp.getOperator();
 			// Sort sort = m_Smt2Boogie.getSort(binexp.getLeft().getType());
             if (op == BinaryExpression.Operator.COMPNEQ) {
+				String equalityFuncname = m_OperationTranslator.opTranslation(
+						BinaryExpression.Operator.COMPEQ, binexp.getLeft().getType(), binexp.getRight().getType());
+				String negationFuncname = m_OperationTranslator.opTranslation(
+						UnaryExpression.Operator.LOGICNEG, PrimitiveType.boolType);
+				BigInteger[] indices = new BigInteger[0];
             	return SmtUtils.termWithLocalSimplification(m_Script, 
-            			m_OperationTranslator.opTranslation(UnaryExpression.Operator.LOGICNEG, PrimitiveType.boolType), 
+            			negationFuncname, indices,
             			SmtUtils.termWithLocalSimplification(m_Script, 
-				    	 m_OperationTranslator.opTranslation(BinaryExpression.Operator.COMPEQ, binexp.getLeft().getType(), binexp.getRight().getType()), 
-					     translate(binexp.getLeft()), translate(binexp.getRight())));
-            } else
+            			equalityFuncname, indices, 
+					    translate(binexp.getLeft()), translate(binexp.getRight())));
+            } else {
+				String funcname = m_OperationTranslator.opTranslation(
+						op, binexp.getLeft().getType(), binexp.getRight().getType());
+				BigInteger[] indices = null;
 			    return SmtUtils.termWithLocalSimplification(m_Script, 
-				    	m_OperationTranslator.opTranslation(op, binexp.getLeft().getType(), binexp.getRight().getType()), 
+			    		funcname, indices,
 					    translate(binexp.getLeft()), translate(binexp.getRight()));
-
+            }
 		} else if (exp instanceof UnaryExpression) {
 			UnaryExpression unexp = (UnaryExpression) exp;
 			UnaryExpression.Operator op = unexp.getOperator();
@@ -226,10 +235,11 @@ public class Expression2Term {
 				Term term = translate(unexp.getExpr());
 				m_OldContextScopeDepth--;
 				return term;
-			} else
-				return SmtUtils.termWithLocalSimplification(m_Script, m_OperationTranslator.opTranslation(op, unexp.getExpr().getType()), translate(unexp.getExpr()));
-
-
+			} else {
+				String funcname = m_OperationTranslator.opTranslation(op, unexp.getExpr().getType());
+				BigInteger[] indices = null;
+				return SmtUtils.termWithLocalSimplification(m_Script, funcname, indices, translate(unexp.getExpr()));
+			}
 		} else if (exp instanceof RealLiteral) {
 			Term result = m_OperationTranslator.realTranslation((RealLiteral) exp);
 			assert result != null;
@@ -306,7 +316,7 @@ public class Expression2Term {
 			Term cond = translate(ite.getCondition());
 			Term thenPart = translate(ite.getThenPart());
 			Term elsePart = translate(ite.getElsePart());
-			Term result = m_Script.term("ite", cond, thenPart, elsePart);
+			Term result = Util.ite(m_Script, cond, thenPart, elsePart);
 			assert result != null;
 			return result;
 

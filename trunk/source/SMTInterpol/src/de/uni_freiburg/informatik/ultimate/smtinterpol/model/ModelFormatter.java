@@ -38,8 +38,6 @@ public class ModelFormatter {
 	private final Theory mTheory;
 	private final Model mModel;
 	
-	private final IRAConstantFormatter mFormatter;
-	
 	private void newline() {
 		mString.append(mLineSep);
 		for (int i = 0; i < mIndent; ++i)
@@ -52,7 +50,6 @@ public class ModelFormatter {
 		mIndent = 0;
 		mTheory = t;
 		mModel = model;
-		mFormatter = t.getLogic().isIRA() ? new IRAConstantFormatter() : null;
 	}
 	
 	public void appendComment(String comment) {
@@ -62,8 +59,7 @@ public class ModelFormatter {
 		mIndent -= Config.INDENTATION;
 	}
 	
-	public void appendSortInterpretation(
-			SortInterpretation si, Sort sort) {
+	public void appendSortInterpretation(SortInterpretation si, Sort sort) {
 		Term t = si.toSMTLIB(mTheory, sort);
 		if (t != null) {
 			mIndent += Config.INDENTATION;
@@ -107,8 +103,8 @@ public class ModelFormatter {
 			Sort resultSort) {
 		if (vars.length == 0) {
 			newline();
-			mString.append(format(
-					mModel.toModelTerm(value.getDefault(), resultSort))
+			mString.append(
+					mModel.toModelTerm(value.getDefault(), resultSort)
 					.toStringDirect());
 		} else {
 			int defaultVal = value.getDefault();
@@ -117,11 +113,9 @@ public class ModelFormatter {
 				if (me.getValue() != defaultVal) {
 					newline();
 					mString.append("(ite ").append(
-							format(index2Term(me.getKey(), vars))
-							.toStringDirect()).append(' ')
-							.append(format(
-									mModel.toModelTerm(
-											me.getValue(), resultSort))
+							index2Term(me.getKey(), vars).toStringDirect())
+							.append(' ').append(mModel.toModelTerm(
+									me.getValue(), resultSort)
 											.toStringDirect());
 					// We have to close one parenthesis;
 					++closing;
@@ -130,7 +124,7 @@ public class ModelFormatter {
 			// Default value
 			mIndent += Config.INDENTATION;
 			newline();
-			mString.append(format(mModel.toModelTerm(defaultVal, resultSort))
+			mString.append(mModel.toModelTerm(defaultVal, resultSort)
 					.toStringDirect());
 			for (int i = 0; i < closing; ++i)
 				mString.append(')');
@@ -138,10 +132,6 @@ public class ModelFormatter {
 		}
 	}
 	
-	private Term format(Term input) {
-		return mFormatter == null ? input : mFormatter.transform(input);
-	}
-
 	public String finish() {
 		return mString.append(')').toString();
 	}

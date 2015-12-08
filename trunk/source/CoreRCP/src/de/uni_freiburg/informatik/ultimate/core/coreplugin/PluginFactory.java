@@ -36,8 +36,8 @@ import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IExtensionRegistry;
 import org.eclipse.core.runtime.Platform;
 
-import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.ExtensionPoints;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
@@ -210,13 +210,18 @@ final class PluginFactory implements IServiceFactoryFactory {
 				continue;
 			}
 			for (IConfigurationElement elem : elements) {
-				IToolchainPlugin tool = (IToolchainPlugin) createInstance(elem);
-				tool = prepareToolchainPlugin(tool);
-				if (tool == null) {
-					notAdmissible++;
-					continue;
+				try {
+					IToolchainPlugin tool = (IToolchainPlugin) createInstance(elem);
+					tool = prepareToolchainPlugin(tool);
+					if (tool == null) {
+						notAdmissible++;
+						continue;
+					}
+					rtr.add(tool);
+				} catch (Exception ex) {
+					mLogger.fatal("Exception during admissibility check of plugin " + elem.getName() + ": "
+							+ ex.getMessage());
 				}
-				rtr.add(tool);
 			}
 		}
 		mLogger.info("Finished loading " + rtr.size() + " admissible plugins"
@@ -264,7 +269,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 		mGuiMode = new Boolean(controllerDescriptor.getAttribute("isGraphical")).booleanValue();
 		mSettingsManager.checkPreferencesForActivePlugins(controller.getPluginID(), controller.getPluginName());
 
-		mLogger.info("Loaded " + (mGuiMode ? "graphical" : "") + " controller " + controller.getPluginName());
+		mLogger.info("Loaded " + (mGuiMode ? "graphical " : "") + "controller " + controller.getPluginName());
 		return controller;
 	}
 

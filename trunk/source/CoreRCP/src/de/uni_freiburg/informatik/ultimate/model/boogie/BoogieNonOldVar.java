@@ -50,8 +50,8 @@ public class BoogieNonOldVar extends GlobalBoogieVar implements Serializable {
 	public BoogieNonOldVar(String identifier, IType iType,
 			TermVariable tv,
 			ApplicationTerm defaultConstant,
-			ApplicationTerm primedContant, BoogieOldVar oldVar) {
-		super(identifier, iType, tv, defaultConstant, primedContant);
+	        ApplicationTerm primedConstant, BoogieOldVar oldVar) {
+		super(identifier, iType, tv, defaultConstant, primedConstant);
 		m_OldVar = oldVar;
 		m_HashCode = computeHashCode();
 	}

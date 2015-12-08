@@ -36,7 +36,7 @@ import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.ToolchainData;
-import de.uni_freiburg.informatik.ultimate.core.services.PreludeProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.PreludeProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IToolchain;
 import de.uni_freiburg.informatik.ultimate.gui.GuiController;
@@ -46,9 +46,8 @@ import de.uni_freiburg.informatik.ultimate.gui.interfaces.IImageKeys;
 
 /**
  * 
- * @author dietsch
- * @version 0.0.1 $LastChangedDate: 2013-10-28 15:45:22 +0100 (Mo, 28 Okt 2013)
- *          $ $LastChangedBy$LastChangedRevision: 10093 $
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * 
  */
 
 public class ResetAndRedoToolChainAction extends RunToolchainAction implements IWorkbenchAction {
@@ -58,7 +57,7 @@ public class ResetAndRedoToolChainAction extends RunToolchainAction implements I
 
 	public ResetAndRedoToolChainAction(final IWorkbenchWindow window, final ICore icore,
 			final GuiController controller, Logger logger) {
-		super(logger, window, icore, controller,ID,LABEL,IImageKeys.REEXEC);
+		super(logger, window, icore, controller, ID, LABEL, IImageKeys.REEXEC);
 	}
 
 	/**
@@ -88,7 +87,7 @@ public class ResetAndRedoToolChainAction extends RunToolchainAction implements I
 			tcj.schedule();
 		}
 	}
-	
+
 	private BasicToolchainJob getToolchainJobFromPreferences() {
 		File[] lastInputFiles = getLastInputFiles();
 		if (lastInputFiles == null) {

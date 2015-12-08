@@ -1,0 +1,21 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: AbstractInterpretation
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2;singleton:=true
+Bundle-Version: 0.0.1
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.AIActivator
+Require-Bundle: UltimateCore,
+ Library-log4j,
+ Library-SMTLIB,
+ BoogiePreprocessor,
+ Library-UltimateUtil,
+ Library-ModelCheckerUtils,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
+ de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies,
+ de.uni_freiburg.informatik.ultimate.automata
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-ActivationPolicy: lazy
+Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2
+Bundle-NativeCode: native_lib/windows/ppl_java.dll; native_lib/windows/libgcc_s_seh-1.dll; native_lib/windows/libgmp-10.dll; native_lib/windows/libgmpxx-4.dll; native_lib/windows/libppl-13.dll; native_lib/windows/libstdc++-6.dll; native_lib/windows/libwinpthread-1.dll; osname=win32,
+ native_lib/linux/libppl.so; native_lib/linux/libgmp.so; native_lib/linux/libgmpxx.so; osname=linux
+Bundle-ClassPath: .,lib/ppl_java.jar

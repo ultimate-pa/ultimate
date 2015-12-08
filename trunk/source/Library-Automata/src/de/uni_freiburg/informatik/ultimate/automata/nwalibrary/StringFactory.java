@@ -26,17 +26,19 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiComplementFKVNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.LevelRankingState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.StateWithRankInfo;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Condition;
+import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 public class StringFactory extends StateFactory<String> {
 
@@ -135,23 +137,30 @@ public class StringFactory extends StateFactory<String> {
 	
 	@Override
 	public String buchiComplementFKV(LevelRankingState<?, String> compl) {
+		if (compl.isNonAcceptingSink()) {
+			return compl.toString();
+		}
 		
+		final boolean isNestedWordAutomaton = 
+				!compl.getOperand().getCallAlphabet().isEmpty();
 		StringBuilder sb = new StringBuilder();
 		sb.append("{");
 		for (StateWithRankInfo<String> down : compl.getDownStates()) {
 			for (StateWithRankInfo<String> up : compl.getUpStates(down)) {
 				sb.append("(");
-				sb.append(down.getState());
-				sb.append(",");
-				if (down.hasRank()) {
-					sb.append(down.getRank());
-					if (down.isInO()) {
-						sb.append("X");
+				if (isNestedWordAutomaton) {
+					sb.append(down.getState());
+					sb.append(",");
+					if (down.hasRank()) {
+						sb.append(down.getRank());
+						if (down.isInO()) {
+							sb.append("X");
+						}
+					} else {
+						sb.append("∞");
 					}
-				} else {
-					sb.append("∞");
+					sb.append(",");
 				}
-				sb.append(",");
 				sb.append(up.getState());
 				sb.append(",");
 				if (up.hasRank()) {
@@ -170,6 +179,82 @@ public class StringFactory extends StateFactory<String> {
 	}
 	
 	
+	
+	@Override
+	public String buchiComplementNCSB(LevelRankingState<?, String> compl) {
+		if (compl.isNonAcceptingSink()) {
+			return compl.toString();
+		}
+		
+		List<Pair<StateWithRankInfo<String>,String>> n = new ArrayList<Pair<StateWithRankInfo<String>,String>>();
+		List<Pair<StateWithRankInfo<String>,String>> c = new ArrayList<Pair<StateWithRankInfo<String>,String>>();
+		List<Pair<StateWithRankInfo<String>,String>> s = new ArrayList<Pair<StateWithRankInfo<String>,String>>();
+		List<Pair<StateWithRankInfo<String>,String>> b = new ArrayList<Pair<StateWithRankInfo<String>,String>>();
+		
+		for (StateWithRankInfo<String> down : compl.getDownStates()) {
+			for (StateWithRankInfo<String> up : compl.getUpStates(down)) {
+				if (up.hasRank()) {
+					if (up.getRank() == 3) {
+						n.add(new Pair<StateWithRankInfo<String>,String>(down, up.getState()));
+					} else if (up.getRank() == 2) {
+						c.add(new Pair<StateWithRankInfo<String>,String>(down, up.getState()));
+						if (up.isInO()) {
+							b.add(new Pair<StateWithRankInfo<String>,String>(down, up.getState()));
+						}
+					} else if (up.getRank() == 1) {
+						s.add(new Pair<StateWithRankInfo<String>,String>(down, up.getState()));
+					} else {
+						throw new IllegalArgumentException("only 1,2,3");
+					}
+				} else {
+					throw new IllegalArgumentException("must have rank");
+				}
+			}
+		}
+		final boolean isNestedWordAutomaton = 
+				!compl.getOperand().getCallAlphabet().isEmpty();
+		StringBuilder sb = new StringBuilder();
+		sb.append("(");
+		sb.append(prettyprintCollectionOfStates(n,isNestedWordAutomaton));
+		sb.append(",");
+		sb.append(prettyprintCollectionOfStates(c,isNestedWordAutomaton));
+		sb.append(",");
+		sb.append(prettyprintCollectionOfStates(s,isNestedWordAutomaton));
+		sb.append(",");
+		sb.append(prettyprintCollectionOfStates(b,isNestedWordAutomaton));
+		sb.append(")");
+		return sb.toString();
+	}
+	
+	
+
+	private String prettyprintCollectionOfStates(List<Pair<StateWithRankInfo<String>,String>> collection, boolean isNestedWordAutomaton) {
+		if (collection.isEmpty()) {
+			return "{}";
+		} else {
+			StringBuilder sb = new StringBuilder();
+			sb.append("{");
+			boolean isFirst = true;
+			for (Pair<StateWithRankInfo<String>,String> dd : collection) {
+				if (isFirst) {
+					isFirst = false;
+				} else {
+					sb.append(",");
+				}
+				if (isNestedWordAutomaton) {
+					sb.append("(");
+					sb.append(dd.getFirst());
+					sb.append(",");
+					sb.append(dd.getSecond());
+					sb.append(")");
+				} else {
+					sb.append(dd.getSecond());
+				}
+			}
+			sb.append("}");
+			return sb.toString();
+		}
+	}
 
 	/* (non-Javadoc)
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.ContentFactory#complementBuchiDeterministicNonFinal(java.lang.Object)

@@ -22,9 +22,9 @@ int main() {
   }
   
   /* assignment */
-  unsigned int a = 5;
-  a = minusOne;
-  if (!(a >= 200U )) {
+  unsigned int b = 5;
+  b = minusOne;
+  if (!(b >= 200U )) {
     //@ assert \false;
   }
   

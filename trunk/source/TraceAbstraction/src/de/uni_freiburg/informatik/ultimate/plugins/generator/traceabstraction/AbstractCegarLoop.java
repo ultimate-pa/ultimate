@@ -36,8 +36,8 @@ import java.util.Collection;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.AtsDefinitionPrinter.Labeling;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
@@ -46,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -169,7 +169,7 @@ public abstract class AbstractCegarLoop {
 	// used for debugging only
 	protected IAutomaton<CodeBlock, IPredicate> m_ArtifactAutomaton;
 	protected PrintWriter m_IterationPW;
-	protected final Labeling m_PrintAutomataLabeling;
+	protected final Format m_PrintAutomataLabeling;
 
 	protected CegarLoopBenchmarkGenerator m_CegarLoopBenchmark;
 
@@ -177,6 +177,12 @@ public abstract class AbstractCegarLoop {
 	//protected final IToolchainStorage m_ToolchainStorage = null; TODO: this is not what we want, is it?
 	protected final IToolchainStorage m_ToolchainStorage;
 
+	
+	private ToolchainCanceledException m_ToolchainCancelledException;
+	
+	public ToolchainCanceledException getToolchainCancelledException() {
+		return m_ToolchainCancelledException;
+	}
 	
 	public AbstractCegarLoop(IUltimateServiceProvider services, IToolchainStorage storage, String name, RootNode rootNode, SmtManager smtManager,
 			TAPreferences taPrefs, Collection<ProgramPoint> errorLocs, Logger logger) {
@@ -350,6 +356,7 @@ public abstract class AbstractCegarLoop {
 					return Result.UNKNOWN;
 				}
 			} catch (ToolchainCanceledException e) {
+				m_ToolchainCancelledException = e;
 				mLogger.warn("Verification cancelled");
 				m_CegarLoopBenchmark.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
@@ -362,6 +369,7 @@ public abstract class AbstractCegarLoop {
 				m_CegarLoopBenchmark.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
 			} catch (ToolchainCanceledException e) {
+				m_ToolchainCancelledException = e;
 				mLogger.warn("Verification cancelled");
 				m_CegarLoopBenchmark.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
@@ -388,6 +396,7 @@ public abstract class AbstractCegarLoop {
 				m_CegarLoopBenchmark.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
 			} catch (ToolchainCanceledException e) {
+				m_ToolchainCancelledException = e;
 				mLogger.warn("Verification cancelled");
 				m_CegarLoopBenchmark.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
@@ -432,7 +441,7 @@ public abstract class AbstractCegarLoop {
 	}
 
 	protected void writeAutomatonToFile(IAutomaton<CodeBlock, IPredicate> automaton, String filename) {
-		new AtsDefinitionPrinter<String, String>(m_Services, filename, m_Pref.dumpPath() + "/" + filename, m_PrintAutomataLabeling,
+		new AutomatonDefinitionPrinter<String, String>(m_Services, filename, m_Pref.dumpPath() + "/" + filename, m_PrintAutomataLabeling,
 				"", automaton);
 	}
 

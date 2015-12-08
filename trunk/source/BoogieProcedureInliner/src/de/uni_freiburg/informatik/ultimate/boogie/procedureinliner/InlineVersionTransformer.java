@@ -45,17 +45,19 @@ import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.Cal
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.CancelToolchainException;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.InliningUnsupportedException;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.PreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressMonitorService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
  * Transforms a Boogie Procedure into an equivalent version, where contained calls are inlined.
- * Inlining of CallStatements ca be enabled/disabled, using {@link CallGraphEdgeLabel#setInlineFlag(boolean)}.
+ * Inlining of CallStatements can be enabled/disabled, using {@link CallGraphEdgeLabel#setInlineFlag(boolean)}.
  * An instance of this class should be used only once.
  * 
  * @author schaetzc@informatik.uni-freiburg.de
@@ -149,7 +151,11 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 
 	private Logger mLogger;
 	
+	private IProgressMonitorService mProgressMonitorService;
+	
 	private GlobalScopeManager mGlobalScopeManager;
+	
+	private InlinerStatistic mInlinerStatistic;
 	
 	/**
 	 * The identifier from the entry procedure, which was inlined using this InlineVersionTransformer instance.
@@ -254,10 +260,14 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	 * Creates a new InlineVersionTransformer.
 	 * @param services Services
 	 * @param globalScopeManager GlobalScopeManager, has to be initialized already
+	 * @param inlinerStatistic Statistic, will be updated while inlining
 	 */
-	public InlineVersionTransformer(IUltimateServiceProvider services, GlobalScopeManager globalScopeManager) {
+	public InlineVersionTransformer(IUltimateServiceProvider services, GlobalScopeManager globalScopeManager,
+			InlinerStatistic inlinerStatistic) {
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mProgressMonitorService = services.getProgressMonitorService();
 		mGlobalScopeManager = globalScopeManager;
+		mInlinerStatistic = inlinerStatistic;
 		mVarMap = globalScopeManager.initVarMap();
 		globalScopeManager.initVarIdManager(mVarIdManager);
 	}
@@ -693,6 +703,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 	}
 	
 	private List<Statement> flattenStatement(Statement stat) throws CancelToolchainException {
+		checkTimeout();
 		Statement newStat = null;
 		if (stat instanceof CallStatement) {
 			CallStatement call = (CallStatement) stat;
@@ -717,6 +728,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 				if (call.getPayload().hasAnnotation()) {
 					mLogger.warn("Discarded annotation of " + call + ": " + call.getPayload().getAnnotations());
 				}
+				mInlinerStatistic.incrementCallsInlined();
 				return inlinedCall;
 			}
 		} else if (stat instanceof IfStatement) {
@@ -738,6 +750,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			ModelUtils.mergeAnnotations(stat, newStat);
 			addBacktranslation(newStat, stat);
 		}
+		mInlinerStatistic.incrementStatementsFlattened();
 		return Collections.singletonList(newStat);
 	}
 
@@ -1210,5 +1223,10 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		}
 	}
 
-
+	private void checkTimeout() {
+		if (!mProgressMonitorService.continueProcessing()) {
+			String msg = "Timeout while inlining. Statistic: " + mInlinerStatistic;
+			throw new ToolchainCanceledException(this.getClass(), msg);
+		}
+	}
 }

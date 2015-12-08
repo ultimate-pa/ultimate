@@ -28,8 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.HashMap;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractPostOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 
 /**
  * 
@@ -38,18 +37,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <ACTION>
  * @param <VARDECL>
  */
-public final class EmptyPostOperator<ACTION, VARDECL> implements IAbstractPostOperator<ACTION, VARDECL> {
-
-	private EmptyStateConverter<ACTION, VARDECL> mStateConverter;
-
-	protected EmptyPostOperator(EmptyStateConverter<ACTION, VARDECL> stateConverter) {
-		mStateConverter = stateConverter;
-	}
+public final class EmptyPostOperator<ACTION, VARDECL> implements IAbstractPostOperator<EmptyDomainState<ACTION, VARDECL>,ACTION, VARDECL> {
 
 	@Override
-	public IAbstractState<ACTION, VARDECL> apply(IAbstractState<ACTION, VARDECL> oldstate, ACTION concrete) {
-		final EmptyDomainState<ACTION, VARDECL> concreteOldState = mStateConverter.getCheckedState(oldstate);
-		return new EmptyDomainState<>(new HashMap<>(concreteOldState.getVariables()), false);
+	public EmptyDomainState<ACTION, VARDECL> apply(EmptyDomainState<ACTION, VARDECL> oldstate, ACTION concrete) {
+		return new EmptyDomainState<>(new HashMap<>(oldstate.getVariables()), false);
 	}
 
 }

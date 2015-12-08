@@ -1,6 +1,9 @@
 //#Unsafe
 // Author: lindenmm@informatik.uni-freiburg.de
 // Date: 16.08.2012
+
+#include <stdlib.h>
+
 typedef struct
 {
 	int nr, nr0;

@@ -27,9 +27,9 @@
 package de.uni_freiburg.informatik.ultimatetest.decider;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.IOverallResultEvaluator;
-import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.LTLCheckerOverallResultEvaluator;
-import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.SafetyCheckerOverallResult;
+import de.uni_freiburg.informatik.ultimatetest.decider.overallresult.IOverallResultEvaluator;
+import de.uni_freiburg.informatik.ultimatetest.decider.overallresult.LTLCheckerOverallResultEvaluator;
+import de.uni_freiburg.informatik.ultimatetest.decider.overallresult.SafetyCheckerOverallResult;
 
 public class LTLCheckerTestResultDecider extends SafetyCheckTestResultDecider{
 

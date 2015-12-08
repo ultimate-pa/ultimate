@@ -27,11 +27,11 @@
 package de.uni_freiburg.informatik.ultimatetest.decider;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.decider.expectedResult.IExpectedResultFinder;
-import de.uni_freiburg.informatik.ultimatetest.decider.expectedResult.KeywordBasedExpectedResultFinder;
-import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.IOverallResultEvaluator;
-import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.TerminationAnalysisOverallResult;
-import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.TerminationAnalysisOverallResultEvaluator;
+import de.uni_freiburg.informatik.ultimatetest.decider.expectedresult.IExpectedResultFinder;
+import de.uni_freiburg.informatik.ultimatetest.decider.expectedresult.KeywordBasedExpectedResultFinder;
+import de.uni_freiburg.informatik.ultimatetest.decider.overallresult.IOverallResultEvaluator;
+import de.uni_freiburg.informatik.ultimatetest.decider.overallresult.TerminationAnalysisOverallResult;
+import de.uni_freiburg.informatik.ultimatetest.decider.overallresult.TerminationAnalysisOverallResultEvaluator;
 import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**

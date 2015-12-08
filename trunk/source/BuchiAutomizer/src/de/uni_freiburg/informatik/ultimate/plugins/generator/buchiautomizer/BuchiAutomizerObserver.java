@@ -41,9 +41,9 @@ import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.IBacktranslationService;
-import de.uni_freiburg.informatik.ultimate.core.services.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lassoranker.BacktranslationUtil;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.RankVar;
@@ -107,7 +107,8 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		TAPreferences taPrefs = new TAPreferences();
 		mGraphRoot = root;
 
-		mSmtManager = new SmtManager(mRootAnnot.getBoogie2SMT(), mRootAnnot.getModGlobVarManager(), mServices);
+		mSmtManager = new SmtManager(mRootAnnot.getScript(), mRootAnnot.getBoogie2SMT(), 
+				mRootAnnot.getModGlobVarManager(), mServices, false);
 
 		mPref = taPrefs;
 
@@ -207,9 +208,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		} else if (result == Result.TIMEOUT) {
 			ProgramPoint position = mRootAnnot.getEntryNodes().values().iterator().next();
 			String longDescr = "Timeout while trying to prove " + whatToProve 
-					+ ". (Timeout occurred in class " + bcl.getToolchainCancelledException().getClassOfThrower().getSimpleName() +
-					(bcl.getToolchainCancelledException().getRunningTaskInfo() != null ? " during the following task: " 
-					+ bcl.getToolchainCancelledException().getRunningTaskInfo() : "") + ")";
+					+ ". " + bcl.getToolchainCancelledException().prettyPrint();
 			IResult reportRes = new TimeoutResultAtElement<RcfgElement>(position, Activator.s_PLUGIN_ID,
 					mServices.getBacktranslationService(), longDescr);
 			reportResult(reportRes);

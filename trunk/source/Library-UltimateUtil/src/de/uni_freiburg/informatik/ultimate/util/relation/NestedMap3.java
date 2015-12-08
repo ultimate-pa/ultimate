@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.util.relation;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * TODO: comment
@@ -59,5 +60,26 @@ public class NestedMap3<K1, K2, K3, V> {
 		} else {
 			return k2tok3toV.get(key2, key3);
 		}
+	}
+	
+	public Map<K3, V> get(K1 key1, K2 key2) {
+		NestedMap2<K2, K3, V> k2toV = m_K1ToK2ToK3V.get(key1);
+		if (k2toV == null) {
+			return null;
+		} else {
+			return k2toV.get(key2);
+		}
+	}
+	
+	public NestedMap2<K2, K3, V> get(K1 key1) {
+		return m_K1ToK2ToK3V.get(key1);
+	}
+	
+	public Set<K1> keySet() {
+		return m_K1ToK2ToK3V.keySet();
+	}
+	
+	public void clear() {
+		m_K1ToK2ToK3V.clear();
 	}
 }

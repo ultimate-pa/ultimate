@@ -29,69 +29,61 @@ package de.uni_freiburg.informatik.ultimate.core.services;
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 
-public class ProgressMonitorService implements IStorable, IToolchainCancel, IProgressMonitorService {
+import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressMonitorService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IStorable;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainCancel;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
+
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
+public class ProgressMonitorService implements IStorable, IToolchainCancel, IProgressMonitorService, IDeadlineProvider {
 
 	private static final String sKey = "CancelNotificationService";
 
 	private IProgressMonitor mMonitor;
-	private long mDeadline;
+	private IDeadlineProvider mTimer;
 	private Logger mLogger;
 	private IToolchainCancel mToolchainCancel;
 	private boolean mCancelRequest;
 
-	public ProgressMonitorService(IProgressMonitor monitor, long deadline, Logger logger, IToolchainCancel cancel) {
+	public ProgressMonitorService(final IProgressMonitor monitor, final Logger logger, final IToolchainCancel cancel) {
 		assert monitor != null;
 		mMonitor = monitor;
-		mDeadline = deadline;
 		mLogger = logger;
 		mToolchainCancel = cancel;
 		mCancelRequest = false;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.core.services.IProgressMonitorService
-	 * #continueProcessing()
-	 */
 	@Override
 	public boolean continueProcessing() {
-		boolean cancel = mMonitor.isCanceled() || mCancelRequest || System.currentTimeMillis() > mDeadline;
+		boolean cancel = mMonitor.isCanceled() || mCancelRequest || (mTimer != null && !mTimer.continueProcessing());
 		if (cancel) {
 			mLogger.debug("Do not continue processing!");
 		}
 		return !cancel;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.core.services.IProgressMonitorService
-	 * #setSubtask(java.lang.String)
-	 */
 	@Override
 	public void setSubtask(String task) {
 		mMonitor.subTask(task);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.core.services.IProgressMonitorService
-	 * #setDeadline(long)
-	 */
 	@Override
-	public void setDeadline(long date) {
-		if (System.currentTimeMillis() >= date) {
-			mLogger.warn(String
-					.format("Deadline was set to a date in the past, " + "effectively stopping the toolchain. "
-							+ "Is this what you intended? Value of date was %,d", date));
+	public void setDeadline(long deadline) {
+		if (System.currentTimeMillis() >= deadline) {
+			mLogger.warn(
+					String.format("Deadline was set to a date in the past, " + "effectively stopping the toolchain. "
+							+ "Is this what you intended? Value of date was %,d", deadline));
 
 		}
-		mDeadline = date;
+		if (mTimer != null) {
+			mLogger.warn("Replacing old deadline");
+		}
+		mTimer = ProgressAwareTimer.createWithDeadline(null, deadline);
 	}
 
 	static ProgressMonitorService getService(IToolchainStorage storage) {
@@ -117,4 +109,21 @@ public class ProgressMonitorService implements IStorable, IToolchainCancel, IPro
 		mCancelRequest = true;
 	}
 
+	@Override
+	public IProgressAwareTimer getChildTimer(long timeout) {
+		return ProgressAwareTimer.createWithTimeout(this, timeout);
+	}
+
+	@Override
+	public IProgressAwareTimer getChildTimer(double percentage) {
+		return ProgressAwareTimer.createWithPercentage(this, percentage);
+	}
+
+	@Override
+	public long getDeadline() {
+		if(mTimer == null){
+			mTimer = ProgressAwareTimer.createWithDeadline(null, Long.MAX_VALUE); 
+		}
+		return mTimer.getDeadline();
+	}
 }

@@ -30,9 +30,9 @@ import java.util.Collections;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimatetest.decider.expectedResult.IExpectedResultFinder;
-import de.uni_freiburg.informatik.ultimatetest.decider.expectedResult.KeywordBasedExpectedResultFinder;
-import de.uni_freiburg.informatik.ultimatetest.decider.overallResult.SafetyCheckerOverallResult;
+import de.uni_freiburg.informatik.ultimatetest.decider.expectedresult.IExpectedResultFinder;
+import de.uni_freiburg.informatik.ultimatetest.decider.expectedresult.KeywordBasedExpectedResultFinder;
+import de.uni_freiburg.informatik.ultimatetest.decider.overallresult.SafetyCheckerOverallResult;
 
 /**
  * Use keywords in filename and first line to decide correctness of overflow

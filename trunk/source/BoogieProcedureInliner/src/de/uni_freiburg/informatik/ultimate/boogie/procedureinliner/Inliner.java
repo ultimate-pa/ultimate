@@ -47,8 +47,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.callgraph.Nod
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.exceptions.CancelToolchainException;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.PreferenceItem;
 import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.preferences.PreferencesInlineSelector;
-import de.uni_freiburg.informatik.ultimate.core.services.IProgressMonitorService;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressMonitorService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.*;
@@ -126,10 +126,11 @@ public class Inliner implements IUnmanagedObserver {
 	private void inline() throws CancelToolchainException {
 		buildCallGraph();
 
-		GlobalScopeManager globalScopeManager = new GlobalScopeManager(mNonProcedureDeclarations);
+		GlobalScopeManager globalMgr = new GlobalScopeManager(mNonProcedureDeclarations);
+		InlinerStatistic inlinerStat = new InlinerStatistic(mCallGraph);
 		for (CallGraphNode proc : proceduresToBeProcessed()) {
 			if (proc.hasInlineFlags()) { // implies that the procedure is implemented
-				InlineVersionTransformer transformer = new InlineVersionTransformer(mServices, globalScopeManager);
+				InlineVersionTransformer transformer = new InlineVersionTransformer(mServices, globalMgr, inlinerStat);
 				mNewProceduresWithBody.put(proc.getId(), transformer.inlineCallsInside(proc));
 				mBacktranslator.addBacktranslation(transformer);
 			}

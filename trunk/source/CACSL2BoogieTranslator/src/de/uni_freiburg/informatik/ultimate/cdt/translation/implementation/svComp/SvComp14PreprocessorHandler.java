@@ -32,7 +32,7 @@ import org.eclipse.cdt.core.dom.ast.IASTPreprocessorPragmaStatement;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PreprocessorHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ResultSkip;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 
 public class SvComp14PreprocessorHandler extends PreprocessorHandler {
@@ -40,14 +40,14 @@ public class SvComp14PreprocessorHandler extends PreprocessorHandler {
 	@Override
 	public Result visit(Dispatcher main, IASTPreprocessorIncludeStatement node) {
 		// Ignore #include in our sv-comp mode
-		return new ResultSkip();
+		return new SkipResult();
 	}
 
 	@Override
 	public Result visit(Dispatcher main, IASTPreprocessorPragmaStatement node) {
 		// TODO Auto-generated method stub
 		//return super.visit(main, node);
-		return new ResultSkip();
+		return new SkipResult();
 	}
 	
 

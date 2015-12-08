@@ -136,7 +136,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLResultExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLType;
@@ -228,37 +228,25 @@ public class MainDispatcher extends Dispatcher {
 	 */
 	private DecoratorNode nextACSLBuffer;
 	/**
-	 * Whether the memory model is required.
+	 * Whether in the C program there is a variable that is declared as a pointer, and that
+	 * is dereferenced at some point.
 	 */
-	private boolean isMMRequired;
+	private boolean thereAreDereferencedPointerVariables;
 
 	LinkedHashSet<IASTDeclaration> reachableDeclarations;
 	/**
 	 * Variables that need some special memory handling.
 	 */
 	private LinkedHashSet<IASTNode> variablesOnHeap;
-	/**
-	 * Functions used as pointer.
-	 */
-	private LinkedHashMap<String, IASTFunctionDefinition> functionsOnHeap;
-
-	/**
-	 * @return a map of functions used as pointers.
-	 * @author Christian
-	 */
-	public LinkedHashMap<String, IASTFunctionDefinition> getFunctionPointers() {
-		return functionsOnHeap;
-	}
 
 	// begin alex
 	private LinkedHashSet<VariableDeclaration> _boogieDeclarationsOfVariablesOnHeap;
-//	private LinkedHashMap<String, Integer> functionToIndex;
 	private LinkedHashMap<Integer, String> indexToFunction;
 	protected boolean m_BitvectorTranslation;
 
-//	public HashMap<String, Integer> getFunctionToIndex() {
-//		return mFunctionToIndex;
-//	}
+	public LinkedHashMap<String, Integer> getFunctionToIndex() {
+		return mFunctionToIndex;
+	}
 
 	public LinkedHashMap<Integer, String> getIndexToFunction() {
 		return indexToFunction;
@@ -283,12 +271,22 @@ public class MainDispatcher extends Dispatcher {
 		m_BitvectorTranslation = mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
 	}
 
+	/**
+	 * Answers the question if we need the basic infrastructure for our memory model.
+	 * That basic infrastructure is: the arrays "valid" and "length" and definitions of 
+	 * our malloc and deallocate functions, the type "$Pointer" and the NULL pointer.
+	 * The basic infrastructure does not include the memory arrays themselves (like
+	 * memory_int,...), those are triggered differently.
+	 */
 	@Override
 	public boolean isMMRequired() {
-		return isMMRequired;
+		return !this.variablesOnHeap.isEmpty() 
+				|| !this.mFunctionToIndex.isEmpty() 
+				|| this.thereAreDereferencedPointerVariables;
 	}
 
-	LinkedHashSet<IASTDeclaration> getReachableDeclarationsOrDeclarators() {
+	@Override
+	public LinkedHashSet<IASTDeclaration> getReachableDeclarationsOrDeclarators() {
 		return reachableDeclarations;
 	}
 
@@ -316,9 +314,9 @@ public class MainDispatcher extends Dispatcher {
 		tu.accept(ftb);
 		PreRunner pr = new PreRunner(ftb.getFunctionTable());
 		tu.accept(pr);
-//		variablesOnHeap = pr.getVarsForHeap();
+
 		variablesOnHeap.addAll(pr.getVarsForHeap());
-		// functionsOnHeap = pr.getFunctionPointers();
+
 		mFunctionToIndex = pr.getFunctionToIndex();
 
 		boolean useDetNecessaryDeclarations = true;
@@ -335,22 +333,14 @@ public class MainDispatcher extends Dispatcher {
 		PRDispatcher prd = new PRDispatcher(backtranslator, mServices, mLogger, mFunctionToIndex, reachableDeclarations);
 		prd.init();
 		prd.dispatch(node);
-		variablesOnHeap.addAll(((PRCHandler) prd.cHandler).getVarsForHeap());
+		variablesOnHeap.addAll(prd.getVariablesOnHeap());
 	
 		indexToFunction = new LinkedHashMap<>();
 		for (Entry<String, Integer> en : mFunctionToIndex.entrySet()) {
 			indexToFunction.put(en.getValue(), en.getKey());
 		}
 
-		// if (functionsOnHeap.size() > 0) { //(alex:) I commented this out
-		// because function pointers are not subject to our memory model
-		if (mFunctionToIndex.size() > 0) { // (alex:) functions are assiociated
-											// to quasi-pointers with base
-											// address -1
-			isMMRequired = true;
-		} else {
-			isMMRequired = pr.isMMRequired();
-		}
+		thereAreDereferencedPointerVariables = pr.isMMRequired();
 
 
 	}
@@ -363,6 +353,7 @@ public class MainDispatcher extends Dispatcher {
 		acslHandler = new ACSLHandler();
 		nameHandler = new NameHandler(backtranslator);
 		cHandler = new CHandler(this, backtranslator, true, mLogger, typeHandler, m_BitvectorTranslation);
+		this.backtranslator.setExpressionTranslation(((CHandler) cHandler).getExpressionTranslation());
 		preprocessorHandler = new PreprocessorHandler();
 		REPORT_WARNINGS = true;
 	}

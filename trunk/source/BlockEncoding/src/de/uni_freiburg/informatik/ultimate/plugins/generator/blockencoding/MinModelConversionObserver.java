@@ -30,12 +30,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.blockencoding.converter.MinModelConverter;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
@@ -51,12 +49,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 public class MinModelConversionObserver implements IUnmanagedObserver {
 
 	private IElement mRoot;
-	private final Logger mLogger;
 	private final IUltimateServiceProvider mServices;
 
 	public MinModelConversionObserver(IUltimateServiceProvider services) {
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 	}
 
 	@Override
@@ -79,10 +75,8 @@ public class MinModelConversionObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(IElement root) {
-		long time = System.currentTimeMillis();
 		RootNode rootNode = (RootNode) root;
 		mRoot = new MinModelConverter(mServices).startConversion(rootNode);
-		mLogger.info("Time (in ms) spend in MinModelConversion: " + (System.currentTimeMillis() - time));
 		return false;
 	}
 

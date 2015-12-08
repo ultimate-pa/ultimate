@@ -35,9 +35,11 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces;
 
 import java.text.ParseException;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorStatement;
 import org.eclipse.cdt.core.dom.ast.IType;
@@ -55,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.IP
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ISideEffectHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
@@ -353,6 +355,8 @@ public abstract class Dispatcher {
 		
 		
 	}
+
+	public abstract LinkedHashSet<IASTDeclaration> getReachableDeclarationsOrDeclarators();
 	
 	
 }

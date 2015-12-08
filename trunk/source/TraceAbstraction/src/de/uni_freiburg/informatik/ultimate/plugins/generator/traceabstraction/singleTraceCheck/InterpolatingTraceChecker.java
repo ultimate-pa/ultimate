@@ -32,7 +32,7 @@ import java.util.Set;
 import java.util.SortedMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
-import de.uni_freiburg.informatik.ultimate.core.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
@@ -88,22 +88,13 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals, AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			IUltimateServiceProvider services, boolean computeRcfgProgramExecution, 
-			PredicateUnifier predicateUnifier) {
+			PredicateUnifier predicateUnifier, SmtManager tcSmtManager) {
 		super(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals,
 				new DefaultTransFormulas(trace, precondition, postcondition, pendingContexts, modifiedGlobals, false),
-				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, false);
+				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, false, tcSmtManager);
 		m_PredicateUnifier = predicateUnifier;
 	}
 
-
-	/**
-	 * 
-	 * @param interpolation
-	 * @return
-	 */
-	protected int getTotalNumberOfPredicates(INTERPOLATION interpolation) {
-		return m_Interpolants != null ? m_Interpolants.length : 0;
-	}
 
 	/**
 	 * Return a sequence of nested interpolants φ_1,...,φ_{n-1} that is
@@ -148,11 +139,11 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 			Set<BoogieVar> frel = rv.getForwardRelevantVariables()[i + 1];
 			Set<BoogieVar> brel = rv.getBackwardRelevantVariables()[i + 1];
 			if (!frel.containsAll(vars)) {
-				mLogger.warn("forward relevant variables wrong");
+				m_Logger.warn("forward relevant variables wrong");
 				result = false;
 			}
 			if (!brel.containsAll(vars)) {
-				mLogger.warn("backward relevant variables wrong");
+				m_Logger.warn("backward relevant variables wrong");
 				result = false;
 			}
 		}

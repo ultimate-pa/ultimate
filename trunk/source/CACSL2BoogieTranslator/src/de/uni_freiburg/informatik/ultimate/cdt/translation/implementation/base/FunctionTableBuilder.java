@@ -54,7 +54,10 @@ public class FunctionTableBuilder extends ASTVisitor {
             for (IASTDeclarator d : cd.getDeclarators()) {
                 String key = d.getName().toString();
                 if (d instanceof IASTFunctionDeclarator) {
-                	fT.put(key, d);
+                	// we only update the table with a declaration, if there is no entry for that name yet.
+                	// otherwise we might only keep the declaration and omit the implementation from reachableDeclarations.
+                	if (!fT.containsKey(key))
+                		fT.put(key, d);
                 }
 
             }
@@ -66,7 +69,6 @@ public class FunctionTableBuilder extends ASTVisitor {
 			}
 			String nameOfInnermostDeclarator = possiblyNestedDeclarator.getName().toString();
 			fT.put(nameOfInnermostDeclarator, declaration);
-//            fT.put(((IASTFunctionDefinition) declaration).getDeclarator().getName().toString(), declaration);
         }
         return super.visit(declaration);
     } 
