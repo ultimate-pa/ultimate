@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.StateWit
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.Condition;
+import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 public class StringFactory extends StateFactory<String> {
 
@@ -185,23 +186,23 @@ public class StringFactory extends StateFactory<String> {
 			return compl.toString();
 		}
 		
-		List<DoubleDecker<String>> n = new ArrayList<DoubleDecker<String>>();
-		List<DoubleDecker<String>> c = new ArrayList<DoubleDecker<String>>();
-		List<DoubleDecker<String>> s = new ArrayList<DoubleDecker<String>>();
-		List<DoubleDecker<String>> b = new ArrayList<DoubleDecker<String>>();
+		List<Pair<StateWithRankInfo<String>,String>> n = new ArrayList<Pair<StateWithRankInfo<String>,String>>();
+		List<Pair<StateWithRankInfo<String>,String>> c = new ArrayList<Pair<StateWithRankInfo<String>,String>>();
+		List<Pair<StateWithRankInfo<String>,String>> s = new ArrayList<Pair<StateWithRankInfo<String>,String>>();
+		List<Pair<StateWithRankInfo<String>,String>> b = new ArrayList<Pair<StateWithRankInfo<String>,String>>();
 		
 		for (StateWithRankInfo<String> down : compl.getDownStates()) {
 			for (StateWithRankInfo<String> up : compl.getUpStates(down)) {
 				if (up.hasRank()) {
 					if (up.getRank() == 3) {
-						n.add(new DoubleDecker<String>(down.getState(), up.getState()));
+						n.add(new Pair<StateWithRankInfo<String>,String>(down, up.getState()));
 					} else if (up.getRank() == 2) {
-						c.add(new DoubleDecker<String>(down.getState(), up.getState()));
+						c.add(new Pair<StateWithRankInfo<String>,String>(down, up.getState()));
 						if (up.isInO()) {
-							b.add(new DoubleDecker<String>(down.getState(), up.getState()));
+							b.add(new Pair<StateWithRankInfo<String>,String>(down, up.getState()));
 						}
 					} else if (up.getRank() == 1) {
-						s.add(new DoubleDecker<String>(down.getState(), up.getState()));
+						s.add(new Pair<StateWithRankInfo<String>,String>(down, up.getState()));
 					} else {
 						throw new IllegalArgumentException("only 1,2,3");
 					}
@@ -227,14 +228,14 @@ public class StringFactory extends StateFactory<String> {
 	
 	
 
-	private String prettyprintCollectionOfStates(List<DoubleDecker<String>> collection, boolean isNestedWordAutomaton) {
+	private String prettyprintCollectionOfStates(List<Pair<StateWithRankInfo<String>,String>> collection, boolean isNestedWordAutomaton) {
 		if (collection.isEmpty()) {
 			return "{}";
 		} else {
 			StringBuilder sb = new StringBuilder();
 			sb.append("{");
 			boolean isFirst = true;
-			for (DoubleDecker<String> dd : collection) {
+			for (Pair<StateWithRankInfo<String>,String> dd : collection) {
 				if (isFirst) {
 					isFirst = false;
 				} else {
@@ -242,12 +243,12 @@ public class StringFactory extends StateFactory<String> {
 				}
 				if (isNestedWordAutomaton) {
 					sb.append("(");
-					sb.append(dd.getDown());
+					sb.append(dd.getFirst());
 					sb.append(",");
-					sb.append(dd.getUp());
+					sb.append(dd.getSecond());
 					sb.append(")");
 				} else {
-					sb.append(dd.getUp());
+					sb.append(dd.getSecond());
 				}
 			}
 			sb.append("}");
