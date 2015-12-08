@@ -16,7 +16,7 @@ NestedWordAutomaton determinized = determinize(worstCaseDeterminizationk2);
 // We assume that sink state was added. 
 assert(numberOfStates(determinized) == 401680);
 // Operation says: "Before removal of dead ends 401680 states." so there are no dead ends.
-assert(accepts(determinized, ["0" "1" c< "0" "1" m "0" "0" e "0" "0" >r "0" "1"]));
+assert(accepts(determinized, [s c<  "0" "1" m "0" "0" e  "0" "0" m "0" "1" e  "1" "1" m "0" "1" e   "0" "0" >r "0" "1"]));
  
 
 
