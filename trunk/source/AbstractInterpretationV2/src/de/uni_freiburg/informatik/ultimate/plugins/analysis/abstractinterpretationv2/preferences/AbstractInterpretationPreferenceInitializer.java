@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalSimpleWideningOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomain;
 
 /**
  * 
@@ -49,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class AbstractInterpretationPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public static final String[] VALUES_ABSTRACT_DOMAIN = new String[] { EmptyDomain.class.getSimpleName(),
-			SignDomain.class.getSimpleName(), IntervalDomain.class.getSimpleName() };
+			SignDomain.class.getSimpleName(), IntervalDomain.class.getSimpleName(), OctagonDomain.class.getSimpleName(), };
 
 	public static final String[] VALUES_WIDENING_OPERATOR = new String[] {
 			IntervalSimpleWideningOperator.class.getSimpleName() };
