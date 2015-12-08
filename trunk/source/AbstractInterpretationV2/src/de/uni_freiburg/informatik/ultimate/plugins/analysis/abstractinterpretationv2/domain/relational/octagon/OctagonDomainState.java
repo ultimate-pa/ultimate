@@ -26,8 +26,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
-public class OctagonDomainState
-		implements IAbstractState<OctagonDomainState, CodeBlock, IBoogieVar> {
+public class OctagonDomainState implements IAbstractState<OctagonDomainState, CodeBlock, IBoogieVar> {
 	
 	private static int sId;
 	
@@ -95,9 +94,8 @@ public class OctagonDomainState
 			} else if (type instanceof BooleanValue) {
 				unrefBooleanAbstraction(newState);
 				newState.mBooleanAbstraction.put(name, new BooleanValue());
-			} else {
-				throw new UnsupportedOperationException("Variables of type " + type + " are not supported.");
 			}
+			// else: variable has unsupported type and is assumed to be \top at all times
 		}
 		newState.mNumericAbstraction =
 				mNumericAbstraction.addVariables(mMapNumericVarToIndex.size() - mNumericAbstraction.variables());
@@ -135,10 +133,11 @@ public class OctagonDomainState
 					unrefNumericNonIntVars(newState);
 					newState.mNumericNonIntVars.remove(name);
 				}
-			} else {
+			} else if (mBooleanAbstraction.containsKey(name)) {
 				unrefBooleanAbstraction(newState);
 				newState.mBooleanAbstraction.remove(name);
 			}
+			// else: variable had an unsupported type => its abstract value (\top) wasn't stored explicitly
 		}
 		newState.mNumericAbstraction = mNumericAbstraction.removeVariables(indexRemovedNumericVars);
 		return newState;
@@ -319,7 +318,7 @@ public class OctagonDomainState
 		log.append("numeric vars: ");
 		log.append(mMapNumericVarToIndex);
 		log.append("\n");
-		log.append("numeric non-int vars:");
+		log.append("numeric non-int vars: ");
 		log.append(mNumericNonIntVars);
 		log.append("\n");
 		for (Map.Entry<String, BooleanValue> entry : mBooleanAbstraction.entrySet()) {
