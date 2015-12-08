@@ -484,8 +484,6 @@ public class Theory {
 	public Term string(String value) {
 		return constant(new QuotedObject(value), mStringSort);
 	}
-	
-	//TODO:fp: Term float 
 
 	/******************** LOGICS AND THEORIES ********************************/
 	public Logics getLogic() {
@@ -597,7 +595,7 @@ public class Theory {
 			public int getFlags(
 					BigInteger[] indices, Sort[] paramSorts, Sort resultSort) {
 				return mFlags;
-			} //XXX: for what are the params?
+			} 
 
 			public Sort getResultSort(
 					BigInteger[] indices, Sort[] paramSorts, Sort resultSort) {
@@ -690,6 +688,8 @@ public class Theory {
 	}
 	
 	private void createBitVecOperators() {
+		
+		//TODO: refactor from here...
 		mBitVecSort = new SortSymbol(this, "BitVec", 0, null,
 				SortSymbol.INTERNAL | SortSymbol.INDEXED) {
 			public void checkArity(BigInteger[] indices, int arity) {
@@ -705,6 +705,7 @@ public class Theory {
 			}
 		};
 		mDeclaredSorts.put("BitVec", mBitVecSort);
+		//...until here
 		class RegularBitVecFunction extends FunctionSymbolFactory {
 			int mNumArgs;
 			Sort mResult;
