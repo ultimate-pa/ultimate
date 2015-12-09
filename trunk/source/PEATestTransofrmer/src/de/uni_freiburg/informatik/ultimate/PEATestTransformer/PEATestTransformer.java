@@ -8,9 +8,8 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.PEATestTransformer.SplPatternParser.SplPatternParser;
+import de.uni_freiburg.informatik.ultimate.PEATestTransformer.SplPatternParser.SplToBoogie;
 import de.uni_freiburg.informatik.ultimate.PeaToBoogieTranslator.BasicTranslator;
-import de.uni_freiburg.informatik.ultimate.PeaToBoogieTranslator.Translator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -79,7 +78,7 @@ public class PeaTestTransformer implements ISource {
 
 	@Override
 	public IElement parseAST(File[] files) throws Exception {
-		SplPatternParser parser = new SplPatternParser();
+		SplToBoogie parser = new SplToBoogie();
 		//parse all files with reqs into one list of filled in patterns
 		ArrayList<PatternType> filledPatterns = new ArrayList<PatternType>();
 		for(File f: files){
@@ -87,12 +86,7 @@ public class PeaTestTransformer implements ISource {
 		}
 		//parse test definition file into a test definition and a system definition
 		//TODO: how to switch transformer? 
-		PhaseEventAutomata[] peas = parser.generatePEA(filledPatterns);
-		//transform to boogie
-		//TODO:write more modifiable translator
-		BasicTranslator bt = new BasicTranslator(peas);
-		Unit u = bt.generateBoogieTranslation();
-		return u; 
+		return parser.generatePEA(filledPatterns);
 	}
 
 	@Override

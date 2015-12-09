@@ -55,7 +55,7 @@ import pea_to_boogie.translator.CDDTranslator;
 public class BasicTranslator {
 	
 	private final static String PRIME_SYMBOL = "'";
-	private final static String PHASE_COUNTER_PREFIX = "pc";
+	protected final static String PHASE_COUNTER_PREFIX = "pc";
 	
 	private String fileName = "fileName";
 	
@@ -64,8 +64,8 @@ public class BasicTranslator {
 	private Set<String> havocInLoop = new HashSet<String>();
 	private Set<String> clocks = new HashSet<String>();
 	private Set<String> vars = new HashSet<String>();
-	private HashMap<String, ArrayList<String>> varsByType = new HashMap<String, ArrayList<String>>();
-	private HashMap<Integer, List<Phase>> initialEdgesAssume = new HashMap<Integer, List<Phase>>();
+	private HashMap<String, HashSet<String>> varsByType = new HashMap<String, HashSet<String>>();
+	protected HashMap<Integer, List<Phase>> initialEdgesAssume = new HashMap<Integer, List<Phase>>();
 	private HashMap<Phase, ArrayList<Statement>> phaseInvariants = new HashMap<Phase, ArrayList<Statement>>();
 	private HashMap<Transition, ArrayList<Statement>> transitionBody = new HashMap<Transition, ArrayList<Statement>>();
 
@@ -86,6 +86,7 @@ public class BasicTranslator {
 		//generate delta variable, that is shared by all automata
 		this.varsByTypeAdd("real", "delta");
 		this.havocInLoop.add("delta");
+		this.modifiedVariables.add("delta");
 		//TODO: process variables here
 		//collect the initial phases
 		for(int i =0; i < peas.length; i++){
@@ -259,7 +260,7 @@ public class BasicTranslator {
 		}
 			
 	}
-	private int getNoOfPhase(PhaseEventAutomata pea, Phase phase){
+	protected int getNoOfPhase(PhaseEventAutomata pea, Phase phase){
 		//TODO: this is strange, 
         Phase[] phases = pea.getPhases();
         int phaseIndex = -1;
@@ -341,13 +342,13 @@ public class BasicTranslator {
 	 */
 	private void varsByTypeAdd(String type, String ident){
 		if(!this.varsByType.containsKey(type)){
-			this.varsByType.put(type, new ArrayList<String>());
+			this.varsByType.put(type, new HashSet<String>());
 		}
 		this.varsByType.get(type).add(ident);
 	}
 	private void varsByTypeAdd(String type, List<String> ident){
 		if(!this.varsByType.containsKey(type)){
-			this.varsByType.put(type, new ArrayList<String>());
+			this.varsByType.put(type, new HashSet<String>());
 		}
 		this.varsByType.get(type).addAll(ident);
 	}
@@ -375,7 +376,7 @@ public class BasicTranslator {
     	IntegerLiteral dZero = new IntegerLiteral(location, Integer.toString(value));
 	    return new AssignmentStatement(location, new LeftHandSide[]{identifier}, new Expression[]{dZero});
 	}
-	protected VarList generateVarList(BoogieLocation location, String type, List<String> idents){
+	protected VarList generateVarList(BoogieLocation location, String type, HashSet<String> idents){
 		return new VarList(location, idents.toArray(new String[idents.size()]), 
 				new PrimitiveType(location, type));
 	}
@@ -451,7 +452,7 @@ public class BasicTranslator {
 		);
 	}
 	
-	private Expression generateBinaryLogicExpression(BoogieLocation location, List<Expression> expressions, BinaryExpression.Operator operator){
+	protected Expression generateBinaryLogicExpression(BoogieLocation location, List<Expression> expressions, BinaryExpression.Operator operator){
 		if(expressions.size() == 1){
 			return expressions.get(0);
 		}
