@@ -202,30 +202,30 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 		result.append(lineSeparator + "\t},");
 		
 		// Best Neighbor Measure
-		result.append(lineSeparator + "\tbest neighbor measure = {");
-		for (SpoilerVertex<LETTER, STATE> vertex : m_Game.getSpoilerVertices()) {
-			result.append(lineSeparator + "\t\t<(" + vertex.getQ0()
-				+ ", " + vertex.getQ1() + "), bnm:" + vertex.getBEff() + ">");
-		}
-		for (DuplicatorVertex<LETTER, STATE> vertex : m_Game.getDuplicatorVertices()) {
-			result.append(lineSeparator + "\t\t<(" + vertex.getQ0()
-				+ ", " + vertex.getQ1() + ", " + vertex.getLetter()
-				+ "), bnm:" + vertex.getBEff() + ">");
-		}
-		result.append(lineSeparator + "\t},");
+//		result.append(lineSeparator + "\tbest neighbor measure = {");
+//		for (SpoilerVertex<LETTER, STATE> vertex : m_Game.getSpoilerVertices()) {
+//			result.append(lineSeparator + "\t\t<(" + vertex.getQ0()
+//				+ ", " + vertex.getQ1() + "), bnm:" + vertex.getBEff() + ">");
+//		}
+//		for (DuplicatorVertex<LETTER, STATE> vertex : m_Game.getDuplicatorVertices()) {
+//			result.append(lineSeparator + "\t\t<(" + vertex.getQ0()
+//				+ ", " + vertex.getQ1() + ", " + vertex.getLetter()
+//				+ "), bnm:" + vertex.getBEff() + ">");
+//		}
+//		result.append(lineSeparator + "\t},");
 		
 		// Neighbor counter
-		result.append(lineSeparator + "\tneighbor counter = {");
-		for (SpoilerVertex<LETTER, STATE> vertex : m_Game.getSpoilerVertices()) {
-			result.append(lineSeparator + "\t\t<(" + vertex.getQ0()
-				+ ", " + vertex.getQ1() + "), nc:" + vertex.getC() + ">");
-		}
-		for (DuplicatorVertex<LETTER, STATE> vertex : m_Game.getDuplicatorVertices()) {
-			result.append(lineSeparator + "\t\t<(" + vertex.getQ0()
-				+ ", " + vertex.getQ1() + ", " + vertex.getLetter()
-				+ "), nc:" + vertex.getC() + ">");
-		}
-		result.append(lineSeparator + "\t},");
+//		result.append(lineSeparator + "\tneighbor counter = {");
+//		for (SpoilerVertex<LETTER, STATE> vertex : m_Game.getSpoilerVertices()) {
+//			result.append(lineSeparator + "\t\t<(" + vertex.getQ0()
+//				+ ", " + vertex.getQ1() + "), nc:" + vertex.getC() + ">");
+//		}
+//		for (DuplicatorVertex<LETTER, STATE> vertex : m_Game.getDuplicatorVertices()) {
+//			result.append(lineSeparator + "\t\t<(" + vertex.getQ0()
+//				+ ", " + vertex.getQ1() + ", " + vertex.getLetter()
+//				+ "), nc:" + vertex.getC() + ">");
+//		}
+//		result.append(lineSeparator + "\t},");
 		
 		// Footer
 		result.append(lineSeparator + ");");
@@ -391,8 +391,11 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 			final int localInfinity, final Set<Vertex<LETTER, STATE>> scc) {
 		if (!m_Game.hasSuccessors(vertex) || vertex.getPriority() == 1
 				|| (isUsingSCCs() && m_pokedFromNeighborSCC.contains(vertex))
-				|| (m_AttemptingChanges && vertex.getC() == 0
-				&& vertex.getPriority() != 0)) {
+				|| (m_AttemptingChanges && m_CurrentChanges != null
+					&& m_CurrentChanges.isAddedVertex(vertex)
+					&& vertex.getPriority() != 0)
+				|| (m_AttemptingChanges && m_CurrentChanges != null
+					&& m_CurrentChanges.isChangedEdgeSource(vertex))) {
 			addVertexToWorkingList(vertex);
 			
 			// XXX Remove debugging information
@@ -400,8 +403,14 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 				if (useDeepDebugPrints) System.out.println("\t\tIs dead-end, adding to wL: " + vertex);
 			} else if (isUsingSCCs() && m_pokedFromNeighborSCC.contains(vertex)) {
 				if (useDeepDebugPrints) System.out.println("\t\tWas poked, adding to wL: " + vertex);
+			} else if (m_AttemptingChanges && m_CurrentChanges != null
+					&& m_CurrentChanges.isAddedVertex(vertex)
+					&& vertex.getPriority() != 0) {
+				if (useDeepDebugPrints) System.out.println("\t\tWas added previously and can contribute, adding to wL: " + vertex);
+			} else if (m_AttemptingChanges && m_CurrentChanges != null
+					&& m_CurrentChanges.isChangedEdgeSource(vertex)) {
+				if (useDeepDebugPrints) System.out.println("\t\tIs source of a changed edge, adding to wL: " + vertex);
 			}
-			
 		}
 		if (isUsingSCCs()) {
 			Set<Vertex<LETTER, STATE>> usedSCCForNeighborCalculation = scc;
@@ -484,6 +493,7 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 		if (wasSuccessful) {
 			changes = null;
 		}
+		
 		return changes;
 	}
 	
@@ -522,6 +532,11 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 			} else {
 				System.out.println("Successfully merged: " + mergeCandidate);
 				noEdgeCandidates.add(mergeCandidate);
+				SpoilerVertex<LETTER, STATE> mirroredCandidate =
+						m_Game.getSpoilerVertex(mergeCandidate.getQ1(), mergeCandidate.getQ0(), false);
+				if (mirroredCandidate != null) {
+					noEdgeCandidates.add(mirroredCandidate);
+				}
 			}
 		}
 		
