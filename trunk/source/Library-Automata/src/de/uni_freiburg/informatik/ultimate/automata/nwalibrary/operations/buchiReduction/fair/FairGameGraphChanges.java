@@ -26,8 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.fair;
 
+import java.util.Map.Entry;
+
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.GameGraphChangeType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.GameGraphChanges;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.VertexValueContainer;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap3;
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 
@@ -97,12 +102,82 @@ public final class FairGameGraphChanges<LETTER, STATE> extends GameGraphChanges<
 							&& changedTrans.getThird() == GameGraphChangeType.ADDITION)) {
 						// Nullify change if it was added and then
 						// removed or vice versa
-						m_ChangedBuechiTransitions.put(src, a, dest,
-								GameGraphChangeType.NO_CHANGE);
+						m_ChangedBuechiTransitions.get(src).remove(a, dest);
 					}
 				}
 			}
 		}
+	}
+	
+	@Override
+	public String toString() {
+		StringBuilder result = new StringBuilder();
+		String lineSeparator = System.lineSeparator();
+		// Header
+		result.append("GameGraphChanges ggc = (");
+		
+		// Vertices
+		result.append(lineSeparator + "\tchangedVertices = {");
+		for (Entry<Vertex<LETTER, STATE>, GameGraphChangeType> vertex : getChangedVertices().entrySet()) {
+			result.append(lineSeparator + "\t\t<(" + vertex.getKey().getQ0()
+				+ ", " + vertex.getKey().getQ1() + "), p:" + vertex.getKey().getPriority() + ">\t"
+					+ vertex.getValue());
+		}
+		result.append(lineSeparator + "\t},");
+		
+		// Edges
+		result.append(lineSeparator + "\tchangedEdges = {");
+		for (Triple<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>,
+				GameGraphChangeType> vertex : getChangedEdges().entrySet()) {
+			result.append(lineSeparator + "\t\t(" + vertex.getFirst().getQ0() + ", " + vertex.getFirst().getQ1());
+			if (vertex.getFirst() instanceof DuplicatorVertex) {
+				DuplicatorVertex<LETTER, STATE> vertexAsDuplicatorVertex =
+						(DuplicatorVertex<LETTER, STATE>) vertex.getFirst();
+				result.append(", " + vertexAsDuplicatorVertex.getLetter());
+			}
+			result.append(")\t--> (" + vertex.getSecond().getQ0() + ", " + vertex.getSecond().getQ1());
+			if (vertex.getSecond() instanceof DuplicatorVertex) {
+				DuplicatorVertex<LETTER, STATE> vertexAsDuplicatorVertex =
+						(DuplicatorVertex<LETTER, STATE>) vertex.getSecond();
+				result.append(", " + vertexAsDuplicatorVertex.getLetter());
+			}
+			result.append(")\t" + vertex.getThird());
+		}
+		result.append(lineSeparator + "\t}");
+		
+		// Changed buechi transitions
+		result.append(lineSeparator + "\tchangedBuechiTrans = {");
+		for (STATE vertex : getChangedBuechiTransitions().keySet()) {
+			for (Triple<LETTER, STATE, GameGraphChangeType> entry :
+				getChangedBuechiTransitions().get(vertex).entrySet()) {
+				result.append(lineSeparator + "\t\t" + vertex + " -" + entry.getFirst()
+					+ "-> " + entry.getSecond() + "\t" + entry.getThird());
+			}
+		}
+		result.append(lineSeparator + "\t}");
+		
+		// Remembered values
+		result.append(lineSeparator + "\trememberedValues = {");
+		for (Entry<Vertex<LETTER, STATE>, VertexValueContainer> vertexContainer :
+			getRememberedVertexValues().entrySet()) {
+			result.append(lineSeparator + "\t\t(" + vertexContainer.getKey().getQ0()
+					+ ", " + vertexContainer.getKey().getQ1());
+			if (vertexContainer.getKey() instanceof DuplicatorVertex) {
+				DuplicatorVertex<LETTER, STATE> vertexAsDuplicatorVertex =
+						(DuplicatorVertex<LETTER, STATE>) vertexContainer.getKey();
+				result.append(", " + vertexAsDuplicatorVertex.getLetter());
+			}
+			result.append(")\tPM:");
+			result.append(vertexContainer.getValue().getProgressMeasure() + ", BNM:");
+			result.append(vertexContainer.getValue().getBestNeighborMeasure() + ", NC:");
+			result.append(vertexContainer.getValue().getNeighborCounter());
+		}
+		result.append(lineSeparator + "\t}");
+		
+		// Footer
+		result.append(lineSeparator + ");");
+		
+		return result.toString();
 	}
 	
 	public void removedBuechiTransition(final STATE src,
@@ -121,8 +196,7 @@ public final class FairGameGraphChanges<LETTER, STATE> extends GameGraphChanges<
 							&& type.equals(GameGraphChangeType.REMOVAL))
 						|| (previousType.equals(GameGraphChangeType.REMOVAL)
 							&& type.equals(GameGraphChangeType.ADDITION)))) {
-			m_ChangedBuechiTransitions.put(src, a, dest,
-					GameGraphChangeType.NO_CHANGE);
+			m_ChangedBuechiTransitions.get(src).remove(a, dest);
 		} else {
 			m_ChangedBuechiTransitions.put(src, a, dest, type);
 		}

@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
@@ -84,6 +85,26 @@ public class GameGraphChanges<LETTER, STATE> {
 	public HashMap<Vertex<LETTER, STATE>,
 		VertexValueContainer> getRememberedVertexValues() {
 		return m_RememberedValues;
+	}
+	
+	public boolean isChangedEdgeSource(final Vertex<LETTER, STATE> vertex) {
+		boolean isChangedEdgeSource = false;
+		Map<Vertex<LETTER, STATE>, GameGraphChangeType> changedMap =
+				m_ChangedEdges.get(vertex);
+		if (changedMap != null) {
+			for (GameGraphChangeType type : changedMap.values()) {
+				if (type != GameGraphChangeType.NO_CHANGE) {
+					isChangedEdgeSource = true;
+					break;
+				}
+			}
+		}
+		return isChangedEdgeSource;
+	}
+	
+	public boolean isAddedVertex(final Vertex<LETTER, STATE> vertex) {
+		GameGraphChangeType type = m_ChangedVertices.get(vertex);
+		return type != null && type.equals(GameGraphChangeType.ADDITION);
 	}
 	
 	public boolean hasBEffEntry(final Vertex<LETTER, STATE> vertex) {
@@ -234,6 +255,66 @@ public class GameGraphChanges<LETTER, STATE> {
 		changedVertex(vertex, GameGraphChangeType.REMOVAL);
 	}
 	
+	@Override
+	public String toString() {
+		StringBuilder result = new StringBuilder();
+		String lineSeparator = System.lineSeparator();
+		// Header
+		result.append("GameGraphChanges ggc = (");
+		
+		// Vertices
+		result.append(lineSeparator + "\tchangedVertices = {");
+		for (Entry<Vertex<LETTER, STATE>, GameGraphChangeType> vertex : getChangedVertices().entrySet()) {
+			result.append(lineSeparator + "\t\t<(" + vertex.getKey().getQ0()
+				+ ", " + vertex.getKey().getQ1() + "), p:" + vertex.getKey().getPriority() + ">\t"
+					+ vertex.getValue());
+		}
+		result.append(lineSeparator + "\t},");
+		
+		// Edges
+		result.append(lineSeparator + "\tchangedEdges = {");
+		for (Triple<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>,
+				GameGraphChangeType> vertex : getChangedEdges().entrySet()) {
+			result.append(lineSeparator + "\t\t(" + vertex.getFirst().getQ0() + ", " + vertex.getFirst().getQ1());
+			if (vertex.getFirst() instanceof DuplicatorVertex) {
+				DuplicatorVertex<LETTER, STATE> vertexAsDuplicatorVertex =
+						(DuplicatorVertex<LETTER, STATE>) vertex.getFirst();
+				result.append(", " + vertexAsDuplicatorVertex.getLetter());
+			}
+			result.append(")\t--> (" + vertex.getSecond().getQ0() + ", " + vertex.getSecond().getQ1());
+			if (vertex.getSecond() instanceof DuplicatorVertex) {
+				DuplicatorVertex<LETTER, STATE> vertexAsDuplicatorVertex =
+						(DuplicatorVertex<LETTER, STATE>) vertex.getSecond();
+				result.append(", " + vertexAsDuplicatorVertex.getLetter());
+			}
+			result.append(")\t" + vertex.getThird());
+		}
+		result.append(lineSeparator + "\t}");
+		
+		// Remembered values
+		result.append(lineSeparator + "\trememberedValues = {");
+		for (Entry<Vertex<LETTER, STATE>, VertexValueContainer> vertexContainer :
+			getRememberedVertexValues().entrySet()) {
+			result.append(lineSeparator + "\t\t(" + vertexContainer.getKey().getQ0()
+					+ ", " + vertexContainer.getKey().getQ1());
+			if (vertexContainer.getKey() instanceof DuplicatorVertex) {
+				DuplicatorVertex<LETTER, STATE> vertexAsDuplicatorVertex =
+						(DuplicatorVertex<LETTER, STATE>) vertexContainer.getKey();
+				result.append(", " + vertexAsDuplicatorVertex.getLetter());
+			}
+			result.append(")\tPM:");
+			result.append(vertexContainer.getValue().getProgressMeasure() + ", BNM:");
+			result.append(vertexContainer.getValue().getBestNeighborMeasure() + ", NC:");
+			result.append(vertexContainer.getValue().getNeighborCounter());
+		}
+		result.append(lineSeparator + "\t}");
+		
+		// Footer
+		result.append(lineSeparator + ");");
+		
+		return result.toString();
+	}
+	
 	private void changedEdge(final Vertex<LETTER, STATE> src,
 			final Vertex<LETTER, STATE> dest, final GameGraphChangeType type) {
 		GameGraphChangeType previousType = m_ChangedEdges.get(src, dest);
@@ -243,7 +324,7 @@ public class GameGraphChanges<LETTER, STATE> {
 							&& type.equals(GameGraphChangeType.REMOVAL))
 						|| (previousType.equals(GameGraphChangeType.REMOVAL)
 							&& type.equals(GameGraphChangeType.ADDITION)))) {
-			m_ChangedEdges.put(src, dest, GameGraphChangeType.NO_CHANGE);
+			m_ChangedEdges.remove(src, dest);
 		} else {
 			m_ChangedEdges.put(src, dest, type);
 		}
@@ -258,7 +339,7 @@ public class GameGraphChanges<LETTER, STATE> {
 							&& type.equals(GameGraphChangeType.REMOVAL))
 						|| (previousType.equals(GameGraphChangeType.REMOVAL)
 							&& type.equals(GameGraphChangeType.ADDITION)))) {
-			m_ChangedVertices.put(vertex, GameGraphChangeType.NO_CHANGE);
+			m_ChangedVertices.remove(vertex);
 		} else {
 			m_ChangedVertices.put(vertex, type);
 		}

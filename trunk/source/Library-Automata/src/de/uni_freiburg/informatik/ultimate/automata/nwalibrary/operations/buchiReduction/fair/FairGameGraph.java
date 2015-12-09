@@ -147,8 +147,7 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 							GameGraphChangeType.ADDITION)
 							|| changedTrans.getThird().equals(
 									GameGraphChangeType.REMOVAL)) {
-						m_ChangedBuechiTransitionsInverse.put(src, a,
-								dest, GameGraphChangeType.NO_CHANGE);
+						m_ChangedBuechiTransitionsInverse.get(dest).remove(a, src);
 					}
 				}
 			}
@@ -323,7 +322,7 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 					 */
 					Vertex<LETTER, STATE> edgeDest = getSpoilerVertex(
 							generatedVertex.getQ0(), succTrans.getSucc(), false);
-					if (src != null && dest != null) {
+					if (generatedVertex != null && edgeDest != null) {
 						addEdge(generatedVertex, edgeDest);
 						// Remember addition
 						changes.addedEdge(generatedVertex, edgeDest);
@@ -498,7 +497,7 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 			// Duplicator edges q1 -a-> q2 : (x, q1, a) -> (x, q2, a)
 			Vertex<LETTER, STATE> edgeSrc = getDuplicatorVertex(fixState, src, a, false);
 			Vertex<LETTER, STATE> edgeDest = getSpoilerVertex(fixState, dest, false);
-			if (src != null && dest != null) {
+			if (edgeSrc != null && edgeDest != null) {
 				removeEdge(edgeSrc, edgeDest);
 				// Remember removal
 				changes.removedEdge(edgeSrc, edgeDest);
