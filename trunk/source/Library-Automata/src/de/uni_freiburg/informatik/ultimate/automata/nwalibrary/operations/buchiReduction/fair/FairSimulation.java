@@ -238,17 +238,17 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 		vertex.setInWL(true);
 	}
 	
-	private GameGraphChanges<LETTER, STATE> attemptEdgeRemoval(final STATE src,
+	private FairGameGraphChanges<LETTER, STATE> attemptEdgeRemoval(final STATE src,
 			final LETTER a, final STATE dest) {
-		GameGraphChanges<LETTER, STATE> changes =
+		FairGameGraphChanges<LETTER, STATE> changes =
 				m_Game.removeBuechiTransition(src, a, dest);
 		
 		return validateChange(changes);
 	}
 
-	private GameGraphChanges<LETTER, STATE> attemptMerge(final STATE firstState,
+	private FairGameGraphChanges<LETTER, STATE> attemptMerge(final STATE firstState,
 			final STATE secondState) {
-		GameGraphChanges<LETTER, STATE> changes =
+		FairGameGraphChanges<LETTER, STATE> changes =
 				m_Game.equalizeBuechiStates(firstState, secondState);
 		
 		return validateChange(changes);
@@ -471,8 +471,8 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 		if (useDeepDebugPrints) System.out.println(result);
 	}
 	
-	private GameGraphChanges<LETTER, STATE> validateChange(
-			GameGraphChanges<LETTER, STATE> changes) {
+	private FairGameGraphChanges<LETTER, STATE> validateChange(
+			FairGameGraphChanges<LETTER, STATE> changes) {
 		// Only do simulation if there actually was a change
 		boolean wasSuccessful = true;
 		if (changes != null) {
@@ -505,7 +505,7 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 		Set<SpoilerVertex<LETTER, STATE>> mergeCandidates = mergeCandidates();
 		Set<SpoilerVertex<LETTER, STATE>> noEdgeCandidates = new HashSet<SpoilerVertex<LETTER, STATE>>();
 		for (SpoilerVertex<LETTER, STATE> mergeCandidate : mergeCandidates) {
-			GameGraphChanges<LETTER, STATE> changes =
+			FairGameGraphChanges<LETTER, STATE> changes =
 					attemptMerge(mergeCandidate.getQ0(), mergeCandidate.getQ1());
 			if (changes != null) {
 				System.out.println("Not successfully merged, undoing: " + mergeCandidate);
@@ -529,7 +529,7 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 		NestedMap2<STATE, LETTER, STATE> edgeCandidates = edgeCandidates(noEdgeCandidates);
 		for (Triple<STATE, LETTER, STATE> edgeCandidate
 				: edgeCandidates.entrySet()) {
-			GameGraphChanges<LETTER, STATE> changes =
+			FairGameGraphChanges<LETTER, STATE> changes =
 					attemptEdgeRemoval(edgeCandidate.getFirst(),
 							edgeCandidate.getSecond(), edgeCandidate.getThird());
 			if (changes != null) {

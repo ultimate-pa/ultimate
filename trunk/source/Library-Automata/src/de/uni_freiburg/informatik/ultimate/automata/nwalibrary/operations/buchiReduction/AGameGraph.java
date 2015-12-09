@@ -149,80 +149,11 @@ public abstract class AGameGraph<LETTER, STATE> {
 		return m_Successors.containsKey(vertex);
 	}
 
-	protected void addDuplicatorVertex(
-			final DuplicatorVertex<LETTER, STATE> vertex) {
-		m_DuplicatorVertices.add(vertex);
-		m_BuechiStatesToGraphDuplicatorVertex.put(vertex.getQ0(),
-				vertex.getQ1(), vertex.getLetter(), vertex.isB(), vertex);
-	}
-	
-	protected void removeDuplicatorVertex(
-			final DuplicatorVertex<LETTER, STATE> vertex) {
-		m_DuplicatorVertices.remove(vertex);
-		m_BuechiStatesToGraphDuplicatorVertex.put(vertex.getQ0(),
-				vertex.getQ1(), vertex.getLetter(), vertex.isB(), null);
-	}
-	
-	protected void removeEdge(final Vertex<LETTER, STATE> src,
-			final Vertex<LETTER, STATE> dest) {
-		if (m_Successors.get(src) != null) {
-			m_Successors.get(src).remove(dest);
-			if (m_Successors.get(src).size() == 0) {
-				m_Successors.remove(src);
-			}
-		}
-		if (m_Predecessors.get(dest) != null) {
-			m_Predecessors.get(dest).remove(src);
-			if (m_Predecessors.get(dest).size() == 0) {
-				m_Predecessors.remove(dest);
-			}
-		}
-	}
-
-	protected void addEdge(final Vertex<LETTER, STATE> src,
-			final Vertex<LETTER, STATE> dest) {
-		if (!m_Successors.containsKey(src)) {
-			m_Successors.put(src, new HashSet<Vertex<LETTER, STATE>>());
-		}
-		m_Successors.get(src).add(dest);
-		if (!m_Predecessors.containsKey(dest)) {
-			m_Predecessors.put(dest, new HashSet<Vertex<LETTER, STATE>>());
-		}
-		m_Predecessors.get(dest).add(src);
-	}
-	
-	protected void addSpoilerVertex(
-			final SpoilerVertex<LETTER, STATE> vertex) {
-		m_SpoilerVertices.add(vertex);
-		m_BuechiStatesToGraphSpoilerVertex.put(vertex.getQ0(),
-				vertex.getQ1(), vertex.isB(), vertex);
-	}
-	
-	protected void removeSpoilerVertex(
-			final SpoilerVertex<LETTER, STATE> vertex) {
-		m_SpoilerVertices.remove(vertex);
-		m_BuechiStatesToGraphSpoilerVertex.put(vertex.getQ0(),
-				vertex.getQ1(), vertex.isB(), null);
-	}
-	
-	protected abstract NestedWordAutomaton<LETTER, STATE> generateBuchiAutomatonFromGraph()
-			throws OperationCanceledException ;
-	
-	protected abstract void generateGameGraphFromBuechi() throws OperationCanceledException ;
-	
-	protected IUltimateServiceProvider getServiceProvider() {
-		return m_Services;
-	}
-	
-	protected void increaseGlobalInfinity() {
-		m_GlobalInfinity++;
-	}
-
-	protected void setGlobalInfinity(final int globalInfinity) {
-		m_GlobalInfinity = globalInfinity;
-	}
-	
 	public void undoChanges(final GameGraphChanges<LETTER, STATE> changes) {
+		if (changes == null) {
+			return;
+		}
+		
 		// Undo edge changes
 		NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>,
 			GameGraphChangeType> changedEdges = changes.getChangedEdges();
@@ -282,5 +213,78 @@ public abstract class AGameGraph<LETTER, STATE> {
 				vertex.setC(values.getNeighborCounter());
 			}
 		}
+	}
+	
+	protected void addDuplicatorVertex(
+			final DuplicatorVertex<LETTER, STATE> vertex) {
+		m_DuplicatorVertices.add(vertex);
+		m_BuechiStatesToGraphDuplicatorVertex.put(vertex.getQ0(),
+				vertex.getQ1(), vertex.getLetter(), vertex.isB(), vertex);
+	}
+	
+	protected void addEdge(final Vertex<LETTER, STATE> src,
+			final Vertex<LETTER, STATE> dest) {
+		if (!m_Successors.containsKey(src)) {
+			m_Successors.put(src, new HashSet<Vertex<LETTER, STATE>>());
+		}
+		m_Successors.get(src).add(dest);
+		if (!m_Predecessors.containsKey(dest)) {
+			m_Predecessors.put(dest, new HashSet<Vertex<LETTER, STATE>>());
+		}
+		m_Predecessors.get(dest).add(src);
+	}
+
+	protected void addSpoilerVertex(
+			final SpoilerVertex<LETTER, STATE> vertex) {
+		m_SpoilerVertices.add(vertex);
+		m_BuechiStatesToGraphSpoilerVertex.put(vertex.getQ0(),
+				vertex.getQ1(), vertex.isB(), vertex);
+	}
+	
+	protected abstract NestedWordAutomaton<LETTER, STATE> generateBuchiAutomatonFromGraph()
+			throws OperationCanceledException ;
+	
+	protected abstract void generateGameGraphFromBuechi() throws OperationCanceledException ;
+	
+	protected IUltimateServiceProvider getServiceProvider() {
+		return m_Services;
+	}
+	
+	protected void increaseGlobalInfinity() {
+		m_GlobalInfinity++;
+	}
+	
+	protected void removeDuplicatorVertex(
+			final DuplicatorVertex<LETTER, STATE> vertex) {
+		m_DuplicatorVertices.remove(vertex);
+		m_BuechiStatesToGraphDuplicatorVertex.put(vertex.getQ0(),
+				vertex.getQ1(), vertex.getLetter(), vertex.isB(), null);
+	}
+	
+	protected void removeEdge(final Vertex<LETTER, STATE> src,
+			final Vertex<LETTER, STATE> dest) {
+		if (m_Successors.get(src) != null) {
+			m_Successors.get(src).remove(dest);
+			if (m_Successors.get(src).size() == 0) {
+				m_Successors.remove(src);
+			}
+		}
+		if (m_Predecessors.get(dest) != null) {
+			m_Predecessors.get(dest).remove(src);
+			if (m_Predecessors.get(dest).size() == 0) {
+				m_Predecessors.remove(dest);
+			}
+		}
+	}
+
+	protected void removeSpoilerVertex(
+			final SpoilerVertex<LETTER, STATE> vertex) {
+		m_SpoilerVertices.remove(vertex);
+		m_BuechiStatesToGraphSpoilerVertex.put(vertex.getQ0(),
+				vertex.getQ1(), vertex.isB(), null);
+	}
+	
+	protected void setGlobalInfinity(final int globalInfinity) {
+		m_GlobalInfinity = globalInfinity;
 	}
 }

@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap3;
+import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 
 /**
  * Doc comes later.
@@ -122,8 +123,36 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 	
 	@Override
 	public void undoChanges(final GameGraphChanges<LETTER, STATE> changes) {
-		// TODO Maintain m_ChangedBuechiTransitionsInverse
 		super.undoChanges(changes);
+		
+		if (changes == null) {
+			return;
+		}
+		
+		if (changes instanceof FairGameGraphChanges) {
+			FairGameGraphChanges<LETTER, STATE> fairChanges =
+					(FairGameGraphChanges<LETTER, STATE>) changes;
+			// Undo buechi transition changes
+			NestedMap3<STATE, LETTER, STATE,
+				GameGraphChangeType> changedTransitions =
+				fairChanges.getChangedBuechiTransitions();
+			for (STATE changedKey : changedTransitions.keySet()) {
+				for (Triple<LETTER, STATE,
+						GameGraphChangeType> changedTrans :
+							changedTransitions.get(changedKey).entrySet()) {
+					STATE src = changedKey;
+					LETTER a = changedTrans.getFirst();
+					STATE dest = changedTrans.getSecond();
+					if (changedTrans.getThird().equals(
+							GameGraphChangeType.ADDITION)
+							|| changedTrans.getThird().equals(
+									GameGraphChangeType.REMOVAL)) {
+						m_ChangedBuechiTransitionsInverse.put(src, a,
+								dest, GameGraphChangeType.NO_CHANGE);
+					}
+				}
+			}
+		}
 	}
 	
 	private int calculatePriority(final STATE leftState, final STATE rightState) {
@@ -136,7 +165,7 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 		}
 	}
 	
-	private GameGraphChanges<LETTER, STATE> equalizeBuechiStatesOneDir(
+	private FairGameGraphChanges<LETTER, STATE> equalizeBuechiStatesOneDir(
 			final STATE stateToAlign, final STATE stateToAlignTo) {
 		Set<STATE> states = m_Buechi.getStates();
 		if (stateToAlignTo == null || stateToAlign == null
@@ -147,8 +176,8 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 					+ " automaton, be different and not null.");
 		}
 		
-		GameGraphChanges<LETTER, STATE> changes =
-				new GameGraphChanges<LETTER, STATE>();
+		FairGameGraphChanges<LETTER, STATE> changes =
+				new FairGameGraphChanges<LETTER, STATE>();
 		boolean madeAChange = false;
 		
 		// Work successors of stateToAlignTo
@@ -163,7 +192,7 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 				}
 			}
 			if (!transCovered) {
-				GameGraphChanges<LETTER, STATE> currentChange =
+				FairGameGraphChanges<LETTER, STATE> currentChange =
 						addBuechiTransition(stateToAlign, trans.getLetter(),
 								trans.getSucc());
 				if (currentChange != null) {
@@ -184,7 +213,7 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 				}
 			}
 			if (!transCovered) {
-				GameGraphChanges<LETTER, STATE> currentChange =
+				FairGameGraphChanges<LETTER, STATE> currentChange =
 						addBuechiTransition(trans.getPred(), trans.getLetter(),
 								stateToAlign);
 				if (currentChange != null) {
@@ -208,7 +237,7 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 	 * @param dest
 	 * @return
 	 */
-	protected GameGraphChanges<LETTER, STATE> addBuechiTransition(
+	protected FairGameGraphChanges<LETTER, STATE> addBuechiTransition(
 			final STATE src, final LETTER a, final STATE dest) {
 		Set<STATE> states = m_Buechi.getStates();
 		if (src == null || dest == null
@@ -252,9 +281,8 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 			}
 		}
 		
-		GameGraphChanges<LETTER, STATE> changes =
-				new GameGraphChanges<LETTER, STATE>();
-		boolean madeAChange = false;
+		FairGameGraphChanges<LETTER, STATE> changes =
+				new FairGameGraphChanges<LETTER, STATE>();
 		
 		// Generate new edges and some missing vertices
 		for (STATE fixState : states) {
@@ -273,7 +301,6 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 				addDuplicatorVertex(generatedVertex);
 				// Remember addition
 				changes.addedVertex(generatedVertex);
-				madeAChange = true;
 				
 				/* 
 				 * Generate left edges for newly generated vertices.
@@ -300,7 +327,6 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 						addEdge(generatedVertex, edgeDest);
 						// Remember addition
 						changes.addedEdge(generatedVertex, edgeDest);
-						madeAChange = true;
 					}
 					/*
 					 * Spoiler edges.
@@ -320,21 +346,17 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 				addEdge(edgeSrc, edgeDest);
 				// Remember addition
 				changes.addedEdge(edgeSrc, edgeDest);
-				madeAChange = true;
 			}
 		}
 		
 		// Update set of changes
 		m_ChangedBuechiTransitionsInverse.put(dest, a, src, GameGraphChangeType.ADDITION);
+		changes.addedBuechiTransition(src, a, dest);
 		
-		if (madeAChange) {
-			return changes;
-		} else {
-			return null;
-		}
+		return changes;
 	}
 	
-	protected GameGraphChanges<LETTER, STATE> equalizeBuechiStates(
+	protected FairGameGraphChanges<LETTER, STATE> equalizeBuechiStates(
 			final STATE firstState, final STATE secondState) {
 		Set<STATE> states = m_Buechi.getStates();
 		if (firstState == null || secondState == null
@@ -344,12 +366,12 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 					+ " automaton, be different and not null.");
 		}
 		
-		GameGraphChanges<LETTER, STATE> changes =
-				new GameGraphChanges<LETTER, STATE>();
+		FairGameGraphChanges<LETTER, STATE> changes =
+				new FairGameGraphChanges<LETTER, STATE>();
 		boolean madeAChange = false;
 		
 		// Equalize states in both directions
-		GameGraphChanges<LETTER, STATE> currentChange =
+		FairGameGraphChanges<LETTER, STATE> currentChange =
 				equalizeBuechiStatesOneDir(secondState, firstState);
 		if (currentChange != null) {
 			changes.merge(currentChange, true);
@@ -453,7 +475,7 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 	 * @param dest
 	 * @return
 	 */
-	protected GameGraphChanges<LETTER, STATE> removeBuechiTransition(
+	protected FairGameGraphChanges<LETTER, STATE> removeBuechiTransition(
 			final STATE src, final LETTER a, final STATE dest) {
 		Set<STATE> states = m_Buechi.getStates();
 		if (src == null || dest == null
@@ -467,9 +489,8 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 			return null;
 		}
 		
-		GameGraphChanges<LETTER, STATE> changes =
-				new GameGraphChanges<LETTER, STATE>();
-		boolean madeAChange = false;
+		FairGameGraphChanges<LETTER, STATE> changes =
+				new FairGameGraphChanges<LETTER, STATE>();
 		
 		// Remove edges that were generated of this transition
 		for (STATE fixState : states) {
@@ -481,17 +502,13 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 				removeEdge(edgeSrc, edgeDest);
 				// Remember removal
 				changes.removedEdge(edgeSrc, edgeDest);
-				madeAChange = true;
 			}
 		}
 		
 		// Update set of changes
 		m_ChangedBuechiTransitionsInverse.put(dest, a, src, GameGraphChangeType.REMOVAL);
+		changes.removedBuechiTransition(src, a, dest);
 		
-		if (madeAChange) {
-			return changes;
-		} else {
-			return null;
-		}
+		return changes;
 	}
 }

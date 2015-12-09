@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
  * @param <LETTER>
  * @param <STATE>
  */
-public final class GameGraphChanges<LETTER, STATE> {
+public class GameGraphChanges<LETTER, STATE> {
 	
 	private final NestedMap2<Vertex<LETTER, STATE>,
 		Vertex<LETTER, STATE>, GameGraphChangeType> m_ChangedEdges;
@@ -64,38 +64,11 @@ public final class GameGraphChanges<LETTER, STATE> {
 	
 	public void addedEdge(final Vertex<LETTER, STATE> src,
 			final Vertex<LETTER, STATE> dest) {
-		changeEdge(src, dest, GameGraphChangeType.ADDITION);
+		changedEdge(src, dest, GameGraphChangeType.ADDITION);
 	}
 	
 	public void addedVertex(final Vertex<LETTER, STATE> vertex) {
-		changeVertex(vertex, GameGraphChangeType.ADDITION);
-	}
-	
-	public void removedEdge(final Vertex<LETTER, STATE> src,
-			final Vertex<LETTER, STATE> dest) {
-		changeEdge(src, dest, GameGraphChangeType.REMOVAL);
-	}
-	
-	public void removedVertex(final Vertex<LETTER, STATE> vertex) {
-		changeVertex(vertex, GameGraphChangeType.REMOVAL);
-	}
-	
-	public void rememberPmVertex(final Vertex<LETTER, STATE> vertex,
-			final int value) {
-		ensureVertexValueContainerIsInitiated(vertex);
-		m_RememberedValues.get(vertex).setProgressMeasure(value);
-	}
-	
-	public void rememberBEffVertex(final Vertex<LETTER, STATE> vertex,
-			final int value) {
-		ensureVertexValueContainerIsInitiated(vertex);
-		m_RememberedValues.get(vertex).setBestNeighborMeasure(value);
-	}
-	
-	public void rememberCVertex(final Vertex<LETTER, STATE> vertex,
-			final int value) {
-		ensureVertexValueContainerIsInitiated(vertex);
-		m_RememberedValues.get(vertex).setNeighborCounter(value);
+		changedVertex(vertex, GameGraphChangeType.ADDITION);
 	}
 	
 	public NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>,
@@ -111,6 +84,24 @@ public final class GameGraphChanges<LETTER, STATE> {
 	public HashMap<Vertex<LETTER, STATE>,
 		VertexValueContainer> getRememberedVertexValues() {
 		return m_RememberedValues;
+	}
+	
+	public boolean hasBEffEntry(final Vertex<LETTER, STATE> vertex) {
+		return m_RememberedValues.get(vertex) != null
+				&& m_RememberedValues.get(vertex).getBestNeighborMeasure()
+				!= VertexValueContainer.NO_VALUE;
+	}
+	
+	public boolean hasCEntry(final Vertex<LETTER, STATE> vertex) {
+		return m_RememberedValues.get(vertex) != null
+				&& m_RememberedValues.get(vertex).getNeighborCounter()
+				!= VertexValueContainer.NO_VALUE;
+	}
+	
+	public boolean hasPmEntry(final Vertex<LETTER, STATE> vertex) {
+			return m_RememberedValues.get(vertex) != null
+					&& m_RememberedValues.get(vertex).getProgressMeasure()
+					!= VertexValueContainer.NO_VALUE;
 	}
 	
 	public void merge(final GameGraphChanges<LETTER, STATE> changes,
@@ -133,7 +124,8 @@ public final class GameGraphChanges<LETTER, STATE> {
 				changeType = m_ChangedEdges.get(
 						changedEdge.getFirst()).get(changedEdge.getSecond());
 			}
-			if (changeType == null) {
+			if (changeType == null
+					|| changeType.equals(GameGraphChangeType.NO_CHANGE)) {
 				// Only add edge change if unknown until now
 				m_ChangedEdges.put(changedEdge.getFirst(),
 						changedEdge.getSecond(), changedEdge.getThird());
@@ -155,7 +147,8 @@ public final class GameGraphChanges<LETTER, STATE> {
 			changedVertices.entrySet()) {
 			GameGraphChangeType changeType = m_ChangedVertices.get(
 					changedVertix.getKey());
-			if (changeType == null) {
+			if (changeType == null
+					|| changeType.equals(GameGraphChangeType.NO_CHANGE)) {
 				// Only add vertix change if unknown until now
 				m_ChangedVertices.put(changedVertix.getKey(),
 						changedVertix.getValue());
@@ -214,22 +207,61 @@ public final class GameGraphChanges<LETTER, STATE> {
 		}
 	}
 	
-	public boolean hasPmEntry(final Vertex<LETTER, STATE> vertex) {
-			return m_RememberedValues.get(vertex) != null
-					&& m_RememberedValues.get(vertex).getProgressMeasure()
-					!= VertexValueContainer.NO_VALUE;
+	public void rememberBEffVertex(final Vertex<LETTER, STATE> vertex,
+			final int value) {
+		ensureVertexValueContainerIsInitiated(vertex);
+		m_RememberedValues.get(vertex).setBestNeighborMeasure(value);
 	}
 	
-	public boolean hasCEntry(final Vertex<LETTER, STATE> vertex) {
-		return m_RememberedValues.get(vertex) != null
-				&& m_RememberedValues.get(vertex).getNeighborCounter()
-				!= VertexValueContainer.NO_VALUE;
+	public void rememberCVertex(final Vertex<LETTER, STATE> vertex,
+			final int value) {
+		ensureVertexValueContainerIsInitiated(vertex);
+		m_RememberedValues.get(vertex).setNeighborCounter(value);
 	}
 	
-	public boolean hasBEffEntry(final Vertex<LETTER, STATE> vertex) {
-		return m_RememberedValues.get(vertex) != null
-				&& m_RememberedValues.get(vertex).getBestNeighborMeasure()
-				!= VertexValueContainer.NO_VALUE;
+	public void rememberPmVertex(final Vertex<LETTER, STATE> vertex,
+			final int value) {
+		ensureVertexValueContainerIsInitiated(vertex);
+		m_RememberedValues.get(vertex).setProgressMeasure(value);
+	}
+	
+	public void removedEdge(final Vertex<LETTER, STATE> src,
+			final Vertex<LETTER, STATE> dest) {
+		changedEdge(src, dest, GameGraphChangeType.REMOVAL);
+	}
+	
+	public void removedVertex(final Vertex<LETTER, STATE> vertex) {
+		changedVertex(vertex, GameGraphChangeType.REMOVAL);
+	}
+	
+	private void changedEdge(final Vertex<LETTER, STATE> src,
+			final Vertex<LETTER, STATE> dest, final GameGraphChangeType type) {
+		GameGraphChangeType previousType = m_ChangedEdges.get(src, dest);
+		// Nullify change if previously added and then removed or vice versa
+		if (previousType != null
+				&& ((previousType.equals(GameGraphChangeType.ADDITION)
+							&& type.equals(GameGraphChangeType.REMOVAL))
+						|| (previousType.equals(GameGraphChangeType.REMOVAL)
+							&& type.equals(GameGraphChangeType.ADDITION)))) {
+			m_ChangedEdges.put(src, dest, GameGraphChangeType.NO_CHANGE);
+		} else {
+			m_ChangedEdges.put(src, dest, type);
+		}
+	}
+	
+	private void changedVertex(final Vertex<LETTER, STATE> vertex,
+			final GameGraphChangeType type) {
+		GameGraphChangeType previousType = m_ChangedVertices.get(vertex);
+		// Nullify change if previously added and then removed or vice versa
+		if (previousType != null
+				&& ((previousType.equals(GameGraphChangeType.ADDITION)
+							&& type.equals(GameGraphChangeType.REMOVAL))
+						|| (previousType.equals(GameGraphChangeType.REMOVAL)
+							&& type.equals(GameGraphChangeType.ADDITION)))) {
+			m_ChangedVertices.put(vertex, GameGraphChangeType.NO_CHANGE);
+		} else {
+			m_ChangedVertices.put(vertex, type);
+		}
 	}
 	
 	private void ensureVertexValueContainerIsInitiated(
@@ -237,15 +269,5 @@ public final class GameGraphChanges<LETTER, STATE> {
 		if (m_RememberedValues.get(key) == null) {
 			m_RememberedValues.put(key, new VertexValueContainer());
 		}
-	}
-	
-	private void changeEdge(final Vertex<LETTER, STATE> src,
-			final Vertex<LETTER, STATE> dest, final GameGraphChangeType type) {
-		m_ChangedEdges.put(src, dest, type);
-	}
-	
-	private void changeVertex(final Vertex<LETTER, STATE> vertex,
-			final GameGraphChangeType type) {
-		m_ChangedVertices.put(vertex, type);
 	}
 }
