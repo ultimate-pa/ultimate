@@ -65,22 +65,34 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  */
 public abstract class ASimulation<LETTER,STATE> {
 	
+	protected static <LETTER, STATE> int calculateInfinityOfSCC(
+			final StronglyConnectedComponent<Vertex<LETTER, STATE>> scc) {
+		int localInfinity = 0;
+		for (Vertex<LETTER, STATE> vertex : scc.getNodes()) {
+			if (vertex.getPriority() == 1) {
+				localInfinity++;
+			}
+		}
+		localInfinity++;
+		return localInfinity;
+	}
+	
 	private final Logger m_Logger;
 	
 	private NestedWordAutomaton<LETTER, STATE> m_Result;
-	
+    
 	private SccComputation<Vertex<LETTER, STATE>,
 		StronglyConnectedComponent<Vertex<LETTER, STATE>>> m_SccComp;
-    
+
 	private final IUltimateServiceProvider m_Services;
 
 	private final StateFactory<STATE> m_StateFactory;
 
 	private final boolean m_UseSCCs;
-
-	private VertexPmReverseComparator<LETTER, STATE> m_VertexComp;
 	
-	private PriorityQueue<Vertex<LETTER, STATE>> m_WorkingList;
+	private VertexPmReverseComparator<LETTER, STATE> m_VertexComp;
+    
+    private PriorityQueue<Vertex<LETTER, STATE>> m_WorkingList;
     
     public ASimulation(final IUltimateServiceProvider services,
     		final boolean useSCCs, final StateFactory<STATE> stateFactory)
@@ -94,7 +106,7 @@ public abstract class ASimulation<LETTER,STATE> {
 		m_SccComp = null;
     }
     
-    public NestedWordAutomaton<LETTER, STATE> getResult() {
+	public NestedWordAutomaton<LETTER, STATE> getResult() {
 		return m_Result;
 	}
     
@@ -151,17 +163,6 @@ public abstract class ASimulation<LETTER,STATE> {
 				counter++;
 			}
 		return counter;
-	}
-    
-	protected int calculateInfinityOfSCC(final StronglyConnectedComponent<Vertex<LETTER, STATE>> scc) {
-		int localInfinity = 0;
-		for (Vertex<LETTER, STATE> vertex : scc.getNodes()) {
-			if (vertex.getPriority() == 1) {
-				localInfinity++;
-			}
-		}
-		localInfinity++;
-		return localInfinity;
 	}
     
 	protected void createWorkingList() {
@@ -288,7 +289,8 @@ public abstract class ASimulation<LETTER,STATE> {
 		return m_Logger;
 	}
 
-	protected SccComputation<Vertex<LETTER, STATE>, StronglyConnectedComponent<Vertex<LETTER, STATE>>> getSccComp() {
+	protected SccComputation<Vertex<LETTER, STATE>,
+		StronglyConnectedComponent<Vertex<LETTER, STATE>>> getSccComp() {
 		return m_SccComp;
 	}
 
@@ -321,7 +323,8 @@ public abstract class ASimulation<LETTER,STATE> {
 	}
 	
 	protected void setSccComp(
-			final SccComputation<Vertex<LETTER, STATE>, StronglyConnectedComponent<Vertex<LETTER, STATE>>> sccComp) {
+			final SccComputation<Vertex<LETTER, STATE>,
+			StronglyConnectedComponent<Vertex<LETTER, STATE>>> sccComp) {
 		m_SccComp = sccComp;
 	}
 

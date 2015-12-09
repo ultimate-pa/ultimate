@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -38,8 +39,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap3;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap4;
+import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 
 /**
  * Doc comes later.
@@ -82,16 +85,6 @@ public abstract class AGameGraph<LETTER, STATE> {
 		m_GlobalInfinity = 0;
 	}
 	
-	public void clear() {
-		m_BuechiStatesToGraphDuplicatorVertex.clear();
-		m_BuechiStatesToGraphSpoilerVertex.clear();
-		m_Predecessors.clear();
-		m_Successors.clear();
-		m_SpoilerVertices.clear();
-		m_DuplicatorVertices.clear();
-	}
-	
-	// TODO Change visibility down to protected
 	public DuplicatorVertex<LETTER, STATE> getDuplicatorVertex(final STATE q0,
 			final STATE q1, final LETTER a, final boolean bit) {
 		return m_BuechiStatesToGraphDuplicatorVertex.get(q0, q1, a, bit);
@@ -120,8 +113,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	public int getSize() {
 		return m_SpoilerVertices.size() + m_DuplicatorVertices.size();
 	}
-
-	// TODO Change visibility down to protected
+	
 	public SpoilerVertex<LETTER, STATE> getSpoilerVertex(final STATE q0,
 			final STATE q1, final boolean bit) {
 		return m_BuechiStatesToGraphSpoilerVertex.get(q0, q1, bit);
@@ -157,12 +149,79 @@ public abstract class AGameGraph<LETTER, STATE> {
 		return m_Successors.containsKey(vertex);
 	}
 
-	protected void addDuplicatorVertex(final DuplicatorVertex<LETTER, STATE> vertex) {
-		m_DuplicatorVertices.add(vertex);
-		m_BuechiStatesToGraphDuplicatorVertex.put(vertex.getQ0(), vertex.getQ1(),
-				vertex.getLetter(), vertex.isB(), vertex);
+	public void undoChanges(final GameGraphChanges<LETTER, STATE> changes) {
+		if (changes == null) {
+			return;
+		}
+		
+		// Undo edge changes
+		NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>,
+			GameGraphChangeType> changedEdges = changes.getChangedEdges();
+		for (Triple<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>,
+				GameGraphChangeType> changedEdge : changedEdges.entrySet()) {
+			if (changedEdge.getThird().equals(GameGraphChangeType.ADDITION)) {
+				removeEdge(changedEdge.getFirst(), changedEdge.getSecond());
+			} else if (changedEdge.getThird().equals(
+					GameGraphChangeType.REMOVAL)) {
+				addEdge(changedEdge.getFirst(), changedEdge.getSecond());
+			}
+		}
+		
+		// Undo vertex changes
+		HashMap<Vertex<LETTER, STATE>,
+			GameGraphChangeType> changedVertices = changes.getChangedVertices();
+		for (Entry<Vertex<LETTER, STATE>,
+				GameGraphChangeType> changedVertex : changedVertices.entrySet()) {
+			if (changedVertex.getValue().equals(GameGraphChangeType.ADDITION)) {
+				if (changedVertex.getKey().isDuplicatorVertex()) {
+					removeDuplicatorVertex((DuplicatorVertex<LETTER, STATE>)
+							changedVertex.getKey());
+				} else if (changedVertex.getKey().isSpoilerVertex()) {
+					removeSpoilerVertex((SpoilerVertex<LETTER, STATE>)
+							changedVertex.getKey());
+				}
+			} else if (changedVertex.getValue().equals(
+					GameGraphChangeType.REMOVAL)) {
+				if (changedVertex.getKey().isDuplicatorVertex()) {
+					addDuplicatorVertex((DuplicatorVertex<LETTER, STATE>)
+							changedVertex.getKey());
+				} else if (changedVertex.getKey().isSpoilerVertex()) {
+					addSpoilerVertex((SpoilerVertex<LETTER, STATE>)
+							changedVertex.getKey());
+				}
+			}
+		}
+		
+		// Undo vertex value changes
+		HashMap<Vertex<LETTER, STATE>,
+			VertexValueContainer> changedVertexValues =
+				changes.getRememberedVertexValues();
+		for (Entry<Vertex<LETTER, STATE>, VertexValueContainer> changedValues :
+				changedVertexValues.entrySet()) {
+			Vertex<LETTER, STATE> vertex = changedValues.getKey();
+			VertexValueContainer values = changedValues.getValue();
+			// Undo PM
+			if (values.getProgressMeasure() != VertexValueContainer.NO_VALUE) {
+				vertex.setPM(values.getProgressMeasure());
+			}
+			// Undo BEff
+			if (values.getBestNeighborMeasure() != VertexValueContainer.NO_VALUE) {
+				vertex.setBEff(values.getBestNeighborMeasure());
+			}
+			// Undo C
+			if (values.getNeighborCounter() != VertexValueContainer.NO_VALUE) {
+				vertex.setC(values.getNeighborCounter());
+			}
+		}
 	}
-
+	
+	protected void addDuplicatorVertex(
+			final DuplicatorVertex<LETTER, STATE> vertex) {
+		m_DuplicatorVertices.add(vertex);
+		m_BuechiStatesToGraphDuplicatorVertex.put(vertex.getQ0(),
+				vertex.getQ1(), vertex.getLetter(), vertex.isB(), vertex);
+	}
+	
 	protected void addEdge(final Vertex<LETTER, STATE> src,
 			final Vertex<LETTER, STATE> dest) {
 		if (!m_Successors.containsKey(src)) {
@@ -174,11 +233,12 @@ public abstract class AGameGraph<LETTER, STATE> {
 		}
 		m_Predecessors.get(dest).add(src);
 	}
-	
-	protected void addSpoilerVertex(final SpoilerVertex<LETTER, STATE> vertex) {
+
+	protected void addSpoilerVertex(
+			final SpoilerVertex<LETTER, STATE> vertex) {
 		m_SpoilerVertices.add(vertex);
-		m_BuechiStatesToGraphSpoilerVertex.put(vertex.getQ0(), vertex.getQ1(),
-				vertex.isB(), vertex);
+		m_BuechiStatesToGraphSpoilerVertex.put(vertex.getQ0(),
+				vertex.getQ1(), vertex.isB(), vertex);
 	}
 	
 	protected abstract NestedWordAutomaton<LETTER, STATE> generateBuchiAutomatonFromGraph()
@@ -193,7 +253,37 @@ public abstract class AGameGraph<LETTER, STATE> {
 	protected void increaseGlobalInfinity() {
 		m_GlobalInfinity++;
 	}
+	
+	protected void removeDuplicatorVertex(
+			final DuplicatorVertex<LETTER, STATE> vertex) {
+		m_DuplicatorVertices.remove(vertex);
+		m_BuechiStatesToGraphDuplicatorVertex.put(vertex.getQ0(),
+				vertex.getQ1(), vertex.getLetter(), vertex.isB(), null);
+	}
+	
+	protected void removeEdge(final Vertex<LETTER, STATE> src,
+			final Vertex<LETTER, STATE> dest) {
+		if (m_Successors.get(src) != null) {
+			m_Successors.get(src).remove(dest);
+			if (m_Successors.get(src).size() == 0) {
+				m_Successors.remove(src);
+			}
+		}
+		if (m_Predecessors.get(dest) != null) {
+			m_Predecessors.get(dest).remove(src);
+			if (m_Predecessors.get(dest).size() == 0) {
+				m_Predecessors.remove(dest);
+			}
+		}
+	}
 
+	protected void removeSpoilerVertex(
+			final SpoilerVertex<LETTER, STATE> vertex) {
+		m_SpoilerVertices.remove(vertex);
+		m_BuechiStatesToGraphSpoilerVertex.put(vertex.getQ0(),
+				vertex.getQ1(), vertex.isB(), null);
+	}
+	
 	protected void setGlobalInfinity(final int globalInfinity) {
 		m_GlobalInfinity = globalInfinity;
 	}
