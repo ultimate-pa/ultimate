@@ -1,3 +1,4 @@
+//#Safe
 // Example where iZ3 returns an interpolant that contains the
 //     array-ext
 // symbol.
