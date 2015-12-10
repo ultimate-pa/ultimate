@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitVectorAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -176,7 +177,17 @@ public class Term2Expression implements Serializable {
 		} else if (symb.getName().equals("ite")) {
 				return new IfThenElseExpression(null, type, params[0], params[1], params[2]); 
 		} else if (symb.isIntern()) {
-			if (symb.getParameterSorts().length == 1) {
+			if (symb.getParameterSorts().length > 0 && BitvectorUtils.isBitvectorSort(symb.getParameterSorts()[0])
+					&& !symb.getName().equals("=") && !symb.getName().equals("distinct")) {
+				if (symb.getName().equals("extract")) {
+					return translateBitvectorAccess(type, term);
+				} else if (m_Boogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
+					return translateWithSymbolTable(symb, type, termParams); 
+				} else {
+					throw new UnsupportedOperationException("translation of " + symb + 
+							" not yet implemented, please contact Matthias");
+				}
+			} else if (symb.getParameterSorts().length == 1) {
 				if (symb.getName().equals("not")) {
 					Expression param = translate(term.getParameters()[0]);
 					return new UnaryExpression(null, type, de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator.LOGICNEG,
@@ -210,16 +221,34 @@ public class Term2Expression implements Serializable {
 				}
 			}
 		} else if (m_Boogie2SmtSymbolTable.getSmtFunction2BoogieFunction().containsKey(symb.getName())) {
-			String identifier = m_Boogie2SmtSymbolTable.getSmtFunction2BoogieFunction().get(symb.getName());
-			Expression[] arguments = new Expression[termParams.length];
-			for (int i=0; i<termParams.length; i++) {
-				arguments[i] = translate(termParams[i]);
-			}
-			return new FunctionApplication(null,type, identifier, arguments); 
+			return translateWithSymbolTable(symb, type, termParams); 
 		} else {
 			throw new UnsupportedOperationException("translation of " + symb + 
 					" not yet implemented, please contact Matthias");
 		}
+	}
+
+	private Expression translateBitvectorAccess(IType type, ApplicationTerm term) {
+		assert term.getFunction().getName().equals("extract") : "no extract";
+		assert term.getParameters().length == 1;
+		assert term.getFunction().getIndices().length == 2;
+		Expression bitvector = translate(term.getParameters()[0]);
+		int start = term.getFunction().getIndices()[1].intValueExact();
+		int end = term.getFunction().getIndices()[0].intValueExact();
+		return new BitVectorAccessExpression(null, type, bitvector, end, start);
+	}
+
+	/**
+	 * Use symbol table to translate a SMT function application into a
+	 * Boogie function application.
+	 */
+	private Expression translateWithSymbolTable(FunctionSymbol symb, IType type, Term[] termParams) {
+		String identifier = m_Boogie2SmtSymbolTable.getSmtFunction2BoogieFunction().get(symb.getName());
+		Expression[] arguments = new Expression[termParams.length];
+		for (int i=0; i<termParams.length; i++) {
+			arguments[i] = translate(termParams[i]);
+		}
+		return new FunctionApplication(null,type, identifier, arguments);
 	}
 	
 	/**
