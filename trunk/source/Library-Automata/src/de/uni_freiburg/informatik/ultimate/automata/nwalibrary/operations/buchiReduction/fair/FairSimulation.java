@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchi
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -44,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.util.scc.DefaultStronglyConnectedComponentFactory;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation;
@@ -512,8 +514,11 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 		
 		// Merge states
 		m_AttemptingChanges = true;
+		List<Pair<STATE, STATE>> statesToMerge =
+				new LinkedList<Pair<STATE, STATE>>();
 		Set<SpoilerVertex<LETTER, STATE>> mergeCandidates = mergeCandidates();
-		Set<SpoilerVertex<LETTER, STATE>> noEdgeCandidates = new HashSet<SpoilerVertex<LETTER, STATE>>();
+		Set<SpoilerVertex<LETTER, STATE>> noEdgeCandidates =
+				new HashSet<SpoilerVertex<LETTER, STATE>>();
 		for (SpoilerVertex<LETTER, STATE> mergeCandidate : mergeCandidates) {
 			FairGameGraphChanges<LETTER, STATE> changes =
 					attemptMerge(mergeCandidate.getQ0(), mergeCandidate.getQ1());
@@ -531,6 +536,9 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 //				System.out.println(this);
 			} else {
 				System.out.println("Successfully merged: " + mergeCandidate);
+				statesToMerge.add(new Pair<STATE, STATE>(mergeCandidate.getQ0(),
+						mergeCandidate.getQ1()));
+				
 				noEdgeCandidates.add(mergeCandidate);
 				SpoilerVertex<LETTER, STATE> mirroredCandidate =
 						m_Game.getSpoilerVertex(mergeCandidate.getQ1(), mergeCandidate.getQ0(), false);
@@ -541,6 +549,8 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 		}
 		
 		// Remove redundant edges
+		List<Triple<STATE, LETTER, STATE>> edgesToRemove =
+				new LinkedList<Triple<STATE, LETTER, STATE>>();
 		NestedMap2<STATE, LETTER, STATE> edgeCandidates = edgeCandidates(noEdgeCandidates);
 		for (Triple<STATE, LETTER, STATE> edgeCandidate
 				: edgeCandidates.entrySet()) {
@@ -561,6 +571,9 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 //				System.out.println(this);
 			} else {
 				System.out.println("Successfully removed: " + edgeCandidate);
+				edgesToRemove.add(new Triple<STATE, LETTER, STATE>(
+						edgeCandidate.getFirst(), edgeCandidate.getSecond(),
+						edgeCandidate.getThird()));
 			}
 		}
 		
@@ -568,7 +581,8 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 //		System.out.println("After everything: ");
 //		System.out.println(this);
 		
-		// TODO Assign the reduced buechi
+		m_Game.setStatesToMerge(statesToMerge);
+		m_Game.setEdgesToRemove(edgesToRemove);
 		setResult(m_Game.generateBuchiAutomatonFromGraph());
 
 		long duration = System.currentTimeMillis() - startTime;

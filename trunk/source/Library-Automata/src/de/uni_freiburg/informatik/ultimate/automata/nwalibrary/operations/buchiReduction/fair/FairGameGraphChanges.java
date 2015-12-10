@@ -30,9 +30,9 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.GameGraphChangeType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.GameGraphChanges;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.VertexValueContainer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.VertexValueContainer;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap3;
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 

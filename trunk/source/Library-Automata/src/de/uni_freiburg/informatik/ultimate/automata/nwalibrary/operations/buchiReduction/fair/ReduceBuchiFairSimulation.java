@@ -40,9 +40,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.core.services.ToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
@@ -124,32 +121,32 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperatio
 //		buechi.addInternalTransition("q1", "b", "q1");
 		
 		// Big example from cav02
-//		buechi.addState(true, false, "q1");
-//		buechi.addState(false, false, "q2");
-//		buechi.addState(false, true, "q3");
-//		buechi.addState(false, true, "q4");
-//		buechi.addState(false, false, "q5");
-//		buechi.addState(false, true, "q6");
-//		buechi.addState(false, false, "q7");
-//		buechi.addState(false, false, "q8");
-//		buechi.addState(false, false, "q9");
-//		buechi.addState(false, true, "q10");
-//		buechi.addInternalTransition("q1", "a", "q2");
-//		buechi.addInternalTransition("q1", "a", "q3");
-//		buechi.addInternalTransition("q2", "a", "q6");
-//		buechi.addInternalTransition("q2", "b", "q4");
-//		buechi.addInternalTransition("q2", "b", "q7");
-//		buechi.addInternalTransition("q4", "a", "q2");
-//		buechi.addInternalTransition("q6", "a", "q6");
-//		buechi.addInternalTransition("q3", "b", "q5");
-//		buechi.addInternalTransition("q3", "b", "q7");
-//		buechi.addInternalTransition("q5", "a", "q3");
-//		buechi.addInternalTransition("q7", "b", "q8");
-//		buechi.addInternalTransition("q8", "a", "q9");
-//		buechi.addInternalTransition("q8", "b", "q10");
-//		buechi.addInternalTransition("q9", "a", "q9");
-//		buechi.addInternalTransition("q9", "b", "q10");
-//		buechi.addInternalTransition("q10", "b", "q10");
+		buechi.addState(true, false, "q1");
+		buechi.addState(false, false, "q2");
+		buechi.addState(false, true, "q3");
+		buechi.addState(false, true, "q4");
+		buechi.addState(false, false, "q5");
+		buechi.addState(false, true, "q6");
+		buechi.addState(false, false, "q7");
+		buechi.addState(false, false, "q8");
+		buechi.addState(false, false, "q9");
+		buechi.addState(false, true, "q10");
+		buechi.addInternalTransition("q1", "a", "q2");
+		buechi.addInternalTransition("q1", "a", "q3");
+		buechi.addInternalTransition("q2", "a", "q6");
+		buechi.addInternalTransition("q2", "b", "q4");
+		buechi.addInternalTransition("q2", "b", "q7");
+		buechi.addInternalTransition("q4", "a", "q2");
+		buechi.addInternalTransition("q6", "a", "q6");
+		buechi.addInternalTransition("q3", "b", "q5");
+		buechi.addInternalTransition("q3", "b", "q7");
+		buechi.addInternalTransition("q5", "a", "q3");
+		buechi.addInternalTransition("q7", "b", "q8");
+		buechi.addInternalTransition("q8", "a", "q9");
+		buechi.addInternalTransition("q8", "b", "q10");
+		buechi.addInternalTransition("q9", "a", "q9");
+		buechi.addInternalTransition("q9", "b", "q10");
+		buechi.addInternalTransition("q10", "b", "q10");
 		
 		// Debug test automata 1
 //		buechi.addState(true, false, "q0");
@@ -246,6 +243,7 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperatio
 //		buechi.addInternalTransition("q0", "a", "q8");
 		
 		// Comparing test 'SCC vs. nonSCC'
+		/*
 		int n = 50;
 		int k = 10;
 		int f = 20;
@@ -260,7 +258,7 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperatio
 			
 //			System.out.println("Start calculating random DFA (n=" + n + ", k=" + k + ", f=" + f + ")...");
 //			buechi = new GetRandomNwa(service, k, n, 0.2, 0, 0, 0.2).getResult();
-//			buechi = new GetRandomDfa(service, n, k, f, 5, true, false, false, false).getResult();
+			buechi = new GetRandomDfa(service, n, k, f, 5, true, false, false, false).getResult();
 //			System.out.println("End calculating random DFA.");
 //			System.out.println();
 			
@@ -334,7 +332,10 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperatio
 			} else {
 				System.out.println("End comparing results, no error occurred.");
 			}
+			
+			System.out.println(simulationSCC);
 		}
+		*/
 		
 		// Single automata comparison
 		/*
@@ -350,6 +351,18 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperatio
 		// Merge tests
 //		FairSimulation<String, String> simulation = new FairSimulation<String, String>(service, buechi, true, snf);
 		
+		// Operation tests
+		ReduceBuchiFairSimulation<String, String> operation =
+				new ReduceBuchiFairSimulation<String, String>(service, snf, buechi);
+		try {
+			if (operation.checkResult(snf)) {
+				System.out.println("Operation is correct.");
+			} else {
+				System.out.println("Operation is NOT correct.");
+			}
+		} catch (AutomataLibraryException e) {
+			e.printStackTrace();
+		}
 		
 		System.out.println("Program terminated.");
 	}

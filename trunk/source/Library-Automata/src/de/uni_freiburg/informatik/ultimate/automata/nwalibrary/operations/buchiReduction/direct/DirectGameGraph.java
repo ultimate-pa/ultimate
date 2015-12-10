@@ -70,7 +70,7 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
         for (STATE state1 : similarStates.getDomain()) {
         	for (STATE state2 : similarStates.getImage(state1)) {
         		if (similarStates.containsPair(state2, state1)) {
-        			uf.union(state1, state2);	
+        			uf.union(state1, state2);
         		}
         	}
         }

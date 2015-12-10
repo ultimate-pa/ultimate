@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices;
 
 /**
  * Container for vertex values. Holds relevant
