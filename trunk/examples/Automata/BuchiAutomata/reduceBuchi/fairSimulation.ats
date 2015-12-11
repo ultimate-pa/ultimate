@@ -5,9 +5,9 @@
 
 assert(!isEmpty(a));
 //Before
-print(a);
+//print(a);
 //After
-//print(reduceBuchiFairSimulation(a));
+print(reduceBuchiFairSimulation(a));
 
 //Use a random automaton
 //print(reduceBuchiFairSimulation(removeDeadEnds(getRandomDfa(10, 2, 5))));
@@ -74,7 +74,7 @@ NestedWordAutomaton a = (
 */
 
 // Big example from cav02
-/*
+
 NestedWordAutomaton a = (
   callAlphabet = { },
   internalAlphabet = {a b},
@@ -103,9 +103,9 @@ NestedWordAutomaton a = (
   }, 
   returnTransitions = {}
 );
-*/
-// Debug test automata
 
+// Debug test automata
+/*
 NestedWordAutomaton a = (
 	callAlphabet = {},
 	internalAlphabet = {"a1" "a0" },
@@ -130,3 +130,4 @@ NestedWordAutomaton a = (
 	returnTransitions = {
 	}
 );
+*/

@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2009-2015 University of Freiburg
+ * 
+ * This file is part of the ULTIMATE Automata Library.
+ * 
+ * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE Automata Library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
+ * containing parts covered by the terms of the Eclipse Public License, the 
+ * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.direct;
 
 import java.util.HashMap;
@@ -56,7 +82,7 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
     	for (STATE state : m_Buechi.getStates()) {
     		uf.makeEquivalenceClass(state);
     	}
-    	HashRelation<STATE, STATE> similarStates = new HashRelation<STATE, STATE>();
+    	HashRelation<STATE, STATE> similarStates = new HashRelation<>();
         for (SpoilerVertex<LETTER,STATE> v : getSpoilerVertices()) {
             // all the states we need are in V1...
             if (v.getPM(null, getGlobalInfinity()) < getGlobalInfinity()) {
@@ -70,7 +96,7 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
         for (STATE state1 : similarStates.getDomain()) {
         	for (STATE state2 : similarStates.getImage(state1)) {
         		if (similarStates.containsPair(state2, state1)) {
-        			uf.union(state1, state2);	
+        			uf.union(state1, state2);
         		}
         	}
         }
@@ -82,14 +108,14 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
         }
 
         // merge states
-        NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<LETTER,STATE>(
+        NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<>(
         		getServiceProvider(), m_Buechi.getInternalAlphabet(), null, null, m_StateFactory);
-        Set<STATE> representativesOfInitials = new HashSet<STATE>();
+        Set<STATE> representativesOfInitials = new HashSet<>();
         for (STATE initial : m_Buechi.getInitialStates()) {
         	representativesOfInitials.add(uf.find(initial));
         }
         
-        Map<STATE,STATE> input2result = new HashMap<STATE,STATE>(m_Buechi.size());
+        Map<STATE,STATE> input2result = new HashMap<>(m_Buechi.size());
         for (STATE representative : uf.getAllRepresentatives()) {
         	boolean isInitial = representativesOfInitials.contains(representative);
         	boolean isFinal = m_Buechi.isFinal(representative);
@@ -122,7 +148,7 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
         // Calculate v1 [paper ref 10]
         for (STATE q0 : m_Buechi.getStates()) {
             for (STATE q1 : m_Buechi.getStates()) {
-                SpoilerVertex<LETTER,STATE> v1e = new SpoilerVertex<LETTER, STATE>(
+                SpoilerVertex<LETTER,STATE> v1e = new SpoilerVertex<>(
                         0, false, q0, q1);
                 addSpoilerVertex(v1e);
             }
@@ -136,11 +162,11 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
         // Calculate v0 and edges [paper ref 10, 11, 12]
         for (STATE q0 : m_Buechi.getStates()) {
             for (STATE q1 : m_Buechi.getStates()) {
-            	Set<LETTER> relevantLetters = new HashSet<LETTER>();
+            	Set<LETTER> relevantLetters = new HashSet<>();
             	relevantLetters.addAll(m_Buechi.lettersInternalIncoming(q0));
             	relevantLetters.addAll(m_Buechi.lettersInternal(q1));
                 for (LETTER s : relevantLetters) {
-                    DuplicatorVertex<LETTER,STATE> v0e = new DuplicatorVertex<LETTER, STATE>(
+                    DuplicatorVertex<LETTER,STATE> v0e = new DuplicatorVertex<>(
                             0, false, q0, q1, s);
                     addDuplicatorVertex(v0e);
                     // V1 -> V0 edges [paper ref 11]

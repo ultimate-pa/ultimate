@@ -41,13 +41,13 @@ import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorPro
  * @param <STATE>
  */
 public final class GameGraphSuccessorProvider<LETTER, STATE> implements ISuccessorProvider<Vertex<LETTER, STATE>> {
-	
+
 	private final AGameGraph<LETTER, STATE> m_Graph;
-	
+
 	public GameGraphSuccessorProvider(final AGameGraph<LETTER, STATE> graph) {
 		m_Graph = graph;
 	}
-	
+
 	@Override
 	public Iterator<Vertex<LETTER, STATE>> getSuccessors(final Vertex<LETTER, STATE> vertex) {
 		if (m_Graph.hasSuccessors(vertex)) {

@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchi
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -44,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.util.scc.DefaultStronglyConnectedComponentFactory;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation;
@@ -135,13 +137,13 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 		
 		m_Buechi = buechi;
 		m_pokedFromNeighborSCC = null;
-		m_NotSimulatingNonTrivialVertices = new HashSet<SpoilerVertex<LETTER, STATE>>();
+		m_NotSimulatingNonTrivialVertices = new HashSet<>();
 		m_CurrentChanges = null;
 		
 		// XXX Remove debugging information
 		if (useDeepDebugPrints) System.out.println("Start constructing game graph...");
 		
-		m_Game = new FairGameGraph<LETTER, STATE>(services, buechi);
+		m_Game = new FairGameGraph<>(services, buechi);
 		
 		// XXX Remove debugging information
 		if (useDeepDebugPrints) System.out.println("End constructing game graph.");
@@ -202,30 +204,30 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 		result.append(lineSeparator + "\t},");
 		
 		// Best Neighbor Measure
-//		result.append(lineSeparator + "\tbest neighbor measure = {");
-//		for (SpoilerVertex<LETTER, STATE> vertex : m_Game.getSpoilerVertices()) {
-//			result.append(lineSeparator + "\t\t<(" + vertex.getQ0()
-//				+ ", " + vertex.getQ1() + "), bnm:" + vertex.getBEff() + ">");
-//		}
-//		for (DuplicatorVertex<LETTER, STATE> vertex : m_Game.getDuplicatorVertices()) {
-//			result.append(lineSeparator + "\t\t<(" + vertex.getQ0()
-//				+ ", " + vertex.getQ1() + ", " + vertex.getLetter()
-//				+ "), bnm:" + vertex.getBEff() + ">");
-//		}
-//		result.append(lineSeparator + "\t},");
+		result.append(lineSeparator + "\tbest neighbor measure = {");
+		for (SpoilerVertex<LETTER, STATE> vertex : m_Game.getSpoilerVertices()) {
+			result.append(lineSeparator + "\t\t<(" + vertex.getQ0()
+				+ ", " + vertex.getQ1() + "), bnm:" + vertex.getBEff() + ">");
+		}
+		for (DuplicatorVertex<LETTER, STATE> vertex : m_Game.getDuplicatorVertices()) {
+			result.append(lineSeparator + "\t\t<(" + vertex.getQ0()
+				+ ", " + vertex.getQ1() + ", " + vertex.getLetter()
+				+ "), bnm:" + vertex.getBEff() + ">");
+		}
+		result.append(lineSeparator + "\t},");
 		
 		// Neighbor counter
-//		result.append(lineSeparator + "\tneighbor counter = {");
-//		for (SpoilerVertex<LETTER, STATE> vertex : m_Game.getSpoilerVertices()) {
-//			result.append(lineSeparator + "\t\t<(" + vertex.getQ0()
-//				+ ", " + vertex.getQ1() + "), nc:" + vertex.getC() + ">");
-//		}
-//		for (DuplicatorVertex<LETTER, STATE> vertex : m_Game.getDuplicatorVertices()) {
-//			result.append(lineSeparator + "\t\t<(" + vertex.getQ0()
-//				+ ", " + vertex.getQ1() + ", " + vertex.getLetter()
-//				+ "), nc:" + vertex.getC() + ">");
-//		}
-//		result.append(lineSeparator + "\t},");
+		result.append(lineSeparator + "\tneighbor counter = {");
+		for (SpoilerVertex<LETTER, STATE> vertex : m_Game.getSpoilerVertices()) {
+			result.append(lineSeparator + "\t\t<(" + vertex.getQ0()
+				+ ", " + vertex.getQ1() + "), nc:" + vertex.getC() + ">");
+		}
+		for (DuplicatorVertex<LETTER, STATE> vertex : m_Game.getDuplicatorVertices()) {
+			result.append(lineSeparator + "\t\t<(" + vertex.getQ0()
+				+ ", " + vertex.getQ1() + ", " + vertex.getLetter()
+				+ "), nc:" + vertex.getC() + ">");
+		}
+		result.append(lineSeparator + "\t},");
 		
 		// Footer
 		result.append(lineSeparator + ");");
@@ -266,11 +268,11 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 			if (useDebugPrints) System.out.println(">Calculating SCCs...");
 			
 			startTimeSCCCalc = System.currentTimeMillis();
-			m_pokedFromNeighborSCC = new HashSet<Vertex<LETTER, STATE>>();
+			m_pokedFromNeighborSCC = new HashSet<>();
 			DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>> sccFactory =
-        			new DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>>();
+        			new DefaultStronglyConnectedComponentFactory<>();
         	GameGraphSuccessorProvider<LETTER, STATE> succProvider =
-        			new GameGraphSuccessorProvider<LETTER, STATE>(m_Game);
+        			new GameGraphSuccessorProvider<>(m_Game);
 			setSccComp(new SccComputation<Vertex<LETTER, STATE>, StronglyConnectedComponent<Vertex<LETTER, STATE>>>(getLogger(), succProvider,
 					sccFactory, m_Game.getSize(), m_Game.getVertices()));
 			durationSCCCalc = System.currentTimeMillis() - startTimeSCCCalc;
@@ -329,7 +331,7 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 	private NestedMap2<STATE, LETTER, STATE> edgeCandidates(
 			final Set<SpoilerVertex<LETTER, STATE>> exclusiveSet) {
 		NestedMap2<STATE, LETTER, STATE> edgeCandidates =
-				new NestedMap2<STATE, LETTER, STATE>();
+				new NestedMap2<>();
 		Set<SpoilerVertex<LETTER, STATE>> spoilerVertices =
 				m_Game.getSpoilerVertices();
 		for (SpoilerVertex<LETTER, STATE> vertex : spoilerVertices) {
@@ -346,18 +348,11 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 				STATE simulatedState = vertex.getQ0();
 				for (IncomingInternalTransition<LETTER, STATE> predTrans
 						: m_Buechi.internalPredecessors(simulatingState)) {
-					boolean transCovered = false;
-					for (IncomingInternalTransition<LETTER, STATE> coveringTrans
-							: m_Buechi.internalPredecessors(
-									predTrans.getLetter(), simulatedState)) {
-						if (coveringTrans.getPred().equals(predTrans.getPred())) {
-							transCovered = true;
-							break;
-						}
-					}
-					if (transCovered) {
-						edgeCandidates.put(predTrans.getPred(),
-								predTrans.getLetter(), simulatedState);
+					STATE src = predTrans.getPred();
+					LETTER a = predTrans.getLetter();
+					STATE dest = simulatedState;
+					if (m_Game.hasBuechiEdge(new Triple<>(src, a, dest))) {
+						edgeCandidates.put(src, a, dest);
 					}
 				}
 				
@@ -430,10 +425,10 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 	}
 	
 	private Set<SpoilerVertex<LETTER, STATE>> mergeCandidates() {
-		Set<SpoilerVertex<LETTER, STATE>> mergeCandidates = new HashSet<SpoilerVertex<LETTER, STATE>>();
+		Set<SpoilerVertex<LETTER, STATE>> mergeCandidates = new HashSet<>();
 		Set<SpoilerVertex<LETTER, STATE>> spoilerVertices =
 				m_Game.getSpoilerVertices();
-		Set<SpoilerVertex<LETTER, STATE>> workedPairs = new HashSet<SpoilerVertex<LETTER, STATE>>();
+		Set<SpoilerVertex<LETTER, STATE>> workedPairs = new HashSet<>();
 		for (SpoilerVertex<LETTER, STATE> vertex : spoilerVertices) {
 			if (vertex.getPM(null, m_GlobalInfinity) < m_GlobalInfinity) {
 				// Skip vertex if it is a trivial simulation
@@ -512,8 +507,11 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 		
 		// Merge states
 		m_AttemptingChanges = true;
+		List<Pair<STATE, STATE>> statesToMerge =
+				new LinkedList<>();
 		Set<SpoilerVertex<LETTER, STATE>> mergeCandidates = mergeCandidates();
-		Set<SpoilerVertex<LETTER, STATE>> noEdgeCandidates = new HashSet<SpoilerVertex<LETTER, STATE>>();
+		Set<SpoilerVertex<LETTER, STATE>> noEdgeCandidates =
+				new HashSet<>();
 		for (SpoilerVertex<LETTER, STATE> mergeCandidate : mergeCandidates) {
 			FairGameGraphChanges<LETTER, STATE> changes =
 					attemptMerge(mergeCandidate.getQ0(), mergeCandidate.getQ1());
@@ -531,6 +529,9 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 //				System.out.println(this);
 			} else {
 				System.out.println("Successfully merged: " + mergeCandidate);
+				statesToMerge.add(new Pair<>(mergeCandidate.getQ0(),
+						mergeCandidate.getQ1()));
+				
 				noEdgeCandidates.add(mergeCandidate);
 				SpoilerVertex<LETTER, STATE> mirroredCandidate =
 						m_Game.getSpoilerVertex(mergeCandidate.getQ1(), mergeCandidate.getQ0(), false);
@@ -541,6 +542,8 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 		}
 		
 		// Remove redundant edges
+		List<Triple<STATE, LETTER, STATE>> edgesToRemove =
+				new LinkedList<>();
 		NestedMap2<STATE, LETTER, STATE> edgeCandidates = edgeCandidates(noEdgeCandidates);
 		for (Triple<STATE, LETTER, STATE> edgeCandidate
 				: edgeCandidates.entrySet()) {
@@ -561,6 +564,9 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 //				System.out.println(this);
 			} else {
 				System.out.println("Successfully removed: " + edgeCandidate);
+				edgesToRemove.add(new Triple<>(
+						edgeCandidate.getFirst(), edgeCandidate.getSecond(),
+						edgeCandidate.getThird()));
 			}
 		}
 		
@@ -568,7 +574,8 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 //		System.out.println("After everything: ");
 //		System.out.println(this);
 		
-		// TODO Assign the reduced buechi
+		m_Game.setStatesToMerge(statesToMerge);
+		m_Game.setEdgesToRemove(edgesToRemove);
 		setResult(m_Game.generateBuchiAutomatonFromGraph());
 
 		long duration = System.currentTimeMillis() - startTime;

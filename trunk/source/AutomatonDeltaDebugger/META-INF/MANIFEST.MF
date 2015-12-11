@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Automaton Delta Debugger
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger;singleton:=true
+Bundle-Version: 0.0.1
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.Activator
+Require-Bundle: UltimateCore,
+ Library-log4j,
+ de.uni_freiburg.informatik.ultimate.automata,
+ Library-UltimateUtil,
+ AutomataScriptParser,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-ActivationPolicy: lazy

@@ -67,7 +67,7 @@ public final class DirectSimulation<LETTER,STATE> extends ASimulation<LETTER, ST
     				throws OperationCanceledException {
     	super(services, useSCCs, stateFactory);
     	
-    	m_Game = new DirectGameGraph<LETTER, STATE>(services, ba, stateFactory);
+    	m_Game = new DirectGameGraph<>(services, ba, stateFactory);
     	doSimulation();
     }
     

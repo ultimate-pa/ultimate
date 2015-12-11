@@ -2,56 +2,57 @@
  * Copyright (C) 2015 Christian Schilling <schillic@informatik.uni-freiburg.de>
  * Copyright (C) 2009-2015 University of Freiburg
  * 
- * This file is part of the ULTIMATE Automata Library.
+ * This file is part of the ULTIMATE Automaton Delta Debugger.
  * 
- * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published
- * by the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * The ULTIMATE Automaton Delta Debugger is free software: you can redistribute
+ * it and/or modify it under the terms of the GNU Lesser General Public License
+ * as published by the Free Software Foundation, either version 3 of the
+ * License, or (at your option) any later version.
  * 
- * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ * The ULTIMATE Automaton Delta Debugger is distributed in the hope that it will
+ * be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
+ * General Public License for more details.
  * 
  * You should have received a copy of the GNU Lesser General Public License
- * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
+ * along with the ULTIMATE Automaton Delta Debugger. If not, see
+ * <http://www.gnu.org/licenses/>.
  * 
- * Additional permission under GNU GPL version 3 section 7:
- * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
- * to convey the resulting work.
+ * Additional permission under GNU GPL version 3 section 7: If you modify the
+ * ULTIMATE Automaton Delta Debugger, or any covered work, by linking or
+ * combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automaton Delta Debugger grant you additional
+ * permission to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.deltaDebug;
+package de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.factories;
 
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.utils.ELetterType;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.utils.TypedLetter;
+import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.utils.TypedTransition;
 
 /**
  * Factory for {@link INestedWordAutomaton} objects.
  * 
- * NOTE: The automaton field is not updated during the shrinking process.
- * Use it with caution.
+ * NOTE: The automaton field is not updated during the shrinking process. Use it
+ * with caution.
  * 
  * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
  */
 public abstract class AAutomatonFactory<LETTER, STATE> {
-	final StateFactory<STATE> m_stateFactory;
-	final INestedWordAutomaton<LETTER, STATE> m_automaton;
+	protected final INestedWordAutomaton<LETTER, STATE> mAutomaton;
 	
-	public AAutomatonFactory(final StateFactory<STATE> stateFactory,
+	public AAutomatonFactory(
 			final INestedWordAutomaton<LETTER, STATE> automaton) {
-		this.m_stateFactory = stateFactory;
-		this.m_automaton = automaton;
+		this.mAutomaton = automaton;
 	}
 	
 	/**
@@ -71,16 +72,16 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 			Set<LETTER> internalAlphabet, Set<LETTER> callAlphabet,
 			Set<LETTER> returnAlphabet) {
 		if (internalAlphabet == null) {
-			internalAlphabet = m_automaton.getAlphabet();
+			internalAlphabet = mAutomaton.getAlphabet();
 		}
 		if (callAlphabet == null) {
-			callAlphabet = m_automaton.getCallAlphabet();
+			callAlphabet = mAutomaton.getCallAlphabet();
 		}
 		if (returnAlphabet == null) {
-			returnAlphabet = m_automaton.getReturnAlphabet();
+			returnAlphabet = mAutomaton.getReturnAlphabet();
 		}
-		return createWithAlphabets(
-				internalAlphabet, callAlphabet, returnAlphabet);
+		return createWithAlphabets(internalAlphabet, callAlphabet,
+				returnAlphabet);
 	}
 	
 	/**
@@ -92,15 +93,30 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 	protected abstract INestedWordAutomaton<LETTER, STATE> createWithAlphabets(
 			final Set<LETTER> internalAlphabet, final Set<LETTER> callAlphabet,
 			final Set<LETTER> returnAlphabet);
+			
+	/**
+	 * This method assumes that the passed state is present of the original
+	 * automaton.
+	 * 
+	 * @param automaton automaton
+	 * @param state new state to add
+	 */
+	public void addState(final INestedWordAutomaton<LETTER, STATE> automaton,
+			final STATE state) {
+		addState(automaton, state, mAutomaton.isInitial(state),
+				mAutomaton.isFinal(state));
+	}
 	
 	/**
 	 * @param automaton automaton
 	 * @param state new state to add
+	 * @param isInitial true iff state is initial
+	 * @param isFinal true iff state is final
 	 */
 	public abstract void addState(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
-			final STATE state);
-	
+			final STATE state, final boolean isInitial, final boolean isFinal);
+			
 	/**
 	 * @param automaton automaton
 	 * @param pred predecessor state
@@ -110,7 +126,7 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 	public abstract void addInternalTransition(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final STATE pred, final LETTER letter, final STATE succ);
-	
+			
 	/**
 	 * @param automaton automaton
 	 * @param pred predecessor state
@@ -120,7 +136,7 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 	public abstract void addCallTransition(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final STATE pred, final LETTER letter, final STATE succ);
-	
+			
 	/**
 	 * @param automaton automaton
 	 * @param pred linear predecessor state
@@ -132,13 +148,12 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final STATE pred, final STATE hier, final LETTER letter,
 			final STATE succ);
-	
+			
 	/**
 	 * @param automaton automaton
 	 * @param states new states to add
 	 */
-	public void addStates(
-			final INestedWordAutomaton<LETTER, STATE> automaton,
+	public void addStates(final INestedWordAutomaton<LETTER, STATE> automaton,
 			final Collection<STATE> states) {
 		for (final STATE state : states) {
 			addState(automaton, state);
@@ -153,10 +168,9 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final Collection<TypedTransition<LETTER, STATE>> transitions) {
 		for (final TypedTransition<LETTER, STATE> trans : transitions) {
-			assert(trans.m_letter.m_type == ELetterType.Internal) :
-				"Wrong transition type.";
-			addInternalTransition(automaton, trans.m_pred,
-					trans.m_letter.m_letter, trans.m_succ);
+			assert (trans.mLetter.mType == ELetterType.Internal) : "Wrong transition type.";
+			addInternalTransition(automaton, trans.mPred, trans.mLetter.mLetter,
+					trans.mSucc);
 		}
 	}
 	
@@ -168,10 +182,9 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final Collection<TypedTransition<LETTER, STATE>> transitions) {
 		for (final TypedTransition<LETTER, STATE> trans : transitions) {
-			assert(trans.m_letter.m_type == ELetterType.Call) :
-				"Wrong transition type.";
-			addCallTransition(automaton, trans.m_pred,
-					trans.m_letter.m_letter, trans.m_succ);
+			assert (trans.mLetter.mType == ELetterType.Call) : "Wrong transition type.";
+			addCallTransition(automaton, trans.mPred, trans.mLetter.mLetter,
+					trans.mSucc);
 		}
 	}
 	
@@ -183,10 +196,9 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final Collection<TypedTransition<LETTER, STATE>> transitions) {
 		for (final TypedTransition<LETTER, STATE> trans : transitions) {
-			assert(trans.m_letter.m_type == ELetterType.Return) :
-				"Wrong transition type.";
-			addReturnTransition(automaton, trans.m_pred,
-					trans.m_hier, trans.m_letter.m_letter, trans.m_succ);
+			assert (trans.mLetter.mType == ELetterType.Return) : "Wrong transition type.";
+			addReturnTransition(automaton, trans.mPred, trans.mHier,
+					trans.mLetter.mLetter, trans.mSucc);
 		}
 	}
 	
@@ -199,12 +211,11 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 		final Set<TypedTransition<LETTER, STATE>> transitions =
 				new HashSet<TypedTransition<LETTER, STATE>>();
 		for (final STATE state : automaton.getStates()) {
-			for (final OutgoingInternalTransition<LETTER, STATE> trans :
-					automaton.internalSuccessors(state)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> trans : automaton
+					.internalSuccessors(state)) {
 				transitions.add(new TypedTransition<LETTER, STATE>(state,
-						trans.getSucc(), null,
-						new TypedLetter<LETTER>(trans.getLetter(),
-								ELetterType.Internal)));
+						trans.getSucc(), null, new TypedLetter<LETTER>(
+								trans.getLetter(), ELetterType.Internal)));
 			}
 		}
 		return transitions;
@@ -219,12 +230,11 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 		final Set<TypedTransition<LETTER, STATE>> transitions =
 				new HashSet<TypedTransition<LETTER, STATE>>();
 		for (final STATE state : automaton.getStates()) {
-			for (final OutgoingCallTransition<LETTER, STATE> trans :
-					automaton.callSuccessors(state)) {
+			for (final OutgoingCallTransition<LETTER, STATE> trans : automaton
+					.callSuccessors(state)) {
 				transitions.add(new TypedTransition<LETTER, STATE>(state,
-						trans.getSucc(), null,
-						new TypedLetter<LETTER>(trans.getLetter(),
-								ELetterType.Call)));
+						trans.getSucc(), null, new TypedLetter<LETTER>(
+								trans.getLetter(), ELetterType.Call)));
 			}
 		}
 		return transitions;
@@ -239,8 +249,8 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 		final Set<TypedTransition<LETTER, STATE>> transitions =
 				new HashSet<TypedTransition<LETTER, STATE>>();
 		for (final STATE state : automaton.getStates()) {
-			for (final OutgoingReturnTransition<LETTER, STATE> trans :
-					automaton.returnSuccessors(state)) {
+			for (final OutgoingReturnTransition<LETTER, STATE> trans : automaton
+					.returnSuccessors(state)) {
 				transitions.add(new TypedTransition<LETTER, STATE>(state,
 						trans.getSucc(), trans.getHierPred(),
 						new TypedLetter<LETTER>(trans.getLetter(),
@@ -261,12 +271,12 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 			final INestedWordAutomaton<LETTER, STATE> automatonFrom) {
 		final Set<STATE> remainingStates = automatonTo.getStates();
 		for (final STATE state : remainingStates) {
-			for (final OutgoingInternalTransition<LETTER, STATE> trans :
-					automatonFrom.internalSuccessors(state)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> trans : automatonFrom
+					.internalSuccessors(state)) {
 				final STATE succ = trans.getSucc();
 				if (remainingStates.contains(succ)) {
-					addInternalTransition(
-							automatonTo, state, trans.getLetter(), succ);
+					addInternalTransition(automatonTo, state, trans.getLetter(),
+							succ);
 				}
 			}
 		}
@@ -283,12 +293,12 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 			final INestedWordAutomaton<LETTER, STATE> automatonFrom) {
 		final Set<STATE> remainingStates = automatonTo.getStates();
 		for (final STATE state : remainingStates) {
-			for (final OutgoingCallTransition<LETTER, STATE> trans :
-					automatonFrom.callSuccessors(state)) {
+			for (final OutgoingCallTransition<LETTER, STATE> trans : automatonFrom
+					.callSuccessors(state)) {
 				final STATE succ = trans.getSucc();
 				if (remainingStates.contains(succ)) {
-					addCallTransition(
-							automatonTo, state, trans.getLetter(), succ);
+					addCallTransition(automatonTo, state, trans.getLetter(),
+							succ);
 				}
 			}
 		}
@@ -306,14 +316,14 @@ public abstract class AAutomatonFactory<LETTER, STATE> {
 		final Set<STATE> remainingStates = automatonTo.getStates();
 		for (final STATE state : remainingStates) {
 			
-			for (final OutgoingReturnTransition<LETTER, STATE> trans :
-					automatonFrom.returnSuccessors(state)) {
+			for (final OutgoingReturnTransition<LETTER, STATE> trans : automatonFrom
+					.returnSuccessors(state)) {
 				final STATE succ = trans.getSucc();
 				final STATE hier = trans.getHierPred();
 				if ((remainingStates.contains(succ)) &&
 						(remainingStates.contains(hier))) {
-					addReturnTransition(
-							automatonTo, state, hier, trans.getLetter(), succ);
+					addReturnTransition(automatonTo, state, hier,
+							trans.getLetter(), succ);
 				}
 			}
 		}

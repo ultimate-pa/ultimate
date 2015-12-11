@@ -31,6 +31,7 @@ import java.math.BigInteger;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
@@ -48,6 +49,10 @@ public class BitvectorUtils {
 	
 	public static boolean isBitvectorConstant(FunctionSymbol symb) {
 		return symb.isIntern() && symb.getName().matches(BITVEC_CONST_PATTERN);
+	}
+	
+	public static boolean isBitvectorSort(Sort sort) {
+		return sort.getRealSort().getName().equals("BitVec");
 	}
 	
 	/**

@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -90,7 +89,7 @@ public class BuchiReduce<LETTER,STATE> implements IOperation<LETTER,STATE> {
         
         boolean compareWithNonSccResult = false;
         if (compareWithNonSccResult) {
-        	NestedWordAutomaton<LETTER,STATE> nonSCCresult = 
+        	INestedWordAutomatonOldApi<LETTER, STATE> nonSCCresult = 
         			new DelayedSimulation<LETTER,STATE>(m_Services, m_Operand, false, stateFactory).getResult();
         	if (m_Result.size() != nonSCCresult.size()) {
         		throw new AssertionError();

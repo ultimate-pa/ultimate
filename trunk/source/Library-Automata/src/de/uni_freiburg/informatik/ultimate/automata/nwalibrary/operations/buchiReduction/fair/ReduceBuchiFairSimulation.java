@@ -40,9 +40,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.core.services.ToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
@@ -62,11 +59,11 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperatio
 		StateFactory<String> snf = (StateFactory<String>) new StringFactory();
 		
 		// Buechi automaton
-		Set<String> alphabet = new HashSet<String>();
+		Set<String> alphabet = new HashSet<>();
 		alphabet.add("a");
 		alphabet.add("b");
 		NestedWordAutomaton<String, String> buechi =
-				new NestedWordAutomaton<String, String>(service, alphabet, null, null, snf);
+				new NestedWordAutomaton<>(service, alphabet, null, null, snf);
 		
 		// Big example from tutors cardboard
 //		buechi.addState(true, false, "q0");
@@ -124,32 +121,32 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperatio
 //		buechi.addInternalTransition("q1", "b", "q1");
 		
 		// Big example from cav02
-//		buechi.addState(true, false, "q1");
-//		buechi.addState(false, false, "q2");
-//		buechi.addState(false, true, "q3");
-//		buechi.addState(false, true, "q4");
-//		buechi.addState(false, false, "q5");
-//		buechi.addState(false, true, "q6");
-//		buechi.addState(false, false, "q7");
-//		buechi.addState(false, false, "q8");
-//		buechi.addState(false, false, "q9");
-//		buechi.addState(false, true, "q10");
-//		buechi.addInternalTransition("q1", "a", "q2");
-//		buechi.addInternalTransition("q1", "a", "q3");
-//		buechi.addInternalTransition("q2", "a", "q6");
-//		buechi.addInternalTransition("q2", "b", "q4");
-//		buechi.addInternalTransition("q2", "b", "q7");
-//		buechi.addInternalTransition("q4", "a", "q2");
-//		buechi.addInternalTransition("q6", "a", "q6");
-//		buechi.addInternalTransition("q3", "b", "q5");
-//		buechi.addInternalTransition("q3", "b", "q7");
-//		buechi.addInternalTransition("q5", "a", "q3");
-//		buechi.addInternalTransition("q7", "b", "q8");
-//		buechi.addInternalTransition("q8", "a", "q9");
-//		buechi.addInternalTransition("q8", "b", "q10");
-//		buechi.addInternalTransition("q9", "a", "q9");
-//		buechi.addInternalTransition("q9", "b", "q10");
-//		buechi.addInternalTransition("q10", "b", "q10");
+		buechi.addState(true, false, "q1");
+		buechi.addState(false, false, "q2");
+		buechi.addState(false, true, "q3");
+		buechi.addState(false, true, "q4");
+		buechi.addState(false, false, "q5");
+		buechi.addState(false, true, "q6");
+		buechi.addState(false, false, "q7");
+		buechi.addState(false, false, "q8");
+		buechi.addState(false, false, "q9");
+		buechi.addState(false, true, "q10");
+		buechi.addInternalTransition("q1", "a", "q2");
+		buechi.addInternalTransition("q1", "a", "q3");
+		buechi.addInternalTransition("q2", "a", "q6");
+		buechi.addInternalTransition("q2", "b", "q4");
+		buechi.addInternalTransition("q2", "b", "q7");
+		buechi.addInternalTransition("q4", "a", "q2");
+		buechi.addInternalTransition("q6", "a", "q6");
+		buechi.addInternalTransition("q3", "b", "q5");
+		buechi.addInternalTransition("q3", "b", "q7");
+		buechi.addInternalTransition("q5", "a", "q3");
+		buechi.addInternalTransition("q7", "b", "q8");
+		buechi.addInternalTransition("q8", "a", "q9");
+		buechi.addInternalTransition("q8", "b", "q10");
+		buechi.addInternalTransition("q9", "a", "q9");
+		buechi.addInternalTransition("q9", "b", "q10");
+		buechi.addInternalTransition("q10", "b", "q10");
 		
 		// Debug test automata 1
 //		buechi.addState(true, false, "q0");
@@ -169,11 +166,11 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperatio
 //		buechi.addInternalTransition("q0", "a", "q4");
 		
 		// Debug test automata 2
-//		alphabet = new HashSet<String>();
+//		alphabet = new HashSet<>();
 //		alphabet.add("a");
 //		alphabet.add("b");
 //		alphabet.add("c");
-//		buechi = new NestedWordAutomaton<String, String>(service, alphabet, null, null, snf);
+//		buechi = new NestedWordAutomaton<>(service, alphabet, null, null, snf);
 //		buechi.addState(true, false, "q0");
 //		buechi.addState(false, false, "q1");
 //		buechi.addState(false, false, "q2");
@@ -246,6 +243,7 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperatio
 //		buechi.addInternalTransition("q0", "a", "q8");
 		
 		// Comparing test 'SCC vs. nonSCC'
+		/*
 		int n = 50;
 		int k = 10;
 		int f = 20;
@@ -260,16 +258,16 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperatio
 			
 //			System.out.println("Start calculating random DFA (n=" + n + ", k=" + k + ", f=" + f + ")...");
 //			buechi = new GetRandomNwa(service, k, n, 0.2, 0, 0, 0.2).getResult();
-//			buechi = new GetRandomDfa(service, n, k, f, 5, true, false, false, false).getResult();
+			buechi = new GetRandomDfa(service, n, k, f, 5, true, false, false, false).getResult();
 //			System.out.println("End calculating random DFA.");
 //			System.out.println();
 			
 			System.out.println("Start Simulation with SCC...");
-			FairSimulation<String, String> simulationSCC = new FairSimulation<String, String>(service, buechi, true, snf);
+			FairSimulation<String, String> simulationSCC = new FairSimulation<>(service, buechi, true, snf);
 			System.out.println();
 			
 			System.out.println("Start Simulation without SCC...");
-			FairSimulation<String, String> simulationNoSCC = new FairSimulation<String, String>(service, buechi, false, snf);
+			FairSimulation<String, String> simulationNoSCC = new FairSimulation<>(service, buechi, false, snf);
 			System.out.println();
 			
 			System.out.println("Start comparing results...");
@@ -334,22 +332,37 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperatio
 			} else {
 				System.out.println("End comparing results, no error occurred.");
 			}
+			
+			System.out.println(simulationSCC);
 		}
+		*/
 		
 		// Single automata comparison
 		/*
 		System.out.println("Start Simulation with SCC...");
-		FairSimulation<String, String> simulationSCC = new FairSimulation<String, String>(service, buechi, true, snf);
+		FairSimulation<String, String> simulationSCC = new FairSimulation<>(service, buechi, true, snf);
 		System.out.println(simulationSCC);
 		
 		System.out.println("Start Simulation without SCC...");
-		FairSimulation<String, String> simulationNoSCC = new FairSimulation<String, String>(service, buechi, false, snf);
+		FairSimulation<String, String> simulationNoSCC = new FairSimulation<>(service, buechi, false, snf);
 		System.out.println(simulationNoSCC);
 		*/
 		
 		// Merge tests
-//		FairSimulation<String, String> simulation = new FairSimulation<String, String>(service, buechi, true, snf);
+//		FairSimulation<String, String> simulation = new FairSimulation<>(service, buechi, true, snf);
 		
+		// Operation tests
+		ReduceBuchiFairSimulation<String, String> operation =
+				new ReduceBuchiFairSimulation<>(service, snf, buechi);
+		try {
+			if (operation.checkResult(snf)) {
+				System.out.println("Operation is correct.");
+			} else {
+				System.out.println("Operation is NOT correct.");
+			}
+		} catch (AutomataLibraryException e) {
+			e.printStackTrace();
+		}
 		
 		System.out.println("Program terminated.");
 	}
@@ -371,11 +384,11 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperatio
 		m_Operand = operand;
 		m_Logger.info(startMessage());
 
-		m_Result = new FairSimulation<LETTER, STATE>(m_Services, m_Operand, true, stateFactory).getResult();
+		m_Result = new FairSimulation<>(m_Services, m_Operand, true, stateFactory).getResult();
 
 		boolean compareWithNonSccResult = false;
 		if (compareWithNonSccResult) {
-			NestedWordAutomaton<LETTER, STATE> nonSCCresult = new FairSimulation<LETTER, STATE>(m_Services, m_Operand,
+			INestedWordAutomatonOldApi<LETTER, STATE> nonSCCresult = new FairSimulation<LETTER, STATE>(m_Services, m_Operand,
 					false, stateFactory).getResult();
 			if (m_Result.size() != nonSCCresult.size()) {
 				throw new AssertionError();
