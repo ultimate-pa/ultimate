@@ -207,9 +207,13 @@ public class OctMatrix {
 
 	// TODO document: Different matrices may represent the same octagon.
 	public boolean isEqualTo(OctMatrix other) {
+		if (this == other) {
+			return true;
+		}
 		return elementwiseRelation(other, (x, y) -> x.compareTo(y) == 0);
 	}
 	
+	// note: "not less-equal than" does not necessarily mean "greater than"
 	public boolean isLessEqualThan(OctMatrix other) {
 		return elementwiseRelation(other, (x, y) -> x.compareTo(y) <= 0);		
 	}
