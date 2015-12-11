@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2015-2016 Daniel Tischner
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
  * 
@@ -48,24 +49,54 @@ import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.UnionFind;
 
 /**
- * Doc comes later.
+ * Game graph that realizes <b>direct simulation</b>.<br/>
+ * In direct simulation each time <i>Spoiler</i> visits a final state
+ * <i>Duplicator</i> must also visit one at his next turn.<br/>
+ * <br/>
+ * 
+ * If its impossible for <i>Spoiler</i> to build a word such that
+ * <i>Duplicator</i> can not fulfill its condition we say <b>q1 direct simulates
+ * q0</b> where q0 was the starting state of <i>Spoiler</i> and q1 of
+ * <i>Duplicator</i>.
  * 
  * @author Daniel Tischner
  *
  * @param <LETTER>
+ *            Letter class of buechi automaton
  * @param <STATE>
+ *            State class of buechi automaton
  */
 public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
-	
+
+	/**
+	 * The underlying buechi automaton from which the game graph gets generated.
+	 */
 	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Buechi;
-	
+	/**
+	 * The logger used by the Ultimate framework.
+	 */
 	private final Logger m_Logger;
-	
+	/**
+	 * The state factory used for creating states.
+	 */
 	private final StateFactory<STATE> m_StateFactory;
-	
+
+	/**
+	 * Creates a new direct game graph by using the given buechi automaton.
+	 * 
+	 * @param services
+	 *            Service provider of Ultimate framework.
+	 * @param buechi
+	 *            The underlying buechi automaton from which the game graph gets
+	 *            generated.
+	 * @param stateFactory
+	 *            The state factory used for creating states.
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
 	public DirectGameGraph(final IUltimateServiceProvider services,
-			final INestedWordAutomatonOldApi<LETTER, STATE> buechi,
-			final StateFactory<STATE> stateFactory)
+			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final StateFactory<STATE> stateFactory)
 					throws OperationCanceledException {
 		super(services);
 		m_Buechi = buechi;
@@ -74,137 +105,145 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 		generateGameGraphFromBuechi();
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * buchiReduction.AGameGraph#generateBuchiAutomatonFromGraph()
+	 */
 	@Override
-	protected NestedWordAutomaton<LETTER, STATE> generateBuchiAutomatonFromGraph()
-			throws OperationCanceledException {
-		// determine which states to merge
-    	UnionFind<STATE> uf = new UnionFind<>();
-    	for (STATE state : m_Buechi.getStates()) {
-    		uf.makeEquivalenceClass(state);
-    	}
-    	HashRelation<STATE, STATE> similarStates = new HashRelation<>();
-        for (SpoilerVertex<LETTER,STATE> v : getSpoilerVertices()) {
-            // all the states we need are in V1...
-            if (v.getPM(null, getGlobalInfinity()) < getGlobalInfinity()) {
-            	STATE state1 = v.getQ0();
-            	STATE state2 = v.getQ1();
-            	similarStates.addPair(state1, state2);
-            	
-            }
-        }
-        // merge if bisimilar
-        for (STATE state1 : similarStates.getDomain()) {
-        	for (STATE state2 : similarStates.getImage(state1)) {
-        		if (similarStates.containsPair(state2, state1)) {
-        			uf.union(state1, state2);
-        		}
-        	}
-        }
-        
-        if (getServiceProvider().getProgressMonitorService() != null
-        		&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
-            m_Logger.debug("Stopped in generateBuchiAutomaton/table filled");
-            throw new OperationCanceledException(this.getClass());
-        }
+	protected NestedWordAutomaton<LETTER, STATE> generateBuchiAutomatonFromGraph() throws OperationCanceledException {
+		// Determine which states to merge
+		UnionFind<STATE> uf = new UnionFind<>();
+		for (STATE state : m_Buechi.getStates()) {
+			uf.makeEquivalenceClass(state);
+		}
+		HashRelation<STATE, STATE> similarStates = new HashRelation<>();
+		for (SpoilerVertex<LETTER, STATE> v : getSpoilerVertices()) {
+			// all the states we need are in V1...
+			if (v.getPM(null, getGlobalInfinity()) < getGlobalInfinity()) {
+				STATE state1 = v.getQ0();
+				STATE state2 = v.getQ1();
+				similarStates.addPair(state1, state2);
 
-        // merge states
-        NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<>(
-        		getServiceProvider(), m_Buechi.getInternalAlphabet(), null, null, m_StateFactory);
-        Set<STATE> representativesOfInitials = new HashSet<>();
-        for (STATE initial : m_Buechi.getInitialStates()) {
-        	representativesOfInitials.add(uf.find(initial));
-        }
-        
-        Map<STATE,STATE> input2result = new HashMap<>(m_Buechi.size());
-        for (STATE representative : uf.getAllRepresentatives()) {
-        	boolean isInitial = representativesOfInitials.contains(representative);
-        	boolean isFinal = m_Buechi.isFinal(representative);
-        	Set<STATE> eqClass = uf.getEquivalenceClassMembers(representative);
-        	STATE resultState = m_StateFactory.minimize(eqClass);
-        	result.addState(isInitial, isFinal, resultState);
-        	for (STATE eqClassMember : eqClass) {
-        		input2result.put(eqClassMember, resultState);
-        	}
-        }
-        
-        for (STATE state : uf.getAllRepresentatives()) {
-        	STATE pred = input2result.get(state);
-        	for (OutgoingInternalTransition<LETTER, STATE> outTrans : m_Buechi.internalSuccessors(state)) {
-        		STATE succ = input2result.get(outTrans.getSucc());
-        		result.addInternalTransition(pred, outTrans.getLetter(), succ);
-        	}
-        }
-        
-        if (getServiceProvider().getProgressMonitorService() != null
-        		&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
-            m_Logger.debug("Stopped in generateBuchiAutomaton/states added to result BA");
-            throw new OperationCanceledException(this.getClass());
-        }
-        return result;
+			}
+		}
+		// Merge if bisimilar
+		for (STATE state1 : similarStates.getDomain()) {
+			for (STATE state2 : similarStates.getImage(state1)) {
+				uf.union(state1, state2);
+			}
+		}
+
+		if (getServiceProvider().getProgressMonitorService() != null
+				&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
+			m_Logger.debug("Stopped in generateBuchiAutomaton/table filled");
+			throw new OperationCanceledException(this.getClass());
+		}
+
+		// Merge states
+		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<>(getServiceProvider(),
+				m_Buechi.getInternalAlphabet(), null, null, m_StateFactory);
+		Set<STATE> representativesOfInitials = new HashSet<>();
+		for (STATE initial : m_Buechi.getInitialStates()) {
+			representativesOfInitials.add(uf.find(initial));
+		}
+
+		Map<STATE, STATE> input2result = new HashMap<>(m_Buechi.size());
+		for (STATE representative : uf.getAllRepresentatives()) {
+			boolean isInitial = representativesOfInitials.contains(representative);
+			boolean isFinal = m_Buechi.isFinal(representative);
+			Set<STATE> eqClass = uf.getEquivalenceClassMembers(representative);
+			STATE resultState = m_StateFactory.minimize(eqClass);
+			result.addState(isInitial, isFinal, resultState);
+			for (STATE eqClassMember : eqClass) {
+				input2result.put(eqClassMember, resultState);
+			}
+		}
+
+		for (STATE state : uf.getAllRepresentatives()) {
+			STATE pred = input2result.get(state);
+			for (OutgoingInternalTransition<LETTER, STATE> outTrans : m_Buechi.internalSuccessors(state)) {
+				STATE succ = input2result.get(outTrans.getSucc());
+				result.addInternalTransition(pred, outTrans.getLetter(), succ);
+			}
+		}
+
+		if (getServiceProvider().getProgressMonitorService() != null
+				&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
+			m_Logger.debug("Stopped in generateBuchiAutomaton/states added to result BA");
+			throw new OperationCanceledException(this.getClass());
+		}
+		return result;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * buchiReduction.AGameGraph#generateGameGraphFromBuechi()
+	 */
 	@Override
 	protected void generateGameGraphFromBuechi() throws OperationCanceledException {
-        // Calculate v1 [paper ref 10]
-        for (STATE q0 : m_Buechi.getStates()) {
-            for (STATE q1 : m_Buechi.getStates()) {
-                SpoilerVertex<LETTER,STATE> v1e = new SpoilerVertex<>(
-                        0, false, q0, q1);
-                addSpoilerVertex(v1e);
-            }
-            
-            if (getServiceProvider().getProgressMonitorService() != null
-            		&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
-                m_Logger.debug("Stopped in generateGameGraph/calculating v0 und v1");
-                throw new OperationCanceledException(this.getClass());
-            }
-        }
-        // Calculate v0 and edges [paper ref 10, 11, 12]
-        for (STATE q0 : m_Buechi.getStates()) {
-            for (STATE q1 : m_Buechi.getStates()) {
-            	Set<LETTER> relevantLetters = new HashSet<>();
-            	relevantLetters.addAll(m_Buechi.lettersInternalIncoming(q0));
-            	relevantLetters.addAll(m_Buechi.lettersInternal(q1));
-                for (LETTER s : relevantLetters) {
-                    DuplicatorVertex<LETTER,STATE> v0e = new DuplicatorVertex<>(
-                            0, false, q0, q1, s);
-                    addDuplicatorVertex(v0e);
-                    // V1 -> V0 edges [paper ref 11]
-                    for (STATE pred0 : m_Buechi.predInternal(q0, s)) {
-                    	//TODO: check conditions
-                        if (!m_Buechi.isFinal(pred0) || m_Buechi.isFinal(q1)) {
-                            addEdge(getSpoilerVertex(pred0, q1, false), v0e);
-                        }
-                    }
-                    // V0 -> V1 edges [paper ref 11]
-                    for (STATE succ1 : m_Buechi.succInternal(q1, s)) {
-                    	//TODO: check conditions
-                        if (!m_Buechi.isFinal(q0) || m_Buechi.isFinal(succ1)) {
-                            addEdge(v0e, getSpoilerVertex(q0, succ1, false));
-                        }
-                    }
-                }
-            }
-            
-            if (getServiceProvider().getProgressMonitorService() != null
-            		&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
-                m_Logger.debug("Stopped in generateGameGraph/calculating v0 und v1");
-                throw new OperationCanceledException(this.getClass());
-            }
-        }
-        increaseGlobalInfinity();; // global infinity = (# of pr==1 nodes) + 1
-        if (m_Logger.isDebugEnabled()) {
-            m_Logger.debug("Infinity is " + getGlobalInfinity());
-            m_Logger.debug("Number of vertices in game graph: "
-                    + (getDuplicatorVertices().size() + getSpoilerVertices().size()));
-            m_Logger.debug("Number of vertices in v0: " + getDuplicatorVertices().size());
-            m_Logger.debug("Number of vertices in v1: " + getSpoilerVertices().size());
-            int edges = 0;
-            for (Set<Vertex<LETTER,STATE>> hs : getSuccessorGroups()) {
-                edges += hs.size();
-            }
-            m_Logger.debug("Number of edges in game graph: " + edges);
-        }
+		// Calculate v1 [paper ref 10]
+		for (STATE q0 : m_Buechi.getStates()) {
+			for (STATE q1 : m_Buechi.getStates()) {
+				SpoilerVertex<LETTER, STATE> v1e = new SpoilerVertex<>(0, false, q0, q1);
+				addSpoilerVertex(v1e);
+			}
+
+			if (getServiceProvider().getProgressMonitorService() != null
+					&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
+				m_Logger.debug("Stopped in generateGameGraph/calculating v0 und v1");
+				throw new OperationCanceledException(this.getClass());
+			}
+		}
+		// Calculate v0 and edges [paper ref 10, 11, 12]
+		for (STATE q0 : m_Buechi.getStates()) {
+			for (STATE q1 : m_Buechi.getStates()) {
+				Set<LETTER> relevantLetters = new HashSet<>();
+				relevantLetters.addAll(m_Buechi.lettersInternalIncoming(q0));
+				relevantLetters.addAll(m_Buechi.lettersInternal(q1));
+				for (LETTER s : relevantLetters) {
+					DuplicatorVertex<LETTER, STATE> v0e = new DuplicatorVertex<>(0, false, q0, q1, s);
+					addDuplicatorVertex(v0e);
+					// V1 -> V0 edges [paper ref 11]
+					for (STATE pred0 : m_Buechi.predInternal(q0, s)) {
+						// TODO: check conditions
+						if (!m_Buechi.isFinal(pred0) || m_Buechi.isFinal(q1)) {
+							addEdge(getSpoilerVertex(pred0, q1, false), v0e);
+						}
+					}
+					// V0 -> V1 edges [paper ref 11]
+					for (STATE succ1 : m_Buechi.succInternal(q1, s)) {
+						// TODO: check conditions
+						if (!m_Buechi.isFinal(q0) || m_Buechi.isFinal(succ1)) {
+							addEdge(v0e, getSpoilerVertex(q0, succ1, false));
+						}
+					}
+				}
+			}
+
+			if (getServiceProvider().getProgressMonitorService() != null
+					&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
+				m_Logger.debug("Stopped in generateGameGraph/calculating v0 und v1");
+				throw new OperationCanceledException(this.getClass());
+			}
+		}
+		// global infinity = (# of pr==1 nodes) + 1
+		increaseGlobalInfinity();
+		if (m_Logger.isDebugEnabled()) {
+			m_Logger.debug("Infinity is " + getGlobalInfinity());
+			m_Logger.debug("Number of vertices in game graph: "
+					+ (getDuplicatorVertices().size() + getSpoilerVertices().size()));
+			m_Logger.debug("Number of vertices in v0: " + getDuplicatorVertices().size());
+			m_Logger.debug("Number of vertices in v1: " + getSpoilerVertices().size());
+			int edges = 0;
+			for (Set<Vertex<LETTER, STATE>> hs : getSuccessorGroups()) {
+				edges += hs.size();
+			}
+			m_Logger.debug("Number of edges in game graph: " + edges);
+		}
 	}
 
 }

@@ -24,26 +24,8 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction;
-
 /**
- * Types of possible game graph changes,
- * mainly used by {@link GameGraphChanges}.
- * 
- * @author Daniel Tischner
- *
+ * This packages contains classes representing vertices in game graphs needed
+ * for buechi reduction using simulation.
  */
-public enum GameGraphChangeType {
-	/**
-	 * Represents a change that added something to the game graph.
-	 */
-	ADDITION,
-	/**
-	 * Represents a change that did not alter the game graph.
-	 */
-	NO_CHANGE,
-	/**
-	 * Represents a change that removed something from the game graph.
-	 */
-	REMOVAL
-}
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices;

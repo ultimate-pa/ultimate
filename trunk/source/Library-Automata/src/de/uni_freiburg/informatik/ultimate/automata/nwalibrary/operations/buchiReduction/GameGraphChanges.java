@@ -37,71 +37,172 @@ import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 
 /**
- * Doc comes later.
+ * Class that stores information of changes made to a {@link AGameGraph}.<br/>
+ * <br/>
+ * 
+ * It can remember changed edges, vertices and values of vertices.<br/>
+ * A GameGraphChanges object can then be used to undo made changes for a game
+ * graph by using {@link AGameGraph#undoChanges(GameGraphChanges)}.
  * 
  * @author Daniel Tischner
  *
  * @param <LETTER>
+ *            Letter class of buechi automaton
  * @param <STATE>
+ *            State class of buechi automaton
  */
 public class GameGraphChanges<LETTER, STATE> {
 
+	/**
+	 * Stores information about changed edges.<br/>
+	 * Stored as (source, destination, type of change).
+	 */
 	private final NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, GameGraphChangeType> m_ChangedEdges;
 
+	/**
+	 * Stores information about changed vertices.<br/>
+	 * Stored as (vertex, type of changes).
+	 */
 	private final HashMap<Vertex<LETTER, STATE>, GameGraphChangeType> m_ChangedVertices;
 
+	/**
+	 * Stores information about remembered values of vertices.<br/>
+	 * Stored as (vertex, value container).
+	 */
 	private final HashMap<Vertex<LETTER, STATE>, VertexValueContainer> m_RememberedValues;
 
+	/**
+	 * Creates a new game graph changes object with no changes at default.
+	 */
 	public GameGraphChanges() {
 		m_ChangedEdges = new NestedMap2<>();
 		m_ChangedVertices = new HashMap<>();
 		m_RememberedValues = new HashMap<>();
 	}
 
+	/**
+	 * Stores information about an added edge.<br/>
+	 * Nullifies changes if the given edge was removed before.
+	 * 
+	 * @param src
+	 *            Source of the added edge
+	 * @param dest
+	 *            Destination of the added edge
+	 */
 	public void addedEdge(final Vertex<LETTER, STATE> src, final Vertex<LETTER, STATE> dest) {
 		changedEdge(src, dest, GameGraphChangeType.ADDITION);
 	}
 
+	/**
+	 * Stores information about an added vertex.<br/>
+	 * Nullifies changes if the given vertex was removed before.
+	 * 
+	 * @param vertex
+	 *            Vertex that was added
+	 */
 	public void addedVertex(final Vertex<LETTER, STATE> vertex) {
 		changedVertex(vertex, GameGraphChangeType.ADDITION);
 	}
 
+	/**
+	 * Gets the information about changed edges.<br/>
+	 * Stored as (source, destination, type of change).
+	 * 
+	 * @return The information about changed edges
+	 */
 	public NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, GameGraphChangeType> getChangedEdges() {
 		return m_ChangedEdges;
 	}
 
+	/**
+	 * Gets the information about changed vertices.<br/>
+	 * Stored as (vertex, type of change).
+	 * 
+	 * @return The information about changed vertices
+	 */
 	public HashMap<Vertex<LETTER, STATE>, GameGraphChangeType> getChangedVertices() {
 		return m_ChangedVertices;
 	}
 
+	/**
+	 * Gets the information about remembered values.<br/>
+	 * Stored as (vertex, value container).
+	 * 
+	 * @return The information about remembered values
+	 */
 	public HashMap<Vertex<LETTER, STATE>, VertexValueContainer> getRememberedVertexValues() {
 		return m_RememberedValues;
 	}
 
+	/**
+	 * Returns if the given vertex has a remembered entry for the <i>BEff
+	 * value</i> stored.
+	 * 
+	 * @param vertex
+	 *            The vertex of interest
+	 * @return True if there is a remembered entry for the <i>BEff value</i>
+	 *         stored, false if not.
+	 */
 	public boolean hasBEffEntry(final Vertex<LETTER, STATE> vertex) {
 		return m_RememberedValues.get(vertex) != null
-				&& m_RememberedValues.get(vertex).getBestNeighborMeasure() != VertexValueContainer.NO_VALUE;
+				&& VertexValueContainer.isValueValid(m_RememberedValues.get(vertex).getBestNeighborMeasure());
 	}
 
+	/**
+	 * Returns if the given vertex has a remembered entry for the <i>C value</i>
+	 * stored.
+	 * 
+	 * @param vertex
+	 *            The vertex of interest
+	 * @return True if there is a remembered entry for the <i>C value</i>
+	 *         stored, false if not.
+	 */
 	public boolean hasCEntry(final Vertex<LETTER, STATE> vertex) {
 		return m_RememberedValues.get(vertex) != null
-				&& m_RememberedValues.get(vertex).getNeighborCounter() != VertexValueContainer.NO_VALUE;
+				&& VertexValueContainer.isValueValid(m_RememberedValues.get(vertex).getNeighborCounter());
 	}
 
+	/**
+	 * Returns if the given vertex has a remembered entry for the <i>Progress
+	 * measure value</i> stored.
+	 * 
+	 * @param vertex
+	 *            The vertex of interest
+	 * @return True if there is a remembered entry for the <i>Progress measure
+	 *         value</i> stored, false if not.
+	 */
 	public boolean hasPmEntry(final Vertex<LETTER, STATE> vertex) {
 		return m_RememberedValues.get(vertex) != null
-				&& m_RememberedValues.get(vertex).getProgressMeasure() != VertexValueContainer.NO_VALUE;
+				&& VertexValueContainer.isValueValid(m_RememberedValues.get(vertex).getProgressMeasure());
 	}
 
+	/**
+	 * Returns if the given vertex has an <i>vertex addition</i> entry stored.
+	 * 
+	 * @param vertex
+	 *            The vertex of interest
+	 * @return True if the given vertex has an <i>vertex addition</i> entry
+	 *         stored, false if not
+	 */
 	public boolean isAddedVertex(final Vertex<LETTER, STATE> vertex) {
 		GameGraphChangeType type = m_ChangedVertices.get(vertex);
 		return type != null && type.equals(GameGraphChangeType.ADDITION);
 	}
 
+	/**
+	 * Returns if the given vertex is the source of an edge that has a <i>change
+	 * entry</i> stored.
+	 * 
+	 * @param vertex
+	 *            Vertex of interest
+	 * @return True if the given vertex is the source of an edge that has a
+	 *         <i>change entry</i> stored, false if not.
+	 */
 	public boolean isChangedEdgeSource(final Vertex<LETTER, STATE> vertex) {
 		boolean isChangedEdgeSource = false;
 		Map<Vertex<LETTER, STATE>, GameGraphChangeType> changedMap = m_ChangedEdges.get(vertex);
 		if (changedMap != null) {
+			// Iterate types of all outgoing changed edges
 			for (GameGraphChangeType type : changedMap.values()) {
 				if (type != GameGraphChangeType.NO_CHANGE) {
 					isChangedEdgeSource = true;
@@ -112,6 +213,21 @@ public class GameGraphChanges<LETTER, STATE> {
 		return isChangedEdgeSource;
 	}
 
+	/**
+	 * Merges the given {@link GameGraphChanges} object with this object by
+	 * adding all information of the second to the first.<br/>
+	 * If the second has stored an addition whereas the first has a removal the
+	 * resulting change gets nullified and vice versa.<br/>
+	 * The given boolean argument gives the option to keep the remembered value
+	 * of this object if the second also has a remembered value. This can be
+	 * used to always keep the oldest entry or the newest.
+	 * 
+	 * @param changes
+	 *            Change object to merge with
+	 * @param rememberValuesOfFirst
+	 *            True if the remembered values of this object should be kept if
+	 *            the second also has an entry, false if not.
+	 */
 	public void merge(final GameGraphChanges<LETTER, STATE> changes, final boolean rememberValuesOfFirst) {
 		if (changes == null) {
 			return;
@@ -145,7 +261,7 @@ public class GameGraphChanges<LETTER, STATE> {
 		for (Entry<Vertex<LETTER, STATE>, GameGraphChangeType> changedVertix : changedVertices.entrySet()) {
 			GameGraphChangeType changeType = m_ChangedVertices.get(changedVertix.getKey());
 			if (changeType == null || changeType.equals(GameGraphChangeType.NO_CHANGE)) {
-				// Only add vertix change if unknown until now
+				// Only add vertex change if unknown until now
 				m_ChangedVertices.put(changedVertix.getKey(), changedVertix.getValue());
 			} else if ((changeType == GameGraphChangeType.ADDITION
 					&& changedVertix.getValue() == GameGraphChangeType.REMOVAL)
@@ -167,54 +283,101 @@ public class GameGraphChanges<LETTER, STATE> {
 			VertexValueContainer currentValues = m_RememberedValues.get(vertex);
 
 			/*
-			 * Only update if new value is not NO_VALUE and user wishes to
-			 * remember the newer value or if he wish to remember the old value
-			 * but the old is NO_VALUE.
+			 * Only update if new value is valid and user wishes to remember the
+			 * newer value or if he wish to remember the old value but the old
+			 * is not valid.
 			 */
 			// Update ProgressMeasure
-			if (values.getProgressMeasure() != VertexValueContainer.NO_VALUE) {
-				if (!rememberValuesOfFirst || currentValues.getProgressMeasure() == VertexValueContainer.NO_VALUE) {
+			if (VertexValueContainer.isValueValid(values.getProgressMeasure())) {
+				if (!rememberValuesOfFirst || !VertexValueContainer.isValueValid(currentValues.getProgressMeasure())) {
 					currentValues.setProgressMeasure(values.getProgressMeasure());
 				}
 			}
 			// Update BestNeighborMeasure
-			if (values.getBestNeighborMeasure() != VertexValueContainer.NO_VALUE) {
-				if (!rememberValuesOfFirst || currentValues.getBestNeighborMeasure() == VertexValueContainer.NO_VALUE) {
+			if (VertexValueContainer.isValueValid(values.getBestNeighborMeasure())) {
+				if (!rememberValuesOfFirst
+						|| !VertexValueContainer.isValueValid(currentValues.getBestNeighborMeasure())) {
 					currentValues.setBestNeighborMeasure(values.getBestNeighborMeasure());
 				}
 			}
 			// Update NeighborCounter
-			if (values.getNeighborCounter() != VertexValueContainer.NO_VALUE) {
-				if (!rememberValuesOfFirst || currentValues.getNeighborCounter() == VertexValueContainer.NO_VALUE) {
+			if (VertexValueContainer.isValueValid(values.getNeighborCounter())) {
+				if (!rememberValuesOfFirst || !VertexValueContainer.isValueValid(currentValues.getNeighborCounter())) {
 					currentValues.setNeighborCounter(values.getNeighborCounter());
 				}
 			}
 		}
 	}
 
+	/**
+	 * Stores information about the <i>BEff value</i> of a given vertex.
+	 * 
+	 * @param vertex
+	 *            The vertex of interest
+	 * @param value
+	 *            The value to remember
+	 */
 	public void rememberBEffVertex(final Vertex<LETTER, STATE> vertex, final int value) {
 		ensureVertexValueContainerIsInitiated(vertex);
 		m_RememberedValues.get(vertex).setBestNeighborMeasure(value);
 	}
 
+	/**
+	 * Stores information about the <i>C value</i> of a given vertex.
+	 * 
+	 * @param vertex
+	 *            The vertex of interest
+	 * @param value
+	 *            The value to remember
+	 */
 	public void rememberCVertex(final Vertex<LETTER, STATE> vertex, final int value) {
 		ensureVertexValueContainerIsInitiated(vertex);
 		m_RememberedValues.get(vertex).setNeighborCounter(value);
 	}
 
+	/**
+	 * Stores information about the <i>Progress measure value</i> of a given
+	 * vertex.
+	 * 
+	 * @param vertex
+	 *            The vertex of interest
+	 * @param value
+	 *            The value to remember
+	 */
 	public void rememberPmVertex(final Vertex<LETTER, STATE> vertex, final int value) {
 		ensureVertexValueContainerIsInitiated(vertex);
 		m_RememberedValues.get(vertex).setProgressMeasure(value);
 	}
 
+	/**
+	 * Stores information about a removed edge.<br/>
+	 * Nullifies changes if the given edge was added before.
+	 * 
+	 * @param src
+	 *            Source of the removed edge
+	 * @param dest
+	 *            Destination of the removed edge
+	 */
 	public void removedEdge(final Vertex<LETTER, STATE> src, final Vertex<LETTER, STATE> dest) {
 		changedEdge(src, dest, GameGraphChangeType.REMOVAL);
 	}
 
+	/**
+	 * Stores information about a removed vertex.<br/>
+	 * Nullifies changes if the given vertex was added before.
+	 * 
+	 * @param vertex
+	 *            Vertex that was removed
+	 */
 	public void removedVertex(final Vertex<LETTER, STATE> vertex) {
 		changedVertex(vertex, GameGraphChangeType.REMOVAL);
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#toString()
+	 */
 	@Override
 	public String toString() {
 		StringBuilder result = new StringBuilder();
@@ -274,6 +437,18 @@ public class GameGraphChanges<LETTER, STATE> {
 		return result.toString();
 	}
 
+	/**
+	 * Stores information about a changed edge.<br/>
+	 * Nullifies changes if the given edge was added before if it was now
+	 * removed or vice versa.
+	 * 
+	 * @param src
+	 *            Source of the changed edge
+	 * @param dest
+	 *            Destination of the changed edge
+	 * @param type
+	 *            Type of the change
+	 */
 	private void changedEdge(final Vertex<LETTER, STATE> src, final Vertex<LETTER, STATE> dest,
 			final GameGraphChangeType type) {
 		GameGraphChangeType previousType = m_ChangedEdges.get(src, dest);
@@ -287,6 +462,16 @@ public class GameGraphChanges<LETTER, STATE> {
 		}
 	}
 
+	/**
+	 * Stores information about a changed vertex.<br/>
+	 * Nullifies changes if the given vertex was added before if it was now
+	 * removed or vice versa.
+	 * 
+	 * @param vertex
+	 *            Vertex that was changed
+	 * @param type
+	 *            Type of the change
+	 */
 	private void changedVertex(final Vertex<LETTER, STATE> vertex, final GameGraphChangeType type) {
 		GameGraphChangeType previousType = m_ChangedVertices.get(vertex);
 		// Nullify change if previously added and then removed or vice versa
@@ -299,6 +484,14 @@ public class GameGraphChanges<LETTER, STATE> {
 		}
 	}
 
+	/**
+	 * Ensures the given vertex has a value container stored by creating a new
+	 * empty container if there is no.<br/>
+	 * This is used to prevent NPE at access.
+	 * 
+	 * @param key
+	 *            Vertex to ensure the container for
+	 */
 	private void ensureVertexValueContainerIsInitiated(final Vertex<LETTER, STATE> key) {
 		if (m_RememberedValues.get(key) == null) {
 			m_RememberedValues.put(key, new VertexValueContainer());

@@ -27,8 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices;
 
 /**
- * Container for vertex values. Holds relevant
- * fields of {@link de.uni_freiburg.informatik.ultimate.automata.
+ * Container for vertex values. Holds relevant fields of
+ * {@link de.uni_freiburg.informatik.ultimate.automata.
  * nwalibrary.operations.buchiReduction.vertices.Vertex vertices}.
  * 
  * @author Daniel Tischner
@@ -39,7 +39,33 @@ public final class VertexValueContainer {
 	/**
 	 * Indicates that a field currently has no valid value.
 	 */
-	public static final int NO_VALUE = -1;
+	private static final int NO_VALUE = -1;
+
+	/**
+	 * Returns if the given value is valid or not.
+	 * 
+	 * @param value
+	 *            The value of interest
+	 * @return True if the value is valid, false if not
+	 */
+	public static boolean isValueValid(int value) {
+		return value != NO_VALUE;
+	}
+
+	/**
+	 * Ensures that a given value is valid by comparing it to the internal field
+	 * {@link #NO_VALUE}.
+	 * 
+	 * @param value
+	 *            Value to ensure that it is valid
+	 * @throws IllegalArgumentException
+	 *             If the value is equals {@link #NO_VALUE}.
+	 */
+	private static void ensureValueIsValid(int value) {
+		if (value == NO_VALUE) {
+			throw new IllegalArgumentException("Value must not be equals the internal value for 'NO_VALUE'.");
+		}
+	}
 
 	/**
 	 * The best neighbor measure.
@@ -74,8 +100,7 @@ public final class VertexValueContainer {
 	 * @param neighborCounter
 	 *            The neighbor counter
 	 */
-	public VertexValueContainer(int progressMeasure,
-			int bestNeighborMeasure, int neighborCounter) {
+	public VertexValueContainer(int progressMeasure, int bestNeighborMeasure, int neighborCounter) {
 		setProgressMeasure(progressMeasure);
 		setBestNeighborMeasure(bestNeighborMeasure);
 		setNeighborCounter(neighborCounter);
@@ -107,6 +132,7 @@ public final class VertexValueContainer {
 	 *            the bestNeighborMeasure to set
 	 */
 	public void setBestNeighborMeasure(int bestNeighborMeasure) {
+		ensureValueIsValid(bestNeighborMeasure);
 		this.m_BestNeighborMeasure = bestNeighborMeasure;
 	}
 
@@ -115,6 +141,7 @@ public final class VertexValueContainer {
 	 *            the NeighborCounter to set
 	 */
 	public void setNeighborCounter(int neighborCounter) {
+		ensureValueIsValid(neighborCounter);
 		this.m_NeighborCounter = neighborCounter;
 	}
 
@@ -123,6 +150,7 @@ public final class VertexValueContainer {
 	 *            the progressMeasure to set
 	 */
 	public void setProgressMeasure(int progressMeasure) {
+		ensureValueIsValid(progressMeasure);
 		this.m_ProgressMeasure = progressMeasure;
 	}
 }

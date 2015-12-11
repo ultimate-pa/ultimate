@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2015-2016 Daniel Tischner
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
  * 
@@ -41,36 +42,66 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
- * Doc comes later.
+ * Simulation that realizes <b>direct simulation</b> for reduction of a given
+ * buechi automaton.<br/>
+ * Once created it starts the simulation, results can then be get by using
+ * {@link #getResult()}.<br/>
+ * <br/>
+ * 
+ * For more information on the type of simulation see {@link DirectGameGraph}.
  * 
  * @author Daniel Tischner
  *
  * @param <LETTER>
+ *            Letter class of buechi automaton
  * @param <STATE>
+ *            State class of buechi automaton
  */
 public final class DirectSimulation<LETTER,STATE> extends ASimulation<LETTER, STATE> {
 	
+	/**
+	 * Game graph that is used for simulation calculation.
+	 */
 	private final DirectGameGraph<LETTER, STATE> m_Game;
 
-    /**
-     * Constructor.
-     * 
-     * @param ba
-     *            the input buchi automaton to reduce.
-     * @param useSCCs
-     *            whether to use strongly connected components
-     * @throws OperationCanceledException
-     */
+	/**
+	 * Creates a new direct simulation that tries to reduce the given buechi
+	 * automaton using <b>direct simulation</b>.<br/>
+	 * After construction the simulation starts and results can be get by using
+	 * {@link #getResult()}.<br/>
+	 * <br/>
+	 * 
+	 * For correctness its important that the inputed automaton has <b>no dead
+	 * ends</b> nor <b>duplicate transitions</b>.
+	 * 
+	 * @param services
+	 *            Service provider of Ultimate framework.
+	 * @param buechi
+	 *            The buechi automaton to reduce with no dead ends nor with
+	 *            duplicate transitions
+	 * @param useSCCs
+	 *            If the simulation calculation should be optimized using SCC,
+	 *            Strongly Connected Components.
+	 * @param stateFactory
+	 *            The state factory used for creating states.
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
     public DirectSimulation(final IUltimateServiceProvider services, 
-    		final INestedWordAutomatonOldApi<LETTER,STATE> ba,
+    		final INestedWordAutomatonOldApi<LETTER,STATE> buechi,
     		final boolean useSCCs, final StateFactory<STATE> stateFactory)
     				throws OperationCanceledException {
     	super(services, useSCCs, stateFactory);
     	
-    	m_Game = new DirectGameGraph<>(services, ba, stateFactory);
+    	m_Game = new DirectGameGraph<>(services, buechi, stateFactory);
     	doSimulation();
     }
     
+    /*
+     * (non-Javadoc)
+     * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.ASimulation#getGameGraph()
+     */
 	@Override
 	protected AGameGraph<LETTER, STATE> getGameGraph() {
 		return m_Game;

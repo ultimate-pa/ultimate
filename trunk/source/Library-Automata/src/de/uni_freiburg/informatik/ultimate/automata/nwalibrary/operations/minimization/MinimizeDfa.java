@@ -151,7 +151,8 @@ public class MinimizeDfa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 						}
 					}
 				}
-				if (!m_Services.getProgressMonitorService().continueProcessing()) {
+				if (m_Services.getProgressMonitorService() != null
+						&& !m_Services.getProgressMonitorService().continueProcessing()) {
 					throw new OperationCanceledException(this.getClass());
 				}
 			}
