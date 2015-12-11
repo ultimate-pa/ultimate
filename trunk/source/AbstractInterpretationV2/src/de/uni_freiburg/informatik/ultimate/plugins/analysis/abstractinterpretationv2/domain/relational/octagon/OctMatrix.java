@@ -507,7 +507,7 @@ public class OctMatrix {
 	}
 
 	public OctMatrix widenSimple(OctMatrix n) {
-		return elementwiseOperation(n, (mij, nij) -> mij.compareTo(nij) > 0 ? mij : OctValue.INFINITY);
+		return elementwiseOperation(n, (mij, nij) -> mij.compareTo(nij) >= 0 ? mij : OctValue.INFINITY);
 	}
 
 	// TODO document: stabilization depends on user-given threshold (stabilizes for threshold < inf)
@@ -515,12 +515,17 @@ public class OctMatrix {
 		return elementwiseOperation(n, (mij, nij) -> {
 			if (mij.compareTo(nij) >= 0) {
 				return mij;
-			}
-			OctValue v = OctValue.max(nij, OctValue.ONE); // TODO better handling of values < 1
-			if (v.compareTo(threshold) > 0) {
+			} else if (nij.compareTo(threshold) > 0) {
 				return OctValue.INFINITY;
+			} else if (nij.compareTo(OctValue.ONE) >= 0) {
+				return nij.add(nij); // 2 * nij
+			} else if (nij.compareTo(OctValue.ZERO) >= 0) {
+				return OctValue.ONE;
+			} else if (nij.compareTo(OctValue.MINUS_ONE) >= 0) {
+				return OctValue.ZERO;
+			} else { // nij < -1
+				return nij.half(); // there is no -inf => will always converge towards 0
 			}
-			return v;
 		});
 	}
 

@@ -18,6 +18,7 @@ public class OctValue implements Comparable<OctValue> {
 	public final static OctValue INFINITY = new OctValue();
 	public final static OctValue ONE = new OctValue(1);
 	public final static OctValue ZERO = new OctValue(0);
+	public final static OctValue MINUS_ONE = new OctValue(-1);
 	
 	private BigDecimal mValue;
 	
