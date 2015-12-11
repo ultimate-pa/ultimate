@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -69,6 +70,8 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 	private List<Pair<STATE, STATE>> m_StatesToMerge;
 
 	private List<Triple<STATE, LETTER, STATE>> m_EdgesToRemove;
+	
+	private final Set<Triple<STATE, LETTER, STATE>> m_BuechiTransitions;
 
 	/**
 	 * True for added, false for removed.
@@ -80,7 +83,8 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 		super(services);
 
 		m_Buechi = buechi;
-		m_ChangedBuechiTransitionsInverse = new NestedMap3<STATE, LETTER, STATE, GameGraphChangeType>();
+		m_ChangedBuechiTransitionsInverse = new NestedMap3<>();
+		m_BuechiTransitions = new HashSet<>();
 		m_StatesToMerge = null;
 		m_EdgesToRemove = null;
 
@@ -185,25 +189,21 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 		if (stateToAlignTo == null || stateToAlign == null || !states.contains(stateToAlignTo)
 				|| !states.contains(stateToAlign) || stateToAlignTo == stateToAlign) {
 			throw new IllegalArgumentException(
-					"Arguments must exist in the" + " automaton, be different and not null.");
+					"Arguments must exist in the automaton, be different and not null.");
 		}
 
-		FairGameGraphChanges<LETTER, STATE> changes = new FairGameGraphChanges<LETTER, STATE>();
+		FairGameGraphChanges<LETTER, STATE> changes = new FairGameGraphChanges<>();
 		boolean madeAChange = false;
 
 		// Work successors of stateToAlignTo
-		for (OutgoingInternalTransition<LETTER, STATE> trans : m_Buechi.internalSuccessors(stateToAlignTo)) {
-			boolean transCovered = false;
-			for (OutgoingInternalTransition<LETTER, STATE> coveringTrans : m_Buechi.internalSuccessors(stateToAlign,
-					trans.getLetter())) {
-				if (coveringTrans.getSucc().equals(trans.getSucc())) {
-					transCovered = true;
-					break;
-				}
-			}
-			if (!transCovered) {
-				FairGameGraphChanges<LETTER, STATE> currentChange = addBuechiTransition(stateToAlign, trans.getLetter(),
-						trans.getSucc());
+		for (OutgoingInternalTransition<LETTER, STATE> outTrans
+				: m_Buechi.internalSuccessors(stateToAlignTo)) {
+			STATE src = stateToAlign;
+			LETTER a = outTrans.getLetter();
+			STATE dest = outTrans.getSucc();
+			if (!hasBuechiEdge(new Triple<>(src, a, dest))) {
+				FairGameGraphChanges<LETTER, STATE> currentChange =
+						addBuechiTransition(src, a, dest);
 				if (currentChange != null) {
 					changes.merge(currentChange, true);
 					madeAChange = true;
@@ -211,18 +211,15 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 			}
 		}
 		// Work predecessors of stateToAlignTo
-		for (IncomingInternalTransition<LETTER, STATE> trans : m_Buechi.internalPredecessors(stateToAlignTo)) {
-			boolean transCovered = false;
-			for (IncomingInternalTransition<LETTER, STATE> coveringTrans : m_Buechi
-					.internalPredecessors(trans.getLetter(), stateToAlign)) {
-				if (coveringTrans.getPred().equals(trans.getPred())) {
-					transCovered = true;
-					break;
-				}
-			}
-			if (!transCovered) {
-				FairGameGraphChanges<LETTER, STATE> currentChange = addBuechiTransition(trans.getPred(),
-						trans.getLetter(), stateToAlign);
+		for (IncomingInternalTransition<LETTER, STATE> inTrans
+				: m_Buechi.internalPredecessors(stateToAlignTo)) {
+			STATE src = inTrans.getPred();
+			LETTER a = inTrans.getLetter();
+			STATE dest = stateToAlign;
+			
+			if (!hasBuechiEdge(new Triple<>(src, a, dest))) {
+				FairGameGraphChanges<LETTER, STATE> currentChange =
+						addBuechiTransition(src, a, stateToAlign);
 				if (currentChange != null) {
 					changes.merge(currentChange, true);
 					madeAChange = true;
@@ -286,7 +283,7 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 			}
 		}
 
-		FairGameGraphChanges<LETTER, STATE> changes = new FairGameGraphChanges<LETTER, STATE>();
+		FairGameGraphChanges<LETTER, STATE> changes = new FairGameGraphChanges<>();
 
 		// Generate new edges and some missing vertices
 		for (STATE fixState : states) {
@@ -300,7 +297,7 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 				if (getDuplicatorVertex(dest, rightState, a, false) != null) {
 					continue;
 				}
-				DuplicatorVertex<LETTER, STATE> generatedVertex = new DuplicatorVertex<LETTER, STATE>(2, false, dest,
+				DuplicatorVertex<LETTER, STATE> generatedVertex = new DuplicatorVertex<>(2, false, dest,
 						rightState, a);
 				addDuplicatorVertex(generatedVertex);
 				// Remember addition
@@ -368,7 +365,7 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 					"Arguments must exist in the" + " automaton, be different and not null.");
 		}
 
-		FairGameGraphChanges<LETTER, STATE> changes = new FairGameGraphChanges<LETTER, STATE>();
+		FairGameGraphChanges<LETTER, STATE> changes = new FairGameGraphChanges<>();
 		boolean madeAChange = false;
 
 		// Equalize states in both directions
@@ -391,18 +388,18 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 	}
 
 	@Override
-	protected NestedWordAutomaton<LETTER, STATE> generateBuchiAutomatonFromGraph() throws OperationCanceledException {
+	protected INestedWordAutomatonOldApi<LETTER, STATE> generateBuchiAutomatonFromGraph() throws OperationCanceledException {
 		boolean canMerge = m_StatesToMerge != null && !m_StatesToMerge.isEmpty();
 		boolean canRemove = m_EdgesToRemove != null && !m_EdgesToRemove.isEmpty();
 
 		@SuppressWarnings("unchecked")
 		StateFactory<STATE> snf = (StateFactory<STATE>) new StringFactory();
-		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<LETTER, STATE>(getServiceProvider(),
+		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<>(getServiceProvider(),
 				m_Buechi.getInternalAlphabet(), null, null, snf);
 
 		// Merge states
 		// Build equivalence classes for every state
-		UnionFind<STATE> uf = new UnionFind<STATE>();
+		UnionFind<STATE> uf = new UnionFind<>();
 		for (STATE state : m_Buechi.getStates()) {
 			uf.makeEquivalenceClass(state);
 		}
@@ -413,18 +410,18 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 			}
 		}
 		// Calculate initial states
-		Set<STATE> representativesOfInitials = new HashSet<STATE>();
+		Set<STATE> representativesOfInitials = new HashSet<>();
 		for (STATE initialState : m_Buechi.getInitialStates()) {
 			representativesOfInitials.add(uf.find(initialState));
 		}
 		// Calculate final states
-		Set<STATE> representativesOfFinals = new HashSet<STATE>();
+		Set<STATE> representativesOfFinals = new HashSet<>();
 		for (STATE finalState : m_Buechi.getFinalStates()) {
 			representativesOfFinals.add(uf.find(finalState));
 		}
 
 		// Add states
-		Map<STATE, STATE> input2result = new HashMap<STATE, STATE>(m_Buechi.size());
+		Map<STATE, STATE> input2result = new HashMap<>(m_Buechi.size());
 		for (STATE representative : uf.getAllRepresentatives()) {
 			boolean isInitial = representativesOfInitials.contains(representative);
 			boolean isFinal = representativesOfFinals.contains(representative);
@@ -447,12 +444,10 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 				STATE resultDest = input2result.get(inputDest);
 				if (canRemove) {
 					// Skip edges that should get removed
-					Triple<STATE, LETTER, STATE> transAsTriple = new Triple<STATE, LETTER, STATE>(inputSrc, a,
+					Triple<STATE, LETTER, STATE> transAsTriple = new Triple<>(inputSrc, a,
 							inputDest);
 					if (!m_EdgesToRemove.contains(transAsTriple)) {
 						result.addInternalTransition(resultSrc, a, resultDest);
-					} else {
-						System.out.println("Skipping " + inputSrc + " -" + a + "-> " + inputDest);
 					}
 				} else {
 					result.addInternalTransition(resultSrc, a, resultDest);
@@ -460,10 +455,12 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 
 			}
 		}
-		// TODO Return result with unreachable states removed
-//		 return new RemoveUnreachable<STATE, LETTER>(getServiceProvider(),
-//		 result).getResult();
-		return result;
+		
+		// Remove unreachable states which can occur due to edge removal
+		NestedWordAutomatonReachableStates<LETTER, STATE> nwaReachableStates =
+				new RemoveUnreachable<LETTER, STATE>(getServiceProvider(),
+						result).getResult();
+		return nwaReachableStates;
 	}
 
 	@Override
@@ -478,13 +475,13 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 				if (priority == 1) {
 					increaseGlobalInfinity();
 				}
-				SpoilerVertex<LETTER, STATE> spoilerVertex = new SpoilerVertex<LETTER, STATE>(priority, false,
+				SpoilerVertex<LETTER, STATE> spoilerVertex = new SpoilerVertex<>(priority, false,
 						leftState, rightState);
 				addSpoilerVertex(spoilerVertex);
 
 				// Generate Duplicator vertices (leftState, rightState, letter)
 				for (LETTER letter : buechi.lettersInternalIncoming(leftState)) {
-					DuplicatorVertex<LETTER, STATE> duplicatorVertex = new DuplicatorVertex<LETTER, STATE>(2, false,
+					DuplicatorVertex<LETTER, STATE> duplicatorVertex = new DuplicatorVertex<>(2, false,
 							leftState, rightState, letter);
 					addDuplicatorVertex(duplicatorVertex);
 				}
@@ -516,8 +513,16 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 					// TODO Can we generate edges at the same time we generate
 					// states?
 				}
+				
+				m_BuechiTransitions.add(
+						new Triple<>(trans.getPred(),
+								trans.getLetter(), edgeDest));
 			}
 		}
+	}
+	
+	protected boolean hasBuechiEdge(final Triple<STATE, LETTER, STATE> edge) {
+		return m_BuechiTransitions.contains(edge);
 	}
 
 	/**
@@ -540,7 +545,7 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 			return null;
 		}
 
-		FairGameGraphChanges<LETTER, STATE> changes = new FairGameGraphChanges<LETTER, STATE>();
+		FairGameGraphChanges<LETTER, STATE> changes = new FairGameGraphChanges<>();
 
 		// Remove edges that were generated of this transition
 		for (STATE fixState : states) {

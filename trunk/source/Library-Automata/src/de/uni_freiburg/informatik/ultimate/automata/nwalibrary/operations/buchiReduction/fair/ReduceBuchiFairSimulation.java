@@ -59,11 +59,11 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperatio
 		StateFactory<String> snf = (StateFactory<String>) new StringFactory();
 		
 		// Buechi automaton
-		Set<String> alphabet = new HashSet<String>();
+		Set<String> alphabet = new HashSet<>();
 		alphabet.add("a");
 		alphabet.add("b");
 		NestedWordAutomaton<String, String> buechi =
-				new NestedWordAutomaton<String, String>(service, alphabet, null, null, snf);
+				new NestedWordAutomaton<>(service, alphabet, null, null, snf);
 		
 		// Big example from tutors cardboard
 //		buechi.addState(true, false, "q0");
@@ -166,11 +166,11 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperatio
 //		buechi.addInternalTransition("q0", "a", "q4");
 		
 		// Debug test automata 2
-//		alphabet = new HashSet<String>();
+//		alphabet = new HashSet<>();
 //		alphabet.add("a");
 //		alphabet.add("b");
 //		alphabet.add("c");
-//		buechi = new NestedWordAutomaton<String, String>(service, alphabet, null, null, snf);
+//		buechi = new NestedWordAutomaton<>(service, alphabet, null, null, snf);
 //		buechi.addState(true, false, "q0");
 //		buechi.addState(false, false, "q1");
 //		buechi.addState(false, false, "q2");
@@ -263,11 +263,11 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperatio
 //			System.out.println();
 			
 			System.out.println("Start Simulation with SCC...");
-			FairSimulation<String, String> simulationSCC = new FairSimulation<String, String>(service, buechi, true, snf);
+			FairSimulation<String, String> simulationSCC = new FairSimulation<>(service, buechi, true, snf);
 			System.out.println();
 			
 			System.out.println("Start Simulation without SCC...");
-			FairSimulation<String, String> simulationNoSCC = new FairSimulation<String, String>(service, buechi, false, snf);
+			FairSimulation<String, String> simulationNoSCC = new FairSimulation<>(service, buechi, false, snf);
 			System.out.println();
 			
 			System.out.println("Start comparing results...");
@@ -340,20 +340,20 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperatio
 		// Single automata comparison
 		/*
 		System.out.println("Start Simulation with SCC...");
-		FairSimulation<String, String> simulationSCC = new FairSimulation<String, String>(service, buechi, true, snf);
+		FairSimulation<String, String> simulationSCC = new FairSimulation<>(service, buechi, true, snf);
 		System.out.println(simulationSCC);
 		
 		System.out.println("Start Simulation without SCC...");
-		FairSimulation<String, String> simulationNoSCC = new FairSimulation<String, String>(service, buechi, false, snf);
+		FairSimulation<String, String> simulationNoSCC = new FairSimulation<>(service, buechi, false, snf);
 		System.out.println(simulationNoSCC);
 		*/
 		
 		// Merge tests
-//		FairSimulation<String, String> simulation = new FairSimulation<String, String>(service, buechi, true, snf);
+//		FairSimulation<String, String> simulation = new FairSimulation<>(service, buechi, true, snf);
 		
 		// Operation tests
 		ReduceBuchiFairSimulation<String, String> operation =
-				new ReduceBuchiFairSimulation<String, String>(service, snf, buechi);
+				new ReduceBuchiFairSimulation<>(service, snf, buechi);
 		try {
 			if (operation.checkResult(snf)) {
 				System.out.println("Operation is correct.");
@@ -384,11 +384,11 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperatio
 		m_Operand = operand;
 		m_Logger.info(startMessage());
 
-		m_Result = new FairSimulation<LETTER, STATE>(m_Services, m_Operand, true, stateFactory).getResult();
+		m_Result = new FairSimulation<>(m_Services, m_Operand, true, stateFactory).getResult();
 
 		boolean compareWithNonSccResult = false;
 		if (compareWithNonSccResult) {
-			NestedWordAutomaton<LETTER, STATE> nonSCCresult = new FairSimulation<LETTER, STATE>(m_Services, m_Operand,
+			INestedWordAutomatonOldApi<LETTER, STATE> nonSCCresult = new FairSimulation<LETTER, STATE>(m_Services, m_Operand,
 					false, stateFactory).getResult();
 			if (m_Result.size() != nonSCCresult.size()) {
 				throw new AssertionError();

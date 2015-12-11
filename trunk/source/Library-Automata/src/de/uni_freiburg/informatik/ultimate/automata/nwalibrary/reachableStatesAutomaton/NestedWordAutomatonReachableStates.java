@@ -694,7 +694,8 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements INeste
 						}
 						m_DownPropagationWorklist.add(cont);
 					}
-					if (!m_Services.getProgressMonitorService().continueProcessing()) {
+					if (m_Services.getProgressMonitorService() != null
+							&& !m_Services.getProgressMonitorService().continueProcessing()) {
 						throw new OperationCanceledException(this.getClass());
 					}
 				}

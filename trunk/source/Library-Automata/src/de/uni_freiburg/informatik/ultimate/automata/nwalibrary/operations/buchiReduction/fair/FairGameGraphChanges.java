@@ -51,8 +51,7 @@ public final class FairGameGraphChanges<LETTER, STATE> extends GameGraphChanges<
 	
 	public FairGameGraphChanges() {
 		super();
-		m_ChangedBuechiTransitions =
-				new NestedMap3<STATE, LETTER, STATE, GameGraphChangeType>();
+		m_ChangedBuechiTransitions = new NestedMap3<>();
 	}
 	
 	public void addedBuechiTransition(final STATE src,

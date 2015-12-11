@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
@@ -57,6 +56,7 @@ public class MinimizeDfaSimulation<LETTER,STATE> implements IOperation<LETTER,ST
     private INestedWordAutomatonOldApi<LETTER,STATE> m_Operand;
 
     private INestedWordAutomatonOldApi<LETTER,STATE> m_Result;
+    
     private final IUltimateServiceProvider m_Services;
 
     /**
@@ -74,11 +74,11 @@ public class MinimizeDfaSimulation<LETTER,STATE> implements IOperation<LETTER,ST
     	m_Operand = operand;
         m_Logger.info(startMessage());
         
-        m_Result = new DirectSimulation<LETTER,STATE>(m_Services, m_Operand, true, stateFactory).getResult();
+        m_Result = new DirectSimulation<>(m_Services, m_Operand, true, stateFactory).getResult();
         
         boolean compareWithNonSccResult = false;
         if (compareWithNonSccResult) {
-        	NestedWordAutomaton<LETTER,STATE> nonSCCresult = 
+        	INestedWordAutomatonOldApi<LETTER, STATE> nonSCCresult = 
         			new DirectSimulation<LETTER,STATE>(m_Services, m_Operand, false, stateFactory).getResult();
         	if (m_Result.size() != nonSCCresult.size()) {
         		throw new AssertionError();
