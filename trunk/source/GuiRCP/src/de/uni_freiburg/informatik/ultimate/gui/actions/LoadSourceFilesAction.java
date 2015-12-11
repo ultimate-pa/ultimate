@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.gui.interfaces.IImageKeys;
  */
 public class LoadSourceFilesAction extends RunToolchainAction implements IWorkbenchAction {
 
-	private static final String s_ID = "de.uni_freiburg.informatik.ultimate.gui.LoadSourceFiles";
 	private static final String s_DIALOG_NAME = "Open Source ... ";
 
 	/**
@@ -63,22 +62,22 @@ public class LoadSourceFilesAction extends RunToolchainAction implements IWorkbe
 	 */
 	public LoadSourceFilesAction(final IWorkbenchWindow window, final ICore icore, final GuiController controller,
 			Logger logger) {
-		super(logger, window, icore, controller, s_ID, s_DIALOG_NAME, IImageKeys.LOADSOURCEFILES);
+		super(logger, window, icore, controller, LoadSourceFilesAction.class.getName(), s_DIALOG_NAME,
+				IImageKeys.LOADSOURCEFILES);
 	}
 
 	/**
-	 * the action opens a file dialog then passes the files for opening to the
-	 * core
+	 * the action opens a file dialog then passes the files for opening to the core
 	 */
 	public final void run() {
-		File[] fp = getInputFilesFromUser(s_DIALOG_NAME);
-
-		if (fp != null && fp.length>0) {
-			File prelude = PreludeContribution.getPreludeFile();
-			BasicToolchainJob tcj = new GuiToolchainJob("Processing Toolchain", mCore, mController, fp,
-					prelude == null ? null : new PreludeProvider(prelude.getAbsolutePath(), mLogger), mLogger);
-			tcj.schedule();
+		final File[] fp = getInputFilesFromUser(s_DIALOG_NAME);
+		if (fp == null || fp.length <= 0) {
+			return;
 		}
+		final File prelude = PreludeContribution.getPreludeFile();
+		final BasicToolchainJob tcj = new GuiToolchainJob("Processing Toolchain", mCore, mController, fp,
+				prelude == null ? null : new PreludeProvider(prelude.getAbsolutePath(), mLogger), mLogger);
+		tcj.schedule();
 	}
 
 }

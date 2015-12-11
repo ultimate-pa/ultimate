@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2011-2015 Jürgen Christ (christj@informatik.uni-freiburg.de)
+ * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE DebugGUI plug-in.
@@ -27,37 +26,34 @@
  */
 package de.uni_freiburg.informatik.ultimate.gui.actions;
 
-import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
-
 import org.eclipse.jface.action.Action;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.widgets.FileDialog;
-import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 
-public class SaveSettingsAction extends Action implements IWorkbenchAction {
+import de.uni_freiburg.informatik.ultimate.ep.interfaces.ICore;
+
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
+public class ResetSettingsAction extends Action implements IWorkbenchAction {
 
 	private final ICore mCore;
-	private final IWorkbenchWindow mWindow;
 
-	public SaveSettingsAction(final IWorkbenchWindow window, final ICore icore) {
+	public ResetSettingsAction(final ICore icore) {
 		setId(getClass().getName());
-		setText("Save settings");
-		setToolTipText("Saves current settings to a file");
+		setText("Reset settings");
+		setToolTipText("Reset all settings to default values");
 		mCore = icore;
-		mWindow = window;
 	}
 
 	public void run() {
-		final FileDialog fd = new FileDialog(mWindow.getShell(), SWT.SAVE);
-		fd.setText("Save settings to...");
-		fd.setFilterExtensions(new String[] { "*.epf" });
-		fd.setFilterNames(new String[] { "Eclipse preference file (*.epf)" });
-		mCore.savePreferences(fd.open());
+		mCore.resetPreferences();
 	}
 
 	@Override
 	public void dispose() {
-	}
+		// TODO Auto-generated method stub
 
+	}
 }
