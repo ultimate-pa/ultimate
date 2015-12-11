@@ -163,21 +163,16 @@ final class PluginFactory implements IServiceFactoryFactory {
 	}
 
 	/**
-	 * This method returns a list of instances of available IToolchainPlugins.
-	 * Those tools are not initialized.
+	 * This method returns a list of instances of available IToolchainPlugins. Those tools are not initialized.
 	 * 
 	 * @return
 	 */
 	List<IToolchainPlugin> getAllAvailableToolchainPlugins() {
-		List<IToolchainPlugin> rtr;
-		if (mToolchainPluginCache != null) {
-			rtr = new ArrayList<>();
-			rtr.addAll(mToolchainPluginCache);
-			return rtr;
+		if (mToolchainPluginCache == null) {
+			mToolchainPluginCache = loadAdmissiblePlugins();
 		}
-		rtr = loadAdmissiblePlugins();
-		mToolchainPluginCache = new ArrayList<>();
-		mToolchainPluginCache.addAll(rtr);
+		final List<IToolchainPlugin> rtr = new ArrayList<>();
+		rtr.addAll(mToolchainPluginCache);
 		return rtr;
 	}
 
@@ -200,19 +195,18 @@ final class PluginFactory implements IServiceFactoryFactory {
 	}
 
 	private List<IToolchainPlugin> loadAdmissiblePlugins() {
-		List<IToolchainPlugin> rtr = new ArrayList<>();
+		final List<IToolchainPlugin> rtr = new ArrayList<>();
 		mLogger.info("--------------------------------------------------------------------------------");
 		mLogger.info("Loading all admissible plugins (creating one instance, loading preferences)");
 		int notAdmissible = 0;
-		for (Class<?> type : sIToolchainPluginClasses) {
-			List<IConfigurationElement> elements = mAvailableToolsByClass.get(type);
+		for (final Class<?> type : sIToolchainPluginClasses) {
+			final List<IConfigurationElement> elements = mAvailableToolsByClass.get(type);
 			if (elements == null) {
 				continue;
 			}
-			for (IConfigurationElement elem : elements) {
+			for (final IConfigurationElement elem : elements) {
 				try {
-					IToolchainPlugin tool = (IToolchainPlugin) createInstance(elem);
-					tool = prepareToolchainPlugin(tool);
+					final IToolchainPlugin tool = prepareToolchainPlugin((IToolchainPlugin) createInstance(elem));
 					if (tool == null) {
 						notAdmissible++;
 						continue;
@@ -235,17 +229,16 @@ final class PluginFactory implements IServiceFactoryFactory {
 	}
 
 	/**
-	 * This method loads all contributions to the IController Extension Point.
-	 * Its receiving configuration elements (see exsd-files) which define class
-	 * name in element "impl" and attribute "class" as well as an attribute
+	 * This method loads all contributions to the IController Extension Point. Its receiving configuration elements (see
+	 * exsd-files) which define class name in element "impl" and attribute "class" as well as an attribute
 	 * "isGraphical". It then
 	 * 
-	 * Changed in Ultimate 2.0 to support multiple present controllers and to
-	 * make the distinction between graphical and non graphical ones
+	 * Changed in Ultimate 2.0 to support multiple present controllers and to make the distinction between graphical and
+	 * non graphical ones
 	 * 
 	 * @param reg
-	 *            The extension registry (which extensions are valid and how can
-	 *            I find them); is obtained by Platform.getExtensionRegistry()
+	 *            The extension registry (which extensions are valid and how can I find them); is obtained by
+	 *            Platform.getExtensionRegistry()
 	 * @throws CoreException
 	 */
 	private IController loadControllerPlugin(IExtensionRegistry reg) {
