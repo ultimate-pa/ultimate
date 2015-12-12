@@ -76,8 +76,6 @@ public class Example {
 		ArrayList<Example> list = new ArrayList<Example>();
 
 		Tasks.TaskNames[] verifyC = { Tasks.TaskNames.AUTOMIZER_C, TaskNames.KOJAK_C };
-		list.add(new Example("Example C File", "exampleCFile", "exampleFile.c", verifyC));
-		list.add(new Example("F-91", "f91", "f91.c", verifyC));
 		addAllFilesInExamplesSubfolder(list, "verifyC/", verifyC);
 
 		Tasks.TaskNames[] verifyBoogie = { Tasks.TaskNames.AUTOMIZER_BOOGIE };

@@ -28,7 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.util.relation;
 
 /**
- * Generic Triple.
+ * Generic Pair.
  * 
  * @author Matthias Heizmann
  *

@@ -5,9 +5,9 @@
 
 assert(!isEmpty(a));
 //Before
-print(a);
+//print(a);
 //After
-//print(reduceBuchiFairSimulation(a));
+print(reduceBuchiFairSimulation(a));
 
 //Use a random automaton
 //print(reduceBuchiFairSimulation(removeDeadEnds(getRandomDfa(10, 2, 5))));
@@ -103,3 +103,31 @@ NestedWordAutomaton a = (
   }, 
   returnTransitions = {}
 );
+
+// Debug test automata
+/*
+NestedWordAutomaton a = (
+	callAlphabet = {},
+	internalAlphabet = {"a1" "a0" },
+	returnAlphabet = {},
+	states = {"q1" "q2" "q3" "q4" "q0" },
+	initialStates = {"q0" },
+	finalStates = {"q3" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("q1" "a1" "q0")
+		 ("q2" "a1" "q2")
+		 ("q2" "a0" "q3")
+		 ("q3" "a1" "q4")
+		 ("q4" "a1" "q3")
+		 ("q0" "a1" "q1")
+		 ("q0" "a1" "q2")
+		 ("q0" "a1" "q4")
+		 ("q0" "a0" "q2")
+		 ("q0" "a0" "q4")
+	},
+	returnTransitions = {
+	}
+);
+*/

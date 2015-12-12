@@ -338,10 +338,10 @@ public class SmtUtils {
 		if (!fst.getSort().equals(snd.getSort())) {
 			throw new UnsupportedOperationException("arguments sort different");
 		}
-		BitvectorConstant fstbw = new BitvectorConstant(fst);
-		if (fstbw.isBitvectorConstant()) {
-			BitvectorConstant sndbw = new BitvectorConstant(snd);
-			if (sndbw.isBitvectorConstant()) {
+		BitvectorConstant fstbw = BitvectorUtils.constructBitvectorConstant(fst);
+		if (fstbw != null) {
+			BitvectorConstant sndbw = BitvectorUtils.constructBitvectorConstant(snd);
+			if (sndbw != null) {
 				return !fstbw.equals(sndbw);
 			}
 		}
@@ -613,7 +613,18 @@ public class SmtUtils {
 				result = mod(script, params[0], params[1]);
 			}
 			break;
+		case "zero_extend":
+		case "extract":
+		case "bvadd":
+		case "bvsub":
+		case "bvmul":
+		case "bvult":
+			result = BitvectorUtils.termWithLocalSimplification(script, funcname, indices, params);
+			break;
 		default:
+//			if (BitvectorUtils.allTermsAreBitvectorConstants(params)) {
+//				throw new AssertionError("wasted optimization " + funcname);
+//			}
 			result = script.term(funcname, indices, null, params);
 			break;
 		}
@@ -621,6 +632,9 @@ public class SmtUtils {
 	}
 	
 	
+
+
+
 	/**
 	 * Returns a possibly simplified version of the Term (div dividend divisor).
 	 * If dividend and divisor are both literals the returned Term is a literal 

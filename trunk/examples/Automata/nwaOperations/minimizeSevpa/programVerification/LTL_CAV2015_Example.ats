@@ -4,7 +4,7 @@
 
 int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeDeadEnds(nwa)));
 print(minimizeSevpaSize);
-assert(minimizeSevpaSize == 7);
+assert(minimizeSevpaSize == 34);
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {c0 c1 },

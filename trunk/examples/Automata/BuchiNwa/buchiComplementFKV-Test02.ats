@@ -4,16 +4,16 @@
 parseAutomata("../BuchiNwa/Xiaolin.ats");
 
 NestedWordAutomaton nwa = buchiComplementFKV(eNoether);
-assert(numberOfStates(nwa) == 8);
+assert(numberOfStates(nwa) == 10);
 assert(!buchiIsEmpty(nwa));
 print(numberOfStates(nwa));
 
 NestedWordAutomaton nwa = buchiComplementFKV(rSchumann);
-assert(numberOfStates(nwa) == 9);
+assert(numberOfStates(nwa) == 10);
 assert(!buchiIsEmpty(nwa));
 print(numberOfStates(nwa));
 
 NestedWordAutomaton nwa = buchiComplementFKV(cKistner);
-assert(numberOfStates(nwa) == 11);
+assert(numberOfStates(nwa) == 12);
 assert(!buchiIsEmpty(nwa));
 print(numberOfStates(nwa));

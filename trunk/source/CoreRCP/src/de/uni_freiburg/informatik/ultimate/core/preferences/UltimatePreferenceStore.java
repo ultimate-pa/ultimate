@@ -326,7 +326,7 @@ public class UltimatePreferenceStore {
 			return null;
 		}
 
-		return rtr.toArray(new String[0]);
+		return rtr.toArray(new String[rtr.size()]);
 	}
 
 	@Override

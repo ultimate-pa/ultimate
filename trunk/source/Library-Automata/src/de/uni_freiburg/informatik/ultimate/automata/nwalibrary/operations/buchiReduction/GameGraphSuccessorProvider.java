@@ -33,27 +33,42 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorProvider;
 
 /**
- * Doc comes later.
+ * Successor provider for a {@link AGameGraph}.
+ * Given a vertex it gets all its successors.
+ * 
  * @author Daniel Tischner
  *
  * @param <LETTER>
+ *            Letter class of buechi automaton
  * @param <STATE>
+ *            State class of buechi automaton
  */
 public final class GameGraphSuccessorProvider<LETTER, STATE> implements ISuccessorProvider<Vertex<LETTER, STATE>> {
-	
-	private GameGraph<LETTER, STATE> m_Graph;
-	
-	public GameGraphSuccessorProvider(GameGraph<LETTER, STATE> game) {
-		m_Graph = game;
+
+	/**
+	 * Underlying game graph of the provider.
+	 */
+	private final AGameGraph<LETTER, STATE> m_Graph;
+
+	/**
+	 * Creates a new successor provider on a given game graph.
+	 * 
+	 * @param graph The game graph of the provider
+	 */
+	public GameGraphSuccessorProvider(final AGameGraph<LETTER, STATE> graph) {
+		m_Graph = graph;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorProvider#getSuccessors(java.lang.Object)
+	 */
 	@Override
-	public Iterator<Vertex<LETTER, STATE>> getSuccessors(Vertex<LETTER, STATE> node) {
-		if (m_Graph.hasSuccessors(node)) {
-			return m_Graph.getSuccessors(node).iterator();
+	public Iterator<Vertex<LETTER, STATE>> getSuccessors(final Vertex<LETTER, STATE> vertex) {
+		if (m_Graph.hasSuccessors(vertex)) {
+			return m_Graph.getSuccessors(vertex).iterator();
 		} else {
 			return new HashSet<Vertex<LETTER, STATE>>().iterator();
 		}
 	}
-
 }

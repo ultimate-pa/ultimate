@@ -28,44 +28,36 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.math.BigInteger;
 
-import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-
 /**
- * 
+ * Representation of bitvectors.
  * @author Matthias Heizmann
  *
  */
 public class BitvectorConstant {
 	private final BigInteger m_Value;
 	private final BigInteger m_Index;
-	private final Term m_Term;
 	
-	public BitvectorConstant(Term term) {
-		if (term instanceof ApplicationTerm) {
-			if (term.getSort().getName().equals("BitVec")) {
-				if (term.getSort().getIndices().length == 1) {
-					ApplicationTerm appTerm = (ApplicationTerm) term;
-					if (appTerm.getParameters().length == 0) {
-						String funName = appTerm.getFunction().getName();
-						if (funName.startsWith("bv")) {
-							String value = funName.substring(2);
-							m_Value = new BigInteger(value);
-							m_Index = term.getSort().getIndices()[0];
-							m_Term = term;
-							return;
-						}
-					}
-				}
-			}
-		}
-		m_Value = null;
-		m_Index = null;
-		m_Term = null;
+	
+	public BitvectorConstant(BigInteger value, BigInteger index) {
+		super();
+		m_Value = computeUnifiedValue(value, index);
+		m_Index = index;
 	}
 	
-	boolean isBitvectorConstant() {
-		return m_Value != null && m_Index != null;
+	
+	/**
+	 * @return the result of value % 2^index
+	 */
+	private BigInteger computeUnifiedValue(BigInteger value, BigInteger index) {
+		return value.mod(new BigInteger("2").pow(index.intValueExact()));
+	}
+
+	public BigInteger getValue() {
+		return m_Value;
+	}
+
+	public BigInteger getIndex() {
+		return m_Index;
 	}
 
 	@Override
@@ -99,11 +91,93 @@ public class BitvectorConstant {
 		return true;
 	}
 
+	/**
+	 * returns the numeral SMT-LIB representation of this bitvector constant
+	 */
 	@Override
 	public String toString() {
-		return String.valueOf(m_Term);
+		return "(_ bv" + m_Value + " " + m_Index + ")";
 	}
 	
+	
+	
+	public static BitvectorConstant bvadd(BitvectorConstant bv1, BitvectorConstant bv2) {
+		if (bv1.getIndex().equals(bv2.getIndex())) {
+			return new BitvectorConstant(bv1.getValue().add(bv2.getValue()), bv1.getIndex());
+		} else {
+			throw new IllegalArgumentException("incompatible indices " + bv1.getIndex() + " " + bv2.getIndex());
+		}
+	}
+	
+	public static BitvectorConstant bvsub(BitvectorConstant bv1, BitvectorConstant bv2) {
+		if (bv1.getIndex().equals(bv2.getIndex())) {
+			return new BitvectorConstant(bv1.getValue().subtract(bv2.getValue()), bv1.getIndex());
+		} else {
+			throw new IllegalArgumentException("incompatible indices " + bv1.getIndex() + " " + bv2.getIndex());
+		}
+	}
+	
+	public static BitvectorConstant bvmul(BitvectorConstant bv1, BitvectorConstant bv2) {
+		if (bv1.getIndex().equals(bv2.getIndex())) {
+			return new BitvectorConstant(bv1.getValue().subtract(bv2.getValue()), bv1.getIndex());
+		} else {
+			throw new IllegalArgumentException("incompatible indices " + bv1.getIndex() + " " + bv2.getIndex());
+		}
+	}
+	
+	public static BitvectorConstant bvshl(BitvectorConstant b1, BitvectorConstant b2) {
+		int effectiveShift = Math.min(b1.getIndex().intValueExact(), b2.getValue().intValue());
+		return new BitvectorConstant(b1.getValue().multiply(new BigInteger("2").pow(effectiveShift)), b1.getIndex());
+	}
+	
+	public static boolean bvult(BitvectorConstant b1, BitvectorConstant b2) {
+		if (b1.getIndex().equals(b2.getIndex())) {
+			return b1.getValue().compareTo(b2.getValue()) < 0;
+		} else {
+			throw new IllegalArgumentException("incompatible indices " + b1.getIndex() + " " + b2.getIndex());
+		}
+	}
+
+	public static BitvectorConstant extract(BitvectorConstant bv, int upperIndex, int lowerIndex) {
+		String binaryString = bvToBinaryString(bv);
+		int resultIndex = upperIndex + 1 - lowerIndex;
+		final String extractedBinaryString;
+		if (resultIndex < binaryString.length()) {
+			extractedBinaryString = binaryString.substring(
+					binaryString.length()-1-upperIndex, binaryString.length()-lowerIndex);
+		} else {
+			extractedBinaryString = binaryString;
+		}
+		BigInteger extractedValue = binaryStringToBv(extractedBinaryString);
+		return new BitvectorConstant(extractedValue, BigInteger.valueOf(resultIndex));
+	}
+
+
+	private static BigInteger binaryStringToBv(final String extractedBinaryString) {
+		return new BigInteger(extractedBinaryString, 2);
+	}
+
+
+	private static String bvToBinaryString(BitvectorConstant bv) {
+		return bv.getValue().toString(2);
+	}
+	
+	private static String bvToFullBinaryString(BitvectorConstant bv) {
+		String withoutZeros = bv.getValue().toString(2);
+		StringBuilder sb = new StringBuilder();
+		int missingZeros = bv.getIndex().intValueExact() - withoutZeros.length(); 
+		for (int i=0; i<missingZeros; i++) {
+			sb.append("0");
+		}
+		sb.append(withoutZeros);
+		return sb.toString();
+	}
+
+
+
+	public static BitvectorConstant zero_extend(BitvectorConstant bv, BigInteger index) {
+		return new BitvectorConstant(bv.getValue(), bv.getIndex().add(index));
+	}
 
 	
 	

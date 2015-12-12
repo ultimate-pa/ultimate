@@ -337,7 +337,8 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 					enqueueAndMark(summarySuccDoubleDecker);
 				}
 			}
-			if (!m_Services.getProgressMonitorService().continueProcessing()) {
+			if (m_Services.getProgressMonitorService() != null
+					&& !m_Services.getProgressMonitorService().continueProcessing()) {
 				throw new OperationCanceledException(this.getClass());
 			}
 

@@ -52,12 +52,11 @@ import de.uni_freiburg.informatik.ultimate.gui.interfaces.IImageKeys;
 
 public class ResetAndRedoToolChainAction extends RunToolchainAction implements IWorkbenchAction {
 
-	private static final String ID = "de.uni_freiburg.informatik.ultimate.gui.ResetAndRedoToolChainAction";
 	private static final String LABEL = "Reset and re-execute";
 
 	public ResetAndRedoToolChainAction(final IWorkbenchWindow window, final ICore icore,
 			final GuiController controller, Logger logger) {
-		super(logger, window, icore, controller, ID, LABEL, IImageKeys.REEXEC);
+		super(logger, window, icore, controller, ResetAndRedoToolChainAction.class.getName(), LABEL, IImageKeys.REEXEC);
 	}
 
 	/**

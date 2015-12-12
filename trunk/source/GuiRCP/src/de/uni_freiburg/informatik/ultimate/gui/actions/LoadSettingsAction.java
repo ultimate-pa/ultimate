@@ -37,13 +37,11 @@ import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 
 public class LoadSettingsAction extends Action implements IWorkbenchAction {
 
-	public static final String s_ID = "de.uni_freiburg.informatik.ultimate.gui.LoadSetings";
-
 	private ICore mCore;
 	private IWorkbenchWindow mWindow;
 
 	public LoadSettingsAction(final IWorkbenchWindow window, final ICore icore) {
-		setId(s_ID);
+		setId(getClass().getName());
 		setText("Load settings");
 		setToolTipText("Loads previously saved settings from a file");
 		mCore = icore;
@@ -60,8 +58,5 @@ public class LoadSettingsAction extends Action implements IWorkbenchAction {
 
 	@Override
 	public void dispose() {
-		// TODO Auto-generated method stub
-
 	}
-
 }

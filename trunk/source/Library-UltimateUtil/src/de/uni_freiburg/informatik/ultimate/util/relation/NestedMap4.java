@@ -61,4 +61,8 @@ public class NestedMap4<K1, K2, K3, K4, V> {
 			return k2tok3tok4toV.get(key2, key3, key4);
 		}
 	}
+	
+	public void clear() {
+		m_K1ToK2ToK3ToK4V.clear();
+	}
 }

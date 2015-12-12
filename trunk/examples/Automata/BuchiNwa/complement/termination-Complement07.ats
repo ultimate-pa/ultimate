@@ -3,10 +3,10 @@
 print(numberOfStates(nwa));
 NestedWordAutomaton complement = buchiComplementFKV(nwa);
 print(numberOfStates(complement));
-assert(numberOfStates(complement) == 51);// with MatthiasTightLevelRankingStateGenerator result was 63 and minimizeSevpa reduced it to 49
+assert(numberOfStates(complement) == 69);// with MatthiasTightLevelRankingStateGenerator result was 63 and minimizeSevpa reduced it to 49
 NestedWordAutomaton live = removeNonLiveStates(complement);
 print(numberOfStates(live));
-assert(numberOfStates(live) == 51);
+assert(numberOfStates(live) == 69);
 minimizeSevpa(complement); //reduced to 27
 
 NestedWordAutomaton nwa = (

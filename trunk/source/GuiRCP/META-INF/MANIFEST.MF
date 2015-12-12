@@ -33,4 +33,3 @@ Export-Package:
    org.eclipse.ui.part,
    org.eclipse.swt.widgets"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
-

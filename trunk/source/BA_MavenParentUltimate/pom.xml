@@ -252,6 +252,7 @@
 		<module>../Library-ojAlgo</module>
 		<module>../AbstractInterpretationV2</module>
 		<module>../AbstractInterpretationMk2</module>
+		<module>../AutomatonDeltaDebugger</module>
 	</modules>
 
 	<profiles>

@@ -39,7 +39,8 @@ import java.util.List;
 		/**
 		 * Construct Word consisting of a sequence of symbols
 		 */
-		public Word(Symbol ... symbols) {
+		@SafeVarargs
+		public Word(Symbol... symbols) {
 			this.m_Word = symbols;
 		}
 		
