@@ -94,7 +94,7 @@ public class Theory {
 	private SolverSetup mSolverSetup;
 	private Logics mLogic;
 	private Sort mNumericSort, mRealSort, mStringSort, mBooleanSort;
-	private SortSymbol mBitVecSort;
+	private SortSymbol mBitVecSort, mFloatingPointSort;
 	private final HashMap<String, FunctionSymbolFactory> mFunFactory = 
 		new HashMap<String, FunctionSymbolFactory>();
 	private final UnifyHash<FunctionSymbol> mModelValueCache =
@@ -846,6 +846,93 @@ public class Theory {
 	
 	private void createFloatingPointOperators() {
 		//TODO: implement operators, Rounding modes
+		mFloatingPointSort = new SortSymbol(this, "fp", 2, null,
+				SortSymbol.INTERNAL | SortSymbol.INDEXED) {
+			public void checkFpArity(BigInteger[] indices, int arity) {
+				if (indices == null || indices.length != 2)
+					throw new IllegalArgumentException(
+							"Floating Point needs two index");
+				if (indices[0].signum() <= 1 || indices[1].signum() <= 1)
+					throw new IllegalArgumentException(
+							"Floating Point Index must be greater 0");
+				if (arity != 0)
+					throw new IllegalArgumentException(
+							"Floating Point has no parameters");
+			}
+		};
+		mDeclaredSorts.put("fp", mFloatingPointSort);
+		class RegularFloatingPointFunction extends FunctionSymbolFactory {
+			int mNumArgs;
+			Sort mResult;
+			public RegularFloatingPointFunction(
+					String name, int numArgs, Sort result) {
+				super(name);
+				mNumArgs = numArgs;
+				mResult = result;
+			}
+			@Override
+			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
+				if (indices != null
+					|| paramSorts.length != mNumArgs || resultSort != null
+					|| paramSorts[0].getName() != "fp")
+					return null;
+				for (int i = 1; i < mNumArgs; i++)
+					if (paramSorts[i] != paramSorts[0])
+						return null;
+				return mResult == null ? paramSorts[0] : mResult;
+			}
+		}
+		
+		// TODO Herausfinden ob das gebraucht wird
+		/*
+		class ExtendFloatingPointFunction extends FunctionSymbolFactory {
+			public ExtendFloatingPointFunction(String name) {
+				super(name);
+			}
+			@Override
+			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
+				if (indices == null || indices.length != 1
+					|| paramSorts.length != 1 || resultSort != null
+					|| paramSorts[0].getName() != "fp")
+					return null;
+				BigInteger size = indices[0].add(paramSorts[0].getIndices()[0]);
+				return mFloatingPointSort.getSort(
+						new BigInteger[] { size }, new Sort[0]);
+			}
+		}
+		*/
+				
+		// Operators
+		defineFunction(new RegularFloatingPointFunction("fpabs", 1, null));
+		defineFunction(new RegularFloatingPointFunction("fpneg", 1, null));
+		defineFunction(new RegularFloatingPointFunction("fpadd", 3, null));
+		defineFunction(new RegularFloatingPointFunction("fpsub", 3, null));
+		defineFunction(new RegularFloatingPointFunction("fpmul", 3, null));
+		defineFunction(new RegularFloatingPointFunction("fpdiv", 3, null));
+		defineFunction(new RegularFloatingPointFunction("fpfma", 4, null));
+		defineFunction(new RegularFloatingPointFunction("fpsqrt", 1, null));
+		defineFunction(new RegularFloatingPointFunction("fproundToIntegral", 2, null));
+		defineFunction(new RegularFloatingPointFunction("fpmin", 2, null));
+		defineFunction(new RegularFloatingPointFunction("fpmax", 2, null));
+		
+		// Comparison Operators
+		defineFunction(new RegularFloatingPointFunction("fpleq", 2, mBooleanSort));
+		defineFunction(new RegularFloatingPointFunction("fplt", 2, mBooleanSort));
+		defineFunction(new RegularFloatingPointFunction("fpgeq", 2, mBooleanSort));
+		defineFunction(new RegularFloatingPointFunction("fpgt", 2, mBooleanSort));
+		defineFunction(new RegularFloatingPointFunction("fpeq", 2, mBooleanSort));
+		
+		// Classification of numbers
+		defineFunction(new RegularFloatingPointFunction("fpIsNormal", 1, mBooleanSort));
+		defineFunction(new RegularFloatingPointFunction("fpIsSubnormal", 1, mBooleanSort));
+		defineFunction(new RegularFloatingPointFunction("fpIsZero", 1, mBooleanSort));
+		defineFunction(new RegularFloatingPointFunction("fpIsInfinite", 1, mBooleanSort));
+		defineFunction(new RegularFloatingPointFunction("fpIsNaN", 1, mBooleanSort));
+		defineFunction(new RegularFloatingPointFunction("fpIsNegativ", 1, mBooleanSort));
+		defineFunction(new RegularFloatingPointFunction("fpIsPositiv", 1, mBooleanSort));
+		
 	}
 	
 	private void setLogic(Logics logic) {
