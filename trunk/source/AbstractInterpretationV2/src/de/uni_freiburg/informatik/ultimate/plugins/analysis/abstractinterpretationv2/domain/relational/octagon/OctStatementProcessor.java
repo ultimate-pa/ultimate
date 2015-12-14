@@ -24,7 +24,7 @@ public class OctStatementProcessor extends BoogieVisitor {
 
 		// TODO implement
 		
-		throw new UnsupportedOperationException("post operator not implemented");
+		throw new UnsupportedOperationException("octagon post operator not implemented");
 	}
 
 }

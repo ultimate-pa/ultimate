@@ -95,8 +95,8 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 			}
 			// else: variable has unsupported type and is assumed to be \top at all times
 		}
-		newState.mNumericAbstraction =
-				mNumericAbstraction.addVariables(mMapNumericVarToIndex.size() - mNumericAbstraction.variables());
+		newState.mNumericAbstraction = mNumericAbstraction
+				.addVariables(newState.mMapNumericVarToIndex.size() - mMapNumericVarToIndex.size());
 		return newState;
 	}
 
