@@ -847,7 +847,7 @@ public class Theory {
 	
 	private void createFloatingPointOperators() {
 		//TODO: implement operators, Rounding modes
-		mFloatingPointSort = new SortSymbol(this, "Floating Point", 2, null,
+		mFloatingPointSort = new SortSymbol(this, "FloatingPoint", 2, null,
 				SortSymbol.INTERNAL | SortSymbol.INDEXED) {
 			public void checkFpArity(BigInteger[] indices, int arity) {
 				if (indices == null || indices.length != 2)
