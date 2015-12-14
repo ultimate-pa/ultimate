@@ -94,6 +94,7 @@ public class Theory {
 	private SolverSetup mSolverSetup;
 	private Logics mLogic;
 	private Sort mNumericSort, mRealSort, mStringSort, mBooleanSort;
+	private Sort mRNE, mRNA, mRTP, mRTN, mRTZ; //Rounding Modes
 	private SortSymbol mBitVecSort, mFloatingPointSort;
 	private final HashMap<String, FunctionSymbolFactory> mFunFactory = 
 		new HashMap<String, FunctionSymbolFactory>();
@@ -860,7 +861,15 @@ public class Theory {
 							"Floating Point has no parameters");
 			}
 		};
+		
+		mRNE = declareInternalSort("roundNearesTiesToEven", 0, 0).getSort(null, new Sort[0]);
+		mRNA = declareInternalSort("roundNearesTiesToAway", 0, 0).getSort(null, new Sort[0]);
+		mRTP = declareInternalSort("roundTowardsPositive", 0, 0).getSort(null, new Sort[0]);
+		mRTN = declareInternalSort("roundTowardsNegative", 0, 0).getSort(null, new Sort[0]);
+		mRTZ = declareInternalSort("roundTowardsZero", 0, 0).getSort(null, new Sort[0]);
+		
 		mDeclaredSorts.put("FloatingPoint", mFloatingPointSort);
+		
 		class RegularFloatingPointFunction extends FunctionSymbolFactory {
 			int mNumArgs;
 			Sort mResult;
