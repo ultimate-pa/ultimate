@@ -72,10 +72,17 @@ public class GameGraphChanges<LETTER, STATE> {
 	private final HashMap<Vertex<LETTER, STATE>, VertexValueContainer> m_RememberedValues;
 
 	/**
+	 * Stores information about vertices that are either source or destination
+	 * of an changed edges and the amount of involvements.<br/>
+	 */
+	private final HashMap<Vertex<LETTER, STATE>, Integer> m_VerticesInvolvedInEdgeChanges;
+
+	/**
 	 * Creates a new game graph changes object with no changes at default.
 	 */
 	public GameGraphChanges() {
 		m_ChangedEdges = new NestedMap2<>();
+		m_VerticesInvolvedInEdgeChanges = new HashMap<>();
 		m_ChangedVertices = new HashMap<>();
 		m_RememberedValues = new HashMap<>();
 	}
@@ -190,27 +197,17 @@ public class GameGraphChanges<LETTER, STATE> {
 	}
 
 	/**
-	 * Returns if the given vertex is the source of an edge that has a <i>change
-	 * entry</i> stored.
+	 * Returns if the given vertex is either the source or destination of an
+	 * edge that has a <i>change entry</i> stored.
 	 * 
 	 * @param vertex
 	 *            Vertex of interest
-	 * @return True if the given vertex is the source of an edge that has a
-	 *         <i>change entry</i> stored, false if not.
+	 * @return True if the given vertex is either the source or destination of
+	 *         an edge that has a <i>change entry</i> stored, false if not.
 	 */
-	public boolean isChangedEdgeSource(final Vertex<LETTER, STATE> vertex) {
-		boolean isChangedEdgeSource = false;
-		Map<Vertex<LETTER, STATE>, GameGraphChangeType> changedMap = m_ChangedEdges.get(vertex);
-		if (changedMap != null) {
-			// Iterate types of all outgoing changed edges
-			for (GameGraphChangeType type : changedMap.values()) {
-				if (type != GameGraphChangeType.NO_CHANGE) {
-					isChangedEdgeSource = true;
-					break;
-				}
-			}
-		}
-		return isChangedEdgeSource;
+	public boolean isVertexInvolvedInEdgeChanges(final Vertex<LETTER, STATE> vertex) {
+		Integer involvements = m_VerticesInvolvedInEdgeChanges.get(vertex);
+		return involvements != null && involvements >= 0;
 	}
 
 	/**
@@ -238,21 +235,27 @@ public class GameGraphChanges<LETTER, STATE> {
 				.getChangedEdges();
 		for (Triple<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, GameGraphChangeType> changedEdge : changedEdges
 				.entrySet()) {
-			Map<Vertex<LETTER, STATE>, GameGraphChangeType> changedMap = m_ChangedEdges.get(changedEdge.getFirst());
+			Vertex<LETTER, STATE> src = changedEdge.getFirst();
+			Vertex<LETTER, STATE> dest = changedEdge.getSecond();
+			GameGraphChangeType type = changedEdge.getThird();
+
+			Map<Vertex<LETTER, STATE>, GameGraphChangeType> changedMap = m_ChangedEdges.get(src);
 			GameGraphChangeType changeType = null;
 			if (changedMap != null) {
-				changeType = m_ChangedEdges.get(changedEdge.getFirst()).get(changedEdge.getSecond());
+				changeType = m_ChangedEdges.get(src).get(dest);
 			}
 			if (changeType == null || changeType.equals(GameGraphChangeType.NO_CHANGE)) {
 				// Only add edge change if unknown until now
-				m_ChangedEdges.put(changedEdge.getFirst(), changedEdge.getSecond(), changedEdge.getThird());
-			} else if ((changeType == GameGraphChangeType.ADDITION
-					&& changedEdge.getThird() == GameGraphChangeType.REMOVAL)
-					|| (changeType == GameGraphChangeType.REMOVAL
-							&& changedEdge.getThird() == GameGraphChangeType.ADDITION)) {
+				m_ChangedEdges.put(src, dest, type);
+				increaseInvolvementsInEdgeChanges(src);
+				increaseInvolvementsInEdgeChanges(dest);
+			} else if ((changeType == GameGraphChangeType.ADDITION && type == GameGraphChangeType.REMOVAL)
+					|| (changeType == GameGraphChangeType.REMOVAL && type == GameGraphChangeType.ADDITION)) {
 				// Nullify change if it was added and then
 				// removed or vice versa
-				m_ChangedEdges.remove(changedEdge.getFirst(), changedEdge.getSecond());
+				m_ChangedEdges.remove(src, dest);
+				decreaseInvolvementsInEdgeChanges(src);
+				decreaseInvolvementsInEdgeChanges(dest);
 			}
 		}
 
@@ -457,8 +460,12 @@ public class GameGraphChanges<LETTER, STATE> {
 				&& type.equals(GameGraphChangeType.REMOVAL))
 				|| (previousType.equals(GameGraphChangeType.REMOVAL) && type.equals(GameGraphChangeType.ADDITION)))) {
 			m_ChangedEdges.remove(src, dest);
+			decreaseInvolvementsInEdgeChanges(src);
+			decreaseInvolvementsInEdgeChanges(dest);
 		} else {
 			m_ChangedEdges.put(src, dest, type);
+			decreaseInvolvementsInEdgeChanges(src);
+			decreaseInvolvementsInEdgeChanges(dest);
 		}
 	}
 
@@ -485,6 +492,25 @@ public class GameGraphChanges<LETTER, STATE> {
 	}
 
 	/**
+	 * Decreases the involvements that a given vertex has in changed edges. This
+	 * is the case if the vertex is either the source or destination of a
+	 * changed edge.
+	 * 
+	 * @param vertex
+	 *            Vertex of interest
+	 */
+	private void decreaseInvolvementsInEdgeChanges(final Vertex<LETTER, STATE> vertex) {
+		Integer involvements = m_VerticesInvolvedInEdgeChanges.get(vertex);
+		if (involvements != null) {
+			if (involvements > 1) {
+				m_VerticesInvolvedInEdgeChanges.put(vertex, involvements - 1);
+			} else {
+				m_VerticesInvolvedInEdgeChanges.remove(vertex);
+			}
+		}
+	}
+
+	/**
 	 * Ensures the given vertex has a value container stored by creating a new
 	 * empty container if there is no.<br/>
 	 * This is used to prevent NPE at access.
@@ -496,5 +522,21 @@ public class GameGraphChanges<LETTER, STATE> {
 		if (m_RememberedValues.get(key) == null) {
 			m_RememberedValues.put(key, new VertexValueContainer());
 		}
+	}
+
+	/**
+	 * Increases the involvements that a given vertex has in changed edges. This
+	 * is the case if the vertex is either the source or destination of a
+	 * changed edge.
+	 * 
+	 * @param vertex
+	 *            Vertex of interest
+	 */
+	private void increaseInvolvementsInEdgeChanges(final Vertex<LETTER, STATE> vertex) {
+		Integer involvements = m_VerticesInvolvedInEdgeChanges.get(vertex);
+		if (involvements == null) {
+			involvements = 0;
+		}
+		m_VerticesInvolvedInEdgeChanges.put(vertex, involvements + 1);
 	}
 }

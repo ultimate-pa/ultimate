@@ -40,6 +40,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.GetRandomDfa;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.GetRandomNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.core.services.ToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
@@ -69,303 +74,417 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperatio
 	 *             framework.
 	 */
 	public static void main(final String[] args) throws OperationCanceledException {
-		ToolchainStorage service = new ToolchainStorage();
+		// Test correctness of operation using random automata or single given
+		// instances
+
+		ToolchainStorage services = new ToolchainStorage();
 		StateFactory<String> snf = (StateFactory<String>) new StringFactory();
 
 		// Buechi automaton
 		Set<String> alphabet = new HashSet<>();
 		alphabet.add("a");
 		alphabet.add("b");
-		NestedWordAutomaton<String, String> buechi = new NestedWordAutomaton<>(service, alphabet, null, null, snf);
+		NestedWordAutomaton<String, String> buechi = new NestedWordAutomaton<>(services, alphabet, null, null, snf);
 
 		// Big example from tutors cardboard
-		buechi.addState(true, false, "q0");
-		buechi.addState(false, false, "q1");
-		buechi.addState(false, true, "q2");
-		buechi.addState(false, false, "q3");
-		buechi.addState(false, true, "q4");
-		buechi.addInternalTransition("q0", "a", "q1");
-		buechi.addInternalTransition("q1", "a", "q1");
-		buechi.addInternalTransition("q1", "a", "q2");
-		buechi.addInternalTransition("q2", "a", "q2");
-		buechi.addInternalTransition("q2", "a", "q1");
-		buechi.addInternalTransition("q0", "a", "q3");
-		buechi.addInternalTransition("q3", "b", "q3");
-		buechi.addInternalTransition("q3", "a", "q4");
-		buechi.addInternalTransition("q4", "a", "q4");
-		buechi.addInternalTransition("q4", "b", "q3");
+//		buechi.addState(true, false, "q0");
+//		buechi.addState(false, false, "q1");
+//		buechi.addState(false, true, "q2");
+//		buechi.addState(false, false, "q3");
+//		buechi.addState(false, true, "q4");
+//		buechi.addInternalTransition("q0", "a", "q1");
+//		buechi.addInternalTransition("q1", "a", "q1");
+//		buechi.addInternalTransition("q1", "a", "q2");
+//		buechi.addInternalTransition("q2", "a", "q2");
+//		buechi.addInternalTransition("q2", "a", "q1");
+//		buechi.addInternalTransition("q0", "a", "q3");
+//		buechi.addInternalTransition("q3", "b", "q3");
+//		buechi.addInternalTransition("q3", "a", "q4");
+//		buechi.addInternalTransition("q4", "a", "q4");
+//		buechi.addInternalTransition("q4", "b", "q3");
 
 		// Small example from cav02 paper
-		// buechi.addState(true, true, "q1");
-		// buechi.addState(false, false, "q2");
-		// buechi.addInternalTransition("q1", "a", "q1");
-		// buechi.addInternalTransition("q1", "b", "q2");
-		// buechi.addInternalTransition("q2", "b", "q2");
-		// buechi.addInternalTransition("q2", "a", "q1");
+//		buechi.addState(true, true, "q1");
+//		buechi.addState(false, false, "q2");
+//		buechi.addInternalTransition("q1", "a", "q1");
+//		buechi.addInternalTransition("q1", "b", "q2");
+//		buechi.addInternalTransition("q2", "b", "q2");
+//		buechi.addInternalTransition("q2", "a", "q1");
 
-		// Small example from cav02 paper extended so that nodes share the same
-		// transitions
-		// buechi.addState(true, true, "q1");
-		// buechi.addState(false, false, "q2");
-		// buechi.addInternalTransition("q1", "a", "q1");
-		// buechi.addInternalTransition("q1", "b", "q1");
-		// buechi.addInternalTransition("q1", "a", "q2");
-		// buechi.addInternalTransition("q1", "b", "q2");
-		// buechi.addInternalTransition("q2", "a", "q2");
-		// buechi.addInternalTransition("q2", "b", "q2");
-		// buechi.addInternalTransition("q2", "a", "q1");
-		// buechi.addInternalTransition("q2", "b", "q1");
+		// Small example from cav02 paper extended so that nodes
+		// share the same transitions
+//		buechi.addState(true, true, "q1");
+//		buechi.addState(false, false, "q2");
+//		buechi.addInternalTransition("q1", "a", "q1");
+//		buechi.addInternalTransition("q1", "b", "q1");
+//		buechi.addInternalTransition("q1", "a", "q2");
+//		buechi.addInternalTransition("q1", "b", "q2");
+//		buechi.addInternalTransition("q2", "a", "q2");
+//		buechi.addInternalTransition("q2", "b", "q2");
+//		buechi.addInternalTransition("q2", "a", "q1");
+//		buechi.addInternalTransition("q2", "b", "q1");
 
 		// Small circle example from mind
-		// buechi.addState(true, true, "q1");
-		// buechi.addState(false, false, "q2");
-		// buechi.addState(true, false, "q3");
-		// buechi.addState(false, false, "q4");
-		// buechi.addInternalTransition("q1", "a", "q2");
-		// buechi.addInternalTransition("q2", "b", "q3");
-		// buechi.addInternalTransition("q3", "a", "q4");
-		// buechi.addInternalTransition("q4", "b", "q1");
+//		buechi.addState(true, true, "q1");
+//		buechi.addState(false, false, "q2");
+//		buechi.addState(true, false, "q3");
+//		buechi.addState(false, false, "q4");
+//		buechi.addInternalTransition("q1", "a", "q2");
+//		buechi.addInternalTransition("q2", "b", "q3");
+//		buechi.addInternalTransition("q3", "a", "q4");
+//		buechi.addInternalTransition("q4", "b", "q1");
 
 		// Non merge-able example with a one-directed fair simulation
-		// buechi.addState(true, true, "q0");
-		// buechi.addState(false, false, "q1");
-		// buechi.addInternalTransition("q0", "b", "q0");
-		// buechi.addInternalTransition("q0", "a", "q1");
-		// buechi.addInternalTransition("q1", "a", "q1");
-		// buechi.addInternalTransition("q1", "b", "q1");
+//		buechi.addState(true, true, "q0");
+//		buechi.addState(false, false, "q1");
+//		buechi.addInternalTransition("q0", "b", "q0");
+//		buechi.addInternalTransition("q0", "a", "q1");
+//		buechi.addInternalTransition("q1", "a", "q1");
+//		buechi.addInternalTransition("q1", "b", "q1");
 
 		// Big example from cav02
-		// buechi.addState(true, false, "q1");
-		// buechi.addState(false, false, "q2");
-		// buechi.addState(false, true, "q3");
-		// buechi.addState(false, true, "q4");
-		// buechi.addState(false, false, "q5");
-		// buechi.addState(false, true, "q6");
-		// buechi.addState(false, false, "q7");
-		// buechi.addState(false, false, "q8");
-		// buechi.addState(false, false, "q9");
-		// buechi.addState(false, true, "q10");
-		// buechi.addInternalTransition("q1", "a", "q2");
-		// buechi.addInternalTransition("q1", "a", "q3");
-		// buechi.addInternalTransition("q2", "a", "q6");
-		// buechi.addInternalTransition("q2", "b", "q4");
-		// buechi.addInternalTransition("q2", "b", "q7");
-		// buechi.addInternalTransition("q4", "a", "q2");
-		// buechi.addInternalTransition("q6", "a", "q6");
-		// buechi.addInternalTransition("q3", "b", "q5");
-		// buechi.addInternalTransition("q3", "b", "q7");
-		// buechi.addInternalTransition("q5", "a", "q3");
-		// buechi.addInternalTransition("q7", "b", "q8");
-		// buechi.addInternalTransition("q8", "a", "q9");
-		// buechi.addInternalTransition("q8", "b", "q10");
-		// buechi.addInternalTransition("q9", "a", "q9");
-		// buechi.addInternalTransition("q9", "b", "q10");
-		// buechi.addInternalTransition("q10", "b", "q10");
+//		buechi.addState(true, false, "q1");
+//		buechi.addState(false, false, "q2");
+//		buechi.addState(false, true, "q3");
+//		buechi.addState(false, true, "q4");
+//		buechi.addState(false, false, "q5");
+//		buechi.addState(false, true, "q6");
+//		buechi.addState(false, false, "q7");
+//		buechi.addState(false, false, "q8");
+//		buechi.addState(false, false, "q9");
+//		buechi.addState(false, true, "q10");
+//		buechi.addInternalTransition("q1", "a", "q2");
+//		buechi.addInternalTransition("q1", "a", "q3");
+//		buechi.addInternalTransition("q2", "a", "q6");
+//		buechi.addInternalTransition("q2", "b", "q4");
+//		buechi.addInternalTransition("q2", "b", "q7");
+//		buechi.addInternalTransition("q4", "a", "q2");
+//		buechi.addInternalTransition("q6", "a", "q6");
+//		buechi.addInternalTransition("q3", "b", "q5");
+//		buechi.addInternalTransition("q3", "b", "q7");
+//		buechi.addInternalTransition("q5", "a", "q3");
+//		buechi.addInternalTransition("q7", "b", "q8");
+//		buechi.addInternalTransition("q8", "a", "q9");
+//		buechi.addInternalTransition("q8", "b", "q10");
+//		buechi.addInternalTransition("q9", "a", "q9");
+//		buechi.addInternalTransition("q9", "b", "q10");
+//		buechi.addInternalTransition("q10", "b", "q10");
 
 		// Debug test automata 1
-		// buechi.addState(true, false, "q0");
-		// buechi.addState(false, false, "q1");
-		// buechi.addState(false, false, "q2");
-		// buechi.addState(false, true, "q3");
-		// buechi.addState(false, false, "q4");
-		// buechi.addInternalTransition("q1", "b", "q0");
-		// buechi.addInternalTransition("q2", "b", "q2");
-		// buechi.addInternalTransition("q2", "a", "q3");
-		// buechi.addInternalTransition("q3", "b", "q4");
-		// buechi.addInternalTransition("q4", "b", "q3");
-		// buechi.addInternalTransition("q0", "b", "q1");
-		// buechi.addInternalTransition("q0", "b", "q2");
-		// buechi.addInternalTransition("q0", "b", "q4");
-		// buechi.addInternalTransition("q0", "a", "q2");
-		// buechi.addInternalTransition("q0", "a", "q4");
+//		buechi.addState(true, false, "q0");
+//		buechi.addState(false, false, "q1");
+//		buechi.addState(false, false, "q2");
+//		buechi.addState(false, true, "q3");
+//		buechi.addState(false, false, "q4");
+//		buechi.addInternalTransition("q1", "b", "q0");
+//		buechi.addInternalTransition("q2", "b", "q2");
+//		buechi.addInternalTransition("q2", "a", "q3");
+//		buechi.addInternalTransition("q3", "b", "q4");
+//		buechi.addInternalTransition("q4", "b", "q3");
+//		buechi.addInternalTransition("q0", "b", "q1");
+//		buechi.addInternalTransition("q0", "b", "q2");
+//		buechi.addInternalTransition("q0", "b", "q4");
+//		buechi.addInternalTransition("q0", "a", "q2");
+//		buechi.addInternalTransition("q0", "a", "q4");
 
 		// Debug test automata 2
-		// alphabet = new HashSet<>();
-		// alphabet.add("a");
-		// alphabet.add("b");
-		// alphabet.add("c");
-		// buechi = new NestedWordAutomaton<>(service, alphabet, null, null,
-		// snf);
-		// buechi.addState(true, false, "q0");
-		// buechi.addState(false, false, "q1");
-		// buechi.addState(false, false, "q2");
-		// buechi.addState(false, false, "q3");
-		// buechi.addState(false, true, "q4");
-		// buechi.addState(false, true, "q5");
-		// buechi.addState(false, false, "q6");
-		// buechi.addState(false, false, "q7");
-		// buechi.addState(false, false, "q8");
-		// buechi.addState(false, false, "q9");
-		// buechi.addInternalTransition("q1", "b", "q1");
-		// buechi.addInternalTransition("q1", "c", "q3");
-		// buechi.addInternalTransition("q1", "c", "q8");
-		// buechi.addInternalTransition("q1", "a", "q7");
-		// buechi.addInternalTransition("q2", "b", "q2");
-		// buechi.addInternalTransition("q2", "b", "q7");
-		// buechi.addInternalTransition("q2", "b", "q8");
-		// buechi.addInternalTransition("q2", "b", "q9");
-		// buechi.addInternalTransition("q2", "c", "q2");
-		// buechi.addInternalTransition("q2", "c", "q5");
-		// buechi.addInternalTransition("q2", "c", "q7");
-		// buechi.addInternalTransition("q2", "a", "q3");
-		// buechi.addInternalTransition("q2", "a", "q6");
-		// buechi.addInternalTransition("q3", "b", "q3");
-		// buechi.addInternalTransition("q3", "b", "q4");
-		// buechi.addInternalTransition("q3", "b", "q5");
-		// buechi.addInternalTransition("q3", "b", "q7");
-		// buechi.addInternalTransition("q3", "b", "q8");
-		// buechi.addInternalTransition("q3", "a", "q6");
-		// buechi.addInternalTransition("q3", "a", "q7");
-		// buechi.addInternalTransition("q3", "a", "q9");
-		// buechi.addInternalTransition("q4", "b", "q1");
-		// buechi.addInternalTransition("q4", "b", "q4");
-		// buechi.addInternalTransition("q4", "b", "q9");
-		// buechi.addInternalTransition("q4", "c", "q5");
-		// buechi.addInternalTransition("q4", "a", "q4");
-		// buechi.addInternalTransition("q5", "c", "q5");
-		// buechi.addInternalTransition("q6", "b", "q2");
-		// buechi.addInternalTransition("q6", "b", "q5");
-		// buechi.addInternalTransition("q6", "b", "q9");
-		// buechi.addInternalTransition("q6", "b", "q0");
-		// buechi.addInternalTransition("q6", "c", "q2");
-		// buechi.addInternalTransition("q6", "c", "q7");
-		// buechi.addInternalTransition("q6", "c", "q9");
-		// buechi.addInternalTransition("q6", "a", "q9");
-		// buechi.addInternalTransition("q6", "a", "q0");
-		// buechi.addInternalTransition("q7", "c", "q2");
-		// buechi.addInternalTransition("q7", "c", "q0");
-		// buechi.addInternalTransition("q7", "a", "q6");
-		// buechi.addInternalTransition("q7", "a", "q9");
-		// buechi.addInternalTransition("q8", "b", "q2");
-		// buechi.addInternalTransition("q8", "b", "q8");
-		// buechi.addInternalTransition("q8", "a", "q4");
-		// buechi.addInternalTransition("q8", "a", "q5");
-		// buechi.addInternalTransition("q8", "a", "q0");
-		// buechi.addInternalTransition("q9", "b", "q3");
-		// buechi.addInternalTransition("q9", "b", "q7");
-		// buechi.addInternalTransition("q9", "c", "q1");
-		// buechi.addInternalTransition("q9", "c", "q2");
-		// buechi.addInternalTransition("q9", "a", "q2");
-		// buechi.addInternalTransition("q9", "a", "q4");
-		// buechi.addInternalTransition("q9", "a", "q8");
-		// buechi.addInternalTransition("q0", "b", "q1");
-		// buechi.addInternalTransition("q0", "b", "q3");
-		// buechi.addInternalTransition("q0", "b", "q6");
-		// buechi.addInternalTransition("q0", "c", "q3");
-		// buechi.addInternalTransition("q0", "c", "q8");
-		// buechi.addInternalTransition("q0", "c", "q0");
-		// buechi.addInternalTransition("q0", "a", "q3");
-		// buechi.addInternalTransition("q0", "a", "q8");
+//		alphabet = new HashSet<>();
+//		alphabet.add("a");
+//		alphabet.add("b");
+//		alphabet.add("c");
+//		buechi = new NestedWordAutomaton<>(services, alphabet, null, null,
+//		snf);
+//		buechi.addState(true, false, "q0");
+//		buechi.addState(false, false, "q1");
+//		buechi.addState(false, false, "q2");
+//	 	buechi.addState(false, false, "q3");
+//		buechi.addState(false, true, "q4");
+//		buechi.addState(false, true, "q5");
+//		buechi.addState(false, false, "q6");
+//		buechi.addState(false, false, "q7");
+//		buechi.addState(false, false, "q8");
+//		buechi.addState(false, false, "q9");
+//		buechi.addInternalTransition("q1", "b", "q1");
+//		buechi.addInternalTransition("q1", "c", "q3");
+//		buechi.addInternalTransition("q1", "c", "q8");
+//		buechi.addInternalTransition("q1", "a", "q7");
+//		buechi.addInternalTransition("q2", "b", "q2");
+//		buechi.addInternalTransition("q2", "b", "q7");
+//		buechi.addInternalTransition("q2", "b", "q8");
+//		buechi.addInternalTransition("q2", "b", "q9");
+//		buechi.addInternalTransition("q2", "c", "q2");
+//		buechi.addInternalTransition("q2", "c", "q5");
+//		buechi.addInternalTransition("q2", "c", "q7");
+//		buechi.addInternalTransition("q2", "a", "q3");
+//		buechi.addInternalTransition("q2", "a", "q6");
+//		buechi.addInternalTransition("q3", "b", "q3");
+//		buechi.addInternalTransition("q3", "b", "q4");
+//		buechi.addInternalTransition("q3", "b", "q5");
+//		buechi.addInternalTransition("q3", "b", "q7");
+//		buechi.addInternalTransition("q3", "b", "q8");
+//		buechi.addInternalTransition("q3", "a", "q6");
+//		buechi.addInternalTransition("q3", "a", "q7");
+//		buechi.addInternalTransition("q3", "a", "q9");
+//		buechi.addInternalTransition("q4", "b", "q1");
+//		buechi.addInternalTransition("q4", "b", "q4");
+//		buechi.addInternalTransition("q4", "b", "q9");
+//		buechi.addInternalTransition("q4", "c", "q5");
+//		buechi.addInternalTransition("q4", "a", "q4");
+//		buechi.addInternalTransition("q5", "c", "q5");
+//		buechi.addInternalTransition("q6", "b", "q2");
+//		buechi.addInternalTransition("q6", "b", "q5");
+//		buechi.addInternalTransition("q6", "b", "q9");
+//		buechi.addInternalTransition("q6", "b", "q0");
+//		buechi.addInternalTransition("q6", "c", "q2");
+//		buechi.addInternalTransition("q6", "c", "q7");
+//		buechi.addInternalTransition("q6", "c", "q9");
+//		buechi.addInternalTransition("q6", "a", "q9");
+//		buechi.addInternalTransition("q6", "a", "q0");
+//		buechi.addInternalTransition("q7", "c", "q2");
+//		buechi.addInternalTransition("q7", "c", "q0");
+//		buechi.addInternalTransition("q7", "a", "q6");
+//		buechi.addInternalTransition("q7", "a", "q9");
+//		buechi.addInternalTransition("q8", "b", "q2");
+//		buechi.addInternalTransition("q8", "b", "q8");
+//		buechi.addInternalTransition("q8", "a", "q4");
+//		buechi.addInternalTransition("q8", "a", "q5");
+//		buechi.addInternalTransition("q8", "a", "q0");
+//		buechi.addInternalTransition("q9", "b", "q3");
+//		buechi.addInternalTransition("q9", "b", "q7");
+//		buechi.addInternalTransition("q9", "c", "q1");
+//		buechi.addInternalTransition("q9", "c", "q2");
+//		buechi.addInternalTransition("q9", "a", "q2");
+//		buechi.addInternalTransition("q9", "a", "q4");
+//		buechi.addInternalTransition("q9", "a", "q8");
+//		buechi.addInternalTransition("q0", "b", "q1");
+//		buechi.addInternalTransition("q0", "b", "q3");
+//		buechi.addInternalTransition("q0", "b", "q6");
+//		buechi.addInternalTransition("q0", "c", "q3");
+//		buechi.addInternalTransition("q0", "c", "q8");
+//		buechi.addInternalTransition("q0", "c", "q0");
+//		buechi.addInternalTransition("q0", "a", "q3");
+//		buechi.addInternalTransition("q0", "a", "q8");
 
-		// Comparing test 'SCC vs. nonSCC'
-		/*
-		 * int n = 50; int k = 10; int f = 20; int amount = 1;
-		 * System.out.println("Start comparing test 'SCC vs. nonSCC' with " +
-		 * amount + " random automata (n=" + n + ", k=" + k + ", f=" + f +
-		 * ")...");
-		 * 
-		 * for (int i = 1; i <= amount; i++) { if (i % 100 == 0) {
-		 * System.out.println("\tWorked " + i + " automata"); }
-		 * 
-		 * // System.out.println("Start calculating random DFA (n=" + n + ", k="
-		 * + k + ", f=" + f + ")..."); // buechi = new GetRandomNwa(service, k,
-		 * n, 0.2, 0, 0, 0.2).getResult(); buechi = new GetRandomDfa(service, n,
-		 * k, f, 5, true, false, false, false).getResult(); //
-		 * System.out.println("End calculating random DFA."); //
-		 * System.out.println();
-		 * 
-		 * System.out.println("Start Simulation with SCC...");
-		 * FairSimulation<String, String> simulationSCC = new
-		 * FairSimulation<>(service, buechi, true, snf); System.out.println();
-		 * 
-		 * System.out.println("Start Simulation without SCC...");
-		 * FairSimulation<String, String> simulationNoSCC = new
-		 * FairSimulation<>(service, buechi, false, snf); System.out.println();
-		 * 
-		 * System.out.println("Start comparing results..."); boolean
-		 * errorOccurred = false; FairGameGraph<String, String> simNoSCCGraph =
-		 * (FairGameGraph<String, String>) simulationNoSCC.getGameGraph();
-		 * Set<Vertex<String, String>> simSCCVertices =
-		 * simulationSCC.getGameGraph().getVertices(); Set<Vertex<String,
-		 * String>> simNoSCCVertices =
-		 * simulationNoSCC.getGameGraph().getVertices(); int globalInfinity =
-		 * simNoSCCGraph.getGlobalInfinity(); if (simSCCVertices.size() !=
-		 * simSCCVertices.size()) {
-		 * System.err.println("SimSCC and SimNoSCC have different size: " +
-		 * simSCCVertices.size() + " & " + simNoSCCVertices.size());
-		 * errorOccurred = true; } if (globalInfinity !=
-		 * simulationSCC.getGameGraph().getGlobalInfinity()) {
-		 * System.err.println("SimSCC and SimNoSCC have different infinities: "
-		 * + simulationSCC.getGameGraph().getGlobalInfinity() + " & " +
-		 * globalInfinity); errorOccurred = true; } for (Vertex<String, String>
-		 * simSCCVertex : simSCCVertices) { if (simSCCVertex.isSpoilerVertex())
-		 * { SpoilerVertex<String, String> asSV = (SpoilerVertex<String,
-		 * String>) simSCCVertex; SpoilerVertex<String, String> simNoSCCVertex =
-		 * simNoSCCGraph.getSpoilerVertex(asSV.getQ0(), asSV.getQ1(), false); if
-		 * (simNoSCCVertex == null) {
-		 * System.err.println("SCCVertex unknown for nonSCC version: " + asSV);
-		 * errorOccurred = true; } else { int sccPM = asSV.getPM(null,
-		 * globalInfinity); int nonSCCPM = simNoSCCVertex.getPM(null,
-		 * globalInfinity); if (sccPM < globalInfinity && nonSCCPM >=
-		 * globalInfinity) {
-		 * System.err.println("SCCVertex is not infinity but nonSCC is (" + asSV
-		 * + "): " + sccPM + " & " + nonSCCPM); errorOccurred = true; } else if
-		 * (sccPM >= globalInfinity && nonSCCPM < globalInfinity) {
-		 * System.err.println("SCCVertex is infinity but nonSCC is not (" + asSV
-		 * + "): " + sccPM + " & " + nonSCCPM); errorOccurred = true; } } } else
-		 * { DuplicatorVertex<String, String> asDV = (DuplicatorVertex<String,
-		 * String>) simSCCVertex; DuplicatorVertex<String, String>
-		 * simNoSCCVertex = simNoSCCGraph.getDuplicatorVertex(asDV.getQ0(),
-		 * asDV.getQ1(), asDV.getLetter(), false); if (simNoSCCVertex == null) {
-		 * System.err.println("SCCVertex unknown for nonSCC version: " + asDV);
-		 * errorOccurred = true; } else { int sccPM = asDV.getPM(null,
-		 * globalInfinity); int nonSCCPM = simNoSCCVertex.getPM(null,
-		 * globalInfinity); if (sccPM < globalInfinity && nonSCCPM >=
-		 * globalInfinity) {
-		 * System.err.println("SCCVertex is not infinity but nonSCC is (" + asDV
-		 * + "): " + sccPM + " & " + nonSCCPM); errorOccurred = true; } else if
-		 * (sccPM >= globalInfinity && nonSCCPM < globalInfinity) {
-		 * System.err.println("SCCVertex is infinity but nonSCC is not (" + asDV
-		 * + "): " + sccPM + " & " + nonSCCPM); errorOccurred = true; } } } }
-		 * 
-		 * if (errorOccurred) { System.out.println(
-		 * "End comparing results, an error occurred. Printing buechi...");
-		 * System.out.println(buechi); break; } else {
-		 * System.out.println("End comparing results, no error occurred."); }
-		 * 
-		 * System.out.println(simulationSCC); }
-		 */
+		// Comparing test
+		boolean logNoErrorDebug = false;
 
-		// Single automata comparison
-		/*
-		 * System.out.println("Start Simulation with SCC...");
-		 * FairSimulation<String, String> simulationSCC = new
-		 * FairSimulation<>(service, buechi, true, snf);
-		 * System.out.println(simulationSCC);
-		 * 
-		 * System.out.println("Start Simulation without SCC...");
-		 * FairSimulation<String, String> simulationNoSCC = new
-		 * FairSimulation<>(service, buechi, false, snf);
-		 * System.out.println(simulationNoSCC);
-		 */
+		int n = 50;
+		int k = 20;
+		int f = 10;
+		int totalityInPerc = 5;
+		int debugPrintEvery = 10;
+		int amount = 100;
 
-		// Merge tests
-		// FairSimulation<String, String> simulation = new
-		// FairSimulation<>(service, buechi, true, snf);
+		System.out.println("Start comparing test 'SCC vs. nonSCC' with " + amount + " random automata (n=" + n + ", k="
+				+ k + ", f=" + f + ", totPerc=" + totalityInPerc + ")...");
 
-		// Operation tests
-		ReduceBuchiFairSimulation<String, String> operation = new ReduceBuchiFairSimulation<>(service, snf, buechi);
-		try {
-			if (operation.checkResult(snf)) {
-				System.out.println("Operation is correct.");
+		for (int i = 1; i <= amount; i++) {
+			if (i % debugPrintEvery == 0) {
+				System.out.println("\tWorked " + i + " automata");
+			}
+
+			if (logNoErrorDebug) {
+				System.out.println("Start calculating random DFA (n=" + n + ", k=" + k + ", f=" + f + ", totPerc="
+						+ totalityInPerc + ")...");
+			}
+
+			// Generate automaton
+			boolean useNwaInsteadDfaMethod = false;
+			if (useNwaInsteadDfaMethod) {
+				buechi = new GetRandomNwa(services, k, n, 0.2, 0, 0, (totalityInPerc + 0.0f) / 100).getResult();
 			} else {
-				System.out.println("Operation is NOT correct.");
+				buechi = new GetRandomDfa(services, n, k, f, totalityInPerc, true, false, false, false).getResult();
+			}
+
+			if (logNoErrorDebug) {
+				System.out.println("End calculating random DFA.");
+				System.out.println();
+			}
+
+			// Check correctness
+			ReduceBuchiFairSimulation<String, String> operation = new ReduceBuchiFairSimulation<>(services, snf,
+					buechi);
+			boolean errorOccurred = checkOperationDeep(operation, logNoErrorDebug, false);
+			if (errorOccurred) {
+				break;
+			}
+		}
+
+		System.out.println("Program terminated.");
+	}
+
+	/**
+	 * Checks the operation deeply by using a given instance and comparing
+	 * results of all stages to an instance with no SCC optimization if used SCC
+	 * optimization and vice versa. Also checks the language equivalence of the
+	 * results from both instances.
+	 * 
+	 * @param operation
+	 *            Operation instance for reference
+	 * @param logNoErrorDebug
+	 *            If true some debugging information gets logged
+	 * @param useLogger
+	 *            True if internal logger should be used, false if
+	 *            {@link System#out} should be used.
+	 * @param <LETTER>
+	 *            Letter class of the operation
+	 * @param <STATE>
+	 *            State class of the operation
+	 * @return True if operation is correct, false if not.
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	private static <LETTER, STATE> boolean checkOperationDeep(ReduceBuchiFairSimulation<LETTER, STATE> operation,
+			final boolean logNoErrorDebug, final boolean useLogger) throws OperationCanceledException {
+		ReduceBuchiFairSimulation<LETTER, STATE> operationSCC;
+		FairSimulation<LETTER, STATE> simulationSCC;
+		ReduceBuchiFairSimulation<LETTER, STATE> operationNoSCC;
+		FairSimulation<LETTER, STATE> simulationNoSCC;
+		Logger logger = null;
+		if (useLogger) {
+			logger = operation.m_Logger;
+		}
+
+		// Create instance of other version
+		if (operation.m_UseSCCs) {
+			operationSCC = operation;
+			simulationSCC = operationSCC.m_Simulation;
+
+			if (logNoErrorDebug)
+				logMessage("Start Cross-Simulation without SCC...", logger);
+
+			operationNoSCC = new ReduceBuchiFairSimulation<>(operation.m_Services, operation.m_StateFactory,
+					operation.m_Operand, false);
+			simulationNoSCC = operationNoSCC.m_Simulation;
+			if (logNoErrorDebug)
+				logMessage("", logger);
+		} else {
+			if (logNoErrorDebug)
+				logMessage("Start Cross-Simulation with SCC...", logger);
+			operationSCC = new ReduceBuchiFairSimulation<>(operation.m_Services, operation.m_StateFactory,
+					operation.m_Operand, true);
+			simulationSCC = operationSCC.m_Simulation;
+			if (logNoErrorDebug)
+				logMessage("", logger);
+
+			operationNoSCC = operation;
+			simulationNoSCC = operationNoSCC.m_Simulation;
+		}
+
+		// Start comparing results
+		if (logNoErrorDebug)
+			logMessage("Start comparing results...", logger);
+		boolean errorOccurred = false;
+		FairGameGraph<LETTER, STATE> simNoSCCGraph = (FairGameGraph<LETTER, STATE>) simulationNoSCC.getGameGraph();
+		Set<Vertex<LETTER, STATE>> simSCCVertices = simulationSCC.getGameGraph().getVertices();
+		Set<Vertex<LETTER, STATE>> simNoSCCVertices = simulationNoSCC.getGameGraph().getVertices();
+		int globalInfinity = simNoSCCGraph.getGlobalInfinity();
+
+		// Compare size
+		if (simSCCVertices.size() != simSCCVertices.size()) {
+			logMessage("SimSCC and SimNoSCC have different size: " + simSCCVertices.size() + " & "
+					+ simNoSCCVertices.size(), logger);
+			errorOccurred = true;
+		}
+		// Compare infinity
+		if (globalInfinity != simulationSCC.getGameGraph().getGlobalInfinity()) {
+			logMessage("SimSCC and SimNoSCC have different infinities: "
+					+ simulationSCC.getGameGraph().getGlobalInfinity() + " & " + globalInfinity, logger);
+			errorOccurred = true;
+		}
+		// Compare progress measure of vertices
+		for (Vertex<LETTER, STATE> simSCCVertex : simSCCVertices) {
+			if (simSCCVertex.isSpoilerVertex()) {
+				SpoilerVertex<LETTER, STATE> asSV = (SpoilerVertex<LETTER, STATE>) simSCCVertex;
+				SpoilerVertex<LETTER, STATE> simNoSCCVertex = simNoSCCGraph.getSpoilerVertex(asSV.getQ0(), asSV.getQ1(),
+						false);
+				if (simNoSCCVertex == null) {
+					logMessage("SCCVertex unknown for nonSCC version: " + asSV, logger);
+					errorOccurred = true;
+				} else {
+					int sccPM = asSV.getPM(null, globalInfinity);
+					int nonSCCPM = simNoSCCVertex.getPM(null, globalInfinity);
+					if (sccPM < globalInfinity && nonSCCPM >= globalInfinity) {
+						logMessage(
+								"SCCVertex is not infinity but nonSCC is (" + asSV + "): " + sccPM + " & " + nonSCCPM,
+								logger);
+						errorOccurred = true;
+					} else if (sccPM >= globalInfinity && nonSCCPM < globalInfinity) {
+						logMessage(
+								"SCCVertex is infinity but nonSCC is not (" + asSV + "): " + sccPM + " & " + nonSCCPM,
+								logger);
+						errorOccurred = true;
+					}
+				}
+			} else {
+				DuplicatorVertex<LETTER, STATE> asDV = (DuplicatorVertex<LETTER, STATE>) simSCCVertex;
+				DuplicatorVertex<LETTER, STATE> simNoSCCVertex = simNoSCCGraph.getDuplicatorVertex(asDV.getQ0(),
+						asDV.getQ1(), asDV.getLetter(), false);
+				if (simNoSCCVertex == null) {
+					logMessage("SCCVertex unknown for nonSCC version: " + asDV, logger);
+					errorOccurred = true;
+				} else {
+					int sccPM = asDV.getPM(null, globalInfinity);
+					int nonSCCPM = simNoSCCVertex.getPM(null, globalInfinity);
+					if (sccPM < globalInfinity && nonSCCPM >= globalInfinity) {
+						logMessage(
+								"SCCVertex is not infinity but nonSCC is (" + asDV + "): " + sccPM + " & " + nonSCCPM,
+								logger);
+						errorOccurred = true;
+					} else if (sccPM >= globalInfinity && nonSCCPM < globalInfinity) {
+						logMessage(
+								"SCCVertex is infinity but nonSCC is not (" + asDV + "): " + sccPM + " & " + nonSCCPM,
+								logger);
+						errorOccurred = true;
+					}
+				}
+			}
+		}
+
+		// Check operation correctness
+		try {
+			if (!operationSCC.checkResult(operation.m_StateFactory)) {
+				logMessage("OperationSCC is not correct.", logger);
+				errorOccurred = true;
+			}
+			if (!operationNoSCC.checkResult(operation.m_StateFactory)) {
+				logMessage("OperationNoSCC is not correct.", logger);
+				errorOccurred = true;
 			}
 		} catch (AutomataLibraryException e) {
 			e.printStackTrace();
 		}
 
-		System.out.println("Program terminated.");
+		if (errorOccurred) {
+			logMessage("End comparing results, a problem occurred. Logging buechi...", logger);
+			logMessage(operation.m_Operand.toString(), logger);
+		} else {
+			if (logNoErrorDebug)
+				logMessage("End comparing results, no problem occurred.", logger);
+		}
+
+		return errorOccurred;
+	}
+
+	/**
+	 * Logs a given message to the debugging channel of a given logger or to
+	 * {@link System#out} if logger is <tt>null</tt>.
+	 * 
+	 * @param message
+	 *            Message to log
+	 * @param logger
+	 *            Logger to log to or <tt>null</tt> if logging to
+	 *            {@link System#out} is desired
+	 */
+	private static void logMessage(final String message, final Logger logger) {
+		if (logger != null) {
+			// XXX Change to debug
+			logger.fatal(message);
+			;
+		} else {
+			System.out.println(message);
+		}
 	}
 
 	/**
@@ -384,10 +503,24 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperatio
 	 * Service provider of Ultimate framework.
 	 */
 	private final IUltimateServiceProvider m_Services;
+	/**
+	 * Simulation used for operation.
+	 */
+	private final FairSimulation<LETTER, STATE> m_Simulation;
+	/**
+	 * State factory used for state creation.
+	 */
+	private final StateFactory<STATE> m_StateFactory;
+
+	/**
+	 * If the simulation calculation should be optimized using SCC, Strongly
+	 * Connected Components.
+	 */
+	private final boolean m_UseSCCs;
 
 	/**
 	 * Creates a new buechi reduce object that starts reducing the given buechi
-	 * automaton.<br/>
+	 * automaton using SCCs as an optimization.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
 	 * 
 	 * @param services
@@ -402,19 +535,77 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperatio
 	 */
 	public ReduceBuchiFairSimulation(final IUltimateServiceProvider services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
+		this(services, stateFactory, operand, true, false);
+	}
+
+	/**
+	 * Creates a new buechi reduce object that starts reducing the given buechi
+	 * automaton.<br/>
+	 * Once finished the result can be get by using {@link #getResult()}.
+	 * 
+	 * @param services
+	 *            Service provider of Ultimate framework
+	 * @param stateFactory
+	 *            The state factory used for creating states
+	 * @param operand
+	 *            The buechi automaton to reduce
+	 * @param useSCCs
+	 *            If the simulation calculation should be optimized using SCC,
+	 *            Strongly Connected Components.
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	public ReduceBuchiFairSimulation(final IUltimateServiceProvider services, final StateFactory<STATE> stateFactory,
+			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs)
+					throws OperationCanceledException {
+		this(services, stateFactory, operand, useSCCs, false);
+	}
+
+	/**
+	 * Creates a new buechi reduce object that starts reducing the given buechi
+	 * automaton.<br/>
+	 * Once finished the result can be get by using {@link #getResult()}.
+	 * 
+	 * @param services
+	 *            Service provider of Ultimate framework
+	 * @param stateFactory
+	 *            The state factory used for creating states
+	 * @param operand
+	 *            The buechi automaton to reduce
+	 * @param useSCCs
+	 *            If the simulation calculation should be optimized using SCC,
+	 *            Strongly Connected Components.
+	 * @param checkOperationDeeply
+	 *            If true the operation gets deeply checked for correctness,
+	 *            false if that is not desired. This can take some time.
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	public ReduceBuchiFairSimulation(final IUltimateServiceProvider services, final StateFactory<STATE> stateFactory,
+			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs,
+			final boolean checkOperationDeeply) throws OperationCanceledException {
 		m_Services = services;
+		m_StateFactory = stateFactory;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;
+		m_UseSCCs = useSCCs;
 		m_Logger.info(startMessage());
+		m_Simulation = new FairSimulation<>(m_Services, m_Operand, m_UseSCCs, m_StateFactory);
+		m_Result = m_Simulation.getResult();
 
-		m_Result = new FairSimulation<>(m_Services, m_Operand, true, stateFactory).getResult();
-
-		boolean compareWithNonSccResult = false;
-		if (compareWithNonSccResult) {
-			INestedWordAutomatonOldApi<LETTER, STATE> nonSCCresult = new FairSimulation<LETTER, STATE>(m_Services,
-					m_Operand, false, stateFactory).getResult();
-			if (m_Result.size() != nonSCCresult.size()) {
-				throw new AssertionError();
+		// Debugging flag
+		if (checkOperationDeeply) {
+			m_Logger.info("Start testing correctness of operation deeply...");
+			boolean operationIsNotCorrect = checkOperationDeep(this, false, true);
+			if (operationIsNotCorrect) {
+				m_Logger.info("End testing correctness of operation deeply, it is not correct.");
+				// throw new AssertionError("The operation " + operationName() +
+				// " returned a false result.");
+			} else {
+				// XXX Change to info
+				m_Logger.fatal("End testing correctness of operation deeply, it is correct.");
 			}
 		}
 

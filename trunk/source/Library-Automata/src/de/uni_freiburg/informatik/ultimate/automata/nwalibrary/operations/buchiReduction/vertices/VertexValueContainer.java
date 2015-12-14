@@ -62,7 +62,7 @@ public final class VertexValueContainer {
 	 *             If the value is equals {@link #NO_VALUE}.
 	 */
 	private static void ensureValueIsValid(int value) {
-		if (value == NO_VALUE) {
+		if (!isValueValid(value)) {
 			throw new IllegalArgumentException("Value must not be equals the internal value for 'NO_VALUE'.");
 		}
 	}
@@ -87,7 +87,9 @@ public final class VertexValueContainer {
 	 * {@link #NO_VALUE}.
 	 */
 	public VertexValueContainer() {
-		this(NO_VALUE, NO_VALUE, NO_VALUE);
+		m_BestNeighborMeasure = NO_VALUE;
+		m_NeighborCounter = NO_VALUE;
+		m_ProgressMeasure = NO_VALUE;
 	}
 
 	/**

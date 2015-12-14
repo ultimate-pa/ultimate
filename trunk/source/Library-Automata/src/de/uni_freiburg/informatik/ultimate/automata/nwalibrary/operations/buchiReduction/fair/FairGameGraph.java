@@ -575,6 +575,7 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 			}
 		}
 
+		// TODO Only do that if edges where removed
 		// Remove unreachable states which can occur due to transition removal
 		NestedWordAutomatonReachableStates<LETTER, STATE> nwaReachableStates = new RemoveUnreachable<LETTER, STATE>(
 				getServiceProvider(), result).getResult();
