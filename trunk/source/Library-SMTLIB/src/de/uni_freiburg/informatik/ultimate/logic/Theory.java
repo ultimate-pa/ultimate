@@ -862,8 +862,8 @@ public class Theory {
 			}
 		};
 		
-		mRNE = declareInternalSort("roundNearesTiesToEven", 0, 0).getSort(null, new Sort[0]);
-		mRNA = declareInternalSort("roundNearesTiesToAway", 0, 0).getSort(null, new Sort[0]);
+		mRNE = declareInternalSort("roundNearestTiesToEven", 0, 0).getSort(null, new Sort[0]);
+		mRNA = declareInternalSort("roundNearestTiesToAway", 0, 0).getSort(null, new Sort[0]);
 		mRTP = declareInternalSort("roundTowardsPositive", 0, 0).getSort(null, new Sort[0]);
 		mRTN = declareInternalSort("roundTowardsNegative", 0, 0).getSort(null, new Sort[0]);
 		mRTZ = declareInternalSort("roundTowardsZero", 0, 0).getSort(null, new Sort[0]);
