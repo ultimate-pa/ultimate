@@ -10,12 +10,10 @@ import java.util.Set;
 import java.util.Map.Entry;
 import java.util.function.BiFunction;
 
-import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
