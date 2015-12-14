@@ -534,10 +534,8 @@ public class OctMatrix {
 	}
 
 	public OctMatrix addVariables(int count) {
-		if (count < 0) {
+		if (count <= 0) {
 			throw new IllegalArgumentException("Cannot add " + count + " variables.");
-		} else if (count == 0) {
-			return this;
 		}
 		OctMatrix n = new OctMatrix(mSize + (2 * count));
 		System.arraycopy(mElements, 0, n.mElements, 0, mElements.length);
@@ -551,25 +549,40 @@ public class OctMatrix {
 	}
 	
 	public OctMatrix removeVariables(Set<Integer> vars) {
-		// note: a set cannot contain any duplicates
+		if (areVariablesLast(vars)) {
+			return removeLastVariables(vars.size()); // note: sets cannot contain duplicates
+		} else {
+			return removeArbitraryVariables(vars);
+		}
+	}
+
+	private boolean areVariablesLast(Set<Integer> vars) {
 		List<Integer> varsDescending = new ArrayList<>(vars);
 		Collections.sort(varsDescending);
-		boolean removeOnlyAtEnd = true;
 		int vPrev = variables();
 		for (int v : varsDescending) {
 			if (v < 0 || v >= variables()) {
-				throw new IllegalArgumentException("Variable " + v + " does not exist (Matrix\n" + this);
+				throw new IllegalArgumentException("Variable " + v + " does not exist.");
 			} else if (v + 1 == vPrev) {				
 				vPrev = v;
 			} else {
-				removeOnlyAtEnd = false;
-				break;
+				return false;
 			}
 		}
-		if (removeOnlyAtEnd) {
-			return removeLastVariables(variables() - vPrev);
+		return true;
+	}
+
+	public OctMatrix removeLastVariables(int count) {
+		if (count > variables()) {
+			throw new IllegalArgumentException("Cannot remove more variables than exist.");
 		}
-		OctMatrix n = new OctMatrix(mSize - (2 * vars.size()));
+		OctMatrix n = new OctMatrix(mSize - (2 * count));
+		System.arraycopy(mElements, 0, n.mElements, 0, n.mElements.length);
+		return n;
+	}
+	
+	public OctMatrix removeArbitraryVariables(Set<Integer> vars) {
+		OctMatrix n = new OctMatrix(mSize - (2 * vars.size())); // note: sets cannot contain duplicates
 		int in = 0;
 		for (int i = 0; i < mSize; ++i) {
 			if (vars.contains(i / 2)) {
@@ -589,16 +602,7 @@ public class OctMatrix {
 		}
 		return n;
 	}
-	
-	public OctMatrix removeLastVariables(int count) {
-		if (count > variables()) {
-			throw new IllegalArgumentException("Cannot remove more variables than exist.");
-		}
-		OctMatrix n = new OctMatrix(mSize - (2 * count));
-		System.arraycopy(mElements, 0, n.mElements, 0, n.mElements.length);
-		return n;
-	}
-	
+
 	public Term getTerm(Script script, List<Term> vars) {
 		Term acc = script.term("true");
 		for (int rowBlock = 0; rowBlock < variables(); ++rowBlock) {
