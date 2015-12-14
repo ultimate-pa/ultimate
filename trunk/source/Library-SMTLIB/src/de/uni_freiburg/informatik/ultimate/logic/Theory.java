@@ -912,8 +912,8 @@ public class Theory {
 		defineFunction(new RegularFloatingPointFunction("fpmul", 3, null));
 		defineFunction(new RegularFloatingPointFunction("fpdiv", 3, null));
 		defineFunction(new RegularFloatingPointFunction("fpfma", 4, null));
-		defineFunction(new RegularFloatingPointFunction("fpsqrt", 1, null));
-		defineFunction(new RegularFloatingPointFunction("fproundToIntegral", 2, null));
+		defineFunction(new RegularFloatingPointFunction("fpsqrt", 2, null));
+		defineFunction(new RegularFloatingPointFunction("fpRoundToIntegral", 2, null));
 		defineFunction(new RegularFloatingPointFunction("fpmin", 2, null));
 		defineFunction(new RegularFloatingPointFunction("fpmax", 2, null));
 		
