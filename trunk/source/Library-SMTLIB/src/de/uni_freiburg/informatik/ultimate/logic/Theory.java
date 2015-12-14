@@ -860,7 +860,7 @@ public class Theory {
 							"Floating Point has no parameters");
 			}
 		};
-		mDeclaredSorts.put("fp", mFloatingPointSort);
+		mDeclaredSorts.put("FloatingPoint", mFloatingPointSort);
 		class RegularFloatingPointFunction extends FunctionSymbolFactory {
 			int mNumArgs;
 			Sort mResult;
@@ -875,7 +875,7 @@ public class Theory {
 					Sort resultSort) {
 				if (indices != null
 					|| paramSorts.length != mNumArgs || resultSort != null
-					|| paramSorts[0].getName() != "fp")
+					|| paramSorts[0].getName() != "FloatingPoint")
 					return null;
 				for (int i = 1; i < mNumArgs; i++)
 					if (paramSorts[i] != paramSorts[0])
@@ -883,55 +883,35 @@ public class Theory {
 				return mResult == null ? paramSorts[0] : mResult;
 			}
 		}
-		
-		// TODO Herausfinden ob das gebraucht wird
-		/*
-		class ExtendFloatingPointFunction extends FunctionSymbolFactory {
-			public ExtendFloatingPointFunction(String name) {
-				super(name);
-			}
-			@Override
-			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
-					Sort resultSort) {
-				if (indices == null || indices.length != 1
-					|| paramSorts.length != 1 || resultSort != null
-					|| paramSorts[0].getName() != "fp")
-					return null;
-				BigInteger size = indices[0].add(paramSorts[0].getIndices()[0]);
-				return mFloatingPointSort.getSort(
-						new BigInteger[] { size }, new Sort[0]);
-			}
-		}
-		*/
-				
+						
 		// Operators
-		defineFunction(new RegularFloatingPointFunction("fpabs", 1, null));
-		defineFunction(new RegularFloatingPointFunction("fpneg", 1, null));
-		defineFunction(new RegularFloatingPointFunction("fpadd", 3, null));
-		defineFunction(new RegularFloatingPointFunction("fpsub", 3, null));
-		defineFunction(new RegularFloatingPointFunction("fpmul", 3, null));
-		defineFunction(new RegularFloatingPointFunction("fpdiv", 3, null));
-		defineFunction(new RegularFloatingPointFunction("fpfma", 4, null));
-		defineFunction(new RegularFloatingPointFunction("fpsqrt", 2, null));
-		defineFunction(new RegularFloatingPointFunction("fpRoundToIntegral", 2, null));
-		defineFunction(new RegularFloatingPointFunction("fpmin", 2, null));
-		defineFunction(new RegularFloatingPointFunction("fpmax", 2, null));
+		defineFunction(new RegularFloatingPointFunction("fp.abs", 1, null));
+		defineFunction(new RegularFloatingPointFunction("fp.neg", 1, null));
+		defineFunction(new RegularFloatingPointFunction("fp.add", 3, null));
+		defineFunction(new RegularFloatingPointFunction("fp.sub", 3, null));
+		defineFunction(new RegularFloatingPointFunction("fp.mul", 3, null));
+		defineFunction(new RegularFloatingPointFunction("fp.div", 3, null));
+		defineFunction(new RegularFloatingPointFunction("fp.fma", 4, null));
+		defineFunction(new RegularFloatingPointFunction("fp.sqrt", 2, null));
+		defineFunction(new RegularFloatingPointFunction("fp.roundToIntegral", 2, null));
+		defineFunction(new RegularFloatingPointFunction("fp.min", 2, null));
+		defineFunction(new RegularFloatingPointFunction("fp.max", 2, null));
 		
 		// Comparison Operators
-		defineFunction(new RegularFloatingPointFunction("fpleq", 2, mBooleanSort));
-		defineFunction(new RegularFloatingPointFunction("fplt", 2, mBooleanSort));
-		defineFunction(new RegularFloatingPointFunction("fpgeq", 2, mBooleanSort));
-		defineFunction(new RegularFloatingPointFunction("fpgt", 2, mBooleanSort));
-		defineFunction(new RegularFloatingPointFunction("fpeq", 2, mBooleanSort));
+		defineFunction(new RegularFloatingPointFunction("fp.leq", 2, mBooleanSort));
+		defineFunction(new RegularFloatingPointFunction("fp.lt", 2, mBooleanSort));
+		defineFunction(new RegularFloatingPointFunction("fp.geq", 2, mBooleanSort));
+		defineFunction(new RegularFloatingPointFunction("fp.gt", 2, mBooleanSort));
+		defineFunction(new RegularFloatingPointFunction("fp.eq", 2, mBooleanSort));
 		
 		// Classification of numbers
-		defineFunction(new RegularFloatingPointFunction("fpIsNormal", 1, mBooleanSort));
-		defineFunction(new RegularFloatingPointFunction("fpIsSubnormal", 1, mBooleanSort));
-		defineFunction(new RegularFloatingPointFunction("fpIsZero", 1, mBooleanSort));
-		defineFunction(new RegularFloatingPointFunction("fpIsInfinite", 1, mBooleanSort));
-		defineFunction(new RegularFloatingPointFunction("fpIsNaN", 1, mBooleanSort));
-		defineFunction(new RegularFloatingPointFunction("fpIsNegativ", 1, mBooleanSort));
-		defineFunction(new RegularFloatingPointFunction("fpIsPositiv", 1, mBooleanSort));
+		defineFunction(new RegularFloatingPointFunction("fp.isNormal", 1, mBooleanSort));
+		defineFunction(new RegularFloatingPointFunction("fp.isSubnormal", 1, mBooleanSort));
+		defineFunction(new RegularFloatingPointFunction("fp.isZero", 1, mBooleanSort));
+		defineFunction(new RegularFloatingPointFunction("fp.isInfinite", 1, mBooleanSort));
+		defineFunction(new RegularFloatingPointFunction("fp.isNaN", 1, mBooleanSort));
+		defineFunction(new RegularFloatingPointFunction("fp.isNegativ", 1, mBooleanSort));
+		defineFunction(new RegularFloatingPointFunction("fp.isPositiv", 1, mBooleanSort));
 		
 	}
 	
