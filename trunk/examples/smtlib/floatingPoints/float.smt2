@@ -2,9 +2,9 @@
 
 (set-logic QF_FP)
 
-(declare-const x (_ FloatingPoint  5  11))
-(declare-const y (_ FloatingPoint  5  11))
-(declare-const z (_ FloatingPoint  5  11))
+(declare-fun x () (_ FloatingPoint  5  11))
+(declare-fun y () (_ FloatingPoint  5  11))
+(declare-fun z () (_ FloatingPoint  5  11))
 ;(push)
 (assert (fp.leq x y ))
 (check-sat)

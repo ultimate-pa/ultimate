@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
+import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
@@ -159,6 +160,8 @@ public class SmtParser implements ISource {
 			benchmark = new SMTInterpol(mLogger, true);
 		}
 
+		benchmark = new LoggingScript("smtlogging", true);
+		
 		mLogger.info("Starting SMT solver with command " + command);
 		
 		mLogger.info("Executing SMT file " + file.getAbsolutePath());
