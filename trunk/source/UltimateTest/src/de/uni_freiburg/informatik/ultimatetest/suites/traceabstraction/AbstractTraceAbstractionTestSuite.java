@@ -106,10 +106,23 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 //								ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
 //						new ColumnDefinition(
 //								"ICC %", "ICC",
-//								ConversionContext.Percent(true,2), Aggregate.Ignore, Aggregate.Average)						
+//								ConversionContext.Percent(true,2), Aggregate.Ignore, Aggregate.Average)
+						new ColumnDefinition("Minimization time", "mnmz time", 
+								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+						new ColumnDefinition("BasicInterpolantAutomatonTime", "bia time", 
+								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+						new ColumnDefinition("EdgeCheckerBenchmarkData_EdgeCheckerTime", "ec time", 
+								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+						new ColumnDefinition("PredicateUnifierData_Time", "pu time", 
+								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+						new ColumnDefinition("TraceCheckerBenchmark_InterpolantComputationTime", "itp time", 
+								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+						new ColumnDefinition("Automata difference", "adiff time", 
+								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+
 					};
 				// @formatter:on
-
+		
 		return new ITestSummary[] { 
 				new TraceAbstractionTestSummary(this.getClass()),
 				new CsvConcatenator(this.getClass(), TraceAbstractionBenchmarks.class), 
