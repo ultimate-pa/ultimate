@@ -16,9 +16,7 @@ import java.math.RoundingMode;
 public class OctValue implements Comparable<OctValue> {
 	
 	public final static OctValue INFINITY = new OctValue();
-	public final static OctValue ONE = new OctValue(1);
 	public final static OctValue ZERO = new OctValue(0);
-	public final static OctValue MINUS_ONE = new OctValue(-1);
 	
 	private BigDecimal mValue;
 	
@@ -42,7 +40,7 @@ public class OctValue implements Comparable<OctValue> {
 	public OctValue(int i) {
 		mValue = new BigDecimal(i);
 	}
-	
+
 	public static OctValue parse(String s) {
 		if ("inf".equals(s)) {
 			return INFINITY;
@@ -63,6 +61,13 @@ public class OctValue implements Comparable<OctValue> {
 			return OctValue.INFINITY;
 		}
 		return new OctValue(mValue.add(other.mValue));
+	}
+	
+	public OctValue negate() {
+		if (mValue == null) {
+			throw new IllegalStateException("Cannot negate infinity.");
+		}
+		return new OctValue(mValue.negate());
 	}
 	
 	/**

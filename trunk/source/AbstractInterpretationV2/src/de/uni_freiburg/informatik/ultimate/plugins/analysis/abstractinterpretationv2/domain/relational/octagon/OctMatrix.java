@@ -510,21 +510,42 @@ public class OctMatrix {
 
 	// TODO document: stabilization depends on user-given threshold (stabilizes for threshold < inf)
 	public OctMatrix widenExponential(OctMatrix n, OctValue threshold) {
+		final OctValue epsilon = new OctValue(1);
+		final OctValue minusTwoEpsilon = epsilon.add(epsilon).negate();
+		final OctValue oneHalfEpsilon = epsilon.half();
 		return elementwiseOperation(n, (mij, nij) -> {
 			if (mij.compareTo(nij) >= 0) {
 				return mij;
-			} else if (nij.compareTo(threshold) > 0) {
-				return OctValue.INFINITY;
-			} else if (nij.compareTo(OctValue.ONE) >= 0) {
-				return nij.add(nij); // 2 * nij
-			} else if (nij.compareTo(OctValue.ZERO) >= 0) {
-				return OctValue.ONE;
-			} else if (nij.compareTo(OctValue.MINUS_ONE) >= 0) {
-				return OctValue.ZERO;
-			} else { // nij < -1
-				return nij.half(); // there is no -inf => will always converge towards 0
 			}
+			if (nij.compareTo(threshold) > 0) {
+				return OctValue.INFINITY;
+			}
+			OctValue result;
+			if (nij.compareTo(minusTwoEpsilon) <= 0) {
+				result = nij.half(); // there is no -inf => will always converge towards 0
+			} else if (nij.compareTo(OctValue.ZERO) <= 0) {
+				result = OctValue.ZERO;
+			} else if (nij.compareTo(oneHalfEpsilon) <= 0) {
+				result = epsilon;
+			} else {
+				result = nij.add(nij); // 2 * nij
+			}
+			return OctValue.min(result, threshold);
 		});
+//		OctValue result = nij;
+//		if (result.compareTo(threshold) > 0) {
+//			return OctValue.INFINITY;
+//		}
+//		int resultComp = result.compareTo(OctValue.ZERO);
+//		if (resultComp > 0) {
+//			result = OctValue.max(nij.add(nij), OctValue.ONE);
+//		} else if (resultComp < 0) {
+//			result = nij.half(); // there is no -inf => will always converge towards 0
+//			result = result.compareTo(OctValue.MINUS_ONE) > 0 ? OctValue.ZERO : result;
+//		} else {
+//			result = nij; // == 0
+//		}
+//		return result;
 	}
 
 	// TODO document: stabilization depends on user-given limit (limit has to be inf after finite number of widenings)

@@ -210,6 +210,39 @@ public class OctMatrixTest {
 	}
 	
 	@Test
+	public void testWidenSimple() {
+		OctMatrix m = OctMatrix.parseBlockLowerTriangular("  4   7   3   1");
+		OctMatrix n = OctMatrix.parseBlockLowerTriangular("  9   1   3.0 5");
+		OctMatrix mWn = OctMatrix.parseBlockLowerTriangular("inf 7   3   inf");
+		OctMatrix nWm = OctMatrix.parseBlockLowerTriangular("9   inf 3   5");
+		assertIsEqualTo(mWn, m.widenSimple(n));
+		assertIsEqualTo(nWm, n.widenSimple(m));
+	}
+
+	@Test
+	public void testWidenExponential() {
+		OctValue threshold = new OctValue(10);
+		// no widening
+		OctMatrix m = OctMatrix.parseBlockLowerTriangular("5  0 3   -7");
+		OctMatrix n = OctMatrix.parseBlockLowerTriangular("3 -4 3.0 -7.1");
+		assertIsEqualTo(m, m.widenExponential(n, threshold));
+		
+		m = OctMatrix.parseBlockLowerTriangular("-9 -9 -9 -9");
+		// negative numbers
+		n = OctMatrix.parseBlockLowerTriangular("-3 -2 -1.9999999999 0");
+		OctMatrix mWn = OctMatrix.parseBlockLowerTriangular("-1.5 -1 0 0");
+		assertIsEqualTo(mWn, m.widenExponential(n, threshold));
+		// positive numbers
+		n = OctMatrix.parseBlockLowerTriangular("0.49999999 0.5 1 1.5");
+		mWn = OctMatrix.parseBlockLowerTriangular("1 1 2 3");
+		assertIsEqualTo(mWn, m.widenExponential(n, threshold));
+		// threshold
+		n = OctMatrix.parseBlockLowerTriangular("5 10 6 11");
+		mWn = OctMatrix.parseBlockLowerTriangular("10 10 10 inf");
+		assertIsEqualTo(mWn, m.widenExponential(n, threshold));
+	}
+	
+//	@Test
 	public void testByComparingRandom() {
 		for (int i = 0; i < 2000; ++i) {
 			int variables = (int) (Math.random() * 10) + 1;
