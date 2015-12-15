@@ -849,13 +849,15 @@ public class Theory {
 		//TODO: implement operators, Rounding modes
 		mFloatingPointSort = new SortSymbol(this, "FloatingPoint", 2, null,
 				SortSymbol.INTERNAL | SortSymbol.INDEXED) {
-			public void checkFpArity(BigInteger[] indices, int arity) {
+			public void checkArity(BigInteger[] indices, int arity) {
 				if (indices == null || indices.length != 2)
 					throw new IllegalArgumentException(
 							"Floating Point needs two index");
-				if (indices[0].signum() <= 1 || indices[1].signum() <= 1)
+				
+		/*		if (indices[0].signum() <= 1 || indices[1].signum() <= 1)
 					throw new IllegalArgumentException(
-							"Floating Point Index must be greater 0");
+							"Floating Point Index must be greater 0"); */ //FIXME: FP index
+				
 				if (arity != 0)
 					throw new IllegalArgumentException(
 							"Floating Point has no parameters");
