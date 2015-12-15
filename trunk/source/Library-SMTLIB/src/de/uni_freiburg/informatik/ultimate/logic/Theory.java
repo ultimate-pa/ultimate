@@ -854,9 +854,9 @@ public class Theory {
 					throw new IllegalArgumentException(
 							"Floating Point needs two index");
 				
-		/*		if (indices[0].signum() <= 1 || indices[1].signum() <= 1)
+				if (indices[0].signum() <= 0 || indices[1].signum() <= 0)
 					throw new IllegalArgumentException(
-							"Floating Point Index must be greater 0"); */ //FIXME: FP index
+							"Floating Point Index must be greater 0");//TODO: discuss this
 				
 				if (arity != 0)
 					throw new IllegalArgumentException(
