@@ -120,7 +120,7 @@ public class HelperFunctions {
 	        IntervalDomainValue expectedResult) {
 
 		final IEvaluationResult<IntervalDomainEvaluationResult> result = createBinaryEvaluator(interval1, interval2,
-		        Operator.ARITHMINUS).evaluate(null);
+		        Operator.ARITHMINUS).evaluate(new IntervalDomainState());
 
 		return computeResult(interval1, interval2, expectedResult, result.getResult().getEvaluatedValue());
 	}
@@ -140,5 +140,9 @@ public class HelperFunctions {
 		final IntervalDomainValue result = interval1.intersect(interval2);
 
 		return computeResult(interval1, interval2, expectedResult, result);
+	}
+	
+	protected static boolean checkInclusion(IntervalDomainValue interval1, IntervalDomainValue interval2) {
+		return interval1.isContainedIn(interval2);
 	}
 }
