@@ -66,7 +66,7 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 	}
 
 	@Override
-	public STATE defineVariablesPre(CodeBlock current, STATE state) {
+	public STATE defineVariablesBefore(CodeBlock current, STATE state) {
 		assert current != null;
 		assert state != null;
 		assert state.isEmpty();
@@ -108,7 +108,7 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 	}
 
 	@Override
-	public STATE defineVariablesPost(CodeBlock current, STATE state) {
+	public STATE defineVariablesAfter(CodeBlock current, STATE state) {
 		assert current != null;
 		assert state != null;
 
@@ -117,8 +117,20 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 		// so, only call or return can do this
 
 		if (current instanceof Call) {
+
 			return updateLocals(state, current.getSource(), current.getTarget());
 		} else if (current instanceof Return) {
+			// if the action is a return, we have to:
+			// - remove all currently local variables
+			// - keep all unmasked globals
+			// - add old locals from the scope we are returning to
+			// - add globals that were masked by this scope from the scope we are returning to
+
+			//TODO: Continue from here 
+			// at the caller source lies the program state that has to be used to obtain the values of the old scope
+			// (i.e., old locals, unmasked globals)
+//			final ProgramPoint callerSource = ((Return) current).getCallerProgramPoint();
+
 			return updateLocals(state, current.getSource(), current.getTarget());
 		} else {
 			// nothing changes

@@ -137,7 +137,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			// calculate the (abstract) effect of the current action by first
 			// declaring variables in the prestate, and then calculating their
 			// values
-			final STATE preStateWithFreshVariables = mVarProvider.defineVariablesPost(currentAction, preState);
+			final STATE preStateWithFreshVariables = mVarProvider.defineVariablesAfter(currentAction, preState);
 			STATE newPostState = post.apply(preStateWithFreshVariables, currentAction);
 
 			// check if this action leaves a loop
@@ -351,7 +351,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		STATE preState = stateStorage.getCurrentAbstractPreState(current);
 		if (preState == null) {
 			preState = mDomain.createFreshState();
-			preState = mVarProvider.defineVariablesPre(current, preState);
+			preState = mVarProvider.defineVariablesBefore(current, preState);
 			stateStorage.addAbstractPreState(current, preState);
 		}
 		return preState;

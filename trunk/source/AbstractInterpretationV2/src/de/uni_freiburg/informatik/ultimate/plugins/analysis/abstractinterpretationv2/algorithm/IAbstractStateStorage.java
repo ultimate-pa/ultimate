@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 
 /**
+ * Interface that describes how abstract states can be stored and retrieved relative to actions of a (program) model.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
