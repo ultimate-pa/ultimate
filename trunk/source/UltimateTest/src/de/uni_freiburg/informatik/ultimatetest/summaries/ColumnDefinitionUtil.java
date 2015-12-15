@@ -192,13 +192,7 @@ public class ColumnDefinitionUtil {
 
 	public static ICsvProvider<String> preparePrintProvider(ICsvProvider<?> provider, UltimateRunDefinition urd,
 			String message, List<ColumnDefinition> columnDefinitions) {
-		List<String> names = new ArrayList<>(provider.getColumnTitles());
-		for (String name : names) {
-			int idx = name.indexOf("TraceCheckerBenchmark_");
-			if (idx != -1) {
-				provider.renameColumnTitle(name, name.substring(22));
-			}
-		}
+
 		// remove all columns that are marked for removal by column definitions
 		provider = CsvUtils.projectColumn(provider,
 				CoreUtil.select(columnDefinitions, new CoreUtil.IReduce<String, ColumnDefinition>() {

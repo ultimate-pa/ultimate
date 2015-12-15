@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2015-2016 Daniel Tischner
  * Copyright (C) 2012-2015 Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Oleksii Saukh (saukho@informatik.uni-freiburg.de)
@@ -29,29 +30,50 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices;
 
 /**
+ * A vertex representing that its <i>Duplicator</i>s turn in the game defined by
+ * a
+ * {@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.AGameGraph
+ * AGameGraph}.<br/>
+ * <br/>
+ * 
+ * The vertex representation is <b>(q0, q1, a, bit)</b> which means
+ * <i>Spoiler</i> is currently at state q0 and made a move using an a-transition
+ * before whereas <i>Duplicator</i> now is at q1 and must try to also use an
+ * a-transition. The bit encodes extra information if needed.
+ * 
+ * @author Daniel Tischner
  * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * @author Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * @date 16.01.2012
+ * 
+ * @param <LETTER>
+ *            Letter class of buechi automaton
+ * @param <STATE>
+ *            State class of buechi automaton
  */
 public class DuplicatorVertex<LETTER, STATE> extends Vertex<LETTER, STATE> {
 	/**
-	 * The label of the edge in the buchi automaton.
+	 * The label of the corresponding transition in the buchi automaton.
 	 */
 	private LETTER a;
 
 	/**
-	 * Vertex constructor.
+	 * Constructs a new duplicator vertex with given representation <b>(q0, q1,
+	 * a, bit)</b> which means <i>Spoiler</i> is currently at state q0 and made
+	 * a move using an a-transition before whereas <i>Duplicator</i> now is at
+	 * q1 and must try to also use an a-transition. The bit encodes extra
+	 * information if needed.
 	 * 
 	 * @param priority
-	 *            priority of this vertex
+	 *            The priority of the vertex
 	 * @param b
-	 *            extra bit b
+	 *            The extra bit of the vertex
 	 * @param q0
-	 *            label of the first Buchi automaton state
+	 *            The state spoiler is at
 	 * @param q1
-	 *            label of the second Buchi automaton state
+	 *            The state duplicator is at
 	 * @param a
-	 *            label of the Buchi automaton edge
+	 *            The letter spoiler used before
 	 */
 	public DuplicatorVertex(int priority, boolean b, STATE q0, STATE q1, LETTER a) {
 		super(priority, b, q0, q1);
@@ -59,7 +81,7 @@ public class DuplicatorVertex<LETTER, STATE> extends Vertex<LETTER, STATE> {
 	}
 
 	/**
-	 * Returns the letter.
+	 * Gets the letter.
 	 * 
 	 * @return the letter
 	 */
@@ -67,6 +89,11 @@ public class DuplicatorVertex<LETTER, STATE> extends Vertex<LETTER, STATE> {
 		return a;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#toString()
+	 */
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();

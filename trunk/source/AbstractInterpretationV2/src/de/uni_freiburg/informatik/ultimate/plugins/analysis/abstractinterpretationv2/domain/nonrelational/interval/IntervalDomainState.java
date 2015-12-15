@@ -342,7 +342,6 @@ public class IntervalDomainState
 		return true;
 	}
 
-	@Override
 	public IntervalDomainState copy() {
 		return new IntervalDomainState(mLogger, mVariablesMap, mValuesMap, mBooleanValuesMap, mIsFixpoint);
 	}

@@ -37,13 +37,11 @@ import org.eclipse.ui.actions.ActionFactory.IWorkbenchAction;
 
 public class SaveSettingsAction extends Action implements IWorkbenchAction {
 
-	public static final String s_ID = "de.uni_freiburg.informatik.ultimate.gui.SaveSetings";
-
-	private ICore mCore;
-	private IWorkbenchWindow mWindow;
+	private final ICore mCore;
+	private final IWorkbenchWindow mWindow;
 
 	public SaveSettingsAction(final IWorkbenchWindow window, final ICore icore) {
-		setId(s_ID);
+		setId(getClass().getName());
 		setText("Save settings");
 		setToolTipText("Saves current settings to a file");
 		mCore = icore;
@@ -51,7 +49,7 @@ public class SaveSettingsAction extends Action implements IWorkbenchAction {
 	}
 
 	public void run() {
-		FileDialog fd = new FileDialog(mWindow.getShell(), SWT.SAVE);
+		final FileDialog fd = new FileDialog(mWindow.getShell(), SWT.SAVE);
 		fd.setText("Save settings to...");
 		fd.setFilterExtensions(new String[] { "*.epf" });
 		fd.setFilterNames(new String[] { "Eclipse preference file (*.epf)" });

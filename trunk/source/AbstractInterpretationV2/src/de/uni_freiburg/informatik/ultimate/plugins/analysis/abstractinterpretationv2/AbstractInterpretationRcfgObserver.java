@@ -88,8 +88,8 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 		}
 
 		final Map<CodeBlock, Map<ProgramPoint, Term>> preds = AbstractInterpreter.run(root, initial, timer, mServices);
-//		dumpToFile(preds);
-		
+		// dumpToFile(preds);
+
 		// do not descend, this is already the root
 		return false;
 	}
@@ -106,14 +106,14 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 				sb.append(" * ").append(runPreds.getValue()).append("\n");
 			}
 		}
-		if(sb.length() == 0){
+		if (sb.length() == 0) {
 			sb.append("No preds :(\n");
 		}
-		
+
 		String filePath = "F:/repos/ultimate/trunk/source/UltimateTest/target/surefire-reports/de.uni_freiburg.informatik.ultimatetest.suites.evals.AbstractInterpretationMk2TestSuite/preds.txt";
 		sb.append("\n\n");
 		try {
-			BufferedWriter bw = new BufferedWriter(new FileWriter(filePath,true));
+			BufferedWriter bw = new BufferedWriter(new FileWriter(filePath, true));
 			bw.append(sb);
 			bw.close();
 		} catch (IOException e) {

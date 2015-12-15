@@ -290,7 +290,8 @@ class RunConstructor<LETTER,STATE> {
 	 */
 	NestedRun<LETTER, STATE> constructRun() throws OperationCanceledException {
 		//TODO: Check if this timeout check is responsible for problems.
-		if (!m_Services.getProgressMonitorService().continueProcessing()) {
+		if (m_Services.getProgressMonitorService() != null
+				&& !m_Services.getProgressMonitorService().continueProcessing()) {
 			throw new OperationCanceledException(this.getClass());
 		}
 		assert !m_SummaryMustContainAccepting || m_Goal != null;

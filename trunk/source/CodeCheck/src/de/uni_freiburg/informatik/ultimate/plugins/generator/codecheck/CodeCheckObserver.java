@@ -62,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2.AbstractInterpretationPredicates;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppHyperEdge;
@@ -203,18 +202,20 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		_graphWriter = new GraphWriter(GlobalSettings._instance._dotGraphPath, true, true, true, false,
 				m_smtManager.getScript());
 
-		boolean usePredicatesFromAbstractInterpretation = true; // TODO make a Pref
+		//DD: removed dependency to AIMK2, will be replaced by AIv2 soon 
+//		boolean usePredicatesFromAbstractInterpretation = true; // TODO make a Pref
 		Map<RCFGNode, Term> initialPredicates = null;
-		if (usePredicatesFromAbstractInterpretation) {
-			AbstractInterpretationPredicates annot = AbstractInterpretationPredicates.getAnnotation(m_originalRoot);
-			if (annot != null) {
-				initialPredicates = annot.getPredicates();
-			} else {
-				mLogger.warn(
-						"was not able to retrieve initial predicates from abstract interpretation --> wrong toolchain?? (using \"true\")");
-				initialPredicates = null;
-			}
-		}
+//		if (usePredicatesFromAbstractInterpretation) {
+//			AbstractInterpretationPredicates annot = AbstractInterpretationPredicates.getAnnotation(m_originalRoot);
+//			if (annot != null) {
+//				initialPredicates = annot.getPredicates();
+//			} else {
+//				mLogger.warn(
+//						"was not able to retrieve initial predicates from abstract interpretation --> wrong toolchain?? (using \"true\")");
+//				initialPredicates = null;
+//			}
+//		}
+		//end dependency removal
 		RCFG2AnnotatedRCFG r2ar = new RCFG2AnnotatedRCFG(m_smtManager, mLogger, _predicateUnifier.getTruePredicate(),
 				initialPredicates);
 		m_graphRoot = r2ar.convert(m_services, m_originalRoot);

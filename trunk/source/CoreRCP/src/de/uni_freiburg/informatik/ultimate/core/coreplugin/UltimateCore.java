@@ -119,7 +119,7 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 
 	@Override
 	public IUltimatePlugin[] getRegisteredUltimatePlugins() {
-		ArrayList<IUltimatePlugin> rtr = new ArrayList<IUltimatePlugin>();
+		final List<IUltimatePlugin> rtr = new ArrayList<IUltimatePlugin>();
 		rtr.addAll(mPluginFactory.getAllAvailableToolchainPlugins());
 		rtr.add(this);
 		rtr.add(getCurrentController());

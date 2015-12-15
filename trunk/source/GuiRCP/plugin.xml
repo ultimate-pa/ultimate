@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.2"?>
 <plugin>
-
    <extension
          point="de.uni_freiburg.informatik.ultimate.ep.controller">
       <impl
@@ -35,21 +34,7 @@
                relative="de.uni_freiburg.informatik.ultimate.gui.UltimateDefaultPerspective.FolderRight"
                ratio="0.8f"/>
           </perspectiveExtension>
-</extension>
-   <extension
-         point="org.eclipse.ui.menus">
-      <menuContribution
-            locationURI="toolbar:org.eclipse.ui.main.toolbar?after=additions">
-         <toolbar
-               id="GuiRCP.toolbar1">
-            <control
-                  class="de.uni_freiburg.informatik.ultimate.gui.contrib.PreludeContribution"
-                  id="de.uni_freiburg.informatik.ultimate.gui.contrib.Prelude">
-            </control>
-         </toolbar>
-      </menuContribution>
-   </extension>
-   
+	</extension>
    <extension point="org.eclipse.ui.preferencePages">
       <page
             category="Core"
@@ -63,5 +48,4 @@
             id="de.uni_freiburg.informatik.ultimate.gui.preferencepages.LoggingToolsPreferencePage"
             name="Log Levels for external tools" />
    </extension>
-   
 </plugin>

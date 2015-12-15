@@ -260,7 +260,6 @@ public class SignDomainState
 		return true;
 	}
 
-	@Override
 	public SignDomainState copy() {
 		return new SignDomainState(new HashMap<String, IBoogieVar>(mVariablesMap),
 				new HashMap<String, SignDomainValue>(mValuesMap), mIsFixpoint);

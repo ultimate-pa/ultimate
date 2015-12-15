@@ -52,18 +52,17 @@ import de.uni_freiburg.informatik.ultimate.gui.interfaces.IImageKeys;
 
 public class ResetAndRedoToolChainNewTCAction extends RunToolchainAction implements IWorkbenchAction {
 
-	private static final String ID = "de.uni_freiburg.informatik.ultimate.gui.ResetAndRedoToolChainNewTCAction";
 	private static final String LABEL = "Execute new Toolchain on file(s)";
 
 	public ResetAndRedoToolChainNewTCAction(final IWorkbenchWindow window, final ICore icore,
 			final GuiController controller, Logger logger) {
-		super(logger, window, icore, controller, ID, LABEL, IImageKeys.REEXECNEWTC);
+		super(logger, window, icore, controller, ResetAndRedoToolChainNewTCAction.class.getName(), LABEL,
+				IImageKeys.REEXECNEWTC);
 	}
 
 	/**
-	 * ! This is a generated comment ! The action has been activated. The
-	 * argument of the method represents the 'real' action sitting in the
-	 * workbench UI.
+	 * ! This is a generated comment ! The action has been activated. The argument of the method represents the 'real'
+	 * action sitting in the workbench UI.
 	 * 
 	 * @see IWorkbenchWindowActionDelegate#run
 	 */
@@ -73,8 +72,8 @@ public class ResetAndRedoToolChainNewTCAction extends RunToolchainAction impleme
 		// are there any current files?
 		File[] lastInputFiles = getLastInputFiles();
 		if (lastInputFiles == null) {
-			MessageDialog
-					.openError(mWorkbenchWindow.getShell(), "Error Occurred", "You don't have any old input files");
+			MessageDialog.openError(mWorkbenchWindow.getShell(), "Error Occurred",
+					"You don't have any old input files");
 			return;
 		}
 

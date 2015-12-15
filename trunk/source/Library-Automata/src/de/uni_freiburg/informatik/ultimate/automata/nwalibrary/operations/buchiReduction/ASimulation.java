@@ -73,6 +73,10 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * visiting odd priorities.<br/>
  * <br/>
  * 
+ * For correctness its important that the inputed automaton has <b>no dead
+ * ends</b> nor <b>duplicate transitions</b>.<br/>
+ * <br/>
+ * 
  * The exact conditions are determined by the type of game graph. If, for a
  * vertex (q0, q1), the progress measure does not reach infinity we say q1
  * simulates q0.<br/>
@@ -91,6 +95,11 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * @author Daniel Tischner
  * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * @author Oleksii Saukh (saukho@informatik.uni-freiburg.de)
+ * 
+ * @param <LETTER>
+ *            Letter class of buechi automaton
+ * @param <STATE>
+ *            State class of buechi automaton
  */
 public abstract class ASimulation<LETTER, STATE> {
 
@@ -232,7 +241,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *            The local infinity in the containing SCC or global infinity if
 	 *            not used
 	 * @param scc
-	 *            The containing SCC or null if not used
+	 *            The containing SCC or <tt>null</tt> if not used
 	 * @return The best neighbor measure of the vertex
 	 */
 	protected int calcBestNghbMeasure(final Vertex<LETTER, STATE> vertex, final int localInfinity,
@@ -286,7 +295,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *            The local infinity in the containing SCC or global infinity if
 	 *            not used
 	 * @param scc
-	 *            The containing SCC or null if not used
+	 *            The containing SCC or <tt>null</tt> if not used
 	 * @return The neighbor counter of the vertex
 	 */
 	protected int calcNghbCounter(final Vertex<LETTER, STATE> vertex, final int localInfinity,
@@ -388,7 +397,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *            The local infinity in the containing SCC or global infinity if
 	 *            not used
 	 * @param scc
-	 *            The containing SCC or null if not used
+	 *            The containing SCC or <tt>null</tt> if not used
 	 * @throws OperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
@@ -474,13 +483,13 @@ public abstract class ASimulation<LETTER, STATE> {
 					// alternative now
 					if (w.isDuplicatorVertex() && decreaseVector(w.getPriority(), t, localInfinity) == w.getBEff()) {
 						if (w.getC() == 1) {
-							// It has now better alternative,
+							// It has no better alternative,
 							// adding to working list
 							m_WorkingList.add(w);
 							w.setInWL(true);
 						}
 						if (w.getC() > 1) {
-							// It has a better alternative, reducing number
+							// It has a better alternative, reducing number of
 							// neighbors that represent the best choice for the
 							// predecessor
 							w.setC(w.getC() - 1);
@@ -623,7 +632,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *            The local infinity in the containing SCC or global infinity if
 	 *            not used
 	 * @param scc
-	 *            The containing SCC or null if not used
+	 *            The containing SCC or <tt>null</tt> if not used
 	 * @return The possible increased progress measure
 	 */
 	protected int update(final Vertex<LETTER, STATE> v, final int localInfinity, final Set<Vertex<LETTER, STATE>> scc) {

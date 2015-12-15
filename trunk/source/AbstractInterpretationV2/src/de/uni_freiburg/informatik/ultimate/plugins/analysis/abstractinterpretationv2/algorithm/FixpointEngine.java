@@ -124,27 +124,27 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem = worklist.removeFirst();
 			final STATE preState = currentItem.getPreState();
-			final ACTION current = currentItem.getAction();
+			final ACTION currentAction = currentItem.getAction();
 			final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> currentStateStorage = currentItem
 					.getCurrentStorage();
 			final STATE oldPostState = currentStateStorage
-					.getCurrentAbstractPostState(current);
+					.getCurrentAbstractPostState(currentAction);
 
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(getLogMessageCurrentTransition(preState, current));
+				mLogger.debug(getLogMessageCurrentTransition(preState, currentAction));
 			}
 
 			// calculate the (abstract) effect of the current action by first
 			// declaring variables in the prestate, and then calculating their
 			// values
-			final STATE preStateWithFreshVariables = mVarProvider.defineVariablesPost(current, preState);
-			STATE newPostState = post.apply(preStateWithFreshVariables, current);
+			final STATE preStateWithFreshVariables = mVarProvider.defineVariablesPost(currentAction, preState);
+			STATE newPostState = post.apply(preStateWithFreshVariables, currentAction);
 
 			// check if this action leaves a loop
 			if (!activeLoops.isEmpty()) {
 				// are we leaving a loop?
 				final Pair<ACTION, ACTION> lastPair = activeLoops.peek();
-				if (lastPair.getSecond().equals(current)) {
+				if (lastPair.getSecond().equals(currentAction)) {
 					newPostState = loopLeave(activeLoops, loopCounters, widening, oldPostState, newPostState, lastPair);
 				}
 			}
@@ -161,9 +161,9 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			}
 
 			// check if we are about to enter a loop
-			final ACTION loopExit = mLoopDetector.getLoopExit(current);
+			final ACTION loopExit = mLoopDetector.getLoopExit(currentAction);
 			if (loopExit != null) {
-				loopEnter(activeLoops, loopCounters, current, loopExit);
+				loopEnter(activeLoops, loopCounters, currentAction, loopExit);
 			}
 
 			if (newPostState.isEqualTo(oldPostState)) {
@@ -176,15 +176,15 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(getLogMessageNewPostState(newPostState));
 				}
-				currentStateStorage.addAbstractPostState(current, newPostState);
+				currentStateStorage.addAbstractPostState(currentAction, newPostState);
 			}
-			if (mTransitionProvider.isPostErrorLocation(current, currentItem.getCurrentScope())
-					&& !newPostState.isBottom() && reachedErrors.add(current)) {
+			if (mTransitionProvider.isPostErrorLocation(currentAction, currentItem.getCurrentScope())
+					&& !newPostState.isBottom() && reachedErrors.add(currentAction)) {
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(new StringBuilder().append(INDENT).append(" Error state reached"));
 				}
 				errorReached = true;
-				mReporter.reportPossibleError(start, current);
+				mReporter.reportPossibleError(start, currentAction);
 			}
 
 			if (newPostState.isFixpoint() && preState.isFixpoint()) {

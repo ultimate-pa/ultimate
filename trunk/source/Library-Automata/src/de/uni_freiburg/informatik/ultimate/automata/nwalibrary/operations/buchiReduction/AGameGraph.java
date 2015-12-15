@@ -140,7 +140,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 
 	/**
 	 * Gets the {@link DuplicatorVertex} object of the game graph by its
-	 * representation or <b>null</b> if there is no such.
+	 * representation or <tt>null</tt> if there is no such.
 	 * 
 	 * @param q0
 	 *            The state spoiler is currently at
@@ -151,7 +151,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * @param bit
 	 *            The bit of the vertex
 	 * @return The {@link DuplicatorVertex} object represented by arguments or
-	 *         <b>null</b> if there is no such.
+	 *         <tt>null</tt> if there is no such.
 	 */
 	public DuplicatorVertex<LETTER, STATE> getDuplicatorVertex(final STATE q0, final STATE q1, final LETTER a,
 			final boolean bit) {
@@ -195,12 +195,12 @@ public abstract class AGameGraph<LETTER, STATE> {
 
 	/**
 	 * Gets an unmodifiable set of all predecessors a given {@link Vertex} has
-	 * or <b>null</b> if it has no.
+	 * or <tt>null</tt> if it has no.
 	 * 
 	 * @param vertex
 	 *            The vertex of interest
 	 * @return An unmodifiable set of all predecessors the given {@link Vertex}
-	 *         has or <b>null</b> if it has no.
+	 *         has or <tt>null</tt> if it has no.
 	 */
 	public Set<Vertex<LETTER, STATE>> getPredecessors(final Vertex<LETTER, STATE> vertex) {
 		if (hasPredecessors(vertex)) {
@@ -221,7 +221,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 
 	/**
 	 * Gets the {@link SpoilerVertex} object of the game graph by its
-	 * representation or <b>null</b> if there is no such.
+	 * representation or <tt>null</tt> if there is no such.
 	 * 
 	 * @param q0
 	 *            The state spoiler is currently at
@@ -230,7 +230,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * @param bit
 	 *            The bit of the vertex
 	 * @return The {@link SpoilerVertex} object represented by arguments or
-	 *         <b>null</b> if there is no such.
+	 *         <tt>null</tt> if there is no such.
 	 */
 	public SpoilerVertex<LETTER, STATE> getSpoilerVertex(final STATE q0, final STATE q1, final boolean bit) {
 		return m_BuechiStatesToGraphSpoilerVertex.get(q0, q1, bit);
@@ -260,12 +260,12 @@ public abstract class AGameGraph<LETTER, STATE> {
 
 	/**
 	 * Gets an unmodifiable set of all successors a given {@link Vertex} has or
-	 * <b>null</b> if it has no.
+	 * <tt>null</tt> if it has no.
 	 * 
 	 * @param vertex
 	 *            The vertex of interest
 	 * @return An unmodifiable set of all successors the given {@link Vertex}
-	 *         has or <b>null</b> if it has no.
+	 *         has or <tt>null</tt> if it has no.
 	 */
 	public Set<Vertex<LETTER, STATE>> getSuccessors(final Vertex<LETTER, STATE> vertex) {
 		if (hasSuccessors(vertex)) {
@@ -364,15 +364,15 @@ public abstract class AGameGraph<LETTER, STATE> {
 			VertexValueContainer values = changedValues.getValue();
 			// Only undo if there actually is a changed value stored
 			// Undo PM
-			if (values.getProgressMeasure() != VertexValueContainer.NO_VALUE) {
+			if (VertexValueContainer.isValueValid(values.getProgressMeasure())) {
 				vertex.setPM(values.getProgressMeasure());
 			}
 			// Undo BEff
-			if (values.getBestNeighborMeasure() != VertexValueContainer.NO_VALUE) {
+			if (VertexValueContainer.isValueValid(values.getBestNeighborMeasure())) {
 				vertex.setBEff(values.getBestNeighborMeasure());
 			}
 			// Undo C
-			if (values.getNeighborCounter() != VertexValueContainer.NO_VALUE) {
+			if (VertexValueContainer.isValueValid(values.getNeighborCounter())) {
 				vertex.setC(values.getNeighborCounter());
 			}
 		}

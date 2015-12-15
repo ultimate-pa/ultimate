@@ -51,17 +51,20 @@ public class PreludeContribution extends WorkbenchWindowControlContribution {
 
 	public final static String s_ID = "de.uni_freiburg.informatik.ultimate.gui.contrib.Prelude";
 	
-	private static PreludeContribution s_me;
+	private static PreludeContribution sPrelude;
 	
 	public static final File getPreludeFile() {
-		String pl = s_me.getPrelude();
+		if(sPrelude == null){
+			return null;
+		}
+		final String pl = sPrelude.getPrelude();
 		return pl == null ? null : new File(pl);
 	}
 	
 	private String m_preludeFile = null;
 
 	private void init() {
-		s_me = this;
+		sPrelude = this;
 		InstanceScope iscope = new InstanceScope();
         IEclipsePreferences prefscope = iscope.getNode(GuiController.sPLUGINID);
         m_preludeFile = prefscope.get(IPreferencesKeys.PRELUDEFILE, null);

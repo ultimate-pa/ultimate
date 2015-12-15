@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2015-2016 Daniel Tischner
  * Copyright (C) 2012-2015 Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Oleksii Saukh (saukho@informatik.uni-freiburg.de)
@@ -43,33 +44,70 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
+ * Simulation that realizes <b>delayed simulation</b> for reduction of a given
+ * buechi automaton.<br/>
+ * Once created it starts the simulation, results can then be get by using
+ * {@link #getResult()}.<br/>
+ * <br/>
+ * 
+ * For more information on the type of simulation see {@link DelayedGameGraph}.
+ * 
+ * @author Daniel Tischner
  * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * @author Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * @date 16.01.2012
+ * 
+ * @param <LETTER>
+ *            Letter class of buechi automaton
+ * @param <STATE>
+ *            State class of buechi automaton
  */
-public final class DelayedSimulation<LETTER,STATE> extends ASimulation<LETTER, STATE> {
-	
+public final class DelayedSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
+
+	/**
+	 * Game graph that is used for simulation calculation.
+	 */
 	private final DelayedGameGraph<LETTER, STATE> m_Game;
 
-    /**
-     * Constructor.
-     * 
-     * @param ba
-     *            the input buchi automaton to reduce.
-     * @param useSCCs
-     *            whether to use strongly connected components
-     * @throws OperationCanceledException
-     */
-    public DelayedSimulation(final IUltimateServiceProvider services,
-    		final INestedWordAutomatonOldApi<LETTER,STATE> ba, 
-    		final boolean useSCCs, final StateFactory<STATE> stateFactory)
-    				throws OperationCanceledException {
-    	super(services, useSCCs, stateFactory);
-    	
-    	m_Game = new DelayedGameGraph<LETTER, STATE>(services, ba);
-    	doSimulation();
-    }
-    
+	/**
+	 * Creates a new delayed simulation that tries to reduce the given buechi
+	 * automaton using <b>delayed simulation</b>.<br/>
+	 * After construction the simulation starts and results can be get by using
+	 * {@link #getResult()}.<br/>
+	 * <br/>
+	 * 
+	 * For correctness its important that the inputed automaton has <b>no dead
+	 * ends</b> nor <b>duplicate transitions</b>.
+	 * 
+	 * @param services
+	 *            Service provider of Ultimate framework.
+	 * @param buechi
+	 *            The buechi automaton to reduce with no dead ends nor with
+	 *            duplicate transitions
+	 * @param useSCCs
+	 *            If the simulation calculation should be optimized using SCC,
+	 *            Strongly Connected Components.
+	 * @param stateFactory
+	 *            The state factory used for creating states.
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	public DelayedSimulation(final IUltimateServiceProvider services,
+			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
+			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
+		super(services, useSCCs, stateFactory);
+
+		m_Game = new DelayedGameGraph<LETTER, STATE>(services, buechi);
+		doSimulation();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * buchiReduction.ASimulation#getGameGraph()
+	 */
 	@Override
 	protected AGameGraph<LETTER, STATE> getGameGraph() {
 		return m_Game;

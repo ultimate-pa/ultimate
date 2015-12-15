@@ -74,7 +74,7 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 		final RCFGNode source = current.getSource();
 
 		// first, create a map of the current scope
-		Map<String, IBoogieVar> vars = new HashMap<String, IBoogieVar>();
+		final Map<String, IBoogieVar> vars = new HashMap<String, IBoogieVar>();
 
 		// add global variables
 		final Map<String, BoogieNonOldVar> globals = mBoogieVarTable.getGlobals();

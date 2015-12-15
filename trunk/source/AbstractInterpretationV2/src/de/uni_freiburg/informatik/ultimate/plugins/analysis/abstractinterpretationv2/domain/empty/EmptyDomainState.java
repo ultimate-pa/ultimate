@@ -179,11 +179,6 @@ public final class EmptyDomainState<ACTION, VARDECL>
 		return mId;
 	}
 
-	@Override
-	public EmptyDomainState<ACTION, VARDECL> copy() {
-		return new EmptyDomainState<>(new HashMap<String, VARDECL>(mVarDecls), mIsFixpoint);
-	}
-
 	/**
 	 * This method compares if this state contains the same variable declarations than the other state.
 	 * 

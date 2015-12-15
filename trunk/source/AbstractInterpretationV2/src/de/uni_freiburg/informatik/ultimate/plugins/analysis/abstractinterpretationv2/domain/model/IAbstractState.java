@@ -178,13 +178,6 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	Term getTerm(final Script script, final Boogie2SMT bpl2smt);
 
 	/**
-	 * Create a copy of this abstract state instance.
-	 * 
-	 * @return An {@link IAbstractState} that is a copy of this instance.
-	 */
-	STATE copy();
-
-	/**
 	 * Is used for debug output.
 	 * 
 	 * @return A {@link String} representing this abstract state.

@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2015-2016 Daniel Tischner
  * Copyright (C) 2012-2015 Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Oleksii Saukh (saukho@informatik.uni-freiburg.de)
@@ -29,35 +30,60 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices;
 
 /**
+ * A vertex representing that its <i>Spoiler</i>s turn in the game defined by a
+ * {@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.AGameGraph
+ * AGameGraph}.<br/>
+ * <br/>
+ * 
+ * The vertex representation is <b>(q0, q1, bit)</b> which means <i>Spoiler</i>
+ * is currently at state q0 and must make a move using an arbitrary transition
+ * whereas <i>Duplicator</i> now is at q1 and later must respond to
+ * <i>Spoiler</i>s decision. The bit encodes extra information if needed.
+ * 
+ * @author Daniel Tischner
  * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * @author Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * @date 16.01.2012
+ * 
+ * @param <LETTER>
+ *            Letter class of buechi automaton
+ * @param <STATE>
+ *            State class of buechi automaton
  */
-public class SpoilerVertex<LETTER,STATE> extends Vertex<LETTER, STATE> {
+public class SpoilerVertex<LETTER, STATE> extends Vertex<LETTER, STATE> {
 
-    /**
-     * Constructor.
-     * 
-     * @param priority
-     *            priority of this vertex
-     * @param b
-     *            extra bit b
-     * @param q0
-     *            label of the first Buchi automaton state
-     * @param q1
-     *            label of the second Buchi automaton state
-     */
-    public SpoilerVertex(int priority, boolean b, STATE q0, STATE q1) {
-        super(priority, b, q0, q1);
-    }
+	/**
+	 * Constructs a new spoiler vertex with given representation <b>(q0, q1,
+	 * bit)</b> which means <i>Spoiler</i> is currently at state q0 and must
+	 * make a move using an arbitrary transition whereas <i>Duplicator</i> now
+	 * is at q1 and later must respond to <i>Spoiler</i>s decision. The bit
+	 * encodes extra information if needed.
+	 * 
+	 * @param priority
+	 *            The priority of the vertex
+	 * @param b
+	 *            The extra bit of the vertex
+	 * @param q0
+	 *            The state spoiler is at
+	 * @param q1
+	 *            The state duplicator is at
+	 */
+	public SpoilerVertex(int priority, boolean b, STATE q0, STATE q1) {
+		super(priority, b, q0, q1);
+	}
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("<").append(isB()).append(",(").append(getQ0()).append(",");
-        sb.append(getQ1()).append("),p:");
-        sb.append(getPriority()).append(",pm:").append(pm);
-        sb.append(">");
-        return sb.toString();
-    }
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append("<").append(isB()).append(",(").append(getQ0()).append(",");
+		sb.append(getQ1()).append("),p:");
+		sb.append(getPriority()).append(",pm:").append(pm);
+		sb.append(">");
+		return sb.toString();
+	}
 }

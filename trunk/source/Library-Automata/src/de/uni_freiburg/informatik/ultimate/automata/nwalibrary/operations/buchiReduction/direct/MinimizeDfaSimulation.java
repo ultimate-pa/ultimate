@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2015 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2016 Daniel Tischner
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2009-2015 University of Freiburg
  * 
@@ -44,53 +45,91 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
+ * Operation that reduces a given buechi automaton by using
+ * {@link DirectSimulation}.<br/>
+ * Once constructed the reduction automatically starts, the result can be get by
+ * using {@link #getResult()}.<br/>
+ * <br/>
+ * 
+ * For correctness its important that the inputed automaton has <b>no dead
+ * ends</b> nor <b>duplicate transitions</b>.
+ * 
+ * @author Daniel Tischner
  * @author heizmann@informatik.uni-freiburg.de
  * @author schillic@informatik.uni-freiburg.de
-
+ * 
+ * @param <LETTER>
+ *            Letter class of buechi automaton
+ * @param <STATE>
+ *            State class of buechi automaton
  */
-public class MinimizeDfaSimulation<LETTER,STATE> implements IOperation<LETTER,STATE> {
-	private final Logger m_Logger;
+public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, STATE> {
+
 	/**
-     * The input automaton.
-     */
-    private INestedWordAutomatonOldApi<LETTER,STATE> m_Operand;
+	 * The logger used by the Ultimate framework.
+	 */
+	private final Logger m_Logger;
 
-    private INestedWordAutomatonOldApi<LETTER,STATE> m_Result;
-    
-    private final IUltimateServiceProvider m_Services;
+	/**
+	 * The inputed buechi automaton.
+	 */
+	private INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
 
-    /**
-     * Constructor.
-     * 
-     * @param operand
-     *            the automaton to reduce
-     * @throws OperationCanceledException 
-     */
-    public MinimizeDfaSimulation(IUltimateServiceProvider services, 
-    		StateFactory<STATE> stateFactory, INestedWordAutomatonOldApi<LETTER,STATE> operand)
-            throws AutomataLibraryException {
-    	m_Services = services;
+	/**
+	 * The resulting possible reduced buechi automaton.
+	 */
+	private INestedWordAutomatonOldApi<LETTER, STATE> m_Result;
+
+	/**
+	 * Service provider of Ultimate framework.
+	 */
+	private final IUltimateServiceProvider m_Services;
+
+	/**
+	 * Creates a new buechi reduce object that starts reducing the given buechi
+	 * automaton.<br/>
+	 * Once finished the result can be get by using {@link #getResult()}.
+	 * 
+	 * @param services
+	 *            Service provider of Ultimate framework
+	 * @param stateFactory
+	 *            The state factory used for creating states
+	 * @param operand
+	 *            The buechi automaton to reduce
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	public MinimizeDfaSimulation(IUltimateServiceProvider services, StateFactory<STATE> stateFactory,
+			INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
+		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-    	m_Operand = operand;
-        m_Logger.info(startMessage());
-        
-        m_Result = new DirectSimulation<>(m_Services, m_Operand, true, stateFactory).getResult();
-        
-        boolean compareWithNonSccResult = false;
-        if (compareWithNonSccResult) {
-        	INestedWordAutomatonOldApi<LETTER, STATE> nonSCCresult = 
-        			new DirectSimulation<LETTER,STATE>(m_Services, m_Operand, false, stateFactory).getResult();
-        	if (m_Result.size() != nonSCCresult.size()) {
-        		throw new AssertionError();
-        	}
-        }
-    	
-        m_Logger.info(exitMessage());
-    }
-    
-    @Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+		m_Operand = operand;
+		m_Logger.info(startMessage());
+
+		m_Result = new DirectSimulation<>(m_Services, m_Operand, true, stateFactory).getResult();
+
+		boolean compareWithNonSccResult = false;
+		if (compareWithNonSccResult) {
+			INestedWordAutomatonOldApi<LETTER, STATE> nonSCCresult = new DirectSimulation<LETTER, STATE>(m_Services,
+					m_Operand, false, stateFactory).getResult();
+			if (m_Result.size() != nonSCCresult.size()) {
+				throw new AssertionError();
+			}
+		}
+
+		m_Logger.info(exitMessage());
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * de.uni_freiburg.informatik.ultimate.automata.IOperation#checkResult(de.
+	 * uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory)
+	 */
+	@Override
+	public boolean checkResult(StateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		m_Logger.info("Start testing correctness of " + operationName());
 		boolean correct = true;
 		correct &= (ResultChecker.nwaLanguageInclusion(m_Services, m_Operand, m_Result, stateFactory) == null);
@@ -102,25 +141,46 @@ public class MinimizeDfaSimulation<LETTER,STATE> implements IOperation<LETTER,ST
 		return correct;
 	}
 
-    @Override
-    public String exitMessage() {
-		return "Finished " + operationName() + " Result " + 
-		m_Result.sizeInformation();
-    }
-
-    @Override
-    public INestedWordAutomatonOldApi<LETTER,STATE> getResult() {
-        return m_Result;
-    }
-
-    @Override
-    public String operationName() {
-        return "minimizeDfaSimulation";
-    }
-
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * de.uni_freiburg.informatik.ultimate.automata.IOperation#exitMessage()
+	 */
 	@Override
-    public String startMessage() {
-		return "Start " + operationName() + ". Operand has " + 
-		m_Operand.sizeInformation();	
-    }
+	public String exitMessage() {
+		return "Finished " + operationName() + " Result " + m_Result.sizeInformation();
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.IOperation#getResult()
+	 */
+	@Override
+	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() {
+		return m_Result;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * de.uni_freiburg.informatik.ultimate.automata.IOperation#operationName()
+	 */
+	@Override
+	public String operationName() {
+		return "minimizeDfaSimulation";
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * de.uni_freiburg.informatik.ultimate.automata.IOperation#startMessage()
+	 */
+	@Override
+	public String startMessage() {
+		return "Start " + operationName() + ". Operand has " + m_Operand.sizeInformation();
+	}
 }
