@@ -137,7 +137,7 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 
 		if (getServiceProvider().getProgressMonitorService() != null
 				&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
-			m_Logger.debug("Stopped in generateBuchiAutomaton/table filled");
+			m_Logger.debug("Stopped in generateBuchiAutomatonFromGraph/table filled");
 			throw new OperationCanceledException(this.getClass());
 		}
 
@@ -171,7 +171,7 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 
 		if (getServiceProvider().getProgressMonitorService() != null
 				&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
-			m_Logger.debug("Stopped in generateBuchiAutomaton/states added to result BA");
+			m_Logger.debug("Stopped in generateBuchiAutomatonFromGraph/states added to result BA");
 			throw new OperationCanceledException(this.getClass());
 		}
 		return result;
@@ -194,7 +194,7 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 
 			if (getServiceProvider().getProgressMonitorService() != null
 					&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
-				m_Logger.debug("Stopped in generateGameGraph/calculating v0 und v1");
+				m_Logger.debug("Stopped in generateGameGraphFromBuechi/calculating v0 und v1");
 				throw new OperationCanceledException(this.getClass());
 			}
 		}
@@ -226,7 +226,7 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 
 			if (getServiceProvider().getProgressMonitorService() != null
 					&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
-				m_Logger.debug("Stopped in generateGameGraph/calculating v0 und v1");
+				m_Logger.debug("Stopped in generateGameGraphFromBuechi/calculating v0 und v1");
 				throw new OperationCanceledException(this.getClass());
 			}
 		}

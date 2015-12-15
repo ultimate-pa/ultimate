@@ -358,7 +358,6 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 				
 				@Override
 				public int compare(Integer x, Integer y) {
-					// TODO Auto-generated method stub
 					return Integer.compare(m_labels[x], m_labels[y]);
 				}
 			});

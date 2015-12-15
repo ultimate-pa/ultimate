@@ -541,6 +541,15 @@ public abstract class ASimulation<LETTER, STATE> {
 	}
 
 	/**
+	 * Gets the used service provider of the Ultimate framework.
+	 * 
+	 * @return The used service provider of the Ultimate framework.
+	 */
+	protected IUltimateServiceProvider getServiceProvider() {
+		return m_Services;
+	}
+
+	/**
 	 * Gets the current working list of the simulation.
 	 * 
 	 * @return The current working list of the simulation.

@@ -87,183 +87,88 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperatio
 		NestedWordAutomaton<String, String> buechi = new NestedWordAutomaton<>(services, alphabet, null, null, snf);
 
 		// Big example from tutors cardboard
-//		buechi.addState(true, false, "q0");
-//		buechi.addState(false, false, "q1");
-//		buechi.addState(false, true, "q2");
-//		buechi.addState(false, false, "q3");
-//		buechi.addState(false, true, "q4");
-//		buechi.addInternalTransition("q0", "a", "q1");
-//		buechi.addInternalTransition("q1", "a", "q1");
-//		buechi.addInternalTransition("q1", "a", "q2");
-//		buechi.addInternalTransition("q2", "a", "q2");
-//		buechi.addInternalTransition("q2", "a", "q1");
-//		buechi.addInternalTransition("q0", "a", "q3");
-//		buechi.addInternalTransition("q3", "b", "q3");
-//		buechi.addInternalTransition("q3", "a", "q4");
-//		buechi.addInternalTransition("q4", "a", "q4");
-//		buechi.addInternalTransition("q4", "b", "q3");
+		// buechi.addState(true, false, "q0");
+		// buechi.addState(false, false, "q1");
+		// buechi.addState(false, true, "q2");
+		// buechi.addState(false, false, "q3");
+		// buechi.addState(false, true, "q4");
+		// buechi.addInternalTransition("q0", "a", "q1");
+		// buechi.addInternalTransition("q1", "a", "q1");
+		// buechi.addInternalTransition("q1", "a", "q2");
+		// buechi.addInternalTransition("q2", "a", "q2");
+		// buechi.addInternalTransition("q2", "a", "q1");
+		// buechi.addInternalTransition("q0", "a", "q3");
+		// buechi.addInternalTransition("q3", "b", "q3");
+		// buechi.addInternalTransition("q3", "a", "q4");
+		// buechi.addInternalTransition("q4", "a", "q4");
+		// buechi.addInternalTransition("q4", "b", "q3");
 
 		// Small example from cav02 paper
-//		buechi.addState(true, true, "q1");
-//		buechi.addState(false, false, "q2");
-//		buechi.addInternalTransition("q1", "a", "q1");
-//		buechi.addInternalTransition("q1", "b", "q2");
-//		buechi.addInternalTransition("q2", "b", "q2");
-//		buechi.addInternalTransition("q2", "a", "q1");
+		// buechi.addState(true, true, "q1");
+		// buechi.addState(false, false, "q2");
+		// buechi.addInternalTransition("q1", "a", "q1");
+		// buechi.addInternalTransition("q1", "b", "q2");
+		// buechi.addInternalTransition("q2", "b", "q2");
+		// buechi.addInternalTransition("q2", "a", "q1");
 
 		// Small example from cav02 paper extended so that nodes
 		// share the same transitions
-//		buechi.addState(true, true, "q1");
-//		buechi.addState(false, false, "q2");
-//		buechi.addInternalTransition("q1", "a", "q1");
-//		buechi.addInternalTransition("q1", "b", "q1");
-//		buechi.addInternalTransition("q1", "a", "q2");
-//		buechi.addInternalTransition("q1", "b", "q2");
-//		buechi.addInternalTransition("q2", "a", "q2");
-//		buechi.addInternalTransition("q2", "b", "q2");
-//		buechi.addInternalTransition("q2", "a", "q1");
-//		buechi.addInternalTransition("q2", "b", "q1");
+		// buechi.addState(true, true, "q1");
+		// buechi.addState(false, false, "q2");
+		// buechi.addInternalTransition("q1", "a", "q1");
+		// buechi.addInternalTransition("q1", "b", "q1");
+		// buechi.addInternalTransition("q1", "a", "q2");
+		// buechi.addInternalTransition("q1", "b", "q2");
+		// buechi.addInternalTransition("q2", "a", "q2");
+		// buechi.addInternalTransition("q2", "b", "q2");
+		// buechi.addInternalTransition("q2", "a", "q1");
+		// buechi.addInternalTransition("q2", "b", "q1");
 
 		// Small circle example from mind
-//		buechi.addState(true, true, "q1");
-//		buechi.addState(false, false, "q2");
-//		buechi.addState(true, false, "q3");
-//		buechi.addState(false, false, "q4");
-//		buechi.addInternalTransition("q1", "a", "q2");
-//		buechi.addInternalTransition("q2", "b", "q3");
-//		buechi.addInternalTransition("q3", "a", "q4");
-//		buechi.addInternalTransition("q4", "b", "q1");
+		// buechi.addState(true, true, "q1");
+		// buechi.addState(false, false, "q2");
+		// buechi.addState(true, false, "q3");
+		// buechi.addState(false, false, "q4");
+		// buechi.addInternalTransition("q1", "a", "q2");
+		// buechi.addInternalTransition("q2", "b", "q3");
+		// buechi.addInternalTransition("q3", "a", "q4");
+		// buechi.addInternalTransition("q4", "b", "q1");
 
 		// Non merge-able example with a one-directed fair simulation
-//		buechi.addState(true, true, "q0");
-//		buechi.addState(false, false, "q1");
-//		buechi.addInternalTransition("q0", "b", "q0");
-//		buechi.addInternalTransition("q0", "a", "q1");
-//		buechi.addInternalTransition("q1", "a", "q1");
-//		buechi.addInternalTransition("q1", "b", "q1");
+		// buechi.addState(true, true, "q0");
+		// buechi.addState(false, false, "q1");
+		// buechi.addInternalTransition("q0", "b", "q0");
+		// buechi.addInternalTransition("q0", "a", "q1");
+		// buechi.addInternalTransition("q1", "a", "q1");
+		// buechi.addInternalTransition("q1", "b", "q1");
 
 		// Big example from cav02
-//		buechi.addState(true, false, "q1");
-//		buechi.addState(false, false, "q2");
-//		buechi.addState(false, true, "q3");
-//		buechi.addState(false, true, "q4");
-//		buechi.addState(false, false, "q5");
-//		buechi.addState(false, true, "q6");
-//		buechi.addState(false, false, "q7");
-//		buechi.addState(false, false, "q8");
-//		buechi.addState(false, false, "q9");
-//		buechi.addState(false, true, "q10");
-//		buechi.addInternalTransition("q1", "a", "q2");
-//		buechi.addInternalTransition("q1", "a", "q3");
-//		buechi.addInternalTransition("q2", "a", "q6");
-//		buechi.addInternalTransition("q2", "b", "q4");
-//		buechi.addInternalTransition("q2", "b", "q7");
-//		buechi.addInternalTransition("q4", "a", "q2");
-//		buechi.addInternalTransition("q6", "a", "q6");
-//		buechi.addInternalTransition("q3", "b", "q5");
-//		buechi.addInternalTransition("q3", "b", "q7");
-//		buechi.addInternalTransition("q5", "a", "q3");
-//		buechi.addInternalTransition("q7", "b", "q8");
-//		buechi.addInternalTransition("q8", "a", "q9");
-//		buechi.addInternalTransition("q8", "b", "q10");
-//		buechi.addInternalTransition("q9", "a", "q9");
-//		buechi.addInternalTransition("q9", "b", "q10");
-//		buechi.addInternalTransition("q10", "b", "q10");
-
-		// Debug test automata 1
-//		buechi.addState(true, false, "q0");
-//		buechi.addState(false, false, "q1");
-//		buechi.addState(false, false, "q2");
-//		buechi.addState(false, true, "q3");
-//		buechi.addState(false, false, "q4");
-//		buechi.addInternalTransition("q1", "b", "q0");
-//		buechi.addInternalTransition("q2", "b", "q2");
-//		buechi.addInternalTransition("q2", "a", "q3");
-//		buechi.addInternalTransition("q3", "b", "q4");
-//		buechi.addInternalTransition("q4", "b", "q3");
-//		buechi.addInternalTransition("q0", "b", "q1");
-//		buechi.addInternalTransition("q0", "b", "q2");
-//		buechi.addInternalTransition("q0", "b", "q4");
-//		buechi.addInternalTransition("q0", "a", "q2");
-//		buechi.addInternalTransition("q0", "a", "q4");
-
-		// Debug test automata 2
-//		alphabet = new HashSet<>();
-//		alphabet.add("a");
-//		alphabet.add("b");
-//		alphabet.add("c");
-//		buechi = new NestedWordAutomaton<>(services, alphabet, null, null,
-//		snf);
-//		buechi.addState(true, false, "q0");
-//		buechi.addState(false, false, "q1");
-//		buechi.addState(false, false, "q2");
-//	 	buechi.addState(false, false, "q3");
-//		buechi.addState(false, true, "q4");
-//		buechi.addState(false, true, "q5");
-//		buechi.addState(false, false, "q6");
-//		buechi.addState(false, false, "q7");
-//		buechi.addState(false, false, "q8");
-//		buechi.addState(false, false, "q9");
-//		buechi.addInternalTransition("q1", "b", "q1");
-//		buechi.addInternalTransition("q1", "c", "q3");
-//		buechi.addInternalTransition("q1", "c", "q8");
-//		buechi.addInternalTransition("q1", "a", "q7");
-//		buechi.addInternalTransition("q2", "b", "q2");
-//		buechi.addInternalTransition("q2", "b", "q7");
-//		buechi.addInternalTransition("q2", "b", "q8");
-//		buechi.addInternalTransition("q2", "b", "q9");
-//		buechi.addInternalTransition("q2", "c", "q2");
-//		buechi.addInternalTransition("q2", "c", "q5");
-//		buechi.addInternalTransition("q2", "c", "q7");
-//		buechi.addInternalTransition("q2", "a", "q3");
-//		buechi.addInternalTransition("q2", "a", "q6");
-//		buechi.addInternalTransition("q3", "b", "q3");
-//		buechi.addInternalTransition("q3", "b", "q4");
-//		buechi.addInternalTransition("q3", "b", "q5");
-//		buechi.addInternalTransition("q3", "b", "q7");
-//		buechi.addInternalTransition("q3", "b", "q8");
-//		buechi.addInternalTransition("q3", "a", "q6");
-//		buechi.addInternalTransition("q3", "a", "q7");
-//		buechi.addInternalTransition("q3", "a", "q9");
-//		buechi.addInternalTransition("q4", "b", "q1");
-//		buechi.addInternalTransition("q4", "b", "q4");
-//		buechi.addInternalTransition("q4", "b", "q9");
-//		buechi.addInternalTransition("q4", "c", "q5");
-//		buechi.addInternalTransition("q4", "a", "q4");
-//		buechi.addInternalTransition("q5", "c", "q5");
-//		buechi.addInternalTransition("q6", "b", "q2");
-//		buechi.addInternalTransition("q6", "b", "q5");
-//		buechi.addInternalTransition("q6", "b", "q9");
-//		buechi.addInternalTransition("q6", "b", "q0");
-//		buechi.addInternalTransition("q6", "c", "q2");
-//		buechi.addInternalTransition("q6", "c", "q7");
-//		buechi.addInternalTransition("q6", "c", "q9");
-//		buechi.addInternalTransition("q6", "a", "q9");
-//		buechi.addInternalTransition("q6", "a", "q0");
-//		buechi.addInternalTransition("q7", "c", "q2");
-//		buechi.addInternalTransition("q7", "c", "q0");
-//		buechi.addInternalTransition("q7", "a", "q6");
-//		buechi.addInternalTransition("q7", "a", "q9");
-//		buechi.addInternalTransition("q8", "b", "q2");
-//		buechi.addInternalTransition("q8", "b", "q8");
-//		buechi.addInternalTransition("q8", "a", "q4");
-//		buechi.addInternalTransition("q8", "a", "q5");
-//		buechi.addInternalTransition("q8", "a", "q0");
-//		buechi.addInternalTransition("q9", "b", "q3");
-//		buechi.addInternalTransition("q9", "b", "q7");
-//		buechi.addInternalTransition("q9", "c", "q1");
-//		buechi.addInternalTransition("q9", "c", "q2");
-//		buechi.addInternalTransition("q9", "a", "q2");
-//		buechi.addInternalTransition("q9", "a", "q4");
-//		buechi.addInternalTransition("q9", "a", "q8");
-//		buechi.addInternalTransition("q0", "b", "q1");
-//		buechi.addInternalTransition("q0", "b", "q3");
-//		buechi.addInternalTransition("q0", "b", "q6");
-//		buechi.addInternalTransition("q0", "c", "q3");
-//		buechi.addInternalTransition("q0", "c", "q8");
-//		buechi.addInternalTransition("q0", "c", "q0");
-//		buechi.addInternalTransition("q0", "a", "q3");
-//		buechi.addInternalTransition("q0", "a", "q8");
+		// buechi.addState(true, false, "q1");
+		// buechi.addState(false, false, "q2");
+		// buechi.addState(false, true, "q3");
+		// buechi.addState(false, true, "q4");
+		// buechi.addState(false, false, "q5");
+		// buechi.addState(false, true, "q6");
+		// buechi.addState(false, false, "q7");
+		// buechi.addState(false, false, "q8");
+		// buechi.addState(false, false, "q9");
+		// buechi.addState(false, true, "q10");
+		// buechi.addInternalTransition("q1", "a", "q2");
+		// buechi.addInternalTransition("q1", "a", "q3");
+		// buechi.addInternalTransition("q2", "a", "q6");
+		// buechi.addInternalTransition("q2", "b", "q4");
+		// buechi.addInternalTransition("q2", "b", "q7");
+		// buechi.addInternalTransition("q4", "a", "q2");
+		// buechi.addInternalTransition("q6", "a", "q6");
+		// buechi.addInternalTransition("q3", "b", "q5");
+		// buechi.addInternalTransition("q3", "b", "q7");
+		// buechi.addInternalTransition("q5", "a", "q3");
+		// buechi.addInternalTransition("q7", "b", "q8");
+		// buechi.addInternalTransition("q8", "a", "q9");
+		// buechi.addInternalTransition("q8", "b", "q10");
+		// buechi.addInternalTransition("q9", "a", "q9");
+		// buechi.addInternalTransition("q9", "b", "q10");
+		// buechi.addInternalTransition("q10", "b", "q10");
 
 		// Comparing test
 		boolean logNoErrorDebug = false;
@@ -479,9 +384,7 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperatio
 	 */
 	private static void logMessage(final String message, final Logger logger) {
 		if (logger != null) {
-			// XXX Change to debug
-			logger.fatal(message);
-			;
+			logger.debug(message);
 		} else {
 			System.out.println(message);
 		}
@@ -604,8 +507,7 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperatio
 				// throw new AssertionError("The operation " + operationName() +
 				// " returned a false result.");
 			} else {
-				// XXX Change to info
-				m_Logger.fatal("End testing correctness of operation deeply, it is correct.");
+				m_Logger.info("End testing correctness of operation deeply, it is correct.");
 			}
 		}
 

@@ -30,15 +30,16 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.ASimulation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.GameGraphChangeType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.GameGraphChanges;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.GameGraphSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
@@ -129,6 +130,11 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 	}
 
 	/**
+	 * If the simulation process itself should log detailed debugging
+	 * information.
+	 */
+	private final boolean debugSimulation = false;
+	/**
 	 * True if currently attempting to do changes on the game graph, false if
 	 * not. Used to tell {@link #efficientLiftingAlgorithm(int, Set)} to re use
 	 * information of previous simulation runs and to store information about
@@ -156,6 +162,10 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 	 */
 	private final int m_GlobalInfinity;
 	/**
+	 * The logger used by the Ultimate framework.
+	 */
+	private final Logger m_Logger;
+	/**
 	 * Stores all currently known {@link SpoilerVertex} objects that indicate
 	 * simulation is not possible and are non trivial. This are vertices with a
 	 * progress measure that reached infinity and where q1 is not equals q2 for
@@ -177,16 +187,13 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 	 * the underlying language did change, false if not.
 	 */
 	private boolean m_SimulationWasAborted;
+
 	/**
 	 * Counts the amount of simulation steps needed to fully finish simulation.
 	 * <br/>
 	 * Can be used for runtime debugging.
 	 */
 	private int m_StepCounter;
-	/**
-	 * If the simulation process itself should log debugging information.
-	 */
-	private final boolean debugSimulation = true;
 
 	/**
 	 * Creates a new fair simulation that tries to reduce the given buechi
@@ -218,6 +225,7 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 		super(services, useSCCs, stateFactory);
 
 		m_Buechi = buechi;
+		m_Logger = getServiceProvider().getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_pokedFromNeighborSCC = null;
 		m_NotSimulatingNonTrivialVertices = new HashSet<>();
 		m_CurrentChanges = null;
@@ -336,8 +344,12 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 	 *         the attempted change is not valid or <tt>null</tt> if it is
 	 *         valid. Can be used to undo changes by using
 	 *         {@link AGameGraph#undoChanges(GameGraphChanges)}.
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
 	 */
-	private FairGameGraphChanges<LETTER, STATE> attemptMerge(final STATE firstState, final STATE secondState) {
+	private FairGameGraphChanges<LETTER, STATE> attemptMerge(final STATE firstState, final STATE secondState)
+			throws OperationCanceledException {
 		FairGameGraphChanges<LETTER, STATE> changes = m_Game.equalizeBuechiStates(firstState, secondState);
 
 		return validateChange(changes);
@@ -357,9 +369,12 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 	 *         the attempted change is not valid or <tt>null</tt> if it is
 	 *         valid. Can be used to undo changes by using
 	 *         {@link AGameGraph#undoChanges(GameGraphChanges)}.
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
 	 */
 	private FairGameGraphChanges<LETTER, STATE> attemptTransitionRemoval(final STATE src, final LETTER a,
-			final STATE dest) {
+			final STATE dest) throws OperationCanceledException {
 		FairGameGraphChanges<LETTER, STATE> changes = m_Game.removeBuechiTransition(src, a, dest);
 
 		return validateChange(changes);
@@ -377,8 +392,12 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 	 *            should not get stored
 	 * @return False if simulation was aborted because the underlying language
 	 *         changed, true if not.
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
 	 */
-	private boolean doSingleSimulation(final GameGraphChanges<LETTER, STATE> changes) {
+	private boolean doSingleSimulation(final GameGraphChanges<LETTER, STATE> changes)
+			throws OperationCanceledException {
 		if (isUsingSCCs()) {
 			m_pokedFromNeighborSCC = new HashSet<>();
 			DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>> sccFactory = new DefaultStronglyConnectedComponentFactory<>();
@@ -426,6 +445,9 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 	private void initSimulation(final int localInfinity, final Set<Vertex<LETTER, STATE>> scc) {
 		m_SimulationWasAborted = false;
 		createWorkingList();
+		// Do not forget to reset the working list flag of all vertices to false
+		// This is needed since a simulation can be aborted
+		// before working all vertices
 		if (isUsingSCCs()) {
 			for (Vertex<LETTER, STATE> vertex : scc) {
 				initWorkingListAndCWithVertex(vertex, localInfinity, scc);
@@ -457,6 +479,12 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 	private void initWorkingListAndCWithVertex(final Vertex<LETTER, STATE> vertex, final int localInfinity,
 			final Set<Vertex<LETTER, STATE>> scc) {
 		// TODO Find out what vertices are really needed for the working list
+
+		// Small note for debugging: If simulation calculates a wrong result
+		// this, in most cases, is because there are important vertices missing
+		// in the working list. Cross check by adding 'true' to the if-clause
+		// which adds all vertices to the working list (inefficient but result
+		// could then be correct).
 		boolean isDeadEnd = !m_Game.hasSuccessors(vertex);
 		boolean hasPriorityOne = vertex.getPriority() == 1;
 		boolean isPokedVertex = isUsingSCCs() && m_pokedFromNeighborSCC.contains(vertex);
@@ -465,10 +493,16 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 		boolean isVertexInvolvedInEdgeChanges = m_AttemptingChanges && m_CurrentChanges != null
 				&& m_CurrentChanges.isVertexInvolvedInEdgeChanges(vertex);
 
+		// Possibly add vertex to working list
 		if (isDeadEnd || hasPriorityOne || isPokedVertex || isNonTrivialAddedVertex || isVertexInvolvedInEdgeChanges) {
 			addVertexToWorkingList(vertex);
+		} else {
+			// Reset working list flag of vertex since it can be true from an
+			// previous simulation abort
+			vertex.setInWL(false);
 		}
 
+		// Possibly initialize C value of vertex
 		if (isUsingSCCs()) {
 			Set<Vertex<LETTER, STATE>> usedSCCForNeighborCalculation = scc;
 			// Ignore bounds of own SCC if vertex was poked
@@ -596,8 +630,12 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 	 *         the attempted change is not valid or <tt>null</tt> if it is
 	 *         valid. Can be used to undo changes by using
 	 *         {@link AGameGraph#undoChanges(GameGraphChanges)}.
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
 	 */
-	private FairGameGraphChanges<LETTER, STATE> validateChange(FairGameGraphChanges<LETTER, STATE> changes) {
+	private FairGameGraphChanges<LETTER, STATE> validateChange(FairGameGraphChanges<LETTER, STATE> changes)
+			throws OperationCanceledException {
 		// Only do simulation if there actually was a change
 		boolean wasSuccessful = true;
 		if (changes != null) {
@@ -625,11 +663,9 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 		m_StepCounter = 0;
 
 		// First simulation
-		// XXX Change to debug
-		getLogger().fatal("Starting first simulation...");
+		getLogger().debug("Starting first simulation...");
 		doSingleSimulation(null);
-		// XXX Change to debug
-		getLogger().fatal("Ending first simulation.");
+		getLogger().debug("Ending first simulation.");
 
 		// Merge states
 		m_AttemptingChanges = true;
@@ -637,8 +673,7 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 		Set<SpoilerVertex<LETTER, STATE>> mergeCandidates = mergeCandidates();
 		Set<SpoilerVertex<LETTER, STATE>> noTransitionCandidates = new HashSet<>();
 
-		// XXX Change to debug
-		getLogger().fatal("Size of merge candidates: " + mergeCandidates.size());
+		getLogger().debug("Size of merge candidates: " + mergeCandidates.size());
 
 		for (SpoilerVertex<LETTER, STATE> mergeCandidate : mergeCandidates) {
 			STATE leftState = mergeCandidate.getQ0();
@@ -649,14 +684,12 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 			// Undo if language changed, else do not consider
 			// pair for transition removal
 			if (changes != null) {
-				// XXX Change to debug
-				getLogger().fatal(
+				getLogger().debug(
 						"Attempted merge for " + leftState + " and " + rightState + " was not successful, undoing...");
-				
+
 				m_Game.undoChanges(changes);
 			} else {
-				// XXX Change to debug
-				getLogger().fatal("Attempted merge for " + leftState + " and " + rightState + " was successful.");
+				getLogger().debug("Attempted merge for " + leftState + " and " + rightState + " was successful.");
 				statesToMerge.add(new Pair<>(leftState, rightState));
 
 				noTransitionCandidates.add(mergeCandidate);
@@ -665,49 +698,57 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 					noTransitionCandidates.add(mirroredCandidate);
 				}
 			}
+
+			// If operation was canceled, for example from the
+			// Ultimate framework
+			if (getServiceProvider().getProgressMonitorService() != null
+					&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
+				m_Logger.debug("Stopped in doSimulation/attempting merges");
+				throw new OperationCanceledException(this.getClass());
+			}
 		}
 
 		// Remove redundant transitions
 		List<Triple<STATE, LETTER, STATE>> transitionsToRemove = new LinkedList<>();
 		NestedMap2<STATE, LETTER, STATE> transitionCandidates = transitionCandidates(noTransitionCandidates);
 
-		// TODO Possibly to expensive for just a debugging log,
-		// is keySet() in O(1) ?
-		// XXX Change to debug
-		getLogger().fatal("Size of transition candidates is >= " + transitionCandidates.keySet().size());
+		// keySet is okay for a debugging message because
+		// access is cheap, in O(1)
+		getLogger().debug("Size of transition candidates is >= " + transitionCandidates.keySet().size());
 
 		for (Triple<STATE, LETTER, STATE> transitionCandidate : transitionCandidates.entrySet()) {
 			STATE src = transitionCandidate.getFirst();
 			LETTER a = transitionCandidate.getSecond();
 			STATE dest = transitionCandidate.getThird();
-			
-			// XXX Remove that
-//			if (!src.equals("q0") || !dest.equals("q3")) {
-//				continue;
-//			}
 
 			// Attempt transition removal
 			FairGameGraphChanges<LETTER, STATE> changes = attemptTransitionRemoval(src, a, dest);
 			// Undo if language changed, else add transition for removal
 			if (changes != null) {
-				// XXX Change to debug
-				getLogger().fatal("Attempted transition removal for " + src + " -" + a + "-> " + dest
+				getLogger().debug("Attempted transition removal for " + src + " -" + a + "-> " + dest
 						+ " was not successful, undoing...");
 				m_Game.undoChanges(changes);
 			} else {
-				// XXX Change to debug
-				getLogger().fatal(
+				getLogger().debug(
 						"Attempted transition removal for " + src + " -" + a + "-> " + dest + " was successful.");
 				transitionsToRemove.add(new Triple<>(src, a, dest));
+			}
+
+			// If operation was canceled, for example from the
+			// Ultimate framework
+			if (getServiceProvider().getProgressMonitorService() != null
+					&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
+				m_Logger.debug("Stopped in doSimulation/attempting transition removal");
+				throw new OperationCanceledException(this.getClass());
 			}
 		}
 
 		// Pass states to merge and transitions to remove
 		m_Game.setStatesToMerge(statesToMerge);
 		m_Game.setTransitionsToRemove(transitionsToRemove);
+
 		// Generate the resulting automata
-		// XXX Change to debug
-		getLogger().fatal("Generating the result automaton...");
+		getLogger().debug("Generating the result automaton...");
 		setResult(m_Game.generateBuchiAutomatonFromGraph());
 
 		long duration = System.currentTimeMillis() - startTime;
@@ -722,7 +763,8 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 	 * buchiReduction.ASimulation#efficientLiftingAlgorithm(int, java.util.Set)
 	 */
 	@Override
-	protected void efficientLiftingAlgorithm(final int localInfinity, final Set<Vertex<LETTER, STATE>> scc) {
+	protected void efficientLiftingAlgorithm(final int localInfinity, final Set<Vertex<LETTER, STATE>> scc)
+			throws OperationCanceledException {
 		if (debugSimulation) {
 			getLogger().debug("Lifting SCC: " + scc);
 		}
@@ -917,6 +959,14 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 			// Update poked set if worked a poked vertex
 			if (isUsingSCCs() && m_pokedFromNeighborSCC.contains(workingVertex)) {
 				m_pokedFromNeighborSCC.remove(workingVertex);
+			}
+
+			// If operation was canceled, for example from the
+			// Ultimate framework
+			if (getServiceProvider().getProgressMonitorService() != null
+					&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
+				m_Logger.debug("Stopped in efficientLiftingAlgorithm");
+				throw new OperationCanceledException(this.getClass());
 			}
 		}
 	}
