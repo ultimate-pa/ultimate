@@ -59,8 +59,8 @@ import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.result.LTLPropertyCheck.CheckableExpression;
 
 /**
- * This class reads a definition of a property in LTL and returns the AST of the
- * description of the LTL formula as a Buchi automaton.
+ * This class reads a definition of a property in LTL and returns the AST of the description of the LTL formula as a
+ * Buchi automaton.
  * 
  * @author Langenfeld
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -122,7 +122,8 @@ public class LTL2autObserver implements IUnmanagedObserver {
 
 		String ltl2baProperty = getLTL2BAProperty(ltlProperty);
 		AstNode node = getNeverClaim(ltl2baProperty);
-		CodeBlockFactory cbf = (CodeBlockFactory) mStorage.getStorable(CodeBlockFactory.s_CodeBlockFactoryKeyInToolchainStorage);
+		CodeBlockFactory cbf = (CodeBlockFactory) mStorage
+				.getStorable(CodeBlockFactory.s_CodeBlockFactoryKeyInToolchainStorage);
 		NestedWordAutomaton<CodeBlock, String> nwa = createNWAFromNeverClaim(node, irs, mSymbolTable, cbf);
 		mLogger.info("LTL Property is: " + prettyPrintProperty(irs, ltlProperty));
 
@@ -239,9 +240,23 @@ public class LTL2autObserver implements IUnmanagedObserver {
 	}
 
 	private NestedWordAutomaton<CodeBlock, String> createNWAFromNeverClaim(AstNode neverclaim,
-			Map<String, CheckableExpression> irs, BoogieSymbolTable symbolTable, CodeBlockFactory cbf) throws Exception {
-		NestedWordAutomaton<CodeBlock, String> nwa;
+			Map<String, CheckableExpression> irs, BoogieSymbolTable symbolTable, CodeBlockFactory cbf)
+					throws Exception {
+		if (neverclaim == null) {
+			throw new IllegalArgumentException("There is no never claim");
+		}
+		if (irs == null) {
+			throw new IllegalArgumentException("There are no CheckableExpressions");
+		}
+		if (symbolTable == null) {
+			throw new IllegalArgumentException("The BoogieSymbolTable is missing");
+		}
+		if (cbf == null) {
+			throw new IllegalArgumentException(
+					"The CodeBlockFactory is missing. Did you run the RCFGBuilder before this plugin?");
+		}
 
+		NestedWordAutomaton<CodeBlock, String> nwa;
 		mLogger.debug("Transforming NeverClaim to NestedWordAutomaton...");
 		try {
 			// Build NWA from LTL formula in NeverClaim representation
