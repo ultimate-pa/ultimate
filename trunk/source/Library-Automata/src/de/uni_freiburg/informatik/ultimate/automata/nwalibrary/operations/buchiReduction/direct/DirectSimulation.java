@@ -57,8 +57,8 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  * @param <STATE>
  *            State class of buechi automaton
  */
-public final class DirectSimulation<LETTER,STATE> extends ASimulation<LETTER, STATE> {
-	
+public final class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
+
 	/**
 	 * Game graph that is used for simulation calculation.
 	 */
@@ -88,20 +88,25 @@ public final class DirectSimulation<LETTER,STATE> extends ASimulation<LETTER, ST
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-    public DirectSimulation(final IUltimateServiceProvider services, 
-    		final INestedWordAutomatonOldApi<LETTER,STATE> buechi,
-    		final boolean useSCCs, final StateFactory<STATE> stateFactory)
-    				throws OperationCanceledException {
-    	super(services, useSCCs, stateFactory);
-    	
-    	m_Game = new DirectGameGraph<>(services, buechi, stateFactory);
-    	doSimulation();
-    }
-    
-    /*
-     * (non-Javadoc)
-     * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.ASimulation#getGameGraph()
-     */
+	public DirectSimulation(final IUltimateServiceProvider services,
+			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
+			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
+		super(services, useSCCs, stateFactory);
+
+		m_Game = new DirectGameGraph<>(services, buechi, stateFactory);
+		doSimulation();
+		// TODO Direct simulation is so easy, it could be computed without
+		// simulation.
+		// All vertices that do have successors directly define simulation
+		// relations, all other not.
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * buchiReduction.ASimulation#getGameGraph()
+	 */
 	@Override
 	protected AGameGraph<LETTER, STATE> getGameGraph() {
 		return m_Game;

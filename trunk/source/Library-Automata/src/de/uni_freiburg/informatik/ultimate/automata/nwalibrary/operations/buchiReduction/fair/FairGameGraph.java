@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.GetAcceptedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.GameGraphChangeType;
@@ -136,57 +135,6 @@ public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE
 		m_TransitionsToRemove = null;
 
 		generateGameGraphFromBuechi();
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see java.lang.Object#toString()
-	 */
-	@Override
-	public String toString() {
-		StringBuilder result = new StringBuilder();
-		String lineSeparator = System.lineSeparator();
-		// Header
-		result.append("FairGameGraph fgg = (");
-
-		// Vertices
-		result.append(lineSeparator + "\tSpoilerVertices = {");
-		for (SpoilerVertex<LETTER, STATE> vertex : getSpoilerVertices()) {
-			result.append(lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + "), p:"
-					+ vertex.getPriority() + ">");
-		}
-		result.append(lineSeparator + "\t},");
-		result.append(lineSeparator + "\tDuplicatorVertices = {");
-		for (DuplicatorVertex<LETTER, STATE> vertex : getDuplicatorVertices()) {
-			result.append(lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + ", " + vertex.getLetter()
-					+ "), p:" + vertex.getPriority() + ">");
-		}
-		result.append(lineSeparator + "\t},");
-
-		// Edges
-		result.append(lineSeparator + "\tedges = {");
-		for (Vertex<LETTER, STATE> vertex : getNonDeadEndVertices()) {
-			for (Vertex<LETTER, STATE> succ : getSuccessors(vertex)) {
-				result.append(lineSeparator + "\t\t(" + vertex.getQ0() + ", " + vertex.getQ1());
-				if (vertex instanceof DuplicatorVertex) {
-					DuplicatorVertex<LETTER, STATE> vertexAsDuplicatorVertex = (DuplicatorVertex<LETTER, STATE>) vertex;
-					result.append(", " + vertexAsDuplicatorVertex.getLetter());
-				}
-				result.append(")\t--> (" + succ.getQ0() + ", " + succ.getQ1());
-				if (succ instanceof DuplicatorVertex) {
-					DuplicatorVertex<LETTER, STATE> vertexAsDuplicatorVertex = (DuplicatorVertex<LETTER, STATE>) succ;
-					result.append(", " + vertexAsDuplicatorVertex.getLetter());
-				}
-				result.append(")");
-			}
-		}
-		result.append(lineSeparator + "\t}");
-
-		// Footer
-		result.append(lineSeparator + ");");
-
-		return result.toString();
 	}
 
 	/*
