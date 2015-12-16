@@ -1,5 +1,4 @@
 /*
- * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
@@ -35,6 +34,7 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
@@ -128,7 +128,7 @@ public class SmtParser implements ISource {
 
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
-		return null;
+		return new PreferenceInitializer();
 	}
 
 	@Override
@@ -148,24 +148,31 @@ public class SmtParser implements ISource {
 	}
 	
 	private void processFile(File file) throws IOException {
-		/** Specify the solver command here. **/
-		String command = "z3 -smt2 -in";
+		
+		final boolean useExternalSolver = (new UltimatePreferenceStore(Activator.PLUGIN_ID)).getBoolean(PreferenceInitializer.LABEL_UseExtSolver);
+		final String commandExternalSolver = (new UltimatePreferenceStore(Activator.PLUGIN_ID)).getString(PreferenceInitializer.LABEL_ExtSolverCommand);
+		
+		final boolean writeCommandsToFile = (new UltimatePreferenceStore(Activator.PLUGIN_ID)).getBoolean(PreferenceInitializer.LABEL_WriteToFile);
+		final String filename = (new UltimatePreferenceStore(Activator.PLUGIN_ID)).getString(PreferenceInitializer.LABEL_Filename);
 
-		mLogger.info("Starting SMT solver with command " + command);
-		Script benchmark;
-		if (!command.equals("SMTInterpol")) {
-			benchmark = new Scriptor(command, mLogger, mServices, mStorage, 
-					"external in solverbridge");
+		Script script;
+		if (useExternalSolver) {
+			mLogger.info("Starting external SMT solver with command " + commandExternalSolver);
+			script = new Scriptor(commandExternalSolver, mLogger, mServices, mStorage, 
+					"external solver of SMT parser plugin");
 		} else {
-			benchmark = new SMTInterpol(mLogger, true);
+			mLogger.info("Starting SMTInterpol");
+			script = new SMTInterpol(mLogger, true);
+		}
+		
+		if (writeCommandsToFile) {
+			String abs = (new File(filename)).getAbsolutePath();
+			mLogger.info("Writing all SMT commands to " + abs);
+			script = new LoggingScript(filename, true);
 		}
 
-		benchmark = new LoggingScript("smtlogging", true);
-		
-		mLogger.info("Starting SMT solver with command " + command);
-		
 		mLogger.info("Executing SMT file " + file.getAbsolutePath());
-		ParseEnvironment parseEnv = new ParseEnvironment(benchmark);
+		ParseEnvironment parseEnv = new ParseEnvironment(script);
 		try {
 			parseEnv.parseScript(file.getAbsolutePath());
 			mLogger.info("Succesfully executed SMT file " + file.getAbsolutePath());
