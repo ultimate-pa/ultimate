@@ -558,6 +558,7 @@
 				<module>../Library-UltimateUtilTest</module>
 				<module>../Library-UltimateTestTest</module>
 				<module>../UltimateRegressionTest</module>
+				<module>../UltimateTest</module>
 			</modules>
 		</profile>
 	</profiles>

@@ -222,6 +222,83 @@ public abstract class ASimulation<LETTER, STATE> {
 		return m_StateFactory;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		StringBuilder result = new StringBuilder();
+		String lineSeparator = System.lineSeparator();
+		// Header
+		result.append("SimulationResults sr = (");
+
+		// Properties
+		result.append(lineSeparator + "\tuseSCCs = " + isUsingSCCs());
+		result.append(lineSeparator + "\tglobalInfinity = " + getGameGraph().getGlobalInfinity());
+		if (getResult() != null) {
+			result.append(lineSeparator + "\tbuechi size after = " + getResult().size() + " states");
+		}
+
+		// Progress Measure
+		result.append(lineSeparator + "\tprogress measure = {");
+		for (SpoilerVertex<LETTER, STATE> vertex : getGameGraph().getSpoilerVertices()) {
+			int localInfinity = getGameGraph().getGlobalInfinity();
+			if (isUsingSCCs()) {
+				for (StronglyConnectedComponent<Vertex<LETTER, STATE>> scc : getSccComp().getSCCs()) {
+					if (scc.getNodes().contains(vertex)) {
+						localInfinity = calculateInfinityOfSCC(scc);
+					}
+				}
+			}
+			result.append(lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + "), pm:"
+					+ vertex.getPM(null, getGameGraph().getGlobalInfinity()) + " of " + localInfinity + ">");
+		}
+		for (DuplicatorVertex<LETTER, STATE> vertex : getGameGraph().getDuplicatorVertices()) {
+			int localInfinity = getGameGraph().getGlobalInfinity();
+			if (isUsingSCCs()) {
+				for (StronglyConnectedComponent<Vertex<LETTER, STATE>> scc : getSccComp().getSCCs()) {
+					if (scc.getNodes().contains(vertex)) {
+						localInfinity = calculateInfinityOfSCC(scc);
+					}
+				}
+			}
+			result.append(lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + ", " + vertex.getLetter()
+					+ "), pm:" + vertex.getPM(null, getGameGraph().getGlobalInfinity()) + " of " + localInfinity + ">");
+		}
+		result.append(lineSeparator + "\t},");
+
+		// Best Neighbor Measure
+		result.append(lineSeparator + "\tbest neighbor measure = {");
+		for (SpoilerVertex<LETTER, STATE> vertex : getGameGraph().getSpoilerVertices()) {
+			result.append(lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + "), bnm:"
+					+ vertex.getBEff() + ">");
+		}
+		for (DuplicatorVertex<LETTER, STATE> vertex : getGameGraph().getDuplicatorVertices()) {
+			result.append(lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + ", " + vertex.getLetter()
+					+ "), bnm:" + vertex.getBEff() + ">");
+		}
+		result.append(lineSeparator + "\t},");
+
+		// Neighbor counter
+		result.append(lineSeparator + "\tneighbor counter = {");
+		for (SpoilerVertex<LETTER, STATE> vertex : getGameGraph().getSpoilerVertices()) {
+			result.append(
+					lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + "), nc:" + vertex.getC() + ">");
+		}
+		for (DuplicatorVertex<LETTER, STATE> vertex : getGameGraph().getDuplicatorVertices()) {
+			result.append(lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + ", " + vertex.getLetter()
+					+ "), nc:" + vertex.getC() + ">");
+		}
+		result.append(lineSeparator + "\t},");
+
+		// Footer
+		result.append(lineSeparator + ");");
+
+		return result.toString();
+	}
+
 	/**
 	 * Calculates the best neighbor measure for a given vertex based on its
 	 * local infinity and its containing SCC.<br/>
@@ -253,7 +330,12 @@ public abstract class ASimulation<LETTER, STATE> {
 			if (isDuplicatorVertex) {
 				return getGameGraph().getGlobalInfinity();
 			} else {
-				return 0;
+				// TODO Returning 0 would be correct but DirectSimulation needs
+				// infinity. Direct simulation uses a hack to exclude winning
+				// Spoiler vertices by removing all their transitions which then
+				// should not indicate a winning for Duplicator.
+				return getGameGraph().getGlobalInfinity();
+				// return 0;
 			}
 		}
 
@@ -341,7 +423,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *         index is not zero and 0 if it is.
 	 */
 	protected int decreaseVector(final int index, final int vector, final int localInfinity) {
-		// Always return global infinity if above local infinity
+		// Always return global infinity if greater than local infinity
 		if (vector >= localInfinity) {
 			return getGameGraph().getGlobalInfinity();
 		}
@@ -409,6 +491,8 @@ public abstract class ASimulation<LETTER, STATE> {
 
 		// Initialize working list and the C value of all vertices
 		createWorkingList();
+		// TODO Since we have a priority queue the notDeadEnd handling is not
+		// needed anymore
 		if (m_UseSCCs) {
 			HashSet<Vertex<LETTER, STATE>> notDeadEnd = new HashSet<>();
 			for (Vertex<LETTER, STATE> v : scc) {
@@ -541,6 +625,15 @@ public abstract class ASimulation<LETTER, STATE> {
 	}
 
 	/**
+	 * Gets the used service provider of the Ultimate framework.
+	 * 
+	 * @return The used service provider of the Ultimate framework.
+	 */
+	protected IUltimateServiceProvider getServiceProvider() {
+		return m_Services;
+	}
+
+	/**
 	 * Gets the current working list of the simulation.
 	 * 
 	 * @return The current working list of the simulation.
@@ -569,13 +662,13 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *         it is one.
 	 */
 	protected int increaseVector(final int index, final int vector, final int localInfinity) {
-		// Always return global infinity if above local infinity
+		// Always return global infinity if greater than local infinity
 		if (vector >= localInfinity) {
 			return getGameGraph().getGlobalInfinity();
 		}
 		if (index == 1) {
 			int tempVector = vector + 1;
-			// Always return global infinity if above local infinity
+			// Always return global infinity if greater than local infinity
 			if (tempVector == localInfinity) {
 				return getGameGraph().getGlobalInfinity();
 			}

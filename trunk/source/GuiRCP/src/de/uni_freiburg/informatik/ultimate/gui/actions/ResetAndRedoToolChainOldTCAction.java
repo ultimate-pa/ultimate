@@ -79,7 +79,7 @@ public class ResetAndRedoToolChainOldTCAction extends RunToolchainAction impleme
 		}
 
 		File[] inputFiles = getInputFilesFromUser("Select input file...");
-		if (inputFiles == null) {
+		if (inputFiles == null || inputFiles.length == 0) {
 			return;
 		}
 

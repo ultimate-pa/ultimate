@@ -209,6 +209,46 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		return false;
 	}
 
+	/**
+	 * Compares <code>this</code> with another {@link IntervalDomainValue} and checks whether <code>this</code> is
+	 * included in other, or vice versa.
+	 * 
+	 * @param other
+	 *            The other value to compare to.
+	 * @return <code>true</code> if and only if either <code>this</code> is included in other, or vice versa,
+	 *         <code>false</code> otherwise.
+	 */
+	protected boolean isContainedIn(IntervalDomainValue other) {
+		assert other != null;
+
+		if (isBottom() || other.isBottom()) {
+			return false;
+		}
+
+		if (isInfinity() || other.isInfinity()) {
+			return true;
+		}
+
+		if (mLower.isInfinity()) {
+			if (mUpper.compareTo(other.mUpper) < 0) {
+				return false;
+			} else {
+				return true;
+			}
+		}
+
+		if (other.mLower.isInfinity()) {
+			if (other.mUpper.compareTo(mUpper) < 0) {
+				return false;
+			} else {
+				return true;
+			}
+		}
+
+		return (mLower.compareTo(other.mLower) <= 0 && mUpper.compareTo(other.mUpper) >= 0)
+		        || (other.mLower.compareTo(mLower) <= 0 && other.mUpper.compareTo(mUpper) >= 0);
+	}
+
 	@Override
 	public String toString() {
 		if (mIsBottom) {

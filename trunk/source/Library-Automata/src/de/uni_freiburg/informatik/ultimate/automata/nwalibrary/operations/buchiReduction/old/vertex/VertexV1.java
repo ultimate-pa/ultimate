@@ -42,7 +42,6 @@ public class VertexV1<LETTER,STATE> extends Vertex<LETTER, STATE> {
     
     /**
      * The priority of this vertex.
-     * TODO : byte would be enough!
      */
     private int priority;
     /**

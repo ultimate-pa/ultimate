@@ -126,12 +126,20 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	@Override
 	protected Expression processExpression(Expression expr) {
 
+		assert mEvaluatorFactory != null;
+
 		Expression newExpr = null;
 
 		if (expr instanceof BinaryExpression) {
 			newExpr = binaryExpressionHandling((BinaryExpression) expr);
 		} else if (expr instanceof UnaryExpression) {
 			newExpr = unaryExpressionHandling((UnaryExpression) expr);
+		} else if (expr instanceof ArrayStoreExpression) {
+			mExpressionEvaluator.addEvaluator(new IntervalSingletonValueExpressionEvaluator(new IntervalDomainValue()));
+			return expr;
+		} else if (expr instanceof ArrayAccessExpression) {
+			mExpressionEvaluator.addEvaluator(new IntervalSingletonValueExpressionEvaluator(new IntervalDomainValue()));
+			return expr;
 		}
 
 		if (newExpr == null || expr == newExpr) {
@@ -415,14 +423,13 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 
 	@Override
 	protected void visit(ArrayStoreExpression expr) {
-		// TODO Implement proper handling of arrays.
-		mExpressionEvaluator.addEvaluator(new IntervalSingletonValueExpressionEvaluator(new IntervalDomainValue()));
+		throw new UnsupportedOperationException("Proper array handling is not implemented.");
 	}
 
 	@Override
 	protected void visit(ArrayAccessExpression expr) {
-		// TODO Implement proper handling of arrays.
-		mExpressionEvaluator.addEvaluator(new IntervalSingletonValueExpressionEvaluator(new IntervalDomainValue()));
+		throw new UnsupportedOperationException("Proper array handling is not implemented.");
 	}
-
+	
+	
 }

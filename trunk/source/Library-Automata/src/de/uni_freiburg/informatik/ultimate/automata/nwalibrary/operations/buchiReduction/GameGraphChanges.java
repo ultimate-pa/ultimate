@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -73,16 +74,16 @@ public class GameGraphChanges<LETTER, STATE> {
 
 	/**
 	 * Stores information about vertices that are either source or destination
-	 * of an changed edges and the amount of involvements.<br/>
+	 * of an changed edges.
 	 */
-	private final HashMap<Vertex<LETTER, STATE>, Integer> m_VerticesInvolvedInEdgeChanges;
+	private final HashSet<Vertex<LETTER, STATE>> m_VerticesInvolvedInEdgeChanges;
 
 	/**
 	 * Creates a new game graph changes object with no changes at default.
 	 */
 	public GameGraphChanges() {
 		m_ChangedEdges = new NestedMap2<>();
-		m_VerticesInvolvedInEdgeChanges = new HashMap<>();
+		m_VerticesInvolvedInEdgeChanges = new HashSet<>();
 		m_ChangedVertices = new HashMap<>();
 		m_RememberedValues = new HashMap<>();
 	}
@@ -206,8 +207,7 @@ public class GameGraphChanges<LETTER, STATE> {
 	 *         an edge that has a <i>change entry</i> stored, false if not.
 	 */
 	public boolean isVertexInvolvedInEdgeChanges(final Vertex<LETTER, STATE> vertex) {
-		Integer involvements = m_VerticesInvolvedInEdgeChanges.get(vertex);
-		return involvements != null && involvements >= 0;
+		return m_VerticesInvolvedInEdgeChanges.contains(vertex);
 	}
 
 	/**
@@ -247,16 +247,14 @@ public class GameGraphChanges<LETTER, STATE> {
 			if (changeType == null || changeType.equals(GameGraphChangeType.NO_CHANGE)) {
 				// Only add edge change if unknown until now
 				m_ChangedEdges.put(src, dest, type);
-				increaseInvolvementsInEdgeChanges(src);
-				increaseInvolvementsInEdgeChanges(dest);
 			} else if ((changeType == GameGraphChangeType.ADDITION && type == GameGraphChangeType.REMOVAL)
 					|| (changeType == GameGraphChangeType.REMOVAL && type == GameGraphChangeType.ADDITION)) {
 				// Nullify change if it was added and then
 				// removed or vice versa
 				m_ChangedEdges.remove(src, dest);
-				decreaseInvolvementsInEdgeChanges(src);
-				decreaseInvolvementsInEdgeChanges(dest);
 			}
+			m_VerticesInvolvedInEdgeChanges.add(src);
+			m_VerticesInvolvedInEdgeChanges.add(dest);
 		}
 
 		// Merge changed vertices
@@ -460,13 +458,11 @@ public class GameGraphChanges<LETTER, STATE> {
 				&& type.equals(GameGraphChangeType.REMOVAL))
 				|| (previousType.equals(GameGraphChangeType.REMOVAL) && type.equals(GameGraphChangeType.ADDITION)))) {
 			m_ChangedEdges.remove(src, dest);
-			decreaseInvolvementsInEdgeChanges(src);
-			decreaseInvolvementsInEdgeChanges(dest);
 		} else {
 			m_ChangedEdges.put(src, dest, type);
-			decreaseInvolvementsInEdgeChanges(src);
-			decreaseInvolvementsInEdgeChanges(dest);
 		}
+		m_VerticesInvolvedInEdgeChanges.add(src);
+		m_VerticesInvolvedInEdgeChanges.add(dest);
 	}
 
 	/**
@@ -492,25 +488,6 @@ public class GameGraphChanges<LETTER, STATE> {
 	}
 
 	/**
-	 * Decreases the involvements that a given vertex has in changed edges. This
-	 * is the case if the vertex is either the source or destination of a
-	 * changed edge.
-	 * 
-	 * @param vertex
-	 *            Vertex of interest
-	 */
-	private void decreaseInvolvementsInEdgeChanges(final Vertex<LETTER, STATE> vertex) {
-		Integer involvements = m_VerticesInvolvedInEdgeChanges.get(vertex);
-		if (involvements != null) {
-			if (involvements > 1) {
-				m_VerticesInvolvedInEdgeChanges.put(vertex, involvements - 1);
-			} else {
-				m_VerticesInvolvedInEdgeChanges.remove(vertex);
-			}
-		}
-	}
-
-	/**
 	 * Ensures the given vertex has a value container stored by creating a new
 	 * empty container if there is no.<br/>
 	 * This is used to prevent NPE at access.
@@ -522,21 +499,5 @@ public class GameGraphChanges<LETTER, STATE> {
 		if (m_RememberedValues.get(key) == null) {
 			m_RememberedValues.put(key, new VertexValueContainer());
 		}
-	}
-
-	/**
-	 * Increases the involvements that a given vertex has in changed edges. This
-	 * is the case if the vertex is either the source or destination of a
-	 * changed edge.
-	 * 
-	 * @param vertex
-	 *            Vertex of interest
-	 */
-	private void increaseInvolvementsInEdgeChanges(final Vertex<LETTER, STATE> vertex) {
-		Integer involvements = m_VerticesInvolvedInEdgeChanges.get(vertex);
-		if (involvements == null) {
-			involvements = 0;
-		}
-		m_VerticesInvolvedInEdgeChanges.put(vertex, involvements + 1);
 	}
 }
