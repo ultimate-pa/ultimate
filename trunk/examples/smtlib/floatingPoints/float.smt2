@@ -1,5 +1,6 @@
 ; script in floating point theory
 
+(set-option :print-success true)
 (set-logic QF_FP)
 
 (declare-fun x () (_ FloatingPoint  5  11))

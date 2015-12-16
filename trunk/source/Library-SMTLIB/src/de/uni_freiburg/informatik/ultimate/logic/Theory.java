@@ -856,7 +856,7 @@ public class Theory {
 				
 				if (indices[0].signum() <= 0 || indices[1].signum() <= 0)
 					throw new IllegalArgumentException(
-							"Floating Point Index must be greater 0");//TODO: discuss this
+							"Floating Point Index must be greater 0");
 				
 				if (arity != 0)
 					throw new IllegalArgumentException(
@@ -864,11 +864,13 @@ public class Theory {
 			}
 		};
 		
-		mRNE = declareInternalSort("roundNearestTiesToEven", 0, 0).getSort(null, new Sort[0]);
-		mRNA = declareInternalSort("roundNearestTiesToAway", 0, 0).getSort(null, new Sort[0]);
-		mRTP = declareInternalSort("roundTowardsPositive", 0, 0).getSort(null, new Sort[0]);
-		mRTN = declareInternalSort("roundTowardsNegative", 0, 0).getSort(null, new Sort[0]);
-		mRTZ = declareInternalSort("roundTowardsZero", 0, 0).getSort(null, new Sort[0]);
+		mRNE = declareInternalSort("RNE", 0, 0).getSort(null, new Sort[0]);
+		mRNA = declareInternalSort("RNA", 0, 0).getSort(null, new Sort[0]);
+		mRTP = declareInternalSort("RTP", 0, 0).getSort(null, new Sort[0]);
+		mRTN = declareInternalSort("RTN", 0, 0).getSort(null, new Sort[0]);
+		mRTZ = declareInternalSort("RTZ", 0, 0).getSort(null, new Sort[0]);
+		
+		//TODO: Rounding functions
 		
 		mDeclaredSorts.put("FloatingPoint", mFloatingPointSort);
 		
