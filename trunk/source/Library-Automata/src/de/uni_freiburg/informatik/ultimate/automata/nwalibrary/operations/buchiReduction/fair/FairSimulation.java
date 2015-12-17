@@ -222,7 +222,9 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	public FairSimulation(final IUltimateServiceProvider services,
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
-		this(services, buechi, useSCCs, stateFactory, new FairGameGraph<LETTER, STATE>(services, buechi));
+		this(services, buechi, useSCCs, stateFactory, 
+				new FairGameGraph<LETTER, STATE>(services, buechi, stateFactory));
+		
 	}
 
 	/**
@@ -615,7 +617,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		getLogger().debug("Starting first simulation...");
 		doSingleSimulation(null);
 		getLogger().debug("Ending first simulation.");
-
+		
+		m_UseSCCs = false;
 		// Merge states
 		m_AttemptingChanges = true;
 		List<Pair<STATE, STATE>> statesToMerge = new LinkedList<>();

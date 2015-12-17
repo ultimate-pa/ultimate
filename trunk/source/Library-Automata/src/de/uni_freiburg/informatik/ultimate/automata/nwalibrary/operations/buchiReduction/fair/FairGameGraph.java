@@ -119,13 +119,14 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * @param buechi
 	 *            The underlying buechi automaton from which the game graph gets
 	 *            generated.
+	 * @param stateFactory 
 	 * @throws OperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public FairGameGraph(final IUltimateServiceProvider services,
-			final INestedWordAutomatonOldApi<LETTER, STATE> buechi) throws OperationCanceledException {
-		super(services);
+			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, StateFactory<STATE> stateFactory) throws OperationCanceledException {
+		super(services, stateFactory);
 
 		m_Buechi = buechi;
 		m_Logger = getServiceProvider().getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
@@ -450,10 +451,8 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		boolean canMerge = m_StatesToMerge != null && !m_StatesToMerge.isEmpty();
 		boolean canRemove = m_TransitionsToRemove != null && !m_TransitionsToRemove.isEmpty();
 
-		@SuppressWarnings("unchecked")
-		StateFactory<STATE> snf = (StateFactory<STATE>) new StringFactory();
 		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<>(getServiceProvider(),
-				m_Buechi.getInternalAlphabet(), null, null, snf);
+				m_Buechi.getInternalAlphabet(), null, null, m_StateFactory);
 
 		// Merge states
 		// Build equivalence classes for every state
@@ -493,7 +492,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 			boolean isInitial = representativesOfInitials.contains(representative);
 			boolean isFinal = representativesOfFinals.contains(representative);
 			Set<STATE> eqClass = uf.getEquivalenceClassMembers(representative);
-			STATE mergedState = snf.minimize(eqClass);
+			STATE mergedState = m_StateFactory.minimize(eqClass);
 			result.addState(isInitial, isFinal, mergedState);
 			for (STATE eqClassMember : eqClass) {
 				input2result.put(eqClassMember, mergedState);

@@ -131,7 +131,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * If the simulation calculation should be optimized using SCC, Strongly
 	 * Connected Components.
 	 */
-	private final boolean m_UseSCCs;
+	protected boolean m_UseSCCs;
 
 	/**
 	 * Comparator that compares two given vertices by their progress measure

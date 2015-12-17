@@ -35,6 +35,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
@@ -119,6 +120,8 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * in the game graph.
 	 */
 	private final HashMap<Vertex<LETTER, STATE>, HashSet<Vertex<LETTER, STATE>>> m_Successors;
+	
+	protected final StateFactory<STATE> m_StateFactory;
 
 	/**
 	 * Creates a new game graph object that initializes all needed data
@@ -127,8 +130,9 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * @param services
 	 *            Service provider of Ultimate framework
 	 */
-	public AGameGraph(final IUltimateServiceProvider services) {
+	public AGameGraph(final IUltimateServiceProvider services, StateFactory<STATE> stateFactory) {
 		m_Services = services;
+		m_StateFactory = stateFactory;
 		m_DuplicatorVertices = new HashSet<>();
 		m_SpoilerVertices = new HashSet<>();
 		m_Successors = new HashMap<>();

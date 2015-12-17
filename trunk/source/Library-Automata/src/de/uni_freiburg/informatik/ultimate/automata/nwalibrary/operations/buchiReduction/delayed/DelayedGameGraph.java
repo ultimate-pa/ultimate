@@ -89,13 +89,14 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 	 * @param buechi
 	 *            The underlying buechi automaton from which the game graph gets
 	 *            generated.
+	 * @param stateFactory 
 	 * @throws OperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public DelayedGameGraph(final IUltimateServiceProvider services,
-			final INestedWordAutomatonOldApi<LETTER, STATE> buechi) throws OperationCanceledException {
-		super(services);
+			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, StateFactory<STATE> stateFactory) throws OperationCanceledException {
+		super(services, stateFactory);
 		m_Buechi = buechi;
 		m_Logger = getServiceProvider().getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		generateGameGraphFromBuechi();
@@ -163,10 +164,8 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 		boolean[] marker = new boolean[states.size()];
 		Set<STATE> temp = new HashSet<>();
 		HashMap<STATE, STATE> oldSNames2newSNames = new HashMap<>();
-		@SuppressWarnings("unchecked")
-		StateFactory<STATE> snf = (StateFactory<STATE>) new StringFactory();
 		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<>(getServiceProvider(),
-				m_Buechi.getInternalAlphabet(), null, null, snf);
+				m_Buechi.getInternalAlphabet(), null, null, m_StateFactory);
 		for (int i = 0; i < states.size(); i++) {
 			if (marker[i])
 				continue;
@@ -185,7 +184,7 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 						isInitial = true;
 				}
 			}
-			STATE minimizedStateName = snf.minimize(temp);
+			STATE minimizedStateName = m_StateFactory.minimize(temp);
 			for (STATE c : temp)
 				oldSNames2newSNames.put(c, minimizedStateName);
 			result.addState(isInitial, isFinal, minimizedStateName);

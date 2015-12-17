@@ -98,7 +98,7 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 	public DirectGameGraph(final IUltimateServiceProvider services,
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final StateFactory<STATE> stateFactory)
 					throws OperationCanceledException {
-		super(services);
+		super(services, stateFactory);
 		m_Buechi = buechi;
 		m_Logger = getServiceProvider().getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_StateFactory = stateFactory;

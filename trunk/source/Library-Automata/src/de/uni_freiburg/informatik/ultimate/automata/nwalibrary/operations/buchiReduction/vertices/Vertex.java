@@ -55,7 +55,7 @@ public class Vertex<LETTER, STATE> {
 	/**
 	 * The bit encodes extra information if needed.
 	 */
-	private boolean b;
+	private final boolean b;
 	/**
 	 * The best neighbor measure of this vertex as needed for the
 	 * {@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.ASimulation
@@ -79,17 +79,17 @@ public class Vertex<LETTER, STATE> {
 	 * {@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.ASimulation
 	 * ASimulation}.
 	 */
-	private int priority;
+	private final int priority;
 	/**
 	 * The label of the first buechi automaton state where <i>Spoiler</i>
 	 * currently is at.
 	 */
-	private STATE q0;
+	private final  STATE q0;
 	/**
 	 * The label of the second buechi automaton state where <i>Duplicator</i>
 	 * currently is at.
 	 */
-	private STATE q1;
+	private final STATE q1;
 	/**
 	 * The progress measure of this vertex as needed for the
 	 * {@link de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.ASimulation
@@ -292,13 +292,44 @@ public class Vertex<LETTER, STATE> {
 		this.pm = pm;
 	}
 
-	/**
-	 * Sets the priority of the vertex.
-	 * 
-	 * @param priority
-	 *            The priority to set
-	 */
-	public void setPriority(final int priority) {
-		this.priority = priority;
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (b ? 1231 : 1237);
+		result = prime * result + priority;
+		result = prime * result + ((q0 == null) ? 0 : q0.hashCode());
+		result = prime * result + ((q1 == null) ? 0 : q1.hashCode());
+		return result;
 	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		@SuppressWarnings("rawtypes")
+		Vertex other = (Vertex) obj;
+		if (b != other.b)
+			return false;
+		if (priority != other.priority)
+			return false;
+		if (q0 == null) {
+			if (other.q0 != null)
+				return false;
+		} else if (!q0.equals(other.q0))
+			return false;
+		if (q1 == null) {
+			if (other.q1 != null)
+				return false;
+		} else if (!q1.equals(other.q1))
+			return false;
+		return true;
+	}
+	
+	
+
 }

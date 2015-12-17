@@ -92,7 +92,8 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	public FairDirectSimulation(final IUltimateServiceProvider services,
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
-		super(services, buechi, useSCCs, stateFactory, new FairDirectGameGraph<LETTER, STATE>(services, buechi));
+		super(services, buechi, useSCCs, stateFactory, 
+				new FairDirectGameGraph<LETTER, STATE>(services, buechi, stateFactory));
 		m_Buechi = buechi;
 		m_IsCurrentlyDirectSimulation = false;
 	}
