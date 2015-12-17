@@ -28,7 +28,9 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -169,9 +171,9 @@ public class IntervalBinaryExpressionEvaluator
 					setToBottom = true;
 				} else {
 					if (mLeftSubEvaluator.containsBool()) {
-						returnState.setBooleanValue(varName, mLeftSubEvaluator.booleanValue());
+						returnState = returnState.setBooleanValue(varName, mLeftSubEvaluator.booleanValue());
 					} else {
-						returnState.setValue(varName, firstResult.getResult().getEvaluatedValue());
+						returnState = returnState.setValue(varName, firstResult.getResult().getEvaluatedValue());
 					}
 
 					returnState = returnState.intersect(currentState);
@@ -199,9 +201,9 @@ public class IntervalBinaryExpressionEvaluator
 					setToBottom = true;
 				} else {
 					if (mRightSubEvaluator.containsBool()) {
-						returnState.setBooleanValue(varName, mRightSubEvaluator.booleanValue());
+						returnState = returnState.setBooleanValue(varName, mRightSubEvaluator.booleanValue());
 					} else {
-						returnState.setValue(varName, secondResult.getResult().getEvaluatedValue());
+						returnState = returnState.setValue(varName, secondResult.getResult().getEvaluatedValue());
 					}
 
 					returnState = returnState.intersect(currentState);
@@ -234,15 +236,15 @@ public class IntervalBinaryExpressionEvaluator
 					setToBottom = true;
 				} else {
 					if (mLeftSubEvaluator.containsBool()) {
-						returnState.setBooleanValue(rightVar, mLeftSubEvaluator.booleanValue());
+						returnState = returnState.setBooleanValue(rightVar, mLeftSubEvaluator.booleanValue());
 					} else {
-						returnState.setValue(rightVar, firstResult.getResult().getEvaluatedValue());
+						returnState = returnState.setValue(rightVar, firstResult.getResult().getEvaluatedValue());
 					}
 
 					if (mRightSubEvaluator.containsBool()) {
-						returnState.setBooleanValue(leftVar, mRightSubEvaluator.booleanValue());
+						returnState = returnState.setBooleanValue(leftVar, mRightSubEvaluator.booleanValue());
 					} else {
-						returnState.setValue(leftVar, secondResult.getResult().getEvaluatedValue());
+						returnState = returnState.setValue(leftVar, secondResult.getResult().getEvaluatedValue());
 					}
 
 					returnState = returnState.intersect(currentState);
@@ -300,7 +302,7 @@ public class IntervalBinaryExpressionEvaluator
 				final IntervalDomainValue computationResult = leftValue
 				        .intersect(secondResult.getResult().getEvaluatedValue());
 
-				returnState.setValue(varName, computationResult);
+				returnState = returnState.setValue(varName, computationResult);
 
 				if (computationResult.isBottom()) {
 					mBooleanValue = new BooleanValue(false);
@@ -327,7 +329,7 @@ public class IntervalBinaryExpressionEvaluator
 				final IntervalDomainValue computationResult = firstResult.getResult().getEvaluatedValue()
 				        .intersect(rightValue);
 
-				returnState.setValue(varName, computationResult);
+				returnState = returnState.setValue(varName, computationResult);
 
 				if (computationResult.isBottom()) {
 					mBooleanValue = new BooleanValue(false);
@@ -351,6 +353,9 @@ public class IntervalBinaryExpressionEvaluator
 				assert leftVar != null;
 				assert rightVar != null;
 
+				List<String> vars = new ArrayList<>();
+				List<IntervalDomainValue> vals = new ArrayList<>();
+
 				final IntervalDomainValue rightForLeft = new IntervalDomainValue(
 				        secondResult.getResult().getEvaluatedValue().getLower(), new IntervalValue());
 
@@ -359,7 +364,8 @@ public class IntervalBinaryExpressionEvaluator
 				final IntervalDomainValue leftComputationResult = firstResult.getResult().getEvaluatedValue()
 				        .intersect(rightForLeft);
 
-				returnState.setValue(leftVar, leftComputationResult);
+				vars.add(leftVar);
+				vals.add(leftComputationResult);
 
 				final IntervalDomainValue leftForRight = new IntervalDomainValue(new IntervalValue(),
 				        firstResult.getResult().getEvaluatedValue().getUpper());
@@ -367,7 +373,11 @@ public class IntervalBinaryExpressionEvaluator
 				// .lessOrEqual(secondResult.getResult().getEvaluatedValue());
 				final IntervalDomainValue rightComputationResult = leftForRight
 				        .intersect(secondResult.getResult().getEvaluatedValue());
-				returnState.setValue(rightVar, rightComputationResult);
+				vars.add(rightVar);
+				vals.add(rightComputationResult);
+
+				returnState = returnState.setValues(vars.toArray(new String[vars.size()]),
+				        vals.toArray(new IntervalDomainValue[vals.size()]));
 
 				if (leftComputationResult.isBottom() || rightComputationResult.isBottom()) {
 					mBooleanValue = new BooleanValue(false);
@@ -423,7 +433,7 @@ public class IntervalBinaryExpressionEvaluator
 				final IntervalDomainValue computationResult = newLeftSide
 				        .intersect(secondResult.getResult().getEvaluatedValue());
 
-				returnState.setValue(varName, computationResult);
+				returnState = returnState.setValue(varName, computationResult);
 
 				if (computationResult.isBottom()) {
 					mBooleanValue = new BooleanValue(false);
@@ -449,7 +459,7 @@ public class IntervalBinaryExpressionEvaluator
 				final IntervalDomainValue computationResult = firstResult.getResult().getEvaluatedValue()
 				        .intersect(newRightSide);
 
-				returnState.setValue(varName, computationResult);
+				returnState = returnState.setValue(varName, computationResult);
 
 				if (computationResult.isBottom()) {
 					mBooleanValue = new BooleanValue(false);
@@ -472,13 +482,18 @@ public class IntervalBinaryExpressionEvaluator
 				assert leftVar != null;
 				assert rightVar != null;
 
+				List<String> vars = new ArrayList<>();
+				List<IntervalDomainValue> vals = new ArrayList<>();
+
 				final IntervalDomainValue rightSideForLeft = new IntervalDomainValue(new IntervalValue(),
 				        secondResult.getResult().getEvaluatedValue().getLower());
 				// final IntervalDomainValue leftComputationResult = firstResult.getResult().getEvaluatedValue()
 				// .lessOrEqual(secondResult.getResult().getEvaluatedValue());
 				final IntervalDomainValue leftComputationResult = firstResult.getResult().getEvaluatedValue()
 				        .intersect(rightSideForLeft);
-				returnState.setValue(leftVar, leftComputationResult);
+
+				vars.add(leftVar);
+				vals.add(leftComputationResult);
 
 				final IntervalDomainValue leftSideForRight = new IntervalDomainValue(
 				        firstResult.getResult().getEvaluatedValue().getUpper(), new IntervalValue());
@@ -486,7 +501,12 @@ public class IntervalBinaryExpressionEvaluator
 				// .greaterOrEqual(secondResult.getResult().getEvaluatedValue());
 				final IntervalDomainValue rightComputationResult = leftSideForRight
 				        .intersect(secondResult.getResult().getEvaluatedValue());
-				returnState.setValue(rightVar, rightComputationResult);
+
+				vars.add(rightVar);
+				vals.add(rightComputationResult);
+
+				returnState = returnState.setValues(vars.toArray(new String[vars.size()]),
+				        vals.toArray(new IntervalDomainValue[vals.size()]));
 
 				if (leftComputationResult.isBottom() || rightComputationResult.isBottom()) {
 					mBooleanValue = new BooleanValue(false);

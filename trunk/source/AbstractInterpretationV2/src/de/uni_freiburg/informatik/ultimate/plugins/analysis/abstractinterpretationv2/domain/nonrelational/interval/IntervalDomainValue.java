@@ -92,6 +92,19 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 	}
 
 	/**
+	 * Performs a deep copy of <code>this</code>.
+	 * 
+	 * @return A new {@link IntervalDomainValue} which is the deep copy of <code>this</code>.
+	 */
+	protected IntervalDomainValue copy() {
+		if (mIsBottom) {
+			return new IntervalDomainValue(true);
+		}
+
+		return new IntervalDomainValue(new IntervalValue(mLower), new IntervalValue(mUpper));
+	}
+
+	/**
 	 * Computes the result of a greater or equal operation with another interval:
 	 * <p>
 	 * [a, b] &gt;= [c, d] results in [max(a, c), b]

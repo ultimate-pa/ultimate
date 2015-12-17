@@ -175,23 +175,23 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 			final IntervalDomainValue newValue = result.getResult().getEvaluatedValue();
 
 			if (newValue == null) {
-				mNewState.setBooleanValue(varname, mExpressionEvaluator.getRootEvaluator().booleanValue());
+				mNewState = mNewState.setBooleanValue(varname, mExpressionEvaluator.getRootEvaluator().booleanValue());
 			} else {
 				final IBoogieVar type = mOldState.getVariableType(varname);
 				if (type.getIType() instanceof PrimitiveType) {
 					final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
 
 					if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-						mNewState.setBooleanValue(varname, mExpressionEvaluator.getRootEvaluator().booleanValue());
+						mNewState = mNewState.setBooleanValue(varname, mExpressionEvaluator.getRootEvaluator().booleanValue());
 					} else {
-						mNewState.setValue(varname, newValue);
+						mNewState = mNewState.setValue(varname, newValue);
 					}
 				} else if (type.getIType() instanceof ArrayType) {
 					// TODO:
 					// We treat Arrays as normal variables for the time being.
-					mNewState.setValue(varname, newValue);
+					mNewState = mNewState.setValue(varname, newValue);
 				} else {
-					mNewState.setValue(varname, newValue);
+					mNewState = mNewState.setValue(varname, newValue);
 				}
 			}
 		}
@@ -371,16 +371,16 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 				final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
 
 				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-					mNewState.setBooleanValue(var.getIdentifier(), new BooleanValue());
+					mNewState = mNewState.setBooleanValue(var.getIdentifier(), new BooleanValue());
 				} else {
-					mNewState.setValue(var.getIdentifier(), new IntervalDomainValue());
+					mNewState = mNewState.setValue(var.getIdentifier(), new IntervalDomainValue());
 				}
 			} else if (type.getIType() instanceof ArrayType) {
 				// TODO:
 				// Implement better handling of arrays.
-				mNewState.setValue(var.getIdentifier(), new IntervalDomainValue());
+				mNewState = mNewState.setValue(var.getIdentifier(), new IntervalDomainValue());
 			} else {
-				mNewState.setValue(var.getIdentifier(), new IntervalDomainValue());
+				mNewState = mNewState.setValue(var.getIdentifier(), new IntervalDomainValue());
 			}
 		}
 	}

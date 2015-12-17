@@ -72,19 +72,19 @@ public class IntervalSingletonVariableExpressionEvaluator
 
 			if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
 				val = new IntervalDomainValue();
-				mBooleanValue = new BooleanValue(currentState.getBooleanValues().get(mVariableName));
+				mBooleanValue = currentState.getBooleanValue(mVariableName);
 				mContainsBoolean = true;
 			} else {
-				val = currentState.getValues().get(mVariableName);
+				val = currentState.getValue(mVariableName);
 
 				assert val != null : "The variable with name " + mVariableName
 				        + " has not been found in the current abstract state.";
 			}
 		} else if (type.getIType() instanceof ArrayType) {
 			// TODO: Implement better handling of arrays.
-			val = currentState.getValues().get(mVariableName);
+			val = currentState.getValue(mVariableName);
 		} else {
-			val = currentState.getValues().get(mVariableName);
+			val = currentState.getValue(mVariableName);
 		}
 
 		if (val.isBottom()) {

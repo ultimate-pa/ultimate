@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class IntervalDomainState
-		implements IAbstractState<IntervalDomainState, CodeBlock, IBoogieVar>, IEvaluationResult<IntervalDomainState> {
+        implements IAbstractState<IntervalDomainState, CodeBlock, IBoogieVar>, IEvaluationResult<IntervalDomainState> {
 
 	private static int sId;
 	private final int mId;
@@ -86,8 +86,8 @@ public class IntervalDomainState
 	}
 
 	protected IntervalDomainState(Logger logger, Map<String, IBoogieVar> variablesMap,
-			Map<String, IntervalDomainValue> valuesMap, Map<String, BooleanValue> booleanValuesMap,
-			boolean isFixpoint) {
+	        Map<String, IntervalDomainValue> valuesMap, Map<String, BooleanValue> booleanValuesMap,
+	        boolean isFixpoint) {
 		mVariablesMap = new HashMap<String, IBoogieVar>(variablesMap);
 		mValuesMap = new HashMap<String, IntervalDomainValue>(valuesMap);
 		mBooleanValuesMap = new HashMap<String, BooleanValue>(booleanValuesMap);
@@ -102,44 +102,102 @@ public class IntervalDomainState
 		return Collections.unmodifiableMap(mVariablesMap);
 	}
 
-	protected Map<String, IntervalDomainValue> getValues() {
-		return new HashMap<String, IntervalDomainValue>(mValuesMap);
+	/**
+	 * Returns the {@link IntervalDomainValue} of the given variable. If the variable does not have a value, an
+	 * {@link UnsupportedOperationException} is thrown.
+	 * 
+	 * @param variableName
+	 *            The name of the variable to get the {@link IntervalDomainValue} for.
+	 * @return A new {@link IntervalDomainValue} containing the {@link IntervalDomainValue} of the given variable.
+	 */
+	protected IntervalDomainValue getValue(String variableName) {
+		if (!mValuesMap.containsKey(variableName)) {
+			throw new UnsupportedOperationException("There is no value of variable " + variableName + ".");
+		}
+
+		return mValuesMap.get(variableName).copy();
 	}
 
-	protected Map<String, BooleanValue> getBooleanValues() {
-		return new HashMap<String, BooleanValue>(mBooleanValuesMap);
+	/**
+	 * Returns the {@link BooleanValue} of the given variable. If the variable is not a boolean variable, an
+	 * {@link UnsupportedOperationException} is thrown.
+	 * 
+	 * @param booleanVariableName
+	 *            The name of the boolean variable to get the {@link BooleanValue} for.
+	 * @return A new {@link BooleanValue} containing the {@link BooleanValue} of the given variable.
+	 */
+	protected BooleanValue getBooleanValue(String booleanVariableName) {
+		if (!mBooleanValuesMap.containsKey(booleanVariableName)) {
+			throw new UnsupportedOperationException(
+			        "There is no boolean variable with name " + booleanVariableName + ".");
+		}
+
+		return new BooleanValue(mBooleanValuesMap.get(booleanVariableName));
 	}
 
-	protected void setValue(String name, IntervalDomainValue value) {
+	protected IntervalDomainState setValue(String name, IntervalDomainValue value) {
+		final IntervalDomainState returnState = copy();
+		setValueInternally(returnState, name, value);
+		return returnState;
+	}
+
+	protected IntervalDomainState setValues(String[] vars, IntervalDomainValue[] values) {
+		assert vars != null;
+		assert values != null;
+		assert vars.length == values.length;
+
+		final IntervalDomainState returnState = copy();
+		for (int i = 0; i < vars.length; i++) {
+			setValueInternally(returnState, vars[i], values[i]);
+		}
+		return returnState;
+	}
+
+	protected IntervalDomainState setBooleanValue(String name, BooleanValue.Value value) {
+		assert value != null;
+
+		final IntervalDomainState returnState = copy();
+		setValueInternally(returnState, name, new BooleanValue(value));
+		return returnState;
+	}
+
+	protected IntervalDomainState setBooleanValue(String name, boolean value) {
+		return setBooleanValue(name, new BooleanValue(value));
+	}
+
+	protected IntervalDomainState setBooleanValue(String name, BooleanValue value) {
+		assert value != null;
+
+		return setBooleanValue(name, value.getValue());
+	}
+
+	protected IntervalDomainState setBooleanValues(String[] vars, BooleanValue.Value[] values) {
+		assert vars != null;
+		assert values != null;
+		assert vars.length == values.length;
+
+		final IntervalDomainState returnState = copy();
+		for (int i = 0; i < vars.length; i++) {
+			setValueInternally(returnState, vars[i], new BooleanValue(values[i]));
+		}
+		return returnState;
+	}
+
+	private static void setValueInternally(IntervalDomainState state, String name, IntervalDomainValue value) {
+		assert state != null;
 		assert name != null;
 		assert value != null;
-		assert mVariablesMap.get(name) != null : "Variable unknown";
-		assert mValuesMap.get(name) != null : "Variable not in values map";
-		mValuesMap.put(name, value);
+		assert state.mVariablesMap.get(name) != null : "Variable unknown";
+		assert state.mValuesMap.get(name) != null : "Variable not in values map";
+		state.mValuesMap.put(name, value);
 	}
 
-	protected void setBooleanValue(String name, boolean value) {
+	private static void setValueInternally(IntervalDomainState state, String name, BooleanValue value) {
+		assert state != null;
 		assert name != null;
-		assert mVariablesMap.get(name) != null : "Variable unknown";
-		assert mBooleanValuesMap.get(name) != null : "Boolean variable not in values map";
-
-		mBooleanValuesMap.put(name, new BooleanValue(value));
-	}
-
-	protected void setBooleanValue(String name, BooleanValue.Value value) {
-		assert name != null;
-		assert mVariablesMap.get(name) != null : "Variable unknown";
-		assert mBooleanValuesMap.get(name) != null : "Boolean variable not in values map";
-
-		mBooleanValuesMap.put(name, new BooleanValue(value));
-	}
-
-	protected void setBooleanValue(String name, BooleanValue value) {
-		assert name != null;
-		assert mVariablesMap.get(name) != null : "Variable unknown";
-		assert mBooleanValuesMap.get(name) != null : "Boolean variable not in values map";
-
-		mBooleanValuesMap.put(name, new BooleanValue(value));
+		assert state.mVariablesMap.get(name) != null : "Variable unknown";
+		assert state.mBooleanValuesMap.get(name) != null : "Boolean variable not in boolean values map";
+		state.mBooleanValuesMap.put(name, value);
 	}
 
 	@Override
@@ -147,36 +205,48 @@ public class IntervalDomainState
 		assert name != null;
 		assert variable != null;
 
-		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(mVariablesMap);
-		final IBoogieVar old = newVarMap.put(name, variable);
+		final IntervalDomainState returnState = copy();
+		addVariableInternally(returnState, name, variable);
+		return returnState;
+	}
+
+	/**
+	 * Adds the given variable with given name and type to the appropriate data structures of <code>this</code>.
+	 * 
+	 * @param name
+	 *            The variable to add.
+	 * @param variable
+	 *            The type of the variable.
+	 */
+	private static void addVariableInternally(IntervalDomainState state, String name, IBoogieVar variable) {
+		assert state != null;
+		assert name != null;
+		assert variable != null;
+
+		final IBoogieVar old = state.mVariablesMap.put(name, variable);
 
 		if (old != null) {
 			throw new UnsupportedOperationException(
-					"Variable names must be disjoint. Variable " + name + " is already present.");
+			        "Variable names must be disjoint. Variable " + name + " is already present.");
 		}
-
-		final Map<String, IntervalDomainValue> newValMap = new HashMap<String, IntervalDomainValue>(mValuesMap);
-		final Map<String, BooleanValue> newBooleanValMap = new HashMap<String, BooleanValue>(mBooleanValuesMap);
 
 		if (variable.getIType() instanceof PrimitiveType) {
 			final PrimitiveType primitiveType = (PrimitiveType) variable.getIType();
 
 			if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-				newBooleanValMap.put(name, new BooleanValue(false));
-			} else if (variable.getIType() instanceof ArrayType) {
-				// TODO:
-				// We treat Arrays as normal variables for the time being.
-				newValMap.put(name, new IntervalDomainValue());
+				state.mBooleanValuesMap.put(name, new BooleanValue(true));
 			} else {
-				newValMap.put(name, new IntervalDomainValue());
+				state.mValuesMap.put(name, new IntervalDomainValue());
 			}
+		} else if (variable.getIType() instanceof ArrayType) {
+			// TODO:
+			// We treat Arrays as normal variables for the time being.
+			state.mValuesMap.put(name, new IntervalDomainValue());
 		} else {
-			mLogger.warn("The IBoogieVar type " + variable.getIType().getClass().toString() + " of variable " + name
-					+ " is not implemented. Assuming top.");
-			newValMap.put(name, new IntervalDomainValue());
+			state.mLogger.warn("The IBoogieVar type " + variable.getIType().getClass().toString() + " of variable "
+			        + name + " is not implemented. Assuming top.");
+			state.mValuesMap.put(name, new IntervalDomainValue());
 		}
-
-		return new IntervalDomainState(mLogger, newVarMap, newValMap, newBooleanValMap, mIsFixpoint);
 	}
 
 	@Override
@@ -209,7 +279,7 @@ public class IntervalDomainState
 			final IBoogieVar old = newVarMap.put(id, var);
 			if (old != null) {
 				throw new UnsupportedOperationException(
-						"Variable names must be disjoint. The variable " + id + " is already present.");
+				        "Variable names must be disjoint. The variable " + id + " is already present.");
 			}
 			if (var.getIType() instanceof PrimitiveType) {
 				final PrimitiveType primitiveType = (PrimitiveType) var.getIType();
@@ -226,7 +296,7 @@ public class IntervalDomainState
 				newValMap.put(id, new IntervalDomainValue());
 			} else {
 				mLogger.warn("The IBoogieVar type " + var.getIType().getClass().toString() + " of variable " + id
-						+ " is not implemented. Assuming top.");
+				        + " is not implemented. Assuming top.");
 				newValMap.put(id, new IntervalDomainValue());
 			}
 		}
@@ -403,12 +473,13 @@ public class IntervalDomainState
 		final IntervalDomainState returnState = copy();
 
 		for (Entry<String, IntervalDomainValue> entry : mValuesMap.entrySet()) {
-			returnState.setValue(entry.getKey(), entry.getValue().intersect(other.mValuesMap.get(entry.getKey())));
+			setValueInternally(returnState, entry.getKey(),
+			        entry.getValue().intersect(other.mValuesMap.get(entry.getKey())));
 		}
 
 		for (Entry<String, BooleanValue> entry : mBooleanValuesMap.entrySet()) {
-			returnState.setBooleanValue(entry.getKey(),
-					new BooleanValue(entry.getValue().intersect(other.mBooleanValuesMap.get(entry.getKey()))));
+			setValueInternally(returnState, entry.getKey(),
+			        new BooleanValue(entry.getValue().intersect(other.mBooleanValuesMap.get(entry.getKey()))));
 		}
 
 		return returnState;
@@ -428,7 +499,7 @@ public class IntervalDomainState
 			final Sort sort = var.getSort().getRealSort();
 			if (!sort.isNumericSort()) {
 				mLogger.warn("Unfinished term transformation: Unsupported sort " + sort + " for variable " + var + ": "
-						+ this);
+				        + this);
 				continue;
 			}
 			final Term newterm = entry.getValue().getTerm(script, sort, var);
@@ -477,6 +548,73 @@ public class IntervalDomainState
 
 	@Override
 	public IntervalDomainState patch(final IntervalDomainState dominator) {
-		throw new UnsupportedOperationException("not yet implemented");
+		assert dominator != null;
+
+		IntervalDomainState returnState = copy();
+
+		for (final Entry<String, IBoogieVar> var : dominator.mVariablesMap.entrySet()) {
+			if (!returnState.containsVariable(var.getKey())) {
+				addVariableInternally(returnState, var.getKey(), var.getValue());
+			}
+
+			if (var.getValue().getIType() instanceof PrimitiveType) {
+				final PrimitiveType primitiveType = (PrimitiveType) var.getValue().getIType();
+
+				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
+					setValueInternally(returnState, var.getKey(), dominator.mBooleanValuesMap.get(var.getKey()));
+				} else if (var.getValue().getIType() instanceof ArrayType) {
+					// TODO:
+					// We treat Arrays as normal variables for the time being.
+					setValueInternally(returnState, var.getKey(), dominator.mValuesMap.get(var.getKey()));
+				} else {
+					setValueInternally(returnState, var.getKey(), dominator.mValuesMap.get(var.getKey()));
+				}
+			}
+
+		}
+
+		return returnState;
+	}
+
+	/**
+	 * Merges <code>this</code> with another {@link IntervalDomainState}. All variables that occur in <code>this</code>
+	 * must also occur in the other state.
+	 * 
+	 * @param other
+	 *            The other state to merge with.
+	 * @return A new {@link IntervalDomainState} which is the result of the merger of <code>this</code> and
+	 *         <code>other</code>.
+	 */
+	protected IntervalDomainState merge(IntervalDomainState other) {
+		assert other != null;
+
+		if (!hasSameVariables(other)) {
+			throw new UnsupportedOperationException(
+			        "Cannot merge the two states as their sets of variables in the states are disjoint.");
+		}
+
+		final IntervalDomainState returnState = copy();
+
+		for (final Entry<String, IBoogieVar> entry : mVariablesMap.entrySet()) {
+			final String var = entry.getKey();
+
+			if (entry.getValue().getIType() instanceof PrimitiveType) {
+				final PrimitiveType primitiveType = (PrimitiveType) entry.getValue().getIType();
+
+				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
+					setValueInternally(returnState, var,
+					        mBooleanValuesMap.get(var).merge(other.mBooleanValuesMap.get(var)));
+				} else {
+					setValueInternally(returnState, var, mValuesMap.get(var).merge(other.mValuesMap.get(var)));
+				}
+			} else if (entry.getValue().getIType() instanceof ArrayType) {
+				// TODO:
+				// Implement better handling of arrays.
+				setValueInternally(returnState, var, mValuesMap.get(var).merge(other.mValuesMap.get(var)));
+			} else {
+				setValueInternally(returnState, var, mValuesMap.get(var).merge(other.mValuesMap.get(var)));
+			}
+		}
+		return returnState;
 	}
 }
