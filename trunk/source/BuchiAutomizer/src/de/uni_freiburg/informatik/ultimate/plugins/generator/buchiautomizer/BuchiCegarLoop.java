@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
@@ -56,7 +57,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Accept
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveNonLiveStates;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.delayed.BuchiReduce;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.fair.ReduceBuchiFairSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -74,6 +79,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Lass
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.RefineBuchi.RefinementSetting;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -213,6 +219,8 @@ public class BuchiCegarLoop {
 
 	private final RefineBuchi m_RefineBuchi;
 	private final List<RefineBuchi.RefinementSetting> m_BuchiRefinementSettingSequence;
+	
+	private final AutomataMinimization m_AutomataMinimization;
 
 	private NonTerminationArgument m_NonterminationArgument;
 
@@ -275,6 +283,7 @@ public class BuchiCegarLoop {
 				&& m_InterpolantAutomaton == BInterpolantAutomaton.ScroogeNondeterminism) {
 			throw new IllegalArgumentException("illegal combination of settings");
 		}
+		m_AutomataMinimization = baPref.getEnum(PreferenceInitializer.LABEL_AutomataMinimization, AutomataMinimization.class);
 		m_CannibalizeLoop = baPref.getBoolean(PreferenceInitializer.LABEL_CannibalizeLoop);
 		m_Interpolation = baPref.getEnum(TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS,
 				INTERPOLATION.class);
@@ -585,10 +594,7 @@ public class BuchiCegarLoop {
 		mLogger.info("Abstraction has " + m_Abstraction.sizeInformation());
 		Collection<Set<IPredicate>> partition = computePartition(m_Abstraction);
 		try {
-			MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(m_Services, m_Abstraction,
-					partition, m_StateFactoryForRefinement);
-			assert (minimizeOp.checkResult(m_PredicateFactoryResultChecking));
-			INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized = minimizeOp.getResult();
+			INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized = minimize(partition);
 			m_Abstraction = minimized;
 		} catch (OperationCanceledException e) {
 			throw new ToolchainCanceledException(getClass(), "minimizing automaton with " + m_Abstraction.size() + " states");
@@ -600,6 +606,46 @@ public class BuchiCegarLoop {
 		int statesAfterMinimization = m_Abstraction.size();
 		m_BenchmarkGenerator.announceStatesRemovedByMinimization(statesBeforeMinimization - statesAfterMinimization);
 		mLogger.info("Abstraction has " + m_Abstraction.sizeInformation());
+	}
+
+	private INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimize(Collection<Set<IPredicate>> partition)
+			throws OperationCanceledException, AutomataLibraryException {
+		final INestedWordAutomatonOldApi<CodeBlock, IPredicate> result;
+		switch (m_AutomataMinimization) {
+		case DelayedSimulation: {
+			BuchiReduce<CodeBlock, IPredicate> minimizeOp = new BuchiReduce<>(m_Services, m_StateFactoryForRefinement, m_Abstraction);
+			result  = minimizeOp.getResult();
+			break;
+		}
+		case FairSimulation: {
+			ReduceBuchiFairSimulation<CodeBlock, IPredicate> minimizeOp = new ReduceBuchiFairSimulation<>(m_Services, m_StateFactoryForRefinement, m_Abstraction);
+			result  = minimizeOp.getResult();
+			break;
+		}
+		case MinimizeSevpa: {
+			MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(m_Services, m_Abstraction,
+					partition, m_StateFactoryForRefinement);
+			assert (minimizeOp.checkResult(m_PredicateFactoryResultChecking));
+			result = minimizeOp.getResult();
+			break;
+		}
+		case None: {
+			result = m_Abstraction;
+			break;
+		}
+		case ShrinkNwa: {
+			ShrinkNwa<CodeBlock, IPredicate> minimizeOp = new ShrinkNwa<CodeBlock, IPredicate>(m_Services,
+					m_StateFactoryForRefinement, m_Abstraction, partition, true, false, false, 200, false, 0,
+					false, false);
+			assert minimizeOp.checkResult(m_StateFactoryForRefinement);
+			result = (new RemoveUnreachable<CodeBlock, IPredicate>(m_Services, minimizeOp.getResult()))
+					.getResult();
+			break;
+		}
+		default:
+			throw new AssertionError();
+		}
+		return result;
 	}
 
 	private INestedWordAutomatonOldApi<CodeBlock, IPredicate> refineBuchi(LassoChecker lassoChecker)
