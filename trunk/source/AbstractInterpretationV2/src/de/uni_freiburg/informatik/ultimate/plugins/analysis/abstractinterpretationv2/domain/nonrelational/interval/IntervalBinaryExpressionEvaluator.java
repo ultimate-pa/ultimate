@@ -253,137 +253,14 @@ public class IntervalBinaryExpressionEvaluator
 					mBooleanValue = mLeftSubEvaluator.booleanValue().intersect(mRightSubEvaluator.booleanValue());
 				} else {
 					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
-					        .isEqualTo(secondResult.getResult().getEvaluatedValue()));
+					        .isContainedIn(secondResult.getResult().getEvaluatedValue()));
 				}
 				mLogger.warn(
 				        "Cannot handle more than one variables in a sub-tree of an expression. Returning current state.");
 			}
 			break;
 		case COMPNEQ:
-			// TODO: Make better, make shorter, move to separate method s.t. it can be called when handling CMPEQ.
-			if (mLeftSubEvaluator.getVarIdentifiers().size() == 0
-			        && mRightSubEvaluator.getVarIdentifiers().size() == 0) {
-				if (mLeftSubEvaluator.containsBool() && mRightSubEvaluator.containsBool()) {
-					mBooleanValue = mLeftSubEvaluator.booleanValue().intersect(mRightSubEvaluator.booleanValue()).neg();
-				} else {
-					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
-					        .isEqualTo(secondResult.getResult().getEvaluatedValue())).neg();
-				}
-
-				if (mBooleanValue.getValue() == Value.FALSE) {
-					setToBottom = true;
-				}
-			} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 0
-			        && mRightSubEvaluator.getVarIdentifiers().size() == 1) {
-				String varName = null;
-
-				for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
-					varName = var;
-				}
-
-				assert varName != null;
-
-				if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
-					mBooleanValue = mLeftSubEvaluator.booleanValue().intersect(mRightSubEvaluator.booleanValue()).neg();
-				} else {
-					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
-					        .isEqualTo(secondResult.getResult().getEvaluatedValue())).neg();
-				}
-
-				if (mBooleanValue.getValue() == Value.FALSE) {
-					setToBottom = true;
-				} else {
-					if (mLeftSubEvaluator.containsBool()) {
-						returnState.setBooleanValue(varName, mLeftSubEvaluator.booleanValue().neg());
-					} else {
-						returnState.setValue(varName, returnState.getValues().get(varName)
-						        .intersect(firstResult.getResult().getEvaluatedValue()));
-					}
-
-					returnState = returnState.intersect(currentState);
-				}
-			} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 1
-			        && mRightSubEvaluator.getVarIdentifiers().size() == 0) {
-
-				String varName = null;
-
-				for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
-					varName = var;
-				}
-
-				assert varName != null;
-
-				if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
-					mBooleanValue = mLeftSubEvaluator.booleanValue().intersect(mRightSubEvaluator.booleanValue()).neg();
-				} else {
-					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
-					        .isEqualTo(secondResult.getResult().getEvaluatedValue())).neg();
-				}
-
-				if (mBooleanValue.getValue() == Value.FALSE) {
-					setToBottom = true;
-				} else {
-					if (mRightSubEvaluator.containsBool()) {
-						returnState.setBooleanValue(varName, mRightSubEvaluator.booleanValue().neg());
-					} else {
-						returnState.setValue(varName, returnState.getValues().get(varName)
-						        .intersect(secondResult.getResult().getEvaluatedValue()));
-					}
-
-					returnState = returnState.intersect(currentState);
-				}
-			} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 1
-			        && mRightSubEvaluator.getVarIdentifiers().size() == 1) {
-				String leftVar = null;
-				String rightVar = null;
-
-				for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
-					leftVar = var;
-				}
-
-				for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
-					rightVar = var;
-				}
-
-				assert leftVar != null;
-				assert rightVar != null;
-
-				if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
-					mBooleanValue = mLeftSubEvaluator.booleanValue().intersect(mRightSubEvaluator.booleanValue()).neg();
-				} else {
-					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
-					        .isEqualTo(secondResult.getResult().getEvaluatedValue())).neg();
-				}
-
-				if (mBooleanValue.getValue() == Value.FALSE) {
-					setToBottom = true;
-				} else {
-					if (mLeftSubEvaluator.containsBool()) {
-						returnState.setBooleanValue(rightVar, mLeftSubEvaluator.booleanValue().neg());
-					} else {
-						returnState.setValue(rightVar, returnState.getValues().get(rightVar)
-						        .intersect(firstResult.getResult().getEvaluatedValue()));
-					}
-
-					if (mRightSubEvaluator.containsBool()) {
-						returnState.setBooleanValue(leftVar, mRightSubEvaluator.booleanValue().neg());
-					} else {
-						returnState.setValue(leftVar, returnState.getValues().get(leftVar)
-						        .intersect(secondResult.getResult().getEvaluatedValue()));
-					}
-
-					returnState = returnState.intersect(currentState);
-				}
-			} else {
-				if (mLeftSubEvaluator.containsBool() && mRightSubEvaluator.containsBool()) {
-					mBooleanValue = mLeftSubEvaluator.booleanValue().intersect(mRightSubEvaluator.booleanValue()).neg();
-				} else {
-					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
-					        .isEqualTo(secondResult.getResult().getEvaluatedValue())).neg();
-				}
-				mLogger.warn(
-				        "Cannot handle more than one variables in a sub-tree of an expression. Returning current state.");
-			}
+			mLogger.warn("Cannot handle the inequality comparison precisely. Returning current state.");
 			break;
 		case COMPGT:
 			mLogger.warn(

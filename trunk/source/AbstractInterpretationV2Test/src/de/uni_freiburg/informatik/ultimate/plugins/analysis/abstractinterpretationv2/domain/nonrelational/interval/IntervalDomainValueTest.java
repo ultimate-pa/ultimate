@@ -37,6 +37,9 @@ import org.junit.Test;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalValue;
 
+/**
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ */
 public class IntervalDomainValueTest {
 
 	@Test
@@ -81,8 +84,8 @@ public class IntervalDomainValueTest {
 		assertFalse(intvUpperOpen.getLower().isInfinity());
 		assertTrue(intvUpperOpen.getUpper().isInfinity());
 
-		IntervalDomainValue intvLowerOpen = new IntervalDomainValue(new IntervalValue(), new IntervalValue(
-		        new BigDecimal(100)));
+		IntervalDomainValue intvLowerOpen = new IntervalDomainValue(new IntervalValue(),
+		        new IntervalValue(new BigDecimal(100)));
 
 		assertTrue(intvLowerOpen.getLower().isInfinity());
 		assertFalse(intvLowerOpen.getUpper().isInfinity());

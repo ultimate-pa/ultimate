@@ -34,6 +34,9 @@ import java.math.BigDecimal;
 
 import org.junit.Test;
 
+/**
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ */
 public class IntervalContainmentChecks {
 
 	@Test
@@ -128,15 +131,27 @@ public class IntervalContainmentChecks {
 	}
 
 	@Test
-	public void testUnContainmentOpenPositive() {
+	public void testUnContainmentOpenMixed() {
 		// Create Interval [2; \infty]
 		IntervalDomainValue int1 = new IntervalDomainValue(new IntervalValue(new BigDecimal(2)), new IntervalValue());
 
-		// Create Interval [0; \infty]
-		IntervalDomainValue int2 = new IntervalDomainValue(new IntervalValue(new BigDecimal(0)), new IntervalValue());
+		// Create Interval [-\infty; 0]
+		IntervalDomainValue int2 = new IntervalDomainValue(new IntervalValue(), new IntervalValue(new BigDecimal(0)));
 
 		// Expected result: true
 		assertFalse(HelperFunctions.checkInclusion(int1, int2));
 		assertFalse(HelperFunctions.checkInclusion(int2, int1));
+	}
+	
+	@Test
+	public void testContainmentFullOpenPositive() {
+		// Create Interval [-\infty; \infty]
+		IntervalDomainValue int1 = new IntervalDomainValue(new IntervalValue(), new IntervalValue());
+		
+		// Create Interval [3; 3]
+		IntervalDomainValue int2 = HelperFunctions.createInterval(3, 3);
+		
+		// Expected result: true
+		assertTrue(HelperFunctions.checkInclusion(int1, int2));
 	}
 }
