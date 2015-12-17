@@ -91,13 +91,15 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	 * @param buechi
 	 *            The underlying buechi automaton from which the game graph gets
 	 *            generated.
-	 * @param stateFactory 
+	 * @param stateFactory
+	 *            State factory used for state creation
 	 * @throws OperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public FairDirectGameGraph(final IUltimateServiceProvider services,
-			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, StateFactory<STATE> stateFactory) throws OperationCanceledException {
+			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final StateFactory<STATE> stateFactory)
+					throws OperationCanceledException {
 		super(services, buechi, stateFactory);
 		m_IsCurrentlyDirectGameGraph = false;
 		m_DirectSimulations = new HashSet<>();

@@ -84,7 +84,7 @@ public class Vertex<LETTER, STATE> {
 	 * The label of the first buechi automaton state where <i>Spoiler</i>
 	 * currently is at.
 	 */
-	private final  STATE q0;
+	private final STATE q0;
 	/**
 	 * The label of the second buechi automaton state where <i>Duplicator</i>
 	 * currently is at.
@@ -112,7 +112,7 @@ public class Vertex<LETTER, STATE> {
 	 * @param q1
 	 *            The state duplicator is at
 	 */
-	public Vertex(int priority, boolean b, STATE q0, STATE q1) {
+	public Vertex(final int priority, final boolean b, final STATE q0, final STATE q1) {
 		this.q0 = q0;
 		this.q1 = q1;
 		this.b = b;
@@ -121,6 +121,38 @@ public class Vertex<LETTER, STATE> {
 		this.bEff = 0;
 		this.c = 0;
 		this.setInWL(false);
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		@SuppressWarnings("rawtypes")
+		Vertex other = (Vertex) obj;
+		if (b != other.b)
+			return false;
+		if (priority != other.priority)
+			return false;
+		if (q0 == null) {
+			if (other.q0 != null)
+				return false;
+		} else if (!q0.equals(other.q0))
+			return false;
+		if (q1 == null) {
+			if (other.q1 != null)
+				return false;
+		} else if (!q1.equals(other.q1))
+			return false;
+		return true;
 	}
 
 	/**
@@ -160,7 +192,7 @@ public class Vertex<LETTER, STATE> {
 	 * @return The progress measure of this vertex or 0 if the SCC is not
 	 *         <tt>null</tt> and not contains this vertex
 	 */
-	public int getPM(Set<Vertex<LETTER, STATE>> scc, int infinity) {
+	public int getPM(final Set<Vertex<LETTER, STATE>> scc, final int infinity) {
 		if (scc == null) {
 			return pm;
 		} else if (pm == infinity) {
@@ -201,6 +233,22 @@ public class Vertex<LETTER, STATE> {
 	 */
 	public STATE getQ1() {
 		return q1;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + (b ? 1231 : 1237);
+		result = prime * result + priority;
+		result = prime * result + ((q0 == null) ? 0 : q0.hashCode());
+		result = prime * result + ((q1 == null) ? 0 : q1.hashCode());
+		return result;
 	}
 
 	/**
@@ -252,7 +300,7 @@ public class Vertex<LETTER, STATE> {
 	 * @param b
 	 *            The best neighbor measure to set
 	 */
-	public void setBEff(int b) {
+	public void setBEff(final int b) {
 		this.bEff = b;
 	}
 
@@ -264,7 +312,7 @@ public class Vertex<LETTER, STATE> {
 	 * @param c
 	 *            The neighbor counter to set
 	 */
-	public void setC(int c) {
+	public void setC(final int c) {
 		this.c = c;
 	}
 
@@ -276,7 +324,7 @@ public class Vertex<LETTER, STATE> {
 	 * @param inWL
 	 *            The value to set
 	 */
-	public void setInWL(boolean inWL) {
+	public void setInWL(final boolean inWL) {
 		this.inWL = inWL;
 	}
 
@@ -288,48 +336,8 @@ public class Vertex<LETTER, STATE> {
 	 * @param pm
 	 *            The progress measure to set
 	 */
-	public void setPM(int pm) {
+	public void setPM(final int pm) {
 		this.pm = pm;
 	}
-
-	@Override
-	public int hashCode() {
-		final int prime = 31;
-		int result = 1;
-		result = prime * result + (b ? 1231 : 1237);
-		result = prime * result + priority;
-		result = prime * result + ((q0 == null) ? 0 : q0.hashCode());
-		result = prime * result + ((q1 == null) ? 0 : q1.hashCode());
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		@SuppressWarnings("rawtypes")
-		Vertex other = (Vertex) obj;
-		if (b != other.b)
-			return false;
-		if (priority != other.priority)
-			return false;
-		if (q0 == null) {
-			if (other.q0 != null)
-				return false;
-		} else if (!q0.equals(other.q0))
-			return false;
-		if (q1 == null) {
-			if (other.q1 != null)
-				return false;
-		} else if (!q1.equals(other.q1))
-			return false;
-		return true;
-	}
-	
-	
 
 }

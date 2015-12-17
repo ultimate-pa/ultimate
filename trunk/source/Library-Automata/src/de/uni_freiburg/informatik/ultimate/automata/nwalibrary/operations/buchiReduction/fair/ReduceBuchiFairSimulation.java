@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.fair;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -438,7 +440,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 */
 	public ReduceBuchiFairSimulation(final IUltimateServiceProvider services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
-		this(services, stateFactory, operand, true, false);
+		this(services, stateFactory, operand, true, Collections.emptyList(), false);
 	}
 
 	/**
@@ -462,7 +464,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	public ReduceBuchiFairSimulation(final IUltimateServiceProvider services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs)
 					throws OperationCanceledException {
-		this(services, stateFactory, operand, useSCCs, false);
+		this(services, stateFactory, operand, useSCCs, Collections.emptyList(), false);
 	}
 
 	/**
@@ -479,6 +481,40 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 * @param useSCCs
 	 *            If the simulation calculation should be optimized using SCC,
 	 *            Strongly Connected Components.
+	 * @param equivalenceClasses
+	 *            A collection of sets which contains states of the buechi
+	 *            automaton that may be merge-able. States which are not in the
+	 *            same set are definitely not merge-able which is used as an
+	 *            optimization for the simulation
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	public ReduceBuchiFairSimulation(final IUltimateServiceProvider services, final StateFactory<STATE> stateFactory,
+			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs,
+			final Collection<Set<STATE>> equivalenceClasses) throws OperationCanceledException {
+		this(services, stateFactory, operand, useSCCs, equivalenceClasses, false);
+	}
+
+	/**
+	 * Creates a new buechi reduce object that starts reducing the given buechi
+	 * automaton.<br/>
+	 * Once finished the result can be get by using {@link #getResult()}.
+	 * 
+	 * @param services
+	 *            Service provider of Ultimate framework
+	 * @param stateFactory
+	 *            The state factory used for creating states
+	 * @param operand
+	 *            The buechi automaton to reduce
+	 * @param useSCCs
+	 *            If the simulation calculation should be optimized using SCC,
+	 *            Strongly Connected Components.
+	 * @param equivalenceClasses
+	 *            A collection of sets which contains states of the buechi
+	 *            automaton that may be merge-able. States which are not in the
+	 *            same set are definitely not merge-able which is used as an
+	 *            optimization for the simulation
 	 * @param checkOperationDeeply
 	 *            If true the operation gets deeply checked for correctness,
 	 *            false if that is not desired. This can take some time.
@@ -488,9 +524,10 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 */
 	public ReduceBuchiFairSimulation(final IUltimateServiceProvider services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs,
-			final boolean checkOperationDeeply) throws OperationCanceledException {
+			final Collection<Set<STATE>> equivalenceClasses, final boolean checkOperationDeeply)
+					throws OperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, checkOperationDeeply,
-				new FairSimulation<>(services, operand, useSCCs, stateFactory));
+				new FairSimulation<>(services, operand, useSCCs, stateFactory, equivalenceClasses));
 	}
 
 	/**

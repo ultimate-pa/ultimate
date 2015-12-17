@@ -26,6 +26,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.fair;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -92,7 +96,44 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	public FairDirectSimulation(final IUltimateServiceProvider services,
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
-		super(services, buechi, useSCCs, stateFactory, 
+		this(services, buechi, useSCCs, stateFactory, Collections.emptyList());
+	}
+
+	/**
+	 * Creates a new fair simulation that tries to reduce the given buechi
+	 * automaton using <b>fair and direct simulation</b>. Uses a given
+	 * collection of equivalence classes to optimize the simulation.<br/>
+	 * After construction the simulation starts and results can be get by using
+	 * {@link #getResult()}.<br/>
+	 * <br/>
+	 * 
+	 * For correctness its important that the inputed automaton has <b>no dead
+	 * ends</b> nor <b>duplicate transitions</b>.
+	 * 
+	 * @param services
+	 *            Service provider of Ultimate framework.
+	 * @param buechi
+	 *            The buechi automaton to reduce with no dead ends nor with
+	 *            duplicate transitions
+	 * @param useSCCs
+	 *            If the simulation calculation should be optimized using SCC,
+	 *            Strongly Connected Components.
+	 * @param stateFactory
+	 *            The state factory used for creating states.
+	 * @param equivalenceClasses
+	 *            A collection of sets which contains states of the buechi
+	 *            automaton that may be merge-able. States which are not in the
+	 *            same set are definitely not merge-able which is used as an
+	 *            optimization for the simulation
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	public FairDirectSimulation(final IUltimateServiceProvider services,
+			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
+			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> equivalenceClasses)
+					throws OperationCanceledException {
+		super(services, buechi, useSCCs, stateFactory, equivalenceClasses,
 				new FairDirectGameGraph<LETTER, STATE>(services, buechi, stateFactory));
 		m_Buechi = buechi;
 		m_IsCurrentlyDirectSimulation = false;
@@ -115,9 +156,6 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 			// safely merge without validating the change.
 			if (game.isDirectSimulating(game.getSpoilerVertex(firstState, secondState, false))
 					&& game.isDirectSimulating(game.getSpoilerVertex(secondState, firstState, false))) {
-				// XXX Remove print
-				System.out.println(
-						"\t\tMerge (" + firstState + ", " + secondState + ") is clearly safe since direct sim.");
 				return null;
 			}
 		}
@@ -144,9 +182,6 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 			// the transition
 			// without validating the change.
 			if (game.isDirectSimulating(game.getSpoilerVertex(dest, invoker, false))) {
-				// XXX Remove print
-				System.out.println("\t\tRemoval (" + src + " -" + a + "-> " + dest
-						+ ") is clearly safe since direct sim of " + invoker + " > " + dest + ".");
 				return null;
 			}
 		}

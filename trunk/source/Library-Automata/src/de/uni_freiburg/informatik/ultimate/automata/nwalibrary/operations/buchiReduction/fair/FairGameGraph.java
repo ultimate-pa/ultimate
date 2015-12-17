@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.GameGraphChangeType;
@@ -119,13 +118,15 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * @param buechi
 	 *            The underlying buechi automaton from which the game graph gets
 	 *            generated.
-	 * @param stateFactory 
+	 * @param stateFactory
+	 *            State factory used for state creation
 	 * @throws OperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public FairGameGraph(final IUltimateServiceProvider services,
-			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, StateFactory<STATE> stateFactory) throws OperationCanceledException {
+			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, StateFactory<STATE> stateFactory)
+					throws OperationCanceledException {
 		super(services, stateFactory);
 
 		m_Buechi = buechi;
@@ -452,7 +453,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		boolean canRemove = m_TransitionsToRemove != null && !m_TransitionsToRemove.isEmpty();
 
 		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<>(getServiceProvider(),
-				m_Buechi.getInternalAlphabet(), null, null, m_StateFactory);
+				m_Buechi.getInternalAlphabet(), null, null, getStateFactory());
 
 		// Merge states
 		// Build equivalence classes for every state
@@ -492,7 +493,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 			boolean isInitial = representativesOfInitials.contains(representative);
 			boolean isFinal = representativesOfFinals.contains(representative);
 			Set<STATE> eqClass = uf.getEquivalenceClassMembers(representative);
-			STATE mergedState = m_StateFactory.minimize(eqClass);
+			STATE mergedState = getStateFactory().minimize(eqClass);
 			result.addState(isInitial, isFinal, mergedState);
 			for (STATE eqClassMember : eqClass) {
 				input2result.put(eqClassMember, mergedState);

@@ -131,7 +131,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * If the simulation calculation should be optimized using SCC, Strongly
 	 * Connected Components.
 	 */
-	protected boolean m_UseSCCs;
+	private boolean m_UseSCCs;
 
 	/**
 	 * Comparator that compares two given vertices by their progress measure
@@ -737,6 +737,18 @@ public abstract class ASimulation<LETTER, STATE> {
 	protected void setSccComp(
 			final SccComputation<Vertex<LETTER, STATE>, StronglyConnectedComponent<Vertex<LETTER, STATE>>> sccComp) {
 		m_SccComp = sccComp;
+	}
+
+	/**
+	 * Sets if the simulation calculation should be optimized using SCC,
+	 * Strongly Connected Components or not.
+	 * 
+	 * @param useSCCs
+	 *            True if the simulation calculation gets optimized by using
+	 *            SCC, false if not.
+	 */
+	protected void setUseSCCs(final boolean useSCCs) {
+		m_UseSCCs = useSCCs;
 	}
 
 	/**

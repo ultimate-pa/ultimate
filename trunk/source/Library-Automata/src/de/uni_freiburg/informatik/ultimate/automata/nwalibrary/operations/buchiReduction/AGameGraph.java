@@ -116,12 +116,14 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	private final HashSet<SpoilerVertex<LETTER, STATE>> m_SpoilerVertices;
 	/**
+	 * State factory used for state creation.
+	 */
+	private final StateFactory<STATE> m_StateFactory;
+	/**
 	 * Data structure that allows a fast access to successors of a given vertex
 	 * in the game graph.
 	 */
 	private final HashMap<Vertex<LETTER, STATE>, HashSet<Vertex<LETTER, STATE>>> m_Successors;
-	
-	protected final StateFactory<STATE> m_StateFactory;
 
 	/**
 	 * Creates a new game graph object that initializes all needed data
@@ -129,8 +131,10 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * 
 	 * @param services
 	 *            Service provider of Ultimate framework
+	 * @param stateFactory
+	 *            State factory used for state creation
 	 */
-	public AGameGraph(final IUltimateServiceProvider services, StateFactory<STATE> stateFactory) {
+	public AGameGraph(final IUltimateServiceProvider services, final StateFactory<STATE> stateFactory) {
 		m_Services = services;
 		m_StateFactory = stateFactory;
 		m_DuplicatorVertices = new HashSet<>();
@@ -525,6 +529,15 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	protected IUltimateServiceProvider getServiceProvider() {
 		return m_Services;
+	}
+
+	/**
+	 * Gets the state factory used for state creation.
+	 * 
+	 * @return The state factory used for state creation
+	 */
+	protected StateFactory<STATE> getStateFactory() {
+		return m_StateFactory;
 	}
 
 	/**

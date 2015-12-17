@@ -26,15 +26,18 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.fair;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -154,6 +157,12 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 */
 	private GameGraphChanges<LETTER, STATE> m_CurrentChanges;
 	/**
+	 * A collection of sets which contains states of the buechi automaton that
+	 * may be merge-able. States which are not in the same set are definitely
+	 * not merge-able which is used as an optimization for the simulation.
+	 */
+	private final Map<STATE, Set<STATE>> m_EquivalenceClasses;
+	/**
 	 * Game graph that is used for simulation calculation.
 	 */
 	private final FairGameGraph<LETTER, STATE> m_Game;
@@ -169,7 +178,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * Stores all currently known {@link SpoilerVertex} objects that indicate
 	 * simulation is not possible and are non trivial. This are vertices with a
 	 * progress measure that reached infinity and where q1 is not equals q2 for
-	 * the representation (q1, q2) because this are trivial simulations.<br/>
+	 * the representation (q1, q2) because these are trivial simulations.<br/>
 	 * The set is used to abort the simulation early whenever a previous
 	 * possible simulation gets removed due to a game graph change.
 	 */
@@ -182,6 +191,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * because a successor of a neighboring SCC has reached infinity.
 	 */
 	private HashSet<Vertex<LETTER, STATE>> m_pokedFromNeighborSCC;
+
 	/**
 	 * True if the simulation was aborted early because its already known that
 	 * the underlying language did change, false if not.
@@ -222,9 +232,46 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	public FairSimulation(final IUltimateServiceProvider services,
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
-		this(services, buechi, useSCCs, stateFactory, 
+		this(services, buechi, useSCCs, stateFactory, Collections.emptyList(),
 				new FairGameGraph<LETTER, STATE>(services, buechi, stateFactory));
-		
+	}
+
+	/**
+	 * Creates a new fair simulation that tries to reduce the given buechi
+	 * automaton using <b>fair simulation</b>. Uses a given collection of
+	 * equivalence classes to optimize the simulation.<br/>
+	 * After construction the simulation starts and results can be get by using
+	 * {@link #getResult()}.<br/>
+	 * <br/>
+	 * 
+	 * For correctness its important that the inputed automaton has <b>no dead
+	 * ends</b> nor <b>duplicate transitions</b>.
+	 * 
+	 * @param services
+	 *            Service provider of Ultimate framework.
+	 * @param buechi
+	 *            The buechi automaton to reduce with no dead ends nor with
+	 *            duplicate transitions
+	 * @param useSCCs
+	 *            If the simulation calculation should be optimized using SCC,
+	 *            Strongly Connected Components.
+	 * @param stateFactory
+	 *            The state factory used for creating states.
+	 * @param equivalenceClasses
+	 *            A collection of sets which contains states of the buechi
+	 *            automaton that may be merge-able. States which are not in the
+	 *            same set are definitely not merge-able which is used as an
+	 *            optimization for the simulation
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	public FairSimulation(final IUltimateServiceProvider services,
+			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
+			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> equivalenceClasses)
+					throws OperationCanceledException {
+		this(services, buechi, useSCCs, stateFactory, equivalenceClasses,
+				new FairGameGraph<LETTER, STATE>(services, buechi, stateFactory));
 	}
 
 	/**
@@ -247,6 +294,11 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 *            Strongly Connected Components.
 	 * @param stateFactory
 	 *            The state factory used for creating states.
+	 * @param equivalenceClasses
+	 *            A collection of sets which contains states of the buechi
+	 *            automaton that may be merge-able. States which are not in the
+	 *            same set are definitely not merge-able which is used as an
+	 *            optimization for the simulation
 	 * @param game
 	 *            The fair game graph to use for simulation.
 	 * @throws OperationCanceledException
@@ -255,17 +307,18 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 */
 	protected FairSimulation(final IUltimateServiceProvider services,
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
-			final StateFactory<STATE> stateFactory, final FairGameGraph<LETTER, STATE> game)
-					throws OperationCanceledException {
+			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> equivalenceClasses,
+			final FairGameGraph<LETTER, STATE> game) throws OperationCanceledException {
 		super(services, useSCCs, stateFactory);
 
 		m_Buechi = buechi;
-		m_Logger = getServiceProvider().getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_Logger = getLogger();
+		m_EquivalenceClasses = processEquivalenceClasses(equivalenceClasses);
 		m_pokedFromNeighborSCC = null;
 		m_NotSimulatingNonTrivialVertices = new HashSet<>();
 		m_CurrentChanges = null;
 
-		getLogger().debug("Starting generation of Fair Game Graph...");
+		m_Logger.debug("Starting generation of Fair Game Graph...");
 		m_Game = game;
 
 		m_GlobalInfinity = m_Game.getGlobalInfinity();
@@ -378,7 +431,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>> sccFactory = new DefaultStronglyConnectedComponentFactory<>();
 			GameGraphSuccessorProvider<LETTER, STATE> succProvider = new GameGraphSuccessorProvider<>(m_Game);
 			setSccComp(new SccComputation<Vertex<LETTER, STATE>, StronglyConnectedComponent<Vertex<LETTER, STATE>>>(
-					getLogger(), succProvider, sccFactory, m_Game.getSize(), m_Game.getVertices()));
+					m_Logger, succProvider, sccFactory, m_Game.getSize(), m_Game.getVertices()));
 
 			Iterator<StronglyConnectedComponent<Vertex<LETTER, STATE>>> iter = new LinkedList<StronglyConnectedComponent<Vertex<LETTER, STATE>>>(
 					getSccComp().getSCCs()).iterator();
@@ -468,6 +521,34 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			}
 		}
 		return mergeCandidates;
+	}
+
+	/**
+	 * Processes a given collection of equivalent classes into a data structure
+	 * that has a faster access for single states.
+	 * 
+	 * @param equivalenceClasses
+	 *            Collection to process
+	 * @return Data structure with a fast access for state to its equivalent
+	 *         class
+	 */
+	private Map<STATE, Set<STATE>> processEquivalenceClasses(final Collection<Set<STATE>> equivalenceClasses) {
+		Map<STATE, Set<STATE>> result;
+		if (equivalenceClasses.isEmpty()) {
+			result = Collections.emptyMap();
+		} else {
+			result = new HashMap<>();
+		}
+
+		// TODO Is the processing necessary or can we get a better data
+		// structure in the constructor?
+		for (Set<STATE> equivalenceClass : equivalenceClasses) {
+			for (STATE state : equivalenceClass) {
+				result.put(state, equivalenceClass);
+			}
+		}
+
+		return result;
 	}
 
 	/**
@@ -569,6 +650,19 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 */
 	protected FairGameGraphChanges<LETTER, STATE> attemptMerge(final STATE firstState, final STATE secondState)
 			throws OperationCanceledException {
+		// Optimize the attempted merge if we have information about equivalence
+		// classes of the states
+		if (!m_EquivalenceClasses.isEmpty()) {
+			Set<STATE> equivalenceClass = m_EquivalenceClasses.get(firstState);
+			// If the states are not in the same equivalence class we already
+			// know that the merge can not be possible
+			if (equivalenceClass != null && !equivalenceClass.contains(secondState)) {
+				// XXX Remove print
+				System.out.println("\tAttempted merge " + firstState + ", " + secondState
+						+ " is clearly not possible since equivalence.");
+				return new FairGameGraphChanges<>();
+			}
+		}
 		FairGameGraphChanges<LETTER, STATE> changes = m_Game.equalizeBuechiStates(firstState, secondState);
 
 		return validateChange(changes);
@@ -614,18 +708,28 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		m_StepCounter = 0;
 
 		// First simulation
-		getLogger().debug("Starting first simulation...");
+		m_Logger.debug("Starting first simulation...");
 		doSingleSimulation(null);
-		getLogger().debug("Ending first simulation.");
-		
-		m_UseSCCs = false;
+		m_Logger.debug("Ending first simulation.");
+
+		// Deactivate the usage of SCCs for the following simulations since the
+		// overhead of using SCCs is only worth it if simulation does not
+		// terminate as quickly as it will do now.
+		boolean disabledSCCUsage = false;
+		if (isUsingSCCs()) {
+			setUseSCCs(false);
+			disabledSCCUsage = true;
+		}
+
 		// Merge states
 		m_AttemptingChanges = true;
 		List<Pair<STATE, STATE>> statesToMerge = new LinkedList<>();
 		Set<SpoilerVertex<LETTER, STATE>> mergeCandidates = mergeCandidates();
 		Set<SpoilerVertex<LETTER, STATE>> noTransitionCandidates = new HashSet<>();
 
-		getLogger().debug("Size of merge candidates: " + mergeCandidates.size());
+		if (m_Logger.isDebugEnabled()) {
+			m_Logger.debug("Size of merge candidates: " + mergeCandidates.size());
+		}
 
 		for (SpoilerVertex<LETTER, STATE> mergeCandidate : mergeCandidates) {
 			STATE leftState = mergeCandidate.getQ0();
@@ -636,12 +740,16 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			// Undo if language changed, else do not consider
 			// pair for transition removal
 			if (changes != null) {
-				getLogger().debug(
-						"Attempted merge for " + leftState + " and " + rightState + " was not successful, undoing...");
+				if (m_Logger.isDebugEnabled()) {
+					m_Logger.debug("Attempted merge for " + leftState + " and " + rightState
+							+ " was not successful, undoing...");
+				}
 
 				m_Game.undoChanges(changes);
 			} else {
-				getLogger().debug("Attempted merge for " + leftState + " and " + rightState + " was successful.");
+				if (m_Logger.isDebugEnabled()) {
+					m_Logger.debug("Attempted merge for " + leftState + " and " + rightState + " was successful.");
+				}
 				statesToMerge.add(new Pair<>(leftState, rightState));
 
 				noTransitionCandidates.add(mergeCandidate);
@@ -664,9 +772,9 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		List<Triple<STATE, LETTER, STATE>> transitionsToRemove = new LinkedList<>();
 		HashSet<Quad<STATE, LETTER, STATE, STATE>> transitionCandidates = transitionCandidates(noTransitionCandidates);
 
-		// keySet is okay for a debugging message because
-		// access is cheap, in O(1)
-		getLogger().debug("Size of transition candidates: " + transitionCandidates.size());
+		if (m_Logger.isDebugEnabled()) {
+			m_Logger.debug("Size of transition candidates: " + transitionCandidates.size());
+		}
 
 		for (Quad<STATE, LETTER, STATE, STATE> transitionCandidate : transitionCandidates) {
 			STATE src = transitionCandidate.getFirst();
@@ -678,12 +786,18 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			FairGameGraphChanges<LETTER, STATE> changes = attemptTransitionRemoval(src, a, dest, invoker);
 			// Undo if language changed, else add transition for removal
 			if (changes != null) {
-				getLogger().debug("Attempted transition removal for " + src + " -" + a + "-> " + dest
-						+ " was not successful, undoing...");
+				if (m_Logger.isDebugEnabled()) {
+					m_Logger.debug("Attempted transition removal for " + src + " -" + a + "-> " + dest
+							+ " was not successful, undoing...");
+				}
+
 				m_Game.undoChanges(changes);
 			} else {
-				getLogger().debug(
-						"Attempted transition removal for " + src + " -" + a + "-> " + dest + " was successful.");
+				if (m_Logger.isDebugEnabled()) {
+					m_Logger.debug(
+							"Attempted transition removal for " + src + " -" + a + "-> " + dest + " was successful.");
+				}
+
 				transitionsToRemove.add(new Triple<>(src, a, dest));
 			}
 
@@ -696,16 +810,21 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			}
 		}
 
+		// Re-enable the usage
+		if (disabledSCCUsage) {
+			setUseSCCs(true);
+		}
+
 		// Pass states to merge and transitions to remove
 		m_Game.setStatesToMerge(statesToMerge);
 		m_Game.setTransitionsToRemove(transitionsToRemove);
 
 		// Generate the resulting automata
-		getLogger().debug("Generating the result automaton...");
+		m_Logger.debug("Generating the result automaton...");
 		setResult(m_Game.generateBuchiAutomatonFromGraph());
 
 		long duration = System.currentTimeMillis() - startTime;
-		getLogger().info((isUsingSCCs() ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds and "
+		m_Logger.info((isUsingSCCs() ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds and "
 				+ m_StepCounter + " simulation steps.");
 	}
 
@@ -719,14 +838,14 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	protected void efficientLiftingAlgorithm(final int localInfinity, final Set<Vertex<LETTER, STATE>> scc)
 			throws OperationCanceledException {
 		if (debugSimulation) {
-			getLogger().debug("Lifting SCC: " + scc);
+			m_Logger.debug("Lifting SCC: " + scc);
 		}
 
 		// Initialize working list and the C value of the correct vertices
 		initSimulation(localInfinity, scc);
 
 		if (debugSimulation) {
-			getLogger().debug("WL: " + getWorkingList());
+			m_Logger.debug("WL: " + getWorkingList());
 		}
 
 		// Work through the working list until its empty
@@ -737,7 +856,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			Vertex<LETTER, STATE> workingVertex = pollVertexFromWorkingList();
 
 			if (debugSimulation) {
-				getLogger().debug("\tWorking with: " + workingVertex);
+				m_Logger.debug("\tWorking with: " + workingVertex);
 			}
 
 			// Ignore bounds of own SCC if vertex was poked
@@ -745,7 +864,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			if (isUsingSCCs() && m_pokedFromNeighborSCC.contains(workingVertex)) {
 				usedSCCForNeighborCalculation = null;
 				if (debugSimulation) {
-					getLogger().debug("\t\tVertex was poked.");
+					m_Logger.debug("\t\tVertex was poked.");
 				}
 			}
 
@@ -758,7 +877,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			saveBEffChange(workingVertex, oldBEff, m_CurrentChanges);
 
 			if (debugSimulation) {
-				getLogger().debug("\t\tUpdated BEff: " + oldBEff + " -> " + workingVertex.getBEff());
+				m_Logger.debug("\t\tUpdated BEff: " + oldBEff + " -> " + workingVertex.getBEff());
 			}
 
 			int oldC = workingVertex.getC();
@@ -766,7 +885,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			saveCChange(workingVertex, oldC, m_CurrentChanges);
 
 			if (debugSimulation) {
-				getLogger().debug("\t\tUpdated C: " + oldC + " -> " + workingVertex.getC());
+				m_Logger.debug("\t\tUpdated C: " + oldC + " -> " + workingVertex.getC());
 			}
 
 			int currentProgressMeasure = increaseVector(m_Game.getPriority(workingVertex), workingVertex.getBEff(),
@@ -775,7 +894,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			savePmChange(workingVertex, oldProgressMeasure, m_CurrentChanges);
 
 			if (debugSimulation) {
-				getLogger().debug("\t\tUpdated PM: " + oldProgressMeasure + " -> " + currentProgressMeasure);
+				m_Logger.debug("\t\tUpdated PM: " + oldProgressMeasure + " -> " + currentProgressMeasure);
 			}
 
 			// If vertex now defines a non trivial non possible simulation
@@ -791,7 +910,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 						m_SimulationWasAborted = true;
 
 						if (debugSimulation) {
-							getLogger().debug("\t\tAborting simulation since " + workingVertex + " reached infinity.");
+							m_Logger.debug("\t\tAborting simulation since " + workingVertex + " reached infinity.");
 						}
 						return;
 					}
@@ -809,7 +928,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			// the changes of the working vertex
 			for (Vertex<LETTER, STATE> pred : predVertices) {
 				if (debugSimulation) {
-					getLogger().debug("\t\tWorking pred: " + pred);
+					m_Logger.debug("\t\tWorking pred: " + pred);
 				}
 
 				if (pred.isInWL()) {
@@ -826,7 +945,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 					pokePossible = hasNewlyReachedInfinity && !m_pokedFromNeighborSCC.contains(pred);
 
 					if (debugSimulation) {
-						getLogger().debug("\t\t\tPoke possible for pred: " + pred);
+						m_Logger.debug("\t\t\tPoke possible for pred: " + pred);
 					}
 					if (!pokePossible) {
 						// Do not further look at predecessor outside SCC if
@@ -866,13 +985,13 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 								m_pokedFromNeighborSCC.add(pred);
 
 								if (debugSimulation) {
-									getLogger().debug("\t\t\tPred has no better alternative, poking.");
+									m_Logger.debug("\t\t\tPred has no better alternative, poking.");
 								}
 							} else {
 								addVertexToWorkingList(pred);
 
 								if (debugSimulation) {
-									getLogger().debug("\t\t\tPred has no better alternative, adding.");
+									m_Logger.debug("\t\t\tPred has no better alternative, adding.");
 								}
 							}
 						} else if (pred.getC() > 1) {
@@ -884,7 +1003,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 							saveCChange(pred, oldPredC, m_CurrentChanges);
 
 							if (debugSimulation) {
-								getLogger().debug("\t\t\tPred has a better alternative.");
+								m_Logger.debug("\t\t\tPred has a better alternative.");
 							}
 						}
 					} else if (pred.isSpoilerVertex()) {
@@ -895,13 +1014,13 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 							m_pokedFromNeighborSCC.add(pred);
 
 							if (debugSimulation) {
-								getLogger().debug("\t\t\tPred is spoiler, poking.");
+								m_Logger.debug("\t\t\tPred is spoiler, poking.");
 							}
 						} else {
 							addVertexToWorkingList(pred);
 
 							if (debugSimulation) {
-								getLogger().debug("\t\t\tPred is spoiler, adding.");
+								m_Logger.debug("\t\t\tPred is spoiler, adding.");
 							}
 						}
 					}
