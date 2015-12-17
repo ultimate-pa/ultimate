@@ -140,7 +140,7 @@ public class IntervalBinaryExpressionEvaluator
 					mBooleanValue = mLeftSubEvaluator.booleanValue().intersect(mRightSubEvaluator.booleanValue());
 				} else {
 					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
-					        .isEqualTo(secondResult.getResult().getEvaluatedValue()));
+					        .isContainedIn(secondResult.getResult().getEvaluatedValue()));
 				}
 
 				if (mBooleanValue.getValue() == Value.FALSE) {
@@ -162,7 +162,7 @@ public class IntervalBinaryExpressionEvaluator
 					mBooleanValue = mLeftSubEvaluator.booleanValue().intersect(mRightSubEvaluator.booleanValue());
 				} else {
 					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
-					        .isEqualTo(secondResult.getResult().getEvaluatedValue()));
+					        .isContainedIn(secondResult.getResult().getEvaluatedValue()));
 				}
 
 				if (mBooleanValue.getValue() == Value.FALSE) {
@@ -192,7 +192,7 @@ public class IntervalBinaryExpressionEvaluator
 					mBooleanValue = mLeftSubEvaluator.booleanValue().intersect(mRightSubEvaluator.booleanValue());
 				} else {
 					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
-					        .isEqualTo(secondResult.getResult().getEvaluatedValue()));
+					        .isContainedIn(secondResult.getResult().getEvaluatedValue()));
 				}
 
 				if (mBooleanValue.getValue() == Value.FALSE) {
@@ -227,7 +227,7 @@ public class IntervalBinaryExpressionEvaluator
 					mBooleanValue = mLeftSubEvaluator.booleanValue().intersect(mRightSubEvaluator.booleanValue());
 				} else {
 					mBooleanValue = new BooleanValue(firstResult.getResult().getEvaluatedValue()
-					        .isEqualTo(secondResult.getResult().getEvaluatedValue()));
+					        .isContainedIn(secondResult.getResult().getEvaluatedValue()));
 				}
 
 				if (mBooleanValue.getValue() == Value.FALSE) {
