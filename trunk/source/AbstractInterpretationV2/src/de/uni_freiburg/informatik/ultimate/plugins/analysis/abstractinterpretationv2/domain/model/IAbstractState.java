@@ -112,7 +112,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 * @return The variable declaration type of the variable.
 	 */
 	VARDECL getVariableType(final String name);
-	
+
 	/**
 	 * Check if a given variable exists in the abstract state.
 	 * 
@@ -121,6 +121,21 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 * @return true if the variable exists, false otherwise.
 	 */
 	boolean containsVariable(final String name);
+
+	/**
+	 * @return an unmodifiable {@link Map} containing all variables declared in this state.
+	 */
+	Map<String, VARDECL> getVariables();
+
+	/**
+	 * Create a new state that has all the variables and abstraction of this {@link IAbstractState} and of the
+	 * <code>dominator</code> (i.e., Var(return) = Var(this) &cup; Var(dominator)). If both states (this and dominator)
+	 * share variables, the abstraction of dominator should replace the abstraction of this state (e.g., if
+	 * Var(this)={x} and Var(dominator)={x}, then return dominator).
+	 * 
+	 * If this state is a fixpoint then the resulting state is also a fixpoint.
+	 */
+	STATE overwrite(STATE dominator);
 
 	/**
 	 * An abstract state is empty when it does not contain any variable.

@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -265,9 +266,11 @@ public class SignDomainState
 				new HashMap<String, SignDomainValue>(mValuesMap), mIsFixpoint);
 	}
 
-	protected Map<String, IBoogieVar> getVariables() {
-		return new HashMap<String, IBoogieVar>(mVariablesMap);
+	@Override
+	public Map<String, IBoogieVar> getVariables() {
+		return Collections.unmodifiableMap(mVariablesMap);
 	}
+	
 
 	protected Map<String, SignDomainValue> getValues() {
 		return new HashMap<String, SignDomainValue>(mValuesMap);
@@ -324,5 +327,10 @@ public class SignDomainState
 		assert mVariablesMap.containsKey(name);
 
 		return mVariablesMap.get(name);
+	}
+
+	@Override
+	public SignDomainState overwrite(final SignDomainState dominator) {
+		throw new UnsupportedOperationException("not yet implemented");
 	}
 }

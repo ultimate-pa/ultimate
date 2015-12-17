@@ -156,8 +156,6 @@ public final class AbstractInterpreter {
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		final ITransitionProvider<CodeBlock> transitionProvider = new RcfgTransitionProvider();
 
-		final IVariableProvider<STATE, CodeBlock, IBoogieVar> varProvider = new RcfgVariableProvider<STATE>(symbolTable,
-				boogieVarTable);
 		final ILoopDetector<CodeBlock> loopDetector = new RcfgLoopDetector(externalLoopDetector);
 
 		final Collection<CodeBlock> filteredInitialElements = transitionProvider.filterInitialElements(initials);
@@ -173,6 +171,8 @@ public final class AbstractInterpreter {
 		for (final CodeBlock initial : filteredInitialElements) {
 			final BaseRcfgAbstractStateStorageProvider<STATE> storage = createStorage(services, domain, persist);
 			final IResultReporter<CodeBlock> reporter = funCreateReporter.apply(services, storage);
+			final IVariableProvider<STATE, CodeBlock, IBoogieVar> varProvider = new RcfgVariableProvider<STATE>(
+					symbolTable, boogieVarTable, storage);
 			final FixpointEngine<STATE, CodeBlock, IBoogieVar, ProgramPoint> interpreter = new FixpointEngine<STATE, CodeBlock, IBoogieVar, ProgramPoint>(
 					services, timer, transitionProvider, storage, domain, varProvider, loopDetector, reporter);
 			try {

@@ -27,6 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -190,8 +191,9 @@ public final class EmptyDomainState<ACTION, VARDECL>
 		return isEqualTo(other);
 	}
 
-	protected Map<String, VARDECL> getVariables() {
-		return new HashMap<>(mVarDecls);
+	@Override
+	public Map<String, VARDECL> getVariables() {
+		return Collections.unmodifiableMap(mVarDecls);
 	}
 
 	@Override
@@ -210,5 +212,24 @@ public final class EmptyDomainState<ACTION, VARDECL>
 		assert mVarDecls.containsKey(name);
 
 		return mVarDecls.get(name);
+	}
+
+	@Override
+	public EmptyDomainState<ACTION, VARDECL> overwrite(final EmptyDomainState<ACTION, VARDECL> dominator) {
+		if (dominator.isEmpty()) {
+			return this;
+		} else if (isEmpty()) {
+			return dominator;
+		}
+
+		final Map<String, VARDECL> newVarDecls = new HashMap<String, VARDECL>();
+		newVarDecls.putAll(mVarDecls);
+		newVarDecls.putAll(dominator.mVarDecls);
+
+		if (newVarDecls.size() == mVarDecls.size()) {
+			return this;
+		}
+
+		return new EmptyDomainState<ACTION, VARDECL>(newVarDecls, isFixpoint());
 	}
 }
