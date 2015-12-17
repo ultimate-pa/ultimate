@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Powers
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveNonLiveStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.delayed.BuchiReduce;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.fair.ReduceBuchiFairDirectSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.fair.ReduceBuchiFairSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.ShrinkNwa;
@@ -594,8 +595,10 @@ public class BuchiCegarLoop {
 		mLogger.info("Abstraction has " + m_Abstraction.sizeInformation());
 		Collection<Set<IPredicate>> partition = computePartition(m_Abstraction);
 		try {
-			INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized = minimize(partition);
-			m_Abstraction = minimized;
+			if (m_Abstraction.size() > 0) {
+				INestedWordAutomatonOldApi<CodeBlock, IPredicate> minimized = minimize(partition);
+				m_Abstraction = minimized;
+			}
 		} catch (OperationCanceledException e) {
 			throw new ToolchainCanceledException(getClass(), "minimizing automaton with " + m_Abstraction.size() + " states");
 		} catch (AutomataLibraryException e) {
@@ -613,18 +616,32 @@ public class BuchiCegarLoop {
 		final INestedWordAutomatonOldApi<CodeBlock, IPredicate> result;
 		switch (m_AutomataMinimization) {
 		case DelayedSimulation: {
-			BuchiReduce<CodeBlock, IPredicate> minimizeOp = new BuchiReduce<>(m_Services, m_StateFactoryForRefinement, m_Abstraction);
+			BuchiReduce<CodeBlock, IPredicate> minimizeOp = new BuchiReduce<>(
+					m_Services, m_StateFactoryForRefinement, m_Abstraction);
 			result  = minimizeOp.getResult();
 			break;
 		}
-		case FairSimulation: {
-			ReduceBuchiFairSimulation<CodeBlock, IPredicate> minimizeOp = new ReduceBuchiFairSimulation<>(m_Services, m_StateFactoryForRefinement, m_Abstraction);
+		case FairSimulation_WithoutSCC: {
+			ReduceBuchiFairSimulation<CodeBlock, IPredicate> minimizeOp = new ReduceBuchiFairSimulation<>(
+					m_Services, m_StateFactoryForRefinement, m_Abstraction, false);
+			result  = minimizeOp.getResult();
+			break;
+		}
+		case FairSimulation_WithSCC: {
+			ReduceBuchiFairSimulation<CodeBlock, IPredicate> minimizeOp = new ReduceBuchiFairSimulation<>(
+					m_Services, m_StateFactoryForRefinement, m_Abstraction, true);
+			result  = minimizeOp.getResult();
+			break;
+		}
+		case FairDirectSimulation: {
+			ReduceBuchiFairDirectSimulation<CodeBlock, IPredicate> minimizeOp = new ReduceBuchiFairDirectSimulation<>(
+					m_Services, m_StateFactoryForRefinement, m_Abstraction, true);
 			result  = minimizeOp.getResult();
 			break;
 		}
 		case MinimizeSevpa: {
-			MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(m_Services, m_Abstraction,
-					partition, m_StateFactoryForRefinement);
+			MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(
+					m_Services, m_Abstraction, partition, m_StateFactoryForRefinement);
 			assert (minimizeOp.checkResult(m_PredicateFactoryResultChecking));
 			result = minimizeOp.getResult();
 			break;

@@ -147,6 +147,6 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	
 	public enum BInterpolantAutomaton { LassoAutomaton, EagerNondeterminism, ScroogeNondeterminism, Deterministic, Staged, TabaRankBased, TabaBlast, StagedBlast };
 	
-	public enum AutomataMinimization { None, MinimizeSevpa, ShrinkNwa, DelayedSimulation, FairSimulation };
+	public enum AutomataMinimization { None, MinimizeSevpa, ShrinkNwa, DelayedSimulation, FairSimulation_WithSCC, FairSimulation_WithoutSCC, FairDirectSimulation };
 	
 }
