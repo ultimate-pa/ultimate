@@ -1,0 +1,81 @@
+/*
+ * Example where the result of buchiDifferenceFKV is better than the result of
+ * buchiDifferenceNCSB.
+ * 
+ * Date: 2015-12-16
+ * Author: Matthias Heizmann
+ */
+
+
+// print(numberOfStates(nwa));
+// print(isDeterministic(nwa));
+// 
+// NestedWordAutomaton cFKV = buchiComplementFKV(nwa);
+// print(numberOfStates(cFKV));
+// NestedWordAutomaton cFKVl = removeNonLiveStates(cFKV);
+// print(numberOfStates(cFKVl));
+// NestedWordAutomaton cDet = buchiComplementDeterministic(nwa);
+// print(numberOfStates(cDet));
+// NestedWordAutomaton cDetl = removeNonLiveStates(cDet);
+// print(numberOfStates(cDetl));
+// NestedWordAutomaton cNCSB = buchiComplementNCSB(nwa);
+// print(numberOfStates(cNCSB));
+// NestedWordAutomaton cNCSBl = removeNonLiveStates(nwa);
+// print(numberOfStates(cNCSBl));
+
+NestedWordAutomaton dFKV = buchiDifferenceFKV(prg, nwa);
+print(numberOfStates(dFKV));
+NestedWordAutomaton dFKVl = removeNonLiveStates(dFKV);
+print(numberOfStates(dFKVl));
+
+NestedWordAutomaton dNCSB = buchiDifferenceNCSB(prg, nwa);
+print(numberOfStates(dNCSB));
+NestedWordAutomaton dNCSBl = removeNonLiveStates(dNCSB);
+print(numberOfStates(dNCSBl));
+
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {"c1" "c2" },
+	internalAlphabet = {"assume true;" "p1" "p2" "assume true;" "fe" "assume !true;" "assume true;" "#res := 0;" "assume true;" "assume !(~x~2 > 0 && ~y~2 > 0);" "assume !!(~x~2 > 0 && ~y~2 > 0);~old_x~3 := ~x~2;~old_y~3 := ~y~2;" },
+	returnAlphabet = {"return;" "return;" },
+	states = {"s2" "honda" "s1" "26#false" "74#(and (<= main_~old_x~3 oldRank0) (<= 1 oldRank0))" "44#unseeded" "47#(and |old(unseeded)| unseeded)" },
+	initialStates = {"44#unseeded" },
+	finalStates = {"honda" "26#false" },
+	callTransitions = {
+		 ("44#unseeded" "c1" "47#(and |old(unseeded)| unseeded)")
+		 ("44#unseeded" "c2" "47#(and |old(unseeded)| unseeded)")
+	},
+	internalTransitions = {
+		 ("s2" "p1" "honda")
+		 ("honda" "assume true;" "s1")
+		 ("s1" "assume !!(~x~2 > 0 && ~y~2 > 0);~old_x~3 := ~x~2;~old_y~3 := ~y~2;" "s2")
+		 ("47#(and |old(unseeded)| unseeded)" "assume true;" "47#(and |old(unseeded)| unseeded)")
+		 ("47#(and |old(unseeded)| unseeded)" "fe" "honda")
+	},
+	returnTransitions = {
+		 ("47#(and |old(unseeded)| unseeded)" "44#unseeded" "return;" "44#unseeded")
+	}
+);
+
+NestedWordAutomaton prg = (
+	callAlphabet = {"c1" "c2" },
+	internalAlphabet = {"assume true;" "p1" "p2" "assume true;" "fe" "assume !true;" "assume true;" "#res := 0;" "assume true;" "assume !(~x~2 > 0 && ~y~2 > 0);" "assume !!(~x~2 > 0 && ~y~2 > 0);~old_x~3 := ~x~2;~old_y~3 := ~y~2;" },
+	returnAlphabet = {"return;" "return;" },
+	states = {"l2" "3#mainEXITtrue" "linit3" "l3" "6#mainFINALtrue" "l4" "8#ULTIMATE.initEXITtrue" "9#ULTIMATE.startFINALtrue" "10#ULTIMATE.startEXITtrue" "l1" "linit" "13#L14''true" "linit2" },
+	initialStates = {"linit" },
+	finalStates = {"l2" "3#mainEXITtrue" "linit3" "l3" "6#mainFINALtrue" "l4" "8#ULTIMATE.initEXITtrue" "9#ULTIMATE.startFINALtrue" "10#ULTIMATE.startEXITtrue" "l1" "linit" "13#L14''true" "linit2" },
+	callTransitions = {
+		 ("linit3" "c2" "l1")
+		 ("linit" "c1" "linit2")
+	},
+	internalTransitions = {
+		 ("l2" "assume true;" "l3")
+		 ("l3" "assume !!(~x~2 > 0 && ~y~2 > 0);~old_x~3 := ~x~2;~old_y~3 := ~y~2;" "l4")
+		 ("l4" "p1" "l2")
+		 ("l4" "p2" "l2")
+		 ("l1" "fe" "l2")
+	},
+	returnTransitions = {
+		 ("linit2" "linit" "return;" "linit3")
+	}
+);
