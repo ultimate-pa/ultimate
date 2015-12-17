@@ -476,7 +476,7 @@ public class IntervalDomainState
 	}
 
 	@Override
-	public IntervalDomainState overwrite(final IntervalDomainState dominator) {
+	public IntervalDomainState patch(final IntervalDomainState dominator) {
 		throw new UnsupportedOperationException("not yet implemented");
 	}
 }

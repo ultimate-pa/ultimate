@@ -215,7 +215,7 @@ public final class EmptyDomainState<ACTION, VARDECL>
 	}
 
 	@Override
-	public EmptyDomainState<ACTION, VARDECL> overwrite(final EmptyDomainState<ACTION, VARDECL> dominator) {
+	public EmptyDomainState<ACTION, VARDECL> patch(final EmptyDomainState<ACTION, VARDECL> dominator) {
 		if (dominator.isEmpty()) {
 			return this;
 		} else if (isEmpty()) {

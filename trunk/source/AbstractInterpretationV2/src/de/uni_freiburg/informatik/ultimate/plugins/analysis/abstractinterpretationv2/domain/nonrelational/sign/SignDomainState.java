@@ -330,7 +330,7 @@ public class SignDomainState
 	}
 
 	@Override
-	public SignDomainState overwrite(final SignDomainState dominator) {
+	public SignDomainState patch(final SignDomainState dominator) {
 		throw new UnsupportedOperationException("not yet implemented");
 	}
 }

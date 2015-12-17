@@ -135,7 +135,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 * 
 	 * If this state is a fixpoint then the resulting state is also a fixpoint.
 	 */
-	STATE overwrite(STATE dominator);
+	STATE patch(STATE dominator);
 
 	/**
 	 * An abstract state is empty when it does not contain any variable.

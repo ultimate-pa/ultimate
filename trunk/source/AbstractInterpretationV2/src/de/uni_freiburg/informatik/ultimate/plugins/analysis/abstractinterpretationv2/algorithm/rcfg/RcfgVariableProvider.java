@@ -153,7 +153,7 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 				preCallState = preCallState.removeVariables(toberemoved);
 			}
 			// now we combine the state after returning from this method with the one from before we entered the method.
-			rtr = rtr.overwrite(preCallState);
+			rtr = rtr.patch(preCallState);
 			return rtr;
 
 		} else {
