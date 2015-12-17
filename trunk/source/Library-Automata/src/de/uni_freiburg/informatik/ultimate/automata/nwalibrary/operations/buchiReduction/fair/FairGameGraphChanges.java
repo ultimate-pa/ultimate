@@ -138,6 +138,21 @@ public final class FairGameGraphChanges<LETTER, STATE> extends GameGraphChanges<
 		}
 	}
 
+	/**
+	 * Stores information about an removed buechi transition.<br/>
+	 * Nullifies changes if the given transition was added before.
+	 * 
+	 * @param src
+	 *            Source of the removed buechi transition
+	 * @param a
+	 *            The letter of the removed buechi transition
+	 * @param dest
+	 *            Destination of the removed buechi transition
+	 */
+	public void removedBuechiTransition(final STATE src, final LETTER a, final STATE dest) {
+		changedBuechiTransition(src, a, dest, GameGraphChangeType.REMOVAL);
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -212,21 +227,6 @@ public final class FairGameGraphChanges<LETTER, STATE> extends GameGraphChanges<
 		result.append(lineSeparator + ");");
 
 		return result.toString();
-	}
-
-	/**
-	 * Stores information about an removed buechi transition.<br/>
-	 * Nullifies changes if the given transition was added before.
-	 * 
-	 * @param src
-	 *            Source of the removed buechi transition
-	 * @param a
-	 *            The letter of the removed buechi transition
-	 * @param dest
-	 *            Destination of the removed buechi transition
-	 */
-	public void removedBuechiTransition(final STATE src, final LETTER a, final STATE dest) {
-		changedBuechiTransition(src, a, dest, GameGraphChangeType.REMOVAL);
 	}
 
 	/**

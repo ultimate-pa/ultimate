@@ -33,8 +33,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorProvider;
 
 /**
- * Successor provider for a {@link AGameGraph}.
- * Given a vertex it gets all its successors.
+ * Successor provider for a {@link AGameGraph}. Given a vertex it gets all its
+ * successors.
  * 
  * @author Daniel Tischner
  *
@@ -53,7 +53,8 @@ public final class GameGraphSuccessorProvider<LETTER, STATE> implements ISuccess
 	/**
 	 * Creates a new successor provider on a given game graph.
 	 * 
-	 * @param graph The game graph of the provider
+	 * @param graph
+	 *            The game graph of the provider
 	 */
 	public GameGraphSuccessorProvider(final AGameGraph<LETTER, STATE> graph) {
 		m_Graph = graph;
@@ -61,7 +62,9 @@ public final class GameGraphSuccessorProvider<LETTER, STATE> implements ISuccess
 
 	/*
 	 * (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorProvider#getSuccessors(java.lang.Object)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.
+	 * ISuccessorProvider#getSuccessors(java.lang.Object)
 	 */
 	@Override
 	public Iterator<Vertex<LETTER, STATE>> getSuccessors(final Vertex<LETTER, STATE> vertex) {

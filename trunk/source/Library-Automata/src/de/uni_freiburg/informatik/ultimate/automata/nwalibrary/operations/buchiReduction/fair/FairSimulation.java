@@ -47,8 +47,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.relation.Quad;
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.util.scc.DefaultStronglyConnectedComponentFactory;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation;
@@ -70,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * @param <STATE>
  *            State class of buechi automaton
  */
-public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
+public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 	/**
 	 * Saves a change on the <i>BEff value</i> of a given vertex in the current
@@ -222,6 +222,39 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 	public FairSimulation(final IUltimateServiceProvider services,
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
+		this(services, buechi, useSCCs, stateFactory, new FairGameGraph<LETTER, STATE>(services, buechi));
+	}
+
+	/**
+	 * Creates a new fair simulation with a given fair game graph that tries to
+	 * reduce the given buechi automaton using <b>fair simulation</b>.<br/>
+	 * After construction the simulation starts and results can be get by using
+	 * {@link #getResult()}.<br/>
+	 * <br/>
+	 * 
+	 * For correctness its important that the inputed automaton has <b>no dead
+	 * ends</b> nor <b>duplicate transitions</b>.
+	 * 
+	 * @param services
+	 *            Service provider of Ultimate framework.
+	 * @param buechi
+	 *            The buechi automaton to reduce with no dead ends nor with
+	 *            duplicate transitions
+	 * @param useSCCs
+	 *            If the simulation calculation should be optimized using SCC,
+	 *            Strongly Connected Components.
+	 * @param stateFactory
+	 *            The state factory used for creating states.
+	 * @param game
+	 *            The fair game graph to use for simulation.
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	protected FairSimulation(final IUltimateServiceProvider services,
+			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
+			final StateFactory<STATE> stateFactory, final FairGameGraph<LETTER, STATE> game)
+					throws OperationCanceledException {
 		super(services, useSCCs, stateFactory);
 
 		m_Buechi = buechi;
@@ -231,7 +264,7 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 		m_CurrentChanges = null;
 
 		getLogger().debug("Starting generation of Fair Game Graph...");
-		m_Game = new FairGameGraph<>(services, buechi);
+		m_Game = game;
 
 		m_GlobalInfinity = m_Game.getGlobalInfinity();
 
@@ -321,66 +354,6 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 	}
 
 	/**
-	 * Adds a given vertex to the working list and updates its own working list
-	 * flag.
-	 * 
-	 * @param vertex
-	 *            Vertex to add
-	 */
-	private void addVertexToWorkingList(final Vertex<LETTER, STATE> vertex) {
-		getWorkingList().add(vertex);
-		vertex.setInWL(true);
-	}
-
-	/**
-	 * Attempts the simulated merge of two given buechi states and returns
-	 * whether the change is valid or not.
-	 * 
-	 * @param firstState
-	 *            First state to merge
-	 * @param secondState
-	 *            Second state to merge
-	 * @return A game graph changes object that has all made changes stored if
-	 *         the attempted change is not valid or <tt>null</tt> if it is
-	 *         valid. Can be used to undo changes by using
-	 *         {@link AGameGraph#undoChanges(GameGraphChanges)}.
-	 * @throws OperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
-	 */
-	private FairGameGraphChanges<LETTER, STATE> attemptMerge(final STATE firstState, final STATE secondState)
-			throws OperationCanceledException {
-		FairGameGraphChanges<LETTER, STATE> changes = m_Game.equalizeBuechiStates(firstState, secondState);
-
-		return validateChange(changes);
-	}
-
-	/**
-	 * Attempts the simulated removal of an buechi transition and returns
-	 * whether the change is valid or not.
-	 * 
-	 * @param src
-	 *            Source of the transition
-	 * @param a
-	 *            Letter of the transition
-	 * @param dest
-	 *            Destination of the transition
-	 * @return A game graph changes object that has all made changes stored if
-	 *         the attempted change is not valid or <tt>null</tt> if it is
-	 *         valid. Can be used to undo changes by using
-	 *         {@link AGameGraph#undoChanges(GameGraphChanges)}.
-	 * @throws OperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
-	 */
-	private FairGameGraphChanges<LETTER, STATE> attemptTransitionRemoval(final STATE src, final LETTER a,
-			final STATE dest) throws OperationCanceledException {
-		FairGameGraphChanges<LETTER, STATE> changes = m_Game.removeBuechiTransition(src, a, dest);
-
-		return validateChange(changes);
-	}
-
-	/**
 	 * Does a single simulation calculation run. After it has finished the
 	 * progress measure of all game graph vertices can be used to determine a
 	 * simulation relation used for buechi reduction.<br/>
@@ -463,68 +436,6 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 	}
 
 	/**
-	 * Initializes a given vertex for the current simulation calculation by
-	 * possibly adding it to the working list and initializing its values.<br/>
-	 * Used by {@link #initSimulation(int, Set)}.
-	 * 
-	 * @param vertex
-	 *            Vertex to initialize
-	 * @param localInfinity
-	 *            The local infinity bound of the used SCC or global infinity if
-	 *            not used
-	 * @param scc
-	 *            The currently for simulation used SCC or <tt>null</tt> if not
-	 *            used
-	 */
-	private void initWorkingListAndCWithVertex(final Vertex<LETTER, STATE> vertex, final int localInfinity,
-			final Set<Vertex<LETTER, STATE>> scc) {
-		// TODO Find out what vertices are really needed for the working list
-
-		// Small note for debugging: If simulation calculates a wrong result
-		// this, in most cases, is because there are important vertices missing
-		// in the working list. Cross check by adding 'true' to the if-clause
-		// which adds all vertices to the working list (inefficient but result
-		// could then be correct).
-		boolean isDeadEnd = !m_Game.hasSuccessors(vertex);
-		boolean hasPriorityOne = vertex.getPriority() == 1;
-		boolean isPokedVertex = isUsingSCCs() && m_pokedFromNeighborSCC.contains(vertex);
-		boolean isNonTrivialAddedVertex = m_AttemptingChanges && m_CurrentChanges != null
-				&& m_CurrentChanges.isAddedVertex(vertex) && vertex.getPriority() != 0;
-		boolean isVertexInvolvedInEdgeChanges = m_AttemptingChanges && m_CurrentChanges != null
-				&& m_CurrentChanges.isVertexInvolvedInEdgeChanges(vertex);
-
-		// Possibly add vertex to working list
-		if (isDeadEnd || hasPriorityOne || isPokedVertex || isNonTrivialAddedVertex || isVertexInvolvedInEdgeChanges) {
-			addVertexToWorkingList(vertex);
-		} else {
-			// Reset working list flag of vertex since it can be true from an
-			// previous simulation abort
-			vertex.setInWL(false);
-		}
-
-		// Possibly initialize C value of vertex
-		if (isUsingSCCs()) {
-			Set<Vertex<LETTER, STATE>> usedSCCForNeighborCalculation = scc;
-			// Ignore bounds of own SCC if vertex was poked
-			if (m_pokedFromNeighborSCC.contains(vertex)) {
-				usedSCCForNeighborCalculation = null;
-			}
-			int oldC = vertex.getC();
-			vertex.setC(calcNghbCounter(vertex, localInfinity, usedSCCForNeighborCalculation));
-			saveCChange(vertex, oldC, m_CurrentChanges);
-		} else if (!isDeadEnd) {
-			boolean isFirstRun = !m_AttemptingChanges;
-			boolean wasNotInitialized = vertex.getC() == 0;
-
-			if (isFirstRun || wasNotInitialized) {
-				int oldC = vertex.getC();
-				vertex.setC(m_Game.getSuccessors(vertex).size());
-				saveCChange(vertex, oldC, m_CurrentChanges);
-			}
-		}
-	}
-
-	/**
 	 * Returns {@link SpoilerVertex} object that define states <b>(q0, q1)</b>
 	 * which are candidates for merge.<br/>
 	 * <br/>
@@ -558,20 +469,6 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 	}
 
 	/**
-	 * Retrieves and removes the head of the working list. Also updates the
-	 * working list flag of the vertex.
-	 * 
-	 * @return The head of the working list, or <tt>null</tt> if it is empty.
-	 */
-	private Vertex<LETTER, STATE> pollVertexFromWorkingList() {
-		Vertex<LETTER, STATE> polledVertex = getWorkingList().poll();
-		if (polledVertex != null) {
-			polledVertex.setInWL(false);
-		}
-		return polledVertex;
-	}
-
-	/**
 	 * Returns buechi transitions that are candidates for removal.<br/>
 	 * <br/>
 	 * To be more precise, transitions <b>q1 -a-> q2</b> where <b>q1 -a-> q3</b>
@@ -584,11 +481,12 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 	 *            candidate generation. In general this are vertices that get
 	 *            merged, such transitions would get removed in the merging
 	 *            process anyway.
-	 * @return Buechi transitions that are candidates for removal.
+	 * @return Buechi transitions that are candidates for removal and the
+	 *         corresponding simulating state <i>q3</i>.
 	 */
-	private NestedMap2<STATE, LETTER, STATE> transitionCandidates(
+	private HashSet<Quad<STATE, LETTER, STATE, STATE>> transitionCandidates(
 			final Set<SpoilerVertex<LETTER, STATE>> exclusiveSet) {
-		NestedMap2<STATE, LETTER, STATE> edgeCandidates = new NestedMap2<>();
+		HashSet<Quad<STATE, LETTER, STATE, STATE>> transitionCandidates = new HashSet<>();
 		Set<SpoilerVertex<LETTER, STATE>> spoilerVertices = m_Game.getSpoilerVertices();
 		for (SpoilerVertex<LETTER, STATE> vertex : spoilerVertices) {
 			if (vertex.getPM(null, m_GlobalInfinity) < m_GlobalInfinity && !exclusiveSet.contains(vertex)) {
@@ -606,14 +504,14 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 					STATE src = predTrans.getPred();
 					LETTER a = predTrans.getLetter();
 					STATE dest = simulatedState;
-					if (m_Game.hasBuechiTransition(new Triple<>(src, a, dest))) {
-						edgeCandidates.put(src, a, dest);
+					Triple<STATE, LETTER, STATE> transition = new Triple<>(src, a, dest);
+					if (m_Game.hasBuechiTransition(transition)) {
+						transitionCandidates.add(new Quad<>(src, a, dest, simulatingState));
 					}
 				}
-
 			}
 		}
-		return edgeCandidates;
+		return transitionCandidates;
 	}
 
 	/**
@@ -649,6 +547,57 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 		}
 
 		return changes;
+	}
+
+	/**
+	 * Attempts the simulated merge of two given buechi states and returns
+	 * whether the change is valid or not.
+	 * 
+	 * @param firstState
+	 *            First state to merge
+	 * @param secondState
+	 *            Second state to merge
+	 * @return A game graph changes object that has all made changes stored if
+	 *         the attempted change is not valid or <tt>null</tt> if it is
+	 *         valid. Can be used to undo changes by using
+	 *         {@link AGameGraph#undoChanges(GameGraphChanges)}.
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	protected FairGameGraphChanges<LETTER, STATE> attemptMerge(final STATE firstState, final STATE secondState)
+			throws OperationCanceledException {
+		FairGameGraphChanges<LETTER, STATE> changes = m_Game.equalizeBuechiStates(firstState, secondState);
+
+		return validateChange(changes);
+	}
+
+	/**
+	 * Attempts the simulated removal of an buechi transition and returns
+	 * whether the change is valid or not.
+	 * 
+	 * @param src
+	 *            Source of the transition
+	 * @param a
+	 *            Letter of the transition
+	 * @param dest
+	 *            Destination of the transition
+	 * @param invoker
+	 *            State that invoked the transition removal. In general this is
+	 *            the state that simulates the transition.
+	 * @return A game graph changes object that has all made changes stored if
+	 *         the attempted change is not valid or <tt>null</tt> if it is
+	 *         valid. Can be used to undo changes by using
+	 *         {@link AGameGraph#undoChanges(GameGraphChanges)}.
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	protected FairGameGraphChanges<LETTER, STATE> attemptTransitionRemoval(final STATE src, final LETTER a,
+			final STATE dest, final STATE invoker) throws OperationCanceledException {
+		FairGameGraphChanges<LETTER, STATE> changes = m_Game.removeBuechiTransition(src, a, dest);
+
+		return validateChange(changes);
 	}
 
 	/*
@@ -710,19 +659,20 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 
 		// Remove redundant transitions
 		List<Triple<STATE, LETTER, STATE>> transitionsToRemove = new LinkedList<>();
-		NestedMap2<STATE, LETTER, STATE> transitionCandidates = transitionCandidates(noTransitionCandidates);
+		HashSet<Quad<STATE, LETTER, STATE, STATE>> transitionCandidates = transitionCandidates(noTransitionCandidates);
 
 		// keySet is okay for a debugging message because
 		// access is cheap, in O(1)
-		getLogger().debug("Size of transition candidates is >= " + transitionCandidates.keySet().size());
+		getLogger().debug("Size of transition candidates: " + transitionCandidates.size());
 
-		for (Triple<STATE, LETTER, STATE> transitionCandidate : transitionCandidates.entrySet()) {
+		for (Quad<STATE, LETTER, STATE, STATE> transitionCandidate : transitionCandidates) {
 			STATE src = transitionCandidate.getFirst();
 			LETTER a = transitionCandidate.getSecond();
 			STATE dest = transitionCandidate.getThird();
+			STATE invoker = transitionCandidate.getFourth();
 
 			// Attempt transition removal
-			FairGameGraphChanges<LETTER, STATE> changes = attemptTransitionRemoval(src, a, dest);
+			FairGameGraphChanges<LETTER, STATE> changes = attemptTransitionRemoval(src, a, dest, invoker);
 			// Undo if language changed, else add transition for removal
 			if (changes != null) {
 				getLogger().debug("Attempted transition removal for " + src + " -" + a + "-> " + dest
@@ -816,7 +766,7 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 				getLogger().debug("\t\tUpdated C: " + oldC + " -> " + workingVertex.getC());
 			}
 
-			int currentProgressMeasure = increaseVector(workingVertex.getPriority(), workingVertex.getBEff(),
+			int currentProgressMeasure = increaseVector(m_Game.getPriority(workingVertex), workingVertex.getBEff(),
 					localInfinity);
 			workingVertex.setPM(currentProgressMeasure);
 			savePmChange(workingVertex, oldProgressMeasure, m_CurrentChanges);
@@ -885,16 +835,15 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 				// If the working vertex has increased its progress
 				// measure from the perspective of the predecessor and
 				// its priority
-				if (decreaseVector(pred.getPriority(), workingVertex.getPM(scc, m_GlobalInfinity), localInfinity) > pred
-						.getBEff()) {
+				if (decreaseVector(m_Game.getPriority(pred), workingVertex.getPM(scc, m_GlobalInfinity),
+						localInfinity) > pred.getBEff()) {
 
 					// A Duplicator vertex is only interested in an increased
 					// progress measure if the working vertex was its
 					// best choice previously and it has no better
 					// alternative now
-					if (pred.isDuplicatorVertex()
-							&& (decreaseVector(pred.getPriority(), oldProgressMeasure, localInfinity) == pred.getBEff()
-									|| (pokePossible && pred.getBEff() == 0))) {
+					if (pred.isDuplicatorVertex() && (decreaseVector(m_Game.getPriority(pred), oldProgressMeasure,
+							localInfinity) == pred.getBEff() || (pokePossible && pred.getBEff() == 0))) {
 
 						// If trying to use a vertex outside of the SCC make
 						// sure the neighbor counter was initialized
@@ -980,5 +929,62 @@ public final class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STA
 	@Override
 	protected AGameGraph<LETTER, STATE> getGameGraph() {
 		return m_Game;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * buchiReduction.ASimulation#initWorkingListAndCWithVertex(de.uni_freiburg.
+	 * informatik.ultimate.automata.nwalibrary.operations.buchiReduction.
+	 * vertices.Vertex, int, java.util.Set)
+	 */
+	@Override
+	protected void initWorkingListAndCWithVertex(final Vertex<LETTER, STATE> vertex, final int localInfinity,
+			final Set<Vertex<LETTER, STATE>> scc) {
+		// TODO Find out what vertices are really needed for the working list
+
+		// Small note for debugging: If simulation calculates a wrong result
+		// this, in most cases, is because there are important vertices missing
+		// in the working list. Cross check by adding 'true' to the if-clause
+		// which adds all vertices to the working list (inefficient but result
+		// could then be correct).
+		boolean isDeadEnd = !m_Game.hasSuccessors(vertex);
+		boolean hasPriorityOne = m_Game.getPriority(vertex) == 1;
+		boolean isPokedVertex = isUsingSCCs() && m_pokedFromNeighborSCC.contains(vertex);
+		boolean isNonTrivialAddedVertex = m_AttemptingChanges && m_CurrentChanges != null
+				&& m_CurrentChanges.isAddedVertex(vertex) && m_Game.getPriority(vertex) != 0;
+		boolean isVertexInvolvedInEdgeChanges = m_AttemptingChanges && m_CurrentChanges != null
+				&& m_CurrentChanges.isVertexInvolvedInEdgeChanges(vertex);
+
+		// Possibly add vertex to working list
+		if (isDeadEnd || hasPriorityOne || isPokedVertex || isNonTrivialAddedVertex || isVertexInvolvedInEdgeChanges) {
+			addVertexToWorkingList(vertex);
+		} else {
+			// Reset working list flag of vertex since it can be true from an
+			// previous simulation abort
+			vertex.setInWL(false);
+		}
+
+		// Possibly initialize C value of vertex
+		if (isUsingSCCs()) {
+			Set<Vertex<LETTER, STATE>> usedSCCForNeighborCalculation = scc;
+			// Ignore bounds of own SCC if vertex was poked
+			if (m_pokedFromNeighborSCC.contains(vertex)) {
+				usedSCCForNeighborCalculation = null;
+			}
+			int oldC = vertex.getC();
+			vertex.setC(calcNghbCounter(vertex, localInfinity, usedSCCForNeighborCalculation));
+			saveCChange(vertex, oldC, m_CurrentChanges);
+		} else if (!isDeadEnd) {
+			boolean isFirstRun = !m_AttemptingChanges;
+			boolean wasNotInitialized = vertex.getC() == 0;
+
+			if (isFirstRun || wasNotInitialized) {
+				int oldC = vertex.getC();
+				vertex.setC(m_Game.getSuccessors(vertex).size());
+				saveCChange(vertex, oldC, m_CurrentChanges);
+			}
+		}
 	}
 }

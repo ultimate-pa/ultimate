@@ -211,6 +211,22 @@ public abstract class AGameGraph<LETTER, STATE> {
 	}
 
 	/**
+	 * Gets the priority of a given vertex.
+	 * 
+	 * @param vertex
+	 *            The vertex of interest
+	 * @return The priority of the given vertex
+	 * @throws IllegalArgumentException
+	 *             If the given vertex is <tt>null</tt>.
+	 */
+	public int getPriority(Vertex<LETTER, STATE> vertex) {
+		if (vertex == null) {
+			throw new IllegalArgumentException("The given vertex must not be null.");
+		}
+		return vertex.getPriority();
+	}
+
+	/**
 	 * Gets the size of the game graph which is the number of all vertices.
 	 * 
 	 * @return The size of the game graph which is the number of all vertices.
@@ -324,13 +340,13 @@ public abstract class AGameGraph<LETTER, STATE> {
 		result.append(lineSeparator + "\tSpoilerVertices = {");
 		for (SpoilerVertex<LETTER, STATE> vertex : getSpoilerVertices()) {
 			result.append(lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + "), p:"
-					+ vertex.getPriority() + ">");
+					+ getPriority(vertex) + ">");
 		}
 		result.append(lineSeparator + "\t},");
 		result.append(lineSeparator + "\tDuplicatorVertices = {");
 		for (DuplicatorVertex<LETTER, STATE> vertex : getDuplicatorVertices()) {
 			result.append(lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + ", " + vertex.getLetter()
-					+ "), p:" + vertex.getPriority() + ">");
+					+ "), p:" + getPriority(vertex) + ">");
 		}
 		result.append(lineSeparator + "\t},");
 

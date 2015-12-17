@@ -77,7 +77,7 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
  * @param <STATE>
  *            State class of buechi automaton
  */
-public final class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
+public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 	/**
 	 * The underlying buechi automaton from which the game graph gets generated.

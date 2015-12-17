@@ -34,11 +34,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.direct;
 
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.ASimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
@@ -62,7 +65,7 @@ public final class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, S
 	/**
 	 * Game graph that is used for simulation calculation.
 	 */
-	private final DirectGameGraph<LETTER, STATE> m_Game;
+	private final AGameGraph<LETTER, STATE> m_Game;
 
 	/**
 	 * Creates a new direct simulation that tries to reduce the given buechi
@@ -91,14 +94,65 @@ public final class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, S
 	public DirectSimulation(final IUltimateServiceProvider services,
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
+		this(services, buechi, useSCCs, stateFactory, new DirectGameGraph<>(services, buechi, stateFactory));
+	}
+
+	/**
+	 * Creates a new direct simulation with a given graph that tries to reduce
+	 * the given buechi automaton using <b>direct simulation</b>.<br/>
+	 * After construction the simulation starts and results can be get by using
+	 * {@link #getResult()}.<br/>
+	 * <br/>
+	 * 
+	 * For correctness its important that the inputed automaton has <b>no dead
+	 * ends</b> nor <b>duplicate transitions</b>.
+	 * 
+	 * @param services
+	 *            Service provider of Ultimate framework.
+	 * @param buechi
+	 *            The buechi automaton to reduce with no dead ends nor with
+	 *            duplicate transitions
+	 * @param useSCCs
+	 *            If the simulation calculation should be optimized using SCC,
+	 *            Strongly Connected Components.
+	 * @param stateFactory
+	 *            The state factory used for creating states.
+	 * @param game
+	 *            The game graph to use for simulation.
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	public DirectSimulation(final IUltimateServiceProvider services,
+			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
+			final StateFactory<STATE> stateFactory, final AGameGraph<LETTER, STATE> game)
+					throws OperationCanceledException {
 		super(services, useSCCs, stateFactory);
 
-		m_Game = new DirectGameGraph<>(services, buechi, stateFactory);
+		m_Game = game;
 		doSimulation();
-		// TODO Direct simulation is so easy, it could be computed without
-		// simulation.
-		// All vertices that do have successors directly define simulation
-		// relations, all other not.
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * buchiReduction.ASimulation#calcBestNghbMeasure(de.uni_freiburg.informatik
+	 * .ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex,
+	 * int, java.util.Set)
+	 */
+	@Override
+	protected int calcBestNghbMeasure(final Vertex<LETTER, STATE> vertex, final int localInfinity,
+			final Set<Vertex<LETTER, STATE>> scc) {
+		// DirectSimulation needs infinity for spoiler vertices without
+		// successors instead of 0. Direct simulation uses a hack to exclude
+		// winning Spoiler vertices by removing all their transitions which then
+		// should not indicate a winning for Duplicator.
+		if (vertex.isSpoilerVertex() && !getGameGraph().hasSuccessors(vertex)) {
+			return getGameGraph().getGlobalInfinity();
+		} else {
+			return super.calcBestNghbMeasure(vertex, localInfinity, scc);
+		}
 	}
 
 	/*

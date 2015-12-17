@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  * @param <STATE>
  *            State class of buechi automaton
  */
-public final class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETTER, STATE> {
+public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	/**
 	 * Demo usage of fair simulation in general. Also used for debugging
@@ -86,7 +86,7 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperatio
 		alphabet.add("b");
 		NestedWordAutomaton<String, String> buechi = new NestedWordAutomaton<>(services, alphabet, null, null, snf);
 
-		// Big example from tutors cardboard
+		// Big example from Matthias cardboard
 		// buechi.addState(true, false, "q0");
 		// buechi.addState(false, false, "q1");
 		// buechi.addState(false, true, "q2");
@@ -489,13 +489,44 @@ public final class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperatio
 	public ReduceBuchiFairSimulation(final IUltimateServiceProvider services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs,
 			final boolean checkOperationDeeply) throws OperationCanceledException {
+		this(services, stateFactory, operand, useSCCs, checkOperationDeeply,
+				new FairSimulation<>(services, operand, useSCCs, stateFactory));
+	}
+
+	/**
+	 * Creates a new buechi reduce object that starts reducing the given buechi
+	 * automaton using a given fair simulation.<br/>
+	 * Once finished the result can be get by using {@link #getResult()}.
+	 * 
+	 * @param services
+	 *            Service provider of Ultimate framework
+	 * @param stateFactory
+	 *            The state factory used for creating states
+	 * @param operand
+	 *            The buechi automaton to reduce
+	 * @param useSCCs
+	 *            If the simulation calculation should be optimized using SCC,
+	 *            Strongly Connected Components.
+	 * @param checkOperationDeeply
+	 *            If true the operation gets deeply checked for correctness,
+	 *            false if that is not desired. This can take some time.
+	 * @param simulation
+	 *            The simulation used by the operation
+	 * @throws OperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	protected ReduceBuchiFairSimulation(final IUltimateServiceProvider services, final StateFactory<STATE> stateFactory,
+			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs,
+			final boolean checkOperationDeeply, FairSimulation<LETTER, STATE> simulation)
+					throws OperationCanceledException {
 		m_Services = services;
 		m_StateFactory = stateFactory;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_Operand = operand;
 		m_UseSCCs = useSCCs;
 		m_Logger.info(startMessage());
-		m_Simulation = new FairSimulation<>(m_Services, m_Operand, m_UseSCCs, m_StateFactory);
+		m_Simulation = simulation;
 		m_Result = m_Simulation.getResult();
 
 		// Debugging flag

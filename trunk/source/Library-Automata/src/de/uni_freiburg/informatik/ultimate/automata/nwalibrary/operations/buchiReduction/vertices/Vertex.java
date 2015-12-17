@@ -291,4 +291,14 @@ public class Vertex<LETTER, STATE> {
 	public void setPM(int pm) {
 		this.pm = pm;
 	}
+
+	/**
+	 * Sets the priority of the vertex.
+	 * 
+	 * @param priority
+	 *            The priority to set
+	 */
+	public void setPriority(final int priority) {
+		this.priority = priority;
+	}
 }
