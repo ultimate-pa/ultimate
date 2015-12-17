@@ -41,17 +41,18 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.QuantifierExpression
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 
-public class BoogieConditionWrapper implements IConditionWrapper<Expression> {
-
-	public BoogieConditionWrapper() {
-
-	}
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
+public class BoogieExpressionTransformer implements INormalFormable<Expression> {
 
 	@Override
-	public Collection<? extends Expression> normalizeNesting(Expression formula, Expression subformula) {
+	public Collection<? extends Expression> normalizeNesting(final Expression formula, final Expression subformula) {
 		if (formula instanceof BinaryExpression && subformula instanceof BinaryExpression) {
-			BinaryExpression binExp = (BinaryExpression) formula;
-			BinaryExpression subBinExp = (BinaryExpression) subformula;
+			final BinaryExpression binExp = (BinaryExpression) formula;
+			final BinaryExpression subBinExp = (BinaryExpression) subformula;
 			if (binExp.getOperator().equals(subBinExp.getOperator())) {
 				return getOperands((BinaryExpression) subformula);
 			}
@@ -70,30 +71,30 @@ public class BoogieConditionWrapper implements IConditionWrapper<Expression> {
 	}
 
 	@Override
-	public Expression makeAnd(Expression left, Expression right) {
+	public Expression makeAnd(final Expression left, final Expression right) {
 		if (left.equals(right)) {
 			return left;
 		}
-		ArrayList<Expression> operands = new ArrayList<>(2);
+		final ArrayList<Expression> operands = new ArrayList<>(2);
 		operands.add(left);
 		operands.add(right);
 		return makeBinop(Operator.LOGICAND, operands.iterator());
 	}
 
 	@Override
-	public Expression makeOr(Iterator<Expression> operands) {
+	public Expression makeOr(final Iterator<Expression> operands) {
 		return makeBinop(Operator.LOGICOR, operands);
 	}
 
 	@Override
-	public Expression makeAnd(Iterator<Expression> operands) {
+	public Expression makeAnd(final Iterator<Expression> operands) {
 		return makeBinop(Operator.LOGICAND, operands);
 	}
 
-	private Expression makeBinop(Operator op, Iterator<Expression> operands) {
+	private Expression makeBinop(final Operator op, final Iterator<Expression> operands) {
 		Expression left = null;
 		Expression right = null;
-		Iterator<Expression> unifiedOperandsIterator = unifyOperands(op, operands);
+		final Iterator<Expression> unifiedOperandsIterator = unifyOperands(op, operands);
 		while (unifiedOperandsIterator.hasNext()) {
 			left = right;
 			right = unifiedOperandsIterator.next();
@@ -118,12 +119,12 @@ public class BoogieConditionWrapper implements IConditionWrapper<Expression> {
 		return left;
 	}
 
-	private Iterator<Expression> unifyOperands(Operator op, Iterator<Expression> operands) {
-		LinkedHashSet<Expression> unifiedOperands = new LinkedHashSet<>();
+	private Iterator<Expression> unifyOperands(final Operator op, final Iterator<Expression> operands) {
+		final LinkedHashSet<Expression> unifiedOperands = new LinkedHashSet<>();
 		while (operands.hasNext()) {
-			Expression operand = operands.next();
+			final Expression operand = operands.next();
 			if (operand instanceof BinaryExpression) {
-				BinaryExpression binOperand = (BinaryExpression) operand;
+				final BinaryExpression binOperand = (BinaryExpression) operand;
 				if (binOperand.getOperator().equals(op)) {
 					unifiedOperands.addAll(getOperands(binOperand));
 				} else {
@@ -134,67 +135,53 @@ public class BoogieConditionWrapper implements IConditionWrapper<Expression> {
 			}
 			operands.remove();
 		}
-
-		// System.out.println("Unified for " + op + ": " +
-		// printExpressionCollection(unifiedOperands));
 		return unifiedOperands.iterator();
 	}
 
-	// private String printExpressionCollection(Collection<Expression> exp) {
-	// StringBuilder sb = new StringBuilder();
-	// sb.append("[");
-	// for (Expression e : exp) {
-	// sb.append(BoogiePrettyPrinter.print(e)).append(", ");
-	// }
-	// sb.delete(sb.length() - 2, sb.length());
-	// sb.append("]");
-	// return sb.toString();
-	// }
-
 	@Override
-	public Expression makeNot(Expression operand) {
+	public Expression makeNot(final Expression operand) {
 		return new UnaryExpression(operand.getLocation(), UnaryExpression.Operator.LOGICNEG, operand);
 	}
 
 	@Override
-	public Expression getOperand(Expression formula) {
+	public Expression getOperand(final Expression formula) {
 		if (formula instanceof UnaryExpression) {
-			UnaryExpression exp = (UnaryExpression) formula;
+			final UnaryExpression exp = (UnaryExpression) formula;
 			return exp.getExpr();
 		} else if (formula instanceof QuantifierExpression) {
-			QuantifierExpression exp = (QuantifierExpression) formula;
+			final QuantifierExpression exp = (QuantifierExpression) formula;
 			return exp.getSubformula();
 		}
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
-	public Iterator<Expression> getOperands(Expression formula) {
+	public Iterator<Expression> getOperands(final Expression formula) {
 		if (formula instanceof UnaryExpression) {
-			UnaryExpression exp = (UnaryExpression) formula;
-			ArrayList<Expression> rtr = new ArrayList<>(1);
+			final UnaryExpression exp = (UnaryExpression) formula;
+			final ArrayList<Expression> rtr = new ArrayList<>(1);
 			rtr.add(exp.getExpr());
 			return rtr.iterator();
 		} else if (formula instanceof BinaryExpression) {
 			return getOperands((BinaryExpression) formula).iterator();
 		} else if (formula instanceof QuantifierExpression) {
-			QuantifierExpression exp = (QuantifierExpression) formula;
-			ArrayList<Expression> rtr = new ArrayList<>(1);
+			final QuantifierExpression exp = (QuantifierExpression) formula;
+			final ArrayList<Expression> rtr = new ArrayList<>(1);
 			rtr.add(exp.getSubformula());
 			return rtr.iterator();
 		}
 		throw new UnsupportedOperationException();
 	}
 
-	private Collection<Expression> getOperands(BinaryExpression expr) {
-		ArrayDeque<Expression> open = new ArrayDeque<>();
-		LinkedHashSet<Expression> closed = new LinkedHashSet<>();
+	private Collection<Expression> getOperands(final BinaryExpression expr) {
+		final ArrayDeque<Expression> open = new ArrayDeque<>();
+		final LinkedHashSet<Expression> closed = new LinkedHashSet<>();
 		open.add(expr.getLeft());
 		open.add(expr.getRight());
-		Operator currentOp = expr.getOperator();
+		final Operator currentOp = expr.getOperator();
 
 		while (!open.isEmpty()) {
-			Expression current = open.removeLast();
+			final Expression current = open.removeLast();
 			if (current instanceof BinaryExpression) {
 				BinaryExpression candidate = (BinaryExpression) current;
 				if (candidate.getOperator() == currentOp) {
@@ -209,63 +196,63 @@ public class BoogieConditionWrapper implements IConditionWrapper<Expression> {
 	}
 
 	@Override
-	public boolean isAtom(Expression formula) {
+	public boolean isAtom(final Expression formula) {
 		return !isNot(formula) && !isAnd(formula) && !isOr(formula) && !isForall(formula) && !isExists(formula);
 	}
 
 	@Override
-	public boolean isNot(Expression formula) {
+	public boolean isNot(final Expression formula) {
 		if (formula instanceof UnaryExpression) {
-			UnaryExpression unexpr = (UnaryExpression) formula;
+			final UnaryExpression unexpr = (UnaryExpression) formula;
 			return unexpr.getOperator() == UnaryExpression.Operator.LOGICNEG;
 		}
 		return false;
 	}
 
 	@Override
-	public boolean isAnd(Expression formula) {
+	public boolean isAnd(final Expression formula) {
 		if (formula instanceof BinaryExpression) {
-			BinaryExpression binexpr = (BinaryExpression) formula;
+			final BinaryExpression binexpr = (BinaryExpression) formula;
 			return binexpr.getOperator() == Operator.LOGICAND;
 		}
 		return false;
 	}
 
 	@Override
-	public boolean isOr(Expression formula) {
+	public boolean isOr(final Expression formula) {
 		if (formula instanceof BinaryExpression) {
-			BinaryExpression binexpr = (BinaryExpression) formula;
+			final BinaryExpression binexpr = (BinaryExpression) formula;
 			return binexpr.getOperator() == Operator.LOGICOR;
 		}
 		return false;
 	}
 
 	@Override
-	public boolean isExists(Expression formula) {
+	public boolean isExists(final Expression formula) {
 		return formula instanceof QuantifierExpression && !((QuantifierExpression) formula).isUniversal();
 	}
 
 	@Override
-	public boolean isForall(Expression formula) {
+	public boolean isForall(final Expression formula) {
 		return formula instanceof QuantifierExpression && ((QuantifierExpression) formula).isUniversal();
 	}
 
 	@Override
-	public Expression changeForall(Expression oldForAll, Expression operand) {
-		QuantifierExpression old = (QuantifierExpression) oldForAll;
+	public Expression changeForall(final Expression oldForAll, Expression operand) {
+		final QuantifierExpression old = (QuantifierExpression) oldForAll;
 		return new QuantifierExpression(operand.getLocation(), true, old.getTypeParams(), old.getParameters(),
 				old.getAttributes(), operand);
 	}
 
 	@Override
-	public Expression changeExists(Expression oldExists, Expression operand) {
-		QuantifierExpression old = (QuantifierExpression) oldExists;
+	public Expression changeExists(final Expression oldExists, final Expression operand) {
+		final QuantifierExpression old = (QuantifierExpression) oldExists;
 		return new QuantifierExpression(operand.getLocation(), false, old.getTypeParams(), old.getParameters(),
 				old.getAttributes(), operand);
 	}
 
 	@Override
-	public boolean isEqual(Expression one, Expression other) {
+	public boolean isEqual(final Expression one, final Expression other) {
 		if (one == null || other == null) {
 			return false;
 		}
@@ -280,13 +267,13 @@ public class BoogieConditionWrapper implements IConditionWrapper<Expression> {
 	}
 
 	@Override
-	public Expression rewritePredNotEquals(Expression atom) {
+	public Expression rewritePredNotEquals(final Expression atom) {
 		if (atom instanceof BinaryExpression) {
-			BinaryExpression binexp = (BinaryExpression) atom;
+			final BinaryExpression binexp = (BinaryExpression) atom;
 			if (binexp.getOperator() == Operator.COMPNEQ) {
-				Expression left = new BinaryExpression(atom.getLocation(), Operator.COMPLT, binexp.getLeft(),
+				final Expression left = new BinaryExpression(atom.getLocation(), Operator.COMPLT, binexp.getLeft(),
 						binexp.getRight());
-				Expression right = new BinaryExpression(atom.getLocation(), Operator.COMPGT, binexp.getLeft(),
+				final Expression right = new BinaryExpression(atom.getLocation(), Operator.COMPGT, binexp.getLeft(),
 						binexp.getRight());
 				return new BinaryExpression(atom.getLocation(), Operator.LOGICOR, left, right);
 			}
@@ -295,10 +282,10 @@ public class BoogieConditionWrapper implements IConditionWrapper<Expression> {
 	}
 
 	@Override
-	public Expression negatePred(Expression atom) {
+	public Expression negatePred(final Expression atom) {
 		if (atom instanceof BinaryExpression) {
-			BinaryExpression binexp = (BinaryExpression) atom;
-			Operator negatedOp;
+			final BinaryExpression binexp = (BinaryExpression) atom;
+			final Operator negatedOp;
 			switch (binexp.getOperator()) {
 			case ARITHDIV:
 			case ARITHMINUS:
@@ -306,13 +293,13 @@ public class BoogieConditionWrapper implements IConditionWrapper<Expression> {
 			case ARITHMUL:
 			case ARITHPLUS:
 			case BITVECCONCAT:
-				//this is a type error and should not happen
+				// this is a type error and should not happen
 				throw new UnsupportedOperationException("Cannot negate non-boolean terms");
 			case LOGICAND:
 			case LOGICIFF:
 			case LOGICIMPLIES:
 			case LOGICOR:
-				//this is a contract violation and should not happen
+				// this is a contract violation and should not happen
 				throw new UnsupportedOperationException(BoogiePrettyPrinter.print(atom) + " is no predicate");
 			case COMPPO:
 				throw new UnsupportedOperationException("Dont know how to negate partial order");
@@ -339,10 +326,22 @@ public class BoogieConditionWrapper implements IConditionWrapper<Expression> {
 			}
 			return new BinaryExpression(atom.getLocation(), negatedOp, binexp.getLeft(), binexp.getRight());
 		} else if (atom instanceof BooleanLiteral) {
-			BooleanLiteral lit = (BooleanLiteral) atom;
+			final BooleanLiteral lit = (BooleanLiteral) atom;
 			return new BooleanLiteral(lit.getLocation(), !lit.getValue());
+		} else if (atom instanceof UnaryExpression) {
+			final UnaryExpression uexp = (UnaryExpression) atom;
+			switch (uexp.getOperator()) {
+			case ARITHNEGATIVE:
+				throw new UnsupportedOperationException("Cannot negate non-boolean terms");
+			case LOGICNEG:
+				return uexp.getExpr();
+			case OLD:
+				throw new UnsupportedOperationException(BoogiePrettyPrinter.print(atom) + " is no predicate");
+			default:
+				throw new UnsupportedOperationException("Unknown operator");
+			}
 		}
-		//cannot negate anything else
-		return atom;
+		// cannot negate anything else
+		throw new UnsupportedOperationException("Cannot negate " + BoogiePrettyPrinter.print(atom));
 	}
 }

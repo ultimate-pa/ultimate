@@ -30,43 +30,55 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
+ * NormalFormTransformer converts expressions or terms to various other forms (e.g., NNF, DNG, CNF, PNF, etc.). It has
+ * to be used together with {@link INormalFormable}, which provides an interface for, e.g., Boogie or SMT s.t. the
+ * operations here can ignore the specifics of the implementation.
  * 
- * @author dietsch@informatik.uni-freiburg.de
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
-public class ConditionTransformer<E> {
+public class NormalFormTransformer<E> {
 
-	private final IConditionWrapper<E> mWrapper;
+	private final INormalFormable<E> mWrapper;
 
-	public ConditionTransformer(IConditionWrapper<E> wrapper) {
+	public NormalFormTransformer(INormalFormable<E> wrapper) {
 		mWrapper = wrapper;
 	}
 
-	public E toNnf(E condition) {
-		if (condition == null) {
+	/**
+	 * Create negation normal form from parameter.
+	 */
+	public E toNnf(E formula) {
+		if (formula == null) {
 			return null;
 		}
-		if (mWrapper.isAtom(condition)) {
-			return condition;
+		if (mWrapper.isAtom(formula)) {
+			return formula;
 		}
-		E current = condition;
+		E current = formula;
 		current = makeNnf(current);
 		current = simplify(current);
 		return current;
 	}
 
-	public E toDnf(E condition) {
-		if (condition == null) {
+	/**
+	 * Create distributive normal form (DNF) from parameter.
+	 */
+	public E toDnf(E formula) {
+		if (formula == null) {
 			return null;
 		}
-		if (mWrapper.isAtom(condition)) {
-			return condition;
+		if (mWrapper.isAtom(formula)) {
+			return formula;
 		}
-		E current = condition;
+		E current = formula;
 		current = makeNnf(current);
 		current = simplify(current);
 		current = skolemize(current);
@@ -77,7 +89,7 @@ public class ConditionTransformer<E> {
 
 	/**
 	 * <ol>
-	 * <li>Convert formula in NNF.
+	 * <li>Create formula in NNF from parameter.
 	 * <li>Pull negations further in, e.g. convert !(x != y) to (x == y)
 	 * <li>Replace all terms of the form x != y with x < y || x > y
 	 * </ol>
@@ -94,29 +106,29 @@ public class ConditionTransformer<E> {
 		} else if (mWrapper.isNot(formula)) {
 			// because the formula is in NNF, the negation can only be in front
 			// of a term
-			E oper = mWrapper.getOperand(formula);
-			E neg = mWrapper.negatePred(oper);
+			final E oper = mWrapper.getOperand(formula);
+			final E neg = mWrapper.negatePred(oper);
 			if (oper == neg) {
-				//the operand cannot be negated any more 
+				// the operand cannot be negated any more
 				return formula;
 			} else {
-				//the operand was negated
-				return neg;
+				// the operand was negated
+				return mWrapper.rewritePredNotEquals(neg);
 			}
 		} else if (mWrapper.isAnd(formula)) {
-			ArrayDeque<E> operands = new ArrayDeque<>();
-			Iterator<E> iter = mWrapper.getOperands(formula);
+			final Deque<E> operands = new ArrayDeque<>();
+			final Iterator<E> iter = mWrapper.getOperands(formula);
 			while (iter.hasNext()) {
-				E operand = rewriteNotEquals(iter.next());
+				final E operand = rewriteNotEquals(iter.next());
 				iter.remove();
 				operands.addFirst(operand);
 			}
 			return mWrapper.makeAnd(operands.iterator());
 		} else if (mWrapper.isOr(formula)) {
-			ArrayDeque<E> operands = new ArrayDeque<>();
-			Iterator<E> iter = mWrapper.getOperands(formula);
+			final Deque<E> operands = new ArrayDeque<>();
+			final Iterator<E> iter = mWrapper.getOperands(formula);
 			while (iter.hasNext()) {
-				E operand = rewriteNotEquals(iter.next());
+				final E operand = rewriteNotEquals(iter.next());
 				iter.remove();
 				operands.addFirst(operand);
 			}
@@ -126,21 +138,12 @@ public class ConditionTransformer<E> {
 		}
 	}
 
-	private Collection<E> toTermsTopLevel(E formula) {
-		if (formula == null) {
-			return null;
-		}
-
-		ArrayList<E> terms = new ArrayList<>();
-		Iterator<E> iter = mWrapper.getOperands(formula);
-		while (iter.hasNext()) {
-			terms.add(iter.next());
-		}
-		return terms;
-	}
-
-	public Collection<E> toDnfDisjuncts(E condition) {
-		E dnf = toDnf(condition);
+	/**
+	 * Creates distributive normal form (DNF) from parameter, but provides a collection of disjuncts instead of a whole
+	 * new formula.
+	 */
+	public Collection<E> toDnfDisjuncts(E formula) {
+		final E dnf = toDnf(formula);
 		if (dnf == null) {
 			return null;
 		}
@@ -150,21 +153,46 @@ public class ConditionTransformer<E> {
 		return toTermsTopLevel(dnf);
 	}
 
+	/**
+	 * Simplifies formula by absorbing true, false, and, or.
+	 */
+	public E simplify(final E formula) {
+		// TODO: Simplify negations by e.g. converting !(a == b) to (a != b)
+		// TODO: Simplify overlapping and/or, e.g. a && (a || b) -> a
+		if (mWrapper.isAnd(formula) || mWrapper.isOr(formula)) {
+			return simplifyAndOr(formula);
+		}
+		return formula;
+	}
+
+	private Collection<E> toTermsTopLevel(final E formula) {
+		if (formula == null) {
+			return null;
+		}
+
+		final List<E> terms = new ArrayList<>();
+		final Iterator<E> iter = mWrapper.getOperands(formula);
+		while (iter.hasNext()) {
+			terms.add(iter.next());
+		}
+		return terms;
+	}
+
 	private E simplifyDnf(E formula) {
 		formula = simplify(formula);
 		if (!mWrapper.isOr(formula)) {
 			// is singleton, cannot be simpler
 			return formula;
 		}
-		LinkedHashSet<E> result = getSet(mWrapper.getOperands(formula));
+		final Set<E> result = getSet(mWrapper.getOperands(formula));
 
-		Iterator<E> operands = mWrapper.getOperands(formula);
+		final Iterator<E> operands = mWrapper.getOperands(formula);
 		while (operands.hasNext()) {
-			E current = operands.next();
+			final E current = operands.next();
 			result.remove(current);
 
 			boolean add = true;
-			for (E other : result) {
+			for (final E other : result) {
 				if (isSubformula(current, other)) {
 					add = false;
 					break;
@@ -203,7 +231,7 @@ public class ConditionTransformer<E> {
 		}
 
 		// descend
-		Iterator<E> operands = mWrapper.getOperands(root);
+		final Iterator<E> operands = mWrapper.getOperands(root);
 		while (operands.hasNext()) {
 			if (isSubformula(operands.next(), candidate)) {
 				return true;
@@ -214,9 +242,9 @@ public class ConditionTransformer<E> {
 	}
 
 	private boolean isOperandSubset(E root, E candidate) {
-		LinkedHashSet<E> operands = getSet(mWrapper.getOperands(root));
+		final Set<E> operands = getSet(mWrapper.getOperands(root));
+		final Iterator<E> childOperands = mWrapper.getOperands(candidate);
 		boolean isSub = true;
-		Iterator<E> childOperands = mWrapper.getOperands(candidate);
 		while (childOperands.hasNext()) {
 			if (!operands.contains(childOperands.next())) {
 				isSub = false;
@@ -226,24 +254,15 @@ public class ConditionTransformer<E> {
 	}
 
 	private LinkedHashSet<E> getSet(Iterator<E> iter) {
-		LinkedHashSet<E> set = new LinkedHashSet<>();
+		final LinkedHashSet<E> set = new LinkedHashSet<>();
 		while (iter.hasNext()) {
 			set.add(iter.next());
 		}
 		return set;
 	}
 
-	public E simplify(E current) {
-		// TODO: Simplify negations by e.g. converting !(a == b) to (a != b)
-		// TODO: Simplify overlapping and/or, e.g. a && (a || b) -> a
-		if (mWrapper.isAnd(current) || mWrapper.isOr(current)) {
-			current = simplifyAndOr(current);
-		}
-		return current;
-	}
-
 	private E skolemize(E current) {
-		// implement skolemization:
+		// TODO implement skolemization:
 		// 1. unify variables
 		// 2. move quantifiers outward
 		// 3. insert skolem function to eliminate existential quantification
@@ -407,12 +426,12 @@ public class ConditionTransformer<E> {
 		}
 	}
 
-	private E simplifyAndOr(E formula) {
-		E trueTerm = mWrapper.makeTrue();
-		E falseTerm = mWrapper.makeFalse();
-		E neutral, absorbing;
+	private E simplifyAndOr(final E formula) {
+		final E trueTerm = mWrapper.makeTrue();
+		final E falseTerm = mWrapper.makeFalse();
+		final E neutral, absorbing;
 
-		boolean isAnd = mWrapper.isAnd(formula);
+		final boolean isAnd = mWrapper.isAnd(formula);
 
 		if (isAnd) {
 			neutral = trueTerm;
@@ -421,11 +440,11 @@ public class ConditionTransformer<E> {
 			neutral = falseTerm;
 			absorbing = trueTerm;
 		}
-		LinkedHashSet<E> formulas = new LinkedHashSet<E>();
 
-		Iterator<E> iter = mWrapper.getOperands(formula);
+		final LinkedHashSet<E> formulas = new LinkedHashSet<E>();
+		final Iterator<E> iter = mWrapper.getOperands(formula);
 		while (iter.hasNext()) {
-			E f = iter.next();
+			final E f = iter.next();
 
 			if (mWrapper.isEqual(f, neutral)) {
 				continue;
