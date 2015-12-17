@@ -27,6 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -139,7 +140,12 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 
 			// the program state that has to be used to obtain the values of the old scope
 			// (old locals, unmasked globals) is the pre state of the call
-			STATE preCallState = mStateStorage.getCurrentAbstractPreState(((Return) current).getCorrespondingCall());
+			final Call call = ((Return) current).getCorrespondingCall();
+			STATE postCallState = mStateStorage.getCurrentAbstractPostState(call);
+			Collection<STATE> allPres = mStateStorage.getAbstractPreStates(call);
+			STATE preCallState = mStateStorage.getCurrentAbstractPreState(call);
+			
+			assert preCallState != null;
 			// we determine which variables are not needed ...
 			final Map<String, IBoogieVar> toberemoved = new TreeMap<String, IBoogieVar>();
 			for (final Entry<String, IBoogieVar> entry : preCallState.getVariables().entrySet()) {
