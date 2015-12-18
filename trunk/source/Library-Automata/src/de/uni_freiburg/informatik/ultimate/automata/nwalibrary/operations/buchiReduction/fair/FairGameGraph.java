@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchi
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -55,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap3;
-import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 
 /**
@@ -79,6 +79,10 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 	/**
+	 * If it is currently known that there are merge-able states.
+	 */
+	private boolean m_AreThereMergeableStates;
+	/**
 	 * The underlying buechi automaton from which the game graph gets generated.
 	 */
 	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Buechi;
@@ -88,7 +92,6 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * Gets used for example by {@link #hasBuechiTransition(Triple)}.
 	 */
 	private final Set<Triple<STATE, LETTER, STATE>> m_BuechiTransitions;
-
 	/**
 	 * Data structure that stores changes that where made on buechi transitions
 	 * from the perspective of this game graph.<br/>
@@ -97,14 +100,16 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 */
 	private final NestedMap3<STATE, LETTER, STATE, GameGraphChangeType> m_ChangedBuechiTransitionsInverse;
 	/**
+	 * Maintains equivalence classes for every state. The game graph has methods
+	 * that allow to union the classes of states. The data structure is used for
+	 * result generation and indicates states that should be merged, all states
+	 * of an equivalence class then get merged to one state.
+	 */
+	private final UnionFind<STATE> m_EquivalenceClasses;
+	/**
 	 * The logger used by the Ultimate framework.
 	 */
 	private final Logger m_Logger;
-	/**
-	 * Pairs of states from the buechi automaton that can safely be merged.
-	 */
-	private List<Pair<STATE, STATE>> m_StatesToMerge;
-
 	/**
 	 * Transitions that safely can be removed from the buechi automaton.
 	 */
@@ -133,7 +138,10 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		m_Logger = getServiceProvider().getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_ChangedBuechiTransitionsInverse = new NestedMap3<>();
 		m_BuechiTransitions = new HashSet<>();
-		m_StatesToMerge = null;
+		m_EquivalenceClasses = new UnionFind<>();
+		m_AreThereMergeableStates = false;
+		// Since there are often no remove-able transitions we first initiate it
+		// when we actually need it
 		m_TransitionsToRemove = null;
 
 		generateGameGraphFromBuechi();
@@ -395,6 +403,37 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	}
 
 	/**
+	 * Returns if the given states are in the same equivalence class.<br/>
+	 * A equivalence class contains states that where marked as merge-able using
+	 * {@link #markMergeable(Object, Object)}. This is especially useful if for
+	 * example <i>firstState</i> and <i>secondState</i> came into the class with
+	 * <i>thirdState</i> respectively. In this case <i>firstState</i> and
+	 * <i>secondState</i> are also in the same equivalence class and so
+	 * merge-able.
+	 * 
+	 * @param firstState
+	 *            First state
+	 * @param secondState
+	 *            Second state
+	 * @return True if the given states are in the same equivalence class, false
+	 *         if not
+	 * @throws IllegalArgumentException
+	 *             If one or both states are <tt>null</tt>.
+	 */
+	protected boolean areInSameEquivalenceClasses(final STATE firstState, final STATE secondState) {
+		if (firstState == null || secondState == null) {
+			throw new IllegalArgumentException("The given states must not be null.");
+		}
+
+		if (firstState.equals(secondState)) {
+			return true;
+		}
+		Set<STATE> equivalenceClass = m_EquivalenceClasses.getEquivalenceClassMembers(firstState);
+
+		return equivalenceClass != null && equivalenceClass.contains(secondState);
+	}
+
+	/**
 	 * Equalizes two given states to each other by adding transitions so that
 	 * both have the same out- and in-going transitions.
 	 * 
@@ -449,73 +488,87 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	@Override
 	protected INestedWordAutomatonOldApi<LETTER, STATE> generateBuchiAutomatonFromGraph()
 			throws OperationCanceledException {
-		boolean canMerge = m_StatesToMerge != null && !m_StatesToMerge.isEmpty();
-		boolean canRemove = m_TransitionsToRemove != null && !m_TransitionsToRemove.isEmpty();
+		boolean areThereMergeableStates = m_AreThereMergeableStates;
+		boolean areThereRemoveableTransitions = m_TransitionsToRemove != null && !m_TransitionsToRemove.isEmpty();
+		Map<STATE, STATE> input2result = null;
 
 		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<>(getServiceProvider(),
 				m_Buechi.getInternalAlphabet(), null, null, getStateFactory());
 
 		// Merge states
-		// Build equivalence classes for every state
-		UnionFind<STATE> uf = new UnionFind<>();
-		for (STATE state : m_Buechi.getStates()) {
-			uf.makeEquivalenceClass(state);
-		}
-		// Union equivalence classes if states should get merged
-		if (canMerge) {
-			for (Pair<STATE, STATE> pair : m_StatesToMerge) {
-				uf.union(pair.getFirst(), pair.getSecond());
+		if (areThereMergeableStates) {
+			// Calculate initial states
+			Set<STATE> representativesOfInitials = new HashSet<>();
+			for (STATE initialState : m_Buechi.getInitialStates()) {
+				representativesOfInitials.add(m_EquivalenceClasses.find(initialState));
 			}
-		}
+			// Calculate final states
+			Set<STATE> representativesOfFinals = new HashSet<>();
+			for (STATE finalState : m_Buechi.getFinalStates()) {
+				representativesOfFinals.add(m_EquivalenceClasses.find(finalState));
+			}
 
-		// Calculate initial states
-		Set<STATE> representativesOfInitials = new HashSet<>();
-		for (STATE initialState : m_Buechi.getInitialStates()) {
-			representativesOfInitials.add(uf.find(initialState));
-		}
-		// Calculate final states
-		Set<STATE> representativesOfFinals = new HashSet<>();
-		for (STATE finalState : m_Buechi.getFinalStates()) {
-			representativesOfFinals.add(uf.find(finalState));
-		}
+			// If operation was canceled, for example from the
+			// Ultimate framework
+			if (getServiceProvider().getProgressMonitorService() != null
+					&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
+				m_Logger.debug("Stopped in generateBuchiAutomatonFromGraph/state calculation finished");
+				throw new OperationCanceledException(this.getClass());
+			}
 
-		// If operation was canceled, for example from the
-		// Ultimate framework
-		if (getServiceProvider().getProgressMonitorService() != null
-				&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
-			m_Logger.debug("Stopped in generateBuchiAutomatonFromGraph/state calculation finished");
-			throw new OperationCanceledException(this.getClass());
-		}
-
-		// Add states
-		Map<STATE, STATE> input2result = new HashMap<>(m_Buechi.size());
-		for (STATE representative : uf.getAllRepresentatives()) {
-			boolean isInitial = representativesOfInitials.contains(representative);
-			boolean isFinal = representativesOfFinals.contains(representative);
-			Set<STATE> eqClass = uf.getEquivalenceClassMembers(representative);
-			STATE mergedState = getStateFactory().minimize(eqClass);
-			result.addState(isInitial, isFinal, mergedState);
-			for (STATE eqClassMember : eqClass) {
-				input2result.put(eqClassMember, mergedState);
+			// Add states
+			input2result = new HashMap<>(m_Buechi.size());
+			for (STATE representative : m_EquivalenceClasses.getAllRepresentatives()) {
+				boolean isInitial = representativesOfInitials.contains(representative);
+				boolean isFinal = representativesOfFinals.contains(representative);
+				Set<STATE> eqClass = m_EquivalenceClasses.getEquivalenceClassMembers(representative);
+				STATE mergedState = getStateFactory().minimize(eqClass);
+				result.addState(isInitial, isFinal, mergedState);
+				for (STATE eqClassMember : eqClass) {
+					input2result.put(eqClassMember, mergedState);
+				}
+			}
+		} else {
+			// If there is no merge-able state simply
+			// copy the inputed automaton
+			for (STATE state : m_Buechi.getStates()) {
+				boolean isInitial = m_Buechi.isInitial(state);
+				boolean isFinal = m_Buechi.isFinal(state);
+				result.addState(isInitial, isFinal, state);
 			}
 		}
 
 		// Add transitions
 		// for (STATE inputSrc : uf.getAllRepresentatives()) {
 		for (STATE inputSrc : m_Buechi.getStates()) {
-			STATE resultSrc = input2result.get(inputSrc);
 			// TODO Is it correct to only add transitions of representatives?
+			STATE resultSrc;
+			if (areThereMergeableStates) {
+				// Only access field if it was initialized
+				resultSrc = input2result.get(inputSrc);
+			} else {
+				resultSrc = inputSrc;
+			}
 			for (OutgoingInternalTransition<LETTER, STATE> outTrans : m_Buechi.internalSuccessors(inputSrc)) {
 				LETTER a = outTrans.getLetter();
 				STATE inputDest = outTrans.getSucc();
-				STATE resultDest = input2result.get(inputDest);
-				if (canRemove) {
+				STATE resultDest;
+				if (areThereMergeableStates) {
+					// Only access field if it was initialized
+					resultDest = input2result.get(inputDest);
+				} else {
+					resultDest = inputDest;
+				}
+
+				if (areThereRemoveableTransitions) {
 					// Skip edges that should get removed
 					Triple<STATE, LETTER, STATE> transAsTriple = new Triple<>(inputSrc, a, inputDest);
 					if (!m_TransitionsToRemove.contains(transAsTriple)) {
 						result.addInternalTransition(resultSrc, a, resultDest);
 					}
 				} else {
+					// If there is no removable transition simply copy the
+					// inputed automaton
 					result.addInternalTransition(resultSrc, a, resultDest);
 				}
 
@@ -531,7 +584,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		}
 
 		// Remove unreachable states which can occur due to transition removal
-		if (!m_TransitionsToRemove.isEmpty()) {
+		if (areThereRemoveableTransitions) {
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwaReachableStates = new RemoveUnreachable<LETTER, STATE>(
 					getServiceProvider(), result).getResult();
 			return nwaReachableStates;
@@ -577,15 +630,18 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 					throw new OperationCanceledException(this.getClass());
 				}
 			}
+
+			// Generate an equivalence class for every state from
+			// the buechi automaton
+			m_EquivalenceClasses.makeEquivalenceClass(leftState);
 		}
 
 		increaseGlobalInfinity();
 
-		// TODO Can we generate edges at the same time
-		// we generate states?
-
 		// Generate edges
 		for (STATE edgeDest : buechi.getStates()) {
+			// TODO Can we generate edges at the same time
+			// we generate states?
 			for (IncomingInternalTransition<LETTER, STATE> trans : buechi.internalPredecessors(edgeDest)) {
 				for (STATE fixState : buechi.getStates()) {
 					// Duplicator edges q1 -a-> q2 : (x, q1, a) -> (x, q2)
@@ -632,6 +688,60 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 */
 	protected boolean hasBuechiTransition(final Triple<STATE, LETTER, STATE> transition) {
 		return m_BuechiTransitions.contains(transition);
+	}
+
+	/**
+	 * Marks two given states merge-able.<br/>
+	 * This unions the internal equivalence classes of the two given states. The
+	 * equivalence classes indicate which states are merge-able. All states in a
+	 * class get merged to one state.
+	 * 
+	 * @param firstState
+	 *            First state
+	 * @param secondState
+	 *            Second state
+	 * @throws IllegalArgumentException
+	 *             If one or both states do not exist in the buechi automaton.
+	 */
+	protected void markMergeable(final STATE firstState, final STATE secondState) {
+		Set<STATE> allStates = m_Buechi.getStates();
+		if (!allStates.contains(firstState) || !allStates.contains(secondState)) {
+			throw new IllegalArgumentException("The given states must exist in the buechi automaton.");
+		}
+		m_EquivalenceClasses.union(firstState, secondState);
+
+		// There is at least one equivalence class with size greater than one
+		if (!m_AreThereMergeableStates && firstState != secondState) {
+			m_AreThereMergeableStates = true;
+		}
+	}
+
+	/**
+	 * Marks a given transition remove-able.<br/>
+	 * When generating the resulting automaton the marked transitions will be
+	 * left.
+	 * 
+	 * @param src
+	 *            Source of the transition
+	 * @param a
+	 *            Letter of the transition
+	 * @param dest
+	 *            Destination of the transition
+	 * @throws IllegalArgumentException
+	 *             If the given transition does not exist in the buechi
+	 *             automaton.
+	 */
+	protected void markRemoveableTransition(final STATE src, final LETTER a, final STATE dest) {
+		Triple<STATE, LETTER, STATE> transition = new Triple<>(src, a, dest);
+		if (!hasBuechiTransition(transition)) {
+			throw new IllegalArgumentException("The given transition must exist in the buechi automaton.");
+		}
+
+		// Initialize if not already done
+		if (m_TransitionsToRemove == null) {
+			m_TransitionsToRemove = new LinkedList<>();
+		}
+		m_TransitionsToRemove.add(transition);
 	}
 
 	/**
@@ -687,29 +797,5 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		changes.removedBuechiTransition(src, a, dest);
 
 		return changes;
-	}
-
-	/**
-	 * Sets the pairs of states from the buechi automaton that can safely be
-	 * merged.
-	 * 
-	 * @param statesToMerge
-	 *            The pairs of states from the buechi automaton that can safely
-	 *            be merged.
-	 */
-	protected void setStatesToMerge(final List<Pair<STATE, STATE>> statesToMerge) {
-		m_StatesToMerge = statesToMerge;
-	}
-
-	/**
-	 * Sets the transitions that safely can be removed from the buechi
-	 * automaton.
-	 * 
-	 * @param transitionsToRemove
-	 *            The transitions that safely can be removed from the buechi
-	 *            automaton.
-	 */
-	protected void setTransitionsToRemove(final List<Triple<STATE, LETTER, STATE>> transitionsToRemove) {
-		m_TransitionsToRemove = transitionsToRemove;
 	}
 }

@@ -120,7 +120,7 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 *            Strongly Connected Components.
 	 * @param stateFactory
 	 *            The state factory used for creating states.
-	 * @param equivalenceClasses
+	 * @param possibleEquivalentClasses
 	 *            A collection of sets which contains states of the buechi
 	 *            automaton that may be merge-able. States which are not in the
 	 *            same set are definitely not merge-able which is used as an
@@ -131,9 +131,9 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 */
 	public FairDirectSimulation(final IUltimateServiceProvider services,
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
-			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> equivalenceClasses)
+			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses)
 					throws OperationCanceledException {
-		super(services, buechi, useSCCs, stateFactory, equivalenceClasses,
+		super(services, buechi, useSCCs, stateFactory, possibleEquivalentClasses,
 				new FairDirectGameGraph<LETTER, STATE>(services, buechi, stateFactory));
 		m_Buechi = buechi;
 		m_IsCurrentlyDirectSimulation = false;
@@ -156,6 +156,10 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 			// safely merge without validating the change.
 			if (game.isDirectSimulating(game.getSpoilerVertex(firstState, secondState, false))
 					&& game.isDirectSimulating(game.getSpoilerVertex(secondState, firstState, false))) {
+				if (getLogger().isDebugEnabled()) {
+					getLogger().debug("\tAttempted merge for " + firstState + " and " + secondState
+							+ " clearly is possible since they direct simulate each other.");
+				}
 				return null;
 			}
 		}
@@ -179,9 +183,12 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 		if (getGameGraph() instanceof FairDirectGameGraph) {
 			FairDirectGameGraph<LETTER, STATE> game = (FairDirectGameGraph<LETTER, STATE>) getGameGraph();
 			// If invoker direct simulates the destination we can safely remove
-			// the transition
-			// without validating the change.
+			// the transition without validating the change.
 			if (game.isDirectSimulating(game.getSpoilerVertex(dest, invoker, false))) {
+				if (getLogger().isDebugEnabled()) {
+					getLogger().debug("\tAttempted transition removal for " + src + " -" + a + "-> " + dest
+							+ " clearly is possible since invoker " + invoker + " direct simulates " + dest + ".");
+				}
 				return null;
 			}
 		}

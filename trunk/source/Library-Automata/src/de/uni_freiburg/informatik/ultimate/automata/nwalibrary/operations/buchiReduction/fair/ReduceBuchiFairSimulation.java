@@ -481,7 +481,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 * @param useSCCs
 	 *            If the simulation calculation should be optimized using SCC,
 	 *            Strongly Connected Components.
-	 * @param equivalenceClasses
+	 * @param possibleEquivalentClasses
 	 *            A collection of sets which contains states of the buechi
 	 *            automaton that may be merge-able. States which are not in the
 	 *            same set are definitely not merge-able which is used as an
@@ -492,8 +492,8 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 */
 	public ReduceBuchiFairSimulation(final IUltimateServiceProvider services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs,
-			final Collection<Set<STATE>> equivalenceClasses) throws OperationCanceledException {
-		this(services, stateFactory, operand, useSCCs, equivalenceClasses, false);
+			final Collection<Set<STATE>> possibleEquivalentClasses) throws OperationCanceledException {
+		this(services, stateFactory, operand, useSCCs, possibleEquivalentClasses, false);
 	}
 
 	/**
@@ -510,7 +510,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 * @param useSCCs
 	 *            If the simulation calculation should be optimized using SCC,
 	 *            Strongly Connected Components.
-	 * @param equivalenceClasses
+	 * @param possibleEquivalentClasses
 	 *            A collection of sets which contains states of the buechi
 	 *            automaton that may be merge-able. States which are not in the
 	 *            same set are definitely not merge-able which is used as an
@@ -524,10 +524,10 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 */
 	public ReduceBuchiFairSimulation(final IUltimateServiceProvider services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs,
-			final Collection<Set<STATE>> equivalenceClasses, final boolean checkOperationDeeply)
+			final Collection<Set<STATE>> possibleEquivalentClasses, final boolean checkOperationDeeply)
 					throws OperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, checkOperationDeeply,
-				new FairSimulation<>(services, operand, useSCCs, stateFactory, equivalenceClasses));
+				new FairSimulation<>(services, operand, useSCCs, stateFactory, possibleEquivalentClasses));
 	}
 
 	/**

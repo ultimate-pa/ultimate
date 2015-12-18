@@ -111,7 +111,7 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	 * @param useSCCs
 	 *            If the simulation calculation should be optimized using SCC,
 	 *            Strongly Connected Components.
-	 * @param equivalenceClasses
+	 * @param possibleEquivalentClasses
 	 *            A collection of sets which contains states of the buechi
 	 *            automaton that may be merge-able. States which are not in the
 	 *            same set are definitely not merge-able which is used as an
@@ -122,9 +122,10 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	 */
 	public ReduceBuchiFairDirectSimulation(final IUltimateServiceProvider services,
 			final StateFactory<STATE> stateFactory, final INestedWordAutomatonOldApi<LETTER, STATE> operand,
-			final boolean useSCCs, final Collection<Set<STATE>> equivalenceClasses) throws OperationCanceledException {
-		super(services, stateFactory, operand, useSCCs, false,
-				new FairDirectSimulation<LETTER, STATE>(services, operand, useSCCs, stateFactory, equivalenceClasses));
+			final boolean useSCCs, final Collection<Set<STATE>> possibleEquivalentClasses)
+					throws OperationCanceledException {
+		super(services, stateFactory, operand, useSCCs, false, new FairDirectSimulation<LETTER, STATE>(services,
+				operand, useSCCs, stateFactory, possibleEquivalentClasses));
 	}
 
 	/*

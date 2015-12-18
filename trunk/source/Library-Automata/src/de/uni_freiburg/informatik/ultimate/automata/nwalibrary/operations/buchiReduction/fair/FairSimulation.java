@@ -32,7 +32,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -50,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.relation.Quad;
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.util.scc.DefaultStronglyConnectedComponentFactory;
@@ -161,7 +159,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * may be merge-able. States which are not in the same set are definitely
 	 * not merge-able which is used as an optimization for the simulation.
 	 */
-	private final Map<STATE, Set<STATE>> m_EquivalenceClasses;
+	private final Map<STATE, Set<STATE>> m_PossibleEquivalentClasses;
 	/**
 	 * Game graph that is used for simulation calculation.
 	 */
@@ -257,7 +255,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 *            Strongly Connected Components.
 	 * @param stateFactory
 	 *            The state factory used for creating states.
-	 * @param equivalenceClasses
+	 * @param possibleEquivalentClasses
 	 *            A collection of sets which contains states of the buechi
 	 *            automaton that may be merge-able. States which are not in the
 	 *            same set are definitely not merge-able which is used as an
@@ -268,9 +266,9 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 */
 	public FairSimulation(final IUltimateServiceProvider services,
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
-			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> equivalenceClasses)
+			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses)
 					throws OperationCanceledException {
-		this(services, buechi, useSCCs, stateFactory, equivalenceClasses,
+		this(services, buechi, useSCCs, stateFactory, possibleEquivalentClasses,
 				new FairGameGraph<LETTER, STATE>(services, buechi, stateFactory));
 	}
 
@@ -294,7 +292,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 *            Strongly Connected Components.
 	 * @param stateFactory
 	 *            The state factory used for creating states.
-	 * @param equivalenceClasses
+	 * @param possibleEquivalentClasses
 	 *            A collection of sets which contains states of the buechi
 	 *            automaton that may be merge-able. States which are not in the
 	 *            same set are definitely not merge-able which is used as an
@@ -307,13 +305,13 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 */
 	protected FairSimulation(final IUltimateServiceProvider services,
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
-			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> equivalenceClasses,
+			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses,
 			final FairGameGraph<LETTER, STATE> game) throws OperationCanceledException {
 		super(services, useSCCs, stateFactory);
 
 		m_Buechi = buechi;
 		m_Logger = getLogger();
-		m_EquivalenceClasses = processEquivalenceClasses(equivalenceClasses);
+		m_PossibleEquivalentClasses = processEquivalenceClasses(possibleEquivalentClasses);
 		m_pokedFromNeighborSCC = null;
 		m_NotSimulatingNonTrivialVertices = new HashSet<>();
 		m_CurrentChanges = null;
@@ -524,17 +522,17 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	}
 
 	/**
-	 * Processes a given collection of equivalent classes into a data structure
-	 * that has a faster access for single states.
+	 * Processes a given collection of possible equivalent classes into a data
+	 * structure that has a faster access for single states.
 	 * 
-	 * @param equivalenceClasses
+	 * @param possibleEquivalentClasses
 	 *            Collection to process
 	 * @return Data structure with a fast access for state to its equivalent
 	 *         class
 	 */
-	private Map<STATE, Set<STATE>> processEquivalenceClasses(final Collection<Set<STATE>> equivalenceClasses) {
+	private Map<STATE, Set<STATE>> processEquivalenceClasses(final Collection<Set<STATE>> possibleEquivalentClasses) {
 		Map<STATE, Set<STATE>> result;
-		if (equivalenceClasses.isEmpty()) {
+		if (possibleEquivalentClasses.isEmpty()) {
 			result = Collections.emptyMap();
 		} else {
 			result = new HashMap<>();
@@ -542,9 +540,9 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 		// TODO Is the processing necessary or can we get a better data
 		// structure in the constructor?
-		for (Set<STATE> equivalenceClass : equivalenceClasses) {
-			for (STATE state : equivalenceClass) {
-				result.put(state, equivalenceClass);
+		for (Set<STATE> possibleEquivalentClass : possibleEquivalentClasses) {
+			for (STATE state : possibleEquivalentClass) {
+				result.put(state, possibleEquivalentClass);
 			}
 		}
 
@@ -652,17 +650,32 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			throws OperationCanceledException {
 		// Optimize the attempted merge if we have information about equivalence
 		// classes of the states
-		if (!m_EquivalenceClasses.isEmpty()) {
-			Set<STATE> equivalenceClass = m_EquivalenceClasses.get(firstState);
+		if (!m_PossibleEquivalentClasses.isEmpty()) {
+			Set<STATE> equivalenceClass = m_PossibleEquivalentClasses.get(firstState);
 			// If the states are not in the same equivalence class we already
 			// know that the merge can not be possible
 			if (equivalenceClass != null && !equivalenceClass.contains(secondState)) {
-				// XXX Remove print
-				System.out.println("\tAttempted merge " + firstState + ", " + secondState
-						+ " is clearly not possible since equivalence.");
+				if (m_Logger.isDebugEnabled()) {
+					m_Logger.debug("\tAttempted merge for " + firstState + " and " + secondState
+							+ " is clearly not possible since they are in different equivalence classes.");
+				}
+
 				return new FairGameGraphChanges<>();
 			}
 		}
+
+		// If both states are already in the same equivalence class the merge is
+		// guaranteed to success.
+		// This often happens if both states already can be merged with a third
+		// state, then they obviously also can be merged.
+		if (m_Game.areInSameEquivalenceClasses(firstState, secondState)) {
+			if (m_Logger.isDebugEnabled()) {
+				m_Logger.debug("\tAttempted merge for " + firstState + " and " + secondState
+						+ " is clearly possible since they already are in the same equivalence class.");
+			}
+			return null;
+		}
+
 		FairGameGraphChanges<LETTER, STATE> changes = m_Game.equalizeBuechiStates(firstState, secondState);
 
 		return validateChange(changes);
@@ -723,7 +736,6 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 		// Merge states
 		m_AttemptingChanges = true;
-		List<Pair<STATE, STATE>> statesToMerge = new LinkedList<>();
 		Set<SpoilerVertex<LETTER, STATE>> mergeCandidates = mergeCandidates();
 		Set<SpoilerVertex<LETTER, STATE>> noTransitionCandidates = new HashSet<>();
 
@@ -750,8 +762,11 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 				if (m_Logger.isDebugEnabled()) {
 					m_Logger.debug("Attempted merge for " + leftState + " and " + rightState + " was successful.");
 				}
-				statesToMerge.add(new Pair<>(leftState, rightState));
+				// Pass merge to game graph
+				m_Game.markMergeable(leftState, rightState);
 
+				// Pair and mirrored pair are no candidates
+				// for transition removal
 				noTransitionCandidates.add(mergeCandidate);
 				SpoilerVertex<LETTER, STATE> mirroredCandidate = m_Game.getSpoilerVertex(rightState, leftState, false);
 				if (mirroredCandidate != null) {
@@ -769,7 +784,6 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		}
 
 		// Remove redundant transitions
-		List<Triple<STATE, LETTER, STATE>> transitionsToRemove = new LinkedList<>();
 		HashSet<Quad<STATE, LETTER, STATE, STATE>> transitionCandidates = transitionCandidates(noTransitionCandidates);
 
 		if (m_Logger.isDebugEnabled()) {
@@ -797,8 +811,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 					m_Logger.debug(
 							"Attempted transition removal for " + src + " -" + a + "-> " + dest + " was successful.");
 				}
-
-				transitionsToRemove.add(new Triple<>(src, a, dest));
+				// Pass removal to game graph
+				m_Game.markRemoveableTransition(src, a, dest);
 			}
 
 			// If operation was canceled, for example from the
@@ -814,10 +828,6 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		if (disabledSCCUsage) {
 			setUseSCCs(true);
 		}
-
-		// Pass states to merge and transitions to remove
-		m_Game.setStatesToMerge(statesToMerge);
-		m_Game.setTransitionsToRemove(transitionsToRemove);
 
 		// Generate the resulting automata
 		m_Logger.debug("Generating the result automaton...");
