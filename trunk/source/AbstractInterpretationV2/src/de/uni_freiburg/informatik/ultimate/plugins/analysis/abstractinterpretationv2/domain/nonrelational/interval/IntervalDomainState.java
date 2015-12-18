@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -529,6 +530,35 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 		}
 
 		return ret;
+	}
+
+	/**
+	 * Sets all variables, booleans, or arrays to &top;, that are specified in the corresponding parameters.
+	 * 
+	 * @param vars
+	 *            The names of the variables to set to &top;.
+	 * @param bools
+	 *            The names of the booleans to set to &top;.
+	 * @param arrays
+	 *            The names of the arrays to set to &top;.
+	 * @return A new {@link IntervalDomainState} that is the copy of <code>this</code>, where all occurring variables,
+	 *         booleans, and arrays given in the parameters are set to &top;.
+	 */
+	protected IntervalDomainState setVarsToTop(List<String> vars, List<String> bools, List<String> arrays) {
+		final IntervalDomainState returnState = copy();
+
+		for (final String var : vars) {
+			setValueInternally(returnState, var, new IntervalDomainValue());
+		}
+		for (final String bool : bools) {
+			setValueInternally(returnState, bool, new BooleanValue());
+		}
+		for (final String array : arrays) {
+			// TODO: Implement proper handling of arrays.
+			setValueInternally(returnState, array, new IntervalDomainValue());
+		}
+
+		return returnState;
 	}
 
 	@Override

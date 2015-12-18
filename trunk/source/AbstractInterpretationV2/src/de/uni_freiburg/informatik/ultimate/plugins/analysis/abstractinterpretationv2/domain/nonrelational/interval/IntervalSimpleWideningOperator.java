@@ -28,7 +28,15 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map.Entry;
+
+import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 
 /**
  * Implementation of a simple widening operator that just returns a new interval of the form (-&infin; ; &infin;).
@@ -40,7 +48,42 @@ public class IntervalSimpleWideningOperator implements IAbstractStateBinaryOpera
 
 	@Override
 	public IntervalDomainState apply(IntervalDomainState first, IntervalDomainState second) {
-		return new IntervalDomainState();
+		assert first.hasSameVariables(second);
+
+		final List<String> boolsToTop = new ArrayList<>();
+		final List<String> varsToTop = new ArrayList<>();
+		final List<String> arraysToTop = new ArrayList<>();
+
+		for (Entry<String, IBoogieVar> entry : first.getVariables().entrySet()) {
+			final String var = entry.getKey();
+			final IBoogieVar type = entry.getValue();
+
+			if (type.getIType() instanceof PrimitiveType) {
+				final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
+
+				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
+					if (!first.getBooleanValue(var).isEqualTo(second.getBooleanValue(var))) {
+						boolsToTop.add(var);
+					}
+				} else {
+					if (!first.getValue(var).isEqualTo(second.getValue(var))) {
+						varsToTop.add(var);
+					}
+				}
+			} else if (type.getIType() instanceof ArrayType) {
+				// TODO:
+				// We treat Arrays as normal variables for the time being.
+				if (!first.getValue(var).isEqualTo(second.getValue(var))) {
+					arraysToTop.add(var);
+				}
+			} else {
+				if (!first.getValue(var).isEqualTo(second.getValue(var))) {
+					varsToTop.add(var);
+				}
+			}
+		}
+
+		return first.setVarsToTop(varsToTop, boolsToTop, arraysToTop);
 	}
 
 }

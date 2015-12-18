@@ -113,17 +113,12 @@ public class BooleanValue {
 	 * @return <code>true</code> if and only if the value of the other Boolean is equal to the value of
 	 *         <code>this</code>.
 	 */
-	public boolean isEqualTo(Object other) {
+	public boolean isEqualTo(BooleanValue other) {
 		if (other == null) {
 			return false;
 		}
 
-		if (!(other instanceof BooleanValue)) {
-			return false;
-		}
-
-		final BooleanValue o = (BooleanValue) other;
-		return mValue == o.mValue;
+		return mValue == other.mValue;
 	}
 
 	/**
@@ -165,7 +160,7 @@ public class BooleanValue {
 			return new BooleanValue(Value.BOTTOM);
 		}
 
-		if (!equals(other)) {
+		if (!isEqualTo(other)) {
 			return new BooleanValue(Value.TOP);
 		}
 
