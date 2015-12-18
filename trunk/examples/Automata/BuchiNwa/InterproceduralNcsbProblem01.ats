@@ -25,10 +25,12 @@
 
 NestedWordAutomaton dFKV = buchiDifferenceFKV(prg, nwa);
 print(numberOfStates(dFKV));
+print(dFKV);
 NestedWordAutomaton dFKVl = removeNonLiveStates(dFKV);
 print(numberOfStates(dFKVl));
 
 NestedWordAutomaton dNCSB = buchiDifferenceNCSB(prg, nwa);
+print(dNCSB);
 print(numberOfStates(dNCSB));
 NestedWordAutomaton dNCSBl = removeNonLiveStates(dNCSB);
 print(numberOfStates(dNCSBl));
@@ -36,41 +38,41 @@ print(numberOfStates(dNCSBl));
 
 NestedWordAutomaton nwa = (
 	callAlphabet = {"c1" "c2" },
-	internalAlphabet = {"assume true;" "p1" "p2" "assume true;" "fe" "assume !true;" "assume true;" "#res := 0;" "assume true;" "assume !(~x~2 > 0 && ~y~2 > 0);" "assume !!(~x~2 > 0 && ~y~2 > 0);~old_x~3 := ~x~2;~old_y~3 := ~y~2;" },
-	returnAlphabet = {"return;" "return;" },
-	states = {"s2" "honda" "s1" "26#false" "74#(and (<= main_~old_x~3 oldRank0) (<= 1 oldRank0))" "44#unseeded" "47#(and |old(unseeded)| unseeded)" },
-	initialStates = {"44#unseeded" },
-	finalStates = {"honda" "26#false" },
+	internalAlphabet = {"a1" "p1" "p2" "fe" "a2" },
+	returnAlphabet = {"return;" },
+	states = {"s2" "honda" "s1" "u" },
+	initialStates = {"u" },
+	finalStates = {"honda" },
 	callTransitions = {
-		 ("44#unseeded" "c1" "47#(and |old(unseeded)| unseeded)")
-		 ("44#unseeded" "c2" "47#(and |old(unseeded)| unseeded)")
+		 ("u" "c1" "u")
+		 ("u" "c2" "u")
 	},
 	internalTransitions = {
 		 ("s2" "p1" "honda")
-		 ("honda" "assume true;" "s1")
-		 ("s1" "assume !!(~x~2 > 0 && ~y~2 > 0);~old_x~3 := ~x~2;~old_y~3 := ~y~2;" "s2")
-		 ("47#(and |old(unseeded)| unseeded)" "assume true;" "47#(and |old(unseeded)| unseeded)")
-		 ("47#(and |old(unseeded)| unseeded)" "fe" "honda")
+		 ("honda" "a1" "s1")
+		 ("s1" "a2" "s2")
+		 ("u" "a1" "u")
+		 ("u" "fe" "honda")
 	},
 	returnTransitions = {
-		 ("47#(and |old(unseeded)| unseeded)" "44#unseeded" "return;" "44#unseeded")
+		 ("u" "u" "return;" "u")
 	}
 );
 
 NestedWordAutomaton prg = (
 	callAlphabet = {"c1" "c2" },
-	internalAlphabet = {"assume true;" "p1" "p2" "assume true;" "fe" "assume !true;" "assume true;" "#res := 0;" "assume true;" "assume !(~x~2 > 0 && ~y~2 > 0);" "assume !!(~x~2 > 0 && ~y~2 > 0);~old_x~3 := ~x~2;~old_y~3 := ~y~2;" },
-	returnAlphabet = {"return;" "return;" },
-	states = {"l2" "3#mainEXITtrue" "linit3" "l3" "6#mainFINALtrue" "l4" "8#ULTIMATE.initEXITtrue" "9#ULTIMATE.startFINALtrue" "10#ULTIMATE.startEXITtrue" "l1" "linit" "13#L14''true" "linit2" },
+	internalAlphabet = {"a1" "p1" "p2" "a1" "fe"  "a1"  "a1"  "a2" },
+	returnAlphabet = {"return;" },
+	states = {"l2"  "linit3" "l3" "l4"  "l1" "linit" "linit2" },
 	initialStates = {"linit" },
-	finalStates = {"l2" "3#mainEXITtrue" "linit3" "l3" "6#mainFINALtrue" "l4" "8#ULTIMATE.initEXITtrue" "9#ULTIMATE.startFINALtrue" "10#ULTIMATE.startEXITtrue" "l1" "linit" "13#L14''true" "linit2" },
+	finalStates = {"l2"  "linit3" "l3" "l4"  "l1" "linit" "linit2" },
 	callTransitions = {
 		 ("linit3" "c2" "l1")
 		 ("linit" "c1" "linit2")
 	},
 	internalTransitions = {
-		 ("l2" "assume true;" "l3")
-		 ("l3" "assume !!(~x~2 > 0 && ~y~2 > 0);~old_x~3 := ~x~2;~old_y~3 := ~y~2;" "l4")
+		 ("l2" "a1" "l3")
+		 ("l3" "a2" "l4")
 		 ("l4" "p1" "l2")
 		 ("l4" "p2" "l2")
 		 ("l1" "fe" "l2")
