@@ -231,6 +231,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 
 		final List<CodeBlock> trace = new ArrayList<>();
 		final IHeuristic<RCFGNode, RCFGEdge> heuristic = new ErrorPathHeuristic();
+		//TODO: Use a denier that takes the abstract states into account (not allowing empty states)
 		final IEdgeDenier<RCFGEdge> denier = new RcfgEdgeDenier();
 		final AStar<RCFGNode, RCFGEdge> search = new AStar<RCFGNode, RCFGEdge>(
 				mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), start.getSource(), end.getTarget(),

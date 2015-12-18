@@ -43,14 +43,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.NonCoreBooleanS
  * 
  */
 public class PrenexNormalForm extends TermTransformer {
-	private final Script m_Script;
+	private final Script mScript;
 	
-	private final IFreshTermVariableConstructor m_FreshTermVariableConstructor;
+	private final IFreshTermVariableConstructor mFreshTermVariableConstructor;
 
 	public PrenexNormalForm(Script script, 
 			IFreshTermVariableConstructor freshTermVariableConstructor) {
-		m_Script = script;
-		m_FreshTermVariableConstructor = freshTermVariableConstructor;
+		mScript = script;
+		mFreshTermVariableConstructor = freshTermVariableConstructor;
 	}
 
 	@Override
@@ -82,13 +82,13 @@ public class PrenexNormalForm extends TermTransformer {
 	}
 
 	private Term pullQuantifiers(ApplicationTerm appTerm, Term[] newArgs) {
-		QuantifierSequence quantifierSequence = new QuantifierSequence(m_Script);
+		QuantifierSequence quantifierSequence = new QuantifierSequence(mScript);
 		Term[] resultArgs = new Term[newArgs.length];
 		for (int i=0; i<newArgs.length; i++) {
 			Term resultArg = newArgs[i];
-			resultArgs[i] = quantifierSequence.extractQuantifiers(resultArg, true, m_FreshTermVariableConstructor);
+			resultArgs[i] = quantifierSequence.extractQuantifiers(resultArg, true, mFreshTermVariableConstructor);
 		}
-		Term resultBody = m_Script.term(appTerm.getFunction().getName(), resultArgs);
+		Term resultBody = mScript.term(appTerm.getFunction().getName(), resultArgs);
 		Term result = quantifierSequence.prependQuantifierSequence(resultBody);
 		return result;
 	}
@@ -105,8 +105,4 @@ public class PrenexNormalForm extends TermTransformer {
 //		setResult(result);
 //		throw new UnsupportedOperationException("not yet implemented: annotations");
 	}
-	
-	
-
-
 }

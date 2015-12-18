@@ -35,6 +35,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
@@ -115,6 +116,10 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	private final HashSet<SpoilerVertex<LETTER, STATE>> m_SpoilerVertices;
 	/**
+	 * State factory used for state creation.
+	 */
+	private final StateFactory<STATE> m_StateFactory;
+	/**
 	 * Data structure that allows a fast access to successors of a given vertex
 	 * in the game graph.
 	 */
@@ -126,9 +131,12 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * 
 	 * @param services
 	 *            Service provider of Ultimate framework
+	 * @param stateFactory
+	 *            State factory used for state creation
 	 */
-	public AGameGraph(final IUltimateServiceProvider services) {
+	public AGameGraph(final IUltimateServiceProvider services, final StateFactory<STATE> stateFactory) {
 		m_Services = services;
+		m_StateFactory = stateFactory;
 		m_DuplicatorVertices = new HashSet<>();
 		m_SpoilerVertices = new HashSet<>();
 		m_Successors = new HashMap<>();
@@ -208,6 +216,22 @@ public abstract class AGameGraph<LETTER, STATE> {
 		} else {
 			return null;
 		}
+	}
+
+	/**
+	 * Gets the priority of a given vertex.
+	 * 
+	 * @param vertex
+	 *            The vertex of interest
+	 * @return The priority of the given vertex
+	 * @throws IllegalArgumentException
+	 *             If the given vertex is <tt>null</tt>.
+	 */
+	public int getPriority(Vertex<LETTER, STATE> vertex) {
+		if (vertex == null) {
+			throw new IllegalArgumentException("The given vertex must not be null.");
+		}
+		return vertex.getPriority();
 	}
 
 	/**
@@ -324,13 +348,13 @@ public abstract class AGameGraph<LETTER, STATE> {
 		result.append(lineSeparator + "\tSpoilerVertices = {");
 		for (SpoilerVertex<LETTER, STATE> vertex : getSpoilerVertices()) {
 			result.append(lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + "), p:"
-					+ vertex.getPriority() + ">");
+					+ getPriority(vertex) + ">");
 		}
 		result.append(lineSeparator + "\t},");
 		result.append(lineSeparator + "\tDuplicatorVertices = {");
 		for (DuplicatorVertex<LETTER, STATE> vertex : getDuplicatorVertices()) {
 			result.append(lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + ", " + vertex.getLetter()
-					+ "), p:" + vertex.getPriority() + ">");
+					+ "), p:" + getPriority(vertex) + ">");
 		}
 		result.append(lineSeparator + "\t},");
 
@@ -505,6 +529,15 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	protected IUltimateServiceProvider getServiceProvider() {
 		return m_Services;
+	}
+
+	/**
+	 * Gets the state factory used for state creation.
+	 * 
+	 * @return The state factory used for state creation
+	 */
+	protected StateFactory<STATE> getStateFactory() {
+		return m_StateFactory;
 	}
 
 	/**

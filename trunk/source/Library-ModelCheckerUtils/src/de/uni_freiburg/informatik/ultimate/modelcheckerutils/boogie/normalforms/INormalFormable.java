@@ -31,12 +31,12 @@ import java.util.Collection;
 import java.util.Iterator;
 
 /**
+ * Describes an decorator that provides an input for {@link NormalFormTransformer}.
  * 
  * @author dietsch@informatik.uni-freiburg.de
- * 
  * @param <E>
  */
-public interface IConditionWrapper<E> {
+public interface INormalFormable<E> {
 
 	E changeForall(E oldForAll, E operand);
 
@@ -57,9 +57,9 @@ public interface IConditionWrapper<E> {
 	E makeNot(E operand);
 
 	E getOperand(E formula);
-	
+
 	E rewritePredNotEquals(E atom);
-	
+
 	E negatePred(E atom);
 
 	Iterator<E> getOperands(E formula);

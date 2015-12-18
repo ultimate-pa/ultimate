@@ -95,6 +95,10 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 						true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_TryTwofoldRefinement,
 						true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<AutomataMinimization>(LABEL_AutomataMinimization,
+						DEF_AutomataMinimization,
+						PreferenceType.Combo,
+						AutomataMinimization.values()),
 		};
 	}
 
@@ -131,6 +135,8 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String DEF_DumpPath = "";
 	public static final String LABEL_TermcompProof = "Construct termination proof for TermComp";
 	public static final String LABEL_Simplify = "Try to simplify termination arguments";
+	public static final String LABEL_AutomataMinimization = "Automata minimization";
+	private static final AutomataMinimization DEF_AutomataMinimization = AutomataMinimization.MinimizeSevpa;
 	/**
 	 * If true we check if the loop is terminating even if the stem or
 	 * the concatenation of stem and loop are already infeasible.
@@ -140,5 +146,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_TryTwofoldRefinement = "Try twofold refinement";
 	
 	public enum BInterpolantAutomaton { LassoAutomaton, EagerNondeterminism, ScroogeNondeterminism, Deterministic, Staged, TabaRankBased, TabaBlast, StagedBlast };
+	
+	public enum AutomataMinimization { None, MinimizeSevpa, ShrinkNwa, DelayedSimulation, FairSimulation_WithSCC, FairSimulation_WithoutSCC, FairDirectSimulation };
 	
 }

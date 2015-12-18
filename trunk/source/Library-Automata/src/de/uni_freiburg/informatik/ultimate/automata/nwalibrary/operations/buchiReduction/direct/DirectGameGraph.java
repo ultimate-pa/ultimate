@@ -90,7 +90,8 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 	 *            The underlying buechi automaton from which the game graph gets
 	 *            generated.
 	 * @param stateFactory
-	 *            The state factory used for creating states.
+	 *            State factory used for state creation The state factory used
+	 *            for creating states.
 	 * @throws OperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
@@ -98,7 +99,7 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 	public DirectGameGraph(final IUltimateServiceProvider services,
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final StateFactory<STATE> stateFactory)
 					throws OperationCanceledException {
-		super(services);
+		super(services, stateFactory);
 		m_Buechi = buechi;
 		m_Logger = getServiceProvider().getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_StateFactory = stateFactory;

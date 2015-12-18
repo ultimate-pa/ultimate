@@ -28,11 +28,10 @@
 package de.uni_freiburg.informatik.ultimatetest.summaries;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.Comparator;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
@@ -114,13 +113,20 @@ public class StandingsSummary extends NewTestSummary {
 			tcse2input.addPair(tcs, urd.getInput());
 		}
 		
+		// sort by TCS strings
+		TreeMap<String, Integer> tcs2amount = new TreeMap<>();
 		for (TCS tcs : tcse2input.getDomain()) {
 			Set<File> inputFiles = tcse2input.getImage(tcs);
-			sb.append(inputFiles.size());
+			String tcsString = String.valueOf(tcs);
+			tcs2amount.put(tcsString, inputFiles.size());
+		}
+		
+		for (Entry<String, Integer> entry : tcs2amount.entrySet()) {
+			sb.append(entry.getValue());
 			sb.append(" times ");
 			sb.append(resultCategory);
 			sb.append(" with the ");
-			sb.append(tcs);
+			sb.append(entry.getKey());
 			sb.append(" toolchain/settings pair.");
 			sb.append(System.lineSeparator());
 		}

@@ -68,7 +68,7 @@ public class SpoilerVertex<LETTER, STATE> extends Vertex<LETTER, STATE> {
 	 * @param q1
 	 *            The state duplicator is at
 	 */
-	public SpoilerVertex(int priority, boolean b, STATE q0, STATE q1) {
+	public SpoilerVertex(final int priority, final boolean b, final STATE q0, final STATE q1) {
 		super(priority, b, q0, q1);
 	}
 

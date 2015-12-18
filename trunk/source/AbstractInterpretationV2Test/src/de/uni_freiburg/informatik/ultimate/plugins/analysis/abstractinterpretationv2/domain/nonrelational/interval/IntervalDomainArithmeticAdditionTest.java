@@ -33,6 +33,9 @@ import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
 
+/**
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ */
 public class IntervalDomainArithmeticAdditionTest {
 
 	@Test

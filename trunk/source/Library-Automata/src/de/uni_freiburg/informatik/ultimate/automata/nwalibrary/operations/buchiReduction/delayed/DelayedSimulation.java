@@ -98,7 +98,7 @@ public final class DelayedSimulation<LETTER, STATE> extends ASimulation<LETTER, 
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
 		super(services, useSCCs, stateFactory);
 
-		m_Game = new DelayedGameGraph<LETTER, STATE>(services, buechi);
+		m_Game = new DelayedGameGraph<LETTER, STATE>(services, buechi, stateFactory);
 		doSimulation();
 	}
 

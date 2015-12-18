@@ -70,8 +70,8 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 //			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_CMP.epf"),
 
 //			new Triple<>("AbstractInterpretationv2CInline.xml", ALL_C, "ai/AIv2_INT.epf"),
-			new Triple<>("AbstractInterpretationv2C.xml", I, "ai/AIv2_INT.epf"),
-//			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/AIv2_INT.epf"),
+//			new Triple<>("AbstractInterpretationv2C.xml", I, "ai/AIv2_INT.epf"),
+			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/AIv2_INT.epf"),
 
 //			new Triple<>("AbstractInterpretationC.xml", ALL_C, "ai/AI.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/AI.epf"),
@@ -85,7 +85,7 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 
 	private static final String[] INPUT = new String[] {
 			/* ULTIMATE repo */
-			// "examples/programs/abstractInterpretation/",
+			 "examples/programs/abstractInterpretation/",
 			// "examples/programs/abstractInterpretationNoRec/",
 //			 "examples/programs/regression/bpl/",
 //			 "examples/programs/regression/c/",
@@ -106,15 +106,16 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 //			 "examples/svcomp/ssh/",
 			
 			//unsoundness
-			"examples/svcomp/loops/array_false-unreach-call.i",
-			"examples/svcomp/loops/eureka_01_false-unreach-call.i"
+//			"examples/svcomp/loops/array_false-unreach-call.i",
+//			"examples/svcomp/loops/eureka_01_false-unreach-call.i"
+
 	};
 
 	// @formatter:on
 
 	@Override
 	protected long getTimeout() {
-		return 60 * 1000 ;
+		return 60 * 1000  ;
 	}
 
 	@Override

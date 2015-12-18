@@ -55,7 +55,7 @@ public class DuplicatorVertex<LETTER, STATE> extends Vertex<LETTER, STATE> {
 	/**
 	 * The label of the corresponding transition in the buchi automaton.
 	 */
-	private LETTER a;
+	private final LETTER a;
 
 	/**
 	 * Constructs a new duplicator vertex with given representation <b>(q0, q1,
@@ -75,9 +75,37 @@ public class DuplicatorVertex<LETTER, STATE> extends Vertex<LETTER, STATE> {
 	 * @param a
 	 *            The letter spoiler used before
 	 */
-	public DuplicatorVertex(int priority, boolean b, STATE q0, STATE q1, LETTER a) {
+	public DuplicatorVertex(final int priority, final boolean b, final STATE q0, final STATE q1, final LETTER a) {
 		super(priority, b, q0, q1);
 		this.a = a;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#equals(java.lang.Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (!super.equals(obj)) {
+			return false;
+		}
+		if (!(obj instanceof DuplicatorVertex)) {
+			return false;
+		}
+		@SuppressWarnings("rawtypes")
+		DuplicatorVertex other = (DuplicatorVertex) obj;
+		if (a == null) {
+			if (other.a != null) {
+				return false;
+			}
+		} else if (!a.equals(other.a)) {
+			return false;
+		}
+		return true;
 	}
 
 	/**
@@ -87,6 +115,19 @@ public class DuplicatorVertex<LETTER, STATE> extends Vertex<LETTER, STATE> {
 	 */
 	public LETTER getLetter() {
 		return a;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = super.hashCode();
+		result = prime * result + ((a == null) ? 0 : a.hashCode());
+		return result;
 	}
 
 	/*
