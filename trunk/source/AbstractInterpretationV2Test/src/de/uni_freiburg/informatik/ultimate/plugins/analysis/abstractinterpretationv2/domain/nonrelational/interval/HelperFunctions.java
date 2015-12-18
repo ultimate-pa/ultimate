@@ -147,6 +147,14 @@ public class HelperFunctions {
 		return computeResult(interval1, interval2, expectedResult, result);
 	}
 
+	protected static boolean computeMergedInterval(IntervalDomainValue interval1, IntervalDomainValue interval2,
+	        IntervalDomainValue expected) {
+
+		final IntervalDomainValue computed = interval1.merge(interval2);
+		
+		return computeResult(interval1, interval2, expected, computed);
+	}
+
 	protected static boolean checkInclusion(IntervalDomainValue interval1, IntervalDomainValue interval2) {
 		return interval1.isContainedIn(interval2);
 	}
