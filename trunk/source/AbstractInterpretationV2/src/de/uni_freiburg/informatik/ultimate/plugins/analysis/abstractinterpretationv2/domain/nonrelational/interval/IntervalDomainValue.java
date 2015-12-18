@@ -215,11 +215,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 			return mIsBottom == other.mIsBottom;
 		}
 
-		if (mLower.equals(other.mLower) && mUpper.equals(other.mUpper)) {
-			return true;
-		}
-
-		return false;
+		return mLower.equals(other.mLower) && mUpper.equals(other.mUpper);
 	}
 
 	/**
@@ -433,7 +429,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 			return new IntervalDomainValue(true);
 		}
 
-		if (equals(other)) {
+		if (isEqualTo(other)) {
 			if (isBottom()) {
 				return new IntervalDomainValue(true);
 			} else if (isInfinity()) {
@@ -459,23 +455,23 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		IntervalValue lower;
 		IntervalValue upper;
 
-		if (getLower().isInfinity() || other.getLower().isInfinity()) {
+		if (mLower.isInfinity() || other.mLower.isInfinity()) {
 			lower = new IntervalValue();
 		} else {
-			if (getLower().compareTo(other.getLower()) < 0) {
-				lower = new IntervalValue(getLower().getValue());
+			if (mLower.compareTo(other.mLower) < 0) {
+				lower = new IntervalValue(mLower.getValue());
 			} else {
-				lower = new IntervalValue(other.getLower().getValue());
+				lower = new IntervalValue(other.mLower.getValue());
 			}
 		}
 
-		if (getUpper().isInfinity() || other.getUpper().isInfinity()) {
+		if (mUpper.isInfinity() || other.mUpper.isInfinity()) {
 			upper = new IntervalValue();
 		} else {
-			if (getUpper().compareTo(other.getUpper()) < 0) {
-				upper = new IntervalValue(getUpper().getValue());
+			if (mUpper.compareTo(other.mUpper) < 0) {
+				upper = new IntervalValue(other.mUpper.getValue());
 			} else {
-				upper = new IntervalValue(other.getUpper().getValue());
+				upper = new IntervalValue(mUpper.getValue());
 			}
 		}
 
