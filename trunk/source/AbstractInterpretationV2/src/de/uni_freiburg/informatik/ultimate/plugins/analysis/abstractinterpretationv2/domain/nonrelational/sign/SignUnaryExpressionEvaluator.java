@@ -28,12 +28,13 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
@@ -66,20 +67,27 @@ public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, Sign
 	}
 
 	@Override
-	public IEvaluationResult<Values> evaluate(SignDomainState oldState) {
+	public List<IEvaluationResult<Values>> evaluate(SignDomainState oldState) {
 
-		IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> castedSubEvaluator = (IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar>) mSubEvaluator;
-		final IEvaluationResult<Values> subEvalResult = (IEvaluationResult<Values>) castedSubEvaluator
-		        .evaluate(oldState);
+		final List<IEvaluationResult<Values>> returnList = new ArrayList<>();
 
-		switch (mOperator) {
-		case LOGICNEG:
-			return negateValue(subEvalResult.getResult());
-		case ARITHNEGATIVE:
-			return negateValue(subEvalResult.getResult());
-		default:
-			throw new UnsupportedOperationException("The operator " + mOperator.toString() + " is not implemented.");
+		final List<IEvaluationResult<Values>> subEvalResult = mSubEvaluator.evaluate(oldState);
+
+		for (final IEvaluationResult<Values> res : subEvalResult) {
+			switch (mOperator) {
+			case LOGICNEG:
+				returnList.add(negateValue(res.getResult()));
+				break;
+			case ARITHNEGATIVE:
+				returnList.add(negateValue(res.getResult()));
+				break;
+			default:
+				throw new UnsupportedOperationException(
+				        "The operator " + mOperator.toString() + " is not implemented.");
+			}
 		}
+
+		return returnList;
 	}
 
 	private IEvaluationResult<SignDomainValue.Values> negateValue(SignDomainValue.Values value) {
@@ -115,12 +123,6 @@ public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, Sign
 	@Override
 	public int getArity() {
 		return 1;
-	}
-
-	@Override
-	public BooleanValue booleanValue() {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override

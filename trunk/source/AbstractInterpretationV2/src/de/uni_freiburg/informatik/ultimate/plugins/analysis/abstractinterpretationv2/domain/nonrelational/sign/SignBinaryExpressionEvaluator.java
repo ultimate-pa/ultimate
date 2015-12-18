@@ -28,7 +28,9 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -83,7 +85,9 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 	}
 
 	@Override
-	public IEvaluationResult<Values> evaluate(SignDomainState currentState) {
+	public List<IEvaluationResult<Values>> evaluate(SignDomainState currentState) {
+
+		final List<IEvaluationResult<Values>> returnList = new ArrayList<>();
 
 		for (String var : mLeftSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
@@ -92,48 +96,56 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 			mVariableSet.add(var);
 		}
 
-		final IEvaluationResult<Values> firstResult = mLeftSubEvaluator.evaluate(currentState);
-		final IEvaluationResult<Values> secondResult = mRightSubEvaluator.evaluate(currentState);
+		final List<IEvaluationResult<Values>> firstResult = mLeftSubEvaluator.evaluate(currentState);
+		final List<IEvaluationResult<Values>> secondResult = mRightSubEvaluator.evaluate(currentState);
 
-		switch (mOperator) {
-		// case LOGICIFF:
-		// break;
-		// case LOGICIMPLIES:
-		// break;
-		// case LOGICAND:
-		// break;
-		// case LOGICOR:
-		// break;
-		// case COMPLT:
-		// break;
-		// case COMPGT:
-		// break;
-		// case COMPLEQ:
-		// break;
-		// case COMPGEQ:
-		// break;
-		// case COMPEQ:
-		// break;
-		// case COMPNEQ:
-		// break;
-		// case COMPPO:
-		// break;
-		// case BITVECCONCAT:
-		// break;
-		// case ARITHMUL:
-		// break;
-		// case ARITHDIV:
-		// break;
-		// case ARITHMOD:
-		// break;
-		case ARITHPLUS:
-			return performAddition((IEvaluationResult<Values>) firstResult, (IEvaluationResult<Values>) secondResult);
-		case ARITHMINUS:
-			return performSubtraction((IEvaluationResult<Values>) firstResult,
-			        (IEvaluationResult<Values>) secondResult);
-		default:
-			throw new UnsupportedOperationException("The operator " + mOperator.toString() + " is not implemented.");
+		for (final IEvaluationResult<Values> res1 : firstResult) {
+			for (final IEvaluationResult<Values> res2 : secondResult) {
+				switch (mOperator) {
+				// case LOGICIFF:
+				// break;
+				// case LOGICIMPLIES:
+				// break;
+				// case LOGICAND:
+				// break;
+				// case LOGICOR:
+				// break;
+				// case COMPLT:
+				// break;
+				// case COMPGT:
+				// break;
+				// case COMPLEQ:
+				// break;
+				// case COMPGEQ:
+				// break;
+				// case COMPEQ:
+				// break;
+				// case COMPNEQ:
+				// break;
+				// case COMPPO:
+				// break;
+				// case BITVECCONCAT:
+				// break;
+				// case ARITHMUL:
+				// break;
+				// case ARITHDIV:
+				// break;
+				// case ARITHMOD:
+				// break;
+				case ARITHPLUS:
+					returnList.add(performAddition(res1, res2));
+					break;
+				case ARITHMINUS:
+					returnList.add(performSubtraction(res1, res2));
+					break;
+				default:
+					throw new UnsupportedOperationException(
+					        "The operator " + mOperator.toString() + " is not implemented.");
+				}
+			}
 		}
+
+		return returnList;
 	}
 
 	/**
@@ -362,12 +374,6 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 	@Override
 	public int getArity() {
 		return 2;
-	}
-
-	@Override
-	public BooleanValue booleanValue() {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override

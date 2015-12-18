@@ -97,8 +97,5 @@ public class IntervalDomainValueTest {
 		assertTrue(bottomInterval.isBottom());
 		assertTrue(bottomInterval.getLower() == null);
 		assertTrue(bottomInterval.getUpper() == null);
-
-		IntervalDomainValue normalInterval = new IntervalDomainValue(new IntervalValue(new BigDecimal(1)),
-		        new IntervalValue(new BigDecimal(10)));
 	}
 }

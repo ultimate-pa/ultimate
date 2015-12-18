@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign;
 
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 
 /**
@@ -216,5 +217,11 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values
 		stringBuilder.append("The case for this = ").append(getResult()).append(" and other = ")
 		        .append(other.getResult()).append(" is not implemented.");
 		throw new UnsupportedOperationException(stringBuilder.toString());
+	}
+
+	@Override
+	public BooleanValue getBooleanValue() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
