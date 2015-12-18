@@ -27,8 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction;
 
 /**
- * Types of possible game graph changes,
- * mainly used by {@link GameGraphChanges}.
+ * Types of possible game graph changes, mainly used by
+ * {@link GameGraphChanges}.
  * 
  * @author Daniel Tischner
  *

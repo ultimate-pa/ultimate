@@ -142,7 +142,7 @@ public final class AbstractInterpreter {
 		final RCFGLoopDetector externalLoopDetector = new RCFGLoopDetector(services);
 		externalLoopDetector.process(root);
 
-		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain = selectDomain(symbolTable, services);
+		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain = selectDomain(root, symbolTable, services);
 		runInternal(initials, timer, services, funCreateReporter, predicates, symbolTable, bpl2smt, script,
 				boogieVarTable, externalLoopDetector, domain);
 	}
@@ -157,8 +157,6 @@ public final class AbstractInterpreter {
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		final ITransitionProvider<CodeBlock> transitionProvider = new RcfgTransitionProvider();
 
-		final IVariableProvider<STATE, CodeBlock, IBoogieVar> varProvider = new RcfgVariableProvider<STATE>(symbolTable,
-				boogieVarTable);
 		final ILoopDetector<CodeBlock> loopDetector = new RcfgLoopDetector(externalLoopDetector);
 
 		final Collection<CodeBlock> filteredInitialElements = transitionProvider.filterInitialElements(initials);
@@ -174,6 +172,8 @@ public final class AbstractInterpreter {
 		for (final CodeBlock initial : filteredInitialElements) {
 			final BaseRcfgAbstractStateStorageProvider<STATE> storage = createStorage(services, domain, persist);
 			final IResultReporter<CodeBlock> reporter = funCreateReporter.apply(services, storage);
+			final IVariableProvider<STATE, CodeBlock, IBoogieVar> varProvider = new RcfgVariableProvider<STATE>(
+					symbolTable, boogieVarTable, storage);
 			final FixpointEngine<STATE, CodeBlock, IBoogieVar, ProgramPoint> interpreter = new FixpointEngine<STATE, CodeBlock, IBoogieVar, ProgramPoint>(
 					services, timer, transitionProvider, storage, domain, varProvider, loopDetector, reporter);
 			try {
@@ -206,10 +206,13 @@ public final class AbstractInterpreter {
 		return pa.getSymbolTable();
 	}
 
-	private static IAbstractDomain<?, CodeBlock, IBoogieVar> selectDomain(final BoogieSymbolTable symbolTable,
-			final IUltimateServiceProvider services) {
+	private static IAbstractDomain<?, CodeBlock, IBoogieVar> selectDomain(final RootNode root,
+			final BoogieSymbolTable symbolTable, final IUltimateServiceProvider services) {
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		final String selectedDomain = ups.getString(AbstractInterpretationPreferenceInitializer.LABEL_ABSTRACT_DOMAIN);
+
+		// use the literal collector result if you need it
+		// new LiteralCollector(root).getResult();
 
 		if (EmptyDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new EmptyDomain<>();

@@ -90,7 +90,8 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 	 *            The underlying buechi automaton from which the game graph gets
 	 *            generated.
 	 * @param stateFactory
-	 *            The state factory used for creating states.
+	 *            State factory used for state creation The state factory used
+	 *            for creating states.
 	 * @throws OperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
@@ -98,7 +99,7 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 	public DirectGameGraph(final IUltimateServiceProvider services,
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final StateFactory<STATE> stateFactory)
 					throws OperationCanceledException {
-		super(services);
+		super(services, stateFactory);
 		m_Buechi = buechi;
 		m_Logger = getServiceProvider().getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_StateFactory = stateFactory;
@@ -128,16 +129,19 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 
 			}
 		}
-		// Merge if bisimilar
+		// Merge states if they simulate each other
 		for (STATE state1 : similarStates.getDomain()) {
 			for (STATE state2 : similarStates.getImage(state1)) {
-				uf.union(state1, state2);
+				// Only merge if simulation holds in both directions
+				if (similarStates.containsPair(state2, state1)) {
+					uf.union(state1, state2);
+				}
 			}
 		}
 
 		if (getServiceProvider().getProgressMonitorService() != null
 				&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
-			m_Logger.debug("Stopped in generateBuchiAutomaton/table filled");
+			m_Logger.debug("Stopped in generateBuchiAutomatonFromGraph/table filled");
 			throw new OperationCanceledException(this.getClass());
 		}
 
@@ -171,7 +175,7 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 
 		if (getServiceProvider().getProgressMonitorService() != null
 				&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
-			m_Logger.debug("Stopped in generateBuchiAutomaton/states added to result BA");
+			m_Logger.debug("Stopped in generateBuchiAutomatonFromGraph/states added to result BA");
 			throw new OperationCanceledException(this.getClass());
 		}
 		return result;
@@ -194,7 +198,7 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 
 			if (getServiceProvider().getProgressMonitorService() != null
 					&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
-				m_Logger.debug("Stopped in generateGameGraph/calculating v0 und v1");
+				m_Logger.debug("Stopped in generateGameGraphFromBuechi/calculating v0 und v1");
 				throw new OperationCanceledException(this.getClass());
 			}
 		}
@@ -209,14 +213,14 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 					addDuplicatorVertex(v0e);
 					// V1 -> V0 edges [paper ref 11]
 					for (STATE pred0 : m_Buechi.predInternal(q0, s)) {
-						// TODO: check conditions
+						// Only add edge if duplicator does not directly loose
 						if (!m_Buechi.isFinal(pred0) || m_Buechi.isFinal(q1)) {
 							addEdge(getSpoilerVertex(pred0, q1, false), v0e);
 						}
 					}
 					// V0 -> V1 edges [paper ref 11]
 					for (STATE succ1 : m_Buechi.succInternal(q1, s)) {
-						// TODO: check conditions
+						// Only add edge if duplicator does not directly loose
 						if (!m_Buechi.isFinal(q0) || m_Buechi.isFinal(succ1)) {
 							addEdge(v0e, getSpoilerVertex(q0, succ1, false));
 						}
@@ -226,7 +230,7 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 
 			if (getServiceProvider().getProgressMonitorService() != null
 					&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
-				m_Logger.debug("Stopped in generateGameGraph/calculating v0 und v1");
+				m_Logger.debug("Stopped in generateGameGraphFromBuechi/calculating v0 und v1");
 				throw new OperationCanceledException(this.getClass());
 			}
 		}

@@ -28,14 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
-import java.util.Map;
-import java.util.Map.Entry;
-
-import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 
 /**
  * The merge operator for the interval domain.
@@ -49,58 +42,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class IntervalMergeOperator implements IAbstractStateBinaryOperator<IntervalDomainState> {
 
-	/**
-	 * Merges two {@link IntervalState}s, first and second, into one new abstract state. All variables that occur in
-	 * first must also occur in second.
-	 */
 	@Override
 	public IntervalDomainState apply(IntervalDomainState first, IntervalDomainState second) {
 		assert first != null;
 		assert second != null;
 
-		if (!first.hasSameVariables(second)) {
-			throw new UnsupportedOperationException(
-					"Cannot merge the two states as their sets of variables in the states are disjoint.");
-		}
-
-		final IntervalDomainState newState = (IntervalDomainState) first.copy();
-
-		final Map<String, IBoogieVar> variables = first.getVariables();
-		final Map<String, IntervalDomainValue> firstValues = first.getValues();
-		final Map<String, BooleanValue> firstBoolValues = first.getBooleanValues();
-		final Map<String, IntervalDomainValue> secondValues = second.getValues();
-		final Map<String, BooleanValue> secondBoolValues = second.getBooleanValues();
-
-		for (final Entry<String, IBoogieVar> entry : variables.entrySet()) {
-
-			if (entry.getValue().getIType() instanceof PrimitiveType) {
-
-				final PrimitiveType primitiveType = (PrimitiveType) entry.getValue().getIType();
-				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-					final BooleanValue value1 = firstBoolValues.get(entry.getKey());
-					final BooleanValue value2 = secondBoolValues.get(entry.getKey());
-
-					newState.setBooleanValue(entry.getKey(), value1.merge(value2));
-				} else {
-					final IntervalDomainValue value1 = firstValues.get(entry.getKey());
-					final IntervalDomainValue value2 = secondValues.get(entry.getKey());
-
-					newState.setValue(entry.getKey(), value1.merge(value2));
-				}
-			} else if (entry.getValue().getIType() instanceof ArrayType) {
-				// TODO:
-				// Implement better handling of arrays.
-				final IntervalDomainValue value1 = firstValues.get(entry.getKey());
-				final IntervalDomainValue value2 = secondValues.get(entry.getKey());
-
-				newState.setValue(entry.getKey(), value1.merge(value2));
-			} else {
-				final IntervalDomainValue value1 = firstValues.get(entry.getKey());
-				final IntervalDomainValue value2 = secondValues.get(entry.getKey());
-
-				newState.setValue(entry.getKey(), value1.merge(value2));
-			}
-		}
-		return newState;
+		return first.merge(second);
 	}
 }

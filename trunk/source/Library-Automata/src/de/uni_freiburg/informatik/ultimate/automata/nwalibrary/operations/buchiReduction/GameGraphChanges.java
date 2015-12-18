@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -72,10 +73,17 @@ public class GameGraphChanges<LETTER, STATE> {
 	private final HashMap<Vertex<LETTER, STATE>, VertexValueContainer> m_RememberedValues;
 
 	/**
+	 * Stores information about vertices that are either source or destination
+	 * of an changed edges.
+	 */
+	private final HashSet<Vertex<LETTER, STATE>> m_VerticesInvolvedInEdgeChanges;
+
+	/**
 	 * Creates a new game graph changes object with no changes at default.
 	 */
 	public GameGraphChanges() {
 		m_ChangedEdges = new NestedMap2<>();
+		m_VerticesInvolvedInEdgeChanges = new HashSet<>();
 		m_ChangedVertices = new HashMap<>();
 		m_RememberedValues = new HashMap<>();
 	}
@@ -190,27 +198,16 @@ public class GameGraphChanges<LETTER, STATE> {
 	}
 
 	/**
-	 * Returns if the given vertex is the source of an edge that has a <i>change
-	 * entry</i> stored.
+	 * Returns if the given vertex is either the source or destination of an
+	 * edge that has a <i>change entry</i> stored.
 	 * 
 	 * @param vertex
 	 *            Vertex of interest
-	 * @return True if the given vertex is the source of an edge that has a
-	 *         <i>change entry</i> stored, false if not.
+	 * @return True if the given vertex is either the source or destination of
+	 *         an edge that has a <i>change entry</i> stored, false if not.
 	 */
-	public boolean isChangedEdgeSource(final Vertex<LETTER, STATE> vertex) {
-		boolean isChangedEdgeSource = false;
-		Map<Vertex<LETTER, STATE>, GameGraphChangeType> changedMap = m_ChangedEdges.get(vertex);
-		if (changedMap != null) {
-			// Iterate types of all outgoing changed edges
-			for (GameGraphChangeType type : changedMap.values()) {
-				if (type != GameGraphChangeType.NO_CHANGE) {
-					isChangedEdgeSource = true;
-					break;
-				}
-			}
-		}
-		return isChangedEdgeSource;
+	public boolean isVertexInvolvedInEdgeChanges(final Vertex<LETTER, STATE> vertex) {
+		return m_VerticesInvolvedInEdgeChanges.contains(vertex);
 	}
 
 	/**
@@ -238,22 +235,26 @@ public class GameGraphChanges<LETTER, STATE> {
 				.getChangedEdges();
 		for (Triple<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, GameGraphChangeType> changedEdge : changedEdges
 				.entrySet()) {
-			Map<Vertex<LETTER, STATE>, GameGraphChangeType> changedMap = m_ChangedEdges.get(changedEdge.getFirst());
+			Vertex<LETTER, STATE> src = changedEdge.getFirst();
+			Vertex<LETTER, STATE> dest = changedEdge.getSecond();
+			GameGraphChangeType type = changedEdge.getThird();
+
+			Map<Vertex<LETTER, STATE>, GameGraphChangeType> changedMap = m_ChangedEdges.get(src);
 			GameGraphChangeType changeType = null;
 			if (changedMap != null) {
-				changeType = m_ChangedEdges.get(changedEdge.getFirst()).get(changedEdge.getSecond());
+				changeType = m_ChangedEdges.get(src).get(dest);
 			}
 			if (changeType == null || changeType.equals(GameGraphChangeType.NO_CHANGE)) {
 				// Only add edge change if unknown until now
-				m_ChangedEdges.put(changedEdge.getFirst(), changedEdge.getSecond(), changedEdge.getThird());
-			} else if ((changeType == GameGraphChangeType.ADDITION
-					&& changedEdge.getThird() == GameGraphChangeType.REMOVAL)
-					|| (changeType == GameGraphChangeType.REMOVAL
-							&& changedEdge.getThird() == GameGraphChangeType.ADDITION)) {
+				m_ChangedEdges.put(src, dest, type);
+			} else if ((changeType == GameGraphChangeType.ADDITION && type == GameGraphChangeType.REMOVAL)
+					|| (changeType == GameGraphChangeType.REMOVAL && type == GameGraphChangeType.ADDITION)) {
 				// Nullify change if it was added and then
 				// removed or vice versa
-				m_ChangedEdges.remove(changedEdge.getFirst(), changedEdge.getSecond());
+				m_ChangedEdges.remove(src, dest);
 			}
+			m_VerticesInvolvedInEdgeChanges.add(src);
+			m_VerticesInvolvedInEdgeChanges.add(dest);
 		}
 
 		// Merge changed vertices
@@ -460,6 +461,8 @@ public class GameGraphChanges<LETTER, STATE> {
 		} else {
 			m_ChangedEdges.put(src, dest, type);
 		}
+		m_VerticesInvolvedInEdgeChanges.add(src);
+		m_VerticesInvolvedInEdgeChanges.add(dest);
 	}
 
 	/**

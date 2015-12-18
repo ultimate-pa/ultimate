@@ -36,7 +36,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction;
 
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
@@ -104,32 +103,6 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 public abstract class ASimulation<LETTER, STATE> {
 
 	/**
-	 * Calculates the local infinity bound of a given SCC. Which is the number
-	 * of vertices in the SCC that have priority 1, plus one.<br/>
-	 * In contrast to the {@link AGameGraph#getGlobalInfinity() global infinity
-	 * of a game graph} this can be used to locally optimize the simulation
-	 * calculation of a single SCC. This is because we can already be sure that
-	 * we can visit the corresponding vertices infinite times after visiting
-	 * them the local bound often.
-	 * 
-	 * @param scc
-	 *            The SCC to calculate the local infinity for
-	 * @return A, for the SCC, local optimal upper bound for infinity which is
-	 *         the number of vertices in the SCC that have priority 1, plus one.
-	 */
-	protected static <LETTER, STATE> int calculateInfinityOfSCC(
-			final StronglyConnectedComponent<Vertex<LETTER, STATE>> scc) {
-		int localInfinity = 0;
-		for (Vertex<LETTER, STATE> vertex : scc.getNodes()) {
-			if (vertex.getPriority() == 1) {
-				localInfinity++;
-			}
-		}
-		localInfinity++;
-		return localInfinity;
-	}
-
-	/**
 	 * The logger used by the Ultimate framework.
 	 */
 	private final Logger m_Logger;
@@ -158,7 +131,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * If the simulation calculation should be optimized using SCC, Strongly
 	 * Connected Components.
 	 */
-	private final boolean m_UseSCCs;
+	private boolean m_UseSCCs;
 
 	/**
 	 * Comparator that compares two given vertices by their progress measure
@@ -222,6 +195,95 @@ public abstract class ASimulation<LETTER, STATE> {
 		return m_StateFactory;
 	}
 
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+		StringBuilder result = new StringBuilder();
+		String lineSeparator = System.lineSeparator();
+		// Header
+		result.append("SimulationResults sr = (");
+
+		// Properties
+		result.append(lineSeparator + "\tuseSCCs = " + isUsingSCCs());
+		result.append(lineSeparator + "\tglobalInfinity = " + getGameGraph().getGlobalInfinity());
+		if (getResult() != null) {
+			result.append(lineSeparator + "\tbuechi size after = " + getResult().size() + " states");
+		}
+
+		// Progress Measure
+		result.append(lineSeparator + "\tprogress measure = {");
+		for (SpoilerVertex<LETTER, STATE> vertex : getGameGraph().getSpoilerVertices()) {
+			int localInfinity = getGameGraph().getGlobalInfinity();
+			if (isUsingSCCs()) {
+				for (StronglyConnectedComponent<Vertex<LETTER, STATE>> scc : getSccComp().getSCCs()) {
+					if (scc.getNodes().contains(vertex)) {
+						localInfinity = calculateInfinityOfSCC(scc);
+					}
+				}
+			}
+			result.append(lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + "), pm:"
+					+ vertex.getPM(null, getGameGraph().getGlobalInfinity()) + " of " + localInfinity + ">");
+		}
+		for (DuplicatorVertex<LETTER, STATE> vertex : getGameGraph().getDuplicatorVertices()) {
+			int localInfinity = getGameGraph().getGlobalInfinity();
+			if (isUsingSCCs()) {
+				for (StronglyConnectedComponent<Vertex<LETTER, STATE>> scc : getSccComp().getSCCs()) {
+					if (scc.getNodes().contains(vertex)) {
+						localInfinity = calculateInfinityOfSCC(scc);
+					}
+				}
+			}
+			result.append(lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + ", " + vertex.getLetter()
+					+ "), pm:" + vertex.getPM(null, getGameGraph().getGlobalInfinity()) + " of " + localInfinity + ">");
+		}
+		result.append(lineSeparator + "\t},");
+
+		// Best Neighbor Measure
+		result.append(lineSeparator + "\tbest neighbor measure = {");
+		for (SpoilerVertex<LETTER, STATE> vertex : getGameGraph().getSpoilerVertices()) {
+			result.append(lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + "), bnm:"
+					+ vertex.getBEff() + ">");
+		}
+		for (DuplicatorVertex<LETTER, STATE> vertex : getGameGraph().getDuplicatorVertices()) {
+			result.append(lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + ", " + vertex.getLetter()
+					+ "), bnm:" + vertex.getBEff() + ">");
+		}
+		result.append(lineSeparator + "\t},");
+
+		// Neighbor counter
+		result.append(lineSeparator + "\tneighbor counter = {");
+		for (SpoilerVertex<LETTER, STATE> vertex : getGameGraph().getSpoilerVertices()) {
+			result.append(
+					lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + "), nc:" + vertex.getC() + ">");
+		}
+		for (DuplicatorVertex<LETTER, STATE> vertex : getGameGraph().getDuplicatorVertices()) {
+			result.append(lineSeparator + "\t\t<(" + vertex.getQ0() + ", " + vertex.getQ1() + ", " + vertex.getLetter()
+					+ "), nc:" + vertex.getC() + ">");
+		}
+		result.append(lineSeparator + "\t},");
+
+		// Footer
+		result.append(lineSeparator + ");");
+
+		return result.toString();
+	}
+
+	/**
+	 * Adds a given vertex to the working list and updates its own working list
+	 * flag.
+	 * 
+	 * @param vertex
+	 *            Vertex to add
+	 */
+	protected void addVertexToWorkingList(final Vertex<LETTER, STATE> vertex) {
+		m_WorkingList.add(vertex);
+		vertex.setInWL(true);
+	}
+
 	/**
 	 * Calculates the best neighbor measure for a given vertex based on its
 	 * local infinity and its containing SCC.<br/>
@@ -281,7 +343,7 @@ public abstract class ASimulation<LETTER, STATE> {
 		}
 
 		// Decrease the optimum based on the priority
-		return decreaseVector(vertex.getPriority(), optimum, localInfinity);
+		return decreaseVector(getGameGraph().getPriority(vertex), optimum, localInfinity);
 	}
 
 	/**
@@ -309,11 +371,36 @@ public abstract class ASimulation<LETTER, STATE> {
 		// neighbor measure from the perspective of the vertex and its priority
 		int counter = 0;
 		for (Vertex<LETTER, STATE> succ : getGameGraph().getSuccessors(vertex))
-			if (decreaseVector(vertex.getPriority(), succ.getPM(scc, getGameGraph().getGlobalInfinity()),
+			if (decreaseVector(getGameGraph().getPriority(vertex), succ.getPM(scc, getGameGraph().getGlobalInfinity()),
 					localInfinity) == vertex.getBEff()) {
 				counter++;
 			}
 		return counter;
+	}
+
+	/**
+	 * Calculates the local infinity bound of a given SCC. Which is the number
+	 * of vertices in the SCC that have priority 1, plus one.<br/>
+	 * In contrast to the {@link AGameGraph#getGlobalInfinity() global infinity
+	 * of a game graph} this can be used to locally optimize the simulation
+	 * calculation of a single SCC. This is because we can already be sure that
+	 * we can visit the corresponding vertices infinite times after visiting
+	 * them the local bound often.
+	 * 
+	 * @param scc
+	 *            The SCC to calculate the local infinity for
+	 * @return A, for the SCC, local optimal upper bound for infinity which is
+	 *         the number of vertices in the SCC that have priority 1, plus one.
+	 */
+	protected int calculateInfinityOfSCC(final StronglyConnectedComponent<Vertex<LETTER, STATE>> scc) {
+		int localInfinity = 0;
+		for (Vertex<LETTER, STATE> vertex : scc.getNodes()) {
+			if (getGameGraph().getPriority(vertex) == 1) {
+				localInfinity++;
+			}
+		}
+		localInfinity++;
+		return localInfinity;
 	}
 
 	/**
@@ -341,7 +428,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *         index is not zero and 0 if it is.
 	 */
 	protected int decreaseVector(final int index, final int vector, final int localInfinity) {
-		// Always return global infinity if above local infinity
+		// Always return global infinity if greater than local infinity
 		if (vector >= localInfinity) {
 			return getGameGraph().getGlobalInfinity();
 		}
@@ -410,50 +497,22 @@ public abstract class ASimulation<LETTER, STATE> {
 		// Initialize working list and the C value of all vertices
 		createWorkingList();
 		if (m_UseSCCs) {
-			HashSet<Vertex<LETTER, STATE>> notDeadEnd = new HashSet<>();
 			for (Vertex<LETTER, STATE> v : scc) {
-				if (v.getPM(scc, globalInfinity) != update(v, localInfinity, scc)) {
-					if (!game.hasSuccessors(v))
-						m_WorkingList.add(v);
-					else
-						notDeadEnd.add(v);
-					v.setInWL(true);
-				}
-				v.setC(calcNghbCounter(v, localInfinity, scc));
+				initWorkingListAndCWithVertex(v, localInfinity, scc);
 			}
-			m_WorkingList.addAll(notDeadEnd);
 		} else {
-			HashSet<Vertex<LETTER, STATE>> notDeadEnd = new HashSet<>();
 			for (DuplicatorVertex<LETTER, STATE> v : game.getDuplicatorVertices()) {
-				if (v.getPM(scc, globalInfinity) != update(v, localInfinity, scc)) {
-					if (!game.hasSuccessors(v))
-						m_WorkingList.add(v);
-					else
-						notDeadEnd.add(v);
-					v.setInWL(true);
-				}
-				if (game.hasSuccessors(v))
-					v.setC(game.getSuccessors(v).size());
+				initWorkingListAndCWithVertex(v, localInfinity, scc);
 			}
 			for (SpoilerVertex<LETTER, STATE> v : game.getSpoilerVertices()) {
-				if (v.getPM(scc, globalInfinity) != update(v, localInfinity, scc)) {
-					if (!game.hasSuccessors(v))
-						m_WorkingList.add(v);
-					else
-						notDeadEnd.add(v);
-					v.setInWL(true);
-				}
-				if (game.hasSuccessors(v))
-					v.setC(game.getSuccessors(v).size());
+				initWorkingListAndCWithVertex(v, localInfinity, scc);
 			}
-			m_WorkingList.addAll(notDeadEnd);
 		}
 
 		// Work through the working list until its empty
 		while (!m_WorkingList.isEmpty()) {
 			// Poll the current working vertex
-			Vertex<LETTER, STATE> v = m_WorkingList.poll();
-			v.setInWL(false);
+			Vertex<LETTER, STATE> v = pollVertexFromWorkingList();
 
 			// Remember old progress measure of the working vertex
 			int t = v.getPM(scc, globalInfinity);
@@ -461,7 +520,7 @@ public abstract class ASimulation<LETTER, STATE> {
 			// Update values of the working vertex
 			v.setBEff(calcBestNghbMeasure(v, localInfinity, scc));
 			v.setC(calcNghbCounter(v, localInfinity, scc));
-			v.setPM(increaseVector(v.getPriority(), v.getBEff(), localInfinity));
+			v.setPM(increaseVector(getGameGraph().getPriority(v), v.getBEff(), localInfinity));
 
 			// Work through its predecessors and possibly add them
 			// to the working list since they may be interested in
@@ -475,18 +534,18 @@ public abstract class ASimulation<LETTER, STATE> {
 				// If the working vertex has increased its progress
 				// measure from the perspective of the predecessor and
 				// its priority
-				if (!w.isInWL()
-						&& decreaseVector(w.getPriority(), v.getPM(scc, globalInfinity), localInfinity) > w.getBEff()) {
+				if (!w.isInWL() && decreaseVector(getGameGraph().getPriority(w), v.getPM(scc, globalInfinity),
+						localInfinity) > w.getBEff()) {
 					// A Duplicator vertex is only interested in an increased
 					// progress measure if the working vertex was its
 					// best choice previously and it has no better
 					// alternative now
-					if (w.isDuplicatorVertex() && decreaseVector(w.getPriority(), t, localInfinity) == w.getBEff()) {
+					if (w.isDuplicatorVertex()
+							&& decreaseVector(getGameGraph().getPriority(w), t, localInfinity) == w.getBEff()) {
 						if (w.getC() == 1) {
 							// It has no better alternative,
 							// adding to working list
-							m_WorkingList.add(w);
-							w.setInWL(true);
+							addVertexToWorkingList(w);
 						}
 						if (w.getC() > 1) {
 							// It has a better alternative, reducing number of
@@ -497,8 +556,7 @@ public abstract class ASimulation<LETTER, STATE> {
 					} else if (w.isSpoilerVertex()) {
 						// A Spoiler vertex is always interested in an increased
 						// progress measure
-						m_WorkingList.add(w);
-						w.setInWL(true);
+						addVertexToWorkingList(w);
 					}
 				}
 			}
@@ -541,6 +599,15 @@ public abstract class ASimulation<LETTER, STATE> {
 	}
 
 	/**
+	 * Gets the used service provider of the Ultimate framework.
+	 * 
+	 * @return The used service provider of the Ultimate framework.
+	 */
+	protected IUltimateServiceProvider getServiceProvider() {
+		return m_Services;
+	}
+
+	/**
 	 * Gets the current working list of the simulation.
 	 * 
 	 * @return The current working list of the simulation.
@@ -569,19 +636,57 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *         it is one.
 	 */
 	protected int increaseVector(final int index, final int vector, final int localInfinity) {
-		// Always return global infinity if above local infinity
+		// Always return global infinity if greater than local infinity
 		if (vector >= localInfinity) {
 			return getGameGraph().getGlobalInfinity();
 		}
 		if (index == 1) {
 			int tempVector = vector + 1;
-			// Always return global infinity if above local infinity
+			// Always return global infinity if greater than local infinity
 			if (tempVector == localInfinity) {
 				return getGameGraph().getGlobalInfinity();
 			}
 			return tempVector;
 		} else {
 			return decreaseVector(index, vector, localInfinity);
+		}
+	}
+
+	/**
+	 * Initializes a given vertex for the current simulation calculation by
+	 * possibly adding it to the working list and initializing its values.<br/>
+	 * Used by {@link #initSimulation(int, Set)}.
+	 * 
+	 * @param vertex
+	 *            Vertex to initialize
+	 * @param localInfinity
+	 *            The local infinity bound of the used SCC or global infinity if
+	 *            not used
+	 * @param scc
+	 *            The currently for simulation used SCC or <tt>null</tt> if not
+	 *            used
+	 */
+	protected void initWorkingListAndCWithVertex(final Vertex<LETTER, STATE> vertex, final int localInfinity,
+			final Set<Vertex<LETTER, STATE>> scc) {
+		boolean isDeadEnd = !getGameGraph().hasSuccessors(vertex);
+		boolean doesChangeWithUpdate = vertex.getPM(scc, getGameGraph().getGlobalInfinity()) != update(vertex,
+				localInfinity, scc);
+
+		// Possibly add vertex to working list
+		if (isDeadEnd || doesChangeWithUpdate) {
+			addVertexToWorkingList(vertex);
+		}
+
+		// Initialize C value of vertex
+		if (m_UseSCCs) {
+			vertex.setC(calcNghbCounter(vertex, localInfinity, scc));
+		} else {
+			if (getGameGraph().hasSuccessors(vertex)) {
+				vertex.setC(getGameGraph().getSuccessors(vertex).size());
+			} else {
+				vertex.setC(0);
+			}
+
 		}
 	}
 
@@ -594,6 +699,20 @@ public abstract class ASimulation<LETTER, STATE> {
 	 */
 	protected boolean isUsingSCCs() {
 		return m_UseSCCs;
+	}
+
+	/**
+	 * Retrieves and removes the head of the working list. Also updates the
+	 * working list flag of the vertex.
+	 * 
+	 * @return The head of the working list, or <tt>null</tt> if it is empty.
+	 */
+	protected Vertex<LETTER, STATE> pollVertexFromWorkingList() {
+		Vertex<LETTER, STATE> polledVertex = m_WorkingList.poll();
+		if (polledVertex != null) {
+			polledVertex.setInWL(false);
+		}
+		return polledVertex;
 	}
 
 	/**
@@ -621,6 +740,18 @@ public abstract class ASimulation<LETTER, STATE> {
 	}
 
 	/**
+	 * Sets if the simulation calculation should be optimized using SCC,
+	 * Strongly Connected Components or not.
+	 * 
+	 * @param useSCCs
+	 *            True if the simulation calculation gets optimized by using
+	 *            SCC, false if not.
+	 */
+	protected void setUseSCCs(final boolean useSCCs) {
+		m_UseSCCs = useSCCs;
+	}
+
+	/**
 	 * Calculates the progress measure of a given vertex by trying to increase
 	 * it, based on its best neighbor measure and priority.<br/>
 	 * If the returned value has increased the vertex can make a better move
@@ -636,6 +767,6 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * @return The possible increased progress measure
 	 */
 	protected int update(final Vertex<LETTER, STATE> v, final int localInfinity, final Set<Vertex<LETTER, STATE>> scc) {
-		return increaseVector(v.getPriority(), calcBestNghbMeasure(v, localInfinity, scc), localInfinity);
+		return increaseVector(getGameGraph().getPriority(v), calcBestNghbMeasure(v, localInfinity, scc), localInfinity);
 	}
 }

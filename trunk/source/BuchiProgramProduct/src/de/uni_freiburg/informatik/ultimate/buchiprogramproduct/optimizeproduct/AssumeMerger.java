@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.BoogieConditionWrapper;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.ConditionTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.BoogieExpressionTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.NormalFormTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -67,7 +67,7 @@ public class AssumeMerger extends BaseProductOptimizer {
 		mRewriteNotEquals = new UltimatePreferenceStore(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES_REWRITENOTEQUALS);
 		mUseSBE = new UltimatePreferenceStore(Activator.PLUGIN_ID)
-		.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES_SBE);
+				.getBoolean(PreferenceInitializer.OPTIMIZE_SIMPLIFY_ASSUMES_SBE);
 	}
 
 	@Override
@@ -146,7 +146,7 @@ public class AssumeMerger extends BaseProductOptimizer {
 			// them into multiple edges
 			assert newStmts.size() == 1;
 			AssumeStatement stmt = (AssumeStatement) newStmts.get(0);
-			ConditionTransformer<Expression> ct = new ConditionTransformer<>(new BoogieConditionWrapper());
+			NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 
 			Expression formula = stmt.getFormula();
 			if (mRewriteNotEquals) {
@@ -185,10 +185,11 @@ public class AssumeMerger extends BaseProductOptimizer {
 			assumeExpressions.add(stmt.getFormula());
 		}
 
-		BoogieConditionWrapper bcw = new BoogieConditionWrapper();
-		ConditionTransformer<Expression> ct = new ConditionTransformer<>(bcw);
+		BoogieExpressionTransformer bcw = new BoogieExpressionTransformer();
+		NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(bcw);
 		int assumeExprSize = assumeExpressions.size();
-		Collection<Expression> disjuncts = new ArrayList<>(ct.toDnfDisjuncts(bcw.makeAnd(assumeExpressions.iterator())));
+		Collection<Expression> disjuncts = new ArrayList<>(
+				ct.toDnfDisjuncts(bcw.makeAnd(assumeExpressions.iterator())));
 		int disjunctsSize = disjuncts.size();
 
 		if (successiveAssumes.size() > 1) {

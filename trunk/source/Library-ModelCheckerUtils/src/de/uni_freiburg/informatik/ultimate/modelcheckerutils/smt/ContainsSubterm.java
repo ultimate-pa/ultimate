@@ -93,7 +93,7 @@ public class ContainsSubterm extends NonRecursive {
 		}
 		@Override
 		public void walk(NonRecursive walker, QuantifiedFormula term) {
-			throw new UnsupportedOperationException();
+			walker.enqueueWalker(new MyWalker(term.getSubformula()));
 		}
 		@Override
 		public void walk(NonRecursive walker, TermVariable term) {

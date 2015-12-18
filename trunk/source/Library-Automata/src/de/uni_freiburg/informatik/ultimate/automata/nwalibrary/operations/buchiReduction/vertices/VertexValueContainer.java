@@ -48,7 +48,7 @@ public final class VertexValueContainer {
 	 *            The value of interest
 	 * @return True if the value is valid, false if not
 	 */
-	public static boolean isValueValid(int value) {
+	public static boolean isValueValid(final int value) {
 		return value != NO_VALUE;
 	}
 
@@ -61,8 +61,8 @@ public final class VertexValueContainer {
 	 * @throws IllegalArgumentException
 	 *             If the value is equals {@link #NO_VALUE}.
 	 */
-	private static void ensureValueIsValid(int value) {
-		if (value == NO_VALUE) {
+	private static void ensureValueIsValid(final int value) {
+		if (!isValueValid(value)) {
 			throw new IllegalArgumentException("Value must not be equals the internal value for 'NO_VALUE'.");
 		}
 	}
@@ -87,7 +87,9 @@ public final class VertexValueContainer {
 	 * {@link #NO_VALUE}.
 	 */
 	public VertexValueContainer() {
-		this(NO_VALUE, NO_VALUE, NO_VALUE);
+		m_BestNeighborMeasure = NO_VALUE;
+		m_NeighborCounter = NO_VALUE;
+		m_ProgressMeasure = NO_VALUE;
 	}
 
 	/**
@@ -100,7 +102,7 @@ public final class VertexValueContainer {
 	 * @param neighborCounter
 	 *            The neighbor counter
 	 */
-	public VertexValueContainer(int progressMeasure, int bestNeighborMeasure, int neighborCounter) {
+	public VertexValueContainer(final int progressMeasure, final int bestNeighborMeasure, final int neighborCounter) {
 		setProgressMeasure(progressMeasure);
 		setBestNeighborMeasure(bestNeighborMeasure);
 		setNeighborCounter(neighborCounter);
@@ -131,7 +133,7 @@ public final class VertexValueContainer {
 	 * @param bestNeighborMeasure
 	 *            the bestNeighborMeasure to set
 	 */
-	public void setBestNeighborMeasure(int bestNeighborMeasure) {
+	public void setBestNeighborMeasure(final int bestNeighborMeasure) {
 		ensureValueIsValid(bestNeighborMeasure);
 		this.m_BestNeighborMeasure = bestNeighborMeasure;
 	}
@@ -140,7 +142,7 @@ public final class VertexValueContainer {
 	 * @param neighborCounter
 	 *            the NeighborCounter to set
 	 */
-	public void setNeighborCounter(int neighborCounter) {
+	public void setNeighborCounter(final int neighborCounter) {
 		ensureValueIsValid(neighborCounter);
 		this.m_NeighborCounter = neighborCounter;
 	}
@@ -149,7 +151,7 @@ public final class VertexValueContainer {
 	 * @param progressMeasure
 	 *            the progressMeasure to set
 	 */
-	public void setProgressMeasure(int progressMeasure) {
+	public void setProgressMeasure(final int progressMeasure) {
 		ensureValueIsValid(progressMeasure);
 		this.m_ProgressMeasure = progressMeasure;
 	}

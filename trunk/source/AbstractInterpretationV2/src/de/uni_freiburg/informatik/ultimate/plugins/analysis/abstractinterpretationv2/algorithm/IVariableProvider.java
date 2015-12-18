@@ -39,11 +39,41 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public interface IVariableProvider<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
 
 	/**
-	 * Defines global and local variables according to the position of <code>current</code>.
+	 * Defines global and local variables in an {@link IAbstractState} before the execution of action
+	 * <code>current</code>. Will be called if a fresh state has to be filled with variables. <br>
 	 * 
-	 * Assumes state is fresh.
+	 * Note that
+	 * <ul>
+	 * <li>The current frontier is not considered.
+	 * <li>May assume that <code>state</code> is fresh (i.e., <code>{@link IAbstractState#isEmpty()} == true</code>).
+	 * </ul>
+	 * 
+	 * @param current
+	 *            The action that will be executed on <code>state</code>.
+	 * @param state
+	 *            A fresh {@link IAbstractState}.
+	 * @return An {@link IAbstractState} that contains all global and local variables according to the position of
+	 *         <code>current</code> in the program.
 	 */
-	STATE defineVariablesPre(ACTION current, STATE state);
+	STATE defineVariablesBefore(ACTION current, STATE state);
 
-	STATE defineVariablesPost(ACTION current, STATE state);
+	/**
+	 * Should prepare an {@link IAbstractState} with insertion or removal of variables s.t.
+	 * <ul>
+	 * <li>All variables that are still in scope are untouched.
+	 * <li>Fresh variables in the scope are added.
+	 * <li>Variables that are masked by a new scope (i.e., variables with the same name) are removed and replaced by
+	 * fresh variables.
+	 * <li>Variables that are local to an old scope have to be restored.
+	 * <li>Variables that are unmasked by an old scope have to be restored.
+	 * </ul>
+	 * 
+	 * @param current
+	 *            The action that will be executed on <code>state</code>.
+	 * @param state
+	 *            The current {@link IAbstractState}.
+	 * @return An {@link IAbstractState} that contains all variables that are necessary to represent the effects of
+	 *         <code>current</code> and that are visible in the scope after execution of <code>current</code>.
+	 */
+	STATE defineVariablesAfter(ACTION current, STATE state);
 }

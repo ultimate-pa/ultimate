@@ -126,12 +126,20 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	@Override
 	protected Expression processExpression(Expression expr) {
 
+		assert mEvaluatorFactory != null;
+
 		Expression newExpr = null;
 
 		if (expr instanceof BinaryExpression) {
 			newExpr = binaryExpressionHandling((BinaryExpression) expr);
 		} else if (expr instanceof UnaryExpression) {
 			newExpr = unaryExpressionHandling((UnaryExpression) expr);
+		} else if (expr instanceof ArrayStoreExpression) {
+			mExpressionEvaluator.addEvaluator(new IntervalSingletonValueExpressionEvaluator(new IntervalDomainValue()));
+			return expr;
+		} else if (expr instanceof ArrayAccessExpression) {
+			mExpressionEvaluator.addEvaluator(new IntervalSingletonValueExpressionEvaluator(new IntervalDomainValue()));
+			return expr;
 		}
 
 		if (newExpr == null || expr == newExpr) {
@@ -167,23 +175,23 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 			final IntervalDomainValue newValue = result.getResult().getEvaluatedValue();
 
 			if (newValue == null) {
-				mNewState.setBooleanValue(varname, mExpressionEvaluator.getRootEvaluator().booleanValue());
+				mNewState = mNewState.setBooleanValue(varname, mExpressionEvaluator.getRootEvaluator().booleanValue());
 			} else {
 				final IBoogieVar type = mOldState.getVariableType(varname);
 				if (type.getIType() instanceof PrimitiveType) {
 					final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
 
 					if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-						mNewState.setBooleanValue(varname, mExpressionEvaluator.getRootEvaluator().booleanValue());
+						mNewState = mNewState.setBooleanValue(varname, mExpressionEvaluator.getRootEvaluator().booleanValue());
 					} else {
-						mNewState.setValue(varname, newValue);
+						mNewState = mNewState.setValue(varname, newValue);
 					}
 				} else if (type.getIType() instanceof ArrayType) {
 					// TODO:
 					// We treat Arrays as normal variables for the time being.
-					mNewState.setValue(varname, newValue);
+					mNewState = mNewState.setValue(varname, newValue);
 				} else {
-					mNewState.setValue(varname, newValue);
+					mNewState = mNewState.setValue(varname, newValue);
 				}
 			}
 		}
@@ -363,16 +371,16 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 				final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
 
 				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-					mNewState.setBooleanValue(var.getIdentifier(), new BooleanValue());
+					mNewState = mNewState.setBooleanValue(var.getIdentifier(), new BooleanValue());
 				} else {
-					mNewState.setValue(var.getIdentifier(), new IntervalDomainValue());
+					mNewState = mNewState.setValue(var.getIdentifier(), new IntervalDomainValue());
 				}
 			} else if (type.getIType() instanceof ArrayType) {
 				// TODO:
 				// Implement better handling of arrays.
-				mNewState.setValue(var.getIdentifier(), new IntervalDomainValue());
+				mNewState = mNewState.setValue(var.getIdentifier(), new IntervalDomainValue());
 			} else {
-				mNewState.setValue(var.getIdentifier(), new IntervalDomainValue());
+				mNewState = mNewState.setValue(var.getIdentifier(), new IntervalDomainValue());
 			}
 		}
 	}
@@ -415,14 +423,13 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 
 	@Override
 	protected void visit(ArrayStoreExpression expr) {
-		// TODO Implement proper handling of arrays.
-		mExpressionEvaluator.addEvaluator(new IntervalSingletonValueExpressionEvaluator(new IntervalDomainValue()));
+		throw new UnsupportedOperationException("Proper array handling is not implemented.");
 	}
 
 	@Override
 	protected void visit(ArrayAccessExpression expr) {
-		// TODO Implement proper handling of arrays.
-		mExpressionEvaluator.addEvaluator(new IntervalSingletonValueExpressionEvaluator(new IntervalDomainValue()));
+		throw new UnsupportedOperationException("Proper array handling is not implemented.");
 	}
-
+	
+	
 }

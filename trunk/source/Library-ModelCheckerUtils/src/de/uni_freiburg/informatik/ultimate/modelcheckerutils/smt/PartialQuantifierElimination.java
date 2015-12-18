@@ -45,8 +45,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfDer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfIrd;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfTir;
@@ -65,6 +67,7 @@ public class PartialQuantifierElimination {
 	static final boolean USE_TIR = true;
 	static final boolean USE_SOS = true;
 	static final boolean USE_USR = !true;
+	private static boolean m_PushPull = true;
 	
 	
 	/**
@@ -149,16 +152,59 @@ public class PartialQuantifierElimination {
 	 */
 	public static Term quantifier(IUltimateServiceProvider services, Logger logger, Script script, 
 			IFreshTermVariableConstructor freshTermVariableConstructor, int quantifier,
-			TermVariable[] vars, Term body, Term[]... patterns) {
-		Set<TermVariable> varSet = new HashSet<TermVariable>(Arrays.asList(vars));
-		body = elim(script, quantifier, varSet, body, services, logger, freshTermVariableConstructor);
+			final TermVariable[] vars, final Term body, Term[]... patterns) {
+		Set<TermVariable> varSet = constructIntersectionWithFreeVars(vars, body);
 		if (varSet.isEmpty()) {
 			return body;
-		} else {
-			return script.quantifier(quantifier, varSet.toArray(new TermVariable[varSet.size()]), body, patterns);
 		}
-
+		Term elim = body;
+		if (m_PushPull ) {
+			int quantBefore = varSet.size();
+			//		Set<TermVariable> varSet = new HashSet<TermVariable>(Arrays.asList(vars));
+			elim = elimPushPull(script, quantifier, varSet, elim, services, logger, freshTermVariableConstructor);
+			if (elim instanceof QuantifiedFormula) {
+				QuantifiedFormula qf = (QuantifiedFormula) elim;
+				varSet = new HashSet<TermVariable>(Arrays.asList(qf.getVariables()));
+				elim = qf.getSubformula();
+				int quantAfterwards = varSet.size();
+				logger.warn("push-pull eliminated " + (quantBefore-quantAfterwards) + " of " + quantBefore);
+			} else {
+				logger.warn("push-pull eliminated " + quantBefore);
+				return elim;
+			}
+		}
+		elim = elim(script, quantifier, varSet, elim, services, logger, freshTermVariableConstructor);
+		if (varSet.isEmpty()) {
+			return elim;
+		} else {
+			return script.quantifier(quantifier, varSet.toArray(new TermVariable[varSet.size()]), elim, patterns);
+		}
 	}
+	
+	private static Set<TermVariable> constructIntersectionWithFreeVars(TermVariable[] vars, Term term) {
+		Set<TermVariable> freeVars = new HashSet<TermVariable>(Arrays.asList(term.getFreeVars()));
+		Set<TermVariable> occurringVars = new HashSet<>();
+		for (TermVariable tv : vars) {
+			if (freeVars.contains(tv)) {
+				occurringVars.add(tv);
+			}
+		}
+		return occurringVars;
+	}
+
+	public static Term elimPushPull(Script script, int quantifier, final Set<TermVariable> eliminatees, final Term term,
+			IUltimateServiceProvider services, Logger logger, 
+			IFreshTermVariableConstructor freshTermVariableConstructor) {
+		final Term withoutIte = (new IteRemover(script)).transform(term);
+		final Term nnf = new Nnf(script, services, freshTermVariableConstructor).transform(withoutIte); 
+		final Term quantified = script.quantifier(quantifier, eliminatees.toArray(new TermVariable[eliminatees.size()]), nnf);
+		final Term pushed = new QuantifierPusher(script, services, freshTermVariableConstructor).transform(quantified);
+		final Term commu = new CommuhashNormalForm(services, script).transform(pushed);
+		final Term pnf = new Nnf(script, services, freshTermVariableConstructor).transform(pushed);
+		return pnf;
+	}
+
+	
 
 	public static Term elim(Script script, int quantifier, final Set<TermVariable> eliminatees, final Term term,
 			IUltimateServiceProvider services, Logger logger, 

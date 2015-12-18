@@ -42,6 +42,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.LoggerInitializer;
 
+/**
+ * Helper functions for the interval test suite.
+ * 
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ *
+ */
 public class HelperFunctions {
 	protected static IntervalDomainValue createInterval(int lower, int upper) {
 		return new IntervalDomainValue(new IntervalValue(new BigDecimal(lower)),
@@ -63,8 +69,7 @@ public class HelperFunctions {
 		IntervalSingletonValueExpressionEvaluator value2Evaluator = new IntervalSingletonValueExpressionEvaluator(
 		        second);
 
-		IntervalBinaryExpressionEvaluator binaryExpressionEvaluator = new IntervalBinaryExpressionEvaluator(
-		        logger);
+		IntervalBinaryExpressionEvaluator binaryExpressionEvaluator = new IntervalBinaryExpressionEvaluator(logger);
 
 		binaryExpressionEvaluator.setOperator(operator);
 		binaryExpressionEvaluator.addSubEvaluator(value1Evaluator);
@@ -120,7 +125,7 @@ public class HelperFunctions {
 	        IntervalDomainValue expectedResult) {
 
 		final IEvaluationResult<IntervalDomainEvaluationResult> result = createBinaryEvaluator(interval1, interval2,
-		        Operator.ARITHMINUS).evaluate(null);
+		        Operator.ARITHMINUS).evaluate(new IntervalDomainState());
 
 		return computeResult(interval1, interval2, expectedResult, result.getResult().getEvaluatedValue());
 	}
@@ -140,5 +145,17 @@ public class HelperFunctions {
 		final IntervalDomainValue result = interval1.intersect(interval2);
 
 		return computeResult(interval1, interval2, expectedResult, result);
+	}
+
+	protected static boolean computeMergedInterval(IntervalDomainValue interval1, IntervalDomainValue interval2,
+	        IntervalDomainValue expected) {
+
+		final IntervalDomainValue computed = interval1.merge(interval2);
+		
+		return computeResult(interval1, interval2, expected, computed);
+	}
+
+	protected static boolean checkInclusion(IntervalDomainValue interval1, IntervalDomainValue interval2) {
+		return interval1.isContainedIn(interval2);
 	}
 }

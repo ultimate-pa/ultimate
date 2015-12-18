@@ -27,18 +27,19 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -59,45 +60,32 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 			StorageClass.IMPLEMENTATION_INPARAM, StorageClass.IMPLEMENTATION_OUTPARAM };
 	private final BoogieSymbolTable mSymbolTable;
 	private final Boogie2SmtSymbolTable mBoogieVarTable;
+	private final BaseRcfgAbstractStateStorageProvider<STATE> mStateStorage;
 
-	public RcfgVariableProvider(BoogieSymbolTable table, Boogie2SmtSymbolTable boogieVarTable) {
+	public RcfgVariableProvider(final BoogieSymbolTable table, final Boogie2SmtSymbolTable boogieVarTable,
+			final BaseRcfgAbstractStateStorageProvider<STATE> storage) {
 		mSymbolTable = table;
 		mBoogieVarTable = boogieVarTable;
+		mStateStorage = storage;
 	}
 
 	@Override
-	public STATE defineVariablesPre(CodeBlock current, STATE state) {
+	public STATE defineVariablesBefore(final CodeBlock current, final STATE state) {
 		assert current != null;
 		assert state != null;
 		assert state.isEmpty();
 
 		final RCFGNode source = current.getSource();
+		final Map<String, IBoogieVar> vars = new TreeMap<String, IBoogieVar>();
 
-		// first, create a map of the current scope
-		Map<String, IBoogieVar> vars = new HashMap<String, IBoogieVar>();
-
-		// add global variables
-		final Map<String, BoogieNonOldVar> globals = mBoogieVarTable.getGlobals();
-		for (final Entry<String, BoogieNonOldVar> entry : globals.entrySet()) {
-			vars.put(entry.getKey(), entry.getValue());
-		}
-
-		// add global constants
-		final Map<String, BoogieConst> consts = mBoogieVarTable.getConsts();
-		for (final Entry<String, BoogieConst> entry : consts.entrySet()) {
-			vars.put(entry.getKey(), entry.getValue());
-		}
+		vars.putAll(mBoogieVarTable.getGlobals());
+		vars.putAll(mBoogieVarTable.getConsts());
 
 		// add locals if applicable, thereby overriding globals
 		if (source instanceof ProgramPoint) {
-			final ProgramPoint programPoint = (ProgramPoint) source;
-			final String procedure = programPoint.getProcedure();
-
-			final Map<String, Declaration> locals = mSymbolTable.getLocalVariables(procedure);
-			for (final Entry<String, Declaration> local : locals.entrySet()) {
-				final IBoogieVar localVar = getLocalVariable(local.getKey(), procedure);
-				assert localVar != null;
-				vars.put(local.getKey(), localVar);
+			final String procedure = ((ProgramPoint) source).getProcedure();
+			if (procedure != null) {
+				vars.putAll(getLocalVariables(procedure));
 			}
 		}
 
@@ -108,7 +96,7 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 	}
 
 	@Override
-	public STATE defineVariablesPost(CodeBlock current, STATE state) {
+	public STATE defineVariablesAfter(final CodeBlock current, final STATE state) {
 		assert current != null;
 		assert state != null;
 
@@ -117,9 +105,63 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 		// so, only call or return can do this
 
 		if (current instanceof Call) {
+			// if we call we just need to update all local variables, i.e., remove all the ones from the current scope
+			// and add all the ones from the new scope (thus also automatically masking globals)
 			return updateLocals(state, current.getSource(), current.getTarget());
 		} else if (current instanceof Return) {
-			return updateLocals(state, current.getSource(), current.getTarget());
+			// if the action is a return, we have to:
+			// - remove all currently local variables
+			// - keep all unmasked globals
+			// - add old locals from the scope we are returning to
+			// - add globals that were masked by this scope from the scope we are returning to
+
+			final ProgramPoint source = (ProgramPoint) current.getSource();
+			final ProgramPoint target = (ProgramPoint) current.getTarget();
+			final Map<String, IBoogieVar> varsNeededFromOldScope = new HashMap<String, IBoogieVar>();
+
+			if (source.getProcedure() != null) {
+				// we need masked globals from the old scope, so we have to determine which globals are masked
+				varsNeededFromOldScope.putAll(getMaskedGlobalsVariables(source.getProcedure()));
+			}
+			if (target.getProcedure() != null) {
+				// we also need oldlocals from the old scope; if the old scope also masks global variables, this will
+				// mask them again
+				varsNeededFromOldScope.putAll(getLocalVariables(target.getProcedure()));
+			}
+
+			STATE rtr = state;
+			// in any case, we have to remove all local variables from the state
+			rtr = removeLocals(rtr, source.getProcedure());
+
+			if (varsNeededFromOldScope.isEmpty()) {
+				// we do not need information from the old scope, so we are finished
+				return rtr;
+			}
+
+			// the program state that has to be used to obtain the values of the old scope
+			// (old locals, unmasked globals) is the pre state of the call
+			final Call call = ((Return) current).getCorrespondingCall();
+			STATE postCallState = mStateStorage.getCurrentAbstractPostState(call);
+			Collection<STATE> allPres = mStateStorage.getAbstractPreStates(call);
+			STATE preCallState = mStateStorage.getCurrentAbstractPreState(call);
+			
+			assert preCallState != null;
+			// we determine which variables are not needed ...
+			final Map<String, IBoogieVar> toberemoved = new TreeMap<String, IBoogieVar>();
+			for (final Entry<String, IBoogieVar> entry : preCallState.getVariables().entrySet()) {
+				if (!varsNeededFromOldScope.containsKey(entry.getKey())) {
+					toberemoved.put(entry.getKey(), entry.getValue());
+				}
+			}
+
+			if (!toberemoved.isEmpty()) {
+				// ... and remove them if there are any
+				preCallState = preCallState.removeVariables(toberemoved);
+			}
+			// now we combine the state after returning from this method with the one from before we entered the method.
+			rtr = rtr.patch(preCallState);
+			return rtr;
+
 		} else {
 			// nothing changes
 			return state;
@@ -131,30 +173,62 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 		final ProgramPoint add = (ProgramPoint) addNode;
 		STATE rtr = state;
 		rtr = removeLocals(rtr, remove.getProcedure());
-		rtr = addLocals(rtr, add.getProcedure());
+		rtr = addFreshLocals(rtr, add.getProcedure());
 		return rtr;
 	}
 
-	private STATE removeLocals(STATE state, final String procedure) {
-		if (procedure != null) {
-			final Map<String, Declaration> locals = mSymbolTable.getLocalVariables(procedure);
-			for (final Entry<String, Declaration> local : locals.entrySet()) {
-				state = state.removeVariable(local.getKey(), getLocalVariable(local.getKey(), procedure));
-			}
-		}
-		return state;
+	private STATE removeLocals(final STATE state, final String procedure) {
+		return updateLocals(state, procedure, state::removeVariables);
 	}
 
-	private STATE addLocals(STATE state, final String procedure) {
-		if (procedure != null) {
-			final Map<String, Declaration> locals = mSymbolTable.getLocalVariables(procedure);
-			for (final Entry<String, Declaration> local : locals.entrySet()) {
-				final IBoogieVar localVar = getLocalVariable(local.getKey(), procedure);
-				assert localVar != null;
-				state = state.addVariable(local.getKey(), localVar);
+	private STATE addFreshLocals(final STATE state, final String procedure) {
+		return updateLocals(state, procedure, state::addVariables);
+	}
+
+	private STATE updateLocals(final STATE state, final String procedure,
+			final Function<Map<String, IBoogieVar>, STATE> fun) {
+		if (procedure == null) {
+			return state;
+		}
+
+		final Map<String, IBoogieVar> locals = getLocalVariables(procedure);
+		if (locals.isEmpty()) {
+			return state;
+		}
+
+		return fun.apply(locals);
+	}
+
+	private Map<String, IBoogieVar> getMaskedGlobalsVariables(final String procedure) {
+		assert procedure != null;
+		final Map<String, IBoogieVar> globals = new HashMap<String, IBoogieVar>();
+		globals.putAll(mBoogieVarTable.getGlobals());
+		globals.putAll(mBoogieVarTable.getConsts());
+
+		final Map<String, IBoogieVar> locals = new HashMap<String, IBoogieVar>();
+		locals.putAll(getLocalVariables(procedure));
+
+		final Map<String, IBoogieVar> rtr = new TreeMap<String, IBoogieVar>();
+
+		for (final Entry<String, IBoogieVar> local : locals.entrySet()) {
+			if (globals.containsKey(local.getKey())) {
+				rtr.put(local.getKey(), local.getValue());
 			}
 		}
-		return state;
+
+		return rtr;
+	}
+
+	private Map<String, IBoogieVar> getLocalVariables(final String procedure) {
+		assert procedure != null;
+		final Map<String, IBoogieVar> localVars = new TreeMap<>();
+		final Map<String, Declaration> locals = mSymbolTable.getLocalVariables(procedure);
+		for (final Entry<String, Declaration> local : locals.entrySet()) {
+			final IBoogieVar bvar = getLocalVariable(local.getKey(), procedure);
+			assert bvar != null;
+			localVars.put(local.getKey(), bvar);
+		}
+		return localVars;
 	}
 
 	private IBoogieVar getLocalVariable(final String key, final String procedure) {

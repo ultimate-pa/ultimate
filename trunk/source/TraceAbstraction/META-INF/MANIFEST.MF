@@ -10,12 +10,11 @@ Require-Bundle: Library-log4j,
  Library-UltimateUtil,
  UltimateCore,
  de.uni_freiburg.informatik.ultimate.automata,
- de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation,
  SMTInterpol,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  SMTSolverBridge,
  de.uni_freiburg.informatik.ultimate.witnessparser,
- Library-LassoRanker;bundle-version="0.9.5"
+ Library-LassoRanker
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction,
