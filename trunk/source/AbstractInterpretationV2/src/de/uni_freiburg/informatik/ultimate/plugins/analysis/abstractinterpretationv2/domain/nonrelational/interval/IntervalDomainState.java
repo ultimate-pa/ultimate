@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -57,8 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class IntervalDomainState
-        implements IAbstractState<IntervalDomainState, CodeBlock, IBoogieVar>, IEvaluationResult<IntervalDomainState> {
+public class IntervalDomainState implements IAbstractState<IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	private static int sId;
 	private final int mId;
@@ -416,11 +414,6 @@ public class IntervalDomainState
 
 	public IntervalDomainState copy() {
 		return new IntervalDomainState(mLogger, mVariablesMap, mValuesMap, mBooleanValuesMap, mIsFixpoint);
-	}
-
-	@Override
-	public IntervalDomainState getResult() {
-		return this;
 	}
 
 	@Override

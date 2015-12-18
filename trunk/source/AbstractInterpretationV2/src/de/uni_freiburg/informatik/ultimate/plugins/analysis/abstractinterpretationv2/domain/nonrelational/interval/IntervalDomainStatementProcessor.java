@@ -29,6 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -76,7 +77,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	private final BoogieSymbolTable mSymbolTable;
 
 	private IntervalDomainState mOldState;
-	private IntervalDomainState mNewState;
+	private List<IntervalDomainState> mReturnState;
 
 	IEvaluatorFactory<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> mEvaluatorFactory;
 	ExpressionEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> mExpressionEvaluator;
@@ -88,23 +89,23 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	protected IntervalDomainStatementProcessor(Logger logger, BoogieSymbolTable symbolTable) {
 		mSymbolTable = symbolTable;
 		mLogger = logger;
-		// mEvaluatorFactory = new IntervalEvaluatorFactory(mLogger, mStateConverter);
 		mLhsVariable = null;
 	}
 
-	public IntervalDomainState process(IntervalDomainState oldState, Statement statement) {
+	public List<IntervalDomainState> process(IntervalDomainState oldState, Statement statement) {
+
+		mReturnState = new ArrayList<>();
 
 		assert oldState != null;
 		assert statement != null;
 
 		mOldState = oldState;
-		mNewState = (IntervalDomainState) mOldState.copy();
 
 		mLhsVariable = null;
 
 		processStatement(statement);
 
-		return mNewState;
+		return mReturnState;
 	}
 
 	@Override
@@ -169,30 +170,36 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 			assert mExpressionEvaluator.isFinished() : "Expression evaluator is not finished";
 			assert mExpressionEvaluator.getRootEvaluator() != null;
 
-			final IEvaluationResult<IntervalDomainEvaluationResult> result = mExpressionEvaluator.getRootEvaluator()
-			        .evaluate(mOldState);
+			final List<IEvaluationResult<IntervalDomainEvaluationResult>> result = mExpressionEvaluator
+			        .getRootEvaluator().evaluate(mOldState);
 
-			final IntervalDomainValue newValue = result.getResult().getEvaluatedValue();
+			for (final IEvaluationResult<IntervalDomainEvaluationResult> res : result) {
+				IntervalDomainState currentNewState = mOldState.copy();
 
-			if (newValue == null) {
-				mNewState = mNewState.setBooleanValue(varname, mExpressionEvaluator.getRootEvaluator().booleanValue());
-			} else {
-				final IBoogieVar type = mOldState.getVariableType(varname);
-				if (type.getIType() instanceof PrimitiveType) {
-					final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
+				final IntervalDomainValue newValue = res.getResult().getEvaluatedValue();
 
-					if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-						mNewState = mNewState.setBooleanValue(varname, mExpressionEvaluator.getRootEvaluator().booleanValue());
-					} else {
-						mNewState = mNewState.setValue(varname, newValue);
-					}
-				} else if (type.getIType() instanceof ArrayType) {
-					// TODO:
-					// We treat Arrays as normal variables for the time being.
-					mNewState = mNewState.setValue(varname, newValue);
+				if (newValue == null) {
+					currentNewState = currentNewState.setBooleanValue(varname, res.getBooleanValue());
 				} else {
-					mNewState = mNewState.setValue(varname, newValue);
+					final IBoogieVar type = currentNewState.getVariableType(varname);
+					if (type.getIType() instanceof PrimitiveType) {
+						final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
+
+						if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
+							currentNewState = currentNewState.setBooleanValue(varname, res.getBooleanValue());
+						} else {
+							currentNewState = currentNewState.setValue(varname, newValue);
+						}
+					} else if (type.getIType() instanceof ArrayType) {
+						// TODO:
+						// We treat Arrays as normal variables for the time being.
+						currentNewState = currentNewState.setValue(varname, newValue);
+					} else {
+						currentNewState = currentNewState.setValue(varname, newValue);
+					}
 				}
+
+				mReturnState.add(currentNewState);
 			}
 		}
 	}
@@ -314,7 +321,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 		if (formula instanceof BooleanLiteral) {
 			BooleanLiteral boolform = (BooleanLiteral) formula;
 			if (!boolform.getValue()) {
-				mNewState = mNewState.bottomState();
+				mReturnState.add(mOldState.bottomState());
 			}
 			// We return since newState is a copy of the old state and the application of true is the old state.
 			return;
@@ -324,10 +331,12 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 
 		assert mExpressionEvaluator.isFinished();
 
-		final IEvaluationResult<IntervalDomainEvaluationResult> evaluationResult = mExpressionEvaluator
-		        .getRootEvaluator().evaluate(mOldState);
+		final List<IEvaluationResult<IntervalDomainEvaluationResult>> result = mExpressionEvaluator.getRootEvaluator()
+		        .evaluate(mOldState);
 
-		mNewState = (IntervalDomainState) evaluationResult.getResult().getEvaluatedState().copy();
+		for (final IEvaluationResult<IntervalDomainEvaluationResult> res : result) {
+			mReturnState.add(res.getResult().getEvaluatedState().copy());
+		}
 	}
 
 	@Override
@@ -364,6 +373,8 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	protected void handleHavocStatement(HavocStatement statement) {
 		mEvaluatorFactory = new IntervalEvaluatorFactory(mLogger);
 
+		IntervalDomainState currentNewState = mOldState.copy();
+
 		for (VariableLHS var : statement.getIdentifiers()) {
 			final IBoogieVar type = mOldState.getVariables().get(var.getIdentifier());
 
@@ -371,18 +382,20 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 				final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
 
 				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-					mNewState = mNewState.setBooleanValue(var.getIdentifier(), new BooleanValue());
+					currentNewState = currentNewState.setBooleanValue(var.getIdentifier(), new BooleanValue());
 				} else {
-					mNewState = mNewState.setValue(var.getIdentifier(), new IntervalDomainValue());
+					currentNewState = currentNewState.setValue(var.getIdentifier(), new IntervalDomainValue());
 				}
 			} else if (type.getIType() instanceof ArrayType) {
 				// TODO:
 				// Implement better handling of arrays.
-				mNewState = mNewState.setValue(var.getIdentifier(), new IntervalDomainValue());
+				currentNewState = currentNewState.setValue(var.getIdentifier(), new IntervalDomainValue());
 			} else {
-				mNewState = mNewState.setValue(var.getIdentifier(), new IntervalDomainValue());
+				currentNewState = currentNewState.setValue(var.getIdentifier(), new IntervalDomainValue());
 			}
 		}
+
+		mReturnState.add(currentNewState);
 	}
 
 	@Override
@@ -430,6 +443,5 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	protected void visit(ArrayAccessExpression expr) {
 		throw new UnsupportedOperationException("Proper array handling is not implemented.");
 	}
-	
-	
+
 }

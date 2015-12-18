@@ -70,7 +70,13 @@ public class SignPostOperator implements IAbstractPostOperator<SignDomainState, 
 		SignDomainState currentState = oldstate;
 		final List<Statement> statements = mStatementExtractor.process(codeBlock);
 		for (final Statement stmt : statements) {
-			currentState = mStatementProcessor.process(currentState, stmt);
+			final List<SignDomainState> result = mStatementProcessor.process(currentState, stmt);
+			for (int i = 0; i < result.size(); i++) {
+				if (i == 0) {
+					currentState = result.get(i);
+					// TODO: Merge all states here!
+				}
+			}
 		}
 
 		return currentState;

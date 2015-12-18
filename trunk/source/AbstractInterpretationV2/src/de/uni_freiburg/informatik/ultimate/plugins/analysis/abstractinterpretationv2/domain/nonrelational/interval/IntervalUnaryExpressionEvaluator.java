@@ -28,6 +28,8 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -55,46 +57,53 @@ public class IntervalUnaryExpressionEvaluator
 	protected IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> mSubEvaluator;
 	protected Operator mOperator;
 
-	private BooleanValue mBooleanValue;
-
 	protected IntervalUnaryExpressionEvaluator(Logger logger) {
 		mLogger = logger;
 	}
 
 	@Override
-	public IEvaluationResult<IntervalDomainEvaluationResult> evaluate(IntervalDomainState currentState) {
+	public List<IEvaluationResult<IntervalDomainEvaluationResult>> evaluate(IntervalDomainState currentState) {
 
-		final IEvaluationResult<IntervalDomainEvaluationResult> subEvaluatorResult = mSubEvaluator
+		final List<IEvaluationResult<IntervalDomainEvaluationResult>> subEvaluatorResult = mSubEvaluator
 		        .evaluate(currentState);
 
-		IntervalDomainState returnState = currentState.copy();
-		IntervalDomainValue returnValue = new IntervalDomainValue();
-		boolean setToBottom = false;
+		final List<IEvaluationResult<IntervalDomainEvaluationResult>> returnEvaluationResults = new ArrayList<>();
 
-		switch (mOperator) {
-		case ARITHNEGATIVE:
-			mBooleanValue = new BooleanValue(false);
-			returnValue = subEvaluatorResult.getResult().getEvaluatedValue().negate();
-			break;
-		case LOGICNEG:
-			mBooleanValue = mSubEvaluator.booleanValue().neg();
-			if (mBooleanValue.getValue() == Value.FALSE || mBooleanValue.getValue() == Value.BOTTOM) {
-				setToBottom = true;
+		for (final IEvaluationResult<IntervalDomainEvaluationResult> result : subEvaluatorResult) {
+			IntervalDomainState returnState = currentState.copy();
+			IntervalDomainValue returnValue = new IntervalDomainValue();
+			BooleanValue returnBool;
+
+			boolean setToBottom = false;
+
+			switch (mOperator) {
+			case ARITHNEGATIVE:
+				returnBool = new BooleanValue(false);
+				returnValue = result.getResult().getEvaluatedValue().negate();
+				break;
+			case LOGICNEG:
+				returnBool = result.getBooleanValue().neg();
+				if (returnBool.getValue() == Value.FALSE || returnBool.getValue() == Value.BOTTOM) {
+					setToBottom = true;
+				}
+				break;
+			default:
+				mLogger.warn(
+				        "Operator " + mOperator + " not implemented. Assuming logical interpretation to be false.");
+				returnBool = new BooleanValue(false);
+				mLogger.warn("Possible loss of precision: cannot handle operator " + mOperator
+				        + ". Returning current state. Returned value is top.");
+				returnValue = new IntervalDomainValue();
 			}
-			break;
-		default:
-			mLogger.warn("Operator " + mOperator + " not implemented. Assuming logical interpretation to be false.");
-			mBooleanValue = new BooleanValue(false);
-			mLogger.warn("Possible loss of precision: cannot handle operator " + mOperator
-			        + ". Returning current state. Returned value is top.");
-			return new IntervalDomainEvaluationResult(new IntervalDomainValue(), currentState);
+
+			if (setToBottom) {
+				returnState = returnState.bottomState();
+			}
+
+			returnEvaluationResults.add(new IntervalDomainEvaluationResult(returnValue, returnState, returnBool));
 		}
 
-		if (setToBottom) {
-			returnState = returnState.bottomState();
-		}
-
-		return new IntervalDomainEvaluationResult(returnValue, returnState);
+		return returnEvaluationResults;
 	}
 
 	@Override
@@ -104,11 +113,6 @@ public class IntervalUnaryExpressionEvaluator
 		assert evaluator != null;
 
 		mSubEvaluator = evaluator;
-	}
-
-	@Override
-	public BooleanValue booleanValue() {
-		return mBooleanValue;
 	}
 
 	@Override

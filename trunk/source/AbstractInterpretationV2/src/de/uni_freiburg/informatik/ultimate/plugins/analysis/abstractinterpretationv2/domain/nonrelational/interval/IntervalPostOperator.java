@@ -61,7 +61,15 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 		IntervalDomainState currentState = oldstate;
 		final List<Statement> statements = mStatementExtractor.process(codeBlock);
 		for (final Statement stmt : statements) {
-			currentState = mStatementProcessor.process(currentState, stmt);
+			final List<IntervalDomainState> result = mStatementProcessor.process(currentState, stmt);
+			
+			for (int i = 0; i < result.size(); i++) {
+				if (i == 0) {
+					currentState = result.get(i);
+				} else {
+					currentState = currentState.merge(result.get(i));
+				}
+			}
 		}
 		return currentState;
 	}

@@ -101,11 +101,6 @@ public class SignLogicalSingletonVariableExpressionEvaluator extends SignSinglet
 	}
 
 	@Override
-	public BooleanValue booleanValue() {
-		return mBooleanValue;
-	}
-
-	@Override
 	public boolean containsBool() {
 		// TODO Auto-generated method stub
 		return false;

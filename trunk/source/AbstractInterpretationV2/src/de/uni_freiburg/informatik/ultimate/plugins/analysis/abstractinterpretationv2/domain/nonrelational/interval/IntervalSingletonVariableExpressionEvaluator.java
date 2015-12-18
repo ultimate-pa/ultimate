@@ -28,7 +28,9 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
@@ -50,7 +52,6 @@ public class IntervalSingletonVariableExpressionEvaluator
 
 	private final Set<String> mVariableSet;
 
-	private BooleanValue mBooleanValue = new BooleanValue();
 	private boolean mContainsBoolean = false;
 
 	private String mVariableName;
@@ -62,9 +63,12 @@ public class IntervalSingletonVariableExpressionEvaluator
 	}
 
 	@Override
-	public IEvaluationResult<IntervalDomainEvaluationResult> evaluate(IntervalDomainState currentState) {
+	public List<IEvaluationResult<IntervalDomainEvaluationResult>> evaluate(IntervalDomainState currentState) {
+
+		final List<IEvaluationResult<IntervalDomainEvaluationResult>> returnList = new ArrayList<>();
 
 		IntervalDomainValue val;
+		BooleanValue returnBool = new BooleanValue();
 
 		final IBoogieVar type = currentState.getVariableType(mVariableName);
 		if (type.getIType() instanceof PrimitiveType) {
@@ -72,7 +76,7 @@ public class IntervalSingletonVariableExpressionEvaluator
 
 			if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
 				val = new IntervalDomainValue();
-				mBooleanValue = currentState.getBooleanValue(mVariableName);
+				returnBool = currentState.getBooleanValue(mVariableName);
 				mContainsBoolean = true;
 			} else {
 				val = currentState.getValue(mVariableName);
@@ -88,16 +92,14 @@ public class IntervalSingletonVariableExpressionEvaluator
 		}
 
 		if (val.isBottom()) {
-			return new IntervalDomainEvaluationResult(new IntervalDomainValue(true), currentState);
+			returnList.add(new IntervalDomainEvaluationResult(new IntervalDomainValue(true), currentState,
+			        new BooleanValue(BooleanValue.Value.BOTTOM)));
+		} else {
+			returnList.add(new IntervalDomainEvaluationResult(new IntervalDomainValue(val.getLower(), val.getUpper()),
+			        currentState, returnBool));
 		}
 
-		return new IntervalDomainEvaluationResult(new IntervalDomainValue(val.getLower(), val.getUpper()),
-		        currentState);
-	}
-
-	@Override
-	public BooleanValue booleanValue() {
-		return mBooleanValue;
+		return returnList;
 	}
 
 	@Override
