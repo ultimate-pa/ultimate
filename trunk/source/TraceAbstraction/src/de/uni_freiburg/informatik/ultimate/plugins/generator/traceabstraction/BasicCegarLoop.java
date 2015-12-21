@@ -155,6 +155,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	private Map<Object, Term> m_AITermMap;
 	private NestedWordAutomaton<WitnessEdge, WitnessNode> m_WitnessAutomaton;
 	private IHoareTripleChecker m_HoareTripleChecker;
+	private boolean m_DoFaultLocalization = false;
 	
 
 	public BasicCegarLoop(String name, RootNode rootNode, SmtManager smtManager, TAPreferences taPrefs,
@@ -370,6 +371,11 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				if (counterexample.isReturnPosition(j)) {
 					indentation = indentation.substring(0, indentation.length() - 4);
 				}
+			}
+			if (m_DoFaultLocalization  && feasibility == LBool.SAT) {
+				new FlowSensitiveFaultLocalizer(counterexample, 
+						(INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, 
+						m_Services, m_SmtManager, m_ModGlobVarManager, predicateUnifier);
 			}
 			// s_Logger.info("Trace with values");
 			// s_Logger.info(interpolatingTraceChecker.getRcfgProgramExecution());
