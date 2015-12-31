@@ -167,9 +167,9 @@ public class PartialQuantifierElimination {
 				varSet = new HashSet<TermVariable>(Arrays.asList(qf.getVariables()));
 				elim = qf.getSubformula();
 				int quantAfterwards = varSet.size();
-				logger.warn("push-pull eliminated " + (quantBefore-quantAfterwards) + " of " + quantBefore);
+//				logger.warn("push-pull eliminated " + (quantBefore-quantAfterwards) + " of " + quantBefore);
 			} else {
-				logger.warn("push-pull eliminated " + quantBefore);
+//				logger.warn("push-pull eliminated " + quantBefore);
 				return elim;
 			}
 		}
