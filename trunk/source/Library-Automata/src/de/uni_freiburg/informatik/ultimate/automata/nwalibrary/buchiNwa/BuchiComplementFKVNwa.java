@@ -284,8 +284,9 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 					m_Cache.addInternalTransition(state, letter, resSucc);
 					resSuccs.add(resSucc);
 				}
+				boolean oIsEmpty = true; // considering O empty for subset component will safe some states
 				LevelRankingConstraint<LETTER,STATE> constraints = new LevelRankingConstraint<LETTER,STATE>(
-						m_Operand, m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
+						m_Operand, oIsEmpty, m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
 				constraints.internalSuccessorConstraints(detUp, letter);
 				TightLevelRankingStateGenerator gen = m_TightLevelRankingStateGeneratorBuilder.
 						buildTightLevelRankingStateGenerator(constraints, true);
@@ -302,7 +303,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 			LevelRankingState<LETTER,STATE> complUp = m_res2lrk.get(state);
 			if (complUp != null) {
 				LevelRankingConstraint<LETTER,STATE> constraints = new LevelRankingConstraint<LETTER,STATE>(
-						m_Operand, m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
+						m_Operand, complUp.isOempty(), m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
 				constraints.internalSuccessorConstraints(complUp, letter);
 				TightLevelRankingStateGenerator gen = m_TightLevelRankingStateGeneratorBuilder.
 						buildTightLevelRankingStateGenerator(constraints, false);
@@ -344,8 +345,9 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 					m_Cache.addCallTransition(state, letter, resSucc);
 					resSuccs.add(resSucc);
 				}
+				boolean oIsEmpty = true; // considering O empty for subset component will safe some states
 				LevelRankingConstraint<LETTER, STATE> constraints = new LevelRankingConstraint<LETTER, STATE>(
-						m_Operand, m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
+						m_Operand, oIsEmpty, m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
 				constraints.callSuccessorConstraints(detUp, letter);
 				TightLevelRankingStateGenerator gen = m_TightLevelRankingStateGeneratorBuilder.
 						buildTightLevelRankingStateGenerator(constraints, true);
@@ -359,7 +361,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 			LevelRankingState<LETTER, STATE> complUp = m_res2lrk.get(state);
 			if (complUp != null) {
 				LevelRankingConstraint<LETTER, STATE> constraints = new LevelRankingConstraint<LETTER, STATE>(
-						m_Operand, m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
+						m_Operand, complUp.isOempty(), m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
 				constraints.callSuccessorConstraints(complUp, letter);
 				TightLevelRankingStateGenerator gen = m_TightLevelRankingStateGeneratorBuilder.
 						buildTightLevelRankingStateGenerator(constraints, false);
@@ -401,8 +403,9 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 					m_Cache.addReturnTransition(state, hier, letter, resSucc);
 					resSuccs.add(resSucc);
 				}
+				boolean oIsEmpty = true; // considering O empty for subset component will safe some states
 				LevelRankingConstraint<LETTER, STATE> constraints = new LevelRankingConstraint<LETTER, STATE>(
-						m_Operand, m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
+						m_Operand, oIsEmpty, m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
 				constraints.returnSuccessorConstraints(detUp, detDown, letter);
 				TightLevelRankingStateGenerator gen = m_TightLevelRankingStateGeneratorBuilder.
 						buildTightLevelRankingStateGenerator(constraints, true);
@@ -423,7 +426,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 			}
 			if (complUp != null) {
 				LevelRankingConstraint<LETTER, STATE> constraints = new LevelRankingConstraint<LETTER, STATE>(
-						m_Operand, m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
+						m_Operand, complUp.isOempty(), m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
 				constraints.returnSuccessorConstraints(complUp, complDown, letter);
 				TightLevelRankingStateGenerator gen = m_TightLevelRankingStateGeneratorBuilder.
 						buildTightLevelRankingStateGenerator(constraints, false);
