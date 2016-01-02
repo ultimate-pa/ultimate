@@ -287,8 +287,7 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 			return Collections.emptyList();
 		}
 		List<LevelRankingState<LETTER, STATE>> succLvls = new ArrayList<LevelRankingState<LETTER,STATE>>();
-		Set<DoubleDecker<StateWithRankInfo<STATE>>> allDoubleDeckersWithVoluntaryDecrease = 
-				computeDoubleDeckersWithVoluntaryDecrease(lrcwh);
+		Set<DoubleDecker<StateWithRankInfo<STATE>>> allDoubleDeckersWithVoluntaryDecrease = lrcwh.getPredecessorWasAccepting();
 		Iterator<Set<DoubleDecker<StateWithRankInfo<STATE>>>> it = 
 				new PowersetIterator<DoubleDecker<StateWithRankInfo<STATE>>>(allDoubleDeckersWithVoluntaryDecrease);
 		while(it.hasNext()) {
@@ -299,24 +298,6 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 			}
 		}
 		return succLvls;
-	}
-
-
-	private Set<DoubleDecker<StateWithRankInfo<STATE>>> computeDoubleDeckersWithVoluntaryDecrease(
-			LevelRankingConstraintDrdCheck<LETTER, STATE> lrcwh) {
-		Set<DoubleDecker<StateWithRankInfo<STATE>>> doubleDeckersWithVoluntaryDecrease = new HashSet<DoubleDecker<StateWithRankInfo<STATE>>>();
-		for (DoubleDecker<StateWithRankInfo<STATE>> predWasAccepting : lrcwh.getPredecessorWasAccepting()) {
-			// we will decrease the rank if 
-			// predecessor was final
-			// state has even rank (resp. lowest rank constraint is even)
-			// state is not final
-			int rank = lrcwh.getRank(predWasAccepting.getDown(), predWasAccepting.getUp().getState());
-			boolean isFinal = m_Operand.isFinal(predWasAccepting.getUp().getState()); 
-			if (LevelRankingState.isEven(rank) && !isFinal) {
-				doubleDeckersWithVoluntaryDecrease.add(predWasAccepting);
-			}
-		}
-		return doubleDeckersWithVoluntaryDecrease;
 	}
 
 
