@@ -31,8 +31,8 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE> extends LevelRan
 				return Collections.singletonList(new LevelRankingState<LETTER, STATE>());
 			}
 		}
-		//			if (lrcwh.aroseFromDelayedRankDecrease()) {
-		if (constraint.isTargetOfDelayedRankDecrease(3)) {
+		//			if (constraint.aroseFromDelayedRankDecrease()) {
+		if (constraint.isTargetOfDelayedRankDecrease(m_UserDefinedMaxRank)) {
 			// in this case we do not want to have successor states
 			return Collections.emptyList();
 		}
@@ -51,11 +51,11 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE> extends LevelRan
 	}
 	
 	
-	private LevelRankingState<LETTER, STATE> computeLevelRanking(LevelRankingConstraintDrdCheck<LETTER, STATE> lrcwh,
+	private LevelRankingState<LETTER, STATE> computeLevelRanking(LevelRankingConstraintDrdCheck<LETTER, STATE> constraint,
 			Set<DoubleDecker<StateWithRankInfo<STATE>>> doubleDeckersWithVoluntaryDecrease) {
 		LevelRankingState<LETTER, STATE> result = new LevelRankingState<LETTER, STATE>(m_Operand);
-		for (StateWithRankInfo<STATE> down : lrcwh.getDownStates()) {
-			for (StateWithRankInfo<STATE> up : lrcwh.getUpStates(down)) {
+		for (StateWithRankInfo<STATE> down : constraint.getDownStates()) {
+			for (StateWithRankInfo<STATE> up : constraint.getUpStates(down)) {
 				final boolean oCandidate = up.isInO();
 				final boolean inO;
 				int rank = up.getRank();
