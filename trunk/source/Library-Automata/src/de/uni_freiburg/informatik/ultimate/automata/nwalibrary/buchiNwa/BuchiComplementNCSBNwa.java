@@ -28,10 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,7 +37,6 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonCache;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -48,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.util.PowersetIterator;
 
 	
 
@@ -198,21 +193,21 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 		if (lvlrkState.isNonAcceptingSink()) {
 			return new LevelRankingConstraintDrdCheck<LETTER, STATE>();
 		}
-		LevelRankingConstraintDrdCheck<LETTER, STATE> lrcwh = new LevelRankingConstraintDrdCheck(m_Operand, lvlrkState.isOempty(), 7777, true);
+		LevelRankingConstraintDrdCheck<LETTER, STATE> constraint = new LevelRankingConstraintDrdCheck(m_Operand, lvlrkState.isOempty(), 7777, true);
 		for (StateWithRankInfo<STATE> down : lvlrkState.getDownStates()) {
 			for (StateWithRankInfo<STATE> up : lvlrkState.getUpStates(down)) {
 				boolean hasSuccessor = false;
 				for (OutgoingInternalTransition<LETTER, STATE> trans : 
 								m_Operand.internalSuccessors(up.getState(), letter)) {
 					hasSuccessor = true;
-					lrcwh.addConstaint(down, trans.getSucc(), up.getRank(), up.isInO(), m_Operand.isFinal(up.getState()));
+					constraint.addConstaint(down, trans.getSucc(), up.getRank(), up.isInO(), m_Operand.isFinal(up.getState()));
 				}
 				if (transitionWouldAnnihilateEvenRank(down, up, hasSuccessor)) {
 					return new LevelRankingConstraintDrdCheck<LETTER, STATE>();
 				}
 			}
 		}
-		return lrcwh;
+		return constraint;
 	}
 	
 	private boolean transitionWouldAnnihilateEvenRank(
@@ -228,21 +223,21 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 		if (lvlrkState.isNonAcceptingSink()) {
 			return new LevelRankingConstraintDrdCheck<LETTER, STATE>();
 		}
-		LevelRankingConstraintDrdCheck<LETTER, STATE> lrcwh = new LevelRankingConstraintDrdCheck(m_Operand, lvlrkState.isOempty(), 7777, true);
+		LevelRankingConstraintDrdCheck<LETTER, STATE> constraint = new LevelRankingConstraintDrdCheck(m_Operand, lvlrkState.isOempty(), 7777, true);
 		for (StateWithRankInfo<STATE> down : lvlrkState.getDownStates()) {
 			for (StateWithRankInfo<STATE> up : lvlrkState.getUpStates(down)) {
 				boolean hasSuccessor = false;
 				for (OutgoingCallTransition<LETTER, STATE> trans : 
 								m_Operand.callSuccessors(up.getState(), letter)) {
 					hasSuccessor = true;
-					lrcwh.addConstaint(up, trans.getSucc(), up.getRank(), up.isInO(), m_Operand.isFinal(up.getState()));
+					constraint.addConstaint(up, trans.getSucc(), up.getRank(), up.isInO(), m_Operand.isFinal(up.getState()));
 				}
 				if (transitionWouldAnnihilateEvenRank(down, up, hasSuccessor)) {
 					return new LevelRankingConstraintDrdCheck<LETTER, STATE>();
 				}
 			}
 		}
-		return lrcwh;
+		return constraint;
 	}
 	
 	private LevelRankingConstraintDrdCheck<LETTER, STATE> computeSuccLevelRankingConstraint_Return(
@@ -252,7 +247,7 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 		if (lvlrkState.isNonAcceptingSink()) {
 			return new LevelRankingConstraintDrdCheck<LETTER, STATE>();
 		}
-		LevelRankingConstraintDrdCheck<LETTER, STATE> lrcwh = new LevelRankingConstraintDrdCheck(m_Operand, lvlrkState.isOempty(), 7777, true);
+		LevelRankingConstraintDrdCheck<LETTER, STATE> constraint = new LevelRankingConstraintDrdCheck(m_Operand, lvlrkState.isOempty(), 7777, true);
 		for (StateWithRankInfo<STATE> downHier : lvlrkHier.getDownStates()) {
 			for (StateWithRankInfo<STATE> upHier : lvlrkHier.getUpStates(downHier)) {
 				if (!lvlrkState.getDownStates().contains(upHier)) {
@@ -263,7 +258,7 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 					for (OutgoingReturnTransition<LETTER, STATE> trans : 
 						m_Operand.returnSucccessors(up.getState(), upHier.getState(), letter)) {
 						hasSuccessor = true;
-						lrcwh.addConstaint(downHier, trans.getSucc(), up.getRank(), up.isInO(), m_Operand.isFinal(up.getState()));
+						constraint.addConstaint(downHier, trans.getSucc(), up.getRank(), up.isInO(), m_Operand.isFinal(up.getState()));
 					}
 					if (transitionWouldAnnihilateEvenRank(downHier, up, hasSuccessor)) {
 						return new LevelRankingConstraintDrdCheck<LETTER, STATE>();
@@ -271,14 +266,19 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 				}
 			}
 		}
-		return lrcwh;
+		return constraint;
 	}
 
 
-
-
-
-
+	private Collection<STATE> computeStates(LevelRankingConstraintDrdCheck<LETTER, STATE> constraint) {
+		Collection<LevelRankingState<LETTER, STATE>> succLvls = m_bclrg.generateLevelRankings(constraint, false);
+		List<STATE> computedSuccs = new ArrayList<>(); 
+		for (LevelRankingState<LETTER, STATE> succLvl : succLvls) {
+			STATE resSucc = getOrAdd(false, succLvl);
+			computedSuccs.add(resSucc);
+		}
+		return computedSuccs;
+	}
 
 
 	@Override
@@ -286,18 +286,14 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 			STATE state, LETTER letter) {
 		Collection<STATE> succs = m_Cache.succInternal(state, letter);
 		if (succs == null) {
-			LevelRankingConstraintDrdCheck<LETTER, STATE> lrcwh = computeSuccLevelRankingConstraint_Internal(
-					state, letter);
-			Collection<LevelRankingState<LETTER, STATE>> succLvls = m_bclrg.generateLevelRankings(lrcwh, false);
-			List<STATE> computedSuccs = new ArrayList<>(); 
-			for (LevelRankingState<LETTER, STATE> succLvl : succLvls) {
-				STATE resSucc = getOrAdd(false, succLvl);
-				computedSuccs.add(resSucc);
-			}
+			LevelRankingConstraintDrdCheck<LETTER, STATE> constraint = 
+					computeSuccLevelRankingConstraint_Internal(state, letter);
+			Collection<STATE> computedSuccs = computeStates(constraint);
 			m_Cache.addInternalTransitions(state, letter, computedSuccs);
 		}
 		return m_Cache.internalSuccessors(state, letter);
 	}
+
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(
@@ -313,13 +309,10 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 			STATE state, LETTER letter) {
 		Collection<STATE> succs = m_Cache.succCall(state, letter);
 		if (succs == null) {
-			LevelRankingConstraintDrdCheck<LETTER, STATE> lrcwh = computeSuccLevelRankingConstraint_Call(
-					state, letter);
-			Collection<LevelRankingState<LETTER, STATE>> succLvls = m_bclrg.generateLevelRankings(lrcwh, false);
-			for (LevelRankingState<LETTER, STATE> succLvl : succLvls) {
-				STATE resSucc = getOrAdd(false, succLvl);
-				m_Cache.addCallTransition(state, letter, resSucc);
-			}
+			LevelRankingConstraintDrdCheck<LETTER, STATE> constraint = 
+					computeSuccLevelRankingConstraint_Call(state, letter);
+			Collection<STATE> computedSuccs = computeStates(constraint);
+			m_Cache.addCallTransitions(state, letter, computedSuccs);
 		}
 		return m_Cache.callSuccessors(state, letter);
 	}
@@ -340,13 +333,10 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 			STATE state, STATE hier, LETTER letter) {
 		Collection<STATE> succs = m_Cache.succReturn(state, hier, letter);
 		if (succs == null) {
-			LevelRankingConstraintDrdCheck<LETTER, STATE> lrcwh = computeSuccLevelRankingConstraint_Return(
-					state, hier, letter);
-			Collection<LevelRankingState<LETTER, STATE>> succLvls = m_bclrg.generateLevelRankings(lrcwh, false);
-			for (LevelRankingState<LETTER, STATE> succLvl : succLvls) {
-				STATE resSucc = getOrAdd(false, succLvl);
-				m_Cache.addReturnTransition(state, hier, letter, resSucc);
-			}
+			LevelRankingConstraintDrdCheck<LETTER, STATE> constraint = 
+					computeSuccLevelRankingConstraint_Return(state, hier, letter);
+			Collection<STATE> computedSuccs = computeStates(constraint);
+			m_Cache.addReturnTransitions(state, hier, letter, computedSuccs);
 		}
 		return m_Cache.returnSucccessors(state, hier, letter);
 	}
