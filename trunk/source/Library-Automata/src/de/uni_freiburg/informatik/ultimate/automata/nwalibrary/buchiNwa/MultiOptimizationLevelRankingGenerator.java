@@ -126,8 +126,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 			//									m_RestrictedDoubleDeckerWithRankInfo.toString());
 
 			if (m_UnrestrictedRank.length == 0 && m_RestrictedRank.length == 0) {
-				constructComplementState();
-				return m_Result;
+				return Collections.emptySet();
 			}
 
 			initializeUnrestricted();
@@ -164,8 +163,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 						m_RestrictedDoubleDeckerWithRankInfo.add(
 								new DoubleDecker<StateWithRankInfo<STATE>>(down, up));
 						m_RestrictedMaxRank.add(rank);
-					}
-					else {
+					} else {
 						m_UnrestrictedDoubleDeckerWithRankInfo.add(
 								new DoubleDecker<StateWithRankInfo<STATE>>(down, up));
 						m_UnrestrictedMaxRank.add(rank);

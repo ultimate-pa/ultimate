@@ -57,34 +57,58 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE> extends LevelRan
 		for (StateWithRankInfo<STATE> down : constraint.getDownStates()) {
 			for (StateWithRankInfo<STATE> up : constraint.getUpStates(down)) {
 				final boolean oCandidate = up.isInO();
+				final int rankConstraint = up.getRank();
 				final boolean inO;
-				int rank = up.getRank();
-				switch (rank) {
-				case 3:
+				final int rank;
+				
+//				switch (rank) {
+//				case 3:
+//					if (m_Operand.isFinal(up.getState())) {
+//						rank = 2;
+//						inO = oCandidate;
+//					} else {
+//						inO = false;
+//					}
+//					break;
+//				case 2:
+//					if (doubleDeckersWithVoluntaryDecrease.contains(new DoubleDecker<StateWithRankInfo<STATE>>(down, up))) {
+//						rank = 1;
+//						inO = false;
+//					} else {
+//						inO = oCandidate;
+//					}
+//					break;
+//				case 1:
+//					if (m_Operand.isFinal(up.getState())) {
+//						return null;
+//					} else {
+//						inO = false;
+//					}
+//					break;
+//				default:
+//					throw new AssertionError("no other ranks allowed");
+//				}
+				if (LevelRankingState.isOdd(rankConstraint)) {
 					if (m_Operand.isFinal(up.getState())) {
-						rank = 2;
-						inO = oCandidate;
+						if (rankConstraint == m_UserDefinedMaxRank) {
+							rank = rankConstraint - 1;
+							inO = oCandidate;
+						} else {
+							return null;
+						}
 					} else {
+						rank = rankConstraint;
 						inO = false;
 					}
-					break;
-				case 2:
+				} else {
+					assert LevelRankingState.isEven(rankConstraint);
 					if (doubleDeckersWithVoluntaryDecrease.contains(new DoubleDecker<StateWithRankInfo<STATE>>(down, up))) {
-						rank = 1;
+						rank = rankConstraint - 1;
 						inO = false;
 					} else {
+						rank = rankConstraint;
 						inO = oCandidate;
 					}
-					break;
-				case 1:
-					if (m_Operand.isFinal(up.getState())) {
-						return null;
-					} else {
-						inO = false;
-					}
-					break;
-				default:
-					throw new AssertionError("no other ranks allowed");
 				}
 				result.addRank(down, up.getState(), rank, inO);
 			}

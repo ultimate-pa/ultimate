@@ -25,9 +25,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
@@ -35,16 +33,11 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.MultiOptimizationLevelRankingGenerator.FkvOptimization;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveNonLiveStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
@@ -113,11 +106,11 @@ public class BuchiComplementationEvaluation<LETTER,STATE> implements IOperation<
 				NestedWordAutomatonReachableStates<LETTER, STATE> result = (new BuchiComplementFKV<LETTER, STATE>(m_Services, stateFactory, m_Operand, fkvOptimization.toString(), Integer.MAX_VALUE)).getResult();
 				addToResultsWithSizeReduction(results, name, result);
 			}
-			{
-				String name = "FKV_" + fkvOptimization + "_MaxRank3";
-				NestedWordAutomatonReachableStates<LETTER, STATE> result = (new BuchiComplementFKV<LETTER, STATE>(m_Services, stateFactory, m_Operand, fkvOptimization.toString(), 3)).getResult();
-				addToResultsWithSizeReduction(results, name, result);
-			}
+//			{
+//				String name = "FKV_" + fkvOptimization + "_MaxRank3";
+//				NestedWordAutomatonReachableStates<LETTER, STATE> result = (new BuchiComplementFKV<LETTER, STATE>(m_Services, stateFactory, m_Operand, fkvOptimization.toString(), 3)).getResult();
+//				addToResultsWithSizeReduction(results, name, result);
+//			}
 		}
 		return prettyPrint(results);
 	}
