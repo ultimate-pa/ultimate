@@ -189,7 +189,7 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 		return m_Operand.getReturnAlphabet();
 	}
 	
-	private LevelRankingConstraintDrdCheck<LETTER, STATE> computeSuccLevelRankingConstraints_Internal(
+	private LevelRankingConstraintDrdCheck<LETTER, STATE> computeSuccLevelRankingConstraint_Internal(
 			STATE state, LETTER letter) {
 		LevelRankingState<LETTER,STATE> lvlrkState = m_res2det.get(state);
 		if (lvlrkState.isNonAcceptingSink()) {
@@ -219,7 +219,7 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 	}
 
 
-	private LevelRankingConstraintDrdCheck<LETTER, STATE> computeSuccLevelRankingConstraints_Call(
+	private LevelRankingConstraintDrdCheck<LETTER, STATE> computeSuccLevelRankingConstraint_Call(
 			STATE state, LETTER letter) {
 		LevelRankingState<LETTER,STATE> lvlrkState = m_res2det.get(state);
 		if (lvlrkState.isNonAcceptingSink()) {
@@ -242,7 +242,7 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 		return lrcwh;
 	}
 	
-	private LevelRankingConstraintDrdCheck<LETTER, STATE> computeSuccLevelRankingConstraints_Return(
+	private LevelRankingConstraintDrdCheck<LETTER, STATE> computeSuccLevelRankingConstraint_Return(
 			STATE state, STATE hier, LETTER letter) {
 		LevelRankingState<LETTER,STATE> lvlrkState = m_res2det.get(state);
 		LevelRankingState<LETTER,STATE> lvlrkHier = m_res2det.get(hier);
@@ -348,7 +348,7 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 			STATE state, LETTER letter) {
 		Collection<STATE> succs = m_Cache.succInternal(state, letter);
 		if (succs == null) {
-			LevelRankingConstraintDrdCheck<LETTER, STATE> lrcwh = computeSuccLevelRankingConstraints_Internal(
+			LevelRankingConstraintDrdCheck<LETTER, STATE> lrcwh = computeSuccLevelRankingConstraint_Internal(
 					state, letter);
 			List<LevelRankingState<LETTER, STATE>> succLvls = computeSuccLevelRankingStates(lrcwh);
 			List<STATE> computedSuccs = new ArrayList<>(); 
@@ -375,7 +375,7 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 			STATE state, LETTER letter) {
 		Collection<STATE> succs = m_Cache.succCall(state, letter);
 		if (succs == null) {
-			LevelRankingConstraintDrdCheck<LETTER, STATE> lrcwh = computeSuccLevelRankingConstraints_Call(
+			LevelRankingConstraintDrdCheck<LETTER, STATE> lrcwh = computeSuccLevelRankingConstraint_Call(
 					state, letter);
 			List<LevelRankingState<LETTER, STATE>> succLvls = computeSuccLevelRankingStates(lrcwh);
 			for (LevelRankingState<LETTER, STATE> succLvl : succLvls) {
@@ -402,7 +402,7 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 			STATE state, STATE hier, LETTER letter) {
 		Collection<STATE> succs = m_Cache.succReturn(state, hier, letter);
 		if (succs == null) {
-			LevelRankingConstraintDrdCheck<LETTER, STATE> lrcwh = computeSuccLevelRankingConstraints_Return(
+			LevelRankingConstraintDrdCheck<LETTER, STATE> lrcwh = computeSuccLevelRankingConstraint_Return(
 					state, hier, letter);
 			List<LevelRankingState<LETTER, STATE>> succLvls = computeSuccLevelRankingStates(lrcwh);
 			for (LevelRankingState<LETTER, STATE> succLvl : succLvls) {

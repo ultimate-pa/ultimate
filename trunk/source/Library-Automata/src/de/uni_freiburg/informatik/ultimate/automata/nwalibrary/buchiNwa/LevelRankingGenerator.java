@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.util.TreeRelation;
  * @param <LETTER>
  * @param <STATE>
  */
-public class TightLevelRankingStateGeneratorBuilder<LETTER,STATE> {
+public class LevelRankingGenerator<LETTER, STATE, CONSTRAINT extends LevelRankingConstraint<LETTER, STATE>> {
 	
 	private final IUltimateServiceProvider m_Services;
 	private final Logger m_Logger;
@@ -68,7 +68,7 @@ public class TightLevelRankingStateGeneratorBuilder<LETTER,STATE> {
 		Schewe,
 	}
 
-	public TightLevelRankingStateGeneratorBuilder(
+	public LevelRankingGenerator(
 			IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<LETTER, STATE> operand,
 			FkvOptimization optimization,
@@ -81,22 +81,22 @@ public class TightLevelRankingStateGeneratorBuilder<LETTER,STATE> {
 		m_UserDefinedMaxRank = userDefinedMaxRank;
 	}
 	
-	public TightLevelRankingStateGenerator buildTightLevelRankingStateGenerator(LevelRankingConstraint<LETTER, STATE> constraint, boolean initial) {
+	public Collection<LevelRankingState<LETTER, STATE>> buildTightLevelRankingStateGenerator(CONSTRAINT constraint, boolean predecessorIsSubsetComponent) {
 		switch (m_Optimization) {
 		case HeiMat1:
-			return new HeiMatTightLevelRankingStateGenerator(constraint, false);
+			return new HeiMatTightLevelRankingStateGenerator(constraint, false).computeResult();
 		case HeiMat2:
-			return new HeiMatTightLevelRankingStateGenerator(constraint, true);
+			return new HeiMatTightLevelRankingStateGenerator(constraint, true).computeResult();
 		case HighEven:
-			return new HighEvenTightLevelRankingStateGenerator(constraint);
+			return new HighEvenTightLevelRankingStateGenerator(constraint).computeResult();
 		case Schewe:
-			if (initial) {
-				return new MaxTightLevelRankingStateGeneratorInitial(constraint);
+			if (predecessorIsSubsetComponent) {
+				return new MaxTightLevelRankingStateGeneratorInitial(constraint).computeResult();
 			} else {
-				return new MaxTightLevelRankingStateGeneratorNonInitial(constraint);
+				return new MaxTightLevelRankingStateGeneratorNonInitial(constraint).computeResult();
 			}
 		case TightLevelRankings:
-			return new TightLevelRankingStateGenerator(constraint);
+			return new TightLevelRankingStateGenerator(constraint).computeResult();
 		default:
 			throw new UnsupportedOperationException();
 		}
