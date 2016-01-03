@@ -221,19 +221,60 @@ public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE
 		if (isEven(m_HighestRank)) {
 			return false;
 		} else {
-			int[] ranks = new int[m_HighestRank+1];
-			for (StateWithRankInfo<STATE> down  : getDownStates()) {
-				for (StateWithRankInfo<STATE> up : getUpStates(down)) {
-					ranks[up.getRank()]++;
-				}
-			}
+			int[] ranks = constructRanksHistogram();
 			for (int i=1; i<=m_HighestRank; i+=2) {
 				if (ranks[i] == 0) {
 					return false;
 				}
 			}
+			if (ranks[0] != 0) {
+				return false;
+			}
 			return true;
 		}
+	}
+	
+	/**
+	 * See Sven's STACS 2009 paper
+	 */
+	boolean isMaximallyTight() {
+		assert m_HighestRank >= 0;
+		assert m_HighestRank < Integer.MAX_VALUE : "not applicable";
+		if (isEven(m_HighestRank)) {
+			return false;
+		} else {
+			int[] ranks = constructRanksHistogram();
+			if (ranks[0] != 0) {
+				throw new AssertionError("here is a performance bug");
+			}
+			for (int i=1; i<m_HighestRank; i+=2) {
+				if (ranks[i] != 1) {
+					return false;
+				}
+			}
+			if (ranks[m_HighestRank] == 0) {
+				return false;
+			}
+			for (int i=0; i<m_HighestRank-1; i+=2) {
+				if (ranks[i] != 0) {
+					return false;
+				}
+			}
+
+			return true;
+		}
+	}
+
+	private int[] constructRanksHistogram() {
+		assert m_HighestRank >= 0;
+		assert m_HighestRank < Integer.MAX_VALUE : "not applicable";
+		int[] ranks = new int[m_HighestRank+1];
+		for (StateWithRankInfo<STATE> down  : getDownStates()) {
+			for (StateWithRankInfo<STATE> up : getUpStates(down)) {
+				ranks[up.getRank()]++;
+			}
+		}
+		return ranks;
 	}
 
 //	@Override
