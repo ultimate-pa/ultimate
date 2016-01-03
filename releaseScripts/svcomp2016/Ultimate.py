@@ -1,11 +1,13 @@
 #!/usr/bin/env python2.7
 
+from __future__ import print_function
 import sys
 import subprocess
 import os
 import fnmatch
 import platform
 import argparse
+
 
 version = 'f286451a'
 writeUltimateOutputToFile = True
@@ -162,14 +164,14 @@ def createUltimateCall(call, arguments):
 
 def getSettingsFile(bitprecise, settingsSearchString):
     if bitprecise:
-        print 'Using bit-precise analysis'
+        print ('Using bit-precise analysis')
         settingsSearchString = settingsSearchString + '*_' + settingsFileBitprecise
     else:
-        print 'Using default analysis'
+        print ('Using default analysis')
         settingsSearchString = settingsSearchString + '*_' + settingsFileDefault
     settingsArgument = searchCurrentDir('*' + settingsSearchString + '*.epf')
     if settingsArgument == '' or settingsArgument == None:
-        print 'No suitable settings file found using ' + settingsSearchString
+        print ('No suitable settings file found using ') + settingsSearchString
         sys.exit(1)
     return settingsArgument
 
@@ -178,69 +180,71 @@ def getSettingsFile(bitprecise, settingsSearchString):
 def parseArgs():
     # parse command line arguments
     
-#     parser = argparse.ArgumentParser(description='Ultimate wrapper script')
-#     parser.add_argument('32bit', action='store_true')
-#     parser.add_argument('64bit', action='store_true')
-#     parser.add_argument('simple', action='store_true')
-#     parser.add_argument('precise', action='store_true')
-#     parser.add_argument('--version', action='store_true')
-#     parser.add_argument('--full-output', action='store_true')
-#     
-#     parser.add_argument('integers', metavar='N', type=int, nargs='+', help='an integer for the accumulator')
-#     parser.add_argument('--sum', dest='accumulate', action='store_const', const=sum, default=max, help='sum the integers (default: find the max)')
-#     args = parser.parse_args()
-#     print args.accumulate(args.integers)
-    
-    
     if ((len(sys.argv) == 2) and (sys.argv[1] == '--version')):
-        print version
+        print (version)
         sys.exit(0)
-    if (len(sys.argv) < 5):
-        print 'Wrong number of arguments: use ./Ultimate.py <propertyfile> <C file> [32bit|64bit] [simple|precise]'
+    
+    parser = argparse.ArgumentParser(description='Ultimate wrapper script for SVCOMP')
+    parser.add_argument('--version', action='store_true')
+    parser.add_argument('--full-output', action='store_true')
+    parser.add_argument('spec', nargs=1, help='An property (.prp) file from SVCOMP')
+    parser.add_argument('architecture', choices=['32bit', '64bit'])
+    parser.add_argument('memorymodel', choices=['simple', 'precise'])
+    parser.add_argument('file', nargs='+', help='All the input files')
+    
+    args = parser.parse_args()
+  
+    if (args.version):
+        print(version)
+        sys.exit(0)
+    
+    if(not args.file):
+        printErr('You must specify at least one input file')
         sys.exit(1)
     
-    propertyFileName = sys.argv[1]
+    if(len(args.file) > 2):
+        printErr('You cannot specify more than 2 input files')
+        sys.exit(1)
+    
+    cFile = None
+    witness = None   
+    for f in args.file:
+        if not os.path.isfile(f):
+            printErr('Input file ' + f + ' does not exist')
+            sys.exit(1)
+        if f.endswith('.graphml'):
+            witness = f
+        else:
+            cFile = f
+    
+    if(cFile == None and witness != None):
+        printErr("You did not specify a C file with your witness")
+        sys.exit(1)
+    
+    propertyFileName = args.spec[0]
     if not os.path.isfile(propertyFileName):
-        print("Property file not found at " + propertyFileName)
+        printErr("Property file not found at " + propertyFileName)
         sys.exit(1)
-    
-    cFile = sys.argv[2]
-    if not os.path.isfile(cFile):
-        print("Input file not found at " + cFile)
-        sys.exit(1)
-    
-    architecture = sys.argv[3]
-    if not architecture in ("32bit", "64bit"): 
-        print('Architecture has to be either 32bit or 64bit')
-        sys.exit(0)
-    
-    # we currently ignore the memory model
-    memorymodel = sys.argv[4]
-    if not memorymodel in ("simple", "precise"): 
-        print('Memory model has to be either simple or precise')
-        sys.exit(0)
-    
-    verbose = (len(sys.argv) > 5 and sys.argv[5] == '--full-output')
-    
-    return propertyFileName, architecture, cFile, verbose
+   
+    return propertyFileName, args.architecture, ' '.join(args.file), args.full_output
 
 
 def createSettingsSearchString(memDeref, memDerefMemtrack, terminationMode, overflowMode, architecture):
     settingsSearchString = ''
     if memDeref and memDerefMemtrack:
-        print 'Checking for memory safety (deref-memtrack)'
+        print ('Checking for memory safety (deref-memtrack)')
         settingsSearchString = settingsFileMemSafetyDerefMemtrack
     elif memDeref:
-        print 'Checking for memory safety (deref)'
+        print ('Checking for memory safety (deref)')
         settingsSearchString = settingsFileMemSafetyDeref
     elif terminationMode:
-        print 'Checking for termination'
+        print ('Checking for termination')
         settingsSearchString = settingsFileTermination
     elif overflowMode:
-        print 'Checking for overflows'
+        print ('Checking for overflows')
         settingsSearchString = settingsFileOverflow
     else:
-        print 'Checking for ERROR reachability'
+        print ('Checking for ERROR reachability')
         settingsSearchString = settingsFileReach
     settingsSearchString = settingsSearchString + '*' + architecture
     return settingsSearchString
@@ -250,7 +254,7 @@ def createToolchainString(terminationMode):
     if terminationMode:
         toolchain = searchCurrentDir('*Termination.xml');
         if toolchain == '' or toolchain == None:
-            print 'No suitable settings file found using *Termination.xml'
+            print ('No suitable settings file found using *Termination.xml')
             sys.exit(1)
         return toolchain
     else:
@@ -263,6 +267,8 @@ def createToolchainString(terminationMode):
     sys.exit(1)
     return 
 
+def printErr(*objs):
+    print(*objs, file=sys.stderr)
 
 def main():
     # different modes 
@@ -326,7 +332,7 @@ def main():
     print(result)
     if(verbose):
         print('--- Real Ultimate output ---')
-        print(ultimateOutput)
+        print(ultimateOutput.decode('UTF-8'))
         
     return
 
