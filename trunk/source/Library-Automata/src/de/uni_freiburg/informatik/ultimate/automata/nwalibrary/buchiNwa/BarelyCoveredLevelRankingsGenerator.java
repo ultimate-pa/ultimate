@@ -15,15 +15,24 @@ import de.uni_freiburg.informatik.ultimate.util.PowersetIterator;
 public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE> extends LevelRankingGenerator<LETTER, STATE, LevelRankingConstraintDrdCheck<LETTER, STATE>> {
 	
 	private final boolean m_OmitNonAcceptingSink = true;
+	private final boolean m_AllowEmptyLevelRanking;
+	private final boolean m_AllowRankZero;
 
 	public BarelyCoveredLevelRankingsGenerator(IUltimateServiceProvider services,
-			INestedWordAutomatonSimple<LETTER, STATE> operand, int userDefinedMaxRank) {
+			INestedWordAutomatonSimple<LETTER, STATE> operand, int userDefinedMaxRank,
+			boolean allowRankZero,
+			boolean allowEmptyLevelRanking) {
 		super(services, operand, userDefinedMaxRank);
+		m_AllowRankZero = allowRankZero;
+		m_AllowEmptyLevelRanking = allowEmptyLevelRanking;
 	}
 
 	@Override
 	public Collection<LevelRankingState<LETTER, STATE>> generateLevelRankings(
 			LevelRankingConstraintDrdCheck<LETTER, STATE> constraint, boolean predecessorIsSubsetComponent) {
+		if (!m_AllowEmptyLevelRanking && constraint.isEmpty()) {
+			return Collections.emptyList();
+		}
 		if (constraint.isNonAcceptingSink()) {
 			if (m_OmitNonAcceptingSink ) {
 				return Collections.emptyList();
@@ -60,7 +69,6 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE> extends LevelRan
 				final int rankConstraint = up.getRank();
 				final boolean inO;
 				final int rank;
-				
 //				switch (rank) {
 //				case 3:
 //					if (m_Operand.isFinal(up.getState())) {
@@ -90,11 +98,11 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE> extends LevelRan
 //				}
 				if (LevelRankingState.isOdd(rankConstraint)) {
 					if (m_Operand.isFinal(up.getState())) {
-						if (rankConstraint == m_UserDefinedMaxRank) {
+						if (!m_AllowRankZero && rankConstraint == 1) {
+							return null;
+						} else {
 							rank = rankConstraint - 1;
 							inO = oCandidate;
-						} else {
-							return null;
 						}
 					} else {
 						rank = rankConstraint;
@@ -102,7 +110,7 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE> extends LevelRan
 					}
 				} else {
 					assert LevelRankingState.isEven(rankConstraint);
-					if (doubleDeckersWithVoluntaryDecrease.contains(new DoubleDecker<StateWithRankInfo<STATE>>(down, up))) {
+					if (rankConstraint > 0 && doubleDeckersWithVoluntaryDecrease.contains(new DoubleDecker<StateWithRankInfo<STATE>>(down, up))) {
 						rank = rankConstraint - 1;
 						inO = false;
 					} else {
