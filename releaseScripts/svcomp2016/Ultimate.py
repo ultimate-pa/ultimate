@@ -171,7 +171,7 @@ def getSettingsFile(bitprecise, settingsSearchString):
         settingsSearchString = settingsSearchString + '*_' + settingsFileDefault
     settingsArgument = searchCurrentDir('*' + settingsSearchString + '*.epf')
     if settingsArgument == '' or settingsArgument == None:
-        print ('No suitable settings file found using ') + settingsSearchString
+        print ('No suitable settings file found using ' + settingsSearchString) 
         sys.exit(1)
     return settingsArgument
 
