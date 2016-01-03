@@ -97,6 +97,7 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 						// maybe we can additionally require that all even ranks are similar
 						// e.g., if we have predecessors with 4 and 2, there is
 						// also a run where 2 is still 4.
+						// 2016-01-02 Matthias: No we cannot, see simple rnk5 example
 						if (nonFinalOdd.isEmpty()) {
 							// do nothing
 						} else {
