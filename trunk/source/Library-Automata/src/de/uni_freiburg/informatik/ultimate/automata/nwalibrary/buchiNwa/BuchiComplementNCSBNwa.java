@@ -95,7 +95,7 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 				operand.getInternalAlphabet(), operand.getCallAlphabet(), 
 				operand.getReturnAlphabet(), m_StateFactory);
 		m_EmptyStackStateWRI = new StateWithRankInfo<STATE>(getEmptyStackState());
-		m_bclrg = new BarelyCoveredLevelRankingsGenerator<>(m_Services, m_Operand, 3, true);
+		m_bclrg = new BarelyCoveredLevelRankingsGenerator<LETTER,STATE>(m_Services, m_Operand, 3, false, true);
 		constructInitialState();
 	}
 	

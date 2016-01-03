@@ -59,6 +59,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 		TightLevelRankings,
 		HighEven,
 		Schewe,
+		Elastic,
 	}
 
 	public MultiOptimizationLevelRankingGenerator(
@@ -83,6 +84,12 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 				return new MaxTightLevelRankingStateGeneratorInitial(constraint).computeResult();
 			} else {
 				return new MaxTightLevelRankingStateGeneratorNonInitial(constraint).computeResult();
+			}
+		case Elastic:
+			if (predecessorIsSubsetComponent) {
+				return new HeiMatTightLevelRankingStateGenerator(constraint, false).computeResult();
+			} else {
+				return new BarelyCoveredLevelRankingsGenerator(m_Services, m_Operand, m_UserDefinedMaxRank, true, false).generateLevelRankings((LevelRankingConstraintDrdCheck) constraint, false);
 			}
 		case TightLevelRankings:
 			return new TightLevelRankingStateGenerator(constraint).computeResult();
@@ -975,6 +982,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 				for (DoubleDecker<StateWithRankInfo<STATE>> dd : m_FinalDoubleDeckerWithRankInfos) {
 					lrs.addRank(dd.getDown(), dd.getUp().getState(), highestEvenRank, true);
 				}
+				assert lrs.isMaximallyTight() : "not maximally tight";
 				m_Result.add(lrs);
 			} else {
 				for (DoubleDecker<StateWithRankInfo<STATE>> dd  : m_NonFinalDoubleDeckerWithRankInfos) {
@@ -1029,7 +1037,12 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 						}
 					}
 				}
-				m_Result.add(pointwiseMax);
+				if (pointwiseMax.isTight()) {
+					m_Result.add(pointwiseMax);
+				} else {
+					assert m_Result.isEmpty();
+					return m_Result;
+				}
 				if (!pointwiseMax.isOempty()) {
 					LevelRankingState<LETTER,STATE> lrs = new LevelRankingState<LETTER,STATE>(m_Operand);
 					for (StateWithRankInfo<STATE> down  : pointwiseMax.getDownStates()) {
