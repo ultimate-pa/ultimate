@@ -284,7 +284,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 					resSuccs.add(resSucc);
 				}
 				boolean oIsEmpty = true; // considering O empty for subset component will safe some states
-				LevelRankingConstraint<LETTER,STATE> constraints = new LevelRankingConstraint<LETTER,STATE>(
+				LevelRankingConstraint<LETTER,STATE> constraints = new LevelRankingConstraintDrdCheck<LETTER,STATE>(
 						m_Operand, oIsEmpty, m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
 				constraints.internalSuccessorConstraints(detUp, letter);
 				Collection<LevelRankingState<LETTER,STATE>> result = m_LevelRankingGenerator.
@@ -300,7 +300,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 			}
 			LevelRankingState<LETTER,STATE> complUp = m_res2lrk.get(state);
 			if (complUp != null) {
-				LevelRankingConstraint<LETTER,STATE> constraints = new LevelRankingConstraint<LETTER,STATE>(
+				LevelRankingConstraint<LETTER,STATE> constraints = new LevelRankingConstraintDrdCheck<LETTER,STATE>(
 						m_Operand, complUp.isOempty(), m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
 				constraints.internalSuccessorConstraints(complUp, letter);
 				Collection<LevelRankingState<LETTER,STATE>> result = m_LevelRankingGenerator.
@@ -343,7 +343,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 					resSuccs.add(resSucc);
 				}
 				boolean oIsEmpty = true; // considering O empty for subset component will safe some states
-				LevelRankingConstraint<LETTER, STATE> constraints = new LevelRankingConstraint<LETTER, STATE>(
+				LevelRankingConstraint<LETTER, STATE> constraints = new LevelRankingConstraintDrdCheck<LETTER, STATE>(
 						m_Operand, oIsEmpty, m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
 				constraints.callSuccessorConstraints(detUp, letter);
 				Collection<LevelRankingState<LETTER, STATE>> result = m_LevelRankingGenerator.
@@ -356,7 +356,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 			}
 			LevelRankingState<LETTER, STATE> complUp = m_res2lrk.get(state);
 			if (complUp != null) {
-				LevelRankingConstraint<LETTER, STATE> constraints = new LevelRankingConstraint<LETTER, STATE>(
+				LevelRankingConstraint<LETTER, STATE> constraints = new LevelRankingConstraintDrdCheck<LETTER, STATE>(
 						m_Operand, complUp.isOempty(), m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
 				constraints.callSuccessorConstraints(complUp, letter);
 				Collection<LevelRankingState<LETTER, STATE>> result = m_LevelRankingGenerator.
@@ -399,7 +399,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 					resSuccs.add(resSucc);
 				}
 				boolean oIsEmpty = true; // considering O empty for subset component will safe some states
-				LevelRankingConstraint<LETTER, STATE> constraints = new LevelRankingConstraint<LETTER, STATE>(
+				LevelRankingConstraint<LETTER, STATE> constraints = new LevelRankingConstraintDrdCheck<LETTER, STATE>(
 						m_Operand, oIsEmpty, m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
 				constraints.returnSuccessorConstraints(detUp, detDown, letter);
 				Collection<LevelRankingState<LETTER, STATE>> result = m_LevelRankingGenerator.
@@ -419,7 +419,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 				complDown = m_res2lrk.get(hier);
 			}
 			if (complUp != null) {
-				LevelRankingConstraint<LETTER, STATE> constraints = new LevelRankingConstraint<LETTER, STATE>(
+				LevelRankingConstraint<LETTER, STATE> constraints = new LevelRankingConstraintDrdCheck<LETTER, STATE>(
 						m_Operand, complUp.isOempty(), m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
 				constraints.returnSuccessorConstraints(complUp, complDown, letter);
 				Collection<LevelRankingState<LETTER, STATE>> result = m_LevelRankingGenerator.
