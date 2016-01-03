@@ -244,9 +244,6 @@ public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE
 			return false;
 		} else {
 			int[] ranks = constructRanksHistogram();
-			if (ranks[0] != 0) {
-				throw new AssertionError("here is a performance bug");
-			}
 			for (int i=1; i<m_HighestRank; i+=2) {
 				if (ranks[i] != 1) {
 					return false;
