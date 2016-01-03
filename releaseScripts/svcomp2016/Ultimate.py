@@ -332,7 +332,7 @@ def main():
     print(result)
     if(verbose):
         print('--- Real Ultimate output ---')
-        print(ultimateOutput.decode('UTF-8'))
+        print(ultimateOutput.decode('UTF-8','replace'))
         
     return
 
