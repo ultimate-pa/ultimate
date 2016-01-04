@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.junit.Assert;
@@ -242,6 +243,29 @@ public class OctMatrixTest {
 		assertIsEqualTo(mWn, m.widenExponential(n, threshold));
 	}
 	
+	@Test
+	public void testAppendSelection() {
+		OctMatrix a = OctMatrix.parseBlockLowerTriangular(
+				  "-1 -2 "
+				+ "-3 -4");
+		OctMatrix b = OctMatrix.parseBlockLowerTriangular(
+				  "1  7 "
+				+ "2  8 "
+				+ "3  9 15 21 "
+				+ "4 10 16 22 "
+				+ "5 11 17 23 29 35 "
+				+ "6 12 18 24 30 36 ");
+		OctMatrix expected = OctMatrix.parseBlockLowerTriangular(
+				  " -1  -2 "
+				+ " -3  -4 "
+				+ "inf inf   1   7 "
+				+ "inf inf   2   8 "
+				+ "inf inf   5  11  29  35 "
+				+ "inf inf   6  12  30  36 ");
+		OctMatrix actual = a.appendSelection(b, asList(0, 2));
+		assertIsEqualTo(expected, actual);
+	}
+	
 //	@Test
 	public void testByComparingRandom() {
 		for (int i = 0; i < 2000; ++i) {
@@ -269,7 +293,10 @@ public class OctMatrixTest {
 	}
 	
 	private Set<Integer> asSet(Integer... elements) {
-		return new HashSet<Integer>(Arrays.asList(elements));
+		return new HashSet<Integer>(asList(elements));
 	}
 
+	private List<Integer> asList(Integer... elements) {
+		return Arrays.asList(elements);
+	}
 }

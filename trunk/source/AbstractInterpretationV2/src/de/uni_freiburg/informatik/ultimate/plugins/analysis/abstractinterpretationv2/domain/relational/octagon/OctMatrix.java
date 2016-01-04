@@ -2,8 +2,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
@@ -11,6 +13,7 @@ import java.util.function.Consumer;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.util.BidirectionalMap;
 
 /**
  * Matrix for octagons (as presented by Antoine Mine).
@@ -73,7 +76,7 @@ public class OctMatrix {
 	private OctMatrix mStrongClosure;
 	private OctMatrix mTightClosure;
 
-	private OctMatrix copy() {
+	public OctMatrix copy() {
 		OctMatrix clone = new OctMatrix(mSize);
 		System.arraycopy(this.mElements, 0, clone.mElements, 0, mElements.length);
 		clone.mStrongClosure = mStrongClosure;
@@ -98,9 +101,9 @@ public class OctMatrix {
 	public static OctMatrix random(int variables) {
 		return random(variables, Math.random());
 	}
-	
+
 	/**
-	 * @param infProbability probability that an element will be infinity
+	 * @param infProbability probability that an element will be infinity (0 = never, 1 = always)
 	 */
 	public static OctMatrix random(int variables, double infProbability) {
 		OctMatrix m = new OctMatrix(variables * 2);
@@ -124,6 +127,12 @@ public class OctMatrix {
 	protected OctMatrix(int size) {
 		mSize = size;
 		mElements = new OctValue[size * size / 2 + size];
+	}
+	
+	protected void fillInPlace(OctValue fill) {
+		for (int i = 0; i < mElements.length; ++i) {
+			mElements[i] = fill;
+		}
 	}
 	
 	public int getSize() {
@@ -623,7 +632,60 @@ public class OctMatrix {
 		}
 		return n;
 	}
+	
+	// TODO note that information is lost. Strong Closure on this and source in advance can reduce loss.
+	// TODO source must be different from target (= this)
+	protected void overwriteSelection(OctMatrix source, BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar) {
+		if (source.mElements == mElements) {
+			throw new UnsupportedOperationException("Cannot overwrite this with this.");
+		}
+		BidirectionalMap<Integer, Integer> mapTargetVarToSourceVar = mapSourceVarToTargetVar.inverse();
+		for (Map.Entry<Integer, Integer> entry : mapSourceVarToTargetVar.entrySet()) {
+			int sourceVar = entry.getKey();
+			int targetVar = entry.getValue();
+			for (int targetOther = 0; targetOther < variables(); ++targetOther) {
+				Integer sourceOther = mapTargetVarToSourceVar.get(targetOther);
+				if (sourceOther == null) {
+					// TODO is it safe/possible to keep some information?
+					setBlock(targetOther, targetVar, OctValue.INFINITY);
+					setBlock(targetVar, targetOther, OctValue.INFINITY);
+				} else {
+					overwriteBlock(targetOther, targetVar, source, sourceOther, sourceVar); // column
+					overwriteBlock(targetVar, targetOther, source, sourceVar, sourceOther); // row
+				}
+			}
+		}
+	}
+	
+	// TODO document: selectedSourceVars should not contain duplicates
+	// TODO document: iteration order matters
+	public OctMatrix appendSelection(OctMatrix source, Collection<Integer> selectedSourceVars) {
+		OctMatrix m = this.addVariables(selectedSourceVars.size());
+		BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar = new BidirectionalMap<>();
+		for (Integer s : selectedSourceVars) {
+			assert !selectedSourceVars.contains(s) : "selectedSourceVars contained duplicate " + s;
+			mapSourceVarToTargetVar.put(s, mapSourceVarToTargetVar.size() + variables());
+		}
+		m.overwriteSelection(source, mapSourceVarToTargetVar);
+		return m;
+	}
+	
+	private void overwriteBlock(int targetBRow, int targetBCol, OctMatrix source, int sourceBRow, int sourceBCol) {
+		for (int j = 0; j < 2; j++) {
+			for (int i = 0; i < 2; ++i) {
+				set(2*targetBRow + i, 2*targetBCol + j, source.get(2*sourceBRow + i, 2*sourceBCol + j));
+			}
+		}
+	}
 
+	private void setBlock(int bRow, int bCol, OctValue v) {
+		for (int j = 0; j < 2; j++) {
+			for (int i = 0; i < 2; ++i) {
+				set(2*bRow + i, 2*bCol + j, v);
+			}
+		}
+	}
+	
 	public Term getTerm(Script script, List<Term> vars) {
 		Term acc = script.term("true");
 		for (int rowBlock = 0; rowBlock < variables(); ++rowBlock) {
@@ -636,7 +698,7 @@ public class OctMatrix {
 		}
 		return acc;
 	}
-	
+
 	private Term getBlockTerm(Script script, int rowBlock, int colBlock, Term rowVar, Term colVar) {
 		Term acc = script.term("true");
 		// 0 = plus, 1 = minus
@@ -668,4 +730,5 @@ public class OctMatrix {
 		}
 		return sb.toString();
 	}
+	
 }

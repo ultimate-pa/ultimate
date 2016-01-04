@@ -7,6 +7,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.Map.Entry;
 import java.util.function.BiFunction;
 
@@ -23,6 +25,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.util.BidirectionalMap;
 
 public class OctagonDomainState implements IAbstractState<OctagonDomainState, CodeBlock, IBoogieVar> {
 	
@@ -59,10 +62,27 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		s.mMapVarToBoogieVar = mMapVarToBoogieVar;
 		s.mMapNumericVarToIndex = mMapNumericVarToIndex;
 		s.mNumericNonIntVars = mNumericNonIntVars;
+		s.mNumericAbstraction = mNumericAbstraction;
 		s.mBooleanAbstraction = mBooleanAbstraction;
 		return s;
 	}
+	
+	public OctagonDomainState deepCopy() {
+		OctagonDomainState s = new OctagonDomainState();
+		s.mIsFixpoint = mIsFixpoint;
+		s.mMapVarToBoogieVar = new HashMap<>(mMapVarToBoogieVar);
+		s.mMapNumericVarToIndex = new HashMap<>(mMapNumericVarToIndex);
+		s.mNumericNonIntVars = new HashSet<>(mNumericNonIntVars);
+		s.mNumericAbstraction = mNumericAbstraction.copy();
+		s.mBooleanAbstraction = new HashMap<>(mBooleanAbstraction);
+		return s;
+	}
 
+	@Override
+	public Map<String, IBoogieVar> getVariables() {
+		return Collections.unmodifiableMap(mMapVarToBoogieVar);
+	}
+	
 	@Override
 	public OctagonDomainState addVariable(String name, IBoogieVar variable) {
 		return addVariables(Collections.singletonMap(name, variable));
@@ -85,11 +105,11 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 			if (isNumeric(type)) {
 				unrefMapNumericVarToIndex(newState);
 				newState.mMapNumericVarToIndex.put(name, newState.mMapNumericVarToIndex.size());
-				if (!isInteger(type)) {
+				if (isNumericNonInteger(type)) {
 					unrefNumericNonIntVars(newState);
 					newState.mNumericNonIntVars.add(name);
 				}
-			} else if (type instanceof BooleanValue) {
+			} else if (isBoolean(type)) {
 				unrefBooleanAbstraction(newState);
 				newState.mBooleanAbstraction.put(name, new BooleanValue());
 			}
@@ -107,11 +127,19 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		}
 		return false;
 	}
-
-	private boolean isInteger(IType type) {
+	
+	private boolean isNumericNonInteger(IType type) {
 		if (type instanceof PrimitiveType) {
 			int typeCode = ((PrimitiveType) type).getTypeCode();
-			return  typeCode == PrimitiveType.INT;
+			return typeCode == PrimitiveType.REAL;
+		}
+		return false;
+	}
+	
+	private boolean isBoolean(IType type) {
+		if (type instanceof PrimitiveType) {
+			int typeCode = ((PrimitiveType) type).getTypeCode();
+			return typeCode == PrimitiveType.BOOL;
 		}
 		return false;
 	}
@@ -231,6 +259,12 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	}
 	
 	private boolean numericAbstractionIsEqualTo(OctagonDomainState other) {
+		// TODO transform ifs into assertion
+		if (!mMapNumericVarToIndex.keySet().equals(other.mMapNumericVarToIndex.keySet())) {
+			return false;
+		} else if (!mMapNumericVarToIndex.equals(other.mMapNumericVarToIndex)) {
+			throw new IllegalStateException("Matrices have same variables but in different order.");
+		}
 		OctMatrix m = normalizedNumericAbstraction();
 		OctMatrix n = other.normalizedNumericAbstraction();
 		return (m.hasNegativeSelfLoop() && n.hasNegativeSelfLoop()) || m.isEqualTo(n);
@@ -273,12 +307,12 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	}
 	
 	private Term getTermNumericAbstraction(Script script, Boogie2SMT bpl2smt) {		
-		List<Term> mapIndexToVar = new ArrayList<>(mMapNumericVarToIndex.size());
+		List<Term> mapIndexToTerm = new ArrayList<>(mMapNumericVarToIndex.size());
 		for (Map.Entry<String, Integer> entry : mMapNumericVarToIndex.entrySet()) {
 			Term termVar = getTermVar(entry.getKey());
-			mapIndexToVar.set(entry.getValue(), termVar);
+			mapIndexToTerm.set(entry.getValue(), termVar);
 		}
-		return mNumericAbstraction.getTerm(script, mapIndexToVar);
+		return mNumericAbstraction.getTerm(script, mapIndexToTerm);
 	}
 
 	private Term getTermBooleanAbstraction(Script script, Boogie2SMT bpl2smt) {
@@ -302,12 +336,87 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		return null;
 	}
 	
+	// TODO test
 	@Override
-	public OctagonDomainState copy() {
-		// unused method of IAbstractState
-		throw new UnsupportedOperationException();
+	public OctagonDomainState patch(OctagonDomainState dominator) {
+		// TODO strong closure to reduce precision loss
+		
+		Map<String, IBoogieVar> mapTypeChangedVarsToNewType = varsWithTypeCategoryCollisions(dominator);
+		OctagonDomainState s = this.removeVariables(mapTypeChangedVarsToNewType);
+		
+		BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar = new BidirectionalMap<>();
+		SortedMap<Integer, String> mapOldIndicesOfNewNumericVars = new TreeMap<>();
+
+		for (Map.Entry<String, IBoogieVar> entry : dominator.mMapVarToBoogieVar.entrySet()) {
+			String var = entry.getKey();
+			IBoogieVar newBoogieVar = entry.getValue();
+			s.mMapVarToBoogieVar.put(var, newBoogieVar);
+			IType newType = newBoogieVar.getIType();
+			if (isNumeric(newType)) {
+				int sourceVar = dominator.mMapNumericVarToIndex.get(var);
+				Integer targetVar = s.mMapNumericVarToIndex.get(var);
+				if (targetVar == null) {
+					mapOldIndicesOfNewNumericVars.put(sourceVar, var);
+				} else {
+					mapSourceVarToTargetVar.put(sourceVar, targetVar);
+				}
+				if (isNumericNonInteger(newType)) {
+					s.mNumericNonIntVars.add(var);
+				} else {
+					s.mNumericNonIntVars.remove(var);
+				}
+			} else if (newType instanceof BooleanValue){
+				s.mBooleanAbstraction.put(var, dominator.mBooleanAbstraction.get(var));
+			}
+			// else: variable has unsupported type and is assumed to be \top
+		}
+		for (String var : mapOldIndicesOfNewNumericVars.values()) {
+			s.mMapNumericVarToIndex.put(var, s.mMapNumericVarToIndex.size());
+		}
+		s.mNumericAbstraction
+				.overwriteSelection(dominator.mNumericAbstraction, mapSourceVarToTargetVar);
+		s.mNumericAbstraction = s.mNumericAbstraction
+				.appendSelection(dominator.mNumericAbstraction, mapOldIndicesOfNewNumericVars.keySet());
+		return s;
 	}
 
+	/**
+	 * Searches variables with the same name in {@code this} and {@code dominator} but different type categories.
+	 * The return value can be used in {@link #removeVariables(Map)}.
+	 * 
+	 * @param dominator other state
+	 * @return map from colliding variable (names) to their {@linkplain IBoogieVar} from {@code this} state
+	 * 
+	 * @see #typeCategoryEquals(IType, IType)
+	 */
+	private Map<String, IBoogieVar> varsWithTypeCategoryCollisions(OctagonDomainState dominator) {
+		HashMap<String, IBoogieVar> typeChangedVars = new HashMap<>();
+		for (Map.Entry<String, IBoogieVar> entry : dominator.mMapVarToBoogieVar.entrySet()) {
+			String var = entry.getKey();
+			IBoogieVar newBoogieVar = entry.getValue();
+			IBoogieVar oldBoogieVar = mMapVarToBoogieVar.get(var);
+			if (oldBoogieVar != null && !typeCategoryEquals(oldBoogieVar.getIType(), oldBoogieVar.getIType())) {
+				typeChangedVars.put(var, newBoogieVar);
+			}
+		}
+		return typeChangedVars;
+	}
+	
+	/**
+	 * Checks if two Boogie types are of the same type category.
+	 * There are three type categories:
+	 * numeric (int, real),
+	 * bool (bool),
+	 * and unsupported types (bit-vectors, arrays, ...).
+	 *
+	 * @param a first type
+	 * @param b second type
+	 * @return a and b are of the same abstract type
+	 */
+	private boolean typeCategoryEquals(IType a, IType b) {
+		return (isBoolean(a) == isBoolean(b)) && (isNumeric(a) == isNumeric(b));
+	}
+	
 	@Override
 	public String toLogString() {
 		StringBuilder log = new StringBuilder();
