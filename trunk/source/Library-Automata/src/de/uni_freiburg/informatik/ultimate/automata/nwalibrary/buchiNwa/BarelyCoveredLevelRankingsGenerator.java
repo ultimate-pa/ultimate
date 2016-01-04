@@ -17,14 +17,20 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE> extends LevelRan
 	private final boolean m_OmitNonAcceptingSink = true;
 	private final boolean m_AllowEmptyLevelRanking;
 	private final boolean m_AllowRankZero;
+	private final boolean m_RestrictToElasticLevelRankings;
+	private final boolean m_VoluntaryDecreaseOnlyForStatesInO;
 
 	public BarelyCoveredLevelRankingsGenerator(IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<LETTER, STATE> operand, int userDefinedMaxRank,
 			boolean allowRankZero,
-			boolean allowEmptyLevelRanking) {
+			boolean allowEmptyLevelRanking, 
+			boolean restrictToElasticLevelRankings, 
+			boolean voluntaryDecreaseOnlyForStatesInO) {
 		super(services, operand, userDefinedMaxRank);
 		m_AllowRankZero = allowRankZero;
 		m_AllowEmptyLevelRanking = allowEmptyLevelRanking;
+		m_RestrictToElasticLevelRankings = restrictToElasticLevelRankings;
+		m_VoluntaryDecreaseOnlyForStatesInO = voluntaryDecreaseOnlyForStatesInO;
 	}
 
 	@Override
@@ -40,20 +46,26 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE> extends LevelRan
 				return Collections.singletonList(new LevelRankingState<LETTER, STATE>());
 			}
 		}
-		//			if (constraint.aroseFromDelayedRankDecrease()) {
-		if (constraint.isTargetOfDelayedRankDecrease(m_UserDefinedMaxRank)) {
-			// in this case we do not want to have successor states
-			return Collections.emptyList();
-		}
 		List<LevelRankingState<LETTER, STATE>> succLvls = new ArrayList<LevelRankingState<LETTER,STATE>>();
 		Set<DoubleDecker<StateWithRankInfo<STATE>>> allDoubleDeckersWithVoluntaryDecrease = constraint.getPredecessorWasAccepting();
+		if (m_VoluntaryDecreaseOnlyForStatesInO) {
+			Iterator<DoubleDecker<StateWithRankInfo<STATE>>> it = allDoubleDeckersWithVoluntaryDecrease.iterator();
+			while (it.hasNext()) {
+				DoubleDecker<StateWithRankInfo<STATE>> dd = it.next();
+				if (!constraint.inO(dd.getDown(), dd.getUp().getState())) {
+					it.remove();
+				}
+			}
+		}
 		Iterator<Set<DoubleDecker<StateWithRankInfo<STATE>>>> it = 
 				new PowersetIterator<DoubleDecker<StateWithRankInfo<STATE>>>(allDoubleDeckersWithVoluntaryDecrease);
 		while(it.hasNext()) {
 			Set<DoubleDecker<StateWithRankInfo<STATE>>> subset = it.next();
 			LevelRankingState<LETTER, STATE> succCandidate = computeLevelRanking(constraint, subset);
 			if (succCandidate != null) {
-				succLvls.add(succCandidate);
+				if (!m_RestrictToElasticLevelRankings || succCandidate.isElastic()) {
+					succLvls.add(succCandidate);
+				}
 			}
 		}
 		return succLvls;

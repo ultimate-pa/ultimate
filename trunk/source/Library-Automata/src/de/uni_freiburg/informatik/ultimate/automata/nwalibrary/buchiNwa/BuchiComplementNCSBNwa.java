@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -95,7 +96,7 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 				operand.getInternalAlphabet(), operand.getCallAlphabet(), 
 				operand.getReturnAlphabet(), m_StateFactory);
 		m_EmptyStackStateWRI = new StateWithRankInfo<STATE>(getEmptyStackState());
-		m_bclrg = new BarelyCoveredLevelRankingsGenerator<LETTER,STATE>(m_Services, m_Operand, 3, false, true);
+		m_bclrg = new BarelyCoveredLevelRankingsGenerator<LETTER,STATE>(m_Services, m_Operand, 3, false, true, false, false);
 		constructInitialState();
 	}
 	
@@ -271,6 +272,10 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 
 
 	private Collection<STATE> computeStates(LevelRankingConstraintDrdCheck<LETTER, STATE> constraint) {
+		if (constraint.isTargetOfDelayedRankDecrease()) {
+			// in this case we do not want to have successor states
+			return Collections.emptyList();
+		}
 		Collection<LevelRankingState<LETTER, STATE>> succLvls = m_bclrg.generateLevelRankings(constraint, false);
 		List<STATE> computedSuccs = new ArrayList<>(); 
 		for (LevelRankingState<LETTER, STATE> succLvl : succLvls) {

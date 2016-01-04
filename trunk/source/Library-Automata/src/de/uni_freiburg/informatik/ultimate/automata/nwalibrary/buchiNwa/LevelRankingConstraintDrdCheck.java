@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeSet;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -45,17 +46,13 @@ import de.uni_freiburg.informatik.ultimate.util.relation.HashRelation3;
 public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingConstraint<LETTER, STATE> {
 	
 	
-	private final HashRelation3<StateWithRankInfo<STATE>, STATE, Integer> m_RanksOfNonFinalPredecessors_Even;
-	private final HashRelation3<StateWithRankInfo<STATE>, STATE, Integer> m_RanksOfNonFinalPredecessors_Odd;
-	private final HashRelation3<StateWithRankInfo<STATE>, STATE, Integer> m_RanksOfFinalPredecessors;
+	private final HashRelation3<StateWithRankInfo<STATE>, STATE, Integer> m_RanksOfPredecessors;
 
 	public LevelRankingConstraintDrdCheck(INestedWordAutomatonSimple<LETTER, STATE> operand,
 			boolean predecessorOwasEmpty,
 			int userDefinedMaxRank, boolean useDoubleDeckers) {
 		super(operand, predecessorOwasEmpty, userDefinedMaxRank, useDoubleDeckers);
-		m_RanksOfNonFinalPredecessors_Even = new HashRelation3<>();
-		m_RanksOfNonFinalPredecessors_Odd = new HashRelation3<>();
-		m_RanksOfFinalPredecessors = new HashRelation3<>();
+		m_RanksOfPredecessors = new HashRelation3<>();
 	}
 	
 	/**
@@ -63,66 +60,54 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 	 */
 	public LevelRankingConstraintDrdCheck() {
 		super();
-		m_RanksOfNonFinalPredecessors_Even = null;
-		m_RanksOfNonFinalPredecessors_Odd = null;
-		m_RanksOfFinalPredecessors = null;
+		m_RanksOfPredecessors = null;
 	}
 
 	@Override
 	protected void addConstaint(StateWithRankInfo<STATE> down, STATE up, Integer predecessorRank, boolean predecessorIsInO,
 			boolean predecessorIsAccepting) {
-		if (isEven(predecessorRank) && !predecessorIsAccepting) {
-			m_RanksOfNonFinalPredecessors_Even.addTriple(down, up, predecessorRank);
-		}
+		m_RanksOfPredecessors.addTriple(down, up, predecessorRank);
 		super.addConstaint(down, up, predecessorRank, predecessorIsInO, predecessorIsAccepting);
 	}
 	
 	
-	public boolean isTargetOfDelayedRankDecrease(Integer maxRank) {
+	/**
+	 * We say that a transition stems from a delayed rank decrease if there
+	 * is a state which has even and odd predecessors. Here, we neglect the
+	 * highest odd if it is higher than the highest even rank.
+	 * Rationale: Odd ranks occur only in the beginning or as result of a
+	 * voluntary rank decrease (if after a final state the rank was decreased).
+	 * This means that for each of these (delayed rank decrease) transitions
+	 * there is also a transition whose source is the level ranking in which
+	 * the rank was not voluntarily decreased.
+	 * This interferes with other optimizations (e.g., tight level rankings, 
+	 * elastic level rankings) because there the not voluntarily decreased
+	 * path was lost is some state in between was not tight (resp. elastic) 
+	 */
+	public boolean isTargetOfDelayedRankDecrease() {
 		for (Entry<StateWithRankInfo<STATE>, HashMap<STATE, Integer>> entry : m_LevelRanking.entrySet()) {
 			for (STATE up : entry.getValue().keySet()) {
-				if (m_Operand.isFinal(up)) {
-					// do nothing
-					// if operand is final we tolerate any rank decrease
-					// this can probably be improved
-					// e.g., if we have ranks 6 and 5 we know (tight 
-					// level rankings) that some time ago 5 was 6 hence there
-					// should be also a run where the state with 5 has an even rank
+				Set<Integer> predRanks = m_RanksOfPredecessors.projectToTrd(entry.getKey(), up);
+				assert predRanks.size() > 0;
+				if (predRanks.size() <= 1) {
+					return false;
 				} else {
-					Set<Integer> nonFinalEven = m_RanksOfNonFinalPredecessors_Even.projectToTrd(entry.getKey(), up);
-					Set<Integer> nonFinalOdd = m_RanksOfNonFinalPredecessors_Odd.projectToTrd(entry.getKey(), up);
-					if (nonFinalEven.isEmpty()) {
-						// do nothing
-					} else {
-						// maybe we can additionally require that all even ranks are similar
-						// e.g., if we have predecessors with 4 and 2, there is
-						// also a run where 2 is still 4.
-						// 2016-01-02 Matthias: No we cannot, see simple rnk5 example
-						if (nonFinalOdd.isEmpty()) {
-							// do nothing
+					TreeSet<Integer> even = new TreeSet<>();
+					TreeSet<Integer> odd = new TreeSet<>();
+					for (Integer i : predRanks) {
+						if (isEven(i)) {
+							even.add(i);
 						} else {
-							if (nonFinalOdd.size() == 1 && nonFinalOdd.contains(maxRank)) {
-								// do nothing
-								// 
-							} else {
-								return true;
-							}
+							assert isOdd(i);
+							odd.add(i);
 						}
 					}
-				}
-			}
-		}
-		return false;
-	}
-	
-	@Deprecated
-	public boolean aroseFromDelayedRankDecrease() {
-		for (StateWithRankInfo<STATE> down : m_RanksOfNonFinalPredecessors_Even.projectToFst()) {
-			for (STATE up : m_RanksOfNonFinalPredecessors_Even.projectToSnd(down)) {
-				Integer constraint = getRank(down, up);
-				Set<Integer> nonAcceptingEvenranks = m_RanksOfNonFinalPredecessors_Even.projectToTrd(down, up);
-				if (isOdd(constraint) && !nonAcceptingEvenranks.isEmpty()) {
-					return true;
+					Integer largestOdd = odd.last();
+					Integer largestEven = even.last();
+					if (largestOdd > largestEven) {
+						odd.remove(largestOdd);
+					}
+					return !odd.isEmpty() && !even.isEmpty();
 				}
 			}
 		}
@@ -131,8 +116,7 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 	
 	private boolean isEligibleForVoluntaryRankDecrease(StateWithRankInfo<STATE> down, STATE up) {
 		Integer constraint = getRank(down, up);
-		Set<Integer> nonAcceptingEvenranks = m_RanksOfNonFinalPredecessors_Even.projectToTrd(down, up);
-		return (isEven(constraint) && !m_Operand.isFinal(up) && nonAcceptingEvenranks.isEmpty());
+		return (isEven(constraint) && !m_Operand.isFinal(up));
 	}
 
 	@Override
