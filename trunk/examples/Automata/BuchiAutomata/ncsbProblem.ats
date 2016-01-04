@@ -2,7 +2,7 @@
  * Example where the result of buchiDifferenceFKV is better than the result of
  * buchiDifferenceNCSB.
  * 
- * Date: 2015-12-16
+ * Date: 2015-12-18
  * Author: Matthias Heizmann
  */
 
@@ -23,61 +23,61 @@
 // NestedWordAutomaton cNCSBl = removeNonLiveStates(nwa);
 // print(numberOfStates(cNCSBl));
 
+// NestedWordAutomaton dFKV = buchiComplementFKV(prg);
 NestedWordAutomaton dFKV = buchiDifferenceFKV(prg, nwa);
 print(numberOfStates(dFKV));
-print(dFKV);
+// print(numberOfTransitions(dFKV));
+// print(dFKV);
 NestedWordAutomaton dFKVl = removeNonLiveStates(dFKV);
 print(numberOfStates(dFKVl));
 
+// NestedWordAutomaton dNCSB = buchiComplementNCSB(prg);
 NestedWordAutomaton dNCSB = buchiDifferenceNCSB(prg, nwa);
 print(dNCSB);
 print(numberOfStates(dNCSB));
+// print(numberOfTransitions(dNCSB));
 NestedWordAutomaton dNCSBl = removeNonLiveStates(dNCSB);
 print(numberOfStates(dNCSBl));
 
 
 NestedWordAutomaton nwa = (
-	callAlphabet = {"c1" "c2" },
-	internalAlphabet = {"a1" "p1" "p2" "fe" "a2" },
-	returnAlphabet = {"return;" },
-	states = {"s2" "honda" "s1" "u" },
-	initialStates = {"u" },
-	finalStates = {"honda" },
+	callAlphabet = { },
+	internalAlphabet = {"p1" "p2" "fe" "a1" "a2" "a3" },
+	returnAlphabet = { },
+	states = {"l1" "l2" "l3" "l4" "l0" },
+	initialStates = {"l0" },
+	finalStates = {"l1" },
 	callTransitions = {
-		 ("u" "c1" "u")
-		 ("u" "c2" "u")
 	},
 	internalTransitions = {
-		 ("s2" "p1" "honda")
-		 ("honda" "a1" "s1")
-		 ("s1" "a2" "s2")
-		 ("u" "a1" "u")
-		 ("u" "fe" "honda")
+		("l0" "fe" "l1")
+		("l1" "a1" "l2")
+		("l2" "a2" "l3")
+		("l3" "a3" "l4")
+		("l4" "p1" "l1")
+// 		("l4" "p2" "l1")
 	},
 	returnTransitions = {
-		 ("u" "u" "return;" "u")
 	}
 );
 
 NestedWordAutomaton prg = (
-	callAlphabet = {"c1" "c2" },
-	internalAlphabet = {"a1" "p1" "p2" "a1" "fe"  "a1"  "a1"  "a2" },
-	returnAlphabet = {"return;" },
-	states = {"l2"  "linit3" "l3" "l4"  "l1" "linit" "linit2" },
-	initialStates = {"linit" },
-	finalStates = {"l2"  "linit3" "l3" "l4"  "l1" "linit" "linit2" },
+	callAlphabet = { },
+	internalAlphabet = {"p1" "p2" "fe" "a1" "a2" "a3" },
+	returnAlphabet = { },
+	states = {"l1" "l2" "l3" "l4"  "l0" },
+	initialStates = {"l0" },
+	finalStates = {"l1" "l2" "l3" "l4" "l0" },
 	callTransitions = {
-		 ("linit3" "c2" "l1")
-		 ("linit" "c1" "linit2")
 	},
 	internalTransitions = {
-		 ("l2" "a1" "l3")
-		 ("l3" "a2" "l4")
-		 ("l4" "p1" "l2")
-		 ("l4" "p2" "l2")
-		 ("l1" "fe" "l2")
+		("l0" "fe" "l1")
+		("l1" "a1" "l2")
+		("l2" "a2" "l3")
+		("l3" "a3" "l4")
+		("l4" "p1" "l1")
+ 		("l4" "p2" "l1")
 	},
 	returnTransitions = {
-		 ("linit2" "linit" "return;" "linit3")
 	}
 );

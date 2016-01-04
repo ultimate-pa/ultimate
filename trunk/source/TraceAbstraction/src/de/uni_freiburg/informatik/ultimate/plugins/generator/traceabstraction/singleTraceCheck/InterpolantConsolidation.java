@@ -69,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.In
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkGeneratorWithStopwatches;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.HoareTripleCheckerBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -77,18 +78,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker.AllIntegers;
 
 /**
- * Interpolant Consolidation works as follows:
- * Requirements: 
- * 		(1) A path automaton for the given trace m_Trace.
- * 		(2) An interpolant automaton (finite automaton) for the given predicate annotation of the given trace m_Trace.
- * Procedure:
- * 		1. Compute the difference between the path automaton and the interpolant automaton.
- * 		2. If the difference is empty, then consolidate the interpolants as follows:
- * 		2.1 Compute a homomorphism for the states of the difference automaton.
- * 		2.2 Compute the annotation for a state p = {q_1, ..., q_k} where q_1 ... q_k are homomorphous to each other as follows:
- * 				Annot(p) = Annot(q_1) OR Annot(q_2) OR ... OR Annot(q_k)
- * 		3. If the difference is not empty, then... (TODO). This case is not yet implemented!
- * 
+ * Interpolant Consolidation brings predicates which have the same location together and connects them through disjunction.
+ * See documentation of B.Musa for more information.
  * 
  * @author musab@informatik.uni-freiburg.de
  */
@@ -150,8 +141,9 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		INestedWordAutomaton<CodeBlock, IPredicate> pathprogramautomaton = ppc.constructAutomatonFromGivenPath(m_Trace, m_Services, m_SmtManager, m_TaPrefs);
 
 
-		IHoareTripleChecker htc = BasicCegarLoop.getEfficientHoareTripleChecker(TraceAbstractionPreferenceInitializer.HoareTripleChecks.INCREMENTAL, 
+		IHoareTripleChecker ehtc = BasicCegarLoop.getEfficientHoareTripleChecker(TraceAbstractionPreferenceInitializer.HoareTripleChecks.INCREMENTAL, 
 				m_SmtManager, m_ModifiedGlobals, m_PredicateUnifier);
+		CachingHoareTripleChecker htc = new CachingHoareTripleChecker(ehtc, m_PredicateUnifier);
 
 
 		// 2. Build the finite automaton (former interpolant path automaton) for the given Floyd-Hoare annotation
@@ -180,6 +172,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 					interpolantAutomatonDeterminized, psd2,
 					pfconsol /* PredicateFactory for Refinement */, false /*explointSigmaStarConcatOfIA*/ );
 			if (m_printAutomataOfDifference) {
+				// Needed for debug
 				AutomatonDefinitionPrinter<CodeBlock, IPredicate> pathAutomatonPrinter = new AutomatonDefinitionPrinter<>(m_Services, "PathAutomaton", Format.ATS, pathprogramautomaton);
 				AutomatonDefinitionPrinter<CodeBlock, IPredicate> interpolantAutomatonPrinter = new AutomatonDefinitionPrinter<>(m_Services, "InterpolantAutomatonNonDet", Format.ATS, interpolantAutomaton);
 				AutomatonDefinitionPrinter<CodeBlock, IPredicate> interpolantAutomatonPrinterDet = new AutomatonDefinitionPrinter<>(m_Services, "InterpolantAutomatonDet", Format.ATS, interpolantAutomatonDeterminized);

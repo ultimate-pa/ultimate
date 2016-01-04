@@ -28,7 +28,9 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
@@ -46,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *            The type of the value stored in this class.
  */
 public abstract class SignSingletonValueExpressionEvaluator<T>
-		implements IEvaluator<SignDomainValue.Values, SignDomainState, CodeBlock, IBoogieVar> {
+        implements IEvaluator<SignDomainValue.Values, SignDomainState, CodeBlock, IBoogieVar> {
 
 	protected final T mValue;
 
@@ -56,24 +58,29 @@ public abstract class SignSingletonValueExpressionEvaluator<T>
 	}
 
 	@Override
-	public IEvaluationResult<SignDomainValue.Values> evaluate(SignDomainState currentState) {
+	public List<IEvaluationResult<Values>> evaluate(SignDomainState currentState) {
+		final List<IEvaluationResult<Values>> returnList = new ArrayList<>();
+
 		int num = getSignum();
 
 		if (num > 0) {
-			return new SignDomainValue(Values.POSITIVE);
+			returnList.add(new SignDomainValue(Values.POSITIVE));
+			return returnList;
 		}
 
 		if (num < 0) {
-			return new SignDomainValue(Values.NEGATIVE);
+			returnList.add(new SignDomainValue(Values.NEGATIVE));
+			return returnList;
 		}
 
-		return new SignDomainValue(Values.ZERO);
+		returnList.add(new SignDomainValue(Values.ZERO));
+		return returnList;
 	}
 
 	@Override
 	public void addSubEvaluator(IEvaluator<SignDomainValue.Values, SignDomainState, CodeBlock, IBoogieVar> evaluator) {
 		throw new UnsupportedOperationException(
-				"A sub evaluator cannot be added to a singleton expression value evaluator.");
+		        "A sub evaluator cannot be added to a singleton expression value evaluator.");
 	}
 
 	@Override

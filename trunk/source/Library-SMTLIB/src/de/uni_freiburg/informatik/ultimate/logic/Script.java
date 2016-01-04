@@ -380,7 +380,7 @@ public interface Script {
 	public Term numeral(String num) throws SMTLIBException;
 	/**
 	 * Create a numeral term.
-	 * @param num String representation of the numeral.
+	 * @param num the numeral as a big integer.
 	 * @return A numeral term.
 	 * @throws SMTLIBException If an error occurred.
 	 */
@@ -393,7 +393,7 @@ public interface Script {
 	public Term decimal(String decimal) throws SMTLIBException;
 	/**
 	 * Create a decimal term.
-	 * @param decimal String representation of the decimal.
+	 * @param decimal the decimal as a big decimal.
 	 * @return A decimal term.
 	 */
 	public Term decimal(BigDecimal decimal) throws SMTLIBException;

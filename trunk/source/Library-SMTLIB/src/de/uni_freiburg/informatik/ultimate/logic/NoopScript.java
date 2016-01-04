@@ -300,9 +300,6 @@ public class NoopScript implements Script {
 	@Override
 	public Term quantifier(int quantor, TermVariable[] vars, Term body,
 			Term[]... patterns) throws SMTLIBException {
-		if (!mTheory.getLogic().isQuantified())
-			throw new SMTLIBException(
-					"Cannot create quantifier in quantifier-free logic");
 		if (vars.length == 0)
 			throw new SMTLIBException("No quantified variables given");
 		if (body == null)

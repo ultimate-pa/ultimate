@@ -36,9 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -52,12 +49,8 @@ import de.uni_freiburg.informatik.ultimate.util.TreeRelation;
  * @param <LETTER>
  * @param <STATE>
  */
-public class TightLevelRankingStateGeneratorBuilder<LETTER,STATE> {
+public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT extends LevelRankingConstraint<LETTER, STATE>> extends LevelRankingGenerator<LETTER, STATE, CONSTRAINT> {
 	
-	private final IUltimateServiceProvider m_Services;
-	private final Logger m_Logger;
-	private final INestedWordAutomatonSimple<LETTER, STATE> m_Operand;
-	private final int m_UserDefinedMaxRank;
 	private final FkvOptimization m_Optimization;
 
 	public enum FkvOptimization {
@@ -66,37 +59,40 @@ public class TightLevelRankingStateGeneratorBuilder<LETTER,STATE> {
 		TightLevelRankings,
 		HighEven,
 		Schewe,
+		Elastic,
 	}
 
-	public TightLevelRankingStateGeneratorBuilder(
+	public MultiOptimizationLevelRankingGenerator(
 			IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<LETTER, STATE> operand,
 			FkvOptimization optimization,
 			int userDefinedMaxRank) {
-		super();
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
-		m_Operand = operand;
+		super(services, operand, userDefinedMaxRank);
 		m_Optimization = optimization;
-		m_UserDefinedMaxRank = userDefinedMaxRank;
 	}
 	
-	public TightLevelRankingStateGenerator buildTightLevelRankingStateGenerator(LevelRankingConstraint<LETTER, STATE> constraint, boolean initial) {
+	public Collection<LevelRankingState<LETTER, STATE>> generateLevelRankings(CONSTRAINT constraint, boolean predecessorIsSubsetComponent) {
 		switch (m_Optimization) {
 		case HeiMat1:
-			return new HeiMatTightLevelRankingStateGenerator(constraint, false);
+			return new HeiMatTightLevelRankingStateGenerator(constraint, false).computeResult();
 		case HeiMat2:
-			return new HeiMatTightLevelRankingStateGenerator(constraint, true);
+			return new HeiMatTightLevelRankingStateGenerator(constraint, true).computeResult();
 		case HighEven:
-			return new HighEvenTightLevelRankingStateGenerator(constraint);
+			return new HighEvenTightLevelRankingStateGenerator(constraint).computeResult();
 		case Schewe:
-			if (initial) {
-				return new MaxTightLevelRankingStateGeneratorInitial(constraint);
+			if (predecessorIsSubsetComponent) {
+				return new MaxTightLevelRankingStateGeneratorInitial(constraint).computeResult();
 			} else {
-				return new MaxTightLevelRankingStateGeneratorNonInitial(constraint);
+				return new MaxTightLevelRankingStateGeneratorNonInitial(constraint).computeResult();
+			}
+		case Elastic:
+			if (predecessorIsSubsetComponent) {
+				return new HeiMatTightLevelRankingStateGenerator(constraint, false).computeResult();
+			} else {
+				return new BarelyCoveredLevelRankingsGenerator(m_Services, m_Operand, m_UserDefinedMaxRank, true, false, true, true).generateLevelRankings((LevelRankingConstraintDrdCheck) constraint, false);
 			}
 		case TightLevelRankings:
-			return new TightLevelRankingStateGenerator(constraint);
+			return new TightLevelRankingStateGenerator(constraint).computeResult();
 		default:
 			throw new UnsupportedOperationException();
 		}
@@ -137,8 +133,7 @@ public class TightLevelRankingStateGeneratorBuilder<LETTER,STATE> {
 			//									m_RestrictedDoubleDeckerWithRankInfo.toString());
 
 			if (m_UnrestrictedRank.length == 0 && m_RestrictedRank.length == 0) {
-				constructComplementState();
-				return m_Result;
+				return Collections.emptySet();
 			}
 
 			initializeUnrestricted();
@@ -175,8 +170,7 @@ public class TightLevelRankingStateGeneratorBuilder<LETTER,STATE> {
 						m_RestrictedDoubleDeckerWithRankInfo.add(
 								new DoubleDecker<StateWithRankInfo<STATE>>(down, up));
 						m_RestrictedMaxRank.add(rank);
-					}
-					else {
+					} else {
 						m_UnrestrictedDoubleDeckerWithRankInfo.add(
 								new DoubleDecker<StateWithRankInfo<STATE>>(down, up));
 						m_UnrestrictedMaxRank.add(rank);
@@ -988,6 +982,7 @@ public class TightLevelRankingStateGeneratorBuilder<LETTER,STATE> {
 				for (DoubleDecker<StateWithRankInfo<STATE>> dd : m_FinalDoubleDeckerWithRankInfos) {
 					lrs.addRank(dd.getDown(), dd.getUp().getState(), highestEvenRank, true);
 				}
+				assert lrs.isMaximallyTight() : "not maximally tight";
 				m_Result.add(lrs);
 			} else {
 				for (DoubleDecker<StateWithRankInfo<STATE>> dd  : m_NonFinalDoubleDeckerWithRankInfos) {
@@ -1042,7 +1037,12 @@ public class TightLevelRankingStateGeneratorBuilder<LETTER,STATE> {
 						}
 					}
 				}
-				m_Result.add(pointwiseMax);
+				if (pointwiseMax.isTight()) {
+					m_Result.add(pointwiseMax);
+				} else {
+					assert m_Result.isEmpty();
+					return m_Result;
+				}
 				if (!pointwiseMax.isOempty()) {
 					LevelRankingState<LETTER,STATE> lrs = new LevelRankingState<LETTER,STATE>(m_Operand);
 					for (StateWithRankInfo<STATE> down  : pointwiseMax.getDownStates()) {

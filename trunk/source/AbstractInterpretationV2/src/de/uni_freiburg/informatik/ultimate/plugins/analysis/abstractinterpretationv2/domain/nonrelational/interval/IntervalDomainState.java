@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -48,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
@@ -57,8 +57,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class IntervalDomainState
-        implements IAbstractState<IntervalDomainState, CodeBlock, IBoogieVar>, IEvaluationResult<IntervalDomainState> {
+public class IntervalDomainState implements IAbstractState<IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	private static int sId;
 	private final int mId;
@@ -419,11 +418,6 @@ public class IntervalDomainState
 	}
 
 	@Override
-	public IntervalDomainState getResult() {
-		return this;
-	}
-
-	@Override
 	public int hashCode() {
 		return mId;
 	}
@@ -536,6 +530,35 @@ public class IntervalDomainState
 		}
 
 		return ret;
+	}
+
+	/**
+	 * Sets all variables, booleans, or arrays to &top;, that are specified in the corresponding parameters.
+	 * 
+	 * @param vars
+	 *            The names of the variables to set to &top;.
+	 * @param bools
+	 *            The names of the booleans to set to &top;.
+	 * @param arrays
+	 *            The names of the arrays to set to &top;.
+	 * @return A new {@link IntervalDomainState} that is the copy of <code>this</code>, where all occurring variables,
+	 *         booleans, and arrays given in the parameters are set to &top;.
+	 */
+	protected IntervalDomainState setVarsToTop(List<String> vars, List<String> bools, List<String> arrays) {
+		final IntervalDomainState returnState = copy();
+
+		for (final String var : vars) {
+			setValueInternally(returnState, var, new IntervalDomainValue());
+		}
+		for (final String bool : bools) {
+			setValueInternally(returnState, bool, new BooleanValue());
+		}
+		for (final String array : arrays) {
+			// TODO: Implement proper handling of arrays.
+			setValueInternally(returnState, array, new IntervalDomainValue());
+		}
+
+		return returnState;
 	}
 
 	@Override
