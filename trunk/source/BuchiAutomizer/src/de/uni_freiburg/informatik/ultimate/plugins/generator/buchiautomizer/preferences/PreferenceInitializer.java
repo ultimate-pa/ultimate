@@ -44,6 +44,10 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 						false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<Boolean>(LABEL_DeterminizationOnDemand,
 						true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<BComplementationConstruction>(
+						LABEL_BuchiComplementationConstruction,
+						BComplementationConstruction.Fanda, PreferenceType.Combo,
+						BComplementationConstruction.values()),
 				new UltimatePreferenceItem<BInterpolantAutomaton>(
 						LABEL_BuchiInterpolantAutomaton,
 						BInterpolantAutomaton.Staged, PreferenceType.Combo,
@@ -115,6 +119,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_IgnoreDownStates = "Ignore down states";
 	public static final String LABEL_DeterminizationOnDemand = "Determinization on demand";
 	public static final String LABEL_BuchiInterpolantAutomaton = "Buchi interpolant automaton";
+	public static final String LABEL_BuchiComplementationConstruction = "Buchi complementation construction";
 	public static final String LABEL_BouncerStem = "Bouncer stem";
 	public static final String LABEL_BouncerLoop = "Bouncer loop";
 	public static final String LABEL_ScroogeNondeterminismStem = "ScroogeNondeterminism stem";
@@ -145,7 +150,9 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	 */
 	public static final String LABEL_TryTwofoldRefinement = "Try twofold refinement";
 	
-	public enum BInterpolantAutomaton { LassoAutomaton, EagerNondeterminism, ScroogeNondeterminism, Deterministic, Staged, TabaRankBased, TabaBlast, StagedBlast };
+	public enum BInterpolantAutomaton { LassoAutomaton, EagerNondeterminism, ScroogeNondeterminism, Deterministic, Staged };
+	
+	public enum BComplementationConstruction { Fanda, Elastic, HeiMat2, TightRO, TightBasic, TightHighEven };
 	
 	public enum AutomataMinimization { None, MinimizeSevpa, ShrinkNwa, DelayedSimulation, FairSimulation_WithSCC, FairSimulation_WithoutSCC, FairDirectSimulation };
 	
