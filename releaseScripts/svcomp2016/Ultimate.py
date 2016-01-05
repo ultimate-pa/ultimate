@@ -34,6 +34,7 @@ safetyString = 'Ultimate proved your program to be correct'
 allSpecString = 'AllSpecificationsHoldResult'
 unsafetyString = 'Ultimate proved your program to be incorrect'
 memDerefFalseString = 'pointer dereference may fail'
+memDerefFalseString2 = 'array index can be out of bounds'
 memFreeFalseString = 'free of unallocated memory possible'
 memMemtrackFalseString = 'not all allocated memory was freed'
 terminationFalseString = 'Found a nonterminating execution for the following lasso shaped sequence of statements'
@@ -132,6 +133,8 @@ def runUltimate(ultimateCall, terminationMode):
             if (line.find(unsafetyString) != -1):
                 safetyResult = 'FALSE'
             if (line.find(memDerefFalseString) != -1):
+                memResult = 'valid-deref'
+            if (line.find(memDerefFalseString2) != -1):
                 memResult = 'valid-deref'
             if (line.find(memFreeFalseString) != -1):
                 memResult = 'valid-free'
