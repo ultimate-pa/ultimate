@@ -6,7 +6,7 @@
 
 NestedWordAutomaton complementNCSB = buchiComplementNCSB(nwa);
 print(numberOfStates(complementNCSB));
-assert(numberOfStates(complementNCSB) == 73);
+assert(numberOfStates(complementNCSB) == 61);
 
 NestedWordAutomaton complementHeiMat2 = buchiComplementFKV(nwa, "HeiMat2", 77);
 print(numberOfStates(complementHeiMat2));
