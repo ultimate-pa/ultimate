@@ -594,7 +594,12 @@ public class IntegerTranslation extends AExpressionTranslation {
 			if (cPrimitive.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
 				CPrimitive promotedType = determineResultOfIntegerPromotion(cPrimitive);
 				if (!promotedType.equals(inputType)) {
-					operand.lrVal.setCType(promotedType);
+					if (((CPrimitive) inputType).isUnsigned()) {
+						Expression wrapped = applyWraparound(loc, m_TypeSizes, cPrimitive, operand.lrVal.getValue());
+						operand.lrVal = new RValue(wrapped, promotedType, false, false);
+					} else {
+						operand.lrVal.setCType(promotedType);
+					}
 				}
 			} else {
 				throw new IllegalArgumentException("integer promotions not applicable to " + inputType);
