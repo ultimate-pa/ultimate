@@ -1,0 +1,42 @@
+/*
+ * Small example where NCSB construction has (after removal of non-live states)
+ * more states than my other implementation of rank-based constructions.
+ * 
+ * Date: 2015-12-25
+ * Author: Matthias Heizmann
+ */
+
+NestedWordAutomaton dFKV = buchiComplementFKV(nwa);
+print(numberOfStates(dFKV));
+print(numberOfTransitions(dFKV));
+print(dFKV);
+NestedWordAutomaton dFKVl = removeNonLiveStates(dFKV);
+print(numberOfStates(dFKVl));
+
+NestedWordAutomaton dNCSB = buchiComplementNCSB(nwa);
+print(dNCSB);
+print(numberOfStates(dNCSB));
+print(numberOfTransitions(dNCSB));
+NestedWordAutomaton dNCSBl = removeNonLiveStates(dNCSB);
+print(numberOfStates(dNCSBl));
+
+
+NestedWordAutomaton nwa = (
+	callAlphabet = { },
+	internalAlphabet = {"a" "b" "b" },
+	returnAlphabet = { },
+	states = {"f" "p" "s" },
+	initialStates = {"s" },
+	finalStates = {"f" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		("s" "a" "f")
+		("s" "b" "f")
+		("f" "a" "p")
+		("f" "b" "p")
+		("p" "b" "f")
+	},
+	returnTransitions = {
+	}
+);
