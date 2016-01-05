@@ -864,6 +864,12 @@ public class FunctionHandler {
         		loc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
 
 
+			//TODO:
+			// even though memset in C takes an int for the value that is to be written,
+			// that value is cut off to be a char, which is then written to every byte in the memory area
+			// the arithmetic implications of that cutoff are still missing here 
+			// (--> just do modulo 256 - 127 or sth like that??)
+
 			er.stmt.add(new CallStatement(loc, 
 					false, 
 					new VariableLHS[0], 

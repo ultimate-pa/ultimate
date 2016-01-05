@@ -640,14 +640,11 @@ public class MemoryHandler {
 		CACSLLocation loc = LocationFactory.createIgnoreCLocation();
 		Expression valid = new IdentifierExpression(loc, SFO.VALID);
         Expression addr = startPointer;
-//        Expression addr = new IdentifierExpression(loc, inPtr);
         Expression addrBase = new StructAccessExpression(loc, addr,
                 SFO.POINTER_BASE);
         Expression[] idcWrite = new Expression[] { addrBase };
-//        Expression ptrOff = new StructAccessExpression(loc, idPtr,
         Expression ptrOff = new StructAccessExpression(loc, startPointer,
         		SFO.POINTER_OFFSET);
-//        Expression ptrBase = new StructAccessExpression(loc, idPtr,
         Expression ptrBase = new StructAccessExpression(loc, startPointer,
         		SFO.POINTER_BASE);
         Expression length = new ArrayAccessExpression(loc,
@@ -680,23 +677,21 @@ public class MemoryHandler {
 			// #length[#ptr!base];
 			CPrimitive intCType = new CPrimitive(PRIMITIVE.INT);
 			RequiresSpecification specValid;
-			Expression e = m_ExpressionTranslation.constructArithmeticIntegerExpression(loc, 
+			Expression sizeOfSetMemory = m_ExpressionTranslation.constructArithmeticIntegerExpression(loc, 
 					IASTBinaryExpression.op_multiply, noFields, intCType, sizeofFields, intCType);
 			
 			if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME) {
 				specValid = new RequiresSpecification(loc, false,
 						constructPointerComponentLessEqual(loc,
 								constructPointerComponentAddition(loc,
-										e,
-//										new IdentifierExpression(loc, noFieldsName),
+										sizeOfSetMemory,
 										ptrOff), length));
 			} else {
 				assert m_PointerAllocated == POINTER_CHECKMODE.ASSUME;
 				specValid = new RequiresSpecification(loc, true,
 						constructPointerComponentLessEqual(loc,
 								constructPointerComponentAddition(loc,
-										e,
-//										new IdentifierExpression(loc, noFieldsName),
+										sizeOfSetMemory,
 										ptrOff), length));
 			}
 			Check check = new Check(Spec.MEMORY_DEREFERENCE);
