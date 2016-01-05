@@ -157,8 +157,11 @@ def runUltimate(ultimateCall, terminationMode):
 
 def createUltimateCall(call, arguments):
     for arg in arguments:
-        call = call + ' "' + arg + '"'
-        
+        if(isinstance (arg, list)):
+            for subarg in arg:
+                call = call + ' "' + subarg + '"'
+        else:
+            call = call + ' "' + arg + '"'
     return call    
     
 
@@ -227,7 +230,7 @@ def parseArgs():
         printErr("Property file not found at " + propertyFileName)
         sys.exit(1)
    
-    return propertyFileName, args.architecture, ' '.join(args.file), args.full_output
+    return propertyFileName, args.architecture, args.file, args.full_output
 
 
 def createSettingsSearchString(memDeref, memDerefMemtrack, terminationMode, overflowMode, architecture):
