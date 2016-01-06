@@ -105,7 +105,7 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 		LevelRankingState<LETTER,STATE> lvlrk = new LevelRankingState<LETTER,STATE>(m_Operand);
 		for (STATE state : m_Operand.getInitialStates()) {
 			if (m_Operand.isFinal(state)) {
-				lvlrk.addRank(m_EmptyStackStateWRI, state, 2, false);
+				lvlrk.addRank(m_EmptyStackStateWRI, state, 2, true);
 			} else {
 				lvlrk.addRank(m_EmptyStackStateWRI, state, 3, false);
 			}
