@@ -347,9 +347,19 @@ public abstract class AExpressionTranslation {
 	 * Perform the integer promotions a specified in C11 6.3.1.1.2 on the
 	 * operand.
 	 */
-	public abstract void doIntegerPromotion(ILocation loc, ExpressionResult operand);
+	public final void doIntegerPromotion(ILocation loc, ExpressionResult operand) {
+		CType ctype = CEnum.replaceEnumWithInt(operand.lrVal.getCType().getUnderlyingType());
+		if (!(ctype instanceof CPrimitive)) {
+			throw new IllegalArgumentException("integer promotions not applicable to " + ctype);
+		}
+		CPrimitive cPrimitive = (CPrimitive) ctype;
+		if (integerPromotionNeeded(cPrimitive)) {
+			CPrimitive promotedType = determineResultOfIntegerPromotion(cPrimitive);
+			convertIntToInt(loc, operand, promotedType);
+		}
+	}
 	
-	public boolean integerPromotionNeeded(CPrimitive cPrimitive) {
+	private boolean integerPromotionNeeded(CPrimitive cPrimitive) {
 		if (cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR) || 
 //			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR16) ||
 //			cPrimitive.getType().equals(CPrimitive.PRIMITIVE.CHAR32) || 
@@ -378,11 +388,11 @@ public abstract class AExpressionTranslation {
 	public abstract BigInteger extractIntegerValue(Expression expr, CType cType);
 	
 		
-	public CPrimitive determineResultOfIntegerPromotion(CPrimitive cPrimitive) {
-		int argBitLength = m_TypeSizes.getSize(cPrimitive.getType()) * 8;
-		int intLength = m_TypeSizes.getSize(CPrimitive.PRIMITIVE.INT) * 8;
+	private CPrimitive determineResultOfIntegerPromotion(CPrimitive cPrimitive) {
+		int sizeOfArgument = m_TypeSizes.getSize(cPrimitive.getType());
+		int sizeofInt = m_TypeSizes.getSize(CPrimitive.PRIMITIVE.INT);
 		
-		if (argBitLength < intLength || !cPrimitive.isUnsigned()) {
+		if (sizeOfArgument < sizeofInt || !cPrimitive.isUnsigned()) {
 			return new CPrimitive(PRIMITIVE.INT);
 		} else {
 			return new CPrimitive(PRIMITIVE.UINT);

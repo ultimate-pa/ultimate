@@ -584,32 +584,6 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public void doIntegerPromotion(ILocation loc, ExpressionResult operand) {
-		if (!integerPromotionNeeded((CPrimitive) operand.lrVal.getCType())) {
-			return;
-		}
-		CType inputType = operand.lrVal.getCType();
-		if (inputType instanceof CPrimitive) {
-			CPrimitive cPrimitive = (CPrimitive) operand.lrVal.getCType();
-			if (cPrimitive.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-				CPrimitive promotedType = determineResultOfIntegerPromotion(cPrimitive);
-				if (!promotedType.equals(inputType)) {
-					if (((CPrimitive) inputType).isUnsigned()) {
-						Expression wrapped = applyWraparound(loc, m_TypeSizes, cPrimitive, operand.lrVal.getValue());
-						operand.lrVal = new RValue(wrapped, promotedType, false, false);
-					} else {
-						operand.lrVal.setCType(promotedType);
-					}
-				}
-			} else {
-				throw new IllegalArgumentException("integer promotions not applicable to " + inputType);
-			}
-		} else {
-			throw new IllegalArgumentException("integer promotions not applicable to " + inputType);
-		}
-	}
-
-	@Override
 	public void convertPointerToInt(Dispatcher main, ILocation loc,
 			ExpressionResult rexp, CPrimitive newType) {
 		assert (newType.isIntegerType());
