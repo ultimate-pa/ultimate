@@ -510,8 +510,6 @@ public class IntegerTranslation extends AExpressionTranslation {
 		} else {
 			throw new UnsupportedOperationException("not yet supported: conversion to " + resultType);
 		}
-		// set the type of the operand to resultType
-		operand.lrVal.setCType(resultType);
 	}
 
 	private void convertToIntegerType(ILocation loc, ExpressionResult operand,

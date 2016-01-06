@@ -323,7 +323,10 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		int operandLength = m_TypeSizes.getSize(((CPrimitive) operand.lrVal.getCType()).getType()) * 8;
 		
 		if (resultLength == operandLength) {
-			// Do nothing.
+			RValue oldRValue = (RValue) operand.lrVal;
+			RValue rVal = new RValue(oldRValue.getValue(), resultType, 
+					oldRValue.isBoogieBool(), oldRValue.isIntFromPointer());
+			operand.lrVal = rVal;
 		} else if (resultLength > operandLength) {
 			extend(loc, operand, resultType, resultPrimitive, resultLength,
 					operandLength);
@@ -332,8 +335,6 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			RValue rVal = new RValue(bv, resultType);
 			operand.lrVal = rVal;
 		}
-		
-		operand.lrVal.setCType(resultType);
 	}
 
 	private void extend(ILocation loc, ExpressionResult operand, CType resultType, CPrimitive resultPrimitive, int resultLength, int operandLength) {
