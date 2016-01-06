@@ -50,6 +50,7 @@ public class UnsatCoreCollector {
 			throw new InternalError(ese.getMessage());
 		}
 	}
+
 	private HashSet<String> run(Clause unsat) {
 		HashSet<String> res = new HashSet<String>();
 		ArrayDeque<Clause> todo = new ArrayDeque<Clause>();
@@ -68,9 +69,10 @@ public class UnsatCoreCollector {
 						// Guard against unnamed clauses
 						if (!name.isEmpty())
 							res.add(name);
-					}				
+					}
 				} else {
 					ResolutionNode n = (ResolutionNode) c.getProof();
+					todo.push(n.getPrimary());
 					Antecedent[] ants = n.getAntecedents();
 					for (Antecedent a : ants)
 						todo.push(a.mAntecedent);
