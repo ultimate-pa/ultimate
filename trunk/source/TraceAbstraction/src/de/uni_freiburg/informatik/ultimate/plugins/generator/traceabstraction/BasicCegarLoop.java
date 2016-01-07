@@ -154,7 +154,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected final boolean m_AbstractInterpretationMode;
 	private Map<Object, Term> m_AITermMap;
 	private NestedWordAutomaton<WitnessEdge, WitnessNode> m_WitnessAutomaton;
-	private IHoareTripleChecker m_HoareTripleChecker;
+//	private IHoareTripleChecker m_HoareTripleChecker;
 	private boolean m_DoFaultLocalization = false;
 	
 
@@ -517,9 +517,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		// Map<IPredicate, IPredicate> context2entry = null;
 
 		final IHoareTripleChecker htc;
-		if (m_HoareTripleChecker != null) {
-			htc = m_HoareTripleChecker;
-		} else {
+		{
 			IHoareTripleChecker ehtc = getEfficientHoareTripleChecker(m_Pref.getHoareTripleChecks(), 
 					m_SmtManager, m_ModGlobVarManager, m_InterpolantGenerator.getPredicateUnifier());
 			htc = new CachingHoareTripleChecker(ehtc, m_InterpolantGenerator.getPredicateUnifier());
