@@ -68,6 +68,13 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 	private final StateWithRankInfo<STATE> m_EmptyStackStateWRI;
 	
 	/**
+	 * Heuristic where we move to accepting sink already from states with
+	 * nonempty difference C\F. Warning: yet this is only implemented for
+	 * internal transitions. 
+	 */
+	private final boolean m_EarlySinkHeuristic = false;
+	
+	/**
 	 * Maps BlaStState to its representative in the resulting automaton.
 	 */
 	private final Map<LevelRankingState<LETTER,STATE>,STATE> m_det2res =
@@ -82,8 +89,6 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 	
 	private final BarelyCoveredLevelRankingsGenerator<LETTER, STATE> m_bclrg;
 
-	
-	
 	public BuchiComplementNCSBNwa(IUltimateServiceProvider services,
 			INestedWordAutomatonSimple<LETTER,STATE> operand,
 			StateFactory<STATE> stateFactory) throws OperationCanceledException {
@@ -195,8 +200,13 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 			return new LevelRankingConstraintDrdCheck<LETTER, STATE>();
 		}
 		LevelRankingConstraintDrdCheck<LETTER, STATE> constraint = new LevelRankingConstraintDrdCheck(m_Operand, lvlrkState.isOempty(), 7777, true);
+		boolean transitionWouldAnnihilateEvenRank = false;
+		boolean somePredecessorHasRank1 = false;
 		for (StateWithRankInfo<STATE> down : lvlrkState.getDownStates()) {
 			for (StateWithRankInfo<STATE> up : lvlrkState.getUpStates(down)) {
+				if (up.getRank() == 1) {
+					somePredecessorHasRank1 = true;
+				}
 				boolean hasSuccessor = false;
 				for (OutgoingInternalTransition<LETTER, STATE> trans : 
 								m_Operand.internalSuccessors(up.getState(), letter)) {
@@ -204,8 +214,20 @@ public class BuchiComplementNCSBNwa<LETTER,STATE> implements INestedWordAutomato
 					constraint.addConstaint(down, trans.getSucc(), up.getRank(), up.isInO(), m_Operand.isFinal(up.getState()));
 				}
 				if (transitionWouldAnnihilateEvenRank(down, up, hasSuccessor)) {
-					return new LevelRankingConstraintDrdCheck<LETTER, STATE>();
+					transitionWouldAnnihilateEvenRank = true;
 				}
+			}
+		}
+		if (m_EarlySinkHeuristic) {
+			if (transitionWouldAnnihilateEvenRank && !constraint.isEmpty()) {
+				return new LevelRankingConstraintDrdCheck<LETTER, STATE>();
+			}
+			if (somePredecessorHasRank1 && constraint.isEmpty()) {
+				return new LevelRankingConstraintDrdCheck<LETTER, STATE>();
+			}
+		} else {
+			if (transitionWouldAnnihilateEvenRank) {
+				return new LevelRankingConstraintDrdCheck<LETTER, STATE>();
 			}
 		}
 		return constraint;
