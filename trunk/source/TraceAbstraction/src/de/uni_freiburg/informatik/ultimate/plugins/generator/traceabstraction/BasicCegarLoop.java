@@ -516,8 +516,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		// Map<IPredicate, Set<IPredicate>> removedDoubleDeckers = null;
 		// Map<IPredicate, IPredicate> context2entry = null;
 
-		final IHoareTripleChecker htc;
-		{
+		final CachingHoareTripleChecker htc;
+		if (m_InterpolantGenerator instanceof InterpolantConsolidation) {
+			htc = ((InterpolantConsolidation) m_InterpolantGenerator).getHoareTripleChecker();
+		} else {
 			IHoareTripleChecker ehtc = getEfficientHoareTripleChecker(m_Pref.getHoareTripleChecks(), 
 					m_SmtManager, m_ModGlobVarManager, m_InterpolantGenerator.getPredicateUnifier());
 			htc = new CachingHoareTripleChecker(ehtc, m_InterpolantGenerator.getPredicateUnifier());
