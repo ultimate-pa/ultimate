@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.HTMLSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.KingOfTheHillSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.LatexDetailedSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.LatexOverviewSummary;
+import de.uni_freiburg.informatik.ultimatetest.summaries.StandingsSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.TraceAbstractionTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
 
@@ -110,6 +111,7 @@ public abstract class AbstractBuchiAutomizerTestSuite extends AbstractModelCheck
 //				new CsvSummary(getClass(), benchmarks, columnDef),
 				new HTMLSummary(getClass(), benchmarks, columnDef),
 				new KingOfTheHillSummary(this.getClass()),
+				new StandingsSummary(this.getClass()),
 		};
 
 	}

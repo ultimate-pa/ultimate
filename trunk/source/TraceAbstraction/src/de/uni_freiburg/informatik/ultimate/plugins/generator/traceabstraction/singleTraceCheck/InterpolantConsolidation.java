@@ -96,6 +96,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	private final ModifiableGlobalVariableManager m_ModifiedGlobals;
 	private final PredicateUnifier m_PredicateUnifier;
 	private final Logger m_Logger;
+	private final CachingHoareTripleChecker m_HoareTripleChecker;
 
 	protected final InterpolantConsolidationBenchmarkGenerator m_InterpolantConsolidationBenchmarkGenerator;
 	private boolean m_printDebugInformation = false;
@@ -126,6 +127,11 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		m_ConsolidatedInterpolants = new IPredicate[m_Trace.length() - 1];
 		m_TaPrefs = taPrefs;
 		m_InterpolantConsolidationBenchmarkGenerator = new InterpolantConsolidationBenchmarkGenerator();
+		
+		IHoareTripleChecker ehtc = BasicCegarLoop.getEfficientHoareTripleChecker(TraceAbstractionPreferenceInitializer.HoareTripleChecks.INCREMENTAL, 
+				m_SmtManager, m_ModifiedGlobals, m_PredicateUnifier);
+		m_HoareTripleChecker = new CachingHoareTripleChecker(ehtc, m_PredicateUnifier);
+
 
 		if (m_InterpolatingTraceChecker.isCorrect() == LBool.UNSAT) {
 			computeInterpolants(new AllIntegers());
@@ -141,16 +147,13 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		INestedWordAutomaton<CodeBlock, IPredicate> pathprogramautomaton = ppc.constructAutomatonFromGivenPath(m_Trace, m_Services, m_SmtManager, m_TaPrefs);
 
 
-		IHoareTripleChecker ehtc = BasicCegarLoop.getEfficientHoareTripleChecker(TraceAbstractionPreferenceInitializer.HoareTripleChecks.INCREMENTAL, 
-				m_SmtManager, m_ModifiedGlobals, m_PredicateUnifier);
-		CachingHoareTripleChecker htc = new CachingHoareTripleChecker(ehtc, m_PredicateUnifier);
 
 
 		// 2. Build the finite automaton (former interpolant path automaton) for the given Floyd-Hoare annotation
 		NestedWordAutomaton<CodeBlock, IPredicate> interpolantAutomaton = constructInterpolantAutomaton(m_Trace, m_SmtManager, m_TaPrefs, m_Services, m_InterpolatingTraceChecker); 
 		// 3. Determinize the finite automaton from step 2.
 		DeterministicInterpolantAutomaton interpolantAutomatonDeterminized = new DeterministicInterpolantAutomaton(
-				m_Services, m_SmtManager, m_ModifiedGlobals, htc, pathprogramautomaton, interpolantAutomaton,
+				m_Services, m_SmtManager, m_ModifiedGlobals, m_HoareTripleChecker, pathprogramautomaton, interpolantAutomaton,
 				m_PredicateUnifier, m_Logger, false ,// PREDICATE_ABSTRACTION_CONSERVATIVE = false (default) 
 				false //PREDICATE_ABSTRACTION_CANNIBALIZE = false  (default) 
 				); 
@@ -183,7 +186,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 				m_Logger.debug(interpolantAutomatonPrinterDet.getDefinitionAsString());
 				m_Logger.debug(diffAutomatonPrinter.getDefinitionAsString());
 			}
-			htc.releaseLock();
+			m_HoareTripleChecker.releaseLock();
 			// 5. Check if difference is empty
 			IsEmpty<CodeBlock, IPredicate> empty = new IsEmpty<CodeBlock, IPredicate>(m_Services, diff.getResult());
 			if (!empty.getResult()) {
@@ -243,7 +246,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 		computeConsolidatedInterpolants(pathPositionsToLocations, locationsToSetOfPredicates, interpolantsBeforeConsolidation, 
 				m_InterpolatingTraceChecker.getInterpolants(),
-				interpolantsAfterConsolidation, htc);
+				interpolantsAfterConsolidation, m_HoareTripleChecker);
 
 		assert TraceCheckerUtils.checkInterpolantsInductivityForward(m_ConsolidatedInterpolants, 
 				m_Trace, m_Precondition, m_Postcondition, m_PendingContexts, "CP", 
@@ -578,6 +581,10 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 	public InterpolantConsolidationBenchmarkGenerator getInterpolantConsolidationBenchmarks() {
 		return m_InterpolantConsolidationBenchmarkGenerator;
+	}
+	
+	public CachingHoareTripleChecker getHoareTripleChecker() {
+		return m_HoareTripleChecker;
 	}
 
 	// Benchmarks Section

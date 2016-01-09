@@ -1,0 +1,43 @@
+// Testfile dumped by Ultimate at 2015/10/05 03:43:09
+//
+// RefinementSetting [m_InterpolantAutomaton=ScroogeNondeterminism, m_BouncerStem=true, m_BouncerLoop=false, m_ScroogeNondeterminismStem=true, m_ScroogeNondeterminismLoop=false, m_CannibalizeLoop=false, m_UsedDefinedMaxRank=-3]
+
+NestedWordAutomaton cNCSB = buchiComplementNCSB(nwa);
+print(numberOfStates(cNCSB));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {},
+	internalAlphabet = {"assume !(main_~b~2 >= 10 && main_~b~2 <= 12);main_~a~2 := main_~a~2 + 1;" "assume true;" "assume !!(main_~b~2 < main_~a~2);" "assume !(main_~b~2 > 5);main_~b~2 := main_~b~2 + 2;" "assume !(main_~b~2 < main_~a~2);" "assume main_~b~2 >= 10 && main_~b~2 <= 12;main_~a~2 := main_~a~2 + 10;" "assume main_~b~2 > 5;main_~b~2 := main_~b~2 + 7;" "havoc main_#res;havoc main_#t~nondet0, main_#t~nondet1, main_~a~2, main_~b~2;main_~a~2 := main_#t~nondet0;havoc main_#t~nondet0;main_~b~2 := main_#t~nondet1;havoc main_#t~nondet1;" "assume !true;" "assume true;assume !!(main_~a~2 < 30);" "assume true;assume !(main_~a~2 < 30);" "main_~a~2 := main_~a~2 + 2;main_~b~2 := main_~b~2 - 10;" "main_#res := 0;#t~ret2 := main_#res;assume true;" "assume true;" "assume !true;" },
+	returnAlphabet = {},
+	states = {"3509#(and (<= 0 oldRank0) (<= 7 (+ ULTIMATE.start_main_~b~2 oldRank0)))" "3510#(<= 6 (+ ULTIMATE.start_main_~b~2 oldRank0))" "3496#unseeded" },
+	initialStates = {"3496#unseeded" },
+	finalStates = {"3509#(and (<= 0 oldRank0) (<= 7 (+ ULTIMATE.start_main_~b~2 oldRank0)))" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("3509#(and (<= 0 oldRank0) (<= 7 (+ ULTIMATE.start_main_~b~2 oldRank0)))" "assume !(main_~b~2 >= 10 && main_~b~2 <= 12);main_~a~2 := main_~a~2 + 1;" "3510#(<= 6 (+ ULTIMATE.start_main_~b~2 oldRank0))")
+		 ("3509#(and (<= 0 oldRank0) (<= 7 (+ ULTIMATE.start_main_~b~2 oldRank0)))" "assume main_~b~2 >= 10 && main_~b~2 <= 12;main_~a~2 := main_~a~2 + 10;" "3510#(<= 6 (+ ULTIMATE.start_main_~b~2 oldRank0))")
+		 ("3509#(and (<= 0 oldRank0) (<= 7 (+ ULTIMATE.start_main_~b~2 oldRank0)))" "assume true;" "3510#(<= 6 (+ ULTIMATE.start_main_~b~2 oldRank0))")
+		 ("3510#(<= 6 (+ ULTIMATE.start_main_~b~2 oldRank0))" "assume !(main_~b~2 >= 10 && main_~b~2 <= 12);main_~a~2 := main_~a~2 + 1;" "3510#(<= 6 (+ ULTIMATE.start_main_~b~2 oldRank0))")
+		 ("3510#(<= 6 (+ ULTIMATE.start_main_~b~2 oldRank0))" "assume true;" "3510#(<= 6 (+ ULTIMATE.start_main_~b~2 oldRank0))")
+		 ("3510#(<= 6 (+ ULTIMATE.start_main_~b~2 oldRank0))" "assume !!(main_~b~2 < main_~a~2);" "3510#(<= 6 (+ ULTIMATE.start_main_~b~2 oldRank0))")
+		 ("3510#(<= 6 (+ ULTIMATE.start_main_~b~2 oldRank0))" "assume !(main_~b~2 > 5);main_~b~2 := main_~b~2 + 2;" "3509#(and (<= 0 oldRank0) (<= 7 (+ ULTIMATE.start_main_~b~2 oldRank0)))")
+		 ("3510#(<= 6 (+ ULTIMATE.start_main_~b~2 oldRank0))" "assume !(main_~b~2 < main_~a~2);" "3510#(<= 6 (+ ULTIMATE.start_main_~b~2 oldRank0))")
+		 ("3510#(<= 6 (+ ULTIMATE.start_main_~b~2 oldRank0))" "assume true;" "3510#(<= 6 (+ ULTIMATE.start_main_~b~2 oldRank0))")
+		 ("3510#(<= 6 (+ ULTIMATE.start_main_~b~2 oldRank0))" "assume main_~b~2 > 5;main_~b~2 := main_~b~2 + 7;" "3510#(<= 6 (+ ULTIMATE.start_main_~b~2 oldRank0))")
+		 ("3496#unseeded" "assume !(main_~b~2 >= 10 && main_~b~2 <= 12);main_~a~2 := main_~a~2 + 1;" "3496#unseeded")
+		 ("3496#unseeded" "assume true;" "3509#(and (<= 0 oldRank0) (<= 7 (+ ULTIMATE.start_main_~b~2 oldRank0)))")
+		 ("3496#unseeded" "assume true;" "3496#unseeded")
+		 ("3496#unseeded" "assume true;assume !!(main_~a~2 < 30);" "3496#unseeded")
+		 ("3496#unseeded" "assume !!(main_~b~2 < main_~a~2);" "3496#unseeded")
+		 ("3496#unseeded" "assume !(main_~b~2 > 5);main_~b~2 := main_~b~2 + 2;" "3496#unseeded")
+		 ("3496#unseeded" "main_~a~2 := main_~a~2 + 2;main_~b~2 := main_~b~2 - 10;" "3496#unseeded")
+		 ("3496#unseeded" "assume !(main_~b~2 < main_~a~2);" "3496#unseeded")
+		 ("3496#unseeded" "assume true;" "3496#unseeded")
+		 ("3496#unseeded" "assume main_~b~2 >= 10 && main_~b~2 <= 12;main_~a~2 := main_~a~2 + 10;" "3496#unseeded")
+		 ("3496#unseeded" "assume main_~b~2 > 5;main_~b~2 := main_~b~2 + 7;" "3496#unseeded")
+		 ("3496#unseeded" "havoc main_#res;havoc main_#t~nondet0, main_#t~nondet1, main_~a~2, main_~b~2;main_~a~2 := main_#t~nondet0;havoc main_#t~nondet0;main_~b~2 := main_#t~nondet1;havoc main_#t~nondet1;" "3496#unseeded")
+	},
+	returnTransitions = {
+	}
+);

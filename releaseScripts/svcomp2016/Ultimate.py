@@ -34,6 +34,7 @@ safetyString = 'Ultimate proved your program to be correct'
 allSpecString = 'AllSpecificationsHoldResult'
 unsafetyString = 'Ultimate proved your program to be incorrect'
 memDerefFalseString = 'pointer dereference may fail'
+memDerefFalseString2 = 'array index can be out of bounds'
 memFreeFalseString = 'free of unallocated memory possible'
 memMemtrackFalseString = 'not all allocated memory was freed'
 terminationFalseString = 'Found a nonterminating execution for the following lasso shaped sequence of statements'
@@ -133,6 +134,8 @@ def runUltimate(ultimateCall, terminationMode):
                 safetyResult = 'FALSE'
             if (line.find(memDerefFalseString) != -1):
                 memResult = 'valid-deref'
+            if (line.find(memDerefFalseString2) != -1):
+                memResult = 'valid-deref'
             if (line.find(memFreeFalseString) != -1):
                 memResult = 'valid-free'
             if (line.find(memMemtrackFalseString) != -1):
@@ -157,8 +160,11 @@ def runUltimate(ultimateCall, terminationMode):
 
 def createUltimateCall(call, arguments):
     for arg in arguments:
-        call = call + ' "' + arg + '"'
-        
+        if(isinstance (arg, list)):
+            for subarg in arg:
+                call = call + ' "' + subarg + '"'
+        else:
+            call = call + ' "' + arg + '"'
     return call    
     
 
@@ -227,7 +233,7 @@ def parseArgs():
         printErr("Property file not found at " + propertyFileName)
         sys.exit(1)
    
-    return propertyFileName, args.architecture, ' '.join(args.file), args.full_output
+    return propertyFileName, args.architecture, args.file, args.full_output
 
 
 def createSettingsSearchString(memDeref, memDerefMemtrack, terminationMode, overflowMode, architecture):

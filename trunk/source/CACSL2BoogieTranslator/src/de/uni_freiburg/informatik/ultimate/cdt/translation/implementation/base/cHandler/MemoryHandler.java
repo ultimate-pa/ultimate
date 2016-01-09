@@ -41,6 +41,7 @@ import java.util.Map;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
@@ -635,6 +636,71 @@ public class MemoryHandler {
 
 		// make the specification
 		ArrayList<Specification> specs = new ArrayList<>();
+		
+		CACSLLocation loc = LocationFactory.createIgnoreCLocation();
+		Expression valid = new IdentifierExpression(loc, SFO.VALID);
+        Expression addr = startPointer;
+        Expression addrBase = new StructAccessExpression(loc, addr,
+                SFO.POINTER_BASE);
+        Expression[] idcWrite = new Expression[] { addrBase };
+        Expression ptrOff = new StructAccessExpression(loc, startPointer,
+        		SFO.POINTER_OFFSET);
+        Expression ptrBase = new StructAccessExpression(loc, startPointer,
+        		SFO.POINTER_BASE);
+        Expression length = new ArrayAccessExpression(loc,
+        		new IdentifierExpression(loc, SFO.LENGTH),
+        		new Expression[] { ptrBase });
+		
+		if (m_PointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME 
+				|| m_PointerBaseValidity == POINTER_CHECKMODE.ASSUME) {
+			// requires #valid[#ptr!base];
+			RequiresSpecification specValid;
+			if (m_PointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME) {
+				specValid = new RequiresSpecification(loc, false,
+						new ArrayAccessExpression(loc, valid,
+								idcWrite));
+			} else {
+				assert m_PointerBaseValidity == POINTER_CHECKMODE.ASSUME;
+				specValid = new RequiresSpecification(loc, true,
+						new ArrayAccessExpression(loc, valid,
+								idcWrite));
+			}
+			Check check = new Check(Spec.MEMORY_DEREFERENCE);
+			check.addToNodeAnnot(specValid);
+			specs.add(specValid);
+		}
+
+
+		if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME 
+				|| m_PointerAllocated == POINTER_CHECKMODE.ASSUME) {
+			// requires #sizeof~$Pointer$ + #ptr!offset <=
+			// #length[#ptr!base];
+			CPrimitive intCType = new CPrimitive(PRIMITIVE.INT);
+			RequiresSpecification specValid;
+			Expression sizeOfSetMemory = m_ExpressionTranslation.constructArithmeticIntegerExpression(loc, 
+					IASTBinaryExpression.op_multiply, noFields, intCType, sizeofFields, intCType);
+			
+			if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME) {
+				specValid = new RequiresSpecification(loc, false,
+						constructPointerComponentLessEqual(loc,
+								constructPointerComponentAddition(loc,
+										sizeOfSetMemory,
+										ptrOff), length));
+			} else {
+				assert m_PointerAllocated == POINTER_CHECKMODE.ASSUME;
+				specValid = new RequiresSpecification(loc, true,
+						constructPointerComponentLessEqual(loc,
+								constructPointerComponentAddition(loc,
+										sizeOfSetMemory,
+										ptrOff), length));
+			}
+			Check check = new Check(Spec.MEMORY_DEREFERENCE);
+			check.addToNodeAnnot(specValid);
+			specs.add(specValid);
+		}
+		
+		
+		
 		ModifiesSpecification modifies = new ModifiesSpecification(ignoreLoc, false, 
 				 modifiesLHSs.toArray(new VariableLHS[modifiesLHSs.size()]));
 		specs.add(modifies);
@@ -724,8 +790,16 @@ public class MemoryHandler {
             for (int j = 0; j < modified.length; j++) {
                 modified[j] = new VariableLHS(loc, SFO.MEMORY + "_" + namesOfAllMemoryArrayTypes[j]);
             }
+
+            Expression ptrOff = new StructAccessExpression(loc, idPtr,
+                    SFO.POINTER_OFFSET);
+            Expression ptrBase = new StructAccessExpression(loc, idPtr,
+                    SFO.POINTER_BASE);
+            Expression length = new ArrayAccessExpression(loc,
+                    new IdentifierExpression(loc, SFO.LENGTH),
+                    new Expression[] { ptrBase });
             
-            
+            // specification for memory writes
             ArrayList<Specification> swrite = new ArrayList<Specification>();
             
             if (m_PointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME 
@@ -746,13 +820,7 @@ public class MemoryHandler {
             	check.addToNodeAnnot(specValid);
             	swrite.add(specValid);
             }
-            Expression ptrOff = new StructAccessExpression(loc, idPtr,
-                    SFO.POINTER_OFFSET);
-            Expression ptrBase = new StructAccessExpression(loc, idPtr,
-                    SFO.POINTER_BASE);
-            Expression length = new ArrayAccessExpression(loc,
-                    new IdentifierExpression(loc, SFO.LENGTH),
-                    new Expression[] { ptrBase });
+ 
             
             if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME 
             		|| m_PointerAllocated == POINTER_CHECKMODE.ASSUME) {
@@ -845,6 +913,10 @@ public class MemoryHandler {
             	decl.add(new Procedure(loc, new Attribute[0], nwrite, new String[0],
             			inWrite, new VarList[0], null, bwrite));
             }
+            
+            
+            
+            // specification for memory reads
             VarList[] inRead = new VarList[] { 
             		new VarList(loc, new String[] { inPtr }, main.typeHandler.constructPointerType(loc)),
             		new VarList(loc, new String[] { readTypeSize }, intType) };

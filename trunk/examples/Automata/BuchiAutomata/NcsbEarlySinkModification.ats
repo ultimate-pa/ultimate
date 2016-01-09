@@ -1,0 +1,30 @@
+// If we use the "early sink" modification on this example we obtain a
+// result that has more transitions.
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 2016-01-06
+
+NestedWordAutomaton ncsb = buchiComplementNCSB(nwa);
+print(numberOfTransitions(ncsb));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {},
+	internalAlphabet = { "c" "a" "b" "d" },
+	returnAlphabet = {},
+	states = {"p" "f" "q" "s" },
+	initialStates = {"s" },
+	finalStates = {"f" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("p" "c" "q")
+		 ("p" "b" "p")
+		 ("f" "a" "p")
+		 ("q" "a" "q")
+		 ("q" "b" "f")
+		 ("s" "a" "s")
+		 ("s" "c" "s")
+		 ("s" "a" "f")
+	},
+	returnTransitions = {
+	}
+);

@@ -183,6 +183,10 @@ public abstract class CodeBlock extends RCFGEdge {
 
 	public abstract String getPrettyPrintedStatements();
 
+	/**
+	 * @return an SMT-LIB based representation of this CodeBlock's transition
+	 * relation
+	 */
 	public TransFormula getTransitionFormula() {
 		return m_TransitionFormula;
 	}

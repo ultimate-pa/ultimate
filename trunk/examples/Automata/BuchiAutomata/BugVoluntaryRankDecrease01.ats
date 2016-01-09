@@ -6,13 +6,20 @@
 
 NestedWordAutomaton complementNCSB = buchiComplementNCSB(nwa);
 print(numberOfStates(complementNCSB));
-// print(complementNCSB);
-NestedWordAutomaton complementFKV = buchiComplementFKV(nwa, "HeiMat2", 77);
-print(numberOfStates(complementFKV));
+assert(numberOfStates(complementNCSB) == 61);
+
+NestedWordAutomaton complementHeiMat2 = buchiComplementFKV(nwa, "HeiMat2", 77);
+print(numberOfStates(complementHeiMat2));
+assert(numberOfStates(complementHeiMat2) == 131);
+
+NestedWordAutomaton complementElastic = buchiComplementFKV(nwa, "Elastic", 77);
+print(numberOfStates(complementElastic));
+assert(numberOfStates(complementElastic) == 131);
+
+
 
 assert(!buchiAccepts(nwa, [ a b, a ]));
 assert(buchiAccepts(complementNCSB, [ a b, a ]));
-assert(buchiAccepts(complementFKV, [ a b , a ]));
 
 
 NestedWordAutomaton nwa = (

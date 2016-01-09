@@ -34,10 +34,14 @@ necessary steps.
    and the automatically build parser/lexer files and the parser build
    scripts which are slightly different for smtinterpol.
 
-6. Do an svn status and check if only changes are in src subdirectory.
+6. Do an git status and check if only changes are in src subdirectory.
+
 7. Check if everything works in Eclipse.
-8. svn commit.  The log message should say (version can be found by 
-   executing "git describe" in smtinterpol.git)
+
+8. Commit die updated Ultimate.
+   git commit source/SMTInterpol source/Library-SMTLIB
+   The log message should say (version can be found by executing "git describe" 
+   in smtinterpol.git)
 
    Updated SMTInterpol to version 2.1-228-g5118445
    from https://github.com/ultimate-pa/smtinterpol.git

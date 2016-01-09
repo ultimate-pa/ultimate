@@ -81,6 +81,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.Refi
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.annot.BuchiProgramAcceptingStateAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.AutomataMinimization;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BComplementationConstruction;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.PreferenceInitializer.BInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -207,6 +208,7 @@ public class BuchiCegarLoop {
 
 	private final boolean m_Difference;
 	private final boolean m_UseDoubleDeckers;
+	private final BComplementationConstruction m_ComplementationConstruction;
 	private final BInterpolantAutomaton m_InterpolantAutomaton;
 	private final boolean m_BouncerStem;
 	private final boolean m_BouncerLoop;
@@ -272,6 +274,8 @@ public class BuchiCegarLoop {
 		m_Difference = baPref.getBoolean(PreferenceInitializer.LABEL_DeterminizationOnDemand);
 		m_InterpolantAutomaton = baPref.getEnum(PreferenceInitializer.LABEL_BuchiInterpolantAutomaton,
 				BInterpolantAutomaton.class);
+		m_ComplementationConstruction = baPref.getEnum(PreferenceInitializer.LABEL_BuchiComplementationConstruction,
+				BComplementationConstruction.class);
 		m_BouncerStem = baPref.getBoolean(PreferenceInitializer.LABEL_BouncerStem);
 		m_BouncerLoop = baPref.getBoolean(PreferenceInitializer.LABEL_BouncerLoop);
 		m_ScroogeNondeterminismStem = baPref.getBoolean(PreferenceInitializer.LABEL_ScroogeNondeterminismStem);
@@ -302,15 +306,15 @@ public class BuchiCegarLoop {
 		switch (m_InterpolantAutomaton) {
 		case Staged:
 			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
-					BInterpolantAutomaton.Deterministic, true, false, false, false, false, Integer.MAX_VALUE));
+					BInterpolantAutomaton.Deterministic, true, false, false, false, false));
 			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
-					BInterpolantAutomaton.Deterministic, true, true, false, false, false, Integer.MAX_VALUE));
+					BInterpolantAutomaton.Deterministic, true, true, false, false, false));
 			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
-					BInterpolantAutomaton.ScroogeNondeterminism, true, false, true, false, false, Integer.MAX_VALUE));
+					BInterpolantAutomaton.ScroogeNondeterminism, true, false, true, false, false));
 			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
-					BInterpolantAutomaton.ScroogeNondeterminism, true, true, true, false, false, Integer.MAX_VALUE));
+					BInterpolantAutomaton.ScroogeNondeterminism, true, true, true, false, false));
 			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
-					BInterpolantAutomaton.ScroogeNondeterminism, false, false, true, true, false, Integer.MAX_VALUE));
+					BInterpolantAutomaton.ScroogeNondeterminism, false, false, true, true, false));
 			break;
 		case LassoAutomaton:
 		case EagerNondeterminism:
@@ -318,27 +322,7 @@ public class BuchiCegarLoop {
 		case Deterministic:
 			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(m_InterpolantAutomaton,
 					m_BouncerStem, m_BouncerLoop, m_ScroogeNondeterminismStem, m_ScroogeNondeterminismLoop,
-					m_CannibalizeLoop, Integer.MAX_VALUE));
-			break;
-		case TabaRankBased:
-			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
-					BInterpolantAutomaton.ScroogeNondeterminism, false, false, true, false, true, Integer.MAX_VALUE));
-			break;
-		case TabaBlast:
-			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
-					BInterpolantAutomaton.ScroogeNondeterminism, false, false, true, false, true, -3));
-			break;
-		case StagedBlast:
-			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
-					BInterpolantAutomaton.Deterministic, true, false, false, false, false, -3));
-			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
-					BInterpolantAutomaton.Deterministic, true, true, false, false, false, -3));
-			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
-					BInterpolantAutomaton.ScroogeNondeterminism, true, false, true, false, false, -3));
-			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
-					BInterpolantAutomaton.ScroogeNondeterminism, true, true, true, false, false, -3));
-			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
-					BInterpolantAutomaton.ScroogeNondeterminism, false, false, true, true, false, Integer.MAX_VALUE));
+					m_CannibalizeLoop));
 			break;
 		default:
 			throw new UnsupportedOperationException("unknown automaton");
@@ -679,7 +663,8 @@ public class BuchiCegarLoop {
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction = null;
 			try {
 				newAbstraction = m_RefineBuchi.refineBuchi(m_Abstraction, m_Counterexample, m_Iteration, rs,
-						lassoChecker.getBinaryStatePredicateManager(), bmgvm, m_Interpolation, m_BenchmarkGenerator);
+						lassoChecker.getBinaryStatePredicateManager(), bmgvm, m_Interpolation, 
+						m_BenchmarkGenerator, m_ComplementationConstruction);
 			} catch (OperationCanceledException e) {
 				m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
 				String runningTaskInfo = "applying " + e.getClassOfThrower().getSimpleName() + " in stage " + stage;

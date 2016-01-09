@@ -61,7 +61,7 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
  * 
  * See CommandLineParser for valid command-line arguments.
  * 
- * @author Christian Ortolf 
+ * @author Christian Ortolf
  * @author Christian Simon
  */
 public class CommandlineController implements IController {
@@ -119,12 +119,12 @@ public class CommandlineController implements IController {
 		for (String inputfilePath : p.getInputFile()) {
 			File inputFile = new File(inputfilePath);
 			if (!inputFile.exists() || !inputFile.canRead()) {
-				mLogger.fatal("Input file not found. Path was: " + p.getInputFile());
+				mLogger.fatal("Input file not found. Paths were: " + String.join(",", p.getInputFile()));
 				return -1;
 			}
 			inputFiles.add(inputFile);
 		}
-		
+
 		// handle prelude file
 		PreludeProvider preludeFile = new PreludeProvider(p.getPreludeFile(), mLogger);
 

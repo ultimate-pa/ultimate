@@ -48,7 +48,7 @@ public abstract class LRValue {
 		this.isIntFromPointer = isIntFromPointer;
 	}
 	
-	private CType cType;
+	private final CType cType;
 	
 	/** 
 	 * This flag is supposed to be true iff the value-expression of this
@@ -56,20 +56,15 @@ public abstract class LRValue {
 	 * For instance if it is the translation of a comparator expression
 	 * like x == 0.
 	 */
-	private boolean isBoogieBool;
+	private final boolean isBoogieBool;
 
-	private boolean isIntFromPointer;
+	private final boolean isIntFromPointer;
 
 	
 	public abstract Expression getValue();
 	
 	public CType getCType() {
 		return cType;
-	}
-
-	@Deprecated
-	public void setCType(CType cType) {
-		this.cType = cType;
 	}
 
 	public boolean isBoogieBool() {
