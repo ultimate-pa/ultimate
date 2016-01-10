@@ -564,8 +564,10 @@ public class OctMatrix {
 	}
 
 	public OctMatrix addVariables(int count) {
-		if (count <= 0) {
+		if (count < 0 ) {
 			throw new IllegalArgumentException("Cannot add " + count + " variables.");
+		} else if (count == 0) {
+			return this;
 		}
 		OctMatrix n = new OctMatrix(mSize + (2 * count));
 		System.arraycopy(mElements, 0, n.mElements, 0, mElements.length);

@@ -51,7 +51,9 @@ public class AbstractInterpretationV2TestSuite extends AbstractEvalTestSuite {
 	
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String, String>[] TOOLCHAINS = new Triple[] {
-	        new Triple<>("AbstractInterpretationV2C.xml", ".c", "ai/AIv2_INT.epf"),
+//	        new Triple<>("AbstractInterpretationV2C.xml", ".c", "ai/AIv2_INT.epf"),
+//	        new Triple<>("AbstractInterpretationv2.xml", ".bpl", "ai/AIv2_INT.epf"),
+	        new Triple<>("AbstractInterpretationv2.xml", ".bpl", "ai/AIv2_OCT.epf"),
 	};
 
 	private static final String[] INPUT = new String[] {
@@ -59,7 +61,7 @@ public class AbstractInterpretationV2TestSuite extends AbstractEvalTestSuite {
 //	         "examples/programs/abstractInterpretation/",
 //	         "examples/programs/abstractInterpretationNoRec/",
 	        /* ULTIMATE repo */
-//	         "examples/programs/regression/bpl/",
+	         "examples/programs/regression/bpl/",
 //	         "examples/programs/regression/c/",
 //	         "examples/programs/recursivePrograms",
 	        /* SV-COMP repo */
@@ -104,7 +106,6 @@ public class AbstractInterpretationV2TestSuite extends AbstractEvalTestSuite {
 	@Override
 	protected long getTimeout() {
 		return 10 * 1000;
-//		return 0;
 	}
 	
 	@Override

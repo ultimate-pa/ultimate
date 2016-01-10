@@ -287,6 +287,25 @@ public class OctMatrixTest {
 		}
 	}
 	
+	public void testIsEqualTo() {
+		OctMatrix m = OctMatrix.parseBlockLowerTriangular("");
+		OctMatrix n = OctMatrix.parseBlockLowerTriangular("");
+		Assert.assertTrue(m.isEqualTo(n));
+		Assert.assertTrue(n.isEqualTo(m));
+
+		OctMatrix m2 = OctMatrix.parseBlockLowerTriangular("4 -9 inf 3.0000");
+		OctMatrix n2 = OctMatrix.parseBlockLowerTriangular("4 -9.0 inf 3");
+		Assert.assertTrue(m2.isEqualTo(n2));
+		Assert.assertTrue(n2.isEqualTo(m2));
+		
+		Assert.assertFalse(m.isEqualTo(m2));
+		Assert.assertFalse(m2.isEqualTo(m));
+		OctMatrix o = OctMatrix.parseBlockLowerTriangular("4 -9 inf 3.00001");
+		Assert.assertFalse(m2.isEqualTo(o));
+		Assert.assertFalse(o.isEqualTo(m2));
+		
+	}
+	
 	private void assertIsEqualTo(OctMatrix expected, OctMatrix actual) {
 		String msg = "expected:\n" + expected + "acutal:\n" + actual;
 		Assert.assertTrue(msg, expected.isEqualTo(actual));

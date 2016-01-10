@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
+import java.util.List;
+
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
@@ -22,11 +24,25 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 	}
 
 	@Override
-	public OctagonDomainState apply(OctagonDomainState currentState, CodeBlock codeBlock) {
-		for (final Statement statement : mStatementExtractor.process(codeBlock)) {
-			currentState = mStatementProcessor.process(currentState, statement);
+	public OctagonDomainState apply(OctagonDomainState oldState, CodeBlock codeBlock) {
+		OctagonDomainState currentState = oldState;
+		for (Statement statement : mStatementExtractor.process(codeBlock)) {
+			currentState = join(mStatementProcessor.process(currentState, statement));
 		}
 		return currentState;
+	}
+	
+	private OctagonDomainState join(List<OctagonDomainState> states) {
+		assert states.size() > 0 : "nothing to join";
+		OctagonDomainState joinedState = null;
+		for (OctagonDomainState result : states) {
+			if (joinedState == null) {
+				joinedState = result;
+			} else {
+				joinedState = joinedState.join(result);
+			}
+		}
+		return joinedState;
 	}
 
 }

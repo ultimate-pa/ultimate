@@ -1,10 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
@@ -23,7 +22,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.util.BidirectionalMap;
 
@@ -40,7 +38,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	private Map<String, Integer> mMapNumericVarToIndex;
 	private Set<String> mNumericNonIntVars;
 	private OctMatrix mNumericAbstraction;
-	private Map<String, BooleanValue> mBooleanAbstraction;
+	private Map<String, BoolValue> mBooleanAbstraction;
 
 	public static OctagonDomainState createFreshState() {
 		OctagonDomainState s = new OctagonDomainState();
@@ -111,7 +109,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 				}
 			} else if (isBoolean(type)) {
 				unrefBooleanAbstraction(newState);
-				newState.mBooleanAbstraction.put(name, new BooleanValue());
+				newState.mBooleanAbstraction.put(name, BoolValue.TOP);
 			}
 			// else: variable has unsupported type and is assumed to be \top at all times
 		}
@@ -120,7 +118,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		return newState;
 	}
 
-	private boolean isNumeric(IType type) {
+	public static boolean isNumeric(IType type) {
 		if (type instanceof PrimitiveType) {
 			int typeCode = ((PrimitiveType) type).getTypeCode();
 			return  typeCode == PrimitiveType.INT || typeCode == PrimitiveType.REAL;
@@ -128,7 +126,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		return false;
 	}
 	
-	private boolean isNumericNonInteger(IType type) {
+	public static boolean isNumericNonInteger(IType type) {
 		if (type instanceof PrimitiveType) {
 			int typeCode = ((PrimitiveType) type).getTypeCode();
 			return typeCode == PrimitiveType.REAL;
@@ -136,7 +134,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		return false;
 	}
 	
-	private boolean isBoolean(IType type) {
+	public static boolean isBoolean(IType type) {
 		if (type instanceof PrimitiveType) {
 			int typeCode = ((PrimitiveType) type).getTypeCode();
 			return typeCode == PrimitiveType.BOOL;
@@ -165,7 +163,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 			}
 			// else: variable had an unsupported type => its abstract value (\top) wasn't stored explicitly
 		}
-		newState.mNumericAbstraction = mNumericAbstraction.removeVariables(indexRemovedNumericVars);
+		newState.mNumericAbstraction = normalizedNumericAbstraction().removeVariables(indexRemovedNumericVars);
 		return newState;
 	}
 
@@ -212,8 +210,8 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	}
 	
 	private boolean isBooleanAbstractionBottom() {
-		for (BooleanValue b : mBooleanAbstraction.values()) {
-			if (b.getValue() != BooleanValue.Value.BOTTOM) {
+		for (BoolValue b : mBooleanAbstraction.values()) {
+			if (b != BoolValue.BOT) {
 				return false;
 			}
 		}
@@ -249,8 +247,15 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 
 	@Override
 	public boolean isEqualTo(OctagonDomainState other) {
-		return mMapVarToBoogieVar.equals(other.mMapVarToBoogieVar)
-				&& mBooleanAbstraction.equals(other.mBooleanAbstraction) && numericAbstractionIsEqualTo(other);
+		if (other == null) {
+			return false;
+		} else if (other == this) {
+			return true;
+		} else {
+			return mMapVarToBoogieVar.equals(other.mMapVarToBoogieVar)
+					&& mBooleanAbstraction.equals(other.mBooleanAbstraction)
+					&& numericAbstractionIsEqualTo(other);
+		}
 	}
 	
 	@Override
@@ -259,7 +264,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	}
 	
 	private boolean numericAbstractionIsEqualTo(OctagonDomainState other) {
-		// TODO transform ifs into assertion
+		// TODO transform the following ifs into assertions
 		if (!mMapNumericVarToIndex.keySet().equals(other.mMapNumericVarToIndex.keySet())) {
 			return false;
 		} else if (!mMapNumericVarToIndex.equals(other.mMapNumericVarToIndex)) {
@@ -271,25 +276,25 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	}
 
 	public OctagonDomainState meet(OctagonDomainState other) {
-		return operation(other, BooleanValue::intersect, OctMatrix::min);
+		return operation(other, BoolValue::meet, OctMatrix::min);
 	}
 	
 	public OctagonDomainState join(OctagonDomainState other) {
-		return operation(other, BooleanValue::merge, OctMatrix::max);
+		return operation(other, BoolValue::join, OctMatrix::max);
 	}
 	
 	public OctagonDomainState widen(OctagonDomainState other, BiFunction<OctMatrix, OctMatrix, OctMatrix> widenOp) {
-		return operation(other, BooleanValue::merge, widenOp);
+		return operation(other, BoolValue::join, widenOp);
 	}
 
 	private OctagonDomainState operation(OctagonDomainState other,
-			BiFunction<BooleanValue, BooleanValue, BooleanValue> booleanOperation,
+			BiFunction<BoolValue, BoolValue, BoolValue> booleanOperation,
 			BiFunction<OctMatrix, OctMatrix, OctMatrix> numericOperation) {		
 		OctagonDomainState result = shallowCopy();
 		unrefBooleanAbstraction(result);
-		for (Map.Entry<String, BooleanValue> entry : mBooleanAbstraction.entrySet()) {
+		for (Map.Entry<String, BoolValue> entry : mBooleanAbstraction.entrySet()) {
 			String name = entry.getKey();
-			BooleanValue value = booleanOperation.apply(entry.getValue(),other.mBooleanAbstraction.get(name));
+			BoolValue value = booleanOperation.apply(entry.getValue(),other.mBooleanAbstraction.get(name));
 			result.mBooleanAbstraction.put(name, value);
 		}
 		result.mNumericAbstraction = numericOperation.apply(mNumericAbstraction, other.mNumericAbstraction);
@@ -307,17 +312,17 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	}
 	
 	private Term getTermNumericAbstraction(Script script, Boogie2SMT bpl2smt) {		
-		List<Term> mapIndexToTerm = new ArrayList<>(mMapNumericVarToIndex.size());
+		Term[] mapIndexToTerm = new Term[mMapNumericVarToIndex.size()];
 		for (Map.Entry<String, Integer> entry : mMapNumericVarToIndex.entrySet()) {
 			Term termVar = getTermVar(entry.getKey());
-			mapIndexToTerm.set(entry.getValue(), termVar);
+			mapIndexToTerm[entry.getValue()] = termVar;
 		}
-		return mNumericAbstraction.getTerm(script, mapIndexToTerm);
+		return mNumericAbstraction.getTerm(script, Arrays.asList(mapIndexToTerm));
 	}
 
 	private Term getTermBooleanAbstraction(Script script, Boogie2SMT bpl2smt) {
 		Term acc = script.term("true");
-		for (Entry<String, BooleanValue> entry : mBooleanAbstraction.entrySet()) {
+		for (Entry<String, BoolValue> entry : mBooleanAbstraction.entrySet()) {
 			Term termVar = getTermVar(entry.getKey());
 			Sort sort = termVar.getSort().getRealSort();
 			Term newTerm = entry.getValue().getTerm(script, sort, termVar);
@@ -339,8 +344,6 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	// TODO test
 	@Override
 	public OctagonDomainState patch(OctagonDomainState dominator) {
-		// TODO strong closure to reduce precision loss
-		
 		Map<String, IBoogieVar> mapTypeChangedVarsToNewType = varsWithTypeCategoryCollisions(dominator);
 		OctagonDomainState s = this.removeVariables(mapTypeChangedVarsToNewType);
 		
@@ -365,7 +368,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 				} else {
 					s.mNumericNonIntVars.remove(var);
 				}
-			} else if (newType instanceof BooleanValue){
+			} else if (isBoolean(newType)){
 				s.mBooleanAbstraction.put(var, dominator.mBooleanAbstraction.get(var));
 			}
 			// else: variable has unsupported type and is assumed to be \top
@@ -402,6 +405,71 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		return typeChangedVars;
 	}
 	
+	protected void havocVar(String var) {
+		Integer v = mMapNumericVarToIndex.get(var);
+		if (v != null) {
+			mNumericAbstraction = normalizedNumericAbstraction(); // reduces information loss
+			// reset column (also resets row by coherence)
+			for (int i = 0; i < mNumericAbstraction.getSize(); ++i) {
+				for (int j = 2*v; j < 2*v + 2; ++j) {
+					mNumericAbstraction.set(i, j, OctValue.INFINITY);
+				}
+			}
+		} else if (mBooleanAbstraction.containsKey(var)) {
+			assert mBooleanAbstraction.containsKey(var) : "introduced new variable " + var;
+			mBooleanAbstraction.put(var, BoolValue.TOP);
+		}
+		// else: variables of unsupported types are assumed to be \top all the time
+		assert mMapVarToBoogieVar.containsKey(var) : "introduced new variable " + var;
+	}
+
+	protected void assignNumericVarConstant(String var, OctValue value) {
+		assignNumericVarInterval(var, value, value);
+	}
+
+	protected void assignNumericVarInterval(String var, OctValue min, OctValue max) {
+		havocVar(var);
+		int v2 = mMapNumericVarToIndex.get(var) * 2;
+		mNumericAbstraction.set(v2, v2 + 1, min.add(min).negate());
+		mNumericAbstraction.set(v2 + 1, v2, max.add(max));
+	}
+
+	// v1 := v2 + c;
+	protected void assignNumericVarRelational(String var, String otherVar, OctValue addConstant) {
+		OctValue addConstantNegated = addConstant.negate();
+		Integer v2 = mMapNumericVarToIndex.get(var) * 2;
+		if (var.equals(otherVar)) {
+			// update column (row is updated by coherence)
+			for (int i = 0; i < mNumericAbstraction.getSize(); ++i) {
+				int beta = 0;
+				if (i == v2) {
+					beta = -1;
+				} else if (i == v2 + 1) {
+					beta = 1;
+				}
+				for (int j = v2; j < v2 + 2; ++j) {
+					int alpha = (j == v2) ? 1 : -1;
+					int factor = alpha + beta;
+					if (factor == 1) {
+						mNumericAbstraction.set(i, j, mNumericAbstraction.get(i, j).add(addConstant));
+					} else if (factor == -1) {
+						mNumericAbstraction.set(i, j, mNumericAbstraction.get(i, j).add(addConstantNegated));
+					}
+				}
+			}
+		} else {
+			Integer ov2 = mMapNumericVarToIndex.get(var) * 2;
+			havocVar(var);
+			mNumericAbstraction.set(ov2, v2, addConstant); // also entry (v2 + 1, ov2 + 1) by coherence
+			mNumericAbstraction.set(v2, ov2, addConstantNegated); // also entry (ov2 + 1, v2 + 1) by coherence
+		}
+	}
+	
+	protected void assignBooleanVar(String var, BoolValue value) {
+		assert mBooleanAbstraction.containsKey(var) : "introduced new boolean variable " + var;
+		mBooleanAbstraction.put(var, value);
+	}
+	
 	/**
 	 * Checks if two Boogie types are of the same type category.
 	 * There are three type categories:
@@ -421,6 +489,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	public String toLogString() {
 		StringBuilder log = new StringBuilder();
 		log.append("\n");
+		log.append("#" + mId + "\n");
 		log.append(mNumericAbstraction);
 		log.append("numeric vars: ");
 		log.append(mMapNumericVarToIndex);
@@ -428,7 +497,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		log.append("numeric non-int vars: ");
 		log.append(mNumericNonIntVars);
 		log.append("\n");
-		for (Map.Entry<String, BooleanValue> entry : mBooleanAbstraction.entrySet()) {
+		for (Map.Entry<String, BoolValue> entry : mBooleanAbstraction.entrySet()) {
 			log.append(entry.getKey());
 			log.append(" = ");
 			log.append(entry.getValue());
