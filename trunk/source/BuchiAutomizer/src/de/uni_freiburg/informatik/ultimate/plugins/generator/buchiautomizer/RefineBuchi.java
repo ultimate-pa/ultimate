@@ -317,7 +317,7 @@ public class RefineBuchi {
 				m_InterpolAutomatonUsedInRefinement, m_UseDoubleDeckers, m_StateFactoryInterpolAutom);
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction;
 		if (m_Difference) {
-			if (complementationConstruction == BComplementationConstruction.Fanda) {
+			if (complementationConstruction == BComplementationConstruction.Ncsb) {
 				if (setting.isAlwaysSemiDeterministic()) {
 					newAbstraction = nsbcDifference(abstraction, setting, benchmarkGenerator);
 				} else {
@@ -331,7 +331,7 @@ public class RefineBuchi {
 				case Elastic:
 					optimization = FkvOptimization.Elastic;
 					break;
-				case Fanda:
+				case Ncsb:
 					throw new AssertionError("should be handled elsewhere");
 				case HeiMat2:
 					optimization = FkvOptimization.HeiMat2;
