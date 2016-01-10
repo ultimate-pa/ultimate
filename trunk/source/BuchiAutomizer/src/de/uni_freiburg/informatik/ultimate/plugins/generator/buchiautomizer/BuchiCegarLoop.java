@@ -304,6 +304,12 @@ public class BuchiCegarLoop {
 				m_StateFactoryForRefinement, m_UseDoubleDeckers, m_Pref.dumpPath(), m_Interpolation, m_Services, mLogger);
 		m_BuchiRefinementSettingSequence = new ArrayList<RefineBuchi.RefinementSetting>();
 		switch (m_InterpolantAutomaton) {
+		case TwoStage:
+			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
+					BInterpolantAutomaton.ScroogeNondeterminism, false, false, true, false, false));
+			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
+					BInterpolantAutomaton.ScroogeNondeterminism, false, false, true, true, false));
+			break;
 		case Staged:
 			m_BuchiRefinementSettingSequence.add(m_RefineBuchi.new RefinementSetting(
 					BInterpolantAutomaton.Deterministic, true, false, false, false, false));
