@@ -38,13 +38,14 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 
 /**
  * The post operator of the interval domain.
  * 
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
-public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomainState,CodeBlock, IBoogieVar> {
+public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	private final Logger mLogger;
 	private final RcfgStatementExtractor mStatementExtractor;
@@ -59,10 +60,15 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 	@Override
 	public IntervalDomainState apply(IntervalDomainState oldstate, CodeBlock codeBlock) {
 		IntervalDomainState currentState = oldstate;
+		// TODO: Handle assign on return!
+
 		final List<Statement> statements = mStatementExtractor.process(codeBlock);
+		if (mLogger.isDebugEnabled() && statements.isEmpty()) {
+			mLogger.warn("No statements for " + codeBlock.getClass().getSimpleName() + " doing nothing");
+		}
 		for (final Statement stmt : statements) {
 			final List<IntervalDomainState> result = mStatementProcessor.process(currentState, stmt);
-			
+
 			for (int i = 0; i < result.size(); i++) {
 				if (i == 0) {
 					currentState = result.get(i);

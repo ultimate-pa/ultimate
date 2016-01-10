@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class AbstractInterpretationPreferenceInitializer extends UltimatePreferenceInitializer {
+public class AbsIntPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public static final String[] VALUES_ABSTRACT_DOMAIN = new String[] { EmptyDomain.class.getSimpleName(),
 			SignDomain.class.getSimpleName(), IntervalDomain.class.getSimpleName() };
@@ -72,6 +72,8 @@ public class AbstractInterpretationPreferenceInitializer extends UltimatePrefere
 	private static final boolean DEF_PERSIST_ABS_STATES = false;
 	public static final String DEF_ABSTRACT_DOMAIN = VALUES_ABSTRACT_DOMAIN[0];
 	public static final String DEF_WIDENING_OPERATOR = VALUES_WIDENING_OPERATOR[0];
+
+	public static final String INDENT = "   ";
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {

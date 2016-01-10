@@ -84,5 +84,4 @@ public class IntervalSimpleWideningOperator implements IAbstractStateBinaryOpera
 
 		return first.setVarsToTop(varsToTop, boolsToTop, arraysToTop);
 	}
-
 }

@@ -27,21 +27,26 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.function.Function;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IAbstractStateStorage;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -54,19 +59,22 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
  *
  */
 public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
-		implements IVariableProvider<STATE, CodeBlock, IBoogieVar> {
+		implements IVariableProvider<STATE, CodeBlock, IBoogieVar, ProgramPoint> {
 
 	private static final StorageClass[] LOCAL_STORAGE_CLASSES = new StorageClass[] { StorageClass.LOCAL,
 			StorageClass.IMPLEMENTATION_INPARAM, StorageClass.IMPLEMENTATION_OUTPARAM };
 	private final BoogieSymbolTable mSymbolTable;
 	private final Boogie2SmtSymbolTable mBoogieVarTable;
-	private final BaseRcfgAbstractStateStorageProvider<STATE> mStateStorage;
+	private final Logger mLogger;
 
 	public RcfgVariableProvider(final BoogieSymbolTable table, final Boogie2SmtSymbolTable boogieVarTable,
-			final BaseRcfgAbstractStateStorageProvider<STATE> storage) {
+			final IUltimateServiceProvider services) {
+		assert table != null;
+		assert boogieVarTable != null;
+		assert services != null;
 		mSymbolTable = table;
 		mBoogieVarTable = boogieVarTable;
-		mStateStorage = storage;
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override
@@ -96,7 +104,8 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 	}
 
 	@Override
-	public STATE defineVariablesAfter(final CodeBlock current, final STATE state) {
+	public STATE defineVariablesAfter(final CodeBlock current, final STATE state,
+			final IAbstractStateStorage<STATE, CodeBlock, IBoogieVar, ProgramPoint> storage) {
 		assert current != null;
 		assert state != null;
 
@@ -135,17 +144,19 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 
 			if (varsNeededFromOldScope.isEmpty()) {
 				// we do not need information from the old scope, so we are finished
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(new StringBuilder().append(AbsIntPreferenceInitializer.INDENT)
+							.append(" No vars needed from old scope"));
+				}
 				return rtr;
 			}
 
 			// the program state that has to be used to obtain the values of the old scope
 			// (old locals, unmasked globals) is the pre state of the call
 			final Call call = ((Return) current).getCorrespondingCall();
-			STATE postCallState = mStateStorage.getCurrentAbstractPostState(call);
-			Collection<STATE> allPres = mStateStorage.getAbstractPreStates(call);
-			STATE preCallState = mStateStorage.getCurrentAbstractPreState(call);
-			
-			assert preCallState != null;
+			STATE preCallState = storage.getCurrentAbstractPreState(call);
+
+			assert preCallState != null : "There is no abstract state before the call that corresponds to this return";
 			// we determine which variables are not needed ...
 			final Map<String, IBoogieVar> toberemoved = new TreeMap<String, IBoogieVar>();
 			for (final Entry<String, IBoogieVar> entry : preCallState.getVariables().entrySet()) {
@@ -156,7 +167,14 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 
 			if (!toberemoved.isEmpty()) {
 				// ... and remove them if there are any
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(getLogMessageRemoveLocalsPreCall(preCallState, toberemoved));
+				}
 				preCallState = preCallState.removeVariables(toberemoved);
+			} else if (mLogger.isDebugEnabled()) {
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(getLogMessageNoRemoveLocalsPreCall(preCallState));
+				}
 			}
 			// now we combine the state after returning from this method with the one from before we entered the method.
 			rtr = rtr.patch(preCallState);
@@ -243,5 +261,17 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 
 	private IBoogieVar getLocalVariable(String key, String procedure, StorageClass sclass) {
 		return mBoogieVarTable.getBoogieVar(key, new DeclarationInformation(sclass, procedure), false);
+	}
+
+	private StringBuilder getLogMessageRemoveLocalsPreCall(STATE state, final Map<String, IBoogieVar> toberemoved) {
+		return new StringBuilder().append(AbsIntPreferenceInitializer.INDENT)
+				.append(" removing vars from pre-call state [").append(state.hashCode()).append("] ")
+				.append(state.toLogString()).append(": ").append(toberemoved);
+	}
+
+	private StringBuilder getLogMessageNoRemoveLocalsPreCall(STATE state) {
+		return new StringBuilder().append(AbsIntPreferenceInitializer.INDENT)
+				.append(" using unchanged pre-call state [").append(state.hashCode()).append("] ")
+				.append(state.toLogString());
 	}
 }

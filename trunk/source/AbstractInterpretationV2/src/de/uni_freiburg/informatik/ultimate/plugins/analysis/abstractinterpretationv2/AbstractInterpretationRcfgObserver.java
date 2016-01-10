@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTim
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbstractInterpretationPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -81,7 +81,7 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		final IProgressAwareTimer timer;
-		if (ups.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_RUN_AS_PRE_ANALYSIS)) {
+		if (ups.getBoolean(AbsIntPreferenceInitializer.LABEL_RUN_AS_PRE_ANALYSIS)) {
 			timer = mServices.getProgressMonitorService().getChildTimer(0.2);
 		} else {
 			timer = mServices.getProgressMonitorService();

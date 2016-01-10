@@ -54,7 +54,8 @@ public class RcfgResultReporter implements IResultReporter<CodeBlock> {
 	private final IUltimateServiceProvider mServices;
 	private final BaseRcfgAbstractStateStorageProvider<?> mStorageProvider;
 
-	public RcfgResultReporter(IUltimateServiceProvider services, BaseRcfgAbstractStateStorageProvider<?> storageProvider) {
+	public RcfgResultReporter(IUltimateServiceProvider services,
+			BaseRcfgAbstractStateStorageProvider<?> storageProvider) {
 		mServices = services;
 		mStorageProvider = storageProvider;
 	}
@@ -75,8 +76,7 @@ public class RcfgResultReporter implements IResultReporter<CodeBlock> {
 
 	@Override
 	public void reportSafe() {
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-				new AllSpecificationsHoldResult(Activator.PLUGIN_NAME, "No error locations were reached."));
+		reportSafe("No error locations were reached.");
 	}
 
 	@Override

@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.Iterator;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 
@@ -111,6 +112,13 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 	public IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> getCurrentStorage() {
 		assert !mScopedStorages.isEmpty();
 		return mScopedStorages.peek();
+	}
+
+	public IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> getPreviousStorage() {
+		assert mScopedStorages.size() > 1 : "There is no previous storage";
+		final Iterator<IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>> iter = mScopedStorages.iterator();
+		iter.next();
+		return iter.next();
 	}
 
 	public int getCallStackDepth() {
