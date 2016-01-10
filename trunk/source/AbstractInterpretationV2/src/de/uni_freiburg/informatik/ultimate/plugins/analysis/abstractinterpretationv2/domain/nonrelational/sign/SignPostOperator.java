@@ -30,13 +30,20 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.List;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 
 /**
  * Applies a post operation to an abstract state of the {@link SignDomain}.
@@ -47,6 +54,7 @@ public class SignPostOperator implements IAbstractPostOperator<SignDomainState, 
 
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final SignDomainStatementProcessor mStatementProcessor;
+	private final Logger mLogger;
 
 	/**
 	 * Default constructor.
@@ -54,10 +62,11 @@ public class SignPostOperator implements IAbstractPostOperator<SignDomainState, 
 	protected SignPostOperator(IUltimateServiceProvider services) {
 		mStatementExtractor = new RcfgStatementExtractor();
 		mStatementProcessor = new SignDomainStatementProcessor(services);
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	/**
-	 * Applys the post operator to a given {@link IAbstractState}, according to some Boogie {@link CodeBlock}.
+	 * Applies the post operator to a given {@link IAbstractState}, according to some Boogie {@link CodeBlock}.
 	 * 
 	 * @param oldstate
 	 *            The current abstract state, the post operator is applied on.
@@ -66,7 +75,7 @@ public class SignPostOperator implements IAbstractPostOperator<SignDomainState, 
 	 * @return A new abstract state which is the result of applying the post operator to a given abstract state.
 	 */
 	@Override
-	public SignDomainState apply(SignDomainState oldstate, CodeBlock codeBlock) {
+	public SignDomainState apply(final SignDomainState oldstate, final CodeBlock codeBlock) {
 		SignDomainState currentState = oldstate;
 		final List<Statement> statements = mStatementExtractor.process(codeBlock);
 		for (final Statement stmt : statements) {
@@ -81,4 +90,26 @@ public class SignPostOperator implements IAbstractPostOperator<SignDomainState, 
 
 		return currentState;
 	}
+
+	@Override
+	public SignDomainState apply(final SignDomainState oldstate, final SignDomainState oldstateWithFreshVariables,
+			final CodeBlock transition) {
+		assert transition instanceof Call || transition instanceof Return;
+
+		if (transition instanceof Call) {
+			// nothing changes during this switch
+			return oldstateWithFreshVariables;
+		} else if (transition instanceof Return) {
+			// TODO: Handle assign on return! This is just the old behavior
+			final Return ret = (Return) transition;
+			final CallStatement correspondingCall = ret.getCallStatement();
+			mLogger.error("SignDomain does not handle returns correctly: " + ret + " for "
+					+ BoogiePrettyPrinter.print(correspondingCall));
+			return oldstateWithFreshVariables;
+		} else {
+			throw new UnsupportedOperationException(
+					"SignDomain does not support context switches other than Call and Return (yet)");
+		}
+	}
+
 }

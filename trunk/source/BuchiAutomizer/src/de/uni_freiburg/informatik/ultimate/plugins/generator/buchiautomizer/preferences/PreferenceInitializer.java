@@ -46,7 +46,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 						true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<BComplementationConstruction>(
 						LABEL_BuchiComplementationConstruction,
-						BComplementationConstruction.Fanda, PreferenceType.Combo,
+						BComplementationConstruction.Ncsb, PreferenceType.Combo,
 						BComplementationConstruction.values()),
 				new UltimatePreferenceItem<BInterpolantAutomaton>(
 						LABEL_BuchiInterpolantAutomaton,
@@ -150,9 +150,9 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	 */
 	public static final String LABEL_TryTwofoldRefinement = "Try twofold refinement";
 	
-	public enum BInterpolantAutomaton { LassoAutomaton, EagerNondeterminism, ScroogeNondeterminism, Deterministic, Staged };
+	public enum BInterpolantAutomaton { LassoAutomaton, EagerNondeterminism, ScroogeNondeterminism, Deterministic, Staged, TwoStage };
 	
-	public enum BComplementationConstruction { Fanda, Elastic, HeiMat2, TightRO, TightBasic, TightHighEven };
+	public enum BComplementationConstruction { Ncsb, Elastic, HeiMat2, TightRO, TightBasic, TightHighEven };
 	
 	public enum AutomataMinimization { None, MinimizeSevpa, ShrinkNwa, DelayedSimulation, FairSimulation_WithSCC, FairSimulation_WithoutSCC, FairDirectSimulation };
 	

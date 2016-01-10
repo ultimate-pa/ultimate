@@ -38,12 +38,10 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIt
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 
 /**
- * CorePreferenceInitializer implements UltimatePreferenceStore for
- * UltimateCore. It initializes the default values for preferences and provides
- * access to the preferences for the plugin.
+ * CorePreferenceInitializer implements UltimatePreferenceStore for UltimateCore. It initializes the default values for
+ * preferences and provides access to the preferences for the plugin.
  * 
- * It has to contribute to the extension point
- * org.eclipse.core.runtime.preferences.initializer (see the plugin.xml).
+ * It has to contribute to the extension point org.eclipse.core.runtime.preferences.initializer (see the plugin.xml).
  * 
  * @author dietsch@informatik.uni-freiburg.de
  * 
@@ -75,7 +73,7 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<String>(LABEL_MM_TMPDIRECTORY, VALUE_MM_TMPDIRECTORY,
 						PreferenceType.Directory),
 
-				new UltimatePreferenceItem<String>(LABEL_LOG4J_PATTERN, "%d{ISO8601} %-5p [%F:%L]: %m%n",
+				new UltimatePreferenceItem<String>(LABEL_LOG4J_PATTERN, DEFAULT_VALUE_LOG4J_PATTERN,
 						PreferenceType.String),
 
 				// Log levels
@@ -119,14 +117,14 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 						PreferenceType.String),
 				new UltimatePreferenceItem<Integer>(LABEL_WITNESS_VERIFIER_TIMEOUT, VALUE_WITNESS_VERIFIER_TIMEOUT,
 						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 1000000)),
-				new UltimatePreferenceItem<String>(LABEL_WITNESS_CPACHECKER_PROPERTY,
-						VALUE_WITNESS_CPACHECKER_PROPERTY, PreferenceType.String),
+				new UltimatePreferenceItem<String>(LABEL_WITNESS_CPACHECKER_PROPERTY, VALUE_WITNESS_CPACHECKER_PROPERTY,
+						PreferenceType.String),
 				new UltimatePreferenceItem<Boolean>(LABEL_WITNESS_DELETE_GRAPHML, VALUE_WITNESS_DELETE_GRAPHML,
 						PreferenceType.Boolean, new WitnessVerifierValidator()),
 
-		// Log levels for external tools
+				// Log levels for external tools
 
-		// Plugin-specific log levels
+				// Plugin-specific log levels
 		};
 	}
 
@@ -166,6 +164,11 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 
 	// Log4j pattern
 	public static final String LABEL_LOG4J_PATTERN = "Logger pattern: ";
+	/**
+	 * Note that this log pattern consumes quite some cycles. Replacing it with "%-5p: %m%n" is advised for more
+	 * performance.
+	 */
+	public static final String DEFAULT_VALUE_LOG4J_PATTERN = "[%d{ISO8601} %-5p L%-5.5L %20.20C{1}]: %m%n";
 
 	// Log level
 	public static final String DESC_LOGFILE = "The basic preferences for creating a log file (like enabled, name, "

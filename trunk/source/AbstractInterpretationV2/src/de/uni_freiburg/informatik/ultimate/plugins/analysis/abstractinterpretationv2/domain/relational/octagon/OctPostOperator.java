@@ -45,4 +45,10 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		return joinedState;
 	}
 
+	@Override
+	public OctagonDomainState apply(
+			OctagonDomainState oldstate, OctagonDomainState oldstateWithFreshVariables, CodeBlock transition) {
+		throw new UnsupportedOperationException("Not yet implemented");
+	}
+
 }

@@ -33,10 +33,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * 
  * @author dietsch@informatik.uni-freiburg.de
  *
- * @param <ACTION>
- * @param <VARDECL>
  */
-public interface IVariableProvider<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
+public interface IVariableProvider<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
 
 	/**
 	 * Defines global and local variables in an {@link IAbstractState} before the execution of action
@@ -72,8 +70,11 @@ public interface IVariableProvider<STATE extends IAbstractState<STATE, ACTION, V
 	 *            The action that will be executed on <code>state</code>.
 	 * @param state
 	 *            The current {@link IAbstractState}.
+	 * @param storage
+	 *            the abstract state storage of the current scope
 	 * @return An {@link IAbstractState} that contains all variables that are necessary to represent the effects of
 	 *         <code>current</code> and that are visible in the scope after execution of <code>current</code>.
 	 */
-	STATE defineVariablesAfter(ACTION current, STATE state);
+	STATE defineVariablesAfter(ACTION current, STATE state,
+			IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> storage);
 }

@@ -44,12 +44,12 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
+public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite {
 
 	private static final String[] I = new String[] { ".i" };
 	private static final String[] BPL = new String[] { ".bpl" };
 	private static final int DEFAULT_LIMIT = Integer.MAX_VALUE;
-//	private static final int DEFAULT_LIMIT = 10;
+	// private static final int DEFAULT_LIMIT = 10;
 	// @formatter:off
 	
 	@SuppressWarnings("unchecked")
@@ -85,7 +85,10 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 
 	private static final String[] INPUT = new String[] {
 			/* ULTIMATE repo */
-			 "examples/programs/abstractInterpretation/",
+//			 "examples/programs/abstractInterpretation/",
+//			 "examples/programs/abstractInterpretation/regression",
+			 "examples/programs/abstractInterpretation/regression/ProcedureCallNested.bpl",
+			 
 			// "examples/programs/abstractInterpretationNoRec/",
 //			 "examples/programs/regression/bpl/",
 //			 "examples/programs/regression/c/",
@@ -115,7 +118,7 @@ public class AbstractInterpretationMk2TestSuite extends AbstractEvalTestSuite {
 
 	@Override
 	protected long getTimeout() {
-		return 60 * 1000  ;
+		return 60 * 1000 * 1000;
 	}
 
 	@Override
