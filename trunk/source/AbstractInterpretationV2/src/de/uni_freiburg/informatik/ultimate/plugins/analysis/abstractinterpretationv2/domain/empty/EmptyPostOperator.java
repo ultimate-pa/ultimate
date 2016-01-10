@@ -37,11 +37,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @param <ACTION>
  * @param <VARDECL>
  */
-public final class EmptyPostOperator<ACTION, VARDECL> implements IAbstractPostOperator<EmptyDomainState<ACTION, VARDECL>,ACTION, VARDECL> {
+public final class EmptyPostOperator<ACTION, VARDECL>
+		implements IAbstractPostOperator<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL> {
 
 	@Override
 	public EmptyDomainState<ACTION, VARDECL> apply(EmptyDomainState<ACTION, VARDECL> oldstate, ACTION concrete) {
 		return new EmptyDomainState<>(new HashMap<>(oldstate.getVariables()), false);
+	}
+
+	@Override
+	public EmptyDomainState<ACTION, VARDECL> apply(EmptyDomainState<ACTION, VARDECL> oldstate,
+			EmptyDomainState<ACTION, VARDECL> oldstateWithFreshVariables, ACTION transition) {
+		return new EmptyDomainState<>(new HashMap<>(oldstateWithFreshVariables.getVariables()), false);
 	}
 
 }

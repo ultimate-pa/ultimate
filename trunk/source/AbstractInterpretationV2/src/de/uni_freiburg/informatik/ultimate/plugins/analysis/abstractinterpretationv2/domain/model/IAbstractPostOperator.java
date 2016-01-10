@@ -29,6 +29,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model;
 
 /**
+ * {@link IAbstractPostOperator} describes a post operator for an {@link IAbstractDomain}. It is used to compute the
+ * abstract post given an old {@link IAbstractState} and a transition.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
@@ -36,6 +38,28 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
  */
 public interface IAbstractPostOperator<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
 
-	STATE apply(STATE oldstate, ACTION concrete);
+	/**
+	 * Compute the abstract post for an old STATE (that extends {@link IAbstractState}) and a given ACTION (transition).
+	 * 
+	 * @param oldstate
+	 *            The abstract state before execution of the ACTION.
+	 * @param transition
+	 *            The transition that is taken.
+	 * @return A new STATE that is the result of applying the abstract post.
+	 */
+	STATE apply(STATE oldstate, ACTION transition);
 
+	/**
+	 * Compute the abstract post from two old abstract STATEs and one ACTION. This is used for scope switching.
+	 * 
+	 * @param oldstate
+	 *            The old abstract state in the old scope.
+	 * @param oldstateWithFreshVariables
+	 *            The old abstract state in the new scope.
+	 * @param transition
+	 *            The transition that is taken.
+	 * @return A new STATE that has the same variables as the old abstract state in the new scope and incorporates the
+	 *         effects of the taken transition.
+	 */
+	STATE apply(STATE oldstate, STATE oldstateWithFreshVariables, ACTION transition);
 }

@@ -136,7 +136,14 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			// values
 			final STATE preStateWithFreshVariables = mVarProvider.defineVariablesAfter(currentAction, preState,
 					currentItem.getCurrentStorage());
-			STATE newPostState = post.apply(preStateWithFreshVariables, currentAction);
+
+			STATE newPostState;
+			if (preState.equals(preStateWithFreshVariables)) {
+				newPostState = post.apply(preStateWithFreshVariables, currentAction);
+			} else {
+				// a context switch happened
+				newPostState = post.apply(preState, preStateWithFreshVariables, currentAction);
+			}
 
 			// check if this action leaves a loop
 			if (!activeLoops.isEmpty()) {
