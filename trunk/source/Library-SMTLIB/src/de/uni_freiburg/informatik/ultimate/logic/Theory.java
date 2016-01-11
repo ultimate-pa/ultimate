@@ -94,7 +94,6 @@ public class Theory {
 	private SolverSetup mSolverSetup;
 	private Logics mLogic;
 	private Sort mNumericSort, mRealSort, mStringSort, mBooleanSort;
-	private Sort mRNE, mRNA, mRTP, mRTN, mRTZ; //Rounding Modes
 	private SortSymbol mBitVecSort, mFloatingPointSort;
 	private final HashMap<String, FunctionSymbolFactory> mFunFactory = 
 		new HashMap<String, FunctionSymbolFactory>();
@@ -116,6 +115,8 @@ public class Theory {
 	 * Cache for bitvector constant function symbols (_ bv123 456).
 	 */
 	private UnifyHash<FunctionSymbol> mBitVecConstCache;
+	
+	private UnifyHash<FunctionSymbol> mFloatingPointCache;
 	
 	public final ApplicationTerm mTrue, mFalse;
 	public final FunctionSymbol mAnd, mOr, mNot, mImplies, mXor;
@@ -864,11 +865,10 @@ public class Theory {
 			}
 		};
 		
-		mRNE = declareInternalSort("RNE", 0, 0).getSort(null, new Sort[0]);
-		mRNA = declareInternalSort("RNA", 0, 0).getSort(null, new Sort[0]);
-		mRTP = declareInternalSort("RTP", 0, 0).getSort(null, new Sort[0]);
-		mRTN = declareInternalSort("RTN", 0, 0).getSort(null, new Sort[0]);
-		mRTZ = declareInternalSort("RTZ", 0, 0).getSort(null, new Sort[0]);
+		Sort RoundingModeSort = declareInternalSort("RoundingMode", 0, 0)
+				.getSort(null, new Sort[0]);
+		
+		
 		
 		//TODO: Rounding functions
 		
@@ -896,6 +896,9 @@ public class Theory {
 				return mResult == null ? paramSorts[0] : mResult;
 			}
 		}
+		
+		//RoundingModes
+		defineFunction(new RegularFloatingPointFunction("roundNearestTiesToEven", 1, null));
 						
 		// Operators
 		defineFunction(new RegularFloatingPointFunction("fp.abs", 1, null));
@@ -1198,6 +1201,25 @@ public class Theory {
 				name, indices, EMPTY_SORT_ARRAY, sort, null, null,
 				FunctionSymbol.INTERNAL);
 		mBitVecConstCache.put(hash,symb);
+		return symb;
+	}
+	
+	private FunctionSymbol getFloatingPointConstant(String name, BigInteger[] indices) {
+		if (mFloatingPointCache == null) {
+			mFloatingPointCache = new UnifyHash<FunctionSymbol>();
+		}
+		int hash = HashUtils.hashJenkins(name.hashCode(), (Object[]) indices);
+		for (FunctionSymbol symb : mFloatingPointCache.iterateHashCode(hash)) {
+			if (symb.getName().equals(name) && symb.getIndices()[0].equals(indices[0])) {
+				return symb;
+			}
+		}
+		Sort sort = mFloatingPointSort.getSort(indices);
+		FunctionSymbol symb = new FunctionSymbol(
+				name, indices, EMPTY_SORT_ARRAY, sort, null, null,
+				FunctionSymbol.INTERNAL);
+		mFloatingPointCache.put(hash, symb);	
+		
 		return symb;
 	}
 
