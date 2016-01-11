@@ -101,6 +101,10 @@ public class IntervalBinaryExpressionEvaluator
 					returnValue = res1.getResult().getEvaluatedValue().multiply(res2.getResult().getEvaluatedValue());
 					returnBool = new BooleanValue(false);
 					break;
+				case ARITHDIV:
+					returnValue = res1.getResult().getEvaluatedValue().divide(res2.getResult().getEvaluatedValue());
+					returnBool = new BooleanValue(false);
+					break;
 				case ARITHMOD:
 					returnValue = res1.getResult().getEvaluatedValue().modulus(res2.getResult().getEvaluatedValue());
 					returnBool = new BooleanValue(false);

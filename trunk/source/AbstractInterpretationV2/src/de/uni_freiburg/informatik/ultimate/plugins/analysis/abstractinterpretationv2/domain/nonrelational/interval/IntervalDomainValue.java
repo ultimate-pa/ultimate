@@ -1092,4 +1092,8 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 			return new IntervalValue(newValue);
 		}
 	}
+
+	public IntervalDomainValue divide(IntervalDomainValue evaluatedValue) {
+		throw new UnsupportedOperationException("TODO: Implement interval division.");
+	}
 }
