@@ -1185,6 +1185,10 @@ public class Theory {
 			/* Create bitvector constants */
 			return getBitVecConstant(name, indices);
 		}
+		if (mFloatingPointSort != null && indices != null 
+			&& indices.length == 1 && resultType == null) {
+			return getFloatingPointConstant(name, indices);
+		}
 		return null;
 	}
 	
