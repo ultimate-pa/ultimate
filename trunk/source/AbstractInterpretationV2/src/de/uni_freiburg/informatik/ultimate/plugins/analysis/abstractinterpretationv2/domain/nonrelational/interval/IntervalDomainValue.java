@@ -425,12 +425,19 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 	protected IntervalDomainValue merge(IntervalDomainValue other) {
 		assert other != null;
 
-		if (isBottom() || other.isBottom()) {
-			return new IntervalDomainValue(true);
+		final boolean thisIsBottom = isBottom();
+		final boolean otherIsBottom = other.isBottom();
+		
+		if (thisIsBottom && !otherIsBottom) {
+			return other.copy();
+		}
+		
+		if (!thisIsBottom && otherIsBottom) {
+			return copy();
 		}
 
 		if (isEqualTo(other)) {
-			if (isBottom()) {
+			if (thisIsBottom) {
 				return new IntervalDomainValue(true);
 			} else if (isInfinity()) {
 				return new IntervalDomainValue(new IntervalValue(), new IntervalValue());

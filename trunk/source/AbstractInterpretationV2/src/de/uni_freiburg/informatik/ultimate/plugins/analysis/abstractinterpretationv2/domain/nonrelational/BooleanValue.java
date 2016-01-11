@@ -156,8 +156,14 @@ public class BooleanValue {
 	public BooleanValue merge(BooleanValue other) {
 		assert other != null;
 
-		if (mValue == Value.BOTTOM || other.mValue == Value.BOTTOM) {
+		if (mValue == Value.BOTTOM && other.mValue == Value.BOTTOM) {
 			return new BooleanValue(Value.BOTTOM);
+		}
+		
+		if (mValue == Value.BOTTOM && other.mValue != Value.BOTTOM) {
+			return new BooleanValue(other.mValue);
+		} else if (mValue != Value.BOTTOM && other.mValue == Value.BOTTOM) {
+			return new BooleanValue(mValue);
 		}
 
 		if (!isEqualTo(other)) {
@@ -202,7 +208,7 @@ public class BooleanValue {
 	public BooleanValue or(BooleanValue other) {
 		assert other != null;
 
-		if (mValue == Value.BOTTOM && other.mValue == Value.BOTTOM) {
+		if (mValue == Value.BOTTOM || other.mValue == Value.BOTTOM) {
 			return new BooleanValue(Value.BOTTOM);
 		}
 
