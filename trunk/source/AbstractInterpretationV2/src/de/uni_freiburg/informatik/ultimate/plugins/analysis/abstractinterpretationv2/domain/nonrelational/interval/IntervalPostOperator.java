@@ -68,6 +68,10 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 
 	@Override
 	public IntervalDomainState apply(final IntervalDomainState oldstate, final CodeBlock transition) {
+		assert oldstate != null;
+		assert !oldstate.isBottom();
+		assert transition != null;
+		
 		IntervalDomainState currentState = oldstate;
 		final List<Statement> statements = mStatementExtractor.process(transition);
 
@@ -82,6 +86,7 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 				}
 			}
 		}
+
 		return currentState;
 	}
 

@@ -145,11 +145,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 		assert values != null;
 		assert vars.length == values.length;
 
-		final IntervalDomainState returnState = copy();
-		for (int i = 0; i < vars.length; i++) {
-			setValueInternally(returnState, vars[i], values[i]);
-		}
-		return returnState;
+		return setMixedValues(vars, values, new String[0], new BooleanValue.Value[0]);
 	}
 
 	protected IntervalDomainState setBooleanValue(String name, BooleanValue.Value value) {
@@ -175,10 +171,27 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 		assert values != null;
 		assert vars.length == values.length;
 
+		return setMixedValues(new String[0], new IntervalDomainValue[0], vars, values);
+	}
+
+	protected IntervalDomainState setMixedValues(String[] normalVars, IntervalDomainValue[] values,
+	        String[] booleanVars, BooleanValue.Value[] booleanValues) {
+		assert normalVars != null;
+		assert values != null;
+		assert booleanVars != null;
+		assert booleanValues != null;
+		assert normalVars.length == values.length;
+		assert booleanVars.length == booleanValues.length;
+
 		final IntervalDomainState returnState = copy();
-		for (int i = 0; i < vars.length; i++) {
-			setValueInternally(returnState, vars[i], new BooleanValue(values[i]));
+		for (int i = 0; i < normalVars.length; i++) {
+			setValueInternally(returnState, normalVars[i], values[i]);
 		}
+
+		for (int i = 0; i < booleanVars.length; i++) {
+			setValueInternally(returnState, booleanVars[i], new BooleanValue(booleanValues[i]));
+		}
+		
 		return returnState;
 	}
 

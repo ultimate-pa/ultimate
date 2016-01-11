@@ -82,7 +82,7 @@ public class IntervalBinaryExpressionEvaluator
 
 		for (final IEvaluationResult<IntervalDomainEvaluationResult> res1 : firstResult) {
 			for (final IEvaluationResult<IntervalDomainEvaluationResult> res2 : secondResult) {
-				IntervalDomainState returnState = currentState.copy();
+				final List<IntervalDomainState> returnStates = new ArrayList<>();
 				IntervalDomainValue returnValue = new IntervalDomainValue();
 				BooleanValue returnBool = new BooleanValue();
 
@@ -116,15 +116,20 @@ public class IntervalBinaryExpressionEvaluator
 					} else {
 						final IntervalDomainState firstIntervalState = res1.getResult().getEvaluatedState();
 						final IntervalDomainState secondIntervalState = res2.getResult().getEvaluatedState();
-						returnState = firstIntervalState.intersect(secondIntervalState);
+						returnStates.add(firstIntervalState.intersect(secondIntervalState));
 					}
 					break;
 				case LOGICOR:
 					returnBool = res1.getBooleanValue().or(res2.getBooleanValue());
 					if (returnBool.getValue() == Value.FALSE) {
 						setToBottom = true;
+					} else {
+						final IntervalDomainState firstIntervalState = res1.getResult().getEvaluatedState();
+						final IntervalDomainState secondIntervalState = res2.getResult().getEvaluatedState();
+
+						returnStates.add(firstIntervalState);
+						returnStates.add(secondIntervalState);
 					}
-					// TODO: Do something with the state here!
 					break;
 				case LOGICIMPLIES:
 					returnBool = res1.getBooleanValue().neg().or(res2.getBooleanValue());
@@ -139,6 +144,7 @@ public class IntervalBinaryExpressionEvaluator
 					if (returnBool.getValue() == Value.FALSE) {
 						setToBottom = true;
 					}
+					// TODO: Do something with the state here!
 					break;
 				case COMPEQ:
 					// TODO: Make better, make shorter, move to separate method s.t. it can be called when handling NEQ
@@ -178,13 +184,15 @@ public class IntervalBinaryExpressionEvaluator
 						if (returnBool.getValue() == Value.FALSE) {
 							setToBottom = true;
 						} else {
+							IntervalDomainState returnState;
+
 							if (mLeftSubEvaluator.containsBool()) {
-								returnState = returnState.setBooleanValue(varName, res1.getBooleanValue());
+								returnState = currentState.setBooleanValue(varName, res1.getBooleanValue());
 							} else {
-								returnState = returnState.setValue(varName, res1.getResult().getEvaluatedValue());
+								returnState = currentState.setValue(varName, res1.getResult().getEvaluatedValue());
 							}
 
-							returnState = returnState.intersect(currentState);
+							returnStates.add(returnState.intersect(currentState));
 						}
 
 					} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 1
@@ -208,13 +216,15 @@ public class IntervalBinaryExpressionEvaluator
 						if (returnBool.getValue() == Value.FALSE) {
 							setToBottom = true;
 						} else {
+							IntervalDomainState returnState;
+
 							if (mRightSubEvaluator.containsBool()) {
-								returnState = returnState.setBooleanValue(varName, res2.getBooleanValue());
+								returnState = currentState.setBooleanValue(varName, res2.getBooleanValue());
 							} else {
-								returnState = returnState.setValue(varName, res2.getResult().getEvaluatedValue());
+								returnState = currentState.setValue(varName, res2.getResult().getEvaluatedValue());
 							}
 
-							returnState = returnState.intersect(currentState);
+							returnStates.add(returnState.intersect(currentState));
 						}
 
 					} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 1
@@ -243,19 +253,33 @@ public class IntervalBinaryExpressionEvaluator
 						if (returnBool.getValue() == Value.FALSE) {
 							setToBottom = true;
 						} else {
+							List<String> boolVarsToChange = new ArrayList<>();
+							List<String> varsToChange = new ArrayList<>();
+							List<BooleanValue.Value> boolsToChange = new ArrayList<>();
+							List<IntervalDomainValue> valsToChange = new ArrayList<>();
+
 							if (mLeftSubEvaluator.containsBool()) {
-								returnState = returnState.setBooleanValue(rightVar, res1.getBooleanValue());
+								boolVarsToChange.add(rightVar);
+								boolsToChange.add(res1.getBooleanValue().getValue());
 							} else {
-								returnState = returnState.setValue(rightVar, res1.getResult().getEvaluatedValue());
+								varsToChange.add(rightVar);
+								valsToChange.add(res1.getResult().getEvaluatedValue());
 							}
 
 							if (mRightSubEvaluator.containsBool()) {
-								returnState = returnState.setBooleanValue(leftVar, res2.getBooleanValue());
+								boolVarsToChange.add(leftVar);
+								boolsToChange.add(res2.getBooleanValue().getValue());
 							} else {
-								returnState = returnState.setValue(leftVar, res2.getResult().getEvaluatedValue());
+								varsToChange.add(leftVar);
+								valsToChange.add(res2.getResult().getEvaluatedValue());
 							}
 
-							returnState = returnState.intersect(currentState);
+							returnStates.add(currentState
+							        .setMixedValues(varsToChange.toArray(new String[varsToChange.size()]),
+							                valsToChange.toArray(new IntervalDomainValue[valsToChange.size()]),
+							                boolVarsToChange.toArray(new String[boolVarsToChange.size()]),
+							                boolsToChange.toArray(new BooleanValue.Value[boolsToChange.size()]))
+							        .intersect(currentState));
 						}
 
 					} else {
@@ -309,7 +333,7 @@ public class IntervalBinaryExpressionEvaluator
 						final IntervalDomainValue computationResult = leftValue
 						        .intersect(res2.getResult().getEvaluatedValue());
 
-						returnState = returnState.setValue(varName, computationResult);
+						returnStates.add(currentState.setValue(varName, computationResult));
 
 						if (computationResult.isBottom()) {
 							returnBool = new BooleanValue(false);
@@ -334,7 +358,7 @@ public class IntervalBinaryExpressionEvaluator
 						final IntervalDomainValue computationResult = res1.getResult().getEvaluatedValue()
 						        .intersect(rightValue);
 
-						returnState = returnState.setValue(varName, computationResult);
+						returnStates.add(currentState.setValue(varName, computationResult));
 
 						if (computationResult.isBottom()) {
 							returnBool = new BooleanValue(false);
@@ -379,8 +403,8 @@ public class IntervalBinaryExpressionEvaluator
 						vars.add(rightVar);
 						vals.add(rightComputationResult);
 
-						returnState = returnState.setValues(vars.toArray(new String[vars.size()]),
-						        vals.toArray(new IntervalDomainValue[vals.size()]));
+						returnStates.add(currentState.setValues(vars.toArray(new String[vars.size()]),
+						        vals.toArray(new IntervalDomainValue[vals.size()])));
 
 						if (leftComputationResult.isBottom() || rightComputationResult.isBottom()) {
 							returnBool = new BooleanValue(false);
@@ -435,7 +459,7 @@ public class IntervalBinaryExpressionEvaluator
 						final IntervalDomainValue computationResult = newLeftSide
 						        .intersect(res2.getResult().getEvaluatedValue());
 
-						returnState = returnState.setValue(varName, computationResult);
+						returnStates.add(currentState.setValue(varName, computationResult));
 
 						if (computationResult.isBottom()) {
 							returnBool = new BooleanValue(false);
@@ -459,7 +483,7 @@ public class IntervalBinaryExpressionEvaluator
 						final IntervalDomainValue computationResult = res1.getResult().getEvaluatedValue()
 						        .intersect(newRightSide);
 
-						returnState = returnState.setValue(varName, computationResult);
+						returnStates.add(currentState.setValue(varName, computationResult));
 
 						if (computationResult.isBottom()) {
 							returnBool = new BooleanValue(false);
@@ -503,8 +527,8 @@ public class IntervalBinaryExpressionEvaluator
 						vars.add(rightVar);
 						vals.add(rightComputationResult);
 
-						returnState = returnState.setValues(vars.toArray(new String[vars.size()]),
-						        vals.toArray(new IntervalDomainValue[vals.size()]));
+						returnStates.add(currentState.setValues(vars.toArray(new String[vars.size()]),
+						        vals.toArray(new IntervalDomainValue[vals.size()])));
 
 						if (leftComputationResult.isBottom() || rightComputationResult.isBottom()) {
 							returnBool = new BooleanValue(false);
@@ -531,10 +555,18 @@ public class IntervalBinaryExpressionEvaluator
 				}
 
 				if (setToBottom) {
-					returnState = returnState.bottomState();
+					returnStates.clear();
+					returnStates.add(currentState.bottomState());
 				}
-				
-				returnList.add(new IntervalDomainEvaluationResult(returnValue, returnState, returnBool));
+
+				// If no state has been added to return, return the current state.
+				if (returnStates.size() == 0) {
+					returnStates.add(currentState.copy());
+				}
+
+				for (final IntervalDomainState s : returnStates) {
+					returnList.add(new IntervalDomainEvaluationResult(returnValue, s, returnBool));
+				}
 			}
 		}
 
