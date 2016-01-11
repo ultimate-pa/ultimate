@@ -87,9 +87,8 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 			/* ULTIMATE repo */
 //			 "examples/programs/abstractInterpretation/",
 //			 "examples/programs/abstractInterpretation/regression",
-			"examples/programs/abstractInterpretation/regression/110517_Martin01.bpl",
-//			"examples/programs/abstractInterpretation/regression/ProcedureCall.bpl",
-//			"examples/programs/abstractInterpretation/regression/ProcedureCallNested.bpl",
+			 "examples/programs/abstractInterpretation/regression/ProcedureCallNested-unsafe.bpl",
+			 "examples/programs/abstractInterpretation/regression/ProcedureCallNested-safe.bpl",
 			 
 			// "examples/programs/abstractInterpretationNoRec/",
 //			 "examples/programs/regression/bpl/",
