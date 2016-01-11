@@ -956,9 +956,10 @@ public class Theory {
 		if (logic.isBitVector())
 			createBitVecOperators();
 		
-		if (logic.isFloatingPoint())
+		if (logic.isFloatingPoint()) {
+			createBitVecOperators();
 			createFloatingPointOperators();
-
+		}
 		if (mSolverSetup != null)
 			mSolverSetup.setLogic(this, logic);
 	}
