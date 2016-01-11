@@ -97,8 +97,6 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 			final Return ret = (Return) transition;
 			final CallStatement correspondingCall = ret.getCallStatement();
 
-			mLogger.debug(mSymbolTable.prettyPrintSymbolTable());
-
 			final List<Declaration> functionDeclarations = mSymbolTable
 			        .getFunctionOrProcedureDeclaration(correspondingCall.getMethodName());
 
