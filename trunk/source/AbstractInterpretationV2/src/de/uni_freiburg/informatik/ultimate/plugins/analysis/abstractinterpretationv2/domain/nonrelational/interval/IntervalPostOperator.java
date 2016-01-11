@@ -94,7 +94,6 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 			// nothing changes during this switch
 			return oldStateWithFreshVariables;
 		} else if (transition instanceof Return) {
-			// TODO: Handle assign on return! This is just the old behavior
 			final Return ret = (Return) transition;
 			final CallStatement correspondingCall = ret.getCallStatement();
 
