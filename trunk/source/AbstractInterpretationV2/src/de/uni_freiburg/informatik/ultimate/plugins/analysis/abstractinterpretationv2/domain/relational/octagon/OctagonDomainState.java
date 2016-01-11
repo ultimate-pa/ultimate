@@ -50,8 +50,11 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		return s;
 	}
 	
+	private Set<OctagonDomainState> allStates = new HashSet<>(); // TODO remove
+	
 	private OctagonDomainState() {
 		mId = sId++;
+		allStates.add(this);
 	}
 	
 	private OctagonDomainState shallowCopy() {
@@ -489,7 +492,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	public String toLogString() {
 		StringBuilder log = new StringBuilder();
 		log.append("\n");
-		log.append("#" + mId + "\n");
+		log.append("#" + mId + "\n"); // TODO remove
 		log.append(mNumericAbstraction);
 		log.append("numeric vars: ");
 		log.append(mMapNumericVarToIndex);
@@ -497,6 +500,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		log.append("numeric non-int vars: ");
 		log.append(mNumericNonIntVars);
 		log.append("\n");
+//		log.append(mBooleanAbstraction);
 		for (Map.Entry<String, BoolValue> entry : mBooleanAbstraction.entrySet()) {
 			log.append(entry.getKey());
 			log.append(" = ");
