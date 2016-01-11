@@ -345,10 +345,10 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			mLogger.debug(getLogMessageFixpointFound(oldPostState, newPostState));
 		}
 
-		// now, replace all occurences of oldPostState as prestate in worklist
+		// now, replace all occurrences of oldPostState as prestate in worklist
 		// with newPostState
 		for (final WorklistItem<STATE, ACTION, VARDECL, LOCATION> entry : worklist) {
-			if (oldPostState.equals(entry.getPreState())) {
+			if (oldPostState.isEqualTo(entry.getPreState())) {
 				entry.setPreState(newPostState);
 			}
 		}
