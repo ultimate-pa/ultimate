@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbstractInterpretationPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.RCFGLoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -159,7 +159,7 @@ public final class AbstractInterpreter {
 		final ILoopDetector<CodeBlock> loopDetector = new RcfgLoopDetector(externalLoopDetector);
 
 		final Collection<CodeBlock> filteredInitialElements = transitionProvider.filterInitialElements(initials);
-		final boolean persist = ups.getBoolean(AbsIntPreferenceInitializer.LABEL_PERSIST_ABS_STATES);
+		final boolean persist = ups.getBoolean(AbstractInterpretationPreferenceInitializer.LABEL_PERSIST_ABS_STATES);
 
 		if (filteredInitialElements.isEmpty()) {
 			final BaseRcfgAbstractStateStorageProvider<?> storage = createStorage(services, domain, persist);
@@ -208,7 +208,7 @@ public final class AbstractInterpreter {
 	private static IAbstractDomain<?, CodeBlock, IBoogieVar> selectDomain(final RootNode root,
 			final BoogieSymbolTable symbolTable, final IUltimateServiceProvider services) {
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
-		final String selectedDomain = ups.getString(AbsIntPreferenceInitializer.LABEL_ABSTRACT_DOMAIN);
+		final String selectedDomain = ups.getString(AbstractInterpretationPreferenceInitializer.LABEL_ABSTRACT_DOMAIN);
 
 		// use the literal collector result if you need it
 		// new LiteralCollector(root).getResult();
@@ -221,6 +221,6 @@ public final class AbstractInterpreter {
 			return new IntervalDomain(services.getLoggingService().getLogger(Activator.PLUGIN_ID), symbolTable);
 		}
 		throw new UnsupportedOperationException("The value \"" + selectedDomain + "\" of preference \""
-				+ AbsIntPreferenceInitializer.LABEL_ABSTRACT_DOMAIN + "\" was not considered before! ");
+				+ AbstractInterpretationPreferenceInitializer.LABEL_ABSTRACT_DOMAIN + "\" was not considered before! ");
 	}
 }
