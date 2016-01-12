@@ -419,6 +419,14 @@ public interface Script {
 	 */
 	public Term string(String str) throws SMTLIBException;
 	
+	/**
+	 * Create rounding mode term.
+	 * @param rm String representation of the rounding mode.
+	 * @return A rounding mode term.
+	 * @throws SMTLIBException If an error occured.
+	 */
+	public Term roundingMode(String rm) throws SMTLIBException;
+	
 	/* Non-SMTLIB extensions */
 	/**
 	 * Return the underlying theory.  This theory is only valid after a call to

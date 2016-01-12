@@ -425,6 +425,18 @@ public class NoopScript implements Script {
 			throw new SMTLIBException("No bitvector logic");
 		return res;
 	}
+	
+	@Override
+	public Term roundingMode(String rm) throws SMTLIBException {
+		if (mTheory == null) {
+			throw new SMTLIBException("No logic set!");
+		}
+		Term res = mTheory.roundingMode(rm);
+		if (res == null) {
+			throw new SMTLIBException("No floating point logic");
+		}
+		return res;
+	}
 		
 	@Override
 	public Sort[] sortVariables(String... names) throws SMTLIBException {

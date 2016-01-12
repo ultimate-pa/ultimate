@@ -95,6 +95,7 @@ public class Theory {
 	private Logics mLogic;
 	private Sort mNumericSort, mRealSort, mStringSort, mBooleanSort;
 	private SortSymbol mBitVecSort, mFloatingPointSort;
+	private Sort mRoundingModeSort;
 	private final HashMap<String, FunctionSymbolFactory> mFunFactory = 
 		new HashMap<String, FunctionSymbolFactory>();
 	private final UnifyHash<FunctionSymbol> mModelValueCache =
@@ -486,6 +487,21 @@ public class Theory {
 	public Term string(String value) {
 		return constant(new QuotedObject(value), mStringSort);
 	}
+	
+	public Term roundingMode(String rm) {
+		assert (rm.startsWith("R") || rm.startsWith("round"));
+		if (mFloatingPointSort == null) {
+			return null;
+		}
+		Term mode = new ConstantTerm(rm, mRoundingModeSort, ConstantTerm.hashConstant(rm, mRoundingModeSort));;
+		//switch (rm) {
+		//case ("RNE") : case ("roundNearestTiesToEven"):
+			//mode = new ConstantTerm(rm, mRoundingModeSort, ConstantTerm.hashConstant(rm, mRoundingModeSort));
+		//}
+		
+		
+		return mode;
+	}
 
 	/******************** LOGICS AND THEORIES ********************************/
 	public Logics getLogic() {
@@ -865,7 +881,7 @@ public class Theory {
 			}
 		};
 		
-		Sort RoundingModeSort = declareInternalSort("RoundingMode", 0, 0)
+		mRoundingModeSort = declareInternalSort("RoundingMode", 0, 0)
 				.getSort(null, new Sort[0]);
 		
 		
