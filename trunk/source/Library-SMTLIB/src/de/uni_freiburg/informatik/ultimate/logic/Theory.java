@@ -493,7 +493,11 @@ public class Theory {
 		if (mFloatingPointSort == null) {
 			return null;
 		}
-		Term mode = new ConstantTerm(rm, mRoundingModeSort, ConstantTerm.hashConstant(rm, mRoundingModeSort));;
+		Term mode = constant(rm, mRoundingModeSort);
+		FunctionSymbol RNE = getFunction("roundNearestTiesToEven", mRoundingModeSort);
+		mode = term(RNE, mode);
+		
+		
 		//switch (rm) {
 		//case ("RNE") : case ("roundNearestTiesToEven"):
 			//mode = new ConstantTerm(rm, mRoundingModeSort, ConstantTerm.hashConstant(rm, mRoundingModeSort));
