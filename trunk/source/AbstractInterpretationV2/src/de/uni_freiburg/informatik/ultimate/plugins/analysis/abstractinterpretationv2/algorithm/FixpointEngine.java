@@ -402,13 +402,15 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 	private StringBuilder getLogMessageUnwindingResult(STATE newPostState) {
 		return new StringBuilder().append(AbstractInterpretationPreferenceInitializer.INDENT)
-				.append(" Widening resulted in post state [").append(newPostState.hashCode()).append("]");
+				.append(" Widening resulted in post state [").append(newPostState.hashCode()).append("] ")
+				.append(newPostState.toLogString());
 	}
 
 	private StringBuilder getLogMessageUnwinding(final STATE oldPostState, STATE newPostState) {
 		return new StringBuilder().append(AbstractInterpretationPreferenceInitializer.INDENT).append(" Widening with old post state [")
-				.append(oldPostState.hashCode()).append("] and new post state [").append(newPostState.hashCode())
-				.append("]");
+				.append(oldPostState.hashCode()).append("] ").append(oldPostState.toLogString())
+				.append(" and new post state [").append(newPostState.hashCode()).append("] ")
+				.append(newPostState.toLogString());
 	}
 
 	private StringBuilder getLogMessageCurrentTransition(final STATE preState, final ACTION current) {
