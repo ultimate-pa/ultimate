@@ -1,11 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
+import java.awt.font.NumericShaper;
 import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiFunction;
 
 public class AffineExpression {
 
@@ -93,12 +95,12 @@ public class AffineExpression {
 		return product;
 	}
 
-	public AffineExpression divide(AffineExpression divisor) {
+	public AffineExpression divide(AffineExpression divisor, boolean integerDivison) {
 		try {
 			if (divisor.isConstant()) {
-				return divideByConstant(divisor);
+				return divideByConstant(divisor, integerDivison);
 			} else {
-				return divideByNonConstant(divisor);
+				return divideByNonConstant(divisor, integerDivison);
 			}
 		} catch (ArithmeticException e) {
 			// TODO log warning
@@ -106,34 +108,41 @@ public class AffineExpression {
 		}
 	}
 
-	private AffineExpression divideByConstant(AffineExpression divisor) {
+	private AffineExpression divideByConstant(AffineExpression divisor, boolean integerDivison) {
 		assert divisor.isConstant();
 		AffineExpression quotient = new AffineExpression();
-		quotient.mConstant = mConstant.divide(divisor.mConstant);
+		BiFunction<BigDecimal, BigDecimal, BigDecimal> divOp =
+				integerDivison ? OctUtil::euclideanIntegerDivision : BigDecimal::divide;
+		quotient.mConstant = divOp.apply(mConstant, divisor.mConstant);
 		for (Map.Entry<String, BigDecimal> entry : mCoefficients.entrySet()) {
-			BigDecimal newCoefficent = entry.getValue().divide(divisor.mConstant);
+			BigDecimal newCoefficent = divOp.apply(entry.getValue(), divisor.mConstant);
 			quotient.mCoefficients.put(entry.getKey(), newCoefficent);
 		}
 		return quotient;
 	}
 	
-	private AffineExpression divideByNonConstant(AffineExpression divisor) {
+	// also allows to divide by constants, but returns null more often
+	// divide by constant may return an AfffineTerm where this doesn't
+	private AffineExpression divideByNonConstant(AffineExpression divisor, boolean integerDivison) {
 		Set<String> vars = mCoefficients.keySet();
 		if (!vars.equals(divisor.mCoefficients.keySet())) {
 			return null;
 		}
+		BiFunction<BigDecimal, BigDecimal, BigDecimal> divOp =
+				integerDivison ? OctUtil::exactIntegerDivison : BigDecimal::divide;
 		BigDecimal qFixed = null;
 		if (divisor.mConstant.signum() != 0) {
-			qFixed = mConstant.divide(divisor.mConstant);
+			qFixed = divOp.apply(mConstant, divisor.mConstant);
+		} else if (mConstant.signum() != 0) {
+			return null; // (x + c) / (x + 0) is not affine
 		}
 		for (String v : vars) {
 			BigDecimal c = mCoefficients.get(v);
 			BigDecimal d = divisor.mCoefficients.get(v);
-			BigDecimal q = c.divide(d);
+			BigDecimal q = divOp.apply(c, d);
 			if (qFixed == null) {
 				qFixed = q;
-			}
-			if (q.compareTo(qFixed) != 0) {
+			} else if (q.compareTo(qFixed) != 0) {
 				return null;
 			}
 		}

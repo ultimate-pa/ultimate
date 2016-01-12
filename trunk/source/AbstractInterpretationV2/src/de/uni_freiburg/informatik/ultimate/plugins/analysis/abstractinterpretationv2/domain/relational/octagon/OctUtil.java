@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 public class OctUtil {
 
 	public static BigDecimal euclideanIntegerDivision(BigDecimal a, BigDecimal b) {
+		assert isIntegral(a) && isIntegral(b) : "Integer divison for reals.";
 		BigDecimal[] quotientAndRemainder = a.divideAndRemainder(b);
 		BigDecimal quotient = quotientAndRemainder[0];
 		BigDecimal remainder = quotientAndRemainder[1];
@@ -18,6 +19,19 @@ public class OctUtil {
 			}
 		}
 		return quotient;
+	}
+	
+	public static BigDecimal exactIntegerDivison(BigDecimal a, BigDecimal b) {
+		assert isIntegral(a) && isIntegral(b) : "Integer divison for reals.";
+		BigDecimal[] quotientAndRemainder = a.divideAndRemainder(b);
+		if (quotientAndRemainder[1].signum() == 0) {
+			return quotientAndRemainder[0];
+		}
+		throw new ArithmeticException("Integer divison is not exact.");
+	}
+	
+	public static boolean isIntegral(BigDecimal d) {
+		return d.remainder(BigDecimal.ONE).signum() == 0;
 	}
 
 }
