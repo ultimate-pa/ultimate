@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
 import java.math.BigDecimal;
-import java.math.MathContext;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -82,6 +81,9 @@ public class AffineExpression {
 		} else {
 			return null;
 		}
+		if (constantFactor.mConstant.signum() == 0) {
+			return new AffineExpression();
+		}
 		AffineExpression product = new AffineExpression();
 		product.mConstant = affineFactor.mConstant.multiply(constantFactor.mConstant);
 		for (Map.Entry<String, BigDecimal> entry : affineFactor.mCoefficients.entrySet()) {
@@ -92,33 +94,52 @@ public class AffineExpression {
 	}
 
 	public AffineExpression divide(AffineExpression divisor) {
-		if (!divisor.isConstant()) {
-			if (divisor.equals(this)) {
-				AffineExpression one = new AffineExpression();
-				one.mConstant = BigDecimal.ONE;
-				return one;
-			}
-			return null;
-		}
 		try {
-			AffineExpression quotient = new AffineExpression();
-			quotient.mConstant = mConstant.divide(divisor.mConstant);
-			for (Map.Entry<String, BigDecimal> entry : mCoefficients.entrySet()) {
-				BigDecimal newCoefficent = entry.getValue().divide(divisor.mConstant);
-				quotient.mCoefficients.put(entry.getKey(), newCoefficent);
+			if (divisor.isConstant()) {
+				return divideByConstant(divisor);
+			} else {
+				return divideByNonConstant(divisor);
 			}
-			return quotient;
 		} catch (ArithmeticException e) {
+			// TODO log warning
 			return null;
 		}
-//		MathContext mc = MathContext.DECIMAL64;
-//		AffineExpression quotient = new AffineExpression();
-//		quotient.mConstant = mConstant.divide(divisor.mConstant, mc);
-//		for (Map.Entry<String, BigDecimal> entry : mCoefficients.entrySet()) {
-//			BigDecimal newCoefficent = entry.getValue().divide(divisor.mConstant, mc);
-//			quotient.mCoefficients.put(entry.getKey(), newCoefficent);
-//		}
-//		return quotient;
+	}
+
+	private AffineExpression divideByConstant(AffineExpression divisor) {
+		assert divisor.isConstant();
+		AffineExpression quotient = new AffineExpression();
+		quotient.mConstant = mConstant.divide(divisor.mConstant);
+		for (Map.Entry<String, BigDecimal> entry : mCoefficients.entrySet()) {
+			BigDecimal newCoefficent = entry.getValue().divide(divisor.mConstant);
+			quotient.mCoefficients.put(entry.getKey(), newCoefficent);
+		}
+		return quotient;
+	}
+	
+	private AffineExpression divideByNonConstant(AffineExpression divisor) {
+		Set<String> vars = mCoefficients.keySet();
+		if (!vars.equals(divisor.mCoefficients.keySet())) {
+			return null;
+		}
+		BigDecimal qFixed = null;
+		if (divisor.mConstant.signum() != 0) {
+			qFixed = mConstant.divide(divisor.mConstant);
+		}
+		for (String v : vars) {
+			BigDecimal c = mCoefficients.get(v);
+			BigDecimal d = divisor.mCoefficients.get(v);
+			BigDecimal q = c.divide(d);
+			if (qFixed == null) {
+				qFixed = q;
+			}
+			if (q.compareTo(qFixed) != 0) {
+				return null;
+			}
+		}
+		AffineExpression result = new AffineExpression();
+		result.mConstant = qFixed;
+		return result;
 	}
 
 	@Override
@@ -149,4 +170,16 @@ public class AffineExpression {
 		return true;
 	}
 
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		for (Map.Entry<String, BigDecimal> entry : mCoefficients.entrySet()) {
+			sb.append(entry.getValue());
+			sb.append("\u22C5"); // multiplication dot
+			sb.append(entry.getKey());
+			sb.append(" + ");
+		}
+		sb.append(mConstant);
+		return sb.toString();
+	}
 }

@@ -6,7 +6,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public enum BoolValue {
 
-	// Ordinal numbers of constants are a bitfield, describing a powerset of {true, false}.
+	// Ordinal numbers of constants are a bitfields, describing a powerset of {true, false}.
 	BOT,   // 00 = {    ,      }
 	FALSE, // 01 = {    , false}
 	TRUE,  // 10 = {true,      }
