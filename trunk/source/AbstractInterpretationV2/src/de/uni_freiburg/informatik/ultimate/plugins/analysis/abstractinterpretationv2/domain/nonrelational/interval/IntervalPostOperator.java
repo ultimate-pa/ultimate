@@ -91,13 +91,13 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 	}
 
 	@Override
-	public IntervalDomainState apply(final IntervalDomainState oldState,
-	        final IntervalDomainState oldStateWithFreshVariables, final CodeBlock transition) {
+	public IntervalDomainState apply(final IntervalDomainState stateBeforeLeaving,
+	        final IntervalDomainState stateAfterLeaving, final CodeBlock transition) {
 		assert transition instanceof Call || transition instanceof Return;
 
 		if (transition instanceof Call) {
 			// nothing changes during this switch
-			return oldStateWithFreshVariables;
+			return stateAfterLeaving;
 		} else if (transition instanceof Return) {
 			final Return ret = (Return) transition;
 			final CallStatement correspondingCall = ret.getCallStatement();
@@ -118,7 +118,7 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 				Procedure procedure = (Procedure) funDecl;
 				for (final VarList list : procedure.getOutParams()) {
 					for (final String s : list.getIdentifiers()) {
-						vals.add(oldState.getValue(s));
+						vals.add(stateBeforeLeaving.getValue(s));
 					}
 				}
 			} else {
@@ -140,7 +140,7 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 
 			assert updateVarNames.size() > 0;
 
-			final IntervalDomainState returnState = oldStateWithFreshVariables.setValues(
+			final IntervalDomainState returnState = stateAfterLeaving.setValues(
 			        updateVarNames.toArray(new String[updateVarNames.size()]),
 			        vals.toArray(new IntervalDomainValue[vals.size()]));
 
