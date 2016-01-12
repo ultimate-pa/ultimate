@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbstractInterpretationPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 
 /**
  * 
@@ -116,7 +116,7 @@ public class AbstractInterpretation implements IAnalysis {
 
 	@Override
 	public UltimatePreferenceInitializer getPreferences() {
-		return new AbstractInterpretationPreferenceInitializer();
+		return new AbsIntPrefInitializer();
 	}
 
 	@Override

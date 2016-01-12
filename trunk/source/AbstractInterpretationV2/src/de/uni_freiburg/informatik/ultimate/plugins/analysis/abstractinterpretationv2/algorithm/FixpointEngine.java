@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbstractInterpretationPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
@@ -95,8 +95,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		mReporter = reporter;
 
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
-		mMaxUnwindings = ups.getInt(AbstractInterpretationPreferenceInitializer.LABEL_ITERATIONS_UNTIL_WIDENING);
-		mMaxParallelStates = ups.getInt(AbstractInterpretationPreferenceInitializer.LABEL_STATES_UNTIL_MERGE);
+		mMaxUnwindings = ups.getInt(AbsIntPrefInitializer.LABEL_ITERATIONS_UNTIL_WIDENING);
+		mMaxParallelStates = ups.getInt(AbsIntPrefInitializer.LABEL_STATES_UNTIL_MERGE);
 	}
 
 	public void run(ACTION start) {
@@ -159,7 +159,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				// execute the action (i.e., we do not enter loops, do not add
 				// new actions to the worklist, etc.)
 				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(new StringBuilder().append(AbstractInterpretationPreferenceInitializer.INDENT)
+					mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT)
 							.append(" Skipping all successors because post is bottom"));
 				}
 				continue;
@@ -188,8 +188,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			if (mTransitionProvider.isPostErrorLocation(currentAction, currentItem.getCurrentScope())
 					&& !newPostState.isBottom() && reachedErrors.add(currentAction)) {
 				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(new StringBuilder().append(AbstractInterpretationPreferenceInitializer.INDENT)
-							.append(" Error state reached"));
+					mLogger.debug(
+							new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Error state reached"));
 				}
 				errorReached = true;
 				mReporter.reportPossibleError(start, currentAction);
@@ -198,7 +198,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			if (newPostState.isFixpoint() && preState.isFixpoint()) {
 				// if our post state is a fixpoint, we do not add successors
 				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(new StringBuilder().append(AbstractInterpretationPreferenceInitializer.INDENT)
+					mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT)
 							.append(" Skipping successors because pre and post states are fixpoints"));
 				}
 				continue;
@@ -234,7 +234,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		loopCounters.put(lastPair, loopCounterValue);
 
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug(new StringBuilder().append(AbstractInterpretationPreferenceInitializer.INDENT).append(" Leaving loop"));
+			mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Leaving loop"));
 		}
 
 		if (loopCounterValue > mMaxUnwindings) {
@@ -249,8 +249,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		if (mTransitionProvider.isEnteringScope(elem)) {
 			startItem.addScope(elem);
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(new StringBuilder().append(AbstractInterpretationPreferenceInitializer.INDENT)
-						.append(" Entering (initial) scope"));
+				mLogger.debug(
+						new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Entering (initial) scope"));
 			}
 		}
 		return startItem;
@@ -277,7 +277,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 		if (successors.isEmpty()) {
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(new StringBuilder().append(AbstractInterpretationPreferenceInitializer.INDENT).append(" No successors"));
+				mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" No successors"));
 			}
 			return;
 		}
@@ -323,15 +323,15 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		if (mTransitionProvider.isEnteringScope(successor)) {
 			successorItem.addScope(successor);
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(new StringBuilder().append(AbstractInterpretationPreferenceInitializer.INDENT)
-						.append(AbstractInterpretationPreferenceInitializer.INDENT).append(" Successor enters scope (new depth=")
+				mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT)
+						.append(AbsIntPrefInitializer.INDENT).append(" Successor enters scope (new depth=")
 						.append(successorItem.getCallStackDepth()).append(")"));
 			}
 		} else if (mTransitionProvider.isLeavingScope(successor, currentItem.getCurrentScope())) {
 			successorItem.removeCurrentScope();
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(new StringBuilder().append(AbstractInterpretationPreferenceInitializer.INDENT)
-						.append(AbstractInterpretationPreferenceInitializer.INDENT).append(" Successor leaves scope (new depth=")
+				mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT)
+						.append(AbsIntPrefInitializer.INDENT).append(" Successor leaves scope (new depth=")
 						.append(successorItem.getCallStackDepth()).append(")"));
 			}
 		}
@@ -374,40 +374,39 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	}
 
 	private StringBuilder getLogMessageFixpointFound(STATE oldPostState, final STATE newPostState) {
-		return new StringBuilder().append(AbstractInterpretationPreferenceInitializer.INDENT).append(" post state ")
+		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" post state ")
 				.append(oldPostState.hashCode()).append(" is fixpoint, replacing with ")
 				.append(newPostState.hashCode());
 	}
 
 	private StringBuilder getLogMessageMergeResult(STATE newPostState) {
-		return new StringBuilder().append(AbstractInterpretationPreferenceInitializer.INDENT).append(" Merging resulted in [")
+		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Merging resulted in [")
 				.append(newPostState.hashCode()).append("]");
 	}
 
 	private StringBuilder getLogMessageMergeStates(final int availablePostStatesCount) {
-		return new StringBuilder().append(AbstractInterpretationPreferenceInitializer.INDENT).append(" Merging ")
+		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Merging ")
 				.append(availablePostStatesCount).append(" states at target location");
 	}
 
 	private StringBuilder getLogMessageNewPostState(STATE newPostState) {
-		return new StringBuilder().append(AbstractInterpretationPreferenceInitializer.INDENT).append(" adding post state [")
+		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" adding post state [")
 				.append(newPostState.hashCode()).append("] ").append(newPostState.toLogString());
 	}
 
 	private StringBuilder getLogMessageEnterLoop(final Map<Pair<ACTION, ACTION>, Integer> loopCounters,
 			final Pair<ACTION, ACTION> pair) {
-		return new StringBuilder().append(AbstractInterpretationPreferenceInitializer.INDENT).append(" Entering loop (")
+		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Entering loop (")
 				.append(loopCounters.get(pair)).append(")");
 	}
 
 	private StringBuilder getLogMessageUnwindingResult(STATE newPostState) {
-		return new StringBuilder().append(AbstractInterpretationPreferenceInitializer.INDENT)
-				.append(" Widening resulted in post state [").append(newPostState.hashCode()).append("] ")
-				.append(newPostState.toLogString());
+		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Widening resulted in post state [")
+				.append(newPostState.hashCode()).append("] ").append(newPostState.toLogString());
 	}
 
 	private StringBuilder getLogMessageUnwinding(final STATE oldPostState, STATE newPostState) {
-		return new StringBuilder().append(AbstractInterpretationPreferenceInitializer.INDENT).append(" Widening with old post state [")
+		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Widening with old post state [")
 				.append(oldPostState.hashCode()).append("] ").append(oldPostState.toLogString())
 				.append(" and new post state [").append(newPostState.hashCode()).append("] ")
 				.append(newPostState.toLogString());
@@ -424,7 +423,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 	private StringBuilder getLogMessageAddTransition(
 			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> newTransition) {
-		return new StringBuilder().append(AbstractInterpretationPreferenceInitializer.INDENT).append(" Adding [")
+		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Adding [")
 				.append(newTransition.getPreState().hashCode()).append("]").append(" --[")
 				.append(newTransition.getAction().hashCode()).append("]->");
 	}

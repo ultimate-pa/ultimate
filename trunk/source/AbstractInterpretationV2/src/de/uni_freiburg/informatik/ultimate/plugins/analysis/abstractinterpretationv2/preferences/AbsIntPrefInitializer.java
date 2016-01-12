@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty.EmptyDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalSimpleWideningOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.lpsolver.LpSolverPreferences;
 
@@ -48,10 +47,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class AbstractInterpretationPreferenceInitializer extends UltimatePreferenceInitializer {
+public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 
 	public static final String[] VALUES_ABSTRACT_DOMAIN = new String[] { EmptyDomain.class.getSimpleName(),
-	        SignDomain.class.getSimpleName(), IntervalDomain.class.getSimpleName() };
+			SignDomain.class.getSimpleName(), IntervalDomain.class.getSimpleName() };
 
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING = "Minimum iterations before widening";
 	public static final String LABEL_STATES_UNTIL_MERGE = "Parallel states before merging";
@@ -74,15 +73,15 @@ public class AbstractInterpretationPreferenceInitializer extends UltimatePrefere
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		final ArrayList<UltimatePreferenceItem<?>> rtr = new ArrayList<UltimatePreferenceItem<?>>();
 		rtr.add(new UltimatePreferenceItem<Integer>(LABEL_ITERATIONS_UNTIL_WIDENING, DEF_ITERATIONS_UNTIL_WIDENING,
-		        PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
+				PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
 		rtr.add(new UltimatePreferenceItem<Integer>(LABEL_STATES_UNTIL_MERGE, DEF_STATES_UNTIL_MERGE,
-		        PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
+				PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
 		rtr.add(new UltimatePreferenceItem<String>(LABEL_ABSTRACT_DOMAIN, DEF_ABSTRACT_DOMAIN, PreferenceType.Combo,
-		        VALUES_ABSTRACT_DOMAIN));
+				VALUES_ABSTRACT_DOMAIN));
 		rtr.add(new UltimatePreferenceItem<Boolean>(LABEL_RUN_AS_PRE_ANALYSIS, DEF_RUN_AS_PRE_ANALYSIS,
-		        TOOLTIP_RUN_AS_PRE_ANALYSIS, PreferenceType.Boolean));
+				TOOLTIP_RUN_AS_PRE_ANALYSIS, PreferenceType.Boolean));
 		rtr.add(new UltimatePreferenceItem<Boolean>(LABEL_PERSIST_ABS_STATES, DEF_PERSIST_ABS_STATES,
-		        PreferenceType.Boolean));
+				PreferenceType.Boolean));
 
 		// Add Interval Domain preferences
 		rtr.addAll(IntervalDomainPreferences.getPreferences());
