@@ -11,9 +11,27 @@ import java.util.function.BiFunction;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.NumUtil;
 
+/**
+ * Represents a Boogie expression as an affine term of the form
+ * {@code Σ ( c_i * x_i ) + c} where c are constants and x are variables.
+ * <p>
+ * This may be an equivalent transformation of the original expression.
+ * {@code null} is used when an expression cannot be transformed into an
+ * affine term (either because it is not affine or we don't know if it is affine).
+ * 
+ * @author schaetzc@informatik.uni-freiburg.de
+ */
 public class AffineExpression {
 
+	/**
+	 * Map from the variables of this affine expression to their coefficients.
+	 * Variables with coefficient zero aren't stored.
+	 */
 	private Map<String, BigDecimal> mCoefficients;
+	
+	/**
+	 * The constant summand of this affine expression.
+	 */
 	private BigDecimal mConstant;
 	
 	public AffineExpression(Map<String, BigDecimal> coefficients, BigDecimal constant) {
@@ -156,22 +174,8 @@ public class AffineExpression {
 	}
 	
 	public AffineExpression modulo(AffineExpression divisor) {
-		try {
-			if (isConstant() && divisor.isConstant()) {
-				return new AffineExpression(NumUtil.euclideanModulo(mConstant, divisor.mConstant));
-			} else if (mCoefficients.keySet().equals(divisor.mCoefficients.keySet())) {
-				AffineExpression qAe = this.divideByNonConstant(divisor, true);
-				assert qAe.isConstant();
-				// only case "(int * x) % x = 0" can be computed
-				//
-				// TODO remove -- THIS IS WRONG!
-				//                x % x is NOT 0, since x could be 0 and 0 % 0 is undefined.
-				//
-				if (NumUtil.isIntegral(qAe.mConstant)) {
-					return new AffineExpression(BigDecimal.ZERO);
-				}
-			}
-		} catch (ArithmeticException e) {
+		if (isConstant() && divisor.isConstant() && divisor.mConstant.signum() != 0) {
+			return new AffineExpression(NumUtil.euclideanModulo(mConstant, divisor.mConstant));
 		}
 		return null;
 	}

@@ -106,32 +106,26 @@ public class AffineExpressionTest {
 
 	@Test
 	public void testMod() {
-		assertMod("x", "x", "0");
-		assertMod("0", "0", "0"); // remove
-		// TODO
+		assertMod(" 4", " 3", "1");
+		assertMod(" 4", "-3", "1");
+		assertMod("-4", " 3", "2");
+		assertMod("-4", "-3", "2");
+		
+		assertMod("x", "y", null);
+		assertMod("1", "x", null);
+		assertMod("x", "1", null);
+		
+		assertMod("1", "0", null);
+		assertMod("0", "0", null);
+		assertMod("x", "x", null); // x could be 0
 	}
 	
 	private void assertDivReal(String a, String b, String expected) {
-		assertDiv(a, b, expected, false);
+		Assert.assertEquals(ae(expected), ae(a).divide(ae(b), false));
 	}
 
 	private void assertDivInt(String a, String b, String expected) {
-		assertDiv(a, b, expected, true);
-	}
-
-	private void assertDiv(String a, String b, String expected, boolean integerDivison) {
-		AffineExpression aExpr = ae(a);
-		AffineExpression bExpr = ae(b);
-		AffineExpression expectedExpr = ae(expected);
-		AffineExpression actualExpr = aExpr.divide(bExpr, integerDivison);
-		boolean equal = expectedExpr == null && actualExpr == null;
-		equal = equal || (expectedExpr != null && expectedExpr.equals(actualExpr));
-		if (!equal) {
-			String msg = "\n(  " + aExpr + "  )  /  (  " + bExpr + "  )";
-			msg += "\nexpected: " + expectedExpr;
-			msg += "\nwas: " + actualExpr;
-			Assert.fail(msg);
-		}
+		Assert.assertEquals(ae(expected), ae(a).divide(ae(b), true));
 	}
 
 	private void assertMod(String a, String b, String rExpected) {
