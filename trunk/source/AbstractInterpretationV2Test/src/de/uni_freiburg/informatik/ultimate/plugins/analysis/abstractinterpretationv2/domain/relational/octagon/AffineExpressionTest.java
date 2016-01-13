@@ -107,7 +107,7 @@ public class AffineExpressionTest {
 	@Test
 	public void testMod() {
 		assertMod("x", "x", "0");
-		assertMod("0", "0", "0");
+		assertMod("0", "0", "0"); // remove
 		// TODO
 	}
 	

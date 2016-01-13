@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.NumUtil;
+
 public class AffineExpression {
 
 	private Map<String, BigDecimal> mCoefficients;
@@ -115,7 +117,7 @@ public class AffineExpression {
 		assert divisor.isConstant();
 		AffineExpression quotient = new AffineExpression();
 		BiFunction<BigDecimal, BigDecimal, BigDecimal> divOp =
-				integerDivison ? OctUtil::euclideanIntegerDivision : BigDecimal::divide;
+				integerDivison ? NumUtil::euclideanDivision : BigDecimal::divide;
 		quotient.mConstant = divOp.apply(mConstant, divisor.mConstant);
 		for (Map.Entry<String, BigDecimal> entry : mCoefficients.entrySet()) {
 			BigDecimal newCoefficent = divOp.apply(entry.getValue(), divisor.mConstant);
@@ -133,7 +135,7 @@ public class AffineExpression {
 			return null;
 		}
 		BiFunction<BigDecimal, BigDecimal, BigDecimal> divOp =
-				integerDivison ? OctUtil::exactIntegerDivison : BigDecimal::divide;
+				integerDivison ? NumUtil::exactDivison : BigDecimal::divide;
 		BigDecimal qFixed = null;
 		if (divisor.mConstant.signum() != 0) {
 			qFixed = divOp.apply(mConstant, divisor.mConstant);
@@ -156,11 +158,16 @@ public class AffineExpression {
 	public AffineExpression modulo(AffineExpression divisor) {
 		try {
 			if (isConstant() && divisor.isConstant()) {
-				return new AffineExpression(OctUtil.euclideanModulo(mConstant, divisor.mConstant));
+				return new AffineExpression(NumUtil.euclideanModulo(mConstant, divisor.mConstant));
 			} else if (mCoefficients.keySet().equals(divisor.mCoefficients.keySet())) {
 				AffineExpression qAe = this.divideByNonConstant(divisor, true);
 				assert qAe.isConstant();
-				if (OctUtil.isIntegral(qAe.mConstant)) { // only case "(int * x) % x = 0" can be computed
+				// only case "(int * x) % x = 0" can be computed
+				//
+				// TODO remove -- THIS IS WRONG!
+				//                x % x is NOT 0, since x could be 0 and 0 % 0 is undefined.
+				//
+				if (NumUtil.isIntegral(qAe.mConstant)) {
 					return new AffineExpression(BigDecimal.ZERO);
 				}
 			}
