@@ -32,6 +32,22 @@ public class OctUtil {
 	
 	public static boolean isIntegral(BigDecimal d) {
 		return d.remainder(BigDecimal.ONE).signum() == 0;
+
+		// alternative implementation (takes 4 times longer)
+//		try {
+//			d.setScale(0, RoundingMode.UNNECESSARY);
+//			return true;
+//		} catch (ArithmeticException e) {
+//			return false;
+//		}
+	}
+
+	public static BigDecimal euclideanModulo(BigDecimal a, BigDecimal b) {
+		BigDecimal r = a.remainder(b);
+		if (r.signum() < 0) {
+			r = r.add(b.abs());
+		}
+		return r;
 	}
 
 }

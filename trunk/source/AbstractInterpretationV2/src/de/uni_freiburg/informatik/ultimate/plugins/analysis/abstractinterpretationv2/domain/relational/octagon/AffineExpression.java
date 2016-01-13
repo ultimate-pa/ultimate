@@ -1,7 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
-import java.awt.font.NumericShaper;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -15,14 +15,18 @@ public class AffineExpression {
 	private BigDecimal mConstant;
 	
 	public AffineExpression(Map<String, BigDecimal> coefficients, BigDecimal constant) {
+		assert coefficients != null && constant != null;
 		mCoefficients = coefficients;
 		mConstant = constant;
 		removeZeroSummands();
 	}
 
+	public AffineExpression(BigDecimal constant) {
+		this(new HashMap<>(), constant);
+	}
+	
 	private AffineExpression() {
-		mCoefficients = new HashMap<>();
-		mConstant = BigDecimal.ZERO;
+		this(BigDecimal.ZERO);
 	}
 	
 	private void removeZeroSummands() {
@@ -103,9 +107,8 @@ public class AffineExpression {
 				return divideByNonConstant(divisor, integerDivison);
 			}
 		} catch (ArithmeticException e) {
-			// TODO log warning
-			return null;
 		}
+		return null;
 	}
 
 	private AffineExpression divideByConstant(AffineExpression divisor, boolean integerDivison) {
@@ -123,6 +126,7 @@ public class AffineExpression {
 	
 	// also allows to divide by constants, but returns null more often
 	// divide by constant may return an AfffineTerm where this doesn't
+	// the result will always be a constant
 	private AffineExpression divideByNonConstant(AffineExpression divisor, boolean integerDivison) {
 		Set<String> vars = mCoefficients.keySet();
 		if (!vars.equals(divisor.mCoefficients.keySet())) {
@@ -146,9 +150,23 @@ public class AffineExpression {
 				return null;
 			}
 		}
-		AffineExpression result = new AffineExpression();
-		result.mConstant = qFixed;
-		return result;
+		return new AffineExpression(qFixed);
+	}
+	
+	public AffineExpression modulo(AffineExpression divisor) {
+		try {
+			if (isConstant() && divisor.isConstant()) {
+				return new AffineExpression(OctUtil.euclideanModulo(mConstant, divisor.mConstant));
+			} else if (mCoefficients.keySet().equals(divisor.mCoefficients.keySet())) {
+				AffineExpression qAe = this.divideByNonConstant(divisor, true);
+				assert qAe.isConstant();
+				if (OctUtil.isIntegral(qAe.mConstant)) { // only case "(int * x) % x = 0" can be computed
+					return new AffineExpression(BigDecimal.ZERO);
+				}
+			}
+		} catch (ArithmeticException e) {
+		}
+		return null;
 	}
 
 	@Override
