@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 /**
@@ -150,6 +151,10 @@ public class BidirectionalMap<K, V> extends HashMap<K, V> {
 
 	/**
 	 * Returns a read-only {@link Set} view of this map's mappings.
+	 * <p>
+	 * <b>Do not use {@link Map.Entry#setValue(Object)}!</b>
+	 * {@code setValue} changes only one side of this BidirectionalMap.
+	 * Changing values using {@code setValue} breaks this map.
 	 * 
 	 * @return read-only {@link Set} view of this map's mappings
 	 */

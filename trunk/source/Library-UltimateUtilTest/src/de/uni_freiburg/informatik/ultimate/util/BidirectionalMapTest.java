@@ -35,6 +35,8 @@ import java.util.function.Consumer;
 
 import org.junit.Test;
 
+import junit.framework.Assert;
+
 /**
  * Some basic tests for {@link BidirectionalMap}.
  * 
@@ -240,21 +242,42 @@ public class BidirectionalMapTest {
 		assertEquals(mCopy.inverse(), m.inverse());
 	}
 	
-	@Test
-	public void testValues() {
-		BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
-		m.put("a", 1);
-		m.put("b", 2);
-		m.put("c", 3);
-		
-	}
+	// TODO
+//	@Test
+//	public void testValues() {
+//		BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
+//		m.put("a", 1);
+//		m.put("b", 2);
+//		m.put("c", 3);
+//	
+//		// test values() equals
+//
+//		// test unmodifiable
+//	}
 	
-	@Test
-	public void testKeySet() {
-		BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
-		m.put("a", 1);
-		m.put("b", 2);
-		m.put("c", 3);	
-	}
+	// TODO
+//	@Test
+//	public void testKeySet() {
+//		BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
+//		m.put("a", 1);
+//		m.put("b", 2);
+//		m.put("c", 3);
+//	
+//		// test keySet() equals
+//	
+//		// test unmodifiable
+//	}
 
+	// Known bug, mentioned in documentation
+//	@Test
+//	public void testEntrySet() {
+//		BidirectionalMap<String, Integer> m = new BidirectionalMap<>();
+//		m.put("a", 1);
+//		m.entrySet().iterator().next().setValue(2);
+//		
+//		BidirectionalMap<Integer, String> mInverseExpected = new BidirectionalMap<>();
+//		mInverseExpected.put(2, "a");
+//		
+//		assertEquals(mInverseExpected, m.inverse());
+//	}
 }
