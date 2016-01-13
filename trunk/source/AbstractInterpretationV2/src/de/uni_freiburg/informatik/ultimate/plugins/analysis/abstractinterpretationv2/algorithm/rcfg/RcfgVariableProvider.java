@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IAbstractStateStorage;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -145,7 +145,7 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 			if (varsNeededFromOldScope.isEmpty()) {
 				// we do not need information from the old scope, so we are finished
 				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(new StringBuilder().append(AbsIntPreferenceInitializer.INDENT)
+					mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT)
 							.append(" No vars needed from old scope"));
 				}
 				return rtr;
@@ -264,13 +264,13 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 	}
 
 	private StringBuilder getLogMessageRemoveLocalsPreCall(STATE state, final Map<String, IBoogieVar> toberemoved) {
-		return new StringBuilder().append(AbsIntPreferenceInitializer.INDENT)
+		return new StringBuilder().append(AbsIntPrefInitializer.INDENT)
 				.append(" removing vars from pre-call state [").append(state.hashCode()).append("] ")
 				.append(state.toLogString()).append(": ").append(toberemoved);
 	}
 
 	private StringBuilder getLogMessageNoRemoveLocalsPreCall(STATE state) {
-		return new StringBuilder().append(AbsIntPreferenceInitializer.INDENT)
+		return new StringBuilder().append(AbsIntPrefInitializer.INDENT)
 				.append(" using unchanged pre-call state [").append(state.hashCode()).append("] ")
 				.append(state.toLogString());
 	}

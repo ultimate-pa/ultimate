@@ -50,16 +50,17 @@ public interface IAbstractPostOperator<STATE extends IAbstractState<STATE, ACTIO
 	STATE apply(STATE oldstate, ACTION transition);
 
 	/**
-	 * Compute the abstract post from two old abstract STATEs and one ACTION. This is used for scope switching.
+	 * Compute the abstract post from two abstract STATEs and one ACTION. This is used for scope switching.
 	 * 
-	 * @param oldstate
-	 *            The old abstract state in the old scope.
-	 * @param oldstateWithFreshVariables
-	 *            The old abstract state in the new scope.
+	 * @param stateBeforeLeaving
+	 *            The abstract state in the old scope, i.e., the scope that we are leaving.
+	 * @param stateAfterLeaving
+	 *            The abstract state in the new scope, i.e., the scope that we are entering. This state has already all
+	 *            non-scope related variables set ({@link IAbstractState#patch(IAbstractState)} was already applied).
 	 * @param transition
-	 *            The transition that is taken.
+	 *            The transition that caused the scope change.
 	 * @return A new STATE that has the same variables as the old abstract state in the new scope and incorporates the
 	 *         effects of the taken transition.
 	 */
-	STATE apply(STATE oldstate, STATE oldstateWithFreshVariables, ACTION transition);
+	STATE apply(STATE stateBeforeLeaving, STATE stateAfterLeaving, ACTION transition);
 }

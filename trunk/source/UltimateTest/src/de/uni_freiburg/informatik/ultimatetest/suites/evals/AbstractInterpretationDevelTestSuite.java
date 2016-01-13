@@ -86,8 +86,9 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	private static final String[] INPUT = new String[] {
 			/* ULTIMATE repo */
 //			 "examples/programs/abstractInterpretation/",
-//			 "examples/programs/abstractInterpretation/regression",
-			 "examples/programs/abstractInterpretation/regression/ProcedureCallNested.bpl",
+			 "examples/programs/abstractInterpretation/regression",
+//			 "examples/programs/abstractInterpretation/regression/ProcedureCallNested-unsafe.bpl",
+//			 "examples/programs/abstractInterpretation/regression/ProcedureCallNested-safe.bpl",
 			 
 			// "examples/programs/abstractInterpretationNoRec/",
 //			 "examples/programs/regression/bpl/",
@@ -118,7 +119,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 	@Override
 	protected long getTimeout() {
-		return 60 * 1000 * 1000;
+		return 60 * 1000 * 1000 ;
 	}
 
 	@Override

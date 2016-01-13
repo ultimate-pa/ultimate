@@ -39,6 +39,9 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.result.GenericResult;
+import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessLocation;
@@ -70,6 +73,14 @@ public class WitnessAutomatonConstructor {
 
 	public IElement constructWitnessAutomaton(File file) {
 		DirectedSparseGraph<WitnessNode, WitnessEdge> graph = getGraph(file);
+		if (graph == null) {
+			String message = "Witness file is invalid";
+			IResult res = new GenericResult(Activator.PLUGIN_ID, message, message, Severity.ERROR);
+			mLogger.error(res);
+			mServices.getResultService().reportResult(Activator.PLUGIN_ID, res );
+			mServices.getProgressMonitorService().cancelToolchain();
+			return null;
+		}
 		// find starting element(s)
 		HashSet<WitnessNode> initialNodes = new HashSet<>();
 		for (WitnessNode v : graph.getVertices()) {

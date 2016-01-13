@@ -92,20 +92,20 @@ public class SignPostOperator implements IAbstractPostOperator<SignDomainState, 
 	}
 
 	@Override
-	public SignDomainState apply(final SignDomainState oldstate, final SignDomainState oldstateWithFreshVariables,
+	public SignDomainState apply(final SignDomainState stateBeforeLeaving, final SignDomainState stateAfterLeaving,
 			final CodeBlock transition) {
 		assert transition instanceof Call || transition instanceof Return;
 
 		if (transition instanceof Call) {
 			// nothing changes during this switch
-			return oldstateWithFreshVariables;
+			return stateAfterLeaving;
 		} else if (transition instanceof Return) {
 			// TODO: Handle assign on return! This is just the old behavior
 			final Return ret = (Return) transition;
 			final CallStatement correspondingCall = ret.getCallStatement();
 			mLogger.error("SignDomain does not handle returns correctly: " + ret + " for "
 					+ BoogiePrettyPrinter.print(correspondingCall));
-			return oldstateWithFreshVariables;
+			return stateAfterLeaving;
 		} else {
 			throw new UnsupportedOperationException(
 					"SignDomain does not support context switches other than Call and Return (yet)");

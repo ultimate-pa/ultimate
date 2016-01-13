@@ -86,6 +86,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.MonolithicHoareTripleChecker;
@@ -375,31 +377,20 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		RcfgProgramExecution realErrorProgramExecution = null;
 
 		// benchmark data collector variables
+		CegarLoopBenchmarkGenerator benchmarkGenerator =  new CegarLoopBenchmarkGenerator();
+		benchmarkGenerator.start(CegarLoopBenchmarkType.s_OverallTime);
+
 		int iterationsCount = 0;
-		long startTime = System.nanoTime();
-		BackwardCoveringInformation bwCoveringInfo = null;
-		boolean weHaveSPWPInterpolation = 
-				GlobalSettings._instance._interpolationMode == INTERPOLATION.BackwardPredicates
-				|| GlobalSettings._instance._interpolationMode == INTERPOLATION.ForwardPredicates
-				|| GlobalSettings._instance._interpolationMode == INTERPOLATION.FPandBP;
-		long noCBs = 0;
-		long soPredsFP = 0;
-		long soPredsBP = 0;
-		long conjsInSSA = 0;
-		long conjsInUC = 0;
 
 		InterpolatingTraceChecker traceChecker = null;
 
 		for (AnnotatedProgramPoint procedureRoot : procRootsToCheck) {
-			// for (AnnotatedProgramPoint procRoot : procRootsToCheck) {
 			if (!m_services.getProgressMonitorService().continueProcessing()) {
 				verificationInterrupted = true;
 				break;
 			}
 
 			mLogger.debug("Exploring : " + procedureRoot);
-			// mLogger.debug("Exploring : " + procRoot);
-			// AnnotatedProgramPoint procedureRoot = procRoot;
 
 			IEmptinessCheck emptinessCheck = new NWAEmptinessCheck(m_services);
 
@@ -410,6 +401,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					verificationInterrupted = true;
 					break;
 				}
+				
+				benchmarkGenerator.announceNextIteration();
 
 				mLogger.debug(String.format("Iterations = %d\n", iterationsCount));
 				NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun = emptinessCheck.checkForEmptiness(procedureRoot);
@@ -532,27 +525,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					}
 
 					LBool isSafe = traceChecker.isCorrect();
+					benchmarkGenerator.addTraceCheckerData(traceChecker.getTraceCheckerBenchmark());
+					
 					if (isSafe == LBool.UNSAT) { // trace is infeasible
-
-						// interpolant coverage capability stuff
-						ArrayList<ProgramPoint> programPoints = new ArrayList<>();
-						for (AnnotatedProgramPoint app : errorRun.getStateSequence())
-							programPoints.add(app.getProgramPoint());
-						BackwardCoveringInformation bci = TraceCheckerUtils.computeCoverageCapability(m_services,
-								traceChecker, programPoints, mLogger);
-						if (bwCoveringInfo == null)
-							bwCoveringInfo = bci;
-						else
-							bwCoveringInfo = new BackwardCoveringInformation(bwCoveringInfo, bci);
-						noCBs += (Integer) traceChecker.getTraceCheckerBenchmark().getValue(s_NumberOfCodeBlocks);
-						if (weHaveSPWPInterpolation) {
-							soPredsFP += (Long) traceChecker.getTraceCheckerBenchmark().getValue(s_SizeOfPredicatesFP);
-							soPredsBP += (Long) traceChecker.getTraceCheckerBenchmark().getValue(s_SizeOfPredicatesBP);
-							conjsInSSA += (Integer) traceChecker.getTraceCheckerBenchmark().getValue(s_ConjunctsInSSA);
-							conjsInUC += (Integer) traceChecker.getTraceCheckerBenchmark()
-									.getValue(s_ConjunctsInUnsatCore);
-						}
-
 						IPredicate[] interpolants = null;
 
 						if (GlobalSettings._instance.useInterpolantconsolidation) {
@@ -585,6 +560,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 							codeChecker.codeCheck(errorRun, interpolants, procedureRoot, _satTriples, _unsatTriples);
 						else
 							codeChecker.codeCheck(errorRun, interpolants, procedureRoot);
+
+						benchmarkGenerator.addEdgeCheckerData(codeChecker._edgeChecker.getEdgeCheckerBenchmark());
+
 					} else { // trace is feasible
 						mLogger.warn(
 								"This program is UNSAFE, Check terminated with " + iterationsCount + " iterations.");
@@ -611,8 +589,9 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			codeChecker.debug();
 
 		if (!verificationInterrupted) {
-			if (allSafe)
+			if (allSafe) {
 				overallResult = Result.CORRECT;
+			}
 			else
 				overallResult = Result.INCORRECT;
 		} else {
@@ -624,41 +603,14 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		mLogger.debug("MemoizationReturnHitsSat: " + codeChecker.memoizationReturnHitsSat);
 		mLogger.debug("MemoizationReturnHitsUnsat: " + codeChecker.memoizationReturnHitsUnsat);
 
-		// inserted by alex: we should return this kind of benchmark result
+		
+		//benchmark stuff
+		benchmarkGenerator.setResult(overallResult);
+		benchmarkGenerator.stop(CegarLoopBenchmarkType.s_OverallTime);
 
-		// CodeCheckBenchmarks ccb = new CodeCheckBenchmarks(traceChecker instanceof TraceCheckerSpWp);
-		CodeCheckBenchmarks ccb = new CodeCheckBenchmarks();
-		ICsvProvider<Object> ccbcsvp = ccb.createCvsProvider();
-		ArrayList<Object> values = new ArrayList<>();
-		values.add((int) ((System.nanoTime() - startTime) / 1000000));
-		values.add(iterationsCount);
+		CodeCheckBenchmarks ccb = new CodeCheckBenchmarks(m_originalRoot.getRootAnnot());
+		ccb.aggregateBenchmarkData(benchmarkGenerator);
 
-		values.add(noCBs);
-		if (weHaveSPWPInterpolation) {
-			values.add(soPredsFP);
-			values.add(soPredsBP);
-			values.add(conjsInSSA);
-			values.add(conjsInUC);
-		} else {
-			values.add(-1);
-			values.add(-1);
-			values.add(-1);
-			values.add(-1);
-		}
-
-		if (bwCoveringInfo != null) {
-			values.add(bwCoveringInfo);
-			if (bwCoveringInfo.getPotentialBackwardCoverings() != 0) {
-				values.add(((double) bwCoveringInfo.getSuccessfullBackwardCoverings())
-						/ bwCoveringInfo.getPotentialBackwardCoverings());
-			} else {
-				values.add(1d);
-			}
-			ccbcsvp.addRow(values);
-		} else {
-			values.add(-1);
-			values.add(-1);
-		}
 		reportBenchmark(ccb);
 
 		if (overallResult == Result.CORRECT) {

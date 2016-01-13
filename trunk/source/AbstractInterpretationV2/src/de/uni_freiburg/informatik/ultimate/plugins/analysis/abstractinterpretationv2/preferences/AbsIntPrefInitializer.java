@@ -37,9 +37,10 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIt
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty.EmptyDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalSimpleWideningOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.lpsolver.LpSolverPreferences;
 
 /**
  * 
@@ -47,32 +48,25 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class AbsIntPreferenceInitializer extends UltimatePreferenceInitializer {
+public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 
 	public static final String[] VALUES_ABSTRACT_DOMAIN = new String[] { EmptyDomain.class.getSimpleName(),
 			SignDomain.class.getSimpleName(), IntervalDomain.class.getSimpleName(), OctagonDomain.class.getSimpleName(), };
 
-	public static final String[] VALUES_WIDENING_OPERATOR = new String[] {
-			IntervalSimpleWideningOperator.class.getSimpleName() };
-
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING = "Minimum iterations before widening";
 	public static final String LABEL_STATES_UNTIL_MERGE = "Parallel states before merging";
 	public static final String LABEL_ABSTRACT_DOMAIN = "Abstract domain";
-	public static final String LABEL_INTERVAL_WIDENING_OPERATOR = "Widening operator";
 
 	public static final String LABEL_RUN_AS_PRE_ANALYSIS = "Run as pre-analysis";
 	public static final String TOOLTIP_RUN_AS_PRE_ANALYSIS = "Do not report any results, suppress all exceptions except OOM, use 20% of available time";
 
 	public static final String LABEL_PERSIST_ABS_STATES = "Save abstract states as RCFG annotation";
 
-	public static final String LABEL_INTERVAL_DOMAIN_SEPARATOR = "   ---   Interval Domain   ---   ";
-
 	public static final int DEF_ITERATIONS_UNTIL_WIDENING = 10;
 	public static final int DEF_STATES_UNTIL_MERGE = 2;
 	public static final boolean DEF_RUN_AS_PRE_ANALYSIS = true;
 	private static final boolean DEF_PERSIST_ABS_STATES = false;
 	public static final String DEF_ABSTRACT_DOMAIN = VALUES_ABSTRACT_DOMAIN[0];
-	public static final String DEF_WIDENING_OPERATOR = VALUES_WIDENING_OPERATOR[0];
 
 	public static final String INDENT = "   ";
 
@@ -90,10 +84,11 @@ public class AbsIntPreferenceInitializer extends UltimatePreferenceInitializer {
 		rtr.add(new UltimatePreferenceItem<Boolean>(LABEL_PERSIST_ABS_STATES, DEF_PERSIST_ABS_STATES,
 				PreferenceType.Boolean));
 
-		rtr.add(new UltimatePreferenceItem<String>(LABEL_INTERVAL_DOMAIN_SEPARATOR, null, PreferenceType.Label));
+		// Add Interval Domain preferences
+		rtr.addAll(IntervalDomainPreferences.getPreferences());
 
-		rtr.add(new UltimatePreferenceItem<String>(LABEL_INTERVAL_WIDENING_OPERATOR, DEF_WIDENING_OPERATOR,
-				PreferenceType.Combo, VALUES_WIDENING_OPERATOR));
+		// Add ojAlgo preferences
+		rtr.addAll(LpSolverPreferences.getPreferences());
 
 		return rtr.toArray(new UltimatePreferenceItem<?>[rtr.size()]);
 	}
