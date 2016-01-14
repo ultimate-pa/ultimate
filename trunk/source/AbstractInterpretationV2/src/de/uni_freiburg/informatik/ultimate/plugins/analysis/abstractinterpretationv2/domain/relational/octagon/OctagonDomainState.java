@@ -1,9 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
@@ -385,7 +387,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 				.appendSelection(dominator.mNumericAbstraction, mapOldIndicesOfNewNumericVars.keySet());
 		return s;
 	}
-
+	
 	/**
 	 * Searches variables with the same name in {@code this} and {@code dominator} but different type categories.
 	 * The return value can be used in {@link #removeVariables(Map)}.
@@ -406,6 +408,52 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 			}
 		}
 		return typeChangedVars;
+	}
+
+	protected void overwriteOnReturnedCall(OctagonDomainState stateOfCallee, Map<String, String> mapOutToLhs) {
+		Set<String> sharedConstants = new HashSet<>();
+		Set<String> sharedGlobals = new HashSet<>();
+		
+		// TODO filter by abstract type (int, bool, (others))
+
+		// TODO copy from stateOfCallee to this
+		
+		throw new UnsupportedOperationException("work in progress");
+	}
+	
+	/**
+	 * Finds the shared global variables between {@code this} and an {@code other} abstract domain state.
+	 * Found variables and constants are added to existing collections.
+	 * <p>
+	 * Shared variables are the exact same variables.
+	 * Different variables with equal names or even equal types are not shared.
+	 * 
+	 * @param other abstract domain state
+	 * @param sharedGlobals collection where the shared globals are added or {@code null}
+	 * @param sharedConstans collection where the shared constants are added or {@code null}
+	 */
+	public void sharedNumericGlobalsAndConstants(OctagonDomainState other,
+			Collection<String> sharedGlobals, Collection<String> sharedConstans) {
+		for (Map.Entry<String, IBoogieVar> var : sharedVars(other)) {
+			IBoogieVar ibv = var.getValue();
+			if (sharedConstans != null && ibv instanceof BoogieConst) {
+				sharedConstans.add(var.getKey());
+			} else if (sharedGlobals != null && ibv instanceof BoogieVar && ((BoogieVar) ibv).isGlobal()) {
+				sharedGlobals.add(var.getKey());
+			}
+		}
+	}
+
+	// private, since Map.Entry.setValue() could be used to alter the internal map 
+	private Set<Map.Entry<String, IBoogieVar>> sharedVars(OctagonDomainState other) {
+		Set<Map.Entry<String, IBoogieVar>> sharedVars = new HashSet<>();
+		Set<Map.Entry<String, IBoogieVar>> otherEntrySet = other.mMapVarToBoogieVar.entrySet();
+		for (Map.Entry<String, IBoogieVar> entry : mMapVarToBoogieVar.entrySet()) {
+			if (otherEntrySet.contains(entry)) {
+				sharedVars.add(entry);
+			}
+		}
+		return sharedVars;
 	}
 	
 	protected void havocVar(String var) {

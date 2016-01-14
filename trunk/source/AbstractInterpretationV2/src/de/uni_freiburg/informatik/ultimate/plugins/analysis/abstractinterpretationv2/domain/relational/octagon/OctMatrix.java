@@ -634,18 +634,24 @@ public class OctMatrix {
 		}
 		return n;
 	}
-	
+
 	// TODO note that information is lost. Strong Closure on this and source in advance can reduce loss.
 	// TODO source must be different from target (= this)
 	protected void overwriteSelection(OctMatrix source, BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar) {
 		if (source.mElements == mElements) {
-			throw new UnsupportedOperationException("Cannot overwrite this with this.");
+			for (Map.Entry<Integer, Integer> entry : mapSourceVarToTargetVar.entrySet()) {
+				if (!entry.getKey().equals(entry.getValue())) {
+					throw new UnsupportedOperationException("Cannot overwrite in place");
+				}
+			}
+			return;
 		}
 		BidirectionalMap<Integer, Integer> mapTargetVarToSourceVar = mapSourceVarToTargetVar.inverse();
 		for (Map.Entry<Integer, Integer> entry : mapSourceVarToTargetVar.entrySet()) {
 			int sourceVar = entry.getKey();
 			int targetVar = entry.getValue();
 			for (int targetOther = 0; targetOther < variables(); ++targetOther) {
+				// TODO copy ONLY block lower part of the matrix -- no duplications
 				Integer sourceOther = mapTargetVarToSourceVar.get(targetOther);
 				if (sourceOther == null) {
 					// TODO is it safe/possible to keep some information?
