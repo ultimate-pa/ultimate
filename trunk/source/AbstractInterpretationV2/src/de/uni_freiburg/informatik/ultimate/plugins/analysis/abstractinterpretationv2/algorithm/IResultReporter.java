@@ -36,11 +36,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
  */
 public interface IResultReporter<ACTION> {
 
-	//TODO: Define this interface -- how do we create counter example?
-	
 	void reportPossibleError(ACTION start, ACTION end);
 
-	void reportSafe();
-	
-	void reportSafe(String msg);
+	void reportSafe(ACTION elem);
+
+	void reportSafe(ACTION elem, String msg);
 }

@@ -101,7 +101,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 	public void run(ACTION start) {
 		if (!runInternal(start)) {
-			mReporter.reportSafe();
+			mReporter.reportSafe(start);
 		}
 	}
 

@@ -27,51 +27,22 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IResultReporter;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
-import de.uni_freiburg.informatik.ultimate.result.IResult;
-import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
+import de.uni_freiburg.informatik.ultimate.result.GenericResultAtElement;
+import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 
 /**
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class RcfgResultReporter implements IResultReporter<CodeBlock> {
+public class RcfgLibraryModeResultReporter extends RcfgResultReporter {
 
-	protected final IUltimateServiceProvider mServices;
-	protected final BaseRcfgAbstractStateStorageProvider<?> mStorageProvider;
-
-	public RcfgResultReporter(IUltimateServiceProvider services,
-			BaseRcfgAbstractStateStorageProvider<?> storageProvider) {
-		mServices = services;
-		mStorageProvider = storageProvider;
-	}
-
-	@Override
-	public void reportPossibleError(CodeBlock start, CodeBlock end) {
-		final IResult result = new UnprovableResult<ProgramPoint, CodeBlock, Expression>(Activator.PLUGIN_ID,
-				(ProgramPoint) end.getTarget(), mServices.getBacktranslationService(), getProgramExecution(start, end),
-				"Abstract Interpretation could reach this error location");
-		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
-	}
-
-	private IProgramExecution<CodeBlock, Expression> getProgramExecution(CodeBlock start, CodeBlock end) {
-		final List<CodeBlock> trace = mStorageProvider.getErrorTrace(start, end);
-		final Map<Integer, ProgramState<Expression>> map = Collections.emptyMap();
-		return new RcfgProgramExecution(trace, map);
+	public RcfgLibraryModeResultReporter(final IUltimateServiceProvider services,
+			final BaseRcfgAbstractStateStorageProvider<?> storageProvider) {
+		super(services, storageProvider);
 	}
 
 	@Override
@@ -82,6 +53,8 @@ public class RcfgResultReporter implements IResultReporter<CodeBlock> {
 	@Override
 	public void reportSafe(CodeBlock first, String msg) {
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-				new AllSpecificationsHoldResult(Activator.PLUGIN_NAME, msg));
+				new GenericResultAtElement<>(first, Activator.PLUGIN_ID, mServices.getBacktranslationService(),
+						"Procedure " + first.getPreceedingProcedure() + " is safe", msg, Severity.INFO));
 	}
+
 }
