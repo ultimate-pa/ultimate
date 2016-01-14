@@ -10,6 +10,7 @@ procedure f() {
 procedure g() returns (x : int);
 
 implementation g() returns (y : int) {
+
 }
 
 procedure h() {

@@ -1,8 +1,4 @@
 //#Safe
-/*
- * 
- */
-
 
 procedure main()
 {

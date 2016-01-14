@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
@@ -169,22 +170,29 @@ public final class AbstractInterpreter {
 			return;
 		}
 
-		boolean isLib = filteredInitialElements.size() > 1;
-
-		for (final CodeBlock initial : filteredInitialElements) {
+		boolean allSafe = true;
+		final boolean isLib = filteredInitialElements.size() > 1;
+		final Iterator<CodeBlock> iter = filteredInitialElements.iterator();
+		//TODO: If an if is at the beginning of a method, this method will be analyzed two times
+		while (iter.hasNext()) {
+			final CodeBlock initial = iter.next();
 			final BaseRcfgAbstractStateStorageProvider<STATE> storage = createStorage(services, domain, persist);
 			final IResultReporter<CodeBlock> reporter = funCreateReporter.create(services, storage, isLib);
 			final IVariableProvider<STATE, CodeBlock, IBoogieVar, ProgramPoint> varProvider = new RcfgVariableProvider<STATE>(
 					symbolTable, boogieVarTable, services);
-			final FixpointEngine<STATE, CodeBlock, IBoogieVar, ProgramPoint> interpreter = new FixpointEngine<STATE, CodeBlock, IBoogieVar, ProgramPoint>(
+			final FixpointEngine<STATE, CodeBlock, IBoogieVar, ProgramPoint> fxpe = new FixpointEngine<STATE, CodeBlock, IBoogieVar, ProgramPoint>(
 					services, timer, transitionProvider, storage, domain, varProvider, loopDetector, reporter);
 			try {
-				interpreter.run(initial);
+				allSafe = fxpe.run(initial) && allSafe;
 			} catch (ToolchainCanceledException c) {
 				predicates.put(initial, storage.getTerms(initial, script, bpl2smt));
 				throw c;
 			}
 			predicates.put(initial, storage.getTerms(initial, script, bpl2smt));
+			if (!iter.hasNext() && allSafe) {
+				//report all safe
+				funCreateReporter.create(services, storage, false).reportSafe(null);
+			}
 		}
 	}
 

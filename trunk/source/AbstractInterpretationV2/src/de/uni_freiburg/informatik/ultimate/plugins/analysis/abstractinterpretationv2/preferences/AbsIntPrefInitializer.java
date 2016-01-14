@@ -61,7 +61,7 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 
 	public static final String LABEL_PERSIST_ABS_STATES = "Save abstract states as RCFG annotation";
 
-	public static final int DEF_ITERATIONS_UNTIL_WIDENING = 10;
+	public static final int DEF_ITERATIONS_UNTIL_WIDENING = 3;
 	public static final int DEF_STATES_UNTIL_MERGE = 2;
 	public static final boolean DEF_RUN_AS_PRE_ANALYSIS = true;
 	private static final boolean DEF_PERSIST_ABS_STATES = false;

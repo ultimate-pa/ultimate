@@ -59,7 +59,7 @@ public class IntervalDomainPreferences {
 	public static final String LABEL_EVALUATOR_TYPE = "Evaluator type";
 
 	// DEFAULT VALUES
-	public static final String DEF_WIDENING_OPERATOR = VALUE_WIDENING_OPERATOR_SIMPLE;
+	public static final String DEF_WIDENING_OPERATOR = VALUE_WIDENING_OPERATOR_LITERALS;
 	public static final String DEF_EVALUATOR_TYPE = VALUE_EVALUATOR_DEFAULT;
 
 	public static List<UltimatePreferenceItem<?>> getPreferences() {

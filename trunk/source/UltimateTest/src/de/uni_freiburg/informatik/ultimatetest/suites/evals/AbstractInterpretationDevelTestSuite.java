@@ -137,7 +137,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 	@Override
 	public ITestResultDecider constructITestResultDecider(UltimateRunDefinition urd) {
-		return new SafetyCheckTestResultDecider(urd, false);
+		return new SafetyCheckTestResultDecider(urd, true);
 	}
 
 	@Override
