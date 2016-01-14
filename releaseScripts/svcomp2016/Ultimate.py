@@ -257,11 +257,17 @@ def createSettingsSearchString(memDeref, memDerefMemtrack, terminationMode, over
     return settingsSearchString
 
 
-def createToolchainString(terminationMode):
-    if terminationMode:
+def createToolchainString(termmode, witnessmode):
+    if termmode:
         toolchain = searchCurrentDir('*Termination.xml');
         if toolchain == '' or toolchain == None:
             print ('No suitable settings file found using *Termination.xml')
+            sys.exit(1)
+        return toolchain
+    elif witnessmode: 
+        toolchain = searchCurrentDir('*WitnessValidation.xml');
+        if toolchain == '' or toolchain == None:
+            print ('No suitable settings file found using **WitnessValidation.xml')
             sys.exit(1)
         return toolchain
     else:
@@ -282,6 +288,7 @@ def main():
     memDeref = False
     memDerefMemtrack = False
     terminationMode = False
+    witnessMode = False
     overflowMode = False
     
     ultimateBin = setBinary()
@@ -299,9 +306,12 @@ def main():
         if line.find('overflow') != -1:
             overflowMode = True
     
+    witnessMode = len(cFile) > 1
+    
     settingsSearchString = createSettingsSearchString(memDeref, memDerefMemtrack, terminationMode, overflowMode, architecture)
     settingsArgument = getSettingsFile(False, settingsSearchString)
-    toolchain = createToolchainString(terminationMode)
+    
+    toolchain = createToolchainString(terminationMode, witnessMode)
 
     # execute ultimate
     print('Version ' + version)
@@ -339,7 +349,7 @@ def main():
     print(result)
     if(verbose):
         print('--- Real Ultimate output ---')
-        print(ultimateOutput.encode('UTF-8','replace'))
+        print(ultimateOutput.encode('UTF-8', 'replace'))
         
     return
 
