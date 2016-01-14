@@ -56,7 +56,7 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	private boolean mIsInfty;
 
 	/**
-	 * Constructor for a new {@link IntervalValue}. The value is set to infinity initially.
+	 * Constructor for a new {@link IntervalValue}. The value is set to infinity (&infin;) initially.
 	 */
 	protected IntervalValue() {
 		mIsInfty = true;

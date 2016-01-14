@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2015 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
@@ -27,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2;
 
+import java.math.BigDecimal;
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
@@ -43,23 +45,31 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 
 /**
- * Collects literals of type int or real found in an RCFG. Some widening operators can use these. 
+ * Collects literals of type int or real found in an RCFG. Some widening operators can use these.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class LiteralCollector extends RCFGEdgeVisitor {
 
 	private final Set<String> mLiterals;
+	private final Set<BigDecimal> mNumberLiterals;
 	private final StatementLiteralCollector mStatementLiteralCollector;
+	private final LiteralCollection mLiteralCollection;
 
 	public LiteralCollector(final RootNode root) {
 		mLiterals = new HashSet<String>();
+		mNumberLiterals = new HashSet<>();
 		mStatementLiteralCollector = new StatementLiteralCollector();
 		process(root.getOutgoingEdges());
+		mLiteralCollection = new LiteralCollection(mNumberLiterals);
 	}
 
 	public Set<String> getResult() {
 		return mLiterals;
+	}
+
+	public LiteralCollection getLiteralCollection() {
+		return mLiteralCollection;
 	}
 
 	private <T extends RCFGEdge> void process(final Collection<T> edges) {
@@ -100,12 +110,14 @@ public class LiteralCollector extends RCFGEdgeVisitor {
 		protected void visit(IntegerLiteral expr) {
 			super.visit(expr);
 			mLiterals.add(expr.getValue());
+			mNumberLiterals.add(new BigDecimal(expr.getValue()));
 		}
 
 		@Override
 		protected void visit(RealLiteral expr) {
 			super.visit(expr);
 			mLiterals.add(expr.getValue());
+			mNumberLiterals.add(new BigDecimal(expr.getValue()));
 		}
 	}
 }

@@ -145,10 +145,12 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 		assert values != null;
 		assert vars.length == values.length;
 
-		return setMixedValues(vars, values, new String[0], new BooleanValue.Value[0]);
+		return setMixedValues(vars, values, new String[0], new BooleanValue.Value[0], new String[0],
+		        new IntervalDomainValue[0]);
 	}
 
 	protected IntervalDomainState setBooleanValue(String name, BooleanValue.Value value) {
+		assert name != null;
 		assert value != null;
 
 		final IntervalDomainState returnState = copy();
@@ -156,14 +158,15 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 		return returnState;
 	}
 
-	protected IntervalDomainState setBooleanValue(String name, boolean value) {
-		return setBooleanValue(name, new BooleanValue(value));
+	protected IntervalDomainState setBooleanValue(String bool, boolean value) {
+		return setBooleanValue(bool, new BooleanValue(value));
 	}
 
-	protected IntervalDomainState setBooleanValue(String name, BooleanValue value) {
+	protected IntervalDomainState setBooleanValue(String bool, BooleanValue value) {
+		assert bool != null;
 		assert value != null;
 
-		return setBooleanValue(name, value.getValue());
+		return setBooleanValue(bool, value.getValue());
 	}
 
 	protected IntervalDomainState setBooleanValues(String[] vars, BooleanValue.Value[] values) {
@@ -171,27 +174,76 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 		assert values != null;
 		assert vars.length == values.length;
 
-		return setMixedValues(new String[0], new IntervalDomainValue[0], vars, values);
+		return setMixedValues(new String[0], new IntervalDomainValue[0], vars, values, new String[0],
+		        new IntervalDomainValue[0]);
 	}
 
-	protected IntervalDomainState setMixedValues(String[] normalVars, IntervalDomainValue[] values,
-	        String[] booleanVars, BooleanValue.Value[] booleanValues) {
-		assert normalVars != null;
+	/**
+	 * Sets the value of an array variable to a given value.
+	 * 
+	 * TODO: Implement proper handling of arrays.
+	 * 
+	 * @param array
+	 *            The array name.
+	 * @param value
+	 *            The value to set the array variable to.
+	 * @return A new {@link IntervalDomainState} which is the copy of <code>this</code> but with updated value for the
+	 *         given array variable.
+	 */
+	protected IntervalDomainState setArrayValue(String array, IntervalDomainValue value) {
+		assert array != null;
+		assert value != null;
+		final IntervalDomainState returnState = copy();
+		setValueInternally(returnState, array, value);
+		return returnState;
+	}
+
+	protected IntervalDomainState setArrayValues(String[] arrays, IntervalDomainValue[] values) {
+		assert arrays != null;
+		assert values != null;
+		assert arrays.length == values.length;
+
+		return setMixedValues(new String[0], new IntervalDomainValue[0], new String[0], new BooleanValue.Value[0],
+		        arrays, values);
+	}
+
+	/**
+	 * Sets multiple values of multiple variable types at the same time.
+	 * 
+	 * TODO: Arrays are currently handled as normal variables.
+	 * 
+	 * @param vars
+	 *            A list of variable identifiers whose values are to be changed.
+	 * @param values
+	 *            A list of values which corresponds to the list of variable identifiers.
+	 * @param booleanVars
+	 *            A list of boolean variable identifiers whose values are to be changed.
+	 * @param booleanValues
+	 *            A list of values which corresponds to the list of boolean variable identifiers.
+	 * @return A new {@link IntervalDomainState} which is the copy of <code>this</code> but with the updated values.
+	 */
+	protected IntervalDomainState setMixedValues(String[] vars, IntervalDomainValue[] values, String[] booleanVars,
+	        BooleanValue.Value[] booleanValues, String[] arrays, IntervalDomainValue[] arrayValues) {
+		assert vars != null;
 		assert values != null;
 		assert booleanVars != null;
 		assert booleanValues != null;
-		assert normalVars.length == values.length;
+		assert vars.length == values.length;
 		assert booleanVars.length == booleanValues.length;
 
 		final IntervalDomainState returnState = copy();
-		for (int i = 0; i < normalVars.length; i++) {
-			setValueInternally(returnState, normalVars[i], values[i]);
+		for (int i = 0; i < vars.length; i++) {
+			setValueInternally(returnState, vars[i], values[i]);
 		}
 
 		for (int i = 0; i < booleanVars.length; i++) {
 			setValueInternally(returnState, booleanVars[i], new BooleanValue(booleanValues[i]));
 		}
-		
+
+		for (int i = 0; i < arrays.length; i++) {
+			setValueInternally(returnState, arrays[i], arrayValues[i]);
+		}
+
 		return returnState;
 	}
 
@@ -569,6 +621,35 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 		for (final String array : arrays) {
 			// TODO: Implement proper handling of arrays.
 			setValueInternally(returnState, array, new IntervalDomainValue());
+		}
+
+		return returnState;
+	}
+
+	/**
+	 * Sets all given variables, booleans, or arrays to &bot;.
+	 * 
+	 * @param vars
+	 *            The names of the variables to set to &bot;.
+	 * @param bools
+	 *            The names of the booleans to set to &bot;.
+	 * @param arrays
+	 *            The names of the arrays to set to &bot;.
+	 * @return A new {@link IntervalDomainState} that is the copy of <code>this</code>, where all occurring variables,
+	 *         booleans, and arrays given as parameters are set to &bot;.
+	 */
+	protected IntervalDomainState setVarsToBottom(List<String> vars, List<String> bools, List<String> arrays) {
+		final IntervalDomainState returnState = copy();
+
+		for (final String var : vars) {
+			setValueInternally(returnState, var, new IntervalDomainValue(true));
+		}
+		for (final String bool : bools) {
+			setValueInternally(returnState, bool, new BooleanValue(Value.BOTTOM));
+		}
+		for (final String array : arrays) {
+			// TODO: Implement proper handling of arrays.
+			setValueInternally(returnState, array, new IntervalDomainValue(true));
 		}
 
 		return returnState;

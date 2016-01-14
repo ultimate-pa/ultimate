@@ -274,12 +274,12 @@ public class IntervalBinaryExpressionEvaluator
 								valsToChange.add(res2.getResult().getEvaluatedValue());
 							}
 
-							returnStates.add(currentState
-							        .setMixedValues(varsToChange.toArray(new String[varsToChange.size()]),
+							returnStates.add(
+							        currentState.setMixedValues(varsToChange.toArray(new String[varsToChange.size()]),
 							                valsToChange.toArray(new IntervalDomainValue[valsToChange.size()]),
 							                boolVarsToChange.toArray(new String[boolVarsToChange.size()]),
-							                boolsToChange.toArray(new BooleanValue.Value[boolsToChange.size()]))
-							        .intersect(currentState));
+							                boolsToChange.toArray(new BooleanValue.Value[boolsToChange.size()]),
+							                new String[0], new IntervalDomainValue[0]).intersect(currentState));
 						}
 
 					} else {
