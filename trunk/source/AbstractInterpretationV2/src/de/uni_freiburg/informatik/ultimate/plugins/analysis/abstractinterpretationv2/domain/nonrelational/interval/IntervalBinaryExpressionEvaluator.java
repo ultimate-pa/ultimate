@@ -289,12 +289,118 @@ public class IntervalBinaryExpressionEvaluator
 							returnBool = new BooleanValue(res1.getResult().getEvaluatedValue()
 							        .isContainedIn(res2.getResult().getEvaluatedValue()));
 						}
+
+						if (returnBool.getValue() == Value.FALSE) {
+							setToBottom = true;
+						}
+
 						mLogger.warn(
 						        "Cannot handle more than one variables in a sub-tree of an expression. Returning current state.");
 					}
 					break;
 				case COMPNEQ:
-					mLogger.warn("Cannot handle the inequality comparison precisely. Returning current state.");
+					if (mLeftSubEvaluator.getVarIdentifiers().size() == 0
+					        && mRightSubEvaluator.getVarIdentifiers().size() == 0) {
+						if (mLeftSubEvaluator.containsBool() && mRightSubEvaluator.containsBool()) {
+							returnBool = res1.getBooleanValue().intersect(res2.getBooleanValue()).neg();
+						} else {
+							returnBool = new BooleanValue(res1.getResult().getEvaluatedValue()
+							        .isContainedIn(res2.getResult().getEvaluatedValue())).neg();
+						}
+
+						if (returnBool.getValue() == Value.FALSE) {
+							setToBottom = true;
+						} else {
+							mLogger.warn("Cannot handle the inequality comparison precisely. Returning current state.");
+							// TODO: Return more than one state!
+						}
+					} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 0
+					        && mRightSubEvaluator.getVarIdentifiers().size() == 1) {
+						String varName = null;
+
+						for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
+							varName = var;
+						}
+
+						assert varName != null;
+
+						if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
+							returnBool = res1.getBooleanValue().intersect(res2.getBooleanValue()).neg();
+						} else {
+							returnBool = new BooleanValue(res1.getResult().getEvaluatedValue()
+							        .isContainedIn(res2.getResult().getEvaluatedValue())).neg();
+						}
+
+						if (returnBool.getValue() == Value.FALSE) {
+							setToBottom = true;
+						} else {
+							mLogger.warn("Cannot handle the inequality comparison precisely. Returning current state.");
+							// TODO: Return more than one state!
+						}
+					} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 1
+					        && mRightSubEvaluator.getVarIdentifiers().size() == 0) {
+						String varName = null;
+
+						for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
+							varName = var;
+						}
+
+						assert varName != null;
+
+						if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
+							returnBool = res1.getBooleanValue().intersect(res2.getBooleanValue()).neg();
+						} else {
+							returnBool = new BooleanValue(res1.getResult().getEvaluatedValue()
+							        .isContainedIn(res2.getResult().getEvaluatedValue())).neg();
+						}
+
+						if (returnBool.getValue() == Value.FALSE) {
+							setToBottom = true;
+						} else {
+							mLogger.warn("Cannot handle the inequality comparison precisely. Returning current state.");
+							// TODO: Return more than one state!
+						}
+					} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 1
+					        && mRightSubEvaluator.getVarIdentifiers().size() == 1) {
+						String leftVar = null;
+						String rightVar = null;
+
+						for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
+							leftVar = var;
+						}
+						for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
+							rightVar = var;
+						}
+
+						assert leftVar != null;
+						assert rightVar != null;
+
+						if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
+							returnBool = res1.getBooleanValue().intersect(res2.getBooleanValue()).neg();
+						} else {
+							returnBool = new BooleanValue(res1.getResult().getEvaluatedValue()
+							        .isContainedIn(res2.getResult().getEvaluatedValue())).neg();
+						}
+
+						if (returnBool.getValue() == Value.FALSE) {
+							setToBottom = true;
+						} else {
+							mLogger.warn("Cannot handle the inequality comparison precisely. Returning current state.");
+							// TODO: Return more than one state!
+						}
+					} else {
+						if (mLeftSubEvaluator.containsBool() && mRightSubEvaluator.containsBool()) {
+							returnBool = res1.getBooleanValue().intersect(res2.getBooleanValue()).neg();
+						} else {
+							returnBool = new BooleanValue(res1.getResult().getEvaluatedValue()
+							        .isContainedIn(res2.getResult().getEvaluatedValue())).neg();
+						}
+						if (returnBool.getValue() == Value.FALSE) {
+							setToBottom = true;
+						} else {
+							mLogger.warn("Cannot handle the inequality comparison precisely. Returning current state.");
+						}
+					}
 					break;
 				case COMPGT:
 					mLogger.warn(
