@@ -41,12 +41,17 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIt
  *
  */
 public class LpSolverPreferences {
-	public static final String[] VALUES_NUMBER_TYPE = new String[] { "BigDecimal", "BigInteger", "Double", "Integer" };
+	public static final String VALUE_NUMBER_TYPE_BIGDECIMAL = "BigDecimal";
+	public static final String VALUE_NUMBER_TYPE_BIGINTEGER = "BigInteger";
+	public static final String VALUE_NUMBER_TYPE_DOUBLE = "Double";
+	public static final String VALUE_NUMBER_TYPE_INTEGER = "Integer";
+	public static final String[] VALUES_NUMBER_TYPE = new String[] { VALUE_NUMBER_TYPE_BIGDECIMAL,
+	        VALUE_NUMBER_TYPE_BIGINTEGER, VALUE_NUMBER_TYPE_DOUBLE, VALUE_NUMBER_TYPE_INTEGER };
 
 	public static final String LABEL_LPSOLVER_TOOL_SEPARATOR = "   ---   LP-Solver   ---   ";
 	public static final String LABEL_LPSOLVER_NUMBER_TYPE = "Number type";
 
-	public static final String DEF_VALUES_NUMBER_TYPE = VALUES_NUMBER_TYPE[0];
+	public static final String DEF_VALUES_NUMBER_TYPE = VALUE_NUMBER_TYPE_BIGDECIMAL;
 
 	public static List<UltimatePreferenceItem<?>> getPreferences() {
 		final List<UltimatePreferenceItem<?>> returnList = new ArrayList<>();

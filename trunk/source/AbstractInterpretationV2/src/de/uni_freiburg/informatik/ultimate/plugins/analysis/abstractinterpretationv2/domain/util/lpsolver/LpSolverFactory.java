@@ -44,28 +44,45 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class LpSolverFactory {
 
 	private final Logger mLogger;
-	private final Class<? extends Number> mType;
+	// private final Class<? extends Number> mType;
+
+	private enum Type {
+		BIGDECIMAL, BIGINTEGER, DOUBLE, INTEGER,
+	}
+
+	private final Type mType;
 
 	public LpSolverFactory(Logger logger) {
 		mLogger = logger;
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		final String type = ups.getString(LpSolverPreferences.LABEL_LPSOLVER_NUMBER_TYPE);
 
-		if (type.equals(LpSolverPreferences.VALUES_NUMBER_TYPE[0])) {
-			mType = BigDecimal.class;
-		} else if (type.equals(LpSolverPreferences.VALUES_NUMBER_TYPE[1])) {
-			mType = BigInteger.class;
-		} else if (type.equals(LpSolverPreferences.VALUES_NUMBER_TYPE[2])) {
-			mType = Double.class;
-		} else if (type.equals(LpSolverPreferences.VALUES_NUMBER_TYPE[3])) {
-			mType = Integer.class;
+		if (type.equals(LpSolverPreferences.VALUE_NUMBER_TYPE_BIGDECIMAL)) {
+			mType = Type.BIGDECIMAL;
+		} else if (type.equals(LpSolverPreferences.VALUE_NUMBER_TYPE_BIGINTEGER)) {
+			mType = Type.BIGINTEGER;
+		} else if (type.equals(LpSolverPreferences.VALUE_NUMBER_TYPE_DOUBLE)) {
+			mType = Type.DOUBLE;
+		} else if (type.equals(LpSolverPreferences.VALUE_NUMBER_TYPE_INTEGER)) {
+			mType = Type.INTEGER;
 		} else {
-			mType = BigDecimal.class;
+			mType = Type.BIGDECIMAL;
 		}
 	}
 
 	protected ILpSolver<? extends Number> getOjAlgoLpSolver() {
-		return new OjAlgoSolver<>(mLogger, mType);
+		switch (mType) {
+		case BIGDECIMAL:
+			return new OjAlgoSolver<BigDecimal>(mLogger, BigDecimal.class);
+		case BIGINTEGER:
+			return new OjAlgoSolver<BigInteger>(mLogger, BigInteger.class);
+		case DOUBLE:
+			return new OjAlgoSolver<Double>(mLogger, Double.class);
+		case INTEGER:
+			return new OjAlgoSolver<Integer>(mLogger, Integer.class);
+		default:
+			return new OjAlgoSolver<BigDecimal>(mLogger, BigDecimal.class);
+		}
 	}
 
 }
