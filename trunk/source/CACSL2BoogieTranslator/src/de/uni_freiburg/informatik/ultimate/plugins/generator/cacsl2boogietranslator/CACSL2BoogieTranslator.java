@@ -86,7 +86,7 @@ public class CACSL2BoogieTranslator implements IGenerator {
 
 	@Override
 	public void setInputDefinition(GraphType graphType) {
-		this.mInputDefinition = graphType;
+		mInputDefinition = graphType;
 	}
 
 	@Override
@@ -127,6 +127,6 @@ public class CACSL2BoogieTranslator implements IGenerator {
 	@Override
 	public void finish() {
 		// TODO Auto-generated method stub
-		
+
 	}
 }

@@ -29,66 +29,33 @@ package de.uni_freiburg.informatik.ultimate.witnessparser.graph;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.IPayload;
-import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.annotation.ModernAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.annotation.Visualizable;
 
-public class WitnessNodeAnnotation extends AbstractAnnotations {
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
+public class WitnessGraphAnnotation extends ModernAnnotations {
+
+	public enum WitnessType {
+		TRUE_WITNESS, FALSE_WITNESS
+	}
 
 	private static final long serialVersionUID = 1L;
-	private static final String sKey = Activator.s_PLUGIN_ID + "_Node";
-	private static final String[] sFieldNames = new String[] { "IsInitial", "IsError", "IsSink", "Invariant" };
+	private static final String sKey = Activator.s_PLUGIN_ID + "_Graph";
 
-	private final boolean mIsInitial;
-	private final boolean mIsError;
-	private final boolean mIsSink;
-	private final String mInvariant;
+	@Visualizable
+	private final String mSourceCodeLanguage;
 
-	public WitnessNodeAnnotation(final boolean isInitial, final boolean isError, final boolean isSink,
-			final String invariant) {
-		mIsInitial = isInitial;
-		mIsError = isError;
-		mIsSink = isSink;
-		mInvariant = invariant;
-	}
+	@Visualizable
+	private final WitnessType mType;
 
-	public String getInvariant() {
-		return mInvariant;
-	}
-
-	public boolean isInitial() {
-		return mIsInitial;
-	}
-
-	public boolean isError() {
-		return mIsError;
-	}
-
-	public boolean isSink() {
-		return mIsSink;
-	}
-
-	public boolean isDefault() {
-		return !mIsInitial && !mIsError && !mIsSink && mInvariant == null;
-	}
-
-	@Override
-	protected String[] getFieldNames() {
-		return sFieldNames;
-	}
-
-	@Override
-	protected Object getFieldValue(final String field) {
-		switch (field) {
-		case "IsInitial":
-			return mIsInitial;
-		case "IsError":
-			return mIsError;
-		case "IsSink":
-			return mIsSink;
-		case "Invariant":
-			return mInvariant;
-		}
-		return null;
+	public WitnessGraphAnnotation(final String sourceodelang, final WitnessType type) {
+		mSourceCodeLanguage = sourceodelang;
+		mType = type;
 	}
 
 	public void annotate(IElement node) {
@@ -101,23 +68,31 @@ public class WitnessNodeAnnotation extends AbstractAnnotations {
 		node.getPayload().getAnnotations().put(sKey, this);
 	}
 
-	public static WitnessNodeAnnotation getAnnotation(IElement node) {
+	public static WitnessGraphAnnotation getAnnotation(IElement node) {
 		if (node instanceof WitnessNode) {
 			getAnnotation((WitnessNode) node);
 		}
 		return null;
 	}
 
-	public static WitnessNodeAnnotation getAnnotation(WitnessNode node) {
+	public static WitnessGraphAnnotation getAnnotation(WitnessNode node) {
 		if (node.hasPayload()) {
 			IPayload payload = node.getPayload();
 			if (payload.hasAnnotation()) {
 				IAnnotations annot = payload.getAnnotations().get(sKey);
 				if (annot != null) {
-					return (WitnessNodeAnnotation) annot;
+					return (WitnessGraphAnnotation) annot;
 				}
 			}
 		}
 		return null;
+	}
+
+	public String getSourceCodeLanguage() {
+		return mSourceCodeLanguage;
+	}
+
+	public WitnessType getWitnessType() {
+		return mType;
 	}
 }

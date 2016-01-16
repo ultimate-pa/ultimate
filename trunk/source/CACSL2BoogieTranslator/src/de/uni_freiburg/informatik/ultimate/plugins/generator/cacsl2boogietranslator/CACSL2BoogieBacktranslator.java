@@ -250,7 +250,7 @@ public class CACSL2BoogieBacktranslator extends
 		CheckForSubtreeInclusion check = new CheckForSubtreeInclusion();
 		translatedAtomicTraceElements = check.check(translatedAtomicTraceElements);
 
-		return new CACSLProgramExecution(initialState, translatedAtomicTraceElements, translatedProgramStates);
+		return new CACSLProgramExecution(initialState, translatedAtomicTraceElements, translatedProgramStates,mLogger);
 	}
 
 	private EnumSet<StepInfo> invertConditionInStepInfo(EnumSet<StepInfo> oldSiSet) {

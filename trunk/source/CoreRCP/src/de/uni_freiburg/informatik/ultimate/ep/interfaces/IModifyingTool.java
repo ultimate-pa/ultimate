@@ -33,6 +33,9 @@ package de.uni_freiburg.informatik.ultimate.ep.interfaces;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 
 /**
+ * 
+ * @see {@link ITool}
+ * 
  * @author dietsch
  *
  */

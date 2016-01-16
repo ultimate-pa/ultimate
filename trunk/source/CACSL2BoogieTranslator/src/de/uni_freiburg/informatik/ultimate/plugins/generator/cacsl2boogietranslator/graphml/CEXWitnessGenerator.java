@@ -30,9 +30,11 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.apache.commons.collections15.Transformer;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
@@ -45,25 +47,28 @@ import edu.uci.ics.jung.graph.util.Pair;
 import edu.uci.ics.jung.io.GraphMLWriter;
 
 /**
+ * Generates an SVCOMP witness from a {@link CACSLProgramExecution} (i.e., a false witness).
  * 
- * @author dietsch@informatik.uni-freiburg.de
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
-public class GraphMLConverter {
+public class CEXWitnessGenerator {
 
 	private final CACSLProgramExecution mProgramExecution;
+	private final Logger mLogger;
 
-	public GraphMLConverter(CACSLProgramExecution translatedProgramExecution) {
+	public CEXWitnessGenerator(final CACSLProgramExecution translatedProgramExecution, final Logger logger) {
 		assert translatedProgramExecution != null;
 		assert translatedProgramExecution.getLength() > 0;
 		mProgramExecution = translatedProgramExecution;
+		mLogger = logger;
 	}
 
 	public String makeGraphMLString() {
-		StringWriter writer = new StringWriter();
+		final GraphMLWriter<WitnessNode, WitnessEdge> graphWriter = new GraphMLWriter<>();
+		final String filename = StringEscapeUtils
+				.escapeXml10(mProgramExecution.getTraceElement(0).getStep().getFileName());
 
-		GraphMLWriter<WitnessNode, WitnessEdge> graphWriter = new GraphMLWriter<>();
-		String filename = StringEscapeUtils.escapeXml10(mProgramExecution.getTraceElement(0).getStep().getFileName());
 		graphWriter.setEdgeIDs(new Transformer<WitnessEdge, String>() {
 			@Override
 			public String transform(WitnessEdge arg0) {
@@ -78,110 +83,31 @@ public class GraphMLConverter {
 			}
 		});
 
-		graphWriter.addGraphData("sourcecodelang", null, null,
-				new Transformer<Hypergraph<WitnessNode, WitnessEdge>, String>() {
-					@Override
-					public String transform(Hypergraph<WitnessNode, WitnessEdge> arg0) {
-						return "C";
-					}
-				});
+		addGraphData(graphWriter, "sourcecodelang", null, graph -> "C");
+		addGraphData(graphWriter, "witness-type", null, graph -> "false_witness");
 
-		graphWriter.addEdgeData("sourcecode", null, null, new Transformer<WitnessEdge, String>() {
-			@Override
-			public String transform(WitnessEdge arg0) {
-				return StringEscapeUtils.escapeXml10(arg0.getSourceCode());
-			}
-		});
+		addEdgeData(graphWriter, "sourcecode", null, edge -> StringEscapeUtils.escapeXml10(edge.getSourceCode()));
+		addEdgeData(graphWriter, "assumption", null, edge -> StringEscapeUtils.escapeXml10(edge.getAssumption()));
+		addEdgeData(graphWriter, "tokens", null, edge -> null);
+		addEdgeData(graphWriter, "control", null, edge -> edge.getControl());
+		addEdgeData(graphWriter, "startline", null, edge -> edge.getStartLineNumber());
+		addEdgeData(graphWriter, "endline", null, edge -> edge.getEndLineNumber());
+		addEdgeData(graphWriter, "originfile", filename, edge -> null);
+		addEdgeData(graphWriter, "enterFunction", null, edge -> null);
+		addEdgeData(graphWriter, "returnFrom", null, edge -> null);
 
-		graphWriter.addEdgeData("assumption", null, null, new Transformer<WitnessEdge, String>() {
-			@Override
-			public String transform(WitnessEdge arg0) {
-				return StringEscapeUtils.escapeXml10(arg0.getAssumption());
-			}
-		});
+		addVertexData(graphWriter, "nodetype", "path", vertex -> null);
+		addVertexData(graphWriter, "entry", "false", vertex -> vertex.isEntry() ? "true" : null);
+		addVertexData(graphWriter, "violation", "false", vertex -> vertex.isError() ? "true" : null);
+		// TODO: When we switch to "multi-property" witnesses, we write invariants for FALSE-witnesses
+		addVertexData(graphWriter, "invariant", "true", vertex -> null);
 
-		graphWriter.addEdgeData("tokens", null, null, new Transformer<WitnessEdge, String>() {
-			@Override
-			public String transform(WitnessEdge arg0) {
-				return null;
-			}
-		});
-
-		graphWriter.addEdgeData("control", null, null, new Transformer<WitnessEdge, String>() {
-			@Override
-			public String transform(WitnessEdge arg0) {
-				return arg0.getControl();
-			}
-		});
-
-		graphWriter.addEdgeData("startline", null, null, new Transformer<WitnessEdge, String>() {
-			@Override
-			public String transform(WitnessEdge arg0) {
-				return arg0.getStartLineNumber();
-			}
-		});
-		
-		graphWriter.addEdgeData("endline", null, null, new Transformer<WitnessEdge, String>() {
-			@Override
-			public String transform(WitnessEdge arg0) {
-				return arg0.getEndLineNumber();
-			}
-		});
-
-		graphWriter.addEdgeData("originfile", null, filename, new Transformer<WitnessEdge, String>() {
-			@Override
-			public String transform(WitnessEdge arg0) {
-				return null;
-			}
-		});
-
-		graphWriter.addEdgeData("enterFunction", null, null, new Transformer<WitnessEdge, String>() {
-			@Override
-			public String transform(WitnessEdge arg0) {
-				return null;
-			}
-		});
-
-		graphWriter.addEdgeData("returnFrom", null, null, new Transformer<WitnessEdge, String>() {
-			@Override
-			public String transform(WitnessEdge arg0) {
-				return null;
-			}
-		});
-
-		graphWriter.addVertexData("nodetype", null, "path", new Transformer<WitnessNode, String>() {
-			@Override
-			public String transform(WitnessNode arg0) {
-				return null;
-			}
-		});
-
-		graphWriter.addVertexData("entry", null, "false", new Transformer<WitnessNode, String>() {
-			@Override
-			public String transform(WitnessNode arg0) {
-				if (arg0.isEntry()) {
-					return "true";
-				}
-				return null;
-			}
-		});
-		
-		graphWriter.addVertexData("violation", null, "false", new Transformer<WitnessNode, String>() {
-			@Override
-			public String transform(WitnessNode arg0) {
-				if (arg0.isError()) {
-					return "true";
-				}
-				return null;
-			}
-		});
-
-		Hypergraph<WitnessNode, WitnessEdge> graph = getGraph();
-
+		final Hypergraph<WitnessNode, WitnessEdge> graph = getGraph();
+		final StringWriter writer = new StringWriter();
 		try {
 			graphWriter.save(graph, writer);
-		} catch (IOException e) {
-			e.printStackTrace();
+		} catch (final IOException e) {
+			mLogger.error("Could not save witness graph: " + e.getMessage());
 		}
 		try {
 			writer.flush();
@@ -189,10 +115,44 @@ public class GraphMLConverter {
 		} finally {
 			try {
 				writer.close();
-			} catch (IOException e) {
-				e.printStackTrace();
+			} catch (final IOException e) {
+				mLogger.error("Could not close witness writer: " + e.getMessage());
 			}
 		}
+	}
+
+	private void addGraphData(final GraphMLWriter<WitnessNode, WitnessEdge> graphWriter, final String key,
+			final String defaultValue, final Function<Hypergraph<WitnessNode, WitnessEdge>, String> transformer) {
+		assert transformer != null;
+		graphWriter.addGraphData(key, null, defaultValue,
+				new Transformer<Hypergraph<WitnessNode, WitnessEdge>, String>() {
+					@Override
+					public String transform(final Hypergraph<WitnessNode, WitnessEdge> arg0) {
+						return transformer.apply(arg0);
+					}
+				});
+	}
+
+	private void addEdgeData(final GraphMLWriter<WitnessNode, WitnessEdge> graphWriter, final String key,
+			final String defaultValue, final Function<WitnessEdge, String> transformer) {
+		assert transformer != null;
+		graphWriter.addEdgeData(key, null, defaultValue, new Transformer<WitnessEdge, String>() {
+			@Override
+			public String transform(final WitnessEdge arg0) {
+				return transformer.apply(arg0);
+			}
+		});
+	}
+
+	private void addVertexData(final GraphMLWriter<WitnessNode, WitnessEdge> graphWriter, final String key,
+			final String defaultValue, final Function<WitnessNode, String> transformer) {
+		assert transformer != null;
+		graphWriter.addVertexData(key, null, defaultValue, new Transformer<WitnessNode, String>() {
+			@Override
+			public String transform(final WitnessNode arg0) {
+				return transformer.apply(arg0);
+			}
+		});
 	}
 
 	private Hypergraph<WitnessNode, WitnessEdge> getGraph() {
@@ -202,17 +162,17 @@ public class GraphMLConverter {
 		WitnessNode current = insertStartNodeAndDummyEdges(fac, graph, 0);
 		WitnessNode next = null;
 
-		//removed because of standard change 
+		// removed because of standard change
 		// Add initial state edge if present; only edge with assumption but no
 		// source code or line number
-//		ProgramState<IASTExpression> initialState = mProgramExecution.getInitialProgramState();
-//		if (initialState != null) {
-//			next = fac.createWitnessNode();
-//			graph.addVertex(next);
-//			graph.addEdge(fac.createWitnessEdge(initialState), current, next);
-//			current = next;
-//		}
-		//end remove
+		// ProgramState<IASTExpression> initialState = mProgramExecution.getInitialProgramState();
+		// if (initialState != null) {
+		// next = fac.createWitnessNode();
+		// graph.addVertex(next);
+		// graph.addEdge(fac.createWitnessEdge(initialState), current, next);
+		// current = next;
+		// }
+		// end remove
 
 		int progExecLength = mProgramExecution.getLength();
 		for (int i = 0; i < progExecLength; ++i) {
@@ -274,8 +234,8 @@ public class GraphMLConverter {
 	}
 
 	/**
-	 * Change the default {@link DirectedSparseGraph} s.t. the nodes and edges
-	 * written are ordered lexicographically. DirectedSparseGraph
+	 * Change the default {@link DirectedSparseGraph} s.t. the nodes and edges written are ordered lexicographically.
+	 * DirectedSparseGraph
 	 * 
 	 * @author dietsch@informatik.uni-freiburg.de
 	 */
