@@ -34,6 +34,10 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.direct.DirectSimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.CountingMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationPerformance;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.TimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
@@ -59,15 +63,19 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LETTER, STATE> {
 
 	/**
-	 * The underlying buechi automaton from which the game graph gets generated.
-	 */
-	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Buechi;
-
-	/**
 	 * True if the simulation currently mimics the behavior of a
 	 * DirectSimulation, false if it mimics a FairSimulation.
 	 */
 	private boolean m_IsCurrentlyDirectSimulation;
+
+	/**
+	 * Holds information about the performance of the simulation after usage.
+	 */
+	private SimulationPerformance m_Performance;
+	/**
+	 * True if the algorithm has already finished, false otherwise.
+	 */
+	private boolean m_HasFinished;
 
 	/**
 	 * Creates a new fair simulation that tries to reduce the given buechi
@@ -135,8 +143,21 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 					throws OperationCanceledException {
 		super(services, buechi, useSCCs, stateFactory, possibleEquivalentClasses,
 				new FairDirectGameGraph<LETTER, STATE>(services, buechi, stateFactory));
-		m_Buechi = buechi;
-		m_IsCurrentlyDirectSimulation = false;
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * buchiReduction.ASimulation#getSimulationPerformance()
+	 */
+	@Override
+	public SimulationPerformance getSimulationPerformance() {
+		if (m_HasFinished) {
+			return m_Performance;
+		} else {
+			return super.getSimulationPerformance();
+		}
 	}
 
 	/*
@@ -224,35 +245,60 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 */
 	@Override
 	protected void doSimulation() throws OperationCanceledException {
+		m_Performance = new SimulationPerformance(SimulationType.FAIRDIRECT, isUsingSCCs());
+		m_Performance.startTimeMeasure(TimeMeasure.OVERALL_TIME);
+
+		int directSimSimulationSteps = 0;
+
 		// First calculate direct simulation
 		if (getGameGraph() instanceof FairDirectGameGraph) {
-			long startTime = System.currentTimeMillis();
-
 			FairDirectGameGraph<LETTER, STATE> game = (FairDirectGameGraph<LETTER, STATE>) getGameGraph();
 
 			// Do direct simulation
 			getLogger().debug("Starting direct simulation...");
 			m_IsCurrentlyDirectSimulation = true;
 			game.transformToDirectGameGraph();
-			new DirectSimulation<LETTER, STATE>(getServiceProvider(), m_Buechi, isUsingSCCs(), getStateFactory(), game);
+			DirectSimulation<LETTER, STATE> directSim = new DirectSimulation<LETTER, STATE>(getServiceProvider(),
+					isUsingSCCs(), getStateFactory(), game);
 
 			// Remember results before transforming back and clear changes made
 			// in the direct simulation
 			game.rememberAndClearDirectSimulationResults();
 
+			// Remember performance data
+			directSimSimulationSteps = directSim.getSimulationPerformance()
+					.getCountingMeasureResult(CountingMeasure.SIMULATION_STEPS);
+
 			// Transform back to fair simulation
 			game.transformToFairGameGraph();
+			// Reset performance data linkage to fair simulation
+			getGameGraph().setSimulationPerformance(super.getSimulationPerformance());
 			m_IsCurrentlyDirectSimulation = false;
-
-			long duration = System.currentTimeMillis() - startTime;
-			getLogger().info((isUsingSCCs() ? "SCC version" : "nonSCC version") + " of direct simulation took "
-					+ duration + " milliseconds");
 			getLogger().debug("Starting fair simulation...");
 		}
-
+		
 		// After that do the normal fair simulation process that will use the
 		// overridden methods which profit from the direct simulation.
 		super.doSimulation();
+
+		long duration = m_Performance.stopTimeMeasure(TimeMeasure.OVERALL_TIME);
+		getLogger().info((isUsingSCCs() ? "SCC version" : "nonSCC version") + " of fairdirect simulation took "
+				+ duration + " milliseconds");
+
+		// Merge performance data
+		m_Performance.setCountingMeasure(CountingMeasure.SIMULATION_STEPS,
+				super.getSimulationPerformance().getCountingMeasureResult(CountingMeasure.SIMULATION_STEPS)
+						+ directSimSimulationSteps);
+		m_Performance.setCountingMeasure(CountingMeasure.REMOVED_STATES,
+				super.getSimulationPerformance().getCountingMeasureResult(CountingMeasure.REMOVED_STATES));
+		m_Performance.setCountingMeasure(CountingMeasure.REMOVED_TRANSITIONS,
+				super.getSimulationPerformance().getCountingMeasureResult(CountingMeasure.REMOVED_TRANSITIONS));
+		m_Performance.setCountingMeasure(CountingMeasure.FAILED_MERGE_ATTEMPTS,
+				super.getSimulationPerformance().getCountingMeasureResult(CountingMeasure.FAILED_MERGE_ATTEMPTS));
+		m_Performance.setCountingMeasure(CountingMeasure.FAILED_TRANSREMOVE_ATTEMPTS,
+				super.getSimulationPerformance().getCountingMeasureResult(CountingMeasure.FAILED_TRANSREMOVE_ATTEMPTS));
+
+		m_HasFinished = true;
 	}
 
 	/**

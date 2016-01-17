@@ -180,17 +180,6 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 		}
 	}
 
-	/**
-	 * Returns if the game graph currently mimics the behavior of a
-	 * DirectGameGraph or a FairGameGraph.
-	 * 
-	 * @return True if the game graph currently mimics the behavior of a
-	 *         DirectGameGraph, false if it mimics a FairGameGraph.
-	 */
-	protected boolean isCurrentlyDirectGameGraph() {
-		return m_IsCurrentlyDirectGameGraph;
-	}
-
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -209,6 +198,17 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 			// Use the original fair generation
 			return super.generateBuchiAutomatonFromGraph();
 		}
+	}
+
+	/**
+	 * Returns if the game graph currently mimics the behavior of a
+	 * DirectGameGraph or a FairGameGraph.
+	 * 
+	 * @return True if the game graph currently mimics the behavior of a
+	 *         DirectGameGraph, false if it mimics a FairGameGraph.
+	 */
+	protected boolean isCurrentlyDirectGameGraph() {
+		return m_IsCurrentlyDirectGameGraph;
 	}
 
 	/**

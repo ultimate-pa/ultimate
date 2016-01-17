@@ -47,6 +47,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.GameGraphChangeType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.GameGraphChanges;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.CountingMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
@@ -77,7 +79,6 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
  *            State class of buechi automaton
  */
 public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
-
 	/**
 	 * If it is currently known that there are merge-able states.
 	 */
@@ -86,6 +87,14 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * The underlying buechi automaton from which the game graph gets generated.
 	 */
 	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Buechi;
+	/**
+	 * Amount of states the inputed buechi automata has.
+	 */
+	private int m_BuechiAmountOfStates;
+	/**
+	 * Amount of transitions the inputed buechi automata has.
+	 */
+	private int m_BuechiAmountOfTransitions;
 	/**
 	 * Data structure that allows a fast access to all transitions of the buechi
 	 * automaton.<br/>
@@ -141,8 +150,10 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		m_EquivalenceClasses = new UnionFind<>();
 		m_AreThereMergeableStates = false;
 		// Since there are often no remove-able transitions we first initiate it
-		// when we actually need it
+		// when we actually needing it
 		m_TransitionsToRemove = null;
+		m_BuechiAmountOfStates = 0;
+		m_BuechiAmountOfTransitions = 0;
 
 		generateGameGraphFromBuechi();
 	}
@@ -495,6 +506,8 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<>(getServiceProvider(),
 				m_Buechi.getInternalAlphabet(), null, null, getStateFactory());
 
+		int resultAmountOfStates = 0;
+		
 		// Merge states
 		if (areThereMergeableStates) {
 			// Calculate initial states
@@ -517,6 +530,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 			}
 
 			// Add states
+			
 			input2result = new HashMap<>(m_Buechi.size());
 			for (STATE representative : m_EquivalenceClasses.getAllRepresentatives()) {
 				boolean isInitial = representativesOfInitials.contains(representative);
@@ -524,6 +538,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 				Set<STATE> eqClass = m_EquivalenceClasses.getEquivalenceClassMembers(representative);
 				STATE mergedState = getStateFactory().minimize(eqClass);
 				result.addState(isInitial, isFinal, mergedState);
+				resultAmountOfStates++;
 				for (STATE eqClassMember : eqClass) {
 					input2result.put(eqClassMember, mergedState);
 				}
@@ -535,8 +550,11 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 				boolean isInitial = m_Buechi.isInitial(state);
 				boolean isFinal = m_Buechi.isFinal(state);
 				result.addState(isInitial, isFinal, state);
+				resultAmountOfStates++;
 			}
 		}
+		
+		int resultAmountOfTransitions = 0;
 
 		// Add transitions
 		// for (STATE inputSrc : uf.getAllRepresentatives()) {
@@ -565,11 +583,13 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 					Triple<STATE, LETTER, STATE> transAsTriple = new Triple<>(inputSrc, a, inputDest);
 					if (!m_TransitionsToRemove.contains(transAsTriple)) {
 						result.addInternalTransition(resultSrc, a, resultDest);
+						resultAmountOfTransitions++;
 					}
 				} else {
 					// If there is no removable transition simply copy the
 					// inputed automaton
 					result.addInternalTransition(resultSrc, a, resultDest);
+					resultAmountOfTransitions++;
 				}
 
 			}
@@ -581,6 +601,15 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 				&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
 			m_Logger.debug("Stopped in generateBuchiAutomatonFromGraph/states and transitions added");
 			throw new OperationCanceledException(this.getClass());
+		}
+		
+		// Log performance
+		SimulationPerformance performance = getSimulationPerformance();
+		if (performance != null) {
+			performance.setCountingMeasure(CountingMeasure.REMOVED_STATES,
+					m_BuechiAmountOfStates - resultAmountOfStates);
+			performance.setCountingMeasure(CountingMeasure.REMOVED_TRANSITIONS,
+					m_BuechiAmountOfTransitions - resultAmountOfTransitions);
 		}
 
 		// Remove unreachable states which can occur due to transition removal
@@ -605,6 +634,8 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 		// Generate states
 		for (STATE leftState : buechi.getStates()) {
+			m_BuechiAmountOfStates++;
+			
 			for (STATE rightState : buechi.getStates()) {
 				// Generate Spoiler vertices (leftState, rightState)
 				int priority = calculatePriority(leftState, rightState);
@@ -643,6 +674,8 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 			// TODO Can we generate edges at the same time
 			// we generate states?
 			for (IncomingInternalTransition<LETTER, STATE> trans : buechi.internalPredecessors(edgeDest)) {
+				m_BuechiAmountOfTransitions++;
+				
 				for (STATE fixState : buechi.getStates()) {
 					// Duplicator edges q1 -a-> q2 : (x, q1, a) -> (x, q2)
 					Vertex<LETTER, STATE> src = getDuplicatorVertex(fixState, trans.getPred(), trans.getLetter(),
