@@ -70,16 +70,16 @@ public class WitnessGraphAnnotation extends ModernAnnotations {
 
 	public static WitnessGraphAnnotation getAnnotation(IElement node) {
 		if (node instanceof WitnessNode) {
-			getAnnotation((WitnessNode) node);
+			return getAnnotation((WitnessNode) node);
 		}
 		return null;
 	}
 
 	public static WitnessGraphAnnotation getAnnotation(WitnessNode node) {
 		if (node.hasPayload()) {
-			IPayload payload = node.getPayload();
+			final IPayload payload = node.getPayload();
 			if (payload.hasAnnotation()) {
-				IAnnotations annot = payload.getAnnotations().get(sKey);
+				final IAnnotations annot = payload.getAnnotations().get(sKey);
 				if (annot != null) {
 					return (WitnessGraphAnnotation) annot;
 				}

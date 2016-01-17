@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Core.
  * 
@@ -27,35 +27,19 @@
 
 package de.uni_freiburg.informatik.ultimate.access;
 
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 /**
- * Simple construct to implement {@link IUnmanagedObserver}s and ignore extended
- * options. Assumes that the observer does not change the model (i.e.
- * {@link IUnmanagedObserver#performedChanges() returns false}.
+ * This {@link IObserver} does nothing.
  * 
- * @author dietsch@informatik.uni-freiburg.de
- * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
  */
-public abstract class BaseObserver implements IUnmanagedObserver {
+public class NoopObserver extends BaseObserver {
 
 	@Override
-	public void init(GraphType modelType, int currentModelIndex, int numberOfModels) {
-
-	}
-
-	@Override
-	public void finish() {
-
-	}
-
-	@Override
-	public WalkerOptions getWalkerOptions() {
-		return null;
-	}
-
-	@Override
-	public boolean performedChanges() {
+	public boolean process(IElement root) throws Throwable {
 		return false;
 	}
+
 }

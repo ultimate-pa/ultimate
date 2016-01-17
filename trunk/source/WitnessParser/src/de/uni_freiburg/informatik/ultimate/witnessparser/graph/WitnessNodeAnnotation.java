@@ -29,18 +29,22 @@ package de.uni_freiburg.informatik.ultimate.witnessparser.graph;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.IPayload;
-import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.annotation.ModernAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.annotation.Visualizable;
 
-public class WitnessNodeAnnotation extends AbstractAnnotations {
+public class WitnessNodeAnnotation extends ModernAnnotations {
 
 	private static final long serialVersionUID = 1L;
-	private static final String sKey = Activator.s_PLUGIN_ID + "_Node";
-	private static final String[] sFieldNames = new String[] { "IsInitial", "IsError", "IsSink", "Invariant" };
+	private static final String KEY = Activator.s_PLUGIN_ID + "_Node";
 
+	@Visualizable
 	private final boolean mIsInitial;
+	@Visualizable
 	private final boolean mIsError;
+	@Visualizable
 	private final boolean mIsSink;
+	@Visualizable
 	private final String mInvariant;
 
 	public WitnessNodeAnnotation(final boolean isInitial, final boolean isError, final boolean isSink,
@@ -71,26 +75,6 @@ public class WitnessNodeAnnotation extends AbstractAnnotations {
 		return !mIsInitial && !mIsError && !mIsSink && mInvariant == null;
 	}
 
-	@Override
-	protected String[] getFieldNames() {
-		return sFieldNames;
-	}
-
-	@Override
-	protected Object getFieldValue(final String field) {
-		switch (field) {
-		case "IsInitial":
-			return mIsInitial;
-		case "IsError":
-			return mIsError;
-		case "IsSink":
-			return mIsSink;
-		case "Invariant":
-			return mInvariant;
-		}
-		return null;
-	}
-
 	public void annotate(IElement node) {
 		if (node instanceof WitnessNode) {
 			annotate((WitnessNode) node);
@@ -98,21 +82,21 @@ public class WitnessNodeAnnotation extends AbstractAnnotations {
 	}
 
 	public void annotate(WitnessNode node) {
-		node.getPayload().getAnnotations().put(sKey, this);
+		node.getPayload().getAnnotations().put(KEY, this);
 	}
 
 	public static WitnessNodeAnnotation getAnnotation(IElement node) {
 		if (node instanceof WitnessNode) {
-			getAnnotation((WitnessNode) node);
+			return getAnnotation((WitnessNode) node);
 		}
 		return null;
 	}
 
 	public static WitnessNodeAnnotation getAnnotation(WitnessNode node) {
 		if (node.hasPayload()) {
-			IPayload payload = node.getPayload();
+			final IPayload payload = node.getPayload();
 			if (payload.hasAnnotation()) {
-				IAnnotations annot = payload.getAnnotations().get(sKey);
+				final IAnnotations annot = payload.getAnnotations().get(KEY);
 				if (annot != null) {
 					return (WitnessNodeAnnotation) annot;
 				}

@@ -34,7 +34,7 @@ import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.graphml.CEXWitnessGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.graphml.FalseWitnessGenerator;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.ProgramExecutionFormatter;
@@ -102,7 +102,7 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 
 	@Override
 	public String getSVCOMPWitnessString() {
-		return new CEXWitnessGenerator(this, mLogger).makeGraphMLString();
+		return new FalseWitnessGenerator(this, mLogger).makeGraphMLString();
 	}
 
 }

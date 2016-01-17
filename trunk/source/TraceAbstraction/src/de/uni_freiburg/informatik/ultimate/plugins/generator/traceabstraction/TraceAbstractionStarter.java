@@ -357,11 +357,7 @@ public class TraceAbstractionStarter {
 	}
 
 	private static boolean isAuxilliaryProcedure(String proc) {
-		if (proc.equals("ULTIMATE.init") || proc.equals("ULTIMATE.start")) {
-			return true;
-		} else {
-			return false;
-		}
+		return proc.equals("ULTIMATE.init") || proc.equals("ULTIMATE.start");
 	}
 	
 	
@@ -376,10 +372,8 @@ public class TraceAbstractionStarter {
 		return m_RootOfNewModel;
 	}
 	
-	
-	
 	public static HoareAnnotation getHoareAnnotation(ProgramPoint programPoint) {
-		return ((HoareAnnotation) programPoint.getPayload().getAnnotations().get(Activator.s_PLUGIN_ID));
+		return HoareAnnotation.getAnnotation(programPoint);
 	}
 
 	public ProgramPoint getErrorPP(RcfgProgramExecution rcfgProgramExecution) {

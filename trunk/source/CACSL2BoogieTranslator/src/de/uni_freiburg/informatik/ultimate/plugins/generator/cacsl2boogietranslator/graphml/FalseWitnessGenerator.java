@@ -52,12 +52,12 @@ import edu.uci.ics.jung.io.GraphMLWriter;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
-public class CEXWitnessGenerator {
+public class FalseWitnessGenerator {
 
 	private final CACSLProgramExecution mProgramExecution;
 	private final Logger mLogger;
 
-	public CEXWitnessGenerator(final CACSLProgramExecution translatedProgramExecution, final Logger logger) {
+	public FalseWitnessGenerator(final CACSLProgramExecution translatedProgramExecution, final Logger logger) {
 		assert translatedProgramExecution != null;
 		assert translatedProgramExecution.getLength() > 0;
 		mProgramExecution = translatedProgramExecution;

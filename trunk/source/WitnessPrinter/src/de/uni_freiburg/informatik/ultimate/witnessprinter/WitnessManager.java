@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.core.coreplugin.cexverifier;
+package de.uni_freiburg.informatik.ultimate.witnessprinter;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -39,8 +39,6 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
@@ -52,13 +50,13 @@ import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.WitnessResult;
 import de.uni_freiburg.informatik.ultimate.result.WitnessResult.WitnessVerificationStatus;
+import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
 
 /**
- * The poorly named WitnessManager "handles" witnesses as specified by the
- * Ultimate Core settings.
+ * The poorly named WitnessManager "handles" witnesses as specified by the Ultimate Core settings.
  * 
- * E.g. it may create witness files from counter example results and may call
- * another verifier with this witness as input.
+ * E.g. it may create witness files from counter example results and may call another verifier with this witness as
+ * input.
  * 
  * The actual witness generation is done by the corresponding plugin (i.e. via
  * {@link IProgramExecution#getSVCOMPWitnessString()}).
@@ -73,7 +71,8 @@ public class WitnessManager {
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
 
-	public WitnessManager(Logger logger, IUltimateServiceProvider services, IToolchainStorage storage) {
+	public WitnessManager(final Logger logger, final IUltimateServiceProvider services,
+			final IToolchainStorage storage) {
 		mLogger = logger;
 		mServices = services;
 		mStorage = storage;
@@ -81,9 +80,9 @@ public class WitnessManager {
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void run() throws IOException, InterruptedException {
-		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
-		final Collection<CounterExampleResult> cexResults = CoreUtil.filterResults(mServices.getResultService()
-				.getResults(), CounterExampleResult.class);
+		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		final Collection<CounterExampleResult> cexResults = CoreUtil
+				.filterResults(mServices.getResultService().getResults(), CounterExampleResult.class);
 
 		final IBacktranslationService backtrans = mServices.getBacktranslationService();
 
@@ -94,8 +93,8 @@ public class WitnessManager {
 					.translateProgramExecution(cex.getProgramExecution());
 			final String svcompWitness = cexProgramExecution.getSVCOMPWitnessString();
 
-			final boolean writeInWorkingDir = ups.getBoolean(CorePreferenceInitializer.LABEL_WITNESS_WRITE_WORKINGDIR);
-			final boolean writeBesideInputFile = ups.getBoolean(CorePreferenceInitializer.LABEL_WITNESS_WRITE);
+			final boolean writeInWorkingDir = ups.getBoolean(PreferenceInitializer.LABEL_WITNESS_WRITE_WORKINGDIR);
+			final boolean writeBesideInputFile = ups.getBoolean(PreferenceInitializer.LABEL_WITNESS_WRITE);
 			final List<String> filenamesToDelete = new ArrayList<>();
 
 			if (!writeBesideInputFile && !writeInWorkingDir) {
@@ -112,18 +111,18 @@ public class WitnessManager {
 				filenamesToDelete.add(filename);
 			}
 
-			if (ups.getBoolean(CorePreferenceInitializer.LABEL_WITNESS_VERIFY)) {
+			if (ups.getBoolean(PreferenceInitializer.LABEL_WITNESS_VERIFY)) {
 				if (svcompWitness == null) {
 					reportWitnessResult(null, cex, WitnessVerificationStatus.INTERNAL_ERROR);
 				} else {
 					checkWitness(filename, cex, svcompWitness);
 				}
-			} else if (ups.getBoolean(CorePreferenceInitializer.LABEL_WITNESS_LOG)) {
+			} else if (ups.getBoolean(PreferenceInitializer.LABEL_WITNESS_LOG)) {
 				reportWitnessResult(svcompWitness, cex, WitnessVerificationStatus.UNVERIFIED);
 			}
 
-			if (ups.getBoolean(CorePreferenceInitializer.LABEL_WITNESS_DELETE_GRAPHML)) {
-				for (String fi : filenamesToDelete) {
+			if (ups.getBoolean(PreferenceInitializer.LABEL_WITNESS_DELETE_GRAPHML)) {
+				for (final String fi : filenamesToDelete) {
 					deleteFile(fi);
 				}
 			}
@@ -180,10 +179,10 @@ public class WitnessManager {
 	private boolean checkWitness(String svcompWitnessFile, CounterExampleResult cex, String svcompWitness)
 			throws IOException, InterruptedException {
 		mLogger.info("Verifying witness for CEX: " + cex.getShortDescription());
-		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
-		final CorePreferenceInitializer.WitnessVerifierType type = ups.getEnum(
-				CorePreferenceInitializer.LABEL_WITNESS_VERIFIER, CorePreferenceInitializer.WitnessVerifierType.class);
-		final String command = ups.getString(CorePreferenceInitializer.LABEL_WITNESS_VERIFIER_COMMAND);
+		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		final PreferenceInitializer.WitnessVerifierType type = ups.getEnum(PreferenceInitializer.LABEL_WITNESS_VERIFIER,
+				PreferenceInitializer.WitnessVerifierType.class);
+		final String command = ups.getString(PreferenceInitializer.LABEL_WITNESS_VERIFIER_COMMAND);
 
 		switch (type) {
 		case CPACHECKER:
@@ -202,13 +201,13 @@ public class WitnessManager {
 			reportWitnessResult(svcompWitness, cex, WitnessVerificationStatus.INTERNAL_ERROR);
 			return false;
 		}
-		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
-		int timeoutInS = ups.getInt(CorePreferenceInitializer.LABEL_WITNESS_VERIFIER_TIMEOUT);
+		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		int timeoutInS = ups.getInt(PreferenceInitializer.LABEL_WITNESS_VERIFIER_TIMEOUT);
 
 		final String originalFile = cex.getLocation().getFileName();
 		final String[] cmdArray = makeCPACheckerCommand(command, svcompWitnessFile,
-				ups.getString(CorePreferenceInitializer.LABEL_WITNESS_CPACHECKER_PROPERTY), originalFile,
-				cpaCheckerHome, timeoutInS);
+				ups.getString(PreferenceInitializer.LABEL_WITNESS_CPACHECKER_PROPERTY), originalFile, cpaCheckerHome,
+				timeoutInS);
 		timeoutInS++;
 		mLogger.info(StringUtils.join(cmdArray, " "));
 		MonitoredProcess cpaCheckerProcess = MonitoredProcess.exec(cmdArray, cpaCheckerHome, null, mServices, mStorage);
