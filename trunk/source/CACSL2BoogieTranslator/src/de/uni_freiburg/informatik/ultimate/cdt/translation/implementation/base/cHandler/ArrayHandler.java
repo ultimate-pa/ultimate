@@ -75,7 +75,7 @@ public class ArrayHandler {
 	private POINTER_CHECKMODE m_checkArrayAccessOffHeap;
 
 	public ArrayHandler() {
-		UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		m_checkArrayAccessOffHeap = 
 				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_ARRAYACCESSOFFHEAP, POINTER_CHECKMODE.class);
 	}

@@ -31,13 +31,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public class WitnessNode {
+public class GeneratedWitnessNode {
 	private final boolean mIsEntry;
 	private final String mId;
 	private final boolean mIsError;
 	private final boolean mIsSink;
 
-	WitnessNode(long currentNodeId, boolean isEntry, boolean isError,boolean isSink) {
+	GeneratedWitnessNode(long currentNodeId, boolean isEntry, boolean isError,boolean isSink) {
 		mIsEntry = isEntry;
 		mIsError = isError;
 		mId = "N" + String.valueOf(currentNodeId);

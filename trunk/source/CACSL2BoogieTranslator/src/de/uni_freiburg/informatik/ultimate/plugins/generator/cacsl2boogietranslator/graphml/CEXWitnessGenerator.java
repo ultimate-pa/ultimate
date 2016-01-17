@@ -65,20 +65,20 @@ public class CEXWitnessGenerator {
 	}
 
 	public String makeGraphMLString() {
-		final GraphMLWriter<WitnessNode, WitnessEdge> graphWriter = new GraphMLWriter<>();
+		final GraphMLWriter<GeneratedWitnessNode, GeneratedWitnessEdge> graphWriter = new GraphMLWriter<>();
 		final String filename = StringEscapeUtils
 				.escapeXml10(mProgramExecution.getTraceElement(0).getStep().getFileName());
 
-		graphWriter.setEdgeIDs(new Transformer<WitnessEdge, String>() {
+		graphWriter.setEdgeIDs(new Transformer<GeneratedWitnessEdge, String>() {
 			@Override
-			public String transform(WitnessEdge arg0) {
+			public String transform(GeneratedWitnessEdge arg0) {
 				return arg0.getName();
 			}
 		});
 
-		graphWriter.setVertexIDs(new Transformer<WitnessNode, String>() {
+		graphWriter.setVertexIDs(new Transformer<GeneratedWitnessNode, String>() {
 			@Override
-			public String transform(WitnessNode arg0) {
+			public String transform(GeneratedWitnessNode arg0) {
 				return arg0.getName();
 			}
 		});
@@ -102,7 +102,7 @@ public class CEXWitnessGenerator {
 		// TODO: When we switch to "multi-property" witnesses, we write invariants for FALSE-witnesses
 		addVertexData(graphWriter, "invariant", "true", vertex -> null);
 
-		final Hypergraph<WitnessNode, WitnessEdge> graph = getGraph();
+		final Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge> graph = getGraph();
 		final StringWriter writer = new StringWriter();
 		try {
 			graphWriter.save(graph, writer);
@@ -121,46 +121,46 @@ public class CEXWitnessGenerator {
 		}
 	}
 
-	private void addGraphData(final GraphMLWriter<WitnessNode, WitnessEdge> graphWriter, final String key,
-			final String defaultValue, final Function<Hypergraph<WitnessNode, WitnessEdge>, String> transformer) {
+	private void addGraphData(final GraphMLWriter<GeneratedWitnessNode, GeneratedWitnessEdge> graphWriter, final String key,
+			final String defaultValue, final Function<Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge>, String> transformer) {
 		assert transformer != null;
 		graphWriter.addGraphData(key, null, defaultValue,
-				new Transformer<Hypergraph<WitnessNode, WitnessEdge>, String>() {
+				new Transformer<Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge>, String>() {
 					@Override
-					public String transform(final Hypergraph<WitnessNode, WitnessEdge> arg0) {
+					public String transform(final Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge> arg0) {
 						return transformer.apply(arg0);
 					}
 				});
 	}
 
-	private void addEdgeData(final GraphMLWriter<WitnessNode, WitnessEdge> graphWriter, final String key,
-			final String defaultValue, final Function<WitnessEdge, String> transformer) {
+	private void addEdgeData(final GraphMLWriter<GeneratedWitnessNode, GeneratedWitnessEdge> graphWriter, final String key,
+			final String defaultValue, final Function<GeneratedWitnessEdge, String> transformer) {
 		assert transformer != null;
-		graphWriter.addEdgeData(key, null, defaultValue, new Transformer<WitnessEdge, String>() {
+		graphWriter.addEdgeData(key, null, defaultValue, new Transformer<GeneratedWitnessEdge, String>() {
 			@Override
-			public String transform(final WitnessEdge arg0) {
+			public String transform(final GeneratedWitnessEdge arg0) {
 				return transformer.apply(arg0);
 			}
 		});
 	}
 
-	private void addVertexData(final GraphMLWriter<WitnessNode, WitnessEdge> graphWriter, final String key,
-			final String defaultValue, final Function<WitnessNode, String> transformer) {
+	private void addVertexData(final GraphMLWriter<GeneratedWitnessNode, GeneratedWitnessEdge> graphWriter, final String key,
+			final String defaultValue, final Function<GeneratedWitnessNode, String> transformer) {
 		assert transformer != null;
-		graphWriter.addVertexData(key, null, defaultValue, new Transformer<WitnessNode, String>() {
+		graphWriter.addVertexData(key, null, defaultValue, new Transformer<GeneratedWitnessNode, String>() {
 			@Override
-			public String transform(final WitnessNode arg0) {
+			public String transform(final GeneratedWitnessNode arg0) {
 				return transformer.apply(arg0);
 			}
 		});
 	}
 
-	private Hypergraph<WitnessNode, WitnessEdge> getGraph() {
-		DirectedSparseGraph<WitnessNode, WitnessEdge> graph = new OrderedDirectedSparseGraph<>();
-		WitnessNodeEdgeFactory fac = new WitnessNodeEdgeFactory();
+	private Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge> getGraph() {
+		DirectedSparseGraph<GeneratedWitnessNode, GeneratedWitnessEdge> graph = new OrderedDirectedSparseGraph<>();
+		GeneratedWitnessNodeEdgeFactory fac = new GeneratedWitnessNodeEdgeFactory();
 
-		WitnessNode current = insertStartNodeAndDummyEdges(fac, graph, 0);
-		WitnessNode next = null;
+		GeneratedWitnessNode current = insertStartNodeAndDummyEdges(fac, graph, 0);
+		GeneratedWitnessNode next = null;
 
 		// removed because of standard change
 		// Add initial state edge if present; only edge with assumption but no
@@ -201,10 +201,10 @@ public class CEXWitnessGenerator {
 		return graph;
 	}
 
-	private WitnessNode insertStartNodeAndDummyEdges(WitnessNodeEdgeFactory fac,
-			DirectedSparseGraph<WitnessNode, WitnessEdge> graph, int numberOfUselessEdgesAfterStart) {
-		WitnessNode current = fac.createInitialWitnessNode();
-		WitnessNode next = null;
+	private GeneratedWitnessNode insertStartNodeAndDummyEdges(GeneratedWitnessNodeEdgeFactory fac,
+			DirectedSparseGraph<GeneratedWitnessNode, GeneratedWitnessEdge> graph, int numberOfUselessEdgesAfterStart) {
+		GeneratedWitnessNode current = fac.createInitialWitnessNode();
+		GeneratedWitnessNode next = null;
 		graph.addVertex(current);
 
 		for (int i = 0; i < numberOfUselessEdgesAfterStart; ++i) {

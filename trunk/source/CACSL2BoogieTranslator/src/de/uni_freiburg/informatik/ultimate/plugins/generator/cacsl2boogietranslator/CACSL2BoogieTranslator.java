@@ -51,8 +51,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  * @date 03.02.2012
  */
 public class CACSL2BoogieTranslator implements IGenerator {
-	private static final String s_PLUGIN_NAME = Activator.s_PLUGIN_NAME;
-	private static final String s_PLUGIN_ID = Activator.s_PLUGIN_ID;
+	private static final String s_PLUGIN_NAME = Activator.PLUGIN_NAME;
+	private static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
 
 	private CACSL2BoogieTranslatorObserver mObserver;
 	private GraphType mInputDefinition;
@@ -96,12 +96,13 @@ public class CACSL2BoogieTranslator implements IGenerator {
 
 	@Override
 	public GraphType getOutputDefinition() {
-		return new GraphType(Activator.s_PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
+		return new GraphType(Activator.PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
 	}
 
 	@Override
 	public IElement getModel() {
-		return this.mObserver.getRoot();
+		final IElement rtr = mObserver.getRoot();
+		return rtr;
 	}
 
 	@Override

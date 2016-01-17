@@ -177,7 +177,7 @@ public class FunctionHandler {
 		this.procedures = new LinkedHashMap<String, Procedure>();
 		this.procedureToCFunctionType = new LinkedHashMap<>();
 		this.modifiedGlobalsIsUserDefined = new LinkedHashSet<String>();
-		m_CheckMemoryLeakAtEndOfMain = (new UltimatePreferenceStore(Activator.s_PLUGIN_ID))
+		m_CheckMemoryLeakAtEndOfMain = (new UltimatePreferenceStore(Activator.PLUGIN_ID))
 				.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MemoryLeakInMain);
 		this.functionSignaturesThatHaveAFunctionPointer = new LinkedHashSet<>();
 	}

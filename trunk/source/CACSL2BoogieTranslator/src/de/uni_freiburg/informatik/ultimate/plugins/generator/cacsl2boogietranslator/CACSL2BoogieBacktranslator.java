@@ -109,7 +109,7 @@ public class CACSL2BoogieBacktranslator extends
 	public CACSL2BoogieBacktranslator(IUltimateServiceProvider services) {
 		super(BoogieASTNode.class, CACSLLocation.class, Expression.class, IASTExpression.class);
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mBoogie2C = new Boogie2C();
 	}
 	
@@ -727,8 +727,8 @@ public class CACSL2BoogieBacktranslator extends
 
 	private void reportUnfinishedBacktranslation(String message) {
 		mLogger.warn(message);
-		mServices.getResultService().reportResult(Activator.s_PLUGIN_ID,
-				new GenericResult(Activator.s_PLUGIN_ID, sUnfinishedBacktranslation, message, Severity.WARNING));
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
+				new GenericResult(Activator.PLUGIN_ID, sUnfinishedBacktranslation, message, Severity.WARNING));
 	}
 
 	private Pair<String,CType> translateIdentifierExpression(IdentifierExpression expr) {
