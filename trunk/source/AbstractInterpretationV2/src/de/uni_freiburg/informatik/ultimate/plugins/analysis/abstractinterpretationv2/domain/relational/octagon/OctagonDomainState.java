@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -296,11 +297,14 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 			BiFunction<BoolValue, BoolValue, BoolValue> booleanOperation,
 			BiFunction<OctMatrix, OctMatrix, OctMatrix> numericOperation) {		
 		OctagonDomainState result = shallowCopy();
-		unrefBooleanAbstraction(result);
 		for (Map.Entry<String, BoolValue> entry : mBooleanAbstraction.entrySet()) {
 			String name = entry.getKey();
-			BoolValue value = booleanOperation.apply(entry.getValue(),other.mBooleanAbstraction.get(name));
-			result.mBooleanAbstraction.put(name, value);
+			BoolValue oldValue = entry.getValue();
+			BoolValue newValue = booleanOperation.apply(oldValue, other.mBooleanAbstraction.get(name));
+			if (!oldValue.equals(newValue)) {
+				unrefBooleanAbstraction(result);
+				result.mBooleanAbstraction.put(name, newValue);
+			}
 		}
 		result.mNumericAbstraction = numericOperation.apply(mNumericAbstraction, other.mNumericAbstraction);
 		return result;
@@ -410,47 +414,84 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		return typeChangedVars;
 	}
 
-	protected void overwriteOnReturnedCall(OctagonDomainState stateOfCallee, Map<String, String> mapOutToLhs) {
-		Set<String> sharedConstants = new HashSet<>();
-		Set<String> sharedGlobals = new HashSet<>();
+	public OctagonDomainState copyValuesOnScopeChange(OctagonDomainState source,
+			Map<String, String> mapSourceToTarget) {
+		BidirectionalMap<Integer, Integer> mapNumericSourceToTarget = new BidirectionalMap<>();
+		Map<String, String> mapBooleanSourceToTarget = new HashMap<>();
 		
-		// TODO filter by abstract type (int, bool, (others))
+		// shared numeric variables (copy to keep relations between globals and in/out-parameters)
+		for (String var : sharedVars(source)) {
+			Integer targetIndex = mMapNumericVarToIndex.get(var);
+			if (targetIndex != null) {
+				Integer sourceIndex = source.mMapNumericVarToIndex.get(var);
+				assert sourceIndex != null : "shared variables are not really shared";
+				mapNumericSourceToTarget.put(sourceIndex, targetIndex);
+			}
+			// do not copy shared booleans (again). Already done by patch(...).
+		}
 
-		// TODO copy from stateOfCallee to this
-		
-		throw new UnsupportedOperationException("work in progress");
-	}
-	
-	/**
-	 * Finds the shared global variables between {@code this} and an {@code other} abstract domain state.
-	 * Found variables and constants are added to existing collections.
-	 * <p>
-	 * Shared variables are the exact same variables.
-	 * Different variables with equal names or even equal types are not shared.
-	 * 
-	 * @param other abstract domain state
-	 * @param sharedGlobals collection where the shared globals are added or {@code null}
-	 * @param sharedConstans collection where the shared constants are added or {@code null}
-	 */
-	public void sharedNumericGlobalsAndConstants(OctagonDomainState other,
-			Collection<String> sharedGlobals, Collection<String> sharedConstans) {
-		for (Map.Entry<String, IBoogieVar> var : sharedVars(other)) {
-			IBoogieVar ibv = var.getValue();
-			if (sharedConstans != null && ibv instanceof BoogieConst) {
-				sharedConstans.add(var.getKey());
-			} else if (sharedGlobals != null && ibv instanceof BoogieVar && ((BoogieVar) ibv).isGlobal()) {
-				sharedGlobals.add(var.getKey());
+		// in/out-parameters (from one scope) to locals (from another scope)
+		for (Map.Entry<String, String> entry : mapSourceToTarget.entrySet()) {
+			String sourceVar = entry.getKey();
+			String targetVar = entry.getValue();
+			Integer targetIndex = mMapNumericVarToIndex.get(targetVar);
+			if (targetIndex != null) {
+				Integer sourceIndex = source.mMapNumericVarToIndex.get(sourceVar);
+				assert sourceIndex != null : "assigned non-numeric var to numeric var";
+				mapNumericSourceToTarget.put(sourceIndex, targetIndex);
+			} else if (mBooleanAbstraction.containsKey(targetVar)) {
+				assert source.mBooleanAbstraction.containsKey(sourceVar) : "assigned non-boolean var to boolean var";
+				mapBooleanSourceToTarget.put(sourceVar, targetVar);
 			}
 		}
+
+		// create new state
+		OctagonDomainState newState = shallowCopy();
+		newState.mNumericAbstraction = mNumericAbstraction.copy();
+		newState.mNumericAbstraction.overwriteSelection(source.mNumericAbstraction, mapNumericSourceToTarget);
+		if (!mapBooleanSourceToTarget.isEmpty()) {
+			unrefBooleanAbstraction(newState);
+			for (Map.Entry<String, String> entry : mapBooleanSourceToTarget.entrySet()) {
+				String sourceVar = entry.getKey();
+				BoolValue sourceValue = source.mBooleanAbstraction.get(sourceVar);
+				String targetVar = entry.getValue();
+				newState.mBooleanAbstraction.put(targetVar, sourceValue);
+			}
+		}
+		return newState;
 	}
 
-	// private, since Map.Entry.setValue() could be used to alter the internal map 
-	private Set<Map.Entry<String, IBoogieVar>> sharedVars(OctagonDomainState other) {
-		Set<Map.Entry<String, IBoogieVar>> sharedVars = new HashSet<>();
+	//	/**
+//	 * Finds the shared global variables and constants between {@code this} and an {@code other} abstract domain state.
+//	 * Found global variables and constants are added to existing collections.
+//	 * <p>
+//	 * Shared variables/constants are the exact same variables/constants.
+//	 * Different variables/constants with equal names or even equal types are not shared.
+//	 * 
+//	 * @param other abstract domain state
+//	 * @param sharedGlobals collection where the shared global variables are added or {@code null}
+//	 * @param sharedConstants collection where the shared constants are added or {@code null}
+//	 */
+//	public void sharedNumericGlobals(OctagonDomainState other,
+//			Collection<String> sharedGlobals, Collection<String> sharedConstants) {
+//		for (Map.Entry<String, IBoogieVar> var : sharedVars(other)) {
+//			IBoogieVar ibv = var.getValue();
+//			if (isNumeric(ibv.getIType())) {
+//				if (sharedConstants != null && ibv instanceof BoogieConst) {
+//					sharedConstants.add(var.getKey());
+//				} else if (sharedGlobals != null && ibv instanceof BoogieVar && ((BoogieVar) ibv).isGlobal()) {
+//					sharedGlobals.add(var.getKey());
+//				}
+//			}
+//		}
+//	}
+
+	public Set<String> sharedVars(OctagonDomainState other) {
+		Set<String> sharedVars = new HashSet<>();
 		Set<Map.Entry<String, IBoogieVar>> otherEntrySet = other.mMapVarToBoogieVar.entrySet();
 		for (Map.Entry<String, IBoogieVar> entry : mMapVarToBoogieVar.entrySet()) {
 			if (otherEntrySet.contains(entry)) {
-				sharedVars.add(entry);
+				sharedVars.add(entry.getKey());
 			}
 		}
 		return sharedVars;

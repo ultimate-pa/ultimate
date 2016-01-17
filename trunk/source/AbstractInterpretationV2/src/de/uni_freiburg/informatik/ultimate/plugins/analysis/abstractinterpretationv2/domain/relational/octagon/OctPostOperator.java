@@ -63,43 +63,67 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 	public OctagonDomainState apply(OctagonDomainState stateBeforeLeaving, OctagonDomainState stateAfterLeaving,
 			CodeBlock transition) {
 		if (transition instanceof Call) {
-			return stateAfterLeaving;
+			return applyCall(stateBeforeLeaving, stateAfterLeaving, (Call) transition);
 		} else if (transition instanceof Return) {
 			return applyReturn(stateBeforeLeaving, stateAfterLeaving, (Return) transition);
 		} else {
 			throw new UnsupportedOperationException("Unsupported transition: " + transition);
 		}
-//		throw new UnsupportedOperationException("Not yet implemented");
+	}
+
+	private OctagonDomainState applyCall(OctagonDomainState stateBeforeLeaving, OctagonDomainState stateAfterLeaving,
+			Call callTransition) {
+		CallStatement call = callTransition.getCallStatement();
+		Procedure procedure = calledProcedure(call);
+
+		Map<String, String> mapArgToInParam = new HashMap<>();
+
+		// TODO evaluate expressions
+//		for (Expression expr : call.getArguments()) {
+//			
+//		}
+		// TODO assign evaluated expressions to <insert state here>.
+		// probably best to project and assign separately
+		
+//		return stateAfterLeaving.copyValuesOnScopeChange(stateBeforeLeaving, mapArgToInParam);
+
+		// HACK -- assume \top for all in-params (valid but poor over-approximation)
+		OctagonDomainState newState = stateAfterLeaving.deepCopy();
+		for (VarList inParamList : procedure.getInParams()) {
+			for (String inParam : inParamList.getIdentifiers()) {
+				newState.havocVar(inParam);
+			}
+		}
+		return newState;
 	}
 	
 	private OctagonDomainState applyReturn(OctagonDomainState stateBeforeLeaving, OctagonDomainState stateAfterLeaving,
-			Return ret) {
-		CallStatement call = ret.getCallStatement();
+			Return returnTransition) {
+		CallStatement call = returnTransition.getCallStatement();
+		Procedure procedure = calledProcedure(call);
+		Map<String, String> mapOutToLhs = generateMapOutToLhs(call.getLhs(), procedure);
+		return stateAfterLeaving.copyValuesOnScopeChange(stateBeforeLeaving, mapOutToLhs);
+	}
+	
+	private Procedure calledProcedure(CallStatement call) {
 		List<Declaration> procedureDeclarations = mSymbolTable.getFunctionOrProcedureDeclaration(call.getMethodName());
-		assert procedureDeclarations.size() > 0 : "return from undefined method";
+		assert procedureDeclarations.size() > 0 : "called/return of undefined method " + call.getMethodName();
 		if (procedureDeclarations.size() > 1) {
 			throw new UnsupportedOperationException("Separated implementations are unsupported.");
 		}
-		assert procedureDeclarations.get(0) instanceof Procedure : "return from non-procedure";
-		Procedure procedure = (Procedure) procedureDeclarations.get(0);
-
-		Map<String, String> mapOutToLhs = generateMapOutToLhs(call.getLhs(), procedure);
-
-		// TODO copy output vars to lhs
-		
-//		return null;
-		throw new UnsupportedOperationException("work in progress");
+		Declaration procedure = procedureDeclarations.get(0);
+		assert procedure instanceof Procedure : "call/return of non-procedure " + call.getMethodName();
+		return (Procedure) procedure;
 	}
 	
 	private Map<String, String> generateMapOutToLhs(VariableLHS[] lhs, Procedure calledProcedure) {
-		Map<String, String> mapOutToLhs = new HashMap<>();
-		
+			Map<String, String> mapOutToLhs = new HashMap<>();
 		// out-parameters to lhs of call assignment
 		int i = 0;
-		for (VarList outVarList : calledProcedure.getOutParams()) {
-			for (String oudVarId : outVarList.getIdentifiers()) {
+		for (VarList outParamList : calledProcedure.getOutParams()) {
+			for (String oudParam : outParamList.getIdentifiers()) {
 				assert i < lhs.length : "missing left hand side for out-parameter";
-				mapOutToLhs.put(oudVarId, lhs[i].getIdentifier());
+				mapOutToLhs.put(oudParam, lhs[i].getIdentifier());
 				++i;
 			}
 		}
