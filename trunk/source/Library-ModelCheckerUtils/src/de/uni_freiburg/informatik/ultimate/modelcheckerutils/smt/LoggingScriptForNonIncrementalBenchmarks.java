@@ -676,5 +676,11 @@ public class LoggingScriptForNonIncrementalBenchmarks implements Script {
 			return m_Command;
 		}
 	}
+
+	@Override
+	public Term roundingMode(String rm) throws SMTLIBException {
+		// TODO Auto-generated method stub
+		return mScript.roundingMode(rm);
+	}
 	
 }
