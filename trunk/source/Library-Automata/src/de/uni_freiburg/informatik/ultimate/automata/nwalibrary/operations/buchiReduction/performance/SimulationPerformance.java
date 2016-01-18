@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -51,7 +52,7 @@ public final class SimulationPerformance {
 	/**
 	 * Holds all counting measures that are monitored.
 	 */
-	private final HashMap<CountingMeasure, Integer> m_CountingMeasures;
+	private final LinkedHashMap<CountingMeasure, Integer> m_CountingMeasures;
 	/**
 	 * If the simulation uses SCC optimization or not.
 	 */
@@ -63,12 +64,12 @@ public final class SimulationPerformance {
 	/**
 	 * Holds all time measures that are monitored.
 	 */
-	private final HashMap<TimeMeasure, List<Long>> m_TimeMeasures;
+	private final LinkedHashMap<TimeMeasure, List<Long>> m_TimeMeasures;
 	/**
 	 * Holds all starting timestamps for monitored time measures.
 	 */
-	private final HashMap<TimeMeasure, Long> m_TimeMeasureStartTimes;
-
+	private final LinkedHashMap<TimeMeasure, Long> m_TimeMeasureStartTimes;
+	
 	/**
 	 * Creates a simulation performance object that monitors the performance of
 	 * a given simulation.
@@ -80,10 +81,25 @@ public final class SimulationPerformance {
 	 */
 	public SimulationPerformance(final SimulationType simType, final boolean isUsingSCCs) {
 		m_SimType = simType;
-		m_TimeMeasures = new HashMap<>();
-		m_TimeMeasureStartTimes = new HashMap<>();
-		m_CountingMeasures = new HashMap<>();
+		m_TimeMeasures = new LinkedHashMap<>();
+		m_TimeMeasureStartTimes = new LinkedHashMap<>();
+		m_CountingMeasures = new LinkedHashMap<>();
 		m_IsUsingSCCs = isUsingSCCs;
+	}
+	
+	/**
+	 * Adds a given value to the duration list of a given time measure.
+	 * 
+	 * @param type
+	 *            Type of the time measure
+	 * @param duration
+	 *            Duration to add
+	 */
+	public void addTimeMeasureValue(final TimeMeasure type, final long duration) {
+		if (!m_TimeMeasures.containsKey(type)) {
+			m_TimeMeasures.put(type, new LinkedList<>());
+		}
+		m_TimeMeasures.get(type).add(duration);
 	}
 
 	/**
@@ -100,6 +116,15 @@ public final class SimulationPerformance {
 			return NO_COUNTING_RESULT;
 		}
 		return m_CountingMeasures.get(type);
+	}
+
+	/**
+	 * Gets the counting measures.
+	 * 
+	 * @return The counting measures.
+	 */
+	public LinkedHashMap<CountingMeasure, Integer> getCountingMeasures() {
+		return m_CountingMeasures;
 	}
 
 	/**
@@ -157,6 +182,15 @@ public final class SimulationPerformance {
 	 */
 	public List<Long> getTimeMeasureResults(final TimeMeasure type) {
 		return m_TimeMeasures.get(type);
+	}
+
+	/**
+	 * Gets the time measures.
+	 * 
+	 * @return The time measures.
+	 */
+	public LinkedHashMap<TimeMeasure, List<Long>> getTimeMeasures() {
+		return m_TimeMeasures;
 	}
 
 	/**
