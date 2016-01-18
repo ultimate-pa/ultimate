@@ -673,6 +673,11 @@ public class SmtUtils {
 		if (affineDivident.isErrorTerm() || affineDivisor.isErrorTerm()) {
 			return script.term("mod", divident, divisor);
 		}
+		if (affineDivisor.isZero()) {
+			// pass the problem how to deal with division by zero to the
+			// subsequent analysis
+			return script.term("mod", divident, divisor);
+		}
 		if (affineDivisor.isConstant()) {
 			BigInteger bigIntDivisor = toInt(affineDivisor.getConstant());
 			if (affineDivident.isConstant()) {
