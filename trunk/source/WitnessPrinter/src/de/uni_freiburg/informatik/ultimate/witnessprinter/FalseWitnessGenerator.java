@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.graphml;
+package de.uni_freiburg.informatik.ultimate.witnessprinter;
 
 import java.io.IOException;
 import java.io.StringWriter;
@@ -35,12 +35,14 @@ import java.util.function.Function;
 import org.apache.commons.collections15.Transformer;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.log4j.Logger;
-import org.eclipse.cdt.core.dom.ast.IASTExpression;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSLProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.result.ProgramExecutionFormatter.IProgramExecutionStringProvider;
+import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessEdge;
+import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessNode;
+import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessNodeEdgeFactory;
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.graph.Hypergraph;
 import edu.uci.ics.jung.graph.util.Pair;
@@ -52,26 +54,30 @@ import edu.uci.ics.jung.io.GraphMLWriter;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
-public class FalseWitnessGenerator {
+public class FalseWitnessGenerator<TE, E> {
 
-	private final CACSLProgramExecution mProgramExecution;
+	private final IProgramExecution<TE, E> mProgramExecution;
 	private final Logger mLogger;
+	private final IProgramExecutionStringProvider<TE, E> mStringProvider;
 
-	public FalseWitnessGenerator(final CACSLProgramExecution translatedProgramExecution, final Logger logger) {
+	public FalseWitnessGenerator(final IProgramExecution<TE, E> translatedProgramExecution,
+			final IProgramExecutionStringProvider<TE, E> stringProvider, final Logger logger) {
 		assert translatedProgramExecution != null;
 		assert translatedProgramExecution.getLength() > 0;
+		assert stringProvider != null;
+		mStringProvider = stringProvider;
 		mProgramExecution = translatedProgramExecution;
 		mLogger = logger;
 	}
 
 	public String makeGraphMLString() {
-		final GraphMLWriter<GeneratedWitnessNode, GeneratedWitnessEdge> graphWriter = new GraphMLWriter<>();
+		final GraphMLWriter<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> graphWriter = new GraphMLWriter<>();
 		final String filename = StringEscapeUtils
-				.escapeXml10(mProgramExecution.getTraceElement(0).getStep().getFileName());
+				.escapeXml10(mStringProvider.getFileNameFromStep(mProgramExecution.getTraceElement(0).getStep()));
 
-		graphWriter.setEdgeIDs(new Transformer<GeneratedWitnessEdge, String>() {
+		graphWriter.setEdgeIDs(new Transformer<GeneratedWitnessEdge<TE, E>, String>() {
 			@Override
-			public String transform(GeneratedWitnessEdge arg0) {
+			public String transform(GeneratedWitnessEdge<TE, E> arg0) {
 				return arg0.getName();
 			}
 		});
@@ -102,7 +108,7 @@ public class FalseWitnessGenerator {
 		// TODO: When we switch to "multi-property" witnesses, we write invariants for FALSE-witnesses
 		addVertexData(graphWriter, "invariant", "true", vertex -> null);
 
-		final Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge> graph = getGraph();
+		final Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> graph = getGraph();
 		final StringWriter writer = new StringWriter();
 		try {
 			graphWriter.save(graph, writer);
@@ -121,31 +127,33 @@ public class FalseWitnessGenerator {
 		}
 	}
 
-	private void addGraphData(final GraphMLWriter<GeneratedWitnessNode, GeneratedWitnessEdge> graphWriter, final String key,
-			final String defaultValue, final Function<Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge>, String> transformer) {
+	private void addGraphData(final GraphMLWriter<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> graphWriter,
+			final String key, final String defaultValue,
+			final Function<Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>>, String> transformer) {
 		assert transformer != null;
 		graphWriter.addGraphData(key, null, defaultValue,
-				new Transformer<Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge>, String>() {
+				new Transformer<Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>>, String>() {
 					@Override
-					public String transform(final Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge> arg0) {
+					public String transform(final Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> arg0) {
 						return transformer.apply(arg0);
 					}
 				});
 	}
 
-	private void addEdgeData(final GraphMLWriter<GeneratedWitnessNode, GeneratedWitnessEdge> graphWriter, final String key,
-			final String defaultValue, final Function<GeneratedWitnessEdge, String> transformer) {
+	private void addEdgeData(final GraphMLWriter<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> graphWriter,
+			final String key, final String defaultValue,
+			final Function<GeneratedWitnessEdge<TE, E>, String> transformer) {
 		assert transformer != null;
-		graphWriter.addEdgeData(key, null, defaultValue, new Transformer<GeneratedWitnessEdge, String>() {
+		graphWriter.addEdgeData(key, null, defaultValue, new Transformer<GeneratedWitnessEdge<TE, E>, String>() {
 			@Override
-			public String transform(final GeneratedWitnessEdge arg0) {
+			public String transform(final GeneratedWitnessEdge<TE, E> arg0) {
 				return transformer.apply(arg0);
 			}
 		});
 	}
 
-	private void addVertexData(final GraphMLWriter<GeneratedWitnessNode, GeneratedWitnessEdge> graphWriter, final String key,
-			final String defaultValue, final Function<GeneratedWitnessNode, String> transformer) {
+	private void addVertexData(final GraphMLWriter<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> graphWriter,
+			final String key, final String defaultValue, final Function<GeneratedWitnessNode, String> transformer) {
 		assert transformer != null;
 		graphWriter.addVertexData(key, null, defaultValue, new Transformer<GeneratedWitnessNode, String>() {
 			@Override
@@ -155,9 +163,9 @@ public class FalseWitnessGenerator {
 		});
 	}
 
-	private Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge> getGraph() {
-		DirectedSparseGraph<GeneratedWitnessNode, GeneratedWitnessEdge> graph = new OrderedDirectedSparseGraph<>();
-		GeneratedWitnessNodeEdgeFactory fac = new GeneratedWitnessNodeEdgeFactory();
+	private Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> getGraph() {
+		DirectedSparseGraph<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> graph = new OrderedDirectedSparseGraph<>();
+		GeneratedWitnessNodeEdgeFactory<TE, E> fac = new GeneratedWitnessNodeEdgeFactory<TE, E>(mStringProvider);
 
 		GeneratedWitnessNode current = insertStartNodeAndDummyEdges(fac, graph, 0);
 		GeneratedWitnessNode next = null;
@@ -180,8 +188,8 @@ public class FalseWitnessGenerator {
 			// i = skipGlobalDeclarations(i, mProgramExecution);
 			i = collapseToSingleTraceElement(i, mProgramExecution);
 
-			AtomicTraceElement<CACSLLocation> currentATE = mProgramExecution.getTraceElement(i);
-			ProgramState<IASTExpression> currentState = mProgramExecution.getProgramState(i);
+			AtomicTraceElement<TE> currentATE = mProgramExecution.getTraceElement(i);
+			ProgramState<E> currentState = mProgramExecution.getProgramState(i);
 			if (i == progExecLength - 1) {
 				// the last node is the error location
 				next = fac.createErrorWitnessNode();
@@ -201,8 +209,9 @@ public class FalseWitnessGenerator {
 		return graph;
 	}
 
-	private GeneratedWitnessNode insertStartNodeAndDummyEdges(GeneratedWitnessNodeEdgeFactory fac,
-			DirectedSparseGraph<GeneratedWitnessNode, GeneratedWitnessEdge> graph, int numberOfUselessEdgesAfterStart) {
+	private GeneratedWitnessNode insertStartNodeAndDummyEdges(GeneratedWitnessNodeEdgeFactory<TE, E> fac,
+			DirectedSparseGraph<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> graph,
+			int numberOfUselessEdgesAfterStart) {
 		GeneratedWitnessNode current = fac.createInitialWitnessNode();
 		GeneratedWitnessNode next = null;
 		graph.addVertex(current);
@@ -217,15 +226,17 @@ public class FalseWitnessGenerator {
 		return current;
 	}
 
-	private int collapseToSingleTraceElement(int currentIdx, CACSLProgramExecution programExecution) {
+	private int collapseToSingleTraceElement(int currentIdx, IProgramExecution<TE, E> programExecution) {
 		int i = currentIdx;
 		for (; i < programExecution.getLength(); i++) {
-			AtomicTraceElement<CACSLLocation> currentATE = programExecution.getTraceElement(i);
-			CACSLLocation currentLoc = currentATE.getTraceElement();
+			final AtomicTraceElement<TE> currentATE = programExecution.getTraceElement(i);
+			final TE currentLoc = currentATE.getTraceElement();
 			for (int j = i; j < programExecution.getLength(); j++) {
-				AtomicTraceElement<CACSLLocation> nextATE = programExecution.getTraceElement(j);
-				CACSLLocation nextLoc = nextATE.getTraceElement();
-				if (nextLoc.getStartLine() != currentLoc.getStartLine()) {
+				final AtomicTraceElement<TE> nextATE = programExecution.getTraceElement(j);
+				final TE nextLoc = nextATE.getTraceElement();
+
+				if (mStringProvider.getStartLineNumberFromStep(nextLoc) != mStringProvider
+						.getStartLineNumberFromStep(currentLoc)) {
 					return j - 1;
 				}
 			}
@@ -239,12 +250,12 @@ public class FalseWitnessGenerator {
 	 * 
 	 * @author dietsch@informatik.uni-freiburg.de
 	 */
-	private class OrderedDirectedSparseGraph<V, E> extends DirectedSparseGraph<V, E> {
+	private class OrderedDirectedSparseGraph<VERTEX, EDGE> extends DirectedSparseGraph<VERTEX, EDGE> {
 		private static final long serialVersionUID = -8539872407688620571L;
 
 		public OrderedDirectedSparseGraph() {
 			super();
-			vertices = new LinkedHashMap<V, Pair<Map<V, E>>>();
+			vertices = new LinkedHashMap<VERTEX, Pair<Map<VERTEX, EDGE>>>();
 			edges = new LinkedHashMap<>();
 		}
 	}

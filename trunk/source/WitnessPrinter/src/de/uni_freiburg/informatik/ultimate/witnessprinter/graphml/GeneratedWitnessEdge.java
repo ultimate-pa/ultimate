@@ -24,30 +24,30 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.graphml;
+package de.uni_freiburg.informatik.ultimate.witnessprinter.graphml;
 
 import java.math.BigDecimal;
 
-import org.eclipse.cdt.core.dom.ast.IASTExpression;
-
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSLProgramExecutionStringProvider;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.result.ProgramExecutionFormatter.IProgramExecutionStringProvider;
 
 /**
  * 
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public class GeneratedWitnessEdge {
+public class GeneratedWitnessEdge<TE, E> {
 
 	private final String mId;
-	private final AtomicTraceElement<CACSLLocation> mATE;
-	private final ProgramState<IASTExpression> mState;
+	private final AtomicTraceElement<TE> mATE;
+	private final ProgramState<E> mState;
+	private final IProgramExecutionStringProvider<TE, E> mStringProvider;
 
-	GeneratedWitnessEdge(AtomicTraceElement<CACSLLocation> traceElement, ProgramState<IASTExpression> state, long currentEdgeId) {
+	GeneratedWitnessEdge(final AtomicTraceElement<TE> traceElement, final ProgramState<E> state,
+			final IProgramExecutionStringProvider<TE, E> stringProvider, long currentEdgeId) {
+		mStringProvider = stringProvider;
 		mId = "E" + String.valueOf(currentEdgeId);
 		mATE = traceElement;
 		mState = state;
@@ -90,14 +90,14 @@ public class GeneratedWitnessEdge {
 		if (!hasStep()) {
 			return null;
 		}
-		return String.valueOf(mATE.getStep().getStartLine());
+		return String.valueOf(mStringProvider.getStartLineNumberFromStep(mATE.getStep()));
 	}
-	
+
 	public String getEndLineNumber() {
 		if (!hasStep()) {
 			return null;
 		}
-		return String.valueOf(mATE.getStep().getEndLine());
+		return String.valueOf(mStringProvider.getEndLineNumberFromStep(mATE.getStep()));
 	}
 
 	public String getAssumption() {
@@ -106,8 +106,8 @@ public class GeneratedWitnessEdge {
 		}
 
 		StringBuilder sb = new StringBuilder();
-		for (IASTExpression var : mState.getVariables()) {
-			for (IASTExpression val : mState.getValues(var)) {
+		for (E var : mState.getVariables()) {
+			for (E val : mState.getValues(var)) {
 				appendValidExpression(var, val, sb);
 			}
 		}
@@ -142,12 +142,11 @@ public class GeneratedWitnessEdge {
 		if (!hasStep()) {
 			return null;
 		}
-		CACSLProgramExecutionStringProvider stringProvider = new CACSLProgramExecutionStringProvider();
-		String stepAsString = stringProvider.getStringFromStep(mATE.getStep());
-		StringBuilder sb = new StringBuilder();
+		final String stepAsString = mStringProvider.getStringFromStep(mATE.getStep());
+		final StringBuilder sb = new StringBuilder();
 
-		boolean isConditional = (mATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE) || mATE
-				.hasStepInfo(StepInfo.CONDITION_EVAL_TRUE));
+		boolean isConditional = (mATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE)
+				|| mATE.hasStepInfo(StepInfo.CONDITION_EVAL_TRUE));
 
 		if (isConditional) {
 			sb.append("[");
@@ -167,10 +166,10 @@ public class GeneratedWitnessEdge {
 		return sb.toString();
 	}
 
-	private void appendValidExpression(IASTExpression var, IASTExpression val, StringBuilder sb) {
+	private void appendValidExpression(E var, E val, StringBuilder sb) {
 
-		String varStr = var.getRawSignature();
-		String valStr = val.getRawSignature();
+		final String varStr = mStringProvider.getStringFromExpression(var);
+		final String valStr = mStringProvider.getStringFromExpression(val);
 
 		if (varStr.contains("\\") || varStr.contains("&")) {
 			// is something like read, old, etc.

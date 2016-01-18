@@ -236,6 +236,8 @@ public class ProgramExecutionFormatter<TE, E> {
 		int getStartLineNumberFromStep(TE step);
 
 		int getEndLineNumberFromStep(TE step);
+		
+		String getFileNameFromStep(TE step);
 
 		String getStringFromStep(TE step);
 

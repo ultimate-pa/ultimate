@@ -96,4 +96,9 @@ public class CACSLProgramExecutionStringProvider implements
 		}
 	}
 
+	@Override
+	public String getFileNameFromStep(CACSLLocation step) {
+		return step.getFileName();
+	}
+
 }

@@ -194,5 +194,9 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 			return BoogiePrettyPrinter.print(expression);
 		}
 
+		@Override
+		public String getFileNameFromStep(BoogieASTNode step) {
+			return step.getLocation().getFileName();
+		}
 	}
 }
