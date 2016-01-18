@@ -894,6 +894,9 @@ public class Theory {
 		
 		mDeclaredSorts.put("FloatingPoint", mFloatingPointSort);
 		
+		/*
+		 * Used to create Functions that only need floating points as arguments
+		 */
 		class RegularFloatingPointFunction extends FunctionSymbolFactory {
 			int mNumArgs;
 			Sort mResult;
@@ -908,8 +911,10 @@ public class Theory {
 					Sort resultSort) {
 				if (indices != null
 					|| paramSorts.length != mNumArgs || resultSort != null
-					|| paramSorts[0].getName() != "FloatingPoint")
+					|| paramSorts[0].getName() != "FloatingPoint" ){
 					return null;
+				}
+					
 				for (int i = 1; i < mNumArgs; i++)
 					if (paramSorts[i] != paramSorts[0])
 						return null;
@@ -917,22 +922,50 @@ public class Theory {
 			}
 		}
 		
+		/*
+		 * Used to create function symbols that take roundingModes and floating points as arguments
+		 */
+		class IrregularFloatingPointFunction extends FunctionSymbolFactory {
+			int mNumArgs;
+			Sort mResult;
+			public IrregularFloatingPointFunction(
+					String name, int numArgs, Sort result) {
+				super(name);
+				mNumArgs = numArgs;
+				mResult = result;
+			}
+			@Override
+			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
+				if (indices != null
+					|| paramSorts.length != mNumArgs || resultSort != null
+					|| paramSorts[0].getName() != "RoundingMode" 
+					|| paramSorts[1].getName() != "FloatingPoint" ){
+					return null;
+				}
+					
+				for (int i = 1; i < mNumArgs; i++)
+					if (paramSorts[i] != paramSorts[1])
+						return null;
+				return mResult == null ? paramSorts[1] : mResult;
+			}
+		}
+		
 		//RoundingModes
 		declareInternalFunction("roundNearestTiesToEven", new Sort[0], mRoundingModeSort, 0);
-		
-		
+				
 		// Operators
-		defineFunction(new RegularFloatingPointFunction("fp.abs", 1, null));
-		defineFunction(new RegularFloatingPointFunction("fp.neg", 1, null));
-		defineFunction(new RegularFloatingPointFunction("fp.add", 2, null));
-		defineFunction(new RegularFloatingPointFunction("fp.sub", 3, null));
-		defineFunction(new RegularFloatingPointFunction("fp.mul", 3, null));
-		defineFunction(new RegularFloatingPointFunction("fp.div", 3, null));
-		defineFunction(new RegularFloatingPointFunction("fp.fma", 4, null));
-		defineFunction(new RegularFloatingPointFunction("fp.sqrt", 2, null));
-		defineFunction(new RegularFloatingPointFunction("fp.roundToIntegral", 2, null));
-		defineFunction(new RegularFloatingPointFunction("fp.min", 2, null));
-		defineFunction(new RegularFloatingPointFunction("fp.max", 2, null));
+		defineFunction(new IrregularFloatingPointFunction("fp.abs", 1, null));
+		defineFunction(new IrregularFloatingPointFunction("fp.neg", 1, null));
+		defineFunction(new IrregularFloatingPointFunction("fp.add", 3, null));
+		defineFunction(new IrregularFloatingPointFunction("fp.sub", 3, null));
+		defineFunction(new IrregularFloatingPointFunction("fp.mul", 3, null));
+		defineFunction(new IrregularFloatingPointFunction("fp.div", 3, null));
+		defineFunction(new IrregularFloatingPointFunction("fp.fma", 4, null));
+		defineFunction(new IrregularFloatingPointFunction("fp.sqrt", 2, null));
+		defineFunction(new IrregularFloatingPointFunction("fp.roundToIntegral", 2, null));
+		defineFunction(new IrregularFloatingPointFunction("fp.min", 2, null));
+		defineFunction(new IrregularFloatingPointFunction("fp.max", 2, null));
 		
 		// Comparison Operators
 		defineFunction(new RegularFloatingPointFunction("fp.leq", 2, mBooleanSort));
