@@ -371,14 +371,6 @@ public class ScriptWithTermConstructionChecks implements Script {
 	public QuotedObject echo(QuotedObject msg) {
 		return m_Script.echo(msg);
 	}
-
-
-
-	@Override
-	public Term roundingMode(String rm) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return m_Script.roundingMode(rm);
-	}
 	
 	
 

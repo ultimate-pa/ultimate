@@ -918,12 +918,13 @@ public class Theory {
 		}
 		
 		//RoundingModes
-		defineFunction(new RegularFloatingPointFunction("roundNearestTiesToEven", 1, null));
-						
+		declareInternalFunction("roundNearestTiesToEven", new Sort[0], mRoundingModeSort, 0);
+		
+		
 		// Operators
 		defineFunction(new RegularFloatingPointFunction("fp.abs", 1, null));
 		defineFunction(new RegularFloatingPointFunction("fp.neg", 1, null));
-		defineFunction(new RegularFloatingPointFunction("fp.add", 3, null));
+		defineFunction(new RegularFloatingPointFunction("fp.add", 2, null));
 		defineFunction(new RegularFloatingPointFunction("fp.sub", 3, null));
 		defineFunction(new RegularFloatingPointFunction("fp.mul", 3, null));
 		defineFunction(new RegularFloatingPointFunction("fp.div", 3, null));

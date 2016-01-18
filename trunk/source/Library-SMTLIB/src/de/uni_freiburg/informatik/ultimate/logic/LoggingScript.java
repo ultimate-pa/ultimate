@@ -505,10 +505,4 @@ public class LoggingScript implements Script {
 		mPw.print("; ");
 		mPw.println(comment);
 	}
-
-	@Override
-	public Term roundingMode(String rm) throws SMTLIBException {
-		// TODO Auto-generated method stub
-		return mScript.roundingMode(rm);
-	}
 }
