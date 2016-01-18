@@ -637,7 +637,7 @@ public class OctMatrix {
 
 	// TODO note that information is lost. Strong Closure on this and source in advance can reduce loss.
 	// TODO source must be different from target (= this)
-	protected void overwriteSelection(OctMatrix source, BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar) {
+	protected void copySelection(OctMatrix source, BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar) {
 		if (source.mElements == mElements) {
 			for (Map.Entry<Integer, Integer> entry : mapSourceVarToTargetVar.entrySet()) {
 				if (!entry.getKey().equals(entry.getValue())) {
@@ -671,10 +671,10 @@ public class OctMatrix {
 		OctMatrix m = this.addVariables(selectedSourceVars.size());
 		BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar = new BidirectionalMap<>();
 		for (Integer s : selectedSourceVars) {
-			assert !selectedSourceVars.contains(s) : "selectedSourceVars contained duplicate " + s;
-			mapSourceVarToTargetVar.put(s, mapSourceVarToTargetVar.size() + variables());
+			Integer prevValue = mapSourceVarToTargetVar.put(s, mapSourceVarToTargetVar.size() + variables());
+			assert prevValue == null : "selection contained duplicate " + s;
 		}
-		m.overwriteSelection(source, mapSourceVarToTargetVar);
+		m.copySelection(source, mapSourceVarToTargetVar);
 		return m;
 	}
 	

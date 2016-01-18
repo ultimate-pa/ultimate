@@ -386,7 +386,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 			s.mMapNumericVarToIndex.put(var, s.mMapNumericVarToIndex.size());
 		}
 		s.mNumericAbstraction
-				.overwriteSelection(dominator.mNumericAbstraction, mapSourceVarToTargetVar);
+				.copySelection(dominator.mNumericAbstraction, mapSourceVarToTargetVar);
 		s.mNumericAbstraction = s.mNumericAbstraction
 				.appendSelection(dominator.mNumericAbstraction, mapOldIndicesOfNewNumericVars.keySet());
 		return s;
@@ -448,7 +448,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		// create new state
 		OctagonDomainState newState = shallowCopy();
 		newState.mNumericAbstraction = mNumericAbstraction.copy();
-		newState.mNumericAbstraction.overwriteSelection(source.mNumericAbstraction, mapNumericSourceToTarget);
+		newState.mNumericAbstraction.copySelection(source.mNumericAbstraction, mapNumericSourceToTarget);
 		if (!mapBooleanSourceToTarget.isEmpty()) {
 			unrefBooleanAbstraction(newState);
 			for (Map.Entry<String, String> entry : mapBooleanSourceToTarget.entrySet()) {
