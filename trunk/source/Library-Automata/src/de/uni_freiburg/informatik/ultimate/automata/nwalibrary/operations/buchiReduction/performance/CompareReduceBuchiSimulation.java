@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.fair.FairSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.ShrinkNwa;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
@@ -467,6 +468,10 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 		try {
 			createAndResetPerformanceHead();
 			appendPerformanceHeadToLog();
+			
+			// TODO the new way to obtain timeout
+			long tenSeconds = 2 * 1000;
+			IProgressAwareTimer pat = services.getProgressMonitorService().getChildTimer(tenSeconds);
 
 			// Direct simulation without SCC
 			appendMethodPerformanceToLog(new DirectSimulation<>(services, operand, false, stateFactory));
