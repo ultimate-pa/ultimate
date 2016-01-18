@@ -107,13 +107,21 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 	
 	private Procedure calledProcedure(CallStatement call) {
 		List<Declaration> procedureDeclarations = mSymbolTable.getFunctionOrProcedureDeclaration(call.getMethodName());
-		assert procedureDeclarations.size() > 0 : "called/return of undefined method " + call.getMethodName();
-		if (procedureDeclarations.size() > 1) {
-			throw new UnsupportedOperationException("Separated implementations are unsupported.");
+		Procedure implementation = null;
+		for (Declaration d : procedureDeclarations) {
+			assert d instanceof Procedure : "call/return of non-procedure " + call.getMethodName() + ": " + d;
+			Procedure p = (Procedure) d;
+			if (p.getBody() != null) {
+				if (implementation != null) {
+					throw new UnsupportedOperationException("Multiple implementations of " + call.getMethodName());
+				}
+				implementation = p;
+			}
 		}
-		Declaration procedure = procedureDeclarations.get(0);
-		assert procedure instanceof Procedure : "call/return of non-procedure " + call.getMethodName();
-		return (Procedure) procedure;
+		if (implementation == null) {
+			throw new UnsupportedOperationException("Missing implementation of " + call.getMethodName());
+		}
+		return implementation;
 	}
 	
 	private Map<String, String> generateMapOutToLhs(VariableLHS[] lhs, Procedure calledProcedure) {
