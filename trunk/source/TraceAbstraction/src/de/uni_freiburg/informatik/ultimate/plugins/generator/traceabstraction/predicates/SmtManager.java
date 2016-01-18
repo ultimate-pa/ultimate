@@ -1417,7 +1417,7 @@ public class SmtManager {
 	}
 
 	public static HoareAnnotation getHoareAnnotation(ProgramPoint programPoint) {
-		return ((HoareAnnotation) programPoint.getPayload().getAnnotations().get(Activator.s_PLUGIN_ID));
+		return HoareAnnotation.getAnnotation(programPoint);
 	}
 
 	public LBool checkSatWithFreeVars(Term negation) {

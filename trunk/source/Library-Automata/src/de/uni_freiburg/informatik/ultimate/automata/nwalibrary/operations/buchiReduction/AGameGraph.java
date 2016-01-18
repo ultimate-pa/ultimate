@@ -36,6 +36,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
@@ -103,6 +104,10 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	private int m_GlobalInfinity;
 	/**
+	 * Holds information about the performance of the simulation after usage.
+	 */
+	private SimulationPerformance m_Performance;
+	/**
 	 * Data structure that allows a fast access to predecessors of a given
 	 * vertex in the game graph.
 	 */
@@ -132,7 +137,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * @param services
 	 *            Service provider of Ultimate framework
 	 * @param stateFactory
-	 *            State factory used for state creation
+	 *            State factory used for state creation+
 	 */
 	public AGameGraph(final IUltimateServiceProvider services, final StateFactory<STATE> stateFactory) {
 		m_Services = services;
@@ -144,6 +149,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 		m_BuechiStatesToGraphSpoilerVertex = new NestedMap3<>();
 		m_BuechiStatesToGraphDuplicatorVertex = new NestedMap4<>();
 		m_GlobalInfinity = 0;
+		m_Performance = null;
 	}
 
 	/**
@@ -330,6 +336,16 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	public boolean hasSuccessors(final Vertex<LETTER, STATE> vertex) {
 		return m_Successors.containsKey(vertex);
+	}
+
+	/**
+	 * Sets the performance object of the corresponding simulation.
+	 * 
+	 * @param simulationPerformance
+	 *            Simulation performance to set.
+	 */
+	public void setSimulationPerformance(final SimulationPerformance simulationPerformance) {
+		m_Performance = simulationPerformance;
 	}
 
 	/*
@@ -529,6 +545,15 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	protected IUltimateServiceProvider getServiceProvider() {
 		return m_Services;
+	}
+
+	/**
+	 * Gets the performance object of the corresponding simulation.
+	 * 
+	 * @return The performance object of the corresponding simulation.
+	 */
+	protected SimulationPerformance getSimulationPerformance() {
+		return m_Performance;
 	}
 
 	/**

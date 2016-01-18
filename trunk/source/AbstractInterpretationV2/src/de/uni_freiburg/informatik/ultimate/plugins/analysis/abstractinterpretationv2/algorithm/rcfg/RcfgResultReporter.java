@@ -51,8 +51,8 @@ import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
  */
 public class RcfgResultReporter implements IResultReporter<CodeBlock> {
 
-	private final IUltimateServiceProvider mServices;
-	private final BaseRcfgAbstractStateStorageProvider<?> mStorageProvider;
+	protected final IUltimateServiceProvider mServices;
+	protected final BaseRcfgAbstractStateStorageProvider<?> mStorageProvider;
 
 	public RcfgResultReporter(IUltimateServiceProvider services,
 			BaseRcfgAbstractStateStorageProvider<?> storageProvider) {
@@ -75,14 +75,13 @@ public class RcfgResultReporter implements IResultReporter<CodeBlock> {
 	}
 
 	@Override
-	public void reportSafe() {
-		reportSafe("No error locations were reached.");
+	public void reportSafe(CodeBlock first) {
+		reportSafe(first, "No error locations were reached.");
 	}
 
 	@Override
-	public void reportSafe(String msg) {
+	public void reportSafe(CodeBlock first, String msg) {
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 				new AllSpecificationsHoldResult(Activator.PLUGIN_NAME, msg));
 	}
-
 }

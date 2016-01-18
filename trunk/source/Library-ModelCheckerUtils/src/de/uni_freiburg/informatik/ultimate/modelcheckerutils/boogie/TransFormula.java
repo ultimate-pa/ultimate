@@ -1314,13 +1314,13 @@ public class TransFormula implements Serializable {
 	 * 	          in which the afterCall TransFormula ends. 
 	 */
 	public static TransFormula sequentialCompositionWithPendingCall(Boogie2SMT boogie2smt, boolean simplify,
-			boolean extPqe, boolean transformToCNF, TransFormula[] beforeCall, TransFormula callTf,
+			boolean extPqe, boolean transformToCNF, List<TransFormula> beforeCall, TransFormula callTf,
 			TransFormula oldVarsAssignment, TransFormula afterCall, Logger logger, IUltimateServiceProvider services, 
 			Set<BoogieVar> modifiableGlobalsOfEndProcedure) {
 		logger.debug("sequential composition (pending call) with" + (simplify ? "" : "out") + " formula simplification");
 		TransFormula callAndBeforeTF;
 		{
-			List<TransFormula> callAndBeforeList = new ArrayList<TransFormula>(Arrays.asList(beforeCall));
+			List<TransFormula> callAndBeforeList = new ArrayList<TransFormula>(beforeCall);
 			callAndBeforeList.add(callTf);
 			TransFormula[] callAndBeforeArray = callAndBeforeList.toArray(new TransFormula[callAndBeforeList.size()]);
 			callAndBeforeTF = sequentialComposition(logger, services, boogie2smt, simplify, extPqe, transformToCNF,

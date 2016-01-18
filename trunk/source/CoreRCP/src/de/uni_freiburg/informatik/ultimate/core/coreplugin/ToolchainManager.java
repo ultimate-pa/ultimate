@@ -71,8 +71,7 @@ import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 
 /**
  * 
- * The {@link ToolchainManager} controls the livecycle of all toolchains and the
- * associated plugins.
+ * The {@link ToolchainManager} controls the livecycle of all toolchains and the associated plugins.
  * 
  * @author dietsch
  * 
@@ -173,8 +172,7 @@ public class ToolchainManager {
 					new GenericServiceProvider(mPluginFactory));
 
 			// install new ProgressMonitorService
-			ProgressMonitorService monitorService = new ProgressMonitorService(monitor, mLogger,
-					mToolchainWalker);
+			ProgressMonitorService monitorService = new ProgressMonitorService(monitor, mLogger, mToolchainWalker);
 			mToolchainData.getStorage().putStorable(ProgressMonitorService.getServiceKey(), monitorService);
 
 		}
@@ -276,8 +274,8 @@ public class ToolchainManager {
 					throw new IllegalStateException("There is no model present.");
 				}
 
-				CompleteToolchainData data = mToolchainWalker.new CompleteToolchainData(mToolchainData, mParsers
-						.values().toArray(new ISource[0]), mCurrentController);
+				CompleteToolchainData data = mToolchainWalker.new CompleteToolchainData(mToolchainData,
+						mParsers.values().toArray(new ISource[0]), mCurrentController);
 
 				mToolchainWalker.walk(data, mToolchainData.getServices().getProgressMonitorService(), monitor);
 				if (ups.getBoolean(CorePreferenceInitializer.LABEL_WITNESS_GEN)) {
@@ -302,8 +300,8 @@ public class ToolchainManager {
 					mBenchmark.printResult();
 
 					// report benchmark results
-					resultService.reportResult(Activator.s_PLUGIN_ID, new BenchmarkResult<Double>(
-							Activator.s_PLUGIN_ID, "Toolchain Benchmarks", mBenchmark));
+					resultService.reportResult(Activator.s_PLUGIN_ID,
+							new BenchmarkResult<Double>(Activator.s_PLUGIN_ID, "Toolchain Benchmarks", mBenchmark));
 
 				}
 
@@ -341,8 +339,7 @@ public class ToolchainManager {
 		 * 
 		 * @param chain
 		 *            Toolchain description to check.
-		 * @return <code>true</code> if and only if every plugin in the chain
-		 *         exists.
+		 * @return <code>true</code> if and only if every plugin in the chain exists.
 		 */
 		private boolean checkToolchain(List<Object> chain) {
 			for (Object o : chain) {
@@ -373,8 +370,8 @@ public class ToolchainManager {
 					.getBoolean(CorePreferenceInitializer.LABEL_BENCHMARK);
 			IElement root = null;
 
-			PluginConnector
-					.initializePlugin(mLogger, parser, mToolchainData.getServices(), mToolchainData.getStorage());
+			PluginConnector.initializePlugin(mLogger, parser, mToolchainData.getServices(),
+					mToolchainData.getStorage());
 
 			// parse the files to Graph
 			try {
@@ -388,13 +385,12 @@ public class ToolchainManager {
 				}
 
 				/*
-				 * for testing purposes only for(ISerialization ser :
-				 * m_SerializationPlugins) { ser.serialize(root,
-				 * "c:\\test.txt"); INode in = ser.deserialize("c:\\test.txt");
-				 * if(in == in) System.out.println(in.toString()); }
+				 * for testing purposes only for(ISerialization ser : m_SerializationPlugins) { ser.serialize(root,
+				 * "c:\\test.txt"); INode in = ser.deserialize("c:\\test.txt"); if(in == in)
+				 * System.out.println(in.toString()); }
 				 */
 			} catch (Exception e) {
-				mLogger.fatal(getLogPrefix() + ": Parsing gives Exception", e);
+				mLogger.fatal(getLogPrefix() + ": Exception during parsing: " + e.getMessage());
 				resetModelManager();
 			} finally {
 				parser.finish();
@@ -408,7 +404,9 @@ public class ToolchainManager {
 				try {
 					mModelManager.persistAll(false);
 				} catch (StoreObjectException e) {
-					mLogger.error(getLogPrefix() + ": Failed to persist Models", e);
+					final Throwable cause = e.getCause();
+					mLogger.error(getLogPrefix() + ": Failed to persist models: "
+							+ (cause == null ? e.getMessage() : cause.getMessage()));
 				}
 			}
 			return;

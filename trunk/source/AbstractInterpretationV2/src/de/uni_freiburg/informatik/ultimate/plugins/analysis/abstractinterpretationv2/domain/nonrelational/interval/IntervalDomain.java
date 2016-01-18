@@ -33,7 +33,10 @@ import java.math.BigDecimal;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.LiteralCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
@@ -51,10 +54,12 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Code
 
 	private final BoogieSymbolTable mSymbolTable;
 	private final Logger mLogger;
+	private final LiteralCollector mLiteralCollector;
 
-	public IntervalDomain(Logger logger, BoogieSymbolTable symbolTable) {
+	public IntervalDomain(Logger logger, BoogieSymbolTable symbolTable, LiteralCollector literalCollector) {
 		mLogger = logger;
 		mSymbolTable = symbolTable;
+		mLiteralCollector = literalCollector;
 	}
 
 	@Override
@@ -64,8 +69,17 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Code
 
 	@Override
 	public IAbstractStateBinaryOperator<IntervalDomainState> getWideningOperator() {
-		// TODO Implement better widening and add appropriate options
-		return new IntervalSimpleWideningOperator();
+		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		final String wideningOperator = ups.getString(IntervalDomainPreferences.LABEL_INTERVAL_WIDENING_OPERATOR);
+
+		if (wideningOperator.equals(IntervalDomainPreferences.VALUE_WIDENING_OPERATOR_SIMPLE)) {
+			return new IntervalSimpleWideningOperator();
+		} else if (wideningOperator.equals(IntervalDomainPreferences.VALUE_WIDENING_OPERATOR_LITERALS)) {
+			return new IntervalLiteralWideningOperator(mLiteralCollector);
+		} else {
+			throw new UnsupportedOperationException(
+			        "The widening operator " + wideningOperator + " is not implemented.");
+		}
 	}
 
 	@Override

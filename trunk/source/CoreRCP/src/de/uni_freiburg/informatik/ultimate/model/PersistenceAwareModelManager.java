@@ -53,18 +53,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.Constants;
 /**
  * PersistenceAwareModelManager
  * 
- * Standard implementation of the {@link IModelManager} A
- * {@link PersistenceAwareModelManager} is created using a repository. The
- * default repository is the System's java temporary directory. There should be
- * a property page to set the repository's location in the file system to a
- * desired value
+ * Standard implementation of the {@link IModelManager} A {@link PersistenceAwareModelManager} is created using a
+ * repository. The default repository is the System's java temporary directory. There should be a property page to set
+ * the repository's location in the file system to a desired value
  * 
- * The ModelManager should be used for any access to models produced by previous
- * tool runs.
+ * The ModelManager should be used for any access to models produced by previous tool runs.
  * 
- * The Application may ask the ModelManager to persist and models and probably
- * drop them from the in-memory map. Subsequent access to such a model is
- * dispatched to the repository and the model is added to the memory-map, again
+ * The Application may ask the ModelManager to persist and models and probably drop them from the in-memory map.
+ * Subsequent access to such a model is dispatched to the repository and the model is added to the memory-map, again
  * 
  * @author Björn Buchhold
  * 
@@ -123,8 +119,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 	 * Adds a new vault to the Chamber
 	 * 
 	 * @param vault
-	 * @return false if vault is present in chamber - method does not add the
-	 *         vault in this case; true otherwise
+	 * @return false if vault is present in chamber - method does not add the vault in this case; true otherwise
 	 */
 	private boolean addItem(ModelContainer vault) {
 		if (this.mModelMap.containsKey(vault.getType())) {
@@ -142,14 +137,11 @@ public class PersistenceAwareModelManager implements IModelManager {
 	 * Adds a new (sub)graph or (sub)tree to the Chamber
 	 * 
 	 * @param rootNode
-	 *            The node itself and all its children and so on are added as
-	 *            own model to the chamber (in a cyclic graph possibly adding
-	 *            the whole graph, especially the parents of this node)
+	 *            The node itself and all its children and so on are added as own model to the chamber (in a cyclic
+	 *            graph possibly adding the whole graph, especially the parents of this node)
 	 * @param graphtype
-	 *            The concrete type of graph this node belongs to (should this
-	 *            be calculated or set somehow here ? )
-	 * @return false if vault is present in chamber - method does not add the
-	 *         vault in this case; true otherwise
+	 *            The concrete type of graph this node belongs to (should this be calculated or set somehow here ? )
+	 * @return false if vault is present in chamber - method does not add the vault in this case; true otherwise
 	 */
 	public boolean addItem(IElement rootNode, GraphType graphtype) {
 		ModelContainer vault = new ModelContainer(rootNode, graphtype, createFileNameFromNode(rootNode));
@@ -160,8 +152,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.model.IModelManager#getItemNames()
+	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#getItemNames()
 	 */
 	@Override
 	public ArrayList<String> getItemNames() {
@@ -176,8 +167,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.model.IModelManager#getLastAdded()
+	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#getLastAdded()
 	 */
 	@Override
 	public GraphType getLastAdded() {
@@ -187,8 +177,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.model.IModelManager#getRootNode(de
+	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#getRootNode(de
 	 * .uni_freiburg.informatik.ultimate.model.GraphType )
 	 */
 	@Override
@@ -221,14 +210,15 @@ public class PersistenceAwareModelManager implements IModelManager {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.model.IModelManager#persistAll(boolean
-	 * )
+	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#persistAll(boolean )
 	 */
 	@Override
 	public void persistAll(boolean keepInMemory) throws StoreObjectException {
-		for (Entry<GraphType, ModelContainer> mapEntry : this.mModelMap.entrySet()) {
-			this.mRepository.addOrReplace(mapEntry.getKey().toString(), mapEntry.getValue());
+		for (final Entry<GraphType, ModelContainer> mapEntry : mModelMap.entrySet()) {
+			if(mapEntry.getKey() == null || mapEntry.getValue() == null){
+				continue;
+			}
+			mRepository.addOrReplace(mapEntry.getKey().toString(), mapEntry.getValue());
 		}
 		if (!keepInMemory) {
 			this.removeAll();
@@ -238,8 +228,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.model.IModelManager#persistExistingGraph
+	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#persistExistingGraph
 	 * (de.uni_freiburg.informatik.ultimate.model .GraphType)
 	 */
 	@Override
@@ -250,13 +239,12 @@ public class PersistenceAwareModelManager implements IModelManager {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.model.IModelManager#persistExistingGraph
+	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#persistExistingGraph
 	 * (de.uni_freiburg.informatik.ultimate.model .GraphType, boolean)
 	 */
 	@Override
-	public void persistExistingGraph(GraphType key, boolean keepInMemory) throws StoreObjectException,
-			GraphNotFoundException {
+	public void persistExistingGraph(GraphType key, boolean keepInMemory)
+			throws StoreObjectException, GraphNotFoundException {
 		if (this.mModelMap.containsKey(key)) {
 			this.mRepository.addOrReplace(key.toString(), this.mModelMap.get(key));
 			if (!keepInMemory) {
@@ -281,8 +269,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.model.IModelManager#removeItem(de
+	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#removeItem(de
 	 * .uni_freiburg.informatik.ultimate.model.GraphType)
 	 */
 	@Override
@@ -297,9 +284,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.model.IModelManager#removeItem(java
-	 * .lang.String)
+	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#removeItem(java .lang.String)
 	 */
 	@Override
 	public boolean removeItem(String id) {
@@ -314,8 +299,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.model.IModelManager#removeItem(de
+	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#removeItem(de
 	 * .uni_freiburg.informatik.ultimate.model.ModelContainer )
 	 */
 	@Override
@@ -326,9 +310,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.model.IModelManager#searchGraphType
-	 * (java.lang.String)
+	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#searchGraphType (java.lang.String)
 	 */
 	@Override
 	public GraphType getGraphTypeById(String s) {
@@ -359,8 +341,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#
-	 * getGraphTypeByGeneratorPluginId(java .lang.String)
+	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager# getGraphTypeByGeneratorPluginId(java .lang.String)
 	 */
 	@Override
 	public GraphType getGraphTypeByGeneratorPluginId(String id) {
@@ -386,8 +367,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.model.IModelManager#setLastAdded(
+	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#setLastAdded(
 	 * de.uni_freiburg.informatik.ultimate.model.GraphType )
 	 */
 	@Override
@@ -398,16 +378,15 @@ public class PersistenceAwareModelManager implements IModelManager {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.model.IModelManager#showStatus(java
-	 * .lang.String)
+	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#showStatus(java .lang.String)
 	 */
 	@Override
 	public void showStatus(String callerName) {
 		mLogger.debug(callerName + " reguests chamber status");
 		int i = 0;
 		for (ModelContainer v : this.mModelMap.values()) {
-			mLogger.debug("(" + i + ") " + "Name/Type/Size: " + v.getName() + " / " + v.getType() + " / " + v.getSize());
+			mLogger.debug(
+					"(" + i + ") " + "Name/Type/Size: " + v.getName() + " / " + v.getType() + " / " + v.getSize());
 			i++;
 		}
 	}
@@ -427,8 +406,7 @@ public class PersistenceAwareModelManager implements IModelManager {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.model.IModelManager#getItemKeys()
+	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#getItemKeys()
 	 */
 	@Override
 	public List<GraphType> getItemKeys() {

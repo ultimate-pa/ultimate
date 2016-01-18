@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.ASimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationType;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
@@ -96,9 +97,10 @@ public final class DelayedSimulation<LETTER, STATE> extends ASimulation<LETTER, 
 	public DelayedSimulation(final IUltimateServiceProvider services,
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
-		super(services, useSCCs, stateFactory);
+		super(services, useSCCs, stateFactory, SimulationType.DELAYED);
 
 		m_Game = new DelayedGameGraph<LETTER, STATE>(services, buechi, stateFactory);
+		m_Game.setSimulationPerformance(getSimulationPerformance());
 		doSimulation();
 	}
 

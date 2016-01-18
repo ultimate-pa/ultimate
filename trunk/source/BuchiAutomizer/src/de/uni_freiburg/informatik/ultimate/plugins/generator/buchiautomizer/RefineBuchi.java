@@ -36,6 +36,7 @@ import java.util.TreeMap;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -95,6 +96,7 @@ public class RefineBuchi {
 	private final PredicateFactoryRefinement m_StateFactoryForRefinement;
 	private final boolean m_UseDoubleDeckers;
 	private final String m_DumpPath;
+	private final Format m_Format;
 	private final INTERPOLATION m_Interpolation;
 	private BackwardCoveringInformation m_Bci;
 	/**
@@ -106,7 +108,7 @@ public class RefineBuchi {
 
 	public RefineBuchi(RootNode rootNode, SmtManager smtManager, boolean dumpAutomata, boolean difference,
 			PredicateFactory stateFactoryInterpolAutom, PredicateFactoryRefinement stateFactoryForRefinement,
-			boolean useDoubleDeckers, String dumpPath, INTERPOLATION interpolation, IUltimateServiceProvider services,
+			boolean useDoubleDeckers, String dumpPath, Format format, INTERPOLATION interpolation, IUltimateServiceProvider services,
 			Logger logger) {
 		super();
 		m_Services = services;
@@ -119,6 +121,7 @@ public class RefineBuchi {
 		m_StateFactoryForRefinement = stateFactoryForRefinement;
 		m_UseDoubleDeckers = useDoubleDeckers;
 		m_DumpPath = dumpPath;
+		m_Format = format;
 		m_Interpolation = interpolation;
 	}
 
@@ -246,7 +249,7 @@ public class RefineBuchi {
 			
 			String filename = m_RootNode.getFilename() + "_" + "InterpolantAutomatonBuchi" + m_Iteration;
 			String message = setting.toString();
-			BuchiCegarLoop.writeAutomatonToFile(m_Services, m_InterpolAutomaton, m_DumpPath, filename, message);
+			BuchiCegarLoop.writeAutomatonToFile(m_Services, m_InterpolAutomaton, m_DumpPath, filename, m_Format, message);
 		}
 
 //		BuchiHoareTripleChecker bhtc = new BuchiHoareTripleChecker(new MonolithicHoareTripleChecker(m_SmtManager));
@@ -415,7 +418,7 @@ public class RefineBuchi {
 			}
 			String filename = m_RootNode.getFilename() + "_" + automatonString + m_Iteration + "after";
 			String message = setting.toString();
-			BuchiCegarLoop.writeAutomatonToFile(m_Services, m_InterpolAutomatonUsedInRefinement, m_DumpPath, filename, message);
+			BuchiCegarLoop.writeAutomatonToFile(m_Services, m_InterpolAutomatonUsedInRefinement, m_DumpPath, filename, m_Format, message);
 		}
 		boolean tacasDump = false;
 		if (tacasDump){
@@ -438,7 +441,7 @@ public class RefineBuchi {
 			}
 			String filename = m_RootNode.getFilename() + "_" + determinicity + automatonString + m_Iteration + "after";
 			String message = setting.toString();
-			BuchiCegarLoop.writeAutomatonToFile(m_Services, m_InterpolAutomatonUsedInRefinement, m_DumpPath, filename, message);
+			BuchiCegarLoop.writeAutomatonToFile(m_Services, m_InterpolAutomatonUsedInRefinement, m_DumpPath, filename, m_Format, message);
 
 		}
 		return newAbstraction;

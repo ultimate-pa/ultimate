@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.ASimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
@@ -94,7 +95,7 @@ public final class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, S
 	public DirectSimulation(final IUltimateServiceProvider services,
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
-		this(services, buechi, useSCCs, stateFactory, new DirectGameGraph<>(services, buechi, stateFactory));
+		this(services, useSCCs, stateFactory, new DirectGameGraph<>(services, buechi, stateFactory));
 	}
 
 	/**
@@ -109,9 +110,6 @@ public final class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, S
 	 * 
 	 * @param services
 	 *            Service provider of Ultimate framework.
-	 * @param buechi
-	 *            The buechi automaton to reduce with no dead ends nor with
-	 *            duplicate transitions
 	 * @param useSCCs
 	 *            If the simulation calculation should be optimized using SCC,
 	 *            Strongly Connected Components.
@@ -123,12 +121,12 @@ public final class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, S
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public DirectSimulation(final IUltimateServiceProvider services,
-			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
+	public DirectSimulation(final IUltimateServiceProvider services, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final AGameGraph<LETTER, STATE> game)
 					throws OperationCanceledException {
-		super(services, useSCCs, stateFactory);
-
+		super(services, useSCCs, stateFactory, SimulationType.DIRECT);
+		
+		game.setSimulationPerformance(getSimulationPerformance());
 		m_Game = game;
 		doSimulation();
 	}

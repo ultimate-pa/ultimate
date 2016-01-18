@@ -419,7 +419,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		BidirectionalMap<Integer, Integer> mapNumericSourceToTarget = new BidirectionalMap<>();
 		Map<String, String> mapBooleanSourceToTarget = new HashMap<>();
 		
-		// shared numeric variables (copy to keep relations between globals and in/out-parameters)
+		// shared numeric variables (always global) (copy to keep relations between globals and in/out-parameters)
 		for (String var : sharedVars(source)) {
 			Integer targetIndex = mMapNumericVarToIndex.get(var);
 			if (targetIndex != null) {

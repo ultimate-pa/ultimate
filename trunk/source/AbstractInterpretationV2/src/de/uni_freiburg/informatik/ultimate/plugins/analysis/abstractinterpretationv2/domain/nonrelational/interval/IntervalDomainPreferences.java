@@ -44,8 +44,10 @@ public class IntervalDomainPreferences {
 
 	public static final String LABEL_INTERVAL_DOMAIN_SEPARATOR = "   ---   Interval Domain   ---   ";
 
-	public static final String[] VALUES_WIDENING_OPERATOR = new String[] {
-	        IntervalSimpleWideningOperator.class.getSimpleName() };
+	public static final String VALUE_WIDENING_OPERATOR_SIMPLE = IntervalSimpleWideningOperator.class.getSimpleName();
+	public static final String VALUE_WIDENING_OPERATOR_LITERALS = IntervalLiteralWideningOperator.class.getSimpleName();
+	public static final String[] VALUES_WIDENING_OPERATOR = new String[] { VALUE_WIDENING_OPERATOR_SIMPLE,
+	        VALUE_WIDENING_OPERATOR_LITERALS };
 
 	public static final String VALUE_EVALUATOR_DEFAULT = "Default Evaluator";
 	public static final String VALUE_EVALUATOR_OPTIMIZATION = "Optimizer Evaluator";
@@ -57,7 +59,7 @@ public class IntervalDomainPreferences {
 	public static final String LABEL_EVALUATOR_TYPE = "Evaluator type";
 
 	// DEFAULT VALUES
-	public static final String DEF_WIDENING_OPERATOR = VALUES_WIDENING_OPERATOR[0];
+	public static final String DEF_WIDENING_OPERATOR = VALUE_WIDENING_OPERATOR_LITERALS;
 	public static final String DEF_EVALUATOR_TYPE = VALUE_EVALUATOR_DEFAULT;
 
 	public static List<UltimatePreferenceItem<?>> getPreferences() {

@@ -44,6 +44,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.ASimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.GameGraphChanges;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.GameGraphSuccessorProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.CountingMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationPerformance;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.TimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
@@ -155,12 +159,6 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 */
 	private GameGraphChanges<LETTER, STATE> m_CurrentChanges;
 	/**
-	 * A collection of sets which contains states of the buechi automaton that
-	 * may be merge-able. States which are not in the same set are definitely
-	 * not merge-able which is used as an optimization for the simulation.
-	 */
-	private final Map<STATE, Set<STATE>> m_PossibleEquivalentClasses;
-	/**
 	 * Game graph that is used for simulation calculation.
 	 */
 	private final FairGameGraph<LETTER, STATE> m_Game;
@@ -189,19 +187,18 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * because a successor of a neighboring SCC has reached infinity.
 	 */
 	private HashSet<Vertex<LETTER, STATE>> m_pokedFromNeighborSCC;
+	/**
+	 * A collection of sets which contains states of the buechi automaton that
+	 * may be merge-able. States which are not in the same set are definitely
+	 * not merge-able which is used as an optimization for the simulation.
+	 */
+	private final Map<STATE, Set<STATE>> m_PossibleEquivalentClasses;
 
 	/**
 	 * True if the simulation was aborted early because its already known that
 	 * the underlying language did change, false if not.
 	 */
 	private boolean m_SimulationWasAborted;
-
-	/**
-	 * Counts the amount of simulation steps needed to fully finish simulation.
-	 * <br/>
-	 * Can be used for runtime debugging.
-	 */
-	private int m_StepCounter;
 
 	/**
 	 * Creates a new fair simulation that tries to reduce the given buechi
@@ -307,7 +304,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses,
 			final FairGameGraph<LETTER, STATE> game) throws OperationCanceledException {
-		super(services, useSCCs, stateFactory);
+		super(services, useSCCs, stateFactory, SimulationType.FAIR);
 
 		m_Buechi = buechi;
 		m_Logger = getLogger();
@@ -318,6 +315,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 		m_Logger.debug("Starting generation of Fair Game Graph...");
 		m_Game = game;
+		m_Game.setSimulationPerformance(super.getSimulationPerformance());
 
 		m_GlobalInfinity = m_Game.getGlobalInfinity();
 
@@ -342,7 +340,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		// Properties
 		result.append(lineSeparator + "\tuseSCCs = " + isUsingSCCs());
 		result.append(lineSeparator + "\tglobalInfinity = " + m_GlobalInfinity);
-		result.append(lineSeparator + "\tstepCounter = " + m_StepCounter);
+		result.append(lineSeparator + "\tstepCounter = "
+				+ getSimulationPerformance().getCountingMeasureResult(CountingMeasure.SIMULATION_STEPS));
 		result.append(lineSeparator + "\tbuechi size before = " + m_Buechi.size() + " states");
 		if (getResult() != null) {
 			result.append(lineSeparator + "\tbuechi size after = " + getResult().size() + " states");
@@ -717,8 +716,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 */
 	@Override
 	protected void doSimulation() throws OperationCanceledException {
-		long startTime = System.currentTimeMillis();
-		m_StepCounter = 0;
+		SimulationPerformance performance = super.getSimulationPerformance();
+		performance.startTimeMeasure(TimeMeasure.OVERALL_TIME);
 
 		// First simulation
 		m_Logger.debug("Starting first simulation...");
@@ -758,6 +757,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 				}
 
 				m_Game.undoChanges(changes);
+				performance.increaseCountingMeasure(CountingMeasure.FAILED_MERGE_ATTEMPTS);
 			} else {
 				if (m_Logger.isDebugEnabled()) {
 					m_Logger.debug("Attempted merge for " + leftState + " and " + rightState + " was successful.");
@@ -806,6 +806,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 				}
 
 				m_Game.undoChanges(changes);
+				performance.increaseCountingMeasure(CountingMeasure.FAILED_TRANSREMOVE_ATTEMPTS);
 			} else {
 				if (m_Logger.isDebugEnabled()) {
 					m_Logger.debug(
@@ -833,9 +834,9 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		m_Logger.debug("Generating the result automaton...");
 		setResult(m_Game.generateBuchiAutomatonFromGraph());
 
-		long duration = System.currentTimeMillis() - startTime;
+		long duration = performance.stopTimeMeasure(TimeMeasure.OVERALL_TIME);
 		m_Logger.info((isUsingSCCs() ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds and "
-				+ m_StepCounter + " simulation steps.");
+				+ performance.getCountingMeasureResult(CountingMeasure.SIMULATION_STEPS) + " simulation steps.");
 	}
 
 	/*
@@ -847,6 +848,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	@Override
 	protected void efficientLiftingAlgorithm(final int localInfinity, final Set<Vertex<LETTER, STATE>> scc)
 			throws OperationCanceledException {
+		SimulationPerformance performance = super.getSimulationPerformance();
 		if (debugSimulation) {
 			m_Logger.debug("Lifting SCC: " + scc);
 		}
@@ -860,7 +862,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 		// Work through the working list until its empty
 		while (!getWorkingList().isEmpty()) {
-			m_StepCounter++;
+			performance.increaseCountingMeasure(CountingMeasure.SIMULATION_STEPS);
 
 			// Poll the current working vertex
 			Vertex<LETTER, STATE> workingVertex = pollVertexFromWorkingList();

@@ -47,6 +47,10 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.CountingMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationPerformance;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.TimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
@@ -106,33 +110,31 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * The logger used by the Ultimate framework.
 	 */
 	private final Logger m_Logger;
-
+	/**
+	 * Holds information about the performance of the simulation after usage.
+	 */
+	private final SimulationPerformance m_Performance;
 	/**
 	 * The resulting possible reduced buechi automaton.
 	 */
 	private INestedWordAutomatonOldApi<LETTER, STATE> m_Result;
-
 	/**
 	 * The object that computes the SCCs of a given buechi automaton.
 	 */
 	private SccComputation<Vertex<LETTER, STATE>, StronglyConnectedComponent<Vertex<LETTER, STATE>>> m_SccComp;
-
 	/**
 	 * Service provider of Ultimate framework.
 	 */
 	private final IUltimateServiceProvider m_Services;
-
 	/**
 	 * The state factory used for creating states.
 	 */
 	private final StateFactory<STATE> m_StateFactory;
-
 	/**
 	 * If the simulation calculation should be optimized using SCC, Strongly
 	 * Connected Components.
 	 */
 	private boolean m_UseSCCs;
-
 	/**
 	 * Comparator that compares two given vertices by their progress measure
 	 * whereas a higher measure gets favored before a smaller.<br/>
@@ -140,7 +142,6 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * as a priority queue that first works vertices with high measures.
 	 */
 	private VertexPmReverseComparator<LETTER, STATE> m_VertexComp;
-
 	/**
 	 * The internal working list of the simulation that, in general, gets
 	 * initiated with vertices that have priority 1. It contains vertices that
@@ -150,7 +151,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * the highest progress measure.
 	 */
 	private PriorityQueue<Vertex<LETTER, STATE>> m_WorkingList;
-
+	
 	/**
 	 * Creates a new simulation that initiates all needed data structures and
 	 * fields.
@@ -162,12 +163,14 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *            Strongly Connected Components.
 	 * @param stateFactory
 	 *            The state factory used for creating states.
+	 * @param simType
+	 *            Type of the simulation implementing.
 	 * @throws OperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
 	public ASimulation(final IUltimateServiceProvider services, final boolean useSCCs,
-			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
+			final StateFactory<STATE> stateFactory, final SimulationType simType) throws OperationCanceledException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_UseSCCs = useSCCs;
@@ -175,6 +178,8 @@ public abstract class ASimulation<LETTER, STATE> {
 		m_VertexComp = new VertexPmReverseComparator<>();
 
 		m_SccComp = null;
+
+		m_Performance = new SimulationPerformance(simType, useSCCs);
 	}
 
 	/**
@@ -184,6 +189,15 @@ public abstract class ASimulation<LETTER, STATE> {
 	 */
 	public INestedWordAutomatonOldApi<LETTER, STATE> getResult() {
 		return m_Result;
+	}
+
+	/**
+	 * Gets the performance of the simulation.
+	 * 
+	 * @return The performance of the simulation.
+	 */
+	public SimulationPerformance getSimulationPerformance() {
+		return m_Performance;
 	}
 
 	/**
@@ -450,7 +464,8 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *             framework.
 	 */
 	protected void doSimulation() throws OperationCanceledException {
-		long startTime = System.currentTimeMillis();
+		m_Performance.startTimeMeasure(TimeMeasure.OVERALL_TIME);
+
 		if (m_UseSCCs) { // calculate reduction with SCC
 			DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>> sccFactory = new DefaultStronglyConnectedComponentFactory<>();
 			GameGraphSuccessorProvider<LETTER, STATE> succProvider = new GameGraphSuccessorProvider<>(getGameGraph());
@@ -468,7 +483,9 @@ public abstract class ASimulation<LETTER, STATE> {
 			efficientLiftingAlgorithm(getGameGraph().getGlobalInfinity(), null);
 		}
 		m_Result = getGameGraph().generateBuchiAutomatonFromGraph();
-		long duration = System.currentTimeMillis() - startTime;
+
+		long duration = m_Performance.stopTimeMeasure(TimeMeasure.OVERALL_TIME);
+		
 		m_Logger.info((this.m_UseSCCs ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds.");
 	}
 
@@ -511,6 +528,8 @@ public abstract class ASimulation<LETTER, STATE> {
 
 		// Work through the working list until its empty
 		while (!m_WorkingList.isEmpty()) {
+			m_Performance.increaseCountingMeasure(CountingMeasure.SIMULATION_STEPS);
+			
 			// Poll the current working vertex
 			Vertex<LETTER, STATE> v = pollVertexFromWorkingList();
 

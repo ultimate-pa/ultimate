@@ -42,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.AGameGraph;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.CountingMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
@@ -76,6 +78,14 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 	 */
 	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Buechi;
 	/**
+	 * Amount of states the inputed buechi automata has.
+	 */
+	private int m_BuechiAmountOfStates;
+	/**
+	 * Amount of transitions the inputed buechi automata has.
+	 */
+	private int m_BuechiAmountOfTransitions;
+	/**
 	 * The logger used by the Ultimate framework.
 	 */
 	private final Logger m_Logger;
@@ -100,6 +110,8 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 		super(services, stateFactory);
 		m_Buechi = buechi;
 		m_Logger = getServiceProvider().getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_BuechiAmountOfStates = 0;
+		m_BuechiAmountOfTransitions = 0;
 		generateGameGraphFromBuechi();
 	}
 
@@ -167,6 +179,9 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 		HashMap<STATE, STATE> oldSNames2newSNames = new HashMap<>();
 		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<>(getServiceProvider(),
 				m_Buechi.getInternalAlphabet(), null, null, getStateFactory());
+
+		int resultAmountOfStates = 0;
+
 		for (int i = 0; i < states.size(); i++) {
 			if (marker[i])
 				continue;
@@ -189,6 +204,7 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 			for (STATE c : temp)
 				oldSNames2newSNames.put(c, minimizedStateName);
 			result.addState(isInitial, isFinal, minimizedStateName);
+			resultAmountOfStates++;
 			marker[i] = true;
 		}
 
@@ -199,13 +215,25 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 		}
 
 		// Add edges
+		int resultAmountOfTransitions = 0;
+
 		for (STATE c : m_Buechi.getStates())
 			for (LETTER s : m_Buechi.getInternalAlphabet())
 				for (STATE succ : m_Buechi.succInternal(c, s)) {
 					STATE newPred = oldSNames2newSNames.get(c);
 					STATE newSucc = oldSNames2newSNames.get(succ);
 					result.addInternalTransition(newPred, s, newSucc);
+					resultAmountOfTransitions++;
 				}
+
+		// Log performance
+		SimulationPerformance performance = getSimulationPerformance();
+		if (performance != null) {
+			performance.setCountingMeasure(CountingMeasure.REMOVED_STATES,
+					m_BuechiAmountOfStates - resultAmountOfStates);
+			performance.setCountingMeasure(CountingMeasure.REMOVED_TRANSITIONS,
+					m_BuechiAmountOfTransitions - resultAmountOfTransitions);
+		}
 
 		return result;
 	}
@@ -220,6 +248,8 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 	protected void generateGameGraphFromBuechi() throws OperationCanceledException {
 		// Calculate v1 [paper ref 10]
 		for (STATE q0 : m_Buechi.getStates()) {
+			m_BuechiAmountOfStates++;
+
 			for (STATE q1 : m_Buechi.getStates()) {
 				SpoilerVertex<LETTER, STATE> v1e = new SpoilerVertex<>(0, false, q0, q1);
 				addSpoilerVertex(v1e);
@@ -237,6 +267,8 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 		}
 		// Calculate v0 and edges [paper ref 10, 11, 12]
 		for (STATE q0 : m_Buechi.getStates()) {
+			boolean countedTransitionsForQ0 = false;
+
 			for (STATE q1 : m_Buechi.getStates()) {
 				for (LETTER s : m_Buechi.lettersInternalIncoming(q0)) {
 					if (m_Buechi.predInternal(q0, s).iterator().hasNext()) {
@@ -265,9 +297,16 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 								addEdge(getSpoilerVertex(q2, q1, true), v0e);
 							if (m_Buechi.isFinal(q0))
 								addEdge(getSpoilerVertex(q2, q1, false), v0e);
+
+							// Make sure to only count this transitions one time
+							// for q0
+							if (!countedTransitionsForQ0) {
+								m_BuechiAmountOfTransitions++;
+							}
 						}
 					}
 				}
+				countedTransitionsForQ0 = true;
 			}
 			if (getServiceProvider().getProgressMonitorService() != null
 					&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {

@@ -210,6 +210,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		LinkedList<TransFormula> transformulasToComputeSummaryFor = new LinkedList<TransFormula>();
 		for (int i = start; i < end; i++) {
 			if (trace.getSymbol(i) instanceof Call) {
+				TransFormula callTf = rv.getLocalVarAssignment(i);
+				TransFormula oldVarsAssignment = rv.getOldVarAssignment(i);
 				if (!trace.isPendingCall(i)) {
 					// Case: non-pending call
 					// Compute a summary for Call and corresponding Return, but
@@ -222,30 +224,22 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 						// and the corresponding Return recursively
 						TransFormula summaryBetweenCallAndReturn = computeSummaryForInterproceduralTrace(trace, rv,
 								i + 1, returnPosition);
-						/**
-						 * FIXME: Here, we have to assign the original
-						 * statements for Call and Return as parameters, because
-						 * the method
-						 * {@link TransFormula.sequentialCompositionWithCallAndReturn}
-						 * expects CodeBlocks and not TransFormulas.
-						 */
+						TransFormula returnTf = rv.getFormulaFromNonCallPos(returnPosition);
 						transformulasToComputeSummaryFor.addLast(TransFormula.sequentialCompositionWithCallAndReturn(
-								m_SmtManager.getBoogie2Smt(), true, false, s_TransformToCNF, trace.getSymbol(i)
-								.getTransitionFormula(), rv.getOldVarAssignment(i),
-								summaryBetweenCallAndReturn, trace.getSymbol(returnPosition).getTransitionFormula(),
+								m_SmtManager.getBoogie2Smt(), true, false, s_TransformToCNF, callTf, oldVarsAssignment,
+								summaryBetweenCallAndReturn, returnTf,
 								m_Logger, m_Services));
 						i = returnPosition;
 					} else {
 						// If the position of the corresponding Return is >=
 						// "end",
 						// then we handle this case as a pending-call
-						TransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(trace, rv, i + 1,
-								end);
+						TransFormula summaryAfterPendingCall = computeSummaryForInterproceduralTrace(trace, rv, i + 1, end);
 						String nameEndProcedure = ((ProgramPoint) trace.getSymbol(end).getTarget()).getProcedure();
 						Set<BoogieVar> modifiableGlobalsOfEndProcedure = m_ModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
 						return TransFormula.sequentialCompositionWithPendingCall(m_SmtManager.getBoogie2Smt(), true,
-								false, s_TransformToCNF, transformulasToComputeSummaryFor.toArray(new TransFormula[0]),
-								rv.getLocalVarAssignment(i), rv.getOldVarAssignment(i), summaryAfterPendingCall,
+								false, s_TransformToCNF, transformulasToComputeSummaryFor,
+								callTf, oldVarsAssignment, summaryAfterPendingCall,
 								m_Logger, m_Services, modifiableGlobalsOfEndProcedure);
 					}
 				} else {
@@ -253,8 +247,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					String nameEndProcedure = ((ProgramPoint) trace.getSymbol(end).getTarget()).getProcedure();
 					Set<BoogieVar> modifiableGlobalsOfEndProcedure = m_ModifiedGlobals.getModifiedBoogieVars(nameEndProcedure);
 					return TransFormula.sequentialCompositionWithPendingCall(m_SmtManager.getBoogie2Smt(), true, false,
-							s_TransformToCNF, transformulasToComputeSummaryFor.toArray(new TransFormula[0]),
-							rv.getLocalVarAssignment(i), rv.getOldVarAssignment(i), summaryAfterPendingCall, m_Logger,
+							s_TransformToCNF, transformulasToComputeSummaryFor,
+							callTf, oldVarsAssignment, summaryAfterPendingCall, m_Logger,
 							m_Services, modifiableGlobalsOfEndProcedure);
 				}
 			} else if (trace.getSymbol(i) instanceof Return) {

@@ -122,6 +122,17 @@ public class BooleanValue {
 	}
 
 	/**
+	 * @return <code>true</code> if and only if the value of <code>this</code> is &bot;, <code>false</code> otherwise.
+	 */
+	public boolean isBottom() {
+		if (mValue.equals(Value.BOTTOM)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
 	 * Intersects this with another {@link BooleanValue}.
 	 * 
 	 * @param other
@@ -159,7 +170,7 @@ public class BooleanValue {
 		if (mValue == Value.BOTTOM && other.mValue == Value.BOTTOM) {
 			return new BooleanValue(Value.BOTTOM);
 		}
-		
+
 		if (mValue == Value.BOTTOM && other.mValue != Value.BOTTOM) {
 			return new BooleanValue(other.mValue);
 		} else if (mValue != Value.BOTTOM && other.mValue == Value.BOTTOM) {

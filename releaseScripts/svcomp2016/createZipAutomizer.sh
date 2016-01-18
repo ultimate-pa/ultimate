@@ -5,6 +5,7 @@ TOOLNAME=Automizer
 TARGETDIR=U${TOOLNAME}
 TOOLCHAIN=../../trunk/examples/toolchains/AutomizerC.xml
 TERMTOOLCHAIN=../../trunk/examples/toolchains/BuchiAutomizerCWithBlockEncoding.xml
+VALTOOLCHAIN=../../trunk/examples/toolchains/AutomizerC.xml
 SETTINGS=../../trunk/examples/settings/svcomp2016/*${TOOLNAME}*
 
 rm -r "$TARGETDIR"
@@ -13,6 +14,7 @@ mkdir "$TARGETDIR"
 cp -a ../../trunk/source/BA_SiteRepository/target/products/CLI-E4/linux/gtk/x86_64/* "$TARGETDIR"/
 cp "$TOOLCHAIN" "$TARGETDIR"/"$TOOLNAME".xml
 cp "$TERMTOOLCHAIN" "$TARGETDIR"/"$TOOLNAME"Termination.xml
+cp "$VALTOOLCHAIN" "$TARGETDIR"/"$TOOLNAME"WitnessValidation.xml
 cp LICENSE* "$TARGETDIR"/
 cp ${SETTINGS} "$TARGETDIR"/.
 cp Ultimate.py "$TARGETDIR"/

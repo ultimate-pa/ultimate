@@ -243,7 +243,9 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 		final Map<String, Declaration> locals = mSymbolTable.getLocalVariables(procedure);
 		for (final Entry<String, Declaration> local : locals.entrySet()) {
 			final IBoogieVar bvar = getLocalVariable(local.getKey(), procedure);
-			assert bvar != null;
+			if(bvar == null){
+				continue;
+			}
 			localVars.put(local.getKey(), bvar);
 		}
 		return localVars;

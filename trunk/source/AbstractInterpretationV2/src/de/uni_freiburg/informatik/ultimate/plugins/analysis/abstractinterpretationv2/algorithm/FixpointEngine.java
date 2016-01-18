@@ -33,8 +33,12 @@ import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 
@@ -99,10 +103,15 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		mMaxParallelStates = ups.getInt(AbsIntPrefInitializer.LABEL_STATES_UNTIL_MERGE);
 	}
 
-	public void run(ACTION start) {
+	/**
+	 * @return true iff safe
+	 */
+	public boolean run(ACTION start) {
 		if (!runInternal(start)) {
-			mReporter.reportSafe();
+			mReporter.reportSafe(start);
+			return true;
 		}
+		return false;
 	}
 
 	// TODO: Recursion
@@ -125,7 +134,6 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			final ACTION currentAction = currentItem.getAction();
 			final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> currentStateStorage = currentItem
 					.getCurrentStorage();
-			final STATE oldPostState = currentStateStorage.getCurrentAbstractPostState(currentAction);
 
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageCurrentTransition(preState, currentAction));
@@ -137,12 +145,12 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			final STATE preStateWithFreshVariables = mVarProvider.defineVariablesAfter(currentAction, preState,
 					currentItem.getCurrentStorage());
 
-			STATE newPostState;
+			STATE pendingNewPostState;
 			if (preState.equals(preStateWithFreshVariables)) {
-				newPostState = post.apply(preStateWithFreshVariables, currentAction);
+				pendingNewPostState = post.apply(preStateWithFreshVariables, currentAction);
 			} else {
 				// a context switch happened
-				newPostState = post.apply(preState, preStateWithFreshVariables, currentAction);
+				pendingNewPostState = post.apply(preState, preStateWithFreshVariables, currentAction);
 			}
 
 			// check if this action leaves a loop
@@ -150,9 +158,12 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				// are we leaving a loop?
 				final Pair<ACTION, ACTION> lastPair = activeLoops.peek();
 				if (lastPair.getSecond().equals(currentAction)) {
-					newPostState = loopLeave(activeLoops, loopCounters, widening, oldPostState, newPostState, lastPair);
+					//TODO: Check if currentStateStorage.getCurrentAbstractPostState(currentAction) is really correct 
+					pendingNewPostState = loopLeave(activeLoops, loopCounters, widening, currentStateStorage.getCurrentAbstractPostState(currentAction), pendingNewPostState, lastPair);
 				}
 			}
+			
+			final STATE newPostState = pendingNewPostState;
 
 			if (newPostState.isBottom()) {
 				// if the new abstract state is bottom, we did not actually
@@ -171,20 +182,37 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				loopEnter(activeLoops, loopCounters, currentAction, loopExit);
 			}
 
-			if (newPostState.isEqualTo(oldPostState)) {
-				// found fixpoint, mark old post state as fixpoint, do not add
-				// new post state, replace all occurences of old post state as
-				// pre-state in worklist with new post state
-				newPostState = setFixpoint(worklist, currentItem, oldPostState);
-				assert oldPostState.getVariables().keySet()
-						.equals(newPostState.getVariables().keySet()) : "setFixpoint() destroyed the state ";
-
-			} else {
+			final Collection<STATE> oldPostStates = currentStateStorage.getAbstractPostStates(currentAction);
+			final Optional<STATE> fixpointState = oldPostStates.stream().filter(old -> newPostState.isEqualTo(old)).findAny();
+			
+			if(fixpointState.isPresent()){
+				//if the state is a fixpoint, we do not need to continue
 				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(getLogMessageNewPostState(newPostState));
+					mLogger.debug(getLogMessageFixpointFound(fixpointState.get(), newPostState));
 				}
-				currentStateStorage.addAbstractPostState(currentAction, newPostState);
+				continue;
 			}
+			
+//			if (newPostState.isEqualTo(oldPostState)) {
+//				// found fixpoint, mark old post state as fixpoint, do not add
+//				// new post state, replace all occurences of old post state as
+//				// pre-state in worklist with new post state
+//				newPostState = setFixpoint(worklist, currentItem, oldPostState);
+//				assert oldPostState.getVariables().keySet()
+//						.equals(newPostState.getVariables().keySet()) : "setFixpoint() destroyed the state ";
+//
+//			} else {
+//				if (mLogger.isDebugEnabled()) {
+//					mLogger.debug(getLogMessageNewPostState(newPostState));
+//				}
+//				currentStateStorage.addAbstractPostState(currentAction, newPostState);
+//			}
+			
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(getLogMessageNewPostState(newPostState));
+			}
+			currentStateStorage.addAbstractPostState(currentAction, newPostState);
+			
 			if (mTransitionProvider.isPostErrorLocation(currentAction, currentItem.getCurrentScope())
 					&& !newPostState.isBottom() && reachedErrors.add(currentAction)) {
 				if (mLogger.isDebugEnabled()) {
@@ -195,14 +223,13 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				mReporter.reportPossibleError(start, currentAction);
 			}
 
-			if (newPostState.isFixpoint() && preState.isFixpoint()) {
-				// if our post state is a fixpoint, we do not add successors
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT)
-							.append(" Skipping successors because pre and post states are fixpoints"));
-				}
-				continue;
-			}
+//			if (newPostState.isFixpoint() && preState.isFixpoint()) {
+//				// if our post state is a fixpoint, we do not add successors
+//				if (mLogger.isDebugEnabled()) {
+//					mLogger.debug(getLogMessageSkippingSuccessorsForFixpoint(preState, newPostState));
+//				}
+//				continue;
+//			}
 
 			// now add successors
 			addSuccessors(worklist, currentItem);
@@ -289,8 +316,9 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 		if (availablePostStatesCount > mMaxParallelStates) {
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(getLogMessageMergeStates(availablePostStatesCount));
+				mLogger.debug(getLogMessageMergeStates(availablePostStatesCount, availablePostStates));
 			}
+			removeMergedStatesFromWorklist(worklist, availablePostStates, current);
 			final STATE newPostState = currentStateStorage.mergePostStates(current);
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageMergeResult(newPostState));
@@ -299,6 +327,21 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		} else {
 			for (final STATE postState : availablePostStates) {
 				addSuccessorsForPostState(worklist, currentItem, successors, postState);
+			}
+		}
+	}
+
+	private void removeMergedStatesFromWorklist(final Deque<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> worklist,
+			final Collection<STATE> availablePostStates, final ACTION current) {
+		final Iterator<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> iter = worklist.iterator();
+		while (iter.hasNext()) {
+			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem = iter.next();
+			// note that here the state has to be equal, i.e., the same instance
+			if (currentItem.getAction().equals(current) && availablePostStates.contains(currentItem.getPreState())) {
+				iter.remove();
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(getLogMessageRemoveFromWorklistDuringMerge(currentItem));
+				}
 			}
 		}
 	}
@@ -374,23 +417,39 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	}
 
 	private StringBuilder getLogMessageFixpointFound(STATE oldPostState, final STATE newPostState) {
-		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" post state ")
-				.append(oldPostState.hashCode()).append(" is fixpoint, replacing with ")
-				.append(newPostState.hashCode());
+		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" new post state [")
+				.append(oldPostState.hashCode()).append("] ").append(oldPostState.toLogString())
+				.append(" is fixpoint, replacing with [").append(newPostState.hashCode()).append("]");
+	}
+
+	private StringBuilder getLogMessageSkippingSuccessorsForFixpoint(STATE pre, final STATE post) {
+		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Skipping successors because pre [")
+				.append(pre.hashCode()).append("] and post [").append(post.hashCode()).append("] states are fixpoints");
 	}
 
 	private StringBuilder getLogMessageMergeResult(STATE newPostState) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Merging resulted in [")
-				.append(newPostState.hashCode()).append("]");
+				.append(newPostState.hashCode()).append("] ").append(newPostState.toLogString());
 	}
 
-	private StringBuilder getLogMessageMergeStates(final int availablePostStatesCount) {
+	private StringBuilder getLogMessageRemoveFromWorklistDuringMerge(
+			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> item) {
+		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Removing [")
+				.append(item.getPreState().hashCode()).append("]").append(" --[").append(item.getAction().hashCode())
+				.append("]-> from worklist during merge");
+	}
+
+	private StringBuilder getLogMessageMergeStates(final int availablePostStatesCount,
+			Collection<STATE> availablePostStates) {
+		final List<String> postStates = availablePostStates.stream().map(a -> "[" + String.valueOf(a.hashCode()) + "]")
+				.collect(Collectors.toList());
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Merging ")
-				.append(availablePostStatesCount).append(" states at target location");
+				.append(availablePostStatesCount).append(" states at target location: ")
+				.append(String.join(",", postStates));
 	}
 
 	private StringBuilder getLogMessageNewPostState(STATE newPostState) {
-		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" adding post state [")
+		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Adding post state [")
 				.append(newPostState.hashCode()).append("] ").append(newPostState.toLogString());
 	}
 

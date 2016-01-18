@@ -79,7 +79,5 @@ public class PositiveResult<ELEM extends IElement> extends AbstractResultAtEleme
 			sb.append(" at this location");
 			return sb.toString();
 		}
-
 	}
-
 }

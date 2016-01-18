@@ -122,10 +122,11 @@ public class HoareAnnotationWriter {
 		String locName = pp.getPosition();
 		ProgramPoint locNode = m_rootAnnot.getProgramPoints().get(procName).get(locName);
 		HoareAnnotation hoareAnnot = null;
-		IAnnotations taAnnot = locNode.getPayload().getAnnotations().get(Activator.s_PLUGIN_ID);
+		
+		HoareAnnotation taAnnot = HoareAnnotation.getAnnotation(locNode);
 		if (taAnnot == null) {
 			hoareAnnot = m_SmtManager.getNewHoareAnnotation(pp);
-			locNode.getPayload().getAnnotations().put(Activator.s_PLUGIN_ID, hoareAnnot);
+			hoareAnnot.annotate(locNode);
 		} else {
 			hoareAnnot = (HoareAnnotation) taAnnot;
 		}

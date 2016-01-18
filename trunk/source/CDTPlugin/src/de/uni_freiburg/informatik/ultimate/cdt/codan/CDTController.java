@@ -140,7 +140,7 @@ public class CDTController implements IController {
 		ArrayList<String> returnList = new ArrayList<String>();
 		for (String model : modelNames) {
 			if (model
-					.contains(de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator.s_PLUGIN_ID)) {
+					.contains(de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.Activator.PLUGIN_ID)) {
 				returnList.add(model);
 			}
 		}

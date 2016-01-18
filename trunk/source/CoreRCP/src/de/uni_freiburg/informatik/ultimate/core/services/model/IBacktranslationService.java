@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
  * {@link IBacktranslationService} contains all {@link ITranslator} instances
  * for the currently running toolchain.
  * 
- * @author dietsch
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
 public interface IBacktranslationService {
@@ -51,6 +51,12 @@ public interface IBacktranslationService {
 
 	public <SE> Object translateExpression(SE expression, Class<SE> clazz);
 
+	/**
+	 * Translate an expression from the output type to a String. 
+	 * @param expression
+	 * @param clazz
+	 * @return
+	 */
 	public <SE> String translateExpressionToString(SE expression, Class<SE> clazz);
 
 	public <STE> List<?> translateTrace(List<STE> trace, Class<STE> clazz);

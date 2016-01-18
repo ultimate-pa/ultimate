@@ -3,9 +3,8 @@
 // Author: nutz
 //
 #include <stdlib.h>
-#include <string.h>
 
-int main() {
+int nonmain() {
   int *jp = malloc(3 * sizeof(int) + 1);
 
   *jp = 4;

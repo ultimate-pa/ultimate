@@ -41,13 +41,13 @@ import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public class WitnessEdge {
+public class GeneratedWitnessEdge {
 
 	private final String mId;
 	private final AtomicTraceElement<CACSLLocation> mATE;
 	private final ProgramState<IASTExpression> mState;
 
-	WitnessEdge(AtomicTraceElement<CACSLLocation> traceElement, ProgramState<IASTExpression> state, long currentEdgeId) {
+	GeneratedWitnessEdge(AtomicTraceElement<CACSLLocation> traceElement, ProgramState<IASTExpression> state, long currentEdgeId) {
 		mId = "E" + String.valueOf(currentEdgeId);
 		mATE = traceElement;
 		mState = state;

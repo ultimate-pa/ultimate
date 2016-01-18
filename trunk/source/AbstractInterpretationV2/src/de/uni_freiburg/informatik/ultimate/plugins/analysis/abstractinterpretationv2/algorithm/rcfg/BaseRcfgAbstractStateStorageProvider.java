@@ -37,8 +37,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -305,7 +303,6 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 		assert node.equals(transition.getSource()) || node.equals(transition.getTarget());
 		final Deque<Pair<CodeBlock, STATE>> states = getStates(node);
 		// TODO: Optimize by removing lower states if they are equal to this one
-		assert !state.isEmpty() : "Empty state is not worth saving";
 		states.addFirst(new Pair<CodeBlock, STATE>(transition, state));
 	}
 

@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.result.WitnessResult.WitnessVerificat
  * The actual witness generation is done by the corresponding plugin (i.e. via
  * {@link IProgramExecution#getSVCOMPWitnessString()}).
  * 
- * @author dietsch@informatik.uni-freiburg.de
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @see IProgramExecution
  * 
  */
@@ -287,7 +287,7 @@ public class WitnessManager {
 			}
 			reader.close();
 		} catch (IOException e) {
-			// supress all exceptions
+			// suppress all exceptions
 		}
 		return out.toString();
 	}
