@@ -658,13 +658,13 @@ public class OctMatrix {
 					setBlock(targetOther, targetVar, OctValue.INFINITY);
 					setBlock(targetVar, targetOther, OctValue.INFINITY);
 				} else {
-					overwriteBlock(targetOther, targetVar, source, sourceOther, sourceVar); // column
-					overwriteBlock(targetVar, targetOther, source, sourceVar, sourceOther); // row
+					copyBlock(targetOther, targetVar, /* := */ source, sourceOther, sourceVar); // column
+					copyBlock(targetVar, targetOther, /* := */ source, sourceVar, sourceOther); // row
 				}
 			}
 		}
 	}
-	
+
 	// TODO document: selectedSourceVars should not contain duplicates
 	// TODO document: iteration order matters
 	public OctMatrix appendSelection(OctMatrix source, Collection<Integer> selectedSourceVars) {
@@ -678,7 +678,7 @@ public class OctMatrix {
 		return m;
 	}
 	
-	private void overwriteBlock(int targetBRow, int targetBCol, OctMatrix source, int sourceBRow, int sourceBCol) {
+	private void copyBlock(int targetBRow, int targetBCol, OctMatrix source, int sourceBRow, int sourceBCol) {
 		for (int j = 0; j < 2; j++) {
 			for (int i = 0; i < 2; ++i) {
 				set(2*targetBRow + i, 2*targetBCol + j, source.get(2*sourceBRow + i, 2*sourceBCol + j));

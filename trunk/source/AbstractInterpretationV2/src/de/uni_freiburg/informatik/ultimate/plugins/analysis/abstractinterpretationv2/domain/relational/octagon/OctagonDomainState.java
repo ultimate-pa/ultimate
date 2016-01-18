@@ -258,9 +258,10 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		} else if (other == this) {
 			return true;
 		} else {
-			return mMapVarToBoogieVar.equals(other.mMapVarToBoogieVar)
+			boolean isEqual = mMapVarToBoogieVar.equals(other.mMapVarToBoogieVar)
 					&& mBooleanAbstraction.equals(other.mBooleanAbstraction)
 					&& numericAbstractionIsEqualTo(other);
+			return isEqual;
 		}
 	}
 	
