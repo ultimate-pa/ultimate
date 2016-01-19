@@ -1397,7 +1397,7 @@ public class TransFormula implements Serializable {
 	}
 
 	/**
-	 * Returns a Transformula that can be seen as procedure summary.
+	 * Returns a TransFormula that can be seen as procedure summary.
 	 * 
 	 * @param callTf
 	 *            TransFormula that describes parameter assignment of call.
@@ -1405,18 +1405,19 @@ public class TransFormula implements Serializable {
 	 *            TransFormula that assigns to oldVars of modifiable globals the
 	 *            value of the global var.
 	 * @param procedureTf
-	 *            TransFormula that describes the procdure.
+	 *            TransFormula that describes the procedure.
 	 * @param returnTf
 	 *            TransFormula that assigns the result of the procedure call.
 	 * @param logger
 	 * @param services
 	 */
 	public static TransFormula sequentialCompositionWithCallAndReturn(Boogie2SMT boogie2smt, boolean simplify,
-			boolean extPqe, boolean transformToCNF, TransFormula callTf, TransFormula oldVarsAssignment,
+			boolean extPqe, boolean transformToCNF, TransFormula callTf, 
+			TransFormula oldVarsAssignment, TransFormula globalVarsAssignment,
 			TransFormula procedureTf, TransFormula returnTf, Logger logger, IUltimateServiceProvider services) {
 		logger.debug("sequential composition (call/return) with" + (simplify ? "" : "out") + " formula simplification");
 		TransFormula result = sequentialComposition(logger, services, boogie2smt, simplify, extPqe, transformToCNF,
-				callTf, oldVarsAssignment, procedureTf, returnTf);
+				callTf, oldVarsAssignment, globalVarsAssignment, procedureTf, returnTf);
 		{
 			List<BoogieVar> inVarsToRemove = new ArrayList<BoogieVar>();
 			for (BoogieVar bv : result.getInVars().keySet()) {

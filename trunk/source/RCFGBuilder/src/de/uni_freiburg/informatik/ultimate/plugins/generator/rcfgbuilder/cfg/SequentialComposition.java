@@ -248,9 +248,10 @@ public class SequentialComposition extends CodeBlock {
 				assert (beforeCall == null);
 				String proc = call.getCallStatement().getMethodName();
 				TransFormula oldVarsAssignment = modGlobVarManager.getOldVarsAssignment(proc);
+				TransFormula globalVarsAssignment = modGlobVarManager.getGlobalVarsAssignment(proc);
 				result = TransFormula.sequentialCompositionWithCallAndReturn(boogie2smt, simplify, extPqe,
-						tranformToCNF, call.getTransitionFormula(), oldVarsAssignment, tfForCodeBlocks,
-						ret.getTransitionFormula(), logger, services);
+						tranformToCNF, call.getTransitionFormula(), oldVarsAssignment, globalVarsAssignment,
+						tfForCodeBlocks, ret.getTransitionFormula(), logger, services);
 			}
 
 		}

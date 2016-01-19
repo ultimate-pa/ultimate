@@ -188,12 +188,14 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 * @return
 	 */
 	private ProcedureSummary computeProcedureSummary(NestedWord<CodeBlock> trace, TransFormula Call,
-			TransFormula Return, TransFormula oldVarsAssignment, NestedFormulas<TransFormula, IPredicate> rv,
+			TransFormula Return, TransFormula oldVarsAssignment, TransFormula globalVarsAssignment, 
+			NestedFormulas<TransFormula, IPredicate> rv,
 			int call_pos, int return_pos) {
 		TransFormula summaryOfInnerStatements = computeSummaryForInterproceduralTrace(trace, rv, call_pos + 1,
 				return_pos);
 		TransFormula summaryWithCallAndReturn = TransFormula.sequentialCompositionWithCallAndReturn(
-				m_SmtManager.getBoogie2Smt(), true, false, s_TransformToCNF, Call, oldVarsAssignment,
+				m_SmtManager.getBoogie2Smt(), true, false, s_TransformToCNF, Call, 
+				oldVarsAssignment, globalVarsAssignment,
 				summaryOfInnerStatements, Return, m_Logger, m_Services);
 		return new ProcedureSummary(summaryWithCallAndReturn, summaryOfInnerStatements);
 	}
@@ -212,6 +214,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			if (trace.getSymbol(i) instanceof Call) {
 				TransFormula callTf = rv.getLocalVarAssignment(i);
 				TransFormula oldVarsAssignment = rv.getOldVarAssignment(i);
+				TransFormula globalVarsAssignment = rv.getGlobalVarAssignment(i);
 				if (!trace.isPendingCall(i)) {
 					// Case: non-pending call
 					// Compute a summary for Call and corresponding Return, but
@@ -227,7 +230,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 						TransFormula returnTf = rv.getFormulaFromNonCallPos(returnPosition);
 						transformulasToComputeSummaryFor.addLast(TransFormula.sequentialCompositionWithCallAndReturn(
 								m_SmtManager.getBoogie2Smt(), true, false, s_TransformToCNF, callTf, oldVarsAssignment,
-								summaryBetweenCallAndReturn, returnTf,
+								globalVarsAssignment, summaryBetweenCallAndReturn, returnTf,
 								m_Logger, m_Services));
 						i = returnPosition;
 					} else {
@@ -640,8 +643,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 					globalVarsAssignments = rv.getGlobalVarAssignment(callPos);
 					oldVarAssignments = rv.getOldVarAssignment(callPos);
 					final ProcedureSummary summary = computeProcedureSummary(
-							m_Trace, callLocalVarsAssignment,
-							returnTf, oldVarAssignments, rv, callPos, i);
+							m_Trace, callLocalVarsAssignment, returnTf, 
+							oldVarAssignments, globalVarsAssignments, rv, callPos, i);
 					varsOccurringBetweenCallAndReturn = summary.computeVariableInInnerSummary();
 					callerPred = m_PredicateTransformer.weakestPrecondition(
 							successor,
