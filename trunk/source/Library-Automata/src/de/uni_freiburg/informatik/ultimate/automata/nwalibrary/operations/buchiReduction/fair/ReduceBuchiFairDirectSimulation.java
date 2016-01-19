@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -124,8 +125,10 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 			final StateFactory<STATE> stateFactory, final INestedWordAutomatonOldApi<LETTER, STATE> operand,
 			final boolean useSCCs, final Collection<Set<STATE>> possibleEquivalentClasses)
 					throws OperationCanceledException {
-		super(services, stateFactory, operand, useSCCs, false, new FairDirectSimulation<LETTER, STATE>(services,
-				operand, useSCCs, stateFactory, possibleEquivalentClasses));
+		super(services, stateFactory, operand, useSCCs, false,
+				new FairDirectSimulation<LETTER, STATE>(services, services.getProgressMonitorService(),
+						services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID), operand, useSCCs,
+						stateFactory, possibleEquivalentClasses));
 	}
 
 	/*

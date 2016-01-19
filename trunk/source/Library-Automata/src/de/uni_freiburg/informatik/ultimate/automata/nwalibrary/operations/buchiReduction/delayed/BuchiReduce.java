@@ -112,12 +112,13 @@ public class BuchiReduce<LETTER, STATE> implements IOperation<LETTER, STATE> {
 			msg.append(" W/O dead ends ").append(m_Operand.sizeInformation());
 			m_Logger.debug(msg.toString());
 		}
-		m_Result = new DelayedSimulation<LETTER, STATE>(m_Services, m_Operand, true, stateFactory).getResult();
+		m_Result = new DelayedSimulation<LETTER, STATE>(m_Services, m_Services.getProgressMonitorService(), m_Logger,
+				m_Operand, true, stateFactory).getResult();
 
 		boolean compareWithNonSccResult = false;
 		if (compareWithNonSccResult) {
 			INestedWordAutomatonOldApi<LETTER, STATE> nonSCCresult = new DelayedSimulation<LETTER, STATE>(m_Services,
-					m_Operand, false, stateFactory).getResult();
+					m_Services.getProgressMonitorService(), m_Logger, m_Operand, false, stateFactory).getResult();
 			if (m_Result.size() != nonSCCresult.size()) {
 				throw new AssertionError();
 			}

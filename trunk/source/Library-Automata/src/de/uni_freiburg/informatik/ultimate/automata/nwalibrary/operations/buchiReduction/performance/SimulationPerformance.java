@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -50,6 +49,21 @@ public final class SimulationPerformance {
 	public static final long NO_TIME_RESULT = -1;
 
 	/**
+	 * Creates an empty simulation performance object that has timed out.
+	 * 
+	 * @param type
+	 *            Type of the simulation
+	 * @param useSCCs
+	 *            If the simulation usesSCCs
+	 * @return The timed out simulation performance object
+	 */
+	public static SimulationPerformance createTimedOutPerformance(final SimulationType type, final boolean useSCCs) {
+		SimulationPerformance performance = new SimulationPerformance(type, useSCCs);
+		performance.timeOut();
+		return performance;
+	}
+
+	/**
 	 * Holds all counting measures that are monitored.
 	 */
 	private final LinkedHashMap<CountingMeasure, Integer> m_CountingMeasures;
@@ -62,14 +76,19 @@ public final class SimulationPerformance {
 	 */
 	private final SimulationType m_SimType;
 	/**
+	 * If the performance object represents a simulation that has timed out.
+	 */
+	private boolean m_TimedOut;
+	/**
 	 * Holds all time measures that are monitored.
 	 */
 	private final LinkedHashMap<TimeMeasure, List<Long>> m_TimeMeasures;
+
 	/**
 	 * Holds all starting timestamps for monitored time measures.
 	 */
 	private final LinkedHashMap<TimeMeasure, Long> m_TimeMeasureStartTimes;
-	
+
 	/**
 	 * Creates a simulation performance object that monitors the performance of
 	 * a given simulation.
@@ -85,8 +104,9 @@ public final class SimulationPerformance {
 		m_TimeMeasureStartTimes = new LinkedHashMap<>();
 		m_CountingMeasures = new LinkedHashMap<>();
 		m_IsUsingSCCs = isUsingSCCs;
+		m_TimedOut = false;
 	}
-	
+
 	/**
 	 * Adds a given value to the duration list of a given time measure.
 	 * 
@@ -170,6 +190,10 @@ public final class SimulationPerformance {
 		if (option.equals(MultipleDataOption.AVERAGE)) {
 			timeResult = Math.round((timeResult + 0.0) / measureList.size());
 		}
+		
+		if (timeResult <= 0) {
+			return NO_TIME_RESULT;
+		}
 		return timeResult;
 	}
 
@@ -191,6 +215,17 @@ public final class SimulationPerformance {
 	 */
 	public LinkedHashMap<TimeMeasure, List<Long>> getTimeMeasures() {
 		return m_TimeMeasures;
+	}
+
+	/**
+	 * Returns whether the performance object represents a simulation that has
+	 * timed out.
+	 * 
+	 * @return Whether the performance object represents a simulation that has
+	 *         timed out.
+	 */
+	public boolean hasTimedOut() {
+		return m_TimedOut;
 	}
 
 	/**
@@ -219,15 +254,17 @@ public final class SimulationPerformance {
 	}
 
 	/**
-	 * Sets the value for a given counting measure.
+	 * Sets the value for a given counting measure if it is not zero.
 	 * 
 	 * @param type
 	 *            Type of the counting measure to set
 	 * @param counter
-	 *            Value to set
+	 *            Value to set which must not be zero
 	 */
 	public void setCountingMeasure(final CountingMeasure type, final int counter) {
-		m_CountingMeasures.put(type, counter);
+		if (counter != 0) {
+			m_CountingMeasures.put(type, counter);
+		}
 	}
 
 	/**
@@ -258,6 +295,14 @@ public final class SimulationPerformance {
 		long duration = endTime - startTime;
 		saveTimeMeasureResult(type, duration);
 		return duration;
+	}
+
+	/**
+	 * If called the performance object indicates that the represented
+	 * simulation timed out.
+	 */
+	public void timeOut() {
+		m_TimedOut = true;
 	}
 
 	/**

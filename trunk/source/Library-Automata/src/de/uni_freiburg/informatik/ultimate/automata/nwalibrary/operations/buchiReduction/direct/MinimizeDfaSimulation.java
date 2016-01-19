@@ -107,12 +107,13 @@ public class MinimizeDfaSimulation<LETTER, STATE> implements IOperation<LETTER, 
 		m_Operand = operand;
 		m_Logger.info(startMessage());
 
-		m_Result = new DirectSimulation<>(m_Services, m_Operand, true, stateFactory).getResult();
+		m_Result = new DirectSimulation<>(m_Services, m_Services.getProgressMonitorService(), m_Logger, m_Operand, true,
+				stateFactory).getResult();
 
 		boolean compareWithNonSccResult = false;
 		if (compareWithNonSccResult) {
 			INestedWordAutomatonOldApi<LETTER, STATE> nonSCCresult = new DirectSimulation<LETTER, STATE>(m_Services,
-					m_Operand, false, stateFactory).getResult();
+					m_Services.getProgressMonitorService(), m_Logger, m_Operand, false, stateFactory).getResult();
 			if (m_Result.size() != nonSCCresult.size()) {
 				throw new AssertionError();
 			}

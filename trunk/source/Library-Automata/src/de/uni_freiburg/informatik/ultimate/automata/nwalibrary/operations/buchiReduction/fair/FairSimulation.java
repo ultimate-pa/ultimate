@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.relation.Quad;
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
@@ -211,7 +212,12 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * ends</b> nor <b>duplicate transitions</b>.
 	 * 
 	 * @param services
-	 *            Service provider of Ultimate framework.
+	 *            Service provider of Ultimate framework
+	 * @param progressTimer
+	 *            Timer used for responding to timeouts and operation
+	 *            cancellation.
+	 * @param logger
+	 *            Logger of the Ultimate framework.
 	 * @param buechi
 	 *            The buechi automaton to reduce with no dead ends nor with
 	 *            duplicate transitions
@@ -224,11 +230,11 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public FairSimulation(final IUltimateServiceProvider services,
-			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
+	public FairSimulation(final IUltimateServiceProvider services, final IProgressAwareTimer progressTimer,
+			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
-		this(services, buechi, useSCCs, stateFactory, Collections.emptyList(),
-				new FairGameGraph<LETTER, STATE>(services, buechi, stateFactory));
+		this(progressTimer, logger, buechi, useSCCs, stateFactory, Collections.emptyList(),
+				new FairGameGraph<LETTER, STATE>(services, progressTimer, logger, buechi, stateFactory));
 	}
 
 	/**
@@ -243,7 +249,12 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * ends</b> nor <b>duplicate transitions</b>.
 	 * 
 	 * @param services
-	 *            Service provider of Ultimate framework.
+	 *            Service provider of Ultimate framework
+	 * @param progressTimer
+	 *            Timer used for responding to timeouts and operation
+	 *            cancellation.
+	 * @param logger
+	 *            Logger of the Ultimate framework.
 	 * @param buechi
 	 *            The buechi automaton to reduce with no dead ends nor with
 	 *            duplicate transitions
@@ -261,12 +272,12 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public FairSimulation(final IUltimateServiceProvider services,
-			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
+	public FairSimulation(final IUltimateServiceProvider services, final IProgressAwareTimer progressTimer,
+			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses)
 					throws OperationCanceledException {
-		this(services, buechi, useSCCs, stateFactory, possibleEquivalentClasses,
-				new FairGameGraph<LETTER, STATE>(services, buechi, stateFactory));
+		this(progressTimer, logger, buechi, useSCCs, stateFactory, possibleEquivalentClasses,
+				new FairGameGraph<LETTER, STATE>(services, progressTimer, logger, buechi, stateFactory));
 	}
 
 	/**
@@ -279,8 +290,11 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * For correctness its important that the inputed automaton has <b>no dead
 	 * ends</b> nor <b>duplicate transitions</b>.
 	 * 
-	 * @param services
-	 *            Service provider of Ultimate framework.
+	 * @param progressTimer
+	 *            Timer used for responding to timeouts and operation
+	 *            cancellation.
+	 * @param logger
+	 *            Logger of the Ultimate framework.
 	 * @param buechi
 	 *            The buechi automaton to reduce with no dead ends nor with
 	 *            duplicate transitions
@@ -300,11 +314,11 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	protected FairSimulation(final IUltimateServiceProvider services,
+	protected FairSimulation(final IProgressAwareTimer progressTimer, final Logger logger,
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses,
 			final FairGameGraph<LETTER, STATE> game) throws OperationCanceledException {
-		super(services, useSCCs, stateFactory, SimulationType.FAIR);
+		super(progressTimer, logger, useSCCs, stateFactory, SimulationType.FAIR);
 
 		m_Buechi = buechi;
 		m_Logger = getLogger();
@@ -776,8 +790,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 			// If operation was canceled, for example from the
 			// Ultimate framework
-			if (getServiceProvider().getProgressMonitorService() != null
-					&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
+			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
 				m_Logger.debug("Stopped in doSimulation/attempting merges");
 				throw new OperationCanceledException(this.getClass());
 			}
@@ -818,8 +831,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 			// If operation was canceled, for example from the
 			// Ultimate framework
-			if (getServiceProvider().getProgressMonitorService() != null
-					&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
+			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
 				m_Logger.debug("Stopped in doSimulation/attempting transition removal");
 				throw new OperationCanceledException(this.getClass());
 			}
@@ -1046,8 +1058,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 			// If operation was canceled, for example from the
 			// Ultimate framework
-			if (getServiceProvider().getProgressMonitorService() != null
-					&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
+			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
 				m_Logger.debug("Stopped in efficientLiftingAlgorithm");
 				throw new OperationCanceledException(this.getClass());
 			}

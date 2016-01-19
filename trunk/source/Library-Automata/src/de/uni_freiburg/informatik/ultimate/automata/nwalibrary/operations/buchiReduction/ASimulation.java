@@ -43,7 +43,6 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -55,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.VertexPmReverseComparator;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.util.scc.DefaultStronglyConnectedComponentFactory;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
@@ -115,6 +114,10 @@ public abstract class ASimulation<LETTER, STATE> {
 	 */
 	private final SimulationPerformance m_Performance;
 	/**
+	 * Timer used for responding to timeouts and operation cancellation.
+	 */
+	private final IProgressAwareTimer m_ProgressTimer;
+	/**
 	 * The resulting possible reduced buechi automaton.
 	 */
 	private INestedWordAutomatonOldApi<LETTER, STATE> m_Result;
@@ -122,10 +125,6 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * The object that computes the SCCs of a given buechi automaton.
 	 */
 	private SccComputation<Vertex<LETTER, STATE>, StronglyConnectedComponent<Vertex<LETTER, STATE>>> m_SccComp;
-	/**
-	 * Service provider of Ultimate framework.
-	 */
-	private final IUltimateServiceProvider m_Services;
 	/**
 	 * The state factory used for creating states.
 	 */
@@ -151,13 +150,16 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * the highest progress measure.
 	 */
 	private PriorityQueue<Vertex<LETTER, STATE>> m_WorkingList;
-	
+
 	/**
 	 * Creates a new simulation that initiates all needed data structures and
 	 * fields.
 	 * 
-	 * @param services
-	 *            Service provider of Ultimate framework.
+	 * @param progressTimer
+	 *            Timer used for responding to timeouts and operation
+	 *            cancellation.
+	 * @param logger
+	 *            Logger of the Ultimate framework.
 	 * @param useSCCs
 	 *            If the simulation calculation should be optimized using SCC,
 	 *            Strongly Connected Components.
@@ -169,10 +171,10 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ASimulation(final IUltimateServiceProvider services, final boolean useSCCs,
+	public ASimulation(final IProgressAwareTimer progressTimer, final Logger logger, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final SimulationType simType) throws OperationCanceledException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
+		m_ProgressTimer = progressTimer;
+		m_Logger = logger;
 		m_UseSCCs = useSCCs;
 		m_StateFactory = stateFactory;
 		m_VertexComp = new VertexPmReverseComparator<>();
@@ -485,7 +487,7 @@ public abstract class ASimulation<LETTER, STATE> {
 		m_Result = getGameGraph().generateBuchiAutomatonFromGraph();
 
 		long duration = m_Performance.stopTimeMeasure(TimeMeasure.OVERALL_TIME);
-		
+
 		m_Logger.info((this.m_UseSCCs ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds.");
 	}
 
@@ -529,7 +531,7 @@ public abstract class ASimulation<LETTER, STATE> {
 		// Work through the working list until its empty
 		while (!m_WorkingList.isEmpty()) {
 			m_Performance.increaseCountingMeasure(CountingMeasure.SIMULATION_STEPS);
-			
+
 			// Poll the current working vertex
 			Vertex<LETTER, STATE> v = pollVertexFromWorkingList();
 
@@ -582,8 +584,7 @@ public abstract class ASimulation<LETTER, STATE> {
 
 			// If operation was canceled, for example from the
 			// Ultimate framework
-			if (m_Services.getProgressMonitorService() != null
-					&& !m_Services.getProgressMonitorService().continueProcessing()) {
+			if (m_ProgressTimer != null && !m_ProgressTimer.continueProcessing()) {
 				m_Logger.debug("Stopped in efficientLiftingAlgorithm");
 				throw new OperationCanceledException(this.getClass());
 			}
@@ -607,6 +608,17 @@ public abstract class ASimulation<LETTER, STATE> {
 	}
 
 	/**
+	 * Gets the timer used for responding to timeouts and operation
+	 * cancellation.
+	 * 
+	 * @return The timer used for responding to timeouts and operation
+	 *         cancellation.
+	 */
+	protected IProgressAwareTimer getProgressTimer() {
+		return m_ProgressTimer;
+	}
+
+	/**
 	 * Gets the object that is used for computing the SCCs of a given buechi
 	 * automaton.
 	 * 
@@ -615,15 +627,6 @@ public abstract class ASimulation<LETTER, STATE> {
 	 */
 	protected SccComputation<Vertex<LETTER, STATE>, StronglyConnectedComponent<Vertex<LETTER, STATE>>> getSccComp() {
 		return m_SccComp;
-	}
-
-	/**
-	 * Gets the used service provider of the Ultimate framework.
-	 * 
-	 * @return The used service provider of the Ultimate framework.
-	 */
-	protected IUltimateServiceProvider getServiceProvider() {
-		return m_Services;
 	}
 
 	/**
