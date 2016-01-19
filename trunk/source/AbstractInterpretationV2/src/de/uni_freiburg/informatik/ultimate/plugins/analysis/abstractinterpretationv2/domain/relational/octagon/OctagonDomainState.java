@@ -14,7 +14,6 @@ import java.util.TreeMap;
 import java.util.Map.Entry;
 import java.util.function.BiFunction;
 
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -25,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.util.BidirectionalMap;
 
@@ -109,14 +109,14 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 				throw new IllegalArgumentException("Variable name already in use: " + varName);
 			}
 			IType type = newBoogieVar.getIType();
-			if (isNumeric(type)) {
+			if (TypeUtil.isNumeric(type)) {
 				unrefMapNumericVarToIndex(newState);
 				newState.mMapNumericVarToIndex.put(varName, newState.mMapNumericVarToIndex.size());
-				if (isNumericNonInteger(type)) {
+				if (TypeUtil.isNumericNonInt(type)) {
 					unrefNumericNonIntVars(newState);
 					newState.mNumericNonIntVars.add(varName);
 				}
-			} else if (isBoolean(type)) {
+			} else if (TypeUtil.isBoolean(type)) {
 				unrefBooleanAbstraction(newState);
 				newState.mBooleanAbstraction.put(varName, BoolValue.TOP);
 			}
@@ -127,30 +127,6 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		return newState;
 	}
 
-	public static boolean isNumeric(IType type) {
-		if (type instanceof PrimitiveType) {
-			int typeCode = ((PrimitiveType) type).getTypeCode();
-			return  typeCode == PrimitiveType.INT || typeCode == PrimitiveType.REAL;
-		}
-		return false;
-	}
-	
-	public static boolean isNumericNonInteger(IType type) {
-		if (type instanceof PrimitiveType) {
-			int typeCode = ((PrimitiveType) type).getTypeCode();
-			return typeCode == PrimitiveType.REAL;
-		}
-		return false;
-	}
-	
-	public static boolean isBoolean(IType type) {
-		if (type instanceof PrimitiveType) {
-			int typeCode = ((PrimitiveType) type).getTypeCode();
-			return typeCode == PrimitiveType.BOOL;
-		}
-		return false;
-	}
-	
 	@Override
 	public OctagonDomainState removeVariables(Map<String, IBoogieVar> variables) {
 		OctagonDomainState newState = shallowCopy();
@@ -368,7 +344,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 			IBoogieVar newBoogieVar = entry.getValue();
 			s.mMapVarToBoogieVar.put(var, newBoogieVar);
 			IType newType = newBoogieVar.getIType();
-			if (isNumeric(newType)) {
+			if (TypeUtil.isNumeric(newType)) {
 				int sourceVar = dominator.mMapNumericVarToIndex.get(var);
 				Integer targetVar = s.mMapNumericVarToIndex.get(var);
 				if (targetVar == null) {
@@ -376,12 +352,12 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 				} else {
 					mapSourceVarToTargetVar.put(sourceVar, targetVar);
 				}
-				if (isNumericNonInteger(newType)) {
+				if (TypeUtil.isNumericNonInt(newType)) {
 					s.mNumericNonIntVars.add(var);
 				} else {
 					s.mNumericNonIntVars.remove(var);
 				}
-			} else if (isBoolean(newType)){
+			} else if (TypeUtil.isBoolean(newType)){
 				s.mBooleanAbstraction.put(var, dominator.mBooleanAbstraction.get(var));
 			}
 			// else: variable has unsupported type and is assumed to be \top
@@ -403,7 +379,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	 * @param dominator other state
 	 * @return map from colliding variable (names) to their {@linkplain IBoogieVar} from {@code this} state
 	 * 
-	 * @see #typeCategoryEquals(IType, IType)
+	 * @see TypeUtil#categoryEquals(IType, IType)
 	 */
 	private Map<String, IBoogieVar> varsWithTypeCategoryCollisions(OctagonDomainState dominator) {
 		HashMap<String, IBoogieVar> typeChangedVars = new HashMap<>();
@@ -411,7 +387,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 			String varName = entry.getKey();
 			IBoogieVar newBoogieVar = entry.getValue();
 			IBoogieVar oldBoogieVar = mMapVarToBoogieVar.get(varName);
-			if (oldBoogieVar != null && !typeCategoryEquals(newBoogieVar.getIType(), oldBoogieVar.getIType())) {
+			if (oldBoogieVar != null && !TypeUtil.categoryEquals(newBoogieVar.getIType(), oldBoogieVar.getIType())) {
 				typeChangedVars.put(varName, newBoogieVar);
 			}
 		}
@@ -564,21 +540,6 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	protected void assignBooleanVar(String var, BoolValue value) {
 		assert mBooleanAbstraction.containsKey(var) : "introduced new boolean variable " + var;
 		mBooleanAbstraction.put(var, value);
-	}
-	
-	/**
-	 * Checks if two Boogie types are of the same type category.
-	 * There are three type categories:
-	 * numeric (int, real),
-	 * bool (bool),
-	 * and unsupported types (bit-vectors, arrays, ...).
-	 *
-	 * @param a first type
-	 * @param b second type
-	 * @return a and b are of the same abstract type
-	 */
-	private boolean typeCategoryEquals(IType a, IType b) {
-		return (isBoolean(a) == isBoolean(b)) && (isNumeric(a) == isNumeric(b));
 	}
 	
 	@Override

@@ -18,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
 
 public class OctStatementProcessor extends BoogieVisitor {
 
@@ -80,9 +81,9 @@ public class OctStatementProcessor extends BoogieVisitor {
 	private void processSingleAssignment(VariableLHS lhs, Expression rhs) {
 		String var = lhs.getIdentifier();
 		IType type = lhs.getType();
-		if (OctagonDomainState.isBoolean(type)) {
+		if (TypeUtil.isBoolean(type)) {
 			processBooleanAssign(var, rhs);
-		} else if (OctagonDomainState.isNumeric(type)) {
+		} else if (TypeUtil.isNumeric(type)) {
 			processNumericAssign(var, rhs);
 		}
 		// else: variables of unsupported types are assumed to be \top all the time
