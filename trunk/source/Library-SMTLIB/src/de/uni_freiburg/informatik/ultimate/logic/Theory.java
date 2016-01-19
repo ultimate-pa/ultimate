@@ -968,6 +968,7 @@ public class Theory {
 		defineFunction(new RegularFloatingPointFunction("fp.neg", 1, null));
 		defineFunction(new RegularFloatingPointFunction("fp.min", 2, null));
 		defineFunction(new RegularFloatingPointFunction("fp.max", 2, null));
+		defineFunction(new RegularFloatingPointFunction("fp.rem", 2, null));
 		// rounded operators
 		defineFunction(new RoundedFloatingPointFunction("fp.add", 3, null));
 		defineFunction(new RoundedFloatingPointFunction("fp.sub", 3, null));
