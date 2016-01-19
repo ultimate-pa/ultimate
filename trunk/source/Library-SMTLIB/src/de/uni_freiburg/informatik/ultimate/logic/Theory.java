@@ -951,6 +951,25 @@ public class Theory {
 			}
 		}
 		
+		defineFunction(new FunctionSymbolFactory("fp") {
+			@Override
+			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
+				if (indices != null
+					|| paramSorts.length != 3 || resultSort != null
+					|| paramSorts[0].getName() != "BitVec"
+					|| paramSorts[1].getName() != "BitVec"
+					|| paramSorts[2].getName() != "BitVec")
+					return null;
+				BigInteger[] fpIndices = new BigInteger[2];
+				fpIndices[0] = paramSorts[1].getIndices()[0];
+				fpIndices[1] = paramSorts[2].getIndices()[0];
+				return mFloatingPointSort.getSort(fpIndices, new Sort[0] );
+			}
+		});
+		
+		
+		
 		//RoundingModes
 		declareInternalFunction("roundNearestTiesToEven", new Sort[0], mRoundingModeSort, 0);
 		declareInternalFunction("RNE", new Sort[0], mRoundingModeSort, 0);
