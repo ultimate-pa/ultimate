@@ -28,9 +28,6 @@ package de.uni_freiburg.informatik.ultimate.witnessprinter;
 
 import java.io.IOException;
 import java.io.StringWriter;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.function.Function;
 
 import org.apache.commons.collections15.Transformer;
 import org.apache.commons.lang3.StringEscapeUtils;
@@ -39,37 +36,38 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
-import de.uni_freiburg.informatik.ultimate.result.ProgramExecutionFormatter.IProgramExecutionStringProvider;
+import de.uni_freiburg.informatik.ultimate.result.IBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessNode;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessNodeEdgeFactory;
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.graph.Hypergraph;
-import edu.uci.ics.jung.graph.util.Pair;
 import edu.uci.ics.jung.io.GraphMLWriter;
 
 /**
- * Generates an SVCOMP witness from a {@link CACSLProgramExecution} (i.e., a false witness).
+ * Generates an SVCOMP witness from a {@link IProgramExecution} (i.e., a false witness). Probably only useful together
+ * with {@link CACSLProgramExecution} instances.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
-public class FalseWitnessGenerator<TE, E> {
+public class FalseWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E> {
 
 	private final IProgramExecution<TE, E> mProgramExecution;
+	private final IBacktranslationValueProvider<TE, E> mStringProvider;
 	private final Logger mLogger;
-	private final IProgramExecutionStringProvider<TE, E> mStringProvider;
 
 	public FalseWitnessGenerator(final IProgramExecution<TE, E> translatedProgramExecution,
-			final IProgramExecutionStringProvider<TE, E> stringProvider, final Logger logger) {
+			final IBacktranslationValueProvider<TE, E> stringProvider, final Logger logger) {
+		super();
 		assert translatedProgramExecution != null;
 		assert translatedProgramExecution.getLength() > 0;
-		assert stringProvider != null;
-		mStringProvider = stringProvider;
-		mProgramExecution = translatedProgramExecution;
 		mLogger = logger;
+		mProgramExecution = translatedProgramExecution;
+		mStringProvider = stringProvider;
 	}
 
+	@Override
 	public String makeGraphMLString() {
 		final GraphMLWriter<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> graphWriter = new GraphMLWriter<>();
 		final String filename = StringEscapeUtils
@@ -127,69 +125,21 @@ public class FalseWitnessGenerator<TE, E> {
 		}
 	}
 
-	private void addGraphData(final GraphMLWriter<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> graphWriter,
-			final String key, final String defaultValue,
-			final Function<Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>>, String> transformer) {
-		assert transformer != null;
-		graphWriter.addGraphData(key, null, defaultValue,
-				new Transformer<Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>>, String>() {
-					@Override
-					public String transform(final Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> arg0) {
-						return transformer.apply(arg0);
-					}
-				});
-	}
-
-	private void addEdgeData(final GraphMLWriter<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> graphWriter,
-			final String key, final String defaultValue,
-			final Function<GeneratedWitnessEdge<TE, E>, String> transformer) {
-		assert transformer != null;
-		graphWriter.addEdgeData(key, null, defaultValue, new Transformer<GeneratedWitnessEdge<TE, E>, String>() {
-			@Override
-			public String transform(final GeneratedWitnessEdge<TE, E> arg0) {
-				return transformer.apply(arg0);
-			}
-		});
-	}
-
-	private void addVertexData(final GraphMLWriter<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> graphWriter,
-			final String key, final String defaultValue, final Function<GeneratedWitnessNode, String> transformer) {
-		assert transformer != null;
-		graphWriter.addVertexData(key, null, defaultValue, new Transformer<GeneratedWitnessNode, String>() {
-			@Override
-			public String transform(final GeneratedWitnessNode arg0) {
-				return transformer.apply(arg0);
-			}
-		});
-	}
-
 	private Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> getGraph() {
-		DirectedSparseGraph<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> graph = new OrderedDirectedSparseGraph<>();
-		GeneratedWitnessNodeEdgeFactory<TE, E> fac = new GeneratedWitnessNodeEdgeFactory<TE, E>(mStringProvider);
+		final DirectedSparseGraph<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> graph = new OrderedDirectedSparseGraph<>();
+		final GeneratedWitnessNodeEdgeFactory<TE, E> fac = new GeneratedWitnessNodeEdgeFactory<TE, E>(mStringProvider);
 
 		GeneratedWitnessNode current = insertStartNodeAndDummyEdges(fac, graph, 0);
 		GeneratedWitnessNode next = null;
 
-		// removed because of standard change
-		// Add initial state edge if present; only edge with assumption but no
-		// source code or line number
-		// ProgramState<IASTExpression> initialState = mProgramExecution.getInitialProgramState();
-		// if (initialState != null) {
-		// next = fac.createWitnessNode();
-		// graph.addVertex(next);
-		// graph.addEdge(fac.createWitnessEdge(initialState), current, next);
-		// current = next;
-		// }
-		// end remove
-
-		int progExecLength = mProgramExecution.getLength();
+		final int progExecLength = mProgramExecution.getLength();
 		for (int i = 0; i < progExecLength; ++i) {
 
 			// i = skipGlobalDeclarations(i, mProgramExecution);
 			i = collapseToSingleTraceElement(i, mProgramExecution);
 
-			AtomicTraceElement<TE> currentATE = mProgramExecution.getTraceElement(i);
-			ProgramState<E> currentState = mProgramExecution.getProgramState(i);
+			final AtomicTraceElement<TE> currentATE = mProgramExecution.getTraceElement(i);
+			final ProgramState<E> currentState = mProgramExecution.getProgramState(i);
 			if (i == progExecLength - 1) {
 				// the last node is the error location
 				next = fac.createErrorWitnessNode();
@@ -209,8 +159,8 @@ public class FalseWitnessGenerator<TE, E> {
 		return graph;
 	}
 
-	private GeneratedWitnessNode insertStartNodeAndDummyEdges(GeneratedWitnessNodeEdgeFactory<TE, E> fac,
-			DirectedSparseGraph<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> graph,
+	private GeneratedWitnessNode insertStartNodeAndDummyEdges(final GeneratedWitnessNodeEdgeFactory<TE, E> fac,
+			final DirectedSparseGraph<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> graph,
 			int numberOfUselessEdgesAfterStart) {
 		GeneratedWitnessNode current = fac.createInitialWitnessNode();
 		GeneratedWitnessNode next = null;
@@ -226,7 +176,7 @@ public class FalseWitnessGenerator<TE, E> {
 		return current;
 	}
 
-	private int collapseToSingleTraceElement(int currentIdx, IProgramExecution<TE, E> programExecution) {
+	private int collapseToSingleTraceElement(final int currentIdx, final IProgramExecution<TE, E> programExecution) {
 		int i = currentIdx;
 		for (; i < programExecution.getLength(); i++) {
 			final AtomicTraceElement<TE> currentATE = programExecution.getTraceElement(i);
@@ -242,21 +192,5 @@ public class FalseWitnessGenerator<TE, E> {
 			}
 		}
 		return currentIdx;
-	}
-
-	/**
-	 * Change the default {@link DirectedSparseGraph} s.t. the nodes and edges written are ordered lexicographically.
-	 * DirectedSparseGraph
-	 * 
-	 * @author dietsch@informatik.uni-freiburg.de
-	 */
-	private class OrderedDirectedSparseGraph<VERTEX, EDGE> extends DirectedSparseGraph<VERTEX, EDGE> {
-		private static final long serialVersionUID = -8539872407688620571L;
-
-		public OrderedDirectedSparseGraph() {
-			super();
-			vertices = new LinkedHashMap<VERTEX, Pair<Map<VERTEX, EDGE>>>();
-			edges = new LinkedHashMap<>();
-		}
 	}
 }

@@ -132,7 +132,7 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 		} else if (result instanceof WitnessResult) {
 			// if there is a witness result it has to be verified, else it is an
 			// error
-			final WitnessResult<?, ?, ?> wit = (WitnessResult<?, ?, ?>) result;
+			final WitnessResult wit = (WitnessResult) result;
 			if (wit.getVerificationStatus() != WitnessVerificationStatus.VERIFIED) {
 				return SafetyCheckerOverallResult.EXCEPTION_OR_ERROR;
 			} else {

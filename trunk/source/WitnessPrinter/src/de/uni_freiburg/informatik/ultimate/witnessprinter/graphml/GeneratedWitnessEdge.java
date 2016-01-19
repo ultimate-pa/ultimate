@@ -31,7 +31,7 @@ import java.math.BigDecimal;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
-import de.uni_freiburg.informatik.ultimate.result.ProgramExecutionFormatter.IProgramExecutionStringProvider;
+import de.uni_freiburg.informatik.ultimate.result.IBacktranslationValueProvider;
 
 /**
  * 
@@ -43,10 +43,10 @@ public class GeneratedWitnessEdge<TE, E> {
 	private final String mId;
 	private final AtomicTraceElement<TE> mATE;
 	private final ProgramState<E> mState;
-	private final IProgramExecutionStringProvider<TE, E> mStringProvider;
+	private final IBacktranslationValueProvider<TE, E> mStringProvider;
 
 	GeneratedWitnessEdge(final AtomicTraceElement<TE> traceElement, final ProgramState<E> state,
-			final IProgramExecutionStringProvider<TE, E> stringProvider, long currentEdgeId) {
+			final IBacktranslationValueProvider<TE, E> stringProvider, long currentEdgeId) {
 		mStringProvider = stringProvider;
 		mId = "E" + String.valueOf(currentEdgeId);
 		mATE = traceElement;
@@ -121,13 +121,6 @@ public class GeneratedWitnessEdge<TE, E> {
 		if (!hasStep()) {
 			return null;
 		}
-		// if(mATE.hasStepInfo(StepInfo.PROC_CALL)){
-		// CACSLLocation currentStep = mATE.getStep();
-		// if (currentStep instanceof CLocation) {
-		// IASTNode currentStepNode = ((CLocation) currentStep).getNode();
-		// String str = currentStepNode.getRawSignature();
-		// }
-		// }
 		return null;
 	}
 

@@ -28,15 +28,15 @@ package de.uni_freiburg.informatik.ultimate.witnessprinter.graphml;
 
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
-import de.uni_freiburg.informatik.ultimate.result.ProgramExecutionFormatter.IProgramExecutionStringProvider;
+import de.uni_freiburg.informatik.ultimate.result.IBacktranslationValueProvider;
 
 public class GeneratedWitnessNodeEdgeFactory<TE, E> {
 
 	private long mCurrentNodeId;
 	private long mCurrentEdgeId;
-	private final IProgramExecutionStringProvider<TE, E> mStringProvider;
+	private final IBacktranslationValueProvider<TE, E> mStringProvider;
 
-	public GeneratedWitnessNodeEdgeFactory(IProgramExecutionStringProvider<TE, E> stringProvider) {
+	public GeneratedWitnessNodeEdgeFactory(IBacktranslationValueProvider<TE, E> stringProvider) {
 		mStringProvider = stringProvider;
 		mCurrentNodeId = -1;
 		mCurrentEdgeId = -1;

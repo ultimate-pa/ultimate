@@ -35,21 +35,22 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Supplier;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.core.util.MonitoredProcess;
 import de.uni_freiburg.informatik.ultimate.core.util.MonitoredProcess.MonitoredProcessState;
-import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.result.IResultWithLocation;
 import de.uni_freiburg.informatik.ultimate.result.WitnessResult;
 import de.uni_freiburg.informatik.ultimate.result.WitnessResult.WitnessVerificationStatus;
+import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
 
 /**
@@ -78,20 +79,23 @@ public class WitnessManager {
 		mStorage = storage;
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public void run() throws IOException, InterruptedException {
+	/**
+	 * 
+	 * @param funsResultSupplier
+	 *            A collection of functions were each provides a string that represents a valid SVCOMP witness.
+	 * @throws IOException
+	 * @throws InterruptedException
+	 */
+	public void run(final Collection<Supplier<Pair<IResultWithLocation, String>>> funsResultSupplier)
+			throws IOException, InterruptedException {
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
-		final Collection<CounterExampleResult> cexResults = CoreUtil
-				.filterResults(mServices.getResultService().getResults(), CounterExampleResult.class);
-
-		final IBacktranslationService backtrans = mServices.getBacktranslationService();
 
 		int cexNo = 0;
 		String suffix = null;
-		for (final CounterExampleResult cex : cexResults) {
-			final IProgramExecution cexProgramExecution = backtrans
-					.translateProgramExecution(cex.getProgramExecution());
-			final String svcompWitness = cexProgramExecution.getSVCOMPWitnessString();
+		for (final Supplier<Pair<IResultWithLocation, String>> funResultSupplier : funsResultSupplier) {
+			final Pair<IResultWithLocation, String> pair = funResultSupplier.get();
+			final IResultWithLocation cex = pair.getFirst();
+			final String svcompWitness = pair.getSecond();
 
 			final boolean writeInWorkingDir = ups.getBoolean(PreferenceInitializer.LABEL_WITNESS_WRITE_WORKINGDIR);
 			final boolean writeBesideInputFile = ups.getBoolean(PreferenceInitializer.LABEL_WITNESS_WRITE);
@@ -168,15 +172,13 @@ public class WitnessManager {
 		return filename.toString();
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private void reportWitnessResult(String svcompWitness, CounterExampleResult cex,
+	private void reportWitnessResult(String svcompWitness, IResultWithLocation cex,
 			WitnessVerificationStatus verificationStatus) {
 		mServices.getResultService().reportResult(cex.getPlugin(),
-				new WitnessResult<>(cex, svcompWitness, verificationStatus));
+				new WitnessResult(Activator.PLUGIN_ID, cex, svcompWitness, verificationStatus));
 	}
 
-	@SuppressWarnings("rawtypes")
-	private boolean checkWitness(String svcompWitnessFile, CounterExampleResult cex, String svcompWitness)
+	private boolean checkWitness(String svcompWitnessFile, IResultWithLocation cex, String svcompWitness)
 			throws IOException, InterruptedException {
 		mLogger.info("Verifying witness for CEX: " + cex.getShortDescription());
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
@@ -192,8 +194,7 @@ public class WitnessManager {
 		}
 	}
 
-	@SuppressWarnings("rawtypes")
-	private boolean checkWitnessWithCPAChecker(String svcompWitnessFile, CounterExampleResult cex, String command,
+	private boolean checkWitnessWithCPAChecker(String svcompWitnessFile, IResultWithLocation cex, String command,
 			String svcompWitness) throws IOException, InterruptedException {
 		final String cpaCheckerHome = System.getenv().get("CPACHECKER_HOME");
 		if (cpaCheckerHome == null) {

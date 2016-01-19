@@ -39,14 +39,10 @@ import de.uni_freiburg.informatik.ultimate.model.ITranslator;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.IValuation;
 import de.uni_freiburg.informatik.ultimate.result.ProgramExecutionFormatter;
-import de.uni_freiburg.informatik.ultimate.result.ProgramExecutionFormatter.IProgramExecutionStringProvider;
 import de.uni_freiburg.informatik.ultimate.result.ResultUtil;
 
 /**
@@ -92,7 +88,7 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 	@Override
 	public String toString() {
 		ProgramExecutionFormatter<BoogieASTNode, Expression> pef = new ProgramExecutionFormatter<>(
-				new BoogieProgramExecutionStringProvider());
+				new BoogieBacktranslationValueProvider());
 		return pef.formatProgramExecution(this);
 	}
 
@@ -145,58 +141,5 @@ public class BoogieProgramExecution implements IProgramExecution<BoogieASTNode, 
 	@Override
 	public String getSVCOMPWitnessString() {
 		return null;
-	}
-
-	/**
-	 * 
-	 * @author dietsch@informatik.uni-freiburg.de
-	 * 
-	 */
-	private class BoogieProgramExecutionStringProvider implements
-			IProgramExecutionStringProvider<BoogieASTNode, Expression> {
-
-		@Override
-		public int getStartLineNumberFromStep(BoogieASTNode step) {
-			if (step.getLocation() == null) {
-				return -1;
-			}
-			return step.getLocation().getStartLine();
-		}
-
-		@Override
-		public int getEndLineNumberFromStep(BoogieASTNode step) {
-			if (step.getLocation() == null) {
-				return -1;
-			}
-			return step.getLocation().getEndLine();
-		}
-
-		@Override
-		public String getStringFromStep(BoogieASTNode step) {
-			if (step instanceof Statement) {
-				return BoogiePrettyPrinter.print((Statement) step);
-			} else if (step instanceof Specification) {
-				return BoogiePrettyPrinter.print((Specification) step);
-			} else if (step instanceof Expression) {
-				return BoogiePrettyPrinter.print((Expression) step);
-			} else {
-				throw new IllegalArgumentException("current step is neither Statement nor Specification nor Expression");
-			}
-		}
-
-		@Override
-		public String getStringFromTraceElement(BoogieASTNode traceelement) {
-			return getStringFromStep(traceelement);
-		}
-
-		@Override
-		public String getStringFromExpression(Expression expression) {
-			return BoogiePrettyPrinter.print(expression);
-		}
-
-		@Override
-		public String getFileNameFromStep(BoogieASTNode step) {
-			return step.getLocation().getFileName();
-		}
 	}
 }

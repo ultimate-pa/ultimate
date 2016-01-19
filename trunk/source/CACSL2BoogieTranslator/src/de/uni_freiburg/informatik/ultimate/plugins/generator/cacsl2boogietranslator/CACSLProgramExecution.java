@@ -96,13 +96,13 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 	@Override
 	public String toString() {
 		ProgramExecutionFormatter<CACSLLocation, IASTExpression> pef = new ProgramExecutionFormatter<>(
-				new CACSLProgramExecutionStringProvider());
+				new CACSLBacktranslationValueProvider());
 		return pef.formatProgramExecution(this);
 	}
 
 	@Override
 	public String getSVCOMPWitnessString() {
-		return new FalseWitnessGenerator<CACSLLocation, IASTExpression>(this, new CACSLProgramExecutionStringProvider(),
+		return new FalseWitnessGenerator<CACSLLocation, IASTExpression>(this, new CACSLBacktranslationValueProvider(),
 				mLogger).makeGraphMLString();
 	}
 

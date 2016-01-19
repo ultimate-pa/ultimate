@@ -36,6 +36,7 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.core.util.IToString;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -59,14 +60,14 @@ import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState
 public class RCFGBacktranslator extends DefaultTranslator<CodeBlock, BoogieASTNode, Expression, Expression> {
 
 	public RCFGBacktranslator() {
-		super(CodeBlock.class, BoogieASTNode.class, Expression.class, Expression.class);
+		super(new BoogieBacktranslationValueProvider(), CodeBlock.class, BoogieASTNode.class, Expression.class,
+				Expression.class);
 	}
 
 	/**
-	 * Mapping from auxiliary CodeBlocks to source BoogieAstNodes. For assert,
-	 * the requires assumed at begin of procedure, and ensures the result is a
-	 * singleton. For the assert requires before the call the result contains
-	 * two elements: First, the call, afterwards the requires.
+	 * Mapping from auxiliary CodeBlocks to source BoogieAstNodes. For assert, the requires assumed at begin of
+	 * procedure, and ensures the result is a singleton. For the assert requires before the call the result contains two
+	 * elements: First, the call, afterwards the requires.
 	 */
 	private Map<Statement, BoogieASTNode[]> m_CodeBlock2Statement = new HashMap<Statement, BoogieASTNode[]>();
 
@@ -95,20 +96,17 @@ public class RCFGBacktranslator extends DefaultTranslator<CodeBlock, BoogieASTNo
 	}
 
 	/**
-	 * Transform a single (possibly large) CodeBlock to a list of BoogieASTNodes
-	 * and add these BoogieASTNodes to the List trace. If
+	 * Transform a single (possibly large) CodeBlock to a list of BoogieASTNodes and add these BoogieASTNodes to the
+	 * List trace. If
 	 * <ul>
 	 * <li>if the CodeBlock contains a single Statement we add this statement
-	 * <li>if the CodeBlock is a StatementsSequence we translate all Statements
-	 * back to their original BoogieASTNodes (e.g., assume Statements might be
-	 * translated to assert Statements, assume Statements might be translated to
+	 * <li>if the CodeBlock is a StatementsSequence we translate all Statements back to their original BoogieASTNodes
+	 * (e.g., assume Statements might be translated to assert Statements, assume Statements might be translated to
 	 * requires/ensures specifications)
-	 * <li>if the CodeBlock is a SequentialComposition we call this method
-	 * recursively
-	 * <li>if the CodeBlock is a ParallelComposition we ask the branchEncoders
-	 * mapping on which branch we call this method recursively. If the
-	 * branchEncoders mapping is null (occurs e.g., for traces whose feasibility
-	 * can not be determined) we call this method recursively on some branch.
+	 * <li>if the CodeBlock is a SequentialComposition we call this method recursively
+	 * <li>if the CodeBlock is a ParallelComposition we ask the branchEncoders mapping on which branch we call this
+	 * method recursively. If the branchEncoders mapping is null (occurs e.g., for traces whose feasibility can not be
+	 * determined) we call this method recursively on some branch.
 	 * </ul>
 	 */
 	private void addCodeBlock(CodeBlock cb, List<AtomicTraceElement<BoogieASTNode>> trace,

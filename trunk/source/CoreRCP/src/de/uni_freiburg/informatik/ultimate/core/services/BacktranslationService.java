@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationS
 import de.uni_freiburg.informatik.ultimate.core.services.model.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
+import de.uni_freiburg.informatik.ultimate.result.IBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 
 /**
@@ -54,7 +55,7 @@ public class BacktranslationService implements IStorable, IBacktranslationServic
 	}
 
 	@Override
-	public <SE> Object translateExpression(SE expression, Class<SE> clazz) {
+	public <SE,TE> TE translateExpression(SE expression, Class<SE> clazz) {
 		return mTranslatorSequence.translateExpression(expression, clazz);
 	}
 
@@ -76,6 +77,12 @@ public class BacktranslationService implements IStorable, IBacktranslationServic
 	@Override
 	public <STE> List<String> translateTraceToHumanReadableString(List<STE> trace, Class<STE> clazz) {
 		return mTranslatorSequence.translateTraceToHumanReadableString(trace, clazz);
+	}
+	
+	@Override
+	public <TTE, TE> IBacktranslationValueProvider<TTE, TE> getValueProvider(Class<TTE> targetTraceElementClass,
+			Class<TE> targetExpressionClass) {
+		return mTranslatorSequence.getValueProvider(targetTraceElementClass, targetExpressionClass);
 	}
 
 	@Override
