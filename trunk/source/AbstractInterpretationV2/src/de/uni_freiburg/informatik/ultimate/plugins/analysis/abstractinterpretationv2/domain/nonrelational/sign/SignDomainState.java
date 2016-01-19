@@ -166,12 +166,10 @@ public class SignDomainState implements IAbstractState<SignDomainState, CodeBloc
 		return false;
 	}
 
-	@Override
 	public boolean isFixpoint() {
 		return mIsFixpoint;
 	}
 
-	@Override
 	public SignDomainState setFixpoint(boolean value) {
 		return new SignDomainState(mVariablesMap, mValuesMap, value);
 	}

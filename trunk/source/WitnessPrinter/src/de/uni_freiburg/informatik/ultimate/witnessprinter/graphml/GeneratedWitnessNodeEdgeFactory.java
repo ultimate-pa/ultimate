@@ -24,20 +24,20 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.graphml;
+package de.uni_freiburg.informatik.ultimate.witnessprinter.graphml;
 
-import org.eclipse.cdt.core.dom.ast.IASTExpression;
-
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.result.IBacktranslationValueProvider;
 
-public class GeneratedWitnessNodeEdgeFactory {
+public class GeneratedWitnessNodeEdgeFactory<TE, E> {
 
 	private long mCurrentNodeId;
 	private long mCurrentEdgeId;
+	private final IBacktranslationValueProvider<TE, E> mStringProvider;
 
-	public GeneratedWitnessNodeEdgeFactory() {
+	public GeneratedWitnessNodeEdgeFactory(IBacktranslationValueProvider<TE, E> stringProvider) {
+		mStringProvider = stringProvider;
 		mCurrentNodeId = -1;
 		mCurrentEdgeId = -1;
 	}
@@ -59,25 +59,24 @@ public class GeneratedWitnessNodeEdgeFactory {
 		return new GeneratedWitnessNode(mCurrentNodeId, isInitial, isError, isSink);
 	}
 
-	public GeneratedWitnessEdge createWitnessEdge(AtomicTraceElement<CACSLLocation> traceElement,
-			ProgramState<IASTExpression> state) {
+	public GeneratedWitnessEdge<TE, E> createWitnessEdge(AtomicTraceElement<TE> traceElement, ProgramState<E> state) {
 		mCurrentEdgeId++;
-		return new GeneratedWitnessEdge(traceElement, state, mCurrentEdgeId);
+		return new GeneratedWitnessEdge<TE, E>(traceElement, state, mStringProvider, mCurrentEdgeId);
 	}
 
-	public GeneratedWitnessEdge createWitnessEdge(AtomicTraceElement<CACSLLocation> traceElement) {
+	public GeneratedWitnessEdge<TE, E> createWitnessEdge(AtomicTraceElement<TE> traceElement) {
 		mCurrentEdgeId++;
-		return new GeneratedWitnessEdge(traceElement, null, mCurrentEdgeId);
+		return new GeneratedWitnessEdge<TE, E>(traceElement, null, mStringProvider, mCurrentEdgeId);
 	}
 
-	public GeneratedWitnessEdge createWitnessEdge(ProgramState<IASTExpression> state) {
+	public GeneratedWitnessEdge<TE, E> createWitnessEdge(ProgramState<E> state) {
 		mCurrentEdgeId++;
-		return new GeneratedWitnessEdge(null, state, mCurrentEdgeId);
+		return new GeneratedWitnessEdge<TE, E>(null, state, mStringProvider, mCurrentEdgeId);
 	}
 
-	public GeneratedWitnessEdge createDummyWitnessEdge() {
+	public GeneratedWitnessEdge<TE, E> createDummyWitnessEdge() {
 		mCurrentEdgeId++;
-		return new GeneratedWitnessEdge(null, null, mCurrentEdgeId);
+		return new GeneratedWitnessEdge<TE, E>(null, null, mStringProvider, mCurrentEdgeId);
 	}
 
 }

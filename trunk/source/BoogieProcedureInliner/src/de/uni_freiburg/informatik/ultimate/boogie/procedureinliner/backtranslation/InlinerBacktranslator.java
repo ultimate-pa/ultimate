@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.InlineVersion
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.util.IToString;
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
@@ -67,16 +68,16 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 	private Logger mLogger;
 
 	/**
-	 * Backtranslation mapping for statements, specifications (and expressions,
-	 * for trace element step). If there is no mapping for a node, then it
-	 * wasn't affected by the inlining process.
+	 * Backtranslation mapping for statements, specifications (and expressions, for trace element step). If there is no
+	 * mapping for a node, then it wasn't affected by the inlining process.
 	 */
 	private Map<BoogieASTNode, BackTransValue> mBackTransMap = new HashMap<>();
 
 	private ExpressionBacktranslation mExprBackTrans = new ExpressionBacktranslation();
 
 	public InlinerBacktranslator(IUltimateServiceProvider services) {
-		super(BoogieASTNode.class, BoogieASTNode.class, Expression.class, Expression.class);
+		super(new BoogieBacktranslationValueProvider(), BoogieASTNode.class, BoogieASTNode.class, Expression.class,
+				Expression.class);
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
@@ -85,8 +86,7 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 	 * Updates the mapping, using an used InlineVersionTransformer.
 	 * 
 	 * @param transformer
-	 *            InlinerVersionTransformer, which already transformed a
-	 *            procedure.
+	 *            InlinerVersionTransformer, which already transformed a procedure.
 	 */
 	public void addBacktranslation(InlineVersionTransformer transformer) {
 		mBackTransMap.putAll(transformer.getBacktranslationMap());
@@ -128,8 +128,8 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 				atomicTraceElem = new AtomicTraceElement<BoogieASTNode>(traceElem, stringProvider);
 			}
 			BackTransValue traceElemMapping = mBackTransMap.get(traceElem);
-			List<AtomicTraceElement<BoogieASTNode>> recoveredCalls = callReinserter.recoverInlinedCallsBefore(
-					atomicTraceElem, traceElemMapping);
+			List<AtomicTraceElement<BoogieASTNode>> recoveredCalls = callReinserter
+					.recoverInlinedCallsBefore(atomicTraceElem, traceElemMapping);
 			for (AtomicTraceElement<BoogieASTNode> insertedCall : recoveredCalls) {
 				translatedTrace.add(insertedCall.getTraceElement());
 			}

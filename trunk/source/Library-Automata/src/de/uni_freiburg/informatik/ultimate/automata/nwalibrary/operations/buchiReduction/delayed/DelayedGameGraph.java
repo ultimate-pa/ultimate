@@ -36,7 +36,6 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -47,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
@@ -86,15 +86,20 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 	 */
 	private int m_BuechiAmountOfTransitions;
 	/**
-	 * The logger used by the Ultimate framework.
+	 * Service provider of Ultimate framework.
 	 */
-	private final Logger m_Logger;
+	private final IUltimateServiceProvider m_Services;
 
 	/**
 	 * Creates a new delayed game graph by using the given buechi automaton.
 	 * 
 	 * @param services
-	 *            Service provider of Ultimate framework.
+	 *            Service provider of Ultimate framework
+	 * @param progressTimer
+	 *            Timer used for responding to timeouts and operation
+	 *            cancellation.
+	 * @param logger
+	 *            Logger of the Ultimate framework.
 	 * @param buechi
 	 *            The underlying buechi automaton from which the game graph gets
 	 *            generated.
@@ -104,12 +109,12 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public DelayedGameGraph(final IUltimateServiceProvider services,
-			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final StateFactory<STATE> stateFactory)
-					throws OperationCanceledException {
-		super(services, stateFactory);
+	public DelayedGameGraph(final IUltimateServiceProvider services, final IProgressAwareTimer progressTimer,
+			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi,
+			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
+		super(progressTimer, logger, stateFactory);
+		m_Services = services;
 		m_Buechi = buechi;
-		m_Logger = getServiceProvider().getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_BuechiAmountOfStates = 0;
 		m_BuechiAmountOfTransitions = 0;
 		generateGameGraphFromBuechi();
@@ -167,9 +172,8 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 			}
 		}
 
-		if (getServiceProvider().getProgressMonitorService() != null
-				&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
-			m_Logger.debug("Stopped in generateBuchiAutomaton/table filled");
+		if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
+			getLogger().debug("Stopped in generateBuchiAutomaton/table filled");
 			throw new OperationCanceledException(this.getClass());
 		}
 
@@ -177,7 +181,7 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 		boolean[] marker = new boolean[states.size()];
 		Set<STATE> temp = new HashSet<>();
 		HashMap<STATE, STATE> oldSNames2newSNames = new HashMap<>();
-		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<>(getServiceProvider(),
+		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<>(m_Services,
 				m_Buechi.getInternalAlphabet(), null, null, getStateFactory());
 
 		int resultAmountOfStates = 0;
@@ -208,9 +212,8 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 			marker[i] = true;
 		}
 
-		if (getServiceProvider().getProgressMonitorService() != null
-				&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
-			m_Logger.debug("Stopped in generateBuchiAutomaton/states added to result BA");
+		if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
+			getLogger().debug("Stopped in generateBuchiAutomaton/states added to result BA");
 			throw new OperationCanceledException(this.getClass());
 		}
 
@@ -259,9 +262,8 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 					increaseGlobalInfinity();
 				}
 			}
-			if (getServiceProvider().getProgressMonitorService() != null
-					&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
-				m_Logger.debug("Stopped in generateGameGraph/calculating v0 und v1");
+			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
+				getLogger().debug("Stopped in generateGameGraph/calculating v0 und v1");
 				throw new OperationCanceledException(this.getClass());
 			}
 		}
@@ -308,25 +310,25 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 				}
 				countedTransitionsForQ0 = true;
 			}
-			if (getServiceProvider().getProgressMonitorService() != null
-					&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
-				m_Logger.debug("Stopped in generateGameGraph/calculating v0 und v1");
+			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
+				getLogger().debug("Stopped in generateGameGraph/calculating v0 und v1");
 				throw new OperationCanceledException(this.getClass());
 			}
 		}
 		// global infinity = (# of pr==1 nodes) + 1
 		increaseGlobalInfinity();
-		if (m_Logger.isDebugEnabled()) {
-			m_Logger.debug("Infinity is " + getGlobalInfinity());
-			m_Logger.debug("Number of vertices in game graph: "
+		Logger logger = getLogger();
+		if (logger.isDebugEnabled()) {
+			logger.debug("Infinity is " + getGlobalInfinity());
+			logger.debug("Number of vertices in game graph: "
 					+ (getDuplicatorVertices().size() + getSpoilerVertices().size()));
-			m_Logger.debug("Number of vertices in v0: " + getDuplicatorVertices().size());
-			m_Logger.debug("Number of vertices in v1: " + getSpoilerVertices().size());
+			logger.debug("Number of vertices in v0: " + getDuplicatorVertices().size());
+			logger.debug("Number of vertices in v1: " + getSpoilerVertices().size());
 			int edges = 0;
 			for (Set<Vertex<LETTER, STATE>> hs : getSuccessorGroups()) {
 				edges += hs.size();
 			}
-			m_Logger.debug("Number of edges in game graph: " + edges);
+			logger.debug("Number of edges in game graph: " + edges);
 		}
 	}
 }

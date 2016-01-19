@@ -153,21 +153,6 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	boolean isBottom();
 
 	/**
-	 * An abstract state is a fixpoint if {@link FixpointEngine} called {@link #setFixpoint(boolean)} with true.
-	 * 
-	 * @return <code>true</code> if and only if the current abstract state is a fix point, <code>false</code> otherwise.
-	 */
-	boolean isFixpoint();
-
-	/**
-	 * {@link FixpointEngine} will call this method to save whether this abstract state is considered a fixpoint or not.
-	 * 
-	 * @return A new abstract state that is a {@link #copy()} of this instance except that {@link #isFixpoint()} returns
-	 *         a different value OR this instance.
-	 */
-	STATE setFixpoint(final boolean value);
-
-	/**
 	 * Check whether this instance is equal to <code>other</code> or not. Instances are equal if they have the same set
 	 * of variables and describe the same abstract state.
 	 * 

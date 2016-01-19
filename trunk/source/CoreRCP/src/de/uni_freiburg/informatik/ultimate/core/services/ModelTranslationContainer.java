@@ -33,6 +33,7 @@ import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
+import de.uni_freiburg.informatik.ultimate.result.IBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
 
@@ -76,7 +77,7 @@ class ModelTranslationContainer implements IBacktranslationService {
 	}
 
 	@Override
-	public <SE> Object translateExpression(SE expression, Class<SE> clazz) {
+	public <SE,TE> TE translateExpression(SE expression, Class<SE> clazz) {
 		Stack<ITranslator<?, ?, ?, ?>> current = prepareExpressionStack(expression, clazz);
 		return translateExpression(current, expression);
 	}
@@ -220,5 +221,12 @@ class ModelTranslationContainer implements IBacktranslationService {
 	@Override
 	public String toString() {
 		return Utils.join(mTranslationSequence, ",");
+	}
+
+	@Override
+	public <TTE, TE> IBacktranslationValueProvider<TTE, TE> getValueProvider(Class<TTE> targetTraceElementClass,
+			Class<TE> targetExpressionClass) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

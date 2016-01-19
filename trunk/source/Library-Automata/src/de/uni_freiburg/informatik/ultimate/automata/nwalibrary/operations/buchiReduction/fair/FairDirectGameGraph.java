@@ -29,12 +29,15 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchi
 import java.util.HashSet;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
@@ -87,7 +90,12 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	 * {@link #transformToDirectGameGraph()}.
 	 * 
 	 * @param services
-	 *            Service provider of Ultimate framework.
+	 *            Service provider of Ultimate framework
+	 * @param progressTimer
+	 *            Timer used for responding to timeouts and operation
+	 *            cancellation.
+	 * @param logger
+	 *            Logger of the Ultimate framework.
 	 * @param buechi
 	 *            The underlying buechi automaton from which the game graph gets
 	 *            generated.
@@ -97,10 +105,10 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public FairDirectGameGraph(final IUltimateServiceProvider services,
-			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final StateFactory<STATE> stateFactory)
-					throws OperationCanceledException {
-		super(services, buechi, stateFactory);
+	public FairDirectGameGraph(final IUltimateServiceProvider services, final IProgressAwareTimer progressTimer,
+			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi,
+			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
+		super(services, progressTimer, logger, buechi, stateFactory);
 		m_IsCurrentlyDirectGameGraph = false;
 		m_DirectSimulations = new HashSet<>();
 		m_EdgesToBeChangedForTransformation = new HashSet<>();

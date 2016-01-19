@@ -28,15 +28,19 @@
 package de.uni_freiburg.informatik.ultimate.witnessprinter;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
@@ -45,6 +49,8 @@ import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.result.IResultWithLocation;
+import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
 
 /**
@@ -123,14 +129,45 @@ public class WitnessPrinter implements IOutput {
 
 	@Override
 	public void finish() {
-		if (mMode == Mode.FALSE_WITNESS) {
-			final WitnessManager cexVerifier = new WitnessManager(mLogger, mServices, mStorage);
-			try {
-				cexVerifier.run();
-			} catch (IOException | InterruptedException e) {
-				throw new RuntimeException(e);
-			}
+		final Collection<Supplier<Pair<IResultWithLocation, String>>> supplier;
+		switch (mMode) {
+		case FALSE_WITNESS:
+			supplier = generateFalseWitnessSupplier();
+			break;
+		case TRUE_WITNESS:
+			supplier = generateTrueWitnessSupplier();
+			break;
+		case NO_WITNESS:
+		default:
+			// do nothing
+			return;
 		}
+
+		final WitnessManager cexVerifier = new WitnessManager(mLogger, mServices, mStorage);
+		try {
+			cexVerifier.run(supplier);
+		} catch (IOException | InterruptedException e) {
+			throw new RuntimeException(e);
+		}
+
+	}
+
+	private Collection<Supplier<Pair<IResultWithLocation, String>>> generateTrueWitnessSupplier() {
+
+		return null;
+	}
+
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	private Collection<Supplier<Pair<IResultWithLocation, String>>> generateFalseWitnessSupplier() {
+		final Collection<Supplier<Pair<IResultWithLocation, String>>> supplier = new ArrayList<>();
+		final Collection<CounterExampleResult> cexResults = CoreUtil
+				.filterResults(mServices.getResultService().getResults(), CounterExampleResult.class);
+		final IBacktranslationService backtrans = mServices.getBacktranslationService();
+		for (final CounterExampleResult cex : cexResults) {
+			supplier.add(() -> new Pair<>(cex,
+					backtrans.translateProgramExecution(cex.getProgramExecution()).getSVCOMPWitnessString()));
+		}
+		return supplier;
 	}
 
 	@Override

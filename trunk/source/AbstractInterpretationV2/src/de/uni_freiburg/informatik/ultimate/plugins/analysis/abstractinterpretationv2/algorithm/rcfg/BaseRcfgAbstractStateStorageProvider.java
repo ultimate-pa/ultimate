@@ -80,7 +80,6 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 		mServices = services;
 	}
 
-	@Override
 	public Collection<STATE> getAbstractPreStates(CodeBlock transition) {
 		assert transition != null;
 		return getAbstractStates(transition, transition.getSource());
@@ -138,29 +137,6 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 	}
 
 	@Override
-	public STATE setPostStateIsFixpoint(CodeBlock transition, STATE state, boolean value) {
-		assert transition != null;
-		assert state != null;
-		final Deque<Pair<CodeBlock, STATE>> states = getStates(transition.getTarget());
-		assert !states.isEmpty();
-
-		final Iterator<Pair<CodeBlock, STATE>> iterator = states.iterator();
-		boolean removed = false;
-		while (iterator.hasNext()) {
-			final Pair<CodeBlock, STATE> next = iterator.next();
-			if (state.equals(next.getSecond())) {
-				iterator.remove();
-				removed = true;
-				break;
-			}
-		}
-		assert removed;
-		final STATE rtr = state.setFixpoint(value);
-		states.addFirst(new Pair<CodeBlock, STATE>(transition, rtr));
-		return rtr;
-	}
-
-	@Override
 	public STATE mergePostStates(CodeBlock transition) {
 		assert transition != null;
 		final Deque<Pair<CodeBlock, STATE>> states = getStates(transition.getTarget());
@@ -184,22 +160,6 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 			iterator.remove();
 		}
 
-		// Pair<CodeBlock, STATE> pair = iterator.next();
-		// iterator.remove();
-		// transitions.add(pair.getFirst());
-		// STATE last;
-		// STATE current = pair.getSecond();
-		// while (iterator.hasNext()) {
-		// pair = iterator.next();
-		// iterator.remove();
-		// transitions.add(pair.getFirst());
-		// last = pair.getSecond();
-		// assert last.getVariables().keySet()
-		// .equals(current.getVariables().keySet()) : "states have different variables";
-		// current = mMergeOperator.apply(current, last);
-		// assert last.getVariables().keySet()
-		// .equals(current.getVariables().keySet()) : "states have different variables";
-		// }
 		assert accumulator != null;
 		for (final CodeBlock trans : transitions) {
 			states.addFirst(new Pair<CodeBlock, STATE>(trans, accumulator));

@@ -44,8 +44,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
 
-	Collection<STATE> getAbstractPreStates(ACTION transition);
-
 	Collection<STATE> getAbstractPostStates(ACTION transition);
 
 	STATE getCurrentAbstractPreState(ACTION transition);
@@ -55,8 +53,6 @@ public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, ACTIO
 	void addAbstractPreState(ACTION transition, STATE state);
 
 	void addAbstractPostState(ACTION transition, STATE state);
-
-	STATE setPostStateIsFixpoint(ACTION transition, STATE state, boolean value);
 
 	STATE mergePostStates(ACTION transition);
 

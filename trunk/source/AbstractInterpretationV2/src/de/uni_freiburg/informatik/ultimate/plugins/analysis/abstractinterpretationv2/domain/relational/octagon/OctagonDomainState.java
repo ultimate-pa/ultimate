@@ -1,12 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
@@ -35,8 +32,6 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	/** A human-readable hash code, unique for each object. */
 	private final int mId;
 	
-	private boolean mIsFixpoint;
-	
 	private Map<String, IBoogieVar> mMapVarToBoogieVar;
 	private Map<String, Integer> mMapNumericVarToIndex;
 	private Set<String> mNumericNonIntVars;
@@ -62,7 +57,6 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	
 	private OctagonDomainState shallowCopy() {
 		OctagonDomainState s = new OctagonDomainState();
-		s.mIsFixpoint = mIsFixpoint;
 		s.mMapVarToBoogieVar = mMapVarToBoogieVar;
 		s.mMapNumericVarToIndex = mMapNumericVarToIndex;
 		s.mNumericNonIntVars = mNumericNonIntVars;
@@ -73,7 +67,6 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	
 	public OctagonDomainState deepCopy() {
 		OctagonDomainState s = new OctagonDomainState();
-		s.mIsFixpoint = mIsFixpoint;
 		s.mMapVarToBoogieVar = new HashMap<>(mMapVarToBoogieVar);
 		s.mMapNumericVarToIndex = new HashMap<>(mMapNumericVarToIndex);
 		s.mNumericNonIntVars = new HashSet<>(mNumericNonIntVars);
@@ -213,21 +206,6 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	
 	private boolean isNumericAbstractionIntegral() {
 		return mNumericNonIntVars.isEmpty();
-	}
-	
-	@Override
-	public boolean isFixpoint() {
-		return mIsFixpoint;
-	}
-
-	@Override
-	public OctagonDomainState setFixpoint(boolean value) {
-		if (value == mIsFixpoint) {
-			return this;
-		}	
-		OctagonDomainState newState = shallowCopy();
-		newState.mIsFixpoint = value;
-		return newState;
 	}
 
 	@Override

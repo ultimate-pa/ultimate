@@ -31,25 +31,24 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.result.IBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 
 /**
- * Translator which just passes the input along, i.e., the mapping from input to
- * output is the identity. If types of source and target differ
- * ClassCastExceptions are thrown during the translation. <br>
- * Because {@link DefaultTranslator} is used for <b>back-translation</b>,
- * <i>Source</i> describes the output of a tool and <i>Target</i> the input of a
- * tool.
+ * Translator which just passes the input along, i.e., the mapping from input to output is the identity. If types of
+ * source and target differ ClassCastExceptions are thrown during the translation. <br>
+ * Because {@link DefaultTranslator} is used for <b>back-translation</b>, <i>Source</i> describes the output of a tool
+ * and <i>Target</i> the input of a tool.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  * @author dietsch@informatik.uni-freiburg.de
  * 
  * @param <STE>
- *            Source Trace Element. Type of trace elements (e.g., Statements,
- *            CodeBlocks, BoogieASTNodes) in the source program model.
+ *            Source Trace Element. Type of trace elements (e.g., Statements, CodeBlocks, BoogieASTNodes) in the source
+ *            program model.
  * @param <TTE>
- *            Target Trace Elment. Type of trace elements (e.g., Statements,
- *            CodeBlocks, BoogieASTNodes) in the target program model.
+ *            Target Trace Elment. Type of trace elements (e.g., Statements, CodeBlocks, BoogieASTNodes) in the target
+ *            program model.
  * @param <SE>
  *            Source Expression. Type of expression in the source program model.
  * @param <TE>
@@ -61,17 +60,21 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	private final Class<TTE> mTargetTraceElementType;
 	private final Class<SE> mSourceExpressionType;
 	private final Class<TE> mTargetExpressionType;
+	private final IBacktranslationValueProvider<TTE, TE> mValueProvider;
 
-	public DefaultTranslator(Class<STE> sourceTraceElementType, Class<TTE> targetTraceElementType,
-			Class<SE> sourceExpressionType, Class<TE> targetExpressionType) {
+	public DefaultTranslator(final IBacktranslationValueProvider<TTE, TE> valueProvider,
+			final Class<STE> sourceTraceElementType, final Class<TTE> targetTraceElementType,
+			final Class<SE> sourceExpressionType, final Class<TE> targetExpressionType) {
 		mSourceTraceElementType = sourceTraceElementType;
 		mTargetTraceElementType = targetTraceElementType;
 		mSourceExpressionType = sourceExpressionType;
 		mTargetExpressionType = targetExpressionType;
+		mValueProvider = valueProvider;
 		assert mTargetExpressionType != null;
 		assert mTargetTraceElementType != null;
 		assert mSourceExpressionType != null;
 		assert mSourceTraceElementType != null;
+		assert mValueProvider != null;
 	}
 
 	@Override
@@ -136,7 +139,7 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 
 	@Override
 	public String targetExpressionToString(TE expression) {
-		if(expression == null){
+		if (expression == null) {
 			return "NULL";
 		}
 		return expression.toString();
@@ -159,8 +162,7 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	}
 
 	/**
-	 * Returns true if all elements of IProgramExecution are of type TTE, throws
-	 * a ClassCastException otherwise.
+	 * Returns true if all elements of IProgramExecution are of type TTE, throws a ClassCastException otherwise.
 	 */
 	@SuppressWarnings("unchecked")
 	private boolean consistsOfTargetTraceElements(IProgramExecution<STE, SE> programExecution) {
@@ -172,8 +174,7 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	}
 
 	/**
-	 * Returns true if all elements of trace are of type TTE, throws a
-	 * ClassCastException otherwise.
+	 * Returns true if all elements of trace are of type TTE, throws a ClassCastException otherwise.
 	 */
 	@SuppressWarnings("unchecked")
 	private boolean consistsOfTargetTraceElements(List<STE> trace) {
@@ -189,22 +190,20 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	}
 
 	/**
-	 * Translate an expression of an arbitrary type E to the target expression
-	 * type of this ITranslator.
+	 * Translate an expression of an arbitrary type E to the target expression type of this ITranslator.
 	 * 
 	 * @param iTranslators
 	 *            is a sequence of ITranslaters itrans_0,...,itrans_n such that
 	 *            <ul>
-	 *            <li>the target expression type of itrans_0 is the source
-	 *            expression type of this ITranslator,
-	 *            <li>for 0<i<n the source expression type of iTrans_i coincides
-	 *            with the target expression type of iTrans_{i+1}, and
-	 *            <li>the source expression type of itrans_n is E (the type of
-	 *            the expression expr)
+	 *            <li>the target expression type of itrans_0 is the source expression type of this ITranslator,
+	 *            <li>for 0<i<n the source expression type of iTrans_i coincides with the target expression type of
+	 *            iTrans_{i+1}, and
+	 *            <li>the source expression type of itrans_n is E (the type of the expression expr)
 	 *            </ul>
 	 */
 	@SuppressWarnings("unchecked")
-	public static <STE, TTE, SE, TE> TE translateExpressionIteratively(SE expr, ITranslator<?, ?, ?, ?>... iTranslators) {
+	public static <STE, TTE, SE, TE> TE translateExpressionIteratively(SE expr,
+			ITranslator<?, ?, ?, ?>... iTranslators) {
 		TE result;
 
 		if (iTranslators.length == 0) {
@@ -241,7 +240,8 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 			ITranslator<STE, ?, SE, ?> last = (ITranslator<STE, ?, SE, ?>) iTranslators[iTranslators.length - 1];
 			ITranslator<?, ?, ?, ?>[] allButLast = Arrays.copyOf(iTranslators, iTranslators.length - 1);
 			IProgramExecution<?, ?> peOfIntermediateType = last.translateProgramExecution(programExecution);
-			result = (IProgramExecution<TTE, TE>) translateProgramExecutionIteratively(peOfIntermediateType, allButLast);
+			result = (IProgramExecution<TTE, TE>) translateProgramExecutionIteratively(peOfIntermediateType,
+					allButLast);
 		}
 		return result;
 	}
@@ -261,4 +261,8 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 		return sb.toString();
 	}
 
+	@Override
+	public IBacktranslationValueProvider<TTE, TE> getValueProvider() {
+		return mValueProvider;
+	}
 }

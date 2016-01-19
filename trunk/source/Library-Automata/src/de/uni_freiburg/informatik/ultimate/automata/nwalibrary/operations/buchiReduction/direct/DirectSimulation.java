@@ -36,6 +36,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchi
 
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -43,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.ASimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
@@ -79,7 +82,12 @@ public final class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, S
 	 * ends</b> nor <b>duplicate transitions</b>.
 	 * 
 	 * @param services
-	 *            Service provider of Ultimate framework.
+	 *            Service provider of Ultimate framework
+	 * @param progressTimer
+	 *            Timer used for responding to timeouts and operation
+	 *            cancellation.
+	 * @param logger
+	 *            Logger of the Ultimate framework.
 	 * @param buechi
 	 *            The buechi automaton to reduce with no dead ends nor with
 	 *            duplicate transitions
@@ -92,10 +100,11 @@ public final class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, S
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public DirectSimulation(final IUltimateServiceProvider services,
+	public DirectSimulation(final IUltimateServiceProvider services, final IProgressAwareTimer progressTimer, final Logger logger,
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
-		this(services, useSCCs, stateFactory, new DirectGameGraph<>(services, buechi, stateFactory));
+		this(progressTimer, logger, useSCCs, stateFactory,
+				new DirectGameGraph<>(services, progressTimer, logger, buechi, stateFactory));
 	}
 
 	/**
@@ -108,8 +117,11 @@ public final class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, S
 	 * For correctness its important that the inputed automaton has <b>no dead
 	 * ends</b> nor <b>duplicate transitions</b>.
 	 * 
-	 * @param services
-	 *            Service provider of Ultimate framework.
+	 * @param progressTimer
+	 *            Timer used for responding to timeouts and operation
+	 *            cancellation.
+	 * @param logger
+	 *            Logger of the Ultimate framework.
 	 * @param useSCCs
 	 *            If the simulation calculation should be optimized using SCC,
 	 *            Strongly Connected Components.
@@ -121,11 +133,11 @@ public final class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, S
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public DirectSimulation(final IUltimateServiceProvider services, final boolean useSCCs,
+	public DirectSimulation(final IProgressAwareTimer progressTimer, final Logger logger, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final AGameGraph<LETTER, STATE> game)
 					throws OperationCanceledException {
-		super(services, useSCCs, stateFactory, SimulationType.DIRECT);
-		
+		super(progressTimer, logger, useSCCs, stateFactory, SimulationType.DIRECT);
+
 		game.setSimulationPerformance(getSimulationPerformance());
 		m_Game = game;
 		doSimulation();

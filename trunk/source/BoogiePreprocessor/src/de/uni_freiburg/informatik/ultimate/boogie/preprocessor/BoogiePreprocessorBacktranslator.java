@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.util.IToString;
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.model.IType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
@@ -77,8 +78,8 @@ import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public class BoogiePreprocessorBacktranslator extends
-		DefaultTranslator<BoogieASTNode, BoogieASTNode, Expression, Expression> {
+public class BoogiePreprocessorBacktranslator
+		extends DefaultTranslator<BoogieASTNode, BoogieASTNode, Expression, Expression> {
 
 	private final Logger mLogger;
 	/**
@@ -89,7 +90,8 @@ public class BoogiePreprocessorBacktranslator extends
 	private BoogieSymbolTable mSymbolTable;
 
 	protected BoogiePreprocessorBacktranslator(IUltimateServiceProvider services) {
-		super(BoogieASTNode.class, BoogieASTNode.class, Expression.class, Expression.class);
+		super(new BoogieBacktranslationValueProvider(), BoogieASTNode.class, BoogieASTNode.class, Expression.class,
+				Expression.class);
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mMapping = new HashMap<>();
@@ -169,8 +171,8 @@ public class BoogiePreprocessorBacktranslator extends
 						return null;
 					}
 				}
-				reportUnfinishedBacktranslation("Generated EnsuresSpecification " + BoogiePrettyPrinter.print(spec)
-						+ " is not ensure(true)");
+				reportUnfinishedBacktranslation(
+						"Generated EnsuresSpecification " + BoogiePrettyPrinter.print(spec) + " is not ensure(true)");
 				return null;
 			}
 			// if there is no mapping, we return the identity (we do not change
@@ -181,8 +183,8 @@ public class BoogiePreprocessorBacktranslator extends
 		} else if (newElem instanceof LoopInvariantSpecification) {
 			return newElem;
 		} else {
-			reportUnfinishedBacktranslation("Unfinished backtranslation: Ignored translation of "
-					+ newElem.getClass().getSimpleName());
+			reportUnfinishedBacktranslation(
+					"Unfinished backtranslation: Ignored translation of " + newElem.getClass().getSimpleName());
 			return null;
 		}
 
@@ -224,11 +226,11 @@ public class BoogiePreprocessorBacktranslator extends
 				// return), else its a procedure call with corresponding return
 
 				if (programExecution.getTraceElement(i).hasStepInfo(StepInfo.NONE)) {
-					atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem, StepInfo.FUNC_CALL,
-							stringProvider));
+					atomicTrace
+							.add(new AtomicTraceElement<BoogieASTNode>(elem, elem, StepInfo.FUNC_CALL, stringProvider));
 				} else {
-					atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem, programExecution.getTraceElement(
-							i).getStepInfo(), stringProvider));
+					atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem,
+							programExecution.getTraceElement(i).getStepInfo(), stringProvider));
 				}
 
 			} else {
@@ -376,8 +378,8 @@ public class BoogiePreprocessorBacktranslator extends
 		@Override
 		protected Expression processExpression(Expression expr) {
 			if (mSymbolTable == null) {
-				reportUnfinishedBacktranslation("No symboltable available, using identity as back-translation of "
-						+ expr);
+				reportUnfinishedBacktranslation(
+						"No symboltable available, using identity as back-translation of " + expr);
 				return expr;
 			}
 
@@ -397,8 +399,8 @@ public class BoogiePreprocessorBacktranslator extends
 				Declaration decl = mSymbolTable.getDeclaration(ident);
 
 				if (decl == null) {
-					reportUnfinishedBacktranslation("No declaration in symboltable, using identity as "
-							+ "back-translation of " + expr);
+					reportUnfinishedBacktranslation(
+							"No declaration in symboltable, using identity as " + "back-translation of " + expr);
 					return expr;
 				}
 				BoogieASTNode newDecl = getMapping(decl);
@@ -460,9 +462,9 @@ public class BoogiePreprocessorBacktranslator extends
 						+ BoogiePrettyPrinter.printSignature(proc) + " and expression "
 						+ BoogiePrettyPrinter.print(inputExp));
 			} else {
-				reportUnfinishedBacktranslation("Unfinished backtranslation: Declaration "
-						+ mappedDecl.getClass().getSimpleName() + " not handled for expression "
-						+ BoogiePrettyPrinter.print(inputExp));
+				reportUnfinishedBacktranslation(
+						"Unfinished backtranslation: Declaration " + mappedDecl.getClass().getSimpleName()
+								+ " not handled for expression " + BoogiePrettyPrinter.print(inputExp));
 			}
 
 			return rtr;
@@ -483,7 +485,8 @@ public class BoogiePreprocessorBacktranslator extends
 			return rtr;
 		}
 
-		private IdentifierExpression extractIdentifier(ILocation mappedLoc, VarList list, IdentifierExpression inputExp) {
+		private IdentifierExpression extractIdentifier(ILocation mappedLoc, VarList list,
+				IdentifierExpression inputExp) {
 			if (list == null) {
 				return inputExp;
 			}
@@ -497,8 +500,8 @@ public class BoogiePreprocessorBacktranslator extends
 
 		}
 
-		private IdentifierExpression extractIdentifier(ILocation mappedLoc, VarList list,
-				IdentifierExpression inputExp, BoogieType type) {
+		private IdentifierExpression extractIdentifier(ILocation mappedLoc, VarList list, IdentifierExpression inputExp,
+				BoogieType type) {
 			if (type instanceof StructType) {
 				StructType st = (StructType) type;
 				String[] inputNames = inputExp.getIdentifier().split("\\.");
@@ -507,7 +510,8 @@ public class BoogiePreprocessorBacktranslator extends
 					String inputName = inputExp.getIdentifier();
 					for (String name : list.getIdentifiers()) {
 						if (inputName.contains(name)) {
-							return new IdentifierExpression(mappedLoc, type, name, inputExp.getDeclarationInformation());
+							return new IdentifierExpression(mappedLoc, type, name,
+									inputExp.getDeclarationInformation());
 						}
 					}
 

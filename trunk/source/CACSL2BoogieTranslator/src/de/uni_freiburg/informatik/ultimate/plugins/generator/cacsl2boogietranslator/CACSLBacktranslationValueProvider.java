@@ -34,15 +34,15 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTIdExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.ACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CLocation;
-import de.uni_freiburg.informatik.ultimate.result.ProgramExecutionFormatter.IProgramExecutionStringProvider;
+import de.uni_freiburg.informatik.ultimate.result.IBacktranslationValueProvider;
 
 /**
  * 
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public class CACSLProgramExecutionStringProvider implements
-		IProgramExecutionStringProvider<CACSLLocation, IASTExpression> {
+public class CACSLBacktranslationValueProvider implements
+		IBacktranslationValueProvider<CACSLLocation, IASTExpression> {
 
 	@Override
 	public int getStartLineNumberFromStep(CACSLLocation step) {
@@ -94,6 +94,11 @@ public class CACSLProgramExecutionStringProvider implements
 		} else {
 			return "*";
 		}
+	}
+
+	@Override
+	public String getFileNameFromStep(CACSLLocation step) {
+		return step.getFileName();
 	}
 
 }

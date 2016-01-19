@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.result.NoBacktranslationValueProvider;
 
 /**
  * 
@@ -51,7 +52,8 @@ public class ProductBacktranslator extends DefaultTranslator<CodeBlock, CodeBloc
 	private final HashMap<RCFGEdge, RCFGEdge> mEdgeMapping;
 
 	public ProductBacktranslator(Class<CodeBlock> traceElementType, Class<Expression> expressionType) {
-		super(traceElementType, traceElementType, expressionType, expressionType);
+		super(new NoBacktranslationValueProvider<CodeBlock, Expression>(), traceElementType, traceElementType,
+				expressionType, expressionType);
 		mEdgeMapping = new HashMap<>();
 	}
 

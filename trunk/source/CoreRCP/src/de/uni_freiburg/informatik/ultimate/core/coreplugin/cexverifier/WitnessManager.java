@@ -50,15 +50,15 @@ import de.uni_freiburg.informatik.ultimate.core.util.MonitoredProcess;
 import de.uni_freiburg.informatik.ultimate.core.util.MonitoredProcess.MonitoredProcessState;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.WitnessResult;
 import de.uni_freiburg.informatik.ultimate.result.WitnessResult.WitnessVerificationStatus;
 
 /**
- * The poorly named WitnessManager "handles" witnesses as specified by the
- * Ultimate Core settings.
+ * The poorly named WitnessManager "handles" witnesses as specified by the Ultimate Core settings.
  * 
- * E.g. it may create witness files from counter example results and may call
- * another verifier with this witness as input.
+ * E.g. it may create witness files from counter example results and may call another verifier with this witness as
+ * input.
  * 
  * The actual witness generation is done by the corresponding plugin (i.e. via
  * {@link IProgramExecution#getSVCOMPWitnessString()}).
@@ -82,8 +82,8 @@ public class WitnessManager {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void run() throws IOException, InterruptedException {
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
-		final Collection<CounterExampleResult> cexResults = CoreUtil.filterResults(mServices.getResultService()
-				.getResults(), CounterExampleResult.class);
+		final Collection<CounterExampleResult> cexResults = CoreUtil
+				.filterResults(mServices.getResultService().getResults(), CounterExampleResult.class);
 
 		final IBacktranslationService backtrans = mServices.getBacktranslationService();
 
@@ -169,11 +169,10 @@ public class WitnessManager {
 		return filename.toString();
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private void reportWitnessResult(String svcompWitness, CounterExampleResult cex,
+	private void reportWitnessResult(String svcompWitness, IResult cex,
 			WitnessVerificationStatus verificationStatus) {
 		mServices.getResultService().reportResult(cex.getPlugin(),
-				new WitnessResult<>(cex, svcompWitness, verificationStatus));
+				new WitnessResult(Activator.s_PLUGIN_ID, cex, svcompWitness, verificationStatus));
 	}
 
 	@SuppressWarnings("rawtypes")

@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE CACSL2BoogieTranslator plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.graphml;
+package de.uni_freiburg.informatik.ultimate.witnessprinter.graphml;
 
 /**
  * 
@@ -36,23 +36,25 @@ public class GeneratedWitnessNode {
 	private final String mId;
 	private final boolean mIsError;
 	private final boolean mIsSink;
+	private String mInvariant;
 
-	GeneratedWitnessNode(long currentNodeId, boolean isEntry, boolean isError,boolean isSink) {
+	GeneratedWitnessNode(long currentNodeId, boolean isEntry, boolean isError, boolean isSink) {
 		mIsEntry = isEntry;
 		mIsError = isError;
 		mId = "N" + String.valueOf(currentNodeId);
 		mIsSink = isSink;
+		mInvariant = null;
 	}
 
 	public boolean isEntry() {
 		return mIsEntry;
 	}
-	
-	public boolean isError(){
+
+	public boolean isError() {
 		return mIsError;
 	}
-	
-	public boolean isSink(){
+
+	public boolean isSink() {
 		return mIsSink;
 	}
 
@@ -60,4 +62,11 @@ public class GeneratedWitnessNode {
 		return mId;
 	}
 
+	public String getInvariant() {
+		return mInvariant;
+	}
+
+	public void setInvariant(final String invariant) {
+		mInvariant = invariant;
+	}
 }

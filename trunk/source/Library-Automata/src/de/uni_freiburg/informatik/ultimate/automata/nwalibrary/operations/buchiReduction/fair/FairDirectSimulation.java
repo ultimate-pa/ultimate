@@ -30,6 +30,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -39,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.TimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
@@ -88,7 +91,12 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 * ends</b> nor <b>duplicate transitions</b>.
 	 * 
 	 * @param services
-	 *            Service provider of Ultimate framework.
+	 *            Service provider of Ultimate framework
+	 * @param progressTimer
+	 *            Timer used for responding to timeouts and operation
+	 *            cancellation.
+	 * @param logger
+	 *            Logger of the Ultimate framework.
 	 * @param buechi
 	 *            The buechi automaton to reduce with no dead ends nor with
 	 *            duplicate transitions
@@ -101,10 +109,10 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public FairDirectSimulation(final IUltimateServiceProvider services,
-			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
+	public FairDirectSimulation(final IUltimateServiceProvider services, final IProgressAwareTimer progressTimer,
+			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
-		this(services, buechi, useSCCs, stateFactory, Collections.emptyList());
+		this(services, progressTimer, logger, buechi, useSCCs, stateFactory, Collections.emptyList());
 	}
 
 	/**
@@ -119,7 +127,12 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 * ends</b> nor <b>duplicate transitions</b>.
 	 * 
 	 * @param services
-	 *            Service provider of Ultimate framework.
+	 *            Service provider of Ultimate framework
+	 * @param progressTimer
+	 *            Timer used for responding to timeouts and operation
+	 *            cancellation.
+	 * @param logger
+	 *            Logger of the Ultimate framework.
 	 * @param buechi
 	 *            The buechi automaton to reduce with no dead ends nor with
 	 *            duplicate transitions
@@ -137,12 +150,12 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public FairDirectSimulation(final IUltimateServiceProvider services,
-			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
+	public FairDirectSimulation(final IUltimateServiceProvider services, final IProgressAwareTimer progressTimer,
+			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses)
 					throws OperationCanceledException {
-		super(services, buechi, useSCCs, stateFactory, possibleEquivalentClasses,
-				new FairDirectGameGraph<LETTER, STATE>(services, buechi, stateFactory));
+		super(progressTimer, logger, buechi, useSCCs, stateFactory, possibleEquivalentClasses,
+				new FairDirectGameGraph<LETTER, STATE>(services, progressTimer, logger, buechi, stateFactory));
 	}
 
 	/*
@@ -258,8 +271,8 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 			getLogger().debug("Starting direct simulation...");
 			m_IsCurrentlyDirectSimulation = true;
 			game.transformToDirectGameGraph();
-			DirectSimulation<LETTER, STATE> directSim = new DirectSimulation<LETTER, STATE>(getServiceProvider(),
-					isUsingSCCs(), getStateFactory(), game);
+			DirectSimulation<LETTER, STATE> directSim = new DirectSimulation<LETTER, STATE>(getProgressTimer(),
+					getLogger(), isUsingSCCs(), getStateFactory(), game);
 
 			// Remember results before transforming back and clear changes made
 			// in the direct simulation
@@ -276,7 +289,7 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 			m_IsCurrentlyDirectSimulation = false;
 			getLogger().debug("Starting fair simulation...");
 		}
-		
+
 		// After that do the normal fair simulation process that will use the
 		// overridden methods which profit from the direct simulation.
 		super.doSimulation();
@@ -286,6 +299,9 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 				+ duration + " milliseconds");
 
 		// Merge performance data
+		if (directSimSimulationSteps == SimulationPerformance.NO_COUNTING_RESULT) {
+			directSimSimulationSteps = 0;
+		}
 		m_Performance.setCountingMeasure(CountingMeasure.SIMULATION_STEPS,
 				super.getSimulationPerformance().getCountingMeasureResult(CountingMeasure.SIMULATION_STEPS)
 						+ directSimSimulationSteps);
