@@ -925,10 +925,10 @@ public class Theory {
 		/*
 		 * Used to create function symbols that take roundingModes and floating points as arguments
 		 */
-		class IrregularFloatingPointFunction extends FunctionSymbolFactory {
+		class RoundedFloatingPointFunction extends FunctionSymbolFactory {
 			int mNumArgs;
 			Sort mResult;
-			public IrregularFloatingPointFunction(
+			public RoundedFloatingPointFunction(
 					String name, int numArgs, Sort result) {
 				super(name);
 				mNumArgs = numArgs;
@@ -964,17 +964,18 @@ public class Theory {
 		declareInternalFunction("RTZ", new Sort[0], mRoundingModeSort, 0);
 		
 		// Operators
-		defineFunction(new IrregularFloatingPointFunction("fp.abs", 1, null));
-		defineFunction(new IrregularFloatingPointFunction("fp.neg", 1, null));
-		defineFunction(new IrregularFloatingPointFunction("fp.add", 3, null));
-		defineFunction(new IrregularFloatingPointFunction("fp.sub", 3, null));
-		defineFunction(new IrregularFloatingPointFunction("fp.mul", 3, null));
-		defineFunction(new IrregularFloatingPointFunction("fp.div", 3, null));
-		defineFunction(new IrregularFloatingPointFunction("fp.fma", 4, null));
-		defineFunction(new IrregularFloatingPointFunction("fp.sqrt", 2, null));
-		defineFunction(new IrregularFloatingPointFunction("fp.roundToIntegral", 2, null));
-		defineFunction(new IrregularFloatingPointFunction("fp.min", 2, null));
-		defineFunction(new IrregularFloatingPointFunction("fp.max", 2, null));
+		defineFunction(new RegularFloatingPointFunction("fp.abs", 1, null));
+		defineFunction(new RegularFloatingPointFunction("fp.neg", 1, null));
+		defineFunction(new RegularFloatingPointFunction("fp.min", 2, null));
+		defineFunction(new RegularFloatingPointFunction("fp.max", 2, null));
+		// rounded operators
+		defineFunction(new RoundedFloatingPointFunction("fp.add", 3, null));
+		defineFunction(new RoundedFloatingPointFunction("fp.sub", 3, null));
+		defineFunction(new RoundedFloatingPointFunction("fp.mul", 3, null));
+		defineFunction(new RoundedFloatingPointFunction("fp.div", 3, null));
+		defineFunction(new RoundedFloatingPointFunction("fp.fma", 4, null));
+		defineFunction(new RoundedFloatingPointFunction("fp.sqrt", 2, null));
+		defineFunction(new RoundedFloatingPointFunction("fp.roundToIntegral", 2, null));
 		
 		// Comparison Operators
 		defineFunction(new RegularFloatingPointFunction("fp.leq", 2, mBooleanSort));
