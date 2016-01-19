@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.function.BiFunction;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.NumUtil;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.lpsolver.LinearConstraint;
 
 /**
  * Represents a Boogie expression as an affine term of the form
@@ -219,5 +220,33 @@ public class AffineExpression {
 		}
 		sb.append(mConstant);
 		return sb.toString();
+	}
+
+	public LinearConstraint<BigDecimal> constraintGreaterEqualZero() {
+		LinearConstraint<BigDecimal> c = baseConstraintWithoutConstant();
+		c.setLower(mConstant.negate());
+		return c;
+	}
+
+	public LinearConstraint<BigDecimal> constraintLessEqualZero() {
+		LinearConstraint<BigDecimal> c = baseConstraintWithoutConstant();
+		c.setUpper(mConstant.negate());
+		return c;
+	}
+
+	public LinearConstraint<BigDecimal> constraintEqualZero() {
+		LinearConstraint<BigDecimal> c = baseConstraintWithoutConstant();
+		BigDecimal bound = mConstant.negate();
+		c.setLower(bound);
+		c.setUpper(bound);
+		return c;
+	}
+
+	private LinearConstraint<BigDecimal> baseConstraintWithoutConstant() {
+		LinearConstraint<BigDecimal> c = new LinearConstraint<>("unnamed");
+		for (Map.Entry<String, BigDecimal> entry : mCoefficients.entrySet()) {
+			c.addCoefficient(entry.getKey(), entry.getValue());
+		}
+		return c;
 	}
 }
