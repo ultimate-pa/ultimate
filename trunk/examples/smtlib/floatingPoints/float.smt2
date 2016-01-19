@@ -32,6 +32,6 @@
 ;(pop)
 ;(push)
 ;(assert (fp.eq x (fp.sqrt roundNearestTiesToEven x)))
-(assert ( fp.eq x (fp.add roundNearestTiesToEven x x)))
+(assert ( fp.eq x (fp.add RTP x x)))
 (check-sat)
 (get-model)

@@ -953,7 +953,16 @@ public class Theory {
 		
 		//RoundingModes
 		declareInternalFunction("roundNearestTiesToEven", new Sort[0], mRoundingModeSort, 0);
-				
+		declareInternalFunction("RNE", new Sort[0], mRoundingModeSort, 0);
+		declareInternalFunction("roundNearestTiesToAway", new Sort[0], mRoundingModeSort, 0);
+		declareInternalFunction("RNA", new Sort[0], mRoundingModeSort, 0);
+		declareInternalFunction("roundTowardPositive", new Sort[0], mRoundingModeSort, 0);
+		declareInternalFunction("RTP", new Sort[0], mRoundingModeSort, 0);
+		declareInternalFunction("roundTowardNegative", new Sort[0], mRoundingModeSort, 0);
+		declareInternalFunction("RTN", new Sort[0], mRoundingModeSort, 0);
+		declareInternalFunction("roundTowardZero", new Sort[0], mRoundingModeSort, 0);
+		declareInternalFunction("RTZ", new Sort[0], mRoundingModeSort, 0);
+		
 		// Operators
 		defineFunction(new IrregularFloatingPointFunction("fp.abs", 1, null));
 		defineFunction(new IrregularFloatingPointFunction("fp.neg", 1, null));
