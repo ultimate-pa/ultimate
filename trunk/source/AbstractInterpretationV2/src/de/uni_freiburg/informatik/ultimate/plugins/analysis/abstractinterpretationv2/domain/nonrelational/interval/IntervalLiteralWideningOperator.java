@@ -120,7 +120,7 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 		final BooleanValue.Value[] boolVals = boolValues.toArray(new BooleanValue.Value[boolValues.size()]);
 		final String[] arrays = arraysToWiden.toArray(new String[arraysToWiden.size()]);
 		final IntervalDomainValue[] arrayVals = arrayValues.toArray(new IntervalDomainValue[arrayValues.size()]);
-		
+
 		return first.setMixedValues(vars, vals, bools, boolVals, arrays, arrayVals);
 	}
 
@@ -134,16 +134,22 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 		IntervalValue newLower;
 		IntervalValue newUpper;
 
+		// Compute new lower
 		if (firstLower.isInfinity() || secondLower.isInfinity()) {
 			newLower = new IntervalValue();
 		} else {
 			BigDecimal working;
+			
+			// If the lower bound has changed, we need to widen the lower bound, starting from the lower value. If the
+			// lower bounds are the same, we use this value as current bound.
 			if (firstLower.compareTo(secondLower) < 0) {
 				working = mLiteralCollection.getNextRealNegative(firstLower.getValue());
+			} else if (firstLower.compareTo(secondLower) > 0) {
+				working = mLiteralCollection.getNextIntegerNegative(secondLower.getValue());
 			} else {
-				working = mLiteralCollection.getNextRealNegative(secondLower.getValue());
+				working = firstLower.getValue();
 			}
-
+			
 			if (working == null) {
 				newLower = new IntervalValue();
 			} else {
@@ -151,16 +157,22 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 			}
 		}
 
+		// Compute new upper
 		if (firstUpper.isInfinity() || secondUpper.isInfinity()) {
 			newUpper = new IntervalValue();
 		} else {
 			BigDecimal working;
+			
+			// If the upper bound has changed, we need to widen the upper bound, starting from the largest value. If the
+			// upper bounds are the same, we use this value as current bound.
 			if (firstUpper.compareTo(secondUpper) > 0) {
 				working = mLiteralCollection.getNextRealPositive(firstUpper.getValue());
-			} else {
+			} else if (firstUpper.compareTo(secondUpper) < 0) {
 				working = mLiteralCollection.getNextRealPositive(secondUpper.getValue());
+			} else {
+				working = firstUpper.getValue();
 			}
-
+			
 			if (working == null) {
 				newUpper = new IntervalValue();
 			} else {
@@ -170,5 +182,4 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 
 		return new IntervalDomainValue(newLower, newUpper);
 	}
-
 }

@@ -134,9 +134,12 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 * Var(this)={x} and Var(dominator)={x}, then return dominator).
 	 * <p>
 	 * Each variable from Var(dominator) is<br>
-	 * <b>either</b> identical to a variable from Var(this),
-	 * (i.e. they have the same name, the same {@link IBoogieVar}, and the same type)<br>
+	 * <b>either</b> identical to a variable from Var(this), (i.e. they have the same name, the same {@link IBoogieVar},
+	 * and the same type)<br>
 	 * <b>or</b> has a unique name that is not used by any variable in Var(this).
+	 * 
+	 * @param dominator
+	 *            The dominator state that should be patched onto <code>this</code>.
 	 */
 	STATE patch(STATE dominator);
 
