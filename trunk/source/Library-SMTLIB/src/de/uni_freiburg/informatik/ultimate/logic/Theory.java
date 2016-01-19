@@ -963,7 +963,7 @@ public class Theory {
 					return null;
 				BigInteger[] fpIndices = new BigInteger[2];
 				fpIndices[0] = paramSorts[1].getIndices()[0];
-				fpIndices[1] = paramSorts[2].getIndices()[0];
+				fpIndices[1] = paramSorts[2].getIndices()[0].add(BigInteger.ONE);
 				return mFloatingPointSort.getSort(fpIndices, new Sort[0] );
 			}
 		});
