@@ -140,6 +140,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 				newState.mBooleanAbstraction.remove(name);
 			}
 			// else: variable had an unsupported type => its abstract value (\top) wasn't stored explicitly
+			//       or variable was not stored at all => already removed
 		}
 		if (!indexRemovedNumericVars.isEmpty()) {
 			newState.mNumericAbstraction = normalizedNumericAbstraction().removeVariables(indexRemovedNumericVars);
@@ -160,6 +161,12 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 			++newIndex;
 		}
 	}
+
+	private void unrefMapVarToBoogieVar(OctagonDomainState state) {
+		if (state.mMapVarToBoogieVar == mMapVarToBoogieVar) {
+			state.mMapVarToBoogieVar = new HashMap<>(mMapVarToBoogieVar);
+		}
+	}
 	
 	private void unrefMapNumericVarToIndex(OctagonDomainState state) {
 		if (state.mMapNumericVarToIndex == mMapNumericVarToIndex) {
@@ -176,6 +183,12 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	private void unrefBooleanAbstraction(OctagonDomainState state) {
 		if (state.mBooleanAbstraction == mBooleanAbstraction) {
 			state.mBooleanAbstraction = new HashMap<>(mBooleanAbstraction);
+		}
+	}
+
+	private void unrefNumericAbstraction(OctagonDomainState state) {
+		if (state.mNumericAbstraction == mNumericAbstraction) {
+			state.mNumericAbstraction = mNumericAbstraction.copy();
 		}
 	}
 	
@@ -327,65 +340,45 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	// TODO test
 	@Override
 	public OctagonDomainState patch(OctagonDomainState dominator) {
-		Map<String, IBoogieVar> mapTypeChangedVarsToNewType = varsWithTypeCategoryCollisions(dominator);
-		OctagonDomainState s = this.removeVariables(mapTypeChangedVarsToNewType);
-		
+		OctagonDomainState patchedState = shallowCopy();
 		BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar = new BidirectionalMap<>();
-		SortedMap<Integer, String> mapOldIndicesOfNewNumericVars = new TreeMap<>();
+		SortedMap<Integer, String> mapDominatorIndicesOfNewNumericVars = new TreeMap<>();
 
 		for (Map.Entry<String, IBoogieVar> entry : dominator.mMapVarToBoogieVar.entrySet()) {
 			String var = entry.getKey();
 			IBoogieVar newBoogieVar = entry.getValue();
-			s.mMapVarToBoogieVar.put(var, newBoogieVar);
-			IType newType = newBoogieVar.getIType();
-			if (TypeUtil.isNumeric(newType)) {
+			unrefMapVarToBoogieVar(patchedState);
+			IBoogieVar oldBoogieVar = patchedState.mMapVarToBoogieVar.put(var, newBoogieVar);
+			assert oldBoogieVar == null || mMapVarToBoogieVar.get(var) == newBoogieVar
+					: "Patch caused name-collision: " + var;
+			IType type = newBoogieVar.getIType();
+			if (TypeUtil.isNumeric(type)) {
 				int sourceVar = dominator.mMapNumericVarToIndex.get(var);
-				Integer targetVar = s.mMapNumericVarToIndex.get(var);
-				if (targetVar == null) {
-					mapOldIndicesOfNewNumericVars.put(sourceVar, var);
+				if (oldBoogieVar == null) {
+					mapDominatorIndicesOfNewNumericVars.put(sourceVar, var);
+					if (TypeUtil.isNumericNonInt(type)) {
+						unrefNumericNonIntVars(patchedState);
+						patchedState.mNumericNonIntVars.add(var);
+					}
 				} else {
+					int targetVar = patchedState.mMapNumericVarToIndex.get(var);
 					mapSourceVarToTargetVar.put(sourceVar, targetVar);
 				}
-				if (TypeUtil.isNumericNonInt(newType)) {
-					s.mNumericNonIntVars.add(var);
-				} else {
-					s.mNumericNonIntVars.remove(var);
-				}
-			} else if (TypeUtil.isBoolean(newType)){
-				s.mBooleanAbstraction.put(var, dominator.mBooleanAbstraction.get(var));
+			} else if (TypeUtil.isBoolean(type)){
+				unrefBooleanAbstraction(patchedState);
+				patchedState.mBooleanAbstraction.put(var, dominator.mBooleanAbstraction.get(var));
 			}
 			// else: variable has unsupported type and is assumed to be \top
 		}
-		for (String var : mapOldIndicesOfNewNumericVars.values()) {
-			s.mMapNumericVarToIndex.put(var, s.mMapNumericVarToIndex.size());
+		for (String var : mapDominatorIndicesOfNewNumericVars.values()) {
+			unrefMapNumericVarToIndex(patchedState);
+			patchedState.mMapNumericVarToIndex.put(var, patchedState.mMapNumericVarToIndex.size());
 		}
-		s.mNumericAbstraction
-				.copySelection(dominator.mNumericAbstraction, mapSourceVarToTargetVar);
-		s.mNumericAbstraction = s.mNumericAbstraction
-				.appendSelection(dominator.mNumericAbstraction, mapOldIndicesOfNewNumericVars.keySet());
-		return s;
-	}
-	
-	/**
-	 * Searches variables with the same name in {@code this} and {@code dominator} but different type categories.
-	 * The return value can be used in {@link #removeVariables(Map)}.
-	 * 
-	 * @param dominator other state
-	 * @return map from colliding variable (names) to their {@linkplain IBoogieVar} from {@code this} state
-	 * 
-	 * @see TypeUtil#categoryEquals(IType, IType)
-	 */
-	private Map<String, IBoogieVar> varsWithTypeCategoryCollisions(OctagonDomainState dominator) {
-		HashMap<String, IBoogieVar> typeChangedVars = new HashMap<>();
-		for (Map.Entry<String, IBoogieVar> entry : dominator.mMapVarToBoogieVar.entrySet()) {
-			String varName = entry.getKey();
-			IBoogieVar newBoogieVar = entry.getValue();
-			IBoogieVar oldBoogieVar = mMapVarToBoogieVar.get(varName);
-			if (oldBoogieVar != null && !TypeUtil.categoryEquals(newBoogieVar.getIType(), oldBoogieVar.getIType())) {
-				typeChangedVars.put(varName, newBoogieVar);
-			}
-		}
-		return typeChangedVars;
+		patchedState.mNumericAbstraction = patchedState.mNumericAbstraction
+				.appendSelection(dominator.mNumericAbstraction, mapDominatorIndicesOfNewNumericVars.keySet());
+		unrefNumericAbstraction(patchedState);
+		patchedState.mNumericAbstraction.copySelection(dominator.mNumericAbstraction, mapSourceVarToTargetVar);
+		return patchedState;
 	}
 
 	public OctagonDomainState copyValuesOnScopeChange(OctagonDomainState source,
