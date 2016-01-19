@@ -58,11 +58,10 @@ public class AbstractInterpretationV2TestSuite extends AbstractEvalTestSuite {
 
 	private static final String[] INPUT = new String[] {
 
-			"examples/programs/abstractInterpretation/EvenOdd.bpl", // doesn't terminate
-//	         "examples/programs/abstractInterpretation/",
-//	         "examples/programs/abstractInterpretationNoRec/",
+//			"examples/programs/abstractInterpretation/EvenOdd.bpl", // doesn't terminate (FXPE error due to recursion)
+	         "examples/programs/abstractInterpretation/",
 	        /* ULTIMATE repo */
-//	         "examples/programs/regression/bpl/",
+	         "examples/programs/regression/bpl/",
 //	         "examples/programs/regression/c/",
 //	         "examples/programs/recursivePrograms",
 	        /* SV-COMP repo */

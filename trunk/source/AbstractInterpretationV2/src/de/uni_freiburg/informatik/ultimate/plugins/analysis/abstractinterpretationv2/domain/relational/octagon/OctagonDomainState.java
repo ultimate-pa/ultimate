@@ -101,21 +101,24 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	public OctagonDomainState addVariables(Map<String, IBoogieVar> variables) {
 		OctagonDomainState newState = shallowCopy();
 		newState.mMapVarToBoogieVar = new HashMap<>(mMapVarToBoogieVar);
-		newState.mMapVarToBoogieVar.putAll(variables);
 		for (Map.Entry<String, IBoogieVar> entry : variables.entrySet()) {
-			String name = entry.getKey();
-			IBoogieVar var = entry.getValue();
-			IType type = var.getIType();
+			String varName = entry.getKey();
+			IBoogieVar newBoogieVar = entry.getValue();
+			IBoogieVar oldBoogieVar = newState.mMapVarToBoogieVar.put(varName, newBoogieVar);
+			if (oldBoogieVar != null) {
+				throw new IllegalArgumentException("Variable name already in use: " + varName);
+			}
+			IType type = newBoogieVar.getIType();
 			if (isNumeric(type)) {
 				unrefMapNumericVarToIndex(newState);
-				newState.mMapNumericVarToIndex.put(name, newState.mMapNumericVarToIndex.size());
+				newState.mMapNumericVarToIndex.put(varName, newState.mMapNumericVarToIndex.size());
 				if (isNumericNonInteger(type)) {
 					unrefNumericNonIntVars(newState);
-					newState.mNumericNonIntVars.add(name);
+					newState.mNumericNonIntVars.add(varName);
 				}
 			} else if (isBoolean(type)) {
 				unrefBooleanAbstraction(newState);
-				newState.mBooleanAbstraction.put(name, BoolValue.TOP);
+				newState.mBooleanAbstraction.put(varName, BoolValue.TOP);
 			}
 			// else: variable has unsupported type and is assumed to be \top at all times
 		}
@@ -405,11 +408,11 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	private Map<String, IBoogieVar> varsWithTypeCategoryCollisions(OctagonDomainState dominator) {
 		HashMap<String, IBoogieVar> typeChangedVars = new HashMap<>();
 		for (Map.Entry<String, IBoogieVar> entry : dominator.mMapVarToBoogieVar.entrySet()) {
-			String var = entry.getKey();
+			String varName = entry.getKey();
 			IBoogieVar newBoogieVar = entry.getValue();
-			IBoogieVar oldBoogieVar = mMapVarToBoogieVar.get(var);
-			if (oldBoogieVar != null && !typeCategoryEquals(oldBoogieVar.getIType(), oldBoogieVar.getIType())) {
-				typeChangedVars.put(var, newBoogieVar);
+			IBoogieVar oldBoogieVar = mMapVarToBoogieVar.get(varName);
+			if (oldBoogieVar != null && !typeCategoryEquals(newBoogieVar.getIType(), oldBoogieVar.getIType())) {
+				typeChangedVars.put(varName, newBoogieVar);
 			}
 		}
 		return typeChangedVars;
