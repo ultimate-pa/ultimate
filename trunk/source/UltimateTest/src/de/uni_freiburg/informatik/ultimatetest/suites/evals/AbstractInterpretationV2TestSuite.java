@@ -59,21 +59,21 @@ public class AbstractInterpretationV2TestSuite extends AbstractEvalTestSuite {
 
 	private static final String[] INPUT = new String[] {
 			/* failed tests */
-			"examples/programs/abstractInterpretation/IRS-Dep-Test.bpl", // OCT
-//			"examples/programs/abstractInterpretation/EvenOdd.bpl", // doesn't terminate (FXPE error due to recursion)
-//			"examples/programs/regression/c/InParamRenaming.c",              // cacsl2boogie UnsupportedOperationException
-//	        "examples/svcomp/loops/bubble_sort_true-unreach-call.c",// RCFG AssertionError non-linear
-//	        "examples/svcomp/loops/compact_false-unreach-call.c",   // RCFG doesn't terminate 
-//	        "examples/svcomp/loops/heavy_false-unreach-call.c",     // RCFG doesn't terminate 
-//	        "examples/svcomp/loops/heavy_true-unreach-call.c",      // RCFG doesn't terminate
+//			"examples/programs/abstractInterpretation/EvenOdd.bpl",  // doesn't terminate (FXPE cannot handle recursion)
+//			"examples/programs/regression/c/InParamRenaming.c",      // cacsl2boogie UnsupportedOperationException
+//	        "examples/svcomp/loops/bubble_sort_true-unreach-call.c", // RCFG AssertionError non-linear
+			/* RCFG does not seem to terminate */
+//	        "examples/svcomp/loops/compact_false-unreach-call.c",
+//	        "examples/svcomp/loops/heavy_false-unreach-call.c",
+//	        "examples/svcomp/loops/heavy_true-unreach-call.c",
 
-//	        "examples/programs/abstractInterpretation/",
+	        "examples/programs/abstractInterpretation/",
 	        /* ULTIMATE repo */
-//	         "examples/programs/regression/bpl/",
-//	         "examples/programs/regression/c/",
+	         "examples/programs/regression/bpl/",
+	         "examples/programs/regression/c/",
 //	         "examples/programs/recursivePrograms",
 	        /* SV-COMP repo */
-//	        "examples/svcomp/loops/", // SPLIT
+	        "examples/svcomp/loops/", // SPLIT
 			// "examples/svcomp/loopsSelection/",
 			// "examples/svcomp/eca/", // SPLIT
 			// "examples/svcomp/ecaSelection/",

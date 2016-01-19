@@ -141,10 +141,26 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 			}
 			// else: variable had an unsupported type => its abstract value (\top) wasn't stored explicitly
 		}
-		newState.mNumericAbstraction = normalizedNumericAbstraction().removeVariables(indexRemovedNumericVars);
+		if (!indexRemovedNumericVars.isEmpty()) {
+			newState.mNumericAbstraction = normalizedNumericAbstraction().removeVariables(indexRemovedNumericVars);
+			defragmentMap(newState.mMapNumericVarToIndex);
+		}
 		return newState;
 	}
-
+	
+	private static <T> void defragmentMap(Map<T, Integer> map) {
+		TreeMap<Integer, T> reversedMapSortedAscending = new TreeMap<Integer, T>();
+		for (Map.Entry<T, Integer> entry : map.entrySet()) {
+			reversedMapSortedAscending.put(entry.getValue(), entry.getKey());
+		}
+		map.clear();
+		int newIndex = 0;
+		for (Map.Entry<Integer, T> entry : reversedMapSortedAscending.entrySet()) {
+			map.put(entry.getValue(), newIndex);
+			++newIndex;
+		}
+	}
+	
 	private void unrefMapNumericVarToIndex(OctagonDomainState state) {
 		if (state.mMapNumericVarToIndex == mMapNumericVarToIndex) {
 			state.mMapNumericVarToIndex = new HashMap<>(mMapNumericVarToIndex);
