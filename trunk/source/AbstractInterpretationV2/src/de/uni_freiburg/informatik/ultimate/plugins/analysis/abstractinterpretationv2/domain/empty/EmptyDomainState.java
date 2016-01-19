@@ -53,17 +53,14 @@ public final class EmptyDomainState<ACTION, VARDECL>
 	private static int sId;
 	private final Map<String, VARDECL> mVarDecls;
 	private final int mId;
-	private boolean mIsFixpoint;
 
 	protected EmptyDomainState() {
 		mVarDecls = new HashMap<String, VARDECL>();
-		mIsFixpoint = false;
 		mId = sId++;
 	}
 
-	protected EmptyDomainState(Map<String, VARDECL> varDecls, boolean isFixpoint) {
+	protected EmptyDomainState(Map<String, VARDECL> varDecls) {
 		mVarDecls = varDecls;
-		mIsFixpoint = isFixpoint;
 		mId = sId++;
 	}
 
@@ -77,7 +74,7 @@ public final class EmptyDomainState<ACTION, VARDECL>
 		if (old != null) {
 			throw new UnsupportedOperationException("Variable names have to be disjoint");
 		}
-		return new EmptyDomainState<ACTION, VARDECL>(newMap, mIsFixpoint);
+		return new EmptyDomainState<ACTION, VARDECL>(newMap);
 	}
 
 	@Override
@@ -88,7 +85,7 @@ public final class EmptyDomainState<ACTION, VARDECL>
 		final Map<String, VARDECL> newMap = new HashMap<>(mVarDecls);
 		final VARDECL oldVar = newMap.remove(name);
 		assert variable.equals(oldVar);
-		return new EmptyDomainState<ACTION, VARDECL>(newMap, mIsFixpoint);
+		return new EmptyDomainState<ACTION, VARDECL>(newMap);
 	}
 
 	@Override
@@ -103,7 +100,7 @@ public final class EmptyDomainState<ACTION, VARDECL>
 				throw new UnsupportedOperationException("Variable names have to be disjoint");
 			}
 		}
-		return new EmptyDomainState<ACTION, VARDECL>(newMap, mIsFixpoint);
+		return new EmptyDomainState<ACTION, VARDECL>(newMap);
 	}
 
 	@Override
@@ -115,7 +112,7 @@ public final class EmptyDomainState<ACTION, VARDECL>
 		for (Entry<String, VARDECL> entry : variables.entrySet()) {
 			newMap.remove(entry.getKey());
 		}
-		return new EmptyDomainState<ACTION, VARDECL>(newMap, mIsFixpoint);
+		return new EmptyDomainState<ACTION, VARDECL>(newMap);
 	}
 
 	@Override
@@ -128,19 +125,10 @@ public final class EmptyDomainState<ACTION, VARDECL>
 		return false;
 	}
 
-	@Override
-	public boolean isFixpoint() {
-		return mIsFixpoint;
-	}
-
-	@Override
-	public EmptyDomainState<ACTION, VARDECL> setFixpoint(boolean value) {
-		return new EmptyDomainState<ACTION, VARDECL>(mVarDecls, value);
-	}
 
 	@Override
 	public String toLogString() {
-		final StringBuilder sb = new StringBuilder().append(mIsFixpoint).append(" ");
+		final StringBuilder sb = new StringBuilder();
 		for (Entry<String, VARDECL> entry : mVarDecls.entrySet()) {
 			sb.append(entry.getKey()).append("; ");
 		}
@@ -230,6 +218,6 @@ public final class EmptyDomainState<ACTION, VARDECL>
 			return this;
 		}
 
-		return new EmptyDomainState<ACTION, VARDECL>(newVarDecls, isFixpoint());
+		return new EmptyDomainState<ACTION, VARDECL>(newVarDecls);
 	}
 }

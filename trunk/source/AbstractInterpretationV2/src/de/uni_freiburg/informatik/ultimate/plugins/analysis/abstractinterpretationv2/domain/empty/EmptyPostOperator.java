@@ -42,13 +42,12 @@ public final class EmptyPostOperator<ACTION, VARDECL>
 
 	@Override
 	public EmptyDomainState<ACTION, VARDECL> apply(EmptyDomainState<ACTION, VARDECL> oldstate, ACTION concrete) {
-		return new EmptyDomainState<>(new HashMap<>(oldstate.getVariables()), false);
+		return new EmptyDomainState<>(new HashMap<>(oldstate.getVariables()));
 	}
 
 	@Override
 	public EmptyDomainState<ACTION, VARDECL> apply(EmptyDomainState<ACTION, VARDECL> oldstate,
 			EmptyDomainState<ACTION, VARDECL> oldstateWithFreshVariables, ACTION transition) {
-		return new EmptyDomainState<>(new HashMap<>(oldstateWithFreshVariables.getVariables()), false);
+		return new EmptyDomainState<>(new HashMap<>(oldstateWithFreshVariables.getVariables()));
 	}
-
 }

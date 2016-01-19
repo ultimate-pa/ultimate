@@ -413,12 +413,10 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 		return false;
 	}
 
-	@Override
 	public boolean isFixpoint() {
 		return mIsFixpoint;
 	}
 
-	@Override
 	public IntervalDomainState setFixpoint(boolean value) {
 		return new IntervalDomainState(mLogger, mVariablesMap, mValuesMap, mBooleanValuesMap, value);
 	}

@@ -48,6 +48,6 @@ public final class EmptyOperator<ACTION, VARDECL>
 			throw new UnsupportedOperationException("Cannot widen or merge two states with different variables");
 		}
 
-		return new EmptyDomainState<>(first.getVariables(), first.isFixpoint() || second.isFixpoint());
+		return new EmptyDomainState<>(first.getVariables());
 	}
 }
