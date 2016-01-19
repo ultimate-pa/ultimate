@@ -175,6 +175,9 @@ public final class SimulationPerformance {
 
 		long timeResult = 0;
 		for (long timeMeasure : measureList) {
+			if (timeMeasure == NO_TIME_RESULT) {
+				continue;
+			}
 			if (option.equals(MultipleDataOption.ADDITIVE) || option.equals(MultipleDataOption.AVERAGE)) {
 				timeResult += timeMeasure;
 			} else if (option.equals(MultipleDataOption.MAXIMUM)) {

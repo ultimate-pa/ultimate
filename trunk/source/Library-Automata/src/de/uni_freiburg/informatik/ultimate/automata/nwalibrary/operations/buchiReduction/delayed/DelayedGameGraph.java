@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.CountingMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationPerformance;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.TimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
@@ -89,6 +90,10 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 	 * Service provider of Ultimate framework.
 	 */
 	private final IUltimateServiceProvider m_Services;
+	/**
+	 * Time duration building the graph took in milliseconds.
+	 */
+	private long m_GraphBuildTime;
 
 	/**
 	 * Creates a new delayed game graph by using the given buechi automaton.
@@ -117,6 +122,7 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 		m_Buechi = buechi;
 		m_BuechiAmountOfStates = 0;
 		m_BuechiAmountOfTransitions = 0;
+		m_GraphBuildTime = 0;
 		generateGameGraphFromBuechi();
 	}
 
@@ -156,6 +162,11 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 	 */
 	@Override
 	protected NestedWordAutomaton<LETTER, STATE> generateBuchiAutomatonFromGraph() throws OperationCanceledException {
+		SimulationPerformance performance = getSimulationPerformance();
+		if (performance != null) {
+			performance.startTimeMeasure(TimeMeasure.BUILD_RESULT_TIME);
+		}
+
 		// Determine which states to merge
 		ArrayList<STATE> states = new ArrayList<>();
 		states.addAll(m_Buechi.getStates());
@@ -230,12 +241,14 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 				}
 
 		// Log performance
-		SimulationPerformance performance = getSimulationPerformance();
 		if (performance != null) {
+			performance.stopTimeMeasure(TimeMeasure.BUILD_RESULT_TIME);
+			performance.addTimeMeasureValue(TimeMeasure.BUILD_GRAPH_TIME, m_GraphBuildTime);
 			performance.setCountingMeasure(CountingMeasure.REMOVED_STATES,
 					m_BuechiAmountOfStates - resultAmountOfStates);
 			performance.setCountingMeasure(CountingMeasure.REMOVED_TRANSITIONS,
 					m_BuechiAmountOfTransitions - resultAmountOfTransitions);
+			performance.setCountingMeasure(CountingMeasure.BUCHI_STATES, m_BuechiAmountOfStates);
 		}
 
 		return result;
@@ -249,6 +262,8 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 	 */
 	@Override
 	protected void generateGameGraphFromBuechi() throws OperationCanceledException {
+		long graphBuildTimeStart = System.currentTimeMillis();
+
 		// Calculate v1 [paper ref 10]
 		for (STATE q0 : m_Buechi.getStates()) {
 			m_BuechiAmountOfStates++;
@@ -330,5 +345,7 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 			}
 			logger.debug("Number of edges in game graph: " + edges);
 		}
+
+		m_GraphBuildTime = System.currentTimeMillis() - graphBuildTimeStart;
 	}
 }

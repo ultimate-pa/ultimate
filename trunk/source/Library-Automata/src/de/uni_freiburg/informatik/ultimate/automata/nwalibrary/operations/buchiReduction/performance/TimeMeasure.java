@@ -36,5 +36,22 @@ public enum TimeMeasure {
 	/**
 	 * The overall time an operation took.
 	 */
-	OVERALL_TIME
+	OVERALL_TIME,
+	/**
+	 * The time building the game graph took.
+	 */
+	BUILD_GRAPH_TIME,
+	/**
+	 * The time the simulation only took, this is the overall time minus the
+	 * time to build the graph and the result.
+	 */
+	SIMULATION_ONLY_TIME,
+	/**
+	 * The time building the result automaton took.
+	 */
+	BUILD_RESULT_TIME,
+	/**
+	 * The time building the SCC took.
+	 */
+	BUILD_SCC
 }

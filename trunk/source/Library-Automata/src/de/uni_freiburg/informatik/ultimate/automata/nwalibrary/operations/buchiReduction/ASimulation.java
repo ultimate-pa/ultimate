@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.CountingMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.MultipleDataOption;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.TimeMeasure;
@@ -467,8 +468,10 @@ public abstract class ASimulation<LETTER, STATE> {
 	 */
 	protected void doSimulation() throws OperationCanceledException {
 		m_Performance.startTimeMeasure(TimeMeasure.OVERALL_TIME);
+		m_Performance.startTimeMeasure(TimeMeasure.SIMULATION_ONLY_TIME);
 
 		if (m_UseSCCs) { // calculate reduction with SCC
+			m_Performance.startTimeMeasure(TimeMeasure.BUILD_SCC);
 			DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>> sccFactory = new DefaultStronglyConnectedComponentFactory<>();
 			GameGraphSuccessorProvider<LETTER, STATE> succProvider = new GameGraphSuccessorProvider<>(getGameGraph());
 			m_SccComp = new SccComputation<>(m_Logger, succProvider, sccFactory, getGameGraph().getSize(),
@@ -476,6 +479,7 @@ public abstract class ASimulation<LETTER, STATE> {
 
 			Iterator<StronglyConnectedComponent<Vertex<LETTER, STATE>>> iter = new LinkedList<StronglyConnectedComponent<Vertex<LETTER, STATE>>>(
 					m_SccComp.getSCCs()).iterator();
+			m_Performance.stopTimeMeasure(TimeMeasure.BUILD_SCC);
 			while (iter.hasNext()) {
 				StronglyConnectedComponent<Vertex<LETTER, STATE>> scc = iter.next();
 				iter.remove();
@@ -483,10 +487,20 @@ public abstract class ASimulation<LETTER, STATE> {
 			}
 		} else { // calculate reduction w/o SCCs
 			efficientLiftingAlgorithm(getGameGraph().getGlobalInfinity(), null);
+			m_Performance.addTimeMeasureValue(TimeMeasure.BUILD_SCC, SimulationPerformance.NO_TIME_RESULT);
 		}
+		m_Performance.stopTimeMeasure(TimeMeasure.SIMULATION_ONLY_TIME);
 		m_Result = getGameGraph().generateBuchiAutomatonFromGraph();
 
 		long duration = m_Performance.stopTimeMeasure(TimeMeasure.OVERALL_TIME);
+		// Add time building of the graph took to the overall time since this
+		// happens outside of simulation
+		long durationGraph = m_Performance.getTimeMeasureResult(TimeMeasure.BUILD_GRAPH_TIME,
+				MultipleDataOption.ADDITIVE);
+		if (durationGraph != SimulationPerformance.NO_TIME_RESULT) {
+			duration += durationGraph;
+			m_Performance.addTimeMeasureValue(TimeMeasure.OVERALL_TIME, durationGraph);
+		}
 
 		m_Logger.info((this.m_UseSCCs ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds.");
 	}

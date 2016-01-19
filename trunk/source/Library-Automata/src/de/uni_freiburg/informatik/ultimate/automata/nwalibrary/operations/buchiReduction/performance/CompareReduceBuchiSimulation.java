@@ -33,14 +33,11 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -59,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 /**
  * Operation that compares the different types of simulation methods for buechi
@@ -74,10 +72,6 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  */
 public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
-	/**
-	 * Decimal places to round duration of a method to.
-	 */
-	private final static int DECIMAL_PLACES = 3;
 	/**
 	 * Amount of fix fields in the log format. Currently this is type, usedSCCs
 	 * and timedOut.
@@ -97,22 +91,21 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	private static final File LOG_PATH = new File(new File(System.getProperty("user.home"), "Desktop"),
 			"simulationPerformance");
 	/**
-	 * File object of the log file.
+	 * Name for the object of the log file.
 	 */
-	private static final File LOG_PATH_DATA = new File(LOG_PATH, "testData.tsv");
+	private static final String LOG_PATH_DATA = "testData.tsv";
 	/**
-	 * File object of the html file.
+	 * Prefix for test result files.
 	 */
-	private static final File LOG_PATH_HTML = new File(LOG_PATH, "testResults.html");
+	private static final String LOG_PATH_HTML_PRE = "testResults_";
+	/**
+	 * Suffix for test result files.
+	 */
+	private static final String LOG_PATH_HTML_SUFF = ".html";
 	/**
 	 * Separator that is used in the log.
 	 */
 	private final static String LOG_SEPARATOR = "\t";
-	/**
-	 * Factor that, if multiplied with, converts seconds to milliseconds.
-	 */
-	private final static int SECONDS_TO_MILLIS = 1000;
-
 	/**
 	 * Time in seconds after which a simulation method should timeout.
 	 */
@@ -129,96 +122,22 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 		LinkedList<LinkedList<SimulationPerformance>> performanceEntries = parseLogFile();
 
 		System.out.println("Processing data...");
-		List<String> table = createInstanceFullComparisonTable(performanceEntries);
+		List<Pair<String, List<String>>> tables = new LinkedList<>();
+		tables.add(new Pair<>("instanceFullComparison",
+				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR)));
+		tables.add(new Pair<>("instanceTimePartitioning",
+				ComparisonTables.createInstanceTimePartitioningTable(performanceEntries, LOG_SEPARATOR)));
+		tables.add(new Pair<>("averagedSimulationFullComparison",
+				ComparisonTables.createAveragedSimulationFullComparisonTable(performanceEntries, LOG_SEPARATOR)));
+		tables.add(new Pair<>("averagedSimulationTimePartitioning",
+				ComparisonTables.createAveragedSimulationTimePartitioningTable(performanceEntries, LOG_SEPARATOR)));
 
-		System.out.println("Creating html file...");
-		tableToHtmlFile(table);
+		System.out.println("Creating html files...");
+		for (Pair<String, List<String>> pair : tables) {
+			tableToHtmlFile(pair.getFirst(), pair.getSecond());
+		}
 
 		System.out.println("Terminated.");
-	}
-
-	/**
-	 * Creates a table that holds the full comparison data for each automata
-	 * instance respectively.
-	 * 
-	 * @param performanceEntries
-	 *            Data structure holding the performance entries
-	 * @return A table in a tsv-like format, specified by
-	 *         {@link #LOG_SEPARATOR}.
-	 */
-	private static List<String> createInstanceFullComparisonTable(
-			final LinkedList<LinkedList<SimulationPerformance>> performanceEntries) {
-		List<String> table = new LinkedList<>();
-		if (performanceEntries.isEmpty()) {
-			return table;
-		}
-
-		// Header of table
-		String header = "TYPE" + LOG_SEPARATOR + "USED_SCCS" + LOG_SEPARATOR + "TIMED_OUT";
-		SimulationPerformance headerCandidate = performanceEntries.get(0).get(0);
-		Set<TimeMeasure> timeMeasures = headerCandidate.getTimeMeasures().keySet();
-		for (TimeMeasure measure : timeMeasures) {
-			header += LOG_SEPARATOR + measure;
-		}
-		Set<CountingMeasure> countingMeasures = headerCandidate.getCountingMeasures().keySet();
-		for (CountingMeasure measure : countingMeasures) {
-			header += LOG_SEPARATOR + measure;
-		}
-		table.add(header);
-
-		for (LinkedList<SimulationPerformance> performanceComparison : performanceEntries) {
-			for (SimulationPerformance performanceOfSimulation : performanceComparison) {
-				SimulationType type = performanceOfSimulation.getSimType();
-
-				// Fix fields
-				String row = type + LOG_SEPARATOR + performanceOfSimulation.isUsingSCCs() + LOG_SEPARATOR
-						+ performanceOfSimulation.hasTimedOut();
-
-				// Variable fields
-				for (TimeMeasure measure : timeMeasures) {
-					long value = performanceOfSimulation.getTimeMeasureResult(measure, MultipleDataOption.ADDITIVE);
-
-					String valueAsString = "";
-					if (value == SimulationPerformance.NO_TIME_RESULT) {
-						valueAsString = "&ndash;";
-					} else {
-						float valueInSeconds = millisToSeconds(value);
-						valueAsString = valueInSeconds + "";
-					}
-
-					row += LOG_SEPARATOR + valueAsString;
-				}
-				for (CountingMeasure measure : countingMeasures) {
-					int value = performanceOfSimulation.getCountingMeasureResult(measure);
-					String valueAsString = value + "";
-					if (value == SimulationPerformance.NO_COUNTING_RESULT) {
-						valueAsString = "&ndash;";
-					}
-					row += LOG_SEPARATOR + valueAsString;
-				}
-				table.add(row);
-			}
-			// Add empty row to delimit the performance entry
-			table.add("");
-		}
-
-		return table;
-	}
-
-	/**
-	 * Converts a given long value, representing milliseconds, to seconds and
-	 * rounds it to {@link #DECIMAL_PLACES} places after the decimal.
-	 * 
-	 * @param millis
-	 *            Value, representing milliseconds, that should be converted
-	 * @return The given value in seconds, rounded to two places after the
-	 *         decimal.
-	 */
-	private static float millisToSeconds(final long millis) {
-		BigDecimal secondsAsBigDecimal = new BigDecimal((millis + 0.0) / SECONDS_TO_MILLIS);
-		secondsAsBigDecimal = secondsAsBigDecimal.setScale(DECIMAL_PLACES, RoundingMode.HALF_UP);
-		float seconds = secondsAsBigDecimal.floatValue();
-		return seconds;
 	}
 
 	/**
@@ -246,7 +165,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 				nameToCountingMeasure.put(measure.name(), measure);
 			}
 
-			br = new BufferedReader(new FileReader(LOG_PATH_DATA));
+			br = new BufferedReader(new FileReader(new File(LOG_PATH, LOG_PATH_DATA)));
 			while (br.ready()) {
 				String line = br.readLine();
 
@@ -298,7 +217,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 							if (value == SimulationPerformance.NO_TIME_RESULT) {
 								performance.addTimeMeasureValue(measure, SimulationPerformance.NO_TIME_RESULT);
 							} else {
-								performance.addTimeMeasureValue(measure, secondsToMillis(value));
+								performance.addTimeMeasureValue(measure, ComparisonTables.secondsToMillis(value));
 							}
 						} else if (indexCountingMeasure >= 0 && indexCountingMeasure < currentCountingMeasures.size()) {
 							CountingMeasure measure = currentCountingMeasures.get(indexCountingMeasure);
@@ -337,25 +256,16 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	}
 
 	/**
-	 * Converts a given float value, representing seconds, to milliseconds.
-	 * 
-	 * @param seconds
-	 *            Value, representing seconds, that should be converted
-	 * @return The given value in milliseconds.
-	 */
-	private static long secondsToMillis(final float seconds) {
-		return Math.round(seconds * SECONDS_TO_MILLIS);
-	}
-
-	/**
 	 * Parses a table, in a format like .csv or .tsv where
 	 * {@link #LOG_SEPARATOR} is the separator. The parsed table then is writen
 	 * to a html-file on the desktop.
 	 * 
+	 * @param name
+	 *            Name for the html file
 	 * @param table
 	 *            Table to convert
 	 */
-	private static void tableToHtmlFile(List<String> table) {
+	private static void tableToHtmlFile(final String name, final List<String> table) {
 		StringBuilder htmlText = new StringBuilder();
 		String normalCellTag = "td";
 		String headerCellTag = "th";
@@ -417,8 +327,9 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 
 		// Write html to file
 		PrintWriter writer = null;
+		File resultFile = new File(LOG_PATH, LOG_PATH_HTML_PRE + name + LOG_PATH_HTML_SUFF);
 		try {
-			writer = new PrintWriter(new BufferedWriter(new FileWriter(LOG_PATH_HTML)));
+			writer = new PrintWriter(new BufferedWriter(new FileWriter(resultFile)));
 			writer.print(htmlText.toString());
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -490,7 +401,9 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 		createAndResetPerformanceHead();
 		appendPerformanceHeadToLog();
 
-		long simulationTimeoutMillis = SIMULATION_TIMEOUT * SECONDS_TO_MILLIS;
+		long simulationTimeoutMillis = SIMULATION_TIMEOUT * ComparisonTables.SECONDS_TO_MILLIS;
+
+		// TODO Should we remove non reachable prior to simulation?
 
 		// Direct simulation without SCC
 		measureMethodPerformance(SimulationType.DIRECT, false, m_Services, simulationTimeoutMillis, stateFactory,
@@ -645,22 +558,22 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 			MinimizeSevpa<LETTER, STATE> minimizeSevpa = (MinimizeSevpa<LETTER, STATE>) method;
 			methodResult = minimizeSevpa.getResult();
 			// Removed states
-			if (m_CountingMeasures.containsKey(CountingMeasure.REMOVED_STATES)) {
-				if (methodResult != null) {
-					int removedStates = m_Operand.size() - methodResult.size();
-					m_CountingMeasures.put(CountingMeasure.REMOVED_STATES, removedStates);
-				}
+			if (methodResult != null) {
+				int removedStates = m_Operand.size() - methodResult.size();
+				m_CountingMeasures.put(CountingMeasure.REMOVED_STATES, removedStates);
 			}
+			// Buechi states
+			m_CountingMeasures.put(CountingMeasure.BUCHI_STATES, operand.size());
 		} else if (method instanceof ShrinkNwa) {
 			ShrinkNwa<LETTER, STATE> shrinkNwa = (ShrinkNwa<LETTER, STATE>) method;
 			methodResult = (INestedWordAutomatonOldApi<LETTER, STATE>) shrinkNwa.getResult();
 			// Removed states
-			if (m_CountingMeasures.containsKey(CountingMeasure.REMOVED_STATES)) {
-				if (methodResult != null) {
-					int removedStates = m_Operand.size() - methodResult.size();
-					m_CountingMeasures.put(CountingMeasure.REMOVED_STATES, removedStates);
-				}
+			if (methodResult != null) {
+				int removedStates = m_Operand.size() - methodResult.size();
+				m_CountingMeasures.put(CountingMeasure.REMOVED_STATES, removedStates);
 			}
+			// Buechi states
+			m_CountingMeasures.put(CountingMeasure.BUCHI_STATES, operand.size());
 		}
 
 		if (timedOut && method == null) {
@@ -695,12 +608,12 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 * Creates or resets the head of the performance format.
 	 */
 	private void createAndResetPerformanceHead() {
-		m_TimeMeasures.put(TimeMeasure.OVERALL_TIME, (float) SimulationPerformance.NO_TIME_RESULT);
-		m_CountingMeasures.put(CountingMeasure.SIMULATION_STEPS, SimulationPerformance.NO_COUNTING_RESULT);
-		m_CountingMeasures.put(CountingMeasure.REMOVED_STATES, SimulationPerformance.NO_COUNTING_RESULT);
-		m_CountingMeasures.put(CountingMeasure.REMOVED_TRANSITIONS, SimulationPerformance.NO_COUNTING_RESULT);
-		m_CountingMeasures.put(CountingMeasure.FAILED_MERGE_ATTEMPTS, SimulationPerformance.NO_COUNTING_RESULT);
-		m_CountingMeasures.put(CountingMeasure.FAILED_TRANSREMOVE_ATTEMPTS, SimulationPerformance.NO_COUNTING_RESULT);
+		for (TimeMeasure measure : TimeMeasure.values()) {
+			m_TimeMeasures.put(measure, (float) SimulationPerformance.NO_TIME_RESULT);
+		}
+		for (CountingMeasure measure : CountingMeasure.values()) {
+			m_CountingMeasures.put(measure, SimulationPerformance.NO_COUNTING_RESULT);
+		}
 	}
 
 	/**
@@ -718,6 +631,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	private SimulationPerformance createTimedOutPerformance(final SimulationType type, final boolean useSCCs,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand) {
 		SimulationPerformance performance = SimulationPerformance.createTimedOutPerformance(type, useSCCs);
+		performance.setCountingMeasure(CountingMeasure.BUCHI_STATES, operand.size());
 		return performance;
 	}
 
@@ -731,8 +645,9 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 		}
 
 		PrintWriter writer = null;
+		File dataFile = new File(LOG_PATH, LOG_PATH_DATA);
 		try {
-			writer = new PrintWriter(new BufferedWriter(new FileWriter(LOG_PATH_DATA, true)));
+			writer = new PrintWriter(new BufferedWriter(new FileWriter(dataFile, true)));
 			for (String message : m_LoggedLines) {
 				writer.println(message);
 			}
@@ -743,7 +658,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 				writer.close();
 			}
 		}
-		m_Logger.info("Logged data to file (" + LOG_PATH_DATA.getAbsolutePath() + ").");
+		m_Logger.info("Logged data to file (" + dataFile.getAbsolutePath() + ").");
 	}
 
 	/**
@@ -827,7 +742,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 			if (durationInMillis == SimulationPerformance.NO_TIME_RESULT) {
 				m_TimeMeasures.put(measure, (float) SimulationPerformance.NO_TIME_RESULT);
 			} else {
-				m_TimeMeasures.put(measure, millisToSeconds(durationInMillis));
+				m_TimeMeasures.put(measure, ComparisonTables.millisToSeconds(durationInMillis));
 			}
 		}
 		for (CountingMeasure measure : m_CountingMeasures.keySet()) {

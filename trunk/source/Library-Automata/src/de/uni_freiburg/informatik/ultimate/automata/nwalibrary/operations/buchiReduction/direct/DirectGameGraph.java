@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.CountingMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationPerformance;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.TimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
@@ -90,6 +91,10 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 	 * The state factory used for creating states.
 	 */
 	private final StateFactory<STATE> m_StateFactory;
+	/**
+	 * Time duration building the graph took in milliseconds.
+	 */
+	private long m_GraphBuildTime;
 
 	/**
 	 * Creates a new direct game graph by using the given buechi automaton.
@@ -120,6 +125,7 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 		m_StateFactory = stateFactory;
 		m_BuechiAmountOfStates = 0;
 		m_BuechiAmountOfTransitions = 0;
+		m_GraphBuildTime = 0;
 		generateGameGraphFromBuechi();
 	}
 
@@ -131,6 +137,11 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 	 */
 	@Override
 	protected NestedWordAutomaton<LETTER, STATE> generateBuchiAutomatonFromGraph() throws OperationCanceledException {
+		SimulationPerformance performance = getSimulationPerformance();
+		if (performance != null) {
+			performance.startTimeMeasure(TimeMeasure.BUILD_RESULT_TIME);
+		}
+
 		// Determine which states to merge
 		UnionFind<STATE> uf = new UnionFind<>();
 		for (STATE state : m_Buechi.getStates()) {
@@ -198,12 +209,14 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 		}
 
 		// Log performance
-		SimulationPerformance performance = getSimulationPerformance();
 		if (performance != null) {
+			performance.stopTimeMeasure(TimeMeasure.BUILD_RESULT_TIME);
+			performance.addTimeMeasureValue(TimeMeasure.BUILD_GRAPH_TIME, m_GraphBuildTime);
 			performance.setCountingMeasure(CountingMeasure.REMOVED_STATES,
 					m_BuechiAmountOfStates - resultAmountOfStates);
 			performance.setCountingMeasure(CountingMeasure.REMOVED_TRANSITIONS,
 					m_BuechiAmountOfTransitions - resultAmountOfTransitions);
+			performance.setCountingMeasure(CountingMeasure.BUCHI_STATES, m_BuechiAmountOfStates);
 		}
 
 		if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
@@ -221,6 +234,8 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 	 */
 	@Override
 	protected void generateGameGraphFromBuechi() throws OperationCanceledException {
+		long graphBuildTimeStart = System.currentTimeMillis();
+
 		// Calculate v1 [paper ref 10]
 		for (STATE q0 : m_Buechi.getStates()) {
 			m_BuechiAmountOfStates++;
@@ -291,6 +306,8 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 			}
 			logger.debug("Number of edges in game graph: " + edges);
 		}
+
+		m_GraphBuildTime = System.currentTimeMillis() - graphBuildTimeStart;
 	}
 
 }
