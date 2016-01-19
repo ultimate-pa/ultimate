@@ -116,7 +116,19 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 		if (current instanceof Call) {
 			// if we call we just need to update all local variables, i.e., remove all the ones from the current scope
 			// and add all the ones from the new scope (thus also automatically masking globals)
-			return updateLocals(state, current.getSource(), current.getTarget());
+			final ProgramPoint remove = (ProgramPoint) current.getSource();
+			final ProgramPoint add = (ProgramPoint) current.getTarget();
+			STATE rtr = state;
+			// remove current locals
+			rtr = removeLocals(rtr, remove.getProcedure());
+			// remove globals that will be masked by the new scope
+			final Map<String, IBoogieVar> masked = getMaskedGlobalsVariables(add.getProcedure());
+			if (!masked.isEmpty()) {
+				rtr = rtr.removeVariables(masked);
+			}
+			// add locals of new scope
+			rtr = applyLocals(rtr, add.getProcedure(), rtr::addVariables);
+			return rtr;
 		} else if (current instanceof Return) {
 			// if the action is a return, we have to:
 			// - remove all currently local variables
@@ -186,24 +198,11 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 		}
 	}
 
-	private STATE updateLocals(STATE state, RCFGNode removeNode, RCFGNode addNode) {
-		final ProgramPoint remove = (ProgramPoint) removeNode;
-		final ProgramPoint add = (ProgramPoint) addNode;
-		STATE rtr = state;
-		rtr = removeLocals(rtr, remove.getProcedure());
-		rtr = addFreshLocals(rtr, add.getProcedure());
-		return rtr;
-	}
-
 	private STATE removeLocals(final STATE state, final String procedure) {
-		return updateLocals(state, procedure, state::removeVariables);
+		return applyLocals(state, procedure, state::removeVariables);
 	}
 
-	private STATE addFreshLocals(final STATE state, final String procedure) {
-		return updateLocals(state, procedure, state::addVariables);
-	}
-
-	private STATE updateLocals(final STATE state, final String procedure,
+	private STATE applyLocals(final STATE state, final String procedure,
 			final Function<Map<String, IBoogieVar>, STATE> fun) {
 		if (procedure == null) {
 			return state;
@@ -217,6 +216,12 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 		return fun.apply(locals);
 	}
 
+	/**
+	 * Get all global variables that are masked by the specified procedure.
+	 * 
+	 * @param procedure
+	 * @return
+	 */
 	private Map<String, IBoogieVar> getMaskedGlobalsVariables(final String procedure) {
 		assert procedure != null;
 		final Map<String, IBoogieVar> globals = new HashMap<String, IBoogieVar>();
@@ -243,7 +248,7 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 		final Map<String, Declaration> locals = mSymbolTable.getLocalVariables(procedure);
 		for (final Entry<String, Declaration> local : locals.entrySet()) {
 			final IBoogieVar bvar = getLocalVariable(local.getKey(), procedure);
-			if(bvar == null){
+			if (bvar == null) {
 				continue;
 			}
 			localVars.put(local.getKey(), bvar);
@@ -266,14 +271,12 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 	}
 
 	private StringBuilder getLogMessageRemoveLocalsPreCall(STATE state, final Map<String, IBoogieVar> toberemoved) {
-		return new StringBuilder().append(AbsIntPrefInitializer.INDENT)
-				.append(" removing vars from pre-call state [").append(state.hashCode()).append("] ")
-				.append(state.toLogString()).append(": ").append(toberemoved);
+		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" removing vars from pre-call state [")
+				.append(state.hashCode()).append("] ").append(state.toLogString()).append(": ").append(toberemoved);
 	}
 
 	private StringBuilder getLogMessageNoRemoveLocalsPreCall(STATE state) {
-		return new StringBuilder().append(AbsIntPrefInitializer.INDENT)
-				.append(" using unchanged pre-call state [").append(state.hashCode()).append("] ")
-				.append(state.toLogString());
+		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" using unchanged pre-call state [")
+				.append(state.hashCode()).append("] ").append(state.toLogString());
 	}
 }
