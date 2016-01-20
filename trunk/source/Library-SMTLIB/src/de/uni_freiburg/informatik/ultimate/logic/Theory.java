@@ -911,7 +911,11 @@ public class Theory {
 					Sort resultSort) {
 				if (indices != null
 					|| paramSorts.length != mNumArgs || resultSort != null
-					|| paramSorts[0].getName() != "FloatingPoint" ){
+					|| !(paramSorts[0].getName() == "FloatingPoint" ||
+						paramSorts[0].getName() == "Float16" ||
+						paramSorts[0].getName() == "Float32" ||
+						paramSorts[0].getName() == "Float64" ||
+						paramSorts[0].getName() == "Float128" )){
 					return null;
 				}
 					
@@ -940,7 +944,11 @@ public class Theory {
 				if (indices != null
 					|| paramSorts.length != mNumArgs || resultSort != null
 					|| paramSorts[0].getName() != "RoundingMode" 
-					|| paramSorts[1].getName() != "FloatingPoint" ){
+					|| !( paramSorts[1].getName() == "FloatingPoint" ||
+						paramSorts[1].getName() == "Float16" ||
+						paramSorts[1].getName() == "Float32" ||
+						paramSorts[1].getName() == "Float64" ||
+						paramSorts[1].getName() == "Float128" )){
 					return null;
 				}
 					
@@ -967,8 +975,12 @@ public class Theory {
 				return mFloatingPointSort.getSort(fpIndices, new Sort[0] );
 			}
 		});
-		
-		
+
+		//short forms of common floats
+		declareInternalSort("Float16", 0, 0).getSort(null, new Sort[0]);
+		declareInternalSort("Float32", 0, 0).getSort(null, new Sort[0]);
+		declareInternalSort("Float64", 0, 0).getSort(null, new Sort[0]);
+		declareInternalSort("Float128", 0, 0).getSort(null, new Sort[0]);
 		
 		//RoundingModes
 		declareInternalFunction("roundNearestTiesToEven", new Sort[0], mRoundingModeSort, 0);

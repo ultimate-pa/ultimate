@@ -3,9 +3,9 @@
 (set-option :print-success true)
 (set-logic QF_FP)
 
-(declare-fun x () (_ FloatingPoint  5  11))
-(declare-fun y () (_ FloatingPoint  5  11))
-(declare-fun z () (_ FloatingPoint  5  11))
+(declare-fun x () Float128)
+(declare-fun y () Float128)
+(declare-fun z () Float128)
 ;(push)
 (assert (fp.leq x y ))
 ;(check-sat)
