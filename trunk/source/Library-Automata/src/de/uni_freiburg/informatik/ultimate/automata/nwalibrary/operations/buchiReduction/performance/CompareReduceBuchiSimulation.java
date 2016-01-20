@@ -46,7 +46,9 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.ASimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.delayed.DelayedSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.direct.DirectSimulation;
@@ -54,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.fair.FairSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.ShrinkNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
@@ -345,6 +348,11 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 */
 	private LinkedHashMap<CountingMeasure, Integer> m_CountingMeasures;
 	/**
+	 * Overall time an external operation took. Needed since it does not track
+	 * this measure by itself.
+	 */
+	private long m_ExternalOverallTime;
+	/**
 	 * Internal buffer for logged lines, can be flushed by using
 	 * {@link #flushLogToLogger()}.
 	 */
@@ -361,12 +369,10 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 * The resulting possible reduced buechi automaton.
 	 */
 	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Result;
-
 	/**
 	 * Service provider of Ultimate framework.
 	 */
 	private final IUltimateServiceProvider m_Services;
-
 	/**
 	 * Holds time measures of the comparison.
 	 */
@@ -395,6 +401,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 		m_Result = operand;
 		m_TimeMeasures = new LinkedHashMap<>();
 		m_CountingMeasures = new LinkedHashMap<>();
+		m_ExternalOverallTime = 0;
 
 		m_Logger.info(startMessage());
 
@@ -403,40 +410,40 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 
 		long simulationTimeoutMillis = SIMULATION_TIMEOUT * ComparisonTables.SECONDS_TO_MILLIS;
 
-		// TODO Should we remove non reachable prior to simulation?
+		// Remove dead ends, a requirement of simulation
+		NestedWordAutomatonReachableStates<LETTER, STATE> operandReachable = new RemoveUnreachable<LETTER, STATE>(
+				m_Services, operand).getResult();
 
 		// Direct simulation without SCC
 		measureMethodPerformance(SimulationType.DIRECT, false, m_Services, simulationTimeoutMillis, stateFactory,
-				operand);
+				operandReachable);
 		// Direct simulation with SCC
 		measureMethodPerformance(SimulationType.DIRECT, true, m_Services, simulationTimeoutMillis, stateFactory,
-				operand);
+				operandReachable);
 		// Delayed simulation without SCC
 		measureMethodPerformance(SimulationType.DELAYED, false, m_Services, simulationTimeoutMillis, stateFactory,
-				operand);
+				operandReachable);
 		// Delayed simulation with SCC
 		measureMethodPerformance(SimulationType.DELAYED, true, m_Services, simulationTimeoutMillis, stateFactory,
-				operand);
+				operandReachable);
 		// Fair simulation without SCC
 		measureMethodPerformance(SimulationType.FAIR, false, m_Services, simulationTimeoutMillis, stateFactory,
-				operand);
+				operandReachable);
 		// Fair simulation with SCC
-		measureMethodPerformance(SimulationType.FAIR, true, m_Services, simulationTimeoutMillis, stateFactory, operand);
+		measureMethodPerformance(SimulationType.FAIR, true, m_Services, simulationTimeoutMillis, stateFactory,
+				operandReachable);
 		// Fair direct simulation without SCC
 		measureMethodPerformance(SimulationType.FAIRDIRECT, false, m_Services, simulationTimeoutMillis, stateFactory,
-				operand);
+				operandReachable);
 		// Fair direct simulation with SCC
 		measureMethodPerformance(SimulationType.FAIRDIRECT, true, m_Services, simulationTimeoutMillis, stateFactory,
-				operand);
+				operandReachable);
 
 		// Other minimization methods
-		// TODO Fix problem with not possible cast to IDoubleDecker
-		// startTimeMeasure();
-		// measureMethodEffectiveness("MinimizeSevpa", new
-		// MinimizeSevpa<>(services, operand));
-		// startTimeMeasure();
-		// measureMethodEffectiveness("ShrinkNwa", new ShrinkNwa<>(services,
-		// stateFactory, operand));
+		measureMethodPerformance(SimulationType.EXT_MINIMIZESEVPA, true, m_Services, simulationTimeoutMillis,
+				stateFactory, operandReachable);
+		measureMethodPerformance(SimulationType.EXT_SHRINKNWA, true, m_Services, simulationTimeoutMillis, stateFactory,
+				operandReachable);
 
 		// flushLogToLogger();
 		flushLogToFile();
@@ -545,7 +552,6 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 					throws AutomataLibraryException {
 		createAndResetPerformanceHead();
 
-		INestedWordAutomatonOldApi<LETTER, STATE> methodResult = null;
 		if (method instanceof ASimulation) {
 			ASimulation<LETTER, STATE> simulation = (ASimulation<LETTER, STATE>) method;
 			SimulationPerformance performance = simulation.getSimulationPerformance();
@@ -556,7 +562,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 			saveStateOfPerformance(performance);
 		} else if (method instanceof MinimizeSevpa) {
 			MinimizeSevpa<LETTER, STATE> minimizeSevpa = (MinimizeSevpa<LETTER, STATE>) method;
-			methodResult = minimizeSevpa.getResult();
+			INestedWordAutomatonOldApi<LETTER, STATE> methodResult = minimizeSevpa.getResult();
 			// Removed states
 			if (methodResult != null) {
 				int removedStates = m_Operand.size() - methodResult.size();
@@ -564,9 +570,11 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 			}
 			// Buechi states
 			m_CountingMeasures.put(CountingMeasure.BUCHI_STATES, operand.size());
+			// Overall time
+			m_TimeMeasures.put(TimeMeasure.OVERALL_TIME, ComparisonTables.millisToSeconds(m_ExternalOverallTime));
 		} else if (method instanceof ShrinkNwa) {
 			ShrinkNwa<LETTER, STATE> shrinkNwa = (ShrinkNwa<LETTER, STATE>) method;
-			methodResult = (INestedWordAutomatonOldApi<LETTER, STATE>) shrinkNwa.getResult();
+			INestedWordAutomatonSimple<LETTER, STATE> methodResult = shrinkNwa.getResult();
 			// Removed states
 			if (methodResult != null) {
 				int removedStates = m_Operand.size() - methodResult.size();
@@ -574,6 +582,8 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 			}
 			// Buechi states
 			m_CountingMeasures.put(CountingMeasure.BUCHI_STATES, operand.size());
+			// Overall time
+			m_TimeMeasures.put(TimeMeasure.OVERALL_TIME, ComparisonTables.millisToSeconds(m_ExternalOverallTime));
 		}
 
 		if (timedOut && method == null) {
@@ -706,25 +716,34 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand) {
 		IProgressAwareTimer progressTimer = services.getProgressMonitorService().getChildTimer(timeout);
 		boolean timedOut = false;
-		ASimulation<LETTER, STATE> simulation = null;
+		Object method = null;
 
 		try {
 			if (type.equals(SimulationType.DIRECT)) {
-				simulation = new DirectSimulation<>(services, progressTimer, m_Logger, operand, useSCCs, stateFactory);
+				method = new DirectSimulation<>(services, progressTimer, m_Logger, operand, useSCCs, stateFactory);
 			} else if (type.equals(SimulationType.DELAYED)) {
-				simulation = new DelayedSimulation<>(services, progressTimer, m_Logger, operand, useSCCs, stateFactory);
+				method = new DelayedSimulation<>(services, progressTimer, m_Logger, operand, useSCCs, stateFactory);
 			} else if (type.equals(SimulationType.FAIR)) {
-				simulation = new FairSimulation<>(services, progressTimer, m_Logger, operand, useSCCs, stateFactory);
+				method = new FairSimulation<>(services, progressTimer, m_Logger, operand, useSCCs, stateFactory);
 			} else if (type.equals(SimulationType.FAIRDIRECT)) {
-				simulation = new FairDirectSimulation<>(services, progressTimer, m_Logger, operand, useSCCs,
-						stateFactory);
+				method = new FairDirectSimulation<>(services, progressTimer, m_Logger, operand, useSCCs, stateFactory);
+			} else if (type.equals(SimulationType.EXT_MINIMIZESEVPA)) {
+				long startTime = System.currentTimeMillis();
+				method = new MinimizeSevpa<LETTER, STATE>(m_Services, operand);
+				m_ExternalOverallTime = System.currentTimeMillis() - startTime;
+			} else if (type.equals(SimulationType.EXT_SHRINKNWA)) {
+				long startTime = System.currentTimeMillis();
+				method = new ShrinkNwa<>(m_Services, stateFactory, operand);
+				m_ExternalOverallTime = System.currentTimeMillis() - startTime;
 			}
 		} catch (OperationCanceledException e) {
 			m_Logger.info("Method timed out.");
 			timedOut = true;
+		} catch (AutomataLibraryException e) {
+			e.printStackTrace();
 		}
 		try {
-			appendMethodPerformanceToLog(simulation, type, useSCCs, timedOut, operand);
+			appendMethodPerformanceToLog(method, type, useSCCs, timedOut, operand);
 		} catch (AutomataLibraryException e) {
 			e.printStackTrace();
 		}

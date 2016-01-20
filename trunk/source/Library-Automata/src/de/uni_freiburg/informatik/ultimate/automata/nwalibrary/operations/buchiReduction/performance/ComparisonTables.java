@@ -79,20 +79,31 @@ public final class ComparisonTables {
 		// Process performance list into a sorted map structure
 		LinkedHashMap<Pair<SimulationType, Boolean>, LinkedList<SimulationPerformance>> simulationToPerformances = new LinkedHashMap<>();
 		for (LinkedList<SimulationPerformance> performanceComparison : performanceEntries) {
+			boolean simulationOfComparisonHasTimedOut = false;
+			LinkedList<SimulationPerformance> performancesToAdd = new LinkedList<>();
+			
 			for (SimulationPerformance performanceOfSimulation : performanceComparison) {
-				// Ignore timed out performances
+				// Ignore comparison if a simulation has timed out
 				if (performanceOfSimulation.hasTimedOut()) {
-					continue;
+					simulationOfComparisonHasTimedOut = true;
+					break;
 				}
-				SimulationType type = performanceOfSimulation.getSimType();
+				
+				performancesToAdd.add(performanceOfSimulation);
+			}
+			if (!simulationOfComparisonHasTimedOut) {
+				// No timeout occurred, add performances
+				for (SimulationPerformance performance : performancesToAdd) {
+					SimulationType type = performance.getSimType();
 
-				Pair<SimulationType, Boolean> simulationKey = new Pair<>(type, performanceOfSimulation.isUsingSCCs());
-				LinkedList<SimulationPerformance> performances = simulationToPerformances.get(simulationKey);
-				if (performances == null) {
-					performances = new LinkedList<>();
-					simulationToPerformances.put(simulationKey, performances);
+					Pair<SimulationType, Boolean> simulationKey = new Pair<>(type, performance.isUsingSCCs());
+					LinkedList<SimulationPerformance> performances = simulationToPerformances.get(simulationKey);
+					if (performances == null) {
+						performances = new LinkedList<>();
+						simulationToPerformances.put(simulationKey, performances);
+					}
+					performances.add(performance);
 				}
-				performances.add(performanceOfSimulation);
 			}
 		}
 
