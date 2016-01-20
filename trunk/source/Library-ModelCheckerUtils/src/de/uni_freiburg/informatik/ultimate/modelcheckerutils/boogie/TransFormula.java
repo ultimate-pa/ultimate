@@ -1510,5 +1510,56 @@ public class TransFormula implements Serializable {
 		}
 		return procedures.size() <= 1;
 	}
+	
+	
+	private static TransFormula computeGuard(TransFormula tf, Boogie2SMT boogie2smt) {
+		Map<BoogieVar, TermVariable> inVars = tf.getInVars();
+		Map<BoogieVar, TermVariable> outVars = tf.getInVars(); // yes! outVars are inVars of input
+		Set<TermVariable> auxVars = new HashSet<TermVariable>();
+		auxVars.addAll(tf.getAuxVars());
+		for (BoogieVar bv : tf.getAssignedVars()) {
+			TermVariable outVar = tf.getOutVars().get(bv);
+			if (Arrays.asList(tf.getFormula().getFreeVars()).contains(outVar)) {
+				auxVars.add(outVar);
+			}
+		}
+		if (!tf.getBranchEncoders().isEmpty()) {
+			throw new AssertionError("I think this does not make sense with branch enconders");
+		}
+		Set<TermVariable> branchEncoders = tf.getBranchEncoders();
+		Infeasibility infeasibility = tf.isInfeasible();
+		Term formula = tf.getFormula();
+		Term closedFormula = computeClosedFormula(formula, inVars, outVars, auxVars, false, boogie2smt);
+		TransFormula result = new TransFormula(formula, inVars, outVars, auxVars, branchEncoders, infeasibility, closedFormula);
+		return result;
+	}
+	
+	private static TransFormula negate(TransFormula tf, Boogie2SMT boogie2smt, IUltimateServiceProvider services, Logger logger) {
+		Map<BoogieVar, TermVariable> inVars = tf.getInVars();
+		Map<BoogieVar, TermVariable> outVars = tf.getOutVars();
+		Set<TermVariable> auxVars = Collections.emptySet();
+		if (!tf.getBranchEncoders().isEmpty()) {
+			throw new AssertionError("I think this does not make sense with branch enconders");
+		}
+		Set<TermVariable> branchEncoders = tf.getBranchEncoders();
+		Infeasibility infeasibility = tf.isInfeasible();
+		Term formula = tf.getFormula();
+		formula = PartialQuantifierElimination.quantifier(services, logger, 
+				boogie2smt.getScript(), boogie2smt.getVariableManager(), QuantifiedFormula.EXISTS, 
+				tf.getAuxVars(), formula, new Term[0]);
+		//FIXME: Filter inVars and outVars to tv that occur in formula
+//		formula = SmtUtils.quantifier(boogie2smt.getScript(), QuantifiedFormula.EXISTS, tf.getAuxVars(), formula);
+		Term closedFormula = computeClosedFormula(formula, inVars, outVars, auxVars, true, boogie2smt);
+		TransFormula result = new TransFormula(formula, inVars, outVars, auxVars, branchEncoders, infeasibility, closedFormula);
+		return result;
+	}
+	
+	public static TransFormula computeMarkhorTransFormula(TransFormula tf, 
+			Boogie2SMT boogie2smt, IUltimateServiceProvider services, Logger logger) {
+		TransFormula guard = computeGuard(tf, boogie2smt);
+		TransFormula negGuard = negate(guard, boogie2smt, services, logger);
+		TransFormula markhor = parallelComposition(logger, services, tf.hashCode(), boogie2smt, null, false, tf, negGuard);
+		return markhor;
+	}
 
 }

@@ -174,6 +174,7 @@ public class FlowSensitiveFaultLocalizer {
 		m_Logger.warn(weakest_preconditionn.toString());
 		// pt.weakestPrecondition(p,tf)   ipredicate p is the post condition and transformula tf is
 														   //the transition formula of the statement
+	
 		
 		IPredicate weakest_precondition = smtManager.newFalsePredicate(); //ERROR IF SET TO FLASE
 		m_Logger.warn(" - - PROGRAM AS LIST - - -");
@@ -189,6 +190,9 @@ public class FlowSensitiveFaultLocalizer {
 			CodeBlock statement = counterexample.getSymbolAt(i);
 			m_Logger.warn("Getting transition formula");
 			TransFormula transition_formula = statement.getTransitionFormula();
+			
+			// markhor formula computation test
+			TransFormula markhor = TransFormula.computeMarkhorTransFormula(transition_formula, smtManager.getBoogie2Smt(), m_Services, m_Logger);
 			m_Logger.warn("Calculating new weakest precondition");
 			weakest_precondition = pt.weakestPrecondition(weakest_precondition, transition_formula);
 			m_Logger.warn(weakest_precondition);
