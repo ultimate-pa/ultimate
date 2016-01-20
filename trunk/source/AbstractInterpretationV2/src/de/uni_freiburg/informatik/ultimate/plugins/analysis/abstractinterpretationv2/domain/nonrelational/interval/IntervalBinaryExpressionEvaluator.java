@@ -106,7 +106,7 @@ public class IntervalBinaryExpressionEvaluator
 					returnBool = new BooleanValue(false);
 					break;
 				case ARITHMOD:
-					returnValue = res1.getResult().getEvaluatedValue().modulus(res2.getResult().getEvaluatedValue());
+					returnValue = res1.getResult().getEvaluatedValue().modulo(res2.getResult().getEvaluatedValue());
 					returnBool = new BooleanValue(false);
 					break;
 				case LOGICAND:
