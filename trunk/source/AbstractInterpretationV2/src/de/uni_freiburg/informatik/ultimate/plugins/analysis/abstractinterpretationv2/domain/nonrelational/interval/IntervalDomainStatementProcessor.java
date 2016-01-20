@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
@@ -225,9 +226,28 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 		mExpressionEvaluator.addEvaluator(evaluator);
 	}
 
+	@Override
+	protected void visit(RealLiteral expr) {
+		assert mEvaluatorFactory != null;
+
+		final IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> evaluator = mEvaluatorFactory
+		        .createSingletonValueExpressionEvaluator(expr.getValue(), BigDecimal.class);
+
+		mExpressionEvaluator.addEvaluator(evaluator);
+	}
+
 	private Expression handleBinaryExpression(final BinaryExpression expr) {
-		if (expr.getOperator() == Operator.COMPGT || expr.getOperator() == Operator.COMPLT
-		        || expr.getOperator() == Operator.COMPNEQ) {
+		if (expr.getOperator() == Operator.COMPNEQ) {
+			final BinaryExpression negativeCase = new BinaryExpression(expr.getLocation(), Operator.COMPLT,
+			        expr.getLeft(), expr.getRight());
+			final BinaryExpression positiveCase = new BinaryExpression(expr.getLocation(), Operator.COMPGT,
+			        expr.getLeft(), expr.getRight());
+
+			final Expression newExp = new BinaryExpression(expr.getLocation(), Operator.LOGICOR, negativeCase, positiveCase);
+			
+			mLogger.debug("Expression rewritten to: " + BoogiePrettyPrinter.print(newExp));
+			return newExp;
+		} else if (expr.getOperator() == Operator.COMPGT || expr.getOperator() == Operator.COMPLT) {
 			if (expr.getLeft().getType() instanceof PrimitiveType
 			        && expr.getRight().getType() instanceof PrimitiveType) {
 				final PrimitiveType primLeft = (PrimitiveType) expr.getLeft().getType();
@@ -251,20 +271,11 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 
 						newExp = new BinaryExpression(expr.getLocation(), Operator.COMPLEQ, expr.getLeft(), newRightLt);
 						break;
-					case COMPNEQ:
-						final BinaryExpression negativeCase = new BinaryExpression(expr.getLocation(), Operator.COMPLT,
-						        expr.getLeft(), expr.getRight());
-						final BinaryExpression positiveCase = new BinaryExpression(expr.getLocation(), Operator.COMPGT,
-						        expr.getLeft(), expr.getRight());
-
-						newExp = new BinaryExpression(expr.getLocation(), Operator.LOGICOR,
-						        negativeCase, positiveCase);
-						break;
 					default:
 						throw new UnsupportedOperationException("Unexpected operator: " + expr.getOperator());
 					}
 
-					mLogger.debug(BoogiePrettyPrinter.print(newExp));
+					mLogger.debug("Expression rewritten to: " + BoogiePrettyPrinter.print(newExp));
 					return newExp;
 				}
 			}
