@@ -226,7 +226,8 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	}
 
 	private Expression handleBinaryExpression(final BinaryExpression expr) {
-		if (expr.getOperator() == Operator.COMPGT || expr.getOperator() == Operator.COMPLT) {
+		if (expr.getOperator() == Operator.COMPGT || expr.getOperator() == Operator.COMPLT
+		        || expr.getOperator() == Operator.COMPNEQ) {
 			if (expr.getLeft().getType() instanceof PrimitiveType
 			        && expr.getRight().getType() instanceof PrimitiveType) {
 				final PrimitiveType primLeft = (PrimitiveType) expr.getLeft().getType();
@@ -235,19 +236,32 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 				if (primLeft.getTypeCode() == PrimitiveType.INT && primRight.getTypeCode() == PrimitiveType.INT) {
 					BinaryExpression newExp;
 
-					if (expr.getOperator() == Operator.COMPGT) {
-
-						final BinaryExpression newRight = new BinaryExpression(expr.getRight().getLocation(),
+					switch (expr.getOperator()) {
+					case COMPGT:
+						final BinaryExpression newRightGt = new BinaryExpression(expr.getRight().getLocation(),
 						        Operator.ARITHPLUS, expr.getRight(),
 						        new IntegerLiteral(expr.getRight().getLocation(), "1"));
 
-						newExp = new BinaryExpression(expr.getLocation(), Operator.COMPGEQ, expr.getLeft(), newRight);
-					} else {
-						final BinaryExpression newRight = new BinaryExpression(expr.getRight().getLocation(),
+						newExp = new BinaryExpression(expr.getLocation(), Operator.COMPGEQ, expr.getLeft(), newRightGt);
+						break;
+					case COMPLT:
+						final BinaryExpression newRightLt = new BinaryExpression(expr.getRight().getLocation(),
 						        Operator.ARITHMINUS, expr.getRight(),
 						        new IntegerLiteral(expr.getRight().getLocation(), "1"));
 
-						newExp = new BinaryExpression(expr.getLocation(), Operator.COMPLEQ, expr.getLeft(), newRight);
+						newExp = new BinaryExpression(expr.getLocation(), Operator.COMPLEQ, expr.getLeft(), newRightLt);
+						break;
+					case COMPNEQ:
+						final BinaryExpression negativeCase = new BinaryExpression(expr.getLocation(), Operator.COMPLT,
+						        expr.getLeft(), expr.getRight());
+						final BinaryExpression positiveCase = new BinaryExpression(expr.getLocation(), Operator.COMPGT,
+						        expr.getLeft(), expr.getRight());
+
+						newExp = new BinaryExpression(expr.getLocation(), Operator.LOGICOR,
+						        negativeCase, positiveCase);
+						break;
+					default:
+						throw new UnsupportedOperationException("Unexpected operator: " + expr.getOperator());
 					}
 
 					mLogger.debug(BoogiePrettyPrinter.print(newExp));
