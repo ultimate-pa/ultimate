@@ -76,42 +76,26 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 	}
 
 	@Override
-	public IntervalDomainState apply(final IntervalDomainState oldstate, final CodeBlock transition) {
+	public List<IntervalDomainState> apply(final IntervalDomainState oldstate, final CodeBlock transition) {
 		assert oldstate != null;
 		assert !oldstate.isBottom();
 		assert transition != null;
 
-		IntervalDomainState currentState = oldstate;
+		List<IntervalDomainState> currentStates = new ArrayList<>();
+		currentStates.add(oldstate);
 		final List<Statement> statements = mStatementExtractor.process(transition);
 
 		for (final Statement stmt : statements) {
-			final List<IntervalDomainState> result = mStatementProcessor.process(currentState, stmt);
-
-			currentState = mergeStates(result);
-		}
-
-		return currentState;
-	}
-
-	/**
-	 * Merges a list of states into one single state.
-	 * 
-	 * @param states
-	 *            The list of states to merge.
-	 * @return A new {@link IntervalDomainState} which is the result of the merger of all states in the list of states.
-	 */
-	private IntervalDomainState mergeStates(final List<IntervalDomainState> states) {
-		IntervalDomainState returnState = null;
-
-		for (int i = 0; i < states.size(); i++) {
-			if (i == 0) {
-				returnState = states.get(0);
-			} else {
-				returnState = returnState.merge(states.get(i));
+			final List<IntervalDomainState> afterProcessStates = new ArrayList<>();
+			for (final IntervalDomainState currentState : currentStates) {
+				final List<IntervalDomainState> processed = mStatementProcessor.process(currentState, stmt);
+				assert processed.size() > 0;
+				afterProcessStates.addAll(processed);
 			}
+			currentStates = afterProcessStates;
 		}
 
-		return returnState;
+		return currentStates;
 	}
 
 	@Override
@@ -169,15 +153,15 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 			}
 
 			IntervalDomainState returnState = stateAfterLeaving.copy();
-			
+
 			for (int i = 0; i < paramIdentifiers.size(); i++) {
 				final String tempName = paramNames.get(i);
 				final String realName = paramIdentifiers.get(i);
-				
+
 				final IBoogieVar type = interimState.getVariableType(tempName);
 				if (type.getIType() instanceof PrimitiveType) {
 					final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
-					
+
 					if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
 						returnState = returnState.setBooleanValue(realName, resultState.getBooleanValue(tempName));
 					} else {
@@ -188,12 +172,13 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 					// We treat Arrays as normal variables for the time being.
 					returnState = returnState.setValue(realName, resultState.getValue(tempName));
 				} else {
-					mLogger.warn("The IBoogieVar type " + type.getIType() + " cannot be handled. Assuming normal variable type.");
+					mLogger.warn("The IBoogieVar type " + type.getIType()
+					        + " cannot be handled. Assuming normal variable type.");
 					returnState = returnState.setValue(realName, resultState.getValue(tempName));
 				}
-				
+
 			}
-			
+
 			return returnState;
 		} else if (transition instanceof Return) {
 			final Return ret = (Return) transition;

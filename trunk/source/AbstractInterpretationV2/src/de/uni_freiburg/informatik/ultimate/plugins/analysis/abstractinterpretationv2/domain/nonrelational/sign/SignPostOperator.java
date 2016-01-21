@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
@@ -70,30 +71,37 @@ public class SignPostOperator implements IAbstractPostOperator<SignDomainState, 
 	 * 
 	 * @param oldstate
 	 *            The current abstract state, the post operator is applied on.
-	 * @param codeBlock
+	 * @param transition
 	 *            The Boogie code block that is used to apply the post operator.
 	 * @return A new abstract state which is the result of applying the post operator to a given abstract state.
 	 */
 	@Override
-	public SignDomainState apply(final SignDomainState oldstate, final CodeBlock codeBlock) {
-		SignDomainState currentState = oldstate;
-		final List<Statement> statements = mStatementExtractor.process(codeBlock);
+	public List<SignDomainState> apply(final SignDomainState oldstate, final CodeBlock transition) {
+		assert oldstate != null;
+		assert !oldstate.isBottom();
+		assert transition != null;
+
+		List<SignDomainState> currentStates = new ArrayList<>();
+		currentStates.add(oldstate);
+		final List<Statement> statements = mStatementExtractor.process(transition);
+
 		for (final Statement stmt : statements) {
-			final List<SignDomainState> result = mStatementProcessor.process(currentState, stmt);
-			for (int i = 0; i < result.size(); i++) {
-				if (i == 0) {
-					currentState = result.get(i);
-					// TODO: Merge all states here!
-				}
+			final List<SignDomainState> afterProcessStates = new ArrayList<>();
+			for (final SignDomainState currentState : currentStates) {
+				final List<SignDomainState> processed = mStatementProcessor.process(currentState, stmt);
+				assert processed.size() > 0;
+				afterProcessStates.addAll(processed);
 			}
+
+			currentStates = afterProcessStates;
 		}
 
-		return currentState;
+		return currentStates;
 	}
 
 	@Override
 	public SignDomainState apply(final SignDomainState stateBeforeLeaving, final SignDomainState stateAfterLeaving,
-			final CodeBlock transition) {
+	        final CodeBlock transition) {
 		assert transition instanceof Call || transition instanceof Return;
 
 		if (transition instanceof Call) {
@@ -104,11 +112,11 @@ public class SignPostOperator implements IAbstractPostOperator<SignDomainState, 
 			final Return ret = (Return) transition;
 			final CallStatement correspondingCall = ret.getCallStatement();
 			mLogger.error("SignDomain does not handle returns correctly: " + ret + " for "
-					+ BoogiePrettyPrinter.print(correspondingCall));
+			        + BoogiePrettyPrinter.print(correspondingCall));
 			return stateAfterLeaving;
 		} else {
 			throw new UnsupportedOperationException(
-					"SignDomain does not support context switches other than Call and Return (yet)");
+			        "SignDomain does not support context switches other than Call and Return (yet)");
 		}
 	}
 
