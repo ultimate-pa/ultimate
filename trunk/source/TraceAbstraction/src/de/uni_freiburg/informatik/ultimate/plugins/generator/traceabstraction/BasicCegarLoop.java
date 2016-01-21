@@ -373,7 +373,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				}
 			}
 			if (m_DoFaultLocalization  && feasibility == LBool.SAT) {
-				new FlowSensitiveFaultLocalizer(counterexample, 
+				new FlowSensitiveFaultLocalizer(m_Counterexample, 
 						(INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, 
 						m_Services, m_SmtManager, m_ModGlobVarManager, predicateUnifier);
 			}
