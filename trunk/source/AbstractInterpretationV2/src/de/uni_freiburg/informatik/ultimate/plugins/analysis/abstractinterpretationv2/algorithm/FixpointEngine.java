@@ -147,14 +147,16 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			        currentItem.getCurrentStorage());
 
 			STATE pendingNewPostState;
+			List<STATE> postStates;
 			if (preState == preStateWithFreshVariables) {
-				final List<STATE> postStates = post.apply(preStateWithFreshVariables, currentAction);
-				// TODO: Handle number of states to hold set in the options correctly here.
-				pendingNewPostState = mergeStates(postStates);
+				postStates = post.apply(preStateWithFreshVariables, currentAction);
 			} else {
 				// a context switch happened
-				pendingNewPostState = post.apply(preState, preStateWithFreshVariables, currentAction);
+				postStates = post.apply(preState, preStateWithFreshVariables, currentAction);
 			}
+
+			// TODO: Handle number of states to hold set in the options correctly here.
+			pendingNewPostState = mergeStates(postStates);
 
 			// check if this action leaves a loop
 			if (!activeLoops.isEmpty()) {

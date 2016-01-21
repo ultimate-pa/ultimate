@@ -50,8 +50,10 @@ public final class EmptyPostOperator<ACTION, VARDECL>
 	}
 
 	@Override
-	public EmptyDomainState<ACTION, VARDECL> apply(EmptyDomainState<ACTION, VARDECL> oldstate,
+	public List<EmptyDomainState<ACTION, VARDECL>> apply(EmptyDomainState<ACTION, VARDECL> oldstate,
 	        EmptyDomainState<ACTION, VARDECL> oldstateWithFreshVariables, ACTION transition) {
-		return new EmptyDomainState<>(new HashMap<>(oldstateWithFreshVariables.getVariables()));
+		final List<EmptyDomainState<ACTION, VARDECL>> returnList = new ArrayList<>();
+		returnList.add(new EmptyDomainState<>(new HashMap<>(oldstateWithFreshVariables.getVariables())));
+		return returnList;
 	}
 }
