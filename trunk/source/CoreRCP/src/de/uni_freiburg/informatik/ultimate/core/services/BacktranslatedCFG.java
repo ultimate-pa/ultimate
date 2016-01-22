@@ -70,4 +70,10 @@ public class BacktranslatedCFG<VL, TE> implements IBacktranslatedCFG<VL, TE> {
 	public String getSVCOMPWitnessString() {
 		return null;
 	}
+
+	@Override
+	public String toString() {
+		return "BacktranslatedCFG with CFG " + mCFG.getClass().getSimpleName() + " and trace element "
+				+ mTraceElementClass.getSimpleName();
+	}
 }

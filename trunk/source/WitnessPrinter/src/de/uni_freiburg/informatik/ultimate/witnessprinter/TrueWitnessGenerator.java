@@ -107,7 +107,7 @@ public class TrueWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<TTE, TE>
 		addVertexData(graphWriter, "entry", "false", vertex -> vertex.isEntry() ? "true" : null);
 		addVertexData(graphWriter, "violation", "false", vertex -> vertex.isError() ? "true" : null);
 		// TODO: When we switch to "multi-property" witnesses, we write invariants for FALSE-witnesses
-		addVertexData(graphWriter, "invariant", "true", vertex -> vertex.getInvariant());
+		addVertexData(graphWriter, "invariant", "true", vertex -> StringEscapeUtils.escapeXml10(vertex.getInvariant()));
 
 		final Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge<TTE, TE>> graph = getGraph();
 		final StringWriter writer = new StringWriter();
@@ -162,8 +162,13 @@ public class TrueWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<TTE, TE>
 				if (!closed.add(outgoing)) {
 					continue;
 				}
-				final AtomicTraceElement<TTE> traceElement = new AtomicTraceElement<>(outgoing.getLabel());
-				final GeneratedWitnessEdge<TTE, TE> edge = fac.createWitnessEdge(traceElement);
+				final TTE label = outgoing.getLabel();
+				final GeneratedWitnessEdge<TTE, TE> edge;
+				if (label == null) {
+					edge = fac.createDummyWitnessEdge();
+				} else {
+					edge = fac.createWitnessEdge(new AtomicTraceElement<>(label));
+				}
 				final GeneratedWitnessNode targetWNode = getWitnessNode(outgoing.getTarget(), mStringProvider, fac,
 						nodecache);
 

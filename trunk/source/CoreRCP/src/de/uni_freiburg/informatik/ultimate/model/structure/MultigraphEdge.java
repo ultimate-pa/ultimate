@@ -52,4 +52,9 @@ public final class MultigraphEdge<VERTEX, EDGE>
 	public EDGE getLabel() {
 		return mEdge;
 	}
+
+	@Override
+	public String toString() {
+		return mEdge == null ? "Unlabeled(" + hashCode() + ")" : mEdge.toString();
+	}
 }

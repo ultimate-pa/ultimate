@@ -30,12 +30,15 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
@@ -63,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
@@ -81,7 +85,10 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Oper
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.structure.IExplicitEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.model.structure.IMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.model.structure.Multigraph;
+import de.uni_freiburg.informatik.ultimate.model.structure.MultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
@@ -121,29 +128,42 @@ public class CACSL2BoogieBacktranslator
 
 	@Override
 	public List<CACSLLocation> translateTrace(List<BoogieASTNode> trace) {
-		// TODO: Implement translatetrace
-		return super.translateTrace(trace);
+		// dirty but quick: convert trace to program execution
+		final List<AtomicTraceElement<BoogieASTNode>> ateTrace = trace.stream().map(a -> new AtomicTraceElement<>(a))
+				.collect(Collectors.toList());
+		final IProgramExecution<BoogieASTNode, Expression> tracePE = new BoogieProgramExecution(Collections.emptyMap(),
+				ateTrace);
+		final IProgramExecution<CACSLLocation, IASTExpression> translatedPE = translateProgramExecution(tracePE);
+		final List<CACSLLocation> translatedTrace = new ArrayList<>();
+
+		for (int i = 0; i < translatedPE.getLength(); ++i) {
+			final AtomicTraceElement<CACSLLocation> ate = translatedPE.getTraceElement(i);
+			// perhaps we have to skip steps here, but lets try it this way and see how it goes
+			translatedTrace.add(ate.getStep());
+		}
+
+		return translatedTrace;
 	}
 
 	@Override
 	public IProgramExecution<CACSLLocation, IASTExpression> translateProgramExecution(
-			IProgramExecution<BoogieASTNode, Expression> programExecution) {
+			IProgramExecution<BoogieASTNode, Expression> oldPE) {
 
 		// initial state
-		ProgramState<IASTExpression> initialState = translateProgramState(programExecution.getInitialProgramState());
+		ProgramState<IASTExpression> initialState = translateProgramState(oldPE.getInitialProgramState());
 
 		// translate trace and program state in tandem
 		List<AtomicTraceElement<CACSLLocation>> translatedAtomicTraceElements = new ArrayList<>();
-		List<ProgramState<IASTExpression>> translatedProgramStates = new ArrayList<>();
-		for (int i = 0; i < programExecution.getLength(); ++i) {
+		final List<ProgramState<IASTExpression>> translatedProgramStates = new ArrayList<>();
+		for (int i = 0; i < oldPE.getLength(); ++i) {
 
-			AtomicTraceElement<BoogieASTNode> ate = programExecution.getTraceElement(i);
-			ILocation loc = ate.getTraceElement().getLocation();
+			final AtomicTraceElement<BoogieASTNode> ate = oldPE.getTraceElement(i);
+			final ILocation loc = ate.getTraceElement().getLocation();
 
 			if (loc instanceof CLocation) {
 				// i = findMergeSequence(programExecution, i, loc);
 
-				CLocation cloc = (CLocation) loc;
+				final CLocation cloc = (CLocation) loc;
 				if (cloc.ignoreDuringBacktranslation()) {
 					// we skip all clocs that can be ignored, i.e. things that
 					// belong to internal structures
@@ -151,7 +171,7 @@ public class CACSL2BoogieBacktranslator
 
 				}
 
-				IASTNode cnode = cloc.getNode();
+				final IASTNode cnode = cloc.getNode();
 
 				if (cnode == null) {
 					reportUnfinishedBacktranslation(
@@ -162,18 +182,18 @@ public class CACSL2BoogieBacktranslator
 				if (cnode instanceof CASTTranslationUnit) {
 					// if it points to the TranslationUnit, it should be
 					// Ultimate.init or Ultimate.start and we make our
-					// initalstate right after them here
+					// initial state right after them here
 					// if we already have some explicit declarations, we just
 					// skip the whole initial state business and use this as the
 					// last
 					// normal state
-					i = findMergeSequence(programExecution, i, loc);
+					i = findMergeSequence(oldPE, i, loc);
 					if (cnode instanceof CASTTranslationUnit) {
 						if (translatedAtomicTraceElements.size() > 0) {
 							translatedProgramStates.remove(translatedProgramStates.size() - 1);
-							translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
+							translatedProgramStates.add(translateProgramState(oldPE.getProgramState(i)));
 						} else {
-							initialState = translateProgramState(programExecution.getProgramState(i));
+							initialState = translateProgramState(oldPE.getProgramState(i));
 						}
 					}
 					continue;
@@ -214,7 +234,7 @@ public class CACSL2BoogieBacktranslator
 							LocationFactory.createCLocation(forStmt.getConditionExpression()), newSi));
 				} else if (cnode instanceof CASTFunctionCallExpression) {
 					// more complex, handled separately
-					i = handleCASTFunctionCallExpression(programExecution, i, (CASTFunctionCallExpression) cnode, cloc,
+					i = handleCASTFunctionCallExpression(oldPE, i, (CASTFunctionCallExpression) cnode, cloc,
 							translatedAtomicTraceElements, translatedProgramStates);
 					continue;
 				} else {
@@ -222,7 +242,7 @@ public class CACSL2BoogieBacktranslator
 					// handled
 					// we merge all things in a row that point to the same
 					// location, as they only contain temporary stuff
-					i = findMergeSequence(programExecution, i, loc);
+					i = findMergeSequence(oldPE, i, loc);
 					// String raw = cnode.getRawSignature(); // debug
 					if (ate.getTraceElement() instanceof HavocStatement) {
 						HavocStatement havoc = (HavocStatement) ate.getTraceElement();
@@ -235,12 +255,12 @@ public class CACSL2BoogieBacktranslator
 					}
 					translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>(cloc));
 				}
-				translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
+				translatedProgramStates.add(translateProgramState(oldPE.getProgramState(i)));
 
 			} else if (loc instanceof ACSLLocation) {
 				// for now, just use ACSL as-it
 				translatedAtomicTraceElements.add(new AtomicTraceElement<CACSLLocation>((ACSLLocation) loc));
-				translatedProgramStates.add(translateProgramState(programExecution.getProgramState(i)));
+				translatedProgramStates.add(translateProgramState(oldPE.getProgramState(i)));
 
 			} else {
 				// invalid location
@@ -535,10 +555,56 @@ public class CACSL2BoogieBacktranslator
 	}
 
 	@Override
-	public IBacktranslatedCFG<?, CACSLLocation> translateCFG(IBacktranslatedCFG<?, BoogieASTNode> cfg) {
-		// TODO: Implement backtranslation here
-		final Multigraph<String, CACSLLocation> newRoot = new Multigraph<String, CACSLLocation>(null);
-		return new CACSLBacktranslatedCFG(cfg.getFilename(), newRoot, CACSLLocation.class, mLogger);
+	public IBacktranslatedCFG<String, CACSLLocation> translateCFG(IBacktranslatedCFG<?, BoogieASTNode> cfg) {
+		mLogger.info(getClass().getSimpleName());
+		printCFG(cfg, mLogger::info);
+		IBacktranslatedCFG<String, CACSLLocation> translated = translateCFG(cfg, (a, b, c) -> translateEdge(a, b, c),
+				(a, b, c) -> new CACSLBacktranslatedCFG(a, b, c, mLogger));
+		mLogger.info(getClass().getSimpleName() + " Translated");
+		printCFG(translated, mLogger::info);
+		return translated;
+	}
+
+	@SuppressWarnings("unchecked")
+	private <TVL, SVL> Multigraph<TVL, CACSLLocation> translateEdge(
+			Map<IExplicitEdgesMultigraph<?, ?, SVL, BoogieASTNode>, Multigraph<TVL, CACSLLocation>> cache,
+			final IMultigraphEdge<?, ?, ?, BoogieASTNode> oldEdge, final Multigraph<TVL, CACSLLocation> newSourceNode) {
+
+		// dirty but quick: convert a single edge to a trace and translate this
+		final IExplicitEdgesMultigraph<?, ?, SVL, BoogieASTNode> oldTarget = (IExplicitEdgesMultigraph<?, ?, SVL, BoogieASTNode>) oldEdge
+				.getTarget();
+		Multigraph<TVL, CACSLLocation> currentSource = newSourceNode;
+		Multigraph<TVL, CACSLLocation> currentTarget = newSourceNode;
+
+		Multigraph<TVL, CACSLLocation> lastTarget = cache.get(oldTarget);
+		if (lastTarget == null) {
+			lastTarget = (Multigraph<TVL, CACSLLocation>) createWitnessNode(oldTarget);
+			cache.put(oldTarget, lastTarget);
+		}
+		if (oldEdge.getLabel() == null) {
+			new MultigraphEdge<>(currentSource, null, lastTarget);
+			return lastTarget;
+		}
+
+		final List<CACSLLocation> translatedTrace = translateTrace(Collections.singletonList(oldEdge.getLabel()));
+		if (translatedTrace.isEmpty()) {
+			new MultigraphEdge<>(currentSource, null, lastTarget);
+			return lastTarget;
+		}
+
+		final Iterator<CACSLLocation> iter = translatedTrace.iterator();
+		while (iter.hasNext()) {
+			final CACSLLocation loc = iter.next();
+			if (iter.hasNext()) {
+				currentTarget = createWitnessNode();
+			} else {
+				currentTarget = lastTarget;
+			}
+			new MultigraphEdge<>(currentSource, loc, currentTarget);
+			currentSource = currentTarget;
+		}
+
+		return lastTarget;
 	}
 
 	@Override

@@ -48,4 +48,9 @@ public class Multigraph<VERTEX, EDGE> extends
 	public VERTEX getLabel() {
 		return mVertex;
 	}
+
+	@Override
+	public String toString() {
+		return mVertex == null ? "Unlabeled("+hashCode()+")" : mVertex.toString();
+	}
 }

@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.StructType;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.util.IToString;
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
@@ -65,12 +66,16 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.structure.IExplicitEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.model.structure.IMultigraphEdge;
+import de.uni_freiburg.informatik.ultimate.model.structure.Multigraph;
+import de.uni_freiburg.informatik.ultimate.model.structure.MultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement.StepInfo;
+import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Severity;
-import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 
 /**
  * 
@@ -318,6 +323,26 @@ public class BoogiePreprocessorBacktranslator
 			}
 		}
 		return rtr;
+	}
+
+	@Override
+	public IBacktranslatedCFG<?, BoogieASTNode> translateCFG(final IBacktranslatedCFG<?, BoogieASTNode> cfg) {
+		return translateCFG(cfg, (a, b,c) -> translateEdge(a, b,c));
+	}
+
+	private <VL> Multigraph<VL, BoogieASTNode> translateEdge(
+			final Map<IExplicitEdgesMultigraph<?, ?, VL, BoogieASTNode>, Multigraph<VL, BoogieASTNode>> cache,
+			final IMultigraphEdge<?, ?, VL, BoogieASTNode> oldEdge,
+			final Multigraph<VL, BoogieASTNode> newSourceNode) {
+		final BoogieASTNode newLabel = backtranslateTraceElement(oldEdge.getLabel());
+		final IExplicitEdgesMultigraph<?, ?, VL, BoogieASTNode> oldTarget = oldEdge.getTarget();
+		Multigraph<VL, BoogieASTNode> newTarget = cache.get(oldTarget);
+		if(newTarget == null){
+			newTarget = createWitnessNode(oldTarget);
+			cache.put(oldTarget, newTarget);
+		}
+		new MultigraphEdge<VL, BoogieASTNode>(newSourceNode, newLabel, newTarget);
+		return newTarget;
 	}
 
 	private void reportUnfinishedBacktranslation(String message) {
