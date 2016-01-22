@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: SyntaxChecker
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.source.syntaxchecker;singleton:=true
 Bundle-Version: 0.0.1
-Bundle-Activator: de.uni_freiburg.informatik.ultimate.source.syntaxchecker.Activator
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.plugins.analysis.syntaxchecker.Activator
 Require-Bundle: UltimateCore,
  Library-log4j,
  org.eclipse.cdt.core

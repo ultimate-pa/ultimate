@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE SmtParser plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.source.syntaxchecker;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.syntaxchecker;
 
 import java.io.BufferedReader;
 import java.io.IOException;

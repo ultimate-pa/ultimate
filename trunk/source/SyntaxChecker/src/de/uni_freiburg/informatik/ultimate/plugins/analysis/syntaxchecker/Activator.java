@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE SyntaxChecker plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.source.syntaxchecker;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.syntaxchecker;
 
 import org.eclipse.core.runtime.Plugin;
 
