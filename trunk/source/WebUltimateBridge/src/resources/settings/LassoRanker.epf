@@ -2,9 +2,12 @@
 file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Use\ external\ SMT\ solver=false
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Termination\ analysis=Linear_with_guesses
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Nontermination\ analysis=Nonlinear
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Termination\ analysis=Nonlinear
 @de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker=0.0.1
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Only\ non-decreasing\ invariants=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Only\ non-decreasing\ invariants=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/Use\ external\ SMT\ solver=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker/SMT\ solver\ command=z3 -smt2 -in SMTLIB2_COMPLIANT\=true -t\:10000
 
 #Fri Apr 10 12:56:34 CEST 2015
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=
