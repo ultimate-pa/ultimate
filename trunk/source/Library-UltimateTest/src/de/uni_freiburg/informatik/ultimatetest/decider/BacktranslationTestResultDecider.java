@@ -32,15 +32,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.Path;
 
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
 import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
@@ -59,7 +57,6 @@ import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 public class BacktranslationTestResultDecider extends TestResultDecider {
 
 	private final String mInputFile;
-	private final String mFileEnding;
 	private final String mSettingsFile;
 
 	/**
@@ -69,12 +66,10 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 	 * @param fileending
 	 *            use .c or .bpl or something like that. The . is important
 	 * 
-	 * 
 	 */
-	public BacktranslationTestResultDecider(String inputFile, String settingsFile, String fileending) {
+	public BacktranslationTestResultDecider(final String inputFile, final String settingsFile, final String fileending) {
 		mInputFile = inputFile;
 		mSettingsFile = settingsFile;
-		mFileEnding = fileending;
 	}
 
 	@Override
@@ -127,36 +122,33 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 			fail = true;
 		}
 
-		if (mFileEnding.equals(".c")
-				&& new UltimatePreferenceStore(Activator.PLUGIN_ID)
-						.getBoolean(CorePreferenceInitializer.LABEL_WITNESS_VERIFY)) {
+		final List<WitnessResult> witnessesWithCex = new ArrayList<>();
+		for (final IResult result : cex) {
+			final Optional<WitnessResult> witness = witnesses.stream().filter(a -> a.getAffectedResult() == result)
+					.findAny();
+			if (witness.isPresent()) {
+				witnessesWithCex.add(witness.get());
+			}
+		}
+
+		if (!witnessesWithCex.isEmpty()) {
 			// we expect witness verification for .c files to succeed
-
-			if (cex.size() != witnesses.size()) {
-				setResultCategory("Not all counter examples have witnesses");
-				String errorMsg = "There were " + cex.size() + " counter examples, but " + witnesses.size()
-						+ " witnesses";
-				setResultMessage(errorMsg);
-				customMessages.add(errorMsg);
-				fail = true;
-
-			} else {
-				for (final WitnessResult witness : witnesses) {
-					if (witness.isEmpty()) {
-						setResultCategory("Empty Witness");
-						String errorMsg = "The witness is empty: " + witness.getShortDescription();
-						setResultMessage(errorMsg);
-						customMessages.add(errorMsg);
-						fail = true;
-						break;
-					} else if (witness.getVerificationStatus() != WitnessVerificationStatus.VERIFIED) {
-						setResultCategory("Witness failed to verify");
-						String errorMsg = "The witness failed to verify: " + witness.getLongDescription();
-						setResultMessage(errorMsg);
-						customMessages.add(errorMsg);
-						fail = true;
-						break;
-					}
+			for (final WitnessResult witness : witnessesWithCex) {
+				if (witness.isEmpty()) {
+					setResultCategory("Empty Witness");
+					String errorMsg = "The witness is empty: " + witness.getShortDescription();
+					setResultMessage(errorMsg);
+					customMessages.add(errorMsg);
+					fail = true;
+					break;
+				} else if (witness.getExpectedVerificationStatus() == WitnessVerificationStatus.VERIFIED
+						&& witness.getVerificationStatus() != WitnessVerificationStatus.VERIFIED) {
+					setResultCategory("Witness failed to verify");
+					String errorMsg = "The witness failed to verify: " + witness.getLongDescription();
+					setResultMessage(errorMsg);
+					customMessages.add(errorMsg);
+					fail = true;
+					break;
 				}
 			}
 		}
@@ -269,11 +261,9 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 	 * @param curDes
 	 *            A line from the desired error trace, already trimmed
 	 * @param curAct
-	 *            The corresponding line from the actual error trace, already
-	 *            trimmed
-	 * @return true iff it is a value line and the values do not differ too much
-	 *         (i.e. there is the same number of the same variables, but the
-	 *         values do not match)
+	 *            The corresponding line from the actual error trace, already trimmed
+	 * @return true iff it is a value line and the values do not differ too much (i.e. there is the same number of the
+	 *         same variables, but the values do not match)
 	 */
 	private boolean isValueLineOk(String curDes, String curAct) {
 

@@ -42,7 +42,6 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.ToolchainWalker.CompleteToolchainData;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.cexverifier.WitnessManager;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.PluginType;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.SubchainType;
@@ -278,11 +277,6 @@ public class ToolchainManager {
 						mParsers.values().toArray(new ISource[0]), mCurrentController);
 
 				mToolchainWalker.walk(data, mToolchainData.getServices().getProgressMonitorService(), monitor);
-				if (ups.getBoolean(CorePreferenceInitializer.LABEL_WITNESS_GEN)) {
-					WitnessManager cexVerifier = new WitnessManager(mLogger, mToolchainData.getServices(),
-							mToolchainData.getStorage());
-					cexVerifier.run();
-				}
 
 			} finally {
 				IResultService resultService = mToolchainData.getServices().getResultService();

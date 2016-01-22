@@ -91,7 +91,7 @@ public class TrueWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<TTE, TE>
 		});
 
 		addGraphData(graphWriter, "sourcecodelang", null, graph -> "C");
-		addGraphData(graphWriter, "witness-type", null, graph -> "false_witness");
+		addGraphData(graphWriter, "witness-type", null, graph -> "true_witness");
 
 		addEdgeData(graphWriter, "sourcecode", null, edge -> StringEscapeUtils.escapeXml10(edge.getSourceCode()));
 		addEdgeData(graphWriter, "assumption", null, edge -> StringEscapeUtils.escapeXml10(edge.getAssumption()));

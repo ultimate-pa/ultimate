@@ -119,12 +119,14 @@ public class WitnessManager {
 
 			if (ups.getBoolean(PreferenceInitializer.LABEL_WITNESS_VERIFY)) {
 				if (svcompWitness == null) {
-					reportWitnessResult(null, cex, WitnessVerificationStatus.INTERNAL_ERROR);
+					reportWitnessResult(null, cex, WitnessVerificationStatus.INTERNAL_ERROR,
+							WitnessVerificationStatus.VERIFIED);
 				} else {
 					checkWitness(filename, cex, originalFile, svcompWitness);
 				}
 			} else if (ups.getBoolean(PreferenceInitializer.LABEL_WITNESS_LOG)) {
-				reportWitnessResult(svcompWitness, cex, WitnessVerificationStatus.UNVERIFIED);
+				reportWitnessResult(svcompWitness, cex, WitnessVerificationStatus.UNVERIFIED,
+						WitnessVerificationStatus.UNVERIFIED);
 			}
 
 			if (ups.getBoolean(PreferenceInitializer.LABEL_WITNESS_DELETE_GRAPHML)) {
@@ -174,9 +176,10 @@ public class WitnessManager {
 		return filename.toString();
 	}
 
-	private void reportWitnessResult(String svcompWitness, IResult cex, WitnessVerificationStatus verificationStatus) {
+	private void reportWitnessResult(final String svcompWitness, final IResult cex,
+			final WitnessVerificationStatus verificationStatus, final WitnessVerificationStatus expectedStatus) {
 		mServices.getResultService().reportResult(cex.getPlugin(),
-				new WitnessResult(Activator.PLUGIN_ID, cex, svcompWitness, verificationStatus));
+				new WitnessResult(Activator.PLUGIN_ID, cex, svcompWitness, verificationStatus, expectedStatus));
 	}
 
 	private boolean checkWitness(String svcompWitnessFile, IResult cex, String originalFile, String svcompWitness)
@@ -200,7 +203,8 @@ public class WitnessManager {
 		final String cpaCheckerHome = System.getenv().get("CPACHECKER_HOME");
 		if (cpaCheckerHome == null) {
 			mLogger.error("CPACHECKER_HOME not set, cannot use CPACHECKER as witness verifier");
-			reportWitnessResult(svcompWitness, cex, WitnessVerificationStatus.INTERNAL_ERROR);
+			reportWitnessResult(svcompWitness, cex, WitnessVerificationStatus.INTERNAL_ERROR,
+					WitnessVerificationStatus.VERIFIED);
 			return false;
 		}
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
@@ -228,7 +232,8 @@ public class WitnessManager {
 
 		if (checkOutputForSuccess(output)) {
 			mLogger.info("Witness for CEX was verified successfully");
-			reportWitnessResult(svcompWitness, cex, WitnessVerificationStatus.VERIFIED);
+			reportWitnessResult(svcompWitness, cex, WitnessVerificationStatus.VERIFIED,
+					WitnessVerificationStatus.VERIFIED);
 			return true;
 		} else {
 			final StringBuilder logMessage = new StringBuilder().append("Witness for CEX did not verify");
@@ -240,7 +245,8 @@ public class WitnessManager {
 					.append(CoreUtil.getPlatformLineSeparator()).append("STDOUT:")
 					.append(CoreUtil.getPlatformLineSeparator()).append(output);
 			mLogger.error(logMessage.toString());
-			reportWitnessResult(svcompWitness, cex, WitnessVerificationStatus.VERIFICATION_FAILED);
+			reportWitnessResult(svcompWitness, cex, WitnessVerificationStatus.VERIFICATION_FAILED,
+					WitnessVerificationStatus.VERIFIED);
 			return false;
 		}
 	}
