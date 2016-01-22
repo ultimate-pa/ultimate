@@ -556,12 +556,12 @@ public class CACSL2BoogieBacktranslator
 
 	@Override
 	public IBacktranslatedCFG<String, CACSLLocation> translateCFG(IBacktranslatedCFG<?, BoogieASTNode> cfg) {
-		mLogger.info(getClass().getSimpleName());
-		printCFG(cfg, mLogger::info);
+//		mLogger.info(getClass().getSimpleName());
+//		printCFG(cfg, mLogger::info);
 		IBacktranslatedCFG<String, CACSLLocation> translated = translateCFG(cfg, (a, b, c) -> translateEdge(a, b, c),
 				(a, b, c) -> new CACSLBacktranslatedCFG(a, b, c, mLogger));
-		mLogger.info(getClass().getSimpleName() + " Translated");
-		printCFG(translated, mLogger::info);
+//		mLogger.info(getClass().getSimpleName() + " Translated");
+//		printCFG(translated, mLogger::info);
 		return translated;
 	}
 
