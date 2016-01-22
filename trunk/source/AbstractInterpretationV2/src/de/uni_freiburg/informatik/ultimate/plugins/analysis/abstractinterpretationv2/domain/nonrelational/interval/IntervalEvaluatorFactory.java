@@ -39,6 +39,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
+/**
+ * Implementation of the evaluator factory for evaluators in the {@link IntervalDomain}.
+ * 
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ *
+ */
 public class IntervalEvaluatorFactory
         implements IEvaluatorFactory<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
 
@@ -98,6 +104,17 @@ public class IntervalEvaluatorFactory
 	public IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> createSingletonLogicalValueExpressionEvaluator(
 	        BooleanValue value) {
 		return new IntervalSingletonBooleanExpressionEvaluator(value);
+	}
+
+	@Override
+	public IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> createFunctionEvaluator(
+	        String functionName, int inputParamCount) {
+		return new IntervalFunctionEvaluator(functionName, inputParamCount);
+	}
+
+	@Override
+	public IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> createConditionalEvaluator() {
+		return new IntervalConditionalEvaluator();
 	}
 
 }

@@ -35,74 +35,86 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IFunctionEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
- * Class for boolean singleton values in the {@link IntervalDomain}.
+ * Implementation of the function evaluator in the {@link IntervalDomain}.
  * 
- * @author Marius Greitschus <greitsch@informatik.uni-freiburg.de>
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class IntervalSingletonBooleanExpressionEvaluator
-        implements IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
+public class IntervalFunctionEvaluator
+        implements IFunctionEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
 
-	private final BooleanValue mBooleanValue;
+	private final String mName;
+	private final int mInParamCount;
 
-	/**
-	 * Default constructor that creates a new instance of the {@link IntervalSingletonBooleanExpressionEvaluator} in the
-	 * {@link IntervalDomain}.
-	 * 
-	 * @param value
-	 *            The value to set.
-	 */
-	protected IntervalSingletonBooleanExpressionEvaluator(BooleanValue value) {
-		mBooleanValue = value;
+	private final List<IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar>> mInputParamEvaluators;
+
+	protected IntervalFunctionEvaluator(String name, int numInParams) {
+		mName = name;
+		mInParamCount = numInParams;
+		mInputParamEvaluators = new ArrayList<>();
 	}
 
 	@Override
 	public List<IEvaluationResult<IntervalDomainEvaluationResult>> evaluate(IntervalDomainState currentState) {
-
 		final List<IEvaluationResult<IntervalDomainEvaluationResult>> returnList = new ArrayList<>();
-		
-		IntervalDomainState returnState;
 
-		if (mBooleanValue.getValue() == Value.TRUE || mBooleanValue.getValue() == Value.TOP) {
-			returnState = currentState;
-		} else {
-			returnState = currentState.bottomState();
-		}
+		final IntervalDomainEvaluationResult res = new IntervalDomainEvaluationResult(new IntervalDomainValue(),
+		        currentState, new BooleanValue(false));
 
-		returnList.add(new IntervalDomainEvaluationResult(null, returnState, mBooleanValue));
-		
+		returnList.add(res);
 		return returnList;
 	}
 
 	@Override
 	public void addSubEvaluator(
 	        IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
-		throw new UnsupportedOperationException("Adding a subevaluator to this kind of evaluator is not permitted.");
+		if (mInputParamEvaluators.size() < mInParamCount) {
+			mInputParamEvaluators.add(evaluator);
+		} else {
+			throw new UnsupportedOperationException("No sub evaluators left.");
+		}
 	}
 
 	@Override
 	public Set<String> getVarIdentifiers() {
-		return new HashSet<String>();
+		return new HashSet<>();
 	}
 
 	@Override
 	public boolean hasFreeOperands() {
-		return false;
+		return mInputParamEvaluators.size() < mInParamCount;
 	}
 
 	@Override
 	public boolean containsBool() {
-		return true;
+		return false;
+	}
+
+	@Override
+	public int getNumberOfInParams() {
+		return mInParamCount;
 	}
 	
 	@Override
 	public String toString() {
-		return mBooleanValue.getValue().name();
+		final StringBuilder sb = new StringBuilder();
+		
+		sb.append(mName);
+		sb.append("(");
+		for (int i = 0; i < mInputParamEvaluators.size(); i++) {
+			if (i > 0) {
+				sb.append(", ");
+			}
+			sb.append(mInputParamEvaluators.get(i));
+		}
+		sb.append(")");
+		
+		return sb.toString();
 	}
 }

@@ -90,5 +90,10 @@ public class IntervalSingletonValueExpressionEvaluator
 	public boolean hasFreeOperands() {
 		return false;
 	}
+	
+	@Override
+	public String toString() {
+		return mValue.toString();
+	}
 
 }

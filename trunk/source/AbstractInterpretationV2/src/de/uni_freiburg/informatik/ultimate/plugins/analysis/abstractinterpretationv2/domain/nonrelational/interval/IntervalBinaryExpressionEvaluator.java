@@ -79,7 +79,7 @@ public class IntervalBinaryExpressionEvaluator
 		for (String var : mRightSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
 		}
-		
+
 		for (final IEvaluationResult<IntervalDomainEvaluationResult> res1 : firstResult) {
 			for (final IEvaluationResult<IntervalDomainEvaluationResult> res2 : secondResult) {
 				final List<IntervalDomainState> returnStates = new ArrayList<>();
@@ -575,7 +575,7 @@ public class IntervalBinaryExpressionEvaluator
 					} else {
 						returnList.add(new IntervalDomainEvaluationResult(returnValue, s, returnBool));
 					}
-					
+
 				}
 			}
 		}
@@ -626,5 +626,67 @@ public class IntervalBinaryExpressionEvaluator
 	@Override
 	public int getArity() {
 		return 2;
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+
+		sb.append(mLeftSubEvaluator);
+		sb.append(" ");
+
+		switch (mOperator) {
+		case ARITHDIV:
+			sb.append(" / ");
+			break;
+		case ARITHMINUS:
+			sb.append(" - ");
+			break;
+		case ARITHMOD:
+			sb.append(" % ");
+			break;
+		case ARITHMUL:
+			sb.append(" * ");
+			break;
+		case ARITHPLUS:
+			sb.append(" + ");
+			break;
+		case COMPEQ:
+			sb.append(" == ");
+			break;
+		case COMPGEQ:
+			sb.append(" >= ");
+			break;
+		case COMPGT:
+			sb.append(" > ");
+			break;
+		case COMPLEQ:
+			sb.append(" <= ");
+			break;
+		case COMPLT:
+			sb.append(" < ");
+			break;
+		case COMPNEQ:
+			sb.append(" != ");
+			break;
+		case LOGICAND:
+			sb.append(" && ");
+			break;
+		case LOGICIFF:
+			sb.append(" <==> ");
+			break;
+		case LOGICIMPLIES:
+			sb.append(" ==> ");
+			break;
+		case LOGICOR:
+			sb.append(" || ");
+			break;
+		default:
+			mOperator.name();
+		}
+
+		sb.append(mRightSubEvaluator);
+
+		return sb.toString();
 	}
 }

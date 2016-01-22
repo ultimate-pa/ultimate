@@ -124,4 +124,8 @@ public class IntervalSingletonVariableExpressionEvaluator
 		return false;
 	}
 
+	@Override
+	public String toString() {
+		return mVariableName;
+	}
 }

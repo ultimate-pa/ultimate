@@ -85,7 +85,7 @@ public class SignEvaluatorFactory implements IEvaluatorFactory<Values, SignDomai
 
 	@Override
 	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createSingletonValueExpressionEvaluator(
-			String value, Class<?> valueType) {
+	        String value, Class<?> valueType) {
 
 		if (valueType.equals(BigInteger.class)) {
 			return new SignSingletonIntegerExpressionEvaluator(value);
@@ -100,13 +100,26 @@ public class SignEvaluatorFactory implements IEvaluatorFactory<Values, SignDomai
 
 	@Override
 	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createSingletonVariableExpressionEvaluator(
-			String variableName) {
+	        String variableName) {
 		return new SignSingletonVariableExpressionEvaluator(variableName);
 	}
 
 	@Override
 	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createSingletonLogicalValueExpressionEvaluator(
-			BooleanValue value) {
+	        BooleanValue value) {
+		return null;
+	}
+
+	@Override
+	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createFunctionEvaluator(String functionName,
+	        int inputParamCount) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createConditionalEvaluator() {
+		// TODO Auto-generated method stub
 		return null;
 	}
 }
