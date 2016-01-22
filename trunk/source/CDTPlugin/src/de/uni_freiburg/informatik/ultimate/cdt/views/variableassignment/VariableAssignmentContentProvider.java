@@ -40,7 +40,7 @@ import org.eclipse.jface.viewers.Viewer;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.result.IValuation;
+import de.uni_freiburg.informatik.ultimate.result.model.IValuation;
 
 /**
  * The content provider for the VariableAssignment

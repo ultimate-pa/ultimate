@@ -26,6 +26,7 @@
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.result;
+
 /**
  * Result that says that all specifications were checked and hold.
  * Use this also if there was not specification.
@@ -50,5 +51,4 @@ public class AllSpecificationsHoldResult extends AbstractResult {
 	public String getLongDescription() {
 		return m_Longdescription;
 	}
-
 }

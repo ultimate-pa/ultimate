@@ -1,9 +1,6 @@
 /*
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2012-2015 Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
- * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 Oleksii Saukh (saukho@informatik.uni-freiburg.de)
- * Copyright (C) 2015 Stefan Wissert
+ * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE Core.
@@ -28,39 +25,16 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.result;
+package de.uni_freiburg.informatik.ultimate.result.model;
 
 
-/**
- * Interface for the results that are produced while running a toolchain.
- * These results are shown by the frontends of ULTIMATE. 
- * @author Markus Lindenmann
- * @author Stefan Wissert
- * @author Oleksii Saukh
- * @author heizmann@informatik.uni-freiburg.de
- * @date 02.01.2012
- */
-public interface IResult {
-	
+public interface IResultWithSeverity extends IResult {
+
 	/**
-	 * Plugin that derived this IResult.
+	 * Severity of a result determines how the result is visualized in a 
+	 * front end.
 	 */
-	public String getPlugin();
+	public enum Severity { ERROR, WARNING, INFO }
 	
-	/**
-	 * Kind of Result, in a few words. E.g., "procedure precondition can be
-	 * violated", "ranking function found", "unsupported syntax".
-	 */
-	public String getShortDescription();
-	
-	/**
-	 * String representation of the result. Contains all information that are
-	 * not already given by
-	 * <ul>
-	 * <li> location, 
-	 * <li> short description,
-	 * <li> or objects provided by subinterfaces/subclasses
-	 * </ul>
-	 */
-	public String getLongDescription();
+	public Severity getSeverity();
 }

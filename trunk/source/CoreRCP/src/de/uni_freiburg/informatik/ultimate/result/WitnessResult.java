@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.result;
 
+import de.uni_freiburg.informatik.ultimate.result.model.IResult;
+
 /**
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)

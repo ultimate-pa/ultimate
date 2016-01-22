@@ -63,8 +63,6 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 	}
 
-
-
 	@Override
 	public boolean process(IElement root) {
 		if (root instanceof RootNode) {
@@ -100,8 +98,6 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	private boolean isOriginalRcfg(GraphType currentGraphType) {
 		return currentGraphType.getCreator().equals("de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder");
 	}
-
-
 
 	@Override
 	public void finish() {

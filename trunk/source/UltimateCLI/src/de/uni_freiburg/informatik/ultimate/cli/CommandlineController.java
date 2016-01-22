@@ -67,8 +67,8 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
 public class CommandlineController implements IController {
 
 	static {
-		sPLUGIN_ID = Activator.s_PLUGIN_ID;
-		sPLUGIN_NAME = Activator.s_PLUGIN_NAME;
+		sPLUGIN_ID = Activator.PLUGIN_ID;
+		sPLUGIN_NAME = Activator.PLUGIN_NAME;
 	}
 
 	private Logger mLogger;

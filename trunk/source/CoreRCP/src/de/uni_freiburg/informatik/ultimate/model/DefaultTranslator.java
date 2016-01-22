@@ -31,8 +31,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.result.IBacktranslationValueProvider;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslatedCFG;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
 
 /**
  * Translator which just passes the input along, i.e., the mapping from input to output is the identity. If types of
@@ -60,21 +60,17 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	private final Class<TTE> mTargetTraceElementType;
 	private final Class<SE> mSourceExpressionType;
 	private final Class<TE> mTargetExpressionType;
-	private final IBacktranslationValueProvider<TTE, TE> mValueProvider;
 
-	public DefaultTranslator(final IBacktranslationValueProvider<TTE, TE> valueProvider,
-			final Class<STE> sourceTraceElementType, final Class<TTE> targetTraceElementType,
+	public DefaultTranslator(final Class<STE> sourceTraceElementType, final Class<TTE> targetTraceElementType,
 			final Class<SE> sourceExpressionType, final Class<TE> targetExpressionType) {
 		mSourceTraceElementType = sourceTraceElementType;
 		mTargetTraceElementType = targetTraceElementType;
 		mSourceExpressionType = sourceExpressionType;
 		mTargetExpressionType = targetExpressionType;
-		mValueProvider = valueProvider;
 		assert mTargetExpressionType != null;
 		assert mTargetTraceElementType != null;
 		assert mSourceExpressionType != null;
 		assert mSourceTraceElementType != null;
-		assert mValueProvider != null;
 	}
 
 	@Override
@@ -159,6 +155,18 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 			throw new AssertionError(message);
 		}
 		return result;
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public IBacktranslatedCFG<?, TTE> translateCFG(IBacktranslatedCFG<?, STE> cfg) {
+		try {
+			return (IBacktranslatedCFG<?, TTE>) cfg;
+		} catch (ClassCastException e) {
+			String message = "Type of source trace element and type of target"
+					+ " trace element are different. DefaultTranslator can only be applied to the same type.";
+			throw new AssertionError(message);
+		}
 	}
 
 	/**
@@ -259,10 +267,5 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 		sb.append(" TTE=");
 		sb.append(getTargetTraceElementClass().getName());
 		return sb.toString();
-	}
-
-	@Override
-	public IBacktranslationValueProvider<TTE, TE> getValueProvider() {
-		return mValueProvider;
 	}
 }

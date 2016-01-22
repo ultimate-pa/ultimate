@@ -89,7 +89,7 @@ public class ExternalParserToolchainJob extends BasicToolchainJob {
 				mChain = currentToolchain.makeToolSelection(monitor);
 				if (mChain == null) {
 					mLogger.warn("Toolchain selection failed, aborting...");
-					return new Status(Status.CANCEL, Activator.s_PLUGIN_ID, "Toolchain selection canceled");
+					return new Status(Status.CANCEL, Activator.PLUGIN_ID, "Toolchain selection canceled");
 				}
 				setServices(mChain.getServices());
 			}
@@ -104,7 +104,7 @@ public class ExternalParserToolchainJob extends BasicToolchainJob {
 			mLogger.fatal(e);
 			mController.displayException("The toolchain threw an exception", e);
 			returnstatus = Status.CANCEL_STATUS;
-			String idOfCore = Activator.s_PLUGIN_ID;
+			String idOfCore = Activator.PLUGIN_ID;
 			mServices.getResultService().reportResult(idOfCore, new ExceptionOrErrorResult(idOfCore, e));
 		} finally {
 			monitor.worked(1);

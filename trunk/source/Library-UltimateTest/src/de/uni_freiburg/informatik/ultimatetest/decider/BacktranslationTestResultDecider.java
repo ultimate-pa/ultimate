@@ -46,9 +46,9 @@ import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
-import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.WitnessResult;
 import de.uni_freiburg.informatik.ultimate.result.WitnessResult.WitnessVerificationStatus;
+import de.uni_freiburg.informatik.ultimate.result.model.IResult;
 import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
@@ -128,7 +128,7 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 		}
 
 		if (mFileEnding.equals(".c")
-				&& new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
+				&& new UltimatePreferenceStore(Activator.PLUGIN_ID)
 						.getBoolean(CorePreferenceInitializer.LABEL_WITNESS_VERIFY)) {
 			// we expect witness verification for .c files to succeed
 

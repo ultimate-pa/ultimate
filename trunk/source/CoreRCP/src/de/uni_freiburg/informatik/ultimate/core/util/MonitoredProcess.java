@@ -110,7 +110,7 @@ public final class MonitoredProcess implements IStorable {
 		assert services != null;
 		mStorage = storage;
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mProcess = process;
 		assert mProcess != null;
 		mProcessCompleted = false;

@@ -553,7 +553,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 					+ "which should be added");
 		} 
 		copyOfCodeBlock.setTransitionFormula(cb.getTransitionFormula());
-		ModelUtils.mergeAnnotations(cb, copyOfCodeBlock);
+		ModelUtils.copyAnnotations(cb, copyOfCodeBlock);
 		return copyOfCodeBlock;
 	}
 
@@ -572,12 +572,12 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		if (secondGotoEdge == null) {
 			replacement = mCbf.constructStatementSequence(null, null, new AssumeStatement(gotoEdge.getPayload().getLocation(),
 					new BooleanLiteral(gotoEdge.getPayload().getLocation(), true)));
-			ModelUtils.mergeAnnotations(gotoEdge, replacement);
+			ModelUtils.copyAnnotations(gotoEdge, replacement);
 		} else {
 			replacement = mCbf.constructStatementSequence(null, null, new AssumeStatement(gotoEdge.getPayload().getLocation(),
 					new BooleanLiteral(gotoEdge.getPayload().getLocation(), true)));
-			ModelUtils.mergeAnnotations(gotoEdge, replacement);
-			ModelUtils.mergeAnnotations(secondGotoEdge, replacement);
+			ModelUtils.copyAnnotations(gotoEdge, replacement);
+			ModelUtils.copyAnnotations(secondGotoEdge, replacement);
 		}
 		String procId = gotoEdge.getPreceedingProcedure();
 		mTransFormBuilder.addTransitionFormulas(replacement, procId);

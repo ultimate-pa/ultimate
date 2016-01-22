@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.model.repository.StoreObjectException
 import de.uni_freiburg.informatik.ultimate.plugins.ResultNotifier;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
-import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.util.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 
@@ -87,7 +87,7 @@ public class ToolchainManager {
 
 	public ToolchainManager(LoggingService loggingService, PluginFactory factory, IController controller) {
 		mLoggingService = loggingService;
-		mLogger = mLoggingService.getLogger(Activator.s_PLUGIN_ID);
+		mLogger = mLoggingService.getLogger(Activator.PLUGIN_ID);
 		mPluginFactory = factory;
 		mCurrentController = controller;
 		mCurrentId = new AtomicLong();
@@ -128,7 +128,7 @@ public class ToolchainManager {
 	}
 
 	private IModelManager createModelManager() {
-		String tmp_dir = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
+		String tmp_dir = new UltimatePreferenceStore(Activator.PLUGIN_ID)
 				.getString(CorePreferenceInitializer.LABEL_MM_TMPDIRECTORY);
 		return new PersistenceAwareModelManager(tmp_dir, mLogger);
 	}
@@ -260,7 +260,7 @@ public class ToolchainManager {
 		@Override
 		public IStatus processToolchain(IProgressMonitor monitor) throws Throwable {
 			mLogger.info("####################### " + getLogPrefix() + " #######################");
-			UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+			UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 			boolean useBenchmark = ups.getBoolean(CorePreferenceInitializer.LABEL_BENCHMARK);
 			Benchmark bench = null;
 			if (useBenchmark) {
@@ -290,7 +290,7 @@ public class ToolchainManager {
 				// GenericResult(Activator.s_PLUGIN_ID,
 				// "VM Information", VMUtils.getVMInfos(), Severity.INFO));
 				if (VMUtils.areAssertionsEnabled()) {
-					resultService.reportResult(Activator.s_PLUGIN_ID, new GenericResult(Activator.s_PLUGIN_ID,
+					resultService.reportResult(Activator.PLUGIN_ID, new GenericResult(Activator.PLUGIN_ID,
 							"Assertions are enabled", "Assertions are enabled", Severity.INFO));
 				}
 
@@ -300,8 +300,8 @@ public class ToolchainManager {
 					mBenchmark.printResult();
 
 					// report benchmark results
-					resultService.reportResult(Activator.s_PLUGIN_ID,
-							new BenchmarkResult<Double>(Activator.s_PLUGIN_ID, "Toolchain Benchmarks", mBenchmark));
+					resultService.reportResult(Activator.PLUGIN_ID,
+							new BenchmarkResult<Double>(Activator.PLUGIN_ID, "Toolchain Benchmarks", mBenchmark));
 
 				}
 
@@ -366,7 +366,7 @@ public class ToolchainManager {
 		}
 
 		private final IElement runParser(final File file, ISource parser) throws Exception {
-			boolean useBenchmark = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
+			boolean useBenchmark = new UltimatePreferenceStore(Activator.PLUGIN_ID)
 					.getBoolean(CorePreferenceInitializer.LABEL_BENCHMARK);
 			IElement root = null;
 
@@ -434,7 +434,7 @@ public class ToolchainManager {
 				}
 			}
 
-			boolean showusableparser = InstanceScope.INSTANCE.getNode(Activator.s_PLUGIN_ID).getBoolean(
+			boolean showusableparser = InstanceScope.INSTANCE.getNode(Activator.PLUGIN_ID).getBoolean(
 					CorePreferenceInitializer.LABEL_SHOWUSABLEPARSER,
 					CorePreferenceInitializer.VALUE_SHOWUSABLEPARSER_DEFAULT);
 

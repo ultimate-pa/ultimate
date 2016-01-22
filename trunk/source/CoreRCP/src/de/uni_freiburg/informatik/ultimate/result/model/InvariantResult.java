@@ -26,10 +26,11 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.result;
+package de.uni_freiburg.informatik.ultimate.result.model;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.result.AbstractResultAtElement;
 
 /**
  * Report an invariant that holds at ELEM which is a node in an Ultimate model.

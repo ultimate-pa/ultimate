@@ -49,10 +49,10 @@ import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.core.util.MonitoredProcess;
 import de.uni_freiburg.informatik.ultimate.core.util.MonitoredProcess.MonitoredProcessState;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.WitnessResult;
 import de.uni_freiburg.informatik.ultimate.result.WitnessResult.WitnessVerificationStatus;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.result.model.IResult;
 
 /**
  * The poorly named WitnessManager "handles" witnesses as specified by the Ultimate Core settings.
@@ -81,7 +81,7 @@ public class WitnessManager {
 
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void run() throws IOException, InterruptedException {
-		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		final Collection<CounterExampleResult> cexResults = CoreUtil
 				.filterResults(mServices.getResultService().getResults(), CounterExampleResult.class);
 
@@ -172,14 +172,14 @@ public class WitnessManager {
 	private void reportWitnessResult(String svcompWitness, IResult cex,
 			WitnessVerificationStatus verificationStatus) {
 		mServices.getResultService().reportResult(cex.getPlugin(),
-				new WitnessResult(Activator.s_PLUGIN_ID, cex, svcompWitness, verificationStatus));
+				new WitnessResult(Activator.PLUGIN_ID, cex, svcompWitness, verificationStatus));
 	}
 
 	@SuppressWarnings("rawtypes")
 	private boolean checkWitness(String svcompWitnessFile, CounterExampleResult cex, String svcompWitness)
 			throws IOException, InterruptedException {
 		mLogger.info("Verifying witness for CEX: " + cex.getShortDescription());
-		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		final CorePreferenceInitializer.WitnessVerifierType type = ups.getEnum(
 				CorePreferenceInitializer.LABEL_WITNESS_VERIFIER, CorePreferenceInitializer.WitnessVerifierType.class);
 		final String command = ups.getString(CorePreferenceInitializer.LABEL_WITNESS_VERIFIER_COMMAND);
@@ -201,7 +201,7 @@ public class WitnessManager {
 			reportWitnessResult(svcompWitness, cex, WitnessVerificationStatus.INTERNAL_ERROR);
 			return false;
 		}
-		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		int timeoutInS = ups.getInt(CorePreferenceInitializer.LABEL_WITNESS_VERIFIER_TIMEOUT);
 
 		final String originalFile = cex.getLocation().getFileName();

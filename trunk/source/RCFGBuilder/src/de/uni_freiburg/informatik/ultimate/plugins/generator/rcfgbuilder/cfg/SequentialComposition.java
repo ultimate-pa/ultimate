@@ -110,7 +110,7 @@ public class SequentialComposition extends CodeBlock {
 			codeBlocks.get(i).disconnectSource();
 			codeBlocks.get(i).disconnectTarget();
 			prettyPrinted.append(codeBlocks.get(i).getPrettyPrintedStatements());
-			ModelUtils.mergeAnnotations(codeBlocks.get(i), this);
+			ModelUtils.copyAnnotations(codeBlocks.get(i), this);
 		}
 		// workaround: set annotation with this pluginId again, because it was
 		// overwritten by the mergeAnnotations method

@@ -100,6 +100,7 @@ public class ModifiableLabeledEdgesMultigraph<T extends ModifiableLabeledEdgesMu
 	 * @return true iff the adding operations were successful, false otherwise. In
 	 *  the latter case, changes already made are undone.
 	 */
+	@SuppressWarnings("unchecked")
 	public boolean connectOutgoing(T node, L label) {
 		assert label != null;
 		if(mOutgoingNodes.add(node)){
@@ -146,6 +147,7 @@ public class ModifiableLabeledEdgesMultigraph<T extends ModifiableLabeledEdgesMu
 	 * @return true iff the adding operations were successful, false otherwise. In
 	 *  the latter case, changes already made are undone.
 	 */
+	@SuppressWarnings("unchecked")
 	public boolean connectIncoming(T node, L label) {
 		assert label != null;
 		if(mIncomingNodes.add(node)) {

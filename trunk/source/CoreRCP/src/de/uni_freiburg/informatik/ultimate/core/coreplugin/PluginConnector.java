@@ -103,7 +103,7 @@ public class PluginConnector {
 		mTool = tool;
 		mStorage = storage;
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		init();
 	}
 

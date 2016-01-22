@@ -29,8 +29,7 @@ package de.uni_freiburg.informatik.ultimate.core.services.model;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
-import de.uni_freiburg.informatik.ultimate.result.IBacktranslationValueProvider;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
 
 /**
  * 
@@ -65,8 +64,7 @@ public interface IBacktranslationService {
 
 	public <STE, SE> IProgramExecution<?, ?> translateProgramExecution(IProgramExecution<STE, SE> programExecution);
 
-	public <TTE, TE> IBacktranslationValueProvider<TTE, TE> getValueProvider(Class<TTE> targetTraceElementClass,
-			Class<TE> targetExpressionClass);
+	public <STE, SE> IBacktranslatedCFG<?, ?> translateCFG(IBacktranslatedCFG<?, STE> cfg);
 
 	/**
 	 * Use this if you want to keep a certain state of the backtranslation chain during toolchain execution.

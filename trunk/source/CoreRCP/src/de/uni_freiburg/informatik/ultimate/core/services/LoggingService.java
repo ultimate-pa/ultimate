@@ -84,7 +84,7 @@ public final class LoggingService implements IStorable, ILoggingService {
 
 	private LoggingService() {
 
-		mPreferenceStore = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		mPreferenceStore = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		mAdditionalAppenders = new HashSet<Appender>();
 
 		// we remove the initial log4j console appender because we want to
@@ -113,7 +113,7 @@ public final class LoggingService implements IStorable, ILoggingService {
 		initializeAppenders();
 		refreshPropertiesLoggerHierarchie();
 		refreshPropertiesAppendLogFile();
-		getLoggerById(Activator.s_PLUGIN_ID).debug("Logger refreshed");
+		getLoggerById(Activator.PLUGIN_ID).debug("Logger refreshed");
 	}
 
 	public void addAppender(Appender appender) {
@@ -242,8 +242,8 @@ public final class LoggingService implements IStorable, ILoggingService {
 	 */
 	private Logger lookupLoggerInHierarchie(String id) {
 		// it is core
-		if (id.equals(Activator.s_PLUGIN_ID)) {
-			return Logger.getLogger(Activator.s_PLUGIN_ID);
+		if (id.equals(Activator.PLUGIN_ID)) {
+			return Logger.getLogger(Activator.PLUGIN_ID);
 		}
 		// it is a controller
 		assert mCurrentControllerName != null;
@@ -304,12 +304,12 @@ public final class LoggingService implements IStorable, ILoggingService {
 		mLiveLoggerIds.add(LOGGER_NAME_CONTROLLER);
 
 		// core
-		Logger corelogger = rootRepos.getLogger(Activator.s_PLUGIN_ID);
+		Logger corelogger = rootRepos.getLogger(Activator.PLUGIN_ID);
 		String corelevel = mPreferenceStore.getString(CorePreferenceInitializer.LABEL_CORE_PREF);
 		if (!corelevel.isEmpty()) {
 			corelogger.setLevel(Level.toLevel(corelevel));
 		}
-		mLiveLoggerIds.add(Activator.s_PLUGIN_ID);
+		mLiveLoggerIds.add(Activator.PLUGIN_ID);
 
 		// create children for plug-ins
 		LoggerRepository piRepos = pluginsLogger.getLoggerRepository();

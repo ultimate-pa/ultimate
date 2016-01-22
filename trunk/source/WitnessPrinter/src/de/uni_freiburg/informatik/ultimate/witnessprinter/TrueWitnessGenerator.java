@@ -34,30 +34,17 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.collections15.Transformer;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
-import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.model.GraphType;
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslatedCFG;
+import de.uni_freiburg.informatik.ultimate.model.structure.IExplicitEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.model.structure.IMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.result.IBacktranslationValueProvider;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.result.model.IBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessNode;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessNodeEdgeFactory;
@@ -70,39 +57,28 @@ import edu.uci.ics.jung.io.GraphMLWriter;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class TrueWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E> implements IUnmanagedObserver {
+public class TrueWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<TTE, TE> {
 
-	private final IUltimateServiceProvider mServices;
 	private final Logger mLogger;
-	private Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> mGraph;
+	private final IBacktranslationValueProvider<TTE, TE> mStringProvider;
+	private final IBacktranslatedCFG<String, TTE> mTranslatedCFG;
 
-	public TrueWitnessGenerator(IUltimateServiceProvider services) {
+	public TrueWitnessGenerator(final IBacktranslatedCFG<String, TTE> translatedCFG,
+			final IBacktranslationValueProvider<TTE, TE> provider, final Logger logger) {
 		super();
-		mServices = services;
-		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-
-	}
-
-	@Override
-	public boolean process(final IElement root) throws Throwable {
-		if (root instanceof RootNode) {
-			final RootNode rootNode = (RootNode) root;
-			final IBacktranslationValueProvider<TE, E> stringProvider = null;
-			final Map<RCFGNode, Expression> invariants = extractInvariants(rootNode);
-			mGraph = getGraph(stringProvider, rootNode, invariants);
-		}
-		return false;
+		mLogger = logger;
+		mStringProvider = provider;
+		mTranslatedCFG = translatedCFG;
 	}
 
 	@Override
 	public String makeGraphMLString() {
-		final GraphMLWriter<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> graphWriter = new GraphMLWriter<>();
-		final String filename = StringEscapeUtils.escapeXml10("");
-		// mStringProvider.getFileNameFromStep(mProgramExecution.getTraceElement(0).getStep())
+		final GraphMLWriter<GeneratedWitnessNode, GeneratedWitnessEdge<TTE, TE>> graphWriter = new GraphMLWriter<>();
+		final String filename = StringEscapeUtils.escapeXml10(mTranslatedCFG.getFilename());
 
-		graphWriter.setEdgeIDs(new Transformer<GeneratedWitnessEdge<TE, E>, String>() {
+		graphWriter.setEdgeIDs(new Transformer<GeneratedWitnessEdge<TTE, TE>, String>() {
 			@Override
-			public String transform(GeneratedWitnessEdge<TE, E> arg0) {
+			public String transform(GeneratedWitnessEdge<TTE, TE> arg0) {
 				return arg0.getName();
 			}
 		});
@@ -133,9 +109,10 @@ public class TrueWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E> imp
 		// TODO: When we switch to "multi-property" witnesses, we write invariants for FALSE-witnesses
 		addVertexData(graphWriter, "invariant", "true", vertex -> vertex.getInvariant());
 
+		final Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge<TTE, TE>> graph = getGraph();
 		final StringWriter writer = new StringWriter();
 		try {
-			graphWriter.save(mGraph, writer);
+			graphWriter.save(graph, writer);
 		} catch (final IOException e) {
 			mLogger.error("Could not save witness graph: " + e.getMessage());
 		}
@@ -151,25 +128,26 @@ public class TrueWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E> imp
 		}
 	}
 
-	private Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> getGraph(
-			final IBacktranslationValueProvider<TE, E> stringProvider, final RootNode root,
-			final Map<RCFGNode, Expression> invariants) {
-		final DirectedSparseGraph<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> graph = new OrderedDirectedSparseGraph<>();
-		final GeneratedWitnessNodeEdgeFactory<TE, E> fac = new GeneratedWitnessNodeEdgeFactory<TE, E>(stringProvider);
+	private Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge<TTE, TE>> getGraph() {
+		final DirectedSparseGraph<GeneratedWitnessNode, GeneratedWitnessEdge<TTE, TE>> graph = new OrderedDirectedSparseGraph<>();
 
-		final Deque<RCFGNode> worklist = new ArrayDeque<>();
-		final Map<RCFGNode, GeneratedWitnessNode> nodecache = new HashMap<>();
-		final Set<RCFGEdge> closed = new HashSet<RCFGEdge>();
+		final GeneratedWitnessNodeEdgeFactory<TTE, TE> fac = new GeneratedWitnessNodeEdgeFactory<TTE, TE>(
+				mStringProvider);
+
+		final IExplicitEdgesMultigraph<?, ?, String, TTE> root = mTranslatedCFG.getCFG();
+
+		final Deque<IExplicitEdgesMultigraph<?, ?, String, TTE>> worklist = new ArrayDeque<>();
+		final Map<IExplicitEdgesMultigraph<?, ?, String, TTE>, GeneratedWitnessNode> nodecache = new HashMap<>();
+		final Set<IMultigraphEdge<?, ?, String, TTE>> closed = new HashSet<>();
 
 		GeneratedWitnessNode rootWitnessNode = fac.createInitialWitnessNode();
 		nodecache.put(root, rootWitnessNode);
 		graph.addVertex(rootWitnessNode);
 
 		// initial edges are different
-		for (final RCFGEdge outgoing : root.getOutgoingEdges()) {
-			final GeneratedWitnessEdge<TE, E> edge = fac.createDummyWitnessEdge();
-			final GeneratedWitnessNode node = getWitnessNode(outgoing.getTarget(), invariants, stringProvider, fac,
-					nodecache);
+		for (final IMultigraphEdge<?, ?, String, TTE> outgoing : root.getOutgoingEdges()) {
+			final GeneratedWitnessEdge<TTE, TE> edge = fac.createDummyWitnessEdge();
+			final GeneratedWitnessNode node = getWitnessNode(outgoing.getTarget(), mStringProvider, fac, nodecache);
 			graph.addEdge(edge, rootWitnessNode, node);
 			closed.add(outgoing);
 			worklist.add(outgoing.getTarget());
@@ -177,18 +155,17 @@ public class TrueWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E> imp
 
 		// now for the rest
 		while (!worklist.isEmpty()) {
-			final RCFGNode sourceNode = worklist.remove();
-			final GeneratedWitnessNode sourceWNode = getWitnessNode(sourceNode, invariants, stringProvider, fac,
-					nodecache);
+			final IExplicitEdgesMultigraph<?, ?, String, TTE> sourceNode = worklist.remove();
+			final GeneratedWitnessNode sourceWNode = getWitnessNode(sourceNode, mStringProvider, fac, nodecache);
 
-			for (final RCFGEdge outgoing : root.getOutgoingEdges()) {
+			for (final IMultigraphEdge<?, ?, String, TTE> outgoing : sourceNode.getOutgoingEdges()) {
 				if (!closed.add(outgoing)) {
 					continue;
 				}
-				final AtomicTraceElement<TE> traceElement = getATE(outgoing);
-				final GeneratedWitnessEdge<TE, E> edge = fac.createWitnessEdge(traceElement);
-				final GeneratedWitnessNode targetWNode = getWitnessNode(outgoing.getTarget(), invariants,
-						stringProvider, fac, nodecache);
+				final AtomicTraceElement<TTE> traceElement = new AtomicTraceElement<>(outgoing.getLabel());
+				final GeneratedWitnessEdge<TTE, TE> edge = fac.createWitnessEdge(traceElement);
+				final GeneratedWitnessNode targetWNode = getWitnessNode(outgoing.getTarget(), mStringProvider, fac,
+						nodecache);
 
 				graph.addEdge(edge, sourceWNode, targetWNode);
 				worklist.add(outgoing.getTarget());
@@ -198,14 +175,10 @@ public class TrueWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E> imp
 		return graph;
 	}
 
-	private AtomicTraceElement<TE> getATE(RCFGEdge outgoing) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	private GeneratedWitnessNode getWitnessNode(final RCFGNode node, final Map<RCFGNode, Expression> invariants,
-			final IBacktranslationValueProvider<TE, E> stringProvider, final GeneratedWitnessNodeEdgeFactory<TE, E> fac,
-			final Map<RCFGNode, GeneratedWitnessNode> nodecache) {
+	private GeneratedWitnessNode getWitnessNode(final IExplicitEdgesMultigraph<?, ?, String, TTE> node,
+			final IBacktranslationValueProvider<TTE, TE> stringProvider,
+			final GeneratedWitnessNodeEdgeFactory<TTE, TE> fac,
+			final Map<IExplicitEdgesMultigraph<?, ?, String, TTE>, GeneratedWitnessNode> nodecache) {
 		GeneratedWitnessNode wnode = nodecache.get(node);
 		if (wnode != null) {
 			return wnode;
@@ -213,88 +186,13 @@ public class TrueWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E> imp
 
 		wnode = fac.createWitnessNode();
 		nodecache.put(node, wnode);
-		final Expression invariant = invariants.get(node);
+		final String invariant = node.getLabel();
 		if (invariant == null) {
 			return wnode;
 		}
 
-		// TODO: Translate invariant, set invariant
-		wnode.setInvariant(invariant.toString());
+		wnode.setInvariant(invariant);
 
 		return wnode;
 	}
-
-	private Map<RCFGNode, Expression> extractInvariants(final RootNode root) {
-		final RootAnnot rootAnnot = root.getRootAnnot();
-		final IBacktranslationService backtranslator = mServices.getBacktranslationService();
-		final Term trueTerm = rootAnnot.getScript().term("true");
-		final Map<RCFGNode, Expression> rtr = new HashMap<RCFGNode, Expression>();
-
-		// loop invariants
-		for (final ProgramPoint locNode : rootAnnot.getLoopLocations().keySet()) {
-			assert (locNode.getBoogieASTNode() != null) : "locNode without BoogieASTNode";
-
-			final HoareAnnotation hoare = HoareAnnotation.getAnnotation(locNode);
-			if (hoare == null) {
-				continue;
-			}
-			final Term formula = hoare.getFormula();
-			if (formula.equals(trueTerm)) {
-				continue;
-			}
-
-			final Expression expr = rootAnnot.getBoogie2SMT().getTerm2Expression().translate(formula);
-			mLogger.info("Invariant at " + locNode + " is "
-					+ backtranslator.translateExpressionToString(expr, (Class<Expression>) expr.getClass()));
-			final Expression old = rtr.put(locNode, expr);
-			assert old == null : "Only one expression per node";
-		}
-
-		// procedure contracts
-		for (final Entry<String, ProgramPoint> entry : rootAnnot.getExitNodes().entrySet()) {
-			if (isAuxilliaryProcedure(entry.getKey())) {
-				continue;
-			}
-			final HoareAnnotation hoare = HoareAnnotation.getAnnotation(entry.getValue());
-			if (hoare == null) {
-				continue;
-			}
-			final Term formula = hoare.getFormula();
-			if (formula.equals(trueTerm)) {
-				continue;
-			}
-			final Expression expr = rootAnnot.getBoogie2SMT().getTerm2Expression().translate(formula);
-			mLogger.info("Contract at " + entry.getValue() + " is "
-					+ backtranslator.translateExpressionToString(expr, (Class<Expression>) expr.getClass()));
-			final Expression old = rtr.put(entry.getValue(), expr);
-			assert old == null : "Only one expression per node";
-		}
-
-		return rtr;
-	}
-
-	private static boolean isAuxilliaryProcedure(final String proc) {
-		return proc.equals("ULTIMATE.init") || proc.equals("ULTIMATE.start");
-	}
-
-	@Override
-	public void init(GraphType modelType, int currentModelIndex, int numberOfModels) throws Throwable {
-
-	}
-
-	@Override
-	public void finish() throws Throwable {
-
-	}
-
-	@Override
-	public WalkerOptions getWalkerOptions() {
-		return null;
-	}
-
-	@Override
-	public boolean performedChanges() {
-		return false;
-	}
-
 }

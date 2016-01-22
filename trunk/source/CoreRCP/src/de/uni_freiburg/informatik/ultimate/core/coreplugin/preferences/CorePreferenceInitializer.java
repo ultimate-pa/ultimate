@@ -134,7 +134,7 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 
 	@Override
 	protected String getPlugID() {
-		return Activator.s_PLUGIN_ID;
+		return Activator.PLUGIN_ID;
 	}
 
 	@Override
@@ -142,8 +142,8 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 		return "General";
 	}
 
-	public static final String PLUGINID = Activator.s_PLUGIN_ID;
-	public static final String PLUGINNAME = Activator.s_PLUGIN_NAME;
+	public static final String PLUGINID = Activator.PLUGIN_ID;
+	public static final String PLUGINNAME = Activator.PLUGIN_NAME;
 
 	/**
 	 * Preference Label/Value pairs
@@ -306,7 +306,7 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 		@Override
 		public boolean isValid(Boolean value) {
 			if (value) {
-				UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+				UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 				return ups.getBoolean(LABEL_WITNESS_GEN) && ups.getBoolean(LABEL_WITNESS_WRITE);
 			} else {
 				return true;

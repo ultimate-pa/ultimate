@@ -38,11 +38,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
-import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.result.model.IResult;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution.ProgramState;
 
 /**
  * 
@@ -62,13 +63,13 @@ public class RcfgResultReporter implements IResultReporter<CodeBlock> {
 
 	@Override
 	public void reportPossibleError(CodeBlock start, CodeBlock end) {
-		final IResult result = new UnprovableResult<ProgramPoint, CodeBlock, Expression>(Activator.PLUGIN_ID,
+		final IResult result = new UnprovableResult<ProgramPoint, RCFGEdge, Expression>(Activator.PLUGIN_ID,
 				(ProgramPoint) end.getTarget(), mServices.getBacktranslationService(), getProgramExecution(start, end),
 				"Abstract Interpretation could reach this error location");
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 	}
 
-	private IProgramExecution<CodeBlock, Expression> getProgramExecution(CodeBlock start, CodeBlock end) {
+	private IProgramExecution<RCFGEdge, Expression> getProgramExecution(CodeBlock start, CodeBlock end) {
 		final List<CodeBlock> trace = mStorageProvider.getErrorTrace(start, end);
 		final Map<Integer, ProgramState<Expression>> map = Collections.emptyMap();
 		return new RcfgProgramExecution(trace, map);

@@ -1,8 +1,9 @@
 /*
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
+ * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Oleksii Saukh (saukho@informatik.uni-freiburg.de)
- * Copyright (C) 2012-2015 Stefan Wissert
+ * Copyright (C) 2015 Stefan Wissert
  * Copyright (C) 2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE Core.
@@ -27,40 +28,39 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
-/**
- * Valuation for the counter example result class.
- */
-package de.uni_freiburg.informatik.ultimate.result;
+package de.uni_freiburg.informatik.ultimate.result.model;
 
-import java.util.AbstractMap.SimpleEntry;
-import java.util.List;
-import java.util.Map;
-
-import de.uni_freiburg.informatik.ultimate.model.IType;
 
 /**
+ * Interface for the results that are produced while running a toolchain.
+ * These results are shown by the frontends of ULTIMATE. 
  * @author Markus Lindenmann
  * @author Stefan Wissert
  * @author Oleksii Saukh
+ * @author heizmann@informatik.uni-freiburg.de
  * @date 02.01.2012
  */
-public interface IValuation {
-
+public interface IResult {
+	
 	/**
-	 * This method returns the Variable Values for current position on the
-	 * failure path. How this is done is in the responsibility of each
-	 * ModelChecker, that have to implement this interface.
-	 * <br><br>
-	 * The method returns a map which maps from the variable name to the values.
-	 * The values are modeled as SimpleEntry<IType, List<String>>, where IType
-	 * signals the type of the Variable (so Integer, Double or Array<Integer>)
-	 * and the List represent the values of the single variable or the array.
-	 * 
-	 * @param index
-	 *            the current position on the failure path.
-	 * @return the values as Strings for the variables.
+	 * Plugin that derived this IResult.
 	 */
-	public Map<String, SimpleEntry<IType, List<String>>> getValuesForFailurePathIndex(
-			int index);
-
+	public String getPlugin();
+	
+	/**
+	 * Kind of Result, in a few words. E.g., "procedure precondition can be
+	 * violated", "ranking function found", "unsupported syntax".
+	 */
+	public String getShortDescription();
+	
+	/**
+	 * String representation of the result. Contains all information that are
+	 * not already given by
+	 * <ul>
+	 * <li> location, 
+	 * <li> short description,
+	 * <li> or objects provided by subinterfaces/subclasses
+	 * </ul>
+	 */
+	public String getLongDescription();
 }

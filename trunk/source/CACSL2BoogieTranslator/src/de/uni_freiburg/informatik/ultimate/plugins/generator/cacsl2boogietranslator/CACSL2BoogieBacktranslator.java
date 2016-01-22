@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
@@ -80,12 +81,13 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Oper
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.structure.Multigraph;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
-import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 /**
@@ -107,8 +109,7 @@ public class CACSL2BoogieBacktranslator
 	private AExpressionTranslation mExpressionTranslation;
 
 	public CACSL2BoogieBacktranslator(IUltimateServiceProvider services) {
-		super(new CACSLBacktranslationValueProvider(), BoogieASTNode.class, CACSLLocation.class, Expression.class,
-				IASTExpression.class);
+		super(BoogieASTNode.class, CACSLLocation.class, Expression.class, IASTExpression.class);
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mBoogie2C = new Boogie2C();
@@ -120,6 +121,7 @@ public class CACSL2BoogieBacktranslator
 
 	@Override
 	public List<CACSLLocation> translateTrace(List<BoogieASTNode> trace) {
+		// TODO: Implement translatetrace
 		return super.translateTrace(trace);
 	}
 
@@ -530,6 +532,13 @@ public class CACSL2BoogieBacktranslator
 				}
 			}
 		}
+	}
+
+	@Override
+	public IBacktranslatedCFG<?, CACSLLocation> translateCFG(IBacktranslatedCFG<?, BoogieASTNode> cfg) {
+		// TODO: Implement backtranslation here
+		final Multigraph<String, CACSLLocation> newRoot = new Multigraph<String, CACSLLocation>(null);
+		return new CACSLBacktranslatedCFG(cfg.getFilename(), newRoot, CACSLLocation.class, mLogger);
 	}
 
 	@Override

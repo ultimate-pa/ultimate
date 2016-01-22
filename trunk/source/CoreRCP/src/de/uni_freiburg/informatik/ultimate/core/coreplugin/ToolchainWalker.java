@@ -138,8 +138,8 @@ final class ToolchainWalker implements IToolchainCancel {
 			data.getToolchain()
 					.getServices()
 					.getResultService()
-					.reportResult(Activator.s_PLUGIN_ID,
-							new TimeoutResult(Activator.s_PLUGIN_ID, "Timeout occured before executing " + pluginId));
+					.reportResult(Activator.PLUGIN_ID,
+							new TimeoutResult(Activator.PLUGIN_ID, "Timeout occured before executing " + pluginId));
 			mLogger.info("Toolchain execution was canceled (Timeout) before executing " + pluginId);
 			return true;
 		}

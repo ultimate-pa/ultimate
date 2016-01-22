@@ -49,8 +49,8 @@ import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.texteditor.MarkerUtilities;
 
 import de.uni_freiburg.informatik.ultimate.cdt.codan.CDTResultStore;
-import de.uni_freiburg.informatik.ultimate.result.IResult;
-import de.uni_freiburg.informatik.ultimate.result.IResultWithLocation;
+import de.uni_freiburg.informatik.ultimate.result.model.IResult;
+import de.uni_freiburg.informatik.ultimate.result.model.IResultWithLocation;
 
 /**
  * This new View is basically a replacement for the not really handy

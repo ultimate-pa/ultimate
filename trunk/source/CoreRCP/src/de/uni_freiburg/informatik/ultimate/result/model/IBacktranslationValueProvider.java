@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.result;
+package de.uni_freiburg.informatik.ultimate.result.model;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;

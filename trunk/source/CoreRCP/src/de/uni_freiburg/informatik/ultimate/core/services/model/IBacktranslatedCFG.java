@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Core.
  * 
@@ -25,8 +24,32 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.result;
 
-public interface ITimeoutResult {
+package de.uni_freiburg.informatik.ultimate.core.services.model;
 
+import de.uni_freiburg.informatik.ultimate.model.structure.IExplicitEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
+
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ * @param <VL>
+ * @param <TE>
+ */
+public interface IBacktranslatedCFG<VL, TE> {
+
+	IExplicitEdgesMultigraph<?, ?, VL, TE> getCFG();
+
+	String getFilename();
+
+	Class<TE> getTraceElementClass();
+
+	/**
+	 * @see IProgramExecution#getSVCOMPWitnessString()
+	 * @return null iff you do not support SVCOMP witnesses, a String
+	 *         representing the described program execution as SVCOMP GraphML
+	 *         otherwise.
+	 */
+	String getSVCOMPWitnessString();
 }

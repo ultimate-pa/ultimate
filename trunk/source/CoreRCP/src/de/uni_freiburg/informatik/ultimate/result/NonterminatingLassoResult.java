@@ -30,6 +30,8 @@ package de.uni_freiburg.informatik.ultimate.result;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.result.model.IResultWithInfiniteLassoTrace;
 
 /**
  * Result that reports that a nonterminating execution for a lasso shaped

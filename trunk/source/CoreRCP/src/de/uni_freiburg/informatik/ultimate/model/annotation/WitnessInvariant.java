@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE Core.
@@ -24,49 +24,48 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.model.annotation;
 
-import java.util.Arrays;
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
+import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.model.IPayload;
 
 /**
- * Annotation that indicates that model checkers should infer an invariant
- * for the annotated node.
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
  */
-public class InvariantRequest extends AbstractAnnotations {
-	
-	public static final String getIdentifier() {
-		return InvariantRequest.class.getName();
-	}
-	
-	public static final String LOOPENTRY = "loop entry";
-	
-	private final String[] m_Reasons;
-	
-	public InvariantRequest(String... resons) {
-		m_Reasons = resons;
+public class WitnessInvariant extends ModernAnnotations {
+
+	private static final long serialVersionUID = 1L;
+	private static final String KEY = Activator.PLUGIN_ID + "_WitnessInvariant";
+
+	@Visualizable
+	private final String mInvariant;
+
+	public WitnessInvariant(final String invariant) {
+		mInvariant = invariant;
 	}
 
-	private static final long serialVersionUID = -575969312624287029L;
-
-	/**
-	 * The published attributes.  Update this and getFieldValue()
-	 * if you add new attributes.
-	 */
-	private final static String[] s_AttribFields = {
-		"Reason"
-	};
-	
-	@Override
-	protected String[] getFieldNames() {
-		return s_AttribFields;
+	public String getInvariant() {
+		return mInvariant;
 	}
 
-	@Override
-	protected Object getFieldValue(String field) {
-		if (field.equals("Reason"))
-			return Arrays.toString(m_Reasons);
-		else
-			throw new UnsupportedOperationException("Unknown field "+field);
+	public void annotate(IElement node) {
+		node.getPayload().getAnnotations().put(KEY, this);
 	}
 
+	public static WitnessInvariant getAnnotation(IElement node) {
+		if (node.hasPayload()) {
+			final IPayload payload = node.getPayload();
+			if (payload.hasAnnotation()) {
+				final IAnnotations annot = payload.getAnnotations().get(KEY);
+				if (annot != null) {
+					return (WitnessInvariant) annot;
+				}
+			}
+		}
+		return null;
+	}
 }
