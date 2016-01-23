@@ -163,6 +163,7 @@ public class TrueWitnessExtractor {
 		final Pair<List<IASTNode>, List<IASTNode>> nodes = matchASTNodes(current);
 		if (nodes == null) {
 			mLogger.error("Could not match witness node to AST node: " + current);
+			return;
 		}
 		for (final IASTNode node : nodes.getFirst()) {
 			addInvariants(rtr.getFirst(), invariant, node);
