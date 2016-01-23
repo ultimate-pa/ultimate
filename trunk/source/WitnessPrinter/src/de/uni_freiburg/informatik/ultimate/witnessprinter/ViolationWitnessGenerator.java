@@ -51,13 +51,13 @@ import edu.uci.ics.jung.io.GraphMLWriter;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
-public class FalseWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E> {
+public class ViolationWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E> {
 
 	private final IProgramExecution<TE, E> mProgramExecution;
 	private final IBacktranslationValueProvider<TE, E> mStringProvider;
 	private final Logger mLogger;
 
-	public FalseWitnessGenerator(final IProgramExecution<TE, E> translatedProgramExecution,
+	public ViolationWitnessGenerator(final IProgramExecution<TE, E> translatedProgramExecution,
 			final IBacktranslationValueProvider<TE, E> stringProvider, final Logger logger) {
 		super();
 		assert translatedProgramExecution != null;
@@ -88,7 +88,7 @@ public class FalseWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E> {
 		});
 
 		addGraphData(graphWriter, "sourcecodelang", null, graph -> "C");
-		addGraphData(graphWriter, "witness-type", null, graph -> "false_witness");
+		addGraphData(graphWriter, "witness-type", null, graph -> "violation_witness");
 
 		addEdgeData(graphWriter, "sourcecode", null, edge -> StringEscapeUtils.escapeXml10(edge.getSourceCode()));
 		addEdgeData(graphWriter, "assumption", null, edge -> StringEscapeUtils.escapeXml10(edge.getAssumption()));

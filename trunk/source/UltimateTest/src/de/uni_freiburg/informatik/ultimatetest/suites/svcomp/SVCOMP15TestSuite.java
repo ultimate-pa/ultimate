@@ -174,7 +174,7 @@ public class SVCOMP15TestSuite extends AbstractSVCOMPTestSuite {
 //				"svcomp2015/svComp-32bit-precise-BE-Impulse.epf", getTimeout()));
 
 		/* Abstract Interpretation */
-		rtr.add(getTestDefinitionFromExamples("Loops-validate", "AbstractInterpretationv2CInline.xml",
+		rtr.add(getTestDefinitionFromExamples("Loops-validate", "AbstractInterpretationv2C.xml",
 		        "ai/AIv2_INT.epf", getTimeout()));
 		
 		return rtr;
