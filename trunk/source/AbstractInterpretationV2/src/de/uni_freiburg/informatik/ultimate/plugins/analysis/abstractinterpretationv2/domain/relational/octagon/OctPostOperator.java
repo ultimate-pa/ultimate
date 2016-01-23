@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,10 +39,12 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 	}
 
 	@Override
-	public OctagonDomainState apply(OctagonDomainState oldState, CodeBlock codeBlock) {
-		OctagonDomainState currentState = oldState;
+	public List<OctagonDomainState> apply(OctagonDomainState oldState, CodeBlock codeBlock) {
+		List<OctagonDomainState> currentState = Collections.singletonList(oldState.deepCopy());
+//		List<OctagonDomainState> currentState = new ArrayList<>();
+//		currentState.add(oldState);
 		for (Statement statement : mStatementExtractor.process(codeBlock)) {
-			currentState = join(mStatementProcessor.process(currentState, statement));
+			currentState = mStatementProcessor.process(currentState, statement);
 		}
 		return currentState;
 	}
@@ -60,15 +63,17 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 	}
 
 	@Override
-	public OctagonDomainState apply(OctagonDomainState stateBeforeLeaving, OctagonDomainState stateAfterLeaving,
+	public List<OctagonDomainState> apply(OctagonDomainState stateBeforeLeaving, OctagonDomainState stateAfterLeaving,
 			CodeBlock transition) {
+		OctagonDomainState result;
 		if (transition instanceof Call) {
-			return applyCall(stateBeforeLeaving, stateAfterLeaving, (Call) transition);
+			result = applyCall(stateBeforeLeaving, stateAfterLeaving, (Call) transition);
 		} else if (transition instanceof Return) {
-			return applyReturn(stateBeforeLeaving, stateAfterLeaving, (Return) transition);
+			result = applyReturn(stateBeforeLeaving, stateAfterLeaving, (Return) transition);
 		} else {
 			throw new UnsupportedOperationException("Unsupported transition: " + transition);
 		}
+		return Collections.singletonList(result);
 	}
 
 	private OctagonDomainState applyCall(OctagonDomainState stateBeforeLeaving, OctagonDomainState stateAfterLeaving,
