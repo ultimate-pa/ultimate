@@ -487,7 +487,6 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 				}
 			}
 		} else if (mBooleanAbstraction.containsKey(var)) {
-			assert mBooleanAbstraction.containsKey(var) : "introduced new variable " + var;
 			mBooleanAbstraction.put(var, BoolValue.TOP);
 		}
 		// else: variables of unsupported types are assumed to be \top all the time
@@ -505,10 +504,47 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		mNumericAbstraction.set(v2 + 1, v2, max.add(max));
 	}
 
+	protected void assignVars(Map<String, String> mapSourceVarToTargetVar) {
+		for (Map.Entry<String, String> entry : mapSourceVarToTargetVar.entrySet()) {
+			String sourceVar = entry.getKey();
+			String targetVar = entry.getValue();
+			assignVar(targetVar, sourceVar);
+		}
+	}
+
+	// targetVar := sourceVar
+	protected void assignVar(String targetVar, String sourceVar) {
+		Integer targetIndex = mMapNumericVarToIndex.get(targetVar);
+		if (targetIndex != null) {
+			int bTarget = targetIndex;
+			int bSource = mMapNumericVarToIndex.get(sourceVar);
+			// minimize imprecise "x + x <= 8" to "x + x <= 0" -- otherwsise "x == y" cannot be detected after "x := y"
+			int bs2 = bSource * 2;
+			mNumericAbstraction.set(bs2, bs2, OctValue.min(OctValue.ZERO, mNumericAbstraction.get(bs2, bs2)));
+			mNumericAbstraction.set(bs2+1, bs2+1, OctValue.min(OctValue.ZERO, mNumericAbstraction.get(bs2+1, bs2+1)));
+			// closure is not necessary -- we do not loose any information
+			// Copy column. Row is copied by coherence.
+			for (int bRow = 0; bRow < mNumericAbstraction.variables(); ++bRow) {
+				if (bRow == bTarget || bRow == bSource) {
+					mNumericAbstraction.copyBlock(bTarget, bTarget, /* := */ mNumericAbstraction, bSource, bSource);
+				} else {
+					mNumericAbstraction.copyBlock(bRow, bTarget, /* := */ mNumericAbstraction, bRow, bSource);
+				}
+			}
+		} else if (mBooleanAbstraction.containsKey(targetIndex)) {
+			BoolValue value = mBooleanAbstraction.get(sourceVar);
+			assert value != null : "Incompatible types";
+			mBooleanAbstraction.put(targetVar, value);
+		}
+		// else: variables of unsupported types are assumed to be \top all the time
+		assert mMapVarToBoogieVar.containsKey(targetVar) && mMapVarToBoogieVar.containsKey(sourceVar)
+			: "unknown variable in assignment: " + targetVar + " := " + sourceVar;
+	}
+	
 	// v1 := v2 + c;
 	protected void assignNumericVarRelational(String var, String otherVar, OctValue addConstant) {
 		OctValue addConstantNegated = addConstant.negate();
-		Integer v2 = mMapNumericVarToIndex.get(var) * 2;
+		int v2 = mMapNumericVarToIndex.get(var) * 2;
 		if (var.equals(otherVar)) {
 			// update column (row is updated by coherence)
 			for (int i = 0; i < mNumericAbstraction.getSize(); ++i) {
@@ -529,10 +565,10 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 				}
 			}
 		} else {
-			Integer ov2 = mMapNumericVarToIndex.get(var) * 2;
+			int ov2 = mMapNumericVarToIndex.get(otherVar) * 2;
 			havocVar(var);
-			mNumericAbstraction.set(ov2, v2, addConstant); // also entry (v2 + 1, ov2 + 1) by coherence
-			mNumericAbstraction.set(v2, ov2, addConstantNegated); // also entry (ov2 + 1, v2 + 1) by coherence
+			mNumericAbstraction.set(ov2, v2, addConstant); // also sets entry (v2 + 1, ov2 + 1) by coherence
+			mNumericAbstraction.set(v2, ov2, addConstantNegated); // also sets entry (ov2 + 1, v2 + 1) by coherence
 		}
 	}
 

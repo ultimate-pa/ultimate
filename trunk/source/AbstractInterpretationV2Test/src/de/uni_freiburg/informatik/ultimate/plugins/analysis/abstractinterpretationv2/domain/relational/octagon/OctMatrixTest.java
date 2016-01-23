@@ -9,6 +9,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctMatrix;
+import de.uni_freiburg.informatik.ultimate.util.BidirectionalMap;
 
 public class OctMatrixTest {
 	
@@ -264,6 +265,38 @@ public class OctMatrixTest {
 				+ "inf inf   6  12  30  36 ");
 		OctMatrix actual = a.appendSelection(b, asList(0, 2));
 		assertIsEqualTo(expected, actual);
+	}
+	
+	@Test
+	public void testCopySelection() {		
+		OctMatrix a = OctMatrix.parseBlockLowerTriangular(
+				  "  1   9 "
+				+ "  2  10 "
+				+ "  3  11  19  27 "
+				+ "  4  12  20  28 "
+				+ "  5  13  21  29  37  45 "
+				+ "  6  14  22  30  38  46 ");
+		OctMatrix b = OctMatrix.parseBlockLowerTriangular(
+				  " .1  .9 "
+				+ " .2 .10 "
+				+ " .3 .11 .19 .27 "
+				+ " .4 .12 .20 .28 "
+				+ " .5 .13 .21 .29 .37 .45 "
+				+ " .6 .14 .22 .30 .38 .46 "
+				+ " .7 .15 .23 .31 .39 .47 .55 .63 "
+				+ " .8 .16 .24 .32 .40 .48 .56 .64 ");
+		OctMatrix expected = OctMatrix.parseBlockLowerTriangular(
+				  ".55 .63 "
+				+ ".56 .64 "
+				+ "inf inf  19  27 "
+				+ "inf inf  20  28 "
+				+ ".32 .31 inf inf .19 .27 "
+				+ ".24 .23 inf inf .20 .28 ");
+		BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar = new BidirectionalMap<>();
+		mapSourceVarToTargetVar.put(1, 2);
+		mapSourceVarToTargetVar.put(3, 0);
+		a.copySelection(b, mapSourceVarToTargetVar);		
+		assertIsEqualTo(expected, a);
 	}
 	
 //	@Test

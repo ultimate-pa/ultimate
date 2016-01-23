@@ -651,15 +651,14 @@ public class OctMatrix {
 			int sourceVar = entry.getKey();
 			int targetVar = entry.getValue();
 			for (int targetOther = 0; targetOther < variables(); ++targetOther) {
-				// TODO copy ONLY block lower part of the matrix -- no duplications
+				// copy only columns. Rows are copied by coherence
 				Integer sourceOther = mapTargetVarToSourceVar.get(targetOther);
 				if (sourceOther == null) {
-					// TODO is it safe/possible to keep some information?
 					setBlock(targetOther, targetVar, OctValue.INFINITY);
-					setBlock(targetVar, targetOther, OctValue.INFINITY);
+//					setBlock(targetVar, targetOther, OctValue.INFINITY);
 				} else {
 					copyBlock(targetOther, targetVar, /* := */ source, sourceOther, sourceVar); // column
-					copyBlock(targetVar, targetOther, /* := */ source, sourceVar, sourceOther); // row
+//					copyBlock(targetVar, targetOther, /* := */ source, sourceVar, sourceOther); // row
 				}
 			}
 		}
@@ -678,18 +677,24 @@ public class OctMatrix {
 		return m;
 	}
 	
-	private void copyBlock(int targetBRow, int targetBCol, OctMatrix source, int sourceBRow, int sourceBCol) {
+	protected void copyBlock(int targetBRow, int targetBCol, OctMatrix source, int sourceBRow, int sourceBCol) {
+		targetBRow *= 2;
+		targetBCol *= 2;
+		sourceBRow *= 2;
+		sourceBCol *= 2;
 		for (int j = 0; j < 2; j++) {
 			for (int i = 0; i < 2; ++i) {
-				set(2*targetBRow + i, 2*targetBCol + j, source.get(2*sourceBRow + i, 2*sourceBCol + j));
+				set(targetBRow + i, targetBCol + j, source.get(sourceBRow + i, sourceBCol + j));
 			}
 		}
 	}
 
-	private void setBlock(int bRow, int bCol, OctValue v) {
+	protected void setBlock(int bRow, int bCol, OctValue v) {
+		bRow *= 2;
+		bCol *= 2;
 		for (int j = 0; j < 2; j++) {
 			for (int i = 0; i < 2; ++i) {
-				set(2*bRow + i, 2*bCol + j, v);
+				set(bRow + i, bCol + j, v);
 			}
 		}
 	}
