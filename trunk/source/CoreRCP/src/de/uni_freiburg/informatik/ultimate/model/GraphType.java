@@ -86,7 +86,7 @@ public class GraphType implements Serializable {
 	 * @author dietsch
 	 */
 	public enum Type {
-		AST, CG, CFG, DFG, CST, TS, PG, OTHER, TRUE_WITNESS, FALSE_WITNESS
+		AST, CG, CFG, DFG, CST, TS, PG, OTHER, CORRECTNESS_WITNESS, VIOLATION_WITNESS
 	}
 
 	public GraphType(String creatorPluginID, Type type, Collection<String> fileNames) {

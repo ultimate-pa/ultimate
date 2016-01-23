@@ -194,10 +194,10 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		final WitnessGraphAnnotation graphAnnot = WitnessGraphAnnotation.getAnnotation(wnode);
 
 		switch (graphAnnot.getWitnessType()) {
-		case FALSE_WITNESS:
+		case VIOLATION_WITNESS:
 			// is currently not handled here. May happen in the future if we want to handle assume
 			break;
-		case TRUE_WITNESS:
+		case CORRECTNESS_WITNESS:
 			mWitnessExtractor.setWitness(wnode);
 			break;
 		default:
