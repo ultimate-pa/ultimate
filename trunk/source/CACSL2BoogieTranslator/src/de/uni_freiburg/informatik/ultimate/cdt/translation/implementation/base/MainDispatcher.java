@@ -206,6 +206,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.WitnessInvariants;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 
 /**
@@ -360,242 +361,182 @@ public class MainDispatcher extends Dispatcher {
 
 	@Override
 	public Result dispatch(IASTNode n) {
+		final Result result;
 		if (n instanceof IASTTranslationUnit) {
-			return cHandler.visit(this, ((IASTTranslationUnit) n));
-		}
-		if (n instanceof IASTSimpleDeclaration) {
-			return cHandler.visit(this, (IASTSimpleDeclaration) n);
-		}
-		if (n instanceof IASTParameterDeclaration) {
-			return cHandler.visit(this, (IASTParameterDeclaration) n);
-		}
-		if (n instanceof IASTASMDeclaration) {
-			return cHandler.visit(this, (IASTASMDeclaration) n);
-		}
-		if (n instanceof IASTDeclarator) {
-			return cHandler.visit(this, (IASTDeclarator) n);
-		}
-		if (n instanceof IASTFunctionDefinition) {
-			return cHandler.visit(this, (IASTFunctionDefinition) n);
-		}
-		if (n instanceof IASTArrayModifier) {
-			return cHandler.visit(this, (IASTArrayModifier) n);
-		}
-		if (n instanceof IASTComment) {
+			result = cHandler.visit(this, ((IASTTranslationUnit) n));
+		} else if (n instanceof IASTSimpleDeclaration) {
+			result =  cHandler.visit(this, (IASTSimpleDeclaration) n);
+		} else if (n instanceof IASTParameterDeclaration) {
+			result =  cHandler.visit(this, (IASTParameterDeclaration) n);
+		} else if (n instanceof IASTASMDeclaration) {
+			result = cHandler.visit(this, (IASTASMDeclaration) n);
+		} else if (n instanceof IASTDeclarator) {
+			result = cHandler.visit(this, (IASTDeclarator) n);
+		} else if (n instanceof IASTFunctionDefinition) {
+			result = cHandler.visit(this, (IASTFunctionDefinition) n);
+		} else if (n instanceof IASTArrayModifier) {
+			result = cHandler.visit(this, (IASTArrayModifier) n);
+		} else if (n instanceof IASTComment) {
 			// TODO : remove? I think they are excluded by the parser anyway?
-			return cHandler.visit(this, (IASTComment) n);
-		}
-		if (n instanceof IASTDeclaration) {
-			return cHandler.visit(this, (IASTDeclaration) n);
-		}
-		if (n instanceof IASTDeclSpecifier) {
+			result = cHandler.visit(this, (IASTComment) n);
+		} else if (n instanceof IASTDeclaration) {
+			result = cHandler.visit(this, (IASTDeclaration) n);
+		} else if (n instanceof IASTDeclSpecifier) {
 			// Here we decide which further Interface we want to visit, and
 			// call the typeHandler
 			if (n instanceof IASTSimpleDeclSpecifier) {
-				return typeHandler.visit(this, (IASTSimpleDeclSpecifier) n);
+				result = typeHandler.visit(this, (IASTSimpleDeclSpecifier) n);
+			} else if (n instanceof IASTNamedTypeSpecifier) {
+				result = typeHandler.visit(this, (IASTNamedTypeSpecifier) n);
+			} else if (n instanceof IASTEnumerationSpecifier) {
+				result = typeHandler.visit(this, (IASTEnumerationSpecifier) n);
+			} else if (n instanceof IASTElaboratedTypeSpecifier) {
+				result = typeHandler.visit(this, (IASTElaboratedTypeSpecifier) n);
+			} else if (n instanceof IASTCompositeTypeSpecifier) {
+				result = typeHandler.visit(this, (IASTCompositeTypeSpecifier) n);
+			} else {
+				result = cHandler.visit(this, (IASTDeclSpecifier) n);
 			}
-			if (n instanceof IASTNamedTypeSpecifier) {
-				return typeHandler.visit(this, (IASTNamedTypeSpecifier) n);
-			}
-			if (n instanceof IASTEnumerationSpecifier) {
-				return typeHandler.visit(this, (IASTEnumerationSpecifier) n);
-			}
-			if (n instanceof IASTElaboratedTypeSpecifier) {
-				return typeHandler.visit(this, (IASTElaboratedTypeSpecifier) n);
-			}
-			if (n instanceof IASTCompositeTypeSpecifier) {
-				return typeHandler.visit(this, (IASTCompositeTypeSpecifier) n);
-			}
-			return cHandler.visit(this, (IASTDeclSpecifier) n);
-		}
-		if (n instanceof IASTDeclarationListOwner) {
+		} else if (n instanceof IASTDeclarationListOwner) {
 			// must be after IASTCompositeTypeSpecifier!
-			return cHandler.visit(this, (IASTDeclarationListOwner) n);
-		}
-		if (n instanceof IASTStatement) {
+			result = cHandler.visit(this, (IASTDeclarationListOwner) n);
+		} else if (n instanceof IASTStatement) {
 			if (n instanceof IASTReturnStatement) {
-				return cHandler.visit(this, (IASTReturnStatement) n);
-			}
-			if (n instanceof IASTSwitchStatement) {
-				return cHandler.visit(this, (IASTSwitchStatement) n);
-			}
-			if (n instanceof IASTWhileStatement) {
-				return cHandler.visit(this, (IASTWhileStatement) n);
-			}
-			if (n instanceof IASTLabelStatement) {
-				return cHandler.visit(this, (IASTLabelStatement) n);
-			}
-			if (n instanceof IASTNullStatement) {
-				return cHandler.visit(this, (IASTNullStatement) n);
-			}
-			if (n instanceof IASTContinueStatement) {
-				return cHandler.visit(this, (IASTContinueStatement) n);
-			}
-			if (n instanceof IASTDeclarationStatement) {
-				return cHandler.visit(this, (IASTDeclarationStatement) n);
-			}
-			if (n instanceof IASTDefaultStatement) {
-				return cHandler.visit(this, (IASTDefaultStatement) n);
-			}
-			if (n instanceof IASTDoStatement) {
-				return cHandler.visit(this, (IASTDoStatement) n);
-			}
-			if (n instanceof IASTExpressionStatement) {
-				return cHandler.visit(this, (IASTExpressionStatement) n);
-			}
-			if (n instanceof IASTForStatement) {
-				return cHandler.visit(this, (IASTForStatement) n);
-			}
-			if (n instanceof IASTGotoStatement) {
-				return cHandler.visit(this, (IASTGotoStatement) n);
-			}
-			if (n instanceof IASTIfStatement) {
-				return cHandler.visit(this, (IASTIfStatement) n);
-			}
-			if (n instanceof IASTCompoundStatement) {
-				return cHandler.visit(this, (IASTCompoundStatement) n);
-			}
-			if (n instanceof IASTBreakStatement) {
-				return cHandler.visit(this, (IASTBreakStatement) n);
-			}
-			if (n instanceof IASTCaseStatement) {
-				return cHandler.visit(this, (IASTCaseStatement) n);
-			}
-			if (n instanceof IASTProblemStatement) {
+				result = cHandler.visit(this, (IASTReturnStatement) n);
+			} else if (n instanceof IASTSwitchStatement) {
+				result = cHandler.visit(this, (IASTSwitchStatement) n);
+			} else if (n instanceof IASTWhileStatement) {
+				result = cHandler.visit(this, (IASTWhileStatement) n);
+			} else if (n instanceof IASTLabelStatement) {
+				result = cHandler.visit(this, (IASTLabelStatement) n);
+			} else if (n instanceof IASTNullStatement) {
+				result = cHandler.visit(this, (IASTNullStatement) n);
+			} else if (n instanceof IASTContinueStatement) {
+				result = cHandler.visit(this, (IASTContinueStatement) n);
+			} else if (n instanceof IASTDeclarationStatement) {
+				result = cHandler.visit(this, (IASTDeclarationStatement) n);
+			} else if (n instanceof IASTDefaultStatement) {
+				result = cHandler.visit(this, (IASTDefaultStatement) n);
+			} else if (n instanceof IASTDoStatement) {
+				result = cHandler.visit(this, (IASTDoStatement) n);
+			} else if (n instanceof IASTExpressionStatement) {
+				result = cHandler.visit(this, (IASTExpressionStatement) n);
+			} else if (n instanceof IASTForStatement) {
+				result = cHandler.visit(this, (IASTForStatement) n);
+			} else if (n instanceof IASTGotoStatement) {
+				result = cHandler.visit(this, (IASTGotoStatement) n);
+			} else if (n instanceof IASTIfStatement) {
+				result = cHandler.visit(this, (IASTIfStatement) n);
+			} else if (n instanceof IASTCompoundStatement) {
+				result = cHandler.visit(this, (IASTCompoundStatement) n);
+			} else if (n instanceof IASTBreakStatement) {
+				result = cHandler.visit(this, (IASTBreakStatement) n);
+			} else if (n instanceof IASTCaseStatement) {
+				result = cHandler.visit(this, (IASTCaseStatement) n);
+			} else if (n instanceof IASTProblemStatement) {
 				// error -> we will cancel the translation anyway ...
 				// -> should be at the end of the parent if for performance
-				return cHandler.visit(this, (IASTProblemStatement) n);
+				result = cHandler.visit(this, (IASTProblemStatement) n);
+			} else {
+				result = cHandler.visit(this, (IASTStatement) n);
 			}
-			return cHandler.visit(this, (IASTStatement) n);
-		}
-		if (n instanceof IASTInitializer) {
+		} else if (n instanceof IASTInitializer) {
 			if (n instanceof IASTEqualsInitializer) {
-				return cHandler.visit(this, (IASTEqualsInitializer) n);
+				result = cHandler.visit(this, (IASTEqualsInitializer) n);
+			} else if (n instanceof CASTDesignatedInitializer) {
+				result = cHandler.visit(this, (CASTDesignatedInitializer) n);
+			} else if (n instanceof IASTInitializerList) {
+				result = cHandler.visit(this, (IASTInitializerList) n);
+			} else { 
+				result = cHandler.visit(this, (IASTInitializer) n);
 			}
-			if (n instanceof CASTDesignatedInitializer) {
-				return cHandler.visit(this, (CASTDesignatedInitializer) n);
-			}
-			if (n instanceof IASTInitializerList) {
-				return cHandler.visit(this, (IASTInitializerList) n);
-			}
-			return cHandler.visit(this, (IASTInitializer) n);
-		}
+		} else
 		if (n instanceof IASTExpression) {
 			if (n instanceof IASTLiteralExpression) {
-				return cHandler.visit(this, (IASTLiteralExpression) n);
+				result = cHandler.visit(this, (IASTLiteralExpression) n);
+			} else if (n instanceof IASTIdExpression) {
+				result = cHandler.visit(this, (IASTIdExpression) n);
+			} else if (n instanceof IASTFunctionCallExpression) {
+				result = cHandler.visit(this, (IASTFunctionCallExpression) n);
+			} else if (n instanceof IASTFieldReference) {
+				result = cHandler.visit(this, (IASTFieldReference) n);
+			} else if (n instanceof IASTExpressionList) {
+				result = cHandler.visit(this, (IASTExpressionList) n);
+			} else if (n instanceof IASTConditionalExpression) {
+				result = cHandler.visit(this, (IASTConditionalExpression) n);
+			} else if (n instanceof IASTCastExpression) {
+				result = cHandler.visit(this, (IASTCastExpression) n);
+			} else if (n instanceof IASTBinaryExpression) {
+				result = cHandler.visit(this, (IASTBinaryExpression) n);
+			} else if (n instanceof IASTBinaryTypeIdExpression) {
+				result = cHandler.visit(this, (IASTBinaryTypeIdExpression) n);
+			} else if (n instanceof IASTArraySubscriptExpression) {
+				result = cHandler.visit(this, (IASTArraySubscriptExpression) n);
+			} else if (n instanceof IASTAmbiguousExpression) {
+				result = cHandler.visit(this, (IASTAmbiguousExpression) n);
+			} else if (n instanceof IASTAmbiguousCondition) {
+				result = cHandler.visit(this, (IASTAmbiguousCondition) n);
+			} else if (n instanceof IASTTypeIdExpression) {
+				result = cHandler.visit(this, (IASTTypeIdExpression) n);
+			} else if (n instanceof IASTTypeIdInitializerExpression) {
+				result = cHandler.visit(this, (IASTTypeIdInitializerExpression) n);
+			} else if (n instanceof IASTUnaryExpression) {
+				result = cHandler.visit(this, (IASTUnaryExpression) n);
+			} else if (n instanceof IASTProblemExpression) {
+				result = cHandler.visit(this, (IASTProblemExpression) n);
+			} else {
+				result = cHandler.visit(this, (IASTExpression) n);
 			}
-			if (n instanceof IASTIdExpression) {
-				return cHandler.visit(this, (IASTIdExpression) n);
-			}
-			if (n instanceof IASTFunctionCallExpression) {
-				return cHandler.visit(this, (IASTFunctionCallExpression) n);
-			}
-			if (n instanceof IASTFieldReference) {
-				return cHandler.visit(this, (IASTFieldReference) n);
-			}
-			if (n instanceof IASTExpressionList) {
-				return cHandler.visit(this, (IASTExpressionList) n);
-			}
-			if (n instanceof IASTConditionalExpression) {
-				return cHandler.visit(this, (IASTConditionalExpression) n);
-			}
-			if (n instanceof IASTCastExpression) {
-				return cHandler.visit(this, (IASTCastExpression) n);
-			}
-			if (n instanceof IASTBinaryExpression) {
-				return cHandler.visit(this, (IASTBinaryExpression) n);
-			}
-			if (n instanceof IASTBinaryTypeIdExpression) {
-				return cHandler.visit(this, (IASTBinaryTypeIdExpression) n);
-			}
-			if (n instanceof IASTArraySubscriptExpression) {
-				return cHandler.visit(this, (IASTArraySubscriptExpression) n);
-			}
-			if (n instanceof IASTAmbiguousExpression) {
-				return cHandler.visit(this, (IASTAmbiguousExpression) n);
-			}
-			if (n instanceof IASTAmbiguousCondition) {
-				return cHandler.visit(this, (IASTAmbiguousCondition) n);
-			}
-			if (n instanceof IASTTypeIdExpression) {
-				return cHandler.visit(this, (IASTTypeIdExpression) n);
-			}
-			if (n instanceof IASTTypeIdInitializerExpression) {
-				return cHandler.visit(this, (IASTTypeIdInitializerExpression) n);
-			}
-			if (n instanceof IASTUnaryExpression) {
-				return cHandler.visit(this, (IASTUnaryExpression) n);
-			}
-			if (n instanceof IASTProblemExpression) {
-				return cHandler.visit(this, (IASTProblemExpression) n);
-			}
-			return cHandler.visit(this, (IASTExpression) n);
-		}
-		if (n instanceof IASTFunctionStyleMacroParameter) {
-			return cHandler.visit(this, (IASTFunctionStyleMacroParameter) n);
-		}
-		if (n instanceof IASTImplicitNameOwner) {
-			return cHandler.visit(this, (IASTImplicitNameOwner) n);
-		}
-		if (n instanceof IASTName) {
-			return cHandler.visit(this, (IASTName) n);
-		}
-		if (n instanceof IASTPointerOperator) {
-			return cHandler.visit(this, (IASTPointerOperator) n);
-		}
-		if (n instanceof IASTPreprocessorMacroExpansion) {
-			return cHandler.visit(this, (IASTPreprocessorMacroExpansion) n);
-		}
-		if (n instanceof IASTProblem) {
-			return cHandler.visit(this, (IASTProblem) n);
-		}
-		if (n instanceof IASTTypeId) {
-			return cHandler.visit(this, (IASTTypeId) n);
-		}
-		// Indirect implementations of IASTNode in CDT version 7:
-		if (n instanceof IASTArrayDeclarator) {
-			return cHandler.visit(this, (IASTArrayDeclarator) n);
-		}
-		if (n instanceof IASTASMDeclaration) {
-			return cHandler.visit(this, (IASTASMDeclaration) n);
-		}
-		if (n instanceof IASTCompositeTypeSpecifier) {
-			return cHandler.visit(this, (IASTCompositeTypeSpecifier) n);
-		}
-		if (n instanceof IASTFieldDeclarator) {
-			return cHandler.visit(this, (IASTFieldDeclarator) n);
-		}
-		if (n instanceof IASTImplicitName) {
-			return cHandler.visit(this, (IASTImplicitName) n);
-		}
-		if (n instanceof IASTInitializerClause) {
-			return cHandler.visit(this, (IASTInitializerClause) n);
-		}
-		if (n instanceof IASTPointer) {
-			return cHandler.visit(this, (IASTPointer) n);
-		}
-		if (n instanceof IASTPreprocessorMacroDefinition) {
-			return cHandler.visit(this, (IASTPreprocessorMacroDefinition) n);
-		}
-		if (n instanceof IASTPreprocessorObjectStyleMacroDefinition) {
-			return cHandler.visit(this, (IASTPreprocessorObjectStyleMacroDefinition) n);
-		}
-		if (n instanceof IASTStandardFunctionDeclarator) {
-			return cHandler.visit(this, (IASTStandardFunctionDeclarator) n);
-		}
-		if (n instanceof IASTProblemDeclaration) {
+		} else if (n instanceof IASTFunctionStyleMacroParameter) {
+			result = cHandler.visit(this, (IASTFunctionStyleMacroParameter) n);
+		} else if (n instanceof IASTImplicitNameOwner) {
+			result = cHandler.visit(this, (IASTImplicitNameOwner) n);
+		} else if (n instanceof IASTName) {
+			result = cHandler.visit(this, (IASTName) n);
+		} else if (n instanceof IASTPointerOperator) {
+			result = cHandler.visit(this, (IASTPointerOperator) n);
+		} else if (n instanceof IASTPreprocessorMacroExpansion) {
+			result = cHandler.visit(this, (IASTPreprocessorMacroExpansion) n);
+		} else if (n instanceof IASTProblem) {
+			result = cHandler.visit(this, (IASTProblem) n);
+		} else if (n instanceof IASTTypeId) {
+			result = cHandler.visit(this, (IASTTypeId) n);
+			
+			// Indirect implementations of IASTNode in CDT version 7:
+		} else if (n instanceof IASTArrayDeclarator) {
+			result = cHandler.visit(this, (IASTArrayDeclarator) n);
+		} else if (n instanceof IASTASMDeclaration) {
+			result = cHandler.visit(this, (IASTASMDeclaration) n);
+		} else if (n instanceof IASTCompositeTypeSpecifier) {
+			result = cHandler.visit(this, (IASTCompositeTypeSpecifier) n);
+		} else if (n instanceof IASTFieldDeclarator) {
+			result = cHandler.visit(this, (IASTFieldDeclarator) n);
+		} else if (n instanceof IASTImplicitName) {
+			result = cHandler.visit(this, (IASTImplicitName) n);
+		} else if (n instanceof IASTInitializerClause) {
+			result = cHandler.visit(this, (IASTInitializerClause) n);
+		} else if (n instanceof IASTPointer) {
+			result = cHandler.visit(this, (IASTPointer) n);
+		} else if (n instanceof IASTPreprocessorMacroDefinition) {
+			result = cHandler.visit(this, (IASTPreprocessorMacroDefinition) n);
+		} else if (n instanceof IASTPreprocessorObjectStyleMacroDefinition) {
+			result = cHandler.visit(this, (IASTPreprocessorObjectStyleMacroDefinition) n);
+		} else if (n instanceof IASTStandardFunctionDeclarator) {
+			result = cHandler.visit(this, (IASTStandardFunctionDeclarator) n);
+		} else if (n instanceof IASTProblemDeclaration) {
 			// error -> we will cancel the translation anyway ...
 			// -> should be at the end of the parent if for performance
-			return cHandler.visit(this, (IASTProblemDeclaration) n);
-		}
-		if (n instanceof IASTProblemTypeId) {
+			result = cHandler.visit(this, (IASTProblemDeclaration) n);
+		} else if (n instanceof IASTProblemTypeId) {
 			// error -> we will cancel the translation anyway ...
 			// -> should be at the end of the parent if for performance
-			return cHandler.visit(this, (IASTProblemTypeId) n);
+			result = cHandler.visit(this, (IASTProblemTypeId) n);
+		} else {
+			String msg = "MainDispatcher: AST node type unknown: " + n.getClass();
+			ILocation loc = LocationFactory.createCLocation(n);
+			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		String msg = "MainDispatcher: AST node type unknown: " + n.getClass();
-		ILocation loc = LocationFactory.createCLocation(n);
-		throw new UnsupportedSyntaxException(loc, msg);
+		return result;
 	}
 
 	@Override
