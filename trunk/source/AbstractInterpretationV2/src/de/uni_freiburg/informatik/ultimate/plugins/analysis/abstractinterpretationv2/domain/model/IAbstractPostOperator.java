@@ -28,6 +28,8 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model;
 
+import java.util.List;
+
 /**
  * {@link IAbstractPostOperator} describes a post operator for an {@link IAbstractDomain}. It is used to compute the
  * abstract post given an old {@link IAbstractState} and a transition.
@@ -45,9 +47,9 @@ public interface IAbstractPostOperator<STATE extends IAbstractState<STATE, ACTIO
 	 *            The abstract state before execution of the ACTION.
 	 * @param transition
 	 *            The transition that is taken.
-	 * @return A new STATE that is the result of applying the abstract post.
+	 * @return A new list of STATEs that is the result of applying the abstract post.
 	 */
-	STATE apply(STATE oldstate, ACTION transition);
+	List<STATE> apply(STATE oldstate, ACTION transition);
 
 	/**
 	 * Compute the abstract post from two abstract STATEs and one ACTION. This is used for scope switching.
@@ -62,5 +64,5 @@ public interface IAbstractPostOperator<STATE extends IAbstractState<STATE, ACTIO
 	 * @return A new STATE that has the same variables as the old abstract state in the new scope and incorporates the
 	 *         effects of the taken transition.
 	 */
-	STATE apply(STATE stateBeforeLeaving, STATE stateAfterLeaving, ACTION transition);
+	List<STATE> apply(STATE stateBeforeLeaving, STATE stateAfterLeaving, ACTION transition);
 }

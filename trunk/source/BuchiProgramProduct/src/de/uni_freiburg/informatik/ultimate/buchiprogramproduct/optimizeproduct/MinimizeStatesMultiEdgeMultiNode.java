@@ -172,7 +172,7 @@ public class MinimizeStatesMultiEdgeMultiNode extends BaseMinimizeStates {
 	}
 
 	private boolean processSuccessorEdges(Collection<RCFGEdge> succEdges, StatementExtractor extractor,
-			Collection<EdgeConstructionInfo> infos, BaseMultigraphEdge<RCFGNode, RCFGEdge> predEdge,
+			Collection<EdgeConstructionInfo> infos, BaseMultigraphEdge<RCFGNode, RCFGEdge,RCFGNode, RCFGEdge> predEdge,
 			List<Statement> first) {
 		final Iterator<RCFGEdge> succIter = succEdges.iterator();
 		boolean canRemovePredEdges = true;

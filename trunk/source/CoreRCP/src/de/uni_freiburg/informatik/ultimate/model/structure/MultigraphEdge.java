@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Core.
  * 
@@ -24,24 +24,37 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.result;
-
-import java.util.List;
-
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+package de.uni_freiburg.informatik.ultimate.model.structure;
 
 /**
- * {@link IResultWithFiniteTrace} describes results that contain a finite trace.
- * The trace consists of trace elements of type TE. Furthermore, the trace is
- * described by (a) a sequence of {@link ILocation} and (b) by a
- * {@link IProgramExecution} that may contain program states, which are
- * described by expressions of type E.
  * 
- * @author dietsch@informatik.uni-freiburg.de
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ * @param <VERTEX>
+ * @param <EDGE>
  */
-public interface IResultWithFiniteTrace<TE, E> extends IResult {
+public final class MultigraphEdge<VERTEX, EDGE>
+		extends ModifiableMultigraphEdge<Multigraph<VERTEX, EDGE>, MultigraphEdge<VERTEX, EDGE>, VERTEX, EDGE> {
+	private static final long serialVersionUID = 1L;
+	private final EDGE mEdge;
 
-	public List<ILocation> getFailurePath();
+	public MultigraphEdge(final Multigraph<VERTEX, EDGE> source, final EDGE edge,
+			final Multigraph<VERTEX, EDGE> target) {
+		super(source, target);
+		assert source != null;
+		assert target != null;
+		mEdge = edge;
+		source.addOutgoing(this);
+		target.addIncoming(this);
+	}
 
-	public IProgramExecution<TE, E> getProgramExecution();
+	@Override
+	public EDGE getLabel() {
+		return mEdge;
+	}
+
+	@Override
+	public String toString() {
+		return mEdge == null ? "Unlabeled(" + hashCode() + ")" : mEdge.toString();
+	}
 }

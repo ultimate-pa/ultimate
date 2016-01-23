@@ -45,7 +45,7 @@ public class WitnessGraphAnnotation extends ModernAnnotations {
 	}
 
 	private static final long serialVersionUID = 1L;
-	private static final String sKey = Activator.s_PLUGIN_ID + "_Graph";
+	private static final String sKey = Activator.PLUGIN_ID + "_Graph";
 
 	@Visualizable
 	private final String mSourceCodeLanguage;

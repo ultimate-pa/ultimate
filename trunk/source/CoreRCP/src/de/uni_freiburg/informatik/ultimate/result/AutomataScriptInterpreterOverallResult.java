@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.result;
 
+import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity;
 
 /**
  * While interpreting an automata script file such an overall result is

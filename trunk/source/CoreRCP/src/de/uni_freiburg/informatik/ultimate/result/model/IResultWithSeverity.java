@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.result;
+package de.uni_freiburg.informatik.ultimate.result.model;
 
 
 public interface IResultWithSeverity extends IResult {

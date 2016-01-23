@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.result;
 
+import de.uni_freiburg.informatik.ultimate.result.model.IResult;
+
 /**
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -40,15 +42,18 @@ public class WitnessResult implements IResult {
 	private final IResult mResult;
 	private final String mWitness;
 	private final WitnessVerificationStatus mVerificationStatus;
+	private final WitnessVerificationStatus mExpectedVerificationStatus;
 	private final String mPluginId;
 
-	public WitnessResult(String pluginId, IResult result, String witness,
-			WitnessVerificationStatus verificationStatus) {
-		//TODO: Witness string may be useless and its potentially large, so... maybe remove it? 
+	public WitnessResult(final String pluginId, final IResult result, final String witness,
+			final WitnessVerificationStatus verificationStatus,
+			final WitnessVerificationStatus expectedVerificationStatus) {
+		// TODO: Witness string may be useless and its potentially large, so... maybe remove it?
 		mPluginId = pluginId;
 		mResult = result;
 		mWitness = witness;
 		mVerificationStatus = verificationStatus;
+		mExpectedVerificationStatus = expectedVerificationStatus;
 	}
 
 	@Override
@@ -78,6 +83,14 @@ public class WitnessResult implements IResult {
 
 	public WitnessVerificationStatus getVerificationStatus() {
 		return mVerificationStatus;
+	}
+	
+	public WitnessVerificationStatus getExpectedVerificationStatus() {
+		return mExpectedVerificationStatus;
+	}
+	
+	public IResult getAffectedResult(){
+		return mResult;
 	}
 
 	public boolean isEmpty() {

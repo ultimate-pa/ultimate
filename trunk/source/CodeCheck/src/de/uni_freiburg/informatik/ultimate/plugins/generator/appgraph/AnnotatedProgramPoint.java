@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
  * @author Mohamed Sherif
  * @author Mostafa Mahmoud
  */
-public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<AnnotatedProgramPoint, AppEdge> {
+public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<AnnotatedProgramPoint, AppEdge,AnnotatedProgramPoint, AppEdge> {
 
 	private static final long serialVersionUID = -4398335480646555023L;
 
@@ -260,6 +260,11 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 		ArrayList<AnnotatedProgramPoint> ret = new ArrayList<AnnotatedProgramPoint>();
 		ret.addAll(newCopies);
 		return ret;
+	}
+
+	@Override
+	public AnnotatedProgramPoint getLabel() {
+		return this;
 	}
 
 }

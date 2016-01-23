@@ -76,53 +76,45 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 	}
 
 	@Override
-	public IntervalDomainState apply(final IntervalDomainState oldstate, final CodeBlock transition) {
+	public List<IntervalDomainState> apply(final IntervalDomainState oldstate, final CodeBlock transition) {
 		assert oldstate != null;
 		assert !oldstate.isBottom();
 		assert transition != null;
 
-		IntervalDomainState currentState = oldstate;
+		List<IntervalDomainState> currentStates = new ArrayList<>();
+		currentStates.add(oldstate);
 		final List<Statement> statements = mStatementExtractor.process(transition);
 
 		for (final Statement stmt : statements) {
-			final List<IntervalDomainState> result = mStatementProcessor.process(currentState, stmt);
-
-			currentState = mergeStates(result);
-		}
-
-		return currentState;
-	}
-
-	/**
-	 * Merges a list of states into one single state.
-	 * 
-	 * @param states
-	 *            The list of states to merge.
-	 * @return A new {@link IntervalDomainState} which is the result of the merger of all states in the list of states.
-	 */
-	private IntervalDomainState mergeStates(final List<IntervalDomainState> states) {
-		IntervalDomainState returnState = null;
-
-		for (int i = 0; i < states.size(); i++) {
-			if (i == 0) {
-				returnState = states.get(0);
-			} else {
-				returnState = returnState.merge(states.get(i));
+			final List<IntervalDomainState> afterProcessStates = new ArrayList<>();
+			for (final IntervalDomainState currentState : currentStates) {
+				final List<IntervalDomainState> processed = mStatementProcessor.process(currentState, stmt);
+				assert processed.size() > 0;
+				afterProcessStates.addAll(processed);
 			}
+			currentStates = afterProcessStates;
 		}
 
-		return returnState;
+		return currentStates;
 	}
 
 	@Override
-	public IntervalDomainState apply(final IntervalDomainState stateBeforeLeaving,
+	public List<IntervalDomainState> apply(final IntervalDomainState stateBeforeLeaving,
 	        final IntervalDomainState stateAfterLeaving, final CodeBlock transition) {
 		assert transition instanceof Call || transition instanceof Return;
+
+		final List<IntervalDomainState> returnList = new ArrayList<>();
 
 		if (transition instanceof Call) {
 			final Call call = (Call) transition;
 			CallStatement callStatement = (CallStatement) call.getCallStatement();
 			final Expression[] args = callStatement.getArguments();
+
+			// If there are no arguments, we don't need to rewrite states.
+			if (args.length == 0) {
+				returnList.add(stateAfterLeaving);
+				return returnList;
+			}
 
 			Map<Integer, String> paramNames = getArgumentTemporaries(args.length, stateBeforeLeaving);
 
@@ -144,12 +136,9 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 			final IntervalDomainState interimState = stateBeforeLeaving.addVariables(paramVariables);
 
 			final List<IntervalDomainState> result = mStatementProcessor.process(interimState, assign);
-			if (result.size() != 1) {
-				throw new UnsupportedOperationException(
-				        "The assingment operation resulted in 0 or more than one state.");
+			if (result.size() == 0) {
+				throw new UnsupportedOperationException("The assingment operation resulted in 0 states.");
 			}
-
-			final IntervalDomainState resultState = result.get(0);
 
 			final Procedure procedure = getProcedure(callStatement.getMethodName());
 			assert procedure != null;
@@ -168,33 +157,37 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 				        "The number of the expressions in the call statement arguments does not correspond to the length of the number of arguments in the symbol table.");
 			}
 
-			IntervalDomainState returnState = stateAfterLeaving.copy();
-			
-			for (int i = 0; i < paramIdentifiers.size(); i++) {
-				final String tempName = paramNames.get(i);
-				final String realName = paramIdentifiers.get(i);
-				
-				final IBoogieVar type = interimState.getVariableType(tempName);
-				if (type.getIType() instanceof PrimitiveType) {
-					final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
-					
-					if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-						returnState = returnState.setBooleanValue(realName, resultState.getBooleanValue(tempName));
+			for (final IntervalDomainState resultState : result) {
+				IntervalDomainState returnState = stateAfterLeaving.copy();
+
+				for (int i = 0; i < paramIdentifiers.size(); i++) {
+					final String tempName = paramNames.get(i);
+					final String realName = paramIdentifiers.get(i);
+
+					final IBoogieVar type = interimState.getVariableType(tempName);
+					if (type.getIType() instanceof PrimitiveType) {
+						final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
+
+						if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
+							returnState = returnState.setBooleanValue(realName, resultState.getBooleanValue(tempName));
+						} else {
+							returnState = returnState.setValue(realName, resultState.getValue(tempName));
+						}
+					} else if (type.getIType() instanceof ArrayType) {
+						// TODO:
+						// We treat Arrays as normal variables for the time being.
+						returnState = returnState.setValue(realName, resultState.getValue(tempName));
 					} else {
+						mLogger.warn("The IBoogieVar type " + type.getIType()
+						        + " cannot be handled. Assuming normal variable type.");
 						returnState = returnState.setValue(realName, resultState.getValue(tempName));
 					}
-				} else if (type.getIType() instanceof ArrayType) {
-					// TODO:
-					// We treat Arrays as normal variables for the time being.
-					returnState = returnState.setValue(realName, resultState.getValue(tempName));
-				} else {
-					mLogger.warn("The IBoogieVar type " + type.getIType() + " cannot be handled. Assuming normal variable type.");
-					returnState = returnState.setValue(realName, resultState.getValue(tempName));
 				}
-				
+
+				returnList.add(returnState);
 			}
-			
-			return returnState;
+
+			return returnList;
 		} else if (transition instanceof Return) {
 			final Return ret = (Return) transition;
 			final CallStatement correspondingCall = ret.getCallStatement();
@@ -217,7 +210,8 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 			        updateVarNames.toArray(new String[updateVarNames.size()]),
 			        vals.toArray(new IntervalDomainValue[vals.size()]));
 
-			return returnState;
+			returnList.add(returnState);
+			return returnList;
 		} else {
 			throw new UnsupportedOperationException(
 			        "IntervalDomain does not support context switches other than Call and Return (yet)");

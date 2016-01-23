@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.result;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.result.model.IResult;
 
 public class NoResult<P extends IElement> extends AbstractResultAtElement<P> implements IResult {
 	private String shortDescription;

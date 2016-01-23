@@ -52,5 +52,9 @@ public enum CountingMeasure {
 	/**
 	 * Amount of steps a simulation needed.
 	 */
-	SIMULATION_STEPS
+	SIMULATION_STEPS,
+	/**
+	 * Amount of states the automaton has before simulation.
+	 */
+	BUCHI_STATES
 }

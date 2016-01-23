@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.result;
 
+import de.uni_freiburg.informatik.ultimate.result.model.IBacktranslationValueProvider;
+
 /**
  * Use this if you do not want to implement a backtranslation provider.
  * 

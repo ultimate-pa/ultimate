@@ -177,7 +177,7 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 			mLogger.fatal(e);
 			mController.displayException("The toolchain threw an exception", e);
 			returnstatus = Status.CANCEL_STATUS;
-			String idOfCore = Activator.s_PLUGIN_ID;
+			String idOfCore = Activator.PLUGIN_ID;
 			if (mServices != null) {
 				mServices.getResultService().reportResult(idOfCore, new ExceptionOrErrorResult(idOfCore, e));
 			}
@@ -222,7 +222,7 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 			}
 			if (mChain == null) {
 				mLogger.fatal("Toolchain selection failed, aborting...");
-				return new Status(Status.CANCEL, Activator.s_PLUGIN_ID, Status.CANCEL, "Toolchain selection canceled",
+				return new Status(Status.CANCEL, Activator.PLUGIN_ID, Status.CANCEL, "Toolchain selection canceled",
 						null);
 			}
 			setServices(mChain.getServices());
@@ -237,9 +237,9 @@ public class DefaultToolchainJob extends BasicToolchainJob {
 			mLogger.fatal(String.format("The toolchain threw an exception: %s", e.getMessage()));
 			mLogger.fatal(e);
 			mController.displayException("The toolchain threw an exception", e);
-			returnstatus = new Status(Status.CANCEL, Activator.s_PLUGIN_ID, Status.ERROR,
+			returnstatus = new Status(Status.CANCEL, Activator.PLUGIN_ID, Status.ERROR,
 					"Toolchain threw an exception", null);
-			String idOfCore = Activator.s_PLUGIN_ID;
+			String idOfCore = Activator.PLUGIN_ID;
 			if (mServices != null) {
 				mServices.getResultService().reportResult(idOfCore, new ExceptionOrErrorResult(idOfCore, e));
 			}

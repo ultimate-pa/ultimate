@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -152,7 +153,7 @@ public class PartialQuantifierElimination {
 	 */
 	public static Term quantifier(IUltimateServiceProvider services, Logger logger, Script script, 
 			IFreshTermVariableConstructor freshTermVariableConstructor, int quantifier,
-			final TermVariable[] vars, final Term body, Term[]... patterns) {
+			final Collection<TermVariable> vars, final Term body, Term[]... patterns) {
 		Set<TermVariable> varSet = constructIntersectionWithFreeVars(vars, body);
 		if (varSet.isEmpty()) {
 			return body;
@@ -181,7 +182,7 @@ public class PartialQuantifierElimination {
 		}
 	}
 	
-	private static Set<TermVariable> constructIntersectionWithFreeVars(TermVariable[] vars, Term term) {
+	private static Set<TermVariable> constructIntersectionWithFreeVars(Collection<TermVariable> vars, Term term) {
 		Set<TermVariable> freeVars = new HashSet<TermVariable>(Arrays.asList(term.getFreeVars()));
 		Set<TermVariable> occurringVars = new HashSet<>();
 		for (TermVariable tv : vars) {

@@ -119,6 +119,8 @@ public class AtomicTraceElement<TE> {
 
 	public AtomicTraceElement(TE element, TE step, EnumSet<AtomicTraceElement.StepInfo> info,
 			IToString<TE> toStringProvider) {
+		assert element != null;
+		assert step != null;
 		mElement = element;
 		mStep = step;
 		mStepInfo = info;

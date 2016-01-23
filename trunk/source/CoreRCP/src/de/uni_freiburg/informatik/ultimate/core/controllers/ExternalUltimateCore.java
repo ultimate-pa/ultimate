@@ -113,7 +113,7 @@ public class ExternalUltimateCore {
 		try {
 			mReachedInit = true;
 			if (core == null || loggingService == null) {
-				return new Status(Status.ERROR, Activator.s_PLUGIN_ID, Status.ERROR, "Initialization failed", null);
+				return new Status(Status.ERROR, Activator.PLUGIN_ID, Status.ERROR, "Initialization failed", null);
 			}
 
 			logger = getLogger(loggingService);

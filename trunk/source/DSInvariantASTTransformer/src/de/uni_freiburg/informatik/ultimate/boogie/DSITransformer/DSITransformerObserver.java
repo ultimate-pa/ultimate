@@ -480,7 +480,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 							null, e.getType(),
 							procLocals.get(e.getIdentifier()),
 							e.getDeclarationInformation());
-					ModelUtils.mergeAnnotations(expr, result);
+					ModelUtils.copyAnnotations(expr, result);
 
 					mLogger.debug("Renamed in expression: "
 							+ procLocals.get(e.getIdentifier()));
@@ -504,7 +504,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 			return super.processLeftHandSide(lhs);
 		VariableLHS newLhs = new VariableLHS(null,
 				procLocals.get(((VariableLHS) lhs).getIdentifier()));
-		ModelUtils.mergeAnnotations(lhs, newLhs);
+		ModelUtils.copyAnnotations(lhs, newLhs);
 		return newLhs;
 	}
 
@@ -973,7 +973,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 				}
 			}
 			if (newStatement != null) {
-				ModelUtils.mergeAnnotations(statement, newStatement);
+				ModelUtils.copyAnnotations(statement, newStatement);
 				return newStatement;
 			}
 		}
@@ -1008,7 +1008,7 @@ public final class DSITransformerObserver extends BoogieTransformer implements
 			}
 			if (changed || newType != type || newWhere != where) {
 				VarList newVl = new VarList(null, newids, newType, newWhere);
-				ModelUtils.mergeAnnotations(newVl, vl);
+				ModelUtils.copyAnnotations(newVl, vl);
 				return newVl;
 			}
 			return vl;

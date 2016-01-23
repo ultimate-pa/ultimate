@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.model.annotation.Visualizable;
 public class WitnessEdgeAnnotation extends ModernAnnotations {
 
 	private static final long serialVersionUID = 1L;
-	private static final String sKey = Activator.s_PLUGIN_ID + "_Edge";
+	private static final String sKey = Activator.PLUGIN_ID + "_Edge";
 
 	@Visualizable
 	private final Boolean mCondition;

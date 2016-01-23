@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE SmtParser plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.source.syntaxchecker;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.syntaxchecker;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -47,8 +47,8 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.Check;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
-import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
+import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Severity;
 
 /**
  * Use external tool to do a syntax check.

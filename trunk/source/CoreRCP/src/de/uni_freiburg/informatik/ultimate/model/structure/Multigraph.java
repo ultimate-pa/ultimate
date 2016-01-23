@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Core.
  * 
@@ -24,49 +24,33 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.model.annotation;
 
-import java.util.Arrays;
+package de.uni_freiburg.informatik.ultimate.model.structure;
 
 /**
- * Annotation that indicates that model checkers should infer an invariant
- * for the annotated node.
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ * @param <VERTEX>
+ * @param <EDGE>
  */
-public class InvariantRequest extends AbstractAnnotations {
-	
-	public static final String getIdentifier() {
-		return InvariantRequest.class.getName();
-	}
-	
-	public static final String LOOPENTRY = "loop entry";
-	
-	private final String[] m_Reasons;
-	
-	public InvariantRequest(String... resons) {
-		m_Reasons = resons;
-	}
+public class Multigraph<VERTEX, EDGE> extends
+		ModifiableExplicitEdgesMultigraph<Multigraph<VERTEX, EDGE>, MultigraphEdge<VERTEX, EDGE>, VERTEX, EDGE> {
 
-	private static final long serialVersionUID = -575969312624287029L;
+	private static final long serialVersionUID = 1L;
+	private final VERTEX mVertex;
 
-	/**
-	 * The published attributes.  Update this and getFieldValue()
-	 * if you add new attributes.
-	 */
-	private final static String[] s_AttribFields = {
-		"Reason"
-	};
-	
-	@Override
-	protected String[] getFieldNames() {
-		return s_AttribFields;
+	public Multigraph(final VERTEX vertex) {
+		mVertex = vertex;
 	}
 
 	@Override
-	protected Object getFieldValue(String field) {
-		if (field.equals("Reason"))
-			return Arrays.toString(m_Reasons);
-		else
-			throw new UnsupportedOperationException("Unknown field "+field);
+	public VERTEX getLabel() {
+		return mVertex;
 	}
 
+	@Override
+	public String toString() {
+		return mVertex == null ? "Unlabeled("+hashCode()+")" : mVertex.toString();
+	}
 }

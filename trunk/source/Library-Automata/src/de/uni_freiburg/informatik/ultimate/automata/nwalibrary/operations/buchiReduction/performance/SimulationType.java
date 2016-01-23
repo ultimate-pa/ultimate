@@ -42,6 +42,14 @@ public enum SimulationType {
 	 */
 	DIRECT,
 	/**
+	 * External minimization method, MinimizeSevpa.
+	 */
+	EXT_MINIMIZESEVPA,
+	/**
+	 * External minimization method, ShrinkNwa.
+	 */
+	EXT_SHRINKNWA,
+	/**
 	 * Fair simulation.
 	 */
 	FAIR,

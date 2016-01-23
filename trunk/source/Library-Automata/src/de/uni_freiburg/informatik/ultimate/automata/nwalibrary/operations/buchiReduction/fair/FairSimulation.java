@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.GameGraphChanges;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.GameGraphSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.CountingMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.MultipleDataOption;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.TimeMeasure;
@@ -439,6 +440,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			throws OperationCanceledException {
 		if (isUsingSCCs()) {
 			m_pokedFromNeighborSCC = new HashSet<>();
+			getSimulationPerformance().startTimeMeasure(TimeMeasure.BUILD_SCC);
 			DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>> sccFactory = new DefaultStronglyConnectedComponentFactory<>();
 			GameGraphSuccessorProvider<LETTER, STATE> succProvider = new GameGraphSuccessorProvider<>(m_Game);
 			setSccComp(new SccComputation<Vertex<LETTER, STATE>, StronglyConnectedComponent<Vertex<LETTER, STATE>>>(
@@ -446,7 +448,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 			Iterator<StronglyConnectedComponent<Vertex<LETTER, STATE>>> iter = new LinkedList<StronglyConnectedComponent<Vertex<LETTER, STATE>>>(
 					getSccComp().getSCCs()).iterator();
-
+			getSimulationPerformance().stopTimeMeasure(TimeMeasure.BUILD_SCC);
 			while (iter.hasNext()) {
 				StronglyConnectedComponent<Vertex<LETTER, STATE>> scc = iter.next();
 				iter.remove();
@@ -732,6 +734,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	protected void doSimulation() throws OperationCanceledException {
 		SimulationPerformance performance = super.getSimulationPerformance();
 		performance.startTimeMeasure(TimeMeasure.OVERALL_TIME);
+		performance.startTimeMeasure(TimeMeasure.SIMULATION_ONLY_TIME);
 
 		// First simulation
 		m_Logger.debug("Starting first simulation...");
@@ -741,6 +744,9 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		// Deactivate the usage of SCCs for the following simulations since the
 		// overhead of using SCCs is only worth it if simulation does not
 		// terminate as quickly as it will do now.
+		if (!isUsingSCCs()) {
+			performance.addTimeMeasureValue(TimeMeasure.BUILD_SCC, SimulationPerformance.NO_TIME_RESULT);
+		}
 		boolean disabledSCCUsage = false;
 		if (isUsingSCCs()) {
 			setUseSCCs(false);
@@ -842,11 +848,22 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			setUseSCCs(true);
 		}
 
+		performance.stopTimeMeasure(TimeMeasure.SIMULATION_ONLY_TIME);
+
 		// Generate the resulting automata
 		m_Logger.debug("Generating the result automaton...");
 		setResult(m_Game.generateBuchiAutomatonFromGraph());
 
 		long duration = performance.stopTimeMeasure(TimeMeasure.OVERALL_TIME);
+		// Add time building of the graph took to the overall time since this
+		// happens outside of simulation
+		long durationGraph = performance.getTimeMeasureResult(TimeMeasure.BUILD_GRAPH_TIME,
+				MultipleDataOption.ADDITIVE);
+		if (durationGraph != SimulationPerformance.NO_TIME_RESULT) {
+			duration += durationGraph;
+			performance.addTimeMeasureValue(TimeMeasure.OVERALL_TIME, durationGraph);
+		}
+
 		m_Logger.info((isUsingSCCs() ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds and "
 				+ performance.getCountingMeasureResult(CountingMeasure.SIMULATION_STEPS) + " simulation steps.");
 	}

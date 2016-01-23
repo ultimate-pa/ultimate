@@ -68,17 +68,17 @@ public class IntervalBinaryExpressionEvaluator
 
 		assert currentState != null;
 
+		final List<IEvaluationResult<IntervalDomainEvaluationResult>> firstResult = mLeftSubEvaluator
+		        .evaluate(currentState);
+		final List<IEvaluationResult<IntervalDomainEvaluationResult>> secondResult = mRightSubEvaluator
+		        .evaluate(currentState);
+
 		for (String var : mLeftSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
 		}
 		for (String var : mRightSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
 		}
-
-		final List<IEvaluationResult<IntervalDomainEvaluationResult>> firstResult = mLeftSubEvaluator
-		        .evaluate(currentState);
-		final List<IEvaluationResult<IntervalDomainEvaluationResult>> secondResult = mRightSubEvaluator
-		        .evaluate(currentState);
 
 		for (final IEvaluationResult<IntervalDomainEvaluationResult> res1 : firstResult) {
 			for (final IEvaluationResult<IntervalDomainEvaluationResult> res2 : secondResult) {
@@ -106,7 +106,7 @@ public class IntervalBinaryExpressionEvaluator
 					returnBool = new BooleanValue(false);
 					break;
 				case ARITHMOD:
-					returnValue = res1.getResult().getEvaluatedValue().modulus(res2.getResult().getEvaluatedValue());
+					returnValue = res1.getResult().getEvaluatedValue().modulo(res2.getResult().getEvaluatedValue());
 					returnBool = new BooleanValue(false);
 					break;
 				case LOGICAND:
@@ -299,109 +299,8 @@ public class IntervalBinaryExpressionEvaluator
 					}
 					break;
 				case COMPNEQ:
-					if (mLeftSubEvaluator.getVarIdentifiers().size() == 0
-					        && mRightSubEvaluator.getVarIdentifiers().size() == 0) {
-						if (mLeftSubEvaluator.containsBool() && mRightSubEvaluator.containsBool()) {
-							returnBool = res1.getBooleanValue().intersect(res2.getBooleanValue()).neg();
-						} else {
-							returnBool = new BooleanValue(res1.getResult().getEvaluatedValue()
-							        .isContainedIn(res2.getResult().getEvaluatedValue())).neg();
-						}
-
-						if (returnBool.getValue() == Value.FALSE) {
-							setToBottom = true;
-						} else {
-							mLogger.warn("Cannot handle the inequality comparison precisely. Returning current state.");
-							// TODO: Return more than one state!
-						}
-					} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 0
-					        && mRightSubEvaluator.getVarIdentifiers().size() == 1) {
-						String varName = null;
-
-						for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
-							varName = var;
-						}
-
-						assert varName != null;
-
-						if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
-							returnBool = res1.getBooleanValue().intersect(res2.getBooleanValue()).neg();
-						} else {
-							returnBool = new BooleanValue(res1.getResult().getEvaluatedValue()
-							        .isContainedIn(res2.getResult().getEvaluatedValue())).neg();
-						}
-
-						if (returnBool.getValue() == Value.FALSE) {
-							setToBottom = true;
-						} else {
-							mLogger.warn("Cannot handle the inequality comparison precisely. Returning current state.");
-							// TODO: Return more than one state!
-						}
-					} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 1
-					        && mRightSubEvaluator.getVarIdentifiers().size() == 0) {
-						String varName = null;
-
-						for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
-							varName = var;
-						}
-
-						assert varName != null;
-
-						if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
-							returnBool = res1.getBooleanValue().intersect(res2.getBooleanValue()).neg();
-						} else {
-							returnBool = new BooleanValue(res1.getResult().getEvaluatedValue()
-							        .isContainedIn(res2.getResult().getEvaluatedValue())).neg();
-						}
-
-						if (returnBool.getValue() == Value.FALSE) {
-							setToBottom = true;
-						} else {
-							mLogger.warn("Cannot handle the inequality comparison precisely. Returning current state.");
-							// TODO: Return more than one state!
-						}
-					} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 1
-					        && mRightSubEvaluator.getVarIdentifiers().size() == 1) {
-						String leftVar = null;
-						String rightVar = null;
-
-						for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
-							leftVar = var;
-						}
-						for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
-							rightVar = var;
-						}
-
-						assert leftVar != null;
-						assert rightVar != null;
-
-						if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
-							returnBool = res1.getBooleanValue().intersect(res2.getBooleanValue()).neg();
-						} else {
-							returnBool = new BooleanValue(res1.getResult().getEvaluatedValue()
-							        .isContainedIn(res2.getResult().getEvaluatedValue())).neg();
-						}
-
-						if (returnBool.getValue() == Value.FALSE) {
-							setToBottom = true;
-						} else {
-							mLogger.warn("Cannot handle the inequality comparison precisely. Returning current state.");
-							// TODO: Return more than one state!
-						}
-					} else {
-						if (mLeftSubEvaluator.containsBool() && mRightSubEvaluator.containsBool()) {
-							returnBool = res1.getBooleanValue().intersect(res2.getBooleanValue()).neg();
-						} else {
-							returnBool = new BooleanValue(res1.getResult().getEvaluatedValue()
-							        .isContainedIn(res2.getResult().getEvaluatedValue())).neg();
-						}
-						if (returnBool.getValue() == Value.FALSE) {
-							setToBottom = true;
-						} else {
-							mLogger.warn("Cannot handle the inequality comparison precisely. Returning current state.");
-						}
-					}
-					break;
+					throw new UnsupportedOperationException(
+					        "COMPNEQ expression occurs even though it should have been replaced before.");
 				case COMPGT:
 					mLogger.warn(
 					        "Cannot handle greater than operators precisely. Using greater or equal over-approximation instead.");
@@ -671,7 +570,12 @@ public class IntervalBinaryExpressionEvaluator
 				}
 
 				for (final IntervalDomainState s : returnStates) {
-					returnList.add(new IntervalDomainEvaluationResult(returnValue, s, returnBool));
+					if (s.isBottom()) {
+						returnList.add(new IntervalDomainEvaluationResult(returnValue, s, new BooleanValue(false)));
+					} else {
+						returnList.add(new IntervalDomainEvaluationResult(returnValue, s, returnBool));
+					}
+
 				}
 			}
 		}
@@ -722,5 +626,67 @@ public class IntervalBinaryExpressionEvaluator
 	@Override
 	public int getArity() {
 		return 2;
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+
+		sb.append(mLeftSubEvaluator);
+		sb.append(" ");
+
+		switch (mOperator) {
+		case ARITHDIV:
+			sb.append(" / ");
+			break;
+		case ARITHMINUS:
+			sb.append(" - ");
+			break;
+		case ARITHMOD:
+			sb.append(" % ");
+			break;
+		case ARITHMUL:
+			sb.append(" * ");
+			break;
+		case ARITHPLUS:
+			sb.append(" + ");
+			break;
+		case COMPEQ:
+			sb.append(" == ");
+			break;
+		case COMPGEQ:
+			sb.append(" >= ");
+			break;
+		case COMPGT:
+			sb.append(" > ");
+			break;
+		case COMPLEQ:
+			sb.append(" <= ");
+			break;
+		case COMPLT:
+			sb.append(" < ");
+			break;
+		case COMPNEQ:
+			sb.append(" != ");
+			break;
+		case LOGICAND:
+			sb.append(" && ");
+			break;
+		case LOGICIFF:
+			sb.append(" <==> ");
+			break;
+		case LOGICIMPLIES:
+			sb.append(" ==> ");
+			break;
+		case LOGICOR:
+			sb.append(" || ");
+			break;
+		default:
+			mOperator.name();
+		}
+
+		sb.append(mRightSubEvaluator);
+
+		return sb.toString();
 	}
 }

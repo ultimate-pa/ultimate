@@ -25,14 +25,19 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.result;
+package de.uni_freiburg.informatik.ultimate.result.model;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.result.ProgramExecutionFormatter;
+
 import java.util.Set;
 
 /**
@@ -133,10 +138,10 @@ public interface IProgramExecution<TE, E> {
 
 		@Override
 		public String toString() {
-			ArrayList<Entry<E, Collection<E>>> toSort = new ArrayList<>(mVariable2Values.entrySet());
+			final List<Entry<E, Collection<E>>> toSort = new ArrayList<>(mVariable2Values.entrySet());
 			Collections.sort(toSort, new Comparator<Entry<E, Collection<E>>>() {
 				@Override
-				public int compare(Entry<E, Collection<E>> arg0, Entry<E, Collection<E>> arg1) {
+				public int compare(final Entry<E, Collection<E>> arg0, final Entry<E, Collection<E>> arg1) {
 					return arg0.getKey().toString().compareToIgnoreCase(arg1.getKey().toString());
 				}
 			});

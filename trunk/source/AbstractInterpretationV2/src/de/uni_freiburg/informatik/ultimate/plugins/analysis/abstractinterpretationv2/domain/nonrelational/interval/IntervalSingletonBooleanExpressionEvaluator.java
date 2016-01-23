@@ -100,4 +100,9 @@ public class IntervalSingletonBooleanExpressionEvaluator
 	public boolean containsBool() {
 		return true;
 	}
+	
+	@Override
+	public String toString() {
+		return mBooleanValue.getValue().name();
+	}
 }

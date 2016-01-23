@@ -142,4 +142,29 @@ public class IntervalUnaryExpressionEvaluator
 		return 1;
 	}
 
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+
+		switch (mOperator) {
+		case LOGICNEG:
+			sb.append("!");
+			break;
+		case OLD:
+			sb.append("old(");
+			break;
+		case ARITHNEGATIVE:
+			sb.append("-");
+			break;
+		default:
+		}
+
+		sb.append(mSubEvaluator);
+
+		if (mOperator == Operator.OLD) {
+			sb.append(")");
+		}
+
+		return sb.toString();
+	}
 }

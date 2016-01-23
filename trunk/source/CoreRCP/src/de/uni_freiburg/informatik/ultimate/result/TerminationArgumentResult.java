@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.result;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.result.model.IResult;
 
 /**
  * Termination Argument consisting of a ranking function given as a list of

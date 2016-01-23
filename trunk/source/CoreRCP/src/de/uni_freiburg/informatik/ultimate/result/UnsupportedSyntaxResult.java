@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.result;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.result.model.IResultWithLocation;
 
 /**
  * Report that some syntax is not (yet?) supported by our implementation 

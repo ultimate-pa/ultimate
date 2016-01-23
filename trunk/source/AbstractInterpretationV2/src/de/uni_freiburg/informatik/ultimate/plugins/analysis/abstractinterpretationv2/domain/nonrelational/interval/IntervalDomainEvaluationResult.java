@@ -84,4 +84,16 @@ public class IntervalDomainEvaluationResult implements IEvaluationResult<Interva
 	public BooleanValue getBooleanValue() {
 		return mBooleanValue;
 	}
+
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Value: ");
+		sb.append(mValue);
+		sb.append(" -- Boolean Value: ");
+		sb.append(mBooleanValue);
+		sb.append(" -- State: ");
+		sb.append(mAbstractState);
+		return sb.toString();
+	}
 }

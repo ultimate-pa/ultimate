@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.IGenerator;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 
 /**
@@ -178,7 +178,7 @@ public class BuchiProgramProduct implements IGenerator {
 		Collection<CounterExampleResult> cex = CoreUtil.filterResults(services.getResultService().getResults(),
 				CounterExampleResult.class);
 		mPreviousToolFoundErrors = !cex.isEmpty();
-		mBacktranslator = new ProductBacktranslator(CodeBlock.class, Expression.class);
+		mBacktranslator = new ProductBacktranslator(RCFGEdge.class, Expression.class);
 		if (!mPreviousToolFoundErrors) {
 			mServices.getBacktranslationService().addTranslator(mBacktranslator);
 		}

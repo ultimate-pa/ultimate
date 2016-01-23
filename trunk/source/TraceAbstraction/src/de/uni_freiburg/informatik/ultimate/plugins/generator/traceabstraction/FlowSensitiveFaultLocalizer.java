@@ -34,7 +34,9 @@ import java.util.TreeMap;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -72,13 +74,13 @@ public class FlowSensitiveFaultLocalizer {
 	private IUltimateServiceProvider m_Services;
 	private final Logger m_Logger;
 
-	public FlowSensitiveFaultLocalizer(NestedWord<CodeBlock> counterexample,
+	public FlowSensitiveFaultLocalizer(IRun<CodeBlock, IPredicate> counterexample,
 			INestedWordAutomaton<CodeBlock, IPredicate> cfg, IUltimateServiceProvider services, SmtManager smtManager,
 			ModifiableGlobalVariableManager modGlobVarManager, PredicateUnifier predicateUnifier) {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		m_Logger.warn("Hello World"); 
-		IPredicate errorPrecondition = computeErrorPrecondition(counterexample, smtManager, predicateUnifier, modGlobVarManager);
+		IPredicate errorPrecondition = computeErrorPrecondition((NestedWord<CodeBlock>) counterexample.getWord(), smtManager, predicateUnifier, modGlobVarManager);
 		//Object informationFromCFG = computeInformationFromCFG(counterexample, cfg);
 		computeFlowSensitiveTraceFormula(errorPrecondition, counterexample, predicateUnifier.getFalsePredicate(), modGlobVarManager, smtManager);
 	}
@@ -90,15 +92,15 @@ public class FlowSensitiveFaultLocalizer {
 		return null;
 	}
 
-	private void computeFlowSensitiveTraceFormula(IPredicate errorPrecondition, NestedWord<CodeBlock> counterexample,
-		IPredicate falsePredicate, ModifiableGlobalVariableManager modGlobVarManager, SmtManager smtManager) 
-	{
+	private void computeFlowSensitiveTraceFormula(IPredicate errorPrecondition, IRun<CodeBlock, IPredicate> counterexampleRun,
+		IPredicate falsePredicate, ModifiableGlobalVariableManager modGlobVarManager, SmtManager smtManager) {
+		NestedWord<CodeBlock> counterexampleWord = (NestedWord<CodeBlock>) counterexampleRun.getWord();
 		
 		m_Logger.warn(" - - - ENTERED computerFlowSensitiveTraceFormula - - - ");
 		// nice representation of error trace (important for interprocedural traces)
-		DefaultTransFormulas nestedTransFormulas = new DefaultTransFormulas(counterexample, errorPrecondition, falsePredicate, new TreeMap<>(), modGlobVarManager, false);
+		DefaultTransFormulas nestedTransFormulas = new DefaultTransFormulas(counterexampleWord, errorPrecondition, falsePredicate, new TreeMap<>(), modGlobVarManager, false);
 		m_Logger.warn(nestedTransFormulas.toString());
-		NestedSsaBuilder ssaBuilder = new NestedSsaBuilder(counterexample, smtManager, nestedTransFormulas, modGlobVarManager, m_Logger, false);
+		NestedSsaBuilder ssaBuilder = new NestedSsaBuilder(counterexampleWord, smtManager, nestedTransFormulas, modGlobVarManager, m_Logger, false);
 		m_Logger.warn(ssaBuilder.toString());
 		// nice representation where all variables have been renamed
 		NestedFormulas<Term, Term> ssa = ssaBuilder.getSsa();
@@ -125,7 +127,7 @@ public class FlowSensitiveFaultLocalizer {
 		
 		
 		
-		for(int i=0; i< counterexample.length();i++)
+		for(int i=0; i< counterexampleWord.length();i++)
 		{
 			term = ssa.getFormulaFromNonCallPos(i);
 			name = "Formula" + i;
@@ -174,6 +176,7 @@ public class FlowSensitiveFaultLocalizer {
 		m_Logger.warn(weakest_preconditionn.toString());
 		// pt.weakestPrecondition(p,tf)   ipredicate p is the post condition and transformula tf is
 														   //the transition formula of the statement
+	
 		
 		IPredicate weakest_precondition = smtManager.newFalsePredicate(); //ERROR IF SET TO FLASE
 		m_Logger.warn(" - - PROGRAM AS LIST - - -");
@@ -189,6 +192,9 @@ public class FlowSensitiveFaultLocalizer {
 			CodeBlock statement = counterexample.getSymbolAt(i);
 			m_Logger.warn("Getting transition formula");
 			TransFormula transition_formula = statement.getTransitionFormula();
+			
+			// markhor formula computation test
+			TransFormula markhor = TransFormula.computeMarkhorTransFormula(transition_formula, smtManager.getBoogie2Smt(), m_Services, m_Logger);
 			m_Logger.warn("Calculating new weakest precondition");
 			weakest_precondition = pt.weakestPrecondition(weakest_precondition, transition_formula);
 			m_Logger.warn(weakest_precondition);

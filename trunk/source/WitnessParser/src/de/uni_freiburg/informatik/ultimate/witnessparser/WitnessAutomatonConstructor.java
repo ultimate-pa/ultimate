@@ -46,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.GraphType.Type;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
-import de.uni_freiburg.informatik.ultimate.result.IResult;
-import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.result.model.IResult;
+import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdgeAnnotation;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessGraphAnnotation;
@@ -269,12 +269,10 @@ public class WitnessAutomatonConstructor {
 
 			@Override
 			public DirectedSparseGraph<WitnessNode, WitnessEdge> transform(GraphMetadata gm) {
-				//@formatter:off
-				mGraphAnnotation = new WitnessGraphAnnotation(
-						gm.getProperty("sourcecodelang"), 
-						(WitnessType) getEnumProperty(WitnessGraphAnnotation.WitnessType.class,gm,"witness-type")
-				);
-				//@formatter:on
+				final String sourcecodelang = gm.getProperty("sourcecodelang");
+				final WitnessType witnesstype = (WitnessType) getEnumProperty(WitnessGraphAnnotation.WitnessType.class,
+						gm, "witness-type", WitnessGraphAnnotation.WitnessType.FALSE_WITNESS);
+				mGraphAnnotation = new WitnessGraphAnnotation(sourcecodelang, witnesstype);
 
 				final DirectedSparseGraph<WitnessNode, WitnessEdge> graph = new DirectedSparseGraph<WitnessNode, WitnessEdge>();
 				for (final Entry<Object, NodeMetadata> e : gm.getNodeMap().entrySet()) {
@@ -294,16 +292,20 @@ public class WitnessAutomatonConstructor {
 		return entry != null && Boolean.valueOf(entry);
 	}
 
-	private <T extends Enum<T>> Enum<T> getEnumProperty(Class<T> clazz, final AbstractMetadata data, final String key) {
+	private <T extends Enum<T>> Enum<T> getEnumProperty(final Class<T> clazz, final AbstractMetadata data,
+			final String key, final T defaultValue) {
 		final String entry = data.getProperties().get(key);
 		if (entry == null) {
-			throw new IllegalArgumentException(
-					"Your witness does not contain a value for " + key + " in element type " + data.getMetadataType());
+			mLogger.warn("Your witness does not contain a value for " + key + " in element type "
+					+ data.getMetadataType() + ". Assuming default value \"" + defaultValue + "\"");
+			return defaultValue;
 		}
 		try {
 			return Enum.valueOf(clazz, entry.toUpperCase());
 		} catch (Exception ex) {
-			throw new IllegalArgumentException("Your witness contains an illegal value for " + key + ": " + entry);
+			mLogger.error("Your witness contains an illegal value for " + key + " in element type "
+					+ data.getMetadataType() + ": \"" + entry + "\". Assuming default value \"" + defaultValue + "\"");
+			return defaultValue;
 		}
 	}
 

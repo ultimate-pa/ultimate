@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.GameGraphChanges;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.CountingMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationPerformance;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.TimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
@@ -123,6 +124,10 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * Transitions that safely can be removed from the buechi automaton.
 	 */
 	private List<Triple<STATE, LETTER, STATE>> m_TransitionsToRemove;
+	/**
+	 * Time duration building the graph took in milliseconds.
+	 */
+	private long m_GraphBuildTime;
 
 	/**
 	 * Creates a new fair game graph by using the given buechi automaton.
@@ -158,6 +163,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		m_TransitionsToRemove = null;
 		m_BuechiAmountOfStates = 0;
 		m_BuechiAmountOfTransitions = 0;
+		m_GraphBuildTime = 0;
 
 		generateGameGraphFromBuechi();
 	}
@@ -503,6 +509,11 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	@Override
 	protected INestedWordAutomatonOldApi<LETTER, STATE> generateBuchiAutomatonFromGraph()
 			throws OperationCanceledException {
+		SimulationPerformance performance = getSimulationPerformance();
+		if (performance != null) {
+			performance.startTimeMeasure(TimeMeasure.BUILD_RESULT_TIME);
+		}
+		
 		boolean areThereMergeableStates = m_AreThereMergeableStates;
 		boolean areThereRemoveableTransitions = m_TransitionsToRemove != null && !m_TransitionsToRemove.isEmpty();
 		Map<STATE, STATE> input2result = null;
@@ -606,12 +617,14 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		}
 
 		// Log performance
-		SimulationPerformance performance = getSimulationPerformance();
 		if (performance != null) {
+			performance.stopTimeMeasure(TimeMeasure.BUILD_RESULT_TIME);
+			performance.addTimeMeasureValue(TimeMeasure.BUILD_GRAPH_TIME, m_GraphBuildTime);
 			performance.setCountingMeasure(CountingMeasure.REMOVED_STATES,
 					m_BuechiAmountOfStates - resultAmountOfStates);
 			performance.setCountingMeasure(CountingMeasure.REMOVED_TRANSITIONS,
 					m_BuechiAmountOfTransitions - resultAmountOfTransitions);
+			performance.setCountingMeasure(CountingMeasure.BUCHI_STATES, m_BuechiAmountOfStates);
 		}
 
 		// Remove unreachable states which can occur due to transition removal
@@ -632,6 +645,8 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 */
 	@Override
 	protected void generateGameGraphFromBuechi() throws OperationCanceledException {
+		long graphBuildTimeStart = System.currentTimeMillis();
+		
 		INestedWordAutomatonOldApi<LETTER, STATE> buechi = m_Buechi;
 
 		// Generate states
@@ -709,6 +724,8 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 				m_BuechiTransitions.add(new Triple<>(trans.getPred(), trans.getLetter(), edgeDest));
 			}
 		}
+		
+		m_GraphBuildTime = System.currentTimeMillis() - graphBuildTimeStart;
 	}
 
 	/**

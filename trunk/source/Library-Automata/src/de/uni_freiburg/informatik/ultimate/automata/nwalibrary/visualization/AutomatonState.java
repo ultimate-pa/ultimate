@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableExplicitEdg
  * @author heizmann@informatik.uni-freiburg.de 
  */
 
-public class AutomatonState extends ModifiableExplicitEdgesMultigraph<AutomatonState, AutomatonTransition> {
+public class AutomatonState extends ModifiableExplicitEdgesMultigraph<AutomatonState, AutomatonTransition,AutomatonState, AutomatonTransition> {
 	private static final long serialVersionUID = 264254789648279608L;
 	
 	private final String m_Name;
@@ -60,4 +60,8 @@ public class AutomatonState extends ModifiableExplicitEdgesMultigraph<AutomatonS
 		return m_Name;
 	}
 
+	@Override
+	public AutomatonState getLabel() {
+		return this;
+	}
 }

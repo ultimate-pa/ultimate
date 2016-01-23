@@ -36,50 +36,47 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.IPayload;
 
 /***
- * VisualizationNode is the Ultimate model for graph visualizations. It wraps
- * every other graph structure and provides a unified interface for
- * {@link IOutput} plugins through the {@link IVisualizable} interface.
+ * VisualizationNode is the Ultimate model for graph visualizations. It wraps every other graph structure and provides a
+ * unified interface for {@link IOutput} plugins through the {@link IVisualizable} interface.
  * 
- * In general, each {@link IVisualizable} type has a corresponding constructor
- * in this class that creates a anonymous sub-class of the inner class
- * WrapperNode which builds a visualization structure through lazy
- * initialization. This visualization structure corresponds to a directed
- * multigraph described through {@link IExplicitEdgesMultigraph}. The
+ * In general, each {@link IVisualizable} type has a corresponding constructor in this class that creates a anonymous
+ * sub-class of the inner class WrapperNode which builds a visualization structure through lazy initialization. This
+ * visualization structure corresponds to a directed multigraph described through {@link IExplicitEdgesMultigraph}. The
  * corresponding edge type is {@link VisualizationEdge}.
  * 
- * Please note that the resulting visualization structure can be larger than the
- * original graph structure, as cycles may lead to multiple WrapperNodes for a
- * single original node (same for edges).
+ * Please note that the resulting visualization structure can be larger than the original graph structure, as cycles may
+ * lead to multiple WrapperNodes for a single original node (same for edges).
  * 
- * {@link IOutput} implementations have to ensure that they always use the
- * {@link VisualizationNode#equals(Object)} and {@link VisualizationEdge}
- * {@link #equals(Object)} methods to compare instances of those structures, as
- * they will return true if the backing is the same for two different instances.
+ * {@link IOutput} implementations have to ensure that they always use the {@link VisualizationNode#equals(Object)} and
+ * {@link VisualizationEdge} {@link #equals(Object)} methods to compare instances of those structures, as they will
+ * return true if the backing is the same for two different instances.
  * 
  * @author dietsch
  * @see VisualizationEdge
  * @see IExplicitEdgesMultigraph
  */
-public final class VisualizationNode implements IExplicitEdgesMultigraph<VisualizationNode, VisualizationEdge> {
+public final class VisualizationNode implements
+		IExplicitEdgesMultigraph<VisualizationNode, VisualizationEdge, VisualizationNode, VisualizationEdge> {
 
 	private static final long serialVersionUID = 1L;
 
 	private final VisualizationWrapperNode mBacking;
 	private List<VisualizationNode> mOutgoing;
 
-	public VisualizationNode(final IExplicitEdgesMultigraph<?, ?> node) {
+	public VisualizationNode(final IExplicitEdgesMultigraph<?, ?, ?, ?> node) {
 		mBacking = new VisualizationWrapperNode(node) {
 
 			@Override
 			protected void createIncoming() {
-				for (IMultigraphEdge<?, ?> e : node.getIncomingEdges()) {
+				for (IMultigraphEdge<?, ?, ?, ?> e : node.getIncomingEdges()) {
 					if (e.getSource() != null) {
 						VisualizationEdge ve;
 						if (e.hasPayload()) {
 							ve = new VisualizationEdge(e.getSource().getVisualizationGraph(), VisualizationNode.this,
 									e.getPayload(), e);
 						} else {
-							ve = new VisualizationEdge(e.getSource().getVisualizationGraph(), VisualizationNode.this, e);
+							ve = new VisualizationEdge(e.getSource().getVisualizationGraph(), VisualizationNode.this,
+									e);
 						}
 						mIncoming.add(ve);
 					}
@@ -88,14 +85,15 @@ public final class VisualizationNode implements IExplicitEdgesMultigraph<Visuali
 
 			@Override
 			protected void createOutgoing() {
-				for (IMultigraphEdge<?, ?> e : node.getOutgoingEdges()) {
+				for (IMultigraphEdge<?, ?, ?, ?> e : node.getOutgoingEdges()) {
 					if (e.getTarget() != null) {
 						VisualizationEdge ve;
 						if (e.hasPayload()) {
 							ve = new VisualizationEdge(VisualizationNode.this, e.getTarget().getVisualizationGraph(),
 									e.getPayload(), e);
 						} else {
-							ve = new VisualizationEdge(VisualizationNode.this, e.getTarget().getVisualizationGraph(), e);
+							ve = new VisualizationEdge(VisualizationNode.this, e.getTarget().getVisualizationGraph(),
+									e);
 						}
 						mOutgoing.add(ve);
 					}
@@ -159,7 +157,7 @@ public final class VisualizationNode implements IExplicitEdgesMultigraph<Visuali
 					} else {
 						ve = new VisualizationEdge(
 
-						VisualizationNode.this, succ.getVisualizationGraph(), null);
+								VisualizationNode.this, succ.getVisualizationGraph(), null);
 					}
 					mOutgoing.add(ve);
 				}
@@ -259,8 +257,8 @@ public final class VisualizationNode implements IExplicitEdgesMultigraph<Visuali
 				@Override
 				protected void createOutgoing() {
 					for (IDirectedGraph<?> succ : node.getOutgoingNodes()) {
-						mOutgoing.add(new VisualizationEdge(VisualizationNode.this, new VisualizationNode(succ,
-								backingDirectory), null));
+						mOutgoing.add(new VisualizationEdge(VisualizationNode.this,
+								new VisualizationNode(succ, backingDirectory), null));
 					}
 				}
 
@@ -416,6 +414,11 @@ public final class VisualizationNode implements IExplicitEdgesMultigraph<Visuali
 		public String toString() {
 			return mBackingNode.toString();
 		}
+	}
+
+	@Override
+	public VisualizationNode getLabel() {
+		return this;
 	}
 
 }

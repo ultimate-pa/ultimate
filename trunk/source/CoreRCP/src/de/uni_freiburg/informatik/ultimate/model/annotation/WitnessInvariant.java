@@ -1,9 +1,5 @@
 /*
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2012-2015 Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
- * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2015 Oleksii Saukh (saukho@informatik.uni-freiburg.de)
- * Copyright (C) 2015 Stefan Wissert
  * Copyright (C) 2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE Core.
@@ -28,39 +24,48 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.result;
 
+package de.uni_freiburg.informatik.ultimate.model.annotation;
+
+import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
+import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.model.IPayload;
 
 /**
- * Interface for the results that are produced while running a toolchain.
- * These results are shown by the frontends of ULTIMATE. 
- * @author Markus Lindenmann
- * @author Stefan Wissert
- * @author Oleksii Saukh
- * @author heizmann@informatik.uni-freiburg.de
- * @date 02.01.2012
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
  */
-public interface IResult {
-	
-	/**
-	 * Plugin that derived this IResult.
-	 */
-	public String getPlugin();
-	
-	/**
-	 * Kind of Result, in a few words. E.g., "procedure precondition can be
-	 * violated", "ranking function found", "unsupported syntax".
-	 */
-	public String getShortDescription();
-	
-	/**
-	 * String representation of the result. Contains all information that are
-	 * not already given by
-	 * <ul>
-	 * <li> location, 
-	 * <li> short description,
-	 * <li> or objects provided by subinterfaces/subclasses
-	 * </ul>
-	 */
-	public String getLongDescription();
+public class WitnessInvariant extends ModernAnnotations {
+
+	private static final long serialVersionUID = 1L;
+	private static final String KEY = Activator.PLUGIN_ID + "_WitnessInvariant";
+
+	@Visualizable
+	private final String mInvariant;
+
+	public WitnessInvariant(final String invariant) {
+		mInvariant = invariant;
+	}
+
+	public String getInvariant() {
+		return mInvariant;
+	}
+
+	public void annotate(IElement node) {
+		node.getPayload().getAnnotations().put(KEY, this);
+	}
+
+	public static WitnessInvariant getAnnotation(IElement node) {
+		if (node.hasPayload()) {
+			final IPayload payload = node.getPayload();
+			if (payload.hasAnnotation()) {
+				final IAnnotations annot = payload.getAnnotations().get(KEY);
+				if (annot != null) {
+					return (WitnessInvariant) annot;
+				}
+			}
+		}
+		return null;
+	}
 }

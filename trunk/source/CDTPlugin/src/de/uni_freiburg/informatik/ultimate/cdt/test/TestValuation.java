@@ -38,7 +38,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.result.IValuation;
+import de.uni_freiburg.informatik.ultimate.result.model.IValuation;
 
 /**
  * Objects return Test Data.

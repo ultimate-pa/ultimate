@@ -132,6 +132,7 @@ public class ModifiableAST<T extends IModifiableAST<T>> extends BaseAST<T>
 		mParent = parent;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public void redirectParent(T parent) {
 		mParent.removeOutgoing(this);
@@ -141,7 +142,5 @@ public class ModifiableAST<T extends IModifiableAST<T>> extends BaseAST<T>
 				parent.addOutgoing((T) this);
 			}
 		}
-
 	}
-
 }

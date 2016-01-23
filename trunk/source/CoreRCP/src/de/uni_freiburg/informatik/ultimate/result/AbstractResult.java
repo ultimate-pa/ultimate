@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.result;
 
+import de.uni_freiburg.informatik.ultimate.result.model.IResult;
 
 /**
  * Default implementation of the IResult interface.

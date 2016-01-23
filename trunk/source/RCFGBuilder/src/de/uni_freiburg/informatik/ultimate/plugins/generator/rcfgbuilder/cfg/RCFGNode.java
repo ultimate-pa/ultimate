@@ -29,9 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 import de.uni_freiburg.informatik.ultimate.model.Payload;
 import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableExplicitEdgesMultigraph;
 
-public abstract class RCFGNode extends
-		ModifiableExplicitEdgesMultigraph<RCFGNode, RCFGEdge> implements
-		RcfgElement {
+public abstract class RCFGNode
+		extends ModifiableExplicitEdgesMultigraph<RCFGNode, RCFGEdge, RCFGNode, RCFGEdge> implements RcfgElement {
 
 	protected RCFGNode(Payload payload) {
 		super(payload);
@@ -40,7 +39,11 @@ public abstract class RCFGNode extends
 	protected RCFGNode() {
 		super();
 	}
+	
+	@Override
+	public RCFGNode getLabel() {
+		return this;
+	}
 
 	private static final long serialVersionUID = 1L;
-
 }
