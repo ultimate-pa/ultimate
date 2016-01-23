@@ -83,8 +83,10 @@ public class OctStatementProcessor {
 				if (l instanceof VariableLHS) {
 					VariableLHS vl = (VariableLHS) l;
 					// parentheses are not allowed in Boogie-identifiers => tmpVar is unique
-					String tmpVar = "octTmp(" + vl.getIdentifier() + ")"; 
+					String origVar = vl.getIdentifier();
+					String tmpVar = "octTmp(" + origVar + ")"; 
 					tmpVars.put(tmpVar, BoogieAstUtil.createTemporaryIBoogieVar(tmpVar, vl.getType()));
+					mapTmpVarToOrigVar.put(tmpVar, origVar);
 					mapLhsToRhs.put(tmpVar, rhs[i]);
 				}
 				// else: variables of unsupported types are assumed to be \top all the time

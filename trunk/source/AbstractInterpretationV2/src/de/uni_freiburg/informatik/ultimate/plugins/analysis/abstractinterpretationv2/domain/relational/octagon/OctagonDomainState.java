@@ -228,11 +228,11 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 
 	private boolean isBooleanAbstractionBottom() {
 		for (BoolValue b : mBooleanAbstraction.values()) {
-			if (b != BoolValue.BOT) {
-				return false;
+			if (BoolValue.BOT.equals(b)) {
+				return true;
 			}
 		}
-		return true;
+		return false;
 	}
 
 	private OctMatrix normalizedNumericAbstraction() {
@@ -500,8 +500,12 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	protected void assignNumericVarInterval(String var, OctValue min, OctValue max) {
 		havocVar(var);
 		int v2 = mMapNumericVarToIndex.get(var) * 2;
+		// lower and upper bound
 		mNumericAbstraction.set(v2, v2 + 1, min.add(min).negate());
 		mNumericAbstraction.set(v2 + 1, v2, max.add(max));
+		// main diagonal (v - v <= ...)
+		mNumericAbstraction.set(v2, v2, OctValue.ZERO);
+		mNumericAbstraction.set(v2 + 1, v2 + 1, OctValue.ZERO);
 	}
 
 	protected void assignVars(Map<String, String> mapSourceVarToTargetVar) {
@@ -526,7 +530,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 			// Copy column. Row is copied by coherence.
 			for (int bRow = 0; bRow < mNumericAbstraction.variables(); ++bRow) {
 				if (bRow == bTarget || bRow == bSource) {
-					mNumericAbstraction.copyBlock(bTarget, bTarget, /* := */ mNumericAbstraction, bSource, bSource);
+					mNumericAbstraction.copyBlock(bRow, bTarget, /* := */ mNumericAbstraction, bSource, bSource);
 				} else {
 					mNumericAbstraction.copyBlock(bRow, bTarget, /* := */ mNumericAbstraction, bRow, bSource);
 				}
