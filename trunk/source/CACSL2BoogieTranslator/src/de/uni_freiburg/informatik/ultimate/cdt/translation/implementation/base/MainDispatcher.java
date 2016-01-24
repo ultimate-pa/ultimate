@@ -593,7 +593,7 @@ public class MainDispatcher extends Dispatcher {
 		if (invariantBefore != null) {
 			ACSLNode acslNode = null;
 			try {
-				acslNode = Parser.parseComment("lstart\n assert" + invariantBefore + ";",
+				acslNode = Parser.parseComment("lstart\n assert " + invariantBefore + ";",
 						0, 0, mLogger);
 			} catch (Exception e) {
 				throw new IllegalArgumentException(e);
