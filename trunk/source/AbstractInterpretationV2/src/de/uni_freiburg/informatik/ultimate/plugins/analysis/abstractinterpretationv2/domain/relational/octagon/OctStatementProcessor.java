@@ -45,7 +45,7 @@ public class OctStatementProcessor {
 		return mNewStates;
 	}
 
-	public void processStatement(Statement statement) {
+	private void processStatement(Statement statement) {
 		if (statement instanceof AssignmentStatement) {
 			processAssignmentStatement((AssignmentStatement) statement);
 		} else if (statement instanceof AssumeStatement) {
@@ -72,8 +72,7 @@ public class OctStatementProcessor {
 			if (l instanceof VariableLHS) {
 				processSingleAssignment(((VariableLHS) l).getIdentifier(), rhs[0]);
 			}
-			// else: Arrays and structs are assumed to be \top all the time
-			
+			// else: variables of unsupported types are assumed to be \top all the time
 		} else {
 			Map<String, IBoogieVar> tmpVars = new HashMap<>();
 			Map<String, String> mapTmpVarToOrigVar = new HashMap<>();

@@ -1,22 +1,32 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
+import org.ojalgo.optimisation.integer.NewIntegerSolver;
 
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
+import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieAstUtil;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -60,41 +70,82 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 	@Override
 	public List<OctagonDomainState> apply(OctagonDomainState stateBeforeLeaving, OctagonDomainState stateAfterLeaving,
 			CodeBlock transition) {
-		OctagonDomainState result;
+		List<OctagonDomainState> result;
 		if (transition instanceof Call) {
 			result = applyCall(stateBeforeLeaving, stateAfterLeaving, (Call) transition);
 		} else if (transition instanceof Return) {
-			result = applyReturn(stateBeforeLeaving, stateAfterLeaving, (Return) transition);
+			result = Collections.singletonList(applyReturn(stateBeforeLeaving, stateAfterLeaving, (Return) transition));
 		} else {
 			throw new UnsupportedOperationException("Unsupported transition: " + transition);
 		}
-		return Collections.singletonList(result);
+		return result;
 	}
 
-	private OctagonDomainState applyCall(OctagonDomainState stateBeforeLeaving, OctagonDomainState stateAfterLeaving,
-			Call callTransition) {
+	private List<OctagonDomainState> applyCall(
+			OctagonDomainState stateBeforeLeaving, OctagonDomainState stateAfterLeaving, Call callTransition) {
 		CallStatement call = callTransition.getCallStatement();
 		Procedure procedure = calledProcedure(call);
 
-		Map<String, String> mapArgToInParam = new HashMap<>();
-
-		// TODO evaluate expressions
-//		for (Expression expr : call.getArguments()) {
-//			
-//		}
-		// TODO assign evaluated expressions to <insert state here>.
-		// probably best to project and assign separately
-		
-//		return stateAfterLeaving.copyValuesOnScopeChange(stateBeforeLeaving, mapArgToInParam);
-
-		// HACK -- assume \top for all in-params (valid but poor over-approximation)
-		OctagonDomainState newState = stateAfterLeaving.deepCopy();
+		Map<String, IBoogieVar> tmpVars = new HashMap<>();
+		Map<String, String> mapTmpVarToInParam = new HashMap<>();
+		List<AssignmentStatement> tmpAssigns = new ArrayList<>();
+		int paramNumber = 0;
 		for (VarList inParamList : procedure.getInParams()) {
+			IType type = inParamList.getType().getBoogieType();
+			if (!TypeUtil.isBoolean(type) && !TypeUtil.isNumeric(type)) {
+				continue;
+				// results in "var := \top" for these variables, which is always assumed for unsupported types
+			}
 			for (String inParam : inParamList.getIdentifiers()) {
-				newState.havocVar(inParam);
+				String tmpVar = "octTmp(" + inParam + ")";
+				IBoogieVar tmpBoogieVar = BoogieAstUtil.createTemporaryIBoogieVar(tmpVar, type);
+				Expression arg = call.getArguments()[paramNumber];
+				++paramNumber;
+
+				tmpVars.put(tmpVar, tmpBoogieVar);
+				mapTmpVarToInParam.put(tmpVar, inParam);
+				
+				ILocation tmpAssignLoc = call.getLocation();
+				LeftHandSide[] tmpAssignLhs = {new VariableLHS(tmpAssignLoc, type, tmpVar, null)};
+				Expression[] tmpAssignRhs = {arg};
+				tmpAssigns.add(new AssignmentStatement(tmpAssignLoc, tmpAssignLhs, tmpAssignRhs));
 			}
 		}
-		return newState;
+		// add temporary variables
+		List<OctagonDomainState> s = Collections.singletonList(stateAfterLeaving.addVariables(tmpVars));
+		
+		// assign tmp := args
+		for (AssignmentStatement assign : tmpAssigns) {
+			s = mStatementProcessor.process(s, assign);
+		}
+		
+		// copy to scope opened by call (inParam := tmp)
+		List<OctagonDomainState> result = new ArrayList<>(s.size());
+		s.forEach(os -> result.add(stateAfterLeaving.copyValuesOnScopeChange(os, mapTmpVarToInParam)));
+		return result;
+
+		// No need to remove the temporary variables.
+		// The state with temporary variables is only a local variable of this method.
+		
+		// HACK -- assume \top for all in-params (valid but poor over-approximation)
+//		OctagonDomainState newState = stateAfterLeaving.deepCopy();
+//		for (VarList inParamList : procedure.getInParams()) {
+//			for (String inParam : inParamList.getIdentifiers()) {
+//				newState.havocVar(inParam);
+//			}
+//		}
+//		return newState;
+	}
+
+	private AssignmentStatement makeAssignment(String lhsVarName, Expression rhsExpr) {
+		LeftHandSide[] lhs = {new VariableLHS(rhsExpr.getLocation(), rhsExpr.getType(), lhsVarName, null)};
+		Expression[] rhs = {rhsExpr};
+		return new AssignmentStatement(rhsExpr.getLocation(), lhs, rhs);
+	}
+	
+	private OctagonDomainState assignInParamsToTmpVars(OctagonDomainState oldState,
+			VarList[] inParamLhs, Expression[] inParamRhs, Map<String, String> mapSourceToTarget) {
+		return null; // TODO
 	}
 	
 	private OctagonDomainState applyReturn(OctagonDomainState stateBeforeLeaving, OctagonDomainState stateAfterLeaving,
@@ -129,9 +180,9 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		// out-parameters to lhs of call assignment
 		int i = 0;
 		for (VarList outParamList : calledProcedure.getOutParams()) {
-			for (String oudParam : outParamList.getIdentifiers()) {
+			for (String outParam : outParamList.getIdentifiers()) {
 				assert i < lhs.length : "missing left hand side for out-parameter";
-				mapOutToLhs.put(oudParam, lhs[i].getIdentifier());
+				mapOutToLhs.put(outParam, lhs[i].getIdentifier());
 				++i;
 			}
 		}
