@@ -123,6 +123,8 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		List<OctagonDomainState> result = new ArrayList<>(s.size());
 		s.forEach(os -> result.add(stateAfterLeaving.copyValuesOnScopeChange(os, mapTmpVarToInParam)));
 		return result;
+		// No need to remove the temporary variables.
+		// The state with temporary variables is only a local variable of this method.
 	}
 	
 	private OctagonDomainState applyReturn(OctagonDomainState stateBeforeLeaving, OctagonDomainState stateAfterLeaving,

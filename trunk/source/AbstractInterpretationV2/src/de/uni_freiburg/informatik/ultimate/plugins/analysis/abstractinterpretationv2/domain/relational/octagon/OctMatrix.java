@@ -157,11 +157,16 @@ public class OctMatrix {
 	}
 	
 	private void minimizeMainDiagonal() {
+		boolean changed = false;
 		for (int i = 0; i < mSize; ++i) {
 			int ii = indexOfLower(i, i);
 			if (OctValue.ZERO.compareTo(mElements[ii]) < 0) {
 				mElements[ii] = OctValue.ZERO;
+				changed = true;
 			}
+		}
+		if (changed) {
+			mStrongClosure = mTightClosure = null;
 		}
 	}
 
@@ -288,6 +293,7 @@ public class OctMatrix {
 		shortestPathClosureAlgorithm.accept(sc);
 		sc.strengtheningInPlace();
 		mStrongClosure = sc.mStrongClosure = sc;
+		sc.mTightClosure = mTightClosure;
 		return sc;
 	}
 	
@@ -308,6 +314,7 @@ public class OctMatrix {
 		}
 		tc.tighteningInPlace();
 		mTightClosure = tc.mTightClosure = tc;
+		tc.mStrongClosure = mStrongClosure;
 		return tc;
 	}
 
