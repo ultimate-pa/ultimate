@@ -9,12 +9,12 @@ import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctMatrix;
 
-public class OctagonSpeedTest {
+public class ClosureSpeedTest {
 
 	// -XX:+PrintCompilation -verbose:gc
 	// -XX:-BackgroundCompilation
 	public static void main(String[] args) {
-		OctagonSpeedTest st = new OctagonSpeedTest();
+		ClosureSpeedTest st = new ClosureSpeedTest();
 		st.addWarmUp(20, 3000);
 		st.addTest(20, 8000);
 		st.addTest(50, 600);

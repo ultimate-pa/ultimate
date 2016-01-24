@@ -1,8 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.junit.Assert;
@@ -320,6 +324,7 @@ public class OctMatrixTest {
 		}
 	}
 	
+	@Test
 	public void testIsEqualTo() {
 		OctMatrix m = OctMatrix.parseBlockLowerTriangular("");
 		OctMatrix n = OctMatrix.parseBlockLowerTriangular("");
@@ -331,12 +336,45 @@ public class OctMatrixTest {
 		Assert.assertTrue(m2.isEqualTo(n2));
 		Assert.assertTrue(n2.isEqualTo(m2));
 		
-		Assert.assertFalse(m.isEqualTo(m2));
-		Assert.assertFalse(m2.isEqualTo(m));
 		OctMatrix o = OctMatrix.parseBlockLowerTriangular("4 -9 inf 3.00001");
 		Assert.assertFalse(m2.isEqualTo(o));
 		Assert.assertFalse(o.isEqualTo(m2));
 		
+	}
+	
+	@Test
+	public void testIsEqualToPermutation() {
+		 OctMatrix a = OctMatrix.parseBlockLowerTriangular(
+				  " 0  1 "
+				+ " 2  3 "
+				+ " 4  5  6  7 "
+				+ " 8  9 10 11 ");
+		 OctMatrix b = OctMatrix.parseBlockLowerTriangular(
+				  " 6  7 "
+				+ "10 11 "
+				+ " 9  5  0  1 "
+				+ " 8  4  2  3 ");
+		 int[] mapAVarIndexToBVarIndex = {1, 0};
+		 Assert.assertTrue(a.isEqualToPermutation(b, mapAVarIndexToBVarIndex));
+	}
+	
+	@Test
+	public void testIsBlockEqualTo() {
+		 OctMatrix a = OctMatrix.parseBlockLowerTriangular(
+				  " 0  1 "
+				+ " 2  3 "
+				+ " 4  5  6  7 "
+				+ " 8  9 10 11 ");
+		 OctMatrix b = OctMatrix.parseBlockLowerTriangular(
+				  " 6  7 "
+				+ "10 11 "
+				+ " 9  5  0  1 "
+				+ " 8  4  2  3 ");
+		 Assert.assertTrue(a.isBlockEqualTo(1, 0, a, 1, 0));
+		 Assert.assertTrue(a.isBlockEqualTo(0, 0, b, 1, 1));
+		 Assert.assertTrue(b.isBlockEqualTo(1, 1, a, 0, 0));
+		 Assert.assertTrue(a.isBlockEqualTo(1, 0, b, 0, 1));
+		 Assert.assertFalse(a.isBlockEqualTo(1, 0, b, 1, 0));
 	}
 	
 	private void assertIsEqualTo(OctMatrix expected, OctMatrix actual) {

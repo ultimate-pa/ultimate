@@ -10,6 +10,8 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
+import javax.print.attribute.Size2DSyntax;
+
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
@@ -218,6 +220,35 @@ public class OctMatrix {
 			return true;
 		}
 		return elementwiseRelation(other, (x, y) -> x.compareTo(y) == 0);
+	}
+
+	public boolean isEqualToPermutation(OctMatrix permutation, int[] mapThisVarIndexToPermVarIndex) {
+		for (int bRow = 0; bRow < variables(); ++bRow) {
+			// compare only block lower triangular part (upper part is coherent)
+			for (int bCol = 0; bCol <= bRow; ++bCol) {
+				int permBRow = mapThisVarIndexToPermVarIndex[bRow];
+				int permBCol = mapThisVarIndexToPermVarIndex[bCol];
+				if (!isBlockEqualTo(bRow, bCol, permutation, permBRow, permBCol)) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	
+	public boolean isBlockEqualTo(int bRow, int bCol, OctMatrix other, int otherBRow, int otherBCol) {
+		bRow *= 2;
+		bCol *= 2;
+		otherBRow *= 2;
+		otherBCol *= 2;
+		for (int j = 0; j < 2; ++j) {
+			for (int i = 0; i < 2; ++i) {
+				if (get(bRow + i, bCol + j).compareTo((other.get(otherBRow + i, otherBCol + j))) != 0) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 	
 	// note: "not less-equal than" does not necessarily mean "greater than"
@@ -682,7 +713,7 @@ public class OctMatrix {
 		targetBCol *= 2;
 		sourceBRow *= 2;
 		sourceBCol *= 2;
-		for (int j = 0; j < 2; j++) {
+		for (int j = 0; j < 2; ++j) {
 			for (int i = 0; i < 2; ++i) {
 				set(targetBRow + i, targetBCol + j, source.get(sourceBRow + i, sourceBCol + j));
 			}
@@ -692,7 +723,7 @@ public class OctMatrix {
 	protected void setBlock(int bRow, int bCol, OctValue v) {
 		bRow *= 2;
 		bCol *= 2;
-		for (int j = 0; j < 2; j++) {
+		for (int j = 0; j < 2; ++j) {
 			for (int i = 0; i < 2; ++i) {
 				set(bRow + i, bCol + j, v);
 			}

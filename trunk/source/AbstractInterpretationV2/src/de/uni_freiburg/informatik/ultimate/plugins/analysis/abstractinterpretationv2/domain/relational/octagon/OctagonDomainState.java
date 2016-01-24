@@ -132,6 +132,9 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 
 	@Override
 	public OctagonDomainState addVariables(Map<String, IBoogieVar> variables) {
+		// variables = new TreeMap<>(variables); // fixed iteration order -- essential for fast isEqualTo
+		// ... probably no speedup. HashSets should iterate in the same order when adding the very same variables.
+		
 		OctagonDomainState newState = shallowCopy();
 		newState.mMapVarToBoogieVar = new HashMap<>(mMapVarToBoogieVar);
 		for (Map.Entry<String, IBoogieVar> entry : variables.entrySet()) {
@@ -266,16 +269,32 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		return mId;
 	}
 
+	// TODO document: call only when same variables are stored
 	private boolean numericAbstractionIsEqualTo(OctagonDomainState other) {
-		// TODO transform the following ifs into assertions
-		if (!mMapNumericVarToIndex.keySet().equals(other.mMapNumericVarToIndex.keySet())) {
-			return false;
-		} else if (!mMapNumericVarToIndex.equals(other.mMapNumericVarToIndex)) {
-			throw new IllegalStateException("Matrices have same variables but in different order.");
+		boolean permutated = false;
+		int[] mapThisVarIndexToOtherVarIndex = new int[mNumericAbstraction.variables()];
+		for (Map.Entry<String, Integer> entry : mMapNumericVarToIndex.entrySet()) {
+			String var = entry.getKey();
+			int thisVarIndex = entry.getValue();
+			int otherVarIndex = other.mMapNumericVarToIndex.get(var);
+			if (thisVarIndex != otherVarIndex) {
+				permutated = true;
+			}
+			mapThisVarIndexToOtherVarIndex[thisVarIndex] = otherVarIndex;
 		}
-		OctMatrix m = normalizedNumericAbstraction();
-		OctMatrix n = other.normalizedNumericAbstraction();
-		return (m.hasNegativeSelfLoop() && n.hasNegativeSelfLoop()) || m.isEqualTo(n);
+		OctMatrix thisClosure = normalizedNumericAbstraction();
+		OctMatrix otherClosure = other.normalizedNumericAbstraction();
+		boolean thisIsBottom = thisClosure.hasNegativeSelfLoop();
+		boolean otherIsBottom = otherClosure.hasNegativeSelfLoop();
+		if (thisIsBottom != otherIsBottom) {
+			return false;
+		} else if (thisIsBottom) { // && otherIsBottom
+			return true;
+		} else if (permutated) {
+			return thisClosure.isEqualToPermutation(otherClosure, mapThisVarIndexToOtherVarIndex);
+		} else {
+			return thisClosure.isEqualTo(otherClosure);
+		}
 	}
 
 	public OctagonDomainState meet(OctagonDomainState other) {

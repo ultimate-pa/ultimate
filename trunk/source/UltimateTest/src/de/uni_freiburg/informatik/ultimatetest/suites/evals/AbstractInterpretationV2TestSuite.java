@@ -60,12 +60,15 @@ public class AbstractInterpretationV2TestSuite extends AbstractEvalTestSuite {
 	private static final String[] INPUT = new String[] {
 			/* failed tests */
 //			"examples/programs/abstractInterpretation/EvenOdd.bpl",  // doesn't terminate (FXPE cannot handle recursion)
+//			// ... more recursive programs
 //			"examples/programs/regression/c/InParamRenaming.c",      // cacsl2boogie UnsupportedOperationException
 //	        "examples/svcomp/loops/bubble_sort_true-unreach-call.c", // RCFG AssertionError non-linear
 			/* RCFG does not seem to terminate */
 //	        "examples/svcomp/loops/compact_false-unreach-call.c",
 //	        "examples/svcomp/loops/heavy_false-unreach-call.c",
 //	        "examples/svcomp/loops/heavy_true-unreach-call.c",
+
+//	        "varDiffOrder/",
 
 	        "examples/programs/abstractInterpretation/",
 	        /* ULTIMATE repo */
