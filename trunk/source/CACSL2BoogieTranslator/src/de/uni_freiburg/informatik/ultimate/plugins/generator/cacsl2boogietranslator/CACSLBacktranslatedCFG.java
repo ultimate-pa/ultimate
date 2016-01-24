@@ -6,7 +6,7 @@ import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.core.services.BacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.model.structure.IExplicitEdgesMultigraph;
-import de.uni_freiburg.informatik.ultimate.witnessprinter.TrueWitnessGenerator;
+import de.uni_freiburg.informatik.ultimate.witnessprinter.CorrectnessWitnessGenerator;
 
 /**
  * 
@@ -25,7 +25,7 @@ public class CACSLBacktranslatedCFG extends BacktranslatedCFG<String, CACSLLocat
 	
 	@Override
 	public String getSVCOMPWitnessString() {
-		return new TrueWitnessGenerator<CACSLLocation, IASTExpression>(this, new CACSLBacktranslationValueProvider(),
+		return new CorrectnessWitnessGenerator<CACSLLocation, IASTExpression>(this, new CACSLBacktranslationValueProvider(),
 				mLogger).makeGraphMLString();
 	}
 

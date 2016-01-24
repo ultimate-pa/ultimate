@@ -197,7 +197,7 @@ public class ACSLHandler implements IACSLHandler {
 
            formula = formula.switchToRValueIfNecessary(main, ((CHandler) main.cHandler).mMemoryHandler, ((CHandler) main.cHandler).mStructHandler, loc);
            
-         //  formula = ConvExpr.rexIntToBoolIfNecessary(loc, formula, ((CHandler) main.cHandler).getExpressionTranslation());
+           formula.rexIntToBoolIfNecessary(loc, ((CHandler) main.cHandler).getExpressionTranslation(), ((CHandler) main.cHandler).mMemoryHandler);
 
            decl.addAll(formula.decl);
            stmt.addAll(formula.stmt);

@@ -109,11 +109,11 @@ public class WitnessAutomatonConstructor {
 
 		mGraphAnnotation.annotate(initial);
 		switch (mGraphAnnotation.getWitnessType()) {
-		case FALSE_WITNESS:
-			mWitnessType = Type.FALSE_WITNESS;
+		case VIOLATION_WITNESS:
+			mWitnessType = Type.VIOLATION_WITNESS;
 			break;
-		case TRUE_WITNESS:
-			mWitnessType = Type.TRUE_WITNESS;
+		case CORRECTNESS_WITNESS:
+			mWitnessType = Type.CORRECTNESS_WITNESS;
 			break;
 		default:
 			mWitnessType = Type.OTHER;
@@ -271,7 +271,7 @@ public class WitnessAutomatonConstructor {
 			public DirectedSparseGraph<WitnessNode, WitnessEdge> transform(GraphMetadata gm) {
 				final String sourcecodelang = gm.getProperty("sourcecodelang");
 				final WitnessType witnesstype = (WitnessType) getEnumProperty(WitnessGraphAnnotation.WitnessType.class,
-						gm, "witness-type", WitnessGraphAnnotation.WitnessType.FALSE_WITNESS);
+						gm, "witness-type", WitnessGraphAnnotation.WitnessType.VIOLATION_WITNESS);
 				mGraphAnnotation = new WitnessGraphAnnotation(sourcecodelang, witnesstype);
 
 				final DirectedSparseGraph<WitnessNode, WitnessEdge> graph = new DirectedSparseGraph<WitnessNode, WitnessEdge>();
