@@ -415,7 +415,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		BidirectionalMap<Integer, Integer> mapNumericSourceToTarget = new BidirectionalMap<>();
 		Map<String, String> mapBooleanSourceToTarget = new HashMap<>();
 
-		// shared numeric variables (always global) (copy to keep relations between globals and in/out-parameters)
+		// shared (=global) numeric variables (copy to keep relations between globals and in/out-parameters)
 		for (String var : sharedVars(source)) {
 			Integer targetIndex = mMapNumericVarToIndex.get(var);
 			if (targetIndex != null) {
@@ -423,7 +423,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 				assert sourceIndex != null : "shared variables are not really shared";
 				mapNumericSourceToTarget.put(sourceIndex, targetIndex);
 			}
-			// do not copy shared booleans (again). Already done by patch(...).
+			// do not copy shared (=global) booleans (again). Already done by patch(...).
 		}
 
 		// in/out-parameters (from one scope) to locals (from another scope)

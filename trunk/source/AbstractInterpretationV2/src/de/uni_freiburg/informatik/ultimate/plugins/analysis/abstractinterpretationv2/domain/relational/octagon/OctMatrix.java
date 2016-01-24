@@ -10,8 +10,6 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
-import javax.print.attribute.Size2DSyntax;
-
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
@@ -77,13 +75,13 @@ public class OctMatrix {
 
 	private OctMatrix mStrongClosure;
 	private OctMatrix mTightClosure;
-
+	
 	public OctMatrix copy() {
-		OctMatrix clone = new OctMatrix(mSize);
-		System.arraycopy(this.mElements, 0, clone.mElements, 0, mElements.length);
-		clone.mStrongClosure = mStrongClosure;
-		clone.mTightClosure = mTightClosure;
-		return clone;
+		OctMatrix copy = new OctMatrix(mSize);
+		System.arraycopy(this.mElements, 0, copy.mElements, 0, mElements.length);
+		copy.mStrongClosure = mStrongClosure;
+		copy.mTightClosure = mTightClosure;
+		return copy;
 	}
 
 	public static OctMatrix parseBlockLowerTriangular(String m) {
@@ -135,6 +133,7 @@ public class OctMatrix {
 		for (int i = 0; i < mElements.length; ++i) {
 			mElements[i] = fill;
 		}
+		mStrongClosure = mTightClosure = null;
 	}
 	
 	public int getSize() {
@@ -153,6 +152,7 @@ public class OctMatrix {
 		if(value == null) {
 			throw new IllegalArgumentException("null is not a valid matrix element.");
 		}
+		mStrongClosure = mTightClosure = null;
 		mElements[indexOf(row, col)] = value;
 	}
 	
@@ -283,7 +283,7 @@ public class OctMatrix {
 	public OctMatrix strongClosure(Consumer<OctMatrix> shortestPathClosureAlgorithm) {
 		if (mStrongClosure != null) {
 			return mStrongClosure;
-		} 
+		}
 		OctMatrix sc = copy();
 		shortestPathClosureAlgorithm.accept(sc);
 		sc.strengtheningInPlace();
@@ -641,6 +641,7 @@ public class OctMatrix {
 		}
 		OctMatrix n = new OctMatrix(mSize - (2 * count));
 		System.arraycopy(mElements, 0, n.mElements, 0, n.mElements.length);
+		// cached closures are of different size and cannot be (directly) reused
 		return n;
 	}
 	
@@ -663,6 +664,7 @@ public class OctMatrix {
 				n.mElements[in++] = get(i, j);
 			}
 		}
+		// cached closures are of different size and cannot be (directly) reused
 		return n;
 	}
 

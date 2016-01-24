@@ -123,29 +123,6 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		List<OctagonDomainState> result = new ArrayList<>(s.size());
 		s.forEach(os -> result.add(stateAfterLeaving.copyValuesOnScopeChange(os, mapTmpVarToInParam)));
 		return result;
-
-		// No need to remove the temporary variables.
-		// The state with temporary variables is only a local variable of this method.
-		
-		// HACK -- assume \top for all in-params (valid but poor over-approximation)
-//		OctagonDomainState newState = stateAfterLeaving.deepCopy();
-//		for (VarList inParamList : procedure.getInParams()) {
-//			for (String inParam : inParamList.getIdentifiers()) {
-//				newState.havocVar(inParam);
-//			}
-//		}
-//		return newState;
-	}
-
-	private AssignmentStatement makeAssignment(String lhsVarName, Expression rhsExpr) {
-		LeftHandSide[] lhs = {new VariableLHS(rhsExpr.getLocation(), rhsExpr.getType(), lhsVarName, null)};
-		Expression[] rhs = {rhsExpr};
-		return new AssignmentStatement(rhsExpr.getLocation(), lhs, rhs);
-	}
-	
-	private OctagonDomainState assignInParamsToTmpVars(OctagonDomainState oldState,
-			VarList[] inParamLhs, Expression[] inParamRhs, Map<String, String> mapSourceToTarget) {
-		return null; // TODO
 	}
 	
 	private OctagonDomainState applyReturn(OctagonDomainState stateBeforeLeaving, OctagonDomainState stateAfterLeaving,
