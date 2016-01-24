@@ -566,22 +566,27 @@ public class MainDispatcher extends Dispatcher {
 		}
 		
 		if (!witnessInvariantsBefore.isEmpty() || !witnessInvariantsAfter.isEmpty()) {
+			ILocation loc = LocationFactory.createCLocation(n);
 			if (result instanceof ExpressionResult) {
 				ExpressionResult exprResult = (ExpressionResult) result;
 				exprResult.stmt.addAll(0, witnessInvariantsBefore);
 				exprResult.stmt.addAll(witnessInvariantsAfter);
 				if (invariantBefore != null) {
-					mLogger.warn("Checking witness invariant " + invariantBefore);
+					mLogger.warn("Checking witness invariant " + invariantBefore + " directly before the following code " + loc);
 				}
 				if (invariantAfter != null) {
-					mLogger.warn("Checking witness invariant " + invariantAfter);
+					mLogger.warn("Checking witness invariant " + invariantAfter + " directly after the following code " + loc);
 				}
 			} else {
 				if (invariantBefore != null) {
-					mLogger.warn("Found witness invariant but unable to add check " + invariantBefore);
+					String message = "Found witness invariant but unable to add check " + invariantBefore + " directly before the following code " + loc;
+					mLogger.warn(message);
+					throw new AssertionError(message);
 				}
 				if (invariantAfter != null) {
-					mLogger.warn("Found witness invariant but unable to add check " + invariantAfter);
+					String message = "Found witness invariant but unable to add check " + invariantAfter + " directly after the following code " + loc;
+					mLogger.warn(message);
+					throw new AssertionError(message);
 				}
 			}
 		}
