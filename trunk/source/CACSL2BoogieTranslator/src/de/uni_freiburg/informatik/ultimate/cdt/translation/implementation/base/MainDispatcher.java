@@ -35,9 +35,12 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
@@ -130,10 +133,12 @@ import org.eclipse.cdt.internal.core.dom.parser.IASTAmbiguousExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.IASTAmbiguousCondition;
 
+import de.uni_freiburg.informatik.ultimate.acsl.parser.Parser;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -203,6 +208,8 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.TypeInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ValidExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.WildcardExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
@@ -244,6 +251,7 @@ public class MainDispatcher extends Dispatcher {
 	private LinkedHashSet<VariableDeclaration> _boogieDeclarationsOfVariablesOnHeap;
 	private LinkedHashMap<Integer, String> indexToFunction;
 	protected boolean m_BitvectorTranslation;
+	private WitnessInvariants m_WitnessInvariants;
 
 	public LinkedHashMap<String, Integer> getFunctionToIndex() {
 		return mFunctionToIndex;
@@ -267,9 +275,10 @@ public class MainDispatcher extends Dispatcher {
 
 	// end alex
 
-	public MainDispatcher(CACSL2BoogieBacktranslator backtranslator, IUltimateServiceProvider services, Logger logger) {
+	public MainDispatcher(CACSL2BoogieBacktranslator backtranslator, WitnessInvariants witnessInvariants, IUltimateServiceProvider services, Logger logger) {
 		super(backtranslator, services, logger);
 		m_BitvectorTranslation = mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
+		m_WitnessInvariants = witnessInvariants;
 	}
 
 	/**
@@ -361,6 +370,16 @@ public class MainDispatcher extends Dispatcher {
 
 	@Override
 	public Result dispatch(IASTNode n) {
+		final List<AssertStatement> witnessInvariantsBefore;
+		final String invariantBefore;
+		if (m_WitnessInvariants != null) {
+			invariantBefore = m_WitnessInvariants.getInvariantsBefore().get(n);
+			witnessInvariantsBefore = translateWitnessInvariant(n, invariantBefore);
+		} else {
+			invariantBefore = null;
+			witnessInvariantsBefore = Collections.emptyList();
+		}
+		
 		final Result result;
 		if (n instanceof IASTTranslationUnit) {
 			result = cHandler.visit(this, ((IASTTranslationUnit) n));
@@ -536,7 +555,76 @@ public class MainDispatcher extends Dispatcher {
 			ILocation loc = LocationFactory.createCLocation(n);
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
+		final List<AssertStatement> witnessInvariantsAfter;
+		final String invariantAfter;
+		if (m_WitnessInvariants != null) {
+			invariantAfter = m_WitnessInvariants.getInvariantsAfter().get(n);
+			witnessInvariantsAfter = translateWitnessInvariant(n, invariantAfter);
+		} else {
+			invariantAfter = null;
+			witnessInvariantsAfter = Collections.emptyList();
+		}
+		
+		if (!witnessInvariantsBefore.isEmpty() || !witnessInvariantsAfter.isEmpty()) {
+			if (result instanceof ExpressionResult) {
+				ExpressionResult exprResult = (ExpressionResult) result;
+				exprResult.stmt.addAll(0, witnessInvariantsBefore);
+				exprResult.stmt.addAll(witnessInvariantsAfter);
+				if (invariantBefore != null) {
+					mLogger.warn("Checking witness invariant " + invariantBefore);
+				}
+				if (invariantAfter != null) {
+					mLogger.warn("Checking witness invariant " + invariantAfter);
+				}
+			} else {
+				if (invariantBefore != null) {
+					mLogger.warn("Found witness invariant but unable to add check " + invariantBefore);
+				}
+				if (invariantAfter != null) {
+					mLogger.warn("Found witness invariant but unable to add check " + invariantAfter);
+				}
+			}
+		}
 		return result;
+	}
+
+	private List<AssertStatement> translateWitnessInvariant(IASTNode n, String invariantBefore) throws AssertionError {
+//		ILocation loca = LocationFactory.createCLocation(n);
+		if (invariantBefore != null) {
+			ACSLNode acslNode = null;
+			try {
+				acslNode = Parser.parseComment("lstart\n assert" + invariantBefore + ";",
+						0, 0, mLogger);
+			} catch (Exception e) {
+				throw new IllegalArgumentException(e);
+			}
+			Result translationResult = dispatch(acslNode);
+			List<AssertStatement> invariants = new ArrayList<>();
+			if (translationResult instanceof ExpressionResult) {
+				ExpressionResult exprResult = (ExpressionResult) translationResult;
+				if (!exprResult.auxVars.isEmpty()) {
+					throw new AssertionError("must be translatable without auxvars");
+				}
+				if (!exprResult.decl.isEmpty()) {
+					throw new AssertionError("must be translatable without new declarations");
+				}
+				if (!exprResult.overappr.isEmpty()) {
+					throw new AssertionError("must be translatable without new overapproximations");
+				}
+				if (exprResult.stmt.size() > 1) {
+					throw new AssertionError("must be translatable without additional statements");
+				}
+				Statement stmt = exprResult.stmt.get(0);
+				if (stmt instanceof AssertStatement) {
+					invariants.add((AssertStatement) stmt);
+				} else {
+					throw new AssertionError("must return one AssertStatement");
+				}
+			}
+			return invariants;
+		} else {
+			return Collections.emptyList();
+		}
 	}
 
 	@Override

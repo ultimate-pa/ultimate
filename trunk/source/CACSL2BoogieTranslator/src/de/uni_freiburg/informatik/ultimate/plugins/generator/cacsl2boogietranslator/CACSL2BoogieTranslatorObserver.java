@@ -97,6 +97,9 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	private final IUltimateServiceProvider mService;
 
 	private final TrueWitnessExtractor mWitnessExtractor;
+	private IASTTranslationUnit inputTU;
+	private boolean m_LastModel;
+	private WitnessInvariants mWitnessInvariants;
 
 	public CACSL2BoogieTranslatorObserver(IUltimateServiceProvider services, IToolchainStorage storage) {
 		assert storage != null;
@@ -117,77 +120,11 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		if (!(root instanceof WrapperNode) || !((((WrapperNode) root).getBacking()) instanceof IASTTranslationUnit)) {
 			// we ignore everything that will not get us an IASTTranslationUnit
 			return false;
+		} else {
+			inputTU = (IASTTranslationUnit) ((WrapperNode) root).getBacking();
+			mWitnessExtractor.setAST(inputTU);
+			return false;
 		}
-
-		final IASTTranslationUnit inputTU = (IASTTranslationUnit) ((WrapperNode) root).getBacking();
-		mWitnessExtractor.setAST(inputTU);
-
-		if (mExtendedDebugOutput) {
-			ASTPrinter.print(inputTU);
-		}
-
-		// translate to Boogie
-		final Dispatcher main;
-		final UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.PLUGIN_ID);
-		TranslationMode mode = TranslationMode.BASE;
-		try {
-			mode = prefs.getEnum(CACSLPreferenceInitializer.LABEL_MODE, TranslationMode.class);
-		} catch (Exception e) {
-			throw new IllegalArgumentException("Unable to determine preferred mode.");
-		}
-		final CACSL2BoogieBacktranslator backtranslator = new CACSL2BoogieBacktranslator(mService);
-		mLogger.info("Settings: " + mode);
-		switch (mode) {
-		case BASE:
-			main = new MainDispatcher(backtranslator, mService, mLogger);
-			break;
-		case SV_COMP14:
-			main = new SvComp14MainDispatcher(backtranslator, mService, mLogger);
-			break;
-		default:
-			throw new IllegalArgumentException("Unknown mode.");
-		}
-		mStorage.putStorable(IdentifierMapping.getStorageKey(), new IdentifierMapping<String, String>());
-
-		final ASTDecorator decorator = new ASTDecorator();
-		// build a list of ACSL ASTs
-		FunctionLineVisitor visitor = new FunctionLineVisitor();
-		inputTU.accept(visitor);
-		final CommentParser cparser = new CommentParser(inputTU.getComments(), visitor.getLineRange(), mLogger, main);
-		final List<ACSLNode> acslNodes = cparser.processComments();
-		validateLTLProperty(acslNodes);
-		decorator.setAcslASTs(acslNodes);
-		// build decorator tree
-		decorator.mapASTs(inputTU);
-
-		try {
-			BoogieASTNode outputTU = main.run(decorator.getRootNode()).node;
-			outputTU = (new BoogieAstCopier()).copy((Unit) outputTU);
-			mRootNode = new WrapperNode(null, outputTU);
-			final IdentifierMapping<String, String> map = new IdentifierMapping<String, String>();
-			map.setMap(main.getIdentifierMapping());
-			mStorage.putStorable(IdentifierMapping.getStorageKey(), map);
-			mService.getBacktranslationService().addTranslator(backtranslator);
-		} catch (final Exception t) {
-			final IResult result;
-			// String message =
-			// "There was an error during the translation process! [" +
-			// t.getClass() + ", "
-			// + t.getMessage() + "]";
-			if (t instanceof IncorrectSyntaxException) {
-				result = new SyntaxErrorResult(Activator.PLUGIN_NAME, ((IncorrectSyntaxException) t).getLocation(),
-						t.getLocalizedMessage());
-			} else if (t instanceof UnsupportedSyntaxException) {
-				result = new UnsupportedSyntaxResult<IElement>(Activator.PLUGIN_NAME,
-						((UnsupportedSyntaxException) t).getLocation(), t.getLocalizedMessage());
-			} else {
-				throw t;
-			}
-			mService.getResultService().reportResult(Activator.PLUGIN_ID, result);
-			mLogger.warn(result.getShortDescription() + " " + result.getLongDescription());
-			mService.getProgressMonitorService().cancelToolchain();
-		}
-		return false;
 	}
 
 	private void extractWitnessInformation(final WitnessNode wnode) {
@@ -252,11 +189,83 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	public void finish() {
 		if (mWitnessExtractor.isReady()) {
 
-			final Map<IASTNode, String> binvariants = mWitnessExtractor.getBeforeAST2Invariants();
-			final Map<IASTNode, String> ainvariants = mWitnessExtractor.getAfterAST2Invariants();
+			final Map<IASTNode, String> bInvariants = mWitnessExtractor.getBeforeAST2Invariants();
+			final Map<IASTNode, String> aInvariants = mWitnessExtractor.getAfterAST2Invariants();
+			mWitnessInvariants = new WitnessInvariants(bInvariants, aInvariants);
 
 			// clear witness extractor to make him loose unused references
 			//mWitnessExtractor.clear();
+		}
+		if (m_LastModel) {
+			doTranslation();
+		}
+	}
+
+	private void doTranslation() {
+		if (mExtendedDebugOutput) {
+			ASTPrinter.print(inputTU);
+		}
+
+		// translate to Boogie
+		final Dispatcher main;
+		final UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		TranslationMode mode = TranslationMode.BASE;
+		try {
+			mode = prefs.getEnum(CACSLPreferenceInitializer.LABEL_MODE, TranslationMode.class);
+		} catch (Exception e) {
+			throw new IllegalArgumentException("Unable to determine preferred mode.");
+		}
+		final CACSL2BoogieBacktranslator backtranslator = new CACSL2BoogieBacktranslator(mService);
+		mLogger.info("Settings: " + mode);
+		switch (mode) {
+		case BASE:
+			main = new MainDispatcher(backtranslator, mWitnessInvariants, mService, mLogger);
+			break;
+		case SV_COMP14:
+			main = new SvComp14MainDispatcher(backtranslator, mWitnessInvariants, mService, mLogger);
+			break;
+		default:
+			throw new IllegalArgumentException("Unknown mode.");
+		}
+		mStorage.putStorable(IdentifierMapping.getStorageKey(), new IdentifierMapping<String, String>());
+
+		final ASTDecorator decorator = new ASTDecorator();
+		// build a list of ACSL ASTs
+		FunctionLineVisitor visitor = new FunctionLineVisitor();
+		inputTU.accept(visitor);
+		final CommentParser cparser = new CommentParser(inputTU.getComments(), visitor.getLineRange(), mLogger, main);
+		final List<ACSLNode> acslNodes = cparser.processComments();
+		validateLTLProperty(acslNodes);
+		decorator.setAcslASTs(acslNodes);
+		// build decorator tree
+		decorator.mapASTs(inputTU);
+
+		try {
+			BoogieASTNode outputTU = main.run(decorator.getRootNode()).node;
+			outputTU = (new BoogieAstCopier()).copy((Unit) outputTU);
+			mRootNode = new WrapperNode(null, outputTU);
+			final IdentifierMapping<String, String> map = new IdentifierMapping<String, String>();
+			map.setMap(main.getIdentifierMapping());
+			mStorage.putStorable(IdentifierMapping.getStorageKey(), map);
+			mService.getBacktranslationService().addTranslator(backtranslator);
+		} catch (final Exception t) {
+			final IResult result;
+			// String message =
+			// "There was an error during the translation process! [" +
+			// t.getClass() + ", "
+			// + t.getMessage() + "]";
+			if (t instanceof IncorrectSyntaxException) {
+				result = new SyntaxErrorResult(Activator.PLUGIN_NAME, ((IncorrectSyntaxException) t).getLocation(),
+						t.getLocalizedMessage());
+			} else if (t instanceof UnsupportedSyntaxException) {
+				result = new UnsupportedSyntaxResult<IElement>(Activator.PLUGIN_NAME,
+						((UnsupportedSyntaxException) t).getLocation(), t.getLocalizedMessage());
+			} else {
+				throw t;
+			}
+			mService.getResultService().reportResult(Activator.PLUGIN_ID, result);
+			mLogger.warn(result.getShortDescription() + " " + result.getLongDescription());
+			mService.getProgressMonitorService().cancelToolchain();
 		}
 	}
 
@@ -267,7 +276,9 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 
 	@Override
 	public void init(GraphType modelType, int currentModelIndex, int numberOfModels) {
-		// Not required.
+		if (currentModelIndex == numberOfModels -1) {
+			m_LastModel = true;
+		}
 	}
 
 	@Override
