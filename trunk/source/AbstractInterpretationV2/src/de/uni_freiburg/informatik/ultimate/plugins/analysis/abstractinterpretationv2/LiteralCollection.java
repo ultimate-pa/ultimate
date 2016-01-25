@@ -29,7 +29,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
@@ -47,28 +46,6 @@ public class LiteralCollection {
 
 	protected LiteralCollection(Set<BigDecimal> realsSet) {
 		mSortedNumbersSet = realsSet.stream().sorted().collect(Collectors.toList());
-	}
-
-	public BigDecimal getNextIntegerPositive(BigDecimal value) {
-
-		final BigDecimal nextNumber = getNextNumberPositive(value);
-
-		if (nextNumber == null) {
-			return null;
-		}
-
-		return nextNumber.setScale(0, RoundingMode.UP);
-	}
-
-	public BigDecimal getNextIntegerNegative(BigDecimal value) {
-
-		final BigDecimal nextNumber = getNextNumberNegative(value);
-
-		if (nextNumber == null) {
-			return null;
-		}
-
-		return nextNumber.setScale(0, RoundingMode.UP);
 	}
 
 	public BigDecimal getNextRealPositive(BigDecimal value) {
