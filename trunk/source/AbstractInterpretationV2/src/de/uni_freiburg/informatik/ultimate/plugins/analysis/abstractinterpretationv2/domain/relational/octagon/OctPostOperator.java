@@ -113,16 +113,16 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 			}
 		}
 		// add temporary variables
-		List<OctagonDomainState> s = Collections.singletonList(stateAfterLeaving.addVariables(tmpVars));
+		List<OctagonDomainState> tmpStates = Collections.singletonList(stateAfterLeaving.addVariables(tmpVars));
 		
 		// assign tmp := args
 		for (AssignmentStatement assign : tmpAssigns) {
-			s = mStatementProcessor.process(s, assign);
+			tmpStates = mStatementProcessor.process(tmpStates, assign);
 		}
 		
 		// copy to scope opened by call (inParam := tmp)
-		List<OctagonDomainState> result = new ArrayList<>(s.size());
-		s.forEach(os -> result.add(stateAfterLeaving.copyValuesOnScopeChange(os, mapTmpVarToInParam)));
+		List<OctagonDomainState> result = new ArrayList<>(tmpStates.size());
+		tmpStates.forEach(s -> result.add(stateAfterLeaving.copyValuesOnScopeChange(s, mapTmpVarToInParam)));
 		return result;
 		// No need to remove the temporary variables.
 		// The state with temporary variables is only a local variable of this method.

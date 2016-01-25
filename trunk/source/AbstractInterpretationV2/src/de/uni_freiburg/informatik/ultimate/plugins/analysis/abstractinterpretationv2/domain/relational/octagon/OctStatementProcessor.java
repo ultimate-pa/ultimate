@@ -129,6 +129,8 @@ public class OctStatementProcessor {
 		if (rhs instanceof BooleanLiteral) {
 			BoolValue value = BoolValue.get(((BooleanLiteral) rhs).getValue());
 			mOldStates.forEach(s -> s.assignBooleanVar(var, value));
+		} else {
+			mOldStates.forEach(s -> s.havocVar(var));
 		}
 	}
 	
