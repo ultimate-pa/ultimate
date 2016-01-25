@@ -62,7 +62,7 @@ public class LiteralCollection {
 
 	public BigDecimal getNextIntegerNegative(BigDecimal value) {
 
-		final BigDecimal nextNumber = getNextIntegerNegative(value);
+		final BigDecimal nextNumber = getNextNumberNegative(value);
 
 		if (nextNumber == null) {
 			return null;
