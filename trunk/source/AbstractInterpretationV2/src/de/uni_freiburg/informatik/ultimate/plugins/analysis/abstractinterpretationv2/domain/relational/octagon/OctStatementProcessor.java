@@ -1,9 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.apache.log4j.Logger;
 
@@ -15,11 +18,10 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieAstUtil;
@@ -114,45 +116,57 @@ public class OctStatementProcessor {
 		}
 	}
 	
-	private void processSingleAssignment(String lhsVar, Expression rhs) {
+	private void processSingleAssignment(String targetVar, Expression rhs) {
 		IType type = rhs.getType(); // note: there is no implicit typecasting in boogie. "real := int;" cannot happen. 
 		if (TypeUtil.isBoolean(type)) {
-			processBooleanAssign(lhsVar, rhs);
+			processBooleanAssign(targetVar, rhs);
 		} else if (TypeUtil.isNumeric(type)) {
-			processNumericAssign(lhsVar, rhs);
+			processNumericAssign(targetVar, rhs);
 		}
 		// else: variables of unsupported types are assumed to be \top all the time
 		mNewStates = mOldStates;
 	}
 	
-	private void processBooleanAssign(String var, Expression rhs) {
+	private void processBooleanAssign(String targetVar, Expression rhs) {
+		Consumer<OctagonDomainState> action = s -> s.havocVar(targetVar);
 		if (rhs instanceof BooleanLiteral) {
 			BoolValue value = BoolValue.get(((BooleanLiteral) rhs).getValue());
-			mOldStates.forEach(s -> s.assignBooleanVar(var, value));
-		} else {
-			mOldStates.forEach(s -> s.havocVar(var));
+			action = s -> s.assignBooleanVar(targetVar, value);
+		} else if (rhs instanceof IdentifierExpression) {
+			IdentifierExpression ie = (IdentifierExpression) rhs;
+			if (BoogieAstUtil.isVariable(ie)) {
+				String sourceVar = ie.getIdentifier();
+				action = s -> s.assignVar(targetVar, sourceVar);
+			}
 		}
+		mOldStates.forEach(action);
 	}
 	
-	private void processNumericAssign(String var, Expression rhs) {
-		 if (rhs instanceof IntegerLiteral) {
-			assignNumericConstant(var, ((IntegerLiteral) rhs).getValue());
-		} else if (rhs instanceof RealLiteral) {
-			assignNumericConstant(var, ((RealLiteral) rhs).getValue());
-		} else {
-			mOldStates.forEach(s -> s.havocVar(var));
+	private void processNumericAssign(String targetVar, Expression rhs) {
+		Consumer<OctagonDomainState> action = s -> s.havocVar(targetVar);
+		AffineExpression ae = AffineExpressionTransformer.transformNumeric(rhs);
+		if (ae != null) {
+			if (ae.isConstant()) {
+				OctValue value = new OctValue(ae.getConstant());
+				action = s -> s.assignNumericVarConstant(targetVar, value);
+			} else {
+				AffineExpression.SimpleForm sf = ae.simpleForm();
+				if (sf != null) {
+					if (sf.var[1] == null && sf.isVarPositive[0]) {
+						String sourceVar = sf.var[0];
+						if (sf.constant.equals(OctValue.ZERO)) {
+							action = s -> s.assignVar(targetVar, sourceVar);
+						} else {
+							action = s -> s.assignNumericVarRelational(targetVar, sourceVar, sf.constant);
+						}
+					}
+				}
+			}
 		}
-		// TODO use AffineExpression to assign relations
-		// TODO project vars to intervals and calculate (if not affine)
-//		if (rhs instanceof BinaryExpression) {
-//			Expression beLhs = ((BinaryExpression) rhs).getLeft();
-//			Expression beRhs = ((BinaryExpression) rhs).getRight();
-//		}
-	}
 
-	private void assignNumericConstant(String var, String numericConstant) {
-		OctValue value = OctValue.parse(numericConstant);
-		mOldStates.forEach(s -> s.assignNumericVarConstant(var, value));
+		// TODO project vars to intervals and calculate (if not affine)
+
+		mOldStates.forEach(action);
 	}
 
 	private void processHavocStatement(HavocStatement statement) {

@@ -568,10 +568,10 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	}
 	
 	// v1 := v2 + c;
-	protected void assignNumericVarRelational(String var, String otherVar, OctValue addConstant) {
+	protected void assignNumericVarRelational(String targetCar, String sourceVar, OctValue addConstant) {
 		OctValue addConstantNegated = addConstant.negate();
-		int v2 = mMapNumericVarToIndex.get(var) * 2;
-		if (var.equals(otherVar)) {
+		int v2 = mMapNumericVarToIndex.get(targetCar) * 2;
+		if (targetCar.equals(sourceVar)) {
 			// update column (row is updated by coherence)
 			for (int i = 0; i < mNumericAbstraction.getSize(); ++i) {
 				int beta = 0;
@@ -591,8 +591,8 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 				}
 			}
 		} else {
-			int ov2 = mMapNumericVarToIndex.get(otherVar) * 2;
-			havocVar(var);
+			int ov2 = mMapNumericVarToIndex.get(sourceVar) * 2;
+			havocVar(targetCar);
 			mNumericAbstraction.set(ov2, v2, addConstant); // also sets entry (v2 + 1, ov2 + 1) by coherence
 			mNumericAbstraction.set(v2, ov2, addConstantNegated); // also sets entry (ov2 + 1, v2 + 1) by coherence
 		}

@@ -31,17 +31,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 
 public class AffineExpressionTransformer {
 	
-	private AffineExpression transform(Expression e) {
-		IType eType = e.getType();
-		if (TypeUtil.isNumeric(eType)) {
-			return transformNumeric(e);
-		} else if (TypeUtil.isBoolean(eType)) {
-			return transformBoolean(e);
-		}
-		return null;
-	}
-	
-	private AffineExpression transformNumeric(Expression e) {
+	public static AffineExpression transformNumeric(Expression e) {
 		assert TypeUtil.isNumeric(e.getType()) : "Tried numeric transformation for " + e;
 		if (e instanceof IntegerLiteral) {
 			String value = ((IntegerLiteral) e).getValue();
@@ -58,21 +48,20 @@ public class AffineExpressionTransformer {
 		} else if (e instanceof BinaryExpression) {
 			return transformNumericBinaryExpression((BinaryExpression) e);
 		}
-		throw new UnsupportedOperationException(String.format("Extend this with new type %s", e.getClass()));
+		return null;
 	}
 
-	private AffineExpression transformNumericUnaryExpression(UnaryExpression e) {
+	private static AffineExpression transformNumericUnaryExpression(UnaryExpression e) {
 		switch (e.getOperator()) {
 		case ARITHNEGATIVE:
 			AffineExpression sub = transformNumeric(e.getExpr());
-			if (sub == null) { return null; }
-			return sub.negate();
+			return sub == null ? null : sub.negate();
 		default:
 			return null;
 		}
 	}
 	
-	private AffineExpression transformNumericBinaryExpression(BinaryExpression e) {
+	private static AffineExpression transformNumericBinaryExpression(BinaryExpression e) {
 		AffineExpression left = transformNumeric(e.getLeft());
 		if (left == null) { return null; }
 		AffineExpression right = transformNumeric(e.getRight());
@@ -92,18 +81,6 @@ public class AffineExpressionTransformer {
 		default:
 			return null;
 		}
-	}
-
-	class TransformBooleanResult {
-		Boolean booleanResult = null;
-		List<LinearConstraint<BigDecimal>> constraintResult = null;
-	}
-	
-	private AffineExpression transformBoolean(Expression e) {
-		assert TypeUtil.isBoolean(e.getType()) : "Tried boolean transformation for " + e;
-//		return null;
-
-		throw new UnsupportedOperationException("work in progress");
 	}
 	
 	

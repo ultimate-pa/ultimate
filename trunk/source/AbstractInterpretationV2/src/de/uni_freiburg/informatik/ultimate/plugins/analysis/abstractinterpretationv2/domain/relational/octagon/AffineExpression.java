@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -24,6 +25,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class AffineExpression {
 
+	public static class SimpleForm {
+		public static final int MAX_VARS = 2;
+		public String[] var = new String[MAX_VARS];
+		public boolean[] isVarPositive = new boolean[MAX_VARS];
+		public OctValue constant;
+	}
+	
 	/**
 	 * Map from the variables of this affine expression to their coefficients.
 	 * Variables with coefficient zero aren't stored.
@@ -59,9 +67,17 @@ public class AffineExpression {
 		}
 	}
 	
+	public Map<String, BigDecimal> getCoefficients() {
+		return Collections.unmodifiableMap(mCoefficients);
+	}
+
 	public BigDecimal getCoefficient(String var) {
 		BigDecimal factor = mCoefficients.get(var);
 		return (factor == null) ? BigDecimal.ZERO : factor;
+	}
+
+	public BigDecimal getConstant() {
+		return mConstant;
 	}
 	
 	public boolean isConstant() {
@@ -72,6 +88,29 @@ public class AffineExpression {
 //		}
 //		return true;
 		return mCoefficients.isEmpty();
+	}
+
+	public SimpleForm simpleForm() {
+		BigDecimal minusOne = BigDecimal.ONE.negate();
+		SimpleForm sf = new SimpleForm();
+		int i = 0;
+		for (Map.Entry<String, BigDecimal> entry : mCoefficients.entrySet()) {
+			if (i >= SimpleForm.MAX_VARS) {
+				return null;
+			} 
+			BigDecimal coeff = entry.getValue();
+			if (coeff.compareTo(BigDecimal.ONE) != 0) {
+				sf.isVarPositive[i] = true;
+			} else if (coeff.compareTo(minusOne) != 0) {
+				sf.isVarPositive[i] = false;
+			} else {
+				return null;
+			}
+			sf.var[i] = entry.getKey();
+			++i;
+		}
+		sf.constant = new OctValue(mConstant);
+		return sf;
 	}
 	
 	public AffineExpression add(AffineExpression summand) {
