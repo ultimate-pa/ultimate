@@ -140,23 +140,24 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 			newLower = new IntervalValue();
 		} else {
 			BigDecimal working;
-			
+
 			// If the lower bound has changed, we need to widen the lower bound, starting from the lower value. If the
 			// lower bounds are the same, we use this value as current bound.
 			final int compResult = firstLower.compareTo(secondLower);
 			if (compResult < 0) {
 				working = mLiteralCollection.getNextRealNegative(firstLower.getValue());
-				working = working.setScale(0, RoundingMode.FLOOR);
 			} else if (compResult > 0) {
 				working = mLiteralCollection.getNextRealNegative(secondLower.getValue());
-				working = working.setScale(0, RoundingMode.FLOOR);
 			} else {
 				working = firstLower.getValue();
 			}
-			
+
 			if (working == null) {
 				newLower = new IntervalValue();
 			} else {
+				if (compResult != 0) {
+					working = working.setScale(0, RoundingMode.FLOOR);
+				}
 				newLower = new IntervalValue(working);
 			}
 		}
@@ -166,23 +167,24 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 			newUpper = new IntervalValue();
 		} else {
 			BigDecimal working;
-			
+
 			// If the upper bound has changed, we need to widen the upper bound, starting from the largest value. If the
 			// upper bounds are the same, we use this value as current bound.
 			final int compResult = firstUpper.compareTo(secondUpper);
 			if (compResult > 0) {
 				working = mLiteralCollection.getNextRealPositive(firstUpper.getValue());
-				working = working.setScale(0, RoundingMode.CEILING);
 			} else if (compResult < 0) {
 				working = mLiteralCollection.getNextRealPositive(secondUpper.getValue());
-				working = working.setScale(0, RoundingMode.CEILING);
 			} else {
 				working = firstUpper.getValue();
 			}
-			
+
 			if (working == null) {
 				newUpper = new IntervalValue();
 			} else {
+				if (compResult != 0) {
+					working = working.setScale(0, RoundingMode.CEILING);
+				}
 				newUpper = new IntervalValue(working);
 			}
 		}
