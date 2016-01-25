@@ -186,7 +186,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 			//       or variable was not stored at all => already removed
 		}
 		if (!indexRemovedNumericVars.isEmpty()) {
-			newState.mNumericAbstraction = normalizedNumericAbstraction().removeVariables(indexRemovedNumericVars);
+			newState.mNumericAbstraction = cachedNormalizedNumericAbstraction().removeVariables(indexRemovedNumericVars);
 			defragmentMap(newState.mMapNumericVarToIndex);
 		}
 		return newState;
@@ -226,7 +226,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	}
 
 	private boolean isNumericAbstractionBottom() {
-		return normalizedNumericAbstraction().hasNegativeSelfLoop();
+		return cachedNormalizedNumericAbstraction().hasNegativeSelfLoop();
 	}
 
 	private boolean isBooleanAbstractionBottom() {
@@ -238,11 +238,12 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		return false;
 	}
 
-	private OctMatrix normalizedNumericAbstraction() {
+	// TODO document: returns original cache. Do not modify in-place!
+	private OctMatrix cachedNormalizedNumericAbstraction() {
 		if (isNumericAbstractionIntegral()) {
-			return mNumericAbstraction.tightClosure();
+			return mNumericAbstraction.cachedTightClosure();
 		} else {
-			return mNumericAbstraction.strongClosure();
+			return mNumericAbstraction.cachedStrongClosure();
 		}
 	}
 
@@ -282,8 +283,8 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 			}
 			mapThisVarIndexToOtherVarIndex[thisVarIndex] = otherVarIndex;
 		}
-		OctMatrix thisClosure = normalizedNumericAbstraction();
-		OctMatrix otherClosure = other.normalizedNumericAbstraction();
+		OctMatrix thisClosure = cachedNormalizedNumericAbstraction();
+		OctMatrix otherClosure = other.cachedNormalizedNumericAbstraction();
 		boolean thisIsBottom = thisClosure.hasNegativeSelfLoop();
 		boolean otherIsBottom = otherClosure.hasNegativeSelfLoop();
 		if (thisIsBottom != otherIsBottom) {
@@ -495,10 +496,12 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		return sharedVars;
 	}
 
+	// TODO buffer vars and havoc all at once => Less closure computations and copies, high speedup.
+	// TODO Only calculate closure if necessary. Some vars may have no constraints to other vars => no closure 
 	protected void havocVar(String var) {
 		Integer v = mMapNumericVarToIndex.get(var);
 		if (v != null) {
-			mNumericAbstraction = normalizedNumericAbstraction(); // reduces information loss
+			mNumericAbstraction = cachedNormalizedNumericAbstraction().copy(); // reduces information loss
 			// reset column (also resets row by coherence)
 			for (int i = 0; i < mNumericAbstraction.getSize(); ++i) {
 				for (int j = 2*v; j < 2*v + 2; ++j) {

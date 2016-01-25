@@ -1,12 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.junit.Assert;
@@ -20,8 +16,8 @@ public class OctMatrixTest {
 	@Test
 	public void testEmpty() {
 		OctMatrix m = OctMatrix.NEW;
-		assertIsEqualTo(m, m.strongClosure());
-		assertIsEqualTo(m, m.tightClosure());
+		assertIsEqualTo(m, m.cachedStrongClosure());
+		assertIsEqualTo(m, m.cachedTightClosure());
 		assertIsEqualTo(m, m.add(m));
 		assertIsEqualTo(m, OctMatrix.min(m, m));
 		assertIsEqualTo(m, OctMatrix.max(m, m));
@@ -43,8 +39,8 @@ public class OctMatrixTest {
 			+ "0 2 0 0\n"
 			+ "4 4 4 4 0 8\n"
 			+ "0 3 0 3 0 0\n");
-		assertIsEqualTo(mStrongClosure, m.strongClosure());
-		assertIsEqualTo(mStrongClosure, mStrongClosure.strongClosure());
+		assertIsEqualTo(mStrongClosure, m.cachedStrongClosure());
+		assertIsEqualTo(mStrongClosure, mStrongClosure.cachedStrongClosure());
 	}
 
 	@Test
@@ -59,8 +55,8 @@ public class OctMatrixTest {
 			+ "inf  0.0\n"
 			+ "inf  1.3 0.0 inf\n"
 			+ "inf -1.5 4.9 0.0\n");
-		assertIsEqualTo(mStrongClosure, m.strongClosure());
-		assertIsEqualTo(mStrongClosure, mStrongClosure.strongClosure());
+		assertIsEqualTo(mStrongClosure, m.cachedStrongClosure());
+		assertIsEqualTo(mStrongClosure, mStrongClosure.cachedStrongClosure());
 	}
 	
 	@Test
@@ -75,8 +71,8 @@ public class OctMatrixTest {
 			+ "  2   0\n"
 			+ "inf inf   0 inf\n"
 			+ "  3 inf   4   0\n");
-		assertIsEqualTo(mStrongClosure, m.strongClosure());
-		assertIsEqualTo(mStrongClosure, mStrongClosure.strongClosure());
+		assertIsEqualTo(mStrongClosure, m.cachedStrongClosure());
+		assertIsEqualTo(mStrongClosure, mStrongClosure.cachedStrongClosure());
 	}
 	
 	@Test
@@ -91,30 +87,30 @@ public class OctMatrixTest {
 			+ "  2   0\n"
 			+ "inf inf   0 inf\n"
 			+ "  3 inf   4   0\n");
-		assertIsEqualTo(mStrongClosure, m.strongClosure());
-		assertIsEqualTo(mStrongClosure, mStrongClosure.strongClosure());
+		assertIsEqualTo(mStrongClosure, m.cachedStrongClosure());
+		assertIsEqualTo(mStrongClosure, mStrongClosure.cachedStrongClosure());
 	}
 
 	@Test
 	public void testTightClosure1() {
 		OctMatrix m = OctMatrix.parseBlockLowerTriangular("0 5.2 \n 2.8 0"); // v_0 \in [-2.6, 1.4]
 		OctMatrix t = OctMatrix.parseBlockLowerTriangular("0 4   \n 2   0");
-		assertIsEqualTo(m, m.strongClosure());
-		assertIsEqualTo(t, m.tightClosure());
+		assertIsEqualTo(m, m.cachedStrongClosure());
+		assertIsEqualTo(t, m.cachedTightClosure());
 	}
 	
 	@Test
 	public void testClosuresSingeltonReals() {
 		OctMatrix m = OctMatrix.parseBlockLowerTriangular("0 2.0000 \n -2 0"); // v_0 \in [-1, -1]
-		Assert.assertFalse(m.strongClosure().hasNegativeSelfLoop());
-		Assert.assertFalse(m.tightClosure().hasNegativeSelfLoop());
+		Assert.assertFalse(m.cachedStrongClosure().hasNegativeSelfLoop());
+		Assert.assertFalse(m.cachedTightClosure().hasNegativeSelfLoop());
 	}
 
 	@Test
 	public void testClosuresBottomReals() {
 		OctMatrix m = OctMatrix.parseBlockLowerTriangular("0 2 \n -3 0");
-		Assert.assertTrue(m.strongClosure().hasNegativeSelfLoop());
-		Assert.assertTrue(m.tightClosure().hasNegativeSelfLoop());
+		Assert.assertTrue(m.cachedStrongClosure().hasNegativeSelfLoop());
+		Assert.assertTrue(m.cachedTightClosure().hasNegativeSelfLoop());
 	}
 	
 	@Test
@@ -124,8 +120,8 @@ public class OctMatrixTest {
 			+ "inf   0\n"
 			+ "inf inf   0  -3\n"
 			+ "  3   0 inf   0\n");
-		Assert.assertFalse(m.strongClosure().hasNegativeSelfLoop());
-		Assert.assertTrue(m.tightClosure().hasNegativeSelfLoop());
+		Assert.assertFalse(m.cachedStrongClosure().hasNegativeSelfLoop());
+		Assert.assertTrue(m.cachedTightClosure().hasNegativeSelfLoop());
 	}
 	
 	@Test
@@ -309,7 +305,7 @@ public class OctMatrixTest {
 			int variables = (int) (Math.random() * 10) + 1;
 			OctMatrix m = OctMatrix.random(variables);
 			OctMatrix cNaiv = m.strongClosureNaiv();
-			OctMatrix cOther = m.strongClosure();
+			OctMatrix cOther = m.cachedStrongClosure();
 			if (cNaiv.hasNegativeSelfLoop() && cOther.hasNegativeSelfLoop()) {
 				// test passed
 			} else if (!cNaiv.isEqualTo(cOther)) {

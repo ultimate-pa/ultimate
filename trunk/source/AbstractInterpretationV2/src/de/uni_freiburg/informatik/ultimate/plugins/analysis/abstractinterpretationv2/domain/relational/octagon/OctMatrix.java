@@ -256,12 +256,16 @@ public class OctMatrix {
 		return true;
 	}
 	
-	// note: "not less-equal than" does not necessarily mean "greater than"
+	// note: "not less-equal than" does not necessarily mean "greater than". OctMatrices are only partial ordered!
 	public boolean isLessEqualThan(OctMatrix other) {
 		return elementwiseRelation(other, (x, y) -> x.compareTo(y) <= 0);		
 	}
 	
-	public OctMatrix strongClosure() {
+	// TODO document: cached closure is the original object. Do not modify!
+	public OctMatrix cachedStrongClosure() {
+		if (mStrongClosure != null) {
+			return mStrongClosure;
+		}
 		return strongClosure(sDefaultShortestPathClosure);
 	}
 
@@ -286,9 +290,6 @@ public class OctMatrix {
 	}
 	
 	public OctMatrix strongClosure(Consumer<OctMatrix> shortestPathClosureAlgorithm) {
-		if (mStrongClosure != null) {
-			return mStrongClosure;
-		}
 		OctMatrix sc = copy();
 		shortestPathClosureAlgorithm.accept(sc);
 		sc.strengtheningInPlace();
@@ -296,15 +297,16 @@ public class OctMatrix {
 		sc.mTightClosure = mTightClosure;
 		return sc;
 	}
-	
-	public OctMatrix tightClosure() {
+
+	// TODO document: cached closure is the original object. Do not modify!
+	public OctMatrix cachedTightClosure() {
+		if (mTightClosure != null) {
+			return mTightClosure;
+		}
 		return tightClosure(sDefaultShortestPathClosure);
 	}
 	
 	public OctMatrix tightClosure(Consumer<OctMatrix> shortestPathClosureAlgorithm) {
-		if (mTightClosure != null) {
-			return mTightClosure;
-		}
 		OctMatrix tc;
 		if (mStrongClosure != null) {
 			tc = mStrongClosure.copy();
