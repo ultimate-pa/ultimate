@@ -35,7 +35,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -74,7 +73,7 @@ public class IntervalConditionalEvaluator
 
 				for (final IEvaluationResult<IntervalDomainEvaluationResult> ifRes : trueResult) {
 					returnList.add(new IntervalDomainEvaluationResult(ifRes.getResult().getEvaluatedValue(),
-					        conditionState, new BooleanValue(true)));
+					        ifRes.getResult().getEvaluatedState(), new BooleanValue(true)));
 				}
 
 				mVariables.addAll(mIfEvaluator.getVarIdentifiers());
@@ -123,7 +122,7 @@ public class IntervalConditionalEvaluator
 
 				for (final IEvaluationResult<IntervalDomainEvaluationResult> elseRes : falseResult) {
 					returnList.add(new IntervalDomainEvaluationResult(elseRes.getResult().getEvaluatedValue(),
-					        conditionState, new BooleanValue(true)));
+					        elseRes.getResult().getEvaluatedState(), new BooleanValue(true)));
 				}
 
 				mVariables.addAll(mElseEvaluator.getVarIdentifiers());

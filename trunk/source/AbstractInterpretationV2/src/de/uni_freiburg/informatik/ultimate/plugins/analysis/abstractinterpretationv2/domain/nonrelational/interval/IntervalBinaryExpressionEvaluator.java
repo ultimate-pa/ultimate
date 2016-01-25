@@ -633,7 +633,6 @@ public class IntervalBinaryExpressionEvaluator
 		final StringBuilder sb = new StringBuilder();
 
 		sb.append(mLeftSubEvaluator);
-		sb.append(" ");
 
 		switch (mOperator) {
 		case ARITHDIV:
