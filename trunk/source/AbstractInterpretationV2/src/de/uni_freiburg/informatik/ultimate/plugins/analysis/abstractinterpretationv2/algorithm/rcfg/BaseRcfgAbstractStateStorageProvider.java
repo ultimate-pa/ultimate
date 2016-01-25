@@ -80,7 +80,6 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 		mServices = services;
 	}
 
-	@Override
 	public Collection<STATE> getAbstractPreStates(CodeBlock transition) {
 		assert transition != null;
 		return getAbstractStates(transition, transition.getSource());
@@ -93,16 +92,34 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 	}
 
 	@Override
-	public STATE getCurrentAbstractPreState(CodeBlock transition) {
+	public STATE getCurrentAbstractPreState(final CodeBlock transition) {
 		assert transition != null;
-		assert transition != null;
-		return getCurrentState(transition, transition.getSource());
+
+		// @formatter:off
+		// The states are stored as pair (transition, state) at a state. 
+		// If 
+		// - the transition is outgoing, state is a prestate,
+		// - the transition is incoming, state is a poststate,
+		// w.r.t. to the transition.
+		// If we want the prestate for a given transition, we first check if for that transition a prestate is saved. 
+		// If not, then we just take the last state at this node.
+		// TODO: Do we have to merge all states at this location to be sound? 
+		// @formatter:on
+
+		final STATE rtr = getCurrentState(transition.getSource(), a -> transition.equals(a));
+		if (rtr == null) {
+			return getCurrentState(transition.getSource(), a -> true);
+		}
+		return rtr;
+
+		// return getCurrentState(transition.getSource(), a -> transition.getSource().equals(a.getTarget()));
+		// return getCurrentState(transition.getSource(), a -> transition.equals(a));
 	}
 
 	@Override
-	public STATE getCurrentAbstractPostState(CodeBlock transition) {
+	public STATE getCurrentAbstractPostState(final CodeBlock transition) {
 		assert transition != null;
-		return getCurrentState(transition, transition.getTarget());
+		return getCurrentState(transition.getTarget(), a -> transition.equals(a));
 	}
 
 	@Override
@@ -120,29 +137,6 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 	}
 
 	@Override
-	public STATE setPostStateIsFixpoint(CodeBlock transition, STATE state, boolean value) {
-		assert transition != null;
-		assert state != null;
-		final Deque<Pair<CodeBlock, STATE>> states = getStates(transition.getTarget());
-		assert !states.isEmpty();
-
-		final Iterator<Pair<CodeBlock, STATE>> iterator = states.iterator();
-		boolean removed = false;
-		while (iterator.hasNext()) {
-			final Pair<CodeBlock, STATE> next = iterator.next();
-			if (state.equals(next.getSecond())) {
-				iterator.remove();
-				removed = true;
-				break;
-			}
-		}
-		assert removed;
-		final STATE rtr = state.setFixpoint(value);
-		states.addFirst(new Pair<CodeBlock, STATE>(transition, rtr));
-		return rtr;
-	}
-
-	@Override
 	public STATE mergePostStates(CodeBlock transition) {
 		assert transition != null;
 		final Deque<Pair<CodeBlock, STATE>> states = getStates(transition.getTarget());
@@ -152,24 +146,26 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 		final Iterator<Pair<CodeBlock, STATE>> iterator = states.iterator();
 		final Set<CodeBlock> transitions = new HashSet<>();
 
-		Pair<CodeBlock, STATE> pair = iterator.next();
-		iterator.remove();
-		transitions.add(pair.getFirst());
-		STATE last;
-		STATE current = pair.getSecond();
+		STATE accumulator = null;
 		while (iterator.hasNext()) {
-			pair = iterator.next();
-			iterator.remove();
+			final Pair<CodeBlock, STATE> pair = iterator.next();
 			transitions.add(pair.getFirst());
-			last = pair.getSecond();
-			current = mMergeOperator.apply(current, last);
+			if (accumulator == null) {
+				accumulator = pair.getSecond();
+			} else {
+				accumulator = mMergeOperator.apply(pair.getSecond(), accumulator);
+				assert accumulator.getVariables().keySet()
+						.equals(pair.getSecond().getVariables().keySet()) : "states have different variables";
+			}
+			iterator.remove();
 		}
-		assert current != null;
-		for (CodeBlock trans : transitions) {
-			states.addFirst(new Pair<CodeBlock, STATE>(trans, current));
+
+		assert accumulator != null;
+		for (final CodeBlock trans : transitions) {
+			states.addFirst(new Pair<CodeBlock, STATE>(trans, accumulator));
 		}
 		assert states.size() == transitions.size();
-		return current;
+		return accumulator;
 	}
 
 	@Override
@@ -200,7 +196,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 				final ProgramPoint targetpp = (ProgramPoint) target;
 				worklist.add(targetpp);
 
-				final STATE states = getCurrentState(succTrans, targetpp);
+				final STATE states = getCurrentState(targetpp, a -> a.equals(succTrans));
 				if (states != null) {
 					currentStates.add(states);
 				}
@@ -231,7 +227,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 
 		final List<CodeBlock> trace = new ArrayList<>();
 		final IHeuristic<RCFGNode, RCFGEdge> heuristic = new ErrorPathHeuristic();
-		//TODO: Use a denier that takes the abstract states into account (not allowing empty states)
+		// TODO: Use a denier that takes the abstract states into account (not allowing empty states)
 		final IEdgeDenier<RCFGEdge> denier = new RcfgEdgeDenier();
 		final AStar<RCFGNode, RCFGEdge> search = new AStar<RCFGNode, RCFGEdge>(
 				mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), start.getSource(), end.getTarget(),
@@ -263,18 +259,29 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 
 	private void addState(CodeBlock transition, STATE state, RCFGNode node) {
 		assert node != null;
+		assert transition != null;
+		assert node.equals(transition.getSource()) || node.equals(transition.getTarget());
 		final Deque<Pair<CodeBlock, STATE>> states = getStates(node);
 		// TODO: Optimize by removing lower states if they are equal to this one
 		states.addFirst(new Pair<CodeBlock, STATE>(transition, state));
 	}
 
-	private STATE getCurrentState(CodeBlock transition, RCFGNode node) {
+	/**
+	 * This method extracts the current state at a given node by comparing all the states at this node in the stack
+	 * order with the matcher. The stack of states at a node is saved as a pair (transition,state), where the state is
+	 * the post state of the transition.
+	 * 
+	 * @param node
+	 * @param matcher
+	 * @return
+	 */
+	private STATE getCurrentState(final RCFGNode node, final IStateMatcher<CodeBlock> matcher) {
 		assert node != null;
 		final Deque<Pair<CodeBlock, STATE>> states = getStates(node);
 		final Iterator<Pair<CodeBlock, STATE>> iterator = states.iterator();
 		while (iterator.hasNext()) {
 			final Pair<CodeBlock, STATE> current = iterator.next();
-			if (current.getFirst().equals(transition)) {
+			if (matcher.check(current.getFirst())) {
 				return current.getSecond();
 			}
 		}
@@ -334,5 +341,10 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 			}
 			return false;
 		}
+	}
+
+	@FunctionalInterface
+	public interface IStateMatcher<T> {
+		public boolean check(T current);
 	}
 }

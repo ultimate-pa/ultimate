@@ -1,0 +1,49 @@
+// Testfile dumped by Ultimate at 2015/10/05 04:15:22
+//
+// RefinementSetting [m_InterpolantAutomaton=ScroogeNondeterminism, m_BouncerStem=true, m_BouncerLoop=false, m_ScroogeNondeterminismStem=true, m_ScroogeNondeterminismLoop=false, m_CannibalizeLoop=false, m_UsedDefinedMaxRank=-3]
+
+NestedWordAutomaton cNCSB = buchiComplementNCSB(nwa);
+print(numberOfStates(cNCSB));
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {},
+	internalAlphabet = {"assume main_#t~nondet2 != 0;havoc main_#t~nondet2;main_~x~2 := main_~x~2 - 1;main_~y~2 := main_#t~nondet3;havoc main_#t~nondet3;" "havoc main_#res;havoc main_#t~nondet0, main_#t~nondet1, main_#t~nondet2, main_#t~nondet3, main_#t~nondet4, main_#t~nondet5, main_~x~2, main_~y~2;main_~x~2 := main_#t~nondet0;havoc main_#t~nondet0;main_~y~2 := main_#t~nondet1;havoc main_#t~nondet1;" "assume true;" "assume true;" "assume !(main_#t~nondet4 != 0);havoc main_#t~nondet4;main_~y~2 := main_~y~2 - 1;main_~x~2 := main_#t~nondet5;havoc main_#t~nondet5;" "#t~ret6 := main_#res;assume true;" "assume !(main_~x~2 > 0);" "assume !true;" "assume true;" "assume !(main_~x~2 != 0 && main_~y~2 > 0);" "assume !!(main_~x~2 != 0 && main_~y~2 > 0);" "assume main_#t~nondet4 != 0;havoc main_#t~nondet4;main_~x~2 := main_~x~2 + 1;" "assume true;" "assume !(main_#t~nondet2 != 0);havoc main_#t~nondet2;main_~y~2 := main_~y~2 - 1;" "assume main_~x~2 > 0;" },
+	returnAlphabet = {},
+	states = {"6617#(<= ULTIMATE.start_main_~y~2 oldRank0)" "6616#(and (<= 0 oldRank0) (<= (+ ULTIMATE.start_main_~y~2 1) oldRank0))" "6631#(and (<= (+ ULTIMATE.start_main_~y~2 1) oldRank0) (<= ULTIMATE.start_main_~y~2 oldRank0))" "6608#unseeded" },
+	initialStates = {"6608#unseeded" },
+	finalStates = {"6616#(and (<= 0 oldRank0) (<= (+ ULTIMATE.start_main_~y~2 1) oldRank0))" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("6617#(<= ULTIMATE.start_main_~y~2 oldRank0)" "assume true;" "6617#(<= ULTIMATE.start_main_~y~2 oldRank0)")
+		 ("6617#(<= ULTIMATE.start_main_~y~2 oldRank0)" "assume !(main_#t~nondet4 != 0);havoc main_#t~nondet4;main_~y~2 := main_~y~2 - 1;main_~x~2 := main_#t~nondet5;havoc main_#t~nondet5;" "6631#(and (<= (+ ULTIMATE.start_main_~y~2 1) oldRank0) (<= ULTIMATE.start_main_~y~2 oldRank0))")
+		 ("6617#(<= ULTIMATE.start_main_~y~2 oldRank0)" "assume !(main_~x~2 > 0);" "6617#(<= ULTIMATE.start_main_~y~2 oldRank0)")
+		 ("6617#(<= ULTIMATE.start_main_~y~2 oldRank0)" "assume true;" "6617#(<= ULTIMATE.start_main_~y~2 oldRank0)")
+		 ("6617#(<= ULTIMATE.start_main_~y~2 oldRank0)" "assume !!(main_~x~2 != 0 && main_~y~2 > 0);" "6617#(<= ULTIMATE.start_main_~y~2 oldRank0)")
+		 ("6617#(<= ULTIMATE.start_main_~y~2 oldRank0)" "assume main_#t~nondet4 != 0;havoc main_#t~nondet4;main_~x~2 := main_~x~2 + 1;" "6617#(<= ULTIMATE.start_main_~y~2 oldRank0)")
+		 ("6617#(<= ULTIMATE.start_main_~y~2 oldRank0)" "assume true;" "6617#(<= ULTIMATE.start_main_~y~2 oldRank0)")
+		 ("6617#(<= ULTIMATE.start_main_~y~2 oldRank0)" "assume !(main_#t~nondet2 != 0);havoc main_#t~nondet2;main_~y~2 := main_~y~2 - 1;" "6631#(and (<= (+ ULTIMATE.start_main_~y~2 1) oldRank0) (<= ULTIMATE.start_main_~y~2 oldRank0))")
+		 ("6616#(and (<= 0 oldRank0) (<= (+ ULTIMATE.start_main_~y~2 1) oldRank0))" "assume !(main_~x~2 > 0);" "6617#(<= ULTIMATE.start_main_~y~2 oldRank0)")
+		 ("6616#(and (<= 0 oldRank0) (<= (+ ULTIMATE.start_main_~y~2 1) oldRank0))" "assume true;" "6617#(<= ULTIMATE.start_main_~y~2 oldRank0)")
+		 ("6616#(and (<= 0 oldRank0) (<= (+ ULTIMATE.start_main_~y~2 1) oldRank0))" "assume main_~x~2 > 0;" "6617#(<= ULTIMATE.start_main_~y~2 oldRank0)")
+		 ("6631#(and (<= (+ ULTIMATE.start_main_~y~2 1) oldRank0) (<= ULTIMATE.start_main_~y~2 oldRank0))" "assume true;" "6631#(and (<= (+ ULTIMATE.start_main_~y~2 1) oldRank0) (<= ULTIMATE.start_main_~y~2 oldRank0))")
+		 ("6631#(and (<= (+ ULTIMATE.start_main_~y~2 1) oldRank0) (<= ULTIMATE.start_main_~y~2 oldRank0))" "assume true;" "6631#(and (<= (+ ULTIMATE.start_main_~y~2 1) oldRank0) (<= ULTIMATE.start_main_~y~2 oldRank0))")
+		 ("6631#(and (<= (+ ULTIMATE.start_main_~y~2 1) oldRank0) (<= ULTIMATE.start_main_~y~2 oldRank0))" "assume !!(main_~x~2 != 0 && main_~y~2 > 0);" "6616#(and (<= 0 oldRank0) (<= (+ ULTIMATE.start_main_~y~2 1) oldRank0))")
+		 ("6631#(and (<= (+ ULTIMATE.start_main_~y~2 1) oldRank0) (<= ULTIMATE.start_main_~y~2 oldRank0))" "assume true;" "6631#(and (<= (+ ULTIMATE.start_main_~y~2 1) oldRank0) (<= ULTIMATE.start_main_~y~2 oldRank0))")
+		 ("6608#unseeded" "havoc main_#res;havoc main_#t~nondet0, main_#t~nondet1, main_#t~nondet2, main_#t~nondet3, main_#t~nondet4, main_#t~nondet5, main_~x~2, main_~y~2;main_~x~2 := main_#t~nondet0;havoc main_#t~nondet0;main_~y~2 := main_#t~nondet1;havoc main_#t~nondet1;" "6608#unseeded")
+		 ("6608#unseeded" "assume main_#t~nondet2 != 0;havoc main_#t~nondet2;main_~x~2 := main_~x~2 - 1;main_~y~2 := main_#t~nondet3;havoc main_#t~nondet3;" "6608#unseeded")
+		 ("6608#unseeded" "assume true;" "6608#unseeded")
+		 ("6608#unseeded" "assume true;" "6608#unseeded")
+		 ("6608#unseeded" "assume !(main_#t~nondet4 != 0);havoc main_#t~nondet4;main_~y~2 := main_~y~2 - 1;main_~x~2 := main_#t~nondet5;havoc main_#t~nondet5;" "6608#unseeded")
+		 ("6608#unseeded" "assume !(main_~x~2 > 0);" "6608#unseeded")
+		 ("6608#unseeded" "assume true;" "6616#(and (<= 0 oldRank0) (<= (+ ULTIMATE.start_main_~y~2 1) oldRank0))")
+		 ("6608#unseeded" "assume true;" "6608#unseeded")
+		 ("6608#unseeded" "assume !!(main_~x~2 != 0 && main_~y~2 > 0);" "6608#unseeded")
+		 ("6608#unseeded" "assume main_#t~nondet4 != 0;havoc main_#t~nondet4;main_~x~2 := main_~x~2 + 1;" "6608#unseeded")
+		 ("6608#unseeded" "assume true;" "6608#unseeded")
+		 ("6608#unseeded" "assume !(main_#t~nondet2 != 0);havoc main_#t~nondet2;main_~y~2 := main_~y~2 - 1;" "6608#unseeded")
+		 ("6608#unseeded" "assume main_~x~2 > 0;" "6608#unseeded")
+	},
+	returnTransitions = {
+	}
+);

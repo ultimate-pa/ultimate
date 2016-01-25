@@ -51,10 +51,10 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement.StepInfo;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
-import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 
 /**
  * Backtranslates an inlined boogie program.
@@ -67,9 +67,8 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 	private Logger mLogger;
 
 	/**
-	 * Backtranslation mapping for statements, specifications (and expressions,
-	 * for trace element step). If there is no mapping for a node, then it
-	 * wasn't affected by the inlining process.
+	 * Backtranslation mapping for statements, specifications (and expressions, for trace element step). If there is no
+	 * mapping for a node, then it wasn't affected by the inlining process.
 	 */
 	private Map<BoogieASTNode, BackTransValue> mBackTransMap = new HashMap<>();
 
@@ -85,8 +84,7 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 	 * Updates the mapping, using an used InlineVersionTransformer.
 	 * 
 	 * @param transformer
-	 *            InlinerVersionTransformer, which already transformed a
-	 *            procedure.
+	 *            InlinerVersionTransformer, which already transformed a procedure.
 	 */
 	public void addBacktranslation(InlineVersionTransformer transformer) {
 		mBackTransMap.putAll(transformer.getBacktranslationMap());
@@ -128,8 +126,8 @@ public class InlinerBacktranslator extends DefaultTranslator<BoogieASTNode, Boog
 				atomicTraceElem = new AtomicTraceElement<BoogieASTNode>(traceElem, stringProvider);
 			}
 			BackTransValue traceElemMapping = mBackTransMap.get(traceElem);
-			List<AtomicTraceElement<BoogieASTNode>> recoveredCalls = callReinserter.recoverInlinedCallsBefore(
-					atomicTraceElem, traceElemMapping);
+			List<AtomicTraceElement<BoogieASTNode>> recoveredCalls = callReinserter
+					.recoverInlinedCallsBefore(atomicTraceElem, traceElemMapping);
 			for (AtomicTraceElement<BoogieASTNode> insertedCall : recoveredCalls) {
 				translatedTrace.add(insertedCall.getTraceElement());
 			}

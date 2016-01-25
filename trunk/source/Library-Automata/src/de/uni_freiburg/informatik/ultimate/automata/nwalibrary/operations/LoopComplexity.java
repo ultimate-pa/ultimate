@@ -78,7 +78,7 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 		super();
 		
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		m_Logger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		
 		if (operand instanceof NestedWordAutomatonReachableStates) {
 			m_Operand = (NestedWordAutomatonReachableStates<LETTER, STATE>) operand;

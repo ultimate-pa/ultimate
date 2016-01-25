@@ -30,6 +30,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVisitor;
@@ -65,7 +67,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class SignDomainStatementProcessor extends BoogieVisitor {
 
 	private SignDomainState mOldState;
-	private SignDomainState mNewState;
+	private List<SignDomainState> mNewState;
+	private SignDomainState mCurrentNewState;
 
 	private final IUltimateServiceProvider mServices;
 
@@ -78,13 +81,14 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 		mServices = services;
 	}
 
-	protected SignDomainState process(SignDomainState oldState, Statement statement) {
+	protected List<SignDomainState> process(SignDomainState oldState, Statement statement) {
 
 		assert oldState != null;
 		assert statement != null;
 
 		mOldState = oldState;
-		mNewState = (SignDomainState) oldState.copy();
+		mNewState = new ArrayList<>();
+		mCurrentNewState = oldState.copy();
 
 		mLhsVariable = null;
 
@@ -101,17 +105,15 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 
 		final VariableLHS[] vars = statement.getIdentifiers();
 		for (final VariableLHS var : vars) {
-			mNewState.setValue(var.getIdentifier(), new SignDomainValue(Values.TOP));
+			mCurrentNewState.setValue(var.getIdentifier(), new SignDomainValue(Values.TOP));
 		}
-
-		super.visit(statement);
+		
+		mNewState.add(mCurrentNewState);
 	}
 
 	@Override
 	protected void visit(AssignmentStatement statement) {
 		mEvaluatorFactory = new SignEvaluatorFactory(mServices);
-
-		// super.visit(statement);
 
 		final LeftHandSide[] lhs = statement.getLhs();
 		final Expression[] rhs = statement.getRhs();
@@ -127,10 +129,14 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 
 			processExpression(rhs[i]);
 			assert mExpressionEvaluator.isFinished();
-			final IEvaluationResult<?> result = mExpressionEvaluator.getRootEvaluator().evaluate(mOldState);
+			final List<IEvaluationResult<Values>> result = mExpressionEvaluator.getRootEvaluator().evaluate(mOldState);
 
-			final SignDomainValue newValue = new SignDomainValue((Values) result.getResult());
-			mNewState.setValue(varname, newValue);
+			for (final IEvaluationResult<Values> res : result) {
+				final SignDomainState retState = mCurrentNewState.copy();
+				final SignDomainValue newValue = new SignDomainValue((Values) res.getResult());
+				retState.setValue(varname, newValue);
+				mNewState.add(retState);
+			}
 		}
 	}
 
@@ -150,7 +156,9 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 		if (formula instanceof BooleanLiteral) {
 			BooleanLiteral binform = (BooleanLiteral) formula;
 			if (!binform.getValue()) {
-				mNewState.setToBottom();
+				final SignDomainState ret = mCurrentNewState.copy();
+				ret.setToBottom();
+				mNewState.add(ret);
 			}
 			return;
 		}
@@ -189,7 +197,7 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 	protected void visit(BooleanLiteral expr) {
 		if (!(mEvaluatorFactory instanceof SignLogicalEvaluatorFactory)) {
 			throw new UnsupportedOperationException(
-					"Boolean literas are only allowed in a boolean context, i.e. when visiting logic formulas.");
+			        "Boolean literas are only allowed in a boolean context, i.e. when visiting logic formulas.");
 		}
 
 		final SignLogicalEvaluatorFactory logicalEvaluatorFactory = (SignLogicalEvaluatorFactory) mEvaluatorFactory;
@@ -197,7 +205,7 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 		final String booleanValue = expr.getValue() ? "True" : "False";
 
 		IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> booleanExpressionEvaluator = logicalEvaluatorFactory
-				.createSingletonValueExpressionEvaluator(booleanValue, Boolean.class);
+		        .createSingletonValueExpressionEvaluator(booleanValue, Boolean.class);
 
 		mExpressionEvaluator.addEvaluator(booleanExpressionEvaluator);
 	}
@@ -205,7 +213,7 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 	@Override
 	protected void visit(RealLiteral expr) {
 		IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> integerExpressionEvaluator = mEvaluatorFactory
-				.createSingletonValueExpressionEvaluator(expr.getValue(), BigDecimal.class);
+		        .createSingletonValueExpressionEvaluator(expr.getValue(), BigDecimal.class);
 
 		mExpressionEvaluator.addEvaluator(integerExpressionEvaluator);
 	}
@@ -214,7 +222,7 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 	protected void visit(IntegerLiteral expr) {
 
 		IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> integerExpressionEvaluator = mEvaluatorFactory
-				.createSingletonValueExpressionEvaluator(expr.getValue(), BigInteger.class);
+		        .createSingletonValueExpressionEvaluator(expr.getValue(), BigInteger.class);
 
 		mExpressionEvaluator.addEvaluator(integerExpressionEvaluator);
 	}
@@ -223,7 +231,7 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 	protected void visit(UnaryExpression expr) {
 
 		SignUnaryExpressionEvaluator unaryExpressionEvaluator = (SignUnaryExpressionEvaluator) mEvaluatorFactory
-				.createNAryExpressionEvaluator(1);
+		        .createNAryExpressionEvaluator(1);
 
 		unaryExpressionEvaluator.setOperator(expr.getOperator());
 
@@ -236,7 +244,7 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 	protected void visit(IdentifierExpression expr) {
 
 		final IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> variableExpressionEvaluator = mEvaluatorFactory
-				.createSingletonVariableExpressionEvaluator(expr.getIdentifier());
+		        .createSingletonVariableExpressionEvaluator(expr.getIdentifier());
 
 		mExpressionEvaluator.addEvaluator(variableExpressionEvaluator);
 

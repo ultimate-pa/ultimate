@@ -31,16 +31,20 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
+
+import org.apache.log4j.Logger;
+
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.VertexValueContainer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap3;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap4;
@@ -103,14 +107,22 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	private int m_GlobalInfinity;
 	/**
+	 * The logger used by the Ultimate framework.
+	 */
+	private final Logger m_Logger;
+	/**
+	 * Holds information about the performance of the simulation after usage.
+	 */
+	private SimulationPerformance m_Performance;
+	/**
 	 * Data structure that allows a fast access to predecessors of a given
 	 * vertex in the game graph.
 	 */
 	private final HashMap<Vertex<LETTER, STATE>, HashSet<Vertex<LETTER, STATE>>> m_Predecessors;
 	/**
-	 * Service provider of Ultimate framework.
+	 * Timer used for responding to timeouts and operation cancellation.
 	 */
-	private final IUltimateServiceProvider m_Services;
+	private final IProgressAwareTimer m_ProgressTimer;
 	/**
 	 * Set of all {@link SpoilerVertex} objects the game graph holds.
 	 */
@@ -129,13 +141,18 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 * Creates a new game graph object that initializes all needed data
 	 * structures.
 	 * 
-	 * @param services
-	 *            Service provider of Ultimate framework
+	 * @param progressTimer
+	 *            Timer used for responding to timeouts and operation
+	 *            cancellation.
+	 * @param logger
+	 *            Logger of the Ultimate framework.
 	 * @param stateFactory
-	 *            State factory used for state creation
+	 *            State factory used for state creation.
 	 */
-	public AGameGraph(final IUltimateServiceProvider services, final StateFactory<STATE> stateFactory) {
-		m_Services = services;
+	public AGameGraph(final IProgressAwareTimer progressTimer, final Logger logger,
+			final StateFactory<STATE> stateFactory) {
+		m_ProgressTimer = progressTimer;
+		m_Logger = logger;
 		m_StateFactory = stateFactory;
 		m_DuplicatorVertices = new HashSet<>();
 		m_SpoilerVertices = new HashSet<>();
@@ -144,6 +161,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 		m_BuechiStatesToGraphSpoilerVertex = new NestedMap3<>();
 		m_BuechiStatesToGraphDuplicatorVertex = new NestedMap4<>();
 		m_GlobalInfinity = 0;
+		m_Performance = null;
 	}
 
 	/**
@@ -330,6 +348,16 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	public boolean hasSuccessors(final Vertex<LETTER, STATE> vertex) {
 		return m_Successors.containsKey(vertex);
+	}
+
+	/**
+	 * Sets the performance object of the corresponding simulation.
+	 * 
+	 * @param simulationPerformance
+	 *            Simulation performance to set.
+	 */
+	public void setSimulationPerformance(final SimulationPerformance simulationPerformance) {
+		m_Performance = simulationPerformance;
 	}
 
 	/*
@@ -523,12 +551,32 @@ public abstract class AGameGraph<LETTER, STATE> {
 	protected abstract void generateGameGraphFromBuechi() throws OperationCanceledException;
 
 	/**
-	 * Gets the used service provider of the Ultimate framework.
+	 * Gets the logger used by the Ultimate framework.
 	 * 
-	 * @return The used service provider of the Ultimate framework.
+	 * @return The logger used by the Ultimate framework.
 	 */
-	protected IUltimateServiceProvider getServiceProvider() {
-		return m_Services;
+	protected Logger getLogger() {
+		return m_Logger;
+	}
+
+	/**
+	 * Gets the timer used for responding to timeouts and operation
+	 * cancellation.
+	 * 
+	 * @return The timer used for responding to timeouts and operation
+	 *         cancellation.
+	 */
+	protected IProgressAwareTimer getProgressTimer() {
+		return m_ProgressTimer;
+	}
+
+	/**
+	 * Gets the performance object of the corresponding simulation.
+	 * 
+	 * @return The performance object of the corresponding simulation.
+	 */
+	protected SimulationPerformance getSimulationPerformance() {
+		return m_Performance;
 	}
 
 	/**

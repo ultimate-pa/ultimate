@@ -28,8 +28,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.Iterator;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 /**
  * 
@@ -37,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
 
-	private STATE mPreState;
-	private ACTION mAction;
+	private final STATE mPreState;
+	private final ACTION mAction;
 	private Deque<ACTION> mScopes;
 	private Deque<IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>> mScopedStorages;
 
@@ -70,18 +72,8 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 		return mAction;
 	}
 
-	public void setAction(ACTION action) {
-		assert action != null;
-		mAction = action;
-	}
-
 	public STATE getPreState() {
 		return mPreState;
-	}
-
-	public void setPreState(STATE preState) {
-		assert preState != null;
-		mPreState = preState;
 	}
 
 	public void addScope(ACTION scope) {
@@ -132,6 +124,28 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 		return new ArrayDeque<>(mScopedStorages);
 	}
 
+	public Deque<Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>> getStack() {
+		final ArrayDeque<Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>> rtr = new ArrayDeque<>();
+		final Iterator<IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>> storageIter = mScopedStorages
+				.iterator();
+		//first, add the global storage 
+		rtr.add(new Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>(null, storageIter.next()));
+		if (mScopes == null || mScopes.isEmpty()) {
+			return rtr;
+		}
+
+		final Iterator<ACTION> scopeIter = mScopes.iterator();
+
+		while (scopeIter.hasNext() && storageIter.hasNext()) {
+			rtr.add(new Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>(scopeIter.next(),
+					storageIter.next()));
+		}
+		assert !scopeIter.hasNext();
+		assert !storageIter.hasNext();
+
+		return rtr;
+	}
+
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder().append("[").append(mPreState.hashCode()).append("]--[")
@@ -142,5 +156,4 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 		builder.append("}");
 		return builder.toString();
 	}
-
 }

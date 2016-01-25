@@ -1,0 +1,22 @@
+// We accidentally used B={} instead of B=C for the initial state.
+// Author: heizmann@informatik.uni-freiburg.de
+// Date: 2016-01-06
+
+NestedWordAutomaton cNCSB = buchiComplementNCSB(nwa);
+assert(numberOfStates(cNCSB) == 1);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = {},
+	internalAlphabet = {"a" },
+	returnAlphabet = {},
+	states = {"f" },
+	initialStates = {"f" },
+	finalStates = {"f" },
+	callTransitions = {
+	},
+	internalTransitions = {
+		 ("f" "a" "f")
+	},
+	returnTransitions = {
+	}
+);

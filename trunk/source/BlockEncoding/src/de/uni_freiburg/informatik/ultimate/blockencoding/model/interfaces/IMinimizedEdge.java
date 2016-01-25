@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.model.structure.IModifiableMultigraph
  * 
  */
 public interface IMinimizedEdge extends
-		IModifiableMultigraphEdge<MinimizedNode, IMinimizedEdge> {
+		IModifiableMultigraphEdge<MinimizedNode, IMinimizedEdge,MinimizedNode, IMinimizedEdge> {
 
 	/**
 	 * Is this a basic edge or a composite edge?

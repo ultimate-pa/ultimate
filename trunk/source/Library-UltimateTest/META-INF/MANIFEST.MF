@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Library-UltimateTest
 Bundle-SymbolicName: Library-UltimateTest
 Bundle-Version: 0.0.1
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: UltimateCore,
  Library-UltimateUtil,
  Library-junit-helper,

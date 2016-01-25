@@ -29,54 +29,68 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.log4j.Logger;
+
+import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.util.IToString;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
+import de.uni_freiburg.informatik.ultimate.model.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.model.structure.IExplicitEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.model.structure.Multigraph;
+import de.uni_freiburg.informatik.ultimate.model.structure.MultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.GotoEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement.StepInfo;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution.ProgramState;
 
-public class RCFGBacktranslator extends DefaultTranslator<CodeBlock, BoogieASTNode, Expression, Expression> {
+public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNode, Expression, Expression> {
 
-	public RCFGBacktranslator() {
-		super(CodeBlock.class, BoogieASTNode.class, Expression.class, Expression.class);
+	private final Logger mLogger;
+
+	public RCFGBacktranslator(final Logger logger) {
+		super(RCFGEdge.class, BoogieASTNode.class, Expression.class, Expression.class);
+		mLogger = logger;
 	}
 
 	/**
-	 * Mapping from auxiliary CodeBlocks to source BoogieAstNodes. For assert,
-	 * the requires assumed at begin of procedure, and ensures the result is a
-	 * singleton. For the assert requires before the call the result contains
-	 * two elements: First, the call, afterwards the requires.
+	 * Mapping from auxiliary CodeBlocks to source BoogieAstNodes. For assert, the requires assumed at begin of
+	 * procedure, and ensures the result is a singleton. For the assert requires before the call the result contains two
+	 * elements: First, the call, afterwards the requires.
 	 */
-	private Map<Statement, BoogieASTNode[]> m_CodeBlock2Statement = new HashMap<Statement, BoogieASTNode[]>();
+	private Map<Statement, BoogieASTNode[]> mCodeBlock2Statement = new HashMap<Statement, BoogieASTNode[]>();
 
 	public BoogieASTNode[] putAux(Statement aux, BoogieASTNode[] source) {
-		return m_CodeBlock2Statement.put(aux, source);
+		return mCodeBlock2Statement.put(aux, source);
 	}
 
 	@Override
-	public List<BoogieASTNode> translateTrace(List<CodeBlock> trace) {
-		List<CodeBlock> cbTrace = trace;
+	public List<BoogieASTNode> translateTrace(List<RCFGEdge> trace) {
+		List<RCFGEdge> cbTrace = trace;
 		List<AtomicTraceElement<BoogieASTNode>> atomicTeList = new ArrayList<AtomicTraceElement<BoogieASTNode>>();
 		for (RcfgElement elem : cbTrace) {
 			if (elem instanceof CodeBlock) {
@@ -95,23 +109,20 @@ public class RCFGBacktranslator extends DefaultTranslator<CodeBlock, BoogieASTNo
 	}
 
 	/**
-	 * Transform a single (possibly large) CodeBlock to a list of BoogieASTNodes
-	 * and add these BoogieASTNodes to the List trace. If
+	 * Transform a single (possibly large) CodeBlock to a list of BoogieASTNodes and add these BoogieASTNodes to the
+	 * List trace. If
 	 * <ul>
 	 * <li>if the CodeBlock contains a single Statement we add this statement
-	 * <li>if the CodeBlock is a StatementsSequence we translate all Statements
-	 * back to their original BoogieASTNodes (e.g., assume Statements might be
-	 * translated to assert Statements, assume Statements might be translated to
+	 * <li>if the CodeBlock is a StatementsSequence we translate all Statements back to their original BoogieASTNodes
+	 * (e.g., assume Statements might be translated to assert Statements, assume Statements might be translated to
 	 * requires/ensures specifications)
-	 * <li>if the CodeBlock is a SequentialComposition we call this method
-	 * recursively
-	 * <li>if the CodeBlock is a ParallelComposition we ask the branchEncoders
-	 * mapping on which branch we call this method recursively. If the
-	 * branchEncoders mapping is null (occurs e.g., for traces whose feasibility
-	 * can not be determined) we call this method recursively on some branch.
+	 * <li>if the CodeBlock is a SequentialComposition we call this method recursively
+	 * <li>if the CodeBlock is a ParallelComposition we ask the branchEncoders mapping on which branch we call this
+	 * method recursively. If the branchEncoders mapping is null (occurs e.g., for traces whose feasibility can not be
+	 * determined) we call this method recursively on some branch.
 	 * </ul>
 	 */
-	private void addCodeBlock(CodeBlock cb, List<AtomicTraceElement<BoogieASTNode>> trace,
+	private void addCodeBlock(RCFGEdge cb, List<AtomicTraceElement<BoogieASTNode>> trace,
 			Map<TermVariable, Boolean> branchEncoders) {
 		final IToString<BoogieASTNode> stringProvider = BoogiePrettyPrinter.getBoogieToStringprovider();
 		if (cb instanceof Call) {
@@ -127,8 +138,8 @@ public class RCFGBacktranslator extends DefaultTranslator<CodeBlock, BoogieASTNo
 		} else if (cb instanceof StatementSequence) {
 			StatementSequence ss = (StatementSequence) cb;
 			for (Statement statement : ss.getStatements()) {
-				if (m_CodeBlock2Statement.containsKey(statement)) {
-					BoogieASTNode[] sources = m_CodeBlock2Statement.get(statement);
+				if (mCodeBlock2Statement.containsKey(statement)) {
+					BoogieASTNode[] sources = mCodeBlock2Statement.get(statement);
 					for (BoogieASTNode source : sources) {
 						trace.add(new AtomicTraceElement<BoogieASTNode>(source, stringProvider));
 					}
@@ -166,7 +177,7 @@ public class RCFGBacktranslator extends DefaultTranslator<CodeBlock, BoogieASTNo
 
 	@Override
 	public IProgramExecution<BoogieASTNode, Expression> translateProgramExecution(
-			IProgramExecution<CodeBlock, Expression> programExecution) {
+			IProgramExecution<RCFGEdge, Expression> programExecution) {
 		if (!(programExecution instanceof RcfgProgramExecution)) {
 			throw new IllegalArgumentException();
 		}
@@ -179,7 +190,7 @@ public class RCFGBacktranslator extends DefaultTranslator<CodeBlock, BoogieASTNo
 			programStateMapping.put(-1, rcfgProgramExecution.getInitialProgramState());
 		}
 		for (int i = 0; i < rcfgProgramExecution.getLength(); i++) {
-			AtomicTraceElement<CodeBlock> codeBlock = rcfgProgramExecution.getTraceElement(i);
+			AtomicTraceElement<RCFGEdge> codeBlock = rcfgProgramExecution.getTraceElement(i);
 			Map<TermVariable, Boolean>[] branchEncoders = rcfgProgramExecution.getBranchEncoders();
 			if (branchEncoders == null || i >= branchEncoders.length) {
 				addCodeBlock(codeBlock.getTraceElement(), trace, null);
@@ -193,4 +204,102 @@ public class RCFGBacktranslator extends DefaultTranslator<CodeBlock, BoogieASTNo
 		return new BoogieProgramExecution(programStateMapping, trace);
 	}
 
+	@Override
+	public IBacktranslatedCFG<String, BoogieASTNode> translateCFG(final IBacktranslatedCFG<?, RCFGEdge> cfg) {
+		if (!(cfg.getCFG() instanceof RootNode)) {
+			throw new UnsupportedOperationException("Cannot translate cfg that is not an RCFG");
+		}
+		final IBacktranslatedCFG<String, BoogieASTNode> translatedCfg = translateCFG(cfg,
+				(a, b, c) -> translateEdge(a, (RCFGEdge) b, c));
+//		mLogger.info(getClass().getSimpleName());
+//		printCFG(cfg, mLogger::info);
+		return translatedCfg;
+	}
+
+	/**
+	 * Translate a given edge, attach the result of the translation (possibly a graph) to newsourcenode and return a
+	 * targetnode that can be used to continue the translation.
+	 * 
+	 * @param cache
+	 */
+	@SuppressWarnings("unchecked")
+	private <TVL> Multigraph<String, BoogieASTNode> translateEdge(
+			final Map<IExplicitEdgesMultigraph<?, ?, TVL, RCFGEdge>, Multigraph<String, BoogieASTNode>> cache,
+			final RCFGEdge oldEdge, final Multigraph<String, BoogieASTNode> newSourceNode) {
+		final RCFGNode oldTarget = oldEdge.getTarget();
+		// this is the node we want to return
+		Multigraph<String, BoogieASTNode> newTarget;
+		if (oldTarget != null) {
+			newTarget = cache.get(oldTarget);
+			if (newTarget == null) {
+				newTarget = createWitnessNode(oldTarget);
+				cache.put((IExplicitEdgesMultigraph<?, ?, TVL, RCFGEdge>) oldTarget, newTarget);
+			}
+		} else {
+			// if the codeblock is disconnected, we need to create some fresh target node
+			newTarget = createWitnessNode();
+		}
+		if (oldEdge instanceof Call) {
+			final Statement st = ((Call) oldEdge).getCallStatement();
+			new MultigraphEdge<>(newSourceNode, st, newTarget);
+		} else if (oldEdge instanceof Return) {
+			final Statement st = ((Return) oldEdge).getCallStatement();
+			new MultigraphEdge<>(newSourceNode, st, newTarget);
+		} else if (oldEdge instanceof Summary) {
+			final Statement st = ((Summary) oldEdge).getCallStatement();
+			// FIXME: Is summary call, return, ignore or something new?
+			new MultigraphEdge<>(newSourceNode, st, newTarget);
+		} else if (oldEdge instanceof StatementSequence) {
+			final StatementSequence ss = (StatementSequence) oldEdge;
+			for (final Statement statement : ss.getStatements()) {
+				if (mCodeBlock2Statement.containsKey(statement)) {
+					BoogieASTNode[] sources = mCodeBlock2Statement.get(statement);
+					Multigraph<String, BoogieASTNode> last = newSourceNode;
+					Multigraph<String, BoogieASTNode> current = newSourceNode;
+					for (int i = 0; i < sources.length; ++i) {
+						final BoogieASTNode source = sources[i];
+						last = current;
+						if (i == sources.length - 1) {
+							current = newTarget;
+						} else {
+							current = createWitnessNode();
+						}
+						new MultigraphEdge<>(last, source, current);
+					}
+				} else {
+					new MultigraphEdge<>(newSourceNode, statement, newTarget);
+				}
+			}
+		} else if (oldEdge instanceof SequentialComposition) {
+			final SequentialComposition seqComp = (SequentialComposition) oldEdge;
+			Multigraph<String, BoogieASTNode> current = newSourceNode;
+			for (final CodeBlock sccb : seqComp.getCodeBlocks()) {
+				current = translateEdge(cache, sccb, current);
+			}
+			new MultigraphEdge<>(current, null, newTarget);
+		} else if (oldEdge instanceof ParallelComposition) {
+			final ParallelComposition parComp = (ParallelComposition) oldEdge;
+			final Map<TermVariable, CodeBlock> bi2cb = parComp.getBranchIndicator2CodeBlock();
+			final Iterator<Entry<TermVariable, CodeBlock>> iter = bi2cb.entrySet().iterator();
+			while (iter.hasNext()) {
+				final CodeBlock someBranch = iter.next().getValue();
+				final Multigraph<String, BoogieASTNode> intermediate = translateEdge(cache, someBranch, newSourceNode);
+				new MultigraphEdge<>(intermediate, null, newTarget);
+			}
+		} else if (oldEdge instanceof GotoEdge) {
+			// we represent goto with an edge without label
+			new MultigraphEdge<>(newSourceNode, null, newTarget);
+		} else if (oldEdge instanceof RootEdge) {
+			// a root edge is just a goto
+			new MultigraphEdge<>(newSourceNode, null, newTarget);
+		} else {
+			throw new UnsupportedOperationException("Unsupported CodeBlock" + oldEdge.getClass().getCanonicalName());
+		}
+		return newTarget;
+	}
+
+	private Multigraph<String, BoogieASTNode> createWitnessNode(final RCFGNode old) {
+		final WitnessInvariant inv = WitnessInvariant.getAnnotation(old);
+		return new Multigraph<String, BoogieASTNode>(inv == null ? null : inv.getInvariant());
+	}
 }

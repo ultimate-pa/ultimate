@@ -38,7 +38,6 @@ import org.apache.log4j.Logger;
 
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -47,12 +46,16 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.GameGraphChangeType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.GameGraphChanges;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.CountingMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationPerformance;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.TimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap3;
@@ -77,7 +80,6 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
  *            State class of buechi automaton
  */
 public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
-
 	/**
 	 * If it is currently known that there are merge-able states.
 	 */
@@ -86,6 +88,14 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * The underlying buechi automaton from which the game graph gets generated.
 	 */
 	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Buechi;
+	/**
+	 * Amount of states the inputed buechi automata has.
+	 */
+	private int m_BuechiAmountOfStates;
+	/**
+	 * Amount of transitions the inputed buechi automata has.
+	 */
+	private int m_BuechiAmountOfTransitions;
 	/**
 	 * Data structure that allows a fast access to all transitions of the buechi
 	 * automaton.<br/>
@@ -107,19 +117,28 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 */
 	private final UnionFind<STATE> m_EquivalenceClasses;
 	/**
-	 * The logger used by the Ultimate framework.
+	 * Service provider of Ultimate framework.
 	 */
-	private final Logger m_Logger;
+	private final IUltimateServiceProvider m_Services;
 	/**
 	 * Transitions that safely can be removed from the buechi automaton.
 	 */
 	private List<Triple<STATE, LETTER, STATE>> m_TransitionsToRemove;
+	/**
+	 * Time duration building the graph took in milliseconds.
+	 */
+	private long m_GraphBuildTime;
 
 	/**
 	 * Creates a new fair game graph by using the given buechi automaton.
 	 * 
 	 * @param services
-	 *            Service provider of Ultimate framework.
+	 *            Service provider of Ultimate framework
+	 * @param progressTimer
+	 *            Timer used for responding to timeouts and operation
+	 *            cancellation.
+	 * @param logger
+	 *            Logger of the Ultimate framework.
 	 * @param buechi
 	 *            The underlying buechi automaton from which the game graph gets
 	 *            generated.
@@ -129,13 +148,12 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public FairGameGraph(final IUltimateServiceProvider services,
-			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, StateFactory<STATE> stateFactory)
-					throws OperationCanceledException {
-		super(services, stateFactory);
-
+	public FairGameGraph(final IUltimateServiceProvider services, final IProgressAwareTimer progressTimer,
+			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi,
+			StateFactory<STATE> stateFactory) throws OperationCanceledException {
+		super(progressTimer, logger, stateFactory);
+		m_Services = services;
 		m_Buechi = buechi;
-		m_Logger = getServiceProvider().getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_ChangedBuechiTransitionsInverse = new NestedMap3<>();
 		m_BuechiTransitions = new HashSet<>();
 		m_EquivalenceClasses = new UnionFind<>();
@@ -143,6 +161,9 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		// Since there are often no remove-able transitions we first initiate it
 		// when we actually need it
 		m_TransitionsToRemove = null;
+		m_BuechiAmountOfStates = 0;
+		m_BuechiAmountOfTransitions = 0;
+		m_GraphBuildTime = 0;
 
 		generateGameGraphFromBuechi();
 	}
@@ -488,12 +509,19 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	@Override
 	protected INestedWordAutomatonOldApi<LETTER, STATE> generateBuchiAutomatonFromGraph()
 			throws OperationCanceledException {
+		SimulationPerformance performance = getSimulationPerformance();
+		if (performance != null) {
+			performance.startTimeMeasure(TimeMeasure.BUILD_RESULT_TIME);
+		}
+		
 		boolean areThereMergeableStates = m_AreThereMergeableStates;
 		boolean areThereRemoveableTransitions = m_TransitionsToRemove != null && !m_TransitionsToRemove.isEmpty();
 		Map<STATE, STATE> input2result = null;
 
-		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<>(getServiceProvider(),
+		NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<>(m_Services,
 				m_Buechi.getInternalAlphabet(), null, null, getStateFactory());
+
+		int resultAmountOfStates = 0;
 
 		// Merge states
 		if (areThereMergeableStates) {
@@ -510,13 +538,13 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 			// If operation was canceled, for example from the
 			// Ultimate framework
-			if (getServiceProvider().getProgressMonitorService() != null
-					&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
-				m_Logger.debug("Stopped in generateBuchiAutomatonFromGraph/state calculation finished");
+			if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
+				getLogger().debug("Stopped in generateBuchiAutomatonFromGraph/state calculation finished");
 				throw new OperationCanceledException(this.getClass());
 			}
 
 			// Add states
+
 			input2result = new HashMap<>(m_Buechi.size());
 			for (STATE representative : m_EquivalenceClasses.getAllRepresentatives()) {
 				boolean isInitial = representativesOfInitials.contains(representative);
@@ -524,6 +552,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 				Set<STATE> eqClass = m_EquivalenceClasses.getEquivalenceClassMembers(representative);
 				STATE mergedState = getStateFactory().minimize(eqClass);
 				result.addState(isInitial, isFinal, mergedState);
+				resultAmountOfStates++;
 				for (STATE eqClassMember : eqClass) {
 					input2result.put(eqClassMember, mergedState);
 				}
@@ -535,8 +564,11 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 				boolean isInitial = m_Buechi.isInitial(state);
 				boolean isFinal = m_Buechi.isFinal(state);
 				result.addState(isInitial, isFinal, state);
+				resultAmountOfStates++;
 			}
 		}
+
+		int resultAmountOfTransitions = 0;
 
 		// Add transitions
 		// for (STATE inputSrc : uf.getAllRepresentatives()) {
@@ -565,11 +597,13 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 					Triple<STATE, LETTER, STATE> transAsTriple = new Triple<>(inputSrc, a, inputDest);
 					if (!m_TransitionsToRemove.contains(transAsTriple)) {
 						result.addInternalTransition(resultSrc, a, resultDest);
+						resultAmountOfTransitions++;
 					}
 				} else {
 					// If there is no removable transition simply copy the
 					// inputed automaton
 					result.addInternalTransition(resultSrc, a, resultDest);
+					resultAmountOfTransitions++;
 				}
 
 			}
@@ -577,16 +611,26 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 		// If operation was canceled, for example from the
 		// Ultimate framework
-		if (getServiceProvider().getProgressMonitorService() != null
-				&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
-			m_Logger.debug("Stopped in generateBuchiAutomatonFromGraph/states and transitions added");
+		if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
+			getLogger().debug("Stopped in generateBuchiAutomatonFromGraph/states and transitions added");
 			throw new OperationCanceledException(this.getClass());
+		}
+
+		// Log performance
+		if (performance != null) {
+			performance.stopTimeMeasure(TimeMeasure.BUILD_RESULT_TIME);
+			performance.addTimeMeasureValue(TimeMeasure.BUILD_GRAPH_TIME, m_GraphBuildTime);
+			performance.setCountingMeasure(CountingMeasure.REMOVED_STATES,
+					m_BuechiAmountOfStates - resultAmountOfStates);
+			performance.setCountingMeasure(CountingMeasure.REMOVED_TRANSITIONS,
+					m_BuechiAmountOfTransitions - resultAmountOfTransitions);
+			performance.setCountingMeasure(CountingMeasure.BUCHI_STATES, m_BuechiAmountOfStates);
 		}
 
 		// Remove unreachable states which can occur due to transition removal
 		if (areThereRemoveableTransitions) {
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwaReachableStates = new RemoveUnreachable<LETTER, STATE>(
-					getServiceProvider(), result).getResult();
+					m_Services, result).getResult();
 			return nwaReachableStates;
 		} else {
 			return result;
@@ -601,10 +645,14 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 */
 	@Override
 	protected void generateGameGraphFromBuechi() throws OperationCanceledException {
+		long graphBuildTimeStart = System.currentTimeMillis();
+		
 		INestedWordAutomatonOldApi<LETTER, STATE> buechi = m_Buechi;
 
 		// Generate states
 		for (STATE leftState : buechi.getStates()) {
+			m_BuechiAmountOfStates++;
+
 			for (STATE rightState : buechi.getStates()) {
 				// Generate Spoiler vertices (leftState, rightState)
 				int priority = calculatePriority(leftState, rightState);
@@ -624,9 +672,8 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 				// If operation was canceled, for example from the
 				// Ultimate framework
-				if (getServiceProvider().getProgressMonitorService() != null
-						&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
-					m_Logger.debug("Stopped in generateGameGraphFromBuechi/generating states");
+				if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
+					getLogger().debug("Stopped in generateGameGraphFromBuechi/generating states");
 					throw new OperationCanceledException(this.getClass());
 				}
 			}
@@ -643,6 +690,8 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 			// TODO Can we generate edges at the same time
 			// we generate states?
 			for (IncomingInternalTransition<LETTER, STATE> trans : buechi.internalPredecessors(edgeDest)) {
+				m_BuechiAmountOfTransitions++;
+
 				for (STATE fixState : buechi.getStates()) {
 					// Duplicator edges q1 -a-> q2 : (x, q1, a) -> (x, q2)
 					Vertex<LETTER, STATE> src = getDuplicatorVertex(fixState, trans.getPred(), trans.getLetter(),
@@ -666,9 +715,8 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 					// If operation was canceled, for example from the
 					// Ultimate framework
-					if (getServiceProvider().getProgressMonitorService() != null
-							&& !getServiceProvider().getProgressMonitorService().continueProcessing()) {
-						m_Logger.debug("Stopped in generateGameGraphFromBuechi/generating edges");
+					if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
+						getLogger().debug("Stopped in generateGameGraphFromBuechi/generating edges");
 						throw new OperationCanceledException(this.getClass());
 					}
 				}
@@ -676,6 +724,8 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 				m_BuechiTransitions.add(new Triple<>(trans.getPred(), trans.getLetter(), edgeDest));
 			}
 		}
+		
+		m_GraphBuildTime = System.currentTimeMillis() - graphBuildTimeStart;
 	}
 
 	/**

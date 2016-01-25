@@ -30,7 +30,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.xml.bind.JAXBContext;
@@ -56,139 +55,139 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.Sp
  */
 public class SpaceExParser implements ISource {
 
-    private final String[] mFileTypes;
-    private List<String> mFileNames;
-    private IUltimateServiceProvider mServices;
-    private Logger mLogger;
+	private final String[] mFileTypes;
+	private List<String> mFileNames;
+	private IUltimateServiceProvider mServices;
+	private Logger mLogger;
 
-    /**
-     * Constructor of the SpaceEx Parser plugin.
-     */
-    public SpaceExParser() {
-        mFileTypes = new String[] { "xml", };
-        mFileNames = new ArrayList<String>();
-    }
+	/**
+	 * Constructor of the SpaceEx Parser plugin.
+	 */
+	public SpaceExParser() {
+		mFileTypes = new String[] { "xml", };
+		mFileNames = new ArrayList<String>();
+	}
 
-    @Override
-    public void setToolchainStorage(IToolchainStorage storage) {
-        // TODO Auto-generated method stub
+	@Override
+	public void setToolchainStorage(IToolchainStorage storage) {
+		// TODO Auto-generated method stub
 
-    }
+	}
 
-    @Override
-    public void setServices(IUltimateServiceProvider services) {
-        mServices = services;
-        mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-    }
+	@Override
+	public void setServices(IUltimateServiceProvider services) {
+		mServices = services;
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+	}
 
-    @Override
-    public void init() {
-        // Auto-generated method stub
-    }
+	@Override
+	public void init() {
+		// Auto-generated method stub
+	}
 
-    @Override
-    public void finish() {
-        // Auto-generated method stub
-    }
+	@Override
+	public void finish() {
+		// Auto-generated method stub
+	}
 
-    @Override
-    public String getPluginName() {
-        return Activator.PLUGIN_NAME;
-    }
+	@Override
+	public String getPluginName() {
+		return Activator.PLUGIN_NAME;
+	}
 
-    @Override
-    public String getPluginID() {
-        return Activator.PLUGIN_ID;
-    }
+	@Override
+	public String getPluginID() {
+		return Activator.PLUGIN_ID;
+	}
 
-    @Override
-    public UltimatePreferenceInitializer getPreferences() {
-        return new SpaceExParserPreferenceInitializer();
-    }
+	@Override
+	public UltimatePreferenceInitializer getPreferences() {
+		return new SpaceExParserPreferenceInitializer();
+	}
 
-    @Override
-    public boolean parseable(File[] files) {
-        for (File f : files) {
-            if (!parseable(f)) {
-                return false;
-            }
-        }
-        return true;
-    }
+	@Override
+	public boolean parseable(File[] files) {
+		for (File f : files) {
+			if (!parseable(f)) {
+				return false;
+			}
+		}
+		return true;
+	}
 
-    @Override
-    public boolean parseable(File file) {
+	@Override
+	public boolean parseable(File file) {
 
-        boolean knownExtension = false;
+		boolean knownExtension = false;
 
-        for (String s : getFileTypes()) {
-            if (file.getName().endsWith(s)) {
-                knownExtension = true;
-                break;
-            }
-        }
+		for (String s : getFileTypes()) {
+			if (file.getName().endsWith(s)) {
+				knownExtension = true;
+				break;
+			}
+		}
 
-        if (!knownExtension) {
-            return false;
-        }
+		if (!knownExtension) {
+			return false;
+		}
 
-        // TODO Check for SpaceEx extension
-        return true;
-    }
+		// TODO Check for SpaceEx extension
+		return true;
+	}
 
-    @Override
-    public IElement parseAST(File[] files) throws Exception {
-        // TODO Auto-generated method stub
-        return null;
-    }
+	@Override
+	public IElement parseAST(File[] files) throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
-    @Override
-    public IElement parseAST(File file) throws Exception {
-    	mFileNames.add(file.getName());
-    	
-        final FileInputStream fis = new FileInputStream(file);
+	@Override
+	public IElement parseAST(File file) throws Exception {
+		mFileNames.add(file.getName());
 
-        final JAXBContext jaxContext = JAXBContext.newInstance(ObjectFactory.class);
+		final FileInputStream fis = new FileInputStream(file);
 
-        final Unmarshaller unmarshaller = jaxContext.createUnmarshaller();
+		final JAXBContext jaxContext = JAXBContext.newInstance(ObjectFactory.class);
 
-        final Sspaceex spaceEx = (Sspaceex) unmarshaller.unmarshal(fis);
+		final Unmarshaller unmarshaller = jaxContext.createUnmarshaller();
 
-        final Marshaller marshaller = jaxContext.createMarshaller();
+		final Sspaceex spaceEx = (Sspaceex) unmarshaller.unmarshal(fis);
 
-        marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
+		final Marshaller marshaller = jaxContext.createMarshaller();
 
-        final StringWriter streamWriter = new StringWriter();
+		marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE);
 
-        marshaller.marshal(spaceEx, streamWriter);
+		final StringWriter streamWriter = new StringWriter();
 
-        mLogger.info(streamWriter.toString());
+		marshaller.marshal(spaceEx, streamWriter);
 
-        fis.close();
+		mLogger.info(streamWriter.toString());
 
-        return new SpaceExModel();
-    }
+		fis.close();
 
-    @Override
-    public String[] getFileTypes() {
-        return mFileTypes;
-    }
+		return new SpaceExModel();
+	}
 
-    @Override
-    public GraphType getOutputDefinition() {
-    	try {
-	        return new GraphType(Activator.PLUGIN_ID, "SpaceExParser", mFileNames);
-        } catch (Exception e) {
-	        // TODO Auto-generated catch block
-	        e.printStackTrace();
-        }
-    	return null;
-    }
+	@Override
+	public String[] getFileTypes() {
+		return mFileTypes;
+	}
 
-    @Override
-    public void setPreludeFile(File prelude) {
-        // TODO Auto-generated method stub
+	@Override
+	public GraphType getOutputDefinition() {
+		try {
+			return new GraphType(Activator.PLUGIN_ID, GraphType.Type.AST, mFileNames);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
+	}
 
-    }
+	@Override
+	public void setPreludeFile(File prelude) {
+		// TODO Auto-generated method stub
+
+	}
 
 }

@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Pro
  * 
  */
 public class MinimizedNode implements
-		IModifiableExplicitEdgesMultigraph<MinimizedNode, IMinimizedEdge> {
+		IModifiableExplicitEdgesMultigraph<MinimizedNode, IMinimizedEdge,MinimizedNode, IMinimizedEdge> {
 
 	/**
 	 * Serial number, do not know if this really needed
@@ -321,5 +321,10 @@ public class MinimizedNode implements
 	@Override
 	public boolean removeAllOutgoing(Collection<?> c) {
 		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public MinimizedNode getLabel() {
+		return this;
 	}
 }

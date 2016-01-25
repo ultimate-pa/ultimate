@@ -42,7 +42,6 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.ToolchainWalker.CompleteToolchainData;
-import de.uni_freiburg.informatik.ultimate.core.coreplugin.cexverifier.WitnessManager;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.PluginType;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.SubchainType;
@@ -65,14 +64,13 @@ import de.uni_freiburg.informatik.ultimate.model.repository.StoreObjectException
 import de.uni_freiburg.informatik.ultimate.plugins.ResultNotifier;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
-import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.util.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 
 /**
  * 
- * The {@link ToolchainManager} controls the livecycle of all toolchains and the
- * associated plugins.
+ * The {@link ToolchainManager} controls the livecycle of all toolchains and the associated plugins.
  * 
  * @author dietsch
  * 
@@ -88,7 +86,7 @@ public class ToolchainManager {
 
 	public ToolchainManager(LoggingService loggingService, PluginFactory factory, IController controller) {
 		mLoggingService = loggingService;
-		mLogger = mLoggingService.getLogger(Activator.s_PLUGIN_ID);
+		mLogger = mLoggingService.getLogger(Activator.PLUGIN_ID);
 		mPluginFactory = factory;
 		mCurrentController = controller;
 		mCurrentId = new AtomicLong();
@@ -129,7 +127,7 @@ public class ToolchainManager {
 	}
 
 	private IModelManager createModelManager() {
-		String tmp_dir = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
+		String tmp_dir = new UltimatePreferenceStore(Activator.PLUGIN_ID)
 				.getString(CorePreferenceInitializer.LABEL_MM_TMPDIRECTORY);
 		return new PersistenceAwareModelManager(tmp_dir, mLogger);
 	}
@@ -173,8 +171,7 @@ public class ToolchainManager {
 					new GenericServiceProvider(mPluginFactory));
 
 			// install new ProgressMonitorService
-			ProgressMonitorService monitorService = new ProgressMonitorService(monitor, mLogger,
-					mToolchainWalker);
+			ProgressMonitorService monitorService = new ProgressMonitorService(monitor, mLogger, mToolchainWalker);
 			mToolchainData.getStorage().putStorable(ProgressMonitorService.getServiceKey(), monitorService);
 
 		}
@@ -262,7 +259,7 @@ public class ToolchainManager {
 		@Override
 		public IStatus processToolchain(IProgressMonitor monitor) throws Throwable {
 			mLogger.info("####################### " + getLogPrefix() + " #######################");
-			UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+			UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 			boolean useBenchmark = ups.getBoolean(CorePreferenceInitializer.LABEL_BENCHMARK);
 			Benchmark bench = null;
 			if (useBenchmark) {
@@ -276,15 +273,10 @@ public class ToolchainManager {
 					throw new IllegalStateException("There is no model present.");
 				}
 
-				CompleteToolchainData data = mToolchainWalker.new CompleteToolchainData(mToolchainData, mParsers
-						.values().toArray(new ISource[0]), mCurrentController);
+				CompleteToolchainData data = mToolchainWalker.new CompleteToolchainData(mToolchainData,
+						mParsers.values().toArray(new ISource[0]), mCurrentController);
 
 				mToolchainWalker.walk(data, mToolchainData.getServices().getProgressMonitorService(), monitor);
-				if (ups.getBoolean(CorePreferenceInitializer.LABEL_WITNESS_GEN)) {
-					WitnessManager cexVerifier = new WitnessManager(mLogger, mToolchainData.getServices(),
-							mToolchainData.getStorage());
-					cexVerifier.run();
-				}
 
 			} finally {
 				IResultService resultService = mToolchainData.getServices().getResultService();
@@ -292,7 +284,7 @@ public class ToolchainManager {
 				// GenericResult(Activator.s_PLUGIN_ID,
 				// "VM Information", VMUtils.getVMInfos(), Severity.INFO));
 				if (VMUtils.areAssertionsEnabled()) {
-					resultService.reportResult(Activator.s_PLUGIN_ID, new GenericResult(Activator.s_PLUGIN_ID,
+					resultService.reportResult(Activator.PLUGIN_ID, new GenericResult(Activator.PLUGIN_ID,
 							"Assertions are enabled", "Assertions are enabled", Severity.INFO));
 				}
 
@@ -302,8 +294,8 @@ public class ToolchainManager {
 					mBenchmark.printResult();
 
 					// report benchmark results
-					resultService.reportResult(Activator.s_PLUGIN_ID, new BenchmarkResult<Double>(
-							Activator.s_PLUGIN_ID, "Toolchain Benchmarks", mBenchmark));
+					resultService.reportResult(Activator.PLUGIN_ID,
+							new BenchmarkResult<Double>(Activator.PLUGIN_ID, "Toolchain Benchmarks", mBenchmark));
 
 				}
 
@@ -341,8 +333,7 @@ public class ToolchainManager {
 		 * 
 		 * @param chain
 		 *            Toolchain description to check.
-		 * @return <code>true</code> if and only if every plugin in the chain
-		 *         exists.
+		 * @return <code>true</code> if and only if every plugin in the chain exists.
 		 */
 		private boolean checkToolchain(List<Object> chain) {
 			for (Object o : chain) {
@@ -369,12 +360,12 @@ public class ToolchainManager {
 		}
 
 		private final IElement runParser(final File file, ISource parser) throws Exception {
-			boolean useBenchmark = new UltimatePreferenceStore(Activator.s_PLUGIN_ID)
+			boolean useBenchmark = new UltimatePreferenceStore(Activator.PLUGIN_ID)
 					.getBoolean(CorePreferenceInitializer.LABEL_BENCHMARK);
 			IElement root = null;
 
-			PluginConnector
-					.initializePlugin(mLogger, parser, mToolchainData.getServices(), mToolchainData.getStorage());
+			PluginConnector.initializePlugin(mLogger, parser, mToolchainData.getServices(),
+					mToolchainData.getStorage());
 
 			// parse the files to Graph
 			try {
@@ -388,13 +379,12 @@ public class ToolchainManager {
 				}
 
 				/*
-				 * for testing purposes only for(ISerialization ser :
-				 * m_SerializationPlugins) { ser.serialize(root,
-				 * "c:\\test.txt"); INode in = ser.deserialize("c:\\test.txt");
-				 * if(in == in) System.out.println(in.toString()); }
+				 * for testing purposes only for(ISerialization ser : m_SerializationPlugins) { ser.serialize(root,
+				 * "c:\\test.txt"); INode in = ser.deserialize("c:\\test.txt"); if(in == in)
+				 * System.out.println(in.toString()); }
 				 */
 			} catch (Exception e) {
-				mLogger.fatal(getLogPrefix() + ": Parsing gives Exception", e);
+				mLogger.fatal(getLogPrefix() + ": Exception during parsing: " + e.getMessage());
 				resetModelManager();
 			} finally {
 				parser.finish();
@@ -408,7 +398,9 @@ public class ToolchainManager {
 				try {
 					mModelManager.persistAll(false);
 				} catch (StoreObjectException e) {
-					mLogger.error(getLogPrefix() + ": Failed to persist Models", e);
+					final Throwable cause = e.getCause();
+					mLogger.error(getLogPrefix() + ": Failed to persist models: "
+							+ (cause == null ? e.getMessage() : cause.getMessage()));
 				}
 			}
 			return;
@@ -436,7 +428,7 @@ public class ToolchainManager {
 				}
 			}
 
-			boolean showusableparser = InstanceScope.INSTANCE.getNode(Activator.s_PLUGIN_ID).getBoolean(
+			boolean showusableparser = InstanceScope.INSTANCE.getNode(Activator.PLUGIN_ID).getBoolean(
 					CorePreferenceInitializer.LABEL_SHOWUSABLEPARSER,
 					CorePreferenceInitializer.VALUE_SHOWUSABLEPARSER_DEFAULT);
 

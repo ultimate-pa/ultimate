@@ -28,7 +28,9 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 
 /**
  * Class for evaluation results used to return both, a new abstract state and an evaluated value for evaluators.
@@ -40,30 +42,58 @@ public class IntervalDomainEvaluationResult implements IEvaluationResult<Interva
 
 	private IntervalDomainValue mValue;
 	private IntervalDomainState mAbstractState;
+	private BooleanValue mBooleanValue;
 
-	public IntervalDomainEvaluationResult(IntervalDomainValue value, IntervalDomainState state) {
+	/**
+	 * Default constructor for an {@link IntervalDomainEvaluationResult}.
+	 * 
+	 * @param value
+	 *            The {@link IntervalDomainValue} to set in the result.
+	 * @param state
+	 *            The {@link IntervalDomainState} to set in the result.
+	 * @param booleanValue
+	 *            The {@link BooleanValue} to set in the result.
+	 */
+	protected IntervalDomainEvaluationResult(IntervalDomainValue value, IntervalDomainState state,
+	        BooleanValue booleanValue) {
 		mValue = value;
 		mAbstractState = state;
+		mBooleanValue = booleanValue;
 	}
 
-	public IntervalDomainState getEvaluatedState() {
+	/**
+	 * @return The evaluated state that is the result of calling the {@link IEvaluator#evaluate(IAbstractState)} method.
+	 */
+	protected IntervalDomainState getEvaluatedState() {
 		return mAbstractState;
 	}
 
-	public IntervalDomainValue getEvaluatedValue() {
+	/**
+	 * @return The evaluated value that is the result of calling the {@link IEvaluator#evaluate(IAbstractState)} method.
+	 */
+	protected IntervalDomainValue getEvaluatedValue() {
 		return mValue;
-	}
-
-	public void setEvaluatedState(IntervalDomainState state) {
-		mAbstractState = state;
-	}
-
-	public void setEvaluatedValue(IntervalDomainValue value) {
-		mValue = value;
 	}
 
 	@Override
 	public IntervalDomainEvaluationResult getResult() {
 		return this;
+	}
+
+	@Override
+	public BooleanValue getBooleanValue() {
+		return mBooleanValue;
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Value: ");
+		sb.append(mValue);
+		sb.append(" -- Boolean Value: ");
+		sb.append(mBooleanValue);
+		sb.append(" -- State: ");
+		sb.append(mAbstractState);
+		return sb.toString();
 	}
 }

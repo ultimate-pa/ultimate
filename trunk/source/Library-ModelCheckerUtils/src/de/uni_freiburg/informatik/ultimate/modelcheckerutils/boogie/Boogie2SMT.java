@@ -164,8 +164,8 @@ public class Boogie2SMT {
 	public static void reportUnsupportedSyntax(BoogieASTNode BoogieASTNode, String longDescription,
 			IUltimateServiceProvider services) {
 		UnsupportedSyntaxResult<BoogieASTNode> result = new UnsupportedSyntaxResult<BoogieASTNode>(BoogieASTNode,
-				Activator.s_PLUGIN_NAME, services.getBacktranslationService(), longDescription);
-		services.getResultService().reportResult(Activator.s_PLUGIN_NAME, result);
+				Activator.PLUGIN_NAME, services.getBacktranslationService(), longDescription);
+		services.getResultService().reportResult(Activator.PLUGIN_NAME, result);
 		services.getProgressMonitorService().cancelToolchain();
 	}
 

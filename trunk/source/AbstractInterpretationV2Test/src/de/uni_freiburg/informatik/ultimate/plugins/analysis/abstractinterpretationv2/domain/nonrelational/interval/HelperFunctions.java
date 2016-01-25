@@ -29,6 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 
@@ -115,28 +116,46 @@ public class HelperFunctions {
 	protected static boolean computeAdditionResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
 	        IntervalDomainValue expectedResult) {
 
-		final IEvaluationResult<IntervalDomainEvaluationResult> result = createBinaryEvaluator(interval1, interval2,
-		        Operator.ARITHPLUS).evaluate(new IntervalDomainState());
+		final List<IEvaluationResult<IntervalDomainEvaluationResult>> result = createBinaryEvaluator(interval1,
+		        interval2, Operator.ARITHPLUS).evaluate(new IntervalDomainState());
 
-		return computeResult(interval1, interval2, expectedResult, result.getResult().getEvaluatedValue());
+		boolean ret = true;
+
+		for (final IEvaluationResult<IntervalDomainEvaluationResult> res : result) {
+			ret = ret && computeResult(interval1, interval2, expectedResult, res.getResult().getEvaluatedValue());
+		}
+
+		return ret;
 	}
 
 	protected static boolean computeSubtractionResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
 	        IntervalDomainValue expectedResult) {
 
-		final IEvaluationResult<IntervalDomainEvaluationResult> result = createBinaryEvaluator(interval1, interval2,
-		        Operator.ARITHMINUS).evaluate(new IntervalDomainState());
+		final List<IEvaluationResult<IntervalDomainEvaluationResult>> result = createBinaryEvaluator(interval1,
+		        interval2, Operator.ARITHMINUS).evaluate(new IntervalDomainState());
 
-		return computeResult(interval1, interval2, expectedResult, result.getResult().getEvaluatedValue());
+		boolean ret = true;
+
+		for (final IEvaluationResult<IntervalDomainEvaluationResult> res : result) {
+			ret = ret && computeResult(interval1, interval2, expectedResult, res.getResult().getEvaluatedValue());
+		}
+
+		return ret;
 	}
 
 	protected static boolean computeMultiplicationResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
 	        IntervalDomainValue expectedResult) {
 
-		final IEvaluationResult<IntervalDomainEvaluationResult> result = createBinaryEvaluator(interval1, interval2,
-		        Operator.ARITHMUL).evaluate(null);
+		final List<IEvaluationResult<IntervalDomainEvaluationResult>> result = createBinaryEvaluator(interval1,
+		        interval2, Operator.ARITHMUL).evaluate(new IntervalDomainState());
 
-		return computeResult(interval1, interval2, expectedResult, result.getResult().getEvaluatedValue());
+		boolean ret = true;
+
+		for (final IEvaluationResult<IntervalDomainEvaluationResult> res : result) {
+			ret = ret && computeResult(interval1, interval2, expectedResult, res.getResult().getEvaluatedValue());
+		}
+
+		return ret;
 	}
 
 	protected static boolean computeIntersectionResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
@@ -151,7 +170,7 @@ public class HelperFunctions {
 	        IntervalDomainValue expected) {
 
 		final IntervalDomainValue computed = interval1.merge(interval2);
-		
+
 		return computeResult(interval1, interval2, expected, computed);
 	}
 

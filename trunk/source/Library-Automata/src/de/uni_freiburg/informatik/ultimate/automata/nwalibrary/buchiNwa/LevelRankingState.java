@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -215,18 +216,25 @@ public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE
 		return true;
 	}
 	
+	
+	private int[] constructRanksHistogram() {
+		assert m_HighestRank >= 0;
+		assert m_HighestRank < Integer.MAX_VALUE : "not applicable";
+		int[] ranks = new int[m_HighestRank+1];
+		for (StateWithRankInfo<STATE> down  : getDownStates()) {
+			for (StateWithRankInfo<STATE> up : getUpStates(down)) {
+				ranks[up.getRank()]++;
+			}
+		}
+		return ranks;
+	}
 	boolean isTight() {
 		assert m_HighestRank >= 0;
 		assert m_HighestRank < Integer.MAX_VALUE : "not applicable";
 		if (isEven(m_HighestRank)) {
 			return false;
 		} else {
-			int[] ranks = new int[m_HighestRank+1];
-			for (StateWithRankInfo<STATE> down  : getDownStates()) {
-				for (StateWithRankInfo<STATE> up : getUpStates(down)) {
-					ranks[up.getRank()]++;
-				}
-			}
+			int[] ranks = constructRanksHistogram();
 			for (int i=1; i<=m_HighestRank; i+=2) {
 				if (ranks[i] == 0) {
 					return false;
@@ -235,6 +243,63 @@ public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE
 			return true;
 		}
 	}
+	
+	/**
+	 * See Sven's STACS 2009 paper
+	 */
+	boolean isMaximallyTight() {
+		assert m_HighestRank >= 0;
+		assert m_HighestRank < Integer.MAX_VALUE : "not applicable";
+		if (isEven(m_HighestRank)) {
+			return false;
+		} else {
+			int[] ranks = constructRanksHistogram();
+			for (int i=1; i<m_HighestRank; i+=2) {
+				if (ranks[i] != 1) {
+					return false;
+				}
+			}
+			if (ranks[m_HighestRank] == 0) {
+				return false;
+			}
+			for (int i=0; i<m_HighestRank-1; i+=2) {
+				if (ranks[i] != 0) {
+					return false;
+				}
+			}
+
+			return true;
+		}
+	}
+	
+	
+	boolean isElastic() {
+		assert m_HighestRank >= 0;
+		assert m_HighestRank < Integer.MAX_VALUE : "not applicable";
+		if (isEven(m_HighestRank)) {
+			return false;
+		} else {
+			final int[] ranks = constructRanksHistogram();
+			final int[] oddRanks = new int[ranks.length];
+			for (int i=1; i<ranks.length; i+=2) {
+				oddRanks[i] = ranks[i];
+			}
+			final int[] downwardAggregatedOddranks = oddRanks.clone();
+			for (int i=ranks.length-3; i>0; i-=2) {
+				downwardAggregatedOddranks[i] += downwardAggregatedOddranks[i+2];
+			}
+			int requiredAmount = 1;
+			for (int i=ranks.length-1; i>0; i-=2) {
+				if (downwardAggregatedOddranks[i] < requiredAmount) {
+					return false;
+				}
+				requiredAmount++;
+			}
+			return true;
+		}
+	}
+
+
 
 //	@Override
 //	public Set<STATE> getDownStates() {

@@ -28,7 +28,9 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
@@ -61,8 +63,10 @@ public class IntervalSingletonBooleanExpressionEvaluator
 	}
 
 	@Override
-	public IEvaluationResult<IntervalDomainEvaluationResult> evaluate(IntervalDomainState currentState) {
+	public List<IEvaluationResult<IntervalDomainEvaluationResult>> evaluate(IntervalDomainState currentState) {
 
+		final List<IEvaluationResult<IntervalDomainEvaluationResult>> returnList = new ArrayList<>();
+		
 		IntervalDomainState returnState;
 
 		if (mBooleanValue.getValue() == Value.TRUE || mBooleanValue.getValue() == Value.TOP) {
@@ -71,7 +75,9 @@ public class IntervalSingletonBooleanExpressionEvaluator
 			returnState = currentState.bottomState();
 		}
 
-		return new IntervalDomainEvaluationResult(null, returnState);
+		returnList.add(new IntervalDomainEvaluationResult(null, returnState, mBooleanValue));
+		
+		return returnList;
 	}
 
 	@Override
@@ -91,12 +97,12 @@ public class IntervalSingletonBooleanExpressionEvaluator
 	}
 
 	@Override
-	public BooleanValue booleanValue() {
-		return mBooleanValue;
-	}
-
-	@Override
 	public boolean containsBool() {
 		return true;
+	}
+	
+	@Override
+	public String toString() {
+		return mBooleanValue.getValue().name();
 	}
 }

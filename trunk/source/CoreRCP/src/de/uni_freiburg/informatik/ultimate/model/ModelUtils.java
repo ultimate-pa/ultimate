@@ -28,29 +28,74 @@
  */
 package de.uni_freiburg.informatik.ultimate.model;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Map.Entry;
+
+import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
+
 /**
  * Helper methods for Ultimate models.
+ * 
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * 
  */
 public final class ModelUtils {
 	/**
-	 * Takes annotations from one IElement (if any) and adds them to another
-	 * IElement.
+	 * Takes annotations from one {@link IElement} (if any) and adds them to another {@link IElement}. This is a shallow
+	 * copy.
 	 * 
 	 * @param oldE
-	 *            old IElement to take annotations from
+	 *            old {@link IElement} to take annotations from.
 	 * @param newE
-	 *            new IElement to add annotations to
+	 *            new {@link IElement} to add annotations to.
 	 */
-	public static void mergeAnnotations(IElement oldE, IElement newE) {
+	public static void copyAnnotations(final IElement oldE, final IElement newE) {
 		if (oldE == null || newE == null) {
 			return;
 		}
 		if (!oldE.hasPayload()) {
 			return;
 		}
-		IPayload oldPayload = oldE.getPayload();
+		final IPayload oldPayload = oldE.getPayload();
 		if (oldPayload.hasAnnotation()) {
 			newE.getPayload().getAnnotations().putAll(oldPayload.getAnnotations());
+		}
+	}
+
+	/**
+	 * Takes annotations from one {@link IElement} that are assignable from <code>annotation</code> and adds them to
+	 * another {@link IElement}. This is a shallow copy.
+	 * 
+	 * @param oldE
+	 *            old {@link IElement} to take annotations from
+	 * @param newE
+	 *            new {@link IElement} to add annotations to
+	 */
+	public static <E extends IAnnotations> void copyAnnotations(final IElement oldE, final IElement newE,
+			final Class<E> annotation) {
+		if (oldE == null || newE == null || annotation == null) {
+			return;
+		}
+		if (!oldE.hasPayload()) {
+			return;
+		}
+		final IPayload oldPayload = oldE.getPayload();
+		if (oldPayload.hasAnnotation()) {
+			final Map<String, IAnnotations> oldAnnots = oldPayload.getAnnotations();
+			final Collection<Entry<String, IAnnotations>> toMerge = new ArrayList<>();
+			for (final Entry<String, IAnnotations> entry : oldAnnots.entrySet()) {
+				if (annotation.isAssignableFrom(entry.getValue().getClass())) {
+					toMerge.add(entry);
+				}
+			}
+			if (toMerge.isEmpty()) {
+				return;
+			}
+			final Map<String, IAnnotations> newAnnots = newE.getPayload().getAnnotations();
+			toMerge.forEach(entry -> newAnnots.put(entry.getKey(), entry.getValue()));
 		}
 	}
 }

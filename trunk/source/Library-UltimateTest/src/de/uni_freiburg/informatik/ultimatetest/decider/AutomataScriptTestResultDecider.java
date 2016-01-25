@@ -33,7 +33,7 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IResultService;
 import de.uni_freiburg.informatik.ultimate.result.AutomataScriptInterpreterOverallResult;
 import de.uni_freiburg.informatik.ultimate.result.AutomataScriptInterpreterOverallResult.OverallResult;
-import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.result.model.IResult;
 
 public class AutomataScriptTestResultDecider implements ITestResultDecider {
 	

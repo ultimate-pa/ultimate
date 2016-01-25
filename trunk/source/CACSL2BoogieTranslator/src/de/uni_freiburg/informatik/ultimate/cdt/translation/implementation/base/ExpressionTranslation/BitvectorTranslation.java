@@ -323,7 +323,10 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		int operandLength = m_TypeSizes.getSize(((CPrimitive) operand.lrVal.getCType()).getType()) * 8;
 		
 		if (resultLength == operandLength) {
-			// Do nothing.
+			RValue oldRValue = (RValue) operand.lrVal;
+			RValue rVal = new RValue(oldRValue.getValue(), resultType, 
+					oldRValue.isBoogieBool(), oldRValue.isIntFromPointer());
+			operand.lrVal = rVal;
 		} else if (resultLength > operandLength) {
 			extend(loc, operand, resultType, resultPrimitive, resultLength,
 					operandLength);
@@ -332,8 +335,6 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			RValue rVal = new RValue(bv, resultType);
 			operand.lrVal = rVal;
 		}
-		
-		operand.lrVal.setCType(resultType);
 	}
 
 	private void extend(ILocation loc, ExpressionResult operand, CType resultType, CPrimitive resultPrimitive, int resultLength, int operandLength) {
@@ -350,31 +351,6 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		FunctionApplication func = new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + funcName, new Expression[]{operand.lrVal.getValue()});
 		RValue rVal = new RValue(func, resultType);
 		operand.lrVal = rVal;
-	}
-
-	@Override
-	public void doIntegerPromotion(ILocation loc, ExpressionResult operand) {
-		if (!integerPromotionNeeded((CPrimitive) operand.lrVal.getCType())) {
-			return;
-		}
-		CType inputType = operand.lrVal.getCType();
-		if (inputType instanceof CPrimitive) {
-			CPrimitive cPrimitive = (CPrimitive) operand.lrVal.getCType();
-			if (cPrimitive.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-				CPrimitive promotedType = determineResultOfIntegerPromotion(cPrimitive);
-
-				int promotedTypeLength = m_TypeSizes.getSize(promotedType.getType()) * 8;
-				int operandLength = m_TypeSizes.getSize(((CPrimitive) operand.lrVal.getCType()).getType()) * 8;
-				if (promotedTypeLength > operandLength) {
-					extend(loc, operand, promotedType, promotedType, promotedTypeLength, operandLength);
-				}
-				operand.lrVal.setCType(promotedType);
-			} else {
-				throw new IllegalArgumentException("integer promotions not applicable to " + inputType);
-			}
-		} else {
-			throw new IllegalArgumentException("integer promotions not applicable to " + inputType);
-		}
 	}
 
 	@Override

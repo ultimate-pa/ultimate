@@ -336,5 +336,10 @@ public abstract class AbstractCompositeEdge implements ICompositeEdge {
 	public Set<BoogieVar> getDifferentVariables() {
 		return this.usedVariables;
 	}
+	
+	@Override
+	public IMinimizedEdge getLabel() {
+		return this;
+	}
 
 }

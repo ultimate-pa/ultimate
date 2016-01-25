@@ -379,7 +379,7 @@ public class UnstructureCode extends BaseObserver {
 	 */
 	private void addStmtAndAnnots(BoogieASTNode source, Statement newStmt) {
 		// adds annotations from old statement to new statement (if any)
-		ModelUtils.mergeAnnotations(source, newStmt);
+		ModelUtils.copyAnnotations(source, newStmt);
 
 		// adds new statement to list
 		mFlatStatements.add(newStmt);

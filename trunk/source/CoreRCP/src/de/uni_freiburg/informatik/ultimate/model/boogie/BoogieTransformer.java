@@ -169,7 +169,7 @@ public abstract class BoogieTransformer {
 		if (newDecl == null) {
 			return decl;
 		} else {
-			ModelUtils.mergeAnnotations(decl, newDecl);
+			ModelUtils.copyAnnotations(decl, newDecl);
 			return newDecl;
 		}
 	}
@@ -221,7 +221,7 @@ public abstract class BoogieTransformer {
 		if (newType == null) {
 			return type;
 		} else {
-			ModelUtils.mergeAnnotations(type, newType);
+			ModelUtils.copyAnnotations(type, newType);
 			return newType;
 		}
 	}
@@ -262,7 +262,7 @@ public abstract class BoogieTransformer {
 		Expression newWhere = where != null ? processExpression(where) : null;
 		if (newType != type || newWhere != where) {
 			VarList newVl = new VarList(vl.getLocation(), vl.getIdentifiers(), newType, newWhere);
-			ModelUtils.mergeAnnotations(vl, newVl);
+			ModelUtils.copyAnnotations(vl, newVl);
 			return newVl;
 		}
 		return vl;
@@ -284,7 +284,7 @@ public abstract class BoogieTransformer {
 		Statement[] newStatements = processStatements(statements);
 		if (newLocals != locals || newStatements != statements) {
 			Body newBody = new Body(body.getLocation(), newLocals, newStatements);
-			ModelUtils.mergeAnnotations(body, newBody);
+			ModelUtils.copyAnnotations(body, newBody);
 			return newBody;
 		}
 		return body;
@@ -305,7 +305,7 @@ public abstract class BoogieTransformer {
 		VarList[] newVl = processVarLists(vl);
 		if (vl != newVl || attrs != newAttrs) {
 			VariableDeclaration newLocal = new VariableDeclaration(local.getLocation(), newAttrs, newVl);
-			ModelUtils.mergeAnnotations(local, newLocal);
+			ModelUtils.copyAnnotations(local, newLocal);
 			return newLocal;
 		}
 		return local;
@@ -418,7 +418,7 @@ public abstract class BoogieTransformer {
 			/* No recursion for label, havoc, break, return and goto */
 			return statement;
 		} else {
-			ModelUtils.mergeAnnotations(statement, newStatement);
+			ModelUtils.copyAnnotations(statement, newStatement);
 			return newStatement;
 		}
 	}
@@ -463,7 +463,7 @@ public abstract class BoogieTransformer {
 			Expression[] newIndices = processExpressions(indices);
 			if (array != newArray || indices != newIndices) {
 				LeftHandSide newLhs = new ArrayLHS(lhs.getLocation(), alhs.getType(), newArray, newIndices);
-				ModelUtils.mergeAnnotations(lhs, newLhs);
+				ModelUtils.copyAnnotations(lhs, newLhs);
 				return newLhs;
 			}
 		}
@@ -540,7 +540,7 @@ public abstract class BoogieTransformer {
 		if (newSpec == null) {
 			return spec;
 		} else {
-			ModelUtils.mergeAnnotations(spec, newSpec);
+			ModelUtils.copyAnnotations(spec, newSpec);
 			return newSpec;
 		}
 	}
@@ -590,7 +590,7 @@ public abstract class BoogieTransformer {
 		if (newAttr == null) {
 			return attr;
 		} else {
-			ModelUtils.mergeAnnotations(attr, newAttr);
+			ModelUtils.copyAnnotations(attr, newAttr);
 			return newAttr;
 		}
 	}
@@ -736,7 +736,7 @@ public abstract class BoogieTransformer {
 			 */
 			return expr;
 		} else {
-			ModelUtils.mergeAnnotations(expr, newExpr);
+			ModelUtils.copyAnnotations(expr, newExpr);
 			return newExpr;
 		}
 	}

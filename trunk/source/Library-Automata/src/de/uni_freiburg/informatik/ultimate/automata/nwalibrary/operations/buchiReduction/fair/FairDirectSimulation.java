@@ -30,11 +30,19 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.direct.DirectSimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.CountingMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.MultipleDataOption;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationPerformance;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.TimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
@@ -59,15 +67,19 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LETTER, STATE> {
 
 	/**
-	 * The underlying buechi automaton from which the game graph gets generated.
-	 */
-	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Buechi;
-
-	/**
 	 * True if the simulation currently mimics the behavior of a
 	 * DirectSimulation, false if it mimics a FairSimulation.
 	 */
 	private boolean m_IsCurrentlyDirectSimulation;
+
+	/**
+	 * Holds information about the performance of the simulation after usage.
+	 */
+	private SimulationPerformance m_Performance;
+	/**
+	 * True if the algorithm has already finished, false otherwise.
+	 */
+	private boolean m_HasFinished;
 
 	/**
 	 * Creates a new fair simulation that tries to reduce the given buechi
@@ -80,7 +92,12 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 * ends</b> nor <b>duplicate transitions</b>.
 	 * 
 	 * @param services
-	 *            Service provider of Ultimate framework.
+	 *            Service provider of Ultimate framework
+	 * @param progressTimer
+	 *            Timer used for responding to timeouts and operation
+	 *            cancellation.
+	 * @param logger
+	 *            Logger of the Ultimate framework.
 	 * @param buechi
 	 *            The buechi automaton to reduce with no dead ends nor with
 	 *            duplicate transitions
@@ -93,10 +110,10 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public FairDirectSimulation(final IUltimateServiceProvider services,
-			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
+	public FairDirectSimulation(final IUltimateServiceProvider services, final IProgressAwareTimer progressTimer,
+			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
-		this(services, buechi, useSCCs, stateFactory, Collections.emptyList());
+		this(services, progressTimer, logger, buechi, useSCCs, stateFactory, Collections.emptyList());
 	}
 
 	/**
@@ -111,7 +128,12 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 * ends</b> nor <b>duplicate transitions</b>.
 	 * 
 	 * @param services
-	 *            Service provider of Ultimate framework.
+	 *            Service provider of Ultimate framework
+	 * @param progressTimer
+	 *            Timer used for responding to timeouts and operation
+	 *            cancellation.
+	 * @param logger
+	 *            Logger of the Ultimate framework.
 	 * @param buechi
 	 *            The buechi automaton to reduce with no dead ends nor with
 	 *            duplicate transitions
@@ -129,14 +151,27 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public FairDirectSimulation(final IUltimateServiceProvider services,
-			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
+	public FairDirectSimulation(final IUltimateServiceProvider services, final IProgressAwareTimer progressTimer,
+			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses)
 					throws OperationCanceledException {
-		super(services, buechi, useSCCs, stateFactory, possibleEquivalentClasses,
-				new FairDirectGameGraph<LETTER, STATE>(services, buechi, stateFactory));
-		m_Buechi = buechi;
-		m_IsCurrentlyDirectSimulation = false;
+		super(progressTimer, logger, buechi, useSCCs, stateFactory, possibleEquivalentClasses,
+				new FairDirectGameGraph<LETTER, STATE>(services, progressTimer, logger, buechi, stateFactory));
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.
+	 * buchiReduction.ASimulation#getSimulationPerformance()
+	 */
+	@Override
+	public SimulationPerformance getSimulationPerformance() {
+		if (m_HasFinished) {
+			return m_Performance;
+		} else {
+			return super.getSimulationPerformance();
+		}
 	}
 
 	/*
@@ -224,35 +259,97 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 */
 	@Override
 	protected void doSimulation() throws OperationCanceledException {
+		m_Performance = new SimulationPerformance(SimulationType.FAIRDIRECT, isUsingSCCs());
+		m_Performance.startTimeMeasure(TimeMeasure.OVERALL_TIME);
+		m_Performance.startTimeMeasure(TimeMeasure.SIMULATION_ONLY_TIME);
+
+		int directSimSimulationSteps = 0;
+		long directSimSCCBuildTime = 0;
+
 		// First calculate direct simulation
 		if (getGameGraph() instanceof FairDirectGameGraph) {
-			long startTime = System.currentTimeMillis();
-
 			FairDirectGameGraph<LETTER, STATE> game = (FairDirectGameGraph<LETTER, STATE>) getGameGraph();
 
 			// Do direct simulation
 			getLogger().debug("Starting direct simulation...");
 			m_IsCurrentlyDirectSimulation = true;
 			game.transformToDirectGameGraph();
-			new DirectSimulation<LETTER, STATE>(getServiceProvider(), m_Buechi, isUsingSCCs(), getStateFactory(), game);
+			DirectSimulation<LETTER, STATE> directSim = new DirectSimulation<LETTER, STATE>(getProgressTimer(),
+					getLogger(), isUsingSCCs(), getStateFactory(), game);
 
 			// Remember results before transforming back and clear changes made
 			// in the direct simulation
 			game.rememberAndClearDirectSimulationResults();
 
+			// Remember performance data
+			directSimSimulationSteps = directSim.getSimulationPerformance()
+					.getCountingMeasureResult(CountingMeasure.SIMULATION_STEPS);
+			directSimSCCBuildTime = directSim.getSimulationPerformance().getTimeMeasureResult(TimeMeasure.BUILD_SCC,
+					MultipleDataOption.ADDITIVE);
+
 			// Transform back to fair simulation
 			game.transformToFairGameGraph();
+			// Reset performance data linkage to fair simulation
+			getGameGraph().setSimulationPerformance(super.getSimulationPerformance());
 			m_IsCurrentlyDirectSimulation = false;
-
-			long duration = System.currentTimeMillis() - startTime;
-			getLogger().info((isUsingSCCs() ? "SCC version" : "nonSCC version") + " of direct simulation took "
-					+ duration + " milliseconds");
 			getLogger().debug("Starting fair simulation...");
 		}
+
+		m_Performance.stopTimeMeasure(TimeMeasure.SIMULATION_ONLY_TIME);
 
 		// After that do the normal fair simulation process that will use the
 		// overridden methods which profit from the direct simulation.
 		super.doSimulation();
+
+		SimulationPerformance fairPerformance = super.getSimulationPerformance();
+		long durationFairSimOnly = fairPerformance.getTimeMeasureResult(TimeMeasure.SIMULATION_ONLY_TIME,
+				MultipleDataOption.ADDITIVE);
+		if (durationFairSimOnly != SimulationPerformance.NO_TIME_RESULT) {
+			m_Performance.addTimeMeasureValue(TimeMeasure.SIMULATION_ONLY_TIME, durationFairSimOnly);
+		}
+
+		long duration = m_Performance.stopTimeMeasure(TimeMeasure.OVERALL_TIME);
+		// Add time building of the graph took to the overall time since this
+		// happens outside of simulation
+		long durationGraph = fairPerformance.getTimeMeasureResult(TimeMeasure.BUILD_GRAPH_TIME,
+				MultipleDataOption.ADDITIVE);
+		if (durationGraph != SimulationPerformance.NO_TIME_RESULT) {
+			duration += durationGraph;
+			m_Performance.addTimeMeasureValue(TimeMeasure.OVERALL_TIME, duration);
+		}
+
+		getLogger().info((isUsingSCCs() ? "SCC version" : "nonSCC version") + " of fairdirect simulation took "
+				+ duration + " milliseconds");
+
+		// Merge performance data
+		// TODO A clone method would be far better
+		if (directSimSimulationSteps == SimulationPerformance.NO_COUNTING_RESULT) {
+			directSimSimulationSteps = 0;
+		}
+		if (directSimSCCBuildTime == SimulationPerformance.NO_TIME_RESULT) {
+			directSimSCCBuildTime = 0;
+		}
+		m_Performance.addTimeMeasureValue(TimeMeasure.BUILD_SCC,
+				fairPerformance.getTimeMeasureResult(TimeMeasure.BUILD_SCC, MultipleDataOption.ADDITIVE)
+						+ directSimSCCBuildTime);
+		m_Performance.setCountingMeasure(CountingMeasure.SIMULATION_STEPS,
+				fairPerformance.getCountingMeasureResult(CountingMeasure.SIMULATION_STEPS) + directSimSimulationSteps);
+		m_Performance.addTimeMeasureValue(TimeMeasure.BUILD_GRAPH_TIME,
+				fairPerformance.getTimeMeasureResult(TimeMeasure.BUILD_GRAPH_TIME, MultipleDataOption.ADDITIVE));
+		m_Performance.addTimeMeasureValue(TimeMeasure.BUILD_RESULT_TIME,
+				fairPerformance.getTimeMeasureResult(TimeMeasure.BUILD_RESULT_TIME, MultipleDataOption.ADDITIVE));
+		m_Performance.setCountingMeasure(CountingMeasure.REMOVED_STATES,
+				fairPerformance.getCountingMeasureResult(CountingMeasure.REMOVED_STATES));
+		m_Performance.setCountingMeasure(CountingMeasure.REMOVED_TRANSITIONS,
+				fairPerformance.getCountingMeasureResult(CountingMeasure.REMOVED_TRANSITIONS));
+		m_Performance.setCountingMeasure(CountingMeasure.FAILED_MERGE_ATTEMPTS,
+				fairPerformance.getCountingMeasureResult(CountingMeasure.FAILED_MERGE_ATTEMPTS));
+		m_Performance.setCountingMeasure(CountingMeasure.FAILED_TRANSREMOVE_ATTEMPTS,
+				fairPerformance.getCountingMeasureResult(CountingMeasure.FAILED_TRANSREMOVE_ATTEMPTS));
+		m_Performance.setCountingMeasure(CountingMeasure.BUCHI_STATES,
+				fairPerformance.getCountingMeasureResult(CountingMeasure.BUCHI_STATES));
+
+		m_HasFinished = true;
 	}
 
 	/**

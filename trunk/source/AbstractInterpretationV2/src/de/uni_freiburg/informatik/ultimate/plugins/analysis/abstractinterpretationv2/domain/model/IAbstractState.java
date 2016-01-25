@@ -132,8 +132,14 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 * <code>dominator</code> (i.e., Var(return) = Var(this) &cup; Var(dominator)). If both states (this and dominator)
 	 * share variables, the abstraction of dominator should replace the abstraction of this state (e.g., if
 	 * Var(this)={x} and Var(dominator)={x}, then return dominator).
+	 * <p>
+	 * Each variable from Var(dominator) is<br>
+	 * <b>either</b> identical to a variable from Var(this), (i.e. they have the same name, the same {@link IBoogieVar},
+	 * and the same type)<br>
+	 * <b>or</b> has a unique name that is not used by any variable in Var(this).
 	 * 
-	 * If this state is a fixpoint then the resulting state is also a fixpoint.
+	 * @param dominator
+	 *            The dominator state that should be patched onto <code>this</code>.
 	 */
 	STATE patch(STATE dominator);
 
@@ -153,25 +159,8 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	boolean isBottom();
 
 	/**
-	 * An abstract state is a fixpoint if {@link FixpointEngine} called {@link #setFixpoint(boolean)} with true.
-	 * 
-	 * @return <code>true</code> if and only if the current abstract state is a fix point, <code>false</code> otherwise.
-	 */
-	boolean isFixpoint();
-
-	/**
-	 * {@link FixpointEngine} will call this method to save whether this abstract state is considered a fixpoint or not.
-	 * 
-	 * @return A new abstract state that is a {@link #copy()} of this instance except that {@link #isFixpoint()} returns
-	 *         a different value OR this instance.
-	 */
-	STATE setFixpoint(final boolean value);
-
-	/**
 	 * Check whether this instance is equal to <code>other</code> or not. Instances are equal if they have the same set
 	 * of variables and describe the same abstract state.
-	 * 
-	 * Note that the {@link #isFixpoint()} property should not be considered.
 	 * 
 	 * @param other
 	 *            The other instance.

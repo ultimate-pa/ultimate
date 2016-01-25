@@ -28,11 +28,12 @@ package de.uni_freiburg.informatik.ultimate.core.services;
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
 
 /**
  * 
@@ -54,7 +55,7 @@ public class BacktranslationService implements IStorable, IBacktranslationServic
 	}
 
 	@Override
-	public <SE> Object translateExpression(SE expression, Class<SE> clazz) {
+	public <SE, TE> TE translateExpression(SE expression, Class<SE> clazz) {
 		return mTranslatorSequence.translateExpression(expression, clazz);
 	}
 
@@ -66,6 +67,11 @@ public class BacktranslationService implements IStorable, IBacktranslationServic
 	@Override
 	public <STE, SE> IProgramExecution<?, ?> translateProgramExecution(IProgramExecution<STE, SE> programExecution) {
 		return mTranslatorSequence.translateProgramExecution(programExecution);
+	}
+
+	@Override
+	public <STE, SE> IBacktranslatedCFG<?, ?> translateCFG(IBacktranslatedCFG< ?, STE> cfg) {
+		return mTranslatorSequence.translateCFG(cfg);
 	}
 
 	@Override
@@ -102,4 +108,5 @@ public class BacktranslationService implements IStorable, IBacktranslationServic
 	public void destroy() {
 		mTranslatorSequence = null;
 	}
+
 }

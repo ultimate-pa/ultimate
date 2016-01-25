@@ -154,7 +154,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected final boolean m_AbstractInterpretationMode;
 	private Map<Object, Term> m_AITermMap;
 	private NestedWordAutomaton<WitnessEdge, WitnessNode> m_WitnessAutomaton;
-	private IHoareTripleChecker m_HoareTripleChecker;
+//	private IHoareTripleChecker m_HoareTripleChecker;
+	private boolean m_DoFaultLocalization = false;
 	
 
 	public BasicCegarLoop(String name, RootNode rootNode, SmtManager smtManager, TAPreferences taPrefs,
@@ -212,9 +213,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				super.m_ErrorLocs);
 		if (m_WitnessAutomaton != null) {
 			WitnessProductAutomaton wpa = new WitnessProductAutomaton(m_Services, (INestedWordAutomatonSimple<CodeBlock, IPredicate>) m_Abstraction, m_WitnessAutomaton, m_SmtManager);
-//			INestedWordAutomatonSimple<CodeBlock, IPredicate> test = (new RemoveUnreachable<CodeBlock, IPredicate>(m_Services, wpa)).getResult();
-//			mLogger.info("Full witness product has " + test.sizeInformation());
-//			mLogger.info(wpa.generateBadWitnessInformation());
+			INestedWordAutomatonSimple<CodeBlock, IPredicate> test = (new RemoveUnreachable<CodeBlock, IPredicate>(m_Services, wpa)).getResult();
+			mLogger.info("Full witness product has " + test.sizeInformation());
+			mLogger.info(wpa.generateBadWitnessInformation());
 			final LineCoverageCalculator origCoverage = new LineCoverageCalculator(m_Services, m_Abstraction);
 			m_Abstraction = (new RemoveDeadEnds<CodeBlock, IPredicate>(m_Services, wpa)).getResult();
 			new LineCoverageCalculator(m_Services, m_Abstraction, origCoverage).reportCoverage("Witness product");
@@ -371,6 +372,11 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					indentation = indentation.substring(0, indentation.length() - 4);
 				}
 			}
+			if (m_DoFaultLocalization  && feasibility == LBool.SAT) {
+				new FlowSensitiveFaultLocalizer(m_Counterexample, 
+						(INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, 
+						m_Services, m_SmtManager, m_ModGlobVarManager, predicateUnifier);
+			}
 			// s_Logger.info("Trace with values");
 			// s_Logger.info(interpolatingTraceChecker.getRcfgProgramExecution());
 			m_RcfgProgramExecution = interpolatingTraceChecker.getRcfgProgramExecution();
@@ -510,9 +516,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		// Map<IPredicate, Set<IPredicate>> removedDoubleDeckers = null;
 		// Map<IPredicate, IPredicate> context2entry = null;
 
-		final IHoareTripleChecker htc;
-		if (m_HoareTripleChecker != null) {
-			htc = m_HoareTripleChecker;
+		final CachingHoareTripleChecker htc;
+		if (m_InterpolantGenerator instanceof InterpolantConsolidation) {
+			htc = ((InterpolantConsolidation) m_InterpolantGenerator).getHoareTripleChecker();
 		} else {
 			IHoareTripleChecker ehtc = getEfficientHoareTripleChecker(m_Pref.getHoareTripleChecks(), 
 					m_SmtManager, m_ModGlobVarManager, m_InterpolantGenerator.getPredicateUnifier());

@@ -39,6 +39,8 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationS
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.result.model.IResultWithFiniteTrace;
 
 /**
  * Result to store that we are not able to determine if a specification given at

@@ -34,6 +34,9 @@ import java.math.BigDecimal;
 
 import org.junit.Test;
 
+/**
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ */
 public class IntervalMergeTest {
 
 	@Test

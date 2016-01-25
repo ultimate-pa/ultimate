@@ -510,8 +510,6 @@ public class IntegerTranslation extends AExpressionTranslation {
 		} else {
 			throw new UnsupportedOperationException("not yet supported: conversion to " + resultType);
 		}
-		// set the type of the operand to resultType
-		operand.lrVal.setCType(resultType);
 	}
 
 	private void convertToIntegerType(ILocation loc, ExpressionResult operand,
@@ -580,27 +578,6 @@ public class IntegerTranslation extends AExpressionTranslation {
 			operand.lrVal = newRValue;
 		} else {
 			throw new UnsupportedOperationException("not yet supported: conversion from " + oldType);
-		}
-	}
-
-	@Override
-	public void doIntegerPromotion(ILocation loc, ExpressionResult operand) {
-		if (!integerPromotionNeeded((CPrimitive) operand.lrVal.getCType())) {
-			return;
-		}
-		CType inputType = operand.lrVal.getCType();
-		if (inputType instanceof CPrimitive) {
-			CPrimitive cPrimitive = (CPrimitive) operand.lrVal.getCType();
-			if (cPrimitive.getGeneralType() == GENERALPRIMITIVE.INTTYPE) {
-				CPrimitive promotedType = determineResultOfIntegerPromotion(cPrimitive);
-				if (!promotedType.equals(inputType)) {
-					operand.lrVal.setCType(promotedType);
-				}
-			} else {
-				throw new IllegalArgumentException("integer promotions not applicable to " + inputType);
-			}
-		} else {
-			throw new IllegalArgumentException("integer promotions not applicable to " + inputType);
 		}
 	}
 

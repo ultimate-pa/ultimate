@@ -32,6 +32,11 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 
+/**
+ * @see {@link IToolchainPlugin}
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public interface ITool extends IToolchainPlugin{
 	
 	/**

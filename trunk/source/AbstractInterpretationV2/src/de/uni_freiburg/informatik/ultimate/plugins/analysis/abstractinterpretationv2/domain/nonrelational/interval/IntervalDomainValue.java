@@ -258,6 +258,17 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		        || (other.mLower.compareTo(mLower) <= 0 && other.mUpper.compareTo(mUpper) >= 0);
 	}
 
+	/**
+	 * @return <code>true</code> if and only if lower == upper and lower != &infin;. <code>false</code> otherwise.
+	 */
+	protected boolean isPointInterval() {
+		if (!mLower.isInfinity() && mLower.compareTo(mUpper) == 0) {
+			return true;
+		}
+
+		return false;
+	}
+
 	@Override
 	public String toString() {
 		if (mIsBottom) {
@@ -425,12 +436,19 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 	protected IntervalDomainValue merge(IntervalDomainValue other) {
 		assert other != null;
 
-		if (isBottom() || other.isBottom()) {
-			return new IntervalDomainValue(true);
+		final boolean thisIsBottom = isBottom();
+		final boolean otherIsBottom = other.isBottom();
+
+		if (thisIsBottom && !otherIsBottom) {
+			return other.copy();
+		}
+
+		if (!thisIsBottom && otherIsBottom) {
+			return copy();
 		}
 
 		if (isEqualTo(other)) {
-			if (isBottom()) {
+			if (thisIsBottom) {
 				return new IntervalDomainValue(true);
 			} else if (isInfinity()) {
 				return new IntervalDomainValue(new IntervalValue(), new IntervalValue());
@@ -606,7 +624,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 	 *            The other value to compute the modulus for.
 	 * @return A new {@link IntervalDomainValue} which corresponds to the application of the modulus operator.
 	 */
-	protected IntervalDomainValue modulus(IntervalDomainValue other) {
+	protected IntervalDomainValue modulo(IntervalDomainValue other) {
 
 		assert other != null;
 
@@ -1091,5 +1109,9 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		} else {
 			return new IntervalValue(newValue);
 		}
+	}
+
+	public IntervalDomainValue divide(IntervalDomainValue evaluatedValue) {
+		throw new UnsupportedOperationException("TODO: Implement interval division.");
 	}
 }

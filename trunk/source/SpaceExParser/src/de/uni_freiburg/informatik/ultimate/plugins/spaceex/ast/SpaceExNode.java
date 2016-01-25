@@ -35,7 +35,8 @@ import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableExplicitEdg
  * @author greitsch@informatik.uni-freiburg.de
  *
  */
-public abstract class SpaceExNode extends ModifiableExplicitEdgesMultigraph<SpaceExNode, SpaceExModelEdge> {
+public abstract class SpaceExNode
+		extends ModifiableExplicitEdgesMultigraph<SpaceExNode, SpaceExModelEdge, SpaceExNode, SpaceExModelEdge> {
 
 	/**
 	 * This field holds the name of the current node.
@@ -62,6 +63,11 @@ public abstract class SpaceExNode extends ModifiableExplicitEdgesMultigraph<Spac
 	@Override
 	public String toString() {
 		return mName;
+	}
+	
+	@Override
+	public SpaceExNode getLabel() {
+		return this;
 	}
 
 }

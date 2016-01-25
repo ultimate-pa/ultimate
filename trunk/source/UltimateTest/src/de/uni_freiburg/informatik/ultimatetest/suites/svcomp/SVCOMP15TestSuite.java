@@ -90,8 +90,8 @@ public class SVCOMP15TestSuite extends AbstractSVCOMPTestSuite {
 //		rtr.add(getTestDefinitionFromExamples("ProductLines", "AutomizerC.xml",
 //				"svcomp2015/svComp-32bit-precise-Automizer.epf", getTimeout()));
 //		
-		rtr.add(getTestDefinitionFromExamples("DeviceDrivers64", "AutomizerC.xml",
-				"svcomp2015/svComp-64bit-simple-Automizer.epf", getTimeout()));
+//		rtr.add(getTestDefinitionFromExamples("DeviceDrivers64", "AutomizerC.xml",
+//				"svcomp2015/svComp-64bit-simple-Automizer.epf", getTimeout()));
 //
 //		rtr.add(getTestDefinitionFromExamples("HeapManipulation", "AutomizerC.xml",
 //				"svcomp2015/svComp-32bit-precise-Automizer.epf", getTimeout()));
@@ -173,6 +173,10 @@ public class SVCOMP15TestSuite extends AbstractSVCOMPTestSuite {
 //		rtr.add(getTestDefinitionFromExamples("Concurrency", "CodeCheckWithBE-C.xml",
 //				"svcomp2015/svComp-32bit-precise-BE-Impulse.epf", getTimeout()));
 
+		/* Abstract Interpretation */
+		rtr.add(getTestDefinitionFromExamples("Loops-validate", "AbstractInterpretationv2C.xml",
+		        "ai/AIv2_INT.epf", getTimeout()));
+		
 		return rtr;
 	}
 

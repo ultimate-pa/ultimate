@@ -6,6 +6,7 @@ import os
 import sys
 import codecs
 import itertools
+from test.test_math import acc_check
 
 
 mLatexSettingsMappings = {
@@ -48,6 +49,25 @@ mLatexSettingsMappings = {
 'Reach-32bit-Z3-SpLv.epf':'\\splv',
 'Reach-32bit-Z3-Wp.epf':'\\wponly',
 'Reach-32bit-Z3-WpLv.epf':'\\wplv',
+'DerefFreeMemtrack-32bit-Z3-BP-UC-LV-Integer.epf': '\\wpiclv',
+'DerefFreeMemtrack-32bit-Z3-FP-UC-Integer.epf': '\\spic',
+'DerefFreeMemtrack-32bit-Z3-FP-Integer.epf': '\\sponly',
+'DerefFreeMemtrack-32bit-Z3-BP-LV-Integer.epf': '\\wplv',
+'DerefFreeMemtrack-32bit-iZ3-NestedInterpolation-Integer.epf': '\\zzzip',
+'DerefFreeMemtrack-32bit-Z3-FP-UC-LV-Integer.epf': '\\spiclv',
+'DerefFreeMemtrack-32bit-Z3-BP-UC-Integer.epf': '\\wpic',
+'DerefFreeMemtrack-32bit-Z3-FP-LV-Integer.epf': '\\splv',
+'Reach-32bit-Z3-BP-UC-Integer.epf': '\\wpic',
+'Reach-32bit-Z3-FP-LV-Integer.epf': '\\splv',
+'Reach-32bit-Z3-FP-Integer.epf': '\\sponly',
+'Reach-32bit-Princess-TreeInterpolation-Integer.epf': '\\princessip',
+'Reach-32bit-Z3-FP-UC-Integer.epf': '\\spic',
+'Reach-32bit-iZ3-NestedInterpolation-Integer.epf': '\\zzzip',
+'Reach-32bit-SMTInterpol-TreeInterpolation-Integer.epf': '\\smtinterpolip',
+'Reach-32bit-Z3-BP-LV-Integer.epf': '\\wplv',
+'Reach-32bit-Z3-BP-Integer.epf': '\\wponly',
+'Reach-32bit-Z3-FP-UC-LV-Integer.epf': '\\spiclv',
+'Reach-32bit-Z3-BP-UC-LV-Integer.epf': '\\wpiclv'
 }
 
 # Those are the dvips colors of xcolor 
@@ -61,9 +81,9 @@ mLatexSettingsMappings = {
 #                 'SeaGreen', 'Sepia', 'SkyBlue', 'SpringGreen', 'Tan', 'TealBlue', 'Thistle', 'Turquoise',
 #                 'Violet', 'VioletRed', 'White', 'WildStrawberry', 'Yellow', 'YellowGreen', 'YellowOrange' ]
 
-mLatexColors = ['s1','s2','s3','s4','s5','s6','s7','s8','s9','black','OliveGreen']
+mLatexColors = ['s1', 's2', 's3', 's4', 's5', 's6', 's7', 's8', 's9', 'black', 'OliveGreen']
 
-mLatexPlotMarks = ['star', 'triangle', 'diamond', 'x', '|', '10-pointed-star', 'pentagon','o']
+mLatexPlotMarks = ['star', 'triangle', 'diamond', 'x', '|', '10-pointed-star', 'pentagon', 'o']
 mLatexPlotMarkRepeat = 10
 mLatexPlotLines = ['solid', 'dotted', 'dashed' ]
 
@@ -142,6 +162,12 @@ def applyOnCsvFile(reader, fun, *args):
     acc = None
     for row in reader:
         acc = fun(row, acc, *args)
+    return acc
+
+def reduce(col, fun, init, *args):
+    acc = init
+    for elem in col:
+        acc = fun(elem, acc, *args)
     return acc
 
 def printFields(row, acc):
@@ -291,6 +317,18 @@ def mapKeys(fun, dicti):
 
 def mapValues(fun, dicti):
     return dict(map(lambda (k, v): (k, fun(v)), dicti.iteritems()))
+
+def min(val, acc):
+    if val > acc:
+        return acc
+    else:
+        return val
+
+def max(val, acc):
+    if val > acc:
+        return acc
+    else:
+        return val
 
 def getLatexPlotStyles():
     plotstylesLines = zip(mLatexColors, mLatexPlotLines)
@@ -479,6 +517,45 @@ def getArgs():
         
     return file, output, name              
 
+def isInt(s):
+    try: 
+        int(s)
+        return True
+    except ValueError:
+        return False
+    except TypeError:
+        return False
+
+
+def getStats(rows, title):
+    sortedByIter = sorted(map(lambda row : int(row[title]), filter(lambda row: isInt(row[title]), rows)))
+    lenSorted = len(sortedByIter)
+    if lenSorted > 0:
+        if len(rows) > lenSorted:
+            print 'Lost', len(rows) - lenSorted, 'rows for stats because there was no value'
+        avg = reduce(sortedByIter, lambda iter, acc : iter + acc, 0) / lenSorted
+        min = sortedByIter[0]
+        max = sortedByIter[lenSorted - 1]
+        if len(rows) % 2 == 0:
+            a = lenSorted / 2;
+            iterMed = (sortedByIter[lenSorted // 2] + sortedByIter[lenSorted // 2 + 1]) / 2.0
+        else:
+            iterMed = sortedByIter[lenSorted // 2 + 1]
+    else:
+        avg = 'N/A'
+        min = 'N/A'
+        max = 'N/A'
+        iterMed = 'N/A'
+    return avg, min, max, iterMed
+
+def printStats(rowsEveryoneCouldSolve, setting, column):
+    rowsEveryoneCouldSolve = filter(lambda x : x['Settings'] == setting, rowsEveryoneCouldSolve)
+    iterAvg, iterMin, iterMax, iterMed = getStats(rowsEveryoneCouldSolve, column)
+    print 'ECS', column, 'Avg:', iterAvg
+    print 'ECS', column, 'Min:', iterMin
+    print 'ECS', column, 'Max:', iterMax
+    print 'ECS', column, 'Med:', iterMed
+
 def main():
     file, output, name = getArgs()
     
@@ -500,9 +577,13 @@ def main():
     # for s in uniqueSettings:
     #    print s, len(filter(lambda x : x['Settings'] == s, rows))
     
-    successResults = ['SAFE', 'UNSAFE']
-    solversOnlySettings = filter(lambda x: not re.match('.*Sp.*|.*Wp.*', x), uniqueSettings)
-    championsSettings = solversOnlySettings + filter(lambda x: re.match('.*IcSp.*', x) and not re.match('.*Lv.*', x), uniqueSettings)
+    successResults = ['SAFE', 'UNSAFE', 'CORRECT', 'INCORRECT']
+
+    renameSettings = lambda x : mLatexSettingsMappings[os.path.basename(x)] if os.path.basename(x) in mLatexSettingsMappings else getSuffix('settings/', x)
+    
+    solversOnlySettings = filter(lambda x: not re.match('.*Sp.*|.*Wp.*|.*FP.*|.*BP.*', os.path.basename(x)), uniqueSettings)
+    championsSettings = solversOnlySettings + filter(lambda x: re.match('.*IcSp.*|.*FP-UC.*', os.path.basename(x)) and not re.match('.*Lv.*', os.path.basename(x),re.IGNORECASE), uniqueSettings)
+    looserSettings = filter(lambda x: re.match('.*Sp.*|.*Wp.*|.*FP.*|.*BP.*', os.path.basename(x)) and not re.match('.*UC.*|.*Ic.*|.*LV.*|.*Lv.*', os.path.basename(x)), uniqueSettings)
     
     # # one line of unique settings: total success
     success = applyOnCsvFile(rows, lambda x, y : getResultCountPerSetting(successResults, x, y))
@@ -513,7 +594,7 @@ def main():
 
     mixed = getMixedInputs(rows, successResults)
 
-    renameSettings = lambda x : mLatexSettingsMappings[os.path.basename(x)] if os.path.basename(x) in mLatexSettingsMappings else getSuffix('settings/',x)
+    
     remPathD = lambda x : mapKeys(lambda y : renameSettings(y), x)
     remPathS = lambda x : map(lambda y : renameSettings(y), x)
 
@@ -530,6 +611,26 @@ def main():
     print 'Craig+IT-SP Portfolio: ', remPathS(championsSettings)
     # print 'Mixed:            ', mixed
     print 'Mixed Count:      ', len(mixed)
+    
+    rowsEveryoneCouldSolve = []
+    for r in rows:
+        add = True
+        for o in rows:
+            if o['File'] == r['File'] and not o['Settings'] in looserSettings:
+                add = add and o['Result'] in successResults
+            if not add:
+                break    
+        if add:
+            rowsEveryoneCouldSolve.append(r)
+    
+    ecs = [i for i in uniqueSettings if not i in looserSettings]
+    print 'Everyone',remPathS(ecs)
+    print 'Everyone could solve (ECS):', len(rowsEveryoneCouldSolve) / len(uniqueSettings)
+    for s in ecs:
+        print '## Setting',  renameSettings(s), '##'
+        printStats(rowsEveryoneCouldSolve, s, 'Overall iterations')
+        printStats(rowsEveryoneCouldSolve, s, 'Overall time')
+
     print 
     
     # # gnuplot and stuff 

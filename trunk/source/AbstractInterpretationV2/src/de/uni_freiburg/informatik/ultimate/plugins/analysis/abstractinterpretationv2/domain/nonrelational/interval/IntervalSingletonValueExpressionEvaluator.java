@@ -28,12 +28,13 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -60,18 +61,17 @@ public class IntervalSingletonValueExpressionEvaluator
 	}
 
 	@Override
-	public BooleanValue booleanValue() {
-		return new BooleanValue(Value.TOP);
-	}
-
-	@Override
 	public boolean containsBool() {
 		return false;
 	}
 
 	@Override
-	public IEvaluationResult<IntervalDomainEvaluationResult> evaluate(IntervalDomainState currentState) {
-		return new IntervalDomainEvaluationResult(mValue, currentState);
+	public List<IEvaluationResult<IntervalDomainEvaluationResult>> evaluate(IntervalDomainState currentState) {
+		final List<IEvaluationResult<IntervalDomainEvaluationResult>> returnList = new ArrayList<>();
+
+		returnList.add(new IntervalDomainEvaluationResult(mValue, currentState, new BooleanValue()));
+
+		return returnList;
 	}
 
 	@Override
@@ -89,6 +89,11 @@ public class IntervalSingletonValueExpressionEvaluator
 	@Override
 	public boolean hasFreeOperands() {
 		return false;
+	}
+	
+	@Override
+	public String toString() {
+		return mValue.toString();
 	}
 
 }

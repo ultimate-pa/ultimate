@@ -38,47 +38,48 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgPro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution.ProgramState;
 
 /**
  * 
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public class ProductBacktranslator extends DefaultTranslator<CodeBlock, CodeBlock, Expression, Expression> {
+public class ProductBacktranslator extends DefaultTranslator<RCFGEdge, RCFGEdge, Expression, Expression> {
 
 	private final HashMap<RCFGEdge, RCFGEdge> mEdgeMapping;
 
-	public ProductBacktranslator(Class<CodeBlock> traceElementType, Class<Expression> expressionType) {
-		super(traceElementType, traceElementType, expressionType, expressionType);
+	public ProductBacktranslator(Class<RCFGEdge> traceElementType, Class<Expression> expressionType) {
+		super(traceElementType, traceElementType, expressionType,
+				expressionType);
 		mEdgeMapping = new HashMap<>();
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public IProgramExecution<CodeBlock, Expression> translateProgramExecution(
-			IProgramExecution<CodeBlock, Expression> programExecution) {
+	public IProgramExecution<RCFGEdge, Expression> translateProgramExecution(
+			IProgramExecution<RCFGEdge, Expression> programExecution) {
 
 		Map<TermVariable, Boolean>[] oldBranchEncoders = null;
 		if (programExecution instanceof RcfgProgramExecution) {
 			oldBranchEncoders = ((RcfgProgramExecution) programExecution).getBranchEncoders();
 		}
 
-		ArrayList<CodeBlock> newTrace = new ArrayList<>();
+		ArrayList<RCFGEdge> newTrace = new ArrayList<>();
 		Map<Integer, ProgramState<Expression>> newValues = new HashMap<>();
 		ArrayList<Map<TermVariable, Boolean>> newBranchEncoders = new ArrayList<>();
 
 		addProgramState(-1, newValues, programExecution.getInitialProgramState());
 
 		for (int i = 0; i < programExecution.getLength(); ++i) {
-			AtomicTraceElement<CodeBlock> currentATE = programExecution.getTraceElement(i);
+			AtomicTraceElement<RCFGEdge> currentATE = programExecution.getTraceElement(i);
 			RCFGEdge mappedEdge = mEdgeMapping.get(currentATE.getTraceElement());
 			if (mappedEdge == null || !(mappedEdge instanceof CodeBlock)) {
 				// skip this, its not worth it.
 				continue;
 			}
-			newTrace.add((CodeBlock) mappedEdge);
+			newTrace.add((RCFGEdge) mappedEdge);
 			addProgramState(i, newValues, programExecution.getProgramState(i));
 			if (oldBranchEncoders != null) {
 				newBranchEncoders.add(oldBranchEncoders[i]);
@@ -94,7 +95,7 @@ public class ProductBacktranslator extends DefaultTranslator<CodeBlock, CodeBloc
 	}
 
 	@Override
-	public List<CodeBlock> translateTrace(List<CodeBlock> trace) {
+	public List<RCFGEdge> translateTrace(List<RCFGEdge> trace) {
 		return super.translateTrace(trace);
 	}
 

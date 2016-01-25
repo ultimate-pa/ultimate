@@ -249,6 +249,7 @@
 		<module>../Library-ojAlgo</module>
 		<module>../AbstractInterpretationV2</module>
 		<module>../AutomatonDeltaDebugger</module>
+		<module>../WitnessPrinter</module>
 	</modules>
 
 	<profiles>

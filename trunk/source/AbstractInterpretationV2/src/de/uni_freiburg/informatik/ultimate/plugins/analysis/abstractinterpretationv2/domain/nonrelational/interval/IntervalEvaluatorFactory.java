@@ -30,29 +30,40 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
+/**
+ * Implementation of the evaluator factory for evaluators in the {@link IntervalDomain}.
+ * 
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ *
+ */
 public class IntervalEvaluatorFactory
-		implements IEvaluatorFactory<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
+        implements IEvaluatorFactory<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	private static final int ARITY_MIN = 1;
 	private static final int ARITY_MAX = 2;
 	private static final int BUFFER_MAX = 100;
 
 	private final Logger mLogger;
+	private final String mEvaluatorType;
 
 	public IntervalEvaluatorFactory(Logger logger) {
 		mLogger = logger;
+		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+		mEvaluatorType = ups.getString(IntervalDomainPreferences.LABEL_EVALUATOR_TYPE);
 	}
 
 	@Override
 	public INAryEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> createNAryExpressionEvaluator(
-			int arity) {
+	        int arity) {
 
 		assert arity >= ARITY_MIN && arity <= ARITY_MAX;
 
@@ -60,7 +71,13 @@ public class IntervalEvaluatorFactory
 		case ARITY_MIN:
 			return new IntervalUnaryExpressionEvaluator(mLogger);
 		case ARITY_MAX:
-			return new IntervalBinaryExpressionEvaluator(mLogger);
+			if (mEvaluatorType.equals(IntervalDomainPreferences.VALUE_EVALUATOR_DEFAULT)) {
+				return new IntervalBinaryExpressionEvaluator(mLogger);
+			} else if (mEvaluatorType.equals(IntervalDomainPreferences.VALUE_EVALUATOR_OPTIMIZATION)) {
+				throw new UnsupportedOperationException("Optimization evaluator is not implemented, yet.");
+			} else {
+				throw new UnsupportedOperationException("The evaluator type " + mEvaluatorType + " is not supported.");
+			}
 		default:
 			final StringBuilder stringBuilder = new StringBuilder(BUFFER_MAX);
 			stringBuilder.append("Arity of ").append(arity).append(" is not implemented.");
@@ -70,23 +87,34 @@ public class IntervalEvaluatorFactory
 
 	@Override
 	public IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> createSingletonValueExpressionEvaluator(
-			String value, Class<?> valueType) {
+	        String value, Class<?> valueType) {
 		assert value != null;
 		return new IntervalSingletonValueExpressionEvaluator(
-				new IntervalDomainValue(new IntervalValue(value), new IntervalValue(value)));
+		        new IntervalDomainValue(new IntervalValue(value), new IntervalValue(value)));
 	}
 
 	@Override
 	public IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> createSingletonVariableExpressionEvaluator(
-			String variableName) {
+	        String variableName) {
 		assert variableName != null;
 		return new IntervalSingletonVariableExpressionEvaluator(variableName);
 	}
 
 	@Override
 	public IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> createSingletonLogicalValueExpressionEvaluator(
-			BooleanValue value) {
+	        BooleanValue value) {
 		return new IntervalSingletonBooleanExpressionEvaluator(value);
+	}
+
+	@Override
+	public IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> createFunctionEvaluator(
+	        String functionName, int inputParamCount) {
+		return new IntervalFunctionEvaluator(functionName, inputParamCount);
+	}
+
+	@Override
+	public IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> createConditionalEvaluator() {
+		return new IntervalConditionalEvaluator();
 	}
 
 }

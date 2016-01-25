@@ -527,7 +527,9 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 			final Collection<Set<STATE>> possibleEquivalentClasses, final boolean checkOperationDeeply)
 					throws OperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, checkOperationDeeply,
-				new FairSimulation<>(services, operand, useSCCs, stateFactory, possibleEquivalentClasses));
+				new FairSimulation<>(services, services.getProgressMonitorService(),
+						services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID), operand, useSCCs,
+						stateFactory, possibleEquivalentClasses));
 	}
 
 	/**

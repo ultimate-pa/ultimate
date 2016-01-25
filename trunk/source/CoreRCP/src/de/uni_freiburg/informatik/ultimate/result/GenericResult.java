@@ -27,7 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.result;
 
-
+import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity;
 
 /**
  * Object for all results for which ULTIMATE does not offer a special result class.

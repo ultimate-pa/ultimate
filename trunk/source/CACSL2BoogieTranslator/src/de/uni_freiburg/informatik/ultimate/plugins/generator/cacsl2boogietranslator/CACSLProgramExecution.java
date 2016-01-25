@@ -28,14 +28,16 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransl
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.graphml.GraphMLConverter;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.ProgramExecutionFormatter;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.witnessprinter.ViolationWitnessGenerator;
 
 /**
  * 
@@ -45,17 +47,20 @@ import de.uni_freiburg.informatik.ultimate.result.ProgramExecutionFormatter;
 public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, IASTExpression> {
 
 	private final ProgramState<IASTExpression> mInitialState;
-	private final ArrayList<ProgramState<IASTExpression>> mProgramStates;
-	private final ArrayList<AtomicTraceElement<CACSLLocation>> mTrace;
+	private final List<ProgramState<IASTExpression>> mProgramStates;
+	private final List<AtomicTraceElement<CACSLLocation>> mTrace;
+	private final Logger mLogger;
 
-	public CACSLProgramExecution(ProgramState<IASTExpression> initialState,
-			Collection<AtomicTraceElement<CACSLLocation>> trace, Collection<ProgramState<IASTExpression>> programStates) {
+	public CACSLProgramExecution(final ProgramState<IASTExpression> initialState,
+			final Collection<AtomicTraceElement<CACSLLocation>> trace,
+			final Collection<ProgramState<IASTExpression>> programStates, final Logger logger) {
 		assert trace != null;
 		assert programStates != null;
 		assert trace.size() == programStates.size();
 		mProgramStates = new ArrayList<>(programStates);
 		mTrace = new ArrayList<>(trace);
 		mInitialState = initialState;
+		mLogger = logger;
 	}
 
 	@Override
@@ -91,13 +96,14 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 	@Override
 	public String toString() {
 		ProgramExecutionFormatter<CACSLLocation, IASTExpression> pef = new ProgramExecutionFormatter<>(
-				new CACSLProgramExecutionStringProvider());
+				new CACSLBacktranslationValueProvider());
 		return pef.formatProgramExecution(this);
 	}
 
 	@Override
 	public String getSVCOMPWitnessString() {
-		return new GraphMLConverter(this).makeGraphMLString();
+		return new ViolationWitnessGenerator<CACSLLocation, IASTExpression>(this, new CACSLBacktranslationValueProvider(),
+				mLogger).makeGraphMLString();
 	}
 
 }

@@ -133,7 +133,7 @@ public class ExpressionBacktranslation extends BoogieTransformer {
 			DeclarationInformation translatedDeclInfo = mapping.getDeclInfo();
 			String translatedId = mapping.getVarId();
 			Expression newExpr = new IdentifierExpression(location, type, translatedId, translatedDeclInfo);
-			ModelUtils.mergeAnnotations(expr, newExpr);
+			ModelUtils.copyAnnotations(expr, newExpr);
 			if (mapping.getInOldExprOfProc() != null) {
 				newExpr = new UnaryExpression(location, type, Operator.OLD, idExpr);
 			}

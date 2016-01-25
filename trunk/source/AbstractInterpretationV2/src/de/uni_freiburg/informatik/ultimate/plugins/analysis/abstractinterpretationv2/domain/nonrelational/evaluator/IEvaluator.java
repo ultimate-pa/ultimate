@@ -28,10 +28,10 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator;
 
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 
 /**
  * Default interface for an expression evaluator. Each Evaluator should implement this interface in order to allow for
@@ -56,7 +56,7 @@ public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTION, V
 	 *            The originating state to evaluate from.
 	 * @return A new evaluation result that contains the result of the evaluation.
 	 */
-	public IEvaluationResult<VALUE> evaluate(STATE currentState);
+	public List<IEvaluationResult<VALUE>> evaluate(STATE currentState);
 
 	/**
 	 * Adds a sub-evaluator to the evaluator.
@@ -66,14 +66,15 @@ public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTION, V
 	 */
 	public void addSubEvaluator(IEvaluator<VALUE, STATE, ACTION, VARDECL> evaluator);
 
+	/**
+	 * @return The set of all variable identifiers that occur in all sub evaluators.
+	 */
 	public Set<String> getVarIdentifiers();
 
-	public boolean hasFreeOperands();
-
 	/**
-	 * @return The boolean value of the logical interpretation of the current expression.
+	 * @return <code>true</code> if and only if there are still free sub evaluators. <code>false</code> otherwise.
 	 */
-	public BooleanValue booleanValue();
+	public boolean hasFreeOperands();
 
 	/**
 	 * States whether somewhere in the evaluator occurs a boolean value. This is needed to determine if the boolean

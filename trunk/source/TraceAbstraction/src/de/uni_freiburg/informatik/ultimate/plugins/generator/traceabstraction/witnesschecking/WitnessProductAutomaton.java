@@ -50,11 +50,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.InterproceduralSequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ParallelComposition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.SequentialComposition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap3;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
@@ -355,12 +357,28 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 			}
 		}
 		if (ps.getStutteringSteps() < m_StutteringStepsLimit) {
-			ProductState succProd = getOrConstructProductState(cfgSucc, ps.getWitnessNode(), ps.getStutteringSteps() + 1);
+			final int stutteringStepsCounter;
+			if (isStateOfInitFunction(ps.m_CfgAutomatonState)) {
+				stutteringStepsCounter = ps.getStutteringSteps();
+			} else {
+				stutteringStepsCounter = ps.getStutteringSteps() + 1;
+			}
+			ProductState succProd = getOrConstructProductState(cfgSucc, ps.getWitnessNode(), stutteringStepsCounter);
 			result.add(succProd.getResultState());
 		}
 		return result;
 	}
 	
+	private boolean isStateOfInitFunction(IPredicate cfgAutomatonState) {
+		ProgramPoint pp = ((SPredicate) cfgAutomatonState).getProgramPoint();
+		String proc = pp.getProcedure();
+		if (proc.equals("ULTIMATE.init")) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+
 	/**
 	 * Nodes can be marked as sink.
 	 */
@@ -496,7 +514,7 @@ public class WitnessProductAutomaton implements INestedWordAutomatonSimple<CodeB
 		return m_WitnessLocationMatcher.isCompatible(location, we);
 	}
 	
-	public LinkedHashSet<WitnessEdge> getBadWitnessEdges() {
+	private LinkedHashSet<WitnessEdge> getBadWitnessEdges() {
 		LinkedHashSet<WitnessEdge> result = new LinkedHashSet<WitnessEdge>(m_BadWitnessEdges);
 		result.removeAll(m_GoodWitnessEdges);
 		return result;

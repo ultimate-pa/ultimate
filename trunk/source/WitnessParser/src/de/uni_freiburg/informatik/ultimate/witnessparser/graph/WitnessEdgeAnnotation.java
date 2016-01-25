@@ -29,20 +29,24 @@ package de.uni_freiburg.informatik.ultimate.witnessparser.graph;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.IPayload;
-import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.annotation.ModernAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.annotation.Visualizable;
 
-public class WitnessEdgeAnnotation extends AbstractAnnotations {
+public class WitnessEdgeAnnotation extends ModernAnnotations {
 
 	private static final long serialVersionUID = 1L;
-	private static final String sKey = Activator.s_PLUGIN_ID + "_Edge";
-	private static final String[] sFieldNames = new String[] { "Condition", "EnterFrom", "ReturnFrom", "Tokens",
-			"Assumption" };
+	private static final String sKey = Activator.PLUGIN_ID + "_Edge";
 
+	@Visualizable
 	private final Boolean mCondition;
+	@Visualizable
 	private final String mEnterFrom;
+	@Visualizable
 	private final String mReturnFrom;
+	@Visualizable
 	private final String mTokens;
+	@Visualizable
 	private final String mAssumption;
 
 	public WitnessEdgeAnnotation(String condition, String enterFrom, String returnFrom, String tokens, String assumption) {
@@ -83,28 +87,6 @@ public class WitnessEdgeAnnotation extends AbstractAnnotations {
 				&& getAssumption() == null;
 	}
 
-	@Override
-	protected String[] getFieldNames() {
-		return sFieldNames;
-	}
-
-	@Override
-	protected Object getFieldValue(String field) {
-		switch (field) {
-		case "Condition":
-			return mCondition;
-		case "EnterFrom":
-			return mEnterFrom;
-		case "ReturnFrom":
-			return mReturnFrom;
-		case "Tokens":
-			return mTokens;
-		case "Assumption":
-			return mAssumption;
-		}
-		return null;
-	}
-
 	public void annotate(IElement elem) {
 		if (elem instanceof WitnessEdge) {
 			annotate((WitnessEdge) elem);
@@ -117,16 +99,16 @@ public class WitnessEdgeAnnotation extends AbstractAnnotations {
 
 	public static WitnessEdgeAnnotation getAnnotation(IElement elem) {
 		if (elem instanceof WitnessEdge) {
-			getAnnotation((WitnessEdge) elem);
+			return getAnnotation((WitnessEdge) elem);
 		}
 		return null;
 	}
 
 	public static WitnessEdgeAnnotation getAnnotation(WitnessEdge elem) {
 		if (elem.hasPayload()) {
-			IPayload payload = elem.getPayload();
+			final IPayload payload = elem.getPayload();
 			if (payload.hasAnnotation()) {
-				IAnnotations annot = payload.getAnnotations().get(sKey);
+				final IAnnotations annot = payload.getAnnotations().get(sKey);
 				if (annot != null) {
 					return (WitnessEdgeAnnotation) annot;
 				}

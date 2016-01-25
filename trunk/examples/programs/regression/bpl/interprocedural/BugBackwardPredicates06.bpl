@@ -1,7 +1,7 @@
 //#Safe
 /*
- * Shows bug in backward predicates. It seems like are not computed with
- * respect to the unsat core.
+ * Shows bug in backward predicates. It seems like procedure summaries 
+ * are not computed with respect to the unsat core.
  * 
  * Author: heizmann@informatik.uni-freiburg.de
  * Date: 2015-12-15

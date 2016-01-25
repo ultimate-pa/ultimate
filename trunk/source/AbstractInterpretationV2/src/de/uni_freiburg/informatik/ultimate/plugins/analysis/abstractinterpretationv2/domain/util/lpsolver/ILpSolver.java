@@ -36,17 +36,67 @@ import java.util.List;
  *
  */
 public interface ILpSolver<T extends Number> {
-	
+
+	/**
+	 * Creates a new Linear Program Solver instance with a set of variables.
+	 * 
+	 * @param variables
+	 *            The list of variables occurring in the linear program.
+	 */
 	public void createNewLpInstance(List<String> variables);
-	
+
+	/**
+	 * Deletes the Linear Program Solver instance. This method should be called when the linear program is not needed
+	 * anymore. Some solvers will free memory when instructed to delete the linear program.
+	 * 
+	 * <p>
+	 * Note: After {@link #deleteLpInstance()} is called, no operations can be performed on the linear program anymore.
+	 * </p>
+	 */
 	public void deleteLpInstance();
-	
-	public void addVariableConstraint(LinearConstraint<T> domainValue);
-	
+
+	/**
+	 * Adds a constraint in the form of a {@link LinearConstraint} to the linear program.
+	 * 
+	 * @param constraint
+	 *            The constraint to add to the linear program.
+	 */
+	public void addVariableConstraint(LinearConstraint<T> constraint);
+
+	/**
+	 * Adds a list of {@link LinearConstraint}s to the linear program.
+	 * 
+	 * @param constraintList
+	 *            The list of {@link LinearConstraint}s.
+	 */
 	public void addVariableConstraints(List<LinearConstraint<T>> constraintList);
-	
+
+	/**
+	 * Returns the computed maximum for the variable with name <code>name</code>. If the value corresponds to &infin;,
+	 * the returned value will be <code>null</code>.
+	 * 
+	 * <p>
+	 * Note: You must call {@link #createNewLpInstance(List)} first, in order to be able to run this function.
+	 * </p>
+	 * 
+	 * @param name
+	 *            The name of the variable.
+	 * @return The computed maximum value for the variable, or <code>null</code> if the value is unbounded (&infin;).
+	 */
 	public BigDecimal getMaximumValue(String name);
-	
+
+	/**
+	 * Returns the computed miminum for the variable with name <code>name</code>. If the value corresponds to &infin;,
+	 * the returned value will be <code>null</code>.
+	 * 
+	 * <p>
+	 * Note: You must call {@link #createNewLpInstance(List)} first, in order to be able to run this function.
+	 * </p>
+	 * 
+	 * @param name
+	 *            The name of the variable.
+	 * @return The computed minimum value for the variable, or <code>null</code> if the value is unbounded (&infin;).
+	 */
 	public BigDecimal getMinimumValue(String name);
 
 }

@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimatetest.suites.traceabstraction;
 
 import java.util.ArrayList;
 
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.util.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -61,6 +62,7 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 		ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = 
 				new ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>>();
 		benchmarks.add(TraceAbstractionBenchmarks.class);
+		benchmarks.add(CodeCheckBenchmarks.class);
 		benchmarks.add(Benchmark.class);
 
 		// @formatter:off
@@ -126,6 +128,7 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 		return new ITestSummary[] { 
 				new TraceAbstractionTestSummary(this.getClass()),
 				new CsvConcatenator(this.getClass(), TraceAbstractionBenchmarks.class), 
+				new CsvConcatenator(this.getClass(), CodeCheckBenchmarks.class), 
 				new LatexOverviewSummary(getClass(), benchmarks, columnDef),
 //				new LatexDetailedSummary(getClass(), benchmarks, columnDef),
 //				new CsvSummary(getClass(), benchmarks, columnDef),

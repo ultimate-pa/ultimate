@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableMultigraphE
  * @author heizmann@informatik.uni-freiburg.de 
  */
 
-public class AutomatonTransition extends ModifiableMultigraphEdge<AutomatonState, AutomatonTransition> {
+public class AutomatonTransition extends ModifiableMultigraphEdge<AutomatonState, AutomatonTransition,AutomatonState, AutomatonTransition> {
 
 	private static final long serialVersionUID = -2531826841396458461L;
 	
@@ -72,5 +72,8 @@ public class AutomatonTransition extends ModifiableMultigraphEdge<AutomatonState
 	public String toString() {
 		return m_Name;
 	}
-
+	@Override
+	public AutomatonTransition getLabel() {
+		return this;
+	}
 }

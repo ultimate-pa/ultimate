@@ -177,7 +177,7 @@ public class FunctionHandler {
 		this.procedures = new LinkedHashMap<String, Procedure>();
 		this.procedureToCFunctionType = new LinkedHashMap<>();
 		this.modifiedGlobalsIsUserDefined = new LinkedHashSet<String>();
-		m_CheckMemoryLeakAtEndOfMain = (new UltimatePreferenceStore(Activator.s_PLUGIN_ID))
+		m_CheckMemoryLeakAtEndOfMain = (new UltimatePreferenceStore(Activator.PLUGIN_ID))
 				.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_MemoryLeakInMain);
 		this.functionSignaturesThatHaveAFunctionPointer = new LinkedHashSet<>();
 	}
@@ -863,6 +863,12 @@ public class FunctionHandler {
 			Expression nr1 = m_ExpressionTranslation.constructLiteralForIntegerType(
         		loc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
 
+
+			//TODO:
+			// even though memset in C takes an int for the value that is to be written,
+			// that value is cut off to be a char, which is then written to every byte in the memory area
+			// the arithmetic implications of that cutoff are still missing here 
+			// (--> just do modulo 256 - 127 or sth like that??)
 
 			er.stmt.add(new CallStatement(loc, 
 					false, 

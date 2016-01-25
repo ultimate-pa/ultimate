@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.witnessparser.graph;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableMultigraphEdge;
 
-public class WitnessEdge extends ModifiableMultigraphEdge<WitnessNode, WitnessEdge> {
+public class WitnessEdge extends ModifiableMultigraphEdge<WitnessNode, WitnessEdge,WitnessNode, WitnessEdge> {
 
 	private static final long serialVersionUID = 1L;
 	private final String mName;
@@ -83,6 +83,11 @@ public class WitnessEdge extends ModifiableMultigraphEdge<WitnessNode, WitnessEd
 		result = prime * result
 				+ ((mSourceCode == null) ? 0 : mSourceCode.hashCode());
 		return result;
+	}
+
+	@Override
+	public WitnessEdge getLabel() {
+		return this;
 	}
 
 }

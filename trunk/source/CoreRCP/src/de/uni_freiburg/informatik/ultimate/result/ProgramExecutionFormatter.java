@@ -34,7 +34,9 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement.StepInfo;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.result.model.IBacktranslationValueProvider;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution.ProgramState;
 
 /**
  * 
@@ -43,9 +45,9 @@ import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState
  */
 public class ProgramExecutionFormatter<TE, E> {
 
-	private final IProgramExecutionStringProvider<TE, E> mStringProvider;
+	private final IBacktranslationValueProvider<TE, E> mStringProvider;
 
-	public ProgramExecutionFormatter(IProgramExecutionStringProvider<TE, E> stringProvider) {
+	public ProgramExecutionFormatter(IBacktranslationValueProvider<TE, E> stringProvider) {
 		mStringProvider = stringProvider;
 	}
 
@@ -222,26 +224,6 @@ public class ProgramExecutionFormatter<TE, E> {
 			rtr.add(sb.toString());
 		}
 		return rtr;
-	}
-
-	/**
-	 * 
-	 * @author dietsch@informatik.uni-freiburg.de
-	 * 
-	 * @param <TE>
-	 * @param <E>
-	 */
-	public interface IProgramExecutionStringProvider<TE, E> {
-
-		int getStartLineNumberFromStep(TE step);
-
-		int getEndLineNumberFromStep(TE step);
-
-		String getStringFromStep(TE step);
-
-		String getStringFromTraceElement(TE traceelement);
-
-		String getStringFromExpression(E expression);
 	}
 
 }
