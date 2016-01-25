@@ -327,10 +327,17 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 				case COMPLT:
 					newOp = Operator.COMPGEQ;
 					break;
+				case LOGICAND:
+					newOp = Operator.LOGICOR;
+					break;
+				case LOGICOR:
+					newOp = Operator.LOGICAND;
+					break;
 				case COMPPO:
 					mLogger.warn("The comparison operator " + binexp.getOperator() + " is not yet supported.");
 				default:
 					newOp = binexp.getOperator();
+					throw new UnsupportedOperationException("Fix me");
 				}
 
 				final BinaryExpression newExp = new BinaryExpression(binexp.getLocation(), newOp, binexp.getLeft(),
