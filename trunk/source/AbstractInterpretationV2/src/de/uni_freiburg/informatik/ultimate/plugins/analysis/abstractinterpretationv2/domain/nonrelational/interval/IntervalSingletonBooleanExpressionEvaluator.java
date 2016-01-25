@@ -36,6 +36,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -50,6 +51,7 @@ public class IntervalSingletonBooleanExpressionEvaluator
         implements IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	private final BooleanValue mBooleanValue;
+	private final EvaluatorType mEvaluatorType;
 
 	/**
 	 * Default constructor that creates a new instance of the {@link IntervalSingletonBooleanExpressionEvaluator} in the
@@ -58,15 +60,16 @@ public class IntervalSingletonBooleanExpressionEvaluator
 	 * @param value
 	 *            The value to set.
 	 */
-	protected IntervalSingletonBooleanExpressionEvaluator(BooleanValue value) {
+	protected IntervalSingletonBooleanExpressionEvaluator(BooleanValue value, EvaluatorType type) {
 		mBooleanValue = value;
+		mEvaluatorType = type;
 	}
 
 	@Override
 	public List<IEvaluationResult<IntervalDomainEvaluationResult>> evaluate(IntervalDomainState currentState) {
 
 		final List<IEvaluationResult<IntervalDomainEvaluationResult>> returnList = new ArrayList<>();
-		
+
 		IntervalDomainState returnState;
 
 		if (mBooleanValue.getValue() == Value.TRUE || mBooleanValue.getValue() == Value.TOP) {
@@ -76,7 +79,7 @@ public class IntervalSingletonBooleanExpressionEvaluator
 		}
 
 		returnList.add(new IntervalDomainEvaluationResult(null, returnState, mBooleanValue));
-		
+
 		return returnList;
 	}
 
@@ -100,9 +103,14 @@ public class IntervalSingletonBooleanExpressionEvaluator
 	public boolean containsBool() {
 		return true;
 	}
-	
+
 	@Override
 	public String toString() {
 		return mBooleanValue.getValue().name();
+	}
+
+	@Override
+	public EvaluatorType getEvaluatorType() {
+		return mEvaluatorType;
 	}
 }

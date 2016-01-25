@@ -1109,7 +1109,11 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		}
 	}
 
-	public IntervalDomainValue divide(IntervalDomainValue evaluatedValue) {
+	protected IntervalDomainValue divide(IntervalDomainValue evaluatedValue) {
 		throw new UnsupportedOperationException("TODO: Implement interval division.");
+	}
+	
+	protected IntervalDomainValue euclideanDivide(IntervalDomainValue evaluatedValue) {
+		throw new UnsupportedOperationException("TODO: Implement eucledian interval division.");
 	}
 }

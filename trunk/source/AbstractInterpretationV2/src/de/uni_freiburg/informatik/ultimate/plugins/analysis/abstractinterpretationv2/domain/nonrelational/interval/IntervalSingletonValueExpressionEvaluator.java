@@ -35,6 +35,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -49,6 +50,7 @@ public class IntervalSingletonValueExpressionEvaluator
         implements IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	private final IntervalDomainValue mValue;
+	private final EvaluatorType mEvaluatorType;
 
 	/**
 	 * Constructor for a singleton value expression evaluator in the {@link IntervalDomain}.
@@ -56,8 +58,9 @@ public class IntervalSingletonValueExpressionEvaluator
 	 * @param value
 	 *            The value of the evaluator.
 	 */
-	protected IntervalSingletonValueExpressionEvaluator(IntervalDomainValue value) {
+	protected IntervalSingletonValueExpressionEvaluator(IntervalDomainValue value, EvaluatorType type) {
 		mValue = value;
+		mEvaluatorType = type;
 	}
 
 	@Override
@@ -90,10 +93,15 @@ public class IntervalSingletonValueExpressionEvaluator
 	public boolean hasFreeOperands() {
 		return false;
 	}
-	
+
 	@Override
 	public String toString() {
 		return mValue.toString();
+	}
+
+	@Override
+	public EvaluatorType getEvaluatorType() {
+		return mEvaluatorType;
 	}
 
 }

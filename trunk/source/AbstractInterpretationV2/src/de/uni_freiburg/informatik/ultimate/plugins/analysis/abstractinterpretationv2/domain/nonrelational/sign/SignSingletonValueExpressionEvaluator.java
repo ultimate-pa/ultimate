@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
@@ -52,7 +53,7 @@ public abstract class SignSingletonValueExpressionEvaluator<T>
 
 	protected final T mValue;
 
-	public SignSingletonValueExpressionEvaluator(String value) {
+	public SignSingletonValueExpressionEvaluator(String value, EvaluatorType type) {
 		T number = instantiate(value);
 		mValue = number;
 	}
