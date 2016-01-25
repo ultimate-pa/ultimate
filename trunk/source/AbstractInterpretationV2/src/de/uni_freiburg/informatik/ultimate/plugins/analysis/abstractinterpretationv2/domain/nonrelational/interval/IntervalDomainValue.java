@@ -646,7 +646,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 			}
 
 			BigDecimal remainder = mLower.getValue().remainder(other.mLower.getValue());
-			if (remainder.signum() >= 0) {
+			if (remainder.signum() < 0) {
 				remainder = other.mLower.getValue().abs().add(remainder);
 			}
 
