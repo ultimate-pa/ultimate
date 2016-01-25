@@ -178,7 +178,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 			assert mExpressionEvaluator.getRootEvaluator() != null;
 
 			final List<IntervalDomainState> newStates = new ArrayList<>();
-			
+
 			for (final IntervalDomainState currentState : currentStateList) {
 				final List<IEvaluationResult<IntervalDomainEvaluationResult>> result = mExpressionEvaluator
 				        .getRootEvaluator().evaluate(currentState);
@@ -187,10 +187,10 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 					throw new UnsupportedOperationException(
 					        "There is supposed to be at least on evaluation result for the assingment expression.");
 				}
-				
+
 				for (final IEvaluationResult<IntervalDomainEvaluationResult> res : result) {
 					IntervalDomainState newState = res.getResult().getEvaluatedState();
-					
+
 					final IntervalDomainValue newValue = res.getResult().getEvaluatedValue();
 
 					if (newValue == null) {
@@ -199,7 +199,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 						final IBoogieVar type = newState.getVariableType(varname);
 						if (type.getIType() instanceof PrimitiveType) {
 							final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
-							
+
 							if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
 								newState = newState.setBooleanValue(varname, res.getBooleanValue());
 							} else {
@@ -213,14 +213,14 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 							newState = newState.setValue(varname, newValue);
 						}
 					}
-					
+
 					newStates.add(newState);
 				}
 			}
-			
+
 			currentStateList = newStates;
 		}
-		
+
 		mReturnState.addAll(currentStateList);
 	}
 
@@ -308,6 +308,9 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 
 				Operator newOp;
 
+				Expression newLeft = binexp.getLeft();
+				Expression newRight = binexp.getRight();
+
 				switch (binexp.getOperator()) {
 				case COMPEQ:
 					newOp = Operator.COMPNEQ;
@@ -329,9 +332,13 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 					break;
 				case LOGICAND:
 					newOp = Operator.LOGICOR;
+					newLeft = new UnaryExpression(binexp.getLocation(), UnaryExpression.Operator.LOGICNEG, newLeft);
+					newRight = new UnaryExpression(binexp.getLocation(), UnaryExpression.Operator.LOGICNEG, newRight);
 					break;
 				case LOGICOR:
 					newOp = Operator.LOGICAND;
+					newLeft = new UnaryExpression(binexp.getLocation(), UnaryExpression.Operator.LOGICNEG, newLeft);
+					newRight = new UnaryExpression(binexp.getLocation(), UnaryExpression.Operator.LOGICNEG, newRight);
 					break;
 				case COMPPO:
 					mLogger.warn("The comparison operator " + binexp.getOperator() + " is not yet supported.");
@@ -340,8 +347,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 					throw new UnsupportedOperationException("Fix me");
 				}
 
-				final BinaryExpression newExp = new BinaryExpression(binexp.getLocation(), newOp, binexp.getLeft(),
-				        binexp.getRight());
+				final BinaryExpression newExp = new BinaryExpression(binexp.getLocation(), newOp, newLeft, newRight);
 
 				mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Expression ")
 				        .append(BoogiePrettyPrinter.print(expr)).append(" rewritten to: ")
