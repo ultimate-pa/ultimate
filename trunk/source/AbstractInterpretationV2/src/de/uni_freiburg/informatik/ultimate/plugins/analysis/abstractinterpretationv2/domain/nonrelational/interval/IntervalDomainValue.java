@@ -638,11 +638,9 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		}
 
 		// If we are dealing with point intervals, the modulo computation is easy.
-		if (!isInfinity() && !other.isInfinity()) {
-			if (mLower.equals(mUpper) && other.mLower.equals(other.mUpper)) {
-				if (other.mLower.getValue().signum() == 0) {
-					return new IntervalDomainValue(true);
-				}
+		if (isPointInterval() && other.isPointInterval()) {
+			if (other.mLower.getValue().signum() == 0) {
+				return new IntervalDomainValue(true);
 			}
 
 			BigDecimal remainder = mLower.getValue().remainder(other.mLower.getValue());
@@ -653,9 +651,14 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 			return new IntervalDomainValue(new IntervalValue(remainder), new IntervalValue(remainder));
 		}
 
+		// Division by zero: return [0, \infty].
+		if (other.containsZero()) {
+			return new IntervalDomainValue(new IntervalValue(new BigDecimal(0)), new IntervalValue());
+		}
+
 		// Compute max(|a|, |b|)
 		IntervalValue maxAB;
-		if (isInfinity()) {
+		if (mLower.isInfinity() || mUpper.isInfinity()) {
 			maxAB = new IntervalValue();
 		} else {
 			if (mLower.getValue().abs().compareTo(mUpper.getValue().abs()) > 0) {
@@ -663,11 +666,6 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 			} else {
 				maxAB = new IntervalValue(mUpper.getValue().abs());
 			}
-		}
-
-		// Division by zero: return [0, \infty].
-		if (other.containsZero()) {
-			return new IntervalDomainValue(new IntervalValue(new BigDecimal(0)), new IntervalValue());
 		}
 
 		// Compute max(|c|, |d|)
