@@ -57,18 +57,18 @@ public class LiteralCollection {
 			return null;
 		}
 
-		return nextNumber.setScale(0, RoundingMode.UP);
+		return nextNumber.setScale(0, RoundingMode.CEILING);
 	}
 
 	public BigDecimal getNextIntegerNegative(BigDecimal value) {
 
-		final BigDecimal nextNumber = getNextIntegerNegative(value);
+		final BigDecimal nextNumber = getNextNumberNegative(value);
 
 		if (nextNumber == null) {
 			return null;
 		}
 
-		return nextNumber.setScale(0, RoundingMode.UP);
+		return nextNumber.setScale(0, RoundingMode.FLOOR);
 	}
 
 	public BigDecimal getNextRealPositive(BigDecimal value) {
