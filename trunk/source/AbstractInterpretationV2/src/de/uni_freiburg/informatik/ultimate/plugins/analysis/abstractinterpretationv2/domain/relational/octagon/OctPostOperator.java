@@ -93,6 +93,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		for (VarList inParamList : procedure.getInParams()) {
 			IType type = inParamList.getType().getBoogieType();
 			if (!TypeUtil.isBoolean(type) && !TypeUtil.isNumeric(type)) {
+				paramNumber += inParamList.getIdentifiers().length;
 				continue;
 				// results in "var := \top" for these variables, which is always assumed for unsupported types
 			}

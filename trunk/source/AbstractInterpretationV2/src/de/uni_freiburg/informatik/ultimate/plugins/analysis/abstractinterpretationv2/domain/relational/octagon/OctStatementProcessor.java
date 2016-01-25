@@ -69,6 +69,7 @@ public class OctStatementProcessor {
 		int length = lhs.length;		
 		if (length == 1) {
 			LeftHandSide l = lhs[0];
+			assert l.getType().equals(rhs[0].getType()) : "Assignment with incompatible types";
 			if (l instanceof VariableLHS) {
 				processSingleAssignment(((VariableLHS) l).getIdentifier(), rhs[0]);
 			}
@@ -79,12 +80,13 @@ public class OctStatementProcessor {
 			Map<String, Expression> mapLhsToRhs = new HashMap<>();
 			for (int i = 0; i < length; ++i) {
 				LeftHandSide l = lhs[i];
+				assert l.getType().equals(rhs[i].getType()) : "Assignment with incompatible types";
 				if (l instanceof VariableLHS) {
-					VariableLHS vl = (VariableLHS) l;
+					VariableLHS vLhs = (VariableLHS) l;
+					String origVar = vLhs.getIdentifier();
 					// parentheses are not allowed in Boogie-identifiers => tmpVar is unique
-					String origVar = vl.getIdentifier();
 					String tmpVar = "octTmp(" + origVar + ")"; 
-					tmpVars.put(tmpVar, BoogieAstUtil.createTemporaryIBoogieVar(tmpVar, vl.getType()));
+					tmpVars.put(tmpVar, BoogieAstUtil.createTemporaryIBoogieVar(tmpVar, vLhs.getType()));
 					mapTmpVarToOrigVar.put(tmpVar, origVar);
 					mapLhsToRhs.put(tmpVar, rhs[i]);
 				}
