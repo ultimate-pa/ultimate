@@ -45,6 +45,7 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.source.syntaxchecker"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.witnessparser"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.witnessprinter"/>
       <plugin id="javax.xml"/>
@@ -130,6 +131,7 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent" autoStart="true" startLevel="0" />
+      <plugin id="de.uni_freiburg.informatik.ultimate.source.syntaxchecker" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.witnessparser" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.witnessprinter" autoStart="true" startLevel="0" />
       <plugin id="javax.xml" autoStart="true" startLevel="0" />
