@@ -86,7 +86,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 	}
 
 	@Override
-	public Collection<STATE> getAbstractPostStates(CodeBlock transition) {
+	public List<STATE> getAbstractPostStates(CodeBlock transition) {
 		assert transition != null;
 		return getAbstractStates(transition, transition.getTarget());
 	}
@@ -247,10 +247,10 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 		return trace;
 	}
 
-	private Collection<STATE> getAbstractStates(CodeBlock transition, RCFGNode node) {
+	private List<STATE> getAbstractStates(CodeBlock transition, RCFGNode node) {
 		assert node != null;
 		final Deque<Pair<CodeBlock, STATE>> states = getStates(node);
-		final Collection<STATE> rtr = new ArrayList<STATE>(states.size());
+		final List<STATE> rtr = new ArrayList<STATE>(states.size());
 		for (final Pair<CodeBlock, STATE> state : states) {
 			rtr.add(state.getSecond());
 		}
