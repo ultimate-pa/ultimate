@@ -26,61 +26,54 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator;
 
-import java.math.BigDecimal;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.Set;
-import java.util.stream.Collectors;
+import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.model.IType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 
 /**
- * Holds all numbered literals in the program.
+ * Evaluator utilities.
  * 
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class LiteralCollection {
-
-	private final List<BigDecimal> mSortedNumbersSet;
-
-	protected LiteralCollection(Set<BigDecimal> realsSet) {
-		mSortedNumbersSet = realsSet.stream().sorted().collect(Collectors.toList());
+public class EvaluatorUtils {
+	/**
+	 * The type of the evaluator. Determines whether integer operations should be assumed, whether there are real-valued
+	 * operations, or whether the evaluator is boolean valued.
+	 * 
+	 * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	public enum EvaluatorType {
+		REAL, INTEGER, BOOL
 	}
 
-	public BigDecimal getNextRealPositive(BigDecimal value) {
-		return getNextNumberPositive(value);
-	}
+	/**
+	 * Determines the {@link EvaluatorType} depending on the Boogie {@link PrimitiveType} of an {@link Expression}.
+	 * 
+	 * @param type
+	 *            The {@link PrimitiveType} of an {@link Expression}.
+	 * @return The corresponding {@link EvaluatorType}.
+	 */
+	public static EvaluatorType getEvaluatorType(IType type) {
+		if (type instanceof PrimitiveType) {
+			final PrimitiveType primitiveType = (PrimitiveType) type;
+			final int typeCode = primitiveType.getTypeCode();
 
-	public BigDecimal getNextRealNegative(BigDecimal value) {
-		return getNextNumberNegative(value);
-	}
-
-	private BigDecimal getNextNumberPositive(BigDecimal value) {
-		ListIterator<BigDecimal> it = mSortedNumbersSet.listIterator();
-
-		while (it.hasNext()) {
-			final BigDecimal current = it.next();
-			if (current.compareTo(value) > 0) {
-				return current;
+			if (typeCode == PrimitiveType.INT) {
+				return EvaluatorType.INTEGER;
+			} else if (typeCode == PrimitiveType.REAL) {
+				return EvaluatorType.REAL;
+			} else if (typeCode == PrimitiveType.BOOL) {
+				return EvaluatorType.BOOL;
+			} else {
+				throw new UnsupportedOperationException("Type code " + typeCode + " is not supported.");
 			}
 		}
 
-		// There is no element in the list which is smaller than the given value.
-		return null;
-	}
-
-	private BigDecimal getNextNumberNegative(BigDecimal value) {
-		ListIterator<BigDecimal> it = mSortedNumbersSet.listIterator(mSortedNumbersSet.size());
-
-		while (it.hasPrevious()) {
-			final BigDecimal current = it.previous();
-			if (current.compareTo(value) < 0) {
-				return current;
-			}
-		}
-
-		// There is no element in the list which is smaller than the given value.
-		return null;
+		// By default, return real.
+		return EvaluatorType.REAL;
 	}
 }

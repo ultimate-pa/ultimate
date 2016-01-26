@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
@@ -47,18 +48,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class IntervalBinaryExpressionEvaluator
         implements INAryEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
 
+	private final Set<String> mVariableSet;
+	private final Logger mLogger;
+	private final EvaluatorType mEvaluatorType;
+
 	private IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> mLeftSubEvaluator;
 	private IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> mRightSubEvaluator;
 
-	private final Set<String> mVariableSet;
-
-	private final Logger mLogger;
-
 	private Operator mOperator;
 
-	protected IntervalBinaryExpressionEvaluator(Logger logger) {
+	protected IntervalBinaryExpressionEvaluator(Logger logger, EvaluatorType type) {
 		mLogger = logger;
 		mVariableSet = new HashSet<>();
+		mEvaluatorType = type;
 	}
 
 	@Override
@@ -102,7 +104,18 @@ public class IntervalBinaryExpressionEvaluator
 					returnBool = new BooleanValue(false);
 					break;
 				case ARITHDIV:
-					returnValue = res1.getResult().getEvaluatedValue().divide(res2.getResult().getEvaluatedValue());
+					switch (mEvaluatorType) {
+					case INTEGER:
+						returnValue = res1.getResult().getEvaluatedValue()
+						        .euclideanDivide(res2.getResult().getEvaluatedValue());
+						break;
+					case REAL:
+						returnValue = res1.getResult().getEvaluatedValue().divide(res2.getResult().getEvaluatedValue());
+						break;
+					default:
+						throw new UnsupportedOperationException(
+						        "Division on types other than integers and reals is undefined.");
+					}
 					returnBool = new BooleanValue(false);
 					break;
 				case ARITHMOD:
@@ -633,7 +646,6 @@ public class IntervalBinaryExpressionEvaluator
 		final StringBuilder sb = new StringBuilder();
 
 		sb.append(mLeftSubEvaluator);
-		sb.append(" ");
 
 		switch (mOperator) {
 		case ARITHDIV:
@@ -688,5 +700,11 @@ public class IntervalBinaryExpressionEvaluator
 		sb.append(mRightSubEvaluator);
 
 		return sb.toString();
+	}
+
+	@Override
+	public EvaluatorType getEvaluatorType() {
+
+		return null;
 	}
 }

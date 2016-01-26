@@ -30,6 +30,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.math.BigInteger;
 
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
+
 /**
  * Represents a single integer expression in the {@link SignDomain}.
  * 
@@ -38,8 +40,8 @@ import java.math.BigInteger;
  */
 public class SignSingletonIntegerExpressionEvaluator extends SignSingletonValueExpressionEvaluator<BigInteger> {
 
-	protected SignSingletonIntegerExpressionEvaluator(String value) {
-		super(value);
+	protected SignSingletonIntegerExpressionEvaluator(String value, EvaluatorType type) {
+		super(value, type);
 	}
 
 	@Override
@@ -62,5 +64,10 @@ public class SignSingletonIntegerExpressionEvaluator extends SignSingletonValueE
 	public boolean containsBool() {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	@Override
+	public EvaluatorType getEvaluatorType() {
+		return null;
 	}
 }

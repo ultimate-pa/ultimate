@@ -30,6 +30,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.math.BigDecimal;
 
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
+
 /**
  * Represents a single decimal expression in the {@link SignDomain}.
  * 
@@ -38,8 +40,8 @@ import java.math.BigDecimal;
  */
 public class SignSingletonDecimalExpressionEvaluator extends SignSingletonValueExpressionEvaluator<BigDecimal> {
 
-	public SignSingletonDecimalExpressionEvaluator(String value) {
-		super(value);
+	public SignSingletonDecimalExpressionEvaluator(String value, EvaluatorType type) {
+		super(value, type);
 	}
 
 	@Override
@@ -64,6 +66,12 @@ public class SignSingletonDecimalExpressionEvaluator extends SignSingletonValueE
 	public boolean containsBool() {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	@Override
+	public EvaluatorType getEvaluatorType() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }

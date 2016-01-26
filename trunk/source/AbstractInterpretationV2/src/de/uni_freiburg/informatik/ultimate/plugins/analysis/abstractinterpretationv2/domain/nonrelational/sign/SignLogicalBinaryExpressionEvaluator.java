@@ -33,6 +33,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
@@ -43,8 +44,8 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 
 	private BooleanValue mBooleanValue = new BooleanValue(false);
 
-	public SignLogicalBinaryExpressionEvaluator(IUltimateServiceProvider services) {
-		super(services);
+	public SignLogicalBinaryExpressionEvaluator(IUltimateServiceProvider services, EvaluatorType type) {
+		super(services, type);
 	}
 
 	@Override
@@ -253,25 +254,25 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 		return false;
 	}
 
-//	protected BooleanValue logicalEvaluation(SignDomainState currentState) {
-//
-//		switch (mOperator) {
-//		case COMPEQ:
-//			return mLeftSubEvaluator.booleanValue().intersect(mRightSubEvaluator.booleanValue());
-//		case COMPNEQ:
-//			return mLeftSubEvaluator.booleanValue().intersect(mRightSubEvaluator.booleanValue().neg());
-//		case LOGICIMPLIES:
-//			return mLeftSubEvaluator.booleanValue().or(mRightSubEvaluator.booleanValue());
-//		case LOGICIFF:
-//			return (mLeftSubEvaluator.booleanValue().and(mRightSubEvaluator.booleanValue())
-//			        .or((mLeftSubEvaluator.booleanValue().neg().and(mRightSubEvaluator.booleanValue().neg()))));
-//		case LOGICOR:
-//			return mLeftSubEvaluator.booleanValue().or(mRightSubEvaluator.booleanValue());
-//		default:
-//			throw new UnsupportedOperationException("Operator " + mOperator + " not yet implemented.");
-//			// TODO: implement other cases
-//		}
-//	}
+	// protected BooleanValue logicalEvaluation(SignDomainState currentState) {
+	//
+	// switch (mOperator) {
+	// case COMPEQ:
+	// return mLeftSubEvaluator.booleanValue().intersect(mRightSubEvaluator.booleanValue());
+	// case COMPNEQ:
+	// return mLeftSubEvaluator.booleanValue().intersect(mRightSubEvaluator.booleanValue().neg());
+	// case LOGICIMPLIES:
+	// return mLeftSubEvaluator.booleanValue().or(mRightSubEvaluator.booleanValue());
+	// case LOGICIFF:
+	// return (mLeftSubEvaluator.booleanValue().and(mRightSubEvaluator.booleanValue())
+	// .or((mLeftSubEvaluator.booleanValue().neg().and(mRightSubEvaluator.booleanValue().neg()))));
+	// case LOGICOR:
+	// return mLeftSubEvaluator.booleanValue().or(mRightSubEvaluator.booleanValue());
+	// default:
+	// throw new UnsupportedOperationException("Operator " + mOperator + " not yet implemented.");
+	// // TODO: implement other cases
+	// }
+	// }
 
 	@Override
 	public boolean containsBool() {

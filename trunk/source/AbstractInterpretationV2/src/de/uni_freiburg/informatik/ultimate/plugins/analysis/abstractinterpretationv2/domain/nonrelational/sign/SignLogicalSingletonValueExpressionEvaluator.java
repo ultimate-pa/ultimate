@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
@@ -51,8 +52,8 @@ public class SignLogicalSingletonValueExpressionEvaluator extends SignSingletonV
 
 	private BooleanValue mBooleanValue;
 
-	public SignLogicalSingletonValueExpressionEvaluator(String value) {
-		super(value);
+	public SignLogicalSingletonValueExpressionEvaluator(String value, EvaluatorType type) {
+		super(value, type);
 		mBooleanValue = new BooleanValue(false);
 	}
 
@@ -94,6 +95,12 @@ public class SignLogicalSingletonValueExpressionEvaluator extends SignSingletonV
 	public boolean containsBool() {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	@Override
+	public EvaluatorType getEvaluatorType() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
