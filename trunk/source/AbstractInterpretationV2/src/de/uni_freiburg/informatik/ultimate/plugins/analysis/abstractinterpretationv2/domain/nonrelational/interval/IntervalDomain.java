@@ -75,10 +75,15 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Code
 		if (wideningOperator.equals(IntervalDomainPreferences.VALUE_WIDENING_OPERATOR_SIMPLE)) {
 			return new IntervalSimpleWideningOperator();
 		} else if (wideningOperator.equals(IntervalDomainPreferences.VALUE_WIDENING_OPERATOR_LITERALS)) {
-			return new IntervalLiteralWideningOperator(mLiteralCollector);
+			final IAbstractStateBinaryOperator<IntervalDomainState> rtr = new IntervalLiteralWideningOperator(
+					mLiteralCollector);
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Using the following literals during widening: " + mLiteralCollector);
+			}
+			return rtr;
 		} else {
 			throw new UnsupportedOperationException(
-			        "The widening operator " + wideningOperator + " is not implemented.");
+					"The widening operator " + wideningOperator + " is not implemented.");
 		}
 	}
 

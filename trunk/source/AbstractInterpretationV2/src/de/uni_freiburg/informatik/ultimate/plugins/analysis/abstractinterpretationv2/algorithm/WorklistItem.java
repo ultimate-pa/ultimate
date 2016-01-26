@@ -45,7 +45,7 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 	private Deque<IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>> mScopedStorages;
 
 	protected WorklistItem(final STATE pre, final ACTION action,
-			IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> globalStorage) {
+			final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> globalStorage) {
 		assert action != null;
 		assert pre != null;
 		assert globalStorage != null;
@@ -153,7 +153,7 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 		for (final ACTION scope : mScopes) {
 			builder.append("[").append(scope.hashCode()).append("]");
 		}
-		builder.append("}");
+		builder.append("})");
 		return builder.toString();
 	}
 }

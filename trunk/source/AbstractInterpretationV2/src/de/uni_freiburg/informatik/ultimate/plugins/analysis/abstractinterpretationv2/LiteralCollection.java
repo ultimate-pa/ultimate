@@ -83,4 +83,10 @@ public class LiteralCollection {
 		// There is no element in the list which is smaller than the given value.
 		return null;
 	}
+
+	@Override
+	public String toString() {
+		return "LiteralCollection "
+				+ String.join("; ", mSortedNumbersSet.stream().map(a -> a.toPlainString()).collect(Collectors.toList()));
+	}
 }
