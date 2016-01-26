@@ -63,9 +63,25 @@ public class OctValue implements Comparable<OctValue> {
 		return new OctValue(mValue.add(other.mValue));
 	}
 	
+	public OctValue subtract(OctValue other) {
+		if (other.mValue == null) {
+			throw new IllegalStateException("Cannot subtract infinity.");
+		} else if (mValue == null) {
+			return OctValue.INFINITY;
+		}
+		return new OctValue(mValue.subtract(other.mValue));
+	}
+	
 	public OctValue negate() {
 		if (mValue == null) {
 			throw new IllegalStateException("Cannot negate infinity.");
+		}
+		return new OctValue(mValue.negate());
+	}
+
+	public OctValue negateIfNotInfinity() {
+		if (mValue == null) {
+			return this;
 		}
 		return new OctValue(mValue.negate());
 	}
@@ -129,5 +145,6 @@ public class OctValue implements Comparable<OctValue> {
 	public static OctValue max(OctValue a, OctValue b) {
 		return a.compareTo(b) >= 0 ? a : b;
 	}
+
 
 }

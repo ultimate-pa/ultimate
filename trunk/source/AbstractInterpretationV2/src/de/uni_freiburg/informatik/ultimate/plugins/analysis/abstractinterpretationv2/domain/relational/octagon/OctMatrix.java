@@ -149,38 +149,46 @@ public class OctMatrix {
 	}
 	
 	protected void set(int row, int col, OctValue value) {
-		if(value == null) {
-			throw new IllegalArgumentException("null is not a valid matrix element.");
-		}
+		assert value != null : "null is not a valid matrix element.";
 		mStrongClosure = mTightClosure = null;
 		mElements[indexOf(row, col)] = value;
 	}
 	
+	protected void setMin(int row, int col, OctValue value) {
+		assert value != null : "null is not a valid matrix element.";
+		mStrongClosure = mTightClosure = null;
+		int index = indexOf(row, col);
+		if (value.compareTo(mElements[index]) < 0) {
+			mElements[index] = value;
+			mStrongClosure = mTightClosure = null;
+		}
+	}
+	
 	/**
-	 * Set all positive values on the main diagonal to zero.
+	 * Set positive values on the main diagonal to zero.
 	 * Negative values are kept, since they denote that this octagon is \bot.
+	 * When encountering an negative value, this method exits early => positive values may remain on the diagonal.
 	 * 
 	 * @return A value on the main diagonal was smaller than zero (=> negative self loop => this=\bot)
 	 */
-	private boolean minimizeMainDiagonal() {
-		boolean changed = false;
-		boolean isBottom = false;
+	private boolean minimizeDiagonal() {
 		for (int i = 0; i < mSize; ++i) {
-			int ii = indexOfLower(i, i);
-			int sig = mElements[ii].signum();
-			if (sig > 0) {
-				mElements[ii] = OctValue.ZERO;
-				changed = true;
-			} else if (sig < 0) {
-				isBottom = true;
-			}
+			minimizeDiagonalElement(i);
 		}
-		if (changed) {
-			mStrongClosure = mTightClosure = null;
-		}
-		return isBottom;
+		return false;
 	}
-
+	
+	private boolean minimizeDiagonalElement(int i) {
+		int ii = indexOfLower(i, i);
+		int sig = mElements[ii].signum();
+		if (sig > 0) {
+			mElements[ii] = OctValue.ZERO;
+			// no need to reset cached closures -- diagonal is always minimized on closure computation
+			return false;
+		}
+		return sig < 0;
+	}
+	
 	private int indexOf(int row, int col) {
 		assert row < mSize && col < mSize : row + "," + col + " is not an index for matrix of size " + mSize + ".";
 		if (row < col) {
@@ -302,7 +310,7 @@ public class OctMatrix {
 	
 	public OctMatrix strongClosure(Consumer<OctMatrix> shortestPathClosureAlgorithm) {
 		OctMatrix sc = copy();
-		boolean isObviouslyBottom = sc.minimizeMainDiagonal();
+		boolean isObviouslyBottom = sc.minimizeDiagonal();
 		if (!isObviouslyBottom) {
 			shortestPathClosureAlgorithm.accept(sc);
 			sc.strengtheningInPlace();
@@ -323,7 +331,7 @@ public class OctMatrix {
 	public OctMatrix tightClosure(Consumer<OctMatrix> shortestPathClosureAlgorithm) {
 		OctMatrix tc;
 		tc = copy();
-		boolean isObviouslyBottom = tc.minimizeMainDiagonal();
+		boolean isObviouslyBottom = tc.minimizeDiagonal();
 		if (!isObviouslyBottom) {
 			shortestPathClosureAlgorithm.accept(tc); // cached strong closure is not re-used ...
 			// ... because strong closure is unlikely to be in cache when tight closure is needed
@@ -701,15 +709,13 @@ public class OctMatrix {
 		for (Map.Entry<Integer, Integer> entry : mapSourceVarToTargetVar.entrySet()) {
 			int sourceVar = entry.getKey();
 			int targetVar = entry.getValue();
+			// Copy columns. Rows are copied by coherence.
 			for (int targetOther = 0; targetOther < variables(); ++targetOther) {
-				// copy only columns. Rows are copied by coherence
-				Integer sourceOther = mapTargetVarToSourceVar.get(targetOther);
-				if (sourceOther == null) {
+				Integer row = mapTargetVarToSourceVar.get(targetOther);
+				if (row == null) {
 					setBlock(targetOther, targetVar, OctValue.INFINITY);
-//					setBlock(targetVar, targetOther, OctValue.INFINITY);
 				} else {
-					copyBlock(targetOther, targetVar, /* := */ source, sourceOther, sourceVar); // column
-//					copyBlock(targetVar, targetOther, /* := */ source, sourceVar, sourceOther); // row
+					copyBlock(targetOther, targetVar, /* := */ source, row, sourceVar); 
 				}
 			}
 		}
@@ -750,6 +756,116 @@ public class OctMatrix {
 		}
 	}
 	
+	/**
+	 * Assigns one (possibly negated) variable to another variable.
+	 * This method may also be used to negate a variable itself.
+	 * <p>
+	 * This method is exact. No precision is lost. Closure in advance is not necessary.
+	 * 
+	 * @param targetVar variable which will be changed
+	 * @param sourceVar variable which will be copied
+	 * @param negate assign the negation {@code targetVar := -sourceVar}
+	 */
+	protected void assignVarCopy(int targetVar, int sourceVar, boolean negate) {
+		int t2 = targetVar * 2;
+		int s2 = sourceVar * 2;
+		int t21 = t2 + 1;
+		int s21 = s2 + 1;
+
+		// "x == y" cannot be detected when imprecise "x + x <= 4" is copied
+		minimizeDiagonalElement(s2);
+		minimizeDiagonalElement(s2 + 1);
+		
+		// copy block-column, block-row is copied by coherence
+		int xor = negate ? 0b1 : 0b0; // 1 = swap sub-columns in block-column
+		for (int row = 0; row < mSize; ++row) {
+			int srcRow = (row / 2 == targetVar) ? s2 + (row % 2) : row;
+			OctValue tmp = get(srcRow, s21);     // source may equal target => swap sub-columns when "negate" is set
+			set(row, t2 ^ xor, get(srcRow, s2)); // (negate ? ◳/◲ : ◰/◱) := ◰/◱
+			set(row, t21 ^ xor, tmp);            // (negate ? ◰/◱ : ◳/◲) := ◳/◲
+		}
+		if (negate) {
+			// swap sub-rows of (target × target)-block
+			int top = indexOfLower(t2, t2);     // ◰ top left
+			int bot = indexOfLower(t2 + 1, t2); // ◱ bottom left
+			for (int column = 0; column < 2; ++column) {
+				OctValue tmp = mElements[top];
+				mElements[top] = mElements[bot];
+				mElements[bot] = tmp;
+				++top; // ◰ => ◳
+				++bot; // ◱ => ◲
+			}
+		}
+		// cached closures were already reset by "set"
+	}
+
+	/**
+	 * Adds a constant to a variable. {@code v := v + c;}
+	 * <p>
+	 * This method is exact. No precision is lost. Closure in advance is not necessary.
+	 * 
+	 * @param targetVar variable to be incremented
+	 * @param constant summand
+	 */
+	protected void assignAddConstant(int targetVar, OctValue constant) {
+		int t2 = targetVar * 2;
+		int t21 = t2 + 1;
+
+		// increment block-column, block-row is incremented by coherence
+		for (int row = 0; row < mSize; ++row) {
+			if (row / 2 == targetVar) {
+				continue; // (v × v)-block is processed after this loop
+			}
+			int iT2 = indexOf(row, t2);   // ◰/◱ left sub-column of block-column
+			int iT21 = indexOf(row, t21); // ◳/◲ right        ...
+			mElements[iT2] = mElements[iT2].add(constant);        //  (v + c) − ? ≤ ?  ≡   v − ? ≤ ?
+			mElements[iT21] = mElements[iT21].subtract(constant); // −(v + c) − ? ≤ ?  ≡  −v − ? ≤ ? − c
+		}
+
+		OctValue doubleConstant = constant.add(constant);
+		int iUpperBound2 = indexOf(t21, t2);
+		int iLowerBound2 = indexOf(t2, t21);
+		mElements[iUpperBound2] = mElements[iUpperBound2].add(doubleConstant);
+		mElements[iLowerBound2] = mElements[iLowerBound2].subtract(doubleConstant);
+		
+		mStrongClosure = mTightClosure = null;
+	}
+	
+	protected void assignConstant(int targetVar, OctValue constant) {
+		havocVariable(targetVar);
+		int t2 = targetVar * 2;
+		int t21 = t2 + 1;
+		OctValue doubleConstant = constant.add(constant);
+		set(t2, t21, doubleConstant.negateIfNotInfinity());
+		set(t21, t2, doubleConstant);
+
+		// cached closures were already reset by "set"
+	}
+	
+	protected void assignInterval(int targetVar, OctValue lowerBound, OctValue upperBound) {
+		havocVariable(targetVar);
+		int t2 = targetVar * 2;
+		int t21 = t2 + 1;
+		set(t2, t21, lowerBound.add(lowerBound).negateIfNotInfinity());
+		set(t21, t2, upperBound.add(upperBound));
+
+		// cached closures were already reset by "set"
+	}
+
+	protected void havocVariable(int targetVar) {
+		int t2 = targetVar * 2;
+		int t21 = t2 + 1;
+
+		// set block-column, block-row is set by coherence
+		for (int row = 0; row < mSize; ++row) {
+			mElements[indexOf(row, t2)] = mElements[indexOf(row, t21)] = OctValue.INFINITY;
+		}
+		set(t2, t2, OctValue.ZERO);
+		set(t21, t21, OctValue.ZERO);
+		
+		// cached closures were already reset by "set"
+	}
+
 	public Term getTerm(Script script, List<Term> vars) {
 		Term acc = script.term("true");
 		for (int rowBlock = 0; rowBlock < variables(); ++rowBlock) {
@@ -779,7 +895,7 @@ public class OctMatrix {
 		}
 		return acc;
 	}
-	
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
@@ -794,5 +910,5 @@ public class OctMatrix {
 		}
 		return sb.toString();
 	}
-	
+
 }
