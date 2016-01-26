@@ -302,9 +302,12 @@ public class OctMatrix {
 	
 	public OctMatrix strongClosure(Consumer<OctMatrix> shortestPathClosureAlgorithm) {
 		OctMatrix sc = copy();
-		shortestPathClosureAlgorithm.accept(sc);
-		sc.strengtheningInPlace();
-		mStrongClosure = sc.mStrongClosure = sc;
+		boolean isObviouslyBottom = sc.minimizeMainDiagonal();
+		if (!isObviouslyBottom) {
+			shortestPathClosureAlgorithm.accept(sc);
+			sc.strengtheningInPlace();
+		}
+		sc.mStrongClosure = mStrongClosure = sc;
 		sc.mTightClosure = mTightClosure;
 		return sc;
 	}
@@ -319,22 +322,19 @@ public class OctMatrix {
 	
 	public OctMatrix tightClosure(Consumer<OctMatrix> shortestPathClosureAlgorithm) {
 		OctMatrix tc;
-		if (mStrongClosure != null) {
-			tc = mStrongClosure.copy();
-		} else {
-			tc = copy();
-			shortestPathClosureAlgorithm.accept(tc);			
+		tc = copy();
+		boolean isObviouslyBottom = tc.minimizeMainDiagonal();
+		if (!isObviouslyBottom) {
+			shortestPathClosureAlgorithm.accept(tc); // cached strong closure is not re-used ...
+			// ... because strong closure is unlikely to be in cache when tight closure is needed
+			tc.tighteningInPlace();
 		}
-		tc.tighteningInPlace();
-		mTightClosure = tc.mTightClosure = tc;
 		tc.mStrongClosure = mStrongClosure;
+		tc.mTightClosure = mTightClosure = tc;
 		return tc;
 	}
 
 	private void shortestPathClosureInPlaceNaiv() {
-		if (minimizeMainDiagonal()) {
-			return;
-		}
 		for (int k = 0; k < mSize; ++k) {
 			for (int i = 0; i < mSize; ++i) {
 				OctValue ik = get(i, k);
@@ -349,9 +349,6 @@ public class OctMatrix {
 	}
 	
 	private void shortestPathClosureInPlaceFullSparse() {
-		if (minimizeMainDiagonal()) {
-			return;
-		}
 		List<Integer> ck = null; // indices of finite elements in columns k and k^1
 		List<Integer> rk = null; // indices of finite elements in rows k and k^1
 		for (int k = 0; k < mSize; ++k) {
@@ -393,9 +390,6 @@ public class OctMatrix {
 	}
 	
 	private void shortestPathClosureInPlaceSparse() {
-		if (minimizeMainDiagonal()) {
-			return;
-		}
 		List<Integer> ck = null; // indices of finite elements in columns k and k^1
 		List<Integer> rk = null; // indices of finite elements in rows k and k^1
 		for (int k = 0; k < mSize; ++k) {
@@ -446,9 +440,6 @@ public class OctMatrix {
 	}
 	
 	private void shortestPathClosureInPlacePrimitiveSparse() {
-		if (minimizeMainDiagonal()) {
-			return;
-		}
 		int[] ck = null; // indices of finite elements in columns k and k^1
 		int[] rk = null; // indices of finite elements in rows k and k^1
 		for (int k = 0; k < mSize; ++k) {
@@ -506,9 +497,6 @@ public class OctMatrix {
 	
 
 	private void shortestPathClosureInPlaceApron() {
-		if (minimizeMainDiagonal()) {
-			return;
-		}
 		for (int k = 0; k < mSize; ++k) {
 			for (int i = 0; i < mSize; ++i) {
 				OctValue ik = get(i, k);
