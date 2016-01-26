@@ -28,7 +28,6 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
-import java.awt.dnd.InvalidDnDOperationException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
@@ -1154,13 +1153,13 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		if (lower.isInfinity()) {
 			newLower = lower;
 		}  else {
-			newLower = new IntervalValue(lower.getValue().setScale(0, RoundingMode.FLOOR));
+			newLower = new IntervalValue(lower.getValue().setScale(0, RoundingMode.DOWN));
 		}
 		
 		if (upper.isInfinity()) {
 			newUpper = upper;
 		} else {
-			newUpper = new IntervalValue(lower.getValue().setScale(0, RoundingMode.CEILING));
+			newUpper = new IntervalValue(lower.getValue().setScale(0, RoundingMode.DOWN));
 		}
 		
 		return new IntervalDomainValue(newLower, newUpper);
