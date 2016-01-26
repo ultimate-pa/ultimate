@@ -395,9 +395,17 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 * @throws OperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
+	 * @throws IllegalArgumentException
+	 *             If the inputed automaton is no Buechi-automaton. It must have
+	 *             an empty call and return alphabet.
 	 */
 	public CompareReduceBuchiSimulation(final IUltimateServiceProvider services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
+		if (!operand.getCallAlphabet().isEmpty() || !operand.getReturnAlphabet().isEmpty()) {
+			throw new IllegalArgumentException(
+					"The inputed automaton is no Buechi-automaton. It must have an empty call and return alphabet.");
+		}
+
 		m_LoggedLines = new LinkedList<String>();
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
