@@ -528,7 +528,7 @@ public class IntervalBinaryExpressionEvaluator
 						List<IntervalDomainValue> vals = new ArrayList<>();
 
 						final IntervalDomainValue rightSideForLeft = new IntervalDomainValue(new IntervalValue(),
-						        res2.getResult().getEvaluatedValue().getLower());
+						        res2.getResult().getEvaluatedValue().getUpper());
 
 						final IntervalDomainValue leftComputationResult = res1.getResult().getEvaluatedValue()
 						        .intersect(rightSideForLeft);
@@ -537,7 +537,7 @@ public class IntervalBinaryExpressionEvaluator
 						vals.add(leftComputationResult);
 
 						final IntervalDomainValue leftSideForRight = new IntervalDomainValue(
-						        res1.getResult().getEvaluatedValue().getUpper(), new IntervalValue());
+						        res1.getResult().getEvaluatedValue().getLower(), new IntervalValue());
 
 						final IntervalDomainValue rightComputationResult = leftSideForRight
 						        .intersect(res2.getResult().getEvaluatedValue());
