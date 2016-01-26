@@ -158,6 +158,17 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			// TODO: Handle multiple states from post correctly here; for now, we merge the states
 			pendingNewPostState = mergeStates(postStates);
 
+			if (pendingNewPostState.isBottom()) {
+				// if the new abstract state is bottom, we did not actually
+				// execute the action (i.e., we do not enter loops, do not add
+				// new actions to the worklist, etc.)
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT)
+							.append(" Skipping all successors because post is bottom"));
+				}
+				continue;
+			}
+			
 			// check if this action leaves a loop
 			if (!activeLoops.isEmpty()) {
 				// are we leaving a loop?
@@ -181,16 +192,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 			final STATE newPostState = pendingNewPostState;
 
-			if (newPostState.isBottom()) {
-				// if the new abstract state is bottom, we did not actually
-				// execute the action (i.e., we do not enter loops, do not add
-				// new actions to the worklist, etc.)
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT)
-							.append(" Skipping all successors because post is bottom"));
-				}
-				continue;
-			}
+
 
 			// check if we are about to enter a loop
 			final ACTION loopExit = mLoopDetector.getLoopExit(currentAction);
