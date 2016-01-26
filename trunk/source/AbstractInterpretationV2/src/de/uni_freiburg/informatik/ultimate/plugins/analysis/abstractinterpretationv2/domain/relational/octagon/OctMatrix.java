@@ -156,18 +156,29 @@ public class OctMatrix {
 		mElements[indexOf(row, col)] = value;
 	}
 	
-	private void minimizeMainDiagonal() {
+	/**
+	 * Set all positive values on the main diagonal to zero.
+	 * Negative values are kept, since they denote that this octagon is \bot.
+	 * 
+	 * @return A value on the main diagonal was smaller than zero (=> negative self loop => this=\bot)
+	 */
+	private boolean minimizeMainDiagonal() {
 		boolean changed = false;
+		boolean isBottom = false;
 		for (int i = 0; i < mSize; ++i) {
 			int ii = indexOfLower(i, i);
-			if (OctValue.ZERO.compareTo(mElements[ii]) < 0) {
+			int sig = mElements[ii].signum();
+			if (sig > 0) {
 				mElements[ii] = OctValue.ZERO;
 				changed = true;
+			} else if (sig < 0) {
+				isBottom = true;
 			}
 		}
 		if (changed) {
 			mStrongClosure = mTightClosure = null;
 		}
+		return isBottom;
 	}
 
 	private int indexOf(int row, int col) {
@@ -321,7 +332,9 @@ public class OctMatrix {
 	}
 
 	private void shortestPathClosureInPlaceNaiv() {
-		minimizeMainDiagonal();
+		if (minimizeMainDiagonal()) {
+			return;
+		}
 		for (int k = 0; k < mSize; ++k) {
 			for (int i = 0; i < mSize; ++i) {
 				OctValue ik = get(i, k);
@@ -336,7 +349,9 @@ public class OctMatrix {
 	}
 	
 	private void shortestPathClosureInPlaceFullSparse() {
-		minimizeMainDiagonal();
+		if (minimizeMainDiagonal()) {
+			return;
+		}
 		List<Integer> ck = null; // indices of finite elements in columns k and k^1
 		List<Integer> rk = null; // indices of finite elements in rows k and k^1
 		for (int k = 0; k < mSize; ++k) {
@@ -378,7 +393,9 @@ public class OctMatrix {
 	}
 	
 	private void shortestPathClosureInPlaceSparse() {
-		minimizeMainDiagonal();
+		if (minimizeMainDiagonal()) {
+			return;
+		}
 		List<Integer> ck = null; // indices of finite elements in columns k and k^1
 		List<Integer> rk = null; // indices of finite elements in rows k and k^1
 		for (int k = 0; k < mSize; ++k) {
@@ -429,7 +446,9 @@ public class OctMatrix {
 	}
 	
 	private void shortestPathClosureInPlacePrimitiveSparse() {
-		minimizeMainDiagonal();
+		if (minimizeMainDiagonal()) {
+			return;
+		}
 		int[] ck = null; // indices of finite elements in columns k and k^1
 		int[] rk = null; // indices of finite elements in rows k and k^1
 		for (int k = 0; k < mSize; ++k) {
@@ -487,7 +506,9 @@ public class OctMatrix {
 	
 
 	private void shortestPathClosureInPlaceApron() {
-		minimizeMainDiagonal();
+		if (minimizeMainDiagonal()) {
+			return;
+		}
 		for (int k = 0; k < mSize; ++k) {
 			for (int i = 0; i < mSize; ++i) {
 				OctValue ik = get(i, k);
@@ -546,7 +567,7 @@ public class OctMatrix {
 	 */
 	public boolean hasNegativeSelfLoop() {
 		for (int i = 0; i < mSize; ++i) {
-			if (get(i, i).compareTo(OctValue.ZERO) < 0) {
+			if (get(i, i).signum() < 0) {
 				return true;
 			}
 		}
@@ -572,7 +593,7 @@ public class OctMatrix {
 			OctValue result;
 			if (nij.compareTo(minusTwoEpsilon) <= 0) {
 				result = nij.half(); // there is no -inf => will always converge towards 0
-			} else if (nij.compareTo(OctValue.ZERO) <= 0) {
+			} else if (nij.signum() <= 0) {
 				result = OctValue.ZERO;
 			} else if (nij.compareTo(oneHalfEpsilon) <= 0) {
 				result = epsilon;

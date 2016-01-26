@@ -96,6 +96,10 @@ public class OctValue implements Comparable<OctValue> {
 		return new OctValue(mValue.setScale(0, RoundingMode.FLOOR));
 	}
 
+	public int signum() {
+		return mValue == null ? 1 : mValue.signum();
+	}
+	
 	@Override
 	public int compareTo(OctValue other) {
 		if (this == other || mValue == other.mValue) {
@@ -107,7 +111,7 @@ public class OctValue implements Comparable<OctValue> {
 		}
 		return mValue.compareTo(other.mValue);
 	}
-	
+
 	@Override
 	public String toString() {
 		if (mValue == null) {
