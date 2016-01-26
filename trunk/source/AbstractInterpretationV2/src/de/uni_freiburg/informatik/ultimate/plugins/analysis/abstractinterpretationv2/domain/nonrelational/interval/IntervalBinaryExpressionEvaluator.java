@@ -107,7 +107,7 @@ public class IntervalBinaryExpressionEvaluator
 					switch (mEvaluatorType) {
 					case INTEGER:
 						returnValue = res1.getResult().getEvaluatedValue()
-						        .euclideanDivide(res2.getResult().getEvaluatedValue());
+						        .integerDivide(res2.getResult().getEvaluatedValue());
 						break;
 					case REAL:
 						returnValue = res1.getResult().getEvaluatedValue().divide(res2.getResult().getEvaluatedValue());

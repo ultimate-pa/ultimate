@@ -28,7 +28,9 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
+import java.awt.dnd.InvalidDnDOperationException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -551,6 +553,11 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 			return new IntervalDomainValue(true);
 		}
 
+		if (isPointInterval() && other.isPointInterval()) {
+			final IntervalValue result = new IntervalValue(getLower().getValue().multiply(other.getLower().getValue()));
+			return new IntervalDomainValue(result, result);
+		}
+
 		IntervalValue lowerBound = computeMinMult(other);
 		IntervalValue upperBound = computeMaxMult(other);
 
@@ -753,10 +760,8 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 	 * [a, b] and [c, d]: max(ac, ad, bc, bd).
 	 * </p>
 	 * 
-	 * @param first
-	 *            The first interval of the form [a, b].
-	 * @param second
-	 *            The second interval of the form [c, d].
+	 * @param other
+	 *            The other interval of the form [c, d].
 	 * @return max(ac, ad, bc, bd).
 	 */
 	private IntervalValue computeMaxMult(IntervalDomainValue other) {
@@ -789,7 +794,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 			}
 		} else {
 			if (other.getLower().isInfinity()) {
-				// val * -\infty = \infty, if val > 0
+				// val * -\infty = \infty, if val < 0
 				if (getLower().getValue().signum() < 0) {
 					return new IntervalValue();
 				}
@@ -920,10 +925,8 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 	 * [a, b] and [c, d]: min(ac, ad, bc, bd).
 	 * </p>
 	 * 
-	 * @param first
-	 *            The first interval of the form [a, b].
-	 * @param second
-	 *            The second interval of the form [c, d].
+	 * @param other
+	 *            The other interval of the form [c, d].
 	 * @return min(ac, ad, bc, bd).
 	 */
 	private IntervalValue computeMinMult(IntervalDomainValue other) {
@@ -931,7 +934,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		IntervalValue returnValue = new IntervalValue();
 		boolean valuePresent = false;
 
-		// If both intervals are infinite, the minimum is -\infty.
+		// If both intervals are infinite, the minimum is \infty.
 		if (isInfinity() && other.isInfinity()) {
 			return new IntervalValue();
 		}
@@ -1109,11 +1112,359 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		}
 	}
 
-	protected IntervalDomainValue divide(IntervalDomainValue evaluatedValue) {
-		throw new UnsupportedOperationException("TODO: Implement interval division.");
+	/**
+	 * Performs the devision of <code>this</code> with the given {@link IntervalDomainValue} following the scheme:
+	 * 
+	 * <p>
+	 * [a; b] / [c; d] = [min(a / c, a / d, b / c, b / d); max(a / c, a / d, b / c, b / d)]
+	 * </p>
+	 * 
+	 * <p>
+	 * If 0 is containd in [x; y], the resulting interval will always be (-&infin;; &infin;).
+	 * </p>
+	 * 
+	 * @param evaluatedValue
+	 *            Another {@link IntervalDomainValue} of the form [x; y].
+	 * @return
+	 */
+	protected IntervalDomainValue divide(IntervalDomainValue other) {
+		return divideInternally(other);
 	}
-	
-	protected IntervalDomainValue euclideanDivide(IntervalDomainValue evaluatedValue) {
-		throw new UnsupportedOperationException("TODO: Implement eucledian interval division.");
+
+	/**
+	 * Performs the divison of <code>this</code> with the given {@link IntervalDomainValue}. The division is done using
+	 * the euclidean method.
+	 * 
+	 * @param evaluatedValue
+	 * @return
+	 */
+	protected IntervalDomainValue integerDivide(IntervalDomainValue other) {		
+		final IntervalDomainValue result = divideInternally(other);
+
+		if (result.isBottom() || result.isInfinity()) {
+			return result;
+		}
+
+		final IntervalValue lower = result.getLower();
+		final IntervalValue upper = result.getUpper();
+		
+		IntervalValue newLower;
+		IntervalValue newUpper; 
+		
+		if (lower.isInfinity()) {
+			newLower = lower;
+		}  else {
+			newLower = new IntervalValue(lower.getValue().setScale(0, RoundingMode.FLOOR));
+		}
+		
+		if (upper.isInfinity()) {
+			newUpper = upper;
+		} else {
+			newUpper = new IntervalValue(lower.getValue().setScale(0, RoundingMode.CEILING));
+		}
+		
+		return new IntervalDomainValue(newLower, newUpper);
+	}
+
+	private IntervalDomainValue divideInternally(IntervalDomainValue other) {
+		assert other != null;
+
+		if (isBottom() || other.isBottom()) {
+			return new IntervalDomainValue(true);
+		}
+
+		if (isPointInterval() && other.isPointInterval()) {
+			if (other.getLower().getValue().signum() == 0) {
+				return new IntervalDomainValue(true);
+			}
+			final IntervalValue result = new IntervalValue(getLower().getValue().divide(other.getLower().getValue()));
+			return new IntervalDomainValue(result, result);
+		}
+
+		if (other.containsZero()) {
+			return new IntervalDomainValue();
+		}
+
+		IntervalValue lowerBound = computeMinDiv(other);
+		IntervalValue upperBound = computeMaxDiv(other);
+
+		return new IntervalDomainValue(lowerBound, upperBound);
+	}
+
+	/**
+	 * Computes the minimum value of the division of two intervals:
+	 * 
+	 * <p>
+	 * [a; b] and [c; d]: min(a / c, a / d, b / c, b / d).
+	 * </p>
+	 * 
+	 * @param other
+	 *            The other interval of the form [c; d].
+	 * @return min(a / c, a / d, b / c, b / d).
+	 */
+	private IntervalValue computeMinDiv(IntervalDomainValue other) {
+		// If both are infinity, the minimum is infinity.
+		if (isInfinity() && other.isInfinity()) {
+			return new IntervalValue();
+		}
+
+		IntervalValue returnValue = new IntervalValue();
+		boolean valuePresent = false;
+
+		final IntervalValue a = getLower();
+		final IntervalValue b = getUpper();
+		final IntervalValue c = other.getLower();
+		final IntervalValue d = other.getUpper();
+
+		// Compute a / c
+		if (a.isInfinity()) {
+			if (!c.isInfinity()) {
+				// -\infty / val = -\infty, if val > 0
+				if (c.getValue().signum() > 0) {
+					return new IntervalValue();
+				}
+			}
+		} else {
+			// 0 / anything = 0.
+			if (a.getValue().signum() == 0) {
+				returnValue = updateIfSmaller(returnValue, new BigDecimal(0), valuePresent);
+				valuePresent = true;
+			} else {
+				if (c.isInfinity()) {
+					// val * -\infty = -\infty, if val > 0
+					if (a.getValue().signum() > 0) {
+						return new IntervalValue();
+					}
+				} else {
+					returnValue = updateIfSmaller(returnValue, a.getValue().divide(c.getValue()), valuePresent);
+					valuePresent = true;
+				}
+			}
+		}
+
+		// Compute a / d
+		if (a.isInfinity()) {
+			// -\infty / \infty = -\infty
+			if (d.isInfinity()) {
+				return new IntervalValue();
+			}
+
+			// -\infty / val = -\infty, if val > 0
+			if (d.getValue().signum() > 0) {
+				return new IntervalValue();
+			}
+		} else {
+			// 0 / anything = 0
+			if (a.getValue().signum() == 0) {
+				returnValue = updateIfSmaller(returnValue, new BigDecimal(0), valuePresent);
+				valuePresent = true;
+			} else {
+				if (d.isInfinity()) {
+					// val * \infty = -\infty, if val < 0
+					if (a.getValue().signum() < 0) {
+						return new IntervalValue();
+					}
+				} else {
+					returnValue = updateIfSmaller(returnValue, a.getValue().divide(d.getValue()), valuePresent);
+				}
+			}
+		}
+
+		// Compute b / c
+		if (b.isInfinity()) {
+			// \infty / -\infty = -\infty
+			if (c.isInfinity()) {
+				return new IntervalValue();
+			}
+
+			// \infty / val = -\infty, if val < 0
+			if (c.getValue().signum() < 0) {
+				return new IntervalValue();
+			}
+		} else {
+			if (c.isInfinity()) {
+				// val / -\infty = -\infty, if val > 0
+				if (b.getValue().signum() > 0) {
+					return new IntervalValue();
+				}
+
+				// 0 / anything = 0
+				if (b.getValue().signum() == 0) {
+					returnValue = updateIfSmaller(returnValue, new BigDecimal(0), valuePresent);
+					valuePresent = true;
+				}
+			} else {
+				returnValue = updateIfSmaller(returnValue, b.getValue().divide(c.getValue()), valuePresent);
+				valuePresent = true;
+			}
+		}
+
+		// Compute b / d
+		if (b.isInfinity()) {
+			if (!d.isInfinity()) {
+				// \infty / val = -\infty, if val < 0
+				if (d.getValue().signum() < 0) {
+					return new IntervalValue();
+				}
+			}
+		} else {
+			if (d.isInfinity()) {
+				// val / \infty = -\infty, if val < 0
+				if (b.getValue().signum() < 0) {
+					return new IntervalValue();
+				}
+
+				// 0 / anything = 0
+				if (b.getValue().signum() == 0) {
+					returnValue = updateIfSmaller(returnValue, new BigDecimal(0), valuePresent);
+					valuePresent = true;
+				}
+			} else {
+				returnValue = updateIfSmaller(returnValue, b.getValue().divide(d.getValue()), valuePresent);
+				valuePresent = true;
+			}
+		}
+
+		assert valuePresent;
+		return returnValue;
+	}
+
+	/**
+	 * Computes the maximum value of the division of two interval values:
+	 * 
+	 * <p>
+	 * [a; b] and [c; d]: max(a / c, a / d, b / c, b / d).
+	 * </p>
+	 * 
+	 * @param other
+	 *            The other interval of the form [c; d].
+	 * @return max(a / c, a / d, b / c, b / d).
+	 */
+	private IntervalValue computeMaxDiv(IntervalDomainValue other) {
+		// If both are infinity, the maximum is infinity.
+		if (isInfinity() && other.isInfinity()) {
+			return new IntervalValue();
+		}
+
+		IntervalValue returnValue = new IntervalValue();
+		boolean valuePresent = false;
+
+		final IntervalValue a = getLower();
+		final IntervalValue b = getUpper();
+		final IntervalValue c = other.getLower();
+		final IntervalValue d = other.getUpper();
+
+		// Compute a / c
+		if (a.isInfinity()) {
+			// -\infty / -\infty = \infty
+			if (c.isInfinity()) {
+				return new IntervalValue();
+			} else {
+				// -\infty / val = \infty, if val < 0
+				if (c.getValue().signum() < 0) {
+					return new IntervalValue();
+				}
+			}
+		} else {
+			if (c.isInfinity()) {
+				// val / -\infty = \infty, if val < 0
+				if (a.getValue().signum() < 0) {
+					return new IntervalValue();
+				}
+
+				// 0 / -\infty = 0
+				if (a.getValue().signum() == 0) {
+					returnValue = updateIfLarger(returnValue, new BigDecimal(0), valuePresent);
+					valuePresent = true;
+				}
+			} else {
+				returnValue = updateIfLarger(returnValue, a.getValue().divide(c.getValue()), valuePresent);
+				valuePresent = true;
+			}
+		}
+
+		// Compute a / d
+		if (a.isInfinity()) {
+			if (!d.isInfinity()) {
+				// -\infty / val = \infty, if val < 0
+				if (d.getValue().signum() < 0) {
+					return new IntervalValue();
+				}
+			}
+		} else {
+			if (d.isInfinity()) {
+				// val / \infty = \infty, if val > 0
+				if (a.getValue().signum() > 0) {
+					return new IntervalValue();
+				}
+
+				// 0 / anything = 0
+				if (a.getValue().signum() == 0) {
+					returnValue = updateIfLarger(returnValue, new BigDecimal(0), valuePresent);
+					valuePresent = true;
+				}
+			} else {
+				returnValue = updateIfLarger(returnValue, a.getValue().divide(d.getValue()), valuePresent);
+				valuePresent = true;
+			}
+		}
+
+		// Compute b / c
+		if (b.isInfinity()) {
+			if (!c.isInfinity()) {
+				// \infty / val = \infty, if val > 0
+				if (c.getValue().signum() > 0) {
+					return new IntervalValue();
+				}
+			}
+		} else {
+			if (c.isInfinity()) {
+				// val / -\infty = \infty, if val < 0
+				if (b.getValue().signum() < 0) {
+					return new IntervalValue();
+				}
+
+				// 0 / anything = 0
+				if (b.getValue().signum() == 0) {
+					returnValue = updateIfLarger(returnValue, new BigDecimal(0), valuePresent);
+					valuePresent = true;
+				}
+			} else {
+				returnValue = updateIfLarger(returnValue, b.getValue().divide(c.getValue()), valuePresent);
+				valuePresent = true;
+			}
+		}
+
+		// Compute b / d
+		if (b.isInfinity()) {
+			// \infty / \infty = \infty
+			if (d.isInfinity()) {
+				return new IntervalValue();
+			} else {
+				// \infty / val = \infty, if val > 0
+				if (d.getValue().signum() > 0) {
+					return new IntervalValue();
+				}
+			}
+		} else {
+			if (d.isInfinity()) {
+				// val / \infty = \infty, if val > 0
+				if (b.getValue().signum() > 0) {
+					return new IntervalValue();
+				}
+
+				// 0 / anything = 0
+				if (b.getValue().signum() == 0) {
+					returnValue = updateIfLarger(returnValue, new BigDecimal(0), valuePresent);
+					valuePresent = true;
+				}
+			} else {
+				returnValue = updateIfLarger(returnValue, b.getValue().divide(d.getValue()), valuePresent);
+				valuePresent = true;
+			}
+		}
+
+		assert valuePresent;
+		return returnValue;
 	}
 }
