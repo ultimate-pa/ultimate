@@ -676,7 +676,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 
 		// Compute max(|c|, |d|)
 		IntervalValue maxCD;
-		if (other.isInfinity()) {
+		if (other.mLower.isInfinity() || other.mUpper.isInfinity()) {
 			maxCD = new IntervalValue();
 		} else {
 			if (other.mLower.getValue().abs().compareTo(other.mUpper.getValue().abs()) > 0) {

@@ -35,7 +35,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
@@ -45,16 +44,14 @@ public class IntervalConditionalEvaluator
         implements IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	private final Set<String> mVariables;
-	private final EvaluatorType mEvaluatorType;
 
 	private IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> mConditionEvaluator;
 	private IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> mNegatedConditionEvaluator;
 	private IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> mIfEvaluator;
 	private IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> mElseEvaluator;
 
-	protected IntervalConditionalEvaluator(EvaluatorType type) {
+	protected IntervalConditionalEvaluator() {
 		mVariables = new HashSet<>();
-		mEvaluatorType = type;
 	}
 
 	@Override
@@ -193,10 +190,5 @@ public class IntervalConditionalEvaluator
 		sb.append(mElseEvaluator);
 
 		return sb.toString();
-	}
-
-	@Override
-	public EvaluatorType getEvaluatorType() {
-		return mEvaluatorType;
 	}
 }

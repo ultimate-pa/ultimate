@@ -206,8 +206,7 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 		final String booleanValue = expr.getValue() ? "True" : "False";
 
 		IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> booleanExpressionEvaluator = logicalEvaluatorFactory
-		        .createSingletonValueExpressionEvaluator(booleanValue, Boolean.class,
-		                EvaluatorUtils.getEvaluatorType(expr.getType()));
+		        .createSingletonValueExpressionEvaluator(booleanValue, Boolean.class);
 
 		mExpressionEvaluator.addEvaluator(booleanExpressionEvaluator);
 	}
@@ -215,8 +214,7 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 	@Override
 	protected void visit(RealLiteral expr) {
 		IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> integerExpressionEvaluator = mEvaluatorFactory
-		        .createSingletonValueExpressionEvaluator(expr.getValue(), BigDecimal.class,
-		                EvaluatorUtils.getEvaluatorType(expr.getType()));
+		        .createSingletonValueExpressionEvaluator(expr.getValue(), BigDecimal.class);
 
 		mExpressionEvaluator.addEvaluator(integerExpressionEvaluator);
 	}
@@ -225,8 +223,7 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 	protected void visit(IntegerLiteral expr) {
 
 		IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> integerExpressionEvaluator = mEvaluatorFactory
-		        .createSingletonValueExpressionEvaluator(expr.getValue(), BigInteger.class,
-		                EvaluatorUtils.getEvaluatorType(expr.getType()));
+		        .createSingletonValueExpressionEvaluator(expr.getValue(), BigInteger.class);
 
 		mExpressionEvaluator.addEvaluator(integerExpressionEvaluator);
 	}
@@ -248,8 +245,7 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 	protected void visit(IdentifierExpression expr) {
 
 		final IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> variableExpressionEvaluator = mEvaluatorFactory
-		        .createSingletonVariableExpressionEvaluator(expr.getIdentifier(),
-		                EvaluatorUtils.getEvaluatorType(expr.getType()));
+		        .createSingletonVariableExpressionEvaluator(expr.getIdentifier());
 
 		mExpressionEvaluator.addEvaluator(variableExpressionEvaluator);
 

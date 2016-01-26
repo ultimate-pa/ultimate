@@ -35,7 +35,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
@@ -130,11 +129,5 @@ public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, Sign
 	public boolean containsBool() {
 		// TODO Auto-generated method stub
 		return false;
-	}
-
-	@Override
-	public EvaluatorType getEvaluatorType() {
-		// TODO Auto-generated method stub
-		return null;
 	}
 }

@@ -70,7 +70,7 @@ public class IntervalEvaluatorFactory
 
 		switch (arity) {
 		case ARITY_MIN:
-			return new IntervalUnaryExpressionEvaluator(mLogger, type);
+			return new IntervalUnaryExpressionEvaluator(mLogger);
 		case ARITY_MAX:
 			if (mSettingsEvaluatorType.equals(IntervalDomainPreferences.VALUE_EVALUATOR_DEFAULT)) {
 				return new IntervalBinaryExpressionEvaluator(mLogger, type);
@@ -89,35 +89,34 @@ public class IntervalEvaluatorFactory
 
 	@Override
 	public IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> createSingletonValueExpressionEvaluator(
-	        String value, Class<?> valueType, EvaluatorType type) {
+	        String value, Class<?> valueType) {
 		assert value != null;
 		return new IntervalSingletonValueExpressionEvaluator(
-		        new IntervalDomainValue(new IntervalValue(value), new IntervalValue(value)), type);
+		        new IntervalDomainValue(new IntervalValue(value), new IntervalValue(value)));
 	}
 
 	@Override
 	public IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> createSingletonVariableExpressionEvaluator(
-	        String variableName, EvaluatorType type) {
+	        String variableName) {
 		assert variableName != null;
-		return new IntervalSingletonVariableExpressionEvaluator(variableName, type);
+		return new IntervalSingletonVariableExpressionEvaluator(variableName);
 	}
 
 	@Override
 	public IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> createSingletonLogicalValueExpressionEvaluator(
-	        BooleanValue value, EvaluatorType type) {
-		return new IntervalSingletonBooleanExpressionEvaluator(value, type);
+	        BooleanValue value) {
+		return new IntervalSingletonBooleanExpressionEvaluator(value);
 	}
 
 	@Override
 	public IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> createFunctionEvaluator(
-	        String functionName, int inputParamCount, EvaluatorType type) {
-		return new IntervalFunctionEvaluator(functionName, inputParamCount, type);
+	        String functionName, int inputParamCount) {
+		return new IntervalFunctionEvaluator(functionName, inputParamCount);
 	}
 
 	@Override
-	public IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> createConditionalEvaluator(
-	        EvaluatorType type) {
-		return new IntervalConditionalEvaluator(type);
+	public IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> createConditionalEvaluator() {
+		return new IntervalConditionalEvaluator();
 	}
 
 }

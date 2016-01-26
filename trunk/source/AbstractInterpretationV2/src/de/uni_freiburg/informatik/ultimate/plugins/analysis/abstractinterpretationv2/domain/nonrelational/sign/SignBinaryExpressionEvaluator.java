@@ -383,9 +383,4 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 		// TODO Auto-generated method stub
 		return false;
 	}
-
-	@Override
-	public EvaluatorType getEvaluatorType() {
-		return mEvaluatorType;
-	}
 }

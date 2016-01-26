@@ -52,8 +52,8 @@ public class SignLogicalSingletonValueExpressionEvaluator extends SignSingletonV
 
 	private BooleanValue mBooleanValue;
 
-	public SignLogicalSingletonValueExpressionEvaluator(String value, EvaluatorType type) {
-		super(value, type);
+	public SignLogicalSingletonValueExpressionEvaluator(String value) {
+		super(value);
 		mBooleanValue = new BooleanValue(false);
 	}
 
@@ -96,11 +96,4 @@ public class SignLogicalSingletonValueExpressionEvaluator extends SignSingletonV
 		// TODO Auto-generated method stub
 		return false;
 	}
-
-	@Override
-	public EvaluatorType getEvaluatorType() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 }

@@ -48,17 +48,14 @@ public interface IEvaluatorFactory<VALUE, STATE extends IAbstractState<STATE, AC
 
 	public INAryEvaluator<VALUE, STATE, ACTION, VARDECL> createNAryExpressionEvaluator(int arity, EvaluatorType type);
 
-	public IEvaluator<VALUE, STATE, ACTION, VARDECL> createFunctionEvaluator(String functionName, int inputParamCount,
-	        EvaluatorType type);
+	public IEvaluator<VALUE, STATE, ACTION, VARDECL> createFunctionEvaluator(String functionName, int inputParamCount);
 
-	public IEvaluator<VALUE, STATE, ACTION, VARDECL> createConditionalEvaluator(EvaluatorType type);
+	public IEvaluator<VALUE, STATE, ACTION, VARDECL> createConditionalEvaluator();
 
 	public IEvaluator<VALUE, STATE, ACTION, VARDECL> createSingletonValueExpressionEvaluator(String value,
-	        Class<?> valueType, EvaluatorType type);
+	        Class<?> valueType);
 
-	public IEvaluator<VALUE, STATE, ACTION, VARDECL> createSingletonVariableExpressionEvaluator(String variableName,
-	        EvaluatorType type);
+	public IEvaluator<VALUE, STATE, ACTION, VARDECL> createSingletonVariableExpressionEvaluator(String variableName);
 
-	public IEvaluator<VALUE, STATE, ACTION, VARDECL> createSingletonLogicalValueExpressionEvaluator(BooleanValue value,
-	        EvaluatorType type);
+	public IEvaluator<VALUE, STATE, ACTION, VARDECL> createSingletonLogicalValueExpressionEvaluator(BooleanValue value);
 }

@@ -601,6 +601,10 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 			entry.setValue(new IntervalDomainValue(true));
 		}
 
+		for (final Entry<String, BooleanValue> entry : ret.mBooleanValuesMap.entrySet()) {
+			entry.setValue(new BooleanValue(Value.BOTTOM));
+		}
+
 		return ret;
 	}
 

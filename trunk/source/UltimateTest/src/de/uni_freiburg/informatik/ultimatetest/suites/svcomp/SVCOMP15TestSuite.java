@@ -54,7 +54,7 @@ public class SVCOMP15TestSuite extends AbstractSVCOMPTestSuite {
 	@Override
 	protected int getFilesPerCategory() {
 		// -1 or value larger than 0
-		return 45;
+		return -1;
 	}
 
 	@Override

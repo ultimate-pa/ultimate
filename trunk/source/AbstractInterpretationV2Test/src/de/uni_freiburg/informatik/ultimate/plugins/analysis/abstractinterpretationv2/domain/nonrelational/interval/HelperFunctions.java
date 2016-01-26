@@ -65,10 +65,10 @@ public class HelperFunctions {
 		final LoggerInitializer loggerInitializer = new LoggerInitializer();
 		final Logger logger = loggerInitializer.getLogger(HelperFunctions.class.toGenericString());
 
-		IntervalSingletonValueExpressionEvaluator value1Evaluator = new IntervalSingletonValueExpressionEvaluator(first,
-		        type);
+		IntervalSingletonValueExpressionEvaluator value1Evaluator = new IntervalSingletonValueExpressionEvaluator(
+		        first);
 		IntervalSingletonValueExpressionEvaluator value2Evaluator = new IntervalSingletonValueExpressionEvaluator(
-		        second, type);
+		        second);
 
 		IntervalBinaryExpressionEvaluator binaryExpressionEvaluator = new IntervalBinaryExpressionEvaluator(logger,
 		        type);

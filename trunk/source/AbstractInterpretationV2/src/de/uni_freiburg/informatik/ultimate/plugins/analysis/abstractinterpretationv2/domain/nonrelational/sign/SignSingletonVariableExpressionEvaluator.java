@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
@@ -60,7 +59,7 @@ public class SignSingletonVariableExpressionEvaluator
 	 * @param stateConverter
 	 *            The interval domain state converter.
 	 */
-	public SignSingletonVariableExpressionEvaluator(String variableName, EvaluatorType type) {
+	public SignSingletonVariableExpressionEvaluator(String variableName) {
 		mVariableName = variableName;
 		mVariableSet = new HashSet<String>();
 	}
@@ -100,11 +99,5 @@ public class SignSingletonVariableExpressionEvaluator
 	public boolean containsBool() {
 		// TODO Auto-generated method stub
 		return false;
-	}
-
-	@Override
-	public EvaluatorType getEvaluatorType() {
-		// TODO Auto-generated method stub
-		return null;
 	}
 }
