@@ -130,10 +130,14 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 				ComparisonTables.createInstanceFullComparisonTable(performanceEntries, LOG_SEPARATOR)));
 		tables.add(new Pair<>("instanceTimePartitioning",
 				ComparisonTables.createInstanceTimePartitioningTable(performanceEntries, LOG_SEPARATOR)));
+		tables.add(new Pair<>("instanceAlgoWork",
+				ComparisonTables.createInstanceAlgoWorkTable(performanceEntries, LOG_SEPARATOR)));
 		tables.add(new Pair<>("averagedSimulationFullComparison",
 				ComparisonTables.createAveragedSimulationFullComparisonTable(performanceEntries, LOG_SEPARATOR)));
 		tables.add(new Pair<>("averagedSimulationTimePartitioning",
 				ComparisonTables.createAveragedSimulationTimePartitioningTable(performanceEntries, LOG_SEPARATOR)));
+		tables.add(new Pair<>("averagedSimulationAlgoWork",
+				ComparisonTables.createAveragedSimulationAlgoWorkTable(performanceEntries, LOG_SEPARATOR)));
 
 		System.out.println("Creating html files...");
 		for (Pair<String, List<String>> pair : tables) {
