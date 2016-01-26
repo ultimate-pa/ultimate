@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.util.BidirectionalMap;
 
 public class OctMatrixTest {
-	
+
 	@Test
 	public void testEmpty() {
 		OctMatrix m = OctMatrix.NEW;
@@ -22,23 +22,25 @@ public class OctMatrixTest {
 		assertIsEqualTo(m, OctMatrix.min(m, m));
 		assertIsEqualTo(m, OctMatrix.max(m, m));
 	}
-	
+
+	// closure tests ///////////////////////////////////////////////////////////////////////////////////////////////////
+
 	@Test
 	public void testStrongClosure1() {
 		 OctMatrix m = OctMatrix.parseBlockLowerTriangular(
-			  "0 9\n"
-			+ "0 0\n"
-			+ "0 8 0 9\n"
-			+ "8 2 0 0\n"
-			+ "7 4 8 6 0 9\n"
-			+ "0 3 6 7 0 0\n");
+				  "0 9 "
+				+ "0 0 "
+				+ "0 8 0 9 "
+				+ "8 2 0 0 "
+				+ "7 4 8 6 0 9 "
+				+ "0 3 6 7 0 0 ");
 		 OctMatrix mStrongClosure = OctMatrix.parseBlockLowerTriangular(
-			  "0 7\n"
-			+ "0 0\n"
-			+ "0 7 0 7\n"
-			+ "0 2 0 0\n"
-			+ "4 4 4 4 0 8\n"
-			+ "0 3 0 3 0 0\n");
+				  "0 7 "
+				+ "0 0 "
+				+ "0 7 0 7 "
+				+ "0 2 0 0 "
+				+ "4 4 4 4 0 8 "
+				+ "0 3 0 3 0 0 ");
 		assertIsEqualTo(mStrongClosure, m.cachedStrongClosure());
 		assertIsEqualTo(mStrongClosure, mStrongClosure.cachedStrongClosure());
 	}
@@ -46,47 +48,47 @@ public class OctMatrixTest {
 	@Test
 	public void testStrongClosure2() {
 		OctMatrix m = OctMatrix.parseBlockLowerTriangular(
-			  "0.6  inf\n"
-			+ "inf  0.6\n"
-			+ "inf  1.3 inf inf\n"
-			+ "inf -1.5 4.9 inf\n");
+				  "0.6  inf "
+				+ "inf  0.6 "
+				+ "inf  1.3 inf inf "
+				+ "inf -1.5 4.9 inf ");
 		OctMatrix mStrongClosure = OctMatrix.parseBlockLowerTriangular(
-			  "0.0 -0.2\n"
-			+ "inf  0.0\n"
-			+ "inf  1.3 0.0 inf\n"
-			+ "inf -1.5 4.9 0.0\n");
+				  "0.0 -0.2 "
+				+ "inf  0.0 "
+				+ "inf  1.3 0.0 inf "
+				+ "inf -1.5 4.9 0.0 ");
 		assertIsEqualTo(mStrongClosure, m.cachedStrongClosure());
 		assertIsEqualTo(mStrongClosure, mStrongClosure.cachedStrongClosure());
 	}
-	
+
 	@Test
 	public void testStrongClosure3() {
 		OctMatrix m = OctMatrix.parseBlockLowerTriangular(
-			  "  0 inf\n"
-			+ "  2   0\n"
-			+ "inf inf   0 inf\n"
-			+ "inf inf   4   0\n");
+				  "  0 inf "
+				+ "  2   0 "
+				+ "inf inf   0 inf "
+				+ "inf inf   4   0 ");
 		OctMatrix mStrongClosure = OctMatrix.parseBlockLowerTriangular(
-			  "  0 inf\n"
-			+ "  2   0\n"
-			+ "inf inf   0 inf\n"
-			+ "  3 inf   4   0\n");
+				  "  0 inf "
+				+ "  2   0 "
+				+ "inf inf   0 inf "
+				+ "  3 inf   4   0 ");
 		assertIsEqualTo(mStrongClosure, m.cachedStrongClosure());
 		assertIsEqualTo(mStrongClosure, mStrongClosure.cachedStrongClosure());
 	}
-	
+
 	@Test
 	public void testStrongClosure4() {
 		OctMatrix m = OctMatrix.parseBlockLowerTriangular(
-			  "  0 inf\n"
-			+ "  2   0\n"
-			+ "inf inf   0 inf\n"
-			+ "inf inf   4   0\n");
+				  "  0 inf "
+				+ "  2   0 "
+				+ "inf inf   0 inf "
+				+ "inf inf   4   0 ");
 		OctMatrix mStrongClosure = OctMatrix.parseBlockLowerTriangular(
-			  "  0 inf\n"
-			+ "  2   0\n"
-			+ "inf inf   0 inf\n"
-			+ "  3 inf   4   0\n");
+				  "  0 inf "
+				+ "  2   0 "
+				+ "inf inf   0 inf "
+				+ "  3 inf   4   0 ");
 		assertIsEqualTo(mStrongClosure, m.cachedStrongClosure());
 		assertIsEqualTo(mStrongClosure, mStrongClosure.cachedStrongClosure());
 	}
@@ -98,7 +100,7 @@ public class OctMatrixTest {
 		assertIsEqualTo(m, m.cachedStrongClosure());
 		assertIsEqualTo(t, m.cachedTightClosure());
 	}
-	
+
 	@Test
 	public void testClosuresSingeltonReals() {
 		OctMatrix m = OctMatrix.parseBlockLowerTriangular("0 2.0000 \n -2 0"); // v_0 \in [-1, -1]
@@ -112,18 +114,38 @@ public class OctMatrixTest {
 		Assert.assertTrue(m.cachedStrongClosure().hasNegativeSelfLoop());
 		Assert.assertTrue(m.cachedTightClosure().hasNegativeSelfLoop());
 	}
-	
+
 	@Test
 	public void testClosuresBottomIntegers() {
 		OctMatrix m = OctMatrix.parseBlockLowerTriangular(
-			  "  0 inf\n"
-			+ "inf   0\n"
-			+ "inf inf   0  -3\n"
-			+ "  3   0 inf   0\n");
+				  "  0 inf "
+				+ "inf   0 "
+				+ "inf inf   0  -3 "
+				+ "  3   0 inf   0 ");
 		Assert.assertFalse(m.cachedStrongClosure().hasNegativeSelfLoop());
 		Assert.assertTrue(m.cachedTightClosure().hasNegativeSelfLoop());
 	}
-	
+
+//	@Test
+	public void testClosureByComparingRandom() {
+		for (int i = 0; i < 2000; ++i) {
+			int variables = (int) (Math.random() * 10) + 1;
+			OctMatrix m = OctMatrix.random(variables);
+			OctMatrix cNaiv = m.strongClosureNaiv();
+			OctMatrix cOther = m.cachedStrongClosure();
+			if (cNaiv.hasNegativeSelfLoop() != cOther.hasNegativeSelfLoop() || !cNaiv.isEqualTo(cOther)) {
+				String msg = String.format("%s%n%s%n%s%n%s%n%s%n%s%n",
+						"original matrix", m,
+						"strong closure (naiv)", cNaiv,
+						"strong closure (other)", cOther);
+				Assert.fail(msg);
+			}
+			// else: test passed
+		}
+	}
+
+	// misc tests //////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	@Test
 	public void testSumMinMax() {
 		OctMatrix m = OctMatrix.parseBlockLowerTriangular("-7 inf    1000000000000.0000000000000 inf");
@@ -141,76 +163,49 @@ public class OctMatrixTest {
 		assertIsEqualTo(max, OctMatrix.max(m, n));
 		assertIsEqualTo(max, OctMatrix.max(n, m));
 	}
-	
-	@Test
-	public void testRelations() {
-		OctMatrix e1 = OctMatrix.parseBlockLowerTriangular("0 inf -2.5e80 9");
-		OctMatrix e2 = OctMatrix.parseBlockLowerTriangular("-0e-1 inf -25e79  9.00000000000000000000");
-		OctMatrix g1 = OctMatrix.parseBlockLowerTriangular("0 inf -2.5e80 9.000000000000000000001");
-		OctMatrix g2 = OctMatrix.parseBlockLowerTriangular("inf inf inf inf");
-		OctMatrix l1 = OctMatrix.parseBlockLowerTriangular("-0.000000000000000000001 inf -2.5e80 9");
-		OctMatrix l2 = OctMatrix.parseBlockLowerTriangular("0 2e308 -2.5e80 9");
-		
-		Assert.assertTrue(e1.isEqualTo(e1));
-		Assert.assertTrue(e1.isEqualTo(e2));
-		Assert.assertTrue(e2.isEqualTo(e1));
-		Assert.assertTrue(e1.isLessEqualThan(e1));
-		Assert.assertTrue(e1.isLessEqualThan(e2));
-		Assert.assertTrue(e2.isLessEqualThan(e1));
-		
-		Assert.assertTrue(e1.isLessEqualThan(g1) && !e1.isEqualTo(g1) && !g1.isEqualTo(e1));
-		Assert.assertTrue(!g1.isLessEqualThan(e1));
-		Assert.assertTrue(e1.isLessEqualThan(g2) && !e1.isEqualTo(g2) && !g2.isEqualTo(e1));
-		Assert.assertTrue(!g2.isLessEqualThan(e1));
-		
-		Assert.assertTrue(l1.isLessEqualThan(e1) && !l1.isEqualTo(e1) && !e1.isEqualTo(l1));
-		Assert.assertTrue(!e1.isLessEqualThan(l1));
-		Assert.assertTrue(l2.isLessEqualThan(e1) && !l2.isEqualTo(e1) && !e1.isEqualTo(l2));
-		Assert.assertTrue(!e1.isLessEqualThan(l2));
-	}
-	
+
 	@Test
 	public void testAddVariables() {
-		 OctMatrix m = OctMatrix.parseBlockLowerTriangular(
-			  " 0  1\n"
-			+ " 2  3\n"
-			+ " 4  5  6  7\n"
-			+ " 8  9 10 11\n");
-		 OctMatrix a1 = OctMatrix.parseBlockLowerTriangular(
-			  "  0   1\n"
-			+ "  2   3\n"
-			+ "  4   5   6   7\n"
-			+ "  8   9  10  11\n"
-			+ "inf inf inf inf inf inf\n"
-			+ "inf inf inf inf inf inf\n");
-		 assertIsEqualTo(a1, m.addVariables(1));
+		OctMatrix m = OctMatrix.parseBlockLowerTriangular(
+				  " 0  1 "
+				+ " 2  3 "
+				+ " 4  5  6  7 "
+				+ " 8  9 10 11 ");
+		OctMatrix a1 = OctMatrix.parseBlockLowerTriangular(
+				  "  0   1 "
+				+ "  2   3 "
+				+ "  4   5   6   7 "
+				+ "  8   9  10  11 "
+				+ "inf inf inf inf inf inf "
+				+ "inf inf inf inf inf inf ");
+		assertIsEqualTo(a1, m.addVariables(1));
 	}
-	
+
 	@Test
 	public void testRemoveVariables() {
-		 OctMatrix m = OctMatrix.parseBlockLowerTriangular(
-			  " 0  1\n"
-			+ " 2  3\n"
-			+ " 4  5  6  7\n"
-			+ " 8  9 10 11\n"
-			+ "12 13 14 15 16 17\n"
-			+ "18 19 20 21 22 23\n");
+		OctMatrix m = OctMatrix.parseBlockLowerTriangular(
+				  " 0  1 "
+				+ " 2  3 "
+				+ " 4  5  6  7 "
+				+ " 8  9 10 11 "
+				+ "12 13 14 15 16 17 "
+				+ "18 19 20 21 22 23 ");
 		 OctMatrix r1 = OctMatrix.parseBlockLowerTriangular(
-			  " 0  1\n"
-			+ " 2  3\n"
-			+ "12 13 16 17\n"
-			+ "18 19 22 23\n");
-		 OctMatrix r12 = OctMatrix.parseBlockLowerTriangular("0 1 2 3");
-		 OctMatrix r02 = OctMatrix.parseBlockLowerTriangular("6 7 10 11");
-		 OctMatrix r01 = OctMatrix.parseBlockLowerTriangular("16 17 22 23");
-		 OctMatrix r012 = OctMatrix.parseBlockLowerTriangular("");
-		 assertIsEqualTo(r1, m.removeVariable(1));
-		 assertIsEqualTo(r12, m.removeVariables(asSet(1, 2)));
-		 assertIsEqualTo(r02, m.removeVariables(asSet(0, 2)));
-		 assertIsEqualTo(r01, m.removeVariables(asSet(0, 1)));
-		 assertIsEqualTo(r012, m.removeVariables(asSet(0, 1, 2)));
+				  " 0  1 "
+				+ " 2  3 "
+				+ "12 13 16 17 "
+				+ "18 19 22 23 ");
+		OctMatrix r12 = OctMatrix.parseBlockLowerTriangular("0 1 2 3");
+		OctMatrix r02 = OctMatrix.parseBlockLowerTriangular("6 7 10 11");
+		OctMatrix r01 = OctMatrix.parseBlockLowerTriangular("16 17 22 23");
+		OctMatrix r012 = OctMatrix.parseBlockLowerTriangular("");
+		assertIsEqualTo(r1, m.removeVariable(1));
+		assertIsEqualTo(r12, m.removeVariables(asSet(1, 2)));
+		assertIsEqualTo(r02, m.removeVariables(asSet(0, 2)));
+		assertIsEqualTo(r01, m.removeVariables(asSet(0, 1)));
+		assertIsEqualTo(r012, m.removeVariables(asSet(0, 1, 2)));
 	}
-	
+
 	@Test
 	public void testWidenSimple() {
 		OctMatrix m = OctMatrix.parseBlockLowerTriangular("  4   7   3   1");
@@ -228,7 +223,7 @@ public class OctMatrixTest {
 		OctMatrix m = OctMatrix.parseBlockLowerTriangular("5  0 3   -7");
 		OctMatrix n = OctMatrix.parseBlockLowerTriangular("3 -4 3.0 -7.1");
 		assertIsEqualTo(m, m.widenExponential(n, threshold));
-		
+
 		m = OctMatrix.parseBlockLowerTriangular("-9 -9 -9 -9");
 		// negative numbers
 		n = OctMatrix.parseBlockLowerTriangular("-3 -2 -1.9999999999 0");
@@ -243,7 +238,7 @@ public class OctMatrixTest {
 		mWn = OctMatrix.parseBlockLowerTriangular("10 10 10 inf");
 		assertIsEqualTo(mWn, m.widenExponential(n, threshold));
 	}
-	
+
 	@Test
 	public void testAppendSelection() {
 		OctMatrix a = OctMatrix.parseBlockLowerTriangular(
@@ -266,9 +261,9 @@ public class OctMatrixTest {
 		OctMatrix actual = a.appendSelection(b, asList(0, 2));
 		assertIsEqualTo(expected, actual);
 	}
-	
+
 	@Test
-	public void testCopySelection() {		
+	public void testCopySelection() {
 		OctMatrix a = OctMatrix.parseBlockLowerTriangular(
 				  "  1   9 "
 				+ "  2  10 "
@@ -295,31 +290,52 @@ public class OctMatrixTest {
 		BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar = new BidirectionalMap<>();
 		mapSourceVarToTargetVar.put(1, 2);
 		mapSourceVarToTargetVar.put(3, 0);
-		a.copySelection(b, mapSourceVarToTargetVar);		
+		a.copySelection(b, mapSourceVarToTargetVar);
 		assertIsEqualTo(expected, a);
 	}
-	
+
+	// post-operator operations ////////////////////////////////////////////////////////////////////////////////////////
+
 //	@Test
-	public void testByComparingRandom() {
-		for (int i = 0; i < 2000; ++i) {
-			int variables = (int) (Math.random() * 10) + 1;
-			OctMatrix m = OctMatrix.random(variables);
-			OctMatrix cNaiv = m.strongClosureNaiv();
-			OctMatrix cOther = m.cachedStrongClosure();
-			if (cNaiv.hasNegativeSelfLoop() && cOther.hasNegativeSelfLoop()) {
-				// test passed
-			} else if (!cNaiv.isEqualTo(cOther)) {
-				System.out.println("original matrix");
-				System.out.println(m);
-				System.out.println("strong closure (naiv)");
-				System.out.println(cNaiv);
-				System.out.println("strong closure (other)");
-				System.out.println(cOther);
-				Assert.fail();
-			}
-		}
+//	public void testAssignVar() {
+//		OctMatrix m = OctMatrix.parseBlockLowerTriangular(
+//				  " 0  1 "
+//				+ " 2  3 "
+//				+ " 4  5  6  7 "
+//				+ " 8  9 10 11 "
+//				+ "12 13 14 15 16 17 "
+//				+ "18 19 20 21 22 23 ");
+//	}
+
+	// relations ///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	@Test
+	public void testRelations() {
+		OctMatrix e1 = OctMatrix.parseBlockLowerTriangular("0 inf -2.5e80 9");
+		OctMatrix e2 = OctMatrix.parseBlockLowerTriangular("-0e-1 inf -25e79  9.00000000000000000000");
+		OctMatrix g1 = OctMatrix.parseBlockLowerTriangular("0 inf -2.5e80 9.000000000000000000001");
+		OctMatrix g2 = OctMatrix.parseBlockLowerTriangular("inf inf inf inf");
+		OctMatrix l1 = OctMatrix.parseBlockLowerTriangular("-0.000000000000000000001 inf -2.5e80 9");
+		OctMatrix l2 = OctMatrix.parseBlockLowerTriangular("0 2e308 -2.5e80 9");
+
+		Assert.assertTrue(e1.isEqualTo(e1));
+		Assert.assertTrue(e1.isEqualTo(e2));
+		Assert.assertTrue(e2.isEqualTo(e1));
+		Assert.assertTrue(e1.isLessEqualThan(e1));
+		Assert.assertTrue(e1.isLessEqualThan(e2));
+		Assert.assertTrue(e2.isLessEqualThan(e1));
+
+		Assert.assertTrue(e1.isLessEqualThan(g1) && !e1.isEqualTo(g1) && !g1.isEqualTo(e1));
+		Assert.assertTrue(!g1.isLessEqualThan(e1));
+		Assert.assertTrue(e1.isLessEqualThan(g2) && !e1.isEqualTo(g2) && !g2.isEqualTo(e1));
+		Assert.assertTrue(!g2.isLessEqualThan(e1));
+
+		Assert.assertTrue(l1.isLessEqualThan(e1) && !l1.isEqualTo(e1) && !e1.isEqualTo(l1));
+		Assert.assertTrue(!e1.isLessEqualThan(l1));
+		Assert.assertTrue(l2.isLessEqualThan(e1) && !l2.isEqualTo(e1) && !e1.isEqualTo(l2));
+		Assert.assertTrue(!e1.isLessEqualThan(l2));
 	}
-	
+
 	@Test
 	public void testIsEqualTo() {
 		OctMatrix m = OctMatrix.parseBlockLowerTriangular("");
@@ -331,53 +347,55 @@ public class OctMatrixTest {
 		OctMatrix n2 = OctMatrix.parseBlockLowerTriangular("4 -9.0 inf 3");
 		Assert.assertTrue(m2.isEqualTo(n2));
 		Assert.assertTrue(n2.isEqualTo(m2));
-		
+
 		OctMatrix o = OctMatrix.parseBlockLowerTriangular("4 -9 inf 3.00001");
 		Assert.assertFalse(m2.isEqualTo(o));
 		Assert.assertFalse(o.isEqualTo(m2));
-		
+
 	}
-	
+
 	@Test
 	public void testIsEqualToPermutation() {
-		 OctMatrix a = OctMatrix.parseBlockLowerTriangular(
+		OctMatrix a = OctMatrix.parseBlockLowerTriangular(
 				  " 0  1 "
 				+ " 2  3 "
 				+ " 4  5  6  7 "
 				+ " 8  9 10 11 ");
-		 OctMatrix b = OctMatrix.parseBlockLowerTriangular(
+		OctMatrix b = OctMatrix.parseBlockLowerTriangular(
 				  " 6  7 "
 				+ "10 11 "
 				+ " 9  5  0  1 "
 				+ " 8  4  2  3 ");
-		 int[] mapAVarIndexToBVarIndex = {1, 0};
-		 Assert.assertTrue(a.isEqualToPermutation(b, mapAVarIndexToBVarIndex));
+		int[] mapAVarIndexToBVarIndex = {1, 0};
+		Assert.assertTrue(a.isEqualToPermutation(b, mapAVarIndexToBVarIndex));
 	}
-	
+
 	@Test
 	public void testIsBlockEqualTo() {
-		 OctMatrix a = OctMatrix.parseBlockLowerTriangular(
+		OctMatrix a = OctMatrix.parseBlockLowerTriangular(
 				  " 0  1 "
 				+ " 2  3 "
 				+ " 4  5  6  7 "
 				+ " 8  9 10 11 ");
-		 OctMatrix b = OctMatrix.parseBlockLowerTriangular(
+		OctMatrix b = OctMatrix.parseBlockLowerTriangular(
 				  " 6  7 "
 				+ "10 11 "
 				+ " 9  5  0  1 "
 				+ " 8  4  2  3 ");
-		 Assert.assertTrue(a.isBlockEqualTo(1, 0, a, 1, 0));
-		 Assert.assertTrue(a.isBlockEqualTo(0, 0, b, 1, 1));
-		 Assert.assertTrue(b.isBlockEqualTo(1, 1, a, 0, 0));
-		 Assert.assertTrue(a.isBlockEqualTo(1, 0, b, 0, 1));
-		 Assert.assertFalse(a.isBlockEqualTo(1, 0, b, 1, 0));
+		Assert.assertTrue(a.isBlockEqualTo(1, 0, a, 1, 0));
+		Assert.assertTrue(a.isBlockEqualTo(0, 0, b, 1, 1));
+		Assert.assertTrue(b.isBlockEqualTo(1, 1, a, 0, 0));
+		Assert.assertTrue(a.isBlockEqualTo(1, 0, b, 0, 1));
+		Assert.assertFalse(a.isBlockEqualTo(1, 0, b, 1, 0));
 	}
-	
+
+	// utilities ///////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	private void assertIsEqualTo(OctMatrix expected, OctMatrix actual) {
 		String msg = "expected:\n" + expected + "acutal:\n" + actual;
 		Assert.assertTrue(msg, expected.isEqualTo(actual));
 	}
-	
+
 	private Set<Integer> asSet(Integer... elements) {
 		return new HashSet<Integer>(asList(elements));
 	}
