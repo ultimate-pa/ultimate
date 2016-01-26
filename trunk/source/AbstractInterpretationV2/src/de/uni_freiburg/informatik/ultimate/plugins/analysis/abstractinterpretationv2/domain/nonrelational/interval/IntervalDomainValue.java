@@ -1159,7 +1159,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		if (upper.isInfinity()) {
 			newUpper = upper;
 		} else {
-			newUpper = new IntervalValue(lower.getValue().setScale(0, RoundingMode.DOWN));
+			newUpper = new IntervalValue(upper.getValue().setScale(0, RoundingMode.DOWN));
 		}
 		
 		return new IntervalDomainValue(newLower, newUpper);

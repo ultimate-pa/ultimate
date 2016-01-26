@@ -193,9 +193,9 @@ public class HelperFunctions {
 
 		return ret;
 	}
-	
+
 	protected static boolean computeDivisionResultInteger(IntervalDomainValue interval1, IntervalDomainValue interval2,
-	        IntervalDomainValue expectedResult, EvaluatorType type) {
+	        IntervalDomainValue expectedResult) {
 
 		final List<IEvaluationResult<IntervalDomainEvaluationResult>> result = createBinaryEvaluator(interval1,
 		        interval2, Operator.ARITHDIV, EvaluatorType.INTEGER).evaluate(new IntervalDomainState());

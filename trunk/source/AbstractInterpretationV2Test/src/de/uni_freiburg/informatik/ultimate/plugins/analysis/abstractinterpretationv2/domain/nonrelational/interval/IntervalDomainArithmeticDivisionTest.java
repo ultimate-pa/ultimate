@@ -131,4 +131,15 @@ public class IntervalDomainArithmeticDivisionTest {
 
 		assertTrue(HelperFunctions.computeDivisionResultReal(interval1, interval2, expectedResult));
 	}
+	
+	@Test
+	public void TestIntervalDivisionRegression() {
+		IntervalDomainValue interval1 = HelperFunctions.createInterval(-16, 16);
+
+		IntervalDomainValue interval2 = HelperFunctions.createInterval(8, 8);
+
+		IntervalDomainValue expectedResult = HelperFunctions.createInterval(-2, 2);
+
+		assertTrue(HelperFunctions.computeDivisionResultInteger(interval1, interval2, expectedResult));
+	}
 }
