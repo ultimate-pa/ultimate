@@ -32,6 +32,8 @@ public class OctStatementProcessor {
 	private final Logger mLogger;
 	private final BoogieSymbolTable mSymbolTable;
 	
+	private final AffineExpressionTransformer mExprTransformer = new AffineExpressionTransformer();
+	
 	private List<OctagonDomainState> mOldStates;
 	private List<OctagonDomainState> mNewStates;
 	
@@ -144,7 +146,7 @@ public class OctStatementProcessor {
 	
 	private void processNumericAssign(String targetVar, Expression rhs) {
 		Consumer<OctagonDomainState> action = s -> s.havocVar(targetVar);
-		AffineExpression ae = AffineExpressionTransformer.transformNumeric(rhs);
+		AffineExpression ae = mExprTransformer.transformNumeric(rhs);
 		if (ae != null) {
 			if (ae.isConstant()) {
 				OctValue value = new OctValue(ae.getConstant());

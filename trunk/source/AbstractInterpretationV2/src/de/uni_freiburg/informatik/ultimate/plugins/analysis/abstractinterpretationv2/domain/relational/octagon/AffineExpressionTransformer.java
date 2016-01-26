@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.math.BigDecimal;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,7 +32,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 
 public class AffineExpressionTransformer {
 	
-	public static AffineExpression transformNumeric(Expression e) {
+	private Map<Expression, AffineExpression> mCacheAffineExpr = new HashMap<>();
+	
+	public AffineExpression transformNumericCached(Expression e) {
+		AffineExpression cachedAe = mCacheAffineExpr.get(e);
+		if (cachedAe == null) {
+			cachedAe = transformNumeric(e);
+			if (cachedAe != null) {
+				mCacheAffineExpr.put(e, cachedAe);
+			}
+		}
+		return cachedAe;
+	}
+	
+	public AffineExpression transformNumeric(Expression e) {
 		assert TypeUtil.isNumeric(e.getType()) : "Tried numeric transformation for " + e;
 		if (e instanceof IntegerLiteral) {
 			String value = ((IntegerLiteral) e).getValue();
@@ -51,7 +65,7 @@ public class AffineExpressionTransformer {
 		return null;
 	}
 
-	private static AffineExpression transformNumericUnaryExpression(UnaryExpression e) {
+	private AffineExpression transformNumericUnaryExpression(UnaryExpression e) {
 		switch (e.getOperator()) {
 		case ARITHNEGATIVE:
 			AffineExpression sub = transformNumeric(e.getExpr());
@@ -61,7 +75,7 @@ public class AffineExpressionTransformer {
 		}
 	}
 	
-	private static AffineExpression transformNumericBinaryExpression(BinaryExpression e) {
+	private AffineExpression transformNumericBinaryExpression(BinaryExpression e) {
 		AffineExpression left = transformNumeric(e.getLeft());
 		if (left == null) { return null; }
 		AffineExpression right = transformNumeric(e.getRight());
