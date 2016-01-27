@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -95,8 +96,18 @@ public class IntervalSingletonVariableExpressionEvaluator
 			returnList.add(new IntervalDomainEvaluationResult(new IntervalDomainValue(true), currentState,
 			        new BooleanValue(BooleanValue.Value.BOTTOM)));
 		} else {
-			returnList.add(new IntervalDomainEvaluationResult(new IntervalDomainValue(val.getLower(), val.getUpper()),
-			        currentState, returnBool));
+			if (mContainsBoolean && returnBool.getValue() == Value.TOP) {
+				final IntervalDomainState truestate = currentState.setBooleanValue(mVariableName, true);
+				returnList.add(new IntervalDomainEvaluationResult(
+				        new IntervalDomainValue(val.getLower(), val.getUpper()), truestate, new BooleanValue(true)));
+
+				final IntervalDomainState falseState = currentState.setBooleanValue(mVariableName, false);
+				returnList.add(new IntervalDomainEvaluationResult(
+				        new IntervalDomainValue(val.getLower(), val.getUpper()), falseState, new BooleanValue(false)));
+			} else {
+				returnList.add(new IntervalDomainEvaluationResult(
+				        new IntervalDomainValue(val.getLower(), val.getUpper()), currentState, returnBool));
+			}
 		}
 
 		return returnList;

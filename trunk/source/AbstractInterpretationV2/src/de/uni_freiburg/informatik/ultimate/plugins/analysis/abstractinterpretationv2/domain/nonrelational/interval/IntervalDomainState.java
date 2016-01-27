@@ -38,6 +38,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -46,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
@@ -85,8 +87,8 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	}
 
 	protected IntervalDomainState(Logger logger, Map<String, IBoogieVar> variablesMap,
-			Map<String, IntervalDomainValue> valuesMap, Map<String, BooleanValue> booleanValuesMap,
-			boolean isFixpoint) {
+	        Map<String, IntervalDomainValue> valuesMap, Map<String, BooleanValue> booleanValuesMap,
+	        boolean isFixpoint) {
 		mVariablesMap = new HashMap<String, IBoogieVar>(variablesMap);
 		mValuesMap = new HashMap<String, IntervalDomainValue>(valuesMap);
 		mBooleanValuesMap = new HashMap<String, BooleanValue>(booleanValuesMap);
@@ -128,7 +130,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	protected BooleanValue getBooleanValue(String booleanVariableName) {
 		if (!mBooleanValuesMap.containsKey(booleanVariableName)) {
 			throw new UnsupportedOperationException(
-					"There is no boolean variable with name " + booleanVariableName + ".");
+			        "There is no boolean variable with name " + booleanVariableName + ".");
 		}
 
 		return new BooleanValue(mBooleanValuesMap.get(booleanVariableName));
@@ -146,7 +148,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 		assert vars.length == values.length;
 
 		return setMixedValues(vars, values, new String[0], new BooleanValue.Value[0], new String[0],
-				new IntervalDomainValue[0]);
+		        new IntervalDomainValue[0]);
 	}
 
 	protected IntervalDomainState setBooleanValue(String name, BooleanValue.Value value) {
@@ -175,7 +177,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 		assert vars.length == values.length;
 
 		return setMixedValues(new String[0], new IntervalDomainValue[0], vars, values, new String[0],
-				new IntervalDomainValue[0]);
+		        new IntervalDomainValue[0]);
 	}
 
 	/**
@@ -204,7 +206,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 		assert arrays.length == values.length;
 
 		return setMixedValues(new String[0], new IntervalDomainValue[0], new String[0], new BooleanValue.Value[0],
-				arrays, values);
+		        arrays, values);
 	}
 
 	/**
@@ -223,7 +225,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	 * @return A new {@link IntervalDomainState} which is the copy of <code>this</code> but with the updated values.
 	 */
 	protected IntervalDomainState setMixedValues(String[] vars, IntervalDomainValue[] values, String[] booleanVars,
-			BooleanValue.Value[] booleanValues, String[] arrays, IntervalDomainValue[] arrayValues) {
+	        BooleanValue.Value[] booleanValues, String[] arrays, IntervalDomainValue[] arrayValues) {
 		assert vars != null;
 		assert values != null;
 		assert booleanVars != null;
@@ -291,7 +293,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 
 		if (old != null) {
 			throw new UnsupportedOperationException(
-					"Variable names must be disjoint. Variable " + name + " is already present.");
+			        "Variable names must be disjoint. Variable " + name + " is already present.");
 		}
 
 		if (variable.getIType() instanceof PrimitiveType) {
@@ -308,7 +310,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 			state.mValuesMap.put(name, new IntervalDomainValue());
 		} else {
 			state.mLogger.warn("The IBoogieVar type " + variable.getIType().getClass().toString() + " of variable "
-					+ name + " is not implemented. Assuming top.");
+			        + name + " is not implemented. Assuming top.");
 			state.mValuesMap.put(name, new IntervalDomainValue());
 		}
 	}
@@ -346,7 +348,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 			final IBoogieVar old = newVarMap.put(id, var);
 			if (old != null) {
 				throw new UnsupportedOperationException(
-						"Variable names must be disjoint. The variable " + id + " is already present.");
+				        "Variable names must be disjoint. The variable " + id + " is already present.");
 			}
 			if (var.getIType() instanceof PrimitiveType) {
 				final PrimitiveType primitiveType = (PrimitiveType) var.getIType();
@@ -363,7 +365,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 				newValMap.put(id, new IntervalDomainValue());
 			} else {
 				mLogger.warn("The IBoogieVar type " + var.getIType().getClass().toString() + " of variable " + id
-						+ " is not implemented. Assuming top.");
+				        + " is not implemented. Assuming top.");
 				newValMap.put(id, new IntervalDomainValue());
 			}
 		}
@@ -534,12 +536,12 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 
 		for (Entry<String, IntervalDomainValue> entry : mValuesMap.entrySet()) {
 			setValueInternally(returnState, entry.getKey(),
-					entry.getValue().intersect(other.mValuesMap.get(entry.getKey())));
+			        entry.getValue().intersect(other.mValuesMap.get(entry.getKey())));
 		}
 
 		for (Entry<String, BooleanValue> entry : mBooleanValuesMap.entrySet()) {
 			setValueInternally(returnState, entry.getKey(),
-					new BooleanValue(entry.getValue().intersect(other.mBooleanValuesMap.get(entry.getKey()))));
+			        new BooleanValue(entry.getValue().intersect(other.mBooleanValuesMap.get(entry.getKey()))));
 		}
 
 		return returnState;
@@ -559,7 +561,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 			final Sort sort = var.getSort().getRealSort();
 			if (!sort.isNumericSort()) {
 				mLogger.warn("Unfinished term transformation: Unsupported sort " + sort + " for variable " + var + ": "
-						+ this);
+				        + this);
 				continue;
 			}
 			final Term newterm = entry.getValue().getTerm(script, sort, var);
@@ -582,6 +584,10 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 			final TermVariable termvar = ((BoogieVar) var).getTermVariable();
 			assert termvar != null : "There seems to be no termvar for this BoogieVar";
 			return termvar;
+		} else if (var instanceof BoogieConst) {
+			final ApplicationTerm termvar = ((BoogieConst) var).getDefaultConstant();
+			assert termvar != null : "There seems to be no termvar for this BoogieConst";
+			return termvar;
 		}
 		return null;
 	}
@@ -593,6 +599,10 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 		IntervalDomainState ret = copy();
 		for (final Entry<String, IntervalDomainValue> entry : ret.mValuesMap.entrySet()) {
 			entry.setValue(new IntervalDomainValue(true));
+		}
+
+		for (final Entry<String, BooleanValue> entry : ret.mBooleanValuesMap.entrySet()) {
+			entry.setValue(new BooleanValue(Value.BOTTOM));
 		}
 
 		return ret;
@@ -708,7 +718,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 
 		if (!hasSameVariables(other)) {
 			throw new UnsupportedOperationException(
-					"Cannot merge the two states as their sets of variables in the states are disjoint.");
+			        "Cannot merge the two states as their sets of variables in the states are disjoint.");
 		}
 
 		final IntervalDomainState returnState = copy();
@@ -721,7 +731,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 
 				if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
 					setValueInternally(returnState, var,
-							mBooleanValuesMap.get(var).merge(other.mBooleanValuesMap.get(var)));
+					        mBooleanValuesMap.get(var).merge(other.mBooleanValuesMap.get(var)));
 				} else {
 					setValueInternally(returnState, var, mValuesMap.get(var).merge(other.mValuesMap.get(var)));
 				}

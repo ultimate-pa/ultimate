@@ -34,6 +34,7 @@ import java.math.BigInteger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
@@ -67,7 +68,8 @@ public class SignEvaluatorFactory implements IEvaluatorFactory<Values, SignDomai
 	}
 
 	@Override
-	public INAryEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createNAryExpressionEvaluator(int arity) {
+	public INAryEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createNAryExpressionEvaluator(int arity,
+	        EvaluatorType type) {
 
 		assert arity >= ARITY_MIN && arity <= ARITY_MAX;
 
@@ -75,7 +77,7 @@ public class SignEvaluatorFactory implements IEvaluatorFactory<Values, SignDomai
 		case ARITY_MIN:
 			return new SignUnaryExpressionEvaluator();
 		case ARITY_MAX:
-			return new SignBinaryExpressionEvaluator(mServices);
+			return new SignBinaryExpressionEvaluator(mServices, type);
 		default:
 			final StringBuilder stringBuilder = new StringBuilder(BUFFER_MAX);
 			stringBuilder.append("Arity of ").append(arity).append(" is not implemented.");

@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
@@ -59,6 +59,7 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 	protected BinaryExpression.Operator mOperator;
 	protected final Set<String> mVariableSet;
 	protected final Logger mLogger;
+	protected final EvaluatorType mEvaluatorType;
 
 	/**
 	 * Creates an instance of the binary expression evaluator of the sign domain.
@@ -66,9 +67,10 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 	 * @param services
 	 *            Ultimate service provider.
 	 */
-	public SignBinaryExpressionEvaluator(IUltimateServiceProvider services) {
+	public SignBinaryExpressionEvaluator(IUltimateServiceProvider services, EvaluatorType type) {
 		mVariableSet = new HashSet<String>();
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mEvaluatorType = type;
 	}
 
 	/**

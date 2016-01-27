@@ -35,7 +35,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -64,19 +63,10 @@ public class IntervalSingletonBooleanExpressionEvaluator
 
 	@Override
 	public List<IEvaluationResult<IntervalDomainEvaluationResult>> evaluate(IntervalDomainState currentState) {
-
 		final List<IEvaluationResult<IntervalDomainEvaluationResult>> returnList = new ArrayList<>();
-		
-		IntervalDomainState returnState;
 
-		if (mBooleanValue.getValue() == Value.TRUE || mBooleanValue.getValue() == Value.TOP) {
-			returnState = currentState;
-		} else {
-			returnState = currentState.bottomState();
-		}
+		returnList.add(new IntervalDomainEvaluationResult(null, currentState, mBooleanValue));
 
-		returnList.add(new IntervalDomainEvaluationResult(null, returnState, mBooleanValue));
-		
 		return returnList;
 	}
 
@@ -100,7 +90,7 @@ public class IntervalSingletonBooleanExpressionEvaluator
 	public boolean containsBool() {
 		return true;
 	}
-	
+
 	@Override
 	public String toString() {
 		return mBooleanValue.getValue().name();

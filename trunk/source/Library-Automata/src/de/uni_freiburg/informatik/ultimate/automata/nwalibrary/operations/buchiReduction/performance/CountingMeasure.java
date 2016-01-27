@@ -56,5 +56,9 @@ public enum CountingMeasure {
 	/**
 	 * Amount of states the automaton has before simulation.
 	 */
-	BUCHI_STATES
+	BUCHI_STATES,
+	/**
+	 * Amount of states the game graph has.
+	 */
+	GAMEGRAPH_STATES
 }

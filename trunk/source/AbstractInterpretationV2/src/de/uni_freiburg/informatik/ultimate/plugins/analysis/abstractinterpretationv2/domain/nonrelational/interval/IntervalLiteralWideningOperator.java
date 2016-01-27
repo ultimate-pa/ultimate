@@ -29,6 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
@@ -36,8 +37,8 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.LiteralCollection;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.LiteralCollector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.LiteralCollection;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.LiteralCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
@@ -139,20 +140,24 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 			newLower = new IntervalValue();
 		} else {
 			BigDecimal working;
-			
+
 			// If the lower bound has changed, we need to widen the lower bound, starting from the lower value. If the
 			// lower bounds are the same, we use this value as current bound.
-			if (firstLower.compareTo(secondLower) < 0) {
+			final int compResult = firstLower.compareTo(secondLower);
+			if (compResult < 0) {
 				working = mLiteralCollection.getNextRealNegative(firstLower.getValue());
-			} else if (firstLower.compareTo(secondLower) > 0) {
-				working = mLiteralCollection.getNextIntegerNegative(secondLower.getValue());
+			} else if (compResult > 0) {
+				working = mLiteralCollection.getNextRealNegative(secondLower.getValue());
 			} else {
 				working = firstLower.getValue();
 			}
-			
+
 			if (working == null) {
 				newLower = new IntervalValue();
 			} else {
+				if (compResult != 0) {
+					working = working.setScale(0, RoundingMode.FLOOR);
+				}
 				newLower = new IntervalValue(working);
 			}
 		}
@@ -162,20 +167,24 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 			newUpper = new IntervalValue();
 		} else {
 			BigDecimal working;
-			
+
 			// If the upper bound has changed, we need to widen the upper bound, starting from the largest value. If the
 			// upper bounds are the same, we use this value as current bound.
-			if (firstUpper.compareTo(secondUpper) > 0) {
+			final int compResult = firstUpper.compareTo(secondUpper);
+			if (compResult > 0) {
 				working = mLiteralCollection.getNextRealPositive(firstUpper.getValue());
-			} else if (firstUpper.compareTo(secondUpper) < 0) {
+			} else if (compResult < 0) {
 				working = mLiteralCollection.getNextRealPositive(secondUpper.getValue());
 			} else {
 				working = firstUpper.getValue();
 			}
-			
+
 			if (working == null) {
 				newUpper = new IntervalValue();
 			} else {
+				if (compResult != 0) {
+					working = working.setScale(0, RoundingMode.CEILING);
+				}
 				newUpper = new IntervalValue(working);
 			}
 		}

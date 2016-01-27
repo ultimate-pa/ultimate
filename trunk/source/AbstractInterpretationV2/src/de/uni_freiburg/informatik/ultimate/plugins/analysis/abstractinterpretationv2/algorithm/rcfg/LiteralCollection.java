@@ -26,10 +26,9 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
@@ -47,28 +46,6 @@ public class LiteralCollection {
 
 	protected LiteralCollection(Set<BigDecimal> realsSet) {
 		mSortedNumbersSet = realsSet.stream().sorted().collect(Collectors.toList());
-	}
-
-	public BigDecimal getNextIntegerPositive(BigDecimal value) {
-
-		final BigDecimal nextNumber = getNextNumberPositive(value);
-
-		if (nextNumber == null) {
-			return null;
-		}
-
-		return nextNumber.setScale(0, RoundingMode.UP);
-	}
-
-	public BigDecimal getNextIntegerNegative(BigDecimal value) {
-
-		final BigDecimal nextNumber = getNextIntegerNegative(value);
-
-		if (nextNumber == null) {
-			return null;
-		}
-
-		return nextNumber.setScale(0, RoundingMode.UP);
 	}
 
 	public BigDecimal getNextRealPositive(BigDecimal value) {
@@ -105,5 +82,11 @@ public class LiteralCollection {
 
 		// There is no element in the list which is smaller than the given value.
 		return null;
+	}
+
+	@Override
+	public String toString() {
+		return "LiteralCollection "
+				+ String.join("; ", mSortedNumbersSet.stream().map(a -> a.toPlainString()).collect(Collectors.toList()));
 	}
 }

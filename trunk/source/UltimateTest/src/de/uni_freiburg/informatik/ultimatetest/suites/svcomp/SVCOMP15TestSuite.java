@@ -29,6 +29,10 @@ package de.uni_freiburg.informatik.ultimatetest.suites.svcomp;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
+
 /**
  * 
  * @author dietsch@informatik.uni-freiburg.de
@@ -36,6 +40,11 @@ import java.util.List;
  */
 public class SVCOMP15TestSuite extends AbstractSVCOMPTestSuite {
 
+	@Override
+	protected ITestResultDecider getTestResultDecider(UltimateRunDefinition urd) {
+		return new SafetyCheckTestResultDecider(urd, true);
+	}
+	
 	@Override
 	protected long getTimeout() {
 		// Timeout for each test case in milliseconds
@@ -45,7 +54,7 @@ public class SVCOMP15TestSuite extends AbstractSVCOMPTestSuite {
 	@Override
 	protected int getFilesPerCategory() {
 		// -1 or value larger than 0
-		return 45;
+		return -1;
 	}
 
 	@Override

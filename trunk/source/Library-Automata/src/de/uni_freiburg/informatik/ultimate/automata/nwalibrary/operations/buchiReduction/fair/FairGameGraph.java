@@ -147,11 +147,18 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * @throws OperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
+	 * @throws IllegalArgumentException
+	 *             If the inputed automaton is no Buechi-automaton. It must have
+	 *             an empty call and return alphabet.
 	 */
 	public FairGameGraph(final IUltimateServiceProvider services, final IProgressAwareTimer progressTimer,
 			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi,
 			StateFactory<STATE> stateFactory) throws OperationCanceledException {
 		super(progressTimer, logger, stateFactory);
+		if (!buechi.getCallAlphabet().isEmpty() || !buechi.getReturnAlphabet().isEmpty()) {
+			throw new IllegalArgumentException(
+					"The inputed automaton is no Buechi-automaton. It must have an empty call and return alphabet.");
+		}
 		m_Services = services;
 		m_Buechi = buechi;
 		m_ChangedBuechiTransitionsInverse = new NestedMap3<>();
@@ -513,7 +520,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		if (performance != null) {
 			performance.startTimeMeasure(TimeMeasure.BUILD_RESULT_TIME);
 		}
-		
+
 		boolean areThereMergeableStates = m_AreThereMergeableStates;
 		boolean areThereRemoveableTransitions = m_TransitionsToRemove != null && !m_TransitionsToRemove.isEmpty();
 		Map<STATE, STATE> input2result = null;
@@ -646,7 +653,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	@Override
 	protected void generateGameGraphFromBuechi() throws OperationCanceledException {
 		long graphBuildTimeStart = System.currentTimeMillis();
-		
+
 		INestedWordAutomatonOldApi<LETTER, STATE> buechi = m_Buechi;
 
 		// Generate states
@@ -724,7 +731,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 				m_BuechiTransitions.add(new Triple<>(trans.getPred(), trans.getLetter(), edgeDest));
 			}
 		}
-		
+
 		m_GraphBuildTime = System.currentTimeMillis() - graphBuildTimeStart;
 	}
 

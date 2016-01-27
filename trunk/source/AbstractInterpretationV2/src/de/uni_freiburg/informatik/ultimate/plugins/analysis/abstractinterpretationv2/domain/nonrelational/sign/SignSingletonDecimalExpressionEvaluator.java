@@ -48,8 +48,8 @@ public class SignSingletonDecimalExpressionEvaluator extends SignSingletonValueE
 		try {
 			number = new BigDecimal(value);
 		} catch (NumberFormatException e) {
-			throw new UnsupportedOperationException("The value \"" + value
-			        + "\" cannot be transformed to a decimal number.");
+			throw new UnsupportedOperationException(
+			        "The value \"" + value + "\" cannot be transformed to a decimal number.");
 		}
 
 		return number;
@@ -65,5 +65,4 @@ public class SignSingletonDecimalExpressionEvaluator extends SignSingletonValueE
 		// TODO Auto-generated method stub
 		return false;
 	}
-
 }

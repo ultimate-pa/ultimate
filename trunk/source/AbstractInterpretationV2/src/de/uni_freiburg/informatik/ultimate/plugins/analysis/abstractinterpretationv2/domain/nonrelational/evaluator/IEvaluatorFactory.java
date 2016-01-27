@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 
 /**
  * Interface to create IEvaluators for different abstract domains.
@@ -45,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public interface IEvaluatorFactory<VALUE, STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
 
-	public INAryEvaluator<VALUE, STATE, ACTION, VARDECL> createNAryExpressionEvaluator(int arity);
+	public INAryEvaluator<VALUE, STATE, ACTION, VARDECL> createNAryExpressionEvaluator(int arity, EvaluatorType type);
 
 	public IEvaluator<VALUE, STATE, ACTION, VARDECL> createFunctionEvaluator(String functionName, int inputParamCount);
 

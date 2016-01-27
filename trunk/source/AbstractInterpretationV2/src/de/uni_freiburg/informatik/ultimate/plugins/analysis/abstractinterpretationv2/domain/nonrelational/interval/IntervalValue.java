@@ -50,7 +50,7 @@ public class IntervalValue implements Comparable<IntervalValue> {
 
 	private static int sId = 0;
 	private final int mId;
-	
+
 	private BigDecimal mValue;
 
 	private boolean mIsInfty;
@@ -88,6 +88,26 @@ public class IntervalValue implements Comparable<IntervalValue> {
 		mIsInfty = val.mIsInfty;
 		sId++;
 		mId = sId;
+	}
+
+	/**
+	 * Constructor for a new {@link IntervalValue} that sets the value to the provided value.
+	 * 
+	 * @param val
+	 *            The value to set.
+	 */
+	protected IntervalValue(int val) {
+		this(new BigDecimal(val));
+	}
+
+	/**
+	 * Constructor for a new {@link IntervalValue} that sets the value to the provided value.
+	 * 
+	 * @param val
+	 *            The value to set.
+	 */
+	protected IntervalValue(double val) {
+		this(new BigDecimal(val));
 	}
 
 	/**

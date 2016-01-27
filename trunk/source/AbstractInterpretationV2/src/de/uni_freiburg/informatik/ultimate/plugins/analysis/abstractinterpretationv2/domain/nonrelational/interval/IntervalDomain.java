@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.LiteralCollector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.LiteralCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
@@ -75,10 +75,15 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Code
 		if (wideningOperator.equals(IntervalDomainPreferences.VALUE_WIDENING_OPERATOR_SIMPLE)) {
 			return new IntervalSimpleWideningOperator();
 		} else if (wideningOperator.equals(IntervalDomainPreferences.VALUE_WIDENING_OPERATOR_LITERALS)) {
-			return new IntervalLiteralWideningOperator(mLiteralCollector);
+			final IAbstractStateBinaryOperator<IntervalDomainState> rtr = new IntervalLiteralWideningOperator(
+					mLiteralCollector);
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Using the following literals during widening: " + mLiteralCollector);
+			}
+			return rtr;
 		} else {
 			throw new UnsupportedOperationException(
-			        "The widening operator " + wideningOperator + " is not implemented.");
+					"The widening operator " + wideningOperator + " is not implemented.");
 		}
 	}
 

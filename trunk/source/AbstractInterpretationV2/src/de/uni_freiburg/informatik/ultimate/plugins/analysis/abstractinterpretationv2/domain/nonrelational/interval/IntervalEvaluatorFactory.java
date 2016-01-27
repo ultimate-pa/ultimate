@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceSt
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
@@ -53,17 +54,17 @@ public class IntervalEvaluatorFactory
 	private static final int BUFFER_MAX = 100;
 
 	private final Logger mLogger;
-	private final String mEvaluatorType;
+	private final String mSettingsEvaluatorType;
 
 	public IntervalEvaluatorFactory(Logger logger) {
 		mLogger = logger;
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
-		mEvaluatorType = ups.getString(IntervalDomainPreferences.LABEL_EVALUATOR_TYPE);
+		mSettingsEvaluatorType = ups.getString(IntervalDomainPreferences.LABEL_EVALUATOR_TYPE);
 	}
 
 	@Override
 	public INAryEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> createNAryExpressionEvaluator(
-	        int arity) {
+	        int arity, EvaluatorType type) {
 
 		assert arity >= ARITY_MIN && arity <= ARITY_MAX;
 
@@ -71,12 +72,13 @@ public class IntervalEvaluatorFactory
 		case ARITY_MIN:
 			return new IntervalUnaryExpressionEvaluator(mLogger);
 		case ARITY_MAX:
-			if (mEvaluatorType.equals(IntervalDomainPreferences.VALUE_EVALUATOR_DEFAULT)) {
-				return new IntervalBinaryExpressionEvaluator(mLogger);
-			} else if (mEvaluatorType.equals(IntervalDomainPreferences.VALUE_EVALUATOR_OPTIMIZATION)) {
+			if (mSettingsEvaluatorType.equals(IntervalDomainPreferences.VALUE_EVALUATOR_DEFAULT)) {
+				return new IntervalBinaryExpressionEvaluator(mLogger, type);
+			} else if (mSettingsEvaluatorType.equals(IntervalDomainPreferences.VALUE_EVALUATOR_OPTIMIZATION)) {
 				throw new UnsupportedOperationException("Optimization evaluator is not implemented, yet.");
 			} else {
-				throw new UnsupportedOperationException("The evaluator type " + mEvaluatorType + " is not supported.");
+				throw new UnsupportedOperationException(
+				        "The evaluator type " + mSettingsEvaluatorType + " is not supported.");
 			}
 		default:
 			final StringBuilder stringBuilder = new StringBuilder(BUFFER_MAX);

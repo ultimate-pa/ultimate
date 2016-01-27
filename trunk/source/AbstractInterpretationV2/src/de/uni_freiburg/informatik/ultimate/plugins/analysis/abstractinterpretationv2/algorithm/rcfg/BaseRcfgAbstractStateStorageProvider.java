@@ -36,12 +36,13 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
@@ -71,6 +72,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 
 	private final IAbstractStateBinaryOperator<STATE> mMergeOperator;
 	private final IUltimateServiceProvider mServices;
+	private final List<BaseRcfgAbstractStateStorageProvider<STATE>> mChildStores;
 
 	public BaseRcfgAbstractStateStorageProvider(IAbstractStateBinaryOperator<STATE> mergeOperator,
 			IUltimateServiceProvider services) {
@@ -78,6 +80,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 		assert services != null;
 		mMergeOperator = mergeOperator;
 		mServices = services;
+		mChildStores = new ArrayList<>();
 	}
 
 	public Collection<STATE> getAbstractPreStates(CodeBlock transition) {
@@ -86,7 +89,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 	}
 
 	@Override
-	public Collection<STATE> getAbstractPostStates(CodeBlock transition) {
+	public List<STATE> getAbstractPostStates(CodeBlock transition) {
 		assert transition != null;
 		return getAbstractStates(transition, transition.getTarget());
 	}
@@ -169,53 +172,104 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 	}
 
 	@Override
+	public final IAbstractStateStorage<STATE, CodeBlock, IBoogieVar, ProgramPoint> createStorage() {
+		final BaseRcfgAbstractStateStorageProvider<STATE> rtr = create();
+		mChildStores.add(rtr);
+		return rtr;
+	}
+
+	protected abstract BaseRcfgAbstractStateStorageProvider<STATE> create();
+
+	@Override
 	public Map<ProgramPoint, Term> getTerms(final CodeBlock initialTransition, final Script script,
 			final Boogie2SMT bpl2smt) {
-		final Map<ProgramPoint, Term> rtr = new HashMap<>();
+		Map<ProgramPoint, STATE> states = getMergedLocalStates(initialTransition);
+		for (final BaseRcfgAbstractStateStorageProvider<STATE> child : mChildStores) {
+			states = mergeMaps(states, child.getMergedLocalStates(initialTransition));
+		}
+		return convertStates2Terms(states, script, bpl2smt);
+	}
+
+	private Map<ProgramPoint, STATE> getMergedLocalStates(final CodeBlock initialTransition) {
+		final Map<ProgramPoint, STATE> rtr = new HashMap<>();
 		final Deque<ProgramPoint> worklist = new ArrayDeque<>();
 		final Set<ProgramPoint> closed = new HashSet<>();
-		final Term constTrue = script.term("true");
 
 		worklist.add((ProgramPoint) initialTransition.getTarget());
 
 		while (!worklist.isEmpty()) {
 			final ProgramPoint current = worklist.remove();
+			// check if already processed
 			if (!closed.add(current)) {
 				continue;
 			}
-			final Set<STATE> currentStates = new HashSet<STATE>();
+			// add successors to worklist
 			for (final RCFGEdge outgoing : current.getOutgoingEdges()) {
 				if (!(outgoing instanceof CodeBlock)) {
 					continue;
 				}
-				final CodeBlock succTrans = (CodeBlock) outgoing;
 				final RCFGNode target = outgoing.getTarget();
 				if (!(target instanceof ProgramPoint)) {
 					continue;
 				}
 				final ProgramPoint targetpp = (ProgramPoint) target;
 				worklist.add(targetpp);
-
-				final STATE states = getCurrentState(targetpp, a -> a.equals(succTrans));
-				if (states != null) {
-					currentStates.add(states);
-				}
 			}
 
-			if (currentStates.isEmpty()) {
+			final Deque<Pair<CodeBlock, STATE>> states = getStates(current);
+			if (states == null) {
+				// no states for this location
+				continue;
+			}
+			final Optional<STATE> mergedState = states.stream().map(a -> a.getSecond()).reduce(mMergeOperator::apply);
+			if (!mergedState.isPresent()) {
+				// no states for this location
 				continue;
 			}
 
 			// TODO: and or or ???
-			Term currentTerm = rtr.get(current);
-			if (currentTerm == null) {
-				currentTerm = constTrue;
+			STATE currentState = rtr.get(current);
+			if (currentState == null) {
+				rtr.put(current, mergedState.get());
+			} else {
+				rtr.put(current, mMergeOperator.apply(mergedState.get(), currentState));
 			}
-			for (final STATE state : currentStates) {
-				currentTerm = Util.and(script, currentTerm, state.getTerm(script, bpl2smt));
-			}
-			rtr.put(current, currentTerm);
 		}
+		return rtr;
+	}
+
+	private Map<ProgramPoint, STATE> mergeMaps(Map<ProgramPoint, STATE> a, Map<ProgramPoint, STATE> b) {
+		final Map<ProgramPoint, STATE> rtr = new HashMap<>();
+
+		for (final Entry<ProgramPoint, STATE> entryA : a.entrySet()) {
+			final STATE valueB = b.get(entryA.getKey());
+			if (valueB == null) {
+				rtr.put(entryA.getKey(), entryA.getValue());
+			} else {
+				rtr.put(entryA.getKey(), mMergeOperator.apply(entryA.getValue(), valueB));
+			}
+		}
+
+		for (final Entry<ProgramPoint, STATE> entryB : b.entrySet()) {
+			final STATE valueA = a.get(entryB.getKey());
+			if (valueA == null) {
+				rtr.put(entryB.getKey(), entryB.getValue());
+			} else {
+				// do nothing, this was already done in first iteration
+			}
+		}
+
+		return rtr;
+	}
+
+	private Map<ProgramPoint, Term> convertStates2Terms(final Map<ProgramPoint, STATE> states, final Script script,
+			final Boogie2SMT bpl2smt) {
+		final Map<ProgramPoint, Term> rtr = new HashMap<>();
+
+		for (final Entry<ProgramPoint, STATE> entry : states.entrySet()) {
+			rtr.put(entry.getKey(), entry.getValue().getTerm(script, bpl2smt));
+		}
+
 		return rtr;
 	}
 
@@ -247,10 +301,10 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 		return trace;
 	}
 
-	private Collection<STATE> getAbstractStates(CodeBlock transition, RCFGNode node) {
+	private List<STATE> getAbstractStates(CodeBlock transition, RCFGNode node) {
 		assert node != null;
 		final Deque<Pair<CodeBlock, STATE>> states = getStates(node);
-		final Collection<STATE> rtr = new ArrayList<STATE>(states.size());
+		final List<STATE> rtr = new ArrayList<STATE>(states.size());
 		for (final Pair<CodeBlock, STATE> state : states) {
 			rtr.add(state.getSecond());
 		}

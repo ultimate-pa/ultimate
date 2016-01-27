@@ -1,6 +1,6 @@
 //#Safe
 
-procedure main()
+procedure ULTIMATE.start()
 {
   var z : int;
   call z := add(5, 3);    

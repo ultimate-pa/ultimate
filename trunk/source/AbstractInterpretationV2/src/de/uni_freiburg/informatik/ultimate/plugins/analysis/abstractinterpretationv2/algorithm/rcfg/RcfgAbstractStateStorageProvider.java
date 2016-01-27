@@ -33,11 +33,9 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IAbstractStateStorage;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
@@ -68,7 +66,7 @@ public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 	}
 
 	@Override
-	public IAbstractStateStorage<STATE, CodeBlock, IBoogieVar,ProgramPoint> createStorage() {
+	public BaseRcfgAbstractStateStorageProvider<STATE> create() {
 		return new RcfgAbstractStateStorageProvider<STATE>(getMergeOperator(), getServices());
 	}
 }

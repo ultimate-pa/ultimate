@@ -100,11 +100,11 @@ public class IntervalFunctionEvaluator
 	public int getNumberOfInParams() {
 		return mInParamCount;
 	}
-	
+
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		
+
 		sb.append(mName);
 		sb.append("(");
 		for (int i = 0; i < mInputParamEvaluators.size(); i++) {
@@ -114,7 +114,7 @@ public class IntervalFunctionEvaluator
 			sb.append(mInputParamEvaluators.get(i));
 		}
 		sb.append(")");
-		
+
 		return sb.toString();
 	}
 }

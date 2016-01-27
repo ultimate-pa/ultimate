@@ -37,7 +37,6 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
@@ -74,8 +73,6 @@ public class IntervalUnaryExpressionEvaluator
 			IntervalDomainValue returnValue = new IntervalDomainValue();
 			BooleanValue returnBool;
 
-			boolean setToBottom = false;
-
 			switch (mOperator) {
 			case ARITHNEGATIVE:
 				returnBool = new BooleanValue(false);
@@ -83,9 +80,6 @@ public class IntervalUnaryExpressionEvaluator
 				break;
 			case LOGICNEG:
 				returnBool = result.getBooleanValue().neg();
-				if (returnBool.getValue() == Value.FALSE || returnBool.getValue() == Value.BOTTOM) {
-					setToBottom = true;
-				}
 				break;
 			default:
 				mLogger.warn(
@@ -94,10 +88,6 @@ public class IntervalUnaryExpressionEvaluator
 				mLogger.warn("Possible loss of precision: cannot handle operator " + mOperator
 				        + ". Returning current state. Returned value is top.");
 				returnValue = new IntervalDomainValue();
-			}
-
-			if (setToBottom) {
-				returnState = returnState.bottomState();
 			}
 
 			returnEvaluationResults.add(new IntervalDomainEvaluationResult(returnValue, returnState, returnBool));
