@@ -76,10 +76,10 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	/**
-	 * Amount of fix fields in the log format. Currently this is type, usedSCCs
-	 * and timedOut.
+	 * Amount of fix fields in the log format. Currently this is type, usedSCCs,
+	 * timedOut and outOfMemory.
 	 */
-	private final static int FIX_FIELD_AMOUNT = 3;
+	private final static int FIX_FIELD_AMOUNT = 4;
 	/**
 	 * Marks the end of the head from an entry.
 	 */
@@ -209,9 +209,13 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 					SimulationType type = SimulationType.valueOf(lineElements[0]);
 					boolean usedSCCs = Boolean.parseBoolean(lineElements[1]);
 					boolean timedOut = Boolean.parseBoolean(lineElements[2]);
+					boolean outOfMemory = Boolean.parseBoolean(lineElements[3]);
 					SimulationPerformance performance = new SimulationPerformance(type, usedSCCs);
 					if (timedOut) {
 						performance.timeOut();
+					}
+					if (outOfMemory) {
+						performance.outOfMemory();
 					}
 
 					// Parse the rest of the data set
@@ -527,10 +531,13 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 *            If SCCs where used by the method
 	 * @param timedOut
 	 *            If the method timed out
+	 * @param outOfMemory
+	 *            If the method has thrown an out of memory error
 	 */
-	private void appendCurrentPerformanceEntryToLog(SimulationType type, boolean usedSCCs, boolean timedOut) {
+	private void appendCurrentPerformanceEntryToLog(final SimulationType type, final boolean usedSCCs,
+			final boolean timedOut, final boolean outOfMemory) {
 		// Fix fields
-		String message = type + LOG_SEPARATOR + usedSCCs + LOG_SEPARATOR + timedOut;
+		String message = type + LOG_SEPARATOR + usedSCCs + LOG_SEPARATOR + timedOut + LOG_SEPARATOR + outOfMemory;
 		// Variable fields
 		for (Float measureValue : m_TimeMeasures.values()) {
 			message += LOG_SEPARATOR + measureValue;
@@ -553,6 +560,8 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 *            If the method used SCCs
 	 * @param timedOut
 	 *            If the method timed out or not
+	 * @param outOfMemory
+	 *            If the method has thrown an out of memory error
 	 * @param operand
 	 *            The automaton the method processed
 	 * @throws AutomataLibraryException
@@ -560,7 +569,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 */
 	@SuppressWarnings("unchecked")
 	private void appendMethodPerformanceToLog(final Object method, final SimulationType type, final boolean usedSCCs,
-			final boolean timedOut, final INestedWordAutomatonOldApi<LETTER, STATE> operand)
+			final boolean timedOut, final boolean outOfMemory, final INestedWordAutomatonOldApi<LETTER, STATE> operand)
 					throws AutomataLibraryException {
 		createAndResetPerformanceHead();
 
@@ -570,6 +579,9 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 
 			if (timedOut) {
 				performance.timeOut();
+			}
+			if (outOfMemory) {
+				performance.outOfMemory();
 			}
 			saveStateOfPerformance(performance);
 		} else if (method instanceof MinimizeSevpa) {
@@ -600,9 +612,11 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 
 		if (timedOut && method == null) {
 			saveStateOfPerformance(createTimedOutPerformance(type, usedSCCs, operand));
+		} else if (outOfMemory && method == null) {
+			saveStateOfPerformance(createOutOfMemoryPerformance(type, usedSCCs, operand));
 		}
 
-		appendCurrentPerformanceEntryToLog(type, usedSCCs, timedOut);
+		appendCurrentPerformanceEntryToLog(type, usedSCCs, timedOut, outOfMemory);
 	}
 
 	/**
@@ -612,7 +626,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 		String message = LOG_ENTRY_HEAD_START + LOG_SEPARATOR;
 
 		// Fix fields
-		message += "TYPE" + LOG_SEPARATOR + "USED_SCCS" + LOG_SEPARATOR + "TIMED_OUT" + LOG_SEPARATOR;
+		message += "TYPE" + LOG_SEPARATOR + "USED_SCCS" + LOG_SEPARATOR + "TIMED_OUT" + LOG_SEPARATOR + "OOM" + LOG_SEPARATOR;
 		// Variable fields
 		for (TimeMeasure measure : m_TimeMeasures.keySet()) {
 			message += measure + LOG_SEPARATOR;
@@ -636,6 +650,25 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 		for (CountingMeasure measure : CountingMeasure.values()) {
 			m_CountingMeasures.put(measure, SimulationPerformance.NO_COUNTING_RESULT);
 		}
+	}
+
+	/**
+	 * Creates an out of memory performance object and adds some information of
+	 * the used method.
+	 * 
+	 * @param type
+	 *            Type of the simulation
+	 * @param useSCCs
+	 *            If the simulation usedSCCs
+	 * @param operand
+	 *            Operand the simulation processed
+	 * @return The out of memory performance object
+	 */
+	private SimulationPerformance createOutOfMemoryPerformance(final SimulationType type, final boolean useSCCs,
+			final INestedWordAutomatonOldApi<LETTER, STATE> operand) {
+		SimulationPerformance performance = SimulationPerformance.createOutOfMemoryPerformance(type, useSCCs);
+		performance.setCountingMeasure(CountingMeasure.BUCHI_STATES, operand.size());
+		return performance;
 	}
 
 	/**
@@ -728,6 +761,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand) {
 		IProgressAwareTimer progressTimer = services.getProgressMonitorService().getChildTimer(timeout);
 		boolean timedOut = false;
+		boolean outOfMemory = false;
 		Object method = null;
 
 		try {
@@ -753,9 +787,12 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 			timedOut = true;
 		} catch (AutomataLibraryException e) {
 			e.printStackTrace();
+		} catch (OutOfMemoryError e) {
+			m_Logger.info("Method has thrown an out of memory error.");
+			outOfMemory = true;
 		}
 		try {
-			appendMethodPerformanceToLog(method, type, useSCCs, timedOut, operand);
+			appendMethodPerformanceToLog(method, type, useSCCs, timedOut, outOfMemory, operand);
 		} catch (AutomataLibraryException e) {
 			e.printStackTrace();
 		}

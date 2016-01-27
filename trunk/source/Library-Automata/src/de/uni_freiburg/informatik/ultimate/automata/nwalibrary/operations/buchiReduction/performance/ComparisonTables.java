@@ -345,7 +345,8 @@ public final class ComparisonTables {
 			if (averageOfValuesForSimSteps == 0 || averageOfValuesForGraphStates == 0) {
 				valueAsString = "&ndash;";
 			} else {
-				valueAsString = roundTo((averageOfValuesForSimSteps + 0.0) / averageOfValuesForGraphStates, DECIMAL_PLACES) + "";
+				valueAsString = roundTo((averageOfValuesForSimSteps + 0.0) / averageOfValuesForGraphStates,
+						DECIMAL_PLACES) + "";
 			}
 			row += separator + valueAsString;
 
@@ -428,7 +429,7 @@ public final class ComparisonTables {
 		}
 
 		// Header of table
-		String header = "TYPE" + separator + "USED_SCCS" + separator + "TIMED_OUT";
+		String header = "TYPE" + separator + "USED_SCCS" + separator + "TIMED_OUT" + separator + "OOM";
 		header += separator + CountingMeasure.BUCHI_STATES;
 		// Work measure
 		header += separator + CountingMeasure.SIMULATION_STEPS + " / " + CountingMeasure.GAMEGRAPH_STATES;
@@ -446,7 +447,7 @@ public final class ComparisonTables {
 
 				// Fix fields
 				String row = type + separator + performanceOfSimulation.isUsingSCCs() + separator
-						+ performanceOfSimulation.hasTimedOut();
+						+ performanceOfSimulation.hasTimedOut() + separator + performanceOfSimulation.isOutOfMemory();
 
 				// Variable fields
 
@@ -533,7 +534,7 @@ public final class ComparisonTables {
 		}
 
 		// Header of table
-		String header = "TYPE" + separator + "USED_SCCS" + separator + "TIMED_OUT";
+		String header = "TYPE" + separator + "USED_SCCS" + separator + "TIMED_OUT" + separator + "OOM";
 		SimulationPerformance headerCandidate = performanceEntries.get(0).get(0);
 		Set<TimeMeasure> timeMeasures = headerCandidate.getTimeMeasures().keySet();
 		for (TimeMeasure measure : timeMeasures) {
@@ -552,7 +553,7 @@ public final class ComparisonTables {
 
 				// Fix fields
 				String row = type + separator + performanceOfSimulation.isUsingSCCs() + separator
-						+ performanceOfSimulation.hasTimedOut();
+						+ performanceOfSimulation.hasTimedOut() + separator + performanceOfSimulation.isOutOfMemory();
 
 				// Variable fields
 				for (TimeMeasure measure : timeMeasures) {
@@ -604,7 +605,7 @@ public final class ComparisonTables {
 		}
 
 		// Header of table
-		String header = "TYPE" + separator + "USED_SCCS" + separator + "TIMED_OUT";
+		String header = "TYPE" + separator + "USED_SCCS" + separator + "TIMED_OUT" + separator + "OOM";
 		// Amount of Buechi states
 		header += separator + CountingMeasure.BUCHI_STATES;
 		// Overall time first
@@ -626,7 +627,7 @@ public final class ComparisonTables {
 
 				// Fix fields
 				String row = type + separator + performanceOfSimulation.isUsingSCCs() + separator
-						+ performanceOfSimulation.hasTimedOut();
+						+ performanceOfSimulation.hasTimedOut() + separator + performanceOfSimulation.isOutOfMemory();
 
 				// Variable fields
 
@@ -739,19 +740,24 @@ public final class ComparisonTables {
 		LinkedHashMap<Pair<SimulationType, Boolean>, LinkedList<SimulationPerformance>> simulationToPerformances = new LinkedHashMap<>();
 		for (LinkedList<SimulationPerformance> performanceComparison : performanceEntries) {
 			boolean simulationOfComparisonHasTimedOut = false;
+			boolean simulationOfComparisonWasOutOfMemory = false;
 			LinkedList<SimulationPerformance> performancesToAdd = new LinkedList<>();
 
 			for (SimulationPerformance performanceOfSimulation : performanceComparison) {
-				// Ignore comparison if a simulation has timed out
+				// Ignore comparison if a simulation has timed out or was out of
+				// memory
 				if (performanceOfSimulation.hasTimedOut()) {
 					simulationOfComparisonHasTimedOut = true;
+					break;
+				} else if (performanceOfSimulation.isOutOfMemory()) {
+					simulationOfComparisonWasOutOfMemory = true;
 					break;
 				}
 
 				performancesToAdd.add(performanceOfSimulation);
 			}
-			if (!simulationOfComparisonHasTimedOut) {
-				// No timeout occurred, add performances
+			if (!simulationOfComparisonHasTimedOut && !simulationOfComparisonWasOutOfMemory) {
+				// No timeout and no out of memory occurred, add performances
 				for (SimulationPerformance performance : performancesToAdd) {
 					SimulationType type = performance.getSimType();
 
