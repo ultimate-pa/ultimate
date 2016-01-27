@@ -836,7 +836,7 @@ public class OctMatrix {
 		int t2 = targetVar * 2;
 		int t21 = t2 + 1;
 		OctValue doubleConstant = constant.add(constant);
-		set(t2, t21, doubleConstant.negateIfNotInfinity());
+		set(t2, t21, doubleConstant.negate());
 		set(t21, t2, doubleConstant);
 
 		// cached closures were already reset by "set"

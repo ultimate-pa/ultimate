@@ -305,7 +305,7 @@ public class OctMatrixTest {
 				+ " 9 10 11 12 "
 				+ "13 14 15 16 17 18 "
 				+ "19 20 21 22 23 24 ");
-		
+		m.assignVarCopy(2, 0, false);
 		OctMatrix expected = OctMatrix.parseBlockLowerTriangular(
 				  " 0  2 "
 				+ " 3  0 "
@@ -313,9 +313,9 @@ public class OctMatrixTest {
 				+ " 9 10 11 12 "
 				+ " 0  2 10  6  0  2 "
 				+ " 3  0  9  5  3  0 ");
-		m.assignVarCopy(2, 0, false);
 		assertIsEqualTo(expected, m);
 
+		m.assignVarCopy(0, 1, true);
 		expected = OctMatrix.parseBlockLowerTriangular(
 				  " 0 11 "
 				+ " 8  0 "
@@ -323,7 +323,6 @@ public class OctMatrixTest {
 				+ " 0 11 11  0 "
 				+ " 6 10 10  6  0  2 "
 				+ " 5  9  9  5  3  0 ");
-		m.assignVarCopy(0, 1, true);
 		assertIsEqualTo(expected, m);
 	}
 	
@@ -337,6 +336,7 @@ public class OctMatrixTest {
 				+ "13 14 15 16 17 18 "
 				+ "19 20 21 22 23 24 ");
 		
+		m.assignVarCopy(2, 0, false);
 		OctMatrix expected = OctMatrix.parseBlockLowerTriangular(
 				  " 0  2 "
 				+ " 3 -3 "
@@ -344,9 +344,9 @@ public class OctMatrixTest {
 				+ " 9 10 11 12 "
 				+ "-3  2 10  6  0  2 "   // it would also be OK, if the first -3 (in this line) ...
 				+ " 3  0  9  5  3 -3 "); // ... was swapped with the first 0 (in this line).
-		m.assignVarCopy(2, 0, false);
 		assertIsEqualTo(expected, m);
 
+		m.assignVarCopy(0, 1, true);
 		expected = OctMatrix.parseBlockLowerTriangular(
 				  " 0 11 "
 				+ " 8 -1 "
@@ -354,7 +354,6 @@ public class OctMatrixTest {
 				+ " 0 11 11  0 " // ... was swapped with the first 0 (in this line).
 				+ " 6 10 10  6  0  2 "
 				+ " 5  9  9  5  3 -3 ");
-		m.assignVarCopy(0, 1, true);
 		assertIsEqualTo(expected, m);
 	}
 	
@@ -367,6 +366,7 @@ public class OctMatrixTest {
 				+ " 5  6  7  8 "
 				+ " 5  6  9 10  7  8 "
 				+ " 9 10 11 12 13 14 ");
+		m.assignVarCopy(0, 0, false);
 		OctMatrix expected = OctMatrix.parseBlockLowerTriangular(
 				  " 0  2 "
 				+ " 3  0 "
@@ -374,9 +374,9 @@ public class OctMatrixTest {
 				+ " 5  6  7  8 "
 				+ " 5  6  9 10  7  8 "
 				+ " 9 10 11 12 13 14 ");
-		m.assignVarCopy(0, 0, false);
 		assertIsEqualTo(expected, m);
 		
+		m.assignVarCopy(1, 1, true);
 		expected = OctMatrix.parseBlockLowerTriangular(
 				  " 0  2 "
 				+ " 3  0 "
@@ -384,7 +384,6 @@ public class OctMatrixTest {
 				+ " 1  2  4  0 "
 				+ " 5  6 10  9  7  8 "
 				+ " 9 10 12 11 13 14 ");
-		m.assignVarCopy(1, 1, true);
 		assertIsEqualTo(expected, m);
 	}
 	
@@ -397,6 +396,7 @@ public class OctMatrixTest {
 				+ " 5  6  7 -1 "
 				+ " 5  6  9 10  7  8 "
 				+ " 9 10 11 12 13 14 ");
+		m.assignVarCopy(0, 0, false);
 		// note: There are multiple acceptable results. The diagonal elements may differ.
 		OctMatrix expected = OctMatrix.parseBlockLowerTriangular(
 				  "-2  2 "
@@ -405,9 +405,9 @@ public class OctMatrixTest {
 				+ " 5  6  7 -1 "
 				+ " 5  6  9 10  7  8 "
 				+ " 9 10 11 12 13 14 ");
-		m.assignVarCopy(0, 0, false);
 		assertIsEqualTo(expected, m);
 		
+		m.assignVarCopy(1, 1, true);
 		expected = OctMatrix.parseBlockLowerTriangular(
 				  "-2  2 "
 				+ " 3  0 "
@@ -415,7 +415,6 @@ public class OctMatrixTest {
 				+ " 1  2  4  0 "
 				+ " 5  6 10  9  7  8 "
 				+ " 9 10 12 11 13 14 ");
-		m.assignVarCopy(1, 1, true);
 		assertIsEqualTo(expected, m);
 	}
 
@@ -426,24 +425,134 @@ public class OctMatrixTest {
 				+ "  3  .2 "
 				+ "  5 inf  .3   8 "
 				+ "inf  10  11   0 ");
+		m.assignAddConstant(0, new OctValue(1));
 		OctMatrix expected = OctMatrix.parseBlockLowerTriangular(
 				  "  0   0 "
 				+ "  5  .2 "
 				+ "  6 inf  .3   8 "
 				+ "inf   9  11   0 ");
-		m.assignAddConstant(0, new OctValue(1));
 		assertIsEqualTo(expected, m);
 		
+		m.assignAddConstant(1, new OctValue(-2));
 		expected = OctMatrix.parseBlockLowerTriangular(
 				  "  0   0 "
 				+ "  5  .2 "
 				+ "  8 inf  .3  12 "
 				+ "inf   7   7   0 ");
-		m.assignAddConstant(1, new OctValue(-2));
 		assertIsEqualTo(expected, m);
 	}
 	
-	// TODO test assignConstant, -Interval, havocVar
+	@Test
+	public void testAssignConstant() {
+		OctMatrix m = OctMatrix.parseBlockLowerTriangular(
+				  "  1   2 "
+				+ "  3   4 "
+				+ "  5   6   7   8 "
+				+ "  9  10  11  12 ");
+		m.assignConstant(0, new OctValue(-3));
+		OctMatrix expected = OctMatrix.parseBlockLowerTriangular(
+				  "  0   6 "
+				+ " -6   0 "
+				+ "inf inf  7   8 "
+				+ "inf inf  11  12 ");
+		assertIsEqualTo(expected, m);
+
+		m = OctMatrix.parseBlockLowerTriangular(
+				  "  1   2 "
+				+ "  3   4 "
+				+ "  5   6   7   8 "
+				+ "  9  10  11  12 ");
+		m.assignConstant(1, new OctValue(2));
+		expected = OctMatrix.parseBlockLowerTriangular(
+				  "  1   2 "
+				+ "  3   4 "
+				+ "inf inf  0  -4 "
+				+ "inf inf  4   0 ");
+		assertIsEqualTo(expected, m);
+		
+		try {
+			m.assignAddConstant(0, OctValue.INFINITY);
+			Assert.fail("Variable set to constant inf\n" + m); // actually, inf would be OK (but cannot be stored)
+		} catch (Exception e) {
+			// test passed
+		}
+	}
+	
+
+	@Test
+	public void testAssignInterval() {
+		OctMatrix m = OctMatrix.parseBlockLowerTriangular(
+				  "  1   2 "
+				+ "  3   4 "
+				+ "  5   6   7   8 "
+				+ "  9  10  11  12 ");
+		m.assignInterval(0, new OctValue(-3), new OctValue(2));
+		OctMatrix expected = OctMatrix.parseBlockLowerTriangular(
+				  "  0   6 "
+				+ "  4   0 "
+				+ "inf inf  7   8 "
+				+ "inf inf  11  12 ");
+		assertIsEqualTo(expected, m);
+
+		m = OctMatrix.parseBlockLowerTriangular(
+				  "  1   2 "
+				+ "  3   4 "
+				+ "  5   6   7   8 "
+				+ "  9  10  11  12 ");
+		m.assignInterval(1, new OctValue(-4), new OctValue(-1));
+		expected = OctMatrix.parseBlockLowerTriangular(
+				  "  1   2 "
+				+ "  3   4 "
+				+ "inf inf   0   8 "
+				+ "inf inf  -2   0 ");
+		assertIsEqualTo(expected, m);
+		
+		m.assignInterval(0, OctValue.INFINITY, new OctValue(3));
+		expected = OctMatrix.parseBlockLowerTriangular(
+				  "  0 inf "
+				+ "  6   0 "
+				+ "inf inf   0   8 "
+				+ "inf inf  -2   0 ");
+		assertIsEqualTo(expected, m);
+		
+		m.assignInterval(0, new OctValue(3), OctValue.INFINITY);
+		expected = OctMatrix.parseBlockLowerTriangular(
+				  "  0  -6 "
+				+ "inf   0 "
+				+ "inf inf   0   8 "
+				+ "inf inf  -2   0 ");
+		assertIsEqualTo(expected, m);
+		
+	}
+
+	@Test
+	public void testHavoc() {
+		OctMatrix m = OctMatrix.parseBlockLowerTriangular(
+				  "  1   2 "
+				+ "  3   4 "
+				+ "  5   6   7   8 "
+				+ "  9  10  11  12 ");
+		m.havocVariable(0);
+		OctMatrix expected = OctMatrix.parseBlockLowerTriangular(
+				  "  0 inf "
+				+ "inf   0 "
+				+ "inf inf  7   8 "
+				+ "inf inf  11  12 ");
+		assertIsEqualTo(expected, m);
+
+		m = OctMatrix.parseBlockLowerTriangular(
+				  "  1   2 "
+				+ "  3   4 "
+				+ "  5   6   7   8 "
+				+ "  9  10  11  12 ");
+		m.havocVariable(1);
+		expected = OctMatrix.parseBlockLowerTriangular(
+				  "  1   2 "
+				+ "  3   4 "
+				+ "inf inf   0 inf "
+				+ "inf inf inf   0 ");
+		assertIsEqualTo(expected, m);
+	}
 	
 	// relations ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
