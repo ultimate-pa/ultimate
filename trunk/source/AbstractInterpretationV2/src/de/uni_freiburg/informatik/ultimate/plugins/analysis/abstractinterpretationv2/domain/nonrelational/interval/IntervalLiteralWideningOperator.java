@@ -37,8 +37,7 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.LiteralCollection;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.LiteralCollector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.LiteralCollection;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
@@ -54,8 +53,8 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 
 	private final LiteralCollection mLiteralCollection;
 
-	protected IntervalLiteralWideningOperator(LiteralCollector literalCollector) {
-		mLiteralCollection = literalCollector.getLiteralCollection();
+	protected IntervalLiteralWideningOperator(final LiteralCollection literalCollection) {
+		mLiteralCollection = literalCollection;
 	}
 
 	@Override

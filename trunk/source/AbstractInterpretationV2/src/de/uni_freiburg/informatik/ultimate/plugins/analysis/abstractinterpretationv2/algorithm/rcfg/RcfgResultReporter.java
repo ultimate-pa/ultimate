@@ -27,6 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -53,10 +54,10 @@ import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution.Progra
 public class RcfgResultReporter implements IResultReporter<CodeBlock> {
 
 	protected final IUltimateServiceProvider mServices;
-	protected final BaseRcfgAbstractStateStorageProvider<?> mStorageProvider;
+	protected final BaseRcfgAbstractStateStorageProvider<?,?> mStorageProvider;
 
 	public RcfgResultReporter(IUltimateServiceProvider services,
-			BaseRcfgAbstractStateStorageProvider<?> storageProvider) {
+			BaseRcfgAbstractStateStorageProvider<?,?> storageProvider) {
 		mServices = services;
 		mStorageProvider = storageProvider;
 	}
@@ -70,8 +71,12 @@ public class RcfgResultReporter implements IResultReporter<CodeBlock> {
 	}
 
 	private IProgramExecution<RCFGEdge, Expression> getProgramExecution(CodeBlock start, CodeBlock end) {
-		final List<CodeBlock> trace = mStorageProvider.getErrorTrace(start, end);
+		//TODO: Report a meaningful error trace
+		//		final List<CodeBlock> trace = mStorageProvider.getErrorTrace(start, end);
 		final Map<Integer, ProgramState<Expression>> map = Collections.emptyMap();
+		final List<RCFGEdge> trace = new ArrayList<>();
+		trace.add(start);
+		trace.add(end);
 		return new RcfgProgramExecution(trace, map);
 	}
 

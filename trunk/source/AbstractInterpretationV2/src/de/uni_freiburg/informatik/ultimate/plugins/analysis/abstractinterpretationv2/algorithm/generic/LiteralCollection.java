@@ -26,7 +26,7 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -44,7 +44,7 @@ public class LiteralCollection {
 
 	private final List<BigDecimal> mSortedNumbersSet;
 
-	protected LiteralCollection(Set<BigDecimal> realsSet) {
+	public LiteralCollection(Set<BigDecimal> realsSet) {
 		mSortedNumbersSet = realsSet.stream().sorted().collect(Collectors.toList());
 	}
 

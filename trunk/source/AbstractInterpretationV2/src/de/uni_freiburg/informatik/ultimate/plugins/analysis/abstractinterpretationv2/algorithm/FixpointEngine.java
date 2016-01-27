@@ -66,7 +66,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	private final int mMaxUnwindings;
 	private final int mMaxParallelStates;
 
-	private final ITransitionProvider<ACTION> mTransitionProvider;
+	private final ITransitionProvider<ACTION,LOCATION> mTransitionProvider;
 	private final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> mStateStorage;
 	private final IAbstractDomain<STATE, ACTION, VARDECL> mDomain;
 	private final IVariableProvider<STATE, ACTION, VARDECL, LOCATION> mVarProvider;
@@ -76,7 +76,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	private final Logger mLogger;
 
 	public FixpointEngine(final IUltimateServiceProvider services, final IProgressAwareTimer timer,
-			final ITransitionProvider<ACTION> post,
+			final ITransitionProvider<ACTION,LOCATION> post,
 			final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> storage,
 			final IAbstractDomain<STATE, ACTION, VARDECL> domain,
 			final IVariableProvider<STATE, ACTION, VARDECL, LOCATION> varProvider,

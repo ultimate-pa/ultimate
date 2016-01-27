@@ -78,7 +78,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 			
 //			new Triple<>("AutomizerCInline.xml", ".c", "EmptySettings.epf"),
 //			new Triple<>("AutomizerC.xml", ".c", "EmptySettings.epf"),
-//			new Triple<>("AutomizerBpl.xml", ".bpl", "EmptySettings.epf"), 
+//			new Triple<>("AutomizerBpl.xml", BPL, "ai/Automizer+AIv2_INT.epf"), 
 	};
 
 

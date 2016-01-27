@@ -48,8 +48,6 @@ public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, ACTIO
 
 	STATE getCurrentAbstractPreState(ACTION transition);
 
-	STATE getCurrentAbstractPostState(ACTION transition);
-
 	void addAbstractPreState(ACTION transition, STATE state);
 
 	void addAbstractPostState(ACTION transition, STATE state);

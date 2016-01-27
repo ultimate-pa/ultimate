@@ -105,7 +105,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 		case DIFFERENCE:
 			throw new AssertionError("wrong cegar loop for this");
 		case INCREMENTAL_INCLUSION_VIA_DIFFERENCE: {
-			m_InclusionCheck = new InclusionViaDifference(m_Services, 
+			m_InclusionCheck = new InclusionViaDifference(mServices, 
 					m_StateFactoryForRefinement, 
 					m_PredicateFactoryInterpolantAutomata, 
 					(INestedWordAutomatonSimple) m_Abstraction);
@@ -114,77 +114,77 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 		case INCREMENTAL_INCLUSION_2: {
 			List<INestedWordAutomatonSimple<CodeBlock, IPredicate>> empty = Collections.emptyList();
 			m_InclusionCheck = new IncrementalInclusionCheck2<CodeBlock, IPredicate>(
-					m_Services, m_StateFactoryForRefinement, 
+					mServices, m_StateFactoryForRefinement, 
 					(INestedWordAutomatonSimple) m_Abstraction, empty);
 		}
 		break;
 		case INCREMENTAL_INCLUSION_2_DEADEND_REMOVE: {
 			List<INestedWordAutomatonSimple<CodeBlock, IPredicate>> empty = Collections.emptyList();
 			m_InclusionCheck = new IncrementalInclusionCheck2DeadEndRemoval<CodeBlock, IPredicate>(
-					m_Services, m_StateFactoryForRefinement, 
+					mServices, m_StateFactoryForRefinement, 
 					(INestedWordAutomatonSimple) m_Abstraction, empty);
 		}
 		break;
 		case INCREMENTAL_INCLUSION_2_DEADEND_REMOVE_ANTICHAIN: {
 			List<INestedWordAutomatonSimple<CodeBlock, IPredicate>> empty = Collections.emptyList();
 			m_InclusionCheck = new IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<CodeBlock, IPredicate>(
-					m_Services, m_StateFactoryForRefinement, 
+					mServices, m_StateFactoryForRefinement, 
 					(INestedWordAutomatonSimple) m_Abstraction, empty);
 		}
 		break;
 		case INCREMENTAL_INCLUSION_2_DEADEND_REMOVE_ANTICHAIN_2STACKS: {
 			List<INestedWordAutomatonSimple<CodeBlock, IPredicate>> empty = Collections.emptyList();
 			m_InclusionCheck = new IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<CodeBlock, IPredicate>(
-					m_Services, m_StateFactoryForRefinement, 
+					mServices, m_StateFactoryForRefinement, 
 					(INestedWordAutomatonSimple) m_Abstraction, empty);
 		}
 		break;
 		case INCREMENTAL_INCLUSION_2_DEADEND_REMOVE_ANTICHAIN_2STACKS_MULTIPLECE: {
 			List<INestedWordAutomatonSimple<CodeBlock, IPredicate>> empty = Collections.emptyList();
 			m_InclusionCheck = new IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multipleCounterExamplesAtOnce<CodeBlock, IPredicate>(
-					m_Services, m_StateFactoryForRefinement, 
+					mServices, m_StateFactoryForRefinement, 
 					(INestedWordAutomatonSimple) m_Abstraction, empty);
 		}
 		break;
 		case INCREMENTAL_INCLUSION_3: {
 			List<INestedWordAutomatonSimple<CodeBlock, IPredicate>> empty = Collections.emptyList();
 			m_InclusionCheck = new IncrementalInclusionCheck3<CodeBlock, IPredicate>(
-					m_Services, m_StateFactoryForRefinement, 
+					mServices, m_StateFactoryForRefinement, 
 					(INestedWordAutomatonSimple) m_Abstraction, empty);
 		}
 		break;
 		case INCREMENTAL_INCLUSION_3_2: {
 			List<INestedWordAutomatonSimple<CodeBlock, IPredicate>> empty = Collections.emptyList();
 			m_InclusionCheck = new IncrementalInclusionCheck3_2<CodeBlock, IPredicate>(
-					m_Services, m_StateFactoryForRefinement, 
+					mServices, m_StateFactoryForRefinement, 
 					(INestedWordAutomatonSimple) m_Abstraction, empty);
 		}
 		break;
 		case INCREMENTAL_INCLUSION_4: {
 			List<INestedWordAutomatonSimple<CodeBlock, IPredicate>> empty = Collections.emptyList();
 			m_InclusionCheck = new IncrementalInclusionCheck4<CodeBlock, IPredicate>(
-					m_Services, m_StateFactoryForRefinement, 
+					mServices, m_StateFactoryForRefinement, 
 					(INestedWordAutomatonSimple) m_Abstraction, empty);
 		}
 		break;
 		case INCREMENTAL_INCLUSION_4_2: {
 			List<INestedWordAutomatonSimple<CodeBlock, IPredicate>> empty = Collections.emptyList();
 			m_InclusionCheck = new IncrementalInclusionCheck4_2<CodeBlock, IPredicate>(
-					m_Services, m_StateFactoryForRefinement, 
+					mServices, m_StateFactoryForRefinement, 
 					(INestedWordAutomatonSimple) m_Abstraction, empty);
 		}
 		break;
 		case INCREMENTAL_INCLUSION_5: {
 			List<INestedWordAutomatonSimple<CodeBlock, IPredicate>> empty = Collections.emptyList();
 			m_InclusionCheck = new IncrementalInclusionCheck5<CodeBlock, IPredicate>(
-					m_Services, m_StateFactoryForRefinement, 
+					mServices, m_StateFactoryForRefinement, 
 					(INestedWordAutomatonSimple) m_Abstraction, empty);
 		}
 		break;
 		case INCREMENTAL_INCLUSION_5_2: {
 			List<INestedWordAutomatonSimple<CodeBlock, IPredicate>> empty = Collections.emptyList();
 			m_InclusionCheck = new IncrementalInclusionCheck5_2<CodeBlock, IPredicate>(
-					m_Services, m_StateFactoryForRefinement, 
+					mServices, m_StateFactoryForRefinement, 
 					(INestedWordAutomatonSimple) m_Abstraction, empty);
 		}
 		break;
@@ -247,7 +247,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 					(m_Pref.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CONSERVATIVE);
 				boolean cannibalize = 
 						(m_Pref.interpolantAutomatonEnhancement() == InterpolantAutomatonEnhancement.PREDICATE_ABSTRACTION_CANNIBALIZE);
-				DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(m_Services, 
+				DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(mServices, 
 						m_SmtManager, m_ModGlobVarManager, edgeChecker, 
 						(INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, 
 						m_InterpolAutomaton, m_InterpolantGenerator.getPredicateUnifier(), mLogger,
@@ -257,9 +257,9 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 				m_InterpolantAutomata.add(determinized);
 				m_HoareTripleChecker.add(edgeChecker);
 				switchAllInterpolantAutomataToReadOnlyMode();
-				INestedWordAutomaton<CodeBlock, IPredicate> test = (new RemoveUnreachable<CodeBlock, IPredicate>(m_Services, 
+				INestedWordAutomaton<CodeBlock, IPredicate> test = (new RemoveUnreachable<CodeBlock, IPredicate>(mServices, 
 						determinized)).getResult();
-				assert (new InductivityCheck(m_Services, test, false, true,
+				assert (new InductivityCheck(mServices, test, false, true,
 						new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult();
 				progress = true;
 				break;
@@ -270,7 +270,7 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 			{
 				boolean conservativeSuccessorCandidateSelection = m_Pref.interpolantAutomatonEnhancement() == m_Pref.interpolantAutomatonEnhancement();
 				boolean secondChance = (m_Pref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE);;
-				NondeterministicInterpolantAutomaton nondet = new NondeterministicInterpolantAutomaton(m_Services, 
+				NondeterministicInterpolantAutomaton nondet = new NondeterministicInterpolantAutomaton(mServices, 
 						m_SmtManager, m_ModGlobVarManager, edgeChecker, 
 						(INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, 
 						m_InterpolAutomaton, m_InterpolantGenerator.getPredicateUnifier(), mLogger, conservativeSuccessorCandidateSelection, secondChance);
@@ -279,16 +279,16 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 				m_InterpolantAutomata.add(nondet);
 				m_HoareTripleChecker.add(edgeChecker);
 				switchAllInterpolantAutomataToReadOnlyMode();
-				INestedWordAutomaton<CodeBlock, IPredicate> test = (new RemoveUnreachable<CodeBlock, IPredicate>(m_Services, 
+				INestedWordAutomaton<CodeBlock, IPredicate> test = (new RemoveUnreachable<CodeBlock, IPredicate>(mServices, 
 						nondet)).getResult();
-				assert (new InductivityCheck(m_Services, test, false, true,
+				assert (new InductivityCheck(mServices, test, false, true,
 						new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult();
 				progress = true;
 				break;
 			}
 			case NONE:
 				m_InclusionCheck.addSubtrahend(m_InterpolAutomaton);
-				boolean acceptedByIA = (new Accepts<CodeBlock, IPredicate>(m_Services, 
+				boolean acceptedByIA = (new Accepts<CodeBlock, IPredicate>(mServices, 
 						m_InterpolAutomaton,
 						(NestedWord<CodeBlock>) m_Counterexample.getWord())).getResult();
 				progress = acceptedByIA;

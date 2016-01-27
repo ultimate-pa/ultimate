@@ -49,8 +49,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 
 /**
@@ -58,8 +56,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
-		implements IVariableProvider<STATE, CodeBlock, IBoogieVar, ProgramPoint> {
+public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>,LOCATION>
+		implements IVariableProvider<STATE, CodeBlock, IBoogieVar, LOCATION> {
 
 	private static final StorageClass[] LOCAL_STORAGE_CLASSES = new StorageClass[] { StorageClass.LOCAL,
 			StorageClass.IMPLEMENTATION_INPARAM, StorageClass.IMPLEMENTATION_OUTPARAM };
@@ -83,20 +81,16 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 		assert state != null;
 		assert state.isEmpty();
 
-		final RCFGNode source = current.getSource();
 		final Map<String, IBoogieVar> vars = new TreeMap<String, IBoogieVar>();
 
 		vars.putAll(mBoogieVarTable.getGlobals());
 		vars.putAll(mBoogieVarTable.getConsts());
 
 		// add locals if applicable, thereby overriding globals
-		if (source instanceof ProgramPoint) {
-			final String procedure = ((ProgramPoint) source).getProcedure();
-			if (procedure != null) {
-				vars.putAll(getLocalVariables(procedure));
-			}
+		final String procedure = current.getPreceedingProcedure();
+		if (procedure != null) {
+			vars.putAll(getLocalVariables(procedure));
 		}
-
 		if (vars.isEmpty()) {
 			return state;
 		}
@@ -105,7 +99,7 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 
 	@Override
 	public STATE defineVariablesAfter(final CodeBlock current, final STATE state,
-			final IAbstractStateStorage<STATE, CodeBlock, IBoogieVar, ProgramPoint> storage) {
+			final IAbstractStateStorage<STATE, CodeBlock, IBoogieVar, LOCATION> storage) {
 		assert current != null;
 		assert state != null;
 
@@ -116,18 +110,18 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 		if (current instanceof Call) {
 			// if we call we just need to update all local variables, i.e., remove all the ones from the current scope
 			// and add all the ones from the new scope (thus also automatically masking globals)
-			final ProgramPoint remove = (ProgramPoint) current.getSource();
-			final ProgramPoint add = (ProgramPoint) current.getTarget();
+			final String remove = current.getPreceedingProcedure();
+			final String add = current.getSucceedingProcedure();
 			STATE rtr = state;
 			// remove current locals
-			rtr = removeLocals(rtr, remove.getProcedure());
+			rtr = removeLocals(rtr, remove);
 			// remove globals that will be masked by the new scope
-			final Map<String, IBoogieVar> masked = getMaskedGlobalsVariables(add.getProcedure());
+			final Map<String, IBoogieVar> masked = getMaskedGlobalsVariables(add);
 			if (!masked.isEmpty()) {
 				rtr = rtr.removeVariables(masked);
 			}
 			// add locals of new scope
-			rtr = applyLocals(rtr, add.getProcedure(), rtr::addVariables);
+			rtr = applyLocals(rtr, add, rtr::addVariables);
 			return rtr;
 		} else if (current instanceof Return) {
 			// if the action is a return, we have to:
@@ -136,23 +130,23 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 			// - add old locals from the scope we are returning to
 			// - add globals that were masked by this scope from the scope we are returning to
 
-			final ProgramPoint source = (ProgramPoint) current.getSource();
-			final ProgramPoint target = (ProgramPoint) current.getTarget();
+			final String source = current.getPreceedingProcedure();
+			final String target = current.getSucceedingProcedure();
 			final Map<String, IBoogieVar> varsNeededFromOldScope = new HashMap<String, IBoogieVar>();
 
-			if (source.getProcedure() != null) {
+			if (source != null) {
 				// we need masked globals from the old scope, so we have to determine which globals are masked
-				varsNeededFromOldScope.putAll(getMaskedGlobalsVariables(source.getProcedure()));
+				varsNeededFromOldScope.putAll(getMaskedGlobalsVariables(source));
 			}
-			if (target.getProcedure() != null) {
+			if (target != null) {
 				// we also need oldlocals from the old scope; if the old scope also masks global variables, this will
 				// mask them again
-				varsNeededFromOldScope.putAll(getLocalVariables(target.getProcedure()));
+				varsNeededFromOldScope.putAll(getLocalVariables(target));
 			}
 
 			STATE rtr = state;
 			// in any case, we have to remove all local variables from the state
-			rtr = removeLocals(rtr, source.getProcedure());
+			rtr = removeLocals(rtr, source);
 
 			if (varsNeededFromOldScope.isEmpty()) {
 				// we do not need information from the old scope, so we are finished
