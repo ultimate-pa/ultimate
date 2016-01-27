@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.LiteralCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IResultReporter;
@@ -54,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.AnnotatingRcfgAbstractStateStorageProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.BaseRcfgAbstractStateStorageProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.LiteralCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgAbstractStateStorageProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgLibraryModeResultReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgLoopDetector;
@@ -91,21 +91,21 @@ public final class AbstractInterpreter {
 			final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
 			final IUltimateServiceProvider services) {
 		final Logger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		final Map<CodeBlock, Map<ProgramPoint, Term>> rtr = new HashMap<CodeBlock, Map<ProgramPoint, Term>>();
+		final Map<CodeBlock, Map<ProgramPoint, Term>> predicates = new HashMap<CodeBlock, Map<ProgramPoint, Term>>();
 		try {
-			runInternal(root, initials, timer, services, (a, b, isLib) -> new SilentReporter<>(), rtr);
+			runInternal(root, initials, timer, services, (a, b, isLib) -> new SilentReporter<>(), predicates);
 		} catch (OutOfMemoryError oom) {
 			throw oom;
 		} catch (IllegalArgumentException iae) {
 			throw iae;
 		} catch (ToolchainCanceledException tce) {
 			// suppress timeout results / timeouts
-			return rtr;
+			return predicates;
 		} catch (Throwable t) {
 			logger.fatal("Suppressed exception in AIv2: " + t.getMessage());
-			return rtr;
+			return predicates;
 		}
-		return rtr;
+		return predicates;
 	}
 
 	/**
@@ -114,16 +114,16 @@ public final class AbstractInterpreter {
 	 */
 	public static Map<CodeBlock, Map<ProgramPoint, Term>> run(final RootNode root, final Collection<CodeBlock> initials,
 			final IProgressAwareTimer timer, final IUltimateServiceProvider services) throws Throwable {
-		final Map<CodeBlock, Map<ProgramPoint, Term>> rtr = new HashMap<CodeBlock, Map<ProgramPoint, Term>>();
+		final Map<CodeBlock, Map<ProgramPoint, Term>> predicates = new HashMap<CodeBlock, Map<ProgramPoint, Term>>();
 		runInternal(root, initials, timer, services,
 				(a, b, libMode) -> libMode ? new RcfgLibraryModeResultReporter(a, b) : new RcfgResultReporter(a, b),
-				rtr);
-		return rtr;
+				predicates);
+		return predicates;
 	}
 
 	private static void runInternal(final RootNode root, final Collection<CodeBlock> initials,
-			final IProgressAwareTimer timer, final IUltimateServiceProvider services, ReporterFactory funCreateReporter,
-			Map<CodeBlock, Map<ProgramPoint, Term>> predicates) throws Throwable {
+			final IProgressAwareTimer timer, final IUltimateServiceProvider services, final ReporterFactory funCreateReporter,
+			final Map<CodeBlock, Map<ProgramPoint, Term>> predicates) throws Throwable {
 		if (initials == null) {
 			throw new IllegalArgumentException("No initial edges provided");
 		}

@@ -31,10 +31,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Consumer;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 
@@ -73,6 +77,27 @@ public final class AbsIntUtil {
 			bw.close();
 		} catch (IOException e) {
 			throw new RuntimeException(e);
+		}
+	}
+
+	public static void logPredicates(final Map<CodeBlock, Map<ProgramPoint, Term>> preds, final Script script,
+			final Consumer<String> printer) {
+		final Map<ProgramPoint, Term> predsPerLoc = new HashMap<ProgramPoint, Term>();
+		for (final Entry<CodeBlock, Map<ProgramPoint, Term>> entryPerBlock : preds.entrySet()) {
+			for (final Entry<ProgramPoint, Term> entryPerLoc : entryPerBlock.getValue().entrySet()) {
+				final Term current = predsPerLoc.get(entryPerLoc.getKey());
+				if (current == null) {
+					predsPerLoc.put(entryPerLoc.getKey(), entryPerLoc.getValue());
+				} else {
+					predsPerLoc.put(entryPerLoc.getKey(), Util.or(script, entryPerLoc.getValue(), current));
+				}
+			}
+		}
+
+		for (final Entry<ProgramPoint, Term> entry : predsPerLoc.entrySet()) {
+
+			printer.accept(
+					entry.getKey().getLocationName() + " (" + entry.getKey().getPayload().getLocation().getStartLine() + "): " + entry.getValue());
 		}
 	}
 }

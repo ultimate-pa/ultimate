@@ -68,7 +68,7 @@ public class AbstractInterpretationV2TestSuite extends AbstractEvalTestSuite {
 			"examples/svcomp/ntdrivers-simplified/",
 	   		"examples/svcomp/ssh-simplified/", 
 			"examples/svcomp/locks/",
-			"examples/svcomp/recursive/", 
+			"examples/svcomp/recursive/",
 			"examples/svcomp/systemc/",
 			// "examples/svcomp/loopsSelection/",
 			// "examples/svcomp/eca/", // SPLIT
