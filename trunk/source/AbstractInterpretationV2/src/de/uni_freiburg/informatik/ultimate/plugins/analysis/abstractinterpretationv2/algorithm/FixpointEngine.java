@@ -66,7 +66,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	private final int mMaxUnwindings;
 	private final int mMaxParallelStates;
 
-	private final ITransitionProvider<ACTION,LOCATION> mTransitionProvider;
+	private final ITransitionProvider<ACTION, LOCATION> mTransitionProvider;
 	private final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> mStateStorage;
 	private final IAbstractDomain<STATE, ACTION, VARDECL> mDomain;
 	private final IVariableProvider<STATE, ACTION, VARDECL, LOCATION> mVarProvider;
@@ -76,7 +76,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	private final Logger mLogger;
 
 	public FixpointEngine(final IUltimateServiceProvider services, final IProgressAwareTimer timer,
-			final ITransitionProvider<ACTION,LOCATION> post,
+			final ITransitionProvider<ACTION, LOCATION> post,
 			final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> storage,
 			final IAbstractDomain<STATE, ACTION, VARDECL> domain,
 			final IVariableProvider<STATE, ACTION, VARDECL, LOCATION> varProvider,
@@ -108,6 +108,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	 * @return true iff safe
 	 */
 	public boolean run(ACTION start) {
+		mLogger.debug("Starting...");
 		if (!runInternal(start)) {
 			mReporter.reportSafe(start);
 			return true;
@@ -168,7 +169,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				}
 				continue;
 			}
-			
+
 			// check if this action leaves a loop
 			if (!activeLoops.isEmpty()) {
 				// are we leaving a loop?
@@ -192,15 +193,13 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 			final STATE newPostState = pendingNewPostState;
 
-
-
 			// check if we are about to enter a loop
 			final ACTION loopExit = mLoopDetector.getLoopExit(currentAction);
 			if (loopExit != null) {
 				// we are entering a loop
 				loopEnter(activeLoops, loopCounters, currentAction, loopExit);
 			}
-			
+
 			// check if the current state is a fixpoint
 			if (checkFixpoint(currentStateStorage, currentAction, newPostState)) {
 				continue;
@@ -480,6 +479,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 	private void checkTimeout() {
 		if (!mTimer.continueProcessing()) {
+			mLogger.warn("Received timeout, aborting fixpoint engine");
 			throw new ToolchainCanceledException(getClass(), "Got cancel request during abstract interpretation");
 		}
 	}

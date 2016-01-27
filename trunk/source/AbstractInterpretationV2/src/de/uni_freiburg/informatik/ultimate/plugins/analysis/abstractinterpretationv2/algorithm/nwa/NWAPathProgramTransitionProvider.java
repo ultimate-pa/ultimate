@@ -3,17 +3,18 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
@@ -24,18 +25,36 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  */
 public class NWAPathProgramTransitionProvider<LOCATION> implements ITransitionProvider<CodeBlock, LOCATION> {
 
+	private final INestedWordAutomatonOldApi<CodeBlock, LOCATION> mAutomata;
+	private final NestedRun<CodeBlock, LOCATION> mCex;
+	private Map<CodeBlock, Integer> mLetter2Index;
+	private CodeBlock mPostErrorLoc;
+
 	public NWAPathProgramTransitionProvider(final INestedWordAutomatonOldApi<CodeBlock, LOCATION> currentAutomata,
-			final IRun<CodeBlock, LOCATION> counterexample, final IUltimateServiceProvider services) {
-		// TODO Auto-generated constructor stub
+			final NestedRun<CodeBlock, LOCATION> counterexample, final IUltimateServiceProvider services) {
+		mAutomata = currentAutomata;
+		mCex = counterexample;
+		mLetter2Index = createLetter2Index(mCex);
+		// words count their states, so 0 is first state, length is last state
+		mPostErrorLoc = mCex.getSymbol(mCex.getLength() - 2);
+	}
+
+	private Map<CodeBlock, Integer> createLetter2Index(final NestedRun<CodeBlock, LOCATION> cex) {
+		final Map<CodeBlock, Integer> rtr = new HashMap<>();
+		final int length = cex.getLength();
+		for (int i = 0; i < length - 1; ++i) {
+			rtr.put(cex.getSymbol(i), i);
+		}
+		return rtr;
 	}
 
 	@Override
 	public Collection<CodeBlock> getSuccessors(CodeBlock elem, CodeBlock scope) {
-		final RCFGNode target = elem.getTarget();
+		final LOCATION target = getTarget(elem);
 		if (target == null) {
 			return Collections.emptyList();
 		}
-		final List<RCFGEdge> successors = target.getOutgoingEdges();
+		final Collection<CodeBlock> successors = getSuccessorActions(target);
 		final Collection<CodeBlock> rtr = getValidCodeBlocks(successors, scope);
 		return rtr;
 	}
@@ -43,19 +62,7 @@ public class NWAPathProgramTransitionProvider<LOCATION> implements ITransitionPr
 	@Override
 	public boolean isPostErrorLocation(CodeBlock elem, CodeBlock currentScope) {
 		assert elem != null;
-
-		if (elem instanceof Return) {
-			if (!isCorrespondingCall(elem, currentScope)) {
-				return false;
-			}
-		}
-
-		final RCFGNode target = elem.getTarget();
-		if (target instanceof ProgramPoint) {
-			ProgramPoint progPoint = (ProgramPoint) target;
-			return progPoint.isErrorLocation();
-		}
-		return false;
+		return mPostErrorLoc == elem;
 	}
 
 	@Override
@@ -90,26 +97,48 @@ public class NWAPathProgramTransitionProvider<LOCATION> implements ITransitionPr
 		assert current != null;
 		return isCorrespondingCall(current, scope);
 	}
-	
+
 	@Override
 	public LOCATION getSource(CodeBlock current) {
-		// TODO Auto-generated method stub
-		return null;
+		final Integer index = mLetter2Index.get(current);
+		if (index == null) {
+			// this is not part of the CEX, it must be part of the path program
+			// TODO: Implement
+			throw new UnsupportedOperationException();
+		} else {
+			final LOCATION locAtIndex = mCex.getStateAtPosition(index);
+			return locAtIndex;
+		}
 	}
 
 	@Override
 	public LOCATION getTarget(CodeBlock current) {
-		// TODO Auto-generated method stub
-		return null;
+		final Integer index = mLetter2Index.get(current);
+		if (index == null) {
+			// this is not part of the CEX, it must be part of the path program
+			// TODO: Implement
+			throw new UnsupportedOperationException();
+		} else {
+			final LOCATION locAtIndex = mCex.getStateAtPosition(index+1);
+			return locAtIndex;
+		}
 	}
 
 	@Override
 	public Collection<CodeBlock> getSuccessorActions(LOCATION loc) {
-		// TODO Auto-generated method stub
-		return null;
+		final Collection<CodeBlock> rtr = new ArrayList<>();
+		for (OutgoingInternalTransition<CodeBlock, LOCATION> internalSucc : mAutomata.internalSuccessors(loc)) {
+			final CodeBlock succ = internalSucc.getLetter();
+			if(mLetter2Index.containsKey(succ)){
+				rtr.add(succ);
+			}
+			//TODO: Add call successors and return successors
+			//TODO: Add loop successors 
+		}
+		return rtr;
 	}
 
-	private Collection<CodeBlock> getValidCodeBlocks(final Collection<RCFGEdge> successors, CodeBlock scope) {
+	private Collection<CodeBlock> getValidCodeBlocks(final Collection<CodeBlock> successors, CodeBlock scope) {
 		if (successors == null) {
 			return Collections.emptyList();
 		}

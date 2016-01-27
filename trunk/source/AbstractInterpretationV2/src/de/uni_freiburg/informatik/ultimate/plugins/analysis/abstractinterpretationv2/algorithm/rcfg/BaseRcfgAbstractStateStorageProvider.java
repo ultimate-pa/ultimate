@@ -52,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loop
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.IHeuristic;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
@@ -202,11 +201,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 					continue;
 				}
 				final LOCATION target = mTransProvider.getTarget(outgoing);
-				if (!(target instanceof ProgramPoint)) {
-					continue;
-				}
-				final LOCATION targetpp = (LOCATION) target;
-				worklist.add(targetpp);
+				worklist.add(target);
 			}
 
 			final Deque<Pair<CodeBlock, STATE>> states = getStates(current);

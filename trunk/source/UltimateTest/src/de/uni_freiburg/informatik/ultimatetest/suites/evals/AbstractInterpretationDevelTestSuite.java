@@ -71,14 +71,17 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 //			new Triple<>("AbstractInterpretationv2CInline.xml", ALL_C, "ai/AIv2_INT.epf"),
 //			new Triple<>("AbstractInterpretationv2C.xml", I, "ai/AIv2_INT.epf"),
-			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/AIv2_INT.epf"),
+
 
 //			new Triple<>("AbstractInterpretationC.xml", ALL_C, "ai/AI.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/AI.epf"),
 			
 //			new Triple<>("AutomizerCInline.xml", ".c", "EmptySettings.epf"),
 //			new Triple<>("AutomizerC.xml", ".c", "EmptySettings.epf"),
-//			new Triple<>("AutomizerBpl.xml", BPL, "ai/Automizer+AIv2_INT.epf"), 
+
+			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/AIv2_INT.epf"),			
+			new Triple<>("AutomizerBpl.xml", BPL, "ai/Automizer+AIv2_INT.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "EmptySettings.epf"), 
 	};
 
 
@@ -86,9 +89,10 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	private static final String[] INPUT = new String[] {
 			/* ULTIMATE repo */
 //			 "examples/programs/abstractInterpretation/",
-			 "examples/programs/abstractInterpretation/regression",
-//			 "examples/programs/abstractInterpretation/regression/ProcedureCallNested-unsafe.bpl",
-//			 "examples/programs/abstractInterpretation/regression/ProcedureCallNested-safe.bpl",
+//			 "examples/programs/abstractInterpretation/regression",
+			 "examples/programs/abstractInterpretation/regression/CountTillBound-Loop-2.bpl",
+			 
+//			 "examples/programs/abstractInterpretation/regression/110517_Martin01-safe.bpl",
 			 
 			// "examples/programs/abstractInterpretationNoRec/",
 //			 "examples/programs/regression/bpl/",
@@ -119,7 +123,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 	@Override
 	protected long getTimeout() {
-		return 60 * 1000 * 1000;
+		return 60 * 1000;// * 1000;
 	}
 
 	@Override

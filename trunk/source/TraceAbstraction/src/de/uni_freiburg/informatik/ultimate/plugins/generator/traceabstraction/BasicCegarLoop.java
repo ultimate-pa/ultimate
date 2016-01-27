@@ -244,9 +244,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			// fill m_AITermMap
 
 			// allow for 20% of the remaining time
-			final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(20);
-			mAbsIntLoc2Term = AbstractInterpreter.runSilently(m_Counterexample, abstraction, m_RootNode, timer,
-					mServices);
+			final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
+			mLogger.info("Running abstract interpretation on error trace");
+			mAbsIntLoc2Term = AbstractInterpreter.runSilently((NestedRun<CodeBlock, IPredicate>) m_Counterexample,
+					abstraction, m_RootNode, timer, mServices);
 			assert mAbsIntLoc2Term != null : "Abstract interpretation did return an invalid term map";
 		}
 
@@ -286,14 +287,20 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		for (IPredicate pred : nwaLocs) {
 			final ISLPredicate slPred = (ISLPredicate) pred;
 
-			final Term term = loc2Term.get(pred);
-			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, m_SmtManager.getBoogie2Smt());
-			final IPredicate newPred = predicateUnifier.getOrConstructPredicate(tvp);
+			Term term = loc2Term.get(pred);
+			final IPredicate newPred;
+			if (term == null) {
+				newPred = predicateUnifier.getTruePredicate();
+			} else {
+				final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, m_SmtManager.getBoogie2Smt());
+				newPred = predicateUnifier.getOrConstructPredicate(tvp);
+			}
+
 			if (predicates.add(newPred)) {
 				result.addState(oldAbstraction.isInitial(slPred), oldAbstraction.isFinal(slPred), newPred);
 			}
 		}
-
+		result.addState(false, true, predicateUnifier.getFalsePredicate());
 		return result;
 	}
 
@@ -499,7 +506,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		final NestedWordAutomaton<CodeBlock, IPredicate> interpolAutomaton = m_InterpolAutomaton;
 		if (mAbsIntMode) {
-			final PredicateUnifier predUnifier = new PredicateUnifier(mServices, m_SmtManager);
+			final PredicateUnifier predUnifier = m_InterpolantGenerator.getPredicateUnifier();
 			final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton = getTermAutomaton(
 					(INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, mAbsIntLoc2Term, predUnifier);
 			refineWithGivenAutomaton(aiInterpolAutomaton, predUnifier);
@@ -618,9 +625,15 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 						boolean ctxAccepted = (new Accepts<CodeBlock, IPredicate>(mServices, test,
 								(NestedWord<CodeBlock>) m_Counterexample.getWord(), true, false)).getResult();
 						if (!ctxAccepted) {
-							throw new AssertionError("enhanced interpolant automaton in iteration " + m_Iteration
-									+ " broken: counterexample of length " + m_Counterexample.getLength()
-									+ " not accepted");
+							if (!mAbsIntMode) {
+								throw new AssertionError("enhanced interpolant automaton in iteration " + m_Iteration
+										+ " broken: counterexample of length " + m_Counterexample.getLength()
+										+ " not accepted");
+							} else {
+								mLogger.warn("Enhanced interpolant automaton in iteration " + m_Iteration
+										+ " did not accept counterexample of length " + m_Counterexample.getLength()
+										+ " during abstract interpretation mode");
+							}
 						}
 						assert (new InductivityCheck(mServices, test, false, true,
 								new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult();

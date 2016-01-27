@@ -29,14 +29,15 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
@@ -55,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.LiteralCollection;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.SilentReporter;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.nwa.NWALoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.nwa.NWAPathProgramTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.AnnotatingRcfgAbstractStateStorageProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.BaseRcfgAbstractStateStorageProvider;
@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.RCFGLoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -122,7 +123,7 @@ public final class AbstractInterpreter {
 	 * @param mServices
 	 * @return
 	 */
-	public static <LOC> Map<LOC, Term> runSilently(final IRun<CodeBlock, LOC> counterexample,
+	public static <LOC> Map<LOC, Term> runSilently(final NestedRun<CodeBlock, LOC> counterexample,
 			final INestedWordAutomatonOldApi<CodeBlock, LOC> currentAutomata, final RootNode root,
 			final IProgressAwareTimer timer, final IUltimateServiceProvider services) {
 		assert counterexample != null && counterexample.getLength() > 0 : "Invalid counterexample";
@@ -145,15 +146,16 @@ public final class AbstractInterpreter {
 			// suppress timeout results / timeouts
 			return predicates;
 		} catch (Throwable t) {
-			logger.fatal("Suppressed exception in AIv2: " + t.getMessage());
-			return predicates;
+			logger.fatal("Suppressed exception in AIv2: " + t.getClass().getSimpleName() + " with message " + t.getMessage());
+			throw new RuntimeException(t);
+//			return predicates;
 		}
 		return predicates;
 	}
 
 	private static <LOC> void runSilentlyOnNWA(final NWAPathProgramTransitionProvider<LOC> transProvider,
 			final CodeBlock initial, final RootNode root, final IProgressAwareTimer timer,
-			final IUltimateServiceProvider services, final Map<LOC, Term> predicates) {
+			final IUltimateServiceProvider services, final Map<LOC, Term> predicates) throws Throwable {
 		// TODO Auto-generated method stub
 
 		final BoogieSymbolTable symbolTable = getSymbolTable(root);
@@ -169,16 +171,19 @@ public final class AbstractInterpreter {
 		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain = selectDomain(
 				() -> new RCFGLiteralCollector(root).getLiteralCollection(), symbolTable, services);
 
+		final RCFGLoopDetector externalLoopDetector = new RCFGLoopDetector(services);
+		externalLoopDetector.process(root);
+		final ILoopDetector<CodeBlock> loopDetector = new RcfgLoopDetector(externalLoopDetector);
+
 		runSilentlyOnNWA(initial, timer, services, predicates, symbolTable, bpl2smt, script, boogieVarTable, domain,
-				transProvider);
+				transProvider, loopDetector);
 	}
 
 	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>, LOC> void runSilentlyOnNWA(
 			CodeBlock initial, IProgressAwareTimer timer, IUltimateServiceProvider services, Map<LOC, Term> predicates,
 			final BoogieSymbolTable symbolTable, final Boogie2SMT bpl2smt, final Script script,
 			final Boogie2SmtSymbolTable boogieVarTable, final IAbstractDomain<STATE, CodeBlock, IBoogieVar> domain,
-			final ITransitionProvider<CodeBlock, LOC> transitionProvider) {
-		final ILoopDetector<CodeBlock> loopDetector = new NWALoopDetector();
+			final ITransitionProvider<CodeBlock, LOC> transitionProvider, ILoopDetector<CodeBlock> loopDetector) {
 
 		final BaseRcfgAbstractStateStorageProvider<STATE, LOC> storage = new RcfgAbstractStateStorageProvider<STATE, LOC>(
 				domain.getMergeOperator(), services, transitionProvider);
@@ -194,6 +199,11 @@ public final class AbstractInterpreter {
 			throw c;
 		}
 		predicates.putAll(storage.getTerms(initial, script, bpl2smt));
+		final Logger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		if(logger.isDebugEnabled()){
+			logger.debug("Found the following predicates:");
+			AbsIntUtil.logPredicates(Collections.singletonMap(initial, predicates), script, logger::debug);	
+		}
 	}
 
 	/**
