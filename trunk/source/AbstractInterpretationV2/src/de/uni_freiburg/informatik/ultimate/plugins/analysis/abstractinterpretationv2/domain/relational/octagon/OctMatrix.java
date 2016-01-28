@@ -79,8 +79,8 @@ public class OctMatrix {
 	public OctMatrix copy() {
 		OctMatrix copy = new OctMatrix(mSize);
 		System.arraycopy(this.mElements, 0, copy.mElements, 0, mElements.length);
-		copy.mStrongClosure = mStrongClosure;
-		copy.mTightClosure = mTightClosure;
+		copy.mStrongClosure = (mStrongClosure == this) ? copy : mStrongClosure;
+		copy.mTightClosure = (mTightClosure == this) ? copy : mTightClosure;
 		return copy;
 	}
 
@@ -768,18 +768,20 @@ public class OctMatrix {
 	}
 	
 	/**
-	 * Assigns one (possibly negated) variable to another variable.
-	 * This method may also be used to negate a variable itself.
+	 * Assigns one variable to another variable.
 	 * <p>
 	 * This method is exact. No precision is lost. Closure in advance is not necessary.
+	 * Already closed matrices remain closed.
 	 * 
 	 * @param targetVar variable which will be changed
 	 * @param sourceVar variable which will be copied
-	 * @param negate assign the negation {@code targetVar := -sourceVar}
 	 */
-	protected void copyVar(int targetVar, int sourceVar, boolean negate) {
-		
-		// TODO move negation to its own function. Copy and negation happen
+	protected void copyVar(int targetVar, int sourceVar) {
+		if (targetVar == sourceVar) {
+			return;
+		}
+		boolean wasStronglyClosed = mStrongClosure == this;
+		boolean wasTightlyClosed = mTightClosure == this;
 		
 		int t2 = targetVar * 2;
 		int s2 = sourceVar * 2;
@@ -789,33 +791,67 @@ public class OctMatrix {
 		// "x == y" cannot be detected when imprecise "x + x <= 4" is copied
 		minimizeDiagonalElement(s2);
 		minimizeDiagonalElement(s2 + 1);
-		
-		// copy block-column, block-row is copied by coherence
-		int xor = negate ? 0b1 : 0b0; // 1 = swap sub-columns in block-column
-		for (int row = 0; row < mSize; ++row) {
-			int srcRow = (row / 2 == targetVar) ? s2 + (row % 2) : row;
-			OctValue tmp = get(srcRow, s21);     // source may equal target => swap sub-columns when "negate" is set
-			set(row, t2 ^ xor, get(srcRow, s2)); // (negate ? ◳/◲ : ◰/◱) := ◰/◱
-			set(row, t21 ^ xor, tmp);            // (negate ? ◰/◱ : ◳/◲) := ◳/◲
+
+		// copy (block lower) block-row (including diagonal block)
+		int length = Math.min(s2, t2) + 2;
+		System.arraycopy(mElements, indexOfLower(s2, 0), mElements, indexOfLower(t2, 0), length);
+		System.arraycopy(mElements, indexOfLower(s21, 0), mElements, indexOfLower(t21, 0), length);
+
+		// copy (block lower) block-column (without diagonal block)
+		for (int row = length; row < mSize; ++row) {
+			set(row, t2 , get(row, s2));
+			set(row, t21, get(row, s21));
 		}
-		if (negate) {
-			// swap sub-rows of block (target, target)
-			int top = indexOfLower(t2, t2);     // ◰ top left
-			int bot = indexOfLower(t2 + 1, t2); // ◱ bottom left
-			for (int column = 0; column < 2; ++column) {
-				OctValue tmp = mElements[top];
-				mElements[top] = mElements[bot];
-				mElements[bot] = tmp;
-				++top; // ◰ => ◳
-				++bot; // ◱ => ◲
-			}
-		}
-		// cached closures were already reset by "set"
+
+		copyBlock(targetVar, targetVar, this, sourceVar, sourceVar);
 		
-		// TODO check: input closed => result closed
-		//      if so: set closure cache
+		// cached closures were reset by "set"
+		if (wasStronglyClosed) {
+			mStrongClosure = this;
+		}
+		if (wasTightlyClosed) {
+			mTightClosure = this;
+		}
 	}
 
+	/**
+	 * Negates a variable.
+	 * <p>
+	 * This method is exact. No precision is lost. Closure in advance is not necessary.
+	 * Already closed matrices remain closed.
+	 * 
+	 * @param targetVar variable which will be negated
+	 */
+	protected void negateVar(int targetVar) {
+		int t2 = targetVar * 2;
+		int t21 = t2 + 1;
+
+		// swap (block lower) sub-rows of block-row (including diagonal block)
+		int t2RowStart = indexOf(t2, 0);
+		int t21RowStart = indexOf(t21, 0);
+		int length = t2 + 2;
+		OctValue[] tmpRow = new OctValue[length];
+		System.arraycopy(mElements, t2RowStart, tmpRow, 0, length);              // tmp row   := upper row
+		System.arraycopy(mElements, t21RowStart, mElements, t2RowStart, length); // upper row := lower row
+		System.arraycopy(tmpRow, 0, mElements, t21RowStart, length);             // lower row := tmp row
+		
+		// swap (block lower) sub-columns of block-column (including diagonal block)
+		for (int row = t2; row < mSize; ++row) {
+			int left = indexOfLower(row, t2);
+			int right = left + 1;
+			OctValue tmpVal = mElements[left];
+			mElements[left] = mElements[right];
+			mElements[right] = tmpVal;
+		}
+
+		if (mStrongClosure != this) {
+			mStrongClosure = null;
+		}
+		if (mTightClosure != this) {
+			mTightClosure = null;
+		}
+	}
+	
 	/**
 	 * Adds a constant to a variable. {@code v := v + c;}
 	 * The constant may also be negative.

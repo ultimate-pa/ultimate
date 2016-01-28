@@ -539,23 +539,20 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		for (Map.Entry<String, String> entry : mapSourceVarToTargetVar.entrySet()) {
 			String sourceVar = entry.getKey();
 			String targetVar = entry.getValue();
-			copyVar(targetVar, sourceVar, false);
+			copyVar(targetVar, sourceVar);
 		}
 	}
 
 	// targetVar := (+/-)sourceVar
-	protected void copyVar(String targetVar, String sourceVar, boolean negate) {
+	protected void copyVar(String targetVar, String sourceVar) {
 		Integer targetIndex = mMapNumericVarToIndex.get(targetVar);
 		if (targetIndex != null) {
 			Integer sourceIndex = mMapNumericVarToIndex.get(sourceVar);
 			assert sourceIndex != null : "Incompatible types";
-			mNumericAbstraction.copyVar(targetIndex, sourceIndex, negate);
+			mNumericAbstraction.copyVar(targetIndex, sourceIndex);
 		} else if (mBooleanAbstraction.containsKey(targetIndex)) {
 			BoolValue value = mBooleanAbstraction.get(sourceVar);
 			assert value != null : "Incompatible types";
-			if (negate) {
-				value = value.not();
-			}
 			mBooleanAbstraction.put(targetVar, value);
 		}
 		// else: variables of unsupported types are assumed to be \top all the time

@@ -138,7 +138,7 @@ public class OctStatementProcessor {
 			IdentifierExpression ie = (IdentifierExpression) rhs;
 			if (BoogieAstUtil.isVariable(ie)) {
 				String sourceVar = ie.getIdentifier();
-				action = s -> s.copyVar(targetVar, sourceVar, false);
+				action = s -> s.copyVar(targetVar, sourceVar);
 			}
 		}
 		mOldStates.forEach(action);
@@ -157,10 +157,10 @@ public class OctStatementProcessor {
 					if (sf.var[1] == null && sf.isVarPositive[0]) {
 						String sourceVar = sf.var[0];
 						if (sf.constant.equals(OctValue.ZERO)) {
-							action = s -> s.copyVar(targetVar, sourceVar, false);
+							action = s -> s.copyVar(targetVar, sourceVar);
 						} else {
 							action = s -> {
-								s.copyVar(targetVar, sourceVar, false);
+								s.copyVar(targetVar, sourceVar);
 								s.incrementNumericVar(targetVar, sf.constant);
 							};
 						}
