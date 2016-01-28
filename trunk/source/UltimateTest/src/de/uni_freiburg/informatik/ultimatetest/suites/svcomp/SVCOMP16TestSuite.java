@@ -38,13 +38,13 @@ import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDeci
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public class SVCOMP15TestSuite extends AbstractSVCOMPTestSuite {
+public class SVCOMP16TestSuite extends AbstractSVCOMPTestSuite {
 
 	@Override
 	protected ITestResultDecider getTestResultDecider(UltimateRunDefinition urd) {
-		return new SafetyCheckTestResultDecider(urd, true);
+		return new SafetyCheckTestResultDecider(urd, false);
 	}
-	
+
 	@Override
 	protected long getTimeout() {
 		// Timeout for each test case in milliseconds
@@ -54,7 +54,7 @@ public class SVCOMP15TestSuite extends AbstractSVCOMPTestSuite {
 	@Override
 	protected int getFilesPerCategory() {
 		// -1 or value larger than 0
-		return -1;
+		return 10;
 	}
 
 	@Override
@@ -83,13 +83,25 @@ public class SVCOMP15TestSuite extends AbstractSVCOMPTestSuite {
 		//Termination-ext.set
 		//@formatter:on
 
+//		rtr.addAll(getForThree("ControlFlow"));
+//		rtr.addAll(getForThree("Simple"));
+//		rtr.addAll(getForThree("ECA"));
+		rtr.addAll(getForThree("Loops"));
+//		rtr.addAll(getForThree("Recursive"));
+//		rtr.addAll(getForThree("ProductLines"));
+//		rtr.addAll(getForThree("Sequentialized"));
 
-		rtr.add(getTestDefinitionFromExamples("Loops", "AbstractInterpretationv2C.xml",
-		        "ai/svcomp-Reach-32bit-AIv2_INT", getTimeout()));
-		rtr.add(getTestDefinitionFromExamples("Loops", "AutomizerC.xml",
-		        "ai/svcomp-Reach-32bit-Automizer_Default.epf", getTimeout()));
-		rtr.add(getTestDefinitionFromExamples("Loops", "AutomizerC.xml",
-		        "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf", getTimeout()));
+		return rtr;
+	}
+
+	private List<TestDefinition> getForThree(final String set) {
+		final List<TestDefinition> rtr = new ArrayList<>();
+		rtr.add(getTestDefinitionFromExamples(set, "AbstractInterpretationv2C.xml",
+				"ai/svcomp-Reach-32bit-AIv2_INT.epf", getTimeout()));
+		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml", "ai/svcomp-Reach-32bit-Automizer_Default.epf",
+				getTimeout()));
+		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
+				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf", getTimeout()));
 		return rtr;
 	}
 

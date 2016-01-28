@@ -79,9 +79,12 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			new Triple<>("AutomizerCInline.xml", ".c", "EmptySettings.epf"),
 //			new Triple<>("AutomizerC.xml", ".c", "EmptySettings.epf"),
 
-			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/AIv2_INT.epf"),			
-			new Triple<>("AutomizerBpl.xml", BPL, "ai/Automizer+AIv2_INT.epf"),
-			new Triple<>("AutomizerBpl.xml", BPL, "EmptySettings.epf"), 
+//			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/AIv2_INT.epf"),			
+//			new Triple<>("AutomizerBpl.xml", BPL, "ai/Automizer+AIv2_INT.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "EmptySettings.epf"),
+			
+			new Triple<>("AutomizerC.xml", I, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"), 
+			
 	};
 
 
@@ -90,7 +93,8 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 			/* ULTIMATE repo */
 //			 "examples/programs/abstractInterpretation/",
 //			 "examples/programs/abstractInterpretation/regression",
-			 "examples/programs/abstractInterpretation/regression/CountTillBound-Loop-2.bpl",
+//			 "examples/programs/abstractInterpretation/regression/CountTillBound-Loop-2.bpl",
+			 "examples/svcomp/loop-acceleration/array_true-unreach-call1.i"
 			 
 //			 "examples/programs/abstractInterpretation/regression/110517_Martin01-safe.bpl",
 			 

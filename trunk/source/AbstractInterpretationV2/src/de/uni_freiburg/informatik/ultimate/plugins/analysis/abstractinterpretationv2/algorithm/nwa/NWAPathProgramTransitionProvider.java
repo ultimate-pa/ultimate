@@ -9,7 +9,9 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -132,9 +134,20 @@ public class NWAPathProgramTransitionProvider<LOCATION> implements ITransitionPr
 			if(mLetter2Index.containsKey(succ)){
 				rtr.add(succ);
 			}
-			//TODO: Add call successors and return successors
-			//TODO: Add loop successors 
 		}
+		for (OutgoingCallTransition<CodeBlock, LOCATION> callSucc : mAutomata.callSuccessors(loc)) {
+			final CodeBlock succ = callSucc.getLetter();
+			if(mLetter2Index.containsKey(succ)){
+				rtr.add(succ);
+			}
+		}
+		for (OutgoingReturnTransition<CodeBlock, LOCATION> returnSucc : mAutomata.returnSuccessors(loc)) {
+			final CodeBlock succ = returnSucc.getLetter();
+			if(mLetter2Index.containsKey(succ)){
+				rtr.add(succ);
+			}
+		}
+		//TODO: Add loop successors
 		return rtr;
 	}
 

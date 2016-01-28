@@ -146,9 +146,10 @@ public final class AbstractInterpreter {
 			// suppress timeout results / timeouts
 			return predicates;
 		} catch (Throwable t) {
-			logger.fatal("Suppressed exception in AIv2: " + t.getClass().getSimpleName() + " with message " + t.getMessage());
+			logger.fatal("Suppressed exception in AIv2: " + t.getClass().getSimpleName() + " with message "
+					+ t.getMessage());
 			throw new RuntimeException(t);
-//			return predicates;
+			// return predicates;
 		}
 		return predicates;
 	}
@@ -192,18 +193,18 @@ public final class AbstractInterpreter {
 				symbolTable, boogieVarTable, services);
 		final FixpointEngine<STATE, CodeBlock, IBoogieVar, LOC> fxpe = new FixpointEngine<STATE, CodeBlock, IBoogieVar, LOC>(
 				services, timer, transitionProvider, storage, domain, varProvider, loopDetector, reporter);
+		final Logger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		try {
 			boolean safe = fxpe.run(initial);
+			if (safe) {
+				logger.info("NWA was safe (error state unreachable)");
+			}
 		} catch (ToolchainCanceledException c) {
 			predicates.putAll(storage.getTerms(initial, script, bpl2smt));
 			throw c;
 		}
 		predicates.putAll(storage.getTerms(initial, script, bpl2smt));
-		final Logger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		if(logger.isDebugEnabled()){
-			logger.debug("Found the following predicates:");
-			AbsIntUtil.logPredicates(Collections.singletonMap(initial, predicates), script, logger::debug);	
-		}
+		logPredicates(logger, initial, predicates, script);
 	}
 
 	/**
@@ -290,12 +291,16 @@ public final class AbstractInterpreter {
 				predicates.put(initial, storage.getTerms(initial, script, bpl2smt));
 				throw c;
 			}
-			predicates.put(initial, storage.getTerms(initial, script, bpl2smt));
+			final Map<ProgramPoint, Term> localPredicates = storage.getTerms(initial, script, bpl2smt);
+			predicates.put(initial, localPredicates);
 			if (!iter.hasNext() && allSafe) {
 				// report all safe
 				funCreateReporter.create(services, storage, false).reportSafe(null);
 			}
+			final Logger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+			logPredicates(logger, initial, localPredicates, script);
 		}
+
 	}
 
 	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>, LOC> BaseRcfgAbstractStateStorageProvider<STATE, LOC> createStorage(
@@ -339,6 +344,11 @@ public final class AbstractInterpreter {
 		}
 		throw new UnsupportedOperationException("The value \"" + selectedDomain + "\" of preference \""
 				+ AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN + "\" was not considered before! ");
+	}
+
+	private static void logPredicates(Logger logger, CodeBlock initial, Map<?, Term> predicates, Script script) {
+		logger.info("Found the following predicates:");
+		AbsIntUtil.logPredicates(Collections.singletonMap(initial, predicates), script, logger::info);
 	}
 
 	@FunctionalInterface

@@ -108,7 +108,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	 * @return true iff safe
 	 */
 	public boolean run(ACTION start) {
-		mLogger.debug("Starting...");
+		mLogger.info("Starting fixpoint engine");
 		if (!runInternal(start)) {
 			mReporter.reportSafe(start);
 			return true;
