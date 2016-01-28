@@ -1191,13 +1191,13 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		if (lower.isInfinity()) {
 			newLower = lower;
 		} else {
-			newLower = new IntervalValue(lower.getValue().setScale(0, RoundingMode.DOWN));
+			newLower = new IntervalValue(lower.getValue().setScale(0, RoundingMode.FLOOR));
 		}
 
 		if (upper.isInfinity()) {
 			newUpper = upper;
 		} else {
-			newUpper = new IntervalValue(upper.getValue().setScale(0, RoundingMode.DOWN));
+				newUpper = new IntervalValue(upper.getValue().setScale(0, RoundingMode.CEILING));
 		}
 
 		return new IntervalDomainValue(newLower, newUpper);
