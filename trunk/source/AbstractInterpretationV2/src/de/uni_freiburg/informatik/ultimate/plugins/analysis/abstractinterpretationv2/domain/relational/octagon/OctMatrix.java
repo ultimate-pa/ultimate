@@ -768,7 +768,7 @@ public class OctMatrix {
 	}
 	
 	/**
-	 * Assigns one variable to another variable.
+	 * Assigns one variable to another variable. {@code x := y;}
 	 * <p>
 	 * This method is exact. No precision is lost. Closure in advance is not necessary.
 	 * Already closed matrices remain closed.
@@ -815,7 +815,7 @@ public class OctMatrix {
 	}
 
 	/**
-	 * Negates a variable.
+	 * Negates a variable. {@code x := -x;}
 	 * <p>
 	 * This method is exact. No precision is lost. Closure in advance is not necessary.
 	 * Already closed matrices remain closed.
@@ -857,6 +857,7 @@ public class OctMatrix {
 	 * The constant may also be negative.
 	 * <p>
 	 * This method is exact. No precision is lost. Closure in advance is not necessary.
+	 * Already closed matrices remain closed.
 	 * 
 	 * @param targetVar variable to be incremented
 	 * @param constant summand
@@ -870,10 +871,10 @@ public class OctMatrix {
 			if (row / 2 == targetVar) {
 				continue; // block (v, v) is processed after this loop
 			}
-			int iT2 = indexOf(row, t2);   // ◰/◱ left sub-column of block-column
-			int iT21 = indexOf(row, t21); // ◳/◲ right        ...
-			mElements[iT2] = mElements[iT2].add(constant);        //  (v + c) − ? ≤ ?  ≡   v − ? ≤ ?
-			mElements[iT21] = mElements[iT21].subtract(constant); // −(v + c) − ? ≤ ?  ≡  −v − ? ≤ ? − c
+			int iT2 = indexOf(row, t2);   // left sub-column of block-column
+			int iT21 = indexOf(row, t21); // right        ...
+			mElements[iT2] = mElements[iT2].add(constant);        //  (v + c) − ? ≤ ?  <=>   v − ? ≤ ?
+			mElements[iT21] = mElements[iT21].subtract(constant); // −(v + c) − ? ≤ ?  <=>  −v − ? ≤ ? − c
 		}
 
 		OctValue doubleConstant = constant.add(constant);
@@ -883,8 +884,13 @@ public class OctMatrix {
 		mElements[iLowerBound2] = mElements[iLowerBound2].subtract(doubleConstant);
 		
 		mStrongClosure = mTightClosure = null;
-		// TODO check: input closed => result closed
-		//      if so: set closure cache
+		
+		if (mStrongClosure != this) {
+			mStrongClosure = null;
+		}
+		if (mTightClosure != this) {
+			mTightClosure = null;
+		}
 	}
 	
 	protected void assignVarConstant(int targetVar, OctValue constant) {
@@ -912,7 +918,7 @@ public class OctMatrix {
 		int t2 = targetVar * 2;
 		int t21 = t2 + 1;
 
-		// set block-column, block-row is set by coherence
+		// Set block-column. Block-row is set by coherence.
 		for (int row = 0; row < mSize; ++row) {
 			mElements[indexOf(row, t2)] = mElements[indexOf(row, t21)] = OctValue.INFINITY;
 		}
