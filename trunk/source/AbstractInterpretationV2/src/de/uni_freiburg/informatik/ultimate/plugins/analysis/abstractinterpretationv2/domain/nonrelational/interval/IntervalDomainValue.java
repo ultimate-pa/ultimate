@@ -88,9 +88,8 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 	protected IntervalDomainValue(IntervalValue lower, IntervalValue upper) {
 		if (!lower.isInfinity() && !upper.isInfinity()) {
 			if (lower.getValue().compareTo(upper.getValue()) > 0) {
-				throw new UnsupportedOperationException(
-				        "The lower value must be smaller than or qual to the upper value. Lower: " + lower.getValue()
-				                + ", Upper: " + upper.getValue());
+				mIsBottom = true;
+				return;
 			}
 		}
 
@@ -1176,7 +1175,25 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 	 * @return
 	 */
 	protected IntervalDomainValue integerDivide(IntervalDomainValue other) {
-		final IntervalDomainValue result = divideInternally(other);
+		IntervalDomainValue result;
+
+		if (other.containsZero()) {
+			if (other.isPointInterval()) {
+				return new IntervalDomainValue(true);
+			}
+			
+			final IntervalDomainValue negZero = new IntervalDomainValue(other.getLower(),
+			        new IntervalValue(new BigDecimal(-1)));
+			final IntervalDomainValue posZero = new IntervalDomainValue(new IntervalValue(new BigDecimal(1)),
+			        other.getUpper());
+
+			final IntervalDomainValue resultNeg = divideInternally(negZero);
+			final IntervalDomainValue resultPos = divideInternally(posZero);
+			
+			result = resultNeg.merge(resultPos);
+		} else {
+			result = divideInternally(other);
+		}
 
 		if (result.isBottom() || result.isInfinity()) {
 			return result;
@@ -1197,7 +1214,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		if (upper.isInfinity()) {
 			newUpper = upper;
 		} else {
-				newUpper = new IntervalValue(upper.getValue().setScale(0, RoundingMode.CEILING));
+			newUpper = new IntervalValue(upper.getValue().setScale(0, RoundingMode.CEILING));
 		}
 
 		return new IntervalDomainValue(newLower, newUpper);
@@ -1220,12 +1237,13 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 
 		if (other.containsZero()) {
 			return new IntervalDomainValue();
+		} else {
+
+			IntervalValue lowerBound = computeMinDiv(other);
+			IntervalValue upperBound = computeMaxDiv(other);
+
+			return new IntervalDomainValue(lowerBound, upperBound);
 		}
-
-		IntervalValue lowerBound = computeMinDiv(other);
-		IntervalValue upperBound = computeMaxDiv(other);
-
-		return new IntervalDomainValue(lowerBound, upperBound);
 	}
 
 	/**

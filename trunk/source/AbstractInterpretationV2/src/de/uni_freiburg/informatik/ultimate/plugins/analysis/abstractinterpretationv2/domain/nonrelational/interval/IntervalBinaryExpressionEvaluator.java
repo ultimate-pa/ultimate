@@ -595,7 +595,7 @@ public class IntervalBinaryExpressionEvaluator
 		final List<IEvaluationResult<IntervalDomainEvaluationResult>> leftValue = mLeftSubEvaluator.evaluate(oldState);
 		final List<IEvaluationResult<IntervalDomainEvaluationResult>> rightValue = mRightSubEvaluator
 		        .evaluate(oldState);
-		
+
 		for (final IEvaluationResult<IntervalDomainEvaluationResult> left : leftValue) {
 			for (final IEvaluationResult<IntervalDomainEvaluationResult> right : rightValue) {
 				final IntervalDomainValue newLeft = computeNewValue(referenceValue,
@@ -646,8 +646,38 @@ public class IntervalBinaryExpressionEvaluator
 			}
 			newValue = newValue.intersect(oldValue);
 			break;
+		case ARITHMUL:
+			if (mEvaluatorType == EvaluatorType.INTEGER) {
+				newValue = referenceValue.integerDivide(otherValue);
+			} else if (mEvaluatorType == EvaluatorType.REAL) {
+				newValue = referenceValue.divide(otherValue);
+			} else {
+				throw new UnsupportedOperationException(
+				        "Division on types other than integers and reals is undefined.");
+			}
+			newValue = newValue.intersect(oldValue);
+			break;
+		case ARITHDIV:
+			if (left) {
+				newValue = referenceValue.multiply(otherValue);
+			} else {
+				if (mEvaluatorType == EvaluatorType.INTEGER) {
+					newValue = otherValue.integerDivide(referenceValue);
+				} else if (mEvaluatorType == EvaluatorType.REAL) {
+					newValue = otherValue.divide(referenceValue);
+				} else {
+					throw new UnsupportedOperationException(
+					        "Division on types other than integers and reals is undefined.");
+				}
+			}
+			newValue = newValue.intersect(oldValue);
+			break;
+		case ARITHMOD:
+			mLogger.warn("Cannot handle inverse of the modulo operation precisely. Returning old value.");
+			newValue = oldValue;
+			break;
 		default:
-			throw new UnsupportedOperationException("Not implemented.");
+			throw new UnsupportedOperationException("Not implemented: " + mOperator);
 		}
 		return newValue;
 	}
