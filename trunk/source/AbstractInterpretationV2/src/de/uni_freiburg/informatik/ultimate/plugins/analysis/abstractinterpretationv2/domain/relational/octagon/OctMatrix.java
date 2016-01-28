@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.util.BidirectionalMap;
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class OctMatrix {
-
+	
 	public final static OctMatrix NEW = new OctMatrix(0);
 
 	private final static Consumer<OctMatrix> sDefaultShortestPathClosure = OctMatrix::shortestPathClosureInPlacePrimitiveSparse;
@@ -154,12 +154,23 @@ public class OctMatrix {
 		mElements[indexOf(row, col)] = value;
 	}
 	
-	protected void setMin(int row, int col, OctValue value) {
-		assert value != null : "null is not a valid matrix element.";
+	/**
+	 * Changes an entry of this matrix iff the new value is smaller than the old value.
+	 * If the new value is not smaller than the old value, this matrix remains unchanged.
+	 * <p>
+	 * This method models the effect of {@code assume vCol - vRow <= newValue}, where {@code vRow} and {@code vCol}
+	 * are positive or negative forms of a program variable.
+	 * 
+	 * @param row row of the matrix entry
+	 * @param col column of the matrix entry
+	 * @param newValue new value of the matrix entry (must be smaller than the old value to have an effect)
+	 */
+	protected void setMin(int row, int col, OctValue newValue) {
+		assert newValue != null : "null is not a valid matrix element.";
 		mStrongClosure = mTightClosure = null;
 		int index = indexOf(row, col);
-		if (value.compareTo(mElements[index]) < 0) {
-			mElements[index] = value;
+		if (newValue.compareTo(mElements[index]) < 0) {
+			mElements[index] = newValue;
 			mStrongClosure = mTightClosure = null;
 		}
 	}
@@ -766,7 +777,10 @@ public class OctMatrix {
 	 * @param sourceVar variable which will be copied
 	 * @param negate assign the negation {@code targetVar := -sourceVar}
 	 */
-	protected void assignVarCopy(int targetVar, int sourceVar, boolean negate) {
+	protected void copyVar(int targetVar, int sourceVar, boolean negate) {
+		
+		// TODO move negation to its own function. Copy and negation happen
+		
 		int t2 = targetVar * 2;
 		int s2 = sourceVar * 2;
 		int t21 = t2 + 1;
@@ -785,7 +799,7 @@ public class OctMatrix {
 			set(row, t21 ^ xor, tmp);            // (negate ? ◰/◱ : ◳/◲) := ◳/◲
 		}
 		if (negate) {
-			// swap sub-rows of (target × target)-block
+			// swap sub-rows of block (target, target)
 			int top = indexOfLower(t2, t2);     // ◰ top left
 			int bot = indexOfLower(t2 + 1, t2); // ◱ bottom left
 			for (int column = 0; column < 2; ++column) {
@@ -797,24 +811,28 @@ public class OctMatrix {
 			}
 		}
 		// cached closures were already reset by "set"
+		
+		// TODO check: input closed => result closed
+		//      if so: set closure cache
 	}
 
 	/**
 	 * Adds a constant to a variable. {@code v := v + c;}
+	 * The constant may also be negative.
 	 * <p>
 	 * This method is exact. No precision is lost. Closure in advance is not necessary.
 	 * 
 	 * @param targetVar variable to be incremented
 	 * @param constant summand
 	 */
-	protected void assignAddConstant(int targetVar, OctValue constant) {
+	protected void incrementVar(int targetVar, OctValue constant) {
 		int t2 = targetVar * 2;
 		int t21 = t2 + 1;
 
 		// increment block-column, block-row is incremented by coherence
 		for (int row = 0; row < mSize; ++row) {
 			if (row / 2 == targetVar) {
-				continue; // (v × v)-block is processed after this loop
+				continue; // block (v, v) is processed after this loop
 			}
 			int iT2 = indexOf(row, t2);   // ◰/◱ left sub-column of block-column
 			int iT21 = indexOf(row, t21); // ◳/◲ right        ...
@@ -829,10 +847,12 @@ public class OctMatrix {
 		mElements[iLowerBound2] = mElements[iLowerBound2].subtract(doubleConstant);
 		
 		mStrongClosure = mTightClosure = null;
+		// TODO check: input closed => result closed
+		//      if so: set closure cache
 	}
 	
-	protected void assignConstant(int targetVar, OctValue constant) {
-		havocVariable(targetVar);
+	protected void assignVarConstant(int targetVar, OctValue constant) {
+		havocVar(targetVar);
 		int t2 = targetVar * 2;
 		int t21 = t2 + 1;
 		OctValue doubleConstant = constant.add(constant);
@@ -842,17 +862,17 @@ public class OctMatrix {
 		// cached closures were already reset by "set"
 	}
 	
-	protected void assignInterval(int targetVar, OctValue lowerBound, OctValue upperBound) {
-		havocVariable(targetVar);
+	protected void assignVarInterval(int targetVar, OctValue min, OctValue max) {
+		havocVar(targetVar);
 		int t2 = targetVar * 2;
 		int t21 = t2 + 1;
-		set(t2, t21, lowerBound.add(lowerBound).negateIfNotInfinity());
-		set(t21, t2, upperBound.add(upperBound));
+		set(t2, t21, min.add(min).negateIfNotInfinity());
+		set(t21, t2, max.add(max));
 
 		// cached closures were already reset by "set"
 	}
 
-	protected void havocVariable(int targetVar) {
+	protected void havocVar(int targetVar) {
 		int t2 = targetVar * 2;
 		int t21 = t2 + 1;
 
@@ -864,6 +884,41 @@ public class OctMatrix {
 		set(t21, t21, OctValue.ZERO);
 		
 		// cached closures were already reset by "set"
+	}
+	
+	// only kept for comparison -- do not use regularly
+	@Deprecated
+	protected void mineAssignRelational(int targetVar, int sourceVar, OctValue addConstant) {
+		OctValue addConstantNegated = addConstant.negate();
+		int v2 = targetVar * 2;
+		if (targetVar == sourceVar) {
+			// update column (row is updated by coherence)
+			for (int i = 0; i < mSize; ++i) {
+				int beta = 0;
+				if (i == v2) {
+					beta = -1;
+				} else if (i == v2 + 1) {
+					beta = 1;
+				}
+				for (int j = v2; j < v2 + 2; ++j) {
+					int alpha = (j == v2) ? 1 : -1;
+					int factor = alpha + beta;
+					if (factor == 1) {
+						set(i, j, get(i, j).add(addConstant));
+					} else if (factor == -1) {
+						set(i, j, get(i, j).add(addConstantNegated));
+					}
+				}
+			}
+		} else {
+			shortestPathClosureInPlaceNaiv();
+			strengtheningInPlace();
+			havocVar(targetVar);
+			int ov2 = sourceVar * 2;
+			set(ov2, v2, addConstant);        // also sets entry (v2 + 1, ov2 + 1) by coherence
+			set(v2, ov2, addConstantNegated); // also sets entry (ov2 + 1, v2 + 1) by coherence
+		}
+		mStrongClosure = mTightClosure = null;
 	}
 
 	public Term getTerm(Script script, List<Term> vars) {

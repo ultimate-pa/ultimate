@@ -21,12 +21,13 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieAstUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.util.BidirectionalMap;
 
 public class OctagonDomainState implements IAbstractState<OctagonDomainState, CodeBlock, IBoogieVar> {
-
+	
 	private static int sId;
 
 	/** A human-readable hash code, unique for each object. */
@@ -515,51 +516,46 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		assert mMapVarToBoogieVar.containsKey(var) : "introduced new variable " + var;
 	}
 
-	protected void assignNumericVarConstant(String var, OctValue value) {
-		assignNumericVarInterval(var, value, value);
+	protected void assignNumericVarConstant(String targetVar, OctValue constant) {
+		mNumericAbstraction.assignVarConstant(numVarIndex(targetVar), constant);
 	}
 
-	protected void assignNumericVarInterval(String var, OctValue min, OctValue max) {
-		havocVar(var);
-		int v2 = mMapNumericVarToIndex.get(var) * 2;
-		// lower and upper bound
-		mNumericAbstraction.set(v2, v2 + 1, min.add(min).negate());
-		mNumericAbstraction.set(v2 + 1, v2, max.add(max));
-		// main diagonal (v - v <= ...)
-		mNumericAbstraction.set(v2, v2, OctValue.ZERO);
-		mNumericAbstraction.set(v2 + 1, v2 + 1, OctValue.ZERO);
+	protected void assignNumericVarInterval(String targetVar, OctValue min, OctValue max) {
+		mNumericAbstraction.assignVarInterval(numVarIndex(targetVar), min, max);
 	}
 
-	protected void assignVars(Map<String, String> mapSourceVarToTargetVar) {
+	// v := v + c;
+	protected void incrementNumericVar(String targetVar, OctValue addConstant) {
+		mNumericAbstraction.incrementVar(numVarIndex(targetVar), addConstant);
+	}
+
+	private int numVarIndex(String var) {
+		Integer index = mMapNumericVarToIndex.get(var);
+		assert index != null : "Not a numeric variable: " + var;
+		return index;
+	}
+	
+	protected void copyVars(Map<String, String> mapSourceVarToTargetVar) {
 		for (Map.Entry<String, String> entry : mapSourceVarToTargetVar.entrySet()) {
 			String sourceVar = entry.getKey();
 			String targetVar = entry.getValue();
-			assignVar(targetVar, sourceVar);
+			copyVar(targetVar, sourceVar, false);
 		}
 	}
 
-	// targetVar := sourceVar
-	protected void assignVar(String targetVar, String sourceVar) {
+	// targetVar := (+/-)sourceVar
+	protected void copyVar(String targetVar, String sourceVar, boolean negate) {
 		Integer targetIndex = mMapNumericVarToIndex.get(targetVar);
 		if (targetIndex != null) {
-			int bTarget = targetIndex;
-			int bSource = mMapNumericVarToIndex.get(sourceVar);
-			// minimize imprecise "x + x <= 8" to "x + x <= 0" -- otherwsise "x == y" cannot be detected after "x := y"
-			int bs2 = bSource * 2;
-			mNumericAbstraction.set(bs2, bs2, OctValue.min(OctValue.ZERO, mNumericAbstraction.get(bs2, bs2)));
-			mNumericAbstraction.set(bs2+1, bs2+1, OctValue.min(OctValue.ZERO, mNumericAbstraction.get(bs2+1, bs2+1)));
-			// closure is not necessary -- we do not loose any information
-			// Copy column. Row is copied by coherence.
-			for (int bRow = 0; bRow < mNumericAbstraction.variables(); ++bRow) {
-				if (bRow == bTarget || bRow == bSource) {
-					mNumericAbstraction.copyBlock(bRow, bTarget, /* := */ mNumericAbstraction, bSource, bSource);
-				} else {
-					mNumericAbstraction.copyBlock(bRow, bTarget, /* := */ mNumericAbstraction, bRow, bSource);
-				}
-			}
+			Integer sourceIndex = mMapNumericVarToIndex.get(sourceVar);
+			assert sourceIndex != null : "Incompatible types";
+			mNumericAbstraction.copyVar(targetIndex, sourceIndex, negate);
 		} else if (mBooleanAbstraction.containsKey(targetIndex)) {
 			BoolValue value = mBooleanAbstraction.get(sourceVar);
 			assert value != null : "Incompatible types";
+			if (negate) {
+				value = value.not();
+			}
 			mBooleanAbstraction.put(targetVar, value);
 		}
 		// else: variables of unsupported types are assumed to be \top all the time
@@ -567,36 +563,6 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 			: "unknown variable in assignment: " + targetVar + " := " + sourceVar;
 	}
 	
-	// v1 := v2 + c;
-	protected void assignNumericVarRelational(String targetCar, String sourceVar, OctValue addConstant) {
-		OctValue addConstantNegated = addConstant.negate();
-		int v2 = mMapNumericVarToIndex.get(targetCar) * 2;
-		if (targetCar.equals(sourceVar)) {
-			// update column (row is updated by coherence)
-			for (int i = 0; i < mNumericAbstraction.getSize(); ++i) {
-				int beta = 0;
-				if (i == v2) {
-					beta = -1;
-				} else if (i == v2 + 1) {
-					beta = 1;
-				}
-				for (int j = v2; j < v2 + 2; ++j) {
-					int alpha = (j == v2) ? 1 : -1;
-					int factor = alpha + beta;
-					if (factor == 1) {
-						mNumericAbstraction.set(i, j, mNumericAbstraction.get(i, j).add(addConstant));
-					} else if (factor == -1) {
-						mNumericAbstraction.set(i, j, mNumericAbstraction.get(i, j).add(addConstantNegated));
-					}
-				}
-			}
-		} else {
-			int ov2 = mMapNumericVarToIndex.get(sourceVar) * 2;
-			havocVar(targetCar);
-			mNumericAbstraction.set(ov2, v2, addConstant); // also sets entry (v2 + 1, ov2 + 1) by coherence
-			mNumericAbstraction.set(v2, ov2, addConstantNegated); // also sets entry (ov2 + 1, v2 + 1) by coherence
-		}
-	}
 
 	protected void assignBooleanVar(String var, BoolValue value) {
 		assert mBooleanAbstraction.containsKey(var) : "introduced new boolean variable " + var;

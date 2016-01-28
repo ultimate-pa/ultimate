@@ -106,7 +106,7 @@ public class OctStatementProcessor {
 			
 			// (origVar := tmpVar)*
 			mOldStates = mNewStates;
-			mOldStates.forEach(oldState -> oldState.assignVars(mapTmpVarToOrigVar));
+			mOldStates.forEach(oldState -> oldState.copyVars(mapTmpVarToOrigVar));
 			mNewStates = mOldStates;
 
 			// TODO remove duplicated states (may occur due to assignments)
@@ -138,7 +138,7 @@ public class OctStatementProcessor {
 			IdentifierExpression ie = (IdentifierExpression) rhs;
 			if (BoogieAstUtil.isVariable(ie)) {
 				String sourceVar = ie.getIdentifier();
-				action = s -> s.assignVar(targetVar, sourceVar);
+				action = s -> s.copyVar(targetVar, sourceVar, false);
 			}
 		}
 		mOldStates.forEach(action);
@@ -157,9 +157,12 @@ public class OctStatementProcessor {
 					if (sf.var[1] == null && sf.isVarPositive[0]) {
 						String sourceVar = sf.var[0];
 						if (sf.constant.equals(OctValue.ZERO)) {
-							action = s -> s.assignVar(targetVar, sourceVar);
+							action = s -> s.copyVar(targetVar, sourceVar, false);
 						} else {
-							action = s -> s.assignNumericVarRelational(targetVar, sourceVar, sf.constant);
+							action = s -> {
+								s.copyVar(targetVar, sourceVar, false);
+								s.incrementNumericVar(targetVar, sf.constant);
+							};
 						}
 					}
 				}
