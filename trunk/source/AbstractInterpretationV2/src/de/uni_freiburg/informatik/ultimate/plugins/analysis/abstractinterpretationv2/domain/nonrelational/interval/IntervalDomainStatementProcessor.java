@@ -198,7 +198,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 					if (newValue == null) {
 						newState = newState.setBooleanValue(varname, res.getBooleanValue());
 					} else {
-						final IBoogieVar type = newState.getVariableType(varname);
+						final IBoogieVar type = newState.getVariableDeclarationType(varname);
 						if (type.getIType() instanceof PrimitiveType) {
 							final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
 

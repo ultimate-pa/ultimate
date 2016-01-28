@@ -164,7 +164,7 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 					final String tempName = paramNames.get(i);
 					final String realName = paramIdentifiers.get(i);
 
-					final IBoogieVar type = interimState.getVariableType(tempName);
+					final IBoogieVar type = interimState.getVariableDeclarationType(tempName);
 					if (type.getIType() instanceof PrimitiveType) {
 						final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
 

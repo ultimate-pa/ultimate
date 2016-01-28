@@ -190,4 +190,10 @@ public class IntervalConditionalEvaluator
 
 		return sb.toString();
 	}
+
+	@Override
+	public List<IEvaluationResult<IntervalDomainEvaluationResult>> inverseEvaluate(
+	        IEvaluationResult<IntervalDomainEvaluationResult> computedState) {
+		throw new UnsupportedOperationException("No inverse function for conditional expressions.");
+	}
 }

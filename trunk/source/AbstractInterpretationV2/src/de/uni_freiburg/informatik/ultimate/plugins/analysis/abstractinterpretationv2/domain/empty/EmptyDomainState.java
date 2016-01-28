@@ -195,7 +195,7 @@ public final class EmptyDomainState<ACTION, VARDECL>
 	}
 
 	@Override
-	public VARDECL getVariableType(String name) {
+	public VARDECL getVariableDeclarationType(String name) {
 		assert name != null;
 		assert mVarDecls.containsKey(name);
 

@@ -157,4 +157,33 @@ public class IntervalUnaryExpressionEvaluator
 
 		return sb.toString();
 	}
+
+	@Override
+	public List<IEvaluationResult<IntervalDomainEvaluationResult>> inverseEvaluate(
+	        IEvaluationResult<IntervalDomainEvaluationResult> computedState) {
+		final List<IEvaluationResult<IntervalDomainEvaluationResult>> returnList = new ArrayList<>();
+		final List<IEvaluationResult<IntervalDomainEvaluationResult>> evaluated = evaluate(
+		        computedState.getResult().getEvaluatedState());
+
+		for (final IEvaluationResult<IntervalDomainEvaluationResult> eval : evaluated) {
+			switch (mOperator) {
+			case ARITHNEGATIVE:
+				final IntervalDomainEvaluationResult inverse = new IntervalDomainEvaluationResult(
+				        computedState.getResult().getEvaluatedValue().negate(),
+				        eval.getResult().getEvaluatedState(), eval.getBooleanValue().neg());
+
+				final List<IEvaluationResult<IntervalDomainEvaluationResult>> result = mSubEvaluator
+				        .inverseEvaluate(inverse);
+				for (final IEvaluationResult<IntervalDomainEvaluationResult> res : result) {
+
+					returnList.add(new IntervalDomainEvaluationResult(computedState.getResult().getEvaluatedValue(),
+					        res.getResult().getEvaluatedState(), computedState.getBooleanValue()));
+				}
+				break;
+			default:
+				throw new UnsupportedOperationException("The inverse for operator " + mOperator + " is undefined.");
+			}
+		}
+		return returnList;
+	}
 }

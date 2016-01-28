@@ -530,10 +530,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 	}
 
 	/**
-	 * Note that a return value of <code>false</code> may also mean that one or both of the interval bounds is -&infin;
-	 * or &infin;.
-	 * 
-	 * @return <code>true</code> if the current interval is &bot;, <code>false</code> otherwise.
+	 * @return <code>true</code> if and only if the value is bottom, <code>false</code> otherwise.
 	 */
 	protected boolean isBottom() {
 		return mIsBottom;

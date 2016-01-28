@@ -117,4 +117,10 @@ public class IntervalFunctionEvaluator
 
 		return sb.toString();
 	}
+
+	@Override
+	public List<IEvaluationResult<IntervalDomainEvaluationResult>> inverseEvaluate(
+	        IEvaluationResult<IntervalDomainEvaluationResult> computedState) {
+		throw new UnsupportedOperationException("No implementation of inverse function applications.");
+	}
 }

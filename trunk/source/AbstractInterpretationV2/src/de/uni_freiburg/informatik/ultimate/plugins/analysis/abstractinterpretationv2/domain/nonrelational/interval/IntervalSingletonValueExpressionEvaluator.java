@@ -95,4 +95,10 @@ public class IntervalSingletonValueExpressionEvaluator
 	public String toString() {
 		return mValue.toString();
 	}
+
+	@Override
+	public List<IEvaluationResult<IntervalDomainEvaluationResult>> inverseEvaluate(
+	        IEvaluationResult<IntervalDomainEvaluationResult> computedState) {
+		return evaluate(computedState.getResult().getEvaluatedState());
+	}
 }

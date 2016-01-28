@@ -29,6 +29,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign;
 
 import java.math.BigDecimal;
+import java.util.List;
+
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
 
 /**
  * Represents a single decimal expression in the {@link SignDomain}.
@@ -64,5 +68,11 @@ public class SignSingletonDecimalExpressionEvaluator extends SignSingletonValueE
 	public boolean containsBool() {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	@Override
+	public List<IEvaluationResult<Values>> inverseEvaluate(IEvaluationResult<Values> computedState) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }
