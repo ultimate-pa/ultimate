@@ -29,7 +29,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -76,10 +75,10 @@ public class IntervalBinaryExpressionEvaluator
 
 		assert currentState != null;
 
-		final List<IEvaluationResult<IntervalDomainEvaluationResult>> firstResult = mergeIfNecessary(
-				mLeftSubEvaluator.evaluate(currentState));
-		final List<IEvaluationResult<IntervalDomainEvaluationResult>> secondResult = mergeIfNecessary(
-				mRightSubEvaluator.evaluate(currentState));
+		final List<IEvaluationResult<IntervalDomainEvaluationResult>> firstResult = mLeftSubEvaluator
+		        .evaluate(currentState);
+		final List<IEvaluationResult<IntervalDomainEvaluationResult>> secondResult = mRightSubEvaluator
+		        .evaluate(currentState);
 
 		for (String var : mLeftSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
@@ -111,14 +110,14 @@ public class IntervalBinaryExpressionEvaluator
 					switch (mEvaluatorType) {
 					case INTEGER:
 						returnValue = res1.getResult().getEvaluatedValue()
-								.integerDivide(res2.getResult().getEvaluatedValue());
+						        .integerDivide(res2.getResult().getEvaluatedValue());
 						break;
 					case REAL:
 						returnValue = res1.getResult().getEvaluatedValue().divide(res2.getResult().getEvaluatedValue());
 						break;
 					default:
 						throw new UnsupportedOperationException(
-								"Division on types other than integers and reals is undefined.");
+						        "Division on types other than integers and reals is undefined.");
 					}
 					returnBool = new BooleanValue(false);
 					break;
@@ -145,7 +144,7 @@ public class IntervalBinaryExpressionEvaluator
 					throw new UnsupportedOperationException("Implications should have been resolved earlier.");
 				case LOGICIFF:
 					throw new UnsupportedOperationException(
-							"If and only if expressions should have been resolved earlier.");
+					        "If and only if expressions should have been resolved earlier.");
 				case COMPEQ:
 					BooleanValue booleanValue = new BooleanValue();
 					IntervalDomainValue intervalValue = new IntervalDomainValue();
@@ -185,10 +184,10 @@ public class IntervalBinaryExpressionEvaluator
 					break;
 				case COMPNEQ:
 					throw new UnsupportedOperationException(
-							"COMPNEQ expression occurs even though it should have been replaced before.");
+					        "COMPNEQ expression occurs even though it should have been replaced before.");
 				case COMPGT:
 					mLogger.warn(
-							"Cannot handle greater than operators precisely. Using greater or equal over-approximation instead.");
+					        "Cannot handle greater than operators precisely. Using greater or equal over-approximation instead.");
 				case COMPGEQ:
 					final IntervalDomainValue intervalValueGeq = res1.getResult().getEvaluatedValue()
 					        .greaterOrEqual(res2.getResult().getEvaluatedValue());
@@ -230,7 +229,7 @@ public class IntervalBinaryExpressionEvaluator
 					break;
 				case COMPLT:
 					mLogger.warn(
-							"Cannot handle less than operators precisely. Using less or equal over-approximation instead.");
+					        "Cannot handle less than operators precisely. Using less or equal over-approximation instead.");
 				case COMPLEQ:
 					final IntervalDomainValue intervalValueLeq = res1.getResult().getEvaluatedValue()
 					        .lessOrEqual(res2.getResult().getEvaluatedValue());
@@ -274,7 +273,7 @@ public class IntervalBinaryExpressionEvaluator
 				default:
 					returnBool = new BooleanValue(false);
 					mLogger.warn("Possible loss of precision: cannot handle operator " + mOperator
-							+ ". Returning current state.");
+					        + ". Returning current state.");
 					returnValue = new IntervalDomainValue();
 				}
 
@@ -295,25 +294,7 @@ public class IntervalBinaryExpressionEvaluator
 		}
 
 		assert returnList.size() != 0;
-		return returnList;
-	}
-
-	private List<IEvaluationResult<IntervalDomainEvaluationResult>> mergeIfNecessary(
-	        final List<IEvaluationResult<IntervalDomainEvaluationResult>> results) {
-		if (results.size() > mMaxParallelStates) {
-			return Collections.singletonList(results.stream().reduce(this::merge).get());
-		}
-		return results;
-	}
-
-	private IEvaluationResult<IntervalDomainEvaluationResult> merge(
-	        final IEvaluationResult<IntervalDomainEvaluationResult> a,
-	        final IEvaluationResult<IntervalDomainEvaluationResult> b) {
-		final IntervalDomainEvaluationResult left = a.getResult();
-		final IntervalDomainEvaluationResult right = b.getResult();
-		return new IntervalDomainEvaluationResult(left.getEvaluatedValue().merge(right.getEvaluatedValue()),
-		        left.getEvaluatedState().merge(right.getEvaluatedState()),
-		        left.getBooleanValue().merge(right.getBooleanValue()));
+		return IntervalUtils.mergeIfNecessary(returnList, mMaxParallelStates);
 	}
 
 	@Override

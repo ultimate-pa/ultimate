@@ -29,7 +29,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -113,23 +112,7 @@ public class IntervalConditionalEvaluator
 			returnList.add(new IntervalDomainEvaluationResult(new IntervalDomainValue(), currentState,
 			        new BooleanValue(BooleanValue.Value.FALSE)));
 		}
-		List<IEvaluationResult<IntervalDomainEvaluationResult>> ret = mergeList(returnList);
-		return ret;
-	}
-
-	private List<IEvaluationResult<IntervalDomainEvaluationResult>> mergeList(
-	        List<IEvaluationResult<IntervalDomainEvaluationResult>> results) {
-		return Collections.singletonList(results.stream().reduce(this::merge).get());
-	}
-
-	private IEvaluationResult<IntervalDomainEvaluationResult> merge(
-	        final IEvaluationResult<IntervalDomainEvaluationResult> a,
-	        IEvaluationResult<IntervalDomainEvaluationResult> b) {
-		final IntervalDomainEvaluationResult left = a.getResult();
-		final IntervalDomainEvaluationResult right = b.getResult();
-		return new IntervalDomainEvaluationResult(left.getEvaluatedValue().merge(right.getEvaluatedValue()),
-		        left.getEvaluatedState().merge(right.getEvaluatedState()),
-		        left.getBooleanValue().merge(right.getBooleanValue()));
+		return IntervalUtils.mergeIfNecessary(returnList, 1);
 	}
 
 	@Override
@@ -258,6 +241,6 @@ public class IntervalConditionalEvaluator
 			        new BooleanValue(BooleanValue.Value.FALSE)));
 		}
 
-		return mergeList(returnList);
+		return IntervalUtils.mergeIfNecessary(returnList, 1);
 	}
 }

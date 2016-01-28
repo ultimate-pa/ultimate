@@ -93,7 +93,7 @@ public class IntervalUnaryExpressionEvaluator
 			returnEvaluationResults.add(new IntervalDomainEvaluationResult(returnValue, returnState, returnBool));
 		}
 
-		return returnEvaluationResults;
+		return IntervalUtils.mergeIfNecessary(returnEvaluationResults, 2);
 	}
 
 	@Override
@@ -169,8 +169,8 @@ public class IntervalUnaryExpressionEvaluator
 			switch (mOperator) {
 			case ARITHNEGATIVE:
 				final IntervalDomainEvaluationResult inverse = new IntervalDomainEvaluationResult(
-				        computedState.getResult().getEvaluatedValue().negate(),
-				        eval.getResult().getEvaluatedState(), computedState.getBooleanValue());
+				        computedState.getResult().getEvaluatedValue().negate(), eval.getResult().getEvaluatedState(),
+				        computedState.getBooleanValue());
 
 				final List<IEvaluationResult<IntervalDomainEvaluationResult>> result = mSubEvaluator
 				        .inverseEvaluate(inverse);
