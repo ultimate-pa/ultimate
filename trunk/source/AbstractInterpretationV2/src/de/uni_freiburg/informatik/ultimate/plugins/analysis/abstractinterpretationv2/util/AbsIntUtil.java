@@ -80,11 +80,11 @@ public final class AbsIntUtil {
 		}
 	}
 
-	public static void logPredicates(final Map<CodeBlock, Map<ProgramPoint, Term>> preds, final Script script,
+	public static <LOC> void logPredicates(final Map<CodeBlock, Map<LOC, Term>> preds, final Script script,
 			final Consumer<String> printer) {
-		final Map<ProgramPoint, Term> predsPerLoc = new HashMap<ProgramPoint, Term>();
-		for (final Entry<CodeBlock, Map<ProgramPoint, Term>> entryPerBlock : preds.entrySet()) {
-			for (final Entry<ProgramPoint, Term> entryPerLoc : entryPerBlock.getValue().entrySet()) {
+		final Map<LOC, Term> predsPerLoc = new HashMap<LOC, Term>();
+		for (final Entry<CodeBlock, Map<LOC, Term>> entryPerBlock : preds.entrySet()) {
+			for (final Entry<LOC, Term> entryPerLoc : entryPerBlock.getValue().entrySet()) {
 				final Term current = predsPerLoc.get(entryPerLoc.getKey());
 				if (current == null) {
 					predsPerLoc.put(entryPerLoc.getKey(), entryPerLoc.getValue());
@@ -94,10 +94,8 @@ public final class AbsIntUtil {
 			}
 		}
 
-		for (final Entry<ProgramPoint, Term> entry : predsPerLoc.entrySet()) {
-
-			printer.accept(
-					entry.getKey().getLocationName() + " (" + entry.getKey().getPayload().getLocation().getStartLine() + "): " + entry.getValue());
+		for (final Entry<LOC, Term> entry : predsPerLoc.entrySet()) {
+			printer.accept(entry.getKey() + ": " + entry.getValue());
 		}
 	}
 }

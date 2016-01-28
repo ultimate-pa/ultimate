@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.LiteralCollector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.LiteralCollection;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
@@ -54,12 +54,12 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Code
 
 	private final BoogieSymbolTable mSymbolTable;
 	private final Logger mLogger;
-	private final LiteralCollector mLiteralCollector;
+	private final LiteralCollection mLiteralCollection;
 
-	public IntervalDomain(Logger logger, BoogieSymbolTable symbolTable, LiteralCollector literalCollector) {
+	public IntervalDomain(Logger logger, BoogieSymbolTable symbolTable, LiteralCollection literalCollector) {
 		mLogger = logger;
 		mSymbolTable = symbolTable;
-		mLiteralCollector = literalCollector;
+		mLiteralCollection = literalCollector;
 	}
 
 	@Override
@@ -76,9 +76,9 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Code
 			return new IntervalSimpleWideningOperator();
 		} else if (wideningOperator.equals(IntervalDomainPreferences.VALUE_WIDENING_OPERATOR_LITERALS)) {
 			final IAbstractStateBinaryOperator<IntervalDomainState> rtr = new IntervalLiteralWideningOperator(
-					mLiteralCollector);
+					mLiteralCollection);
 			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("Using the following literals during widening: " + mLiteralCollector);
+				mLogger.debug("Using the following literals during widening: " + mLiteralCollection);
 			}
 			return rtr;
 		} else {

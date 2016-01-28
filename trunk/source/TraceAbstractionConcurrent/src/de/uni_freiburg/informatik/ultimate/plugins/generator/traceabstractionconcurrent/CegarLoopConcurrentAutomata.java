@@ -90,20 +90,20 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 	protected void constructInterpolantAutomaton() throws OperationCanceledException {
 		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
 		StraightLineInterpolantAutomatonBuilder iab = new StraightLineInterpolantAutomatonBuilder(
-				m_Services, new InCaReAlphabet<CodeBlock>(m_Abstraction), m_InterpolantGenerator, m_PredicateFactoryInterpolantAutomata);
+				mServices, new InCaReAlphabet<CodeBlock>(m_Abstraction), m_InterpolantGenerator, m_PredicateFactoryInterpolantAutomata);
 		m_InterpolAutomaton = iab.getResult();
 		mLogger.info("Interpolatants " + m_InterpolAutomaton.getStates());
 
 		m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
-		assert (accepts(m_Services, m_InterpolAutomaton, m_Counterexample.getWord())) : "Interpolant automaton broken!";
-		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true,
+		assert (accepts(mServices, m_InterpolAutomaton, m_Counterexample.getWord())) : "Interpolant automaton broken!";
+		assert (new InductivityCheck(mServices, m_InterpolAutomaton, false, true,
 				new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult() : "Not inductive";
 	}
 
 	@Override
 	protected void getInitialAbstraction() {
 		StateFactory<IPredicate> predicateFactory = new PredicateFactory(super.m_SmtManager, m_Pref);
-		CFG2Automaton cFG2NestedWordAutomaton = new Cfg2Nwa(m_RootNode, predicateFactory, m_SmtManager, m_Services);
+		CFG2Automaton cFG2NestedWordAutomaton = new Cfg2Nwa(m_RootNode, predicateFactory, m_SmtManager, mServices);
 		m_Abstraction = (NestedWordAutomaton<CodeBlock, IPredicate>) cFG2NestedWordAutomaton.getResult();
 
 		if (m_Iteration <= m_Pref.watchIteration()
@@ -168,7 +168,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 		IOpWithDelayedDeadEndRemoval<CodeBlock, IPredicate> diff;
 
 		DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(
-				m_Services, m_SmtManager, m_ModGlobVarManager, htc, oldAbstraction, m_InterpolAutomaton,
+				mServices, m_SmtManager, m_ModGlobVarManager, htc, oldAbstraction, m_InterpolAutomaton,
 				m_InterpolantGenerator.getPredicateUnifier(), mLogger, false, false);
 		// ComplementDeterministicNwa<CodeBlock, IPredicate>
 		// cdnwa = new ComplementDeterministicNwa<>(dia);
@@ -176,19 +176,19 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 				determinized, false, m_PredicateFactoryInterpolantAutomata);
 
 		if (m_Pref.differenceSenwa()) {
-			diff = new DifferenceSenwa<CodeBlock, IPredicate>(m_Services, oldAbstraction, (INestedWordAutomaton<CodeBlock, IPredicate>) determinized, psd2, false);
+			diff = new DifferenceSenwa<CodeBlock, IPredicate>(mServices, oldAbstraction, (INestedWordAutomaton<CodeBlock, IPredicate>) determinized, psd2, false);
 		} else {
-			diff = new Difference<CodeBlock, IPredicate>(m_Services, oldAbstraction, determinized, psd2,
+			diff = new Difference<CodeBlock, IPredicate>(mServices, oldAbstraction, determinized, psd2,
 					m_StateFactoryForRefinement, explointSigmaStarConcatOfIA);
 		}
 		determinized.switchToReadonlyMode();
 		assert !m_SmtManager.isLocked();
-		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true,
+		assert (new InductivityCheck(mServices, m_InterpolAutomaton, false, true,
 				new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult();
 		// do the following check only to obtain logger messages of
 		// checkInductivity
 
-		if (m_RemoveDeadEnds) {
+		if (REMOVE_DEAD_ENDS) {
 			if (m_ComputeHoareAnnotation) {
 				Difference<CodeBlock, IPredicate> difference = (Difference<CodeBlock, IPredicate>) diff;
 				m_Haf.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
@@ -221,7 +221,7 @@ public class CegarLoopConcurrentAutomata extends BasicCegarLoop {
 			throw new AssertionError();
 		}
 
-		boolean stillAccepted = (new Accepts<CodeBlock, IPredicate>(m_Services, 
+		boolean stillAccepted = (new Accepts<CodeBlock, IPredicate>(mServices, 
 				(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction,
 				(NestedWord<CodeBlock>) m_Counterexample.getWord())).getResult();
 		if (stillAccepted) {

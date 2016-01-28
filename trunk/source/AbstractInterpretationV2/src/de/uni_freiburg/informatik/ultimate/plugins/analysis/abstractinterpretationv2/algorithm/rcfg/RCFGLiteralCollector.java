@@ -39,9 +39,11 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILiteralCollector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.LiteralCollection;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 
@@ -50,14 +52,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RC
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class LiteralCollector extends RCFGEdgeVisitor {
+public class RCFGLiteralCollector extends RCFGEdgeVisitor implements ILiteralCollector {
 
 	private final Set<String> mLiterals;
 	private final Set<BigDecimal> mNumberLiterals;
 	private final StatementLiteralCollector mStatementLiteralCollector;
 	private final LiteralCollection mLiteralCollection;
 
-	public LiteralCollector(final RootNode root) {
+	public RCFGLiteralCollector(final RCFGNode root) {
 		mLiterals = new HashSet<String>();
 		mNumberLiterals = new HashSet<>();
 		mStatementLiteralCollector = new StatementLiteralCollector();
