@@ -54,7 +54,7 @@ public class SVCOMP16TestSuite extends AbstractSVCOMPTestSuite {
 	@Override
 	protected int getFilesPerCategory() {
 		// -1 or value larger than 0
-		return 10;
+		return 20;
 	}
 
 	@Override
@@ -83,13 +83,13 @@ public class SVCOMP16TestSuite extends AbstractSVCOMPTestSuite {
 		//Termination-ext.set
 		//@formatter:on
 
-//		rtr.addAll(getForThree("ControlFlow"));
-//		rtr.addAll(getForThree("Simple"));
-//		rtr.addAll(getForThree("ECA"));
+		rtr.addAll(getForThree("ControlFlow"));
+		rtr.addAll(getForThree("Simple"));
+		rtr.addAll(getForThree("ECA"));
 		rtr.addAll(getForThree("Loops"));
-//		rtr.addAll(getForThree("Recursive"));
-//		rtr.addAll(getForThree("ProductLines"));
-//		rtr.addAll(getForThree("Sequentialized"));
+		rtr.addAll(getForThree("Recursive"));
+		rtr.addAll(getForThree("ProductLines"));
+		rtr.addAll(getForThree("Sequentialized"));
 
 		return rtr;
 	}
