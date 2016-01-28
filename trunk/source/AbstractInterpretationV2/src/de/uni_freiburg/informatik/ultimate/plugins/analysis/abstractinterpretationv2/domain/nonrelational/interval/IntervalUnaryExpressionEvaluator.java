@@ -170,7 +170,7 @@ public class IntervalUnaryExpressionEvaluator
 			case ARITHNEGATIVE:
 				final IntervalDomainEvaluationResult inverse = new IntervalDomainEvaluationResult(
 				        computedState.getResult().getEvaluatedValue().negate(),
-				        eval.getResult().getEvaluatedState(), eval.getBooleanValue().neg());
+				        eval.getResult().getEvaluatedState(), computedState.getBooleanValue());
 
 				final List<IEvaluationResult<IntervalDomainEvaluationResult>> result = mSubEvaluator
 				        .inverseEvaluate(inverse);

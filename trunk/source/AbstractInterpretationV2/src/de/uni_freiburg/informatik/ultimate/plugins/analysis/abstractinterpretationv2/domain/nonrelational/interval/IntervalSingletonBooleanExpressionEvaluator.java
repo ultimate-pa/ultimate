@@ -65,7 +65,7 @@ public class IntervalSingletonBooleanExpressionEvaluator
 	public List<IEvaluationResult<IntervalDomainEvaluationResult>> evaluate(IntervalDomainState currentState) {
 		final List<IEvaluationResult<IntervalDomainEvaluationResult>> returnList = new ArrayList<>();
 
-		returnList.add(new IntervalDomainEvaluationResult(null, currentState, mBooleanValue));
+		returnList.add(new IntervalDomainEvaluationResult(new IntervalDomainValue(), currentState, mBooleanValue));
 
 		return returnList;
 	}

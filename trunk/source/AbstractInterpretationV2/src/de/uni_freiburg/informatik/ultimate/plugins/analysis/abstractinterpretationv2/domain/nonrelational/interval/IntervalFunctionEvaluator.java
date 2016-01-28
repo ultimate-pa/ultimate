@@ -121,6 +121,6 @@ public class IntervalFunctionEvaluator
 	@Override
 	public List<IEvaluationResult<IntervalDomainEvaluationResult>> inverseEvaluate(
 	        IEvaluationResult<IntervalDomainEvaluationResult> computedState) {
-		throw new UnsupportedOperationException("No implementation of inverse function applications.");
+		return evaluate(computedState.getResult().getEvaluatedState());
 	}
 }

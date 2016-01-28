@@ -153,6 +153,13 @@ public class IntervalSingletonVariableExpressionEvaluator
 			        computedState.getResult().getEvaluatedValue());
 		}
 
-		return evaluate(newState);
+		final List<IEvaluationResult<IntervalDomainEvaluationResult>> result = evaluate(newState);
+		final List<IEvaluationResult<IntervalDomainEvaluationResult>> returnList = new ArrayList<>();
+
+		for (final IEvaluationResult<IntervalDomainEvaluationResult> res : result) {
+			returnList.add(new IntervalDomainEvaluationResult(res.getResult().getEvaluatedValue(),
+			        res.getResult().getEvaluatedState(), computedState.getBooleanValue()));
+		}
+		return returnList;
 	}
 }
