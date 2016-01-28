@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
  */
 public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite {
 
-	private static final String[] I = new String[] { ".i" };
+	private static final String[] I = new String[] { ".i",".c" };
 	private static final String[] BPL = new String[] { ".bpl" };
 	private static final int DEFAULT_LIMIT = Integer.MAX_VALUE;
 	// private static final int DEFAULT_LIMIT = 10;
@@ -83,7 +83,8 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/Automizer+AIv2_INT.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "EmptySettings.epf"),
 			
-			new Triple<>("AutomizerC.xml", I, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"), 
+//			new Triple<>("AutomizerC.xml", I, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+			new Triple<>("AbstractInterpretationv2C.xml", I, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 			
 	};
 
@@ -94,32 +95,13 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			 "examples/programs/abstractInterpretation/",
 //			 "examples/programs/abstractInterpretation/regression",
 //			 "examples/programs/abstractInterpretation/regression/CountTillBound-Loop-2.bpl",
-			 "examples/svcomp/loop-acceleration/array_true-unreach-call1.i"
-			 
-//			 "examples/programs/abstractInterpretation/regression/110517_Martin01-safe.bpl",
-			 
-			// "examples/programs/abstractInterpretationNoRec/",
-//			 "examples/programs/regression/bpl/",
-//			 "examples/programs/regression/c/",
-			// "examples/programs/recursivePrograms",
+//			 "examples/svcomp/loop-acceleration/array_true-unreach-call1.i",
 			
-			 /* SV-COMP repo */
-//			"examples/svcomp/loops/", 
-			// "examples/svcomp/loopsSelection/",
-//			 "examples/svcomp/eca-rers2012/", 
-			// "examples/svcomp/ecaSelection/",
-			// "examples/svcomp/systemc/", 
-			// "examples/svcomp/systemc1/",
-			// "examples/svcomp/systemc2/",
-			// "examples/svcomp/eca-rers2012/",
-			// "examples/svcomp/recursive/",
-//			 "examples/svcomp/ssh-simplified/",
-//			 "examples/svcomp/ntdrivers-simplified/",
-//			 "examples/svcomp/ssh/",
-			
-			//unsoundness
-//			"examples/svcomp/loops/array_false-unreach-call.i",
-//			"examples/svcomp/loops/eureka_01_false-unreach-call.i"
+
+			// ########### Bugs ###########
+			//AStar does not terminate  
+//			"examples/svcomp/locks/test_locks_12_true-unreach-call_false-termination.c"
+			"examples/svcomp/eca-rers2012/Problem06_label22_true-unreach-call.c"
 
 	};
 
