@@ -54,37 +54,14 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
-//			new Triple<>("AbstractInterpretationMk2CInline.xml", ALL_C, "ai/AI2_INT.epf"),
-//			new Triple<>("AbstractInterpretationMk2C.xml", ALL_C, "ai/AI2_INT.epf"),
-//			new Triple<>("AbstractInterpretationMk2.xml", BPL, "ai/AI2_INT.epf"),
+			//### BPL 
+			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/AIv2_INT.epf"),			
+			new Triple<>("AutomizerBpl.xml", BPL, "ai/Automizer+AIv2_INT.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "EmptySettings.epf"),
 			
-//			new Triple<>("KojakAIC.xml", ALL_C, "svcomp2016/svcomp-Reach-32bit-Kojak_Default.epf"),
-//			new Triple<>("KojakCInline.xml", ALL_C, "svcomp2016/svcomp-Reach-32bit-Kojak_Default.epf"),
-			
-//			new Triple<>("AbstractInterpretationMk2CInline.xml", ALL_C, "ai/AI2_PLT.epf"),
-//			new Triple<>("AbstractInterpretationMk2C.xml", ALL_C, "ai/AI2_PLT.epf"),
-//			new Triple<>("AbstractInterpretationMk2.xml", BPL, "ai/AI2_PLT.epf"),
-			
-//			new Triple<>("AbstractInterpretationMk2CInline.xml", ".c", "ai/AI2_CMP.epf"),
-//			new Triple<>("AbstractInterpretationMk2C.xml", ".c", "ai/AI2_CMP.epf"),
-//			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_CMP.epf"),
-
-//			new Triple<>("AbstractInterpretationv2CInline.xml", ALL_C, "ai/AIv2_INT.epf"),
-//			new Triple<>("AbstractInterpretationv2C.xml", I, "ai/AIv2_INT.epf"),
-
-
-//			new Triple<>("AbstractInterpretationC.xml", ALL_C, "ai/AI.epf"),
-//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/AI.epf"),
-			
-//			new Triple<>("AutomizerCInline.xml", ".c", "EmptySettings.epf"),
-//			new Triple<>("AutomizerC.xml", ".c", "EmptySettings.epf"),
-
-//			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/AIv2_INT.epf"),			
-//			new Triple<>("AutomizerBpl.xml", BPL, "ai/Automizer+AIv2_INT.epf"),
-//			new Triple<>("AutomizerBpl.xml", BPL, "EmptySettings.epf"),
-			
+			//### C
 //			new Triple<>("AutomizerC.xml", I, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
-			new Triple<>("AbstractInterpretationv2C.xml", I, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+//			new Triple<>("AbstractInterpretationv2C.xml", I, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 			
 	};
 
@@ -94,14 +71,19 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 			/* ULTIMATE repo */
 //			 "examples/programs/abstractInterpretation/",
 //			 "examples/programs/abstractInterpretation/regression",
-//			 "examples/programs/abstractInterpretation/regression/CountTillBound-Loop-2.bpl",
+			 "examples/programs/abstractInterpretation/regression/CountTillBound-Loop-2.bpl",
 //			 "examples/svcomp/loop-acceleration/array_true-unreach-call1.i",
 			
 
 			// ########### Bugs ###########
 			//AStar does not terminate  
 //			"examples/svcomp/locks/test_locks_12_true-unreach-call_false-termination.c"
-			"examples/svcomp/eca-rers2012/Problem06_label22_true-unreach-call.c"
+			 
+			 
+			 
+			 //examples/svcomp/recursive/Ackermann03_true-unreach-call.c
+			 //examples/svcomp/product-lines/elevator_spec14_product32_false-unreach-call.cil.c
+			 //examples/svcomp/eca-rers2012/Problem16_label46_false-unreach-call.c
 
 	};
 
@@ -127,7 +109,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 	@Override
 	public ITestResultDecider constructITestResultDecider(UltimateRunDefinition urd) {
-		return new SafetyCheckTestResultDecider(urd, true);
+		return new SafetyCheckTestResultDecider(urd, false);
 	}
 
 	@Override

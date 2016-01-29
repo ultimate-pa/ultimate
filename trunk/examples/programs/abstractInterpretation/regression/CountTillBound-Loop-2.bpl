@@ -9,11 +9,11 @@
  *
  */
 
-var x,y: int;
+
 
 procedure main()
-modifies x,y;
 {
+  var x,y: int;
   x := 0;
   y := 42;
   while (x < 100) {
