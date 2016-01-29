@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
@@ -43,8 +42,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public class SignLogicalSingletonIntegerExpressionEvaluator extends SignSingletonIntegerExpressionEvaluator
         implements IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> {
 
-	protected SignLogicalSingletonIntegerExpressionEvaluator(String value, EvaluatorType type) {
-		super(value, type);
+	protected SignLogicalSingletonIntegerExpressionEvaluator(String value) {
+		super(value);
 	}
 
 	private SignDomainState logicallyInterpret(SignDomainState currentState) {

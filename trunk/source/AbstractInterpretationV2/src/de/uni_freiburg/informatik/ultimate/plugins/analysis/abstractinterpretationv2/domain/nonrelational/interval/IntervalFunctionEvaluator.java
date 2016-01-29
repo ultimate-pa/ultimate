@@ -35,7 +35,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IFunctionEvaluator;
@@ -52,15 +51,13 @@ public class IntervalFunctionEvaluator
 
 	private final String mName;
 	private final int mInParamCount;
-	private final EvaluatorType mEvaluatorType;
 
 	private final List<IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar>> mInputParamEvaluators;
 
-	protected IntervalFunctionEvaluator(String name, int numInParams, EvaluatorType type) {
+	protected IntervalFunctionEvaluator(String name, int numInParams) {
 		mName = name;
 		mInParamCount = numInParams;
 		mInputParamEvaluators = new ArrayList<>();
-		mEvaluatorType = type;
 	}
 
 	@Override
@@ -122,7 +119,8 @@ public class IntervalFunctionEvaluator
 	}
 
 	@Override
-	public EvaluatorType getEvaluatorType() {
-		return mEvaluatorType;
+	public List<IEvaluationResult<IntervalDomainEvaluationResult>> inverseEvaluate(
+	        IEvaluationResult<IntervalDomainEvaluationResult> computedState) {
+		return evaluate(computedState.getResult().getEvaluatedState());
 	}
 }

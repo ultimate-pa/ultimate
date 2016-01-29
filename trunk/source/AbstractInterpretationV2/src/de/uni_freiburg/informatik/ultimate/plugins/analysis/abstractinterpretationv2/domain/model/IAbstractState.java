@@ -111,7 +111,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 *            The variable to get the type of.
 	 * @return The variable declaration type of the variable.
 	 */
-	VARDECL getVariableType(final String name);
+	VARDECL getVariableDeclarationType(final String name);
 
 	/**
 	 * Check if a given variable exists in the abstract state.

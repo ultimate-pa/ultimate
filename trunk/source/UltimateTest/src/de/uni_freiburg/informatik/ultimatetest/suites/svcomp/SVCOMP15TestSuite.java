@@ -48,13 +48,13 @@ public class SVCOMP15TestSuite extends AbstractSVCOMPTestSuite {
 	@Override
 	protected long getTimeout() {
 		// Timeout for each test case in milliseconds
-		return 30 * 1000;
+		return 60 * 1000;
 	}
 
 	@Override
 	protected int getFilesPerCategory() {
 		// -1 or value larger than 0
-		return 45;
+		return -1;
 	}
 
 	@Override
@@ -83,109 +83,13 @@ public class SVCOMP15TestSuite extends AbstractSVCOMPTestSuite {
 		//Termination-ext.set
 		//@formatter:on
 
-		/* Automizer */
-//		rtr.add(getTestDefinitionFromExamples("Arrays", "AutomizerC.xml",
-//				"svcomp2015/svComp-32bit-precise-Automizer.epf", getTimeout()));
-//
-//		rtr.add(getTestDefinitionFromExamples("BitVectors", "AutomizerC.xml",
-//				"svcomp2015/svComp-32bit-precise-Automizer.epf", getTimeout()));
-//		
-//		rtr.add(getTestDefinitionFromExamples("ControlFlowInteger", "AutomizerC.xml",
-//				"svcomp2015/svComp-32bit-precise-Automizer.epf", getTimeout()));
-//		rtr.add(getTestDefinitionFromExamples("ECA", "AutomizerC.xml", "svcomp2015/svComp-32bit-precise-Automizer.epf",
-//				getTimeout()));
-//		rtr.add(getTestDefinitionFromExamples("Loops", "AutomizerC.xml",
-//				"svcomp2015/svComp-32bit-precise-Automizer.epf", getTimeout()));
-//		rtr.add(getTestDefinitionFromExamples("ProductLines", "AutomizerC.xml",
-//				"svcomp2015/svComp-32bit-precise-Automizer.epf", getTimeout()));
-//		
-//		rtr.add(getTestDefinitionFromExamples("DeviceDrivers64", "AutomizerC.xml",
-//				"svcomp2015/svComp-64bit-simple-Automizer.epf", getTimeout()));
-//
-//		rtr.add(getTestDefinitionFromExamples("HeapManipulation", "AutomizerC.xml",
-//				"svcomp2015/svComp-32bit-precise-Automizer.epf", getTimeout()));
-//
-//		rtr.add(getTestDefinitionFromExamples("MemorySafety", "AutomizerC.xml",
-//				"svcomp2015/svComp-32bit-memsafety-Automizer.epf", getTimeout()));
-//		
-//		rtr.add(getTestDefinitionFromExamples("Recursive", "AutomizerC.xml",
-//				"svcomp2015/svComp-32bit-precise-Automizer.epf", getTimeout()));
-//		
-//		rtr.add(getTestDefinitionFromExamples("Sequentialized", "AutomizerC.xml",
-//				"svcomp2015/svComp-32bit-precise-Automizer.epf", getTimeout()));
-//
-//		rtr.add(getTestDefinitionFromExamples("Simple", "AutomizerC.xml",
-//				"svcomp2015/svComp-32bit-simple-Automizer.epf", getTimeout()));
 
-//		rtr.add(getTestDefinitionFromExamples("Concurrency", "AutomizerC.xml",
-//				"svcomp2015/svComp-32bit-precise-Automizer.epf", getTimeout()));
-		
-		
-		
-//		/* Kojak */
-//		rtr.add(getTestDefinitionFromExamples("Arrays", "CodeCheckWithBE-C.xml",
-//				"svcomp2015/svComp-32bit-precise-BE-Kojak.epf", getTimeout()));
-//		rtr.add(getTestDefinitionFromExamples("ControlFlowInteger", "CodeCheckWithBE-C.xml",
-//				"svcomp2015/svComp-32bit-precise-BE-Kojak.epf", getTimeout()));
-//		rtr.add(getTestDefinitionFromExamples("ECA", "CodeCheckWithBE-C.xml",
-//				"svcomp2015/svComp-32bit-precise-BE-Kojak.epf", getTimeout()));
-//		rtr.add(getTestDefinitionFromExamples("Loops", "CodeCheckWithBE-C.xml",
-//				"svcomp2015/svComp-32bit-precise-BE-Kojak.epf", getTimeout()));
-//		rtr.add(getTestDefinitionFromExamples("ProductLines", "CodeCheckWithBE-C.xml",
-//				"svcomp2015/svComp-32bit-precise-BE-Kojak.epf", getTimeout()));
-//		rtr.add(getTestDefinitionFromExamples("Recursive", "CodeCheckWithBE-C.xml",
-//				"svcomp2015/svComp-32bit-precise-BE-Kojak.epf", getTimeout()));
-//		rtr.add(getTestDefinitionFromExamples("Sequentialized", "CodeCheckWithBE-C.xml",
-//				"svcomp2015/svComp-32bit-precise-BE-Kojak.epf", getTimeout()));
-//		rtr.add(getTestDefinitionFromExamples("DeviceDrivers64", "CodeCheckWithBE-C.xml",
-//				"svcomp2015/svComp-64bit-precise-BE-Kojak.epf", getTimeout()));
-//		rtr.add(getTestDefinitionFromExamples("Simple", "CodeCheckWithBE-C.xml",
-//				"svcomp2015/svComp-32bit-precise-BE-Kojak.epf", getTimeout()));
-//		rtr.add(getTestDefinitionFromExamples("MemorySafety", "CodeCheckWithBE-C.xml",
-//				"svcomp2015/svComp-32bit-memsafety-BE-Kojak.epf.epf", getTimeout()));
-
-		/* Impulse */
-//		rtr.add(getTestDefinitionFromExamples("Arrays", "CodeCheckWithBE-C.xml",
-//				"svcomp2015/svComp-32bit-precise-BE-Impulse.epf", getTimeout()));
-//		
-//		rtr.add(getTestDefinitionFromExamples("BitVectors", "CodeCheckWithBE-C.xml",
-//				"svcomp2015/svComp-32bit-precise-BE-Impulse.epf", getTimeout()));
-//		
-//		rtr.add(getTestDefinitionFromExamples("ControlFlowInteger", "CodeCheckWithBE-C.xml",
-//				"svcomp2015/svComp-32bit-precise-BE-Impulse.epf", getTimeout()));
-//		rtr.add(getTestDefinitionFromExamples("ECA", "CodeCheckWithBE-C.xml",
-//				"svcomp2015/svComp-32bit-precise-BE-Impulse.epf", getTimeout()));
-//		rtr.add(getTestDefinitionFromExamples("Loops", "CodeCheckWithBE-C.xml",
-//				"svcomp2015/svComp-32bit-precise-BE-Impulse.epf", getTimeout()));
-//		rtr.add(getTestDefinitionFromExamples("ProductLine", "CodeCheckWithBE-C.xml",
-//				"svcomp2015/svComp-32bit-precise-BE-Impulse.epf", getTimeout()));
-//
-//		rtr.add(getTestDefinitionFromExamples("DeviceDrivers64", "CodeCheckWithBE-C.xml",
-//				"svcomp2015/svComp-64bit-precise-BE-Impulse.epf", getTimeout()));
-//
-//		rtr.add(getTestDefinitionFromExamples("HeapManipulation", "CodeCheckWithBE-C.xml",
-//				"svcomp2015/svComp-32bit-precise-BE-Impulse.epf", getTimeout()));
-//
-//		rtr.add(getTestDefinitionFromExamples("MemorySafety", "CodeCheckWithBE-C.xml",
-//				"svcomp2015/svComp-32bit-memsafety-BE-Impulse.epf.epf", getTimeout()));
-//
-//		
-//		rtr.add(getTestDefinitionFromExamples("Recursive", "CodeCheckWithBE-C.xml",
-//				"svcomp2015/svComp-32bit-precise-BE-Impulse.epf", getTimeout()));
-//		
-//		rtr.add(getTestDefinitionFromExamples("Sequentialized", "CodeCheckWithBE-C.xml",
-//				"svcomp2015/svComp-32bit-precise-BE-Impulse.epf", getTimeout()));
-//		
-//		rtr.add(getTestDefinitionFromExamples("Simple", "CodeCheckWithBE-C.xml",
-//				"svcomp2015/svComp-32bit-precise-BE-Impulse.epf", getTimeout()));
-//		
-//		rtr.add(getTestDefinitionFromExamples("Concurrency", "CodeCheckWithBE-C.xml",
-//				"svcomp2015/svComp-32bit-precise-BE-Impulse.epf", getTimeout()));
-
-		/* Abstract Interpretation */
-		rtr.add(getTestDefinitionFromExamples("Loops-validate", "AbstractInterpretationv2C.xml",
-		        "ai/AIv2_INT.epf", getTimeout()));
-		
+		rtr.add(getTestDefinitionFromExamples("Loops", "AbstractInterpretationv2C.xml",
+		        "ai/svcomp-Reach-32bit-AIv2_INT", getTimeout()));
+		rtr.add(getTestDefinitionFromExamples("Loops", "AutomizerC.xml",
+		        "ai/svcomp-Reach-32bit-Automizer_Default.epf", getTimeout()));
+		rtr.add(getTestDefinitionFromExamples("Loops", "AutomizerC.xml",
+		        "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf", getTimeout()));
 		return rtr;
 	}
 

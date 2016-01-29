@@ -1733,6 +1733,7 @@ public class CHandler implements ICHandler {
 	 * requires that the Boogie expressions in left (resp. right) are a 
 	 * non-boolean representation of these results 
 	 * (i.e., rexBoolToIntIfNecessary() has already been applied if needed).
+	 * @param lhs is non-null iff we haven an assignment
 	 */
 	ExpressionResult handleMultiplicativeOperation(Dispatcher main, ILocation loc, 
 			LRValue lhs, int op, ExpressionResult left, ExpressionResult right) {
@@ -1834,6 +1835,7 @@ public class CHandler implements ICHandler {
 	 * requires that the Boogie expressions in left (resp. right) are a 
 	 * non-boolean representation of these results 
 	 * (i.e., rexBoolToIntIfNecessary() has already been applied if needed).
+	 * @param lhs is non-null iff we haven an assignment
 	 */
 	ExpressionResult handleAdditiveOperation(Dispatcher main, ILocation loc, 
 			LRValue lhs, int op, ExpressionResult left, ExpressionResult right) {
@@ -2074,6 +2076,7 @@ public class CHandler implements ICHandler {
 	 * requires that the Boogie expressions in left (resp. right) are a 
 	 * non-boolean representation of these results 
 	 * (i.e., rexBoolToIntIfNecessary() has already been applied if needed).
+	 * @param lhs is non-null iff we haven an assignment
 	 */
 	ExpressionResult handleBitshiftOperation(Dispatcher main, ILocation loc, 
 			LRValue lhs, int op, ExpressionResult left, ExpressionResult right) {
@@ -2118,6 +2121,7 @@ public class CHandler implements ICHandler {
 	 * requires that the Boogie expressions in left (resp. right) are a 
 	 * non-boolean representation of these results 
 	 * (i.e., rexBoolToIntIfNecessary() has already been applied if needed).
+	 * @param lhs is non-null iff we haven an assignment
 	 */
 	ExpressionResult handleBitwiseArithmeticOperation(Dispatcher main, ILocation loc, 
 			LRValue lhs, int op, ExpressionResult left, ExpressionResult right) {

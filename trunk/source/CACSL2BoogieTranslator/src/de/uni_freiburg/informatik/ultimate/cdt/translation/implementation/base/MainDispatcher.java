@@ -138,6 +138,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.DeclarationResult;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
@@ -568,25 +571,38 @@ public class MainDispatcher extends Dispatcher {
 		if (!witnessInvariantsBefore.isEmpty() || !witnessInvariantsAfter.isEmpty()) {
 			ILocation loc = LocationFactory.createCLocation(n);
 			if (result instanceof ExpressionResult) {
-				ExpressionResult exprResult = (ExpressionResult) result;
-				exprResult.stmt.addAll(0, witnessInvariantsBefore);
-				exprResult.stmt.addAll(witnessInvariantsAfter);
+				final ExpressionResult exprResult = (ExpressionResult) result;
+				final ArrayList<Statement> stmt = exprResult.stmt;
 				if (invariantBefore != null) {
+					stmt.addAll(0, witnessInvariantsBefore);
 					mLogger.warn("Checking witness invariant " + invariantBefore + " directly before the following code " + loc);
 				}
 				if (invariantAfter != null) {
+					stmt.addAll(witnessInvariantsAfter);
+					mLogger.warn("Checking witness invariant " + invariantAfter + " directly after the following code " + loc);
+				}
+			} else if (result instanceof ExpressionListResult) {
+				ExpressionListResult exlire = (ExpressionListResult) result;
+				if (invariantBefore != null) {
+					ArrayList<Statement> stmt = exlire.list.get(0).stmt;
+					stmt.addAll(0, witnessInvariantsBefore);
+					mLogger.warn("Checking witness invariant " + invariantBefore + " directly before the following code " + loc);
+				}
+				if (invariantAfter != null) {
+					ArrayList<Statement> stmt = exlire.list.get(exlire.list.size()-1).stmt;
+					stmt.addAll(witnessInvariantsAfter);
 					mLogger.warn("Checking witness invariant " + invariantAfter + " directly after the following code " + loc);
 				}
 			} else {
 				if (invariantBefore != null) {
 					String message = "Found witness invariant but unable to add check " + invariantBefore + " directly before the following code " + loc;
 					mLogger.warn(message);
-					throw new AssertionError(message);
+//					throw new AssertionError(message);
 				}
 				if (invariantAfter != null) {
 					String message = "Found witness invariant but unable to add check " + invariantAfter + " directly after the following code " + loc;
 					mLogger.warn(message);
-					throw new AssertionError(message);
+//					throw new AssertionError(message);
 				}
 			}
 		}

@@ -34,12 +34,10 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IAbstractStateStorage;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 /**
@@ -47,24 +45,26 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public class AnnotatingRcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
-		extends BaseRcfgAbstractStateStorageProvider<STATE> {
+public class AnnotatingRcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>, LOCATION>
+		extends BaseRcfgAbstractStateStorageProvider<STATE, LOCATION> {
 
 	private static int sSuffix;
 	private final String mSuffix;
 
 	public AnnotatingRcfgAbstractStateStorageProvider(IAbstractStateBinaryOperator<STATE> mergeOperator,
-			IUltimateServiceProvider services) {
-		super(mergeOperator, services);
+			IUltimateServiceProvider services, ITransitionProvider<CodeBlock, LOCATION> transProvider) {
+		super(mergeOperator, services, transProvider);
 		mSuffix = String.valueOf(sSuffix++);
 	}
 
-	protected Deque<Pair<CodeBlock, STATE>> getStates(RCFGNode node) {
+	protected Deque<Pair<CodeBlock, STATE>> getStates(LOCATION node) {
 		assert node != null;
-		AbsIntAnnotation<STATE> rtr = AbsIntAnnotation.getAnnotation(node, mSuffix);
+		assert node instanceof IElement : "Cannot persist states for locations that do not support payloads";
+		final IElement elem = (IElement) node;
+		AbsIntAnnotation<STATE> rtr = AbsIntAnnotation.getAnnotation(elem, mSuffix);
 		if (rtr == null) {
 			rtr = new AbsIntAnnotation<STATE>();
-			rtr.annotate(node, mSuffix);
+			rtr.annotate(elem, mSuffix);
 		}
 		return rtr.mStates;
 	}
@@ -119,7 +119,8 @@ public class AnnotatingRcfgAbstractStateStorageProvider<STATE extends IAbstractS
 	}
 
 	@Override
-	public IAbstractStateStorage<STATE, CodeBlock, IBoogieVar, ProgramPoint> createStorage() {
-		return new AnnotatingRcfgAbstractStateStorageProvider<STATE>(getMergeOperator(), getServices());
+	public BaseRcfgAbstractStateStorageProvider<STATE, LOCATION> create() {
+		return new AnnotatingRcfgAbstractStateStorageProvider<STATE, LOCATION>(getMergeOperator(), getServices(),
+				getTransitionProvider());
 	}
 }

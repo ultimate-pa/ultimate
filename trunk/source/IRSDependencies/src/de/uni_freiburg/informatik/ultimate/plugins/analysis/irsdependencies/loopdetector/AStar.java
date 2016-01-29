@@ -40,6 +40,8 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
 
 /**
@@ -61,24 +63,26 @@ public class AStar<V, E> {
 	private final V mTarget;
 	private final IEdgeDenier<E> mEdgeDenier;
 	private final IGraph<V, E> mGraph;
+	private final IProgressAwareTimer mTimer;
 
-	public AStar(Logger logger, V start, V target, IHeuristic<V, E> heuristic, IGraph<V, E> graph) {
-		this(logger, start, target, heuristic, graph, new NoEdgeDenier<E>());
+	public AStar(Logger logger, V start, V target, IHeuristic<V, E> heuristic, IGraph<V, E> graph, IProgressAwareTimer timer) {
+		this(logger, start, target, heuristic, graph, new NoEdgeDenier<E>(),timer);
 	}
 
 	public AStar(Logger logger, V start, V target, IHeuristic<V, E> heuristic, IGraph<V, E> graph,
-			Collection<E> forbiddenEdges) {
-		this(logger, start, target, heuristic, graph, new CollectionEdgeDenier<>(forbiddenEdges));
+			Collection<E> forbiddenEdges, IProgressAwareTimer timer) {
+		this(logger, start, target, heuristic, graph, new CollectionEdgeDenier<>(forbiddenEdges),timer);
 	}
 
 	public AStar(Logger logger, V start, V target, IHeuristic<V, E> heuristic, IGraph<V, E> graph,
-			IEdgeDenier<E> edgeDenier) {
+			IEdgeDenier<E> edgeDenier, IProgressAwareTimer timer) {
 		mLogger = logger;
 		mHeuristic = heuristic;
 		mStart = start;
 		mTarget = target;
 		mEdgeDenier = edgeDenier;
 		mGraph = graph;
+		mTimer = timer;
 	}
 
 	public List<E> findPath() {
@@ -124,6 +128,7 @@ public class AStar<V, E> {
 
 		List<E> path = null;
 		while (!open.isEmpty()) {
+			checkTimeout();
 			final OpenItem<V, E> currentItem = open.poll();
 
 			if (currentItem.getNode().equals(mTarget)) {
@@ -144,6 +149,13 @@ public class AStar<V, E> {
 			mLogger.warn(String.format("Did not find a path from source %s to target %s!", mStart, mTarget));
 		}
 		return path;
+	}
+
+	private void checkTimeout() {
+		if(!mTimer.continueProcessing()){
+			mLogger.warn("Received timeout, aborting AStar engine");
+			throw new ToolchainCanceledException(getClass(), "Got cancel request during AStar");
+		}
 	}
 
 	private void expandNode(final OpenItem<V, E> currentItem, final FasterPriorityQueue<OpenItem<V, E>> open) {

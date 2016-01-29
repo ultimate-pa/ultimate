@@ -385,7 +385,8 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 	}
 
 	@Override
-	public EvaluatorType getEvaluatorType() {
-		return mEvaluatorType;
+	public List<IEvaluationResult<Values>> inverseEvaluate(IEvaluationResult<Values> computedState) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

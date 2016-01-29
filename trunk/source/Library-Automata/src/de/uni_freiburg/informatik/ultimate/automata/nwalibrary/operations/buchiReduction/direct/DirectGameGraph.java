@@ -115,11 +115,18 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 	 * @throws OperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
+	 * @throws IllegalArgumentException
+	 *             If the inputed automaton is no Buechi-automaton. It must have
+	 *             an empty call and return alphabet.
 	 */
 	public DirectGameGraph(final IUltimateServiceProvider services, final IProgressAwareTimer progressTimer,
 			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
 		super(progressTimer, logger, stateFactory);
+		if (!buechi.getCallAlphabet().isEmpty() || !buechi.getReturnAlphabet().isEmpty()) {
+			throw new IllegalArgumentException(
+					"The inputed automaton is no Buechi-automaton. It must have an empty call and return alphabet.");
+		}
 		m_Services = services;
 		m_Buechi = buechi;
 		m_StateFactory = stateFactory;

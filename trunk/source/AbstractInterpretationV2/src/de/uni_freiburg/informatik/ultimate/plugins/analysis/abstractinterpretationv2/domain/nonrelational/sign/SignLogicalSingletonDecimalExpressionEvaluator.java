@@ -31,7 +31,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
@@ -46,8 +45,8 @@ public class SignLogicalSingletonDecimalExpressionEvaluator extends SignSingleto
 
 	private BooleanValue mBooleanValue;
 
-	public SignLogicalSingletonDecimalExpressionEvaluator(String value, EvaluatorType type) {
-		super(value, type);
+	public SignLogicalSingletonDecimalExpressionEvaluator(String value) {
+		super(value);
 		mBooleanValue = new BooleanValue(false);
 	}
 

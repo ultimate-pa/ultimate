@@ -26,61 +26,35 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
-import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
-import java.util.ListIterator;
-import java.util.Set;
-import java.util.stream.Collectors;
+
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 
 /**
- * Holds all numbered literals in the program.
+ * Utilitiy functions for the interval domain.
  * 
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class LiteralCollection {
-
-	private final List<BigDecimal> mSortedNumbersSet;
-
-	protected LiteralCollection(Set<BigDecimal> realsSet) {
-		mSortedNumbersSet = realsSet.stream().sorted().collect(Collectors.toList());
-	}
-
-	public BigDecimal getNextRealPositive(BigDecimal value) {
-		return getNextNumberPositive(value);
-	}
-
-	public BigDecimal getNextRealNegative(BigDecimal value) {
-		return getNextNumberNegative(value);
-	}
-
-	private BigDecimal getNextNumberPositive(BigDecimal value) {
-		ListIterator<BigDecimal> it = mSortedNumbersSet.listIterator();
-
-		while (it.hasNext()) {
-			final BigDecimal current = it.next();
-			if (current.compareTo(value) > 0) {
-				return current;
-			}
+public class IntervalUtils {
+	protected static List<IEvaluationResult<IntervalDomainEvaluationResult>> mergeIfNecessary(
+	        final List<IEvaluationResult<IntervalDomainEvaluationResult>> results, int maxParallelStates) {
+		if (results.size() > maxParallelStates) {
+			return Collections.singletonList(results.stream().reduce(IntervalUtils::merge).get());
 		}
-
-		// There is no element in the list which is smaller than the given value.
-		return null;
+		return results;
 	}
 
-	private BigDecimal getNextNumberNegative(BigDecimal value) {
-		ListIterator<BigDecimal> it = mSortedNumbersSet.listIterator(mSortedNumbersSet.size());
-
-		while (it.hasPrevious()) {
-			final BigDecimal current = it.previous();
-			if (current.compareTo(value) < 0) {
-				return current;
-			}
-		}
-
-		// There is no element in the list which is smaller than the given value.
-		return null;
+	private static IEvaluationResult<IntervalDomainEvaluationResult> merge(
+	        final IEvaluationResult<IntervalDomainEvaluationResult> a,
+	        final IEvaluationResult<IntervalDomainEvaluationResult> b) {
+		final IntervalDomainEvaluationResult left = a.getResult();
+		final IntervalDomainEvaluationResult right = b.getResult();
+		return new IntervalDomainEvaluationResult(left.getEvaluatedValue().merge(right.getEvaluatedValue()),
+		        left.getEvaluatedState().merge(right.getEvaluatedState()),
+		        left.getBooleanValue().merge(right.getBooleanValue()));
 	}
 }

@@ -207,7 +207,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	}
 
 	@Override
-	public IBoogieVar getVariableType(String name) {
+	public IBoogieVar getVariableDeclarationType(String name) {
 		return mMapVarToBoogieVar.get(name);
 	}
 

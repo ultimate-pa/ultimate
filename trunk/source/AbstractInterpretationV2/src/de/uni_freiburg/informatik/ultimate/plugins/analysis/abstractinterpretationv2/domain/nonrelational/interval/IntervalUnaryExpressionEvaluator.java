@@ -37,8 +37,6 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
@@ -54,14 +52,12 @@ public class IntervalUnaryExpressionEvaluator
         implements INAryEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	private final Logger mLogger;
-	private final EvaluatorType mEvaluatorType;
 
 	protected IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> mSubEvaluator;
 	protected Operator mOperator;
 
-	protected IntervalUnaryExpressionEvaluator(Logger logger, EvaluatorType type) {
+	protected IntervalUnaryExpressionEvaluator(Logger logger) {
 		mLogger = logger;
-		mEvaluatorType = type;
 	}
 
 	@Override
@@ -77,8 +73,6 @@ public class IntervalUnaryExpressionEvaluator
 			IntervalDomainValue returnValue = new IntervalDomainValue();
 			BooleanValue returnBool;
 
-			boolean setToBottom = false;
-
 			switch (mOperator) {
 			case ARITHNEGATIVE:
 				returnBool = new BooleanValue(false);
@@ -86,9 +80,6 @@ public class IntervalUnaryExpressionEvaluator
 				break;
 			case LOGICNEG:
 				returnBool = result.getBooleanValue().neg();
-				if (returnBool.getValue() == Value.FALSE || returnBool.getValue() == Value.BOTTOM) {
-					setToBottom = true;
-				}
 				break;
 			default:
 				mLogger.warn(
@@ -99,14 +90,10 @@ public class IntervalUnaryExpressionEvaluator
 				returnValue = new IntervalDomainValue();
 			}
 
-			if (setToBottom) {
-				returnState = returnState.bottomState();
-			}
-
 			returnEvaluationResults.add(new IntervalDomainEvaluationResult(returnValue, returnState, returnBool));
 		}
 
-		return returnEvaluationResults;
+		return IntervalUtils.mergeIfNecessary(returnEvaluationResults, 2);
 	}
 
 	@Override
@@ -172,7 +159,31 @@ public class IntervalUnaryExpressionEvaluator
 	}
 
 	@Override
-	public EvaluatorType getEvaluatorType() {
-		return mEvaluatorType;
+	public List<IEvaluationResult<IntervalDomainEvaluationResult>> inverseEvaluate(
+	        IEvaluationResult<IntervalDomainEvaluationResult> computedState) {
+		final List<IEvaluationResult<IntervalDomainEvaluationResult>> returnList = new ArrayList<>();
+		final List<IEvaluationResult<IntervalDomainEvaluationResult>> evaluated = evaluate(
+		        computedState.getResult().getEvaluatedState());
+
+		for (final IEvaluationResult<IntervalDomainEvaluationResult> eval : evaluated) {
+			switch (mOperator) {
+			case ARITHNEGATIVE:
+				final IntervalDomainEvaluationResult inverse = new IntervalDomainEvaluationResult(
+				        computedState.getResult().getEvaluatedValue().negate(), eval.getResult().getEvaluatedState(),
+				        computedState.getBooleanValue());
+
+				final List<IEvaluationResult<IntervalDomainEvaluationResult>> result = mSubEvaluator
+				        .inverseEvaluate(inverse);
+				for (final IEvaluationResult<IntervalDomainEvaluationResult> res : result) {
+
+					returnList.add(new IntervalDomainEvaluationResult(computedState.getResult().getEvaluatedValue(),
+					        res.getResult().getEvaluatedState(), computedState.getBooleanValue()));
+				}
+				break;
+			default:
+				throw new UnsupportedOperationException("The inverse for operator " + mOperator + " is undefined.");
+			}
+		}
+		return returnList;
 	}
 }

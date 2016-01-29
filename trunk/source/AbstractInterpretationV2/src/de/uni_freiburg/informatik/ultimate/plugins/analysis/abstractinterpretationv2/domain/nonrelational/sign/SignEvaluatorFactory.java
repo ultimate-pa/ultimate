@@ -87,14 +87,14 @@ public class SignEvaluatorFactory implements IEvaluatorFactory<Values, SignDomai
 
 	@Override
 	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createSingletonValueExpressionEvaluator(
-	        String value, Class<?> valueType, EvaluatorType type) {
+	        String value, Class<?> valueType) {
 
 		if (valueType.equals(BigInteger.class)) {
-			return new SignSingletonIntegerExpressionEvaluator(value, type);
+			return new SignSingletonIntegerExpressionEvaluator(value);
 		}
 
 		if (valueType.equals(BigDecimal.class)) {
-			return new SignSingletonDecimalExpressionEvaluator(value, type);
+			return new SignSingletonDecimalExpressionEvaluator(value);
 		}
 
 		throw new UnsupportedOperationException("The type " + valueType.toString() + " is not supported.");
@@ -102,25 +102,25 @@ public class SignEvaluatorFactory implements IEvaluatorFactory<Values, SignDomai
 
 	@Override
 	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createSingletonVariableExpressionEvaluator(
-	        String variableName, EvaluatorType type) {
-		return new SignSingletonVariableExpressionEvaluator(variableName, type);
+	        String variableName) {
+		return new SignSingletonVariableExpressionEvaluator(variableName);
 	}
 
 	@Override
 	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createSingletonLogicalValueExpressionEvaluator(
-	        BooleanValue value, EvaluatorType type) {
+	        BooleanValue value) {
 		return null;
 	}
 
 	@Override
 	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createFunctionEvaluator(String functionName,
-	        int inputParamCount, EvaluatorType type) {
+	        int inputParamCount) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createConditionalEvaluator(EvaluatorType type) {
+	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createConditionalEvaluator() {
 		// TODO Auto-generated method stub
 		return null;
 	}

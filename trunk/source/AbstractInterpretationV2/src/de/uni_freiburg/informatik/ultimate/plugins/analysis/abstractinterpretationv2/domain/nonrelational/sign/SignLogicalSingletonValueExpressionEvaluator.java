@@ -52,8 +52,8 @@ public class SignLogicalSingletonValueExpressionEvaluator extends SignSingletonV
 
 	private BooleanValue mBooleanValue;
 
-	public SignLogicalSingletonValueExpressionEvaluator(String value, EvaluatorType type) {
-		super(value, type);
+	public SignLogicalSingletonValueExpressionEvaluator(String value) {
+		super(value);
 		mBooleanValue = new BooleanValue(false);
 	}
 
@@ -98,9 +98,8 @@ public class SignLogicalSingletonValueExpressionEvaluator extends SignSingletonV
 	}
 
 	@Override
-	public EvaluatorType getEvaluatorType() {
+	public List<IEvaluationResult<Values>> inverseEvaluate(IEvaluationResult<Values> computedState) {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
 }

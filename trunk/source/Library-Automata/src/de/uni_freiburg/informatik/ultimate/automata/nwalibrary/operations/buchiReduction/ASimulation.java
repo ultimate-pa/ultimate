@@ -501,6 +501,7 @@ public abstract class ASimulation<LETTER, STATE> {
 			duration += durationGraph;
 			m_Performance.addTimeMeasureValue(TimeMeasure.OVERALL_TIME, durationGraph);
 		}
+		m_Performance.setCountingMeasure(CountingMeasure.GAMEGRAPH_STATES, getGameGraph().getSize());
 
 		m_Logger.info((this.m_UseSCCs ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds.");
 	}

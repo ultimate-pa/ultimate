@@ -173,7 +173,7 @@ public abstract class AbstractCegarLoop {
 
 	protected CegarLoopBenchmarkGenerator m_CegarLoopBenchmark;
 
-	protected final IUltimateServiceProvider m_Services;
+	protected final IUltimateServiceProvider mServices;
 	//protected final IToolchainStorage m_ToolchainStorage = null; TODO: this is not what we want, is it?
 	protected final IToolchainStorage m_ToolchainStorage;
 
@@ -186,7 +186,7 @@ public abstract class AbstractCegarLoop {
 	
 	public AbstractCegarLoop(IUltimateServiceProvider services, IToolchainStorage storage, String name, RootNode rootNode, SmtManager smtManager,
 			TAPreferences taPrefs, Collection<ProgramPoint> errorLocs, Logger logger) {
-		m_Services = services;
+		mServices = services;
 		mLogger = logger;
 		this.m_PrintAutomataLabeling = taPrefs.getAutomataFormat();
 		m_ModGlobVarManager = rootNode.getRootAnnot().getModGlobVarManager();
@@ -408,7 +408,7 @@ public abstract class AbstractCegarLoop {
 			mLogger.info("Interpolant automaton has " + m_InterpolAutomaton.sizeInformation());
 
 			if (m_Pref.computeHoareAnnotation()) {
-				assert (new InductivityCheck(m_Services, (INestedWordAutomaton) m_Abstraction,
+				assert (new InductivityCheck(mServices, (INestedWordAutomaton) m_Abstraction,
 						false, true, new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult() : "Not inductive";
 			}
 
@@ -441,7 +441,7 @@ public abstract class AbstractCegarLoop {
 	}
 
 	protected void writeAutomatonToFile(IAutomaton<CodeBlock, IPredicate> automaton, String filename) {
-		new AutomatonDefinitionPrinter<String, String>(m_Services, filename, m_Pref.dumpPath() + "/" + filename, m_PrintAutomataLabeling,
+		new AutomatonDefinitionPrinter<String, String>(mServices, filename, m_Pref.dumpPath() + "/" + filename, m_PrintAutomataLabeling,
 				"", automaton);
 	}
 

@@ -34,11 +34,11 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.decider.NoTimeoutTestResultDecider;
+import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.suites.AbstractEvalTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition;
-import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
+import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -77,6 +77,11 @@ public class AbstractInterpretationV2TestSuite extends AbstractEvalTestSuite {
 //	         "examples/programs/recursivePrograms",
 	        /* SV-COMP repo */
 	        "examples/svcomp/loops/", // SPLIT
+			// "examples/svcomp/ntdrivers-simplified/",
+	   		// "examples/svcomp/ssh-simplified/", 
+			// "examples/svcomp/locks/",
+			// "examples/svcomp/recursive/",
+			// "examples/svcomp/systemc/",
 			// "examples/svcomp/loopsSelection/",
 			// "examples/svcomp/eca/", // SPLIT
 			// "examples/svcomp/ecaSelection/",
@@ -116,12 +121,13 @@ public class AbstractInterpretationV2TestSuite extends AbstractEvalTestSuite {
 
 	@Override
 	protected long getTimeout() {
-		return 10 * 1000;
+		return 10 * 1000; // origin/dev uses 60 * 1000
 	}
 	
 	@Override
 	public ITestResultDecider constructITestResultDecider(UltimateRunDefinition urd) {
-		return new NoTimeoutTestResultDecider(urd);
+		return new SafetyCheckTestResultDecider(urd, true);
+		//		return new NoTimeoutTestResultDecider(urd);
 	}
 
 	@Override

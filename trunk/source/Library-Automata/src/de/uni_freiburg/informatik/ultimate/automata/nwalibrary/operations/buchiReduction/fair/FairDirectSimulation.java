@@ -348,6 +348,8 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 				fairPerformance.getCountingMeasureResult(CountingMeasure.FAILED_TRANSREMOVE_ATTEMPTS));
 		m_Performance.setCountingMeasure(CountingMeasure.BUCHI_STATES,
 				fairPerformance.getCountingMeasureResult(CountingMeasure.BUCHI_STATES));
+		m_Performance.setCountingMeasure(CountingMeasure.GAMEGRAPH_STATES,
+				fairPerformance.getCountingMeasureResult(CountingMeasure.GAMEGRAPH_STATES));
 
 		m_HasFinished = true;
 	}

@@ -49,6 +49,21 @@ public final class SimulationPerformance {
 	public static final long NO_TIME_RESULT = -1;
 
 	/**
+	 * Creates an empty simulation performance object that is out of memory.
+	 * 
+	 * @param type
+	 *            Type of the simulation
+	 * @param useSCCs
+	 *            If the simulation usesSCCs
+	 * @return The out of memory simulation performance object
+	 */
+	public static SimulationPerformance createOutOfMemoryPerformance(final SimulationType type, final boolean useSCCs) {
+		SimulationPerformance performance = new SimulationPerformance(type, useSCCs);
+		performance.outOfMemory();
+		return performance;
+	}
+
+	/**
 	 * Creates an empty simulation performance object that has timed out.
 	 * 
 	 * @param type
@@ -71,6 +86,11 @@ public final class SimulationPerformance {
 	 * If the simulation uses SCC optimization or not.
 	 */
 	private final boolean m_IsUsingSCCs;
+	/**
+	 * If the performance object represents a simulation that has thrown an out
+	 * of memory error.
+	 */
+	private boolean m_OutOfMemory;
 	/**
 	 * The type of the simulation that is monitored.
 	 */
@@ -105,6 +125,7 @@ public final class SimulationPerformance {
 		m_CountingMeasures = new LinkedHashMap<>();
 		m_IsUsingSCCs = isUsingSCCs;
 		m_TimedOut = false;
+		m_OutOfMemory = false;
 	}
 
 	/**
@@ -193,7 +214,7 @@ public final class SimulationPerformance {
 		if (option.equals(MultipleDataOption.AVERAGE)) {
 			timeResult = Math.round((timeResult + 0.0) / measureList.size());
 		}
-		
+
 		if (timeResult <= 0) {
 			return NO_TIME_RESULT;
 		}
@@ -248,12 +269,31 @@ public final class SimulationPerformance {
 	}
 
 	/**
+	 * Returns whether the performance object represents a simulation that has
+	 * thrown an out of memory error.
+	 * 
+	 * @return Whether the performance object represents a simulation that has
+	 *         throen an out of memory error.
+	 */
+	public boolean isOutOfMemory() {
+		return m_OutOfMemory;
+	}
+
+	/**
 	 * If the monitored simulation uses a SCC simulation.
 	 * 
 	 * @return If the monitored simulation uses a SCC simulation.
 	 */
 	public boolean isUsingSCCs() {
 		return m_IsUsingSCCs;
+	}
+
+	/**
+	 * If called the performance object indicates that the represented
+	 * simulation has thrown an out of memory error.
+	 */
+	public void outOfMemory() {
+		m_OutOfMemory = true;
 	}
 
 	/**

@@ -29,8 +29,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign;
 
 import java.math.BigDecimal;
+import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
 
 /**
  * Represents a single decimal expression in the {@link SignDomain}.
@@ -40,8 +42,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class SignSingletonDecimalExpressionEvaluator extends SignSingletonValueExpressionEvaluator<BigDecimal> {
 
-	public SignSingletonDecimalExpressionEvaluator(String value, EvaluatorType type) {
-		super(value, type);
+	public SignSingletonDecimalExpressionEvaluator(String value) {
+		super(value);
 	}
 
 	@Override
@@ -50,8 +52,8 @@ public class SignSingletonDecimalExpressionEvaluator extends SignSingletonValueE
 		try {
 			number = new BigDecimal(value);
 		} catch (NumberFormatException e) {
-			throw new UnsupportedOperationException("The value \"" + value
-			        + "\" cannot be transformed to a decimal number.");
+			throw new UnsupportedOperationException(
+			        "The value \"" + value + "\" cannot be transformed to a decimal number.");
 		}
 
 		return number;
@@ -69,9 +71,8 @@ public class SignSingletonDecimalExpressionEvaluator extends SignSingletonValueE
 	}
 
 	@Override
-	public EvaluatorType getEvaluatorType() {
+	public List<IEvaluationResult<Values>> inverseEvaluate(IEvaluationResult<Values> computedState) {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
 }

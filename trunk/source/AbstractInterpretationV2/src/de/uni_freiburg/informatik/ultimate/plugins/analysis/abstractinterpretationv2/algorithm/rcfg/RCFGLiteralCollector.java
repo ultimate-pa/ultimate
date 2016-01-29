@@ -26,7 +26,7 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
 
 import java.math.BigDecimal;
 import java.util.ArrayDeque;
@@ -39,8 +39,11 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILiteralCollector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.LiteralCollection;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RCFGEdgeVisitor;
 
@@ -49,14 +52,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.RC
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class LiteralCollector extends RCFGEdgeVisitor {
+public class RCFGLiteralCollector extends RCFGEdgeVisitor implements ILiteralCollector {
 
 	private final Set<String> mLiterals;
 	private final Set<BigDecimal> mNumberLiterals;
 	private final StatementLiteralCollector mStatementLiteralCollector;
 	private final LiteralCollection mLiteralCollection;
 
-	public LiteralCollector(final RootNode root) {
+	public RCFGLiteralCollector(final RCFGNode root) {
 		mLiterals = new HashSet<String>();
 		mNumberLiterals = new HashSet<>();
 		mStatementLiteralCollector = new StatementLiteralCollector();
@@ -64,13 +67,18 @@ public class LiteralCollector extends RCFGEdgeVisitor {
 		mLiteralCollection = new LiteralCollection(mNumberLiterals);
 	}
 
-	public Set<String> getResult() {
-		return mLiterals;
-	}
-
 	public LiteralCollection getLiteralCollection() {
 		return mLiteralCollection;
 	}
+
+//	private void addBoundaryLiterals(Set<BigDecimal> numbers) {
+//		final Set<BigDecimal> adds = new HashSet<BigDecimal>();
+//		for (final BigDecimal number : numbers) {
+//			adds.add(number.add(BigDecimal.ONE));
+//			adds.add(number.subtract(BigDecimal.ONE));
+//		}
+//		numbers.addAll(adds);
+//	}
 
 	private <T extends RCFGEdge> void process(final Collection<T> edges) {
 		final Deque<RCFGEdge> worklist = new ArrayDeque<RCFGEdge>();
@@ -93,6 +101,12 @@ public class LiteralCollector extends RCFGEdgeVisitor {
 		for (final Statement s : c.getStatements()) {
 			mStatementLiteralCollector.processStatement(s);
 		}
+	}
+
+	@Override
+	protected void visit(Call c) {
+		super.visit(c);
+		mStatementLiteralCollector.processStatement(c.getCallStatement());
 	}
 
 	/**
@@ -119,5 +133,10 @@ public class LiteralCollector extends RCFGEdgeVisitor {
 			mLiterals.add(expr.getValue());
 			mNumberLiterals.add(new BigDecimal(expr.getValue()));
 		}
+	}
+
+	@Override
+	public String toString() {
+		return getLiteralCollection().toString();
 	}
 }
