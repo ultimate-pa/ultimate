@@ -54,7 +54,7 @@ public class SVCOMP16TestSuite extends AbstractSVCOMPTestSuite {
 	@Override
 	protected int getFilesPerCategory() {
 		// -1 or value larger than 0
-		return 20;
+		return -1;
 	}
 
 	@Override
@@ -98,10 +98,10 @@ public class SVCOMP16TestSuite extends AbstractSVCOMPTestSuite {
 		final List<TestDefinition> rtr = new ArrayList<>();
 		rtr.add(getTestDefinitionFromExamples(set, "AbstractInterpretationv2C.xml",
 				"ai/svcomp-Reach-32bit-AIv2_INT.epf", getTimeout()));
-		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml", "ai/svcomp-Reach-32bit-Automizer_Default.epf",
-				getTimeout()));
-		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
-				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf", getTimeout()));
+//		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml", "ai/svcomp-Reach-32bit-Automizer_Default.epf",
+//				getTimeout()));
+//		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
+//				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf", getTimeout()));
 		return rtr;
 	}
 
