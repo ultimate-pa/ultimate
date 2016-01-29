@@ -116,6 +116,7 @@ public class LassoRankerPreferences implements Serializable {
 	 */
 	public LassoRankerPreferences(LassoRankerPreferences other) {
 		this.compute_integral_hull = other.compute_integral_hull;
+		this.enable_partitioneer = other.enable_partitioneer;
 		this.annotate_terms = other.annotate_terms;
 		this.externalSolver = other.externalSolver;
 		this.smt_solver_command = other.smt_solver_command;
@@ -149,6 +150,8 @@ public class LassoRankerPreferences implements Serializable {
 		StringBuilder sb = new StringBuilder();
 		sb.append("Compute integeral hull: ");
 		sb.append(this.compute_integral_hull);
+		sb.append("\nEnable LassoPartitioneer: ");
+		sb.append(this.enable_partitioneer);
 		sb.append("\nTerm annotations enabled: ");
 		sb.append(this.annotate_terms);
 		sb.append("\nUse exernal solver: ");
