@@ -231,12 +231,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	}
 
 	private boolean isBooleanAbstractionBottom() {
-		for (BoolValue b : mBooleanAbstraction.values()) {
-			if (BoolValue.BOT.equals(b)) {
-				return true;
-			}
-		}
-		return false;
+		return mBooleanAbstraction.containsValue(BoolValue.BOT);
 	}
 
 	// TODO document: returns original cache. Do not modify in-place!
