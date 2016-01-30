@@ -68,13 +68,15 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 	}
 
 	@Override
-	public List<OctagonDomainState> apply(OctagonDomainState stateBeforeLeaving, OctagonDomainState stateAfterLeaving,
-			CodeBlock transition) {
+	public List<OctagonDomainState> apply(
+			OctagonDomainState stateBeforeTransition, OctagonDomainState stateAfterTransition, CodeBlock transition) {
+
 		List<OctagonDomainState> result;
 		if (transition instanceof Call) {
-			result = applyCall(stateBeforeLeaving, stateAfterLeaving, (Call) transition);
+			result = applyCall(stateBeforeTransition, stateAfterTransition, (Call) transition);
 		} else if (transition instanceof Return) {
-			result = Collections.singletonList(applyReturn(stateBeforeLeaving, stateAfterLeaving, (Return) transition));
+			result = Collections.singletonList(
+					applyReturn(stateBeforeTransition, stateAfterTransition, (Return) transition));
 		} else {
 			throw new UnsupportedOperationException("Unsupported transition: " + transition);
 		}
@@ -82,7 +84,8 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 	}
 
 	private List<OctagonDomainState> applyCall(
-			OctagonDomainState stateBeforeLeaving, OctagonDomainState stateAfterLeaving, Call callTransition) {
+			OctagonDomainState stateBeforeCall, OctagonDomainState stateAfterCall, Call callTransition) {
+
 		CallStatement call = callTransition.getCallStatement();
 		Procedure procedure = calledProcedure(call);
 
@@ -113,7 +116,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 			}
 		}
 		// add temporary variables
-		List<OctagonDomainState> tmpStates = Collections.singletonList(stateAfterLeaving.addVariables(tmpVars));
+		List<OctagonDomainState> tmpStates = Collections.singletonList(stateBeforeCall.addVariables(tmpVars));
 		
 		// assign tmp := args
 		for (AssignmentStatement assign : tmpAssigns) {
@@ -122,18 +125,19 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		
 		// copy to scope opened by call (inParam := tmp)
 		List<OctagonDomainState> result = new ArrayList<>(tmpStates.size());
-		tmpStates.forEach(s -> result.add(stateAfterLeaving.copyValuesOnScopeChange(s, mapTmpVarToInParam)));
+		tmpStates.forEach(s -> result.add(stateAfterCall.copyValuesOnScopeChange(s, mapTmpVarToInParam)));
 		return result;
 		// No need to remove the temporary variables.
 		// The state with temporary variables is only a local variable of this method.
 	}
 	
-	private OctagonDomainState applyReturn(OctagonDomainState stateBeforeLeaving, OctagonDomainState stateAfterLeaving,
-			Return returnTransition) {
+	private OctagonDomainState applyReturn(
+			OctagonDomainState stateBeforeReturn, OctagonDomainState stateAfterReturn, Return returnTransition) {
+
 		CallStatement call = returnTransition.getCallStatement();
 		Procedure procedure = calledProcedure(call);
 		Map<String, String> mapOutToLhs = generateMapOutToLhs(call.getLhs(), procedure);
-		return stateAfterLeaving.copyValuesOnScopeChange(stateBeforeLeaving, mapOutToLhs);
+		return stateAfterReturn.copyValuesOnScopeChange(stateBeforeReturn, mapOutToLhs);
 	}
 	
 	private Procedure calledProcedure(CallStatement call) {
