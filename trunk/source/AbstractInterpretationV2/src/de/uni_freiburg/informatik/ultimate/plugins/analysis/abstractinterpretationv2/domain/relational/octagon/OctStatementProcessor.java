@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfStatement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
@@ -57,8 +58,8 @@ public class OctStatementProcessor {
 		} else if (statement instanceof HavocStatement) {
 			processHavocStatement((HavocStatement) statement);
 		} else if (statement instanceof IfStatement) {
-			// TODO support
-			throw new UnsupportedOperationException("IfStatements are currently not supported");
+			String msg = "IfStatements are not supported by post-operator. Switch block-encoding to single statements.";
+			throw new UnsupportedOperationException(msg);
 		} else if (statement instanceof Label) {
 			// nothing to do
 		} else {
@@ -109,13 +110,13 @@ public class OctStatementProcessor {
 			mOldStates.forEach(oldState -> oldState.copyVars(mapTmpVarToOrigVar));
 			mNewStates = mOldStates;
 
-			// TODO remove duplicated states (may occur due to assignments)
-
 			// remove temporary variables
 			mOldStates = mNewStates;
 			mNewStates = new ArrayList<>(mOldStates.size());
 			mOldStates.forEach(s -> mNewStates.add(s.removeVariables(tmpVars)));
 		}
+
+		// TODO remove duplicated states (may occur due to assignments)
 	}
 	
 	private void processSingleAssignment(String targetVar, Expression rhs) {
@@ -145,32 +146,31 @@ public class OctStatementProcessor {
 	}
 	
 	private void processNumericAssign(String targetVar, Expression rhs) {
-		Consumer<OctagonDomainState> action = s -> s.havocVar(targetVar);
-		AffineExpression ae = mExprTransformer.transformNumeric(rhs);
+		
+		// TODO handle IfThenElseExpression, maybe even "(if A then B else C) + 1;"
+
+		Consumer<OctagonDomainState> action;
+		action = s -> s.havocVar(targetVar); // default operation (if assignment cannot be interpreted)
+		AffineExpression ae = mExprTransformer.transformNumericCached(rhs);
 		if (ae != null) {
 			if (ae.isConstant()) {
 				OctValue value = new OctValue(ae.getConstant());
 				action = s -> s.assignNumericVarConstant(targetVar, value);
 			} else {
-				AffineExpression.SimpleForm sf = ae.simpleForm();
-				if (sf != null) {
-					if (sf.var[1] == null && sf.isVarPositive[0]) {
-						String sourceVar = sf.var[0];
-						if (sf.constant.equals(OctValue.ZERO)) {
-							action = s -> s.copyVar(targetVar, sourceVar);
-						} else {
-							action = s -> {
-								s.copyVar(targetVar, sourceVar);
-								s.incrementNumericVar(targetVar, sf.constant);
-							};
-						}
+				AffineExpression.OneVarForm ovf = ae.getOneVarForm();
+				if (ovf != null) {
+					action = s -> s.copyVar(targetVar, ovf.var);
+					if (ovf.varSignum == -1) {
+						action = action.andThen(s -> s.negateNumericVar(targetVar));
 					}
+					if (ovf.constant.signum() != 0) {
+						action = action.andThen(s -> s.incrementNumericVar(targetVar, ovf.constant));
+					}
+				} else {
+					// TODO project to intervals and calculate
 				}
 			}
 		}
-
-		// TODO project vars to intervals and calculate (if not affine)
-
 		mOldStates.forEach(action);
 	}
 
@@ -185,6 +185,6 @@ public class OctStatementProcessor {
 
 	private void processAssumeStatement(AssumeStatement statement) {
 		// TODO implement
-		mNewStates = mOldStates; // note: returning old state is safe
+		mNewStates = mOldStates; // note: returning old state is safe (but imprecise)
 	}
 }

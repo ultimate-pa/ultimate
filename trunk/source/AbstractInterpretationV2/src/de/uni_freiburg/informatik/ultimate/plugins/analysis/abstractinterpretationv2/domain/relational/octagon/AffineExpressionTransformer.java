@@ -45,7 +45,7 @@ public class AffineExpressionTransformer {
 		return cachedAe;
 	}
 	
-	public AffineExpression transformNumeric(Expression e) {
+	private AffineExpression transformNumeric(Expression e) {
 		assert TypeUtil.isNumeric(e.getType()) : "Tried numeric transformation for " + e;
 		if (e instanceof IntegerLiteral) {
 			String value = ((IntegerLiteral) e).getValue();

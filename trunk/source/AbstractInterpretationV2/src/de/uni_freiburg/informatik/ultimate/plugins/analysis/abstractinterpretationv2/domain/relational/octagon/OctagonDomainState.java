@@ -456,7 +456,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		return newState;
 	}
 
-	//	/**
+//	/**
 //	 * Finds the shared global variables and constants between {@code this} and an {@code other} abstract domain state.
 //	 * Found global variables and constants are added to existing collections.
 //	 * <p>
@@ -524,6 +524,10 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		mNumericAbstraction.incrementVar(numVarIndex(targetVar), addConstant);
 	}
 
+	protected void negateNumericVar(String targetVar) {
+		mNumericAbstraction.negateVar(numVarIndex(targetVar));
+	}
+
 	private int numVarIndex(String var) {
 		Integer index = mMapNumericVarToIndex.get(var);
 		assert index != null : "Not a numeric variable: " + var;
@@ -560,7 +564,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		assert mBooleanAbstraction.containsKey(var) : "introduced new boolean variable " + var;
 		mBooleanAbstraction.put(var, value);
 	}
-
+	
 	@Override
 	public String toLogString() {
 		StringBuilder log = new StringBuilder();

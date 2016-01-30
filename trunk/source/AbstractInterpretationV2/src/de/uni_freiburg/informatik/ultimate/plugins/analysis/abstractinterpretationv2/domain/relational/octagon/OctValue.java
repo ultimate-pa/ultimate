@@ -136,6 +136,12 @@ public class OctValue implements Comparable<OctValue> {
 		return mValue.toString();
 	}
 
+	/** Checks reference equality. Use {@link #compareTo(OctValue)} instead. */
+	@Override @Deprecated
+	public boolean equals(Object other) {
+		return super.equals(other); 
+	}
+	
 	// static methods ---------------------------------------------------------
 	
 	public static OctValue min(OctValue a, OctValue b) {
