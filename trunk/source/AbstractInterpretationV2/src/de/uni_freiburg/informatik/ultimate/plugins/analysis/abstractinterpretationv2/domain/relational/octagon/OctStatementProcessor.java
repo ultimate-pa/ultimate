@@ -27,15 +27,31 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieAstUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
+import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 public class OctStatementProcessor {
 
 	private final Logger mLogger;
 	private final BoogieSymbolTable mSymbolTable;
 	
-	private final AffineExpressionTransformer mExprTransformer = new AffineExpressionTransformer();
+	private final ExpressionTransformer mExprTransformer = new ExpressionTransformer();
 	
+	/**
+	 * Abstract domain states before the interpretation of an statement.
+	 * Interpretation of statements should happen for each of these states separately.
+	 * <p>
+	 * Most methods of this class use the attribute as an input.
+	 * Methods may also modify the list or even the states inside the list!
+	 */
 	private List<OctagonDomainState> mOldStates;
+	
+	/**
+	 * Abstract domain states after the interpretation of an statement.
+	 * After interpreting an statement, there may be more states than before due to splitting.
+	 * Example: {@code assume x != 0} can be split into {@code assume x < 0} and {@code assume x > 0}.
+	 * <p>
+	 * Methods of this class use the attribute as an output.
+	 */
 	private List<OctagonDomainState> mNewStates;
 	
 	public OctStatementProcessor(Logger logger, BoogieSymbolTable symbolTable) {
@@ -54,10 +70,11 @@ public class OctStatementProcessor {
 		if (statement instanceof AssignmentStatement) {
 			processAssignmentStatement((AssignmentStatement) statement);
 		} else if (statement instanceof AssumeStatement) {
-			processAssumeStatement((AssumeStatement) statement);
+			processAssumeStatement(((AssumeStatement) statement).getFormula());
 		} else if (statement instanceof HavocStatement) {
 			processHavocStatement((HavocStatement) statement);
 		} else if (statement instanceof IfStatement) {
+			// TODO support if it can occur
 			String msg = "IfStatements are not supported by post-operator. Switch block-encoding to single statements.";
 			throw new UnsupportedOperationException(msg);
 		} else if (statement instanceof Label) {
@@ -120,14 +137,29 @@ public class OctStatementProcessor {
 	}
 	
 	private void processSingleAssignment(String targetVar, Expression rhs) {
-		IType type = rhs.getType(); // note: there is no implicit typecasting in boogie. "real := int;" cannot happen. 
-		if (TypeUtil.isBoolean(type)) {
-			processBooleanAssign(targetVar, rhs);
-		} else if (TypeUtil.isNumeric(type)) {
-			processNumericAssign(targetVar, rhs);
+		List<Pair<List<Expression>, Expression>> paths = mExprTransformer.removeIfExprsCached(rhs);
+		List<OctagonDomainState> tmpNewStates = new ArrayList<>();
+		for (Pair<List<Expression>, Expression> p : paths) {
+			// !!!!!!!!!!!!!!! 
+			// TODO !!!!!!!!!!  processAssume may modify mOldStates => Copy or ensure that this never happens
+			// !!!!!!!!!!!!!!!                                         but do not copy if not necessary
+			p.getFirst().forEach(assumption -> processAssumeStatement(assumption));
+
+			IType type = rhs.getType();
+			// note: there is no implicit typecasting in boogie. "real := int;" cannot happen. 
+			if (TypeUtil.isBoolean(type)) {
+				processBooleanAssign(targetVar, rhs);
+			} else if (TypeUtil.isNumeric(type)) {
+				processNumericAssign(targetVar, rhs);
+			} else {
+				// variables of unsupported types are assumed to be \top all the time
+				mNewStates = mOldStates;
+			}
+			
+			tmpNewStates.addAll(mNewStates);
 		}
-		// else: variables of unsupported types are assumed to be \top all the time
-		mNewStates = mOldStates;
+
+		mNewStates = tmpNewStates;
 	}
 	
 	private void processBooleanAssign(String targetVar, Expression rhs) {
@@ -143,15 +175,13 @@ public class OctStatementProcessor {
 			}
 		}
 		mOldStates.forEach(action);
+		mNewStates = mOldStates;
 	}
 	
 	private void processNumericAssign(String targetVar, Expression rhs) {
-		
-		// TODO handle IfThenElseExpression, maybe even "(if A then B else C) + 1;"
-
 		Consumer<OctagonDomainState> action;
 		action = s -> s.havocVar(targetVar); // default operation (if assignment cannot be interpreted)
-		AffineExpression ae = mExprTransformer.transformNumericCached(rhs);
+		AffineExpression ae = mExprTransformer.affineExprCached(rhs);
 		if (ae != null) {
 			if (ae.isConstant()) {
 				OctValue value = new OctValue(ae.getConstant());
@@ -172,6 +202,7 @@ public class OctStatementProcessor {
 			}
 		}
 		mOldStates.forEach(action);
+		mNewStates = mOldStates;
 	}
 
 	private void processHavocStatement(HavocStatement statement) {
@@ -183,8 +214,11 @@ public class OctStatementProcessor {
 		mNewStates = mOldStates;
 	}
 
-	private void processAssumeStatement(AssumeStatement statement) {
+	private void processAssumeStatement(Expression assumedFormula) {
 		// TODO implement
+		
+		// note IfThenElseExpression can occur
+		
 		mNewStates = mOldStates; // note: returning old state is safe (but imprecise)
 	}
 }

@@ -510,7 +510,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		// else: variables of unsupported types are assumed to be \top all the time
 		assert mMapVarToBoogieVar.containsKey(var) : "introduced new variable " + var;
 	}
-
+	
 	protected void assignNumericVarConstant(String targetVar, OctValue constant) {
 		mNumericAbstraction.assignVarConstant(numVarIndex(targetVar), constant);
 	}
