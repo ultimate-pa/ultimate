@@ -174,6 +174,9 @@ public class OctStatementProcessor {
 				action = s -> s.copyVar(targetVar, sourceVar);
 			}
 		}
+		
+		// TODO calculate using BoolValue
+
 		mOldStates.forEach(action);
 		mNewStates = mOldStates;
 	}
@@ -206,11 +209,11 @@ public class OctStatementProcessor {
 	}
 
 	private void processHavocStatement(HavocStatement statement) {
-		for (OctagonDomainState oldState : mOldStates) {
-			for (VariableLHS lhs : statement.getIdentifiers()) {
-				oldState.havocVar(lhs.getIdentifier());
-			}
+		List<String> vars = new ArrayList<>();
+		for (VariableLHS lhs : statement.getIdentifiers()) {
+			vars.add(lhs.getIdentifier());
 		}
+		mOldStates.forEach(s -> s.havocVars(vars));
 		mNewStates = mOldStates;
 	}
 

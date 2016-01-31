@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -492,23 +493,27 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		return sharedVars;
 	}
 
-	// TODO buffer vars and havoc all at once => Less closure computations and copies, high speedup.
-	// TODO Only calculate closure if necessary. Some vars may have no constraints to other vars => no closure 
 	protected void havocVar(String var) {
-		Integer v = mMapNumericVarToIndex.get(var);
-		if (v != null) {
-			mNumericAbstraction = cachedNormalizedNumericAbstraction().copy(); // reduces information loss
-			// reset column (also resets row by coherence)
-			for (int i = 0; i < mNumericAbstraction.getSize(); ++i) {
-				for (int j = 2*v; j < 2*v + 2; ++j) {
-					mNumericAbstraction.set(i, j, OctValue.INFINITY);
-				}
+		havocVars(Collections.singleton(var));
+	}
+
+	// TODO Only calculate closure if necessary. Some vars may have no constraints to other vars => no closure 
+	protected void havocVars(Collection<String> vars) {
+		Set<Integer> numVarIndices = new HashSet<>();
+		for (String var : vars) {
+			Integer numVarIndex = mMapNumericVarToIndex.get(var);
+			if (numVarIndex != null) {
+				numVarIndices.add(numVarIndex);
+			} else if (mBooleanAbstraction.containsKey(var)) {
+				mBooleanAbstraction.put(var, BoolValue.TOP);
 			}
-		} else if (mBooleanAbstraction.containsKey(var)) {
-			mBooleanAbstraction.put(var, BoolValue.TOP);
+			// else: variables of unsupported types are assumed to be \top all the time
+			assert mMapVarToBoogieVar.containsKey(var) : "unknown variable in havoc: " + var;
 		}
-		// else: variables of unsupported types are assumed to be \top all the time
-		assert mMapVarToBoogieVar.containsKey(var) : "introduced new variable " + var;
+		if (!numVarIndices.isEmpty()) {
+			mNumericAbstraction = cachedNormalizedNumericAbstraction().copy(); // reduces information loss
+			numVarIndices.forEach(v -> mNumericAbstraction.havocVar(v));
+		}
 	}
 	
 	protected void assignNumericVarConstant(String targetVar, OctValue constant) {
@@ -561,7 +566,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	
 
 	protected void assignBooleanVar(String var, BoolValue value) {
-		assert mBooleanAbstraction.containsKey(var) : "introduced new boolean variable " + var;
+		assert mBooleanAbstraction.containsKey(var) : "unknown variable in boolean assignment: " + var;
 		mBooleanAbstraction.put(var, value);
 	}
 	
