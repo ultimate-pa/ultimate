@@ -339,6 +339,10 @@ public class OctMatrix {
 		return tightClosure(sDefaultShortestPathClosure);
 	}
 	
+	public OctMatrix tightClosurePrimitiveSparse() {
+		return tightClosure(OctMatrix::shortestPathClosureInPlacePrimitiveSparse);
+	}
+	
 	public OctMatrix tightClosure(Consumer<OctMatrix> shortestPathClosureAlgorithm) {
 		OctMatrix tc;
 		tc = copy();
@@ -810,7 +814,9 @@ public class OctMatrix {
 			mStrongClosure = this;
 		}
 		if (wasTightlyClosed) {
-			mTightClosure = this;
+			// TODO assert that copied variable was integral, before keeping cached closure
+			// mTightClosure = this;
+			mTightClosure = null;
 		}
 	}
 
@@ -883,14 +889,14 @@ public class OctMatrix {
 		mElements[iUpperBound2] = mElements[iUpperBound2].add(doubleConstant);
 		mElements[iLowerBound2] = mElements[iLowerBound2].subtract(doubleConstant);
 		
-		mStrongClosure = mTightClosure = null;
-		
 		if (mStrongClosure != this) {
 			mStrongClosure = null;
 		}
-		if (mTightClosure != this) {
-			mTightClosure = null;
-		}
+		// TODO assert that added constant was integral, before keeping cached closure
+//		if (mTightClosure != this) {
+//			mTightClosure = null;
+//		}
+		mTightClosure = null;
 	}
 	
 	protected void assignVarConstant(int targetVar, OctValue constant) {
