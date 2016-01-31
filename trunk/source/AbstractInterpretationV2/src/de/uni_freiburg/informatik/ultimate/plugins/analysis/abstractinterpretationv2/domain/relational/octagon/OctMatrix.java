@@ -1014,12 +1014,14 @@ public class OctMatrix {
 	
 	public String toStringLower() {
 		StringBuilder sb = new StringBuilder();
-		int ln = 2;
+		int n = 2;      // input of integer sequence floor(n^2 / 2 -1)
+		int rowEnd = 1; // index of last element in current row (= output of integer sequence)
 		for (int i = 0; i < mElements.length; ++i) {
 			sb.append(mElements[i]);
-			if (i ==  ln * ln / 2 - 1) {
+			if (i == rowEnd) {
 				sb.append("\n");
-				++ln;
+				++n;
+				rowEnd = n * n / 2 -1;
 			} else {
 				sb.append("\t");
 			}
