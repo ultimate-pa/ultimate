@@ -995,6 +995,10 @@ public class OctMatrix {
 
 	@Override
 	public String toString() {
+		return toStringLower();
+	}
+	
+	public String toStringFull() {
 		StringBuilder sb = new StringBuilder();
 		for (int row = 0; row < mSize; ++row) {
 			String delimiter = "";
@@ -1007,5 +1011,19 @@ public class OctMatrix {
 		}
 		return sb.toString();
 	}
-
+	
+	public String toStringLower() {
+		StringBuilder sb = new StringBuilder();
+		int ln = 2;
+		for (int i = 0; i < mElements.length; ++i) {
+			sb.append(mElements[i]);
+			if (i ==  ln * ln / 2 - 1) {
+				sb.append("\n");
+				++ln;
+			} else {
+				sb.append("\t");
+			}
+		}
+		return sb.toString();
+	}
 }
