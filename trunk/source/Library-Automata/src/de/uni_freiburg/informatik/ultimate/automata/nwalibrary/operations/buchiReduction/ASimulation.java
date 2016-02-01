@@ -93,7 +93,15 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * <br/>
  * 
  * For game graphs see {@link AGameGraph}, for information on the magic infinity
- * bound see {@link AGameGraph#getGlobalInfinity()}.
+ * bound see {@link AGameGraph#getGlobalInfinity()}.<br/>
+ * <br/>
+ * 
+ * The simulation process runs in <b>O(n^3 * k)</b> time and <b>O(n * k)</b>
+ * space where n is the amount of states and k the amount of transitions from
+ * the inputed automaton.<br/>
+ * The algorithm is based on the paper: <i>Fair simulation relations, parity
+ * games, and state space reduction for büchi automata<i> by <i>Etessami, Wilke
+ * and Schuller</i>.
  * 
  * @author Daniel Tischner
  * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
@@ -480,14 +488,18 @@ public abstract class ASimulation<LETTER, STATE> {
 			Iterator<StronglyConnectedComponent<Vertex<LETTER, STATE>>> iter = new LinkedList<StronglyConnectedComponent<Vertex<LETTER, STATE>>>(
 					m_SccComp.getSCCs()).iterator();
 			m_Performance.stopTimeMeasure(TimeMeasure.BUILD_SCC);
+			int amountOfSCCs = 0;
 			while (iter.hasNext()) {
 				StronglyConnectedComponent<Vertex<LETTER, STATE>> scc = iter.next();
 				iter.remove();
 				efficientLiftingAlgorithm(calculateInfinityOfSCC(scc), scc.getNodes());
+				amountOfSCCs++;
 			}
+			m_Performance.setCountingMeasure(CountingMeasure.SCCS, amountOfSCCs);
 		} else { // calculate reduction w/o SCCs
 			efficientLiftingAlgorithm(getGameGraph().getGlobalInfinity(), null);
 			m_Performance.addTimeMeasureValue(TimeMeasure.BUILD_SCC, SimulationPerformance.NO_TIME_RESULT);
+			m_Performance.setCountingMeasure(CountingMeasure.SCCS, SimulationPerformance.NO_COUNTING_RESULT);
 		}
 		m_Performance.stopTimeMeasure(TimeMeasure.SIMULATION_ONLY_TIME);
 		m_Result = getGameGraph().generateBuchiAutomatonFromGraph();
@@ -502,6 +514,7 @@ public abstract class ASimulation<LETTER, STATE> {
 			m_Performance.addTimeMeasureValue(TimeMeasure.OVERALL_TIME, durationGraph);
 		}
 		m_Performance.setCountingMeasure(CountingMeasure.GAMEGRAPH_STATES, getGameGraph().getSize());
+		m_Performance.setCountingMeasure(CountingMeasure.GLOBAL_INFINITY, getGameGraph().getGlobalInfinity());
 
 		m_Logger.info((this.m_UseSCCs ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds.");
 	}

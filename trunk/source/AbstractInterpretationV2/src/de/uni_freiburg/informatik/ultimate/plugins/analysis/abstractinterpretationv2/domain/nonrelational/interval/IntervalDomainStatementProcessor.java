@@ -60,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.ExpressionEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
@@ -198,7 +197,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 					if (newValue == null) {
 						newState = newState.setBooleanValue(varname, res.getBooleanValue());
 					} else {
-						final IBoogieVar type = newState.getVariableType(varname);
+						final IBoogieVar type = newState.getVariableDeclarationType(varname);
 						if (type.getIType() instanceof PrimitiveType) {
 							final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
 
@@ -405,7 +404,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 		        .evaluate(mOldState);
 
 		for (final IEvaluationResult<IntervalDomainEvaluationResult> res : result) {
-			if (res.getBooleanValue().getValue() == Value.FALSE || res.getBooleanValue().getValue() == Value.BOTTOM) {
+			if (res.getResult().getEvaluatedState().isBottom()) {
 				mReturnState.add(res.getResult().getEvaluatedState().bottomState());
 			} else {
 				mReturnState.add(res.getResult().getEvaluatedState().copy());

@@ -117,4 +117,10 @@ public class IntervalFunctionEvaluator
 
 		return sb.toString();
 	}
+
+	@Override
+	public List<IEvaluationResult<IntervalDomainEvaluationResult>> inverseEvaluate(
+	        IEvaluationResult<IntervalDomainEvaluationResult> computedState) {
+		return evaluate(computedState.getResult().getEvaluatedState());
+	}
 }

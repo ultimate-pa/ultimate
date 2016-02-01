@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
  */
 public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite {
 
-	private static final String[] I = new String[] { ".i",".c" };
+	private static final String[] C = new String[] { ".i", ".c" };
 	private static final String[] BPL = new String[] { ".bpl" };
 	private static final int DEFAULT_LIMIT = Integer.MAX_VALUE;
 	// private static final int DEFAULT_LIMIT = 10;
@@ -54,37 +54,14 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
-//			new Triple<>("AbstractInterpretationMk2CInline.xml", ALL_C, "ai/AI2_INT.epf"),
-//			new Triple<>("AbstractInterpretationMk2C.xml", ALL_C, "ai/AI2_INT.epf"),
-//			new Triple<>("AbstractInterpretationMk2.xml", BPL, "ai/AI2_INT.epf"),
-			
-//			new Triple<>("KojakAIC.xml", ALL_C, "svcomp2016/svcomp-Reach-32bit-Kojak_Default.epf"),
-//			new Triple<>("KojakCInline.xml", ALL_C, "svcomp2016/svcomp-Reach-32bit-Kojak_Default.epf"),
-			
-//			new Triple<>("AbstractInterpretationMk2CInline.xml", ALL_C, "ai/AI2_PLT.epf"),
-//			new Triple<>("AbstractInterpretationMk2C.xml", ALL_C, "ai/AI2_PLT.epf"),
-//			new Triple<>("AbstractInterpretationMk2.xml", BPL, "ai/AI2_PLT.epf"),
-			
-//			new Triple<>("AbstractInterpretationMk2CInline.xml", ".c", "ai/AI2_CMP.epf"),
-//			new Triple<>("AbstractInterpretationMk2C.xml", ".c", "ai/AI2_CMP.epf"),
-//			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_CMP.epf"),
-
-//			new Triple<>("AbstractInterpretationv2CInline.xml", ALL_C, "ai/AIv2_INT.epf"),
-//			new Triple<>("AbstractInterpretationv2C.xml", I, "ai/AIv2_INT.epf"),
-
-
-//			new Triple<>("AbstractInterpretationC.xml", ALL_C, "ai/AI.epf"),
-//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/AI.epf"),
-			
-//			new Triple<>("AutomizerCInline.xml", ".c", "EmptySettings.epf"),
-//			new Triple<>("AutomizerC.xml", ".c", "EmptySettings.epf"),
-
+			//### BPL 
 //			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/AIv2_INT.epf"),			
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/Automizer+AIv2_INT.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "EmptySettings.epf"),
 			
+			//### C
 //			new Triple<>("AutomizerC.xml", I, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
-			new Triple<>("AbstractInterpretationv2C.xml", I, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+			new Triple<>("AbstractInterpretationv2C.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 			
 	};
 
@@ -99,10 +76,44 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 			
 
 			// ########### Bugs ###########
-			//AStar does not terminate  
-//			"examples/svcomp/locks/test_locks_12_true-unreach-call_false-termination.c"
-			"examples/svcomp/eca-rers2012/Problem06_label22_true-unreach-call.c"
+			// Here are representatives of current bugs 
 
+			 
+			//no exact representable decimal result (106 total) 
+			 "examples/svcomp/eca-rers2012/Problem16_label02_true-unreach-call.c",
+			 "examples/svcomp/eca-rers2012/Problem16_label00_false-unreach-call.c",
+			 
+			 //NoSuchElementException: No value present: java.util.Optional.get(Optional.java:135) (16 total)
+			 "examples/svcomp/recursive-simple/fibo_2calls_10_true-unreach-call.c",
+			 "examples/svcomp/recursive-simple/id2_b3_o5_true-unreach-call.c",
+
+			 //ArrayIndexOutOfBoundsException (all)
+			 "examples/svcomp/systemc/transmitter.01_false-unreach-call_false-termination.cil.c",
+			 "examples/svcomp/systemc/transmitter.02_false-unreach-call_false-termination.cil.c",
+			 "examples/svcomp/systemc/transmitter.03_false-unreach-call_false-termination.cil.c",
+			 "examples/svcomp/systemc/transmitter.04_false-unreach-call_false-termination.cil.c",
+			 "examples/svcomp/systemc/transmitter.05_false-unreach-call_false-termination.cil.c",
+			 "examples/svcomp/systemc/transmitter.06_false-unreach-call_false-termination.cil.c",
+			 "examples/svcomp/systemc/transmitter.07_false-unreach-call_false-termination.cil.c",
+			 "examples/svcomp/systemc/transmitter.08_false-unreach-call_false-termination.cil.c",
+
+			 //unsoundness (all) 
+			 "examples/svcomp/recursive-simple/id_i10_o10_false-unreach-call.c",
+			 "examples/svcomp/recursive-simple/id_i15_o15_false-unreach-call.c",
+			 "examples/svcomp/recursive-simple/id_i20_o20_false-unreach-call.c",
+			 "examples/svcomp/recursive-simple/id_i25_o25_false-unreach-call.c",
+			 "examples/svcomp/recursive-simple/id_o1000_false-unreach-call.c",
+			 "examples/svcomp/recursive-simple/id_o100_false-unreach-call.c",
+			 "examples/svcomp/recursive-simple/id_o10_false-unreach-call.c",
+			 "examples/svcomp/recursive-simple/id_o200_false-unreach-call.c",
+			 "examples/svcomp/recursive-simple/id_o20_false-unreach-call.c",
+
+			//AStar does not terminate (246 total) 
+			"examples/svcomp/locks/test_locks_12_true-unreach-call_false-termination.c",
+			"examples/svcomp/locks/test_locks_9_true-unreach-call.c",
+			"examples/svcomp/product-lines/email_spec0_product16_false-unreach-call.cil.c",
+			"examples/svcomp/product-lines/email_spec4_productSimulator_false-unreach-call.cil.c",
+			"examples/svcomp/seq-mthreaded/rekh_nxt_false-unreach-call.1.M1.c",
 	};
 
 	// @formatter:on
@@ -127,7 +138,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 	@Override
 	public ITestResultDecider constructITestResultDecider(UltimateRunDefinition urd) {
-		return new SafetyCheckTestResultDecider(urd, true);
+		return new SafetyCheckTestResultDecider(urd, false);
 	}
 
 	@Override

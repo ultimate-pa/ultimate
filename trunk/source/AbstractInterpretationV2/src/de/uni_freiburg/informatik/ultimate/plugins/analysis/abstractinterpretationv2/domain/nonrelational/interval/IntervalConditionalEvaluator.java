@@ -72,40 +72,14 @@ public class IntervalConditionalEvaluator
 				        .evaluate(conditionState);
 
 				for (final IEvaluationResult<IntervalDomainEvaluationResult> ifRes : trueResult) {
-					returnList.add(new IntervalDomainEvaluationResult(ifRes.getResult().getEvaluatedValue(),
-					        ifRes.getResult().getEvaluatedState(), new BooleanValue(true)));
+					if (!ifRes.getResult().getEvaluatedState().isBottom()) {
+						returnList.add(new IntervalDomainEvaluationResult(ifRes.getResult().getEvaluatedValue(),
+						        ifRes.getResult().getEvaluatedState(), ifRes.getBooleanValue()));
+					}
 				}
 
 				mVariables.addAll(mIfEvaluator.getVarIdentifiers());
 				break;
-			// case TOP:
-			// final List<IEvaluationResult<IntervalDomainEvaluationResult>> trueTopResult = mIfEvaluator
-			// .evaluate(conditionState);
-			//
-			// for (final IEvaluationResult<IntervalDomainEvaluationResult> ifRes : trueTopResult) {
-			// returnList.add(new IntervalDomainEvaluationResult(ifRes.getResult().getEvaluatedValue(),
-			// conditionState, new BooleanValue(true)));
-			// }
-			//
-			// for (final IEvaluationResult<IntervalDomainEvaluationResult> negCond : negatedConditionResult) {
-			// if (negCond.getBooleanValue().getValue() == Value.BOTTOM) {
-			// continue;
-			// }
-			//
-			// final IntervalDomainState negState = negCond.getResult().getEvaluatedState();
-			//
-			// final List<IEvaluationResult<IntervalDomainEvaluationResult>> falseTopResult = mIfEvaluator
-			// .evaluate(negState);
-			//
-			// for (final IEvaluationResult<IntervalDomainEvaluationResult> ifRes : falseTopResult) {
-			// returnList.add(new IntervalDomainEvaluationResult(ifRes.getResult().getEvaluatedValue(),
-			// conditionState, new BooleanValue(true)));
-			// }
-			// }
-			//
-			// mVariables.addAll(mIfEvaluator.getVarIdentifiers());
-			// mVariables.addAll(mElseEvaluator.getVarIdentifiers());
-			// break;
 			default:
 				break;
 			}
@@ -121,8 +95,10 @@ public class IntervalConditionalEvaluator
 				        .evaluate(conditionState);
 
 				for (final IEvaluationResult<IntervalDomainEvaluationResult> elseRes : falseResult) {
-					returnList.add(new IntervalDomainEvaluationResult(elseRes.getResult().getEvaluatedValue(),
-					        elseRes.getResult().getEvaluatedState(), new BooleanValue(true)));
+					if (!elseRes.getResult().getEvaluatedState().isBottom()) {
+						returnList.add(new IntervalDomainEvaluationResult(elseRes.getResult().getEvaluatedValue(),
+						        elseRes.getResult().getEvaluatedState(), elseRes.getBooleanValue()));
+					}
 				}
 
 				mVariables.addAll(mElseEvaluator.getVarIdentifiers());
@@ -133,12 +109,10 @@ public class IntervalConditionalEvaluator
 		}
 
 		if (returnList.size() == 0) {
-			returnList.add(new IntervalDomainEvaluationResult(new IntervalDomainValue(true), currentState.bottomState(),
-			        new BooleanValue(BooleanValue.Value.BOTTOM)));
+			returnList.add(new IntervalDomainEvaluationResult(new IntervalDomainValue(), currentState,
+			        new BooleanValue(BooleanValue.Value.FALSE)));
 		}
-
-		// TODO Bottom resolve!
-		return returnList;
+		return IntervalUtils.mergeIfNecessary(returnList, 1);
 	}
 
 	@Override
@@ -170,8 +144,7 @@ public class IntervalConditionalEvaluator
 
 	@Override
 	public boolean containsBool() {
-		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 
 	@Override
@@ -189,5 +162,85 @@ public class IntervalConditionalEvaluator
 		sb.append(mElseEvaluator);
 
 		return sb.toString();
+	}
+
+	@Override
+	public List<IEvaluationResult<IntervalDomainEvaluationResult>> inverseEvaluate(
+	        IEvaluationResult<IntervalDomainEvaluationResult> computedState) {
+
+		final IntervalDomainState currentState = computedState.getResult().getEvaluatedState();
+
+		final List<IEvaluationResult<IntervalDomainEvaluationResult>> returnList = new ArrayList<>();
+
+		final List<IEvaluationResult<IntervalDomainEvaluationResult>> conditionResult = mConditionEvaluator
+		        .evaluate(currentState);
+		final List<IEvaluationResult<IntervalDomainEvaluationResult>> negatedConditionResult = mNegatedConditionEvaluator
+		        .evaluate(currentState);
+
+		for (final IEvaluationResult<IntervalDomainEvaluationResult> cond : conditionResult) {
+			final IntervalDomainState conditionState = cond.getResult().getEvaluatedState();
+
+			switch (cond.getBooleanValue().getValue()) {
+			case TRUE:
+			case TOP:
+				final List<IEvaluationResult<IntervalDomainEvaluationResult>> trueResult = mIfEvaluator
+				        .evaluate(conditionState);
+
+				for (final IEvaluationResult<IntervalDomainEvaluationResult> t : trueResult) {
+					if (!t.getResult().getEvaluatedState().isBottom()) {
+						final IntervalDomainEvaluationResult trueInverse = new IntervalDomainEvaluationResult(
+						        t.getResult().getEvaluatedValue(), t.getResult().getEvaluatedState(),
+						        t.getBooleanValue());
+						final List<IEvaluationResult<IntervalDomainEvaluationResult>> trueInverseResult = mIfEvaluator
+						        .inverseEvaluate(trueInverse);
+
+						for (final IEvaluationResult<IntervalDomainEvaluationResult> ifRes : trueInverseResult) {
+							returnList.add(new IntervalDomainEvaluationResult(ifRes.getResult().getEvaluatedValue(),
+							        ifRes.getResult().getEvaluatedState(), t.getBooleanValue()));
+						}
+					}
+				}
+
+				break;
+			default:
+				break;
+			}
+		}
+
+		for (final IEvaluationResult<IntervalDomainEvaluationResult> cond : negatedConditionResult) {
+			final IntervalDomainState conditionState = cond.getResult().getEvaluatedState();
+
+			switch (cond.getBooleanValue().getValue()) {
+			case TRUE:
+			case TOP:
+				final List<IEvaluationResult<IntervalDomainEvaluationResult>> falseResult = mElseEvaluator
+				        .evaluate(conditionState);
+
+				for (final IEvaluationResult<IntervalDomainEvaluationResult> f : falseResult) {
+					if (!f.getResult().getEvaluatedState().isBottom()) {
+						final IntervalDomainEvaluationResult falseInverse = new IntervalDomainEvaluationResult(
+						        f.getResult().getEvaluatedValue(), f.getResult().getEvaluatedState(),
+						        f.getBooleanValue());
+						final List<IEvaluationResult<IntervalDomainEvaluationResult>> falseInverseResult = mElseEvaluator
+						        .inverseEvaluate(falseInverse);
+
+						for (final IEvaluationResult<IntervalDomainEvaluationResult> elseRes : falseInverseResult) {
+							returnList.add(new IntervalDomainEvaluationResult(elseRes.getResult().getEvaluatedValue(),
+							        elseRes.getResult().getEvaluatedState(), f.getBooleanValue()));
+						}
+					}
+				}
+				break;
+			default:
+				break;
+			}
+		}
+
+		if (returnList.size() == 0) {
+			returnList.add(new IntervalDomainEvaluationResult(new IntervalDomainValue(), currentState,
+			        new BooleanValue(BooleanValue.Value.FALSE)));
+		}
+
+		return IntervalUtils.mergeIfNecessary(returnList, 1);
 	}
 }

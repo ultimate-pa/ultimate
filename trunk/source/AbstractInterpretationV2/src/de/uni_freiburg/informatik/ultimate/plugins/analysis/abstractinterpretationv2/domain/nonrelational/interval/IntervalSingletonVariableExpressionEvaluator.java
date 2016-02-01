@@ -71,7 +71,7 @@ public class IntervalSingletonVariableExpressionEvaluator
 		IntervalDomainValue val;
 		BooleanValue returnBool = new BooleanValue();
 
-		final IBoogieVar type = currentState.getVariableType(mVariableName);
+		final IBoogieVar type = currentState.getVariableDeclarationType(mVariableName);
 		if (type.getIType() instanceof PrimitiveType) {
 			final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
 
@@ -138,5 +138,28 @@ public class IntervalSingletonVariableExpressionEvaluator
 	@Override
 	public String toString() {
 		return mVariableName;
+	}
+
+	@Override
+	public List<IEvaluationResult<IntervalDomainEvaluationResult>> inverseEvaluate(
+	        IEvaluationResult<IntervalDomainEvaluationResult> computedState) {
+		IntervalDomainState newState;
+
+		if (mContainsBoolean) {
+			newState = computedState.getResult().getEvaluatedState().setBooleanValue(mVariableName,
+			        computedState.getBooleanValue());
+		} else {
+			newState = computedState.getResult().getEvaluatedState().setValue(mVariableName,
+			        computedState.getResult().getEvaluatedValue());
+		}
+
+		final List<IEvaluationResult<IntervalDomainEvaluationResult>> result = evaluate(newState);
+		final List<IEvaluationResult<IntervalDomainEvaluationResult>> returnList = new ArrayList<>();
+
+		for (final IEvaluationResult<IntervalDomainEvaluationResult> res : result) {
+			returnList.add(new IntervalDomainEvaluationResult(res.getResult().getEvaluatedValue(),
+			        res.getResult().getEvaluatedState(), computedState.getBooleanValue()));
+		}
+		return returnList;
 	}
 }

@@ -312,7 +312,7 @@ public class SignDomainState implements IAbstractState<SignDomainState, CodeBloc
 	}
 
 	@Override
-	public IBoogieVar getVariableType(String name) {
+	public IBoogieVar getVariableDeclarationType(String name) {
 		assert name != null;
 		assert mVariablesMap.containsKey(name);
 

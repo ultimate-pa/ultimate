@@ -383,4 +383,10 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 		// TODO Auto-generated method stub
 		return false;
 	}
+
+	@Override
+	public List<IEvaluationResult<Values>> inverseEvaluate(IEvaluationResult<Values> computedState) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

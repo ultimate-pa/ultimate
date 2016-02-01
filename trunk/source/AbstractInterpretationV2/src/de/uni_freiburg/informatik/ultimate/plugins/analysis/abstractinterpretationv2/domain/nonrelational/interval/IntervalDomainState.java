@@ -72,6 +72,10 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 
 	private boolean mIsFixpoint;
 
+	protected enum VariableType {
+		VARIABLE, BOOLEAN, ARRAY
+	}
+
 	protected IntervalDomainState() {
 		this(null);
 	}
@@ -274,6 +278,24 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 		final IntervalDomainState returnState = copy();
 		addVariableInternally(returnState, name, variable);
 		return returnState;
+	}
+
+	protected VariableType getVariableType(String var) {
+		if (!containsVariable(var)) {
+			throw new UnsupportedOperationException("The variable " + var + " does not exist in the current state.");
+		}
+
+		if (mBooleanValuesMap.containsKey(var)) {
+			return VariableType.BOOLEAN;
+		}
+
+		if (mValuesMap.containsKey(var)) {
+			return VariableType.VARIABLE;
+		}
+
+		// TODO: Implement proper handling of arrays.
+		throw new UnsupportedOperationException(
+		        "The variable " + var + " exists but was not found in the variable sets.");
 	}
 
 	/**
@@ -667,7 +689,7 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 	}
 
 	@Override
-	public IBoogieVar getVariableType(String name) {
+	public IBoogieVar getVariableDeclarationType(String name) {
 		assert name != null;
 		final IBoogieVar var = mVariablesMap.get(name);
 		assert var != null : "Unknown variable";
