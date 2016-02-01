@@ -33,8 +33,8 @@ public class OctStatementProcessor {
 
 	private final Logger mLogger;
 	private final BoogieSymbolTable mSymbolTable;
-	
-	private final ExpressionTransformer mExprTransformer = new ExpressionTransformer();
+	private final ExpressionTransformer mExprTransformer;
+	private final OctAssumeProcessor mAssumeProcessor;
 	
 	/**
 	 * Abstract domain states before the interpretation of an statement.
@@ -57,6 +57,8 @@ public class OctStatementProcessor {
 	public OctStatementProcessor(Logger logger, BoogieSymbolTable symbolTable) {
 		mLogger = logger;
 		mSymbolTable = symbolTable;
+		mExprTransformer = new ExpressionTransformer();
+		mAssumeProcessor = new OctAssumeProcessor(logger, symbolTable, mExprTransformer);
 	}
 
 	public List<OctagonDomainState> process(List<OctagonDomainState> oldStates, Statement statement) {
@@ -70,7 +72,8 @@ public class OctStatementProcessor {
 		if (statement instanceof AssignmentStatement) {
 			processAssignmentStatement((AssignmentStatement) statement);
 		} else if (statement instanceof AssumeStatement) {
-			processAssumeStatement(((AssumeStatement) statement).getFormula());
+			Expression assumption = ((AssumeStatement) statement).getFormula();
+			mNewStates = mAssumeProcessor.assume(mOldStates, assumption);
 		} else if (statement instanceof HavocStatement) {
 			processHavocStatement((HavocStatement) statement);
 		} else if (statement instanceof IfStatement) {
@@ -139,11 +142,26 @@ public class OctStatementProcessor {
 	private void processSingleAssignment(String targetVar, Expression rhs) {
 		List<Pair<List<Expression>, Expression>> paths = mExprTransformer.removeIfExprsCached(rhs);
 		List<OctagonDomainState> tmpNewStates = new ArrayList<>();
-		for (Pair<List<Expression>, Expression> p : paths) {
-			// !!!!!!!!!!!!!!! 
-			// TODO !!!!!!!!!!  processAssume may modify mOldStates => Copy or ensure that this never happens
-			// !!!!!!!!!!!!!!!                                         but do not copy if not necessary
-			p.getFirst().forEach(assumption -> processAssumeStatement(assumption));
+		List<OctagonDomainState> origOldStates = mOldStates;
+		
+		// copy old states (as rarely as needed => one copy less by modifying original states)
+		List<List<OctagonDomainState>> mCopiedOldStates = new ArrayList<>(paths.size());
+		mCopiedOldStates.add(mOldStates);
+		for (int i = 1; i < paths.size(); ++i) {
+			List<OctagonDomainState> copy = new ArrayList<>(mOldStates.size());
+			mCopiedOldStates.add(copy);
+		}
+		
+		for (Iterator<Pair<List<Expression>, Expression>> iter = paths.iterator(); iter.hasNext(); ) {
+			Pair<List<Expression>, Expression> p = iter.next();
+			if (iter.hasNext()) {
+				mOldStates = new ArrayList<>(origOldStates.size());
+				origOldStates.forEach(s -> mOldStates.add(s.deepCopy()));				
+			} else {
+				mOldStates = origOldStates; // save one copy -- original oldState is not needed any more
+			}
+
+			p.getFirst().forEach(assumption -> mOldStates = mAssumeProcessor.assume(mOldStates, assumption));
 
 			IType type = rhs.getType();
 			// note: there is no implicit typecasting in boogie. "real := int;" cannot happen. 
@@ -174,7 +192,7 @@ public class OctStatementProcessor {
 				action = s -> s.copyVar(targetVar, sourceVar);
 			}
 		}
-		
+
 		// TODO calculate using BoolValue
 
 		mOldStates.forEach(action);
@@ -217,11 +235,4 @@ public class OctStatementProcessor {
 		mNewStates = mOldStates;
 	}
 
-	private void processAssumeStatement(Expression assumedFormula) {
-		// TODO implement
-		
-		// note IfThenElseExpression can occur
-		
-		mNewStates = mOldStates; // note: returning old state is safe (but imprecise)
-	}
 }
