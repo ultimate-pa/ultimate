@@ -177,6 +177,10 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 */
 	private final int m_GlobalInfinity;
 	/**
+	 * Amount of SCCs of the initial game graph version.
+	 */
+	private int m_AmountOfSCCs;
+	/**
 	 * The logger used by the Ultimate framework.
 	 */
 	private final Logger m_Logger;
@@ -345,6 +349,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 		m_AttemptingChanges = false;
 		m_SimulationWasAborted = false;
+		m_AmountOfSCCs = 0;
 
 		doSimulation();
 	}
@@ -466,6 +471,9 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 				m_CurrentChanges = changes;
 				efficientLiftingAlgorithm(infinityOfSCC, scc.getNodes());
+				if (changes == null) {
+					m_AmountOfSCCs++;
+				}
 				if (m_SimulationWasAborted) {
 					return false;
 				}
@@ -755,12 +763,15 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		// terminate as quickly as it will do now.
 		if (!isUsingSCCs()) {
 			performance.addTimeMeasureValue(TimeMeasure.BUILD_SCC, SimulationPerformance.NO_TIME_RESULT);
+			performance.setCountingMeasure(CountingMeasure.SCCS, SimulationPerformance.NO_COUNTING_RESULT);
 		}
 		boolean disabledSCCUsage = false;
 		if (isUsingSCCs()) {
 			setUseSCCs(false);
 			disabledSCCUsage = true;
+			performance.setCountingMeasure(CountingMeasure.SCCS, m_AmountOfSCCs);
 		}
+		performance.setCountingMeasure(CountingMeasure.GLOBAL_INFINITY, m_GlobalInfinity);
 
 		// Merge states
 		m_AttemptingChanges = true;

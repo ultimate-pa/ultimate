@@ -34,6 +34,10 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchi
  */
 public enum CountingMeasure {
 	/**
+	 * Amount of states the automaton has before simulation.
+	 */
+	BUCHI_STATES,
+	/**
 	 * Amount of merge attempts that where aborted.
 	 */
 	FAILED_MERGE_ATTEMPTS,
@@ -41,6 +45,14 @@ public enum CountingMeasure {
 	 * Amount of transition removal attempts that where aborted.
 	 */
 	FAILED_TRANSREMOVE_ATTEMPTS,
+	/**
+	 * Amount of states the game graph has.
+	 */
+	GAMEGRAPH_STATES,
+	/**
+	 * The global bound for infinty.
+	 */
+	GLOBAL_INFINITY,
 	/**
 	 * Amount of states a simulation has removed.
 	 */
@@ -50,15 +62,11 @@ public enum CountingMeasure {
 	 */
 	REMOVED_TRANSITIONS,
 	/**
+	 * Amount of SCCs the game graph has.
+	 */
+	SCCS,
+	/**
 	 * Amount of steps a simulation needed.
 	 */
-	SIMULATION_STEPS,
-	/**
-	 * Amount of states the automaton has before simulation.
-	 */
-	BUCHI_STATES,
-	/**
-	 * Amount of states the game graph has.
-	 */
-	GAMEGRAPH_STATES
+	SIMULATION_STEPS
 }

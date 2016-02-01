@@ -357,6 +357,10 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 				fairPerformance.getCountingMeasureResult(CountingMeasure.BUCHI_STATES));
 		m_Performance.setCountingMeasure(CountingMeasure.GAMEGRAPH_STATES,
 				fairPerformance.getCountingMeasureResult(CountingMeasure.GAMEGRAPH_STATES));
+		m_Performance.setCountingMeasure(CountingMeasure.SCCS,
+				fairPerformance.getCountingMeasureResult(CountingMeasure.SCCS));
+		m_Performance.setCountingMeasure(CountingMeasure.GLOBAL_INFINITY,
+				fairPerformance.getCountingMeasureResult(CountingMeasure.GLOBAL_INFINITY));
 
 		m_HasFinished = true;
 	}
