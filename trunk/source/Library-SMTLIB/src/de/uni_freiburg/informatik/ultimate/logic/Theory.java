@@ -1051,6 +1051,24 @@ public class Theory {
 					return null;
 				return mBitVecSort.getSort(
 						new BigInteger[] { indices[0] }, new Sort[0]);
+				
+			}
+		});
+		
+		// +/- infinity
+		defineFunction(new FunctionSymbolFactory("+oo") {
+			@Override
+			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
+				return mFloatingPointSort.getSort(indices, new Sort[0] );
+			}
+		});
+		
+		defineFunction(new FunctionSymbolFactory("-oo") {
+			@Override
+			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
+				return mFloatingPointSort.getSort(indices, new Sort[0] );
 			}
 		});
 
