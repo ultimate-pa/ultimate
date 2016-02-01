@@ -56,6 +56,15 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  * <br/>
  * 
  * For more information on the type of simulation see {@link DirectGameGraph}.
+ * <br/>
+ * <br/>
+ * 
+ * The algorithm runs in <b>O(n^3 * k)</b> time and <b>O(n * k)</b> space where
+ * n is the amount of states and k the amount of transitions from the inputed
+ * automaton.<br/>
+ * The algorithm is based on the paper: <i>Fair simulation relations, parity
+ * games, and state space reduction for büchi automata<i> by <i>Etessami, Wilke
+ * and Schuller</i>.
  * 
  * @author Daniel Tischner
  *
@@ -100,8 +109,8 @@ public final class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, S
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public DirectSimulation(final IUltimateServiceProvider services, final IProgressAwareTimer progressTimer, final Logger logger,
-			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
+	public DirectSimulation(final IUltimateServiceProvider services, final IProgressAwareTimer progressTimer,
+			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
 		this(progressTimer, logger, useSCCs, stateFactory,
 				new DirectGameGraph<>(services, progressTimer, logger, buechi, stateFactory));
