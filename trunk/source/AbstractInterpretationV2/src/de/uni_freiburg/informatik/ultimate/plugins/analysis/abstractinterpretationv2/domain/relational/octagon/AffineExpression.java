@@ -200,6 +200,10 @@ public class AffineExpression {
 		return sum;
 	}
 	
+	public AffineExpression subtract(AffineExpression subtrahend) {
+		return this.add(subtrahend.negate()); // negate never returns null
+	}
+
 	public AffineExpression negate() {
 		AffineExpression negation = new AffineExpression();
 		negation.mConstant = mConstant.negate();
