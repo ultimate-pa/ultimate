@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
@@ -41,7 +42,7 @@ public class ExpressionTransformer {
 	public Expression logicNegCached(Expression e) {
 		Expression cachedLn = mCacheLogicNeg.get(e);
 		if (cachedLn == null) {
-			cachedLn = encloseInLogicNeg(e);
+			cachedLn = logicNeg(e);
 			if (cachedLn != null) {
 				mCacheLogicNeg.put(e, cachedLn);
 			}
@@ -116,8 +117,17 @@ public class ExpressionTransformer {
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	private Expression encloseInLogicNeg(Expression e) {
+	private Expression logicNeg(Expression e) {
 		assert TypeUtil.isBoolean(e.getType()) : "Logical negation of non-boolean expression: " + e;
+		if (e instanceof UnaryExpression) {
+			UnaryExpression ue = (UnaryExpression) e;
+			if (ue.getOperator() == UnaryExpression.Operator.LOGICNEG) {
+				return ue.getExpr();
+			}
+		} else if (e instanceof BooleanLiteral) {
+			BooleanLiteral bl = (BooleanLiteral) e;
+			return new BooleanLiteral(bl.getLocation(), bl.getType(), !bl.getValue());
+		}
 		return new UnaryExpression(e.getLocation(), e.getType(), UnaryExpression.Operator.LOGICNEG, e);
 	}
 
