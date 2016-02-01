@@ -975,6 +975,85 @@ public class Theory {
 				return mFloatingPointSort.getSort(fpIndices, new Sort[0] );
 			}
 		});
+		// from BitVec to FP
+		defineFunction(new FunctionSymbolFactory("to_fp") {
+		    @Override
+		    public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+		    		Sort resultSort) {
+		    	if (indices == null || indices.length != 2
+		    		|| paramSorts == null) {
+		    		return null;
+		    }
+		    //from BitVec to FP
+		   	if (paramSorts.length == 1 && paramSorts[0].getName() == "BitVec") {
+		   		if (!((indices[0].add(indices[1]).equals( paramSorts[0].getIndices()[0])))) {
+		   			return null;
+		   		}
+		   	return mFloatingPointSort.getSort(indices, new Sort[0]);
+		    }
+
+		    // from FP to FP
+		    if (paramSorts.length == 2 && paramSorts[0].getName() == "RoundingMode"
+		    		&& paramSorts[1].getName() == "FloatingPoint") {
+		    	return mFloatingPointSort.getSort(indices, new Sort[0]);
+		    }
+
+		    // from real to FP
+		    if (paramSorts.length == 2 && paramSorts[0].getName() == "RoundingMode"
+		    		&& paramSorts[1].getName() == "Real") {
+		      return mFloatingPointSort.getSort(indices, new Sort[0]);
+		    }
+
+		    // from signed machine integer, represented as a 2's complement bit vector to FP
+		    if (paramSorts.length == 2 && paramSorts[0].getName() == "RoundingMode"
+		    		&& paramSorts[1].getName() == "BitVec") {
+		      return mFloatingPointSort.getSort(indices, new Sort[0]);
+		    }
+		    return null;
+		    }
+		});
+
+		defineFunction(new FunctionSymbolFactory("to_fp_unsigned") {
+		    @Override
+		    public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+		    		Sort resultSort) {
+		    	if (indices == null || indices.length != 2
+		    		|| paramSorts.length != 2 || resultSort != null
+		    		|| paramSorts[0].getName() != "RoundingMode"
+		    		|| paramSorts[1].getName() != "BitVec")
+		    		return null;
+		    	return mFloatingPointSort.getSort(indices, new Sort[0] );
+		    	}
+		    });
+		
+		defineFunction(new FunctionSymbolFactory("fp.to_ubv") {
+			@Override
+			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
+				if (indices == null || indices.length != 1
+					|| paramSorts.length != 2 || resultSort != null
+					|| paramSorts[0].getName() != "RoundingMode"
+					|| paramSorts[1].getName() != "FloatingPoint")
+					return null;
+				return mBitVecSort.getSort(
+						new BigInteger[] { indices[0] }, new Sort[0]);
+			}
+		});
+		
+		defineFunction(new FunctionSymbolFactory("fp.to_sbv") {
+			@Override
+			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
+				if (indices == null || indices.length != 1
+					|| paramSorts.length != 2 || resultSort != null
+					|| paramSorts[0].getName() != "RoundingMode"
+					|| paramSorts[1].getName() != "FloatingPoint")
+					return null;
+				return mBitVecSort.getSort(
+						new BigInteger[] { indices[0] }, new Sort[0]);
+			}
+		});
+
 
 		//short forms of common floats
 		declareInternalSort("Float16", 0, 0).getSort(null, new Sort[0]);
@@ -1025,6 +1104,8 @@ public class Theory {
 		defineFunction(new RegularFloatingPointFunction("fp.isNegativ", 1, mBooleanSort));
 		defineFunction(new RegularFloatingPointFunction("fp.isPositiv", 1, mBooleanSort));
 		
+		// Conversion from FP
+		defineFunction(new RegularFloatingPointFunction("fp.to_real", 1, mRealSort));
 	}
 	
 	private void setLogic(Logics logic) {
