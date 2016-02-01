@@ -339,6 +339,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		m_Logger.debug("Starting generation of Fair Game Graph...");
 		m_Game = game;
 		m_Game.setSimulationPerformance(super.getSimulationPerformance());
+		m_Logger.debug("Fair Game Graph has " + m_Game.getSize() + " vertices.");
 
 		m_GlobalInfinity = m_Game.getGlobalInfinity();
 
