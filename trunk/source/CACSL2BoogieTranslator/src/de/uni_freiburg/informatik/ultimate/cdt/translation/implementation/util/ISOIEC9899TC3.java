@@ -77,6 +77,21 @@ public final class ISOIEC9899TC3 {
 	 */
 	private static final String[] SUFFIXES_INT = new String[] { "ULL", "Ull", "ull", "uLL", "llu", "llU", "LLu", "LLU",
 			"ul", "uL", "Ul", "UL", "lu", "lU", "Lu", "LU", "ll", "LL", "u", "U", "l", "L" };
+	
+	public enum IntegerConstantType {
+		OCTAL(8), 
+		DECIMAL(10), 
+		HEXADECIMAL(16);
+		
+		private final int m_Base;
+		IntegerConstantType(int base) {
+			m_Base = base;
+		}
+		
+		public int getBase() {
+			return m_Base;
+		}
+	}
 
 	/**
 	 * Parses Integer constants according to <a
@@ -207,80 +222,20 @@ public final class ISOIEC9899TC3 {
 	 *  		  primitive types.
 	 * @return the parsed value
 	 */
-	public static final RValue handleIntegerConstant(String valueWithSuffixes, ILocation loc, 
+	public static final RValue handleIntegerConstant(String valueWithPrefixAndSuffix, ILocation loc, 
 			boolean bitvectorTranslation, 
 			TypeSizes typeSizeConstants) {
-		String valueAsString = valueWithSuffixes;
-		String suffix = "";
-		final CPrimitive cType;
-		// if there is a integer-suffix: throw it away
-		for (String s : SUFFIXES_INT) {
-			if (valueWithSuffixes.endsWith(s)) {
-				valueAsString = valueWithSuffixes.substring(0, valueWithSuffixes.length() - s.length());
-				suffix = s;
-				break;
-			}
-		}
-		switch (suffix) {
-		case "ULL": 
-		case "Ull": 
-		case "ull": 
-		case "uLL":
-		case "llu":
-		case "llU":
-		case "LLu":
-		case "LLU":
-			cType = new CPrimitive(PRIMITIVE.ULONGLONG);
-			break;
-		case "ul":
-		case "uL":
-		case "Ul":
-		case "UL":
-		case "lu":
-		case "lU":
-		case "Lu":
-		case "LU":
-			cType = new CPrimitive(PRIMITIVE.ULONG);
-			break;
-		case "ll":
-		case "LL":
-			cType = new CPrimitive(PRIMITIVE.LONGLONG);
-			break;
-		case "u":
-		case "U":
-			cType = new CPrimitive(PRIMITIVE.UINT);
-			break;
-		case "l": 
-		case "L":
-			cType = new CPrimitive(PRIMITIVE.LONG);
-			break;
-		default:
-			cType = new CPrimitive(PRIMITIVE.INT);
-			break;
-		}
-		final BigInteger value;
 		try {
-			// check for integer-prefix.
-			if (valueAsString.startsWith(HEX_L0X) || valueAsString.startsWith(HEX_U0X)) {
-				// val is a hexadecimal-constant
-//				return new BigInteger(value.substring(2), 16).toString();
-				value = new BigInteger(valueAsString.substring(2), 16);
-			} else if (valueAsString.startsWith(OCT_0)) {
-				// val is a octal-constant.
-//				return new BigInteger(value, 8).toString();
-				value = new BigInteger(valueAsString, 8);
-			} else {
-//				return new BigInteger(value).toString(); // check if correct!
-				value = new BigInteger(valueAsString); // check if correct!
-			}
+			final IntegerConstant ic = new IntegerConstant(valueWithPrefixAndSuffix);
+			final CPrimitive cType = determineCType(ic, typeSizeConstants);
+			final Expression resultLiteral = constructLiteralForCIntegerLiteral(
+					loc, bitvectorTranslation, typeSizeConstants, cType,
+					ic.getValue());
+			return new RValue(resultLiteral, cType);
 		} catch (NumberFormatException nfe) {
 			String msg = "Unable to translate int!";
 			throw new IncorrectSyntaxException(loc, msg);
 		}
-		final Expression resultLiteral = constructLiteralForCIntegerLiteral(
-				loc, bitvectorTranslation, typeSizeConstants, cType,
-				value);
-		return new RValue(resultLiteral, cType);
 	}
 
 	public static Expression constructLiteralForCIntegerLiteral(
@@ -299,5 +254,104 @@ public final class ISOIEC9899TC3 {
 			resultLiteral = new IntegerLiteral(loc, value.toString());
 		}
 		return resultLiteral;
+	}
+	
+	private static class IntegerConstant {
+		
+		private final IntegerConstantType m_IntegerConstantType;
+		private final String m_Suffix;
+		private final BigInteger m_Value;
+		public IntegerConstant(String valueWithPrefixAndSuffix) {
+			String valueWithPrefix = valueWithPrefixAndSuffix;
+			String suffix = "";
+			for (String s : SUFFIXES_INT) {
+				if (valueWithPrefixAndSuffix.endsWith(s)) {
+					valueWithPrefix = valueWithPrefixAndSuffix.substring(0, valueWithPrefixAndSuffix.length() - s.length());
+					suffix = s;
+					break;
+				}
+			}
+			m_Suffix = suffix;
+			final String valueAsString;
+			if (valueWithPrefix.startsWith(HEX_L0X) || valueWithPrefix.startsWith(HEX_U0X)) {
+				// val is a hexadecimal-constant
+				valueAsString = valueWithPrefix.substring(2);
+				m_IntegerConstantType = IntegerConstantType.HEXADECIMAL;
+			} else if (valueWithPrefix.startsWith(OCT_0)) {
+				valueAsString = valueWithPrefix;
+				m_IntegerConstantType = IntegerConstantType.OCTAL;
+			} else {
+				valueAsString = valueWithPrefix;
+				m_IntegerConstantType = IntegerConstantType.DECIMAL;
+			}
+			m_Value = new BigInteger(valueAsString, m_IntegerConstantType.getBase());
+		}
+		
+		public BigInteger getValue() {
+			return m_Value;
+		}
+		public IntegerConstantType getIntegerConstantType() {
+			return m_IntegerConstantType;
+		}
+		public boolean hasUnsignedSuffix() {
+			return m_Suffix.contains("u") || m_Suffix.contains("U"); 
+		}
+		public boolean hasLongLongSuffix() {
+			return m_Suffix.contains("ll") || m_Suffix.contains("LL"); 
+		}
+		public boolean hasLongSuffix() {
+			return !hasLongLongSuffix() && (m_Suffix.contains("l") || m_Suffix.contains("L")); 
+		}
+	}
+	
+	/**
+	 * Get the types that a given integer type can have.
+	 * Returns the types in the correct order according to 6.4.4.1.5 of the 
+	 * C11 standard.
+	 */
+	private static PRIMITIVE[] getPossibleTypes(IntegerConstant ic) {
+		if (ic.hasUnsignedSuffix()) {
+			if (ic.hasLongLongSuffix()) {
+				return new PRIMITIVE[] { PRIMITIVE.ULONGLONG };
+			} else if (ic.hasLongSuffix()) {
+				return new PRIMITIVE[] { PRIMITIVE.ULONG, PRIMITIVE.ULONGLONG };
+			} else {
+				return new PRIMITIVE[] { PRIMITIVE.UINT, PRIMITIVE.ULONG, PRIMITIVE.ULONGLONG };
+			}
+		} else {
+			if (ic.hasLongLongSuffix()) {
+				if (ic.getIntegerConstantType() == IntegerConstantType.DECIMAL) {
+					return new PRIMITIVE[] { PRIMITIVE.LONGLONG };
+				} else {
+					return new PRIMITIVE[] { PRIMITIVE.LONGLONG, PRIMITIVE.ULONGLONG };
+				}
+			} else if (ic.hasLongSuffix()) {
+				if (ic.getIntegerConstantType() == IntegerConstantType.DECIMAL) {
+					return new PRIMITIVE[] { PRIMITIVE.LONG, PRIMITIVE.LONGLONG };
+				} else {
+					return new PRIMITIVE[] { PRIMITIVE.LONG, PRIMITIVE.ULONG, PRIMITIVE.LONGLONG, PRIMITIVE.ULONGLONG };
+				}
+			} else {
+				if (ic.getIntegerConstantType() == IntegerConstantType.DECIMAL) {
+					return new PRIMITIVE[] { PRIMITIVE.INT, PRIMITIVE.LONG, PRIMITIVE.LONGLONG };
+				} else {
+					return new PRIMITIVE[] { PRIMITIVE.INT, PRIMITIVE.UINT, PRIMITIVE.LONG, PRIMITIVE.ULONG, PRIMITIVE.LONGLONG, PRIMITIVE.ULONGLONG };
+				}
+			}
+		}
+	}
+	
+	private static CPrimitive determineCType(IntegerConstant ic, TypeSizes typeSizes) {
+		PRIMITIVE[] primitives = getPossibleTypes(ic);
+		for (PRIMITIVE primitive : primitives) {
+			CPrimitive cPrimitive = new CPrimitive(primitive);
+			BigInteger maxValue = typeSizes.getMaxValueOfPrimitiveType(cPrimitive);
+			if (ic.getValue().compareTo(maxValue) <= 0) {
+				return cPrimitive;
+			}
+		}
+		throw new IllegalArgumentException("Unable to represent " + ic.getValue() 
+			+ " using any of the given types. This is probably undefined"
+			+ " or we need extended integer types. See 6.4.4.1 in the C standard");
 	}
 }
