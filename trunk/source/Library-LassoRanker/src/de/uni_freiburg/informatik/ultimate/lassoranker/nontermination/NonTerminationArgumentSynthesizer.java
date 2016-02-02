@@ -122,6 +122,11 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	private NonTerminationArgument m_argument = null;
 	
 	/**
+	 * Result of SMT query
+	 */
+	private LBool m_IsSat;
+	
+	/**
 	 * Constructor for the termination argument function synthesizer.
 	 * 
 	 * @param lasso the lasso program
@@ -203,14 +208,14 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		m_script.assertTerm(constraints);
 		
 		// Check for satisfiability
-		LBool isSat = m_script.checkSat();
-		if (isSat == LBool.SAT) {
+		m_IsSat = m_script.checkSat();
+		if (m_IsSat == LBool.SAT) {
 			m_argument = extractArgument(vars_init, vars_honda, vars_gevs,
 					lambdas, nus);
-		} else if (isSat == LBool.UNKNOWN) {
+		} else if (m_IsSat == LBool.UNKNOWN) {
 			m_script.echo(new QuotedObject(ArgumentSynthesizer.s_SolverUnknownMessage));
 		}
-		return isSat;
+		return m_IsSat;
 	}
 	
 	/**
@@ -588,4 +593,5 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		assert synthesisSuccessful();
 		return m_argument;
 	}
+	
 }
