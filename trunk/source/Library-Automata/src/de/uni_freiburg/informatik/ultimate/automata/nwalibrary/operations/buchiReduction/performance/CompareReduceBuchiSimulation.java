@@ -76,10 +76,10 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
 	/**
-	 * Amount of fix fields in the log format. Currently this is type, usedSCCs,
-	 * timedOut and outOfMemory.
+	 * Amount of fix fields in the log format. Currently this is name, type,
+	 * usedSCCs, timedOut and outOfMemory.
 	 */
-	private final static int FIX_FIELD_AMOUNT = 4;
+	private final static int FIX_FIELD_AMOUNT = 5;
 	/**
 	 * Marks the end of the head from an entry.
 	 */
@@ -206,10 +206,11 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 				} else {
 					// Line is a data set of the current performance entry
 					// Fix fields
-					SimulationType type = SimulationType.valueOf(lineElements[0]);
-					boolean usedSCCs = Boolean.parseBoolean(lineElements[1]);
-					boolean timedOut = Boolean.parseBoolean(lineElements[2]);
-					boolean outOfMemory = Boolean.parseBoolean(lineElements[3]);
+					String name = lineElements[0];
+					SimulationType type = SimulationType.valueOf(lineElements[1]);
+					boolean usedSCCs = Boolean.parseBoolean(lineElements[2]);
+					boolean timedOut = Boolean.parseBoolean(lineElements[3]);
+					boolean outOfMemory = Boolean.parseBoolean(lineElements[4]);
 					SimulationPerformance performance = new SimulationPerformance(type, usedSCCs);
 					if (timedOut) {
 						performance.timeOut();
@@ -217,6 +218,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 					if (outOfMemory) {
 						performance.outOfMemory();
 					}
+					performance.setName(name);
 
 					// Parse the rest of the data set
 					for (int i = FIX_FIELD_AMOUNT; i < lineElements.length; i++) {
@@ -430,36 +432,55 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 		NestedWordAutomatonReachableStates<LETTER, STATE> operandReachable = new RemoveUnreachable<LETTER, STATE>(
 				m_Services, operand).getResult();
 
+		String automatonName = "";
+//		BufferedReader br = null;
+//		try {
+//			br = new BufferedReader(new FileReader(new File(LOG_PATH, "currentAutomatonName.txt")));
+//			while (br.ready()) {
+//				automatonName = br.readLine();
+//			}
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		} finally {
+//			if (br != null) {
+//				try {
+//					br.close();
+//				} catch (IOException e) {
+//					e.printStackTrace();
+//				}
+//			}
+//		}
+
 		// Direct simulation without SCC
-		measureMethodPerformance(SimulationType.DIRECT, false, m_Services, simulationTimeoutMillis, stateFactory,
-				operandReachable);
+		measureMethodPerformance(automatonName, SimulationType.DIRECT, false, m_Services, simulationTimeoutMillis,
+				stateFactory, operandReachable);
 		// Direct simulation with SCC
-		measureMethodPerformance(SimulationType.DIRECT, true, m_Services, simulationTimeoutMillis, stateFactory,
-				operandReachable);
+		measureMethodPerformance(automatonName, SimulationType.DIRECT, true, m_Services, simulationTimeoutMillis,
+				stateFactory, operandReachable);
 		// Delayed simulation without SCC
-		measureMethodPerformance(SimulationType.DELAYED, false, m_Services, simulationTimeoutMillis, stateFactory,
-				operandReachable);
+		measureMethodPerformance(automatonName, SimulationType.DELAYED, false, m_Services, simulationTimeoutMillis,
+				stateFactory, operandReachable);
 		// Delayed simulation with SCC
-		measureMethodPerformance(SimulationType.DELAYED, true, m_Services, simulationTimeoutMillis, stateFactory,
-				operandReachable);
+		measureMethodPerformance(automatonName, SimulationType.DELAYED, true, m_Services, simulationTimeoutMillis,
+				stateFactory, operandReachable);
 		// Fair simulation without SCC
-		measureMethodPerformance(SimulationType.FAIR, false, m_Services, simulationTimeoutMillis, stateFactory,
-				operandReachable);
+		measureMethodPerformance(automatonName, SimulationType.FAIR, false, m_Services, simulationTimeoutMillis,
+				stateFactory, operandReachable);
 		// Fair simulation with SCC
-		measureMethodPerformance(SimulationType.FAIR, true, m_Services, simulationTimeoutMillis, stateFactory,
-				operandReachable);
+		measureMethodPerformance(automatonName, SimulationType.FAIR, true, m_Services, simulationTimeoutMillis,
+				stateFactory, operandReachable);
 		// Fair direct simulation without SCC
-		measureMethodPerformance(SimulationType.FAIRDIRECT, false, m_Services, simulationTimeoutMillis, stateFactory,
-				operandReachable);
+		measureMethodPerformance(automatonName, SimulationType.FAIRDIRECT, false, m_Services, simulationTimeoutMillis,
+				stateFactory, operandReachable);
 		// Fair direct simulation with SCC
-		measureMethodPerformance(SimulationType.FAIRDIRECT, true, m_Services, simulationTimeoutMillis, stateFactory,
-				operandReachable);
+		measureMethodPerformance(automatonName, SimulationType.FAIRDIRECT, true, m_Services, simulationTimeoutMillis,
+				stateFactory, operandReachable);
 
 		// Other minimization methods
-		measureMethodPerformance(SimulationType.EXT_MINIMIZESEVPA, true, m_Services, simulationTimeoutMillis,
+		measureMethodPerformance(automatonName, SimulationType.EXT_MINIMIZESEVPA, true, m_Services,
+				simulationTimeoutMillis, stateFactory, operandReachable);
+		measureMethodPerformance(automatonName, SimulationType.EXT_SHRINKNWA, true, m_Services, simulationTimeoutMillis,
 				stateFactory, operandReachable);
-		measureMethodPerformance(SimulationType.EXT_SHRINKNWA, true, m_Services, simulationTimeoutMillis, stateFactory,
-				operandReachable);
 
 		// flushLogToLogger();
 		flushLogToFile();
@@ -525,6 +546,8 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 * Appends the current saved state of the performance as an entry to the
 	 * log.
 	 *
+	 * @param name
+	 *            Name of the automaton used for the method
 	 * @param type
 	 *            Type of the used method
 	 * @param usedSCCs
@@ -534,10 +557,11 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 * @param outOfMemory
 	 *            If the method has thrown an out of memory error
 	 */
-	private void appendCurrentPerformanceEntryToLog(final SimulationType type, final boolean usedSCCs,
-			final boolean timedOut, final boolean outOfMemory) {
+	private void appendCurrentPerformanceEntryToLog(final String name, final SimulationType type,
+			final boolean usedSCCs, final boolean timedOut, final boolean outOfMemory) {
 		// Fix fields
-		String message = type + LOG_SEPARATOR + usedSCCs + LOG_SEPARATOR + timedOut + LOG_SEPARATOR + outOfMemory;
+		String message = name + LOG_SEPARATOR + type + LOG_SEPARATOR + usedSCCs + LOG_SEPARATOR + timedOut
+				+ LOG_SEPARATOR + outOfMemory;
 		// Variable fields
 		for (Float measureValue : m_TimeMeasures.values()) {
 			message += LOG_SEPARATOR + measureValue;
@@ -554,6 +578,8 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 * 
 	 * @param method
 	 *            Used method
+	 * @param name
+	 *            Name of the automaton used for the method
 	 * @param type
 	 *            The type of the used simulation
 	 * @param usedSCCs
@@ -568,9 +594,9 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 *             If a automata library exception occurred.
 	 */
 	@SuppressWarnings("unchecked")
-	private void appendMethodPerformanceToLog(final Object method, final SimulationType type, final boolean usedSCCs,
-			final boolean timedOut, final boolean outOfMemory, final INestedWordAutomatonOldApi<LETTER, STATE> operand)
-					throws AutomataLibraryException {
+	private void appendMethodPerformanceToLog(final Object method, final String name, final SimulationType type,
+			final boolean usedSCCs, final boolean timedOut, final boolean outOfMemory,
+			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataLibraryException {
 		createAndResetPerformanceHead();
 
 		if (method instanceof ASimulation) {
@@ -583,6 +609,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 			if (outOfMemory) {
 				performance.outOfMemory();
 			}
+			performance.setName(name);
 			saveStateOfPerformance(performance);
 		} else if (method instanceof MinimizeSevpa) {
 			MinimizeSevpa<LETTER, STATE> minimizeSevpa = (MinimizeSevpa<LETTER, STATE>) method;
@@ -611,12 +638,12 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 		}
 
 		if (timedOut && method == null) {
-			saveStateOfPerformance(createTimedOutPerformance(type, usedSCCs, operand));
+			saveStateOfPerformance(createTimedOutPerformance(name, type, usedSCCs, operand));
 		} else if (outOfMemory && method == null) {
-			saveStateOfPerformance(createOutOfMemoryPerformance(type, usedSCCs, operand));
+			saveStateOfPerformance(createOutOfMemoryPerformance(name, type, usedSCCs, operand));
 		}
 
-		appendCurrentPerformanceEntryToLog(type, usedSCCs, timedOut, outOfMemory);
+		appendCurrentPerformanceEntryToLog(name, type, usedSCCs, timedOut, outOfMemory);
 	}
 
 	/**
@@ -626,7 +653,8 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 		String message = LOG_ENTRY_HEAD_START + LOG_SEPARATOR;
 
 		// Fix fields
-		message += "TYPE" + LOG_SEPARATOR + "USED_SCCS" + LOG_SEPARATOR + "TIMED_OUT" + LOG_SEPARATOR + "OOM" + LOG_SEPARATOR;
+		message += "NAME" + LOG_SEPARATOR + "TYPE" + LOG_SEPARATOR + "USED_SCCS" + LOG_SEPARATOR + "TIMED_OUT"
+				+ LOG_SEPARATOR + "OOM" + LOG_SEPARATOR;
 		// Variable fields
 		for (TimeMeasure measure : m_TimeMeasures.keySet()) {
 			message += measure + LOG_SEPARATOR;
@@ -656,6 +684,8 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 * Creates an out of memory performance object and adds some information of
 	 * the used method.
 	 * 
+	 * @param name
+	 *            Name of the performance object
 	 * @param type
 	 *            Type of the simulation
 	 * @param useSCCs
@@ -664,9 +694,10 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 *            Operand the simulation processed
 	 * @return The out of memory performance object
 	 */
-	private SimulationPerformance createOutOfMemoryPerformance(final SimulationType type, final boolean useSCCs,
-			final INestedWordAutomatonOldApi<LETTER, STATE> operand) {
+	private SimulationPerformance createOutOfMemoryPerformance(final String name, final SimulationType type,
+			final boolean useSCCs, final INestedWordAutomatonOldApi<LETTER, STATE> operand) {
 		SimulationPerformance performance = SimulationPerformance.createOutOfMemoryPerformance(type, useSCCs);
+		performance.setName(name);
 		performance.setCountingMeasure(CountingMeasure.BUCHI_STATES, operand.size());
 		return performance;
 	}
@@ -675,6 +706,8 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 * Creates a timed out performance object and adds some information of the
 	 * timed out method.
 	 * 
+	 * @param name
+	 *            Name of the performance object
 	 * @param type
 	 *            Type of the simulation
 	 * @param useSCCs
@@ -683,9 +716,10 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 *            Operand the simulation processed
 	 * @return The timed out performance object
 	 */
-	private SimulationPerformance createTimedOutPerformance(final SimulationType type, final boolean useSCCs,
-			final INestedWordAutomatonOldApi<LETTER, STATE> operand) {
+	private SimulationPerformance createTimedOutPerformance(final String name, final SimulationType type,
+			final boolean useSCCs, final INestedWordAutomatonOldApi<LETTER, STATE> operand) {
 		SimulationPerformance performance = SimulationPerformance.createTimedOutPerformance(type, useSCCs);
+		performance.setName(name);
 		performance.setCountingMeasure(CountingMeasure.BUCHI_STATES, operand.size());
 		return performance;
 	}
@@ -742,6 +776,8 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 * Measures the performance of a simulation, represented by a given type, on
 	 * a given automaton and appends its performance to the log.
 	 * 
+	 * @param name
+	 *            Name of the automaton used for the simulation method
 	 * @param type
 	 *            Type of the simulation method to measure performance for
 	 * @param useSCCs
@@ -756,7 +792,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 * @param operand
 	 *            The buechi automaton to reduce
 	 */
-	private void measureMethodPerformance(final SimulationType type, final boolean useSCCs,
+	private void measureMethodPerformance(final String name, final SimulationType type, final boolean useSCCs,
 			final IUltimateServiceProvider services, final long timeout, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand) {
 		IProgressAwareTimer progressTimer = services.getProgressMonitorService().getChildTimer(timeout);
@@ -792,7 +828,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 			outOfMemory = true;
 		}
 		try {
-			appendMethodPerformanceToLog(method, type, useSCCs, timedOut, outOfMemory, operand);
+			appendMethodPerformanceToLog(method, name, type, useSCCs, timedOut, outOfMemory, operand);
 		} catch (AutomataLibraryException e) {
 			e.printStackTrace();
 		}

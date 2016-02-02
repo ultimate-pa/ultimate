@@ -59,210 +59,6 @@ public final class ComparisonTables {
 	private final static int FULL_PERCENTAGE = 100;
 
 	/**
-	 * Creates a table that holds the time partitioning for each simulation type
-	 * averaged over all automata instances respectively. The work measure gets
-	 * calculated by (SIMULATION_STEPS / GAMEGRAPH_STATES).
-	 * 
-	 * @param performanceEntries
-	 *            Data structure holding the performance entries
-	 * @param separator
-	 *            Separator to use for separating cells
-	 * @return A table in a tsv-like format, specified by
-	 *         {@link #LOG_SEPARATOR}.
-	 */
-	public static List<String> createAveragedSimulationTimePartitioningTable(
-			final LinkedList<LinkedList<SimulationPerformance>> performanceEntries, final String separator) {
-		List<String> table = new LinkedList<>();
-		if (performanceEntries.isEmpty()) {
-			return table;
-		}
-
-		// Process performance list into a sorted map structure
-		LinkedHashMap<Pair<SimulationType, Boolean>, LinkedList<SimulationPerformance>> simulationToPerformances = calcSimToPerformances(
-				performanceEntries);
-
-		// Header of table
-		String header = "TYPE" + separator + "USED_SCCS";
-		// Amount of Buechi states
-		header += separator + CountingMeasure.BUCHI_STATES + "(&Oslash;)";
-		// Overall time first
-		header += separator + TimeMeasure.OVERALL_TIME + "(&Oslash;)";
-		// Other time measures
-		SimulationPerformance headerCandidate = performanceEntries.get(0).get(0);
-		Set<TimeMeasure> timeMeasures = headerCandidate.getTimeMeasures().keySet();
-		for (TimeMeasure measure : timeMeasures) {
-			if (!measure.equals(TimeMeasure.OVERALL_TIME)) {
-				header += separator + measure + "(%)(&Oslash;)";
-			}
-		}
-		table.add(header);
-
-		// Rows of table
-		for (Entry<Pair<SimulationType, Boolean>, LinkedList<SimulationPerformance>> entry : simulationToPerformances
-				.entrySet()) {
-			String row = entry.getKey().getFirst() + separator + entry.getKey().getSecond();
-
-			// Amount of Buechi states
-			int sumOfAllValuesForBuechiStates = 0;
-			int amountOfValuesForBuechiStates = 0;
-			for (SimulationPerformance performance : entry.getValue()) {
-				int value = performance.getCountingMeasureResult(CountingMeasure.BUCHI_STATES);
-				if (value != SimulationPerformance.NO_COUNTING_RESULT) {
-					sumOfAllValuesForBuechiStates += value;
-				}
-				amountOfValuesForBuechiStates++;
-			}
-			long averageOfValuesForBuechiStates = Math
-					.round((sumOfAllValuesForBuechiStates + 0.0) / amountOfValuesForBuechiStates);
-			String valueAsString = averageOfValuesForBuechiStates + "";
-			if (averageOfValuesForBuechiStates == 0) {
-				valueAsString = "&ndash;";
-			}
-			row += separator + valueAsString;
-
-			// Overall time first
-			long sumOfAllValuesForOverallTime = 0;
-			int amountOfValuesForOverallTime = 0;
-			for (SimulationPerformance performance : entry.getValue()) {
-				long value = performance.getTimeMeasureResult(TimeMeasure.OVERALL_TIME, MultipleDataOption.ADDITIVE);
-				if (value != SimulationPerformance.NO_TIME_RESULT) {
-					sumOfAllValuesForOverallTime += value;
-				}
-				amountOfValuesForOverallTime++;
-			}
-			long averageOfValuesForOverallTime = Math
-					.round((sumOfAllValuesForOverallTime + 0.0) / amountOfValuesForOverallTime);
-			valueAsString = "";
-			if (averageOfValuesForOverallTime == 0) {
-				valueAsString = "&ndash;";
-			} else {
-				float valueInSeconds = millisToSeconds(averageOfValuesForOverallTime);
-				valueAsString = valueInSeconds + "";
-			}
-			row += separator + valueAsString;
-
-			// Other time measures
-			for (TimeMeasure measure : timeMeasures) {
-				if (measure.equals(TimeMeasure.OVERALL_TIME)) {
-					continue;
-				}
-
-				long sumOfAllValues = 0;
-				int amountOfValues = 0;
-				for (SimulationPerformance performance : entry.getValue()) {
-					long value = performance.getTimeMeasureResult(measure, MultipleDataOption.ADDITIVE);
-					if (value != SimulationPerformance.NO_TIME_RESULT) {
-						sumOfAllValues += value;
-					}
-					amountOfValues++;
-				}
-				long averageOfValues = Math.round((sumOfAllValues + 0.0) / amountOfValues);
-				valueAsString = "";
-				if (averageOfValues == 0 || averageOfValuesForOverallTime == 0) {
-					valueAsString = "&ndash;";
-				} else {
-					int averageOfPercentages = percentageOf(averageOfValues, averageOfValuesForOverallTime);
-					if (averageOfPercentages == 0) {
-						valueAsString = "&ndash;";
-					} else {
-						valueAsString = averageOfPercentages + "";
-					}
-				}
-				row += separator + valueAsString;
-
-			}
-			table.add(row);
-		}
-
-		return table;
-	}
-
-	/**
-	 * Creates a table that holds the full comparison data for each simulation
-	 * type averaged over all automata instances respectively.
-	 * 
-	 * @param performanceEntries
-	 *            Data structure holding the performance entries
-	 * @param separator
-	 *            Separator to use for separating cells
-	 * @return A table in a tsv-like format, specified by
-	 *         {@link #LOG_SEPARATOR}.
-	 */
-	public static List<String> createAveragedSimulationFullComparisonTable(
-			final LinkedList<LinkedList<SimulationPerformance>> performanceEntries, final String separator) {
-		List<String> table = new LinkedList<>();
-		if (performanceEntries.isEmpty()) {
-			return table;
-		}
-
-		// Process performance list into a sorted map structure
-		LinkedHashMap<Pair<SimulationType, Boolean>, LinkedList<SimulationPerformance>> simulationToPerformances = calcSimToPerformances(
-				performanceEntries);
-
-		// Header of table
-		String header = "TYPE" + separator + "USED_SCCS";
-		SimulationPerformance headerCandidate = performanceEntries.get(0).get(0);
-		Set<TimeMeasure> timeMeasures = headerCandidate.getTimeMeasures().keySet();
-		for (TimeMeasure measure : timeMeasures) {
-			header += separator + measure + "(&Oslash;)";
-		}
-		Set<CountingMeasure> countingMeasures = headerCandidate.getCountingMeasures().keySet();
-		for (CountingMeasure measure : countingMeasures) {
-			header += separator + measure + "(&Oslash;)";
-		}
-		table.add(header);
-
-		// Rows of table
-		for (Entry<Pair<SimulationType, Boolean>, LinkedList<SimulationPerformance>> entry : simulationToPerformances
-				.entrySet()) {
-			String row = entry.getKey().getFirst() + separator + entry.getKey().getSecond();
-
-			for (TimeMeasure measure : timeMeasures) {
-				long sumOfAllValues = 0;
-				int amountOfValues = 0;
-				for (SimulationPerformance performance : entry.getValue()) {
-					long value = performance.getTimeMeasureResult(measure, MultipleDataOption.ADDITIVE);
-					if (value != SimulationPerformance.NO_TIME_RESULT) {
-						sumOfAllValues += value;
-					}
-					amountOfValues++;
-				}
-				long averageOfValues = Math.round((sumOfAllValues + 0.0) / amountOfValues);
-				String valueAsString = "";
-				if (averageOfValues == 0) {
-					valueAsString = "&ndash;";
-				} else {
-					float valueInSeconds = millisToSeconds(averageOfValues);
-					valueAsString = valueInSeconds + "";
-				}
-
-				row += separator + valueAsString;
-
-			}
-			for (CountingMeasure measure : countingMeasures) {
-				long sumOfAllValues = 0;
-				int amountOfValues = 0;
-				for (SimulationPerformance performance : entry.getValue()) {
-					long value = performance.getCountingMeasureResult(measure);
-					if (value != SimulationPerformance.NO_COUNTING_RESULT) {
-						sumOfAllValues += value;
-					}
-					amountOfValues++;
-				}
-				long averageOfValues = Math.round((sumOfAllValues + 0.0) / amountOfValues);
-				String valueAsString = averageOfValues + "";
-				if (averageOfValues == 0) {
-					valueAsString = "&ndash;";
-				}
-				row += separator + valueAsString;
-			}
-			table.add(row);
-		}
-
-		return table;
-	}
-
-	/**
 	 * Creates a table that holds information about the actual work the
 	 * algorithm needs to do for each simulation type averaged over all automata
 	 * instances respectively.
@@ -410,6 +206,210 @@ public final class ComparisonTables {
 	}
 
 	/**
+	 * Creates a table that holds the full comparison data for each simulation
+	 * type averaged over all automata instances respectively.
+	 * 
+	 * @param performanceEntries
+	 *            Data structure holding the performance entries
+	 * @param separator
+	 *            Separator to use for separating cells
+	 * @return A table in a tsv-like format, specified by
+	 *         {@link #LOG_SEPARATOR}.
+	 */
+	public static List<String> createAveragedSimulationFullComparisonTable(
+			final LinkedList<LinkedList<SimulationPerformance>> performanceEntries, final String separator) {
+		List<String> table = new LinkedList<>();
+		if (performanceEntries.isEmpty()) {
+			return table;
+		}
+
+		// Process performance list into a sorted map structure
+		LinkedHashMap<Pair<SimulationType, Boolean>, LinkedList<SimulationPerformance>> simulationToPerformances = calcSimToPerformances(
+				performanceEntries);
+
+		// Header of table
+		String header = "TYPE" + separator + "USED_SCCS";
+		SimulationPerformance headerCandidate = performanceEntries.get(0).get(0);
+		Set<TimeMeasure> timeMeasures = headerCandidate.getTimeMeasures().keySet();
+		for (TimeMeasure measure : timeMeasures) {
+			header += separator + measure + "(&Oslash;)";
+		}
+		Set<CountingMeasure> countingMeasures = headerCandidate.getCountingMeasures().keySet();
+		for (CountingMeasure measure : countingMeasures) {
+			header += separator + measure + "(&Oslash;)";
+		}
+		table.add(header);
+
+		// Rows of table
+		for (Entry<Pair<SimulationType, Boolean>, LinkedList<SimulationPerformance>> entry : simulationToPerformances
+				.entrySet()) {
+			String row = entry.getKey().getFirst() + separator + entry.getKey().getSecond();
+
+			for (TimeMeasure measure : timeMeasures) {
+				long sumOfAllValues = 0;
+				int amountOfValues = 0;
+				for (SimulationPerformance performance : entry.getValue()) {
+					long value = performance.getTimeMeasureResult(measure, MultipleDataOption.ADDITIVE);
+					if (value != SimulationPerformance.NO_TIME_RESULT) {
+						sumOfAllValues += value;
+					}
+					amountOfValues++;
+				}
+				long averageOfValues = Math.round((sumOfAllValues + 0.0) / amountOfValues);
+				String valueAsString = "";
+				if (averageOfValues == 0) {
+					valueAsString = "&ndash;";
+				} else {
+					float valueInSeconds = millisToSeconds(averageOfValues);
+					valueAsString = valueInSeconds + "";
+				}
+
+				row += separator + valueAsString;
+
+			}
+			for (CountingMeasure measure : countingMeasures) {
+				long sumOfAllValues = 0;
+				int amountOfValues = 0;
+				for (SimulationPerformance performance : entry.getValue()) {
+					long value = performance.getCountingMeasureResult(measure);
+					if (value != SimulationPerformance.NO_COUNTING_RESULT) {
+						sumOfAllValues += value;
+					}
+					amountOfValues++;
+				}
+				long averageOfValues = Math.round((sumOfAllValues + 0.0) / amountOfValues);
+				String valueAsString = averageOfValues + "";
+				if (averageOfValues == 0) {
+					valueAsString = "&ndash;";
+				}
+				row += separator + valueAsString;
+			}
+			table.add(row);
+		}
+
+		return table;
+	}
+
+	/**
+	 * Creates a table that holds the time partitioning for each simulation type
+	 * averaged over all automata instances respectively. The work measure gets
+	 * calculated by (SIMULATION_STEPS / GAMEGRAPH_STATES).
+	 * 
+	 * @param performanceEntries
+	 *            Data structure holding the performance entries
+	 * @param separator
+	 *            Separator to use for separating cells
+	 * @return A table in a tsv-like format, specified by
+	 *         {@link #LOG_SEPARATOR}.
+	 */
+	public static List<String> createAveragedSimulationTimePartitioningTable(
+			final LinkedList<LinkedList<SimulationPerformance>> performanceEntries, final String separator) {
+		List<String> table = new LinkedList<>();
+		if (performanceEntries.isEmpty()) {
+			return table;
+		}
+
+		// Process performance list into a sorted map structure
+		LinkedHashMap<Pair<SimulationType, Boolean>, LinkedList<SimulationPerformance>> simulationToPerformances = calcSimToPerformances(
+				performanceEntries);
+
+		// Header of table
+		String header = "TYPE" + separator + "USED_SCCS";
+		// Amount of Buechi states
+		header += separator + CountingMeasure.BUCHI_STATES + "(&Oslash;)";
+		// Overall time first
+		header += separator + TimeMeasure.OVERALL_TIME + "(&Oslash;)";
+		// Other time measures
+		SimulationPerformance headerCandidate = performanceEntries.get(0).get(0);
+		Set<TimeMeasure> timeMeasures = headerCandidate.getTimeMeasures().keySet();
+		for (TimeMeasure measure : timeMeasures) {
+			if (!measure.equals(TimeMeasure.OVERALL_TIME)) {
+				header += separator + measure + "(%)(&Oslash;)";
+			}
+		}
+		table.add(header);
+
+		// Rows of table
+		for (Entry<Pair<SimulationType, Boolean>, LinkedList<SimulationPerformance>> entry : simulationToPerformances
+				.entrySet()) {
+			String row = entry.getKey().getFirst() + separator + entry.getKey().getSecond();
+
+			// Amount of Buechi states
+			int sumOfAllValuesForBuechiStates = 0;
+			int amountOfValuesForBuechiStates = 0;
+			for (SimulationPerformance performance : entry.getValue()) {
+				int value = performance.getCountingMeasureResult(CountingMeasure.BUCHI_STATES);
+				if (value != SimulationPerformance.NO_COUNTING_RESULT) {
+					sumOfAllValuesForBuechiStates += value;
+				}
+				amountOfValuesForBuechiStates++;
+			}
+			long averageOfValuesForBuechiStates = Math
+					.round((sumOfAllValuesForBuechiStates + 0.0) / amountOfValuesForBuechiStates);
+			String valueAsString = averageOfValuesForBuechiStates + "";
+			if (averageOfValuesForBuechiStates == 0) {
+				valueAsString = "&ndash;";
+			}
+			row += separator + valueAsString;
+
+			// Overall time first
+			long sumOfAllValuesForOverallTime = 0;
+			int amountOfValuesForOverallTime = 0;
+			for (SimulationPerformance performance : entry.getValue()) {
+				long value = performance.getTimeMeasureResult(TimeMeasure.OVERALL_TIME, MultipleDataOption.ADDITIVE);
+				if (value != SimulationPerformance.NO_TIME_RESULT) {
+					sumOfAllValuesForOverallTime += value;
+				}
+				amountOfValuesForOverallTime++;
+			}
+			long averageOfValuesForOverallTime = Math
+					.round((sumOfAllValuesForOverallTime + 0.0) / amountOfValuesForOverallTime);
+			valueAsString = "";
+			if (averageOfValuesForOverallTime == 0) {
+				valueAsString = "&ndash;";
+			} else {
+				float valueInSeconds = millisToSeconds(averageOfValuesForOverallTime);
+				valueAsString = valueInSeconds + "";
+			}
+			row += separator + valueAsString;
+
+			// Other time measures
+			for (TimeMeasure measure : timeMeasures) {
+				if (measure.equals(TimeMeasure.OVERALL_TIME)) {
+					continue;
+				}
+
+				long sumOfAllValues = 0;
+				int amountOfValues = 0;
+				for (SimulationPerformance performance : entry.getValue()) {
+					long value = performance.getTimeMeasureResult(measure, MultipleDataOption.ADDITIVE);
+					if (value != SimulationPerformance.NO_TIME_RESULT) {
+						sumOfAllValues += value;
+					}
+					amountOfValues++;
+				}
+				long averageOfValues = Math.round((sumOfAllValues + 0.0) / amountOfValues);
+				valueAsString = "";
+				if (averageOfValues == 0 || averageOfValuesForOverallTime == 0) {
+					valueAsString = "&ndash;";
+				} else {
+					int averageOfPercentages = percentageOf(averageOfValues, averageOfValuesForOverallTime);
+					if (averageOfPercentages == 0) {
+						valueAsString = "&ndash;";
+					} else {
+						valueAsString = averageOfPercentages + "";
+					}
+				}
+				row += separator + valueAsString;
+
+			}
+			table.add(row);
+		}
+
+		return table;
+	}
+
+	/**
 	 * Creates a table that holds information about the actual work the
 	 * algorithm needs to do for each automata instance respectively. The work
 	 * measure gets calculated by (SIMULATION_STEPS / GAMEGRAPH_STATES).
@@ -429,7 +429,8 @@ public final class ComparisonTables {
 		}
 
 		// Header of table
-		String header = "TYPE" + separator + "USED_SCCS" + separator + "TIMED_OUT" + separator + "OOM";
+		String header = "NAME" + separator + "TYPE" + separator + "USED_SCCS" + separator + "TIMED_OUT" + separator
+				+ "OOM";
 		header += separator + CountingMeasure.BUCHI_STATES;
 		// Work measure
 		header += separator + CountingMeasure.SIMULATION_STEPS + " / " + CountingMeasure.GAMEGRAPH_STATES;
@@ -444,9 +445,10 @@ public final class ComparisonTables {
 		for (LinkedList<SimulationPerformance> performanceComparison : performanceEntries) {
 			for (SimulationPerformance performanceOfSimulation : performanceComparison) {
 				SimulationType type = performanceOfSimulation.getSimType();
+				String name = performanceOfSimulation.getName();
 
 				// Fix fields
-				String row = type + separator + performanceOfSimulation.isUsingSCCs() + separator
+				String row = name + separator + type + separator + performanceOfSimulation.isUsingSCCs() + separator
 						+ performanceOfSimulation.hasTimedOut() + separator + performanceOfSimulation.isOutOfMemory();
 
 				// Variable fields
@@ -534,7 +536,8 @@ public final class ComparisonTables {
 		}
 
 		// Header of table
-		String header = "TYPE" + separator + "USED_SCCS" + separator + "TIMED_OUT" + separator + "OOM";
+		String header = "NAME" + separator + "TYPE" + separator + "USED_SCCS" + separator + "TIMED_OUT" + separator
+				+ "OOM";
 		SimulationPerformance headerCandidate = performanceEntries.get(0).get(0);
 		Set<TimeMeasure> timeMeasures = headerCandidate.getTimeMeasures().keySet();
 		for (TimeMeasure measure : timeMeasures) {
@@ -550,9 +553,10 @@ public final class ComparisonTables {
 		for (LinkedList<SimulationPerformance> performanceComparison : performanceEntries) {
 			for (SimulationPerformance performanceOfSimulation : performanceComparison) {
 				SimulationType type = performanceOfSimulation.getSimType();
+				String name = performanceOfSimulation.getName();
 
 				// Fix fields
-				String row = type + separator + performanceOfSimulation.isUsingSCCs() + separator
+				String row = name + separator + type + separator + performanceOfSimulation.isUsingSCCs() + separator
 						+ performanceOfSimulation.hasTimedOut() + separator + performanceOfSimulation.isOutOfMemory();
 
 				// Variable fields
@@ -605,7 +609,8 @@ public final class ComparisonTables {
 		}
 
 		// Header of table
-		String header = "TYPE" + separator + "USED_SCCS" + separator + "TIMED_OUT" + separator + "OOM";
+		String header = "NAME" + separator + "TYPE" + separator + "USED_SCCS" + separator + "TIMED_OUT" + separator
+				+ "OOM";
 		// Amount of Buechi states
 		header += separator + CountingMeasure.BUCHI_STATES;
 		// Overall time first
@@ -624,9 +629,10 @@ public final class ComparisonTables {
 		for (LinkedList<SimulationPerformance> performanceComparison : performanceEntries) {
 			for (SimulationPerformance performanceOfSimulation : performanceComparison) {
 				SimulationType type = performanceOfSimulation.getSimType();
+				String name = performanceOfSimulation.getName();
 
 				// Fix fields
-				String row = type + separator + performanceOfSimulation.isUsingSCCs() + separator
+				String row = name + separator + type + separator + performanceOfSimulation.isUsingSCCs() + separator
 						+ performanceOfSimulation.hasTimedOut() + separator + performanceOfSimulation.isOutOfMemory();
 
 				// Variable fields
@@ -700,21 +706,6 @@ public final class ComparisonTables {
 	}
 
 	/**
-	 * Rounds a given value to a given scale.
-	 * 
-	 * @param value
-	 *            Value to round
-	 * @param scale
-	 *            Scale to round to
-	 * @return The rounded value
-	 */
-	private static float roundTo(final double value, final int scale) {
-		BigDecimal valueAsBigDecimal = new BigDecimal(value);
-		valueAsBigDecimal = valueAsBigDecimal.setScale(scale, RoundingMode.HALF_UP);
-		return valueAsBigDecimal.floatValue();
-	}
-
-	/**
 	 * Converts a given float value, representing seconds, to milliseconds.
 	 * 
 	 * @param seconds
@@ -785,6 +776,21 @@ public final class ComparisonTables {
 	 */
 	private static int percentageOf(final long value, final long fullPercentage) {
 		return (int) Math.round(((value + 0.0) / fullPercentage) * FULL_PERCENTAGE);
+	}
+
+	/**
+	 * Rounds a given value to a given scale.
+	 * 
+	 * @param value
+	 *            Value to round
+	 * @param scale
+	 *            Scale to round to
+	 * @return The rounded value
+	 */
+	private static float roundTo(final double value, final int scale) {
+		BigDecimal valueAsBigDecimal = new BigDecimal(value);
+		valueAsBigDecimal = valueAsBigDecimal.setScale(scale, RoundingMode.HALF_UP);
+		return valueAsBigDecimal.floatValue();
 	}
 
 	/**
