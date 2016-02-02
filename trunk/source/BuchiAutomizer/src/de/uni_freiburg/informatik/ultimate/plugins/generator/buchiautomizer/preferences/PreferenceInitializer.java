@@ -87,6 +87,9 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 						AnalysisType.Nonlinear,
 						PreferenceType.Combo,
 						AnalysisType.values()),
+				new UltimatePreferenceItem<Integer>(LABEL_GntaDirections,
+						DEF_GntaDirections,
+						PreferenceType.Integer),
 				new UltimatePreferenceItem<Boolean>(LABEL_TemplateBenchmarkMode,
 						false, PreferenceType.Boolean),	
 				new UltimatePreferenceItem<Boolean>(LABEL_DumpToFile,
@@ -134,6 +137,8 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_ExtSolverCommandGNTA = "Command for external solver (GNTA synthesis)";
 	public static final String DEF_ExtSolverCommandGNTA = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000";
 	public static final String LABEL_AnalysisTypeGNTA = "GNTA analysis";
+	public static final String LABEL_GntaDirections = "Number of GNTA directions";
+	private static final int DEF_GntaDirections = 3;
 	public static final String LABEL_TemplateBenchmarkMode = "Template benchmark mode";
 	public static final String LABEL_DumpToFile = "Dump SMT script to file";
 	public static final String LABEL_DumpPath = "To the following directory";
@@ -141,7 +146,7 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_TermcompProof = "Construct termination proof for TermComp";
 	public static final String LABEL_Simplify = "Try to simplify termination arguments";
 	public static final String LABEL_AutomataMinimization = "Automata minimization";
-	private static final AutomataMinimization DEF_AutomataMinimization = AutomataMinimization.MinimizeSevpa;
+	private static final AutomataMinimization DEF_AutomataMinimization = AutomataMinimization.None;
 	/**
 	 * If true we check if the loop is terminating even if the stem or
 	 * the concatenation of stem and loop are already infeasible.

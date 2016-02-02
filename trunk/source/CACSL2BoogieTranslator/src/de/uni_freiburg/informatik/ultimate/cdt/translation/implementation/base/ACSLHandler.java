@@ -401,14 +401,14 @@ public class ACSLHandler implements IACSLHandler {
 			left.rexBoolToIntIfNecessary(loc, expressionTranslation);
 			right.rexBoolToIntIfNecessary(loc, expressionTranslation);
 			int op = getCASTBinaryExprOperator(node.getOperator());
-			return ((CHandler) main.cHandler).handleAdditiveOperation(main, loc, null, op, left, right);
+			return ((CHandler) main.cHandler).handleMultiplicativeOperation(main, loc, null, op, left, right);
 		}
 		case ARITHMINUS:
 		case ARITHPLUS: {
 			left.rexBoolToIntIfNecessary(loc, expressionTranslation);
 			right.rexBoolToIntIfNecessary(loc, expressionTranslation);
 			int op = getCASTBinaryExprOperator(node.getOperator());
-			return ((CHandler) main.cHandler).handleMultiplicativeOperation(main, loc, null, op, left, right);
+			return ((CHandler) main.cHandler).handleAdditiveOperation(main, loc, null, op, left, right);
 		}
 		case COMPEQ:
 		case COMPNEQ: {

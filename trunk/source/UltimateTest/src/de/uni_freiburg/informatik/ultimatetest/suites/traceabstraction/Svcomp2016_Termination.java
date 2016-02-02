@@ -77,6 +77,9 @@ public class Svcomp2016_Termination extends AbstractBuchiAutomizerTestSuite {
 	 */
 	private static final String[] m_Settings = {
 		"svcomp2016/svcomp-Termination-64bit-Automizer_Default.epf",
+//		"buchiAutomizer/gnta/svcomp-Termination-64bit-Automizer_GntaZero.epf",
+//		"buchiAutomizer/gnta/svcomp-Termination-64bit-Automizer_DefaultBarcelogic.epf",
+//		"buchiAutomizer/gnta/svcomp-Termination-64bit-Automizer_Default.epf",
 	};
 	
 	

@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.PreprocessingBenchmark;
+import de.uni_freiburg.informatik.ultimate.lassoranker.termination.NonterminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
@@ -63,6 +64,11 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 	public static final String s_InterpolantCoveringCapabilityBuchi = "InterpolantCoveringCapabilityBuchi";
 	public static final String s_LassoPreprocessingBenchmarks = "LassoPreprocessingBenchmarks";
 	public static final String s_LassoTerminationAnalysisBenchmarks = "LassoTerminationAnalysisBenchmarks";
+	public static final String s_LassoNonterminationAnalysisBenchmarks = "LassoNonterminationAnalysisBenchmarks";
+	public static final String s_LassoNonterminationAnalysisSAT = "LassoNonterminationAnalysisSat";
+	public static final String s_LassoNonterminationAnalysisUNSAT = "LassoNonterminationAnalysisUnsat";
+	public static final String s_LassoNonterminationAnalysisUNKNOWN = "LassoNonterminationAnalysisUnknown";
+	public static final String s_LassoNonterminationAnalysisTIME = "LassoNonterminationAnalysisTime";
 	
 	public static BuchiCegarLoopBenchmark getInstance() {
 		return s_Instance;
@@ -84,6 +90,10 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 		keyList.add(s_InterpolantCoveringCapabilityBuchi);
 		keyList.add(s_LassoPreprocessingBenchmarks);
 		keyList.add(s_LassoTerminationAnalysisBenchmarks);
+		keyList.add(s_LassoNonterminationAnalysisSAT);
+		keyList.add(s_LassoNonterminationAnalysisUNSAT);
+		keyList.add(s_LassoNonterminationAnalysisUNKNOWN);
+		keyList.add(s_LassoNonterminationAnalysisTIME);
 		return keyList;
 	}
 	
@@ -127,6 +137,10 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 		case s_LassoPreprocessingBenchmarks:
 		case s_LassoTerminationAnalysisBenchmarks:
 		case s_HighestRank:
+		case s_LassoNonterminationAnalysisSAT:
+		case s_LassoNonterminationAnalysisUNSAT:
+		case s_LassoNonterminationAnalysisUNKNOWN:
+		case s_LassoNonterminationAnalysisTIME:
 			throw new AssertionError("not yet implemented");
 		default:
 			return super.aggregate(key, value1, value2);
@@ -230,6 +244,30 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 		sb.append(": ");
 		List<TerminationAnalysisBenchmark> tabbench = (List<TerminationAnalysisBenchmark>) benchmarkData.getValue(s_LassoTerminationAnalysisBenchmarks);
 		sb.append(prettyPrintTerminationAnalysisBenchmark(tabbench));
+		sb.append(s_LassoTerminationAnalysisBenchmarks);
+		sb.append(": ");
+		
+		sb.append(s_LassoNonterminationAnalysisSAT);
+		sb.append(": ");
+		sb.append((Integer) benchmarkData.getValue(s_LassoNonterminationAnalysisSAT));
+		sb.append("\t");
+		
+		sb.append(s_LassoNonterminationAnalysisUNSAT);
+		sb.append(": ");
+		sb.append((Integer) benchmarkData.getValue(s_LassoNonterminationAnalysisUNSAT));
+		sb.append("\t");
+
+		sb.append(s_LassoNonterminationAnalysisUNKNOWN);
+		sb.append(": ");
+		sb.append((Integer) benchmarkData.getValue(s_LassoNonterminationAnalysisUNKNOWN));
+		sb.append("\t");
+
+		sb.append(s_LassoNonterminationAnalysisTIME);
+		sb.append(": ");
+		sb.append(prettyprintNanoseconds((Long) benchmarkData.getValue(s_LassoNonterminationAnalysisTIME)));
+		sb.append("\t");
+
+		
 		return sb.toString();
 	}
 	
@@ -260,7 +298,6 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 		}
 		return sb.toString();
 	}
-	
 	
 	private ICsvProvider<Object> aggregateTermBench(List<TerminationAnalysisBenchmark> benchmarks) {
 		List<ICsvProvider<Object>> list = new ArrayList<ICsvProvider<Object>>();
