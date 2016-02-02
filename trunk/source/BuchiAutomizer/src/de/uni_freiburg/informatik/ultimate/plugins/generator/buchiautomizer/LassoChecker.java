@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.LassoRankerPreferences;
 import de.uni_freiburg.informatik.ultimate.lassoranker.exceptions.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.nontermination.NonTerminationArgument;
+import de.uni_freiburg.informatik.ultimate.lassoranker.termination.NonterminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.SupportingInvariant;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisSettings;
@@ -147,6 +148,7 @@ public class LassoChecker {
 	
 	private final AnalysisType m_RankAnalysisType;
 	private final AnalysisType m_GntaAnalysisType;
+	private final int m_GntaDirections;
 	private final boolean m_TrySimplificationTerminationArgument;
 
 	/**
@@ -210,6 +212,8 @@ public class LassoChecker {
 	
 	private final List<TerminationAnalysisBenchmark> m_TerminationAnalysisBenchmarks =
 			new ArrayList<TerminationAnalysisBenchmark>();
+	private final List<NonterminationAnalysisBenchmark> m_NonterminationAnalysisBenchmarks =
+			new ArrayList<NonterminationAnalysisBenchmark>();
 	
 	public LassoCheckResult getLassoCheckResult() {
 		return m_LassoCheckResult;
@@ -247,6 +251,10 @@ public class LassoChecker {
 	public List<TerminationAnalysisBenchmark> getTerminationAnalysisBenchmarks() {
 		return m_TerminationAnalysisBenchmarks;
 	}
+	
+	public List<NonterminationAnalysisBenchmark> getNonterminationAnalysisBenchmarks() {
+		return m_NonterminationAnalysisBenchmarks;
+	}
 
 	public LassoChecker(INTERPOLATION interpolation, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiableGlobalVariableManager, Collection<Term> axioms,
@@ -263,6 +271,7 @@ public class LassoChecker {
 		m_ExternalSolverCommand_GntaSynthesis = baPref.getString(PreferenceInitializer.LABEL_ExtSolverCommandGNTA);
 		m_RankAnalysisType = baPref.getEnum(PreferenceInitializer.LABEL_AnalysisTypeRank, AnalysisType.class);
 		m_GntaAnalysisType = baPref.getEnum(PreferenceInitializer.LABEL_AnalysisTypeGNTA, AnalysisType.class);
+		m_GntaDirections = baPref.getInt(PreferenceInitializer.LABEL_GntaDirections);
 		
 		m_TemplateBenchmarkMode = baPref.getBoolean(PreferenceInitializer.LABEL_TemplateBenchmarkMode);
 		m_TrySimplificationTerminationArgument = baPref.getBoolean(PreferenceInitializer.LABEL_Simplify);
@@ -645,6 +654,7 @@ public class LassoChecker {
 	private NonTerminationAnalysisSettings constructNTASettings() {
 		NonTerminationAnalysisSettings settings = new NonTerminationAnalysisSettings();
 		settings.analysis = m_GntaAnalysisType;
+		settings.number_of_gevs = m_GntaDirections;
 		return settings;
 	}
 
@@ -689,6 +699,8 @@ public class LassoChecker {
 			try {
 				NonTerminationAnalysisSettings settings = constructNTASettings();
 				nonTermArgument = laNT.checkNonTermination(settings);
+				List<NonterminationAnalysisBenchmark> benchs = laNT.getNonterminationAnalysisBenchmarks();
+				m_NonterminationAnalysisBenchmarks.addAll(benchs);
 			} catch (SMTLIBException e) {
 				e.printStackTrace();
 				throw new AssertionError("SMTLIBException " + e);
