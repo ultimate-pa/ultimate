@@ -69,7 +69,7 @@ public class IntervalUnaryExpressionEvaluator
 		final List<IEvaluationResult<IntervalDomainEvaluationResult>> returnEvaluationResults = new ArrayList<>();
 
 		for (final IEvaluationResult<IntervalDomainEvaluationResult> result : subEvaluatorResult) {
-			IntervalDomainState returnState = currentState.copy();
+			List<IntervalDomainState> returnStates = new ArrayList<>();
 			IntervalDomainValue returnValue = new IntervalDomainValue();
 			BooleanValue returnBool;
 
@@ -80,6 +80,11 @@ public class IntervalUnaryExpressionEvaluator
 				break;
 			case LOGICNEG:
 				returnBool = result.getBooleanValue().neg();
+				List<IEvaluationResult<IntervalDomainEvaluationResult>> returnList = mSubEvaluator.inverseEvaluate(
+				        new IntervalDomainEvaluationResult(new IntervalDomainValue(), currentState, returnBool));
+				for (final IEvaluationResult<IntervalDomainEvaluationResult> res : returnList) {
+					returnStates.add(res.getResult().getEvaluatedState());
+				}
 				break;
 			default:
 				mLogger.warn(
@@ -90,9 +95,21 @@ public class IntervalUnaryExpressionEvaluator
 				returnValue = new IntervalDomainValue();
 			}
 
-			returnEvaluationResults.add(new IntervalDomainEvaluationResult(returnValue, returnState, returnBool));
+			if (returnStates.size() == 0) {
+				returnStates.add(currentState);
+			}
+
+			for (final IntervalDomainState s : returnStates) {
+				if (s.isBottom()) {
+					returnEvaluationResults
+					        .add(new IntervalDomainEvaluationResult(returnValue, s, new BooleanValue(false)));
+				} else {
+					returnEvaluationResults.add(new IntervalDomainEvaluationResult(returnValue, s, returnBool));
+				}
+			}
 		}
 
+		assert returnEvaluationResults.size() != 0;
 		return IntervalUtils.mergeIfNecessary(returnEvaluationResults, 2);
 	}
 
