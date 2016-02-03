@@ -72,13 +72,15 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	private final IResultReporter<ACTION> mReporter;
 	private final IProgressAwareTimer mTimer;
 	private final Logger mLogger;
+	private final AbstractInterpretationBenchmark<ACTION, LOCATION> mBenchmark;
 
 	public FixpointEngine(final IUltimateServiceProvider services, final IProgressAwareTimer timer,
 			final ITransitionProvider<ACTION, LOCATION> post,
 			final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> storage,
 			final IAbstractDomain<STATE, ACTION, VARDECL> domain,
 			final IVariableProvider<STATE, ACTION, VARDECL, LOCATION> varProvider,
-			final ILoopDetector<ACTION> loopDetector, final IResultReporter<ACTION> reporter) {
+			final ILoopDetector<ACTION> loopDetector, final IResultReporter<ACTION> reporter,
+			final AbstractInterpretationBenchmark<ACTION, LOCATION> benchmark) {
 		assert timer != null;
 		assert services != null;
 		assert post != null;
@@ -96,6 +98,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		mVarProvider = varProvider;
 		mLoopDetector = loopDetector;
 		mReporter = reporter;
+		mBenchmark = benchmark;
 
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		mMaxUnwindings = ups.getInt(AbsIntPrefInitializer.LABEL_ITERATIONS_UNTIL_WIDENING);
@@ -132,6 +135,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			final ACTION currentAction = currentItem.getAction();
 			final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> currentStateStorage = currentItem
 					.getCurrentStorage();
+
+			mBenchmark.addIteration(currentItem);
 
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageCurrentTransition(preState, currentAction, currentItem.getCallStackDepth()));
@@ -259,6 +264,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageFixpointFound(fixpointState.get(), newPostState));
 			}
+			mBenchmark.addFixpoint();
 			return true;
 		}
 		return false;
@@ -313,6 +319,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(getLogMessageUnwinding(oldPostState, pendingPostState));
 		}
+		mBenchmark.addWiden();
 		final STATE newPostState = widening.apply(oldPostState, pendingPostState);
 		assert oldPostState.getVariables().keySet()
 				.equals(newPostState.getVariables().keySet()) : "Widening destroyed the state";
@@ -340,10 +347,11 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		final int availablePostStatesCount = availablePostStates.size();
 
 		if (availablePostStatesCount > mMaxParallelStates) {
+			mBenchmark.addMerge(availablePostStatesCount);
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageMergeStates(availablePostStatesCount, availablePostStates));
 			}
-			removeMergedStatesFromWorklist(worklist, availablePostStates, current);
+			removeMergedStatesFromWorklist(worklist, availablePostStates, successors);
 			final STATE newPostState = currentStateStorage.mergePostStates(current);
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageMergeResult(newPostState));
@@ -357,12 +365,14 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	}
 
 	private void removeMergedStatesFromWorklist(final Deque<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> worklist,
-			final Collection<STATE> availablePostStates, final ACTION current) {
+			final Collection<STATE> availablePostStates, final Collection<ACTION> successors) {
 		final Iterator<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> iter = worklist.iterator();
+		final Set<ACTION> successorSet = new HashSet<>(successors);
 		while (iter.hasNext()) {
 			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem = iter.next();
 			// note that here the state has to be equal, i.e., the same instance
-			if (currentItem.getAction() == current && availablePostStates.contains(currentItem.getPreState())) {
+			if (successorSet.contains(currentItem.getAction())
+					&& availablePostStates.contains(currentItem.getPreState())) {
 				iter.remove();
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(getLogMessageRemoveFromWorklistDuringMerge(currentItem));

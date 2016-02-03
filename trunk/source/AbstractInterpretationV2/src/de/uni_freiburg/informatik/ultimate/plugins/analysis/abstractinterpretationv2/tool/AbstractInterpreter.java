@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbstractInterpretationBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IResultReporter;
@@ -186,8 +187,10 @@ public final class AbstractInterpreter {
 		final IResultReporter<CodeBlock> reporter = new SilentReporter<>();
 		final IVariableProvider<STATE, CodeBlock, IBoogieVar, LOC> varProvider = new RcfgVariableProvider<STATE, LOC>(
 				symbolTable, boogieVarTable, services);
+		
+		final AbstractInterpretationBenchmark<CodeBlock, LOC> benchmark = new AbstractInterpretationBenchmark<>();
 		final FixpointEngine<STATE, CodeBlock, IBoogieVar, LOC> fxpe = new FixpointEngine<STATE, CodeBlock, IBoogieVar, LOC>(
-				services, timer, transitionProvider, storage, domain, varProvider, loopDetector, reporter);
+				services, timer, transitionProvider, storage, domain, varProvider, loopDetector, reporter,benchmark);
 		final Logger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		try {
 			boolean safe = fxpe.run(initial);
@@ -200,6 +203,7 @@ public final class AbstractInterpreter {
 		}
 		predicates.putAll(storage.getTerms(initial, script, bpl2smt));
 		logPredicates(logger, initial, predicates, script);
+		logger.info(benchmark);
 	}
 
 	/**
@@ -236,7 +240,8 @@ public final class AbstractInterpreter {
 		final Script script = rootAnnot.getScript();
 		final Boogie2SmtSymbolTable boogieVarTable = bpl2smt.getBoogie2SmtSymbolTable();
 		final ITransitionProvider<CodeBlock, ProgramPoint> transitionProvider = new RcfgTransitionProvider();
-		final ILoopDetector<CodeBlock> loopDetector = new RcfgLoopDetector<>(rootAnnot.getLoopLocations().keySet(), transitionProvider);
+		final ILoopDetector<CodeBlock> loopDetector = new RcfgLoopDetector<>(rootAnnot.getLoopLocations().keySet(),
+				transitionProvider);
 
 		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain = selectDomain(
 				() -> new RCFGLiteralCollector(root).getLiteralCollection(), symbolTable, services);
@@ -264,8 +269,11 @@ public final class AbstractInterpreter {
 			return;
 		}
 
+		final AbstractInterpretationBenchmark<CodeBlock, ProgramPoint> benchmark = new AbstractInterpretationBenchmark<>();
+		final Logger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		boolean allSafe = true;
 		final boolean isLib = filteredInitialElements.size() > 1;
+
 		final Iterator<CodeBlock> iter = filteredInitialElements.iterator();
 		// TODO: If an if is at the beginning of a method, this method will be analyzed two times
 		while (iter.hasNext()) {
@@ -275,8 +283,10 @@ public final class AbstractInterpreter {
 			final IResultReporter<CodeBlock> reporter = funCreateReporter.create(services, storage, isLib);
 			final IVariableProvider<STATE, CodeBlock, IBoogieVar, ProgramPoint> varProvider = new RcfgVariableProvider<STATE, ProgramPoint>(
 					symbolTable, boogieVarTable, services);
+			
 			final FixpointEngine<STATE, CodeBlock, IBoogieVar, ProgramPoint> fxpe = new FixpointEngine<STATE, CodeBlock, IBoogieVar, ProgramPoint>(
-					services, timer, transitionProvider, storage, domain, varProvider, loopDetector, reporter);
+					services, timer, transitionProvider, storage, domain, varProvider, loopDetector, reporter,
+					benchmark);
 			try {
 				allSafe = fxpe.run(initial) && allSafe;
 			} catch (ToolchainCanceledException c) {
@@ -289,10 +299,11 @@ public final class AbstractInterpreter {
 				// report all safe
 				funCreateReporter.create(services, storage, false).reportSafe(null);
 			}
-			final Logger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+			
 			logPredicates(logger, initial, localPredicates, script);
 		}
-
+		
+		logger.info(benchmark);
 	}
 
 	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>, LOC> BaseRcfgAbstractStateStorageProvider<STATE, LOC> createStorage(
