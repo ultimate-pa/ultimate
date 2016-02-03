@@ -31,11 +31,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayDeque;
 import java.util.Collection;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -119,8 +117,6 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	// TODO: Recursion
 	private boolean runInternal(final ACTION start) {
 		final Deque<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> worklist = new ArrayDeque<WorklistItem<STATE, ACTION, VARDECL, LOCATION>>();
-		final Deque<LOCATION> activeLoops = new ArrayDeque<>();
-		final Map<LOCATION, Integer> loopCounters = new HashMap<>();
 		final IAbstractPostOperator<STATE, ACTION, VARDECL> post = mDomain.getPostOperator();
 		final IAbstractStateBinaryOperator<STATE> widening = mDomain.getWideningOperator();
 		final Set<ACTION> reachedErrors = new HashSet<>();
@@ -171,16 +167,15 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			}
 
 			// check if this action leaves a loop
-			if (!activeLoops.isEmpty()) {
+			if (currentItem.hasActiveLoop()) {
 				// are we leaving a loop?
-				final LOCATION lastLoopHead = activeLoops.peek();
-				LOCATION currentLoopHead = mTransitionProvider.getTarget(currentAction);
-				if (lastLoopHead == currentLoopHead) {
+				final LOCATION currentLoopHead = mTransitionProvider.getTarget(currentAction);
+				if (currentItem.isActiveLoopHead(currentLoopHead)) {
 					// yes, we are leaving a loop
 					// here we also check if we have to widen
 					final List<STATE> currentStateStack = currentStateStorage.getAbstractPostStates(currentAction);
-					pendingNewPostState = loopLeave(activeLoops, loopCounters, widening, currentStateStack,
-							pendingNewPostState, lastLoopHead);
+					pendingNewPostState = loopLeave(currentItem, currentLoopHead, widening, currentStateStack,
+							pendingNewPostState);
 				}
 			}
 
@@ -199,7 +194,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			// check if we are about to enter a loop
 			if (mLoopDetector.isEnteringLoop(currentAction)) {
 				// we are entering a loop
-				loopEnter(activeLoops, loopCounters, currentAction);
+				loopEnter(currentItem);
 			}
 
 			// check if the current state is a fixpoint
@@ -270,29 +265,23 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 	}
 
-	private void loopEnter(final Deque<LOCATION> activeLoops, final Map<LOCATION, Integer> loopCounters,
-			final ACTION current) {
+	private void loopEnter(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem) {
+		final ACTION current = currentItem.getAction();
 		final LOCATION loopHead = mTransitionProvider.getSource(current);
-		activeLoops.push(loopHead);
-		if (!loopCounters.containsKey(loopHead)) {
-			loopCounters.put(loopHead, 0);
-		}
+		int loopCounterValue = currentItem.enterLoop(loopHead);
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug(getLogMessageEnterLoop(loopCounters, loopHead));
+			mLogger.debug(getLogMessageEnterLoop(loopCounterValue, loopHead));
 		}
 	}
 
-	private STATE loopLeave(final Deque<LOCATION> activeLoops, final Map<LOCATION, Integer> loopCounters,
-			final IAbstractStateBinaryOperator<STATE> widening, final List<STATE> currentStateStack,
-			final STATE pendingPostState, final LOCATION lastLoopHead) {
-		activeLoops.pop();
-		Integer loopCounterValue = loopCounters.get(lastLoopHead);
-		assert loopCounterValue != null;
-		loopCounterValue++;
-		loopCounters.put(lastLoopHead, loopCounterValue);
+	private STATE loopLeave(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem,
+			final LOCATION currentLoopHead, final IAbstractStateBinaryOperator<STATE> widening,
+			final List<STATE> currentStateStack, final STATE pendingPostState) {
+
+		int loopCounterValue = currentItem.leaveCurrentLoop();
 
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug(getLogMessageLeaveLoop(loopCounters, lastLoopHead));
+			mLogger.debug(getLogMessageLeaveLoop(loopCounterValue, currentLoopHead));
 		}
 
 		if (loopCounterValue > mMaxUnwindings) {
@@ -549,14 +538,14 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				.append(newPostState.hashCode()).append("] ").append(newPostState.toLogString());
 	}
 
-	private StringBuilder getLogMessageEnterLoop(final Map<LOCATION, Integer> loopCounters, final LOCATION pair) {
-		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Entering loop (")
-				.append(loopCounters.get(pair)).append(")");
+	private StringBuilder getLogMessageEnterLoop(final int loopCounterValue, final LOCATION loopHead) {
+		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Entering loop ").append(loopHead)
+				.append(" (").append(loopCounterValue).append(")");
 	}
 
-	private StringBuilder getLogMessageLeaveLoop(final Map<LOCATION, Integer> loopCounters, final LOCATION lastPair) {
-		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Leaving loop (")
-				.append(loopCounters.get(lastPair)).append(")");
+	private StringBuilder getLogMessageLeaveLoop(final int loopCounterValue, final LOCATION loopHead) {
+		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Leaving loop ").append(loopHead)
+				.append(" (").append(loopCounterValue).append(")");
 	}
 
 	private StringBuilder getLogMessageUnwindingResult(STATE newPostState) {
