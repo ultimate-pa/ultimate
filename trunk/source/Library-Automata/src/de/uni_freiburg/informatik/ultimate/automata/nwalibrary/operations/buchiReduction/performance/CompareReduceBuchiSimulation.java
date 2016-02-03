@@ -139,6 +139,8 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 		tables.add(new Pair<>("averagedSimulationAlgoWork",
 				ComparisonTables.createAveragedSimulationAlgoWorkTable(performanceEntries, LOG_SEPARATOR)));
 		tables.add(new Pair<>("timedOutNames", ComparisonTables.createTimedOutNamesTable(performanceEntries)));
+		tables.add(new Pair<>("noRemoveNames", ComparisonTables.createNoRemoveNamesTable(performanceEntries)));
+		tables.add(new Pair<>("smallSizeNames", ComparisonTables.createSmallSizeNamesTable(performanceEntries)));
 
 		System.out.println("Creating html files...");
 		for (Pair<String, List<String>> pair : tables) {
@@ -434,23 +436,23 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 				m_Services, operand).getResult();
 
 		String automatonName = "";
-		BufferedReader br = null;
-		try {
-			br = new BufferedReader(new FileReader(new File(LOG_PATH, "currentAutomatonName.txt")));
-			while (br.ready()) {
-				automatonName = br.readLine();
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			if (br != null) {
-				try {
-					br.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-		}
+//		BufferedReader br = null;
+//		try {
+//			br = new BufferedReader(new FileReader(new File(LOG_PATH, "currentAutomatonName.txt")));
+//			while (br.ready()) {
+//				automatonName = br.readLine();
+//			}
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		} finally {
+//			if (br != null) {
+//				try {
+//					br.close();
+//				} catch (IOException e) {
+//					e.printStackTrace();
+//				}
+//			}
+//		}
 
 		// Direct simulation without SCC
 		measureMethodPerformance(automatonName, SimulationType.DIRECT, false, m_Services, simulationTimeoutMillis,

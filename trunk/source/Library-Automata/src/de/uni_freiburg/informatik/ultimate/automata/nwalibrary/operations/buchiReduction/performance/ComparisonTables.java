@@ -57,6 +57,10 @@ public final class ComparisonTables {
 	 * Represents the value for full percentage.
 	 */
 	private final static int FULL_PERCENTAGE = 100;
+	/**
+	 * Amount of states at which a buechi automaton has a small size.
+	 */
+	private final static int SMALL_BUCHI_SIZE = 20;
 
 	/**
 	 * Creates a table that holds information about the actual work the
@@ -687,6 +691,87 @@ public final class ComparisonTables {
 			}
 			// Add empty row to delimit the performance entry
 			table.add("");
+		}
+
+		return table;
+	}
+
+	/**
+	 * Creates a table that holds all names of automata where no method could
+	 * remove states.
+	 * 
+	 * @param performanceEntries
+	 *            Data structure holding the performance entries
+	 * @return A table in a tsv-like format, specified by
+	 *         {@link #LOG_SEPARATOR}.
+	 */
+	public static List<String> createNoRemoveNamesTable(
+			final LinkedList<LinkedList<SimulationPerformance>> performanceEntries) {
+		List<String> table = new LinkedList<>();
+		if (performanceEntries.isEmpty()) {
+			return table;
+		}
+
+		// Header of table
+		String header = "NAME";
+		table.add(header);
+
+		// Rows of table
+		for (LinkedList<SimulationPerformance> performanceComparison : performanceEntries) {
+			boolean methodHasRemoved = false;
+			String name = "";
+			for (SimulationPerformance performanceOfSimulation : performanceComparison) {
+				name = performanceOfSimulation.getName();
+				int amountOfRemovedStates = performanceOfSimulation
+						.getCountingMeasureResult(CountingMeasure.REMOVED_STATES);
+				if (amountOfRemovedStates != SimulationPerformance.NO_COUNTING_RESULT && amountOfRemovedStates > 0) {
+					methodHasRemoved = true;
+					break;
+				}
+			}
+			if (!methodHasRemoved) {
+				table.add(name);
+			}
+		}
+
+		return table;
+	}
+
+	/**
+	 * Creates a table that holds all names of automata where the amount of
+	 * states is small, i.e. less than 20.
+	 * 
+	 * @param performanceEntries
+	 *            Data structure holding the performance entries
+	 * @return A table in a tsv-like format, specified by
+	 *         {@link #LOG_SEPARATOR}.
+	 */
+	public static List<String> createSmallSizeNamesTable(
+			final LinkedList<LinkedList<SimulationPerformance>> performanceEntries) {
+		List<String> table = new LinkedList<>();
+		if (performanceEntries.isEmpty()) {
+			return table;
+		}
+
+		// Header of table
+		String header = "NAME";
+		table.add(header);
+
+		// Rows of table
+		for (LinkedList<SimulationPerformance> performanceComparison : performanceEntries) {
+			boolean buechiHasSmallSize = false;
+			String name = "";
+			for (SimulationPerformance performanceOfSimulation : performanceComparison) {
+				name = performanceOfSimulation.getName();
+				int amountOfStates = performanceOfSimulation.getCountingMeasureResult(CountingMeasure.BUCHI_STATES);
+				if (amountOfStates == SimulationPerformance.NO_COUNTING_RESULT || amountOfStates < SMALL_BUCHI_SIZE) {
+					buechiHasSmallSize = true;
+					break;
+				}
+			}
+			if (buechiHasSmallSize) {
+				table.add(name);
+			}
 		}
 
 		return table;
