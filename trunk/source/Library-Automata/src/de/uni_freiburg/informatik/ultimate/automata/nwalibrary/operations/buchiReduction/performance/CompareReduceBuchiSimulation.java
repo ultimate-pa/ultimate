@@ -379,7 +379,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 */
 	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
 	/**
-	 * The resulting possible reduced buechi automaton.
+	 * The resulting buechi automaton.
 	 */
 	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Result;
 	/**
@@ -400,7 +400,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 * @param stateFactory
 	 *            The state factory used for creating states
 	 * @param operand
-	 *            The buechi automaton to reduce
+	 *            The buechi automaton to compare with
 	 * @throws OperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
