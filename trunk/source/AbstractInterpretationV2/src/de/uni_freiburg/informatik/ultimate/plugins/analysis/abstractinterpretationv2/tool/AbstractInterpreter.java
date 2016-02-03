@@ -73,7 +73,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.RCFGLoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
@@ -136,7 +135,7 @@ public final class AbstractInterpreter {
 		final Map<LOC, Term> predicates = new HashMap<>();
 		try {
 			final NWAPathProgramTransitionProvider<LOC> transProvider = new NWAPathProgramTransitionProvider<>(
-					currentAutomata, counterexample, services);
+					currentAutomata, counterexample, services, root.getRootAnnot());
 			runSilentlyOnNWA(transProvider, counterexample.getSymbol(0), root, timer, services, predicates);
 		} catch (OutOfMemoryError oom) {
 			throw oom;
@@ -172,12 +171,8 @@ public final class AbstractInterpreter {
 		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain = selectDomain(
 				() -> new RCFGLiteralCollector(root).getLiteralCollection(), symbolTable, services);
 
-		final RCFGLoopDetector externalLoopDetector = new RCFGLoopDetector(services);
-		externalLoopDetector.process(root);
-		final ILoopDetector<CodeBlock> loopDetector = new RcfgLoopDetector(externalLoopDetector);
-
 		runSilentlyOnNWA(initial, timer, services, predicates, symbolTable, bpl2smt, script, boogieVarTable, domain,
-				transProvider, loopDetector);
+				transProvider, transProvider);
 	}
 
 	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>, LOC> void runSilentlyOnNWA(
@@ -240,26 +235,23 @@ public final class AbstractInterpreter {
 		final Boogie2SMT bpl2smt = rootAnnot.getBoogie2SMT();
 		final Script script = rootAnnot.getScript();
 		final Boogie2SmtSymbolTable boogieVarTable = bpl2smt.getBoogie2SmtSymbolTable();
-
-		final RCFGLoopDetector externalLoopDetector = new RCFGLoopDetector(services);
-		externalLoopDetector.process(root);
+		final ITransitionProvider<CodeBlock, ProgramPoint> transitionProvider = new RcfgTransitionProvider();
+		final ILoopDetector<CodeBlock> loopDetector = new RcfgLoopDetector<>(rootAnnot.getLoopLocations().keySet(), transitionProvider);
 
 		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain = selectDomain(
 				() -> new RCFGLiteralCollector(root).getLiteralCollection(), symbolTable, services);
 		runOnRCFG(initials, timer, services, funCreateReporter, predicates, symbolTable, bpl2smt, script,
-				boogieVarTable, externalLoopDetector, domain);
+				boogieVarTable, loopDetector, domain, transitionProvider);
 	}
 
 	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>> void runOnRCFG(
 			final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
-			final IUltimateServiceProvider services, ReporterFactory funCreateReporter,
-			Map<CodeBlock, Map<ProgramPoint, Term>> predicates, final BoogieSymbolTable symbolTable,
+			final IUltimateServiceProvider services, final ReporterFactory funCreateReporter,
+			final Map<CodeBlock, Map<ProgramPoint, Term>> predicates, final BoogieSymbolTable symbolTable,
 			final Boogie2SMT bpl2smt, final Script script, final Boogie2SmtSymbolTable boogieVarTable,
-			final RCFGLoopDetector externalLoopDetector, final IAbstractDomain<STATE, CodeBlock, IBoogieVar> domain) {
+			final ILoopDetector<CodeBlock> loopDetector, final IAbstractDomain<STATE, CodeBlock, IBoogieVar> domain,
+			final ITransitionProvider<CodeBlock, ProgramPoint> transitionProvider) {
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
-		final ITransitionProvider<CodeBlock, ProgramPoint> transitionProvider = new RcfgTransitionProvider();
-
-		final ILoopDetector<CodeBlock> loopDetector = new RcfgLoopDetector(externalLoopDetector);
 
 		final Collection<CodeBlock> filteredInitialElements = transitionProvider.filterInitialElements(initials);
 		final boolean persist = ups.getBoolean(AbsIntPrefInitializer.LABEL_PERSIST_ABS_STATES);

@@ -84,11 +84,7 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 			timer = mServices.getProgressMonitorService();
 		}
 
-		final Map<CodeBlock, Map<ProgramPoint, Term>> preds = AbstractInterpreter.run(root, initial, timer, mServices);
-		if(mLogger.isDebugEnabled()){
-			mLogger.debug("Found the following predicates:");
-			AbsIntUtil.logPredicates(preds, root.getRootAnnot().getScript(), mLogger::debug);	
-		}
+		AbstractInterpreter.run(root, initial, timer, mServices);
 
 		// do not descend, this is already the root
 		return false;

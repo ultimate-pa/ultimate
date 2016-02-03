@@ -124,11 +124,15 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 		return new ArrayDeque<>(mScopedStorages);
 	}
 
+	/**
+	 * 
+	 * @return A {@link Deque} that contains pairs of scopes and the corresponding state storage.
+	 */
 	public Deque<Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>> getStack() {
 		final ArrayDeque<Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>> rtr = new ArrayDeque<>();
 		final Iterator<IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>> storageIter = mScopedStorages
 				.iterator();
-		//first, add the global storage 
+		// first, add the global storage
 		rtr.add(new Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>(null, storageIter.next()));
 		if (mScopes == null || mScopes.isEmpty()) {
 			return rtr;

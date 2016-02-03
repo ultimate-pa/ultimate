@@ -58,7 +58,7 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 	}
 
 	@Override
-	public IntervalDomainState apply(IntervalDomainState first, IntervalDomainState second) {
+	public IntervalDomainState apply(final IntervalDomainState first, final IntervalDomainState second) {
 		assert first.hasSameVariables(second);
 		assert !first.isBottom() && !second.isBottom();
 
@@ -69,7 +69,7 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 		final List<String> arraysToWiden = new ArrayList<>();
 		final List<IntervalDomainValue> arrayValues = new ArrayList<>();
 
-		for (Entry<String, IBoogieVar> entry : first.getVariables().entrySet()) {
+		for (final Entry<String, IBoogieVar> entry : first.getVariables().entrySet()) {
 			final String var = entry.getKey();
 			final IBoogieVar type = entry.getValue();
 
@@ -89,7 +89,10 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 					final IntervalDomainValue firstValue = first.getValue(var);
 					final IntervalDomainValue secondValue = second.getValue(var);
 
-					if (!firstValue.isEqualTo(secondValue)) {
+					if (secondValue.isContainedInDD(firstValue)) {
+						varsToWiden.add(var);
+						varValues.add(firstValue);
+					} else if (!firstValue.isEqualTo(secondValue)) {
 						varsToWiden.add(var);
 						varValues.add(determineNextValue(firstValue, secondValue));
 					}
@@ -122,6 +125,11 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 		final IntervalDomainValue[] arrayVals = arrayValues.toArray(new IntervalDomainValue[arrayValues.size()]);
 
 		return first.setMixedValues(vars, vals, bools, boolVals, arrays, arrayVals);
+	}
+
+	private void doNothing() {
+		// TODO Auto-generated method stub
+
 	}
 
 	private IntervalDomainValue determineNextValue(IntervalDomainValue first, IntervalDomainValue second) {

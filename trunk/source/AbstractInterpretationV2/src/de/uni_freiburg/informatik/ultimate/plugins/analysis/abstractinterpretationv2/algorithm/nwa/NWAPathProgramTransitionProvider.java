@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
@@ -13,11 +14,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 /**
@@ -25,20 +29,22 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class NWAPathProgramTransitionProvider<LOCATION> implements ITransitionProvider<CodeBlock, LOCATION> {
+public class NWAPathProgramTransitionProvider<LOCATION> implements ITransitionProvider<CodeBlock, LOCATION>,ILoopDetector<CodeBlock> {
 
 	private final INestedWordAutomatonOldApi<CodeBlock, LOCATION> mAutomata;
 	private final NestedRun<CodeBlock, LOCATION> mCex;
 	private Map<CodeBlock, Integer> mLetter2Index;
 	private CodeBlock mPostErrorLoc;
+	private final Set<ProgramPoint> mLoopLocations;
 
 	public NWAPathProgramTransitionProvider(final INestedWordAutomatonOldApi<CodeBlock, LOCATION> currentAutomata,
-			final NestedRun<CodeBlock, LOCATION> counterexample, final IUltimateServiceProvider services) {
+			final NestedRun<CodeBlock, LOCATION> counterexample, final IUltimateServiceProvider services,RootAnnot annotation) {
 		mAutomata = currentAutomata;
 		mCex = counterexample;
 		mLetter2Index = createLetter2Index(mCex);
 		// words count their states, so 0 is first state, length is last state
 		mPostErrorLoc = mCex.getSymbol(mCex.getLength() - 2);
+		mLoopLocations = annotation.getLoopLocations().keySet();
 	}
 
 	private Map<CodeBlock, Integer> createLetter2Index(final NestedRun<CodeBlock, LOCATION> cex) {
@@ -201,5 +207,12 @@ public class NWAPathProgramTransitionProvider<LOCATION> implements ITransitionPr
 			return currReturn.getCorrespondingCall().equals(currentScope);
 		}
 		return false;
+	}
+
+	@Override
+	public boolean isEnteringLoop(CodeBlock transition) {
+		assert transition != null;
+		final LOCATION source = getSource(transition);
+		return mLoopLocations.contains(source);
 	}
 }

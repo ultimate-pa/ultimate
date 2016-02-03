@@ -70,4 +70,12 @@ public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 		return new RcfgAbstractStateStorageProvider<STATE, LOCATION>(getMergeOperator(), getServices(),
 				getTransitionProvider());
 	}
+
+	@Override
+	public String toString() {
+		if (mStorage == null) {
+			return "NULL";
+		}
+		return mStorage.toString();
+	}
 }
