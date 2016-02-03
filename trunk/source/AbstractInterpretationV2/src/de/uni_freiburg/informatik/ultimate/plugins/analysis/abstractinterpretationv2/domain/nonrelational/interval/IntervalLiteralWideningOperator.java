@@ -127,11 +127,6 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 		return first.setMixedValues(vars, vals, bools, boolVals, arrays, arrayVals);
 	}
 
-	private void doNothing() {
-		// TODO Auto-generated method stub
-
-	}
-
 	private IntervalDomainValue determineNextValue(IntervalDomainValue first, IntervalDomainValue second) {
 		final IntervalValue firstLower = first.getLower();
 		final IntervalValue firstUpper = first.getUpper();
