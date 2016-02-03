@@ -1,4 +1,4 @@
-//#Unsafe
+//#Safe
 
 procedure ULTIMATE.start()
 {
