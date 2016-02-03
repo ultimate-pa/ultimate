@@ -23,14 +23,14 @@ public abstract class srParseScope {
 	}
 
 	public void setCdd1(CDD cdd1) {
-		this.cdd2 = cdd1;
+		this.cdd1 = cdd1;
 	}
 
 	public CDD getCdd2() {
-		return cdd1;
+		return cdd2;
 	}
 
 	public void setCdd2(CDD cdd2) {
-		this.cdd1 = cdd2;
+		this.cdd2 = cdd2;
 	}
 }

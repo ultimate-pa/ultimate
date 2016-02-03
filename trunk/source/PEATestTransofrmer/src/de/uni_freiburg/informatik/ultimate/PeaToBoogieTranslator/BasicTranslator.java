@@ -119,7 +119,7 @@ public class BasicTranslator {
 				"executeModel", 
 				new String[0],
 				new VarList[0], 
-				new VarList[0], 
+				new VarList[0],  
 				new Specification[]{this.generateModifiesVariable(location, this.modifiedVariables)}, 
 				new Body(location, new VariableDeclaration[]{}, generateBodyStatements(location))
 				) 
@@ -130,7 +130,7 @@ public class BasicTranslator {
 	private Statement[] generateBodyStatements(BoogieLocation location){
 		ArrayList<Statement> statements = new ArrayList<Statement>();
 		statements.add(this.generateInitialPhaseCounterHavoc(location, this.peas));
-		statements.add(new AssertStatement(location, this.generateInitialPhaseAssumptionArgument(location, this.peas)));
+		statements.add(new AssumeStatement(location, this.generateInitialPhaseAssumptionArgument(location, this.peas)));
 		//add while body
 		statements.add(new WhileStatement(
 					location, 

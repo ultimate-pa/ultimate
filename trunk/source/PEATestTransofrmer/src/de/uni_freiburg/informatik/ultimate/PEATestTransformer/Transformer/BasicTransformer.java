@@ -23,7 +23,7 @@ import srParse.pattern.UniversalityPattern;
  * 
  * @author Langenfeld
  * 
- * TODO: complete rewrite of pattern!
+ * TODO: complete rewrite of pattern! 
  *
  */
 public class BasicTransformer {
@@ -77,43 +77,43 @@ public class BasicTransformer {
 		if(pattern instanceof InvariantPattern){
 			// ... it is always the case that if s holds then p holds.
 			if(pattern.getScope().getClass() == srParseScopeGlob.class){	
-				return this.GlobalInvariantPattern(pattern, p, q, r, s);
+				return this.GlobalInvariantPattern(pattern, p, q, r, s);			//test [yes]
 			} else if (pattern.getScope().getClass() == srParseScopeBefore.class){	
-				return this.BeforeInvariantPattern(pattern, p, q, r, s);
+				return this.BeforeInvariantPattern(pattern, p, q, r, s);			//test [broken]
 			} else if (pattern.getScope().getClass() == srParseScopeAfterUntil.class){	
-				return this.AfterUntilInvariantPattern(pattern, p, q, r, s);
+				return this.AfterUntilInvariantPattern(pattern, p, q, r, s);		//test []
 			} else if (pattern.getScope().getClass() == srParseScopeAfter.class){
-				return this.AfterInvariantPattern(pattern, p, q, r, s);
+				return this.AfterInvariantPattern(pattern, p, q, r, s);				//test [yes]
 			} else if (pattern.getScope().getClass() == srParseScopeBetween.class){	
-				return this.BetweenInvariantPattern(pattern, p, q, r, s);
+				return this.BetweenInvariantPattern(pattern, p, q, r, s);			//test []
 			} else {throw new UnsupportedOperationException();}
 			
 		} else if (pattern instanceof InstAbsPattern){
 			// ... it is never the case that s holds.
 			if(pattern.getScope().getClass() == srParseScopeGlob.class){	
-				return this.GlobalInstAbsPattern(pattern, p, q, r, s);
+				return this.GlobalInstAbsPattern(pattern, p, q, r, s);				//test [yes]
 			} else if (pattern.getScope().getClass() == srParseScopeBefore.class){	
-				return this.BeforeInstAbsPattern(pattern, p, q, r, s);
+				return this.BeforeInstAbsPattern(pattern, p, q, r, s);				//test [yes]
 			} else if (pattern.getScope().getClass() == srParseScopeAfterUntil.class){	
-				return this.AfterUntilInstAbsPattern(pattern, p, q, r, s);
+				return this.AfterUntilInstAbsPattern(pattern, p, q, r, s);			//test [broken]
 			} else if (pattern.getScope().getClass() == srParseScopeAfter.class){
-				return this.AfterInstAbsPattern(pattern, p, q, r, s);
+				return this.AfterInstAbsPattern(pattern, p, q, r, s);				//test [yes]
 			} else if (pattern.getScope().getClass() == srParseScopeBetween.class){	
-				return this.BetweenInstAbsPattern(pattern, p, q, r, s);
+				return this.BetweenInstAbsPattern(pattern, p, q, r, s);				//test [broken]
 			} else {throw new UnsupportedOperationException();}
 			
 		} else if (pattern instanceof UniversalityPattern){
 			// ... it is always the case that s holds.
 			if(pattern.getScope().getClass() == srParseScopeGlob.class){	
-				return this.GlobalUniversality(pattern, p, q, r, s);
+				return this.GlobalUniversality(pattern, p, q, r, s);				//test []
 			} else if (pattern.getScope().getClass() == srParseScopeBefore.class){	
-				return this.BeforeUniversality(pattern, p, q, r, s);
+				return this.BeforeUniversality(pattern, p, q, r, s);				//test []
 			} else if (pattern.getScope().getClass() == srParseScopeAfterUntil.class){	
-				return this.AfterUntilUniversality(pattern, p, q, r, s);
+				return this.AfterUntilUniversality(pattern, p, q, r, s);			//test []
 			} else if (pattern.getScope().getClass() == srParseScopeAfter.class){
-				return this.AfterUniversality(pattern, p, q, r, s);
+				return this.AfterUniversality(pattern, p, q, r, s);					//test []
 			} else if (pattern.getScope().getClass() == srParseScopeBetween.class){	
-				return this.BetweenUniversality(pattern, p, q, r, s);
+				return this.BetweenUniversality(pattern, p, q, r, s);				//test []
 			} else {throw new UnsupportedOperationException();}
 			
 		} else {
@@ -189,9 +189,10 @@ public class BasicTransformer {
 	
 	protected PhaseEventAutomata BeforeInstAbsPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
 		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
-    		    new CounterTrace.DCPhase(q.negate()),
-    		    new CounterTrace.DCPhase(s.and(p.negate())),
-    		    new CounterTrace.DCPhase(q.negate()),
+    		    new CounterTrace.DCPhase(r.negate()),
+    		    new CounterTrace.DCPhase(s.and(r.negate())),
+    		    new CounterTrace.DCPhase(r.negate()),
+    		    new CounterTrace.DCPhase(r),
     		    new CounterTrace.DCPhase()
     		 });    	
     		return compiler.compile("TAbsenceBefore", ct);
@@ -204,7 +205,7 @@ public class BasicTransformer {
 	               	    new CounterTrace.DCPhase(r.negate()),
 	               	    new CounterTrace.DCPhase(s.and(r.negate())),
 	               	    new CounterTrace.DCPhase()
-	               	});    	
+	               	});   
 	               	return compiler.compile("TAbsenceUntil", ct);
 	}
 
