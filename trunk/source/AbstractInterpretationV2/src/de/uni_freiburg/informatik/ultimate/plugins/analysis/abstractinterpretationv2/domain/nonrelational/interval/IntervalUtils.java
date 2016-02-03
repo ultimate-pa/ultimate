@@ -40,21 +40,50 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  */
 public class IntervalUtils {
-	protected static List<IEvaluationResult<IntervalDomainEvaluationResult>> mergeIfNecessary(
-	        final List<IEvaluationResult<IntervalDomainEvaluationResult>> results, int maxParallelStates) {
+
+	/**
+	 * Merges states in a given list of {@link IntervalDomainValue}s if the elements in the list are more than the
+	 * specified number of elements.
+	 * 
+	 * @param results
+	 *            The list of {@link IntervalDomainValue}s.
+	 * @param maxParallelStates
+	 *            The largest allowed number of singular {@link IntervalDomainValue}s in the list.
+	 * @return A new list that contains the result of merging all {@link IntervalDomainValue}s in the given list.
+	 */
+	protected static List<IEvaluationResult<IntervalDomainValue>> mergeIfNecessary(
+	        final List<IEvaluationResult<IntervalDomainValue>> results, int maxParallelStates) {
 		if (results.size() > maxParallelStates) {
 			return Collections.singletonList(results.stream().reduce(IntervalUtils::merge).get());
 		}
 		return results;
 	}
 
-	private static IEvaluationResult<IntervalDomainEvaluationResult> merge(
-	        final IEvaluationResult<IntervalDomainEvaluationResult> a,
-	        final IEvaluationResult<IntervalDomainEvaluationResult> b) {
-		final IntervalDomainEvaluationResult left = a.getResult();
-		final IntervalDomainEvaluationResult right = b.getResult();
-		return new IntervalDomainEvaluationResult(left.getEvaluatedValue().merge(right.getEvaluatedValue()),
-		        left.getEvaluatedState().merge(right.getEvaluatedState()),
-		        left.getBooleanValue().merge(right.getBooleanValue()));
+	/**
+	 * Merges states in a given list of {@link IntervalDomainState}s if the elements in the list are more than the
+	 * specified number of elements.
+	 * 
+	 * @param results
+	 *            The list of {@link IntervalDomainState}s.
+	 * @param maxParallelStates
+	 *            The largest allowed number of singular {@link IntervalDomainState}s in the given list.
+	 * @return A new list that contains the result of merging all {@link IntervalDomainState}s in the given list.
+	 */
+	protected static List<IntervalDomainState> mergeStatesIfNecessary(final List<IntervalDomainState> results,
+	        int maxParallelStates) {
+		if (results.size() > maxParallelStates) {
+			return Collections.singletonList(results.stream().reduce(IntervalUtils::merge).get());
+		}
+		return results;
+	}
+
+	private static IEvaluationResult<IntervalDomainValue> merge(final IEvaluationResult<IntervalDomainValue> a,
+	        final IEvaluationResult<IntervalDomainValue> b) {
+		return new IntervalDomainEvaluationResult(a.getValue().merge(b.getValue()),
+		        a.getBooleanValue().merge(b.getBooleanValue()));
+	}
+
+	private static IntervalDomainState merge(final IntervalDomainState a, final IntervalDomainState b) {
+		return a.merge(b);
 	}
 }

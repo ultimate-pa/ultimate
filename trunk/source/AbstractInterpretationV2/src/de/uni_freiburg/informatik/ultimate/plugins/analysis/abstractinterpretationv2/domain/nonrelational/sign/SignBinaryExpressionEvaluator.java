@@ -198,34 +198,34 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 		assert second != null;
 
 		// ===== Same values =====
-		if (first.getResult().equals(second.getResult())) {
-			return new SignDomainValue(first.getResult());
+		if (first.getValue().equals(second.getValue())) {
+			return new SignDomainValue(first.getValue());
 		}
 		// ===== End Same values =====
 
 		// ===== Special cases =====
 		// If first = \bot or second = \bot, return \bot.
-		if (first.getResult().equals(Values.BOTTOM) || second.getResult().equals(Values.BOTTOM)) {
+		if (first.getValue().equals(Values.BOTTOM) || second.getValue().equals(Values.BOTTOM)) {
 			return new SignDomainValue(Values.BOTTOM);
 		}
 
 		// If one of them is \top, return \top.
-		if (first.getResult().equals(Values.TOP) || second.getResult().equals(Values.TOP)) {
+		if (first.getValue().equals(Values.TOP) || second.getValue().equals(Values.TOP)) {
 			return new SignDomainValue(Values.TOP);
 		}
 		// ===== End Special cases =====
 
 		// ===== Different values =====
 		// If one of the values is 0, return the other value.
-		if (first.getResult().equals(Values.ZERO)) {
-			return new SignDomainValue(second.getResult());
+		if (first.getValue().equals(Values.ZERO)) {
+			return new SignDomainValue(second.getValue());
 		}
-		if (second.getResult().equals(Values.ZERO)) {
-			return new SignDomainValue(first.getResult());
+		if (second.getValue().equals(Values.ZERO)) {
+			return new SignDomainValue(first.getValue());
 		}
 
 		// If both values are different, return \top.
-		if (!first.getResult().equals(second.getResult())) {
+		if (!first.getValue().equals(second.getValue())) {
 			return new SignDomainValue(Values.TOP);
 		}
 		// ===== End Different values =====
@@ -233,7 +233,7 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 		// We should have covered all cases. If not, throw exception.
 		throw new UnsupportedOperationException(
 		        "There is one case which has not been covered in the addition of SignedDomain values. first: "
-		                + first.getResult().toString() + ", second: " + second.getResult().toString());
+		                + first.getValue().toString() + ", second: " + second.getValue().toString());
 	}
 
 	/**
@@ -284,28 +284,28 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 		assert second != null;
 
 		// ====== Same Values ======
-		if (first.getResult().equals(Values.ZERO) && second.getResult().equals(Values.ZERO)) {
+		if (first.getValue().equals(Values.ZERO) && second.getValue().equals(Values.ZERO)) {
 			return new SignDomainValue(Values.ZERO);
 		}
-		if (first.getResult().equals(Values.BOTTOM) || second.getResult().equals(Values.BOTTOM)) {
+		if (first.getValue().equals(Values.BOTTOM) || second.getValue().equals(Values.BOTTOM)) {
 			return new SignDomainValue(Values.BOTTOM);
 		}
-		if (first.getResult().equals(second.getResult())) {
+		if (first.getValue().equals(second.getValue())) {
 			return new SignDomainValue(Values.TOP);
 		}
 		// ====== End Same Values ======
 
 		// ====== Different Values ======
-		if (first.getResult().equals(Values.ZERO)) {
-			return negateValue(first.getResult());
+		if (first.getValue().equals(Values.ZERO)) {
+			return negateValue(first.getValue());
 		}
-		if (second.getResult().equals(Values.ZERO)) {
-			return new SignDomainValue(first.getResult());
+		if (second.getValue().equals(Values.ZERO)) {
+			return new SignDomainValue(first.getValue());
 		}
-		if (first.getResult().equals(Values.POSITIVE) && second.getResult().equals(Values.NEGATIVE)) {
+		if (first.getValue().equals(Values.POSITIVE) && second.getValue().equals(Values.NEGATIVE)) {
 			return new SignDomainValue(Values.POSITIVE);
 		}
-		if (first.getResult().equals(Values.NEGATIVE) && second.getResult().equals(Values.POSITIVE)) {
+		if (first.getValue().equals(Values.NEGATIVE) && second.getValue().equals(Values.POSITIVE)) {
 			return new SignDomainValue(Values.NEGATIVE);
 		}
 		// ====== End Different Values ======
@@ -313,7 +313,7 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 		// We should have covered all cases. If not, throw exception.
 		throw new UnsupportedOperationException(
 		        "There is one case which has not been covered in the subtraction of SignedDomain values. first: "
-		                + first.getResult().toString() + ", second: " + second.getResult().toString());
+		                + first.getValue().toString() + ", second: " + second.getValue().toString());
 	}
 
 	/**
@@ -385,7 +385,8 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 	}
 
 	@Override
-	public List<IEvaluationResult<Values>> inverseEvaluate(IEvaluationResult<Values> computedState) {
+	public List<SignDomainState> inverseEvaluate(final IEvaluationResult<Values> computedValue,
+	        final SignDomainState currentState) {
 		// TODO Auto-generated method stub
 		return null;
 	}

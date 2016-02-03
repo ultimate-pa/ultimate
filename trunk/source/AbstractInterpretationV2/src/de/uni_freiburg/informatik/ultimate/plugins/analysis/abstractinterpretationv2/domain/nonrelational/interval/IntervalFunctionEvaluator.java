@@ -47,12 +47,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class IntervalFunctionEvaluator
-        implements IFunctionEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
+        implements IFunctionEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	private final String mName;
 	private final int mInParamCount;
 
-	private final List<IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar>> mInputParamEvaluators;
+	private final List<IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar>> mInputParamEvaluators;
 
 	protected IntervalFunctionEvaluator(String name, int numInParams) {
 		mName = name;
@@ -61,19 +61,18 @@ public class IntervalFunctionEvaluator
 	}
 
 	@Override
-	public List<IEvaluationResult<IntervalDomainEvaluationResult>> evaluate(IntervalDomainState currentState) {
-		final List<IEvaluationResult<IntervalDomainEvaluationResult>> returnList = new ArrayList<>();
+	public List<IEvaluationResult<IntervalDomainValue>> evaluate(IntervalDomainState currentState) {
+		final List<IEvaluationResult<IntervalDomainValue>> returnList = new ArrayList<>();
 
 		final IntervalDomainEvaluationResult res = new IntervalDomainEvaluationResult(new IntervalDomainValue(),
-		        currentState, new BooleanValue(false));
+		        new BooleanValue(false));
 
 		returnList.add(res);
 		return returnList;
 	}
 
 	@Override
-	public void addSubEvaluator(
-	        IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
 		if (mInputParamEvaluators.size() < mInParamCount) {
 			mInputParamEvaluators.add(evaluator);
 		} else {
@@ -119,8 +118,10 @@ public class IntervalFunctionEvaluator
 	}
 
 	@Override
-	public List<IEvaluationResult<IntervalDomainEvaluationResult>> inverseEvaluate(
-	        IEvaluationResult<IntervalDomainEvaluationResult> computedState) {
-		return evaluate(computedState.getResult().getEvaluatedState());
+	public List<IntervalDomainState> inverseEvaluate(IEvaluationResult<IntervalDomainValue> computedValue,
+	        IntervalDomainState currentState) {
+		final List<IntervalDomainState> returnList = new ArrayList<>();
+		returnList.add(currentState);
+		return returnList;
 	}
 }

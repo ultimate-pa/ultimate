@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class IntervalSingletonVariableExpressionEvaluator
-        implements IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
+        implements IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	private final Set<String> mVariableSet;
 
@@ -64,9 +64,9 @@ public class IntervalSingletonVariableExpressionEvaluator
 	}
 
 	@Override
-	public List<IEvaluationResult<IntervalDomainEvaluationResult>> evaluate(IntervalDomainState currentState) {
+	public List<IEvaluationResult<IntervalDomainValue>> evaluate(IntervalDomainState currentState) {
 
-		final List<IEvaluationResult<IntervalDomainEvaluationResult>> returnList = new ArrayList<>();
+		final List<IEvaluationResult<IntervalDomainValue>> returnList = new ArrayList<>();
 
 		IntervalDomainValue val;
 		BooleanValue returnBool = new BooleanValue();
@@ -93,22 +93,14 @@ public class IntervalSingletonVariableExpressionEvaluator
 		}
 
 		if (val.isBottom() || returnBool.isBottom()) {
-			if (mContainsBoolean) {
-				returnList.add(new IntervalDomainEvaluationResult(new IntervalDomainValue(true),
-				        currentState.setBooleanValue(mVariableName, returnBool), returnBool));
-			} else {
-				returnList.add(new IntervalDomainEvaluationResult(val, currentState.setValue(mVariableName, val),
-				        new BooleanValue(Value.BOTTOM)));
-			}
+			returnList.add(
+			        new IntervalDomainEvaluationResult(new IntervalDomainValue(true), new BooleanValue(Value.BOTTOM)));
 		} else {
 			if (mContainsBoolean && returnBool.getValue() == Value.TOP) {
-				final IntervalDomainState truestate = currentState.setBooleanValue(mVariableName, true);
-				returnList.add(new IntervalDomainEvaluationResult(val, truestate, new BooleanValue(true)));
-
-				final IntervalDomainState falseState = currentState.setBooleanValue(mVariableName, false);
-				returnList.add(new IntervalDomainEvaluationResult(val, falseState, new BooleanValue(false)));
+				returnList.add(new IntervalDomainEvaluationResult(val, new BooleanValue(true)));
+				returnList.add(new IntervalDomainEvaluationResult(val, new BooleanValue(false)));
 			} else {
-				returnList.add(new IntervalDomainEvaluationResult(val, currentState, returnBool));
+				returnList.add(new IntervalDomainEvaluationResult(val, returnBool));
 			}
 		}
 
@@ -122,8 +114,7 @@ public class IntervalSingletonVariableExpressionEvaluator
 	}
 
 	@Override
-	public void addSubEvaluator(
-	        IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
 		throw new UnsupportedOperationException(
 		        "A sub evaluator cannot be added to a singleton variable expression evaluator.");
 	}
@@ -144,25 +135,16 @@ public class IntervalSingletonVariableExpressionEvaluator
 	}
 
 	@Override
-	public List<IEvaluationResult<IntervalDomainEvaluationResult>> inverseEvaluate(
-	        IEvaluationResult<IntervalDomainEvaluationResult> computedState) {
-		IntervalDomainState newState;
+	public List<IntervalDomainState> inverseEvaluate(IEvaluationResult<IntervalDomainValue> computedValue,
+	        IntervalDomainState currentState) {
+		List<IntervalDomainState> returnList = new ArrayList<>();
 
 		if (mContainsBoolean) {
-			newState = computedState.getResult().getEvaluatedState().setBooleanValue(mVariableName,
-			        computedState.getBooleanValue());
+			returnList.add(currentState.setBooleanValue(mVariableName, computedValue.getBooleanValue()));
 		} else {
-			newState = computedState.getResult().getEvaluatedState().setValue(mVariableName,
-			        computedState.getResult().getEvaluatedValue());
+			returnList.add(currentState.setValue(mVariableName, computedValue.getValue()));
 		}
 
-		final List<IEvaluationResult<IntervalDomainEvaluationResult>> result = evaluate(newState);
-		final List<IEvaluationResult<IntervalDomainEvaluationResult>> returnList = new ArrayList<>();
-
-		for (final IEvaluationResult<IntervalDomainEvaluationResult> res : result) {
-			returnList.add(new IntervalDomainEvaluationResult(res.getResult().getEvaluatedValue(),
-			        res.getResult().getEvaluatedState(), computedState.getBooleanValue()));
-		}
 		return returnList;
 	}
 }

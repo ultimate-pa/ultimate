@@ -11,5 +11,5 @@ procedure ULTIMATE.start()
         assume b == (if x >= 5 then x == 8 else x == 2);
         assert true;
 
-        assert b;
+        assert !b;
 }

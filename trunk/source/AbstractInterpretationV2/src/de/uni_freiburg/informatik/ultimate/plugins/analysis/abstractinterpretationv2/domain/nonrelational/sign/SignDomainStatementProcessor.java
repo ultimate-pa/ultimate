@@ -134,7 +134,7 @@ public class SignDomainStatementProcessor extends BoogieVisitor {
 
 			for (final IEvaluationResult<Values> res : result) {
 				final SignDomainState retState = mCurrentNewState.copy();
-				final SignDomainValue newValue = new SignDomainValue((Values) res.getResult());
+				final SignDomainValue newValue = new SignDomainValue((Values) res.getValue());
 				retState.setValue(varname, newValue);
 				mNewState.add(retState);
 			}
