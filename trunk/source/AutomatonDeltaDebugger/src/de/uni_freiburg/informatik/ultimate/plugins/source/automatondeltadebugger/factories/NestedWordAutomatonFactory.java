@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugge
 
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -62,7 +63,7 @@ public class NestedWordAutomatonFactory<LETTER, STATE>
 	protected INestedWordAutomaton<LETTER, STATE> createWithAlphabets(
 			Set<LETTER> internalAlphabet, Set<LETTER> callAlphabet,
 			Set<LETTER> returnAlphabet) {
-		return new NestedWordAutomaton<LETTER, STATE>(mServices,
+		return new NestedWordAutomaton<LETTER, STATE>(new AutomataLibraryServices(mServices),
 				internalAlphabet, callAlphabet, returnAlphabet,
 				mAutomaton.getStateFactory());
 	}

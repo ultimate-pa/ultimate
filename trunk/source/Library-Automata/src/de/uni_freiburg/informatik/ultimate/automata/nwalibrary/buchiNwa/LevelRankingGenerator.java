@@ -30,9 +30,9 @@ import java.util.Collection;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * Builder used by buchiComplementFKV to obtain TightLevelRankingStateGenerators.
@@ -43,13 +43,13 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  */
 public abstract class LevelRankingGenerator<LETTER, STATE, CONSTRAINT extends LevelRankingConstraint<LETTER, STATE>> {
 
-	protected final IUltimateServiceProvider m_Services;
+	protected final AutomataLibraryServices m_Services;
 	protected final Logger m_Logger;
 	protected final INestedWordAutomatonSimple<LETTER, STATE> m_Operand;
 	protected final int m_UserDefinedMaxRank;
 
 	public LevelRankingGenerator(
-			IUltimateServiceProvider services,
+			AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER, STATE> operand,
 			int userDefinedMaxRank) {
 		super();

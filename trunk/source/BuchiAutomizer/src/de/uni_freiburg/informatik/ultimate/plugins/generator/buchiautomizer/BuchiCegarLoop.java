@@ -41,6 +41,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -569,13 +570,13 @@ public class BuchiCegarLoop {
 	private void reduceAbstractionSize() throws OperationCanceledException, AssertionError {
 		m_BenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_NonLiveStateRemoval);
 		try {
-			m_Abstraction = (new RemoveNonLiveStates<CodeBlock, IPredicate>(m_Services, m_Abstraction)).getResult();
+			m_Abstraction = (new RemoveNonLiveStates<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), m_Abstraction)).getResult();
 		} finally {
 			m_BenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_NonLiveStateRemoval);
 		}
 		m_BenchmarkGenerator.start(BuchiCegarLoopBenchmark.s_BuchiClosure);
 		try {
-			m_Abstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) (new BuchiClosureNwa<>(m_Services, m_Abstraction));
+			m_Abstraction = (INestedWordAutomatonOldApi<CodeBlock, IPredicate>) (new BuchiClosureNwa<>(new AutomataLibraryServices(m_Services), m_Abstraction));
 //			m_Abstraction = (new RemoveDeadEnds<CodeBlock, IPredicate>(m_Services, m_Abstraction)).getResult();
 		} finally {
 			m_BenchmarkGenerator.stop(BuchiCegarLoopBenchmark.s_BuchiClosure);
@@ -607,31 +608,31 @@ public class BuchiCegarLoop {
 		switch (m_AutomataMinimization) {
 		case DelayedSimulation: {
 			BuchiReduce<CodeBlock, IPredicate> minimizeOp = new BuchiReduce<>(
-					m_Services, m_StateFactoryForRefinement, m_Abstraction);
+					new AutomataLibraryServices(m_Services), m_StateFactoryForRefinement, m_Abstraction);
 			result  = minimizeOp.getResult();
 			break;
 		}
 		case FairSimulation_WithoutSCC: {
 			ReduceBuchiFairSimulation<CodeBlock, IPredicate> minimizeOp = new ReduceBuchiFairSimulation<>(
-					m_Services, m_StateFactoryForRefinement, m_Abstraction, false);
+					new AutomataLibraryServices(m_Services), m_StateFactoryForRefinement, m_Abstraction, false);
 			result  = minimizeOp.getResult();
 			break;
 		}
 		case FairSimulation_WithSCC: {
 			ReduceBuchiFairSimulation<CodeBlock, IPredicate> minimizeOp = new ReduceBuchiFairSimulation<>(
-					m_Services, m_StateFactoryForRefinement, m_Abstraction, true);
+					new AutomataLibraryServices(m_Services), m_StateFactoryForRefinement, m_Abstraction, true);
 			result  = minimizeOp.getResult();
 			break;
 		}
 		case FairDirectSimulation: {
 			ReduceBuchiFairDirectSimulation<CodeBlock, IPredicate> minimizeOp = new ReduceBuchiFairDirectSimulation<>(
-					m_Services, m_StateFactoryForRefinement, m_Abstraction, true);
+					new AutomataLibraryServices(m_Services), m_StateFactoryForRefinement, m_Abstraction, true);
 			result  = minimizeOp.getResult();
 			break;
 		}
 		case MinimizeSevpa: {
 			MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(
-					m_Services, m_Abstraction, partition, m_StateFactoryForRefinement);
+					new AutomataLibraryServices(m_Services), m_Abstraction, partition, m_StateFactoryForRefinement);
 			assert (minimizeOp.checkResult(m_PredicateFactoryResultChecking));
 			result = minimizeOp.getResult();
 			break;
@@ -641,11 +642,11 @@ public class BuchiCegarLoop {
 			break;
 		}
 		case ShrinkNwa: {
-			ShrinkNwa<CodeBlock, IPredicate> minimizeOp = new ShrinkNwa<CodeBlock, IPredicate>(m_Services,
+			ShrinkNwa<CodeBlock, IPredicate> minimizeOp = new ShrinkNwa<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services),
 					m_StateFactoryForRefinement, m_Abstraction, partition, true, false, false, 200, false, 0,
 					false, false);
 			assert minimizeOp.checkResult(m_StateFactoryForRefinement);
-			result = (new RemoveUnreachable<CodeBlock, IPredicate>(m_Services, minimizeOp.getResult()))
+			result = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), minimizeOp.getResult()))
 					.getResult();
 			break;
 		}
@@ -711,7 +712,7 @@ public class BuchiCegarLoop {
 	}
 
 	private boolean isAbstractionCorrect() throws AutomataLibraryException {
-		BuchiIsEmpty<CodeBlock, IPredicate> ec = new BuchiIsEmpty<CodeBlock, IPredicate>(m_Services, m_Abstraction);
+		BuchiIsEmpty<CodeBlock, IPredicate> ec = new BuchiIsEmpty<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), m_Abstraction);
 		if (ec.getResult()) {
 			return true;
 		} else {
@@ -792,7 +793,7 @@ public class BuchiCegarLoop {
 				true, m_DefaultStateFactory);
 		Difference<CodeBlock, IPredicate> diff = null;
 		try {
-			diff = new Difference<CodeBlock, IPredicate>(m_Services, m_Abstraction, determinized, psd,
+			diff = new Difference<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), m_Abstraction, determinized, psd,
 					m_StateFactoryForRefinement, true);
 		} catch (AutomataLibraryException e) {
 			if (e instanceof OperationCanceledException) {
@@ -830,7 +831,7 @@ public class BuchiCegarLoop {
 		m_InterpolAutomaton = iab.getInterpolantAutomaton();
 
 		try {
-			assert ((new Accepts<CodeBlock, IPredicate>(m_Services, m_InterpolAutomaton, run.getWord())).getResult()) : "Interpolant automaton broken!";
+			assert ((new Accepts<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), m_InterpolAutomaton, run.getWord())).getResult()) : "Interpolant automaton broken!";
 		} catch (AutomataLibraryException e) {
 			throw new AssertionError(e);
 		}
@@ -925,7 +926,7 @@ public class BuchiCegarLoop {
 
 	protected static void writeAutomatonToFile(IUltimateServiceProvider services, IAutomaton<CodeBlock, IPredicate> automaton, String path,
 			String filename, Format format, String message) {
-		new AutomatonDefinitionPrinter<String, String>(services, "nwa", path + "/" + filename, format, message, automaton);
+		new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(services), "nwa", path + "/" + filename, format, message, automaton);
 	}
 
 	public BuchiAutomizerModuleDecompositionBenchmark getMDBenchmark() {

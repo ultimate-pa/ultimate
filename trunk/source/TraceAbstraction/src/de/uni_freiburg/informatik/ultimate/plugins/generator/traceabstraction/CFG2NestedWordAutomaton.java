@@ -35,6 +35,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -173,7 +174,7 @@ public class CFG2NestedWordAutomaton {
 		mLogger.debug("Step: construct the automaton");
 		// construct the automaton
 		NestedWordAutomaton<CodeBlock, IPredicate> nwa =
-			new NestedWordAutomaton<CodeBlock, IPredicate>(m_Services, 
+			new NestedWordAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), 
 					internalAlphabet,
 					callAlphabet,
 					returnAlphabet,

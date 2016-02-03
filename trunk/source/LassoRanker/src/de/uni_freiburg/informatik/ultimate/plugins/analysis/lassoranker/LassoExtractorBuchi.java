@@ -35,6 +35,7 @@ import java.util.Map;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
@@ -87,7 +88,7 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 		m_CfgAutomaton = constructCfgAutomaton(rootNode, smtManager);
 		m_SmtManager = smtManager;
 		NestedLassoRun<CodeBlock, IPredicate> run = 
-				(new BuchiIsEmpty<>(m_Services, m_CfgAutomaton)).getAcceptingNestedLassoRun();
+				(new BuchiIsEmpty<>(new AutomataLibraryServices(m_Services), m_CfgAutomaton)).getAcceptingNestedLassoRun();
 
 		if (run == null) {
 			m_LassoFound = false;
@@ -98,9 +99,9 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 			m_LassoAutomaton = (new LassoAutomatonBuilder(alphabet, 
 					m_PredicateFactory, nlw.getStem(), nlw.getLoop())).getResult();
 			INestedWordAutomaton<CodeBlock, IPredicate> difference = 
-					(new BuchiDifferenceFKV<>(m_Services, m_PredicateFactory, 
+					(new BuchiDifferenceFKV<>(new AutomataLibraryServices(m_Services), m_PredicateFactory, 
 							m_CfgAutomaton, m_LassoAutomaton)).getResult();
-			boolean isEmpty = (new BuchiIsEmpty<>(m_Services, difference)).getResult();
+			boolean isEmpty = (new BuchiIsEmpty<>(new AutomataLibraryServices(m_Services), difference)).getResult();
 			if (isEmpty) {
 				m_LassoFound = true;
 				m_Honda = extractHonda(run);
@@ -148,7 +149,7 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 				NestedWord<CodeBlock> stem,
 				NestedWord<CodeBlock> loop) throws OperationCanceledException {
 			m_Result =	new NestedWordAutomaton<CodeBlock, IPredicate>(
-							m_Services,
+					new AutomataLibraryServices(m_Services),
 							alphabet.getInternalAlphabet(),
 							alphabet.getCallAlphabet(),
 							alphabet.getReturnAlphabet(),
@@ -174,7 +175,7 @@ public class LassoExtractorBuchi extends AbstractLassoExtractor {
 			addSequenceOfStatesButFirstAndLast(loopStates);
 			m_Result.addTransitions(loop, loopStates);
 			try {
-				assert (new BuchiAccepts<>(m_Services, m_Result, new NestedLassoWord<>(stem, loop)).getResult());
+				assert (new BuchiAccepts<>(new AutomataLibraryServices(m_Services), m_Result, new NestedLassoWord<>(stem, loop)).getResult());
 			} catch (AutomataLibraryException e) {
 				throw new AssertionError(e);
 			}

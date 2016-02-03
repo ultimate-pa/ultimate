@@ -34,11 +34,11 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * This class manages the parallel computation of minimization by Hopcroft's and
@@ -162,7 +162,7 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 	 * @throws AutomataLibraryException
 	 * 				thrown by DFA check
 	 */
-	public MinimizeDfaParallel(final IUltimateServiceProvider services,
+	public MinimizeDfaParallel(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand)
 			throws AutomataLibraryException, AutomataLibraryException {
@@ -176,7 +176,7 @@ public class MinimizeDfaParallel<LETTER, STATE> extends
 	 * @param operand
 	 * 			input automaton
 	 */
-	public MinimizeDfaParallel(final IUltimateServiceProvider services,
+	public MinimizeDfaParallel(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
 		super(services, operand.getStateFactory(), "MinimizeDfaParallel",
 				operand);

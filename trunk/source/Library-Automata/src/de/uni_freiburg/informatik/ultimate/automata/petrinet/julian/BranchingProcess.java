@@ -36,15 +36,15 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 	
 	final private Collection<Condition<S, C>> conditions;
@@ -60,7 +60,7 @@ public class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	
 	private final Order<S,C> m_Order;
 
-	public BranchingProcess(IUltimateServiceProvider services,
+	public BranchingProcess(AutomataLibraryServices services,
 			PetriNetJulian<S, C> net, Order<S, C> order) {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);

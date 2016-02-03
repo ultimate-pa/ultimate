@@ -35,6 +35,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -73,7 +74,7 @@ public class CanonicalInterpolantAutomatonBuilder extends CoverageAnalysis {
 			InCaReAlphabet<CodeBlock> alphabet, SmtManager smtManager, StateFactory<IPredicate> predicateFactory,
 			Logger logger) {
 		super(services, interpolantGenerator, programPointSequence, logger);
-		m_IA = new NestedWordAutomaton<CodeBlock, IPredicate>(m_Services, alphabet.getInternalAlphabet(),
+		m_IA = new NestedWordAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), alphabet.getInternalAlphabet(),
 				alphabet.getCallAlphabet(), alphabet.getReturnAlphabet(), predicateFactory);
 		m_SmtManager = smtManager;
 	}

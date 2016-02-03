@@ -42,6 +42,7 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -58,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 /**
@@ -383,7 +383,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	/**
 	 * Service provider of Ultimate framework.
 	 */
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	/**
 	 * Holds time measures of the comparison.
 	 */
@@ -406,7 +406,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 *             If the inputed automaton is no Buechi-automaton. It must have
 	 *             an empty call and return alphabet.
 	 */
-	public CompareReduceBuchiSimulation(final IUltimateServiceProvider services, final StateFactory<STATE> stateFactory,
+	public CompareReduceBuchiSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
 		if (!operand.getCallAlphabet().isEmpty() || !operand.getReturnAlphabet().isEmpty()) {
 			throw new IllegalArgumentException(
@@ -794,7 +794,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 *            The buechi automaton to reduce
 	 */
 	private void measureMethodPerformance(final String name, final SimulationType type, final boolean useSCCs,
-			final IUltimateServiceProvider services, final long timeout, final StateFactory<STATE> stateFactory,
+			final AutomataLibraryServices services, final long timeout, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand) {
 		IProgressAwareTimer progressTimer = services.getProgressMonitorService().getChildTimer(timeout);
 		boolean timedOut = false;

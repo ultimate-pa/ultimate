@@ -32,13 +32,13 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
-import de.uni_freiburg.informatik.ultimate.automata.IOperation;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
+import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * 
@@ -57,7 +57,7 @@ public class Jeffery_Test_4<LETTER,STATE> implements IOperation<LETTER,STATE>{
 	String folder;
 	static long faster_i = 0, slower_i = 0;
 	static long timeBuffer1, timeBuffer2;
-	public Jeffery_Test_4(IUltimateServiceProvider services, StateFactory<STATE> sf,
+	public Jeffery_Test_4(AutomataLibraryServices services, StateFactory<STATE> sf,
 			INestedWordAutomatonSimple<LETTER, STATE> a, List<INestedWordAutomatonSimple<LETTER,STATE>> b) throws AutomataLibraryException, IOException{
 		folder = "/media/user_data/Java/trunk/examples/Automata/finiteAutomata/incrementalInclusion/randomCasesDumpedResults/";
 		timeBuffer1 = (new Date()).getTime();
@@ -121,7 +121,7 @@ public class Jeffery_Test_4<LETTER,STATE> implements IOperation<LETTER,STATE>{
 		
 	}
 	
-	public Jeffery_Test_4(IUltimateServiceProvider services, StateFactory<STATE> sf,
+	public Jeffery_Test_4(AutomataLibraryServices services, StateFactory<STATE> sf,
 			INestedWordAutomatonSimple<LETTER, STATE> a, List<INestedWordAutomatonSimple<LETTER,STATE>> b, String folderInput) throws AutomataLibraryException, IOException{
 		folder = folderInput;
 		timeBuffer1 = (new Date()).getTime();

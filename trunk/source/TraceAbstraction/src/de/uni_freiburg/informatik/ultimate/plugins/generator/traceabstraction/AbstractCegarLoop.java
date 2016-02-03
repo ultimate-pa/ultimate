@@ -39,6 +39,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -173,7 +174,7 @@ public abstract class AbstractCegarLoop {
 
 	protected CegarLoopBenchmarkGenerator m_CegarLoopBenchmark;
 
-	protected final IUltimateServiceProvider mServices;
+	protected final IUltimateServiceProvider m_Services;
 	//protected final IToolchainStorage m_ToolchainStorage = null; TODO: this is not what we want, is it?
 	protected final IToolchainStorage m_ToolchainStorage;
 
@@ -186,7 +187,7 @@ public abstract class AbstractCegarLoop {
 	
 	public AbstractCegarLoop(IUltimateServiceProvider services, IToolchainStorage storage, String name, RootNode rootNode, SmtManager smtManager,
 			TAPreferences taPrefs, Collection<ProgramPoint> errorLocs, Logger logger) {
-		mServices = services;
+		m_Services = services;
 		mLogger = logger;
 		this.m_PrintAutomataLabeling = taPrefs.getAutomataFormat();
 		m_ModGlobVarManager = rootNode.getRootAnnot().getModGlobVarManager();
@@ -408,7 +409,7 @@ public abstract class AbstractCegarLoop {
 			mLogger.info("Interpolant automaton has " + m_InterpolAutomaton.sizeInformation());
 
 			if (m_Pref.computeHoareAnnotation()) {
-				assert (new InductivityCheck(mServices, (INestedWordAutomaton) m_Abstraction,
+				assert (new InductivityCheck(m_Services, (INestedWordAutomaton) m_Abstraction,
 						false, true, new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult() : "Not inductive";
 			}
 
@@ -441,7 +442,7 @@ public abstract class AbstractCegarLoop {
 	}
 
 	protected void writeAutomatonToFile(IAutomaton<CodeBlock, IPredicate> automaton, String filename) {
-		new AutomatonDefinitionPrinter<String, String>(mServices, filename, m_Pref.dumpPath() + "/" + filename, m_PrintAutomataLabeling,
+		new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(m_Services), filename, m_Pref.dumpPath() + "/" + filename, m_PrintAutomataLabeling,
 				"", automaton);
 	}
 

@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -40,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incremental_inclusion.AbstractIncrementalInclusionCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * 
@@ -60,7 +60,7 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 	private List<INestedWordAutomatonSimple<LETTER, STATE>> local_m_B;
 	private ArrayList<INestedWordAutomatonSimple<LETTER,STATE>> local_m_B2;
 	private StateFactory<STATE> localStateFactory;
-	private IUltimateServiceProvider localServiceProvider;
+	private AutomataLibraryServices localServiceProvider;
 	private ArrayList<STATE> newBnStates;
 	//public HashMap<STATE,ArrayList<NodeData<LETTER,STATE>>> completeTree,currentTree,terminalNodes;
 	//public HashMap<STATE,HashMap<NodeData<LETTER,STATE>,ArrayList<NodeData<LETTER,STATE>>>> coverage;
@@ -132,7 +132,7 @@ public class IncrementalInclusionCheck3_2<LETTER,STATE> extends AbstractIncremen
 		//currentTerminalLeafs = null;
 		//run();
 	}
-	public IncrementalInclusionCheck3_2(IUltimateServiceProvider services, StateFactory<STATE> sf,
+	public IncrementalInclusionCheck3_2(AutomataLibraryServices services, StateFactory<STATE> sf,
 			INestedWordAutomatonSimple<LETTER, STATE> a, List<INestedWordAutomatonSimple<LETTER,STATE>> b) throws AutomataLibraryException{
 		super(services,a);
 		IncrementalInclusionCheck2.abortIfContainsCallOrReturn(a);

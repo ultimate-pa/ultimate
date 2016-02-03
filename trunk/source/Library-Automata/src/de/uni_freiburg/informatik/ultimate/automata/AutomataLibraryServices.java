@@ -46,11 +46,11 @@ public class AutomataLibraryServices {
 		m_ProgressMonitorService = ultimareServices.getProgressMonitorService();
 	}
 	
-	ILoggingService getLoggingService() {
+	public ILoggingService getLoggingService() {
 		return m_LoggingService;
 	}
 
-	IProgressMonitorService getProgressMonitorService() {
+	public IProgressMonitorService getProgressMonitorService() {
 		return m_ProgressMonitorService;
 	}
 

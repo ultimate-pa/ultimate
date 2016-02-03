@@ -36,6 +36,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -112,11 +113,11 @@ public class BuchiInterpolantAutomaton implements INestedWordAutomatonSimple<Cod
 		m_Services = services;
 		m_SmtManager = smtManager;
 		m_EdgeChecker = edgeChecker;
-		m_InputSuccessorCache = new NestedWordAutomatonCache<CodeBlock, IPredicate>(m_Services, abstraction.getInternalAlphabet(),
+		m_InputSuccessorCache = new NestedWordAutomatonCache<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), abstraction.getInternalAlphabet(),
 				abstraction.getCallAlphabet(), abstraction.getReturnAlphabet(), predicateFactory);
-		m_RejectionCache = new NestedWordAutomatonCache<CodeBlock, IPredicate>(m_Services, abstraction.getInternalAlphabet(),
+		m_RejectionCache = new NestedWordAutomatonCache<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), abstraction.getInternalAlphabet(),
 				abstraction.getCallAlphabet(), abstraction.getReturnAlphabet(), predicateFactory);
-		m_Result = new NestedWordAutomatonCache<CodeBlock, IPredicate>(m_Services, abstraction.getInternalAlphabet(),
+		m_Result = new NestedWordAutomatonCache<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), abstraction.getInternalAlphabet(),
 				abstraction.getCallAlphabet(), abstraction.getReturnAlphabet(), predicateFactory);
 		m_InputStemPredicates = new HashSet<IPredicate>();
 		m_InputLoopPredicates = new HashSet<IPredicate>();
@@ -786,7 +787,7 @@ public class BuchiInterpolantAutomaton implements INestedWordAutomatonSimple<Cod
 	@Override
 	public String toString() {
 		if (m_ComputationFinished) {
-			return (new AutomatonDefinitionPrinter<String, String>(m_Services, "nwa", Format.ATS, this)).getDefinitionAsString();
+			return (new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(m_Services), "nwa", Format.ATS, this)).getDefinitionAsString();
 		} else {
 			return "automaton under construction";
 		}

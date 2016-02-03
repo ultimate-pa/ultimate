@@ -37,6 +37,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
@@ -110,7 +111,7 @@ public class Never2Automaton {
 		mUseSBE = ups.getBoolean(PreferenceInitializer.LABEL_OPTIMIZE_SBE);
 		mRewriteAssumeDuringSBE = ups.getBoolean(PreferenceInitializer.LABEL_OPTIMIZE_REWRITEASSUME);
 
-		mAutomaton = new NestedWordAutomaton<CodeBlock, String>(mServices, collectAlphabet(), null, // call
+		mAutomaton = new NestedWordAutomaton<CodeBlock, String>(new AutomataLibraryServices(mServices), collectAlphabet(), null, // call
 				null, // return
 				new DummyStateFactory<String>());
 

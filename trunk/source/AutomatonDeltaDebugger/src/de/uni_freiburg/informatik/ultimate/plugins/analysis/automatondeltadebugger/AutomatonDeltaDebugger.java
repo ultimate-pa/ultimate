@@ -34,6 +34,7 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiClosureNwa;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
@@ -130,7 +131,7 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 			@Override
 			public void execute(INestedWordAutomaton<LETTER, STATE> automaton)
 					throws Throwable {
-				new BuchiClosureNwa<LETTER, STATE>(mServices, automaton);
+				new BuchiClosureNwa<LETTER, STATE>(new AutomataLibraryServices(mServices), automaton);
 			}
 		};
 	}

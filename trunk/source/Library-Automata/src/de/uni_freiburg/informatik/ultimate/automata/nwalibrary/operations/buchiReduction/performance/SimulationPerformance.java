@@ -30,6 +30,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.ASimulation;
+
 /**
  * Class that is used by {@link ASimulation} to measure its performance. Has
  * timer and counter to save performance data.

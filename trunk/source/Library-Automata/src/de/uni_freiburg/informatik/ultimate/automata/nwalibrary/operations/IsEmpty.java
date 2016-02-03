@@ -37,6 +37,7 @@ import java.util.Stack;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -49,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
 
 
@@ -70,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.util.Utils;
  */
 
 public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 	
 	@Override
@@ -244,7 +244,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * Default constructor. Here we search a run from the initial states
 	 * of the automaton to the final states of the automaton.
 	 */
-	public IsEmpty(IUltimateServiceProvider services,
+	public IsEmpty(AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER,STATE> nwa) {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
@@ -264,7 +264,7 @@ public class IsEmpty<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * startStates defines where the run that we search has to start. The set
 	 * of goalStates defines where the run that we search has to end.
 	 */
-	public IsEmpty(IUltimateServiceProvider services,
+	public IsEmpty(AutomataLibraryServices services,
 			INestedWordAutomaton<LETTER,STATE> nwa, 
 			Set<STATE> startStates, Set<STATE> goalStates) {
 		m_Services = services;

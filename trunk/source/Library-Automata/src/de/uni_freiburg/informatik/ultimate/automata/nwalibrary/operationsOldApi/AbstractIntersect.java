@@ -34,13 +34,13 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 
 
@@ -100,7 +100,7 @@ public abstract class AbstractIntersect<LETTER,STATE> extends DoubleDeckerBuilde
 
 	
 
-	public AbstractIntersect(IUltimateServiceProvider services,
+	public AbstractIntersect(AutomataLibraryServices services,
 			boolean buchiIntersection, boolean minimizeResult,
 					 INestedWordAutomatonOldApi<LETTER,STATE> fstNwa,
 					 INestedWordAutomatonOldApi<LETTER,STATE> sndNwa) throws AutomataLibraryException {

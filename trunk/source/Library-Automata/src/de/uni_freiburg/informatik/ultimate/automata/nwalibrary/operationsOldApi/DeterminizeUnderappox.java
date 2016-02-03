@@ -30,11 +30,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 
 /**
@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
 
 public class DeterminizeUnderappox<LETTER,STATE> extends DeterminizeDD<LETTER, STATE> {
 
-	public DeterminizeUnderappox(IUltimateServiceProvider services,
+	public DeterminizeUnderappox(AutomataLibraryServices services,
 			INestedWordAutomatonOldApi<LETTER,STATE> input,
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer)
 			throws AutomataLibraryException {

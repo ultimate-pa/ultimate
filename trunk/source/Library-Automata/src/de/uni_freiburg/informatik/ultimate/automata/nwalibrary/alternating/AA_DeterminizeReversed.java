@@ -31,14 +31,14 @@ import java.util.Collections;
 import java.util.LinkedList;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 public class AA_DeterminizeReversed<LETTER> implements IOperation<LETTER, BitSet>{
 
-	public AA_DeterminizeReversed(IUltimateServiceProvider ultimateServiceProvider, AlternatingAutomaton<LETTER, BitSet> alternatingAutomaton){
+	public AA_DeterminizeReversed(AutomataLibraryServices ultimateServiceProvider, AlternatingAutomaton<LETTER, BitSet> alternatingAutomaton){
 		resultAutomaton = new NestedWordAutomaton<LETTER, BitSet>(
 				ultimateServiceProvider,
 				alternatingAutomaton.getAlphabet(),

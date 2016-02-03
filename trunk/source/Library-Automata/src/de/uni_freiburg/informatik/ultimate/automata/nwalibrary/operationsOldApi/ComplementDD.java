@@ -29,16 +29,16 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 public class ComplementDD<LETTER, STATE> implements IOperation<LETTER, STATE> {
 
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 
 	protected INestedWordAutomatonOldApi<LETTER, STATE> m_Operand;
@@ -67,7 +67,7 @@ public class ComplementDD<LETTER, STATE> implements IOperation<LETTER, STATE> {
 		return m_Result;
 	}
 
-	public ComplementDD(IUltimateServiceProvider services,
+	public ComplementDD(AutomataLibraryServices services,
 			StateFactory<STATE> stateFactory,
 			INestedWordAutomatonOldApi<LETTER, STATE> operand)
 			throws AutomataLibraryException {

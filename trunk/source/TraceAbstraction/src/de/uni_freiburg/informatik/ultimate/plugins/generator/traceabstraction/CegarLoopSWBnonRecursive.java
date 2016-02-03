@@ -38,6 +38,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonEpimorphism;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
@@ -199,7 +200,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		// automaton
 		m_NestedAbstraction = (INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction;
 
-		m_DoubleDeckerAbstraction = (new RemoveUnreachable<CodeBlock, IPredicate>(mServices, 
+		m_DoubleDeckerAbstraction = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), 
 				(INestedWordAutomatonSimple<CodeBlock, IPredicate>) m_Abstraction)).getResult();
 		// (IDoubleDeckerAutomaton<CodeBlock, IPredicate>) m_Abstraction.get;
 
@@ -207,7 +208,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		m_CounterExamplePath = (NestedRun<CodeBlock, IPredicate>) m_Counterexample;
 
 		// create an new interpolant automaton
-		m_InterpolAutomaton = new NestedWordAutomaton<CodeBlock, IPredicate>(mServices, m_NestedAbstraction.getAlphabet(),
+		m_InterpolAutomaton = new NestedWordAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), m_NestedAbstraction.getAlphabet(),
 				m_NestedAbstraction.getCallAlphabet(), m_NestedAbstraction.getReturnAlphabet(),
 				m_NestedAbstraction.getStateFactory());
 
@@ -215,7 +216,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		m_AbstractionInitialState = m_InterpolantGenerator.getPrecondition();
 		m_AbstractionFinalState = m_InterpolantGenerator.getPostcondition();
 		m_PredicateUnifier = m_InterpolantGenerator.getPredicateUnifier();
-		m_Epimorphism = new AutomatonEpimorphism<>(mServices);
+		m_Epimorphism = new AutomatonEpimorphism<>(new AutomataLibraryServices(m_Services));
 
 		// // / debugging
 		// {
@@ -331,7 +332,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 		mLogger.debug("Epimorphism:");
 		m_Epimorphism.Print();
 
-		assert (new InductivityCheck(mServices, m_InterpolAutomaton, false, true,
+		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true,
 				new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult() : "Not inductive";
 
 		m_nofStates.add(m_Abstraction.size());
@@ -591,7 +592,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 										 * parameter he set the argument to
 										 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this
 										 * to another value.
-										 */AssertCodeBlockOrder.NOT_INCREMENTALLY,mServices, false, m_PredicateUnifier,
+										 */AssertCodeBlockOrder.NOT_INCREMENTALLY,m_Services, false, m_PredicateUnifier,
 											m_Pref.interpolation(), true);
 
 		this.m_InterpolantGenerator = traceChecker;
@@ -713,7 +714,7 @@ public class CegarLoopSWBnonRecursive extends BasicCegarLoop {
 	 */
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
-		SuperDifference<CodeBlock, IPredicate> diff = new SuperDifference<CodeBlock, IPredicate>(mServices, m_NestedAbstraction,
+		SuperDifference<CodeBlock, IPredicate> diff = new SuperDifference<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), m_NestedAbstraction,
 				m_InterpolAutomaton, m_Epimorphism, false);
 
 		m_Abstraction = diff.getResult();

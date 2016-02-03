@@ -31,7 +31,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 
 /**
  * Special case of NestedWordAutomaton in which we can partition the set of
@@ -58,7 +58,7 @@ public class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> {
 	@Deprecated
 	Map<STATE,Set<STATE>> m_Entry2CallPredecessors = new HashMap<STATE,Set<STATE>>();
 
-	public Senwa(IUltimateServiceProvider services,
+	public Senwa(AutomataLibraryServices services,
 			Set<LETTER> internalAlphabet,
 			Set<LETTER> callAlphabet, Set<LETTER> returnAlphabet,
 			StateFactory<STATE> stateFactory) {

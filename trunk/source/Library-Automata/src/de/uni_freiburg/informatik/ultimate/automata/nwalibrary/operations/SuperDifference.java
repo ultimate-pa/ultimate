@@ -32,6 +32,7 @@ import java.util.HashMap;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonEpimorphism;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
@@ -43,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Transitionlet;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * Given two nondeterministic NWAs nwa_minuend and nwa_subtrahend a
@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
 
 public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE> 
 {
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	/* *** *** *** Fields *** *** *** */
 
 	// For status output
@@ -128,7 +128,7 @@ public class SuperDifference<LETTER, STATE> implements IOperation<LETTER, STATE>
 	 * @throws OperationCanceledException
 	 */
 	public SuperDifference(
-			IUltimateServiceProvider services,
+			AutomataLibraryServices services,
 			INestedWordAutomaton<LETTER, STATE> minuend,
 			INestedWordAutomaton<LETTER, STATE> subtrahend,
 			AutomatonEpimorphism<STATE> automatonEpimorhpism, 
