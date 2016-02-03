@@ -248,10 +248,12 @@ public class BasicTransformer {
 	}
 	
 	protected PhaseEventAutomata BeforeInvariantPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
+		//Before R it is always the case that if S holds then P holds as well.
 		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
-    		    new CounterTrace.DCPhase(p.negate()),
-    		    new CounterTrace.DCPhase(p.and(s.negate()).and(q.negate())),
-    		    new CounterTrace.DCPhase(p.negate()),
+    		    new CounterTrace.DCPhase(r.negate()),
+    		    new CounterTrace.DCPhase(s.and(r.negate()).and(p.negate())),
+    		    new CounterTrace.DCPhase(r.negate()),
+    		    new CounterTrace.DCPhase(r),
     		    new CounterTrace.DCPhase()
     		 });    	
     		return compiler.compile("TAbsenceBefore", ct);
