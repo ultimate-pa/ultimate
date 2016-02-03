@@ -38,6 +38,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchi
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -45,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.ASimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationType;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * Simulation that realizes <b>delayed simulation</b> for reduction of a given
@@ -111,7 +111,7 @@ public final class DelayedSimulation<LETTER, STATE> extends ASimulation<LETTER, 
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public DelayedSimulation(final IUltimateServiceProvider services, final IProgressAwareTimer progressTimer,
+	public DelayedSimulation(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
 		super(progressTimer, logger, useSCCs, stateFactory, SimulationType.DELAYED);

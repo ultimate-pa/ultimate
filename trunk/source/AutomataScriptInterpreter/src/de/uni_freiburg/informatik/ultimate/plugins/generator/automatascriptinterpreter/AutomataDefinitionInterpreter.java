@@ -45,6 +45,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AlternatingAutomaton;
@@ -199,7 +200,7 @@ public class AutomataDefinitionInterpreter {
 		Set<String> returnAlphabet = new HashSet<String>(nwa.getReturnAlphabet());
 		
 		NestedWordAutomaton<String, String> nw = new NestedWordAutomaton<String, String>(
-				mServices,
+				new AutomataLibraryServices(mServices),
 				Collections.unmodifiableSet(internalAlphabet), 
 				Collections.unmodifiableSet(callAlphabet), 
 				Collections.unmodifiableSet(returnAlphabet), 
@@ -271,7 +272,7 @@ public class AutomataDefinitionInterpreter {
 	public void interpret(PetriNetAutomatonAST pna) throws IllegalArgumentException {
 		mErrorLocation = pna.getLocation();
 		PetriNetJulian<String, String> net = new PetriNetJulian<String, String>(
-				mServices,
+				new AutomataLibraryServices(mServices),
 				new HashSet<String>(pna.getAlphabet()), 
 				new StringFactory(), false);
 		Map<String, Place<String, String>> name2places = new HashMap<String, Place<String, String>>();

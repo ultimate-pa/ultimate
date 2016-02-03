@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PrefixProduct;
@@ -46,11 +47,11 @@ public class Cfg2NetJulian extends CFG2Automaton {
 		super(rootNode, contentFactory, smtManager, services);
 		
 		constructProcedureAutomata();
-		m_Result = new PetriNetJulian<CodeBlock,IPredicate>(services,m_Automata.get(0));
+		m_Result = new PetriNetJulian<CodeBlock,IPredicate>(new AutomataLibraryServices(services), m_Automata.get(0));
 //		new TestFileWriter<TransAnnot, Predicate>(m_Automata.get(0), true);
 		for (int i=1; i<m_Automata.size(); i++) {
 			m_Result = (new PrefixProduct<CodeBlock,IPredicate>(
-					services, m_Result, m_Automata.get(i)).getResult());
+					new AutomataLibraryServices(services), m_Result, m_Automata.get(i)).getResult());
 //			new TestFileWriter<TransAnnot, Predicate>(m_Automata.get(i), true);
 		}
 	}

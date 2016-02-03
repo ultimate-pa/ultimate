@@ -37,6 +37,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
@@ -49,11 +50,10 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.petruchio.EmptinessPetruchio;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 
 	@SuppressWarnings("unused")
 	private final Logger m_Logger;
@@ -73,7 +73,7 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	 */
 	private final boolean m_ConstantTokenAmount;
 
-	public PetriNetJulian(IUltimateServiceProvider services, Set<S> alphabet,
+	public PetriNetJulian(AutomataLibraryServices services, Set<S> alphabet,
 			StateFactory<C> stateFactory, boolean constantTokenAmount) {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
@@ -83,7 +83,7 @@ public class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 		assert (!constantTokenAmount() || transitionsPreserveTokenAmount());
 	}
 
-	public PetriNetJulian(IUltimateServiceProvider services, 
+	public PetriNetJulian(AutomataLibraryServices services, 
 			INestedWordAutomatonOldApi<S, C> nwa)
 			throws AutomataLibraryException {
 		m_Services = services;

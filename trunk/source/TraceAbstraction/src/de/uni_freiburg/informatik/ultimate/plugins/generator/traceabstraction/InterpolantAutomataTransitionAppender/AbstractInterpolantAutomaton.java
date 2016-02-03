@@ -32,6 +32,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -128,7 +129,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 		m_InSucComp = new InternalSuccessorComputationHelper();
 		m_CaSucComp = new CallSuccessorComputationHelper();
 		m_ReSucComp = new ReturnSuccessorComputationHelper();
-		m_AlreadyConstrucedAutomaton = new NestedWordAutomatonCache<CodeBlock, IPredicate>(m_Services, abstraction.getInternalAlphabet(),
+		m_AlreadyConstrucedAutomaton = new NestedWordAutomatonCache<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), abstraction.getInternalAlphabet(),
 				abstraction.getCallAlphabet(), abstraction.getReturnAlphabet(), abstraction.getStateFactory());
 		if (useEfficientTotalAutomatonBookkeeping) {
 			m_SuccessorComputationBookkeeping = new SuccessorComputationBookkeepingForTotalAutomata();
@@ -330,7 +331,7 @@ public abstract class AbstractInterpolantAutomaton implements INestedWordAutomat
 	@Override
 	public final String toString() {
 		if (m_Mode == Mode.READ_ONLY) {
-			return (new AutomatonDefinitionPrinter<String, String>(m_Services, "nwa", Format.ATS, this)).getDefinitionAsString();
+			return (new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(m_Services), "nwa", Format.ATS, this)).getDefinitionAsString();
 		} else {
 			return "automaton under construction";
 		}

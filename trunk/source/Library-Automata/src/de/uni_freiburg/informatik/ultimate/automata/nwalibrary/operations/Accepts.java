@@ -30,12 +30,12 @@ import java.util.Set;
 import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * Check if word is accepted by automaton.
@@ -59,7 +59,7 @@ public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 	private final boolean m_InputIsSuffixOfAcceptedWord;
 	private boolean m_IsAccepted;
 
-	public Accepts(IUltimateServiceProvider services,
+	public Accepts(AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER,STATE> automaton, NestedWord<LETTER> word,
 			boolean prefixOfIntputIsAccepted,
 			boolean inputIsSuffixOfAcceptedWord) throws AutomataLibraryException {
@@ -72,7 +72,7 @@ public class Accepts<LETTER,STATE> extends AbstractAcceptance<LETTER,STATE>
 		m_IsAccepted = isAccepted();
 		m_Logger.info(exitMessage());
 	}
-	public Accepts(IUltimateServiceProvider services,
+	public Accepts(AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER,STATE> automaton, NestedWord<LETTER> word) throws AutomataLibraryException {
 		this(services, automaton, word, false, false);
 	}

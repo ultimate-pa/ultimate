@@ -39,13 +39,13 @@ import java.util.Map.Entry;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * Class for minimize deterministic finite automaton by the Hopcroft -
@@ -61,7 +61,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> implements IMinimize,
 	// Logger for debug - information.
 	private final Logger m_Logger;
 	// Service provider
-	private final IUltimateServiceProvider m_services;
+	private final AutomataLibraryServices m_services;
 	// Result automaton.
 	private INestedWordAutomaton<LETTER, STATE> m_result;
 	// Input automaton.
@@ -85,7 +85,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> implements IMinimize,
 	private int[] m_state2representative;
 
 	// Constructor.
-	public MinimizeDfaHopcroftWiki(IUltimateServiceProvider services, INestedWordAutomaton<LETTER, STATE> operand) {
+	public MinimizeDfaHopcroftWiki(AutomataLibraryServices services, INestedWordAutomaton<LETTER, STATE> operand) {
 		this.m_services = services;
 		this.m_Logger = m_services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		this.m_operand = operand;

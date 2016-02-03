@@ -36,6 +36,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
@@ -46,11 +47,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 	
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	
 	@Override
 	public String operationName() {
@@ -97,7 +97,7 @@ public class DifferenceBlackAndWhite<S,C> implements IOperation<S,C> {
 			" Result " + m_Result.sizeInformation();
 	}
 	
-	public DifferenceBlackAndWhite(IUltimateServiceProvider services,
+	public DifferenceBlackAndWhite(AutomataLibraryServices services,
 									PetriNetJulian<S,C> net, 
 								   NestedWordAutomaton<S,C> nwa) {
 		m_Services = services;

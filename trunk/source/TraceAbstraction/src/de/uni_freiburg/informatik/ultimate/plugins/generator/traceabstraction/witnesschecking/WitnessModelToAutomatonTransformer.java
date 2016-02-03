@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -51,7 +52,7 @@ public class WitnessModelToAutomatonTransformer {
 		Set<WitnessEdge> returnAlphabet = Collections.emptySet();
 		StateFactory<WitnessNode> stateFactory = new StateFactory<WitnessNode>() {
 		};
-		m_Result = new NestedWordAutomaton<WitnessEdge, WitnessNode>(services, internalAlphabet, callAlphabet, returnAlphabet, stateFactory);
+		m_Result = new NestedWordAutomaton<WitnessEdge, WitnessNode>(new AutomataLibraryServices(services), internalAlphabet, callAlphabet, returnAlphabet, stateFactory);
 		constructAutomaton(internalAlphabet);
 	}
 

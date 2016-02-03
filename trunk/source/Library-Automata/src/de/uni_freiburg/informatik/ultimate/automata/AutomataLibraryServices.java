@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
  * 
@@ -26,17 +26,32 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
-import org.apache.log4j.Logger;
+import de.uni_freiburg.informatik.ultimate.core.services.model.ILoggingService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressMonitorService;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
-public abstract class AbstractOperation<LETTER,STATE> implements IOperation<LETTER,STATE> {
-
-	protected final Logger mLogger;
-	protected final AutomataLibraryServices mServices;
+/**
+ * Wrapper for ILoggingService and IProgressMonitorService that are used in
+ * the automata library.
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ *
+ */
+public class AutomataLibraryServices {
 	
+	private final ILoggingService m_LoggingService;
+	private final IProgressMonitorService m_ProgressMonitorService;
 	
-	protected AbstractOperation(Logger logger, AutomataLibraryServices services){
-		mLogger = logger;
-		mServices = services;
+	public AutomataLibraryServices(IUltimateServiceProvider ultimareServices) {
+		m_LoggingService = ultimareServices.getLoggingService();
+		m_ProgressMonitorService = ultimareServices.getProgressMonitorService();
 	}
 	
+	public ILoggingService getLoggingService() {
+		return m_LoggingService;
+	}
+
+	public IProgressMonitorService getProgressMonitorService() {
+		return m_ProgressMonitorService;
+	}
+
 }

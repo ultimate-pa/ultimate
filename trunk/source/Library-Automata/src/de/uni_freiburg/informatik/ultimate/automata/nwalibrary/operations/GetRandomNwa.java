@@ -38,12 +38,12 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * Class that provides the method {@code generateAutomaton()} for randomly
@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  */
 public class GetRandomNwa implements IOperation<String,String> {
 	
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 	
 	private final Random m_Random;
@@ -76,7 +76,7 @@ public class GetRandomNwa implements IOperation<String,String> {
 	 * @param returnTransitionProbability
 	 * @param acceptanceDensity
 	 */
-	public GetRandomNwa(IUltimateServiceProvider services,
+	public GetRandomNwa(AutomataLibraryServices services,
 			int alphabetSize, int size, 
 			double internalTransitionDensity,
 			double callTransitionProbability,
@@ -108,7 +108,7 @@ public class GetRandomNwa implements IOperation<String,String> {
 	 * @param returnTransitionProbability
 	 * @param acceptanceDensity
 	 */
-	public GetRandomNwa(IUltimateServiceProvider services,
+	public GetRandomNwa(AutomataLibraryServices services,
 			int alphabetSize, int size, 
 			int internalTransitionDensity,
 			int callTransitionProbability,

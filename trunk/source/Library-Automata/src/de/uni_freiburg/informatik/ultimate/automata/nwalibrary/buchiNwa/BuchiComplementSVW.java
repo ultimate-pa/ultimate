@@ -30,12 +30,12 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * Büchi complementation based on the method of Sistla, Vardi, Wolper: <br>
@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  */
 public class BuchiComplementSVW<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 	
 	private INestedWordAutomatonOldApi<LETTER,STATE> m_Operand;
@@ -75,7 +75,7 @@ public class BuchiComplementSVW<LETTER,STATE> implements IOperation<LETTER,STATE
 				m_Result.sizeInformation();
 	}
 		
-	public BuchiComplementSVW(IUltimateServiceProvider services,
+	public BuchiComplementSVW(AutomataLibraryServices services,
 			INestedWordAutomatonOldApi<LETTER,STATE> operand)
 			throws AutomataLibraryException {
 		m_Services = services;

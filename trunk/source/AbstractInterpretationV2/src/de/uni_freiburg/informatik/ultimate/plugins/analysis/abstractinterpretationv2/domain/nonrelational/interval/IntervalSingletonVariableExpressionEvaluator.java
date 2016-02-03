@@ -92,25 +92,28 @@ public class IntervalSingletonVariableExpressionEvaluator
 			val = currentState.getValue(mVariableName);
 		}
 
-		if (val.isBottom()) {
-			returnList.add(new IntervalDomainEvaluationResult(new IntervalDomainValue(true), currentState,
-			        new BooleanValue(BooleanValue.Value.BOTTOM)));
+		if (val.isBottom() || returnBool.isBottom()) {
+			if (mContainsBoolean) {
+				returnList.add(new IntervalDomainEvaluationResult(new IntervalDomainValue(true),
+				        currentState.setBooleanValue(mVariableName, returnBool), returnBool));
+			} else {
+				returnList.add(new IntervalDomainEvaluationResult(val, currentState.setValue(mVariableName, val),
+				        new BooleanValue(Value.BOTTOM)));
+			}
 		} else {
 			if (mContainsBoolean && returnBool.getValue() == Value.TOP) {
 				final IntervalDomainState truestate = currentState.setBooleanValue(mVariableName, true);
-				returnList.add(new IntervalDomainEvaluationResult(
-				        new IntervalDomainValue(val.getLower(), val.getUpper()), truestate, new BooleanValue(true)));
+				returnList.add(new IntervalDomainEvaluationResult(val, truestate, new BooleanValue(true)));
 
 				final IntervalDomainState falseState = currentState.setBooleanValue(mVariableName, false);
-				returnList.add(new IntervalDomainEvaluationResult(
-				        new IntervalDomainValue(val.getLower(), val.getUpper()), falseState, new BooleanValue(false)));
+				returnList.add(new IntervalDomainEvaluationResult(val, falseState, new BooleanValue(false)));
 			} else {
-				returnList.add(new IntervalDomainEvaluationResult(
-				        new IntervalDomainValue(val.getLower(), val.getUpper()), currentState, returnBool));
+				returnList.add(new IntervalDomainEvaluationResult(val, currentState, returnBool));
 			}
 		}
 
 		return returnList;
+
 	}
 
 	@Override

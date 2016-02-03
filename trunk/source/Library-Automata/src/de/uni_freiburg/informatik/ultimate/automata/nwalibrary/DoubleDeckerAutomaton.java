@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DoubleDeckerVisitor.ReachFinal;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 public class DoubleDeckerAutomaton<LETTER, STATE> extends NestedWordAutomaton<LETTER, STATE> 
 							implements IDoubleDeckerAutomaton<LETTER, STATE> {
@@ -38,7 +38,7 @@ public class DoubleDeckerAutomaton<LETTER, STATE> extends NestedWordAutomaton<LE
 	
 	private Map<STATE,Map<STATE,ReachFinal>> m_Up2Down;
 	
-	public DoubleDeckerAutomaton(IUltimateServiceProvider services, 
+	public DoubleDeckerAutomaton(AutomataLibraryServices services, 
 			Set<LETTER> internalAlphabet,
 			Set<LETTER> callAlphabet,
 			Set<LETTER> returnAlphabet,

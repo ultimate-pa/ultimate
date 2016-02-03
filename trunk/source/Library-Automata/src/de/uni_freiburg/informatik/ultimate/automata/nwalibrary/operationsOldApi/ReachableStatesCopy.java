@@ -32,18 +32,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.DownStateConsistencyCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTER, STATE>
 		implements IOperation<LETTER,STATE> {
@@ -63,7 +61,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 	 * @param nwa
 	 * @throws OperationCanceledException
 	 */
-	public ReachableStatesCopy(IUltimateServiceProvider services,
+	public ReachableStatesCopy(AutomataLibraryServices services,
 			INestedWordAutomatonOldApi<LETTER,STATE> nwa,
 			boolean totalize, boolean complement,
 			boolean removeDeadEnds, boolean removeNonLiveStates)
@@ -92,7 +90,7 @@ public class ReachableStatesCopy<LETTER,STATE> extends DoubleDeckerBuilder<LETTE
 	}
 	
 	
-	public ReachableStatesCopy(IUltimateServiceProvider services,
+	public ReachableStatesCopy(AutomataLibraryServices services,
 			INestedWordAutomatonOldApi<LETTER,STATE> nwa)
 			throws AutomataLibraryException {
 		super(services);

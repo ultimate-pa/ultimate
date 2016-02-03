@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -36,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Determinize;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * This class implements Brzozowski's minimization algorithm.
@@ -73,7 +73,7 @@ public class MinimizeBrzozowski<LETTER, STATE>
 	 * @param operand input (finite, possibly nondeterministic) automaton
 	 * @throws OperationCanceledException thrown when execution is cancelled
 	 */
-	public MinimizeBrzozowski(IUltimateServiceProvider services,
+	public MinimizeBrzozowski(AutomataLibraryServices services,
 			StateFactory<STATE> stateFactory, 
 			INestedWordAutomaton<LETTER, STATE> operand)
 			throws AutomataLibraryException {

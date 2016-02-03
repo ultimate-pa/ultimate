@@ -33,6 +33,7 @@ import java.util.TreeMap;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -219,7 +220,7 @@ public class FlowSensitiveFaultLocalizer {
 			Set<IPredicate> possibleEndPoints, INestedWordAutomaton<CodeBlock, 
 			IPredicate> cfg) {
 		try {
-			return (new IsEmpty<CodeBlock, IPredicate>(m_Services, cfg, 
+			return (new IsEmpty<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), cfg, 
 					Collections.singleton(startPoint), possibleEndPoints)).getNestedRun();
 		} catch (OperationCanceledException e) {
 			throw new ToolchainCanceledException(getClass());

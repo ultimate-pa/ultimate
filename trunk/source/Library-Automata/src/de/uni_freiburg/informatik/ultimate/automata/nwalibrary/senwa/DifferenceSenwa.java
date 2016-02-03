@@ -35,6 +35,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -52,14 +53,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DifferenceState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa.SenwaWalker.ISuccessorVisitor;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 public class DifferenceSenwa<LETTER, STATE> implements 
 								ISuccessorVisitor<LETTER, STATE>,
 								IOperation<LETTER, STATE>,
 								IOpWithDelayedDeadEndRemoval<LETTER, STATE>{
 	
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 		
 	private final INestedWordAutomatonOldApi<LETTER,STATE> minuend;
@@ -116,7 +116,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 	
 	
 	
-	public DifferenceSenwa(IUltimateServiceProvider services,
+	public DifferenceSenwa(AutomataLibraryServices services,
 			INestedWordAutomatonOldApi<LETTER,STATE> minuend,
 			INestedWordAutomatonOldApi<LETTER,STATE> subtrahend)
 					throws AutomataLibraryException {
@@ -140,7 +140,7 @@ public class DifferenceSenwa<LETTER, STATE> implements
 	
 	
 	public DifferenceSenwa(
-			IUltimateServiceProvider services,
+			AutomataLibraryServices services,
 			INestedWordAutomaton<LETTER,STATE> minuend,
 			INestedWordAutomaton<LETTER,STATE> subtrahend,
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer,

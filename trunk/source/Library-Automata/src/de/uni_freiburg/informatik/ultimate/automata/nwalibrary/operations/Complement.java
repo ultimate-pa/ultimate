@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
@@ -38,12 +39,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ComplementDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IntersectDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 
 public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 	
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_Operand;
@@ -74,7 +74,7 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 	
-	public Complement(IUltimateServiceProvider services,
+	public Complement(AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER,STATE> operand, 
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer, 
 			StateFactory<STATE> sf) throws AutomataLibraryException {
@@ -88,7 +88,7 @@ public class Complement<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		m_Logger.info(exitMessage());
 	}
 	
-	public Complement(IUltimateServiceProvider services,
+	public Complement(AutomataLibraryServices services,
 			StateFactory<STATE> stateFactory, 
 			INestedWordAutomatonSimple<LETTER,STATE> operand) throws AutomataLibraryException {
 		m_Services = services;

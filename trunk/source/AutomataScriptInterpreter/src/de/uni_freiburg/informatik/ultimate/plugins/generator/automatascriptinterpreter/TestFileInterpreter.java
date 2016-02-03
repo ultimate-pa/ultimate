@@ -57,6 +57,7 @@ import org.eclipse.core.runtime.FileLocator;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -1112,7 +1113,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 							+ "automaton only two arguments are allowed");
 				}
 				mLastPrintedAutomaton = (IAutomaton<?, ?>) arguments.get(0);
-				text = (new AutomatonDefinitionPrinter<String, String>(mServices, "automaton", format, arguments.get(0)))
+				text = (new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "automaton", format, arguments.get(0)))
 							.getDefinitionAsString();
 			} else {
 				if (arguments.size() > 1) {
@@ -1145,7 +1146,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			}
 			String argsAsString = children.get(0).getAsString();
 			reportToLogger(LoggerSeverity.INFO, "Writing " + argsAsString + " to file " + filename + " in " + format + " format.");
-			new AutomatonDefinitionPrinter<String, String>(mServices, "ats", filename, format, "hello", automaton);
+			new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "ats", filename, format, "hello", automaton);
 		} else {
 			IOperation<String, String> op = getAutomataOperation(oe, arguments);
 			if (op != null) {

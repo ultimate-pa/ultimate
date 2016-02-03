@@ -33,6 +33,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
@@ -40,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.StateBasedTransitionFilterPredicateProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.SummaryReturnTransition;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.FilteredIterable;
 import de.uni_freiburg.informatik.ultimate.util.IteratorConcatenation;
 import de.uni_freiburg.informatik.ultimate.util.scc.DefaultSccComputation;
@@ -65,7 +65,7 @@ public class AutomatonSccComputation<LETTER, STATE> {
 	
 	
 	private final INestedWordAutomaton<LETTER, STATE> m_NestedWordAutomaton;
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 	private final DefaultSccComputation<STATE> m_SccComputation;
 	
@@ -78,7 +78,7 @@ public class AutomatonSccComputation<LETTER, STATE> {
 	 */
 	public AutomatonSccComputation(
 			NestedWordAutomatonReachableStates<LETTER, STATE> nestedWordAutomatonReachableStates,
-			IUltimateServiceProvider services, Set<STATE> stateSubset, Set<STATE> startNodes) {
+			AutomataLibraryServices services, Set<STATE> stateSubset, Set<STATE> startNodes) {
 		super();
 		m_NestedWordAutomaton = nestedWordAutomatonReachableStates;
 		m_Services = services;

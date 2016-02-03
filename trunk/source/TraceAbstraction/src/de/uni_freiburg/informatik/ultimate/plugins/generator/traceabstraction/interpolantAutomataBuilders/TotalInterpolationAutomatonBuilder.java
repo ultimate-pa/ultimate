@@ -37,6 +37,7 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonEpimorphism;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -97,14 +98,14 @@ public class TotalInterpolationAutomatonBuilder {
 	private final INTERPOLATION m_Interpolation;
 
 	private final TotalInterpolationBenchmarkGenerator m_BenchmarkGenerator = new TotalInterpolationBenchmarkGenerator();
-	private final IUltimateServiceProvider mServices;
+	private final IUltimateServiceProvider m_Services;
 
 	public TotalInterpolationAutomatonBuilder(INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
 			ArrayList<IPredicate> stateSequence, IInterpolantGenerator interpolantGenerator, SmtManager smtManager,
 			PredicateFactory predicateFactory, ModifiableGlobalVariableManager modifiableGlobals,
 			INTERPOLATION interpolation, IUltimateServiceProvider services, HoareTripleChecks hoareTripleChecks) throws OperationCanceledException {
 		super();
-		mServices = services;
+		m_Services = services;
 		m_StateSequence = stateSequence;
 		// m_TraceChecker = traceChecker;
 		m_SmtManager = smtManager;
@@ -112,10 +113,10 @@ public class TotalInterpolationAutomatonBuilder {
 		m_PredicateUnifier = interpolantGenerator.getPredicateUnifier();
 		m_Abstraction = abstraction;
 		InCaReAlphabet<CodeBlock> alphabet = new InCaReAlphabet<CodeBlock>(abstraction);
-		m_IA = (new StraightLineInterpolantAutomatonBuilder(mServices, alphabet, interpolantGenerator, predicateFactory)).getResult();
+		m_IA = (new StraightLineInterpolantAutomatonBuilder(m_Services, alphabet, interpolantGenerator, predicateFactory)).getResult();
 		m_ModifiedGlobals = modifiableGlobals;
 		m_Interpolation = interpolation;
-		m_Epimorphism = new AutomatonEpimorphism<IPredicate>(mServices);
+		m_Epimorphism = new AutomatonEpimorphism<IPredicate>(new AutomataLibraryServices(m_Services));
 		{
 			IPredicate firstAutomatonState = m_StateSequence.get(0);
 			m_Epimorphism.insert(firstAutomatonState, interpolantGenerator.getPrecondition());
@@ -286,7 +287,7 @@ public class TotalInterpolationAutomatonBuilder {
 			tc = new InterpolatingTraceCheckerCraig(precondition, postcondition,
 					pendingContexts, run.getWord(),
 					m_SmtManager, m_ModifiedGlobals, AssertCodeBlockOrder.NOT_INCREMENTALLY,
-					mServices, true, m_PredicateUnifier, m_Interpolation, true);
+					m_Services, true, m_PredicateUnifier, m_Interpolation, true);
 			break;
 		case ForwardPredicates:
 		case BackwardPredicates:
@@ -294,7 +295,7 @@ public class TotalInterpolationAutomatonBuilder {
 			tc = new TraceCheckerSpWp(precondition, postcondition, pendingContexts,
 					run.getWord(), m_SmtManager, m_ModifiedGlobals, 
 					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true,
-					mServices, true, m_PredicateUnifier, m_Interpolation, m_SmtManager);
+					m_Services, true, m_PredicateUnifier, m_Interpolation, m_SmtManager);
 			
 			break;
 		case PathInvariants:
@@ -387,7 +388,7 @@ public class TotalInterpolationAutomatonBuilder {
 
 	private NestedRun<CodeBlock, IPredicate> findRun(IPredicate p, Set<IPredicate> annotated)
 			throws OperationCanceledException {
-		return (new IsEmpty<CodeBlock, IPredicate>(mServices, m_Abstraction, Collections.singleton(p), m_Annotated))
+		return (new IsEmpty<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), m_Abstraction, Collections.singleton(p), m_Annotated))
 				.getNestedRun();
 	}
 

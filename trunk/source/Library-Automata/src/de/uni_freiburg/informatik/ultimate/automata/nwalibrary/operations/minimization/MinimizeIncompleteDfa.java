@@ -40,6 +40,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -47,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * Utility class for minimizing incomplete DFAs (Deterministic Finite
@@ -107,7 +107,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 	/**
 	 * Service provider.
 	 */
-	private final IUltimateServiceProvider m_services;
+	private final AutomataLibraryServices m_services;
 	/**
 	 * Mapping for state to the block number where it is contained.
 	 */
@@ -140,7 +140,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 	 * where 'n' is the number of states, 'm' the number of edges and 'k' the
 	 * size of the alphabet.
 	 */
-	public MinimizeIncompleteDfa(final IUltimateServiceProvider services,
+	public MinimizeIncompleteDfa(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final StateFactory<STATE> stateFactoryConstruction,
 			final Collection<Set<STATE>> initialPartition,
@@ -202,7 +202,7 @@ public final class MinimizeIncompleteDfa<LETTER, STATE> extends
 	 * @param operand
 	 *            Automaton to minimize
 	 */
-	public MinimizeIncompleteDfa(final IUltimateServiceProvider services,
+	public MinimizeIncompleteDfa(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
 		this(services, operand, operand.getStateFactory(), null, false);
 	}

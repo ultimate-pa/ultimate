@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -42,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incremental_inclusion.AbstractIncrementalInclusionCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incremental_inclusion.InclusionViaDifference;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * 
@@ -61,7 +61,7 @@ public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementa
 	private List<INestedWordAutomatonSimple<LETTER, STATE>> local_m_B;
 	private List<INestedWordAutomatonSimple<LETTER,STATE>> local_m_B2;
 	private StateFactory<STATE> localStateFactory;
-	private IUltimateServiceProvider localServiceProvider;
+	private AutomataLibraryServices localServiceProvider;
 	public HashMap<STATE,HashSet<NodeData<LETTER,STATE>>> completeTree,currentTree,coveredNodes;
 	NestedRun<LETTER,STATE> result;
 	class NodeData<A,B>{
@@ -131,7 +131,7 @@ public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementa
 		}
 		m_Logger.info(exitMessage());
 	}
-	public IncrementalInclusionCheck2(IUltimateServiceProvider services, StateFactory<STATE> sf,
+	public IncrementalInclusionCheck2(AutomataLibraryServices services, StateFactory<STATE> sf,
 			INestedWordAutomatonSimple<LETTER, STATE> a, List<INestedWordAutomatonSimple<LETTER,STATE>> b) throws AutomataLibraryException{
 		super(services,a);
 		IncrementalInclusionCheck2.abortIfContainsCallOrReturn(a);
@@ -647,7 +647,7 @@ public class IncrementalInclusionCheck2<LETTER,STATE> extends AbstractIncrementa
 	 * exactly the same counterexample. 
 	 */
 	public static <LETTER, STATE> boolean compareInclusionCheckResult(
-			IUltimateServiceProvider services, 
+			AutomataLibraryServices services, 
 			StateFactory<STATE> stateFactory, 
 			INestedWordAutomatonSimple<LETTER, STATE> a, 
 			List<INestedWordAutomatonSimple<LETTER, STATE>> b, 

@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.i
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -114,7 +115,7 @@ public class TwoTrackInterpolantAutomatonBuilder {
 		}
 		
 		NestedWordAutomaton<CodeBlock, IPredicate> nwa = new NestedWordAutomaton<CodeBlock, IPredicate>(
-				m_Services, internalAlphabet, callAlphabet, returnAlphabet, tAContentFactory);
+				new AutomataLibraryServices(m_Services), internalAlphabet, callAlphabet, returnAlphabet, tAContentFactory);
 
 		// Add states, which contains the predicates computed via SP, WP.
 		addStatesAccordingToPredicates(nwa);

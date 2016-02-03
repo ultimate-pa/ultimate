@@ -8,9 +8,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.PowersetIterator;
 
 public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE> extends LevelRankingGenerator<LETTER, STATE, LevelRankingConstraintDrdCheck<LETTER, STATE>> {
@@ -22,7 +22,7 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE> extends LevelRan
 	private final boolean m_VoluntaryDecreaseOnlyForStatesInO;
 	private final boolean m_AllowDelayedRankDecrease;
 
-	public BarelyCoveredLevelRankingsGenerator(IUltimateServiceProvider services,
+	public BarelyCoveredLevelRankingsGenerator(AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER, STATE> operand, int userDefinedMaxRank,
 			boolean allowRankZero,
 			boolean allowEmptyLevelRanking, 
