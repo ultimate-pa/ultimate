@@ -1427,7 +1427,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 					// Convention: If the first parameter is a StateFactory, we
 					// prepend a StringFactory to the arguments.
 					Object[] augmentedArgs = prependStateFactoryIfNecessary(c, arguments);
-					Object[] argumentsWithServices = prependIUltimateServiceProviderIfNecessary(c, augmentedArgs);
+					Object[] argumentsWithServices = prependAutomataLibraryServicesIfNecessary(c, augmentedArgs);
 					if (allArgumentsHaveCorrectTypeForThisConstructor(c, argumentsWithServices)) {
 						try {
 							result = (IOperation<String, String>) c.newInstance(argumentsWithServices);
@@ -1483,23 +1483,23 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	/**
-	 * Prepend mServices to args if IUltimateServiceProvider is the first
+	 * Prepend mServices to args if AutomataLibraryServices is the first
 	 * parameter of the constructor. FIXME: This is only a workaround! In the
-	 * future IUltimateServiceProvider will be the first argument of each
+	 * future AutomataLibraryServices will be the first argument of each
 	 * IOperation and we will always prepend mServices
 	 */
-	private Object[] prependIUltimateServiceProviderIfNecessary(Constructor<?> c, Object[] args) {
-		boolean firstParameterIsIUltimateServiceProvider;
+	private Object[] prependAutomataLibraryServicesIfNecessary(Constructor<?> c, Object[] args) {
+		boolean firstParameterIsAutomataLibraryServices;
 		Class<?> fstParam = c.getParameterTypes()[0];
-		if (IUltimateServiceProvider.class.isAssignableFrom(fstParam)) {
-			firstParameterIsIUltimateServiceProvider = true;
+		if (AutomataLibraryServices.class.isAssignableFrom(fstParam)) {
+			firstParameterIsAutomataLibraryServices = true;
 		} else {
-			firstParameterIsIUltimateServiceProvider = false;
+			firstParameterIsAutomataLibraryServices = false;
 		}
 		Object[] result;
-		if (firstParameterIsIUltimateServiceProvider) {
+		if (firstParameterIsAutomataLibraryServices) {
 			List<Object> list = new ArrayList<>();
-			list.add(mServices);
+			list.add(new AutomataLibraryServices(mServices));
 			list.addAll(Arrays.asList(args));
 			result = list.toArray();
 		} else {
@@ -1548,7 +1548,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			firstParameterIsServicesAndSecondParameterIsStateFactory = false;
 		} else {
 			Class<?> sndParam = c.getParameterTypes()[1];
-			if (IUltimateServiceProvider.class.isAssignableFrom(fstParam)) {
+			if (AutomataLibraryServices.class.isAssignableFrom(fstParam)) {
 				if (StateFactory.class.isAssignableFrom(sndParam)) {
 					firstParameterIsServicesAndSecondParameterIsStateFactory = true;
 				} else {
