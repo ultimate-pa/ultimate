@@ -693,6 +693,45 @@ public final class ComparisonTables {
 	}
 
 	/**
+	 * Creates a table that holds all names of automata where at least one
+	 * method timed out.
+	 * 
+	 * @param performanceEntries
+	 *            Data structure holding the performance entries
+	 * @return A table in a tsv-like format, specified by
+	 *         {@link #LOG_SEPARATOR}.
+	 */
+	public static List<String> createTimedOutNamesTable(
+			final LinkedList<LinkedList<SimulationPerformance>> performanceEntries) {
+		List<String> table = new LinkedList<>();
+		if (performanceEntries.isEmpty()) {
+			return table;
+		}
+
+		// Header of table
+		String header = "NAME";
+		table.add(header);
+
+		// Rows of table
+		for (LinkedList<SimulationPerformance> performanceComparison : performanceEntries) {
+			boolean methodTimedOut = false;
+			String name = "";
+			for (SimulationPerformance performanceOfSimulation : performanceComparison) {
+				name = performanceOfSimulation.getName();
+				if (performanceOfSimulation.hasTimedOut()) {
+					methodTimedOut = true;
+					break;
+				}
+			}
+			if (methodTimedOut) {
+				table.add(name);
+			}
+		}
+
+		return table;
+	}
+
+	/**
 	 * Converts a given long value, representing milliseconds, to seconds and
 	 * rounds it to {@link #DECIMAL_PLACES} places after the decimal.
 	 * 
