@@ -72,9 +72,8 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 	private static final String[] INPUT = new String[] {
 			/* ULTIMATE repo */
-//			 "examples/programs/abstractInterpretation/",
-//			 "examples/programs/abstractInterpretation/regression",
-//			"examples/programs/abstractInterpretation/regression/whileProcedure.bpl",
+//			"examples/programs/abstractInterpretation/",
+			"examples/programs/abstractInterpretation/regression",
 
 			// ################################# Bugs #########################
 			// ########### Here are representatives of current bugs ########### 

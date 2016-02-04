@@ -69,18 +69,18 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	private final IAbstractDomain<STATE, ACTION, VARDECL> mDomain;
 	private final IVariableProvider<STATE, ACTION, VARDECL, LOCATION> mVarProvider;
 	private final ILoopDetector<ACTION> mLoopDetector;
-	private final IResultReporter<ACTION> mReporter;
 	private final IProgressAwareTimer mTimer;
 	private final Logger mLogger;
-	private final AbstractInterpretationBenchmark<ACTION, LOCATION> mBenchmark;
+
+	private AbstractInterpretationBenchmark<ACTION, LOCATION> mBenchmark;
+	private AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> mResult;
 
 	public FixpointEngine(final IUltimateServiceProvider services, final IProgressAwareTimer timer,
 			final ITransitionProvider<ACTION, LOCATION> post,
 			final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> storage,
 			final IAbstractDomain<STATE, ACTION, VARDECL> domain,
 			final IVariableProvider<STATE, ACTION, VARDECL, LOCATION> varProvider,
-			final ILoopDetector<ACTION> loopDetector, final IResultReporter<ACTION> reporter,
-			final AbstractInterpretationBenchmark<ACTION, LOCATION> benchmark) {
+			final ILoopDetector<ACTION> loopDetector) {
 		assert timer != null;
 		assert services != null;
 		assert post != null;
@@ -88,7 +88,6 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		assert domain != null;
 		assert varProvider != null;
 		assert loopDetector != null;
-		assert reporter != null;
 
 		mTimer = timer;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -97,8 +96,6 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		mDomain = domain;
 		mVarProvider = varProvider;
 		mLoopDetector = loopDetector;
-		mReporter = reporter;
-		mBenchmark = benchmark;
 
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		mMaxUnwindings = ups.getInt(AbsIntPrefInitializer.LABEL_ITERATIONS_UNTIL_WIDENING);
@@ -108,24 +105,21 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	/**
 	 * @return true iff safe
 	 */
-	public boolean run(ACTION start) {
+	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> run(ACTION start) {
 		mLogger.info("Starting fixpoint engine");
-		if (!runInternal(start)) {
-			mReporter.reportSafe(start);
-			return true;
-		}
-		return false;
+		mResult = new AbstractInterpretationResult<>();
+		mBenchmark = mResult.getBenchmark();
+		calculateFixpoint(start);
+		return mResult;
 	}
 
-	// TODO: Recursion
-	private boolean runInternal(final ACTION start) {
+	private void calculateFixpoint(final ACTION start) {
 		final Deque<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> worklist = new ArrayDeque<WorklistItem<STATE, ACTION, VARDECL, LOCATION>>();
 		final IAbstractPostOperator<STATE, ACTION, VARDECL> post = mDomain.getPostOperator();
 		final IAbstractStateBinaryOperator<STATE> widening = mDomain.getWideningOperator();
 		final Set<ACTION> reachedErrors = new HashSet<>();
 
-		boolean errorReached = false;
-		worklist.add(createWorklistItem(start));
+		worklist.add(createInitialWorklistItem(start));
 
 		while (!worklist.isEmpty()) {
 			checkTimeout();
@@ -189,7 +183,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				pendingNewPostState = widenAtScopeEntry(currentItem, widening, pendingNewPostState);
 				// check if the resulting state is a fixpoint
 				if (checkFixpointAtScopeEntry(currentItem, pendingNewPostState)) {
-					// TODO: single function recursion (e.g., collatz) has to somehow add the inner function return
+					// TODO: Add the summary successor here
 					continue;
 				}
 			}
@@ -219,14 +213,12 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 					mLogger.debug(
 							new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Error state reached"));
 				}
-				errorReached = true;
-				mReporter.reportPossibleError(start, currentAction);
+				mResult.reachedError(mTransitionProvider, currentItem, newPostState);
 			}
 
 			// now add successors
 			addSuccessors(worklist, currentItem);
 		}
-		return errorReached;
 	}
 
 	/**
@@ -298,7 +290,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		return pendingPostState;
 	}
 
-	private WorklistItem<STATE, ACTION, VARDECL, LOCATION> createWorklistItem(final ACTION elem) {
+	private WorklistItem<STATE, ACTION, VARDECL, LOCATION> createInitialWorklistItem(final ACTION elem) {
 		final WorklistItem<STATE, ACTION, VARDECL, LOCATION> startItem = new WorklistItem<STATE, ACTION, VARDECL, LOCATION>(
 				getCurrentAbstractPreState(elem, mStateStorage), elem, mStateStorage);
 		if (mTransitionProvider.isEnteringScope(elem)) {

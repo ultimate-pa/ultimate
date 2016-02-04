@@ -29,65 +29,84 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbstractCounterexample;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IResultReporter;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
-import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.result.model.IResult;
 import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.result.model.IResult;
+import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 
 /**
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class RcfgResultReporter implements IResultReporter<CodeBlock> {
+public class RcfgResultReporter<STATE extends IAbstractState<STATE, CodeBlock, VARDECL>, VARDECL>
+		implements IResultReporter<STATE, CodeBlock, VARDECL, ProgramPoint> {
 
 	protected final IUltimateServiceProvider mServices;
-	protected final BaseRcfgAbstractStateStorageProvider<?,?> mStorageProvider;
+	protected final BaseRcfgAbstractStateStorageProvider<?, ?> mStorageProvider;
 
 	public RcfgResultReporter(IUltimateServiceProvider services,
-			BaseRcfgAbstractStateStorageProvider<?,?> storageProvider) {
+			BaseRcfgAbstractStateStorageProvider<?, ?> storageProvider) {
 		mServices = services;
 		mStorageProvider = storageProvider;
 	}
 
 	@Override
-	public void reportPossibleError(CodeBlock start, CodeBlock end) {
+	public void reportPossibleError(final AbstractCounterexample<STATE, CodeBlock, ?, ProgramPoint> cex) {
+		final Map<Integer, ProgramState<Expression>> programStates = new HashMap<>();
+		final List<RCFGEdge> trace = new ArrayList<>();
+
+		programStates.put(-1, computeProgramState(cex.getInitialState()));
+
+		int i = 0;
+		for (final Triple<STATE, ProgramPoint, CodeBlock> elem : cex.getAbstractExecution()) {
+			trace.add(elem.getThird());
+			programStates.put(i, computeProgramState(elem.getFirst()));
+			++i;
+		}
+		final RcfgProgramExecution pex = new RcfgProgramExecution(trace, programStates);
+
 		final IResult result = new UnprovableResult<ProgramPoint, RCFGEdge, Expression>(Activator.PLUGIN_ID,
-				(ProgramPoint) end.getTarget(), mServices.getBacktranslationService(), getProgramExecution(start, end),
+				getLast(cex), mServices.getBacktranslationService(), pex,
 				"Abstract Interpretation could reach this error location");
+
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 	}
 
-	private IProgramExecution<RCFGEdge, Expression> getProgramExecution(CodeBlock start, CodeBlock end) {
-		//TODO: Report a meaningful error trace
-		//		final List<CodeBlock> trace = mStorageProvider.getErrorTrace(start, end);
-		final Map<Integer, ProgramState<Expression>> map = Collections.emptyMap();
-		final List<RCFGEdge> trace = new ArrayList<>();
-		trace.add(start);
-		trace.add(end);
-		return new RcfgProgramExecution(trace, map);
+	private ProgramState<Expression> computeProgramState(STATE state) {
+		// TODO: Compute program state
+		return new ProgramState<>(Collections.emptyMap());
+	}
+
+	private ProgramPoint getLast(final AbstractCounterexample<STATE, CodeBlock, ?, ProgramPoint> cex) {
+		int size = cex.getAbstractExecution().size();
+		return cex.getAbstractExecution().get(size - 1).getSecond();
 	}
 
 	@Override
-	public void reportSafe(CodeBlock first) {
+	public void reportSafe(final CodeBlock first) {
 		reportSafe(first, "No error locations were reached.");
 	}
 
 	@Override
-	public void reportSafe(CodeBlock first, String msg) {
+	public void reportSafe(final CodeBlock first, final String msg) {
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 				new AllSpecificationsHoldResult(Activator.PLUGIN_NAME, msg));
 	}
+
 }

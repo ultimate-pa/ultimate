@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
+import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
@@ -75,6 +76,7 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 	private final IProgramExecution<TE, E> mProgramExecution;
 	private final List<ILocation> mFailurePath;
 	private final List<UnprovabilityReason> mUnprovabilityReasons;
+	private String mProgramExecutionAsString;
 
 	public UnprovableResult(String plugin, ELEM position, IBacktranslationService translatorSequence,
 			IProgramExecution<TE, E> programExecution) {
@@ -114,7 +116,22 @@ public class UnprovableResult<ELEM extends IElement, TE extends IElement, E> ext
 
 	@Override
 	public String getLongDescription() {
-		return "Unable to prove that " + mCheckedSpecification.getPositiveMessage() + getReasons();
+		final StringBuilder sb = new StringBuilder();
+		sb.append(getShortDescription());
+		sb.append(CoreUtil.getPlatformLineSeparator());
+		sb.append(getReasons());
+		sb.append(CoreUtil.getPlatformLineSeparator());
+		sb.append("Possible FailurePath: ");
+		sb.append(CoreUtil.getPlatformLineSeparator());
+		sb.append(getProgramExecutionAsString());
+		return sb.toString();
+	}
+
+	public String getProgramExecutionAsString() {
+		if (mProgramExecutionAsString == null) {
+			mProgramExecutionAsString = mTranslatorSequence.translateProgramExecution(mProgramExecution).toString();
+		}
+		return mProgramExecutionAsString;
 	}
 
 	/**
