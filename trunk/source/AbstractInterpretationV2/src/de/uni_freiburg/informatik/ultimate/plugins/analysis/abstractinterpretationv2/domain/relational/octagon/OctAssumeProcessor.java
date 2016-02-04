@@ -27,17 +27,17 @@ public class OctAssumeProcessor {
 		mExprTransformer = exprTransformer;
 	}
 	
-	public List<OctagonDomainState> assume(List<OctagonDomainState> oldStates, Expression assumption) {
-		List<Pair<List<Expression>, Expression>> paths = mExprTransformer.removeIfExprsCached(assumption);
-		if (paths.size() > 1) { // there was an IfThenElseExpression
-			// TODO recursively remove IfThenElseExpression from conditions
-			// TODO assume selected part ("then" or "else")
-			return oldStates; // safe over-approximation
-		} else {
-			assert paths.get(0).getFirst().isEmpty() && paths.get(0).getSecond() == assumption;
+	public List<OctagonDomainState> assume(Expression assumption, List<OctagonDomainState> oldStates) {
+//		List<Pair<List<Expression>, Expression>> paths = mExprTransformer.removeIfExprsCached(assumption);
+//		if (paths.size() > 1) { // there was an IfThenElseExpression
+//			// TODO recursively remove IfThenElseExpression from conditions
+//			// TODO assume selected part ("then" or "else")
+//			return oldStates; // safe over-approximation
+//		} else {
+//			assert paths.get(0).getFirst().isEmpty() && paths.get(0).getSecond() == assumption;
 			// TODO processBooleanOperations(assumption, false);
 			return oldStates; // safe over-approximation
-		}
+//		}
 	}
 	
 	private void processBooleanOperations(Expression e, boolean isNegated) {

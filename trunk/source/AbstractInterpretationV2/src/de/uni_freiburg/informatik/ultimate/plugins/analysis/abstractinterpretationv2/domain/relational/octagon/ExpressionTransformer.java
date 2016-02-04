@@ -57,7 +57,7 @@ public class ExpressionTransformer {
 		}
 		return cachedPaths;
 	}
-	
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	private AffineExpression toAffineExpr(Expression e) {
@@ -230,18 +230,25 @@ public class ExpressionTransformer {
 		List<Pair<List<Expression>, Expression>> leftPaths, rightPaths;
 		leftPaths = removeIfExprs(e.getLeft());
 		rightPaths = removeIfExprs(e.getRight());
+		
 		if (leftPaths.size() == 1 && rightPaths.size() == 1) {
+			
 			// TODO remove assertion (complete line)
 			assert leftPaths.get(0).getSecond() == e.getLeft() && rightPaths.get(0).getSecond() == e.getRight()
 					&& leftPaths.get(0).getFirst().isEmpty() && rightPaths.get(0).getFirst().isEmpty();
 			return pathWithoutIfs(e);
+
 		} else {
+			
 			int cartesianProductSize = leftPaths.size() * rightPaths.size();
+			// TODO throw exception if cartesian product is too large
+			// it is possible (but unlikely) that a lot of nested IfThenElseExpressions appear
 			List<Pair<List<Expression>, Expression>> newPaths = new ArrayList<>(cartesianProductSize);
 			for (Pair<List<Expression>, Expression> pl : leftPaths) {
 				for (Pair<List<Expression>, Expression> pr : rightPaths) {
-					newPaths.add(new Pair<>(concatLists(pl.getFirst(), pr.getFirst()), new BinaryExpression(
-							e.getLocation(), e.getType(), e.getOperator(), pl.getSecond(), pr.getSecond())));
+					BinaryExpression flatBe = new BinaryExpression(
+							e.getLocation(), e.getType(), e.getOperator(), pl.getSecond(), pr.getSecond());
+					newPaths.add(new Pair<>(concatLists(pl.getFirst(), pr.getFirst()), flatBe));
 				}
 			}
 			return newPaths;

@@ -41,7 +41,7 @@ public class OctStatementProcessor {
 	 * Most methods of this class use the attribute as an input.
 	 * Methods may also modify the list or even the states inside the list!
 	 */
-	private List<OctagonDomainState> mOldStates;
+//	private List<OctagonDomainState> mOldStates;
 	
 	/**
 	 * Abstract domain states after the interpretation of an statement.
@@ -50,7 +50,7 @@ public class OctStatementProcessor {
 	 * <p>
 	 * Methods of this class use the attribute as an output.
 	 */
-	private List<OctagonDomainState> mNewStates;
+//	private List<OctagonDomainState> mNewStates;
 	
 	public OctStatementProcessor(Logger logger, BoogieSymbolTable symbolTable) {
 		mLogger = logger;
@@ -59,127 +59,122 @@ public class OctStatementProcessor {
 		mAssumeProcessor = new OctAssumeProcessor(logger, symbolTable, mExprTransformer);
 	}
 
-	public List<OctagonDomainState> process(List<OctagonDomainState> oldStates, Statement statement) {
-		mOldStates = oldStates;
-		processStatement(statement);
-		assert mNewStates != null && !mNewStates.isEmpty() : "Did not return any states";
-		return mNewStates;
-	}
-
-	private void processStatement(Statement statement) {
+	public List<OctagonDomainState> processStatement(Statement statement, List<OctagonDomainState> oldStates) {
 		if (statement instanceof AssignmentStatement) {
-			processAssignmentStatement((AssignmentStatement) statement);
+			return processAssignmentStatement((AssignmentStatement) statement, oldStates);
 		} else if (statement instanceof AssumeStatement) {
 			Expression assumption = ((AssumeStatement) statement).getFormula();
-			mNewStates = mAssumeProcessor.assume(mOldStates, assumption);
+			return mAssumeProcessor.assume(assumption, oldStates);
 		} else if (statement instanceof HavocStatement) {
-			processHavocStatement((HavocStatement) statement);
+			return processHavocStatement((HavocStatement) statement, oldStates);
 		} else if (statement instanceof IfStatement) {
 			// TODO support if it can occur
 			String msg = "IfStatements are not supported by post-operator. Switch block-encoding to single statements.";
 			throw new UnsupportedOperationException(msg);
 		} else if (statement instanceof Label) {
-			// nothing to do
+			return oldStates; // nothing to do
 		} else {
 			throw new UnsupportedOperationException("Unsupported type of statement: " + statement);
 		}
 	}
 
-	private void processAssignmentStatement(AssignmentStatement statement) {
+	private List<OctagonDomainState> processAssignmentStatement(AssignmentStatement statement,
+			List<OctagonDomainState> oldStates) {
+
 		LeftHandSide[] lhs = statement.getLhs();
 		Expression[] rhs = statement.getRhs();
 		assert lhs.length == rhs.length : "Unbalanced assignment: " + statement;
 		int length = lhs.length;		
 		if (length == 1) {
 			LeftHandSide l = lhs[0];
-			assert l.getType().equals(rhs[0].getType()) : "Assignment with incompatible types";
 			if (l instanceof VariableLHS) {
-				processSingleAssignment(((VariableLHS) l).getIdentifier(), rhs[0]);
+				return processSingleAssignment(((VariableLHS) l).getIdentifier(), rhs[0], oldStates);
+			} else {
+				// variables of unsupported types (e.g. arrays) are assumed to be \top all the time
+				return oldStates;
+			}
+		}
+		Map<String, IBoogieVar> tmpVars = new HashMap<>();
+		Map<String, String> mapTmpVarToOrigVar = new HashMap<>();
+		Map<String, Expression> mapLhsToRhs = new HashMap<>();
+		for (int i = 0; i < length; ++i) {
+			LeftHandSide l = lhs[i];
+			if (l instanceof VariableLHS) {
+				VariableLHS vLhs = (VariableLHS) l;
+				String origVar = vLhs.getIdentifier();
+				// parentheses are not allowed in Boogie-identifiers => tmpVar is unique
+				String tmpVar = "octTmp(" + origVar + ")"; 
+				tmpVars.put(tmpVar, BoogieAstUtil.createTemporaryIBoogieVar(tmpVar, vLhs.getType()));
+				mapTmpVarToOrigVar.put(tmpVar, origVar);
+				mapLhsToRhs.put(tmpVar, rhs[i]);
 			}
 			// else: variables of unsupported types are assumed to be \top all the time
-		} else {
-			Map<String, IBoogieVar> tmpVars = new HashMap<>();
-			Map<String, String> mapTmpVarToOrigVar = new HashMap<>();
-			Map<String, Expression> mapLhsToRhs = new HashMap<>();
-			for (int i = 0; i < length; ++i) {
-				LeftHandSide l = lhs[i];
-				assert l.getType().equals(rhs[i].getType()) : "Assignment with incompatible types";
-				if (l instanceof VariableLHS) {
-					VariableLHS vLhs = (VariableLHS) l;
-					String origVar = vLhs.getIdentifier();
-					// parentheses are not allowed in Boogie-identifiers => tmpVar is unique
-					String tmpVar = "octTmp(" + origVar + ")"; 
-					tmpVars.put(tmpVar, BoogieAstUtil.createTemporaryIBoogieVar(tmpVar, vLhs.getType()));
-					mapTmpVarToOrigVar.put(tmpVar, origVar);
-					mapLhsToRhs.put(tmpVar, rhs[i]);
-				}
-				// else: variables of unsupported types are assumed to be \top all the time
-			}
-			// add temporary variables
-			mNewStates = new ArrayList<>(mOldStates.size());
-			mOldStates.forEach(oldState -> mNewStates.add(oldState.addVariables(tmpVars)));
-			
-			// (tmpVar := origExpr)*
-			mOldStates = mNewStates;
-			mapLhsToRhs.entrySet().forEach(entry -> processSingleAssignment(entry.getKey(), entry.getValue()));
-			
-			// (origVar := tmpVar)*
-			mOldStates = mNewStates;
-			mOldStates.forEach(oldState -> oldState.copyVars(mapTmpVarToOrigVar));
-			mNewStates = mOldStates;
-
-			// remove temporary variables
-			mOldStates = mNewStates;
-			mNewStates = new ArrayList<>(mOldStates.size());
-			mOldStates.forEach(s -> mNewStates.add(s.removeVariables(tmpVars)));
 		}
 
-		// TODO remove duplicated states (may occur due to assignments)
+		// add temporary variables
+		List<OctagonDomainState> tmpStates = new ArrayList<>(oldStates.size());
+		oldStates.forEach(oldState -> tmpStates.add(oldState.addVariables(tmpVars)));
+
+		// (tmpVar := origExpr)*
+		mapLhsToRhs.entrySet().forEach(
+				lhsToRhs -> processSingleAssignment(lhsToRhs.getKey(), lhsToRhs.getValue(), tmpStates));
+
+		// (origVar := tmpVar)*
+		tmpStates.forEach(tmpState -> tmpState.copyVars(mapTmpVarToOrigVar));
+
+		// remove temporary variables
+		List<OctagonDomainState> newStates = new ArrayList<>(oldStates.size());
+		tmpStates.forEach(tmpState -> newStates.add(tmpState.removeVariables(tmpVars)));
+		return newStates;
 	}
 	
-	private void processSingleAssignment(String targetVar, Expression rhs) {
+	public List<OctagonDomainState> processSingleAssignment(String targetVar, Expression rhs,
+			List<OctagonDomainState> oldStates) {
+
 		List<Pair<List<Expression>, Expression>> paths = mExprTransformer.removeIfExprsCached(rhs);
-		List<OctagonDomainState> tmpNewStates = new ArrayList<>();
-		List<OctagonDomainState> origOldStates = mOldStates;
+		List<OctagonDomainState> result = new ArrayList<>();
 		
-		// copy old states (as rarely as needed => one copy less by modifying original states)
-		List<List<OctagonDomainState>> mCopiedOldStates = new ArrayList<>(paths.size());
-		mCopiedOldStates.add(mOldStates);
-		for (int i = 1; i < paths.size(); ++i) {
-			List<OctagonDomainState> copy = new ArrayList<>(mOldStates.size());
-			mCopiedOldStates.add(copy);
-		}
-		
-		for (Iterator<Pair<List<Expression>, Expression>> iter = paths.iterator(); iter.hasNext(); ) {
-			Pair<List<Expression>, Expression> p = iter.next();
-			if (iter.hasNext()) {
-				mOldStates = new ArrayList<>(origOldStates.size());
-				origOldStates.forEach(s -> mOldStates.add(s.deepCopy()));				
+		for (int i = 0; i < paths.size(); ++i) {
+			Pair<List<Expression>, Expression> p = paths.get(i);
+
+			List<OctagonDomainState> copiedOldStates;
+			if (i + 1 < paths.size()) {
+				copiedOldStates = deepCopy(oldStates);
 			} else {
-				mOldStates = origOldStates; // save one copy -- original oldState is not needed any more
+				copiedOldStates = oldStates; // skip one copy -- original oldState is not needed any more
+				// For assignments without IfThenElseExpressions => no copy at all
 			}
 
-			p.getFirst().forEach(assumption -> mOldStates = mAssumeProcessor.assume(mOldStates, assumption));
+			for (Expression assumption : p.getFirst()) {
+				// This step is slow for deeply nested IfThenElseExpressions
+				// same assumptions have to be assumed over and over again
+				// TODO create BinaryTree instead of paths, which allows re-use of assumes
+				copiedOldStates = mAssumeProcessor.assume(assumption, copiedOldStates);
+			}
 
-			IType type = rhs.getType();
 			// note: there is no implicit typecasting in boogie. "real := int;" cannot happen. 
+			IType type = rhs.getType();
+			List<OctagonDomainState> newStates = new ArrayList<>();
 			if (TypeUtil.isBoolean(type)) {
-				processBooleanAssign(targetVar, rhs);
+				newStates = processBooleanAssign(targetVar, rhs, copiedOldStates);
 			} else if (TypeUtil.isNumeric(type)) {
-				processNumericAssign(targetVar, rhs);
+				newStates = processNumericAssign(targetVar, rhs, copiedOldStates);
 			} else {
 				// variables of unsupported types are assumed to be \top all the time
-				mNewStates = mOldStates;
+				newStates = oldStates;
 			}
-			
-			tmpNewStates.addAll(mNewStates);
-		}
 
-		mNewStates = tmpNewStates;
+			// TODO merge when maxParallelStates reached
+			result.addAll(newStates);
+		}
+		return result;
 	}
 	
-	private void processBooleanAssign(String targetVar, Expression rhs) {
-		Consumer<OctagonDomainState> action = s -> s.havocVar(targetVar);
+	private List<OctagonDomainState> processBooleanAssign(String targetVar, Expression rhs,
+			List<OctagonDomainState> oldStates) {
+
+		Consumer<OctagonDomainState> action = s -> s.havocVar(targetVar); // default operation (if uninterpretable)
+
 		if (rhs instanceof BooleanLiteral) {
 			BoolValue value = BoolValue.get(((BooleanLiteral) rhs).getValue());
 			action = s -> s.assignBooleanVar(targetVar, value);
@@ -191,15 +186,15 @@ public class OctStatementProcessor {
 			}
 		}
 
-		// TODO calculate using BoolValue
-
-		mOldStates.forEach(action);
-		mNewStates = mOldStates;
+		oldStates.forEach(action);
+		return oldStates;
 	}
 	
-	private void processNumericAssign(String targetVar, Expression rhs) {
-		Consumer<OctagonDomainState> action;
-		action = s -> s.havocVar(targetVar); // default operation (if assignment cannot be interpreted)
+	private List<OctagonDomainState> processNumericAssign(String targetVar, Expression rhs,
+			List<OctagonDomainState> oldStates) {
+		
+		Consumer<OctagonDomainState> action = s -> s.havocVar(targetVar); // default operation (if uninterpretable)
+
 		AffineExpression ae = mExprTransformer.affineExprCached(rhs);
 		if (ae != null) {
 			if (ae.isConstant()) {
@@ -220,17 +215,24 @@ public class OctStatementProcessor {
 				}
 			}
 		}
-		mOldStates.forEach(action);
-		mNewStates = mOldStates;
+		oldStates.forEach(action);
+		return oldStates;
 	}
 
-	private void processHavocStatement(HavocStatement statement) {
+	private List<OctagonDomainState> processHavocStatement(HavocStatement statement,
+			List<OctagonDomainState> oldStates) {
 		List<String> vars = new ArrayList<>();
 		for (VariableLHS lhs : statement.getIdentifiers()) {
 			vars.add(lhs.getIdentifier());
 		}
-		mOldStates.forEach(s -> s.havocVars(vars));
-		mNewStates = mOldStates;
+		oldStates.forEach(s -> s.havocVars(vars));
+		return oldStates;
+	}
+	
+	private static List<OctagonDomainState> deepCopy(List<OctagonDomainState> states) {
+		List<OctagonDomainState> copy = new ArrayList<>(states.size());
+		states.forEach(state -> copy.add(state.deepCopy()));
+		return copy; 
 	}
 
 }

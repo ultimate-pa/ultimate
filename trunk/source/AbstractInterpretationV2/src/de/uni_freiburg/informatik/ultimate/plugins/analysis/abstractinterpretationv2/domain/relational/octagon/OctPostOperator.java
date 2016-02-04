@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.ojalgo.optimisation.integer.NewIntegerSolver;
@@ -51,7 +52,9 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 	public List<OctagonDomainState> apply(OctagonDomainState oldState, CodeBlock codeBlock) {
 		List<OctagonDomainState> currentState = Collections.singletonList(oldState.deepCopy());
 		for (Statement statement : mStatementExtractor.process(codeBlock)) {
-			currentState = mStatementProcessor.process(currentState, statement);
+			currentState = mStatementProcessor.processStatement(statement, currentState);
+			assert currentState != null && currentState.stream().allMatch(s -> s != null): "NULLY";
+			assert currentState.size() > 0 : "EMPTYLY";
 		}
 		return currentState;
 	}
@@ -122,7 +125,8 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		
 		// assign tmp := args
 		for (AssignmentStatement assign : tmpAssigns) {
-			tmpStates = mStatementProcessor.process(tmpStates, assign);
+			// TODO do not build new Statements just to disassemble them later on ==> use method directly
+			tmpStates = mStatementProcessor.processStatement(assign, tmpStates);
 		}
 		
 		// copy to scope opened by call (inParam := tmp)

@@ -14,9 +14,9 @@ public class OctPreferences {
 
 	public static final String WIDENING_OPERATOR = "Octagon widening operator";
 	public static final WideningOperator WIDENING_OPERATOR_DEFAULT = WideningOperator.EXPONENTIAL;
-	
+
 	public static final String EXP_WIDENING_THRESHOLD = "Threshold for exponential widening";
-	public static final String EXP_WIDENING_THRESHOLD_DEFAULT_VALUE = Integer.toString(Integer.MAX_VALUE);
+	public static final String EXP_WIDENING_THRESHOLD_DEFAULT_VALUE = "65536"; // 2^16
 	public static final String EXP_WIDENING_THRESHOLD_TOOLTIP
 			= "Exponential widening will set values above this threshold to infinity";
 
