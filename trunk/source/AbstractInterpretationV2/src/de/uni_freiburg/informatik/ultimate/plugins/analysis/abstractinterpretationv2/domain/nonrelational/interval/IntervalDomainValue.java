@@ -290,7 +290,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		return (mLower.compareTo(other.mLower) <= 0 && mUpper.compareTo(other.mUpper) >= 0)
 		        || (other.mLower.compareTo(mLower) <= 0 && other.mUpper.compareTo(mUpper) >= 0);
 	}
-	
+
 	/**
 	 * Compares <code>this</code> with another {@link IntervalDomainValue} and checks whether <code>this</code> is
 	 * included in other.
@@ -299,8 +299,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 	 * 
 	 * @param other
 	 *            The other value to compare to.
-	 * @return <code>true</code> if and only if <code>this</code> is included in other,
-	 *         <code>false</code> otherwise.
+	 * @return <code>true</code> if and only if <code>this</code> is included in other, <code>false</code> otherwise.
 	 */
 	protected boolean isContainedInDD(IntervalDomainValue other) {
 		assert other != null;
@@ -1258,7 +1257,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 			if (other.getLower().getValue().signum() == 0) {
 				return new IntervalDomainValue(true);
 			}
-			final IntervalValue result = new IntervalValue(getLower().getValue().divide(other.getLower().getValue()));
+			final IntervalValue result = new IntervalValue(divide(getLower().getValue(), other.getLower().getValue()));
 			return new IntervalDomainValue(result, result);
 		}
 

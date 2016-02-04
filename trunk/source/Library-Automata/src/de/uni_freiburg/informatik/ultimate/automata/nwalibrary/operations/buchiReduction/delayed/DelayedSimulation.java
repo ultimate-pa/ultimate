@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.ASimulation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.ESimulationType;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 
 /**
@@ -114,7 +114,7 @@ public final class DelayedSimulation<LETTER, STATE> extends ASimulation<LETTER, 
 	public DelayedSimulation(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
-		super(progressTimer, logger, useSCCs, stateFactory, SimulationType.DELAYED);
+		super(progressTimer, logger, useSCCs, stateFactory, ESimulationType.DELAYED);
 
 		m_Game = new DelayedGameGraph<LETTER, STATE>(services, progressTimer, logger, buechi, stateFactory);
 		m_Game.setSimulationPerformance(getSimulationPerformance());

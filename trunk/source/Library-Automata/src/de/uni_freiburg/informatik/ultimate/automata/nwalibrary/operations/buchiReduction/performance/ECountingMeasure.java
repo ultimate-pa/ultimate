@@ -27,30 +27,46 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance;
 
 /**
- * Different options that are available for handling multiple data values.
+ * Different types of counting measures.
  * 
  * @author Daniel Tischner
  *
  */
-public enum MultipleDataOption {
+public enum ECountingMeasure {
 	/**
-	 * The data gets added.
+	 * Amount of states the automaton has before simulation.
 	 */
-	ADDITIVE,
+	BUCHI_STATES,
 	/**
-	 * The average among the data values is build.
+	 * Amount of merge attempts that where aborted.
 	 */
-	AVERAGE,
+	FAILED_MERGE_ATTEMPTS,
 	/**
-	 * The maximum of all values is returned.
+	 * Amount of transition removal attempts that where aborted.
 	 */
-	MAXIMUM,
+	FAILED_TRANSREMOVE_ATTEMPTS,
 	/**
-	 * The minimium of all values is returned.
+	 * Amount of states the game graph has.
 	 */
-	MINIMIUM,
+	GAMEGRAPH_STATES,
 	/**
-	 * All data values are returned without changing them.
+	 * The global bound for infinty.
 	 */
-	SINGLE
+	GLOBAL_INFINITY,
+	/**
+	 * Amount of states a simulation has removed.
+	 */
+	REMOVED_STATES,
+	/**
+	 * Amount of transitions a simulation has removed.
+	 */
+	REMOVED_TRANSITIONS,
+	/**
+	 * Amount of SCCs the game graph has.
+	 */
+	SCCS,
+	/**
+	 * Amount of steps a simulation needed.
+	 */
+	SIMULATION_STEPS
 }

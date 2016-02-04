@@ -82,23 +82,23 @@ public final class ComparisonTables {
 		}
 
 		// Process performance list into a sorted map structure
-		LinkedHashMap<Pair<SimulationType, Boolean>, LinkedList<SimulationPerformance>> simulationToPerformances = calcSimToPerformances(
+		LinkedHashMap<Pair<ESimulationType, Boolean>, LinkedList<SimulationPerformance>> simulationToPerformances = calcSimToPerformances(
 				performanceEntries);
 
 		// Header of table
 		String header = "TYPE" + separator + "USED_SCCS";
-		header += separator + CountingMeasure.BUCHI_STATES + "(&Oslash;)";
+		header += separator + ECountingMeasure.BUCHI_STATES + "(&Oslash;)";
 		// Work measure
-		header += separator + CountingMeasure.SIMULATION_STEPS + " / " + CountingMeasure.GAMEGRAPH_STATES
+		header += separator + ECountingMeasure.SIMULATION_STEPS + " / " + ECountingMeasure.GAMEGRAPH_STATES
 				+ "(&Oslash;)";
-		header += separator + TimeMeasure.OVERALL_TIME + "(&Oslash;)";
-		header += separator + CountingMeasure.SIMULATION_STEPS + "(&Oslash;)";
-		header += separator + CountingMeasure.GAMEGRAPH_STATES + "(&Oslash;)";
-		header += separator + CountingMeasure.REMOVED_STATES + "(&Oslash;)";
+		header += separator + ETimeMeasure.OVERALL_TIME + "(&Oslash;)";
+		header += separator + ECountingMeasure.SIMULATION_STEPS + "(&Oslash;)";
+		header += separator + ECountingMeasure.GAMEGRAPH_STATES + "(&Oslash;)";
+		header += separator + ECountingMeasure.REMOVED_STATES + "(&Oslash;)";
 		table.add(header);
 
 		// Rows of table
-		for (Entry<Pair<SimulationType, Boolean>, LinkedList<SimulationPerformance>> entry : simulationToPerformances
+		for (Entry<Pair<ESimulationType, Boolean>, LinkedList<SimulationPerformance>> entry : simulationToPerformances
 				.entrySet()) {
 			String row = entry.getKey().getFirst() + separator + entry.getKey().getSecond();
 
@@ -106,7 +106,7 @@ public final class ComparisonTables {
 			int sumOfAllValuesForBuechiStates = 0;
 			int amountOfValuesForBuechiStates = 0;
 			for (SimulationPerformance performance : entry.getValue()) {
-				int value = performance.getCountingMeasureResult(CountingMeasure.BUCHI_STATES);
+				int value = performance.getCountingMeasureResult(ECountingMeasure.BUCHI_STATES);
 				if (value != SimulationPerformance.NO_COUNTING_RESULT) {
 					sumOfAllValuesForBuechiStates += value;
 				}
@@ -124,7 +124,7 @@ public final class ComparisonTables {
 			int sumOfAllValuesForSimSteps = 0;
 			int amountOfValuesForSimSteps = 0;
 			for (SimulationPerformance performance : entry.getValue()) {
-				int value = performance.getCountingMeasureResult(CountingMeasure.SIMULATION_STEPS);
+				int value = performance.getCountingMeasureResult(ECountingMeasure.SIMULATION_STEPS);
 				if (value != SimulationPerformance.NO_COUNTING_RESULT) {
 					sumOfAllValuesForSimSteps += value;
 				}
@@ -134,7 +134,7 @@ public final class ComparisonTables {
 			int sumOfAllValuesForGraphStates = 0;
 			int amountOfValuesForGraphStates = 0;
 			for (SimulationPerformance performance : entry.getValue()) {
-				int value = performance.getCountingMeasureResult(CountingMeasure.GAMEGRAPH_STATES);
+				int value = performance.getCountingMeasureResult(ECountingMeasure.GAMEGRAPH_STATES);
 				if (value != SimulationPerformance.NO_COUNTING_RESULT) {
 					sumOfAllValuesForGraphStates += value;
 				}
@@ -154,7 +154,7 @@ public final class ComparisonTables {
 			long sumOfAllValuesForOverallTime = 0;
 			int amountOfValuesForOverallTime = 0;
 			for (SimulationPerformance performance : entry.getValue()) {
-				long value = performance.getTimeMeasureResult(TimeMeasure.OVERALL_TIME, MultipleDataOption.ADDITIVE);
+				long value = performance.getTimeMeasureResult(ETimeMeasure.OVERALL_TIME, EMultipleDataOption.ADDITIVE);
 				if (value != SimulationPerformance.NO_TIME_RESULT) {
 					sumOfAllValuesForOverallTime += value;
 				}
@@ -189,7 +189,7 @@ public final class ComparisonTables {
 			int sumOfAllValuesForRemovedStates = 0;
 			int amountOfValuesForRemovedStates = 0;
 			for (SimulationPerformance performance : entry.getValue()) {
-				int value = performance.getCountingMeasureResult(CountingMeasure.REMOVED_STATES);
+				int value = performance.getCountingMeasureResult(ECountingMeasure.REMOVED_STATES);
 				if (value != SimulationPerformance.NO_COUNTING_RESULT) {
 					sumOfAllValuesForRemovedStates += value;
 				}
@@ -228,32 +228,32 @@ public final class ComparisonTables {
 		}
 
 		// Process performance list into a sorted map structure
-		LinkedHashMap<Pair<SimulationType, Boolean>, LinkedList<SimulationPerformance>> simulationToPerformances = calcSimToPerformances(
+		LinkedHashMap<Pair<ESimulationType, Boolean>, LinkedList<SimulationPerformance>> simulationToPerformances = calcSimToPerformances(
 				performanceEntries);
 
 		// Header of table
 		String header = "TYPE" + separator + "USED_SCCS";
 		SimulationPerformance headerCandidate = performanceEntries.get(0).get(0);
-		Set<TimeMeasure> timeMeasures = headerCandidate.getTimeMeasures().keySet();
-		for (TimeMeasure measure : timeMeasures) {
+		Set<ETimeMeasure> timeMeasures = headerCandidate.getTimeMeasures().keySet();
+		for (ETimeMeasure measure : timeMeasures) {
 			header += separator + measure + "(&Oslash;)";
 		}
-		Set<CountingMeasure> countingMeasures = headerCandidate.getCountingMeasures().keySet();
-		for (CountingMeasure measure : countingMeasures) {
+		Set<ECountingMeasure> countingMeasures = headerCandidate.getCountingMeasures().keySet();
+		for (ECountingMeasure measure : countingMeasures) {
 			header += separator + measure + "(&Oslash;)";
 		}
 		table.add(header);
 
 		// Rows of table
-		for (Entry<Pair<SimulationType, Boolean>, LinkedList<SimulationPerformance>> entry : simulationToPerformances
+		for (Entry<Pair<ESimulationType, Boolean>, LinkedList<SimulationPerformance>> entry : simulationToPerformances
 				.entrySet()) {
 			String row = entry.getKey().getFirst() + separator + entry.getKey().getSecond();
 
-			for (TimeMeasure measure : timeMeasures) {
+			for (ETimeMeasure measure : timeMeasures) {
 				long sumOfAllValues = 0;
 				int amountOfValues = 0;
 				for (SimulationPerformance performance : entry.getValue()) {
-					long value = performance.getTimeMeasureResult(measure, MultipleDataOption.ADDITIVE);
+					long value = performance.getTimeMeasureResult(measure, EMultipleDataOption.ADDITIVE);
 					if (value != SimulationPerformance.NO_TIME_RESULT) {
 						sumOfAllValues += value;
 					}
@@ -271,7 +271,7 @@ public final class ComparisonTables {
 				row += separator + valueAsString;
 
 			}
-			for (CountingMeasure measure : countingMeasures) {
+			for (ECountingMeasure measure : countingMeasures) {
 				long sumOfAllValues = 0;
 				int amountOfValues = 0;
 				for (SimulationPerformance performance : entry.getValue()) {
@@ -314,27 +314,27 @@ public final class ComparisonTables {
 		}
 
 		// Process performance list into a sorted map structure
-		LinkedHashMap<Pair<SimulationType, Boolean>, LinkedList<SimulationPerformance>> simulationToPerformances = calcSimToPerformances(
+		LinkedHashMap<Pair<ESimulationType, Boolean>, LinkedList<SimulationPerformance>> simulationToPerformances = calcSimToPerformances(
 				performanceEntries);
 
 		// Header of table
 		String header = "TYPE" + separator + "USED_SCCS";
 		// Amount of Buechi states
-		header += separator + CountingMeasure.BUCHI_STATES + "(&Oslash;)";
+		header += separator + ECountingMeasure.BUCHI_STATES + "(&Oslash;)";
 		// Overall time first
-		header += separator + TimeMeasure.OVERALL_TIME + "(&Oslash;)";
+		header += separator + ETimeMeasure.OVERALL_TIME + "(&Oslash;)";
 		// Other time measures
 		SimulationPerformance headerCandidate = performanceEntries.get(0).get(0);
-		Set<TimeMeasure> timeMeasures = headerCandidate.getTimeMeasures().keySet();
-		for (TimeMeasure measure : timeMeasures) {
-			if (!measure.equals(TimeMeasure.OVERALL_TIME)) {
+		Set<ETimeMeasure> timeMeasures = headerCandidate.getTimeMeasures().keySet();
+		for (ETimeMeasure measure : timeMeasures) {
+			if (!measure.equals(ETimeMeasure.OVERALL_TIME)) {
 				header += separator + measure + "(%)(&Oslash;)";
 			}
 		}
 		table.add(header);
 
 		// Rows of table
-		for (Entry<Pair<SimulationType, Boolean>, LinkedList<SimulationPerformance>> entry : simulationToPerformances
+		for (Entry<Pair<ESimulationType, Boolean>, LinkedList<SimulationPerformance>> entry : simulationToPerformances
 				.entrySet()) {
 			String row = entry.getKey().getFirst() + separator + entry.getKey().getSecond();
 
@@ -342,7 +342,7 @@ public final class ComparisonTables {
 			int sumOfAllValuesForBuechiStates = 0;
 			int amountOfValuesForBuechiStates = 0;
 			for (SimulationPerformance performance : entry.getValue()) {
-				int value = performance.getCountingMeasureResult(CountingMeasure.BUCHI_STATES);
+				int value = performance.getCountingMeasureResult(ECountingMeasure.BUCHI_STATES);
 				if (value != SimulationPerformance.NO_COUNTING_RESULT) {
 					sumOfAllValuesForBuechiStates += value;
 				}
@@ -360,7 +360,7 @@ public final class ComparisonTables {
 			long sumOfAllValuesForOverallTime = 0;
 			int amountOfValuesForOverallTime = 0;
 			for (SimulationPerformance performance : entry.getValue()) {
-				long value = performance.getTimeMeasureResult(TimeMeasure.OVERALL_TIME, MultipleDataOption.ADDITIVE);
+				long value = performance.getTimeMeasureResult(ETimeMeasure.OVERALL_TIME, EMultipleDataOption.ADDITIVE);
 				if (value != SimulationPerformance.NO_TIME_RESULT) {
 					sumOfAllValuesForOverallTime += value;
 				}
@@ -378,15 +378,15 @@ public final class ComparisonTables {
 			row += separator + valueAsString;
 
 			// Other time measures
-			for (TimeMeasure measure : timeMeasures) {
-				if (measure.equals(TimeMeasure.OVERALL_TIME)) {
+			for (ETimeMeasure measure : timeMeasures) {
+				if (measure.equals(ETimeMeasure.OVERALL_TIME)) {
 					continue;
 				}
 
 				long sumOfAllValues = 0;
 				int amountOfValues = 0;
 				for (SimulationPerformance performance : entry.getValue()) {
-					long value = performance.getTimeMeasureResult(measure, MultipleDataOption.ADDITIVE);
+					long value = performance.getTimeMeasureResult(measure, EMultipleDataOption.ADDITIVE);
 					if (value != SimulationPerformance.NO_TIME_RESULT) {
 						sumOfAllValues += value;
 					}
@@ -435,20 +435,20 @@ public final class ComparisonTables {
 		// Header of table
 		String header = "NAME" + separator + "TYPE" + separator + "USED_SCCS" + separator + "TIMED_OUT" + separator
 				+ "OOM";
-		header += separator + CountingMeasure.BUCHI_STATES;
+		header += separator + ECountingMeasure.BUCHI_STATES;
 		// Work measure
-		header += separator + CountingMeasure.SIMULATION_STEPS + " / " + CountingMeasure.GAMEGRAPH_STATES;
-		header += separator + TimeMeasure.OVERALL_TIME;
-		header += separator + CountingMeasure.SIMULATION_STEPS;
-		header += separator + CountingMeasure.GAMEGRAPH_STATES;
-		header += separator + CountingMeasure.REMOVED_STATES;
+		header += separator + ECountingMeasure.SIMULATION_STEPS + " / " + ECountingMeasure.GAMEGRAPH_STATES;
+		header += separator + ETimeMeasure.OVERALL_TIME;
+		header += separator + ECountingMeasure.SIMULATION_STEPS;
+		header += separator + ECountingMeasure.GAMEGRAPH_STATES;
+		header += separator + ECountingMeasure.REMOVED_STATES;
 
 		table.add(header);
 
 		// Rows of table
 		for (LinkedList<SimulationPerformance> performanceComparison : performanceEntries) {
 			for (SimulationPerformance performanceOfSimulation : performanceComparison) {
-				SimulationType type = performanceOfSimulation.getSimType();
+				ESimulationType type = performanceOfSimulation.getSimType();
 				String name = performanceOfSimulation.getName();
 
 				// Fix fields
@@ -458,7 +458,7 @@ public final class ComparisonTables {
 				// Variable fields
 
 				// Amount of Buechi states
-				int buechiStates = performanceOfSimulation.getCountingMeasureResult(CountingMeasure.BUCHI_STATES);
+				int buechiStates = performanceOfSimulation.getCountingMeasureResult(ECountingMeasure.BUCHI_STATES);
 				String buechiStatesAsString = buechiStates + "";
 				if (buechiStates == SimulationPerformance.NO_COUNTING_RESULT) {
 					buechiStatesAsString = "&ndash;";
@@ -466,8 +466,8 @@ public final class ComparisonTables {
 				row += separator + buechiStatesAsString;
 
 				// Work measure
-				int simSteps = performanceOfSimulation.getCountingMeasureResult(CountingMeasure.SIMULATION_STEPS);
-				int graphStates = performanceOfSimulation.getCountingMeasureResult(CountingMeasure.GAMEGRAPH_STATES);
+				int simSteps = performanceOfSimulation.getCountingMeasureResult(ECountingMeasure.SIMULATION_STEPS);
+				int graphStates = performanceOfSimulation.getCountingMeasureResult(ECountingMeasure.GAMEGRAPH_STATES);
 				String workMeasureAsString = "";
 				if (simSteps == SimulationPerformance.NO_COUNTING_RESULT
 						|| graphStates == SimulationPerformance.NO_COUNTING_RESULT) {
@@ -478,8 +478,8 @@ public final class ComparisonTables {
 				row += separator + workMeasureAsString;
 
 				// Overall time
-				long value = performanceOfSimulation.getTimeMeasureResult(TimeMeasure.OVERALL_TIME,
-						MultipleDataOption.ADDITIVE);
+				long value = performanceOfSimulation.getTimeMeasureResult(ETimeMeasure.OVERALL_TIME,
+						EMultipleDataOption.ADDITIVE);
 
 				String valueAsString = "";
 				if (value == SimulationPerformance.NO_TIME_RESULT) {
@@ -505,7 +505,7 @@ public final class ComparisonTables {
 				row += separator + graphStatesAsString;
 
 				// Removed states
-				int removedStates = performanceOfSimulation.getCountingMeasureResult(CountingMeasure.REMOVED_STATES);
+				int removedStates = performanceOfSimulation.getCountingMeasureResult(ECountingMeasure.REMOVED_STATES);
 				String removedStatesAsString = removedStates + "";
 				if (removedStates == SimulationPerformance.NO_COUNTING_RESULT) {
 					removedStatesAsString = "&ndash;";
@@ -543,12 +543,12 @@ public final class ComparisonTables {
 		String header = "NAME" + separator + "TYPE" + separator + "USED_SCCS" + separator + "TIMED_OUT" + separator
 				+ "OOM";
 		SimulationPerformance headerCandidate = performanceEntries.get(0).get(0);
-		Set<TimeMeasure> timeMeasures = headerCandidate.getTimeMeasures().keySet();
-		for (TimeMeasure measure : timeMeasures) {
+		Set<ETimeMeasure> timeMeasures = headerCandidate.getTimeMeasures().keySet();
+		for (ETimeMeasure measure : timeMeasures) {
 			header += separator + measure;
 		}
-		Set<CountingMeasure> countingMeasures = headerCandidate.getCountingMeasures().keySet();
-		for (CountingMeasure measure : countingMeasures) {
+		Set<ECountingMeasure> countingMeasures = headerCandidate.getCountingMeasures().keySet();
+		for (ECountingMeasure measure : countingMeasures) {
 			header += separator + measure;
 		}
 		table.add(header);
@@ -556,7 +556,7 @@ public final class ComparisonTables {
 		// Rows of table
 		for (LinkedList<SimulationPerformance> performanceComparison : performanceEntries) {
 			for (SimulationPerformance performanceOfSimulation : performanceComparison) {
-				SimulationType type = performanceOfSimulation.getSimType();
+				ESimulationType type = performanceOfSimulation.getSimType();
 				String name = performanceOfSimulation.getName();
 
 				// Fix fields
@@ -564,8 +564,8 @@ public final class ComparisonTables {
 						+ performanceOfSimulation.hasTimedOut() + separator + performanceOfSimulation.isOutOfMemory();
 
 				// Variable fields
-				for (TimeMeasure measure : timeMeasures) {
-					long value = performanceOfSimulation.getTimeMeasureResult(measure, MultipleDataOption.ADDITIVE);
+				for (ETimeMeasure measure : timeMeasures) {
+					long value = performanceOfSimulation.getTimeMeasureResult(measure, EMultipleDataOption.ADDITIVE);
 
 					String valueAsString = "";
 					if (value == SimulationPerformance.NO_TIME_RESULT) {
@@ -577,7 +577,7 @@ public final class ComparisonTables {
 
 					row += separator + valueAsString;
 				}
-				for (CountingMeasure measure : countingMeasures) {
+				for (ECountingMeasure measure : countingMeasures) {
 					int value = performanceOfSimulation.getCountingMeasureResult(measure);
 					String valueAsString = value + "";
 					if (value == SimulationPerformance.NO_COUNTING_RESULT) {
@@ -616,14 +616,14 @@ public final class ComparisonTables {
 		String header = "NAME" + separator + "TYPE" + separator + "USED_SCCS" + separator + "TIMED_OUT" + separator
 				+ "OOM";
 		// Amount of Buechi states
-		header += separator + CountingMeasure.BUCHI_STATES;
+		header += separator + ECountingMeasure.BUCHI_STATES;
 		// Overall time first
-		header += separator + TimeMeasure.OVERALL_TIME;
+		header += separator + ETimeMeasure.OVERALL_TIME;
 		// Other time measures
 		SimulationPerformance headerCandidate = performanceEntries.get(0).get(0);
-		Set<TimeMeasure> timeMeasures = headerCandidate.getTimeMeasures().keySet();
-		for (TimeMeasure measure : timeMeasures) {
-			if (!measure.equals(TimeMeasure.OVERALL_TIME)) {
+		Set<ETimeMeasure> timeMeasures = headerCandidate.getTimeMeasures().keySet();
+		for (ETimeMeasure measure : timeMeasures) {
+			if (!measure.equals(ETimeMeasure.OVERALL_TIME)) {
 				header += separator + measure + "(%)";
 			}
 		}
@@ -632,7 +632,7 @@ public final class ComparisonTables {
 		// Rows of table
 		for (LinkedList<SimulationPerformance> performanceComparison : performanceEntries) {
 			for (SimulationPerformance performanceOfSimulation : performanceComparison) {
-				SimulationType type = performanceOfSimulation.getSimType();
+				ESimulationType type = performanceOfSimulation.getSimType();
 				String name = performanceOfSimulation.getName();
 
 				// Fix fields
@@ -642,7 +642,7 @@ public final class ComparisonTables {
 				// Variable fields
 
 				// Amount of Buechi states
-				int buechiStates = performanceOfSimulation.getCountingMeasureResult(CountingMeasure.BUCHI_STATES);
+				int buechiStates = performanceOfSimulation.getCountingMeasureResult(ECountingMeasure.BUCHI_STATES);
 				String buechiStatesAsString = buechiStates + "";
 				if (buechiStates == SimulationPerformance.NO_COUNTING_RESULT) {
 					buechiStatesAsString = "&ndash;";
@@ -650,8 +650,8 @@ public final class ComparisonTables {
 				row += separator + buechiStatesAsString;
 
 				// Overall time first
-				long value = performanceOfSimulation.getTimeMeasureResult(TimeMeasure.OVERALL_TIME,
-						MultipleDataOption.ADDITIVE);
+				long value = performanceOfSimulation.getTimeMeasureResult(ETimeMeasure.OVERALL_TIME,
+						EMultipleDataOption.ADDITIVE);
 
 				String valueAsString = "";
 				long overallTime = 0;
@@ -665,13 +665,13 @@ public final class ComparisonTables {
 				row += separator + valueAsString;
 
 				// Other time measures
-				for (TimeMeasure measure : timeMeasures) {
-					if (measure.equals(TimeMeasure.OVERALL_TIME)) {
+				for (ETimeMeasure measure : timeMeasures) {
+					if (measure.equals(ETimeMeasure.OVERALL_TIME)) {
 						continue;
 					}
 
 					// Calculate the percentage of the value to the overall time
-					value = performanceOfSimulation.getTimeMeasureResult(measure, MultipleDataOption.ADDITIVE);
+					value = performanceOfSimulation.getTimeMeasureResult(measure, EMultipleDataOption.ADDITIVE);
 
 					valueAsString = "";
 					if (value == SimulationPerformance.NO_TIME_RESULT || overallTime == 0) {
@@ -723,7 +723,7 @@ public final class ComparisonTables {
 			for (SimulationPerformance performanceOfSimulation : performanceComparison) {
 				name = performanceOfSimulation.getName();
 				int amountOfRemovedStates = performanceOfSimulation
-						.getCountingMeasureResult(CountingMeasure.REMOVED_STATES);
+						.getCountingMeasureResult(ECountingMeasure.REMOVED_STATES);
 				if (amountOfRemovedStates != SimulationPerformance.NO_COUNTING_RESULT && amountOfRemovedStates > 0) {
 					methodHasRemoved = true;
 					break;
@@ -763,7 +763,7 @@ public final class ComparisonTables {
 			String name = "";
 			for (SimulationPerformance performanceOfSimulation : performanceComparison) {
 				name = performanceOfSimulation.getName();
-				int amountOfStates = performanceOfSimulation.getCountingMeasureResult(CountingMeasure.BUCHI_STATES);
+				int amountOfStates = performanceOfSimulation.getCountingMeasureResult(ECountingMeasure.BUCHI_STATES);
 				if (amountOfStates == SimulationPerformance.NO_COUNTING_RESULT || amountOfStates < SMALL_BUCHI_SIZE) {
 					buechiHasSmallSize = true;
 					break;
@@ -849,10 +849,10 @@ public final class ComparisonTables {
 	 *            List of performances to process
 	 * @return Performance entries in a sorted map structure
 	 */
-	private static LinkedHashMap<Pair<SimulationType, Boolean>, LinkedList<SimulationPerformance>> calcSimToPerformances(
+	private static LinkedHashMap<Pair<ESimulationType, Boolean>, LinkedList<SimulationPerformance>> calcSimToPerformances(
 			final LinkedList<LinkedList<SimulationPerformance>> performanceEntries) {
 		// Process performance list into a sorted map structure
-		LinkedHashMap<Pair<SimulationType, Boolean>, LinkedList<SimulationPerformance>> simulationToPerformances = new LinkedHashMap<>();
+		LinkedHashMap<Pair<ESimulationType, Boolean>, LinkedList<SimulationPerformance>> simulationToPerformances = new LinkedHashMap<>();
 		for (LinkedList<SimulationPerformance> performanceComparison : performanceEntries) {
 			boolean simulationOfComparisonHasTimedOut = false;
 			boolean simulationOfComparisonWasOutOfMemory = false;
@@ -874,9 +874,9 @@ public final class ComparisonTables {
 			if (!simulationOfComparisonHasTimedOut && !simulationOfComparisonWasOutOfMemory) {
 				// No timeout and no out of memory occurred, add performances
 				for (SimulationPerformance performance : performancesToAdd) {
-					SimulationType type = performance.getSimType();
+					ESimulationType type = performance.getSimType();
 
-					Pair<SimulationType, Boolean> simulationKey = new Pair<>(type, performance.isUsingSCCs());
+					Pair<ESimulationType, Boolean> simulationKey = new Pair<>(type, performance.isUsingSCCs());
 					LinkedList<SimulationPerformance> performances = simulationToPerformances.get(simulationKey);
 					if (performances == null) {
 						performances = new LinkedList<>();

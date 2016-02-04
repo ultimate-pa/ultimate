@@ -423,34 +423,34 @@ public abstract class AGameGraph<LETTER, STATE> {
 		}
 
 		// Undo edge changes
-		NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, GameGraphChangeType> changedEdges = changes
+		NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> changedEdges = changes
 				.getChangedEdges();
-		for (Triple<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, GameGraphChangeType> changedEdge : changedEdges
+		for (Triple<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> changedEdge : changedEdges
 				.entrySet()) {
 			Vertex<LETTER, STATE> src = changedEdge.getFirst();
 			Vertex<LETTER, STATE> dest = changedEdge.getSecond();
-			GameGraphChangeType type = changedEdge.getThird();
+			EGameGraphChangeType type = changedEdge.getThird();
 			// If added before, remove and vice versa
-			if (type.equals(GameGraphChangeType.ADDITION)) {
+			if (type.equals(EGameGraphChangeType.ADDITION)) {
 				removeEdge(src, dest);
-			} else if (type.equals(GameGraphChangeType.REMOVAL)) {
+			} else if (type.equals(EGameGraphChangeType.REMOVAL)) {
 				addEdge(src, dest);
 			}
 		}
 
 		// Undo vertex changes
-		HashMap<Vertex<LETTER, STATE>, GameGraphChangeType> changedVertices = changes.getChangedVertices();
-		for (Entry<Vertex<LETTER, STATE>, GameGraphChangeType> changedVertex : changedVertices.entrySet()) {
+		HashMap<Vertex<LETTER, STATE>, EGameGraphChangeType> changedVertices = changes.getChangedVertices();
+		for (Entry<Vertex<LETTER, STATE>, EGameGraphChangeType> changedVertex : changedVertices.entrySet()) {
 			Vertex<LETTER, STATE> vertex = changedVertex.getKey();
-			GameGraphChangeType type = changedVertex.getValue();
+			EGameGraphChangeType type = changedVertex.getValue();
 			// If added before, remove and vice versa
-			if (type.equals(GameGraphChangeType.ADDITION)) {
+			if (type.equals(EGameGraphChangeType.ADDITION)) {
 				if (vertex.isDuplicatorVertex()) {
 					removeDuplicatorVertex((DuplicatorVertex<LETTER, STATE>) vertex);
 				} else if (vertex.isSpoilerVertex()) {
 					removeSpoilerVertex((SpoilerVertex<LETTER, STATE>) vertex);
 				}
-			} else if (type.equals(GameGraphChangeType.REMOVAL)) {
+			} else if (type.equals(EGameGraphChangeType.REMOVAL)) {
 				if (vertex.isDuplicatorVertex()) {
 					addDuplicatorVertex((DuplicatorVertex<LETTER, STATE>) vertex);
 				} else if (vertex.isSpoilerVertex()) {

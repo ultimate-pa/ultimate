@@ -162,16 +162,16 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 		try {
 			LinkedList<LinkedList<SimulationPerformance>> performanceEntries = new LinkedList<>();
 			LinkedList<SimulationPerformance> currentPerformanceEntry = null;
-			ArrayList<TimeMeasure> currentTimeMeasures = new ArrayList<>();
-			ArrayList<CountingMeasure> currentCountingMeasures = new ArrayList<>();
+			ArrayList<ETimeMeasure> currentTimeMeasures = new ArrayList<>();
+			ArrayList<ECountingMeasure> currentCountingMeasures = new ArrayList<>();
 
 			// Setup isValidEnum - Map
-			HashMap<String, TimeMeasure> nameToTimeMeasure = new HashMap<>();
-			for (TimeMeasure measure : TimeMeasure.values()) {
+			HashMap<String, ETimeMeasure> nameToTimeMeasure = new HashMap<>();
+			for (ETimeMeasure measure : ETimeMeasure.values()) {
 				nameToTimeMeasure.put(measure.name(), measure);
 			}
-			HashMap<String, CountingMeasure> nameToCountingMeasure = new HashMap<>();
-			for (CountingMeasure measure : CountingMeasure.values()) {
+			HashMap<String, ECountingMeasure> nameToCountingMeasure = new HashMap<>();
+			for (ECountingMeasure measure : ECountingMeasure.values()) {
 				nameToCountingMeasure.put(measure.name(), measure);
 			}
 
@@ -210,7 +210,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 					// Line is a data set of the current performance entry
 					// Fix fields
 					String name = lineElements[0];
-					SimulationType type = SimulationType.valueOf(lineElements[1]);
+					ESimulationType type = ESimulationType.valueOf(lineElements[1]);
 					boolean usedSCCs = Boolean.parseBoolean(lineElements[2]);
 					boolean timedOut = Boolean.parseBoolean(lineElements[3]);
 					boolean outOfMemory = Boolean.parseBoolean(lineElements[4]);
@@ -228,7 +228,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 						int indexTimeMeasure = i - FIX_FIELD_AMOUNT;
 						int indexCountingMeasure = i - FIX_FIELD_AMOUNT - currentTimeMeasures.size();
 						if (indexTimeMeasure >= 0 && indexTimeMeasure < currentTimeMeasures.size()) {
-							TimeMeasure measure = currentTimeMeasures.get(indexTimeMeasure);
+							ETimeMeasure measure = currentTimeMeasures.get(indexTimeMeasure);
 							float value = Float.parseFloat(lineElements[i]);
 							if (value == SimulationPerformance.NO_TIME_RESULT) {
 								performance.addTimeMeasureValue(measure, SimulationPerformance.NO_TIME_RESULT);
@@ -236,7 +236,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 								performance.addTimeMeasureValue(measure, ComparisonTables.secondsToMillis(value));
 							}
 						} else if (indexCountingMeasure >= 0 && indexCountingMeasure < currentCountingMeasures.size()) {
-							CountingMeasure measure = currentCountingMeasures.get(indexCountingMeasure);
+							ECountingMeasure measure = currentCountingMeasures.get(indexCountingMeasure);
 							int value = Integer.parseInt(lineElements[i]);
 							if (value == SimulationPerformance.NO_COUNTING_RESULT) {
 								performance.setCountingMeasure(measure, SimulationPerformance.NO_COUNTING_RESULT);
@@ -359,7 +359,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	/**
 	 * Holds counting measures of the comparison.
 	 */
-	private LinkedHashMap<CountingMeasure, Integer> m_CountingMeasures;
+	private LinkedHashMap<ECountingMeasure, Integer> m_CountingMeasures;
 	/**
 	 * Overall time an external operation took. Needed since it does not track
 	 * this measure by itself.
@@ -389,7 +389,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	/**
 	 * Holds time measures of the comparison.
 	 */
-	private LinkedHashMap<TimeMeasure, Float> m_TimeMeasures;
+	private LinkedHashMap<ETimeMeasure, Float> m_TimeMeasures;
 
 	/**
 	 * Compares the different types of simulation methods for buechi reduction.
@@ -455,34 +455,34 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 //		}
 
 		// Direct simulation without SCC
-		measureMethodPerformance(automatonName, SimulationType.DIRECT, false, m_Services, simulationTimeoutMillis,
+		measureMethodPerformance(automatonName, ESimulationType.DIRECT, false, m_Services, simulationTimeoutMillis,
 				stateFactory, operandReachable);
 		// Direct simulation with SCC
-		measureMethodPerformance(automatonName, SimulationType.DIRECT, true, m_Services, simulationTimeoutMillis,
+		measureMethodPerformance(automatonName, ESimulationType.DIRECT, true, m_Services, simulationTimeoutMillis,
 				stateFactory, operandReachable);
 		// Delayed simulation without SCC
-		measureMethodPerformance(automatonName, SimulationType.DELAYED, false, m_Services, simulationTimeoutMillis,
+		measureMethodPerformance(automatonName, ESimulationType.DELAYED, false, m_Services, simulationTimeoutMillis,
 				stateFactory, operandReachable);
 		// Delayed simulation with SCC
-		measureMethodPerformance(automatonName, SimulationType.DELAYED, true, m_Services, simulationTimeoutMillis,
+		measureMethodPerformance(automatonName, ESimulationType.DELAYED, true, m_Services, simulationTimeoutMillis,
 				stateFactory, operandReachable);
 		// Fair simulation without SCC
-		measureMethodPerformance(automatonName, SimulationType.FAIR, false, m_Services, simulationTimeoutMillis,
+		measureMethodPerformance(automatonName, ESimulationType.FAIR, false, m_Services, simulationTimeoutMillis,
 				stateFactory, operandReachable);
 		// Fair simulation with SCC
-		measureMethodPerformance(automatonName, SimulationType.FAIR, true, m_Services, simulationTimeoutMillis,
+		measureMethodPerformance(automatonName, ESimulationType.FAIR, true, m_Services, simulationTimeoutMillis,
 				stateFactory, operandReachable);
 		// Fair direct simulation without SCC
-		measureMethodPerformance(automatonName, SimulationType.FAIRDIRECT, false, m_Services, simulationTimeoutMillis,
+		measureMethodPerformance(automatonName, ESimulationType.FAIRDIRECT, false, m_Services, simulationTimeoutMillis,
 				stateFactory, operandReachable);
 		// Fair direct simulation with SCC
-		measureMethodPerformance(automatonName, SimulationType.FAIRDIRECT, true, m_Services, simulationTimeoutMillis,
+		measureMethodPerformance(automatonName, ESimulationType.FAIRDIRECT, true, m_Services, simulationTimeoutMillis,
 				stateFactory, operandReachable);
 
 		// Other minimization methods
-		measureMethodPerformance(automatonName, SimulationType.EXT_MINIMIZESEVPA, true, m_Services,
+		measureMethodPerformance(automatonName, ESimulationType.EXT_MINIMIZESEVPA, true, m_Services,
 				simulationTimeoutMillis, stateFactory, operandReachable);
-		measureMethodPerformance(automatonName, SimulationType.EXT_SHRINKNWA, true, m_Services, simulationTimeoutMillis,
+		measureMethodPerformance(automatonName, ESimulationType.EXT_SHRINKNWA, true, m_Services, simulationTimeoutMillis,
 				stateFactory, operandReachable);
 
 		// flushLogToLogger();
@@ -560,7 +560,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 * @param outOfMemory
 	 *            If the method has thrown an out of memory error
 	 */
-	private void appendCurrentPerformanceEntryToLog(final String name, final SimulationType type,
+	private void appendCurrentPerformanceEntryToLog(final String name, final ESimulationType type,
 			final boolean usedSCCs, final boolean timedOut, final boolean outOfMemory) {
 		// Fix fields
 		String message = name + LOG_SEPARATOR + type + LOG_SEPARATOR + usedSCCs + LOG_SEPARATOR + timedOut
@@ -597,7 +597,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 *             If a automata library exception occurred.
 	 */
 	@SuppressWarnings("unchecked")
-	private void appendMethodPerformanceToLog(final Object method, final String name, final SimulationType type,
+	private void appendMethodPerformanceToLog(final Object method, final String name, final ESimulationType type,
 			final boolean usedSCCs, final boolean timedOut, final boolean outOfMemory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws AutomataLibraryException {
 		createAndResetPerformanceHead();
@@ -620,24 +620,24 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 			// Removed states
 			if (methodResult != null) {
 				int removedStates = m_Operand.size() - methodResult.size();
-				m_CountingMeasures.put(CountingMeasure.REMOVED_STATES, removedStates);
+				m_CountingMeasures.put(ECountingMeasure.REMOVED_STATES, removedStates);
 			}
 			// Buechi states
-			m_CountingMeasures.put(CountingMeasure.BUCHI_STATES, operand.size());
+			m_CountingMeasures.put(ECountingMeasure.BUCHI_STATES, operand.size());
 			// Overall time
-			m_TimeMeasures.put(TimeMeasure.OVERALL_TIME, ComparisonTables.millisToSeconds(m_ExternalOverallTime));
+			m_TimeMeasures.put(ETimeMeasure.OVERALL_TIME, ComparisonTables.millisToSeconds(m_ExternalOverallTime));
 		} else if (method instanceof ShrinkNwa) {
 			ShrinkNwa<LETTER, STATE> shrinkNwa = (ShrinkNwa<LETTER, STATE>) method;
 			INestedWordAutomatonSimple<LETTER, STATE> methodResult = shrinkNwa.getResult();
 			// Removed states
 			if (methodResult != null) {
 				int removedStates = m_Operand.size() - methodResult.size();
-				m_CountingMeasures.put(CountingMeasure.REMOVED_STATES, removedStates);
+				m_CountingMeasures.put(ECountingMeasure.REMOVED_STATES, removedStates);
 			}
 			// Buechi states
-			m_CountingMeasures.put(CountingMeasure.BUCHI_STATES, operand.size());
+			m_CountingMeasures.put(ECountingMeasure.BUCHI_STATES, operand.size());
 			// Overall time
-			m_TimeMeasures.put(TimeMeasure.OVERALL_TIME, ComparisonTables.millisToSeconds(m_ExternalOverallTime));
+			m_TimeMeasures.put(ETimeMeasure.OVERALL_TIME, ComparisonTables.millisToSeconds(m_ExternalOverallTime));
 		}
 
 		if (timedOut && method == null) {
@@ -659,10 +659,10 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 		message += "NAME" + LOG_SEPARATOR + "TYPE" + LOG_SEPARATOR + "USED_SCCS" + LOG_SEPARATOR + "TIMED_OUT"
 				+ LOG_SEPARATOR + "OOM" + LOG_SEPARATOR;
 		// Variable fields
-		for (TimeMeasure measure : m_TimeMeasures.keySet()) {
+		for (ETimeMeasure measure : m_TimeMeasures.keySet()) {
 			message += measure + LOG_SEPARATOR;
 		}
-		for (CountingMeasure measure : m_CountingMeasures.keySet()) {
+		for (ECountingMeasure measure : m_CountingMeasures.keySet()) {
 			message += measure + LOG_SEPARATOR;
 		}
 
@@ -675,10 +675,10 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 * Creates or resets the head of the performance format.
 	 */
 	private void createAndResetPerformanceHead() {
-		for (TimeMeasure measure : TimeMeasure.values()) {
+		for (ETimeMeasure measure : ETimeMeasure.values()) {
 			m_TimeMeasures.put(measure, (float) SimulationPerformance.NO_TIME_RESULT);
 		}
-		for (CountingMeasure measure : CountingMeasure.values()) {
+		for (ECountingMeasure measure : ECountingMeasure.values()) {
 			m_CountingMeasures.put(measure, SimulationPerformance.NO_COUNTING_RESULT);
 		}
 	}
@@ -697,11 +697,11 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 *            Operand the simulation processed
 	 * @return The out of memory performance object
 	 */
-	private SimulationPerformance createOutOfMemoryPerformance(final String name, final SimulationType type,
+	private SimulationPerformance createOutOfMemoryPerformance(final String name, final ESimulationType type,
 			final boolean useSCCs, final INestedWordAutomatonOldApi<LETTER, STATE> operand) {
 		SimulationPerformance performance = SimulationPerformance.createOutOfMemoryPerformance(type, useSCCs);
 		performance.setName(name);
-		performance.setCountingMeasure(CountingMeasure.BUCHI_STATES, operand.size());
+		performance.setCountingMeasure(ECountingMeasure.BUCHI_STATES, operand.size());
 		return performance;
 	}
 
@@ -719,11 +719,11 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 *            Operand the simulation processed
 	 * @return The timed out performance object
 	 */
-	private SimulationPerformance createTimedOutPerformance(final String name, final SimulationType type,
+	private SimulationPerformance createTimedOutPerformance(final String name, final ESimulationType type,
 			final boolean useSCCs, final INestedWordAutomatonOldApi<LETTER, STATE> operand) {
 		SimulationPerformance performance = SimulationPerformance.createTimedOutPerformance(type, useSCCs);
 		performance.setName(name);
-		performance.setCountingMeasure(CountingMeasure.BUCHI_STATES, operand.size());
+		performance.setCountingMeasure(ECountingMeasure.BUCHI_STATES, operand.size());
 		return performance;
 	}
 
@@ -795,7 +795,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 * @param operand
 	 *            The buechi automaton to reduce
 	 */
-	private void measureMethodPerformance(final String name, final SimulationType type, final boolean useSCCs,
+	private void measureMethodPerformance(final String name, final ESimulationType type, final boolean useSCCs,
 			final AutomataLibraryServices services, final long timeout, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand) {
 		IProgressAwareTimer progressTimer = services.getProgressMonitorService().getChildTimer(timeout);
@@ -804,19 +804,19 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 		Object method = null;
 
 		try {
-			if (type.equals(SimulationType.DIRECT)) {
+			if (type.equals(ESimulationType.DIRECT)) {
 				method = new DirectSimulation<>(services, progressTimer, m_Logger, operand, useSCCs, stateFactory);
-			} else if (type.equals(SimulationType.DELAYED)) {
+			} else if (type.equals(ESimulationType.DELAYED)) {
 				method = new DelayedSimulation<>(services, progressTimer, m_Logger, operand, useSCCs, stateFactory);
-			} else if (type.equals(SimulationType.FAIR)) {
+			} else if (type.equals(ESimulationType.FAIR)) {
 				method = new FairSimulation<>(services, progressTimer, m_Logger, operand, useSCCs, stateFactory);
-			} else if (type.equals(SimulationType.FAIRDIRECT)) {
+			} else if (type.equals(ESimulationType.FAIRDIRECT)) {
 				method = new FairDirectSimulation<>(services, progressTimer, m_Logger, operand, useSCCs, stateFactory);
-			} else if (type.equals(SimulationType.EXT_MINIMIZESEVPA)) {
+			} else if (type.equals(ESimulationType.EXT_MINIMIZESEVPA)) {
 				long startTime = System.currentTimeMillis();
 				method = new MinimizeSevpa<LETTER, STATE>(m_Services, operand);
 				m_ExternalOverallTime = System.currentTimeMillis() - startTime;
-			} else if (type.equals(SimulationType.EXT_SHRINKNWA)) {
+			} else if (type.equals(ESimulationType.EXT_SHRINKNWA)) {
 				long startTime = System.currentTimeMillis();
 				method = new ShrinkNwa<>(m_Services, stateFactory, operand);
 				m_ExternalOverallTime = System.currentTimeMillis() - startTime;
@@ -844,15 +844,15 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 	 *            Performance to save
 	 */
 	private void saveStateOfPerformance(final SimulationPerformance performance) {
-		for (TimeMeasure measure : m_TimeMeasures.keySet()) {
-			long durationInMillis = performance.getTimeMeasureResult(measure, MultipleDataOption.ADDITIVE);
+		for (ETimeMeasure measure : m_TimeMeasures.keySet()) {
+			long durationInMillis = performance.getTimeMeasureResult(measure, EMultipleDataOption.ADDITIVE);
 			if (durationInMillis == SimulationPerformance.NO_TIME_RESULT) {
 				m_TimeMeasures.put(measure, (float) SimulationPerformance.NO_TIME_RESULT);
 			} else {
 				m_TimeMeasures.put(measure, ComparisonTables.millisToSeconds(durationInMillis));
 			}
 		}
-		for (CountingMeasure measure : m_CountingMeasures.keySet()) {
+		for (ECountingMeasure measure : m_CountingMeasures.keySet()) {
 			int counter = performance.getCountingMeasureResult(measure);
 			m_CountingMeasures.put(measure, counter);
 		}
