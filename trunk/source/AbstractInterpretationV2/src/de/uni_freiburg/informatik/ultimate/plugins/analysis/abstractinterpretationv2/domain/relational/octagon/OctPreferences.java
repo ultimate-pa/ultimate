@@ -12,7 +12,7 @@ public class OctPreferences {
 		SIMPLE, EXPONENTIAL, LITERAL;
 	}
 
-	public static final String WIDENING_OPERATOR = "Widening operator";
+	public static final String WIDENING_OPERATOR = "Octagon widening operator";
 	public static final WideningOperator WIDENING_OPERATOR_DEFAULT = WideningOperator.EXPONENTIAL;
 	
 	public static final String EXP_WIDENING_THRESHOLD = "Threshold for exponential widening";
