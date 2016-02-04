@@ -54,7 +54,7 @@ public class AbstractInterpretationV2TestSuite extends AbstractEvalTestSuite {
 //	        new Triple<>("AutomizerC.xml", ".i", "svcomp2016/svcomp-Reach-64bit-Automizer_Default.epf"),
 //	        new Triple<>("AbstractInterpretationv2C.xml", ".i", "ai/AIv2_INT.epf"),
 //	        new Triple<>("AbstractInterpretationv2.xml", ".bpl", "ai/AIv2_INT.epf"),
-	        new Triple<>("AbstractInterpretationV2C.xml", ".c", "ai/AIv2_OCT.epf"),
+	        new Triple<>("AbstractInterpretationv2C.xml", ".c", "ai/AIv2_OCT.epf"),
 	        new Triple<>("AbstractInterpretationv2.xml", ".bpl", "ai/AIv2_OCT.epf"),
 	};
 
@@ -68,16 +68,17 @@ public class AbstractInterpretationV2TestSuite extends AbstractEvalTestSuite {
 //	        "examples/svcomp/loops/compact_false-unreach-call.c",
 //	        "examples/svcomp/loops/heavy_false-unreach-call.c",
 //	        "examples/svcomp/loops/heavy_true-unreach-call.c",
+			"examples/programs/abstractInterpretation/EasyRecursive_incorrect.bpl",
 
 //	        "varDiffOrder/",
 
-	        "examples/programs/abstractInterpretation/",
-	        /* ULTIMATE repo */
-	         "examples/programs/regression/bpl/",
-	         "examples/programs/regression/c/",
-//	         "examples/programs/recursivePrograms",
-	        /* SV-COMP repo */
-	        "examples/svcomp/loops/", // SPLIT
+//	        "examples/programs/abstractInterpretation/",
+//	        /* ULTIMATE repo */
+//	         "examples/programs/regression/bpl/",
+//	         "examples/programs/regression/c/",
+////	         "examples/programs/recursivePrograms",
+//	        /* SV-COMP repo */
+//	        "examples/svcomp/loops/", // SPLIT
 			// "examples/svcomp/ntdrivers-simplified/",
 	   		// "examples/svcomp/ssh-simplified/", 
 			// "examples/svcomp/locks/",
