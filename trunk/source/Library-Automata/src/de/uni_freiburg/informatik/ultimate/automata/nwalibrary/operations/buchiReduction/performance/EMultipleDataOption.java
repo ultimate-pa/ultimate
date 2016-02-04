@@ -24,26 +24,33 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance;
 
 /**
- * Types of possible game graph changes, mainly used by
- * {@link GameGraphChanges}.
+ * Different options that are available for handling multiple data values.
  * 
  * @author Daniel Tischner
  *
  */
-public enum GameGraphChangeType {
+public enum EMultipleDataOption {
 	/**
-	 * Represents a change that added something to the game graph.
+	 * The data gets added.
 	 */
-	ADDITION,
+	ADDITIVE,
 	/**
-	 * Represents a change that did not alter the game graph.
+	 * The average among the data values is build.
 	 */
-	NO_CHANGE,
+	AVERAGE,
 	/**
-	 * Represents a change that removed something from the game graph.
+	 * The maximum of all values is returned.
 	 */
-	REMOVAL
+	MAXIMUM,
+	/**
+	 * The minimium of all values is returned.
+	 */
+	MINIMIUM,
+	/**
+	 * All data values are returned without changing them.
+	 */
+	SINGLE
 }

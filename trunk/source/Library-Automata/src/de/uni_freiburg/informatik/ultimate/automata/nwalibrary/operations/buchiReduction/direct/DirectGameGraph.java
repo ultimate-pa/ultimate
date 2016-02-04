@@ -40,9 +40,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.AGameGraph;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.CountingMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.ECountingMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationPerformance;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.TimeMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.ETimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
@@ -146,7 +146,7 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 	protected NestedWordAutomaton<LETTER, STATE> generateBuchiAutomatonFromGraph() throws OperationCanceledException {
 		SimulationPerformance performance = getSimulationPerformance();
 		if (performance != null) {
-			performance.startTimeMeasure(TimeMeasure.BUILD_RESULT_TIME);
+			performance.startTimeMeasure(ETimeMeasure.BUILD_RESULT_TIME);
 		}
 
 		// Determine which states to merge
@@ -217,13 +217,13 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 
 		// Log performance
 		if (performance != null) {
-			performance.stopTimeMeasure(TimeMeasure.BUILD_RESULT_TIME);
-			performance.addTimeMeasureValue(TimeMeasure.BUILD_GRAPH_TIME, m_GraphBuildTime);
-			performance.setCountingMeasure(CountingMeasure.REMOVED_STATES,
+			performance.stopTimeMeasure(ETimeMeasure.BUILD_RESULT_TIME);
+			performance.addTimeMeasureValue(ETimeMeasure.BUILD_GRAPH_TIME, m_GraphBuildTime);
+			performance.setCountingMeasure(ECountingMeasure.REMOVED_STATES,
 					m_BuechiAmountOfStates - resultAmountOfStates);
-			performance.setCountingMeasure(CountingMeasure.REMOVED_TRANSITIONS,
+			performance.setCountingMeasure(ECountingMeasure.REMOVED_TRANSITIONS,
 					m_BuechiAmountOfTransitions - resultAmountOfTransitions);
-			performance.setCountingMeasure(CountingMeasure.BUCHI_STATES, m_BuechiAmountOfStates);
+			performance.setCountingMeasure(ECountingMeasure.BUCHI_STATES, m_BuechiAmountOfStates);
 		}
 
 		if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {

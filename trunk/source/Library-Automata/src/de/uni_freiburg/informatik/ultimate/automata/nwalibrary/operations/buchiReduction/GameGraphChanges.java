@@ -58,13 +58,13 @@ public class GameGraphChanges<LETTER, STATE> {
 	 * Stores information about changed edges.<br/>
 	 * Stored as (source, destination, type of change).
 	 */
-	private final NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, GameGraphChangeType> m_ChangedEdges;
+	private final NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> m_ChangedEdges;
 
 	/**
 	 * Stores information about changed vertices.<br/>
 	 * Stored as (vertex, type of changes).
 	 */
-	private final HashMap<Vertex<LETTER, STATE>, GameGraphChangeType> m_ChangedVertices;
+	private final HashMap<Vertex<LETTER, STATE>, EGameGraphChangeType> m_ChangedVertices;
 
 	/**
 	 * Stores information about remembered values of vertices.<br/>
@@ -98,7 +98,7 @@ public class GameGraphChanges<LETTER, STATE> {
 	 *            Destination of the added edge
 	 */
 	public void addedEdge(final Vertex<LETTER, STATE> src, final Vertex<LETTER, STATE> dest) {
-		changedEdge(src, dest, GameGraphChangeType.ADDITION);
+		changedEdge(src, dest, EGameGraphChangeType.ADDITION);
 	}
 
 	/**
@@ -109,7 +109,7 @@ public class GameGraphChanges<LETTER, STATE> {
 	 *            Vertex that was added
 	 */
 	public void addedVertex(final Vertex<LETTER, STATE> vertex) {
-		changedVertex(vertex, GameGraphChangeType.ADDITION);
+		changedVertex(vertex, EGameGraphChangeType.ADDITION);
 	}
 
 	/**
@@ -118,7 +118,7 @@ public class GameGraphChanges<LETTER, STATE> {
 	 * 
 	 * @return The information about changed edges
 	 */
-	public NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, GameGraphChangeType> getChangedEdges() {
+	public NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> getChangedEdges() {
 		return m_ChangedEdges;
 	}
 
@@ -128,7 +128,7 @@ public class GameGraphChanges<LETTER, STATE> {
 	 * 
 	 * @return The information about changed vertices
 	 */
-	public HashMap<Vertex<LETTER, STATE>, GameGraphChangeType> getChangedVertices() {
+	public HashMap<Vertex<LETTER, STATE>, EGameGraphChangeType> getChangedVertices() {
 		return m_ChangedVertices;
 	}
 
@@ -193,8 +193,8 @@ public class GameGraphChanges<LETTER, STATE> {
 	 *         stored, false if not
 	 */
 	public boolean isAddedVertex(final Vertex<LETTER, STATE> vertex) {
-		GameGraphChangeType type = m_ChangedVertices.get(vertex);
-		return type != null && type.equals(GameGraphChangeType.ADDITION);
+		EGameGraphChangeType type = m_ChangedVertices.get(vertex);
+		return type != null && type.equals(EGameGraphChangeType.ADDITION);
 	}
 
 	/**
@@ -231,24 +231,24 @@ public class GameGraphChanges<LETTER, STATE> {
 		}
 
 		// Merge changed edges
-		NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, GameGraphChangeType> changedEdges = changes
+		NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> changedEdges = changes
 				.getChangedEdges();
-		for (Triple<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, GameGraphChangeType> changedEdge : changedEdges
+		for (Triple<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> changedEdge : changedEdges
 				.entrySet()) {
 			Vertex<LETTER, STATE> src = changedEdge.getFirst();
 			Vertex<LETTER, STATE> dest = changedEdge.getSecond();
-			GameGraphChangeType type = changedEdge.getThird();
+			EGameGraphChangeType type = changedEdge.getThird();
 
-			Map<Vertex<LETTER, STATE>, GameGraphChangeType> changedMap = m_ChangedEdges.get(src);
-			GameGraphChangeType changeType = null;
+			Map<Vertex<LETTER, STATE>, EGameGraphChangeType> changedMap = m_ChangedEdges.get(src);
+			EGameGraphChangeType changeType = null;
 			if (changedMap != null) {
 				changeType = m_ChangedEdges.get(src).get(dest);
 			}
-			if (changeType == null || changeType.equals(GameGraphChangeType.NO_CHANGE)) {
+			if (changeType == null || changeType.equals(EGameGraphChangeType.NO_CHANGE)) {
 				// Only add edge change if unknown until now
 				m_ChangedEdges.put(src, dest, type);
-			} else if ((changeType == GameGraphChangeType.ADDITION && type == GameGraphChangeType.REMOVAL)
-					|| (changeType == GameGraphChangeType.REMOVAL && type == GameGraphChangeType.ADDITION)) {
+			} else if ((changeType == EGameGraphChangeType.ADDITION && type == EGameGraphChangeType.REMOVAL)
+					|| (changeType == EGameGraphChangeType.REMOVAL && type == EGameGraphChangeType.ADDITION)) {
 				// Nullify change if it was added and then
 				// removed or vice versa
 				m_ChangedEdges.remove(src, dest);
@@ -258,16 +258,16 @@ public class GameGraphChanges<LETTER, STATE> {
 		}
 
 		// Merge changed vertices
-		HashMap<Vertex<LETTER, STATE>, GameGraphChangeType> changedVertices = changes.getChangedVertices();
-		for (Entry<Vertex<LETTER, STATE>, GameGraphChangeType> changedVertix : changedVertices.entrySet()) {
-			GameGraphChangeType changeType = m_ChangedVertices.get(changedVertix.getKey());
-			if (changeType == null || changeType.equals(GameGraphChangeType.NO_CHANGE)) {
+		HashMap<Vertex<LETTER, STATE>, EGameGraphChangeType> changedVertices = changes.getChangedVertices();
+		for (Entry<Vertex<LETTER, STATE>, EGameGraphChangeType> changedVertix : changedVertices.entrySet()) {
+			EGameGraphChangeType changeType = m_ChangedVertices.get(changedVertix.getKey());
+			if (changeType == null || changeType.equals(EGameGraphChangeType.NO_CHANGE)) {
 				// Only add vertex change if unknown until now
 				m_ChangedVertices.put(changedVertix.getKey(), changedVertix.getValue());
-			} else if ((changeType == GameGraphChangeType.ADDITION
-					&& changedVertix.getValue() == GameGraphChangeType.REMOVAL)
-					|| (changeType == GameGraphChangeType.REMOVAL
-							&& changedVertix.getValue() == GameGraphChangeType.ADDITION)) {
+			} else if ((changeType == EGameGraphChangeType.ADDITION
+					&& changedVertix.getValue() == EGameGraphChangeType.REMOVAL)
+					|| (changeType == EGameGraphChangeType.REMOVAL
+							&& changedVertix.getValue() == EGameGraphChangeType.ADDITION)) {
 				// Nullify change if it was added and then
 				// removed or vice versa
 				m_ChangedVertices.remove(changedVertix.getKey());
@@ -360,7 +360,7 @@ public class GameGraphChanges<LETTER, STATE> {
 	 *            Destination of the removed edge
 	 */
 	public void removedEdge(final Vertex<LETTER, STATE> src, final Vertex<LETTER, STATE> dest) {
-		changedEdge(src, dest, GameGraphChangeType.REMOVAL);
+		changedEdge(src, dest, EGameGraphChangeType.REMOVAL);
 	}
 
 	/**
@@ -371,7 +371,7 @@ public class GameGraphChanges<LETTER, STATE> {
 	 *            Vertex that was removed
 	 */
 	public void removedVertex(final Vertex<LETTER, STATE> vertex) {
-		changedVertex(vertex, GameGraphChangeType.REMOVAL);
+		changedVertex(vertex, EGameGraphChangeType.REMOVAL);
 	}
 
 	/*
@@ -388,7 +388,7 @@ public class GameGraphChanges<LETTER, STATE> {
 
 		// Vertices
 		result.append(lineSeparator + "\tchangedVertices = {");
-		for (Entry<Vertex<LETTER, STATE>, GameGraphChangeType> vertex : getChangedVertices().entrySet()) {
+		for (Entry<Vertex<LETTER, STATE>, EGameGraphChangeType> vertex : getChangedVertices().entrySet()) {
 			result.append(lineSeparator + "\t\t<(" + vertex.getKey().getQ0() + ", " + vertex.getKey().getQ1() + "), p:"
 					+ vertex.getKey().getPriority() + ">\t" + vertex.getValue());
 		}
@@ -396,7 +396,7 @@ public class GameGraphChanges<LETTER, STATE> {
 
 		// Edges
 		result.append(lineSeparator + "\tchangedEdges = {");
-		for (Triple<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, GameGraphChangeType> vertex : getChangedEdges()
+		for (Triple<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> vertex : getChangedEdges()
 				.entrySet()) {
 			result.append(lineSeparator + "\t\t(" + vertex.getFirst().getQ0() + ", " + vertex.getFirst().getQ1());
 			if (vertex.getFirst() instanceof DuplicatorVertex) {
@@ -451,12 +451,12 @@ public class GameGraphChanges<LETTER, STATE> {
 	 *            Type of the change
 	 */
 	private void changedEdge(final Vertex<LETTER, STATE> src, final Vertex<LETTER, STATE> dest,
-			final GameGraphChangeType type) {
-		GameGraphChangeType previousType = m_ChangedEdges.get(src, dest);
+			final EGameGraphChangeType type) {
+		EGameGraphChangeType previousType = m_ChangedEdges.get(src, dest);
 		// Nullify change if previously added and then removed or vice versa
-		if (previousType != null && ((previousType.equals(GameGraphChangeType.ADDITION)
-				&& type.equals(GameGraphChangeType.REMOVAL))
-				|| (previousType.equals(GameGraphChangeType.REMOVAL) && type.equals(GameGraphChangeType.ADDITION)))) {
+		if (previousType != null && ((previousType.equals(EGameGraphChangeType.ADDITION)
+				&& type.equals(EGameGraphChangeType.REMOVAL))
+				|| (previousType.equals(EGameGraphChangeType.REMOVAL) && type.equals(EGameGraphChangeType.ADDITION)))) {
 			m_ChangedEdges.remove(src, dest);
 		} else {
 			m_ChangedEdges.put(src, dest, type);
@@ -475,12 +475,12 @@ public class GameGraphChanges<LETTER, STATE> {
 	 * @param type
 	 *            Type of the change
 	 */
-	private void changedVertex(final Vertex<LETTER, STATE> vertex, final GameGraphChangeType type) {
-		GameGraphChangeType previousType = m_ChangedVertices.get(vertex);
+	private void changedVertex(final Vertex<LETTER, STATE> vertex, final EGameGraphChangeType type) {
+		EGameGraphChangeType previousType = m_ChangedVertices.get(vertex);
 		// Nullify change if previously added and then removed or vice versa
-		if (previousType != null && ((previousType.equals(GameGraphChangeType.ADDITION)
-				&& type.equals(GameGraphChangeType.REMOVAL))
-				|| (previousType.equals(GameGraphChangeType.REMOVAL) && type.equals(GameGraphChangeType.ADDITION)))) {
+		if (previousType != null && ((previousType.equals(EGameGraphChangeType.ADDITION)
+				&& type.equals(EGameGraphChangeType.REMOVAL))
+				|| (previousType.equals(EGameGraphChangeType.REMOVAL) && type.equals(EGameGraphChangeType.ADDITION)))) {
 			m_ChangedVertices.remove(vertex);
 		} else {
 			m_ChangedVertices.put(vertex, type);

@@ -27,46 +27,34 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance;
 
 /**
- * Different types of counting measures.
+ * Different types of simulation.
  * 
  * @author Daniel Tischner
  *
  */
-public enum CountingMeasure {
+public enum ESimulationType {
 	/**
-	 * Amount of states the automaton has before simulation.
+	 * Delayed simulation.
 	 */
-	BUCHI_STATES,
+	DELAYED,
 	/**
-	 * Amount of merge attempts that where aborted.
+	 * Direct simulation.
 	 */
-	FAILED_MERGE_ATTEMPTS,
+	DIRECT,
 	/**
-	 * Amount of transition removal attempts that where aborted.
+	 * External minimization method, MinimizeSevpa.
 	 */
-	FAILED_TRANSREMOVE_ATTEMPTS,
+	EXT_MINIMIZESEVPA,
 	/**
-	 * Amount of states the game graph has.
+	 * External minimization method, ShrinkNwa.
 	 */
-	GAMEGRAPH_STATES,
+	EXT_SHRINKNWA,
 	/**
-	 * The global bound for infinty.
+	 * Fair simulation.
 	 */
-	GLOBAL_INFINITY,
+	FAIR,
 	/**
-	 * Amount of states a simulation has removed.
+	 * Fair simulation that uses direct simulation as an optimization.
 	 */
-	REMOVED_STATES,
-	/**
-	 * Amount of transitions a simulation has removed.
-	 */
-	REMOVED_TRANSITIONS,
-	/**
-	 * Amount of SCCs the game graph has.
-	 */
-	SCCS,
-	/**
-	 * Amount of steps a simulation needed.
-	 */
-	SIMULATION_STEPS
+	FAIRDIRECT
 }

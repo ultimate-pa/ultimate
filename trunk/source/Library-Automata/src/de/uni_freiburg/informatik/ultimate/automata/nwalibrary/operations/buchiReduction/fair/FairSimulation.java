@@ -45,11 +45,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.ASimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.GameGraphChanges;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.GameGraphSuccessorProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.CountingMeasure;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.MultipleDataOption;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.ECountingMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.EMultipleDataOption;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationPerformance;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationType;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.TimeMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.ESimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.ETimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
@@ -331,7 +331,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses,
 			final FairGameGraph<LETTER, STATE> game) throws OperationCanceledException {
-		super(progressTimer, logger, useSCCs, stateFactory, SimulationType.FAIR);
+		super(progressTimer, logger, useSCCs, stateFactory, ESimulationType.FAIR);
 
 		m_Buechi = buechi;
 		m_Logger = getLogger();
@@ -370,7 +370,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		result.append(lineSeparator + "\tuseSCCs = " + isUsingSCCs());
 		result.append(lineSeparator + "\tglobalInfinity = " + m_GlobalInfinity);
 		result.append(lineSeparator + "\tstepCounter = "
-				+ getSimulationPerformance().getCountingMeasureResult(CountingMeasure.SIMULATION_STEPS));
+				+ getSimulationPerformance().getCountingMeasureResult(ECountingMeasure.SIMULATION_STEPS));
 		result.append(lineSeparator + "\tbuechi size before = " + m_Buechi.size() + " states");
 		if (getResult() != null) {
 			result.append(lineSeparator + "\tbuechi size after = " + getResult().size() + " states");
@@ -454,7 +454,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			throws OperationCanceledException {
 		if (isUsingSCCs()) {
 			m_pokedFromNeighborSCC = new HashSet<>();
-			getSimulationPerformance().startTimeMeasure(TimeMeasure.BUILD_SCC);
+			getSimulationPerformance().startTimeMeasure(ETimeMeasure.BUILD_SCC);
 			DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>> sccFactory = new DefaultStronglyConnectedComponentFactory<>();
 			GameGraphSuccessorProvider<LETTER, STATE> succProvider = new GameGraphSuccessorProvider<>(m_Game);
 			setSccComp(new SccComputation<Vertex<LETTER, STATE>, StronglyConnectedComponent<Vertex<LETTER, STATE>>>(
@@ -462,7 +462,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 			Iterator<StronglyConnectedComponent<Vertex<LETTER, STATE>>> iter = new LinkedList<StronglyConnectedComponent<Vertex<LETTER, STATE>>>(
 					getSccComp().getSCCs()).iterator();
-			getSimulationPerformance().stopTimeMeasure(TimeMeasure.BUILD_SCC);
+			getSimulationPerformance().stopTimeMeasure(ETimeMeasure.BUILD_SCC);
 			while (iter.hasNext()) {
 				StronglyConnectedComponent<Vertex<LETTER, STATE>> scc = iter.next();
 				iter.remove();
@@ -750,8 +750,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	@Override
 	protected void doSimulation() throws OperationCanceledException {
 		SimulationPerformance performance = super.getSimulationPerformance();
-		performance.startTimeMeasure(TimeMeasure.OVERALL_TIME);
-		performance.startTimeMeasure(TimeMeasure.SIMULATION_ONLY_TIME);
+		performance.startTimeMeasure(ETimeMeasure.OVERALL_TIME);
+		performance.startTimeMeasure(ETimeMeasure.SIMULATION_ONLY_TIME);
 
 		// First simulation
 		m_Logger.debug("Starting first simulation...");
@@ -762,16 +762,16 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		// overhead of using SCCs is only worth it if simulation does not
 		// terminate as quickly as it will do now.
 		if (!isUsingSCCs()) {
-			performance.addTimeMeasureValue(TimeMeasure.BUILD_SCC, SimulationPerformance.NO_TIME_RESULT);
-			performance.setCountingMeasure(CountingMeasure.SCCS, SimulationPerformance.NO_COUNTING_RESULT);
+			performance.addTimeMeasureValue(ETimeMeasure.BUILD_SCC, SimulationPerformance.NO_TIME_RESULT);
+			performance.setCountingMeasure(ECountingMeasure.SCCS, SimulationPerformance.NO_COUNTING_RESULT);
 		}
 		boolean disabledSCCUsage = false;
 		if (isUsingSCCs()) {
 			setUseSCCs(false);
 			disabledSCCUsage = true;
-			performance.setCountingMeasure(CountingMeasure.SCCS, m_AmountOfSCCs);
+			performance.setCountingMeasure(ECountingMeasure.SCCS, m_AmountOfSCCs);
 		}
-		performance.setCountingMeasure(CountingMeasure.GLOBAL_INFINITY, m_GlobalInfinity);
+		performance.setCountingMeasure(ECountingMeasure.GLOBAL_INFINITY, m_GlobalInfinity);
 
 		// Merge states
 		m_AttemptingChanges = true;
@@ -797,7 +797,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 				}
 
 				m_Game.undoChanges(changes);
-				performance.increaseCountingMeasure(CountingMeasure.FAILED_MERGE_ATTEMPTS);
+				performance.increaseCountingMeasure(ECountingMeasure.FAILED_MERGE_ATTEMPTS);
 			} else {
 				if (m_Logger.isDebugEnabled()) {
 					m_Logger.debug("Attempted merge for " + leftState + " and " + rightState + " was successful.");
@@ -845,7 +845,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 				}
 
 				m_Game.undoChanges(changes);
-				performance.increaseCountingMeasure(CountingMeasure.FAILED_TRANSREMOVE_ATTEMPTS);
+				performance.increaseCountingMeasure(ECountingMeasure.FAILED_TRANSREMOVE_ATTEMPTS);
 			} else {
 				if (m_Logger.isDebugEnabled()) {
 					m_Logger.debug(
@@ -868,25 +868,25 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			setUseSCCs(true);
 		}
 
-		performance.stopTimeMeasure(TimeMeasure.SIMULATION_ONLY_TIME);
+		performance.stopTimeMeasure(ETimeMeasure.SIMULATION_ONLY_TIME);
 
 		// Generate the resulting automata
 		m_Logger.debug("Generating the result automaton...");
 		setResult(m_Game.generateBuchiAutomatonFromGraph());
 
-		long duration = performance.stopTimeMeasure(TimeMeasure.OVERALL_TIME);
+		long duration = performance.stopTimeMeasure(ETimeMeasure.OVERALL_TIME);
 		// Add time building of the graph took to the overall time since this
 		// happens outside of simulation
-		long durationGraph = performance.getTimeMeasureResult(TimeMeasure.BUILD_GRAPH_TIME,
-				MultipleDataOption.ADDITIVE);
+		long durationGraph = performance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH_TIME,
+				EMultipleDataOption.ADDITIVE);
 		if (durationGraph != SimulationPerformance.NO_TIME_RESULT) {
 			duration += durationGraph;
-			performance.addTimeMeasureValue(TimeMeasure.OVERALL_TIME, durationGraph);
+			performance.addTimeMeasureValue(ETimeMeasure.OVERALL_TIME, durationGraph);
 		}
-		performance.setCountingMeasure(CountingMeasure.GAMEGRAPH_STATES, m_Game.getSize());
+		performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_STATES, m_Game.getSize());
 
 		m_Logger.info((isUsingSCCs() ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds and "
-				+ performance.getCountingMeasureResult(CountingMeasure.SIMULATION_STEPS) + " simulation steps.");
+				+ performance.getCountingMeasureResult(ECountingMeasure.SIMULATION_STEPS) + " simulation steps.");
 	}
 
 	/*
@@ -912,7 +912,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 		// Work through the working list until its empty
 		while (!getWorkingList().isEmpty()) {
-			performance.increaseCountingMeasure(CountingMeasure.SIMULATION_STEPS);
+			performance.increaseCountingMeasure(ECountingMeasure.SIMULATION_STEPS);
 
 			// Poll the current working vertex
 			Vertex<LETTER, STATE> workingVertex = pollVertexFromWorkingList();

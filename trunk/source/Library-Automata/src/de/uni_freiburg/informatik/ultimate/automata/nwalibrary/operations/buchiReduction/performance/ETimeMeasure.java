@@ -32,7 +32,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchi
  * @author Daniel Tischner
  *
  */
-public enum TimeMeasure {
+public enum ETimeMeasure {
 	/**
 	 * The overall time an operation took.
 	 */
