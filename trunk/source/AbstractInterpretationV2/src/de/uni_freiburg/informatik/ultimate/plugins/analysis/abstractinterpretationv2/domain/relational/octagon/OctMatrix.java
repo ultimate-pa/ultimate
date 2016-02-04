@@ -7,12 +7,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.NumUtil;
 import de.uni_freiburg.informatik.ultimate.util.BidirectionalMap;
 
 /**
@@ -48,6 +50,8 @@ public class OctMatrix {
 	/**
 	 * Size of this matrix (size = #rows = #columns).
 	 * Size is always an even number.
+	 * 
+	 * @see #variables()
 	 */
 	private final int mSize;
 	
@@ -136,10 +140,23 @@ public class OctMatrix {
 		mStrongClosure = mTightClosure = null;
 	}
 	
+	/**
+	 * Returns the number of rows (= number of columns) in this octagon matrix.
+	 * Octagon matrices always have an even-numbered size, since every variable
+	 * corresponds to two rows (and two columns) of the octagon matrix.
+	 * 
+	 * @return size of this octagon matrix.
+	 */
 	public int getSize() {
 		return mSize;
 	}
 	
+	/**
+	 * Returns the number of variables, stored by this octagon.
+	 * Each variable corresponds to two rows and two columns of the octagon matrix.
+	 * 
+	 * @return number of variables in this octagon
+	 */
 	public int variables() {
 		return mSize / 2;
 	}
@@ -597,8 +614,7 @@ public class OctMatrix {
 		return elementwiseOperation(n, (mij, nij) -> {
 			if (mij.compareTo(nij) >= 0) {
 				return mij;
-			}
-			if (nij.compareTo(threshold) > 0) {
+			} else if (nij.compareTo(threshold) > 0) {
 				return OctValue.INFINITY;
 			}
 			OctValue result;
@@ -629,10 +645,18 @@ public class OctMatrix {
 //		return result;
 	}
 
-	// TODO document: stabilization depends on user-given limit (limit has to be inf after finite number of widenings)
-	// TODO: use list of literals instead of one fixed limit
-	public OctMatrix widenLimit(OctMatrix n, OctValue limit) {
-		return elementwiseOperation(n, (mij, nij) -> mij.compareTo(nij) >= 0 ? mij : OctValue.max(nij, limit));
+	public interface WideningStepSupplier {
+		public OctValue nextWideningStep(OctValue v);
+	}
+	
+	public OctMatrix widenStepwise(OctMatrix n, WideningStepSupplier stepSupplier) {
+		return elementwiseOperation(n, (mij, nij) -> {
+			if (mij.compareTo(nij) >= 0) {
+				return mij;
+			} else {
+				return stepSupplier.nextWideningStep(nij);
+			}
+		});
 	}
 
 	public OctMatrix addVariables(int count) {
@@ -814,9 +838,8 @@ public class OctMatrix {
 			mStrongClosure = this;
 		}
 		if (wasTightlyClosed) {
-			// TODO assert that copied variable was integral, before keeping cached closure
-			// mTightClosure = this;
-			mTightClosure = null;
+			// tightly closed => all variables have integral values => copied variable had integral value
+			mTightClosure = this;
 		}
 	}
 
@@ -892,11 +915,10 @@ public class OctMatrix {
 		if (mStrongClosure != this) {
 			mStrongClosure = null;
 		}
-		// TODO assert that added constant was integral, before keeping cached closure
-//		if (mTightClosure != this) {
-//			mTightClosure = null;
-//		}
-		mTightClosure = null;
+		if (mTightClosure != this) {
+			assert constant.isInfinity() || NumUtil.isIntegral(constant.getValue()) : "int incremented by real";
+			mTightClosure = null;
+		}
 	}
 	
 	protected void assignVarConstant(int targetVar, OctValue constant) {

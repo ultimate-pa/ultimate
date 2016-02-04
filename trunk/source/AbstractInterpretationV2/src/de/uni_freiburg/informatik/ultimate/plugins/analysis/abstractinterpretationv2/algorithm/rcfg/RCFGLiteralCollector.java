@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.math.BigDecimal;
 import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.Set;
@@ -69,6 +70,10 @@ public class RCFGLiteralCollector extends RCFGEdgeVisitor implements ILiteralCol
 
 	public LiteralCollection getLiteralCollection() {
 		return mLiteralCollection;
+	}
+	
+	public Collection<BigDecimal> getNumberLiterals() {
+		return Collections.unmodifiableCollection(mNumberLiterals);
 	}
 
 //	private void addBoundaryLiterals(Set<BigDecimal> numbers) {

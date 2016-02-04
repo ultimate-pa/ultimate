@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.lpsolver.LpSolverPreferences;
 
@@ -86,6 +87,9 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 
 		// Add Interval Domain preferences
 		rtr.addAll(IntervalDomainPreferences.getPreferences());
+
+		// Add Octagon Domain preferences
+		rtr.addAll(OctPreferences.createPreferences());
 
 		// Add ojAlgo preferences
 		rtr.addAll(LpSolverPreferences.getPreferences());

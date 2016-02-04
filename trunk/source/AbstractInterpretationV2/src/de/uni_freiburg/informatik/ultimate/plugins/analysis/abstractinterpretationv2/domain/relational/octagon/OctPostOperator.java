@@ -37,12 +37,14 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final OctStatementProcessor mStatementProcessor;
 	private final BoogieSymbolTable mSymbolTable;
-
-	public OctPostOperator(Logger logger, BoogieSymbolTable symbolTable) {
+	private final int mStatesUntilMerge;
+	
+	public OctPostOperator(Logger logger, BoogieSymbolTable symbolTable, int statesUntilMerge) {
 		mLogger = logger;
 		mStatementExtractor = new RcfgStatementExtractor();
 		mStatementProcessor = new OctStatementProcessor(mLogger, symbolTable);
 		mSymbolTable = symbolTable;
+		mStatesUntilMerge = statesUntilMerge;
 	}
 
 	@Override

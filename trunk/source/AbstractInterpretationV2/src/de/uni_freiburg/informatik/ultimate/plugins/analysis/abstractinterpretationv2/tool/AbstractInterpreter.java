@@ -171,7 +171,7 @@ public final class AbstractInterpreter {
 		final Boogie2SmtSymbolTable boogieVarTable = bpl2smt.getBoogie2SmtSymbolTable();
 
 		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain = selectDomain(
-				() -> new RCFGLiteralCollector(root).getLiteralCollection(), symbolTable, services);
+				() -> new RCFGLiteralCollector(root), symbolTable, services);
 
 		runSilentlyOnNWA(initial, timer, services, predicates, symbolTable, bpl2smt, script, boogieVarTable, domain,
 				transProvider, transProvider);
@@ -245,7 +245,7 @@ public final class AbstractInterpreter {
 				transitionProvider);
 
 		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain = selectDomain(
-				() -> new RCFGLiteralCollector(root).getLiteralCollection(), symbolTable, services);
+				() -> new RCFGLiteralCollector(root), symbolTable, services);
 		runOnRCFG(initials, timer, services, funCreateReporter, predicates, symbolTable, bpl2smt, script,
 				boogieVarTable, loopDetector, domain, transitionProvider);
 	}
@@ -330,7 +330,7 @@ public final class AbstractInterpreter {
 	}
 
 	private static IAbstractDomain<?, CodeBlock, IBoogieVar> selectDomain(
-			final LiteralCollectionFactory literalCollector, final BoogieSymbolTable symbolTable,
+			final LiteralCollectorFactory literalCollector, final BoogieSymbolTable symbolTable,
 			final IUltimateServiceProvider services) {
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		final String selectedDomain = ups.getString(AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN);
@@ -344,10 +344,10 @@ public final class AbstractInterpreter {
 			return new SignDomain(services);
 		} else if (IntervalDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new IntervalDomain(services.getLoggingService().getLogger(Activator.PLUGIN_ID), symbolTable,
-					literalCollector.create());
+					literalCollector.create().getLiteralCollection());
 		} else if (OctagonDomain.class.getSimpleName().equals(selectedDomain)) {
 			Logger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-			return new OctagonDomain(logger, symbolTable);
+			return new OctagonDomain(logger, symbolTable, literalCollector);
 		}
 		throw new UnsupportedOperationException("The value \"" + selectedDomain + "\" of preference \""
 				+ AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN + "\" was not considered before! ");
@@ -365,7 +365,7 @@ public final class AbstractInterpreter {
 	}
 
 	@FunctionalInterface
-	private interface LiteralCollectionFactory {
-		LiteralCollection create();
+	public interface LiteralCollectorFactory {
+		RCFGLiteralCollector create();
 	}
 }
