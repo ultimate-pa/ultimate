@@ -4,11 +4,15 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import org.junit.Assert;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctMatrix;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctMatrix.WideningStepSupplier;
 import de.uni_freiburg.informatik.ultimate.util.BidirectionalMap;
 
 public class OctMatrixTest {
@@ -144,6 +148,78 @@ public class OctMatrixTest {
 		}
 	}
 
+	// widening tests //////////////////////////////////////////////////////////////////////////////////////////////////
+
+	@Test
+	public void testWidenSimple() {
+		OctMatrix m = OctMatrix.parseBlockLowerTriangular("  4   7   3   1");
+		OctMatrix n = OctMatrix.parseBlockLowerTriangular("  9   1   3.0 5");
+		OctMatrix mWn = OctMatrix.parseBlockLowerTriangular("inf 7   3   inf");
+		OctMatrix nWm = OctMatrix.parseBlockLowerTriangular("9   inf 3   5");
+		assertIsEqualTo(mWn, m.widenSimple(n));
+		assertIsEqualTo(nWm, n.widenSimple(m));
+	}
+
+	@Test
+	public void testWidenExponential() {
+		OctValue threshold = new OctValue(10);
+		// no widening
+		OctMatrix m = OctMatrix.parseBlockLowerTriangular("5  0 3   -7");
+		OctMatrix n = OctMatrix.parseBlockLowerTriangular("3 -4 3.0 -7.1");
+		assertIsEqualTo(m, m.widenExponential(n, threshold));
+
+		m = OctMatrix.parseBlockLowerTriangular("-9 -9 -9 -9");
+		// negative numbers
+		n = OctMatrix.parseBlockLowerTriangular("-3 -2 -1.9999999999 0");
+		OctMatrix mWn = OctMatrix.parseBlockLowerTriangular("-1.5 -1 0 0");
+		assertIsEqualTo(mWn, m.widenExponential(n, threshold));
+		// positive numbers
+		n = OctMatrix.parseBlockLowerTriangular("0.49999999 0.5 1 1.5");
+		mWn = OctMatrix.parseBlockLowerTriangular("1 1 2 3");
+		assertIsEqualTo(mWn, m.widenExponential(n, threshold));
+		// threshold
+		n = OctMatrix.parseBlockLowerTriangular("5 10 6 11");
+		mWn = OctMatrix.parseBlockLowerTriangular("10 10 10 inf");
+		assertIsEqualTo(mWn, m.widenExponential(n, threshold));
+	}
+
+	@Test
+	public void testWidenStepwise() {
+		WideningStepSupplier wss = createWideningStepSupplier("-9 -5 -3.2 4 8");
+		
+		OctMatrix m = OctMatrix.parseBlockLowerTriangular(  "6 -4.2 1 0");
+		OctMatrix n = OctMatrix.parseBlockLowerTriangular(  "5 -4   2 9");
+		OctMatrix mWn = OctMatrix.parseBlockLowerTriangular("6 -3.2 4 inf");
+		assertIsEqualTo(mWn, m.widenStepwise(n, wss));
+		
+		m = OctMatrix.parseBlockLowerTriangular(  "4 -9    2 1");
+		n = OctMatrix.parseBlockLowerTriangular(  "4 -3.20 8 1");
+		mWn = OctMatrix.parseBlockLowerTriangular("4 -3.2  8 1");
+		assertIsEqualTo(mWn, m.widenStepwise(n, wss));
+
+		m = OctMatrix.parseBlockLowerTriangular(  "inf 5   1.0 1");
+		n = OctMatrix.parseBlockLowerTriangular(  "5   inf 1   1.0");
+		mWn = OctMatrix.parseBlockLowerTriangular("inf inf 1   1");
+		assertIsEqualTo(mWn, m.widenStepwise(n, wss));
+	}
+	
+	private WideningStepSupplier createWideningStepSupplier(String steps) {
+		TreeSet<OctValue> treeSet = new TreeSet<>();
+		steps = steps.trim();
+		if (steps.length() > 0) {
+			for (String s : steps.split("\\s+")) {
+				treeSet.add(OctValue.parse(s));
+			}
+		}
+		return new WideningStepSupplier() {
+			@Override
+			public OctValue nextWideningStep(OctValue v) {
+				OctValue ceil = treeSet.ceiling(v);
+				return (ceil == null) ? OctValue.INFINITY : ceil;
+			}
+		};
+	}
+	
 	// misc tests //////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	@Test
@@ -205,40 +281,7 @@ public class OctMatrixTest {
 		assertIsEqualTo(r01, m.removeVariables(asSet(0, 1)));
 		assertIsEqualTo(r012, m.removeVariables(asSet(0, 1, 2)));
 	}
-
-	@Test
-	public void testWidenSimple() {
-		OctMatrix m = OctMatrix.parseBlockLowerTriangular("  4   7   3   1");
-		OctMatrix n = OctMatrix.parseBlockLowerTriangular("  9   1   3.0 5");
-		OctMatrix mWn = OctMatrix.parseBlockLowerTriangular("inf 7   3   inf");
-		OctMatrix nWm = OctMatrix.parseBlockLowerTriangular("9   inf 3   5");
-		assertIsEqualTo(mWn, m.widenSimple(n));
-		assertIsEqualTo(nWm, n.widenSimple(m));
-	}
-
-	@Test
-	public void testWidenExponential() {
-		OctValue threshold = new OctValue(10);
-		// no widening
-		OctMatrix m = OctMatrix.parseBlockLowerTriangular("5  0 3   -7");
-		OctMatrix n = OctMatrix.parseBlockLowerTriangular("3 -4 3.0 -7.1");
-		assertIsEqualTo(m, m.widenExponential(n, threshold));
-
-		m = OctMatrix.parseBlockLowerTriangular("-9 -9 -9 -9");
-		// negative numbers
-		n = OctMatrix.parseBlockLowerTriangular("-3 -2 -1.9999999999 0");
-		OctMatrix mWn = OctMatrix.parseBlockLowerTriangular("-1.5 -1 0 0");
-		assertIsEqualTo(mWn, m.widenExponential(n, threshold));
-		// positive numbers
-		n = OctMatrix.parseBlockLowerTriangular("0.49999999 0.5 1 1.5");
-		mWn = OctMatrix.parseBlockLowerTriangular("1 1 2 3");
-		assertIsEqualTo(mWn, m.widenExponential(n, threshold));
-		// threshold
-		n = OctMatrix.parseBlockLowerTriangular("5 10 6 11");
-		mWn = OctMatrix.parseBlockLowerTriangular("10 10 10 inf");
-		assertIsEqualTo(mWn, m.widenExponential(n, threshold));
-	}
-
+	
 	@Test
 	public void testAppendSelection() {
 		OctMatrix a = OctMatrix.parseBlockLowerTriangular(

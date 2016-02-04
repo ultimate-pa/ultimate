@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
@@ -90,7 +89,7 @@ public class OctMatrix {
 
 	public static OctMatrix parseBlockLowerTriangular(String m) {
 		m = m.trim();
-		String[] elements = "".equals(m) ? new String[0] : m.split("\\s+");
+		String[] elements = m.length() > 0 ? m.split("\\s+") : new String[0];
 		int size = (int) (Math.sqrt(2 * elements.length + 1) - 1);
 		if (size % 2 != 0) {
 			throw new IllegalArgumentException("Number of elements does not match any 2x2 block lower triangular matrix.");
