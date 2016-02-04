@@ -272,9 +272,9 @@ public class TypeChecker extends BaseObserver {
 				resultType = boolType; /* try to recover in any case */
 				break;
 			case ARITHNEGATIVE:
-				if (!subtype.equals(errorType) && !subtype.equals(intType))
+				if (!subtype.equals(errorType) && !subtype.equals(intType) && !subtype.equals(realType))
 					typeError(expr, "Type check failed for " + expr);
-				resultType = intType; /* try to recover in any case */
+				resultType = subtype;
 				break;
 			case OLD:
 				resultType = subtype;
