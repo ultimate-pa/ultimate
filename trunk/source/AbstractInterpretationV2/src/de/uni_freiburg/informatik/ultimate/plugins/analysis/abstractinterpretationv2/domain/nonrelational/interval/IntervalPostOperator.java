@@ -90,7 +90,19 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 			for (final IntervalDomainState currentState : currentStates) {
 				final List<IntervalDomainState> processed = mStatementProcessor.process(currentState, stmt);
 				assert processed.size() > 0;
-				afterProcessStates.addAll(processed);
+				final List<IntervalDomainState> postProcessed = new ArrayList<>();
+				for (final IntervalDomainState s : processed) {
+					if (!s.isBottom()) {
+						postProcessed.add(s);
+					}
+				}
+				if (postProcessed.size() == 0) {
+					currentStates.clear();
+					currentStates.add(oldstate.bottomState());
+					return currentStates;
+				} else {
+					afterProcessStates.addAll(postProcessed);
+				}
 			}
 			currentStates = afterProcessStates;
 		}
