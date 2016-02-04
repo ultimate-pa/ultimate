@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.log4j.Logger;
 
@@ -38,11 +37,9 @@ import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
@@ -84,11 +81,7 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 			timer = mServices.getProgressMonitorService();
 		}
 
-		final Map<CodeBlock, Map<ProgramPoint, Term>> preds = AbstractInterpreter.run(root, initial, timer, mServices);
-		if(mLogger.isDebugEnabled()){
-			mLogger.debug("Found the following predicates:");
-			AbsIntUtil.logPredicates(preds, root.getRootAnnot().getScript(), mLogger::debug);	
-		}
+		AbstractInterpreter.run(root, initial, timer, mServices);
 
 		// do not descend, this is already the root
 		return false;

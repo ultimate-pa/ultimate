@@ -76,10 +76,10 @@ public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, Sign
 		for (final IEvaluationResult<Values> res : subEvalResult) {
 			switch (mOperator) {
 			case LOGICNEG:
-				returnList.add(negateValue(res.getResult()));
+				returnList.add(negateValue(res.getValue()));
 				break;
 			case ARITHNEGATIVE:
-				returnList.add(negateValue(res.getResult()));
+				returnList.add(negateValue(res.getValue()));
 				break;
 			default:
 				throw new UnsupportedOperationException(
@@ -132,7 +132,8 @@ public class SignUnaryExpressionEvaluator implements INAryEvaluator<Values, Sign
 	}
 
 	@Override
-	public List<IEvaluationResult<Values>> inverseEvaluate(IEvaluationResult<Values> computedState) {
+	public List<SignDomainState> inverseEvaluate(final IEvaluationResult<Values> computedValue,
+	        final SignDomainState currentState) {
 		// TODO Auto-generated method stub
 		return null;
 	}

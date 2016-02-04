@@ -159,7 +159,7 @@ public class SignDomainState implements IAbstractState<SignDomainState, CodeBloc
 	@Override
 	public boolean isBottom() {
 		for (final Entry<String, SignDomainValue> entry : mValuesMap.entrySet()) {
-			if (entry.getValue().getResult() == Values.BOTTOM) {
+			if (entry.getValue().getValue() == Values.BOTTOM) {
 				return true;
 			}
 		}
@@ -184,7 +184,7 @@ public class SignDomainState implements IAbstractState<SignDomainState, CodeBloc
 		final StringBuilder stringBuffer = new StringBuilder();
 		for (final Entry<String, IBoogieVar> entry : mVariablesMap.entrySet()) {
 			stringBuffer.append(entry.getKey()).append(':').append(entry.getValue()).append(" = ")
-			        .append(mValuesMap.get(entry.getKey()).getResult().toString()).append("; ");
+			        .append(mValuesMap.get(entry.getKey()).getValue().toString()).append("; ");
 		}
 		return stringBuffer.toString();
 	}
@@ -223,7 +223,7 @@ public class SignDomainState implements IAbstractState<SignDomainState, CodeBloc
 		}
 		for (final Entry<String, SignDomainValue> entry : mValuesMap.entrySet()) {
 			final SignDomainValue otherValue = other.mValuesMap.get(entry.getKey());
-			if (!mValuesMap.get(entry.getKey()).getResult().equals(otherValue.getResult())) {
+			if (!mValuesMap.get(entry.getKey()).getValue().equals(otherValue.getValue())) {
 				return false;
 			}
 		}

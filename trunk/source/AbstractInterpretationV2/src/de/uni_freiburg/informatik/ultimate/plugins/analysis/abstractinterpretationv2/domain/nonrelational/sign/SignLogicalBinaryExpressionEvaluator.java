@@ -113,7 +113,7 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 		final SignDomainValue firstResult = (SignDomainValue) mLeftSubEvaluator.evaluate(currentState);
 		final SignDomainValue secondResult = (SignDomainValue) mRightSubEvaluator.evaluate(currentState);
 
-		if (firstResult.getResult().equals(Values.BOTTOM) || secondResult.getResult().equals(Values.BOTTOM)) {
+		if (firstResult.getValue().equals(Values.BOTTOM) || secondResult.getValue().equals(Values.BOTTOM)) {
 			SignDomainState newState = currentState.copy();
 			newState.setToBottom();
 			return newState;
@@ -134,7 +134,7 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 		case COMPGEQ:
 			throw new UnsupportedOperationException("The operator " + mOperator.toString() + " is not implemented.");
 		case COMPNEQ:
-			if (firstResult.getResult().equals(Values.TOP) || secondResult.getResult().equals(Values.TOP)) {
+			if (firstResult.getValue().equals(Values.TOP) || secondResult.getValue().equals(Values.TOP)) {
 				return newState;
 			}
 
@@ -145,7 +145,7 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 
 			return newState;
 		case COMPEQ:
-			if (firstResult.getResult().equals(Values.TOP) || secondResult.getResult().equals(Values.TOP)) {
+			if (firstResult.getValue().equals(Values.TOP) || secondResult.getValue().equals(Values.TOP)) {
 				return newState;
 			}
 
@@ -214,7 +214,7 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 	}
 
 	private boolean evaluateNEComparison(SignDomainValue firstResult, SignDomainValue secondResult) {
-		if (firstResult.getResult() == Values.ZERO && secondResult.getResult() == Values.ZERO) {
+		if (firstResult.getValue() == Values.ZERO && secondResult.getValue() == Values.ZERO) {
 			return false;
 		}
 
@@ -222,17 +222,17 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 	}
 
 	private boolean evaluateGTComparison(SignDomainValue firstResult, SignDomainValue secondResult) {
-		if (firstResult.getResult() == secondResult.getResult() || firstResult.getResult() == Values.BOTTOM
-		        || secondResult.getResult() == Values.BOTTOM || firstResult.getResult() == Values.TOP
-		        || secondResult.getResult() == Values.TOP) {
+		if (firstResult.getValue() == secondResult.getValue() || firstResult.getValue() == Values.BOTTOM
+		        || secondResult.getValue() == Values.BOTTOM || firstResult.getValue() == Values.TOP
+		        || secondResult.getValue() == Values.TOP) {
 			return false;
 		}
 
-		if (firstResult.getResult() == Values.POSITIVE && !(secondResult.getResult() == Values.POSITIVE)) {
+		if (firstResult.getValue() == Values.POSITIVE && !(secondResult.getValue() == Values.POSITIVE)) {
 			return true;
 		}
 
-		if (firstResult.getResult() == Values.ZERO && secondResult.getResult() == Values.NEGATIVE) {
+		if (firstResult.getValue() == Values.ZERO && secondResult.getValue() == Values.NEGATIVE) {
 			return true;
 		}
 
@@ -244,11 +244,11 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 			return false;
 		}
 
-		if (firstResult.getResult() == Values.NEGATIVE && !(secondResult.getResult() == Values.NEGATIVE)) {
+		if (firstResult.getValue() == Values.NEGATIVE && !(secondResult.getValue() == Values.NEGATIVE)) {
 			return true;
 		}
 
-		if (firstResult.getResult() == Values.ZERO && secondResult.getResult() == Values.POSITIVE) {
+		if (firstResult.getValue() == Values.ZERO && secondResult.getValue() == Values.POSITIVE) {
 			return true;
 		}
 		return false;

@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.ExpressionEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
@@ -82,8 +83,8 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	private IntervalDomainState mOldState;
 	private List<IntervalDomainState> mReturnState;
 
-	IEvaluatorFactory<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> mEvaluatorFactory;
-	ExpressionEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> mExpressionEvaluator;
+	IEvaluatorFactory<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> mEvaluatorFactory;
+	ExpressionEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> mExpressionEvaluator;
 
 	private String mLhsVariable;
 
@@ -171,7 +172,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 			final String varname = mLhsVariable;
 			mLhsVariable = null;
 
-			mExpressionEvaluator = new ExpressionEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar>();
+			mExpressionEvaluator = new ExpressionEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar>();
 
 			processExpression(rhs[i]);
 
@@ -181,38 +182,32 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 			final List<IntervalDomainState> newStates = new ArrayList<>();
 
 			for (final IntervalDomainState currentState : currentStateList) {
-				final List<IEvaluationResult<IntervalDomainEvaluationResult>> result = mExpressionEvaluator
-				        .getRootEvaluator().evaluate(currentState);
+				final List<IEvaluationResult<IntervalDomainValue>> result = mExpressionEvaluator.getRootEvaluator()
+				        .evaluate(currentState);
 
 				if (result.size() == 0) {
 					throw new UnsupportedOperationException(
 					        "There is supposed to be at least on evaluation result for the assingment expression.");
 				}
 
-				for (final IEvaluationResult<IntervalDomainEvaluationResult> res : result) {
-					IntervalDomainState newState = res.getResult().getEvaluatedState();
+				for (final IEvaluationResult<IntervalDomainValue> res : result) {
+					IntervalDomainState newState = currentState.copy();
 
-					final IntervalDomainValue newValue = res.getResult().getEvaluatedValue();
+					final IBoogieVar type = newState.getVariableDeclarationType(varname);
+					if (type.getIType() instanceof PrimitiveType) {
+						final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
 
-					if (newValue == null) {
-						newState = newState.setBooleanValue(varname, res.getBooleanValue());
-					} else {
-						final IBoogieVar type = newState.getVariableDeclarationType(varname);
-						if (type.getIType() instanceof PrimitiveType) {
-							final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
-
-							if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
-								newState = currentState.setBooleanValue(varname, res.getBooleanValue());
-							} else {
-								newState = newState.setValue(varname, newValue);
-							}
-						} else if (type.getIType() instanceof ArrayType) {
-							// TODO:
-							// We treat Arrays as normal variables for the time being.
-							newState = newState.setValue(varname, newValue);
+						if (primitiveType.getTypeCode() == PrimitiveType.BOOL) {
+							newState = currentState.setBooleanValue(varname, res.getBooleanValue());
 						} else {
-							newState = newState.setValue(varname, newValue);
+							newState = newState.setValue(varname, res.getValue());
 						}
+					} else if (type.getIType() instanceof ArrayType) {
+						// TODO:
+						// We treat Arrays as normal variables for the time being.
+						newState = newState.setValue(varname, res.getValue());
+					} else {
+						newState = newState.setValue(varname, res.getValue());
 					}
 
 					newStates.add(newState);
@@ -234,7 +229,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	protected void visit(IntegerLiteral expr) {
 		assert mEvaluatorFactory != null;
 
-		final IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> evaluator = mEvaluatorFactory
+		final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator = mEvaluatorFactory
 		        .createSingletonValueExpressionEvaluator(expr.getValue(), BigDecimal.class);
 
 		mExpressionEvaluator.addEvaluator(evaluator);
@@ -244,7 +239,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	protected void visit(RealLiteral expr) {
 		assert mEvaluatorFactory != null;
 
-		final IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> evaluator = mEvaluatorFactory
+		final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator = mEvaluatorFactory
 		        .createSingletonValueExpressionEvaluator(expr.getValue(), BigDecimal.class);
 
 		mExpressionEvaluator.addEvaluator(evaluator);
@@ -371,7 +366,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 
 		assert mEvaluatorFactory != null;
 
-		final INAryEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> evaluator = mEvaluatorFactory
+		final INAryEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator = mEvaluatorFactory
 		        .createNAryExpressionEvaluator(2, EvaluatorUtils.getEvaluatorType(expr.getType()));
 
 		evaluator.setOperator(expr.getOperator());
@@ -381,7 +376,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 
 	private void handleAssumeStatement(final AssumeStatement statement) {
 		mEvaluatorFactory = new IntervalEvaluatorFactory(mLogger);
-		mExpressionEvaluator = new ExpressionEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar>();
+		mExpressionEvaluator = new ExpressionEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar>();
 
 		final Expression formula = statement.getFormula();
 
@@ -400,14 +395,17 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 
 		assert mExpressionEvaluator.isFinished();
 
-		final List<IEvaluationResult<IntervalDomainEvaluationResult>> result = mExpressionEvaluator.getRootEvaluator()
+		final List<IEvaluationResult<IntervalDomainValue>> result = mExpressionEvaluator.getRootEvaluator()
 		        .evaluate(mOldState);
 
-		for (final IEvaluationResult<IntervalDomainEvaluationResult> res : result) {
-			if (res.getResult().getEvaluatedState().isBottom()) {
-				mReturnState.add(res.getResult().getEvaluatedState().bottomState());
+		for (final IEvaluationResult<IntervalDomainValue> res : result) {
+			if (res.getValue().isBottom() || res.getBooleanValue().getValue() == Value.BOTTOM
+			        || res.getBooleanValue().getValue() == Value.FALSE) {
+				mReturnState.add(mOldState.bottomState());
 			} else {
-				mReturnState.add(res.getResult().getEvaluatedState().copy());
+				final List<IntervalDomainState> resultStates = mExpressionEvaluator.getRootEvaluator()
+				        .inverseEvaluate(res, mOldState);
+				mReturnState.addAll(resultStates);
 			}
 		}
 	}
@@ -416,7 +414,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	protected void visit(FunctionApplication expr) {
 		assert mEvaluatorFactory != null;
 
-		IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> evaluator;
+		IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator;
 
 		List<Declaration> decls = mSymbolTable.getFunctionOrProcedureDeclaration(expr.getIdentifier());
 
@@ -476,7 +474,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	protected void visit(IdentifierExpression expr) {
 		assert mEvaluatorFactory != null;
 
-		final IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> evaluator = mEvaluatorFactory
+		final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator = mEvaluatorFactory
 		        .createSingletonVariableExpressionEvaluator(expr.getIdentifier());
 
 		mExpressionEvaluator.addEvaluator(evaluator);
@@ -488,7 +486,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	protected void visit(UnaryExpression expr) {
 		assert mEvaluatorFactory != null;
 
-		final INAryEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> evaluator = mEvaluatorFactory
+		final INAryEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator = mEvaluatorFactory
 		        .createNAryExpressionEvaluator(1, EvaluatorUtils.getEvaluatorType(expr.getType()));
 
 		evaluator.setOperator(expr.getOperator());
@@ -502,7 +500,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	protected void visit(BooleanLiteral expr) {
 		assert mEvaluatorFactory != null;
 
-		final IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> evaluator = mEvaluatorFactory
+		final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator = mEvaluatorFactory
 		        .createSingletonLogicalValueExpressionEvaluator(new BooleanValue(expr.getValue()));
 
 		mExpressionEvaluator.addEvaluator(evaluator);
@@ -522,7 +520,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	protected void visit(IfThenElseExpression expr) {
 		assert mEvaluatorFactory != null;
 
-		final IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> evaluator = mEvaluatorFactory
+		final IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator = mEvaluatorFactory
 		        .createConditionalEvaluator();
 
 		mExpressionEvaluator.addEvaluator(evaluator);

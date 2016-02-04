@@ -181,7 +181,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 		}
 		return convertStates2Terms(states, script, bpl2smt);
 	}
-
+	
 	private Map<LOCATION, STATE> getMergedLocalStates(final CodeBlock initialTransition) {
 		final Map<LOCATION, STATE> rtr = new HashMap<>();
 		final Deque<LOCATION> worklist = new ArrayDeque<>();

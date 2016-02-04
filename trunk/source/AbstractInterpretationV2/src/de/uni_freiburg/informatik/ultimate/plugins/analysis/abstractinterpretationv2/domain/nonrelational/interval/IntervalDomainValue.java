@@ -290,6 +290,31 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		return (mLower.compareTo(other.mLower) <= 0 && mUpper.compareTo(other.mUpper) >= 0)
 		        || (other.mLower.compareTo(mLower) <= 0 && other.mUpper.compareTo(mUpper) >= 0);
 	}
+	
+	/**
+	 * Compares <code>this</code> with another {@link IntervalDomainValue} and checks whether <code>this</code> is
+	 * included in other.
+	 * 
+	 * DD added this method to check for containment
+	 * 
+	 * @param other
+	 *            The other value to compare to.
+	 * @return <code>true</code> if and only if <code>this</code> is included in other,
+	 *         <code>false</code> otherwise.
+	 */
+	protected boolean isContainedInDD(IntervalDomainValue other) {
+		assert other != null;
+
+		if (isBottom()) {
+			return true;
+		}
+
+		if (other.isInfinity()) {
+			return true;
+		}
+
+		return mLower.compareTo(other.mLower) >= 0 && mUpper.compareTo(other.mUpper) <= 0;
+	}
 
 	/**
 	 * @return <code>true</code> if and only if lower == upper and lower != &infin;. <code>false</code> otherwise.

@@ -65,7 +65,7 @@ public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTION, V
 	 *            Contains the reference value and the input state to compute the inverse for.
 	 * @return The result of the inverse application of the evaluate function.
 	 */
-	public List<IEvaluationResult<VALUE>> inverseEvaluate(final IEvaluationResult<VALUE> computedState);
+	public List<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState);
 
 	/**
 	 * Adds a sub-evaluator to the evaluator.

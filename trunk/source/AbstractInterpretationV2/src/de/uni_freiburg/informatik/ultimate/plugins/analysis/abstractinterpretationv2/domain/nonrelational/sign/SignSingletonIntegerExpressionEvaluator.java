@@ -69,7 +69,8 @@ public class SignSingletonIntegerExpressionEvaluator extends SignSingletonValueE
 	}
 
 	@Override
-	public List<IEvaluationResult<Values>> inverseEvaluate(IEvaluationResult<Values> computedState) {
+	public List<SignDomainState> inverseEvaluate(final IEvaluationResult<Values> computedValue,
+	        final SignDomainState currentState) {
 		// TODO Auto-generated method stub
 		return null;
 	}
