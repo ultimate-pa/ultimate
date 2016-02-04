@@ -26,14 +26,13 @@ public class ExpressionTransformer {
 	private Map<Expression, List<Pair<List<Expression>, Expression>>> mCacheRemoveIfExpr = new HashMap<>();
 	
 	public AffineExpression affineExprCached(Expression e) {
-		AffineExpression cachedAe = mCacheAffineExpr.get(e);
-		if (cachedAe == null) {
-			cachedAe = toAffineExpr(e);
-			if (cachedAe != null) {
-				mCacheAffineExpr.put(e, cachedAe);
-			}
+		if (mCacheAffineExpr.containsKey(e)) {
+			return mCacheAffineExpr.get(e); // may return null
+		} else {
+			AffineExpression cachedAe = toAffineExpr(e);
+			mCacheAffineExpr.put(e, cachedAe);
+			return cachedAe;
 		}
-		return cachedAe;
 	}
 
 	// TODO implement transformation to AffineExpression, using known concrete values
@@ -43,9 +42,7 @@ public class ExpressionTransformer {
 		Expression cachedLn = mCacheLogicNeg.get(e);
 		if (cachedLn == null) {
 			cachedLn = logicNeg(e);
-			if (cachedLn != null) {
-				mCacheLogicNeg.put(e, cachedLn);
-			}
+			mCacheLogicNeg.put(e, cachedLn);
 		}
 		return cachedLn;
 	}
