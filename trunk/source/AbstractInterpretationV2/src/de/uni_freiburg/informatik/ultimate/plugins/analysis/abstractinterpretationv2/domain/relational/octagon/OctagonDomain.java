@@ -50,7 +50,7 @@ public class OctagonDomain implements IAbstractDomain<OctagonDomainState, CodeBl
 			} 
 			return new OctExponentialWideningOperator(threshold);
 		case LITERAL:
-			new OctLiteralWideningOperator(mLiteralCollectorFactory.create().getNumberLiterals());
+			return new OctLiteralWideningOperator(mLiteralCollectorFactory.create().getNumberLiterals());
 		default:
 			throw new IllegalArgumentException("Unknown value for setting \"widening operator\": " + wOp);
 		}

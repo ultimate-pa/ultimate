@@ -410,6 +410,8 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 
 	public OctagonDomainState copyValuesOnScopeChange(OctagonDomainState source,
 			Map<String, String> mapSourceToTarget) {
+		// TODO closure in advance to reduce information loss
+		
 		BidirectionalMap<Integer, Integer> mapNumericSourceToTarget = new BidirectionalMap<>();
 		Map<String, String> mapBooleanSourceToTarget = new HashMap<>();
 
