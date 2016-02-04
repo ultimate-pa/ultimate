@@ -39,6 +39,8 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILiteralCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.LiteralCollection;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -114,6 +116,8 @@ public class RCFGLiteralCollector extends RCFGEdgeVisitor implements ILiteralCol
 	 */
 	private final class StatementLiteralCollector extends BoogieVisitor {
 
+		private boolean mNegate = false;
+		
 		@Override
 		protected Statement processStatement(Statement statement) {
 			// override because we need the visibility here
@@ -123,18 +127,50 @@ public class RCFGLiteralCollector extends RCFGEdgeVisitor implements ILiteralCol
 		@Override
 		protected void visit(IntegerLiteral expr) {
 			super.visit(expr);
-			mLiterals.add(expr.getValue());
-			mNumberLiterals.add(new BigDecimal(expr.getValue()));
+			StringBuilder litBuilder = new StringBuilder();
+			if (mNegate) {
+				litBuilder.append("-");
+			}
+			litBuilder.append(expr.getValue());
+			mLiterals.add(litBuilder.toString());
+			
+			BigDecimal val = new BigDecimal(expr.getValue());
+			if (mNegate) {
+				val = val.negate();
+			}
+			mNumberLiterals.add(val);
+			
+			mNegate = false;
+		}
+
+		@Override
+		protected void visit(UnaryExpression expr) {
+			super.visit(expr);
+			if (expr.getOperator() == Operator.ARITHNEGATIVE) {
+				mNegate = !mNegate;
+			}
 		}
 
 		@Override
 		protected void visit(RealLiteral expr) {
 			super.visit(expr);
-			mLiterals.add(expr.getValue());
-			mNumberLiterals.add(new BigDecimal(expr.getValue()));
+			StringBuilder litBuilder = new StringBuilder();
+			if (mNegate) {
+				litBuilder.append("-");
+			}
+			litBuilder.append(expr.getValue());
+			mLiterals.add(litBuilder.toString());
+			
+			BigDecimal val = new BigDecimal(expr.getValue());
+			if (mNegate) {
+				val = val.negate();
+			}
+			mNumberLiterals.add(val);
+			
+			mNegate = false;
 		}
 	}
-
+	
 	@Override
 	public String toString() {
 		return getLiteralCollection().toString();

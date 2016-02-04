@@ -128,23 +128,53 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 	}
 
 	private IntervalDomainValue determineNextValue(IntervalDomainValue first, IntervalDomainValue second) {
+		// Determine widen mode:
+		// Nothing changed, return same.
+		if (first.isEqualTo(second)) {
+			return first;
+		}
+
 		final IntervalValue firstLower = first.getLower();
 		final IntervalValue firstUpper = first.getUpper();
 
 		final IntervalValue secondLower = second.getLower();
 		final IntervalValue secondUpper = second.getUpper();
 
-		IntervalValue newLower;
-		IntervalValue newUpper;
+		// Lower bound is same, or lower bound of second is not smaller than lower bound of first, but upper bound has
+		// changed: widen upper bound.
+		// @formatter:off
+		// [...]
+		//   [...]
+		// ---------
+		// [.......]
+		// @formatter:on
+		if (firstLower.isInfinity()
+		        || (!firstLower.isInfinity() && !secondLower.isInfinity() && firstLower.compareTo(secondLower) <= 0)) {
+			return new IntervalDomainValue(firstLower, widenUpper(firstUpper, secondUpper));
+		}
 
-		// Compute new lower
+		// Upper bound is same, or upper bound of second is not larger than upper bound of first, but lower bound has
+		// changed: widen lower bound.
+		// @formatter:off
+		//    [...]
+		//   [...]
+		// --------
+		// [......]
+		// @formatter:on
+		if (firstUpper.isInfinity() || (!firstUpper.isInfinity() && firstUpper.compareTo(secondUpper) >= 0)) {
+			return new IntervalDomainValue(widenLower(firstLower, secondLower), firstUpper);
+		}
+
+		// If all else fails, widen both ends.
+		return new IntervalDomainValue(widenLower(firstLower, secondLower), widenUpper(firstUpper, secondUpper));
+	}
+
+	private IntervalValue widenLower(IntervalValue firstLower, IntervalValue secondLower) {
 		if (firstLower.isInfinity() || secondLower.isInfinity()) {
-			newLower = new IntervalValue();
+			return new IntervalValue();
 		} else {
 			BigDecimal working;
 
-			// If the lower bound has changed, we need to widen the lower bound, starting from the lower value. If the
-			// lower bounds are the same, we use this value as current bound.
 			final int compResult = firstLower.compareTo(secondLower);
 			if (compResult < 0) {
 				working = mLiteralCollection.getNextRealNegative(firstLower.getValue());
@@ -155,42 +185,40 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 			}
 
 			if (working == null) {
-				newLower = new IntervalValue();
+				return new IntervalValue();
 			} else {
 				if (compResult != 0) {
 					working = working.setScale(0, RoundingMode.FLOOR);
 				}
-				newLower = new IntervalValue(working);
+				return new IntervalValue(working);
 			}
 		}
+	}
 
-		// Compute new upper
+	private IntervalValue widenUpper(IntervalValue firstUpper, IntervalValue secondUpper) {
 		if (firstUpper.isInfinity() || secondUpper.isInfinity()) {
-			newUpper = new IntervalValue();
-		} else {
-			BigDecimal working;
-
-			// If the upper bound has changed, we need to widen the upper bound, starting from the largest value. If the
-			// upper bounds are the same, we use this value as current bound.
-			final int compResult = firstUpper.compareTo(secondUpper);
-			if (compResult > 0) {
-				working = mLiteralCollection.getNextRealPositive(firstUpper.getValue());
-			} else if (compResult < 0) {
-				working = mLiteralCollection.getNextRealPositive(secondUpper.getValue());
-			} else {
-				working = firstUpper.getValue();
-			}
-
-			if (working == null) {
-				newUpper = new IntervalValue();
-			} else {
-				if (compResult != 0) {
-					working = working.setScale(0, RoundingMode.CEILING);
-				}
-				newUpper = new IntervalValue(working);
-			}
+			return new IntervalValue();
 		}
 
-		return new IntervalDomainValue(newLower, newUpper);
+		BigDecimal working;
+
+		// Widen the upper bound.
+		final int compResult = firstUpper.compareTo(secondUpper);
+		if (compResult > 0) {
+			working = mLiteralCollection.getNextRealPositive(firstUpper.getValue());
+		} else if (compResult < 0) {
+			working = mLiteralCollection.getNextRealPositive(secondUpper.getValue());
+		} else {
+			working = firstUpper.getValue();
+		}
+
+		if (working == null) {
+			return new IntervalValue();
+		} else {
+			if (compResult != 0) {
+				working = working.setScale(0, RoundingMode.CEILING);
+			}
+			return new IntervalValue(working);
+		}
 	}
 }
