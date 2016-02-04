@@ -133,19 +133,23 @@ public class IntervalBinaryExpressionEvaluator
 					throw new UnsupportedOperationException(
 					        "If and only if expressions should have been resolved earlier.");
 				case COMPEQ:
-					BooleanValue booleanValue = new BooleanValue();
-
 					if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
-						booleanValue = res1.getBooleanValue().intersect(res2.getBooleanValue());
+						returnBool = res1.getBooleanValue().intersect(res2.getBooleanValue());
 					}
 
 					returnValue = res1.getValue().intersect(res2.getValue());
 
-					if (booleanValue.isBottom() || returnValue.isBottom()) {
+					if (returnBool.isBottom() || returnValue.isBottom()) {
 						returnBool = new BooleanValue(false);
 						break;
-					} else {
-						returnBool = new BooleanValue(true);
+					}
+
+					if (!mLeftSubEvaluator.containsBool() && !mRightSubEvaluator.containsBool()) {
+						if (returnValue.isEqualTo(res1.getValue()) && returnValue.isEqualTo(res2.getValue())) {
+							returnBool = new BooleanValue(true);
+						} else {
+							returnBool = new BooleanValue();
+						}
 					}
 					break;
 				case COMPNEQ:
@@ -161,7 +165,12 @@ public class IntervalBinaryExpressionEvaluator
 						returnBool = new BooleanValue(false);
 						break;
 					} else {
-						returnBool = new BooleanValue(true);
+						final IntervalDomainValue leq = res1.getValue().lessOrEqual(res2.getValue());
+						if (leq.isBottom() || leq.isPointInterval()) {
+							returnBool = new BooleanValue(true);
+						} else {
+							returnBool = new BooleanValue();
+						}
 					}
 					break;
 				case COMPLT:
@@ -174,7 +183,12 @@ public class IntervalBinaryExpressionEvaluator
 						returnBool = new BooleanValue(false);
 						break;
 					} else {
-						returnBool = new BooleanValue(true);
+						final IntervalDomainValue geq = res1.getValue().greaterOrEqual(res2.getValue());
+						if (geq.isBottom() || geq.isPointInterval()) {
+							returnBool = new BooleanValue(true);
+						} else {
+							returnBool = new BooleanValue();
+						}
 					}
 					break;
 				case COMPPO:
