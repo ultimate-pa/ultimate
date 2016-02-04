@@ -38,6 +38,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -46,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * Simulation that realizes <b>direct simulation</b> for reduction of a given
@@ -109,7 +109,7 @@ public final class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, S
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public DirectSimulation(final IUltimateServiceProvider services, final IProgressAwareTimer progressTimer,
+	public DirectSimulation(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
 		this(progressTimer, logger, useSCCs, stateFactory,

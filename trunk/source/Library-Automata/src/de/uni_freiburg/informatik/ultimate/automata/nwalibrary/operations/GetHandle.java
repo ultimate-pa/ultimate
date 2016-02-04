@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -42,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 
 /**
@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  * @author Matthias Heizmann
  */
 public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 
 	private final INestedWordAutomaton<LETTER, STATE> m_Operand;
@@ -66,7 +66,7 @@ public class GetHandle<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	private enum NoHandleReason { MULTI_INITIAL, CYCLE_SHAPE, MULTI_INIT_SUCC }
 	private NoHandleReason m_NoHandleReason;
 
-	public GetHandle(IUltimateServiceProvider services,
+	public GetHandle(AutomataLibraryServices services,
 			INestedWordAutomaton<LETTER, STATE> operand) throws OperationCanceledException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);

@@ -27,9 +27,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * This is the superclass of all incremental minimization classes.
@@ -59,7 +59,7 @@ public abstract class AMinimizeIncremental<LETTER, STATE>
 	 * @param operand input automaton
 	 * @param interrupt interrupt
 	 */
-	protected AMinimizeIncremental(IUltimateServiceProvider services,
+	protected AMinimizeIncremental(AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final String name,
 			final INestedWordAutomaton<LETTER, STATE> operand,

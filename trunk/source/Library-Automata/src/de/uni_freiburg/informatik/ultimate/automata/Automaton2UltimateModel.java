@@ -35,14 +35,13 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.BranchingProcessToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.PetriNetToUltimateModel;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 
 public class Automaton2UltimateModel<LETTER,STATE> {
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public static IElement ultimateModel(IUltimateServiceProvider services, IAutomaton automaton) throws OperationCanceledException {
+	public static IElement ultimateModel(AutomataLibraryServices services, IAutomaton automaton) throws OperationCanceledException {
 		if (automaton instanceof INestedWordAutomatonSimple) {
 			INestedWordAutomatonSimple nwa = (INestedWordAutomatonSimple) automaton;
 			NwaToUltimateModel transformer = new NwaToUltimateModel(services);

@@ -7,9 +7,9 @@
 procedure main() returns ()
 {
   var a, b: int;
-  b := 4;
-  while (a >= 1) {
-    a := 2*a + 1;
+  b := 1;
+  while (a+b >= 3) {
+    a := 3*a + 1;
     havoc b;
   }
 }

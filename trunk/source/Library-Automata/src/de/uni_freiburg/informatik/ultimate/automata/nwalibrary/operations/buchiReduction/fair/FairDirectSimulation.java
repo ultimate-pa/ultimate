@@ -32,6 +32,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -43,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.TimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
 /**
@@ -117,7 +117,7 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public FairDirectSimulation(final IUltimateServiceProvider services, final IProgressAwareTimer progressTimer,
+	public FairDirectSimulation(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
 		this(services, progressTimer, logger, buechi, useSCCs, stateFactory, Collections.emptyList());
@@ -158,7 +158,7 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public FairDirectSimulation(final IUltimateServiceProvider services, final IProgressAwareTimer progressTimer,
+	public FairDirectSimulation(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses)
 					throws OperationCanceledException {
@@ -357,6 +357,10 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 				fairPerformance.getCountingMeasureResult(CountingMeasure.BUCHI_STATES));
 		m_Performance.setCountingMeasure(CountingMeasure.GAMEGRAPH_STATES,
 				fairPerformance.getCountingMeasureResult(CountingMeasure.GAMEGRAPH_STATES));
+		m_Performance.setCountingMeasure(CountingMeasure.SCCS,
+				fairPerformance.getCountingMeasureResult(CountingMeasure.SCCS));
+		m_Performance.setCountingMeasure(CountingMeasure.GLOBAL_INFINITY,
+				fairPerformance.getCountingMeasureResult(CountingMeasure.GLOBAL_INFINITY));
 
 		m_HasFinished = true;
 	}

@@ -42,6 +42,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -52,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.SummaryReturnTransition;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * minimizer for special type of nested word automata used in Ultimate
@@ -68,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
  */
 public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 	// old automaton
 	private final INestedWordAutomatonOldApi<LETTER,STATE> m_operand;
@@ -118,7 +118,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * @param operand nested word automaton to minimize
 	 * @throws OperationCanceledException iff cancel signal is received
 	 */
-	public MinimizeSevpa(IUltimateServiceProvider services,
+	public MinimizeSevpa(AutomataLibraryServices services,
 			INestedWordAutomatonOldApi<LETTER,STATE> operand)
 			throws AutomataLibraryException {
 		this(services, operand, null, operand.getStateFactory());
@@ -135,7 +135,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 */
 	@SuppressWarnings("unchecked")
 	public MinimizeSevpa(
-			IUltimateServiceProvider services,
+			AutomataLibraryServices services,
 			final INestedWordAutomatonOldApi<LETTER,STATE> operand,
 			Collection<Set<STATE>> equivalenceClasses,
 			StateFactory<STATE> stateFactoryConstruction)

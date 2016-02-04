@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteTrue
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.RewriteUserDefinedTypes;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.SimplifyPreprocessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.preprocessors.StemAndLoopPreprocessor;
+import de.uni_freiburg.informatik.ultimate.lassoranker.termination.NonterminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisSettings;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationArgument;
@@ -159,12 +160,20 @@ public class LassoAnalysis {
 	 * Benchmark data from last termination analysis. 
 	 * Includes e.g., the number  of Motzkin's Theorem applications.
 	 */
-	private List<TerminationAnalysisBenchmark> m_LassoTerminationAnalysisBenchmarks;
+	private final List<TerminationAnalysisBenchmark> m_LassoTerminationAnalysisBenchmarks;
+	
+	/**
+	 * Benchmark data from last nontermination analysis. 
+	 */
+	private final List<NonterminationAnalysisBenchmark> m_LassoNonterminationAnalysisBenchmarks;
 	
 	/**
 	 * Benchmark data from the preprocessing of the lasso.
 	 */
 	private PreprocessingBenchmark m_PreprocessingBenchmark;
+
+
+
 
 
 
@@ -217,6 +226,9 @@ public class LassoAnalysis {
 		
 		m_LassoTerminationAnalysisBenchmarks =
 				new ArrayList<TerminationAnalysisBenchmark>();
+		
+		m_LassoNonterminationAnalysisBenchmarks =
+				new ArrayList<NonterminationAnalysisBenchmark>();
 		
 		m_stem_transition = stem_transition;
 		m_loop_transition = loop_transition;
@@ -336,6 +348,10 @@ public class LassoAnalysis {
 		return m_LassoTerminationAnalysisBenchmarks;
 	}
 	
+	public List<NonterminationAnalysisBenchmark> getNonterminationAnalysisBenchmarks() {
+		return m_LassoNonterminationAnalysisBenchmarks;
+	}
+	
 	public PreprocessingBenchmark getPreprocessingBenchmark() {
 		return m_PreprocessingBenchmark;
 	}
@@ -395,10 +411,21 @@ public class LassoAnalysis {
 					LinearTransition.getTranstionTrue()));
 		}
 		for (Lasso lasso : m_lassos) {
+			
+			long startTime = System.nanoTime();
 			NonTerminationArgumentSynthesizer nas =
 					new NonTerminationArgumentSynthesizer(lasso, m_preferences,
 							settings, mServices, mStorage);
 			final LBool constraintSat = nas.synthesize();
+			long endTime = System.nanoTime();
+			
+			NonterminationAnalysisBenchmark nab = new NonterminationAnalysisBenchmark(
+					constraintSat, lasso.getStemVarNum(),
+					lasso.getLoopVarNum(), lasso.getStemDisjuncts(),
+					lasso.getLoopDisjuncts(), 
+					endTime - startTime);
+			m_LassoNonterminationAnalysisBenchmarks.add(nab);
+			
 			if (constraintSat == LBool.SAT) {
 				m_Logger.info("Proved nontermination for one component.");
 				NonTerminationArgument nta = nas.getArgument();

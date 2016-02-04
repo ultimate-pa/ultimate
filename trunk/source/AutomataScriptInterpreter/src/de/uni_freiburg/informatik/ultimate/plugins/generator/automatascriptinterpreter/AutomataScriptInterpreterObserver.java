@@ -33,6 +33,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.Automaton2UltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -72,7 +73,7 @@ public class AutomataScriptInterpreterObserver implements IUnmanagedObserver {
 			printAutomaton = getDummyAutomatonWithMessage();
 		}
 		try {
-			mGraphrootOfUltimateModelOfLastPrintedAutomaton = Automaton2UltimateModel.ultimateModel(mServices, printAutomaton);
+			mGraphrootOfUltimateModelOfLastPrintedAutomaton = Automaton2UltimateModel.ultimateModel(new AutomataLibraryServices(mServices), printAutomaton);
 		} catch (OperationCanceledException e) {
 			mLogger.warn("Nothing visualized because of timeout");
 		}
@@ -109,7 +110,7 @@ public class AutomataScriptInterpreterObserver implements IUnmanagedObserver {
 
 	public IAutomaton<String, String> getDummyAutomatonWithMessage() {
 		NestedWordAutomaton<String, String> dummyAutomaton = new NestedWordAutomaton<String, String>(
-				mServices, new HashSet<String>(0), null, null, new StringFactory());
+				new AutomataLibraryServices(mServices), new HashSet<String>(0), null, null, new StringFactory());
 		dummyAutomaton.addState(true, false, "Use the print keyword in .ats file to select an automaton"
 				+ " for visualization");
 		return dummyAutomaton;

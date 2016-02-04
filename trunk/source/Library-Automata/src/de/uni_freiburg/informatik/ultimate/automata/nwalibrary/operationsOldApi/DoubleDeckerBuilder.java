@@ -30,10 +30,10 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 public abstract class DoubleDeckerBuilder<LETTER,STATE> extends DoubleDeckerVisitor<LETTER,STATE> 
 														implements IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
@@ -42,7 +42,7 @@ public abstract class DoubleDeckerBuilder<LETTER,STATE> extends DoubleDeckerVisi
 	Set<STATE> m_SuccessorsConstructedCa = new HashSet<STATE>();
 //	Set<STATE> m_SuccessorsConstructedRe = new HashSet<STATE>();
 	
-	public DoubleDeckerBuilder(IUltimateServiceProvider services) {
+	public DoubleDeckerBuilder(AutomataLibraryServices services) {
 		super(services);
 	}
 	

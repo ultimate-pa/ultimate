@@ -64,7 +64,7 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 
 	public static final int DEF_ITERATIONS_UNTIL_WIDENING = 3;
 	public static final int DEF_STATES_UNTIL_MERGE = 2;
-	public static final boolean DEF_RUN_AS_PRE_ANALYSIS = true;
+	public static final boolean DEF_RUN_AS_PRE_ANALYSIS = false;
 	private static final boolean DEF_PERSIST_ABS_STATES = false;
 	public static final String DEF_ABSTRACT_DOMAIN = VALUES_ABSTRACT_DOMAIN[0];
 

@@ -46,9 +46,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
  * </ul>
  * By convention the constructor of an IOperation has the following parameters.
  * <ul>
- *   <li> The fist parameter is the IUltimateServiceProvider. If the operation
+ *   <li> The fist parameter is the AutomataLibraryServices. If the operation
  *   is executed by the automata script interpreter, the interpreter will use
- *   the IUltimateServiceProvider of the current toolchain as an argument.
+ *   the AutomataLibraryServices of the current toolchain as an argument.
  *   <li> If the IOperation requires a StateFactory, the StateFactory should
  *   be the second parameter. If the second parameter is a StateFactory, the
  *   automtata script interpreter uses a StringFactory as argument.

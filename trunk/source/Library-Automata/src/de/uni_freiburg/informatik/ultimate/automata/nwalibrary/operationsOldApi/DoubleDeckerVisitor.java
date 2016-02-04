@@ -41,6 +41,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
@@ -50,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * TODO Documentation
@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  */
 public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 
-	protected final IUltimateServiceProvider m_Services;
+	protected final AutomataLibraryServices m_Services;
 	protected final Logger m_Logger;
 	public enum ReachFinal {
 		UNKNOWN, AT_LEAST_ONCE
@@ -162,7 +162,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE>  {
 
 	private Set<STATE> m_DeadEnds;
 	
-	public DoubleDeckerVisitor(IUltimateServiceProvider services) {
+	public DoubleDeckerVisitor(AutomataLibraryServices services) {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 	}

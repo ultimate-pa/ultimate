@@ -33,6 +33,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.DoubleDecker;
@@ -44,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.SummaryReturnTransition;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * Check if an automaton is 
@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  */
 public class IsSemiDeterministic<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
-	protected final IUltimateServiceProvider m_Services;
+	protected final AutomataLibraryServices m_Services;
 	protected final Logger m_Logger;
 	
 	private final Set<STATE> m_NondeterministicSuccessorOfAccepting = new HashSet<>();
@@ -84,7 +84,7 @@ public class IsSemiDeterministic<LETTER,STATE> implements IOperation<LETTER,STAT
 	}
 	
 	
-	public IsSemiDeterministic(IUltimateServiceProvider services,
+	public IsSemiDeterministic(AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataLibraryException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);

@@ -1,11 +1,12 @@
 //#Unsafe
 /*
  * Calling two functions in an alternating fashion
+ * g will be 14 after the execution. 
  *
  */
 var g : int;
 
-procedure main()
+procedure ULTIMATE.start()
 modifies g;
 {
   var x : int;

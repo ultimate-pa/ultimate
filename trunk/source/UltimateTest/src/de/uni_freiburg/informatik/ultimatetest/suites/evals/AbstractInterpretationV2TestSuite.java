@@ -51,10 +51,14 @@ public class AbstractInterpretationV2TestSuite extends AbstractEvalTestSuite {
 	
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String, String>[] TOOLCHAINS = new Triple[] {
-//	        new Triple<>("AbstractInterpretationV2C.xml", ".c", "ai/AIv2_INT.epf"),
+<<<<<<< HEAD
+//	        new Triple<>("AutomizerC.xml", ".i", "svcomp2016/svcomp-Reach-64bit-Automizer_Default.epf"),
+//	        new Triple<>("AbstractInterpretationv2C.xml", ".i", "ai/AIv2_INT.epf"),
 //	        new Triple<>("AbstractInterpretationv2.xml", ".bpl", "ai/AIv2_INT.epf"),
 	        new Triple<>("AbstractInterpretationV2C.xml", ".c", "ai/AIv2_OCT.epf"),
 	        new Triple<>("AbstractInterpretationv2.xml", ".bpl", "ai/AIv2_OCT.epf"),
+=======
+>>>>>>> origin/dev
 	};
 
 	private static final String[] INPUT = new String[] {

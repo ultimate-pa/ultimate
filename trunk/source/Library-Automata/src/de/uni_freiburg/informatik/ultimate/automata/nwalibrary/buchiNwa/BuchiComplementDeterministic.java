@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.HashMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
@@ -40,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DoubleDeckerVisitor;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ReachableStatesCopy;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 
 /**
@@ -83,7 +83,7 @@ public class BuchiComplementDeterministic<LETTER,STATE> extends DoubleDeckerVisi
 			m_TraversedNwa.sizeInformation();
 	}
 	
-	public BuchiComplementDeterministic(IUltimateServiceProvider services,
+	public BuchiComplementDeterministic(AutomataLibraryServices services,
 			INestedWordAutomatonOldApi<LETTER,STATE> nwa) throws AutomataLibraryException {
 		super(services);
 		m_Operand = nwa;

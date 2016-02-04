@@ -33,11 +33,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import java.util.Set;
-
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -56,7 +56,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAu
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap3;
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
@@ -119,7 +118,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	/**
 	 * Service provider of Ultimate framework.
 	 */
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	/**
 	 * Transitions that safely can be removed from the buechi automaton.
 	 */
@@ -151,7 +150,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 *             If the inputed automaton is no Buechi-automaton. It must have
 	 *             an empty call and return alphabet.
 	 */
-	public FairGameGraph(final IUltimateServiceProvider services, final IProgressAwareTimer progressTimer,
+	public FairGameGraph(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi,
 			StateFactory<STATE> stateFactory) throws OperationCanceledException {
 		super(progressTimer, logger, stateFactory);

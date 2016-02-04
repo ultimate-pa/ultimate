@@ -35,6 +35,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
@@ -47,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * 
  */
 class ShortestLassoExtractor<LETTER, STATE> {
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_Nwars;
 	
@@ -84,7 +84,7 @@ class ShortestLassoExtractor<LETTER, STATE> {
 	NestedRun<LETTER, STATE> m_Loop;
 	NestedRun<LETTER, STATE> m_ConstructedNestedRun;
 	
-	public ShortestLassoExtractor(IUltimateServiceProvider services, 
+	public ShortestLassoExtractor(AutomataLibraryServices services, 
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwars, StateContainer<LETTER, STATE> goal) throws OperationCanceledException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);

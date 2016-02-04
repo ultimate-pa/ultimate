@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -92,7 +93,7 @@ public class PathProgramAutomatonConstructor {
 		
 		StateFactory<IPredicate> predicateFactory = new PredicateFactory(smtManager, taPrefs);
 		// Create the automaton
-		NestedWordAutomaton<CodeBlock, IPredicate> pathPA = new NestedWordAutomaton<CodeBlock, IPredicate>(services, internalAlphabet, callAlphabet, returnAlphabet, predicateFactory);
+		NestedWordAutomaton<CodeBlock, IPredicate> pathPA = new NestedWordAutomaton<CodeBlock, IPredicate>(new AutomataLibraryServices(services), internalAlphabet, callAlphabet, returnAlphabet, predicateFactory);
 		
 		// We need this list to create the transitions of the automaton.
 		m_PositionsToStates = new ArrayList<IPredicate>(path.length() + 1);

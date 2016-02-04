@@ -8,10 +8,9 @@ procedure main() returns ()
 {
   var a, b: int;
   b := 1;
-  a := 1;
-  while (a + b >= 2) {
-    a := 3*a;
-    b := 2*b + 1;
+  while (a + b >= 3) {
+    a := 3*a - 2;
+    b := 2*b;
   }
 }
 

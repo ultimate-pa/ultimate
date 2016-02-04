@@ -33,6 +33,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -41,11 +42,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
 	
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 	
 	private final INestedWordAutomatonSimple<LETTER, STATE> m_Operand;
@@ -58,7 +58,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	private final Map<DeterminizedState<LETTER, STATE>, STATE> m_det2res =
 			new HashMap<DeterminizedState<LETTER, STATE>, STATE>();
 	
-	public DeterminizeNwa(IUltimateServiceProvider services,
+	public DeterminizeNwa(AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER, STATE> operand, 
 			IStateDeterminizer<LETTER, STATE> stateDeterminizer, 
 			StateFactory<STATE> sf) {

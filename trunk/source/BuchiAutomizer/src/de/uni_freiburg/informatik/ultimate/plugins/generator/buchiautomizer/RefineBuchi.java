@@ -36,6 +36,7 @@ import java.util.TreeMap;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -256,7 +257,7 @@ public class RefineBuchi {
 		BuchiHoareTripleChecker bhtc = new BuchiHoareTripleChecker(new IncrementalHoareTripleChecker(m_SmtManager, buchiModGlobalVarManager));
 		bhtc.putDecreaseEqualPair(bspm.getHondaPredicate(), bspm.getRankEqAndSi());
 		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true, bhtc)).getResult();
-		assert (new BuchiAccepts<CodeBlock, IPredicate>(m_Services, m_InterpolAutomaton, m_Counterexample.getNestedLassoWord()))
+		assert (new BuchiAccepts<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), m_InterpolAutomaton, m_Counterexample.getNestedLassoWord()))
 				.getResult();
 		switch (setting.getInterpolantAutomaton()) {
 		case LassoAutomaton:
@@ -380,15 +381,15 @@ public class RefineBuchi {
 			
 		} else {
 			BuchiComplementFKV<CodeBlock, IPredicate> complNwa = new BuchiComplementFKV<CodeBlock, IPredicate>(
-					m_Services, 
+					new AutomataLibraryServices(m_Services), 
 					m_InterpolAutomatonUsedInRefinement, stateDeterminizer);
 			finishComputation(m_InterpolAutomatonUsedInRefinement, setting);
 			benchmarkGenerator.reportHighestRank(complNwa.getHighestRank());
 			assert (complNwa.checkResult(m_StateFactoryInterpolAutom));
 			INestedWordAutomatonOldApi<CodeBlock, IPredicate> complement = complNwa.getResult();
-			assert !(new BuchiAccepts<CodeBlock, IPredicate>(m_Services, complement, m_Counterexample.getNestedLassoWord()))
+			assert !(new BuchiAccepts<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), complement, m_Counterexample.getNestedLassoWord()))
 					.getResult();
-			BuchiIntersect<CodeBlock, IPredicate> interNwa = new BuchiIntersect<CodeBlock, IPredicate>(m_Services, abstraction,
+			BuchiIntersect<CodeBlock, IPredicate> interNwa = new BuchiIntersect<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), abstraction,
 					complement, m_StateFactoryForRefinement);
 			assert (interNwa.checkResult(m_StateFactoryInterpolAutom));
 			newAbstraction = interNwa.getResult();
@@ -423,8 +424,8 @@ public class RefineBuchi {
 		boolean tacasDump = false;
 		if (tacasDump){
 			final String determinicity;
-			boolean isSemiDeterministic = (new IsSemiDeterministic<CodeBlock, IPredicate>(m_Services, m_InterpolAutomatonUsedInRefinement)).getResult();
-			boolean isDeterministic = (new IsDeterministic<CodeBlock, IPredicate>(m_Services, m_InterpolAutomatonUsedInRefinement)).getResult();
+			boolean isSemiDeterministic = (new IsSemiDeterministic<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), m_InterpolAutomatonUsedInRefinement)).getResult();
+			boolean isDeterministic = (new IsDeterministic<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), m_InterpolAutomatonUsedInRefinement)).getResult();
 			if (isDeterministic) {
 				determinicity = "deterministic";
 				assert isSemiDeterministic : "but semi deterministic";
@@ -451,7 +452,7 @@ public class RefineBuchi {
 			INestedWordAutomaton<CodeBlock, IPredicate> abstraction, RefinementSetting setting,
 			BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) throws AutomataLibraryException {
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction;
-		BuchiDifferenceNCSB<CodeBlock, IPredicate> diff = new BuchiDifferenceNCSB<CodeBlock, IPredicate>(m_Services, 
+		BuchiDifferenceNCSB<CodeBlock, IPredicate> diff = new BuchiDifferenceNCSB<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), 
 				m_StateFactoryForRefinement, abstraction, m_InterpolAutomatonUsedInRefinement);
 		finishComputation(m_InterpolAutomatonUsedInRefinement, setting);
 		benchmarkGenerator.reportHighestRank(3);
@@ -466,7 +467,7 @@ public class RefineBuchi {
 			IStateDeterminizer<CodeBlock, IPredicate> stateDeterminizer, FkvOptimization optimization)
 					throws AutomataLibraryException {
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> newAbstraction;
-		BuchiDifferenceFKV<CodeBlock, IPredicate> diff = new BuchiDifferenceFKV<CodeBlock, IPredicate>(m_Services, 
+		BuchiDifferenceFKV<CodeBlock, IPredicate> diff = new BuchiDifferenceFKV<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), 
 				abstraction, m_InterpolAutomatonUsedInRefinement, stateDeterminizer, m_StateFactoryForRefinement,
 				optimization.toString(),
 				Integer.MAX_VALUE);
@@ -523,14 +524,14 @@ public class RefineBuchi {
 			INestedWordAutomatonSimple<CodeBlock, IPredicate> interpolAutomatonUsedInRefinement,
 			NestedLassoRun<CodeBlock, IPredicate> counterexample) throws AutomataLibraryException {
 		INestedWordAutomatonOldApi<CodeBlock, IPredicate> oldApi;
-		oldApi = (new RemoveUnreachable<CodeBlock, IPredicate>(m_Services, interpolAutomatonUsedInRefinement)).getResult();
+		oldApi = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), interpolAutomatonUsedInRefinement)).getResult();
 		NestedWord<CodeBlock> stem = counterexample.getStem().getWord();
 		NestedWord<CodeBlock> loop = counterexample.getLoop().getWord();
 		NestedWord<CodeBlock> stemAndLoop = stem.concatenate(loop);
 		NestedLassoWord<CodeBlock> stemExtension = new NestedLassoWord<CodeBlock>(stemAndLoop, loop);
 		NestedWord<CodeBlock> loopAndLoop = loop.concatenate(loop);
 		NestedLassoWord<CodeBlock> loopExtension = new NestedLassoWord<CodeBlock>(stem, loopAndLoop);
-		boolean wordAccepted = (new BuchiAccepts<CodeBlock, IPredicate>(m_Services, oldApi, counterexample.getNestedLassoWord()))
+		boolean wordAccepted = (new BuchiAccepts<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), oldApi, counterexample.getNestedLassoWord()))
 				.getResult();
 		if (!wordAccepted) {
 			mLogger.info("Bad chosen interpolant automaton: word not accepted");
@@ -539,13 +540,13 @@ public class RefineBuchi {
 		// 2015-01-14 Matthias: word, stemExtension, and loopExtension are only
 		// different representations of the same word. The following lines
 		// do not make any sense (but might be helpful to reveal a bug.
-		boolean stemExtensionAccepted = (new BuchiAccepts<CodeBlock, IPredicate>(m_Services, oldApi, stemExtension)).getResult();
+		boolean stemExtensionAccepted = (new BuchiAccepts<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), oldApi, stemExtension)).getResult();
 		if (!stemExtensionAccepted) {
 			throw new AssertionError("Bad chosen interpolant automaton: stem extension not accepted");
 //			mLogger.info("Bad chosen interpolant automaton: stem extension not accepted");
 //			return false;
 		}
-		boolean loopExtensionAccepted = (new BuchiAccepts<CodeBlock, IPredicate>(m_Services, oldApi, loopExtension)).getResult();
+		boolean loopExtensionAccepted = (new BuchiAccepts<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), oldApi, loopExtension)).getResult();
 		if (!loopExtensionAccepted) {
 			throw new AssertionError("Bad chosen interpolant automaton: loop extension not accepted");
 //			mLogger.info("Bad chosen interpolant automaton: loop extension not accepted");
@@ -576,7 +577,7 @@ public class RefineBuchi {
 			NestedWord<CodeBlock> stem, IPredicate[] stemInterpolants, IPredicate honda, NestedWord<CodeBlock> loop,
 			IPredicate[] loopInterpolants, INestedWordAutomatonSimple<CodeBlock, IPredicate> abstraction) {
 		NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<CodeBlock, IPredicate>(
-				m_Services, 
+				new AutomataLibraryServices(m_Services), 
 				abstraction.getInternalAlphabet(), abstraction.getCallAlphabet(), abstraction.getReturnAlphabet(),
 				abstraction.getStateFactory());
 		boolean emptyStem = stem.length() == 0;

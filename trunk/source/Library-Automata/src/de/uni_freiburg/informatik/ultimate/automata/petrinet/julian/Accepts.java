@@ -34,6 +34,7 @@ import java.util.HashSet;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -44,11 +45,10 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 public class Accepts<S, C> implements IOperation<S, C> {
 	
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 		
 	@Override
@@ -78,7 +78,7 @@ public class Accepts<S, C> implements IOperation<S, C> {
 	
 	
 
-	public Accepts(IUltimateServiceProvider services, 
+	public Accepts(AutomataLibraryServices services, 
 			PetriNetJulian<S, C> net, Word<S> nWord) throws AutomataLibraryException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);

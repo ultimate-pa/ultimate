@@ -34,6 +34,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -48,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.core.services.ToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * Operation that reduces a given buechi automaton by using
@@ -86,7 +86,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 		Set<String> alphabet = new HashSet<>();
 		alphabet.add("a");
 		alphabet.add("b");
-		NestedWordAutomaton<String, String> buechi = new NestedWordAutomaton<>(services, alphabet, null, null, snf);
+		NestedWordAutomaton<String, String> buechi = new NestedWordAutomaton<>(new AutomataLibraryServices(services), alphabet, null, null, snf);
 
 		// Big example from Matthias cardboard
 		// buechi.addState(true, false, "q0");
@@ -198,9 +198,9 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 			// Generate automaton
 			boolean useNwaInsteadDfaMethod = false;
 			if (useNwaInsteadDfaMethod) {
-				buechi = new GetRandomNwa(services, k, n, 0.2, 0, 0, (totalityInPerc + 0.0f) / 100).getResult();
+				buechi = new GetRandomNwa(new AutomataLibraryServices(services), k, n, 0.2, 0, 0, (totalityInPerc + 0.0f) / 100).getResult();
 			} else {
-				buechi = new GetRandomDfa(services, n, k, f, totalityInPerc, true, false, false, false).getResult();
+				buechi = new GetRandomDfa(new AutomataLibraryServices(services), n, k, f, totalityInPerc, true, false, false, false).getResult();
 			}
 
 			if (logNoErrorDebug) {
@@ -209,7 +209,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 			}
 
 			// Check correctness
-			ReduceBuchiFairSimulation<String, String> operation = new ReduceBuchiFairSimulation<>(services, snf,
+			ReduceBuchiFairSimulation<String, String> operation = new ReduceBuchiFairSimulation<>(new AutomataLibraryServices(services), snf,
 					buechi);
 			boolean errorOccurred = checkOperationDeep(operation, logNoErrorDebug, false);
 			if (errorOccurred) {
@@ -407,7 +407,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	/**
 	 * Service provider of Ultimate framework.
 	 */
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	/**
 	 * Simulation used for operation.
 	 */
@@ -438,7 +438,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceBuchiFairSimulation(final IUltimateServiceProvider services, final StateFactory<STATE> stateFactory,
+	public ReduceBuchiFairSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand) throws OperationCanceledException {
 		this(services, stateFactory, operand, true, Collections.emptyList(), false);
 	}
@@ -461,7 +461,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceBuchiFairSimulation(final IUltimateServiceProvider services, final StateFactory<STATE> stateFactory,
+	public ReduceBuchiFairSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs)
 					throws OperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, Collections.emptyList(), false);
@@ -490,7 +490,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceBuchiFairSimulation(final IUltimateServiceProvider services, final StateFactory<STATE> stateFactory,
+	public ReduceBuchiFairSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs,
 			final Collection<Set<STATE>> possibleEquivalentClasses) throws OperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, possibleEquivalentClasses, false);
@@ -522,7 +522,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceBuchiFairSimulation(final IUltimateServiceProvider services, final StateFactory<STATE> stateFactory,
+	public ReduceBuchiFairSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs,
 			final Collection<Set<STATE>> possibleEquivalentClasses, final boolean checkOperationDeeply)
 					throws OperationCanceledException {
@@ -555,7 +555,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> implements IOperation<LETT
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	protected ReduceBuchiFairSimulation(final IUltimateServiceProvider services, final StateFactory<STATE> stateFactory,
+	protected ReduceBuchiFairSimulation(final AutomataLibraryServices services, final StateFactory<STATE> stateFactory,
 			final INestedWordAutomatonOldApi<LETTER, STATE> operand, final boolean useSCCs,
 			final boolean checkOperationDeeply, FairSimulation<LETTER, STATE> simulation)
 					throws OperationCanceledException {

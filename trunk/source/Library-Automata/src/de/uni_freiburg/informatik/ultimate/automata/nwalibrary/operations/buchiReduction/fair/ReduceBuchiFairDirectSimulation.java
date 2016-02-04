@@ -30,12 +30,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * Operation that reduces a given buechi automaton by using
@@ -68,7 +68,7 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceBuchiFairDirectSimulation(final IUltimateServiceProvider services,
+	public ReduceBuchiFairDirectSimulation(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory, final INestedWordAutomatonOldApi<LETTER, STATE> operand)
 					throws OperationCanceledException {
 		this(services, stateFactory, operand, true, Collections.emptyList());
@@ -92,7 +92,7 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceBuchiFairDirectSimulation(final IUltimateServiceProvider services,
+	public ReduceBuchiFairDirectSimulation(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory, final INestedWordAutomatonOldApi<LETTER, STATE> operand,
 			final boolean useSCCs) throws OperationCanceledException {
 		this(services, stateFactory, operand, useSCCs, Collections.emptyList());
@@ -121,7 +121,7 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public ReduceBuchiFairDirectSimulation(final IUltimateServiceProvider services,
+	public ReduceBuchiFairDirectSimulation(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory, final INestedWordAutomatonOldApi<LETTER, STATE> operand,
 			final boolean useSCCs, final Collection<Set<STATE>> possibleEquivalentClasses)
 					throws OperationCanceledException {

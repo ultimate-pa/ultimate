@@ -40,11 +40,11 @@ import java.util.Random;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * Utility class that provides a method
@@ -183,7 +183,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	/**
 	 * Service provider.
 	 */
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 
 	/**
 	 * Size of the automaton also amount of nodes.
@@ -227,7 +227,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 *            Number of accepting states
 	 * @return Uniform distributed random total DFA
 	 */
-	public GetRandomDfa(final IUltimateServiceProvider services,
+	public GetRandomDfa(final AutomataLibraryServices services,
 			final int size, final int alphabetSize,
 			final int numOfAccStates) {
 		this(services, size, alphabetSize, numOfAccStates,
@@ -277,7 +277,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 *            it may happen that the automata is not connected.
 	 * @return Uniform distributed random total DFA
 	 */
-	public GetRandomDfa(final IUltimateServiceProvider services,
+	public GetRandomDfa(final AutomataLibraryServices services,
 			final int size, final int alphabetSize, final int numOfAccStates,
 			final int percOfTotality, final boolean ensureIsConnected) {
 		this(services, size, alphabetSize, numOfAccStates, percOfTotality,
@@ -334,7 +334,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 *            generation is very fast.
 	 * @return Uniform or non-uniform distributed random DFA
 	 */
-	public GetRandomDfa(final IUltimateServiceProvider services,
+	public GetRandomDfa(final AutomataLibraryServices services,
 			final int size, final int alphabetSize, final int numOfAccStates,
 			final int percOfTotality, final boolean ensureIsConnected,
 			final boolean ensureStatesReachFinal,
@@ -393,7 +393,7 @@ public final class GetRandomDfa implements IOperation<String, String> {
 	 *            and similar 'alphabetSize' behind one another.
 	 * @return Uniform or non-uniform distributed random DFA
 	 */
-	public GetRandomDfa(final IUltimateServiceProvider services,
+	public GetRandomDfa(final AutomataLibraryServices services,
 			final int size, final int alphabetSize, final int numOfAccStates,
 			final int percOfTotality, final boolean ensureIsConnected,
 			final boolean ensureStatesReachFinal,

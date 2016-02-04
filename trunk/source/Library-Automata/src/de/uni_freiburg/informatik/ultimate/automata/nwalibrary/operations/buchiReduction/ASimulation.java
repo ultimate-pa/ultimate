@@ -488,14 +488,18 @@ public abstract class ASimulation<LETTER, STATE> {
 			Iterator<StronglyConnectedComponent<Vertex<LETTER, STATE>>> iter = new LinkedList<StronglyConnectedComponent<Vertex<LETTER, STATE>>>(
 					m_SccComp.getSCCs()).iterator();
 			m_Performance.stopTimeMeasure(TimeMeasure.BUILD_SCC);
+			int amountOfSCCs = 0;
 			while (iter.hasNext()) {
 				StronglyConnectedComponent<Vertex<LETTER, STATE>> scc = iter.next();
 				iter.remove();
 				efficientLiftingAlgorithm(calculateInfinityOfSCC(scc), scc.getNodes());
+				amountOfSCCs++;
 			}
+			m_Performance.setCountingMeasure(CountingMeasure.SCCS, amountOfSCCs);
 		} else { // calculate reduction w/o SCCs
 			efficientLiftingAlgorithm(getGameGraph().getGlobalInfinity(), null);
 			m_Performance.addTimeMeasureValue(TimeMeasure.BUILD_SCC, SimulationPerformance.NO_TIME_RESULT);
+			m_Performance.setCountingMeasure(CountingMeasure.SCCS, SimulationPerformance.NO_COUNTING_RESULT);
 		}
 		m_Performance.stopTimeMeasure(TimeMeasure.SIMULATION_ONLY_TIME);
 		m_Result = getGameGraph().generateBuchiAutomatonFromGraph();
@@ -510,6 +514,7 @@ public abstract class ASimulation<LETTER, STATE> {
 			m_Performance.addTimeMeasureValue(TimeMeasure.OVERALL_TIME, durationGraph);
 		}
 		m_Performance.setCountingMeasure(CountingMeasure.GAMEGRAPH_STATES, getGameGraph().getSize());
+		m_Performance.setCountingMeasure(CountingMeasure.GLOBAL_INFINITY, getGameGraph().getGlobalInfinity());
 
 		m_Logger.info((this.m_UseSCCs ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds.");
 	}

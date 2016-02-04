@@ -29,8 +29,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesA
 import java.util.Collection;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.AcceptingComponentsAnalysis.StronglyConnectedComponentWithAcceptanceInformation;
-
 /**
  * Interface for computation of strongly connected components (SCC) for a given 
  * automaton. Objects that implement this interface also allow the computation

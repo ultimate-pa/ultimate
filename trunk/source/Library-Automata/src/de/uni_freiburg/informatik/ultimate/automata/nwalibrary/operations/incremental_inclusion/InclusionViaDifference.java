@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incremental_inclusion;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -38,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Inters
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveDeadEnds;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * This is an implementation of our incremental inclusion check based on a
@@ -62,7 +62,7 @@ public class InclusionViaDifference<LETTER, STATE> extends
 	private final boolean m_RemoveDeadEnds = true;
 
 	
-	public InclusionViaDifference(IUltimateServiceProvider services,
+	public InclusionViaDifference(AutomataLibraryServices services,
 			StateFactory<STATE> stateFactory,
 			INestedWordAutomatonSimple<LETTER, STATE> a) throws OperationCanceledException {
 		this(services, stateFactory, stateFactory, a);
@@ -75,7 +75,7 @@ public class InclusionViaDifference<LETTER, STATE> extends
 	 * check in program verification. 
 	 * @throws OperationCanceledException 
 	 */
-	public InclusionViaDifference(IUltimateServiceProvider services,
+	public InclusionViaDifference(AutomataLibraryServices services,
 			StateFactory<STATE> stateFactoryIntersect,
 			StateFactory<STATE> stateFactoryDeterminize,
 			INestedWordAutomatonSimple<LETTER, STATE> a) throws OperationCanceledException {

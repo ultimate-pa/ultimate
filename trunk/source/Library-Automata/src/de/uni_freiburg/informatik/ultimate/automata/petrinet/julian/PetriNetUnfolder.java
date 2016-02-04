@@ -35,6 +35,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -46,11 +47,10 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 	
 	private final PetriNetJulian<S, C> m_Net;
@@ -167,7 +167,7 @@ public class PetriNetUnfolder<S, C> implements IOperation<S, C> {
 	 *            if false, the complete finite Prefix will be build.
 	 * @throws OperationCanceledException
 	 */
-	public PetriNetUnfolder(IUltimateServiceProvider services, 
+	public PetriNetUnfolder(AutomataLibraryServices services, 
 			PetriNetJulian<S, C> net, order Order,
 			boolean sameTransitionCutOff, boolean stopIfAcceptingRunFound)
 			throws OperationCanceledException {

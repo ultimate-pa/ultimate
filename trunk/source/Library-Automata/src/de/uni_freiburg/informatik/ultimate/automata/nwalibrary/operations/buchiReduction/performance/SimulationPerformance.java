@@ -30,6 +30,8 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.ASimulation;
+
 /**
  * Class that is used by {@link ASimulation} to measure its performance. Has
  * timer and counter to save performance data.
@@ -87,6 +89,10 @@ public final class SimulationPerformance {
 	 */
 	private final boolean m_IsUsingSCCs;
 	/**
+	 * Name for the performance object to distinguish it from others.
+	 */
+	private String m_Name;
+	/**
 	 * If the performance object represents a simulation that has thrown an out
 	 * of memory error.
 	 */
@@ -99,11 +105,11 @@ public final class SimulationPerformance {
 	 * If the performance object represents a simulation that has timed out.
 	 */
 	private boolean m_TimedOut;
+
 	/**
 	 * Holds all time measures that are monitored.
 	 */
 	private final LinkedHashMap<TimeMeasure, List<Long>> m_TimeMeasures;
-
 	/**
 	 * Holds all starting timestamps for monitored time measures.
 	 */
@@ -126,6 +132,7 @@ public final class SimulationPerformance {
 		m_IsUsingSCCs = isUsingSCCs;
 		m_TimedOut = false;
 		m_OutOfMemory = false;
+		m_Name = "";
 	}
 
 	/**
@@ -166,6 +173,15 @@ public final class SimulationPerformance {
 	 */
 	public LinkedHashMap<CountingMeasure, Integer> getCountingMeasures() {
 		return m_CountingMeasures;
+	}
+
+	/**
+	 * Returns the name of the performance object.
+	 * 
+	 * @return The name of the object.
+	 */
+	public String getName() {
+		return m_Name;
 	}
 
 	/**
@@ -308,6 +324,16 @@ public final class SimulationPerformance {
 		if (counter != 0) {
 			m_CountingMeasures.put(type, counter);
 		}
+	}
+
+	/**
+	 * Sets the name of the performance object.
+	 * 
+	 * @param name
+	 *            The name to set
+	 */
+	public void setName(final String name) {
+		m_Name = name;
 	}
 
 	/**

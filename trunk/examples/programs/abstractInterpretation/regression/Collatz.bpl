@@ -9,9 +9,7 @@
  *
  */
 
-procedure Collatz(x: int) returns (res: int);
-
-implementation Collatz(x: int) returns (res: int)
+procedure Collatz(x: int) returns (res: int)
 {
   if (x == 1) {
     res := 1;

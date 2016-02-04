@@ -37,6 +37,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -54,7 +55,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.relation.Quad;
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.util.scc.DefaultStronglyConnectedComponentFactory;
@@ -177,6 +177,10 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 */
 	private final int m_GlobalInfinity;
 	/**
+	 * Amount of SCCs of the initial game graph version.
+	 */
+	private int m_AmountOfSCCs;
+	/**
 	 * The logger used by the Ultimate framework.
 	 */
 	private final Logger m_Logger;
@@ -239,7 +243,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public FairSimulation(final IUltimateServiceProvider services, final IProgressAwareTimer progressTimer,
+	public FairSimulation(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
 		this(progressTimer, logger, buechi, useSCCs, stateFactory, Collections.emptyList(),
@@ -281,7 +285,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public FairSimulation(final IUltimateServiceProvider services, final IProgressAwareTimer progressTimer,
+	public FairSimulation(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses)
 					throws OperationCanceledException {
@@ -345,6 +349,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 		m_AttemptingChanges = false;
 		m_SimulationWasAborted = false;
+		m_AmountOfSCCs = 0;
 
 		doSimulation();
 	}
@@ -466,6 +471,9 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 				m_CurrentChanges = changes;
 				efficientLiftingAlgorithm(infinityOfSCC, scc.getNodes());
+				if (changes == null) {
+					m_AmountOfSCCs++;
+				}
 				if (m_SimulationWasAborted) {
 					return false;
 				}
@@ -755,12 +763,15 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		// terminate as quickly as it will do now.
 		if (!isUsingSCCs()) {
 			performance.addTimeMeasureValue(TimeMeasure.BUILD_SCC, SimulationPerformance.NO_TIME_RESULT);
+			performance.setCountingMeasure(CountingMeasure.SCCS, SimulationPerformance.NO_COUNTING_RESULT);
 		}
 		boolean disabledSCCUsage = false;
 		if (isUsingSCCs()) {
 			setUseSCCs(false);
 			disabledSCCUsage = true;
+			performance.setCountingMeasure(CountingMeasure.SCCS, m_AmountOfSCCs);
 		}
+		performance.setCountingMeasure(CountingMeasure.GLOBAL_INFINITY, m_GlobalInfinity);
 
 		// Merge states
 		m_AttemptingChanges = true;

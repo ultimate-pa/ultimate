@@ -29,11 +29,11 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incremental_inclusion.AbstractIncrementalInclusionCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incremental_inclusion.InclusionViaDifference;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * 
@@ -62,7 +61,7 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 	private List<INestedWordAutomatonSimple<LETTER, STATE>> local_m_B;
 	private List<INestedWordAutomatonSimple<LETTER,STATE>> local_m_B2;
 	private StateFactory<STATE> localStateFactory;
-	private IUltimateServiceProvider localServiceProvider;
+	private AutomataLibraryServices localServiceProvider;
 	public HashSet<NodeData<LETTER,STATE>> allNodes;
 	public LinkedList<NodeData<LETTER,STATE>>errorNodes,currentTree,alreadyDeltedNodes;
 	public LinkedList<NodeData<LETTER,STATE>> completeTree,coveredNodes;
@@ -136,7 +135,7 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 		m_Logger.info(exitMessage());
 	}
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public IncrementalInclusionCheck2DeadEndRemoval(IUltimateServiceProvider services, StateFactory<STATE> sf,
+	public IncrementalInclusionCheck2DeadEndRemoval(AutomataLibraryServices services, StateFactory<STATE> sf,
 			INestedWordAutomatonSimple<LETTER, STATE> a, List<INestedWordAutomatonSimple<LETTER,STATE>> b) throws AutomataLibraryException{
 		super(services,a);
 		IncrementalInclusionCheck2DeadEndRemoval.abortIfContainsCallOrReturn(a);
@@ -900,7 +899,7 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER,STATE> extends Abst
 	 * exactly the same counterexample. 
 	 */
 	public static <LETTER, STATE> boolean compareInclusionCheckResult(
-			IUltimateServiceProvider services, 
+			AutomataLibraryServices services, 
 			StateFactory<STATE> stateFactory, 
 			INestedWordAutomatonSimple<LETTER, STATE> a, 
 			List<INestedWordAutomatonSimple<LETTER, STATE>> b, 

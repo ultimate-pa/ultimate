@@ -32,13 +32,13 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 	
 
@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  */
 public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 
 	private final INestedWordAutomaton<LETTER,STATE> m_Operand;
@@ -82,7 +82,7 @@ public class BuchiClosure<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 
 
-	public BuchiClosure(IUltimateServiceProvider services,
+	public BuchiClosure(AutomataLibraryServices services,
 			INestedWordAutomatonOldApi<LETTER,STATE> input) throws AutomataLibraryException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
