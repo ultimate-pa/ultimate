@@ -975,15 +975,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 		public void rec(int rank, Map<DoubleDecker<StateWithRankInfo<STATE>>, Integer> assigned) {
 			if (assigned.size() == m_NonFinalDoubleDeckerWithRankInfos.size()) {
 				int maxrank = rank - 2;
-				int highestEvenRank = maxrank - 1;
-				LevelRankingState<LETTER,STATE> lrs = new LevelRankingState<LETTER,STATE>(m_Operand);
-				for (DoubleDecker<StateWithRankInfo<STATE>> dd : assigned.keySet()) {
-					lrs.addRank(dd.getDown(), dd.getUp().getState(), assigned.get(dd), false);
-				}
-				for (DoubleDecker<StateWithRankInfo<STATE>> dd : m_FinalDoubleDeckerWithRankInfos) {
-					lrs.addRank(dd.getDown(), dd.getUp().getState(), highestEvenRank, true);
-				}
-				assert lrs.isMaximallyTight() : "not maximally tight";
+				LevelRankingState<LETTER, STATE> lrs = constructLevelRankingState(assigned, maxrank);
 				m_Result.add(lrs);
 			} else {
 				for (DoubleDecker<StateWithRankInfo<STATE>> dd  : m_NonFinalDoubleDeckerWithRankInfos) {
@@ -994,7 +986,37 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 						rec(rank + 2, assignedCopy);
 					}
 				}
+				
+				{
+					// construct copy where maxrank is the current rank
+					Map<DoubleDecker<StateWithRankInfo<STATE>>, Integer> assignedCopy = 
+							new HashMap<DoubleDecker<StateWithRankInfo<STATE>>, Integer>(assigned);
+					for (DoubleDecker<StateWithRankInfo<STATE>> dd  : m_NonFinalDoubleDeckerWithRankInfos) {
+						if (!assignedCopy.containsKey(dd)) {
+							assignedCopy.put(dd, rank);
+						}
+					}
+					int maxrank = rank;
+					LevelRankingState<LETTER, STATE> lrs = constructLevelRankingState(assignedCopy, maxrank);
+					m_Result.add(lrs);
+				}
+				
 			}
+		}
+
+		private LevelRankingState<LETTER, STATE> constructLevelRankingState(
+				Map<DoubleDecker<StateWithRankInfo<STATE>>, Integer> assigned, int maxrank) {
+			assert assigned.size() == m_NonFinalDoubleDeckerWithRankInfos.size() : "not ready for construction";
+			int highestEvenRank = maxrank - 1;
+			LevelRankingState<LETTER,STATE> lrs = new LevelRankingState<LETTER,STATE>(m_Operand);
+			for (DoubleDecker<StateWithRankInfo<STATE>> dd : assigned.keySet()) {
+				lrs.addRank(dd.getDown(), dd.getUp().getState(), assigned.get(dd), false);
+			}
+			for (DoubleDecker<StateWithRankInfo<STATE>> dd : m_FinalDoubleDeckerWithRankInfos) {
+				lrs.addRank(dd.getDown(), dd.getUp().getState(), highestEvenRank, true);
+			}
+			assert lrs.isMaximallyTight() : "not maximally tight";
+			return lrs;
 		}
 
 		@Override
