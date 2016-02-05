@@ -23,20 +23,22 @@ public class OctLiteralWideningOperator
 	public OctLiteralWideningOperator(Collection<BigDecimal> numberLiterals) {
 		wideningSteps = new TreeSet<>(); // removes duplicates using method "compareTo"
 		for (BigDecimal literal : numberLiterals) {			
-			// literals * 2, since octagons store interval bounds * 2
-			// interval bounds (x + x <= c) are more likely to be relevant than other constraints (x + y <= c)
-			literal = literal.add(literal);
+
+			BigDecimal literal2 = literal.add(literal); // literal * 2, since octagons store interval bounds * 2
 
 			wideningSteps.add(new OctValue(literal));
+			wideningSteps.add(new OctValue(literal2));
+
 			// negative literals are usually represented as UnaryExpression[ARITHNEG,<literal>]
 			// => negation signs get lost during literal collection
 			wideningSteps.add(new OctValue(literal.negate()));
+			wideningSteps.add(new OctValue(literal2.negate()));
 		}
 	}
 
 	@Override
 	public OctValue nextWideningStep(OctValue v) {
-		OctValue ceil = wideningSteps.ceiling(v);
+		OctValue ceil = wideningSteps.ceiling(v); // TODO some programs only terminate with "higher(v)"
 		return (ceil == null) ? OctValue.INFINITY : ceil;
 	}
 	
