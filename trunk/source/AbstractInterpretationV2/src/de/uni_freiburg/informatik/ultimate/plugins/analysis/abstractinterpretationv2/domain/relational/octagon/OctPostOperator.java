@@ -96,7 +96,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 
 		Map<String, IBoogieVar> tmpVars = new HashMap<>();
 		Map<String, String> mapTmpVarToInParam = new HashMap<>();
-		List<AssignmentStatement> tmpAssigns = new ArrayList<>();
+		Map<String, Expression> mapTmpVarToArg = new HashMap<>();
 		int paramNumber = 0;
 		for (VarList inParamList : procedure.getInParams()) {
 			IType type = inParamList.getType().getBoogieType();
@@ -114,19 +114,15 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 				tmpVars.put(tmpVar, tmpBoogieVar);
 				mapTmpVarToInParam.put(tmpVar, inParam);
 				
-				ILocation tmpAssignLoc = call.getLocation();
-				LeftHandSide[] tmpAssignLhs = {new VariableLHS(tmpAssignLoc, type, tmpVar, null)};
-				Expression[] tmpAssignRhs = {arg};
-				tmpAssigns.add(new AssignmentStatement(tmpAssignLoc, tmpAssignLhs, tmpAssignRhs));
+				mapTmpVarToArg.put(tmpVar, arg); // nothing will be overwritten -- in-parameters have unique names
 			}
 		}
 		// add temporary variables
 		List<OctagonDomainState> tmpStates = Collections.singletonList(stateBeforeCall.addVariables(tmpVars));
 		
 		// assign tmp := args
-		for (AssignmentStatement assign : tmpAssigns) {
-			// TODO do not build new Statements just to disassemble them later on ==> use method directly
-			tmpStates = mStatementProcessor.processStatement(assign, tmpStates);
+		for (Map.Entry<String, Expression> assign : mapTmpVarToArg.entrySet()) {
+			tmpStates = mStatementProcessor.processSingleAssignment(assign.getKey(), assign.getValue(), tmpStates);
 		}
 		
 		// copy to scope opened by call (inParam := tmp)
@@ -134,7 +130,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		tmpStates.forEach(s -> result.add(stateAfterCall.copyValuesOnScopeChange(s, mapTmpVarToInParam)));
 		return result;
 		// No need to remove the temporary variables.
-		// The state with temporary variables is only a local variable of this method.
+		// The states with temporary variables are only local variables of this method.
 	}
 	
 	private OctagonDomainState applyReturn(

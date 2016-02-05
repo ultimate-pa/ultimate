@@ -34,24 +34,6 @@ public class OctStatementProcessor {
 	private final ExpressionTransformer mExprTransformer;
 	private final OctAssumeProcessor mAssumeProcessor;
 	
-	/**
-	 * Abstract domain states before the interpretation of an statement.
-	 * Interpretation of statements should happen for each of these states separately.
-	 * <p>
-	 * Most methods of this class use the attribute as an input.
-	 * Methods may also modify the list or even the states inside the list!
-	 */
-//	private List<OctagonDomainState> mOldStates;
-	
-	/**
-	 * Abstract domain states after the interpretation of an statement.
-	 * After interpreting an statement, there may be more states than before due to splitting.
-	 * Example: {@code assume x != 0} can be split into {@code assume x < 0} and {@code assume x > 0}.
-	 * <p>
-	 * Methods of this class use the attribute as an output.
-	 */
-//	private List<OctagonDomainState> mNewStates;
-	
 	public OctStatementProcessor(Logger logger, BoogieSymbolTable symbolTable) {
 		mLogger = logger;
 		mSymbolTable = symbolTable;
