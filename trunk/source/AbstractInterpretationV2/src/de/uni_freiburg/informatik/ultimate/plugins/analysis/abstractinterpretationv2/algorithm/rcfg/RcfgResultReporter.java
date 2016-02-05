@@ -83,7 +83,7 @@ public class RcfgResultReporter<STATE extends IAbstractState<STATE, CodeBlock, V
 
 		final IResult result = new UnprovableResult<ProgramPoint, RCFGEdge, Expression>(Activator.PLUGIN_ID,
 				getLast(cex), mServices.getBacktranslationService(), pex,
-				"Abstract Interpretation could reach this error location");
+				"abstract domain could reach this error location");
 
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 	}
