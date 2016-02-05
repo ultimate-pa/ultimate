@@ -24,7 +24,8 @@
  * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.spaceex.ast.automata;
+
+package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata;
 
 import java.util.ArrayList;
 import java.util.HashMap;

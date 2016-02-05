@@ -24,47 +24,37 @@
  * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.spaceex.ast.automata;
+
+package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata;
 
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ParamType;
 
-public class RealValuedParameter extends ParameterType {
+public abstract class ParameterType {
 
-	public enum Dynamics {
-		ANY, CONST,
-	}
-
-	private Dynamics mDynamics;
-	private boolean mControlled;
-
-	public RealValuedParameter(ParamType realValuedParam) {
-		super(ParamTypes.REAL, realValuedParam);
-
-		switch (realValuedParam.getDynamics()) {
-		case "any":
-			mDynamics = Dynamics.ANY;
-			break;
-		case "const":
-			mDynamics = Dynamics.CONST;
-			break;
-		default:
-			throw new IllegalArgumentException("The dynamics " + realValuedParam.getDynamics() + " of parameter "
-			        + getName() + " is unknown.");
-		}
-
-		if (realValuedParam.isControlled()) {
-			mControlled = true;
-		} else {
-			mControlled = false;
-		}
-	}
-
-	public Dynamics getDynamics() {
-		return mDynamics;
+	private ParamTypes mType;
+	
+	private boolean mLocal;
+	private String mName;
+	
+	public ParameterType(ParamTypes type, ParamType param) {
+		mType = type;
+		mLocal = param.isLocal();
+		mName = param.getName();
 	}
 	
-	public boolean isControlled() {
-		return mControlled;
+	public ParamTypes getType() {
+		return mType;
+	}
+	
+	public void setLocal(boolean local) {
+		mLocal = local;
+	}
+	
+	public boolean isLocal() {
+		return mLocal;
 	}
 
+	public String getName() {
+	    return mName;
+    }
 }

@@ -24,47 +24,16 @@
  * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.spaceex.ast.automata;
 
-public class Transition extends SpaceExElement {
+package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata;
 
-	private String mLabel;
-	private String mGuard;
-	private String mUpdate;
-
-	private Location mSource;
-	private Location mTarget;
-
-	/**
-	 * Connects two locations with a transition. The source and target location's transitions are updated accordingly.
-	 * 
-	 * @param source
-	 *            The source location of the transition.
-	 * @param target
-	 *            The target location of the transition.
-	 */
-	public Transition(Location source, Location target) {
-		source.addOutgoingTransition(this);
-		target.addIncomingTransition(this);
-	}
-
-	public void setLabel(String label) {
-		mLabel = label;
-	}
-
-	public void setUpdate(String update) {
-		mUpdate = update;
-	}
-
-	public void setGuard(String guard) {
-		mGuard = guard;
-	}
-
-	public void setSource(Location location) {
-		mSource = location;
-	}
-
-	public void setTarget(Location location) {
-		mTarget = location;
-	}
+/**
+ * The possible parameter types of SpaceEX automaton variables.
+ * @author greitsch@informatik.uni-freiburg.de
+ *
+ */
+public enum ParamTypes {
+	REAL,
+	CONST,
+	LABEL,
 }
