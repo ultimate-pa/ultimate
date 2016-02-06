@@ -1023,7 +1023,7 @@ public class CfgBuilder {
 				// Hence the error location would be erroneously reachable from
 				// the final location.
 				assumeSafe = new AssumeStatement(st.getLocation(), 
-						new BooleanLiteral(st.getLocation(), true));
+						new BooleanLiteral(st.getLocation(), BoogieType.boolType, true));
 			}
 			passAllAnnotations(st, assumeSafe);
 			m_Backtranslator.putAux(assumeSafe, new BoogieASTNode[] { st });
