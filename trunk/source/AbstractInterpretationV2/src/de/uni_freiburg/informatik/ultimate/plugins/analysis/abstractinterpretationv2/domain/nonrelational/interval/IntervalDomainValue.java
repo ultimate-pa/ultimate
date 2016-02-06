@@ -264,7 +264,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		assert other != null;
 
 		if (isBottom() || other.isBottom()) {
-			return false;
+			return true;
 		}
 
 		if (isInfinity() || other.isInfinity()) {
@@ -311,7 +311,19 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		if (other.isInfinity()) {
 			return true;
 		}
-
+	
+		if (mLower.isInfinity() && !other.mLower.isInfinity()) {
+			return false;
+		}
+		
+		if (other.mLower.isInfinity()) {
+			return mUpper.compareTo(other.mUpper) <= 0;
+		}
+		
+		if (!mLower.isInfinity() && !other.mLower.isInfinity()) {
+			return mLower.compareTo(other.mLower) >= 0 && mUpper.compareTo(other.mUpper) <= 0;
+		}
+		
 		return mLower.compareTo(other.mLower) >= 0 && mUpper.compareTo(other.mUpper) <= 0;
 	}
 

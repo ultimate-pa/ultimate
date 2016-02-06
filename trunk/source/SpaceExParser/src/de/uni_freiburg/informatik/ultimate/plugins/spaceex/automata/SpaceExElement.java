@@ -24,36 +24,18 @@
  * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.spaceex.ast.automata;
 
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ParamType;
+package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata;
 
-public abstract class ParameterType {
-
-	private ParamTypes mType;
+public abstract class SpaceExElement {
 	
-	private boolean mLocal;
-	private String mName;
+	private String mNote;
 	
-	public ParameterType(ParamTypes type, ParamType param) {
-		mType = type;
-		mLocal = param.isLocal();
-		mName = param.getName();
+	public final void setNote(String note) {
+		mNote = note;
 	}
 	
-	public ParamTypes getType() {
-		return mType;
+	public final String getNote() {
+		return mNote;
 	}
-	
-	public void setLocal(boolean local) {
-		mLocal = local;
-	}
-	
-	public boolean isLocal() {
-		return mLocal;
-	}
-
-	public String getName() {
-	    return mName;
-    }
 }

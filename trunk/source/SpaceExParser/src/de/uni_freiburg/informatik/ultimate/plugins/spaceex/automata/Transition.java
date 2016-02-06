@@ -24,17 +24,74 @@
  * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.spaceex.ast.automata;
 
-public abstract class SpaceExElement {
-	
-	private String mNote;
-	
-	public final void setNote(String note) {
-		mNote = note;
+package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata;
+
+public class Transition extends SpaceExElement {
+
+	private String mLabel;
+	private String mGuard;
+	private String mUpdate;
+
+	private Location mSource;
+	private Location mTarget;
+
+	/**
+	 * Connects two locations with a transition. The source and target location's transitions are updated accordingly.
+	 * 
+	 * @param source
+	 *            The source location of the transition.
+	 * @param target
+	 *            The target location of the transition.
+	 */
+	public Transition(Location source, Location target) {
+		mSource = source;
+		mTarget = target;
+		mGuard = "";
+		mUpdate = "";
+		mLabel = "";
+		
+		source.addOutgoingTransition(this);
+		target.addIncomingTransition(this);
+	}
+
+	public int getSourceId() {
+		return mSource.getId();
 	}
 	
-	public final String getNote() {
-		return mNote;
+	public int getTargetId() {
+		return mTarget.getId();
+	}
+	
+	public void setLabel(String label) {
+		mLabel = label;
+	}
+	
+	public String getLabel() {
+		return mLabel;
+	}
+
+	public void setUpdate(final String update) {
+		mUpdate = update;
+	}
+	
+	public String getUpdate() {
+		return mUpdate;
+	}
+
+	public void setGuard(final String guard) {
+		mGuard = guard;
+	}
+	
+	public String getGuard() {
+		return mGuard;
+	}
+
+	public void setSource(final Location location) {
+		mSource = location;
+	}
+
+	public void setTarget(final Location location) {
+		mTarget = location;
 	}
 }

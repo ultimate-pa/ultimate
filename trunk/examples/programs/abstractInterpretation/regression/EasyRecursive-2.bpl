@@ -3,6 +3,9 @@
 procedure ULTIMATE.start()
 {
   var z : int;
+  var x, y : int;
+  x := -2 + -3;
+  y := 10;
   call z := add(5, 3);    
   assert(z == 8);       
 }                       
