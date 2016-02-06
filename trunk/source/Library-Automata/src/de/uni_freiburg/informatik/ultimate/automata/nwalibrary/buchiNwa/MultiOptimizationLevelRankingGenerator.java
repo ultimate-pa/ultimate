@@ -782,6 +782,9 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 						}
 					} else {
 						if (m_SacrificedDoubleDeckerWithRankInfos.size() > 1) {
+							// 2016-02-05 Matthias: I checked this on the Michael4 example
+							// and could not see obvious problem.
+							// Maybe this is new because we decrease the rank after visiting a final state.
 							m_Logger.warn("unneccessary sacrifice !!! this state is is not needed, "
 									+ "construction can be optimized, contact Matthias");
 						}
