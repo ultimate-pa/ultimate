@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -51,7 +50,7 @@ public class OctStatementProcessor {
 			return processHavocStatement((HavocStatement) statement, oldStates);
 		} else if (statement instanceof IfStatement) {
 			// TODO support if it can occur
-			String msg = "IfStatements are not supported by post-operator. Switch block-encoding to single statements.";
+			String msg = "IfStatements are not supported by post-operator. Set block-encoding to single statements.";
 			throw new UnsupportedOperationException(msg);
 		} else if (statement instanceof Label) {
 			return oldStates; // nothing to do
@@ -115,18 +114,10 @@ public class OctStatementProcessor {
 
 		List<Pair<List<Expression>, Expression>> paths = mExprTransformer.removeIfExprsCached(rhs);
 		List<OctagonDomainState> result = new ArrayList<>();
-		
 		for (int i = 0; i < paths.size(); ++i) {
 			Pair<List<Expression>, Expression> p = paths.get(i);
-
-			List<OctagonDomainState> copiedOldStates;
-			if (i + 1 < paths.size()) {
-				copiedOldStates = deepCopy(oldStates);
-			} else {
-				copiedOldStates = oldStates; // skip one copy -- original oldState is not needed any more
-				// For assignments without IfThenElseExpressions => no copy at all
-			}
-
+			List<OctagonDomainState> copiedOldStates = (i + 1 < paths.size()) ?
+					OctPostOperator.deepCopy(oldStates) : oldStates; // as little copies as possible
 			for (Expression assumption : p.getFirst()) {
 				// This step is slow for deeply nested IfThenElseExpressions
 				// same assumptions have to be assumed over and over again
@@ -146,7 +137,6 @@ public class OctStatementProcessor {
 				newStates = oldStates;
 			}
 
-			// TODO merge when maxParallelStates reached
 			result.addAll(newStates);
 		}
 		return result;
@@ -166,6 +156,8 @@ public class OctStatementProcessor {
 				String sourceVar = ie.getIdentifier();
 				action = s -> s.copyVar(targetVar, sourceVar);
 			}
+		} else {
+			// TODO calculate using BoolValue    or   (set true and assume rhs) and (set false and assume !rhs)
 		}
 
 		oldStates.forEach(action);
@@ -186,10 +178,9 @@ public class OctStatementProcessor {
 				AffineExpression.OneVarForm ovf = ae.getOneVarForm();
 				if (ovf != null) {
 					action = s -> s.copyVar(targetVar, ovf.var);
-					if (ovf.varSignum == -1) {
+					if (ovf.negVar) {
 						action = action.andThen(s -> s.negateNumericVar(targetVar));
-					}
-					if (ovf.constant.signum() != 0) {
+					} else {
 						action = action.andThen(s -> s.incrementNumericVar(targetVar, ovf.constant));
 					}
 				} else {
@@ -211,10 +202,4 @@ public class OctStatementProcessor {
 		return oldStates;
 	}
 	
-	private static List<OctagonDomainState> deepCopy(List<OctagonDomainState> states) {
-		List<OctagonDomainState> copy = new ArrayList<>(states.size());
-		states.forEach(state -> copy.add(state.deepCopy()));
-		return copy; 
-	}
-
 }

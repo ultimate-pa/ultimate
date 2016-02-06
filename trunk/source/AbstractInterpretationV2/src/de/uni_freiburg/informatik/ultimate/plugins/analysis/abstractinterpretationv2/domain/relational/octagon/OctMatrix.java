@@ -21,10 +21,10 @@ import de.uni_freiburg.informatik.ultimate.util.BidirectionalMap;
  * <p>
  * 
  * TODO More documentation
- * TODO Stores entries for variables +v1, -v1, ..., +vn, -vn
- * TODO Variables (names, type, ...) aren't stored
- * TODO Matrix is divided into 2x2 blocks
- * TODO Different matrices, same octagon -> closures
+ * Stores entries for variables +v1, -v1, ..., +vn, -vn
+ * Variables (names, type, ...) aren't stored
+ * Matrix is divided into 2x2 blocks
+ * Different matrices, same octagon -> closures
  * 
  * This class ensures coherence (as seen in the following ASCII art).
  * <pre>
@@ -732,8 +732,9 @@ public class OctMatrix {
 		return n;
 	}
 
-	// TODO note that information is lost. Strong Closure on this and source in advance can reduce loss.
-	// TODO source must be different from target (= this)
+	// TODO document
+	// - note that information is lost. Strong Closure on this and source in advance can reduce loss.
+	// - source must be different from target (= this)
 	protected void copySelection(OctMatrix source, BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar) {
 		if (source.mElements == mElements) {
 			for (Map.Entry<Integer, Integer> entry : mapSourceVarToTargetVar.entrySet()) {
@@ -759,8 +760,9 @@ public class OctMatrix {
 		}
 	}
 
-	// TODO document: selectedSourceVars should not contain duplicates
-	// TODO document: iteration order matters
+	// TODO document
+	// - selectedSourceVars should not contain duplicates
+	// - iteration order matters
 	public OctMatrix appendSelection(OctMatrix source, Collection<Integer> selectedSourceVars) {
 		OctMatrix m = this.addVariables(selectedSourceVars.size());
 		BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar = new BidirectionalMap<>();
@@ -927,7 +929,16 @@ public class OctMatrix {
 		OctValue doubleConstant = constant.add(constant);
 		set(t2, t21, doubleConstant.negate());
 		set(t21, t2, doubleConstant);
+		// cached closures were already reset by "set"
+	}
 
+	protected void assumeVarConstant(int targetVar, OctValue constant) {
+		havocVar(targetVar);
+		int t2 = targetVar * 2;
+		int t21 = t2 + 1;
+		OctValue doubleConstant = constant.add(constant);
+		setMin(t2, t21, doubleConstant.negate());
+		setMin(t21, t2, doubleConstant);
 		// cached closures were already reset by "set"
 	}
 	
@@ -937,10 +948,32 @@ public class OctMatrix {
 		int t21 = t2 + 1;
 		set(t2, t21, min.add(min).negateIfNotInfinity());
 		set(t21, t2, max.add(max));
-
+		// cached closures were already reset by "set"
+	}
+	
+	
+	protected void assumeVarInterval(int targetVar, OctValue min, OctValue max) {
+		int t2 = targetVar * 2;
+		int t21 = t2 + 1;
+		setMin(t2, t21, min.add(min).negateIfNotInfinity());
+		setMin(t21, t2, max.add(max));
 		// cached closures were already reset by "set"
 	}
 
+	// var1 + var2 <= constant
+	protected void assumeVarRelationLeConstant(
+			int var1, boolean var1Negate, int var2, boolean var2Negate, OctValue constant) {
+		var1 *= 2;
+		var2 *= 2;
+		if (!var1Negate) {
+			var1 = var1 | 0b1; // negative form of var1
+		}
+		if (var2Negate) {
+			var2 = var2 | 0b1; // negative form of var2
+		}
+		setMin(var1, var2, constant);
+	}
+	
 	protected void havocVar(int targetVar) {
 		int t2 = targetVar * 2;
 		int t21 = t2 + 1;

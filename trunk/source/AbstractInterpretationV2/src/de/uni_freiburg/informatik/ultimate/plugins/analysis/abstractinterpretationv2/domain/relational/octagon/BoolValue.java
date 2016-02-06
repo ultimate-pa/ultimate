@@ -16,11 +16,11 @@ public enum BoolValue {
 		return value ? TRUE : FALSE;
 	}
 	
-	public BoolValue join(BoolValue other) {
+	public BoolValue union(BoolValue other) {
 		return values()[this.ordinal() | other.ordinal()];
 	}
 	
-	public BoolValue meet(BoolValue other) {
+	public BoolValue intersect(BoolValue other) {
 		return values()[this.ordinal() & other.ordinal()];
 	}
 	

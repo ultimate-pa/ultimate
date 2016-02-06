@@ -13,6 +13,8 @@ import org.ojalgo.optimisation.integer.NewIntegerSolver;
 
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.model.IType;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
@@ -34,33 +36,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 
 public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState, CodeBlock, IBoogieVar> {
 
-	private final Logger mLogger;
-	private final RcfgStatementExtractor mStatementExtractor;
-	private final OctStatementProcessor mStatementProcessor;
-	private final BoogieSymbolTable mSymbolTable;
-	private final int mStatesUntilMerge;
-	
-	public OctPostOperator(Logger logger, BoogieSymbolTable symbolTable, int statesUntilMerge) {
-		mLogger = logger;
-		mStatementExtractor = new RcfgStatementExtractor();
-		mStatementProcessor = new OctStatementProcessor(mLogger, symbolTable);
-		mSymbolTable = symbolTable;
-		mStatesUntilMerge = statesUntilMerge;
-	}
-
-	@Override
-	public List<OctagonDomainState> apply(OctagonDomainState oldState, CodeBlock codeBlock) {
-		List<OctagonDomainState> currentState = Collections.singletonList(oldState.deepCopy());
-		for (Statement statement : mStatementExtractor.process(codeBlock)) {
-			currentState = mStatementProcessor.processStatement(statement, currentState);
-			assert currentState != null && currentState.stream().allMatch(s -> s != null): "NULLY";
-			assert currentState.size() > 0 : "EMPTYLY";
-		}
-		return currentState;
-	}
-	
-	private OctagonDomainState join(List<OctagonDomainState> states) {
-		assert states.size() > 0 : "nothing to join";
+	public static OctagonDomainState join(List<OctagonDomainState> states) {
 		OctagonDomainState joinedState = null;
 		for (OctagonDomainState result : states) {
 			if (joinedState == null) {
@@ -72,6 +48,41 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		return joinedState;
 	}
 
+	public static List<OctagonDomainState> deepCopy(List<OctagonDomainState> states) {
+		List<OctagonDomainState> copy = new ArrayList<>(states.size());
+		states.forEach(state -> copy.add(state.deepCopy()));
+		return copy; 
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	private final Logger mLogger;
+	private final RcfgStatementExtractor mStatementExtractor;
+	private final OctStatementProcessor mStatementProcessor;
+	private final BoogieSymbolTable mSymbolTable;
+	private final int mStatesUntilJoin;
+	
+	public OctPostOperator(Logger logger, BoogieSymbolTable symbolTable, int statesUntilMerge) {
+		mLogger = logger;
+		mStatementExtractor = new RcfgStatementExtractor();
+		mStatementProcessor = new OctStatementProcessor(mLogger, symbolTable);
+		mSymbolTable = symbolTable;
+		mStatesUntilJoin = statesUntilMerge;
+	}
+
+	@Override
+	public List<OctagonDomainState> apply(OctagonDomainState oldState, CodeBlock codeBlock) {
+		List<OctagonDomainState> currentState = deepCopy(Collections.singletonList(oldState));
+		for (Statement statement : mStatementExtractor.process(codeBlock)) {
+			currentState = mStatementProcessor.processStatement(statement, currentState);
+		}
+		if (currentState.isEmpty()) {
+			// TODO workaround or remove
+			throw new UnsupportedOperationException("FXPE cannot handle empty state list yet");
+		}
+		return currentState;
+	}
+
 	@Override
 	public List<OctagonDomainState> apply(
 			OctagonDomainState stateBeforeTransition, OctagonDomainState stateAfterTransition, CodeBlock transition) {
@@ -80,8 +91,8 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		if (transition instanceof Call) {
 			result = applyCall(stateBeforeTransition, stateAfterTransition, (Call) transition);
 		} else if (transition instanceof Return) {
-			result = Collections.singletonList(
-					applyReturn(stateBeforeTransition, stateAfterTransition, (Return) transition));
+			result = new ArrayList<>();
+			result.add(applyReturn(stateBeforeTransition, stateAfterTransition, (Return) transition));
 		} else {
 			throw new UnsupportedOperationException("Unsupported transition: " + transition);
 		}
@@ -118,8 +129,9 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 			}
 		}
 		// add temporary variables
-		List<OctagonDomainState> tmpStates = Collections.singletonList(stateBeforeCall.addVariables(tmpVars));
-		
+		List<OctagonDomainState> tmpStates = new ArrayList<>();
+		tmpStates.add(stateBeforeCall.addVariables(tmpVars));
+
 		// assign tmp := args
 		for (Map.Entry<String, Expression> assign : mapTmpVarToArg.entrySet()) {
 			tmpStates = mStatementProcessor.processSingleAssignment(assign.getKey(), assign.getValue(), tmpStates);

@@ -22,7 +22,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieAstUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.util.BidirectionalMap;
@@ -235,7 +234,8 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		return mBooleanAbstraction.containsValue(BoolValue.BOT);
 	}
 
-	// TODO document: returns original cache. Do not modify in-place!
+	// TODO document
+	// - returns original cache. Do not modify in-place!
 	private OctMatrix cachedNormalizedNumericAbstraction() {
 		if (isNumericAbstractionIntegral()) {
 			return mNumericAbstraction.cachedTightClosure();
@@ -267,7 +267,8 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		return mId;
 	}
 
-	// TODO document: call only when same variables are stored
+	// TODO document
+	// - call only when same variables are stored
 	private boolean numericAbstractionIsEqualTo(OctagonDomainState other) {
 		boolean permutated = false;
 		int[] mapThisVarIndexToOtherVarIndex = new int[mNumericAbstraction.variables()];
@@ -296,15 +297,15 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	}
 
 	public OctagonDomainState meet(OctagonDomainState other) {
-		return operation(other, BoolValue::meet, OctMatrix::min);
+		return operation(other, BoolValue::intersect, OctMatrix::min);
 	}
 
 	public OctagonDomainState join(OctagonDomainState other) {
-		return operation(other, BoolValue::join, OctMatrix::max);
+		return operation(other, BoolValue::union, OctMatrix::max);
 	}
 
 	public OctagonDomainState widen(OctagonDomainState other, BiFunction<OctMatrix, OctMatrix, OctMatrix> widenOp) {
-		return operation(other, BoolValue::join, widenOp);
+		return operation(other, BoolValue::union, widenOp);
 	}
 
 	private OctagonDomainState operation(OctagonDomainState other,
@@ -517,14 +518,6 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 			numVarIndices.forEach(v -> mNumericAbstraction.havocVar(v));
 		}
 	}
-	
-	protected void assignNumericVarConstant(String targetVar, OctValue constant) {
-		mNumericAbstraction.assignVarConstant(numVarIndex(targetVar), constant);
-	}
-
-	protected void assignNumericVarInterval(String targetVar, OctValue min, OctValue max) {
-		mNumericAbstraction.assignVarInterval(numVarIndex(targetVar), min, max);
-	}
 
 	// v := v + c;
 	protected void incrementNumericVar(String targetVar, OctValue addConstant) {
@@ -535,6 +528,32 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		mNumericAbstraction.negateVar(numVarIndex(targetVar));
 	}
 
+	protected void assignNumericVarConstant(String targetVar, OctValue constant) {
+		mNumericAbstraction.assignVarConstant(numVarIndex(targetVar), constant);
+	}
+	
+	// min <= var <= max
+	protected void assignNumericVarInterval(String targetVar, OctValue min, OctValue max) {
+		mNumericAbstraction.assignVarInterval(numVarIndex(targetVar), min, max);
+	}
+
+	
+	protected void assumeNumericVarConstant(String targetVar, OctValue constant) {
+		mNumericAbstraction.assumeVarConstant(numVarIndex(targetVar), constant);
+	}
+	
+	// min <= var <= max
+	protected void assumeNumericVarInterval(String targetVar, OctValue min, OctValue max) {
+		mNumericAbstraction.assumeVarInterval(numVarIndex(targetVar), min, max);
+	}
+	
+	// var1 + var2 <= zero
+	protected void assumeNumericVarRelationLeConstant(
+			String var1, boolean var1Negate, String var2, boolean var2Negate, OctValue constant) {
+		mNumericAbstraction.assumeVarRelationLeConstant(
+				numVarIndex(var1), var1Negate, numVarIndex(var2), var2Negate, constant);
+	}
+	
 	private int numVarIndex(String var) {
 		Integer index = mMapNumericVarToIndex.get(var);
 		assert index != null : "Not a numeric variable: " + var;
@@ -565,13 +584,16 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		assert mMapVarToBoogieVar.containsKey(targetVar) && mMapVarToBoogieVar.containsKey(sourceVar)
 			: "unknown variable in assignment: " + targetVar + " := " + sourceVar;
 	}
-	
 
 	protected void assignBooleanVar(String var, BoolValue value) {
 		assert mBooleanAbstraction.containsKey(var) : "unknown variable in boolean assignment: " + var;
 		mBooleanAbstraction.put(var, value);
 	}
 	
+	protected void assumeBooleanVar(String var, BoolValue value) {
+		mBooleanAbstraction.put(var, mBooleanAbstraction.get(var).intersect(value));
+	}
+
 	@Override
 	public String toLogString() {
 		StringBuilder log = new StringBuilder();

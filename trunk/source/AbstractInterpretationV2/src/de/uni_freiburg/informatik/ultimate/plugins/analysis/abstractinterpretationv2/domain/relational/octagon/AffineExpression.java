@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -56,7 +55,7 @@ public class AffineExpression {
 	private void removeZeroSummands() {
 		Iterator<BigDecimal> iter = mCoefficients.values().iterator();
 		while (iter.hasNext()) {
-			if (iter.next().signum() == 0) { // "signum()" is faster than "comparTo(0)"
+			if (iter.next().signum() == 0) { // "signum()" is faster than "compareTo(0)"
 				iter.remove();
 			}
 		}
@@ -85,9 +84,13 @@ public class AffineExpression {
 		return mCoefficients.isEmpty();
 	}
 
+	public AffineExpression withoutConstant() {
+		return new AffineExpression(mCoefficients, BigDecimal.ZERO);
+	}
+	
 	public static class OneVarForm {
 		public String var;
-		public int varSignum;
+		public boolean negVar;
 		public OctValue constant;
 	}
 
@@ -101,90 +104,39 @@ public class AffineExpression {
 			return null;
 		}
 		oneVarForm.var = entry.getKey();
-		oneVarForm.varSignum = entry.getValue().signum();
+		oneVarForm.negVar = entry.getValue().signum() < 0;
 		oneVarForm.constant = new OctValue(mConstant);
 		return oneVarForm;
 	}
 	
 	public static class TwoVarForm {
 		public String var1, var2;
-		public int var1Signum, var2Signum;
+		public boolean negVar2, negVar1;
 		public OctValue constant;
 	}
 	
 	public TwoVarForm getTwoVarForm() {
-		int numberOfVars = mCoefficients.size();
-		if (numberOfVars < 1 || numberOfVars > 2) {
+		if (mCoefficients.size() != 2) {
 			return null;
 		}
-		List<String> vars = new ArrayList<>(numberOfVars);
-		List<BigDecimal> coefficients = new ArrayList<>(numberOfVars);
-		mCoefficients.entrySet().forEach(entry -> {vars.add(entry.getKey()); coefficients.add(entry.getValue());});
+		List<String> vars = new ArrayList<>(2);
+		List<BigDecimal> coefficients = new ArrayList<>(2);
+		mCoefficients.entrySet().forEach(entry -> {
+			vars.add(entry.getKey());
+			coefficients.add(entry.getValue());
+		});
 		TwoVarForm twoVarForm = new TwoVarForm();
-		if (numberOfVars == 1) {
-			if (coefficients.get(0).abs().compareTo(new BigDecimal(2)) != 0) {
+		for (BigDecimal d : coefficients) {
+			if (d.abs().compareTo(BigDecimal.ONE) != 0) {
 				return null;
 			}
-			twoVarForm.var1 = twoVarForm.var2 = vars.get(0);
-			twoVarForm.var1Signum = twoVarForm.var2Signum = coefficients.get(0).signum();
-		} else { // numberOfVars == 2
-			for (BigDecimal d : coefficients) {
-				if (d.abs().compareTo(BigDecimal.ONE) != 0) {
-					return null;
-				}
-			}
-			twoVarForm.var1 = vars.get(0);
-			twoVarForm.var1 = vars.get(1);
-			twoVarForm.var1Signum = coefficients.get(0).signum();
-			twoVarForm.var2Signum = coefficients.get(1).signum();
 		}
+		twoVarForm.var1 = vars.get(0);
+		twoVarForm.var2 = vars.get(1);
+		twoVarForm.negVar2 = coefficients.get(0).signum() < 0;
+		twoVarForm.negVar1 = coefficients.get(1).signum() < 0;
 		return twoVarForm;
 	}
-
-//	/**
-//	 * Affine expression of the form {@code (±x) + (±y) + c}.
-//	 * {@code x} and {@code y} are always two different variables.
-//	 * The variables may also 
-//	 * <p>
-//	 * This class is only used to return multiple values from {@link AffineExpression#simpleForm()},
-//	 * therefore getters, setters and other methods are missing.
-//	 */
-//	public static class SimpleForm {
-//		public static final int MAX_VARS = 2;
-//		/**
-//		 * Variable names from this AffineExpression.
-//		 * {@code null} may be used for the last entries, if there are less than 2 variables.
-//		 */
-//		public String[] variables = new String[MAX_VARS];
-//		
-//		/**
-//		 * Coefficients of the variables.
-//		 * Always +1 or -1 for the variables from {@link #variables} and 0 for {@code null}-entries.
-//		 */
-//		public int[] signumsOfVars = new int[MAX_VARS];
-//		
-//		public OctValue constant;
-//	}
-//
-//	public SimpleForm simpleForm() {
-//		SimpleForm sf = new SimpleForm();
-//		int i = 0;
-//		for (Map.Entry<String, BigDecimal> entry : mCoefficients.entrySet()) {
-//			if (i >= SimpleForm.MAX_VARS) {
-//				return null;
-//			} 
-//			BigDecimal coeff = entry.getValue();
-//			if (coeff.abs().compareTo(BigDecimal.ONE) == 0) {
-//				sf.signumsOfVars[i] = coeff.signum();
-//			} else {
-//				return null;
-//			}
-//			sf.variables[i] = entry.getKey();
-//			++i;
-//		}
-//		sf.constant = new OctValue(mConstant);
-//		return sf;
-//	}
 	
 	public AffineExpression add(AffineExpression summand) {
 		AffineExpression sum = new AffineExpression();
@@ -201,7 +153,7 @@ public class AffineExpression {
 	}
 	
 	public AffineExpression subtract(AffineExpression subtrahend) {
-		return this.add(subtrahend.negate()); // negate never returns null
+		return this.add(subtrahend.negate()); // negate() never returns null
 	}
 
 	public AffineExpression negate() {

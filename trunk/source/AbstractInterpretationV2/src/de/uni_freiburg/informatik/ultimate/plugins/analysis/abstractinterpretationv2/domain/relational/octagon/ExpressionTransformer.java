@@ -128,71 +128,6 @@ public class ExpressionTransformer {
 		return new UnaryExpression(e.getLocation(), e.getType(), UnaryExpression.Operator.LOGICNEG, e);
 	}
 
-	/*
-	private Expression toLogicNegation(Expression e) {
-		assert TypeUtil.isBoolean(e.getType()) : "Logical negation of non-boolean expression: " + e;
-		if (e instanceof BinaryExpression) {
-			return binaryExpressionToLogicNegation((BinaryExpression) e);
-		}
-		return null; // TODO
-	}
-
-	private Expression binaryExpressionToLogicNegation(BinaryExpression e) {
-		BinaryExpression.Operator negOp = null;
-		boolean negateSubExpr = false;
-		switch (e.getOperator()) {
-		case COMPEQ:
-			negOp = Operator.COMPNEQ;
-			break;
-		case COMPNEQ:
-			negOp = Operator.COMPEQ;
-			break;
-		case COMPGEQ:
-			negOp = Operator.COMPLT;
-			break;
-		case COMPLT:
-			negOp = Operator.COMPGEQ;
-			break;
-		case COMPGT:
-			negOp = Operator.COMPLEQ;
-			break;
-		case COMPLEQ:
-			negOp = Operator.COMPGT;
-			break;
-		case LOGICAND:
-			negOp = Operator.LOGICOR;
-			negateSubExpr = true;
-			break;
-		case LOGICOR:
-			negOp = Operator.LOGICAND;
-			negateSubExpr = true;
-			break;
-		case LOGICIFF:
-			// TODO
-			throw new UnsupportedOperationException("Negation of '<=>' not yet implemented.");
-			// break;
-		case LOGICIMPLIES:
-			// TODO
-			throw new UnsupportedOperationException("Negation of '=>' not yet implemented.");
-			// break;s
-		case COMPPO: // partial order "<:"
-			return encloseInLogicNeg(e);
-		case BITVECCONCAT:
-			throw new IllegalArgumentException("Logical negation of bit-vector concat: " + e);
-		case ARITHDIV:
-		case ARITHMINUS:
-		case ARITHMOD:
-		case ARITHMUL:
-		case ARITHPLUS:
-			throw new IllegalArgumentException("Logical negation of arithmetic operator: " + e);
-		default:
-			throw new UnsupportedOperationException("Unknown binary operator: " + e);
-		}
-		throw new UnsupportedOperationException("logical negation not yet implemented.");
-		// return null; // TODO
-	}
-	*/
-
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	private List<Pair<List<Expression>, Expression>> removeIfExprs(Expression e) {
@@ -242,7 +177,7 @@ public class ExpressionTransformer {
 			
 			int cartesianProductSize = leftPaths.size() * rightPaths.size();
 			// TODO throw exception if cartesian product is too large
-			// it is possible (but unlikely) that a lot of nested IfThenElseExpressions appear
+			// it is possible (but unlikely) that a lot of nested IfThenElseExpressions appear (maybe in svcomp eca?)
 			List<Pair<List<Expression>, Expression>> newPaths = new ArrayList<>(cartesianProductSize);
 			for (Pair<List<Expression>, Expression> pl : leftPaths) {
 				for (Pair<List<Expression>, Expression> pr : rightPaths) {
@@ -258,8 +193,7 @@ public class ExpressionTransformer {
 	private List<Pair<List<Expression>, Expression>> removeIfExprsFromUnaryExpr(UnaryExpression e) {
 		List<Pair<List<Expression>, Expression>> paths = removeIfExprs(e.getExpr());
 		if (paths.size() == 1) {
-			// TODO remove assertion (complete line)
-			assert paths.get(0).getSecond() == e.getExpr() && paths.get(0).getFirst().isEmpty();
+			assert paths.get(0).getSecond() == e.getExpr() && paths.get(0).getFirst().isEmpty(); // TODO remove
 			return pathWithoutIfs(e);
 		} else {
 			// modify paths in-place (value is used only here)
@@ -285,11 +219,3 @@ public class ExpressionTransformer {
 	}
 
 }
-
-
-
-
-
-
-
-

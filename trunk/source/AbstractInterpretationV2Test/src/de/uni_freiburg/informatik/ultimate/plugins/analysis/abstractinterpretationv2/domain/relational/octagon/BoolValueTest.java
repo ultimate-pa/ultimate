@@ -19,7 +19,7 @@ public class BoolValueTest {
 			{TRUE,  TOP,   TRUE, TOP},
 			{TOP,   TOP,   TOP,  TOP},
 		};
-		testBinaryOperation(expected, BoolValue::join);
+		testBinaryOperation(expected, BoolValue::union);
 	}
 
 	@Test
@@ -30,7 +30,7 @@ public class BoolValueTest {
 			{BOT, BOT,   TRUE, TRUE},
 			{BOT, FALSE, TRUE, TOP},
 		};
-		testBinaryOperation(expected, BoolValue::meet);
+		testBinaryOperation(expected, BoolValue::intersect);
 	}
 	
 	@Test

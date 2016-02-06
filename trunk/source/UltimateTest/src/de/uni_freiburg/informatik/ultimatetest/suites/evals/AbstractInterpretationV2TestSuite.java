@@ -68,17 +68,17 @@ public class AbstractInterpretationV2TestSuite extends AbstractEvalTestSuite {
 //	        "examples/svcomp/loops/compact_false-unreach-call.c",
 //	        "examples/svcomp/loops/heavy_false-unreach-call.c",
 //	        "examples/svcomp/loops/heavy_true-unreach-call.c",
-			"examples/programs/abstractInterpretation/EasyRecursive_incorrect.bpl",
+//			"examples/programs/abstractInterpretation/EasyRecursive_incorrect.bpl",
 
 //	        "varDiffOrder/",
 
-//	        "examples/programs/abstractInterpretation/",
-//	        /* ULTIMATE repo */
-//	         "examples/programs/regression/bpl/",
-//	         "examples/programs/regression/c/",
-////	         "examples/programs/recursivePrograms",
-//	        /* SV-COMP repo */
-//	        "examples/svcomp/loops/", // SPLIT
+	        "examples/programs/abstractInterpretation/",
+	        /* ULTIMATE repo */
+	         "examples/programs/regression/bpl/",
+	         "examples/programs/regression/c/",
+	         "examples/programs/recursivePrograms",
+	        /* SV-COMP repo */
+	        "examples/svcomp/loops/", // SPLIT
 			// "examples/svcomp/ntdrivers-simplified/",
 	   		// "examples/svcomp/ssh-simplified/", 
 			// "examples/svcomp/locks/",
