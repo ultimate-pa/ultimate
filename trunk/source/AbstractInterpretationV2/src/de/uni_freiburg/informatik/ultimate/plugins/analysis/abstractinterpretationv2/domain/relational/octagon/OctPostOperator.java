@@ -138,8 +138,10 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 //			mLogger.warn("---´");
 		}
 		if (currentState.isEmpty()) {
-			// TODO workaround or remove
-			throw new UnsupportedOperationException("FXPE cannot handle empty state list yet");
+			// TODO workaround (remove)
+			OctagonDomainState bottom = oldState.deepCopy();
+			bottom.bottomizeWORKAROUND();
+			return Collections.singletonList(bottom);
 		}
 		return currentState;
 	}

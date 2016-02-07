@@ -602,6 +602,17 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		mBooleanAbstraction.put(var, mBooleanAbstraction.get(var).intersect(value));
 	}
 
+	// TODO remove
+	protected void bottomizeWORKAROUND() {
+		if (!mBooleanAbstraction.isEmpty()) {
+			String var = mBooleanAbstraction.keySet().iterator().next();
+			mBooleanAbstraction.put(var, BoolValue.BOT);
+		} else if (mNumericAbstraction.getSize() > 0) {
+			mNumericAbstraction.set(0, 0, new OctValue(-9999));
+		}
+		// else: there is no way to set this state to bottom
+	}
+	
 	@Override
 	public String toLogString() {
 		StringBuilder log = new StringBuilder();
