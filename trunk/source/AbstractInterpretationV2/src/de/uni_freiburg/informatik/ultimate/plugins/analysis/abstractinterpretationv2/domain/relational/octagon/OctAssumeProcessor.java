@@ -258,10 +258,14 @@ public class OctAssumeProcessor {
 					s -> s.assumeNumericVarRelationLeConstant(tvf.var1, tvf.negVar1, tvf.var2, tvf.negVar2, leOc),
 					s -> s.assumeNumericVarRelationLeConstant(tvf.var1, !tvf.negVar1, tvf.var2, !tvf.negVar2, leOc2));
 			
-		} else {
+		} else if (mPostOp.isFallbackAssumeLpSolverEnabled()) {
 			// TODO use LP-solver
+			mPostOp.getLogger().warn("Fallback to lp-solver not yet implemented.");
 			return oldStates; // safe over-approximation
 			
+		} else {
+			return oldStates; // safe over-approximation
+
 		}
 	}
 
@@ -299,8 +303,12 @@ public class OctAssumeProcessor {
 					tvf.var1, !tvf.negVar1, tvf.var2, !tvf.negVar2, ocNeg));
 			return oldStates;
 
-		} else {
+		} else if (mPostOp.isFallbackAssumeLpSolverEnabled()) {
 			// TODO use LP-solver
+			mPostOp.getLogger().warn("Fallback to lp-solver not yet implemented.");
+			return oldStates; // safe over-approximation
+			
+		} else {
 			return oldStates; // safe over-approximation
 
 		}
@@ -348,8 +356,12 @@ public class OctAssumeProcessor {
 					tvf.var1, tvf.negVar2, tvf.var2, tvf.negVar1, co));
 			return oldStates;
 		
-		} else {
+		} else if (mPostOp.isFallbackAssumeLpSolverEnabled()) {
 			// TODO use LP-solver
+			mPostOp.getLogger().warn("Fallback to lp-solver not yet implemented.");
+			return oldStates; // safe over-approximation
+			
+		} else {
 			return oldStates; // safe over-approximation
 
 		}

@@ -3,6 +3,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalValue;
+
 /**
  * Values for {@link OctMatrix}.
  * <p>
@@ -41,11 +43,20 @@ public class OctValue implements Comparable<OctValue> {
 		mValue = new BigDecimal(i);
 	}
 
+	
 	public static OctValue parse(String s) {
 		if ("inf".equals(s)) {
 			return INFINITY;
 		}
 		return new OctValue(new BigDecimal(s));
+	}
+
+	public OctValue(IntervalValue ivlValue) {
+		mValue = ivlValue.isInfinity() ? null : ivlValue.getValue();
+	}
+	
+	public IntervalValue toIvlValue() {
+		return mValue == null ? new IntervalValue() : new IntervalValue(mValue);
 	}
 	
 	public boolean isInfinity() {

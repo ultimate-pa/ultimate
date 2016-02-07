@@ -7,7 +7,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIt
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
 
 public class OctPreferences {
-	
+
 	public static enum WideningOperator {
 		SIMPLE, EXPONENTIAL, LITERAL;
 	}
@@ -20,6 +20,9 @@ public class OctPreferences {
 	public static final String EXP_WIDENING_THRESHOLD_TOOLTIP
 			= "Exponential widening will set values above this threshold to infinity";
 
+	public static final String FALLBACK_ASSIGN_INTERVAL_PROJECTION = "Fallback: assign interval projection";
+	public static final String FALLBACK_ASSUME_LP_SOLVER = "Fallback: assume lp-solver";
+
 	public static List<UltimatePreferenceItem<?>> createPreferences() {
 		List<UltimatePreferenceItem<?>> prf = new ArrayList<>();
 		prf.add(createLabel(
@@ -30,6 +33,12 @@ public class OctPreferences {
 		prf.add(new UltimatePreferenceItem<String>(
 				EXP_WIDENING_THRESHOLD,
 				EXP_WIDENING_THRESHOLD_DEFAULT_VALUE, EXP_WIDENING_THRESHOLD_TOOLTIP, PreferenceType.String));
+
+		prf.add(new UltimatePreferenceItem<Boolean>(
+				FALLBACK_ASSIGN_INTERVAL_PROJECTION, true, PreferenceType.Boolean));
+		prf.add(new UltimatePreferenceItem<Boolean>(
+				FALLBACK_ASSUME_LP_SOLVER, true, PreferenceType.Boolean));
+
 		return prf;
 	}
 

@@ -174,28 +174,33 @@ public class OctStatementProcessor {
 	private List<OctagonDomainState> processNumericAssignWithoutIfs(String targetVar, Expression rhs,
 			List<OctagonDomainState> oldStates) {
 		
-		Consumer<OctagonDomainState> action = s -> s.havocVar(targetVar); // default operation (if uninterpretable)
-
 		AffineExpression ae = mPostOp.getExprTransformer().affineExprCached(rhs);
 		if (ae != null) {
+			AffineExpression.OneVarForm ovf;
 			if (ae.isConstant()) {
 				OctValue value = new OctValue(ae.getConstant());
-				action = s -> s.assignNumericVarConstant(targetVar, value);
-			} else {
-				AffineExpression.OneVarForm ovf = ae.getOneVarForm();
-				if (ovf != null) {
-					action = s -> s.copyVar(targetVar, ovf.var);
-					if (ovf.negVar) {
-						action = action.andThen(s -> s.negateNumericVar(targetVar));
-					} else {
-						action = action.andThen(s -> s.incrementNumericVar(targetVar, ovf.constant));
-					}
+				oldStates.forEach(s -> s.assignNumericVarConstant(targetVar, value));
+				return oldStates;
+			} else if ((ovf = ae.getOneVarForm()) != null) {
+				Consumer<OctagonDomainState> action = s -> s.copyVar(targetVar, ovf.var);
+				if (ovf.negVar) {
+					action = action.andThen(s -> s.negateNumericVar(targetVar));
 				} else {
-					// TODO project to intervals and calculate
+					action = action.andThen(s -> s.incrementNumericVar(targetVar, ovf.constant));
 				}
+				oldStates.forEach(action);
+				return oldStates;
+			} else if (mPostOp.isFallbackAssignIntervalProjectionEnabled()) {
+				// TODO use setting
+				return IntervalProjection.assignNumericVarAffine(targetVar, ae, oldStates);
 			}
+		} else if (mPostOp.isFallbackAssignIntervalProjectionEnabled()) { // no affine form found
+			// TODO use setting
+			return IntervalProjection.assignNumericVarWithoutIfs(targetVar, rhs, oldStates);
 		}
-		oldStates.forEach(action);
+
+		// could not interpret rhs -- return safe over-approximation (targetVar := \top)
+		oldStates.forEach(s -> s.havocVar(targetVar));
 		return oldStates;
 	}
 

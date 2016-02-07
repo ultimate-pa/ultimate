@@ -96,6 +96,14 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		return mExprTransformer;
 	}
 	
+	public boolean isFallbackAssignIntervalProjectionEnabled() {
+		return mFallbackAssignIntervalProjection;
+	}
+
+	public boolean isFallbackAssumeLpSolverEnabled() {
+		return mFallbackAssumeLpSolver;
+	}
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	private final Logger mLogger;
@@ -104,14 +112,19 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final ExpressionTransformer mExprTransformer;
 	private final OctStatementProcessor mStatementProcessor;
-	
-	public OctPostOperator(Logger logger, BoogieSymbolTable symbolTable, int statesUntilMerge) {
+	private final boolean mFallbackAssignIntervalProjection;
+	private final boolean mFallbackAssumeLpSolver;
+
+	public OctPostOperator(Logger logger, BoogieSymbolTable symbolTable, int statesUntilMerge,
+			boolean fallbackAssignIntervalProjection, boolean fallbackAssumeLpSolver) {
 		mLogger = logger;
 		mSymbolTable = symbolTable;
 		mMaxParallelStates = statesUntilMerge;
 		mStatementExtractor = new RcfgStatementExtractor();
 		mExprTransformer = new ExpressionTransformer();
 		mStatementProcessor = new OctStatementProcessor(this);
+		mFallbackAssignIntervalProjection = fallbackAssignIntervalProjection;
+		mFallbackAssumeLpSolver = fallbackAssumeLpSolver;
 	}
 
 	@Override

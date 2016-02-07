@@ -69,8 +69,10 @@ public class OctagonDomain implements IAbstractDomain<OctagonDomainState, CodeBl
 	@Override
 	public IAbstractPostOperator<OctagonDomainState, CodeBlock, IBoogieVar> getPostOperator() {
 		UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
-		int statesUntilMerge = ups.getInt(AbsIntPrefInitializer.LABEL_STATES_UNTIL_MERGE);
-		return new OctPostOperator(mLogger, mSymbolTable, statesUntilMerge);
+		return new OctPostOperator(mLogger, mSymbolTable,
+				ups.getInt(AbsIntPrefInitializer.LABEL_STATES_UNTIL_MERGE),
+				ups.getBoolean(OctPreferences.FALLBACK_ASSIGN_INTERVAL_PROJECTION),
+				ups.getBoolean(OctPreferences.FALLBACK_ASSUME_LP_SOLVER));
 	}
 	
 }

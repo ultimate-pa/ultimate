@@ -553,7 +553,15 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		mNumericAbstraction.assumeVarRelationLeConstant(
 				numVarIndex(var1), var1Negate, numVarIndex(var2), var2Negate, constant);
 	}
-	
+
+	public OctInterval projectToInterval(String numericVar) {
+		OctMatrix n = cachedNormalizedNumericAbstraction();
+		int i2 = numVarIndex(numericVar) * 2;
+		OctValue min = n.get(i2, i2 + 1).negateIfNotInfinity().half();
+		OctValue max = n.get(i2 + 1, i2).half();
+		return new OctInterval(min, max);
+	}
+
 	private int numVarIndex(String var) {
 		Integer index = mMapNumericVarToIndex.get(var);
 		assert index != null : "Not a numeric variable: " + var;
