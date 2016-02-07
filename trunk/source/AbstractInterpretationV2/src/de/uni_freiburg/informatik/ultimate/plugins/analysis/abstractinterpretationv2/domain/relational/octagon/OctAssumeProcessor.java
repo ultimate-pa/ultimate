@@ -372,7 +372,7 @@ public class OctAssumeProcessor {
 		List<OctagonDomainState> newStates = op1.apply(OctPostOperator.deepCopy(oldStates));
 		newStates.addAll(op2.apply(oldStates));
 		// TODO join if #states > max     and     remove \bot
-		return oldStates;
+		return newStates;
 	}
 	
 	private List<OctagonDomainState> splitC(List<OctagonDomainState> oldStates,
