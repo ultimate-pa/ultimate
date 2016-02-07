@@ -200,7 +200,8 @@ public class OctAssumeProcessor {
 			// TODO (?) project to intervals and try to deduce (assume false) or even new intervals
 			return oldStates; // safe over-approximation
 		}
-		boolean intRelation = TypeUtil.isNumericInt(be.getType());
+		assert left.getType().equals(right.getType());
+		boolean intRelation = TypeUtil.isNumericInt(left.getType());
 		boolean strictRelInt = false;
 		switch (op) {
 		case COMPEQ:
