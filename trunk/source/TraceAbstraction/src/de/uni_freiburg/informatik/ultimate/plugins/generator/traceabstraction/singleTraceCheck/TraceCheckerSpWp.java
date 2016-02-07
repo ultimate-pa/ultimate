@@ -329,7 +329,11 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 
 		if (m_ConstructForwardInterpolantSequence) {
 			m_Logger.debug("Computing forward predicates...");
-			computeForwardPredicates(liveVariables, rtf);
+			try {
+				computeForwardPredicates(liveVariables, rtf);
+			} catch (ToolchainCanceledException tce) {
+				throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while constructing forward predicates");
+			}
 			assert TraceCheckerUtils.checkInterpolantsInductivityForward(m_InterpolantsFp, 
 					m_Trace, m_Precondition, m_Postcondition, m_PendingContexts, "FP", 
 					m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in FP";
@@ -341,7 +345,11 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		
 		if (m_ConstructBackwardInterpolantSequence) {
 			m_Logger.debug("Computing backward predicates...");
-			computeBackwardPredicates(liveVariables, rtf);
+			try {
+				computeBackwardPredicates(liveVariables, rtf);
+			} catch (ToolchainCanceledException tce) {
+				throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while constructing backward predicates");
+			}
 			assert TraceCheckerUtils.checkInterpolantsInductivityBackward(m_InterpolantsBp, 
 					m_Trace, m_Precondition, m_Postcondition, m_PendingContexts, "BP", 
 					m_SmtManager, m_ModifiedGlobals, m_Logger) : "invalid Hoare triple in BP";
