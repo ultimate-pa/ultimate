@@ -6,9 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
@@ -28,16 +25,12 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 public class OctStatementProcessor {
 
-	private final Logger mLogger;
-	private final BoogieSymbolTable mSymbolTable;
-	private final ExpressionTransformer mExprTransformer;
+	private final OctPostOperator mPostOp;
 	private final OctAssumeProcessor mAssumeProcessor;
 	
-	public OctStatementProcessor(Logger logger, BoogieSymbolTable symbolTable) {
-		mLogger = logger;
-		mSymbolTable = symbolTable;
-		mExprTransformer = new ExpressionTransformer();
-		mAssumeProcessor = new OctAssumeProcessor(logger, symbolTable, mExprTransformer);
+	public OctStatementProcessor(OctPostOperator postOperator) {
+		mPostOp = postOperator;
+		mAssumeProcessor = new OctAssumeProcessor(postOperator);
 	}
 
 	public List<OctagonDomainState> processStatement(Statement statement, List<OctagonDomainState> oldStates) {
@@ -114,14 +107,12 @@ public class OctStatementProcessor {
 
 		// note: there is no implicit typecasting in boogie. "real := int;" cannot happen. 
 		IType type = rhs.getType();
-		List<OctagonDomainState> newStates = new ArrayList<>();
 		if (TypeUtil.isBoolean(type)) {
 			return processBooleanAssign(targetVar, rhs, oldStates);
 		} else if (TypeUtil.isNumeric(type)) {
 			return processNumericAssign(targetVar, rhs, oldStates);
 		} else {
-			// variables of unsupported types are assumed to be \top all the time
-			return oldStates;
+			return oldStates; // variables of unsupported types are assumed to be \top all the time
 		}
 	}
 	
@@ -140,8 +131,8 @@ public class OctStatementProcessor {
 				action = s -> s.copyVar(targetVar, sourceVar);
 			}
 		} else {
-			Expression notRhs = mExprTransformer.logicNegCached(rhs);
-			return OctPostOperator.splitF(oldStates,
+			Expression notRhs = mPostOp.getExprTransformer().logicNegCached(rhs);
+			return mPostOp.splitF(oldStates,
 					stateList -> {
 						stateList = mAssumeProcessor.assume(rhs, stateList);
 						stateList = OctPostOperator.removeBottomStates(stateList);
@@ -163,12 +154,12 @@ public class OctStatementProcessor {
 	private List<OctagonDomainState> processNumericAssign(String targetVar, Expression rhs,
 			List<OctagonDomainState> oldStates) {
 
-		List<Pair<List<Expression>, Expression>> paths = mExprTransformer.removeIfExprsCached(rhs);
+		List<Pair<List<Expression>, Expression>> paths = mPostOp.getExprTransformer().removeIfExprsCached(rhs);
 		List<OctagonDomainState> result = new ArrayList<>();
 		for (int i = 0; i < paths.size(); ++i) {
 			Pair<List<Expression>, Expression> p = paths.get(i);
 			List<OctagonDomainState> copiedOldStates = (i + 1 < paths.size()) ?
-					OctPostOperator.deepCopy(oldStates) : oldStates; // as little copies as possible
+					mPostOp.deepCopy(oldStates) : oldStates; // as little copies as possible
 			for (Expression assumption : p.getFirst()) {
 				// This step is slow for deeply nested IfThenElseExpressions
 				// same assumptions have to be assumed over and over again
@@ -177,7 +168,7 @@ public class OctStatementProcessor {
 			}
 			result.addAll(processNumericAssignWithoutIfs(targetVar, rhs, copiedOldStates));
 		}
-		return result;
+		return mPostOp.joinIfGeMaxParallelStates(result);
 	}
 	
 	private List<OctagonDomainState> processNumericAssignWithoutIfs(String targetVar, Expression rhs,
@@ -185,7 +176,7 @@ public class OctStatementProcessor {
 		
 		Consumer<OctagonDomainState> action = s -> s.havocVar(targetVar); // default operation (if uninterpretable)
 
-		AffineExpression ae = mExprTransformer.affineExprCached(rhs);
+		AffineExpression ae = mPostOp.getExprTransformer().affineExprCached(rhs);
 		if (ae != null) {
 			if (ae.isConstant()) {
 				OctValue value = new OctValue(ae.getConstant());

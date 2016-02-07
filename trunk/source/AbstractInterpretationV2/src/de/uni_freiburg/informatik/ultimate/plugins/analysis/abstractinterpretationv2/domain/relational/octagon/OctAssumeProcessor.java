@@ -3,12 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
-import org.apache.log4j.Logger;
-
-import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
@@ -22,15 +17,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 public class OctAssumeProcessor {
+	
+	private final OctPostOperator mPostOp;
 
-	private final Logger mLogger;
-	private final BoogieSymbolTable mSymbolTable;
-	private ExpressionTransformer mExprTransformer;
-
-	public OctAssumeProcessor(Logger logger, BoogieSymbolTable symbolTable, ExpressionTransformer exprTransformer) {
-		mLogger = logger;
-		mSymbolTable = symbolTable;
-		mExprTransformer = exprTransformer;
+	public OctAssumeProcessor(OctPostOperator postOperator) {
+		mPostOp = postOperator;
 	}
 	
 	public List<OctagonDomainState> assume(Expression assumption, List<OctagonDomainState> oldStates) {
@@ -107,11 +98,12 @@ public class OctAssumeProcessor {
 
 		} else if (e instanceof IfThenElseExpression) {
 			IfThenElseExpression ie = (IfThenElseExpression) e;
+			// isNegated refers to the then and else part of the IfThenElseExpressions -- condition is not affected
 			Expression condition = ie.getCondition();
-			Expression notCondition = mExprTransformer.logicNegCached(condition);
+			Expression notCondition = mPostOp.getExprTransformer().logicNegCached(condition);
 			Expression thenPart = ie.getThenPart();
 			Expression elsePart = ie.getElsePart();
-			return OctPostOperator.splitF(oldStates,
+			return mPostOp.splitF(oldStates,
 					stateList -> processBooleanOperations(thenPart, isNegated, assume(condition, stateList)),
 					stateList -> processBooleanOperations(elsePart, isNegated, assume(notCondition, stateList)));
 		} else {
@@ -130,18 +122,17 @@ public class OctAssumeProcessor {
 
 	private List<OctagonDomainState> assumeOr(Expression left, boolean negLeft, Expression right, boolean negRight,
 			List<OctagonDomainState> oldStates) {
-		return OctPostOperator.splitF(oldStates,
+		return mPostOp.splitF(oldStates,
 				statesBeforeOr -> processBooleanOperations(left, negLeft, statesBeforeOr),
 				statesBeforeOr -> processBooleanOperations(right, negRight, statesBeforeOr));
 	}
 
 	private List<OctagonDomainState> assumeIff(Expression left, Expression right, boolean isIffNegated,
 			List<OctagonDomainState> oldStates) {
-		List<OctagonDomainState> newStates = new ArrayList<>();
-		newStates.addAll(assumeAnd(left, isIffNegated, right, false, oldStates));
-		newStates.addAll(assumeAnd(left, !isIffNegated, right, true, oldStates));
-		// TODO join if #states > max     and     remove \bot
-		return newStates;
+
+		return mPostOp.splitF(oldStates,
+				stateList -> assumeAnd(left, isIffNegated, right, false, stateList),
+				stateList -> assumeAnd(left, !isIffNegated, right, true, oldStates));
 	}
 
 	private List<OctagonDomainState> processBooleanRelation(BinaryExpression be, boolean isNegated,
@@ -165,20 +156,19 @@ public class OctAssumeProcessor {
 		// TODO build binary tree from IfExprs (or same assumption may be processed multiple times)
 
 		// isNegated refers to the relation (==, !=, <, ...) -- inner IfThenElseExpressions are not affected
-		List<Pair<List<Expression>, Expression>> paths = mExprTransformer.removeIfExprsCached(be);
+		List<Pair<List<Expression>, Expression>> paths = mPostOp.getExprTransformer().removeIfExprsCached(be);
 		List<OctagonDomainState> newStates = new ArrayList<>();
 		for (int i = 0; i < paths.size(); ++i) {
 			Pair<List<Expression>, Expression> path = paths.get(i);
 			List<OctagonDomainState> tmpOldStates = (i + 1 < paths.size()) ?
-					OctPostOperator.deepCopy(oldStates) : oldStates; // as little copies as possible
+					mPostOp.deepCopy(oldStates) : oldStates; // as little copies as possible
 			for (Expression assumption : path.getFirst()) {
 				tmpOldStates = assume(assumption, tmpOldStates);
 			}
 			newStates.addAll(
 					processNumericRelationWithoutIfs((BinaryExpression) path.getSecond(), isNegated, tmpOldStates));
-			// TODO join if #states > max     and     remove \bot
 		}
-		return newStates;
+		return mPostOp.joinIfGeMaxParallelStates(newStates);
 	}
 
 	private List<OctagonDomainState> processNumericRelationWithoutIfs(BinaryExpression be, boolean isNegated,
@@ -194,8 +184,8 @@ public class OctAssumeProcessor {
 		Expression left = be.getLeft();
 		Expression right = be.getRight();
 		
-		AffineExpression aeLeft = mExprTransformer.affineExprCached(left);
-		AffineExpression aeRight = mExprTransformer.affineExprCached(right);
+		AffineExpression aeLeft = mPostOp.getExprTransformer().affineExprCached(left);
+		AffineExpression aeRight = mPostOp.getExprTransformer().affineExprCached(right);
 		if (aeLeft == null || aeRight == null) {
 			// TODO (?) project to intervals and try to deduce (assume false) or even new intervals
 			return oldStates; // safe over-approximation
@@ -257,14 +247,14 @@ public class OctAssumeProcessor {
 				geOc = new OctValue(geC);
 				leOc = new OctValue(leC);
 			}
-			return OctPostOperator.splitC(oldStates,
+			return mPostOp.splitC(oldStates,
 					s -> s.assumeNumericVarInterval(ovf.var, geOc, OctValue.INFINITY),  // v > c
 					s -> s.assumeNumericVarInterval(ovf.var, OctValue.INFINITY, leOc)); // v < c
 
 		} else if ((tvf = ae.getTwoVarForm()) != null) {
 			OctValue leOc = new OctValue(leC);
 			OctValue leOc2 = new OctValue(geC.negate()); // (ae > c) is equivalent to (-ae < -c)
-			return OctPostOperator.splitC(oldStates,
+			return mPostOp.splitC(oldStates,
 					s -> s.assumeNumericVarRelationLeConstant(tvf.var1, tvf.negVar1, tvf.var2, tvf.negVar2, leOc),
 					s -> s.assumeNumericVarRelationLeConstant(tvf.var1, !tvf.negVar1, tvf.var2, !tvf.negVar2, leOc2));
 			

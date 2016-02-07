@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
 
 public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState, CodeBlock, IBoogieVar> {
 
-	public static OctagonDomainState join(List<OctagonDomainState> states) {
+	public OctagonDomainState join(List<OctagonDomainState> states) {
 		OctagonDomainState joinedState = null;
 		for (OctagonDomainState result : states) {
 			if (joinedState == null) {
@@ -42,31 +42,29 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		return joinedState;
 	}
 
-	public static List<OctagonDomainState> deepCopy(List<OctagonDomainState> states) {
+	public List<OctagonDomainState> deepCopy(List<OctagonDomainState> states) {
 		List<OctagonDomainState> copy = new ArrayList<>(states.size());
 		states.forEach(state -> copy.add(state.deepCopy()));
 		return copy; 
 	}
 
-	public static List<OctagonDomainState> splitF(List<OctagonDomainState> oldStates,
+	public List<OctagonDomainState> splitF(List<OctagonDomainState> oldStates,
 			Function<List<OctagonDomainState>, List<OctagonDomainState>> op1,
 			Function<List<OctagonDomainState>, List<OctagonDomainState>> op2) {
 
-		List<OctagonDomainState> newStates = op1.apply(OctPostOperator.deepCopy(oldStates));
+		List<OctagonDomainState> newStates = op1.apply(deepCopy(oldStates));
 		newStates.addAll(op2.apply(oldStates));
-		// TODO join if #states > max     and     remove \bot
-		return newStates;
+		return joinIfGeMaxParallelStates(newStates);
 	}
-	
-	public static List<OctagonDomainState> splitC(List<OctagonDomainState> oldStates,
+
+	public List<OctagonDomainState> splitC(List<OctagonDomainState> oldStates,
 			Consumer<OctagonDomainState> op1, Consumer<OctagonDomainState> op2) {
 
-		List<OctagonDomainState> copiedOldStates = OctPostOperator.deepCopy(oldStates);
+		List<OctagonDomainState> copiedOldStates = deepCopy(oldStates);
 		oldStates.forEach(op1);
 		copiedOldStates.forEach(op2);
 		oldStates.addAll(copiedOldStates);
-		// TODO join if #states > max     and     remove \bot
-		return oldStates;
+		return joinIfGeMaxParallelStates(oldStates);
 	}
 
 	public static List<OctagonDomainState> removeBottomStates(List<OctagonDomainState> states) {
@@ -78,21 +76,41 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		}
 		return nonBottomStates;
 	}
+
+	public List<OctagonDomainState> joinIfGeMaxParallelStates(List<OctagonDomainState> states) {
+		states = removeBottomStates(states);
+		if (states.isEmpty() || states.size() <= mMaxParallelStates) {
+			return states;
+		}
+		List<OctagonDomainState> joinedStates = new ArrayList<>();
+		joinedStates.add(join(states));
+		return joinedStates;
+	}
+	
+	public Logger getLogger() {
+		return mLogger;
+	}
+	
+	public ExpressionTransformer getExprTransformer() {
+		return mExprTransformer;
+	}
 	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	private final Logger mLogger;
-	private final RcfgStatementExtractor mStatementExtractor;
-	private final OctStatementProcessor mStatementProcessor;
 	private final BoogieSymbolTable mSymbolTable;
-	private final int mStatesUntilJoin;
+	private final int mMaxParallelStates;
+	private final RcfgStatementExtractor mStatementExtractor;
+	private final ExpressionTransformer mExprTransformer;
+	private final OctStatementProcessor mStatementProcessor;
 	
 	public OctPostOperator(Logger logger, BoogieSymbolTable symbolTable, int statesUntilMerge) {
 		mLogger = logger;
-		mStatementExtractor = new RcfgStatementExtractor();
-		mStatementProcessor = new OctStatementProcessor(mLogger, symbolTable);
 		mSymbolTable = symbolTable;
-		mStatesUntilJoin = statesUntilMerge;
+		mMaxParallelStates = statesUntilMerge;
+		mStatementExtractor = new RcfgStatementExtractor();
+		mExprTransformer = new ExpressionTransformer();
+		mStatementProcessor = new OctStatementProcessor(this);
 	}
 
 	@Override
@@ -100,7 +118,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		List<OctagonDomainState> currentState = deepCopy(Collections.singletonList(oldState));
 		for (Statement statement : mStatementExtractor.process(codeBlock)) {
 			currentState = mStatementProcessor.processStatement(statement, currentState);
-//			mLogger.warn("after " + statement + currentState);
+			mLogger.warn("after " + statement + currentState);
 		}
 		if (currentState.isEmpty()) {
 			// TODO workaround or remove
