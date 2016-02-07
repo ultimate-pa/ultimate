@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2T
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfDer;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
  * Translates statements into TransFormulas. The resulting TransFormula encodes
@@ -147,6 +148,21 @@ public class Statements2TransFormula {
 	}
 
 	private TranslationResult getTransFormula(boolean simplify, boolean feasibilityKnown) {
+		TransFormula tf = null;
+		try {
+			tf = constructTransFormula(simplify, feasibilityKnown);
+			m_CurrentProcedure = null;
+			m_OutVars = null;
+			m_InVars = null;
+			m_AuxVars = null;
+			m_Assumes = null;
+		} catch (ToolchainCanceledException tce) {
+			throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while contructing transformula");
+		}
+		return new TranslationResult(tf, m_Overapproximations);
+	}
+
+	private TransFormula constructTransFormula(boolean simplify, boolean feasibilityKnown) {
 		Set<TermVariable> auxVars = m_AuxVars;
 		Term formula = m_Assumes;
 		formula = eliminateAuxVars(m_Assumes, auxVars);
@@ -183,12 +199,7 @@ public class Statements2TransFormula {
 				m_Boogie2SMT);
 		TransFormula tf = new TransFormula(formula, m_InVars, m_OutVars, auxVars, branchEncoders, infeasibility,
 				closedFormula);
-		m_CurrentProcedure = null;
-		m_OutVars = null;
-		m_InVars = null;
-		m_AuxVars = null;
-		m_Assumes = null;
-		return new TranslationResult(tf, m_Overapproximations);
+		return tf;
 	}
 
 	private BoogieVar getModifiableBoogieVar(String id, DeclarationInformation declInfo) {

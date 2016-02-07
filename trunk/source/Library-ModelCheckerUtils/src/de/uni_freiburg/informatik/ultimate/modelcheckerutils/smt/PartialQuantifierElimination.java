@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfTir;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfUsr;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
  * Try to eliminate existentially quantified variables in terms. Therefore we
@@ -174,7 +175,12 @@ public class PartialQuantifierElimination {
 				return elim;
 			}
 		}
-		elim = elim(script, quantifier, varSet, elim, services, logger, freshTermVariableConstructor);
+		try {
+		 elim = elim(script, quantifier, varSet, elim, services, logger, freshTermVariableConstructor);
+		} catch (ToolchainCanceledException tce) {
+			throw new ToolchainCanceledException(PartialQuantifierElimination.class,
+						tce.getRunningTaskInfo() + " during partial quantifier elimination");
+		}
 		if (varSet.isEmpty()) {
 			return elim;
 		} else {

@@ -292,6 +292,19 @@ public class SmtUtils {
 	}
 	
 	/**
+	 * Return sum, in affine representation if possible.
+	 */
+	public static Term sum(Script script, Term... summands) {
+		final Term sum = script.term("+", summands);
+		final AffineTerm affine = (AffineTerm) (new AffineTermTransformer(script)).transform(sum);
+		if (affine.isErrorTerm()) {
+			return sum;
+		} else {
+			return affine.toTerm(script);
+		}
+	}
+	
+	/**
 	 * Returns the equality ("=" lhs rhs), or true resp. false if some simple
 	 * checks detect validity or unsatisfiablity of the equality.
 	 */
@@ -599,6 +612,10 @@ public class SmtUtils {
 				result = Util.ite(script, params[0], params[1], params[2]);
 			}
 			break;
+		case "+": {
+			result = SmtUtils.sum(script, params);
+			}
+			break;
 		case "div":
 			if (params.length != 2) {
 				throw new IllegalArgumentException("no div");
@@ -618,6 +635,7 @@ public class SmtUtils {
 		case "bvadd":
 		case "bvsub":
 		case "bvmul":
+//		case "bvand":
 		case "bvult":
 			result = BitvectorUtils.termWithLocalSimplification(script, funcname, indices, params);
 			break;
