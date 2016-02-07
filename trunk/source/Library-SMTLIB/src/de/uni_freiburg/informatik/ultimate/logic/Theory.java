@@ -1091,6 +1091,14 @@ public class Theory {
 				return mFloatingPointSort.getSort(indices, new Sort[0] );
 			}
 		});
+		
+		defineFunction(new FunctionSymbolFactory("NaN") {
+			@Override
+			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
+				return mFloatingPointSort.getSort(indices, new Sort[0] );
+			}
+		});
 
 		//short forms of common floats
 		declareInternalSort("Float16", 0, 0).getSort(null, new Sort[0]);
