@@ -635,8 +635,26 @@ public class SmtUtils {
 		case "bvadd":
 		case "bvsub":
 		case "bvmul":
-//		case "bvand":
+		case "bvudiv":
+		case "bvurem":
+		case "bvsdiv":
+		case "bvsrem":
+		case "bvand":
+		case "bvor":
+		case "bvxor":
+		case "bvnot":
+		case "bvneg":
+		case "bvshl":
+		case "bvlshr":
+		case "bvashr":
 		case "bvult":
+		case "bvule":
+		case "bvugt":
+		case "bvuge":
+		case "bvslt":
+		case "bvsle":
+		case "bvsgt":
+		case "bvsge":
 			result = BitvectorUtils.termWithLocalSimplification(script, funcname, indices, params);
 			break;
 		default:
