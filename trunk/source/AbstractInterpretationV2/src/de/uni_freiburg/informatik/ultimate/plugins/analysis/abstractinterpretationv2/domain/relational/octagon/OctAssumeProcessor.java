@@ -112,8 +112,8 @@ public class OctAssumeProcessor {
 			Expression thenPart = ie.getThenPart();
 			Expression elsePart = ie.getElsePart();
 			return OctPostOperator.splitF(oldStates,
-					statesBeforeIf -> assume(thenPart, assume(condition, statesBeforeIf)),
-					statesBeforeIf -> assume(elsePart, assume(notCondition, statesBeforeIf)));
+					stateList -> processBooleanOperations(thenPart, isNegated, assume(condition, stateList)),
+					stateList -> processBooleanOperations(elsePart, isNegated, assume(notCondition, stateList)));
 		} else {
 			// unknown expression (ArrayAccessExpression, FunctionApplication, QuantifierExpression, ...)
 			return oldStates; // safe over-approximation
