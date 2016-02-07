@@ -127,12 +127,12 @@ public class OctAssumeProcessor {
 				statesBeforeOr -> processBooleanOperations(right, negRight, statesBeforeOr));
 	}
 
-	private List<OctagonDomainState> assumeIff(Expression left, Expression right, boolean isIffNegated,
+	private List<OctagonDomainState> assumeIff(Expression left, Expression right, boolean negIff,
 			List<OctagonDomainState> oldStates) {
 
 		return mPostOp.splitF(oldStates,
-				stateList -> assumeAnd(left, isIffNegated, right, false, stateList),
-				stateList -> assumeAnd(left, !isIffNegated, right, true, oldStates));
+				statesBeforeIff -> assumeAnd(left, negIff, right, false, statesBeforeIff),
+				statesBeforeIff -> assumeAnd(left, !negIff, right, true, statesBeforeIff));
 	}
 
 	private List<OctagonDomainState> processBooleanRelation(BinaryExpression be, boolean isNegated,

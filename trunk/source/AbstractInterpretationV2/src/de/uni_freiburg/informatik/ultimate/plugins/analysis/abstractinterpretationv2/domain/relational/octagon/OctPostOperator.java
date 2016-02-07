@@ -20,6 +20,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieAstUtil;
@@ -118,7 +119,10 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		List<OctagonDomainState> currentState = deepCopy(Collections.singletonList(oldState));
 		for (Statement statement : mStatementExtractor.process(codeBlock)) {
 			currentState = mStatementProcessor.processStatement(statement, currentState);
-			mLogger.warn("after " + statement + currentState);
+//			mLogger.warn("after " + BoogiePrettyPrinter.print(statement));
+//			mLogger.warn(statement);
+//			mLogger.warn(currentState);
+//			mLogger.warn("---´");
 		}
 		if (currentState.isEmpty()) {
 			// TODO workaround or remove
