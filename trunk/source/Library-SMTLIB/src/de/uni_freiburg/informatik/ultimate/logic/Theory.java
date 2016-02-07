@@ -910,18 +910,19 @@ public class Theory {
 			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
 					Sort resultSort) {
 				if (indices != null
-					|| paramSorts.length != mNumArgs || resultSort != null
-					|| !(paramSorts[0].getName() == "FloatingPoint" ||
-						paramSorts[0].getName() == "Float16" ||
-						paramSorts[0].getName() == "Float32" ||
-						paramSorts[0].getName() == "Float64" ||
-						paramSorts[0].getName() == "Float128" )){
+					|| paramSorts.length != mNumArgs || resultSort != null){
 					return null;
 				}
 					
-				for (int i = 1; i < mNumArgs; i++)
-					if (paramSorts[i] != paramSorts[0])
+				for (int i = 0; i < mNumArgs; i++) {
+					if (!(paramSorts[i].getName() == "FloatingPoint" ||
+							paramSorts[i].getName() == "Float16" ||
+							paramSorts[i].getName() == "Float32" ||
+							paramSorts[i].getName() == "Float64" ||
+							paramSorts[i].getName() == "Float128")) {
 						return null;
+					}
+				}
 				return mResult == null ? paramSorts[0] : mResult;
 			}
 		}
@@ -943,18 +944,19 @@ public class Theory {
 					Sort resultSort) {
 				if (indices != null
 					|| paramSorts.length != mNumArgs || resultSort != null
-					|| paramSorts[0].getName() != "RoundingMode" 
-					|| !( paramSorts[1].getName() == "FloatingPoint" ||
-						paramSorts[1].getName() == "Float16" ||
-						paramSorts[1].getName() == "Float32" ||
-						paramSorts[1].getName() == "Float64" ||
-						paramSorts[1].getName() == "Float128" )){
+					|| paramSorts[0].getName() != "RoundingMode"){
 					return null;
 				}
 					
-				for (int i = 1; i < mNumArgs; i++)
-					if (paramSorts[i] != paramSorts[1])
+				for (int i = 1; i < mNumArgs; i++) {
+					if (!(paramSorts[i].getName() != "FloatingPoint" ||
+							paramSorts[i].getName() != "Float16" ||
+							paramSorts[i].getName() != "Float32" ||
+							paramSorts[i].getName() != "Float64" ||
+							paramSorts[i].getName() != "Float128")) {
 						return null;
+					}
+				}
 				return mResult == null ? paramSorts[1] : mResult;
 			}
 		}
@@ -975,6 +977,7 @@ public class Theory {
 				return mFloatingPointSort.getSort(fpIndices, new Sort[0] );
 			}
 		});
+		
 		// from BitVec to FP
 		defineFunction(new FunctionSymbolFactory("to_fp") {
 		    @Override
