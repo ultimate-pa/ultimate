@@ -125,6 +125,18 @@ public class BitvectorUtils {
 		case "bvmul":
 			result = new Bvmul().simplifiedResult(script, funcname, indices, params);
 			break;
+		case "bvand":
+			result = new Bvand().simplifiedResult(script, funcname, indices, params);
+			break;
+		case "bvor":
+			result = new Bvor().simplifiedResult(script, funcname, indices, params);
+			break;
+		case "bvxor":
+			result = new Bvxor().simplifiedResult(script, funcname, indices, params);
+			break;
+		case "bvnot":
+			result = new Bvnot().simplifiedResult(script, funcname, indices, params);
+			break;
 		case "bvult":
 			result = new Bvult().simplifiedResult(script, funcname, indices, params);
 			break;
@@ -264,6 +276,43 @@ public class BitvectorUtils {
 			return constructTerm(script, BitvectorConstant.bvmul(bvs[0], bvs[1]));
 		}
 	}
+	
+	private static class Bvand extends RegularBitvectorOperation {
+		@Override
+		public String getFunctionName() { return "bvand"; }
+		@Override
+		public Term simplify_ConstantCase(Script script, BigInteger[] indices, BitvectorConstant[] bvs) {
+			return constructTerm(script, BitvectorConstant.bvand(bvs[0], bvs[1]));
+		}
+	}
+	
+	private static class Bvor extends RegularBitvectorOperation {
+		@Override
+		public String getFunctionName() { return "bvor"; }
+		@Override
+		public Term simplify_ConstantCase(Script script, BigInteger[] indices, BitvectorConstant[] bvs) {
+			return constructTerm(script, BitvectorConstant.bvor(bvs[0], bvs[1]));
+		}
+	}
+	
+	private static class Bvxor extends RegularBitvectorOperation {
+		@Override
+		public String getFunctionName() { return "bvxor"; }
+		@Override
+		public Term simplify_ConstantCase(Script script, BigInteger[] indices, BitvectorConstant[] bvs) {
+			return constructTerm(script, BitvectorConstant.bvxor(bvs[0], bvs[1]));
+		}
+	}
+	
+	private static class Bvnot extends RegularBitvectorOperation {
+		@Override
+		public String getFunctionName() { return "bvnot"; }
+		@Override
+		public Term simplify_ConstantCase(Script script, BigInteger[] indices, BitvectorConstant[] bvs) {
+			return constructTerm(script, BitvectorConstant.bvnot(bvs[0]));
+		}
+	}
+
 	
 	private static class Bvult extends RegularBitvectorOperation {
 		@Override
