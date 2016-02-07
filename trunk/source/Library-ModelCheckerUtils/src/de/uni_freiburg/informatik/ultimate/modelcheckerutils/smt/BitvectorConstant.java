@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.math.BigInteger;
+import java.util.function.Function;
 
 /**
  * Representation of bitvectors.
@@ -102,28 +103,38 @@ public class BitvectorConstant {
 	
 	
 	public static BitvectorConstant bvadd(BitvectorConstant bv1, BitvectorConstant bv2) {
-		if (bv1.getIndex().equals(bv2.getIndex())) {
-			return new BitvectorConstant(bv1.getValue().add(bv2.getValue()), bv1.getIndex());
-		} else {
-			throw new IllegalArgumentException("incompatible indices " + bv1.getIndex() + " " + bv2.getIndex());
-		}
+		return similarIndexBvOp(bv1, bv2, x -> y -> x.add(y));
 	}
 	
 	public static BitvectorConstant bvsub(BitvectorConstant bv1, BitvectorConstant bv2) {
+		return similarIndexBvOp(bv1, bv2, x -> y -> x.subtract(y));
+	}
+	
+	public static BitvectorConstant bvmul(BitvectorConstant bv1, BitvectorConstant bv2) {
+		return similarIndexBvOp(bv1, bv2, x -> y -> x.multiply(y));
+	}
+	
+	public static BitvectorConstant bvand(BitvectorConstant bv1, BitvectorConstant bv2) {
+		return similarIndexBvOp(bv1, bv2, x -> y -> x.and(y));
+	}
+	
+	public static BitvectorConstant bvor(BitvectorConstant bv1, BitvectorConstant bv2) {
+		return similarIndexBvOp(bv1, bv2, x -> y -> x.or(y));
+	}
+	
+	public static BitvectorConstant bxor(BitvectorConstant bv1, BitvectorConstant bv2) {
+		return similarIndexBvOp(bv1, bv2, x -> y -> x.xor(y));
+	}
+
+	
+	public static BitvectorConstant similarIndexBvOp(BitvectorConstant bv1, BitvectorConstant bv2, Function<BigInteger, Function<BigInteger, BigInteger>> fun) {
 		if (bv1.getIndex().equals(bv2.getIndex())) {
-			return new BitvectorConstant(bv1.getValue().subtract(bv2.getValue()), bv1.getIndex());
+			return new BitvectorConstant(fun.apply(bv1.getValue()).apply(bv2.getValue()), bv1.getIndex());
 		} else {
 			throw new IllegalArgumentException("incompatible indices " + bv1.getIndex() + " " + bv2.getIndex());
 		}
 	}
 	
-	public static BitvectorConstant bvmul(BitvectorConstant bv1, BitvectorConstant bv2) {
-		if (bv1.getIndex().equals(bv2.getIndex())) {
-			return new BitvectorConstant(bv1.getValue().subtract(bv2.getValue()), bv1.getIndex());
-		} else {
-			throw new IllegalArgumentException("incompatible indices " + bv1.getIndex() + " " + bv2.getIndex());
-		}
-	}
 	
 	public static BitvectorConstant bvshl(BitvectorConstant b1, BitvectorConstant b2) {
 		int effectiveShift = Math.min(b1.getIndex().intValueExact(), b2.getValue().intValue());
