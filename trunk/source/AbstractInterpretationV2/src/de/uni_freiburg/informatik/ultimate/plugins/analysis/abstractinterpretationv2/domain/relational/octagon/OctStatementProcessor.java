@@ -112,34 +112,17 @@ public class OctStatementProcessor {
 	public List<OctagonDomainState> processSingleAssignment(String targetVar, Expression rhs,
 			List<OctagonDomainState> oldStates) {
 
-		List<Pair<List<Expression>, Expression>> paths = mExprTransformer.removeIfExprsCached(rhs);
-		List<OctagonDomainState> result = new ArrayList<>();
-		for (int i = 0; i < paths.size(); ++i) {
-			Pair<List<Expression>, Expression> p = paths.get(i);
-			List<OctagonDomainState> copiedOldStates = (i + 1 < paths.size()) ?
-					OctPostOperator.deepCopy(oldStates) : oldStates; // as little copies as possible
-			for (Expression assumption : p.getFirst()) {
-				// This step is slow for deeply nested IfThenElseExpressions
-				// same assumptions have to be assumed over and over again
-				// TODO create BinaryTree instead of paths, which allows re-use of assumes
-				copiedOldStates = mAssumeProcessor.assume(assumption, copiedOldStates);
-			}
-
-			// note: there is no implicit typecasting in boogie. "real := int;" cannot happen. 
-			IType type = rhs.getType();
-			List<OctagonDomainState> newStates = new ArrayList<>();
-			if (TypeUtil.isBoolean(type)) {
-				newStates = processBooleanAssign(targetVar, rhs, copiedOldStates);
-			} else if (TypeUtil.isNumeric(type)) {
-				newStates = processNumericAssign(targetVar, rhs, copiedOldStates);
-			} else {
-				// variables of unsupported types are assumed to be \top all the time
-				newStates = oldStates;
-			}
-
-			result.addAll(newStates);
+		// note: there is no implicit typecasting in boogie. "real := int;" cannot happen. 
+		IType type = rhs.getType();
+		List<OctagonDomainState> newStates = new ArrayList<>();
+		if (TypeUtil.isBoolean(type)) {
+			return processBooleanAssign(targetVar, rhs, oldStates);
+		} else if (TypeUtil.isNumeric(type)) {
+			return processNumericAssign(targetVar, rhs, oldStates);
+		} else {
+			// variables of unsupported types are assumed to be \top all the time
+			return oldStates;
 		}
-		return result;
 	}
 	
 	private List<OctagonDomainState> processBooleanAssign(String targetVar, Expression rhs,
@@ -157,7 +140,20 @@ public class OctStatementProcessor {
 				action = s -> s.copyVar(targetVar, sourceVar);
 			}
 		} else {
-			// TODO calculate using BoolValue    or   (set true and assume rhs) and (set false and assume !rhs)
+			Expression notRhs = mExprTransformer.logicNegCached(rhs);
+			return OctPostOperator.splitF(oldStates,
+					stateList -> {
+						stateList = mAssumeProcessor.assume(rhs, stateList);
+						stateList = OctPostOperator.removeBottomStates(stateList);
+						stateList.forEach(state -> state.assignBooleanVar(targetVar, BoolValue.TRUE));
+						return stateList;
+					},
+					stateList -> {
+						stateList = mAssumeProcessor.assume(notRhs, stateList);
+						stateList = OctPostOperator.removeBottomStates(stateList);
+						stateList.forEach(state -> state.assignBooleanVar(targetVar, BoolValue.FALSE));
+						return stateList;
+					});
 		}
 
 		oldStates.forEach(action);
@@ -165,6 +161,26 @@ public class OctStatementProcessor {
 	}
 	
 	private List<OctagonDomainState> processNumericAssign(String targetVar, Expression rhs,
+			List<OctagonDomainState> oldStates) {
+
+		List<Pair<List<Expression>, Expression>> paths = mExprTransformer.removeIfExprsCached(rhs);
+		List<OctagonDomainState> result = new ArrayList<>();
+		for (int i = 0; i < paths.size(); ++i) {
+			Pair<List<Expression>, Expression> p = paths.get(i);
+			List<OctagonDomainState> copiedOldStates = (i + 1 < paths.size()) ?
+					OctPostOperator.deepCopy(oldStates) : oldStates; // as little copies as possible
+			for (Expression assumption : p.getFirst()) {
+				// This step is slow for deeply nested IfThenElseExpressions
+				// same assumptions have to be assumed over and over again
+				// TODO create BinaryTree instead of paths, which allows re-use of assumes
+				copiedOldStates = mAssumeProcessor.assume(assumption, copiedOldStates);
+			}
+			result.addAll(processNumericAssignWithoutIfs(targetVar, rhs, copiedOldStates));
+		}
+		return result;
+	}
+	
+	private List<OctagonDomainState> processNumericAssignWithoutIfs(String targetVar, Expression rhs,
 			List<OctagonDomainState> oldStates) {
 		
 		Consumer<OctagonDomainState> action = s -> s.havocVar(targetVar); // default operation (if uninterpretable)

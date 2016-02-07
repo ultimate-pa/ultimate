@@ -3,29 +3,23 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 import org.apache.log4j.Logger;
-import org.ojalgo.optimisation.integer.NewIntegerSolver;
 
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieTransformer;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVisitor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieAstUtil;
@@ -54,6 +48,37 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		return copy; 
 	}
 
+	public static List<OctagonDomainState> splitF(List<OctagonDomainState> oldStates,
+			Function<List<OctagonDomainState>, List<OctagonDomainState>> op1,
+			Function<List<OctagonDomainState>, List<OctagonDomainState>> op2) {
+
+		List<OctagonDomainState> newStates = op1.apply(OctPostOperator.deepCopy(oldStates));
+		newStates.addAll(op2.apply(oldStates));
+		// TODO join if #states > max     and     remove \bot
+		return newStates;
+	}
+	
+	public static List<OctagonDomainState> splitC(List<OctagonDomainState> oldStates,
+			Consumer<OctagonDomainState> op1, Consumer<OctagonDomainState> op2) {
+
+		List<OctagonDomainState> copiedOldStates = OctPostOperator.deepCopy(oldStates);
+		oldStates.forEach(op1);
+		copiedOldStates.forEach(op2);
+		oldStates.addAll(copiedOldStates);
+		// TODO join if #states > max     and     remove \bot
+		return oldStates;
+	}
+
+	public static List<OctagonDomainState> removeBottomStates(List<OctagonDomainState> states) {
+		List<OctagonDomainState> nonBottomStates = new ArrayList<>(states.size());
+		for (OctagonDomainState state : states) {
+			if (!state.isBottom()) {
+				nonBottomStates.add(state);
+			}
+		}
+		return nonBottomStates;
+	}
+	
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	private final Logger mLogger;
@@ -75,6 +100,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		List<OctagonDomainState> currentState = deepCopy(Collections.singletonList(oldState));
 		for (Statement statement : mStatementExtractor.process(codeBlock)) {
 			currentState = mStatementProcessor.processStatement(statement, currentState);
+//			mLogger.warn("after " + statement + currentState);
 		}
 		if (currentState.isEmpty()) {
 			// TODO workaround or remove

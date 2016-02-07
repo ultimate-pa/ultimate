@@ -111,7 +111,7 @@ public class OctAssumeProcessor {
 			Expression notCondition = mExprTransformer.logicNegCached(condition);
 			Expression thenPart = ie.getThenPart();
 			Expression elsePart = ie.getElsePart();
-			return splitF(oldStates,
+			return OctPostOperator.splitF(oldStates,
 					statesBeforeIf -> assume(thenPart, assume(condition, statesBeforeIf)),
 					statesBeforeIf -> assume(elsePart, assume(notCondition, statesBeforeIf)));
 		} else {
@@ -130,7 +130,7 @@ public class OctAssumeProcessor {
 
 	private List<OctagonDomainState> assumeOr(Expression left, boolean negLeft, Expression right, boolean negRight,
 			List<OctagonDomainState> oldStates) {
-		return splitF(oldStates,
+		return OctPostOperator.splitF(oldStates,
 				statesBeforeOr -> processBooleanOperations(left, negLeft, statesBeforeOr),
 				statesBeforeOr -> processBooleanOperations(right, negRight, statesBeforeOr));
 	}
@@ -164,7 +164,7 @@ public class OctAssumeProcessor {
 		
 		// TODO build binary tree from IfExprs (or same assumption may be processed multiple times)
 
-		// isNegated refers to the relation (==, !=, <, ...) -- inner IfThenElseExpression are not affected
+		// isNegated refers to the relation (==, !=, <, ...) -- inner IfThenElseExpressions are not affected
 		List<Pair<List<Expression>, Expression>> paths = mExprTransformer.removeIfExprsCached(be);
 		List<OctagonDomainState> newStates = new ArrayList<>();
 		for (int i = 0; i < paths.size(); ++i) {
@@ -257,14 +257,14 @@ public class OctAssumeProcessor {
 				geOc = new OctValue(geC);
 				leOc = new OctValue(leC);
 			}
-			return splitC(oldStates,
+			return OctPostOperator.splitC(oldStates,
 					s -> s.assumeNumericVarInterval(ovf.var, geOc, OctValue.INFINITY),  // v > c
 					s -> s.assumeNumericVarInterval(ovf.var, OctValue.INFINITY, leOc)); // v < c
 
 		} else if ((tvf = ae.getTwoVarForm()) != null) {
 			OctValue leOc = new OctValue(leC);
 			OctValue leOc2 = new OctValue(geC.negate()); // (ae > c) is equivalent to (-ae < -c)
-			return splitC(oldStates,
+			return OctPostOperator.splitC(oldStates,
 					s -> s.assumeNumericVarRelationLeConstant(tvf.var1, tvf.negVar1, tvf.var2, tvf.negVar2, leOc),
 					s -> s.assumeNumericVarRelationLeConstant(tvf.var1, !tvf.negVar1, tvf.var2, !tvf.negVar2, leOc2));
 			
@@ -363,27 +363,6 @@ public class OctAssumeProcessor {
 			return oldStates; // safe over-approximation
 
 		}
-	}
-
-	private List<OctagonDomainState> splitF(List<OctagonDomainState> oldStates,
-			Function<List<OctagonDomainState>, List<OctagonDomainState>> op1,
-			Function<List<OctagonDomainState>, List<OctagonDomainState>> op2) {
-
-		List<OctagonDomainState> newStates = op1.apply(OctPostOperator.deepCopy(oldStates));
-		newStates.addAll(op2.apply(oldStates));
-		// TODO join if #states > max     and     remove \bot
-		return newStates;
-	}
-	
-	private List<OctagonDomainState> splitC(List<OctagonDomainState> oldStates,
-			Consumer<OctagonDomainState> op1, Consumer<OctagonDomainState> op2) {
-
-		List<OctagonDomainState> copiedOldStates = OctPostOperator.deepCopy(oldStates);
-		oldStates.forEach(op1);
-		copiedOldStates.forEach(op2);
-		oldStates.addAll(copiedOldStates);
-		// TODO join if #states > max     and     remove \bot
-		return oldStates;
 	}
 
 }
