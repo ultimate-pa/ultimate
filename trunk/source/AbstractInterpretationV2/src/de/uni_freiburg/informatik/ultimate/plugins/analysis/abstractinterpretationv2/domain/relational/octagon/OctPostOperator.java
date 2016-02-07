@@ -138,10 +138,8 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 //			mLogger.warn("---´");
 		}
 		if (currentState.isEmpty()) {
-			// TODO workaround (remove)
-			OctagonDomainState bottom = oldState.deepCopy();
-			bottom.bottomizeWORKAROUND();
-			return Collections.singletonList(bottom);
+			// TODO remove (only workaround: fxpe does not accept empty lsit as bottom)
+			return Collections.singletonList(oldState.bottomCopy_WORKAROUND());
 		}
 		return currentState;
 	}
@@ -154,10 +152,12 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		if (transition instanceof Call) {
 			result = applyCall(stateBeforeTransition, stateAfterTransition, (Call) transition);
 		} else if (transition instanceof Return) {
-			result = new ArrayList<>();
-			result.add(applyReturn(stateBeforeTransition, stateAfterTransition, (Return) transition));
+			result = applyReturn(stateBeforeTransition, stateAfterTransition, (Return) transition);
 		} else {
 			throw new UnsupportedOperationException("Unsupported transition: " + transition);
+		}
+		if (result.isEmpty()) { // TODO remove (only workaround: fxpe does not accept empty lsit as bottom)
+			return Collections.singletonList(stateAfterTransition.bottomCopy_WORKAROUND());
 		}
 		return result;
 	}
@@ -201,20 +201,27 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		}
 		
 		// copy to scope opened by call (inParam := tmp)
-		List<OctagonDomainState> result = new ArrayList<>(tmpStates.size());
-		tmpStates.forEach(s -> result.add(stateAfterCall.copyValuesOnScopeChange(s, mapTmpVarToInParam)));
+		List<OctagonDomainState> result = new ArrayList<>();
+		if (!stateAfterCall.isBottom()) {
+			tmpStates.forEach(s -> result.add(stateAfterCall.copyValuesOnScopeChange(s, mapTmpVarToInParam)));
+		}
 		return result;
 		// No need to remove the temporary variables.
 		// The states with temporary variables are only local variables of this method.
 	}
 	
-	private OctagonDomainState applyReturn(
+	private List<OctagonDomainState> applyReturn(
 			OctagonDomainState stateBeforeReturn, OctagonDomainState stateAfterReturn, Return returnTransition) {
 
-		CallStatement call = returnTransition.getCallStatement();
-		Procedure procedure = calledProcedure(call);
-		Map<String, String> mapOutToLhs = generateMapOutToLhs(call.getLhs(), procedure);
-		return stateAfterReturn.copyValuesOnScopeChange(stateBeforeReturn, mapOutToLhs);
+		ArrayList<OctagonDomainState> result = new ArrayList<>();
+		if (!stateAfterReturn.isBottom()) {
+			CallStatement call = returnTransition.getCallStatement();
+			Procedure procedure = calledProcedure(call);
+			Map<String, String> mapOutToLhs = generateMapOutToLhs(call.getLhs(), procedure);
+			stateAfterReturn.copyValuesOnScopeChange(stateBeforeReturn, mapOutToLhs);
+			result.add(stateAfterReturn);
+		}
+		return result;
 	}
 	
 	private Procedure calledProcedure(CallStatement call) {

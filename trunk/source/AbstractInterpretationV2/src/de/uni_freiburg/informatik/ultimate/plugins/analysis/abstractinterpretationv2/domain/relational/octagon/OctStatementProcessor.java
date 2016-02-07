@@ -105,6 +105,8 @@ public class OctStatementProcessor {
 	public List<OctagonDomainState> processSingleAssignment(String targetVar, Expression rhs,
 			List<OctagonDomainState> oldStates) {
 
+		oldStates = OctPostOperator.removeBottomStates(oldStates); // important! assign may un-bottomize some states!
+
 		// note: there is no implicit typecasting in boogie. "real := int;" cannot happen. 
 		IType type = rhs.getType();
 		if (TypeUtil.isBoolean(type)) {
@@ -135,13 +137,13 @@ public class OctStatementProcessor {
 			return mPostOp.splitF(oldStates,
 					stateList -> {
 						stateList = mAssumeProcessor.assume(rhs, stateList);
-						stateList = OctPostOperator.removeBottomStates(stateList);
+						stateList = OctPostOperator.removeBottomStates(stateList); // important!
 						stateList.forEach(state -> state.assignBooleanVar(targetVar, BoolValue.TRUE));
 						return stateList;
 					},
 					stateList -> {
 						stateList = mAssumeProcessor.assume(notRhs, stateList);
-						stateList = OctPostOperator.removeBottomStates(stateList);
+						stateList = OctPostOperator.removeBottomStates(stateList); // important!
 						stateList.forEach(state -> state.assignBooleanVar(targetVar, BoolValue.FALSE));
 						return stateList;
 					});
@@ -166,6 +168,7 @@ public class OctStatementProcessor {
 				// TODO create BinaryTree instead of paths, which allows re-use of assumes
 				copiedOldStates = mAssumeProcessor.assume(assumption, copiedOldStates);
 			}
+			copiedOldStates = OctPostOperator.removeBottomStates(copiedOldStates); // important!
 			result.addAll(processNumericAssignWithoutIfs(targetVar, rhs, copiedOldStates));
 		}
 		return mPostOp.joinIfGeMaxParallelStates(result);

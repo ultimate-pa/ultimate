@@ -70,11 +70,11 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	 *
 	 * @return shallow copy
 	 *
-	 * @see #unrefMapVarToBoogieVar(OctagonDomainState)
-	 * @see #unrefMapNumericVarToIndex(OctagonDomainState)
-	 * @see #unrefNumericNonIntVars(OctagonDomainState)
-	 * @see #unrefNumericAbstraction(OctagonDomainState)
-	 * @see #unrefBooleanAbstraction(OctagonDomainState)
+	 * @see #unrefOtherMapVarToBoogieVar(OctagonDomainState)
+	 * @see #unrefOtherMapNumericVarToIndex(OctagonDomainState)
+	 * @see #unrefOtherNumericNonIntVars(OctagonDomainState)
+	 * @see #unrefOtherNumericAbstraction(OctagonDomainState)
+	 * @see #unrefOtherBooleanAbstraction(OctagonDomainState)
 	 */
 	private OctagonDomainState shallowCopy() {
 		OctagonDomainState s = new OctagonDomainState();
@@ -86,33 +86,33 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		return s;
 	}
 
-	private void unrefMapVarToBoogieVar(OctagonDomainState state) {
-		if (state.mMapVarToBoogieVar == mMapVarToBoogieVar) {
-			state.mMapVarToBoogieVar = new HashMap<>(mMapVarToBoogieVar);
+	private void unrefOtherMapVarToBoogieVar(OctagonDomainState other) {
+		if (other.mMapVarToBoogieVar == mMapVarToBoogieVar) {
+			other.mMapVarToBoogieVar = new HashMap<>(mMapVarToBoogieVar);
 		}
 	}
 
-	private void unrefMapNumericVarToIndex(OctagonDomainState state) {
-		if (state.mMapNumericVarToIndex == mMapNumericVarToIndex) {
-			state.mMapNumericVarToIndex = new HashMap<>(mMapNumericVarToIndex);
+	private void unrefOtherMapNumericVarToIndex(OctagonDomainState other) {
+		if (other.mMapNumericVarToIndex == mMapNumericVarToIndex) {
+			other.mMapNumericVarToIndex = new HashMap<>(mMapNumericVarToIndex);
 		}
 	}
 
-	private void unrefNumericNonIntVars(OctagonDomainState state) {
-		if (state.mNumericNonIntVars == mNumericNonIntVars) {
-			state.mNumericNonIntVars = new HashSet<>(mNumericNonIntVars);
+	private void unrefOtherNumericNonIntVars(OctagonDomainState other) {
+		if (other.mNumericNonIntVars == mNumericNonIntVars) {
+			other.mNumericNonIntVars = new HashSet<>(mNumericNonIntVars);
 		}
 	}
 
-	private void unrefNumericAbstraction(OctagonDomainState state) {
-		if (state.mNumericAbstraction == mNumericAbstraction) {
-			state.mNumericAbstraction = mNumericAbstraction.copy();
+	private void unrefOtherNumericAbstraction(OctagonDomainState other) {
+		if (other.mNumericAbstraction == mNumericAbstraction) {
+			other.mNumericAbstraction = mNumericAbstraction.copy();
 		}
 	}
 
-	private void unrefBooleanAbstraction(OctagonDomainState state) {
-		if (state.mBooleanAbstraction == mBooleanAbstraction) {
-			state.mBooleanAbstraction = new HashMap<>(mBooleanAbstraction);
+	private void unrefOtherBooleanAbstraction(OctagonDomainState other) {
+		if (other.mBooleanAbstraction == mBooleanAbstraction) {
+			other.mBooleanAbstraction = new HashMap<>(mBooleanAbstraction);
 		}
 	}
 
@@ -147,14 +147,14 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 			}
 			IType type = newBoogieVar.getIType();
 			if (TypeUtil.isNumeric(type)) {
-				unrefMapNumericVarToIndex(newState);
+				unrefOtherMapNumericVarToIndex(newState);
 				newState.mMapNumericVarToIndex.put(varName, newState.mMapNumericVarToIndex.size());
 				if (TypeUtil.isNumericNonInt(type)) {
-					unrefNumericNonIntVars(newState);
+					unrefOtherNumericNonIntVars(newState);
 					newState.mNumericNonIntVars.add(varName);
 				}
 			} else if (TypeUtil.isBoolean(type)) {
-				unrefBooleanAbstraction(newState);
+				unrefOtherBooleanAbstraction(newState);
 				newState.mBooleanAbstraction.put(varName, BoolValue.TOP);
 			}
 			// else: variable has unsupported type and is assumed to be \top at all times
@@ -172,15 +172,15 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		for (String name : variables.keySet()) {
 			newState.mMapVarToBoogieVar.remove(name);
 			if (newState.mMapNumericVarToIndex.containsKey(name)) {
-				unrefMapNumericVarToIndex(newState);
+				unrefOtherMapNumericVarToIndex(newState);
 				int i = newState.mMapNumericVarToIndex.remove(name);
 				indexRemovedNumericVars.add(i);
 				if (mNumericNonIntVars.contains(name)) {
-					unrefNumericNonIntVars(newState);
+					unrefOtherNumericNonIntVars(newState);
 					newState.mNumericNonIntVars.remove(name);
 				}
 			} else if (mBooleanAbstraction.containsKey(name)) {
-				unrefBooleanAbstraction(newState);
+				unrefOtherBooleanAbstraction(newState);
 				newState.mBooleanAbstraction.remove(name);
 			}
 			// else: variable had an unsupported type => its abstract value (\top) wasn't stored explicitly
@@ -317,7 +317,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 			BoolValue oldValue = entry.getValue();
 			BoolValue newValue = booleanOperation.apply(oldValue, other.mBooleanAbstraction.get(name));
 			if (!oldValue.equals(newValue)) {
-				unrefBooleanAbstraction(result);
+				unrefOtherBooleanAbstraction(result);
 				result.mBooleanAbstraction.put(name, newValue);
 			}
 		}
@@ -368,6 +368,8 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	// TODO test
 	@Override
 	public OctagonDomainState patch(OctagonDomainState dominator) {
+		assert !isBottom() : "un-bottomized state";
+		
 		OctagonDomainState patchedState = shallowCopy();
 		BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar = new BidirectionalMap<>();
 		SortedMap<Integer, String> mapDominatorIndicesOfNewNumericVars = new TreeMap<>();
@@ -375,7 +377,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		for (Map.Entry<String, IBoogieVar> entry : dominator.mMapVarToBoogieVar.entrySet()) {
 			String var = entry.getKey();
 			IBoogieVar newBoogieVar = entry.getValue();
-			unrefMapVarToBoogieVar(patchedState);
+			unrefOtherMapVarToBoogieVar(patchedState);
 			IBoogieVar oldBoogieVar = patchedState.mMapVarToBoogieVar.put(var, newBoogieVar);
 			assert oldBoogieVar == null || mMapVarToBoogieVar.get(var) == newBoogieVar
 					: "Patch caused name-collision: " + var;
@@ -385,7 +387,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 				if (oldBoogieVar == null) {
 					mapDominatorIndicesOfNewNumericVars.put(sourceVar, var);
 					if (TypeUtil.isNumericNonInt(type)) {
-						unrefNumericNonIntVars(patchedState);
+						unrefOtherNumericNonIntVars(patchedState);
 						patchedState.mNumericNonIntVars.add(var);
 					}
 				} else {
@@ -393,24 +395,27 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 					mapSourceVarToTargetVar.put(sourceVar, targetVar);
 				}
 			} else if (TypeUtil.isBoolean(type)){
-				unrefBooleanAbstraction(patchedState);
+				unrefOtherBooleanAbstraction(patchedState);
 				patchedState.mBooleanAbstraction.put(var, dominator.mBooleanAbstraction.get(var));
 			}
 			// else: variable has unsupported type and is assumed to be \top
 		}
 		for (String var : mapDominatorIndicesOfNewNumericVars.values()) {
-			unrefMapNumericVarToIndex(patchedState);
+			unrefOtherMapNumericVarToIndex(patchedState);
 			patchedState.mMapNumericVarToIndex.put(var, patchedState.mMapNumericVarToIndex.size());
 		}
 		patchedState.mNumericAbstraction = patchedState.mNumericAbstraction
 				.appendSelection(dominator.mNumericAbstraction, mapDominatorIndicesOfNewNumericVars.keySet());
-		unrefNumericAbstraction(patchedState);
+		unrefOtherNumericAbstraction(patchedState);
 		patchedState.mNumericAbstraction.copySelection(dominator.mNumericAbstraction, mapSourceVarToTargetVar);
 		return patchedState;
 	}
 
 	public OctagonDomainState copyValuesOnScopeChange(OctagonDomainState source,
 			Map<String, String> mapSourceToTarget) {
+		
+		assert !isBottom() : "un-bottomized state";
+		
 		// TODO closure in advance to reduce information loss
 		
 		BidirectionalMap<Integer, Integer> mapNumericSourceToTarget = new BidirectionalMap<>();
@@ -445,11 +450,11 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		// create new state
 		OctagonDomainState newState = shallowCopy();
 		if (!mapNumericSourceToTarget.isEmpty()) {
-			unrefNumericAbstraction(newState);
+			unrefOtherNumericAbstraction(newState);
 			newState.mNumericAbstraction.copySelection(source.mNumericAbstraction, mapNumericSourceToTarget);
 		}
 		if (!mapBooleanSourceToTarget.isEmpty()) {
-			unrefBooleanAbstraction(newState);
+			unrefOtherBooleanAbstraction(newState);
 			for (Map.Entry<String, String> entry : mapBooleanSourceToTarget.entrySet()) {
 				String sourceVar = entry.getKey();
 				BoolValue sourceValue = source.mBooleanAbstraction.get(sourceVar);
@@ -502,6 +507,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 
 	// TODO Only calculate closure if necessary. Some vars may have no constraints to other vars => no closure 
 	protected void havocVars(Collection<String> vars) {
+		assert !isBottom() : "un-bottomized state";
 		Set<Integer> numVarIndices = new HashSet<>();
 		for (String var : vars) {
 			Integer numVarIndex = mMapNumericVarToIndex.get(var);
@@ -521,19 +527,23 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 
 	// v := v + c;
 	protected void incrementNumericVar(String targetVar, OctValue addConstant) {
+		assert !isBottom() : "un-bottomized state";
 		mNumericAbstraction.incrementVar(numVarIndex(targetVar), addConstant);
 	}
 
 	protected void negateNumericVar(String targetVar) {
+		assert !isBottom() : "un-bottomized state";
 		mNumericAbstraction.negateVar(numVarIndex(targetVar));
 	}
 
 	protected void assignNumericVarConstant(String targetVar, OctValue constant) {
+		assert !isBottom() : "un-bottomized state";
 		mNumericAbstraction.assignVarConstant(numVarIndex(targetVar), constant);
 	}
 	
 	// min <= var <= max
 	protected void assignNumericVarInterval(String targetVar, OctValue min, OctValue max) {
+		assert !isBottom() : "un-bottomized state";
 		mNumericAbstraction.assignVarInterval(numVarIndex(targetVar), min, max);
 	}
 
@@ -569,6 +579,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	}
 	
 	protected void copyVars(Map<String, String> mapSourceVarToTargetVar) {
+		assert !isBottom() : "un-bottomized state";
 		for (Map.Entry<String, String> entry : mapSourceVarToTargetVar.entrySet()) {
 			String sourceVar = entry.getKey();
 			String targetVar = entry.getValue();
@@ -595,6 +606,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 
 	protected void assignBooleanVar(String var, BoolValue value) {
 		assert mBooleanAbstraction.containsKey(var) : "unknown variable in boolean assignment: " + var;
+		assert mBooleanAbstraction.get(var) != BoolValue.BOT : "un-bottomized!";
 		mBooleanAbstraction.put(var, value);
 	}
 	
@@ -603,14 +615,18 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	}
 
 	// TODO remove
-	protected void bottomizeWORKAROUND() {
+	public OctagonDomainState bottomCopy_WORKAROUND() {
+		OctagonDomainState bottom = shallowCopy();
 		if (!mBooleanAbstraction.isEmpty()) {
 			String var = mBooleanAbstraction.keySet().iterator().next();
-			mBooleanAbstraction.put(var, BoolValue.BOT);
+			unrefOtherBooleanAbstraction(bottom);
+			bottom.mBooleanAbstraction.put(var, BoolValue.BOT);
 		} else if (mNumericAbstraction.getSize() > 0) {
-			mNumericAbstraction.set(0, 0, new OctValue(-9999));
+			unrefOtherNumericAbstraction(bottom);
+			bottom.mNumericAbstraction.set(0, 0, new OctValue(-9999));
 		}
 		// else: there is no way to set this state to bottom
+		return bottom;
 	}
 	
 	@Override
