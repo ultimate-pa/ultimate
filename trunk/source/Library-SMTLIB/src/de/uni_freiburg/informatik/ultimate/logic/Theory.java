@@ -711,7 +711,7 @@ public class Theory {
 	
 	private void createBitVecOperators() {
 		
-		//TODO: refactor from here...
+		
 		mBitVecSort = new SortSymbol(this, "BitVec", 0, null,
 				SortSymbol.INTERNAL | SortSymbol.INDEXED) {
 			public void checkArity(BigInteger[] indices, int arity) {
@@ -867,7 +867,7 @@ public class Theory {
 	}
 	
 	private void createFloatingPointOperators() {
-		//TODO: implement operators, Rounding modes
+		
 		mFloatingPointSort = new SortSymbol(this, "FloatingPoint", 2, null,
 				SortSymbol.INTERNAL | SortSymbol.INDEXED) {
 			public void checkArity(BigInteger[] indices, int arity) {
@@ -890,7 +890,6 @@ public class Theory {
 		
 		
 		
-		//TODO: Rounding functions
 		
 		mDeclaredSorts.put("FloatingPoint", mFloatingPointSort);
 		
