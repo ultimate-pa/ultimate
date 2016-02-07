@@ -122,8 +122,12 @@ public class BitvectorConstant {
 		return similarIndexBvOp(bv1, bv2, x -> y -> x.or(y));
 	}
 	
-	public static BitvectorConstant bxor(BitvectorConstant bv1, BitvectorConstant bv2) {
+	public static BitvectorConstant bvxor(BitvectorConstant bv1, BitvectorConstant bv2) {
 		return similarIndexBvOp(bv1, bv2, x -> y -> x.xor(y));
+	}
+	
+	public static BitvectorConstant bvnot(BitvectorConstant bv) {
+		return new BitvectorConstant(bv.getValue().not(), bv.getIndex());
 	}
 
 	
