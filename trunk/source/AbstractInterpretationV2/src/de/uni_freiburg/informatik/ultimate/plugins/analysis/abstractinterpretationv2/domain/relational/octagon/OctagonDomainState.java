@@ -39,6 +39,20 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	private OctMatrix mNumericAbstraction;
 	private Map<String, BoolValue> mBooleanAbstraction;
 
+	private boolean mIsLocked = false;
+	
+	public void lock() {
+		mIsLocked = true;
+	}
+	
+	private boolean assertNotLockedBeforeModification() {
+		return !mIsLocked;
+	};
+	
+	private boolean assertNotBottomBeforeAssign() {
+		return !isBottom();
+	};
+	
 	public static OctagonDomainState createFreshState() {
 		OctagonDomainState s = new OctagonDomainState();
 		s.mMapVarToBoogieVar = new HashMap<>();
@@ -136,10 +150,10 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	public OctagonDomainState addVariables(Map<String, IBoogieVar> variables) {
 		// variables = new TreeMap<>(variables); // fixed iteration order -- essential for fast isEqualTo
 		// ... probably no speedup. HashSets should iterate in the same order when adding the very same variables.
-		
+
 		OctagonDomainState newState = shallowCopy();
-		newState.mMapVarToBoogieVar = new HashMap<>(mMapVarToBoogieVar);
 		for (Map.Entry<String, IBoogieVar> entry : variables.entrySet()) {
+			unrefOtherMapVarToBoogieVar(newState);
 			String varName = entry.getKey();
 			IBoogieVar newBoogieVar = entry.getValue();
 			IBoogieVar oldBoogieVar = newState.mMapVarToBoogieVar.put(varName, newBoogieVar);
@@ -168,10 +182,11 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	// TODO document: Returned state is a shallow copy. Do not modify!
 	@Override
 	public OctagonDomainState removeVariables(Map<String, IBoogieVar> variables) {
+
 		OctagonDomainState newState = shallowCopy();
-		newState.mMapVarToBoogieVar = new HashMap<>(mMapVarToBoogieVar);
 		Set<Integer> indexRemovedNumericVars = new HashSet<>();
 		for (String name : variables.keySet()) {
+			unrefOtherMapVarToBoogieVar(newState);
 			newState.mMapVarToBoogieVar.remove(name);
 			if (newState.mMapNumericVarToIndex.containsKey(name)) {
 				unrefOtherMapNumericVarToIndex(newState);
@@ -190,6 +205,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		}
 		if (!indexRemovedNumericVars.isEmpty()) {
 			newState.mNumericAbstraction = cachedNormalizedNumericAbstraction().removeVariables(indexRemovedNumericVars);
+			unrefOtherMapNumericVarToIndex(newState);
 			defragmentMap(newState.mMapNumericVarToIndex);
 		}
 		return newState;
@@ -375,7 +391,8 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	// TODO document: Returned state is a shallow copy. Do not modify!
 	@Override
 	public OctagonDomainState patch(OctagonDomainState dominator) {
-		assert !isBottom() : "un-bottomized state";
+		
+		assertNotBottomBeforeAssign();
 
 		OctagonDomainState patchedState = shallowCopy();
 		BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar = new BidirectionalMap<>();
@@ -422,7 +439,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	public OctagonDomainState copyValuesOnScopeChange(OctagonDomainState source,
 			Map<String, String> mapSourceToTarget) {
 		
-		assert !isBottom() : "un-bottomized state";
+		assert assertNotBottomBeforeAssign();
 		
 		// TODO closure in advance to reduce information loss
 		
@@ -515,7 +532,8 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 
 	// TODO Only calculate closure if necessary. Some vars may have no constraints to other vars => no closure 
 	protected void havocVars(Collection<String> vars) {
-		assert !isBottom() : "un-bottomized state";
+		assert assertNotLockedBeforeModification();
+		assert assertNotBottomBeforeAssign();
 		Set<Integer> numVarIndices = new HashSet<>();
 		for (String var : vars) {
 			Integer numVarIndex = mMapNumericVarToIndex.get(var);
@@ -535,28 +553,33 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 
 	// v := v + c;
 	protected void incrementNumericVar(String targetVar, OctValue addConstant) {
-		assert !isBottom() : "un-bottomized state";
+		assert assertNotLockedBeforeModification();
+		assert assertNotBottomBeforeAssign();
 		mNumericAbstraction.incrementVar(numVarIndex(targetVar), addConstant);
 	}
 
 	protected void negateNumericVar(String targetVar) {
-		assert !isBottom() : "un-bottomized state";
+		assert assertNotLockedBeforeModification();
+		assert assertNotBottomBeforeAssign();
 		mNumericAbstraction.negateVar(numVarIndex(targetVar));
 	}
 
 	protected void assignNumericVarConstant(String targetVar, OctValue constant) {
-		assert !isBottom() : "un-bottomized state";
+		assert assertNotLockedBeforeModification();
+		assert assertNotBottomBeforeAssign();
 		mNumericAbstraction.assignVarConstant(numVarIndex(targetVar), constant);
 	}
 	
 	// min <= var <= max
 	protected void assignNumericVarInterval(String targetVar, OctValue min, OctValue max) {
-		assert !isBottom() : "un-bottomized state";
+		assert assertNotLockedBeforeModification();
+		assert assertNotBottomBeforeAssign();
 		mNumericAbstraction.assignVarInterval(numVarIndex(targetVar), min, max);
 	}
 
 	
 	protected void assumeNumericVarConstant(String targetVar, OctValue constant) {
+		assert assertNotLockedBeforeModification();
 		mNumericAbstraction.assumeVarConstant(numVarIndex(targetVar), constant);
 	}
 	
@@ -568,6 +591,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	// var1 + var2 <= zero
 	protected void assumeNumericVarRelationLeConstant(
 			String var1, boolean var1Negate, String var2, boolean var2Negate, OctValue constant) {
+		assert assertNotLockedBeforeModification();
 		mNumericAbstraction.assumeVarRelationLeConstant(
 				numVarIndex(var1), var1Negate, numVarIndex(var2), var2Negate, constant);
 	}
@@ -587,7 +611,6 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	}
 	
 	protected void copyVars(Map<String, String> mapSourceVarToTargetVar) {
-		assert !isBottom() : "un-bottomized state";
 		for (Map.Entry<String, String> entry : mapSourceVarToTargetVar.entrySet()) {
 			String sourceVar = entry.getKey();
 			String targetVar = entry.getValue();
@@ -597,7 +620,8 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 
 	// targetVar := (+/-)sourceVar
 	protected void copyVar(String targetVar, String sourceVar) {
-		assert !isBottom() : "un-bottomized state";
+		assert assertNotLockedBeforeModification();
+		assert assertNotBottomBeforeAssign();
 		Integer targetIndex = mMapNumericVarToIndex.get(targetVar);
 		if (targetIndex != null) {
 			Integer sourceIndex = mMapNumericVarToIndex.get(sourceVar);
@@ -615,11 +639,13 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 
 	protected void assignBooleanVar(String var, BoolValue value) {
 		assert mBooleanAbstraction.containsKey(var) : "unknown variable in boolean assignment: " + var;
-		assert mBooleanAbstraction.get(var) != BoolValue.BOT : "un-bottomized!";
+		assert assertNotLockedBeforeModification();
+		assert assertNotBottomBeforeAssign();
 		mBooleanAbstraction.put(var, value);
 	}
 	
 	protected void assumeBooleanVar(String var, BoolValue value) {
+		assert assertNotLockedBeforeModification();
 		mBooleanAbstraction.put(var, mBooleanAbstraction.get(var).intersect(value));
 	}
 
@@ -642,7 +668,14 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	public String toLogString() {
 		StringBuilder log = new StringBuilder();
 		log.append("\n");
-		log.append("#" + mId + "\n"); // TODO remove
+		
+		// TODO remove (only for debugging)
+		log.append("#" + mId);
+		if (mIsLocked) {
+			log.append(" locked");
+		}
+		log.append("\n");
+		
 		log.append(mNumericAbstraction);
 		log.append("numeric vars: ");
 		log.append(mMapNumericVarToIndex);
@@ -657,6 +690,9 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 			log.append(entry.getValue());
 			log.append("\n");
 		}
+		
+		log.append("#END"); // TODO remove
+		
 		return log.toString();
 	}
 

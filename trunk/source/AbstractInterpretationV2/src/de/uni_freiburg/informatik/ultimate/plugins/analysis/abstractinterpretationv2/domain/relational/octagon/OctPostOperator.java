@@ -131,8 +131,9 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 //			mLogger.warn(currentState);
 //			mLogger.warn("---´");
 		}
+		currentState.forEach(s -> s.lock());
 		if (currentState.isEmpty()) {
-			// TODO remove (only workaround: fxpe does not accept empty lsit as bottom)
+			// TODO remove (only workaround: fxpe does not accept empty list)
 			return emptyListToSingeltonBot_WORKAROUND(oldState);
 		}
 		return currentState;
@@ -151,9 +152,10 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 			throw new UnsupportedOperationException("Unsupported transition: " + transition);
 		}
 		if (result.isEmpty()) {
-			// TODO remove (only workaround: fxpe does not accept empty lsit as bottom)
+			// TODO remove (only workaround: fxpe does not accept empty list)
 			return emptyListToSingeltonBot_WORKAROUND(stateAfterTransition);
 		}
+		result.forEach(s -> s.lock());
 		return result;
 	}
 	

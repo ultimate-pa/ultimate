@@ -25,7 +25,8 @@ public class OctAssumeProcessor {
 	}
 	
 	public List<OctagonDomainState> assume(Expression assumption, List<OctagonDomainState> oldStates) {
-		return processBooleanOperations(assumption, false, oldStates);
+		return oldStates;
+//		return processBooleanOperations(assumption, false, oldStates);
 	}
 	
 	private List<OctagonDomainState> processBooleanOperations(Expression e, boolean isNegated,
