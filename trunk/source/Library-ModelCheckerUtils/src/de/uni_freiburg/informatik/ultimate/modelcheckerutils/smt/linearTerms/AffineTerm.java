@@ -287,14 +287,14 @@ public class AffineTerm extends Term {
 			if (entry.getValue().equals(Rational.ONE)) {
 				summands[i] = entry.getKey();
 			} else {
-				Term coeff = entry.getValue().toTerm(m_Sort);
+				Term coeff = SmtUtils.rational2Term(script, entry.getValue(), m_Sort);
 				summands[i] = script.term("*", coeff, entry.getKey());
 			}
 			++i;
 		}
 		if (!m_Constant.equals(Rational.ZERO)) {
 			assert m_Constant.isIntegral() || m_Sort.getName().equals("Real");
-			summands[i] = m_Constant.toTerm(m_Sort);
+			summands[i] = SmtUtils.rational2Term(script, m_Constant, m_Sort);
 		}
 		Term result = SmtUtils.sum(script, m_Sort, summands);
 		return result;
