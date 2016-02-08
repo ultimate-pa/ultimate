@@ -132,17 +132,14 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		List<OctagonDomainState> currentState = deepCopy(Collections.singletonList(oldState));
 		for (Statement statement : mStatementExtractor.process(codeBlock)) {
 			currentState = mStatementProcessor.processStatement(statement, currentState);
-//			mLogger.warn("after " + BoogiePrettyPrinter.print(statement));
-//			mLogger.warn(statement);
-//			mLogger.warn(currentState);
-//			mLogger.warn("---´");
+			mLogger.warn("after " + BoogiePrettyPrinter.print(statement));
+			mLogger.warn(statement);
+			mLogger.warn(currentState);
+			mLogger.warn("---´");
 		}
 		if (currentState.isEmpty()) {
 			// TODO remove (only workaround: fxpe does not accept empty lsit as bottom)
-			OctagonDomainState bot = oldState.bottomCopy_WORKAROUND();
-//			mLogger.warn("workaround empty list: " + bot);
-//			mLogger.warn("---´");
-			return Collections.singletonList(bot);
+			return emptyListToSingeltonBot_WORKAROUND(oldState);
 		}
 		return currentState;
 	}
@@ -159,10 +156,18 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		} else {
 			throw new UnsupportedOperationException("Unsupported transition: " + transition);
 		}
-		if (result.isEmpty()) { // TODO remove (only workaround: fxpe does not accept empty lsit as bottom)
-			return Collections.singletonList(stateAfterTransition.bottomCopy_WORKAROUND());
+		if (result.isEmpty()) {
+			// TODO remove (only workaround: fxpe does not accept empty lsit as bottom)
+			return emptyListToSingeltonBot_WORKAROUND(stateAfterTransition);
 		}
 		return result;
+	}
+	
+	private List<OctagonDomainState> emptyListToSingeltonBot_WORKAROUND(OctagonDomainState s) {
+		OctagonDomainState bot = s.bottomCopy_WORKAROUND();
+		mLogger.error("workaround empty list: " + bot);
+		mLogger.error("---´");
+		return Collections.singletonList(bot);
 	}
 
 	private List<OctagonDomainState> applyCall(
