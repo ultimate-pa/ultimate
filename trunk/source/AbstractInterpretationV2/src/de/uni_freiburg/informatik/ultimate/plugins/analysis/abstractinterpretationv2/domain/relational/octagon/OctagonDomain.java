@@ -71,8 +71,7 @@ public class OctagonDomain implements IAbstractDomain<OctagonDomainState, CodeBl
 		UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		return new OctPostOperator(mLogger, mSymbolTable,
 				ups.getInt(AbsIntPrefInitializer.LABEL_STATES_UNTIL_MERGE),
-				ups.getBoolean(OctPreferences.FALLBACK_ASSIGN_INTERVAL_PROJECTION),
-				ups.getBoolean(OctPreferences.FALLBACK_ASSUME_LP_SOLVER));
+				ups.getBoolean(OctPreferences.FALLBACK_ASSIGN_INTERVAL_PROJECTION));
 	}
 	
 }

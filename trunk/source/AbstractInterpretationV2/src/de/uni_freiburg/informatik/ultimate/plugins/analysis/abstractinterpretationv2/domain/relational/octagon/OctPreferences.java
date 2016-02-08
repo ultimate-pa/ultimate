@@ -21,7 +21,7 @@ public class OctPreferences {
 			= "Exponential widening will set values above this threshold to infinity";
 
 	public static final String FALLBACK_ASSIGN_INTERVAL_PROJECTION = "Fallback: assign interval projection";
-	public static final String FALLBACK_ASSUME_LP_SOLVER = "Fallback: assume lp-solver";
+//	public static final String FALLBACK_ASSUME_LP_SOLVER = "Fallback: assume lp-solver";
 
 	public static List<UltimatePreferenceItem<?>> createPreferences() {
 		List<UltimatePreferenceItem<?>> prf = new ArrayList<>();
@@ -36,8 +36,8 @@ public class OctPreferences {
 
 		prf.add(new UltimatePreferenceItem<Boolean>(
 				FALLBACK_ASSIGN_INTERVAL_PROJECTION, true, PreferenceType.Boolean));
-		prf.add(new UltimatePreferenceItem<Boolean>(
-				FALLBACK_ASSUME_LP_SOLVER, true, PreferenceType.Boolean));
+//		prf.add(new UltimatePreferenceItem<Boolean>(
+//				FALLBACK_ASSUME_LP_SOLVER, false, PreferenceType.Boolean));
 
 		return prf;
 	}

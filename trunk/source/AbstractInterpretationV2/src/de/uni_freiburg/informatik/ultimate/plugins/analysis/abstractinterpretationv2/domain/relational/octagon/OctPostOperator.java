@@ -100,10 +100,6 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		return mFallbackAssignIntervalProjection;
 	}
 
-	public boolean isFallbackAssumeLpSolverEnabled() {
-		return mFallbackAssumeLpSolver;
-	}
-
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	private final Logger mLogger;
@@ -113,10 +109,9 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 	private final ExpressionTransformer mExprTransformer;
 	private final OctStatementProcessor mStatementProcessor;
 	private final boolean mFallbackAssignIntervalProjection;
-	private final boolean mFallbackAssumeLpSolver;
 
 	public OctPostOperator(Logger logger, BoogieSymbolTable symbolTable, int statesUntilMerge,
-			boolean fallbackAssignIntervalProjection, boolean fallbackAssumeLpSolver) {
+			boolean fallbackAssignIntervalProjection) {
 		mLogger = logger;
 		mSymbolTable = symbolTable;
 		mMaxParallelStates = statesUntilMerge;
@@ -124,7 +119,6 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		mExprTransformer = new ExpressionTransformer();
 		mStatementProcessor = new OctStatementProcessor(this);
 		mFallbackAssignIntervalProjection = fallbackAssignIntervalProjection;
-		mFallbackAssumeLpSolver = fallbackAssumeLpSolver;
 	}
 
 	@Override
@@ -132,10 +126,10 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		List<OctagonDomainState> currentState = deepCopy(Collections.singletonList(oldState));
 		for (Statement statement : mStatementExtractor.process(codeBlock)) {
 			currentState = mStatementProcessor.processStatement(statement, currentState);
-			mLogger.warn("after " + BoogiePrettyPrinter.print(statement));
-			mLogger.warn(statement);
-			mLogger.warn(currentState);
-			mLogger.warn("---´");
+//			mLogger.warn("after " + BoogiePrettyPrinter.print(statement));
+//			mLogger.warn(statement);
+//			mLogger.warn(currentState);
+//			mLogger.warn("---´");
 		}
 		if (currentState.isEmpty()) {
 			// TODO remove (only workaround: fxpe does not accept empty lsit as bottom)
@@ -165,8 +159,8 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 	
 	private List<OctagonDomainState> emptyListToSingeltonBot_WORKAROUND(OctagonDomainState s) {
 		OctagonDomainState bot = s.bottomCopy_WORKAROUND();
-		mLogger.error("workaround empty list: " + bot);
-		mLogger.error("---´");
+//		mLogger.error("workaround empty list: " + bot);
+//		mLogger.error("---´");
 		return Collections.singletonList(bot);
 	}
 
