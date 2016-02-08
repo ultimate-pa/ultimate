@@ -105,7 +105,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 	private final Logger mLogger;
 	private final BoogieSymbolTable mSymbolTable;
 	private final int mMaxParallelStates;
-	private final RcfgStatementExtractor mStatementExtractor;
+	private final HavocBundler mHavocBundler;
 	private final ExpressionTransformer mExprTransformer;
 	private final OctStatementProcessor mStatementProcessor;
 	private final boolean mFallbackAssignIntervalProjection;
@@ -115,7 +115,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		mLogger = logger;
 		mSymbolTable = symbolTable;
 		mMaxParallelStates = statesUntilMerge;
-		mStatementExtractor = new RcfgStatementExtractor();
+		mHavocBundler = new HavocBundler();
 		mExprTransformer = new ExpressionTransformer();
 		mStatementProcessor = new OctStatementProcessor(this);
 		mFallbackAssignIntervalProjection = fallbackAssignIntervalProjection;
@@ -124,7 +124,9 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 	@Override
 	public List<OctagonDomainState> apply(OctagonDomainState oldState, CodeBlock codeBlock) {
 		List<OctagonDomainState> currentState = deepCopy(Collections.singletonList(oldState));
-		for (Statement statement : mStatementExtractor.process(codeBlock)) {
+		List<Statement> statements = mHavocBundler.bundleHavocsCached(codeBlock);
+		statements.forEach(s -> mLogger.error(BoogiePrettyPrinter.print(s)));
+		for (Statement statement : statements) {
 			currentState = mStatementProcessor.processStatement(statement, currentState);
 //			mLogger.warn("after " + BoogiePrettyPrinter.print(statement));
 //			mLogger.warn(statement);
