@@ -50,7 +50,8 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	};
 	
 	private boolean assertNotBottomBeforeAssign() {
-		return !isBottom();
+		return true; // assertion is disabled
+//		return !isBottom();
 	};
 	
 	public static OctagonDomainState createFreshState() {

@@ -1,5 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -9,6 +12,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+
+import org.eclipse.osgi.internal.messages.Msg;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -44,8 +49,34 @@ public class OctMatrix {
 	
 	public final static OctMatrix NEW = new OctMatrix(0);
 
-	private final static Consumer<OctMatrix> sDefaultShortestPathClosure = OctMatrix::shortestPathClosureInPlacePrimitiveSparse;
-
+//	private final static Consumer<OctMatrix> sDefaultShortestPathClosure = OctMatrix::shortestPathClosureInPlacePrimitiveSparse;
+	private final static Consumer<OctMatrix> sDefaultShortestPathClosure = m -> {
+			if (m.mSize <= 0) {
+				return;
+			}
+			String s = m.toStringLower();
+			BufferedWriter bw;
+			try {
+				bw = new BufferedWriter(new FileWriter(makeFilename()), s.length() * 2);
+				try {
+					bw.write(s);
+				} finally {
+					bw.close();
+				}
+			} catch (IOException e) {
+				throw new AssertionError("Could not write benchmark file.", e);
+			}
+			m.shortestPathClosureInPlacePrimitiveSparse();
+	};
+	private static String makeFilename() {
+		int i;
+		synchronized (OctMatrix.class) {
+			i = ++sFileNameCounter;
+		}
+		return "/tmp/closureBenchmark/" + String.format("%08d", i);
+	}
+	private static volatile int sFileNameCounter = 0;
+	
 	/**
 	 * Size of this matrix (size = #rows = #columns).
 	 * Size is always an even number.

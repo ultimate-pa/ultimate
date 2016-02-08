@@ -123,7 +123,7 @@ public class AbstractInterpretationV2TestSuite extends AbstractEvalTestSuite {
 
 	@Override
 	protected long getTimeout() {
-		return 10 * 1000; // origin/dev uses 60 * 1000
+		return 5 * 1000; // origin/dev uses 60 * 1000
 	}
 	
 	@Override
