@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Ope
  * 
  * @author schaetzc@informatik.uni-freiburg.de
  */
-public class BoogieAstUtil {
+public class BoogieUtil {
 
 	public static IBoogieVar createTemporaryIBoogieVar(String identifier, IType type) {
 		return new IBoogieVar() {

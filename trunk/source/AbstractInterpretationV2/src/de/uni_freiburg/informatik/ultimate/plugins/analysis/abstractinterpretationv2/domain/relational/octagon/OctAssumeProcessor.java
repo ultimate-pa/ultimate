@@ -11,7 +11,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieAstUtil;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.NumUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
 import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
@@ -178,7 +178,7 @@ public class OctAssumeProcessor {
 		if (op == BinaryExpression.Operator.COMPPO) {
 			return oldStates; // safe over-approximation
 		} else if (isNegated) {
-			op = BoogieAstUtil.negateRelOp(op);
+			op = BoogieUtil.negateRelOp(op);
 		}
 
 		Expression left = be.getLeft();

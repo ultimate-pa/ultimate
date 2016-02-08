@@ -19,7 +19,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieAstUtil;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
 import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
@@ -78,7 +78,7 @@ public class OctStatementProcessor {
 				String origVar = vLhs.getIdentifier();
 				// parentheses are not allowed in Boogie-identifiers => tmpVar is unique
 				String tmpVar = "octTmp(" + origVar + ")"; 
-				tmpVars.put(tmpVar, BoogieAstUtil.createTemporaryIBoogieVar(tmpVar, vLhs.getType()));
+				tmpVars.put(tmpVar, BoogieUtil.createTemporaryIBoogieVar(tmpVar, vLhs.getType()));
 				mapTmpVarToOrigVar.put(tmpVar, origVar);
 				mapLhsToRhs.put(tmpVar, rhs[i]);
 			}
@@ -128,7 +128,7 @@ public class OctStatementProcessor {
 			action = s -> s.assignBooleanVar(targetVar, value);
 		} else if (rhs instanceof IdentifierExpression) {
 			IdentifierExpression ie = (IdentifierExpression) rhs;
-			if (BoogieAstUtil.isVariable(ie)) {
+			if (BoogieUtil.isVariable(ie)) {
 				String sourceVar = ie.getIdentifier();
 				action = s -> s.copyVar(targetVar, sourceVar);
 			}
