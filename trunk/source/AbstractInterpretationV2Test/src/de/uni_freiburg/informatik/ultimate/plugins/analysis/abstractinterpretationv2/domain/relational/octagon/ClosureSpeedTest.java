@@ -6,6 +6,11 @@ import java.util.function.Consumer;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctMatrix;
 
+/**
+ * Measures speed of different closures on random generated matrices.
+ *
+ * @author schaetzc@informatik.uni-freiburg.de
+ */
 public class ClosureSpeedTest {
 
 	// -XX:+PrintCompilation -verbose:gc
@@ -17,11 +22,11 @@ public class ClosureSpeedTest {
 		st.addTest(50, 600);
 		st.addTest(100, 80);
 		st.addTest(150, 20);
-		st.addFunction("naiv", OctMatrix::strongClosureNaiv);
-		st.addFunction("apron", OctMatrix::strongClosureApron);
-		st.addFunction("fsparse", OctMatrix::strongClosureFullSparse);
-		st.addFunction("sparse", OctMatrix::strongClosureSparse);
-		st.addFunction("psparse", OctMatrix::strongClosurePrimitiveSparse);
+		st.addFunction("naiv", OctMatrix::shortestPathClosureNaiv);
+		st.addFunction("apron", OctMatrix::shortestPathClosureApron);
+		st.addFunction("fsparse", OctMatrix::shortestPathClosureFullSparse);
+		st.addFunction("sparse", OctMatrix::shortestPathClosureSparse);
+		st.addFunction("psparse", OctMatrix::shortestPathClosurePrimitiveSparse);
 		st.run();
 	}
 
@@ -78,8 +83,9 @@ public class ClosureSpeedTest {
 	private void runScenario(Scenario scenario) {
 		resetMeassuredNanoSeconds();
 		for (int mi = 0; mi < scenario.cycles; ++mi) {
-			OctMatrix m = OctMatrix.random(scenario.vars);
+			OctMatrix mOrig = OctMatrix.random(scenario.vars);
 			for (Function f : mFunctions) {
+				OctMatrix m = mOrig.copy();
 				long tStart = System.nanoTime();
 				f.function.accept(m);
 				f.measuredNanoSeconds += System.nanoTime() - tStart;		

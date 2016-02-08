@@ -49,33 +49,33 @@ public class OctMatrix {
 	
 	public final static OctMatrix NEW = new OctMatrix(0);
 
-//	private final static Consumer<OctMatrix> sDefaultShortestPathClosure = OctMatrix::shortestPathClosureInPlacePrimitiveSparse;
-	private final static Consumer<OctMatrix> sDefaultShortestPathClosure = m -> {
-			if (m.mSize <= 0) {
-				return;
-			}
-			String s = m.toStringLower();
-			BufferedWriter bw;
-			try {
-				bw = new BufferedWriter(new FileWriter(makeFilename()), s.length() * 2);
-				try {
-					bw.write(s);
-				} finally {
-					bw.close();
-				}
-			} catch (IOException e) {
-				throw new AssertionError("Could not write benchmark file.", e);
-			}
-			m.shortestPathClosureInPlacePrimitiveSparse();
-	};
-	private static String makeFilename() {
-		int i;
-		synchronized (OctMatrix.class) {
-			i = ++sFileNameCounter;
-		}
-		return "/tmp/closureBenchmark/" + String.format("%08d", i);
-	}
-	private static volatile int sFileNameCounter = 0;
+	private final static Consumer<OctMatrix> sDefaultShortestPathClosure = OctMatrix::shortestPathClosurePrimitiveSparse;
+//	private final static Consumer<OctMatrix> sDefaultShortestPathClosure = m -> {
+//			if (m.mSize <= 0) {
+//				return;
+//			}
+//			String s = m.toStringLower();
+//			BufferedWriter bw;
+//			try {
+//				bw = new BufferedWriter(new FileWriter(makeFilename()), s.length() * 2);
+//				try {
+//					bw.write(s);
+//				} finally {
+//					bw.close();
+//				}
+//			} catch (IOException e) {
+//				throw new AssertionError("Could not write benchmark file.", e);
+//			}
+//			m.shortestPathClosureInPlacePrimitiveSparse();
+//	};
+//	private static String makeFilename() {
+//		int i;
+//		synchronized (OctMatrix.class) {
+//			i = ++sFileNameCounter;
+//		}
+//		return "/tmp/closureBenchmark/" + String.format("%08d", i);
+//	}
+//	private static volatile int sFileNameCounter = 0;
 	
 	/**
 	 * Size of this matrix (size = #rows = #columns).
@@ -345,26 +345,6 @@ public class OctMatrix {
 		}
 		return strongClosure(sDefaultShortestPathClosure);
 	}
-
-	public OctMatrix strongClosureNaiv() {
-		return strongClosure(OctMatrix::shortestPathClosureInPlaceNaiv);
-	}
-	
-	public OctMatrix strongClosureApron() {
-		return strongClosure(OctMatrix::shortestPathClosureInPlaceApron);
-	}
-	
-	public OctMatrix strongClosureFullSparse() {
-		return strongClosure(OctMatrix::shortestPathClosureInPlaceFullSparse);
-	}
-	
-	public OctMatrix strongClosureSparse() {
-		return strongClosure(OctMatrix::shortestPathClosureInPlaceSparse);
-	}
-	
-	public OctMatrix strongClosurePrimitiveSparse() {
-		return strongClosure(OctMatrix::shortestPathClosureInPlacePrimitiveSparse);
-	}
 	
 	public OctMatrix strongClosure(Consumer<OctMatrix> shortestPathClosureAlgorithm) {
 		OctMatrix sc = copy();
@@ -387,7 +367,7 @@ public class OctMatrix {
 	}
 	
 	public OctMatrix tightClosurePrimitiveSparse() {
-		return tightClosure(OctMatrix::shortestPathClosureInPlacePrimitiveSparse);
+		return tightClosure(OctMatrix::shortestPathClosurePrimitiveSparse);
 	}
 	
 	public OctMatrix tightClosure(Consumer<OctMatrix> shortestPathClosureAlgorithm) {
@@ -404,7 +384,7 @@ public class OctMatrix {
 		return tc;
 	}
 
-	private void shortestPathClosureInPlaceNaiv() {
+	protected void shortestPathClosureNaiv() {
 		for (int k = 0; k < mSize; ++k) {
 			for (int i = 0; i < mSize; ++i) {
 				OctValue ik = get(i, k);
@@ -418,7 +398,7 @@ public class OctMatrix {
 		}
 	}
 	
-	private void shortestPathClosureInPlaceFullSparse() {
+	protected void shortestPathClosureFullSparse() {
 		List<Integer> ck = null; // indices of finite elements in columns k and k^1
 		List<Integer> rk = null; // indices of finite elements in rows k and k^1
 		for (int k = 0; k < mSize; ++k) {
@@ -459,7 +439,7 @@ public class OctMatrix {
 		return index;
 	}
 	
-	private void shortestPathClosureInPlaceSparse() {
+	protected void shortestPathClosureSparse() {
 		List<Integer> ck = null; // indices of finite elements in columns k and k^1
 		List<Integer> rk = null; // indices of finite elements in rows k and k^1
 		for (int k = 0; k < mSize; ++k) {
@@ -509,7 +489,7 @@ public class OctMatrix {
 		return index;
 	}
 	
-	private void shortestPathClosureInPlacePrimitiveSparse() {
+	protected void shortestPathClosurePrimitiveSparse() {
 		int[] ck = null; // indices of finite elements in columns k and k^1
 		int[] rk = null; // indices of finite elements in rows k and k^1
 		for (int k = 0; k < mSize; ++k) {
@@ -566,7 +546,7 @@ public class OctMatrix {
 	}
 	
 
-	private void shortestPathClosureInPlaceApron() {
+	protected void shortestPathClosureApron() {
 		for (int k = 0; k < mSize; ++k) {
 			for (int i = 0; i < mSize; ++i) {
 				OctValue ik = get(i, k);
@@ -1043,7 +1023,7 @@ public class OctMatrix {
 				}
 			}
 		} else {
-			shortestPathClosureInPlaceNaiv();
+			shortestPathClosureNaiv();
 			strengtheningInPlace();
 			havocVar(targetVar);
 			int ov2 = sourceVar * 2;

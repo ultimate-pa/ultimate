@@ -133,7 +133,7 @@ public class OctMatrixTest {
 		for (int i = 0; i < 2000; ++i) {
 			int variables = (int) (Math.random() * 10) + 1;
 			OctMatrix m = OctMatrix.random(variables);
-			OctMatrix cNaiv = m.strongClosureNaiv();
+			OctMatrix cNaiv = m.strongClosure(OctMatrix::shortestPathClosureNaiv);
 			OctMatrix cOther = m.cachedStrongClosure();
 			if (cNaiv.hasNegativeSelfLoop() != cOther.hasNegativeSelfLoop() || !cNaiv.isEqualTo(cOther)) {
 				String msg = String.format("%s%n%s%n%s%n%s%n%s%n%s%n",
