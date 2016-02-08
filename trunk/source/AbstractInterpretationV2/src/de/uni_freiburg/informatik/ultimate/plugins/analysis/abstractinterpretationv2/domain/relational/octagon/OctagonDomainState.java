@@ -80,7 +80,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	/**
 	 * Creates a shallow copy of this OctagonDomainState.
 	 * Use the {@code unref}&hellip; methods to deep copy single fields
-	 * before modifying them in-place.
+	 * before modifying them.
 	 *
 	 * @return shallow copy
 	 *
@@ -205,8 +205,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		}
 		if (!indexRemovedNumericVars.isEmpty()) {
 			newState.mNumericAbstraction = cachedNormalizedNumericAbstraction().removeVariables(indexRemovedNumericVars);
-			unrefOtherMapNumericVarToIndex(newState);
-			defragmentMap(newState.mMapNumericVarToIndex);
+			defragmentMap(newState.mMapNumericVarToIndex); // already unref'd
 		}
 		return newState;
 	}
@@ -288,6 +287,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	// TODO document
 	// - call only when same variables are stored
 	private boolean numericAbstractionIsEqualTo(OctagonDomainState other) {
+		assert mMapNumericVarToIndex.keySet().equals(other.mMapNumericVarToIndex.keySet());
 		boolean permutated = false;
 		int[] mapThisVarIndexToOtherVarIndex = new int[mNumericAbstraction.variables()];
 		for (Map.Entry<String, Integer> entry : mMapNumericVarToIndex.entrySet()) {
@@ -316,23 +316,24 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 
 	// TODO document: Returned state is a shallow copy. Do not modify!
 	public OctagonDomainState meet(OctagonDomainState other) {
-		return operation(other, BoolValue::intersect, OctMatrix::min);
+		return operation(other, BoolValue::intersect, OctMatrix::min, false);
 	}
 
 	// TODO document: Returned state is a shallow copy. Do not modify!
 	public OctagonDomainState join(OctagonDomainState other) {
-		return operation(other, BoolValue::union, OctMatrix::max);
+		return operation(other, BoolValue::union, OctMatrix::max, false);
 	}
 
 	// TODO document: Returned state is a shallow copy. Do not modify!
 	public OctagonDomainState widen(OctagonDomainState other, BiFunction<OctMatrix, OctMatrix, OctMatrix> widenOp) {
-		return operation(other, BoolValue::union, widenOp);
+		return operation(other, BoolValue::union, widenOp, true);
 	}
 
 	// TODO document: Returned state is a shallow copy. Do not modify!
 	private OctagonDomainState operation(OctagonDomainState other,
 			BiFunction<BoolValue, BoolValue, BoolValue> booleanOperation,
-			BiFunction<OctMatrix, OctMatrix, OctMatrix> numericOperation) {
+			BiFunction<OctMatrix, OctMatrix, OctMatrix> numericOperation,
+			boolean closureOtherInAdvance) {
 		OctagonDomainState result = shallowCopy();
 		for (Map.Entry<String, BoolValue> entry : mBooleanAbstraction.entrySet()) {
 			String name = entry.getKey();
@@ -343,7 +344,9 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 				result.mBooleanAbstraction.put(name, newValue);
 			}
 		}
-		result.mNumericAbstraction = numericOperation.apply(mNumericAbstraction, other.mNumericAbstraction);
+		OctMatrix otherNumericAbstraction = closureOtherInAdvance ?
+				other.cachedNormalizedNumericAbstraction() : other.mNumericAbstraction;
+		result.mNumericAbstraction = numericOperation.apply(mNumericAbstraction, otherNumericAbstraction);
 		return result;
 	}
 
@@ -363,7 +366,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 			Term termVar = getTermVar(entry.getKey());
 			mapIndexToTerm[entry.getValue()] = termVar;
 		}
-		return mNumericAbstraction.getTerm(script, Arrays.asList(mapIndexToTerm));
+		return cachedNormalizedNumericAbstraction().getTerm(script, Arrays.asList(mapIndexToTerm));
 	}
 
 	private Term getTermBooleanAbstraction(Script script, Boogie2SMT bpl2smt) {
@@ -428,9 +431,8 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 			unrefOtherMapNumericVarToIndex(patchedState);
 			patchedState.mMapNumericVarToIndex.put(var, patchedState.mMapNumericVarToIndex.size());
 		}
-		patchedState.mNumericAbstraction = patchedState.mNumericAbstraction
+		patchedState.mNumericAbstraction = cachedNormalizedNumericAbstraction()
 				.appendSelection(dominator.mNumericAbstraction, mapDominatorIndicesOfNewNumericVars.keySet());
-		unrefOtherNumericAbstraction(patchedState);
 		patchedState.mNumericAbstraction.copySelection(dominator.mNumericAbstraction, mapSourceVarToTargetVar);
 		return patchedState;
 	}
@@ -475,7 +477,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		// create new state
 		OctagonDomainState newState = shallowCopy();
 		if (!mapNumericSourceToTarget.isEmpty()) {
-			unrefOtherNumericAbstraction(newState);
+			newState.mNumericAbstraction = cachedNormalizedNumericAbstraction().copy();
 			newState.mNumericAbstraction.copySelection(source.mNumericAbstraction, mapNumericSourceToTarget);
 		}
 		if (!mapBooleanSourceToTarget.isEmpty()) {
@@ -546,7 +548,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 			assert mMapVarToBoogieVar.containsKey(var) : "unknown variable in havoc: " + var;
 		}
 		if (!numVarIndices.isEmpty()) {
-			mNumericAbstraction = cachedNormalizedNumericAbstraction().copy(); // reduces information loss
+			mNumericAbstraction = cachedNormalizedNumericAbstraction().copy();
 			numVarIndices.forEach(v -> mNumericAbstraction.havocVar(v));
 		}
 	}
@@ -567,6 +569,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	protected void assignNumericVarConstant(String targetVar, OctValue constant) {
 		assert assertNotLockedBeforeModification();
 		assert assertNotBottomBeforeAssign();
+		mNumericAbstraction = cachedNormalizedNumericAbstraction().copy();
 		mNumericAbstraction.assignVarConstant(numVarIndex(targetVar), constant);
 	}
 	
@@ -574,6 +577,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	protected void assignNumericVarInterval(String targetVar, OctValue min, OctValue max) {
 		assert assertNotLockedBeforeModification();
 		assert assertNotBottomBeforeAssign();
+		mNumericAbstraction = cachedNormalizedNumericAbstraction().copy();
 		mNumericAbstraction.assignVarInterval(numVarIndex(targetVar), min, max);
 	}
 
@@ -610,31 +614,43 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		return index;
 	}
 	
+	// targetVar1, targetVar2, ... := sourceVar1, sourceVar2, ...
 	protected void copyVars(Map<String, String> mapSourceVarToTargetVar) {
+
+		assert assertNotLockedBeforeModification();
+		assert assertNotBottomBeforeAssign();
+
+		boolean usedClosure = false;
+
 		for (Map.Entry<String, String> entry : mapSourceVarToTargetVar.entrySet()) {
 			String sourceVar = entry.getKey();
 			String targetVar = entry.getValue();
-			copyVar(targetVar, sourceVar);
+
+			Integer targetIndex = mMapNumericVarToIndex.get(targetVar);
+			if (targetIndex != null) {
+				if (!usedClosure) {
+					mNumericAbstraction = cachedNormalizedNumericAbstraction().copy();
+					usedClosure = true;
+				}
+				Integer sourceIndex = mMapNumericVarToIndex.get(sourceVar);
+				assert sourceIndex != null : "Incompatible types";
+				mNumericAbstraction.copyVar(targetIndex, sourceIndex);
+
+			} else if (mBooleanAbstraction.containsKey(targetIndex)) {
+				BoolValue value = mBooleanAbstraction.get(sourceVar);
+				assert value != null : "Incompatible types";
+				mBooleanAbstraction.put(targetVar, value);
+
+			}
+			// else: variables of unsupported types are assumed to be \top all the time
+			assert mMapVarToBoogieVar.containsKey(targetVar) && mMapVarToBoogieVar.containsKey(sourceVar)
+				: "unknown variable in assignment: " + targetVar + " := " + sourceVar;
 		}
 	}
 
-	// targetVar := (+/-)sourceVar
+	// targetVar := sourceVar
 	protected void copyVar(String targetVar, String sourceVar) {
-		assert assertNotLockedBeforeModification();
-		assert assertNotBottomBeforeAssign();
-		Integer targetIndex = mMapNumericVarToIndex.get(targetVar);
-		if (targetIndex != null) {
-			Integer sourceIndex = mMapNumericVarToIndex.get(sourceVar);
-			assert sourceIndex != null : "Incompatible types";
-			mNumericAbstraction.copyVar(targetIndex, sourceIndex);
-		} else if (mBooleanAbstraction.containsKey(targetIndex)) {
-			BoolValue value = mBooleanAbstraction.get(sourceVar);
-			assert value != null : "Incompatible types";
-			mBooleanAbstraction.put(targetVar, value);
-		}
-		// else: variables of unsupported types are assumed to be \top all the time
-		assert mMapVarToBoogieVar.containsKey(targetVar) && mMapVarToBoogieVar.containsKey(sourceVar)
-			: "unknown variable in assignment: " + targetVar + " := " + sourceVar;
+		copyVars(Collections.singletonMap(targetVar, sourceVar));
 	}
 
 	protected void assignBooleanVar(String var, BoolValue value) {

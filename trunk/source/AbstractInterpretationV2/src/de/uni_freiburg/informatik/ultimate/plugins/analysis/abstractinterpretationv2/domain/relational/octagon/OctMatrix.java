@@ -933,7 +933,6 @@ public class OctMatrix {
 	}
 
 	protected void assumeVarConstant(int targetVar, OctValue constant) {
-		havocVar(targetVar);
 		int t2 = targetVar * 2;
 		int t21 = t2 + 1;
 		OctValue doubleConstant = constant.add(constant);
