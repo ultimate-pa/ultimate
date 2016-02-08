@@ -13,12 +13,13 @@ public class OctPreferences {
 	}
 
 	public static final String WIDENING_OPERATOR = "Octagon widening operator";
-	public static final WideningOperator WIDENING_OPERATOR_DEFAULT = WideningOperator.EXPONENTIAL;
+	public static final WideningOperator WIDENING_OPERATOR_DEFAULT = WideningOperator.LITERAL;
 
 	public static final String EXP_WIDENING_THRESHOLD = "Threshold for exponential widening";
-	public static final String EXP_WIDENING_THRESHOLD_DEFAULT_VALUE = "65536"; // 2^16
+	public static final String EXP_WIDENING_THRESHOLD_DEFAULT_VALUE = "131072"; // 2 * 2^16
 	public static final String EXP_WIDENING_THRESHOLD_TOOLTIP
-			= "Exponential widening will set values above this threshold to infinity";
+			= "Exponential widening will set matrix entries above this threshold to infinity. "
+			+ "You may want to double the threshold, since interval bounds are stored with factor 2.";
 
 	public static final String FALLBACK_ASSIGN_INTERVAL_PROJECTION = "Fallback: assign interval projection";
 //	public static final String FALLBACK_ASSUME_LP_SOLVER = "Fallback: assume lp-solver";
