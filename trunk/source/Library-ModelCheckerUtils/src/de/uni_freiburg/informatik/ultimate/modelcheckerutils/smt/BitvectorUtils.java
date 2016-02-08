@@ -108,6 +108,14 @@ public class BitvectorUtils {
 		}
 		return null;
 	}
+
+	/**
+	 * @return Term that represents bitvector (value % 2^index)
+	 */
+	public static Term constructTerm(Script script, BigInteger value, Sort sort) {
+		BigInteger index = sort.getIndices()[0];
+		return constructTerm(script, new BitvectorConstant(value, index));
+	}
 	
 	public static Term constructTerm(Script script, BitvectorConstant bitvec) {
 		String funcname = "bv" + bitvec.getValue().toString();

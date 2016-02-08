@@ -275,27 +275,37 @@ public class SmtUtils {
 	 * element for sort sort if summands is empty.
 	 */
 	public static Term sum(Script script, Sort sort, Term... summands) {
-		assert sort.isNumericSort();
+		assert sort.isNumericSort() || BitvectorUtils.isBitvectorSort(sort);
 		if (summands.length == 0) {
 			if (sort.toString().equals("Int")) {
 				return script.numeral(BigInteger.ZERO);
 			} else if (sort.toString().equals("Real")) {
 				return script.decimal(BigDecimal.ZERO);
+			} else if (BitvectorUtils.isBitvectorSort(sort)) {
+				return BitvectorUtils.constructTerm(script, BigInteger.ZERO, sort);
 			} else {
 				throw new UnsupportedOperationException("unkown sort " + sort);
 			}
 		} else if (summands.length == 1) {
 			return summands[0];
 		} else {
-			return script.term("+", summands);
+			if (sort.isNumericSort()) {
+				return script.term("+", summands);
+			} else if (BitvectorUtils.isBitvectorSort(sort)) {
+				return script.term("bvadd", summands);
+			} else {
+				throw new UnsupportedOperationException("unkown sort " + sort);
+			}
 		}
 	}
 	
 	/**
 	 * Return sum, in affine representation if possible.
+	 * @param funcname either "+" or "bvadd".
 	 */
-	public static Term sum(Script script, Term... summands) {
-		final Term sum = script.term("+", summands);
+	public static Term sum(Script script, String funcname, Term... summands) {
+		assert funcname.equals("+") || funcname.equals("bvadd");
+		final Term sum = script.term(funcname, summands);
 		final AffineTerm affine = (AffineTerm) (new AffineTermTransformer(script)).transform(sum);
 		if (affine.isErrorTerm()) {
 			return sum;
@@ -612,8 +622,9 @@ public class SmtUtils {
 				result = Util.ite(script, params[0], params[1], params[2]);
 			}
 			break;
-		case "+": {
-			result = SmtUtils.sum(script, params);
+		case "+":
+		case "bvadd": {
+			result = SmtUtils.sum(script, funcname, params);
 			}
 			break;
 		case "div":
@@ -632,7 +643,6 @@ public class SmtUtils {
 			break;
 		case "zero_extend":
 		case "extract":
-		case "bvadd":
 		case "bvsub":
 		case "bvmul":
 		case "bvudiv":
@@ -742,6 +752,20 @@ public class SmtUtils {
 	
 	public static Rational toRational(BigInteger bigInt) {
 		return Rational.valueOf(bigInt, BigInteger.ONE);
+	}
+	
+	public static Term rational2Term(Script script, Rational rational, Sort sort) {
+		if (sort.isNumericSort()) {
+			return rational.toTerm(sort);
+		} else if (BitvectorUtils.isBitvectorSort(sort)) {
+			if (rational.isIntegral() && rational.isRational()) {
+				return BitvectorUtils.constructTerm(script, rational.numerator(), sort);
+			} else {
+				throw new IllegalArgumentException("unable to convert rational to bitvector if not integer");
+			}
+		} else {
+			throw new AssertionError("unknown sort " + sort);
+		}
 	}
 	
 	/**
