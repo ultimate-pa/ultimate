@@ -16,17 +16,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public class OctValue implements Comparable<OctValue> {
-	
+
 	public final static OctValue INFINITY = new OctValue();
-	public final static OctValue ZERO = new OctValue(0);
-	
+	public final static OctValue ONE = new OctValue(BigDecimal.ONE);
+	public final static OctValue ZERO = new OctValue(BigDecimal.ZERO);
+
 	private BigDecimal mValue;
-	
+
 	/** Creates a new OctagonValue with value infinity. */
 	private OctValue() {
 		// mValue is already null => represents infinity
 	}
-	
+
 	/**
 	 * Creates a new OctagonValue with a value less than infinity.
 	 * Use {@link #INFINITY} to represent infinity.

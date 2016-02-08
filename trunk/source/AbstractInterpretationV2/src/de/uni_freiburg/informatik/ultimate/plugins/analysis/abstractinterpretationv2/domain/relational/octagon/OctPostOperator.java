@@ -139,7 +139,10 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		}
 		if (currentState.isEmpty()) {
 			// TODO remove (only workaround: fxpe does not accept empty lsit as bottom)
-			return Collections.singletonList(oldState.bottomCopy_WORKAROUND());
+			OctagonDomainState bot = oldState.bottomCopy_WORKAROUND();
+//			mLogger.warn("workaround empty list: " + bot);
+//			mLogger.warn("---´");
+			return Collections.singletonList(bot);
 		}
 		return currentState;
 	}
@@ -164,6 +167,10 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 
 	private List<OctagonDomainState> applyCall(
 			OctagonDomainState stateBeforeCall, OctagonDomainState stateAfterCall, Call callTransition) {
+
+		if (stateAfterCall.isBottom()) {
+			return new ArrayList<>();
+		}
 
 		CallStatement call = callTransition.getCallStatement();
 		Procedure procedure = calledProcedure(call);
@@ -196,15 +203,15 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		tmpStates.add(stateBeforeCall.addVariables(tmpVars));
 
 		// assign tmp := args
+		tmpStates = deepCopy(tmpStates);
 		for (Map.Entry<String, Expression> assign : mapTmpVarToArg.entrySet()) {
 			tmpStates = mStatementProcessor.processSingleAssignment(assign.getKey(), assign.getValue(), tmpStates);
 		}
 		
 		// copy to scope opened by call (inParam := tmp)
+		// bottom-states are not overwritten (see top of this method)
 		List<OctagonDomainState> result = new ArrayList<>();
-		if (!stateAfterCall.isBottom()) {
-			tmpStates.forEach(s -> result.add(stateAfterCall.copyValuesOnScopeChange(s, mapTmpVarToInParam)));
-		}
+		tmpStates.forEach(s -> result.add(stateAfterCall.copyValuesOnScopeChange(s, mapTmpVarToInParam)));
 		return result;
 		// No need to remove the temporary variables.
 		// The states with temporary variables are only local variables of this method.

@@ -213,6 +213,7 @@ public class OctStatementProcessor {
 		for (VariableLHS lhs : statement.getIdentifiers()) {
 			vars.add(lhs.getIdentifier());
 		}
+		oldStates = OctPostOperator.removeBottomStates(oldStates); // important!
 		oldStates.forEach(s -> s.havocVars(vars));
 		return oldStates;
 	}

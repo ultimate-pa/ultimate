@@ -28,7 +28,7 @@ import de.uni_freiburg.informatik.ultimate.util.BidirectionalMap;
 
 public class OctagonDomainState implements IAbstractState<OctagonDomainState, CodeBlock, IBoogieVar> {
 	
-	private static int sId;
+	private static int sId = 0;
 
 	/** A human-readable hash code, unique for each object. */
 	private final int mId;
@@ -131,6 +131,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		return removeVariables(Collections.singletonMap(name, variable));
 	}
 
+	// TODO document: Returned state is a shallow copy. Do not modify!
 	@Override
 	public OctagonDomainState addVariables(Map<String, IBoogieVar> variables) {
 		// variables = new TreeMap<>(variables); // fixed iteration order -- essential for fast isEqualTo
@@ -164,6 +165,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		return newState;
 	}
 
+	// TODO document: Returned state is a shallow copy. Do not modify!
 	@Override
 	public OctagonDomainState removeVariables(Map<String, IBoogieVar> variables) {
 		OctagonDomainState newState = shallowCopy();
@@ -296,18 +298,22 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		}
 	}
 
+	// TODO document: Returned state is a shallow copy. Do not modify!
 	public OctagonDomainState meet(OctagonDomainState other) {
 		return operation(other, BoolValue::intersect, OctMatrix::min);
 	}
 
+	// TODO document: Returned state is a shallow copy. Do not modify!
 	public OctagonDomainState join(OctagonDomainState other) {
 		return operation(other, BoolValue::union, OctMatrix::max);
 	}
 
+	// TODO document: Returned state is a shallow copy. Do not modify!
 	public OctagonDomainState widen(OctagonDomainState other, BiFunction<OctMatrix, OctMatrix, OctMatrix> widenOp) {
 		return operation(other, BoolValue::union, widenOp);
 	}
 
+	// TODO document: Returned state is a shallow copy. Do not modify!
 	private OctagonDomainState operation(OctagonDomainState other,
 			BiFunction<BoolValue, BoolValue, BoolValue> booleanOperation,
 			BiFunction<OctMatrix, OctMatrix, OctMatrix> numericOperation) {
@@ -366,10 +372,11 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	}
 
 	// TODO test
+	// TODO document: Returned state is a shallow copy. Do not modify!
 	@Override
 	public OctagonDomainState patch(OctagonDomainState dominator) {
 		assert !isBottom() : "un-bottomized state";
-		
+
 		OctagonDomainState patchedState = shallowCopy();
 		BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar = new BidirectionalMap<>();
 		SortedMap<Integer, String> mapDominatorIndicesOfNewNumericVars = new TreeMap<>();
@@ -411,6 +418,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		return patchedState;
 	}
 
+	// TODO document: Returned state is a shallow copy. Do not modify!
 	public OctagonDomainState copyValuesOnScopeChange(OctagonDomainState source,
 			Map<String, String> mapSourceToTarget) {
 		
@@ -589,6 +597,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 
 	// targetVar := (+/-)sourceVar
 	protected void copyVar(String targetVar, String sourceVar) {
+		assert !isBottom() : "un-bottomized state";
 		Integer targetIndex = mMapNumericVarToIndex.get(targetVar);
 		if (targetIndex != null) {
 			Integer sourceIndex = mMapNumericVarToIndex.get(sourceVar);

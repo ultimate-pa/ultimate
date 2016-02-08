@@ -19,6 +19,7 @@ public class IntervalProjection {
 	public static List<OctagonDomainState> assignNumericVarWithoutIfs(String var, Expression rhs,
 			List<OctagonDomainState> oldStates) {
 
+		oldStates = OctPostOperator.removeBottomStates(oldStates);
 		for (OctagonDomainState state : oldStates) {
 			IntervalDomainValue i = projectNumericExprWithoutIfs(rhs, state);
 			OctInterval oi = new OctInterval(i);
@@ -29,7 +30,8 @@ public class IntervalProjection {
 
 	public static List<OctagonDomainState> assignNumericVarAffine(String var, AffineExpression rhs,
 			List<OctagonDomainState> oldStates) {
-		
+
+		oldStates = OctPostOperator.removeBottomStates(oldStates);
 		for (OctagonDomainState state : oldStates) {
 			IntervalDomainValue i = projectAffineExpr(rhs, state);
 			OctInterval oi = new OctInterval(i);
