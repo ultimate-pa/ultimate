@@ -8,7 +8,7 @@ procedure ULTIMATE.start()
 	assume y >= 11 && y <= 20;
 	
 	assert true;
-	assume x - x == 2;
+	assume x - y == 2;
 	
 	assert true;
 	assert x != 8;
