@@ -109,7 +109,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 
 		processStatement(statement);
 
-		assert mReturnState.size() != 0;
+		assert !(oldState.getVariables().size() != 0) || (mReturnState.size() != 0);
 
 		return mReturnState;
 	}
@@ -401,7 +401,9 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 		for (final IEvaluationResult<IntervalDomainValue> res : result) {
 			if (res.getValue().isBottom() || res.getBooleanValue().getValue() == Value.BOTTOM
 			        || res.getBooleanValue().getValue() == Value.FALSE) {
-				mReturnState.add(mOldState.bottomState());
+				if (mOldState.getVariables().size() != 0) {
+					mReturnState.add(mOldState.bottomState());
+				}
 			} else {
 				final List<IntervalDomainState> resultStates = mExpressionEvaluator.getRootEvaluator()
 				        .inverseEvaluate(res, mOldState);
