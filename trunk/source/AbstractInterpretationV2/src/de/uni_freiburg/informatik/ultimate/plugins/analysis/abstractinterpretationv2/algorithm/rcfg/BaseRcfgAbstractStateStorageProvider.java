@@ -48,13 +48,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.IEdgeDenier;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.IHeuristic;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 /**
@@ -112,9 +106,6 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 			return getCurrentState(mTransProvider.getSource(transition), a -> true);
 		}
 		return rtr;
-
-		// return getCurrentState(mTransProvider.getSource(transition), a -> mTransProvider.getSource(transition).equals(a.getTarget()));
-		// return getCurrentState(mTransProvider.getSource(transition), a -> transition.equals(a));
 	}
 
 	@Override
@@ -260,34 +251,6 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 		return rtr;
 	}
 
-//	protected List<CodeBlock> getErrorTrace(CodeBlock start, CodeBlock end) {
-//		// get the trace from the entry codeblock to this codeblock via all the
-//		// states in between
-//		assert start != null;
-//		assert end != null;
-//
-//		final List<CodeBlock> trace = new ArrayList<>();
-//		final IHeuristic<LOCATION, CodeBlock> heuristic = new ErrorPathHeuristic();
-//		// TODO: Use a denier that takes the abstract states into account (not allowing empty states)
-//		final IEdgeDenier<CodeBlock> denier = new RcfgEdgeDenier();
-//		final AStar<LOCATION, CodeBlock> search = new AStar<LOCATION, CodeBlock>(
-//				mServices.getLoggingService().getLogger(Activator.PLUGIN_ID), mTransProvider.getSource(start), mTransProvider.getTarget(end),
-//				heuristic, new RcfgWrapper(), denier);
-//		final List<RCFGEdge> path = search.findPath();
-//
-//		if (path == null) {
-//			return Collections.emptyList();
-//		}
-//
-//		for (final RCFGEdge elem : path) {
-//			if (elem instanceof CodeBlock) {
-//				trace.add((CodeBlock) elem);
-//			}
-//		}
-//
-//		return trace;
-//	}
-
 	private List<STATE> getAbstractStates(CodeBlock transition, LOCATION node) {
 		assert node != null;
 		final Deque<Pair<CodeBlock, STATE>> states = getStates(node);
@@ -341,51 +304,6 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 	
 	protected ITransitionProvider<CodeBlock, LOCATION> getTransitionProvider() {
 		return mTransProvider;
-	}
-
-	private final class ErrorPathHeuristic implements IHeuristic<LOCATION, CodeBlock> {
-		@Override
-		public int getHeuristicValue(LOCATION from, CodeBlock over, LOCATION to) {
-			for (Pair<CodeBlock, STATE> pair : getStates(mTransProvider.getTarget(over))) {
-				if (pair.getFirst().equals(over)) {
-					return 0;
-				}
-			}
-			return 1000;
-		}
-
-		@Override
-		public int getConcreteCost(CodeBlock edge) {
-			for (Pair<CodeBlock, STATE> pair : getStates(mTransProvider.getTarget(edge))) {
-				if (pair.getFirst().equals(edge)) {
-					return 1;
-				}
-			}
-			return 1000;
-		}
-	}
-
-	private static final class RcfgEdgeDenier implements IEdgeDenier<CodeBlock> {
-		@Override
-		public boolean isForbidden(final CodeBlock edge, final Iterator<CodeBlock> backpointers) {
-			if (edge instanceof Summary) {
-				return ((Summary) edge).calledProcedureHasImplementation();
-			}
-
-			if (edge instanceof Return) {
-				// check if the first call on the path spanned by the
-				// backpointers is the call matching this return
-				final Call call = ((Return) edge).getCorrespondingCall();
-				while (backpointers.hasNext()) {
-					final RCFGEdge backpointer = backpointers.next();
-					if (call.equals(backpointer)) {
-						return false;
-					}
-				}
-				return true;
-			}
-			return false;
-		}
 	}
 
 	@FunctionalInterface

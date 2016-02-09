@@ -28,15 +28,17 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+
 /**
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * 
  */
-public interface IResultReporter<ACTION> {
+public interface IResultReporter<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
 
-	void reportPossibleError(ACTION start, ACTION end);
+	void reportPossibleError(AbstractCounterexample<STATE, ACTION, ?, LOCATION> cex);
 
 	void reportSafe(ACTION elem);
 

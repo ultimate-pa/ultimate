@@ -27,6 +27,8 @@
 
 package de.uni_freiburg.informatik.ultimate.core.services.model;
 
+import java.util.List;
+
 import de.uni_freiburg.informatik.ultimate.model.structure.IExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
 
@@ -39,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
  */
 public interface IBacktranslatedCFG<VL, TE> {
 
-	IExplicitEdgesMultigraph<?, ?, VL, TE> getCFG();
+	List<IExplicitEdgesMultigraph<?, ?, VL, TE>> getCFGs();
 
 	String getFilename();
 
@@ -47,9 +49,8 @@ public interface IBacktranslatedCFG<VL, TE> {
 
 	/**
 	 * @see IProgramExecution#getSVCOMPWitnessString()
-	 * @return null iff you do not support SVCOMP witnesses, a String
-	 *         representing the described program execution as SVCOMP GraphML
-	 *         otherwise.
+	 * @return null iff you do not support SVCOMP witnesses, a String representing the described program execution as
+	 *         SVCOMP GraphML otherwise.
 	 */
 	String getSVCOMPWitnessString();
 }
