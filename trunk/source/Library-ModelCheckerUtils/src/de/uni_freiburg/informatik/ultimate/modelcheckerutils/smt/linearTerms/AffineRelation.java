@@ -328,10 +328,10 @@ public class AffineRelation {
 		if (rational.equals(Rational.ONE)) {
 			return term;
 		} else if (rational.equals(Rational.MONE)) {
-			return script.term("-", term);
+			return SmtUtils.neg(script, term.getSort(), term);
 		} else {
 			Term coefficient = SmtUtils.rational2Term(script, rational, term.getSort());
-			return script.term("*", coefficient, term);
+			return SmtUtils.mul(script, term.getSort(), coefficient, term);
 		}
 	}
 	
