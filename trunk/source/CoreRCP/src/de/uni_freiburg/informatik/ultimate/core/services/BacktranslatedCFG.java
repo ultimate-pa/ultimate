@@ -27,6 +27,10 @@
 
 package de.uni_freiburg.informatik.ultimate.core.services;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.model.structure.IExplicitEdgesMultigraph;
 
@@ -37,23 +41,28 @@ import de.uni_freiburg.informatik.ultimate.model.structure.IExplicitEdgesMultigr
  */
 public class BacktranslatedCFG<VL, TE> implements IBacktranslatedCFG<VL, TE> {
 
-	private final IExplicitEdgesMultigraph<?, ?, VL, TE> mCFG;
+	private final List<IExplicitEdgesMultigraph<?, ?, VL, TE>> mCFGs;
 	private final String mFilename;
 	private final Class<TE> mTraceElementClass;
 
 	public BacktranslatedCFG(final String filename, final IExplicitEdgesMultigraph<?, ?, VL, TE> cfg,
 			final Class<TE> clazz) {
+		this(filename, Collections.singletonList(cfg), clazz);
+	}
+
+	public BacktranslatedCFG(final String filename, final List<? extends IExplicitEdgesMultigraph<?, ?, VL, TE>> cfgs,
+			final Class<TE> clazz) {
 		assert filename != null;
-		assert cfg != null;
+		assert cfgs != null && !cfgs.isEmpty();
 		assert clazz != null;
 		mFilename = filename;
-		mCFG = cfg;
+		mCFGs = new ArrayList<>(cfgs);
 		mTraceElementClass = clazz;
 	}
 
 	@Override
-	public IExplicitEdgesMultigraph<?, ?, VL, TE> getCFG() {
-		return mCFG;
+	public List<IExplicitEdgesMultigraph<?, ?, VL, TE>> getCFGs() {
+		return mCFGs;
 	}
 
 	@Override
@@ -73,7 +82,7 @@ public class BacktranslatedCFG<VL, TE> implements IBacktranslatedCFG<VL, TE> {
 
 	@Override
 	public String toString() {
-		return "BacktranslatedCFG with CFG " + mCFG.getClass().getSimpleName() + " and trace element "
+		return "BacktranslatedCFG with CFG " + mCFGs.getClass().getSimpleName() + " and trace element "
 				+ mTraceElementClass.getSimpleName();
 	}
 }

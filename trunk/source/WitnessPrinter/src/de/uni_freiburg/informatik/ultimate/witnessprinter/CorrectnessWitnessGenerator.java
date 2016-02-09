@@ -33,6 +33,7 @@ import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -48,9 +49,9 @@ import de.uni_freiburg.informatik.ultimate.result.model.IBacktranslationValuePro
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessNode;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessNodeEdgeFactory;
-import edu.uci.ics.jung.graph.DirectedSparseGraph;
+import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.UltimateGraphMLWriter;
+import edu.uci.ics.jung.graph.DirectedOrderedSparseMultigraph;
 import edu.uci.ics.jung.graph.Hypergraph;
-import edu.uci.ics.jung.io.GraphMLWriter;
 
 /**
  * 
@@ -73,7 +74,7 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 
 	@Override
 	public String makeGraphMLString() {
-		final GraphMLWriter<GeneratedWitnessNode, GeneratedWitnessEdge<TTE, TE>> graphWriter = new GraphMLWriter<>();
+		final UltimateGraphMLWriter<GeneratedWitnessNode, GeneratedWitnessEdge<TTE, TE>> graphWriter = new UltimateGraphMLWriter<>();
 		final String filename = StringEscapeUtils.escapeXml10(mTranslatedCFG.getFilename());
 
 		graphWriter.setEdgeIDs(new Transformer<GeneratedWitnessEdge<TTE, TE>, String>() {
@@ -129,37 +130,29 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 	}
 
 	private Hypergraph<GeneratedWitnessNode, GeneratedWitnessEdge<TTE, TE>> getGraph() {
-		final DirectedSparseGraph<GeneratedWitnessNode, GeneratedWitnessEdge<TTE, TE>> graph = new OrderedDirectedSparseGraph<>();
+		final DirectedOrderedSparseMultigraph<GeneratedWitnessNode, GeneratedWitnessEdge<TTE, TE>> graph = new DirectedOrderedSparseMultigraph<>();
 
 		final GeneratedWitnessNodeEdgeFactory<TTE, TE> fac = new GeneratedWitnessNodeEdgeFactory<TTE, TE>(
 				mStringProvider);
 
-		final IExplicitEdgesMultigraph<?, ?, String, TTE> root = mTranslatedCFG.getCFG();
+		final List<IExplicitEdgesMultigraph<?, ?, String, TTE>> roots = mTranslatedCFG.getCFGs();
+		if (roots.size() != 1) {
+			throw new UnsupportedOperationException("Cannot generate correctness witnesses in library mode");
+		}
+		final IExplicitEdgesMultigraph<?, ?, String, TTE> root = roots.get(0);
 
 		final Deque<IExplicitEdgesMultigraph<?, ?, String, TTE>> worklist = new ArrayDeque<>();
 		final Map<IExplicitEdgesMultigraph<?, ?, String, TTE>, GeneratedWitnessNode> nodecache = new HashMap<>();
 		final Set<IMultigraphEdge<?, ?, String, TTE>> closed = new HashSet<>();
+		worklist.add(root);
 
-		GeneratedWitnessNode rootWitnessNode = fac.createInitialWitnessNode();
-		nodecache.put(root, rootWitnessNode);
-		graph.addVertex(rootWitnessNode);
-
-		// initial edges are different
-		for (final IMultigraphEdge<?, ?, String, TTE> outgoing : root.getOutgoingEdges()) {
-			final GeneratedWitnessEdge<TTE, TE> edge = fac.createDummyWitnessEdge();
-			final GeneratedWitnessNode node = getWitnessNode(outgoing.getTarget(), mStringProvider, fac, nodecache);
-			graph.addEdge(edge, rootWitnessNode, node);
-			closed.add(outgoing);
-			worklist.add(outgoing.getTarget());
-		}
-
-		// now for the rest
 		while (!worklist.isEmpty()) {
 			final IExplicitEdgesMultigraph<?, ?, String, TTE> sourceNode = worklist.remove();
 			final GeneratedWitnessNode sourceWNode = getWitnessNode(sourceNode, mStringProvider, fac, nodecache);
 
 			for (final IMultigraphEdge<?, ?, String, TTE> outgoing : sourceNode.getOutgoingEdges()) {
 				if (!closed.add(outgoing)) {
+//					mLogger.info("Ignoring " + outgoing);
 					continue;
 				}
 				final TTE label = outgoing.getLabel();
@@ -171,7 +164,7 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 				}
 				final GeneratedWitnessNode targetWNode = getWitnessNode(outgoing.getTarget(), mStringProvider, fac,
 						nodecache);
-
+//				mLogger.info("Adding edge from " + sourceWNode + " to " + targetWNode);
 				graph.addEdge(edge, sourceWNode, targetWNode);
 				worklist.add(outgoing.getTarget());
 			}
@@ -192,11 +185,9 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 		wnode = fac.createWitnessNode();
 		nodecache.put(node, wnode);
 		final String invariant = node.getLabel();
-		if (invariant == null) {
-			return wnode;
+		if (invariant != null) {
+			wnode.setInvariant(invariant);
 		}
-
-		wnode.setInvariant(invariant);
 
 		return wnode;
 	}

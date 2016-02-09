@@ -40,9 +40,9 @@ import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution.Progra
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessNode;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessNodeEdgeFactory;
+import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.UltimateGraphMLWriter;
 import edu.uci.ics.jung.graph.DirectedSparseGraph;
 import edu.uci.ics.jung.graph.Hypergraph;
-import edu.uci.ics.jung.io.GraphMLWriter;
 
 /**
  * Generates an SVCOMP witness from a {@link IProgramExecution} (i.e., a false witness). Probably only useful together
@@ -69,7 +69,7 @@ public class ViolationWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E
 
 	@Override
 	public String makeGraphMLString() {
-		final GraphMLWriter<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> graphWriter = new GraphMLWriter<>();
+		final UltimateGraphMLWriter<GeneratedWitnessNode, GeneratedWitnessEdge<TE, E>> graphWriter = new UltimateGraphMLWriter<>();
 		final String filename = StringEscapeUtils
 				.escapeXml10(mStringProvider.getFileNameFromStep(mProgramExecution.getTraceElement(0).getStep()));
 

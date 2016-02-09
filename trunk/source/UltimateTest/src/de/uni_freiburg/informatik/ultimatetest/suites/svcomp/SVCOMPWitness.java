@@ -55,8 +55,8 @@ public class SVCOMPWitness extends AbstractSVCOMPTestSuite {
 		/* Automizer */
 //		rtr.add(getTestDefinitionFromExamples("ControlFlow.false-unreach-call", "AutomizerC.xml",
 //				"svcomp2016/witness-verif/svcomp-Reach-32bit-Automizer_Default-Witness.epf", getTimeout()));
-		rtr.add(getTestDefinitionFromExamples("Loops-validate", "AutomizerC.xml",
-				"svcomp2016/witness-verif/svcomp-Reach-32bit-Automizer_Default-Witness-win32.epf", getTimeout()));
+		rtr.add(getTestDefinitionFromExamples("Loops", "AutomizerC_WitnessPrinter.xml",
+				"svcomp2016/witness-verif/svcomp-Reach-32bit-Automizer_Default-Witness.epf", getTimeout()));
 //		rtr.add(getTestDefinitionFromExamples("ProductLines.false-unreach-call", "AutomizerC.xml",
 //				"svcomp2016/witness-verif/svcomp-Reach-32bit-Automizer_Default-Witness.epf", getTimeout()));
 //		rtr.add(getTestDefinitionFromExamples("Sequentialized.false-unreach-call", "AutomizerC.xml",

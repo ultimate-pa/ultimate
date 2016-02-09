@@ -57,7 +57,8 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 			//### BPL 
 //			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/AIv2_INT.epf"),			
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/Automizer+AIv2_INT.epf"),
-			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+//			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "EmptySettings.epf"),
 			
 			//### C
@@ -73,19 +74,22 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	private static final String[] INPUT = new String[] {
 			/* ULTIMATE repo */
 //			"examples/programs/abstractInterpretation/",
-			"examples/programs/abstractInterpretation/regression",
+//			"examples/programs/abstractInterpretation/regression",
+//			"examples/programs/abstractInterpretation/regression",
+			"examples/programs/abstractInterpretation/regression/CountTillBound-Loop-2.bpl",
+			
 
 			// ################################# Bugs #########################
 			// ########### Here are representatives of current bugs ########### 
 
 			 
-			//nullpointer exception (754 total)
+//			//nullpointer exception (754 total)
 //			"examples/svcomp/eca-rers2012/Problem14_label24_true-unreach-call.c",
 //			"examples/svcomp/eca-rers2012/Problem10_label15_false-unreach-call.c",
 //			"examples/svcomp/eca-rers2012/Problem10_label00_true-unreach-call.c",
 //			"examples/svcomp/eca-rers2012/Problem16_label02_true-unreach-call.c",
 //			"examples/svcomp/eca-rers2012/Problem16_label00_false-unreach-call.c",
-			 
+//			 
 //			//no exact representable decimal result (46 total) 
 //			"examples/svcomp/product-lines/elevator_spec13_product21_true-unreach-call.cil.c",
 //			"examples/svcomp/product-lines/elevator_spec13_product22_true-unreach-call.cil.c",
@@ -127,7 +131,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 	@Override
 	protected long getTimeout() {
-		return 15 * 1000;
+		return 15 * 1000 * 1000;
 	}
 
 	@Override

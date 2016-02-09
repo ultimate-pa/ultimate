@@ -28,15 +28,18 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator;
 
 import java.math.BigInteger;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
@@ -270,7 +273,7 @@ public class CACSL2BoogieBacktranslator
 		}
 
 		// replace all expr eval occurences with the right atomictraceelements
-		CheckForSubtreeInclusion check = new CheckForSubtreeInclusion();
+		final CheckForSubtreeInclusion check = new CheckForSubtreeInclusion();
 		translatedAtomicTraceElements = check.check(translatedAtomicTraceElements);
 
 		return new CACSLProgramExecution(initialState, translatedAtomicTraceElements, translatedProgramStates, mLogger);
@@ -308,7 +311,7 @@ public class CACSL2BoogieBacktranslator
 		// maps the input variable to a new local one (because boogie function
 		// params are immutable)
 		// we throw them away
-		AtomicTraceElement<BoogieASTNode> origFuncCall = programExecution.getTraceElement(i);
+		final AtomicTraceElement<BoogieASTNode> origFuncCall = programExecution.getTraceElement(i);
 
 		if (!(origFuncCall.getTraceElement() instanceof CallStatement)) {
 			// this is some special case, e.g. an assert false or an havoc
@@ -342,59 +345,7 @@ public class CACSL2BoogieBacktranslator
 			// if it is a return we are already finished.
 			return i;
 		}
-		// The following code is not necessary anymore because Alex changed the
-		// local var initialisation code s.t the assign statements at the
-		// beginning of each function have their ignore flags set
-		// We keep it for a couple of revisions and throw it out once we are
-		// sure we dont need it
 
-		// int j = i + 1;
-		// for (int k = 0; k < fcall.getArguments().length && j <
-		// programExecution.getLength(); ++j, ++k) {
-		// AtomicTraceElement<BoogieASTNode> origFuncDef =
-		// programExecution.getTraceElement(j);
-		//
-		// if (!(origFuncDef.getTraceElement() instanceof AssignmentStatement))
-		// {
-		// reportUnfinishedBacktranslation("CASTFunctionCallExpression is followed by "
-		// + origFuncDef.getTraceElement().getClass().getSimpleName());
-		// return i;
-		// }
-		//
-		// if (!(origFuncDef.getTraceElement().getLocation() instanceof
-		// CACSLLocation)) {
-		// reportUnfinishedBacktranslation("CASTFunctionCallExpression is followed by some unknown location: "
-		// +
-		// origFuncDef.getTraceElement().getLocation().getClass().getSimpleName());
-		// return i;
-		// }
-		// IASTNode cnode = ((CLocation)
-		// origFuncDef.getTraceElement().getLocation()).getNode();
-		// if (!(cnode instanceof CASTFunctionDefinition)) {
-		// reportUnfinishedBacktranslation("After CASTFunctionCallExpression should follow a "
-		// + "CASTFunctionDefinition for each argument, but was: " +
-		// cnode.getClass().getSimpleName());
-		// return i;
-		// }
-		//
-		// // there is no backtranslation for this assign, but maybe we need it
-		// // to track the body vars?
-		// // AssignmentStatement assign = (AssignmentStatement)
-		// // origFuncDef.getTraceElement();
-		// // IdentifierExpression origInParam = new
-		// // LHSIdentifierExtractor().extract(assign);
-		// // IASTExpression inParam = translateExpression(origInParam);
-		// //
-		// // translatedAtomicTraceElements.add(new
-		// // AtomicTraceElement<CACSLLocation>(cloc, new
-		// // CACSLLocation(inParam),
-		// // StepInfo.ARG_EVAL));
-		// //
-		// //
-		// translatedProgramStates.add(translateProgramState(programExecution.getProgramState(j)));
-		// }
-		//
-		// i = j - 1;
 		return i;
 	}
 
@@ -556,21 +507,76 @@ public class CACSL2BoogieBacktranslator
 
 	@Override
 	public IBacktranslatedCFG<String, CACSLLocation> translateCFG(IBacktranslatedCFG<?, BoogieASTNode> cfg) {
-//		mLogger.info(getClass().getSimpleName());
+//		mLogger.info("################# Input: " + cfg.getClass().getSimpleName());
+//		printHondas(cfg, mLogger::info);
 //		printCFG(cfg, mLogger::info);
 		IBacktranslatedCFG<String, CACSLLocation> translated = translateCFG(cfg, (a, b, c) -> translateEdge(a, b, c),
 				(a, b, c) -> new CACSLBacktranslatedCFG(a, b, c, mLogger));
-//		mLogger.info(getClass().getSimpleName() + " Translated");
+		translated = reduceCFGs(translated);
+//		mLogger.info("################# Output: " + translated.getClass().getSimpleName());
+//		printHondas(translated, mLogger::info);
 //		printCFG(translated, mLogger::info);
+
+		return translated;
+	}
+
+	private IBacktranslatedCFG<String, CACSLLocation> reduceCFGs(IBacktranslatedCFG<String, CACSLLocation> translated) {
+		for (final IExplicitEdgesMultigraph<?, ?, String, CACSLLocation> root : translated.getCFGs()) {
+			reduceCFG(root);
+		}
+
 		return translated;
 	}
 
 	@SuppressWarnings("unchecked")
+	private void reduceCFG(final IExplicitEdgesMultigraph<?, ?, String, CACSLLocation> root) {
+		final Deque<Multigraph<String, CACSLLocation>> worklist = new ArrayDeque<>();
+		final Set<IExplicitEdgesMultigraph<?, ?, String, CACSLLocation>> closed = new HashSet<>();
+		int i = 0;
+		worklist.add((Multigraph<String, CACSLLocation>) root);
+		while (!worklist.isEmpty()) {
+			final Multigraph<String, CACSLLocation> current = worklist.remove();
+			if (!closed.add(current)) {
+				continue;
+			}
+
+			for (final MultigraphEdge<String, CACSLLocation> outEdge : new ArrayList<>(current.getOutgoingEdges())) {
+				final Multigraph<String, CACSLLocation> target = outEdge.getTarget();
+				final List<MultigraphEdge<String, CACSLLocation>> targetOutEdges = target.getOutgoingEdges();
+				if (target.getLabel() == null && target.getIncomingEdges().size() == 1) {
+					// remove target and outedge if target is not labeled and has only one incoming edge and ....
+					if (outEdge.getLabel() == null || (targetOutEdges.size() == 1
+							&& outEdge.getLabel().equals(targetOutEdges.get(0).getLabel()))) {
+						++i;
+						// ... this edge is unlabeled (i.e., a skip), or
+						// ... the only outgoing edge from target is identically labeled (i.e., there was a
+						// duplication). Also, remove outedge.
+						outEdge.disconnectSource();
+						outEdge.disconnectTarget();
+						for (final MultigraphEdge<String, CACSLLocation> out : new ArrayList<>(targetOutEdges)) {
+							out.redirectSource(current);
+						}
+					}
+				}
+			}
+
+			for (final MultigraphEdge<String, CACSLLocation> out : current.getOutgoingEdges()) {
+				worklist.add(out.getTarget());
+			}
+		}
+		if (i > 0) {
+			mLogger.info("Reduced CFG by removing " + i + " nodes and edges");
+			reduceCFG(root);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
 	private <TVL, SVL> Multigraph<TVL, CACSLLocation> translateEdge(
-			Map<IExplicitEdgesMultigraph<?, ?, SVL, BoogieASTNode>, Multigraph<TVL, CACSLLocation>> cache,
+			final Map<IExplicitEdgesMultigraph<?, ?, SVL, BoogieASTNode>, Multigraph<TVL, CACSLLocation>> cache,
 			final IMultigraphEdge<?, ?, ?, BoogieASTNode> oldEdge, final Multigraph<TVL, CACSLLocation> newSourceNode) {
 
 		// dirty but quick: convert a single edge to a trace and translate this
+
 		final IExplicitEdgesMultigraph<?, ?, SVL, BoogieASTNode> oldTarget = (IExplicitEdgesMultigraph<?, ?, SVL, BoogieASTNode>) oldEdge
 				.getTarget();
 		Multigraph<TVL, CACSLLocation> currentSource = newSourceNode;
@@ -581,12 +587,15 @@ public class CACSL2BoogieBacktranslator
 			lastTarget = (Multigraph<TVL, CACSLLocation>) createWitnessNode(oldTarget);
 			cache.put(oldTarget, lastTarget);
 		}
+
 		if (oldEdge.getLabel() == null) {
 			new MultigraphEdge<>(currentSource, null, lastTarget);
 			return lastTarget;
 		}
-
+//		mLogger.info("Translating " + oldTarget.getLabel() + " --" + oldEdge + "-->");
 		final List<CACSLLocation> translatedTrace = translateTrace(Collections.singletonList(oldEdge.getLabel()));
+//		mLogger.info("translated trace: "
+//				+ String.join(",", translatedTrace.stream().map(a -> a.toString()).collect(Collectors.toList())));
 		if (translatedTrace.isEmpty()) {
 			new MultigraphEdge<>(currentSource, null, lastTarget);
 			return lastTarget;
