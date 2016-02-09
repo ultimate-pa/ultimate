@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -116,6 +117,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		final Deque<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> worklist = new ArrayDeque<WorklistItem<STATE, ACTION, VARDECL, LOCATION>>();
 		final IAbstractPostOperator<STATE, ACTION, VARDECL> post = mDomain.getPostOperator();
 		final IAbstractStateBinaryOperator<STATE> widening = mDomain.getWideningOperator();
+		final IAbstractStateBinaryOperator<STATE> mergeOperator = mDomain.getMergeOperator();
 		final Set<ACTION> reachedErrors = new HashSet<>();
 
 		worklist.add(createInitialWorklistItem(start));
@@ -141,12 +143,27 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			final STATE preStateWithFreshVariables = mVarProvider.defineVariablesAfter(currentAction, preState,
 					currentStateStorage);
 
-			final List<STATE> postStates;
+			List<STATE> postStates;
 			if (preState == preStateWithFreshVariables) {
 				postStates = post.apply(preStateWithFreshVariables, currentAction);
 			} else {
 				// a context switch happened
 				postStates = post.apply(preState, preStateWithFreshVariables, currentAction);
+			}
+
+			if (postStates.isEmpty()) {
+				// if there are no post states, we interpret this as bottom
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(getLogMessageEmptyIsBottom());
+				}
+				continue;
+			}
+
+			if (postStates.size() > mMaxParallelStates) {
+				mLogger.warn("Domain produced too many abstract states during post: " + mMaxParallelStates
+						+ " allowed, " + postStates.size() + " received.");
+				postStates = Collections
+						.singletonList(postStates.stream().reduce((a, b) -> mergeOperator.apply(a, b)).get());
 			}
 
 			for (STATE pendingNewPostState : postStates) {
@@ -466,6 +483,11 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			mLogger.warn("Received timeout, aborting fixpoint engine");
 			throw new ToolchainCanceledException(getClass(), "Got cancel request during abstract interpretation");
 		}
+	}
+
+	private StringBuilder getLogMessageEmptyIsBottom() {
+		return new StringBuilder().append(AbsIntPrefInitializer.INDENT)
+				.append(" Skipping all successors because there was no post state (i.e., post is bottom)");
 	}
 
 	private StringBuilder getLogMessagePostIsBottom(final STATE pendingNewPostState) {
