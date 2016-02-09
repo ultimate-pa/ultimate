@@ -1,10 +1,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
@@ -25,6 +27,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.util.BidirectionalMap;
+import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock, IBoogieVar> {
 	
@@ -145,7 +148,7 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 		return removeVariables(Collections.singletonMap(name, variable));
 	}
 
-	// TODO document: Returned state is a shallow copy. Do not modify!
+	// TODO document: Returned state is a shallow copy. Modifications of returned state may also effect this state!
 	@Override
 	public OctDomainState addVariables(Map<String, IBoogieVar> variables) {
 		// variables = new TreeMap<>(variables); // fixed iteration order -- essential for fast isEqualTo
@@ -398,7 +401,7 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 		assertNotBottomBeforeAssign();
 
 		OctDomainState patchedState = shallowCopy();
-		BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar = new BidirectionalMap<>();
+		BidirectionalMap<Integer, Integer> mapTargetVarToSourceVar = new BidirectionalMap<>();
 		SortedMap<Integer, String> mapDominatorIndicesOfNewNumericVars = new TreeMap<>();
 
 		for (Map.Entry<String, IBoogieVar> entry : dominator.mMapVarToBoogieVar.entrySet()) {
@@ -419,7 +422,7 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 					}
 				} else {
 					int targetVar = patchedState.mMapNumericVarToIndex.get(var);
-					mapSourceVarToTargetVar.put(sourceVar, targetVar);
+					mapTargetVarToSourceVar.put(targetVar, sourceVar);
 				}
 			} else if (TypeUtil.isBoolean(type)){
 				unrefOtherBooleanAbstraction(patchedState);
@@ -433,20 +436,19 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 		}
 		patchedState.mNumericAbstraction = cachedNormalizedNumericAbstraction()
 				.appendSelection(dominator.mNumericAbstraction, mapDominatorIndicesOfNewNumericVars.keySet());
-		patchedState.mNumericAbstraction.copySelection(dominator.mNumericAbstraction, mapSourceVarToTargetVar);
+		patchedState.mNumericAbstraction.copySelection(dominator.mNumericAbstraction, mapTargetVarToSourceVar);
 		return patchedState;
 	}
 
 	// TODO document: Returned state is a shallow copy. Modifications on return value may also modify this OctDomainState!
-	public OctDomainState copyValuesOnScopeChange(OctDomainState source,
-			Map<String, String> mapSourceToTarget) {
+	public OctDomainState copyValuesOnScopeChange(OctDomainState source, List<Pair<String, String>> mapTargetToSource) {
 		
 		assert assertNotBottomBeforeAssign();
 		
 		// TODO closure in advance to reduce information loss
 		
-		BidirectionalMap<Integer, Integer> mapNumericSourceToTarget = new BidirectionalMap<>();
-		Map<String, String> mapBooleanSourceToTarget = new HashMap<>();
+		BidirectionalMap<Integer, Integer> mapNumericTargetToSource = new BidirectionalMap<>();
+		List<Pair<String, String>> mapBooleanTargetToSource = new ArrayList<>(mapTargetToSource.size());
 
 		// shared (=global) numeric variables (copy to keep relations between globals and in/out-parameters)
 		for (String var : sharedVars(source)) {
@@ -454,38 +456,38 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 			if (targetIndex != null) {
 				Integer sourceIndex = source.mMapNumericVarToIndex.get(var);
 				assert sourceIndex != null : "shared variables are not really shared";
-				mapNumericSourceToTarget.put(sourceIndex, targetIndex);
+				mapNumericTargetToSource.put(sourceIndex, targetIndex);
 			}
 			// do not copy shared (=global) booleans (again). Already done by patch(...).
 		}
 
 		// in/out-parameters (from one scope) to locals (from another scope)
-		for (Map.Entry<String, String> entry : mapSourceToTarget.entrySet()) {
-			String sourceVar = entry.getKey();
-			String targetVar = entry.getValue();
+		for (Pair<String, String> assignmentPair : mapTargetToSource) {
+			String targetVar = assignmentPair.getFirst();
+			String sourceVar = assignmentPair.getSecond();
 			Integer targetIndex = mMapNumericVarToIndex.get(targetVar);
 			if (targetIndex != null) {
 				Integer sourceIndex = source.mMapNumericVarToIndex.get(sourceVar);
 				assert sourceIndex != null : "assigned non-numeric var to numeric var";
-				mapNumericSourceToTarget.put(sourceIndex, targetIndex);
+				mapNumericTargetToSource.put(targetIndex, sourceIndex);
 			} else if (mBooleanAbstraction.containsKey(targetVar)) {
 				assert source.mBooleanAbstraction.containsKey(sourceVar) : "assigned non-boolean var to boolean var";
-				mapBooleanSourceToTarget.put(sourceVar, targetVar);
+				mapBooleanTargetToSource.add(new Pair<>(targetVar, sourceVar));
 			}
 		}
 
 		// create new state
 		OctDomainState newState = shallowCopy();
-		if (!mapNumericSourceToTarget.isEmpty()) {
+		if (!mapNumericTargetToSource.isEmpty()) {
 			newState.mNumericAbstraction = cachedNormalizedNumericAbstraction().copy();
-			newState.mNumericAbstraction.copySelection(source.mNumericAbstraction, mapNumericSourceToTarget);
+			newState.mNumericAbstraction.copySelection(source.mNumericAbstraction, mapNumericTargetToSource);
 		}
-		if (!mapBooleanSourceToTarget.isEmpty()) {
+		if (!mapBooleanTargetToSource.isEmpty()) {
 			unrefOtherBooleanAbstraction(newState);
-			for (Map.Entry<String, String> entry : mapBooleanSourceToTarget.entrySet()) {
-				String sourceVar = entry.getKey();
+			for (Pair<String, String> entry : mapBooleanTargetToSource) {
+				String targetVar = entry.getFirst();
+				String sourceVar = entry.getSecond();
 				BoolValue sourceValue = source.mBooleanAbstraction.get(sourceVar);
-				String targetVar = entry.getValue();
 				newState.mBooleanAbstraction.put(targetVar, sourceValue);
 			}
 		}
@@ -615,16 +617,16 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 	}
 	
 	// targetVar1, targetVar2, ... := sourceVar1, sourceVar2, ...
-	protected void copyVars(Map<String, String> mapTargetVarToSourceVar) {
+	protected void copyVars(List<Pair<String, String>> mapTargetVarToSourceVar) {
 
 		assert assertNotLockedBeforeModification();
 		assert assertNotBottomBeforeAssign();
 
 		boolean usedClosure = false;
 
-		for (Map.Entry<String, String> entry : mapTargetVarToSourceVar.entrySet()) {
-			String targetVar = entry.getKey();
-			String sourceVar = entry.getValue();
+		for (Pair<String, String> entry : mapTargetVarToSourceVar) {
+			String targetVar = entry.getFirst();
+			String sourceVar = entry.getSecond();
 
 			Integer targetIndex = mMapNumericVarToIndex.get(targetVar);
 			if (targetIndex != null) {
@@ -650,7 +652,7 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 
 	// targetVar := sourceVar
 	protected void copyVar(String targetVar, String sourceVar) {
-		copyVars(Collections.singletonMap(targetVar, sourceVar));
+		copyVars(Collections.singletonList(new Pair<>(targetVar, sourceVar)));
 	}
 
 	protected void assignBooleanVar(String var, BoolValue value) {

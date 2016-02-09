@@ -68,19 +68,21 @@ public class OctStatementProcessor {
 				return oldStates;
 			}
 		}
+
 		Map<String, IBoogieVar> tmpVars = new HashMap<>();
-		Map<String, String> mapOrigVarToTmpVar = new HashMap<>();
-		Map<String, Expression> mapLhsToRhs = new HashMap<>();
+		List<Pair<String, Expression>> mapLhsToRhs = new ArrayList<>(length);
+		List<Pair<String, String>> mapOrigVarToTmpVar = new ArrayList<>(length);
 		for (int i = 0; i < length; ++i) {
 			LeftHandSide l = lhs[i];
+
 			if (l instanceof VariableLHS) {
 				VariableLHS vLhs = (VariableLHS) l;
 				String origVar = vLhs.getIdentifier();
-				// parentheses are not allowed in Boogie-identifiers => tmpVar is unique
-				String tmpVar = "octTmp(" + origVar + ")"; 
+				String tmpVar = "octTmp(" + origVar + ")"; // unique (origVar is unique + braces are not allowed)
+
 				tmpVars.put(tmpVar, BoogieUtil.createTemporaryIBoogieVar(tmpVar, vLhs.getType()));
-				mapOrigVarToTmpVar.put(origVar, tmpVar);
-				mapLhsToRhs.put(tmpVar, rhs[i]);
+				mapLhsToRhs.add(new Pair<>(tmpVar, rhs[i]));
+				mapOrigVarToTmpVar.add(new Pair<>(origVar, tmpVar));
 			}
 			// else: variables of unsupported types are assumed to be \top all the time
 		}
@@ -91,8 +93,7 @@ public class OctStatementProcessor {
 
 		// (tmpVar := origExpr)*
 		// note: oldStates may be modified (which is OK), since addVariables() returns only a shallow copy
-		mapLhsToRhs.entrySet().forEach(
-				lhsToRhs -> processSingleAssignment(lhsToRhs.getKey(), lhsToRhs.getValue(), tmpStates));
+		mapLhsToRhs.forEach(lhsToRhs -> processSingleAssignment(lhsToRhs.getFirst(), lhsToRhs.getSecond(), tmpStates));
 
 		// (origVar := tmpVar)*
 		tmpStates.forEach(tmpState -> tmpState.copyVars(mapOrigVarToTmpVar));

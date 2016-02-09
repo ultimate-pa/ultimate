@@ -328,10 +328,10 @@ public class OctMatrixTest {
 				+ "inf inf  20  28 "
 				+ ".32 .31 inf inf .19 .27 "
 				+ ".24 .23 inf inf .20 .28 ");
-		BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar = new BidirectionalMap<>();
-		mapSourceVarToTargetVar.put(1, 2);
-		mapSourceVarToTargetVar.put(3, 0);
-		a.copySelection(b, mapSourceVarToTargetVar);
+		BidirectionalMap<Integer, Integer> mapTargetVarToSourceVar = new BidirectionalMap<>();
+		mapTargetVarToSourceVar.put(2, 1);
+		mapTargetVarToSourceVar.put(0, 3);
+		a.copySelection(b, mapTargetVarToSourceVar);
 		assertIsEqualTo(expected, a);
 	}
 

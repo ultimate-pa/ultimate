@@ -27,6 +27,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 public class OctPostOperator implements IAbstractPostOperator<OctDomainState, CodeBlock, IBoogieVar> {
 
@@ -162,8 +163,8 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		Procedure procedure = calledProcedure(call);
 
 		Map<String, IBoogieVar> tmpVars = new HashMap<>();
-		Map<String, String> mapTmpVarToInParam = new HashMap<>();
-		Map<String, Expression> mapTmpVarToArg = new HashMap<>();
+		List<Pair<String, String>> mapInParamToTmpVar = new ArrayList<>();
+		List<Pair<String, Expression>> mapTmpVarToArg = new ArrayList<>();
 		int paramNumber = 0;
 		for (VarList inParamList : procedure.getInParams()) {
 			IType type = inParamList.getType().getBoogieType();
@@ -173,15 +174,14 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 				// results in "var := \top" for these variables, which is always assumed for unsupported types
 			}
 			for (String inParam : inParamList.getIdentifiers()) {
-				String tmpVar = "octTmp(" + inParam + ")";
+				String tmpVar = "octTmp(" + inParam + ")"; // unique (inParams are all unique + brackets are forbidden)
 				IBoogieVar tmpBoogieVar = BoogieUtil.createTemporaryIBoogieVar(tmpVar, type);
 				Expression arg = call.getArguments()[paramNumber];
 				++paramNumber;
 
 				tmpVars.put(tmpVar, tmpBoogieVar);
-				mapTmpVarToInParam.put(tmpVar, inParam);
-				
-				mapTmpVarToArg.put(tmpVar, arg); // nothing will be overwritten -- in-parameters have unique names
+				mapInParamToTmpVar.add(new Pair<>(inParam, tmpVar));
+				mapTmpVarToArg.add(new Pair<>(tmpVar, arg));
 			}
 		}
 		// add temporary variables
@@ -190,14 +190,14 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 
 		// assign tmp := args
 		tmpStates = deepCopy(tmpStates);
-		for (Map.Entry<String, Expression> assign : mapTmpVarToArg.entrySet()) {
-			tmpStates = mStatementProcessor.processSingleAssignment(assign.getKey(), assign.getValue(), tmpStates);
+		for (Pair<String, Expression> assign : mapTmpVarToArg) {
+			tmpStates = mStatementProcessor.processSingleAssignment(assign.getFirst(), assign.getSecond(), tmpStates);
 		}
 		
-		// copy to scope opened by call (inParam := tmp)
-		// bottom-states are not overwritten (see top of this method)
+		// inParam := tmp (copy to scope opened by call)
+		// note: bottom-states are not overwritten (see top of this method)
 		List<OctDomainState> result = new ArrayList<>();
-		tmpStates.forEach(s -> result.add(stateAfterCall.copyValuesOnScopeChange(s, mapTmpVarToInParam)));
+		tmpStates.forEach(s -> result.add(stateAfterCall.copyValuesOnScopeChange(s, mapInParamToTmpVar)));
 		return result;
 		// No need to remove the temporary variables.
 		// The states with temporary variables are only local variables of this method.
@@ -210,13 +210,13 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		if (!stateAfterReturn.isBottom()) {
 			CallStatement call = returnTransition.getCallStatement();
 			Procedure procedure = calledProcedure(call);
-			Map<String, String> mapOutToLhs = generateMapOutToLhs(call.getLhs(), procedure);
-			stateAfterReturn = stateAfterReturn.copyValuesOnScopeChange(stateBeforeReturn, mapOutToLhs);
+			List<Pair<String, String>> mapLhsToOut = generateMapCallLhsToOutParams(call.getLhs(), procedure);
+			stateAfterReturn = stateAfterReturn.copyValuesOnScopeChange(stateBeforeReturn, mapLhsToOut);
 			result.add(stateAfterReturn);
 		}
 		return result;
 	}
-	
+
 	private Procedure calledProcedure(CallStatement call) {
 		List<Declaration> procedureDeclarations = mSymbolTable.getFunctionOrProcedureDeclaration(call.getMethodName());
 		Procedure implementation = null;
@@ -235,20 +235,19 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		}
 		return implementation;
 	}
-	
-	private Map<String, String> generateMapOutToLhs(VariableLHS[] lhs, Procedure calledProcedure) {
-			Map<String, String> mapOutToLhs = new HashMap<>();
-		// out-parameters to lhs of call assignment
+
+	private List<Pair<String, String>> generateMapCallLhsToOutParams(VariableLHS[] callLhs, Procedure calledProcedure) {
+		List<Pair<String, String>> mapLhsToOut = new ArrayList<>(callLhs.length);
 		int i = 0;
 		for (VarList outParamList : calledProcedure.getOutParams()) {
 			for (String outParam : outParamList.getIdentifiers()) {
-				assert i < lhs.length : "missing left hand side for out-parameter";
-				mapOutToLhs.put(outParam, lhs[i].getIdentifier());
+				assert i < callLhs.length : "missing left hand side for out-parameter";
+				mapLhsToOut.add(new Pair<>(callLhs[i].getIdentifier(), outParam));
 				++i;
 			}
 		}
-		assert i == lhs.length : "missing out-parameter for left hand side";
-		return mapOutToLhs;
+		assert i == callLhs.length : "missing out-parameter for left hand side";
+		return mapLhsToOut;
 	}
-	
+
 }

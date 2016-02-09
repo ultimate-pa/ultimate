@@ -741,7 +741,10 @@ public class OctMatrix {
 	// TODO document
 	// - note that information is lost. Strong Closure on this and source in advance can reduce loss.
 	// - source must be different from target (= this)
-	protected void copySelection(OctMatrix source, BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar) {
+	protected void copySelection(OctMatrix source, BidirectionalMap<Integer, Integer> mapTargetVarToSourceVar) {
+
+		BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar = mapTargetVarToSourceVar.inverse();
+		
 		if (source.mElements == mElements) {
 			for (Map.Entry<Integer, Integer> entry : mapSourceVarToTargetVar.entrySet()) {
 				if (!entry.getKey().equals(entry.getValue())) {
@@ -750,7 +753,6 @@ public class OctMatrix {
 			}
 			return;
 		}
-		BidirectionalMap<Integer, Integer> mapTargetVarToSourceVar = mapSourceVarToTargetVar.inverse();
 		for (Map.Entry<Integer, Integer> entry : mapSourceVarToTargetVar.entrySet()) {
 			int sourceVar = entry.getKey();
 			int targetVar = entry.getValue();
@@ -771,12 +773,13 @@ public class OctMatrix {
 	// - iteration order matters
 	public OctMatrix appendSelection(OctMatrix source, Collection<Integer> selectedSourceVars) {
 		OctMatrix m = this.addVariables(selectedSourceVars.size());
-		BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar = new BidirectionalMap<>();
-		for (Integer s : selectedSourceVars) {
-			Integer prevValue = mapSourceVarToTargetVar.put(s, mapSourceVarToTargetVar.size() + variables());
-			assert prevValue == null : "selection contained duplicate " + s;
+		BidirectionalMap<Integer, Integer> mapTargetVarToSourceVar = new BidirectionalMap<>();
+		for (Integer sourceVar : selectedSourceVars) {
+			int targetVar = mapTargetVarToSourceVar.size() + variables();
+			Integer prevValue = mapTargetVarToSourceVar.put(targetVar, sourceVar);
+			assert prevValue == null : "Selection contained duplicate: " + sourceVar;
 		}
-		m.copySelection(source, mapSourceVarToTargetVar);
+		m.copySelection(source, mapTargetVarToSourceVar);
 		return m;
 	}
 	
