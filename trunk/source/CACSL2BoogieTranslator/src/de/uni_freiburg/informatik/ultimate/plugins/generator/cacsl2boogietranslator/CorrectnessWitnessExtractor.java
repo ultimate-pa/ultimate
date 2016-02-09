@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNodeAnnota
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class TrueWitnessExtractor {
+public class CorrectnessWitnessExtractor {
 
 	private final IUltimateServiceProvider mServices;
 	private final Logger mLogger;
@@ -65,7 +65,7 @@ public class TrueWitnessExtractor {
 	private IASTTranslationUnit mTranslationUnit;
 	private Pair<Map<IASTNode, String>, Map<IASTNode, String>> mAST2Invariant;
 
-	public TrueWitnessExtractor(final IUltimateServiceProvider service) {
+	public CorrectnessWitnessExtractor(final IUltimateServiceProvider service) {
 		mServices = service;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
@@ -120,22 +120,25 @@ public class TrueWitnessExtractor {
 		final Deque<WitnessNode> worklist = new ArrayDeque<>();
 		final Set<WitnessNode> closed = new HashSet<>();
 		worklist.add(mWitnessNode);
-
+		int invariantCounter = 0;
 		while (!worklist.isEmpty()) {
 			final WitnessNode current = worklist.remove();
 			if (!closed.add(current)) {
 				continue;
 			}
 			worklist.addAll(current.getOutgoingNodes());
-			extractNode(current, rtr);
+			if (extractNode(current, rtr)) {
+				++invariantCounter;
+			}
 		}
 
-		printDebug(rtr);
+		mLogger.info("Extracted " + invariantCounter + " invariants");
+		printResults(rtr);
 
 		return rtr;
 	}
 
-	private void printDebug(final Pair<Map<IASTNode, String>, Map<IASTNode, String>> rtr) {
+	private void printResults(final Pair<Map<IASTNode, String>, Map<IASTNode, String>> rtr) {
 		mLogger.info("Found the following invariants in the witness");
 		final Map<IASTNode, String> before = rtr.getFirst();
 		final Map<IASTNode, String> after = rtr.getSecond();
@@ -151,19 +154,23 @@ public class TrueWitnessExtractor {
 		}
 	}
 
-	private void extractNode(final WitnessNode current, final Pair<Map<IASTNode, String>, Map<IASTNode, String>> rtr) {
+	/**
+	 * @return true iff an invariant was extracted, false otherwise.
+	 */
+	private boolean extractNode(final WitnessNode current,
+			final Pair<Map<IASTNode, String>, Map<IASTNode, String>> rtr) {
 		final WitnessNodeAnnotation annot = WitnessNodeAnnotation.getAnnotation(current);
 		if (annot == null) {
-			return;
+			return false;
 		}
 		final String invariant = annot.getInvariant();
 		if (invariant == null || invariant.equalsIgnoreCase("true")) {
-			return;
+			return false;
 		}
 		final Pair<List<IASTNode>, List<IASTNode>> nodes = matchASTNodes(current);
 		if (nodes == null) {
 			mLogger.error("Could not match witness node to AST node: " + current);
-			return;
+			return false;
 		}
 		for (final IASTNode node : nodes.getFirst()) {
 			addInvariants(rtr.getFirst(), invariant, node);
@@ -171,6 +178,7 @@ public class TrueWitnessExtractor {
 		for (final IASTNode node : nodes.getSecond()) {
 			addInvariants(rtr.getSecond(), invariant, node);
 		}
+		return true;
 	}
 
 	private void addInvariants(final Map<IASTNode, String> rtr, final String invariant, final IASTNode node) {

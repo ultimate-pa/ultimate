@@ -205,6 +205,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				// check if we are about to enter a loop
 				if (mLoopDetector.isEnteringLoop(currentAction)) {
 					// we are entering a loop
+					// TODO: Consider action when entering the loop; for this, entering actions have to be marked in the
+					// boogie preprocessor
 					loopEnter(currentItem);
 				}
 
