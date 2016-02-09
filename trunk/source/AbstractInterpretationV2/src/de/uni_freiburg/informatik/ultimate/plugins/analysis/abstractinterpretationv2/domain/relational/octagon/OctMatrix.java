@@ -49,33 +49,33 @@ public class OctMatrix {
 	
 	public final static OctMatrix NEW = new OctMatrix(0);
 
-	private final static Consumer<OctMatrix> sDefaultShortestPathClosure = OctMatrix::shortestPathClosurePrimitiveSparse;
-//	private final static Consumer<OctMatrix> sDefaultShortestPathClosure = m -> {
-//			if (m.mSize <= 0) {
-//				return;
-//			}
-//			String s = m.toStringLower();
-//			BufferedWriter bw;
-//			try {
-//				bw = new BufferedWriter(new FileWriter(makeFilename()), s.length() * 2);
-//				try {
-//					bw.write(s);
-//				} finally {
-//					bw.close();
-//				}
-//			} catch (IOException e) {
-//				throw new AssertionError("Could not write benchmark file.", e);
-//			}
-//			m.shortestPathClosureInPlacePrimitiveSparse();
-//	};
-//	private static String makeFilename() {
-//		int i;
-//		synchronized (OctMatrix.class) {
-//			i = ++sFileNameCounter;
-//		}
-//		return "/tmp/closureBenchmark/" + String.format("%08d", i);
-//	}
-//	private static volatile int sFileNameCounter = 0;
+//	private final static Consumer<OctMatrix> sDefaultShortestPathClosure = OctMatrix::shortestPathClosurePrimitiveSparse;
+	private final static Consumer<OctMatrix> sDefaultShortestPathClosure = m -> {
+			if (m.mSize <= 0) {
+				return;
+			}
+			String s = m.toStringLower();
+			BufferedWriter bw;
+			try {
+				bw = new BufferedWriter(new FileWriter(makeFilename()), s.length() * 2);
+				try {
+					bw.write(s);
+				} finally {
+					bw.close();
+				}
+			} catch (IOException e) {
+				throw new AssertionError("Could not write benchmark file.", e);
+			}
+			m.shortestPathClosurePrimitiveSparse();
+	};
+	private static String makeFilename() {
+		int i;
+		synchronized (OctMatrix.class) {
+			i = ++sFileNameCounter;
+		}
+		return "/tmp/closureBenchmarkSvcomp/" + String.format("%08d", i);
+	}
+	private static volatile int sFileNameCounter = 0;
 	
 	/**
 	 * Size of this matrix (size = #rows = #columns).
@@ -1031,6 +1031,19 @@ public class OctMatrix {
 			set(v2, ov2, addConstantNegated); // also sets entry (ov2 + 1, v2 + 1) by coherence
 		}
 		mStrongClosure = mTightClosure = null;
+	}
+	
+	public double infinityPercentageInBlockLowerHalf() {
+		if (mElements.length == 0) {
+			return Double.NaN;
+		}
+		int infCounter = 0;
+		for (OctValue v : mElements) {
+			if (v.isInfinity()) {
+				++infCounter;
+			}
+		}
+		return infCounter / (double) mElements.length;
 	}
 
 	public Term getTerm(Script script, List<Term> vars) {

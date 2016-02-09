@@ -72,13 +72,26 @@ public class AbstractInterpretationV2TestSuite extends AbstractEvalTestSuite {
 
 //	        "varDiffOrder/",
 
-	        "examples/programs/abstractInterpretation/",
-	        /* ULTIMATE repo */
-	         "examples/programs/regression/bpl/",
-	         "examples/programs/regression/c/",
-	         "examples/programs/recursivePrograms",
-	        /* SV-COMP repo */
-	        "examples/svcomp/loops/", // SPLIT
+			/* closure test set */
+			"examples/svcomp/locks/",
+			"examples/svcomp/loop-acceleration/",
+			"examples/svcomp/loop-invgen/",
+			"examples/svcomp/loop-lit/",
+			"examples/svcomp/loop-new/",
+			"examples/svcomp/loops/",
+			"examples/svcomp/ntdrivers/",
+			"examples/svcomp/ntdrivers-simplified/",
+			"examples/svcomp/ssh/",
+			"examples/svcomp/ssh-simplified/",
+			"examples/svcomp/systemc/",
+
+//	        "examples/programs/abstractInterpretation/",
+//	        /* ULTIMATE repo */
+//	         "examples/programs/regression/bpl/",
+//	         "examples/programs/regression/c/",
+//	         "examples/programs/recursivePrograms",
+//	        /* SV-COMP repo */
+//	        "examples/svcomp/loops/", // SPLIT
 			// "examples/svcomp/ntdrivers-simplified/",
 	   		// "examples/svcomp/ssh-simplified/", 
 			// "examples/svcomp/locks/",
@@ -123,7 +136,7 @@ public class AbstractInterpretationV2TestSuite extends AbstractEvalTestSuite {
 
 	@Override
 	protected long getTimeout() {
-		return 5 * 1000; // origin/dev uses 60 * 1000
+		return 10 * 1000; // origin/dev uses 60 * 1000
 	}
 	
 	@Override
