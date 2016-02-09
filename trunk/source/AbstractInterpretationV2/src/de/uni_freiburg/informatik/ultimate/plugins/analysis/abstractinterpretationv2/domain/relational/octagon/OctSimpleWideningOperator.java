@@ -2,10 +2,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 
-public class OctSimpleWideningOperator implements IAbstractStateBinaryOperator<OctagonDomainState> {
+public class OctSimpleWideningOperator implements IAbstractStateBinaryOperator<OctDomainState> {
 
 	@Override
-	public OctagonDomainState apply(OctagonDomainState first, OctagonDomainState second) {
+	public OctDomainState apply(OctDomainState first, OctDomainState second) {
 		return first.widen(second, OctMatrix::widenSimple);
 	}
 

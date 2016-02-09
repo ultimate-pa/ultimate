@@ -16,11 +16,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 
 public class IntervalProjection {
 
-	public static List<OctagonDomainState> assignNumericVarWithoutIfs(String var, Expression rhs,
-			List<OctagonDomainState> oldStates) {
+	public static List<OctDomainState> assignNumericVarWithoutIfs(String var, Expression rhs,
+			List<OctDomainState> oldStates) {
 
 		oldStates = OctPostOperator.removeBottomStates(oldStates);
-		for (OctagonDomainState state : oldStates) {
+		for (OctDomainState state : oldStates) {
 			IntervalDomainValue i = projectNumericExprWithoutIfs(rhs, state);
 			OctInterval oi = new OctInterval(i);
 			state.assignNumericVarInterval(var, oi.getMin(), oi.getMax());
@@ -28,11 +28,11 @@ public class IntervalProjection {
 		return oldStates;
 	}
 
-	public static List<OctagonDomainState> assignNumericVarAffine(String var, AffineExpression rhs,
-			List<OctagonDomainState> oldStates) {
+	public static List<OctDomainState> assignNumericVarAffine(String var, AffineExpression rhs,
+			List<OctDomainState> oldStates) {
 
 		oldStates = OctPostOperator.removeBottomStates(oldStates);
-		for (OctagonDomainState state : oldStates) {
+		for (OctDomainState state : oldStates) {
 			IntervalDomainValue i = projectAffineExpr(rhs, state);
 			OctInterval oi = new OctInterval(i);
 			state.assignNumericVarInterval(var, oi.getMin(), oi.getMax());
@@ -40,7 +40,7 @@ public class IntervalProjection {
 		return oldStates;
 	}
 	
-	public static IntervalDomainValue projectNumericExprWithoutIfs(Expression expr, OctagonDomainState state) {
+	public static IntervalDomainValue projectNumericExprWithoutIfs(Expression expr, OctDomainState state) {
 		// TODO (?) cache interval projections of each variable
 
 		if (expr instanceof IntegerLiteral) {
@@ -92,7 +92,7 @@ public class IntervalProjection {
 		return new IntervalDomainValue(); // \top = safe over-approximation
 	}
 	
-	public static IntervalDomainValue projectAffineExpr(AffineExpression expr, OctagonDomainState state) {
+	public static IntervalDomainValue projectAffineExpr(AffineExpression expr, OctDomainState state) {
 		IntervalDomainValue i = new IntervalDomainValue(0, 0);
 		for (Map.Entry<String, BigDecimal> summand : expr.getCoefficients().entrySet()) {
 			IntervalDomainValue varIvl = state.projectToInterval(summand.getKey()).toIvlInterval();

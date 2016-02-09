@@ -2,10 +2,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.IType;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomainState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctDomainState;
 
 /**
- * Utility functions for type-handling, especially in {@link OctagonDomainState}.
+ * Utility functions for type-handling, especially in {@link OctDomainState}.
  *
  * @author schaetzc@informatik.uni-freiburg.de
  */

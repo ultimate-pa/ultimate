@@ -26,7 +26,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.util.BidirectionalMap;
 
-public class OctagonDomainState implements IAbstractState<OctagonDomainState, CodeBlock, IBoogieVar> {
+public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock, IBoogieVar> {
 	
 	private static int sId = 0;
 
@@ -54,8 +54,8 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 //		return !isBottom();
 	};
 	
-	public static OctagonDomainState createFreshState() {
-		OctagonDomainState s = new OctagonDomainState();
+	public static OctDomainState createFreshState() {
+		OctDomainState s = new OctDomainState();
 		s.mMapVarToBoogieVar = new HashMap<>();
 		s.mMapNumericVarToIndex = new HashMap<>();
 		s.mNumericNonIntVars = new HashSet<>();
@@ -64,12 +64,12 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		return s;
 	}
 
-	private OctagonDomainState() {
+	private OctDomainState() {
 		mId = sId++;
 	}
 
-	public OctagonDomainState deepCopy() {
-		OctagonDomainState s = new OctagonDomainState();
+	public OctDomainState deepCopy() {
+		OctDomainState s = new OctDomainState();
 		s.mMapVarToBoogieVar = new HashMap<>(mMapVarToBoogieVar);
 		s.mMapNumericVarToIndex = new HashMap<>(mMapNumericVarToIndex);
 		s.mNumericNonIntVars = new HashSet<>(mNumericNonIntVars);
@@ -85,14 +85,14 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	 *
 	 * @return shallow copy
 	 *
-	 * @see #unrefOtherMapVarToBoogieVar(OctagonDomainState)
-	 * @see #unrefOtherMapNumericVarToIndex(OctagonDomainState)
-	 * @see #unrefOtherNumericNonIntVars(OctagonDomainState)
-	 * @see #unrefOtherNumericAbstraction(OctagonDomainState)
-	 * @see #unrefOtherBooleanAbstraction(OctagonDomainState)
+	 * @see #unrefOtherMapVarToBoogieVar(OctDomainState)
+	 * @see #unrefOtherMapNumericVarToIndex(OctDomainState)
+	 * @see #unrefOtherNumericNonIntVars(OctDomainState)
+	 * @see #unrefOtherNumericAbstraction(OctDomainState)
+	 * @see #unrefOtherBooleanAbstraction(OctDomainState)
 	 */
-	private OctagonDomainState shallowCopy() {
-		OctagonDomainState s = new OctagonDomainState();
+	private OctDomainState shallowCopy() {
+		OctDomainState s = new OctDomainState();
 		s.mMapVarToBoogieVar = mMapVarToBoogieVar;
 		s.mMapNumericVarToIndex = mMapNumericVarToIndex;
 		s.mNumericNonIntVars = mNumericNonIntVars;
@@ -101,31 +101,31 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		return s;
 	}
 
-	private void unrefOtherMapVarToBoogieVar(OctagonDomainState other) {
+	private void unrefOtherMapVarToBoogieVar(OctDomainState other) {
 		if (other.mMapVarToBoogieVar == mMapVarToBoogieVar) {
 			other.mMapVarToBoogieVar = new HashMap<>(mMapVarToBoogieVar);
 		}
 	}
 
-	private void unrefOtherMapNumericVarToIndex(OctagonDomainState other) {
+	private void unrefOtherMapNumericVarToIndex(OctDomainState other) {
 		if (other.mMapNumericVarToIndex == mMapNumericVarToIndex) {
 			other.mMapNumericVarToIndex = new HashMap<>(mMapNumericVarToIndex);
 		}
 	}
 
-	private void unrefOtherNumericNonIntVars(OctagonDomainState other) {
+	private void unrefOtherNumericNonIntVars(OctDomainState other) {
 		if (other.mNumericNonIntVars == mNumericNonIntVars) {
 			other.mNumericNonIntVars = new HashSet<>(mNumericNonIntVars);
 		}
 	}
 
-	private void unrefOtherNumericAbstraction(OctagonDomainState other) {
+	private void unrefOtherNumericAbstraction(OctDomainState other) {
 		if (other.mNumericAbstraction == mNumericAbstraction) {
 			other.mNumericAbstraction = mNumericAbstraction.copy();
 		}
 	}
 
-	private void unrefOtherBooleanAbstraction(OctagonDomainState other) {
+	private void unrefOtherBooleanAbstraction(OctDomainState other) {
 		if (other.mBooleanAbstraction == mBooleanAbstraction) {
 			other.mBooleanAbstraction = new HashMap<>(mBooleanAbstraction);
 		}
@@ -137,22 +137,22 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	}
 
 	@Override
-	public OctagonDomainState addVariable(String name, IBoogieVar variable) {
+	public OctDomainState addVariable(String name, IBoogieVar variable) {
 		return addVariables(Collections.singletonMap(name, variable));
 	}
 
 	@Override
-	public OctagonDomainState removeVariable(String name, IBoogieVar variable) {
+	public OctDomainState removeVariable(String name, IBoogieVar variable) {
 		return removeVariables(Collections.singletonMap(name, variable));
 	}
 
 	// TODO document: Returned state is a shallow copy. Do not modify!
 	@Override
-	public OctagonDomainState addVariables(Map<String, IBoogieVar> variables) {
+	public OctDomainState addVariables(Map<String, IBoogieVar> variables) {
 		// variables = new TreeMap<>(variables); // fixed iteration order -- essential for fast isEqualTo
 		// ... probably no speedup. HashSets should iterate in the same order when adding the very same variables.
 
-		OctagonDomainState newState = shallowCopy();
+		OctDomainState newState = shallowCopy();
 		for (Map.Entry<String, IBoogieVar> entry : variables.entrySet()) {
 			unrefOtherMapVarToBoogieVar(newState);
 			String varName = entry.getKey();
@@ -182,9 +182,9 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 
 	// TODO document: Returned state is a shallow copy. Do not modify!
 	@Override
-	public OctagonDomainState removeVariables(Map<String, IBoogieVar> variables) {
+	public OctDomainState removeVariables(Map<String, IBoogieVar> variables) {
 
-		OctagonDomainState newState = shallowCopy();
+		OctDomainState newState = shallowCopy();
 		Set<Integer> indexRemovedNumericVars = new HashSet<>();
 		for (String name : variables.keySet()) {
 			unrefOtherMapVarToBoogieVar(newState);
@@ -267,7 +267,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	}
 
 	@Override
-	public boolean isEqualTo(OctagonDomainState other) {
+	public boolean isEqualTo(OctDomainState other) {
 		if (other == null) {
 			return false;
 		} else if (other == this) {
@@ -287,7 +287,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 
 	// TODO document
 	// - call only when same variables are stored
-	private boolean numericAbstractionIsEqualTo(OctagonDomainState other) {
+	private boolean numericAbstractionIsEqualTo(OctDomainState other) {
 		assert mMapNumericVarToIndex.keySet().equals(other.mMapNumericVarToIndex.keySet());
 		boolean permutated = false;
 		int[] mapThisVarIndexToOtherVarIndex = new int[mNumericAbstraction.variables()];
@@ -316,26 +316,26 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	}
 
 	// TODO document: Returned state is a shallow copy. Do not modify!
-	public OctagonDomainState meet(OctagonDomainState other) {
+	public OctDomainState meet(OctDomainState other) {
 		return operation(other, BoolValue::intersect, OctMatrix::min, false);
 	}
 
 	// TODO document: Returned state is a shallow copy. Do not modify!
-	public OctagonDomainState join(OctagonDomainState other) {
+	public OctDomainState join(OctDomainState other) {
 		return operation(other, BoolValue::union, OctMatrix::max, false);
 	}
 
 	// TODO document: Returned state is a shallow copy. Do not modify!
-	public OctagonDomainState widen(OctagonDomainState other, BiFunction<OctMatrix, OctMatrix, OctMatrix> widenOp) {
+	public OctDomainState widen(OctDomainState other, BiFunction<OctMatrix, OctMatrix, OctMatrix> widenOp) {
 		return operation(other, BoolValue::union, widenOp, true);
 	}
 
 	// TODO document: Returned state is a shallow copy. Do not modify!
-	private OctagonDomainState operation(OctagonDomainState other,
+	private OctDomainState operation(OctDomainState other,
 			BiFunction<BoolValue, BoolValue, BoolValue> booleanOperation,
 			BiFunction<OctMatrix, OctMatrix, OctMatrix> numericOperation,
 			boolean closureOtherInAdvance) {
-		OctagonDomainState result = shallowCopy();
+		OctDomainState result = shallowCopy();
 		for (Map.Entry<String, BoolValue> entry : mBooleanAbstraction.entrySet()) {
 			String name = entry.getKey();
 			BoolValue oldValue = entry.getValue();
@@ -394,11 +394,11 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	// TODO test
 	// TODO document: Returned state is a shallow copy. Do not modify!
 	@Override
-	public OctagonDomainState patch(OctagonDomainState dominator) {
+	public OctDomainState patch(OctDomainState dominator) {
 		
 		assertNotBottomBeforeAssign();
 
-		OctagonDomainState patchedState = shallowCopy();
+		OctDomainState patchedState = shallowCopy();
 		BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar = new BidirectionalMap<>();
 		SortedMap<Integer, String> mapDominatorIndicesOfNewNumericVars = new TreeMap<>();
 
@@ -439,7 +439,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	}
 
 	// TODO document: Returned state is a shallow copy. Do not modify!
-	public OctagonDomainState copyValuesOnScopeChange(OctagonDomainState source,
+	public OctDomainState copyValuesOnScopeChange(OctDomainState source,
 			Map<String, String> mapSourceToTarget) {
 		
 		assert assertNotBottomBeforeAssign();
@@ -476,7 +476,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 		}
 
 		// create new state
-		OctagonDomainState newState = shallowCopy();
+		OctDomainState newState = shallowCopy();
 		if (!mapNumericSourceToTarget.isEmpty()) {
 			newState.mNumericAbstraction = cachedNormalizedNumericAbstraction().copy();
 			newState.mNumericAbstraction.copySelection(source.mNumericAbstraction, mapNumericSourceToTarget);
@@ -518,7 +518,7 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 //		}
 //	}
 
-	public Set<String> sharedVars(OctagonDomainState other) {
+	public Set<String> sharedVars(OctDomainState other) {
 		Set<String> sharedVars = new HashSet<>();
 		Set<Map.Entry<String, IBoogieVar>> otherEntrySet = other.mMapVarToBoogieVar.entrySet();
 		for (Map.Entry<String, IBoogieVar> entry : mMapVarToBoogieVar.entrySet()) {
@@ -667,8 +667,8 @@ public class OctagonDomainState implements IAbstractState<OctagonDomainState, Co
 	}
 
 	// TODO remove
-	public OctagonDomainState bottomCopy_WORKAROUND() {
-		OctagonDomainState bottom = shallowCopy();
+	public OctDomainState bottomCopy_WORKAROUND() {
+		OctDomainState bottom = shallowCopy();
 		if (!mBooleanAbstraction.isEmpty()) {
 			String var = mBooleanAbstraction.keySet().iterator().next();
 			unrefOtherBooleanAbstraction(bottom);

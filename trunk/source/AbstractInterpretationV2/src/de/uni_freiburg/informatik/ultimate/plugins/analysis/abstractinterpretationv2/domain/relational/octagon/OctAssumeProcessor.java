@@ -24,12 +24,12 @@ public class OctAssumeProcessor {
 		mPostOp = postOperator;
 	}
 	
-	public List<OctagonDomainState> assume(Expression assumption, List<OctagonDomainState> oldStates) {
+	public List<OctDomainState> assume(Expression assumption, List<OctDomainState> oldStates) {
 		return processBooleanOperations(assumption, false, oldStates);
 	}
 	
-	private List<OctagonDomainState> processBooleanOperations(Expression e, boolean isNegated,
-			List<OctagonDomainState> oldStates) {
+	private List<OctDomainState> processBooleanOperations(Expression e, boolean isNegated,
+			List<OctDomainState> oldStates) {
 
 		assert TypeUtil.isBoolean(e.getType());
 
@@ -113,30 +113,30 @@ public class OctAssumeProcessor {
 		}
 	}
 	
-	private List<OctagonDomainState> assumeAnd(Expression left, boolean negLeft, Expression right, boolean negRight,
-			List<OctagonDomainState> oldStates) {
+	private List<OctDomainState> assumeAnd(Expression left, boolean negLeft, Expression right, boolean negRight,
+			List<OctDomainState> oldStates) {
 		oldStates = processBooleanOperations(left, negLeft, oldStates);
 		oldStates = processBooleanOperations(right, negRight, oldStates);
 		return oldStates;
 	}
 
-	private List<OctagonDomainState> assumeOr(Expression left, boolean negLeft, Expression right, boolean negRight,
-			List<OctagonDomainState> oldStates) {
+	private List<OctDomainState> assumeOr(Expression left, boolean negLeft, Expression right, boolean negRight,
+			List<OctDomainState> oldStates) {
 		return mPostOp.splitF(oldStates,
 				statesBeforeOr -> processBooleanOperations(left, negLeft, statesBeforeOr),
 				statesBeforeOr -> processBooleanOperations(right, negRight, statesBeforeOr));
 	}
 
-	private List<OctagonDomainState> assumeIff(Expression left, Expression right, boolean negIff,
-			List<OctagonDomainState> oldStates) {
+	private List<OctDomainState> assumeIff(Expression left, Expression right, boolean negIff,
+			List<OctDomainState> oldStates) {
 
 		return mPostOp.splitF(oldStates,
 				statesBeforeIff -> assumeAnd(left, negIff, right, false, statesBeforeIff),
 				statesBeforeIff -> assumeAnd(left, !negIff, right, true, statesBeforeIff));
 	}
 
-	private List<OctagonDomainState> processBooleanRelation(BinaryExpression be, boolean isNegated,
-			List<OctagonDomainState> oldStates) {
+	private List<OctDomainState> processBooleanRelation(BinaryExpression be, boolean isNegated,
+			List<OctDomainState> oldStates) {
 		boolean not = false;
 		switch (be.getOperator()) {
 		case COMPNEQ:
@@ -150,17 +150,17 @@ public class OctAssumeProcessor {
 		}
 	}
 	
-	private List<OctagonDomainState> processNumericRelation(BinaryExpression be, boolean isNegated,
-			List<OctagonDomainState> oldStates) {
+	private List<OctDomainState> processNumericRelation(BinaryExpression be, boolean isNegated,
+			List<OctDomainState> oldStates) {
 		
 		// TODO build binary tree from IfExprs (or same assumption may be processed multiple times)
 
 		// isNegated refers to the relation (==, !=, <, ...) -- inner IfThenElseExpressions are not affected
 		List<Pair<List<Expression>, Expression>> paths = mPostOp.getExprTransformer().removeIfExprsCached(be);
-		List<OctagonDomainState> newStates = new ArrayList<>();
+		List<OctDomainState> newStates = new ArrayList<>();
 		for (int i = 0; i < paths.size(); ++i) {
 			Pair<List<Expression>, Expression> path = paths.get(i);
-			List<OctagonDomainState> tmpOldStates = (i + 1 < paths.size()) ?
+			List<OctDomainState> tmpOldStates = (i + 1 < paths.size()) ?
 					mPostOp.deepCopy(oldStates) : oldStates; // as little copies as possible
 			for (Expression assumption : path.getFirst()) {
 				tmpOldStates = assume(assumption, tmpOldStates);
@@ -171,8 +171,8 @@ public class OctAssumeProcessor {
 		return mPostOp.joinIfGeMaxParallelStates(newStates);
 	}
 
-	private List<OctagonDomainState> processNumericRelationWithoutIfs(BinaryExpression be, boolean isNegated,
-			List<OctagonDomainState> oldStates) {
+	private List<OctDomainState> processNumericRelationWithoutIfs(BinaryExpression be, boolean isNegated,
+			List<OctDomainState> oldStates) {
 
 		Operator op = be.getOperator();
 		if (op == BinaryExpression.Operator.COMPPO) {
@@ -212,8 +212,8 @@ public class OctAssumeProcessor {
 	}
 	
 	
-	private List<OctagonDomainState> processAffineNeZero(AffineExpression ae, boolean intRelation,
-			List<OctagonDomainState> oldStates) {
+	private List<OctDomainState> processAffineNeZero(AffineExpression ae, boolean intRelation,
+			List<OctDomainState> oldStates) {
 		
 		if (ae.isConstant()) {
 			if (ae.getConstant().signum() == 0) {
@@ -264,8 +264,8 @@ public class OctAssumeProcessor {
 		}
 	}
 
-	private List<OctagonDomainState> processAffineEqZero(AffineExpression ae, boolean intRelation,
-			List<OctagonDomainState> oldStates) {
+	private List<OctDomainState> processAffineEqZero(AffineExpression ae, boolean intRelation,
+			List<OctDomainState> oldStates) {
 		
 		if (ae.isConstant()) {
 			if (ae.getConstant().signum() != 0) {
@@ -304,8 +304,8 @@ public class OctAssumeProcessor {
 		}
 	}
 
-	private List<OctagonDomainState> processAffineLtZero(AffineExpression ae, boolean strictRelInt,
-			List<OctagonDomainState> oldStates) {
+	private List<OctDomainState> processAffineLtZero(AffineExpression ae, boolean strictRelInt,
+			List<OctDomainState> oldStates) {
 		
 		// from now on handle (ae - c <= 0) as (ae <= c) ----------------
 		BigDecimal c = ae.getConstant().negate();

@@ -33,7 +33,7 @@ public class OctStatementProcessor {
 		mAssumeProcessor = new OctAssumeProcessor(postOperator);
 	}
 
-	public List<OctagonDomainState> processStatement(Statement statement, List<OctagonDomainState> oldStates) {
+	public List<OctDomainState> processStatement(Statement statement, List<OctDomainState> oldStates) {
 		if (statement instanceof AssignmentStatement) {
 			return processAssignmentStatement((AssignmentStatement) statement, oldStates);
 		} else if (statement instanceof AssumeStatement) {
@@ -52,8 +52,8 @@ public class OctStatementProcessor {
 		}
 	}
 
-	private List<OctagonDomainState> processAssignmentStatement(AssignmentStatement statement,
-			List<OctagonDomainState> oldStates) {
+	private List<OctDomainState> processAssignmentStatement(AssignmentStatement statement,
+			List<OctDomainState> oldStates) {
 
 		LeftHandSide[] lhs = statement.getLhs();
 		Expression[] rhs = statement.getRhs();
@@ -86,7 +86,7 @@ public class OctStatementProcessor {
 		}
 
 		// add temporary variables
-		List<OctagonDomainState> tmpStates = new ArrayList<>(oldStates.size());
+		List<OctDomainState> tmpStates = new ArrayList<>(oldStates.size());
 		oldStates.forEach(oldState -> tmpStates.add(oldState.addVariables(tmpVars)));
 
 		// (tmpVar := origExpr)*
@@ -97,13 +97,13 @@ public class OctStatementProcessor {
 		tmpStates.forEach(tmpState -> tmpState.copyVars(mapTmpVarToOrigVar));
 
 		// remove temporary variables
-		List<OctagonDomainState> newStates = new ArrayList<>(oldStates.size());
+		List<OctDomainState> newStates = new ArrayList<>(oldStates.size());
 		tmpStates.forEach(tmpState -> newStates.add(tmpState.removeVariables(tmpVars)));
 		return newStates;
 	}
 	
-	public List<OctagonDomainState> processSingleAssignment(String targetVar, Expression rhs,
-			List<OctagonDomainState> oldStates) {
+	public List<OctDomainState> processSingleAssignment(String targetVar, Expression rhs,
+			List<OctDomainState> oldStates) {
 
 		oldStates = OctPostOperator.removeBottomStates(oldStates); // important! assign may un-bottomize some states!
 
@@ -118,10 +118,10 @@ public class OctStatementProcessor {
 		}
 	}
 	
-	private List<OctagonDomainState> processBooleanAssign(String targetVar, Expression rhs,
-			List<OctagonDomainState> oldStates) {
+	private List<OctDomainState> processBooleanAssign(String targetVar, Expression rhs,
+			List<OctDomainState> oldStates) {
 
-		Consumer<OctagonDomainState> action = s -> s.havocVar(targetVar); // default operation (if uninterpretable)
+		Consumer<OctDomainState> action = s -> s.havocVar(targetVar); // default operation (if uninterpretable)
 
 		if (rhs instanceof BooleanLiteral) {
 			BoolValue value = BoolValue.get(((BooleanLiteral) rhs).getValue());
@@ -153,14 +153,14 @@ public class OctStatementProcessor {
 		return oldStates;
 	}
 	
-	private List<OctagonDomainState> processNumericAssign(String targetVar, Expression rhs,
-			List<OctagonDomainState> oldStates) {
+	private List<OctDomainState> processNumericAssign(String targetVar, Expression rhs,
+			List<OctDomainState> oldStates) {
 
 		List<Pair<List<Expression>, Expression>> paths = mPostOp.getExprTransformer().removeIfExprsCached(rhs);
-		List<OctagonDomainState> result = new ArrayList<>();
+		List<OctDomainState> result = new ArrayList<>();
 		for (int i = 0; i < paths.size(); ++i) {
 			Pair<List<Expression>, Expression> p = paths.get(i);
-			List<OctagonDomainState> copiedOldStates = (i + 1 < paths.size()) ?
+			List<OctDomainState> copiedOldStates = (i + 1 < paths.size()) ?
 					mPostOp.deepCopy(oldStates) : oldStates; // as little copies as possible
 			for (Expression assumption : p.getFirst()) {
 				// This step is slow for deeply nested IfThenElseExpressions
@@ -174,8 +174,8 @@ public class OctStatementProcessor {
 		return mPostOp.joinIfGeMaxParallelStates(result);
 	}
 	
-	private List<OctagonDomainState> processNumericAssignWithoutIfs(String targetVar, Expression rhs,
-			List<OctagonDomainState> oldStates) {
+	private List<OctDomainState> processNumericAssignWithoutIfs(String targetVar, Expression rhs,
+			List<OctDomainState> oldStates) {
 		
 		AffineExpression ae = mPostOp.getExprTransformer().affineExprCached(rhs);
 		if (ae != null) {
@@ -185,7 +185,7 @@ public class OctStatementProcessor {
 				oldStates.forEach(s -> s.assignNumericVarConstant(targetVar, value));
 				return oldStates;
 			} else if ((ovf = ae.getOneVarForm()) != null) {
-				Consumer<OctagonDomainState> action = s -> s.copyVar(targetVar, ovf.var);
+				Consumer<OctDomainState> action = s -> s.copyVar(targetVar, ovf.var);
 				if (ovf.negVar) {
 					action = action.andThen(s -> s.negateNumericVar(targetVar));
 				} else {
@@ -207,8 +207,8 @@ public class OctStatementProcessor {
 		return oldStates;
 	}
 
-	private List<OctagonDomainState> processHavocStatement(HavocStatement statement,
-			List<OctagonDomainState> oldStates) {
+	private List<OctDomainState> processHavocStatement(HavocStatement statement,
+			List<OctDomainState> oldStates) {
 		List<String> vars = new ArrayList<>();
 		for (VariableLHS lhs : statement.getIdentifiers()) {
 			vars.add(lhs.getIdentifier());

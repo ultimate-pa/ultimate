@@ -7,7 +7,7 @@ import java.util.TreeSet;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 
 public class OctLiteralWideningOperator
-		implements IAbstractStateBinaryOperator<OctagonDomainState>, OctMatrix.WideningStepSupplier {
+		implements IAbstractStateBinaryOperator<OctDomainState>, OctMatrix.WideningStepSupplier {
 
 	/**
 	 * Widening steps.
@@ -43,7 +43,7 @@ public class OctLiteralWideningOperator
 	}
 	
 	@Override
-	public OctagonDomainState apply(OctagonDomainState first, OctagonDomainState second) {
+	public OctDomainState apply(OctDomainState first, OctDomainState second) {
 		return first.widen(second, (m, n) -> m.widenStepwise(n, this));
 	}
 

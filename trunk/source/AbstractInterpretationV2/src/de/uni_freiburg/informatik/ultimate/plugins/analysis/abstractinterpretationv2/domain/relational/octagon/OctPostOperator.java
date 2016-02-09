@@ -29,11 +29,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 
-public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState, CodeBlock, IBoogieVar> {
+public class OctPostOperator implements IAbstractPostOperator<OctDomainState, CodeBlock, IBoogieVar> {
 
-	public OctagonDomainState join(List<OctagonDomainState> states) {
-		OctagonDomainState joinedState = null;
-		for (OctagonDomainState result : states) {
+	public OctDomainState join(List<OctDomainState> states) {
+		OctDomainState joinedState = null;
+		for (OctDomainState result : states) {
 			if (joinedState == null) {
 				joinedState = result;
 			} else {
@@ -43,34 +43,34 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		return joinedState;
 	}
 
-	public List<OctagonDomainState> deepCopy(List<OctagonDomainState> states) {
-		List<OctagonDomainState> copy = new ArrayList<>(states.size());
+	public List<OctDomainState> deepCopy(List<OctDomainState> states) {
+		List<OctDomainState> copy = new ArrayList<>(states.size());
 		states.forEach(state -> copy.add(state.deepCopy()));
 		return copy; 
 	}
 
-	public List<OctagonDomainState> splitF(List<OctagonDomainState> oldStates,
-			Function<List<OctagonDomainState>, List<OctagonDomainState>> op1,
-			Function<List<OctagonDomainState>, List<OctagonDomainState>> op2) {
+	public List<OctDomainState> splitF(List<OctDomainState> oldStates,
+			Function<List<OctDomainState>, List<OctDomainState>> op1,
+			Function<List<OctDomainState>, List<OctDomainState>> op2) {
 
-		List<OctagonDomainState> newStates = op1.apply(deepCopy(oldStates));
+		List<OctDomainState> newStates = op1.apply(deepCopy(oldStates));
 		newStates.addAll(op2.apply(oldStates));
 		return joinIfGeMaxParallelStates(newStates);
 	}
 
-	public List<OctagonDomainState> splitC(List<OctagonDomainState> oldStates,
-			Consumer<OctagonDomainState> op1, Consumer<OctagonDomainState> op2) {
+	public List<OctDomainState> splitC(List<OctDomainState> oldStates,
+			Consumer<OctDomainState> op1, Consumer<OctDomainState> op2) {
 
-		List<OctagonDomainState> copiedOldStates = deepCopy(oldStates);
+		List<OctDomainState> copiedOldStates = deepCopy(oldStates);
 		oldStates.forEach(op1);
 		copiedOldStates.forEach(op2);
 		oldStates.addAll(copiedOldStates);
 		return joinIfGeMaxParallelStates(oldStates);
 	}
 
-	public static List<OctagonDomainState> removeBottomStates(List<OctagonDomainState> states) {
-		List<OctagonDomainState> nonBottomStates = new ArrayList<>(states.size());
-		for (OctagonDomainState state : states) {
+	public static List<OctDomainState> removeBottomStates(List<OctDomainState> states) {
+		List<OctDomainState> nonBottomStates = new ArrayList<>(states.size());
+		for (OctDomainState state : states) {
 			if (!state.isBottom()) {
 				nonBottomStates.add(state);
 			}
@@ -78,12 +78,12 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		return nonBottomStates;
 	}
 
-	public List<OctagonDomainState> joinIfGeMaxParallelStates(List<OctagonDomainState> states) {
+	public List<OctDomainState> joinIfGeMaxParallelStates(List<OctDomainState> states) {
 		states = removeBottomStates(states);
 		if (states.isEmpty() || states.size() <= mMaxParallelStates) {
 			return states;
 		}
-		List<OctagonDomainState> joinedStates = new ArrayList<>();
+		List<OctDomainState> joinedStates = new ArrayList<>();
 		joinedStates.add(join(states));
 		return joinedStates;
 	}
@@ -122,8 +122,8 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 	}
 
 	@Override
-	public List<OctagonDomainState> apply(OctagonDomainState oldState, CodeBlock codeBlock) {
-		List<OctagonDomainState> currentState = deepCopy(Collections.singletonList(oldState));
+	public List<OctDomainState> apply(OctDomainState oldState, CodeBlock codeBlock) {
+		List<OctDomainState> currentState = deepCopy(Collections.singletonList(oldState));
 		List<Statement> statements = mHavocBundler.bundleHavocsCached(codeBlock);
 		statements.forEach(s -> mLogger.error(BoogiePrettyPrinter.print(s)));
 		for (Statement statement : statements) {
@@ -142,10 +142,10 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 	}
 
 	@Override
-	public List<OctagonDomainState> apply(
-			OctagonDomainState stateBeforeTransition, OctagonDomainState stateAfterTransition, CodeBlock transition) {
+	public List<OctDomainState> apply(
+			OctDomainState stateBeforeTransition, OctDomainState stateAfterTransition, CodeBlock transition) {
 
-		List<OctagonDomainState> result;
+		List<OctDomainState> result;
 		if (transition instanceof Call) {
 			result = applyCall(stateBeforeTransition, stateAfterTransition, (Call) transition);
 		} else if (transition instanceof Return) {
@@ -161,15 +161,15 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		return result;
 	}
 	
-	private List<OctagonDomainState> emptyListToSingeltonBot_WORKAROUND(OctagonDomainState s) {
-		OctagonDomainState bot = s.bottomCopy_WORKAROUND();
+	private List<OctDomainState> emptyListToSingeltonBot_WORKAROUND(OctDomainState s) {
+		OctDomainState bot = s.bottomCopy_WORKAROUND();
 //		mLogger.error("workaround empty list: " + bot);
 //		mLogger.error("---´");
 		return Collections.singletonList(bot);
 	}
 
-	private List<OctagonDomainState> applyCall(
-			OctagonDomainState stateBeforeCall, OctagonDomainState stateAfterCall, Call callTransition) {
+	private List<OctDomainState> applyCall(
+			OctDomainState stateBeforeCall, OctDomainState stateAfterCall, Call callTransition) {
 
 		if (stateAfterCall.isBottom()) {
 			return new ArrayList<>();
@@ -202,7 +202,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 			}
 		}
 		// add temporary variables
-		List<OctagonDomainState> tmpStates = new ArrayList<>();
+		List<OctDomainState> tmpStates = new ArrayList<>();
 		tmpStates.add(stateBeforeCall.addVariables(tmpVars));
 
 		// assign tmp := args
@@ -213,17 +213,17 @@ public class OctPostOperator implements IAbstractPostOperator<OctagonDomainState
 		
 		// copy to scope opened by call (inParam := tmp)
 		// bottom-states are not overwritten (see top of this method)
-		List<OctagonDomainState> result = new ArrayList<>();
+		List<OctDomainState> result = new ArrayList<>();
 		tmpStates.forEach(s -> result.add(stateAfterCall.copyValuesOnScopeChange(s, mapTmpVarToInParam)));
 		return result;
 		// No need to remove the temporary variables.
 		// The states with temporary variables are only local variables of this method.
 	}
 	
-	private List<OctagonDomainState> applyReturn(
-			OctagonDomainState stateBeforeReturn, OctagonDomainState stateAfterReturn, Return returnTransition) {
+	private List<OctDomainState> applyReturn(
+			OctDomainState stateBeforeReturn, OctDomainState stateAfterReturn, Return returnTransition) {
 
-		ArrayList<OctagonDomainState> result = new ArrayList<>();
+		ArrayList<OctDomainState> result = new ArrayList<>();
 		if (!stateAfterReturn.isBottom()) {
 			CallStatement call = returnTransition.getCallStatement();
 			Procedure procedure = calledProcedure(call);

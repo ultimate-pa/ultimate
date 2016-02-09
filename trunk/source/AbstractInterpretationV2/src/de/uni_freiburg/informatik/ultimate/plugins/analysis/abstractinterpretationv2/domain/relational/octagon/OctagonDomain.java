@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter.LiteralCollectorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
-public class OctagonDomain implements IAbstractDomain<OctagonDomainState, CodeBlock, IBoogieVar> {
+public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock, IBoogieVar> {
 
 	private final BoogieSymbolTable mSymbolTable;
 	private final Logger mLogger;
@@ -29,12 +29,12 @@ public class OctagonDomain implements IAbstractDomain<OctagonDomainState, CodeBl
 	}
 
 	@Override
-	public OctagonDomainState createFreshState() {
-		return OctagonDomainState.createFreshState();
+	public OctDomainState createFreshState() {
+		return OctDomainState.createFreshState();
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<OctagonDomainState> getWideningOperator() {
+	public IAbstractStateBinaryOperator<OctDomainState> getWideningOperator() {
 		UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		WideningOperator wOp = ups.getEnum(OctPreferences.WIDENING_OPERATOR, WideningOperator.class);
 		switch (wOp) {
@@ -57,17 +57,17 @@ public class OctagonDomain implements IAbstractDomain<OctagonDomainState, CodeBl
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<OctagonDomainState> getMergeOperator() {
-		return new IAbstractStateBinaryOperator<OctagonDomainState>() {
+	public IAbstractStateBinaryOperator<OctDomainState> getMergeOperator() {
+		return new IAbstractStateBinaryOperator<OctDomainState>() {
 			@Override
-			public OctagonDomainState apply(OctagonDomainState first, OctagonDomainState second) {
+			public OctDomainState apply(OctDomainState first, OctDomainState second) {
 				return first.join(second);
 			}
 		};
 	}
 
 	@Override
-	public IAbstractPostOperator<OctagonDomainState, CodeBlock, IBoogieVar> getPostOperator() {
+	public IAbstractPostOperator<OctDomainState, CodeBlock, IBoogieVar> getPostOperator() {
 		UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		return new OctPostOperator(mLogger, mSymbolTable,
 				ups.getInt(AbsIntPrefInitializer.LABEL_STATES_UNTIL_MERGE),

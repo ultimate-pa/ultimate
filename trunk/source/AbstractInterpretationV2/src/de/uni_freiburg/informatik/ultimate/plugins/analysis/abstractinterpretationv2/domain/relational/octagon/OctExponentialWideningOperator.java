@@ -5,7 +5,7 @@ import java.util.function.BiFunction;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 
-public class OctExponentialWideningOperator implements IAbstractStateBinaryOperator<OctagonDomainState> {
+public class OctExponentialWideningOperator implements IAbstractStateBinaryOperator<OctDomainState> {
 		
 	private final BiFunction<OctMatrix, OctMatrix, OctMatrix> mWideningOperator;
 	
@@ -15,7 +15,7 @@ public class OctExponentialWideningOperator implements IAbstractStateBinaryOpera
 	}
 
 	@Override
-	public OctagonDomainState apply(OctagonDomainState first, OctagonDomainState second) {
+	public OctDomainState apply(OctDomainState first, OctDomainState second) {
 		return first.widen(second, mWideningOperator);
 	}
 }
