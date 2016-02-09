@@ -300,6 +300,35 @@ public class SmtUtils {
 	}
 	
 	/**
+	 * Return term that represents the product of all factors. Return the neutral
+	 * element for sort sort if factors is empty.
+	 */
+	public static Term mul(Script script, Sort sort, Term... factors) {
+		assert sort.isNumericSort() || BitvectorUtils.isBitvectorSort(sort);
+		if (factors.length == 0) {
+			if (sort.toString().equals("Int")) {
+				return script.numeral(BigInteger.ONE);
+			} else if (sort.toString().equals("Real")) {
+				return script.decimal(BigDecimal.ONE);
+			} else if (BitvectorUtils.isBitvectorSort(sort)) {
+				return BitvectorUtils.constructTerm(script, BigInteger.ONE, sort);
+			} else {
+				throw new UnsupportedOperationException("unkown sort " + sort);
+			}
+		} else if (factors.length == 1) {
+			return factors[0];
+		} else {
+			if (sort.isNumericSort()) {
+				return script.term("*", factors);
+			} else if (BitvectorUtils.isBitvectorSort(sort)) {
+				return script.term("bvmul", factors);
+			} else {
+				throw new UnsupportedOperationException("unkown sort " + sort);
+			}
+		}
+	}
+	
+	/**
 	 * Return sum, in affine representation if possible.
 	 * @param funcname either "+" or "bvadd".
 	 */
@@ -311,6 +340,20 @@ public class SmtUtils {
 			return sum;
 		} else {
 			return affine.toTerm(script);
+		}
+	}
+	
+	/**
+	 * Return term that represents negation (unary minus).
+	 */
+	public static Term neg(Script script, Sort sort, Term operand) {
+		assert sort.isNumericSort() || BitvectorUtils.isBitvectorSort(sort);
+		if (sort.isNumericSort()) {
+			return script.term("-", operand);
+		} else if (BitvectorUtils.isBitvectorSort(sort)) {
+			return script.term("bvneg", operand);
+		} else {
+			throw new UnsupportedOperationException("unkown sort " + sort);
 		}
 	}
 	

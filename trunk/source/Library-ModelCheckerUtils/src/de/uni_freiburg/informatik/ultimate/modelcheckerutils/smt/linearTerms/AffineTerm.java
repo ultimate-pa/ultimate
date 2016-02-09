@@ -288,7 +288,7 @@ public class AffineTerm extends Term {
 				summands[i] = entry.getKey();
 			} else {
 				Term coeff = SmtUtils.rational2Term(script, entry.getValue(), m_Sort);
-				summands[i] = script.term("*", coeff, entry.getKey());
+				summands[i] = SmtUtils.mul(script, m_Sort, coeff, entry.getKey()); 
 			}
 			++i;
 		}
