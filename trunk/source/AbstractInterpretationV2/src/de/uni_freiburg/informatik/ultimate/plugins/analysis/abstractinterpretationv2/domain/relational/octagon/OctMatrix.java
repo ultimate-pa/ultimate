@@ -1076,7 +1076,7 @@ public class OctMatrix {
 
 	@Override
 	public String toString() {
-		return toStringLower();
+		return toStringHalf();
 	}
 	
 	public String toStringFull() {
@@ -1093,7 +1093,7 @@ public class OctMatrix {
 		return sb.toString();
 	}
 	
-	public String toStringLower() {
+	public String toStringHalf() {
 		StringBuilder sb = new StringBuilder();
 		int n = 2;      // input of integer sequence floor(n^2 / 2 -1)
 		int rowEnd = 1; // index of last element in current row (= output of integer sequence)

@@ -606,11 +606,7 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 	}
 
 	public OctInterval projectToInterval(String numericVar) {
-		OctMatrix n = cachedNormalizedNumericAbstraction();
-		int i2 = numVarIndex(numericVar) * 2;
-		OctValue min = n.get(i2, i2 + 1).negateIfNotInfinity().half();
-		OctValue max = n.get(i2 + 1, i2).half();
-		return new OctInterval(min, max);
+		return OctInterval.fromMatrix(cachedNormalizedNumericAbstraction(), numVarIndex(numericVar));
 	}
 
 	private int numVarIndex(String var) {
@@ -671,53 +667,125 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 	}
 
 	@Override
+	public String toString() {
+		return toLogString();
+	}
+
+	@Override
 	public String toLogString() {
 		return mLogStringFunction.apply(this);
 	}
 
 	public String logStringFullMatrix() {
-		// TODO implement
-		throw new UnsupportedOperationException("Full matrix log string not yet implemented");
+		return logStringMatrix(mNumericAbstraction.toStringFull());
 	}
 
 	public String logStringHalfMatrix() {
+		return logStringMatrix(mNumericAbstraction.toStringHalf());
+	}
+
+	private String logStringMatrix(String logStringNumericAbstration) {
 		StringBuilder log = new StringBuilder();
 		log.append("\n");
-		
-		// TODO remove (only for debugging)
-		log.append("#" + mId);
-		if (mIsLocked) {
-			log.append(" locked");
-		}
-		log.append("\n");
 
-		log.append(mNumericAbstraction);
-		log.append("numeric vars: ");
-		log.append(mMapNumericVarToIndex);
-		log.append("\n");
-		log.append("numeric non-int vars: ");
-		log.append(mNumericNonIntVars);
-		log.append("\n");
-//		log.append(mBooleanAbstraction);
-		for (Map.Entry<String, BoolValue> entry : mBooleanAbstraction.entrySet()) {
-			log.append(entry.getKey());
-			log.append(" = ");
-			log.append(entry.getValue());
-			log.append("\n");
-		}
-		
-		log.append("#END"); // TODO remove
+		// TODO remove (only for debugging)
+		log.append("#").append(mId);
+		log.append(mIsLocked ? " locked\n" : " open\n");
+
+		log.append(logStringNumericAbstration);
+
+		log.append("numeric vars: ").append(mMapNumericVarToIndex);
+		log.append("\nnumeric non-int vars: ").append(mNumericNonIntVars);
+		log.append("\nboolean abstraction: ").append(mBooleanAbstraction);
+
+//		for (Map.Entry<String, BoolValue> entry : mBooleanAbstraction.entrySet()) {
+//			log.append(entry.getKey()).append(" = ").append(entry.getValue()).append("\n");
+//		}
+
+		// TODO remove
+		log.append("\n#END");
 
 		return log.toString();
 	}
 
 	public String logStringTerm() {
-		// TODO implement
-		throw new UnsupportedOperationException("Term log string not yet implemented");
+		final String le = " <= ";
+		final String in = " = ";
+		final String minus = " - ";
+		final String plus = " + ";
+		final String delimiter = "; ";
+		
+		// Interval bounds --------------------------------------------------------------
+		StringBuilder intsLog = new StringBuilder("ints: {");
+		StringBuilder realsLog = new StringBuilder("reals: {");
+
+		String curDelimiter = "";
+		for (Map.Entry<String, Integer> entry : mMapNumericVarToIndex.entrySet()) {
+			String varName = entry.getKey();
+			OctInterval interval = OctInterval.fromMatrix(mNumericAbstraction, entry.getValue());
+
+			StringBuilder curLog = mNumericNonIntVars.contains(varName) ? realsLog : intsLog;
+			curLog.append(curDelimiter);
+			curDelimiter = delimiter;
+			curLog.append(varName).append(in).append(interval);
+		}
+
+		// Constraints between two different variables ----------------------------------
+		StringBuilder relLog = new StringBuilder("relations: {");
+		
+		curDelimiter = "";
+		if (mNumericAbstraction.hasNegativeSelfLoop()) {
+			relLog.append("\\bot");
+			curDelimiter = delimiter;
+		}
+		for (Map.Entry<String, Integer> rowEntry : mMapNumericVarToIndex.entrySet()) {
+			for (Map.Entry<String, Integer> colEntry : mMapNumericVarToIndex.entrySet()) {
+				String rowName = rowEntry.getKey();
+				String colName = colEntry.getKey();
+				int row2 = rowEntry.getValue() * 2;
+				int col2 = colEntry.getValue() * 2;
+
+				if (row2 <= col2) {
+					// skip block upper triangular part (is coherent/redundant)
+					// skip diagonal blocks (already logged, see above)
+					continue;
+				}
+
+				OctInterval sumInterval = OctInterval.fromMatrixEntries(
+						mNumericAbstraction.get(row2, col2 + 1),
+						mNumericAbstraction.get(row2 + 1, col2));
+				OctValue colMinusRowMax = mNumericAbstraction.get(row2, col2);
+				OctValue rowMinusColMax = mNumericAbstraction.get(row2 + 1, col2 + 1);
+
+				// top right and bottom left entry of 2x2 block
+				if (!sumInterval.getMin().isInfinity() || !sumInterval.getMax().isInfinity()) {
+					relLog.append(curDelimiter);
+					curDelimiter = delimiter;
+					relLog.append(colName).append(plus).append(rowName).append(in).append(sumInterval);
+				}
+
+				// top left entry of 2x2 block
+				if (!colMinusRowMax.isInfinity()) {
+					relLog.append(curDelimiter);
+					curDelimiter = delimiter;
+					relLog.append(colName).append(minus).append(rowName).append(le).append(colMinusRowMax);
+				}
+
+				// bottom right entry of 2x2 block
+				if (!rowMinusColMax.isInfinity()) {
+					relLog.append(curDelimiter);
+					curDelimiter = delimiter;
+					relLog.append(rowName).append(minus).append(colName).append(le).append(rowMinusColMax);
+				}
+			}
+		}
+
+		return new StringBuilder("{")
+				.append(intsLog).append("}, ")
+				.append(realsLog).append("}, ")
+				.append(relLog).append("}, ")
+				.append("bools: ").append(mBooleanAbstraction)
+				.append("}").toString();
 	}
 	
-	@Override
-	public String toString() {
-		return toLogString();
-	}
 }
