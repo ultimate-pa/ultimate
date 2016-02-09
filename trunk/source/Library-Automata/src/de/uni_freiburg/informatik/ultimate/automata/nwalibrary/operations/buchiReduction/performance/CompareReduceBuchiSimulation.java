@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveNonLiveStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.ASimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.delayed.DelayedSimulation;
@@ -433,7 +434,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 
 		// Remove dead ends, a requirement of simulation
 		NestedWordAutomatonReachableStates<LETTER, STATE> operandReachable = new RemoveUnreachable<LETTER, STATE>(
-				m_Services, operand).getResult();
+				m_Services, new RemoveNonLiveStates<LETTER, STATE>(m_Services, operand).getResult()).getResult();
 
 		String automatonName = "";
 //		BufferedReader br = null;
@@ -482,8 +483,8 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 		// Other minimization methods
 		measureMethodPerformance(automatonName, ESimulationType.EXT_MINIMIZESEVPA, true, m_Services,
 				simulationTimeoutMillis, stateFactory, operandReachable);
-		measureMethodPerformance(automatonName, ESimulationType.EXT_SHRINKNWA, true, m_Services, simulationTimeoutMillis,
-				stateFactory, operandReachable);
+		measureMethodPerformance(automatonName, ESimulationType.EXT_SHRINKNWA, true, m_Services,
+				simulationTimeoutMillis, stateFactory, operandReachable);
 
 		// flushLogToLogger();
 		flushLogToFile();

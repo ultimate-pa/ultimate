@@ -883,7 +883,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			duration += durationGraph;
 			performance.addTimeMeasureValue(ETimeMeasure.OVERALL_TIME, durationGraph);
 		}
-		performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_STATES, m_Game.getSize());
+		performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_VERTICES, m_Game.getSize());
 
 		m_Logger.info((isUsingSCCs() ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds and "
 				+ performance.getCountingMeasureResult(ECountingMeasure.SIMULATION_STEPS) + " simulation steps.");

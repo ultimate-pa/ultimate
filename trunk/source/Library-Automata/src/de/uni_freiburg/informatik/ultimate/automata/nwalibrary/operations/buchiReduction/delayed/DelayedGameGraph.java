@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.ETimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 
 /**
@@ -87,13 +86,17 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 	 */
 	private int m_BuechiAmountOfTransitions;
 	/**
-	 * Service provider of Ultimate framework.
+	 * Amount of edges the game graph has.
 	 */
-	private final AutomataLibraryServices m_Services;
+	private int m_GraphAmountOfEdges;
 	/**
 	 * Time duration building the graph took in milliseconds.
 	 */
 	private long m_GraphBuildTime;
+	/**
+	 * Service provider of Ultimate framework.
+	 */
+	private final AutomataLibraryServices m_Services;
 
 	/**
 	 * Creates a new delayed game graph by using the given buechi automaton.
@@ -130,6 +133,7 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 		m_BuechiAmountOfStates = 0;
 		m_BuechiAmountOfTransitions = 0;
 		m_GraphBuildTime = 0;
+		m_GraphAmountOfEdges = 0;
 		generateGameGraphFromBuechi();
 	}
 
@@ -255,7 +259,9 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 					m_BuechiAmountOfStates - resultAmountOfStates);
 			performance.setCountingMeasure(ECountingMeasure.REMOVED_TRANSITIONS,
 					m_BuechiAmountOfTransitions - resultAmountOfTransitions);
+			performance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS, m_BuechiAmountOfTransitions);
 			performance.setCountingMeasure(ECountingMeasure.BUCHI_STATES, m_BuechiAmountOfStates);
+			performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES, m_GraphAmountOfEdges);
 		}
 
 		return result;
@@ -299,28 +305,39 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 						DuplicatorVertex<LETTER, STATE> v0e = new DuplicatorVertex<>(2, false, q0, q1, s);
 						addDuplicatorVertex(v0e);
 						// V0 -> V1 edges [paper ref 11]
-						for (STATE q2 : m_Buechi.succInternal(q1, s))
+						for (STATE q2 : m_Buechi.succInternal(q1, s)) {
 							addEdge(v0e, getSpoilerVertex(q0, q2, false));
+							m_GraphAmountOfEdges++;
+						}
 						// V1 -> V0 edges [paper ref 11]
-						for (STATE q2 : m_Buechi.predInternal(q0, s))
-							if (!m_Buechi.isFinal(q0))
+						for (STATE q2 : m_Buechi.predInternal(q0, s)) {
+							if (!m_Buechi.isFinal(q0)) {
 								addEdge(getSpoilerVertex(q2, q1, false), v0e);
+								m_GraphAmountOfEdges++;
+							}
+						}
 						v0e = new DuplicatorVertex<>(2, true, q0, q1, s);
 						addDuplicatorVertex(v0e);
 						// V0 -> V1 edges [paper ref 11]
 						for (STATE q2 : m_Buechi.succInternal(q1, s)) {
 							if (!m_Buechi.isFinal(q2) && getAmountOfBitsForSpoilerVertix(q0, q2) > 1) {
 								addEdge(v0e, getSpoilerVertex(q0, q2, true));
+								m_GraphAmountOfEdges++;
 							} else {
 								addEdge(v0e, getSpoilerVertex(q0, q2, false));
+								m_GraphAmountOfEdges++;
 							}
 						}
 						// V1 -> V0 edges [paper ref 11]
 						for (STATE q2 : m_Buechi.predInternal(q0, s)) {
-							if (getAmountOfBitsForSpoilerVertix(q2, q1) > 1)
+							if (getAmountOfBitsForSpoilerVertix(q2, q1) > 1) {
 								addEdge(getSpoilerVertex(q2, q1, true), v0e);
-							if (m_Buechi.isFinal(q0))
+								m_GraphAmountOfEdges++;
+							}
+							if (m_Buechi.isFinal(q0)) {
 								addEdge(getSpoilerVertex(q2, q1, false), v0e);
+								m_GraphAmountOfEdges++;
+							}
 
 							// Make sure to only count this transitions one time
 							// for q0
@@ -346,11 +363,7 @@ public final class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, ST
 					+ (getDuplicatorVertices().size() + getSpoilerVertices().size()));
 			logger.debug("Number of vertices in v0: " + getDuplicatorVertices().size());
 			logger.debug("Number of vertices in v1: " + getSpoilerVertices().size());
-			int edges = 0;
-			for (Set<Vertex<LETTER, STATE>> hs : getSuccessorGroups()) {
-				edges += hs.size();
-			}
-			logger.debug("Number of edges in game graph: " + edges);
+			logger.debug("Number of edges in game graph: " + m_GraphAmountOfEdges);
 		}
 
 		m_GraphBuildTime = System.currentTimeMillis() - graphBuildTimeStart;
