@@ -50,8 +50,7 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 	};
 	
 	private boolean assertNotBottomBeforeAssign() {
-		return true; // assertion is disabled
-//		return !isBottom();
+		return !isBottom();
 	};
 	
 	public static OctDomainState createFreshState() {
@@ -678,7 +677,7 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 			bottom.mNumericAbstraction.set(0, 0, new OctValue(-9999));
 		}
 		// else: there is no way to set this state to bottom
-		return bottom;
+		throw new UnsupportedOperationException("Empty state cannot be set to \bot!");
 	}
 	
 	@Override
