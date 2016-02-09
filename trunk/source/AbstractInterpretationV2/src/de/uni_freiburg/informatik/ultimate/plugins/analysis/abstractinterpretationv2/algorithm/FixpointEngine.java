@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
@@ -142,7 +141,6 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			final STATE preStateWithFreshVariables = mVarProvider.defineVariablesAfter(currentAction, preState,
 					currentStateStorage);
 
-			STATE pendingNewPostState;
 			final List<STATE> postStates;
 			if (preState == preStateWithFreshVariables) {
 				postStates = post.apply(preStateWithFreshVariables, currentAction);
@@ -151,98 +149,72 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				postStates = post.apply(preState, preStateWithFreshVariables, currentAction);
 			}
 
-			// TODO: Handle multiple states from post correctly here; for now, we merge the states
-			pendingNewPostState = mergeStates(postStates);
-
-			if (pendingNewPostState.isBottom()) {
-				// if the new abstract state is bottom, we did not actually
-				// execute the action (i.e., we do not enter loops, do not add
-				// new actions to the worklist, etc.)
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT)
-							.append(" Skipping all successors because post is bottom"));
-				}
-				continue;
-			}
-
-			// check if this action leaves a loop
-			if (currentItem.hasActiveLoop()) {
-				// are we leaving a loop?
-				final LOCATION currentLoopHead = mTransitionProvider.getTarget(currentAction);
-				if (currentItem.isActiveLoopHead(currentLoopHead)) {
-					// yes, we are leaving a loop
-					// here we also check if we have to widen
-					final List<STATE> currentStateStack = currentStateStorage.getAbstractPostStates(currentAction);
-					pendingNewPostState = loopLeave(currentItem, currentLoopHead, widening, currentStateStack,
-							pendingNewPostState);
-				}
-			}
-
-			// check if we should widen after entering a new scope
-			if (mTransitionProvider.isEnteringScope(currentAction)) {
-				pendingNewPostState = widenAtScopeEntry(currentItem, widening, pendingNewPostState);
-				// check if the resulting state is a fixpoint
-				if (checkFixpointAtScopeEntry(currentItem, pendingNewPostState)) {
-					// TODO: Add the summary successor here
+			for (STATE pendingNewPostState : postStates) {
+				if (pendingNewPostState.isBottom()) {
+					// if the new abstract state is bottom, we did not actually
+					// execute the action (i.e., we do not enter loops, do not add
+					// new actions to the worklist, etc.)
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug(getLogMessagePostIsBottom(pendingNewPostState));
+					}
 					continue;
 				}
-			}
 
-			final STATE newPostState = pendingNewPostState;
-
-			// check if we are about to enter a loop
-			if (mLoopDetector.isEnteringLoop(currentAction)) {
-				// we are entering a loop
-				loopEnter(currentItem);
-			}
-
-			// check if the current state is a fixpoint
-			if (checkFixpoint(currentStateStorage, currentAction, newPostState)) {
-				continue;
-			}
-
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(getLogMessageNewPostState(newPostState));
-			}
-			// add post state to this location
-			currentStateStorage.addAbstractPostState(currentAction, newPostState);
-
-			if (mTransitionProvider.isPostErrorLocation(currentAction, currentItem.getCurrentScope())
-					&& !newPostState.isBottom() && reachedErrors.add(currentAction)) {
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(
-							new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Error state reached"));
+				// check if this action leaves a loop
+				if (currentItem.hasActiveLoop()) {
+					// are we leaving a loop?
+					final LOCATION currentLoopHead = mTransitionProvider.getTarget(currentAction);
+					if (currentItem.isActiveLoopHead(currentLoopHead)) {
+						// yes, we are leaving a loop
+						// here we also check if we have to widen
+						final List<STATE> currentStateStack = currentStateStorage.getAbstractPostStates(currentAction);
+						pendingNewPostState = loopLeave(currentItem, currentLoopHead, widening, currentStateStack,
+								pendingNewPostState);
+					}
 				}
-				mResult.reachedError(mTransitionProvider, currentItem, newPostState);
+
+				// check if we should widen after entering a new scope
+				if (mTransitionProvider.isEnteringScope(currentAction)) {
+					pendingNewPostState = widenAtScopeEntry(currentItem, widening, pendingNewPostState);
+					// check if the resulting state is a fixpoint
+					if (checkFixpointAtScopeEntry(currentItem, pendingNewPostState)) {
+						// TODO: Add the summary successor here
+						continue;
+					}
+				}
+
+				final STATE newPostState = pendingNewPostState;
+
+				// check if we are about to enter a loop
+				if (mLoopDetector.isEnteringLoop(currentAction)) {
+					// we are entering a loop
+					loopEnter(currentItem);
+				}
+
+				// check if the current state is a fixpoint
+				if (checkFixpoint(currentStateStorage, currentAction, newPostState)) {
+					continue;
+				}
+
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(getLogMessageNewPostState(newPostState));
+				}
+				// add post state to this location
+				currentStateStorage.addAbstractPostState(currentAction, newPostState);
+
+				if (mTransitionProvider.isPostErrorLocation(currentAction, currentItem.getCurrentScope())
+						&& !newPostState.isBottom() && reachedErrors.add(currentAction)) {
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT)
+								.append(" Error state reached"));
+					}
+					mResult.reachedError(mTransitionProvider, currentItem, newPostState);
+				}
+
+				// now add successors
+				addSuccessors(worklist, currentItem);
 			}
-
-			// now add successors
-			addSuccessors(worklist, currentItem);
 		}
-	}
-
-	/**
-	 * Merges a list of states into one single state.
-	 * 
-	 * @param states
-	 *            The list of states to merge.
-	 * @return A new {@link IntervalDomainState} which is the result of the merger of all states in the list of states.
-	 */
-	private STATE mergeStates(final List<STATE> states) {
-		assert states != null;
-
-		STATE returnState = null;
-		final IAbstractStateBinaryOperator<STATE> mergeOperator = mDomain.getMergeOperator();
-
-		for (int i = 0; i < states.size(); i++) {
-			if (i == 0) {
-				returnState = states.get(0);
-			} else {
-				returnState = mergeOperator.apply(returnState, states.get(i));
-			}
-		}
-
-		return returnState;
 	}
 
 	private boolean checkFixpoint(final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> currentStorage,
@@ -494,6 +466,12 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			mLogger.warn("Received timeout, aborting fixpoint engine");
 			throw new ToolchainCanceledException(getClass(), "Got cancel request during abstract interpretation");
 		}
+	}
+
+	private StringBuilder getLogMessagePostIsBottom(final STATE pendingNewPostState) {
+		return new StringBuilder().append(AbsIntPrefInitializer.INDENT)
+				.append(" Skipping all successors because post state [").append(pendingNewPostState.hashCode())
+				.append("] is bottom");
 	}
 
 	private StringBuilder getLogMessageLeaveScope(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> successorItem) {
