@@ -13,6 +13,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.Map.Entry;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -36,6 +37,7 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 	/** A human-readable hash code, unique for each object. */
 	private final int mId;
 
+	private final Function<OctDomainState, String> mLogStringFunction;
 	private Map<String, IBoogieVar> mMapVarToBoogieVar;
 	private Map<String, Integer> mMapNumericVarToIndex;
 	private Set<String> mNumericNonIntVars;
@@ -55,9 +57,14 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 	private boolean assertNotBottomBeforeAssign() {
 		return !isBottom();
 	};
+
+	private OctDomainState(Function<OctDomainState, String> logStringFunction) {
+		mLogStringFunction = logStringFunction;
+		mId = sId++;
+	}
 	
-	public static OctDomainState createFreshState() {
-		OctDomainState s = new OctDomainState();
+	public static OctDomainState createFreshState(Function<OctDomainState, String> logStringFunction) {
+		OctDomainState s = new OctDomainState(logStringFunction);
 		s.mMapVarToBoogieVar = new HashMap<>();
 		s.mMapNumericVarToIndex = new HashMap<>();
 		s.mNumericNonIntVars = new HashSet<>();
@@ -66,12 +73,8 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 		return s;
 	}
 
-	private OctDomainState() {
-		mId = sId++;
-	}
-
 	public OctDomainState deepCopy() {
-		OctDomainState s = new OctDomainState();
+		OctDomainState s = new OctDomainState(mLogStringFunction);
 		s.mMapVarToBoogieVar = new HashMap<>(mMapVarToBoogieVar);
 		s.mMapNumericVarToIndex = new HashMap<>(mMapNumericVarToIndex);
 		s.mNumericNonIntVars = new HashSet<>(mNumericNonIntVars);
@@ -94,7 +97,7 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 	 * @see #unrefOtherBooleanAbstraction(OctDomainState)
 	 */
 	private OctDomainState shallowCopy() {
-		OctDomainState s = new OctDomainState();
+		OctDomainState s = new OctDomainState(mLogStringFunction);
 		s.mMapVarToBoogieVar = mMapVarToBoogieVar;
 		s.mMapNumericVarToIndex = mMapNumericVarToIndex;
 		s.mNumericNonIntVars = mNumericNonIntVars;
@@ -669,6 +672,15 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 
 	@Override
 	public String toLogString() {
+		return mLogStringFunction.apply(this);
+	}
+
+	public String logStringFullMatrix() {
+		// TODO implement
+		throw new UnsupportedOperationException("Full matrix log string not yet implemented");
+	}
+
+	public String logStringHalfMatrix() {
 		StringBuilder log = new StringBuilder();
 		log.append("\n");
 		
@@ -678,7 +690,7 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 			log.append(" locked");
 		}
 		log.append("\n");
-		
+
 		log.append(mNumericAbstraction);
 		log.append("numeric vars: ");
 		log.append(mMapNumericVarToIndex);
@@ -695,10 +707,15 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 		}
 		
 		log.append("#END"); // TODO remove
-		
+
 		return log.toString();
 	}
 
+	public String logStringTerm() {
+		// TODO implement
+		throw new UnsupportedOperationException("Term log string not yet implemented");
+	}
+	
 	@Override
 	public String toString() {
 		return toLogString();

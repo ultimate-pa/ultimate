@@ -12,6 +12,15 @@ public class OctPreferences {
 		SIMPLE, EXPONENTIAL, LITERAL;
 	}
 
+	public static enum LogMessageFormatting {
+		FULL_MATRIX, HALF_MATRIX, TERM;
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+	public static final String LOG_STRING_FORMAT = "Log string format";
+	public static final LogMessageFormatting LOG_STRING_FORMAT_DEFAULT = LogMessageFormatting.HALF_MATRIX;
+
 	public static final String WIDENING_OPERATOR = "Octagon widening operator";
 	public static final WideningOperator WIDENING_OPERATOR_DEFAULT = WideningOperator.LITERAL;
 
@@ -22,28 +31,30 @@ public class OctPreferences {
 			+ "You may want to double the threshold, since interval bounds are stored with factor 2.";
 
 	public static final String FALLBACK_ASSIGN_INTERVAL_PROJECTION = "Fallback: assign interval projection";
-//	public static final String FALLBACK_ASSUME_LP_SOLVER = "Fallback: assume lp-solver";
+	public static final boolean FALLBACK_ASSIGN_INTERVAL_PROJECTION_DEFAULT = true;
 
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	
 	public static List<UltimatePreferenceItem<?>> createPreferences() {
+
 		List<UltimatePreferenceItem<?>> prf = new ArrayList<>();
-		prf.add(createLabel(
-				"   ---   Octagon Domain   ---   "));
-		prf.add(new UltimatePreferenceItem<WideningOperator>(
-				WIDENING_OPERATOR,
+		prf.add(makeLabel("   ---   Octagon Domain   ---   "));
+
+		prf.add(new UltimatePreferenceItem<LogMessageFormatting>(LOG_STRING_FORMAT,
+				LOG_STRING_FORMAT_DEFAULT, PreferenceType.Combo, LogMessageFormatting.values()));
+
+		prf.add(new UltimatePreferenceItem<WideningOperator>(WIDENING_OPERATOR,
 				WIDENING_OPERATOR_DEFAULT, PreferenceType.Combo, WideningOperator.values()));
-		prf.add(new UltimatePreferenceItem<String>(
-				EXP_WIDENING_THRESHOLD,
+		prf.add(new UltimatePreferenceItem<String>(EXP_WIDENING_THRESHOLD,
 				EXP_WIDENING_THRESHOLD_DEFAULT_VALUE, EXP_WIDENING_THRESHOLD_TOOLTIP, PreferenceType.String));
 
-		prf.add(new UltimatePreferenceItem<Boolean>(
-				FALLBACK_ASSIGN_INTERVAL_PROJECTION, true, PreferenceType.Boolean));
-//		prf.add(new UltimatePreferenceItem<Boolean>(
-//				FALLBACK_ASSUME_LP_SOLVER, false, PreferenceType.Boolean));
+		prf.add(new UltimatePreferenceItem<Boolean>(FALLBACK_ASSIGN_INTERVAL_PROJECTION,
+				FALLBACK_ASSIGN_INTERVAL_PROJECTION_DEFAULT, PreferenceType.Boolean));
 
 		return prf;
 	}
 
-	private static UltimatePreferenceItem<?> createLabel(String msg) {
+	private static UltimatePreferenceItem<?> makeLabel(String msg) {
 		return new UltimatePreferenceItem<Object>(msg, null, PreferenceType.Label);
 	}
 

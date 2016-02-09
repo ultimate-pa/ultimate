@@ -110,11 +110,11 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 	private final OctStatementProcessor mStatementProcessor;
 	private final boolean mFallbackAssignIntervalProjection;
 
-	public OctPostOperator(Logger logger, BoogieSymbolTable symbolTable, int statesUntilMerge,
+	public OctPostOperator(Logger logger, BoogieSymbolTable symbolTable, int maxParallelStates,
 			boolean fallbackAssignIntervalProjection) {
 		mLogger = logger;
 		mSymbolTable = symbolTable;
-		mMaxParallelStates = statesUntilMerge;
+		mMaxParallelStates = maxParallelStates;
 		mHavocBundler = new HavocBundler();
 		mExprTransformer = new ExpressionTransformer();
 		mStatementProcessor = new OctStatementProcessor(this);
