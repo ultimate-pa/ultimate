@@ -155,7 +155,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	private Map<Object, Term> m_AITermMap;
 	private NestedWordAutomaton<WitnessEdge, WitnessNode> m_WitnessAutomaton;
 //	private IHoareTripleChecker m_HoareTripleChecker;
-	private boolean m_DoFaultLocalization = false;
+	private boolean m_DoFaultLocalization = true;
 	
 
 	public BasicCegarLoop(String name, RootNode rootNode, SmtManager smtManager, TAPreferences taPrefs,

@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+
 /**
  * A tuple class for integers.
  * @author Layla Franke
@@ -40,6 +42,8 @@ public final class Tuple {
 	 * The second integer.
 	 */
 	final int m_second;
+	public IPredicate x;
+	public IPredicate y;
 
 	/**
 	 * Constructor.

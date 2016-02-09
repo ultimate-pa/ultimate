@@ -27,12 +27,14 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.awt.List;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.TreeMap;
-
 import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -41,6 +43,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.Tuple;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -79,130 +84,261 @@ public class FlowSensitiveFaultLocalizer {
 			ModifiableGlobalVariableManager modGlobVarManager, PredicateUnifier predicateUnifier) {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
-		m_Logger.warn("Hello World"); 
-		IPredicate errorPrecondition = computeErrorPrecondition((NestedWord<CodeBlock>) counterexample.getWord(), smtManager, predicateUnifier, modGlobVarManager);
-		//Object informationFromCFG = computeInformationFromCFG(counterexample, cfg);
-		computeFlowSensitiveTraceFormula(errorPrecondition, counterexample, predicateUnifier.getFalsePredicate(), modGlobVarManager, smtManager);
+		m_Logger.warn("* * * ENTERED FLOW SENSITIVE FAULT LOCALIZER * * * *");
+		ArrayList<int[]> informationFromCFG = computeInformationFromCFG( (NestedRun<CodeBlock, IPredicate>) counterexample, cfg); //Get branch information. in the form of an array list
+		IPredicate errorPrecondition = computeErrorPrecondition((NestedWord<CodeBlock>) counterexample.getWord(), smtManager, predicateUnifier, modGlobVarManager, informationFromCFG);
+		//ArrayList<int[]> informationFromCFG = computeInformationFromCFG( (NestedRun<CodeBlock, IPredicate>) counterexample, cfg); //Get branch information. in the form of an array list
+		computeFlowSensitiveTraceFormula(errorPrecondition, counterexample, predicateUnifier.getFalsePredicate(), modGlobVarManager, smtManager,informationFromCFG);
 	}
 
-	private Object computeInformationFromCFG(NestedWord<CodeBlock> counterexample,
-			INestedWordAutomaton<CodeBlock, IPredicate> cfg) {
-		// use findPathInCFG
-		NestedRun<CodeBlock, IPredicate> test = findPathInCFG(null, null, cfg);
-		return null;
+	@SuppressWarnings("null")
+	private ArrayList<int[]> computeInformationFromCFG(NestedRun<CodeBlock, IPredicate> counterexample,
+			INestedWordAutomaton<CodeBlock, IPredicate> cfg) 
+	{
+		m_Logger.warn("Computing Graph Information . . . . ");
+		ArrayList<int[]> result = new ArrayList<>();
+		int size = counterexample.getStateSequence().size();
+		IPredicate start_state = null;
+		// For each state find out if it's a branch or not.
+		// For each state, find out if there is an outgoing branch from that state
+		// that transitions to a state which is not in the counter example.
+		// if you find such a state, then from that state. run the FINDPATHINCFG() method
+		// and find out if that path returns to a state which IS in the counterexample.
+		// If you find such a path, then that state is a branching state then you save this information for future use.
+		//  **** REMEMBER THE CASE WHEN THERE ARE TWO OUTGOING BRANCHES FROM A STATE GOING IN THE SAME BRANCH ****
+		for(int counter = 0; counter < counterexample.getLength();counter++) // For all States
+		{
+			start_state = counterexample.getStateAtPosition(counter); // State in consideration at the moment
+			Iterable<OutgoingInternalTransition<CodeBlock, IPredicate>> succesors = cfg.internalSuccessors(start_state); //Immediate successors of of the state in CFG
+			Set<IPredicate> possibleEndPoints =  new HashSet<IPredicate>();  // all the successive states of the current state in the counter example
+			for(int j=counter+1; j< size; j++)
+			{
+				possibleEndPoints.add((IPredicate) counterexample.getStateAtPosition(j)); // Pushing all the successive states from the counter example
+			}
+			for( OutgoingInternalTransition<CodeBlock, IPredicate> test:succesors) // For all the immediate successor states of the state in focus
+			{
+				IPredicate succesor2 = test.getSucc(); // One of the successors of the the state in focus.
+				if(succesor2 != counterexample.getStateAtPosition(counter+1)) // If this successor state is NOT the next state of the current state in the counter example
+				{	
+					int[] tuple = new int[2]; // Initialize tuple
+					//m_Logger.warn("Found a state not in the counter example -->>" + succesor2);
+					NestedRun<CodeBlock, IPredicate> path = findPathInCFG(succesor2, possibleEndPoints, cfg); // Path from the successor state not in the counter example till one of the states in the possible end points.
+					//m_Logger.warn("Path -->  "+ path);
+					if(path != null) // If such a path exists. Then that means that there is a path from the successor state that comes back to the counter example
+					{ // THAT MEANS WE HAVE FOUND AN IF BRANCH AT POSITION "COUNTER" !!
+						// Found an IF branch at position 1 of the counter example.
+						int length = path.getLength();
+						IPredicate last_state_of_the_path = path.getStateAtPosition(length-1);
+						tuple[0] = counter; //Location of the OUT BRANCH in the counterexample.
+						//// Computing the location of the IN-BRANCH					
+						for(int j = 0; j<counterexample.getLength();j++)
+						{
+							IPredicate counter_example_state = counterexample.getStateAtPosition(j);
+							if(last_state_of_the_path.equals(counter_example_state))
+							{
+								tuple[1] = j; // Location of the state in the counter example where the branch ends
+								//m_Logger.warn(" LAST STATE OF THE PATH -->> " + j);
+							}
+						}
+						//// In-Branch Location computed.
+						result.add(tuple);
+						m_Logger.warn(" ");
+					}
+				}
+			}
+		}
+		m_Logger.warn(" ");
+		return result;
 	}
 
 	private void computeFlowSensitiveTraceFormula(IPredicate errorPrecondition, IRun<CodeBlock, IPredicate> counterexampleRun,
-		IPredicate falsePredicate, ModifiableGlobalVariableManager modGlobVarManager, SmtManager smtManager) {
+		IPredicate falsePredicate, ModifiableGlobalVariableManager modGlobVarManager, SmtManager smtManager, ArrayList<int[]> informationFromCFG) 
+	
+	{
 		NestedWord<CodeBlock> counterexampleWord = (NestedWord<CodeBlock>) counterexampleRun.getWord();
 		
-		m_Logger.warn(" - - - ENTERED computerFlowSensitiveTraceFormula - - - ");
-		// nice representation of error trace (important for interprocedural traces)
+		m_Logger.warn("Computing Flow Sensitive Formula . . . .");
 		DefaultTransFormulas nestedTransFormulas = new DefaultTransFormulas(counterexampleWord, errorPrecondition, falsePredicate, new TreeMap<>(), modGlobVarManager, false);
-		m_Logger.warn(nestedTransFormulas.toString());
 		NestedSsaBuilder ssaBuilder = new NestedSsaBuilder(counterexampleWord, smtManager, nestedTransFormulas, modGlobVarManager, m_Logger, false);
-		m_Logger.warn(ssaBuilder.toString());
-		// nice representation where all variables have been renamed
 		NestedFormulas<Term, Term> ssa = ssaBuilder.getSsa();
+		m_Logger.warn(" ");
+		m_Logger.warn("Precondition : " + ssa.getPrecondition());
+		m_Logger.warn("Precondition : " + errorPrecondition);
+		m_Logger.warn("Branching Information");
+		for(int i = 0; i<informationFromCFG.size();i++)
+		{
+				m_Logger.warn("Branch out " + informationFromCFG.get(i)[0]);
+				m_Logger.warn("Branch in " + informationFromCFG.get(i)[1]);
+		}
 		
-		//SmtUtils.and(script, terms) //make conjuncts
-		//Util.and(script, subforms) //make conjuncts
+		m_Logger.warn(" ");
+		//////////////////////////////////////////// - - FORMULA WITH CONJUNCTS - - ////////////////////////////////////////
+		ArrayList<Term> formulas_list = new ArrayList<Term>(); // initializing a new array list that will be later turned to conjuncts
+		//formulas_list.add(Util.not(smtManager.getScript(), ssa.getPrecondition())); // adding the precondition in the array
+		for(int k = 0; k < counterexampleWord.length(); k++)
+		{
+			formulas_list.add(ssa.getFormulaFromNonCallPos(k));
+		}
+		Term conjunct_formula = SmtUtils.and(smtManager.getScript(), formulas_list); //make conjuncts from a list of formulas.
+		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		m_Logger.warn(" ");
+		//////////////////////////////////////////- - FORMULA WITH only IMPLICATIONS - - ////////////////////////////
+		Term right_side;
+		Term implication_formula = Util.implies(smtManager.getScript(), ssa.getFormulaFromNonCallPos(0)); //First line in the program
+		//Term implication_formula = Util.implies(smtManager.getScript(), Util.not(smtManager.getScript(), ssa.getPrecondition())); // adding precondition as the first formula
+		for(int k = 1; k < counterexampleWord.length()-1; k++)
+		{
+			right_side = ssa.getFormulaFromNonCallPos(k); // Formula that will be put on the right side of the implication
+			implication_formula = Util.implies(smtManager.getScript(), implication_formula, right_side); 
+		}
+		//////////////////////////////////////////////////////////////////////////////////////////////////////////	
+		m_Logger.warn(" ");
+		//////////////////////////////////////// - - - PRO SENSITIVE FORMULA //////////////////////////////////
+		ArrayList<Term> prosensitive_formula_list = new ArrayList<Term>(); // A main list of the forumlas that will be put into conjunctions.
+		ArrayList<Term> implication_formula_list = new ArrayList<Term>(); // Main list of all the formulas which contain formulas of the form
+																		  // guard(body) ==> body.
+		// Computation of the implication_formula_list.
+		for(int i =0; i < informationFromCFG.size();i++)
+		{
+			int[] Branch = informationFromCFG.get(i);
+			int branch_out_formula = Branch[0];
+			int branch_in_formula = Branch[1];
+			ArrayList<Term> right_conjunct_formulas_list = new ArrayList<Term>();
+			for(int j = branch_out_formula+1; j < branch_in_formula; j++)
+			{
+				right_conjunct_formulas_list.add(ssa.getFormulaFromNonCallPos(j));
+			}
+			Term right_conjunct_formula = SmtUtils.and(smtManager.getScript(), right_conjunct_formulas_list);
+			Term left_side_of_implication = ssa.getFormulaFromNonCallPos(branch_out_formula);
+			Term pro_sensitive_implication = Util.implies(smtManager.getScript(), left_side_of_implication, right_conjunct_formula);
+			implication_formula_list.add(pro_sensitive_implication);
+		}
+		for(int k = 0; k <counterexampleWord.length()-1; k++)
+		{
+			boolean flag = false;
+			for(int l=0;l<informationFromCFG.size();l++) // Check if the current formula is at a branch out position.
+			{
+				if(k == informationFromCFG.get(l)[0])
+				{
+					flag = true; //current formula is at a branch out position
+					k = informationFromCFG.get(l)[1] - 1;
+				}
+			}
+			if(!flag)
+			{
+				prosensitive_formula_list.add(ssa.getFormulaFromNonCallPos(k));
+			}
+		}
+		// Now add the implications in the pro sensitive formula list
+		for(int k = 0; k < implication_formula_list.size(); k++ )
+		{
+			prosensitive_formula_list.add(implication_formula_list.get(k)); // FINAL CONJUNTS OF THE PRO-SENSITIVE FORMULA
+		}
+		// Make conjuncts
+		Term pro_flow_sensitive_formula = SmtUtils.and(smtManager.getScript(), prosensitive_formula_list);	
+		m_Logger.warn(" ");
+		/////////////////////////////////////////////////// END OF PRO-FLOW SENSITIVE COMPUTATION /////////////////////////////////////////////////
 		
+		/////////////////////////////////////// - - TRANSFORM INTO CONJUNCTIVE NORMAL FORM - - ////////
 		Cnf cnf = new Cnf(smtManager.getScript(), m_Services , smtManager.getVariableManager());
-		Term test = cnf.transform(null); //Term is a formula 
-		
-		Term[] conjunts = SmtUtils.getConjuncts(test);
-		
-		
-		
-		// NEW FORMULA WITH ASSERTIONS
-		// Util.implies(smtManager.getScript())
-		
+		Term conjunctive_normal_form = cnf.transform(pro_flow_sensitive_formula); //Term is a formula 
+		Term[] conjunt_array = SmtUtils.getConjuncts(conjunctive_normal_form);
+		//m_Logger.warn("CONJUNCTS IN CNF = " + conjunt_array);
+		//////////////////////////////////////////////////////////////////////////////////////////////
+		m_Logger.warn(" ");
+
 		smtManager.getScript().push(1);
-		Term term = ssa.getPrecondition();
-		String name = "Precondition";
+		//Term precondition = Util.not(smtManager.getScript(), ssa.getPrecondition()); // FEEDING THE COMPLIMENT OF THE PRECONDITION
+		Term precondition =  ssa.getPrecondition(); // Feeding the normal precondition
+		String name = "Pre-condition";
 		Annotation annot = new Annotation(":named", name);
-		Term annotTerm = smtManager.getScript().annotate(term, annot);
+		Term annotTerm = smtManager.getScript().annotate(precondition, annot);
 		smtManager.assertTerm(annotTerm);
 		
-		
-		
-		for(int i=0; i< counterexampleWord.length();i++)
+		Term term;
+		for(int i=0; i< conjunt_array.length; i++)
 		{
-			term = ssa.getFormulaFromNonCallPos(i);
+			term = conjunt_array[i] ; 
 			name = "Formula" + i;
 			annot = new Annotation(":named", name);
 			annotTerm = smtManager.getScript().annotate(term, annot);
 			smtManager.assertTerm(annotTerm);
-			m_Logger.warn(term.toString());
-			
 		}
-		 LBool sat = smtManager.getScript().checkSat();
-		m_Logger.warn("LBOOL");
+		
+		Term neg_post_cond = ssa.getFormulaFromNonCallPos(counterexampleWord.length()-1);
+		name = "post-condition";
+		annot = new Annotation(":named", name);
+		annotTerm = smtManager.getScript().annotate(Util.not(smtManager.getScript(),neg_post_cond ), annot);
+		smtManager.assertTerm(annotTerm);
+		
+		
+		LBool sat = smtManager.getScript().checkSat();
+		
+		
+		
+		m_Logger.warn(sat);
+		m_Logger.warn(" "); 
+		 
 		
 		Term[] unsat_core = smtManager.getScript().getUnsatCore();
-		m_Logger.warn("LBOOL");
-		// Big conjunct -> annotate each term in that conjunct -> feed it to the SMT solver
-		
-		
-		
-		////////////////////////
-		//Annotate each term
-		/////////////////////////
-		//assert term.getFreeVars().length == 0 : "Term has free vars";
-		//Annotation annot = new Annotation(":named", name);
-		//Term annotTerm = m_Script.annotate(term, annot);
-		//m_SmtManager.assertTerm(annotTerm);
-		//Term constantRepresentingAnnotatedTerm = m_Script.term(name);
-		
+		m_Logger.warn(" ");
 		
 		
 		m_Logger.warn(ssaBuilder.toString());
+		
 	}
 
 	private IPredicate computeErrorPrecondition(NestedWord<CodeBlock> counterexample, SmtManager smtManager,
-			PredicateUnifier predicateUnifier, ModifiableGlobalVariableManager modGlobVarManager)
+			PredicateUnifier predicateUnifier, ModifiableGlobalVariableManager modGlobVarManager,ArrayList<int[]> informationFromCFG)
 	{
+		m_Logger.warn("COMPUTING ERROR PRECONDITION . . . . . ");
 		PredicateTransformer pt = new PredicateTransformer(smtManager, modGlobVarManager, m_Services);
-		// iterate over the counterexample and compute the error precondition
-		// Working on this 
-
-		m_Logger.warn("PRINTING LIST ITEMS NOW");
-;		
-		CodeBlock statement1 = counterexample.getSymbolAt(0);
-		TransFormula TranFormula = statement1.getTransitionFormula();
-		IPredicate post_condition = smtManager.newFalsePredicate();  //ERROR IF SET TO FALSE
-		IPredicate weakest_preconditionn = pt.weakestPrecondition(post_condition, TranFormula);
-		m_Logger.warn(weakest_preconditionn.toString());
-		// pt.weakestPrecondition(p,tf)   ipredicate p is the post condition and transformula tf is
-														   //the transition formula of the statement
-	
-		
-		IPredicate weakest_precondition = smtManager.newFalsePredicate(); //ERROR IF SET TO FLASE
-		m_Logger.warn(" - - PROGRAM AS LIST - - -");
-		m_Logger.warn(counterexample.asList());
-		for(int i=counterexample.length()-1; i>=0; i--)
+		// iterate over the counterexample and compute the error precondition		
+		// Make an ArrayList of Transition formulas in a backward fashion. 
+		ArrayList<TransFormula> trans_formula_arraylist = new ArrayList<>();
+		int backward_counter = counterexample.length()-1;
+		int flag = 0;
+		while(backward_counter != -1)
 		{
-			m_Logger.warn("- - - - - -");
-			m_Logger.warn(weakest_precondition);
-			//m_Logger.warn(counterexample.asList().get(i));
-			//m_Logger.warn(counterexample.getSymbolAt(i));
-			//m_Logger.warn(counterexample.getSymbolAt(i).getTransitionFormula());
-			m_Logger.warn("Getting symbol at i");
-			CodeBlock statement = counterexample.getSymbolAt(i);
-			m_Logger.warn("Getting transition formula");
-			TransFormula transition_formula = statement.getTransitionFormula();
-			
-			// markhor formula computation test
-			TransFormula markhor = TransFormula.computeMarkhorTransFormula(transition_formula, smtManager.getBoogie2Smt(), m_Services, m_Logger);
-			m_Logger.warn("Calculating new weakest precondition");
-			weakest_precondition = pt.weakestPrecondition(weakest_precondition, transition_formula);
-			m_Logger.warn(weakest_precondition);
+			flag = 0;
+			int a = 0; // branch out
+			int b = 0; // branch in
+			for(int i = 0; i<informationFromCFG.size();i++)
+			{
+				if (backward_counter == informationFromCFG.get(i)[1]-1)
+				{
+					flag = 1;
+					a = informationFromCFG.get(i)[0];
+					b = informationFromCFG.get(i)[1]-1;
+				}
+			}
+			if(flag == 1) // compute the markhor Transformula and push it into the transformula array list here .
+			{			// also update backward counter ! 
+				TransFormula combined_transition_formula = counterexample.getSymbolAt(a).getTransitionFormula();
+				for(int i = a+1 ; i <= b;i++)
+				{
+					CodeBlock statement = counterexample.getSymbolAt(i);
+					TransFormula transition_formula = statement.getTransitionFormula();
+					combined_transition_formula = TransFormula.sequentialComposition(m_Logger, m_Services, smtManager.getBoogie2Smt(),
+							false, false, false, combined_transition_formula, transition_formula);
+				}
+				TransFormula markhor = TransFormula.computeMarkhorTransFormula(combined_transition_formula, smtManager.getBoogie2Smt(), 
+						m_Services, m_Logger);
+				trans_formula_arraylist.add(markhor);
+				backward_counter = a - 1 ;
+			}
+			else // push the transformula at this position to the trans_formula_arraylist.
+			{ 	// also update the backward counter !
+				trans_formula_arraylist.add(counterexample.getSymbolAt(backward_counter).getTransitionFormula());
+				backward_counter -= 1;
+			}
 		}
-
-		
-		
-		m_Logger.warn("List printed");
+		// COMPUTE THE ERROR PRE-CONDITION FROM TTHE TRANSFORMULAS IN  "trans_formula_arraylist" on forward order.
+		IPredicate weakest_precondition = smtManager.newFalsePredicate(); // initialization to false
+		for(int i=0; i< trans_formula_arraylist.size(); i++)
+		{
+			weakest_precondition = pt.weakestPrecondition(weakest_precondition, trans_formula_arraylist.get(i));
+		}
 		return weakest_precondition;
 	}
 	
@@ -217,11 +353,18 @@ public class FlowSensitiveFaultLocalizer {
 	 */
 	private NestedRun<CodeBlock, IPredicate> findPathInCFG(IPredicate startPoint, 
 			Set<IPredicate> possibleEndPoints, INestedWordAutomaton<CodeBlock, 
-			IPredicate> cfg) {
-		try {
+			IPredicate> cfg) 
+	{
+
+		
+		try 
+		{
 			return (new IsEmpty<CodeBlock, IPredicate>(m_Services, cfg, 
 					Collections.singleton(startPoint), possibleEndPoints)).getNestedRun();
-		} catch (OperationCanceledException e) {
+		} 
+		
+		catch (OperationCanceledException e) 
+		{
 			throw new ToolchainCanceledException(getClass());
 		}
 	}
