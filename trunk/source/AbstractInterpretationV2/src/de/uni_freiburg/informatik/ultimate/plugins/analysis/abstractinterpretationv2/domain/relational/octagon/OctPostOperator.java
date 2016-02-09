@@ -133,10 +133,6 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 //			mLogger.warn("---´");
 		}
 		currentState.forEach(s -> s.lock());
-		if (currentState.isEmpty()) {
-			// TODO remove (only workaround: fxpe does not accept empty list)
-			return emptyListToSingeltonBot_WORKAROUND(oldState);
-		}
 		return currentState;
 	}
 
@@ -152,21 +148,10 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		} else {
 			throw new UnsupportedOperationException("Unsupported transition: " + transition);
 		}
-		if (result.isEmpty()) {
-			// TODO remove (only workaround: fxpe does not accept empty list)
-			return emptyListToSingeltonBot_WORKAROUND(stateAfterTransition);
-		}
 		result.forEach(s -> s.lock());
 		return result;
 	}
 	
-	private List<OctDomainState> emptyListToSingeltonBot_WORKAROUND(OctDomainState s) {
-		OctDomainState bot = s.bottomCopy_WORKAROUND();
-//		mLogger.error("workaround empty list: " + bot);
-//		mLogger.error("---´");
-		return Collections.singletonList(bot);
-	}
-
 	private List<OctDomainState> applyCall(
 			OctDomainState stateBeforeCall, OctDomainState stateAfterCall, Call callTransition) {
 

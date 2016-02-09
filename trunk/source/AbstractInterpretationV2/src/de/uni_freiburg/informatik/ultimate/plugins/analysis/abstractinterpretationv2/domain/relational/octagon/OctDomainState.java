@@ -665,21 +665,6 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 		mBooleanAbstraction.put(var, mBooleanAbstraction.get(var).intersect(value));
 	}
 
-	// TODO remove
-	public OctDomainState bottomCopy_WORKAROUND() {
-		OctDomainState bottom = shallowCopy();
-		if (!mBooleanAbstraction.isEmpty()) {
-			String var = mBooleanAbstraction.keySet().iterator().next();
-			unrefOtherBooleanAbstraction(bottom);
-			bottom.mBooleanAbstraction.put(var, BoolValue.BOT);
-		} else if (mNumericAbstraction.getSize() > 0) {
-			unrefOtherNumericAbstraction(bottom);
-			bottom.mNumericAbstraction.set(0, 0, new OctValue(-9999));
-		}
-		// else: there is no way to set this state to bottom
-		throw new UnsupportedOperationException("Empty state cannot be set to \\bot!");
-	}
-	
 	@Override
 	public String toLogString() {
 		StringBuilder log = new StringBuilder();
