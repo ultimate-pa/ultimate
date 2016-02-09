@@ -124,7 +124,6 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 	public List<OctDomainState> apply(OctDomainState oldState, CodeBlock codeBlock) {
 		List<OctDomainState> currentState = deepCopy(Collections.singletonList(oldState));
 		List<Statement> statements = mHavocBundler.bundleHavocsCached(codeBlock);
-		statements.forEach(s -> mLogger.error(BoogiePrettyPrinter.print(s)));
 		for (Statement statement : statements) {
 			currentState = mStatementProcessor.processStatement(statement, currentState);
 //			mLogger.warn("after " + BoogiePrettyPrinter.print(statement));
