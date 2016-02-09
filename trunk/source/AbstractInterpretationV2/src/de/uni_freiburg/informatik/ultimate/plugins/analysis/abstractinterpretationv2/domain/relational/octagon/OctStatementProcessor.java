@@ -194,11 +194,9 @@ public class OctStatementProcessor {
 				oldStates.forEach(action);
 				return oldStates;
 			} else if (mPostOp.isFallbackAssignIntervalProjectionEnabled()) {
-				// TODO use setting
 				return IntervalProjection.assignNumericVarAffine(targetVar, ae, oldStates);
 			}
 		} else if (mPostOp.isFallbackAssignIntervalProjectionEnabled()) { // no affine form found
-			// TODO use setting
 			return IntervalProjection.assignNumericVarWithoutIfs(targetVar, rhs, oldStates);
 		}
 
