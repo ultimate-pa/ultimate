@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.ASimulation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.ESimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 
@@ -145,7 +145,7 @@ public final class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, S
 	public DirectSimulation(final IProgressAwareTimer progressTimer, final Logger logger, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final AGameGraph<LETTER, STATE> game)
 					throws OperationCanceledException {
-		super(progressTimer, logger, useSCCs, stateFactory, SimulationType.DIRECT);
+		super(progressTimer, logger, useSCCs, stateFactory, ESimulationType.DIRECT);
 
 		game.setSimulationPerformance(getSimulationPerformance());
 		m_Game = game;

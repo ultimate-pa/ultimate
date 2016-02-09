@@ -24,15 +24,14 @@
  * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.spaceex.ast.automata;
 
-/**
- * The possible parameter types of SpaceEX automaton variables.
- * @author greitsch@informatik.uni-freiburg.de
- *
- */
-public enum ParamTypes {
-	REAL,
-	CONST,
-	LABEL,
+package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata;
+
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ParamType;
+
+public class LabelParameter extends ParameterType {
+	public LabelParameter(ParamType param) {
+		super(ParamTypes.LABEL, param);
+		
+	}
 }

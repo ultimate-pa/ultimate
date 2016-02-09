@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
 import java.math.BigInteger;
+import java.util.function.Function;
 
 /**
  * Representation of bitvectors.
@@ -102,41 +103,124 @@ public class BitvectorConstant {
 	
 	
 	public static BitvectorConstant bvadd(BitvectorConstant bv1, BitvectorConstant bv2) {
-		if (bv1.getIndex().equals(bv2.getIndex())) {
-			return new BitvectorConstant(bv1.getValue().add(bv2.getValue()), bv1.getIndex());
-		} else {
-			throw new IllegalArgumentException("incompatible indices " + bv1.getIndex() + " " + bv2.getIndex());
-		}
+		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.add(y));
 	}
 	
 	public static BitvectorConstant bvsub(BitvectorConstant bv1, BitvectorConstant bv2) {
-		if (bv1.getIndex().equals(bv2.getIndex())) {
-			return new BitvectorConstant(bv1.getValue().subtract(bv2.getValue()), bv1.getIndex());
-		} else {
-			throw new IllegalArgumentException("incompatible indices " + bv1.getIndex() + " " + bv2.getIndex());
-		}
+		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.subtract(y));
 	}
 	
 	public static BitvectorConstant bvmul(BitvectorConstant bv1, BitvectorConstant bv2) {
+		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.multiply(y));
+	}
+	
+	public static BitvectorConstant bvudiv(BitvectorConstant bv1, BitvectorConstant bv2) {
+		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.divide(y));
+	}
+	
+	public static BitvectorConstant bvurem(BitvectorConstant bv1, BitvectorConstant bv2) {
+		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.remainder(y));
+	}
+	
+	public static BitvectorConstant bvsdiv(BitvectorConstant bv1, BitvectorConstant bv2) {
+		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> toSignedInt(x, bv1.getIndex()).divide(toSignedInt(y, bv2.getIndex())));
+	}
+	
+	public static BitvectorConstant bvsrem(BitvectorConstant bv1, BitvectorConstant bv2) {
+		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> toSignedInt(x, bv1.getIndex()).remainder(toSignedInt(y, bv2.getIndex())));
+	}
+	
+	public static BitvectorConstant bvand(BitvectorConstant bv1, BitvectorConstant bv2) {
+		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.and(y));
+	}
+	
+	public static BitvectorConstant bvor(BitvectorConstant bv1, BitvectorConstant bv2) {
+		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.or(y));
+	}
+	
+	public static BitvectorConstant bvxor(BitvectorConstant bv1, BitvectorConstant bv2) {
+		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.xor(y));
+	}
+	
+	public static BitvectorConstant bvshl(BitvectorConstant bv1, BitvectorConstant bv2) {
+		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.shiftLeft(y.intValueExact()));
+	}
+	
+	public static BitvectorConstant bvlshr(BitvectorConstant bv1, BitvectorConstant bv2) {
+		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> x.shiftRight(y.intValueExact()));
+	}
+	
+	public static BitvectorConstant bvashr(BitvectorConstant bv1, BitvectorConstant bv2) {
+		return similarIndexBvOp_BitvectorResult(bv1, bv2, x -> y -> toSignedInt(x, bv1.getIndex()).shiftRight(y.intValueExact()));
+	}
+
+	
+	public static BitvectorConstant bvnot(BitvectorConstant bv) {
+		return new BitvectorConstant(bv.getValue().not(), bv.getIndex());
+	}
+	
+	public static BitvectorConstant bvneg(BitvectorConstant bv) {
+		return new BitvectorConstant(toSignedInt(bv.getValue(), bv.getIndex()).negate(), bv.getIndex());
+	}
+
+	
+	public static BitvectorConstant similarIndexBvOp_BitvectorResult(BitvectorConstant bv1, BitvectorConstant bv2, 
+			Function<BigInteger, Function<BigInteger, BigInteger>> fun) {
 		if (bv1.getIndex().equals(bv2.getIndex())) {
-			return new BitvectorConstant(bv1.getValue().subtract(bv2.getValue()), bv1.getIndex());
+			return new BitvectorConstant(fun.apply(bv1.getValue()).apply(bv2.getValue()), bv1.getIndex());
 		} else {
 			throw new IllegalArgumentException("incompatible indices " + bv1.getIndex() + " " + bv2.getIndex());
 		}
 	}
 	
-	public static BitvectorConstant bvshl(BitvectorConstant b1, BitvectorConstant b2) {
-		int effectiveShift = Math.min(b1.getIndex().intValueExact(), b2.getValue().intValue());
-		return new BitvectorConstant(b1.getValue().multiply(new BigInteger("2").pow(effectiveShift)), b1.getIndex());
-	}
-	
-	public static boolean bvult(BitvectorConstant b1, BitvectorConstant b2) {
-		if (b1.getIndex().equals(b2.getIndex())) {
-			return b1.getValue().compareTo(b2.getValue()) < 0;
+	public static Boolean comparison(BitvectorConstant bv1, BitvectorConstant bv2, 
+			Function<BigInteger, Function<BigInteger, Boolean>> fun) {
+		if (bv1.getIndex().equals(bv2.getIndex())) {
+			return fun.apply(bv1.getValue()).apply(bv2.getValue());
 		} else {
-			throw new IllegalArgumentException("incompatible indices " + b1.getIndex() + " " + b2.getIndex());
+			throw new IllegalArgumentException("incompatible indices " + bv1.getIndex() + " " + bv2.getIndex());
 		}
 	}
+	
+//	public static BitvectorConstant bvshl(BitvectorConstant b1, BitvectorConstant b2) {
+//		int effectiveShift = Math.min(b1.getIndex().intValueExact(), b2.getValue().intValue());
+//		return new BitvectorConstant(b1.getValue().multiply(new BigInteger("2").pow(effectiveShift)), b1.getIndex());
+//	}
+	
+	public static boolean bvult(BitvectorConstant bv1, BitvectorConstant bv2) {
+		return comparison(bv1, bv2, x -> y -> x.compareTo(y) < 0);
+	}
+	
+	public static boolean bvule(BitvectorConstant bv1, BitvectorConstant bv2) {
+		return comparison(bv1, bv2, x -> y -> x.compareTo(y) <= 0);
+	}
+	
+	public static boolean bvugt(BitvectorConstant bv1, BitvectorConstant bv2) {
+		return comparison(bv1, bv2, x -> y -> x.compareTo(y) > 0);
+	}
+	
+	public static boolean bvuge(BitvectorConstant bv1, BitvectorConstant bv2) {
+		return comparison(bv1, bv2, x -> y -> x.compareTo(y) >= 0);
+	}
+	
+	
+	public static boolean bvslt(BitvectorConstant bv1, BitvectorConstant bv2) {
+		return comparison(bv1, bv2, x -> y -> toSignedInt(x, bv1.getIndex()).compareTo(toSignedInt(y, bv2.getIndex())) < 0);
+	}
+	
+	public static boolean bvsle(BitvectorConstant bv1, BitvectorConstant bv2) {
+		return comparison(bv1, bv2, x -> y -> toSignedInt(x, bv1.getIndex()).compareTo(toSignedInt(y, bv2.getIndex())) <= 0);
+	}
+	
+	public static boolean bvsgt(BitvectorConstant bv1, BitvectorConstant bv2) {
+		return comparison(bv1, bv2, x -> y -> toSignedInt(x, bv1.getIndex()).compareTo(toSignedInt(y, bv2.getIndex())) > 0);
+	}
+	
+	public static boolean bvsge(BitvectorConstant bv1, BitvectorConstant bv2) {
+		return comparison(bv1, bv2, x -> y -> toSignedInt(x, bv1.getIndex()).compareTo(toSignedInt(y, bv2.getIndex())) >= 0);
+	}
+
+
 
 	public static BitvectorConstant extract(BitvectorConstant bv, int upperIndex, int lowerIndex) {
 		String binaryString = bvToBinaryString(bv);
@@ -177,6 +261,16 @@ public class BitvectorConstant {
 
 	public static BitvectorConstant zero_extend(BitvectorConstant bv, BigInteger index) {
 		return new BitvectorConstant(bv.getValue(), bv.getIndex().add(index));
+	}
+	
+	public static BigInteger toSignedInt(BigInteger bvValue, BigInteger bvIndex) {
+		BigInteger firstNegative = new BigInteger("2").pow(bvIndex.intValueExact() - 1);
+		if (bvValue.compareTo(firstNegative) < 0) {
+			return bvValue;
+		} else {
+			BigInteger biggestUnsigned = new BigInteger("2").pow(bvIndex.intValueExact());
+			return bvValue.subtract(biggestUnsigned);
+		}
 	}
 
 	

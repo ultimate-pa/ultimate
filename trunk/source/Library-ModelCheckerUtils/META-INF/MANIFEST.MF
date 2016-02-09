@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Library-ModelCheckerUtils
 Bundle-SymbolicName: Library-ModelCheckerUtils
 Bundle-Version: 0.0.1
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt,

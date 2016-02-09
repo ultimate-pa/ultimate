@@ -24,7 +24,8 @@
  * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.spaceex.ast.automata;
+
+package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,47 +38,69 @@ public class Location extends SpaceExElement {
 	private String mName;
 	private String mInvariant;
 	private String mFlow;
+
+	private final List<Transition> mOutgoingTransitions;
+	private final List<Transition> mIncomingTransitions;
+
+	private double mXPos;
+	private double mYPos;
+
+	public Location(final int id) {
+		this(id, new StringBuilder().append("loc_").append(id).toString());
+	}
+
+	public Location(final LocationType location) {
+		this(location.getId(), location.getName());
+	}
 	
-	private List<Transition> mOutgoingTransitions;
-	private List<Transition> mIncomingTransitions;
-	
-	public Location(LocationType location) {
-	    mName = location.getName();
-		mId = location.getId();
-		
+	public Location(final int id, final String name) {
+		mName = name;
+		mId = id;
+
 		mOutgoingTransitions = new ArrayList<Transition>();
 		mIncomingTransitions = new ArrayList<Transition>();
-    }
-
+		
+		mXPos = ((mId * 180) + 320);
+		mYPos = ((mId * 140) + 60);
+	}
+	
 	public int getId() {
 		return mId;
 	}
-	
+
 	public String getName() {
 		return mName;
 	}
-	
-	public void setInvariant(String invariant) {
+
+	public void setInvariant(final String invariant) {
 		mInvariant = invariant;
 	}
-	
-	public void setFlow(String flow) {
+
+	public void setFlow(final String flow) {
 		mFlow = flow;
 	}
-	
+
 	public String getInvariant() {
 		return mInvariant;
 	}
-	
+
 	public String getFlow() {
 		return mFlow;
 	}
-	
-	public void addOutgoingTransition(Transition t) {
+
+	public void addOutgoingTransition(final Transition t) {
 		mOutgoingTransitions.add(t);
 	}
-	
-	public void addIncomingTransition(Transition t) {
+
+	public void addIncomingTransition(final Transition t) {
 		mIncomingTransitions.add(t);
+	}
+	
+	public double getXPos() {
+		return mXPos;
+	}
+	
+	public double getYPos() {
+		return mYPos;
 	}
 }

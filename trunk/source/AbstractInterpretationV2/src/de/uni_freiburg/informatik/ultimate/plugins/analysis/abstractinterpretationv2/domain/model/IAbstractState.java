@@ -61,7 +61,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 *            The name of the variable that should be added.
 	 * @param variable
 	 *            An object that describes the type of the variable.
-	 * @return A new abstract state that is a {@link #copy()} of this instance except that it contains the freshly added
+	 * @return A new abstract state that is a copy of this instance except that it contains the freshly added
 	 *         variable.
 	 */
 	STATE addVariable(final String name, final VARDECL variable);
@@ -79,7 +79,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 * @param variable
 	 *            An object that describes the type of the variable. This should be equal to the object that was added
 	 *            previously.
-	 * @return A new abstract state that is a {@link #copy()} of this instance except that the removed variable is
+	 * @return A new abstract state that is a copy of this instance except that the removed variable is
 	 *         missing.
 	 */
 	STATE removeVariable(final String name, final VARDECL variable);
@@ -89,7 +89,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 * 
 	 * @param variables
 	 *            A {@link Map} describing all the variables that have to be added.
-	 * @return A new abstract state that is a {@link #copy()} of this instance except that it contains the freshly added
+	 * @return A new abstract state that is a copy of this instance except that it contains the freshly added
 	 *         variables.
 	 */
 	STATE addVariables(final Map<String, VARDECL> variables);
@@ -99,7 +99,7 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, ACTION, VARD
 	 * 
 	 * @param variables
 	 *            A {@link Map} describing all the variables that have to be removed.
-	 * @return A new abstract state that is a {@link #copy()} of this instance except that all the variables defined by
+	 * @return A new abstract state that is a copy of this instance except that all the variables defined by
 	 *         <code>variables</code> are missing.
 	 */
 	STATE removeVariables(final Map<String, VARDECL> variables);

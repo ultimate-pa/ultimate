@@ -96,12 +96,7 @@ public class IntervalSingletonVariableExpressionEvaluator
 			returnList.add(
 			        new IntervalDomainEvaluationResult(new IntervalDomainValue(true), new BooleanValue(Value.BOTTOM)));
 		} else {
-			if (mContainsBoolean && returnBool.getValue() == Value.TOP) {
-				returnList.add(new IntervalDomainEvaluationResult(val, new BooleanValue(true)));
-				returnList.add(new IntervalDomainEvaluationResult(val, new BooleanValue(false)));
-			} else {
-				returnList.add(new IntervalDomainEvaluationResult(val, returnBool));
-			}
+			returnList.add(new IntervalDomainEvaluationResult(val, returnBool));
 		}
 
 		return returnList;

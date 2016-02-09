@@ -39,6 +39,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.lpsolver.LpSolverPreferences;
 
 /**
@@ -50,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 
 	public static final String[] VALUES_ABSTRACT_DOMAIN = new String[] { EmptyDomain.class.getSimpleName(),
-			SignDomain.class.getSimpleName(), IntervalDomain.class.getSimpleName() };
+			SignDomain.class.getSimpleName(), IntervalDomain.class.getSimpleName(), OctagonDomain.class.getSimpleName(), };
 
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING = "Minimum iterations before widening";
 	public static final String LABEL_STATES_UNTIL_MERGE = "Parallel states before merging";
@@ -85,6 +87,9 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 
 		// Add Interval Domain preferences
 		rtr.addAll(IntervalDomainPreferences.getPreferences());
+
+		// Add Octagon Domain preferences
+		rtr.addAll(OctPreferences.createPreferences());
 
 		// Add ojAlgo preferences
 		rtr.addAll(LpSolverPreferences.getPreferences());

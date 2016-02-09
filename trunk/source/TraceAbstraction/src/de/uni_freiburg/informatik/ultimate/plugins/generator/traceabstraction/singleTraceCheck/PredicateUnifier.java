@@ -352,7 +352,11 @@ public class PredicateUnifier {
 		if (pc.isIntricatePredicate()) {
 			simplifiedTerm = term;
 		} else {
-			simplifiedTerm = SmtUtils.simplify(m_SmtManager.getScript(), term, mServices);
+			try {
+				simplifiedTerm = SmtUtils.simplify(m_SmtManager.getScript(), term, mServices);
+			} catch (ToolchainCanceledException tce) {
+				throw new ToolchainCanceledException(getClass(), tce.getRunningTaskInfo() + " while unifying predicates");
+			}
 		}
 		if (m_BringTermsToCommuhashNormalForm) {
 			simplifiedTerm = (new CommuhashNormalForm(mServices, m_SmtManager.getScript())).transform(simplifiedTerm);

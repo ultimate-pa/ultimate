@@ -24,37 +24,26 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction;
 
 /**
- * Different types of simulation.
+ * Types of possible game graph changes, mainly used by
+ * {@link GameGraphChanges}.
  * 
  * @author Daniel Tischner
  *
  */
-public enum SimulationType {
+public enum EGameGraphChangeType {
 	/**
-	 * Delayed simulation.
+	 * Represents a change that added something to the game graph.
 	 */
-	DELAYED,
+	ADDITION,
 	/**
-	 * Direct simulation.
+	 * Represents a change that did not alter the game graph.
 	 */
-	DIRECT,
+	NO_CHANGE,
 	/**
-	 * External minimization method, MinimizeSevpa.
+	 * Represents a change that removed something from the game graph.
 	 */
-	EXT_MINIMIZESEVPA,
-	/**
-	 * External minimization method, ShrinkNwa.
-	 */
-	EXT_SHRINKNWA,
-	/**
-	 * Fair simulation.
-	 */
-	FAIR,
-	/**
-	 * Fair simulation that uses direct simulation as an optimization.
-	 */
-	FAIRDIRECT
+	REMOVAL
 }

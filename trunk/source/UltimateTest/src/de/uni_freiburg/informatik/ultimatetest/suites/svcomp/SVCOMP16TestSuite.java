@@ -85,7 +85,7 @@ public class SVCOMP16TestSuite extends AbstractSVCOMPTestSuite {
 
 		rtr.addAll(getForThree("ControlFlow"));
 		rtr.addAll(getForThree("Simple"));
-		rtr.addAll(getForThree("ECA"));
+//		rtr.addAll(getForThree("ECA"));
 		rtr.addAll(getForThree("Loops"));
 		rtr.addAll(getForThree("Recursive"));
 		rtr.addAll(getForThree("ProductLines"));
@@ -98,6 +98,8 @@ public class SVCOMP16TestSuite extends AbstractSVCOMPTestSuite {
 		final List<TestDefinition> rtr = new ArrayList<>();
 		rtr.add(getTestDefinitionFromExamples(set, "AbstractInterpretationv2C.xml",
 				"ai/svcomp-Reach-32bit-AIv2_INT.epf", getTimeout()));
+		rtr.add(getTestDefinitionFromExamples(set, "AbstractInterpretationv2C.xml",
+				"ai/svcomp-Reach-32bit-AIv2_OCT.epf", getTimeout()));
 //		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml", "ai/svcomp-Reach-32bit-Automizer_Default.epf",
 //				getTimeout()));
 //		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",

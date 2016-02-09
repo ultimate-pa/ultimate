@@ -46,11 +46,11 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.CountingMeasure;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.MultipleDataOption;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.ECountingMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.EMultipleDataOption;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationPerformance;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationType;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.TimeMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.ESimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.ETimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
@@ -181,7 +181,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *             framework.
 	 */
 	public ASimulation(final IProgressAwareTimer progressTimer, final Logger logger, final boolean useSCCs,
-			final StateFactory<STATE> stateFactory, final SimulationType simType) throws OperationCanceledException {
+			final StateFactory<STATE> stateFactory, final ESimulationType simType) throws OperationCanceledException {
 		m_ProgressTimer = progressTimer;
 		m_Logger = logger;
 		m_UseSCCs = useSCCs;
@@ -475,11 +475,11 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *             framework.
 	 */
 	protected void doSimulation() throws OperationCanceledException {
-		m_Performance.startTimeMeasure(TimeMeasure.OVERALL_TIME);
-		m_Performance.startTimeMeasure(TimeMeasure.SIMULATION_ONLY_TIME);
+		m_Performance.startTimeMeasure(ETimeMeasure.OVERALL_TIME);
+		m_Performance.startTimeMeasure(ETimeMeasure.SIMULATION_ONLY_TIME);
 
 		if (m_UseSCCs) { // calculate reduction with SCC
-			m_Performance.startTimeMeasure(TimeMeasure.BUILD_SCC);
+			m_Performance.startTimeMeasure(ETimeMeasure.BUILD_SCC);
 			DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>> sccFactory = new DefaultStronglyConnectedComponentFactory<>();
 			GameGraphSuccessorProvider<LETTER, STATE> succProvider = new GameGraphSuccessorProvider<>(getGameGraph());
 			m_SccComp = new SccComputation<>(m_Logger, succProvider, sccFactory, getGameGraph().getSize(),
@@ -487,7 +487,7 @@ public abstract class ASimulation<LETTER, STATE> {
 
 			Iterator<StronglyConnectedComponent<Vertex<LETTER, STATE>>> iter = new LinkedList<StronglyConnectedComponent<Vertex<LETTER, STATE>>>(
 					m_SccComp.getSCCs()).iterator();
-			m_Performance.stopTimeMeasure(TimeMeasure.BUILD_SCC);
+			m_Performance.stopTimeMeasure(ETimeMeasure.BUILD_SCC);
 			int amountOfSCCs = 0;
 			while (iter.hasNext()) {
 				StronglyConnectedComponent<Vertex<LETTER, STATE>> scc = iter.next();
@@ -495,26 +495,26 @@ public abstract class ASimulation<LETTER, STATE> {
 				efficientLiftingAlgorithm(calculateInfinityOfSCC(scc), scc.getNodes());
 				amountOfSCCs++;
 			}
-			m_Performance.setCountingMeasure(CountingMeasure.SCCS, amountOfSCCs);
+			m_Performance.setCountingMeasure(ECountingMeasure.SCCS, amountOfSCCs);
 		} else { // calculate reduction w/o SCCs
 			efficientLiftingAlgorithm(getGameGraph().getGlobalInfinity(), null);
-			m_Performance.addTimeMeasureValue(TimeMeasure.BUILD_SCC, SimulationPerformance.NO_TIME_RESULT);
-			m_Performance.setCountingMeasure(CountingMeasure.SCCS, SimulationPerformance.NO_COUNTING_RESULT);
+			m_Performance.addTimeMeasureValue(ETimeMeasure.BUILD_SCC, SimulationPerformance.NO_TIME_RESULT);
+			m_Performance.setCountingMeasure(ECountingMeasure.SCCS, SimulationPerformance.NO_COUNTING_RESULT);
 		}
-		m_Performance.stopTimeMeasure(TimeMeasure.SIMULATION_ONLY_TIME);
+		m_Performance.stopTimeMeasure(ETimeMeasure.SIMULATION_ONLY_TIME);
 		m_Result = getGameGraph().generateBuchiAutomatonFromGraph();
 
-		long duration = m_Performance.stopTimeMeasure(TimeMeasure.OVERALL_TIME);
+		long duration = m_Performance.stopTimeMeasure(ETimeMeasure.OVERALL_TIME);
 		// Add time building of the graph took to the overall time since this
 		// happens outside of simulation
-		long durationGraph = m_Performance.getTimeMeasureResult(TimeMeasure.BUILD_GRAPH_TIME,
-				MultipleDataOption.ADDITIVE);
+		long durationGraph = m_Performance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH_TIME,
+				EMultipleDataOption.ADDITIVE);
 		if (durationGraph != SimulationPerformance.NO_TIME_RESULT) {
 			duration += durationGraph;
-			m_Performance.addTimeMeasureValue(TimeMeasure.OVERALL_TIME, durationGraph);
+			m_Performance.addTimeMeasureValue(ETimeMeasure.OVERALL_TIME, durationGraph);
 		}
-		m_Performance.setCountingMeasure(CountingMeasure.GAMEGRAPH_STATES, getGameGraph().getSize());
-		m_Performance.setCountingMeasure(CountingMeasure.GLOBAL_INFINITY, getGameGraph().getGlobalInfinity());
+		m_Performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_STATES, getGameGraph().getSize());
+		m_Performance.setCountingMeasure(ECountingMeasure.GLOBAL_INFINITY, getGameGraph().getGlobalInfinity());
 
 		m_Logger.info((this.m_UseSCCs ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds.");
 	}
@@ -558,7 +558,7 @@ public abstract class ASimulation<LETTER, STATE> {
 
 		// Work through the working list until its empty
 		while (!m_WorkingList.isEmpty()) {
-			m_Performance.increaseCountingMeasure(CountingMeasure.SIMULATION_STEPS);
+			m_Performance.increaseCountingMeasure(ECountingMeasure.SIMULATION_STEPS);
 
 			// Poll the current working vertex
 			Vertex<LETTER, STATE> v = pollVertexFromWorkingList();
