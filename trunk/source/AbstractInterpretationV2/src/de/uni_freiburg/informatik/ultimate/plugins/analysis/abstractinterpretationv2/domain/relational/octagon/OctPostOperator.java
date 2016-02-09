@@ -13,6 +13,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -125,6 +126,10 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		List<OctDomainState> currentState = deepCopy(Collections.singletonList(oldState));
 		List<Statement> statements = mHavocBundler.bundleHavocsCached(codeBlock);
 		for (Statement statement : statements) {
+//			if (statement instanceof AssignmentStatement) {
+//				String printedStatement = BoogiePrettyPrinter.print(statement); 
+//				mLogger.warn("Assign " + printedStatement);
+//			}
 			currentState = mStatementProcessor.processStatement(statement, currentState);
 //			mLogger.warn("after " + BoogiePrettyPrinter.print(statement));
 //			mLogger.warn(statement);
@@ -211,7 +216,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 			CallStatement call = returnTransition.getCallStatement();
 			Procedure procedure = calledProcedure(call);
 			Map<String, String> mapOutToLhs = generateMapOutToLhs(call.getLhs(), procedure);
-			stateAfterReturn.copyValuesOnScopeChange(stateBeforeReturn, mapOutToLhs);
+			stateAfterReturn = stateAfterReturn.copyValuesOnScopeChange(stateBeforeReturn, mapOutToLhs);
 			result.add(stateAfterReturn);
 		}
 		return result;

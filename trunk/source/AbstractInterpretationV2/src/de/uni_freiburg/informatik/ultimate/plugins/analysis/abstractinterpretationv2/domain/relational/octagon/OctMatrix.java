@@ -803,7 +803,7 @@ public class OctMatrix {
 	}
 	
 	/**
-	 * Assigns one variable to another variable. {@code x := y;}
+	 * Assigns one variable to another variable in this matrix. {@code x := y;}
 	 * <p>
 	 * This method is exact. No precision is lost. Closure in advance is not necessary.
 	 * Already closed matrices remain closed.
@@ -811,7 +811,7 @@ public class OctMatrix {
 	 * @param targetVar variable which will be changed
 	 * @param sourceVar variable which will be copied
 	 */
-	protected void copyVar(int targetVar, int sourceVar) {
+	protected void assignVarCopy(int targetVar, int sourceVar) {
 		if (targetVar == sourceVar) {
 			return;
 		}

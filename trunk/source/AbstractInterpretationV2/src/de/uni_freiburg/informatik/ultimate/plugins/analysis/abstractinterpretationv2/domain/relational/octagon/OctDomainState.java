@@ -437,7 +437,7 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 		return patchedState;
 	}
 
-	// TODO document: Returned state is a shallow copy. Do not modify!
+	// TODO document: Returned state is a shallow copy. Modifications on return value may also modify this OctDomainState!
 	public OctDomainState copyValuesOnScopeChange(OctDomainState source,
 			Map<String, String> mapSourceToTarget) {
 		
@@ -615,16 +615,16 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 	}
 	
 	// targetVar1, targetVar2, ... := sourceVar1, sourceVar2, ...
-	protected void copyVars(Map<String, String> mapSourceVarToTargetVar) {
+	protected void copyVars(Map<String, String> mapTargetVarToSourceVar) {
 
 		assert assertNotLockedBeforeModification();
 		assert assertNotBottomBeforeAssign();
 
 		boolean usedClosure = false;
 
-		for (Map.Entry<String, String> entry : mapSourceVarToTargetVar.entrySet()) {
-			String sourceVar = entry.getKey();
-			String targetVar = entry.getValue();
+		for (Map.Entry<String, String> entry : mapTargetVarToSourceVar.entrySet()) {
+			String targetVar = entry.getKey();
+			String sourceVar = entry.getValue();
 
 			Integer targetIndex = mMapNumericVarToIndex.get(targetVar);
 			if (targetIndex != null) {
@@ -634,7 +634,7 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 				}
 				Integer sourceIndex = mMapNumericVarToIndex.get(sourceVar);
 				assert sourceIndex != null : "Incompatible types";
-				mNumericAbstraction.copyVar(targetIndex, sourceIndex);
+				mNumericAbstraction.assignVarCopy(targetIndex, sourceIndex);
 
 			} else if (mBooleanAbstraction.containsKey(targetIndex)) {
 				BoolValue value = mBooleanAbstraction.get(sourceVar);
