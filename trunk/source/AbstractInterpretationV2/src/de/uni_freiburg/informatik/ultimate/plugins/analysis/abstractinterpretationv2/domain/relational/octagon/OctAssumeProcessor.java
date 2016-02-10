@@ -343,7 +343,7 @@ public class OctAssumeProcessor {
 		} else if ((tvf = ae.getTwoVarForm()) != null) {
 			OctValue co = new OctValue(c);
 			oldStates.forEach(state -> state.assumeNumericVarRelationLeConstant(
-					tvf.var1, tvf.negVar2, tvf.var2, tvf.negVar1, co));
+					tvf.var1, tvf.negVar1, tvf.var2, tvf.negVar2, co));
 			return oldStates;
 		
 		} else {
