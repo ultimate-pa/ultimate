@@ -459,7 +459,7 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 			if (targetIndex != null) {
 				Integer sourceIndex = source.mMapNumericVarToIndex.get(var);
 				assert sourceIndex != null : "shared variables are not really shared";
-				mapNumericTargetToSource.put(sourceIndex, targetIndex);
+				mapNumericTargetToSource.put(targetIndex, sourceIndex);
 			}
 			// do not copy shared (=global) booleans (again). Already done by patch(...).
 		}
