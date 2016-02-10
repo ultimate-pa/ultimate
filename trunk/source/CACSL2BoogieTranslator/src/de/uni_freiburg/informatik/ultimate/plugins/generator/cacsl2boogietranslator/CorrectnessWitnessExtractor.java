@@ -122,20 +122,33 @@ public class CorrectnessWitnessExtractor {
 		final Deque<WitnessNode> worklist = new ArrayDeque<>();
 		final Set<WitnessNode> closed = new HashSet<>();
 		worklist.add(mWitnessNode);
-		int invariantCounter = 0;
+		int successCounter = 0;
+		int failCounter = 0;
 		while (!worklist.isEmpty()) {
 			final WitnessNode current = worklist.remove();
 			if (!closed.add(current)) {
 				continue;
 			}
 			worklist.addAll(current.getOutgoingNodes());
-			if (extractNode(current, rtr)) {
-				++invariantCounter;
+			switch (extractNode(current, rtr)) {
+			case EXTRACTED:
+				++successCounter;
+				break;
+			case NOT_EXTRACTED:
+				++failCounter;
+				break;
+			default:
+				break;
 			}
 		}
 
 		mLogger.info("Processed " + closed.size() + " nodes");
-		mLogger.info("Extracted " + invariantCounter + " invariants");
+		mLogger.info("Extracted " + successCounter + " invariants");
+		if (failCounter > 0) {
+			mLogger.info("Could not extract " + failCounter + " invariants");
+		} else {
+			mLogger.info("Extracted all invariants");
+		}
 		printResults(rtr);
 
 		return rtr;
@@ -162,28 +175,29 @@ public class CorrectnessWitnessExtractor {
 	/**
 	 * @return true iff an invariant was extracted, false otherwise.
 	 */
-	private boolean extractNode(final WitnessNode current,
+	private ExtractionResult extractNode(final WitnessNode current,
 			final Pair<Map<IASTNode, String>, Map<IASTNode, String>> rtr) {
 		final WitnessNodeAnnotation annot = WitnessNodeAnnotation.getAnnotation(current);
 		if (annot == null) {
-			return false;
+			return ExtractionResult.NOT_RELEVANT;
 		}
 		final String invariant = annot.getInvariant();
 		if (invariant == null || invariant.equalsIgnoreCase("true")) {
-			return false;
+			return ExtractionResult.NOT_RELEVANT;
 		}
 		final Pair<List<IASTNode>, List<IASTNode>> nodes = matchASTNodes(current);
-		if (nodes == null) {
+		if (nodes == null || (nodes.getFirst().isEmpty() && nodes.getSecond().isEmpty())) {
 			mLogger.error("Could not match witness node to AST node: " + current);
-			return false;
+			return ExtractionResult.NOT_EXTRACTED;
 		}
+
 		for (final IASTNode node : nodes.getFirst()) {
 			addInvariants(rtr.getFirst(), invariant, node);
 		}
 		for (final IASTNode node : nodes.getSecond()) {
 			addInvariants(rtr.getSecond(), invariant, node);
 		}
-		return true;
+		return ExtractionResult.EXTRACTED;
 	}
 
 	private void addInvariants(final Map<IASTNode, String> rtr, final String invariant, final IASTNode node) {
@@ -221,10 +235,11 @@ public class CorrectnessWitnessExtractor {
 
 		final Pair<List<IASTNode>, List<IASTNode>> matchedNodes = matcher.getMatchedNodes();
 		if (matchedNodes.getFirst().isEmpty() && !beforeLines.isEmpty()) {
-			mLogger.warn("Could not match AST node to invariant for witness lines " + toStringCollection(beforeLines));
+			mLogger.warn(
+					"Could not match AST node to invariant before witness lines " + toStringCollection(beforeLines));
 		}
 		if (matchedNodes.getSecond().isEmpty() && !afterLines.isEmpty()) {
-			mLogger.warn("Could not match AST node to invariant for witness lines " + toStringCollection(afterLines));
+			mLogger.warn("Could not match AST node to invariant after witness lines " + toStringCollection(afterLines));
 		}
 
 		return matchedNodes;
@@ -288,4 +303,19 @@ public class CorrectnessWitnessExtractor {
 		}
 	}
 
+	private enum ExtractionResult {
+		/**
+		 * The invariant was true and is therefore not relevant.
+		 */
+		NOT_RELEVANT,
+		/**
+		 * We could extract a relevant invariant.
+		 */
+		EXTRACTED,
+		/**
+		 * We could not extract a relevant invariant.
+		 */
+		NOT_EXTRACTED
+
+	}
 }
