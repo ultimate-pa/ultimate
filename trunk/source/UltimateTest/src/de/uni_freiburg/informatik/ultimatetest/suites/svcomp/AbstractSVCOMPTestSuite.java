@@ -57,7 +57,7 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.HTMLSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.KingOfTheHillSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.LatexDetailedSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.LatexOverviewSummary;
-import de.uni_freiburg.informatik.ultimatetest.summaries.SVCOMP15TestSummary;
+import de.uni_freiburg.informatik.ultimatetest.summaries.SVCOMPTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.TraceAbstractionTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
@@ -208,7 +208,7 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 		};
 	
 		return new ITestSummary[] { 
-				new SVCOMP15TestSummary(getClass()), 
+				new SVCOMPTestSummary(getClass()), 
 				new TraceAbstractionTestSummary(getClass()),
 				new LatexOverviewSummary(getClass(), benchmarks, columnDef), 
 				new LatexDetailedSummary(getClass(), benchmarks, columnDef),
