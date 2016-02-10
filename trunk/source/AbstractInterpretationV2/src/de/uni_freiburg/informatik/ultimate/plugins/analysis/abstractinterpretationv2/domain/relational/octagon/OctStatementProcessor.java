@@ -89,13 +89,18 @@ public class OctStatementProcessor {
 
 		// add temporary variables
 		List<OctDomainState> tmpStates = new ArrayList<>(oldStates.size());
-		oldStates.forEach(oldState -> tmpStates.add(oldState.addVariables(tmpVars)));
+		for (OctDomainState oldState : oldStates) {
+			tmpStates.add(oldState.addVariables(tmpVars));
+		}
 
 		// (tmpVar := origExpr)*
-		// note: oldStates may be modified (which is OK), since addVariables() returns only a shallow copy
-		mapLhsToRhs.forEach(lhsToRhs -> processSingleAssignment(lhsToRhs.getFirst(), lhsToRhs.getSecond(), tmpStates));
+		// note: oldStates may be modified, since addVariables() returns only a shallow copy. Not a problem.
+		for (Pair<String, Expression> assignment : mapLhsToRhs) {
+			tmpStates = processSingleAssignment(assignment.getFirst(), assignment.getSecond(), tmpStates);
+		}
 
 		// (origVar := tmpVar)*
+		tmpStates = OctPostOperator.removeBottomStates(tmpStates); // important!
 		tmpStates.forEach(tmpState -> tmpState.copyVars(mapOrigVarToTmpVar));
 
 		// remove temporary variables
@@ -103,13 +108,9 @@ public class OctStatementProcessor {
 		tmpStates.forEach(tmpState -> newStates.add(tmpState.removeVariables(tmpVars)));
 		return newStates;
 	}
-	
+
 	public List<OctDomainState> processSingleAssignment(String targetVar, Expression rhs,
 			List<OctDomainState> oldStates) {
-
-		oldStates = OctPostOperator.removeBottomStates(oldStates); // important! assign may un-bottomize some states!
-
-		// note: there is no implicit typecasting in boogie. "real := int;" cannot happen. 
 		IType type = rhs.getType();
 		if (TypeUtil.isBoolean(type)) {
 			return processBooleanAssign(targetVar, rhs, oldStates);
@@ -119,21 +120,27 @@ public class OctStatementProcessor {
 			return oldStates; // variables of unsupported types are assumed to be \top all the time
 		}
 	}
-	
+
 	private List<OctDomainState> processBooleanAssign(String targetVar, Expression rhs,
 			List<OctDomainState> oldStates) {
 
-		Consumer<OctDomainState> action = s -> s.havocVar(targetVar); // default operation (if uninterpretable)
-
 		if (rhs instanceof BooleanLiteral) {
 			BoolValue value = BoolValue.get(((BooleanLiteral) rhs).getValue());
-			action = s -> s.assignBooleanVar(targetVar, value);
+			oldStates = OctPostOperator.removeBottomStates(oldStates); // important!
+			oldStates.forEach(s -> s.assignBooleanVar(targetVar, value));
+			return oldStates;
+
 		} else if (rhs instanceof IdentifierExpression) {
 			IdentifierExpression ie = (IdentifierExpression) rhs;
+			oldStates = OctPostOperator.removeBottomStates(oldStates); // important!
 			if (BoogieUtil.isVariable(ie)) {
 				String sourceVar = ie.getIdentifier();
-				action = s -> s.copyVar(targetVar, sourceVar);
+				oldStates.forEach(s -> s.copyVar(targetVar, sourceVar));
+			} else {
+				oldStates.forEach(s -> s.havocVar(targetVar));
 			}
+			return oldStates;
+
 		} else {
 			Expression notRhs = mPostOp.getExprTransformer().logicNegCached(rhs);
 			return mPostOp.splitF(oldStates,
@@ -150,11 +157,8 @@ public class OctStatementProcessor {
 						return stateList;
 					});
 		}
-
-		oldStates.forEach(action);
-		return oldStates;
 	}
-	
+
 	private List<OctDomainState> processNumericAssign(String targetVar, Expression rhs,
 			List<OctDomainState> oldStates) {
 
@@ -162,8 +166,8 @@ public class OctStatementProcessor {
 		List<OctDomainState> result = new ArrayList<>();
 		for (int i = 0; i < paths.size(); ++i) {
 			Pair<List<Expression>, Expression> p = paths.get(i);
-			List<OctDomainState> copiedOldStates = (i + 1 < paths.size()) ?
-					mPostOp.deepCopy(oldStates) : oldStates; // as little copies as possible
+			List<OctDomainState> copiedOldStates = (i + 1 < paths.size()) ? // as little copies as possible
+					OctPostOperator.deepCopy(oldStates) : oldStates;
 			for (Expression assumption : p.getFirst()) {
 				// This step is slow for deeply nested IfThenElseExpressions
 				// same assumptions have to be assumed over and over again
@@ -173,9 +177,9 @@ public class OctStatementProcessor {
 			copiedOldStates = OctPostOperator.removeBottomStates(copiedOldStates); // important!
 			result.addAll(processNumericAssignWithoutIfs(targetVar, rhs, copiedOldStates));
 		}
-		return mPostOp.joinIfGeMaxParallelStates(result);
+		return mPostOp.joinDownToMax(result);
 	}
-	
+
 	private List<OctDomainState> processNumericAssignWithoutIfs(String targetVar, Expression rhs,
 			List<OctDomainState> oldStates) {
 		
@@ -217,5 +221,5 @@ public class OctStatementProcessor {
 		oldStates.forEach(s -> s.havocVars(vars));
 		return oldStates;
 	}
-	
+
 }

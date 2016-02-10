@@ -168,7 +168,7 @@ public class OctAssumeProcessor {
 			newStates.addAll(
 					processNumericRelationWithoutIfs((BinaryExpression) path.getSecond(), isNegated, tmpOldStates));
 		}
-		return mPostOp.joinIfGeMaxParallelStates(newStates);
+		return mPostOp.joinDownToMax(newStates);
 	}
 
 	private List<OctDomainState> processNumericRelationWithoutIfs(BinaryExpression be, boolean isNegated,

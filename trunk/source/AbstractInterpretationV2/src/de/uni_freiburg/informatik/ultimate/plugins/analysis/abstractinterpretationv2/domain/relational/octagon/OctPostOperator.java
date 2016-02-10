@@ -1,7 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 public class OctPostOperator implements IAbstractPostOperator<OctDomainState, CodeBlock, IBoogieVar> {
 
-	public OctDomainState join(List<OctDomainState> states) {
+	public static OctDomainState join(List<OctDomainState> states) {
 		OctDomainState joinedState = null;
 		for (OctDomainState result : states) {
 			if (joinedState == null) {
@@ -43,7 +45,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		return joinedState;
 	}
 
-	public List<OctDomainState> deepCopy(List<OctDomainState> states) {
+	public static List<OctDomainState> deepCopy(List<OctDomainState> states) {
 		List<OctDomainState> copy = new ArrayList<>(states.size());
 		states.forEach(state -> copy.add(state.deepCopy()));
 		return copy; 
@@ -55,7 +57,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 
 		List<OctDomainState> newStates = op1.apply(deepCopy(oldStates));
 		newStates.addAll(op2.apply(oldStates));
-		return joinIfGeMaxParallelStates(newStates);
+		return joinDownToMax(newStates);
 	}
 
 	public List<OctDomainState> splitC(List<OctDomainState> oldStates,
@@ -65,7 +67,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		oldStates.forEach(op1);
 		copiedOldStates.forEach(op2);
 		oldStates.addAll(copiedOldStates);
-		return joinIfGeMaxParallelStates(oldStates);
+		return joinDownToMax(oldStates);
 	}
 
 	public static List<OctDomainState> removeBottomStates(List<OctDomainState> states) {
@@ -78,9 +80,12 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		return nonBottomStates;
 	}
 
-	public List<OctDomainState> joinIfGeMaxParallelStates(List<OctDomainState> states) {
+	public List<OctDomainState> joinDownToMax(List<OctDomainState> states) {
+		if (states.size() <= mMaxParallelStates) {
+			return states;
+		}
 		states = removeBottomStates(states);
-		if (states.isEmpty() || states.size() <= mMaxParallelStates) {
+		if (states.size() <= mMaxParallelStates) {
 			return states;
 		}
 		List<OctDomainState> joinedStates = new ArrayList<>();
@@ -112,6 +117,11 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 
 	public OctPostOperator(Logger logger, BoogieSymbolTable symbolTable, int maxParallelStates,
 			boolean fallbackAssignIntervalProjection) {
+
+		if (maxParallelStates < 1) {
+			throw new IllegalArgumentException("MaxParallelStates needs to be > 0, was " + maxParallelStates);
+		}
+
 		mLogger = logger;
 		mSymbolTable = symbolTable;
 		mMaxParallelStates = maxParallelStates;
