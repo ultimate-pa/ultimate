@@ -133,8 +133,8 @@ public class AffineExpression {
 		}
 		twoVarForm.var1 = vars.get(0);
 		twoVarForm.var2 = vars.get(1);
-		twoVarForm.negVar2 = coefficients.get(0).signum() < 0;
-		twoVarForm.negVar1 = coefficients.get(1).signum() < 0;
+		twoVarForm.negVar1 = coefficients.get(0).signum() < 0;
+		twoVarForm.negVar2 = coefficients.get(1).signum() < 0;
 		return twoVarForm;
 	}
 	
