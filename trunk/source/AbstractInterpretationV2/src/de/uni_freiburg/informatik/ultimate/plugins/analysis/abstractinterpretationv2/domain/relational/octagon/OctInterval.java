@@ -22,14 +22,10 @@ public class OctInterval {
 		mMax = max;
 	}
 
-	public static OctInterval fromMatrixEntries(OctValue minNeg2, OctValue max2) {
-		return new OctInterval(minNeg2.half().negateIfNotInfinity(), max2.half());
-	}
-
 	public static OctInterval fromMatrix(OctMatrix m, int variableIndex) {
 		int i2 = variableIndex * 2;
 		int i21 = i2 + 1;
-		return fromMatrixEntries(m.get(i2, i21), m.get(i21, i2));
+		return new OctInterval(m.get(i2, i21).half().negateIfNotInfinity(), m.get(i21, i2).half());
 	}
 
 	public OctInterval() {

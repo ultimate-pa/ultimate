@@ -650,6 +650,7 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 	}
 
 	// targetVar := sourceVar
+	// TODO rename to: assignVarCopy
 	protected void copyVar(String targetVar, String sourceVar) {
 		copyVars(Collections.singletonList(new Pair<>(targetVar, sourceVar)));
 	}
@@ -673,7 +674,7 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 
 	@Override
 	public String toLogString() {
-		return mLogStringFunction.apply(this);
+		return mLogStringFunction.apply(this) + " " + logStringTerm();
 	}
 
 	public String logStringFullMatrix() {
@@ -709,7 +710,6 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 	}
 
 	public String logStringTerm() {
-		final String le = " <= ";
 		final String in = " = ";
 		final String minus = " - ";
 		final String plus = " + ";
@@ -751,23 +751,23 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 					continue;
 				}
 
-				OctInterval sumInterval = OctInterval.fromMatrixEntries(
-						mNumericAbstraction.get(row2 + 1, col2),
-						mNumericAbstraction.get(row2, col2 + 1));
-				OctInterval rowMinusColInterval = OctInterval.fromMatrixEntries(
-						mNumericAbstraction.get(row2 + 1, col2 + 1),
+				OctInterval sumInterval = new OctInterval(
+						mNumericAbstraction.get(row2, col2 + 1).negateIfNotInfinity(),
+						mNumericAbstraction.get(row2 + 1, col2));
+				OctInterval colMinusRowInterval = new OctInterval(
+						mNumericAbstraction.get(row2 + 1, col2 + 1).negateIfNotInfinity(),
 						mNumericAbstraction.get(row2, col2));
 
 				if (!sumInterval.isTop()) {
 					relLog.append(curDelimiter);
 					curDelimiter = delimiter;
-					relLog.append(rowName).append(plus).append(colName).append(in).append(sumInterval);
+					relLog.append(colName).append(plus).append(rowName).append(in).append(sumInterval);
 				}
 
-				if (!rowMinusColInterval.isTop()) {
+				if (!colMinusRowInterval.isTop()) {
 					relLog.append(curDelimiter);
 					curDelimiter = delimiter;
-					relLog.append(rowName).append(minus).append(colName).append(in).append(rowMinusColInterval);
+					relLog.append(colName).append(minus).append(rowName).append(in).append(colMinusRowInterval);
 				}
 			}
 		}
