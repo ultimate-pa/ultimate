@@ -674,7 +674,7 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 
 	@Override
 	public String toLogString() {
-		return mLogStringFunction.apply(this) + " " + logStringTerm();
+		return mLogStringFunction.apply(this);
 	}
 
 	public String logStringFullMatrix() {
@@ -704,8 +704,11 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 //		}
 
 		// TODO remove
-		log.append("\n#END");
+		log.append("\n#END\n");
 
+		// TODO remove
+		log.append(logStringTerm()).append("\n");
+		
 		return log.toString();
 	}
 
