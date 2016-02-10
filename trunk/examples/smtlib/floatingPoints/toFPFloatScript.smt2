@@ -4,7 +4,7 @@
 (declare-fun w () (_ FloatingPoint 5 11))
 (declare-fun a () (_ FloatingPoint 5 11))
 (declare-fun e () (_ FloatingPoint 5 11))
-(declare-fun b () (_ FloatingPoint 8 24))
+(declare-fun b () Float32)
 (declare-fun y () (_ BitVec 16))
 (declare-fun d () (_ BitVec 16))
 ;(declare-fun z () Real)

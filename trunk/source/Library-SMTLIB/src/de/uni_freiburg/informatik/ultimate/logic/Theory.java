@@ -996,7 +996,11 @@ public class Theory {
 
 		    // from FP to FP
 		    if (paramSorts.length == 2 && paramSorts[0].getName() == "RoundingMode"
-		    		&& paramSorts[1].getName() == "FloatingPoint") {
+		    		&& (paramSorts[1].getName() == "FloatingPoint" ||
+		    				paramSorts[1].getName() == "Float16" ||
+		    				paramSorts[1].getName() == "Float32" ||
+		    				paramSorts[1].getName() == "Float64" ||
+		    				paramSorts[1].getName() == "Float128" )) {
 		    	return mFloatingPointSort.getSort(indices, new Sort[0]);
 		    }
 
