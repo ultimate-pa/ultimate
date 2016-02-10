@@ -296,7 +296,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			Term term = loc2Term.get(pred);
 			final IPredicate newPred;
 			if (term != null) {
-				mLogger.info("Term "+term);
 				final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, m_SmtManager.getBoogie2Smt());
 				newPred = predicateUnifier.getOrConstructPredicate(tvp);
 			} else {
