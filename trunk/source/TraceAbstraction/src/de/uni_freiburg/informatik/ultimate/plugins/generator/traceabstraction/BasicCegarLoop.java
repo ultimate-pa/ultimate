@@ -286,13 +286,17 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		final Collection<IPredicate> nwaLocs = oldAbstraction.getStates();
 
 		final Set<IPredicate> predicates = new HashSet<>();
+		result.addState(true, false, predicateUnifier.getTruePredicate());
+		predicates.add(predicateUnifier.getTruePredicate());
 
+		final IPredicate falsePred = predicateUnifier.getFalsePredicate();
 		for (IPredicate pred : nwaLocs) {
 			final ISLPredicate slPred = (ISLPredicate) pred;
 
 			Term term = loc2Term.get(pred);
 			final IPredicate newPred;
 			if (term != null) {
+				mLogger.info("Term "+term);
 				final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, m_SmtManager.getBoogie2Smt());
 				newPred = predicateUnifier.getOrConstructPredicate(tvp);
 			} else {
@@ -300,18 +304,18 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			}
 
 			if (predicates.add(newPred)) {
-				result.addState(oldAbstraction.isInitial(slPred), oldAbstraction.isFinal(slPred), newPred);
+				if (newPred == falsePred) {
+					result.addState(oldAbstraction.isInitial(slPred), true, newPred);
+				} else {
+					result.addState(oldAbstraction.isInitial(slPred), oldAbstraction.isFinal(slPred), newPred);
+				}
 			}
 		}
 
-		if (result.getInitialStates().isEmpty()) {
-			result.addState(true, false, predicateUnifier.getTruePredicate());
+		if (result.getFinalStates().isEmpty() || !predicates.contains(falsePred)) {
+			result.addState(false, true, predicateUnifier.getFalsePredicate());
 		}
-		final IPredicate falsePred = predicateUnifier.getFalsePredicate();
-		if(result.getFinalStates().isEmpty() || !predicates.contains(falsePred)){
-			result.addState(false, true, predicateUnifier.getFalsePredicate());	
-		}
-		
+
 		return result;
 	}
 
