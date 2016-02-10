@@ -276,7 +276,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		if (loopCounterValue > mMaxUnwindings) {
 			assert !currentStateStack.isEmpty();
 			// we widen with the last state at this location, but we could widen from the beginning
-			return applyWidening(widening, currentStateStack.get(currentStateStack.size() - 1), pendingPostState);
+			return applyWidening(widening, currentStateStack.get(0), pendingPostState);
 		}
 		return pendingPostState;
 	}
