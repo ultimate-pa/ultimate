@@ -55,6 +55,10 @@ public class OctInterval {
 		// note: [-inf, inf] is represeted as [inf, inf], which is also not empty
 		return mMin.compareTo(mMax) > 0;
 	}
+	
+	public boolean isTop() {
+		return mMin.isInfinity() && mMax.isInfinity();
+	}
 
 	@Override
 	public String toString() {

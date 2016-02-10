@@ -752,30 +752,22 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 				}
 
 				OctInterval sumInterval = OctInterval.fromMatrixEntries(
-						mNumericAbstraction.get(row2, col2 + 1),
-						mNumericAbstraction.get(row2 + 1, col2));
-				OctValue colMinusRowMax = mNumericAbstraction.get(row2, col2);
-				OctValue rowMinusColMax = mNumericAbstraction.get(row2 + 1, col2 + 1);
+						mNumericAbstraction.get(row2 + 1, col2),
+						mNumericAbstraction.get(row2, col2 + 1));
+				OctInterval rowMinusColInterval = OctInterval.fromMatrixEntries(
+						mNumericAbstraction.get(row2 + 1, col2 + 1),
+						mNumericAbstraction.get(row2, col2));
 
-				// top right and bottom left entry of 2x2 block
-				if (!sumInterval.getMin().isInfinity() || !sumInterval.getMax().isInfinity()) {
+				if (!sumInterval.isTop()) {
 					relLog.append(curDelimiter);
 					curDelimiter = delimiter;
-					relLog.append(colName).append(plus).append(rowName).append(in).append(sumInterval);
+					relLog.append(rowName).append(plus).append(colName).append(in).append(sumInterval);
 				}
 
-				// top left entry of 2x2 block
-				if (!colMinusRowMax.isInfinity()) {
+				if (!rowMinusColInterval.isTop()) {
 					relLog.append(curDelimiter);
 					curDelimiter = delimiter;
-					relLog.append(colName).append(minus).append(rowName).append(le).append(colMinusRowMax);
-				}
-
-				// bottom right entry of 2x2 block
-				if (!rowMinusColMax.isInfinity()) {
-					relLog.append(curDelimiter);
-					curDelimiter = delimiter;
-					relLog.append(rowName).append(minus).append(colName).append(le).append(rowMinusColMax);
+					relLog.append(rowName).append(minus).append(colName).append(in).append(rowMinusColInterval);
 				}
 			}
 		}
