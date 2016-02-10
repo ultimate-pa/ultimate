@@ -13,6 +13,7 @@ import srParse.srParseScopeAfterUntil;
 import srParse.srParseScopeBefore;
 import srParse.srParseScopeBetween;
 import srParse.srParseScopeGlob;
+import srParse.pattern.BndResponsePattern;
 import srParse.pattern.InstAbsPattern;
 import srParse.pattern.InvariantPattern;
 import srParse.pattern.PatternType;
@@ -62,11 +63,19 @@ public class BasicTransformer {
 
 	private PhaseEventAutomata translateSwitch(PatternType pattern){
 		//get CDDs
-		CDD p = null;
-		if (pattern.getCdds().size() > 1)  p =  pattern.getCdds().get(1);
+		 
 		CDD q = pattern.getScope().getCdd1(); 
 		CDD r = pattern.getScope().getCdd2();
-		CDD s = pattern.getCdds().get(0);
+		CDD s = null;
+		CDD p = null;
+		if (pattern.getCdds().size() > 1)
+			{
+				s =  pattern.getCdds().get(0);
+				p = pattern.getCdds().get(1);
+			} else {
+				p = pattern.getCdds().get(0);
+			}
+		int t = pattern.getDuration();
 		//switch pattern x
 		/* scope.contains("Globally")	-> srParseScopeGlobally
 		 * scope.contains("Before")		-> srParseScopeBefore
@@ -79,9 +88,9 @@ public class BasicTransformer {
 			if(pattern.getScope().getClass() == srParseScopeGlob.class){	
 				return this.GlobalInvariantPattern(pattern, p, q, r, s);			//test [yes]
 			} else if (pattern.getScope().getClass() == srParseScopeBefore.class){	
-				return this.BeforeInvariantPattern(pattern, p, q, r, s);			//test [broken]
+				return this.BeforeInvariantPattern(pattern, p, q, r, s);			//test [yes]
 			} else if (pattern.getScope().getClass() == srParseScopeAfterUntil.class){	
-				return this.AfterUntilInvariantPattern(pattern, p, q, r, s);		//test []
+				return this.AfterUntilInvariantPattern(pattern, p, q, r, s);		//test [yes]
 			} else if (pattern.getScope().getClass() == srParseScopeAfter.class){
 				return this.AfterInvariantPattern(pattern, p, q, r, s);				//test [yes]
 			} else if (pattern.getScope().getClass() == srParseScopeBetween.class){	
@@ -95,11 +104,11 @@ public class BasicTransformer {
 			} else if (pattern.getScope().getClass() == srParseScopeBefore.class){	
 				return this.BeforeInstAbsPattern(pattern, p, q, r, s);				//test [yes]
 			} else if (pattern.getScope().getClass() == srParseScopeAfterUntil.class){	
-				return this.AfterUntilInstAbsPattern(pattern, p, q, r, s);			//test [broken]
+				return this.AfterUntilInstAbsPattern(pattern, p, q, r, s);			//test [yes]
 			} else if (pattern.getScope().getClass() == srParseScopeAfter.class){
 				return this.AfterInstAbsPattern(pattern, p, q, r, s);				//test [yes]
 			} else if (pattern.getScope().getClass() == srParseScopeBetween.class){	
-				return this.BetweenInstAbsPattern(pattern, p, q, r, s);				//test [broken]
+				return this.BetweenInstAbsPattern(pattern, p, q, r, s);				//test [yes]
 			} else {throw new UnsupportedOperationException();}
 			
 		} else if (pattern instanceof UniversalityPattern){
@@ -115,62 +124,89 @@ public class BasicTransformer {
 			} else if (pattern.getScope().getClass() == srParseScopeBetween.class){	
 				return this.BetweenUniversality(pattern, p, q, r, s);				//test []
 			} else {throw new UnsupportedOperationException();}
+	
+		} else if (pattern instanceof BndResponsePattern){
+			// ... it is never the case that s holds.
+			if(pattern.getScope().getClass() == srParseScopeGlob.class){	 
+				return this.GlobalBndResponsePattern(pattern, p, q, r, s, t);			//test []
+			} else if (pattern.getScope().getClass() == srParseScopeBefore.class){	
+				//return this.BeforeBndResponsPattern(pattern, p, q, r, s);				//test []
+				return null;
+			} else if (pattern.getScope().getClass() == srParseScopeAfterUntil.class){	
+				//return this.AfterUntilBndResponsPattern(pattern, p, q, r, s);			//test []
+				return null;
+			} else if (pattern.getScope().getClass() == srParseScopeAfter.class){
+				//return this.AfterBndResponsPattern(pattern, p, q, r, s);				//test []
+				return null;
+			} else if (pattern.getScope().getClass() == srParseScopeBetween.class){	
+				//return this.BetweenBndResponsPattern(pattern, p, q, r, s);				//test []
+				return null;
+			} else {throw new UnsupportedOperationException();}
 			
 		} else {
 			throw new UnsupportedOperationException("Pattern not implemented");
 		}
-	}
+	} 
 	
-	//Universality Pattern
-	//TODO: not tested but taken from pattern pdf, test asap
-	protected PhaseEventAutomata GlobalUniversality(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
+	protected PhaseEventAutomata GlobalBndResponsePattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s, int t){ 
 		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 			    new CounterTrace.DCPhase(),
-			    new CounterTrace.DCPhase(s.negate()),
+			    new CounterTrace.DCPhase(p.and(s.negate())),
+			    new CounterTrace.DCPhase(s.negate(), CounterTrace.BOUND_GREATER, t),
 			    new CounterTrace.DCPhase()
 			});
 			return compiler.compile("GlobalUniverslity", ct);
 	}
-	//TODO: not tested but taken from pattern pdf, test asap
+	
+	//Universality Pattern
+	protected PhaseEventAutomata GlobalUniversality(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
+		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
+			    new CounterTrace.DCPhase(),
+			    new CounterTrace.DCPhase(p.negate()), 
+			    new CounterTrace.DCPhase()
+			});
+			return compiler.compile("GlobalUniverslity", ct);
+	}
+
 	protected PhaseEventAutomata BeforeUniversality(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
 		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 			    new CounterTrace.DCPhase(q.negate()),
-			    new CounterTrace.DCPhase(q.negate().and(s)),
+			    new CounterTrace.DCPhase(q.negate().and(p)),
 			    new CounterTrace.DCPhase()
 			});
 			return compiler.compile("BeforeUniverstality", ct);
 	}
-	//TODO: not tested but taken from pattern pdf, test asap
+
 	protected PhaseEventAutomata AfterUniversality(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
 		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 				new CounterTrace.DCPhase(),
 			    new CounterTrace.DCPhase(q),
 			    new CounterTrace.DCPhase(),
-			    new CounterTrace.DCPhase(s.negate()),
+			    new CounterTrace.DCPhase(p.and(s.negate())),
 			    new CounterTrace.DCPhase()
 			});
 			return compiler.compile("AfterUniverstality", ct);
 	}
-	//TODO: not tested but taken from pattern pdf, test asap
+
 	protected PhaseEventAutomata BetweenUniversality(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
 		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 				new CounterTrace.DCPhase(),
 			    new CounterTrace.DCPhase(q.and(r.negate())),
 			    new CounterTrace.DCPhase(r.negate()),
-			    new CounterTrace.DCPhase(r.negate().and(s.negate())),
+			    new CounterTrace.DCPhase(r.negate().and(p.negate())),
 			    new CounterTrace.DCPhase(r.negate()),
 			    new CounterTrace.DCPhase(r),
 			    new CounterTrace.DCPhase()
 			});
 			return compiler.compile("AfterUniverstality", ct);
 	}
-	//TODO: not tested but taken from pattern pdf, test asap
+
 	protected PhaseEventAutomata AfterUntilUniversality(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
 		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 				new CounterTrace.DCPhase(),
 			    new CounterTrace.DCPhase(r.negate().and(q)),
 			    new CounterTrace.DCPhase(r.negate()),
-			    new CounterTrace.DCPhase(r.negate().and(s.negate())),
+			    new CounterTrace.DCPhase(r.negate().and(p.negate())),
 			    new CounterTrace.DCPhase()
 			});
 			return compiler.compile("AfterUniverstality", ct);
@@ -181,7 +217,7 @@ public class BasicTransformer {
 	protected PhaseEventAutomata GlobalInstAbsPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
 		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 			    new CounterTrace.DCPhase(),
-			    new CounterTrace.DCPhase(s),
+			    new CounterTrace.DCPhase(p),
 			    new CounterTrace.DCPhase()
 			});
 			return compiler.compile("AbsenceGlob", ct);
@@ -190,7 +226,7 @@ public class BasicTransformer {
 	protected PhaseEventAutomata BeforeInstAbsPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
 		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     		    new CounterTrace.DCPhase(r.negate()),
-    		    new CounterTrace.DCPhase(s.and(r.negate())),
+    		    new CounterTrace.DCPhase(p.and(r.negate())),
     		    new CounterTrace.DCPhase(r.negate()),
     		    new CounterTrace.DCPhase(r),
     		    new CounterTrace.DCPhase()
@@ -203,7 +239,7 @@ public class BasicTransformer {
 	               	    new CounterTrace.DCPhase(),
 	               	    new CounterTrace.DCPhase(q.and(r.negate())),
 	               	    new CounterTrace.DCPhase(r.negate()),
-	               	    new CounterTrace.DCPhase(s.and(r.negate())),
+	               	    new CounterTrace.DCPhase(p.and(r.negate())),
 	               	    new CounterTrace.DCPhase()
 	               	});   
 	               	return compiler.compile("TAbsenceUntil", ct);
@@ -214,7 +250,7 @@ public class BasicTransformer {
 	    	    new CounterTrace.DCPhase(),
 	    	    new CounterTrace.DCPhase(q),
 	    	    new CounterTrace.DCPhase(),
-	    	    new CounterTrace.DCPhase(s),
+	    	    new CounterTrace.DCPhase(p),
 	    	    new CounterTrace.DCPhase()
 	    	});    	
 	    	return compiler.compile("TAbsenceAfter", ct);
@@ -225,7 +261,7 @@ public class BasicTransformer {
     	  	    new CounterTrace.DCPhase(),
     	   	    new CounterTrace.DCPhase(q.and(r.negate())),
     	   	    new CounterTrace.DCPhase(r.negate()),
-    	   	    new CounterTrace.DCPhase(s.and(r.negate())),
+    	   	    new CounterTrace.DCPhase(p.and(r.negate())),
     	   	    new CounterTrace.DCPhase(r.negate()),
     	   	    new CounterTrace.DCPhase(r),
     	  	  new CounterTrace.DCPhase()
@@ -251,7 +287,7 @@ public class BasicTransformer {
 		//Before R it is always the case that if S holds then P holds as well.
 		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     		    new CounterTrace.DCPhase(r.negate()),
-    		    new CounterTrace.DCPhase(s.and(r.negate()).and(p.negate())),
+    		    new CounterTrace.DCPhase(p.and(r.negate()).and(s.negate())),
     		    new CounterTrace.DCPhase(r.negate()),
     		    new CounterTrace.DCPhase(r),
     		    new CounterTrace.DCPhase()
@@ -264,19 +300,18 @@ public class BasicTransformer {
            	    new CounterTrace.DCPhase(),
            	    new CounterTrace.DCPhase(q.and(r.negate())),
            	    new CounterTrace.DCPhase(r.negate()),
-           	    new CounterTrace.DCPhase(s.and(r.negate())),
+           	    new CounterTrace.DCPhase(p.and(r.negate())),
            	    new CounterTrace.DCPhase()
            	});    	
            	return compiler.compile("TAbsenceUntil", ct);
 	}
 
-	//TODO: not tested but taken from pattern pdf, test asap
 	protected PhaseEventAutomata AfterInvariantPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
 		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
 	    	    new CounterTrace.DCPhase(),
 	    	    new CounterTrace.DCPhase(q),
 	    	    new CounterTrace.DCPhase(),
-	    	    new CounterTrace.DCPhase(p.and(s.negate())),
+	    	    new CounterTrace.DCPhase(s.and(p.negate())),
 	    	    new CounterTrace.DCPhase()
 	    	});    	
 	    	return compiler.compile("TAbsenceAfter", ct);
@@ -287,7 +322,7 @@ public class BasicTransformer {
     	  	    new CounterTrace.DCPhase(),
     	   	    new CounterTrace.DCPhase(q.and(r.negate())),
     	   	    new CounterTrace.DCPhase(r.negate()),
-    	   	    new CounterTrace.DCPhase(s.and(r.negate())),
+    	   	    new CounterTrace.DCPhase(p.and(r.negate())),
     	   	    new CounterTrace.DCPhase(r.negate()),
     	   	    new CounterTrace.DCPhase(r),
     	  	  new CounterTrace.DCPhase()

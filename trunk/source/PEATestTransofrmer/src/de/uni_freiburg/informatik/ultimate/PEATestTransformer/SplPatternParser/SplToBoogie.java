@@ -9,8 +9,9 @@ import de.uni_freiburg.informatik.ultimate.PEATestTransformer.PreferenceInitiali
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.PreferenceInitializer.PatternTransformerTypes;
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.SystemInformation;
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer.BasicTransformer;
-import de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer.SimplePositiveTest;
+import de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer.SimplePositiveTestTransformer;
 import de.uni_freiburg.informatik.ultimate.PeaToBoogieTranslator.BasicTranslator;
+import de.uni_freiburg.informatik.ultimate.PeaToBoogieTranslator.SimplePositiveTestTranslator;
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.Transformer.ClosedWorldTransformator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
@@ -58,7 +59,7 @@ public class SplToBoogie {
 		switch(ttype){
 			case None: patternToPea = new BasicTransformer(); 
 					break;
-			case SimplePositiveTest: patternToPea = new SimplePositiveTest(sysInfo);
+			case SimplePositiveTest: patternToPea = new SimplePositiveTestTransformer(sysInfo);
 				break;
 			case ClosedWorld: patternToPea = new ClosedWorldTransformator(sysInfo);
 				break;
@@ -73,7 +74,7 @@ public class SplToBoogie {
 		switch(ttype){
 		case None: peaToBoogie = new BasicTranslator(peas); 
 				break;
-		case SimplePositiveTest: peaToBoogie = new BasicTranslator(peas);
+		case SimplePositiveTest: peaToBoogie = new SimplePositiveTestTranslator(peas, sysInfo);
 			break;
 		case ClosedWorld: peaToBoogie = new BasicTranslator(peas);
 			break;

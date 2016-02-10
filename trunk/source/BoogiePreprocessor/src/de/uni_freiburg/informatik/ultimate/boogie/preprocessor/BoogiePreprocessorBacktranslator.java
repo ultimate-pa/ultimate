@@ -569,7 +569,7 @@ public class BoogiePreprocessorBacktranslator
 			} else if (type instanceof PrimitiveType) {
 				String inputName = inputExp.getIdentifier();
 				for (String name : list.getIdentifiers()) {
-					if (inputName.contains(name)) {
+					if (inputName.equals(name)) {
 						return new IdentifierExpression(mappedLoc, list.getType().getBoogieType(), name,
 								inputExp.getDeclarationInformation());
 					}

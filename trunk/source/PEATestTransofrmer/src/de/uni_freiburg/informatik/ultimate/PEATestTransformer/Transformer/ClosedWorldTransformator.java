@@ -55,7 +55,7 @@ public class ClosedWorldTransformator extends BasicTransformer {
 	}
 
 	/**
-	 * Append the automata for the closed world assumption on all variabels that are not in the input set
+	 * Append the automata for the closed world assumption on all variables that are not in the input set
 	 */
 	@Override
 	protected ArrayList<PhaseEventAutomata> postProcess(ArrayList<PatternType> patterns, ArrayList<PhaseEventAutomata> peas) {
@@ -91,33 +91,40 @@ public class ClosedWorldTransformator extends BasicTransformer {
 	/**
 	 * Appends a conjunction to the guard of the passed transition, that appends an closed world
 	 * guard R_<varname> for the variable.
-	 * TODO: nicht per edge sondern per automaton ein neues edge erstellen
 	 * @param trans
-	 * @note guarantee that newIdentIndex is called once per ident and Pea before this Method is called.
+	 * @note guarantee that newIdentIndex is called once per pea for all its identifiers that are later
+	 * used on a closed world edge.
 	 */
-	private void createClosedWorldGuard(Transition transition, Set<String> idents){
+	protected CDD createClosedWorldGuard(CDD consequence){
+		Set<String> idents = new HashSet<String>();
+		this.collectIdentifiersFromCdd(consequence, idents);
+		return this.createClosedWorldGuard(idents);
+	}
+	protected CDD createClosedWorldGuard(Set<String> idents){
 		//count for later use when building automata for every var
+		CDD guard = CDD.TRUE;
 		for(String ident: idents){
 			//build actual new guard
 			if(!this.sysInfo.isInput(ident)){
-				CDD guard = transition.getGuard();
-				if (guard == CDD.TRUE){
-					transition.setGuard(BoogieBooleanExpressionDecision.create(
-								BoogieAstSnippet.createIdentifier(CLOSED_WORLD_PREFIX+this.closedWorldCounter.get(ident)+CLOSED_WORLD_SEPR+ ident, "ClosedWorldAsumption")).negate());
-				} else {
-					transition.setGuard(
-							guard.and(BoogieBooleanExpressionDecision.create(
-								BoogieAstSnippet.createIdentifier(CLOSED_WORLD_PREFIX+this.closedWorldCounter.get(ident)+CLOSED_WORLD_SEPR+ ident, "ClosedWorldAsumption")
-							).negate()));	
-				}
+				guard = guard.and(BoogieBooleanExpressionDecision.create(
+						BoogieAstSnippet.createIdentifier(
+								CLOSED_WORLD_PREFIX+this.closedWorldCounter.get(ident)+CLOSED_WORLD_SEPR+ ident, "ClosedWorldAsumption"
+								)).negate());
 			}
 		}
+		return guard;
 	}
+	
 	/**
-	 * Must be called for an ident before createClosedWorld edge is called with the ident. This increases the R_x counter
-	 * per ident and must be called per automaton. Inside the automaton one id can be used the whole time.
+	 * Helper for giving a unique x per automaton for a variable y for R_x_y edges.
+	 * Must be called once per automaton in the beginning of the automaton creation.
 	 */
-	private void newIdentIndex(Set<String> idents){
+	protected void newIdentIndex(CDD cdd){
+		Set<String> idents = new HashSet<String>();
+		this.collectIdentifiersFromCdd(cdd, idents);
+		this.newIdentIndex(idents);
+	}
+	protected void newIdentIndex(Set<String> idents){
 		for(String ident: idents){
 			if(!this.sysInfo.isInput(ident)){
 				if(!this.closedWorldCounter.containsKey(ident)){
@@ -133,34 +140,25 @@ public class ClosedWorldTransformator extends BasicTransformer {
 	protected PhaseEventAutomata GlobalInvariantPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s) {
 		PhaseEventAutomata pea = super.GlobalInvariantPattern(pattern, p, q, r, s);
 		//collect all variables in the effect
-		Set<String> cddIdents = new HashSet<String>();
-		this.collectIdentifiersFromCdd(s, cddIdents); //yes, s is correct!
-		//add !R_varname to original (true) edge for every var in s. (may only change when not s)
-		//TODO: ONLY if they are no input variables (compare with SystemInfo) not with I_ prefix
+		this.newIdentIndex(s);
+		//add to self loop: P' or (!P' and !R_S)
 		Transition transition = pea.getPhases()[0].getTransitions().get(0);
-		this.newIdentIndex(cddIdents);
-		this.createClosedWorldGuard(transition, cddIdents);
-		transition.setGuard(transition.getGuard().and(p));
-		//add one edge that can be taken when !s
-		pea.getPhases()[0].addTransition(
-				pea.getPhases()[0], //selfloop
-				p.negate(),
-				new String[]{});
+		transition.setGuard(transition.getGuard().and(p.prime().or(p.prime().negate().and(this.createClosedWorldGuard(s)))));
 		return pea;
 	}
 
 	@Override
-	protected PhaseEventAutomata AfterUniversality(PatternType pattern, CDD p, CDD q, CDD r, CDD s) {
-		PhaseEventAutomata pea =  super.AfterUniversality(pattern, p, q, r, s);
-		//collect all variables in the effect
-		Set<String> cddIdents = new HashSet<String>();
-		this.collectIdentifiersFromCdd(s, cddIdents);
-		//select self loop of phase 0 to add closed world guard (altering other edges is not necessary)
-		Transition transition = pea.getPhases()[0].getTransitions().get(0);
-		this.newIdentIndex(cddIdents);
-		this.createClosedWorldGuard(transition, cddIdents);
+	protected PhaseEventAutomata AfterUntilInvariantPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s) {
+		PhaseEventAutomata pea =  super.AfterUntilInvariantPattern(pattern, p, q, r, s);
+		Phase st0 = pea.getPhases()[0];
+		for(Transition transition: st0.getTransitions()){
+			transition.setGuard(transition.getGuard().and(this.createClosedWorldGuard(s)));
+		}
+		
 		return pea;
 	}
+	
+	
 
 	
 	

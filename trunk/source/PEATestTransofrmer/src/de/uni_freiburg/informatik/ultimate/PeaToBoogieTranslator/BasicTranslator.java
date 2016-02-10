@@ -60,14 +60,14 @@ public class BasicTranslator {
 	private String fileName = "fileName";
 	
 	//All necessary information to translate the PEAs into a Boogie file is stored in the below structures
-	private Set<String> modifiedVariables = new HashSet<String>();
-	private Set<String> havocInLoop = new HashSet<String>();
-	private Set<String> clocks = new HashSet<String>();
-	private Set<String> vars = new HashSet<String>();
-	private HashMap<String, HashSet<String>> varsByType = new HashMap<String, HashSet<String>>();
+	protected Set<String> modifiedVariables = new HashSet<String>();
+	protected Set<String> havocInLoop = new HashSet<String>();
+	protected Set<String> clocks = new HashSet<String>();
+	protected Set<String> vars = new HashSet<String>();
+	protected HashMap<String, HashSet<String>> varsByType = new HashMap<String, HashSet<String>>();
 	protected HashMap<Integer, List<Phase>> initialEdgesAssume = new HashMap<Integer, List<Phase>>();
-	private HashMap<Phase, ArrayList<Statement>> phaseInvariants = new HashMap<Phase, ArrayList<Statement>>();
-	private HashMap<Transition, ArrayList<Statement>> transitionBody = new HashMap<Transition, ArrayList<Statement>>();
+	protected HashMap<Phase, ArrayList<Statement>> phaseInvariants = new HashMap<Phase, ArrayList<Statement>>();
+	protected HashMap<Transition, ArrayList<Statement>> transitionBody = new HashMap<Transition, ArrayList<Statement>>();
 
 	//Atomaton this class shall translate
 	private PhaseEventAutomata[] peas;
@@ -221,7 +221,7 @@ public class BasicTranslator {
 	}
 	
 	protected Statement[] generatePhase(BoogieLocation location, int id, PhaseEventAutomata pea, 
-			HashMap<Phase, ArrayList<Statement>> phaseInvariants){
+		HashMap<Phase, ArrayList<Statement>> phaseInvariants){
 		Statement[] ifStatement = new Statement[]{
 				this.generateIfPhaseCounterEquals(location, id, 0, phaseInvariants.get(pea.getPhases()[0]), new Statement[0])};
 		for(int i = 1; i < pea.getPhases().length; i++){
@@ -279,18 +279,23 @@ public class BasicTranslator {
 	 */
 	protected void generatePhaseInvariants(PhaseEventAutomata pea, String file, BoogieLocation location){
 		for(Phase phase: pea.getPhases()){
-			this.phaseInvariants.put(phase, new ArrayList<Statement>());
-			if(phase.getClockInvariant() != CDD.TRUE){
-				this.phaseInvariants.get(phase).add(
-						this.generateAssumeCDD(phase.getClockInvariant(), file, location)
-						);	
-			}
-			//add invariant even if just assume(true) to prevent empty lists
-			this.phaseInvariants.get(phase).add(
-				this.generateAssumeCDD(phase.getStateInvariant(), file, location)
-			);	
+			this.phaseInvariants.put(phase, this.generatePhaseInvariant(pea, file, location, phase));
 		}	
 	}
+	protected ArrayList<Statement> generatePhaseInvariant(PhaseEventAutomata pea, String file, BoogieLocation location, Phase phase){
+		ArrayList<Statement> stmt = new ArrayList<Statement>();
+		if(phase.getClockInvariant() != CDD.TRUE){
+			stmt.add(
+					this.generateAssumeCDD(phase.getClockInvariant(), file, location)
+					);	
+		}
+		//add invariant even if just assume(true) to prevent empty lists
+		stmt.add(
+			this.generateAssumeCDD(phase.getStateInvariant(), file, location)
+		);
+		return stmt;
+	}
+	
 	/**
 	 * Collect all initial phases of all automata.
 	 * @param pea

@@ -15,3 +15,4 @@ Require-Bundle: UltimateCore,
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Export-Package: de.uni_freiburg.informatik.ultimate.PEATestTransformer.SplPatternParser
+Import-Package: de.uni_freiburg.informatik.ultimate.boogie.type

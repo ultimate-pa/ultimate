@@ -2,6 +2,13 @@ package de.uni_freiburg.informatik.ultimate.PEATestTransformer;
 
 import java.util.HashSet;
 
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+
 /**
  * Description of all meta information of the SUT that is not derivable from the reauirements.
  * - Variable sets Input and Output
@@ -26,10 +33,24 @@ public class SystemInformation {
 	public void addOutputVariable(String ident){
 		this.outputVariables.add(ident);
 	}
-
+	
 	//TODO: this is a hack and should really check if the variable is not in the inputs
 	public boolean isInput(String ident) {
-		return ident.startsWith("I:");
+		return ident.startsWith("I");
+	}
+	
+	/**
+	 * Returns for a variable name a predicate of the variables initial value. 
+	 * @TODO: this currently reutns mockup values dependig on the type of the vairable e.g. false for boools, 0 for integers, 0.0 for floats. ... 
+	 * @param Name
+	 * @return
+	 */
+	public Expression getInitialAssignmentPredicate(String ident){
+		ILocation loc = BoogieAstSnippet.createDummyLocation();
+		return new BinaryExpression(loc,
+									BinaryExpression.Operator.COMPEQ, 
+									new IdentifierExpression(loc, ident), 
+									new BooleanLiteral(loc, false));
 	}
 	
 	
