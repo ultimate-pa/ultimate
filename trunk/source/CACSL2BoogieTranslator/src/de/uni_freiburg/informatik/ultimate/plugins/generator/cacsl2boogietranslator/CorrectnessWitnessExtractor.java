@@ -42,7 +42,9 @@ import java.util.stream.Collectors;
 import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.ASTGenericVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
+import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFileLocation;
+import org.eclipse.cdt.core.dom.ast.IASTInitializer;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
@@ -132,6 +134,7 @@ public class CorrectnessWitnessExtractor {
 			}
 		}
 
+		mLogger.info("Processed " + closed.size() + " nodes");
 		mLogger.info("Extracted " + invariantCounter + " invariants");
 		printResults(rtr);
 
@@ -139,18 +142,20 @@ public class CorrectnessWitnessExtractor {
 	}
 
 	private void printResults(final Pair<Map<IASTNode, String>, Map<IASTNode, String>> rtr) {
-		mLogger.info("Found the following invariants in the witness");
 		final Map<IASTNode, String> before = rtr.getFirst();
 		final Map<IASTNode, String> after = rtr.getSecond();
 		if (before.isEmpty() && after.isEmpty()) {
-			mLogger.info("No invariants found except invariant=true");
+			mLogger.info("Witness did not contain any usable invariants.");
 			return;
 		}
+		mLogger.info("Found the following invariants in the witness:");
 		for (final Entry<IASTNode, String> entry : before.entrySet()) {
-			mLogger.info("Before " + entry.getKey().getRawSignature() + " invariant is " + entry.getValue());
+			mLogger.info("Before [L" + entry.getKey().getFileLocation().getStartingLineNumber() + "] "
+					+ entry.getKey().getRawSignature() + " invariant is " + entry.getValue());
 		}
 		for (final Entry<IASTNode, String> entry : after.entrySet()) {
-			mLogger.info("After " + entry.getKey().getRawSignature() + " invariant is " + entry.getValue());
+			mLogger.info("After [L" + entry.getKey().getFileLocation().getStartingLineNumber() + "] "
+					+ entry.getKey().getRawSignature() + " invariant is " + entry.getValue());
 		}
 	}
 
@@ -215,10 +220,10 @@ public class CorrectnessWitnessExtractor {
 		mTranslationUnit.accept(matcher);
 
 		final Pair<List<IASTNode>, List<IASTNode>> matchedNodes = matcher.getMatchedNodes();
-		if (matchedNodes.getFirst().isEmpty()) {
+		if (matchedNodes.getFirst().isEmpty() && !beforeLines.isEmpty()) {
 			mLogger.warn("Could not match AST node to invariant for witness lines " + toStringCollection(beforeLines));
 		}
-		if (matchedNodes.getSecond().isEmpty()) {
+		if (matchedNodes.getSecond().isEmpty() && !afterLines.isEmpty()) {
 			mLogger.warn("Could not match AST node to invariant for witness lines " + toStringCollection(afterLines));
 		}
 
@@ -256,6 +261,17 @@ public class CorrectnessWitnessExtractor {
 		public int visit(IASTStatement statement) {
 			match(statement);
 			return super.visit(statement);
+		}
+
+		@Override
+		public int visit(IASTInitializer initializer) {
+			match(initializer);
+			return super.visit(initializer);
+		}
+
+		@Override
+		public int visit(IASTDeclarator declarator) {
+			return super.visit(declarator);
 		}
 
 		private void match(IASTNode node) {
