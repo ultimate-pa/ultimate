@@ -1,4 +1,4 @@
-//#Unsafe
+//#Safe
 
 procedure ULTIMATE.start()
 {
@@ -9,6 +9,7 @@ procedure ULTIMATE.start()
 	
 	assert true;
 	assume y - x == 2;
+	// possible abstract states: (x=9, y=11) or (x=10, y=12)
 	
 	assert true;
 	assert x != 8;
