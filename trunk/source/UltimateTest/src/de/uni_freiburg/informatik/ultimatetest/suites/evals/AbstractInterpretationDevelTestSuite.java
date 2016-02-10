@@ -98,13 +98,15 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 			
 			//NullPointerException in octagon.OctDomainState.numVarIndex (10 total)
-			"examples/svcomp/seq-mthreaded/pals_STARTPALS_ActiveStandby_true-unreach-call.ufo.UNBOUNDED.pals.c",
-			"examples/svcomp/seq-mthreaded/pals_floodmax.5_false-unreach-call.4.ufo.UNBOUNDED.pals.c",
+			// FIXED
+//			"examples/svcomp/seq-mthreaded/pals_STARTPALS_ActiveStandby_true-unreach-call.ufo.UNBOUNDED.pals.c",
+//			"examples/svcomp/seq-mthreaded/pals_floodmax.5_false-unreach-call.4.ufo.UNBOUNDED.pals.c",
 			
 			//NullPointerException in OctDomainState.copyVars (6 total)
-			"examples/svcomp/ntdrivers/cdaudio_false-unreach-call.i.cil.c",
-			"examples/svcomp/ntdrivers/diskperf_false-unreach-call.i.cil.c",
-			"examples/svcomp/ntdrivers/kbfiltr_false-unreach-call.i.cil.c",
+			// FIXED
+//			"examples/svcomp/ntdrivers/cdaudio_false-unreach-call.i.cil.c",
+//			"examples/svcomp/ntdrivers/diskperf_false-unreach-call.i.cil.c",
+//			"examples/svcomp/ntdrivers/kbfiltr_false-unreach-call.i.cil.c",
 
 			
 			//ArrayIndexOutOfBoundsException (all)

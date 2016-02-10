@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util;
 
+import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctDomainState;
@@ -11,36 +12,34 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class TypeUtil {
 
+	private final static Integer INT = PrimitiveType.INT;
+	private final static Integer REAL = PrimitiveType.REAL;
+	private final static Integer BOOL = PrimitiveType.BOOL;
+
 	public static boolean isBoolean(IType type) {
-		if (type instanceof PrimitiveType) {
-			int typeCode = ((PrimitiveType) type).getTypeCode();
-			return typeCode == PrimitiveType.BOOL;
-		}
-		return false;
+		return BOOL.equals(primitiveType(type));
 	}
 
 	public static boolean isNumeric(IType type) {
-		if (type instanceof PrimitiveType) {
-			int typeCode = ((PrimitiveType) type).getTypeCode();
-			return  typeCode == PrimitiveType.INT || typeCode == PrimitiveType.REAL;
-		}
-		return false;
+		Integer t = primitiveType(type);
+		return INT.equals(t) || INT.equals(t);
 	}
 
 	public static boolean isNumericNonInt(IType type) {
-		if (type instanceof PrimitiveType) {
-			int typeCode = ((PrimitiveType) type).getTypeCode();
-			return typeCode == PrimitiveType.REAL;
-		}
-		return false;
+		return REAL.equals(primitiveType(type));
 	}
-	
+
 	public static boolean isNumericInt(IType type) {
+		return INT.equals(primitiveType(type));
+	}
+
+	private static Integer primitiveType(IType type) {
 		if (type instanceof PrimitiveType) {
-			int typeCode = ((PrimitiveType) type).getTypeCode();
-			return typeCode == PrimitiveType.INT;
+			return ((PrimitiveType) type).getTypeCode();
+		} else if (type instanceof ConstructedType) {
+			return primitiveType(((ConstructedType) type).getUnderlyingType());
 		}
-		return false;
+		return null;
 	}
 
 	/**
