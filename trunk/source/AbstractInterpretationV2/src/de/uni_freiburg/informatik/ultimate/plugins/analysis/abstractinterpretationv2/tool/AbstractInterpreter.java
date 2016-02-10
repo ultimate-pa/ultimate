@@ -74,6 +74,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp.VPDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -348,6 +349,8 @@ public final class AbstractInterpreter {
 		} else if (OctagonDomain.class.getSimpleName().equals(selectedDomain)) {
 			Logger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 			return new OctagonDomain(logger, symbolTable, literalCollector);
+		} else if (VPDomain.class.getSimpleName().equals(selectedDomain)) {
+			return new VPDomain(services);
 		}
 		throw new UnsupportedOperationException("The value \"" + selectedDomain + "\" of preference \""
 				+ AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN + "\" was not considered before! ");
