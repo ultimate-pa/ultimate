@@ -27,18 +27,17 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.annotation.ModernAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 /**
  * 
@@ -57,7 +56,7 @@ public class AnnotatingRcfgAbstractStateStorageProvider<STATE extends IAbstractS
 		mSuffix = String.valueOf(sSuffix++);
 	}
 
-	protected Deque<Pair<CodeBlock, STATE>> getStates(LOCATION node) {
+	protected Deque<STATE> getStates(LOCATION node) {
 		assert node != null;
 		assert node instanceof IElement : "Cannot persist states for locations that do not support payloads";
 		final IElement elem = (IElement) node;
@@ -70,35 +69,16 @@ public class AnnotatingRcfgAbstractStateStorageProvider<STATE extends IAbstractS
 	}
 
 	private static final class AbsIntAnnotation<STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
-			extends AbstractAnnotations {
+			extends ModernAnnotations {
 
 		private static final String KEY = AbsIntAnnotation.class.getSimpleName();
-		private static final String[] FIELD_NAMES = new String[] { "States" };
 		private static final long serialVersionUID = 1L;
-		private final Deque<Pair<CodeBlock, STATE>> mStates;
+
+		@Visualizable
+		private final Deque<STATE> mStates;
 
 		private AbsIntAnnotation() {
 			mStates = new ArrayDeque<>();
-		}
-
-		@Override
-		protected String[] getFieldNames() {
-			return FIELD_NAMES;
-		}
-
-		@Override
-		protected Object getFieldValue(String field) {
-			if (FIELD_NAMES[0].equals(field)) {
-				// states
-				final ArrayList<String> rtr = new ArrayList<>();
-				for (final Pair<CodeBlock, STATE> entry : mStates) {
-					rtr.add(new StringBuilder().append("[").append(entry.getSecond().hashCode()).append("] ")
-							.append(entry.getSecond().toLogString()).append(" (from ")
-							.append(entry.getFirst().getPrettyPrintedStatements()).append(")").toString());
-				}
-				return rtr.toArray(new String[rtr.size()]);
-			}
-			return null;
 		}
 
 		public void annotate(IElement elem, String suffix) {

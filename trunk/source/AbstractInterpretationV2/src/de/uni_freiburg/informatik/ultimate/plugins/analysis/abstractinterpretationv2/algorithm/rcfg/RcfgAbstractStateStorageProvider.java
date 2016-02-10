@@ -37,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 /**
  * 
@@ -47,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>, LOCATION>
 		extends BaseRcfgAbstractStateStorageProvider<STATE, LOCATION> {
 
-	private final Map<LOCATION, Deque<Pair<CodeBlock, STATE>>> mStorage;
+	private final Map<LOCATION, Deque<STATE>> mStorage;
 
 	public RcfgAbstractStateStorageProvider(IAbstractStateBinaryOperator<STATE> mergeOperator,
 			IUltimateServiceProvider services, ITransitionProvider<CodeBlock, LOCATION> transprovider) {
@@ -55,11 +54,11 @@ public class RcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 		mStorage = new HashMap<>();
 	}
 
-	protected Deque<Pair<CodeBlock, STATE>> getStates(LOCATION node) {
+	protected Deque<STATE> getStates(LOCATION node) {
 		assert node != null;
-		Deque<Pair<CodeBlock, STATE>> rtr = mStorage.get(node);
+		Deque<STATE> rtr = mStorage.get(node);
 		if (rtr == null) {
-			rtr = new ArrayDeque<Pair<CodeBlock, STATE>>();
+			rtr = new ArrayDeque<STATE>();
 			mStorage.put(node, rtr);
 		}
 		return rtr;
