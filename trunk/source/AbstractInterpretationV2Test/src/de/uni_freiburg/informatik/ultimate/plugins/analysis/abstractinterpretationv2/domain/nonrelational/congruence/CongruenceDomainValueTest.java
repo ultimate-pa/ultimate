@@ -139,16 +139,4 @@ public class CongruenceDomainValueTest{
 		assertTrue(c.negate().toString().equals("3"));
 		assertTrue(z.negate().toString().equals("3Z"));
 	}
-	
-	@Test
-	public void testEqualsMult() {
-		CongruenceDomainValue right = new CongruenceDomainValue(new BigInteger("36"), true);
-		CongruenceDomainValue factor = new CongruenceDomainValue(new BigInteger("3"), true);
-		CongruenceDomainValue res = right.equalsMult(factor);
-		assertTrue(res.toString().equals("12"));
-		right = new CongruenceDomainValue(new BigInteger("3"));
-		factor = new CongruenceDomainValue(new BigInteger("3"), true);
-		res = right.equalsMult(factor);
-		assertTrue(res.toString().equals("1Z"));
-	}
 }

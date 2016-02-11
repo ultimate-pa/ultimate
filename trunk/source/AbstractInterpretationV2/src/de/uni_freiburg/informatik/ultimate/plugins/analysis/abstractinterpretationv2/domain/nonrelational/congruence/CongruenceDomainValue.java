@@ -35,6 +35,10 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 	}
 	
 	protected CongruenceDomainValue(BigInteger value, boolean isConstant) {
+		if (value == null) {
+			setToBottom();
+			return;
+		}
 		mIsBottom = false;
 		mIsConstant = isConstant;
 		if (value.equals(BigInteger.ZERO)) {
@@ -259,23 +263,11 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 		return new CongruenceDomainValue(mValue, mIsConstant);
 	}
 	
-	protected CongruenceDomainValue moduloEqualsZero(CongruenceDomainValue other) {
-		// Shouldn't happen, just to be safe
-		if (other == null || mIsBottom || other.mIsBottom) {
+	protected CongruenceDomainValue modEquals(CongruenceDomainValue modul, CongruenceDomainValue rest) {
+		if (mIsBottom || modul == null || modul.mIsBottom || rest == null || rest.mIsBottom) {
 			return new CongruenceDomainValue(true);
 		}
-		return new CongruenceDomainValue(mValue.multiply(other.mValue).divide(mValue.gcd(other.mValue)));
-	}
-	
-	protected CongruenceDomainValue equalsMult(CongruenceDomainValue factor) {
-		if (mIsBottom || factor.mIsBottom) {
-			return new CongruenceDomainValue(true);
-		}
-		if (factor.mValue.signum() < 0) {
-			return new CongruenceDomainValue(mValue.divide(mValue.gcd(factor.mValue)).negate(), mIsConstant);
-		} else {
-			return new CongruenceDomainValue(mValue.divide(mValue.gcd(factor.mValue)), mIsConstant);
-		}
-		
+		CongruenceDomainValue val = rest.merge(modul);
+		return new CongruenceDomainValue(mValue.multiply(val.mValue).divide(mValue.gcd(val.mValue)));
 	}
 }

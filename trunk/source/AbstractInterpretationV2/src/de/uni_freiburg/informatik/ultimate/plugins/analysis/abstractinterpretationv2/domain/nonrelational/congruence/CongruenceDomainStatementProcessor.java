@@ -394,23 +394,6 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 					return unexp.getExpr();
 				}
 			}
-
-		} else {
-			// Simply replace -x by (-1) * x (handled correctly by the ExpressionEvaluator)
-			// TODO: Handle -k * -x correctly
-			int c = 1;
-			Expression newExpr = expr.getExpr();
-			while (newExpr instanceof UnaryExpression) {
-				newExpr = ((UnaryExpression) newExpr).getExpr();
-				c++;
-			}
-			if (c % 2 == 0) {
-				return newExpr;
-			} else {
-				Expression newLeft = new UnaryExpression(expr.getLocation(), UnaryExpression.Operator.ARITHNEGATIVE, new IntegerLiteral(expr.getLocation(), "1"));
-				return new BinaryExpression(expr.getLocation(), Operator.ARITHMUL, newLeft, newExpr);
-				//return new BinaryExpression(expr.getLocation(), Operator.ARITHMUL, new IntegerLiteral(expr.getLocation(), "-1"), newExpr);
-			}
 		}
 		return expr;
 	}

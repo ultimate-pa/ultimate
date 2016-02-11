@@ -58,6 +58,10 @@ public class CongruenceBinaryExpressionEvaluator
 	private IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> mRightSubEvaluator;
 
 	private Operator mOperator;
+	
+	private CongruenceDomainValue mModul = null;
+	
+	private CongruenceDomainValue mRest = null;
 
 	protected CongruenceBinaryExpressionEvaluator(final Logger logger, final EvaluatorType type) {
 		mLogger = logger;
@@ -111,6 +115,7 @@ public class CongruenceBinaryExpressionEvaluator
 				case ARITHMOD:
 					returnValue = v1.mod(v2);
 					returnBool = new BooleanValue(false);
+					mModul = v2;
 					break;
 				case LOGICAND:
 					returnBool = res1.getBooleanValue().and(res2.getBooleanValue());
@@ -134,10 +139,34 @@ public class CongruenceBinaryExpressionEvaluator
 						returnBool = new BooleanValue(false);
 						break;
 					}
+					
+					if (mLeftSubEvaluator instanceof CongruenceBinaryExpressionEvaluator) {
+						CongruenceBinaryExpressionEvaluator sub  = (CongruenceBinaryExpressionEvaluator) mLeftSubEvaluator;
+						if (sub.mOperator == Operator.ARITHMOD) {
+							if (v2.isConstant() && (v2.value().compareTo(sub.mModul.value().abs())) >= 0 || v2.value().signum() < 0) {
+								returnBool = new BooleanValue(false);
+								break;
+							}
+						}
+					}
+					
+					if (mRightSubEvaluator instanceof CongruenceBinaryExpressionEvaluator) {
+						CongruenceBinaryExpressionEvaluator sub  = (CongruenceBinaryExpressionEvaluator) mRightSubEvaluator;
+						if (sub.mOperator == Operator.ARITHMOD) {
+							if (v2.isConstant() && (v1.value().compareTo(sub.mModul.value().abs())) >= 0 || v1.value().signum() < 0) {
+								returnBool = new BooleanValue(false);
+								break;
+							}
+						}
+					}
 
 					if (!mLeftSubEvaluator.containsBool() && !mRightSubEvaluator.containsBool()) {
-						if (returnValue.isEqualTo(v1) && returnValue.isEqualTo(v2)) {
-							returnBool = new BooleanValue(true);
+						if (v1.isConstant() && v2.isConstant()) {
+							returnBool = new BooleanValue(v1.value().equals(v2.value()));
+							break;
+						}
+						if (returnValue.isBottom()) {
+							returnBool = new BooleanValue(false);
 						} else {
 							returnBool = new BooleanValue();
 						}
@@ -344,6 +373,16 @@ public class CongruenceBinaryExpressionEvaluator
 					        referenceBool);
 					final CongruenceDomainEvaluationResult rightEvalresult = new CongruenceDomainEvaluationResult(newRight,
 					        referenceBool);
+					
+					if (mLeftSubEvaluator instanceof CongruenceBinaryExpressionEvaluator) {
+						CongruenceBinaryExpressionEvaluator c = (CongruenceBinaryExpressionEvaluator) mLeftSubEvaluator;
+						c.mRest = rightEvalresult.getValue();
+					}
+					
+					if (mRightSubEvaluator instanceof CongruenceBinaryExpressionEvaluator) {
+						CongruenceBinaryExpressionEvaluator c = (CongruenceBinaryExpressionEvaluator) mRightSubEvaluator;
+						c.mRest = leftEvalresult.getValue();
+					}
 
 					final List<CongruenceDomainState> leftEq = mLeftSubEvaluator.inverseEvaluate(leftEvalresult,
 					        currentState);
@@ -355,22 +394,32 @@ public class CongruenceBinaryExpressionEvaluator
 						}
 					}
 					break;
-				case COMPNEQ:
-					// TODO: can be removed?
+				case ARITHDIV:
+				case ARITHMINUS:
+				case ARITHMOD:
+				case ARITHMUL:
+				case ARITHPLUS:
+					final CongruenceDomainValue newArithValueLeft = computeNewValue(referenceValue, left.getValue(),
+					        right.getValue(), true);
+					final CongruenceDomainValue newArithValueRight = computeNewValue(referenceValue, right.getValue(),
+					        left.getValue(), false);
+
+					final CongruenceDomainEvaluationResult inverseResultArithLeft = new CongruenceDomainEvaluationResult(
+					        newArithValueLeft, referenceBool);
+					final CongruenceDomainEvaluationResult inverseResultArithRight = new CongruenceDomainEvaluationResult(
+					        newArithValueRight, referenceBool);
+
+					final List<CongruenceDomainState> leftInverseArith = mLeftSubEvaluator
+					        .inverseEvaluate(inverseResultArithLeft, currentState);
+					final List<CongruenceDomainState> rightInverseArith = mRightSubEvaluator
+					        .inverseEvaluate(inverseResultArithRight, currentState);
+					
+					for (final CongruenceDomainState le : leftInverseArith) {
+						for (final CongruenceDomainState ri : rightInverseArith) {
+							returnStates.add(le.intersect(ri));
+						}
+					}
 					break;
-				case COMPGT:
-					// TODO: can be removed?
-					break;
-				case COMPGEQ:
-					// TODO: can be removed?
-					break;
-				case COMPLT:
-					// TODO: can be removed?
-					break;
-				case COMPLEQ:
-					// TODO: can be removed?
-					break;
-				case COMPPO:
 				default:
 					returnStates.add(currentState);
 					break;
@@ -419,8 +468,11 @@ public class CongruenceBinaryExpressionEvaluator
 			newValue = newValue.intersect(oldValue);
 			break;
 		case ARITHMOD:
-			mLogger.warn("Cannot handle inverse of the modulo operation precisely. Returning old value.");
-			newValue = oldValue;
+			if (left && mRest != null) {
+				newValue = oldValue.modEquals(otherValue, mRest);
+			} else {
+				newValue = oldValue;
+			}
 			break;
 		case COMPEQ:
 		case COMPLEQ:
