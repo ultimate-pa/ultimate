@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 public class PeaToBoogie implements ISource {
 	protected Logger mLogger;
-	List<String> m_FileNames = new ArrayList<String>();
+	List<String> mFileNames = new ArrayList<String>();
 
 	@Override
 	public void init() {
@@ -83,10 +83,11 @@ public class PeaToBoogie implements ISource {
 	public IElement parseAST(File file) throws Exception {
 		Translator translator = new Translator();
 		String inputPath = file.getAbsolutePath();
-		m_FileNames = new ArrayList<String>();
-		m_FileNames.add(inputPath);
+		mFileNames = new ArrayList<String>();
+		mFileNames.add(inputPath);
 		mLogger.info("Parsing: '" + inputPath + "'");
 		srParsePattern[] patterns = new ReqToPEA().genPatterns(inputPath);
+		//TODO: Add options to this cruel program 
 		BitSet vacuityChecks = new BitSet(patterns.length);
 		vacuityChecks.set(0, patterns.length);
 		
@@ -105,7 +106,7 @@ public class PeaToBoogie implements ISource {
 	@Override
 	public GraphType getOutputDefinition() {
 		try {
-			return new GraphType(getPluginID(), GraphType.Type.AST, m_FileNames);
+			return new GraphType(getPluginID(), GraphType.Type.AST, mFileNames);
 		} catch (Exception ex) {
 			mLogger.log(Level.FATAL, "syntax error: " + ex.getMessage());
 			return null;
