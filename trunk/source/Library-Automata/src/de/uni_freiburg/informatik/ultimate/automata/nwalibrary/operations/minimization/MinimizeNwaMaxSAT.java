@@ -36,9 +36,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 
 public class MinimizeNwaMaxSAT<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
@@ -46,7 +45,7 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
 	private final NestedWordAutomaton<LETTER, STATE> m_result;
 	
 	public MinimizeNwaMaxSAT(
-			IUltimateServiceProvider services,
+			AutomataLibraryServices services,
 			StateFactory<STATE> stateFactory, 
 			INestedWordAutomaton<LETTER, STATE> automaton) {
 		Logger logger = services.getLoggingService().getLogger("MinimizeNWAMaxSAT");

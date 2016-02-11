@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 
 /**
  * Convert a <code>INestedWordAutomaton</code> to a <code>NiceNWA</code>
@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  */
 public class NiceConvert<LETTER, STATE> {
 	private Logger logger;
-	private IUltimateServiceProvider services;
+	private AutomataLibraryServices services;
 	private StateFactory<STATE> factory;
 	
 	// LETTERs are shared between old (input) and new (output) automaton
@@ -96,7 +96,7 @@ public class NiceConvert<LETTER, STATE> {
 	public NiceNWA getNiceNWA() { return converted; }
 	
 	public NiceConvert(Logger logger,
-			IUltimateServiceProvider services,
+			AutomataLibraryServices services,
 			INestedWordAutomaton<LETTER, STATE> automaton,
 			StateFactory<STATE> factory) {
 		this.logger = logger;
