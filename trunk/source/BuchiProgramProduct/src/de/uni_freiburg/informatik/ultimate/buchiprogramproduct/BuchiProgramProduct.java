@@ -170,7 +170,6 @@ public class BuchiProgramProduct implements IGenerator {
 		mStorage = storage;
 	}
 
-	@SuppressWarnings("rawtypes")
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
 		mServices = services;

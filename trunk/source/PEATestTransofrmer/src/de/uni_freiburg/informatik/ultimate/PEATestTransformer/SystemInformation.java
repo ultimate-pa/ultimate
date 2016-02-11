@@ -38,6 +38,13 @@ public class SystemInformation {
 	public boolean isInput(String ident) {
 		return ident.startsWith("I");
 	}
+	//TODO: this is a hack and should really check if the variable is not in the inputs
+	public boolean isOutput(String ident) {
+		return ident.startsWith("O");
+	}
+	public boolean isInternal(String ident) {
+		return !this.isInput(ident) && !this.isOutput(ident);
+	}
 	
 	/**
 	 * Returns for a variable name a predicate of the variables initial value. 

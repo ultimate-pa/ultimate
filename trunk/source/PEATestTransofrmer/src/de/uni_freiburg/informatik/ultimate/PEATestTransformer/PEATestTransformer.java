@@ -4,25 +4,34 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.Collection;
 import java.util.List;
 
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.SplPatternParser.SplToBoogie;
 import de.uni_freiburg.informatik.ultimate.PeaToBoogieTranslator.BasicTranslator;
+import de.uni_freiburg.informatik.ultimate.access.IObserver;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
+import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import pea.PhaseEventAutomata;
 import srParse.pattern.PatternType; 
 
 public class PeaTestTransformer implements ISource {
 	protected Logger mLogger;
 	List<String> m_FileNames = new ArrayList<String>();
+	private boolean previousToolFoundErrors;
+	private SystemInformation sysInfo = new SystemInformation();
 	
 	
 	@Override
@@ -34,6 +43,13 @@ public class PeaTestTransformer implements ISource {
 	@Override
 	public void setServices(IUltimateServiceProvider services) {
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		Collection<CounterExampleResult> cex = CoreUtil.filterResults(services.getResultService().getResults(),
+				CounterExampleResult.class);
+		previousToolFoundErrors = !cex.isEmpty();
+		PeaTestBackTranslator backtranslator = new PeaTestBackTranslator(BoogieASTNode.class, Expression.class, this.sysInfo);
+		if (!previousToolFoundErrors) {
+			services.getBacktranslationService().addTranslator(backtranslator);
+		}
 	}
 
 	@Override
@@ -78,6 +94,7 @@ public class PeaTestTransformer implements ISource {
 
 	@Override
 	public IElement parseAST(File[] files) throws Exception {
+		this.sysInfo = new SystemInformation();
 		SplToBoogie parser = new SplToBoogie();
 		//parse all files with reqs into one list of filled in patterns
 		ArrayList<PatternType> filledPatterns = new ArrayList<PatternType>();

@@ -144,8 +144,11 @@ public class ClosedWorldTransformator extends BasicTransformer {
 		//add to self loop: P' or (!P' and !R_S)
 		Transition transition = pea.getPhases()[0].getTransitions().get(0);
 		transition.setGuard(transition.getGuard().and(
-				p.prime().and(this.createClosedWorldGuard(s).negate())			// P && R_s or
-				.or(p.prime().negate().and(this.createClosedWorldGuard(s)))));  // !P && !R_s
+				p.prime()));		// P && R_s or
+		Phase phase = pea.getPhases()[0];
+		phase.addTransition(phase, 
+				p.prime().negate().and(this.createClosedWorldGuard(s)),
+				new String[]{});
 		return pea;
 	}
 
