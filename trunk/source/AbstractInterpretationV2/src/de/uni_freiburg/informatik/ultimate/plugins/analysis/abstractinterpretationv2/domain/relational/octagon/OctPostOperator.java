@@ -23,6 +23,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieUtil;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.CollectionUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -43,6 +44,10 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		return joinedState;
 	}
 
+	public static List<OctDomainState> joinToSingleton(List<OctDomainState> states) {
+		return CollectionUtil.singeltonArrayList(join(states));
+	}
+	
 	public static List<OctDomainState> deepCopy(List<OctDomainState> states) {
 		List<OctDomainState> copy = new ArrayList<>(states.size());
 		states.forEach(state -> copy.add(state.deepCopy()));
@@ -90,6 +95,8 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		joinedStates.add(join(states));
 		return joinedStates;
 	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	public Logger getLogger() {
 		return mLogger;
@@ -98,7 +105,15 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 	public ExpressionTransformer getExprTransformer() {
 		return mExprTransformer;
 	}
+
+	public OctAssumeProcessor getAssumeProcessor() {
+		return mAssumeProcessor;
+	}
 	
+	public int getMaxParallelStates() {
+		return mMaxParallelStates;
+	}
+
 	public boolean isFallbackAssignIntervalProjectionEnabled() {
 		return mFallbackAssignIntervalProjection;
 	}
@@ -108,10 +123,12 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 	private final Logger mLogger;
 	private final BoogieSymbolTable mSymbolTable;
 	private final int mMaxParallelStates;
+	private final boolean mFallbackAssignIntervalProjection;
+	
 	private final HavocBundler mHavocBundler;
 	private final ExpressionTransformer mExprTransformer;
 	private final OctStatementProcessor mStatementProcessor;
-	private final boolean mFallbackAssignIntervalProjection;
+	private final OctAssumeProcessor mAssumeProcessor;
 
 	public OctPostOperator(Logger logger, BoogieSymbolTable symbolTable, int maxParallelStates,
 			boolean fallbackAssignIntervalProjection) {
@@ -123,10 +140,12 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		mLogger = logger;
 		mSymbolTable = symbolTable;
 		mMaxParallelStates = maxParallelStates;
+		mFallbackAssignIntervalProjection = fallbackAssignIntervalProjection;
+
 		mHavocBundler = new HavocBundler();
 		mExprTransformer = new ExpressionTransformer();
 		mStatementProcessor = new OctStatementProcessor(this);
-		mFallbackAssignIntervalProjection = fallbackAssignIntervalProjection;
+		mAssumeProcessor = new OctAssumeProcessor(this);
 	}
 
 	@Override
