@@ -2,6 +2,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1082,18 +1084,16 @@ public class OctMatrix {
 					BigDecimal max = value.getValue();
 					Term vj = j == 0 ? colVar : script.term("-", colVar);
 					Term vi = i == 0 ? rowVar : script.term("-", rowVar);
-					Term diffTerm = script.term("-", vj, vi);
-					Term maxTerm = null;
-					if (!relationIsInt) {
-						maxTerm = script.decimal(max);
-					} else if (NumUtil.isIntegral(max)) {
-						maxTerm = script.numeral(max.toBigInteger());
+					Term maxTerm;
+					if (relationIsInt) {
+						// (intX - intY <= 7.3) is equivalent to (intX - intY <= 7)
+						// (intX - intY <= -7.3) is equivalent to (intX - intY <= -8)
+						BigInteger maxInt = max.round(new MathContext(0, RoundingMode.FLOOR)).toBigIntegerExact();
+						maxTerm = script.numeral(maxInt);
 					} else {
-						Pair<BigInteger, BigInteger> maxDf = NumUtil.decimalFraction(max);
-						maxTerm = script.numeral(maxDf.getFirst());
-						diffTerm = script.term("*", diffTerm, script.numeral(maxDf.getSecond()));
+						maxTerm = script.decimal(max);
 					}
-					acc = Util.and(script, acc, script.term("<=", diffTerm, maxTerm));
+					acc = Util.and(script, acc, script.term("<=", script.term("-", vj, vi), maxTerm));
 				}
 			}
 		}
