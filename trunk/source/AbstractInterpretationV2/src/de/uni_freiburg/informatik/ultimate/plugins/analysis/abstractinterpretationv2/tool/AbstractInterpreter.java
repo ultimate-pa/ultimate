@@ -71,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty.EmptyDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence.CongruenceDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomain;
@@ -351,6 +352,8 @@ public final class AbstractInterpreter {
 			return new OctagonDomain(logger, symbolTable, literalCollector);
 		} else if (VPDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new VPDomain(services);
+		} else if (CongruenceDomain.class.getSimpleName().equals(selectedDomain)) {
+			return new CongruenceDomain(services.getLoggingService().getLogger(Activator.PLUGIN_ID), symbolTable);
 		}
 		throw new UnsupportedOperationException("The value \"" + selectedDomain + "\" of preference \""
 				+ AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN + "\" was not considered before! ");
