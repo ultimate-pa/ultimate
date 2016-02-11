@@ -143,18 +143,31 @@ public class ClosedWorldTransformator extends BasicTransformer {
 		this.newIdentIndex(s);
 		//add to self loop: P' or (!P' and !R_S)
 		Transition transition = pea.getPhases()[0].getTransitions().get(0);
-		transition.setGuard(transition.getGuard().and(p.prime().or(p.prime().negate().and(this.createClosedWorldGuard(s)))));
+		transition.setGuard(transition.getGuard().and(
+				p.prime().and(this.createClosedWorldGuard(s).negate())			// P && R_s or
+				.or(p.prime().negate().and(this.createClosedWorldGuard(s)))));  // !P && !R_s
 		return pea;
 	}
 
 	@Override
-	protected PhaseEventAutomata AfterUntilInvariantPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s) {
-		PhaseEventAutomata pea =  super.AfterUntilInvariantPattern(pattern, p, q, r, s);
-		Phase st0 = pea.getPhases()[0];
-		for(Transition transition: st0.getTransitions()){
+	protected PhaseEventAutomata AfterInvariantPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s) {
+		PhaseEventAutomata pea =  super.AfterInvariantPattern(pattern, p, q, r, s);
+		Phase phase = pea.getPhases()[0]; //st0
+		for(Transition transition: phase.getTransitions()){
 			transition.setGuard(transition.getGuard().and(this.createClosedWorldGuard(s)));
 		}
-		
+		phase = pea.getPhases()[1];  //st012
+		for(Transition transition: phase.getTransitions()){
+			transition.setGuard(transition.getGuard().and(
+					p.prime().and(this.createClosedWorldGuard(s).negate())			// P && R_s or
+					.or(p.prime().negate().and(this.createClosedWorldGuard(s)))));  // !P && !R_s
+		}
+		phase = pea.getPhases()[2];  //st02
+		for(Transition transition: phase.getTransitions()){
+			transition.setGuard(transition.getGuard().and(
+					p.prime().and(this.createClosedWorldGuard(s).negate())			// P && R_s or
+					.or(p.prime().negate().and(this.createClosedWorldGuard(s)))));  // !P && !R_s
+		}
 		return pea;
 	}
 	

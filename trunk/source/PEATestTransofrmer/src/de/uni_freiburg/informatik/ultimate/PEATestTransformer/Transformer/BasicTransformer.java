@@ -30,6 +30,8 @@ import srParse.pattern.UniversalityPattern;
 public class BasicTransformer {
 	Trace2PEACompiler compiler = new Trace2PEACompiler();
 	
+	protected int reqNumber = 0;
+	protected int reqMaxNumber;
 	/**
 	 * Translates a pattern into a Phase Event Automaton
 	 * @param pattern spl pattern
@@ -38,9 +40,11 @@ public class BasicTransformer {
 	public final List<PhaseEventAutomata> translate(ArrayList<PatternType> patterns){
 		ArrayList<PhaseEventAutomata> peas = new ArrayList<PhaseEventAutomata>();
 		this.preProcess(patterns);
+		this.reqMaxNumber = patterns.size()-1;
 		for(PatternType pattern : patterns)
 		{
 			peas.add(this.translateSwitch(pattern));
+			reqNumber++;
 		}
 		return postProcess(patterns, peas);
 	}
@@ -284,10 +288,10 @@ public class BasicTransformer {
 	}
 	
 	protected PhaseEventAutomata BeforeInvariantPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s){ 
-		//Before R it is always the case that if S holds then P holds as well.
+		//Before R it is always the case that if p holds then s holds as well.
 		CounterTrace ct = new CounterTrace(new CounterTrace.DCPhase[] {
     		    new CounterTrace.DCPhase(r.negate()),
-    		    new CounterTrace.DCPhase(p.and(r.negate()).and(s.negate())),
+    		    new CounterTrace.DCPhase(p.and(s.negate()).and(r.negate())),
     		    new CounterTrace.DCPhase(r.negate()),
     		    new CounterTrace.DCPhase(r),
     		    new CounterTrace.DCPhase()

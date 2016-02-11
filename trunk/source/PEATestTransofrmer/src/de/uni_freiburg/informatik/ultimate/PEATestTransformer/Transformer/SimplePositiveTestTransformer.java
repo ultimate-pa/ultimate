@@ -20,8 +20,6 @@ import srParse.pattern.PatternType;
  */
 public class SimplePositiveTestTransformer extends ClosedWorldTransformator {
 
-	private int requirementNumber = 0;
-
 	public SimplePositiveTestTransformer(SystemInformation sysInfo) {
 		super(sysInfo);
 		// TODO Auto-generated constructor stub
@@ -31,7 +29,7 @@ public class SimplePositiveTestTransformer extends ClosedWorldTransformator {
 	protected PhaseEventAutomata GlobalInvariantPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s) {
 		PhaseEventAutomata pea = super.GlobalInvariantPattern(pattern, p, q, r, s);
 		PhaseEventAutomata trapAutomaton = pea;
-		if (this.requirementNumber == 0) {
+		if (this.reqNumber == this.reqMaxNumber) {
 			// bild phases
 			Phase init = new Phase("stinit", p.negate());
 			Phase trap = new Phase("sttrap", p.and(s));
@@ -45,19 +43,37 @@ public class SimplePositiveTestTransformer extends ClosedWorldTransformator {
 			//Transition transition = pea.getPhases()[0].getTransitions().get(0);
 			//transition.setGuard(transition.getGuard().and(s.negate()));
 		}
-		this.requirementNumber++;
 		return trapAutomaton;
 	}
-
+	
 	@Override
-	protected PhaseEventAutomata AfterUniversality(PatternType pattern, CDD p, CDD q, CDD r, CDD s) {
-		PhaseEventAutomata pea = super.AfterUniversality(pattern, p, q, r, s);
-		if (this.requirementNumber == 0) {
-			Transition transition = pea.getPhases()[0].getTransitions().get(1);
-			transition.setGuard(p.negate());
+	protected PhaseEventAutomata AfterInvariantPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s) {
+		PhaseEventAutomata pea = super.GlobalInvariantPattern(pattern, p, q, r, s);
+		PhaseEventAutomata trapAutomaton = pea;
+		if (this.reqNumber == this.reqMaxNumber) {
+			// bild phases
+			Phase init = new Phase("stinit", p.negate());
+			Phase st012 = new Phase("st012", p.and(s));
+			Phase st02 = new Phase("st02", p.and(s));
+			Phase trap = new Phase("trap", p.and(s));
+			//init selfloop + closed world guard
+			init.addTransition(init, this.createClosedWorldGuard(s), new String[] {});
+			st012.addTransition(st012, this.createClosedWorldGuard(s), new String[] {});
+			st02.addTransition(st02, this.createClosedWorldGuard(s), new String[] {});
+			//edges
+			init.addTransition(st012, this.createClosedWorldGuard(s), new String[] {});
+			st012.addTransition(st02, this.createClosedWorldGuard(s), new String[] {});
+			st02.addTransition(st012, this.createClosedWorldGuard(s), new String[] {});
+			//trap edge
+			st012.addTransition(trap, s.negate(), new String[] {});
+			st012.addTransition(trap, s.negate(), new String[] {});
+			//create automaton
+			trapAutomaton = new PhaseEventAutomata("trap_" + pea.getName(), new Phase[] { init, trap, st012, st02 },
+					new Phase[] { init, st012 }, pea.getClocks(), pea.getVariables(), pea.getEvents(), pea.getDeclarations());
+			//Transition transition = pea.getPhases()[0].getTransitions().get(0);
+			//transition.setGuard(transition.getGuard().and(s.negate()));
 		}
-		this.requirementNumber++;
-		return pea;
+		return trapAutomaton;
 	}
 
 }
