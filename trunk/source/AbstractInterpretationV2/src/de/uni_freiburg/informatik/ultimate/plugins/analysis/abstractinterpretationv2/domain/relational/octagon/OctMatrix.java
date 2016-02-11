@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -14,7 +16,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.NumUtil;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
 import de.uni_freiburg.informatik.ultimate.util.BidirectionalMap;
+import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 /**
  * Matrix for octagons (as presented by Antoine Mine).
@@ -1044,12 +1048,12 @@ public class OctMatrix {
 		return infCounter / (double) mElements.length;
 	}
 
-	public Term getTerm(Script script, List<Term> vars) {
+	public Term getTerm(Script script, Term[] vars) {
 		Term acc = script.term("true");
 		for (int rowBlock = 0; rowBlock < variables(); ++rowBlock) {
-			Term rowVar = vars.get(rowBlock);
+			Term rowVar = vars[rowBlock];
 			for (int colBlock = 0; colBlock <= rowBlock; ++colBlock) {
-				Term colVar = vars.get(colBlock);
+				Term colVar = vars[colBlock];
 				Term blockTerm = getBlockTerm(script, rowBlock, colBlock, rowVar, colVar);
 				acc = Util.and(script, acc, blockTerm);
 			}
@@ -1059,15 +1063,37 @@ public class OctMatrix {
 
 	private Term getBlockTerm(Script script, int rowBlock, int colBlock, Term rowVar, Term colVar) {
 		Term acc = script.term("true");
+		boolean rowIsInt = TypeUtil.isIntTerm(rowVar);
+		boolean colIsInt = TypeUtil.isIntTerm(colVar);
+		boolean relationIsInt = rowIsInt && colIsInt;
+		if (rowIsInt != colIsInt) {
+			// one var is a real => typecast non-reals to real
+			if (rowIsInt) {
+				rowVar = script.term("to_real", rowVar);
+			} else /* if (colIsInt) */ {
+				colVar = script.term("to_real", colVar);
+			}
+		}
 		// 0 = plus, 1 = minus
 		for (int i = 0; i < 2; ++i) { // row offset
 			for (int j = 0; j < 2; ++j) { // col offset
 				OctValue value = get(rowBlock + i, colBlock + j);
 				if (!value.isInfinity()) {
+					BigDecimal max = value.getValue();
 					Term vj = j == 0 ? colVar : script.term("-", colVar);
 					Term vi = i == 0 ? rowVar : script.term("-", rowVar);
-					Term constraint = script.term("<=", script.term("-", vj, vi), script.decimal(value.getValue()));
-					acc = Util.and(script, acc, constraint);
+					Term diffTerm = script.term("-", vj, vi);
+					Term maxTerm = null;
+					if (!relationIsInt) {
+						maxTerm = script.decimal(max);
+					} else if (NumUtil.isIntegral(max)) {
+						maxTerm = script.numeral(max.toBigInteger());
+					} else {
+						Pair<BigInteger, BigInteger> maxDf = NumUtil.decimalFraction(max);
+						maxTerm = script.numeral(maxDf.getFirst());
+						diffTerm = script.term("*", diffTerm, script.numeral(maxDf.getSecond()));
+					}
+					acc = Util.and(script, acc, script.term("<=", diffTerm, maxTerm));
 				}
 			}
 		}

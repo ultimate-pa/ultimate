@@ -124,11 +124,12 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 		}
 	}
 
-	private void unrefOtherNumericAbstraction(OctDomainState other) {
-		if (other.mNumericAbstraction == mNumericAbstraction) {
-			other.mNumericAbstraction = mNumericAbstraction.copy();
-		}
-	}
+	// currently unused
+//	private void unrefOtherNumericAbstraction(OctDomainState other) {
+//		if (other.mNumericAbstraction == mNumericAbstraction) {
+//			other.mNumericAbstraction = mNumericAbstraction.copy();
+//		}
+//	}
 
 	private void unrefOtherBooleanAbstraction(OctDomainState other) {
 		if (other.mBooleanAbstraction == mBooleanAbstraction) {
@@ -372,7 +373,7 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 			Term termVar = getTermVar(entry.getKey());
 			mapIndexToTerm[entry.getValue()] = termVar;
 		}
-		return cachedNormalizedNumericAbstraction().getTerm(script, Arrays.asList(mapIndexToTerm));
+		return cachedNormalizedNumericAbstraction().getTerm(script, mapIndexToTerm);
 	}
 
 	private Term getTermBooleanAbstraction(Script script, Boogie2SMT bpl2smt) {

@@ -161,7 +161,7 @@ public class OctAssumeProcessor {
 		for (int i = 0; i < paths.size(); ++i) {
 			Pair<List<Expression>, Expression> path = paths.get(i);
 			List<OctDomainState> tmpOldStates = (i + 1 < paths.size()) ?
-					mPostOp.deepCopy(oldStates) : oldStates; // as little copies as possible
+					OctPostOperator.deepCopy(oldStates) : oldStates; // as little copies as possible
 			for (Expression assumption : path.getFirst()) {
 				tmpOldStates = assume(assumption, tmpOldStates);
 			}

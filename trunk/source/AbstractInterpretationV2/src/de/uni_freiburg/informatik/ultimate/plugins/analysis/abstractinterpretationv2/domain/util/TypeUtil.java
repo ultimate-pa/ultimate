@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctDomainState;
 
@@ -57,6 +58,14 @@ public class TypeUtil {
 	 */
 	public static boolean categoryEquals(IType a, IType b) {
 		return (isBoolean(a) == isBoolean(b)) && (isNumeric(a) == isNumeric(b));
+	}
+	
+	public static boolean isIntTerm(Term t) {
+		return "Int".equals(t.getSort().getRealSort().getName());
+	}
+	
+	public static boolean isRealTerm(Term t) {
+		return "Real".equals(t.getSort().getRealSort().getName());
 	}
 
 }
