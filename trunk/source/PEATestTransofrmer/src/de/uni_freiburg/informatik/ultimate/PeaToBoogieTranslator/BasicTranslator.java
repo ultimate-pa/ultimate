@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
+import pea.BoogieBooleanExpressionDecision;
 import pea.CDD;
 import pea.PEATestAutomaton;
 import pea.Phase;
@@ -133,7 +134,7 @@ public class BasicTranslator {
 		statements.add(new AssumeStatement(location, this.generateInitialPhaseAssumptionArgument(location, this.peas)));
 		//add while body
 		statements.add(new WhileStatement(
-					location, 
+					new BoogieLocation(location.getFileName(), 0,0,0,0,true), 
 					new WildcardExpression(location),
 					new LoopInvariantSpecification[0],
 					this.generateWhileBody(location)
@@ -239,6 +240,11 @@ public class BasicTranslator {
 	protected void generateTransitionBody(PhaseEventAutomata pea, int id, String file, BoogieLocation location){
 		for(Phase phase: pea.getPhases()){
 			for(Transition transition: phase.getTransitions()){
+				if(transition.getGuard().getDecision() instanceof BoogieBooleanExpressionDecision){
+					location = new BoogieLocation(this.fileName,0,0,0,0,
+							new PEALocation<Transition>( ((BoogieBooleanExpressionDecision)transition.getGuard().getDecision()).getExpression().getLocation(),
+									transition));
+				}	
 				ArrayList<Statement> statements = new ArrayList<Statement>();
 				this.transitionBody.put(transition, statements);
 				//guard
@@ -284,6 +290,12 @@ public class BasicTranslator {
 	}
 	protected ArrayList<Statement> generatePhaseInvariant(PhaseEventAutomata pea, String file, BoogieLocation location, Phase phase){
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
+		//pick out the spl parsers location, and wrap it into a pea location for backtranslation.
+		if(phase.getStateInvariant().getDecision() instanceof BoogieBooleanExpressionDecision){
+			location = new BoogieLocation(this.fileName,0,0,0,0,
+					new PEALocation<Phase>( ((BoogieBooleanExpressionDecision)phase.getStateInvariant().getDecision()).getExpression().getLocation(),
+							phase));
+		}	
 		if(phase.getClockInvariant() != CDD.TRUE){
 			stmt.add(
 					this.generateAssumeCDD(phase.getClockInvariant(), file, location)
@@ -385,6 +397,7 @@ public class BasicTranslator {
 		return new VarList(location, idents.toArray(new String[idents.size()]), 
 				new PrimitiveType(location, type));
 	}
+	
 	protected ModifiesSpecification generateModifiesVariable(BoogieLocation location, Set<String> idents){
 		ArrayList<VariableLHS> vars = new ArrayList<VariableLHS>();
 		for(String ident: idents){
@@ -392,6 +405,7 @@ public class BasicTranslator {
 		}
 		return new ModifiesSpecification(location, false, vars.toArray(new VariableLHS[vars.size()]));
 	}
+	
 	protected Statement generateInitialPhaseCounterHavoc(BoogieLocation location, PhaseEventAutomata[] peas){
 		ArrayList<VariableLHS> vars = new ArrayList<VariableLHS>();
 		for(int i = 0; i < peas.length; i++ ){
@@ -399,6 +413,7 @@ public class BasicTranslator {
 		}
 		return new HavocStatement(noneLocation, vars.toArray(new VariableLHS[vars.size()]));
 	}
+	
 	protected Statement generateWhileBodyHavoc(BoogieLocation location){
 		ArrayList<VariableLHS> vars = new ArrayList<VariableLHS>();
 		for(String ident: this.havocInLoop){
@@ -406,6 +421,7 @@ public class BasicTranslator {
 		}
 		return new HavocStatement(noneLocation, vars.toArray(new VariableLHS[vars.size()]));
 	}
+	
 	protected Expression generateInitialPhaseAssumptionArgument(BoogieLocation location, PhaseEventAutomata[] peas){
 		ArrayList<Expression> conjunction = new ArrayList<Expression>();
 		ArrayList<Expression> disjunctsPerPea;
@@ -420,6 +436,7 @@ public class BasicTranslator {
 		}
 		return this.generateBinaryLogicExpression(location, conjunction, BinaryExpression.Operator.LOGICAND);
 	} 
+	
 	protected ArrayList<Statement> generateClockUpdates(BoogieLocation location, Set<String> clockIdents){
 		ArrayList<Statement> updates = new ArrayList<Statement>();
 		for(String ident: clockIdents){

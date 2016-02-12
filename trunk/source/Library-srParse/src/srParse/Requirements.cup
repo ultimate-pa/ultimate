@@ -117,7 +117,7 @@ action code {:
 	    int endLine = sEnd.right;
 	    int startColumn = 0;
 	    int endColumn = 0;
-	    return new BoogieLocation("",
+	    return new BoogieLocation(this.filename,
 	                   startLine, endLine, startColumn, endColumn, isLoop);
 	}
 :}
