@@ -48,9 +48,7 @@
 			<fileset dir="${trunkEx.dir}/programs/toy/showcase" includes="*.c" />
 			<fileset dir="${trunkEx.dir}/programs/quantifier/regression/c/" includes="FunctionPointers01.c" />
 			
-			<fileset dir="${trunkEx.dir}/svcomp/ldv-regression/" includes="alias_of_return_2.c_true-unreach-call.i" />
 			<fileset dir="${trunkEx.dir}/svcomp/ldv-regression/" includes="nested_structure_true-unreach-call.c" />
-			<fileset dir="${trunkEx.dir}/svcomp/ldv-regression/" includes="rule60_list.c_true-unreach-call.i" />
 			
 			<fileset dir="${trunkEx.dir}/svcomp/list-properties/" includes="list_flag_false-unreach-call.c" />
 			
