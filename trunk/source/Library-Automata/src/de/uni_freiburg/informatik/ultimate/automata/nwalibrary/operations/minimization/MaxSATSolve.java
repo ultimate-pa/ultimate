@@ -2,27 +2,27 @@
  * Copyright (C) 2016 Jens Stimpfle <stimpflj@informatik.uni-freiburg.de>
 
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
@@ -38,7 +38,7 @@ enum Assign { NONE, TRUE, FALSE };
  * Stupid SAT solver.
  * Takes a set of Horn clauses. Goes through all variables in sequence, and
  * tries to set each to true.
- * 
+ *
  * @author stimpflj
  */
 public class MaxSATSolve {
@@ -48,13 +48,13 @@ public class MaxSATSolve {
 
     /** the problem in CNF */
     private HornClause3[] clause;
-    
+
     /** variable -> clauses in which it occurs */
     private final int[][] occur;
-    
+
     /** variable -> assigned value */
     private Assign[] assigned;
-    
+
     /** last assignment operations */
     private ArrayList<Integer> op;
 
@@ -63,32 +63,32 @@ public class MaxSATSolve {
         occur = new int[nvars][];
         assigned = new Assign[nvars];
         op = new ArrayList<Integer>(0);
-        
+
         for (HornClause3 c : clause) {
-        	assert 0 <= c.l0 && c.l0 < nvars;
-        	assert 0 <= c.l1 && c.l1 < nvars;
-        	assert 0 <= c.l2 && c.l2 < nvars;
+            assert 0 <= c.l0 && c.l0 < nvars;
+            assert 0 <= c.l1 && c.l1 < nvars;
+			assert 0 <= c.l2 && c.l2 < nvars;
         }
 
         // so much work if you want the nice syntax of arrays vs ArrayLists...
         int[] numOcc = new int[nvars];
         for (int i = 0; i < clause.length; i++) {
-        		numOcc[clause[i].l0]++;
-        		numOcc[clause[i].l1]++;
-        		numOcc[clause[i].l2]++;
-        }        
+			numOcc[clause[i].l0]++;
+			numOcc[clause[i].l1]++;
+			numOcc[clause[i].l2]++;
+        }
         for (int i = 0; i < nvars; i++) {
-        	occur[i] = new int[numOcc[i]];
-        	numOcc[i] = 0;
+			occur[i] = new int[numOcc[i]];
+			numOcc[i] = 0;
         }
         for (int i = 0; i < clause.length; i++) {
-        	occur[clause[i].l0][numOcc[clause[i].l0]++] = i;
-        	occur[clause[i].l1][numOcc[clause[i].l1]++] = i;
-        	occur[clause[i].l2][numOcc[clause[i].l2]++] = i;
+			occur[clause[i].l0][numOcc[clause[i].l0]++] = i;
+			occur[clause[i].l1][numOcc[clause[i].l1]++] = i;
+			occur[clause[i].l2][numOcc[clause[i].l2]++] = i;
         }
-        
+
         for (int i = 0; i < nvars; i++)
-        	assigned[i] = Assign.NONE;
+			assigned[i] = Assign.NONE;
         assigned[trueVar] = Assign.TRUE;
         assigned[falseVar] = Assign.FALSE;
     }
@@ -161,45 +161,45 @@ public class MaxSATSolve {
                         assert(false);
         return assigned;
     }
-    
-    
+
+
     // "test" the thing
     public static void main(String[] args) {
-    	PrintWriter writer = new PrintWriter(new OutputStreamWriter(System.err));
-    	
-    	HornClause3[] clauses;
-    	Assign assign[];
-    	
-    	clauses = new HornClause3[] {
-    			HornClause3.F(3),
-    			HornClause3.FT(2, 3)
-    	};    	
-    	assign = new MaxSATSolve(4, clauses).solve();
-    	assert assign != null;
-    	assert assign[2] == Assign.FALSE;
-    	assert assign[3] == Assign.FALSE;
-    	
-    	clauses = new HornClause3[] {
-    			HornClause3.T(2),
-    			HornClause3.FT(2, 3),
-    			HornClause3.FFT(2, 3, 4)
-    	};
-    	assign = new MaxSATSolve(5, clauses).solve();
-    	assert assign != null;
-    	assert assign[2] == Assign.TRUE;
-    	assert assign[3] == Assign.TRUE;
-    	assert assign[4] == Assign.TRUE;
-    	
-    	clauses = new HornClause3[] {
-    			HornClause3.T(2),
-    			HornClause3.FT(2, 3),
-    			HornClause3.FFT(2, 3, 4),
-    			HornClause3.F(4)
-    	};
-    	assign = new MaxSATSolve(5, clauses).solve();
-    	assert assign == null;
-    	
-    	writer.printf("tests passed\n");
-    	writer.flush();
+		PrintWriter writer = new PrintWriter(new OutputStreamWriter(System.err));
+
+		HornClause3[] clauses;
+		Assign assign[];
+
+		clauses = new HornClause3[] {
+				HornClause3.F(3),
+				HornClause3.FT(2, 3)
+		};
+		assign = new MaxSATSolve(4, clauses).solve();
+		assert assign != null;
+		assert assign[2] == Assign.FALSE;
+		assert assign[3] == Assign.FALSE;
+
+		clauses = new HornClause3[] {
+				HornClause3.T(2),
+				HornClause3.FT(2, 3),
+				HornClause3.FFT(2, 3, 4)
+		};
+		assign = new MaxSATSolve(5, clauses).solve();
+		assert assign != null;
+		assert assign[2] == Assign.TRUE;
+		assert assign[3] == Assign.TRUE;
+		assert assign[4] == Assign.TRUE;
+
+		clauses = new HornClause3[] {
+				HornClause3.T(2),
+				HornClause3.FT(2, 3),
+				HornClause3.FFT(2, 3, 4),
+				HornClause3.F(4)
+		};
+		assign = new MaxSATSolve(5, clauses).solve();
+		assert assign == null;
+
+		writer.printf("tests passed\n");
+		writer.flush();
     }
 }

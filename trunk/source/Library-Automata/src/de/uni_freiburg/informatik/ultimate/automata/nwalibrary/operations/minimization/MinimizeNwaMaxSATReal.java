@@ -30,32 +30,39 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 
+/**
+ * Minimize an NWA by converting a sufficient set of logical conditions
+ * for state equivalency to Horn clauses and solve them as a (MAX)SAT problem.
+ * 
+ * This is currently not practical since state equivalency needs to be
+ * transitive and we need numStates^3 clauses for transitivity. 
+ * 
+ * @author stimpflj
+ */
 public class MinimizeNwaMaxSATReal {
 
 	/**
 	 * @param inNWA input NWA. The NWA is mutated (transitions sorted).
 	 *        Give me a copy instead if mutation isn't possible for you.
+	 *        
 	 * @return A (consistent) NiceClasses which represents
 	 *         the minimized automaton.
 	 */
 	public static NiceClasses minimize(NiceNWA inNWA) {
-		PrintWriter logWriter = new PrintWriter(new OutputStreamWriter(System.err));
 		
 		// some "imports"
 		int numStates = inNWA.numStates;
-		int numISyms = inNWA.numISyms;
-		int numCSyms = inNWA.numCSyms;
-		int numRsyms = inNWA.numRSyms;
+		@SuppressWarnings("unused") int numISyms = inNWA.numISyms;
+		@SuppressWarnings("unused") int numCSyms = inNWA.numCSyms;
+		@SuppressWarnings("unused") int numRsyms = inNWA.numRSyms;
 		int numITrans = inNWA.iTrans.length;
 		int numCTrans = inNWA.cTrans.length;
 		int numRTrans = inNWA.rTrans.length;
-		boolean[] isInitial = inNWA.isInitial;
+		@SuppressWarnings("unused") boolean[] isInitial = inNWA.isInitial;
 		boolean[] isFinal = inNWA.isFinal;
 		NiceITrans[] iTrans = inNWA.iTrans;
 		NiceCTrans[] cTrans = inNWA.cTrans;
@@ -126,7 +133,7 @@ public class MinimizeNwaMaxSATReal {
 		Arrays.sort(cTrans, NiceCTrans::compareSrcSymDst);
 		Arrays.sort(rTrans, NiceRTrans::compareSrcSymTopDst);
 		
-		// All outgoing edges, sorted by src, sym, dst, (top), just like above
+		// All outgoing edges, sorted by src, sym, (top), dst just like above
 		ArrayList<ArrayList<NiceITrans>> iTransOut = new ArrayList<ArrayList<NiceITrans>>();
 		ArrayList<ArrayList<NiceCTrans>> cTransOut = new ArrayList<ArrayList<NiceCTrans>>();
 		ArrayList<ArrayList<NiceRTrans>> rTransOut = new ArrayList<ArrayList<NiceRTrans>>();
@@ -182,7 +189,7 @@ public class MinimizeNwaMaxSATReal {
 				for (int k = j+1; k < numStates; k++) {
 					int eq2 = calc.eqVar(j, k);
 					int eq3 = calc.eqVar(i, k);
-					clauses.add(HornClause3.FFT(eq1,  eq2,  eq3));
+					clauses.add(HornClause3.FFT(eq1, eq2, eq3));
 				}
 			}
 		}
@@ -219,7 +226,7 @@ public class MinimizeNwaMaxSATReal {
 				if (iSymRepr[i] != iSymRepr[j] || cSymRepr[i] != cSymRepr[j]) {
 					// see optimization above
 				} else {
-					// TODO: this is inefficient when there are many out-edges
+					// NOTE: this is inefficient when there are many out-edges
 					for (NiceITrans x : iTransOut.get(i)) {
 						for (NiceITrans y : iTransOut.get(j)) {
 							if (x.sym == y.sym) {
@@ -239,7 +246,7 @@ public class MinimizeNwaMaxSATReal {
 				if (iSymRepr[i] != iSymRepr[j] || cSymRepr[i] != cSymRepr[j]) {
 					// see optimization above
 				} else {
-					// TODO: this is inefficient when there are many out-edges
+					// NOTE: this is inefficient when there are many out-edges
 					for (NiceCTrans x : cTransOut.get(i)) {
 						for (NiceCTrans y : cTransOut.get(j)) {
 							if (x.sym == y.sym) {
@@ -255,7 +262,7 @@ public class MinimizeNwaMaxSATReal {
 		// emit clauses from rule 3
 		for (int i = 0; i < numStates; i++) {
 			for (int j = i+1; j < numStates; j++) {
-				int eqVarSrc = calc.eqVar(i, j);
+				/* TODO */
 			}
 		}
 		
@@ -298,9 +305,9 @@ public class MinimizeNwaMaxSATReal {
 		OutputStreamWriter out = new OutputStreamWriter(System.err);
 		NiceNWA nwa = NiceScan.inputAsRelations("/tmp/test2.nwa");
 		assert nwa != null;
-		NicePrint.print(out, nwa);
+		NicePrint.printNWA(out, nwa);
 		NiceClasses eq = minimize(nwa);
-		NicePrint.print(out, eq);
+		NicePrint.printClasses(out, eq);
 	}
 }
 

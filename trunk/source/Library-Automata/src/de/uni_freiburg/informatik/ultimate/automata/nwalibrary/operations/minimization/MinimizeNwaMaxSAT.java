@@ -27,10 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.StringWriter;
-
 import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 
@@ -49,22 +45,24 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
 			StateFactory<STATE> stateFactory, 
 			INestedWordAutomaton<LETTER, STATE> automaton) {
 		Logger logger = services.getLoggingService().getLogger("MinimizeNWAMaxSAT");
-		PrintWriter writer = new PrintWriter(new OutputStreamWriter(System.err));
 		
 		logger.info(startMessage());
-		logger.info("input follows");
+		/*logger.info("input follows");
 		logger.info(automaton);
+		*/
 		
-		NiceConvert<LETTER, STATE> converter = new NiceConvert<LETTER, STATE>(logger, services, automaton, stateFactory);
+		NiceConvert<LETTER, STATE> converter = new NiceConvert<LETTER, STATE>(services, stateFactory, automaton);
 		NiceNWA nwa = converter.getNiceNWA();
 		
-		logger.info("converted automaton follows");
+		/*logger.info("converted automaton follows");
 		logger.info(NicePrint.makeString(nwa));
+		*/
 		
 		NiceClasses eqCls = MinimizeNwaMaxSATReal.minimize(nwa);
 		
-		logger.info("equivalence classes following");
+		/*logger.info("equivalence classes following");
 		logger.info(NicePrint.makeString(eqCls));
+		*/
 		
 		m_result = converter.constructMerged(eqCls);
 		

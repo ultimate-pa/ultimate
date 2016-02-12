@@ -2,27 +2,27 @@
  * Copyright (C) 2016 Jens Stimpfle <stimpflj@informatik.uni-freiburg.de>
 
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
@@ -37,37 +37,23 @@ import java.io.StreamTokenizer;
 
 /**
  * A few static parsing methods for the Nice* classes
- * 
+ *
  * @author stimpflj
  *
  */
 public class NiceScan {
 
 	/**
-	 * This opens the given file as a StreamReader and calls inputAsRelations(java.io.Reader)
-	 * 
-	 * @throws FileNotFoundException
-	 */
-	public static NiceNWA inputAsRelations(String filepath) throws FileNotFoundException, IOException {
-		InputStream inputStream = new FileInputStream(filepath);
-		Reader reader = new InputStreamReader(inputStream);
-		return inputAsRelations(reader);
-	}
-	
-	/**
-	 * @param reader
-	 * @return parsed NiceNWA or null
+	 * @param reader where to scan from
+	 * @return parsed <code>NiceNWA</code> or <code>null</code>
 	 * @throws java.io.IOException
-	 * 
-	 * TODO: how to log when input is bad? We currently log to stderr.
-	 *       Design is very ad-hoc.
 	 */
-	public static NiceNWA inputAsRelations(Reader reader) throws IOException {
+	public static NiceNWA scanNWA(Reader reader) throws IOException {
 		int numStates, numISyms, numCSyms, numRSyms, numITrans, numCTrans, numRTrans;
 		int numInitialStates, numFinalStates;
 		boolean[] isInitial, isFinal;
 		NiceITrans[] iTrans; NiceCTrans[] cTrans; NiceRTrans[] rTrans;
-		java.io.StreamTokenizer in = new StreamTokenizer(reader);
+		StreamTokenizer in = new StreamTokenizer(reader);
 		in.eolIsSignificant(true);
 		try {
 		expectString(in, "numStates"); numStates = parseInt(in); expectEOL(in);
@@ -90,7 +76,7 @@ public class NiceScan {
 		for (int i = 0; i < numCTrans; i++) { expectString(in, "cTrans"); int src = parseInt(in, numStates); int sym = parseInt(in, numCSyms); int dst = parseInt(in, numStates); cTrans[i] = new NiceCTrans(src, sym, dst); expectEOL(in); }
 		for (int i = 0; i < numRTrans; i++) { expectString(in, "rTrans"); int src = parseInt(in, numStates); int sym = parseInt(in, numRSyms); int top = parseInt(in, numStates); int dst = parseInt(in, numStates); rTrans[i] = new NiceRTrans(src, sym, top, dst); expectEOL(in); }
 		expectEOF(in);
-		
+
 		NiceNWA out = new NiceNWA();
 		out.numStates = numStates;
 		out.numISyms = numISyms;
@@ -101,20 +87,33 @@ public class NiceScan {
 		out.iTrans = iTrans;
 		out.cTrans = cTrans;
 		out.rTrans = rTrans;
-		if (!NiceNWA.checkConsistency(out)) { 
+		if (!NiceNWA.checkConsistency(out)) {
 			System.err.println("ERROR: Parsed automaton is not consistent");
 			return null;
 		}
 		return out;
-		
+
 		} catch (ParseNiceNWAException exc) {
             System.err.println(exc.problem);
 			return null;
 		}
 	}
-	
-	
+
+	/**
+	 * Convenience method which calls <code>inputAsRelations(Reader)</code>
+	 * with an <code>InputStreamReader</code> made from the
+	 * <code>filepath</code> argument.
+	 *
+	 * @throws FileNotFoundException
+	 */
+	public static NiceNWA inputAsRelations(String filepath) throws FileNotFoundException, IOException {
+		InputStream inputStream = new FileInputStream(filepath);
+		Reader reader = new InputStreamReader(inputStream);
+		return scanNWA(reader);
+	}
+
 	// shitty helpers for inputAsRelations()
+	@SuppressWarnings("serial")
 	private static class ParseNiceNWAException extends Exception {
 		public String problem;
         ParseNiceNWAException(String x) { problem = x; }
