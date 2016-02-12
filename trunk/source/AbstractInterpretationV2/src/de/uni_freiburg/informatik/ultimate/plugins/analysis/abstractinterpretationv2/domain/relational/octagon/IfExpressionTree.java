@@ -11,10 +11,32 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WildcardExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.CollectionUtil;
 import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
+/**
+ * Represents an {@link Expression} as a set of if-free expression.
+ * <p>
+ * This representation is similar to the prenex normal form for quantifiers.
+ * {@link IfThenElseExpression} are lifted to the top and build a binary tree,
+ * where the edges are labeled with the assumed conditions from the {@linkplain IfThenElseExpression}s.
+ * The conditions are not processed and may contain further {@linkplain IfThenElseExpression}s.
+ * The leafs of the tree are if-free expressions.
+ * <p>
+ * Example: {@code x + (if c then y else z)} becomes {@code (if c then x + y else x + z)}, which is represented as
+ * <pre>
+ *      .
+ *   c / \ !c
+ *    /   \
+ *  x+y   x+z
+ * </pre>
+ * <p>
+ * Trees are immutable after creation.
+ *
+ * @author schaetzc@informatik.uni-freiburg.de
+ */
 public class IfExpressionTree {
 
 	public static IfExpressionTree buildTree(Expression e, ExpressionTransformer exprTransformer) {
@@ -56,7 +78,7 @@ public class IfExpressionTree {
 		leftTree.append(rightTree, (left, right) -> new BinaryExpression(beLocation, beType, beOperator, left, right));
 		return leftTree;
 	}
-	
+
 	private static IfExpressionTree treeFromUnaryExpr(UnaryExpression ue, ExpressionTransformer exprTransformer) {
 		IfExpressionTree subTree = buildTree(ue.getExpr(), exprTransformer);
 
@@ -69,9 +91,9 @@ public class IfExpressionTree {
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	
+
 	/**
-	 * Content of either the {@code then} or {@code else} part of an IfThenElseExpression.
+	 * IfThenElseExpression-free content of either the {@code then} or {@code else} part of an IfThenElseExpression.
 	 * Not null <=> this is a leaf. All other attributes are null <=> this is a leaf.
 	 */
 	private Expression mLeafExpr;
@@ -80,23 +102,20 @@ public class IfExpressionTree {
 	private IfExpressionTree mThenChild;
 	private Expression mElseCondition;
 	private IfExpressionTree mElseChild;
-	
-	public IfExpressionTree(Expression expressionWithoutIf) {
+
+	private IfExpressionTree(Expression expressionWithoutIf) {
 		mLeafExpr = expressionWithoutIf;
 	}
 
-	public IfExpressionTree(Expression thenCondition, Expression elseCondition) {
-		mThenCondition = thenCondition;
-		mElseCondition = elseCondition;
-	}
-
-	public IfExpressionTree(Expression thenCondition, IfExpressionTree thenChild,
+	private IfExpressionTree(Expression thenCondition, IfExpressionTree thenChild,
 			Expression elseCondition, IfExpressionTree elseChild) {
-		super();
-		this.mThenCondition = thenCondition;
-		this.mThenChild = thenChild;
-		this.mElseCondition = elseCondition;
-		this.mElseChild = elseChild;
+		if (thenCondition != null && thenCondition == thenChild.mThenCondition) {
+			assert false;
+		}
+		mThenCondition = thenCondition;
+		mThenChild = thenChild;
+		mElseCondition = elseCondition;
+		mElseChild = elseChild;
 	}
 
 	public IfExpressionTree deepCopy() {
@@ -108,8 +127,13 @@ public class IfExpressionTree {
 	}
 
 	public boolean isLeaf() {
-		// TODO assert that (mLeafExpr == null) != (everythingOther == null);
+		assert compareNonLeafAttributesToNull(mLeafExpr == null);
 		return mLeafExpr != null;
+	}
+
+	private boolean compareNonLeafAttributesToNull(boolean not) {
+		return (not ^ (mThenCondition == null)) && (not ^ (mThenChild == null))
+				&& (not ^ (mElseCondition == null)) && (not ^ (mElseChild == null));
 	}
 
 	private void mapLeafExprs(Function<Expression, Expression> function) {
@@ -129,7 +153,7 @@ public class IfExpressionTree {
 	 * <pre>
 	 * this       suffix    function
 	 * -------    ------    ------------
-	 *  (A)         (X)     f(t,s) = t.s 
+	 *  (A)         (X)     f(t,s) = t.s
 	 *  / \         / \
 	 * b  (C)      y   z
 	 *    / \
@@ -138,45 +162,43 @@ public class IfExpressionTree {
 	 * ... results in the following tree
 	 * <pre>
 	 *       ____(A)____
-	 *      /           \         
-	 *    (X)         ___(C)___      
+	 *      /           \
+	 *    (X)         ___(C)___
 	 *   /   \       /         \
 	 * b.y   b.z   (X)        (X)
 	 *            /   \      /   \
 	 *          d.y   d.z  e.y   e.z
 	 * </pre>
-	 * 
+	 *
 	 * @param suffix tree to be appended (may be modified)
 	 * @param function f(thisLeaf, suffixLeaf) = resultLeaf
 	 */
 	private void append(IfExpressionTree suffix, BiFunction<Expression, Expression, Expression> function) {
-		if (isLeaf()) {
-			mThenCondition = suffix.mThenCondition;
-			mElseCondition = suffix.mElseCondition;
-			Function<Expression, Expression> curriedFunction = suffixLeaf -> function.apply(mLeafExpr, suffixLeaf);
-			mThenChild = suffix.deepCopy();
-			mThenChild.mapLeafExprs(curriedFunction);
-			mElseChild = suffix; // may be modified
-			mElseChild.mapLeafExprs(curriedFunction);
-			mLeafExpr = null;
+		if (suffix.isLeaf()) {
+			// it is faster to handle this common case separately
+			mapLeafExprs(thisLeaf -> function.apply(thisLeaf, suffix.mLeafExpr));
 		} else {
-			mThenChild.append(suffix, function);
-			mElseChild.append(suffix, function);
+			appendNonLeaf(suffix, function);
 		}
 	}
 
-//	private List<IfExpressionTree> leafs() {
-//		List<IfExpressionTree> leafs;
-//		if (isLeaf()) {
-//			leafs = new ArrayList<>();
-//			leafs.add(this);
-//		} else {
-//			leafs = mThenChild.leafs();
-//			leafs.addAll(mElseChild.leafs());
-//		}
-//		return leafs;
-//	}postOp
-	
+	private void appendNonLeaf(IfExpressionTree suffix, BiFunction<Expression, Expression, Expression> function) {
+		if (isLeaf()) {
+			assert !suffix.isLeaf();
+			mThenCondition = suffix.mThenCondition;
+			mElseCondition = suffix.mElseCondition;
+			Function<Expression, Expression> curriedFunction = suffixLeaf -> function.apply(mLeafExpr, suffixLeaf);
+			mThenChild = suffix.mThenChild.deepCopy();
+			mThenChild.mapLeafExprs(curriedFunction);
+			mElseChild = suffix.mElseChild.deepCopy();
+			mElseChild.mapLeafExprs(curriedFunction);
+			mLeafExpr = null;
+		} else {
+			mThenChild.appendNonLeaf(suffix, function);
+			mElseChild.appendNonLeaf(suffix, function);
+		}
+	}
+
 	public List<Pair<Expression, List<OctDomainState>>> assumeLeafs(OctPostOperator postOp,
 			List<OctDomainState> oldStates) {
 
@@ -201,6 +223,7 @@ public class IfExpressionTree {
 			elseStates = OctPostOperator.joinToSingleton(elseStates);
 		}
 		if (thenStates.size() + elseStates.size() > maxParallelStates) {
+			// maxParallelStates == 1
 			thenStates.addAll(elseStates);
 			thenStates = OctPostOperator.joinToSingleton(thenStates);
 			elseStates = OctPostOperator.deepCopy(thenStates);
@@ -214,4 +237,20 @@ public class IfExpressionTree {
 		return thenLeafs;
 	}
 
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		toString("", sb);
+		return sb.toString();
+	}
+
+    private void toString(String prefix, StringBuilder sb) {
+    	if (isLeaf()) {
+        	sb.append(prefix + "└╼ " + BoogiePrettyPrinter.print(mLeafExpr) + "\n");
+        } else {
+        	sb.append(prefix + "├─ " + BoogiePrettyPrinter.print(mThenCondition) + "\n");
+        	mThenChild.toString(prefix + "│  ", sb);
+        	sb.append(prefix + "└─ " + BoogiePrettyPrinter.print(mElseCondition) + "\n");
+        	mElseChild.toString(prefix + "   ", sb);
+        }
+    }
 }
