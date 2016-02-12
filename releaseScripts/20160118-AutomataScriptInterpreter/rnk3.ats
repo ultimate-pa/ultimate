@@ -1,0 +1,29 @@
+// Date: May 2014
+// Matthias Heizmann
+// typical(?) Büchi interpolant automaton that is not easy to complement
+
+NestedWordAutomaton res = buchiComplementFKV(bia);
+assert( !BuchiAccepts(bia, [a b, a b]));
+assert( BuchiAccepts(res, [a b, a b]));
+print(res);
+
+NestedWordAutomaton bia = (
+  callAlphabet = { },
+  internalAlphabet = { "a" "b" },
+  returnAlphabet = { },
+  states = {s0 s1 qi l0 l1},
+  initialStates = {s0},
+  finalStates = {qi},
+  callTransitions = { },
+  internalTransitions = { 
+    (s0 "a" s1) 
+	(s1 "b" s0) 
+    (s1 "b" qi) 
+    (l0 "a" l1)
+    (l1 "b" l0)
+    (qi "a" l1)
+  }, 
+  returnTransitions = { }
+);
+//7591 states and 18770In 0Ca 0Re transitions.
+//3838 states and 4990In 0Ca 0Re transitions

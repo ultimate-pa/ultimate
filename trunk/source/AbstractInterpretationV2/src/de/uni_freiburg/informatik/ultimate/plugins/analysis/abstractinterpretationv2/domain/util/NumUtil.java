@@ -1,6 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
+
+import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 /**
  * Utility functions for BigDecimal calculations, i.e.
@@ -110,4 +113,33 @@ public class NumUtil {
 		return r;
 	}
 
+	/**
+	 * Turns a BigDecimal d into its decimal fraction d = numerator / denominator.
+	 * Numerator and denominator are both integers and denominator is a positive power of 10.
+	 * Trailing zeros are not removed (can be done by {@link BigDecimal#stripTrailingZeros()} in advance).
+	 * <p>
+	 * Examples:<br>
+	 * <pre>
+	 *  1.5   =  15 /   10
+	 * -1.5   = -15 /   10
+	 * 20.0   = 200 /   10
+	 * 20     =  20 /    1
+	 *  2e1   =  20 /    1
+	 *  0.03  =   3 /  100
+	 *  0.030 =  30 / 1000
+	 *  0e9   =   0 /    1
+	 * </pre>
+	 * 
+	 * @param d BigDecimal
+	 * @return decimal fraction 
+	 */
+	public static Pair<BigInteger, BigInteger> decimalFraction(BigDecimal d) {
+		BigInteger numerator = d.unscaledValue();
+		BigInteger denominator = BigInteger.TEN.pow(Math.abs(d.scale()));
+		if (d.scale() < 0) {
+			numerator = numerator.multiply(denominator);
+			denominator = BigInteger.ONE;
+		}
+		return new Pair<>(numerator, denominator);
+	}
 }

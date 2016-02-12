@@ -96,7 +96,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 
 	private final IUltimateServiceProvider mService;
 
-	private final TrueWitnessExtractor mWitnessExtractor;
+	private final CorrectnessWitnessExtractor mWitnessExtractor;
 	private IASTTranslationUnit inputTU;
 	private boolean m_LastModel;
 	private WitnessInvariants mWitnessInvariants;
@@ -107,7 +107,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 		mStorage = storage;
 		mService = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mWitnessExtractor = new TrueWitnessExtractor(mService);
+		mWitnessExtractor = new CorrectnessWitnessExtractor(mService);
 	}
 
 	@Override

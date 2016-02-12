@@ -89,11 +89,11 @@ public final class ComparisonTables {
 		String header = "TYPE" + separator + "USED_SCCS";
 		header += separator + ECountingMeasure.BUCHI_STATES + "(&Oslash;)";
 		// Work measure
-		header += separator + ECountingMeasure.SIMULATION_STEPS + " / " + ECountingMeasure.GAMEGRAPH_STATES
+		header += separator + ECountingMeasure.SIMULATION_STEPS + " / " + ECountingMeasure.GAMEGRAPH_VERTICES
 				+ "(&Oslash;)";
 		header += separator + ETimeMeasure.OVERALL_TIME + "(&Oslash;)";
 		header += separator + ECountingMeasure.SIMULATION_STEPS + "(&Oslash;)";
-		header += separator + ECountingMeasure.GAMEGRAPH_STATES + "(&Oslash;)";
+		header += separator + ECountingMeasure.GAMEGRAPH_VERTICES + "(&Oslash;)";
 		header += separator + ECountingMeasure.REMOVED_STATES + "(&Oslash;)";
 		table.add(header);
 
@@ -134,7 +134,7 @@ public final class ComparisonTables {
 			int sumOfAllValuesForGraphStates = 0;
 			int amountOfValuesForGraphStates = 0;
 			for (SimulationPerformance performance : entry.getValue()) {
-				int value = performance.getCountingMeasureResult(ECountingMeasure.GAMEGRAPH_STATES);
+				int value = performance.getCountingMeasureResult(ECountingMeasure.GAMEGRAPH_VERTICES);
 				if (value != SimulationPerformance.NO_COUNTING_RESULT) {
 					sumOfAllValuesForGraphStates += value;
 				}
@@ -437,10 +437,10 @@ public final class ComparisonTables {
 				+ "OOM";
 		header += separator + ECountingMeasure.BUCHI_STATES;
 		// Work measure
-		header += separator + ECountingMeasure.SIMULATION_STEPS + " / " + ECountingMeasure.GAMEGRAPH_STATES;
+		header += separator + ECountingMeasure.SIMULATION_STEPS + " / " + ECountingMeasure.GAMEGRAPH_VERTICES;
 		header += separator + ETimeMeasure.OVERALL_TIME;
 		header += separator + ECountingMeasure.SIMULATION_STEPS;
-		header += separator + ECountingMeasure.GAMEGRAPH_STATES;
+		header += separator + ECountingMeasure.GAMEGRAPH_VERTICES;
 		header += separator + ECountingMeasure.REMOVED_STATES;
 
 		table.add(header);
@@ -467,7 +467,7 @@ public final class ComparisonTables {
 
 				// Work measure
 				int simSteps = performanceOfSimulation.getCountingMeasureResult(ECountingMeasure.SIMULATION_STEPS);
-				int graphStates = performanceOfSimulation.getCountingMeasureResult(ECountingMeasure.GAMEGRAPH_STATES);
+				int graphStates = performanceOfSimulation.getCountingMeasureResult(ECountingMeasure.GAMEGRAPH_VERTICES);
 				String workMeasureAsString = "";
 				if (simSteps == SimulationPerformance.NO_COUNTING_RESULT
 						|| graphStates == SimulationPerformance.NO_COUNTING_RESULT) {

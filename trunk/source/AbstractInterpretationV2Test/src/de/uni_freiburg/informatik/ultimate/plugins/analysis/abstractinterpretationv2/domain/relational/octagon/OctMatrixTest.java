@@ -328,10 +328,10 @@ public class OctMatrixTest {
 				+ "inf inf  20  28 "
 				+ ".32 .31 inf inf .19 .27 "
 				+ ".24 .23 inf inf .20 .28 ");
-		BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar = new BidirectionalMap<>();
-		mapSourceVarToTargetVar.put(1, 2);
-		mapSourceVarToTargetVar.put(3, 0);
-		a.copySelection(b, mapSourceVarToTargetVar);
+		BidirectionalMap<Integer, Integer> mapTargetVarToSourceVar = new BidirectionalMap<>();
+		mapTargetVarToSourceVar.put(2, 1);
+		mapTargetVarToSourceVar.put(0, 3);
+		a.copySelection(b, mapTargetVarToSourceVar);
 		assertIsEqualTo(expected, a);
 	}
 
@@ -346,7 +346,7 @@ public class OctMatrixTest {
 				+ " 9 10 11 12 "
 				+ "13 14 15 16 17 18 "
 				+ "19 20 21 22 23 24 ");
-		m.copyVar(2, 0);
+		m.assignVarCopy(2, 0);
 		OctMatrix expected = OctMatrix.parseBlockLowerTriangular(
 				  " 0  2 "
 				+ " 3  0 "
@@ -363,7 +363,7 @@ public class OctMatrixTest {
 				+ " 9 10 11 12 "
 				+ "13 14 15 16 17 18 "
 				+ "19 20 21 22 23 24 ");
-		m.copyVar(0, 2);
+		m.assignVarCopy(0, 2);
 		expected = OctMatrix.parseBlockLowerTriangular(
 				  " 0 18 "
 				+ "23  0 "
@@ -382,7 +382,7 @@ public class OctMatrixTest {
 				+ "19 20 21 22 23 24 "
 				+ "25 26 27 28 29 30 31 32 "
 				+ "33 34 35 36 37 38 39 40 ");
-		m.copyVar(1, 2);
+		m.assignVarCopy(1, 2);
 		expected = OctMatrix.parseBlockLowerTriangular(
 				  " 1  2 "
 				+ " 3  4 "
@@ -406,7 +406,7 @@ public class OctMatrixTest {
 				+ "13 14 15 16 17 18 "
 				+ "19 20 21 22 23 24 ");
 		
-		m.copyVar(2, 0);
+		m.assignVarCopy(2, 0);
 		OctMatrix expected = OctMatrix.parseBlockLowerTriangular(
 				  " 0  2 "
 				+ " 3 -3 "
@@ -427,7 +427,7 @@ public class OctMatrixTest {
 				+ " 5  6  9 10  7  8 "
 				+ " 9 10 11 12 13 14 ");
 		OctMatrix expected = m.copy();
-		m.copyVar(1, 1);
+		m.assignVarCopy(1, 1);
 		assertIsEqualTo(expected, m);
 	}
 	

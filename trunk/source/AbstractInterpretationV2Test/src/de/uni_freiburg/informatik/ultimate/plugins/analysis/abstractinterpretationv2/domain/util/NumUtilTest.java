@@ -7,6 +7,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.NumUtil;
+import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 /**
  * Tests for {@link NumUtil}.
@@ -104,6 +105,21 @@ public class NumUtilTest {
 		} catch (ArithmeticException e) {}
 	}
 
+	@Test
+	public void testDecimalFraction() {
+		assertDecimalFraction( "1.5",     "15",   "10");
+		assertDecimalFraction("-1.5",    "-15",   "10");
+		assertDecimalFraction("20.0",    "200",   "10");
+		assertDecimalFraction( "20",      "20",    "1");
+		assertDecimalFraction(  "2e1",    "20",    "1");
+		assertDecimalFraction(  "0.03",    "3",  "100");
+		assertDecimalFraction(  "0.030",  "30", "1000");
+		assertDecimalFraction( "-0.030", "-30", "1000");
+		assertDecimalFraction(  "0",       "0",    "1");
+		assertDecimalFraction(  "0.0",     "0",   "10");
+		assertDecimalFraction(  "0e9",     "0",    "1");
+	}
+
 	// assert a / b = q
 	private void assertIntDiv(String a, String b, String qExpected) {
 		BigDecimal qActual = NumUtil.euclideanDivision(new BigDecimal(a), new BigDecimal(b));
@@ -111,13 +127,22 @@ public class NumUtilTest {
 			Assert.fail(String.format("%s / %s: expected %s but was %s", a, b, qExpected, qActual));
 		}
 	}
-	
-	
+
 	// assert a % b = r
 	private void assertMod(String a, String b, String rExpected) {
 		BigDecimal rActual = NumUtil.euclideanModulo(new BigDecimal(a), new BigDecimal(b));
 		if (rActual.compareTo(new BigDecimal(rExpected)) != 0) {
 			Assert.fail(String.format("%s %% %s: expected %s but was %s", a, b, rExpected, rActual));
+		}
+	}
+
+	// assert d = expectedDecimalFraction
+	private void assertDecimalFraction(String d, String nomExpected, String denomExpected) {
+		Pair<BigInteger, BigInteger> fActual = NumUtil.decimalFraction(new BigDecimal(d));
+		Pair<BigInteger, BigInteger> fExpected = new Pair<>(new BigInteger(nomExpected), new BigInteger(denomExpected));
+		if (!fExpected.equals(fActual)) {
+			Assert.fail(String.format("decimalFraction(%s): expected %s/%s but was %s/%s",
+					d, nomExpected, denomExpected, fActual.getFirst(), fActual.getSecond()));
 		}
 	}
 }

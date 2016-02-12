@@ -23,7 +23,7 @@ public class ExpressionTransformer {
 
 	private Map<Expression, AffineExpression> mCacheAffineExpr = new HashMap<>();
 	private Map<Expression, Expression> mCacheLogicNeg = new HashMap<>();
-	private Map<Expression, List<Pair<List<Expression>, Expression>>> mCacheRemoveIfExpr = new HashMap<>();
+	private Map<Expression, IfExpressionTree> mCacheRemoveIfExpr = new HashMap<>();
 	
 	public AffineExpression affineExprCached(Expression e) {
 		if (mCacheAffineExpr.containsKey(e)) {
@@ -47,15 +47,14 @@ public class ExpressionTransformer {
 		return cachedLn;
 	}
 
-	public List<Pair<List<Expression>, Expression>> removeIfExprsCached(Expression e) {
-		List<Pair<List<Expression>, Expression>> cachedPaths = mCacheRemoveIfExpr.get(e);
-		if (cachedPaths == null) {
-			cachedPaths = removeIfExprs(e);
-			if (cachedPaths != null) {
-				mCacheRemoveIfExpr.put(e, cachedPaths);
-			}
+	public IfExpressionTree removeIfExprsCached(Expression e) {
+		IfExpressionTree cachedTree = mCacheRemoveIfExpr.get(e);
+		if (cachedTree == null) {
+			// cachedTree = removeIfExprs(e);
+			cachedTree = IfExpressionTree.buildTree(e, this);
+			mCacheRemoveIfExpr.put(e, cachedTree);
 		}
-		return cachedPaths;
+		return cachedTree;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -129,7 +128,8 @@ public class ExpressionTransformer {
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
+	// TODO remove methods below -- IfThenElseExpressions are now handled by IfExpressionTree
+	
 	private List<Pair<List<Expression>, Expression>> removeIfExprs(Expression e) {
 		if (e instanceof IfThenElseExpression) {
 			return removeIfExprsFromIfExpr((IfThenElseExpression) e);

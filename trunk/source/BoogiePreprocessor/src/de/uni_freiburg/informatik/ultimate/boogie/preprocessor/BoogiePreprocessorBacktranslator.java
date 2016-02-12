@@ -334,6 +334,7 @@ public class BoogiePreprocessorBacktranslator
 			final Map<IExplicitEdgesMultigraph<?, ?, VL, BoogieASTNode>, Multigraph<VL, BoogieASTNode>> cache,
 			final IMultigraphEdge<?, ?, VL, BoogieASTNode> oldEdge,
 			final Multigraph<VL, BoogieASTNode> newSourceNode) {
+		
 		final BoogieASTNode newLabel = backtranslateTraceElement(oldEdge.getLabel());
 		final IExplicitEdgesMultigraph<?, ?, VL, BoogieASTNode> oldTarget = oldEdge.getTarget();
 		Multigraph<VL, BoogieASTNode> newTarget = cache.get(oldTarget);

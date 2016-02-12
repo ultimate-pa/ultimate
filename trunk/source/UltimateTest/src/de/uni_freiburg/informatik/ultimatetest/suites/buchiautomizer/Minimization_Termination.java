@@ -28,12 +28,11 @@
 /**
  * 
  */
-package de.uni_freiburg.informatik.ultimatetest.suites.traceabstraction;
+package de.uni_freiburg.informatik.ultimatetest.suites.buchiautomizer;
 
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimatetest.suites.buchiautomizer.AbstractBuchiAutomizerTestSuite;
 
 /**
  * @author heizmann@informatik.uni-freiburg.de

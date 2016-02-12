@@ -86,7 +86,10 @@ public class LiteralCollection {
 
 	@Override
 	public String toString() {
-		return "LiteralCollection "
-				+ String.join("; ", mSortedNumbersSet.stream().map(a -> a.toPlainString()).collect(Collectors.toList()));
+		if (mSortedNumbersSet.isEmpty()) {
+			return "Empty LiteralCollection";
+		}
+		return "LiteralCollection " + String.join("; ",
+				mSortedNumbersSet.stream().map(a -> a.toPlainString()).collect(Collectors.toList()));
 	}
 }

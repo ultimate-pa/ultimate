@@ -1547,10 +1547,12 @@ public class TransFormula implements Serializable {
 		formula = PartialQuantifierElimination.quantifier(services, logger, 
 				boogie2smt.getScript(), boogie2smt.getVariableManager(), QuantifiedFormula.EXISTS, 
 				tf.getAuxVars(), formula, new Term[0]);
+		formula = Util.not(boogie2smt.getScript(), formula);
 		
 		Map<BoogieVar, TermVariable> inVars = new HashMap<>(tf.getInVars());
 		Map<BoogieVar, TermVariable> outVars = new HashMap<>(tf.getOutVars());
 		TransFormula.removeSuperfluousVars(formula, inVars, outVars, auxVars);
+		
 
 		//FIXME: Filter inVars and outVars to tv that occur in formula
 //		formula = SmtUtils.quantifier(boogie2smt.getScript(), QuantifiedFormula.EXISTS, tf.getAuxVars(), formula);

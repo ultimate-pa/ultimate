@@ -38,6 +38,10 @@ public enum ECountingMeasure {
 	 */
 	BUCHI_STATES,
 	/**
+	 * Amount of transitions the automaton has before simulation.
+	 */
+	BUCHI_TRANSITIONS,
+	/**
 	 * Amount of merge attempts that where aborted.
 	 */
 	FAILED_MERGE_ATTEMPTS,
@@ -46,9 +50,13 @@ public enum ECountingMeasure {
 	 */
 	FAILED_TRANSREMOVE_ATTEMPTS,
 	/**
-	 * Amount of states the game graph has.
+	 * Amount of edges the game graph has.
 	 */
-	GAMEGRAPH_STATES,
+	GAMEGRAPH_EDGES,
+	/**
+	 * Amount of vertices the game graph has.
+	 */
+	GAMEGRAPH_VERTICES,
 	/**
 	 * The global bound for infinty.
 	 */

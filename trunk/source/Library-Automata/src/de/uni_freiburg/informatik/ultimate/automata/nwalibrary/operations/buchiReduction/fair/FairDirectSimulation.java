@@ -355,8 +355,12 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 				fairPerformance.getCountingMeasureResult(ECountingMeasure.FAILED_TRANSREMOVE_ATTEMPTS));
 		m_Performance.setCountingMeasure(ECountingMeasure.BUCHI_STATES,
 				fairPerformance.getCountingMeasureResult(ECountingMeasure.BUCHI_STATES));
-		m_Performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_STATES,
-				fairPerformance.getCountingMeasureResult(ECountingMeasure.GAMEGRAPH_STATES));
+		m_Performance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS,
+				fairPerformance.getCountingMeasureResult(ECountingMeasure.BUCHI_TRANSITIONS));
+		m_Performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_VERTICES,
+				fairPerformance.getCountingMeasureResult(ECountingMeasure.GAMEGRAPH_VERTICES));
+		m_Performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES,
+				fairPerformance.getCountingMeasureResult(ECountingMeasure.GAMEGRAPH_EDGES));
 		m_Performance.setCountingMeasure(ECountingMeasure.SCCS,
 				fairPerformance.getCountingMeasureResult(ECountingMeasure.SCCS));
 		m_Performance.setCountingMeasure(ECountingMeasure.GLOBAL_INFINITY,

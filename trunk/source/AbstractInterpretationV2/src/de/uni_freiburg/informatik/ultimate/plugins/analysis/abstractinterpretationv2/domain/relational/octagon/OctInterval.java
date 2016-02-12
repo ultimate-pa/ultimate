@@ -22,6 +22,12 @@ public class OctInterval {
 		mMax = max;
 	}
 
+	public static OctInterval fromMatrix(OctMatrix m, int variableIndex) {
+		int i2 = variableIndex * 2;
+		int i21 = i2 + 1;
+		return new OctInterval(m.get(i2, i21).half().negateIfNotInfinity(), m.get(i21, i2).half());
+	}
+
 	public OctInterval() {
 		mMin = mMax = OctValue.INFINITY;
 	}
@@ -44,5 +50,20 @@ public class OctInterval {
 	public boolean isBottom() {
 		// note: [-inf, inf] is represeted as [inf, inf], which is also not empty
 		return mMin.compareTo(mMax) > 0;
+	}
+	
+	public boolean isTop() {
+		return mMin.isInfinity() && mMax.isInfinity();
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append('[');
+		if (mMin.isInfinity()) {
+			sb.append('-');
+		}
+		sb.append(mMin).append("; ").append(mMax).append(']');
+		return sb.toString();
 	}
 }

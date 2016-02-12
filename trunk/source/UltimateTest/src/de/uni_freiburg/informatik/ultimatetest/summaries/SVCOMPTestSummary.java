@@ -51,9 +51,9 @@ import de.uni_freiburg.informatik.ultimatetest.suites.svcomp.SVCOMP15TestSuite;
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public class SVCOMP15TestSummary extends NewTestSummary {
+public class SVCOMPTestSummary extends NewTestSummary {
 
-	public SVCOMP15TestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite) {
+	public SVCOMPTestSummary(Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		super(ultimateTestSuite);
 	}
 

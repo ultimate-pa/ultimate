@@ -55,38 +55,74 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
 			//### BPL 
-//			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/AIv2_INT.epf"),			
-//			new Triple<>("AutomizerBpl.xml", BPL, "ai/Automizer+AIv2_INT.epf"),
-			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "EmptySettings.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
+			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
 			
 			//### C
-//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
-//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
+//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
 			new Triple<>("AbstractInterpretationv2C.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
-			
+			new Triple<>("AbstractInterpretationv2C.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),			
 	};
 
 
 
 	private static final String[] INPUT = new String[] {
 			/* ULTIMATE repo */
-//			 "examples/programs/abstractInterpretation/",
-//			 "examples/programs/abstractInterpretation/regression",
-//			"examples/programs/abstractInterpretation/regression/whileProcedure.bpl",
+//			"examples/programs/abstractInterpretation/",
+//			"examples/programs/abstractInterpretation/regression",
+//			"examples/programs/abstractInterpretation/regression/CountTillBound-Loop-2.bpl",
+			
 
 			// ################################# Bugs #########################
 			// ########### Here are representatives of current bugs ########### 
 
 			 
-			//nullpointer exception (754 total)
+			//IllegalArgumentException: State already exists (total 427)
+			"examples/svcomp/eca-rers2012/Problem01_label01_true-unreach-call.c",
+			"examples/svcomp/product-lines/elevator_spec13_product29_true-unreach-call.cil.c",
+			"examples/svcomp/product-lines/elevator_spec14_product32_false-unreach-call.cil.c",
+			"examples/svcomp/seq-mthreaded/rekh_aso_true-unreach-call.1.M4.c",
+			"examples/svcomp/loop-lit/mcmillan2006_true-unreach-call.c.i",
+			
+			//java.lang.NullPointerException in AI (20 total) 
+			"examples/svcomp/seq-mthreaded/pals_floodmax.5_false-unreach-call.3.ufo.BOUNDED-10.pals.c",
+			"examples/svcomp/seq-mthreaded/pals_floodmax.5_false-unreach-call.4.ufo.UNBOUNDED.pals.c",
+			"examples/svcomp/ntdrivers/cdaudio_false-unreach-call.i.cil.c",
+			"examples/svcomp/ntdrivers/diskperf_true-unreach-call.i.cil.c",
+
+			
+			//NullPointerException in octagon.OctDomainState.numVarIndex (10 total)
+			// FIXED
+//			"examples/svcomp/seq-mthreaded/pals_STARTPALS_ActiveStandby_true-unreach-call.ufo.UNBOUNDED.pals.c",
+//			"examples/svcomp/seq-mthreaded/pals_floodmax.5_false-unreach-call.4.ufo.UNBOUNDED.pals.c",
+			
+			//NullPointerException in OctDomainState.copyVars (6 total)
+			// FIXED
+//			"examples/svcomp/ntdrivers/cdaudio_false-unreach-call.i.cil.c",
+//			"examples/svcomp/ntdrivers/diskperf_false-unreach-call.i.cil.c",
+//			"examples/svcomp/ntdrivers/kbfiltr_false-unreach-call.i.cil.c",
+
+			
+			//ArrayIndexOutOfBoundsException (all)
+			"examples/svcomp/seq-mthreaded/rekh_nxt_false-unreach-call.2.M4.c",
+			"examples/svcomp/seq-mthreaded/rekh_nxt_true-unreach-call.3.M4.c",
+			"examples/svcomp/systemc/toy_true-unreach-call_false-termination.cil.c",
+			"examples/svcomp/ntdrivers/cdaudio_false-unreach-call.i.cil.c",
+			"examples/svcomp/ntdrivers/cdaudio_true-unreach-call.i.cil.c",
+			
+//			//nullpointer exception (754 total)
 //			"examples/svcomp/eca-rers2012/Problem14_label24_true-unreach-call.c",
 //			"examples/svcomp/eca-rers2012/Problem10_label15_false-unreach-call.c",
 //			"examples/svcomp/eca-rers2012/Problem10_label00_true-unreach-call.c",
 //			"examples/svcomp/eca-rers2012/Problem16_label02_true-unreach-call.c",
 //			"examples/svcomp/eca-rers2012/Problem16_label00_false-unreach-call.c",
-			 
+//			 
 //			//no exact representable decimal result (46 total) 
 //			"examples/svcomp/product-lines/elevator_spec13_product21_true-unreach-call.cil.c",
 //			"examples/svcomp/product-lines/elevator_spec13_product22_true-unreach-call.cil.c",
@@ -122,13 +158,30 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			 "examples/svcomp/recursive-simple/id_o200_false-unreach-call.c",
 //			 "examples/svcomp/recursive-simple/id_o20_false-unreach-call.c",
 //			 "examples/programs/abstractInterpretation/regression/Collatz.bpl",
+			"examples/svcomp/loop-invgen/id_trans_false-unreach-call.i",
+			"examples/svcomp/ntdrivers-simplified/floppy_simpl3_false-unreach-call_true-termination.cil.c",
+			"examples/svcomp/ntdrivers-simplified/kbfiltr_simpl2_false-unreach-call_true-termination.cil.c",
+			"examples/svcomp/ssh-simplified/s3_clnt_1_false-unreach-call.cil.c",
+			"examples/svcomp/ssh-simplified/s3_clnt_3_false-unreach-call.cil.c",
+			"examples/svcomp/ssh-simplified/s3_clnt_4_false-unreach-call.cil.c",
+			"examples/svcomp/ssh-simplified/s3_srvr_10_false-unreach-call.cil.c",
+			"examples/svcomp/ssh-simplified/s3_srvr_11_false-unreach-call.cil.c",
+			"examples/svcomp/ssh-simplified/s3_srvr_6_false-unreach-call.cil.c",
+			"examples/svcomp/ssh/s3_clnt.blast.01_false-unreach-call.i.cil.c",
+			"examples/svcomp/ssh/s3_clnt.blast.03_false-unreach-call.i.cil.c",
+			"examples/svcomp/ssh/s3_clnt.blast.04_false-unreach-call.i.cil.c",
+			"examples/svcomp/ssh/s3_srvr.blast.03_false-unreach-call.i.cil.c",
+			"examples/svcomp/ssh/s3_srvr.blast.04_false-unreach-call.i.cil.c",
+			"examples/svcomp/ssh/s3_srvr.blast.07_false-unreach-call.i.cil.c",
+			"examples/svcomp/ssh/s3_srvr.blast.09_false-unreach-call.i.cil.c",
+			"examples/svcomp/ssh/s3_srvr.blast.13_false-unreach-call.i.cil.c",
 	};
 
 	// @formatter:on
 
 	@Override
 	protected long getTimeout() {
-		return 15 * 1000;
+		return 120 * 1000 ;
 	}
 
 	@Override

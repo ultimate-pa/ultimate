@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.services.BacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslatedCFG;
@@ -283,32 +284,41 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 
 	protected <TVL, SVL> IBacktranslatedCFG<TVL, TTE> translateCFG(final IBacktranslatedCFG<SVL, STE> cfg,
 			final Function<Map<IExplicitEdgesMultigraph<?, ?, SVL, STE>, Multigraph<TVL, TTE>>, IMultigraphEdge<?, ?, SVL, STE>, Multigraph<TVL, TTE>, Multigraph<TVL, TTE>> funTranslateEdge,
-			final Function<String, Multigraph<TVL, TTE>, Class<TTE>, IBacktranslatedCFG<TVL, TTE>> funCreateBCFG) {
+			final Function<String, List<Multigraph<TVL, TTE>>, Class<TTE>, IBacktranslatedCFG<TVL, TTE>> funCreateBCFG) {
 
-		final Map<IExplicitEdgesMultigraph<?, ?, SVL, STE>, Multigraph<TVL, TTE>> nodeCache = new HashMap<>();
-		final IExplicitEdgesMultigraph<?, ?, SVL, STE> oldRoot = cfg.getCFG();
-		final Multigraph<TVL, TTE> newRoot = createWitnessNode();
-		nodeCache.put(oldRoot, newRoot);
+		final List<IExplicitEdgesMultigraph<?, ?, SVL, STE>> oldRoots = cfg.getCFGs();
+		final List<Multigraph<TVL, TTE>> newRoots = new ArrayList<>();
 
-		final Deque<Pair<IExplicitEdgesMultigraph<?, ?, SVL, STE>, Multigraph<TVL, TTE>>> worklist = new ArrayDeque<>();
-		final Set<IExplicitEdgesMultigraph<?, ?, SVL, STE>> closed = new HashSet<>();
-		worklist.add(new Pair<>(oldRoot, newRoot));
+		for (final IExplicitEdgesMultigraph<?, ?, SVL, STE> oldRoot : oldRoots) {
+			final Multigraph<TVL, TTE> newRoot = createWitnessNode();
+			final Map<IExplicitEdgesMultigraph<?, ?, SVL, STE>, Multigraph<TVL, TTE>> nodeCache = new HashMap<>();
+			final Deque<Pair<IExplicitEdgesMultigraph<?, ?, SVL, STE>, Multigraph<TVL, TTE>>> worklist = new ArrayDeque<>();
+			final Set<IExplicitEdgesMultigraph<?, ?, SVL, STE>> closed = new HashSet<>();
 
-		while (!worklist.isEmpty()) {
-			final Pair<IExplicitEdgesMultigraph<?, ?, SVL, STE>, Multigraph<TVL, TTE>> current = worklist.remove();
-			final IExplicitEdgesMultigraph<?, ?, SVL, STE> oldSourceNode = current.getFirst();
-			final Multigraph<TVL, TTE> newSourceNode = current.getSecond();
-			if (!closed.add(oldSourceNode)) {
-				continue;
+			newRoots.add(newRoot);
+			nodeCache.put(oldRoot, newRoot);
+			worklist.add(new Pair<>(oldRoot, newRoot));
+
+			while (!worklist.isEmpty()) {
+				final Pair<IExplicitEdgesMultigraph<?, ?, SVL, STE>, Multigraph<TVL, TTE>> current = worklist.remove();
+				final IExplicitEdgesMultigraph<?, ?, SVL, STE> oldSourceNode = current.getFirst();
+				final Multigraph<TVL, TTE> newSourceNode = current.getSecond();
+				if (!closed.add(oldSourceNode)) {
+//					System.out.println(getClass().getSimpleName()+": skipping new source " + newSourceNode );
+					continue;
+				}
+
+				for (final IMultigraphEdge<?, ?, SVL, STE> edge : oldSourceNode.getOutgoingEdges()) {
+					final Multigraph<TVL, TTE> newTargetNode = funTranslateEdge.create(nodeCache, edge, newSourceNode);
+//					System.out.println(getClass().getSimpleName()+": new edge from " + newSourceNode + " to " + newTargetNode);
+					if (newTargetNode != null) {
+						worklist.add(new Pair<>(edge.getTarget(), newTargetNode));
+					}
+				}
+
 			}
-
-			for (final IMultigraphEdge<?, ?, SVL, STE> edge : oldSourceNode.getOutgoingEdges()) {
-				final Multigraph<TVL, TTE> newTargetNode = funTranslateEdge.create(nodeCache, edge, newSourceNode);
-				worklist.add(new Pair<>(edge.getTarget(), newTargetNode));
-			}
-
 		}
-		return funCreateBCFG.create(cfg.getFilename(), newRoot, mTargetTraceElementType);
+		return funCreateBCFG.create(cfg.getFilename(), newRoots, mTargetTraceElementType);
 	}
 
 	/**
@@ -337,22 +347,54 @@ public class DefaultTranslator<STE, TTE, SE, TE> implements ITranslator<STE, TTE
 	}
 
 	protected void printCFG(IBacktranslatedCFG<?, ?> cfg, Consumer<String> printer) {
-		final IExplicitEdgesMultigraph<?, ?, ?, ?> root = cfg.getCFG();
-		final Deque<IExplicitEdgesMultigraph<?, ?, ?, ?>> worklist = new ArrayDeque<>();
-		final Set<IExplicitEdgesMultigraph<?, ?, ?, ?>> closed = new HashSet<>();
+		for (final IExplicitEdgesMultigraph<?, ?, ?, ?> root : cfg.getCFGs()) {
+			final Deque<IExplicitEdgesMultigraph<?, ?, ?, ?>> worklist = new ArrayDeque<>();
+			final Set<IExplicitEdgesMultigraph<?, ?, ?, ?>> closed = new HashSet<>();
+			worklist.add(root);
+
+			while (!worklist.isEmpty()) {
+				final IExplicitEdgesMultigraph<?, ?, ?, ?> current = worklist.remove();
+				if (!closed.add(current)) {
+					continue;
+				}
+				printer.accept(current.toString());
+				for (final IMultigraphEdge<?, ?, ?, ?> out : current.getOutgoingEdges()) {
+					printer.accept("  --" + out + "--> " + out.getTarget());
+					worklist.add(out.getTarget());
+				}
+			}
+		}
+	}
+
+	protected void printHondas(IBacktranslatedCFG<?, ?> cfg, Consumer<String> printer) {
+		for (final IExplicitEdgesMultigraph<?, ?, ?, ?> graph : cfg.getCFGs()) {
+			final Set<?> set = getHondas(graph);
+			if (set.isEmpty()) {
+				printer.accept("No Hondas");
+			}
+			for (final Object entry : set) {
+				printer.accept("Honda: " + entry);
+			}
+		}
+	}
+
+	protected <VL, EL> Set<VL> getHondas(final IExplicitEdgesMultigraph<?, ?, VL, EL> root) {
+		final Deque<IExplicitEdgesMultigraph<?, ?, VL, EL>> worklist = new ArrayDeque<>();
+		final Set<IExplicitEdgesMultigraph<?, ?, VL, EL>> closed = new HashSet<>();
+		final Set<IExplicitEdgesMultigraph<?, ?, VL, EL>> hondas = new HashSet<>();
 		worklist.add(root);
 
 		while (!worklist.isEmpty()) {
-			IExplicitEdgesMultigraph<?, ?, ?, ?> current = worklist.remove();
+			final IExplicitEdgesMultigraph<?, ?, VL, EL> current = worklist.remove();
 			if (!closed.add(current)) {
+				hondas.add(current);
 				continue;
 			}
-			printer.accept(current.toString());
-			for (IMultigraphEdge<?, ?, ?, ?> out : current.getOutgoingEdges()) {
-				printer.accept("  --" + out + "--> " + out.getTarget());
+			for (final IMultigraphEdge<?, ?, VL, EL> out : current.getOutgoingEdges()) {
 				worklist.add(out.getTarget());
 			}
 		}
+		return hondas.stream().map(a -> a.getLabel()).collect(Collectors.toSet());
 	}
 
 	@FunctionalInterface

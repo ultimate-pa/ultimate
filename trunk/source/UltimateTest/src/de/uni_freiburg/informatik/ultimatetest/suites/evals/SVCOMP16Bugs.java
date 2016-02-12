@@ -52,7 +52,13 @@ public class SVCOMP16Bugs extends AbstractEvalTestSuite {
 	// @formatter:off
 	@SuppressWarnings("unchecked")
 	private static final Quad<String, String[], String,String[]>[] DEFS = new Quad[] {
-			new Quad<>("AutomizerCInline.xml", ALL_C, "automizer/interpolation/Reach-32bit-SMTInterpol-TreeInterpolation.epf", sv("loops/linear_sea.ch_true-unreach-call.i")),
+//			new Quad<>("AutomizerCInline.xml", ALL_C, "automizer/interpolation/Reach-32bit-SMTInterpol-TreeInterpolation.epf",
+//					sv("loops/linear_sea.ch_true-unreach-call.i")),
+//			witnessSV("loops/array_true-unreach-call.i"),
+			witnessSV("loops/sum03_true-unreach-call_false-termination.i"),
+//			witnessSV("loops/linear_sea.ch_true-unreach-call.i"),
+			
+			
 	};
 	// @formatter:on
 
@@ -91,9 +97,14 @@ public class SVCOMP16Bugs extends AbstractEvalTestSuite {
 		}
 		return super.createTestCases();
 	}
-	
+
 	private static String[] sv(final String path) {
 		return new String[] { "examples/svcomp/" + path };
+	}
+
+	private static Quad<String, String[], String, String[]> witnessSV(String example) {
+		return new Quad<>("AutomizerC_WitnessPrinter.xml", ALL_C,
+				"svcomp2016/witness-verif/svcomp-Reach-32bit-Automizer_Default-Witness.epf", sv(example));
 	}
 
 }

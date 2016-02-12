@@ -1,8 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.MathContext;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -13,13 +14,13 @@ import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
-import org.eclipse.osgi.internal.messages.Msg;
-
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.NumUtil;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
 import de.uni_freiburg.informatik.ultimate.util.BidirectionalMap;
+import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 /**
  * Matrix for octagons (as presented by Antoine Mine).
@@ -746,7 +747,10 @@ public class OctMatrix {
 	// TODO document
 	// - note that information is lost. Strong Closure on this and source in advance can reduce loss.
 	// - source must be different from target (= this)
-	protected void copySelection(OctMatrix source, BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar) {
+	protected void copySelection(OctMatrix source, BidirectionalMap<Integer, Integer> mapTargetVarToSourceVar) {
+
+		BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar = mapTargetVarToSourceVar.inverse();
+		
 		if (source.mElements == mElements) {
 			for (Map.Entry<Integer, Integer> entry : mapSourceVarToTargetVar.entrySet()) {
 				if (!entry.getKey().equals(entry.getValue())) {
@@ -755,7 +759,6 @@ public class OctMatrix {
 			}
 			return;
 		}
-		BidirectionalMap<Integer, Integer> mapTargetVarToSourceVar = mapSourceVarToTargetVar.inverse();
 		for (Map.Entry<Integer, Integer> entry : mapSourceVarToTargetVar.entrySet()) {
 			int sourceVar = entry.getKey();
 			int targetVar = entry.getValue();
@@ -776,12 +779,13 @@ public class OctMatrix {
 	// - iteration order matters
 	public OctMatrix appendSelection(OctMatrix source, Collection<Integer> selectedSourceVars) {
 		OctMatrix m = this.addVariables(selectedSourceVars.size());
-		BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar = new BidirectionalMap<>();
-		for (Integer s : selectedSourceVars) {
-			Integer prevValue = mapSourceVarToTargetVar.put(s, mapSourceVarToTargetVar.size() + variables());
-			assert prevValue == null : "selection contained duplicate " + s;
+		BidirectionalMap<Integer, Integer> mapTargetVarToSourceVar = new BidirectionalMap<>();
+		for (Integer sourceVar : selectedSourceVars) {
+			int targetVar = mapTargetVarToSourceVar.size() + variables();
+			Integer prevValue = mapTargetVarToSourceVar.put(targetVar, sourceVar);
+			assert prevValue == null : "Selection contained duplicate: " + sourceVar;
 		}
-		m.copySelection(source, mapSourceVarToTargetVar);
+		m.copySelection(source, mapTargetVarToSourceVar);
 		return m;
 	}
 	
@@ -808,7 +812,7 @@ public class OctMatrix {
 	}
 	
 	/**
-	 * Assigns one variable to another variable. {@code x := y;}
+	 * Assigns one variable to another variable in this matrix. {@code x := y;}
 	 * <p>
 	 * This method is exact. No precision is lost. Closure in advance is not necessary.
 	 * Already closed matrices remain closed.
@@ -816,7 +820,7 @@ public class OctMatrix {
 	 * @param targetVar variable which will be changed
 	 * @param sourceVar variable which will be copied
 	 */
-	protected void copyVar(int targetVar, int sourceVar) {
+	protected void assignVarCopy(int targetVar, int sourceVar) {
 		if (targetVar == sourceVar) {
 			return;
 		}
@@ -1046,12 +1050,12 @@ public class OctMatrix {
 		return infCounter / (double) mElements.length;
 	}
 
-	public Term getTerm(Script script, List<Term> vars) {
+	public Term getTerm(Script script, Term[] vars) {
 		Term acc = script.term("true");
 		for (int rowBlock = 0; rowBlock < variables(); ++rowBlock) {
-			Term rowVar = vars.get(rowBlock);
+			Term rowVar = vars[rowBlock];
 			for (int colBlock = 0; colBlock <= rowBlock; ++colBlock) {
-				Term colVar = vars.get(colBlock);
+				Term colVar = vars[colBlock];
 				Term blockTerm = getBlockTerm(script, rowBlock, colBlock, rowVar, colVar);
 				acc = Util.and(script, acc, blockTerm);
 			}
@@ -1061,15 +1065,35 @@ public class OctMatrix {
 
 	private Term getBlockTerm(Script script, int rowBlock, int colBlock, Term rowVar, Term colVar) {
 		Term acc = script.term("true");
+		boolean rowIsInt = TypeUtil.isIntTerm(rowVar);
+		boolean colIsInt = TypeUtil.isIntTerm(colVar);
+		boolean relationIsInt = rowIsInt && colIsInt;
+		if (rowIsInt != colIsInt) {
+			// one var is a real => typecast non-reals to real
+			if (rowIsInt) {
+				rowVar = script.term("to_real", rowVar);
+			} else /* if (colIsInt) */ {
+				colVar = script.term("to_real", colVar);
+			}
+		}
 		// 0 = plus, 1 = minus
 		for (int i = 0; i < 2; ++i) { // row offset
 			for (int j = 0; j < 2; ++j) { // col offset
 				OctValue value = get(rowBlock + i, colBlock + j);
 				if (!value.isInfinity()) {
+					BigDecimal max = value.getValue();
 					Term vj = j == 0 ? colVar : script.term("-", colVar);
 					Term vi = i == 0 ? rowVar : script.term("-", rowVar);
-					Term constraint = script.term("<=", script.term("-", vj, vi), script.decimal(value.getValue()));
-					acc = Util.and(script, acc, constraint);
+					Term maxTerm;
+					if (relationIsInt) {
+						// (intX - intY <= 7.3) is equivalent to (intX - intY <= 7)
+						// (intX - intY <= -7.3) is equivalent to (intX - intY <= -8)
+						BigInteger maxInt = max.round(new MathContext(0, RoundingMode.FLOOR)).toBigIntegerExact();
+						maxTerm = script.numeral(maxInt);
+					} else {
+						maxTerm = script.decimal(max);
+					}
+					acc = Util.and(script, acc, script.term("<=", script.term("-", vj, vi), maxTerm));
 				}
 			}
 		}
@@ -1078,7 +1102,7 @@ public class OctMatrix {
 
 	@Override
 	public String toString() {
-		return toStringLower();
+		return toStringHalf();
 	}
 	
 	public String toStringFull() {
@@ -1095,7 +1119,7 @@ public class OctMatrix {
 		return sb.toString();
 	}
 	
-	public String toStringLower() {
+	public String toStringHalf() {
 		StringBuilder sb = new StringBuilder();
 		int n = 2;      // input of integer sequence floor(n^2 / 2 -1)
 		int rowEnd = 1; // index of last element in current row (= output of integer sequence)

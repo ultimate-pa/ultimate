@@ -156,7 +156,7 @@ public class IntervalConditionalEvaluator
 
 	@Override
 	public boolean containsBool() {
-		return true;
+		return mIfEvaluator.containsBool() || mElseEvaluator.containsBool();
 	}
 
 	@Override

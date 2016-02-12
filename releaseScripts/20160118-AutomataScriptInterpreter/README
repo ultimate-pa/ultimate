@@ -1,0 +1,24 @@
+This is the Ultimate Automata Script Interpreter, a user interface for
+the Ultimate Automata Library.
+
+
+You find more information and sample .ats (automata script) files on the website
+of the tool.
+http://ultimate.informatik.uni-freiburg.de/automata_script_interpreter
+
+
+
+Requirements:
+64bit Linux system with Java 1.8
+
+
+
+Usage:
+If you want execute the automata script file foo.ats then execute the
+shellscript
+./AutomataScriptInterpreter.sh foo.ats
+
+
+
+Maintainer:
+heizmann@informatik.uni-freiburg.de

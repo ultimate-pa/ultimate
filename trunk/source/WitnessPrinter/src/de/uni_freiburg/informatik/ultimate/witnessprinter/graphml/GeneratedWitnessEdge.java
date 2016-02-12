@@ -186,4 +186,12 @@ public class GeneratedWitnessEdge<TE, E> {
 		sb.append(";");
 	}
 
+	@Override
+	public String toString() {
+		if (getStartLineNumber() == getEndLineNumber()) {
+			return "L" + getStartLineNumber();
+		} else {
+			return "L" + getStartLineNumber() + "-L" + getEndLineNumber();
+		}
+	}
 }

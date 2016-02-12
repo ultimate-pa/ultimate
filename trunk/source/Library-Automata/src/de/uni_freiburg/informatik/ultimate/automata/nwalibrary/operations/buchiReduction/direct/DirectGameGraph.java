@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.ETimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
@@ -84,6 +83,14 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 	 */
 	private int m_BuechiAmountOfTransitions;
 	/**
+	 * Amount of edges the game graph has.
+	 */
+	private int m_GraphAmountOfEdges;
+	/**
+	 * Time duration building the graph took in milliseconds.
+	 */
+	private long m_GraphBuildTime;
+	/**
 	 * Service provider of Ultimate framework.
 	 */
 	private final AutomataLibraryServices m_Services;
@@ -91,10 +98,6 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 	 * The state factory used for creating states.
 	 */
 	private final StateFactory<STATE> m_StateFactory;
-	/**
-	 * Time duration building the graph took in milliseconds.
-	 */
-	private long m_GraphBuildTime;
 
 	/**
 	 * Creates a new direct game graph by using the given buechi automaton.
@@ -133,6 +136,7 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 		m_BuechiAmountOfStates = 0;
 		m_BuechiAmountOfTransitions = 0;
 		m_GraphBuildTime = 0;
+		m_GraphAmountOfEdges = 0;
 		generateGameGraphFromBuechi();
 	}
 
@@ -223,7 +227,9 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 					m_BuechiAmountOfStates - resultAmountOfStates);
 			performance.setCountingMeasure(ECountingMeasure.REMOVED_TRANSITIONS,
 					m_BuechiAmountOfTransitions - resultAmountOfTransitions);
+			performance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS, m_BuechiAmountOfTransitions);
 			performance.setCountingMeasure(ECountingMeasure.BUCHI_STATES, m_BuechiAmountOfStates);
+			performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES, m_GraphAmountOfEdges);
 		}
 
 		if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
@@ -273,6 +279,7 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 						// Only add edge if duplicator does not directly loose
 						if (!m_Buechi.isFinal(pred0) || m_Buechi.isFinal(q1)) {
 							addEdge(getSpoilerVertex(pred0, q1, false), v0e);
+							m_GraphAmountOfEdges++;
 						}
 
 						// Make sure to only count this transitions one time for
@@ -287,6 +294,7 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 						// Only add edge if duplicator does not directly loose
 						if (!m_Buechi.isFinal(q0) || m_Buechi.isFinal(succ1)) {
 							addEdge(v0e, getSpoilerVertex(q0, succ1, false));
+							m_GraphAmountOfEdges++;
 						}
 					}
 				}
@@ -307,11 +315,7 @@ public final class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STA
 					+ (getDuplicatorVertices().size() + getSpoilerVertices().size()));
 			logger.debug("Number of vertices in v0: " + getDuplicatorVertices().size());
 			logger.debug("Number of vertices in v1: " + getSpoilerVertices().size());
-			int edges = 0;
-			for (Set<Vertex<LETTER, STATE>> hs : getSuccessorGroups()) {
-				edges += hs.size();
-			}
-			logger.debug("Number of edges in game graph: " + edges);
+			logger.debug("Number of edges in game graph: " + m_GraphAmountOfEdges);
 		}
 
 		m_GraphBuildTime = System.currentTimeMillis() - graphBuildTimeStart;

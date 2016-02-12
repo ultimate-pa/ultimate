@@ -446,6 +446,34 @@ public class IntervalBinaryExpressionEvaluator
 					}
 					break;
 				case COMPPO:
+					returnStates.add(currentState);
+					break;
+				case ARITHDIV:
+				case ARITHMINUS:
+				case ARITHMOD:
+				case ARITHMUL:
+				case ARITHPLUS:
+					final IntervalDomainValue newArithValueLeft = computeNewValue(referenceValue, left.getValue(),
+					        right.getValue(), true);
+					final IntervalDomainValue newArithValueRight = computeNewValue(referenceValue, right.getValue(),
+					        left.getValue(), false);
+
+					final IntervalDomainEvaluationResult inverseResultArithLeft = new IntervalDomainEvaluationResult(
+					        newArithValueLeft, referenceBool);
+					final IntervalDomainEvaluationResult inverseResultArithRight = new IntervalDomainEvaluationResult(
+					        newArithValueRight, referenceBool);
+
+					final List<IntervalDomainState> leftInverseArith = mLeftSubEvaluator
+					        .inverseEvaluate(inverseResultArithLeft, currentState);
+					final List<IntervalDomainState> rightInverseArith = mRightSubEvaluator
+					        .inverseEvaluate(inverseResultArithRight, currentState);
+					
+					for (final IntervalDomainState le : leftInverseArith) {
+						for (final IntervalDomainState ri : rightInverseArith) {
+							returnStates.add(le.intersect(ri));
+						}
+					}
+					break;
 				default:
 					returnStates.add(currentState);
 					break;

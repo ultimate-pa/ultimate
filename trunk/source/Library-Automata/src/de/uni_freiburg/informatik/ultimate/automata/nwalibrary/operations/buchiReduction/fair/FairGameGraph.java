@@ -116,6 +116,14 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 */
 	private final UnionFind<STATE> m_EquivalenceClasses;
 	/**
+	 * Amount of edges the game graph has.
+	 */
+	private int m_GraphAmountOfEdges;
+	/**
+	 * Time duration building the graph took in milliseconds.
+	 */
+	private long m_GraphBuildTime;
+	/**
 	 * Service provider of Ultimate framework.
 	 */
 	private final AutomataLibraryServices m_Services;
@@ -123,10 +131,6 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * Transitions that safely can be removed from the buechi automaton.
 	 */
 	private List<Triple<STATE, LETTER, STATE>> m_TransitionsToRemove;
-	/**
-	 * Time duration building the graph took in milliseconds.
-	 */
-	private long m_GraphBuildTime;
 
 	/**
 	 * Creates a new fair game graph by using the given buechi automaton.
@@ -170,6 +174,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		m_BuechiAmountOfStates = 0;
 		m_BuechiAmountOfTransitions = 0;
 		m_GraphBuildTime = 0;
+		m_GraphAmountOfEdges = 0;
 
 		generateGameGraphFromBuechi();
 	}
@@ -630,7 +635,9 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 					m_BuechiAmountOfStates - resultAmountOfStates);
 			performance.setCountingMeasure(ECountingMeasure.REMOVED_TRANSITIONS,
 					m_BuechiAmountOfTransitions - resultAmountOfTransitions);
+			performance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS, m_BuechiAmountOfTransitions);
 			performance.setCountingMeasure(ECountingMeasure.BUCHI_STATES, m_BuechiAmountOfStates);
+			performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES, m_GraphAmountOfEdges);
 		}
 
 		// Remove unreachable states which can occur due to transition removal
@@ -705,6 +712,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 					Vertex<LETTER, STATE> dest = getSpoilerVertex(fixState, edgeDest, false);
 					if (src != null && dest != null) {
 						addEdge(src, dest);
+						m_GraphAmountOfEdges++;
 					}
 
 					// Spoiler edges q1 -a-> q2 : (q1, x) -> (q2, x, a)
@@ -712,6 +720,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 					dest = getDuplicatorVertex(edgeDest, fixState, trans.getLetter(), false);
 					if (src != null && dest != null) {
 						addEdge(src, dest);
+						m_GraphAmountOfEdges++;
 					}
 					// TODO Can it link trivial edges like duplicator -> spoiler
 					// where origin has no predecessors? If optimizing this be

@@ -152,23 +152,14 @@ public class OctAssumeProcessor {
 	
 	private List<OctDomainState> processNumericRelation(BinaryExpression be, boolean isNegated,
 			List<OctDomainState> oldStates) {
-		
-		// TODO build binary tree from IfExprs (or same assumption may be processed multiple times)
 
-		// isNegated refers to the relation (==, !=, <, ...) -- inner IfThenElseExpressions are not affected
-		List<Pair<List<Expression>, Expression>> paths = mPostOp.getExprTransformer().removeIfExprsCached(be);
 		List<OctDomainState> newStates = new ArrayList<>();
-		for (int i = 0; i < paths.size(); ++i) {
-			Pair<List<Expression>, Expression> path = paths.get(i);
-			List<OctDomainState> tmpOldStates = (i + 1 < paths.size()) ?
-					mPostOp.deepCopy(oldStates) : oldStates; // as little copies as possible
-			for (Expression assumption : path.getFirst()) {
-				tmpOldStates = assume(assumption, tmpOldStates);
-			}
+		IfExpressionTree ifExprTree = mPostOp.getExprTransformer().removeIfExprsCached(be);
+		for (Pair<Expression, List<OctDomainState>> leaf : ifExprTree.assumeLeafs(mPostOp, oldStates)) {
 			newStates.addAll(
-					processNumericRelationWithoutIfs((BinaryExpression) path.getSecond(), isNegated, tmpOldStates));
+					processNumericRelationWithoutIfs((BinaryExpression) leaf.getFirst(), isNegated, leaf.getSecond()));
 		}
-		return mPostOp.joinIfGeMaxParallelStates(newStates);
+		return mPostOp.joinDownToMax(newStates);
 	}
 
 	private List<OctDomainState> processNumericRelationWithoutIfs(BinaryExpression be, boolean isNegated,
@@ -343,7 +334,7 @@ public class OctAssumeProcessor {
 		} else if ((tvf = ae.getTwoVarForm()) != null) {
 			OctValue co = new OctValue(c);
 			oldStates.forEach(state -> state.assumeNumericVarRelationLeConstant(
-					tvf.var1, tvf.negVar2, tvf.var2, tvf.negVar1, co));
+					tvf.var1, tvf.negVar1, tvf.var2, tvf.negVar2, co));
 			return oldStates;
 		
 		} else {

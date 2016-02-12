@@ -38,14 +38,17 @@ public class WitnessLocation implements ILocation {
 	private int mEndColumn;
 
 	public WitnessLocation(String filename, int startline) {
-		this(filename,startline,startline);
+		this(filename, startline, startline);
 	}
-	
-	
+
 	public WitnessLocation(String filename, int startline, int endline) {
 		mFilename = filename;
 		mStartLine = startline;
-		mEndLine = endline;
+		if (endline == -1) {
+			mEndLine = startline;
+		} else {
+			mEndLine = endline;
+		}
 		mStartColumn = -1;
 		mEndColumn = -1;
 	}

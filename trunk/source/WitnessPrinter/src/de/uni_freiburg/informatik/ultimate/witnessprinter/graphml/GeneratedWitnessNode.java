@@ -69,4 +69,9 @@ public class GeneratedWitnessNode {
 	public void setInvariant(final String invariant) {
 		mInvariant = invariant;
 	}
+	
+	@Override
+	public String toString() {
+		return mId;
+	}
 }

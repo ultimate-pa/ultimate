@@ -21,17 +21,18 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.BoogieUtil;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.CollectionUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 public class OctPostOperator implements IAbstractPostOperator<OctDomainState, CodeBlock, IBoogieVar> {
 
-	public OctDomainState join(List<OctDomainState> states) {
+	public static OctDomainState join(List<OctDomainState> states) {
 		OctDomainState joinedState = null;
 		for (OctDomainState result : states) {
 			if (joinedState == null) {
@@ -43,7 +44,11 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		return joinedState;
 	}
 
-	public List<OctDomainState> deepCopy(List<OctDomainState> states) {
+	public static List<OctDomainState> joinToSingleton(List<OctDomainState> states) {
+		return CollectionUtil.singeltonArrayList(join(states));
+	}
+	
+	public static List<OctDomainState> deepCopy(List<OctDomainState> states) {
 		List<OctDomainState> copy = new ArrayList<>(states.size());
 		states.forEach(state -> copy.add(state.deepCopy()));
 		return copy; 
@@ -55,7 +60,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 
 		List<OctDomainState> newStates = op1.apply(deepCopy(oldStates));
 		newStates.addAll(op2.apply(oldStates));
-		return joinIfGeMaxParallelStates(newStates);
+		return joinDownToMax(newStates);
 	}
 
 	public List<OctDomainState> splitC(List<OctDomainState> oldStates,
@@ -65,7 +70,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		oldStates.forEach(op1);
 		copiedOldStates.forEach(op2);
 		oldStates.addAll(copiedOldStates);
-		return joinIfGeMaxParallelStates(oldStates);
+		return joinDownToMax(oldStates);
 	}
 
 	public static List<OctDomainState> removeBottomStates(List<OctDomainState> states) {
@@ -78,15 +83,20 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		return nonBottomStates;
 	}
 
-	public List<OctDomainState> joinIfGeMaxParallelStates(List<OctDomainState> states) {
+	public List<OctDomainState> joinDownToMax(List<OctDomainState> states) {
+		if (states.size() <= mMaxParallelStates) {
+			return states;
+		}
 		states = removeBottomStates(states);
-		if (states.isEmpty() || states.size() <= mMaxParallelStates) {
+		if (states.size() <= mMaxParallelStates) {
 			return states;
 		}
 		List<OctDomainState> joinedStates = new ArrayList<>();
 		joinedStates.add(join(states));
 		return joinedStates;
 	}
+
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	public Logger getLogger() {
 		return mLogger;
@@ -95,7 +105,15 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 	public ExpressionTransformer getExprTransformer() {
 		return mExprTransformer;
 	}
+
+	public OctAssumeProcessor getAssumeProcessor() {
+		return mAssumeProcessor;
+	}
 	
+	public int getMaxParallelStates() {
+		return mMaxParallelStates;
+	}
+
 	public boolean isFallbackAssignIntervalProjectionEnabled() {
 		return mFallbackAssignIntervalProjection;
 	}
@@ -105,27 +123,35 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 	private final Logger mLogger;
 	private final BoogieSymbolTable mSymbolTable;
 	private final int mMaxParallelStates;
+	private final boolean mFallbackAssignIntervalProjection;
+	
 	private final HavocBundler mHavocBundler;
 	private final ExpressionTransformer mExprTransformer;
 	private final OctStatementProcessor mStatementProcessor;
-	private final boolean mFallbackAssignIntervalProjection;
+	private final OctAssumeProcessor mAssumeProcessor;
 
-	public OctPostOperator(Logger logger, BoogieSymbolTable symbolTable, int statesUntilMerge,
+	public OctPostOperator(Logger logger, BoogieSymbolTable symbolTable, int maxParallelStates,
 			boolean fallbackAssignIntervalProjection) {
+
+		if (maxParallelStates < 1) {
+			throw new IllegalArgumentException("MaxParallelStates needs to be > 0, was " + maxParallelStates);
+		}
+
 		mLogger = logger;
 		mSymbolTable = symbolTable;
-		mMaxParallelStates = statesUntilMerge;
+		mMaxParallelStates = maxParallelStates;
+		mFallbackAssignIntervalProjection = fallbackAssignIntervalProjection;
+
 		mHavocBundler = new HavocBundler();
 		mExprTransformer = new ExpressionTransformer();
 		mStatementProcessor = new OctStatementProcessor(this);
-		mFallbackAssignIntervalProjection = fallbackAssignIntervalProjection;
+		mAssumeProcessor = new OctAssumeProcessor(this);
 	}
 
 	@Override
 	public List<OctDomainState> apply(OctDomainState oldState, CodeBlock codeBlock) {
 		List<OctDomainState> currentState = deepCopy(Collections.singletonList(oldState));
 		List<Statement> statements = mHavocBundler.bundleHavocsCached(codeBlock);
-		statements.forEach(s -> mLogger.error(BoogiePrettyPrinter.print(s)));
 		for (Statement statement : statements) {
 			currentState = mStatementProcessor.processStatement(statement, currentState);
 //			mLogger.warn("after " + BoogiePrettyPrinter.print(statement));
@@ -134,10 +160,6 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 //			mLogger.warn("---´");
 		}
 		currentState.forEach(s -> s.lock());
-		if (currentState.isEmpty()) {
-			// TODO remove (only workaround: fxpe does not accept empty list)
-			return emptyListToSingeltonBot_WORKAROUND(oldState);
-		}
 		return currentState;
 	}
 
@@ -153,21 +175,10 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		} else {
 			throw new UnsupportedOperationException("Unsupported transition: " + transition);
 		}
-		if (result.isEmpty()) {
-			// TODO remove (only workaround: fxpe does not accept empty list)
-			return emptyListToSingeltonBot_WORKAROUND(stateAfterTransition);
-		}
 		result.forEach(s -> s.lock());
 		return result;
 	}
 	
-	private List<OctDomainState> emptyListToSingeltonBot_WORKAROUND(OctDomainState s) {
-		OctDomainState bot = s.bottomCopy_WORKAROUND();
-//		mLogger.error("workaround empty list: " + bot);
-//		mLogger.error("---´");
-		return Collections.singletonList(bot);
-	}
-
 	private List<OctDomainState> applyCall(
 			OctDomainState stateBeforeCall, OctDomainState stateAfterCall, Call callTransition) {
 
@@ -179,8 +190,8 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		Procedure procedure = calledProcedure(call);
 
 		Map<String, IBoogieVar> tmpVars = new HashMap<>();
-		Map<String, String> mapTmpVarToInParam = new HashMap<>();
-		Map<String, Expression> mapTmpVarToArg = new HashMap<>();
+		List<Pair<String, String>> mapInParamToTmpVar = new ArrayList<>();
+		List<Pair<String, Expression>> mapTmpVarToArg = new ArrayList<>();
 		int paramNumber = 0;
 		for (VarList inParamList : procedure.getInParams()) {
 			IType type = inParamList.getType().getBoogieType();
@@ -190,15 +201,14 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 				// results in "var := \top" for these variables, which is always assumed for unsupported types
 			}
 			for (String inParam : inParamList.getIdentifiers()) {
-				String tmpVar = "octTmp(" + inParam + ")";
+				String tmpVar = "octTmp(" + inParam + ")"; // unique (inParams are all unique + brackets are forbidden)
 				IBoogieVar tmpBoogieVar = BoogieUtil.createTemporaryIBoogieVar(tmpVar, type);
 				Expression arg = call.getArguments()[paramNumber];
 				++paramNumber;
 
 				tmpVars.put(tmpVar, tmpBoogieVar);
-				mapTmpVarToInParam.put(tmpVar, inParam);
-				
-				mapTmpVarToArg.put(tmpVar, arg); // nothing will be overwritten -- in-parameters have unique names
+				mapInParamToTmpVar.add(new Pair<>(inParam, tmpVar));
+				mapTmpVarToArg.add(new Pair<>(tmpVar, arg));
 			}
 		}
 		// add temporary variables
@@ -207,14 +217,14 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 
 		// assign tmp := args
 		tmpStates = deepCopy(tmpStates);
-		for (Map.Entry<String, Expression> assign : mapTmpVarToArg.entrySet()) {
-			tmpStates = mStatementProcessor.processSingleAssignment(assign.getKey(), assign.getValue(), tmpStates);
+		for (Pair<String, Expression> assign : mapTmpVarToArg) {
+			tmpStates = mStatementProcessor.processSingleAssignment(assign.getFirst(), assign.getSecond(), tmpStates);
 		}
 		
-		// copy to scope opened by call (inParam := tmp)
-		// bottom-states are not overwritten (see top of this method)
+		// inParam := tmp (copy to scope opened by call)
+		// note: bottom-states are not overwritten (see top of this method)
 		List<OctDomainState> result = new ArrayList<>();
-		tmpStates.forEach(s -> result.add(stateAfterCall.copyValuesOnScopeChange(s, mapTmpVarToInParam)));
+		tmpStates.forEach(s -> result.add(stateAfterCall.copyValuesOnScopeChange(s, mapInParamToTmpVar)));
 		return result;
 		// No need to remove the temporary variables.
 		// The states with temporary variables are only local variables of this method.
@@ -227,13 +237,13 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		if (!stateAfterReturn.isBottom()) {
 			CallStatement call = returnTransition.getCallStatement();
 			Procedure procedure = calledProcedure(call);
-			Map<String, String> mapOutToLhs = generateMapOutToLhs(call.getLhs(), procedure);
-			stateAfterReturn.copyValuesOnScopeChange(stateBeforeReturn, mapOutToLhs);
+			List<Pair<String, String>> mapLhsToOut = generateMapCallLhsToOutParams(call.getLhs(), procedure);
+			stateAfterReturn = stateAfterReturn.copyValuesOnScopeChange(stateBeforeReturn, mapLhsToOut);
 			result.add(stateAfterReturn);
 		}
 		return result;
 	}
-	
+
 	private Procedure calledProcedure(CallStatement call) {
 		List<Declaration> procedureDeclarations = mSymbolTable.getFunctionOrProcedureDeclaration(call.getMethodName());
 		Procedure implementation = null;
@@ -252,20 +262,19 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		}
 		return implementation;
 	}
-	
-	private Map<String, String> generateMapOutToLhs(VariableLHS[] lhs, Procedure calledProcedure) {
-			Map<String, String> mapOutToLhs = new HashMap<>();
-		// out-parameters to lhs of call assignment
+
+	private List<Pair<String, String>> generateMapCallLhsToOutParams(VariableLHS[] callLhs, Procedure calledProcedure) {
+		List<Pair<String, String>> mapLhsToOut = new ArrayList<>(callLhs.length);
 		int i = 0;
 		for (VarList outParamList : calledProcedure.getOutParams()) {
 			for (String outParam : outParamList.getIdentifiers()) {
-				assert i < lhs.length : "missing left hand side for out-parameter";
-				mapOutToLhs.put(outParam, lhs[i].getIdentifier());
+				assert i < callLhs.length : "missing left hand side for out-parameter";
+				mapLhsToOut.add(new Pair<>(callLhs[i].getIdentifier(), outParam));
 				++i;
 			}
 		}
-		assert i == lhs.length : "missing out-parameter for left hand side";
-		return mapOutToLhs;
+		assert i == callLhs.length : "missing out-parameter for left hand side";
+		return mapLhsToOut;
 	}
-	
+
 }

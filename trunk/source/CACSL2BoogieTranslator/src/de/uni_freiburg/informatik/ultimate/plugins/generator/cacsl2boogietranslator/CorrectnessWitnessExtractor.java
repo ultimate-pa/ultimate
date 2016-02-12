@@ -42,7 +42,9 @@ import java.util.stream.Collectors;
 import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.ASTGenericVisitor;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
+import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFileLocation;
+import org.eclipse.cdt.core.dom.ast.IASTInitializer;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
@@ -57,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNodeAnnota
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class TrueWitnessExtractor {
+public class CorrectnessWitnessExtractor {
 
 	private final IUltimateServiceProvider mServices;
 	private final Logger mLogger;
@@ -65,7 +67,7 @@ public class TrueWitnessExtractor {
 	private IASTTranslationUnit mTranslationUnit;
 	private Pair<Map<IASTNode, String>, Map<IASTNode, String>> mAST2Invariant;
 
-	public TrueWitnessExtractor(final IUltimateServiceProvider service) {
+	public CorrectnessWitnessExtractor(final IUltimateServiceProvider service) {
 		mServices = service;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
@@ -120,57 +122,82 @@ public class TrueWitnessExtractor {
 		final Deque<WitnessNode> worklist = new ArrayDeque<>();
 		final Set<WitnessNode> closed = new HashSet<>();
 		worklist.add(mWitnessNode);
-
+		int successCounter = 0;
+		int failCounter = 0;
 		while (!worklist.isEmpty()) {
 			final WitnessNode current = worklist.remove();
 			if (!closed.add(current)) {
 				continue;
 			}
 			worklist.addAll(current.getOutgoingNodes());
-			extractNode(current, rtr);
+			switch (extractNode(current, rtr)) {
+			case EXTRACTED:
+				++successCounter;
+				break;
+			case NOT_EXTRACTED:
+				++failCounter;
+				break;
+			default:
+				break;
+			}
 		}
 
-		printDebug(rtr);
+		mLogger.info("Processed " + closed.size() + " nodes");
+		mLogger.info("Extracted " + successCounter + " invariants");
+		if (failCounter > 0) {
+			mLogger.info("Could not extract " + failCounter + " invariants");
+		} else {
+			mLogger.info("Extracted all invariants");
+		}
+		printResults(rtr);
 
 		return rtr;
 	}
 
-	private void printDebug(final Pair<Map<IASTNode, String>, Map<IASTNode, String>> rtr) {
-		mLogger.info("Found the following invariants in the witness");
+	private void printResults(final Pair<Map<IASTNode, String>, Map<IASTNode, String>> rtr) {
 		final Map<IASTNode, String> before = rtr.getFirst();
 		final Map<IASTNode, String> after = rtr.getSecond();
 		if (before.isEmpty() && after.isEmpty()) {
-			mLogger.info("No invariants found except invariant=true");
+			mLogger.info("Witness did not contain any usable invariants.");
 			return;
 		}
+		mLogger.info("Found the following invariants in the witness:");
 		for (final Entry<IASTNode, String> entry : before.entrySet()) {
-			mLogger.info("Before " + entry.getKey().getRawSignature() + " invariant is " + entry.getValue());
+			mLogger.info("Before [L" + entry.getKey().getFileLocation().getStartingLineNumber() + "] "
+					+ entry.getKey().getRawSignature() + " invariant is " + entry.getValue());
 		}
 		for (final Entry<IASTNode, String> entry : after.entrySet()) {
-			mLogger.info("After " + entry.getKey().getRawSignature() + " invariant is " + entry.getValue());
+			mLogger.info("After [L" + entry.getKey().getFileLocation().getStartingLineNumber() + "] "
+					+ entry.getKey().getRawSignature() + " invariant is " + entry.getValue());
 		}
 	}
 
-	private void extractNode(final WitnessNode current, final Pair<Map<IASTNode, String>, Map<IASTNode, String>> rtr) {
+	/**
+	 * @return true iff an invariant was extracted, false otherwise.
+	 */
+	private ExtractionResult extractNode(final WitnessNode current,
+			final Pair<Map<IASTNode, String>, Map<IASTNode, String>> rtr) {
 		final WitnessNodeAnnotation annot = WitnessNodeAnnotation.getAnnotation(current);
 		if (annot == null) {
-			return;
+			return ExtractionResult.NOT_RELEVANT;
 		}
 		final String invariant = annot.getInvariant();
 		if (invariant == null || invariant.equalsIgnoreCase("true")) {
-			return;
+			return ExtractionResult.NOT_RELEVANT;
 		}
 		final Pair<List<IASTNode>, List<IASTNode>> nodes = matchASTNodes(current);
-		if (nodes == null) {
+		if (nodes == null || (nodes.getFirst().isEmpty() && nodes.getSecond().isEmpty())) {
 			mLogger.error("Could not match witness node to AST node: " + current);
-			return;
+			return ExtractionResult.NOT_EXTRACTED;
 		}
+
 		for (final IASTNode node : nodes.getFirst()) {
 			addInvariants(rtr.getFirst(), invariant, node);
 		}
 		for (final IASTNode node : nodes.getSecond()) {
 			addInvariants(rtr.getSecond(), invariant, node);
 		}
+		return ExtractionResult.EXTRACTED;
 	}
 
 	private void addInvariants(final Map<IASTNode, String> rtr, final String invariant, final IASTNode node) {
@@ -207,11 +234,12 @@ public class TrueWitnessExtractor {
 		mTranslationUnit.accept(matcher);
 
 		final Pair<List<IASTNode>, List<IASTNode>> matchedNodes = matcher.getMatchedNodes();
-		if (matchedNodes.getFirst().isEmpty()) {
-			mLogger.warn("Could not match AST node to invariant for witness lines " + toStringCollection(beforeLines));
+		if (matchedNodes.getFirst().isEmpty() && !beforeLines.isEmpty()) {
+			mLogger.warn(
+					"Could not match AST node to invariant before witness lines " + toStringCollection(beforeLines));
 		}
-		if (matchedNodes.getSecond().isEmpty()) {
-			mLogger.warn("Could not match AST node to invariant for witness lines " + toStringCollection(afterLines));
+		if (matchedNodes.getSecond().isEmpty() && !afterLines.isEmpty()) {
+			mLogger.warn("Could not match AST node to invariant after witness lines " + toStringCollection(afterLines));
 		}
 
 		return matchedNodes;
@@ -250,6 +278,17 @@ public class TrueWitnessExtractor {
 			return super.visit(statement);
 		}
 
+		@Override
+		public int visit(IASTInitializer initializer) {
+			match(initializer);
+			return super.visit(initializer);
+		}
+
+		@Override
+		public int visit(IASTDeclarator declarator) {
+			return super.visit(declarator);
+		}
+
 		private void match(IASTNode node) {
 			final IASTFileLocation loc = node.getFileLocation();
 			final int startLine = loc.getStartingLineNumber();
@@ -264,4 +303,19 @@ public class TrueWitnessExtractor {
 		}
 	}
 
+	private enum ExtractionResult {
+		/**
+		 * The invariant was true and is therefore not relevant.
+		 */
+		NOT_RELEVANT,
+		/**
+		 * We could extract a relevant invariant.
+		 */
+		EXTRACTED,
+		/**
+		 * We could not extract a relevant invariant.
+		 */
+		NOT_EXTRACTED
+
+	}
 }

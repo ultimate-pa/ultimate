@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction;
 
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -286,17 +285,6 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	public Set<SpoilerVertex<LETTER, STATE>> getSpoilerVertices() {
 		return Collections.unmodifiableSet(m_SpoilerVertices);
-	}
-
-	/**
-	 * Gets an unmodifiable collection of all successor vertices grouped by
-	 * their predecessors.
-	 * 
-	 * @return An unmodifiable collection of all successor vertices grouped by
-	 *         their predecessors.
-	 */
-	public Collection<Set<Vertex<LETTER, STATE>>> getSuccessorGroups() {
-		return Collections.unmodifiableCollection(m_Successors.values());
 	}
 
 	/**
