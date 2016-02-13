@@ -82,7 +82,7 @@ public class ExpressionTransformer {
 	private AffineExpression unaryExprToAffineExpr(UnaryExpression e) {
 		switch (e.getOperator()) {
 		case ARITHNEGATIVE:
-			AffineExpression sub = toAffineExpr(e.getExpr());
+			AffineExpression sub = affineExprCached(e.getExpr());
 			return sub == null ? null : sub.negate();
 		default:
 			return null;
@@ -90,9 +90,9 @@ public class ExpressionTransformer {
 	}
 	
 	private AffineExpression binaryExprToAffineExpr(BinaryExpression e) {
-		AffineExpression left = toAffineExpr(e.getLeft());
+		AffineExpression left = affineExprCached(e.getLeft());
 		if (left == null) { return null; }
-		AffineExpression right = toAffineExpr(e.getRight());
+		AffineExpression right = affineExprCached(e.getRight());
 		if (right == null) { return null; }
 		boolean isInteger = TypeUtil.isNumericInt(e.getType());
 		switch (e.getOperator()) {

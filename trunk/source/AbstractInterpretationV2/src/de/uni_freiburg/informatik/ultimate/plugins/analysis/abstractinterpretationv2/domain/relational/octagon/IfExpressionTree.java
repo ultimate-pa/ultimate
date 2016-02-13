@@ -22,7 +22,6 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
  * This representation is similar to the prenex normal form for quantifiers.
  * {@link IfThenElseExpression} are lifted to the top and build a binary tree,
  * where the edges are labeled with the assumed conditions from the {@linkplain IfThenElseExpression}s.
- * The conditions are not processed and may contain further {@linkplain IfThenElseExpression}s.
  * The leafs of the tree are if-free expressions.
  * <p>
  * Example: {@code x + (if c then y else z)} becomes {@code (if c then x + y else x + z)}, which is represented as
@@ -32,6 +31,8 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
  *    /   \
  *  x+y   x+z
  * </pre>
+ * <p>
+ * Conditions, arrays, and quantifiers are not processed and may contain further {@linkplain IfThenElseExpression}s.
  * <p>
  * Trees are immutable after creation.
  *
@@ -48,7 +49,7 @@ public class IfExpressionTree {
 			return treeFromUnaryExpr((UnaryExpression) e, exprTransformer);
 		} else {
 			// Expression does not contain further expressions
-			// except for Quantifiers or Array*Expressions -- but they are are not interpreted by the post-operator
+			// except for quantifiers or arrays -- but they are are not interpreted by the post-operator
 			return new IfExpressionTree(e);
 		}
 	}
@@ -146,7 +147,7 @@ public class IfExpressionTree {
 	}
 
 	/**
-	 * Appends a tree (called {@code suffix}) to each leaf of this tree. Leafs of this tree are replaced by the suffix,
+	 * Appends a tree (called suffix) to each leaf of this tree. Leafs of this tree are replaced by the suffix,
 	 * and the leafs of the suffix are replaced by the result of a function, which uses both old leafs as arguments.
 	 * <p>
 	 * Example: The input ...
