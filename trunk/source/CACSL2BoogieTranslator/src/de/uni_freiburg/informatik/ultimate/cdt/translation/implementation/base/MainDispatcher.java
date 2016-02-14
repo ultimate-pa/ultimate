@@ -609,12 +609,12 @@ public class MainDispatcher extends Dispatcher {
 		return result;
 	}
 
-	private List<AssertStatement> translateWitnessInvariant(IASTNode n, String invariantBefore) throws AssertionError {
+	private List<AssertStatement> translateWitnessInvariant(IASTNode n, String invariant) throws AssertionError {
 //		ILocation loca = LocationFactory.createCLocation(n);
-		if (invariantBefore != null) {
+		if (invariant != null) {
 			ACSLNode acslNode = null;
 			try {
-				acslNode = Parser.parseComment("lstart\n assert " + invariantBefore + ";",
+				acslNode = Parser.parseComment("lstart\n assert " + invariant + ";",
 						0, 0, mLogger);
 			} catch (Exception e) {
 				throw new IllegalArgumentException(e);
