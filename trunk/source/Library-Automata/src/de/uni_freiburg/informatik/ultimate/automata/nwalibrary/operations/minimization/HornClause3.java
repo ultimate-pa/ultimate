@@ -46,6 +46,11 @@ class HornClause3 {
     private HornClause3(int l0, int l1, int l2)
         { this.l0 = l0; this.l1 = l1; this.l2 = l2; }
 
+    /* These are fixed constants: Clients rely on their values to not hit them
+     * accidentally */
+    public static final int falseVar = 0;
+    public static final int trueVar = 1;
+
     public static HornClause3 T(int x)                 { return new HornClause3(1, 1, x); }
     public static HornClause3 F(int x)                 { return new HornClause3(x, 1, 0); }
     public static HornClause3 FT(int y, int z)         { return new HornClause3(y, 1, z); }
