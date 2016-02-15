@@ -152,21 +152,12 @@ public class OctAssumeProcessor {
 	
 	private List<OctDomainState> processNumericRelation(BinaryExpression be, boolean isNegated,
 			List<OctDomainState> oldStates) {
-		
-		// TODO build binary tree from IfExprs (or same assumption may be processed multiple times)
 
-		// isNegated refers to the relation (==, !=, <, ...) -- inner IfThenElseExpressions are not affected
-		List<Pair<List<Expression>, Expression>> paths = mPostOp.getExprTransformer().removeIfExprsCached(be);
 		List<OctDomainState> newStates = new ArrayList<>();
-		for (int i = 0; i < paths.size(); ++i) {
-			Pair<List<Expression>, Expression> path = paths.get(i);
-			List<OctDomainState> tmpOldStates = (i + 1 < paths.size()) ?
-					OctPostOperator.deepCopy(oldStates) : oldStates; // as little copies as possible
-			for (Expression assumption : path.getFirst()) {
-				tmpOldStates = assume(assumption, tmpOldStates);
-			}
+		IfExpressionTree ifExprTree = mPostOp.getExprTransformer().removeIfExprsCached(be);
+		for (Pair<Expression, List<OctDomainState>> leaf : ifExprTree.assumeLeafs(mPostOp, oldStates)) {
 			newStates.addAll(
-					processNumericRelationWithoutIfs((BinaryExpression) path.getSecond(), isNegated, tmpOldStates));
+					processNumericRelationWithoutIfs((BinaryExpression) leaf.getFirst(), isNegated, leaf.getSecond()));
 		}
 		return mPostOp.joinDownToMax(newStates);
 	}

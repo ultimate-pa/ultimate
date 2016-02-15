@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
  * Represents the transition of a program or a transition system as an SMT
@@ -585,8 +586,13 @@ public class TransFormula implements Serializable {
 
 		formula = new FormulaUnLet().unlet(formula);
 		if (simplify) {
-			Term simplified = SmtUtils.simplify(script, formula, services);
-			formula = simplified;
+			try {
+				Term simplified = SmtUtils.simplify(script, formula, services);
+				formula = simplified;
+			} catch (ToolchainCanceledException tce) {
+				throw new ToolchainCanceledException(TransFormula.class, tce.getRunningTaskInfo() + 
+						" while doing sequential composition of " + transFormula.length + " TransFormulas");
+			}
 		}
 		removesuperfluousVariables(inVars, outVars, auxVars, formula);
 

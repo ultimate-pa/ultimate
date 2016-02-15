@@ -705,12 +705,23 @@ public class Theory {
 		mDeclaredSorts.put("BitVec", mBitVecSort);
 		class RegularBitVecFunction extends FunctionSymbolFactory {
 			int mNumArgs;
+			int mFlags;
 			Sort mResult;
 			public RegularBitVecFunction(
-					String name, int numArgs, Sort result) {
+					String name, int numArgs, Sort result, int flags) {
 				super(name);
 				mNumArgs = numArgs;
 				mResult = result;
+				mFlags = flags;
+			}
+			public RegularBitVecFunction(
+					String name, int numArgs, Sort result) {
+				this(name, numArgs, result, FunctionSymbol.INTERNAL);
+			}
+			@Override
+			public int getFlags(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
+				return mFlags;
 			}
 			@Override
 			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
@@ -757,6 +768,11 @@ public class Theory {
 		}
 		defineFunction(new FunctionSymbolFactory("concat") {
 			@Override
+			public int getFlags(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
+				return FunctionSymbol.INTERNAL | FunctionSymbol.LEFTASSOC;
+			}
+			@Override
 			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
 					Sort resultSort) {
 				if (indices != null
@@ -791,11 +807,15 @@ public class Theory {
 			getSort(new BigInteger[] {BigInteger.ONE}, new Sort[0]);
 		
 		defineFunction(new RegularBitVecFunction("bvnot", 1, null));
-		defineFunction(new RegularBitVecFunction("bvand", 2, null));
-		defineFunction(new RegularBitVecFunction("bvor",  2, null));
+		defineFunction(new RegularBitVecFunction("bvand", 2, null,
+				FunctionSymbol.INTERNAL | FunctionSymbol.LEFTASSOC));
+		defineFunction(new RegularBitVecFunction("bvor",  2, null,
+				FunctionSymbol.INTERNAL | FunctionSymbol.LEFTASSOC));
 		defineFunction(new RegularBitVecFunction("bvneg", 1, null));
-		defineFunction(new RegularBitVecFunction("bvadd", 2, null));
-		defineFunction(new RegularBitVecFunction("bvmul", 2, null));
+		defineFunction(new RegularBitVecFunction("bvadd", 2, null,
+				FunctionSymbol.INTERNAL | FunctionSymbol.LEFTASSOC));
+		defineFunction(new RegularBitVecFunction("bvmul", 2, null,
+				FunctionSymbol.INTERNAL | FunctionSymbol.LEFTASSOC));
 		defineFunction(new RegularBitVecFunction("bvudiv", 2, null));
 		defineFunction(new RegularBitVecFunction("bvurem", 2, null));
 		defineFunction(new RegularBitVecFunction("bvshl", 2, null));
@@ -803,7 +823,8 @@ public class Theory {
 		
 		defineFunction(new RegularBitVecFunction("bvnand", 2, null));
 		defineFunction(new RegularBitVecFunction("bvnor", 2, null));
-		defineFunction(new RegularBitVecFunction("bvxor", 2, null));
+		defineFunction(new RegularBitVecFunction("bvxor", 2, null,
+				FunctionSymbol.INTERNAL | FunctionSymbol.LEFTASSOC));
 		defineFunction(new RegularBitVecFunction("bvxnor", 2, null));
 		defineFunction(new RegularBitVecFunction("bvcomp", 2, bitvec1));
 		defineFunction(new RegularBitVecFunction("bvsub", 2, null));
@@ -831,14 +852,22 @@ public class Theory {
 		defineFunction(new RotateBitVecFunction("rotate_left"));
 		defineFunction(new RotateBitVecFunction("rotate_right"));
 		
-		defineFunction(new RegularBitVecFunction("bvult", 2, mBooleanSort));
-		defineFunction(new RegularBitVecFunction("bvule", 2, mBooleanSort));
-		defineFunction(new RegularBitVecFunction("bvugt", 2, mBooleanSort));
-		defineFunction(new RegularBitVecFunction("bvuge", 2, mBooleanSort));
-		defineFunction(new RegularBitVecFunction("bvslt", 2, mBooleanSort));
-		defineFunction(new RegularBitVecFunction("bvsle", 2, mBooleanSort));
-		defineFunction(new RegularBitVecFunction("bvsgt", 2, mBooleanSort));
-		defineFunction(new RegularBitVecFunction("bvsge", 2, mBooleanSort));
+		defineFunction(new RegularBitVecFunction("bvult", 2, mBooleanSort,
+				FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
+		defineFunction(new RegularBitVecFunction("bvule", 2, mBooleanSort,
+				FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
+		defineFunction(new RegularBitVecFunction("bvugt", 2, mBooleanSort,
+				FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
+		defineFunction(new RegularBitVecFunction("bvuge", 2, mBooleanSort,
+				FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
+		defineFunction(new RegularBitVecFunction("bvslt", 2, mBooleanSort,
+				FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
+		defineFunction(new RegularBitVecFunction("bvsle", 2, mBooleanSort,
+				FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
+		defineFunction(new RegularBitVecFunction("bvsgt", 2, mBooleanSort,
+				FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
+		defineFunction(new RegularBitVecFunction("bvsge", 2, mBooleanSort,
+				FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
 	}
 	
 	private void setLogic(Logics logic) {

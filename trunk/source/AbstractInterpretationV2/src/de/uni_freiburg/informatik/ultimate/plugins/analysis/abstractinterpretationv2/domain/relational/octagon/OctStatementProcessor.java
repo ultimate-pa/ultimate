@@ -26,11 +26,9 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 public class OctStatementProcessor {
 
 	private final OctPostOperator mPostOp;
-	private final OctAssumeProcessor mAssumeProcessor;
 	
 	public OctStatementProcessor(OctPostOperator postOperator) {
 		mPostOp = postOperator;
-		mAssumeProcessor = new OctAssumeProcessor(postOperator);
 	}
 
 	public List<OctDomainState> processStatement(Statement statement, List<OctDomainState> oldStates) {
@@ -38,7 +36,7 @@ public class OctStatementProcessor {
 			return processAssignmentStatement((AssignmentStatement) statement, oldStates);
 		} else if (statement instanceof AssumeStatement) {
 			Expression assumption = ((AssumeStatement) statement).getFormula();
-			return mAssumeProcessor.assume(assumption, oldStates);
+			return mPostOp.getAssumeProcessor().assume(assumption, oldStates);
 		} else if (statement instanceof HavocStatement) {
 			return processHavocStatement((HavocStatement) statement, oldStates);
 		} else if (statement instanceof IfStatement) {
@@ -145,13 +143,13 @@ public class OctStatementProcessor {
 			Expression notRhs = mPostOp.getExprTransformer().logicNegCached(rhs);
 			return mPostOp.splitF(oldStates,
 					stateList -> {
-						stateList = mAssumeProcessor.assume(rhs, stateList);
+						stateList = mPostOp.getAssumeProcessor().assume(rhs, stateList);
 						stateList = OctPostOperator.removeBottomStates(stateList); // important!
 						stateList.forEach(state -> state.assignBooleanVar(targetVar, BoolValue.TRUE));
 						return stateList;
 					},
 					stateList -> {
-						stateList = mAssumeProcessor.assume(notRhs, stateList);
+						stateList = mPostOp.getAssumeProcessor().assume(notRhs, stateList);
 						stateList = OctPostOperator.removeBottomStates(stateList); // important!
 						stateList.forEach(state -> state.assignBooleanVar(targetVar, BoolValue.FALSE));
 						return stateList;
@@ -162,22 +160,14 @@ public class OctStatementProcessor {
 	private List<OctDomainState> processNumericAssign(String targetVar, Expression rhs,
 			List<OctDomainState> oldStates) {
 
-		List<Pair<List<Expression>, Expression>> paths = mPostOp.getExprTransformer().removeIfExprsCached(rhs);
-		List<OctDomainState> result = new ArrayList<>();
-		for (int i = 0; i < paths.size(); ++i) {
-			Pair<List<Expression>, Expression> p = paths.get(i);
-			List<OctDomainState> copiedOldStates = (i + 1 < paths.size()) ? // as little copies as possible
-					OctPostOperator.deepCopy(oldStates) : oldStates;
-			for (Expression assumption : p.getFirst()) {
-				// This step is slow for deeply nested IfThenElseExpressions
-				// same assumptions have to be assumed over and over again
-				// TODO create BinaryTree instead of paths, which allows re-use of assumes
-				copiedOldStates = mAssumeProcessor.assume(assumption, copiedOldStates);
-			}
-			copiedOldStates = OctPostOperator.removeBottomStates(copiedOldStates); // important!
-			result.addAll(processNumericAssignWithoutIfs(targetVar, rhs, copiedOldStates));
+		List<OctDomainState> newStates = new ArrayList<>();
+		IfExpressionTree ifExprTree = mPostOp.getExprTransformer().removeIfExprsCached(rhs);
+		for (Pair<Expression, List<OctDomainState>> leave : ifExprTree.assumeLeafs(mPostOp, oldStates)) {
+			List<OctDomainState> oldStatesIfsAssumed = leave.getSecond();
+			oldStatesIfsAssumed = OctPostOperator.removeBottomStates(oldStatesIfsAssumed); // important!
+			newStates.addAll(processNumericAssignWithoutIfs(targetVar, leave.getFirst(), oldStatesIfsAssumed));
 		}
-		return mPostOp.joinDownToMax(result);
+		return mPostOp.joinDownToMax(newStates);
 	}
 
 	private List<OctDomainState> processNumericAssignWithoutIfs(String targetVar, Expression rhs,
