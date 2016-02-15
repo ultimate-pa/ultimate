@@ -534,7 +534,7 @@
 							<argLine>${manualtest-argline}</argLine>
 
 							<systemProperties>
-								<svcompdir>../svcomp</svcompdir>
+								<svcompdir>examples/svcomp</svcompdir>
 							</systemProperties>
 
 							<!-- Use this for global timeouts per class -->
