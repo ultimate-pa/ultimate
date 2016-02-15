@@ -583,8 +583,6 @@ public class CongruenceDomainState implements IAbstractState<CongruenceDomainSta
 			assert var != null : "Error during TermVar creation";
 			final Sort sort = var.getSort().getRealSort();
 			if (!sort.isNumericSort()) {
-				mLogger.warn("Unfinished term transformation: Unsupported sort " + sort + " for variable " + var + ": "
-				        + this);
 				continue;
 			}
 			final Term newterm = entry.getValue().getTerm(script, sort, var);

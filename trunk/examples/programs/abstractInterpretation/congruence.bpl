@@ -1,12 +1,10 @@
 procedure main()
 {
    var x, y, z : int;
-   var b : bool;
    
-   x := 2;
-   y := 3;
+   assume y % 4 == 0;
    
-   assume x % y == 0;
+   assume x % y == 5;
    
    //assume x % 5 == 3;
    

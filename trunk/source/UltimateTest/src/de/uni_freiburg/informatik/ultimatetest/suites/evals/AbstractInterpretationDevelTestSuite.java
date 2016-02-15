@@ -61,7 +61,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
 //			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
-//			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/AIv2_CON.epf"),
+			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/AIv2_CON.epf"),
 			
 			//### C
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
@@ -69,7 +69,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
 //			new Triple<>("AbstractInterpretationv2C.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AbstractInterpretationv2C.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
-			new Triple<>("AbstractInterpretationv2C.xml", C, "ai/AIv2_CON.epf"),
+//			new Triple<>("AbstractInterpretationv2C.xml", C, "ai/AIv2_CON.epf"),
 //			new Triple<>("AutomizerC.xml", C, "ai/Automizer+AIv2_CON.epf"),
 	};
 
@@ -80,15 +80,12 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			"examples/programs/abstractInterpretation/",
 //			"examples/programs/abstractInterpretation/regression",
 //			"examples/programs/abstractInterpretation/regression/CountTillBound-Loop-2.bpl",
-//			"examples/programs/abstractInterpretation/congruence.bpl",
+			"examples/programs/abstractInterpretation/congruence.bpl",
 			
 			/* BUGS */
 			
-			// Not terminating
-//			"examples/svcomp/loops/compact_false-unreach-call.c",
-			
 			// UNSAFE_DEREF / SAFE
-//			"svcomp/array-memsafety/add_last_unsafe_false-valid-deref.c",
+//			"examples/svcomp/array-memsafety/add_last_unsafe_false-valid-deref.c",
 
 			// UNSAFE / SAFE
 //			"examples/svcomp/bitvector-regression/pointer_extension3_false-unreach-call.c",
@@ -98,6 +95,9 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 			
 			// NullPointerException (Evaluator)
 //			"examples/svcomp/float-benchs/inv_square_true-unreach-call.c",
+			
+			// Timeout
+//			"examples/svcomp/busybox-1.22.0/chroot-incomplete_false-unreach-call.i",
 			
 			
 			///////////////////////////////////////////

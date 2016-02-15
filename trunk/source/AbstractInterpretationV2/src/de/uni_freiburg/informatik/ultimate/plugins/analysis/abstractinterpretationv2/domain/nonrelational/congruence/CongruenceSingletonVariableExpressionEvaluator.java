@@ -88,7 +88,7 @@ public class CongruenceSingletonVariableExpressionEvaluator
 			}
 		} else if (type.getIType() instanceof ArrayType) {
 			// TODO: Implement better handling of arrays.
-			val = currentState.getValue(mVariableName);
+			val = new CongruenceDomainValue();
 		} else {
 			val = currentState.getValue(mVariableName);
 		}
@@ -134,7 +134,7 @@ public class CongruenceSingletonVariableExpressionEvaluator
 	public List<CongruenceDomainState> inverseEvaluate(IEvaluationResult<CongruenceDomainValue> computedValue,
 	        CongruenceDomainState currentState) {
 		List<CongruenceDomainState> returnList = new ArrayList<>();
-
+		
 		if (mContainsBoolean) {
 			returnList.add(currentState.setBooleanValue(mVariableName, computedValue.getBooleanValue()));
 		} else {

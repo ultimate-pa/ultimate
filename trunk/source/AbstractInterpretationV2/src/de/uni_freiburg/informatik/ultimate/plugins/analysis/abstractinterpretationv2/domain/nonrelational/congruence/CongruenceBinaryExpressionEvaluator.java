@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -67,7 +68,6 @@ public class CongruenceBinaryExpressionEvaluator
 	private Operator mOperator;
 	
 	private CongruenceDomainValue mModul = null;
-	
 	private CongruenceDomainValue mRest = null;
 
 	protected CongruenceBinaryExpressionEvaluator(final Logger logger, final EvaluatorType type) {
@@ -150,9 +150,11 @@ public class CongruenceBinaryExpressionEvaluator
 					if (mLeftSubEvaluator instanceof CongruenceBinaryExpressionEvaluator) {
 						CongruenceBinaryExpressionEvaluator sub  = (CongruenceBinaryExpressionEvaluator) mLeftSubEvaluator;
 						if (sub.mOperator == Operator.ARITHMOD) {
-							if (v2.isConstant() && (v2.value().compareTo(sub.mModul.value().abs())) >= 0 || v2.value().signum() < 0) {
-								returnBool = new BooleanValue(false);
-								break;
+							if (v2.isConstant()) {
+								if (v2.value().signum() < 0 || sub.mModul.isConstant() && v2.value().compareTo(sub.mModul.value().abs()) >= 0) {
+									returnBool = new BooleanValue(false);
+									break;
+								}
 							}
 						}
 					}
@@ -160,9 +162,11 @@ public class CongruenceBinaryExpressionEvaluator
 					if (mRightSubEvaluator instanceof CongruenceBinaryExpressionEvaluator) {
 						CongruenceBinaryExpressionEvaluator sub  = (CongruenceBinaryExpressionEvaluator) mRightSubEvaluator;
 						if (sub.mOperator == Operator.ARITHMOD) {
-							if (v2.isConstant() && (v1.value().compareTo(sub.mModul.value().abs())) >= 0 || v1.value().signum() < 0) {
-								returnBool = new BooleanValue(false);
-								break;
+							if (v1.isConstant()) {
+								if (v1.value().signum() < 0 || sub.mModul.isConstant() && v1.value().compareTo(sub.mModul.value().abs()) >= 0) {
+									returnBool = new BooleanValue(false);
+									break;
+								}
 							}
 						}
 					}
