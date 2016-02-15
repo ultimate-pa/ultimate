@@ -56,9 +56,10 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 	public static final String s_InterpolantConsolidationBenchmark = "InterpolantConsolidationBenchmark";
 	public static final String s_InterpolantCoveringCapability = "InterpolantCoveringCapability";
 	public static final String s_TotalInterpolationBenchmark = "TotalInterpolationBenchmark";
+	public static final String s_AbsIntTime = "Abstract Interpretation Time";
 	
 	private static final CegarLoopBenchmarkType s_Instance = new CegarLoopBenchmarkType();
-	
+		
 	public static CegarLoopBenchmarkType getInstance() {
 		return s_Instance;
 	}
@@ -67,7 +68,7 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 	public Collection<String> getKeys() {
 		ArrayList<String> keyList = new ArrayList<String>();
 		keyList.addAll(Arrays.asList(new String[] { 
-				s_Result, s_OverallTime, s_OverallIterations, 
+				s_Result, s_OverallTime, s_AbsIntTime,s_OverallIterations, 
 				s_AutomataDifference, 
 				s_DeadEndRemovalTime, 
 				s_AutomataMinimizationTime, s_HoareAnnotationTime, 
@@ -108,6 +109,7 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 		case s_AutomataMinimizationTime:
 		case s_HoareAnnotationTime:
 		case s_BasicInterpolantAutomatonTime:
+		case s_AbsIntTime:
 			Long time1 = (Long) value1;
 			Long time2 = (Long) value2;
 			return time1 + time2;
@@ -174,6 +176,11 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 		sb.append(" states and took ");
 		Long time = (Long) benchmarkData.getValue(s_AutomataMinimizationTime);
 		sb.append(prettyprintNanoseconds(time));
+		sb.append(". ");
+		
+		sb.append("Abstract interpretation took ");
+		Long aiTime = (Long) benchmarkData.getValue(s_AbsIntTime);
+		sb.append(prettyprintNanoseconds(aiTime));
 		sb.append(". ");
 		
 		SizeIterationPair sip = (SizeIterationPair) benchmarkData.getValue(s_BiggestAbstraction);

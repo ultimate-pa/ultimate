@@ -159,6 +159,7 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 	}
 
 	public int leaveCurrentLoop() {
+		assert !mActiveLoops.isEmpty() : "Active loops is empty";
 		final LOCATION lastLoopHead = mActiveLoops.pop();
 		final Integer loopCounterValue = mLoopCounters.get(lastLoopHead);
 		assert loopCounterValue != null;

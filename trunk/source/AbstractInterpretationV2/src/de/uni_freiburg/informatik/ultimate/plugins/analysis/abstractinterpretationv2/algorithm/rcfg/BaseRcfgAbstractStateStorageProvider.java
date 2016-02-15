@@ -36,7 +36,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -146,15 +145,20 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 	@Override
 	public Map<LOCATION, Term> getTerms(final CodeBlock initialTransition, final Script script,
 			final Boogie2SMT bpl2smt) {
-		Map<LOCATION, STATE> states = getMergedLocalStates(initialTransition);
-		for (final BaseRcfgAbstractStateStorageProvider<STATE, LOCATION> child : mChildStores) {
-			states = mergeMaps(states, child.getMergedLocalStates(initialTransition));
-		}
+		final Map<LOCATION, StateDecorator> states = getMergedStatesOfAllChilds(initialTransition);
 		return convertStates2Terms(states, script, bpl2smt);
 	}
 
-	private Map<LOCATION, STATE> getMergedLocalStates(final CodeBlock initialTransition) {
-		final Map<LOCATION, STATE> rtr = new HashMap<>();
+	private Map<LOCATION, StateDecorator> getMergedStatesOfAllChilds(final CodeBlock initialTransition) {
+		Map<LOCATION, StateDecorator> states = getMergedLocalStates(initialTransition);
+		for (final BaseRcfgAbstractStateStorageProvider<STATE, LOCATION> child : mChildStores) {
+			states = mergeMaps(states, child.getMergedStatesOfAllChilds(initialTransition));
+		}
+		return states;
+	}
+
+	private Map<LOCATION, StateDecorator> getMergedLocalStates(final CodeBlock initialTransition) {
+		final Map<LOCATION, StateDecorator> rtr = new HashMap<>();
 		final Deque<LOCATION> worklist = new ArrayDeque<>();
 		final Set<LOCATION> closed = new HashSet<>();
 
@@ -166,6 +170,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 			if (!closed.add(current)) {
 				continue;
 			}
+			
 			// add successors to worklist
 			for (final CodeBlock outgoing : mTransProvider.getSuccessorActions(current)) {
 				if (!(outgoing instanceof CodeBlock)) {
@@ -176,40 +181,40 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 			}
 
 			final Deque<STATE> states = getStates(current);
-			if (states == null) {
+
+			StateDecorator currentState;
+			if (states == null || states.isEmpty()) {
 				// no states for this location
-				continue;
-			}
-			final Optional<STATE> mergedState = states.stream().reduce(mMergeOperator::apply);
-			if (!mergedState.isPresent()) {
-				// no states for this location
-				continue;
+				currentState = new StateDecorator();
+			} else if (states.size() == 1) {
+				currentState = new StateDecorator(states.getFirst());
+			} else {
+				currentState = new StateDecorator(states.stream().reduce(mMergeOperator::apply).get());
 			}
 
-			final STATE currentState = rtr.get(current);
-			if (currentState == null) {
-				rtr.put(current, mergedState.get());
-			} else {
-				rtr.put(current, mMergeOperator.apply(mergedState.get(), currentState));
+			final StateDecorator alreadyKnownState = rtr.get(current);
+			if (alreadyKnownState != null) {
+				currentState = alreadyKnownState.merge(currentState);
 			}
+			rtr.put(current, currentState);
 		}
 		return rtr;
 	}
 
-	private Map<LOCATION, STATE> mergeMaps(Map<LOCATION, STATE> a, Map<LOCATION, STATE> b) {
-		final Map<LOCATION, STATE> rtr = new HashMap<>();
+	private Map<LOCATION, StateDecorator> mergeMaps(Map<LOCATION, StateDecorator> a, Map<LOCATION, StateDecorator> b) {
+		final Map<LOCATION, StateDecorator> rtr = new HashMap<>();
 
-		for (final Entry<LOCATION, STATE> entryA : a.entrySet()) {
-			final STATE valueB = b.get(entryA.getKey());
+		for (final Entry<LOCATION, StateDecorator> entryA : a.entrySet()) {
+			final StateDecorator valueB = b.get(entryA.getKey());
 			if (valueB == null) {
 				rtr.put(entryA.getKey(), entryA.getValue());
 			} else {
-				rtr.put(entryA.getKey(), mMergeOperator.apply(entryA.getValue(), valueB));
+				rtr.put(entryA.getKey(), entryA.getValue().merge(valueB));
 			}
 		}
 
-		for (final Entry<LOCATION, STATE> entryB : b.entrySet()) {
-			final STATE valueA = a.get(entryB.getKey());
+		for (final Entry<LOCATION, StateDecorator> entryB : b.entrySet()) {
+			final StateDecorator valueA = a.get(entryB.getKey());
 			if (valueA == null) {
 				rtr.put(entryB.getKey(), entryB.getValue());
 			} else {
@@ -220,12 +225,14 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 		return rtr;
 	}
 
-	private Map<LOCATION, Term> convertStates2Terms(final Map<LOCATION, STATE> states, final Script script,
+	private Map<LOCATION, Term> convertStates2Terms(final Map<LOCATION, StateDecorator> states, final Script script,
 			final Boogie2SMT bpl2smt) {
 		final Map<LOCATION, Term> rtr = new HashMap<>();
 
-		for (final Entry<LOCATION, STATE> entry : states.entrySet()) {
-			rtr.put(entry.getKey(), entry.getValue().getTerm(script, bpl2smt));
+		for (final Entry<LOCATION, StateDecorator> entry : states.entrySet()) {
+			final Term term = entry.getValue().getTerm(script, bpl2smt);
+			final LOCATION loc = entry.getKey();
+			rtr.put(loc, term);
 		}
 
 		return rtr;
@@ -273,8 +280,37 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 		return mTransProvider;
 	}
 
-	@FunctionalInterface
-	public interface IStateMatcher<T> {
-		public boolean check(T current);
+	private final class StateDecorator {
+		private final STATE mState;
+
+		private StateDecorator() {
+			mState = null;
+		}
+
+		private boolean isBottom() {
+			return mState == null || mState.isBottom();
+		}
+
+		private StateDecorator(STATE state) {
+			mState = state;
+		}
+
+		private Term getTerm(final Script script, final Boogie2SMT bpl2smt) {
+			if (mState == null) {
+				return script.term("false");
+			}
+			return mState.getTerm(script, bpl2smt);
+		}
+
+		private StateDecorator merge(final StateDecorator other) {
+			if (other == null || other.mState == null) {
+				return this;
+			}
+			if (mState == null) {
+				return other;
+			}
+			return new StateDecorator(mMergeOperator.apply(mState, other.mState));
+		}
+
 	}
 }

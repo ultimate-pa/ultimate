@@ -44,6 +44,8 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
@@ -102,15 +104,20 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		mMaxParallelStates = ups.getInt(AbsIntPrefInitializer.LABEL_STATES_UNTIL_MERGE);
 	}
 
-	/**
-	 * @return true iff safe
-	 */
-	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> run(ACTION start) {
+	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> run(final ACTION start, final Script script,
+			final Boogie2SMT bpl2smt,
+			final AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> intermediateResult) {
 		mLogger.info("Starting fixpoint engine");
-		mResult = new AbstractInterpretationResult<>();
+		mResult = (intermediateResult == null ? new AbstractInterpretationResult<>() : intermediateResult);
 		mBenchmark = mResult.getBenchmark();
 		calculateFixpoint(start);
+		mResult.addTerms(mStateStorage.getTerms(start, script, bpl2smt));
 		return mResult;
+	}
+
+	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> run(final ACTION start, final Script script,
+			final Boogie2SMT bpl2smt) {
+		return run(start, script, bpl2smt, new AbstractInterpretationResult<>());
 	}
 
 	private void calculateFixpoint(final ACTION start) {
@@ -168,9 +175,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 			for (STATE pendingNewPostState : postStates) {
 				if (pendingNewPostState.isBottom()) {
-					// if the new abstract state is bottom, we did not actually
-					// execute the action (i.e., we do not enter loops, do not add
-					// new actions to the worklist, etc.)
+					// if the new abstract state is bottom, we do not enter loops and we do not add
+					// new actions to the worklist
 					if (mLogger.isDebugEnabled()) {
 						mLogger.debug(getLogMessagePostIsBottom(pendingNewPostState));
 					}
