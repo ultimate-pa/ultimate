@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
@@ -238,8 +239,16 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 
 		mExpressionEvaluator.addEvaluator(evaluator);
 	}
+	
+	@Override
+	protected void visit(RealLiteral expr) {
+		assert mEvaluatorFactory != null;
+
+		mExpressionEvaluator.addEvaluator(new CongruenceSingletonValueExpressionEvaluator(new CongruenceDomainValue()));
+	}
 
 	private Expression handleBinaryExpression(final BinaryExpression expr) {
+		// TODO: Better simplification (newExpr && expr)
 		if (expr.getOperator() != Operator.COMPEQ) {
 			return expr;
 		}

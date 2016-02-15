@@ -1,10 +1,15 @@
 procedure main()
 {
    var x, y, z : int;
+   var b : bool;
    
-   assume y % 4 == 0;
+   b := true;
    
-   assume x % y == 5;
+   //assume x % 4294967298 == 0;
+   
+   //assume y % 1073741822 == 0;
+   
+   //assume x == y;
    
    //assume x % 5 == 3;
    

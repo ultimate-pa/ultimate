@@ -94,6 +94,7 @@ public class CongruenceEvaluatorFactory
 	public IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> createSingletonValueExpressionEvaluator(
 	        String value, Class<?> valueType) {
 		assert value != null;
+		
 		return new CongruenceSingletonValueExpressionEvaluator(
 		        new CongruenceDomainValue(new BigInteger(value), true));
 	}
