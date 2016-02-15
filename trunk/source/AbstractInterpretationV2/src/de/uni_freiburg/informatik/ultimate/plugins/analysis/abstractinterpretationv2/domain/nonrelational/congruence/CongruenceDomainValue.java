@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * Representation of a congruence value in the congruence domain
  * 
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
 
@@ -263,6 +264,7 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 		return new CongruenceDomainValue(mValue, mIsConstant);
 	}
 	
+	// Computes the new value for this, if we have an "assume this % modul == rest"
 	protected CongruenceDomainValue modEquals(CongruenceDomainValue modul, CongruenceDomainValue rest) {
 		if (mIsBottom || modul == null || modul.mIsBottom || rest == null || rest.mIsBottom) {
 			return new CongruenceDomainValue(true);

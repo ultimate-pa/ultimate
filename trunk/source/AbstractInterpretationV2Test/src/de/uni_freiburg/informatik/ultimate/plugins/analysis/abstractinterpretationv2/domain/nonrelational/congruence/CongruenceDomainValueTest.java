@@ -7,6 +7,10 @@ import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence.CongruenceDomainValue;
 
+/**
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ */
+
 public class CongruenceDomainValueTest{
 	@Test
 	public void testConstructSet() {
@@ -138,5 +142,19 @@ public class CongruenceDomainValueTest{
 		assertTrue(b.negate().toString().equals("{}"));
 		assertTrue(c.negate().toString().equals("3"));
 		assertTrue(z.negate().toString().equals("3Z"));
+	}
+	
+	@Test
+	public void testModEquals() {
+		CongruenceDomainValue zero = new CongruenceDomainValue(BigInteger.ZERO, true);
+		CongruenceDomainValue two = new CongruenceDomainValue(new BigInteger("2"), true);
+		CongruenceDomainValue minusTwo = new CongruenceDomainValue(new BigInteger("-2"), true);
+		CongruenceDomainValue z2 = new CongruenceDomainValue(new BigInteger("2"));
+		CongruenceDomainValue z3 = new CongruenceDomainValue(new BigInteger("3"));
+		CongruenceDomainValue z4 = new CongruenceDomainValue(new BigInteger("4"));
+		assertTrue(z2.modEquals(z3, zero).toString().equals("6Z"));
+		assertTrue(z3.modEquals(z4, two).toString().equals("6Z"));
+		assertTrue(z3.modEquals(two, zero).toString().equals("6Z"));
+		assertTrue(z3.modEquals(minusTwo, zero).toString().equals("6Z"));
 	}
 }

@@ -34,7 +34,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 /**
  * Class for evaluation results used to return both, a new abstract state and an evaluated value for evaluators.
  * 
- * @author Marius Greitschus <greitsch@informatik.uni-freiburg.de>
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
 public class CongruenceDomainEvaluationResult implements IEvaluationResult<CongruenceDomainValue> {

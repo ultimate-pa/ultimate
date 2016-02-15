@@ -61,15 +61,16 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
 //			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
-			
-			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/AIv2_CON.epf"),
+//			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/AIv2_CON.epf"),
 			
 			//### C
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
 //			new Triple<>("AbstractInterpretationv2C.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
-//			new Triple<>("AbstractInterpretationv2C.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),			
+//			new Triple<>("AbstractInterpretationv2C.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
+			new Triple<>("AbstractInterpretationv2C.xml", C, "ai/AIv2_CON.epf"),
+//			new Triple<>("AutomizerC.xml", C, "ai/Automizer+AIv2_CON.epf"),
 	};
 
 
@@ -79,15 +80,101 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			"examples/programs/abstractInterpretation/",
 //			"examples/programs/abstractInterpretation/regression",
 //			"examples/programs/abstractInterpretation/regression/CountTillBound-Loop-2.bpl",
+//			"examples/programs/abstractInterpretation/congruence.bpl",
 			
-			"examples/programs/abstractInterpretation/congruence.bpl",
+			/* BUGS */
+			
+			// Not terminating
+//			"examples/svcomp/loops/compact_false-unreach-call.c",
+			
+			// UNSAFE_DEREF / SAFE
+//			"svcomp/array-memsafety/add_last_unsafe_false-valid-deref.c",
+
+			// UNSAFE / SAFE
+//			"examples/svcomp/bitvector-regression/pointer_extension3_false-unreach-call.c",
+			
+			// IndexOutOfBoundsException
+//			"examples/svcomp/ldv-consumption/linux-3.8-rc1-32_7a-drivers--net--dsa--mv88e6xxx_drv.ko-ldv_main2_true-unreach-call.cil.out.c",
+			
+			// NullPointerException (Evaluator)
+//			"examples/svcomp/float-benchs/inv_square_true-unreach-call.c",
+			
+			
+			///////////////////////////////////////////
+			/* SVCOMP */
+			//"examples/svcomp",
+			
+			
+//			"examples/svcomp/array-examples",
+//			"examples/svcomp/array-memsafety",
+//			"examples/svcomp/bitvector",
+//			"examples/svcomp/bitvector-loops",
+//			"examples/svcomp/bitvector-regression",
+//			"examples/svcomp/busybox-1.22.0",
+//			"examples/svcomp/ddv-machzwd",
+//			"examples/svcomp/eca-rers2012",
+//			"examples/svcomp/float-benchs",
+//			"examples/svcomp/floats-cbmc-regression",
+//			"examples/svcomp/floats-cdfpl",
+//			"examples/svcomp/heap-manipulation",
+//			"examples/svcomp/ldv-challenges",
+//			"examples/svcomp/ldv-commit-tester",
+//			"examples/svcomp/ldv-consumption",
+//			"examples/svcomp/ldv-linux-3.0",
+//			"examples/svcomp/ldv-linux-3.12-rc1",
+//			"examples/svcomp/ldv-linux-3.16-rc1",
+/*			"examples/svcomp/ldv-linux-3.4-simple",
+			"examples/svcomp/ldv-linux-3.7.3",
+			"examples/svcomp/ldv-linux-4.2-rc1",
+			"examples/svcomp/ldv-memsafety",
+			"examples/svcomp/ldv-races",
+			"examples/svcomp/ldv-regression",
+			"examples/svcomp/ldv-validator-v0.6",
+			"examples/svcomp/ldv-validator-v0.8",
+			"examples/svcomp/list-ext-properties",
+			"examples/svcomp/list-properties",
+			"examples/svcomp/locks",
+			"examples/svcomp/loop-acceleration",
+			"examples/svcomp/loop-invgen",
+			"examples/svcomp/loop-lit",
+			"examples/svcomp/loop-new",
+			"examples/svcomp/loops",
+			"examples/svcomp/memory-alloca",
+			"examples/svcomp/memory-unsafe",
+			"examples/svcomp/memsafety",
+			"examples/svcomp/memsafety-ext",
+			"examples/svcomp/ntdrivers",
+			"examples/svcomp/ntdrivers-simplified",
+			"examples/svcomp/product-lines",
+			"examples/svcomp/pthread",
+			"examples/svcomp/pthread-atomic",
+			"examples/svcomp/pthread-ext",
+			"examples/svcomp/pthread-lit",
+			"examples/svcomp/pthread-wmm",
+			"examples/svcomp/recursive",
+			"examples/svcomp/recursive-simple",
+			"examples/svcomp/reducercommutativity",
+			"examples/svcomp/regression",
+			"examples/svcomp/seq-mthreaded",
+			"examples/svcomp/seq-pthread",
+			"examples/svcomp/signedintegeroverflow-regression",
+			"examples/svcomp/ssh",
+			"examples/svcomp/ssh-simplified",
+			"examples/svcomp/systemc",
+			"examples/svcomp/termination-15",
+			"examples/svcomp/termination-crafted",
+			"examples/svcomp/termination-crafted-lit",
+			"examples/svcomp/termination-libowfat",
+			"examples/svcomp/termination-memory-alloca",
+			"examples/svcomp/termination-numeric",
+			"examples/svcomp/termination-restricted-15",*/
 	};
 
 	// @formatter:on
 
 	@Override
 	protected long getTimeout() {
-		return 120 * 1000 ;
+		return 10 * 1000 ;
 	}
 
 	@Override
@@ -105,7 +192,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 	@Override
 	public ITestResultDecider constructITestResultDecider(UltimateRunDefinition urd) {
-		return new SafetyCheckTestResultDecider(urd, false);
+		return new SafetyCheckTestResultDecider(urd, true);
 	}
 
 	@Override

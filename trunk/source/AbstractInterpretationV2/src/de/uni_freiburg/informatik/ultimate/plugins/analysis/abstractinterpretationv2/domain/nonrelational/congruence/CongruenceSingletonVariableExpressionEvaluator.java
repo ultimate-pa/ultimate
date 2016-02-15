@@ -45,7 +45,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 /**
  * Class to represent the logical evaluator for singleton variable expressions in the {@link CongruenceDomain}.
  * 
- * @author Marius Greitschus <greitsch@informatik.uni-freiburg.de>
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
 public class CongruenceSingletonVariableExpressionEvaluator

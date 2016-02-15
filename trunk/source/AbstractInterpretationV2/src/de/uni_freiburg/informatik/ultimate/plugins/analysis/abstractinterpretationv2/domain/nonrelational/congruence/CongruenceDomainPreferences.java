@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIt
 /**
  * Defines the Ultimate preferences page for the Congruence domain and the kind of evaluators to use.
  * 
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */

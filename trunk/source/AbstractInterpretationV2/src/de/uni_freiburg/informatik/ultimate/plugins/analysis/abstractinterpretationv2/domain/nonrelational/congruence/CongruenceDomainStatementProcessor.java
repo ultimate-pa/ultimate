@@ -72,6 +72,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 /**
  * Processes Boogie {@link Statement}s and returns a new {@link CongruenceDomainState} for the given statement.
  * 
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
@@ -194,7 +195,9 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 
 					final IBoogieVar type = newState.getVariableDeclarationType(varname);
 					// Always assign non-constant values for variables
-					CongruenceDomainValue newValue = new CongruenceDomainValue(res.getValue().value(), false);
+					//CongruenceDomainValue newValue = new CongruenceDomainValue(res.getValue().value(), false);
+					
+					CongruenceDomainValue newValue = res.getValue();
 					
 					if (type.getIType() instanceof PrimitiveType) {
 						final PrimitiveType primitiveType = (PrimitiveType) type.getIType();

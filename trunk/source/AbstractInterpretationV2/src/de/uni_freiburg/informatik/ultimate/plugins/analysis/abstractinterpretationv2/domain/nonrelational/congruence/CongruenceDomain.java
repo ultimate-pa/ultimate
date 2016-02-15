@@ -9,6 +9,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
+/**
+ * 
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ *
+ */
+
 public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState, CodeBlock, IBoogieVar> {	
 	
 	private final BoogieSymbolTable mSymbolTable;
@@ -27,6 +34,7 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState, 
 
 	@Override
 	public IAbstractStateBinaryOperator<CongruenceDomainState> getWideningOperator() {
+		// Widening is the same as merge, so we don't need an extra operator
 		return new CongruenceMergeOperator();
 	}
 
