@@ -892,7 +892,8 @@ public class Theory {
 		
 		
 		mDeclaredSorts.put("FloatingPoint", mFloatingPointSort);
-		
+		mRealSort = declareInternalSort("Real", 0,
+				SortSymbol.INTERNAL).getSort(null, new Sort[0]);
 		/*
 		 * Used to create Functions that only need floating points as arguments
 		 */
