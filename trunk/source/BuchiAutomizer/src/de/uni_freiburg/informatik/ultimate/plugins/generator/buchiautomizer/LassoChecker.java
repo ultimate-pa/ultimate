@@ -554,8 +554,13 @@ public class LassoChecker {
 	 */
 	protected TransFormula computeStemTF() {
 		NestedWord<CodeBlock> stem = m_Counterexample.getStem().getWord();
-		TransFormula stemTF = computeTF(stem, m_SimplifyStemAndLoop, true, false);
-		return stemTF;
+		try {
+			TransFormula stemTF = computeTF(stem, m_SimplifyStemAndLoop, true, false);
+			return stemTF;
+		} catch (ToolchainCanceledException tce) {
+			throw new ToolchainCanceledException(getClass(), 
+					tce.getRunningTaskInfo() + " while constructing stem TransFormula");
+		}
 	}
 
 	/**
@@ -563,8 +568,13 @@ public class LassoChecker {
 	 */
 	protected TransFormula computeLoopTF() {
 		NestedWord<CodeBlock> loop = m_Counterexample.getLoop().getWord();
-		TransFormula loopTF = computeTF(loop, m_SimplifyStemAndLoop, true, false);
-		return loopTF;
+		try {
+			TransFormula loopTF = computeTF(loop, m_SimplifyStemAndLoop, true, false);
+			return loopTF;
+		} catch (ToolchainCanceledException tce) {
+			throw new ToolchainCanceledException(getClass(), 
+					tce.getRunningTaskInfo() + " while constructing loop TransFormula");
+		}
 	}
 
 	/**
