@@ -1,8 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -27,6 +27,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 public class AbstractInterpretationAutomatonGenerator {
 
 	private static final boolean CANNIBALIZE = false;
+	private static final long PRINT_PREDS_LIMIT = 30;
 
 	private final IUltimateServiceProvider mServices;
 	private final Logger mLogger;
@@ -50,35 +51,38 @@ public class AbstractInterpretationAutomatonGenerator {
 	private NestedWordAutomaton<CodeBlock, IPredicate> getTermAutomaton(
 			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction, final Map<IPredicate, Term> loc2Term,
 			final PredicateUnifier predicateUnifier) {
+		mLogger.info("Creating automaton from AI predicates (Cannibalize=" + CANNIBALIZE + ").");
 		final NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<CodeBlock, IPredicate>(
 				new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
 				oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
-		final Collection<IPredicate> nwaLocs = oldAbstraction.getStates();
-
 		final Set<IPredicate> predicates = new HashSet<>();
 		result.addState(true, false, predicateUnifier.getTruePredicate());
 		predicates.add(predicateUnifier.getTruePredicate());
 
 		final IPredicate falsePred = predicateUnifier.getFalsePredicate();
-		for (final IPredicate pred : nwaLocs) {
-			final ISLPredicate slPred = (ISLPredicate) pred;
-			final Term term = loc2Term.get(pred);
+		for (final Entry<IPredicate, Term> entry : loc2Term.entrySet()) {
+			final ISLPredicate loc = (ISLPredicate) entry.getKey();
+			final Term term = entry.getValue();
 			if (CANNIBALIZE) {
-				addStateCannibalize(oldAbstraction, predicateUnifier, result, predicates, falsePred, slPred, term);
+				addStateCannibalize(oldAbstraction, predicateUnifier, result, predicates, falsePred, loc, term);
 			} else {
-				addState(oldAbstraction, predicateUnifier, result, predicates, falsePred, slPred, term);
+				addState(oldAbstraction, predicateUnifier, result, predicates, falsePred, loc, term);
 			}
 		}
 
 		if (result.getFinalStates().isEmpty() || !predicates.contains(falsePred)) {
 			result.addState(false, true, predicateUnifier.getFalsePredicate());
 		}
-		if (mLogger.isDebugEnabled()) {
+
+		if (PRINT_PREDS_LIMIT < predicates.size()) {
+			mLogger.info("Using " + predicates.size() + " predicates from AI: " + String.join(",",
+					predicates.stream().limit(PRINT_PREDS_LIMIT).map(a -> a.toString()).collect(Collectors.toList()))
+					+ "...");
+		} else {
 			mLogger.info("Using " + predicates.size() + " predicates from AI: "
 					+ String.join(",", predicates.stream().map(a -> a.toString()).collect(Collectors.toList())));
-		} else {
-			mLogger.info("Using " + predicates.size() + " predicates from AI.");
 		}
+
 		return result;
 	}
 
