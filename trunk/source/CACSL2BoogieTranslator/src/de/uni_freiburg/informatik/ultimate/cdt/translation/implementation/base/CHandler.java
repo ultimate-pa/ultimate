@@ -2443,13 +2443,16 @@ public class CHandler implements ICHandler {
 		List<Overapprox> overappr = new ArrayList<Overapprox>();
 
 		// dispatch the controlling expression, convert it to int
-		// 6.8.4.2-1: "The controlling expression of a switch statement shall have integer type."
 		Result switchParam = main.dispatch(node.getControllerExpression());
 		assert switchParam instanceof ExpressionResult;
 		ExpressionResult l = ((ExpressionResult) switchParam).switchToRValueIfNecessary(main, mMemoryHandler,
 				mStructHandler, loc);
-		CPrimitive intType = new CPrimitive(PRIMITIVE.INT);
-		m_ExpressionTranslation.convertIntToInt(loc, l, intType);
+		// 6.8.4.2-1: "The controlling expression of a switch statement shall have integer type."
+		// note that this does not mean that it has "int" type, it may be long or char, for instance
+		assert l.lrVal.getCType().isIntegerType();
+		// 6.8.4.2-5: "The integer promotions are performed on the controlling expression."
+		m_ExpressionTranslation.doIntegerPromotion(loc, l);
+		
 		stmt.addAll(l.stmt);
 		decl.addAll(l.decl);
 		auxVars.putAll(l.auxVars);
@@ -2457,6 +2460,7 @@ public class CHandler implements ICHandler {
 		Expression switchArg = l.lrVal.getValue();
 
 
+		CPrimitive intType = new CPrimitive(PRIMITIVE.INT);
 		String breakLabelName = main.nameHandler.getGloballyUniqueIdentifier("SWITCH~BREAK~");
         String switchFlag = main.nameHandler.getTempVarUID(SFO.AUXVAR.SWITCH, intType);
         ASTType flagType = new PrimitiveType(loc, SFO.BOOL);
@@ -2488,13 +2492,13 @@ public class CHandler implements ICHandler {
 
 			checkForACSL(main, ifBlock, decl, child, null);
 			if (child instanceof IASTCaseStatement || child instanceof IASTDefaultStatement) {
-				ExpressionResult res = (ExpressionResult) main.dispatch(child);
+				ExpressionResult caseExpression = (ExpressionResult) main.dispatch(child);
 				if (locC != null) {
 					IfStatement ifStmt = new IfStatement(locC, new IdentifierExpression(locC, switchFlag), ifBlock.toArray(new Statement[0]),
 									new Statement[0]);
 					Map<String, IAnnotations> annots = ifStmt.getPayload().getAnnotations();
 
-					for (Overapprox overapprItem : res.overappr) {
+					for (Overapprox overapprItem : caseExpression.overappr) {
 						annots.put(Overapprox.getIdentifier(), overapprItem);
 					}
 	
@@ -2512,14 +2516,16 @@ public class CHandler implements ICHandler {
 				locC = LocationFactory.createCLocation(child);
 
 				if (child instanceof IASTCaseStatement) {
-					cond = ExpressionFactory.newBinaryExpression(locC, Operator.COMPEQ, switchArg, res.lrVal.getValue());
-					decl.addAll(res.decl);
-					stmt.addAll(res.stmt);
-					auxVars.putAll(res.auxVars);
-					overappr.addAll(res.overappr);
+					// 6.8.4.2-5: "The constant	expression in each case label is converted to the promoted type of the controlling expression"
+					m_ExpressionTranslation.convertIntToInt(locC, caseExpression, (CPrimitive) l.lrVal.getCType());
+					cond = ExpressionFactory.newBinaryExpression(locC, Operator.COMPEQ, switchArg, caseExpression.lrVal.getValue());
+					decl.addAll(caseExpression.decl);
+					stmt.addAll(caseExpression.stmt);
+					auxVars.putAll(caseExpression.auxVars);
+					overappr.addAll(caseExpression.overappr);
 				} else {
 					//default statement
-					cond = res.lrVal.getValue();
+					cond = caseExpression.lrVal.getValue();
 				}
 
 				/*
