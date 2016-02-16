@@ -105,6 +105,8 @@ public class SVCOMP16TestSuite extends AbstractSVCOMPTestSuite {
 		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
 				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf", getTimeout()));
 		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
+				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_SMTInterpol.epf", getTimeout()));
+		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
 				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf", getTimeout()));
 		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
 				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON.epf", getTimeout()));
