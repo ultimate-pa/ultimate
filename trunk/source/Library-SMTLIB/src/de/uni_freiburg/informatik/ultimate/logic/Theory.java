@@ -727,7 +727,6 @@ public class Theory {
 			}
 		};
 		mDeclaredSorts.put("BitVec", mBitVecSort);
-		//...until here
 		class RegularBitVecFunction extends FunctionSymbolFactory {
 			int mNumArgs;
 			Sort mResult;
@@ -873,27 +872,23 @@ public class Theory {
 			public void checkArity(BigInteger[] indices, int arity) {
 				if (indices == null || indices.length != 2)
 					throw new IllegalArgumentException(
-							"Floating Point needs two index");
+							"Floating Point needs two indices");
 				
 				if (indices[0].signum() <= 0 || indices[1].signum() <= 0)
 					throw new IllegalArgumentException(
-							"Floating Point Index must be greater 0");
+							"FloatingPoint indices must be greater 0");
 				
 				if (arity != 0)
 					throw new IllegalArgumentException(
-							"Floating Point has no parameters");
+							"FloatingPoint has no parameters");
 			}
 		};
 		
-		mRoundingModeSort = declareInternalSort("RoundingMode", 0, 0)
-				.getSort(null, new Sort[0]);
-		
-		
-		
-		
-		mDeclaredSorts.put("FloatingPoint", mFloatingPointSort);
+				mDeclaredSorts.put("FloatingPoint", mFloatingPointSort);
 		mRealSort = declareInternalSort("Real", 0,
 				SortSymbol.INTERNAL).getSort(null, new Sort[0]);
+		mRoundingModeSort = declareInternalSort("RoundingMode", 0, 0)
+				.getSort(null, new Sort[0]);
 		/*
 		 * Used to create Functions that only need floating points as arguments
 		 */
