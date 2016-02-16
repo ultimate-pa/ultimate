@@ -424,10 +424,10 @@ public class MemoryHandler {
                     SFO.POINTER_OFFSET);
 //	
 		Expression lengthSrc = new ArrayAccessExpression(ignoreLoc,
-				new IdentifierExpression(ignoreLoc, SFO.LENGTH),
+				getLenthArray(ignoreLoc),
 				new Expression[] { srcBase });
 		Expression lengthDest = new ArrayAccessExpression(ignoreLoc,
-				new IdentifierExpression(ignoreLoc, SFO.LENGTH),
+				getLenthArray(ignoreLoc),
 				new Expression[] { srcBase });
 
 		if (m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSERTandASSUME 
@@ -781,51 +781,22 @@ public class MemoryHandler {
                     new VarList(loc, new String[] { value }, astType),
                     new VarList(loc, new String[] { inPtr }, main.typeHandler.constructPointerType(loc)),
                     new VarList(loc, new String[] { writtenTypeSize }, intType) };
-            Expression addr = new IdentifierExpression(loc, inPtr);
+            
             VariableLHS[] modified = new VariableLHS[namesOfAllMemoryArrayTypes.length];
             for (int j = 0; j < modified.length; j++) {
                 modified[j] = new VariableLHS(loc, SFO.MEMORY + "_" + namesOfAllMemoryArrayTypes[j]);
             }
 
-            Expression ptrOff = new StructAccessExpression(loc, idPtr,
-                    SFO.POINTER_OFFSET);
-            Expression ptrBase = new StructAccessExpression(loc, idPtr,
-                    SFO.POINTER_BASE);
-            Expression length = new ArrayAccessExpression(loc,
-                    new IdentifierExpression(loc, SFO.LENGTH),
-                    new Expression[] { ptrBase });
+
+
             
             // specification for memory writes
             ArrayList<Specification> swrite = new ArrayList<Specification>();
             
-            addPointerBaseValidityCheck(loc, addr, swrite);
- 
+            addPointerBaseValidityCheck(loc, inPtr, swrite);
             
-            if (m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSERTandASSUME 
-            		|| m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSUME) {
-            	// requires #sizeof~$Pointer$ + #ptr!offset <=
-            	// #length[#ptr!base];
-            	RequiresSpecification specValid;
-            	if (m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSERTandASSUME) {
-            		specValid = new RequiresSpecification(loc, false,
-            				constructPointerComponentLessEqual(loc,
-                					constructPointerComponentAddition(loc,
-                							new IdentifierExpression(loc, writtenTypeSize),
-//                							new IdentifierExpression(loc, SFO.SIZEOF + CtypeCompatibleId),
-                					  ptrOff), length));
-            	} else {
-            		assert m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSUME;
-            		specValid = new RequiresSpecification(loc, true,
-            				constructPointerComponentLessEqual(loc,
-                					constructPointerComponentAddition(loc,
-                							new IdentifierExpression(loc, writtenTypeSize),
-//                							new IdentifierExpression(loc, SFO.SIZEOF + CtypeCompatibleId),
-                							ptrOff), length));
-            	}
-            	Check check = new Check(Spec.MEMORY_DEREFERENCE);
-            	check.addToNodeAnnot(specValid);
-            	swrite.add(specValid);
-            }
+            Expression sizeWrite = new IdentifierExpression(loc, writtenTypeSize);
+            checkPointerTargetFullyAllocated(loc, sizeWrite, inPtr, swrite);
             swrite.add(new ModifiesSpecification(loc, false, modified));
             for (String s : namesOfAllMemoryArrayTypes) {
                 // ensures #memory_int == old(#valid)[~addr!base := false];
@@ -903,33 +874,10 @@ public class MemoryHandler {
                     new String[] { value }, astType) };
             ArrayList<Specification> sread = new ArrayList<Specification>();
             
-            addPointerBaseValidityCheck(loc, addr, sread);
+            addPointerBaseValidityCheck(loc, inPtr, sread);
             
-            if (m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSERTandASSUME || 
-            		m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSUME) {
-            	// requires #sizeof~$Pointer$ + #ptr!offset <=
-            	// #length[#ptr!base];
-            	RequiresSpecification specValid;
-            	if (m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSERTandASSUME) {
-            		specValid = new RequiresSpecification(loc, false, 
-            				constructPointerComponentLessEqual(loc,
-            						constructPointerComponentAddition(loc, 
-                					new IdentifierExpression(loc, readTypeSize),
-//                					new IdentifierExpression(loc, SFO.SIZEOF + CtypeCompatibleId),
-                					ptrOff), length));
-            	} else {
-            		assert m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSUME;
-            		specValid = new RequiresSpecification(loc, true, 
-            				constructPointerComponentLessEqual(loc,
-            						constructPointerComponentAddition(loc, 
-            						new IdentifierExpression(loc, readTypeSize),
-//                					new IdentifierExpression(loc, SFO.SIZEOF + CtypeCompatibleId),
-            						ptrOff), length));
-            	}
-            	Check check = new Check(Spec.MEMORY_DEREFERENCE);
-            	check.addToNodeAnnot(specValid);
-            	sread.add(specValid);
-            }
+            Expression sizeRead = new IdentifierExpression(loc, readTypeSize);
+            checkPointerTargetFullyAllocated(loc, sizeRead, inPtr, sread);
             
            	Expression arr = new IdentifierExpression(loc, SFO.MEMORY + "_" + typeName);
            	Expression arrE = new ArrayAccessExpression(loc, arr, idc);
@@ -952,11 +900,50 @@ public class MemoryHandler {
 	}
 
 	/**
+	 * Add specification that target of pointer is fully allocated to the list 
+	 * {@link specList}. The specification checks that the address of the
+	 * pointer plus the size of the type that we read/write is smaller than or
+	 * equal to the size of the allocated memory at the base address of the 
+	 * pointer.
+	 * In case m_PointerBaseValidity is ASSERTandASSUME, we add the requires
+	 * specification 
+	 * <code>requires #size + #ptr!offset <= #length[#ptr!base]</code>.
+	 * In case m_PointerBaseValidity is ASSERTandASSUME, we add the <b>free</b>
+	 * requires specification 
+	 * <code>free requires #size + #ptr!offset <= #length[#ptr!base]</code>.
+	 * In case m_PointerBaseValidity is IGNORE, we add nothing.
 	 * @param loc location of translation unit
-	 * @return new IdentifierExpression that represents the <em>#valid array</em>
+	 * @param size Expression that represents the size of the data type that we
+	 *     read/write at the address of the pointer.
+	 * @param ptrName name of pointer whose base address is checked
+	 * @param specList list to which the specification is added
 	 */
-	private Expression getValidArray(final ILocation loc) {
-		return new IdentifierExpression(loc, SFO.VALID);
+	private void checkPointerTargetFullyAllocated(final ILocation loc, 
+			Expression size, String ptrName,
+			ArrayList<Specification> specList) {
+		if (m_PointerBaseValidity == POINTER_CHECKMODE.IGNORE) {
+			// add nothing
+			return;
+		} else {
+			final Expression ptrExpr = new IdentifierExpression(loc, ptrName);
+			final Expression ptrBase = getPointerBaseAddress(ptrExpr, loc);
+			final Expression aae = new ArrayAccessExpression(loc,
+					getLenthArray(loc), new Expression[] { ptrBase });
+			final Expression ptrOffset = getPointerOffset(ptrExpr, loc);
+			final Expression sum = constructPointerComponentAddition(loc, size, ptrOffset);
+			final Expression leq = constructPointerComponentLessEqual(loc, sum, aae);
+			final boolean isFreeRequires;
+			if (m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSERTandASSUME) {
+				isFreeRequires = false;
+			} else {
+				assert m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSUME;
+				isFreeRequires = true;
+			}
+			final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, leq);
+			Check check = new Check(Spec.MEMORY_DEREFERENCE);
+			check.addToNodeAnnot(spec);
+			specList.add(spec);
+		}
 	}
 
 	/**
@@ -968,19 +955,19 @@ public class MemoryHandler {
 	 * requires specification <code>free requires #valid[#ptr!base]</code>.
 	 * In case m_PointerBaseValidity is IGNORE, we add nothing.
 	 * @param loc location of translation unit
-	 * @param ptr pointer whose base address is checked
+	 * @param ptrName name of pointer whose base address is checked
 	 * @param specList list to which the specification is added
 	 */
-	private void addPointerBaseValidityCheck(final ILocation loc, Expression ptr,
+	private void addPointerBaseValidityCheck(final ILocation loc, String ptrName,
 			ArrayList<Specification> specList) {
 		if (m_PointerBaseValidity == POINTER_CHECKMODE.IGNORE) {
 			// add nothing
 			return;
 		} else {
-			final Expression pointerBase = getPointerBaseAddress(ptr, loc);
+			final Expression ptrExpr = new IdentifierExpression(loc, ptrName);
+			final Expression ptrBase = getPointerBaseAddress(ptrExpr, loc);
 			final ArrayAccessExpression aae = new ArrayAccessExpression(loc, 
-					getValidArray(loc), new Expression[]{pointerBase});
-			// 
+					getValidArray(loc), new Expression[]{ ptrBase });
 			final boolean isFreeRequires;
 			if (m_PointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME) {
 		    	isFreeRequires = false;
@@ -993,6 +980,22 @@ public class MemoryHandler {
 			check.addToNodeAnnot(spec);
 			specList.add(spec);
 		}
+	}
+	
+	/**
+	 * @param loc location of translation unit
+	 * @return new IdentifierExpression that represents the <em>#length array</em>
+	 */
+	private Expression getLenthArray(final ILocation loc) {
+		return new IdentifierExpression(loc, SFO.LENGTH);
+	}
+
+	/**
+	 * @param loc location of translation unit
+	 * @return new IdentifierExpression that represents the <em>#valid array</em>
+	 */
+	private Expression getValidArray(final ILocation loc) {
+		return new IdentifierExpression(loc, SFO.VALID);
 	}
 	
 	
@@ -1188,7 +1191,7 @@ public class MemoryHandler {
         // ensures #length = old(#length)[#res!base := ~size];
         // modifies #length, #valid;
         Expression res = new IdentifierExpression(tuLoc, SFO.RES);
-        Expression length = new IdentifierExpression(tuLoc, SFO.LENGTH);
+        Expression length = getLenthArray(tuLoc);
         Expression[] idcMalloc = new Expression[] { new StructAccessExpression(
                 tuLoc, res, SFO.POINTER_BASE) };
         Expression bLTrue = new BooleanLiteral(tuLoc, true);
