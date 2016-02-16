@@ -36,9 +36,9 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbstractCounterexample;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IResultReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractCounterexample;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -58,12 +58,9 @@ public class RcfgResultReporter<STATE extends IAbstractState<STATE, CodeBlock, V
 		implements IResultReporter<STATE, CodeBlock, VARDECL, ProgramPoint> {
 
 	protected final IUltimateServiceProvider mServices;
-	protected final BaseRcfgAbstractStateStorageProvider<?, ?> mStorageProvider;
 
-	public RcfgResultReporter(IUltimateServiceProvider services,
-			BaseRcfgAbstractStateStorageProvider<?, ?> storageProvider) {
+	public RcfgResultReporter(final IUltimateServiceProvider services) {
 		mServices = services;
-		mStorageProvider = storageProvider;
 	}
 
 	@Override

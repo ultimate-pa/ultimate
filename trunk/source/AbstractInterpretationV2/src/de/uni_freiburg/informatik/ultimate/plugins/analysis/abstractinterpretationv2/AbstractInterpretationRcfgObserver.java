@@ -81,7 +81,7 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 			timer = mServices.getProgressMonitorService();
 		}
 
-		AbstractInterpreter.run(root, initial, timer, mServices);
+		AbstractInterpreter.runOnRCFG(root, initial, timer, mServices, false);
 
 		// do not descend, this is already the root
 		return false;

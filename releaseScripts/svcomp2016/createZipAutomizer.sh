@@ -3,7 +3,7 @@
 
 TOOLNAME=Automizer
 TARGETDIR=U${TOOLNAME}
-TOOLCHAIN=../../trunk/examples/toolchains/AutomizerC.xml
+TOOLCHAIN=../../trunk/examples/toolchains/AutomizerC_WitnessPrinter.xml
 TERMTOOLCHAIN=../../trunk/examples/toolchains/BuchiAutomizerCWithBlockEncoding.xml
 VALTOOLCHAIN=../../trunk/examples/toolchains/AutomizerC.xml
 SETTINGS=../../trunk/examples/settings/svcomp2016/*${TOOLNAME}*

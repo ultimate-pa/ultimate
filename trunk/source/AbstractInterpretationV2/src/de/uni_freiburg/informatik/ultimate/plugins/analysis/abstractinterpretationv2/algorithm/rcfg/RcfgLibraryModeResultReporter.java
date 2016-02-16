@@ -42,9 +42,8 @@ import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Seve
 public class RcfgLibraryModeResultReporter<STATE extends IAbstractState<STATE, CodeBlock, VARDECL>, VARDECL>
 		extends RcfgResultReporter<STATE, VARDECL> {
 
-	public RcfgLibraryModeResultReporter(final IUltimateServiceProvider services,
-			final BaseRcfgAbstractStateStorageProvider<?, ?> storageProvider) {
-		super(services, storageProvider);
+	public RcfgLibraryModeResultReporter(final IUltimateServiceProvider services) {
+		super(services);
 	}
 
 	@Override

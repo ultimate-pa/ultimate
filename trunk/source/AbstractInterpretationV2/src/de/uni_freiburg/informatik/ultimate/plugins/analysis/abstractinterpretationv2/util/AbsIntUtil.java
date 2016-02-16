@@ -93,8 +93,11 @@ public final class AbsIntUtil {
 				}
 			}
 		}
+		logPredicates(predsPerLoc, printer);
+	}
 
-		for (final Entry<LOC, Term> entry : predsPerLoc.entrySet()) {
+	public static void logPredicates(final Map<?, Term> preds, final Consumer<String> printer) {
+		for (final Entry<?, Term> entry : preds.entrySet()) {
 			printer.accept(entry.getKey() + ": " + entry.getValue());
 		}
 	}

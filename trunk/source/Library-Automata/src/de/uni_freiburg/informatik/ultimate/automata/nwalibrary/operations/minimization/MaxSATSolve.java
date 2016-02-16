@@ -35,87 +35,95 @@ enum Sat { OK, UNSATISFIABLE; };
 enum Assign { NONE, TRUE, FALSE };
 
 /**
- * Stupid SAT solver.
+ * Simple SAT solver.
  * Takes a set of Horn clauses. Goes through all variables in sequence, and
  * tries to set each to true.
+ *
+ * Note that we stick to the convention introduced in HornClause3.java:
+ * the variables 0 and 1 are reserved for constant true and false,
+ * respectively.
  *
  * @author stimpflj
  */
 public class MaxSATSolve {
-	/* this convention is setup by HornClause3 */
-    static final int falseVar = 0;
-    static final int trueVar = 1;
+	/** the number of boolean variables */
+	int numVars;
+
+	/** the number of Horn clauses */
+	int numClauses;
 
     /** the problem in CNF */
-    private HornClause3[] clause;
+    private HornClause3[] clauses;
 
     /** variable -> clauses in which it occurs */
     private final int[][] occur;
 
     /** variable -> assigned value */
-    private Assign[] assigned;
+    private Assign[] assign;
 
     /** last assignment operations */
     private ArrayList<Integer> op;
 
-    public MaxSATSolve(int nvars, HornClause3[] theclause) {
-        clause = theclause;
-        occur = new int[nvars][];
-        assigned = new Assign[nvars];
-        op = new ArrayList<Integer>(0);
+    public MaxSATSolve(int theNumVars, HornClause3[] theclauses) {
+        numVars = theNumVars;
+        numClauses = theclauses.length;
+        clauses = theclauses;
+        occur = new int[numVars][];
+        assign = new Assign[numVars];
+        op = new ArrayList<Integer>();
 
-        for (HornClause3 c : clause) {
-            assert 0 <= c.l0 && c.l0 < nvars;
-            assert 0 <= c.l1 && c.l1 < nvars;
-			assert 0 <= c.l2 && c.l2 < nvars;
+        for (HornClause3 c : clauses) {
+            assert 0 <= c.l0 && c.l0 < numVars;
+            assert 0 <= c.l1 && c.l1 < numVars;
+            assert 0 <= c.l2 && c.l2 < numVars;
         }
 
         // so much work if you want the nice syntax of arrays vs ArrayLists...
-        int[] numOcc = new int[nvars];
-        for (int i = 0; i < clause.length; i++) {
-			numOcc[clause[i].l0]++;
-			numOcc[clause[i].l1]++;
-			numOcc[clause[i].l2]++;
+        int[] numOcc = new int[numVars];
+        for (int i = 0; i < numClauses; i++) {
+			numOcc[clauses[i].l0]++;
+			numOcc[clauses[i].l1]++;
+			numOcc[clauses[i].l2]++;
         }
-        for (int i = 0; i < nvars; i++) {
+        for (int i = 0; i < numVars; i++) {
 			occur[i] = new int[numOcc[i]];
 			numOcc[i] = 0;
         }
-        for (int i = 0; i < clause.length; i++) {
-			occur[clause[i].l0][numOcc[clause[i].l0]++] = i;
-			occur[clause[i].l1][numOcc[clause[i].l1]++] = i;
-			occur[clause[i].l2][numOcc[clause[i].l2]++] = i;
+        for (int i = 0; i < numClauses; i++) {
+			occur[clauses[i].l0][numOcc[clauses[i].l0]++] = i;
+			occur[clauses[i].l1][numOcc[clauses[i].l1]++] = i;
+			occur[clauses[i].l2][numOcc[clauses[i].l2]++] = i;
         }
 
-        for (int i = 0; i < nvars; i++)
-			assigned[i] = Assign.NONE;
-        assigned[trueVar] = Assign.TRUE;
-        assigned[falseVar] = Assign.FALSE;
+        for (int i = 0; i < numVars; i++)
+			assign[i] = Assign.NONE;
+        assign[HornClause3.trueVar] = Assign.TRUE;
+        assign[HornClause3.falseVar] = Assign.FALSE;
     }
 
     private void setVar(int v, Assign a) {
-        assert(a != Assign.NONE);
-        assert(assigned[v] == Assign.NONE);
+        assert a != Assign.NONE;
+        assert assign[v] == Assign.NONE;
         op.add(v);
-        assigned[v] = a;
+        assign[v] = a;
     }
 
     private Sat check(HornClause3 c) {
-        if (assigned[c.l0] == Assign.TRUE &&
-            assigned[c.l1] == Assign.TRUE &&
-            assigned[c.l2] == Assign.FALSE)
+        if (assign[c.l0] == Assign.TRUE &&
+            assign[c.l1] == Assign.TRUE &&
+            assign[c.l2] == Assign.FALSE)
             return Sat.UNSATISFIABLE;
-        else if (assigned[c.l0] == Assign.NONE &&
-                 assigned[c.l1] == Assign.TRUE &&
-                 assigned[c.l2] == Assign.FALSE)
+        else if (assign[c.l0] == Assign.NONE &&
+                 assign[c.l1] == Assign.TRUE &&
+                 assign[c.l2] == Assign.FALSE)
             setVar(c.l0, Assign.FALSE);
-        else if (assigned[c.l0] == Assign.TRUE &&
-                 assigned[c.l1] == Assign.NONE &&
-                 assigned[c.l2] == Assign.FALSE)
+        else if (assign[c.l0] == Assign.TRUE &&
+                 assign[c.l1] == Assign.NONE &&
+                 assign[c.l2] == Assign.FALSE)
             setVar(c.l1, Assign.FALSE);
-        else if (assigned[c.l0] == Assign.TRUE &&
-                 assigned[c.l1] == Assign.TRUE &&
-                 assigned[c.l2] == Assign.NONE)
+        else if (assign[c.l0] == Assign.TRUE &&
+                 assign[c.l1] == Assign.TRUE &&
+                 assign[c.l2] == Assign.NONE)
             setVar(c.l2, Assign.TRUE);
         return Sat.OK;
     }
@@ -126,18 +134,18 @@ public class MaxSATSolve {
          * loop body might insert new elements into `op' */
         for (int i = 0; i < op.size(); i++)
             for (int c : occur[op.get(i)])
-                if (check(clause[c]) == Sat.UNSATISFIABLE)
+                if (check(clauses[c]) == Sat.UNSATISFIABLE)
                     return Sat.UNSATISFIABLE;
         return Sat.OK;
     }
 
     private Sat setAndPropagate(int v, Assign a) {
-        op.clear();
+        assert op.size() == 0;
         setVar(v, a);
         if (propagate() == Sat.UNSATISFIABLE) {
             /* rollback */
             for (int v2 : op)
-                assigned[v2] = Assign.NONE;
+                assign[v2] = Assign.NONE;
             op.clear();
             return Sat.UNSATISFIABLE;
         }
@@ -145,21 +153,31 @@ public class MaxSATSolve {
         return Sat.OK;
     }
 
+    /** Solve the thing. Call only once, i.e.
+     *
+     * Assign assign[] = new MaxSATSolve(numVars, theclauses).solve()
+     *
+     * (Yes, this is a broken design. But I bet Java is happy to create
+     * another object for you.)
+     *
+     * @return <code>null</code> if there is no solution, or an array
+     * of assignments (Assign.TRUE or Assign.FALSE) for each variable.
+     */
     public Assign[] solve() {
-        op.clear();
-        for (HornClause3 c : clause)
+        assert op.size() == 0;
+        for (HornClause3 c : clauses)
             if (check(c) != Sat.OK)
                 return null;
         if (propagate() == Sat.UNSATISFIABLE)
             return null;
         /* dumb chooser of next variable: iterate from beginning to end */
-        for (int v = 0; v < assigned.length; v++)
-            if (assigned[v] == Assign.NONE)
+        for (int v = 0; v < numVars; v++)
+            if (assign[v] == Assign.NONE)
                 if (setAndPropagate(v, Assign.TRUE) == Sat.UNSATISFIABLE)
                     if (setAndPropagate(v, Assign.FALSE) == Sat.UNSATISFIABLE)
                         /* should not happen */
-                        assert(false);
-        return assigned;
+                        assert false;
+        return assign;
     }
 
 
@@ -175,7 +193,6 @@ public class MaxSATSolve {
 				HornClause3.FT(2, 3)
 		};
 		assign = new MaxSATSolve(4, clauses).solve();
-		assert assign != null;
 		assert assign[2] == Assign.FALSE;
 		assert assign[3] == Assign.FALSE;
 
@@ -185,7 +202,6 @@ public class MaxSATSolve {
 				HornClause3.FFT(2, 3, 4)
 		};
 		assign = new MaxSATSolve(5, clauses).solve();
-		assert assign != null;
 		assert assign[2] == Assign.TRUE;
 		assert assign[3] == Assign.TRUE;
 		assert assign[4] == Assign.TRUE;

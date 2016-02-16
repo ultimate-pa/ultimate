@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.be
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
 
 public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatches implements IBenchmarkDataProvider {
-	
+
 	private Object m_Result;
 	private final BenchmarkData m_EcData = new BenchmarkData();
 	private final BenchmarkData m_PuData = new BenchmarkData();
@@ -52,45 +52,45 @@ public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatch
 	public Collection<String> getKeys() {
 		return getBenchmarkType().getKeys();
 	}
-	
+
 	public void setResult(Object result) {
 		m_Result = result;
 	}
-	
+
 	public void addEdgeCheckerData(IBenchmarkDataProvider ecbd) {
 		m_EcData.aggregateBenchmarkData(ecbd);
 	}
-	
+
 	public void addPredicateUnifierData(IBenchmarkDataProvider pubd) {
 		m_PuData.aggregateBenchmarkData(pubd);
 	}
-	
+
 	public void addTraceCheckerData(IBenchmarkDataProvider tcbd) {
 		m_TcData.aggregateBenchmarkData(tcbd);
 	}
-	
+
 	public void addInterpolationConsolidationData(IBenchmarkDataProvider tcbd) {
 		m_InterpolantConsolidationBenchmarks.aggregateBenchmarkData(tcbd);
 	}
-	
+
 	public void addTotalInterpolationData(IBenchmarkDataProvider tibd) {
 		m_TiData.aggregateBenchmarkData(tibd);
 	}
-	
+
 	public void addBackwardCoveringInformation(BackwardCoveringInformation bci) {
 		m_BCI = new BackwardCoveringInformation(m_BCI, bci);
 	}
-	
+
 	public void announceStatesRemovedByMinimization(int statesRemoved) {
 		m_StatesRemovedByMinimization += statesRemoved;
 	}
-	
+
 	public void announceNextIteration() {
 		m_Iterations++;
 	}
-	
+
 	public void reportAbstractionSize(int size, int iteration) {
-		if(size > m_BiggestAbstraction.getSize()) {
+		if (size > m_BiggestAbstraction.getSize()) {
 			m_BiggestAbstraction = CegarLoopBenchmarkType.getInstance().new SizeIterationPair(size, iteration);
 		}
 	}
@@ -106,6 +106,7 @@ public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatch
 		case CegarLoopBenchmarkType.s_AutomataMinimizationTime:
 		case CegarLoopBenchmarkType.s_HoareAnnotationTime:
 		case CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime:
+		case CegarLoopBenchmarkType.s_AbsIntTime:
 			try {
 				return getElapsedTime(key);
 			} catch (StopwatchStillRunningException e) {
@@ -141,14 +142,9 @@ public class CegarLoopBenchmarkGenerator extends BenchmarkGeneratorWithStopwatch
 
 	@Override
 	public String[] getStopwatches() {
-		return new String[] { CegarLoopBenchmarkType.s_OverallTime, 
-				CegarLoopBenchmarkType.s_AutomataDifference, 
-				CegarLoopBenchmarkType.s_DeadEndRemovalTime, 
-				CegarLoopBenchmarkType.s_AutomataMinimizationTime, 
-				CegarLoopBenchmarkType.s_HoareAnnotationTime,
-				CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime};
+		return new String[] { CegarLoopBenchmarkType.s_OverallTime, CegarLoopBenchmarkType.s_AbsIntTime,
+				CegarLoopBenchmarkType.s_AutomataDifference, CegarLoopBenchmarkType.s_DeadEndRemovalTime,
+				CegarLoopBenchmarkType.s_AutomataMinimizationTime, CegarLoopBenchmarkType.s_HoareAnnotationTime,
+				CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime };
 	}
-	
-	
-
 }

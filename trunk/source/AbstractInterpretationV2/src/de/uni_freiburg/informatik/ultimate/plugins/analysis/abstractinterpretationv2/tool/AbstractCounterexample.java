@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool;
 
 import java.util.List;
 

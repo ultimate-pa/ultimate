@@ -64,10 +64,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution.ProgramState;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
-
 /**
- * Check if a trace fulfills a specification. Provides an execution (that 
- * violates the specification) if the check was negative.
+ * Check if a trace fulfills a specification. Provides an execution (that violates the specification) if the check was
+ * negative.
  * <p>
  * Given
  * <ul>
@@ -75,13 +74,11 @@ import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
  * <li>a postcondition stated by predicate φ_n
  * <li>a trace (which is a word of CodeBlocks) cb_0 cb_2 ... cb_{n-1},
  * </ul>
- * check if the trace always fulfills the postcondition φ_n if the precondition
- * φ_0 holds before the execution of the trace, i.e. we check if the following
- * inclusion of predicates is valid. post(φ_0, cb_1 cb_2 ... cb_n) ⊆ φ_n
+ * check if the trace always fulfills the postcondition φ_n if the precondition φ_0 holds before the execution of the
+ * trace, i.e. we check if the following inclusion of predicates is valid. post(φ_0, cb_1 cb_2 ... cb_n) ⊆ φ_n
  * <p>
- * A feasibility check of a trace can be seen as the special case of this trace
- * check. A trace is feasible if and only if the trace does not fulfill the
- * specification given by the precondition <i>true</i> and the postcondition
+ * A feasibility check of a trace can be seen as the special case of this trace check. A trace is feasible if and only
+ * if the trace does not fulfill the specification given by the precondition <i>true</i> and the postcondition
  * <i>false</i>. See Example1.
  * <p>
  * Example1: If
@@ -110,12 +107,9 @@ public class TraceChecker {
 	protected final Logger m_Logger;
 	protected final IUltimateServiceProvider m_Services;
 	/**
-	 * After constructing a new TraceChecker satisfiability of the trace was
-	 * checked. However, the trace check is not yet finished, and the SmtManager
-	 * is still locked by this TraceChecker to allow the computation of
-	 * an interpolants or an execution.
-	 * The trace check is only finished after the unlockSmtManager() method was 
-	 * called.
+	 * After constructing a new TraceChecker satisfiability of the trace was checked. However, the trace check is not
+	 * yet finished, and the SmtManager is still locked by this TraceChecker to allow the computation of an interpolants
+	 * or an execution. The trace check is only finished after the unlockSmtManager() method was called.
 	 * 
 	 */
 	protected boolean m_TraceCheckFinished;
@@ -125,23 +119,19 @@ public class TraceChecker {
 	protected final SmtManager m_SmtManager;
 	protected final SmtManager m_TcSmtManager;
 	/**
-	 * Maps a procedure name to the set of global variables which may be
-	 * modified by the procedure. The set of variables is represented as a map
-	 * where the identifier of the variable is mapped to the type of the
-	 * variable.
+	 * Maps a procedure name to the set of global variables which may be modified by the procedure. The set of variables
+	 * is represented as a map where the identifier of the variable is mapped to the type of the variable.
 	 */
 	protected final ModifiableGlobalVariableManager m_ModifiedGlobals;
 	protected final NestedWord<CodeBlock> m_Trace;
 	protected final IPredicate m_Precondition;
 	protected final IPredicate m_Postcondition;
 	/**
-	 * If the trace contains "pending returns" (returns without corresponding
-	 * calls) we have to provide a predicate for each pending return that
-	 * specifies what held in the calling context to which we return. (If the
-	 * trace would contain the corresponding call, this predicate would be the
-	 * predecessor of the call). We call these predicates "pending contexts".
-	 * These pending contexts are provided via a mapping from the position of
-	 * the pending return (given as Integer) to the predicate.
+	 * If the trace contains "pending returns" (returns without corresponding calls) we have to provide a predicate for
+	 * each pending return that specifies what held in the calling context to which we return. (If the trace would
+	 * contain the corresponding call, this predicate would be the predecessor of the call). We call these predicates
+	 * "pending contexts". These pending contexts are provided via a mapping from the position of the pending return
+	 * (given as Integer) to the predicate.
 	 */
 	protected final SortedMap<Integer, IPredicate> m_PendingContexts;
 	protected AnnotateAndAsserter m_AAA;
@@ -154,38 +144,37 @@ public class TraceChecker {
 	protected ToolchainCanceledException m_ToolchainCanceledException;
 
 	/**
-	 * Defines benchmark for measuring data about the usage of TraceCheckers.
-	 * E.g., number and size of predicates obtained via interpolation.
+	 * Defines benchmark for measuring data about the usage of TraceCheckers. E.g., number and size of predicates
+	 * obtained via interpolation.
 	 * 
 	 * @author Matthias Heizmann
 	 * 
 	 */
 	public static class TraceCheckerBenchmarkType implements IBenchmarkType {
-	
+
 		private static TraceCheckerBenchmarkType s_Instance = new TraceCheckerBenchmarkType();
-	
+
 		protected final static String s_SsaConstruction = "SsaConstructionTime";
 		protected final static String s_SatisfiabilityAnalysis = "SatisfiabilityAnalysisTime";
 		protected final static String s_InterpolantComputation = "InterpolantComputationTime";
-	
+
 		protected final static String s_NumberOfCodeBlocks = "NumberOfCodeBlocks";
 		protected final static String s_NumberOfCodeBlocksAsserted = "NumberOfCodeBlocksAsserted";
 		protected final static String s_NumberOfCheckSat = "NumberOfCheckSat";
 		protected final static String s_ConstructedInterpolants = "ConstructedInterpolants";
 		protected final static String s_QuantifiedInterpolants = "QuantifiedInterpolants";
-	
+
 		public static TraceCheckerBenchmarkType getInstance() {
 			return s_Instance;
 		}
-	
+
 		@Override
 		public Collection<String> getKeys() {
-			return Arrays.asList(new String[] { s_SsaConstruction, s_SatisfiabilityAnalysis, 
-					s_InterpolantComputation,
-					s_NumberOfCodeBlocks, s_NumberOfCodeBlocksAsserted, s_NumberOfCheckSat, 
-					s_ConstructedInterpolants, s_QuantifiedInterpolants });
+			return Arrays.asList(new String[] { s_SsaConstruction, s_SatisfiabilityAnalysis, s_InterpolantComputation,
+					s_NumberOfCodeBlocks, s_NumberOfCodeBlocksAsserted, s_NumberOfCheckSat, s_ConstructedInterpolants,
+					s_QuantifiedInterpolants});
 		}
-	
+
 		@Override
 		public Object aggregate(String key, Object value1, Object value2) {
 			switch (key) {
@@ -207,25 +196,13 @@ public class TraceChecker {
 				throw new AssertionError("unknown key");
 			}
 		}
-	
+
 		@Override
 		public String prettyprintBenchmarkData(IBenchmarkDataProvider benchmarkData) {
 			StringBuilder sb = new StringBuilder();
-			sb.append(s_SsaConstruction);
-			sb.append(": ");
-			Long ssaConstructionTime = (Long) benchmarkData.getValue(s_SsaConstruction);
-			sb.append(TraceAbstractionBenchmarks.prettyprintNanoseconds(ssaConstructionTime));
-			sb.append(" ");
-			sb.append(s_SatisfiabilityAnalysis);
-			sb.append(": ");
-			Long satisfiabilityAnalysisTime = (Long) benchmarkData.getValue(s_SatisfiabilityAnalysis);
-			sb.append(TraceAbstractionBenchmarks.prettyprintNanoseconds(satisfiabilityAnalysisTime));
-			sb.append(" ");
-			sb.append(s_InterpolantComputation);
-			sb.append(": ");
-			Long interpolantComputationTime = (Long) benchmarkData.getValue(s_InterpolantComputation);
-			sb.append(TraceAbstractionBenchmarks.prettyprintNanoseconds(interpolantComputationTime));
-			sb.append(" ");
+			addTimedStatistic(benchmarkData, sb,s_SsaConstruction);
+			addTimedStatistic(benchmarkData, sb,s_SatisfiabilityAnalysis);
+			addTimedStatistic(benchmarkData, sb,s_InterpolantComputation);
 			sb.append(s_NumberOfCodeBlocks);
 			sb.append(": ");
 			sb.append(benchmarkData.getValue(s_NumberOfCodeBlocks));
@@ -250,22 +227,31 @@ public class TraceChecker {
 			if (constructedInterpolants == 0) {
 				percent = 0;
 			} else {
-				percent = (((double) quantifiedInterpolants) / ((double) constructedInterpolants))*100; 
+				percent = (((double) quantifiedInterpolants) / ((double) constructedInterpolants)) * 100;
 			}
 			sb.append(percent);
 			sb.append("%");
 			return sb.toString();
 		}
+
+		private StringBuilder addTimedStatistic(final IBenchmarkDataProvider benchmarkData, final StringBuilder sb, final String key) {
+			sb.append(key);
+			sb.append(": ");
+			final Long time = (Long) benchmarkData.getValue(key);
+			sb.append(TraceAbstractionBenchmarks.prettyprintNanoseconds(time));
+			sb.append(" ");
+			return sb;
+		}
 	}
-	
+
 	/**
-	 * Stores benchmark data about the usage of TraceCheckers. E.g., number and
-	 * size of predicates obtained via interpolation.
+	 * Stores benchmark data about the usage of TraceCheckers. E.g., number and size of predicates obtained via
+	 * interpolation.
 	 * 
 	 * @author Matthias Heizmann
 	 */
-	public class TraceCheckerBenchmarkGenerator extends BenchmarkGeneratorWithStopwatches implements
-			IBenchmarkDataProvider {
+	public class TraceCheckerBenchmarkGenerator extends BenchmarkGeneratorWithStopwatches
+			implements IBenchmarkDataProvider {
 
 		int m_NumberOfCodeBlocks = 0;
 		int m_NumberOfCodeBlocksAsserted = 0;
@@ -336,14 +322,14 @@ public class TraceChecker {
 		public void reportnewCheckSat() {
 			m_NumberOfCheckSat++;
 		}
-		
+
 		public void reportNewInterpolant(boolean isQuantified) {
 			m_ConstructedInterpolants++;
 			if (isQuantified) {
 				m_QuantifiedInterpolants++;
 			}
 		}
-		
+
 		public void reportSequenceOfInterpolants(IPredicate[] interpolants) {
 			for (IPredicate pred : interpolants) {
 				boolean isQuantified = new ContainsQuantifier().containsQuantifier(pred.getFormula());
@@ -362,26 +348,22 @@ public class TraceChecker {
 	 * <ul>
 	 * <li>SAT if the trace does not fulfill its specification,
 	 * <li>UNSAT if the trace does fulfill its specification,
-	 * <li>UNKNOWN if it was not possible to determine if the trace fulfills its
-	 * specification.
+	 * <li>UNKNOWN if it was not possible to determine if the trace fulfills its specification.
 	 * </ul>
 	 */
 	public LBool isCorrect() {
 		return m_IsSafe;
 	}
-	
-	
+
 	/**
-	 * Check if trace fulfills specification given by precondition,
-	 * postcondition and pending contexts. The pendingContext maps the positions
-	 * of pending returns to predicates which define possible variable
-	 * valuations in the context to which the return leads the trace.
+	 * Check if trace fulfills specification given by precondition, postcondition and pending contexts. The
+	 * pendingContext maps the positions of pending returns to predicates which define possible variable valuations in
+	 * the context to which the return leads the trace.
 	 * 
 	 * @param assertCodeBlocksIncrementally
-	 *            If set to false, check-sat is called after all CodeBlocks are
-	 *            asserted. If set to true we use Betims heuristic an
-	 *            incrementally assert CodeBlocks and do check-sat until all
-	 *            CodeBlocks are asserted or the result to a check-sat is UNSAT.
+	 *            If set to false, check-sat is called after all CodeBlocks are asserted. If set to true we use Betims
+	 *            heuristic an incrementally assert CodeBlocks and do check-sat until all CodeBlocks are asserted or the
+	 *            result to a check-sat is UNSAT.
 	 * @param logger
 	 * @param services
 	 */
@@ -393,19 +375,17 @@ public class TraceChecker {
 				new DefaultTransFormulas(trace, precondition, postcondition, pendingContexts, modifiedGlobals, false),
 				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, true);
 	}
-	
+
 	protected TraceChecker(IPredicate precondition, IPredicate postcondition,
 			SortedMap<Integer, IPredicate> pendingContexts, NestedWord<CodeBlock> trace, SmtManager smtManager,
 			ModifiableGlobalVariableManager modifiedGlobals, NestedFormulas<TransFormula, IPredicate> rv,
 			AssertCodeBlockOrder assertCodeBlocksIncrementally, IUltimateServiceProvider services,
 			boolean computeRcfgProgramExecution, boolean unlockSmtSolverAlsoIfUnsat) {
-		this(precondition, postcondition, pendingContexts, trace, smtManager, 
-				modifiedGlobals, rv, assertCodeBlocksIncrementally, services, 
-				computeRcfgProgramExecution, unlockSmtSolverAlsoIfUnsat, smtManager);
+		this(precondition, postcondition, pendingContexts, trace, smtManager, modifiedGlobals, rv,
+				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, unlockSmtSolverAlsoIfUnsat,
+				smtManager);
 	}
-	
-	
-	
+
 	/**
 	 * Commit additionally the DefaultTransFormulas
 	 * 
@@ -426,8 +406,8 @@ public class TraceChecker {
 		m_Precondition = precondition;
 		m_Postcondition = postcondition;
 		if (pendingContexts == null) {
-			throw new NullPointerException("pendingContexts must not be "
-					+ "null, if there are no pending contexts, use an empty map");
+			throw new NullPointerException(
+					"pendingContexts must not be " + "null, if there are no pending contexts, use an empty map");
 		}
 		m_PendingContexts = pendingContexts;
 		m_NestedFormulas = rv;
@@ -454,13 +434,11 @@ public class TraceChecker {
 			m_IsSafe = isSafe;
 		}
 	}
-	
 
 	/**
-	 * Like three-argument-checkTrace-Method above but for traces which contain
-	 * pending returns. The pendingContext maps the positions of pending returns
-	 * to predicates which define possible variable valuations in the context to
-	 * which the return leads the trace.
+	 * Like three-argument-checkTrace-Method above but for traces which contain pending returns. The pendingContext maps
+	 * the positions of pending returns to predicates which define possible variable valuations in the context to which
+	 * the return leads the trace.
 	 * 
 	 */
 	protected LBool checkTrace() {
@@ -468,11 +446,11 @@ public class TraceChecker {
 		m_TcSmtManager.startTraceCheck(this);
 		boolean transferToDifferentScript = (m_TcSmtManager != m_SmtManager);
 		m_TraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_SsaConstruction);
-		m_Nsb = new NestedSsaBuilder(m_Trace, m_TcSmtManager, m_NestedFormulas,
-				m_ModifiedGlobals, m_Logger, transferToDifferentScript);
+		m_Nsb = new NestedSsaBuilder(m_Trace, m_TcSmtManager, m_NestedFormulas, m_ModifiedGlobals, m_Logger,
+				transferToDifferentScript);
 		NestedFormulas<Term, Term> ssa = m_Nsb.getSsa();
 		m_TraceCheckerBenchmarkGenerator.stop(TraceCheckerBenchmarkType.s_SsaConstruction);
-	
+
 		m_TraceCheckerBenchmarkGenerator.start(TraceCheckerBenchmarkType.s_SatisfiabilityAnalysis);
 		if (m_assertCodeBlocksIncrementally != AssertCodeBlockOrder.NOT_INCREMENTALLY) {
 			m_AAA = new AnnotateAndAsserterWithStmtOrderPrioritization(m_TcSmtManager, ssa,
@@ -482,7 +460,7 @@ public class TraceChecker {
 			m_AAA = new AnnotateAndAsserter(m_TcSmtManager, ssa, getAnnotateAndAsserterCodeBlocks(ssa),
 					m_TraceCheckerBenchmarkGenerator, m_Services);
 			// Report the asserted code blocks
-//			m_TraceCheckerBenchmarkGenerator.reportnewAssertedCodeBlocks(m_Trace.length());
+			// m_TraceCheckerBenchmarkGenerator.reportnewAssertedCodeBlocks(m_Trace.length());
 		}
 		try {
 			m_AAA.buildAnnotatedSsaAndAssertTerms();
@@ -502,35 +480,33 @@ public class TraceChecker {
 	/**
 	 * Compute a program execution for the checked trace.
 	 * <ul>
-	 * <li>If the checked trace violates its specification (result of trace
-	 * check is SAT), we compute a program execution that contains program
-	 * states that witness the violation of the specification (however, this can
-	 * still be partial program states e.g., no values assigned to arrays) and
-	 * that contains information which branch of a parallel composed CodeBlock
-	 * violates the specification.
-	 * <li>If we can not determine if the trace violates its specification
-	 * (result of trace check is UNKNOWN) we compute a program execution trace
-	 * that contains neither states nor information about which branch of a
+	 * <li>If the checked trace violates its specification (result of trace check is SAT), we compute a program
+	 * execution that contains program states that witness the violation of the specification (however, this can still
+	 * be partial program states e.g., no values assigned to arrays) and that contains information which branch of a
 	 * parallel composed CodeBlock violates the specification.
-	 * <li>If we have proven that the trace satisfies its specification (result
-	 * of trace check is UNSAT) we throw an Error.
-	 * @param isSafe 
+	 * <li>If we can not determine if the trace violates its specification (result of trace check is UNKNOWN) we compute
+	 * a program execution trace that contains neither states nor information about which branch of a parallel composed
+	 * CodeBlock violates the specification.
+	 * <li>If we have proven that the trace satisfies its specification (result of trace check is UNSAT) we throw an
+	 * Error.
+	 * 
+	 * @param isSafe
 	 */
 	private void computeRcfgProgramExecution(LBool isSafe) {
 		if (!(m_NestedFormulas instanceof DefaultTransFormulas)) {
-			throw new AssertionError("program execution only computable if "
-					+ "m_NestedFormulas instanceof DefaultTransFormulas");
+			throw new AssertionError(
+					"program execution only computable if " + "m_NestedFormulas instanceof DefaultTransFormulas");
 		}
 		if (isSafe == LBool.SAT) {
 			if (!((DefaultTransFormulas) m_NestedFormulas).hasBranchEncoders()) {
 				unlockSmtManager();
 				DefaultTransFormulas withBE = new DefaultTransFormulas(m_NestedFormulas.getTrace(),
-						m_NestedFormulas.getPrecondition(), m_NestedFormulas.getPostcondition(),
-						m_PendingContexts, m_ModifiedGlobals, true);
+						m_NestedFormulas.getPrecondition(), m_NestedFormulas.getPostcondition(), m_PendingContexts,
+						m_ModifiedGlobals, true);
 				TraceChecker tc = new TraceChecker(m_NestedFormulas.getPrecondition(),
-						m_NestedFormulas.getPostcondition(), m_PendingContexts,
-						m_NestedFormulas.getTrace(), m_SmtManager, m_ModifiedGlobals, withBE,
-						AssertCodeBlockOrder.NOT_INCREMENTALLY, m_Services, true, true, m_TcSmtManager);
+						m_NestedFormulas.getPostcondition(), m_PendingContexts, m_NestedFormulas.getTrace(),
+						m_SmtManager, m_ModifiedGlobals, withBE, AssertCodeBlockOrder.NOT_INCREMENTALLY, m_Services,
+						true, true, m_TcSmtManager);
 				if (tc.getToolchainCancelledExpection() != null) {
 					throw tc.getToolchainCancelledExpection();
 				}
@@ -550,11 +526,12 @@ public class TraceChecker {
 	}
 
 	/**
-	 * Compute program execution in the case that we do not know if the checked
-	 * specification is violated (result of trace check is UNKNOWN).
+	 * Compute program execution in the case that we do not know if the checked specification is violated (result of
+	 * trace check is UNKNOWN).
 	 */
 	private RcfgProgramExecution computeRcfgProgramExecutionCaseUNKNOWN() {
 		Map<Integer, ProgramState<Expression>> emptyMap = Collections.emptyMap();
+		@SuppressWarnings("unchecked")
 		Map<TermVariable, Boolean>[] branchEncoders = new Map[0];
 		unlockSmtManager();
 		m_TraceCheckFinished = true;
@@ -562,8 +539,7 @@ public class TraceChecker {
 	}
 
 	/**
-	 * Compute program execution in the case that the checked specification is
-	 * violated (result of trace check is SAT).
+	 * Compute program execution in the case that the checked specification is violated (result of trace check is SAT).
 	 */
 	private RcfgProgramExecution computeRcfgProgramExecutionCaseSAT(NestedSsaBuilder nsb) {
 		RelevantVariables relVars = new RelevantVariables(m_NestedFormulas, m_ModifiedGlobals);
@@ -605,7 +581,7 @@ public class TraceChecker {
 
 	protected AnnotateAndAssertCodeBlocks getAnnotateAndAsserterCodeBlocks(NestedFormulas<Term, Term> ssa) {
 		return new AnnotateAndAssertCodeBlocks(m_TcSmtManager, ssa, m_Logger);
-	
+
 		// AnnotateAndAssertCodeBlocks aaacb =
 		// return new AnnotateAndAsserter(m_SmtManager, ssa, aaacb);
 	}
@@ -614,17 +590,18 @@ public class TraceChecker {
 		final Term[] arr = { term };
 		final Map<Term, Term> map = m_TcSmtManager.getScript().getValue(arr);
 		final Term value = map.get(term);
-		/* Some solvers, e.g., Z3 return -1 not as a literal but as a unary
-		 * minus of a positive literal. We use our affine term to obtain
-		 * the negative literal.
+		/*
+		 * Some solvers, e.g., Z3 return -1 not as a literal but as a unary minus of a positive literal. We use our
+		 * affine term to obtain the negative literal.
 		 */
-		final AffineTerm affineTerm = (AffineTerm) (new AffineTermTransformer(m_TcSmtManager.getScript())).transform(value);
+		final AffineTerm affineTerm = (AffineTerm) (new AffineTermTransformer(m_TcSmtManager.getScript()))
+				.transform(value);
 		if (affineTerm.isErrorTerm()) {
 			return value;
 		} else {
 			return affineTerm.toTerm(m_TcSmtManager.getScript());
 		}
-		
+
 	}
 
 	private Boolean getBooleanValue(Term term) {
@@ -658,8 +635,7 @@ public class TraceChecker {
 	}
 
 	/**
-	 * Return the RcfgProgramExecution that has been computed by
-	 * computeRcfgProgramExecution().
+	 * Return the RcfgProgramExecution that has been computed by computeRcfgProgramExecution().
 	 */
 	public RcfgProgramExecution getRcfgProgramExecution() {
 		if (m_RcfgProgramExecution == null) {
@@ -672,7 +648,6 @@ public class TraceChecker {
 		m_TcSmtManager.endTraceCheck(this);
 	}
 
-
 	public TraceCheckerBenchmarkGenerator getTraceCheckerBenchmark() {
 		if (m_TraceCheckFinished || m_ToolchainCanceledException != null) {
 			return m_TraceCheckerBenchmarkGenerator;
@@ -680,11 +655,10 @@ public class TraceChecker {
 			throw new AssertionError("Benchmark is only available after the trace check is finished.");
 		}
 	}
-	
+
 	/**
-	 * Returns the {@link ToolchainCanceledException} that was thrown if
-	 * the computation was cancelled. If the computation was not cancelled,
-	 * we return null.
+	 * Returns the {@link ToolchainCanceledException} that was thrown if the computation was cancelled. If the
+	 * computation was not cancelled, we return null.
 	 */
 	public ToolchainCanceledException getToolchainCancelledExpection() {
 		return m_ToolchainCanceledException;

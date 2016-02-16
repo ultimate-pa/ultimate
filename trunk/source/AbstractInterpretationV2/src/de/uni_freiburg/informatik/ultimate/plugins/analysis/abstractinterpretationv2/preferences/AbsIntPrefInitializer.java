@@ -36,6 +36,8 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIt
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty.EmptyDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence.CongruenceDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence.CongruenceDomainPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomain;
@@ -54,7 +56,7 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 
 	public static final String[] VALUES_ABSTRACT_DOMAIN = new String[] { EmptyDomain.class.getSimpleName(),
 			SignDomain.class.getSimpleName(), IntervalDomain.class.getSimpleName(), OctagonDomain.class.getSimpleName(), 
-			VPDomain.class.getSimpleName() };
+			VPDomain.class.getSimpleName(), CongruenceDomain.class.getSimpleName() };
 
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING = "Minimum iterations before widening";
 	public static final String LABEL_STATES_UNTIL_MERGE = "Parallel states before merging";
@@ -95,6 +97,9 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 
 		// Add ojAlgo preferences
 		rtr.addAll(LpSolverPreferences.getPreferences());
+		
+		// Add Congruence Domain preferences
+		rtr.addAll(CongruenceDomainPreferences.getPreferences());
 
 		return rtr.toArray(new UltimatePreferenceItem<?>[rtr.size()]);
 	}
