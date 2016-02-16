@@ -390,7 +390,7 @@ public class MemoryHandler {
                     SFO.POINTER_BASE);
 	
 		
-        Expression valid = new IdentifierExpression(ignoreLoc, SFO.VALID);	
+        Expression valid = getValidArray(ignoreLoc);	
 		if (m_PointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME 
         		|| m_PointerBaseValidity == POINTER_CHECKMODE.ASSUME) {
         	// requires #valid[#ptr!base];
@@ -781,11 +781,7 @@ public class MemoryHandler {
                     new VarList(loc, new String[] { value }, astType),
                     new VarList(loc, new String[] { inPtr }, main.typeHandler.constructPointerType(loc)),
                     new VarList(loc, new String[] { writtenTypeSize }, intType) };
-            Expression valid = new IdentifierExpression(loc, SFO.VALID);
             Expression addr = new IdentifierExpression(loc, inPtr);
-            Expression addrBase = new StructAccessExpression(loc, addr,
-                    SFO.POINTER_BASE);
-            Expression[] idcWrite = new Expression[] { addrBase };
             VariableLHS[] modified = new VariableLHS[namesOfAllMemoryArrayTypes.length];
             for (int j = 0; j < modified.length; j++) {
                 modified[j] = new VariableLHS(loc, SFO.MEMORY + "_" + namesOfAllMemoryArrayTypes[j]);
@@ -802,24 +798,7 @@ public class MemoryHandler {
             // specification for memory writes
             ArrayList<Specification> swrite = new ArrayList<Specification>();
             
-            if (m_PointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME 
-            		|| m_PointerBaseValidity == POINTER_CHECKMODE.ASSUME) {
-            	// requires #valid[#ptr!base];
-            	RequiresSpecification specValid;
-            	if (m_PointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME) {
-            		specValid = new RequiresSpecification(loc, false,
-                			new ArrayAccessExpression(loc, valid,
-                					idcWrite));
-            	} else {
-            		assert m_PointerBaseValidity == POINTER_CHECKMODE.ASSUME;
-            		specValid = new RequiresSpecification(loc, true,
-                			new ArrayAccessExpression(loc, valid,
-                					idcWrite));
-            	}
-            	Check check = new Check(Spec.MEMORY_DEREFERENCE);
-            	check.addToNodeAnnot(specValid);
-            	swrite.add(specValid);
-            }
+            addPointerBaseValidityCheck(loc, addr, swrite);
  
             
             if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME 
@@ -924,24 +903,7 @@ public class MemoryHandler {
                     new String[] { value }, astType) };
             ArrayList<Specification> sread = new ArrayList<Specification>();
             
-            if (m_PointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME 
-            		|| m_PointerBaseValidity == POINTER_CHECKMODE.ASSUME) {
-            	// requires #valid[#ptr!base];
-            	RequiresSpecification specValid;
-            	if (m_PointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME) {
-            		specValid = new RequiresSpecification(loc, false,
-                			new ArrayAccessExpression(loc, valid,
-                					idcWrite));
-            	} else {
-            		assert m_PointerBaseValidity == POINTER_CHECKMODE.ASSUME;
-            		specValid = new RequiresSpecification(loc, true,
-                			new ArrayAccessExpression(loc, valid,
-                					idcWrite));
-            	}
-            	Check check = new Check(Spec.MEMORY_DEREFERENCE);
-            	check.addToNodeAnnot(specValid);
-            	sread.add(specValid);
-            }
+            addPointerBaseValidityCheck(loc, addr, sread);
             
             if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME || 
             		m_PointerAllocated == POINTER_CHECKMODE.ASSUME) {
@@ -988,6 +950,39 @@ public class MemoryHandler {
         }
 		return decl;
 	}
+
+	/**
+	 * @param location of translation unit
+	 * @return new IdentifierExpression that represents the <em>#valid array</em>
+	 */
+	private Expression getValidArray(final ILocation loc) {
+		return new IdentifierExpression(loc, SFO.VALID);
+	}
+
+
+	private void addPointerBaseValidityCheck(final ILocation loc, Expression pointer,
+			ArrayList<Specification> specList) {
+		if (m_PointerBaseValidity == POINTER_CHECKMODE.IGNORE) {
+			// add nothing
+			return;
+		} else {
+			final Expression pointerBase = getPointerBaseAddress(pointer, loc);
+			final ArrayAccessExpression aae = new ArrayAccessExpression(loc, 
+					getValidArray(loc), new Expression[]{pointerBase});
+			// requires #valid[#ptr!base];
+			final boolean isFreeRequires;
+			if (m_PointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME) {
+		    	isFreeRequires = false;
+			} else {
+				assert m_PointerBaseValidity == POINTER_CHECKMODE.ASSUME;
+				isFreeRequires = true;
+			}
+			final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, aae);
+			Check check = new Check(Spec.MEMORY_DEREFERENCE);
+			check.addToNodeAnnot(spec);
+			specList.add(spec);
+		}
+	}
 	
 	
 	private Expression constructPointerComponentAddition(
@@ -1026,7 +1021,7 @@ public class MemoryHandler {
         		tuLoc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
         Expression bLFalse = new BooleanLiteral(tuLoc, false);
         Expression addr = new IdentifierExpression(tuLoc, ADDR);
-        Expression valid = new IdentifierExpression(tuLoc, SFO.VALID);
+        Expression valid = getValidArray(tuLoc);
         Expression addrOffset = new StructAccessExpression(tuLoc, addr,
                 SFO.POINTER_OFFSET);
         Expression addrBase = new StructAccessExpression(tuLoc, addr,
@@ -1125,7 +1120,7 @@ public class MemoryHandler {
         // ensures #valid = old(valid)[~addr!base := false];
         Expression bLFalse = new BooleanLiteral(tuLoc, false);
         Expression addr = new IdentifierExpression(tuLoc, ADDR);
-        Expression valid = new IdentifierExpression(tuLoc, SFO.VALID);
+        Expression valid = getValidArray(tuLoc);
         Expression addrBase = new StructAccessExpression(tuLoc, addr,
                 SFO.POINTER_BASE);
         Expression[] idcFree = new Expression[] { addrBase };
@@ -1167,7 +1162,7 @@ public class MemoryHandler {
         		tuLoc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
         Expression bLFalse = new BooleanLiteral(tuLoc, false);
         Expression addr = new IdentifierExpression(tuLoc, ADDR);
-        Expression valid = new IdentifierExpression(tuLoc, SFO.VALID);
+        Expression valid = getValidArray(tuLoc);
         Expression addrOffset = new StructAccessExpression(tuLoc, addr,
                 SFO.POINTER_OFFSET);
         Expression addrBase = new StructAccessExpression(tuLoc, addr,
