@@ -1105,10 +1105,15 @@ public class Theory {
 		});
 
 		//short forms of common floats
-		declareInternalSort("Float16", 0, 0).getSort(null, new Sort[0]);
-		declareInternalSort("Float32", 0, 0).getSort(null, new Sort[0]);
-		declareInternalSort("Float64", 0, 0).getSort(null, new Sort[0]);
-		declareInternalSort("Float128", 0, 0).getSort(null, new Sort[0]);
+		//declareInternalSort("Float16", 0, 0).getSort(null, new Sort[0]);
+		//declareInternalSort("Float32", 0, 0).getSort(null, new Sort[0]);
+		//declareInternalSort("Float64", 0, 0).getSort(null, new Sort[0]);
+		//declareInternalSort("Float128", 0, 0).getSort(null, new Sort[0]);
+		Sort test = mFloatingPointSort.getSort(new BigInteger[]{new BigInteger("11"), new BigInteger("53")});
+		defineSort("Float16", 0, mFloatingPointSort.getSort(new BigInteger[]{new BigInteger("5"), new BigInteger("11")}));
+		defineSort("Float32", 0, mFloatingPointSort.getSort(new BigInteger[]{new BigInteger("8"), new BigInteger("24")}));
+		defineSort("Float64", 0, mFloatingPointSort.getSort(new BigInteger[]{new BigInteger("11"), new BigInteger("53")}));
+		defineSort("Float128", 0, mFloatingPointSort.getSort(new BigInteger[]{new BigInteger("15"), new BigInteger("113")}));
 		
 		//RoundingModes
 		declareInternalFunction("roundNearestTiesToEven", new Sort[0], mRoundingModeSort, 0);
