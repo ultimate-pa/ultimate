@@ -33,6 +33,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -782,14 +783,7 @@ public class MemoryHandler {
                     new VarList(loc, new String[] { inPtr }, main.typeHandler.constructPointerType(loc)),
                     new VarList(loc, new String[] { writtenTypeSize }, intType) };
             
-            VariableLHS[] modified = new VariableLHS[namesOfAllMemoryArrayTypes.length];
-            for (int j = 0; j < modified.length; j++) {
-                modified[j] = new VariableLHS(loc, SFO.MEMORY + "_" + namesOfAllMemoryArrayTypes[j]);
-            }
-
-
-
-            
+       
             // specification for memory writes
             ArrayList<Specification> swrite = new ArrayList<Specification>();
             
@@ -797,7 +791,15 @@ public class MemoryHandler {
             
             Expression sizeWrite = new IdentifierExpression(loc, writtenTypeSize);
             checkPointerTargetFullyAllocated(loc, sizeWrite, inPtr, swrite);
-            swrite.add(new ModifiesSpecification(loc, false, modified));
+            
+            
+            String[] modified = new String[namesOfAllMemoryArrayTypes.length];
+            for (int j = 0; j < modified.length; j++) {
+            	modified[j] = SFO.MEMORY + "_" + namesOfAllMemoryArrayTypes[j];
+            }
+            
+            ModifiesSpecification mod = constructModifiesSpecification(loc, Arrays.asList(modified));
+            swrite.add(mod);
             for (String s : namesOfAllMemoryArrayTypes) {
                 // ensures #memory_int == old(#valid)[~addr!base := false];
                 Expression memA = new IdentifierExpression(loc, SFO.MEMORY + "_"
@@ -897,6 +899,24 @@ public class MemoryHandler {
             }
         }
 		return decl;
+	}
+
+	/**
+	 * 
+	 * @param loc location of translation unit
+	 * @param vars
+	 * @return ModifiesSpecification which says that all variables of the
+	 * set vars can be modified.
+	 */
+	private ModifiesSpecification constructModifiesSpecification(
+								final ILocation loc, List<String> vars) {
+		VariableLHS[] modifie = new VariableLHS[vars.size()];
+		int i = 0;
+		for (String variable : vars) {
+			modifie[i] = new VariableLHS(loc, variable);
+			i++;
+		}
+		return new ModifiesSpecification(loc, false, modifie);
 	}
 
 	/**
