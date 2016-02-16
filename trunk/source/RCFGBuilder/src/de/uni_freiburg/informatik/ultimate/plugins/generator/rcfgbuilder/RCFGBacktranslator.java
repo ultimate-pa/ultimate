@@ -211,10 +211,10 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 		}
 		final IBacktranslatedCFG<String, BoogieASTNode> translatedCfg = translateCFG(cfg,
 				(a, b, c) -> translateEdge(a, (RCFGEdge) b, c));
-		 mLogger.info(getClass().getSimpleName());
-		 printHondas(cfg, mLogger::info);
-		 printCFG(cfg, mLogger::info);
-		 mLogger.info("######## END "+getClass().getSimpleName());
+//		 mLogger.info(getClass().getSimpleName());
+//		 printHondas(cfg, mLogger::info);
+//		 printCFG(cfg, mLogger::info);
+//		 mLogger.info("######## END "+getClass().getSimpleName());
 		return translatedCfg;
 	}
 
