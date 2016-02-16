@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIt
 /**
  * Defines the Ultimate preferences page for the Congruence domain and the kind of evaluators to use.
  * 
- * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * @author Frank Schï¿½ssele (schuessf@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
@@ -53,9 +53,9 @@ public class CongruenceDomainPreferences {
 	public static final String[] VALUES_EVALUATOR_TYPE = new String[] { VALUE_EVALUATOR_DEFAULT,
 	        VALUE_EVALUATOR_OPTIMIZATION };
 
-	public static final String LABEL_Congruence_WIDENING_OPERATOR = "Widening operator";
+	public static final String LABEL_Congruence_WIDENING_OPERATOR = "Widening operator (CON)";
 
-	public static final String LABEL_EVALUATOR_TYPE = "Evaluator type";
+	public static final String LABEL_EVALUATOR_TYPE = "Evaluator type (CON)";
 
 	// DEFAULT VALUES
 	public static final String DEF_WIDENING_OPERATOR = VALUE_WIDENING;

@@ -91,7 +91,8 @@ public final class AbstractInterpreter {
 	 * 
 	 * Suppress all exceptions except {@link OutOfMemoryError}, {@link ToolchainCanceledException},
 	 * {@link IllegalArgumentException}. Produce no results.
-	 * @return 
+	 * 
+	 * @return
 	 */
 	public static IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ProgramPoint> runSilently(final RootNode root,
 			final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
@@ -116,7 +117,8 @@ public final class AbstractInterpreter {
 	 * Run abstract interpretation on a path program constructed from a counterexample.
 	 * 
 	 */
-	public static <LOC> IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, LOC> runSilently(final NestedRun<CodeBlock, LOC> counterexample,
+	public static <LOC> IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, LOC> runSilently(
+			final NestedRun<CodeBlock, LOC> counterexample,
 			final INestedWordAutomatonOldApi<CodeBlock, LOC> currentAutomata, final RootNode root,
 			final IProgressAwareTimer timer, final IUltimateServiceProvider services) {
 		assert counterexample != null && counterexample.getLength() > 0 : "Invalid counterexample";
@@ -145,9 +147,9 @@ public final class AbstractInterpreter {
 		}
 	}
 
-	private static <LOC> AbstractInterpretationResult<?, CodeBlock, IBoogieVar, LOC> runSilentlyOnNWA(final NWAPathProgramTransitionProvider<LOC> transProvider,
-			final CodeBlock initial, final RootNode root, final IProgressAwareTimer timer,
-			final IUltimateServiceProvider services) throws Throwable {
+	private static <LOC> AbstractInterpretationResult<?, CodeBlock, IBoogieVar, LOC> runSilentlyOnNWA(
+			final NWAPathProgramTransitionProvider<LOC> transProvider, final CodeBlock initial, final RootNode root,
+			final IProgressAwareTimer timer, final IUltimateServiceProvider services) throws Throwable {
 
 		final BoogieSymbolTable symbolTable = getSymbolTable(root);
 		if (symbolTable == null) {
@@ -167,7 +169,7 @@ public final class AbstractInterpreter {
 	}
 
 	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>, LOC> AbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, LOC> runSilentlyOnNWA(
-			final CodeBlock initial, final IProgressAwareTimer timer, final IUltimateServiceProvider services, 
+			final CodeBlock initial, final IProgressAwareTimer timer, final IUltimateServiceProvider services,
 			final BoogieSymbolTable symbolTable, final Boogie2SMT bpl2smt, final Script script,
 			final Boogie2SmtSymbolTable boogieVarTable, final IAbstractDomain<STATE, CodeBlock, IBoogieVar> domain,
 			final ITransitionProvider<CodeBlock, LOC> transitionProvider, ILoopDetector<CodeBlock> loopDetector) {
@@ -186,8 +188,10 @@ public final class AbstractInterpreter {
 			if (!result.hasReachedError()) {
 				logger.info("NWA was safe (error state unreachable)");
 			}
-			logger.info("Found the following predicates:");
-			AbsIntUtil.logPredicates(Collections.singletonMap(initial, result.getTerms()), script, logger::info);
+			if (logger.isDebugEnabled()) {
+				logger.debug("Found the following predicates:");
+				AbsIntUtil.logPredicates(Collections.singletonMap(initial, result.getTerms()), script, logger::debug);
+			}
 			logger.info(result.getBenchmark());
 			return result;
 		} catch (ToolchainCanceledException c) {
@@ -199,10 +203,9 @@ public final class AbstractInterpreter {
 	 * Run abstract interpretation on the whole RCFG.
 	 * 
 	 */
-	public static IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ProgramPoint> runOnRCFG(final RootNode root, 
-			final Collection<CodeBlock> initials,
-			final IProgressAwareTimer timer, final IUltimateServiceProvider services,
-			final boolean isSilent) throws Throwable {
+	public static IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ProgramPoint> runOnRCFG(final RootNode root,
+			final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
+			final IUltimateServiceProvider services, final boolean isSilent) throws Throwable {
 		if (initials == null) {
 			throw new IllegalArgumentException("No initial edges provided");
 		}
@@ -225,16 +228,15 @@ public final class AbstractInterpreter {
 
 		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain = selectDomain(() -> new RCFGLiteralCollector(root),
 				symbolTable, services);
-		return runOnRCFG(initials, timer, services, symbolTable, bpl2smt, script, boogieVarTable, loopDetector,
-				domain, transitionProvider, isSilent);
+		return runOnRCFG(initials, timer, services, symbolTable, bpl2smt, script, boogieVarTable, loopDetector, domain,
+				transitionProvider, isSilent);
 	}
 
 	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>> AbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, ProgramPoint> runOnRCFG(
 			final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
-			final IUltimateServiceProvider services, 
-			final BoogieSymbolTable symbolTable, final Boogie2SMT bpl2smt, final Script script,
-			final Boogie2SmtSymbolTable boogieVarTable, final ILoopDetector<CodeBlock> loopDetector,
-			final IAbstractDomain<STATE, CodeBlock, IBoogieVar> domain,
+			final IUltimateServiceProvider services, final BoogieSymbolTable symbolTable, final Boogie2SMT bpl2smt,
+			final Script script, final Boogie2SmtSymbolTable boogieVarTable,
+			final ILoopDetector<CodeBlock> loopDetector, final IAbstractDomain<STATE, CodeBlock, IBoogieVar> domain,
 			final ITransitionProvider<CodeBlock, ProgramPoint> transitionProvider, final boolean isSilent) {
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 
@@ -272,8 +274,10 @@ public final class AbstractInterpreter {
 		} else {
 			getReporter(services, false, isSilent).reportSafe(null);
 		}
-		logger.info("Found the following predicates:");
-		AbsIntUtil.logPredicates(result.getTerms(), logger::info);
+		if (logger.isDebugEnabled()) {
+			logger.debug("Found the following predicates:");
+			AbsIntUtil.logPredicates(result.getTerms(), logger::debug);
+		}
 		logger.info(result.getBenchmark());
 		return result;
 	}

@@ -480,9 +480,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		final NestedWordAutomaton<CodeBlock, IPredicate> interpolAutomaton = m_InterpolAutomaton;
+		final PredicateUnifier predUnifier = m_InterpolantGenerator.getPredicateUnifier();
 		if (mAbsIntMode) {
 			m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_AbsIntTime);
-			final PredicateUnifier predUnifier = m_InterpolantGenerator.getPredicateUnifier();
 
 			final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton = new AbstractInterpretationAutomatonGenerator(
 					m_Services, (INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, mAbsIntLoc2Term,
@@ -491,7 +491,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AbsIntTime);
 			mLogger.info("Finished refinement with abstract interpretation automaton");
 		}
-		return refineWithGivenAutomaton(interpolAutomaton, m_InterpolantGenerator.getPredicateUnifier());
+		return refineWithGivenAutomaton(interpolAutomaton, predUnifier);
 
 	}
 
