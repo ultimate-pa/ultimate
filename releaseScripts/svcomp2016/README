@@ -1,17 +1,53 @@
-This is an Ultimate tool.
+This archive contains an Ultimate tool.
+Direct any questions to one of the maintainers and/or consult the websites. 
 
-Website:
+Websites:
 https://github.com/ultimate-pa/ultimate
-https://ultimate.informatik.uni-freiburg.de/BuchiAutomizer/
-https://ultimate.informatik.uni-freiburg.de/Kojak
 https://ultimate.informatik.uni-freiburg.de/
 
-
-Maintainer:
+Maintainers:
 dietsch@informatik.uni-freiburg.de
 heizmann@informatik.uni-freiburg.de
 nutz@informatik.uni-freiburg.de
 
-
-This archive contains also a binary of the Z3 theorem prover.
+This archive also contains a binary of the Z3 theorem prover.
 https://github.com/Z3Prover
+
+--------------------------------------------------------------------------------
+1. Requirements
+A working version of Python2.7 in your path. 
+
+2. Usage
+This Ultimate tool should be used in conjunction with the provided Python wrapper 
+script Ultimate.py. This script is geared towards the interface provided by SV-COMP and 
+maps the input given there to the arguments that are required by the actual binary of 
+Ultimate. At the SV-COMP the input to a tool is 
+ * a C program <inputfile>, 
+ * a property file <prop.prp>,
+ * an architecture which is either '32bit' or '64bit', and 
+ * a memory model which is either 'simple' or 'precise'. 
+Given these arguments, the script should be invoked by the following command.
+
+	./Ultimate.py prop.prp inputfile 32bit|64bit simple|precise
+
+The output of Ultimate Automizer is written to the file Ultimate.log and
+the result is written to stdout. 
+
+If the checked property does not hold, a human readable counterexample is
+written to UltimateCounterExample.errorpath and an error witness is written
+to witness.graphml.
+
+3. Choosing the right parameters
+3.1 Property files 
+This archive contains a set of property files in the directory props/ that 
+are supported by the current tool. Those files may be one of the following.
+ * Deref.prp
+ * Memsafety.prp
+ * Overflow.prp
+ * Reach.prp
+ * Termination.prp
+
+3.2 Architecture 
+
+3.3 Memory model
+
