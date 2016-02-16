@@ -961,7 +961,7 @@ public class MemoryHandler {
 
 	/**
 	 * Add specification that the pointer base address is valid to the list 
-	 * {@param specList}.
+	 * {@link specList}.
 	 * In case m_PointerBaseValidity is ASSERTandASSUME, we add the requires
 	 * specification <code>requires #valid[#ptr!base]</code>.
 	 * In case m_PointerBaseValidity is ASSERTandASSUME, we add the <b>free</b>
