@@ -132,7 +132,7 @@ public class MemoryHandler {
 	
 	private final POINTER_CHECKMODE m_PointerBaseValidity;
 	private final POINTER_CHECKMODE m_checkPointerSubtractionAndComparisonValidity;
-	private final POINTER_CHECKMODE m_PointerAllocated;
+	private final POINTER_CHECKMODE m_PointerTargetFullyAllocated;
 	private final boolean m_CheckFreeValid;
 	private final boolean m_CheckMallocNonNegative;
 	
@@ -186,7 +186,7 @@ public class MemoryHandler {
 		
 		m_PointerBaseValidity = 
 				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY, POINTER_CHECKMODE.class);
-    	m_PointerAllocated = 
+    	m_PointerTargetFullyAllocated = 
 				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_ALLOC, POINTER_CHECKMODE.class);
     	m_CheckFreeValid = 
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_FREE_VALID);
@@ -430,13 +430,13 @@ public class MemoryHandler {
 				new IdentifierExpression(ignoreLoc, SFO.LENGTH),
 				new Expression[] { srcBase });
 
-		if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME 
-				|| m_PointerAllocated == POINTER_CHECKMODE.ASSUME) {
+		if (m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSERTandASSUME 
+				|| m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSUME) {
 			// requires #sizeof~$Pointer$ + #ptr!offset <=
 					// #length[#ptr!base];
         	RequiresSpecification specLengthSrc = null;
         	RequiresSpecification specLengthDest = null;
-			if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME) {
+			if (m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSERTandASSUME) {
 				specLengthSrc = new RequiresSpecification(ignoreLoc, false,
 						constructPointerComponentLessEqual(ignoreLoc, //TODO LT or LEQ?? (also below..)
 								constructPointerComponentAddition(ignoreLoc,
@@ -448,7 +448,7 @@ public class MemoryHandler {
 										new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SIZE),
 										destOffset), lengthDest));
 			} else {
-				assert m_PointerAllocated == POINTER_CHECKMODE.ASSUME;
+				assert m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSUME;
 				specLengthSrc = new RequiresSpecification(ignoreLoc, true,
 						constructPointerComponentLessEqual(ignoreLoc,
 								constructPointerComponentAddition(ignoreLoc,
@@ -671,8 +671,8 @@ public class MemoryHandler {
 		}
 
 
-		if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME 
-				|| m_PointerAllocated == POINTER_CHECKMODE.ASSUME) {
+		if (m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSERTandASSUME 
+				|| m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSUME) {
 			// requires #sizeof~$Pointer$ + #ptr!offset <=
 			// #length[#ptr!base];
 			CPrimitive intCType = new CPrimitive(PRIMITIVE.INT);
@@ -680,14 +680,14 @@ public class MemoryHandler {
 			Expression sizeOfSetMemory = m_ExpressionTranslation.constructArithmeticIntegerExpression(loc, 
 					IASTBinaryExpression.op_multiply, noFields, intCType, sizeofFields, intCType);
 			
-			if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME) {
+			if (m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSERTandASSUME) {
 				specValid = new RequiresSpecification(loc, false,
 						constructPointerComponentLessEqual(loc,
 								constructPointerComponentAddition(loc,
 										sizeOfSetMemory,
 										ptrOff), length));
 			} else {
-				assert m_PointerAllocated == POINTER_CHECKMODE.ASSUME;
+				assert m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSUME;
 				specValid = new RequiresSpecification(loc, true,
 						constructPointerComponentLessEqual(loc,
 								constructPointerComponentAddition(loc,
@@ -801,12 +801,12 @@ public class MemoryHandler {
             addPointerBaseValidityCheck(loc, addr, swrite);
  
             
-            if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME 
-            		|| m_PointerAllocated == POINTER_CHECKMODE.ASSUME) {
+            if (m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSERTandASSUME 
+            		|| m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSUME) {
             	// requires #sizeof~$Pointer$ + #ptr!offset <=
             	// #length[#ptr!base];
             	RequiresSpecification specValid;
-            	if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME) {
+            	if (m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSERTandASSUME) {
             		specValid = new RequiresSpecification(loc, false,
             				constructPointerComponentLessEqual(loc,
                 					constructPointerComponentAddition(loc,
@@ -814,7 +814,7 @@ public class MemoryHandler {
 //                							new IdentifierExpression(loc, SFO.SIZEOF + CtypeCompatibleId),
                 					  ptrOff), length));
             	} else {
-            		assert m_PointerAllocated == POINTER_CHECKMODE.ASSUME;
+            		assert m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSUME;
             		specValid = new RequiresSpecification(loc, true,
             				constructPointerComponentLessEqual(loc,
                 					constructPointerComponentAddition(loc,
@@ -905,12 +905,12 @@ public class MemoryHandler {
             
             addPointerBaseValidityCheck(loc, addr, sread);
             
-            if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME || 
-            		m_PointerAllocated == POINTER_CHECKMODE.ASSUME) {
+            if (m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSERTandASSUME || 
+            		m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSUME) {
             	// requires #sizeof~$Pointer$ + #ptr!offset <=
             	// #length[#ptr!base];
             	RequiresSpecification specValid;
-            	if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME) {
+            	if (m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSERTandASSUME) {
             		specValid = new RequiresSpecification(loc, false, 
             				constructPointerComponentLessEqual(loc,
             						constructPointerComponentAddition(loc, 
@@ -918,7 +918,7 @@ public class MemoryHandler {
 //                					new IdentifierExpression(loc, SFO.SIZEOF + CtypeCompatibleId),
                 					ptrOff), length));
             	} else {
-            		assert m_PointerAllocated == POINTER_CHECKMODE.ASSUME;
+            		assert m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSUME;
             		specValid = new RequiresSpecification(loc, true, 
             				constructPointerComponentLessEqual(loc,
             						constructPointerComponentAddition(loc, 
@@ -952,24 +952,35 @@ public class MemoryHandler {
 	}
 
 	/**
-	 * @param location of translation unit
+	 * @param loc location of translation unit
 	 * @return new IdentifierExpression that represents the <em>#valid array</em>
 	 */
 	private Expression getValidArray(final ILocation loc) {
 		return new IdentifierExpression(loc, SFO.VALID);
 	}
 
-
-	private void addPointerBaseValidityCheck(final ILocation loc, Expression pointer,
+	/**
+	 * Add specification that the pointer base address is valid to the list 
+	 * {@param specList}.
+	 * In case m_PointerBaseValidity is ASSERTandASSUME, we add the requires
+	 * specification <code>requires #valid[#ptr!base]</code>.
+	 * In case m_PointerBaseValidity is ASSERTandASSUME, we add the <b>free</b>
+	 * requires specification <code>free requires #valid[#ptr!base]</code>.
+	 * In case m_PointerBaseValidity is IGNORE, we add nothing.
+	 * @param loc location of translation unit
+	 * @param ptr pointer whose base address is checked
+	 * @param specList list to which the specification is added
+	 */
+	private void addPointerBaseValidityCheck(final ILocation loc, Expression ptr,
 			ArrayList<Specification> specList) {
 		if (m_PointerBaseValidity == POINTER_CHECKMODE.IGNORE) {
 			// add nothing
 			return;
 		} else {
-			final Expression pointerBase = getPointerBaseAddress(pointer, loc);
+			final Expression pointerBase = getPointerBaseAddress(ptr, loc);
 			final ArrayAccessExpression aae = new ArrayAccessExpression(loc, 
 					getValidArray(loc), new Expression[]{pointerBase});
-			// requires #valid[#ptr!base];
+			// 
 			final boolean isFreeRequires;
 			if (m_PointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME) {
 		    	isFreeRequires = false;
