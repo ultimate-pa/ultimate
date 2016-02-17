@@ -1,4 +1,4 @@
-This archive contains an Ultimate tool.
+This archive contains Ultimate.
 Please direct any questions to one of the maintainers and/or consult the
 websites.
 
@@ -22,20 +22,18 @@ You require a working version of Python2.7. Its executable should be present in
 your PATH variable.
 
 2. Usage
-This Ultimate tool should be used in conjunction with the provided Python
-wrapper script Ultimate.py. The script runs the Ultimate executable. In
-addition, the script adheres to the interface provided by SV-COMP and maps its
-input to the arguments required by Ultimate. In the SV-COMP environment the
-script is invoked with the command:
+This Ultimate tool should be called by the Python wrapper script Ultimate.py. 
+The script supports the input parameters that are used in the SV-COMP and
+whould be invoked as follows.
 
  $ ./Ultimate.py <propfile> <inputfile> <architecture> <memorymodel>
 
 where
- * <propfile> is a property file, usually with the ending *.prop,
+ * <propfile> is a property file, usually with the ending *.prp,
  * <inputfile> is a C program,
- * <architecture> is either '32bit' or '64bit' (without the quotes), and
+ * <architecture> is either '32bit' or '64bit' (without quotes), and
  * <memorymodel> is the memory model to be used, either 'simple' or 'precise'
-   (without the quotes).
+   (without quotes).
 
 The output of the Ultimate tool is written to the file Ultimate.log and the
 result is written to stdout. 
@@ -47,38 +45,31 @@ error witness is written to witness.graphml.
 3. Choosing the right parameters
 3.1 Property files 
 This archive contains a set of property files located in the directory props/
-that are supported by the current tool. Those files may be one of the
-following:
  * Deref.prp
    The result is 'TRUE' iff all pointer dereferences are valid, i.e., iff the
-   program never dereferences a null pointer. 
+   program does never access memory that is not allocated.
  * Memsafety.prp
-   The result is 'TRUE' iff the program never dereferences a null pointer and
-   all deallocations are valid and all allocated memory is eventually freed. 
+   The result is 'TRUE' iff all pointer dereferences are valid,
+   all deallocations are valid, and all allocated memory is eventually freed. 
  * Overflow.prp
-   The result is 'TRUE' iff all operations whose resulting type is a signed
-   integer type result in a value that is in the range of values representable
-   by that type. 
+   The result is 'TRUE' iff no operations on signed integers results in an 
+   overflow. (Operations on unsigned integers are not checked as their
+   behaviour is always defined by the C standard.)
  * Reach.prp
    The result is 'TRUE' iff the program does not contain an execution that
-   violates an assertion. 
+   calls the SV-COMP error function __VERIFIER_error().
  * Termination.prp
    The result is 'TRUE' iff every program execution reaches the end of the
    program, i.e., iff all program executions are finite.  
+For each of this property files (except Termination.prp) Ultimate also checks
+if all ACSL specifications (e.g., "//@ assert x > 0") are valid.
 
 3.2 Architecture 
 The architecture parameter specifies whether the program is written for an
 ILP32 (32bit) or an LP64 (64bit) architecture.
 
 3.3 Memory model
-The memory model parameter specifies what Ultimate should assume about the
-memory model. The following two parameter values are possible:
-  * Simple
-    Variables can only be modified using direct assignments or via pointer
-    access if the address was obtained using the address-of operator '&'.
-  * Precise
-    All memory cells can be written to, even dereferencing (uninitialized)
-    pointers. 
+In the current version this option does not have any effect.
 
 4. Results
 The wrapper script provides output to stdout that indicates whether the checked
