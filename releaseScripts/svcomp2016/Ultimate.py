@@ -151,7 +151,7 @@ def runUltimate(ultimateCall, terminationMode):
             print('\nDid read empty line, but expected closing message. Wrong executable or arguments?')
             break
         
-        if (line.find('Closed successfully') != -1):
+        if (line.find('Preparing to exit Ultimate with return code 0') != -1):
             print('\nExecution finished normally') 
             break
     

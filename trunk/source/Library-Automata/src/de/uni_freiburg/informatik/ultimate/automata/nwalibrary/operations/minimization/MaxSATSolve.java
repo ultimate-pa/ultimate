@@ -153,7 +153,8 @@ public class MaxSATSolve {
         return Sat.OK;
     }
 
-    /** Solve the thing. Call only once, i.e.
+    /**
+     * Solve the thing. Call only once, i.e.
      *
      * Assign assign[] = new MaxSATSolve(numVars, theclauses).solve()
      *
@@ -166,7 +167,7 @@ public class MaxSATSolve {
     public Assign[] solve() {
         assert op.size() == 0;
         for (HornClause3 c : clauses)
-            if (check(c) != Sat.OK)
+            if (check(c) == Sat.UNSATISFIABLE)
                 return null;
         if (propagate() == Sat.UNSATISFIABLE)
             return null;

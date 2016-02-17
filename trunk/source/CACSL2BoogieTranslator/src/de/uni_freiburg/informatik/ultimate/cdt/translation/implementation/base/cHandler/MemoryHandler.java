@@ -33,6 +33,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -771,25 +772,15 @@ public class MemoryHandler {
             String value = "#value";
             String inPtr = "#ptr";
             String writtenTypeSize = "#sizeOfWrittenType"; //this is needed for the requires spec that adds this typesize once to make sure we don't write behind the memregion
-            String readTypeSize = "#sizeOfReadType"; 
-            Expression idVal = new IdentifierExpression(loc, value);
-            Expression idPtr = new IdentifierExpression(loc, inPtr);
-            Expression[] idc = new Expression[] { idPtr };
+            
             String nwrite = "write~" + typeName;
-            String nread = "read~" + typeName;
+
             VarList[] inWrite = new VarList[] {
                     new VarList(loc, new String[] { value }, astType),
                     new VarList(loc, new String[] { inPtr }, main.typeHandler.constructPointerType(loc)),
                     new VarList(loc, new String[] { writtenTypeSize }, intType) };
             
-            VariableLHS[] modified = new VariableLHS[namesOfAllMemoryArrayTypes.length];
-            for (int j = 0; j < modified.length; j++) {
-                modified[j] = new VariableLHS(loc, SFO.MEMORY + "_" + namesOfAllMemoryArrayTypes[j]);
-            }
-
-
-
-            
+       
             // specification for memory writes
             ArrayList<Specification> swrite = new ArrayList<Specification>();
             
@@ -797,76 +788,30 @@ public class MemoryHandler {
             
             Expression sizeWrite = new IdentifierExpression(loc, writtenTypeSize);
             checkPointerTargetFullyAllocated(loc, sizeWrite, inPtr, swrite);
-            swrite.add(new ModifiesSpecification(loc, false, modified));
+            
+            
+            String[] modified = new String[namesOfAllMemoryArrayTypes.length];
+            for (int j = 0; j < modified.length; j++) {
+            	modified[j] = SFO.MEMORY + "_" + namesOfAllMemoryArrayTypes[j];
+            }
+            
+            ModifiesSpecification mod = constructModifiesSpecification(loc, Arrays.asList(modified));
+            swrite.add(mod);
             for (String s : namesOfAllMemoryArrayTypes) {
-                // ensures #memory_int == old(#valid)[~addr!base := false];
-                Expression memA = new IdentifierExpression(loc, SFO.MEMORY + "_"
-                        + s);
                 if (s.equals(typeName)) {
-                    swrite.add(new EnsuresSpecification(
-                            loc,
-                            false,
-                            ExpressionFactory.newBinaryExpression(
-                                    loc,
-                                    Operator.COMPEQ,
-                                    memA,
-                                    new ArrayStoreExpression(
-                                            loc,
-                                            ExpressionFactory.newUnaryExpression(
-                                                    loc,
-                                                    UnaryExpression.Operator.OLD,
-                                                    memA), idc, idVal))));
+                    swrite.add(ensuresHeapArrayUpdate(loc, value, inPtr, s));
                 } else {
-                    Expression aae = new ArrayAccessExpression(loc, memA, idc);
-                    swrite.add(new EnsuresSpecification(
-                            loc,
-                            false,
-                            ExpressionFactory.newBinaryExpression(
-                                    loc,
-                                    Operator.COMPEQ,
-                                    memA,
-                                    new ArrayStoreExpression(
-                                            loc,
-                                            ExpressionFactory.newUnaryExpression(
-                                                    loc,
-                                                    UnaryExpression.Operator.OLD,
-                                                    memA), idc, aae))));
+                    swrite.add(ensuresHeapArrayHardlyModified(loc, inPtr, s));
                 }
                 
             }
             decl.add(new Procedure(loc, new Attribute[0], nwrite, new String[0],
                     inWrite, new VarList[0], swrite.toArray(new Specification[swrite.size()]), null));
-            if (m_AddImplementation) {
-            	VariableDeclaration[] writeDecl = new VariableDeclaration[astTypesOfAllMemoryArrayTypes.length];
-            	Statement[] writeBlock = new Statement[2 * astTypesOfAllMemoryArrayTypes.length - 1];
-            	for (int j = 0, k = 0; j < astTypesOfAllMemoryArrayTypes.length; j++, k++) {
-            		String tmpVar = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET, null);	
-            		writeDecl[j] = new VariableDeclaration(loc, new Attribute[0],
-            				new VarList[] { new VarList(loc, new String[] { tmpVar },
-            						astTypesOfAllMemoryArrayTypes[j]) });
-            		VariableLHS arr = new VariableLHS(loc, SFO.MEMORY + "_"
-            				+ namesOfAllMemoryArrayTypes[j]);
-            		LeftHandSide[] arrL = new LeftHandSide[] { new ArrayLHS(loc, arr,
-            				idc) };
-            		if (namesOfAllMemoryArrayTypes[j].equals(typeName)) {
-            			writeBlock[k] = new AssignmentStatement(loc, arrL,
-            					new Expression[] { idVal });
-            		} else {
-            			writeBlock[k] = new HavocStatement(loc,
-            					new VariableLHS[] { new VariableLHS(loc, tmpVar) });
-            			writeBlock[++k] = new AssignmentStatement(loc, arrL,
-            					new Expression[] { new IdentifierExpression(loc,
-            							tmpVar) });
-            		}
-            	}
-            	Body bwrite = new Body(loc, writeDecl, writeBlock);
-            	decl.add(new Procedure(loc, new Attribute[0], nwrite, new String[0],
-            			inWrite, new VarList[0], null, bwrite));
-            }
-            
             
             
             // specification for memory reads
+            String nread = "read~" + typeName;
+            String readTypeSize = "#sizeOfReadType"; 
             VarList[] inRead = new VarList[] { 
             		new VarList(loc, new String[] { inPtr }, main.typeHandler.constructPointerType(loc)),
             		new VarList(loc, new String[] { readTypeSize }, intType) };
@@ -880,23 +825,67 @@ public class MemoryHandler {
             checkPointerTargetFullyAllocated(loc, sizeRead, inPtr, sread);
             
            	Expression arr = new IdentifierExpression(loc, SFO.MEMORY + "_" + typeName);
-           	Expression arrE = new ArrayAccessExpression(loc, arr, idc);
+            Expression idPtr = new IdentifierExpression(loc, inPtr);
+            Expression[] index = new Expression[] { idPtr };
+           	Expression arrE = new ArrayAccessExpression(loc, arr, index);
            	Expression valueE = new IdentifierExpression(loc, value);
            	Expression equality = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, valueE, arrE);
            	sread.add(new EnsuresSpecification(loc, false, equality));
-
-            decl.add(new Procedure(loc, new Attribute[0], nread, new String[0],
-                    inRead, outRead, sread.toArray(new Specification[0]), null));
-            if (m_AddImplementation) {
-            	Statement[] readBlock = new Statement[] { new AssignmentStatement(
-            			loc, new LeftHandSide[] { new VariableLHS(loc, value) },
-            			new Expression[] { arrE }) };
-            	Body bread = new Body(loc, new VariableDeclaration[0], readBlock);
-            	decl.add(new Procedure(loc, new Attribute[0], nread, new String[0],
-            			inRead, outRead, null, bread));
-            }
+           	Procedure result = new Procedure(loc, new Attribute[0], nread, new String[0],
+                    inRead, outRead, sread.toArray(new Specification[0]), null);
+           	
+           	
+            decl.add(result);
         }
 		return decl;
+	}
+
+	// ensures #memory_X == old(#memory_X)[#ptr := #value];
+	private EnsuresSpecification ensuresHeapArrayUpdate(final ILocation loc, 
+			final String valueId, final String ptrId, final String memArrayId) {
+		final Expression valueExpr = new IdentifierExpression(loc, valueId);
+        final Expression memArray = new IdentifierExpression(loc, SFO.MEMORY + "_"+ memArrayId);
+        final Expression ptrExpr = new IdentifierExpression(loc, ptrId);
+        final Expression[] index = new Expression[] { ptrExpr };
+		return ensuresArrayUpdate(loc, valueExpr, index, memArray);
+	}
+	
+	//#memory_$Pointer$ == old(#memory_X)[#ptr := #memory_X[#ptr]];
+	private EnsuresSpecification ensuresHeapArrayHardlyModified(final ILocation loc, 
+			final String ptrId, final String memArrayId) {
+        final Expression memArray = new IdentifierExpression(loc, SFO.MEMORY + "_"+ memArrayId);
+        final Expression ptrExpr = new IdentifierExpression(loc, ptrId);
+        final Expression[] index = new Expression[] { ptrExpr };
+        final Expression aae = new ArrayAccessExpression(loc, memArray, index);
+		return ensuresArrayUpdate(loc, aae, index, memArray);
+	}
+	
+	
+	
+	private EnsuresSpecification ensuresArrayUpdate(final ILocation loc, 
+			final Expression newValue, final Expression[] index, final Expression arrayExpr) {
+		final Expression oldArray = ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.OLD, arrayExpr);
+        final ArrayStoreExpression ase = new ArrayStoreExpression(loc, oldArray, index, newValue);
+        final Expression eq = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, arrayExpr, ase);
+		return new EnsuresSpecification(loc, false, eq);
+	}
+
+	/**
+	 * 
+	 * @param loc location of translation unit
+	 * @param vars
+	 * @return ModifiesSpecification which says that all variables of the
+	 * set vars can be modified.
+	 */
+	private ModifiesSpecification constructModifiesSpecification(
+								final ILocation loc, List<String> vars) {
+		VariableLHS[] modifie = new VariableLHS[vars.size()];
+		int i = 0;
+		for (String variable : vars) {
+			modifie[i] = new VariableLHS(loc, variable);
+			i++;
+		}
+		return new ModifiesSpecification(loc, false, modifie);
 	}
 
 	/**
@@ -1209,11 +1198,7 @@ public class MemoryHandler {
                         new ArrayAccessExpression(tuLoc, ExpressionFactory.newUnaryExpression(
                                 tuLoc, UnaryExpression.Operator.OLD, valid),
                                 idcMalloc), bLFalse)));
-        specMalloc.add(new EnsuresSpecification(tuLoc, false,
-                ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, valid,
-                        new ArrayStoreExpression(tuLoc, ExpressionFactory.newUnaryExpression(
-                                tuLoc, UnaryExpression.Operator.OLD, valid),
-                                idcMalloc, bLTrue))));
+        specMalloc.add(ensuresArrayUpdate(tuLoc, bLTrue, idcMalloc, valid));
         specMalloc.add(new EnsuresSpecification(tuLoc, false,
                 ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ,
                         new StructAccessExpression(tuLoc, res,

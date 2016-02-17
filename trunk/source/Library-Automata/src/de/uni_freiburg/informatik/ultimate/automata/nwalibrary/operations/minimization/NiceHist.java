@@ -27,45 +27,57 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
+
 /**
- * Return transition for nested word automata (NWA).
+ * Utility functions for history states
  *
  * @author stimpflj
+ *
  */
-public class NiceRTrans implements Comparable<NiceRTrans> {
-	/** Source state */
-	public int src;
+public class NiceHist implements Comparable<NiceHist> {
+	/** linear state */
+	int lin;
 
-	/** Return symbol */
-	public int sym;
-
-	/** top-of-stack (hierarchical) state */
-	public int top;
-
-	/** Destination state */
-	public int dst;
+	/** hierarchical (history) state */
+	int hier;
 
 
-	public NiceRTrans() {}
+	public NiceHist() {}
 
-	public NiceRTrans(int src, int sym, int top, int dst)
-		{ this.src = src; this.sym = sym; this.top = top; this.dst = dst; }
+	public NiceHist(int lin, int hier)
+		{ this.lin = lin; this.hier = hier; }
 
-	public boolean equals(NiceRTrans b)
-		{ return src == b.src && top == b.top && sym == b.sym && dst == b.dst; }
+	public boolean equals(NiceHist b)
+		{ return lin == b.lin && hier == b.hier; }
 
 	@Override
 	public int hashCode()
-		{ return ((src * 31 + sym) * 31 + top) * 31 + dst; }
+		{ return 31 * lin + hier; }
 
 	@Override
-	public int compareTo(NiceRTrans b)
-		{ return NiceRTrans.compareSrcSymTopDst(this, b); }
+	public int compareTo(NiceHist b)
+		{ return NiceHist.compareLinHier(this, b); }
 
-	public static int compareSrcSymTopDst(NiceRTrans a, NiceRTrans b) {
-		if (a.src != b.src) return a.src - b.src;
-		if (a.sym != b.sym) return a.sym - b.sym;
-		if (a.top != b.top) return a.top - b.top;
-		return a.dst - b.dst;
+
+	public static int compareLinHier(NiceHist a, NiceHist b) {
+		if (a.lin != b.lin) return a.lin - b.lin;
+		return a.hier - b.hier;
+	}
+
+	/**
+	 * @param nwa
+	 * @param history An array of NiceHist sorted by linear, then hierarchical states
+	 * @return whether <code>history</code> is consistent with <code>nwa</code>
+	 */
+	public static boolean checkHistoryStatesConsistency(NiceNWA nwa, NiceHist[] hist) {
+		for (int i = 0; i < hist.length; i++) {
+			if (i != 0 && NiceHist.compareLinHier(hist[i],  hist[i-1]) <= 0)
+				return false;
+			if (hist[i].lin < 0 || hist[i].lin >= nwa.numStates)
+				return false;
+			if (hist[i].hier < 0 || hist[i].hier >= nwa.numStates)
+				return false;
+		}
+		return true;
 	}
 }

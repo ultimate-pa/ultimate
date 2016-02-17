@@ -62,7 +62,6 @@ public class NiceCTrans implements Comparable<NiceCTrans> {
 	public static int compareSrcSymDst(NiceCTrans a, NiceCTrans b) {
 		if (a.src != b.src) return a.src - b.src;
 		if (a.sym != b.sym) return a.sym - b.sym;
-		if (a.dst != b.dst) return a.dst - b.dst;
-		return 0;
+		return a.dst - b.dst;
 	}
 }
