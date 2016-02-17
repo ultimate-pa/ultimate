@@ -28,13 +28,13 @@ addition, the script adheres to the interface provided by SV-COMP and maps its
 input to the arguments required by Ultimate. In the SV-COMP environment the
 script is invoked with the command:
 
- $ ./Ultimate.py <properties> <inputfile> <architecture> <memorymodel>
+ $ ./Ultimate.py <propfile> <inputfile> <architecture> <memorymodel>
 
 where
- * <properties> is a property file, usually with the ending *.prop,
+ * <propfile> is a property file, usually with the ending *.prop,
  * <inputfile> is a C program,
  * <architecture> is either '32bit' or '64bit' (without the quotes), and
- * <memorymodel> is the memory model to be used,  either 'simple' or 'precise'
+ * <memorymodel> is the memory model to be used, either 'simple' or 'precise'
    (without the quotes).
 
 The output of the Ultimate tool is written to the file Ultimate.log and the
