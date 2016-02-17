@@ -2,14 +2,18 @@ package de.uni_freiburg.informatik.ultimate.PEATestTransformer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.PeaToBoogieTranslator.PEALocation;
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WhileStatement;
+import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution.ProgramState;
+import pea.Phase;
 
 public class PeaTestBackTranslator extends DefaultTranslator<BoogieASTNode, BoogieASTNode, Expression, Expression> {
 	
@@ -22,23 +26,39 @@ public class PeaTestBackTranslator extends DefaultTranslator<BoogieASTNode, Boog
 		//mEdgeMapping = new HashMap<>();
 	}
 	
+	@SuppressWarnings({ "deprecation", "unchecked" })
 	public IProgramExecution<BoogieASTNode, Expression> translateProgramExecution(
 			IProgramExecution<BoogieASTNode, Expression> programExecution) {
 		ProgramState<Expression> lastState = null;
 		List<ProgramState<Expression>> states = new ArrayList<>();
+		List<HashSet<Phase>> phases = new ArrayList<>();
 		boolean findNextLoop = true;
+		HashSet<Phase> phase = new HashSet<>();
+
+		//only report states when the loop is reentered, skip if only next codeblock
 		for(int i =0; i < programExecution.getLength(); i++ ){
-			//programExecution.
-			if(programExecution.getTraceElement(i).getTraceElement().getLocation().isLoop()){
+			//programExecution. 
+			BoogieASTNode element = programExecution.getTraceElement(i).getTraceElement();
+			if(element instanceof WhileStatement){
 				findNextLoop = false;
+				phases.add(phase);
+				phase = new HashSet<>();
 			}
-			if(lastState != programExecution.getProgramState(i)){
+			
+			if(lastState != programExecution.getProgramState(i) && !findNextLoop){
 				states.add(programExecution.getProgramState(i));
 				findNextLoop = true;
 			}
+			
+			if(element.getLocation().getOrigin() != null
+					&& element.getLocation().getOrigin() instanceof PEALocation
+					&& ((PEALocation<?>)element.getLocation().getOrigin()).getElement() instanceof Phase){
+						phase.add( (Phase)((PEALocation<Phase>)element.getLocation().getOrigin()).getElement() );
+			}
 		}
-		
-		return new PeaTestGeneratorExecution(states, this.sysInfo);
+		phases.add(phase);
+		phases.remove(0);
+		return new PeaTestGeneratorExecution(states, phases , this.sysInfo);
 	}
 
 }

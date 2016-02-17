@@ -41,6 +41,10 @@ public class BoogieAstSnippet {
 	 * @param b
 	 * @return
 	 */
+	public static Expression createBooleanExpression(String a, Expression e, BinaryExpression.Operator op){
+		return new BinaryExpression(createDummyLocation(), op, 
+				createIdentifier(a), e);
+	}
 	public static Expression createBooleanExpression(String a, String b, BinaryExpression.Operator op){
 		return new BinaryExpression(createDummyLocation(), op, 
 				createIdentifier(a), createIdentifier(b));

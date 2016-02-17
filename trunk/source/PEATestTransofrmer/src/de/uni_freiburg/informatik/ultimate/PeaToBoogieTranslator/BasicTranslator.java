@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WildcardExpression;
 import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
+import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import pea.BoogieBooleanExpressionDecision;
 import pea.CDD;
 import pea.PEATestAutomaton;
@@ -134,8 +135,8 @@ public class BasicTranslator {
 		statements.add(new AssumeStatement(location, this.generateInitialPhaseAssumptionArgument(location, this.peas)));
 		//add while body
 		statements.add(new WhileStatement(
-					new BoogieLocation(location.getFileName(), 0,0,0,0,true), 
-					new WildcardExpression(location),
+					new BoogieLocation(location.getFileName(), 0,0,0,0, true), 
+					new BooleanLiteral(location, true),
 					new LoopInvariantSpecification[0],
 					this.generateWhileBody(location)
 					));
@@ -241,9 +242,9 @@ public class BasicTranslator {
 		for(Phase phase: pea.getPhases()){
 			for(Transition transition: phase.getTransitions()){
 				if(transition.getGuard().getDecision() instanceof BoogieBooleanExpressionDecision){
-					location = new BoogieLocation(this.fileName,0,0,0,0,
-							new PEALocation<Transition>( ((BoogieBooleanExpressionDecision)transition.getGuard().getDecision()).getExpression().getLocation(),
-									transition));
+					ILocation l = ((BoogieBooleanExpressionDecision)transition.getGuard().getDecision()).getExpression().getLocation();
+					location = new BoogieLocation(l.getFileName(), l.getStartLine(), l.getEndLine(), l.getStartColumn(), l.getEndColumn(),
+						new PEALocation<Transition>(transition));
 				}	
 				ArrayList<Statement> statements = new ArrayList<Statement>();
 				this.transitionBody.put(transition, statements);
@@ -292,9 +293,9 @@ public class BasicTranslator {
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		//pick out the spl parsers location, and wrap it into a pea location for backtranslation.
 		if(phase.getStateInvariant().getDecision() instanceof BoogieBooleanExpressionDecision){
-			location = new BoogieLocation(this.fileName,0,0,0,0,
-					new PEALocation<Phase>( ((BoogieBooleanExpressionDecision)phase.getStateInvariant().getDecision()).getExpression().getLocation(),
-							phase));
+			ILocation l = ((BoogieBooleanExpressionDecision)phase.getStateInvariant().getDecision()).getExpression().getLocation();
+			location = new BoogieLocation(l.getFileName(), l.getStartLine(), l.getEndLine(), l.getStartColumn(), l.getEndColumn(),
+				new PEALocation<Phase>(phase));
 		}	
 		if(phase.getClockInvariant() != CDD.TRUE){
 			stmt.add(

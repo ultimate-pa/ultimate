@@ -10,8 +10,7 @@ public class PEALocation<T> implements ILocation {
 	private T element;
 	private ILocation origin;
 	
-	public PEALocation(ILocation origin, T element){
-		this.origin = origin;
+	public PEALocation(T element){
 		this.element = element;
 	}
 	

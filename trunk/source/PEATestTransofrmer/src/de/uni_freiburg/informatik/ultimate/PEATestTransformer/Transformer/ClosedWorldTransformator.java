@@ -145,7 +145,7 @@ public class ClosedWorldTransformator extends BasicTransformer {
 		Transition transition = pea.getPhases()[0].getTransitions().get(0);
 		transition.setGuard(transition.getGuard().and(
 				p.prime()));		// P && R_s or
-		Phase phase = pea.getPhases()[0];
+		Phase phase = pea.getPhases()[0]; 
 		phase.addTransition(phase, 
 				p.prime().negate().and(this.createClosedWorldGuard(s)),
 				new String[]{});
@@ -155,6 +155,7 @@ public class ClosedWorldTransformator extends BasicTransformer {
 	@Override
 	protected PhaseEventAutomata AfterInvariantPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s) {
 		PhaseEventAutomata pea =  super.AfterInvariantPattern(pattern, p, q, r, s);
+		this.newIdentIndex(s);
 		Phase phase = pea.getPhases()[0]; //st0
 		for(Transition transition: phase.getTransitions()){
 			transition.setGuard(transition.getGuard().and(this.createClosedWorldGuard(s)));
