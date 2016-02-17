@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -55,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 public class NiceConvert<LETTER, STATE> {
 	private AutomataLibraryServices services;
 	private StateFactory<STATE> factory;
+	private INestedWordAutomaton<LETTER, STATE> automaton;
 
 	// LETTERs are shared between old (input) and new (output) automaton
 	private Set<LETTER> iAlphabet;
@@ -103,6 +105,7 @@ public class NiceConvert<LETTER, STATE> {
 
 		this.services = services;
 		this.factory = stateFactory;
+		this.automaton = automaton;
 
 		oldStates = automaton.getStates();
 		oldInitialStates = automaton.getInitialStates();
@@ -242,5 +245,23 @@ public class NiceConvert<LETTER, STATE> {
 		for (NiceRTrans x : newRTrans) nwa.addReturnTransition  (newState.get(x.src), newState.get(x.top), rSym.get(x.sym), newState.get(x.dst));
 
 		return nwa;
+	}
+
+	// compute history states, using a INestedWordAutomaton based implementation
+	public NiceHist[] computeHistoryStates() {
+		ArrayList<NiceHist> hist = new ArrayList<NiceHist>();
+
+		// casting doesn't really make sense here, but it seems this is
+		// currently the only implementation of history states
+		IDoubleDeckerAutomaton<LETTER, STATE> doubleDecker;
+		if (!(automaton instanceof IDoubleDeckerAutomaton<?, ?>))
+			throw new IllegalArgumentException("Operand must be an IDoubleDeckerAutomaton.");
+		doubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>) automaton;
+		for (int i = 0; i < oldState.size(); i++)
+			for (int j = 0; j < oldState.size(); j++)
+				if (doubleDecker.isDoubleDecker(oldState.get(i), oldState.get(j)))
+					hist.add(new NiceHist(i, j));
+
+		return (NiceHist[]) hist.toArray();
 	}
 }
