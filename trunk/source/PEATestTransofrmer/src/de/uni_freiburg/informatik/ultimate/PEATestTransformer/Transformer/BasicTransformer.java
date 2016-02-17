@@ -315,7 +315,7 @@ public class BasicTransformer {
 	    	    new CounterTrace.DCPhase(),
 	    	    new CounterTrace.DCPhase(q),
 	    	    new CounterTrace.DCPhase(),
-	    	    new CounterTrace.DCPhase(s.and(p.negate())),
+	    	    new CounterTrace.DCPhase(p.and(s.negate())),
 	    	    new CounterTrace.DCPhase()
 	    	});    	
 	    	return compiler.compile("TAbsenceAfter", ct);
