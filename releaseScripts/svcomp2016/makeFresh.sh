@@ -17,7 +17,7 @@ popd
 #awk -v rev=$REVISION '/svnRevNumber = '"'"'.*'"'"'/ { print "svnRevNumber = '"'"'" rev "'"'"'"; next }1' Ultimate.py > Ultimate.py.tmp && mv Ultimate.py.tmp Ultimate.py
 
 ./createZipAutomizer.sh linux
-./createZipAutomizer.sh windows
+./createZipAutomizer.sh win32
 ./createZipCodeCheck.sh
 #scp *.zip revision $CURRENTUSER@sotec.informatik.uni-freiburg.de:/export/server/httpd/ultimate/downloads/svcomp2016/.
 rm *.zip 
