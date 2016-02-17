@@ -42,12 +42,29 @@ to witness.graphml.
 This archive contains a set of property files in the directory props/ that 
 are supported by the current tool. Those files may be one of the following.
  * Deref.prp
+   True iff all pointer dereferences are valid, i.e., iff the program never dereferences a null pointer. 
  * Memsafety.prp
+   True iff the program never dereferences a null pointer and all deallocations are valid and all allocated memory is eventually freed. 
  * Overflow.prp
+   True iff all operations whose resulting type is a signed integer type result in a value that is in the range of values representable by that type. 
  * Reach.prp
+   True iff the program does not contain an execution that violates an assertion. 
  * Termination.prp
+   True iff every program execution reaches the end of the program, i.e., iff all program executions are finite.  
 
 3.2 Architecture 
+The architecture parameter specifies whether the program is written for an ILP32 (32bit) or an LP64 (64bit) architecture.
 
 3.3 Memory model
+The memory model parameter specifies what Ultimate should assume about the memory model.
+  * Simple
+    Variables can only be modified using direct assignments or via pointer access if the address was obtained using the operator '&'.
+  * Precise
+    All memory cells can be written to, even dereferencing uninitialized pointers. 
 
+4. Results
+The wrapper script provides output to stdout that indicates whether the checked property is violated or not. 
+The output "TRUE" generally means that the property holds.
+The output "FALSE(P)" generally means that the property is violated. P specifies which property is violated. 
+If the result is "FALSE(P)", the wrapper script produces the file "UltimateCounterExample.errorpath" in the current working directory. This file contains a counterexample in human-readable form. 
+The wrapper script also records the original output of Ultimate in the file "Ultimate.log" in the current working directory. 
