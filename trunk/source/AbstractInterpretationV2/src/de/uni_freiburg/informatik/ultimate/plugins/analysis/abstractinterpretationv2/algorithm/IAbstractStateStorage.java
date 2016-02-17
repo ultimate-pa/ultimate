@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -56,8 +57,7 @@ public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, ACTIO
 
 	IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> createStorage();
 
-	Map<LOCATION, Term> getTerms(final ACTION initialTransition, final Script script, final Boogie2SMT bpl2smt);
+	Map<LOCATION, Term> getLoc2Term(final ACTION initialTransition, final Script script, final Boogie2SMT bpl2smt);
 	
-//	void addBottomPostState(ACTION transition);
-
+	Set<Term> getTerms(final ACTION initialTransition, final Script script, final Boogie2SMT bpl2smt);
 }

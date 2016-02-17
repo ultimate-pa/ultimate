@@ -111,7 +111,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		mResult = (intermediateResult == null ? new AbstractInterpretationResult<>() : intermediateResult);
 		mBenchmark = mResult.getBenchmark();
 		calculateFixpoint(start);
-		mResult.addTerms(mStateStorage.getTerms(start, script, bpl2smt));
+		mResult.saveTerms(mStateStorage,start, script, bpl2smt);
 		return mResult;
 	}
 

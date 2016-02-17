@@ -143,10 +143,23 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 	protected abstract BaseRcfgAbstractStateStorageProvider<STATE, LOCATION> create();
 
 	@Override
-	public Map<LOCATION, Term> getTerms(final CodeBlock initialTransition, final Script script,
+	public Map<LOCATION, Term> getLoc2Term(final CodeBlock initialTransition, final Script script,
 			final Boogie2SMT bpl2smt) {
+		// TODO: What shall we do about different scopes? Currently, states at the same location are merged and later
+		// converted to terms. This leads to loss of precision, so that tools relying on those terms cannot prove
+		// absence of errors with the terms alone, even if AI was able to prove it.
 		final Map<LOCATION, StateDecorator> states = getMergedStatesOfAllChilds(initialTransition);
 		return convertStates2Terms(states, script, bpl2smt);
+	}
+
+	@Override
+	public Set<Term> getTerms(final CodeBlock initialTransition, final Script script, final Boogie2SMT bpl2smt) {
+		final Set<Term> rtr = new HashSet<>();
+		getLocalTerms(initialTransition, script, bpl2smt, rtr);
+		for (final BaseRcfgAbstractStateStorageProvider<STATE, LOCATION> child : mChildStores) {
+			child.getLocalTerms(initialTransition, script, bpl2smt, rtr);
+		}
+		return rtr;
 	}
 
 	private Map<LOCATION, StateDecorator> getMergedStatesOfAllChilds(final CodeBlock initialTransition) {
@@ -170,7 +183,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 			if (!closed.add(current)) {
 				continue;
 			}
-			
+
 			// add successors to worklist
 			for (final CodeBlock outgoing : mTransProvider.getSuccessorActions(current)) {
 				if (!(outgoing instanceof CodeBlock)) {
@@ -199,6 +212,45 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 			rtr.put(current, currentState);
 		}
 		return rtr;
+	}
+
+	private Set<Term> getLocalTerms(final CodeBlock initialTransition, final Script script, final Boogie2SMT bpl2smt,
+			final Set<Term> terms) {
+		final Deque<LOCATION> worklist = new ArrayDeque<>();
+		final Set<LOCATION> closed = new HashSet<>();
+
+		worklist.add(mTransProvider.getTarget(initialTransition));
+
+		final Term falseTerm = script.term("false");
+
+		while (!worklist.isEmpty()) {
+			final LOCATION current = worklist.remove();
+			// check if already processed
+			if (!closed.add(current)) {
+				continue;
+			}
+
+			// add successors to worklist
+			for (final CodeBlock outgoing : mTransProvider.getSuccessorActions(current)) {
+				if (!(outgoing instanceof CodeBlock)) {
+					continue;
+				}
+				final LOCATION target = mTransProvider.getTarget(outgoing);
+				worklist.add(target);
+			}
+
+			final Deque<STATE> states = getStates(current);
+
+			if (states == null || states.isEmpty()) {
+				// no states for this location
+				terms.add(falseTerm);
+			} else {
+				for (STATE state : states) {
+					terms.add(state.getTerm(script, bpl2smt));
+				}
+			}
+		}
+		return terms;
 	}
 
 	private Map<LOCATION, StateDecorator> mergeMaps(Map<LOCATION, StateDecorator> a, Map<LOCATION, StateDecorator> b) {
@@ -287,9 +339,9 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 			mState = null;
 		}
 
-		private boolean isBottom() {
-			return mState == null || mState.isBottom();
-		}
+//		private boolean isBottom() {
+//			return mState == null || mState.isBottom();
+//		}
 
 		private StateDecorator(STATE state) {
 			mState = state;
