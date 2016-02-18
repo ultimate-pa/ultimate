@@ -1174,8 +1174,8 @@ public class Theory {
 		defineFunction(new RegularFloatingPointFunction("fp.isZero", 1, mBooleanSort));
 		defineFunction(new RegularFloatingPointFunction("fp.isInfinite", 1, mBooleanSort));
 		defineFunction(new RegularFloatingPointFunction("fp.isNaN", 1, mBooleanSort));
-		defineFunction(new RegularFloatingPointFunction("fp.isNegativ", 1, mBooleanSort));
-		defineFunction(new RegularFloatingPointFunction("fp.isPositiv", 1, mBooleanSort));
+		defineFunction(new RegularFloatingPointFunction("fp.isNegative", 1, mBooleanSort));
+		defineFunction(new RegularFloatingPointFunction("fp.isPositive", 1, mBooleanSort));
 		
 		// Conversion from FP
 		defineFunction(new RegularFloatingPointFunction("fp.to_real", 1, mRealSort));
