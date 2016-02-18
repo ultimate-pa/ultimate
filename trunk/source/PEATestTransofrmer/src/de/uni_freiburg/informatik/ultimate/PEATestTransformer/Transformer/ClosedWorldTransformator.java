@@ -8,6 +8,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.BoogieAstSnippet;
 import de.uni_freiburg.informatik.ultimate.PEATestTransformer.SystemInformation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
 import pea.BoogieBooleanExpressionDecision;
 import pea.CDD;
 import pea.Phase;
@@ -28,6 +30,7 @@ public class ClosedWorldTransformator extends BasicTransformer {
 	private SystemInformation sysInfo;
 	private final static String CLOSED_WORLD_PREFIX = "R_";
 	private final static String CLOSED_WORLD_SEPR = "_";
+	private final static String READ_GUARD_PREFIX = "L_";
 	
 	public ClosedWorldTransformator(SystemInformation sysInfo){
 		this.sysInfo = sysInfo;
@@ -64,15 +67,17 @@ public class ClosedWorldTransformator extends BasicTransformer {
 			Phase phase = new Phase("p0", CDD.TRUE);
 			HashMap<String,String> variables = new HashMap<String,String>();
 			//the variable stays the same
+			//CDD closedWorldContition = CDD.FALSE;
 			CDD closedWorldContition = BoogieBooleanExpressionDecision.create(
-						BoogieAstSnippet.createBooleanExpression(ident, ident+"'", BinaryExpression.Operator.COMPEQ)
-					);
+						new IdentifierExpression(new BoogieLocation("",0,0,0,0,false),  READ_GUARD_PREFIX+ident+"'")
+					).negate();
 			//unless one automata allows it		
 			for(int i = 1; i <= this.closedWorldCounter.get(ident); i++){
 				closedWorldContition = closedWorldContition.or(BoogieBooleanExpressionDecision.create(
-							BoogieAstSnippet.createIdentifier(CLOSED_WORLD_PREFIX+i+CLOSED_WORLD_SEPR+ident, "ClosedWorldAsumption")
+							BoogieAstSnippet.createIdentifier(CLOSED_WORLD_PREFIX+i+CLOSED_WORLD_SEPR+ident+"'", "ClosedWorldAsumption")
 						));
 				variables.put(CLOSED_WORLD_PREFIX+i+CLOSED_WORLD_SEPR+ident, "bool");
+				variables.put(READ_GUARD_PREFIX+ident, "bool");
 			}
 			phase.addTransition(phase, closedWorldContition, new String[]{});
 			peas.add(new PhaseEventAutomata(
@@ -108,13 +113,32 @@ public class ClosedWorldTransformator extends BasicTransformer {
 			if(!this.sysInfo.isInput(ident)){
 				guard = guard.and(BoogieBooleanExpressionDecision.create(
 						BoogieAstSnippet.createIdentifier(
-								CLOSED_WORLD_PREFIX+this.closedWorldCounter.get(ident)+CLOSED_WORLD_SEPR+ ident, "ClosedWorldAsumption"
+								CLOSED_WORLD_PREFIX+this.closedWorldCounter.get(ident)+CLOSED_WORLD_SEPR+ ident+"'", "ClosedWorldAsumption"
 								)).negate());
 			}
 		}
 		return guard;
 	}
 	
+	protected CDD createReadGuard(CDD consequence){
+		Set<String> idents = new HashSet<String>();
+		this.collectIdentifiersFromCdd(consequence, idents);
+		return this.createReadGuard(idents);
+	}
+	protected CDD createReadGuard(Set<String> idents){ 
+		//count for later use when building automata for every var
+		CDD guard = CDD.TRUE; 
+		for(String ident: idents){
+			//build actual new guard
+			if(!this.sysInfo.isInput(ident)){
+				guard = guard.and(BoogieBooleanExpressionDecision.create(
+						BoogieAstSnippet.createIdentifier(
+								READ_GUARD_PREFIX+ident+"'", "ReadGuard"
+								)));
+			}
+		}
+		return guard;
+	}
 	/**
 	 * Helper for giving a unique x per automaton for a variable y for R_x_y edges.
 	 * Must be called once per automaton in the beginning of the automaton creation.
@@ -141,14 +165,10 @@ public class ClosedWorldTransformator extends BasicTransformer {
 		PhaseEventAutomata pea = super.GlobalInvariantPattern(pattern, p, q, r, s);
 		//collect all variables in the effect
 		this.newIdentIndex(s);
-		//add to self loop: P' or (!P' and !R_S)
 		Transition transition = pea.getPhases()[0].getTransitions().get(0);
 		transition.setGuard(transition.getGuard().and(
-				p.prime()));		// P && R_s or
-		Phase phase = pea.getPhases()[0]; 
-		phase.addTransition(phase, 
-				p.prime().negate().and(this.createClosedWorldGuard(s)),
-				new String[]{});
+				// !R_s or (p' and L_p))
+				this.createClosedWorldGuard(s).or(p.prime().and(this.createReadGuard(p)))));		// P && R_s or
 		return pea;
 	}
 
@@ -158,19 +178,36 @@ public class ClosedWorldTransformator extends BasicTransformer {
 		this.newIdentIndex(s);
 		Phase phase = pea.getPhases()[0]; //st0
 		for(Transition transition: phase.getTransitions()){
-			transition.setGuard(transition.getGuard().and(this.createClosedWorldGuard(s)));
+			if(transition.getDest() == phase){ // detect self loop
+				transition.setGuard(transition.getGuard().and(this.createClosedWorldGuard(s)));
+			} else {
+				// L_q and (!R_s or (P and L_p))
+				transition.setGuard(transition.getGuard().and(
+							this.createReadGuard(q).and(
+									this.createClosedWorldGuard(s).or(
+												p.and(this.createReadGuard(p))
+											)
+									)
+						));	
+			}
 		}
 		phase = pea.getPhases()[1];  //st012
 		for(Transition transition: phase.getTransitions()){
+			// !R_s or (P and L_p)
 			transition.setGuard(transition.getGuard().and(
-					p.prime().and(this.createClosedWorldGuard(s).negate())			// P && R_s or
-					.or(p.prime().negate().and(this.createClosedWorldGuard(s)))));  // !P && !R_s
+								this.createClosedWorldGuard(s).or(
+											p.and(this.createReadGuard(p))
+										)
+					));	
 		}
 		phase = pea.getPhases()[2];  //st02
 		for(Transition transition: phase.getTransitions()){
+			// !R_s or (P and L_p)
 			transition.setGuard(transition.getGuard().and(
-					p.prime().and(this.createClosedWorldGuard(s).negate())			// P && R_s or
-					.or(p.prime().negate().and(this.createClosedWorldGuard(s)))));  // !P && !R_s
+								this.createClosedWorldGuard(s).or(
+											p.and(this.createReadGuard(p))
+										)
+					));	
 		}
 		return pea;
 	}

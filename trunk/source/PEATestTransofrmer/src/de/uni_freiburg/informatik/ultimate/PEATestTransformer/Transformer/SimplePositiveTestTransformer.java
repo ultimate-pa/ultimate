@@ -34,9 +34,9 @@ public class SimplePositiveTestTransformer extends ClosedWorldTransformator {
 			Phase init = new Phase("stinit", p.negate());
 			Phase trap = new Phase("sttrap", p.and(s));
 			//init selfloop + closed world guard
-			init.addTransition(init, p.prime().negate().and(this.createClosedWorldGuard(s)), new String[] {});
+			init.addTransition(init, this.createClosedWorldGuard(s), new String[] {});
 			//trap edge
-			init.addTransition(trap, s.negate(), new String[] {});
+			init.addTransition(trap, s.negate().and(this.createReadGuard(p)), new String[] {});
 			//create automaton
 			trapAutomaton = new PhaseEventAutomata("trap_" + pea.getName(), new Phase[] { init, trap },
 					new Phase[] { init }, pea.getClocks(), pea.getVariables(), pea.getEvents(), pea.getDeclarations());
@@ -48,7 +48,7 @@ public class SimplePositiveTestTransformer extends ClosedWorldTransformator {
 	
 	@Override
 	protected PhaseEventAutomata AfterInvariantPattern(PatternType pattern, CDD p, CDD q, CDD r, CDD s) {
-		PhaseEventAutomata pea = super.GlobalInvariantPattern(pattern, p, q, r, s);
+		PhaseEventAutomata pea = super.AfterInvariantPattern(pattern, p, q, r, s);
 		PhaseEventAutomata trapAutomaton = pea;
 		if (this.reqNumber == this.reqMaxNumber) {
 			// bild phases
