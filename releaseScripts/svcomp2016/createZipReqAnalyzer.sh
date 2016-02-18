@@ -53,7 +53,7 @@ test cp "$TOOLCHAIN" "$TARGETDIR"/"$TOOLNAME".xml
 test cp LICENSE* "$TARGETDIR"/
 test cp ${SETTINGS} "$TARGETDIR"/.
 test cp Ultimate.ini "$TARGETDIR"/
-test cp README "$TARGETDIR"/
+test cp README.req "$TARGETDIR"/README
 if [ "$1" == "linux" ]; then
 	echo -e "#!/bin/bash\n\nif [ \$# -ne 1 ]; then\n   echo \"Wrong number of parameters.\"\n   echo\n   echo \"Usage: ./run.sh <requirements-file>\"\n   exit 1\nfi\n\n./ReqAnalyzer --console \"./ReqAnalyzer.xml\" \"\$1\" --settings \"reqanalyzer.epf\"" > "${TARGETDIR}/run.sh"
 	chmod +x "${TARGETDIR}/run.sh"
