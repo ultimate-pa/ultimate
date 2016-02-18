@@ -35,10 +35,13 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -172,6 +175,7 @@ public class MemoryHandler {
 	private final AExpressionTranslation m_ExpressionTranslation;
 	
 	private final TypeSizeAndOffsetComputer m_TypeSizeAndOffsetComputer;
+	private final RequiredMemoryModelFeatures m_RequiredMemoryModelFeatures;
 	
 	
 	/**
@@ -185,6 +189,7 @@ public class MemoryHandler {
     	m_TypeHandler = typeHandler;
     	m_FunctionHandler = functionHandler;
     	m_ExpressionTranslation = expressionTranslation;
+    	m_RequiredMemoryModelFeatures = new RequiredMemoryModelFeatures();
 		this.variablesToBeMalloced = new LinkedScopedHashMap<LocalLValueILocationPair, Integer>();
 		this.variablesToBeFreed = new LinkedScopedHashMap<LocalLValueILocationPair, Integer>();
 		//read preferences from settings
@@ -207,6 +212,29 @@ public class MemoryHandler {
 		m_TypeSizeAndOffsetComputer = typeSizeComputer;
     }
     
+    public class RequiredMemoryModelFeatures {
+    	private final Set<PRIMITIVE> m_DataOnHeapRequired = new HashSet<>();
+    	private boolean m_PointerOnHeapRequired;
+    	
+    	public void reportPointerOnHeapRequired() {
+    		m_PointerOnHeapRequired = true;
+    	}
+    	
+    	public void reportDataOnHeapRequired(PRIMITIVE primitive) {
+    		m_DataOnHeapRequired.add(primitive);
+    	}
+    	
+    	public boolean isPointerOnHeapRequired() {
+    		return m_PointerOnHeapRequired;
+    	}
+
+		public Set<PRIMITIVE> getDataOnHeapRequired() {
+			return m_DataOnHeapRequired;
+		}
+    	
+    	
+    }
+    
     
     public Expression calculateSizeOf(ILocation loc, CType cType) {
     	return m_TypeSizeAndOffsetComputer.constructBytesizeExpression(loc, cType);
@@ -215,10 +243,12 @@ public class MemoryHandler {
     private class HeapDataArray {
     	private final String m_Name;
     	private final ASTType m_ASTType;
-		public HeapDataArray(String name, ASTType aSTType) {
+    	private final int m_Size;
+		public HeapDataArray(String name, ASTType aSTType, int size) {
 			super();
 			m_Name = name;
 			m_ASTType = aSTType;
+			m_Size = size;
 		}
 		public String getName() {
 			return m_Name;
@@ -226,9 +256,11 @@ public class MemoryHandler {
 		public ASTType getASTType() {
 			return m_ASTType;
 		}
-		
 		public String getVariableName() {
 			return SFO.MEMORY + "_" + getName();
+		}
+		public int getSize() {
+			return m_Size;
 		}
     	
     	
@@ -270,13 +302,13 @@ public class MemoryHandler {
         // add memory arrays and access procedures
         ArrayList<HeapDataArray> heapDataArrays = new ArrayList<>();
         if (isIntArrayRequiredInMM) {
-        	heapDataArrays.add(new HeapDataArray(SFO.INT, intArrayType));
+        	heapDataArrays.add(new HeapDataArray(SFO.INT, intArrayType, 0));
         }
         if (isFloatArrayRequiredInMM) {
-        	heapDataArrays.add(new HeapDataArray(SFO.REAL, realArrayType));
+        	heapDataArrays.add(new HeapDataArray(SFO.REAL, realArrayType, 0));
         }
         if (isPointerArrayRequiredInMM) {
-        	heapDataArrays.add(new HeapDataArray(SFO.POINTER, main.typeHandler.constructPointerType(tuLoc)));
+        	heapDataArrays.add(new HeapDataArray(SFO.POINTER, main.typeHandler.constructPointerType(tuLoc), 0));
         }
         
         decl.addAll(declareSomeMemoryArrays(tuLoc, heapDataArrays));
@@ -1518,6 +1550,7 @@ public class MemoryHandler {
     	
     	if (ut instanceof CPrimitive) {
 			CPrimitive cp = (CPrimitive) ut;
+			m_RequiredMemoryModelFeatures.reportDataOnHeapRequired(cp.getType());
 			switch (cp.getGeneralType()) {
 			case INTTYPE:
 				isIntArrayRequiredInMM = true;
@@ -1530,6 +1563,7 @@ public class MemoryHandler {
 			}
 			return main.typeHandler.ctype2asttype(loc, ct);
 		} else if (ut instanceof CPointer) {
+			m_RequiredMemoryModelFeatures.reportPointerOnHeapRequired();
 			isPointerArrayRequiredInMM = true;
 			return main.typeHandler.constructPointerType(loc);
 		} else if (ut instanceof CNamed) {
@@ -1542,8 +1576,9 @@ public class MemoryHandler {
 			// a struct that is addressoffed..
 			isPointerArrayRequiredInMM = true;
 			return main.typeHandler.constructPointerType(loc);
-		} else if (ut instanceof CEnum) { 
+		} else if (ut instanceof CEnum) {
 			//enum is treated like an int
+			m_RequiredMemoryModelFeatures.reportDataOnHeapRequired(PRIMITIVE.INT);
 			isIntArrayRequiredInMM = true;
 			return main.typeHandler.ctype2asttype(loc, new CPrimitive(PRIMITIVE.INT));
 		} else {
@@ -1592,6 +1627,7 @@ public class MemoryHandler {
         	valueType = ((CNamed) valueType).getUnderlyingType();
         
         if (valueType instanceof CPrimitive) {
+        	m_RequiredMemoryModelFeatures.reportDataOnHeapRequired(((CPrimitive) valueType).getType());
         	switch (((CPrimitive) valueType).getGeneralType()) {
         	case INTTYPE:
         		isIntArrayRequiredInMM = true;
@@ -1612,12 +1648,14 @@ public class MemoryHandler {
         	}
         } else if (valueType instanceof CEnum) {
         	//treat like INT
+        	m_RequiredMemoryModelFeatures.reportDataOnHeapRequired(PRIMITIVE.INT);
         	isIntArrayRequiredInMM = true;
         	m_FunctionHandler.getModifiedGlobals().
         	get(m_FunctionHandler.getCurrentProcedureID()).add(SFO.MEMORY_INT);
         	stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.INT,
         			new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(loc, hlv.getCType())}));
         } else if (valueType instanceof CPointer) {
+        	m_RequiredMemoryModelFeatures.reportPointerOnHeapRequired();
         	isPointerArrayRequiredInMM = true;
         	m_FunctionHandler.getModifiedGlobals().
         			get(m_FunctionHandler.getCurrentProcedureID()).add(SFO.MEMORY_POINTER);
