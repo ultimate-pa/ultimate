@@ -867,7 +867,7 @@ public class Theory {
 	
 	private void createFloatingPointOperators() {
 		
-		mFloatingPointSort = new SortSymbol(this, "FloatingPoint", 2, null,
+		mFloatingPointSort = new SortSymbol(this, "FloatingPoint", 0, null,
 				SortSymbol.INTERNAL | SortSymbol.INDEXED) {
 			public void checkArity(BigInteger[] indices, int arity) {
 				if (indices == null || indices.length != 2)
