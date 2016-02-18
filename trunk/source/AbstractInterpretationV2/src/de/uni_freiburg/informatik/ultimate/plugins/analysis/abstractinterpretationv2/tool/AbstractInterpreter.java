@@ -190,7 +190,7 @@ public final class AbstractInterpreter {
 			}
 			if (logger.isDebugEnabled()) {
 				logger.debug("Found the following predicates:");
-				AbsIntUtil.logPredicates(Collections.singletonMap(initial, result.getTerms()), script, logger::debug);
+				AbsIntUtil.logPredicates(Collections.singletonMap(initial, result.getLoc2Term()), script, logger::debug);
 			}
 			logger.info(result.getBenchmark());
 			return result;
@@ -276,7 +276,7 @@ public final class AbstractInterpreter {
 		}
 		if (logger.isDebugEnabled()) {
 			logger.debug("Found the following predicates:");
-			AbsIntUtil.logPredicates(result.getTerms(), logger::debug);
+			AbsIntUtil.logPredicates(result.getLoc2Term(), logger::debug);
 		}
 		logger.info(result.getBenchmark());
 		return result;

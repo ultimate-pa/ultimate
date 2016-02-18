@@ -3,10 +3,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractCounterexample;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
@@ -22,12 +26,14 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 
 	private final List<AbstractCounterexample<STATE, ACTION, VARDECL, LOCATION>> mCounterexamples;
 	private final AbstractInterpretationBenchmark<ACTION, LOCATION> mBenchmark;
-	private final Map<LOCATION, Term> mTerms;
+	private final Map<LOCATION, Term> mLoc2Term;
+	private final Set<Term> mTerms;
 
 	protected AbstractInterpretationResult() {
 		mCounterexamples = new ArrayList<>();
 		mBenchmark = new AbstractInterpretationBenchmark<>();
-		mTerms = new HashMap<LOCATION, Term>();
+		mLoc2Term = new HashMap<LOCATION, Term>();
+		mTerms = new HashSet<>();
 	}
 
 	protected void reachedError(final ITransitionProvider<ACTION, LOCATION> transitionProvider,
@@ -53,11 +59,17 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 	}
 
 	protected void addTerms(final Map<LOCATION, Term> terms) {
-		mTerms.putAll(terms);
+
 	}
 
-	public Map<LOCATION, Term> getTerms() {
-		return mTerms;
+	protected void saveTerms(IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> rootStateStorage, ACTION start,
+			Script script, Boogie2SMT bpl2smt) {
+		mLoc2Term.putAll(rootStateStorage.getLoc2Term(start, script, bpl2smt));
+		mTerms.addAll(rootStateStorage.getTerms(start, script, bpl2smt));
+	}
+
+	public Map<LOCATION, Term> getLoc2Term() {
+		return mLoc2Term;
 	}
 
 	public List<AbstractCounterexample<STATE, ACTION, VARDECL, LOCATION>> getCounterexamples() {
@@ -71,4 +83,10 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 	public AbstractInterpretationBenchmark<ACTION, LOCATION> getBenchmark() {
 		return mBenchmark;
 	}
+
+	@Override
+	public Set<Term> getTerms() {
+		return mTerms;
+	}
+
 }

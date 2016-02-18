@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
@@ -12,7 +13,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public interface IAbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> {
 
-	Map<LOCATION, Term> getTerms();
+	Map<LOCATION, Term> getLoc2Term();
+	
+	Set<Term> getTerms();
 
 	List<AbstractCounterexample<STATE, ACTION, VARDECL, LOCATION>> getCounterexamples();
 

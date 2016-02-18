@@ -13,8 +13,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -35,19 +37,61 @@ public class AbstractInterpretationAutomatonGenerator {
 	private final SmtManager mSmtManager;
 
 	public AbstractInterpretationAutomatonGenerator(final IUltimateServiceProvider services,
-			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction, final Map<IPredicate, Term> loc2Term,
-			final PredicateUnifier predicateUnifier, final SmtManager smtManager) {
+			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction,
+			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, IPredicate> aiResult,
+			final PredicateUnifier predUnifier, final SmtManager smtManager) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		mSmtManager = smtManager;
 
-		mResult = getTermAutomaton(oldAbstraction, loc2Term, predicateUnifier);
+		mResult = getTermAutomaton(oldAbstraction, aiResult.getTerms(), predUnifier);
 	}
 
 	public NestedWordAutomaton<CodeBlock, IPredicate> getResult() {
 		return mResult;
 	}
 
+	private NestedWordAutomaton<CodeBlock, IPredicate> getTermAutomaton(
+			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction, final Set<Term> terms,
+			final PredicateUnifier predicateUnifier) {
+		mLogger.info("Creating automaton from AI predicates (Cannibalize=" + CANNIBALIZE + ").");
+		final NestedWordAutomaton<CodeBlock, IPredicate> result = new NestedWordAutomaton<CodeBlock, IPredicate>(
+				new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
+				oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
+		final Set<IPredicate> predicates = new HashSet<>();
+		result.addState(true, false, predicateUnifier.getTruePredicate());
+		predicates.add(predicateUnifier.getTruePredicate());
+
+		final IPredicate falsePred = predicateUnifier.getFalsePredicate();
+		for (final Term term : terms) {
+			if (term == null) {
+				continue;
+			}
+
+			final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, mSmtManager.getBoogie2Smt());
+			final IPredicate newPred = predicateUnifier.getOrConstructPredicate(tvp);
+			if (!predicates.add(newPred)) {
+				continue;
+			}
+			result.addState(false, newPred == falsePred, newPred);
+		}
+
+		if (result.getFinalStates().isEmpty() || !predicates.contains(falsePred)) {
+			result.addState(false, true, predicateUnifier.getFalsePredicate());
+		}
+
+		if (PRINT_PREDS_LIMIT < predicates.size()) {
+			mLogger.info("Using " + predicates.size() + " predicates from AI: " + String.join(",",
+					predicates.stream().limit(PRINT_PREDS_LIMIT).map(a -> a.toString()).collect(Collectors.toList()))
+					+ "...");
+		} else {
+			mLogger.info("Using " + predicates.size() + " predicates from AI: "
+					+ String.join(",", predicates.stream().map(a -> a.toString()).collect(Collectors.toList())));
+		}
+
+		return result;
+	}
+	
 	private NestedWordAutomaton<CodeBlock, IPredicate> getTermAutomaton(
 			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction, final Map<IPredicate, Term> loc2Term,
 			final PredicateUnifier predicateUnifier) {

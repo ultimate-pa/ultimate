@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
+import de.uni_freiburg.informatik.ultimatetest.logs.IncrementalLogWithBenchmarkResults;
 import de.uni_freiburg.informatik.ultimatetest.logs.IncrementalLogWithVMParameters;
 import de.uni_freiburg.informatik.ultimatetest.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.reporting.ITestSummary;
@@ -164,7 +165,7 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 		if (mIncrementalLog == null) {
 			mIncrementalLog = new IncrementalLogWithVMParameters(getClass(), getTimeout());
 		}
-		return new IIncrementalLog[] { mIncrementalLog };
+		return new IIncrementalLog[] { mIncrementalLog, new IncrementalLogWithBenchmarkResults(this.getClass()) };
 	}
 
 	@Override
@@ -220,8 +221,8 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 	}
 
 	/**
-	 * Override this if you want to use some special place for your SVCOMP15
-	 * repository. We default to trunk/examples/svcomp .
+	 * Override this if you want to use some special place for your SVCOMP15 repository. We default to
+	 * trunk/examples/svcomp .
 	 */
 	protected File getSVCOMP15RootDirectory() {
 		String svcompRootDir = TestUtil.getFromMavenVariableSVCOMPRoot(TestUtil.getPathFromTrunk("examples/svcomp"));
@@ -236,8 +237,8 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 	protected abstract List<TestDefinition> getTestDefinitions();
 
 	/**
-	 * -1 if you want all files per category, a value larger than 0 if you want
-	 * to limit the number of files per TestDefinition.
+	 * -1 if you want all files per category, a value larger than 0 if you want to limit the number of files per
+	 * TestDefinition.
 	 * 
 	 * @return
 	 */
@@ -280,8 +281,8 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 			int filesPerSetLine = filesPerCategory / regexes.size();
 			filesPerSetLine = filesPerSetLine <= 0 ? 1 : filesPerSetLine;
 			for (String regex : regexes) {
-				currentFiles.addAll(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.firstN(
-						TestUtil.filterFiles(allFiles, regex), filesPerSetLine));
+				currentFiles.addAll(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil
+						.firstN(TestUtil.filterFiles(allFiles, regex), filesPerSetLine));
 			}
 		}
 
@@ -304,20 +305,17 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 
 	/**
 	 * @param setname
-	 *            Case-sensitive name of the .set file without the suffix and
-	 *            without the path, e.g. ControlFlowInteger.false-unreach-label
-	 *            or Simple
+	 *            Case-sensitive name of the .set file without the suffix and without the path, e.g.
+	 *            ControlFlowInteger.false-unreach-label or Simple
 	 * @param toolchain
-	 *            Path to .xml file describing the toolchain relative to
-	 *            trunk/examples/toolchains, e.g. "AutomizerBpl.xml"
+	 *            Path to .xml file describing the toolchain relative to trunk/examples/toolchains, e.g.
+	 *            "AutomizerBpl.xml"
 	 * @param settings
-	 *            Path to .xml file describing the toolchain relative to
-	 *            trunk/examples/settings, e.g.
+	 *            Path to .xml file describing the toolchain relative to trunk/examples/settings, e.g.
 	 *            "automizer/BackwardPredicates.epf"
 	 * @param timeout
-	 *            Timeout in ms after which Ultimate should timeout. Overrides
-	 *            timeout in settings. Values <= 0 disable the timeout (Timeout
-	 *            in settings still applies).
+	 *            Timeout in ms after which Ultimate should timeout. Overrides timeout in settings. Values <= 0 disable
+	 *            the timeout (Timeout in settings still applies).
 	 */
 	protected TestDefinition getTestDefinitionFromExamples(String setname, String toolchain, String settings,
 			long timeout) {
@@ -334,17 +332,15 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 		/**
 		 * 
 		 * @param setname
-		 *            Case-sensitive name of the .set file without the suffix
-		 *            and without the path, e.g.
+		 *            Case-sensitive name of the .set file without the suffix and without the path, e.g.
 		 *            ControlFlowInteger.false-unreach-label or Simple
 		 * @param toolchain
 		 *            Path to .xml file describing the toolchain.
 		 * @param settings
 		 *            Path to .epf file describing the settings.
 		 * @param timeout
-		 *            Timeout in ms after which Ultimate should timeout.
-		 *            Overrides timeout in settings. Values <= 0 disable the
-		 *            timeout (Timeout in settings still applies).
+		 *            Timeout in ms after which Ultimate should timeout. Overrides timeout in settings. Values <= 0
+		 *            disable the timeout (Timeout in settings still applies).
 		 * 
 		 * @author dietsch@informatik.uni-freiburg.de
 		 */

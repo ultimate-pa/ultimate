@@ -111,6 +111,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceCheckerCraig;
@@ -154,7 +155,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 	protected final AssertCodeBlockOrder m_AssertCodeBlocksIncrementally;
 
 	protected final boolean mAbsIntMode;
-	private Map<IPredicate, Term> mAbsIntLoc2Term;
+	private IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, IPredicate> mAbsIntResult;
+
 	private NestedWordAutomaton<WitnessEdge, WitnessNode> m_WitnessAutomaton;
 	// private IHoareTripleChecker m_HoareTripleChecker;
 	private boolean m_DoFaultLocalization = false;
@@ -243,7 +245,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 		if (mAbsIntMode) {
 			m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_AbsIntTime);
-			mAbsIntLoc2Term = null;
+			mAbsIntResult = null;
 
 			// allow for 20% of the remaining time
 			final IProgressAwareTimer timer = m_Services.getProgressMonitorService().getChildTimer(0.2);
@@ -251,8 +253,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, IPredicate> result = AbstractInterpreter
 					.runSilently((NestedRun<CodeBlock, IPredicate>) m_Counterexample, abstraction, m_RootNode, timer,
 							m_Services);
-			mAbsIntLoc2Term = result.getTerms();
-			assert mAbsIntLoc2Term != null : "Abstract interpretation did return an invalid term map";
+			mAbsIntResult = result;
 			m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AbsIntTime);
 		}
 
@@ -479,20 +480,18 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
-		final NestedWordAutomaton<CodeBlock, IPredicate> interpolAutomaton = m_InterpolAutomaton;
 		final PredicateUnifier predUnifier = m_InterpolantGenerator.getPredicateUnifier();
-		if (mAbsIntMode) {
+		if (mAbsIntMode && mAbsIntResult != null) {
 			m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_AbsIntTime);
-
+			mLogger.info("Refining with abstract interpretation automaton");
 			final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton = new AbstractInterpretationAutomatonGenerator(
-					m_Services, (INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, mAbsIntLoc2Term,
-					predUnifier, m_SmtManager).getResult();
+					m_Services, (INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, mAbsIntResult, predUnifier,
+					m_SmtManager).getResult();
 			refineWithGivenAutomaton(aiInterpolAutomaton, predUnifier);
+			mLogger.info("Finished additional refinement with abstract interpretation automaton");
 			m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AbsIntTime);
-			mLogger.info("Finished refinement with abstract interpretation automaton");
 		}
-		return refineWithGivenAutomaton(interpolAutomaton, predUnifier);
-
+		return refineWithGivenAutomaton(m_InterpolAutomaton, predUnifier);
 	}
 
 	private boolean refineWithGivenAutomaton(NestedWordAutomaton<CodeBlock, IPredicate> interpolAutomaton,
