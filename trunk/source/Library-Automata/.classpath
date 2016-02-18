@@ -4,5 +4,6 @@
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry excluding="**/.svn/*" kind="src" path="src"/>
 	<classpathentry kind="lib" path="src/de/uni_freiburg/informatik/ultimate/automata/petrinet/julian/petruchio/petruchio.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/Library-UltimateUtil"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

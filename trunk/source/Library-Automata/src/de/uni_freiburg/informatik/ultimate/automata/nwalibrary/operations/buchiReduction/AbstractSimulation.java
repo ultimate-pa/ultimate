@@ -170,12 +170,6 @@ public abstract class AbstractSimulation<LETTER,STATE> {
     }
 
     /**
-     * Efficient implementation of the lifting algorithm. (see figure 2 in the
-     * paper.
-     * 
-     * 
-     */
-    /**
      * Efficient implementation of the lifting algorithm extended with an SCC
      * approach. (see figure 2 in the paper).
      * 
