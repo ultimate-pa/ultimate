@@ -918,18 +918,30 @@ public class Theory {
 				SortSymbol.INTERNAL).getSort(null, new Sort[0]);
 		mRoundingModeSort = declareInternalSort("RoundingMode", 0, 0)
 				.getSort(null, new Sort[0]);
+		
 		/*
 		 * Used to create Functions that only need floating points as arguments
 		 */
 		class RegularFloatingPointFunction extends FunctionSymbolFactory {
 			int mNumArgs;
 			Sort mResult;
+			int mFlags;
+			public RegularFloatingPointFunction(
+					String name, int numArgs, Sort result, int flags) {
+				super(name);
+				mNumArgs = numArgs;				
+				mResult = result;
+				mFlags = flags;
+			}
 			public RegularFloatingPointFunction(
 					String name, int numArgs, Sort result) {
-				super(name);
-				mNumArgs = numArgs;
-				mResult = result;
+				this(name, numArgs, result, FunctionSymbol.INTERNAL);
 			}
+			@Override
+			public int getFlags(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
+				return mFlags;
+			}	
 			@Override
 			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
 					Sort resultSort) {
@@ -957,12 +969,23 @@ public class Theory {
 		class RoundedFloatingPointFunction extends FunctionSymbolFactory {
 			int mNumArgs;
 			Sort mResult;
+			int mFlags;
 			public RoundedFloatingPointFunction(
-					String name, int numArgs, Sort result) {
+					String name, int numArgs, Sort result, int flags) {
 				super(name);
 				mNumArgs = numArgs;
 				mResult = result;
+				mFlags = flags;
 			}
+			public RoundedFloatingPointFunction(
+					String name, int numArgs, Sort result) {
+				this(name, numArgs, result, FunctionSymbol.INTERNAL);
+			}
+			@Override
+			public int getFlags(BigInteger[] indices, Sort[] paramSorts,
+					Sort resultSort) {
+				return mFlags;
+			}	
 			@Override
 			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
 					Sort resultSort) {
@@ -1147,35 +1170,35 @@ public class Theory {
 		declareInternalFunction("RTZ", new Sort[0], mRoundingModeSort, 0);
 		
 		// Operators
-		defineFunction(new RegularFloatingPointFunction("fp.abs", 1, null));
-		defineFunction(new RegularFloatingPointFunction("fp.neg", 1, null));
-		defineFunction(new RegularFloatingPointFunction("fp.min", 2, null));
-		defineFunction(new RegularFloatingPointFunction("fp.max", 2, null));
-		defineFunction(new RegularFloatingPointFunction("fp.rem", 2, null));
+		defineFunction(new RegularFloatingPointFunction("fp.abs", 1, null, FunctionSymbol.INTERNAL));
+		defineFunction(new RegularFloatingPointFunction("fp.neg", 1, null, FunctionSymbol.INTERNAL));
+		defineFunction(new RegularFloatingPointFunction("fp.min", 2, null, FunctionSymbol.INTERNAL));
+		defineFunction(new RegularFloatingPointFunction("fp.max", 2, null, FunctionSymbol.INTERNAL));
+		defineFunction(new RegularFloatingPointFunction("fp.rem", 2, null, FunctionSymbol.INTERNAL));
 		// rounded operators
-		defineFunction(new RoundedFloatingPointFunction("fp.add", 3, null));
-		defineFunction(new RoundedFloatingPointFunction("fp.sub", 3, null));
-		defineFunction(new RoundedFloatingPointFunction("fp.mul", 3, null));
-		defineFunction(new RoundedFloatingPointFunction("fp.div", 3, null));
-		defineFunction(new RoundedFloatingPointFunction("fp.fma", 4, null));
-		defineFunction(new RoundedFloatingPointFunction("fp.sqrt", 2, null));
-		defineFunction(new RoundedFloatingPointFunction("fp.roundToIntegral", 2, null));
+		defineFunction(new RoundedFloatingPointFunction("fp.add", 3, null, FunctionSymbol.INTERNAL));
+		defineFunction(new RoundedFloatingPointFunction("fp.sub", 3, null, FunctionSymbol.INTERNAL));
+		defineFunction(new RoundedFloatingPointFunction("fp.mul", 3, null, FunctionSymbol.INTERNAL));
+		defineFunction(new RoundedFloatingPointFunction("fp.div", 3, null, FunctionSymbol.INTERNAL));
+		defineFunction(new RoundedFloatingPointFunction("fp.fma", 4, null, FunctionSymbol.INTERNAL));
+		defineFunction(new RoundedFloatingPointFunction("fp.sqrt", 2, null, FunctionSymbol.INTERNAL));
+		defineFunction(new RoundedFloatingPointFunction("fp.roundToIntegral", 2, null, FunctionSymbol.INTERNAL));
 		
 		// Comparison Operators
-		defineFunction(new RegularFloatingPointFunction("fp.leq", 2, mBooleanSort));
-		defineFunction(new RegularFloatingPointFunction("fp.lt", 2, mBooleanSort));
-		defineFunction(new RegularFloatingPointFunction("fp.geq", 2, mBooleanSort));
-		defineFunction(new RegularFloatingPointFunction("fp.gt", 2, mBooleanSort));
-		defineFunction(new RegularFloatingPointFunction("fp.eq", 2, mBooleanSort));
+		defineFunction(new RegularFloatingPointFunction("fp.leq", 2, mBooleanSort, FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
+		defineFunction(new RegularFloatingPointFunction("fp.lt", 2, mBooleanSort, FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
+		defineFunction(new RegularFloatingPointFunction("fp.geq", 2, mBooleanSort, FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
+		defineFunction(new RegularFloatingPointFunction("fp.gt", 2, mBooleanSort, FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
+		defineFunction(new RegularFloatingPointFunction("fp.eq", 2, mBooleanSort, FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
 		
 		// Classification of numbers
-		defineFunction(new RegularFloatingPointFunction("fp.isNormal", 1, mBooleanSort));
-		defineFunction(new RegularFloatingPointFunction("fp.isSubnormal", 1, mBooleanSort));
-		defineFunction(new RegularFloatingPointFunction("fp.isZero", 1, mBooleanSort));
-		defineFunction(new RegularFloatingPointFunction("fp.isInfinite", 1, mBooleanSort));
-		defineFunction(new RegularFloatingPointFunction("fp.isNaN", 1, mBooleanSort));
-		defineFunction(new RegularFloatingPointFunction("fp.isNegative", 1, mBooleanSort));
-		defineFunction(new RegularFloatingPointFunction("fp.isPositive", 1, mBooleanSort));
+		defineFunction(new RegularFloatingPointFunction("fp.isNormal", 1, mBooleanSort, FunctionSymbol.INTERNAL));
+		defineFunction(new RegularFloatingPointFunction("fp.isSubnormal", 1, mBooleanSort, FunctionSymbol.INTERNAL));
+		defineFunction(new RegularFloatingPointFunction("fp.isZero", 1, mBooleanSort, FunctionSymbol.INTERNAL));
+		defineFunction(new RegularFloatingPointFunction("fp.isInfinite", 1, mBooleanSort, FunctionSymbol.INTERNAL));
+		defineFunction(new RegularFloatingPointFunction("fp.isNaN", 1, mBooleanSort, FunctionSymbol.INTERNAL));
+		defineFunction(new RegularFloatingPointFunction("fp.isNegative", 1, mBooleanSort, FunctionSymbol.INTERNAL));
+		defineFunction(new RegularFloatingPointFunction("fp.isPositive", 1, mBooleanSort, FunctionSymbol.INTERNAL));
 		
 		// Conversion from FP
 		defineFunction(new RegularFloatingPointFunction("fp.to_real", 1, mRealSort));

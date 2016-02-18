@@ -168,7 +168,7 @@ public class SmtParser implements ISource {
 		if (writeCommandsToFile) {
 			String abs = (new File(filename)).getAbsolutePath();
 			mLogger.info("Writing all SMT commands to " + abs);
-			script = new LoggingScript(filename, true);
+			script = new LoggingScript(script ,filename, true);
 		}
 
 		mLogger.info("Executing SMT file " + file.getAbsolutePath());
