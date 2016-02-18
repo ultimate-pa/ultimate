@@ -39,6 +39,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
@@ -210,6 +211,28 @@ public class MemoryHandler {
     public Expression calculateSizeOf(ILocation loc, CType cType) {
     	return m_TypeSizeAndOffsetComputer.constructBytesizeExpression(loc, cType);
 	}
+    
+    private class HeapDataArray {
+    	private final String m_Name;
+    	private final ASTType m_ASTType;
+		public HeapDataArray(String name, ASTType aSTType) {
+			super();
+			m_Name = name;
+			m_ASTType = aSTType;
+		}
+		public String getName() {
+			return m_Name;
+		}
+		public ASTType getASTType() {
+			return m_ASTType;
+		}
+		
+		public String getVariableName() {
+			return SFO.MEMORY + "_" + getName();
+		}
+    	
+    	
+    }
 
     /**
      * Declare all variables required for the memory model.
@@ -245,29 +268,18 @@ public class MemoryHandler {
         //declare the arrays that will model the heap
         
         // add memory arrays and access procedures
-        ArrayList<String> allMMArrayNames = new ArrayList<>();
-        ArrayList<ASTType> allMMArrayTypes = new ArrayList<>();
+        ArrayList<HeapDataArray> heapDataArrays = new ArrayList<>();
         if (isIntArrayRequiredInMM) {
-        	allMMArrayNames.add(SFO.INT);
-        	allMMArrayTypes.add(intArrayType);
+        	heapDataArrays.add(new HeapDataArray(SFO.INT, intArrayType));
         }
         if (isFloatArrayRequiredInMM) {
-        	allMMArrayNames.add(SFO.REAL);
-        	allMMArrayTypes.add(realArrayType);
+        	heapDataArrays.add(new HeapDataArray(SFO.REAL, realArrayType));
         }
         if (isPointerArrayRequiredInMM) {
-        	allMMArrayNames.add(SFO.POINTER);
-        	allMMArrayTypes.add(main.typeHandler.constructPointerType(tuLoc));
+        	heapDataArrays.add(new HeapDataArray(SFO.POINTER, main.typeHandler.constructPointerType(tuLoc)));
         }
-        String[] namesOfAllMemoryArrayTypes = allMMArrayNames.toArray(new String[0]);
-        ASTType[] astTypesOfAllMemoryArrayTypes = allMMArrayTypes.toArray(new ASTType[0]);
         
-//        if (namesOfAllMemoryArrayTypes.length == 0) { 
-//        	noMemArrays = true;
-////        	return decl;//if we reach here, mmRequired == true --> we need valid + length (one usecase: we malloc but don't use something..)
-//        }
-        
-        decl.addAll(declareSomeMemoryArrays(tuLoc, namesOfAllMemoryArrayTypes, astTypesOfAllMemoryArrayTypes));
+        decl.addAll(declareSomeMemoryArrays(tuLoc, heapDataArrays));
        
         // var #valid : [int]bool;
         ASTType validType = new ArrayType(tuLoc, new String[0],
@@ -287,10 +299,10 @@ public class MemoryHandler {
         decl.addAll(declareMalloc(main.typeHandler, tuLoc));
 
         if (m_declareMemCpy) {
-        	decl.addAll(declareMemCpy(main, namesOfAllMemoryArrayTypes, astTypesOfAllMemoryArrayTypes));
+        	decl.addAll(declareMemCpy(main, heapDataArrays));
         }
         if (m_declareMemset) {
-        	decl.addAll(declareMemset(main, allMMArrayNames, allMMArrayTypes));
+        	decl.addAll(declareMemset(main, heapDataArrays));
         }
 
         return decl;
@@ -300,7 +312,7 @@ public class MemoryHandler {
      * Adds our implementation of the memcpy procedure to the boogie code.
      */
     private List<Declaration> declareMemCpy(Dispatcher main,
-    		String[] namesOfAllMemoryArrayTypes, ASTType[] astTypesOfAllMemoryArrayTypes) {
+    		List<HeapDataArray> heapDataArrays) {
     	ArrayList<Declaration> memCpyDecl = new ArrayList<>();
     	ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
     	
@@ -347,8 +359,8 @@ public class MemoryHandler {
 
 		// handle modifies
 		ArrayList<VariableLHS> modifiesLHSs = new ArrayList<>();
-		for (String name : namesOfAllMemoryArrayTypes) {
-			String memArrayName = SFO.MEMORY + "_" + name;
+		for (HeapDataArray hda : heapDataArrays) {
+			String memArrayName = hda.getVariableName();
 
 			ArrayAccessExpression srcAcc = new ArrayAccessExpression(ignoreLoc, new IdentifierExpression(ignoreLoc, memArrayName), new Expression[] { currentSrc });
 			ArrayLHS destAcc = new ArrayLHS(ignoreLoc, new VariableLHS(ignoreLoc, memArrayName), new Expression[] { currentDest });
@@ -501,7 +513,7 @@ public class MemoryHandler {
      * @return
      */
     private List<Declaration> declareMemset(Dispatcher main, 
-    		List<String> namesOfAllMemoryArrayTypes, List<ASTType> astTypesOfAllMemoryArrayTypes) {
+    		List<HeapDataArray> heapDataArrays) {
 
     	List<Declaration> memsetDecls = new ArrayList<>();
     	ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
@@ -563,7 +575,8 @@ public class MemoryHandler {
 
     	//TODO: this is designed to work only for the memory arrays for int and pointer, if we want to support others, 
     	// like floats or so, we have to add a case here
-    	if (namesOfAllMemoryArrayTypes.contains(SFO.INT)) {
+    	//if (namesOfAllMemoryArrayTypes.contains(SFO.INT)) {
+    	if (true) {
     		//   write~int(valueToBeWritten, { startPointer!Base, startPointer!Offset + (ctr * sizeOfFields) });
     		isIntArrayRequiredInMM = true;
 
@@ -572,7 +585,8 @@ public class MemoryHandler {
     		whileBody.add(new CallStatement(ignoreLoc, false, new VariableLHS[0], "write~" + SFO.INT,
     				new Expression[] { value, curAddr, sizeofFields}));	
     	}
-    	if (namesOfAllMemoryArrayTypes.contains(SFO.POINTER)) {
+    	if (true) {
+//    	if (namesOfAllMemoryArrayTypes.contains(SFO.POINTER)) {
     		//   write~Pointer(valueToBeWritten, { startPointer!Base, startPointer!Offset + (ctr * sizeOfFields) });
     		isPointerArrayRequiredInMM = true;
 
@@ -628,8 +642,8 @@ public class MemoryHandler {
 		// tell function handler of this procedure
      	// to deal with modifies
 		ArrayList<VariableLHS> modifiesLHSs = new ArrayList<>();
-		for (String name : namesOfAllMemoryArrayTypes) {
-			String memArrayName = SFO.MEMORY + "_" + name;
+		for (HeapDataArray hda : heapDataArrays) {
+			String memArrayName = hda.getVariableName();
 
 			modifiesLHSs.add(new VariableLHS(ignoreLoc, memArrayName));
 
@@ -746,19 +760,16 @@ public class MemoryHandler {
      * @return the declarations for the memory arrays as well as read and write
      *         procedures for these arrays.
      */
-	private ArrayList<Declaration> declareSomeMemoryArrays(final ILocation loc, String[] namesOfAllMemoryArrayTypes,
-			 ASTType[] astTypesOfAllMemoryArrayTypes) {
+	private ArrayList<Declaration> declareSomeMemoryArrays(final ILocation loc, List<HeapDataArray> heapDataArrays) {
 		ArrayList<Declaration> decl = new ArrayList<>();
         
-		for (int i = 0; i < namesOfAllMemoryArrayTypes.length; i++) {
-        	String typeName = namesOfAllMemoryArrayTypes[i];
-        	ASTType astType = astTypesOfAllMemoryArrayTypes[i];
+		for (HeapDataArray heapDataArray : heapDataArrays) {
 
-            decl.add(constructMemoryArrayDeclaration(loc, typeName, astType));
+            decl.add(constructMemoryArrayDeclaration(loc, heapDataArray.getName(), heapDataArray.getASTType()));
             
             // create and add read and write procedure
-           	decl.add(constructWriteProcedure(loc, namesOfAllMemoryArrayTypes, typeName, astType));
-            decl.add(constructReadProcedure(loc, typeName, astType));
+           	decl.add(constructWriteProcedure(loc, heapDataArrays, heapDataArray));
+            decl.add(constructReadProcedure(loc, heapDataArray));
 
         }
 		return decl;
@@ -773,16 +784,16 @@ public class MemoryHandler {
 		return new VariableDeclaration(loc, new Attribute[0], new VarList[] { varList });
 	}
 
-	private Procedure constructWriteProcedure(final ILocation loc, String[] namesOfAllMemoryArrayTypes, String typeName,
-			ASTType astType) {
+	private Procedure constructWriteProcedure(final ILocation loc, 
+			final List<HeapDataArray> heapDataArrays, final HeapDataArray heapDataArray) {
 		String value = "#value";
 		String inPtr = "#ptr";
 		String writtenTypeSize = "#sizeOfWrittenType";
-		String nwrite = "write~" + typeName;
+		String nwrite = "write~" + heapDataArray.getName();
 
 		ASTType intType = m_TypeHandler.ctype2asttype(loc, m_ExpressionTranslation.getCTypeOfIntArray());
 		VarList[] inWrite = new VarList[] {
-				new VarList(loc, new String[] { value }, astType),
+				new VarList(loc, new String[] { value }, heapDataArray.getASTType()),
 				new VarList(loc, new String[] { inPtr }, m_TypeHandler.constructPointerType(loc)),
 				new VarList(loc, new String[] { writtenTypeSize }, intType) };
          
@@ -796,18 +807,13 @@ public class MemoryHandler {
 		checkPointerTargetFullyAllocated(loc, sizeWrite, inPtr, swrite);
 
 
-		String[] modified = new String[namesOfAllMemoryArrayTypes.length];
-		for (int j = 0; j < modified.length; j++) {
-			modified[j] = SFO.MEMORY + "_" + namesOfAllMemoryArrayTypes[j];
-		}
-
-		ModifiesSpecification mod = constructModifiesSpecification(loc, Arrays.asList(modified));
+		ModifiesSpecification mod = constructModifiesSpecification(loc, heapDataArrays, x -> x.getVariableName());
 		swrite.add(mod);
-		for (String s : namesOfAllMemoryArrayTypes) {
-			if (s.equals(typeName)) {
-				swrite.add(ensuresHeapArrayUpdate(loc, value, inPtr, s));
+		for (HeapDataArray other : heapDataArrays) {
+			if (heapDataArray == other) {
+				swrite.add(ensuresHeapArrayUpdate(loc, value, inPtr, other));
 			} else {
-				swrite.add(ensuresHeapArrayHardlyModified(loc, inPtr, s));
+				swrite.add(ensuresHeapArrayHardlyModified(loc, inPtr, other));
 			}
 
 		}
@@ -816,18 +822,18 @@ public class MemoryHandler {
 		return result;
 	}
 
-	private Procedure constructReadProcedure(final ILocation loc, String typeName, ASTType astType) {
+	private Procedure constructReadProcedure(final ILocation loc, HeapDataArray hda) {
 		// specification for memory reads
 		final String value = "#value";
 		final String ptrId = "#ptr";
-		final String nread = "read~" + typeName;
+		final String nread = "read~" + hda.getName();
 		final String readTypeSize = "#sizeOfReadType";
 		ASTType intType = m_TypeHandler.ctype2asttype(loc, m_ExpressionTranslation.getCTypeOfIntArray());
 		VarList[] inRead = new VarList[] { 
 				new VarList(loc, new String[] { ptrId }, m_TypeHandler.constructPointerType(loc)),
 				new VarList(loc, new String[] { readTypeSize }, intType) };
 		VarList[] outRead = new VarList[] { new VarList(loc,
-		        new String[] { value }, astType) };
+		        new String[] { value }, hda.getASTType()) };
 		
 		ArrayList<Specification> sread = new ArrayList<Specification>();
 		
@@ -836,7 +842,7 @@ public class MemoryHandler {
 		Expression sizeRead = new IdentifierExpression(loc, readTypeSize);
 		checkPointerTargetFullyAllocated(loc, sizeRead, ptrId, sread);
 		
-		Expression arr = new IdentifierExpression(loc, SFO.MEMORY + "_" + typeName);
+		Expression arr = new IdentifierExpression(loc, hda.getVariableName());
 		Expression ptrExpr = new IdentifierExpression(loc, ptrId);
 		Expression[] index = new Expression[] { ptrExpr };
 		Expression aae = new ArrayAccessExpression(loc, arr, index);
@@ -850,9 +856,9 @@ public class MemoryHandler {
 
 	// ensures #memory_X == old(#memory_X)[#ptr := #value];
 	private EnsuresSpecification ensuresHeapArrayUpdate(final ILocation loc, 
-			final String valueId, final String ptrId, final String memArrayId) {
+			final String valueId, final String ptrId, final HeapDataArray hda) {
 		final Expression valueExpr = new IdentifierExpression(loc, valueId);
-        final Expression memArray = new IdentifierExpression(loc, SFO.MEMORY + "_"+ memArrayId);
+        final Expression memArray = new IdentifierExpression(loc, hda.getVariableName());
         final Expression ptrExpr = new IdentifierExpression(loc, ptrId);
         final Expression[] index = new Expression[] { ptrExpr };
 		return ensuresArrayUpdate(loc, valueExpr, index, memArray);
@@ -860,8 +866,8 @@ public class MemoryHandler {
 	
 	//#memory_$Pointer$ == old(#memory_X)[#ptr := #memory_X[#ptr]];
 	private EnsuresSpecification ensuresHeapArrayHardlyModified(final ILocation loc, 
-			final String ptrId, final String memArrayId) {
-        final Expression memArray = new IdentifierExpression(loc, SFO.MEMORY + "_"+ memArrayId);
+			final String ptrId, final HeapDataArray hda) {
+        final Expression memArray = new IdentifierExpression(loc, hda.getVariableName());
         final Expression ptrExpr = new IdentifierExpression(loc, ptrId);
         final Expression[] index = new Expression[] { ptrExpr };
         final Expression aae = new ArrayAccessExpression(loc, memArray, index);
@@ -885,12 +891,12 @@ public class MemoryHandler {
 	 * @return ModifiesSpecification which says that all variables of the
 	 * set vars can be modified.
 	 */
-	private ModifiesSpecification constructModifiesSpecification(
-								final ILocation loc, List<String> vars) {
+	private <T> ModifiesSpecification constructModifiesSpecification(
+					final ILocation loc, final List<T> vars, final Function<T, String> varToString) {
 		VariableLHS[] modifie = new VariableLHS[vars.size()];
 		int i = 0;
-		for (String variable : vars) {
-			modifie[i] = new VariableLHS(loc, variable);
+		for (T variable : vars) {
+			modifie[i] = new VariableLHS(loc, varToString.apply(variable));
 			i++;
 		}
 		return new ModifiesSpecification(loc, false, modifie);
