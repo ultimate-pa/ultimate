@@ -64,8 +64,8 @@ public enum Logics {
 	AUFLIRA   (Features.QU + Features.AX + Features.UF + Features.LA + Features.IA + Features.RA), //NOCHECKSTYLE
 	AUFNIRA   (Features.QU + Features.AX + Features.UF + Features.NA + Features.IA + Features.RA), //NOCHECKSTYLE
 	
-	FP        (Features.QU + Features.FP),
-	QF_FP     (Features.FP),
+	FP        (Features.QU + Features.UF + Features.FP),
+	QF_FP     (Features.UF + Features.FP),
 	; //NOCHECKSTYLE
 	
 	static class Features {
