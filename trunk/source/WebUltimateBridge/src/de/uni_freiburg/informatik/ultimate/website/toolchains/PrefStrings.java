@@ -14,6 +14,7 @@ public class PrefStrings {
 
 	/** Names of tools **/
 
+	public static final String s_syntaxchecker = "de.uni_freiburg.informatik.ultimate.plugins.analysis.syntaxchecker";
 	public static final String s_cacsl2boogietranslator = "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator";
 	public static final String s_boogiePreprocessor = "de.uni_freiburg.informatik.ultimate.boogie.preprocessor";
 	public static final String s_rcfgBuilder = "de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder";

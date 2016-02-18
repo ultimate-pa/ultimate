@@ -129,7 +129,7 @@ public class LineCoverageCalculator {
 			for (final Statement stmt : statements) {
 				final ILocation location = getLocation(stmt);
 				if (location == null) {
-					mLogger.warn("Skipping empty location for statement " + BoogiePrettyPrinter.print(stmt));
+					mLogger.warn("Skipping empty location or mult-line location for statement " + BoogiePrettyPrinter.print(stmt));
 					continue;
 				}
 				addLines(rtr, location);

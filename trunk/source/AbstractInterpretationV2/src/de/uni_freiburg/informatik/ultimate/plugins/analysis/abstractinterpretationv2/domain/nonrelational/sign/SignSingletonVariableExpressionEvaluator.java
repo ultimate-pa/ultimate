@@ -28,11 +28,12 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
@@ -74,7 +75,9 @@ public class SignSingletonVariableExpressionEvaluator
 	}
 
 	@Override
-	public final IEvaluationResult<Values> evaluate(SignDomainState currentState) {
+	public final List<IEvaluationResult<Values>> evaluate(SignDomainState currentState) {
+		final List<IEvaluationResult<Values>> returnList = new ArrayList<>();
+
 		final SignDomainValue val = currentState.getValues().get(mVariableName);
 
 		if (val == null) {
@@ -82,7 +85,9 @@ public class SignSingletonVariableExpressionEvaluator
 			        "The variable with name " + mVariableName + " has not been found in the current abstract state.");
 		}
 
-		return new SignDomainValue(val.getResult());
+		returnList.add(new SignDomainValue(val.getValue()));
+
+		return returnList;
 	}
 
 	@Override
@@ -91,14 +96,15 @@ public class SignSingletonVariableExpressionEvaluator
 	}
 
 	@Override
-	public BooleanValue booleanValue() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public boolean containsBool() {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	@Override
+	public List<SignDomainState> inverseEvaluate(final IEvaluationResult<Values> computedValue,
+	        final SignDomainState currentState) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

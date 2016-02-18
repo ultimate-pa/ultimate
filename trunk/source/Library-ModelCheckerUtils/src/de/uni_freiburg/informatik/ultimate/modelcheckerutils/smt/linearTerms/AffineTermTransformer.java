@@ -37,6 +37,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.BitvectorConstant;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
@@ -57,7 +59,7 @@ public class AffineTermTransformer extends TermTransformer {
 	protected void convert(Term term) {
 		if (term instanceof TermVariable) {
 			TermVariable tv = (TermVariable) term;
-			if (tv.getSort().isNumericSort()) {
+			if (tv.getSort().isNumericSort() || BitvectorUtils.isBitvectorSort(tv.getSort())) {
 				AffineTerm result = new AffineTerm(tv);
 				setResult(result);
 				return;
@@ -65,6 +67,13 @@ public class AffineTermTransformer extends TermTransformer {
 		} else if (term instanceof ApplicationTerm) {
 			ApplicationTerm appTerm = (ApplicationTerm) term;
 			String funName = appTerm.getFunction().getName();
+			if (BitvectorUtils.isBitvectorConstant(appTerm.getFunction())) {
+				BitvectorConstant bv = BitvectorUtils.constructBitvectorConstant(appTerm);
+				Rational rational = Rational.valueOf(bv.getValue(), BigInteger.ONE);
+				AffineTerm result = new AffineTerm(appTerm.getSort(), rational);
+				setResult(result);
+				return;
+			}
 			if (isAffineSymbol(funName)) {
 				super.convert(term);
 				return;
@@ -156,7 +165,8 @@ public class AffineTermTransformer extends TermTransformer {
 	}
 
 	private boolean isAffineSymbol(String funName) {
-		return (funName.equals("+") || funName.equals("-") || funName.equals("*") || funName.equals("/"));
+		return (funName.equals("+") || funName.equals("-") || funName.equals("*") || funName.equals("/")
+				|| funName.equals("bvadd") || funName.equals("bvsub") || funName.equals("bvmul"));
 	}
 
 	@Override
@@ -185,7 +195,7 @@ public class AffineTermTransformer extends TermTransformer {
 			return;
 		}
 		String funName = appTerm.getFunction().getName();
-		if (funName.equals("*")) {
+		if (funName.equals("*") || funName.equals("bvmul")) {
 			// the result is the product of at most one affineTerm and one
 			// multiplier (that may be obtained from a product of constants)
 			AffineTerm affineTerm = null;
@@ -213,11 +223,11 @@ public class AffineTermTransformer extends TermTransformer {
 			}
 			setResult(result);
 			return;
-		} else if (funName.equals("+")) {
+		} else if (funName.equals("+") || funName.equals("bvadd")) {
 			AffineTerm result = new AffineTerm(affineArgs);
 			setResult(result);
 			return;
-		} else if (funName.equals("-")) {
+		} else if (funName.equals("-") || funName.equals("bvsub")) {
 			AffineTerm result;
 			if (affineArgs.length == 1) {
 				// unary minus

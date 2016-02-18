@@ -29,12 +29,12 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * Operation that checks if the language of the first operand is included in the
@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  */
 public class IsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 	
 	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Operand1;
@@ -56,7 +56,7 @@ public class IsIncluded<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	private final NestedRun<LETTER, STATE> m_Counterexample;
 	
 	
-	public IsIncluded(IUltimateServiceProvider services,
+	public IsIncluded(AutomataLibraryServices services,
 			StateFactory<STATE> stateFactory,
 			INestedWordAutomatonOldApi<LETTER, STATE> nwa1, 
 			INestedWordAutomatonOldApi<LETTER, STATE> nwa2) throws AutomataLibraryException {

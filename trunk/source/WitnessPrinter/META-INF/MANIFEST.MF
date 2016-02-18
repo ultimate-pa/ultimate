@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: BuchiProgramProduct
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.witnessprinter;singleton:=true
+Bundle-Version: 0.0.1
+Bundle-Activator: de.uni_freiburg.informatik.ultimate.witnessprinter.Activator
+Require-Bundle: Library-log4j,
+ Library-SMTLIB,
+ Library-UltimateUtil,
+ Library-ModelCheckerUtils,
+ Library-ApacheCommonsLang,
+ UltimateCore,
+ Library-Jung,
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
+Bundle-ActivationPolicy: lazy
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Export-Package: de.uni_freiburg.informatik.ultimate.witnessprinter

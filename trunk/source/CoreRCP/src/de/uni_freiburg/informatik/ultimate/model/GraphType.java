@@ -39,24 +39,20 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
-import org.eclipse.core.runtime.Assert;
-
 import de.uni_freiburg.informatik.ultimate.plugins.Constants;
 
 /**
- * Intended for separating different types of graphs and trees like Call Graphs,
- * Data Flow Graphs, AST Should also specify their special attributes
+ * Intended for separating different types of graphs and trees like Call Graphs, Data Flow Graphs, AST Should also
+ * specify their special attributes
  * 
  * Change in Ultimate 2.0:
  * 
- * A GraphType should be identified by its String representation. Unlike object
- * identity this should be preserved during serialization. Therefore the equals
- * method now checks for equal String representation instead of object identity.
- * In order to be consistent this change is carried to hashCode.
+ * A GraphType should be identified by its String representation. Unlike object identity this should be preserved during
+ * serialization. Therefore the equals method now checks for equal String representation instead of object identity. In
+ * order to be consistent this change is carried to hashCode.
  * 
- * The changes will allow the GraphType to remain a suitable key in the model
- * managers in-memory map and its string representation to be the key in the
- * repository.
+ * The changes will allow the GraphType to remain a suitable key in the model managers in-memory map and its string
+ * representation to be the key in the repository.
  * 
  * @author dietsch
  */
@@ -67,63 +63,57 @@ public class GraphType implements Serializable {
 	 */
 	private static final long serialVersionUID = -2922069733243189149L;
 
-	private int m_Size;
+	private int mSize;
 
-	private String m_Creator;
-	private Date m_Created;
-	private long m_LastModified;
-	private String m_LastModifier;
-	private Type m_Type;
-	private int m_Iteration;
-	private boolean m_Touched;
-	private List<String> m_FileNames;
-	private DateFormat m_LastModifiedStringFormat;
+	private String mCreator;
+	private Date mCreated;
+	private long mLastModified;
+	private String mLastModifier;
+	private Type mType;
+	private int mIteration;
+	private boolean mTouched;
+	private List<String> mFileNames;
+	private DateFormat mLastModifiedStringFormat;
 
-	private boolean m_IsCyclic;
-	private boolean m_IsDirected;
-	private boolean m_IsTree;
-	private boolean m_IsOrdered;
-	private boolean m_IsMultiGraph;
-	private boolean m_IsFinite;
+	private boolean mIsCyclic;
+	private boolean mIsDirected;
+	private boolean mIsTree;
+	private boolean mIsOrdered;
+	private boolean mIsMultiGraph;
+	private boolean mIsFinite;
 
 	/**
 	 * @author dietsch
 	 */
 	public enum Type {
-		AST, CG, CFG, DFG, CST, TS, PG, OTHER
+		AST, CG, CFG, DFG, CST, TS, PG, OTHER, CORRECTNESS_WITNESS, VIOLATION_WITNESS
 	}
 
 	public GraphType(String creatorPluginID, Type type, Collection<String> fileNames) {
-		Assert.isNotNull(fileNames);
-		Assert.isNotNull(type);
-		m_Creator = creatorPluginID;
-		m_Type = type;
-		m_FileNames = new ArrayList<String>(fileNames);
+		if (fileNames == null) {
+			throw new IllegalArgumentException("A graphtype has to have at least one filename");
+		}
+		if (type == null) {
+			throw new IllegalArgumentException("A graphtype has to have a type");
+		}
+		mCreator = creatorPluginID;
+		mType = type;
+		mFileNames = new ArrayList<String>(fileNames);
 
-		init();
-	}
-
-	public GraphType(String creatorPluginID, String type, List<String> fileNames) throws Exception {
-		Assert.isNotNull(fileNames);
-		Assert.isNotNull(type);
-		this.m_Creator = creatorPluginID;
-		this.m_FileNames = fileNames;
-		this.m_Type = Type.OTHER;
 		init();
 	}
 
 	/**
-	 * Should be set AFTER a write operation was performed on this data
-	 * structure was completed
+	 * Should be set AFTER a write operation was performed on this data structure was completed
 	 * 
 	 * @param modifierPluginID
 	 *            The ID of the plugin which performed the write operation
 	 */
 	public void modified(String modifierPluginID) {
 		this.setDirty(true);
-		this.m_LastModifier = modifierPluginID;
-		this.m_LastModified = System.currentTimeMillis();
-		this.m_Iteration++;
+		this.mLastModifier = modifierPluginID;
+		this.mLastModified = System.currentTimeMillis();
+		this.mIteration++;
 	}
 
 	/*
@@ -135,7 +125,7 @@ public class GraphType implements Serializable {
 	public boolean equals(Object obj) {
 		if (obj instanceof GraphType) {
 			GraphType t = (GraphType) obj;
-			return t.m_LastModified == m_LastModified && t.m_Creator.equals(m_Creator);
+			return t.mLastModified == mLastModified && t.mCreator.equals(mCreator);
 		}
 		return false;
 	}
@@ -147,7 +137,7 @@ public class GraphType implements Serializable {
 	 */
 	@Override
 	public int hashCode() {
-		return (int) m_LastModified;
+		return (int) mLastModified;
 	}
 
 	/*
@@ -157,80 +147,80 @@ public class GraphType implements Serializable {
 	 */
 	public String toString() {
 		StringBuffer sb = new StringBuffer();
-		for (String fileName : this.m_FileNames) {
+		for (String fileName : this.mFileNames) {
 			sb.append(new File(fileName).getName());
 		}
 		if (sb.length() > 0) {
 			sb.append(" ");
 		}
-		sb.append(this.m_Creator);
-		sb.append(" " + this.m_Type);
-		sb.append(" " + this.m_LastModifiedStringFormat.format(new Date(this.m_LastModified)));
+		sb.append(this.mCreator);
+		sb.append(" " + this.mType);
+		sb.append(" " + this.mLastModifiedStringFormat.format(new Date(this.mLastModified)));
 		return sb.toString();
 	}
 
 	public boolean isDirty() {
-		return this.m_Touched;
+		return this.mTouched;
 	}
 
 	public void setDirty(boolean flag) {
-		this.m_Touched = flag;
+		this.mTouched = flag;
 	}
 
 	public String getCreator() {
-		return m_Creator;
+		return mCreator;
 	}
 
 	public Date getCreated() {
-		return m_Created;
+		return mCreated;
 	}
 
 	public String getLastModifier() {
-		return m_LastModifier;
+		return mLastModifier;
 	}
 
 	public Date getLastModified() {
-		return new Date(m_LastModified);
+		return new Date(mLastModified);
 	}
 
 	public boolean isFromSource() {
-		return (this.m_Iteration == 0);
+		return (this.mIteration == 0);
 	}
 
 	public Type getType() {
-		return m_Type;
+		return mType;
 	}
 
 	public boolean isCyclic() {
-		return m_IsCyclic;
+		return mIsCyclic;
 	}
 
 	public boolean isDirected() {
-		return m_IsDirected;
+		return mIsDirected;
 	}
 
 	public boolean isGraph() {
-		return m_IsTree;
+		return mIsTree;
 	}
 
 	public boolean isOrdered() {
-		return m_IsOrdered;
+		return mIsOrdered;
 	}
 
 	public boolean isFinite() {
-		return m_IsFinite;
+		return mIsFinite;
 	}
 
 	public boolean isMulitGraph() {
-		return m_IsMultiGraph;
+		return mIsMultiGraph;
 	}
 
 	public String getAbsolutePath(int i) {
-		return this.m_FileNames.get(i);
+		return this.mFileNames.get(i);
 	}
 
 	public String getFileName(int i) {
-		String s = this.m_FileNames.get(i);
+		String s = this.mFileNames.get(i);
 		if (s.contains(Constants.getFileSep())) {
 			String fileSep = Constants.getFileSep();
 			String[] names = s.split(fileSep);
@@ -247,77 +237,78 @@ public class GraphType implements Serializable {
 	}
 
 	public int getNumberOfFiles() {
-		return this.m_FileNames.size();
+		return this.mFileNames.size();
 	}
 
 	private void init() {
-		this.m_Touched = false;
-		this.m_Iteration = 0;
-		this.m_LastModifier = this.m_Creator;
-		this.m_Created = new Date();
-		this.m_LastModified = System.currentTimeMillis();
-		this.m_Size = 0;
-		this.m_LastModifiedStringFormat = new SimpleDateFormat("dd.MM hh:mm:ss");
+		this.mTouched = false;
+		this.mIteration = 0;
+		this.mLastModifier = this.mCreator;
+		this.mCreated = new Date();
+		this.mLastModified = System.currentTimeMillis();
+		this.mSize = 0;
+		this.mLastModifiedStringFormat = new SimpleDateFormat("dd.MM hh:mm:ss");
 		setAttributes();
 	}
 
 	private void setAttributes() {
-		switch (m_Type) {
+		switch (mType) {
 		case AST:
-			m_IsCyclic = false;
-			m_IsDirected = true;
-			m_IsTree = true;
-			m_IsOrdered = true;
-			m_IsMultiGraph = false;
-			m_IsFinite = true;
+			mIsCyclic = false;
+			mIsDirected = true;
+			mIsTree = true;
+			mIsOrdered = true;
+			mIsMultiGraph = false;
+			mIsFinite = true;
 			break;
 		case CST:
-			m_IsCyclic = false;
-			m_IsDirected = true;
-			m_IsTree = true;
-			m_IsOrdered = true;
-			m_IsMultiGraph = false;
-			m_IsFinite = true;
+			mIsCyclic = false;
+			mIsDirected = true;
+			mIsTree = true;
+			mIsOrdered = true;
+			mIsMultiGraph = false;
+			mIsFinite = true;
 			break;
 		case DFG:
-			m_IsCyclic = false;
-			m_IsDirected = true;
-			m_IsTree = true;
-			m_IsOrdered = false;
-			m_IsMultiGraph = false;
-			m_IsFinite = true;
+			mIsCyclic = false;
+			mIsDirected = true;
+			mIsTree = true;
+			mIsOrdered = false;
+			mIsMultiGraph = false;
+			mIsFinite = true;
 			break;
 		case CFG:
-			m_IsCyclic = true;
-			m_IsDirected = true;
-			m_IsTree = false;
-			m_IsOrdered = false;
-			m_IsMultiGraph = false;
-			m_IsFinite = true;
+			mIsCyclic = true;
+			mIsDirected = true;
+			mIsTree = false;
+			mIsOrdered = false;
+			mIsMultiGraph = false;
+			mIsFinite = true;
 			break;
 		case OTHER:
-			m_IsCyclic = true;
-			m_IsDirected = true;
-			m_IsTree = false;
-			m_IsOrdered = false;
-			m_IsMultiGraph = true;
-			m_IsFinite = false;
+			mIsCyclic = true;
+			mIsDirected = true;
+			mIsTree = false;
+			mIsOrdered = false;
+			mIsMultiGraph = true;
+			mIsFinite = false;
 			break;
 		default:
-			throw new UnsupportedOperationException("Graphtype " + m_Type + " not implemented yet");
+			//do nothing
+			break;
 		}
 	}
 
 	public int getSize() {
-		return this.m_Size;
+		return this.mSize;
 	}
 
 	public void setSize(int size) {
-		this.m_Size = size;
+		this.mSize = size;
 	}
 
 	public List<String> getFileNames() {
-		return this.m_FileNames;
+		return this.mFileNames;
 	}
 
 }

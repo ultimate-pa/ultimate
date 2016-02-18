@@ -39,10 +39,11 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
+import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.ConcurrentProduct;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
@@ -52,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.SummaryReturnTransition;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * 
@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
 public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonOldApi<LETTER, STATE>,
 		INestedWordAutomaton<LETTER, STATE> {
 
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 
 	private Set<LETTER> m_InternalAlphabet;
@@ -2000,7 +2000,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomatonO
 		// assert checkTransitionsStoredConsistent();
 	}
 
-	public NestedWordAutomaton(IUltimateServiceProvider services,
+	public NestedWordAutomaton(AutomataLibraryServices services,
 			Set<LETTER> internalAlphabet, Set<LETTER> callAlphabet, Set<LETTER> returnAlphabet,
 			StateFactory<STATE> stateFactory) {
 		m_Services = services;

@@ -340,6 +340,15 @@ public class Nnf {
 			return newTerms;
 		}
 
+		
+		@Override
+		public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
+			Term simplified = SmtUtils.termWithLocalSimplification(m_Script, 
+					appTerm.getFunction().getName(), 
+					appTerm.getFunction().getIndices(), newArgs);
+			setResult(simplified);
+		}
+
 	}
 
 }

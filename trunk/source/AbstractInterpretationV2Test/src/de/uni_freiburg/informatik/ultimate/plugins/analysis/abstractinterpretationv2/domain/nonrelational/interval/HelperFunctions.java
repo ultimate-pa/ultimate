@@ -29,12 +29,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainEvaluationResult;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalBinaryExpressionEvaluator;
@@ -42,6 +42,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.LoggerInitializer;
 
+/**
+ * Helper functions for the interval test suite.
+ * 
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ *
+ */
 public class HelperFunctions {
 	protected static IntervalDomainValue createInterval(int lower, int upper) {
 		return new IntervalDomainValue(new IntervalValue(new BigDecimal(lower)),
@@ -53,7 +59,7 @@ public class HelperFunctions {
 	}
 
 	protected static IntervalBinaryExpressionEvaluator createBinaryEvaluator(IntervalDomainValue first,
-	        IntervalDomainValue second, Operator operator) {
+	        IntervalDomainValue second, Operator operator, EvaluatorType type) {
 
 		final LoggerInitializer loggerInitializer = new LoggerInitializer();
 		final Logger logger = loggerInitializer.getLogger(HelperFunctions.class.toGenericString());
@@ -63,8 +69,8 @@ public class HelperFunctions {
 		IntervalSingletonValueExpressionEvaluator value2Evaluator = new IntervalSingletonValueExpressionEvaluator(
 		        second);
 
-		IntervalBinaryExpressionEvaluator binaryExpressionEvaluator = new IntervalBinaryExpressionEvaluator(
-		        logger);
+		IntervalBinaryExpressionEvaluator binaryExpressionEvaluator = new IntervalBinaryExpressionEvaluator(logger,
+		        type);
 
 		binaryExpressionEvaluator.setOperator(operator);
 		binaryExpressionEvaluator.addSubEvaluator(value1Evaluator);
@@ -110,28 +116,46 @@ public class HelperFunctions {
 	protected static boolean computeAdditionResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
 	        IntervalDomainValue expectedResult) {
 
-		final IEvaluationResult<IntervalDomainEvaluationResult> result = createBinaryEvaluator(interval1, interval2,
-		        Operator.ARITHPLUS).evaluate(new IntervalDomainState());
+		final List<IEvaluationResult<IntervalDomainValue>> result = createBinaryEvaluator(interval1, interval2,
+		        Operator.ARITHPLUS, EvaluatorType.INTEGER).evaluate(new IntervalDomainState());
 
-		return computeResult(interval1, interval2, expectedResult, result.getResult().getEvaluatedValue());
+		boolean ret = true;
+
+		for (final IEvaluationResult<IntervalDomainValue> res : result) {
+			ret = ret && computeResult(interval1, interval2, expectedResult, res.getValue());
+		}
+
+		return ret;
 	}
 
 	protected static boolean computeSubtractionResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
 	        IntervalDomainValue expectedResult) {
 
-		final IEvaluationResult<IntervalDomainEvaluationResult> result = createBinaryEvaluator(interval1, interval2,
-		        Operator.ARITHMINUS).evaluate(null);
+		final List<IEvaluationResult<IntervalDomainValue>> result = createBinaryEvaluator(interval1, interval2,
+		        Operator.ARITHMINUS, EvaluatorType.INTEGER).evaluate(new IntervalDomainState());
 
-		return computeResult(interval1, interval2, expectedResult, result.getResult().getEvaluatedValue());
+		boolean ret = true;
+
+		for (final IEvaluationResult<IntervalDomainValue> res : result) {
+			ret = ret && computeResult(interval1, interval2, expectedResult, res.getValue());
+		}
+
+		return ret;
 	}
 
 	protected static boolean computeMultiplicationResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
 	        IntervalDomainValue expectedResult) {
 
-		final IEvaluationResult<IntervalDomainEvaluationResult> result = createBinaryEvaluator(interval1, interval2,
-		        Operator.ARITHMUL).evaluate(null);
+		final List<IEvaluationResult<IntervalDomainValue>> result = createBinaryEvaluator(interval1, interval2,
+		        Operator.ARITHMUL, EvaluatorType.INTEGER).evaluate(new IntervalDomainState());
 
-		return computeResult(interval1, interval2, expectedResult, result.getResult().getEvaluatedValue());
+		boolean ret = true;
+
+		for (final IEvaluationResult<IntervalDomainValue> res : result) {
+			ret = ret && computeResult(interval1, interval2, expectedResult, res.getValue());
+		}
+
+		return ret;
 	}
 
 	protected static boolean computeIntersectionResult(IntervalDomainValue interval1, IntervalDomainValue interval2,
@@ -140,5 +164,47 @@ public class HelperFunctions {
 		final IntervalDomainValue result = interval1.intersect(interval2);
 
 		return computeResult(interval1, interval2, expectedResult, result);
+	}
+
+	protected static boolean computeMergedInterval(IntervalDomainValue interval1, IntervalDomainValue interval2,
+	        IntervalDomainValue expected) {
+
+		final IntervalDomainValue computed = interval1.merge(interval2);
+
+		return computeResult(interval1, interval2, expected, computed);
+	}
+
+	protected static boolean checkInclusion(IntervalDomainValue interval1, IntervalDomainValue interval2) {
+		return interval1.isContainedIn(interval2);
+	}
+
+	protected static boolean computeDivisionResultReal(IntervalDomainValue interval1, IntervalDomainValue interval2,
+	        IntervalDomainValue expectedResult) {
+
+		final List<IEvaluationResult<IntervalDomainValue>> result = createBinaryEvaluator(interval1, interval2,
+		        Operator.ARITHDIV, EvaluatorType.REAL).evaluate(new IntervalDomainState());
+
+		boolean ret = true;
+
+		for (final IEvaluationResult<IntervalDomainValue> res : result) {
+			ret = ret && computeResult(interval1, interval2, expectedResult, res.getValue());
+		}
+
+		return ret;
+	}
+
+	protected static boolean computeDivisionResultInteger(IntervalDomainValue interval1, IntervalDomainValue interval2,
+	        IntervalDomainValue expectedResult) {
+
+		final List<IEvaluationResult<IntervalDomainValue>> result = createBinaryEvaluator(interval1, interval2,
+		        Operator.ARITHDIV, EvaluatorType.INTEGER).evaluate(new IntervalDomainState());
+
+		boolean ret = true;
+
+		for (final IEvaluationResult<IntervalDomainValue> res : result) {
+			ret = ret && computeResult(interval1, interval2, expectedResult, res.getValue());
+		}
+
+		return ret;
 	}
 }

@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -40,11 +41,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Transitionlet;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
 class LassoConstructor<LETTER, STATE> {
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_Nwars;
     private final StateContainer<LETTER,STATE> m_Goal;
     private final Set<StateContainer<LETTER,STATE>> m_Visited =
@@ -59,7 +59,7 @@ class LassoConstructor<LETTER, STATE> {
     private NestedRun<LETTER, STATE> m_Stem;
     private NestedLassoRun<LETTER, STATE> m_Lasso;
     
-	public LassoConstructor(IUltimateServiceProvider services, 
+	public LassoConstructor(AutomataLibraryServices services, 
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwars, 
 			StateContainer<LETTER, STATE> goal, StronglyConnectedComponent<StateContainer<LETTER, STATE>> scc) throws OperationCanceledException {
 		m_Services = services;
@@ -81,7 +81,7 @@ class LassoConstructor<LETTER, STATE> {
 		m_Lasso = new NestedLassoRun<LETTER, STATE>(m_Stem, m_Loop);
 	}
 	
-	public LassoConstructor(IUltimateServiceProvider services,
+	public LassoConstructor(AutomataLibraryServices services,
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwars, 
 			Summary<LETTER, STATE> summary, StronglyConnectedComponent<StateContainer<LETTER, STATE>> scc) throws OperationCanceledException {
 		m_Services = services;

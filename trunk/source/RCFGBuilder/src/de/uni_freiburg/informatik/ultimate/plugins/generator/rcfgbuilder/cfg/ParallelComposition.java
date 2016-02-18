@@ -111,7 +111,7 @@ public class ParallelComposition extends CodeBlock {
 			TermVariable tv = script.variable(varname, boolSort);
 			branchIndicator[i] = tv;
 			m_BranchIndicator2CodeBlock.put(branchIndicator[i], codeBlocks.get(i));
-			ModelUtils.mergeAnnotations(codeBlocks.get(i), this);
+			ModelUtils.copyAnnotations(codeBlocks.get(i), this);
 		}
 		// workaround: set annotation with this pluginId again, because it was
 		// overwritten by the mergeAnnotations method

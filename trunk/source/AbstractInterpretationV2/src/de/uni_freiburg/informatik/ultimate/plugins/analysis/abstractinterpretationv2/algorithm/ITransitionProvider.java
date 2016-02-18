@@ -36,7 +36,7 @@ import java.util.Collection;
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public interface ITransitionProvider<ACTION> {
+public interface ITransitionProvider<ACTION, LOCATION> {
 
 	Collection<ACTION> filterInitialElements(Collection<ACTION> actions);
 
@@ -49,4 +49,10 @@ public interface ITransitionProvider<ACTION> {
 	boolean isEnteringScope(ACTION current);
 
 	boolean isLeavingScope(ACTION current, ACTION scope);
+
+	LOCATION getSource(ACTION current);
+
+	LOCATION getTarget(ACTION current);
+
+	Collection<ACTION> getSuccessorActions(LOCATION loc);
 }

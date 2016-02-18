@@ -39,6 +39,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
@@ -47,13 +48,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * @author Björn Hagemeister
  */
 public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTER, STATE> {
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	// Logger for debug - information.
 	private final Logger m_Logger;
 	// Result automaton.
@@ -99,14 +99,14 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 	/*******************************************************************//**
 	 * Constructor.
 	 */
-	public MinimizeDfaHopcroftPaper(IUltimateServiceProvider services, 
+	public MinimizeDfaHopcroftPaper(AutomataLibraryServices services, 
 			INestedWordAutomaton<LETTER, STATE> operand,
 			StateFactory<STATE> stateFactoryConstruction,
 			boolean addMapping) {
 		this(services, operand, stateFactoryConstruction, null, addMapping);
 	}
 	
-	public MinimizeDfaHopcroftPaper(IUltimateServiceProvider services, 
+	public MinimizeDfaHopcroftPaper(AutomataLibraryServices services, 
 			INestedWordAutomaton<LETTER, STATE> operand,
 			StateFactory<STATE> stateFactoryConstruction,
 			Collection<Set<STATE>> initialPartition, boolean addMapping) {
@@ -146,7 +146,7 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 	/**
 	 * Constructor without state factory.
 	 */
-	public MinimizeDfaHopcroftPaper(IUltimateServiceProvider services, 
+	public MinimizeDfaHopcroftPaper(AutomataLibraryServices services, 
 			INestedWordAutomaton<LETTER, STATE> operand) {
 		this(services, operand, operand.getStateFactory(), false);
 	}
@@ -358,7 +358,6 @@ public class MinimizeDfaHopcroftPaper<LETTER, STATE> implements IOperation<LETTE
 				
 				@Override
 				public int compare(Integer x, Integer y) {
-					// TODO Auto-generated method stub
 					return Integer.compare(m_labels[x], m_labels[y]);
 				}
 			});

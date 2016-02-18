@@ -36,6 +36,7 @@ import java.util.SortedMap;
 import java.util.Stack;
 import java.util.TreeMap;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -44,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Transitionlet;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * Construction of initial runs and runs for summaries. Runs are constructed
@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  *
  */
 class RunConstructor<LETTER,STATE> {
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_Nwars;
 	private final StateContainer<LETTER,STATE> m_Start;
 	/**
@@ -73,7 +73,7 @@ class RunConstructor<LETTER,STATE> {
 	/**
 	 * Construction of an initial run whose last state is start.
 	 */
-	public RunConstructor(IUltimateServiceProvider services, 
+	public RunConstructor(AutomataLibraryServices services, 
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwars,
 			StateContainer<LETTER, STATE> start) {
 		m_Services = services;
@@ -94,7 +94,7 @@ class RunConstructor<LETTER,STATE> {
 	 * is goal and whose last state is start. If goal is null we construct
 	 * an initial run whose last state is start.
 	 */
-	public RunConstructor(IUltimateServiceProvider services, 
+	public RunConstructor(AutomataLibraryServices services, 
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwars,
 			Summary<LETTER,STATE> summary,
 			boolean summaryMustContainAccepting) {
@@ -116,7 +116,7 @@ class RunConstructor<LETTER,STATE> {
 	 * is a run that takes a summary twice, then there is a run that takes the 
 	 * summary once).
 	 */
-	private RunConstructor(IUltimateServiceProvider services, 
+	private RunConstructor(AutomataLibraryServices services, 
 			NestedWordAutomatonReachableStates<LETTER, STATE> nwars,
 			Summary<LETTER,STATE> summary,
 			boolean summaryMustContainAccepting,
@@ -290,7 +290,8 @@ class RunConstructor<LETTER,STATE> {
 	 */
 	NestedRun<LETTER, STATE> constructRun() throws OperationCanceledException {
 		//TODO: Check if this timeout check is responsible for problems.
-		if (!m_Services.getProgressMonitorService().continueProcessing()) {
+		if (m_Services.getProgressMonitorService() != null
+				&& !m_Services.getProgressMonitorService().continueProcessing()) {
 			throw new OperationCanceledException(this.getClass());
 		}
 		assert !m_SummaryMustContainAccepting || m_Goal != null;

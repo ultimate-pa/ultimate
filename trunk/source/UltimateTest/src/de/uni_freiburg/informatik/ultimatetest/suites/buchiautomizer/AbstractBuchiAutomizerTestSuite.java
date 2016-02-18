@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.HTMLSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.KingOfTheHillSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.LatexDetailedSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.LatexOverviewSummary;
+import de.uni_freiburg.informatik.ultimatetest.summaries.StandingsSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.TraceAbstractionTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
 
@@ -65,9 +66,42 @@ public abstract class AbstractBuchiAutomizerTestSuite extends AbstractModelCheck
 		benchmarks.add(Benchmark.class);
 		benchmarks.add(BuchiAutomizerModuleDecompositionBenchmark.class);
 
-		ColumnDefinition[] columnDef = new ColumnDefinition[] { new ColumnDefinition(
-				"Runtime (ns)", "Avg. runtime",
-				ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average) };
+		ColumnDefinition[] columnDef = new ColumnDefinition[] { 
+				new ColumnDefinition(
+						"Overall time", "runtime",
+						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),	
+//				new ColumnDefinition(
+//						"Peak memory consumption (bytes)", "Mem{-}ory",
+//						ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average),						
+				new ColumnDefinition(
+						"Overall iterations", "iter{-}ations",
+						ConversionContext.Divide(1, 2, ""), Aggregate.Ignore, Aggregate.Average),
+				
+				new ColumnDefinition("Automata difference", "adiff time", 
+						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+				
+				new ColumnDefinition("Dead end removal time", "dead end time", 
+						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition("Minimization time", "mnmz time", 
+						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition("BasicInterpolantAutomatonTime", "bia time", 
+						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition("EdgeCheckerBenchmarkData_EdgeCheckerTime", "ec time", 
+						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition("PredicateUnifierData_Time", "pu time", 
+						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition("TraceCheckerBenchmark_InterpolantComputationTime", "itp time", 
+						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+				
+				new ColumnDefinition("States removed by minization", "mnmz states", 
+						ConversionContext.Divide(1, 2, ""), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition("NonLiveStateRemoval", "non live time", 
+						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition("BuchiClosure", "bc time", 
+						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+				new ColumnDefinition("LassoAnalysisTime", "lasso analysis time", 
+						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+		};
 
 		return new ITestSummary[] { 
 				new TraceAbstractionTestSummary(this.getClass()),
@@ -77,6 +111,7 @@ public abstract class AbstractBuchiAutomizerTestSuite extends AbstractModelCheck
 //				new CsvSummary(getClass(), benchmarks, columnDef),
 				new HTMLSummary(getClass(), benchmarks, columnDef),
 				new KingOfTheHillSummary(this.getClass()),
+				new StandingsSummary(this.getClass()),
 		};
 
 	}

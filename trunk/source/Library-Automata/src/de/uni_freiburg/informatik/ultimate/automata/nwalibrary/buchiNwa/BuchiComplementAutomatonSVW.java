@@ -41,6 +41,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
@@ -53,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.SummaryReturnTransition;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * Automaton that is returned as the result of the {@code BuchiComplementSVW}
@@ -66,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  * 
  */
 public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAutomatonOldApi<LETTER, STATE> {
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private TransitionMonoidAutomaton m_TMA;
 	private Set<LETTER> m_Alphabet;
 	private SizeInfoContainer m_sizeInfo = null;
@@ -83,7 +83,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	private final Logger m_Logger;
 	private String UnsupportedOperationMessage = "Transform to NestedWordAutomaton to get full support.";
 
-	public BuchiComplementAutomatonSVW(IUltimateServiceProvider services, 
+	public BuchiComplementAutomatonSVW(AutomataLibraryServices services, 
 			INestedWordAutomatonOldApi<LETTER, STATE> origAutomaton)
 			throws AutomataLibraryException {
 		m_Services = services;

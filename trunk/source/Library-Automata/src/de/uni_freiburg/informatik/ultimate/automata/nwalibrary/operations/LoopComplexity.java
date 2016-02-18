@@ -37,6 +37,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.AutomatonSccComputation;
@@ -47,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAu
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
 /**
@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  */
 public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> {	
 	
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 	
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> m_Operand;
@@ -73,12 +73,12 @@ public class LoopComplexity<LETTER, STATE> implements IOperation<LETTER, STATE> 
 	private HashMap<Set<STATE>, Integer> statesToLC = new HashMap<Set<STATE>, Integer>();
 	
 	
-	public LoopComplexity(IUltimateServiceProvider services,
+	public LoopComplexity(AutomataLibraryServices services,
 			INestedWordAutomaton<LETTER, STATE> operand) throws AutomataLibraryException {
 		super();
 		
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		m_Logger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		
 		if (operand instanceof NestedWordAutomatonReachableStates) {
 			m_Operand = (NestedWordAutomatonReachableStates<LETTER, STATE>) operand;

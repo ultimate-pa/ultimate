@@ -38,12 +38,12 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 
 /**
@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  */
 public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 	/**
 	 * stem of the nested lasso word whose acceptance is checked 
@@ -112,7 +112,7 @@ public class BuchiAcceptsRecursive<LETTER,STATE> implements IOperation<LETTER,ST
 	 * @return true iff nlw is accepted by nwa. Note that here a nested lasso word is
 	 *  always rejected its loop contains pending returns.  
 	 */
-	public BuchiAcceptsRecursive(IUltimateServiceProvider services,
+	public BuchiAcceptsRecursive(AutomataLibraryServices services,
 			INestedWordAutomatonOldApi<LETTER,STATE> nwa, NestedLassoWord<LETTER> nlw){
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);

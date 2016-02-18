@@ -28,7 +28,11 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
    org.apache.log4j,
    de.uni_freiburg.informatik.ultimate.core.api",
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction,
+ de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.delayed,
+ de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.direct,
+ de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.fair,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.old.vertex,
+ de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incremental_inclusion,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization,
@@ -40,7 +44,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
  de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;uses:="de.uni_freiburg.informatik.ultimate.automata.petrinet,de.uni_freiburg.informatik.ultimate.automata.nwalibrary,de.uni_freiburg.informatik.ultimate.automata",
  de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.petruchio,
  de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization;uses:="de.uni_freiburg.informatik.ultimate.automata.petrinet,de.uni_freiburg.informatik.ultimate.model,de.uni_freiburg.informatik.ultimate.automata.petrinet.julian"
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ClassPath: src/de/uni_freiburg/informatik/ultimate/automata/petrinet/julian/petruchio/petruchio.jar,
  .
 Import-Package: cern.colt.function,

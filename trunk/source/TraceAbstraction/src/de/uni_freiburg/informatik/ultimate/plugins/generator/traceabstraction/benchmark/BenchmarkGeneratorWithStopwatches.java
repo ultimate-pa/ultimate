@@ -32,58 +32,61 @@ import java.util.concurrent.TimeUnit;
 
 import de.uni_freiburg.informatik.ultimate.util.Benchmark;
 
-
 /**
- * Superclass for benchmark generators that use stopwatches.
- * Takes care that
- * <li> no unregistered stopwatches are used
- * <li> we only take the time of stopwatches that have been stopped.
+ * Superclass for benchmark generators that use stopwatches. Takes care that
+ * <li>no unregistered stopwatches are used
+ * <li>we only take the time of stopwatches that have been stopped.
+ * 
  * @author Matthias Heizmann
  *
  */
 public abstract class BenchmarkGeneratorWithStopwatches {
-	
-	private final Map<String, Boolean> m_RunningStopwatches;
-	private final Benchmark m_Benchmark;
-	
+
+	private final Map<String, Boolean> mRunningStopwatches;
+	private final Benchmark mBenchmark;
+
 	public abstract String[] getStopwatches();
-	
+
 	public BenchmarkGeneratorWithStopwatches() {
-		m_RunningStopwatches = new HashMap<String, Boolean>(getStopwatches().length);
-		m_Benchmark = new Benchmark();
-		for (String name : getStopwatches()) {
-			m_RunningStopwatches.put(name, false);
-			m_Benchmark.register(name);
+		mRunningStopwatches = new HashMap<String, Boolean>(getStopwatches().length);
+		mBenchmark = new Benchmark();
+		for (final String name : getStopwatches()) {
+			mRunningStopwatches.put(name, false);
+			mBenchmark.register(name);
 		}
 	}
-	
-	public void start(String stopwatchName) {
-		assert m_RunningStopwatches.containsKey(stopwatchName) : 
-			"no such stopwatch " + stopwatchName;
-		assert m_RunningStopwatches.get(stopwatchName) == false : 
-			"already started " + stopwatchName;
-		m_RunningStopwatches.put(stopwatchName, true);
-		m_Benchmark.unpause(stopwatchName);
+
+	public void start(final String stopwatchName) {
+		assert mRunningStopwatches.containsKey(stopwatchName) : "no such stopwatch " + stopwatchName;
+		assert mRunningStopwatches.get(stopwatchName) == false : "already started " + stopwatchName;
+		mRunningStopwatches.put(stopwatchName, true);
+		mBenchmark.unpause(stopwatchName);
+	}
+
+	public void stop(final String stopwatchName) {
+		assert mRunningStopwatches.containsKey(stopwatchName) : "no such stopwatch " + stopwatchName;
+		assert mRunningStopwatches.get(stopwatchName) == true : "not running " + stopwatchName;
+		mRunningStopwatches.put(stopwatchName, false);
+		mBenchmark.pause(stopwatchName);
 	}
 	
-	public void stop(String stopwatchName) {
-		assert m_RunningStopwatches.containsKey(stopwatchName) : 
-			"no such stopwatch " + stopwatchName;
-		assert m_RunningStopwatches.get(stopwatchName) == true : 
-			"not running "  + stopwatchName;
-		m_RunningStopwatches.put(stopwatchName, false);
-		m_Benchmark.pause(stopwatchName);
+	public void stopIfRunning(String name){
+		mRunningStopwatches.put(name, false);
+		mBenchmark.pause(name);
 	}
-	
-	protected long getElapsedTime(String stopwatchName) throws StopwatchStillRunningException {
-		assert m_RunningStopwatches.containsKey(stopwatchName) : 
-			"no such stopwatch " + stopwatchName;
-		if(m_RunningStopwatches.get(stopwatchName)) {
+
+	public void stopAllStopwatches() {
+		mRunningStopwatches.entrySet().stream().filter(a -> a.getValue()).map(a -> a.getKey()).forEach(a -> stop(a));
+	}
+
+	protected long getElapsedTime(final String stopwatchName) throws StopwatchStillRunningException {
+		assert mRunningStopwatches.containsKey(stopwatchName) : "no such stopwatch " + stopwatchName;
+		if (mRunningStopwatches.get(stopwatchName)) {
 			throw new StopwatchStillRunningException();
 		}
-		return (long) m_Benchmark.getElapsedTime(stopwatchName, TimeUnit.NANOSECONDS);
+		return (long) mBenchmark.getElapsedTime(stopwatchName, TimeUnit.NANOSECONDS);
 	}
-	
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
@@ -95,7 +98,7 @@ public abstract class BenchmarkGeneratorWithStopwatches {
 			} catch (StopwatchStillRunningException e) {
 				sb.append("clockStillRunning!");
 			}
-			if (m_RunningStopwatches.get(name)) {
+			if (mRunningStopwatches.get(name)) {
 				sb.append("stopwatch still running!!!");
 			}
 			sb.append(" ");
@@ -104,16 +107,15 @@ public abstract class BenchmarkGeneratorWithStopwatches {
 	}
 
 	public static String prettyprintNanoseconds(long time) {
-		long seconds = time/1000000000;
-		long tenthDigit = (time/100000000) % 10;
+		long seconds = time / 1000000000;
+		long tenthDigit = (time / 100000000) % 10;
 		return seconds + "." + tenthDigit + "s";
 	}
-	
-	
+
 	public class StopwatchStillRunningException extends Exception {
 
 		private static final long serialVersionUID = 47519007262609785L;
-		
+
 	}
-	
+
 }

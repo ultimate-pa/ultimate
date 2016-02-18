@@ -29,8 +29,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign;
 
 import java.math.BigDecimal;
+import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
 
 /**
  * Represents a single decimal expression in the {@link SignDomain}.
@@ -50,8 +52,8 @@ public class SignSingletonDecimalExpressionEvaluator extends SignSingletonValueE
 		try {
 			number = new BigDecimal(value);
 		} catch (NumberFormatException e) {
-			throw new UnsupportedOperationException("The value \"" + value
-			        + "\" cannot be transformed to a decimal number.");
+			throw new UnsupportedOperationException(
+			        "The value \"" + value + "\" cannot be transformed to a decimal number.");
 		}
 
 		return number;
@@ -63,15 +65,15 @@ public class SignSingletonDecimalExpressionEvaluator extends SignSingletonValueE
 	}
 
 	@Override
-	public BooleanValue booleanValue() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public boolean containsBool() {
 		// TODO Auto-generated method stub
 		return false;
 	}
 
+	@Override
+	public List<SignDomainState> inverseEvaluate(final IEvaluationResult<Values> computedValue,
+	        final SignDomainState currentState) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

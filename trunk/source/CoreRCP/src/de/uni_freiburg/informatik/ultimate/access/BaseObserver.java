@@ -24,6 +24,7 @@
  * licensors of the ULTIMATE Core grant you additional permission 
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.access;
 
 import de.uni_freiburg.informatik.ultimate.model.GraphType;

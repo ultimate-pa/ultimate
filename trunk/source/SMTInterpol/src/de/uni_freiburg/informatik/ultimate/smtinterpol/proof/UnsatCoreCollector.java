@@ -18,6 +18,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.smtinterpol.proof;
 
+import java.util.ArrayDeque;
 import java.util.HashSet;
 
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
@@ -33,53 +34,51 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.IdentityHashSet;
  */
 public class UnsatCoreCollector {
 	private final Script mScript;
-	private final HashSet<String> mUnsatCoreIds;
-	private final IdentityHashSet<Clause> mVisited;
 	public UnsatCoreCollector(Script script) {
 		mScript = script;
-		mUnsatCoreIds = new HashSet<String>();
-		mVisited = new IdentityHashSet<Clause>();
 	}
 	
 	public Term[] getUnsatCore(Clause unsat) {
 		try {
-			accept(unsat);
-			Term[] res = new Term[mUnsatCoreIds.size()];
+			HashSet<String> unsatCoreIds = run(unsat);
+			Term[] res = new Term[unsatCoreIds.size()];
 			int i = -1;
-			for (String s : mUnsatCoreIds)
+			for (String s : unsatCoreIds)
 				res[++i] = mScript.term(s);
 			return res;
 		} catch (SMTLIBException ese) {
 			throw new InternalError(ese.getMessage());
 		}
 	}
-	// Entry to the visitor.
-	private void accept(Clause c) {
-		if (mVisited.add(c)) {
-			if (c.getProof().isLeaf())
-				visit((LeafNode) c.getProof());
-			else
-				visit((ResolutionNode) c.getProof());
+
+	private HashSet<String> run(Clause unsat) {
+		HashSet<String> res = new HashSet<String>();
+		ArrayDeque<Clause> todo = new ArrayDeque<Clause>();
+		todo.push(unsat);
+		IdentityHashSet<Clause> visited = new IdentityHashSet<Clause>();
+		while (!todo.isEmpty()) {
+			Clause c = todo.pop();
+			if (visited.add(c)) {
+				if (c.getProof().isLeaf()) {
+					LeafNode l = (LeafNode) c.getProof();
+					// Tautologies are not needed in an unsat core
+					if (l.getLeafKind() == LeafNode.NO_THEORY
+							&& l.getTheoryAnnotation() instanceof SourceAnnotation) {
+						String name = ((SourceAnnotation) l.getTheoryAnnotation()).
+							getAnnotation();
+						// Guard against unnamed clauses
+						if (!name.isEmpty())
+							res.add(name);
+					}
+				} else {
+					ResolutionNode n = (ResolutionNode) c.getProof();
+					todo.push(n.getPrimary());
+					Antecedent[] ants = n.getAntecedents();
+					for (Antecedent a : ants)
+						todo.push(a.mAntecedent);
+				}
+			}
 		}
-	}
-	// Visit resolution nodes
-	private void visit(ResolutionNode node) {
-		accept(node.getPrimary());
-		Antecedent[] ants = node.getAntecedents();
-		for (Antecedent a : ants) {
-			accept(a.mAntecedent);
-		}
-	}
-	// Visit leaf nodes
-	private void visit(LeafNode node) {
-		// Tautologies are not needed in an unsat core
-		if (node.getLeafKind() == LeafNode.NO_THEORY
-				&& node.getTheoryAnnotation() instanceof SourceAnnotation) {
-			String name = ((SourceAnnotation) node.getTheoryAnnotation()).
-				getAnnotation();
-			// Guard against unnamed clauses
-			if (!name.isEmpty())
-				mUnsatCoreIds.add(name);
-		}
+		return res;
 	}
 }

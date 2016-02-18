@@ -29,28 +29,33 @@ package de.uni_freiburg.informatik.ultimate.core.services.model;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
 
 /**
  * 
- * {@link IBacktranslationService} contains all {@link ITranslator} instances
- * for the currently running toolchain.
+ * {@link IBacktranslationService} contains all {@link ITranslator} instances for the currently running toolchain.
  * 
- * @author dietsch
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
 public interface IBacktranslationService {
 
 	/**
-	 * Add a new translator to the backtranslation service. It has to be
-	 * type-compatible with the existing ones!
+	 * Add a new translator to the backtranslation service. It has to be type-compatible with the existing ones!
 	 * 
 	 * @param translator
 	 */
 	public <STE, TTE, SE, TE> void addTranslator(ITranslator<STE, TTE, SE, TE> translator);
 
-	public <SE> Object translateExpression(SE expression, Class<SE> clazz);
+	public <SE, TE> TE translateExpression(SE expression, Class<SE> sourceExpressionClass);
 
+	/**
+	 * Translate an expression from the output type to a String.
+	 * 
+	 * @param expression
+	 * @param clazz
+	 * @return
+	 */
 	public <SE> String translateExpressionToString(SE expression, Class<SE> clazz);
 
 	public <STE> List<?> translateTrace(List<STE> trace, Class<STE> clazz);
@@ -59,6 +64,11 @@ public interface IBacktranslationService {
 
 	public <STE, SE> IProgramExecution<?, ?> translateProgramExecution(IProgramExecution<STE, SE> programExecution);
 
+	public <STE, SE> IBacktranslatedCFG<?, ?> translateCFG(IBacktranslatedCFG<?, STE> cfg);
+
+	/**
+	 * Use this if you want to keep a certain state of the backtranslation chain during toolchain execution.
+	 */
 	public IBacktranslationService getTranslationServiceCopy();
 
 }

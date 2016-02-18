@@ -113,17 +113,23 @@ public class BooleanValue {
 	 * @return <code>true</code> if and only if the value of the other Boolean is equal to the value of
 	 *         <code>this</code>.
 	 */
-	public boolean isEqualTo(Object other) {
+	public boolean isEqualTo(BooleanValue other) {
 		if (other == null) {
 			return false;
 		}
 
-		if (!(other instanceof BooleanValue)) {
-			return false;
+		return mValue == other.mValue;
+	}
+
+	/**
+	 * @return <code>true</code> if and only if the value of <code>this</code> is &bot;, <code>false</code> otherwise.
+	 */
+	public boolean isBottom() {
+		if (mValue.equals(Value.BOTTOM)) {
+			return true;
 		}
 
-		final BooleanValue o = (BooleanValue) other;
-		return mValue == o.mValue;
+		return false;
 	}
 
 	/**
@@ -161,11 +167,17 @@ public class BooleanValue {
 	public BooleanValue merge(BooleanValue other) {
 		assert other != null;
 
-		if (mValue == Value.BOTTOM || other.mValue == Value.BOTTOM) {
+		if (mValue == Value.BOTTOM && other.mValue == Value.BOTTOM) {
 			return new BooleanValue(Value.BOTTOM);
 		}
 
-		if (!equals(other)) {
+		if (mValue == Value.BOTTOM && other.mValue != Value.BOTTOM) {
+			return new BooleanValue(other.mValue);
+		} else if (mValue != Value.BOTTOM && other.mValue == Value.BOTTOM) {
+			return new BooleanValue(mValue);
+		}
+
+		if (!isEqualTo(other)) {
 			return new BooleanValue(Value.TOP);
 		}
 
@@ -207,7 +219,7 @@ public class BooleanValue {
 	public BooleanValue or(BooleanValue other) {
 		assert other != null;
 
-		if (mValue == Value.BOTTOM && other.mValue == Value.BOTTOM) {
+		if (mValue == Value.BOTTOM || other.mValue == Value.BOTTOM) {
 			return new BooleanValue(Value.BOTTOM);
 		}
 

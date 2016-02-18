@@ -8,5 +8,5 @@ Require-Bundle: UltimateCore,
  Library-log4j,
  Library-Jung
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.witnessparser.graph

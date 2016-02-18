@@ -28,10 +28,14 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
@@ -54,12 +58,16 @@ public class SignLogicalSingletonValueExpressionEvaluator extends SignSingletonV
 	}
 
 	@Override
-	public IEvaluationResult<Values> evaluate(SignDomainState currentState) {
+	public List<IEvaluationResult<Values>> evaluate(SignDomainState currentState) {
+		final List<IEvaluationResult<Values>> returnList = new ArrayList<>();
+
 		if (mValue) {
-			return new SignDomainValue(Values.POSITIVE);
+			returnList.add(new SignDomainValue(Values.POSITIVE));
 		} else {
-			return new SignDomainValue(Values.NEGATIVE);
+			returnList.add(new SignDomainValue(Values.NEGATIVE));
 		}
+
+		return returnList;
 	}
 
 	private SignDomainState logicallyInterpret(SignDomainState currentState) {
@@ -84,14 +92,15 @@ public class SignLogicalSingletonValueExpressionEvaluator extends SignSingletonV
 	}
 
 	@Override
-	public BooleanValue booleanValue() {
-		return mBooleanValue;
-	}
-
-	@Override
 	public boolean containsBool() {
 		// TODO Auto-generated method stub
 		return false;
 	}
 
+	@Override
+	public List<SignDomainState> inverseEvaluate(final IEvaluationResult<Values> computedValue,
+	        final SignDomainState currentState) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

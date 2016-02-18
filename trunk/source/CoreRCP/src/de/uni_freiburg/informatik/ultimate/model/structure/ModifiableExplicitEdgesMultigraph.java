@@ -31,54 +31,47 @@ import java.util.Collection;
 import de.uni_freiburg.informatik.ultimate.model.IPayload;
 
 /***
- * This class is the reference implementation for
- * {@link IModifiableExplicitEdgesMultigraph}. It works together with
+ * This class is the reference implementation for {@link IModifiableExplicitEdgesMultigraph}. It works together with
  * {@link ModifiableMultigraphEdge}.
  * 
  * @author dietsch
  * @param <V>
- *            is the type of the nodes of the concrete model. This parameter
- *            should be used by sub-classes to specify a more restrictive type
- *            and thus free clients from the need of down-casting.<br>
- *            Final implementations should fix this parameter to their type,
- *            e.g. a (fictive) type <tt>FinalModelNode</tt> would declare
+ *            is the type of the nodes of the concrete model. This parameter should be used by sub-classes to specify a
+ *            more restrictive type and thus free clients from the need of down-casting.<br>
+ *            Final implementations should fix this parameter to their type, e.g. a (fictive) type
+ *            <tt>FinalModelNode</tt> would declare
  *            <tt>public final class FinalModelNode extends ModifiableExplicitEdgesMultigraph&lt;FinalModelNode,E&gt;</tt>
  *            .
  * @param <E>
- *            is the type of the edges of the concrete model. This parameter
- *            should be used by sub-classes to specify a more restrictive type
- *            and thus free clients from the need of down-casting.<br>
- *            Final implementations should fix this parameter to the
- *            corresponding node type, e.g. a (fictive) type
- *            <tt>FinalModelNode</tt> and the corresponding edge type
- *            <tt>FinalModelEdge</tt> would declare
+ *            is the type of the edges of the concrete model. This parameter should be used by sub-classes to specify a
+ *            more restrictive type and thus free clients from the need of down-casting.<br>
+ *            Final implementations should fix this parameter to the corresponding node type, e.g. a (fictive) type
+ *            <tt>FinalModelNode</tt> and the corresponding edge type <tt>FinalModelEdge</tt> would declare
  *            <tt>public final class FinalModelNode extends ModifiableExplicitEdgesMultigraph&lt;FinalModelNode,FinalModelEdge&gt;</tt>
  * @see IModifiableExplicitEdgesMultigraph
  * @see BaseExplicitEdgesMultigraph
  * @see ModifiableMultigraphEdge
  */
-public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExplicitEdgesMultigraph<V, E>, E extends IModifiableMultigraphEdge<V, E>>
-		extends BaseExplicitEdgesMultigraph<V, E> implements
-		IModifiableExplicitEdgesMultigraph<V, E> {
+public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExplicitEdgesMultigraph<V, E, VL, EL>, E extends IModifiableMultigraphEdge<V, E, VL, EL>, VL, EL>
+		extends BaseExplicitEdgesMultigraph<V, E, VL, EL> implements IModifiableExplicitEdgesMultigraph<V, E, VL, EL> {
 
 	/**
-	 * ID to distinguish different versions of this class. If the class gains
-	 * additional fields, this constant should be incremented. This field may
-	 * not be renamed.
+	 * ID to distinguish different versions of this class. If the class gains additional fields, this constant should be
+	 * incremented. This field may not be renamed.
 	 */
 	private static final long serialVersionUID = 1L;
 
 	/***
-	 * This constructor creates a new ModifiableExplicitEdgesMultigraph node
-	 * without connections to any other node and without a payload.
+	 * This constructor creates a new ModifiableExplicitEdgesMultigraph node without connections to any other node and
+	 * without a payload.
 	 */
 	protected ModifiableExplicitEdgesMultigraph() {
 		this(null, null, null);
 	}
 
 	/***
-	 * This constructor creates a new ModifiableExplicitEdgesMultigraph node
-	 * without connections to any other node but with a given payload.
+	 * This constructor creates a new ModifiableExplicitEdgesMultigraph node without connections to any other node but
+	 * with a given payload.
 	 * 
 	 * @param payload
 	 *            The payload for the current node or null.
@@ -90,15 +83,13 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 	}
 
 	/***
-	 * This constructor creates a new ModifiableExplicitEdgesMultigraph node
-	 * without a payload. It creates a new IMultigraphEdge from the given
-	 * predecessor to the new node and updates the predecessor's outgoing edges
-	 * and the new nodes' incoming edges accordingly. The new edge from the
-	 * given node to the new node is not labeled, i.e. its payload will be null.
+	 * This constructor creates a new ModifiableExplicitEdgesMultigraph node without a payload. It creates a new
+	 * IMultigraphEdge from the given predecessor to the new node and updates the predecessor's outgoing edges and the
+	 * new nodes' incoming edges accordingly. The new edge from the given node to the new node is not labeled, i.e. its
+	 * payload will be null.
 	 * 
 	 * @param predecessor
-	 *            A node that should become the predecessor of this node or
-	 *            null.
+	 *            A node that should become the predecessor of this node or null.
 	 * @see IMultigraphEdge
 	 */
 	protected ModifiableExplicitEdgesMultigraph(V predecessor) {
@@ -106,46 +97,37 @@ public abstract class ModifiableExplicitEdgesMultigraph<V extends IModifiableExp
 	}
 
 	/***
-	 * This constructor creates a new ModifiableExplicitEdgesMultigraph node
-	 * without a payload. It creates a new IMultigraphEdge from the given
-	 * predecessor to the new node and updates the predecessor's outgoing edges
-	 * and the new nodes' incoming edges accordingly. The given edge payload is
-	 * then used for this new edge.
+	 * This constructor creates a new ModifiableExplicitEdgesMultigraph node without a payload. It creates a new
+	 * IMultigraphEdge from the given predecessor to the new node and updates the predecessor's outgoing edges and the
+	 * new nodes' incoming edges accordingly. The given edge payload is then used for this new edge.
 	 * 
 	 * 
 	 * @param predecessor
-	 *            A node that should become the predecessor of this node or
-	 *            null.
+	 *            A node that should become the predecessor of this node or null.
 	 * @param edgePayload
-	 *            A payload for the edge from the predecessor to the new node or
-	 *            null. If the predecessor is null, this payload will be
-	 *            ignored.
+	 *            A payload for the edge from the predecessor to the new node or null. If the predecessor is null, this
+	 *            payload will be ignored.
 	 */
-	protected ModifiableExplicitEdgesMultigraph(V predecessor,
-			IPayload edgePayload) {
+	protected ModifiableExplicitEdgesMultigraph(V predecessor, IPayload edgePayload) {
 		this(predecessor, edgePayload, null);
 	}
 
 	/***
-	 * This constructor creates a new ModifiableExplicitEdgesMultigraph node
-	 * with a given payload, creates a new IMultigraphEdge from the given
-	 * predecessor to the new node and updates the predecessor's outgoing edges
-	 * and the new nodes' incoming edges accordingly, and labels the edge from
-	 * the predecessor to the new node with a given edge payload.
+	 * This constructor creates a new ModifiableExplicitEdgesMultigraph node with a given payload, creates a new
+	 * IMultigraphEdge from the given predecessor to the new node and updates the predecessor's outgoing edges and the
+	 * new nodes' incoming edges accordingly, and labels the edge from the predecessor to the new node with a given edge
+	 * payload.
 	 * 
 	 * @param predecessor
-	 *            A node that should become the predecessor of this node or
-	 *            null.
+	 *            A node that should become the predecessor of this node or null.
 	 * @param edgePayload
-	 *            A payload for the edge from the predecessor to the new node or
-	 *            null. If the predecessor is null, this payload will be
-	 *            ignored.
+	 *            A payload for the edge from the predecessor to the new node or null. If the predecessor is null, this
+	 *            payload will be ignored.
 	 * @param payload
 	 *            A payload for the new node or null.
 	 * @see IPayload
 	 */
-	protected ModifiableExplicitEdgesMultigraph(V predecessor,
-			IPayload edgePayload, IPayload payload) {
+	protected ModifiableExplicitEdgesMultigraph(V predecessor, IPayload edgePayload, IPayload payload) {
 		super(predecessor, edgePayload, payload);
 	}
 

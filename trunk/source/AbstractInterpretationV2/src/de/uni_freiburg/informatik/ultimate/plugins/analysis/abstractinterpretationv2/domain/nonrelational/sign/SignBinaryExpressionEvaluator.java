@@ -28,7 +28,9 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -37,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.preprocessor.Activator;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
@@ -57,6 +59,7 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 	protected BinaryExpression.Operator mOperator;
 	protected final Set<String> mVariableSet;
 	protected final Logger mLogger;
+	protected final EvaluatorType mEvaluatorType;
 
 	/**
 	 * Creates an instance of the binary expression evaluator of the sign domain.
@@ -64,9 +67,10 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 	 * @param services
 	 *            Ultimate service provider.
 	 */
-	public SignBinaryExpressionEvaluator(IUltimateServiceProvider services) {
+	public SignBinaryExpressionEvaluator(IUltimateServiceProvider services, EvaluatorType type) {
 		mVariableSet = new HashSet<String>();
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mEvaluatorType = type;
 	}
 
 	/**
@@ -83,7 +87,9 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 	}
 
 	@Override
-	public IEvaluationResult<Values> evaluate(SignDomainState currentState) {
+	public List<IEvaluationResult<Values>> evaluate(SignDomainState currentState) {
+
+		final List<IEvaluationResult<Values>> returnList = new ArrayList<>();
 
 		for (String var : mLeftSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
@@ -92,48 +98,56 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 			mVariableSet.add(var);
 		}
 
-		final IEvaluationResult<Values> firstResult = mLeftSubEvaluator.evaluate(currentState);
-		final IEvaluationResult<Values> secondResult = mRightSubEvaluator.evaluate(currentState);
+		final List<IEvaluationResult<Values>> firstResult = mLeftSubEvaluator.evaluate(currentState);
+		final List<IEvaluationResult<Values>> secondResult = mRightSubEvaluator.evaluate(currentState);
 
-		switch (mOperator) {
-		// case LOGICIFF:
-		// break;
-		// case LOGICIMPLIES:
-		// break;
-		// case LOGICAND:
-		// break;
-		// case LOGICOR:
-		// break;
-		// case COMPLT:
-		// break;
-		// case COMPGT:
-		// break;
-		// case COMPLEQ:
-		// break;
-		// case COMPGEQ:
-		// break;
-		// case COMPEQ:
-		// break;
-		// case COMPNEQ:
-		// break;
-		// case COMPPO:
-		// break;
-		// case BITVECCONCAT:
-		// break;
-		// case ARITHMUL:
-		// break;
-		// case ARITHDIV:
-		// break;
-		// case ARITHMOD:
-		// break;
-		case ARITHPLUS:
-			return performAddition((IEvaluationResult<Values>) firstResult, (IEvaluationResult<Values>) secondResult);
-		case ARITHMINUS:
-			return performSubtraction((IEvaluationResult<Values>) firstResult,
-			        (IEvaluationResult<Values>) secondResult);
-		default:
-			throw new UnsupportedOperationException("The operator " + mOperator.toString() + " is not implemented.");
+		for (final IEvaluationResult<Values> res1 : firstResult) {
+			for (final IEvaluationResult<Values> res2 : secondResult) {
+				switch (mOperator) {
+				// case LOGICIFF:
+				// break;
+				// case LOGICIMPLIES:
+				// break;
+				// case LOGICAND:
+				// break;
+				// case LOGICOR:
+				// break;
+				// case COMPLT:
+				// break;
+				// case COMPGT:
+				// break;
+				// case COMPLEQ:
+				// break;
+				// case COMPGEQ:
+				// break;
+				// case COMPEQ:
+				// break;
+				// case COMPNEQ:
+				// break;
+				// case COMPPO:
+				// break;
+				// case BITVECCONCAT:
+				// break;
+				// case ARITHMUL:
+				// break;
+				// case ARITHDIV:
+				// break;
+				// case ARITHMOD:
+				// break;
+				case ARITHPLUS:
+					returnList.add(performAddition(res1, res2));
+					break;
+				case ARITHMINUS:
+					returnList.add(performSubtraction(res1, res2));
+					break;
+				default:
+					throw new UnsupportedOperationException(
+					        "The operator " + mOperator.toString() + " is not implemented.");
+				}
+			}
 		}
+
+		return returnList;
 	}
 
 	/**
@@ -184,34 +198,34 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 		assert second != null;
 
 		// ===== Same values =====
-		if (first.getResult().equals(second.getResult())) {
-			return new SignDomainValue(first.getResult());
+		if (first.getValue().equals(second.getValue())) {
+			return new SignDomainValue(first.getValue());
 		}
 		// ===== End Same values =====
 
 		// ===== Special cases =====
 		// If first = \bot or second = \bot, return \bot.
-		if (first.getResult().equals(Values.BOTTOM) || second.getResult().equals(Values.BOTTOM)) {
+		if (first.getValue().equals(Values.BOTTOM) || second.getValue().equals(Values.BOTTOM)) {
 			return new SignDomainValue(Values.BOTTOM);
 		}
 
 		// If one of them is \top, return \top.
-		if (first.getResult().equals(Values.TOP) || second.getResult().equals(Values.TOP)) {
+		if (first.getValue().equals(Values.TOP) || second.getValue().equals(Values.TOP)) {
 			return new SignDomainValue(Values.TOP);
 		}
 		// ===== End Special cases =====
 
 		// ===== Different values =====
 		// If one of the values is 0, return the other value.
-		if (first.getResult().equals(Values.ZERO)) {
-			return new SignDomainValue(second.getResult());
+		if (first.getValue().equals(Values.ZERO)) {
+			return new SignDomainValue(second.getValue());
 		}
-		if (second.getResult().equals(Values.ZERO)) {
-			return new SignDomainValue(first.getResult());
+		if (second.getValue().equals(Values.ZERO)) {
+			return new SignDomainValue(first.getValue());
 		}
 
 		// If both values are different, return \top.
-		if (!first.getResult().equals(second.getResult())) {
+		if (!first.getValue().equals(second.getValue())) {
 			return new SignDomainValue(Values.TOP);
 		}
 		// ===== End Different values =====
@@ -219,7 +233,7 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 		// We should have covered all cases. If not, throw exception.
 		throw new UnsupportedOperationException(
 		        "There is one case which has not been covered in the addition of SignedDomain values. first: "
-		                + first.getResult().toString() + ", second: " + second.getResult().toString());
+		                + first.getValue().toString() + ", second: " + second.getValue().toString());
 	}
 
 	/**
@@ -270,28 +284,28 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 		assert second != null;
 
 		// ====== Same Values ======
-		if (first.getResult().equals(Values.ZERO) && second.getResult().equals(Values.ZERO)) {
+		if (first.getValue().equals(Values.ZERO) && second.getValue().equals(Values.ZERO)) {
 			return new SignDomainValue(Values.ZERO);
 		}
-		if (first.getResult().equals(Values.BOTTOM) || second.getResult().equals(Values.BOTTOM)) {
+		if (first.getValue().equals(Values.BOTTOM) || second.getValue().equals(Values.BOTTOM)) {
 			return new SignDomainValue(Values.BOTTOM);
 		}
-		if (first.getResult().equals(second.getResult())) {
+		if (first.getValue().equals(second.getValue())) {
 			return new SignDomainValue(Values.TOP);
 		}
 		// ====== End Same Values ======
 
 		// ====== Different Values ======
-		if (first.getResult().equals(Values.ZERO)) {
-			return negateValue(first.getResult());
+		if (first.getValue().equals(Values.ZERO)) {
+			return negateValue(first.getValue());
 		}
-		if (second.getResult().equals(Values.ZERO)) {
-			return new SignDomainValue(first.getResult());
+		if (second.getValue().equals(Values.ZERO)) {
+			return new SignDomainValue(first.getValue());
 		}
-		if (first.getResult().equals(Values.POSITIVE) && second.getResult().equals(Values.NEGATIVE)) {
+		if (first.getValue().equals(Values.POSITIVE) && second.getValue().equals(Values.NEGATIVE)) {
 			return new SignDomainValue(Values.POSITIVE);
 		}
-		if (first.getResult().equals(Values.NEGATIVE) && second.getResult().equals(Values.POSITIVE)) {
+		if (first.getValue().equals(Values.NEGATIVE) && second.getValue().equals(Values.POSITIVE)) {
 			return new SignDomainValue(Values.NEGATIVE);
 		}
 		// ====== End Different Values ======
@@ -299,7 +313,7 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 		// We should have covered all cases. If not, throw exception.
 		throw new UnsupportedOperationException(
 		        "There is one case which has not been covered in the subtraction of SignedDomain values. first: "
-		                + first.getResult().toString() + ", second: " + second.getResult().toString());
+		                + first.getValue().toString() + ", second: " + second.getValue().toString());
 	}
 
 	/**
@@ -365,14 +379,15 @@ public class SignBinaryExpressionEvaluator implements INAryEvaluator<Values, Sig
 	}
 
 	@Override
-	public BooleanValue booleanValue() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public boolean containsBool() {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	@Override
+	public List<SignDomainState> inverseEvaluate(final IEvaluationResult<Values> computedValue,
+	        final SignDomainState currentState) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

@@ -296,7 +296,9 @@ public class Expression2Term {
 				if (funcSymb == null) {
 					throw new IllegalArgumentException("unknown function" + func.getIdentifier());
 				}
-				result = m_Script.term(funcSymb, indices, null, parameters);
+//				result = m_Script.term(funcSymb, indices, null, parameters);
+				// overkill, this should be called only for bitvector operations.
+				result = SmtUtils.termWithLocalSimplification(m_Script, funcSymb, indices, parameters);
 			}
 			return result;
 		} else if (exp instanceof IdentifierExpression) {

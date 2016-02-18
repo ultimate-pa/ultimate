@@ -93,7 +93,7 @@ public class ToolchainStorage implements IToolchainStorage,
 		Collections.reverse(current);
 
 		Logger coreLogger = getLoggingService()
-				.getLogger(Activator.s_PLUGIN_ID);
+				.getLogger(Activator.PLUGIN_ID);
 		for (IStorable storable : current) {
 			try {
 				storable.destroy();

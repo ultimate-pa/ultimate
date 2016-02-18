@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator;
 
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+
 /**
  * Interface type that is returned by every call of {@link IEvaluator#evaluate(IAbstractState)} of an {@link IEvaluator}
  * .
@@ -38,5 +40,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
  */
 public interface IEvaluationResult<VALUE> {
 
-	public VALUE getResult();
+	public VALUE getValue();
+	
+	public BooleanValue getBooleanValue();
 }

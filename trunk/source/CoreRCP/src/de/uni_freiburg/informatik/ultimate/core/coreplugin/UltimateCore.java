@@ -119,7 +119,7 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 
 	@Override
 	public IUltimatePlugin[] getRegisteredUltimatePlugins() {
-		ArrayList<IUltimatePlugin> rtr = new ArrayList<IUltimatePlugin>();
+		final List<IUltimatePlugin> rtr = new ArrayList<IUltimatePlugin>();
 		rtr.addAll(mPluginFactory.getAllAvailableToolchainPlugins());
 		rtr.add(this);
 		rtr.add(getCurrentController());
@@ -169,12 +169,12 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 	 *********************/
 	@Override
 	public String getPluginName() {
-		return Activator.s_PLUGIN_NAME;
+		return Activator.PLUGIN_NAME;
 	}
 
 	@Override
 	public String getPluginID() {
-		return Activator.s_PLUGIN_ID;
+		return Activator.PLUGIN_ID;
 	}
 
 	@Override
@@ -211,7 +211,7 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 		// initializing variables, loggers,...
 		mCoreStorage = new ToolchainStorage();
 		mLoggingService = (LoggingService) mCoreStorage.getLoggingService();
-		mLogger = mLoggingService.getLogger(Activator.s_PLUGIN_ID);
+		mLogger = mLoggingService.getLogger(Activator.PLUGIN_ID);
 		mLogger.info("Initializing application");
 
 		final Logger tmpLogger = mLogger;
@@ -296,7 +296,7 @@ public class UltimateCore implements IApplication, ICore, IUltimatePlugin {
 
 	private String getCurrentControllerID() {
 		if (getCurrentController() == null) {
-			return Activator.s_PLUGIN_ID;
+			return Activator.PLUGIN_ID;
 		}
 		return getCurrentController().getPluginID();
 	}

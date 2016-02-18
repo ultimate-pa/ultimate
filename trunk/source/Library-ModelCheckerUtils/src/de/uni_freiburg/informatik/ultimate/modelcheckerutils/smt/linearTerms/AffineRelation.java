@@ -35,8 +35,10 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.NoRelationOfThisKindException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.RelationSymbol;
@@ -251,9 +253,9 @@ public class AffineRelation {
 			}
 			if (m_AffineTerm.getConstant() != Rational.ZERO) {
 				if (m_AffineTerm.getConstant().isNegative()) {
-					rhsSummands.add(m_AffineTerm.getConstant().abs().toTerm(m_AffineTerm.getSort()));
+					rhsSummands.add(SmtUtils.rational2Term(script, m_AffineTerm.getConstant().abs(), m_AffineTerm.getSort()));
 				} else {
-					lhsSummands.add(m_AffineTerm.getConstant().toTerm(m_AffineTerm.getSort()));
+					lhsSummands.add(SmtUtils.rational2Term(script, m_AffineTerm.getConstant(), m_AffineTerm.getSort()));
 				}
 			}
 			Term lhsTerm = SmtUtils.sum(script, m_AffineTerm.getSort(), lhsSummands.toArray(new Term[lhsSummands.size()]));
@@ -295,9 +297,9 @@ public class AffineRelation {
 		}
 		{
 			Rational newConstant = m_AffineTerm.getConstant().div(termsCoeff);
-			if (newConstant.isIntegral() || m_AffineTerm.getSort().getName().equals("Real")) {
+			if (newConstant.isIntegral() && newConstant.isRational() || m_AffineTerm.getSort().getName().equals("Real")) {
 				Rational negated = newConstant.negate();
-				rhsSummands.add(negated.toTerm(m_AffineTerm.getSort()));
+				rhsSummands.add(SmtUtils.rational2Term(script, negated, m_AffineTerm.getSort()));
 			} else {
 				throw new NotAffineException("No affine representation "
 						+ "where desired variable is on left hand side");
@@ -326,11 +328,14 @@ public class AffineRelation {
 		if (rational.equals(Rational.ONE)) {
 			return term;
 		} else if (rational.equals(Rational.MONE)) {
-			return script.term("-", term);
+			return SmtUtils.neg(script, term.getSort(), term);
 		} else {
-			return script.term("*", rational.toTerm(term.getSort()), term);
+			Term coefficient = SmtUtils.rational2Term(script, rational, term.getSort());
+			return SmtUtils.mul(script, term.getSort(), coefficient, term);
 		}
 	}
+	
+
 	
 
 

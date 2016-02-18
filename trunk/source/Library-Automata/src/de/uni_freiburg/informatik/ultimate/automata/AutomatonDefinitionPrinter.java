@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.ITransition;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Marking;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 
 /**
@@ -115,7 +114,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 			}
 		};
 		
-		private final IUltimateServiceProvider m_Services;
+		private final AutomataLibraryServices m_Services;
 		private final Logger m_Logger;
 		
 		/**
@@ -138,7 +137,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 		}
 		
 		
-		public AutomatonDefinitionPrinter(IUltimateServiceProvider services,
+		public AutomatonDefinitionPrinter(AutomataLibraryServices services,
 				String automatonName, String filename, Format format, String message, Object... automata) {
 			m_Services = services;
 			m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
@@ -170,7 +169,7 @@ public class AutomatonDefinitionPrinter<LETTER,STATE> {
 		}
 		
 		
-		public AutomatonDefinitionPrinter(IUltimateServiceProvider services, String name, Format format, Object automaton) {
+		public AutomatonDefinitionPrinter(AutomataLibraryServices services, String name, Format format, Object automaton) {
 			m_Services = services;
 			m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 			m_StringWriter = new StringWriter();

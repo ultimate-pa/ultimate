@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableMultigraphE
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class AppEdge extends
-		ModifiableMultigraphEdge<AnnotatedProgramPoint, AppEdge> {
+		ModifiableMultigraphEdge<AnnotatedProgramPoint, AppEdge,AnnotatedProgramPoint, AppEdge> {
 
 	private static final long serialVersionUID = 1L;
 	
@@ -57,5 +57,10 @@ public class AppEdge extends
 	
 	public String toString() {
 		return String.format("%s -- %s --> %s", this.mSource, this.statement, this.mTarget);
+	}
+
+	@Override
+	public AppEdge getLabel() {
+		return this;
 	}
 }

@@ -32,11 +32,11 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * TODO: Documentation
@@ -46,14 +46,14 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  */
 public abstract class AbstractIncrementalInclusionCheck<LETTER,STATE> {
 	
-	protected final IUltimateServiceProvider m_Services;
+	protected final AutomataLibraryServices m_Services;
 	protected final Logger m_Logger;
 	
 	private final INestedWordAutomatonSimple<LETTER, STATE> m_A;
 	private final List<INestedWordAutomatonSimple<LETTER, STATE>> m_B = new ArrayList<>();
 	
 	
-	public AbstractIncrementalInclusionCheck(IUltimateServiceProvider services,
+	public AbstractIncrementalInclusionCheck(AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER, STATE> a) {
 		super();
 		m_Services = services;

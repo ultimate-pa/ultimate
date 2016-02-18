@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.StructType;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.util.IToString;
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
@@ -65,20 +66,24 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.model.structure.IExplicitEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.model.structure.IMultigraphEdge;
+import de.uni_freiburg.informatik.ultimate.model.structure.Multigraph;
+import de.uni_freiburg.informatik.ultimate.model.structure.MultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
-import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution.ProgramState;
+import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Severity;
 
 /**
  * 
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public class BoogiePreprocessorBacktranslator extends
-		DefaultTranslator<BoogieASTNode, BoogieASTNode, Expression, Expression> {
+public class BoogiePreprocessorBacktranslator
+		extends DefaultTranslator<BoogieASTNode, BoogieASTNode, Expression, Expression> {
 
 	private final Logger mLogger;
 	/**
@@ -169,8 +174,8 @@ public class BoogiePreprocessorBacktranslator extends
 						return null;
 					}
 				}
-				reportUnfinishedBacktranslation("Generated EnsuresSpecification " + BoogiePrettyPrinter.print(spec)
-						+ " is not ensure(true)");
+				reportUnfinishedBacktranslation(
+						"Generated EnsuresSpecification " + BoogiePrettyPrinter.print(spec) + " is not ensure(true)");
 				return null;
 			}
 			// if there is no mapping, we return the identity (we do not change
@@ -181,8 +186,8 @@ public class BoogiePreprocessorBacktranslator extends
 		} else if (newElem instanceof LoopInvariantSpecification) {
 			return newElem;
 		} else {
-			reportUnfinishedBacktranslation("Unfinished backtranslation: Ignored translation of "
-					+ newElem.getClass().getSimpleName());
+			reportUnfinishedBacktranslation(
+					"Unfinished backtranslation: Ignored translation of " + newElem.getClass().getSimpleName());
 			return null;
 		}
 
@@ -224,11 +229,11 @@ public class BoogiePreprocessorBacktranslator extends
 				// return), else its a procedure call with corresponding return
 
 				if (programExecution.getTraceElement(i).hasStepInfo(StepInfo.NONE)) {
-					atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem, StepInfo.FUNC_CALL,
-							stringProvider));
+					atomicTrace
+							.add(new AtomicTraceElement<BoogieASTNode>(elem, elem, StepInfo.FUNC_CALL, stringProvider));
 				} else {
-					atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem, programExecution.getTraceElement(
-							i).getStepInfo(), stringProvider));
+					atomicTrace.add(new AtomicTraceElement<BoogieASTNode>(elem, elem,
+							programExecution.getTraceElement(i).getStepInfo(), stringProvider));
 				}
 
 			} else {
@@ -320,6 +325,27 @@ public class BoogiePreprocessorBacktranslator extends
 		return rtr;
 	}
 
+	@Override
+	public IBacktranslatedCFG<?, BoogieASTNode> translateCFG(final IBacktranslatedCFG<?, BoogieASTNode> cfg) {
+		return translateCFG(cfg, (a, b,c) -> translateEdge(a, b,c));
+	}
+
+	private <VL> Multigraph<VL, BoogieASTNode> translateEdge(
+			final Map<IExplicitEdgesMultigraph<?, ?, VL, BoogieASTNode>, Multigraph<VL, BoogieASTNode>> cache,
+			final IMultigraphEdge<?, ?, VL, BoogieASTNode> oldEdge,
+			final Multigraph<VL, BoogieASTNode> newSourceNode) {
+		
+		final BoogieASTNode newLabel = backtranslateTraceElement(oldEdge.getLabel());
+		final IExplicitEdgesMultigraph<?, ?, VL, BoogieASTNode> oldTarget = oldEdge.getTarget();
+		Multigraph<VL, BoogieASTNode> newTarget = cache.get(oldTarget);
+		if(newTarget == null){
+			newTarget = createWitnessNode(oldTarget);
+			cache.put(oldTarget, newTarget);
+		}
+		new MultigraphEdge<VL, BoogieASTNode>(newSourceNode, newLabel, newTarget);
+		return newTarget;
+	}
+
 	private void reportUnfinishedBacktranslation(String message) {
 		mLogger.warn(message);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
@@ -376,8 +402,8 @@ public class BoogiePreprocessorBacktranslator extends
 		@Override
 		protected Expression processExpression(Expression expr) {
 			if (mSymbolTable == null) {
-				reportUnfinishedBacktranslation("No symboltable available, using identity as back-translation of "
-						+ expr);
+				reportUnfinishedBacktranslation(
+						"No symboltable available, using identity as back-translation of " + expr);
 				return expr;
 			}
 
@@ -397,8 +423,8 @@ public class BoogiePreprocessorBacktranslator extends
 				Declaration decl = mSymbolTable.getDeclaration(ident);
 
 				if (decl == null) {
-					reportUnfinishedBacktranslation("No declaration in symboltable, using identity as "
-							+ "back-translation of " + expr);
+					reportUnfinishedBacktranslation(
+							"No declaration in symboltable, using identity as " + "back-translation of " + expr);
 					return expr;
 				}
 				BoogieASTNode newDecl = getMapping(decl);
@@ -460,9 +486,9 @@ public class BoogiePreprocessorBacktranslator extends
 						+ BoogiePrettyPrinter.printSignature(proc) + " and expression "
 						+ BoogiePrettyPrinter.print(inputExp));
 			} else {
-				reportUnfinishedBacktranslation("Unfinished backtranslation: Declaration "
-						+ mappedDecl.getClass().getSimpleName() + " not handled for expression "
-						+ BoogiePrettyPrinter.print(inputExp));
+				reportUnfinishedBacktranslation(
+						"Unfinished backtranslation: Declaration " + mappedDecl.getClass().getSimpleName()
+								+ " not handled for expression " + BoogiePrettyPrinter.print(inputExp));
 			}
 
 			return rtr;
@@ -483,7 +509,8 @@ public class BoogiePreprocessorBacktranslator extends
 			return rtr;
 		}
 
-		private IdentifierExpression extractIdentifier(ILocation mappedLoc, VarList list, IdentifierExpression inputExp) {
+		private IdentifierExpression extractIdentifier(ILocation mappedLoc, VarList list,
+				IdentifierExpression inputExp) {
 			if (list == null) {
 				return inputExp;
 			}
@@ -497,8 +524,8 @@ public class BoogiePreprocessorBacktranslator extends
 
 		}
 
-		private IdentifierExpression extractIdentifier(ILocation mappedLoc, VarList list,
-				IdentifierExpression inputExp, BoogieType type) {
+		private IdentifierExpression extractIdentifier(ILocation mappedLoc, VarList list, IdentifierExpression inputExp,
+				BoogieType type) {
 			if (type instanceof StructType) {
 				StructType st = (StructType) type;
 				String[] inputNames = inputExp.getIdentifier().split("\\.");
@@ -507,7 +534,8 @@ public class BoogiePreprocessorBacktranslator extends
 					String inputName = inputExp.getIdentifier();
 					for (String name : list.getIdentifiers()) {
 						if (inputName.contains(name)) {
-							return new IdentifierExpression(mappedLoc, type, name, inputExp.getDeclarationInformation());
+							return new IdentifierExpression(mappedLoc, type, name,
+									inputExp.getDeclarationInformation());
 						}
 					}
 

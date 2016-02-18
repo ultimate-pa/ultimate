@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 
 /**
@@ -36,34 +37,41 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Marius Greitschus <greitsch@informatik.uni-freiburg.de>
  *
  */
-public class IntervalDomainEvaluationResult implements IEvaluationResult<IntervalDomainEvaluationResult> {
+public class IntervalDomainEvaluationResult implements IEvaluationResult<IntervalDomainValue> {
 
 	private IntervalDomainValue mValue;
-	private IntervalDomainState mAbstractState;
+	private BooleanValue mBooleanValue;
 
-	public IntervalDomainEvaluationResult(IntervalDomainValue value, IntervalDomainState state) {
+	/**
+	 * Default constructor for an {@link IntervalDomainEvaluationResult}.
+	 * 
+	 * @param value
+	 *            The {@link IntervalDomainValue} to set in the result.
+	 * @param booleanValue
+	 *            The {@link BooleanValue} to set in the result.
+	 */
+	protected IntervalDomainEvaluationResult(IntervalDomainValue value, BooleanValue booleanValue) {
 		mValue = value;
-		mAbstractState = state;
-	}
-
-	public IntervalDomainState getEvaluatedState() {
-		return mAbstractState;
-	}
-
-	public IntervalDomainValue getEvaluatedValue() {
-		return mValue;
-	}
-
-	public void setEvaluatedState(IntervalDomainState state) {
-		mAbstractState = state;
-	}
-
-	public void setEvaluatedValue(IntervalDomainValue value) {
-		mValue = value;
+		mBooleanValue = booleanValue;
 	}
 
 	@Override
-	public IntervalDomainEvaluationResult getResult() {
-		return this;
+	public IntervalDomainValue getValue() {
+		return mValue;
+	}
+
+	@Override
+	public BooleanValue getBooleanValue() {
+		return mBooleanValue;
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Value: ");
+		sb.append(mValue);
+		sb.append(" -- Boolean Value: ");
+		sb.append(mBooleanValue);
+		return sb.toString();
 	}
 }

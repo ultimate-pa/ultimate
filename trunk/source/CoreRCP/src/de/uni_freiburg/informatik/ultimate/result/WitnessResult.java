@@ -26,45 +26,51 @@
  */
 package de.uni_freiburg.informatik.ultimate.result;
 
-import java.util.List;
+import de.uni_freiburg.informatik.ultimate.result.model.IResult;
 
-import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
-
-public class WitnessResult<ELEM extends IElement, TE extends IElement, E> extends AbstractResultAtElement<ELEM>
-		implements IResultWithFiniteTrace<TE, E> {
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
+public class WitnessResult implements IResult {
 
 	public static enum WitnessVerificationStatus {
 		VERIFIED, UNVERIFIED, VERIFICATION_FAILED, INTERNAL_ERROR
 	}
 
-	private final CounterExampleResult<ELEM, TE, E> mCEXResult;
+	private final IResult mResult;
 	private final String mWitness;
 	private final WitnessVerificationStatus mVerificationStatus;
+	private final WitnessVerificationStatus mExpectedVerificationStatus;
+	private final String mPluginId;
 
-	public WitnessResult(CounterExampleResult<ELEM, TE, E> cexRes, String witness,
-			WitnessVerificationStatus verificationStatus) {
-		super(cexRes.getElement(), cexRes.getPlugin(), cexRes.mTranslatorSequence);
-		mCEXResult = cexRes;
+	public WitnessResult(final String pluginId, final IResult result, final String witness,
+			final WitnessVerificationStatus verificationStatus,
+			final WitnessVerificationStatus expectedVerificationStatus) {
+		// TODO: Witness string may be useless and its potentially large, so... maybe remove it?
+		mPluginId = pluginId;
+		mResult = result;
 		mWitness = witness;
 		mVerificationStatus = verificationStatus;
+		mExpectedVerificationStatus = expectedVerificationStatus;
 	}
 
 	@Override
 	public String getShortDescription() {
 		if (isEmpty()) {
-			return "No witness for: " + mCEXResult.getShortDescription();
+			return "No witness for: " + mResult.getShortDescription();
 		}
 
 		switch (getVerificationStatus()) {
 		case INTERNAL_ERROR:
-			return "An error occured during witness verification for: " + mCEXResult.getShortDescription();
+			return "An error occured during witness verification for: " + mResult.getShortDescription();
 		case UNVERIFIED:
-			return "Unverified witness for: " + mCEXResult.getShortDescription();
+			return "Unverified witness for: " + mResult.getShortDescription();
 		case VERIFICATION_FAILED:
-			return "Witness verification failed for: " + mCEXResult.getShortDescription();
+			return "Witness verification failed for: " + mResult.getShortDescription();
 		case VERIFIED:
-			return "Verified witness for: " + mCEXResult.getShortDescription();
+			return "Verified witness for: " + mResult.getShortDescription();
 		default:
 			throw new UnsupportedOperationException("Enum value " + getVerificationStatus() + " is unhandled");
 		}
@@ -75,29 +81,25 @@ public class WitnessResult<ELEM extends IElement, TE extends IElement, E> extend
 		return getShortDescription();
 	}
 
-	@Override
-	public List<ILocation> getFailurePath() {
-		return mCEXResult.getFailurePath();
-	}
-
 	public WitnessVerificationStatus getVerificationStatus() {
 		return mVerificationStatus;
+	}
+	
+	public WitnessVerificationStatus getExpectedVerificationStatus() {
+		return mExpectedVerificationStatus;
+	}
+	
+	public IResult getAffectedResult(){
+		return mResult;
 	}
 
 	public boolean isEmpty() {
 		return mWitness == null;
 	}
 
-	public CounterExampleResult<ELEM, TE, E> getCounterExampleResult() {
-		return mCEXResult;
-	}
-
 	@Override
-	public IProgramExecution<TE, E> getProgramExecution() {
-		if (mCEXResult == null) {
-			return null;
-		}
-		return mCEXResult.getProgramExecution();
+	public String getPlugin() {
+		return mPluginId;
 	};
 
 }

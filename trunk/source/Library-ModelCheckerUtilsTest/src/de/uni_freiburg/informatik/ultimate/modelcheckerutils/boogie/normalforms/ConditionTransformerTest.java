@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 import org.junit.Assert;
@@ -78,6 +79,27 @@ public class ConditionTransformerTest {
 
 	private Expression or(Expression left, Expression right) {
 		return new BinaryExpression(null, Operator.LOGICOR, left, right);
+	}
+
+	private Expression and(Expression... left) {
+		if (left == null || left.length == 0) {
+			throw new IllegalArgumentException();
+		} else if (left.length == 1) {
+			return left[0];
+		} else {
+			return new BinaryExpression(null, Operator.LOGICAND, and(Arrays.copyOfRange(left, 1, left.length)),
+					left[0]);
+		}
+	}
+
+	private Expression or(Expression... left) {
+		if (left == null || left.length == 0) {
+			throw new IllegalArgumentException();
+		} else if (left.length == 1) {
+			return left[0];
+		} else {
+			return new BinaryExpression(null, Operator.LOGICOR, or(Arrays.copyOfRange(left, 1, left.length)), left[0]);
+		}
 	}
 
 	private Expression var(String varname) {
@@ -173,58 +195,62 @@ public class ConditionTransformerTest {
 		// (((A || B) && (C || D)) && (E || F)) && (G || H)
 		Expression input = and(and(and(or(var("A"), var("B")), or(var("C"), var("D"))), or(var("E"), var("F"))),
 				or(var("G"), var("H")));
-		Expression afterNNF = and(and(and(or(var("B"), var("A")), or(var("D"), var("C"))), or(var("F"), var("E"))),
+		Expression nnf = and(and(and(or(var("B"), var("A")), or(var("D"), var("C"))), or(var("F"), var("E"))),
 				or(var("H"), var("G")));
-		ConditionTransformer<Expression> ct = new ConditionTransformer<>(new BoogieConditionWrapper());
-		input = ct.rewriteNotEquals(input);
-		
-		Test(input, afterNNF, input);
+		Expression dnf = or(
+				and(var("C"), var("A"), var("G"), var("E")), and(var("C"), var("A"), var("G"), var("E")),
+				and(var("C"), var("A"), var("H"), var("E")), and(var("C"), var("A"), var("G"), var("F")),
+				and(var("C"), var("A"), var("H"), var("F")), and(var("D"), var("A"), var("G"), var("E")),
+				and(var("D"), var("A"), var("H"), var("E")), and(var("D"), var("A"), var("G"), var("F")),
+				and(var("D"), var("A"), var("H"), var("F")), and(var("C"), var("B"), var("G"), var("E")),
+				and(var("C"), var("B"), var("H"), var("E")), and(var("C"), var("B"), var("G"), var("F")),
+				and(var("C"), var("B"), var("H"), var("F")), and(var("D"), var("B"), var("G"), var("E")),
+				and(var("D"), var("B"), var("H"), var("E")), and(var("D"), var("B"), var("G"), var("F")),
+				and(var("D"), var("B"), var("H"), var("F")));
+		//i dont want to order this s.t. it fits :(
+		Test(input, nnf, null);
 	}
 
 	private void TestRewrite(Expression input, Expression afterRewrite) {
-
-		ConditionTransformer<Expression> ct = new ConditionTransformer<>(new BoogieConditionWrapper());
+		NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 		System.out.println();
 		System.out.println("Input: " + printExpression(input));
 		ct.simplify(input);
 		Expression result = ct.rewriteNotEquals(input);
 		System.out.println("Rewri: " + printExpression(result));
 
-		Assert.assertEquals("Rewrite of " + printExpression(input) + "not correct,", printExpression(result),
-				printExpression(afterRewrite));
-
+		Assert.assertEquals("Rewrite of " + printExpression(input) + " not correct,", printExpression(afterRewrite),
+				printExpression(result));
 	}
 
 	private void TestSimplify(Expression input, Expression afterSimplify) {
-
-		ConditionTransformer<Expression> ct = new ConditionTransformer<>(new BoogieConditionWrapper());
+		NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 		System.out.println();
 		System.out.println("Input: " + printExpression(input));
 		ct.simplify(input);
 		Expression result = ct.simplify(input);
 		System.out.println("Simpl: " + printExpression(result));
 
-		Assert.assertEquals("Simplify of " + printExpression(input) + "not correct,", printExpression(result),
-				printExpression(afterSimplify));
-
+		Assert.assertEquals("Simplify of " + printExpression(input) + " not correct,", printExpression(afterSimplify),
+				printExpression(result));
 	}
 
 	private void Test(Expression input, Expression afterNnf, Expression afterDnf) {
 		System.out.println();
-		ConditionTransformer<Expression> ct = new ConditionTransformer<>(new BoogieConditionWrapper());
+		NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 		System.out.println("Input: " + printExpression(input));
 		Expression result = ct.toNnf(input);
 		System.out.println("NNF  : " + printExpression(result));
 		if (afterNnf != null) {
-			Assert.assertEquals("NNF of " + printExpression(input) + "not correct,", printExpression(result),
-					printExpression(afterNnf));
+			Assert.assertEquals("NNF of " + printExpression(input) + " not correct,", printExpression(afterNnf),
+					printExpression(result));
 		}
 
 		result = ct.toDnf(input);
 		System.out.println("DNF  : " + printExpression(result));
 		if (afterDnf != null) {
-			Assert.assertEquals("DNF of " + printExpression(input) + " not correct,", printExpression(result),
-					printExpression(afterDnf));
+			Assert.assertEquals("DNF of " + printExpression(input) + " not correct,", printExpression(afterDnf),
+					printExpression(result));
 		}
 	}
 

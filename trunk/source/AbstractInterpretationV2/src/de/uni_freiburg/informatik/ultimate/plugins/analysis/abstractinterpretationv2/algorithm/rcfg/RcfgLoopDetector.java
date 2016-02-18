@@ -27,41 +27,31 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
 
-import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILoopDetector;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.RCFGLoopDetector;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 
 /**
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
-public class RcfgLoopDetector implements ILoopDetector<CodeBlock> {
+public class RcfgLoopDetector<ACTION, LOCATION> implements ILoopDetector<ACTION> {
 
-	private final Map<ProgramPoint, Map<RCFGEdge, RCFGEdge>> mLoops;
+	private final Set<LOCATION> mLoopLocations;
+	private final ITransitionProvider<ACTION, LOCATION> mTransitionProvider;
 
-	public RcfgLoopDetector(final RCFGLoopDetector loopDetector) {
-		mLoops = loopDetector.getResult();
+	public RcfgLoopDetector(final Set<LOCATION> loopLocations,
+			final ITransitionProvider<ACTION, LOCATION> transProvider) {
+		mLoopLocations = loopLocations;
+		mTransitionProvider = transProvider;
 	}
 
 	@Override
-	public CodeBlock getLoopExit(final CodeBlock transition) {
+	public boolean isEnteringLoop(ACTION transition) {
 		assert transition != null;
-		final RCFGNode source = transition.getSource();
-		final Map<RCFGEdge, RCFGEdge> loops = mLoops.get(source);
-		if (loops == null) {
-			return null;
-		}
-		final RCFGEdge exit = loops.get(transition);
-		if (exit instanceof CodeBlock) {
-			return (CodeBlock) exit;
-		}
-		assert exit == null;
-		return null;
+		final LOCATION source = mTransitionProvider.getSource(transition);
+		return mLoopLocations.contains(source);
 	}
 }

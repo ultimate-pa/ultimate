@@ -33,6 +33,8 @@ import de.uni_freiburg.informatik.ultimate.model.IElement;
  * An {@link IGenerator} plugin creates a new model, typically from some input
  * provided by an {@link ISource} plugin.
  * 
+ * @see {@link IModifyingTool}
+ * 
  * @author dietsch
  * 
  */

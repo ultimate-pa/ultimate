@@ -49,6 +49,7 @@ import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.StructHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -197,7 +198,7 @@ public class ACSLHandler implements IACSLHandler {
 
            formula = formula.switchToRValueIfNecessary(main, ((CHandler) main.cHandler).mMemoryHandler, ((CHandler) main.cHandler).mStructHandler, loc);
            
-         //  formula = ConvExpr.rexIntToBoolIfNecessary(loc, formula, ((CHandler) main.cHandler).getExpressionTranslation());
+           formula.rexIntToBoolIfNecessary(loc, ((CHandler) main.cHandler).getExpressionTranslation(), ((CHandler) main.cHandler).mMemoryHandler);
 
            decl.addAll(formula.decl);
            stmt.addAll(formula.stmt);
@@ -354,9 +355,10 @@ public class ACSLHandler implements IACSLHandler {
         ExpressionResult right = (ExpressionResult) main.dispatch(node.getRight());
         
         MemoryHandler memoryHandler = ((CHandler) main.cHandler).mMemoryHandler;
+        StructHandler structHandler = ((CHandler) main.cHandler).mStructHandler;
         
-        left = left.switchToRValueIfNecessary(main, memoryHandler, ((CHandler) main.cHandler).mStructHandler, loc);
-        right = right.switchToRValueIfNecessary(main, memoryHandler, ((CHandler) main.cHandler).mStructHandler, loc);
+        left = left.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+        right = right.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
         
         AExpressionTranslation expressionTranslation = 
      		   ((CHandler) main.cHandler).getExpressionTranslation();
@@ -394,21 +396,24 @@ public class ACSLHandler implements IACSLHandler {
 
         switch (node.getOperator()) {
 		case ARITHDIV:
-		case ARITHMINUS:
 		case ARITHMOD:
-		case ARITHMUL:
-		case ARITHPLUS:
-		{
-			Expression expr = expressionTranslation.constructArithmeticExpression(
-					loc, 
-					getCASTBinaryExprOperator(node.getOperator()), left.lrVal.getValue(), 
-					(CPrimitive) left.lrVal.getCType(), right.lrVal.getValue(), (CPrimitive) right.lrVal.getCType());
-			CType type = new CPrimitive(PRIMITIVE.INT);
-			return new ExpressionResult(stmt, new RValue(expr, type), decl, auxVars, overappr);
-			
+		case ARITHMUL: {
+			left.rexBoolToIntIfNecessary(loc, expressionTranslation);
+			right.rexBoolToIntIfNecessary(loc, expressionTranslation);
+			int op = getCASTBinaryExprOperator(node.getOperator());
+			return ((CHandler) main.cHandler).handleMultiplicativeOperation(main, loc, null, op, left, right);
+		}
+		case ARITHMINUS:
+		case ARITHPLUS: {
+			left.rexBoolToIntIfNecessary(loc, expressionTranslation);
+			right.rexBoolToIntIfNecessary(loc, expressionTranslation);
+			int op = getCASTBinaryExprOperator(node.getOperator());
+			return ((CHandler) main.cHandler).handleAdditiveOperation(main, loc, null, op, left, right);
 		}
 		case COMPEQ:
 		case COMPNEQ: {
+			left.rexBoolToIntIfNecessary(loc, expressionTranslation);
+			right.rexBoolToIntIfNecessary(loc, expressionTranslation);
 			int op = getCASTBinaryExprOperator(node.getOperator());
 			return ((CHandler) main.cHandler).handleEqualityOperators(main, loc, op, left, right);
 		}
@@ -417,13 +422,10 @@ public class ACSLHandler implements IACSLHandler {
 		case COMPLEQ:
 		case COMPLT:
 		{
-			Expression expr = expressionTranslation.constructBinaryComparisonExpression(loc,
-					getCASTBinaryExprOperator(node.getOperator()), 
-					left.lrVal.getValue(), (CPrimitive) left.lrVal.getCType(), 
-					right.lrVal.getValue(), (CPrimitive) right.lrVal.getCType());
-			CType type = new CPrimitive(PRIMITIVE.INT);
-			return new ExpressionResult(stmt, new RValue(expr, type, true), decl, auxVars, overappr);
-			
+			left.rexBoolToIntIfNecessary(loc, expressionTranslation);
+			right.rexBoolToIntIfNecessary(loc, expressionTranslation);
+			int op = getCASTBinaryExprOperator(node.getOperator());
+			return ((CHandler) main.cHandler).handleRelationalOperators(main, loc, op, left, right);
 		}
 		case LOGICAND:
 		case LOGICIFF:
@@ -480,34 +482,20 @@ public class ACSLHandler implements IACSLHandler {
             Dispatcher main,
             de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression node) {
         ILocation loc = LocationFactory.createACSLLocation(node);
-        //Expression expr = (Expression) main.dispatch(node.getExpr()).node;
         ExpressionResult res = (ExpressionResult) main.dispatch(node.getExpr());
+        
+        MemoryHandler memoryHandler = ((CHandler) main.cHandler).mMemoryHandler;
+        StructHandler structHandler = ((CHandler) main.cHandler).mStructHandler;
+        
+        res = res.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
 
-        ArrayList<Declaration> decl = new ArrayList<Declaration>();
-        ArrayList<Statement> stmt = new ArrayList<Statement>();
-        List<Overapprox> overappr = new ArrayList<Overapprox>();
-        Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<VariableDeclaration, ILocation>();
-        
-        
-        decl.addAll(res.decl);
-        stmt.addAll(res.stmt);
-        overappr.addAll(res.overappr);
-        auxVars.putAll(res.auxVars);
-        
         switch (node.getOperator()) {
             case LOGICNEG:
-            	return new ExpressionResult(stmt, new RValue(ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, res.lrVal.getValue()), res.lrVal.getCType()), decl, auxVars, overappr);
-                //return new Result(ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, expr));
+            	return ((CHandler) main.cHandler).handleUnaryArithmeticOperators(main, loc, IASTUnaryExpression.op_not, res);
             case MINUS:
-            	AExpressionTranslation expressionTranslation = 
-    				((CHandler) main.cHandler).getExpressionTranslation();
-            	Expression expr = expressionTranslation.constructUnaryExpression(loc, 
-            			IASTUnaryExpression.op_minus, res.lrVal.getValue(), (CPrimitive) res.lrVal.getCType());
-                return new ExpressionResult(stmt, new RValue(expr, res.lrVal.getCType()), decl, auxVars, overappr);
-                //return new Result(ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.ARITHNEGATIVE, expr));
+            	return ((CHandler) main.cHandler).handleUnaryArithmeticOperators(main, loc, IASTUnaryExpression.op_minus, res);
             case PLUS:
-                return new ExpressionResult(stmt, new RValue(res.lrVal.getValue(), res.lrVal.getCType()), decl, auxVars, overappr);
-                //return new Result(expr);
+            	return ((CHandler) main.cHandler).handleUnaryArithmeticOperators(main, loc, IASTUnaryExpression.op_plus, res);
             case POINTER:
             case ADDROF:
             case LOGICCOMPLEMENT:

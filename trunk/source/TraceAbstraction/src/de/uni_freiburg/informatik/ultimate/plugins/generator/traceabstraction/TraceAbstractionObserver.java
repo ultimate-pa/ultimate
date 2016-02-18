@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
+import de.uni_freiburg.informatik.ultimate.model.GraphType.Type;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessModelToAutomatonTransformer;
@@ -63,8 +64,6 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 	}
 
-
-
 	@Override
 	public boolean process(IElement root) {
 		if (root instanceof RootNode) {
@@ -83,7 +82,7 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 				}
 			}
 		}
-		if (root instanceof WitnessNode) {
+		if (m_CurrentGraphType.getType() == Type.VIOLATION_WITNESS) {
 			if (m_WitnessNode == null) {
 				m_WitnessNode = (WitnessNode) root;
 			} else {
@@ -100,8 +99,6 @@ public class TraceAbstractionObserver implements IUnmanagedObserver {
 	private boolean isOriginalRcfg(GraphType currentGraphType) {
 		return currentGraphType.getCreator().equals("de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder");
 	}
-
-
 
 	@Override
 	public void finish() {

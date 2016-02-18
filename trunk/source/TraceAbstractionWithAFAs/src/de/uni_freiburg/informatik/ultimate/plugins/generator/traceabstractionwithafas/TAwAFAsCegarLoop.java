@@ -40,6 +40,7 @@ import java.util.TreeMap;
 import org.apache.log4j.Level;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
@@ -201,7 +202,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		RAFA_Determination<CodeBlock> determination = new RAFA_Determination<CodeBlock>(m_Services, alternatingAutomatonUnion, m_SmtManager, m_PredicateUnifier);
 		m_InterpolAutomaton = determination.getResult();
 		try {
-			assert new Accepts<CodeBlock,IPredicate>(m_Services, m_InterpolAutomaton, (NestedWord<CodeBlock>) trace).getResult() 
+			assert new Accepts<CodeBlock,IPredicate>(new AutomataLibraryServices(m_Services), m_InterpolAutomaton, (NestedWord<CodeBlock>) trace).getResult() 
 				: "interpolant automaton does not accept the trace!";
 		} catch (AutomataLibraryException e) {
 			throw new AssertionError(e);
@@ -491,9 +492,9 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 				determinized, false, m_PredicateFactoryInterpolantAutomata);
 
 		if (m_Pref.differenceSenwa()) {
-			diff = new DifferenceSenwa<CodeBlock, IPredicate>(m_Services, oldAbstraction, (INestedWordAutomaton<CodeBlock, IPredicate>) determinized, psd2, false);
+			diff = new DifferenceSenwa<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), oldAbstraction, (INestedWordAutomaton<CodeBlock, IPredicate>) determinized, psd2, false);
 		} else {
-			diff = new Difference<CodeBlock, IPredicate>(m_Services, oldAbstraction, determinized, psd2,
+			diff = new Difference<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), oldAbstraction, determinized, psd2,
 					m_StateFactoryForRefinement, explointSigmaStarConcatOfIA);
 		}
 		assert !m_SmtManager.isLocked();
@@ -502,7 +503,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		// do the following check only to obtain logger messages of
 		// checkInductivity
 
-		if (m_RemoveDeadEnds) {
+		if (REMOVE_DEAD_ENDS) {
 			if (m_ComputeHoareAnnotation) {
 				Difference<CodeBlock, IPredicate> difference = (Difference<CodeBlock, IPredicate>) diff;
 				m_Haf.updateOnIntersection(difference.getFst2snd2res(), difference.getResult());
@@ -534,7 +535,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			throw new AssertionError();
 		}
 
-		boolean stillAccepted = (new Accepts<CodeBlock, IPredicate>(m_Services, 
+		boolean stillAccepted = (new Accepts<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), 
 				(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) m_Abstraction,
 				(NestedWord<CodeBlock>) m_Counterexample.getWord())).getResult();
 		assert !stillAccepted : "stillAccepted --> no progress";

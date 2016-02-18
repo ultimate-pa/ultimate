@@ -32,6 +32,7 @@ package de.uni_freiburg.informatik.ultimate.result;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.result.model.IResult;
 
 /**
  * Result to store that the specification given at some location always holds. 
@@ -79,7 +80,5 @@ public class PositiveResult<ELEM extends IElement> extends AbstractResultAtEleme
 			sb.append(" at this location");
 			return sb.toString();
 		}
-
 	}
-
 }

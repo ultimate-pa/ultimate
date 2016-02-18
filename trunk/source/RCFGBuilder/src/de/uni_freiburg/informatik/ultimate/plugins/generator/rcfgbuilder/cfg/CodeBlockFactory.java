@@ -63,7 +63,7 @@ public class CodeBlockFactory implements IStorable {
 			Boogie2SMT boogie2smt, ModifiableGlobalVariableManager mgvManager) {
 		super();
 		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		m_Logger = m_Services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		m_Boogie2smt = boogie2smt;
 		m_MgvManager = mgvManager;
 	}

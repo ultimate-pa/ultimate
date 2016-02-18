@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.result;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
 
 /**
  * Result that reports that a counter example for an LTL property was found and

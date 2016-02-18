@@ -27,6 +27,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -52,17 +53,14 @@ public final class EmptyDomainState<ACTION, VARDECL>
 	private static int sId;
 	private final Map<String, VARDECL> mVarDecls;
 	private final int mId;
-	private boolean mIsFixpoint;
 
 	protected EmptyDomainState() {
 		mVarDecls = new HashMap<String, VARDECL>();
-		mIsFixpoint = false;
 		mId = sId++;
 	}
 
-	protected EmptyDomainState(Map<String, VARDECL> varDecls, boolean isFixpoint) {
+	protected EmptyDomainState(Map<String, VARDECL> varDecls) {
 		mVarDecls = varDecls;
-		mIsFixpoint = isFixpoint;
 		mId = sId++;
 	}
 
@@ -76,7 +74,7 @@ public final class EmptyDomainState<ACTION, VARDECL>
 		if (old != null) {
 			throw new UnsupportedOperationException("Variable names have to be disjoint");
 		}
-		return new EmptyDomainState<ACTION, VARDECL>(newMap, mIsFixpoint);
+		return new EmptyDomainState<ACTION, VARDECL>(newMap);
 	}
 
 	@Override
@@ -87,7 +85,7 @@ public final class EmptyDomainState<ACTION, VARDECL>
 		final Map<String, VARDECL> newMap = new HashMap<>(mVarDecls);
 		final VARDECL oldVar = newMap.remove(name);
 		assert variable.equals(oldVar);
-		return new EmptyDomainState<ACTION, VARDECL>(newMap, mIsFixpoint);
+		return new EmptyDomainState<ACTION, VARDECL>(newMap);
 	}
 
 	@Override
@@ -102,7 +100,7 @@ public final class EmptyDomainState<ACTION, VARDECL>
 				throw new UnsupportedOperationException("Variable names have to be disjoint");
 			}
 		}
-		return new EmptyDomainState<ACTION, VARDECL>(newMap, mIsFixpoint);
+		return new EmptyDomainState<ACTION, VARDECL>(newMap);
 	}
 
 	@Override
@@ -114,7 +112,7 @@ public final class EmptyDomainState<ACTION, VARDECL>
 		for (Entry<String, VARDECL> entry : variables.entrySet()) {
 			newMap.remove(entry.getKey());
 		}
-		return new EmptyDomainState<ACTION, VARDECL>(newMap, mIsFixpoint);
+		return new EmptyDomainState<ACTION, VARDECL>(newMap);
 	}
 
 	@Override
@@ -127,19 +125,10 @@ public final class EmptyDomainState<ACTION, VARDECL>
 		return false;
 	}
 
-	@Override
-	public boolean isFixpoint() {
-		return mIsFixpoint;
-	}
-
-	@Override
-	public EmptyDomainState<ACTION, VARDECL> setFixpoint(boolean value) {
-		return new EmptyDomainState<ACTION, VARDECL>(mVarDecls, value);
-	}
 
 	@Override
 	public String toLogString() {
-		final StringBuilder sb = new StringBuilder().append(mIsFixpoint).append(" ");
+		final StringBuilder sb = new StringBuilder();
 		for (Entry<String, VARDECL> entry : mVarDecls.entrySet()) {
 			sb.append(entry.getKey()).append("; ");
 		}
@@ -179,11 +168,6 @@ public final class EmptyDomainState<ACTION, VARDECL>
 		return mId;
 	}
 
-	@Override
-	public EmptyDomainState<ACTION, VARDECL> copy() {
-		return new EmptyDomainState<>(new HashMap<String, VARDECL>(mVarDecls), mIsFixpoint);
-	}
-
 	/**
 	 * This method compares if this state contains the same variable declarations than the other state.
 	 * 
@@ -195,8 +179,9 @@ public final class EmptyDomainState<ACTION, VARDECL>
 		return isEqualTo(other);
 	}
 
-	protected Map<String, VARDECL> getVariables() {
-		return new HashMap<>(mVarDecls);
+	@Override
+	public Map<String, VARDECL> getVariables() {
+		return Collections.unmodifiableMap(mVarDecls);
 	}
 
 	@Override
@@ -210,10 +195,29 @@ public final class EmptyDomainState<ACTION, VARDECL>
 	}
 
 	@Override
-	public VARDECL getVariableType(String name) {
+	public VARDECL getVariableDeclarationType(String name) {
 		assert name != null;
 		assert mVarDecls.containsKey(name);
 
 		return mVarDecls.get(name);
+	}
+
+	@Override
+	public EmptyDomainState<ACTION, VARDECL> patch(final EmptyDomainState<ACTION, VARDECL> dominator) {
+		if (dominator.isEmpty()) {
+			return this;
+		} else if (isEmpty()) {
+			return dominator;
+		}
+
+		final Map<String, VARDECL> newVarDecls = new HashMap<String, VARDECL>();
+		newVarDecls.putAll(mVarDecls);
+		newVarDecls.putAll(dominator.mVarDecls);
+
+		if (newVarDecls.size() == mVarDecls.size()) {
+			return this;
+		}
+
+		return new EmptyDomainState<ACTION, VARDECL>(newVarDecls);
 	}
 }

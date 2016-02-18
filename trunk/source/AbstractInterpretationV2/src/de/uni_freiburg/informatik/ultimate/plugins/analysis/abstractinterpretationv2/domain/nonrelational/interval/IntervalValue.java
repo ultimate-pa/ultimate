@@ -50,15 +50,15 @@ public class IntervalValue implements Comparable<IntervalValue> {
 
 	private static int sId = 0;
 	private final int mId;
-	
+
 	private BigDecimal mValue;
 
 	private boolean mIsInfty;
 
 	/**
-	 * Constructor for a new {@link IntervalValue}. The value is set to infinity initially.
+	 * Constructor for a new {@link IntervalValue}. The value is set to infinity (&infin;) initially.
 	 */
-	protected IntervalValue() {
+	public IntervalValue() {
 		mIsInfty = true;
 		sId++;
 		mId = sId;
@@ -70,7 +70,7 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	 * @param val
 	 *            The value to set.
 	 */
-	protected IntervalValue(BigDecimal val) {
+	public IntervalValue(BigDecimal val) {
 		mValue = val;
 		mIsInfty = false;
 		sId++;
@@ -83,11 +83,31 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	 * @param val
 	 *            The value to set.
 	 */
-	protected IntervalValue(IntervalValue val) {
+	public IntervalValue(IntervalValue val) {
 		mValue = val.mValue;
 		mIsInfty = val.mIsInfty;
 		sId++;
 		mId = sId;
+	}
+
+	/**
+	 * Constructor for a new {@link IntervalValue} that sets the value to the provided value.
+	 * 
+	 * @param val
+	 *            The value to set.
+	 */
+	public IntervalValue(int val) {
+		this(new BigDecimal(val));
+	}
+
+	/**
+	 * Constructor for a new {@link IntervalValue} that sets the value to the provided value.
+	 * 
+	 * @param val
+	 *            The value to set.
+	 */
+	public IntervalValue(double val) {
+		this(new BigDecimal(val));
 	}
 
 	/**
@@ -97,7 +117,7 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	 * @param val
 	 *            The value to set.
 	 */
-	protected IntervalValue(String val) {
+	public IntervalValue(String val) {
 		this(new BigDecimal(val));
 	}
 
@@ -121,7 +141,7 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	 * 
 	 * @return The value of this.
 	 */
-	protected BigDecimal getValue() {
+	public BigDecimal getValue() {
 		return mValue;
 	}
 
@@ -138,7 +158,7 @@ public class IntervalValue implements Comparable<IntervalValue> {
 	 * 
 	 * @return <code>true</code> or <code>false</code>
 	 */
-	protected boolean isInfinity() {
+	public boolean isInfinity() {
 		return mIsInfty;
 	}
 

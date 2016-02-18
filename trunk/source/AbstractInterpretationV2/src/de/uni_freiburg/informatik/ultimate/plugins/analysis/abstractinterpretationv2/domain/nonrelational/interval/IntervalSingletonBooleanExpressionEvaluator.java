@@ -28,12 +28,13 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -45,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class IntervalSingletonBooleanExpressionEvaluator
-        implements IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
+        implements IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	private final BooleanValue mBooleanValue;
 
@@ -61,22 +62,16 @@ public class IntervalSingletonBooleanExpressionEvaluator
 	}
 
 	@Override
-	public IEvaluationResult<IntervalDomainEvaluationResult> evaluate(IntervalDomainState currentState) {
+	public List<IEvaluationResult<IntervalDomainValue>> evaluate(IntervalDomainState currentState) {
+		final List<IEvaluationResult<IntervalDomainValue>> returnList = new ArrayList<>();
 
-		IntervalDomainState returnState;
+		returnList.add(new IntervalDomainEvaluationResult(new IntervalDomainValue(), mBooleanValue));
 
-		if (mBooleanValue.getValue() == Value.TRUE || mBooleanValue.getValue() == Value.TOP) {
-			returnState = currentState;
-		} else {
-			returnState = currentState.bottomState();
-		}
-
-		return new IntervalDomainEvaluationResult(null, returnState);
+		return returnList;
 	}
 
 	@Override
-	public void addSubEvaluator(
-	        IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
 		throw new UnsupportedOperationException("Adding a subevaluator to this kind of evaluator is not permitted.");
 	}
 
@@ -91,12 +86,20 @@ public class IntervalSingletonBooleanExpressionEvaluator
 	}
 
 	@Override
-	public BooleanValue booleanValue() {
-		return mBooleanValue;
+	public boolean containsBool() {
+		return true;
 	}
 
 	@Override
-	public boolean containsBool() {
-		return true;
+	public String toString() {
+		return mBooleanValue.getValue().name();
+	}
+
+	@Override
+	public List<IntervalDomainState> inverseEvaluate(IEvaluationResult<IntervalDomainValue> computedValue,
+	        IntervalDomainState currentState) {
+		final List<IntervalDomainState> returnList = new ArrayList<>();
+		returnList.add(currentState);
+		return returnList;
 	}
 }

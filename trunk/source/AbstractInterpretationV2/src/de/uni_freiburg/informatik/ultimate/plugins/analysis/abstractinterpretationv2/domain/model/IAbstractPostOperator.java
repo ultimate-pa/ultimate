@@ -28,7 +28,11 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model;
 
+import java.util.List;
+
 /**
+ * {@link IAbstractPostOperator} describes a post operator for an {@link IAbstractDomain}. It is used to compute the
+ * abstract post given an old {@link IAbstractState} and a transition.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
@@ -36,6 +40,29 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
  */
 public interface IAbstractPostOperator<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL> {
 
-	STATE apply(STATE oldstate, ACTION concrete);
+	/**
+	 * Compute the abstract post for an old STATE (that extends {@link IAbstractState}) and a given ACTION (transition).
+	 * 
+	 * @param oldstate
+	 *            The abstract state before execution of the ACTION.
+	 * @param transition
+	 *            The transition that is taken.
+	 * @return A new list of STATEs that is the result of applying the abstract post.
+	 */
+	List<STATE> apply(STATE oldstate, ACTION transition);
 
+	/**
+	 * Compute the abstract post from two abstract STATEs and one ACTION. This is used for scope switching.
+	 * 
+	 * @param stateBeforeLeaving
+	 *            The abstract state in the old scope, i.e., the scope that we are leaving.
+	 * @param stateAfterLeaving
+	 *            The abstract state in the new scope, i.e., the scope that we are entering. This state has already all
+	 *            non-scope related variables set ({@link IAbstractState#patch(IAbstractState)} was already applied).
+	 * @param transition
+	 *            The transition that caused the scope change.
+	 * @return A new STATE that has the same variables as the old abstract state in the new scope and incorporates the
+	 *         effects of the taken transition.
+	 */
+	List<STATE> apply(STATE stateBeforeLeaving, STATE stateAfterLeaving, ACTION transition);
 }

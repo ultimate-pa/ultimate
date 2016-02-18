@@ -37,6 +37,7 @@ import java.util.Set;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.NestedLassoRun;
@@ -45,15 +46,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.StateBasedTransitionFilterPredicateProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.SummaryReturnTransition;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.FilteredIterable;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.IteratorConcatenation;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation;
-import de.uni_freiburg.informatik.ultimate.util.scc.SccComputationNonRecursive;
-import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.IStronglyConnectedComponentFactory;
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorProvider;
+import de.uni_freiburg.informatik.ultimate.util.scc.SccComputationNonRecursive;
+import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
 
 public class AcceptingComponentsAnalysis<LETTER, STATE> {
@@ -77,7 +77,7 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 	private SccComputation<StateContainer<LETTER, STATE>, StronglyConnectedComponentWithAcceptanceInformation<LETTER, STATE>> m_SccComputation;
 	
 	private int m_AcceptingBalls = 0;
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 	private StronglyConnectedComponentWithAcceptanceInformation_Factory m_ScComponentFactory;
 	private InSumCaSuccessorProvider m_NWARSSuccessorProvider;
@@ -98,7 +98,7 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 	 * @param startStates
 	 */
 	public AcceptingComponentsAnalysis(NestedWordAutomatonReachableStates<LETTER, STATE> nestedWordAutomatonReachableStates, 
-			NestedWordAutomatonReachableStates<LETTER, STATE>.AcceptingSummariesComputation asc, IUltimateServiceProvider services,
+			NestedWordAutomatonReachableStates<LETTER, STATE>.AcceptingSummariesComputation asc, AutomataLibraryServices services,
 			Set<STATE> allStates, Set<STATE> startStates) {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);

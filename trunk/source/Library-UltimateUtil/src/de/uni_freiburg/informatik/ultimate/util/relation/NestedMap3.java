@@ -79,5 +79,7 @@ public class NestedMap3<K1, K2, K3, V> {
 		return m_K1ToK2ToK3V.keySet();
 	}
 	
-	
+	public void clear() {
+		m_K1ToK2ToK3V.clear();
+	}
 }

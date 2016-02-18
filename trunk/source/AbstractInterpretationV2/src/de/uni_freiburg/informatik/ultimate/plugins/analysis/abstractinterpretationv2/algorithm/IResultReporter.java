@@ -28,19 +28,20 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm;
 
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractCounterexample;
+
 /**
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * 
  */
-public interface IResultReporter<ACTION> {
+public interface IResultReporter<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
 
-	//TODO: Define this interface -- how do we create counter example?
-	
-	void reportPossibleError(ACTION start, ACTION end);
+	void reportPossibleError(AbstractCounterexample<STATE, ACTION, ?, LOCATION> cex);
 
-	void reportSafe();
-	
-	void reportSafe(String msg);
+	void reportSafe(ACTION elem);
+
+	void reportSafe(ACTION elem, String msg);
 }

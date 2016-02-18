@@ -308,13 +308,13 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			Attribute[] newAttrs = processAttributes(varDecl.getAttributes());
 			VarList[] newVars = applyMappingToVarList(varDecl.getVariables(), localDeclInfo);
 			VariableDeclaration newVarDecl = new VariableDeclaration(varDecl.getLocation(), newAttrs, newVars);
-			ModelUtils.mergeAnnotations(varDecl, newVarDecl);
+			ModelUtils.copyAnnotations(varDecl, newVarDecl);
 			newLocalVars.add(newVarDecl);
 		}
 		newLocalVars.addAll(mInlinedVars);
 		VariableDeclaration[] newLocalVarsArray = newLocalVars.toArray(new VariableDeclaration[newLocalVars.size()]);
 		Body newBody = new Body(body.getLocation(), newLocalVarsArray, newBlock);
-		ModelUtils.mergeAnnotations(body, newBody);
+		ModelUtils.copyAnnotations(body, newBody);
 		
 		Specification[] oldSpecs = proc.getSpecification();
 		boolean hasSpec = oldSpecs != null;
@@ -335,7 +335,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		Attribute[] newAttrs = processAttributes(proc.getAttributes());
 		Procedure newProc = new Procedure(proc.getLocation(), newAttrs, procId, proc.getTypeParams(),
 				newInParams, newOutParams, newSpecs, newBody);
-		ModelUtils.mergeAnnotations(proc, newProc);
+		ModelUtils.copyAnnotations(proc, newProc);
 
 		mEdgeIndexStack.pop();
 		mProcedureStack.pop();
@@ -560,8 +560,8 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 				}
 				Attribute[] attrs = {};
 				VarList variables = new VarList(location, identifiers, type, whereClause);
-				ModelUtils.mergeAnnotations(usedVarList, variables);
-				ModelUtils.mergeAnnotations(unusedVarList, variables);
+				ModelUtils.copyAnnotations(usedVarList, variables);
+				ModelUtils.copyAnnotations(unusedVarList, variables);
 				inlinedVars.add(new VariableDeclaration(location, attrs, new VarList[]{ variables }));				
 			}
 		}
@@ -575,7 +575,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			VarList[] newVarLists = new VarList[inlinedVars.size()];
 			inlinedVars.toArray(newVarLists);
 			VariableDeclaration newVarDecl = new VariableDeclaration(varDecl.getLocation(), newAttrs, newVarLists);
-			ModelUtils.mergeAnnotations(varDecl, newVarDecl);
+			ModelUtils.copyAnnotations(varDecl, newVarDecl);
 			mInlinedVars.add(newVarDecl);
 		}
 	}
@@ -677,7 +677,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 			Expression whereClause = varList.getWhereClause();
 			Expression newWhereClause = whereClause != null ? processExpression(whereClause) : null;
 			VarList newVarList = new VarList(varList.getLocation(), newVarIdsArray, varList.getType(), newWhereClause);
-			ModelUtils.mergeAnnotations(varList, newVarList);
+			ModelUtils.copyAnnotations(varList, newVarList);
 			newVarLists.add(newVarList);
 		}
 		return newVarLists;
@@ -747,7 +747,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		if (newStat == null) {
 			newStat = processStatement(stat); // also adds backtranslation
 		} else {
-			ModelUtils.mergeAnnotations(stat, newStat);
+			ModelUtils.copyAnnotations(stat, newStat);
 			addBacktranslation(newStat, stat);
 		}
 		mInlinerStatistic.incrementStatementsFlattened();
@@ -798,12 +798,12 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 				}
 				// assert PRE
 				AssertStatement assertStat = new AssertStatement(loc, processedFormula);
-				ModelUtils.mergeAnnotations(processedSpec, assertStat);
+				ModelUtils.copyAnnotations(processedSpec, assertStat);
 				addBacktranslation(assertStat, spec);
 				assertRequires.add(assertStat);
 				// assume PRE
 				AssumeStatement assumeStat = new AssumeStatement(loc, processedFormula);
-				ModelUtils.mergeAnnotations(processedSpec, assumeStat);
+				ModelUtils.copyAnnotations(processedSpec, assumeStat);
 				addBacktranslation(assumeStat, null); // "assert PRE" is always there and translates to the spec
 				assumeRequires.add(assumeStat);
 			} else if (processedSpec instanceof EnsuresSpecification) {
@@ -811,13 +811,13 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 				if (!isFree && calleeNode.isImplemented()) {
 					// assert POST
 					AssertStatement assertStat = new AssertStatement(loc, formula);
-					ModelUtils.mergeAnnotations(processedSpec, assertStat);
+					ModelUtils.copyAnnotations(processedSpec, assertStat);
 					addBacktranslation(assertStat, null); // "assume POST" is always there and translates to the spec
 					assertEnsures.add(assertStat);
 				}
 				// assume POST
 				AssumeStatement assumeStat = new AssumeStatement(loc, formula);
-				ModelUtils.mergeAnnotations(processedSpec, assumeStat);
+				ModelUtils.copyAnnotations(processedSpec, assumeStat);
 				addBacktranslation(assumeStat, spec);
 				assumeEnsures.add(assumeStat);
 			} else if (processedSpec instanceof ModifiesSpecification) {
@@ -880,7 +880,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 				VariableLHS[] processedModVars = processedModSpec.getIdentifiers();
 				if (processedModVars.length > 0) {
 					Statement havocModifiedVars = new HavocStatement(processedModSpec.getLocation(), processedModVars);
-					ModelUtils.mergeAnnotations(processedModSpec, havocModifiedVars);
+					ModelUtils.copyAnnotations(processedModSpec, havocModifiedVars);
 					addBacktranslation(havocModifiedVars, modSpec); // TODO remove from backtranslated trace?
 					inlinedBody.add(havocModifiedVars);
 				}
@@ -1002,7 +1002,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		if (newStat == null) {
 			newStat = super.processStatement(stat);
 		} else {
-			ModelUtils.mergeAnnotations(stat, newStat);
+			ModelUtils.copyAnnotations(stat, newStat);
 		}
 		addBacktranslation(newStat, stat);
 		return newStat;
@@ -1030,7 +1030,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		} else {
 			throw new UnsupportedOperationException("Cannot process unknown LHS: " + lhs.getClass().getName());
 		}
-		ModelUtils.mergeAnnotations(lhs, newLhs);
+		ModelUtils.copyAnnotations(lhs, newLhs);
 		return newLhs;
 	}
 	
@@ -1129,7 +1129,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		if (newExpr == null) {
 			newExpr = super.processExpression(expr);			
 		} else {
-			ModelUtils.mergeAnnotations(expr, newExpr);
+			ModelUtils.copyAnnotations(expr, newExpr);
 		}
 		addBacktranslation(newExpr, expr);
 		return newExpr;
@@ -1172,7 +1172,7 @@ public class InlineVersionTransformer extends BoogieCopyTransformer {
 		String[] newIds = applyMappingToVarIds(ids, declInfo);
 		if (newWhere != where || ids != newIds) {
 			VarList newVl = new VarList(vl.getLocation(), newIds, vl.getType(), newWhere);
-			ModelUtils.mergeAnnotations(vl, newVl);
+			ModelUtils.copyAnnotations(vl, newVl);
 			return newVl;
 		}
 		return vl;

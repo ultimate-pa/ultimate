@@ -105,6 +105,7 @@ extends BaseDirectedGraph<T> implements IModifiableDirectedGraph<T> {
 	}
 	
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean connectIncoming(T predecessor) {
 		boolean thisIncomingChanged = addIncoming(predecessor);
@@ -113,6 +114,7 @@ extends BaseDirectedGraph<T> implements IModifiableDirectedGraph<T> {
 		return thisIncomingChanged;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean disconnectIncoming(T predecessor) {
 		boolean thisIncomingChanged = removeIncoming(predecessor);
@@ -121,6 +123,7 @@ extends BaseDirectedGraph<T> implements IModifiableDirectedGraph<T> {
 		return thisIncomingChanged;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean connectOutgoing(T successor) {
 		boolean thisOutgoingChanged = addOutgoing(successor);
@@ -129,6 +132,7 @@ extends BaseDirectedGraph<T> implements IModifiableDirectedGraph<T> {
 		return thisOutgoingChanged;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public boolean disconnectOutgoing(T successor) {
 		boolean thisOutgoingChanged = removeOutgoing(successor);

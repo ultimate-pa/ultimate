@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -109,7 +110,7 @@ public class SequentialComposition extends CodeBlock {
 			codeBlocks.get(i).disconnectSource();
 			codeBlocks.get(i).disconnectTarget();
 			prettyPrinted.append(codeBlocks.get(i).getPrettyPrintedStatements());
-			ModelUtils.mergeAnnotations(codeBlocks.get(i), this);
+			ModelUtils.copyAnnotations(codeBlocks.get(i), this);
 		}
 		// workaround: set annotation with this pluginId again, because it was
 		// overwritten by the mergeAnnotations method
@@ -242,14 +243,15 @@ public class SequentialComposition extends CodeBlock {
 				}
 				Set<BoogieVar> modifiableGlobalsOfEndProcedure = modGlobVarManager.getModifiedBoogieVars(nameEndProcedure);
 				result = TransFormula.sequentialCompositionWithPendingCall(boogie2smt, simplify, extPqe, tranformToCNF,
-						beforeCall, call.getTransitionFormula(), oldVarsAssignment, tfForCodeBlocks, logger, services, modifiableGlobalsOfEndProcedure);
+						Arrays.asList(beforeCall), call.getTransitionFormula(), oldVarsAssignment, tfForCodeBlocks, logger, services, modifiableGlobalsOfEndProcedure);
 			} else {
 				assert (beforeCall == null);
 				String proc = call.getCallStatement().getMethodName();
 				TransFormula oldVarsAssignment = modGlobVarManager.getOldVarsAssignment(proc);
+				TransFormula globalVarsAssignment = modGlobVarManager.getGlobalVarsAssignment(proc);
 				result = TransFormula.sequentialCompositionWithCallAndReturn(boogie2smt, simplify, extPqe,
-						tranformToCNF, call.getTransitionFormula(), oldVarsAssignment, tfForCodeBlocks,
-						ret.getTransitionFormula(), logger, services);
+						tranformToCNF, call.getTransitionFormula(), oldVarsAssignment, globalVarsAssignment,
+						tfForCodeBlocks, ret.getTransitionFormula(), logger, services);
 			}
 
 		}

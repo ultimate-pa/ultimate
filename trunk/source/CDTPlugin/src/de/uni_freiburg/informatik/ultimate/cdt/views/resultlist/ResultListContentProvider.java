@@ -38,8 +38,8 @@ import org.eclipse.jface.viewers.Viewer;
 
 import de.uni_freiburg.informatik.ultimate.cdt.codan.CDTResultStore;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
-import de.uni_freiburg.informatik.ultimate.result.IResult;
 import de.uni_freiburg.informatik.ultimate.result.UnprovableResult;
+import de.uni_freiburg.informatik.ultimate.result.model.IResult;
 
 /**
  * @author Stefan Wissert

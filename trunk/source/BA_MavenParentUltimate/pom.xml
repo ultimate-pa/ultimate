@@ -195,7 +195,6 @@
 		<module>../BA_FeatureDependenciesCommandlineE4</module>
 		<module>../BA_FeatureDependenciesDebugE4</module>
 		<module>../BA_FeatureUltimateBOSCHReqAnalyzer</module>
-
 		<module>../CoreRCP</module>
 		<module>../GuiRCP</module>
 		<module>../BoogieModSetAnnotator</module>
@@ -208,8 +207,6 @@
 		<module>../TraceAbstractionWithAFAs</module>
 		<module>../JavaCup</module>
 		<module>../RCFGBuilder</module>
-		<module>../AbstractInterpretation</module>
-
 		<module>../CodeCheck</module>
 		<module>../Library-log4j</module>
 		<module>../ACSLParser</module>
@@ -251,7 +248,8 @@
 		<module>../SpaceExParser</module>
 		<module>../Library-ojAlgo</module>
 		<module>../AbstractInterpretationV2</module>
-		<module>../AbstractInterpretationMk2</module>
+		<module>../AutomatonDeltaDebugger</module>
+		<module>../WitnessPrinter</module>
 	</modules>
 
 	<profiles>
@@ -321,9 +319,11 @@
 				<module>../Library-UltimateTest</module>
 
 				<!-- modules containing actual tests -->
+				<module>../AbstractInterpretationV2Test</module>
+				<module>../CoreRCPTest</module>
+				<module>../Library-ModelCheckerUtilsTest</module>
 				<module>../Library-UltimateUtilTest</module>
 				<module>../Library-UltimateTestTest</module>
-				<module>../CoreRCPTest</module>
 				<module>../UltimateRegressionTest</module>
 			</modules>
 		</profile>
@@ -400,9 +400,11 @@
 				<module>../Library-UltimateTest</module>
 
 				<!-- modules containing actual tests -->
+				<module>../AbstractInterpretationV2Test</module>
+				<module>../CoreRCPTest</module>
+				<module>../Library-ModelCheckerUtilsTest</module>
 				<module>../Library-UltimateUtilTest</module>
 				<module>../Library-UltimateTestTest</module>
-				<module>../CoreRCPTest</module>
 				<module>../UltimateRegressionTest</module>
 			</modules>
 		</profile>
@@ -484,9 +486,11 @@
 				<module>../Library-UltimateTest</module>
 
 				<!-- modules containing actual tests -->
+				<module>../AbstractInterpretationV2Test</module>
+				<module>../CoreRCPTest</module>
+				<module>../Library-ModelCheckerUtilsTest</module>
 				<module>../Library-UltimateUtilTest</module>
 				<module>../Library-UltimateTestTest</module>
-				<module>../CoreRCPTest</module>
 				<module>../UltimateRegressionTest</module>
 			</modules>
 		</profile>
@@ -530,7 +534,7 @@
 							<argLine>${manualtest-argline}</argLine>
 
 							<systemProperties>
-								<svcompdir>../svcomp</svcompdir>
+								<svcompdir>examples/svcomp</svcompdir>
 							</systemProperties>
 
 							<!-- Use this for global timeouts per class -->
@@ -549,9 +553,11 @@
 				<module>../Library-UltimateTest</module>
 
 				<!-- modules containing actual tests -->
+				<module>../AbstractInterpretationV2Test</module>
+				<module>../CoreRCPTest</module>
+				<module>../Library-ModelCheckerUtilsTest</module>
 				<module>../Library-UltimateUtilTest</module>
 				<module>../Library-UltimateTestTest</module>
-				<module>../CoreRCPTest</module>
 				<module>../UltimateRegressionTest</module>
 				<module>../UltimateTest</module>
 			</modules>

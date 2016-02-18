@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationS
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.result.model.IResult;
 
 /**
  * Nontermination argument in form of an infinite program execution.

@@ -25,31 +25,24 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StringFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.TightLevelRankingStateGeneratorBuilder.FkvOptimization;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.MultiOptimizationLevelRankingGenerator.FkvOptimization;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveNonLiveStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 	
 
@@ -59,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  */
 public class BuchiComplementationEvaluation<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 	
 	private final INestedWordAutomaton<LETTER,STATE> m_Operand;
@@ -87,7 +80,7 @@ public class BuchiComplementationEvaluation<LETTER,STATE> implements IOperation<
 				m_Result;
 	}
 	
-	public BuchiComplementationEvaluation(IUltimateServiceProvider services,
+	public BuchiComplementationEvaluation(AutomataLibraryServices services,
 			StateFactory<STATE> stateFactory, 
 			INestedWordAutomatonSimple<LETTER,STATE> input) throws AutomataLibraryException {
 		m_Services = services;
@@ -113,11 +106,11 @@ public class BuchiComplementationEvaluation<LETTER,STATE> implements IOperation<
 				NestedWordAutomatonReachableStates<LETTER, STATE> result = (new BuchiComplementFKV<LETTER, STATE>(m_Services, stateFactory, m_Operand, fkvOptimization.toString(), Integer.MAX_VALUE)).getResult();
 				addToResultsWithSizeReduction(results, name, result);
 			}
-			{
-				String name = "FKV_" + fkvOptimization + "_MaxRank3";
-				NestedWordAutomatonReachableStates<LETTER, STATE> result = (new BuchiComplementFKV<LETTER, STATE>(m_Services, stateFactory, m_Operand, fkvOptimization.toString(), 3)).getResult();
-				addToResultsWithSizeReduction(results, name, result);
-			}
+//			{
+//				String name = "FKV_" + fkvOptimization + "_MaxRank3";
+//				NestedWordAutomatonReachableStates<LETTER, STATE> result = (new BuchiComplementFKV<LETTER, STATE>(m_Services, stateFactory, m_Operand, fkvOptimization.toString(), 3)).getResult();
+//				addToResultsWithSizeReduction(results, name, result);
+//			}
 		}
 		return prettyPrint(results);
 	}

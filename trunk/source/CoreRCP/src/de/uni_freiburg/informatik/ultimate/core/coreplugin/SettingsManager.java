@@ -69,67 +69,76 @@ class SettingsManager {
 	void loadPreferencesFromFile(ICore core, String filename) {
 		if (filename != null && !filename.isEmpty()) {
 			mLogger.debug("--------------------------------------------------------------------------------");
-			mLogger.info("Loading settings from " + filename);
+			mLogger.info("Beginning loading settings from " + filename);
+			if (mLogger.isDebugEnabled()) {
+				mLogger.info("Preferences different from defaults before loading file:");
+				logPreferencesDifferentFromDefaults(core);
+			}
+
 			try {
-				FileInputStream fis = new FileInputStream(filename);
-				IStatus status = UltimatePreferenceStore.importPreferences(fis);
+				final FileInputStream fis = new FileInputStream(filename);
+				final IStatus status = UltimatePreferenceStore.importPreferences(fis);
 				if (!status.isOK()) {
 					mLogger.warn("Failed to load preferences. Status is: " + status);
 					mLogger.warn("Did not attach debug property logger");
 				} else {
 					mLogger.info("Loading preferences was successful");
-					mLogger.info("Preferences different from defaults:");
-					boolean isSomePluginDifferent = false;
-					for (IUltimatePlugin plugin : core.getRegisteredUltimatePlugins()) {
-						String[] delta = new UltimatePreferenceStore(plugin.getPluginID()).getDeltaPreferencesStrings();
-						if (delta != null && delta.length > 0) {
-							isSomePluginDifferent = true;
-							mLogger.info("Preferences of " + plugin.getPluginName() + " differ from their defaults:");
-							for (String s : delta) {
-								mLogger.info(" * " + s);
-							}
-						}
-					}
-					if (!isSomePluginDifferent) {
-						mLogger.info("All preferences are set to their defaults");
-					}
-
 				}
+				mLogger.info("Preferences different from defaults after loading the file:");
+				logPreferencesDifferentFromDefaults(core);
 			} catch (Exception e) {
 				mLogger.error("Could not load preferences because of exception: ", e);
 				mLogger.warn("Did not attach debug property logger");
 			} finally {
 				mLogger.debug("--------------------------------------------------------------------------------");
 			}
-
 		} else {
 			mLogger.info("Loading settings from empty filename is not possible");
 		}
 	}
 
-	void savePreferences(ICore core, String filename) {
-		if (filename != null && !filename.isEmpty()) {
-			mLogger.info("Saving preferences to file " + filename);
-			try {
-				File f = new File(filename);
-				if (f.isFile() && f.exists()) {
-					f.delete();
+	private void logPreferencesDifferentFromDefaults(ICore core) {
+		boolean isSomePluginDifferent = false;
+		for (final IUltimatePlugin plugin : core.getRegisteredUltimatePlugins()) {
+			final String pluginId = plugin.getPluginID();
+			final String[] delta = new UltimatePreferenceStore(pluginId).getDeltaPreferencesStrings();
+			if (delta != null && delta.length > 0) {
+				isSomePluginDifferent = true;
+				mLogger.info("Preferences of " + plugin.getPluginName() + " differ from their defaults:");
+				for (final String setting : delta) {
+					mLogger.info(" * " + setting);
 				}
-				FileOutputStream fis = new FileOutputStream(filename);
-
-				for (IUltimatePlugin plugin : core.getRegisteredUltimatePlugins()) {
-					new UltimatePreferenceStore(plugin.getPluginID()).exportPreferences(fis);
-				}
-
-				fis.flush();
-				fis.close();
-			} catch (FileNotFoundException e) {
-				mLogger.error("Saving preferences failed with exception: ", e);
-			} catch (IOException e) {
-				mLogger.error("Saving preferences failed with exception: ", e);
-			} catch (CoreException e) {
-				mLogger.error("Saving preferences failed with exception: ", e);
 			}
+		}
+		if (!isSomePluginDifferent) {
+			mLogger.info("All preferences are set to their defaults");
+		}
+	}
+
+	void savePreferences(ICore core, String filename) {
+		if (filename == null || filename.isEmpty()) {
+			return;
+		}
+		mLogger.info("Saving preferences to file " + filename);
+		try {
+			final File outputFile = new File(filename);
+			if (outputFile.isFile() && outputFile.exists()) {
+				outputFile.delete();
+			}
+			final FileOutputStream fis = new FileOutputStream(filename);
+
+			for (final IUltimatePlugin plugin : core.getRegisteredUltimatePlugins()) {
+				new UltimatePreferenceStore(plugin.getPluginID()).exportPreferences(fis);
+			}
+
+			fis.flush();
+			fis.close();
+		} catch (FileNotFoundException e) {
+			mLogger.error("Saving preferences failed with exception: ", e);
+		} catch (IOException e) {
+			mLogger.error("Saving preferences failed with exception: ", e);
+		} catch (CoreException e) {
+			mLogger.error("Saving preferences failed with exception: ", e);
 		}
 	}
 
@@ -166,8 +175,8 @@ class SettingsManager {
 	}
 
 	/**
-	 * Attaches Listener to all preferences and all scopes of all plugins to
-	 * notify developers about changing preferences
+	 * Attaches Listener to all preferences and all scopes of all plugins to notify developers about changing
+	 * preferences
 	 * 
 	 * @param pluginId
 	 */
@@ -212,8 +221,8 @@ class SettingsManager {
 
 		@Override
 		public void preferenceChange(PreferenceChangeEvent event) {
-			mLogger.debug(mPrefix + event.getKey() + "\" changed: " + event.getOldValue() + " -> "
-					+ event.getNewValue() + " (actual value in store: " + mPreferences.getString(event.getKey()) + ")");
+			mLogger.debug(mPrefix + event.getKey() + "\" changed: " + event.getOldValue() + " -> " + event.getNewValue()
+					+ " (actual value in store: " + mPreferences.getString(event.getKey()) + ")");
 		}
 	}
 

@@ -29,13 +29,13 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incremental_inclusion.InclusionViaDifference;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * Operation that takes three Operands A, B_1 and B_2 and checks if the language
@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  */
 public class IsIncluded2<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 	
 	
@@ -64,7 +64,7 @@ public class IsIncluded2<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	private final NestedRun<LETTER, STATE> m_Counterexample;
 	
 	
-	public IsIncluded2(IUltimateServiceProvider services,
+	public IsIncluded2(AutomataLibraryServices services,
 			StateFactory<STATE> stateFactory,
 			INestedWordAutomatonSimple<LETTER, STATE> a, 
 			INestedWordAutomatonSimple<LETTER, STATE> b_1,

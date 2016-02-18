@@ -1339,7 +1339,7 @@ public class SmtManager {
 			return newPredicate(term, tvp.getProcedures(), tvp.getVars(), closed_formula);
 		} else {
 			Term result = PartialQuantifierElimination.quantifier(mServices, mLogger, m_Script, getVariableManager(), quantifier,
-					quantifiedVariables.toArray(new TermVariable[quantifiedVariables.size()]), term, (Term[][]) null);
+					quantifiedVariables, term, (Term[][]) null);
 			// Compute the set of BoogieVars, the procedures and the term
 			TermVarsProc tvp = TermVarsProc.computeTermVarsProc(result, m_Boogie2Smt);
 			// Compute a closed formula version of term.
@@ -1417,7 +1417,7 @@ public class SmtManager {
 	}
 
 	public static HoareAnnotation getHoareAnnotation(ProgramPoint programPoint) {
-		return ((HoareAnnotation) programPoint.getPayload().getAnnotations().get(Activator.s_PLUGIN_ID));
+		return HoareAnnotation.getAnnotation(programPoint);
 	}
 
 	public LBool checkSatWithFreeVars(Term negation) {

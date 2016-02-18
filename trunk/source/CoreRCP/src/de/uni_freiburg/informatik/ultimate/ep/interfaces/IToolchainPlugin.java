@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
+ * @see {@link IUltimatePlugin}
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */

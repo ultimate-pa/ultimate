@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.alternating.AlternatingAutomaton;
@@ -49,7 +50,7 @@ public class RAFA_Determination<LETTER> implements IOperation<LETTER, IPredicate
 		this.smtManager = smtManager;
 		this.predicateUnifier = predicateUnifier;
 		resultAutomaton = new NestedWordAutomaton<LETTER, IPredicate>(
-			ultimateServiceProvider,
+				new AutomataLibraryServices(ultimateServiceProvider),
 			alternatingAutomaton.getAlphabet(),
 			Collections.<LETTER>emptySet(),
 			Collections.<LETTER>emptySet(),

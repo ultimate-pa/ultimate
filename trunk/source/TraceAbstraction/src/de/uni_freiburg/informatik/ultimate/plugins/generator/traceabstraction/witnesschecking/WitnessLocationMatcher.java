@@ -76,6 +76,9 @@ public class WitnessLocationMatcher {
 		matchLocations(controlFlowAutomaton.getReturnAlphabet());
 		m_UnmatchedWitnessLetters = new ArrayList<WitnessEdge>(witnessAutomaton.getInternalAlphabet());
 		m_UnmatchedWitnessLetters.removeAll(m_WitnessLetters2SingleLineLocations.getDomain());
+//		for (WitnessEdge witnessLetter : m_UnmatchedWitnessLetters) {
+//			m_Logger.info("Unmatched witness edge: " + witnessLetter);
+//		}
 		m_Logger.info(witnessAutomaton.getInternalAlphabet().size() + " witness edges");
 		m_Logger.info(m_PureAnnotationEdges.size() + " pure annotation edges");
 		m_Logger.info(m_UnmatchedWitnessLetters.size() + " unmatched witness edges");

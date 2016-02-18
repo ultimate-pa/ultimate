@@ -275,19 +275,85 @@ public class SmtUtils {
 	 * element for sort sort if summands is empty.
 	 */
 	public static Term sum(Script script, Sort sort, Term... summands) {
-		assert sort.isNumericSort();
+		assert sort.isNumericSort() || BitvectorUtils.isBitvectorSort(sort);
 		if (summands.length == 0) {
 			if (sort.toString().equals("Int")) {
 				return script.numeral(BigInteger.ZERO);
 			} else if (sort.toString().equals("Real")) {
 				return script.decimal(BigDecimal.ZERO);
+			} else if (BitvectorUtils.isBitvectorSort(sort)) {
+				return BitvectorUtils.constructTerm(script, BigInteger.ZERO, sort);
 			} else {
 				throw new UnsupportedOperationException("unkown sort " + sort);
 			}
 		} else if (summands.length == 1) {
 			return summands[0];
 		} else {
-			return script.term("+", summands);
+			if (sort.isNumericSort()) {
+				return script.term("+", summands);
+			} else if (BitvectorUtils.isBitvectorSort(sort)) {
+				return script.term("bvadd", summands);
+			} else {
+				throw new UnsupportedOperationException("unkown sort " + sort);
+			}
+		}
+	}
+	
+	/**
+	 * Return term that represents the product of all factors. Return the neutral
+	 * element for sort sort if factors is empty.
+	 */
+	public static Term mul(Script script, Sort sort, Term... factors) {
+		assert sort.isNumericSort() || BitvectorUtils.isBitvectorSort(sort);
+		if (factors.length == 0) {
+			if (sort.toString().equals("Int")) {
+				return script.numeral(BigInteger.ONE);
+			} else if (sort.toString().equals("Real")) {
+				return script.decimal(BigDecimal.ONE);
+			} else if (BitvectorUtils.isBitvectorSort(sort)) {
+				return BitvectorUtils.constructTerm(script, BigInteger.ONE, sort);
+			} else {
+				throw new UnsupportedOperationException("unkown sort " + sort);
+			}
+		} else if (factors.length == 1) {
+			return factors[0];
+		} else {
+			if (sort.isNumericSort()) {
+				return script.term("*", factors);
+			} else if (BitvectorUtils.isBitvectorSort(sort)) {
+				return script.term("bvmul", factors);
+			} else {
+				throw new UnsupportedOperationException("unkown sort " + sort);
+			}
+		}
+	}
+	
+	/**
+	 * Return sum, in affine representation if possible.
+	 * @param funcname either "+" or "bvadd".
+	 */
+	public static Term sum(Script script, String funcname, Term... summands) {
+		assert funcname.equals("+") || funcname.equals("bvadd");
+		final Term sum = script.term(funcname, summands);
+		final AffineTerm affine = (AffineTerm) (new AffineTermTransformer(script)).transform(sum);
+		if (affine.isErrorTerm()) {
+			return sum;
+		} else {
+			return affine.toTerm(script);
+		}
+	}
+	
+	/**
+	 * Return term that represents negation (unary minus).
+	 */
+	public static Term neg(Script script, Sort sort, Term operand) {
+		assert sort.isNumericSort() || BitvectorUtils.isBitvectorSort(sort);
+		if (sort.isNumericSort()) {
+			return script.term("-", operand);
+		} else if (BitvectorUtils.isBitvectorSort(sort)) {
+			return script.term("bvneg", operand);
+		} else {
+			throw new UnsupportedOperationException("unkown sort " + sort);
 		}
 	}
 	
@@ -338,10 +404,10 @@ public class SmtUtils {
 		if (!fst.getSort().equals(snd.getSort())) {
 			throw new UnsupportedOperationException("arguments sort different");
 		}
-		BitvectorConstant fstbw = new BitvectorConstant(fst);
-		if (fstbw.isBitvectorConstant()) {
-			BitvectorConstant sndbw = new BitvectorConstant(snd);
-			if (sndbw.isBitvectorConstant()) {
+		BitvectorConstant fstbw = BitvectorUtils.constructBitvectorConstant(fst);
+		if (fstbw != null) {
+			BitvectorConstant sndbw = BitvectorUtils.constructBitvectorConstant(snd);
+			if (sndbw != null) {
 				return !fstbw.equals(sndbw);
 			}
 		}
@@ -599,6 +665,11 @@ public class SmtUtils {
 				result = Util.ite(script, params[0], params[1], params[2]);
 			}
 			break;
+		case "+":
+		case "bvadd": {
+			result = SmtUtils.sum(script, funcname, params);
+			}
+			break;
 		case "div":
 			if (params.length != 2) {
 				throw new IllegalArgumentException("no div");
@@ -613,7 +684,36 @@ public class SmtUtils {
 				result = mod(script, params[0], params[1]);
 			}
 			break;
+		case "zero_extend":
+		case "extract":
+		case "bvsub":
+		case "bvmul":
+		case "bvudiv":
+		case "bvurem":
+		case "bvsdiv":
+		case "bvsrem":
+		case "bvand":
+		case "bvor":
+		case "bvxor":
+		case "bvnot":
+		case "bvneg":
+		case "bvshl":
+		case "bvlshr":
+		case "bvashr":
+		case "bvult":
+		case "bvule":
+		case "bvugt":
+		case "bvuge":
+		case "bvslt":
+		case "bvsle":
+		case "bvsgt":
+		case "bvsge":
+			result = BitvectorUtils.termWithLocalSimplification(script, funcname, indices, params);
+			break;
 		default:
+//			if (BitvectorUtils.allTermsAreBitvectorConstants(params)) {
+//				throw new AssertionError("wasted optimization " + funcname);
+//			}
 			result = script.term(funcname, indices, null, params);
 			break;
 		}
@@ -621,6 +721,9 @@ public class SmtUtils {
 	}
 	
 	
+
+
+
 	/**
 	 * Returns a possibly simplified version of the Term (div dividend divisor).
 	 * If dividend and divisor are both literals the returned Term is a literal 
@@ -659,6 +762,11 @@ public class SmtUtils {
 		if (affineDivident.isErrorTerm() || affineDivisor.isErrorTerm()) {
 			return script.term("mod", divident, divisor);
 		}
+		if (affineDivisor.isZero()) {
+			// pass the problem how to deal with division by zero to the
+			// subsequent analysis
+			return script.term("mod", divident, divisor);
+		}
 		if (affineDivisor.isConstant()) {
 			BigInteger bigIntDivisor = toInt(affineDivisor.getConstant());
 			if (affineDivident.isConstant()) {
@@ -687,6 +795,20 @@ public class SmtUtils {
 	
 	public static Rational toRational(BigInteger bigInt) {
 		return Rational.valueOf(bigInt, BigInteger.ONE);
+	}
+	
+	public static Term rational2Term(Script script, Rational rational, Sort sort) {
+		if (sort.isNumericSort()) {
+			return rational.toTerm(sort);
+		} else if (BitvectorUtils.isBitvectorSort(sort)) {
+			if (rational.isIntegral() && rational.isRational()) {
+				return BitvectorUtils.constructTerm(script, rational.numerator(), sort);
+			} else {
+				throw new IllegalArgumentException("unable to convert rational to bitvector if not integer");
+			}
+		} else {
+			throw new AssertionError("unknown sort " + sort);
+		}
 	}
 	
 	/**
@@ -804,13 +926,13 @@ public class SmtUtils {
 	 * Returns quantified formula. Drops quantifiers for variables that do not
 	 * occur in formula.
 	 */
-	public static Term quantifier(Script script, int quantifier, TermVariable[] vars, Term body) {
-		if (vars.length == 0) {
+	public static Term quantifier(Script script, int quantifier, Collection<TermVariable> vars, Term body) {
+		if (vars.size() == 0) {
 			return body;
 		}
 		ArrayList<TermVariable> resultVars = new ArrayList<>();
 		for (TermVariable tv : Arrays.asList(body.getFreeVars())) {
-			if (Arrays.asList(vars).contains(tv)) {
+			if (vars.contains(tv)) {
 				resultVars.add(tv);
 			}
 		}

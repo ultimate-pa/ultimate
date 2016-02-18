@@ -34,11 +34,10 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.ISource;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
-import de.uni_freiburg.informatik.ultimate.model.GraphType.Type;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 
 /**
- * @author dietsch@informatik.uni-freiburg.de
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
 public class WitnessParser implements ISource {
@@ -46,10 +45,10 @@ public class WitnessParser implements ISource {
 	private static final String[] sFileTypes = new String[] { "graphml" };
 	private IUltimateServiceProvider mServices;
 	private String mFilename;
+	private GraphType.Type mWitnessType;
 
 	@Override
 	public void setToolchainStorage(IToolchainStorage storage) {
-		// TODO Auto-generated method stub
 
 	}
 
@@ -94,7 +93,7 @@ public class WitnessParser implements ISource {
 	@Override
 	public boolean parseable(File file) {
 		if (file != null && file.exists() && file.isFile()) {
-			for (String suffix : getFileTypes()) {
+			for (final String suffix : getFileTypes()) {
 				if (file.getName().endsWith(suffix)) {
 					return true;
 				}
@@ -114,7 +113,10 @@ public class WitnessParser implements ISource {
 	@Override
 	public IElement parseAST(File file) throws Exception {
 		mFilename = file.getAbsolutePath();
-		return new WitnessAutomatonConstructor(mServices).constructWitnessAutomaton(file);
+		final WitnessAutomatonConstructor wac = new WitnessAutomatonConstructor(mServices);
+		final IElement rtr = wac.constructWitnessAutomaton(file);
+		mWitnessType = wac.getWitnessType();
+		return rtr;
 	}
 
 	@Override
@@ -124,7 +126,7 @@ public class WitnessParser implements ISource {
 
 	@Override
 	public GraphType getOutputDefinition() {
-		return new GraphType(getPluginID(), Type.OTHER, Collections.singleton(mFilename));
+		return new GraphType(getPluginID(), mWitnessType, Collections.singleton(mFilename));
 	}
 
 	@Override

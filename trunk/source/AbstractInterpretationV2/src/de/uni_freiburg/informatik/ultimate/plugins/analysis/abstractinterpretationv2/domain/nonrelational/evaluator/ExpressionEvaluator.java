@@ -64,6 +64,10 @@ public class ExpressionEvaluator<VALUE, STATE extends IAbstractState<STATE, ACTI
 		// TODO Insert sanity checks to be on the safe side.
 
 		if (mEvaluators.isEmpty()) {
+			if (mRootEvaluator != null) {
+				throw new UnsupportedOperationException("The root evaluator is not empty.");
+			}
+			
 			mEvaluators.push((IEvaluator<VALUE, STATE, ACTION, VARDECL>) evaluator);
 			mRootEvaluator = (IEvaluator<VALUE, STATE, ACTION, VARDECL>) evaluator;
 		} else {

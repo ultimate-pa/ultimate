@@ -27,78 +27,58 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg;
 
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.Deque;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.annotation.ModernAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IAbstractStateStorage;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
-import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 /**
  * 
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public class AnnotatingRcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
-		extends BaseRcfgAbstractStateStorageProvider<STATE> {
+public class AnnotatingRcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>, LOCATION>
+		extends BaseRcfgAbstractStateStorageProvider<STATE, LOCATION> {
 
 	private static int sSuffix;
 	private final String mSuffix;
 
 	public AnnotatingRcfgAbstractStateStorageProvider(IAbstractStateBinaryOperator<STATE> mergeOperator,
-			IUltimateServiceProvider services) {
-		super(mergeOperator, services);
+			IUltimateServiceProvider services, ITransitionProvider<CodeBlock, LOCATION> transProvider) {
+		super(mergeOperator, services, transProvider);
 		mSuffix = String.valueOf(sSuffix++);
 	}
 
-	protected Deque<Pair<CodeBlock, STATE>> getStates(RCFGNode node) {
+	protected Deque<STATE> getStates(LOCATION node) {
 		assert node != null;
-		AbsIntAnnotation<STATE> rtr = AbsIntAnnotation.getAnnotation(node, mSuffix);
+		assert node instanceof IElement : "Cannot persist states for locations that do not support payloads";
+		final IElement elem = (IElement) node;
+		AbsIntAnnotation<STATE> rtr = AbsIntAnnotation.getAnnotation(elem, mSuffix);
 		if (rtr == null) {
 			rtr = new AbsIntAnnotation<STATE>();
-			rtr.annotate(node, mSuffix);
+			rtr.annotate(elem, mSuffix);
 		}
 		return rtr.mStates;
 	}
 
 	private static final class AbsIntAnnotation<STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>>
-			extends AbstractAnnotations {
+			extends ModernAnnotations {
 
 		private static final String KEY = AbsIntAnnotation.class.getSimpleName();
-		private static final String[] FIELD_NAMES = new String[] { "States" };
 		private static final long serialVersionUID = 1L;
-		private final Deque<Pair<CodeBlock, STATE>> mStates;
+
+		@Visualizable
+		private final Deque<STATE> mStates;
 
 		private AbsIntAnnotation() {
 			mStates = new ArrayDeque<>();
-		}
-
-		@Override
-		protected String[] getFieldNames() {
-			return FIELD_NAMES;
-		}
-
-		@Override
-		protected Object getFieldValue(String field) {
-			if (FIELD_NAMES[0].equals(field)) {
-				// states
-				final ArrayList<String> rtr = new ArrayList<>();
-				for (final Pair<CodeBlock, STATE> entry : mStates) {
-					rtr.add(new StringBuilder().append("[").append(entry.getSecond().hashCode()).append("] ")
-							.append(entry.getSecond().toLogString()).append(" (from ")
-							.append(entry.getFirst().getPrettyPrintedStatements()).append(")").toString());
-				}
-				return rtr.toArray(new String[rtr.size()]);
-			}
-			return null;
 		}
 
 		public void annotate(IElement elem, String suffix) {
@@ -119,7 +99,8 @@ public class AnnotatingRcfgAbstractStateStorageProvider<STATE extends IAbstractS
 	}
 
 	@Override
-	public IAbstractStateStorage<STATE, CodeBlock, IBoogieVar, ProgramPoint> createStorage() {
-		return new AnnotatingRcfgAbstractStateStorageProvider<STATE>(getMergeOperator(), getServices());
+	public BaseRcfgAbstractStateStorageProvider<STATE, LOCATION> create() {
+		return new AnnotatingRcfgAbstractStateStorageProvider<STATE, LOCATION>(getMergeOperator(), getServices(),
+				getTransitionProvider());
 	}
 }

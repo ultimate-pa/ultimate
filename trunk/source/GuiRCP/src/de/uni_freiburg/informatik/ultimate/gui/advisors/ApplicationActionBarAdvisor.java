@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.gui.actions.LoadSourceFilesAction;
 import de.uni_freiburg.informatik.ultimate.gui.actions.ResetAndRedoToolChainAction;
 import de.uni_freiburg.informatik.ultimate.gui.actions.ResetAndRedoToolChainNewTCAction;
 import de.uni_freiburg.informatik.ultimate.gui.actions.ResetAndRedoToolChainOldTCAction;
+import de.uni_freiburg.informatik.ultimate.gui.actions.ResetSettingsAction;
 import de.uni_freiburg.informatik.ultimate.gui.actions.SaveSettingsAction;
 
 import org.apache.log4j.Logger;
@@ -44,6 +45,7 @@ import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.action.ToolBarManager;
+import org.eclipse.swt.SWT;
 import org.eclipse.ui.IWorkbenchActionConstants;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.actions.ActionFactory;
@@ -52,68 +54,61 @@ import org.eclipse.ui.application.ActionBarAdvisor;
 import org.eclipse.ui.application.IActionBarConfigurer;
 
 /**
- * the class that handles the actions and fills the action bars.
+ * The class that handles the actions and fills the action bars.
  * 
  * @author Christian Ortolf
  * 
  */
 public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 
-	private ICore mCore;
-	private GuiController mController;
+	private final ICore mCore;
+	private final GuiController mController;
+	private final Logger mLogger;
 
-	private IWorkbenchAction exitAction;
-
-	private IWorkbenchAction aboutAction;
-
-	private IWorkbenchAction preferenceAction;
+	private IWorkbenchAction mExitAction;
+	private IWorkbenchAction mAboutAction;
+	private IWorkbenchAction mPreferenceAction;
 
 	// custom actions
-	private IWorkbenchAction loadSourceFiles;
-	private IWorkbenchAction resetAndReRun;
-	private IWorkbenchAction resetAndReRunNewTC, resetAndReRunOldTC;
-	private IWorkbenchAction loadSettings, saveSettings;
-	private Logger mLogger;
+	private IWorkbenchAction mLoadSourceFiles;
+	private IWorkbenchAction mResetAndReRun;
+	private IWorkbenchAction mResetAndReRunNewTC;
+	private IWorkbenchAction mResetAndReRunOldTC;
+	private IWorkbenchAction mLoadSettings;
+	private IWorkbenchAction mSaveSettings;
+	private IWorkbenchAction mResetSettings;
 
-	public ApplicationActionBarAdvisor(IActionBarConfigurer configurer, ICore icc, GuiController controller, Logger logger) {
+	public ApplicationActionBarAdvisor(IActionBarConfigurer configurer, ICore icc, GuiController controller,
+			Logger logger) {
 		super(configurer);
-		this.mCore = icc;
+		mCore = icc;
 		mController = controller;
 		mLogger = logger;
 	}
 
 	/**
-	 * called by Workbench to create our actions.
+	 * Called by Workbench to create our actions.
 	 * 
 	 * @param window
 	 *            the workbench window we are in
 	 */
 	protected final void makeActions(final IWorkbenchWindow window) {
-		exitAction = ActionFactory.QUIT.create(window);
-		register(exitAction);
-		aboutAction = ActionFactory.ABOUT.create(window);
-		register(aboutAction);
-		preferenceAction = ActionFactory.PREFERENCES.create(window);
-		register(preferenceAction);
+		mExitAction = registerAction(ActionFactory.QUIT.create(window));
+		mAboutAction = registerAction(ActionFactory.ABOUT.create(window));
+		mPreferenceAction = registerAction(ActionFactory.PREFERENCES.create(window));
 
-		// openPreferencesDialog = new OpenPreferencesDialogAction(window);
-		// register(openPreferencesDialog);
+		mLoadSourceFiles = registerAction(new LoadSourceFilesAction(window, mCore, mController, mLogger));
+		mResetAndReRun = registerAction(new ResetAndRedoToolChainAction(window, mCore, mController, mLogger));
+		mResetAndReRunNewTC = registerAction(new ResetAndRedoToolChainNewTCAction(window, mCore, mController, mLogger));
+		mResetAndReRunOldTC = registerAction(new ResetAndRedoToolChainOldTCAction(window, mCore, mController, mLogger));
+		mLoadSettings = registerAction(new LoadSettingsAction(window, mCore));
+		mSaveSettings = registerAction(new SaveSettingsAction(window, mCore));
+		mResetSettings = registerAction(new ResetSettingsAction(mCore));
+	}
 
-		// openDottyGraphFromFile = new OpenDottyGraphFromFileAction(window);
-		// register(openDottyGraphFromFile);
-
-		loadSourceFiles = new LoadSourceFilesAction(window, mCore, mController, mLogger);
-		register(loadSourceFiles);
-		resetAndReRun = new ResetAndRedoToolChainAction(window, mCore, mController, mLogger);
-		register(resetAndReRun);
-		resetAndReRunNewTC = new ResetAndRedoToolChainNewTCAction(window, mCore, mController, mLogger);
-		register(resetAndReRunNewTC);
-		resetAndReRunOldTC = new ResetAndRedoToolChainOldTCAction(window, mCore, mController, mLogger);
-		register(resetAndReRunOldTC);
-		loadSettings = new LoadSettingsAction(window, mCore);
-		register(loadSettings);
-		saveSettings = new SaveSettingsAction(window, mCore);
-		register(saveSettings);
+	private IWorkbenchAction registerAction(IWorkbenchAction action) {
+		register(action);
+		return action;
 	}
 
 	/**
@@ -124,22 +119,23 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 	protected void fillMenuBar(IMenuManager menuBar) {
 		final MenuManager fileMenu = new MenuManager("&File", "file");
 
-		fileMenu.add(loadSourceFiles);
+		fileMenu.add(mLoadSourceFiles);
 		// fileMenu.add(openDottyGraphFromFile);
 
 		// fileMenu.add(preferenceAction);
 		fileMenu.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 		fileMenu.add(new Separator());
-		fileMenu.add(exitAction);
+		fileMenu.add(mExitAction);
 
 		MenuManager settingsMenu = new MenuManager("&Settings", "settings");
-		settingsMenu.add(preferenceAction);
+		settingsMenu.add(mPreferenceAction);
 		settingsMenu.add(new Separator());
-		settingsMenu.add(loadSettings);
-		settingsMenu.add(saveSettings);
+		settingsMenu.add(mLoadSettings);
+		settingsMenu.add(mSaveSettings);
+		settingsMenu.add(mResetSettings);
 
 		MenuManager helpMenu = new MenuManager("&Help", "help");
-		helpMenu.add(aboutAction);
+		helpMenu.add(mAboutAction);
 
 		menuBar.add(fileMenu);
 		menuBar.add(settingsMenu);
@@ -149,19 +145,20 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 	}
 
 	protected void fillCoolBar(ICoolBarManager coolBar) {
-		IToolBarManager toolBar = new ToolBarManager(coolBar.getStyle());
+		final IToolBarManager toolBar = new ToolBarManager(SWT.PUSH);
 		coolBar.add(toolBar);
 
-		toolBar.add(loadSourceFiles);
+		toolBar.add(mLoadSourceFiles);
 		toolBar.add(new Separator());
-		toolBar.add(resetAndReRun);
-		toolBar.add(resetAndReRunNewTC);
-		toolBar.add(resetAndReRunOldTC);
-		toolBar.add(loadSettings);
-		toolBar.add(saveSettings);
-		// toolBar.add(openDottyGraphFromFile);
+		toolBar.add(mResetAndReRun);
+		toolBar.add(mResetAndReRunNewTC);
+		toolBar.add(mResetAndReRunOldTC);
+		toolBar.add(new Separator());
+		toolBar.add(mLoadSettings);
+		toolBar.add(mSaveSettings);
+		toolBar.add(mResetSettings);
 
-		toolBar.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
+//		toolBar.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 
 	}
 }

@@ -33,16 +33,20 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.BitvectorTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -131,7 +135,7 @@ public class MemoryHandler {
 	
 	private final POINTER_CHECKMODE m_PointerBaseValidity;
 	private final POINTER_CHECKMODE m_checkPointerSubtractionAndComparisonValidity;
-	private final POINTER_CHECKMODE m_PointerAllocated;
+	private final POINTER_CHECKMODE m_PointerTargetFullyAllocated;
 	private final boolean m_CheckFreeValid;
 	private final boolean m_CheckMallocNonNegative;
 	
@@ -140,7 +144,8 @@ public class MemoryHandler {
 	public boolean isPointerArrayRequiredInMM;
 	
 	//needed for adding modifies clauses
-	private FunctionHandler m_functionHandler;
+	private final FunctionHandler m_FunctionHandler;
+	private final ITypeHandler m_TypeHandler;
 
 	/**
 	 * This set contains those pointers that we have to malloc at the beginning
@@ -171,21 +176,23 @@ public class MemoryHandler {
 	
 	/**
      * Constructor.
+	 * @param typeHandler 
      * @param checkPointerValidity 
 	 * @param typeSizeComputer 
      */
-    public MemoryHandler(FunctionHandler functionHandler, boolean checkPointerValidity, 
+    public MemoryHandler(ITypeHandler typeHandler, FunctionHandler functionHandler, boolean checkPointerValidity, 
     		TypeSizeAndOffsetComputer typeSizeComputer, AExpressionTranslation expressionTranslation) {
-    	m_functionHandler = functionHandler;
+    	m_TypeHandler = typeHandler;
+    	m_FunctionHandler = functionHandler;
     	m_ExpressionTranslation = expressionTranslation;
 		this.variablesToBeMalloced = new LinkedScopedHashMap<LocalLValueILocationPair, Integer>();
 		this.variablesToBeFreed = new LinkedScopedHashMap<LocalLValueILocationPair, Integer>();
 		//read preferences from settings
-		UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		
 		m_PointerBaseValidity = 
 				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_VALIDITY, POINTER_CHECKMODE.class);
-    	m_PointerAllocated = 
+    	m_PointerTargetFullyAllocated = 
 				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_ALLOC, POINTER_CHECKMODE.class);
     	m_CheckFreeValid = 
 				ups.getBoolean(CACSLPreferenceInitializer.LABEL_CHECK_FREE_VALID);
@@ -204,6 +211,28 @@ public class MemoryHandler {
     public Expression calculateSizeOf(ILocation loc, CType cType) {
     	return m_TypeSizeAndOffsetComputer.constructBytesizeExpression(loc, cType);
 	}
+    
+    private class HeapDataArray {
+    	private final String m_Name;
+    	private final ASTType m_ASTType;
+		public HeapDataArray(String name, ASTType aSTType) {
+			super();
+			m_Name = name;
+			m_ASTType = aSTType;
+		}
+		public String getName() {
+			return m_Name;
+		}
+		public ASTType getASTType() {
+			return m_ASTType;
+		}
+		
+		public String getVariableName() {
+			return SFO.MEMORY + "_" + getName();
+		}
+    	
+    	
+    }
 
     /**
      * Declare all variables required for the memory model.
@@ -239,29 +268,18 @@ public class MemoryHandler {
         //declare the arrays that will model the heap
         
         // add memory arrays and access procedures
-        ArrayList<String> allMMArrayNames = new ArrayList<>();
-        ArrayList<ASTType> allMMArrayTypes = new ArrayList<>();
+        ArrayList<HeapDataArray> heapDataArrays = new ArrayList<>();
         if (isIntArrayRequiredInMM) {
-        	allMMArrayNames.add(SFO.INT);
-        	allMMArrayTypes.add(intArrayType);
+        	heapDataArrays.add(new HeapDataArray(SFO.INT, intArrayType));
         }
         if (isFloatArrayRequiredInMM) {
-        	allMMArrayNames.add(SFO.REAL);
-        	allMMArrayTypes.add(realArrayType);
+        	heapDataArrays.add(new HeapDataArray(SFO.REAL, realArrayType));
         }
         if (isPointerArrayRequiredInMM) {
-        	allMMArrayNames.add(SFO.POINTER);
-        	allMMArrayTypes.add(main.typeHandler.constructPointerType(tuLoc));
+        	heapDataArrays.add(new HeapDataArray(SFO.POINTER, main.typeHandler.constructPointerType(tuLoc)));
         }
-        String[] namesOfAllMemoryArrayTypes = allMMArrayNames.toArray(new String[0]);
-        ASTType[] astTypesOfAllMemoryArrayTypes = allMMArrayTypes.toArray(new ASTType[0]);
         
-//        if (namesOfAllMemoryArrayTypes.length == 0) { 
-//        	noMemArrays = true;
-////        	return decl;//if we reach here, mmRequired == true --> we need valid + length (one usecase: we malloc but don't use something..)
-//        }
-        
-        decl.addAll(declareSomeMemoryArrays(tuLoc, main, namesOfAllMemoryArrayTypes, astTypesOfAllMemoryArrayTypes));
+        decl.addAll(declareSomeMemoryArrays(tuLoc, heapDataArrays));
        
         // var #valid : [int]bool;
         ASTType validType = new ArrayType(tuLoc, new String[0],
@@ -281,10 +299,10 @@ public class MemoryHandler {
         decl.addAll(declareMalloc(main.typeHandler, tuLoc));
 
         if (m_declareMemCpy) {
-        	decl.addAll(declareMemCpy(main, namesOfAllMemoryArrayTypes, astTypesOfAllMemoryArrayTypes));
+        	decl.addAll(declareMemCpy(main, heapDataArrays));
         }
         if (m_declareMemset) {
-        	decl.addAll(declareMemset(main, allMMArrayNames, allMMArrayTypes));
+        	decl.addAll(declareMemset(main, heapDataArrays));
         }
 
         return decl;
@@ -294,7 +312,7 @@ public class MemoryHandler {
      * Adds our implementation of the memcpy procedure to the boogie code.
      */
     private List<Declaration> declareMemCpy(Dispatcher main,
-    		String[] namesOfAllMemoryArrayTypes, ASTType[] astTypesOfAllMemoryArrayTypes) {
+    		List<HeapDataArray> heapDataArrays) {
     	ArrayList<Declaration> memCpyDecl = new ArrayList<>();
     	ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
     	
@@ -341,8 +359,8 @@ public class MemoryHandler {
 
 		// handle modifies
 		ArrayList<VariableLHS> modifiesLHSs = new ArrayList<>();
-		for (String name : namesOfAllMemoryArrayTypes) {
-			String memArrayName = SFO.MEMORY + "_" + name;
+		for (HeapDataArray hda : heapDataArrays) {
+			String memArrayName = hda.getVariableName();
 
 			ArrayAccessExpression srcAcc = new ArrayAccessExpression(ignoreLoc, new IdentifierExpression(ignoreLoc, memArrayName), new Expression[] { currentSrc });
 			ArrayLHS destAcc = new ArrayLHS(ignoreLoc, new VariableLHS(ignoreLoc, memArrayName), new Expression[] { currentDest });
@@ -350,13 +368,13 @@ public class MemoryHandler {
 
 			modifiesLHSs.add(new VariableLHS(ignoreLoc, memArrayName));
 
-			if (m_functionHandler.getModifiedGlobals().get(SFO.MEMCPY) == null){
-				m_functionHandler.getModifiedGlobals().put(SFO.MEMCPY, new LinkedHashSet<String>());
+			if (m_FunctionHandler.getModifiedGlobals().get(SFO.MEMCPY) == null){
+				m_FunctionHandler.getModifiedGlobals().put(SFO.MEMCPY, new LinkedHashSet<String>());
 			}
-			if (m_functionHandler.getCallGraph().get(SFO.MEMCPY) == null) {
-				m_functionHandler.getCallGraph().put(SFO.MEMCPY, new LinkedHashSet<String>());
+			if (m_FunctionHandler.getCallGraph().get(SFO.MEMCPY) == null) {
+				m_FunctionHandler.getCallGraph().put(SFO.MEMCPY, new LinkedHashSet<String>());
 			}
-			m_functionHandler.getModifiedGlobals().get(SFO.MEMCPY).add(memArrayName);
+			m_FunctionHandler.getModifiedGlobals().get(SFO.MEMCPY).add(memArrayName);
 		}
 		
 		//increment counter
@@ -389,7 +407,7 @@ public class MemoryHandler {
                     SFO.POINTER_BASE);
 	
 		
-        Expression valid = new IdentifierExpression(ignoreLoc, SFO.VALID);	
+        Expression valid = getValidArray(ignoreLoc);	
 		if (m_PointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME 
         		|| m_PointerBaseValidity == POINTER_CHECKMODE.ASSUME) {
         	// requires #valid[#ptr!base];
@@ -423,19 +441,19 @@ public class MemoryHandler {
                     SFO.POINTER_OFFSET);
 //	
 		Expression lengthSrc = new ArrayAccessExpression(ignoreLoc,
-				new IdentifierExpression(ignoreLoc, SFO.LENGTH),
+				getLenthArray(ignoreLoc),
 				new Expression[] { srcBase });
 		Expression lengthDest = new ArrayAccessExpression(ignoreLoc,
-				new IdentifierExpression(ignoreLoc, SFO.LENGTH),
+				getLenthArray(ignoreLoc),
 				new Expression[] { srcBase });
 
-		if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME 
-				|| m_PointerAllocated == POINTER_CHECKMODE.ASSUME) {
+		if (m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSERTandASSUME 
+				|| m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSUME) {
 			// requires #sizeof~$Pointer$ + #ptr!offset <=
 					// #length[#ptr!base];
         	RequiresSpecification specLengthSrc = null;
         	RequiresSpecification specLengthDest = null;
-			if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME) {
+			if (m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSERTandASSUME) {
 				specLengthSrc = new RequiresSpecification(ignoreLoc, false,
 						constructPointerComponentLessEqual(ignoreLoc, //TODO LT or LEQ?? (also below..)
 								constructPointerComponentAddition(ignoreLoc,
@@ -447,7 +465,7 @@ public class MemoryHandler {
 										new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SIZE),
 										destOffset), lengthDest));
 			} else {
-				assert m_PointerAllocated == POINTER_CHECKMODE.ASSUME;
+				assert m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSUME;
 				specLengthSrc = new RequiresSpecification(ignoreLoc, true,
 						constructPointerComponentLessEqual(ignoreLoc,
 								constructPointerComponentAddition(ignoreLoc,
@@ -495,7 +513,7 @@ public class MemoryHandler {
      * @return
      */
     private List<Declaration> declareMemset(Dispatcher main, 
-    		List<String> namesOfAllMemoryArrayTypes, List<ASTType> astTypesOfAllMemoryArrayTypes) {
+    		List<HeapDataArray> heapDataArrays) {
 
     	List<Declaration> memsetDecls = new ArrayList<>();
     	ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
@@ -550,23 +568,25 @@ public class MemoryHandler {
     					ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.ARITHMUL, ctr, sizeofFields)),
     			ignoreLoc);
 
-    	if (m_functionHandler.getModifiedGlobals().get(SFO.MEMSET) == null)
-    		m_functionHandler.getModifiedGlobals().put(SFO.MEMSET, new LinkedHashSet<>());
-    	if (m_functionHandler.getCallGraph().get(SFO.MEMSET) == null)
-    		m_functionHandler.getCallGraph().put(SFO.MEMSET, new LinkedHashSet<String>());
+    	if (m_FunctionHandler.getModifiedGlobals().get(SFO.MEMSET) == null)
+    		m_FunctionHandler.getModifiedGlobals().put(SFO.MEMSET, new LinkedHashSet<>());
+    	if (m_FunctionHandler.getCallGraph().get(SFO.MEMSET) == null)
+    		m_FunctionHandler.getCallGraph().put(SFO.MEMSET, new LinkedHashSet<String>());
 
     	//TODO: this is designed to work only for the memory arrays for int and pointer, if we want to support others, 
     	// like floats or so, we have to add a case here
-    	if (namesOfAllMemoryArrayTypes.contains(SFO.INT)) {
+    	//if (namesOfAllMemoryArrayTypes.contains(SFO.INT)) {
+    	if (true) {
     		//   write~int(valueToBeWritten, { startPointer!Base, startPointer!Offset + (ctr * sizeOfFields) });
     		isIntArrayRequiredInMM = true;
 
-    		m_functionHandler.getModifiedGlobals().get(SFO.MEMSET).add(SFO.MEMORY_INT);
+    		m_FunctionHandler.getModifiedGlobals().get(SFO.MEMSET).add(SFO.MEMORY_INT);
 
     		whileBody.add(new CallStatement(ignoreLoc, false, new VariableLHS[0], "write~" + SFO.INT,
     				new Expression[] { value, curAddr, sizeofFields}));	
     	}
-    	if (namesOfAllMemoryArrayTypes.contains(SFO.POINTER)) {
+    	if (true) {
+//    	if (namesOfAllMemoryArrayTypes.contains(SFO.POINTER)) {
     		//   write~Pointer(valueToBeWritten, { startPointer!Base, startPointer!Offset + (ctr * sizeOfFields) });
     		isPointerArrayRequiredInMM = true;
 
@@ -574,7 +594,7 @@ public class MemoryHandler {
 //    			m_functionHandler.getModifiedGlobals().put(SFO.MEMSET, new LinkedHashSet<>());
 //    		if (m_functionHandler.getCallGraph().get(SFO.MEMSET) == null)
 //    			m_functionHandler.getCallGraph().put(SFO.MEMSET, new LinkedHashSet<String>());
-    		m_functionHandler.getModifiedGlobals().get(SFO.MEMSET).add(SFO.MEMORY_POINTER);
+    		m_FunctionHandler.getModifiedGlobals().get(SFO.MEMSET).add(SFO.MEMORY_POINTER);
 
     		whileBody.add(new CallStatement(ignoreLoc, false, new VariableLHS[0], "write~" + SFO.POINTER,
     				new Expression[] { 
@@ -622,19 +642,84 @@ public class MemoryHandler {
 		// tell function handler of this procedure
      	// to deal with modifies
 		ArrayList<VariableLHS> modifiesLHSs = new ArrayList<>();
-		for (String name : namesOfAllMemoryArrayTypes) {
-			String memArrayName = SFO.MEMORY + "_" + name;
+		for (HeapDataArray hda : heapDataArrays) {
+			String memArrayName = hda.getVariableName();
 
 			modifiesLHSs.add(new VariableLHS(ignoreLoc, memArrayName));
 
-			if (!m_functionHandler.getModifiedGlobals().containsKey(SFO.MEMCPY)){
-				m_functionHandler.getModifiedGlobals().put(SFO.MEMCPY, new LinkedHashSet<String>());
+			if (!m_FunctionHandler.getModifiedGlobals().containsKey(SFO.MEMCPY)){
+				m_FunctionHandler.getModifiedGlobals().put(SFO.MEMCPY, new LinkedHashSet<String>());
 			}
-			m_functionHandler.getModifiedGlobals().get(SFO.MEMCPY).add(memArrayName);
+			m_FunctionHandler.getModifiedGlobals().get(SFO.MEMCPY).add(memArrayName);
 		}
 
 		// make the specification
 		ArrayList<Specification> specs = new ArrayList<>();
+		
+		CACSLLocation loc = LocationFactory.createIgnoreCLocation();
+		Expression valid = new IdentifierExpression(loc, SFO.VALID);
+        Expression addr = startPointer;
+        Expression addrBase = new StructAccessExpression(loc, addr,
+                SFO.POINTER_BASE);
+        Expression[] idcWrite = new Expression[] { addrBase };
+        Expression ptrOff = new StructAccessExpression(loc, startPointer,
+        		SFO.POINTER_OFFSET);
+        Expression ptrBase = new StructAccessExpression(loc, startPointer,
+        		SFO.POINTER_BASE);
+        Expression length = new ArrayAccessExpression(loc,
+        		new IdentifierExpression(loc, SFO.LENGTH),
+        		new Expression[] { ptrBase });
+		
+		if (m_PointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME 
+				|| m_PointerBaseValidity == POINTER_CHECKMODE.ASSUME) {
+			// requires #valid[#ptr!base];
+			RequiresSpecification specValid;
+			if (m_PointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME) {
+				specValid = new RequiresSpecification(loc, false,
+						new ArrayAccessExpression(loc, valid,
+								idcWrite));
+			} else {
+				assert m_PointerBaseValidity == POINTER_CHECKMODE.ASSUME;
+				specValid = new RequiresSpecification(loc, true,
+						new ArrayAccessExpression(loc, valid,
+								idcWrite));
+			}
+			Check check = new Check(Spec.MEMORY_DEREFERENCE);
+			check.addToNodeAnnot(specValid);
+			specs.add(specValid);
+		}
+
+
+		if (m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSERTandASSUME 
+				|| m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSUME) {
+			// requires #sizeof~$Pointer$ + #ptr!offset <=
+			// #length[#ptr!base];
+			CPrimitive intCType = new CPrimitive(PRIMITIVE.INT);
+			RequiresSpecification specValid;
+			Expression sizeOfSetMemory = m_ExpressionTranslation.constructArithmeticIntegerExpression(loc, 
+					IASTBinaryExpression.op_multiply, noFields, intCType, sizeofFields, intCType);
+			
+			if (m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSERTandASSUME) {
+				specValid = new RequiresSpecification(loc, false,
+						constructPointerComponentLessEqual(loc,
+								constructPointerComponentAddition(loc,
+										sizeOfSetMemory,
+										ptrOff), length));
+			} else {
+				assert m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSUME;
+				specValid = new RequiresSpecification(loc, true,
+						constructPointerComponentLessEqual(loc,
+								constructPointerComponentAddition(loc,
+										sizeOfSetMemory,
+										ptrOff), length));
+			}
+			Check check = new Check(Spec.MEMORY_DEREFERENCE);
+			check.addToNodeAnnot(specValid);
+			specs.add(specValid);
+		}
+		
+		
+		
 		ModifiesSpecification modifies = new ModifiesSpecification(ignoreLoc, false, 
 				 modifiesLHSs.toArray(new VariableLHS[modifiesLHSs.size()]));
 		specs.add(modifies);
@@ -672,249 +757,248 @@ public class MemoryHandler {
      * as well as read and write procedures for these arrays.
      * 
      * @param loc the location of the translation unit.
-     * @param main 
      * @return the declarations for the memory arrays as well as read and write
      *         procedures for these arrays.
      */
-	private ArrayList<Declaration> declareSomeMemoryArrays(final ILocation loc, Dispatcher main,
-			 String[] namesOfAllMemoryArrayTypes,
-			ASTType[] astTypesOfAllMemoryArrayTypes) {
+	private ArrayList<Declaration> declareSomeMemoryArrays(final ILocation loc, List<HeapDataArray> heapDataArrays) {
 		ArrayList<Declaration> decl = new ArrayList<>();
-        ASTType intType = main.typeHandler.ctype2asttype(loc, m_ExpressionTranslation.getCTypeOfIntArray());
-		for (int i = 0; i < namesOfAllMemoryArrayTypes.length; i++) {
-        	String typeName = namesOfAllMemoryArrayTypes[i];
-        	ASTType astType = astTypesOfAllMemoryArrayTypes[i];
-        	//The name of the sizeof constants is determined by the name of the
-        	//Ctype. Names of primitive CTypes are written in uppercase.
-        	//Names of our boogie types are written in lowercase.
-        	//Our convention is to use uppercase.
-        	String CtypeCompatibleId;
-        	if (typeName.equals(SFO.POINTER)) {
-        		CtypeCompatibleId = SFO.POINTER;
-        	} else {
-        		CtypeCompatibleId = typeName.toUpperCase();
-        	}
-//            declareSizeOf(main, loc, CtypeCompatibleId, typeSizeConstants.useFixedTypeSizes());
-            ASTType memoryType = new ArrayType(loc, new String[0],
-                    new ASTType[] { main.typeHandler.constructPointerType(loc) }, astType);
-            VarList vlM = new VarList(loc, new String[] { SFO.MEMORY + "_"
-                    + typeName }, memoryType);
-            decl.add(new VariableDeclaration(loc, new Attribute[0],
-                    new VarList[] { vlM }));
-            // create and add read and write procedure
-            String value = "#value";
-            String inPtr = "#ptr";
-            String writtenTypeSize = "#sizeOfWrittenType"; //this is needed for the requires spec that adds this typesize once to make sure we don't write behind the memregion
-            String readTypeSize = "#sizeOfReadType"; 
-            Expression idVal = new IdentifierExpression(loc, value);
-            Expression idPtr = new IdentifierExpression(loc, inPtr);
-            Expression[] idc = new Expression[] { idPtr };
-            String nwrite = "write~" + typeName;
-            String nread = "read~" + typeName;
-            VarList[] inWrite = new VarList[] {
-                    new VarList(loc, new String[] { value }, astType),
-                    new VarList(loc, new String[] { inPtr }, main.typeHandler.constructPointerType(loc)),
-                    new VarList(loc, new String[] { writtenTypeSize }, intType) };
-            Expression valid = new IdentifierExpression(loc, SFO.VALID);
-            Expression addr = new IdentifierExpression(loc, inPtr);
-            Expression addrBase = new StructAccessExpression(loc, addr,
-                    SFO.POINTER_BASE);
-            Expression[] idcWrite = new Expression[] { addrBase };
-            VariableLHS[] modified = new VariableLHS[namesOfAllMemoryArrayTypes.length];
-            for (int j = 0; j < modified.length; j++) {
-                modified[j] = new VariableLHS(loc, SFO.MEMORY + "_" + namesOfAllMemoryArrayTypes[j]);
-            }
-            
-            
-            ArrayList<Specification> swrite = new ArrayList<Specification>();
-            
-            if (m_PointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME 
-            		|| m_PointerBaseValidity == POINTER_CHECKMODE.ASSUME) {
-            	// requires #valid[#ptr!base];
-            	RequiresSpecification specValid;
-            	if (m_PointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME) {
-            		specValid = new RequiresSpecification(loc, false,
-                			new ArrayAccessExpression(loc, valid,
-                					idcWrite));
-            	} else {
-            		assert m_PointerBaseValidity == POINTER_CHECKMODE.ASSUME;
-            		specValid = new RequiresSpecification(loc, true,
-                			new ArrayAccessExpression(loc, valid,
-                					idcWrite));
-            	}
-            	Check check = new Check(Spec.MEMORY_DEREFERENCE);
-            	check.addToNodeAnnot(specValid);
-            	swrite.add(specValid);
-            }
-            Expression ptrOff = new StructAccessExpression(loc, idPtr,
-                    SFO.POINTER_OFFSET);
-            Expression ptrBase = new StructAccessExpression(loc, idPtr,
-                    SFO.POINTER_BASE);
-            Expression length = new ArrayAccessExpression(loc,
-                    new IdentifierExpression(loc, SFO.LENGTH),
-                    new Expression[] { ptrBase });
-            
-            if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME 
-            		|| m_PointerAllocated == POINTER_CHECKMODE.ASSUME) {
-            	// requires #sizeof~$Pointer$ + #ptr!offset <=
-            	// #length[#ptr!base];
-            	RequiresSpecification specValid;
-            	if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME) {
-            		specValid = new RequiresSpecification(loc, false,
-            				constructPointerComponentLessEqual(loc,
-                					constructPointerComponentAddition(loc,
-                							new IdentifierExpression(loc, writtenTypeSize),
-//                							new IdentifierExpression(loc, SFO.SIZEOF + CtypeCompatibleId),
-                					  ptrOff), length));
-            	} else {
-            		assert m_PointerAllocated == POINTER_CHECKMODE.ASSUME;
-            		specValid = new RequiresSpecification(loc, true,
-            				constructPointerComponentLessEqual(loc,
-                					constructPointerComponentAddition(loc,
-                							new IdentifierExpression(loc, writtenTypeSize),
-//                							new IdentifierExpression(loc, SFO.SIZEOF + CtypeCompatibleId),
-                							ptrOff), length));
-            	}
-            	Check check = new Check(Spec.MEMORY_DEREFERENCE);
-            	check.addToNodeAnnot(specValid);
-            	swrite.add(specValid);
-            }
-            swrite.add(new ModifiesSpecification(loc, false, modified));
-            for (String s : namesOfAllMemoryArrayTypes) {
-                // ensures #memory_int == old(#valid)[~addr!base := false];
-                Expression memA = new IdentifierExpression(loc, SFO.MEMORY + "_"
-                        + s);
-                if (s.equals(typeName)) {
-                    swrite.add(new EnsuresSpecification(
-                            loc,
-                            false,
-                            ExpressionFactory.newBinaryExpression(
-                                    loc,
-                                    Operator.COMPEQ,
-                                    memA,
-                                    new ArrayStoreExpression(
-                                            loc,
-                                            ExpressionFactory.newUnaryExpression(
-                                                    loc,
-                                                    UnaryExpression.Operator.OLD,
-                                                    memA), idc, idVal))));
-                } else {
-                    Expression aae = new ArrayAccessExpression(loc, memA, idc);
-                    swrite.add(new EnsuresSpecification(
-                            loc,
-                            false,
-                            ExpressionFactory.newBinaryExpression(
-                                    loc,
-                                    Operator.COMPEQ,
-                                    memA,
-                                    new ArrayStoreExpression(
-                                            loc,
-                                            ExpressionFactory.newUnaryExpression(
-                                                    loc,
-                                                    UnaryExpression.Operator.OLD,
-                                                    memA), idc, aae))));
-                }
-                
-            }
-            decl.add(new Procedure(loc, new Attribute[0], nwrite, new String[0],
-                    inWrite, new VarList[0], swrite.toArray(new Specification[swrite.size()]), null));
-            if (m_AddImplementation) {
-            	VariableDeclaration[] writeDecl = new VariableDeclaration[astTypesOfAllMemoryArrayTypes.length];
-            	Statement[] writeBlock = new Statement[2 * astTypesOfAllMemoryArrayTypes.length - 1];
-            	for (int j = 0, k = 0; j < astTypesOfAllMemoryArrayTypes.length; j++, k++) {
-            		String tmpVar = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET, null);	
-            		writeDecl[j] = new VariableDeclaration(loc, new Attribute[0],
-            				new VarList[] { new VarList(loc, new String[] { tmpVar },
-            						astTypesOfAllMemoryArrayTypes[j]) });
-            		VariableLHS arr = new VariableLHS(loc, SFO.MEMORY + "_"
-            				+ namesOfAllMemoryArrayTypes[j]);
-            		LeftHandSide[] arrL = new LeftHandSide[] { new ArrayLHS(loc, arr,
-            				idc) };
-            		if (namesOfAllMemoryArrayTypes[j].equals(typeName)) {
-            			writeBlock[k] = new AssignmentStatement(loc, arrL,
-            					new Expression[] { idVal });
-            		} else {
-            			writeBlock[k] = new HavocStatement(loc,
-            					new VariableLHS[] { new VariableLHS(loc, tmpVar) });
-            			writeBlock[++k] = new AssignmentStatement(loc, arrL,
-            					new Expression[] { new IdentifierExpression(loc,
-            							tmpVar) });
-            		}
-            	}
-            	Body bwrite = new Body(loc, writeDecl, writeBlock);
-            	decl.add(new Procedure(loc, new Attribute[0], nwrite, new String[0],
-            			inWrite, new VarList[0], null, bwrite));
-            }
-            VarList[] inRead = new VarList[] { 
-            		new VarList(loc, new String[] { inPtr }, main.typeHandler.constructPointerType(loc)),
-            		new VarList(loc, new String[] { readTypeSize }, intType) };
-            VarList[] outRead = new VarList[] { new VarList(loc,
-                    new String[] { value }, astType) };
-            ArrayList<Specification> sread = new ArrayList<Specification>();
-            
-            if (m_PointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME 
-            		|| m_PointerBaseValidity == POINTER_CHECKMODE.ASSUME) {
-            	// requires #valid[#ptr!base];
-            	RequiresSpecification specValid;
-            	if (m_PointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME) {
-            		specValid = new RequiresSpecification(loc, false,
-                			new ArrayAccessExpression(loc, valid,
-                					idcWrite));
-            	} else {
-            		assert m_PointerBaseValidity == POINTER_CHECKMODE.ASSUME;
-            		specValid = new RequiresSpecification(loc, true,
-                			new ArrayAccessExpression(loc, valid,
-                					idcWrite));
-            	}
-            	Check check = new Check(Spec.MEMORY_DEREFERENCE);
-            	check.addToNodeAnnot(specValid);
-            	sread.add(specValid);
-            }
-            
-            if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME || 
-            		m_PointerAllocated == POINTER_CHECKMODE.ASSUME) {
-            	// requires #sizeof~$Pointer$ + #ptr!offset <=
-            	// #length[#ptr!base];
-            	RequiresSpecification specValid;
-            	if (m_PointerAllocated == POINTER_CHECKMODE.ASSERTandASSUME) {
-            		specValid = new RequiresSpecification(loc, false, 
-            				constructPointerComponentLessEqual(loc,
-            						constructPointerComponentAddition(loc, 
-                					new IdentifierExpression(loc, readTypeSize),
-//                					new IdentifierExpression(loc, SFO.SIZEOF + CtypeCompatibleId),
-                					ptrOff), length));
-            	} else {
-            		assert m_PointerAllocated == POINTER_CHECKMODE.ASSUME;
-            		specValid = new RequiresSpecification(loc, true, 
-            				constructPointerComponentLessEqual(loc,
-            						constructPointerComponentAddition(loc, 
-            						new IdentifierExpression(loc, readTypeSize),
-//                					new IdentifierExpression(loc, SFO.SIZEOF + CtypeCompatibleId),
-            						ptrOff), length));
-            	}
-            	Check check = new Check(Spec.MEMORY_DEREFERENCE);
-            	check.addToNodeAnnot(specValid);
-            	sread.add(specValid);
-            }
-            
-           	Expression arr = new IdentifierExpression(loc, SFO.MEMORY + "_" + typeName);
-           	Expression arrE = new ArrayAccessExpression(loc, arr, idc);
-           	Expression valueE = new IdentifierExpression(loc, value);
-           	Expression equality = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, valueE, arrE);
-           	sread.add(new EnsuresSpecification(loc, false, equality));
+        
+		for (HeapDataArray heapDataArray : heapDataArrays) {
 
-            decl.add(new Procedure(loc, new Attribute[0], nread, new String[0],
-                    inRead, outRead, sread.toArray(new Specification[0]), null));
-            if (m_AddImplementation) {
-            	Statement[] readBlock = new Statement[] { new AssignmentStatement(
-            			loc, new LeftHandSide[] { new VariableLHS(loc, value) },
-            			new Expression[] { arrE }) };
-            	Body bread = new Body(loc, new VariableDeclaration[0], readBlock);
-            	decl.add(new Procedure(loc, new Attribute[0], nread, new String[0],
-            			inRead, outRead, null, bread));
-            }
+            decl.add(constructMemoryArrayDeclaration(loc, heapDataArray.getName(), heapDataArray.getASTType()));
+            
+            // create and add read and write procedure
+           	decl.add(constructWriteProcedure(loc, heapDataArrays, heapDataArray));
+            decl.add(constructReadProcedure(loc, heapDataArray));
+
         }
 		return decl;
+	}
+
+	private VariableDeclaration constructMemoryArrayDeclaration(
+			final ILocation loc, final String typeName, final ASTType astType) {
+		final ASTType memoryArrayType = new ArrayType(loc, new String[0],
+		        new ASTType[] { m_TypeHandler.constructPointerType(loc) }, astType);
+		final VarList varList = new VarList(loc, new String[] { SFO.MEMORY + "_" 
+		        + typeName }, memoryArrayType);
+		return new VariableDeclaration(loc, new Attribute[0], new VarList[] { varList });
+	}
+
+	private Procedure constructWriteProcedure(final ILocation loc, 
+			final List<HeapDataArray> heapDataArrays, final HeapDataArray heapDataArray) {
+		String value = "#value";
+		String inPtr = "#ptr";
+		String writtenTypeSize = "#sizeOfWrittenType";
+		String nwrite = "write~" + heapDataArray.getName();
+
+		ASTType intType = m_TypeHandler.ctype2asttype(loc, m_ExpressionTranslation.getCTypeOfIntArray());
+		VarList[] inWrite = new VarList[] {
+				new VarList(loc, new String[] { value }, heapDataArray.getASTType()),
+				new VarList(loc, new String[] { inPtr }, m_TypeHandler.constructPointerType(loc)),
+				new VarList(loc, new String[] { writtenTypeSize }, intType) };
+         
+      
+		// specification for memory writes
+		ArrayList<Specification> swrite = new ArrayList<Specification>();
+
+		addPointerBaseValidityCheck(loc, inPtr, swrite);
+
+		Expression sizeWrite = new IdentifierExpression(loc, writtenTypeSize);
+		checkPointerTargetFullyAllocated(loc, sizeWrite, inPtr, swrite);
+
+
+		ModifiesSpecification mod = constructModifiesSpecification(loc, heapDataArrays, x -> x.getVariableName());
+		swrite.add(mod);
+		for (HeapDataArray other : heapDataArrays) {
+			if (heapDataArray == other) {
+				swrite.add(ensuresHeapArrayUpdate(loc, value, inPtr, other));
+			} else {
+				swrite.add(ensuresHeapArrayHardlyModified(loc, inPtr, other));
+			}
+
+		}
+		Procedure result = new Procedure(loc, new Attribute[0], nwrite, new String[0],
+				inWrite, new VarList[0], swrite.toArray(new Specification[swrite.size()]), null);
+		return result;
+	}
+
+	private Procedure constructReadProcedure(final ILocation loc, HeapDataArray hda) {
+		// specification for memory reads
+		final String value = "#value";
+		final String ptrId = "#ptr";
+		final String nread = "read~" + hda.getName();
+		final String readTypeSize = "#sizeOfReadType";
+		ASTType intType = m_TypeHandler.ctype2asttype(loc, m_ExpressionTranslation.getCTypeOfIntArray());
+		VarList[] inRead = new VarList[] { 
+				new VarList(loc, new String[] { ptrId }, m_TypeHandler.constructPointerType(loc)),
+				new VarList(loc, new String[] { readTypeSize }, intType) };
+		VarList[] outRead = new VarList[] { new VarList(loc,
+		        new String[] { value }, hda.getASTType()) };
+		
+		ArrayList<Specification> sread = new ArrayList<Specification>();
+		
+		addPointerBaseValidityCheck(loc, ptrId, sread);
+		
+		Expression sizeRead = new IdentifierExpression(loc, readTypeSize);
+		checkPointerTargetFullyAllocated(loc, sizeRead, ptrId, sread);
+		
+		Expression arr = new IdentifierExpression(loc, hda.getVariableName());
+		Expression ptrExpr = new IdentifierExpression(loc, ptrId);
+		Expression[] index = new Expression[] { ptrExpr };
+		Expression aae = new ArrayAccessExpression(loc, arr, index);
+		Expression valueExpr = new IdentifierExpression(loc, value);
+		Expression equality = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, valueExpr, aae);
+		sread.add(new EnsuresSpecification(loc, false, equality));
+		Procedure result = new Procedure(loc, new Attribute[0], nread, new String[0],
+		        inRead, outRead, sread.toArray(new Specification[0]), null);
+		return result;
+	}
+
+	// ensures #memory_X == old(#memory_X)[#ptr := #value];
+	private EnsuresSpecification ensuresHeapArrayUpdate(final ILocation loc, 
+			final String valueId, final String ptrId, final HeapDataArray hda) {
+		final Expression valueExpr = new IdentifierExpression(loc, valueId);
+        final Expression memArray = new IdentifierExpression(loc, hda.getVariableName());
+        final Expression ptrExpr = new IdentifierExpression(loc, ptrId);
+        final Expression[] index = new Expression[] { ptrExpr };
+		return ensuresArrayUpdate(loc, valueExpr, index, memArray);
+	}
+	
+	//#memory_$Pointer$ == old(#memory_X)[#ptr := #memory_X[#ptr]];
+	private EnsuresSpecification ensuresHeapArrayHardlyModified(final ILocation loc, 
+			final String ptrId, final HeapDataArray hda) {
+        final Expression memArray = new IdentifierExpression(loc, hda.getVariableName());
+        final Expression ptrExpr = new IdentifierExpression(loc, ptrId);
+        final Expression[] index = new Expression[] { ptrExpr };
+        final Expression aae = new ArrayAccessExpression(loc, memArray, index);
+		return ensuresArrayUpdate(loc, aae, index, memArray);
+	}
+	
+	
+	
+	private EnsuresSpecification ensuresArrayUpdate(final ILocation loc, 
+			final Expression newValue, final Expression[] index, final Expression arrayExpr) {
+		final Expression oldArray = ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.OLD, arrayExpr);
+        final ArrayStoreExpression ase = new ArrayStoreExpression(loc, oldArray, index, newValue);
+        final Expression eq = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, arrayExpr, ase);
+		return new EnsuresSpecification(loc, false, eq);
+	}
+
+	/**
+	 * 
+	 * @param loc location of translation unit
+	 * @param vars
+	 * @return ModifiesSpecification which says that all variables of the
+	 * set vars can be modified.
+	 */
+	private <T> ModifiesSpecification constructModifiesSpecification(
+					final ILocation loc, final List<T> vars, final Function<T, String> varToString) {
+		VariableLHS[] modifie = new VariableLHS[vars.size()];
+		int i = 0;
+		for (T variable : vars) {
+			modifie[i] = new VariableLHS(loc, varToString.apply(variable));
+			i++;
+		}
+		return new ModifiesSpecification(loc, false, modifie);
+	}
+
+	/**
+	 * Add specification that target of pointer is fully allocated to the list 
+	 * {@link specList}. The specification checks that the address of the
+	 * pointer plus the size of the type that we read/write is smaller than or
+	 * equal to the size of the allocated memory at the base address of the 
+	 * pointer.
+	 * In case m_PointerBaseValidity is ASSERTandASSUME, we add the requires
+	 * specification 
+	 * <code>requires #size + #ptr!offset <= #length[#ptr!base]</code>.
+	 * In case m_PointerBaseValidity is ASSERTandASSUME, we add the <b>free</b>
+	 * requires specification 
+	 * <code>free requires #size + #ptr!offset <= #length[#ptr!base]</code>.
+	 * In case m_PointerBaseValidity is IGNORE, we add nothing.
+	 * @param loc location of translation unit
+	 * @param size Expression that represents the size of the data type that we
+	 *     read/write at the address of the pointer.
+	 * @param ptrName name of pointer whose base address is checked
+	 * @param specList list to which the specification is added
+	 */
+	private void checkPointerTargetFullyAllocated(final ILocation loc, 
+			Expression size, String ptrName,
+			ArrayList<Specification> specList) {
+		if (m_PointerBaseValidity == POINTER_CHECKMODE.IGNORE) {
+			// add nothing
+			return;
+		} else {
+			final Expression ptrExpr = new IdentifierExpression(loc, ptrName);
+			final Expression ptrBase = getPointerBaseAddress(ptrExpr, loc);
+			final Expression aae = new ArrayAccessExpression(loc,
+					getLenthArray(loc), new Expression[] { ptrBase });
+			final Expression ptrOffset = getPointerOffset(ptrExpr, loc);
+			final Expression sum = constructPointerComponentAddition(loc, size, ptrOffset);
+			final Expression leq = constructPointerComponentLessEqual(loc, sum, aae);
+			final boolean isFreeRequires;
+			if (m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSERTandASSUME) {
+				isFreeRequires = false;
+			} else {
+				assert m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSUME;
+				isFreeRequires = true;
+			}
+			final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, leq);
+			Check check = new Check(Spec.MEMORY_DEREFERENCE);
+			check.addToNodeAnnot(spec);
+			specList.add(spec);
+		}
+	}
+
+	/**
+	 * Add specification that the pointer base address is valid to the list 
+	 * {@link specList}.
+	 * In case m_PointerBaseValidity is ASSERTandASSUME, we add the requires
+	 * specification <code>requires #valid[#ptr!base]</code>.
+	 * In case m_PointerBaseValidity is ASSERTandASSUME, we add the <b>free</b>
+	 * requires specification <code>free requires #valid[#ptr!base]</code>.
+	 * In case m_PointerBaseValidity is IGNORE, we add nothing.
+	 * @param loc location of translation unit
+	 * @param ptrName name of pointer whose base address is checked
+	 * @param specList list to which the specification is added
+	 */
+	private void addPointerBaseValidityCheck(final ILocation loc, String ptrName,
+			ArrayList<Specification> specList) {
+		if (m_PointerBaseValidity == POINTER_CHECKMODE.IGNORE) {
+			// add nothing
+			return;
+		} else {
+			final Expression ptrExpr = new IdentifierExpression(loc, ptrName);
+			final Expression ptrBase = getPointerBaseAddress(ptrExpr, loc);
+			final ArrayAccessExpression aae = new ArrayAccessExpression(loc, 
+					getValidArray(loc), new Expression[]{ ptrBase });
+			final boolean isFreeRequires;
+			if (m_PointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME) {
+		    	isFreeRequires = false;
+			} else {
+				assert m_PointerBaseValidity == POINTER_CHECKMODE.ASSUME;
+				isFreeRequires = true;
+			}
+			final RequiresSpecification spec = new RequiresSpecification(loc, isFreeRequires, aae);
+			Check check = new Check(Spec.MEMORY_DEREFERENCE);
+			check.addToNodeAnnot(spec);
+			specList.add(spec);
+		}
+	}
+	
+	/**
+	 * @param loc location of translation unit
+	 * @return new IdentifierExpression that represents the <em>#length array</em>
+	 */
+	private Expression getLenthArray(final ILocation loc) {
+		return new IdentifierExpression(loc, SFO.LENGTH);
+	}
+
+	/**
+	 * @param loc location of translation unit
+	 * @return new IdentifierExpression that represents the <em>#valid array</em>
+	 */
+	private Expression getValidArray(final ILocation loc) {
+		return new IdentifierExpression(loc, SFO.VALID);
 	}
 	
 	
@@ -954,7 +1038,7 @@ public class MemoryHandler {
         		tuLoc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
         Expression bLFalse = new BooleanLiteral(tuLoc, false);
         Expression addr = new IdentifierExpression(tuLoc, ADDR);
-        Expression valid = new IdentifierExpression(tuLoc, SFO.VALID);
+        Expression valid = getValidArray(tuLoc);
         Expression addrOffset = new StructAccessExpression(tuLoc, addr,
                 SFO.POINTER_OFFSET);
         Expression addrBase = new StructAccessExpression(tuLoc, addr,
@@ -1053,7 +1137,7 @@ public class MemoryHandler {
         // ensures #valid = old(valid)[~addr!base := false];
         Expression bLFalse = new BooleanLiteral(tuLoc, false);
         Expression addr = new IdentifierExpression(tuLoc, ADDR);
-        Expression valid = new IdentifierExpression(tuLoc, SFO.VALID);
+        Expression valid = getValidArray(tuLoc);
         Expression addrBase = new StructAccessExpression(tuLoc, addr,
                 SFO.POINTER_BASE);
         Expression[] idcFree = new Expression[] { addrBase };
@@ -1095,7 +1179,7 @@ public class MemoryHandler {
         		tuLoc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
         Expression bLFalse = new BooleanLiteral(tuLoc, false);
         Expression addr = new IdentifierExpression(tuLoc, ADDR);
-        Expression valid = new IdentifierExpression(tuLoc, SFO.VALID);
+        Expression valid = getValidArray(tuLoc);
         Expression addrOffset = new StructAccessExpression(tuLoc, addr,
                 SFO.POINTER_OFFSET);
         Expression addrBase = new StructAccessExpression(tuLoc, addr,
@@ -1110,7 +1194,7 @@ public class MemoryHandler {
         // ensures #length = old(#length)[#res!base := ~size];
         // modifies #length, #valid;
         Expression res = new IdentifierExpression(tuLoc, SFO.RES);
-        Expression length = new IdentifierExpression(tuLoc, SFO.LENGTH);
+        Expression length = getLenthArray(tuLoc);
         Expression[] idcMalloc = new Expression[] { new StructAccessExpression(
                 tuLoc, res, SFO.POINTER_BASE) };
         Expression bLTrue = new BooleanLiteral(tuLoc, true);
@@ -1128,11 +1212,7 @@ public class MemoryHandler {
                         new ArrayAccessExpression(tuLoc, ExpressionFactory.newUnaryExpression(
                                 tuLoc, UnaryExpression.Operator.OLD, valid),
                                 idcMalloc), bLFalse)));
-        specMalloc.add(new EnsuresSpecification(tuLoc, false,
-                ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ, valid,
-                        new ArrayStoreExpression(tuLoc, ExpressionFactory.newUnaryExpression(
-                                tuLoc, UnaryExpression.Operator.OLD, valid),
-                                idcMalloc, bLTrue))));
+        specMalloc.add(ensuresArrayUpdate(tuLoc, bLTrue, idcMalloc, valid));
         specMalloc.add(new EnsuresSpecification(tuLoc, false,
                 ExpressionFactory.newBinaryExpression(tuLoc, Operator.COMPEQ,
                         new StructAccessExpression(tuLoc, res,
@@ -1515,15 +1595,15 @@ public class MemoryHandler {
         	switch (((CPrimitive) valueType).getGeneralType()) {
         	case INTTYPE:
         		isIntArrayRequiredInMM = true;
-        		m_functionHandler.getModifiedGlobals().
-        			get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY_INT);
+        		m_FunctionHandler.getModifiedGlobals().
+        			get(m_FunctionHandler.getCurrentProcedureID()).add(SFO.MEMORY_INT);
         		stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.INT,
         				new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(loc, hlv.getCType())}));
         		break;
         	case FLOATTYPE:
         		isFloatArrayRequiredInMM = true;
-        		m_functionHandler.getModifiedGlobals().
-        			get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY_REAL);
+        		m_FunctionHandler.getModifiedGlobals().
+        			get(m_FunctionHandler.getCurrentProcedureID()).add(SFO.MEMORY_REAL);
         		stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.REAL,
         				new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(loc, hlv.getCType()) }));
         		break;	
@@ -1533,14 +1613,14 @@ public class MemoryHandler {
         } else if (valueType instanceof CEnum) {
         	//treat like INT
         	isIntArrayRequiredInMM = true;
-        	m_functionHandler.getModifiedGlobals().
-        	get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY_INT);
+        	m_FunctionHandler.getModifiedGlobals().
+        	get(m_FunctionHandler.getCurrentProcedureID()).add(SFO.MEMORY_INT);
         	stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.INT,
         			new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(loc, hlv.getCType())}));
         } else if (valueType instanceof CPointer) {
         	isPointerArrayRequiredInMM = true;
-        	m_functionHandler.getModifiedGlobals().
-        			get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY_POINTER);
+        	m_FunctionHandler.getModifiedGlobals().
+        			get(m_FunctionHandler.getCurrentProcedureID()).add(SFO.MEMORY_POINTER);
         	stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.POINTER,
         			new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(loc, hlv.getCType()) }));
         } else if (valueType instanceof CStruct) {
@@ -1573,8 +1653,8 @@ public class MemoryHandler {
         	
         } else if (valueType instanceof CArray) {
         	isPointerArrayRequiredInMM = true;
-        	m_functionHandler.getModifiedGlobals().
-        			get(m_functionHandler.getCurrentProcedureID()).add(SFO.MEMORY_POINTER);
+        	m_FunctionHandler.getModifiedGlobals().
+        			get(m_FunctionHandler.getCurrentProcedureID()).add(SFO.MEMORY_POINTER);
         	
         	CArray arrayType = (CArray) valueType;
         	Expression arrayStartAddress = hlv.getAddress();
@@ -1680,11 +1760,11 @@ public class MemoryHandler {
 	public ArrayList<Statement> insertMallocs(Dispatcher main, ArrayList<Statement> block) {
 		ArrayList<Statement> mallocs = new ArrayList<Statement>();
 		for (LocalLValueILocationPair llvp : this.variablesToBeMalloced.currentScopeKeys()) 
-			mallocs.add(this.getMallocCall(main, m_functionHandler, 
+			mallocs.add(this.getMallocCall(main, m_FunctionHandler, 
 					llvp.llv, llvp.loc));
 		ArrayList<Statement> frees = new ArrayList<Statement>();
 		for (LocalLValueILocationPair llvp : this.variablesToBeFreed.currentScopeKeys()) {  //frees are inserted in handleReturnStm
-			frees.add(this.getDeallocCall(main, m_functionHandler, llvp.llv, llvp.loc));
+			frees.add(this.getDeallocCall(main, m_FunctionHandler, llvp.llv, llvp.loc));
 			frees.add(new HavocStatement(llvp.loc, new VariableLHS[] { (VariableLHS) llvp.llv.getLHS() }));
 		}
 		ArrayList<Statement> newBlockAL = new ArrayList<Statement>();

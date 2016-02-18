@@ -163,6 +163,7 @@ public class NestedMap2<K1, K2, V> {
 		return m_K1ToK2ToV.toString();
 	}
 	
-	
-
+	public void clear() {
+		m_K1ToK2ToV.clear();
+	}
 }

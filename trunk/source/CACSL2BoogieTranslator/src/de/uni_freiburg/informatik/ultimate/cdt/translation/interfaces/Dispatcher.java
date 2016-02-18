@@ -66,9 +66,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.POINTER_CHECKMODE;
 import de.uni_freiburg.informatik.ultimate.result.GenericResultAtLocation;
-import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.result.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.result.UnsupportedSyntaxResult;
+import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Severity;
 
 /**
  * @author Markus Lindenmann
@@ -131,7 +131,7 @@ public abstract class Dispatcher {
 		this.backtranslator = backtranslator;
 		mLogger = logger;
 		mServices = services;
-		mPreferences = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		mPreferences = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		m_TypeSizes = new TypeSizes(mPreferences);
 		m_TranslationSettings = new TranslationSettings(mPreferences);
 	}
@@ -252,9 +252,9 @@ public abstract class Dispatcher {
 	 *            description.
 	 */
 	public void syntaxError(ILocation loc, String msg) {
-		SyntaxErrorResult result = new SyntaxErrorResult(Activator.s_PLUGIN_NAME, loc, msg);
+		SyntaxErrorResult result = new SyntaxErrorResult(Activator.PLUGIN_NAME, loc, msg);
 		mLogger.warn(msg);
-		mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 		mServices.getProgressMonitorService().cancelToolchain();
 	}
 
@@ -269,10 +269,10 @@ public abstract class Dispatcher {
 	 *            description.
 	 */
 	public void unsupportedSyntax(ILocation loc, String msg) {
-		UnsupportedSyntaxResult<IElement> result = new UnsupportedSyntaxResult<IElement>(Activator.s_PLUGIN_NAME, loc,
+		UnsupportedSyntaxResult<IElement> result = new UnsupportedSyntaxResult<IElement>(Activator.PLUGIN_NAME, loc,
 				msg);
 		mLogger.warn(msg);
-		mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 		mServices.getProgressMonitorService().cancelToolchain();
 	}
 
@@ -285,15 +285,15 @@ public abstract class Dispatcher {
 	 *            description.
 	 */
 	public void warn(ILocation loc, String longDescription) {
-		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		boolean reportUnsoundnessWarning = prefs
 				.getBoolean(CACSLPreferenceInitializer.LABEL_REPORT_UNSOUNDNESS_WARNING);
 		if (reportUnsoundnessWarning) {
 			String shortDescription = "Unsoundness Warning";
 			mLogger.warn(shortDescription + " " + longDescription);
-			GenericResultAtLocation result = new GenericResultAtLocation(Activator.s_PLUGIN_NAME, loc,
+			GenericResultAtLocation result = new GenericResultAtLocation(Activator.PLUGIN_NAME, loc,
 					shortDescription, longDescription, Severity.WARNING);
-			mServices.getResultService().reportResult(Activator.s_PLUGIN_ID, result);
+			mServices.getResultService().reportResult(Activator.PLUGIN_ID, result);
 		}
 	}
 
@@ -303,7 +303,7 @@ public abstract class Dispatcher {
 	 * @return the checked method's name.
 	 */
 	public String getCheckedMethod() {
-		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		UltimatePreferenceStore prefs = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		String checkMethod = SFO.EMPTY;
 		try {
 			checkMethod = prefs.getString(CACSLPreferenceInitializer.LABEL_MAINPROC);

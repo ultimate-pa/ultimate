@@ -80,7 +80,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 public class UnstructureCode extends BaseObserver {
 
 	/** The prefix of automatically generated unique labels. */
-	private static final String s_labelPrefix = "$Ultimate##";
+	private static final String sLabelPrefix = "$Ultimate##";
 	/** The list of unstructured statements of the procedure that were produced. */
 	private LinkedList<Statement> mFlatStatements;
 	/** A counter to produce unique label names. */
@@ -210,9 +210,9 @@ public class UnstructureCode extends BaseObserver {
 			Statement s = block[i];
 			if (s instanceof Label) {
 				Label label = (Label) s;
-				if (label.getName().startsWith(s_labelPrefix)) {
+				if (label.getName().startsWith(sLabelPrefix)) {
 					// FIXME: report unsupported syntax instead
-					throw new AssertionError("labels with prefix " + s_labelPrefix
+					throw new AssertionError("labels with prefix " + sLabelPrefix
 							+ " are reseved for auxiliary labels and are disallowed in input ");
 				}
 				currentBI.breakLabels.add(label.getName());
@@ -379,7 +379,7 @@ public class UnstructureCode extends BaseObserver {
 	 */
 	private void addStmtAndAnnots(BoogieASTNode source, Statement newStmt) {
 		// adds annotations from old statement to new statement (if any)
-		ModelUtils.mergeAnnotations(source, newStmt);
+		ModelUtils.copyAnnotations(source, newStmt);
 
 		// adds new statement to list
 		mFlatStatements.add(newStmt);
@@ -389,7 +389,7 @@ public class UnstructureCode extends BaseObserver {
 	}
 
 	private String generateLabel() {
-		return s_labelPrefix + (mLabelNr++);
+		return sLabelPrefix + (mLabelNr++);
 	}
 
 }

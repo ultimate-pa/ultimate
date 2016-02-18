@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign;
 
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 
 /**
@@ -84,7 +85,7 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values
 	 * Returns the value of the current {@link SignDomainValue}.
 	 */
 	@Override
-	public Values getResult() {
+	public Values getValue() {
 		return mValue;
 	}
 
@@ -108,13 +109,13 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values
 	 */
 	protected SignDomainValue intersect(SignDomainValue other) {
 
-		if (mValue == other.getResult() && mValue == Values.POSITIVE) {
+		if (mValue == other.getValue() && mValue == Values.POSITIVE) {
 			return new SignDomainValue(Values.POSITIVE);
 		}
-		if (mValue == other.getResult() && mValue == Values.ZERO) {
+		if (mValue == other.getValue() && mValue == Values.ZERO) {
 			return new SignDomainValue(Values.ZERO);
 		}
-		if (mValue == other.getResult() && mValue == Values.TOP) {
+		if (mValue == other.getValue() && mValue == Values.TOP) {
 			return new SignDomainValue(Values.TOP);
 		}
 
@@ -124,7 +125,7 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values
 
 	@Override
 	public int hashCode() {
-		return getResult().hashCode();
+		return getValue().hashCode();
 	}
 
 	@Override
@@ -139,7 +140,7 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values
 
 		if (this.getClass() == other.getClass()) {
 			final SignDomainValue castedOther = (SignDomainValue) other;
-			return getResult() == castedOther.getResult();
+			return getValue() == castedOther.getValue();
 		}
 		return false;
 	}
@@ -171,50 +172,56 @@ public class SignDomainValue implements IEvaluationResult<SignDomainValue.Values
 	public int compareTo(SignDomainValue other) {
 
 		// ... == ...
-		if (getResult() == other.getResult()) {
+		if (getValue() == other.getValue()) {
 			return 0;
 		}
 		// ... == ...
 
 		// \bot < ...
-		if (getResult() == Values.BOTTOM && other.getResult() != Values.BOTTOM) {
+		if (getValue() == Values.BOTTOM && other.getValue() != Values.BOTTOM) {
 			return -1;
 		}
-		if (getResult() != Values.BOTTOM && other.getResult() == Values.BOTTOM) {
+		if (getValue() != Values.BOTTOM && other.getValue() == Values.BOTTOM) {
 			return 1;
 		}
 		// \bot < ...
 
 		// (-) < ...
-		if (getResult() == Values.NEGATIVE && other.getResult() != Values.NEGATIVE) {
+		if (getValue() == Values.NEGATIVE && other.getValue() != Values.NEGATIVE) {
 			return -1;
 		}
-		if (getResult() != Values.NEGATIVE && other.getResult() == Values.NEGATIVE) {
+		if (getValue() != Values.NEGATIVE && other.getValue() == Values.NEGATIVE) {
 			return 1;
 		}
 		// (-) < ...
 
 		// (0) < ...
-		if (getResult() == Values.ZERO && other.getResult() != Values.ZERO) {
+		if (getValue() == Values.ZERO && other.getValue() != Values.ZERO) {
 			return -1;
 		}
-		if (getResult() != Values.ZERO && other.getResult() == Values.ZERO) {
+		if (getValue() != Values.ZERO && other.getValue() == Values.ZERO) {
 			return 1;
 		}
 		// (0) < ...
 
 		// \top > ...
-		if (getResult() != Values.TOP && other.getResult() == Values.TOP) {
+		if (getValue() != Values.TOP && other.getValue() == Values.TOP) {
 			return -1;
 		}
-		if (getResult() == Values.TOP && other.getResult() != Values.TOP) {
+		if (getValue() == Values.TOP && other.getValue() != Values.TOP) {
 			return 1;
 		}
 		// \top > ...
 
 		final StringBuilder stringBuilder = new StringBuilder(BUILDER_SIZE);
-		stringBuilder.append("The case for this = ").append(getResult()).append(" and other = ")
-		        .append(other.getResult()).append(" is not implemented.");
+		stringBuilder.append("The case for this = ").append(getValue()).append(" and other = ")
+		        .append(other.getValue()).append(" is not implemented.");
 		throw new UnsupportedOperationException(stringBuilder.toString());
+	}
+
+	@Override
+	public BooleanValue getBooleanValue() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

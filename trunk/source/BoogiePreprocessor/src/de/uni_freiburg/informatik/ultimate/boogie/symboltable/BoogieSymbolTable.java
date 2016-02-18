@@ -232,7 +232,7 @@ public class BoogieSymbolTable {
 
 	public Map<String, Declaration> getLocalVariables(String procedureName) {
 		assert procedureName != null;
-		Map<String, Declaration> rtr = new HashMap<String, Declaration>();
+		final Map<String, Declaration> rtr = new HashMap<String, Declaration>();
 		rtr.putAll(getMap(StorageClass.LOCAL, procedureName));
 		rtr.putAll(getMap(StorageClass.IMPLEMENTATION_INPARAM, procedureName));
 		rtr.putAll(getMap(StorageClass.IMPLEMENTATION_OUTPARAM, procedureName));

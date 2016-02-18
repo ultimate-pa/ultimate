@@ -48,6 +48,7 @@ public class CLTLAutomizerTC extends WebToolchain {
 	protected List<Tool> defineTools() {
 		List<Tool> rtr = new ArrayList<Tool>();
 
+		rtr.add(new Tool(PrefStrings.s_syntaxchecker));
 		rtr.add(new Tool(PrefStrings.s_cacsl2boogietranslator));
 		rtr.add(new Tool(PrefStrings.s_boogiePreprocessor));
 		rtr.add(new Tool(PrefStrings.s_rcfgBuilder));

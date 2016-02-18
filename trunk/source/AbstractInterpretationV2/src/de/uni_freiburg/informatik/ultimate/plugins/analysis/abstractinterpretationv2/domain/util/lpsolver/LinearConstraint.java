@@ -34,7 +34,7 @@ import java.util.List;
 /**
  * Class for a linear constraint of the form
  * <p>
- * lower <= a1*x1 + a2 * x2 + ... + an * xn <= upper,
+ * lower &leq; a1*x1 + a2 * x2 + ... + an * xn &leq; upper,
  * </p>
  * where lower, upper are the bounds for the constraint, a1,...,an are coefficients, and x1,...,xn are variables.
  * 

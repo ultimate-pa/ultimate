@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimatetest.suites.traceabstraction;
 
 import java.util.ArrayList;
 
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckBenchmarks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.util.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -61,6 +62,7 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 		ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks = 
 				new ArrayList<Class<? extends ICsvProviderProvider<? extends Object>>>();
 		benchmarks.add(TraceAbstractionBenchmarks.class);
+		benchmarks.add(CodeCheckBenchmarks.class);
 		benchmarks.add(Benchmark.class);
 
 		// @formatter:off
@@ -106,13 +108,27 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 //								ConversionContext.BestFitNumber(), Aggregate.Ignore, Aggregate.Average),
 //						new ColumnDefinition(
 //								"ICC %", "ICC",
-//								ConversionContext.Percent(true,2), Aggregate.Ignore, Aggregate.Average)						
+//								ConversionContext.Percent(true,2), Aggregate.Ignore, Aggregate.Average)
+						new ColumnDefinition("Minimization time", "mnmz time", 
+								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+						new ColumnDefinition("BasicInterpolantAutomatonTime", "bia time", 
+								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+						new ColumnDefinition("EdgeCheckerBenchmarkData_EdgeCheckerTime", "ec time", 
+								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+						new ColumnDefinition("PredicateUnifierData_Time", "pu time", 
+								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+						new ColumnDefinition("TraceCheckerBenchmark_InterpolantComputationTime", "itp time", 
+								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+						new ColumnDefinition("Automata difference", "adiff time", 
+								ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+
 					};
 				// @formatter:on
-
+		
 		return new ITestSummary[] { 
 				new TraceAbstractionTestSummary(this.getClass()),
 				new CsvConcatenator(this.getClass(), TraceAbstractionBenchmarks.class), 
+				new CsvConcatenator(this.getClass(), CodeCheckBenchmarks.class), 
 				new LatexOverviewSummary(getClass(), benchmarks, columnDef),
 //				new LatexDetailedSummary(getClass(), benchmarks, columnDef),
 //				new CsvSummary(getClass(), benchmarks, columnDef),

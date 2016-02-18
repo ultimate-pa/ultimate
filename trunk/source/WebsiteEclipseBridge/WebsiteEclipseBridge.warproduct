@@ -23,6 +23,7 @@
       <plugin id="Library-UltimateUtilTest" fragment="true"/>
       <plugin id="Library-junit-helper"/>
       <plugin id="Library-log4j"/>
+      <plugin id="Library-ojAlgo"/>
       <plugin id="SMTInterpol"/>
       <plugin id="SMTSolverBridge"/>
       <plugin id="UltimateCore"/>
@@ -33,8 +34,7 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.boogie.printer"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.buchiprogramproduct"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.ltl2aut"/>
-      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation"/>
-      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter"/>
@@ -45,7 +45,9 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.source.syntaxchecker"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.witnessparser"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.witnessprinter"/>
       <plugin id="javax.xml"/>
       <plugin id="org.apache.commons.io"/>
       <plugin id="org.apache.log4j"/>
@@ -107,6 +109,7 @@
       <plugin id="Library-UltimateUtil" autoStart="true" startLevel="0" />
       <plugin id="Library-junit-helper" autoStart="true" startLevel="0" />
       <plugin id="Library-log4j" autoStart="true" startLevel="0" />
+      <plugin id="Library-ojAlgo" autoStart="true" startLevel="0" />
       <plugin id="SMTInterpol" autoStart="true" startLevel="0" />
       <plugin id="SMTSolverBridge" autoStart="true" startLevel="0" />
       <plugin id="UltimateCore" autoStart="true" startLevel="0" />
@@ -117,8 +120,7 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.boogie.printer" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.buchiprogramproduct" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.ltl2aut" autoStart="true" startLevel="0" />
-      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation" autoStart="true" startLevel="0" />
-      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationMk2" autoStart="true" startLevel="0" />
+      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter" autoStart="true" startLevel="0" />
@@ -129,7 +131,9 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionconcurrent" autoStart="true" startLevel="0" />
+      <plugin id="de.uni_freiburg.informatik.ultimate.source.syntaxchecker" autoStart="true" startLevel="0" />
       <plugin id="de.uni_freiburg.informatik.ultimate.witnessparser" autoStart="true" startLevel="0" />
+      <plugin id="de.uni_freiburg.informatik.ultimate.witnessprinter" autoStart="true" startLevel="0" />
       <plugin id="javax.xml" autoStart="true" startLevel="0" />
       <plugin id="org.apache.commons.io" autoStart="true" startLevel="0" />
       <plugin id="org.apache.log4j" autoStart="true" startLevel="0" />

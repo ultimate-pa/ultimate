@@ -51,9 +51,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 
 /**
  * 
- * {@link RCFGLoopDetector} computes for each Loophead of an RCFG the edge which
- * is used to enter the loop body and the corresponding edge that leads back to
- * the loop head.
+ * {@link RCFGLoopDetector} computes for each Loophead of an RCFG the edge which is used to enter the loop body and the
+ * corresponding edge that leads back to the loop head.
  * 
  * If your graph looks like this and L1 and L2 are loop heads,
  * 
@@ -71,8 +70,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
  * L2 -> (e4 -> e4) <br>
  * <br>
  * 
- * You should call {@link #process(IElement)} on the root element of your RCFG
- * and then get the resulting map via {@link #getResult()}.
+ * You should call {@link #process(IElement)} on the root element of your RCFG and then get the resulting map via
+ * {@link #getResult()}.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
@@ -142,7 +141,7 @@ public class RCFGLoopDetector {
 
 	private void process(ProgramPoint loopHead, Map<RCFGEdge, RCFGEdge> map, List<RCFGEdge> forbiddenEdges) {
 		AStar<RCFGNode, RCFGEdge> walker = new AStar<>(mLogger, loopHead, loopHead, new ZeroHeuristic(),
-				new RcfgWrapper(), forbiddenEdges);
+				new RcfgWrapper(), forbiddenEdges, mServices.getProgressMonitorService());
 
 		List<RCFGEdge> path = walker.findPath();
 		if (forbiddenEdges.isEmpty() && (path == null || path.isEmpty())) {
@@ -157,7 +156,7 @@ public class RCFGLoopDetector {
 			forbiddenEdges.add(forbiddenEdge);
 
 			walker = new AStar<RCFGNode, RCFGEdge>(mLogger, loopHead, loopHead, new ZeroHeuristic(), new RcfgWrapper(),
-					createDenier(forbiddenEdges));
+					createDenier(forbiddenEdges), mServices.getProgressMonitorService());
 			path = walker.findPath();
 		}
 	}

@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -37,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
@@ -56,8 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @param <IBoogieVar>
  *            Any variable declaration.
  */
-public class SignDomainState
-		implements IAbstractState<SignDomainState, CodeBlock, IBoogieVar>, IEvaluationResult<SignDomainState> {
+public class SignDomainState implements IAbstractState<SignDomainState, CodeBlock, IBoogieVar> {
 
 	private static int sId;
 	private final int mId;
@@ -76,7 +75,7 @@ public class SignDomainState
 	}
 
 	protected SignDomainState(Map<String, IBoogieVar> variablesMap, Map<String, SignDomainValue> valuesMap,
-			boolean isFixpoint) {
+	        boolean isFixpoint) {
 		mVariablesMap = new HashMap<String, IBoogieVar>(variablesMap);
 		mValuesMap = new HashMap<String, SignDomainValue>(valuesMap);
 		mIsFixpoint = isFixpoint;
@@ -160,19 +159,17 @@ public class SignDomainState
 	@Override
 	public boolean isBottom() {
 		for (final Entry<String, SignDomainValue> entry : mValuesMap.entrySet()) {
-			if (entry.getValue().getResult() == Values.BOTTOM) {
+			if (entry.getValue().getValue() == Values.BOTTOM) {
 				return true;
 			}
 		}
 		return false;
 	}
 
-	@Override
 	public boolean isFixpoint() {
 		return mIsFixpoint;
 	}
 
-	@Override
 	public SignDomainState setFixpoint(boolean value) {
 		return new SignDomainState(mVariablesMap, mValuesMap, value);
 	}
@@ -187,7 +184,7 @@ public class SignDomainState
 		final StringBuilder stringBuffer = new StringBuilder();
 		for (final Entry<String, IBoogieVar> entry : mVariablesMap.entrySet()) {
 			stringBuffer.append(entry.getKey()).append(':').append(entry.getValue()).append(" = ")
-					.append(mValuesMap.get(entry.getKey()).getResult().toString()).append("; ");
+			        .append(mValuesMap.get(entry.getKey()).getValue().toString()).append("; ");
 		}
 		return stringBuffer.toString();
 	}
@@ -226,7 +223,7 @@ public class SignDomainState
 		}
 		for (final Entry<String, SignDomainValue> entry : mValuesMap.entrySet()) {
 			final SignDomainValue otherValue = other.mValuesMap.get(entry.getKey());
-			if (!mValuesMap.get(entry.getKey()).getResult().equals(otherValue.getResult())) {
+			if (!mValuesMap.get(entry.getKey()).getValue().equals(otherValue.getValue())) {
 				return false;
 			}
 		}
@@ -260,14 +257,14 @@ public class SignDomainState
 		return true;
 	}
 
-	@Override
 	public SignDomainState copy() {
 		return new SignDomainState(new HashMap<String, IBoogieVar>(mVariablesMap),
-				new HashMap<String, SignDomainValue>(mValuesMap), mIsFixpoint);
+		        new HashMap<String, SignDomainValue>(mValuesMap), mIsFixpoint);
 	}
 
-	protected Map<String, IBoogieVar> getVariables() {
-		return new HashMap<String, IBoogieVar>(mVariablesMap);
+	@Override
+	public Map<String, IBoogieVar> getVariables() {
+		return Collections.unmodifiableMap(mVariablesMap);
 	}
 
 	protected Map<String, SignDomainValue> getValues() {
@@ -310,20 +307,20 @@ public class SignDomainState
 	}
 
 	@Override
-	public SignDomainState getResult() {
-		return this;
-	}
-
-	@Override
 	public Term getTerm(Script script, Boogie2SMT bpl2smt) {
 		return script.term("true");
 	}
 
 	@Override
-	public IBoogieVar getVariableType(String name) {
+	public IBoogieVar getVariableDeclarationType(String name) {
 		assert name != null;
 		assert mVariablesMap.containsKey(name);
 
 		return mVariablesMap.get(name);
+	}
+
+	@Override
+	public SignDomainState patch(final SignDomainState dominator) {
+		throw new UnsupportedOperationException("not yet implemented");
 	}
 }

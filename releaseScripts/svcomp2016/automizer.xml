@@ -22,6 +22,10 @@
   <tasks name="Memsafety DerefFreeMemtrack">
     <include>../../trunk/examples/svcomp/memsafety/test-0158_false-valid-free.i</include>
     <include>../../trunk/examples/svcomp/list-ext-properties/test-0158_1_false-valid-memtrack.i</include>
+	<include>../../trunk/examples/svcomp/list-ext-properties/960521-1_1_false-valid-deref.i</include>
+	<include>../../trunk/examples/svcomp/ldv-memsafety/ArraysOfVariableLength_false-valid-deref-read.c</include>
+	<include>../../trunk/examples/svcomp/ldv-memsafety/memset2_false-valid-deref-write.c</include>
+	<include>../../trunk/examples/svcomp/ldv-memsafety/memset_false-valid-deref-write.c</include>
     <propertyfile>${inputfile_path}/ALL.prp</propertyfile>
 	<option name="32bit"></option>
 	<option name="precise"></option>
@@ -44,6 +48,7 @@
     <include>../../trunk/examples/svcomp/ssh-simplified/s3_clnt_1_false-unreach-call.cil.c</include>
     <include>../../trunk/examples/svcomp/loop-acceleration/array_true-unreach-call3.i</include>
     <include>../../trunk/examples/svcomp/loop-acceleration/simple_false-unreach-call2.i</include>
+	<include>../../trunk/examples/svcomp/seq-pthread/cs_dekker_true-unreach-call.i</include>
     <propertyfile>${inputfile_path}/ALL.prp</propertyfile>
 	<option name="32bit"></option>
 	<option name="precise"></option>
@@ -83,6 +88,21 @@
   </tasks>
 
   <tasks name="Termination">
+    <include>../../trunk/examples/svcomp/termination-15/cstrcmp_diffterm_alloca_true-termination.c.i</include>
+	<include>../../trunk/examples/svcomp/termination-15/cstrncpy_malloc_true-termination.c.i</include>
+	<include>../../trunk/examples/svcomp/termination-crafted-lit/AliasDarteFeautrierGonnord-SAS2010-counterex1a_true-termination.c</include>
+	<include>../../trunk/examples/svcomp/termination-crafted/Madrid_false-termination.c</include>
+	<include>../../trunk/examples/svcomp/termination-crafted/McCarthy91_Iteration_true-termination.c</include>
+	<include>../../trunk/examples/svcomp/termination-crafted/NonTermination1_false-termination.c</include>
+	<include>../../trunk/examples/svcomp/termination-libowfat/strcpy_small_true-termination.c.i</include>
+	<include>../../trunk/examples/svcomp/termination-libowfat/strstr_true-termination.c.i</include>
+	<include>../../trunk/examples/svcomp/termination-memory-alloca/b.10-alloca_true-termination.c.i</include>
+	<include>../../trunk/examples/svcomp/termination-numeric/Avg_true_true-termination.c</include>
+	<include>../../trunk/examples/svcomp/termination-numeric/Et1_true_true-termination.c</include>
+	<include>../../trunk/examples/svcomp/termination-numeric/LeUserDefRec_true-termination.c</include>
+	<include>../../trunk/examples/svcomp/termination-restricted-15/NO_13_false-termination.c</include>
+	<include>../../trunk/examples/svcomp/termination-restricted-15/WhileTrueInc_false-termination.c</include>
+	<include>../../trunk/examples/svcomp/termination-restricted-15/java_Continue1_true-termination.c</include>
     <include>../../trunk/examples/svcomp/termination-memory-alloca/a.04-alloca_true-termination.c.i</include>
     <include>../../trunk/examples/svcomp/termination-restricted-15/ConvLower_false-termination.c</include>
     <include>../../trunk/examples/svcomp/termination-crafted/Collatz_unknown-termination.c</include>

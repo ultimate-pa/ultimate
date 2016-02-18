@@ -170,7 +170,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	/**
 	 * The cache used by flattenType to prevent repeated work.
 	 */
-	private final HashMap<BoogieType, BoogieType> m_FlattenCache;
+	private final HashMap<BoogieType, BoogieType> mFlattenCache;
 	/**
 	 * This map remembers the created struct types. For named type parameters
 	 * that have struct type, we create a new pseudo type struct~f1~f2, where
@@ -186,17 +186,14 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	 * 
 	 * which is remembered in this map.
 	 */
-	private final HashMap<String, TypeConstructor> m_StructTypes;
+	private final HashMap<String, TypeConstructor> mStructTypes;
 
 	private final BoogiePreprocessorBacktranslator mTranslator;
 
-	private final Logger mLogger;
-
 	protected StructExpander(BoogiePreprocessorBacktranslator translator, Logger logger) {
 		mTranslator = translator;
-		m_FlattenCache = new HashMap<BoogieType, BoogieType>();
-		m_StructTypes = new HashMap<String, TypeConstructor>();
-		mLogger = logger;
+		mFlattenCache = new HashMap<BoogieType, BoogieType>();
+		mStructTypes = new HashMap<String, TypeConstructor>();
 	}
 
 	/**
@@ -214,13 +211,13 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 		for (String f : st.getFieldIds())
 			sb.append('~').append(f);
 		String name = sb.toString();
-		TypeConstructor tc = m_StructTypes.get(name);
+		TypeConstructor tc = mStructTypes.get(name);
 		if (tc == null) {
 			int[] paramOrder = new int[st.getFieldCount()];
 			for (int i = 0; i < paramOrder.length; i++)
 				paramOrder[i] = i;
 			tc = new TypeConstructor(name, false, st.getFieldCount(), paramOrder);
-			m_StructTypes.put(name, tc);
+			mStructTypes.put(name, tc);
 		}
 		BoogieType[] types = new BoogieType[st.getFieldCount()];
 		for (int i = 0; i < types.length; i++)
@@ -242,8 +239,8 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 	private BoogieType flattenType(IType itype) {
 		BoogieType result;
 		BoogieType type = ((BoogieType) itype).getUnderlyingType();
-		if (m_FlattenCache.containsKey(type))
-			return m_FlattenCache.get(type);
+		if (mFlattenCache.containsKey(type))
+			return mFlattenCache.get(type);
 		if (type instanceof PrimitiveType) {
 			result = type;
 		} else if (type instanceof ConstructedType) {
@@ -311,7 +308,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 		} else {
 			throw new AssertionError("Unknown ASTType " + type);
 		}
-		m_FlattenCache.put(type, result);
+		mFlattenCache.put(type, result);
 		return result;
 	}
 
@@ -348,7 +345,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 					newDecls.add(newDecl);
 				}
 			}
-			for (TypeConstructor tc : m_StructTypes.values()) {
+			for (TypeConstructor tc : mStructTypes.values()) {
 				String[] typeParams = new String[tc.getParamCount()];
 				for (int i = 0; i < typeParams.length; i++)
 					typeParams[i] = "$" + i;
@@ -442,7 +439,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 			for (int i = 0; i < fields.length; i++) {
 				if (fields[i].equals(sae.getField())) {
 					newExpr = exprs[i];
-					ModelUtils.mergeAnnotations(expr, newExpr);
+					ModelUtils.copyAnnotations(expr, newExpr);
 					return newExpr;
 				}
 			}
@@ -471,7 +468,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 			result.setType(flattenType(expr.getType()));
 			return result;
 		} else {
-			ModelUtils.mergeAnnotations(expr, newExpr);
+			ModelUtils.copyAnnotations(expr, newExpr);
 			return newExpr;
 		}
 	}
@@ -632,7 +629,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 			for (int i = 0; i < st.getFieldCount(); i++) {
 				if (st.getFieldIds()[i].equals(slhs.getField())) {
 					LeftHandSide newLhs = allFields[i];
-					ModelUtils.mergeAnnotations(lhs, newLhs);
+					ModelUtils.copyAnnotations(lhs, newLhs);
 					return newLhs;
 				}
 			}

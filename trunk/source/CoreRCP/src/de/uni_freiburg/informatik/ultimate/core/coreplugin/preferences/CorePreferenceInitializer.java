@@ -35,15 +35,12 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIn
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 
 /**
- * CorePreferenceInitializer implements UltimatePreferenceStore for
- * UltimateCore. It initializes the default values for preferences and provides
- * access to the preferences for the plugin.
+ * CorePreferenceInitializer implements UltimatePreferenceStore for UltimateCore. It initializes the default values for
+ * preferences and provides access to the preferences for the plugin.
  * 
- * It has to contribute to the extension point
- * org.eclipse.core.runtime.preferences.initializer (see the plugin.xml).
+ * It has to contribute to the extension point org.eclipse.core.runtime.preferences.initializer (see the plugin.xml).
  * 
  * @author dietsch@informatik.uni-freiburg.de
  * 
@@ -75,7 +72,7 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<String>(LABEL_MM_TMPDIRECTORY, VALUE_MM_TMPDIRECTORY,
 						PreferenceType.Directory),
 
-				new UltimatePreferenceItem<String>(LABEL_LOG4J_PATTERN, "%d{ISO8601} %-5p [%F:%L]: %m%n",
+				new UltimatePreferenceItem<String>(LABEL_LOG4J_PATTERN, DEFAULT_VALUE_LOG4J_PATTERN,
 						PreferenceType.String),
 
 				// Log levels
@@ -103,30 +100,6 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 				// Toolchain
 				new UltimatePreferenceItem<Integer>(LABEL_TIMEOUT, VALUE_TIMEOUT, PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, 1000000)),
-
-				// Witness generation
-				new UltimatePreferenceItem<String>(DESC_WITNESS, null, PreferenceType.Label),
-				new UltimatePreferenceItem<Boolean>(LABEL_WITNESS_GEN, VALUE_WITNESS_GEN, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_WITNESS_LOG, VALUE_WITNESS_LOG, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_WITNESS_WRITE, VALUE_WITNESS_WRITE, PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_WITNESS_WRITE_WORKINGDIR, VALUE_WITNESS_WRITE_WORKINGDIR,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_WITNESS_VERIFY, VALUE_WITNESS_VERIFY, PreferenceType.Boolean,
-						new WitnessVerifierValidator()),
-				new UltimatePreferenceItem<WitnessVerifierType>(LABEL_WITNESS_VERIFIER, VALUE_WITNESS_VERIFIER,
-						PreferenceType.Combo, WitnessVerifierType.values()),
-				new UltimatePreferenceItem<String>(LABEL_WITNESS_VERIFIER_COMMAND, VALUE_WITNESS_VERIFIER_COMMAND,
-						PreferenceType.String),
-				new UltimatePreferenceItem<Integer>(LABEL_WITNESS_VERIFIER_TIMEOUT, VALUE_WITNESS_VERIFIER_TIMEOUT,
-						PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 1000000)),
-				new UltimatePreferenceItem<String>(LABEL_WITNESS_CPACHECKER_PROPERTY,
-						VALUE_WITNESS_CPACHECKER_PROPERTY, PreferenceType.String),
-				new UltimatePreferenceItem<Boolean>(LABEL_WITNESS_DELETE_GRAPHML, VALUE_WITNESS_DELETE_GRAPHML,
-						PreferenceType.Boolean, new WitnessVerifierValidator()),
-
-		// Log levels for external tools
-
-		// Plugin-specific log levels
 		};
 	}
 
@@ -136,7 +109,7 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 
 	@Override
 	protected String getPlugID() {
-		return Activator.s_PLUGIN_ID;
+		return Activator.PLUGIN_ID;
 	}
 
 	@Override
@@ -144,8 +117,8 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 		return "General";
 	}
 
-	public static final String PLUGINID = Activator.s_PLUGIN_ID;
-	public static final String PLUGINNAME = Activator.s_PLUGIN_NAME;
+	public static final String PLUGINID = Activator.PLUGIN_ID;
+	public static final String PLUGINNAME = Activator.PLUGIN_NAME;
 
 	/**
 	 * Preference Label/Value pairs
@@ -166,6 +139,11 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 
 	// Log4j pattern
 	public static final String LABEL_LOG4J_PATTERN = "Logger pattern: ";
+	/**
+	 * Note that this log pattern consumes quite some cycles. Replacing it with "%-5p: %m%n" is advised for more
+	 * performance.
+	 */
+	public static final String DEFAULT_VALUE_LOG4J_PATTERN = "[%d{ISO8601} %-5p L%-5.5L %20.20C{1}]: %m%n";
 
 	// Log level
 	public static final String DESC_LOGFILE = "The basic preferences for creating a log file (like enabled, name, "
@@ -242,33 +220,6 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_TIMEOUT = "Toolchain timeout in seconds";
 	public static final int VALUE_TIMEOUT = 0;
 
-	// Witness generation
-	public static final String DESC_WITNESS = "Witness generation";
-	public static final String LABEL_WITNESS_GEN = "Generate witness from each counter example result";
-	public static final boolean VALUE_WITNESS_GEN = false;
-	public static final String LABEL_WITNESS_LOG = "Log witness";
-	public static final boolean VALUE_WITNESS_LOG = false;
-	public static final String LABEL_WITNESS_WRITE = "Write witness as \"<inputfilename>-witness.graphml\" "
-			+ "in the same directory as the input file";
-	public static final boolean VALUE_WITNESS_WRITE = false;
-	public static final String LABEL_WITNESS_WRITE_WORKINGDIR = "Write witness as \"witness.graphml\" "
-			+ "to working directory";
-	public static final boolean VALUE_WITNESS_WRITE_WORKINGDIR = false;
-	public static final String LABEL_WITNESS_VERIFY = "Verify the witness and generate results";
-	public static final boolean VALUE_WITNESS_VERIFY = false;
-	public static final String LABEL_WITNESS_VERIFIER = "Use the following witness verifier";
-	public static final WitnessVerifierType VALUE_WITNESS_VERIFIER = WitnessVerifierType.CPACHECKER;
-	public static final String LABEL_WITNESS_VERIFIER_COMMAND = "Command to execute witness verifier "
-			+ "(gets witness file as first and input file as second parameter)\n"
-			+ "For CPA Checker: Additionally, set CPACHECKER_HOME";
-	public static final String VALUE_WITNESS_VERIFIER_COMMAND = "";
-	public static final String LABEL_WITNESS_CPACHECKER_PROPERTY = "For CPAChecker: Use this .prp file (may be relative to CPACHECKER_HOME)";
-	public static final String VALUE_WITNESS_CPACHECKER_PROPERTY = "";
-	public static final String LABEL_WITNESS_VERIFIER_TIMEOUT = "Timeout in seconds for witness verifier";
-	public static final int VALUE_WITNESS_VERIFIER_TIMEOUT = 10;
-	public static final String LABEL_WITNESS_DELETE_GRAPHML = "Delete the .graphml file after verification";
-	public static final boolean VALUE_WITNESS_DELETE_GRAPHML = false;
-
 	/**
 	 * Messages
 	 */
@@ -295,24 +246,6 @@ public class CorePreferenceInitializer extends UltimatePreferenceInitializer {
 		@Override
 		public String getInvalidValueErrorMessage(String value) {
 			return INVALID_LOGLEVEL;
-		}
-	}
-
-	private class WitnessVerifierValidator implements IUltimatePreferenceItemValidator<Boolean> {
-
-		@Override
-		public boolean isValid(Boolean value) {
-			if (value) {
-				UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
-				return ups.getBoolean(LABEL_WITNESS_GEN) && ups.getBoolean(LABEL_WITNESS_WRITE);
-			} else {
-				return true;
-			}
-		}
-
-		@Override
-		public String getInvalidValueErrorMessage(Boolean value) {
-			return INVALID_WITNESSVERIFCATION_SETTING;
 		}
 	}
 }

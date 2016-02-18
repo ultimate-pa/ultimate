@@ -32,6 +32,7 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
@@ -39,12 +40,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 
 public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 	
 	private final INestedWordAutomatonSimple<LETTER,STATE> m_FstOperand;
@@ -77,7 +77,7 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 	
 	
-	public BuchiIntersect(IUltimateServiceProvider services,
+	public BuchiIntersect(AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
 			INestedWordAutomatonSimple<LETTER,STATE> sndOperand
 			) throws AutomataLibraryException {
@@ -89,7 +89,7 @@ public class BuchiIntersect<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		doIntersect();
 	}
 	
-	public BuchiIntersect(IUltimateServiceProvider services,
+	public BuchiIntersect(AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER,STATE> fstOperand,
 			INestedWordAutomatonSimple<LETTER,STATE> sndOperand,
 			StateFactory<STATE> sf) throws AutomataLibraryException {

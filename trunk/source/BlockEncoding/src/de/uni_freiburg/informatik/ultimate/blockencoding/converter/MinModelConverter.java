@@ -93,7 +93,7 @@ public class MinModelConverter {
 	 */
 	public RootNode startConversion(RootNode root) {
 		RootNode newRoot = new RootNode(root.getPayload().getLocation(), root.getRootAnnot());
-		ModelUtils.mergeAnnotations(root, newRoot);
+		ModelUtils.copyAnnotations(root, newRoot);
 		mBoogie2SMT = root.getRootAnnot().getBoogie2SMT();
 		boolean simplify = (new UltimatePreferenceStore(RCFGBuilder.s_PLUGIN_ID))
 				.getBoolean(RcfgPreferenceInitializer.LABEL_Simplify);
@@ -102,7 +102,7 @@ public class MinModelConverter {
 			if (edge instanceof RootEdge) {
 				BlockEncodingAnnotation annot = BlockEncodingAnnotation.getAnnotation(edge);
 				if (annot != null) {
-					ModelUtils.mergeAnnotations(edge, new RootEdge(newRoot, convertFunction(annot.getNode())));
+					ModelUtils.copyAnnotations(edge, new RootEdge(newRoot, convertFunction(annot.getNode())));
 				} else {
 					mLogger.warn("Conversion cancelled, illegal RCFG!");
 					throw new IllegalArgumentException("The target of an root edge is not a MinimizedNode");

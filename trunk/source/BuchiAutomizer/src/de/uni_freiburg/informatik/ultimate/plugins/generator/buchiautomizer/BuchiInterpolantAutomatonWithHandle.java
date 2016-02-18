@@ -30,6 +30,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
@@ -65,7 +66,7 @@ public class BuchiInterpolantAutomatonWithHandle extends
 				scroogeNondeterminismLoop, hondaBouncerStem, hondaBouncerLoop,  	predicateFactory ,logger, services);
 		GetHandle<CodeBlock, IPredicate> gh;
 		try {
-			gh = new GetHandle<CodeBlock, IPredicate>(services, abstraction);
+			gh = new GetHandle<CodeBlock, IPredicate>(new AutomataLibraryServices(services), abstraction);
 			m_Handle = gh.getResult();
 		} catch (OperationCanceledException e) {
 			throw new AssertionError();

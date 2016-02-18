@@ -27,9 +27,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomainValue.Values;
@@ -40,12 +44,14 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 
 	private BooleanValue mBooleanValue = new BooleanValue(false);
 
-	public SignLogicalBinaryExpressionEvaluator(IUltimateServiceProvider services) {
-		super(services);
+	public SignLogicalBinaryExpressionEvaluator(IUltimateServiceProvider services, EvaluatorType type) {
+		super(services, type);
 	}
 
 	@Override
-	public IEvaluationResult<Values> evaluate(SignDomainState currentState) {
+	public List<IEvaluationResult<Values>> evaluate(SignDomainState currentState) {
+		final List<IEvaluationResult<Values>> returnList = new ArrayList<>();
+
 		for (String var : mLeftSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
 		}
@@ -53,54 +59,61 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 			mVariableSet.add(var);
 		}
 
-		final SignDomainValue firstResult = (SignDomainValue) mLeftSubEvaluator.evaluate(currentState);
-		final SignDomainValue secondResult = (SignDomainValue) mRightSubEvaluator.evaluate(currentState);
+		final List<IEvaluationResult<Values>> firstResult = mLeftSubEvaluator.evaluate(currentState);
+		final List<IEvaluationResult<Values>> secondResult = mRightSubEvaluator.evaluate(currentState);
 
-		switch (mOperator) {
-		// case LOGICIFF:
-		// break;
-		// case LOGICIMPLIES:
-		// break;
-		// case LOGICAND:
-		// break;
-		// case LOGICOR:
-		// break;
-		// case COMPLT:
-		// break;
-		// case COMPGT:
-		// break;
-		// case COMPLEQ:
-		// break;
-		// case COMPGEQ:
-		// break;
-		case COMPEQ:
-		case COMPNEQ:
-			// return evaluateComparisonOperators(firstResult, secondResult);
-			// case COMPPO:
-			// break;
-			// case BITVECCONCAT:
-			// break;
-			// case ARITHMUL:
-			// break;
-			// case ARITHDIV:
-			// break;
-			// case ARITHMOD:
-			// break;
-			// case ARITHPLUS:
-			// break;
-			// case ARITHMINUS:
-			// break;
-		default:
-			throw new UnsupportedOperationException("The operator " + mOperator.toString() + " is not implemented.");
+		for (final IEvaluationResult<Values> res1 : firstResult) {
+			for (final IEvaluationResult<Values> res2 : secondResult) {
+				switch (mOperator) {
+				// case LOGICIFF:
+				// break;
+				// case LOGICIMPLIES:
+				// break;
+				// case LOGICAND:
+				// break;
+				// case LOGICOR:
+				// break;
+				// case COMPLT:
+				// break;
+				// case COMPGT:
+				// break;
+				// case COMPLEQ:
+				// break;
+				// case COMPGEQ:
+				// break;
+				case COMPEQ:
+				case COMPNEQ:
+					// return evaluateComparisonOperators(firstResult, secondResult);
+					// case COMPPO:
+					// break;
+					// case BITVECCONCAT:
+					// break;
+					// case ARITHMUL:
+					// break;
+					// case ARITHDIV:
+					// break;
+					// case ARITHMOD:
+					// break;
+					// case ARITHPLUS:
+					// break;
+					// case ARITHMINUS:
+					// break;
+				default:
+					throw new UnsupportedOperationException(
+					        "The operator " + mOperator.toString() + " is not implemented.");
+				}
+			}
 		}
+
+		return returnList;
 	}
 
-	public SignDomainState logicallyInterpret(SignDomainState currentState) {
+	private SignDomainState logicallyInterpret(SignDomainState currentState) {
 
 		final SignDomainValue firstResult = (SignDomainValue) mLeftSubEvaluator.evaluate(currentState);
 		final SignDomainValue secondResult = (SignDomainValue) mRightSubEvaluator.evaluate(currentState);
 
-		if (firstResult.getResult().equals(Values.BOTTOM) || secondResult.getResult().equals(Values.BOTTOM)) {
+		if (firstResult.getValue().equals(Values.BOTTOM) || secondResult.getValue().equals(Values.BOTTOM)) {
 			SignDomainState newState = currentState.copy();
 			newState.setToBottom();
 			return newState;
@@ -121,7 +134,7 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 		case COMPGEQ:
 			throw new UnsupportedOperationException("The operator " + mOperator.toString() + " is not implemented.");
 		case COMPNEQ:
-			if (firstResult.getResult().equals(Values.TOP) || secondResult.getResult().equals(Values.TOP)) {
+			if (firstResult.getValue().equals(Values.TOP) || secondResult.getValue().equals(Values.TOP)) {
 				return newState;
 			}
 
@@ -132,7 +145,7 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 
 			return newState;
 		case COMPEQ:
-			if (firstResult.getResult().equals(Values.TOP) || secondResult.getResult().equals(Values.TOP)) {
+			if (firstResult.getValue().equals(Values.TOP) || secondResult.getValue().equals(Values.TOP)) {
 				return newState;
 			}
 
@@ -201,7 +214,7 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 	}
 
 	private boolean evaluateNEComparison(SignDomainValue firstResult, SignDomainValue secondResult) {
-		if (firstResult.getResult() == Values.ZERO && secondResult.getResult() == Values.ZERO) {
+		if (firstResult.getValue() == Values.ZERO && secondResult.getValue() == Values.ZERO) {
 			return false;
 		}
 
@@ -209,17 +222,17 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 	}
 
 	private boolean evaluateGTComparison(SignDomainValue firstResult, SignDomainValue secondResult) {
-		if (firstResult.getResult() == secondResult.getResult() || firstResult.getResult() == Values.BOTTOM
-		        || secondResult.getResult() == Values.BOTTOM || firstResult.getResult() == Values.TOP
-		        || secondResult.getResult() == Values.TOP) {
+		if (firstResult.getValue() == secondResult.getValue() || firstResult.getValue() == Values.BOTTOM
+		        || secondResult.getValue() == Values.BOTTOM || firstResult.getValue() == Values.TOP
+		        || secondResult.getValue() == Values.TOP) {
 			return false;
 		}
 
-		if (firstResult.getResult() == Values.POSITIVE && !(secondResult.getResult() == Values.POSITIVE)) {
+		if (firstResult.getValue() == Values.POSITIVE && !(secondResult.getValue() == Values.POSITIVE)) {
 			return true;
 		}
 
-		if (firstResult.getResult() == Values.ZERO && secondResult.getResult() == Values.NEGATIVE) {
+		if (firstResult.getValue() == Values.ZERO && secondResult.getValue() == Values.NEGATIVE) {
 			return true;
 		}
 
@@ -231,40 +244,35 @@ public class SignLogicalBinaryExpressionEvaluator extends SignBinaryExpressionEv
 			return false;
 		}
 
-		if (firstResult.getResult() == Values.NEGATIVE && !(secondResult.getResult() == Values.NEGATIVE)) {
+		if (firstResult.getValue() == Values.NEGATIVE && !(secondResult.getValue() == Values.NEGATIVE)) {
 			return true;
 		}
 
-		if (firstResult.getResult() == Values.ZERO && secondResult.getResult() == Values.POSITIVE) {
+		if (firstResult.getValue() == Values.ZERO && secondResult.getValue() == Values.POSITIVE) {
 			return true;
 		}
 		return false;
 	}
 
-	protected BooleanValue logicalEvaluation(SignDomainState currentState) {
-
-		switch (mOperator) {
-		case COMPEQ:
-			return mLeftSubEvaluator.booleanValue().intersect(mRightSubEvaluator.booleanValue());
-		case COMPNEQ:
-			return mLeftSubEvaluator.booleanValue().intersect(mRightSubEvaluator.booleanValue().neg());
-		case LOGICIMPLIES:
-			return mLeftSubEvaluator.booleanValue().or(mRightSubEvaluator.booleanValue());
-		case LOGICIFF:
-			return (mLeftSubEvaluator.booleanValue().and(mRightSubEvaluator.booleanValue())
-			        .or((mLeftSubEvaluator.booleanValue().neg().and(mRightSubEvaluator.booleanValue().neg()))));
-		case LOGICOR:
-			return mLeftSubEvaluator.booleanValue().or(mRightSubEvaluator.booleanValue());
-		default:
-			throw new UnsupportedOperationException("Operator " + mOperator + " not yet implemented.");
-			// TODO: implement other cases
-		}
-	}
-
-	@Override
-	public BooleanValue booleanValue() {
-		return mBooleanValue;
-	}
+	// protected BooleanValue logicalEvaluation(SignDomainState currentState) {
+	//
+	// switch (mOperator) {
+	// case COMPEQ:
+	// return mLeftSubEvaluator.booleanValue().intersect(mRightSubEvaluator.booleanValue());
+	// case COMPNEQ:
+	// return mLeftSubEvaluator.booleanValue().intersect(mRightSubEvaluator.booleanValue().neg());
+	// case LOGICIMPLIES:
+	// return mLeftSubEvaluator.booleanValue().or(mRightSubEvaluator.booleanValue());
+	// case LOGICIFF:
+	// return (mLeftSubEvaluator.booleanValue().and(mRightSubEvaluator.booleanValue())
+	// .or((mLeftSubEvaluator.booleanValue().neg().and(mRightSubEvaluator.booleanValue().neg()))));
+	// case LOGICOR:
+	// return mLeftSubEvaluator.booleanValue().or(mRightSubEvaluator.booleanValue());
+	// default:
+	// throw new UnsupportedOperationException("Operator " + mOperator + " not yet implemented.");
+	// // TODO: implement other cases
+	// }
+	// }
 
 	@Override
 	public boolean containsBool() {

@@ -139,7 +139,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	@Override
 	protected String getPlugID() {
-		return Activator.s_PLUGIN_ID;
+		return Activator.PLUGIN_ID;
 	}
 
 	@Override

@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -45,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public class RcfgTransitionProvider implements ITransitionProvider<CodeBlock> {
+public class RcfgTransitionProvider implements ITransitionProvider<CodeBlock, ProgramPoint> {
 
 	@Override
 	public Collection<CodeBlock> getSuccessors(CodeBlock elem, CodeBlock scope) {
@@ -150,7 +151,7 @@ public class RcfgTransitionProvider implements ITransitionProvider<CodeBlock> {
 	}
 
 	private boolean isCorrespondingCall(CodeBlock current, CodeBlock currentScope) {
-		if(currentScope == null){
+		if (currentScope == null) {
 			return false;
 		}
 		if (current instanceof Return) {
@@ -159,5 +160,20 @@ public class RcfgTransitionProvider implements ITransitionProvider<CodeBlock> {
 			return currReturn.getCorrespondingCall().equals(currentScope);
 		}
 		return false;
+	}
+
+	@Override
+	public ProgramPoint getSource(final CodeBlock current) {
+		return (ProgramPoint) current.getSource();
+	}
+
+	@Override
+	public ProgramPoint getTarget(final CodeBlock current) {
+		return (ProgramPoint) current.getTarget();
+	}
+
+	@Override
+	public Collection<CodeBlock> getSuccessorActions(ProgramPoint loc) {
+		return loc.getOutgoingEdges().stream().map(e -> (CodeBlock)e).collect(Collectors.toList());
 	}
 }

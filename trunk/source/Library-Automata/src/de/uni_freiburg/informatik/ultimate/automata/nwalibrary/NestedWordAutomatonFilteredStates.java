@@ -32,11 +32,11 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.DownStateConsistencyCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.reachableStatesAutomaton.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
@@ -47,13 +47,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.StateBasedTransitionFilterPredicateProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.SummaryReturnTransition;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.FilteredIterable;
 import de.uni_freiburg.informatik.ultimate.util.IPredicate;
 
 public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 		INestedWordAutomatonOldApi<LETTER, STATE>, INestedWordAutomaton<LETTER, STATE>, IDoubleDeckerAutomaton<LETTER, STATE> {
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 	private final INestedWordAutomatonOldApi<LETTER, STATE> m_Nwa;
 	private final Set<STATE> m_RemainingStates;
@@ -62,7 +61,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 	private final NestedWordAutomatonReachableStates<LETTER, STATE>.AncestorComputation m_AncestorComputation;
 	private final StateBasedTransitionFilterPredicateProvider<LETTER, STATE> m_TransitionFilter;
 	
-	NestedWordAutomatonFilteredStates(IUltimateServiceProvider services,
+	NestedWordAutomatonFilteredStates(AutomataLibraryServices services,
 			INestedWordAutomatonOldApi<LETTER, STATE> automaton, 
 			Set<STATE> remainingStates, Set<STATE> newInitials, Set<STATE> newFinals) 
 					throws OperationCanceledException {
@@ -78,7 +77,7 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements
 	}
 	
 	public NestedWordAutomatonFilteredStates(
-			IUltimateServiceProvider services,
+			AutomataLibraryServices services,
 			NestedWordAutomatonReachableStates<LETTER, STATE> automaton, 
 			NestedWordAutomatonReachableStates<LETTER, STATE>.AncestorComputation ancestorComputation) 
 					throws OperationCanceledException {

@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
  * Represents the transition of a program or a transition system as an SMT
@@ -585,8 +586,13 @@ public class TransFormula implements Serializable {
 
 		formula = new FormulaUnLet().unlet(formula);
 		if (simplify) {
-			Term simplified = SmtUtils.simplify(script, formula, services);
-			formula = simplified;
+			try {
+				Term simplified = SmtUtils.simplify(script, formula, services);
+				formula = simplified;
+			} catch (ToolchainCanceledException tce) {
+				throw new ToolchainCanceledException(TransFormula.class, tce.getRunningTaskInfo() + 
+						" while doing sequential composition of " + transFormula.length + " TransFormulas");
+			}
 		}
 		removesuperfluousVariables(inVars, outVars, auxVars, formula);
 
@@ -640,6 +646,8 @@ public class TransFormula implements Serializable {
 		services.getResultService().reportResult(ModelCheckerUtils.sPluginID, timeOutRes);
 	}
 
+	@Deprecated
+	// there is also a probably similar methods with a similar name
 	private static void removesuperfluousVariables(Map<BoogieVar, TermVariable> inVars,
 			Map<BoogieVar, TermVariable> outVars, Set<TermVariable> auxVars, Term formula) {
 		Set<TermVariable> occuringVars = new HashSet<TermVariable>(Arrays.asList(formula.getFreeVars()));
@@ -1314,13 +1322,13 @@ public class TransFormula implements Serializable {
 	 * 	          in which the afterCall TransFormula ends. 
 	 */
 	public static TransFormula sequentialCompositionWithPendingCall(Boogie2SMT boogie2smt, boolean simplify,
-			boolean extPqe, boolean transformToCNF, TransFormula[] beforeCall, TransFormula callTf,
+			boolean extPqe, boolean transformToCNF, List<TransFormula> beforeCall, TransFormula callTf,
 			TransFormula oldVarsAssignment, TransFormula afterCall, Logger logger, IUltimateServiceProvider services, 
 			Set<BoogieVar> modifiableGlobalsOfEndProcedure) {
 		logger.debug("sequential composition (pending call) with" + (simplify ? "" : "out") + " formula simplification");
 		TransFormula callAndBeforeTF;
 		{
-			List<TransFormula> callAndBeforeList = new ArrayList<TransFormula>(Arrays.asList(beforeCall));
+			List<TransFormula> callAndBeforeList = new ArrayList<TransFormula>(beforeCall);
 			callAndBeforeList.add(callTf);
 			TransFormula[] callAndBeforeArray = callAndBeforeList.toArray(new TransFormula[callAndBeforeList.size()]);
 			callAndBeforeTF = sequentialComposition(logger, services, boogie2smt, simplify, extPqe, transformToCNF,
@@ -1397,7 +1405,7 @@ public class TransFormula implements Serializable {
 	}
 
 	/**
-	 * Returns a Transformula that can be seen as procedure summary.
+	 * Returns a TransFormula that can be seen as procedure summary.
 	 * 
 	 * @param callTf
 	 *            TransFormula that describes parameter assignment of call.
@@ -1405,18 +1413,19 @@ public class TransFormula implements Serializable {
 	 *            TransFormula that assigns to oldVars of modifiable globals the
 	 *            value of the global var.
 	 * @param procedureTf
-	 *            TransFormula that describes the procdure.
+	 *            TransFormula that describes the procedure.
 	 * @param returnTf
 	 *            TransFormula that assigns the result of the procedure call.
 	 * @param logger
 	 * @param services
 	 */
 	public static TransFormula sequentialCompositionWithCallAndReturn(Boogie2SMT boogie2smt, boolean simplify,
-			boolean extPqe, boolean transformToCNF, TransFormula callTf, TransFormula oldVarsAssignment,
+			boolean extPqe, boolean transformToCNF, TransFormula callTf, 
+			TransFormula oldVarsAssignment, TransFormula globalVarsAssignment,
 			TransFormula procedureTf, TransFormula returnTf, Logger logger, IUltimateServiceProvider services) {
 		logger.debug("sequential composition (call/return) with" + (simplify ? "" : "out") + " formula simplification");
 		TransFormula result = sequentialComposition(logger, services, boogie2smt, simplify, extPqe, transformToCNF,
-				callTf, oldVarsAssignment, procedureTf, returnTf);
+				callTf, oldVarsAssignment, globalVarsAssignment, procedureTf, returnTf);
 		{
 			List<BoogieVar> inVarsToRemove = new ArrayList<BoogieVar>();
 			for (BoogieVar bv : result.getInVars().keySet()) {
@@ -1508,6 +1517,62 @@ public class TransFormula implements Serializable {
 			}
 		}
 		return procedures.size() <= 1;
+	}
+	
+	
+	private static TransFormula computeGuard(TransFormula tf, Boogie2SMT boogie2smt) {
+		Map<BoogieVar, TermVariable> inVars = tf.getInVars();
+		Map<BoogieVar, TermVariable> outVars = tf.getInVars(); // yes! outVars are inVars of input
+		Set<TermVariable> auxVars = new HashSet<TermVariable>();
+		auxVars.addAll(tf.getAuxVars());
+		for (BoogieVar bv : tf.getAssignedVars()) {
+			TermVariable outVar = tf.getOutVars().get(bv);
+			if (Arrays.asList(tf.getFormula().getFreeVars()).contains(outVar)) {
+				auxVars.add(outVar);
+			}
+		}
+		if (!tf.getBranchEncoders().isEmpty()) {
+			throw new AssertionError("I think this does not make sense with branch enconders");
+		}
+		Set<TermVariable> branchEncoders = tf.getBranchEncoders();
+		Infeasibility infeasibility = tf.isInfeasible();
+		Term formula = tf.getFormula();
+		Term closedFormula = computeClosedFormula(formula, inVars, outVars, auxVars, false, boogie2smt);
+		TransFormula result = new TransFormula(formula, inVars, outVars, auxVars, branchEncoders, infeasibility, closedFormula);
+		return result;
+	}
+	
+	private static TransFormula negate(TransFormula tf, Boogie2SMT boogie2smt, IUltimateServiceProvider services, Logger logger) {
+		Set<TermVariable> auxVars = Collections.emptySet();
+		if (!tf.getBranchEncoders().isEmpty()) {
+			throw new AssertionError("I think this does not make sense with branch enconders");
+		}
+		Set<TermVariable> branchEncoders = tf.getBranchEncoders();
+		Infeasibility infeasibility = tf.isInfeasible();
+		Term formula = tf.getFormula();
+		formula = PartialQuantifierElimination.quantifier(services, logger, 
+				boogie2smt.getScript(), boogie2smt.getVariableManager(), QuantifiedFormula.EXISTS, 
+				tf.getAuxVars(), formula, new Term[0]);
+		formula = Util.not(boogie2smt.getScript(), formula);
+		
+		Map<BoogieVar, TermVariable> inVars = new HashMap<>(tf.getInVars());
+		Map<BoogieVar, TermVariable> outVars = new HashMap<>(tf.getOutVars());
+		TransFormula.removeSuperfluousVars(formula, inVars, outVars, auxVars);
+		
+
+		//FIXME: Filter inVars and outVars to tv that occur in formula
+//		formula = SmtUtils.quantifier(boogie2smt.getScript(), QuantifiedFormula.EXISTS, tf.getAuxVars(), formula);
+		Term closedFormula = computeClosedFormula(formula, inVars, outVars, auxVars, true, boogie2smt);
+		TransFormula result = new TransFormula(formula, inVars, outVars, auxVars, branchEncoders, infeasibility, closedFormula);
+		return result;
+	}
+	
+	public static TransFormula computeMarkhorTransFormula(TransFormula tf, 
+			Boogie2SMT boogie2smt, IUltimateServiceProvider services, Logger logger) {
+		TransFormula guard = computeGuard(tf, boogie2smt);
+		TransFormula negGuard = negate(guard, boogie2smt, services, logger);
+		TransFormula markhor = parallelComposition(logger, services, tf.hashCode(), boogie2smt, null, false, tf, negGuard);
+		return markhor;
 	}
 
 }

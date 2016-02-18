@@ -66,7 +66,7 @@ public class SignLogicalSingletonVariableExpressionEvaluator extends SignSinglet
 
 		SignDomainValue newValue;
 
-		switch (value.getResult()) {
+		switch (value.getValue()) {
 		case NEGATIVE:
 			return new SignDomainValue(Values.NEGATIVE);
 		case POSITIVE:
@@ -75,7 +75,7 @@ public class SignLogicalSingletonVariableExpressionEvaluator extends SignSinglet
 			return new SignDomainValue(Values.BOTTOM);
 		default:
 			throw new UnsupportedOperationException(
-			        "The value " + value.getResult().toString() + " is no valid boolean sign domain value.");
+			        "The value " + value.getValue().toString() + " is no valid boolean sign domain value.");
 		}
 	}
 
@@ -87,7 +87,7 @@ public class SignLogicalSingletonVariableExpressionEvaluator extends SignSinglet
 
 		SignDomainValue newValue;
 
-		switch (value.getResult()) {
+		switch (value.getValue()) {
 		case NEGATIVE:
 			return false;
 		case POSITIVE:
@@ -96,13 +96,8 @@ public class SignLogicalSingletonVariableExpressionEvaluator extends SignSinglet
 			return false;
 		default:
 			throw new UnsupportedOperationException(
-			        "The value " + value.getResult().toString() + " is no valid boolean sign domain value.");
+			        "The value " + value.getValue().toString() + " is no valid boolean sign domain value.");
 		}
-	}
-
-	@Override
-	public BooleanValue booleanValue() {
-		return mBooleanValue;
 	}
 
 	@Override

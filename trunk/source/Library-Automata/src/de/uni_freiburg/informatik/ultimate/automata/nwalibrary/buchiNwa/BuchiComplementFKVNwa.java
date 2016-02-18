@@ -34,19 +34,18 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomatonCache;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.TightLevelRankingStateGeneratorBuilder.FkvOptimization;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.TightLevelRankingStateGeneratorBuilder.TightLevelRankingStateGenerator;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.MultiOptimizationLevelRankingGenerator.FkvOptimization;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.DeterminizedState;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 	
 
@@ -58,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  */
 public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomatonSimple<LETTER,STATE> {
 	
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 	
 	/**
@@ -108,13 +107,13 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 	 */
 	int m_HighestRank = -1;	
 	
-	private final TightLevelRankingStateGeneratorBuilder<LETTER, STATE> m_TightLevelRankingStateGeneratorBuilder;
+	private final MultiOptimizationLevelRankingGenerator<LETTER, STATE, LevelRankingConstraint<LETTER, STATE>> m_LevelRankingGenerator;
 	
 	private final STATE m_SinkState;
 	
 	
 	
-	public BuchiComplementFKVNwa(IUltimateServiceProvider services,
+	public BuchiComplementFKVNwa(AutomataLibraryServices services,
 			INestedWordAutomatonSimple<LETTER,STATE> operand,
 			IStateDeterminizer<LETTER,STATE> stateDeterminizer,
 			StateFactory<STATE> stateFactory, FkvOptimization optimization,
@@ -129,7 +128,7 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 				operand.getReturnAlphabet(), m_StateFactory);
 		m_StateDeterminizer = stateDeterminizer;
 		m_UserDefinedMaxRank = userDefinedMaxRank;
-		m_TightLevelRankingStateGeneratorBuilder = new TightLevelRankingStateGeneratorBuilder<>(
+		m_LevelRankingGenerator = new MultiOptimizationLevelRankingGenerator<>(
 				m_Services, m_Operand, optimization, userDefinedMaxRank);
 		m_SinkState = constructSinkState();
 	}
@@ -284,12 +283,12 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 					m_Cache.addInternalTransition(state, letter, resSucc);
 					resSuccs.add(resSucc);
 				}
-				LevelRankingConstraint<LETTER,STATE> constraints = new LevelRankingConstraint<LETTER,STATE>(
-						m_Operand, m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
+				boolean oIsEmpty = true; // considering O empty for subset component will safe some states
+				LevelRankingConstraint<LETTER,STATE> constraints = new LevelRankingConstraintDrdCheck<LETTER,STATE>(
+						m_Operand, oIsEmpty, m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
 				constraints.internalSuccessorConstraints(detUp, letter);
-				TightLevelRankingStateGenerator gen = m_TightLevelRankingStateGeneratorBuilder.
-						buildTightLevelRankingStateGenerator(constraints, true);
-				Collection<LevelRankingState<LETTER,STATE>> result = gen.computeResult();
+				Collection<LevelRankingState<LETTER,STATE>> result = m_LevelRankingGenerator.
+						generateLevelRankings(constraints, true);
 				if (result.size() > 2) {
 					m_Logger.warn("big" + result.size());
 				}
@@ -301,12 +300,11 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 			}
 			LevelRankingState<LETTER,STATE> complUp = m_res2lrk.get(state);
 			if (complUp != null) {
-				LevelRankingConstraint<LETTER,STATE> constraints = new LevelRankingConstraint<LETTER,STATE>(
-						m_Operand, m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
+				LevelRankingConstraint<LETTER,STATE> constraints = new LevelRankingConstraintDrdCheck<LETTER,STATE>(
+						m_Operand, complUp.isOempty(), m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
 				constraints.internalSuccessorConstraints(complUp, letter);
-				TightLevelRankingStateGenerator gen = m_TightLevelRankingStateGeneratorBuilder.
-						buildTightLevelRankingStateGenerator(constraints, false);
-				Collection<LevelRankingState<LETTER,STATE>> result = gen.computeResult();
+				Collection<LevelRankingState<LETTER,STATE>> result = m_LevelRankingGenerator.
+						generateLevelRankings(constraints, false);
 				if (result.size() > 4) {
 					m_Logger.warn("big" + result.size());
 				}
@@ -344,12 +342,12 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 					m_Cache.addCallTransition(state, letter, resSucc);
 					resSuccs.add(resSucc);
 				}
-				LevelRankingConstraint<LETTER, STATE> constraints = new LevelRankingConstraint<LETTER, STATE>(
-						m_Operand, m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
+				boolean oIsEmpty = true; // considering O empty for subset component will safe some states
+				LevelRankingConstraint<LETTER, STATE> constraints = new LevelRankingConstraintDrdCheck<LETTER, STATE>(
+						m_Operand, oIsEmpty, m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
 				constraints.callSuccessorConstraints(detUp, letter);
-				TightLevelRankingStateGenerator gen = m_TightLevelRankingStateGeneratorBuilder.
-						buildTightLevelRankingStateGenerator(constraints, true);
-				Collection<LevelRankingState<LETTER, STATE>> result = gen.computeResult();
+				Collection<LevelRankingState<LETTER, STATE>> result = m_LevelRankingGenerator.
+						generateLevelRankings(constraints, true);
 				for (LevelRankingState<LETTER, STATE> complSucc : result) {
 					STATE resSucc = getOrAdd(complSucc);
 					m_Cache.addCallTransition(state, letter, resSucc);
@@ -358,12 +356,11 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 			}
 			LevelRankingState<LETTER, STATE> complUp = m_res2lrk.get(state);
 			if (complUp != null) {
-				LevelRankingConstraint<LETTER, STATE> constraints = new LevelRankingConstraint<LETTER, STATE>(
-						m_Operand, m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
+				LevelRankingConstraint<LETTER, STATE> constraints = new LevelRankingConstraintDrdCheck<LETTER, STATE>(
+						m_Operand, complUp.isOempty(), m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
 				constraints.callSuccessorConstraints(complUp, letter);
-				TightLevelRankingStateGenerator gen = m_TightLevelRankingStateGeneratorBuilder.
-						buildTightLevelRankingStateGenerator(constraints, false);
-				Collection<LevelRankingState<LETTER, STATE>> result = gen.computeResult();
+				Collection<LevelRankingState<LETTER, STATE>> result = m_LevelRankingGenerator.
+						generateLevelRankings(constraints, false);
 				for (LevelRankingState<LETTER, STATE> complSucc : result) {
 					STATE resSucc = getOrAdd(complSucc);
 					m_Cache.addCallTransition(state, letter, resSucc);
@@ -401,12 +398,12 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 					m_Cache.addReturnTransition(state, hier, letter, resSucc);
 					resSuccs.add(resSucc);
 				}
-				LevelRankingConstraint<LETTER, STATE> constraints = new LevelRankingConstraint<LETTER, STATE>(
-						m_Operand, m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
+				boolean oIsEmpty = true; // considering O empty for subset component will safe some states
+				LevelRankingConstraint<LETTER, STATE> constraints = new LevelRankingConstraintDrdCheck<LETTER, STATE>(
+						m_Operand, oIsEmpty, m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
 				constraints.returnSuccessorConstraints(detUp, detDown, letter);
-				TightLevelRankingStateGenerator gen = m_TightLevelRankingStateGeneratorBuilder.
-						buildTightLevelRankingStateGenerator(constraints, true);
-				Collection<LevelRankingState<LETTER, STATE>> result = gen.computeResult();
+				Collection<LevelRankingState<LETTER, STATE>> result = m_LevelRankingGenerator.
+						generateLevelRankings(constraints, true);
 				for (LevelRankingState<LETTER, STATE> complSucc : result) {
 					STATE resSucc = getOrAdd(complSucc);
 					m_Cache.addReturnTransition(state, hier, letter, resSucc);
@@ -422,12 +419,11 @@ public class BuchiComplementFKVNwa<LETTER,STATE> implements INestedWordAutomaton
 				complDown = m_res2lrk.get(hier);
 			}
 			if (complUp != null) {
-				LevelRankingConstraint<LETTER, STATE> constraints = new LevelRankingConstraint<LETTER, STATE>(
-						m_Operand, m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
+				LevelRankingConstraint<LETTER, STATE> constraints = new LevelRankingConstraintDrdCheck<LETTER, STATE>(
+						m_Operand, complUp.isOempty(), m_UserDefinedMaxRank, m_StateDeterminizer.useDoubleDeckers());
 				constraints.returnSuccessorConstraints(complUp, complDown, letter);
-				TightLevelRankingStateGenerator gen = m_TightLevelRankingStateGeneratorBuilder.
-						buildTightLevelRankingStateGenerator(constraints, false);
-				Collection<LevelRankingState<LETTER, STATE>> result = gen.computeResult();
+				Collection<LevelRankingState<LETTER, STATE>> result = m_LevelRankingGenerator.
+						generateLevelRankings(constraints, false);
 				for (LevelRankingState<LETTER, STATE> complSucc : result) {
 					STATE resSucc = getOrAdd(complSucc);
 					m_Cache.addReturnTransition(state, hier, letter, resSucc);

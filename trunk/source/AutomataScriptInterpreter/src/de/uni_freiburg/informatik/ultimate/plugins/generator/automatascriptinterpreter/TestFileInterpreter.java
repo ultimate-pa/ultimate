@@ -57,6 +57,7 @@ import org.eclipse.core.runtime.FileLocator;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
@@ -91,10 +92,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.WhileStatementAST;
 import de.uni_freiburg.informatik.ultimate.result.AutomataScriptInterpreterOverallResult;
 import de.uni_freiburg.informatik.ultimate.result.AutomataScriptInterpreterOverallResult.OverallResult;
+import de.uni_freiburg.informatik.ultimate.result.model.IResult;
+import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Severity;
 import de.uni_freiburg.informatik.ultimate.result.GenericResult;
 import de.uni_freiburg.informatik.ultimate.result.GenericResultAtElement;
-import de.uni_freiburg.informatik.ultimate.result.IResult;
-import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
 
 /**
  * This enum represents the current flow of the program. It could have the
@@ -1112,7 +1113,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 							+ "automaton only two arguments are allowed");
 				}
 				mLastPrintedAutomaton = (IAutomaton<?, ?>) arguments.get(0);
-				text = (new AutomatonDefinitionPrinter<String, String>(mServices, "automaton", format, arguments.get(0)))
+				text = (new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "automaton", format, arguments.get(0)))
 							.getDefinitionAsString();
 			} else {
 				if (arguments.size() > 1) {
@@ -1145,7 +1146,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			}
 			String argsAsString = children.get(0).getAsString();
 			reportToLogger(LoggerSeverity.INFO, "Writing " + argsAsString + " to file " + filename + " in " + format + " format.");
-			new AutomatonDefinitionPrinter<String, String>(mServices, "ats", filename, format, "hello", automaton);
+			new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(mServices), "ats", filename, format, "hello", automaton);
 		} else {
 			IOperation<String, String> op = getAutomataOperation(oe, arguments);
 			if (op != null) {
@@ -1426,7 +1427,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 					// Convention: If the first parameter is a StateFactory, we
 					// prepend a StringFactory to the arguments.
 					Object[] augmentedArgs = prependStateFactoryIfNecessary(c, arguments);
-					Object[] argumentsWithServices = prependIUltimateServiceProviderIfNecessary(c, augmentedArgs);
+					Object[] argumentsWithServices = prependAutomataLibraryServicesIfNecessary(c, augmentedArgs);
 					if (allArgumentsHaveCorrectTypeForThisConstructor(c, argumentsWithServices)) {
 						try {
 							result = (IOperation<String, String>) c.newInstance(argumentsWithServices);
@@ -1482,23 +1483,23 @@ public class TestFileInterpreter implements IMessagePrinter {
 	}
 
 	/**
-	 * Prepend mServices to args if IUltimateServiceProvider is the first
+	 * Prepend mServices to args if AutomataLibraryServices is the first
 	 * parameter of the constructor. FIXME: This is only a workaround! In the
-	 * future IUltimateServiceProvider will be the first argument of each
+	 * future AutomataLibraryServices will be the first argument of each
 	 * IOperation and we will always prepend mServices
 	 */
-	private Object[] prependIUltimateServiceProviderIfNecessary(Constructor<?> c, Object[] args) {
-		boolean firstParameterIsIUltimateServiceProvider;
+	private Object[] prependAutomataLibraryServicesIfNecessary(Constructor<?> c, Object[] args) {
+		boolean firstParameterIsAutomataLibraryServices;
 		Class<?> fstParam = c.getParameterTypes()[0];
-		if (IUltimateServiceProvider.class.isAssignableFrom(fstParam)) {
-			firstParameterIsIUltimateServiceProvider = true;
+		if (AutomataLibraryServices.class.isAssignableFrom(fstParam)) {
+			firstParameterIsAutomataLibraryServices = true;
 		} else {
-			firstParameterIsIUltimateServiceProvider = false;
+			firstParameterIsAutomataLibraryServices = false;
 		}
 		Object[] result;
-		if (firstParameterIsIUltimateServiceProvider) {
+		if (firstParameterIsAutomataLibraryServices) {
 			List<Object> list = new ArrayList<>();
-			list.add(mServices);
+			list.add(new AutomataLibraryServices(mServices));
 			list.addAll(Arrays.asList(args));
 			result = list.toArray();
 		} else {
@@ -1547,7 +1548,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			firstParameterIsServicesAndSecondParameterIsStateFactory = false;
 		} else {
 			Class<?> sndParam = c.getParameterTypes()[1];
-			if (IUltimateServiceProvider.class.isAssignableFrom(fstParam)) {
+			if (AutomataLibraryServices.class.isAssignableFrom(fstParam)) {
 				if (StateFactory.class.isAssignableFrom(sndParam)) {
 					firstParameterIsServicesAndSecondParameterIsStateFactory = true;
 				} else {

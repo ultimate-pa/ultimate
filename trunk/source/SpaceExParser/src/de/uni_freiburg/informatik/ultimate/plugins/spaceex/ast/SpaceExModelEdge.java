@@ -28,7 +28,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.spaceex.ast;
 
 import de.uni_freiburg.informatik.ultimate.model.structure.ModifiableMultigraphEdge;
 
-public class SpaceExModelEdge extends ModifiableMultigraphEdge<SpaceExNode, SpaceExModelEdge> {
+public class SpaceExModelEdge
+		extends ModifiableMultigraphEdge<SpaceExNode, SpaceExModelEdge, SpaceExNode, SpaceExModelEdge> {
 
 	/**
 	 * Serialization ID.
@@ -40,6 +41,11 @@ public class SpaceExModelEdge extends ModifiableMultigraphEdge<SpaceExNode, Spac
 
 		setSource(source);
 		setTarget(target);
+	}
+
+	@Override
+	public SpaceExModelEdge getLabel() {
+		return this;
 	}
 
 }

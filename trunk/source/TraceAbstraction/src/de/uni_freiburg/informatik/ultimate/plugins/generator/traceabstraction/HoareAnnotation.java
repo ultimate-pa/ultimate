@@ -37,8 +37,11 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.model.IPayload;
+import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineSubtermNormalizer;
@@ -63,12 +66,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 public class HoareAnnotation extends SPredicate {
 
+	//DD: Matthias, do you really want to save only one annotation?
+	private static final String KEY = Activator.s_PLUGIN_ID;
+	private static final long serialVersionUID = 72852101509650437L;
+	
 	private final Logger mLogger;
 	private final IUltimateServiceProvider m_Services;
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 72852101509650437L;
 
 	// private final Script m_Script;
 	private final SmtManager m_SmtManager;
@@ -78,6 +81,7 @@ public class HoareAnnotation extends SPredicate {
 
 	private boolean m_FormulaHasBeenComputed = false;
 	private Term m_ClosedFormula;
+	
 
 	public HoareAnnotation(ProgramPoint programPoint, int serialNumber, SmtManager smtManager, IUltimateServiceProvider services) {
 		super(programPoint, serialNumber, new String[] { programPoint.getProcedure() }, smtManager.getScript().term(
@@ -198,6 +202,36 @@ public class HoareAnnotation extends SPredicate {
 			result.put(entry.getKey().toStringDirect(), entry.getValue().toStringDirect());
 		}
 		return result;
+	}
+	
+	public void annotate(IElement node) {
+		if (node instanceof ProgramPoint) {
+			annotate((ProgramPoint) node);
+		}
+	}
+
+	public void annotate(ProgramPoint node) {
+		node.getPayload().getAnnotations().put(KEY, this);
+	}
+
+	public static HoareAnnotation getAnnotation(IElement node) {
+		if (node instanceof ProgramPoint) {
+			return getAnnotation((ProgramPoint) node);
+		}
+		return null;
+	}
+
+	public static HoareAnnotation getAnnotation(ProgramPoint node) {
+		if (node.hasPayload()) {
+			final IPayload payload = node.getPayload();
+			if (payload.hasAnnotation()) {
+				final IAnnotations annot = payload.getAnnotations().get(KEY);
+				if (annot != null) {
+					return (HoareAnnotation) annot;
+				}
+			}
+		}
+		return null;
 	}
 
 }
