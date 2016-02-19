@@ -202,7 +202,21 @@ public class MemoryHandler {
 		m_TypeSizeAndOffsetComputer = typeSizeComputer;
     }
     
-    public class RequiredMemoryModelFeatures {
+    
+    
+    public RequiredMemoryModelFeatures getRequiredMemoryModelFeatures() {
+		return m_RequiredMemoryModelFeatures;
+	}
+
+
+
+	public MemoryModel getMemoryModel() {
+		return m_MemoryModel;
+	}
+
+
+
+	public class RequiredMemoryModelFeatures {
     	private final Set<PRIMITIVE> m_DataOnHeapRequired = new HashSet<>();
     	private boolean m_PointerOnHeapRequired;
     	
@@ -222,6 +236,9 @@ public class MemoryHandler {
 			return m_DataOnHeapRequired;
 		}
     	
+		public boolean isMemoryModelInfrastructureRequired() {
+			return isPointerOnHeapRequired() || !getDataOnHeapRequired().isEmpty();
+		}
     	
     }
     
@@ -1438,22 +1455,53 @@ public class MemoryHandler {
 		ArrayList<Overapprox> overappr = new ArrayList<Overapprox>();
         
         
-        ASTType heapType = getHeapTypeOfLRVal(main, loc, resultType);
-        
-        final String heapTypeName = getHeapTypeName(resultType);
+        final String readCallProcedureName;
+        {
+        	
+        	final CType ut;
+        	if (resultType instanceof CNamed) {
+        		ut = ((CNamed) resultType).getUnderlyingType();
+        	} else {
+        		ut = resultType;
+        	}
+        	
+        	if (ut instanceof CPrimitive) {
+    			CPrimitive cp = (CPrimitive) ut;
+    			m_RequiredMemoryModelFeatures.reportDataOnHeapRequired(cp.getType());
+    			readCallProcedureName = m_MemoryModel.getReadProcedureName(cp.getType());
+    		} else if (ut instanceof CPointer) {
+    			m_RequiredMemoryModelFeatures.reportPointerOnHeapRequired();
+    			readCallProcedureName = m_MemoryModel.getReadPointerProcedureName();
+    		} else if (ut instanceof CNamed) {
+    			throw new AssertionError("we took underlying type");
+    		} else if (ut instanceof CArray) {
+    			// we assume it is an Array on Heap
+//    			assert main.cHandler.isHeapVar(((IdentifierExpression) lrVal.getValue()).getIdentifier());
+    			//but it may not only be on heap, because it is addressoffed, but also because it is inside
+    			// a struct that is addressoffed..
+    			m_RequiredMemoryModelFeatures.reportPointerOnHeapRequired();
+    			readCallProcedureName = m_MemoryModel.getReadPointerProcedureName();
+    		} else if (ut instanceof CEnum) {
+    			//enum is treated like an int
+    			m_RequiredMemoryModelFeatures.reportDataOnHeapRequired(PRIMITIVE.INT);
+    			readCallProcedureName = m_MemoryModel.getReadProcedureName(PRIMITIVE.INT);
+    		} else {
+    			throw new UnsupportedOperationException("unsupported type " + ut);
+    		}
+        }
         
         String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD, m_ExpressionTranslation.getCTypeOfIntArray());
         final ASTType tmpAstType;
         if (bitvectorConversionNeeded) {
         	tmpAstType = main.typeHandler.ctype2asttype(loc, m_ExpressionTranslation.getCTypeOfIntArray());
         } else {
-        	tmpAstType = heapType;
+        	tmpAstType = main.typeHandler.ctype2asttype(loc, resultType);
         }
         VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, tmpAstType, loc);
         auxVars.put(tVarDecl, loc);
         decl.add(tVarDecl);
         VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, tmpId) };
-        CallStatement call = new CallStatement(loc, false, lhs, "read~" + heapTypeName,//heapType.toString(),
+        CallStatement call = new CallStatement(loc, false, lhs, readCallProcedureName,//heapType.toString(),
                 new Expression[] { address, this.calculateSizeOf(loc, resultType) });
         for (Overapprox overapprItem : overappr) {
             call.getPayload().getAnnotations().put(Overapprox.getIdentifier(),
@@ -1469,7 +1517,7 @@ public class MemoryHandler {
 	        		decl, auxVars, overappr);
 			m_ExpressionTranslation.convertIntToInt(loc, result, (CPrimitive) resultType.getUnderlyingType());
 	        String bvtmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD, resultType);
-	        VariableDeclaration bvtVarDecl = SFO.getTempVarVariableDeclaration(bvtmpId, heapType, loc);
+	        VariableDeclaration bvtVarDecl = SFO.getTempVarVariableDeclaration(bvtmpId, tmpAstType, loc);
 	        auxVars.put(bvtVarDecl, loc);
 	        decl.add(bvtVarDecl);
 	        VariableLHS[] bvlhs = new VariableLHS[] { new VariableLHS(loc, bvtmpId) };
@@ -1506,37 +1554,7 @@ public class MemoryHandler {
     	}
     }
     
-    ASTType getHeapTypeOfLRVal(Dispatcher main, ILocation loc, CType ct) {
-    	
-    	CType ut = ct;
-    	if (ut instanceof CNamed)
-    		ut = ((CNamed) ut).getUnderlyingType();
-    	
-    	if (ut instanceof CPrimitive) {
-			CPrimitive cp = (CPrimitive) ut;
-			m_RequiredMemoryModelFeatures.reportDataOnHeapRequired(cp.getType());
-			return main.typeHandler.ctype2asttype(loc, ct);
-		} else if (ut instanceof CPointer) {
-			m_RequiredMemoryModelFeatures.reportPointerOnHeapRequired();
-			return main.typeHandler.constructPointerType(loc);
-		} else if (ut instanceof CNamed) {
-			assert false : "This should not be the case as we took the underlying type.";
-			throw new UnsupportedSyntaxException(null, "non-heap type?: " + ct);
-		} else if (ut instanceof CArray) {
-			// we assume it is an Array on Heap
-//			assert main.cHandler.isHeapVar(((IdentifierExpression) lrVal.getValue()).getIdentifier());
-			//but it may not only be on heap, because it is addressoffed, but also because it is inside
-			// a struct that is addressoffed..
-			m_RequiredMemoryModelFeatures.reportPointerOnHeapRequired();
-			return main.typeHandler.constructPointerType(loc);
-		} else if (ut instanceof CEnum) {
-			//enum is treated like an int
-			m_RequiredMemoryModelFeatures.reportDataOnHeapRequired(PRIMITIVE.INT);
-			return main.typeHandler.ctype2asttype(loc, new CPrimitive(PRIMITIVE.INT));
-		} else {
-			throw new UnsupportedSyntaxException(null, "non-heap type?: " + ct);
-		}
-    }
+
 
     /**
      * Generates a procedure call to writeT(val, ptr), writing val to the
