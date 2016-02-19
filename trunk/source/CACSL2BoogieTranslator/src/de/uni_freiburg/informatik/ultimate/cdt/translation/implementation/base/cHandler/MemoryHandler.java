@@ -1593,40 +1593,36 @@ public class MemoryHandler {
 		
         ArrayList<Statement> stmt = new ArrayList<Statement>();
         
+        
         if (valueType instanceof CNamed)
         	valueType = ((CNamed) valueType).getUnderlyingType();
         
         if (valueType instanceof CPrimitive) {
-        	m_RequiredMemoryModelFeatures.reportDataOnHeapRequired(((CPrimitive) valueType).getType());
-        	switch (((CPrimitive) valueType).getGeneralType()) {
-        	case INTTYPE:
-        		m_FunctionHandler.getModifiedGlobals().
-        			get(m_FunctionHandler.getCurrentProcedureID()).add(SFO.MEMORY_INT);
-        		stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.INT,
-        				new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(loc, hlv.getCType())}));
-        		break;
-        	case FLOATTYPE:
-        		m_FunctionHandler.getModifiedGlobals().
-        			get(m_FunctionHandler.getCurrentProcedureID()).add(SFO.MEMORY_REAL);
-        		stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.REAL,
-        				new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(loc, hlv.getCType()) }));
-        		break;	
-        	default:
-        		throw new UnsupportedSyntaxException(loc, "we don't recognize this type");
-        	}
+        	CPrimitive cp = (CPrimitive) valueType;
+        	m_RequiredMemoryModelFeatures.reportDataOnHeapRequired(cp.getType());
+        	String writeCallProcedureName = m_MemoryModel.getWriteProcedureName(cp.getType());
+        	HeapDataArray dhp = m_MemoryModel.getDataHeapArray(cp.getType());
+    		m_FunctionHandler.getModifiedGlobals().
+			get(m_FunctionHandler.getCurrentProcedureID()).add(dhp.getVariableName());
+    		stmt.add(new CallStatement(loc, false, new VariableLHS[0], writeCallProcedureName,
+    				new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(loc, hlv.getCType())}));
         } else if (valueType instanceof CEnum) {
         	//treat like INT
         	m_RequiredMemoryModelFeatures.reportDataOnHeapRequired(PRIMITIVE.INT);
-        	m_FunctionHandler.getModifiedGlobals().
-        	get(m_FunctionHandler.getCurrentProcedureID()).add(SFO.MEMORY_INT);
-        	stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.INT,
-        			new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(loc, hlv.getCType())}));
+        	String writeCallProcedureName = m_MemoryModel.getWriteProcedureName(PRIMITIVE.INT);
+        	HeapDataArray dhp = m_MemoryModel.getDataHeapArray(PRIMITIVE.INT);
+    		m_FunctionHandler.getModifiedGlobals().
+			get(m_FunctionHandler.getCurrentProcedureID()).add(dhp.getVariableName());
+    		stmt.add(new CallStatement(loc, false, new VariableLHS[0], writeCallProcedureName,
+    				new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(loc, hlv.getCType())}));
         } else if (valueType instanceof CPointer) {
         	m_RequiredMemoryModelFeatures.reportPointerOnHeapRequired();
-        	m_FunctionHandler.getModifiedGlobals().
-        			get(m_FunctionHandler.getCurrentProcedureID()).add(SFO.MEMORY_POINTER);
-        	stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.POINTER,
-        			new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(loc, hlv.getCType()) }));
+        	String writeCallProcedureName = m_MemoryModel.getWritePointerProcedureName();
+        	HeapDataArray dhp = m_MemoryModel.getPointerHeapArray();
+    		m_FunctionHandler.getModifiedGlobals().
+			get(m_FunctionHandler.getCurrentProcedureID()).add(dhp.getVariableName());
+    		stmt.add(new CallStatement(loc, false, new VariableLHS[0], writeCallProcedureName,
+    				new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(loc, hlv.getCType())}));
         } else if (valueType instanceof CStruct) {
         	CStruct rStructType = (CStruct) valueType;
         	for (String fieldId : rStructType.getFieldIds()) {
@@ -1656,8 +1652,6 @@ public class MemoryHandler {
         	}
         	
         } else if (valueType instanceof CArray) {
-        	m_FunctionHandler.getModifiedGlobals().
-        			get(m_FunctionHandler.getCurrentProcedureID()).add(SFO.MEMORY_POINTER);
         	
         	CArray arrayType = (CArray) valueType;
         	Expression arrayStartAddress = hlv.getAddress();
