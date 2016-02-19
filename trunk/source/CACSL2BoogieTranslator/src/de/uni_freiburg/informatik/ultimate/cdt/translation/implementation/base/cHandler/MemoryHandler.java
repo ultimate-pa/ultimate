@@ -176,6 +176,7 @@ public class MemoryHandler {
 	
 	private final TypeSizeAndOffsetComputer m_TypeSizeAndOffsetComputer;
 	private final RequiredMemoryModelFeatures m_RequiredMemoryModelFeatures;
+	private final MemoryModel m_MemoryModel;
 	
 	
 	/**
@@ -185,11 +186,12 @@ public class MemoryHandler {
 	 * @param typeSizeComputer 
      */
     public MemoryHandler(ITypeHandler typeHandler, FunctionHandler functionHandler, boolean checkPointerValidity, 
-    		TypeSizeAndOffsetComputer typeSizeComputer, AExpressionTranslation expressionTranslation) {
+    		TypeSizeAndOffsetComputer typeSizeComputer, TypeSizes typeSizes, AExpressionTranslation expressionTranslation) {
     	m_TypeHandler = typeHandler;
     	m_FunctionHandler = functionHandler;
     	m_ExpressionTranslation = expressionTranslation;
     	m_RequiredMemoryModelFeatures = new RequiredMemoryModelFeatures();
+    	m_MemoryModel = new MemoryModel(0, typeSizes, typeHandler, expressionTranslation);
 		this.variablesToBeMalloced = new LinkedScopedHashMap<LocalLValueILocationPair, Integer>();
 		this.variablesToBeFreed = new LinkedScopedHashMap<LocalLValueILocationPair, Integer>();
 		//read preferences from settings
@@ -240,31 +242,7 @@ public class MemoryHandler {
     	return m_TypeSizeAndOffsetComputer.constructBytesizeExpression(loc, cType);
 	}
     
-    private class HeapDataArray {
-    	private final String m_Name;
-    	private final ASTType m_ASTType;
-    	private final int m_Size;
-		public HeapDataArray(String name, ASTType aSTType, int size) {
-			super();
-			m_Name = name;
-			m_ASTType = aSTType;
-			m_Size = size;
-		}
-		public String getName() {
-			return m_Name;
-		}
-		public ASTType getASTType() {
-			return m_ASTType;
-		}
-		public String getVariableName() {
-			return SFO.MEMORY + "_" + getName();
-		}
-		public int getSize() {
-			return m_Size;
-		}
-    	
-    	
-    }
+
 
     /**
      * Declare all variables required for the memory model.
@@ -300,16 +278,16 @@ public class MemoryHandler {
         //declare the arrays that will model the heap
         
         // add memory arrays and access procedures
-        ArrayList<HeapDataArray> heapDataArrays = new ArrayList<>();
-        if (isIntArrayRequiredInMM) {
-        	heapDataArrays.add(new HeapDataArray(SFO.INT, intArrayType, 0));
-        }
-        if (isFloatArrayRequiredInMM) {
-        	heapDataArrays.add(new HeapDataArray(SFO.REAL, realArrayType, 0));
-        }
-        if (isPointerArrayRequiredInMM) {
-        	heapDataArrays.add(new HeapDataArray(SFO.POINTER, main.typeHandler.constructPointerType(tuLoc), 0));
-        }
+        ArrayList<HeapDataArray> heapDataArrays = m_MemoryModel.getDataHeapArrays(m_RequiredMemoryModelFeatures);
+//        if (isIntArrayRequiredInMM) {
+//        	heapDataArrays.add(new HeapDataArray(SFO.INT, intArrayType, 0));
+//        }
+//        if (isFloatArrayRequiredInMM) {
+//        	heapDataArrays.add(new HeapDataArray(SFO.REAL, realArrayType, 0));
+//        }
+//        if (isPointerArrayRequiredInMM) {
+//        	heapDataArrays.add(new HeapDataArray(SFO.POINTER, main.typeHandler.constructPointerType(tuLoc), 0));
+//        }
         
         decl.addAll(declareSomeMemoryArrays(tuLoc, heapDataArrays));
        
