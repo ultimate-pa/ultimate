@@ -281,9 +281,7 @@ public class PostProcessor {
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		ArrayList<VariableDeclaration> initDecl = new ArrayList<VariableDeclaration>();
 		if (main.isMMRequired()) {
-			if (memoryHandler.isFloatArrayRequiredInMM ||
-					memoryHandler.isIntArrayRequiredInMM ||
-					memoryHandler.isPointerArrayRequiredInMM) {
+			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()) {
 				Expression zero = m_ExpressionTranslation.constructLiteralForIntegerType(
 						translationUnitLoc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
 				LeftHandSide[] lhs = new LeftHandSide[] { new ArrayLHS(translationUnitLoc,

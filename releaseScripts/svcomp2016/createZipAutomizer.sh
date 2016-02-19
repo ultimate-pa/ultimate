@@ -21,7 +21,7 @@ if [ "$1" == "linux" ]; then
 	ARCHPATH="products/CLI-E4/linux/gtk/x86_64"
 	Z3PATH="z3"
 elif [ "$1" == "win32" ]; then
-	echo "Building .zip for linux..."
+	echo "Building .zip for win32..."
 	ARCH="win32"
 	ARCHPATH="products/CLI-E4/win32/win32/x86_64"
 	Z3PATH="z3.exe"

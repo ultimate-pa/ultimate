@@ -595,14 +595,12 @@ public class FunctionHandler {
 				// add missing heap arrays
 				if (modifySet.contains(SFO.MEMORY_INT) || modifySet.contains(SFO.MEMORY_REAL)
 						|| modifySet.contains(SFO.MEMORY_POINTER)) {
-					if (memoryHandler.isIntArrayRequiredInMM) {
-						modifySet.add(SFO.MEMORY_INT);
+					
+					if (memoryHandler.getRequiredMemoryModelFeatures().isPointerOnHeapRequired()) {
+						modifySet.add(memoryHandler.getMemoryModel().getPointerHeapArray().getVariableName());
 					}
-					if (memoryHandler.isFloatArrayRequiredInMM) {
-						modifySet.add(SFO.MEMORY_REAL);
-					}
-					if (memoryHandler.isPointerArrayRequiredInMM) {
-						modifySet.add(SFO.MEMORY_POINTER);
+					for (HeapDataArray hda : memoryHandler.getMemoryModel().getDataHeapArrays(memoryHandler.getRequiredMemoryModelFeatures())) {
+						modifySet.add(hda.getVariableName());
 					}
 				}
 
