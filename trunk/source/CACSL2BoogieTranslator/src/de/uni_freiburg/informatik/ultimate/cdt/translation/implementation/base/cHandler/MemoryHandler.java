@@ -33,9 +33,6 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -49,7 +46,6 @@ import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.BitvectorTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -90,7 +86,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.EnsuresSpecification
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LoopInvariantSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ModifiesSpecification;
@@ -259,51 +254,17 @@ public class MemoryHandler {
         if (!main.isMMRequired()) {
             return decl;
         }
-        ASTType pointerComponentType = main.typeHandler.ctype2asttype(tuLoc, 
-        		m_ExpressionTranslation.getCTypeOfPointerComponents());
-        ASTType intArrayType = main.typeHandler.ctype2asttype(tuLoc, 
-        		m_ExpressionTranslation.getCTypeOfIntArray());
-        ASTType realArrayType = main.typeHandler.ctype2asttype(tuLoc, 
-        		m_ExpressionTranslation.getCTypeOfFloatingArray());
        
 
-        // NULL Pointer
-        decl.add(new VariableDeclaration(tuLoc, new Attribute[0],
-                new VarList[] { new VarList(tuLoc, new String[] { SFO.NULL },
-                        main.typeHandler.constructPointerType(tuLoc)) }));
-        // to add a type declaration for "real"
-        // decl.add(new TypeDeclaration(tuLoc, new Attribute[0], false,
-        // SFO.REAL, new String[0]));
-        
-        //declare the arrays that will model the heap
+        decl.add(constructNullPointerConstant());
+        decl.add(constructValidArrayDeclaration());
+        decl.add(constuctLengthArrayDeclaration());
         
         // add memory arrays and access procedures
         ArrayList<HeapDataArray> heapDataArrays = m_MemoryModel.getDataHeapArrays(m_RequiredMemoryModelFeatures);
-//        if (isIntArrayRequiredInMM) {
-//        	heapDataArrays.add(new HeapDataArray(SFO.INT, intArrayType, 0));
-//        }
-//        if (isFloatArrayRequiredInMM) {
-//        	heapDataArrays.add(new HeapDataArray(SFO.REAL, realArrayType, 0));
-//        }
-//        if (isPointerArrayRequiredInMM) {
-//        	heapDataArrays.add(new HeapDataArray(SFO.POINTER, main.typeHandler.constructPointerType(tuLoc), 0));
-//        }
         
         decl.addAll(declareSomeMemoryArrays(tuLoc, heapDataArrays));
-       
-        // var #valid : [int]bool;
-        ASTType validType = new ArrayType(tuLoc, new String[0],
-                new ASTType[] { pointerComponentType }, new PrimitiveType(tuLoc, "bool"));
-        VarList vlV = new VarList(tuLoc, new String[] { SFO.VALID }, validType);
-        decl.add(new VariableDeclaration(tuLoc, new Attribute[0],
-                new VarList[] { vlV }));
-        // var #length : [int]int;
-        ASTType lengthType = new ArrayType(tuLoc, new String[0],
-                new ASTType[] { pointerComponentType }, pointerComponentType);
-        VarList vlL = new VarList(tuLoc, new String[] { SFO.LENGTH },
-                lengthType);
-        decl.add(new VariableDeclaration(tuLoc, new Attribute[0],
-                new VarList[] { vlL }));
+
         decl.addAll(declareFree(main, tuLoc));
         decl.addAll(declareDeallocation(main, tuLoc));
         decl.addAll(declareMalloc(main.typeHandler, tuLoc));
@@ -317,6 +278,40 @@ public class MemoryHandler {
 
         return decl;
     }
+
+	private VariableDeclaration constuctLengthArrayDeclaration() {
+		// var #length : [int]int;
+		ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+        ASTType pointerComponentType = m_TypeHandler.ctype2asttype(ignoreLoc, 
+        		m_ExpressionTranslation.getCTypeOfPointerComponents());
+        ASTType lengthType = new ArrayType(ignoreLoc, new String[0],
+                new ASTType[] { pointerComponentType }, pointerComponentType);
+        VarList vlL = new VarList(ignoreLoc, new String[] { SFO.LENGTH },
+                lengthType);
+        return new VariableDeclaration(ignoreLoc, new Attribute[0],
+                new VarList[] { vlL });
+	}
+
+	private VariableDeclaration constructValidArrayDeclaration() {
+        // var #valid : [int]bool;
+		ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+        ASTType pointerComponentType = m_TypeHandler.ctype2asttype(ignoreLoc, 
+        		m_ExpressionTranslation.getCTypeOfPointerComponents());
+        ASTType validType = new ArrayType(ignoreLoc, new String[0],
+                new ASTType[] { pointerComponentType }, new PrimitiveType(ignoreLoc, "bool"));
+        VarList vlV = new VarList(ignoreLoc, new String[] { SFO.VALID }, validType);
+        return new VariableDeclaration(ignoreLoc, new Attribute[0],
+                new VarList[] { vlV });
+	}
+
+	private VariableDeclaration constructNullPointerConstant() {
+		// NULL Pointer
+		ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+        VariableDeclaration result = new VariableDeclaration(ignoreLoc, new Attribute[0],
+                new VarList[] { new VarList(ignoreLoc, new String[] { SFO.NULL },
+                		m_TypeHandler.constructPointerType(ignoreLoc)) });
+		return result;
+	}
 
     /**
      * Adds our implementation of the memcpy procedure to the boogie code.
