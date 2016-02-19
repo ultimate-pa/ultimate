@@ -137,10 +137,6 @@ public class MemoryHandler {
 	private final boolean m_CheckFreeValid;
 	private final boolean m_CheckMallocNonNegative;
 	
-	public boolean isIntArrayRequiredInMM;
-	public boolean isFloatArrayRequiredInMM;
-	public boolean isPointerArrayRequiredInMM;
-	
 	//needed for adding modifies clauses
 	private final FunctionHandler m_FunctionHandler;
 	private final ITypeHandler m_TypeHandler;
@@ -203,9 +199,6 @@ public class MemoryHandler {
     	m_checkPointerSubtractionAndComparisonValidity = 
 				ups.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY, POINTER_CHECKMODE.class);
 		
-		isIntArrayRequiredInMM = false;
-		isFloatArrayRequiredInMM = false;
-		isPointerArrayRequiredInMM = false;
 		m_TypeSizeAndOffsetComputer = typeSizeComputer;
     }
     
@@ -583,7 +576,6 @@ public class MemoryHandler {
     	//if (namesOfAllMemoryArrayTypes.contains(SFO.INT)) {
     	if (true) {
     		//   write~int(valueToBeWritten, { startPointer!Base, startPointer!Offset + (ctr * sizeOfFields) });
-    		isIntArrayRequiredInMM = true;
 
     		m_FunctionHandler.getModifiedGlobals().get(SFO.MEMSET).add(SFO.MEMORY_INT);
 
@@ -593,7 +585,6 @@ public class MemoryHandler {
     	if (true) {
 //    	if (namesOfAllMemoryArrayTypes.contains(SFO.POINTER)) {
     		//   write~Pointer(valueToBeWritten, { startPointer!Base, startPointer!Offset + (ctr * sizeOfFields) });
-    		isPointerArrayRequiredInMM = true;
 
 //    		if (m_functionHandler.getModifiedGlobals().get(SFO.MEMSET) == null)
 //    			m_functionHandler.getModifiedGlobals().put(SFO.MEMSET, new LinkedHashSet<>());
@@ -1524,20 +1515,9 @@ public class MemoryHandler {
     	if (ut instanceof CPrimitive) {
 			CPrimitive cp = (CPrimitive) ut;
 			m_RequiredMemoryModelFeatures.reportDataOnHeapRequired(cp.getType());
-			switch (cp.getGeneralType()) {
-			case INTTYPE:
-				isIntArrayRequiredInMM = true;
-				break;
-			case FLOATTYPE:
-				isFloatArrayRequiredInMM = true;
-				break;
-			default:
-				throw new UnsupportedSyntaxException(null, "unsupported cType " + ct);
-			}
 			return main.typeHandler.ctype2asttype(loc, ct);
 		} else if (ut instanceof CPointer) {
 			m_RequiredMemoryModelFeatures.reportPointerOnHeapRequired();
-			isPointerArrayRequiredInMM = true;
 			return main.typeHandler.constructPointerType(loc);
 		} else if (ut instanceof CNamed) {
 			assert false : "This should not be the case as we took the underlying type.";
@@ -1547,12 +1527,11 @@ public class MemoryHandler {
 //			assert main.cHandler.isHeapVar(((IdentifierExpression) lrVal.getValue()).getIdentifier());
 			//but it may not only be on heap, because it is addressoffed, but also because it is inside
 			// a struct that is addressoffed..
-			isPointerArrayRequiredInMM = true;
+			m_RequiredMemoryModelFeatures.reportPointerOnHeapRequired();
 			return main.typeHandler.constructPointerType(loc);
 		} else if (ut instanceof CEnum) {
 			//enum is treated like an int
 			m_RequiredMemoryModelFeatures.reportDataOnHeapRequired(PRIMITIVE.INT);
-			isIntArrayRequiredInMM = true;
 			return main.typeHandler.ctype2asttype(loc, new CPrimitive(PRIMITIVE.INT));
 		} else {
 			throw new UnsupportedSyntaxException(null, "non-heap type?: " + ct);
@@ -1603,14 +1582,12 @@ public class MemoryHandler {
         	m_RequiredMemoryModelFeatures.reportDataOnHeapRequired(((CPrimitive) valueType).getType());
         	switch (((CPrimitive) valueType).getGeneralType()) {
         	case INTTYPE:
-        		isIntArrayRequiredInMM = true;
         		m_FunctionHandler.getModifiedGlobals().
         			get(m_FunctionHandler.getCurrentProcedureID()).add(SFO.MEMORY_INT);
         		stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.INT,
         				new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(loc, hlv.getCType())}));
         		break;
         	case FLOATTYPE:
-        		isFloatArrayRequiredInMM = true;
         		m_FunctionHandler.getModifiedGlobals().
         			get(m_FunctionHandler.getCurrentProcedureID()).add(SFO.MEMORY_REAL);
         		stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.REAL,
@@ -1622,14 +1599,12 @@ public class MemoryHandler {
         } else if (valueType instanceof CEnum) {
         	//treat like INT
         	m_RequiredMemoryModelFeatures.reportDataOnHeapRequired(PRIMITIVE.INT);
-        	isIntArrayRequiredInMM = true;
         	m_FunctionHandler.getModifiedGlobals().
         	get(m_FunctionHandler.getCurrentProcedureID()).add(SFO.MEMORY_INT);
         	stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.INT,
         			new Expression[] { value, hlv.getAddress(), this.calculateSizeOf(loc, hlv.getCType())}));
         } else if (valueType instanceof CPointer) {
         	m_RequiredMemoryModelFeatures.reportPointerOnHeapRequired();
-        	isPointerArrayRequiredInMM = true;
         	m_FunctionHandler.getModifiedGlobals().
         			get(m_FunctionHandler.getCurrentProcedureID()).add(SFO.MEMORY_POINTER);
         	stmt.add(new CallStatement(loc, false, new VariableLHS[0], "write~" + SFO.POINTER,
@@ -1663,7 +1638,6 @@ public class MemoryHandler {
         	}
         	
         } else if (valueType instanceof CArray) {
-        	isPointerArrayRequiredInMM = true;
         	m_FunctionHandler.getModifiedGlobals().
         			get(m_FunctionHandler.getCurrentProcedureID()).add(SFO.MEMORY_POINTER);
         	
