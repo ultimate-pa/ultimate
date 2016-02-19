@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimatetest.logs.IncrementalLogWithVMParamete
 import de.uni_freiburg.informatik.ultimatetest.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition;
+import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimatetest.summaries.CsvSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.HTMLSummary;
@@ -60,7 +61,6 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.LatexDetailedSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.LatexOverviewSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.SVCOMPTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.TraceAbstractionTestSummary;
-import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
@@ -98,17 +98,18 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 
 			mTestCases = new ArrayList<>();
 
-			for (TestDefinition def : testDefs) {
-				List<UltimateTestCase> current = new ArrayList<>();
-				String setFilename = def.getSetName() + ".set";
-				for (File set : setFiles) {
+			for (final TestDefinition def : testDefs) {
+				final List<UltimateTestCase> current = new ArrayList<>();
+				final String setFilename = def.getSetName() + ".set";
+				for (final File set : setFiles) {
 					if (setFilename.equals(set.getName())) {
 						addTestCases(def, set, allInputFiles, current, svcompRootDir);
 					}
 				}
 				mTestCases.addAll(current);
 			}
-
+			
+			mTestCases.sort(null);
 			mIncrementalLog.setCountTotal(mTestCases.size());
 		}
 		return mTestCases;
