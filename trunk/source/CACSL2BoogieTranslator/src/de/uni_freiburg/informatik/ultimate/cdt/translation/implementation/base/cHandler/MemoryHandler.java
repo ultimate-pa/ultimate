@@ -804,11 +804,11 @@ public class MemoryHandler {
 		String writtenTypeSize = "#sizeOfWrittenType";
 		String nwrite = "write~" + heapDataArray.getName();
 
-		ASTType intType = m_TypeHandler.ctype2asttype(loc, m_ExpressionTranslation.getCTypeOfIntArray());
+		ASTType sizetType = m_TypeHandler.ctype2asttype(loc, m_TypeSizeAndOffsetComputer.getSize_T());
 		VarList[] inWrite = new VarList[] {
 				new VarList(loc, new String[] { value }, heapDataArray.getASTType()),
 				new VarList(loc, new String[] { inPtr }, m_TypeHandler.constructPointerType(loc)),
-				new VarList(loc, new String[] { writtenTypeSize }, intType) };
+				new VarList(loc, new String[] { writtenTypeSize }, sizetType) };
          
       
 		// specification for memory writes
@@ -841,10 +841,10 @@ public class MemoryHandler {
 		final String ptrId = "#ptr";
 		final String nread = "read~" + hda.getName();
 		final String readTypeSize = "#sizeOfReadType";
-		ASTType intType = m_TypeHandler.ctype2asttype(loc, m_ExpressionTranslation.getCTypeOfIntArray());
+		ASTType sizetType = m_TypeHandler.ctype2asttype(loc, m_TypeSizeAndOffsetComputer.getSize_T());
 		VarList[] inRead = new VarList[] { 
 				new VarList(loc, new String[] { ptrId }, m_TypeHandler.constructPointerType(loc)),
-				new VarList(loc, new String[] { readTypeSize }, intType) };
+				new VarList(loc, new String[] { readTypeSize }, sizetType) };
 		VarList[] outRead = new VarList[] { new VarList(loc,
 		        new String[] { value }, hda.getASTType()) };
 		
@@ -1490,10 +1490,10 @@ public class MemoryHandler {
     		}
         }
         
-        String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD, m_ExpressionTranslation.getCTypeOfIntArray());
+        String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD, resultType);
         final ASTType tmpAstType;
         if (bitvectorConversionNeeded) {
-        	tmpAstType = main.typeHandler.ctype2asttype(loc, m_ExpressionTranslation.getCTypeOfIntArray());
+        	tmpAstType = main.typeHandler.ctype2asttype(loc, resultType);
         } else {
         	tmpAstType = main.typeHandler.ctype2asttype(loc, resultType);
         }
@@ -1513,7 +1513,7 @@ public class MemoryHandler {
 		ExpressionResult result; 
 		if (bitvectorConversionNeeded) {
 			result = new ExpressionResult(stmt, 
-	        		new RValue(new IdentifierExpression(loc, tmpId), m_ExpressionTranslation.getCTypeOfIntArray()),
+	        		new RValue(new IdentifierExpression(loc, tmpId), resultType),
 	        		decl, auxVars, overappr);
 			m_ExpressionTranslation.convertIntToInt(loc, result, (CPrimitive) resultType.getUnderlyingType());
 	        String bvtmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMREAD, resultType);

@@ -401,24 +401,6 @@ public abstract class AExpressionTranslation {
 	
 
 	/**
-	 * In our Lindenmann-Hoenicke memory model, we use an array for all
-	 * integer data on the heap. This method returns the CType that we use to
-	 * represents this data.
-	 */
-	public CPrimitive getCTypeOfIntArray() {
-		return new CPrimitive(PRIMITIVE.INT);
-	}
-
-	/**
-	 * In our Lindenmann-Hoenicke memory model, we use an array for all
-	 * floating type data on the heap. This method returns the CType that we 
-	 * use to represent this data.
-	 */
-	public CPrimitive getCTypeOfFloatingArray() {
-		return new CPrimitive(PRIMITIVE.FLOAT);
-	}
-	
-	/**
 	 * In our Lindenmann-Hoenicke memory model, a pointer is a struct of two
 	 * integer data types. This method returns the CType of the structs
 	 * components.
