@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler.RequiredMemoryModelFeatures;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -45,23 +46,37 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
  */
 public class MemoryModel {
 	
-	private final static String s_ReadProcedurePrefix = "read~";
-	private final static String s_WriteProcedurePrefix = "write~";
+	protected final static String s_ReadProcedurePrefix = "read~";
+	protected final static String s_WriteProcedurePrefix = "write~";
 	private final int m_MemoryModelResolution;
 	
+	protected final TypeSizes m_TypeSizes;
+	
 	private final HeapDataArray m_IntegerArray;
-	private final TypeSizes m_TypeSizes;
 	private final HeapDataArray m_FloatingArray;
 	private final HeapDataArray m_PointerArray;
 	
 	public MemoryModel(int memoryModelResolution, TypeSizes typeSizes, ITypeHandler typeHandler, AExpressionTranslation expressionTranslation) {
 		m_MemoryModelResolution = memoryModelResolution;
 		m_TypeSizes = typeSizes;
+		
+
 		ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+		/*
+		 * In our Lindenmann-Hoenicke memory model, we use an array for all
+		 * integer data on the heap. This method returns the CType that we use to
+		 * represents this data.
+		 */
         ASTType intArrayType = typeHandler.ctype2asttype(ignoreLoc, 
-        		expressionTranslation.getCTypeOfIntArray());
+        		new CPrimitive(PRIMITIVE.INT));
+        
+    	/*
+    	 * In our Lindenmann-Hoenicke memory model, we use an array for all
+    	 * floating type data on the heap. This method returns the CType that we 
+    	 * use to represent this data.
+    	 */
         ASTType realArrayType = typeHandler.ctype2asttype(ignoreLoc, 
-        		expressionTranslation.getCTypeOfFloatingArray());
+        		new CPrimitive(PRIMITIVE.FLOAT));
         
        	m_IntegerArray = new HeapDataArray(SFO.INT, intArrayType, 0);
        	m_FloatingArray = new HeapDataArray(SFO.REAL, realArrayType, 0);
