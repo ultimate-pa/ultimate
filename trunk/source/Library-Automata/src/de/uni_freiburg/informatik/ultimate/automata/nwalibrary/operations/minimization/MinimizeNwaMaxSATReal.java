@@ -30,14 +30,16 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
 /**
- * Minimize an NWA by converting a sufficient set of logical conditions
- * for state equivalency to Horn clauses and solve them as a (MAX)SAT problem.
+ * Minimize an NWA by by converting the "merge relation" (as defined in my
+ * thesis) constraints to (Horn) clauses, and then solve them as a MAX-SAT
+ * problem.
  *
  * This is currently not practical since state equivalency needs to be
  * transitive and we need numStates^3 clauses for transitivity.
@@ -48,105 +50,54 @@ public class MinimizeNwaMaxSATReal {
 
 	/**
 	 * @param inNWA input NWA. The NWA is mutated (transitions sorted).
-	 *        Give me a copy instead if mutation isn't possible for you.
+	 *        Give a (shallow) copy if mutation isn't possible for you.
 	 * @param precalculated history states for <code>inNWA</code>.
 	 *        For each state, a sorted list of its history states.
 	 *
 	 * @return A (consistent) NiceClasses which represents
 	 *         the minimized automaton.
 	 */
-	public static NiceClasses minimize(NiceNWA inNWA, NiceHist[] history) {
+	public static NiceClasses minimize(NiceNWA inNWA, ArrayList<NiceHist> history) {
 		assert NiceHist.checkHistoryStatesConsistency(inNWA, history);
-		// this assertion is needed for "rule 3". probably makes sense to add
-		// to the consistency checking for history sets
+		// "assert" that there are no transitions which are never taken
 		{
 			HashSet<NiceHist> hs = new HashSet<NiceHist>();
 			for (NiceHist h : history)
 				hs.add(h);
-			for (NiceRTrans x : inNWA.rTrans)
+			for (NiceRTrans x : inNWA.rTrans) {
+				if (!hs.contains(new NiceHist(x.src, x.top)))
+					System.err.printf("missing %d %d\n",  x.src, x.top);
 				assert hs.contains(new NiceHist(x.src, x.top));
+			}
 		}
 
 		// some "imports"
 		int numStates = inNWA.numStates;
-		@SuppressWarnings("unused") int numISyms = inNWA.numISyms;
-		@SuppressWarnings("unused") int numCSyms = inNWA.numCSyms;
-		int numRSyms = inNWA.numRSyms;
+		//@SuppressWarnings("unused") int numISyms = inNWA.numISyms;
+		//@SuppressWarnings("unused") int numCSyms = inNWA.numCSyms;
+		//@SuppressWarnings("unused") int numRSyms = inNWA.numRSyms;
+		//@SuppressWarnings("unused") boolean[] isInitial = inNWA.isInitial;
+		boolean[] isFinal = inNWA.isFinal;
 		int numITrans = inNWA.iTrans.length;
 		int numCTrans = inNWA.cTrans.length;
 		int numRTrans = inNWA.rTrans.length;
-		@SuppressWarnings("unused") boolean[] isInitial = inNWA.isInitial;
-		boolean[] isFinal = inNWA.isFinal;
 		NiceITrans[] iTrans = inNWA.iTrans;
 		NiceCTrans[] cTrans = inNWA.cTrans;
 		NiceRTrans[] rTrans = inNWA.rTrans;
 
-		// accumulate clauses to be solved by SAT solver
+		// we accumulate clauses in this array
 		ArrayList<HornClause3> clauses = new ArrayList<HornClause3>();
+		// this encapsulates some evil intricate knowledge about the
+		// representation of the equivalence variables as integers
 		EqVarCalc calc = new EqVarCalc(numStates);
-
-		/*
-		 *
-		 * RULE 1:
-		 * Create clauses: NOT(src1 ~ src2) OR (dst1 ~ dst2)
-		 * for all src1, src2, dst1, dst2
-		 * described by the following query:
-		 *
-		 * SELECT
-		 *         src1, src2, dst1, dst2
-		 * FROM
-		 *         (SELECT
-		 *                 A.src AS src1, A.sym AS sym1, A.dst AS dst1,
-		 *                 B.src AS src2, B.sym AS sym2, B.dst AS dst2
-		 *         FROM
-		 *                 iTrans A, iTrans B
-		 *         WHERE
-		 *                 (src1, src2) IN HaveSameSetOfOutgoingInternalSymbols
-		 *           AND
-		 *                 sym1 == sym2)
-		 *
-		 * RULE 2:
-		 * Create clauses: NOT(Eq(src1, src2)) OR Eq(dst1,dst2)
-		 * for all src1, src2, dst1, dst2
-		 * described by the following query:
-		 *
-		 * SELECT
-		 *         src1, src2, dst1, dst2
-		 * FROM
-		 *         (SELECT
-		 *                 A.src AS src1, A.sym AS sym1, A.dst AS dst1,
-		 *                 B.src AS src2, B.sym AS sym2, B.dst AS dst2,
-		 *         FROM
-		 *                 cTrans A, cTrans B
-		 *         WHERE
-		 *                 (src1, src2) IN HaveSameSetOfOutgoingCallSymbols
-		 *           AND
-		 *                 sym1 == sym2)
-		 *
-		 * RULE 3:
-		 * Create clauses: NOT(Eq(src1, src2)) OR NOT(Eq(top1, top2)) OR Eq(dst1, dst2)
-		 * for all src1, src2, top1, top2, dst1, dst2
-		 * described by the following query:
-		 *
-		 * SELECT
-		 *         src1, src2, top1, top2, dst1, dst2
-		 * FROM
-		 *         (SELECT
-		 *                 A.src AS src1, A.top AS top1, A.sym AS sym1, A.dst AS dst1,
-		 *                 B.src AS src2, B.top as top2, B.sym AS sym2, B.dst AS dst2
-		 *         FROM
-		 *                 rTrans A, rTrans B
-		 *         WHERE
-		 *                 (src1, src2) IN HaveSameSetOfOutgoingReturnSymbols
-		 *           AND
-		 *                 sym1 == sym2)
-		 */
 
 		Arrays.sort(iTrans, NiceITrans::compareSrcSymDst);
 		Arrays.sort(cTrans, NiceCTrans::compareSrcSymDst);
 		Arrays.sort(rTrans, NiceRTrans::compareSrcSymTopDst);
 
-		// All outgoing edges, sorted by src, sym, (top), dst just like above
+		history.sort(NiceHist::compareLinHier);
+
+		// All "outgoing" transitions, grouped by src, then sorted by src, sym, (top), dst
 		ArrayList<ArrayList<NiceITrans>> iTransOut = new ArrayList<ArrayList<NiceITrans>>();
 		ArrayList<ArrayList<NiceCTrans>> cTransOut = new ArrayList<ArrayList<NiceCTrans>>();
 		ArrayList<ArrayList<NiceRTrans>> rTransOut = new ArrayList<ArrayList<NiceRTrans>>();
@@ -159,47 +110,45 @@ public class MinimizeNwaMaxSATReal {
 		for (int i = 0; i < numCTrans; i++) cTransOut.get(cTrans[i].src).add(cTrans[i]);
 		for (int i = 0; i < numRTrans; i++) rTransOut.get(rTrans[i].src).add(rTrans[i]);
 
-		// strictly ascending lists of outgoing symbols, per source state
-		ArrayList<ArrayList<Integer>> iSyms = new ArrayList<ArrayList<Integer>>();
-		ArrayList<ArrayList<Integer>> cSyms = new ArrayList<ArrayList<Integer>>();
-		ArrayList<ArrayList<Integer>> rSyms = new ArrayList<ArrayList<Integer>>();
+		// OutSet is a combination of iSet, cSet, rSet as defined in the thesis
+		OutSet[] outSet = new OutSet[numStates];
+		for (int i = 0; i < numStates; i++) outSet[i] = new OutSet();
 
-		for (int i = 0; i < numStates; i++) iSyms.add(new ArrayList<Integer>());
-		for (int i = 0; i < numStates; i++) cSyms.add(new ArrayList<Integer>());
-		for (int i = 0; i < numStates; i++) rSyms.add(new ArrayList<Integer>());
+		for (int i = 0; i < numITrans; i++)	if (i == 0 || iTrans[i-1].src != iTrans[i].src || iTrans[i-1].sym != iTrans[i].sym) outSet[iTrans[i].src].iSet.add(iTrans[i].sym);
+		for (int i = 0; i < numCTrans; i++)	if (i == 0 || cTrans[i-1].src != cTrans[i].src || cTrans[i-1].sym != cTrans[i].sym) outSet[cTrans[i].src].cSet.add(cTrans[i].sym);
+		for (int i = 0; i < numRTrans; i++)	if (i == 0 || rTrans[i-1].src != rTrans[i].src || rTrans[i-1].sym != rTrans[i].sym || rTrans[i-1].top != rTrans[i].top) outSet[rTrans[i].src].rSetSym.add(rTrans[i].sym);
+		for (int i = 0; i < numRTrans; i++)	if (i == 0 || rTrans[i-1].src != rTrans[i].src || rTrans[i-1].sym != rTrans[i].sym || rTrans[i-1].top != rTrans[i].top) outSet[rTrans[i].src].rSetTop.add(rTrans[i].top);
 
-		for (int i = 0; i < numITrans; i++)	if (i == 0 || (iTrans[i-1].src == iTrans[i].src && iTrans[i-1].sym != iTrans[i].sym)) iSyms.get(iTrans[i].src).add(iTrans[i].sym);
-		for (int i = 0; i < numCTrans; i++)	if (i == 0 || (cTrans[i-1].src == cTrans[i].src && cTrans[i-1].sym != cTrans[i].sym)) cSyms.get(cTrans[i].src).add(cTrans[i].sym);
-		for (int i = 0; i < numRTrans; i++)	if (i == 0 || (rTrans[i-1].src == rTrans[i].src && rTrans[i-1].sym != rTrans[i].sym)) rSyms.get(rTrans[i].src).add(rTrans[i].sym);
+		HashMap<OutSet, ArrayList<Integer>> byOutSet = new HashMap<OutSet, ArrayList<Integer>>();
 
-		// set of outgoing symbols -> states with that set
-		HashMap<ArrayList<Integer>, ArrayList<Integer>> statesByISyms = new HashMap<ArrayList<Integer>, ArrayList<Integer>>();
-		HashMap<ArrayList<Integer>, ArrayList<Integer>> statesByCSyms = new HashMap<ArrayList<Integer>, ArrayList<Integer>>();
-		HashMap<ArrayList<Integer>, ArrayList<Integer>> statesByRSyms = new HashMap<ArrayList<Integer>, ArrayList<Integer>>();
+		for (int i = 0; i < numStates; i++) {
+			ArrayList<Integer> x = byOutSet.get(outSet[i]);
+			if (x == null) {
+				x = new ArrayList<Integer>();
+				byOutSet.put(outSet[i], x);
+			}
+			x.add(i);
+		}
 
-		// state -> some state representing the equivalence class of all states with same set of outgoing symbols
-		int[] iSymRepr = new int[numStates];
-		int[] cSymRepr = new int[numStates];
-		int[] rSymRepr = new int[numStates];
+		// debug out sets
+		System.err.printf("out sets:\n");
+		for (int i = 0; i < numStates; i++) {
+			System.err.printf("%d : %s\n", i, outSet[i].toString());
+		}
 
-		for (int i = 0; i < numStates; i++) { ArrayList<Integer> k = iSyms.get(i); ArrayList<Integer> v = statesByISyms.get(k); if (v == null) { v = new ArrayList<Integer>(); statesByISyms.put(k, v); } v.add(i); iSymRepr[i] = v.get(0); }
-		for (int i = 0; i < numStates; i++) { ArrayList<Integer> k = cSyms.get(i); ArrayList<Integer> v = statesByCSyms.get(k); if (v == null) { v = new ArrayList<Integer>(); statesByCSyms.put(k, v); } v.add(i); cSymRepr[i] = v.get(0); }
-		for (int i = 0; i < numStates; i++) { ArrayList<Integer> k = rSyms.get(i); ArrayList<Integer> v = statesByRSyms.get(k); if (v == null) { v = new ArrayList<Integer>(); statesByRSyms.put(k, v); } v.add(i); rSymRepr[i] = v.get(0); }
-
-		// emit clauses for reflexivity
+		// clauses for reflexivity
 		for (int i = 0; i < numStates; i++) {
 			int eqVar = calc.eqVar(i, i);
 			clauses.add(HornClause3.T(eqVar));
 		}
 
-		// we don't need to emit clauses for symmetricity since we identify i~j with j~i in EqVarCalc
+		// we don't need to emit clauses for symmetry since we identify i~j with j~i in EqVarCalc
 
-		// emit clauses for transitivity
-		// NOTE: this is super expensive and the most likely opportunity for optimization
+		// clauses for transitivity
 		for (int i = 0; i < numStates; i++) {
 			for (int j = i+1; j < numStates; j++) {
-				int eq1 = calc.eqVar(i, j);
 				for (int k = j+1; k < numStates; k++) {
+					int eq1 = calc.eqVar(i, j);
 					int eq2 = calc.eqVar(j, k);
 					int eq3 = calc.eqVar(i, k);
 					clauses.add(HornClause3.FFT(eq1, eq2, eq3));
@@ -207,92 +156,104 @@ public class MinimizeNwaMaxSATReal {
 			}
 		}
 
-		// emit clauses for rule 0 (to separate final and nonfinal states)
-		for (int i = 0; i < numStates; i++)
-			for (int j = i+1; j < numStates; j++)
-				if (isFinal[i] != isFinal[j])
+		// clauses for rule 0 (to separate final and nonfinal states)
+		for (int i = 0; i < numStates; i++) {
+			for (int j = i+1; j < numStates; j++) {
+				if (isFinal[i] != isFinal[j]) {
 					clauses.add(HornClause3.F(calc.eqVar(i, j)));
-
-		// optimization: avoid emitting clauses from rule 1 and rule 2
-		// if iSym or cSym sets are not equal
-		for (int i = 0; i < numStates; i++) {
-			for (int j = 0; j < numStates; j++) {
-				int eqVar = calc.eqVar(i, j);
-				if (iSymRepr[i] != iSymRepr[j] ||
-					cSymRepr[i] != cSymRepr[j]) {
-					/* If the outgoing symbol sets are not equal
-					 * we don't consider merging. This is because we
-					 * assume that every outgoing edge can lead to
-					 * an accepting state. If that shouldn't be the
-					 * case that this optimization is still not unsound.
-					 * We only miss an opportunity for merging.
-					 */
-					clauses.add(HornClause3.F(eqVar));
 				}
 			}
 		}
 
-		// emit clauses from rule 1
-		for (int i = 0; i < numStates; i++) {
-			for (int j = i+1; j < numStates; j++) {
-				int eqVarSrc = calc.eqVar(i, j);
-				if (iSymRepr[i] != iSymRepr[j] || cSymRepr[i] != cSymRepr[j]) {
-					// see optimization above
-				} else {
-					// NOTE: this is inefficient when there are many out-edges
-					for (NiceITrans x : iTransOut.get(i)) {
-						for (NiceITrans y : iTransOut.get(j)) {
-							if (x.sym == y.sym) {
-								int eqVarDst = calc.eqVar(x.dst, y.dst);
-								clauses.add(HornClause3.FT(eqVarSrc, eqVarDst));
-							}
-						}
-					}
-				}
-			}
-		}
-
-		// emit clauses from rule 2
-		for (int i = 0; i < numStates; i++) {
-			for (int j = i+1; j < numStates; j++) {
-				int eqVarSrc = calc.eqVar(i, j);
-				if (iSymRepr[i] != iSymRepr[j] || cSymRepr[i] != cSymRepr[j]) {
-					// see optimization above
-				} else {
-					// NOTE: this is inefficient when there are many out-edges
-					for (NiceCTrans x : cTransOut.get(i)) {
-						for (NiceCTrans y : cTransOut.get(j)) {
-							if (x.sym == y.sym) {
-								int eqVarDst = calc.eqVar(x.dst, y.dst);
-								clauses.add(HornClause3.FT(eqVarSrc, eqVarDst));
-							}
-						}
-					}
-				}
-			}
-		}
-
-		// emit clauses from rule 3
+		// separate states with differing out sets
+		// NOTE: differing out sets means either their iSets or their cSets
+		// are not equal. It could still be the case that their rSets are not
+		// "compatible" but we handle that only later
 		{
-			// TODO: Not at all sure if this is correct
-
-			// "group by return symbol"
-			ArrayList<ArrayList<NiceRTrans>> groups = new ArrayList<ArrayList<NiceRTrans>>();
-			for (int i = 0; i < numRSyms; i++)
-				groups.add(new ArrayList<NiceRTrans>());
-			for (NiceRTrans x : rTrans)
-				groups.get(x.sym).add(x);
-			for (ArrayList<NiceRTrans> g : groups) {
-				for (int i = 0; i < g.size(); i++) {
-					for (int j = i+1; j < g.size(); j++) {
-						NiceRTrans x = g.get(i);
-						NiceRTrans y = g.get(j);
-						int v0 = calc.eqVar(x.src, y.src);
-						int v1 = calc.eqVar(x.top, y.top);
-						int v2 = calc.eqVar(x.dst, y.dst);
-						clauses.add(HornClause3.FFT(v0, v1, v2));
+			ArrayList<Integer> tmp = new ArrayList<Integer>();
+			for (ArrayList<Integer> group : byOutSet.values()) {
+				for (int q1 : tmp) {
+					for (int q2 : group) {
+						System.err.printf("outSet(%d) != outSet(%d), so adding clause: NOT X_%d,%d\n", q1, q2, q1, q2);
+						clauses.add(HornClause3.F(calc.eqVar(q1, q2)));
 					}
 				}
+				tmp.addAll(group);
+			}
+		}
+
+		// clauses from rules 1, 2 and 3 for states with "equal" out sets
+		// NOTE: equal out sets means that their iSets and cSets are equal.
+		// We still need to check if their rSets are "compatible"
+		for (ArrayList<Integer> group : byOutSet.values()) {
+			for (int i = 0; i < group.size(); i++) {
+				for (int j = i+1; j < group.size(); j++) {
+					if (!OutSet.rSetCompatible(outSet[group.get(i)], outSet[group.get(j)])) {
+						int q1 = group.get(i);
+						int q2 = group.get(j);
+						System.err.printf("rSet(%d) and rSet(%d) incompatible, so adding clause: NOT X_%d,%d\n", q1, q2, q1, q2);
+						clauses.add(HornClause3.F(calc.eqVar(q1, q2)));
+						// XXX: OBACHT!
+						continue;
+					}
+					// rule 1
+					for (NiceITrans x : iTransOut.get(group.get(i))) {
+						for (NiceITrans y : iTransOut.get(group.get(j))) {
+							assert x.src != y.src;
+							assert x.src == group.get(i);
+							assert y.src == group.get(j);
+							assert x.sym == x.sym;
+							int eq1 = calc.eqVar(x.src, y.src);
+							int eq2 = calc.eqVar(x.dst, y.dst);
+							System.err.printf("from rule 1: NOT X_%d,%d OR X_%d,%d\n", x.src, y.src, x.dst, y.dst);
+							clauses.add(HornClause3.FT(eq1, eq2));
+						}
+					}
+					// rule 2
+					for (NiceCTrans x : cTransOut.get(group.get(i))) {
+						for (NiceCTrans y : cTransOut.get(group.get(j))) {
+							assert x.src != y.src;
+							assert x.src == group.get(i);
+							assert y.src == group.get(j);
+							assert x.sym == x.sym;
+							int eq1 = calc.eqVar(x.src, y.src);
+							int eq2 = calc.eqVar(x.dst, y.dst);
+							System.err.printf("from rule 2: NOT X_%d,%d OR X_%d,%d\n", x.src, y.src, x.dst, y.dst);
+							clauses.add(HornClause3.FT(eq1, eq2));
+						}
+					}
+					// rule 3
+					for (NiceRTrans x : rTransOut.get(group.get(i))) {
+						for (NiceRTrans y : rTransOut.get(group.get(j))) {
+							assert x.src != y.src;
+							assert x.src == group.get(i);
+							assert y.src == group.get(j);
+							assert x.sym == x.sym;
+							int eq1 = calc.eqVar(x.src, y.src);
+							int eq2 = calc.eqVar(x.top, y.top);
+							int eq3 = calc.eqVar(x.dst, y.dst);
+							System.err.printf("from rule 3: NOT X_%d,%d OR NOT X_%d,%d OR X_%d,%d\n", x.src, y.src, x.top, y.top, x.dst, y.dst);
+							clauses.add(HornClause3.FFT(eq1, eq2, eq3));
+						}
+					}
+				}
+			}
+		}
+
+		{
+			HashMap<Integer, String> name = new HashMap<Integer, String>();
+			name.put(0, "F");
+			name.put(1, "T");
+			for (int i = 0; i < numStates; i++)
+				for (int j = i; j < numStates; j++)
+					name.put(calc.eqVar(i, j), "X_" + Integer.toString(i) + "," + Integer.toString(j));
+
+			System.err.printf("Clauses\n");
+			for (HornClause3 x : clauses) {
+				String s0 =	name.get(x.l0);
+				String s1 = name.get(x.l1);
+				String s2 = name.get(x.l2);
+				System.err.printf("NOT %s OR NOT %s OR %s\n", s0, s1, s2);
 			}
 		}
 
@@ -333,36 +294,167 @@ public class MinimizeNwaMaxSATReal {
 	/** Test the thing */
 	public static void main(String[] args) throws FileNotFoundException, IOException {
 		OutputStreamWriter out = new OutputStreamWriter(System.err);
-		NiceNWA nwa = NiceScan.inputAsRelations("/tmp/test2.nwa");
+
+		ArrayList<NiceNWA> nwas = new ArrayList<NiceNWA>();
+		ArrayList<ArrayList<NiceHist>> hists = new ArrayList<ArrayList<NiceHist>>();
+
+		{
+		NiceNWA nwa = NiceScan.scanNWA(new StringReader(
+			"numStates 2\n"
+			+ "numISyms 0\n"
+			+ "numCSyms 1\n"
+			+ "numRSyms 1\n"
+			+ "numInitial 1\n"
+			+ "numFinal 1\n"
+			+ "numITrans 0\n"
+			+ "numCTrans 2\n"
+			+ "numRTrans 2\n"
+			+ "initial 0\n"
+			+ "final 0\n"
+			+ "cTrans 0 0 1\n"
+			+ "cTrans 1 0 1\n"
+			+ "rTrans 1 0 1 1\n"
+			+ "rTrans 1 0 0 0\n"
+		));
 		assert nwa != null;
-
+		// even for debug code, this is really bad code:
 		// history states algorithm not implemented :-(
-		NiceHist[] dummy = new NiceHist[0];
+		ArrayList<NiceHist> hist = new ArrayList<NiceHist>();
+		// -1 means bottom-of-stack symbol
+		hist.add(new NiceHist(0, -1));
+		hist.add(new NiceHist(1, 0));
+		hist.add(new NiceHist(1, 1));
 
-		NicePrint.printNWA(out, nwa);
-		NiceClasses eq = minimize(nwa, dummy);
-		NicePrint.printClasses(out, eq);
+		nwas.add(nwa);
+		hists.add(hist);
+		}
+
+		{
+		NiceNWA nwa = NiceScan.scanNWA(new StringReader(
+				"numStates 5\n"
+				+ "numISyms 1\n"
+				+ "numCSyms 2\n"
+				+ "numRSyms 1\n"
+				+ "numInitial 1\n"
+				+ "numFinal 1\n"
+				+ "numITrans 4\n"
+				+ "numCTrans 2\n"
+				+ "numRTrans 1\n"//+ "numRTrans 2\n"
+				+ "initial 0\n"
+				+ "final 4\n"
+				+ "iTrans 0 0 2\n"
+				+ "iTrans 1 0 4\n"
+				+ "iTrans 2 0 4\n"
+				+ "iTrans 3 0 4\n"
+				+ "cTrans 0 0 1\n"
+				+ "cTrans 0 0 3\n"
+				//+ "rTrans 1 0 0 1\n"
+				//+ "rTrans 3 0 0 3\n"
+				//+ "rTrans 3 0 0 3\n"
+				+ "rTrans 1 0 0 4\n"
+		));
+		assert nwa != null;
+		// even for debug code, this is really bad code.
+		// history states algorithm not implemented :-(
+		// -1 means bottom symbol
+		ArrayList<NiceHist> hist = new ArrayList<NiceHist>();
+		hist.add(new NiceHist(0, -1));
+		hist.add(new NiceHist(2, -1));
+		hist.add(new NiceHist(4, -1));
+		hist.add(new NiceHist(1, 0));
+		hist.add(new NiceHist(3, 0));
+		hist.add(new NiceHist(4, 0));
+
+		nwas.add(nwa);
+		hists.add(hist);
+		}
+
+		for (int i = 0; i < nwas.size(); i++) {
+			NiceNWA nwa = nwas.get(i);
+			ArrayList<NiceHist> hist = hists.get(i);
+
+			NicePrint.printNWA(out, nwa);
+			NiceClasses eq = minimize(nwa, hist);
+			NicePrint.printClasses(out, eq);
+		}
+	}
+}
+
+// combination of iSet, cSet and rSet as defined in the thesis
+class OutSet {
+	ArrayList<Integer> iSet;
+	ArrayList<Integer> cSet;
+	ArrayList<Integer> rSetSym;
+	ArrayList<Integer> rSetTop;
+
+	public OutSet() {
+		iSet = new ArrayList<Integer>();
+		cSet = new ArrayList<Integer>();
+		rSetSym = new ArrayList<Integer>();
+		rSetTop = new ArrayList<Integer>();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		// This tests only equality of i-set and c-set
+		// equality of r-set is not required.
+		if (!(obj instanceof OutSet)) return false;
+		OutSet b = (OutSet) obj;
+		return iSet.equals(b.iSet) && cSet.equals(b.cSet);
+	}
+
+	@Override
+	public int hashCode() {
+		return 31*iSet.hashCode() + cSet.hashCode();
+	}
+
+	private static boolean isSubset(ArrayList<Integer> x, ArrayList<Integer> y) {
+		assert x.size() < y.size();
+		int i = 0, j = 0;
+		while (true) {
+			if (i == x.size()) return true;
+			if (j == y.size()) return false;
+			if (x.get(i) < y.get(j)) return false;
+			if (x.get(i) > y.get(j)) j++;
+			if (x.get(i) == y.get(j)) { i++; j++; }
+		}
+	}
+
+	public static boolean rSetCompatible(OutSet a, OutSet b) {
+		// test "a subsetof b" || "b subsetof a"
+		ArrayList<Integer> x = a.rSetSym;
+		ArrayList<Integer> y = b.rSetSym;
+		if (x.size() == y.size())
+			return x.equals(y);
+		if (x.size() < y.size())
+			return isSubset(x, y);
+		else
+			return isSubset(y, x);
+	}
+
+	@Override
+	public String toString() {
+		return "{" + iSet.toString() + " " + cSet.toString() + " " + rSetSym.toString() + " " + rSetTop.toString() + "}";
 	}
 }
 
 class EqVarCalc {
-	private final int numStates;
+	private final int n;
 
 	public EqVarCalc(int numStates) {
-		this.numStates = numStates;
-	}
-
-	public int eqVar(int a, int b) {
-		assert 0 <= a && a < numStates;
-		assert 0 <= b && b < numStates;
-		if (a > b) return eqVar(b, a);
-		int n = numStates;
-		// add 2 because 0 and 1 are reserved for const false / const true
-		return 2 + (n*(n+1)/2)-((n-a)*(n-a+1)/2) + b-a;
+		this.n = numStates;
 	}
 
 	public int getNumEqVars() {
 		// add 2 because 0 and 1 are reserved for const false / const true
-		return 2 + numStates*(numStates+1)/2;
+		return 2 + n*(n+1)/2;
+	}
+
+	public int eqVar(int a, int b) {
+		assert 0 <= a && a < n;
+		assert 0 <= b && b < n;
+		if (a > b) return eqVar(b, a);
+		// add 2 because 0 and 1 are reserved for const false / const true
+		return 2 + (n*(n+1)/2)-((n-a)*(n-a+1)/2) + b-a;
 	}
 }

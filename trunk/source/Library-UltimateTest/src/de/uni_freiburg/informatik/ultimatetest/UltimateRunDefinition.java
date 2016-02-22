@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
  * @author heizmann@informatik.uni-freiburg.de
  * 
  */
-public class UltimateRunDefinition {
+public class UltimateRunDefinition implements Comparable<UltimateRunDefinition> {
 	private final File mInput;
 	private final File mSettings;
 	private final File mToolchain;
@@ -141,4 +141,25 @@ public class UltimateRunDefinition {
 		return true;
 	}
 
+	@Override
+	public int compareTo(final UltimateRunDefinition other) {
+		int inputCmp = mInput.compareTo(other.mInput);
+		if (inputCmp != 0) {
+			return inputCmp;
+		}
+		int tcCmp = mToolchain.compareTo(other.mToolchain);
+		if (tcCmp != 0) {
+			return tcCmp;
+		}
+
+		if (mSettings == null && other.mSettings == null) {
+			return 0;
+		} else if (mSettings == null) {
+			return 1;
+		} else if (other.mSettings == null) {
+			return -1;
+		} else {
+			return mSettings.compareTo(other.mSettings);
+		}
+	}
 }

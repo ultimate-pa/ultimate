@@ -66,11 +66,11 @@ public class NicePrint {
 		ArrayList<Integer> initialStates = NiceNWA.computeInitialStates(nwa);
 		ArrayList<Integer> finalStates = NiceNWA.computeFinalStates(nwa);
 		p.printf("numStates %d\n", nwa.numStates);
-		p.printf("numInitialStates %d\n",  initialStates.size());
-		p.printf("numFinalStates %d\n",  finalStates.size());
 		p.printf("numISyms %d\n",  nwa.numISyms);
 		p.printf("numCSyms %d\n",  nwa.numCSyms);
 		p.printf("numRSyms %d\n",  nwa.numRSyms);
+		p.printf("numInitial %d\n", initialStates.size());
+		p.printf("numFinal %d\n",  finalStates.size());
 		p.printf("numITrans %d\n", nwa.iTrans.length);
 		p.printf("numCTrans %d\n", nwa.cTrans.length);
 		p.printf("numRTrans %d\n", nwa.rTrans.length);
@@ -78,7 +78,7 @@ public class NicePrint {
 		for (int i : finalStates) p.printf("final %d\n", i);
 		for (NiceITrans x : nwa.iTrans)	p.printf("iTrans %d %d %d\n", x.src, x.sym, x.dst);
 		for (NiceCTrans x : nwa.cTrans)	p.printf("cTrans %d %d %d\n", x.src, x.sym, x.dst);
-		for (NiceRTrans x : nwa.rTrans)	p.printf("rTrans %d %d %d %d\n", x.top, x.src, x.sym, x.dst);
+		for (NiceRTrans x : nwa.rTrans)	p.printf("rTrans %d %d %d %d\n", x.src, x.sym, x.top, x.dst);
 		p.flush();
 	}
 

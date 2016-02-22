@@ -8,7 +8,7 @@
 #include <stdlib.h>
 
 int main() {
-    int *p = malloc(sizeof(int));
+    long long *p = malloc(sizeof(long long));
     *p = 3;
     free(p);
     return 0;

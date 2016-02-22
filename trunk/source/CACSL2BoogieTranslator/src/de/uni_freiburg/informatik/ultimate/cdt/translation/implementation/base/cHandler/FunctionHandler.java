@@ -32,6 +32,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -55,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.M
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler.RequiredMemoryModelFeatures;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
@@ -592,15 +594,21 @@ public class FunctionHandler {
 					modifySet.add(var);
 				}
 
-				// add missing heap arrays
-				if (modifySet.contains(SFO.MEMORY_INT) || modifySet.contains(SFO.MEMORY_REAL)
-						|| modifySet.contains(SFO.MEMORY_POINTER)) {
-					
-					if (memoryHandler.getRequiredMemoryModelFeatures().isPointerOnHeapRequired()) {
-						modifySet.add(memoryHandler.getMemoryModel().getPointerHeapArray().getVariableName());
-					}
-					for (HeapDataArray hda : memoryHandler.getMemoryModel().getDataHeapArrays(memoryHandler.getRequiredMemoryModelFeatures())) {
-						modifySet.add(hda.getVariableName());
+				
+				{
+					/* add missing heap arrays
+					 * If the procedure modifies one heap array, we add all
+					 * heap arrays. This is a workaround. We cannot add all
+					 * procedures immediately, because we do not know all heap
+					 * arrays in advance since they are added lazily on demand.
+					 * 
+					 */
+					Collection<HeapDataArray> heapDataArrays = memoryHandler.getMemoryModel().
+							getDataHeapArrays(memoryHandler.getRequiredMemoryModelFeatures());
+					if (containsOneHeapDataArray(modifySet, heapDataArrays)) {
+						for (HeapDataArray hda : heapDataArrays) {
+							modifySet.add(hda.getVariableName());
+						}
 					}
 				}
 
@@ -630,6 +638,17 @@ public class FunctionHandler {
 		}
 		return declarations;
 	}
+
+	private boolean containsOneHeapDataArray(LinkedHashSet<String> modifySet, 
+											Collection<HeapDataArray> heapDataArrays) {
+		for (HeapDataArray hda : heapDataArrays) {
+			if (modifySet.contains(hda.getVariableName())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 
 	private Result handleFunctionCallGivenNameAndArguments(Dispatcher main, MemoryHandler memoryHandler,
 			StructHandler structHandler, ILocation loc, String methodName, IASTInitializerClause[] arguments) {

@@ -48,16 +48,23 @@ public class NiceITrans implements Comparable<NiceITrans> {
 	public NiceITrans(int src, int sym, int dst)
 		{ this.src = src; this.sym = sym; this.dst = dst; }
 
-	public boolean equals(NiceITrans b)
-		{ return src == b.src && sym == b.sym && dst == b.dst; }
+	@Override
+	public boolean equals(Object obj) {
+		if (!(obj instanceof NiceITrans))
+			return false;
+		NiceITrans b = (NiceITrans) obj;
+		return src == b.src && sym == b.sym && dst == b.dst;
+	}
 
 	@Override
-	public int hashCode()
-		{ return (src * 31 + sym) * 31 + dst; }
+	public int hashCode() {
+		return (src * 31 + sym) * 31 + dst;
+	}
 
 	@Override
-	public int compareTo(NiceITrans b)
-		{ return NiceITrans.compareSrcSymDst(this, b); }
+	public int compareTo(NiceITrans b) {
+		return NiceITrans.compareSrcSymDst(this, b);
+	}
 
 	public static int compareSrcSymDst(NiceITrans a, NiceITrans b) {
 		if (a.src != b.src) return a.src - b.src;

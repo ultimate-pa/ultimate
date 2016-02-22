@@ -113,7 +113,7 @@ public class CPrimitive extends CType {
     	}
     	
     	public boolean isFloatingtype() {
-    		return m_Generalprimitive == GENERALPRIMITIVE.INTTYPE;
+    		return m_Generalprimitive == GENERALPRIMITIVE.FLOATTYPE;
     	}
     }
     

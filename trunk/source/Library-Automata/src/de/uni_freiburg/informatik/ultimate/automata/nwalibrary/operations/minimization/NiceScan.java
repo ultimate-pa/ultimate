@@ -50,18 +50,18 @@ public class NiceScan {
 	 */
 	public static NiceNWA scanNWA(Reader reader) throws IOException {
 		int numStates, numISyms, numCSyms, numRSyms, numITrans, numCTrans, numRTrans;
-		int numInitialStates, numFinalStates;
+		int numInitial, numFinal;
 		boolean[] isInitial, isFinal;
 		NiceITrans[] iTrans; NiceCTrans[] cTrans; NiceRTrans[] rTrans;
 		StreamTokenizer in = new StreamTokenizer(reader);
 		in.eolIsSignificant(true);
 		try {
 		expectString(in, "numStates"); numStates = parseInt(in); expectEOL(in);
-		expectString(in, "numInitialStates"); numInitialStates = parseInt(in); expectEOL(in);
-		expectString(in, "numFinalStates"); numFinalStates = parseInt(in); expectEOL(in);
 		expectString(in, "numISyms");  numISyms = parseInt(in);  expectEOL(in);
 		expectString(in, "numCSyms");  numCSyms = parseInt(in);  expectEOL(in);
 		expectString(in, "numRSyms");  numRSyms = parseInt(in);  expectEOL(in);
+		expectString(in, "numInitial"); numInitial = parseInt(in); expectEOL(in);
+		expectString(in, "numFinal"); numFinal = parseInt(in); expectEOL(in);
 		expectString(in, "numITrans"); numITrans = parseInt(in); expectEOL(in);
 		expectString(in, "numCTrans"); numCTrans = parseInt(in); expectEOL(in);
 		expectString(in, "numRTrans"); numRTrans = parseInt(in); expectEOL(in);
@@ -70,8 +70,8 @@ public class NiceScan {
 		iTrans = new NiceITrans[numITrans];
 		cTrans = new NiceCTrans[numCTrans];
 		rTrans = new NiceRTrans[numRTrans];
-		for (int i = 0; i < numInitialStates; i++) { expectString(in, "initial"); int x = parseInt(in, numStates); isInitial[x] = true; expectEOL(in); }
-		for (int i = 0; i < numFinalStates; i++) { expectString(in, "final"); int x = parseInt(in, numStates); isFinal[x] = true; expectEOL(in); }
+		for (int i = 0; i < numInitial; i++) { expectString(in, "initial"); int x = parseInt(in, numStates); isInitial[x] = true; expectEOL(in); }
+		for (int i = 0; i < numFinal; i++) { expectString(in, "final"); int x = parseInt(in, numStates); isFinal[x] = true; expectEOL(in); }
 		for (int i = 0; i < numITrans; i++) { expectString(in, "iTrans"); int src = parseInt(in, numStates); int sym = parseInt(in, numISyms); int dst = parseInt(in, numStates); iTrans[i] = new NiceITrans(src, sym, dst); expectEOL(in); }
 		for (int i = 0; i < numCTrans; i++) { expectString(in, "cTrans"); int src = parseInt(in, numStates); int sym = parseInt(in, numCSyms); int dst = parseInt(in, numStates); cTrans[i] = new NiceCTrans(src, sym, dst); expectEOL(in); }
 		for (int i = 0; i < numRTrans; i++) { expectString(in, "rTrans"); int src = parseInt(in, numStates); int sym = parseInt(in, numRSyms); int top = parseInt(in, numStates); int dst = parseInt(in, numStates); rTrans[i] = new NiceRTrans(src, sym, top, dst); expectEOL(in); }

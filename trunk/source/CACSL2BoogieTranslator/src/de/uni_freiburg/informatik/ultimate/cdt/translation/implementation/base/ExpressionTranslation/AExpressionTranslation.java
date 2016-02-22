@@ -401,24 +401,6 @@ public abstract class AExpressionTranslation {
 	
 
 	/**
-	 * In our Lindenmann-Hoenicke memory model, we use an array for all
-	 * integer data on the heap. This method returns the CType that we use to
-	 * represents this data.
-	 */
-	public CPrimitive getCTypeOfIntArray() {
-		return new CPrimitive(PRIMITIVE.INT);
-	}
-
-	/**
-	 * In our Lindenmann-Hoenicke memory model, we use an array for all
-	 * floating type data on the heap. This method returns the CType that we 
-	 * use to represent this data.
-	 */
-	public CPrimitive getCTypeOfFloatingArray() {
-		return new CPrimitive(PRIMITIVE.FLOAT);
-	}
-	
-	/**
 	 * In our Lindenmann-Hoenicke memory model, a pointer is a struct of two
 	 * integer data types. This method returns the CType of the structs
 	 * components.
@@ -636,5 +618,14 @@ public abstract class AExpressionTranslation {
 		}
 		return result;
 	}
-	
+
+	/**
+	 * Returns an {@link Expression} that represents the following bits of 
+	 * operand high-1, high-2, ..., low+1, low (i.e., the bit at the higher 
+	 * index is not included, the bit at the lower index is included).  
+	 */
+	public abstract Expression extractBits(ILocation loc, Expression operand, int high, int low);
+
+	public abstract Expression concatBits(ILocation loc, List<Expression> dataChunks, int size);
+
 }

@@ -373,7 +373,8 @@ public class CHandler implements ICHandler {
 		this.mPostProcessor = new PostProcessor(main, mLogger, m_ExpressionTranslation);
 		this.mFunctionHandler = new FunctionHandler(m_ExpressionTranslation);
 		this.mTypeSizeComputer = new TypeSizeAndOffsetComputer((TypeHandler) mTypeHandler, m_ExpressionTranslation, main.getTypeSizes());
-		this.mMemoryHandler = new MemoryHandler(typeHandler, mFunctionHandler, checkPointerValidity, mTypeSizeComputer, main.getTypeSizes(), m_ExpressionTranslation);
+		this.mMemoryHandler = new MemoryHandler(typeHandler, mFunctionHandler, checkPointerValidity, 
+				mTypeSizeComputer, main.getTypeSizes(), m_ExpressionTranslation, bitvectorTranslation);
 		this.mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, m_ExpressionTranslation);
 		this.mInitHandler = new InitializationHandler(mFunctionHandler, mStructHandler, mMemoryHandler, m_ExpressionTranslation);
 	}
@@ -421,7 +422,7 @@ public class CHandler implements ICHandler {
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		
 		if (!((TypeHandler) mTypeHandler).useIntForAllIntegerTypes()) {
-			decl.addAll(PostProcessor.declarePrimitiveDataTypeSynonyms(loc, main.getTypeSizes()));
+			decl.addAll(PostProcessor.declarePrimitiveDataTypeSynonyms(loc, main.getTypeSizes(), (TypeHandler) mTypeHandler));
 		}
 
 		// TODO(thrax): Check if decl should be passed as null or not.
@@ -3325,10 +3326,6 @@ public class CHandler implements ICHandler {
 		return eres;
 	}
 	
-	
-	{
-
-	}
 	
 	/**
 	 * Multiply an integerExpresion with the size of another type.

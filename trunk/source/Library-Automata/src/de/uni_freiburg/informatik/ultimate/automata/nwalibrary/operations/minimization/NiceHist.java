@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
+import java.util.ArrayList;
 
 /**
  * Utility functions for history states
@@ -44,19 +45,28 @@ public class NiceHist implements Comparable<NiceHist> {
 
 	public NiceHist() {}
 
-	public NiceHist(int lin, int hier)
-		{ this.lin = lin; this.hier = hier; }
-
-	public boolean equals(NiceHist b)
-		{ return lin == b.lin && hier == b.hier; }
-
-	@Override
-	public int hashCode()
-		{ return 31 * lin + hier; }
+	public NiceHist(int lin, int hier) {
+		this.lin = lin;
+		this.hier = hier;
+	}
 
 	@Override
-	public int compareTo(NiceHist b)
-		{ return NiceHist.compareLinHier(this, b); }
+	public boolean equals(Object obj) {
+		if (!(obj instanceof NiceHist))
+			return false;
+		NiceHist b = (NiceHist) obj;
+		return lin == b.lin && hier == b.hier;
+	}
+
+	@Override
+	public int hashCode() {
+		return 31 * lin + hier;
+	}
+
+	@Override
+	public int compareTo(NiceHist b) {
+		return NiceHist.compareLinHier(this, b);
+	}
 
 
 	public static int compareLinHier(NiceHist a, NiceHist b) {
@@ -68,14 +78,13 @@ public class NiceHist implements Comparable<NiceHist> {
 	 * @param nwa
 	 * @param history An array of NiceHist sorted by linear, then hierarchical states
 	 * @return whether <code>history</code> is consistent with <code>nwa</code>
+	 * NOTE: history states can be -1. This means "bottom-of-stack" state.
 	 */
-	public static boolean checkHistoryStatesConsistency(NiceNWA nwa, NiceHist[] hist) {
-		for (int i = 0; i < hist.length; i++) {
-			if (i != 0 && NiceHist.compareLinHier(hist[i],  hist[i-1]) <= 0)
+	public static boolean checkHistoryStatesConsistency(NiceNWA nwa, ArrayList<NiceHist> hist) {
+		for (int i = 0; i < hist.size(); i++) {
+			if (hist.get(i).lin < 0 || hist.get(i).lin >= nwa.numStates)
 				return false;
-			if (hist[i].lin < 0 || hist[i].lin >= nwa.numStates)
-				return false;
-			if (hist[i].hier < 0 || hist[i].hier >= nwa.numStates)
+			if (hist.get(i).hier < -1 || hist.get(i).hier >= nwa.numStates)
 				return false;
 		}
 		return true;

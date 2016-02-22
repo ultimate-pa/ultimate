@@ -57,4 +57,43 @@ public class HeapDataArray {
 	public int getSize() {
 		return m_Size;
 	}
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((m_ASTType == null) ? 0 : m_ASTType.hashCode());
+		result = prime * result + ((m_Name == null) ? 0 : m_Name.hashCode());
+		result = prime * result + m_Size;
+		return result;
+	}
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		HeapDataArray other = (HeapDataArray) obj;
+		if (m_ASTType == null) {
+			if (other.m_ASTType != null)
+				return false;
+		} else if (!m_ASTType.equals(other.m_ASTType))
+			return false;
+		if (m_Name == null) {
+			if (other.m_Name != null)
+				return false;
+		} else if (!m_Name.equals(other.m_Name))
+			return false;
+		if (m_Size != other.m_Size)
+			return false;
+		return true;
+	}
+	@Override
+	public String toString() {
+		return "HeapDataArray [m_Name=" + m_Name + ", m_ASTType=" + m_ASTType + ", m_Size=" + m_Size + "]";
+	}
+	
+	
+	
 }

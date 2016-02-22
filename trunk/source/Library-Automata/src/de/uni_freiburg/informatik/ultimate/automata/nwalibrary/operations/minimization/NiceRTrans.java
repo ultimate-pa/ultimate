@@ -51,16 +51,23 @@ public class NiceRTrans implements Comparable<NiceRTrans> {
 	public NiceRTrans(int src, int sym, int top, int dst)
 		{ this.src = src; this.sym = sym; this.top = top; this.dst = dst; }
 
-	public boolean equals(NiceRTrans b)
-		{ return src == b.src && top == b.top && sym == b.sym && dst == b.dst; }
+	@Override
+	public boolean equals(Object obj) {
+		if (!(obj instanceof NiceRTrans))
+			return false;
+		NiceRTrans b = (NiceRTrans) obj;
+		return src == b.src && top == b.top && sym == b.sym && dst == b.dst;
+	}
 
 	@Override
-	public int hashCode()
-		{ return ((src * 31 + sym) * 31 + top) * 31 + dst; }
+	public int hashCode() {
+		return ((src * 31 + sym) * 31 + top) * 31 + dst;
+	}
 
 	@Override
-	public int compareTo(NiceRTrans b)
-		{ return NiceRTrans.compareSrcSymTopDst(this, b); }
+	public int compareTo(NiceRTrans b) {
+		return NiceRTrans.compareSrcSymTopDst(this, b);
+	}
 
 	public static int compareSrcSymTopDst(NiceRTrans a, NiceRTrans b) {
 		if (a.src != b.src) return a.src - b.src;
