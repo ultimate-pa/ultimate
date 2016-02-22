@@ -52,7 +52,9 @@ public class MinimizeNwaMaxSATReal {
 	 * @param inNWA input NWA. The NWA is mutated (transitions sorted).
 	 *        Give a (shallow) copy if mutation isn't possible for you.
 	 * @param precalculated history states for <code>inNWA</code>.
-	 *        For each state, a sorted list of its history states.
+	 *        The list is mutated (sorted by <code>lin</code>,
+	 *        then by <code>hier</code>). Give a (shallow) copy if mutation
+	 *        isn't possible for you.
 	 *
 	 * @return A (consistent) NiceClasses which represents
 	 *         the minimized automaton.
@@ -91,6 +93,7 @@ public class MinimizeNwaMaxSATReal {
 		// representation of the equivalence variables as integers
 		EqVarCalc calc = new EqVarCalc(numStates);
 
+		// IMPORTANT. Sort inputs
 		Arrays.sort(iTrans, NiceITrans::compareSrcSymDst);
 		Arrays.sort(cTrans, NiceCTrans::compareSrcSymDst);
 		Arrays.sort(rTrans, NiceRTrans::compareSrcSymTopDst);
@@ -110,31 +113,79 @@ public class MinimizeNwaMaxSATReal {
 		for (int i = 0; i < numCTrans; i++) cTransOut.get(cTrans[i].src).add(cTrans[i]);
 		for (int i = 0; i < numRTrans; i++) rTransOut.get(rTrans[i].src).add(rTrans[i]);
 
-		// OutSet is a combination of iSet, cSet, rSet as defined in the thesis
+		// OutSet is a combination of iSet, cSet, rSet and hSet as defined in the thesis
 		OutSet[] outSet = new OutSet[numStates];
 		for (int i = 0; i < numStates; i++) outSet[i] = new OutSet();
 
 		for (int i = 0; i < numITrans; i++)	if (i == 0 || iTrans[i-1].src != iTrans[i].src || iTrans[i-1].sym != iTrans[i].sym) outSet[iTrans[i].src].iSet.add(iTrans[i].sym);
 		for (int i = 0; i < numCTrans; i++)	if (i == 0 || cTrans[i-1].src != cTrans[i].src || cTrans[i-1].sym != cTrans[i].sym) outSet[cTrans[i].src].cSet.add(cTrans[i].sym);
-		for (int i = 0; i < numRTrans; i++)	if (i == 0 || rTrans[i-1].src != rTrans[i].src || rTrans[i-1].sym != rTrans[i].sym || rTrans[i-1].top != rTrans[i].top) outSet[rTrans[i].src].rSetSym.add(rTrans[i].sym);
-		for (int i = 0; i < numRTrans; i++)	if (i == 0 || rTrans[i-1].src != rTrans[i].src || rTrans[i-1].sym != rTrans[i].sym || rTrans[i-1].top != rTrans[i].top) outSet[rTrans[i].src].rSetTop.add(rTrans[i].top);
+		for (int i = 0; i < numRTrans; i++)	if (i == 0 || rTrans[i-1].src != rTrans[i].src || rTrans[i-1].top != rTrans[i].top) outSet[rTrans[i].src].rSet.add(rTrans[i].top);
 
-		HashMap<OutSet, ArrayList<Integer>> byOutSet = new HashMap<OutSet, ArrayList<Integer>>();
-
-		for (int i = 0; i < numStates; i++) {
-			ArrayList<Integer> x = byOutSet.get(outSet[i]);
-			if (x == null) {
-				x = new ArrayList<Integer>();
-				byOutSet.put(outSet[i], x);
+		// make the hSet, i.e. those history states except bottom-of-stack
+		// symbol which are not in the outgoing return transitions as
+		// top-of-stack symbol.
+		{
+		int i = 0;
+		for (int j = 0; i < history.size() && j < numRTrans;) {
+			if (history.get(i).hier == -1) {
+				// bottom-of-stack state, which is never in RTrans
+				i++;
+				continue;
 			}
-			x.add(i);
+			int diff = history.get(i).lin - rTrans[j].src;
+			if (diff == 0) diff = history.get(i).hier - rTrans[j].top;
+			if (diff < 0) {
+				//System.err.printf("Adding to hSet(%d) %d\n", history.get(i).lin, history.get(i).hier);
+				outSet[history.get(i).lin].hSet.add(history.get(i).hier);
+				i++;
+			} else if (diff > 0) {
+				System.err.printf("state %d has %d in rTrans but not in history\n", history.get(i).lin, history.get(i).hier);
+				System.err.printf("SHOULD NOT HAPPEN");
+				assert false;
+				j++;
+			} else {
+				//System.err.printf("Both contain %d %d %d %d\n", rTrans[j].src, rTrans[j].top, history.get(i).lin, history.get(i).hier);
+				i++;
+				j++;
+			}
 		}
-
-		// debug out sets
+		for (; i < history.size();) {
+			if (history.get(i).hier == -1) {
+				// bottom-of-stack state, which is never in RTrans
+				i++;
+				continue;
+			}
+			//System.err.printf("Adding to hSet(%d) %d\n", history.get(i).lin, history.get(i).hier);
+			outSet[history.get(i).lin].hSet.add(history.get(i).hier);
+			i++;
+		}
+		}
+		/*
 		System.err.printf("out sets:\n");
 		for (int i = 0; i < numStates; i++) {
 			System.err.printf("%d : %s\n", i, outSet[i].toString());
 		}
+		*/
+
+		// group states by (iSet, cSet)
+		// we do it using a hashmap of ICSet here
+		HashMap<ICSet, ArrayList<Integer>> byICSet = new HashMap<ICSet, ArrayList<Integer>>();
+
+		for (int i = 0; i < numStates; i++) {
+			ICSet x = new ICSet(outSet[i].iSet, outSet[i].cSet);
+			ArrayList<Integer> list = byICSet.get(x);
+			if (list == null) {
+				list = new ArrayList<Integer>();
+				byICSet.put(x, list);
+			}
+			list.add(i);
+		}
+		/*
+		System.err.printf("byICSet:\n");
+		for (ArrayList<Integer> x : byICSet.values()) {
+			System.err.printf(x.toString() + "\n");
+		}
+		*/
 
 		// clauses for reflexivity
 		for (int i = 0; i < numStates; i++) {
@@ -171,10 +222,10 @@ public class MinimizeNwaMaxSATReal {
 		// "compatible" but we handle that only later
 		{
 			ArrayList<Integer> tmp = new ArrayList<Integer>();
-			for (ArrayList<Integer> group : byOutSet.values()) {
+			for (ArrayList<Integer> group : byICSet.values()) {
 				for (int q1 : tmp) {
 					for (int q2 : group) {
-						System.err.printf("outSet(%d) != outSet(%d), so adding clause: NOT X_%d,%d\n", q1, q2, q1, q2);
+						//System.err.printf("outSet(%d) != outSet(%d), so adding clause: NOT X_%d,%d\n", q1, q2, q1, q2);
 						clauses.add(HornClause3.F(calc.eqVar(q1, q2)));
 					}
 				}
@@ -185,13 +236,13 @@ public class MinimizeNwaMaxSATReal {
 		// clauses from rules 1, 2 and 3 for states with "equal" out sets
 		// NOTE: equal out sets means that their iSets and cSets are equal.
 		// We still need to check if their rSets are "compatible"
-		for (ArrayList<Integer> group : byOutSet.values()) {
+		for (ArrayList<Integer> group : byICSet.values()) {
 			for (int i = 0; i < group.size(); i++) {
 				for (int j = i+1; j < group.size(); j++) {
-					if (!OutSet.rSetCompatible(outSet[group.get(i)], outSet[group.get(j)])) {
+					if (OutSet.outSetsIncompatible(outSet[group.get(i)], outSet[group.get(j)])) {
 						int q1 = group.get(i);
 						int q2 = group.get(j);
-						System.err.printf("rSet(%d) and rSet(%d) incompatible, so adding clause: NOT X_%d,%d\n", q1, q2, q1, q2);
+						//System.err.printf("outSet(%d) and outSet(%d) incompatible, so adding clause: NOT X_%d,%d\n", q1, q2, q1, q2);
 						clauses.add(HornClause3.F(calc.eqVar(q1, q2)));
 						// XXX: OBACHT!
 						continue;
@@ -205,7 +256,7 @@ public class MinimizeNwaMaxSATReal {
 							assert x.sym == x.sym;
 							int eq1 = calc.eqVar(x.src, y.src);
 							int eq2 = calc.eqVar(x.dst, y.dst);
-							System.err.printf("from rule 1: NOT X_%d,%d OR X_%d,%d\n", x.src, y.src, x.dst, y.dst);
+							//System.err.printf("from rule 1: NOT X_%d,%d OR X_%d,%d\n", x.src, y.src, x.dst, y.dst);
 							clauses.add(HornClause3.FT(eq1, eq2));
 						}
 					}
@@ -218,7 +269,7 @@ public class MinimizeNwaMaxSATReal {
 							assert x.sym == x.sym;
 							int eq1 = calc.eqVar(x.src, y.src);
 							int eq2 = calc.eqVar(x.dst, y.dst);
-							System.err.printf("from rule 2: NOT X_%d,%d OR X_%d,%d\n", x.src, y.src, x.dst, y.dst);
+							//System.err.printf("from rule 2: NOT X_%d,%d OR X_%d,%d\n", x.src, y.src, x.dst, y.dst);
 							clauses.add(HornClause3.FT(eq1, eq2));
 						}
 					}
@@ -232,7 +283,7 @@ public class MinimizeNwaMaxSATReal {
 							int eq1 = calc.eqVar(x.src, y.src);
 							int eq2 = calc.eqVar(x.top, y.top);
 							int eq3 = calc.eqVar(x.dst, y.dst);
-							System.err.printf("from rule 3: NOT X_%d,%d OR NOT X_%d,%d OR X_%d,%d\n", x.src, y.src, x.top, y.top, x.dst, y.dst);
+							//System.err.printf("from rule 3: NOT X_%d,%d OR NOT X_%d,%d OR X_%d,%d\n", x.src, y.src, x.top, y.top, x.dst, y.dst);
 							clauses.add(HornClause3.FFT(eq1, eq2, eq3));
 						}
 					}
@@ -248,7 +299,7 @@ public class MinimizeNwaMaxSATReal {
 				for (int j = i; j < numStates; j++)
 					name.put(calc.eqVar(i, j), "X_" + Integer.toString(i) + "," + Integer.toString(j));
 
-			System.err.printf("Clauses\n");
+			System.err.printf("\nClauses:\n");
 			for (HornClause3 x : clauses) {
 				String s0 =	name.get(x.l0);
 				String s1 = name.get(x.l1);
@@ -338,7 +389,7 @@ public class MinimizeNwaMaxSATReal {
 				+ "numInitial 1\n"
 				+ "numFinal 1\n"
 				+ "numITrans 4\n"
-				+ "numCTrans 2\n"
+				+ "numCTrans 1\n"//+ "numCTrans 2\n"
 				+ "numRTrans 1\n"//+ "numRTrans 2\n"
 				+ "initial 0\n"
 				+ "final 4\n"
@@ -346,12 +397,10 @@ public class MinimizeNwaMaxSATReal {
 				+ "iTrans 1 0 4\n"
 				+ "iTrans 2 0 4\n"
 				+ "iTrans 3 0 4\n"
-				+ "cTrans 0 0 1\n"
-				+ "cTrans 0 0 3\n"
-				//+ "rTrans 1 0 0 1\n"
-				//+ "rTrans 3 0 0 3\n"
-				//+ "rTrans 3 0 0 3\n"
-				+ "rTrans 1 0 0 4\n"
+				//+ "cTrans 0 0 1\n"
+				+ "cTrans 0 1 3\n"
+				//+ "rTrans 1 0 0 4\n"
+				+ "rTrans 3 0 0 4\n"
 		));
 		assert nwa != null;
 		// even for debug code, this is really bad code.
@@ -360,8 +409,9 @@ public class MinimizeNwaMaxSATReal {
 		ArrayList<NiceHist> hist = new ArrayList<NiceHist>();
 		hist.add(new NiceHist(0, -1));
 		hist.add(new NiceHist(2, -1));
+		//hist.add(new NiceHist(3, -1));
 		hist.add(new NiceHist(4, -1));
-		hist.add(new NiceHist(1, 0));
+		//hist.add(new NiceHist(1, 0));
 		hist.add(new NiceHist(3, 0));
 		hist.add(new NiceHist(4, 0));
 
@@ -380,61 +430,74 @@ public class MinimizeNwaMaxSATReal {
 	}
 }
 
-// combination of iSet, cSet and rSet as defined in the thesis
+// combination of iSet, cSet, rSet and hSet as defined in the thesis:
+// for a given state q,
+//   iSet = i such that iTrans(q, i, *)
+//   cSet = c such that cTrans(q, c, *)
+//   rSet = q' such that rTrans(q, *, q', *)
+//   hSet = q' such that history(q, q') AND NOT rTrans(q, *, q', *)
 class OutSet {
 	ArrayList<Integer> iSet;
 	ArrayList<Integer> cSet;
-	ArrayList<Integer> rSetSym;
-	ArrayList<Integer> rSetTop;
+	ArrayList<Integer> rSet;
+	ArrayList<Integer> hSet;
 
 	public OutSet() {
 		iSet = new ArrayList<Integer>();
 		cSet = new ArrayList<Integer>();
-		rSetSym = new ArrayList<Integer>();
-		rSetTop = new ArrayList<Integer>();
+		rSet = new ArrayList<Integer>();
+		hSet = new ArrayList<Integer>();
+	}
+
+	private static boolean nonemptyIntersection(ArrayList<Integer> a, ArrayList<Integer> b) {
+		for (int i = 1; i < a.size(); i++) assert a.get(i) > a.get(i-1);
+		for (int i = 1; i < a.size(); i++) assert b.get(i) > b.get(i-1);
+		for (int i = 0, j = 0; i < a.size() && j < b.size();) {
+			if (a.get(i) < b.get(j)) {
+				i++;
+			} else if (a.get(i) > b.get(j)) {
+				j++;
+			} else {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * test for an indication of incompatible out sets (which means
+	 * incompatible states).
+	 */
+	public static boolean outSetsIncompatible(OutSet a, OutSet b) {
+		return (nonemptyIntersection(a.hSet, b.rSet) ||
+				nonemptyIntersection(b.hSet, a.rSet));
+	}
+
+	@Override
+	public String toString() {
+		return "{" + iSet.toString() + " " + cSet.toString() + " " + rSet.toString() + " " + hSet.toString() + "}";
+	}
+}
+
+class ICSet {
+	ArrayList<Integer> iSet;
+	ArrayList<Integer> cSet;
+
+	public ICSet(ArrayList<Integer> iSet, ArrayList<Integer> cSet) {
+		this.iSet = iSet;
+		this.cSet = cSet;
 	}
 
 	@Override
 	public boolean equals(Object obj) {
-		// This tests only equality of i-set and c-set
-		// equality of r-set is not required.
-		if (!(obj instanceof OutSet)) return false;
-		OutSet b = (OutSet) obj;
+		if (obj == null || !(obj instanceof ICSet)) return false;
+		ICSet b = (ICSet) obj;
 		return iSet.equals(b.iSet) && cSet.equals(b.cSet);
 	}
 
 	@Override
 	public int hashCode() {
 		return 31*iSet.hashCode() + cSet.hashCode();
-	}
-
-	private static boolean isSubset(ArrayList<Integer> x, ArrayList<Integer> y) {
-		assert x.size() < y.size();
-		int i = 0, j = 0;
-		while (true) {
-			if (i == x.size()) return true;
-			if (j == y.size()) return false;
-			if (x.get(i) < y.get(j)) return false;
-			if (x.get(i) > y.get(j)) j++;
-			if (x.get(i) == y.get(j)) { i++; j++; }
-		}
-	}
-
-	public static boolean rSetCompatible(OutSet a, OutSet b) {
-		// test "a subsetof b" || "b subsetof a"
-		ArrayList<Integer> x = a.rSetSym;
-		ArrayList<Integer> y = b.rSetSym;
-		if (x.size() == y.size())
-			return x.equals(y);
-		if (x.size() < y.size())
-			return isSubset(x, y);
-		else
-			return isSubset(y, x);
-	}
-
-	@Override
-	public String toString() {
-		return "{" + iSet.toString() + " " + cSet.toString() + " " + rSetSym.toString() + " " + rSetTop.toString() + "}";
 	}
 }
 

@@ -251,7 +251,7 @@ public class NiceConvert<LETTER, STATE> {
 	public ArrayList<NiceHist> computeHistoryStates() {
 		ArrayList<NiceHist> hist = new ArrayList<NiceHist>();
 
-		// TODO: XXX: How to find out if the bottom-of-stack state is a history state?
+		STATE bottomOfStackState = automaton.getEmptyStackState();
 
 		// casting doesn't really make sense here, but it seems this is
 		// currently the only implementation of history states
@@ -259,10 +259,13 @@ public class NiceConvert<LETTER, STATE> {
 		if (!(automaton instanceof IDoubleDeckerAutomaton<?, ?>))
 			throw new IllegalArgumentException("Operand must be an IDoubleDeckerAutomaton.");
 		doubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>) automaton;
-		for (int i = 0; i < oldState.size(); i++)
+		for (int i = 0; i < oldState.size(); i++) {
+			if (doubleDecker.isDoubleDecker(oldState.get(i), bottomOfStackState))
+				hist.add(new NiceHist(i, -1));  // -1 is bottom-of-stack
 			for (int j = 0; j < oldState.size(); j++)
 				if (doubleDecker.isDoubleDecker(oldState.get(i), oldState.get(j)))
 					hist.add(new NiceHist(i, j));
+		}
 
 		return hist;
 	}
