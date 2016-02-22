@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
+import java.util.ArrayList;
+
 import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 
@@ -54,7 +56,7 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
 		NiceConvert<LETTER, STATE> converter = new NiceConvert<LETTER, STATE>(services, stateFactory, automaton);
 		NiceNWA nwa = converter.getNiceNWA();
 		// this should not be like this, but...
-		NiceHist[] history = converter.computeHistoryStates();
+		ArrayList<NiceHist> history = converter.computeHistoryStates();
 
 		/*logger.info("converted automaton follows");
 		logger.info(NicePrint.makeString(nwa));

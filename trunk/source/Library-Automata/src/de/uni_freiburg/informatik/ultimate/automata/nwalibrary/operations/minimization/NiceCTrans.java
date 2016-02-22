@@ -48,12 +48,18 @@ public class NiceCTrans implements Comparable<NiceCTrans> {
 	public NiceCTrans(int src, int sym, int dst)
 		{ this.src = src; this.sym = sym; this.dst = dst; }
 
-	public boolean equals(NiceCTrans b)
-		{ return src == b.src && sym == b.sym && dst == b.dst; }
+	@Override
+	public boolean equals(Object obj) {
+		if (!(obj instanceof NiceCTrans))
+			return false;
+		NiceCTrans b = (NiceCTrans) obj;
+		return src == b.src && sym == b.sym && dst == b.dst;
+	}
 
 	@Override
-	public int hashCode()
-		{ return (src * 31 + sym) * 31 + dst; }
+	public int hashCode() {
+		return (src * 31 + sym) * 31 + dst;
+	}
 
 	@Override
 	public int compareTo(NiceCTrans b)

@@ -248,8 +248,10 @@ public class NiceConvert<LETTER, STATE> {
 	}
 
 	// compute history states, using a INestedWordAutomaton based implementation
-	public NiceHist[] computeHistoryStates() {
+	public ArrayList<NiceHist> computeHistoryStates() {
 		ArrayList<NiceHist> hist = new ArrayList<NiceHist>();
+
+		// TODO: XXX: How to find out if the bottom-of-stack state is a history state?
 
 		// casting doesn't really make sense here, but it seems this is
 		// currently the only implementation of history states
@@ -262,6 +264,6 @@ public class NiceConvert<LETTER, STATE> {
 				if (doubleDecker.isDoubleDecker(oldState.get(i), oldState.get(j)))
 					hist.add(new NiceHist(i, j));
 
-		return (NiceHist[]) hist.toArray();
+		return hist;
 	}
 }

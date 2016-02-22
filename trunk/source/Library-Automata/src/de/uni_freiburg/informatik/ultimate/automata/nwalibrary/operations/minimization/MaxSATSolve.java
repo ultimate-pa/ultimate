@@ -128,7 +128,6 @@ public class MaxSATSolve {
         return Sat.OK;
     }
 
-    /* helper for setAndPropagate */
     private Sat propagate() {
         /* NOTE: the termination condition is "flexible" since the
          * loop body might insert new elements into `op' */
@@ -171,6 +170,7 @@ public class MaxSATSolve {
                 return null;
         if (propagate() == Sat.UNSATISFIABLE)
             return null;
+        op.clear();
         /* dumb chooser of next variable: iterate from beginning to end */
         for (int v = 0; v < numVars; v++)
             if (assign[v] == Assign.NONE)
