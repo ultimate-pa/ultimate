@@ -693,4 +693,16 @@ public class IntegerTranslation extends AExpressionTranslation {
 		return inRange;
 	}
 
+	@Override
+	public Expression extractBits(ILocation loc, Expression operand, int high, int low) {
+		// we probably also have to provide information if input is signed/unsigned
+		throw new UnsupportedOperationException("not yet implemented");
+	}
+
+	@Override
+	public Expression concatBits(ILocation loc, List<Expression> dataChunks, int size) {
+		// we probably also have to provide information if input is signed/unsigned
+		throw new UnsupportedOperationException("not yet implemented");
+	}
+
 }

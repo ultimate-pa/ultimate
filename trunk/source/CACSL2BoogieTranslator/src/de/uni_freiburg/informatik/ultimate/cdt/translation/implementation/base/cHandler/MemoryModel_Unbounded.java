@@ -30,6 +30,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
@@ -40,27 +41,19 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class MemoryModel {
-	
-	protected final static String s_ReadProcedurePrefix = "read~";
-	protected final static String s_WriteProcedurePrefix = "write~";
-	private final int m_MemoryModelResolution;
-	
-	protected final TypeSizes m_TypeSizes;
+public class MemoryModel_Unbounded extends AMemoryModel {
 	
 	private final HeapDataArray m_IntegerArray;
 	private final HeapDataArray m_FloatingArray;
-	private final HeapDataArray m_PointerArray;
 	
-	public MemoryModel(int memoryModelResolution, TypeSizes typeSizes, ITypeHandler typeHandler, AExpressionTranslation expressionTranslation) {
-		m_MemoryModelResolution = memoryModelResolution;
-		m_TypeSizes = typeSizes;
+	public MemoryModel_Unbounded(TypeSizes typeSizes, ITypeHandler typeHandler, AExpressionTranslation expressionTranslation) {
+		super(typeSizes, typeHandler, expressionTranslation);
 		
-
 		ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		/*
 		 * In our Lindenmann-Hoenicke memory model, we use an array for all
@@ -80,64 +73,14 @@ public class MemoryModel {
         
        	m_IntegerArray = new HeapDataArray(SFO.INT, intArrayType, 0);
        	m_FloatingArray = new HeapDataArray(SFO.REAL, realArrayType, 0);
-       	m_PointerArray = new HeapDataArray(SFO.POINTER, typeHandler.constructPointerType(ignoreLoc), 0);
+	}
+	
+	@Override
+	public String getProcedureSuffix(PRIMITIVE primitive) {
+		return getDataHeapArray(primitive).getName();
 	}
        	
-	public int getMemoryModelResolution() {
-		return m_MemoryModelResolution;
-	}
-	
-	public String getReadProcedureName(PRIMITIVE primitive) {
-		final HeapDataArray hda = getDataHeapArray(primitive);
-		final String result;
-		if (getMemoryModelResolution() == 0) {
-			result = s_ReadProcedurePrefix + hda.getName();
-		} else {
-			int size = m_TypeSizes.getSize(primitive);
-			result = s_ReadProcedurePrefix + hda.getName() + size;
-		}
-		return result;
-	}
-
-
-	public String getWriteProcedureName(PRIMITIVE primitive) {
-		final HeapDataArray hda = getDataHeapArray(primitive);
-		final String result;
-		if (getMemoryModelResolution() == 0) {
-			result = s_WriteProcedurePrefix + hda.getName();
-		} else {
-			int size = m_TypeSizes.getSize(primitive);
-			result = s_WriteProcedurePrefix + hda.getName() + size;
-		}
-		return result;
-	}
-	
-	public String getReadPointerProcedureName() {
-		final HeapDataArray hda = m_PointerArray;
-		final String result;
-		if (getMemoryModelResolution() == 0) {
-			result = s_ReadProcedurePrefix + hda.getName();
-		} else {
-			int size = m_TypeSizes.getSizeOfPointer();
-			result = s_ReadProcedurePrefix + hda.getName() + size;
-		}
-		return result;
-	}
-
-
-	public String getWritePointerProcedureName() {
-		final HeapDataArray hda = m_PointerArray;
-		final String result;
-		if (getMemoryModelResolution() == 0) {
-			result = s_WriteProcedurePrefix + hda.getName();
-		} else {
-			int size = m_TypeSizes.getSizeOfPointer();
-			result = s_WriteProcedurePrefix + hda.getName() + size;
-		}
-		return result;
-	}
-
-	
+	@Override
 	public HeapDataArray getDataHeapArray(PRIMITIVE primitive) {
 		if (primitive.isIntegertype()) {
 			return m_IntegerArray;
@@ -148,19 +91,35 @@ public class MemoryModel {
 		}
 	}
 	
-	public HeapDataArray getPointerHeapArray() {
-		return m_PointerArray;
-	}
 
-	public ArrayList<HeapDataArray> getDataHeapArrays(RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
-		ArrayList<HeapDataArray> result = new ArrayList<>();
-		if (requiredMemoryModelFeatures.isPointerOnHeapRequired()) {
-			result.add(getPointerHeapArray());
-		}
+	
+	@Override
+	public List<ReadWriteDefinition> getBytesizesStoredInNonPointerHeapDataArray(HeapDataArray hda, RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
+		final HashRelation<Integer, PRIMITIVE> bytesizes2primitives = new HashRelation<>();
 		for (PRIMITIVE primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
-			result.add(getDataHeapArray(primitive));
+			final int bytesize = 0;
+			if (getDataHeapArray(primitive) == hda) {
+				bytesizes2primitives.addPair(bytesize, primitive);
+			}
+		}
+		List<ReadWriteDefinition> result = new ArrayList<>();
+		for (Integer bytesize : bytesizes2primitives.getDomain()) {
+			final PRIMITIVE representative = bytesizes2primitives.getImage(bytesize).iterator().next();
+			final String procedureName = getProcedureSuffix(representative);
+			final ASTType astType = m_TypeHandler.ctype2asttype(LocationFactory.createIgnoreCLocation(), new CPrimitive(representative));
+			result.add(new ReadWriteDefinition(procedureName, bytesize, astType, bytesizes2primitives.getImage(bytesize)));
 		}
 		return result;
 	}
+
+	@Override
+	protected int bytesizeOfStoredPointerComponents() {
+		return 0;
+	}
+
+
+
+	
+	
 
 }

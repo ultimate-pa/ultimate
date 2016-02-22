@@ -618,5 +618,14 @@ public abstract class AExpressionTranslation {
 		}
 		return result;
 	}
-	
+
+	/**
+	 * Returns an {@link Expression} that represents the following bits of 
+	 * operand high-1, high-2, ..., low+1, low (i.e., the bit at the higher 
+	 * index is not included, the bit at the lower index is included).  
+	 */
+	public abstract Expression extractBits(ILocation loc, Expression operand, int high, int low);
+
+	public abstract Expression concatBits(ILocation loc, List<Expression> dataChunks, int size);
+
 }
