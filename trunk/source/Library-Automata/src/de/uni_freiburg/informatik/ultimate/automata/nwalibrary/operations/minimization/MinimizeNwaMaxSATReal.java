@@ -50,27 +50,27 @@ public class MinimizeNwaMaxSATReal {
 
 	/**
 	 * @param inNWA input NWA. The NWA is mutated (transitions sorted).
-	 *        Give a (shallow) copy if mutation isn't possible for you.
-	 * @param precalculated history states for <code>inNWA</code>.
-	 *        The list is mutated (sorted by <code>lin</code>,
-	 *        then by <code>hier</code>). Give a (shallow) copy if mutation
-	 *        isn't possible for you.
+	 * Give a (shallow) copy if mutation isn't possible for you.
 	 *
-	 * @return A (consistent) NiceClasses which represents
-	 *         the minimized automaton.
+	 * @param history precalculated history states for <code>inNWA</code>.
+	 * The list is mutated (sorted by <code>lin</code>, <code>hier</code>).
+	 * Give a (shallow) copy if mutation isn't possible for you.
+	 *
+	 * @return A (consistent) NiceClasses which represents the minimized
+	 * automaton.
 	 */
 	public static NiceClasses minimize(NiceNWA inNWA, ArrayList<NiceHist> history) {
 		assert NiceHist.checkHistoryStatesConsistency(inNWA, history);
-		// "assert" that there are no transitions which are never taken
 		{
-			HashSet<NiceHist> hs = new HashSet<NiceHist>();
-			for (NiceHist h : history)
-				hs.add(h);
-			for (NiceRTrans x : inNWA.rTrans) {
-				if (!hs.contains(new NiceHist(x.src, x.top)))
-					System.err.printf("missing %d %d\n",  x.src, x.top);
-				assert hs.contains(new NiceHist(x.src, x.top));
-			}
+		// "assert" that there are no transitions which are never taken
+		HashSet<NiceHist> hs = new HashSet<NiceHist>();
+		for (NiceHist h : history)
+			hs.add(h);
+		for (NiceRTrans x : inNWA.rTrans) {
+			if (!hs.contains(new NiceHist(x.src, x.top)))
+				System.err.printf("missing %d %d\n",  x.src, x.top);
+			assert hs.contains(new NiceHist(x.src, x.top));
+		}
 		}
 
 		// some "imports"
@@ -96,11 +96,11 @@ public class MinimizeNwaMaxSATReal {
 		// IMPORTANT. Sort inputs
 		Arrays.sort(iTrans, NiceITrans::compareSrcSymDst);
 		Arrays.sort(cTrans, NiceCTrans::compareSrcSymDst);
-		Arrays.sort(rTrans, NiceRTrans::compareSrcSymTopDst);
+		Arrays.sort(rTrans, NiceRTrans::compareSrcTopSymDst);
 
 		history.sort(NiceHist::compareLinHier);
 
-		// All "outgoing" transitions, grouped by src, then sorted by src, sym, (top), dst
+		// All "outgoing" transitions, grouped by src, then sorted by (top), sym, dst
 		ArrayList<ArrayList<NiceITrans>> iTransOut = new ArrayList<ArrayList<NiceITrans>>();
 		ArrayList<ArrayList<NiceCTrans>> cTransOut = new ArrayList<ArrayList<NiceCTrans>>();
 		ArrayList<ArrayList<NiceRTrans>> rTransOut = new ArrayList<ArrayList<NiceRTrans>>();
@@ -121,43 +121,23 @@ public class MinimizeNwaMaxSATReal {
 		for (int i = 0; i < numCTrans; i++)	if (i == 0 || cTrans[i-1].src != cTrans[i].src || cTrans[i-1].sym != cTrans[i].sym) outSet[cTrans[i].src].cSet.add(cTrans[i].sym);
 		for (int i = 0; i < numRTrans; i++)	if (i == 0 || rTrans[i-1].src != rTrans[i].src || rTrans[i-1].top != rTrans[i].top) outSet[rTrans[i].src].rSet.add(rTrans[i].top);
 
+		{
 		// make the hSet, i.e. those history states except bottom-of-stack
 		// symbol which are not in the outgoing return transitions as
 		// top-of-stack symbol.
-		{
 		int i = 0;
-		for (int j = 0; i < history.size() && j < numRTrans;) {
-			if (history.get(i).hier == -1) {
-				// bottom-of-stack state, which is never in RTrans
-				i++;
-				continue;
+		for (NiceHist h : history) {
+			for (; i < numRTrans; i++) {
+				NiceRTrans r = rTrans[i];
+				if (h.lin < r.src || (h.lin == r.src && h.hier <= r.top))
+					break;
 			}
-			int diff = history.get(i).lin - rTrans[j].src;
-			if (diff == 0) diff = history.get(i).hier - rTrans[j].top;
-			if (diff < 0) {
-				//System.err.printf("Adding to hSet(%d) %d\n", history.get(i).lin, history.get(i).hier);
-				outSet[history.get(i).lin].hSet.add(history.get(i).hier);
-				i++;
-			} else if (diff > 0) {
-				System.err.printf("state %d has %d in rTrans but not in history\n", history.get(i).lin, history.get(i).hier);
-				System.err.printf("SHOULD NOT HAPPEN");
-				assert false;
-				j++;
-			} else {
-				//System.err.printf("Both contain %d %d %d %d\n", rTrans[j].src, rTrans[j].top, history.get(i).lin, history.get(i).hier);
-				i++;
-				j++;
-			}
-		}
-		for (; i < history.size();) {
-			if (history.get(i).hier == -1) {
-				// bottom-of-stack state, which is never in RTrans
-				i++;
-				continue;
-			}
-			//System.err.printf("Adding to hSet(%d) %d\n", history.get(i).lin, history.get(i).hier);
-			outSet[history.get(i).lin].hSet.add(history.get(i).hier);
-			i++;
+			if (i == numRTrans
+					|| h.lin < rTrans[i].src
+					|| (h.lin == rTrans[i].src
+						&& h.hier < rTrans[i].top))
+				if (h.hier >= 0) // could be been bottom-of-stack (-1)
+					outSet[h.lin].hSet.add(h.hier);
 		}
 		}
 		/*
@@ -312,7 +292,7 @@ public class MinimizeNwaMaxSATReal {
 		Assign[] assigned = new MaxSATSolve(calc.getNumEqVars(), clArray).solve();
 
 		if (assigned == null) {
-			System.err.println("could not solve");
+			System.err.println("instance could not be solved");
 			return null;
 		}
 
@@ -389,18 +369,18 @@ public class MinimizeNwaMaxSATReal {
 				+ "numInitial 1\n"
 				+ "numFinal 1\n"
 				+ "numITrans 4\n"
-				+ "numCTrans 1\n"//+ "numCTrans 2\n"
-				+ "numRTrans 1\n"//+ "numRTrans 2\n"
+				+ "numCTrans 2\n"
+				+ "numRTrans 2\n"
 				+ "initial 0\n"
 				+ "final 4\n"
 				+ "iTrans 0 0 2\n"
 				+ "iTrans 1 0 4\n"
 				+ "iTrans 2 0 4\n"
 				+ "iTrans 3 0 4\n"
-				//+ "cTrans 0 0 1\n"
+				+ "cTrans 0 0 1\n"
 				+ "cTrans 0 1 3\n"
-				//+ "rTrans 1 0 0 4\n"
-				+ "rTrans 3 0 0 4\n"
+				+ "rTrans 1 0 0 4\n"
+				+ "rTrans 3 0 0 3\n"
 		));
 		assert nwa != null;
 		// even for debug code, this is really bad code.
@@ -409,9 +389,9 @@ public class MinimizeNwaMaxSATReal {
 		ArrayList<NiceHist> hist = new ArrayList<NiceHist>();
 		hist.add(new NiceHist(0, -1));
 		hist.add(new NiceHist(2, -1));
-		//hist.add(new NiceHist(3, -1));
+		hist.add(new NiceHist(3, -1));
 		hist.add(new NiceHist(4, -1));
-		//hist.add(new NiceHist(1, 0));
+		hist.add(new NiceHist(1, 0));
 		hist.add(new NiceHist(3, 0));
 		hist.add(new NiceHist(4, 0));
 
@@ -451,7 +431,8 @@ class OutSet {
 
 	private static boolean nonemptyIntersection(ArrayList<Integer> a, ArrayList<Integer> b) {
 		for (int i = 1; i < a.size(); i++) assert a.get(i) > a.get(i-1);
-		for (int i = 1; i < a.size(); i++) assert b.get(i) > b.get(i-1);
+		for (int i = 1; i < b.size(); i++) assert b.get(i) > b.get(i-1);
+
 		for (int i = 0, j = 0; i < a.size() && j < b.size();) {
 			if (a.get(i) < b.get(j)) {
 				i++;

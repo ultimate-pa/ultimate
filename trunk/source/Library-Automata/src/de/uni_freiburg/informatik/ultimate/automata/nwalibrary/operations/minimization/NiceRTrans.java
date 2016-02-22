@@ -75,4 +75,11 @@ public class NiceRTrans implements Comparable<NiceRTrans> {
 		if (a.top != b.top) return a.top - b.top;
 		return a.dst - b.dst;
 	}
+
+	public static int compareSrcTopSymDst(NiceRTrans a, NiceRTrans b) {
+		if (a.src != b.src) return a.src - b.src;
+		if (a.top != b.top) return a.top - b.top;
+		if (a.sym != b.sym) return a.sym - b.sym;
+		return a.dst - b.dst;
+	}
 }

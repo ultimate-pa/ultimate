@@ -35,7 +35,7 @@ import java.util.ArrayList;
  * @author stimpflj
  *
  */
-public class NiceHist implements Comparable<NiceHist> {
+public class NiceHist {
 	/** linear state */
 	int lin;
 
@@ -63,12 +63,6 @@ public class NiceHist implements Comparable<NiceHist> {
 		return 31 * lin + hier;
 	}
 
-	@Override
-	public int compareTo(NiceHist b) {
-		return NiceHist.compareLinHier(this, b);
-	}
-
-
 	public static int compareLinHier(NiceHist a, NiceHist b) {
 		if (a.lin != b.lin) return a.lin - b.lin;
 		return a.hier - b.hier;
@@ -76,7 +70,10 @@ public class NiceHist implements Comparable<NiceHist> {
 
 	/**
 	 * @param nwa
-	 * @param history An array of NiceHist sorted by linear, then hierarchical states
+	 *
+	 * @param history An array of NiceHist sorted by linear, then hierarchical
+	 * states
+	 *
 	 * @return whether <code>history</code> is consistent with <code>nwa</code>
 	 * NOTE: history states can be -1. This means "bottom-of-stack" state.
 	 */
