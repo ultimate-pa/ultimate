@@ -12,13 +12,12 @@
 int main() {
 	char *src = malloc(3*sizeof(char));
 	char *dst = malloc(3*sizeof(char));
-	*src = 17;
-	*(src+1) = 42;
+	char *dstPlusTwo = dst+2;
+	*dstPlusTwo = 23;
 	void *res = memcpy(dst,src,2);
-	// assert dst == res;
-	char snd = *(src+1);
-	printf("%d\n",snd);
-	//@ assert snd == 42;
+	char dst_third = *(dstPlusTwo);
+	printf("%d\n",dst_third);
+	//@ assert dst_third == 23;
 	free(src);
 	free(dst);
 	return 0;
