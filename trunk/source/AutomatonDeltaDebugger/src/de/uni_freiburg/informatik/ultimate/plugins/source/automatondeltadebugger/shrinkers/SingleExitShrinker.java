@@ -69,14 +69,14 @@ public class SingleExitShrinker<LETTER, STATE>
 			createAutomaton(final List<Pair<STATE, STATE>> list) {
 		// create fresh automaton
 		final INestedWordAutomaton<LETTER, STATE> automaton = mFactory.create();
-
+		
 		/*
 		 * data structures which contains all transitive chains; after
 		 * initialization
 		 */
 		final HashMap<STATE, STATE> left2right = new HashMap<STATE, STATE>();
 		HashMap<STATE, STATE> right2left = new HashMap<STATE, STATE>();
-
+		
 		/*
 		 * add states which are not a left-hand side in the list; also set up a
 		 * data structures which contain all transitive chains
@@ -86,11 +86,11 @@ public class SingleExitShrinker<LETTER, STATE>
 		for (final Pair<STATE, STATE> pair : list) {
 			final STATE source = pair.getFirst();
 			final STATE target = pair.getSecond();
-
+			
 			// left-hand side state will be removed
 			final boolean wasPresent = states.remove(source);
 			assert wasPresent : "Pairs in the list should be left-unique.";
-
+			
 			// update transitive chains
 			STATE lhs = right2left.get(source);
 			STATE rhs = left2right.get(target);
@@ -107,73 +107,83 @@ public class SingleExitShrinker<LETTER, STATE>
 		}
 		right2left = null; // not needed anymore
 		mFactory.addStates(automaton, states);
-
+		
 		// add transitions which are still unconcerned by removing the states
 		mFactory.addFilteredTransitions(automaton, mAutomaton);
-
+		
 		// add transitions which close a (transitive) chain of removed states
 		for (final Pair<STATE, STATE> pair : list) {
 			final STATE source = pair.getFirst();
 			final STATE transitiveTarget = left2right.get(source);
-			if (transitiveTarget == null) {
+			if ((transitiveTarget == null) ||
+					(!states.contains(transitiveTarget))) {
 				// source state is no entry of a transitive chain, ignore it
 				continue;
 			}
 			// add missing transitions and bend them to transitive chain target
-			for (final IncomingInternalTransition<LETTER, STATE> trans :
-					mAutomaton.internalPredecessors(source)) {
-				mFactory.addInternalTransition(automaton, trans.getPred(),
-						trans.getLetter(), transitiveTarget);
+			for (final IncomingInternalTransition<LETTER, STATE> trans : mAutomaton
+					.internalPredecessors(source)) {
+				final STATE pred = trans.getPred();
+				if (states.contains(pred)) {
+					mFactory.addInternalTransition(automaton, pred,
+							trans.getLetter(), transitiveTarget);
+				}
 			}
-			for (final IncomingCallTransition<LETTER, STATE> trans :
-					mAutomaton.callPredecessors(source)) {
-				mFactory.addCallTransition(automaton, trans.getPred(),
-						trans.getLetter(), transitiveTarget);
+			for (final IncomingCallTransition<LETTER, STATE> trans : mAutomaton
+					.callPredecessors(source)) {
+				final STATE pred = trans.getPred();
+				if (states.contains(pred)) {
+					mFactory.addCallTransition(automaton, pred,
+							trans.getLetter(), transitiveTarget);
+				}
 			}
-			for (final IncomingReturnTransition<LETTER, STATE> trans :
-					mAutomaton.returnPredecessors(source)) {
-				mFactory.addReturnTransition(automaton, trans.getLinPred(),
-						trans.getHierPred(), trans.getLetter(),
-						transitiveTarget);
+			for (final IncomingReturnTransition<LETTER, STATE> trans : mAutomaton
+					.returnPredecessors(source)) {
+				final STATE linPred = trans.getLinPred();
+				final STATE hierPred = trans.getHierPred();
+				if (states.contains(linPred) && states.contains(hierPred)) {
+					mFactory.addReturnTransition(automaton, trans.getLinPred(),
+							hierPred, trans.getLetter(), transitiveTarget);
+				}
 			}
 		}
-
+		
 		return automaton;
 	}
-
+	
 	@Override
 	public List<Pair<STATE, STATE>> extractList() {
 		final ArrayList<Pair<STATE, STATE>> list =
 				new ArrayList<Pair<STATE, STATE>>();
-
+				
 		/*
 		 * check that there is exactly one internal/call/return successor which
 		 * is not a self-loop
 		 */
 		chooseState: for (final STATE state : mAutomaton.getStates()) {
 			STATE target = null;
-			for (final OutgoingInternalTransition<LETTER, STATE> trans :
-					mAutomaton.internalSuccessors(state)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> trans : mAutomaton
+					.internalSuccessors(state)) {
 				if ((target != null) && (!target.equals(state))) {
 					continue chooseState;
 				}
 				target = trans.getSucc();
 			}
-			for (final OutgoingCallTransition<LETTER, STATE> trans :
-					mAutomaton.callSuccessors(state)) {
+			for (final OutgoingCallTransition<LETTER, STATE> trans : mAutomaton
+					.callSuccessors(state)) {
 				if ((target != null) && (!target.equals(state))) {
 					continue chooseState;
 				}
 				target = trans.getSucc();
 			}
-			for (final OutgoingReturnTransition<LETTER, STATE> trans :
-					mAutomaton.returnSuccessors(state)) {
+			for (final OutgoingReturnTransition<LETTER, STATE> trans : mAutomaton
+					.returnSuccessors(state)) {
 				if ((target != null) && (!target.equals(state))) {
 					continue chooseState;
 				}
 				target = trans.getSucc();
 			}
-
+			
 			if (target != null) {
 				// state has exactly one successor, add the pair
 				list.add(new Pair<STATE, STATE>(state, target));
