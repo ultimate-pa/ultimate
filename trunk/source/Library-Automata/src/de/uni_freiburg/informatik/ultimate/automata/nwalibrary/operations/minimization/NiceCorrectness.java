@@ -153,10 +153,11 @@ public class NiceCorrectness {
 				// rules 1 and 2, partly
 				assert icSet[q1].equals(icSet[q2]);
 				// rule 3, partly
-				System.err.printf("outSet[%d].rSet: %s\n", q1, outSet[q1].rSet.toString());
+				/*System.err.printf("outSet[%d].rSet: %s\n", q1, outSet[q1].rSet.toString());
 				System.err.printf("outSet[%d].hSet: %s\n", q1, outSet[q1].hSet.toString());
 				System.err.printf("outSet[%d].rSet: %s\n", q2, outSet[q2].rSet.toString());
 				System.err.printf("outSet[%d].hSet: %s\n", q2, outSet[q2].hSet.toString());
+				*/
 				assert !OutSet.outSetsIncompatible(outSet[q1], outSet[q2]);
 			}
 			for (int i = 0; i < cls.size(); i++) {
@@ -164,6 +165,10 @@ public class NiceCorrectness {
 					int q1 = cls.get(i);
 					int q2 = cls.get(j);
 					assert q1 != q2;
+					if (OutSet.outSetsIncompatible(outSet[q1], outSet[q2])) {
+						// XXX: OBACHT!
+						continue;
+					}
 					// rule 1, rest
 					for (NiceITrans x : iTransOut.get(q1)) {
 						for (NiceITrans y : iTransOut.get(q2)) {
@@ -190,13 +195,6 @@ public class NiceCorrectness {
 							if (x.sym == y.sym) {
 								assert x.src == q1;
 								assert y.src == q2;
-
-								if (!(classOf[x.top] != classOf[y.top]
-										|| classOf[x.dst] == classOf[y.dst])) {
-									System.err.printf("x.src %d, y.src %d, x.dst %d, y.dst %d\n", x.src, y.src, x.dst, y.dst);
-									System.err.flush();
-								}
-
 								assert classOf[x.top] != classOf[y.top]
 									|| classOf[x.dst] == classOf[y.dst];
 							}

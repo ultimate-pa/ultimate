@@ -55,12 +55,17 @@ public class NwaMinimizationClausesGenerator {
 		for (Assign x : assignments)
 			assert x == Assign.TRUE || x == Assign.FALSE;
 
+		/*for (int i : new int[]{16, 29, 41, 49, 59, 70, 81, 85}) {
+			System.err.printf("(%d,%d) %d\n", i, 70,
+					assignments[calc.eqVar(i, 70)] == Assign.TRUE ? 1 : 0);
+		}*/
+
 		NiceUnionFind unionFind = new NiceUnionFind(numStates);
 		for (int i = 0; i < numStates; i++) {
 			for (int j = i+1; j < numStates; j++) {
 				int eqVar = calc.eqVar(i, j);
 				if (assignments[eqVar] == Assign.TRUE) {
-					System.err.printf("merging X_%d,%d\n", i, j);
+					//System.err.printf("merging X_%d,%d\n", i, j);
 					unionFind.merge(i, j);
 				}
 			}
@@ -70,12 +75,9 @@ public class NwaMinimizationClausesGenerator {
 	}
 
 	/**
-	 * @param inNWA input NWA. The NWA is mutated (transitions sorted).
-	 * Give a (shallow) copy if mutation isn't possible for you.
+	 * @param inNWA input NWA.
 	 *
 	 * @param history precalculated history states for <code>inNWA</code>.
-	 * The list is mutated (sorted by <code>lin</code>, <code>hier</code>).
-	 * Give a (shallow) copy if mutation isn't possible for you.
 	 *
 	 * @return A (consistent) NiceClasses which represents the minimized
 	 * automaton.
@@ -104,9 +106,11 @@ public class NwaMinimizationClausesGenerator {
 		int numITrans = inNWA.iTrans.length;
 		int numCTrans = inNWA.cTrans.length;
 		int numRTrans = inNWA.rTrans.length;
-		NiceITrans[] iTrans = inNWA.iTrans;
-		NiceCTrans[] cTrans = inNWA.cTrans;
-		NiceRTrans[] rTrans = inNWA.rTrans;
+		NiceITrans[] iTrans = inNWA.iTrans.clone();
+		NiceCTrans[] cTrans = inNWA.cTrans.clone();
+		NiceRTrans[] rTrans = inNWA.rTrans.clone();
+
+		history = new ArrayList<NiceHist>(history);
 
 		// IMPORTANT. Sort inputs
 		Arrays.sort(iTrans, NiceITrans::compareSrcSymDst);
@@ -198,15 +202,16 @@ public class NwaMinimizationClausesGenerator {
 		// we don't need to emit clauses for symmetry since we identify i~j with j~i in EqVarCalc
 
 		// clauses for transitivity
+		// TODO: why does it only work with 0-based iterations for all three? is there something wrong somewhere else?
 		for (int i = 0; i < numStates; i++) {
-			for (int j = i+1; j < numStates; j++) {
-				for (int k = j+1; k < numStates; k++) {
+			for (int j = 0; j < numStates; j++) {
+				for (int k = 0; k < numStates; k++) {
 					int eq1 = calc.eqVar(i, j);
 					int eq2 = calc.eqVar(j, k);
 					int eq3 = calc.eqVar(i, k);
 					builder.addClauseFFT(eq1, eq2, eq3);
-					builder.addClauseFFT(eq1, eq3, eq2);
-					builder.addClauseFFT(eq1, eq3, eq1);
+					builder.addClauseFFT(eq2, eq3, eq2);
+					builder.addClauseFFT(eq3, eq1, eq1);
 				}
 			}
 		}
@@ -299,7 +304,7 @@ public class NwaMinimizationClausesGenerator {
 			}
 		}
 
-
+		/*
 		{
 			HashMap<Integer, String> name = new HashMap<Integer, String>();
 			name.put(0, "F");
@@ -316,7 +321,7 @@ public class NwaMinimizationClausesGenerator {
 				System.err.printf("NOT %s OR NOT %s OR %s\n", s0, s1, s2);
 			}
 		}
-
+		*/
 
 		ArrayList<HornClause3> clauses = builder.getClauses();
 		//System.err.printf("number of clauses: %d\n", clauses.size());

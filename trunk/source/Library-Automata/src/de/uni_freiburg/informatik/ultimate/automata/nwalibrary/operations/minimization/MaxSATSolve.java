@@ -182,6 +182,12 @@ public class MaxSATSolve {
                     if (setAndPropagate(v, Assign.FALSE) == Sat.UNSATISFIABLE)
                         /* should not happen */
                         assert false;
+        /* test */
+        for (HornClause3 c : clauses) {
+        	assert assign[c.l0] == Assign.FALSE
+        			|| assign[c.l1] == Assign.FALSE
+        			|| assign[c.l2] == Assign.TRUE;
+        }
         return assign;
     }
 
