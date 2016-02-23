@@ -525,10 +525,10 @@ public class MemoryHandler {
 		IdentifierExpression srcPtrExpr = new IdentifierExpression(ignoreLoc, srcPtr);
 
 		Expression currentDest = doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc, destPtrExpr, 
-				new RValue(loopCtrExpr, m_TypeSizeAndOffsetComputer.getSize_T()), 
+				new RValue(loopCtrExpr, m_ExpressionTranslation.getCTypeOfPointerComponents()), 
 				new CPrimitive(PRIMITIVE.VOID));
 		Expression currentSrc = doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc, srcPtrExpr, 
-				new RValue(loopCtrExpr, m_TypeSizeAndOffsetComputer.getSize_T()), 
+				new RValue(loopCtrExpr, m_ExpressionTranslation.getCTypeOfPointerComponents()), 
 				new CPrimitive(PRIMITIVE.VOID));
 		for (HeapDataArray hda : heapDataArrays) {
 			String memArrayName = hda.getVariableName();

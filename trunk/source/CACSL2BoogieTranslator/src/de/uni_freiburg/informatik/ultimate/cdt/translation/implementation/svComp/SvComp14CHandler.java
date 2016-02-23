@@ -287,7 +287,7 @@ public class SvComp14CHandler extends CHandler {
 			return main.dispatch(node.getArguments()[0]);
 		}
 		
-		if (methodName.equals("__builtin_memcpy")) {
+		if (methodName.equals("__builtin_memcpy") || methodName.equals("memcpy")) {
 			((CHandler) main.cHandler).mMemoryHandler.setDeclareMemCpy();
 
 			assert node.getArguments().length == 3;
