@@ -127,16 +127,14 @@ public class MinimizeNwaMaxSATReal {
 		// top-of-stack symbol.
 		int i = 0;
 		for (NiceHist h : history) {
-			for (; i < numRTrans; i++) {
-				NiceRTrans r = rTrans[i];
-				if (h.lin < r.src || (h.lin == r.src && h.hier <= r.top))
+			for (; i < numRTrans; i++)
+				if (h.lin < rTrans[i].src
+						|| (h.lin == rTrans[i].src && h.hier <= rTrans[i].top))
 					break;
-			}
 			if (i == numRTrans
 					|| h.lin < rTrans[i].src
-					|| (h.lin == rTrans[i].src
-						&& h.hier < rTrans[i].top))
-				if (h.hier >= 0) // could be been bottom-of-stack (-1)
+					|| (h.lin == rTrans[i].src && h.hier < rTrans[i].top))
+				if (h.hier >= 0) // could be bottom-of-stack (-1)
 					outSet[h.lin].hSet.add(h.hier);
 		}
 		}
@@ -169,8 +167,8 @@ public class MinimizeNwaMaxSATReal {
 
 		// clauses for reflexivity
 		for (int i = 0; i < numStates; i++) {
-			int eqVar = calc.eqVar(i, i);
-			clauses.add(HornClause3.T(eqVar));
+			int eq1 = calc.eqVar(i, i);
+			clauses.add(HornClause3.T(eq1));
 		}
 
 		// we don't need to emit clauses for symmetry since we identify i~j with j~i in EqVarCalc
@@ -191,22 +189,24 @@ public class MinimizeNwaMaxSATReal {
 		for (int i = 0; i < numStates; i++) {
 			for (int j = i+1; j < numStates; j++) {
 				if (isFinal[i] != isFinal[j]) {
-					clauses.add(HornClause3.F(calc.eqVar(i, j)));
+					int eq1 = calc.eqVar(i, j);
+					clauses.add(HornClause3.F(eq1));
 				}
 			}
 		}
 
 		// separate states with differing out sets
 		// NOTE: differing out sets means either their iSets or their cSets
-		// are not equal. It could still be the case that their rSets are not
-		// "compatible" but we handle that only later
+		// are not equal. If they are equal, it could still be the case that
+		// their rSets are not "compatible" but we handle that only later.
 		{
 			ArrayList<Integer> tmp = new ArrayList<Integer>();
 			for (ArrayList<Integer> group : byICSet.values()) {
 				for (int q1 : tmp) {
 					for (int q2 : group) {
 						//System.err.printf("outSet(%d) != outSet(%d), so adding clause: NOT X_%d,%d\n", q1, q2, q1, q2);
-						clauses.add(HornClause3.F(calc.eqVar(q1, q2)));
+						int eq1 = calc.eqVar(q1, q2);
+						clauses.add(HornClause3.F(eq1));
 					}
 				}
 				tmp.addAll(group);
@@ -219,52 +219,55 @@ public class MinimizeNwaMaxSATReal {
 		for (ArrayList<Integer> group : byICSet.values()) {
 			for (int i = 0; i < group.size(); i++) {
 				for (int j = i+1; j < group.size(); j++) {
-					if (OutSet.outSetsIncompatible(outSet[group.get(i)], outSet[group.get(j)])) {
-						int q1 = group.get(i);
-						int q2 = group.get(j);
+					int q1 = group.get(i);
+					int q2 = group.get(j);
+					assert q1 != q2;
+					if (OutSet.outSetsIncompatible(outSet[q1], outSet[q2])) {
 						//System.err.printf("outSet(%d) and outSet(%d) incompatible, so adding clause: NOT X_%d,%d\n", q1, q2, q1, q2);
 						clauses.add(HornClause3.F(calc.eqVar(q1, q2)));
 						// XXX: OBACHT!
 						continue;
 					}
 					// rule 1
-					for (NiceITrans x : iTransOut.get(group.get(i))) {
-						for (NiceITrans y : iTransOut.get(group.get(j))) {
-							assert x.src != y.src;
-							assert x.src == group.get(i);
-							assert y.src == group.get(j);
-							assert x.sym == x.sym;
-							int eq1 = calc.eqVar(x.src, y.src);
-							int eq2 = calc.eqVar(x.dst, y.dst);
-							//System.err.printf("from rule 1: NOT X_%d,%d OR X_%d,%d\n", x.src, y.src, x.dst, y.dst);
-							clauses.add(HornClause3.FT(eq1, eq2));
+					for (NiceITrans x : iTransOut.get(q1)) {
+						for (NiceITrans y : iTransOut.get(q2)) {
+							if (x.sym == y.sym) {
+								assert x.src == q1;
+								assert y.src == q2;
+								assert x.sym == y.sym;
+								int eq1 = calc.eqVar(x.src, y.src);
+								int eq2 = calc.eqVar(x.dst, y.dst);
+								//System.err.printf("from rule 1: NOT X_%d,%d OR X_%d,%d\n", x.src, y.src, x.dst, y.dst);
+								clauses.add(HornClause3.FT(eq1, eq2));
+							}
 						}
 					}
 					// rule 2
-					for (NiceCTrans x : cTransOut.get(group.get(i))) {
-						for (NiceCTrans y : cTransOut.get(group.get(j))) {
-							assert x.src != y.src;
-							assert x.src == group.get(i);
-							assert y.src == group.get(j);
-							assert x.sym == x.sym;
-							int eq1 = calc.eqVar(x.src, y.src);
-							int eq2 = calc.eqVar(x.dst, y.dst);
-							//System.err.printf("from rule 2: NOT X_%d,%d OR X_%d,%d\n", x.src, y.src, x.dst, y.dst);
-							clauses.add(HornClause3.FT(eq1, eq2));
+					for (NiceCTrans x : cTransOut.get(q1)) {
+						for (NiceCTrans y : cTransOut.get(q2)) {
+							if (x.sym == y.sym) {
+								assert x.src == q1;
+								assert y.src == q2;
+								int eq1 = calc.eqVar(x.src, y.src);
+								int eq2 = calc.eqVar(x.dst, y.dst);
+								//System.err.printf("from rule 2: NOT X_%d,%d OR X_%d,%d\n", x.src, y.src, x.dst, y.dst);
+								clauses.add(HornClause3.FT(eq1, eq2));
+							}
 						}
 					}
 					// rule 3
-					for (NiceRTrans x : rTransOut.get(group.get(i))) {
-						for (NiceRTrans y : rTransOut.get(group.get(j))) {
-							assert x.src != y.src;
-							assert x.src == group.get(i);
-							assert y.src == group.get(j);
-							assert x.sym == x.sym;
-							int eq1 = calc.eqVar(x.src, y.src);
-							int eq2 = calc.eqVar(x.top, y.top);
-							int eq3 = calc.eqVar(x.dst, y.dst);
-							//System.err.printf("from rule 3: NOT X_%d,%d OR NOT X_%d,%d OR X_%d,%d\n", x.src, y.src, x.top, y.top, x.dst, y.dst);
-							clauses.add(HornClause3.FFT(eq1, eq2, eq3));
+					for (NiceRTrans x : rTransOut.get(q1)) {
+						for (NiceRTrans y : rTransOut.get(q2)) {
+							if (x.sym == y.sym) {
+								assert x.src == q1;
+								assert y.src == q2;
+								assert x.sym == y.sym;
+								int eq1 = calc.eqVar(x.src, y.src);
+								int eq2 = calc.eqVar(x.top, y.top);
+								int eq3 = calc.eqVar(x.dst, y.dst);
+								//System.err.printf("from rule 3: NOT X_%d,%d OR NOT X_%d,%d OR X_%d,%d\n", x.src, y.src, x.top, y.top, x.dst, y.dst);
+								clauses.add(HornClause3.FFT(eq1, eq2, eq3));
+							}
 						}
 					}
 				}
@@ -350,8 +353,8 @@ public class MinimizeNwaMaxSATReal {
 		assert nwa != null;
 		// even for debug code, this is really bad code:
 		// history states algorithm not implemented :-(
-		ArrayList<NiceHist> hist = new ArrayList<NiceHist>();
 		// -1 means bottom-of-stack symbol
+		ArrayList<NiceHist> hist = new ArrayList<NiceHist>();
 		hist.add(new NiceHist(0, -1));
 		hist.add(new NiceHist(1, 0));
 		hist.add(new NiceHist(1, 1));
@@ -403,8 +406,8 @@ public class MinimizeNwaMaxSATReal {
 			NiceNWA nwa = nwas.get(i);
 			ArrayList<NiceHist> hist = hists.get(i);
 
-			NicePrint.printNWA(out, nwa);
 			NiceClasses eq = minimize(nwa, hist);
+			NicePrint.printNWA(out, nwa);
 			NicePrint.printClasses(out, eq);
 		}
 	}
