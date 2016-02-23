@@ -169,6 +169,7 @@ public class MemoryHandler {
 	private final AExpressionTranslation m_ExpressionTranslation;
 	
 	private final TypeSizeAndOffsetComputer m_TypeSizeAndOffsetComputer;
+	private final TypeSizes m_TypeSizes;
 	private final RequiredMemoryModelFeatures m_RequiredMemoryModelFeatures;
 	private final AMemoryModel m_MemoryModel;
 	
@@ -184,6 +185,7 @@ public class MemoryHandler {
     		TypeSizeAndOffsetComputer typeSizeComputer, TypeSizes typeSizes, 
     		AExpressionTranslation expressionTranslation, boolean bitvectorTranslation) {
     	m_TypeHandler = typeHandler;
+    	m_TypeSizes = typeSizes;
     	m_FunctionHandler = functionHandler;
     	m_ExpressionTranslation = expressionTranslation;
     	m_RequiredMemoryModelFeatures = new RequiredMemoryModelFeatures();
@@ -370,25 +372,15 @@ public class MemoryHandler {
 		
 		
 		ArrayList<Statement> bodyStmt = new ArrayList<>();
-
-		//make the assigments on the arrays
-		Expression currentDest = ((CHandler) main.cHandler).doPointerArithmetic(main, IASTBinaryExpression.op_plus, ignoreLoc, 
-					new IdentifierExpression(ignoreLoc, SFO.MEMCPY_DEST), 
-					new RValue(ctrIdex, m_ExpressionTranslation.getCTypeOfPointerComponents()), 
-					new CPrimitive(PRIMITIVE.VOID));
-		Expression currentSrc = ((CHandler) main.cHandler).doPointerArithmetic(main, IASTBinaryExpression.op_plus, ignoreLoc, 
-					new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SRC), 
-					new RValue(ctrIdex, m_ExpressionTranslation.getCTypeOfPointerComponents()), 
-					new CPrimitive(PRIMITIVE.VOID));
+		
+		ArrayList<Statement> loopBody = constructMemcpyLoopBody(heapDataArrays, loopCtr, SFO.MEMCPY_DEST, SFO.MEMCPY_SRC);
+		bodyStmt.addAll(loopBody);
 
 		// handle modifies
 		ArrayList<VariableLHS> modifiesLHSs = new ArrayList<>();
 		for (HeapDataArray hda : heapDataArrays) {
 			String memArrayName = hda.getVariableName();
 
-			ArrayAccessExpression srcAcc = new ArrayAccessExpression(ignoreLoc, new IdentifierExpression(ignoreLoc, memArrayName), new Expression[] { currentSrc });
-			ArrayLHS destAcc = new ArrayLHS(ignoreLoc, new VariableLHS(ignoreLoc, memArrayName), new Expression[] { currentDest });
-			bodyStmt.add(new AssignmentStatement(ignoreLoc, new LeftHandSide[] { destAcc }, new Expression[] { srcAcc }));
 
 			modifiesLHSs.add(new VariableLHS(ignoreLoc, memArrayName));
 
@@ -520,6 +512,33 @@ public class MemoryHandler {
     	
 		return memCpyDecl;
 	}
+
+	//make the assigments on the arrays
+	private ArrayList<Statement> constructMemcpyLoopBody(Collection<HeapDataArray> heapDataArrays, 
+			String loopCtr, String destPtr, String srcPtr) {
+		
+		ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+		ArrayList<Statement> result = new ArrayList<>();
+		
+		IdentifierExpression loopCtrExpr = new IdentifierExpression(ignoreLoc, loopCtr);
+		IdentifierExpression destPtrExpr = new IdentifierExpression(ignoreLoc, destPtr);
+		IdentifierExpression srcPtrExpr = new IdentifierExpression(ignoreLoc, srcPtr);
+
+		Expression currentDest = doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc, destPtrExpr, 
+				new RValue(loopCtrExpr, m_TypeSizeAndOffsetComputer.getSize_T()), 
+				new CPrimitive(PRIMITIVE.VOID));
+		Expression currentSrc = doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc, srcPtrExpr, 
+				new RValue(loopCtrExpr, m_TypeSizeAndOffsetComputer.getSize_T()), 
+				new CPrimitive(PRIMITIVE.VOID));
+		for (HeapDataArray hda : heapDataArrays) {
+			String memArrayName = hda.getVariableName();
+			ArrayAccessExpression srcAcc = new ArrayAccessExpression(ignoreLoc, new IdentifierExpression(ignoreLoc, memArrayName), new Expression[] { currentSrc });
+			ArrayLHS destAcc = new ArrayLHS(ignoreLoc, new VariableLHS(ignoreLoc, memArrayName), new Expression[] { currentDest });
+			result.add(new AssignmentStatement(ignoreLoc, new LeftHandSide[] { destAcc }, new Expression[] { srcAcc }));
+			
+		}
+		return result;
+	}
     
     /**
      * Returns a (Boogie) declaration and an implementation for the method
@@ -569,7 +588,8 @@ public class MemoryHandler {
     	VariableDeclaration ctrDec = new VariableDeclaration(
     			ignoreLoc, 
     			new Attribute[0], 
-    			new VarList[] { new VarList(ignoreLoc, new String[] { ctrName }, new PrimitiveType(ignoreLoc, SFO.INT))});
+    			new VarList[] { new VarList(ignoreLoc, new String[] { ctrName }, 
+    					m_TypeHandler.ctype2asttype(ignoreLoc, new CPrimitive(PRIMITIVE.INT)))});
     	localDecls.add(ctrDec);
     	
     	// ctr := 0;
@@ -1869,5 +1889,51 @@ public class MemoryHandler {
 		return m_TypeSizeAndOffsetComputer;
 	}
 	
+	/**
+	 * Add or subtract a Pointer and an integer.
+	 * Use this method only if you are sure that the type of the integer
+	 * is the same as the type that we use for our pointer components.
+	 * Otherwise, use the method below.
+	 * @param operator Either plus or minus.
+	 * @param integer
+	 * @param valueType
+	 *            The value type the pointer points to (we need it because we
+	 *            have to multiply with its size)
+	 * 
+	 * @return a pointer of the form: {base: ptr.base, offset: ptr.offset +
+	 *         integer * sizeof(valueType)}
+	 */
+	public Expression doPointerArithmetic(int operator, ILocation loc, Expression ptrAddress, RValue integer,
+			CType valueType) {
+		if (m_TypeSizes.getSize(((CPrimitive) integer.getCType()).getType()) != 
+				m_TypeSizes.getSize(m_ExpressionTranslation.getCTypeOfPointerComponents().getType())) {
+			throw new UnsupportedOperationException("not yet implemented, conversion is needed");
+		}
+		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(ptrAddress, loc);
+		final Expression pointerOffset = MemoryHandler.getPointerOffset(ptrAddress, loc);
+		final Expression timesSizeOf = multiplyWithSizeOfAnotherType(loc, valueType, integer.getValue(), 
+					m_ExpressionTranslation.getCTypeOfPointerComponents());
+		final Expression sum = m_ExpressionTranslation.constructArithmeticExpression(loc, 
+				operator, pointerOffset,
+				m_ExpressionTranslation.getCTypeOfPointerComponents(), timesSizeOf, m_ExpressionTranslation.getCTypeOfPointerComponents());
+		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
+		return newPointer;
+	}
+	
+	
+	/**
+	 * Multiply an integerExpresion with the size of another type.
+	 * @param integerExpresionType {@link CType} whose translation is the Boogie 
+	 * 		type of integerExpression and the result.
+	 * @return An {@link Expression} that represents <i>integerExpression * sizeof(valueType)</i>
+	 */
+	public Expression multiplyWithSizeOfAnotherType(ILocation loc, CType valueType, Expression integerExpression,
+			CPrimitive integerExpresionType) {
+		final Expression timesSizeOf;
+		timesSizeOf = m_ExpressionTranslation.constructArithmeticExpression(
+				loc, IASTBinaryExpression.op_multiply, integerExpression,
+				integerExpresionType, calculateSizeOf(loc, valueType), integerExpresionType);
+		return timesSizeOf;
+	}
 
 }
