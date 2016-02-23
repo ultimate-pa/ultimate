@@ -69,11 +69,6 @@ public class NiceHist {
 	}
 
 	/**
-	 * @param nwa
-	 *
-	 * @param history An array of NiceHist sorted by linear, then hierarchical
-	 * states
-	 *
 	 * @return whether <code>history</code> is consistent with <code>nwa</code>
 	 * NOTE: history states can be -1. This means "bottom-of-stack" state.
 	 */

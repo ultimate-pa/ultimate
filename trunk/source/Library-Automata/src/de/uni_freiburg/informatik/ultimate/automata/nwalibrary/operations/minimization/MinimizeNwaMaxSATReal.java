@@ -73,7 +73,7 @@ public class MinimizeNwaMaxSATReal {
 		}
 		}
 
-		// some "imports"
+		// some "namespace imports"
 		int numStates = inNWA.numStates;
 		//@SuppressWarnings("unused") int numISyms = inNWA.numISyms;
 		//@SuppressWarnings("unused") int numCSyms = inNWA.numCSyms;
@@ -86,12 +86,6 @@ public class MinimizeNwaMaxSATReal {
 		NiceITrans[] iTrans = inNWA.iTrans;
 		NiceCTrans[] cTrans = inNWA.cTrans;
 		NiceRTrans[] rTrans = inNWA.rTrans;
-
-		// we accumulate clauses in this array
-		ArrayList<HornClause3> clauses = new ArrayList<HornClause3>();
-		// this encapsulates some evil intricate knowledge about the
-		// representation of the equivalence variables as integers
-		EqVarCalc calc = new EqVarCalc(numStates);
 
 		// IMPORTANT. Sort inputs
 		Arrays.sort(iTrans, NiceITrans::compareSrcSymDst);
@@ -165,10 +159,19 @@ public class MinimizeNwaMaxSATReal {
 		}
 		*/
 
+
+		/*
+		 * GENERATE CLAUSES
+		 *
+		 */
+
+		HornCNFBuilder builder = new HornCNFBuilder();
+		EqVarCalc calc = new EqVarCalc(numStates);
+
 		// clauses for reflexivity
 		for (int i = 0; i < numStates; i++) {
 			int eq1 = calc.eqVar(i, i);
-			clauses.add(HornClause3.T(eq1));
+			builder.addClauseT(eq1);
 		}
 
 		// we don't need to emit clauses for symmetry since we identify i~j with j~i in EqVarCalc
@@ -180,7 +183,7 @@ public class MinimizeNwaMaxSATReal {
 					int eq1 = calc.eqVar(i, j);
 					int eq2 = calc.eqVar(j, k);
 					int eq3 = calc.eqVar(i, k);
-					clauses.add(HornClause3.FFT(eq1, eq2, eq3));
+					builder.addClauseFFT(eq1, eq2, eq3);
 				}
 			}
 		}
@@ -190,7 +193,7 @@ public class MinimizeNwaMaxSATReal {
 			for (int j = i+1; j < numStates; j++) {
 				if (isFinal[i] != isFinal[j]) {
 					int eq1 = calc.eqVar(i, j);
-					clauses.add(HornClause3.F(eq1));
+					builder.addClauseF(eq1);
 				}
 			}
 		}
@@ -206,7 +209,7 @@ public class MinimizeNwaMaxSATReal {
 					for (int q2 : group) {
 						//System.err.printf("outSet(%d) != outSet(%d), so adding clause: NOT X_%d,%d\n", q1, q2, q1, q2);
 						int eq1 = calc.eqVar(q1, q2);
-						clauses.add(HornClause3.F(eq1));
+						builder.addClauseF(eq1);
 					}
 				}
 				tmp.addAll(group);
@@ -223,8 +226,9 @@ public class MinimizeNwaMaxSATReal {
 					int q2 = group.get(j);
 					assert q1 != q2;
 					if (OutSet.outSetsIncompatible(outSet[q1], outSet[q2])) {
+						int eq1 = calc.eqVar(q1, q2);
 						//System.err.printf("outSet(%d) and outSet(%d) incompatible, so adding clause: NOT X_%d,%d\n", q1, q2, q1, q2);
-						clauses.add(HornClause3.F(calc.eqVar(q1, q2)));
+						builder.addClauseF(eq1);
 						// XXX: OBACHT!
 						continue;
 					}
@@ -234,11 +238,10 @@ public class MinimizeNwaMaxSATReal {
 							if (x.sym == y.sym) {
 								assert x.src == q1;
 								assert y.src == q2;
-								assert x.sym == y.sym;
 								int eq1 = calc.eqVar(x.src, y.src);
 								int eq2 = calc.eqVar(x.dst, y.dst);
 								//System.err.printf("from rule 1: NOT X_%d,%d OR X_%d,%d\n", x.src, y.src, x.dst, y.dst);
-								clauses.add(HornClause3.FT(eq1, eq2));
+								builder.addClauseFT(eq1, eq2);
 							}
 						}
 					}
@@ -251,7 +254,7 @@ public class MinimizeNwaMaxSATReal {
 								int eq1 = calc.eqVar(x.src, y.src);
 								int eq2 = calc.eqVar(x.dst, y.dst);
 								//System.err.printf("from rule 2: NOT X_%d,%d OR X_%d,%d\n", x.src, y.src, x.dst, y.dst);
-								clauses.add(HornClause3.FT(eq1, eq2));
+								builder.addClauseFT(eq1, eq2);
 							}
 						}
 					}
@@ -261,12 +264,11 @@ public class MinimizeNwaMaxSATReal {
 							if (x.sym == y.sym) {
 								assert x.src == q1;
 								assert y.src == q2;
-								assert x.sym == y.sym;
 								int eq1 = calc.eqVar(x.src, y.src);
 								int eq2 = calc.eqVar(x.top, y.top);
 								int eq3 = calc.eqVar(x.dst, y.dst);
 								//System.err.printf("from rule 3: NOT X_%d,%d OR NOT X_%d,%d OR X_%d,%d\n", x.src, y.src, x.top, y.top, x.dst, y.dst);
-								clauses.add(HornClause3.FFT(eq1, eq2, eq3));
+								builder.addClauseFFT(eq1, eq2, eq3);
 							}
 						}
 					}
@@ -274,6 +276,7 @@ public class MinimizeNwaMaxSATReal {
 			}
 		}
 
+		/*
 		{
 			HashMap<Integer, String> name = new HashMap<Integer, String>();
 			name.put(0, "F");
@@ -283,16 +286,21 @@ public class MinimizeNwaMaxSATReal {
 					name.put(calc.eqVar(i, j), "X_" + Integer.toString(i) + "," + Integer.toString(j));
 
 			System.err.printf("\nClauses:\n");
-			for (HornClause3 x : clauses) {
+			for (HornClause3 x : builder.getClauses()) {
 				String s0 =	name.get(x.l0);
 				String s1 = name.get(x.l1);
 				String s2 = name.get(x.l2);
 				System.err.printf("NOT %s OR NOT %s OR %s\n", s0, s1, s2);
 			}
 		}
+		*/
 
-		HornClause3[] clArray = clauses.toArray(new HornClause3[clauses.size()]);
-		Assign[] assigned = new MaxSATSolve(calc.getNumEqVars(), clArray).solve();
+		HornClause3[] clauses = builder.getClauses().toArray(new HornClause3[builder.getClauses().size()]);
+		System.err.printf("number of Clauses: %d\n", clauses.length);
+		System.err.printf("number of clause-add requests: %d\n", builder.getNumRequests());
+		builder = null;  // save some memory
+
+		Assign[] assigned = new MaxSATSolve(calc.getNumEqVars(), clauses).solve();
 
 		if (assigned == null) {
 			System.err.println("instance could not be solved");
@@ -485,8 +493,12 @@ class ICSet {
 	}
 }
 
+/**
+ * This encapsulates some evil intricate knowledge about the
+ * representation of the equivalence variables as integers
+ */
 class EqVarCalc {
-	private final int n;
+	private int n;
 
 	public EqVarCalc(int numStates) {
 		this.n = numStates;

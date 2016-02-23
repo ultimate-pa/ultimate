@@ -32,7 +32,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
  *
  * @author stimpflj
  */
-public class NiceCTrans implements Comparable<NiceCTrans> {
+public class NiceCTrans {
 	/** Source state */
 	public int src;
 
@@ -45,12 +45,15 @@ public class NiceCTrans implements Comparable<NiceCTrans> {
 
 	public NiceCTrans() {}
 
-	public NiceCTrans(int src, int sym, int dst)
-		{ this.src = src; this.sym = sym; this.dst = dst; }
+	public NiceCTrans(int src, int sym, int dst) {
+		this.src = src;
+		this.sym = sym;
+		this.dst = dst;
+	}
 
 	@Override
 	public boolean equals(Object obj) {
-		if (!(obj instanceof NiceCTrans))
+		if (obj == null || !(obj instanceof NiceCTrans))
 			return false;
 		NiceCTrans b = (NiceCTrans) obj;
 		return src == b.src && sym == b.sym && dst == b.dst;
@@ -60,10 +63,6 @@ public class NiceCTrans implements Comparable<NiceCTrans> {
 	public int hashCode() {
 		return (src * 31 + sym) * 31 + dst;
 	}
-
-	@Override
-	public int compareTo(NiceCTrans b)
-		{ return NiceCTrans.compareSrcSymDst(this, b); }
 
 	public static int compareSrcSymDst(NiceCTrans a, NiceCTrans b) {
 		if (a.src != b.src) return a.src - b.src;
