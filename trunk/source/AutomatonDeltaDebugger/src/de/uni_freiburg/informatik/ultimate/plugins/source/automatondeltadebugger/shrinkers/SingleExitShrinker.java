@@ -78,7 +78,7 @@ public class SingleExitShrinker<LETTER, STATE>
 		HashMap<STATE, STATE> right2left = new HashMap<STATE, STATE>();
 		
 		/*
-		 * add states which are not a left-hand side in the list; also set up a
+		 * add states which are not a left-hand side in the list; also set up
 		 * data structures which contain all transitive chains
 		 */
 		final HashSet<STATE> states =
