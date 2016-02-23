@@ -133,7 +133,6 @@ public class UnusedLetterShrinker<LETTER, STATE>
 			final Set<LETTER> originalAlphabet, final ELetterType letterType) {
 		// find all letters which should be filtered
 		final HashSet<LETTER> alphabetFilter = new HashSet<LETTER>();
-		assert (it.hasNext()) : "The list should not be empty.";
 		TypedLetter<LETTER> nextLetter;
 		while (true) {
 			if (it.hasNext()) {
