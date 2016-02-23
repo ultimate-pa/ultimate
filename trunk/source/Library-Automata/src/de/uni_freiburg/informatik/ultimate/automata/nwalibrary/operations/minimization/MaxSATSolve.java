@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 enum Sat { OK, UNSATISFIABLE; };
 enum Assign { NONE, TRUE, FALSE };
@@ -53,7 +54,7 @@ public class MaxSATSolve {
 	int numClauses;
 
     /** the problem in CNF */
-    private HornClause3[] clauses;
+    private ArrayList<HornClause3> clauses;
 
     /** variable -> clauses in which it occurs */
     private final int[][] occur;
@@ -64,35 +65,38 @@ public class MaxSATSolve {
     /** last assignment operations */
     private ArrayList<Integer> op;
 
-    public MaxSATSolve(int theNumVars, HornClause3[] theclauses) {
-        numVars = theNumVars;
-        numClauses = theclauses.length;
-        clauses = theclauses;
+    public MaxSATSolve(ArrayList<HornClause3> clauses) {
+        this.clauses = clauses;
+
+        numVars = 0;
+        for (HornClause3 c : clauses) {
+        	assert 0 <= c.l0;
+        	assert 0 <= c.l1;
+        	assert 0 <= c.l2;
+        	numVars = Math.max(numVars, c.l0 + 1);
+        	numVars = Math.max(numVars, c.l1 + 1);
+        	numVars = Math.max(numVars, c.l2 + 1);
+        }
+
         occur = new int[numVars][];
         assign = new Assign[numVars];
         op = new ArrayList<Integer>();
 
-        for (HornClause3 c : clauses) {
-            assert 0 <= c.l0 && c.l0 < numVars;
-            assert 0 <= c.l1 && c.l1 < numVars;
-            assert 0 <= c.l2 && c.l2 < numVars;
-        }
-
         // so much work if you want the nice syntax of arrays vs ArrayLists...
         int[] numOcc = new int[numVars];
-        for (int i = 0; i < numClauses; i++) {
-			numOcc[clauses[i].l0]++;
-			numOcc[clauses[i].l1]++;
-			numOcc[clauses[i].l2]++;
+        for (HornClause3 x : clauses) {
+			numOcc[x.l0]++;
+			numOcc[x.l1]++;
+			numOcc[x.l2]++;
         }
         for (int i = 0; i < numVars; i++) {
 			occur[i] = new int[numOcc[i]];
 			numOcc[i] = 0;
         }
-        for (int i = 0; i < numClauses; i++) {
-			occur[clauses[i].l0][numOcc[clauses[i].l0]++] = i;
-			occur[clauses[i].l1][numOcc[clauses[i].l1]++] = i;
-			occur[clauses[i].l2][numOcc[clauses[i].l2]++] = i;
+        for (int i = 0; i < clauses.size(); i++) {
+			occur[clauses.get(i).l0][numOcc[clauses.get(i).l0]++] = i;
+			occur[clauses.get(i).l1][numOcc[clauses.get(i).l1]++] = i;
+			occur[clauses.get(i).l2][numOcc[clauses.get(i).l2]++] = i;
         }
 
         for (int i = 0; i < numVars; i++)
@@ -133,7 +137,7 @@ public class MaxSATSolve {
          * loop body might insert new elements into `op' */
         for (int i = 0; i < op.size(); i++)
             for (int c : occur[op.get(i)])
-                if (check(clauses[c]) == Sat.UNSATISFIABLE)
+                if (check(clauses.get(c)) == Sat.UNSATISFIABLE)
                     return Sat.UNSATISFIABLE;
         return Sat.OK;
     }
@@ -186,34 +190,31 @@ public class MaxSATSolve {
     public static void main(String[] args) {
 		PrintWriter writer = new PrintWriter(new OutputStreamWriter(System.err));
 
-		HornClause3[] clauses;
+		ArrayList<HornClause3> clauses;
 		Assign assign[];
 
-		clauses = new HornClause3[] {
-				HornClause3.F(3),
-				HornClause3.FT(2, 3)
-		};
-		assign = new MaxSATSolve(4, clauses).solve();
+		clauses = new ArrayList<HornClause3>();
+		clauses.add(HornClause3.F(3));
+		clauses.add(HornClause3.FT(2, 3));
+		assign = new MaxSATSolve(clauses).solve();
 		assert assign[2] == Assign.FALSE;
 		assert assign[3] == Assign.FALSE;
 
-		clauses = new HornClause3[] {
-				HornClause3.T(2),
-				HornClause3.FT(2, 3),
-				HornClause3.FFT(2, 3, 4)
-		};
-		assign = new MaxSATSolve(5, clauses).solve();
+		clauses = new ArrayList<HornClause3>();
+		clauses.add(HornClause3.T(2));
+		clauses.add(HornClause3.FT(2, 3));
+		clauses.add(HornClause3.FFT(2, 3, 4));
+		assign = new MaxSATSolve(clauses).solve();
 		assert assign[2] == Assign.TRUE;
 		assert assign[3] == Assign.TRUE;
 		assert assign[4] == Assign.TRUE;
 
-		clauses = new HornClause3[] {
-				HornClause3.T(2),
-				HornClause3.FT(2, 3),
-				HornClause3.FFT(2, 3, 4),
-				HornClause3.F(4)
-		};
-		assign = new MaxSATSolve(5, clauses).solve();
+		clauses = new ArrayList<HornClause3>();
+		clauses.add(HornClause3.T(2));
+		clauses.add(HornClause3.FT(2, 3));
+		clauses.add(HornClause3.FFT(2, 3, 4));
+		clauses.add(HornClause3.F(4));
+		assign = new MaxSATSolve(clauses).solve();
 		assert assign == null;
 
 		writer.printf("tests passed\n");

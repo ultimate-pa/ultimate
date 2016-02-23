@@ -36,8 +36,11 @@ import java.util.HashSet;
  * This class is an clauses generation time optimization, because some clauses
  * need not be made at all.
  *
+ * OPTIMIZATION TEMPORARILY DISABLED
+ *
  * NOTE: this was a bad idea for my own application. The savings are minimal
- * if the client is not super stupid.
+ * if the client is not super stupid (it should not be!)
+ *
  *
  * @author stimpflj
  */
@@ -73,12 +76,18 @@ public class HornCNFBuilder {
 	/** number of add-clause requests so far */
 	public int getNumRequests() { return numRequests; }
 
+	/* OPTIMIZATION TEMPORARILY DISABLED
 	public void addClauseF(int x) { numRequests++; addF(x); }
 	public void addClauseT(int z) { numRequests++; addT(z); }
 	public void addClauseFF(int x, int y) { numRequests++; addFF(x, y); }
 	public void addClauseFT(int x, int z) { numRequests++; addFT(x, z); }
 	public void addClauseFFT(int x, int y, int z) { numRequests++; addFFT(x, y, z); }
-
+	*/
+	public void addClauseF(int x) { clauses.add(HornClause3.F(x)); }
+	public void addClauseT(int z) { clauses.add(HornClause3.T(z)); }
+	public void addClauseFF(int x, int y) { clauses.add(HornClause3.FF(x, y)); }
+	public void addClauseFT(int x, int z) { clauses.add(HornClause3.FT(x, z)); }
+	public void addClauseFFT(int x, int y, int z) { clauses.add(HornClause3.FFT(x, y, z)); }
 
 	public boolean isSolveable() {
 		return solveable;

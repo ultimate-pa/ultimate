@@ -46,29 +46,55 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
 			AutomataLibraryServices services,
 			StateFactory<STATE> stateFactory,
 			INestedWordAutomaton<LETTER, STATE> automaton) {
-		Logger logger = services.getLoggingService().getLogger("MinimizeNWAMaxSAT");
+		Logger logger = services.getLoggingService().getLogger(operationName());
+		Logger convertLog = services.getLoggingService().getLogger("NiceConvert");
+		Logger generateLog = services.getLoggingService().getLogger("MergeRelationClausesGenerator");
+		Logger solveLog = services.getLoggingService().getLogger("MaxSATSolve");
 
 		logger.info(startMessage());
 		/*logger.info("input follows");
 		logger.info(automaton);
 		*/
 
+		convertLog.info("starting conversion");
 		NiceConvert<LETTER, STATE> converter = new NiceConvert<LETTER, STATE>(services, stateFactory, automaton);
 		NiceNWA nwa = converter.getNiceNWA();
-		// this should not be like this, but...
+		// it shouldn't be like this, but...
 		ArrayList<NiceHist> history = converter.computeHistoryStates();
-
-		/*logger.info("converted automaton follows");
-		logger.info(NicePrint.makeString(nwa));
+		convertLog.info(
+				"finished conversion. "
+				+ Integer.toString(nwa.numStates) + " states, "
+				+ Integer.toString(nwa.numISyms) + " iSyms, "
+				+ Integer.toString(nwa.numCSyms) + " cSyms, "
+				+ Integer.toString(nwa.numRSyms) + " rSyms, "
+				+ Integer.toString(nwa.iTrans.length) + " iTrans, "
+				+ Integer.toString(nwa.cTrans.length) + " cTrans, "
+				+ Integer.toString(nwa.rTrans.length) + " rTrans."
+		);
+		/*convertLog.info("converted automaton follows");
+		convertLog.info(NicePrint.makeString(nwa));
 		*/
 
-		NiceClasses eqCls = MinimizeNwaMaxSATReal.minimize(nwa, history);
+		generateLog.info("starting clauses generation");
+		ArrayList<HornClause3> clauses = NwaMinimizationClausesGenerator.generateConstraints(nwa, history);
+		generateLog.info("finished clauses generation. " + Integer.toString(clauses.size()) + " clauses");
 
+		solveLog.info("starting MaxSATSolve");
+		Assign[] assignments = new MaxSATSolve(clauses).solve();
+		solveLog.info("finished MaxSATSolve");
+
+		generateLog.info("making equivalence classes from assignments");
+		NiceClasses eqCls = NwaMinimizationClausesGenerator.makeMergeRelation(nwa.numStates, assignments);
+		generateLog.info("finished making equivalence classes");
 		/*logger.info("equivalence classes following");
 		logger.info(NicePrint.makeString(eqCls));
-		*/
+		 */
+
+		logger.info("Testing correctness of equivalence classes");
+		NiceCorrectness.testCorrectness(nwa, history, eqCls);
 
 		m_result = converter.constructMerged(eqCls);
+		convertLog.info("constructed minimized automaton");
 
 		logger.info(exitMessage());
 	}

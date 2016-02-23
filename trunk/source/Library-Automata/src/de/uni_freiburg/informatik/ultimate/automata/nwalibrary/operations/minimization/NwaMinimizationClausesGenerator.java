@@ -27,26 +27,47 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 
 /**
- * Minimize an NWA by by converting the "merge relation" (as defined in my
- * thesis) constraints to (Horn) clauses, and then solve them as a MAX-SAT
- * problem.
+ * Formulate "merge relation constraints" (as defined in my thesis) as a
+ * MAX-SAT instance.
+ *
+ * A solution to the instance can be converted to a merge relation later.
  *
  * This is currently not practical since state equivalency needs to be
  * transitive and we need numStates^3 clauses for transitivity.
  *
  * @author stimpflj
  */
-public class MinimizeNwaMaxSATReal {
+public class NwaMinimizationClausesGenerator {
+
+	/**
+	 * Convert a solved instance to a merge relation
+	 */
+	public static NiceClasses makeMergeRelation(int numStates, Assign[] assignments) {
+		EqVarCalc calc = new EqVarCalc(numStates);
+
+		assert assignments.length == calc.getNumEqVars();
+		for (Assign x : assignments)
+			assert x == Assign.TRUE || x == Assign.FALSE;
+
+		NiceUnionFind unionFind = new NiceUnionFind(numStates);
+		for (int i = 0; i < numStates; i++) {
+			for (int j = i+1; j < numStates; j++) {
+				int eqVar = calc.eqVar(i, j);
+				if (assignments[eqVar] == Assign.TRUE) {
+					System.err.printf("merging X_%d,%d\n", i, j);
+					unionFind.merge(i, j);
+				}
+			}
+		}
+
+		return NiceClasses.compress(unionFind.getRoots());
+	}
 
 	/**
 	 * @param inNWA input NWA. The NWA is mutated (transitions sorted).
@@ -59,7 +80,7 @@ public class MinimizeNwaMaxSATReal {
 	 * @return A (consistent) NiceClasses which represents the minimized
 	 * automaton.
 	 */
-	public static NiceClasses minimize(NiceNWA inNWA, ArrayList<NiceHist> history) {
+	public static ArrayList<HornClause3> generateConstraints(NiceNWA inNWA, ArrayList<NiceHist> history) {
 		assert NiceHist.checkHistoryStatesConsistency(inNWA, history);
 		{
 		// "assert" that there are no transitions which are never taken
@@ -184,6 +205,8 @@ public class MinimizeNwaMaxSATReal {
 					int eq2 = calc.eqVar(j, k);
 					int eq3 = calc.eqVar(i, k);
 					builder.addClauseFFT(eq1, eq2, eq3);
+					builder.addClauseFFT(eq1, eq3, eq2);
+					builder.addClauseFFT(eq1, eq3, eq1);
 				}
 			}
 		}
@@ -276,7 +299,7 @@ public class MinimizeNwaMaxSATReal {
 			}
 		}
 
-		/*
+
 		{
 			HashMap<Integer, String> name = new HashMap<Integer, String>();
 			name.put(0, "F");
@@ -293,131 +316,13 @@ public class MinimizeNwaMaxSATReal {
 				System.err.printf("NOT %s OR NOT %s OR %s\n", s0, s1, s2);
 			}
 		}
-		*/
 
-		HornClause3[] clauses = builder.getClauses().toArray(new HornClause3[builder.getClauses().size()]);
-		System.err.printf("number of Clauses: %d\n", clauses.length);
-		System.err.printf("number of clause-add requests: %d\n", builder.getNumRequests());
-		builder = null;  // save some memory
 
-		Assign[] assigned = new MaxSATSolve(calc.getNumEqVars(), clauses).solve();
+		ArrayList<HornClause3> clauses = builder.getClauses();
+		//System.err.printf("number of clauses: %d\n", clauses.size());
+		//System.err.printf("number of clause-add requests: %d\n", builder.getNumRequests());
 
-		if (assigned == null) {
-			System.err.println("instance could not be solved");
-			return null;
-		}
-
-		/*
-		System.err.printf("Assignments (%d states, %d variables):", numStates, calc.getNumEqVars());
-		for (int i = 0; i < numStates; i++) {
-			for (int j = i+1; j < numStates; j++) {
-				int eqVar = calc.eqVar(i,  j);
-				assert assigned[eqVar] != Assign.NONE;
-				String maybeNot = assigned[eqVar] == Assign.FALSE ? "NOT" : "";
-				System.err.printf(" %s(%d~%d)", maybeNot, i, j);
-			}
-		}
-		System.err.printf("\n");
-		System.err.flush();
-		*/
-
-		NiceUnionFind unionFind = new NiceUnionFind(numStates);
-		for (int i = 0; i < numStates; i++) {
-			for (int j = i+1; j < numStates; j++) {
-				int eqVar = calc.eqVar(i, j);
-				if (assigned[eqVar] == Assign.TRUE)
-					unionFind.merge(i, j);
-			}
-		}
-
-		return NiceClasses.compress(unionFind.getRoots());
-	}
-
-	/** Test the thing */
-	public static void main(String[] args) throws FileNotFoundException, IOException {
-		OutputStreamWriter out = new OutputStreamWriter(System.err);
-
-		ArrayList<NiceNWA> nwas = new ArrayList<NiceNWA>();
-		ArrayList<ArrayList<NiceHist>> hists = new ArrayList<ArrayList<NiceHist>>();
-
-		{
-		NiceNWA nwa = NiceScan.scanNWA(new StringReader(
-			"numStates 2\n"
-			+ "numISyms 0\n"
-			+ "numCSyms 1\n"
-			+ "numRSyms 1\n"
-			+ "numInitial 1\n"
-			+ "numFinal 1\n"
-			+ "numITrans 0\n"
-			+ "numCTrans 2\n"
-			+ "numRTrans 2\n"
-			+ "initial 0\n"
-			+ "final 0\n"
-			+ "cTrans 0 0 1\n"
-			+ "cTrans 1 0 1\n"
-			+ "rTrans 1 0 1 1\n"
-			+ "rTrans 1 0 0 0\n"
-		));
-		assert nwa != null;
-		// even for debug code, this is really bad code:
-		// history states algorithm not implemented :-(
-		// -1 means bottom-of-stack symbol
-		ArrayList<NiceHist> hist = new ArrayList<NiceHist>();
-		hist.add(new NiceHist(0, -1));
-		hist.add(new NiceHist(1, 0));
-		hist.add(new NiceHist(1, 1));
-
-		nwas.add(nwa);
-		hists.add(hist);
-		}
-
-		{
-		NiceNWA nwa = NiceScan.scanNWA(new StringReader(
-				"numStates 5\n"
-				+ "numISyms 1\n"
-				+ "numCSyms 2\n"
-				+ "numRSyms 1\n"
-				+ "numInitial 1\n"
-				+ "numFinal 1\n"
-				+ "numITrans 4\n"
-				+ "numCTrans 2\n"
-				+ "numRTrans 2\n"
-				+ "initial 0\n"
-				+ "final 4\n"
-				+ "iTrans 0 0 2\n"
-				+ "iTrans 1 0 4\n"
-				+ "iTrans 2 0 4\n"
-				+ "iTrans 3 0 4\n"
-				+ "cTrans 0 0 1\n"
-				+ "cTrans 0 1 3\n"
-				+ "rTrans 1 0 0 4\n"
-				+ "rTrans 3 0 0 3\n"
-		));
-		assert nwa != null;
-		// even for debug code, this is really bad code.
-		// history states algorithm not implemented :-(
-		// -1 means bottom symbol
-		ArrayList<NiceHist> hist = new ArrayList<NiceHist>();
-		hist.add(new NiceHist(0, -1));
-		hist.add(new NiceHist(2, -1));
-		hist.add(new NiceHist(3, -1));
-		hist.add(new NiceHist(4, -1));
-		hist.add(new NiceHist(1, 0));
-		hist.add(new NiceHist(3, 0));
-		hist.add(new NiceHist(4, 0));
-
-		nwas.add(nwa);
-		hists.add(hist);
-		}
-
-		for (int i = 0; i < nwas.size(); i++) {
-			NiceNWA nwa = nwas.get(i);
-			ArrayList<NiceHist> hist = hists.get(i);
-
-			NiceClasses eq = minimize(nwa, hist);
-			NicePrint.printNWA(out, nwa);
-			NicePrint.printClasses(out, eq);
-		}
+		return clauses;
 	}
 }
 
