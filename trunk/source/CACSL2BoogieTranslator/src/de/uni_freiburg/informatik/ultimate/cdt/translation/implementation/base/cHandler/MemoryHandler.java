@@ -333,6 +333,97 @@ public class MemoryHandler {
                 		m_TypeHandler.constructPointerType(ignoreLoc)) });
 		return result;
 	}
+	
+	
+    private List<Declaration> declareUltimateUncheckedMemset(Dispatcher main,
+    		Collection<HeapDataArray> heapDataArrays) {
+    	ArrayList<Declaration> decls = new ArrayList<>();
+    	ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+    	
+    	String inParamPtr = SFO.POINTER;
+    	String inParamValue = "#value";
+    	String inParamAmountOfFields = "#amountOfFields";
+    	String inParamSizeOfFields = "#sizeOfFields";
+    	String inParamProduct = "#product";
+    	String proc = "Ultimate.unchecked_memset";
+    	
+    	VarList inParamPtrVl = new VarList(ignoreLoc, new String[] { inParamPtr }, 
+    			main.typeHandler.constructPointerType(ignoreLoc));
+    	VarList inParamValueVl = new VarList(ignoreLoc, new String[] { inParamValue }, 
+    			main.typeHandler.ctype2asttype(ignoreLoc, new CPrimitive(PRIMITIVE.UCHAR)));
+    	VarList inParamAmountOfFieldsVl = new VarList(ignoreLoc, new String[] { inParamAmountOfFields }, 
+    			main.typeHandler.ctype2asttype(ignoreLoc, m_TypeSizeAndOffsetComputer.getSize_T()));
+    	VarList inParamSizeOfFieldsVl = new VarList(ignoreLoc, new String[] { inParamSizeOfFields }, 
+    			main.typeHandler.ctype2asttype(ignoreLoc, m_TypeSizeAndOffsetComputer.getSize_T()));
+    	VarList inParamProductVl = new VarList(ignoreLoc, new String[] { inParamProduct }, 
+    			main.typeHandler.ctype2asttype(ignoreLoc, m_TypeSizeAndOffsetComputer.getSize_T()));
+    	
+    	VarList[] inParams = new VarList[] { inParamPtrVl, inParamValueVl, inParamAmountOfFieldsVl, inParamSizeOfFieldsVl, inParamProductVl };
+    	VarList[] outParams = new VarList[] { };
+   			
+    	List<VariableDeclaration> decl = new ArrayList<>();
+    	CPrimitive sizeT = m_TypeSizeAndOffsetComputer.getSize_T();
+    	String loopCtr = main.nameHandler.getTempVarUID(SFO.AUXVAR.LOOPCTR, sizeT);
+    	ASTType astType = m_TypeHandler.ctype2asttype(ignoreLoc, sizeT);
+		VarList lcvl = new VarList(ignoreLoc, new String[] { loopCtr }, astType);
+		VariableDeclaration loopCtrDec = new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] { lcvl });
+		decl.add(loopCtrDec);
+
+		List<Statement> loopBody = constructMemsetLoopBody(heapDataArrays, loopCtr, inParamPtr, inParamValue);
+		
+		IdentifierExpression inParamProductExpr = new IdentifierExpression(ignoreLoc, inParamProduct);
+		IdentifierExpression inParamSizeOfFieldsExpr = new IdentifierExpression(ignoreLoc, inParamSizeOfFields);
+		List<Statement> stmt = constructCountingLoop(inParamProductExpr, loopCtr, inParamSizeOfFieldsExpr, loopBody);
+		
+		Body procBody = new Body(ignoreLoc, 
+				decl.toArray(new VariableDeclaration[decl.size()]), 
+				stmt.toArray(new Statement[stmt.size()]));
+		
+		//make the specifications
+		ArrayList<Specification> specs = new ArrayList<>();
+		
+		// add modifies spec
+		ModifiesSpecification modifiesSpec = announceModifiedGlobals(proc, heapDataArrays);
+		specs.add(modifiesSpec);
+		
+		//add the procedure declaration
+     	Procedure memCpyProcDecl = new Procedure(ignoreLoc, new Attribute[0], proc, new String[0], 
+    			inParams, outParams, specs.toArray(new Specification[specs.size()]), null);
+     	decls.add(memCpyProcDecl);
+     	
+     	//add the procedure implementation
+     	Procedure memCpyProc = new Procedure(ignoreLoc, new Attribute[0], proc, new String[0], 
+    			inParams, outParams, null, procBody);
+     	decls.add(memCpyProc);
+    	
+		return decls;
+	}
+
+    /**
+     * Tell m_FunctionHandler that procedure proc modifies all heapDataArrays.
+     * Retruns modifies specification.
+     */
+	private ModifiesSpecification announceModifiedGlobals(String proc,
+			Collection<HeapDataArray> heapDataArrays) {
+    	ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+		ArrayList<VariableLHS> modifiesLHSs = new ArrayList<>();
+		for (HeapDataArray hda : heapDataArrays) {
+			String memArrayName = hda.getVariableName();
+			modifiesLHSs.add(new VariableLHS(ignoreLoc, memArrayName));
+
+			if (m_FunctionHandler.getModifiedGlobals().get(proc) == null){
+				m_FunctionHandler.getModifiedGlobals().put(proc, new LinkedHashSet<String>());
+			}
+			if (m_FunctionHandler.getCallGraph().get(proc) == null) {
+				m_FunctionHandler.getCallGraph().put(proc, new LinkedHashSet<String>());
+			}
+			m_FunctionHandler.getModifiedGlobals().get(proc).add(memArrayName);
+		}
+		return new ModifiesSpecification(ignoreLoc, false, 
+				modifiesLHSs.toArray(new VariableLHS[modifiesLHSs.size()]));
+	}
+	
+	
 
     /**
      * Adds our implementation of the memcpy procedure to the boogie code.
@@ -351,9 +442,9 @@ public class MemoryHandler {
     	VarList inPSrc = new VarList(ignoreLoc, new String[] { memcpyInParamSrc }, main.typeHandler.constructPointerType(ignoreLoc));
     	VarList	inPSize = new VarList(ignoreLoc, new String[] { memcpyInParamSize }, 
     			m_TypeHandler.ctype2asttype(ignoreLoc, m_TypeSizeAndOffsetComputer.getSize_T()));
+    	VarList outP = new VarList(ignoreLoc, new String[] { memcpyOutParam }, main.typeHandler.constructPointerType(ignoreLoc));
     	VarList[] inParams = new VarList[] { inPDest, inPSrc, inPSize };
-    	
-    	VarList[] outParams = new VarList[] { new VarList(ignoreLoc, new String[] { memcpyOutParam }, main.typeHandler.constructPointerType(ignoreLoc)) };
+    	VarList[] outParams = new VarList[] { outP };
 
    			
     	List<VariableDeclaration> decl = new ArrayList<>();
@@ -366,37 +457,21 @@ public class MemoryHandler {
 
 		List<Statement> loopBody = constructMemcpyLoopBody(heapDataArrays, loopCtr, memcpyInParamDest, memcpyInParamSrc);
 		
-		List<Statement> stmt = constructCountingLoop(memcpyInParamSize, loopCtr, loopBody);
+		IdentifierExpression memcpyInParamSizeExpr = new IdentifierExpression(ignoreLoc, memcpyInParamSize);
+		Expression one = m_ExpressionTranslation.constructLiteralForIntegerType(
+				ignoreLoc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
+		List<Statement> stmt = constructCountingLoop(memcpyInParamSizeExpr, loopCtr, one, loopBody);
 		
 		Body procBody = new Body(ignoreLoc, 
 				decl.toArray(new VariableDeclaration[decl.size()]), 
 				stmt.toArray(new Statement[stmt.size()]));
 		
-
-		
 		//make the specifications
 		ArrayList<Specification> specs = new ArrayList<>();
-		{
-			// handle modifies
-			ArrayList<VariableLHS> modifiesLHSs = new ArrayList<>();
-			for (HeapDataArray hda : heapDataArrays) {
-				String memArrayName = hda.getVariableName();
-
-
-				modifiesLHSs.add(new VariableLHS(ignoreLoc, memArrayName));
-
-				if (m_FunctionHandler.getModifiedGlobals().get(SFO.MEMCPY) == null){
-					m_FunctionHandler.getModifiedGlobals().put(SFO.MEMCPY, new LinkedHashSet<String>());
-				}
-				if (m_FunctionHandler.getCallGraph().get(SFO.MEMCPY) == null) {
-					m_FunctionHandler.getCallGraph().put(SFO.MEMCPY, new LinkedHashSet<String>());
-				}
-				m_FunctionHandler.getModifiedGlobals().get(SFO.MEMCPY).add(memArrayName);
-			}
-			ModifiesSpecification modifies = new ModifiesSpecification(ignoreLoc, false, 
-					modifiesLHSs.toArray(new VariableLHS[modifiesLHSs.size()]));
-			specs.add(modifies);
-		}
+		
+		// add modifies spec
+		ModifiesSpecification modifiesSpec = announceModifiedGlobals(SFO.MEMCPY, heapDataArrays);
+		specs.add(modifiesSpec);
 		
 		// add requires #valid[dest!base];
         addPointerBaseValidityCheck(ignoreLoc, memcpyInParamDest, specs);
@@ -444,13 +519,13 @@ public class MemoryHandler {
      *    loopConterVariable := loopConterVariable + 1;
      * }
      * 
-     * @param loopBoundVariableId
-     * @param loopConterVariableId
+     * @param loopBoundVariableExpr
+     * @param loopCounterVariableId
      * @param loopBody
      * @return
      */
-	private ArrayList<Statement> constructCountingLoop(String loopBoundVariableId, 
-			String loopConterVariableId,
+	private ArrayList<Statement> constructCountingLoop(Expression loopBoundVariableExpr, 
+			String loopCounterVariableId, Expression loopCounterIncrementExpr,
 			List<Statement> loopBody) {
 		CACSLLocation ignoreLoc = LocationFactory.createIgnoreCLocation();
 		ArrayList<Statement> stmt = new ArrayList<>();
@@ -458,11 +533,11 @@ public class MemoryHandler {
 		//initialize the counter to 0
 		Expression zero = m_ExpressionTranslation.constructLiteralForIntegerType(
 				ignoreLoc, m_TypeSizeAndOffsetComputer.getSize_T(), BigInteger.ZERO);
-		stmt.add(new AssignmentStatement(ignoreLoc, new LeftHandSide[] { new VariableLHS(ignoreLoc, loopConterVariableId)}, 
+		stmt.add(new AssignmentStatement(ignoreLoc, new LeftHandSide[] { new VariableLHS(ignoreLoc, loopCounterVariableId)}, 
 				new Expression[] { zero }));
 		
-		IdentifierExpression loopCounterVariableExpr = new IdentifierExpression(ignoreLoc, loopConterVariableId);
-		IdentifierExpression loopBoundVariableExpr = new IdentifierExpression(ignoreLoc, loopBoundVariableId);
+		IdentifierExpression loopCounterVariableExpr = new IdentifierExpression(ignoreLoc, loopCounterVariableId);
+		
 		Expression condition = m_ExpressionTranslation.constructBinaryComparisonExpression(
 				ignoreLoc, IASTBinaryExpression.op_lessThan, 
 				loopCounterVariableExpr, m_TypeSizeAndOffsetComputer.getSize_T(), 
@@ -472,13 +547,11 @@ public class MemoryHandler {
 		bodyStmt.addAll(loopBody);
 		
 		//increment counter
-		VariableLHS ctrLHS = new VariableLHS(ignoreLoc, loopConterVariableId);
-		Expression one = m_ExpressionTranslation.constructLiteralForIntegerType(
-				ignoreLoc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
+		VariableLHS ctrLHS = new VariableLHS(ignoreLoc, loopCounterVariableId);
 		Expression counterPlusOne = m_ExpressionTranslation.constructArithmeticExpression(
 				ignoreLoc, IASTBinaryExpression.op_plus, 
 				loopCounterVariableExpr, m_ExpressionTranslation.getCTypeOfPointerComponents(), 
-				one, m_ExpressionTranslation.getCTypeOfPointerComponents());
+				loopCounterIncrementExpr, m_ExpressionTranslation.getCTypeOfPointerComponents());
 		bodyStmt.add(new AssignmentStatement(ignoreLoc, new LeftHandSide[] { ctrLHS }, 
 				new Expression[] { counterPlusOne }));
 		
