@@ -226,19 +226,25 @@ public class NiceConvert<LETTER, STATE> {
 
 		// Make a new STATE for each equivalence class of old STATEs
 		ArrayList<STATE> newState = new ArrayList<STATE>();
+		HashSet<STATE> newInitialStates = new HashSet<STATE>();
+		HashSet<STATE> newFinalStates = new HashSet<STATE>();
 
-		for (int i = 0; i < numClasses; i++)
-			newState.add(factory.minimize(statesOfClass.get(i)));
+		for (int i = 0; i < numClasses; i++) {
+			STATE newst = factory.minimize(statesOfClass.get(i));
+			newState.add(newst);
+			for (STATE oldst : statesOfClass.get(i)) {
+				if (oldInitialStates.contains(oldst))  // any
+					newInitialStates.add(newst);
+				if (oldFinalStates.contains(oldst))    // all
+					newFinalStates.add(newst);
+			}
+		}
 
 		// Construct result NestedWordAutomaton
 		NestedWordAutomaton<LETTER, STATE> nwa = new NestedWordAutomaton<LETTER, STATE>(services, iAlphabet, cAlphabet, rAlphabet, factory);
 
-		for (int i = 0; i < numClasses; i++) {
-			STATE someOldState = statesOfClass.get(i).get(0);
-			nwa.addState(oldInitialStates.contains(someOldState),
-						 oldFinalStates.contains(someOldState),
-						 newState.get(i));
-		}
+		for (STATE st : newState)
+			nwa.addState(newInitialStates.contains(st), newFinalStates.contains(st), st);
 
 		for (NiceITrans x : newITrans) nwa.addInternalTransition(newState.get(x.src), iSym.get(x.sym), newState.get(x.dst));
 		for (NiceCTrans x : newCTrans) nwa.addCallTransition    (newState.get(x.src), cSym.get(x.sym), newState.get(x.dst));
