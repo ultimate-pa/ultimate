@@ -15,7 +15,7 @@ int main() {
 	*src = 17;
 	*(src+1) = 42;
 	void *res = memcpy(dst,src,2);
-	// assert dst == res;
+	//@ assert dst == res;
 	char snd = *(src+1);
 	printf("%d\n",snd);
 	//@ assert snd == 42;

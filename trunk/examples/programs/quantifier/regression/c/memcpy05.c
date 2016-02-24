@@ -13,6 +13,7 @@ int main() {
 	char *src = malloc(3*sizeof(char));
 	char *dst = malloc(3*sizeof(char));
 	void *res = memcpy(dst+1,src,2);
+	//@ assert res == dst+1;
 	free(src);
 	free(dst);
 	return 0;
