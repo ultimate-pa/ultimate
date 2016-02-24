@@ -489,7 +489,17 @@ public class MemoryHandler {
 		return stmt;
 	}
 
-	//make the assigments on the arrays
+	/**
+	 * Return the assignments that we do in the loop body of our memcpy 
+	 * implementation.
+	 * 
+	 * #memory_int[{ base: dest!base, offset: dest!offset + #t~loopctr6 * 1 }] := #memory_int[{ base: src!base, offset: src!offset + #t~loopctr6 * 1 }];
+	 * @param heapDataArrays
+	 * @param loopCtr
+	 * @param destPtr
+	 * @param srcPtr
+	 * @return
+	 */
 	private ArrayList<Statement> constructMemcpyLoopBody(Collection<HeapDataArray> heapDataArrays, 
 			String loopCtr, String destPtr, String srcPtr) {
 		
