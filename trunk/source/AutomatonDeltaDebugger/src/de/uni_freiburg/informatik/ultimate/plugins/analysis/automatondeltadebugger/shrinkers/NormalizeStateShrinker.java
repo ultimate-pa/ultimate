@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE Automaton Delta Debugger grant you additional
  * permission to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.shrinkers;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -61,7 +61,7 @@ public class NormalizeStateShrinker<LETTER, STATE>
 			createAutomaton(final List<STATE> list) {
 		// create fresh automaton
 		final INestedWordAutomaton<LETTER, STATE> automaton = mFactory.create();
-
+		
 		// remaining original states
 		final HashSet<STATE> remaining =
 				new HashSet<STATE>(mAutomaton.getStates());
@@ -75,7 +75,7 @@ public class NormalizeStateShrinker<LETTER, STATE>
 				toVisit.add(state);
 			}
 		}
-
+		
 		// depth-first renaming of states
 		final HashMap<STATE, STATE> old2new = new HashMap<STATE, STATE>();
 		final HashSet<STATE> onStackOrVisited = new HashSet<STATE>(stack);
@@ -110,8 +110,7 @@ public class NormalizeStateShrinker<LETTER, STATE>
 				newState = oldState;
 			} else {
 				// assign new name
-				assert (oldState instanceof String) :
-					"The state was a string during list creation.";
+				assert (oldState instanceof String) : "The state was a string during list creation.";
 				final String name;
 				if (isInitial) {
 					name = "q0_" + ++initials;
@@ -122,29 +121,29 @@ public class NormalizeStateShrinker<LETTER, STATE>
 				}
 				newState = (STATE) name;
 			}
-
+			
 			old2new.put(oldState, newState);
 			mFactory.addState(automaton, newState, isInitial, isFinal);
-
+			
 			// push successors which have not been visited
-			for (final OutgoingInternalTransition<LETTER, STATE> trans :
-					mAutomaton.internalSuccessors(oldState)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> trans : mAutomaton
+					.internalSuccessors(oldState)) {
 				final STATE succ = trans.getSucc();
 				if (!onStackOrVisited.contains(succ)) {
 					stack.push(succ);
 					onStackOrVisited.add(succ);
 				}
 			}
-			for (final OutgoingCallTransition<LETTER, STATE> trans :
-					mAutomaton.callSuccessors(oldState)) {
+			for (final OutgoingCallTransition<LETTER, STATE> trans : mAutomaton
+					.callSuccessors(oldState)) {
 				final STATE succ = trans.getSucc();
 				if (!onStackOrVisited.contains(succ)) {
 					stack.push(succ);
 					onStackOrVisited.add(succ);
 				}
 			}
-			for (final OutgoingReturnTransition<LETTER, STATE> trans :
-					mAutomaton.returnSuccessors(oldState)) {
+			for (final OutgoingReturnTransition<LETTER, STATE> trans : mAutomaton
+					.returnSuccessors(oldState)) {
 				final STATE succ = trans.getSucc();
 				if (!onStackOrVisited.contains(succ)) {
 					stack.push(succ);
@@ -154,32 +153,32 @@ public class NormalizeStateShrinker<LETTER, STATE>
 		}
 		assert (automaton.size() == mAutomaton
 				.size()) : "The number of states must be retained.";
-
+				
 		// add transitions
 		for (final Entry<STATE, STATE> entry : old2new.entrySet()) {
 			final STATE oldState = entry.getKey();
 			final STATE newState = entry.getValue();
-			for (final OutgoingInternalTransition<LETTER, STATE> trans :
-					mAutomaton.internalSuccessors(oldState)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> trans : mAutomaton
+					.internalSuccessors(oldState)) {
 				mFactory.addInternalTransition(automaton, newState,
 						trans.getLetter(), old2new.get(trans.getSucc()));
 			}
-			for (final OutgoingCallTransition<LETTER, STATE> trans :
-					mAutomaton.callSuccessors(oldState)) {
+			for (final OutgoingCallTransition<LETTER, STATE> trans : mAutomaton
+					.callSuccessors(oldState)) {
 				mFactory.addCallTransition(automaton, newState,
 						trans.getLetter(), old2new.get(trans.getSucc()));
 			}
-			for (final OutgoingReturnTransition<LETTER, STATE> trans :
-					mAutomaton.returnSuccessors(oldState)) {
+			for (final OutgoingReturnTransition<LETTER, STATE> trans : mAutomaton
+					.returnSuccessors(oldState)) {
 				mFactory.addReturnTransition(automaton, newState,
 						old2new.get(trans.getHierPred()), trans.getLetter(),
 						old2new.get(trans.getSucc()));
 			}
 		}
-
+		
 		return automaton;
 	}
-
+	
 	@Override
 	public List<STATE> extractList() {
 		final Set<STATE> states = mAutomaton.getStates();

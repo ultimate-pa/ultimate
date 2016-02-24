@@ -43,15 +43,15 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebug
  */
 public class DebuggerException extends Exception {
 	private static final long serialVersionUID = 1L;
-
+	
 	final Class<?> mClassOfThrower;
 	final String mMessage;
-
+	
 	public DebuggerException(final Class<?> thrower, final String message) {
 		mClassOfThrower = thrower;
 		mMessage = message;
 	}
-
+	
 	@Override
 	public String toString() {
 		final StringBuilder b = new StringBuilder();

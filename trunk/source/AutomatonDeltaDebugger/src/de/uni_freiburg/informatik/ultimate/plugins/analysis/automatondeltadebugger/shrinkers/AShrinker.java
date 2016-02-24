@@ -25,14 +25,14 @@
  * licensors of the ULTIMATE Automaton Delta Debugger grant you additional
  * permission to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.shrinkers;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers;
 
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.ATester;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.BinaryDebug;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.factories.AAutomatonFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories.AAutomatonFactory;
 
 /**
  * Shrinks an automaton according to a certain criterion while still producing
@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger
 public abstract class AShrinker<T, LETTER, STATE> {
 	INestedWordAutomaton<LETTER, STATE> mAutomaton;
 	AAutomatonFactory<LETTER, STATE> mFactory;
-
+	
 	/**
 	 * Creates an automaton.
 	 * 
@@ -65,7 +65,7 @@ public abstract class AShrinker<T, LETTER, STATE> {
 	 */
 	public abstract INestedWordAutomaton<LETTER, STATE>
 			createAutomaton(final List<T> list);
-
+			
 	/**
 	 * Extracts a list of objects containing all respective objects of the
 	 * current automaton.
@@ -73,7 +73,7 @@ public abstract class AShrinker<T, LETTER, STATE> {
 	 * @return list of objects to be removed
 	 */
 	public abstract List<T> extractList();
-
+	
 	/**
 	 * Called when the error still occurs for a shrunk automaton (-> success).
 	 */
@@ -81,7 +81,7 @@ public abstract class AShrinker<T, LETTER, STATE> {
 		// use shrunk automaton henceforth
 		mAutomaton = newAutomaton;
 	}
-
+	
 	/**
 	 * Called when no error occurs for a shrunk automaton (-> failure).
 	 */
@@ -89,7 +89,7 @@ public abstract class AShrinker<T, LETTER, STATE> {
 			noError(final INestedWordAutomaton<LETTER, STATE> newAutomaton) {
 		// no action for standard shrinker
 	}
-
+	
 	/**
 	 * Runs a binary search according to the shrinking rule implemented by this
 	 * shrinker.
@@ -110,7 +110,7 @@ public abstract class AShrinker<T, LETTER, STATE> {
 		final boolean isReduced = binSearch.run();
 		return isReduced ? mAutomaton : null;
 	}
-
+	
 	@Override
 	public String toString() {
 		return this.getClass().getSimpleName();

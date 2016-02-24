@@ -25,49 +25,49 @@
  * licensors of the ULTIMATE Automaton Delta Debugger grant you additional
  * permission to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.shrinkers;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.utils.TypedTransition;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.utils.TypedTransition;
 
 /**
- * Removes call transitions.
+ * Removes return transitions.
  * 
  * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
  */
-public class CallTransitionShrinker<LETTER, STATE>
+public class ReturnTransitionShrinker<LETTER, STATE>
 		extends AShrinker<TypedTransition<LETTER, STATE>, LETTER, STATE> {
 	@Override
 	public INestedWordAutomaton<LETTER, STATE>
 			createAutomaton(final List<TypedTransition<LETTER, STATE>> list) {
 		// create fresh automaton
 		INestedWordAutomaton<LETTER, STATE> automaton = mFactory.create();
-
+		
 		// add all states
 		mFactory.addStates(automaton, mAutomaton.getStates());
-
+		
 		// add all internal transitions
 		mFactory.addFilteredInternalTransitions(automaton, mAutomaton);
-
-		// add the complement of the passed call transitions
+		
+		// add all call transitions
+		mFactory.addFilteredCallTransitions(automaton, mAutomaton);
+		
+		// add the complement of the passed return transitions
 		final Set<TypedTransition<LETTER, STATE>> oldTransitions =
-				mFactory.getCallTransitions(mAutomaton);
+				mFactory.getReturnTransitions(mAutomaton);
 		oldTransitions.removeAll(list);
-		mFactory.addCallTransitions(automaton, oldTransitions);
-
-		// add all return transitions
-		mFactory.addFilteredReturnTransitions(automaton, mAutomaton);
-
+		mFactory.addReturnTransitions(automaton, oldTransitions);
+		
 		return automaton;
 	}
-
+	
 	@Override
 	public List<TypedTransition<LETTER, STATE>> extractList() {
 		return new ArrayList<TypedTransition<LETTER, STATE>>(
-				mFactory.getCallTransitions(mAutomaton));
+				mFactory.getReturnTransitions(mAutomaton));
 	}
 }

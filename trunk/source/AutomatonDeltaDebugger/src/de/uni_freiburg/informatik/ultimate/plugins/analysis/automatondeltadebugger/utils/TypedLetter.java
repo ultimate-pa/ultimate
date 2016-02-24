@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE Automaton Delta Debugger grant you additional
  * permission to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.utils;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.utils;
 
 /**
  * Wraps a letter together with its type (internal, call, return).
@@ -35,12 +35,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugge
 public class TypedLetter<LETTER> {
 	public final LETTER mLetter;
 	public final ELetterType mType;
-
+	
 	public TypedLetter(final LETTER letter, final ELetterType type) {
 		this.mLetter = letter;
 		this.mType = type;
 	}
-
+	
 	@Override
 	public String toString() {
 		final StringBuilder b = new StringBuilder();
@@ -50,12 +50,12 @@ public class TypedLetter<LETTER> {
 		b.append(")");
 		return b.toString();
 	}
-
+	
 	@Override
 	public int hashCode() {
 		return mLetter.hashCode() + mType.hashCode();
 	}
-
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(Object o) {

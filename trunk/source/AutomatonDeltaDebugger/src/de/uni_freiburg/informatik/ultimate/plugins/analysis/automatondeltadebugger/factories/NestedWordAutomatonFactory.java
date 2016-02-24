@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE Automaton Delta Debugger grant you additional
  * permission to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.factories;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories;
 
 import java.util.Set;
 
@@ -42,14 +42,14 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
 public class NestedWordAutomatonFactory<LETTER, STATE>
 		extends AAutomatonFactory<LETTER, STATE> {
 	private final IUltimateServiceProvider mServices;
-
+	
 	public NestedWordAutomatonFactory(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final IUltimateServiceProvider services) {
 		super(automaton);
 		this.mServices = services;
 	}
-
+	
 	/**
 	 * @param automaton automaton interface
 	 * @return cast automaton
@@ -58,36 +58,36 @@ public class NestedWordAutomatonFactory<LETTER, STATE>
 			getNWA(final INestedWordAutomaton<LETTER, STATE> automaton) {
 		return ((NestedWordAutomaton<LETTER, STATE>) automaton);
 	}
-
+	
 	@Override
 	protected INestedWordAutomaton<LETTER, STATE> createWithAlphabets(
 			Set<LETTER> internalAlphabet, Set<LETTER> callAlphabet,
 			Set<LETTER> returnAlphabet) {
-		return new NestedWordAutomaton<LETTER, STATE>(new AutomataLibraryServices(mServices),
-				internalAlphabet, callAlphabet, returnAlphabet,
-				mAutomaton.getStateFactory());
+		return new NestedWordAutomaton<LETTER, STATE>(
+				new AutomataLibraryServices(mServices), internalAlphabet,
+				callAlphabet, returnAlphabet, mAutomaton.getStateFactory());
 	}
-
+	
 	@Override
 	public void addState(final INestedWordAutomaton<LETTER, STATE> automaton,
 			final STATE state, final boolean isInitial, final boolean isFinal) {
 		getNWA(automaton).addState(isInitial, isFinal, state);
 	}
-
+	
 	@Override
 	public void addInternalTransition(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final STATE pred, final LETTER letter, final STATE succ) {
 		getNWA(automaton).addInternalTransition(pred, letter, succ);
 	}
-
+	
 	@Override
 	public void addCallTransition(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final STATE pred, final LETTER letter, final STATE succ) {
 		getNWA(automaton).addCallTransition(pred, letter, succ);
 	}
-
+	
 	@Override
 	public void addReturnTransition(
 			final INestedWordAutomaton<LETTER, STATE> automaton,

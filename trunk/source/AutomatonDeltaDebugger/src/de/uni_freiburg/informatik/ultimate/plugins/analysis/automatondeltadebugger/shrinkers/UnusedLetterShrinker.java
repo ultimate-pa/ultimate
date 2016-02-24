@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE Automaton Delta Debugger grant you additional
  * permission to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.shrinkers;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -37,8 +37,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.utils.ELetterType;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.utils.TypedLetter;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.utils.ELetterType;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.utils.TypedLetter;
 
 /**
  * Removes unused letters.
@@ -60,42 +60,42 @@ public class UnusedLetterShrinker<LETTER, STATE>
 				mAutomaton.getCallAlphabet(), ELetterType.Call);
 		final Set<LETTER> returnAlphabet = unwrapLetters(it,
 				mAutomaton.getReturnAlphabet(), ELetterType.Return);
-
+				
 		// create fresh automaton
 		final INestedWordAutomaton<LETTER, STATE> automaton =
 				mFactory.create(internalAlphabet, callAlphabet, returnAlphabet);
-
+				
 		// add original states
 		mFactory.addStates(automaton, mAutomaton.getStates());
-
+		
 		// add transitions which still remain
 		mFactory.addFilteredTransitions(automaton, mAutomaton);
-
+		
 		return automaton;
 	}
-
+	
 	@Override
 	public List<TypedLetter<LETTER>> extractList() {
 		final HashSet<LETTER> internalsUsed = new HashSet<LETTER>();
 		final HashSet<LETTER> callsUsed = new HashSet<LETTER>();
 		final HashSet<LETTER> returnsUsed = new HashSet<LETTER>();
-
+		
 		// find used letters
 		for (final STATE state : mAutomaton.getStates()) {
-			for (final OutgoingInternalTransition<LETTER, STATE> trans :
-					mAutomaton.internalSuccessors(state)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> trans : mAutomaton
+					.internalSuccessors(state)) {
 				internalsUsed.add(trans.getLetter());
 			}
-			for (final OutgoingCallTransition<LETTER, STATE> trans :
-					mAutomaton.callSuccessors(state)) {
+			for (final OutgoingCallTransition<LETTER, STATE> trans : mAutomaton
+					.callSuccessors(state)) {
 				callsUsed.add(trans.getLetter());
 			}
-			for (final OutgoingReturnTransition<LETTER, STATE> trans :
-					mAutomaton.returnSuccessors(state)) {
+			for (final OutgoingReturnTransition<LETTER, STATE> trans : mAutomaton
+					.returnSuccessors(state)) {
 				returnsUsed.add(trans.getLetter());
 			}
 		}
-
+		
 		// wrap complement of present letters to include type information
 		final ArrayList<TypedLetter<LETTER>> unused =
 				new ArrayList<TypedLetter<LETTER>>();
@@ -115,10 +115,10 @@ public class UnusedLetterShrinker<LETTER, STATE>
 				unused.add(new TypedLetter<LETTER>(letter, ELetterType.Return));
 			}
 		}
-
+		
 		return unused;
 	}
-
+	
 	/**
 	 * Unwraps letters from the type wrapper list and creates the respective
 	 * alphabet.
@@ -145,13 +145,13 @@ public class UnusedLetterShrinker<LETTER, STATE>
 			} else {
 				break;
 			}
-
+			
 			final LETTER letter = nextLetter.mLetter;
 			if (originalAlphabet.contains(letter)) {
 				alphabetFilter.add(letter);
 			}
 		}
-
+		
 		// create the complement of the filtered letters
 		final HashSet<LETTER> result = new HashSet<LETTER>();
 		for (final LETTER letter : originalAlphabet) {

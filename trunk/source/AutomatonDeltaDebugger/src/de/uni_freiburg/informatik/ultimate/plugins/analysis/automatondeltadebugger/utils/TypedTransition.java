@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE Automaton Delta Debugger grant you additional
  * permission to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.utils;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.utils;
 
 /**
  * Wraps a transition together with its type (internal, call, return).
@@ -37,7 +37,7 @@ public class TypedTransition<LETTER, STATE> {
 	public final STATE mSucc;
 	public final STATE mHier;
 	public final TypedLetter<LETTER> mLetter;
-
+	
 	public TypedTransition(final STATE pred, final STATE succ, final STATE hier,
 			final TypedLetter<LETTER> letter) {
 		this.mPred = pred;
@@ -45,14 +45,14 @@ public class TypedTransition<LETTER, STATE> {
 		this.mHier = hier;
 		this.mLetter = letter;
 	}
-
+	
 	@Override
 	public int hashCode() {
 		final int hashCode = (mHier == null ? 0 : mHier.hashCode());
 		return hashCode + mPred.hashCode() + mSucc.hashCode() +
 				mLetter.hashCode();
 	}
-
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(Object o) {
@@ -72,7 +72,7 @@ public class TypedTransition<LETTER, STATE> {
 				(other.mSucc.equals(this.mSucc)) &&
 				(other.mLetter.equals(this.mLetter));
 	}
-
+	
 	@Override
 	public String toString() {
 		final StringBuilder b = new StringBuilder();

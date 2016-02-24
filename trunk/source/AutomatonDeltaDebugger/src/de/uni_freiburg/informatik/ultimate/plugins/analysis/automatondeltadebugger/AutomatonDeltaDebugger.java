@@ -49,14 +49,14 @@ import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.ATester;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.AutomatonDeltaDebuggerObserver;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.DebuggerException;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.shrinkers.AShrinker;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.shrinkers.CallTransitionShrinker;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.shrinkers.InternalTransitionShrinker;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.shrinkers.NormalizeStateShrinker;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.shrinkers.ReturnTransitionShrinker;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.shrinkers.SingleExitShrinker;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.shrinkers.StateShrinker;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.shrinkers.UnusedLetterShrinker;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.AShrinker;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.CallTransitionShrinker;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.InternalTransitionShrinker;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.NormalizeStateShrinker;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.ReturnTransitionShrinker;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.SingleExitShrinker;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.StateShrinker;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.UnusedLetterShrinker;
 
 /**
  * Ultimate interface to the automaton delta debugger.
