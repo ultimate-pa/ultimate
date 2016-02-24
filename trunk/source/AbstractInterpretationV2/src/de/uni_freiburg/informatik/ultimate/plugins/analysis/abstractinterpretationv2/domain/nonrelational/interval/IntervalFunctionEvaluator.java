@@ -65,7 +65,7 @@ public class IntervalFunctionEvaluator
 		final List<IEvaluationResult<IntervalDomainValue>> returnList = new ArrayList<>();
 
 		final IntervalDomainEvaluationResult res = new IntervalDomainEvaluationResult(new IntervalDomainValue(),
-		        new BooleanValue(false));
+		        new BooleanValue());
 
 		returnList.add(res);
 		return returnList;
