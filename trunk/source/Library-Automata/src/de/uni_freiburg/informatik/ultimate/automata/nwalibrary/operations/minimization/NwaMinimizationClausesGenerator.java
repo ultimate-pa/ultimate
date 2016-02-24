@@ -165,7 +165,6 @@ public class NwaMinimizationClausesGenerator {
 		*/
 
 		// group states by (iSet, cSet)
-		// we do it using a hashmap of ICSet here
 		HashMap<ICSet, ArrayList<Integer>> byICSet = new HashMap<ICSet, ArrayList<Integer>>();
 
 		for (int i = 0; i < numStates; i++) {
@@ -177,12 +176,14 @@ public class NwaMinimizationClausesGenerator {
 			}
 			list.add(i);
 		}
-		/*
-		System.err.printf("byICSet:\n");
+		System.err.printf("byICSet (%d states in %d groups):\n", numStates, byICSet.size());
 		for (ArrayList<Integer> x : byICSet.values()) {
 			System.err.printf(x.toString() + "\n");
 		}
-		*/
+		System.err.printf("rSets and hSets:\n");
+		for (int i = 0; i < numStates; i++) {
+			System.err.printf("rset[%d] %s\nhset[%d] %s\n", i, outSet[i].rSet.toString(), i, outSet[i].hSet.toString());
+		}
 
 
 		/*
@@ -193,30 +194,11 @@ public class NwaMinimizationClausesGenerator {
 		HornCNFBuilder builder = new HornCNFBuilder();
 		EqVarCalc calc = new EqVarCalc(numStates);
 
-		// clauses for reflexivity
 		for (int i = 0; i < numStates; i++) {
 			int eq1 = calc.eqVar(i, i);
 			builder.addClauseT(eq1);
 		}
 
-		// we don't need to emit clauses for symmetry since we identify i~j with j~i in EqVarCalc
-
-		// clauses for transitivity
-		// TODO: why does it only work with 0-based iterations for all three? is there something wrong somewhere else?
-		for (int i = 0; i < numStates; i++) {
-			for (int j = 0; j < numStates; j++) {
-				for (int k = 0; k < numStates; k++) {
-					int eq1 = calc.eqVar(i, j);
-					int eq2 = calc.eqVar(j, k);
-					int eq3 = calc.eqVar(i, k);
-					builder.addClauseFFT(eq1, eq2, eq3);
-					builder.addClauseFFT(eq2, eq3, eq2);
-					builder.addClauseFFT(eq3, eq1, eq1);
-				}
-			}
-		}
-
-		// clauses for rule 0 (to separate final and nonfinal states)
 		for (int i = 0; i < numStates; i++) {
 			for (int j = i+1; j < numStates; j++) {
 				if (isFinal[i] != isFinal[j]) {
@@ -299,6 +281,22 @@ public class NwaMinimizationClausesGenerator {
 								builder.addClauseFFT(eq1, eq2, eq3);
 							}
 						}
+					}
+				}
+			}
+		}
+
+		// clauses for transitivity
+		for (ArrayList<Integer> group : byICSet.values()) {
+			for (int i = 0; i < group.size(); i++) {
+				for (int j = i+1; j < group.size(); j++) {
+					for (int k = j+1; k < group.size(); k++) {
+						int eq1 = calc.eqVar(group.get(i), group.get(j));
+						int eq2 = calc.eqVar(group.get(j), group.get(k));
+						int eq3 = calc.eqVar(group.get(i), group.get(k));
+						builder.addClauseFFT(eq1, eq2, eq3);
+						builder.addClauseFFT(eq2, eq3, eq1);
+						builder.addClauseFFT(eq3, eq1, eq2);
 					}
 				}
 			}
