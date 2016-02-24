@@ -11,8 +11,9 @@ import de.uni_freiburg.informatik.ultimate.website.WebToolchain;
 
 /**
  * @author dietsch@informatik.uni-freiburg.de
+ * @author nutz@informatik.uni-freiburg.de
  */
-public class CKojakTC extends WebToolchain {
+public class BoogieKojakTC extends WebToolchain {
 
 	@Override
 	protected String defineDescription() {
@@ -26,25 +27,23 @@ public class CKojakTC extends WebToolchain {
 
 	@Override
 	protected String defineId() {
-		return "cKojak";
+		return "boogieKojak";
 	}
 
 	@Override
 	protected TaskNames[] defineTaskName() {
-		return new TaskNames[] { TaskNames.KOJAK_C };
+		return new TaskNames[] { TaskNames.KOJAK_BOOGIE };
 	}
 
 	@Override
 	protected String defineLanguage() {
-		return "c";
+		return "boogie";
 	}
 
 	@Override
 	protected List<Tool> defineTools() {
 		List<Tool> tools = new ArrayList<Tool>();
 
-		tools.add(new Tool(PrefStrings.s_syntaxchecker));
-		tools.add(new Tool(PrefStrings.s_cacsl2boogietranslator));
 		tools.add(new Tool(PrefStrings.s_boogiePreprocessor));
 		tools.add(new Tool(PrefStrings.s_rcfgBuilder));
 		tools.add(new Tool(PrefStrings.s_blockencoding));
@@ -68,7 +67,7 @@ public class CKojakTC extends WebToolchain {
 	
 	@Override
 	protected String defineToolchainSettingsFile() {
-		return "Kojak-C.epf";
+		return "Kojak.epf";
 	}
 
 }

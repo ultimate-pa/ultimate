@@ -179,6 +179,7 @@ public class UltimateExecutor {
 		case CONCURRENT_TRACE_ABSTRACTION_BOOGIE:
 		case RANK_SYNTHESIS_BOOGIE:
 		case TERMINATION_BOOGIE:
+		case KOJAK_BOOGIE:
 			fileExtension = ".bpl";
 			break;
 		case AUTOMIZER_C:
