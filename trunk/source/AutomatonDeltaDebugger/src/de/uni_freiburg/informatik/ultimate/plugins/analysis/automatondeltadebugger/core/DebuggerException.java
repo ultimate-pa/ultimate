@@ -41,7 +41,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebug
  * 
  * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
  */
-class DebuggerException extends Exception {
+public class DebuggerException extends Exception {
 	private static final long serialVersionUID = 1L;
 
 	final Class<?> mClassOfThrower;

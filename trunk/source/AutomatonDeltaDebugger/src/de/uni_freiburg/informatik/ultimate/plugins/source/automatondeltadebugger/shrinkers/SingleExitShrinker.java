@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
@@ -70,10 +71,7 @@ public class SingleExitShrinker<LETTER, STATE>
 		// create fresh automaton
 		final INestedWordAutomaton<LETTER, STATE> automaton = mFactory.create();
 		
-		/*
-		 * data structures which contains all transitive chains; after
-		 * initialization
-		 */
+		// data structures to contain all transitive chains (forward & backward)
 		final HashMap<STATE, STATE> left2right = new HashMap<STATE, STATE>();
 		HashMap<STATE, STATE> right2left = new HashMap<STATE, STATE>();
 		
@@ -92,8 +90,8 @@ public class SingleExitShrinker<LETTER, STATE>
 			assert wasPresent : "Pairs in the list should be left-unique.";
 			
 			// update transitive chains
-			STATE lhs = right2left.get(source);
-			STATE rhs = left2right.get(target);
+			STATE lhs = right2left.remove(source);
+			STATE rhs = left2right.remove(target);
 			if (lhs == null) {
 				// the removed state was (not yet) a unique target
 				lhs = source;
@@ -112,9 +110,9 @@ public class SingleExitShrinker<LETTER, STATE>
 		mFactory.addFilteredTransitions(automaton, mAutomaton);
 		
 		// add transitions which close a (transitive) chain of removed states
-		for (final Pair<STATE, STATE> pair : list) {
-			final STATE source = pair.getFirst();
-			final STATE transitiveTarget = left2right.get(source);
+		for (final Entry<STATE, STATE> entry : left2right.entrySet()) {
+			final STATE source = entry.getKey();
+			final STATE transitiveTarget = entry.getValue();
 			if ((transitiveTarget == null) ||
 					(!states.contains(transitiveTarget))) {
 				// source state is no entry of a transitive chain, ignore it
