@@ -65,6 +65,7 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
+		mTestCases.sort(null);
 		return mTestCases;
 	}
 
