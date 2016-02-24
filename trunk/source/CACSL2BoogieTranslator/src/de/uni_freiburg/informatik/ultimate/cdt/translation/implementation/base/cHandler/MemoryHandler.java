@@ -525,6 +525,34 @@ public class MemoryHandler {
 		}
 		return result;
 	}
+	
+	private ArrayList<Statement> constructMemsetLoopBody(Collection<HeapDataArray> heapDataArrays, 
+			String loopCtr, String ptr, String value) {
+		
+		ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+		ArrayList<Statement> result = new ArrayList<>();
+		
+		IdentifierExpression loopCtrExpr = new IdentifierExpression(ignoreLoc, loopCtr);
+		IdentifierExpression ptrExpr = new IdentifierExpression(ignoreLoc, ptr);
+		IdentifierExpression valueExpr = new IdentifierExpression(ignoreLoc, value);
+
+		Expression currentPtr = doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc, ptrExpr, 
+				new RValue(loopCtrExpr, m_ExpressionTranslation.getCTypeOfPointerComponents()), 
+				new CPrimitive(PRIMITIVE.VOID));
+		for (HeapDataArray hda : heapDataArrays) {
+//			final Expression convertedValue; 
+//			if (hda.getName().equals(SFO.POINTER)) {
+//				
+//			} else {
+//				// convert to smallest
+//			}
+//			String memArrayName = hda.getVariableName();
+//			ArrayLHS destAcc = new ArrayLHS(ignoreLoc, new VariableLHS(ignoreLoc, memArrayName), new Expression[] { ptrExpr });
+//			m_MemoryModel.getReadWriteDefinitionForHeapDataArray(hda, getRequiredMemoryModelFeatures());
+//			result.add(new AssignmentStatement(ignoreLoc, new LeftHandSide[] { destAcc }, new Expression[] { convertedValue }));
+		}
+		return result;
+	}
     
     /**
      * Returns a (Boogie) declaration and an implementation for the method
@@ -569,6 +597,19 @@ public class MemoryHandler {
 		IdentifierExpression sizeofFields = new IdentifierExpression(ignoreLoc, sizeofFieldsName);
     	
 
+    	List<VariableDeclaration> decl = new ArrayList<>();
+    	CPrimitive sizeT = m_TypeSizeAndOffsetComputer.getSize_T();
+    	String loopCtr = main.nameHandler.getTempVarUID(SFO.AUXVAR.LOOPCTR, sizeT);
+    	ASTType astType = m_TypeHandler.ctype2asttype(ignoreLoc, sizeT);
+		VarList lcvl = new VarList(ignoreLoc, new String[] { loopCtr }, astType);
+		VariableDeclaration loopCtrDec = new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] { lcvl });
+		decl.add(loopCtrDec);
+		
+//		List<Statement> loopBody = constructMemsetLoopBody(heapDataArrays, loopCtr, startPointerName, valueName);
+//		
+//		List<Statement> stmt = constructCountingLoop(memcpyInParamSize, loopCtr, loopBody);
+		
+		
     	//var ctr : int;
     	String ctrName = "ctr";
     	VariableDeclaration ctrDec = new VariableDeclaration(
@@ -614,7 +655,7 @@ public class MemoryHandler {
     		whileBody.add(new CallStatement(ignoreLoc, false, new VariableLHS[0], "write~" + SFO.INT,
     				new Expression[] { value, curAddr, sizeofFields}));	
     	}
-    	if (true) {
+    	if (!true) {
 //    	if (namesOfAllMemoryArrayTypes.contains(SFO.POINTER)) {
     		//   write~Pointer(valueToBeWritten, { startPointer!Base, startPointer!Offset + (ctr * sizeOfFields) });
 
@@ -819,7 +860,7 @@ public class MemoryHandler {
 	private List<Declaration> constructWriteProcedures(ILocation loc, Collection<HeapDataArray> heapDataArrays,
 			HeapDataArray heapDataArray) {
 		List<Declaration> result = new ArrayList<>();
-		for (ReadWriteDefinition rda : m_MemoryModel.getBytesizesStoredInHeapDataArray(heapDataArray, m_RequiredMemoryModelFeatures)) {
+		for (ReadWriteDefinition rda : m_MemoryModel.getReadWriteDefinitionForHeapDataArray(heapDataArray, m_RequiredMemoryModelFeatures)) {
 			result.add(constructWriteProcedure(loc, heapDataArrays, heapDataArray, rda));
 		}
 		return result;
@@ -827,7 +868,7 @@ public class MemoryHandler {
 	
 	private List<Declaration> constructReadProcedures(ILocation loc, HeapDataArray heapDataArray) {
 		List<Declaration> result = new ArrayList<>();
-		for (ReadWriteDefinition rda : m_MemoryModel.getBytesizesStoredInHeapDataArray(heapDataArray, m_RequiredMemoryModelFeatures)) {
+		for (ReadWriteDefinition rda : m_MemoryModel.getReadWriteDefinitionForHeapDataArray(heapDataArray, m_RequiredMemoryModelFeatures)) {
 			result.add(constructReadProcedure(loc, heapDataArray, rda));
 		}
 		return result;
