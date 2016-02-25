@@ -52,8 +52,7 @@ public class NwaMinimizationClausesGenerator {
 		EqVarCalc calc = new EqVarCalc(numStates);
 
 		assert assignments.length == calc.getNumEqVars();
-		for (Assign x : assignments)
-			assert x == Assign.TRUE || x == Assign.FALSE;
+		for (Assign x : assignments) assert x != Assign.NONE;
 
 		NiceUnionFind unionFind = new NiceUnionFind(numStates);
 		for (int i = 0; i < numStates; i++) {
@@ -182,20 +181,18 @@ public class NwaMinimizationClausesGenerator {
 			a.add(x);
 		}
 
-
 		/*
 		 * GENERATE CLAUSES
 		 *
 		 */
 
-		HornCNFBuilder builder = new HornCNFBuilder();
 		EqVarCalc calc = new EqVarCalc(numStates);
+		HornCNFBuilder builder = new HornCNFBuilder(calc.getNumEqVars());
 
 		for (int i = 0; i < numStates; i++) {
 			int eq1 = calc.eqVar(i, i);
 			builder.addClauseT(eq1);
 		}
-
 		for (int i = 0; i < numStates; i++) {
 			for (int j = i+1; j < numStates; j++) {
 				if (isFinal[i] != isFinal[j]) {
@@ -206,13 +203,19 @@ public class NwaMinimizationClausesGenerator {
 		}
 
 		for (int i = 0; i < numStates; i++) {
-			System.err.printf("now at %d, %d clauses %d requests\n", i, builder.getNumClauses(), builder.getNumRequests());
 			for (int j = i; j < numStates; j++) {
 				if (!iSet.get(i).equals(iSet.get(j))
 						|| !cSet.get(i).equals(cSet.get(j))) {
 					int eq1 = calc.eqVar(i, j);
 					builder.addClauseF(eq1);
-				} else {
+				}
+			}
+		}
+
+		for (int i = 0; i < numStates; i++) {
+			for (int j = i; j < numStates; j++) {
+				int eq1 = calc.eqVar(i, j);
+				if (!builder.isAlreadyFalse(eq1)) {
 					// rule 1
 					for (int x = 0, y = 0; x < iTransOut.get(i).size() && y < iTransOut.get(j).size();) {
 						NiceITrans t1 = iTransOut.get(i).get(x);
@@ -222,7 +225,6 @@ public class NwaMinimizationClausesGenerator {
 						} else if (t1.sym > t2.sym) {
 							y++;
 						} else {
-							int eq1 = calc.eqVar(t1.src, t2.src);
 							int eq2 = calc.eqVar(t1.dst, t2.dst);
 							builder.addClauseFT(eq1, eq2);
 							x++;
@@ -238,37 +240,33 @@ public class NwaMinimizationClausesGenerator {
 						} else if (t1.sym > t2.sym) {
 							y++;
 						} else {
-							int eq1 = calc.eqVar(t1.src, t2.src);
 							int eq2 = calc.eqVar(t1.dst, t2.dst);
 							builder.addClauseFT(eq1, eq2);
 							x++;
 							y++;
 						}
 					}
-				}
-				// rule 3
-				for (int k : rTop.get(i)) {
-					for (int l : hSet.get(j)) {
-						int eq1 = calc.eqVar(i, j);
-						int eq2 = calc.eqVar(k, l);
-						builder.addClauseFF(eq1, eq2);
+					// rule 3
+					for (int k : rTop.get(i)) {
+						for (int l : hSet.get(j)) {
+							int eq2 = calc.eqVar(k, l);
+							builder.addClauseFF(eq1, eq2);
+						}
 					}
-				}
-				for (int k : hSet.get(i)) {
-					for (int l : rTop.get(j)) {
-						int eq1 = calc.eqVar(i, j);
-						int eq2 = calc.eqVar(k, l);
-						builder.addClauseFF(eq1, eq2);
+					for (int k : hSet.get(i)) {
+						for (int l : rTop.get(j)) {
+							int eq2 = calc.eqVar(k, l);
+							builder.addClauseFF(eq1, eq2);
+						}
 					}
-				}
-				for (int s1 : rSet.get(i)) {
-					for (int s2 : rSet.get(j)) {
-						for (NiceRTrans t1 : bySrcSym.get(new SrcSym(i, s1))) {
-							for (NiceRTrans t2 : bySrcSym.get(new SrcSym(j, s2))) {
-								int eq1 = calc.eqVar(t1.src, t2.src);
-								int eq2 = calc.eqVar(t1.top, t2.top);
-								int eq3 = calc.eqVar(t1.dst, t2.dst);
-								builder.addClauseFFT(eq1, eq2, eq3);
+					for (int s1 : rSet.get(i)) {
+						for (int s2 : rSet.get(j)) {
+							for (NiceRTrans t1 : bySrcSym.get(new SrcSym(i, s1))) {
+								for (NiceRTrans t2 : bySrcSym.get(new SrcSym(j, s2))) {
+									int eq2 = calc.eqVar(t1.top, t2.top);
+									int eq3 = calc.eqVar(t1.dst, t2.dst);
+									builder.addClauseFFT(eq1, eq2, eq3);
+								}
 							}
 						}
 					}
@@ -276,10 +274,26 @@ public class NwaMinimizationClausesGenerator {
 			}
 		}
 
+		ArrayList<ArrayList<Integer>> possible = new ArrayList<ArrayList<Integer>>();
+		for (int i = 0; i < numStates; i++) possible.add(new ArrayList<Integer>());
+
+		for (int i = 0; i < numStates; i++) {
+			for (int j = i+1; j < numStates; j++) {
+				int eq1 = calc.eqVar(i, j);
+				if (!builder.isAlreadyFalse(eq1)) {
+					possible.get(i).add(j);
+				}
+			}
+		}
+
+		int combs = 0;
+		for (ArrayList<Integer> x : possible) for (int y : x) combs += possible.get(y).size();
+		System.err.printf("%d combinations out of %d still possible\n", combs, numStates*(numStates+1)/2);
+
 		for (int i = 0; i < numStates; i++) {
 			System.err.printf("transitive clauses: now at %d, %d clauses, %d requests\n", i, builder.getNumClauses(), builder.getNumRequests());
-			for (int j = i+1; j < numStates; j++) {
-				for (int k = j+1; k < numStates; k++) {
+			for (int j : possible.get(i)) {
+				for (int k : possible.get(j)) {
 					int eq1 = calc.eqVar(i, j);
 					int eq2 = calc.eqVar(j, k);
 					int eq3 = calc.eqVar(i, k);
@@ -289,25 +303,6 @@ public class NwaMinimizationClausesGenerator {
 				}
 			}
 		}
-
-		/*
-		{
-			HashMap<Integer, String> name = new HashMap<Integer, String>();
-			name.put(0, "F");
-			name.put(1, "T");
-			for (int i = 0; i < numStates; i++)
-				for (int j = i; j < numStates; j++)
-					name.put(calc.eqVar(i, j), "X_" + Integer.toString(i) + "," + Integer.toString(j));
-
-			System.err.printf("\nClauses:\n");
-			for (HornClause3 x : builder.getClauses()) {
-				String s0 =	name.get(x.l0);
-				String s1 = name.get(x.l1);
-				String s2 = name.get(x.l2);
-				System.err.printf("NOT %s OR NOT %s OR %s\n", s0, s1, s2);
-			}
-		}
-		*/
 
 		ArrayList<HornClause3> clauses = builder.getClauses();
 		System.err.printf("number of clauses: %d\n", clauses.size());
