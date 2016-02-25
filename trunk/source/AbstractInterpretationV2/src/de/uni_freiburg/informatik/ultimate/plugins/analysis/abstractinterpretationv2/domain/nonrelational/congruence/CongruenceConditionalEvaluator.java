@@ -158,7 +158,7 @@ public class CongruenceConditionalEvaluator
 
 	@Override
 	public boolean containsBool() {
-		return true;
+		return mIfEvaluator.containsBool() || mElseEvaluator.containsBool();
 	}
 
 	@Override

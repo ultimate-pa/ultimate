@@ -25,15 +25,45 @@
  * licensors of the ULTIMATE Automaton Delta Debugger grant you additional
  * permission to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.utils;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers;
+
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 
 /**
- * Enum of transition/letter types in nested word automata.
+ * Removes states.
+ * 
+ * This shrinker removes any kind of states. Especially, it does not make an
+ * exception to initial states. Transitions are added iff all respective states
+ * are still present.
  * 
  * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
  */
-public enum ELetterType {
-	Internal,
-	Call,
-	Return
+public class StateShrinker<LETTER, STATE>
+		extends AShrinker<STATE, LETTER, STATE> {
+	@Override
+	public INestedWordAutomaton<LETTER, STATE>
+			createAutomaton(final List<STATE> states) {
+		// create fresh automaton
+		INestedWordAutomaton<LETTER, STATE> automaton = mFactory.create();
+		
+		// add the complement of the passed states
+		final Set<STATE> oldStates = new HashSet<STATE>(mAutomaton.getStates());
+		oldStates.removeAll(states);
+		mFactory.addStates(automaton, oldStates);
+		
+		// add transitions which still remain
+		mFactory.addFilteredTransitions(automaton, mAutomaton);
+		
+		return automaton;
+	}
+	
+	@Override
+	public List<STATE> extractList() {
+		return new ArrayList<STATE>(mAutomaton.getStates());
+	}
 }

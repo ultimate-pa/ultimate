@@ -162,7 +162,6 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
-import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
@@ -193,7 +192,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
@@ -371,8 +369,8 @@ public class CHandler implements ICHandler {
 			m_ExpressionTranslation = new IntegerTranslation(main.getTypeSizes(), typeHandler, mUnsignedTreatment, inRange);
 		}
 		this.mPostProcessor = new PostProcessor(main, mLogger, m_ExpressionTranslation);
-		this.mFunctionHandler = new FunctionHandler(m_ExpressionTranslation);
 		this.mTypeSizeComputer = new TypeSizeAndOffsetComputer((TypeHandler) mTypeHandler, m_ExpressionTranslation, main.getTypeSizes());
+		this.mFunctionHandler = new FunctionHandler(m_ExpressionTranslation, mTypeSizeComputer);
 		this.mMemoryHandler = new MemoryHandler(typeHandler, mFunctionHandler, checkPointerValidity, 
 				mTypeSizeComputer, main.getTypeSizes(), m_ExpressionTranslation, bitvectorTranslation);
 		this.mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, m_ExpressionTranslation);
@@ -1236,7 +1234,7 @@ public class CHandler implements ICHandler {
 					loc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
 			CPrimitive oneType = m_ExpressionTranslation.getCTypeOfPointerComponents();
 			RValue one = new RValue(oneEpr, oneType);
-			valueIncremented = doPointerArithmetic(main, op, loc, value, one, cPointer.pointsToType);
+			valueIncremented = mMemoryHandler.doPointerArithmetic(op, loc, value, one, cPointer.pointsToType);
 			addOffsetInBoundsCheck(main, loc, valueIncremented, result);
 		}
 		else if (ctype instanceof CPrimitive) {
@@ -3279,39 +3277,10 @@ public class CHandler implements ICHandler {
 	}
 
 
-	/**
-	 * Add or subtract a Pointer and an integer.
-	 * Use this method only if you are sure that the type of the integer
-	 * is the same as the type that we use for our pointer components.
-	 * Otherwise, use the method below.
-	 * 
-	 * @param operator Either plus or minus.
-	 * @param integer
-	 * @param valueType
-	 *            The value type the pointer points to (we need it because we
-	 *            have to multiply with its size)
-	 * @return a pointer of the form: {base: ptr.base, offset: ptr.offset +
-	 *         integer * sizeof(valueType)}
-	 */
-	public Expression doPointerArithmetic(Dispatcher main, int operator, ILocation loc, Expression ptrAddress,
-			RValue integer, CType valueType) {
-		if (main.getTypeSizes().getSize(((CPrimitive) integer.getCType()).getType()) != 
-				main.getTypeSizes().getSize(m_ExpressionTranslation.getCTypeOfPointerComponents().getType())) {
-			throw new UnsupportedOperationException("not yet implemented, conversion is needed");
-		}
-		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(ptrAddress, loc);
-		final Expression pointerOffset = MemoryHandler.getPointerOffset(ptrAddress, loc);
-		final Expression timesSizeOf = multiplyWithSizeOfAnotherType(loc, valueType, integer.getValue(), 
-					m_ExpressionTranslation.getCTypeOfPointerComponents());
-		final Expression sum = m_ExpressionTranslation.constructArithmeticExpression(loc, 
-				operator, pointerOffset,
-				m_ExpressionTranslation.getCTypeOfPointerComponents(), timesSizeOf, m_ExpressionTranslation.getCTypeOfPointerComponents());
-		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
-		return newPointer;
-	}
+
 	
 	/**
-	 * Like {@link CHandler#doPointerArithmetic(Dispatcher, int, ILocation, Expression, RValue, CType)}
+	 * Like {@link CHandler#doPointerArithmetic(int, ILocation, Expression, RValue, CType)}
 	 * but additionally the integer operand is converted to the same type
 	 * that we use to represent pointer components.
 	 * As a consequence we have to return an ExpressionResult.
@@ -3321,26 +3290,13 @@ public class CHandler implements ICHandler {
 		ExpressionResult eres = new ExpressionResult(integer);
 		AExpressionTranslation exprTrans = ((CHandler) main.cHandler).getExpressionTranslation();
 		exprTrans.convertIntToInt(loc, eres, exprTrans.getCTypeOfPointerComponents());
-		Expression resultExpression = doPointerArithmetic(main, operator, loc, ptrAddress, (RValue) eres.lrVal, valueType);
+		Expression resultExpression = mMemoryHandler.doPointerArithmetic(operator, loc, ptrAddress, (RValue) eres.lrVal, valueType);
 		eres.lrVal = new RValue(resultExpression, m_ExpressionTranslation.getCTypeOfPointerComponents());
 		return eres;
 	}
 	
 	
-	/**
-	 * Multiply an integerExpresion with the size of another type.
-	 * @param integerExpresionType {@link CType} whose translation is the Boogie 
-	 * 		type of integerExpression and the result.
-	 * @return An {@link Expression} that represents <i>integerExpression * sizeof(valueType)</i>
-	 */
-	public Expression multiplyWithSizeOfAnotherType(ILocation loc, CType valueType, Expression integerExpression,
-			CPrimitive integerExpresionType) {
-		final Expression timesSizeOf;
-		timesSizeOf = m_ExpressionTranslation.constructArithmeticExpression(
-				loc, IASTBinaryExpression.op_multiply, integerExpression,
-				integerExpresionType, mMemoryHandler.calculateSizeOf(loc, valueType), integerExpresionType);
-		return timesSizeOf;
-	}
+
 
 	/**
 	 * Method that handles loops (for, while, do/while). Each of corresponding

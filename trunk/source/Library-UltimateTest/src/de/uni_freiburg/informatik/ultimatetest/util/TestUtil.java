@@ -37,9 +37,11 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
@@ -56,22 +58,39 @@ import de.uni_freiburg.informatik.ultimatetest.reporting.ITestSummary;
 
 /**
  * 
- * @author dietsch@informatik.uni-freiburg.de
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
-public class TestUtil {
+public final class TestUtil {
+
+	private static final long PSEUDO_RANDOM_FILE_SELECTION_SEED = 19120623;
 
 	/**
-	 * Generates a name based on the current time, the original name of the
-	 * input file and the description string such that it should be unique and
-	 * recognizable.
+	 * Select n files from a collection of files in a pseudo-random and deterministic way.
+	 */
+	public static Collection<File> limitFiles(final Collection<File> files, final int n) {
+		if (files == null || files.isEmpty() || n < 0) {
+			return files;
+		} else if (n == 0) {
+			return new ArrayList<>();
+		} else if (n >= files.size()) {
+			return files;
+		} else {
+			final List<File> shuffle = new ArrayList<>(files);
+			Collections.shuffle(shuffle, new Random(PSEUDO_RANDOM_FILE_SELECTION_SEED));
+			return new ArrayList<>(shuffle.subList(0, n));
+		}
+	}
+
+	/**
+	 * Generates a name based on the current time, the original name of the input file and the description string such
+	 * that it should be unique and recognizable.
 	 * 
 	 * @param inputFile
 	 *            An instance representing a file on the local machine
 	 * @param description
 	 *            A description for the log file name.
-	 * @return A string representing the absolute path to a file on the local
-	 *         machine.
+	 * @return A string representing the absolute path to a file on the local machine.
 	 */
 	public static String generateLogFilename(File inputFile, String description) {
 
@@ -92,16 +111,13 @@ public class TestUtil {
 	}
 
 	/**
-	 * Combines a relative path with the base directory of this plugin, i.e. you
-	 * can say getPathFromHere("../../examples/settings/") to reach the setting
-	 * directory
+	 * Combines a relative path with the base directory of this plugin, i.e. you can say
+	 * getPathFromHere("../../examples/settings/") to reach the setting directory
 	 * 
 	 * @param path
-	 *            A string representing a relative path. Please use "/" as path
-	 *            separator regardless of OS. Java will recognize \\, but this
-	 *            wont work under Linux
-	 * @return A string representing the absolute path to the relative path
-	 *         based on the actual position of this package
+	 *            A string representing a relative path. Please use "/" as path separator regardless of OS. Java will
+	 *            recognize \\, but this wont work under Linux
+	 * @return A string representing the absolute path to the relative path based on the actual position of this package
 	 */
 	public static String getPathFromHere(String path) {
 		File here = new File(System.getProperty("user.dir"));
@@ -118,8 +134,7 @@ public class TestUtil {
 	}
 
 	/**
-	 * Prefix the parameter "path" with the path to the trunk folder of the
-	 * Ultimate repository on the current machine.
+	 * Prefix the parameter "path" with the path to the trunk folder of the Ultimate repository on the current machine.
 	 * 
 	 * @param path
 	 * @return
@@ -170,8 +185,8 @@ public class TestUtil {
 	}
 
 	/***
-	 * Filters a list of files based on a given regex. Returns a collection of
-	 * files of which the path matches the regex.
+	 * Filters a list of files based on a given regex. Returns a collection of files of which the path matches the
+	 * regex.
 	 * 
 	 * @param files
 	 * @param regex
@@ -191,18 +206,17 @@ public class TestUtil {
 	}
 
 	/**
-	 * Get absolute path for the file in which an ITestLogfile will be written.
-	 * This includes also the filename.
+	 * Get absolute path for the file in which an ITestLogfile will be written. This includes also the filename.
 	 */
 	public static String generateAbsolutePathForLogfile(ITestLogfile testSummary) {
-		String absolutPath = TestUtil.getPathFromSurefire(generateLogfilename(testSummary), testSummary
-				.getUltimateTestSuiteClass().getCanonicalName());
+		String absolutPath = TestUtil.getPathFromSurefire(generateLogfilename(testSummary),
+				testSummary.getUltimateTestSuiteClass().getCanonicalName());
 		return absolutPath;
 	}
 
 	/**
-	 * Get filename for the file in which an ITestSummary will be written.
-	 * Returns only the name of the file without directories.
+	 * Get filename for the file in which an ITestSummary will be written. Returns only the name of the file without
+	 * directories.
 	 */
 	public static String generateLogfilename(ITestLogfile testSummary) {
 		String filename = testSummary.getDescriptiveLogName() + " "
@@ -275,12 +289,10 @@ public class TestUtil {
 	}
 
 	/**
-	 * Returns recursively all files in a directory that have a path whose
-	 * suffix beyond root is matched by regex. If root is a file, a collection
-	 * containing root is returned (ignoring the regex) E.g., your file root has
-	 * the absolute path /home/horst/ultimate/ and your regex is *horst* you
-	 * obtain the files that contain the String "horst" if the prefix
-	 * "/home/horst/ultimate/" was removed.
+	 * Returns recursively all files in a directory that have a path whose suffix beyond root is matched by regex. If
+	 * root is a file, a collection containing root is returned (ignoring the regex) E.g., your file root has the
+	 * absolute path /home/horst/ultimate/ and your regex is *horst* you obtain the files that contain the String
+	 * "horst" if the prefix "/home/horst/ultimate/" was removed.
 	 * 
 	 * @param root
 	 * @param regex
@@ -291,9 +303,8 @@ public class TestUtil {
 	}
 
 	/**
-	 * Returns recursively all files in a directory that have a path whose
-	 * suffix beyond the String prefix is matched by regex. If root is a file, a
-	 * collection containing root is returned (ignoring the regex).
+	 * Returns recursively all files in a directory that have a path whose suffix beyond the String prefix is matched by
+	 * regex. If root is a file, a collection containing root is returned (ignoring the regex).
 	 * 
 	 * @param root
 	 * @param regex
@@ -387,8 +398,8 @@ public class TestUtil {
 		}
 	}
 
-	private static void logResults(ILogWriter logger, String inputFile, boolean fail,
-			Collection<String> customMessages, IResultService resultService) {
+	private static void logResults(ILogWriter logger, String inputFile, boolean fail, Collection<String> customMessages,
+			IResultService resultService) {
 		logger.write("#################### TEST RESULT ####################");
 		logger.write("Results for " + inputFile);
 
@@ -399,8 +410,8 @@ public class TestUtil {
 			for (Entry<String, List<IResult>> entry : resultService.getResults().entrySet()) {
 				int i = 0;
 				for (IResult result : entry.getValue()) {
-					logger.write(String.format("[%s] %s --> [%s] %s", i, entry.getKey(), result.getClass()
-							.getSimpleName(), result.getLongDescription()));
+					logger.write(String.format("[%s] %s --> [%s] %s", i, entry.getKey(),
+							result.getClass().getSimpleName(), result.getLongDescription()));
 					++i;
 				}
 			}
@@ -440,9 +451,8 @@ public class TestUtil {
 	}
 
 	/**
-	 * Returns a map from keywords to verification results. We use keywords in
-	 * filenames to specify expected verification results. If a key of this map
-	 * is a substring of the filename, the value of this map is the expected
+	 * Returns a map from keywords to verification results. We use keywords in filenames to specify expected
+	 * verification results. If a key of this map is a substring of the filename, the value of this map is the expected
 	 * verification result of a safety checker.
 	 */
 	public static Map<String, SafetyCheckerOverallResult> constructFilenameKeywordMap_SafetyChecker() {
@@ -479,10 +489,9 @@ public class TestUtil {
 	}
 
 	/**
-	 * Returns a map from keywords to verification results. We use keywords in
-	 * the first line of files to specify expected verification results. If a
-	 * key of this map is a substring of the first line, the value of this map
-	 * is the expected verification result of a safety checker.
+	 * Returns a map from keywords to verification results. We use keywords in the first line of files to specify
+	 * expected verification results. If a key of this map is a substring of the first line, the value of this map is
+	 * the expected verification result of a safety checker.
 	 */
 	public static Map<String, SafetyCheckerOverallResult> constructFirstlineKeywordMap_SafetyChecker() {
 		Map<String, SafetyCheckerOverallResult> map = new HashMap<String, SafetyCheckerOverallResult>();
@@ -496,9 +505,8 @@ public class TestUtil {
 	}
 
 	/**
-	 * Returns a map from keywords to verification results. We use keywords in
-	 * filenames to specify expected verification results. If a key of this map
-	 * is a substring of the filename, the value of this map is the expected
+	 * Returns a map from keywords to verification results. We use keywords in filenames to specify expected
+	 * verification results. If a key of this map is a substring of the filename, the value of this map is the expected
 	 * verification result of a termination analysis.
 	 */
 	public static Map<String, TerminationAnalysisOverallResult> constructFilenameKeywordMap_TerminationAnalysis() {
@@ -511,9 +519,8 @@ public class TestUtil {
 	}
 
 	/**
-	 * Returns a map from keywords to verification results. We use keywords in
-	 * paths to specify expected verification results. If a key of this map is a
-	 * substring of the path, the value of this map is the expected verification
+	 * Returns a map from keywords to verification results. We use keywords in paths to specify expected verification
+	 * results. If a key of this map is a substring of the path, the value of this map is the expected verification
 	 * result of a termination analysis.
 	 */
 	public static Map<String, TerminationAnalysisOverallResult> constructPathKeywordMap_TerminationAnalysis() {
@@ -526,10 +533,9 @@ public class TestUtil {
 	}
 
 	/**
-	 * Returns a map from keywords to verification results. We use keywords in
-	 * the first line of files to specify expected verification results. If a
-	 * key of this map is a substring of the first line, the value of this map
-	 * is the expected verification result of a termination analysis.
+	 * Returns a map from keywords to verification results. We use keywords in the first line of files to specify
+	 * expected verification results. If a key of this map is a substring of the first line, the value of this map is
+	 * the expected verification result of a termination analysis.
 	 */
 	public static Map<String, TerminationAnalysisOverallResult> constructFirstlineKeywordMap_TerminationAnalysis() {
 		Map<String, TerminationAnalysisOverallResult> map = new HashMap<String, TerminationAnalysisOverallResult>();
@@ -558,8 +564,8 @@ public class TestUtil {
 	}
 
 	/**
-	 * Returns all ICsvProviderProvider of class benchmarkClass that are stored
-	 * in the BenchmarkResults benchmarkResults.
+	 * Returns all ICsvProviderProvider of class benchmarkClass that are stored in the BenchmarkResults
+	 * benchmarkResults.
 	 */
 	@SuppressWarnings("rawtypes")
 	private static <E extends ICsvProviderProvider> Collection<E> getCsvProviderProviderFromBenchmarkResults(
@@ -576,26 +582,25 @@ public class TestUtil {
 	}
 
 	/**
-	 * Returns all ICsvProviderProvider of class benchmarkClass that are stored
-	 * in the BenchmarkResults of ultimateIResults.
+	 * Returns all ICsvProviderProvider of class benchmarkClass that are stored in the BenchmarkResults of
+	 * ultimateIResults.
 	 */
 	@SuppressWarnings("rawtypes")
 	public static <E extends ICsvProviderProvider<?>> Collection<E> getCsvProviderProviderFromUltimateResults(
 			Map<String, List<IResult>> ultimateIResults, Class<E> benchmarkClass) {
-		Collection<BenchmarkResult> benchmarks = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil.filterResults(
-				ultimateIResults, BenchmarkResult.class);
+		Collection<BenchmarkResult> benchmarks = de.uni_freiburg.informatik.ultimate.core.util.CoreUtil
+				.filterResults(ultimateIResults, BenchmarkResult.class);
 		return getCsvProviderProviderFromBenchmarkResults(benchmarks, benchmarkClass);
 	}
 
 	/**
-	 * Returns an absolute path to the SVCOMP root directory specified by the
-	 * Maven variable "svcompdir". If there is no variable with such a name, the
-	 * parameter fallback will be used. The method converts relative paths to
-	 * absolute ones.
+	 * Returns an absolute path to the SVCOMP root directory specified by the Maven variable "svcompdir". If there is no
+	 * variable with such a name, the parameter fallback will be used. The method converts relative paths to absolute
+	 * ones.
 	 * 
 	 * @param fallback
-	 *            A string describing a relative or absolute path to an existing
-	 *            directory (which is hopefully the SVCOMP root directory).
+	 *            A string describing a relative or absolute path to an existing directory (which is hopefully the
+	 *            SVCOMP root directory).
 	 * @return An absolute path to an existing directory or null
 	 */
 	public static String getFromMavenVariableSVCOMPRoot(String fallback) {
@@ -609,8 +614,7 @@ public class TestUtil {
 	}
 
 	/**
-	 * Converts a relative path to an absolute one and checks if this path
-	 * exists.
+	 * Converts a relative path to an absolute one and checks if this path exists.
 	 * 
 	 * @param somepath
 	 *            A relative or absolute path

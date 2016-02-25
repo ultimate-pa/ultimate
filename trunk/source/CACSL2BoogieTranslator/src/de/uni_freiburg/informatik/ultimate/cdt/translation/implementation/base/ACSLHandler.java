@@ -363,11 +363,6 @@ public class ACSLHandler implements IACSLHandler {
         AExpressionTranslation expressionTranslation = 
      		   ((CHandler) main.cHandler).getExpressionTranslation();
         
-        if (node.getOperator() != de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression.Operator.COMPEQ && 
-        		node.getOperator() != de.uni_freiburg.informatik.ultimate.model.acsl.ast.BinaryExpression.Operator.COMPNEQ) {
-        	expressionTranslation.usualArithmeticConversions(main, loc, left, right);
-        }
-
         ArrayList<Declaration> decl = new ArrayList<Declaration>();
         ArrayList<Statement> stmt = new ArrayList<Statement>();
         List<Overapprox> overappr = new ArrayList<Overapprox>();

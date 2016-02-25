@@ -106,7 +106,7 @@ public abstract class AMemoryModel {
 		return result;
 	}
 	
-	public final List<ReadWriteDefinition> getBytesizesStoredInHeapDataArray(HeapDataArray hda, RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
+	public final List<ReadWriteDefinition> getReadWriteDefinitionForHeapDataArray(HeapDataArray hda, RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
 		if (hda == m_PointerArray) {
 			if (requiredMemoryModelFeatures.isPointerOnHeapRequired()) {
 				return Collections.singletonList(new ReadWriteDefinition(
@@ -115,11 +115,11 @@ public abstract class AMemoryModel {
 				return Collections.emptyList();
 			}
 		} else {
-			return getBytesizesStoredInNonPointerHeapDataArray(hda, requiredMemoryModelFeatures);
+			return getReadWriteDefinitionForNonPointerHeapDataArray(hda, requiredMemoryModelFeatures);
 		}
 	}
 	
-	protected abstract List<ReadWriteDefinition> getBytesizesStoredInNonPointerHeapDataArray(HeapDataArray hda,
+	protected abstract List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(HeapDataArray hda,
 			RequiredMemoryModelFeatures requiredMemoryModelFeatures);
 	
 	public class ReadWriteDefinition {

@@ -78,7 +78,7 @@ public class Example {
 		Tasks.TaskNames[] verifyC = { Tasks.TaskNames.AUTOMIZER_C, TaskNames.KOJAK_C };
 		addAllFilesInExamplesSubfolder(list, "verifyC/", verifyC);
 
-		Tasks.TaskNames[] verifyBoogie = { Tasks.TaskNames.AUTOMIZER_BOOGIE };
+		Tasks.TaskNames[] verifyBoogie = { Tasks.TaskNames.AUTOMIZER_BOOGIE, Tasks.TaskNames.KOJAK_BOOGIE };
 		addAllFilesInExamplesSubfolder(list, "verifyBoogie/", verifyBoogie);
 
 		Tasks.TaskNames[] rankBoogie = { Tasks.TaskNames.RANK_SYNTHESIS_BOOGIE };

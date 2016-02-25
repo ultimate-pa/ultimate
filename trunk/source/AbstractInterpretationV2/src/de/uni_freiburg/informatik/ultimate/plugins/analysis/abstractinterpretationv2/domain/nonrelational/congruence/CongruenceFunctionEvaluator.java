@@ -66,7 +66,7 @@ public class CongruenceFunctionEvaluator
 		final List<IEvaluationResult<CongruenceDomainValue>> returnList = new ArrayList<>();
 
 		final CongruenceDomainEvaluationResult res = new CongruenceDomainEvaluationResult(new CongruenceDomainValue(),
-		        new BooleanValue(false));
+		        new BooleanValue());
 
 		returnList.add(res);
 		return returnList;

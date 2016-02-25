@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.AutomtaScriptTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieBuchiAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieConcurrentTraceAbstractionTC;
+import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieKojakTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieLassoRankerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.BoogieAutomizerTC;
 import de.uni_freiburg.informatik.ultimate.website.toolchains.CBuchiAutomizerTC;
@@ -33,7 +34,8 @@ public class Tasks {
 	 */
 	private static final Class<?>[] sToolchainTypes = { AutomtaScriptTC.class, BoogieAutomizerTC.class,
 			CAutomizerTC.class, BoogieLassoRankerTC.class, CLassoRankerTC.class, BoogieBuchiAutomizerTC.class,
-			CBuchiAutomizerTC.class, BoogieConcurrentTraceAbstractionTC.class, CLTLAutomizerTC.class,CKojakTC.class };
+			CBuchiAutomizerTC.class, BoogieConcurrentTraceAbstractionTC.class, CLTLAutomizerTC.class, 
+			CKojakTC.class,	BoogieKojakTC.class };
 	/**
 	 * The String representations of TaskNames.
 	 */
@@ -64,7 +66,7 @@ public class Tasks {
 
 		CONCURRENT_TRACE_ABSTRACTION_BOOGIE,
 
-		LTLAUTOMIZER_C,KOJAK_C
+		LTLAUTOMIZER_C,KOJAK_C, KOJAK_BOOGIE
 
 		// If you add something here, add a String representation to
 		// initTaskNames()
@@ -120,6 +122,7 @@ public class Tasks {
 			case TERMINATION_BOOGIE:
 			case RANK_SYNTHESIS_BOOGIE:
 			case CONCURRENT_TRACE_ABSTRACTION_BOOGIE:
+			case KOJAK_BOOGIE:
 				return "boogie";
 			case AUTOMIZER_C:
 			case TERMINATION_C:
@@ -243,6 +246,7 @@ public class Tasks {
 		sTaskStrings.put(TaskNames.CONCURRENT_TRACE_ABSTRACTION_BOOGIE, "Verify concurrent Boogie");
 		sTaskStrings.put(TaskNames.LTLAUTOMIZER_C, "Verify if C program fulfils LTL property");
 		sTaskStrings.put(TaskNames.KOJAK_C, "Verify C");
+		sTaskStrings.put(TaskNames.KOJAK_BOOGIE, "Verify Boogie");
 
 		SimpleLogger.log("Finished initializing task names");
 		SimpleLogger.log("The following " + sTaskStrings.size() + " task names are present:");

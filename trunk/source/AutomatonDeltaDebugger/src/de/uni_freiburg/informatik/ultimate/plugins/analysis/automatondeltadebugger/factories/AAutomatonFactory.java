@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE Automaton Delta Debugger grant you additional
  * permission to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.factories;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -35,9 +35,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.utils.ELetterType;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.utils.TypedLetter;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.utils.TypedTransition;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.utils.ELetterType;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.utils.TypedLetter;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.utils.TypedTransition;
 
 /**
  * Factory for {@link INestedWordAutomaton} objects.

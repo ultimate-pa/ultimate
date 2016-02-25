@@ -44,31 +44,33 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
+@SuppressWarnings("unused")
 public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite {
 
 	private static final String[] C = new String[] { ".i", ".c" };
 	private static final String[] BPL = new String[] { ".bpl" };
 	private static final int DEFAULT_LIMIT = Integer.MAX_VALUE;
-	// private static final int DEFAULT_LIMIT = 10;
+
 	// @formatter:off
-	
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
 			//### BPL 
-//			new Triple<>("AutomizerBpl.xml", BPL, "EmptySettings.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
 //			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
+			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),			
 			
 			//### C
-			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
-			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
-			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
-			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON.epf"),
+//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
+//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
+//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
+//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON.epf"),
 //			new Triple<>("AbstractInterpretationv2C.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
-//			new Triple<>("AbstractInterpretationv2C.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),			
+//			new Triple<>("AbstractInterpretationv2C.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
+			new Triple<>("AbstractInterpretationv2C.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),			
 	};
 
 
@@ -77,7 +79,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 			/* ULTIMATE repo */
 //			"examples/programs/abstractInterpretation/",
 //			"examples/programs/abstractInterpretation/regression",
-//			"examples/programs/abstractInterpretation/regression/CountTillBound-Loop-2.bpl",
+//			"examples/programs/abstractInterpretation/regression/LoopGoto.bpl",
 			
 
 			// ################################# Bugs #########################
@@ -91,11 +93,17 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 			
 			//nullpointer exception (all)
 //			"examples/svcomp/systemc/kundu_true-unreach-call_false-termination.cil.c",
-			"examples/svcomp/product-lines/elevator_spec13_product29_true-unreach-call.cil.c",
-			"examples/svcomp/ssh/s3_srvr.blast.16_false-unreach-call.i.cil.c",
+//			"examples/svcomp/product-lines/elevator_spec13_product29_true-unreach-call.cil.c",
+//			"examples/svcomp/ssh/s3_srvr.blast.16_false-unreach-call.i.cil.c",
+//			"examples/svcomp/eca-rers2012/Problem03_label08_true-unreach-call.c",
+//			"examples/svcomp/systemc/kundu_true-unreach-call_false-termination.cil.c"
+//			"examples/svcomp/ssh/s3_srvr.blast.16_true-unreach-call.i.cil.c",
+//			"examples/svcomp/product-lines/elevator_spec9_product26_false-unreach-call.cil.c",
+			
 //			"examples/svcomp/eca-rers2012/Problem01_label01_true-unreach-call.c"
 			 
 //			//unsoundness (all) 
+			"examples/svcomp/loop-invgen/id_trans_false-unreach-call.i", // CON Domain
 //			 "examples/svcomp/loops/linear_search_false-unreach-call.i",
 //			 "examples/svcomp/loops/verisec_OpenSER__cases1_stripFullBoth_arr_false-unreach-call.i",
 //			 "examples/svcomp/recursive-simple/id_i10_o10_false-unreach-call.c",
@@ -131,7 +139,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 	@Override
 	protected long getTimeout() {
-		return 120 * 1000 ;
+		return 60 * 1000 ;
 	}
 
 	@Override

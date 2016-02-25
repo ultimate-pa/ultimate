@@ -41,6 +41,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
 
+import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
@@ -56,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.M
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler.RequiredMemoryModelFeatures;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
@@ -165,13 +166,16 @@ public class FunctionHandler {
 	LinkedHashSet<ProcedureSignature> functionSignaturesThatHaveAFunctionPointer;
 	
 	private final AExpressionTranslation m_ExpressionTranslation;
+	private final TypeSizeAndOffsetComputer m_TypeSizeComputer;
 
 	/**
 	 * Constructor.
 	 * @param expressionTranslation 
+	 * @param typeSizeComputer 
 	 */
-	public FunctionHandler(AExpressionTranslation expressionTranslation) {
+	public FunctionHandler(AExpressionTranslation expressionTranslation, TypeSizeAndOffsetComputer typeSizeComputer) {
 		this.m_ExpressionTranslation = expressionTranslation;
+		this.m_TypeSizeComputer = typeSizeComputer;
 		this.callGraph = new LinkedHashMap<String, LinkedHashSet<String>>();
 		this.currentProcedureIsVoid = false;
 		this.modifiedGlobals = new LinkedHashMap<String, LinkedHashSet<String>>();
@@ -789,7 +793,7 @@ public class FunctionHandler {
 	public Result handleStandardFunctions(Dispatcher main,
 			MemoryHandler memoryHandler, StructHandler structHandler,
 			ILocation loc, String methodName, IASTInitializerClause[] arguments) {
-		if (methodName.equals("malloc") || methodName.equals("alloca") || methodName.equals("__builtin_alloca")) {//TODO: add calloc
+		if (methodName.equals("malloc") || methodName.equals("alloca") || methodName.equals("__builtin_alloca")) {
 			assert arguments.length == 1;
 			Result sizeRes = main.dispatch(arguments[0]);
 			ExpressionResult er = ((ExpressionResult) sizeRes).switchToRValueIfNecessary(main, memoryHandler,
@@ -820,48 +824,39 @@ public class FunctionHandler {
 			pRex.stmt.add(memoryHandler.getFreeCall(main, this, pRex.lrVal, loc));
 			return pRex;
 		} else if (methodName.equals("calloc")) {
-			memoryHandler.setDeclareMemset();
-
+			/*
+			 * C11 says in 7.22.3.2
+			 * void *calloc(size_t nmemb, size_t size);
+			 * The calloc function allocates space for an array of nmemb 
+			 * objects, each of whose size is size. The space is initialized 
+			 * to all bits zero.
+			 */
 			assert arguments.length == 2;
-			ExpressionResult noItems = ((ExpressionResult) main.dispatch(arguments[0])).switchToRValueIfNecessary(
-					main, memoryHandler,
-					structHandler, loc);
-			ExpressionResult er = new ExpressionResult(noItems);
-			ExpressionResult sizeRes = ((ExpressionResult) main.dispatch(arguments[1])).switchToRValueIfNecessary(main, memoryHandler,
-					structHandler, loc);
-			er.addAll((ExpressionResult) sizeRes);
-
-			ExpressionResult mallocRex = memoryHandler.getMallocCall(
-					main, 
-					this, 
-					ExpressionFactory.newBinaryExpression(loc, 
-							Operator.ARITHMUL, 
-							noItems.lrVal.getValue(), 
-							sizeRes.lrVal.getValue()),
-					loc);
-
-			er.addAll(mallocRex);
-			er.lrVal = mallocRex.lrVal;
+			ExpressionResult nmemb = ((ExpressionResult) main.dispatch(arguments[0])).switchToRValueIfNecessary(main, memoryHandler,structHandler, loc);
+			m_ExpressionTranslation.convertIntToInt(loc, nmemb, m_TypeSizeComputer.getSize_T());
+			ExpressionResult size = ((ExpressionResult) main.dispatch(arguments[1])).switchToRValueIfNecessary(main, memoryHandler,structHandler, loc);
+			m_ExpressionTranslation.convertIntToInt(loc, size, m_TypeSizeComputer.getSize_T());
 			
-			Expression nr0 = m_ExpressionTranslation.constructLiteralForIntegerType(
-        		loc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-			er.stmt.add(new CallStatement(loc, 
-					false, 
-					new VariableLHS[0], 
-					SFO.MEMSET,
-					new Expression[] {
-							mallocRex.lrVal.getValue(),	//ptr
-							noItems.lrVal.getValue(),	//noFields
-							sizeRes.lrVal.getValue(),	//sizeofFields
-							nr0							//value
-					}));
+			Expression product = m_ExpressionTranslation.constructArithmeticExpression(
+					loc, IASTBinaryExpression.op_multiply,
+					nmemb.lrVal.getValue(), m_TypeSizeComputer.getSize_T(), 
+					size.lrVal.getValue(), m_TypeSizeComputer.getSize_T());
+
+			ExpressionResult mallocExprRes = memoryHandler.getMallocCall(main, this, product, loc);
+			final ExpressionResult result = new ExpressionResult(mallocExprRes.lrVal);
+			result.addAll(nmemb);
+			result.addAll(size);
+			result.addAll(mallocExprRes);
+			
+			result.stmt.add(memoryHandler.constructUltimateMeminitCall(loc, nmemb.lrVal.getValue(), 
+					size.lrVal.getValue(), product, mallocExprRes.lrVal.getValue()));
 			
 			if (this.callGraph.get(this.currentProcedure.getIdentifier()) == null)
 				this.callGraph.put(this.currentProcedure.getIdentifier(), new LinkedHashSet<String>());
-			this.callGraph.get(this.currentProcedure.getIdentifier()).add(SFO.MEMSET);
+			this.callGraph.get(this.currentProcedure.getIdentifier()).add(MemoryModelDeclarations.Ultimate_MemInit.getName());
 			this.callGraph.get(this.currentProcedure.getIdentifier()).add(SFO.MALLOC);
 
-			return er;
+			return result;
 		} else if (methodName.equals("memset")) {
 			// void *memset(void *str, int c, size_t n)
 			// void *memset(void *ptr, int value size_t size
@@ -907,6 +902,8 @@ public class FunctionHandler {
 			return null;
 		}
 	}
+
+
 
 	/**
 	 * 

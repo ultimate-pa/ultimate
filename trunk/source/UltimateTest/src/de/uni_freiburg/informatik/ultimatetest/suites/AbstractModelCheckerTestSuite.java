@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateStarter;
@@ -46,7 +45,6 @@ import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
  *
  */
 public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
-	private static final long PSEUDO_RANDOM_FILE_SELECTION_SEED = 19120623;
 	private static final String SETTINGS_PATH = "examples/settings/";
 	private static final String TOOLCHAIN_PATH = "examples/toolchains/";
 
@@ -55,16 +53,16 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 	/**
 	 * Timeout of each test case.
 	 * 
-	 * @return A timeout for each test case in ms. The value 0 means that there
-	 *         is no timeout. Negative values are forbidden. This will override
-	 *         the timeout that is specified in the settings files.
+	 * @return A timeout for each test case in ms. The value 0 means that there is no timeout. Negative values are
+	 *         forbidden. This will override the timeout that is specified in the settings files.
 	 */
 	protected abstract long getTimeout();
 
 	protected abstract ITestResultDecider constructITestResultDecider(UltimateRunDefinition ultimateRunDefinition);
-	
+
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
+		mTestCases.sort(null);
 		return mTestCases;
 	}
 
@@ -94,14 +92,11 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 	 * Add a single test case with paths relative to the ultimate trunk
 	 * 
 	 * @param toolchain
-	 *            A string specifying a valid path to a toolchain file relative
-	 *            to trunk/examples/toolchain
+	 *            A string specifying a valid path to a toolchain file relative to trunk/examples/toolchain
 	 * @param settings
-	 *            A string specifying a valid path to a setting file relative to
-	 *            trunk/examples/settings
+	 *            A string specifying a valid path to a setting file relative to trunk/examples/settings
 	 * @param input
-	 *            A string specifying a valid path to an input file relative to
-	 *            trunk/examples
+	 *            A string specifying a valid path to an input file relative to trunk/examples
 	 * @param testResultDecider
 	 *            The test result decider that should be used in this test
 	 */
@@ -150,7 +145,8 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 		addTestCases(toolchainFile, settingsFile, testFiles);
 	}
 
-	protected void addTestCases(String toolchain, String settings, DirectoryFileEndingsPair[] directoryFileEndingsPairs) {
+	protected void addTestCases(String toolchain, String settings,
+			DirectoryFileEndingsPair[] directoryFileEndingsPairs) {
 		File toolchainFile = getToolchainFile(toolchain);
 		File settingsFile = getSettingsFile(settings);
 		Collection<File> testFiles = new ArrayList<File>();
@@ -162,18 +158,11 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 	}
 
 	/**
-	 * Get input files from directory. Do not take all files but only up to n
-	 * pseudorandomly selected files.
+	 * Get input files from directory. Do not take all files but only up to n pseudorandomly selected files.
 	 */
 	private Collection<File> getInputFiles(String directory, String[] fileEndings, int n) {
-		List<File> files = TestUtil.getFiles(new File(TestUtil.getPathFromTrunk(directory)), fileEndings);
-		if (n >= files.size()) {
-			return files;
-		} else {
-			Collections.shuffle(files, new Random(PSEUDO_RANDOM_FILE_SELECTION_SEED));
-			ArrayList<File> result = new ArrayList<>(files.subList(0, n));
-			return result;
-		}
+		final List<File> files = TestUtil.getFiles(new File(TestUtil.getPathFromTrunk(directory)), fileEndings);
+		return TestUtil.limitFiles(files, n);
 	}
 
 	public static class DirectoryFileEndingsPair {

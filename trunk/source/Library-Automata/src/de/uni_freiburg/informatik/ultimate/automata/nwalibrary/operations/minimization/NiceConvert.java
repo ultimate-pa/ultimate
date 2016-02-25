@@ -226,19 +226,25 @@ public class NiceConvert<LETTER, STATE> {
 
 		// Make a new STATE for each equivalence class of old STATEs
 		ArrayList<STATE> newState = new ArrayList<STATE>();
+		HashSet<STATE> newInitialStates = new HashSet<STATE>();
+		HashSet<STATE> newFinalStates = new HashSet<STATE>();
 
-		for (int i = 0; i < numClasses; i++)
-			newState.add(factory.minimize(statesOfClass.get(i)));
+		for (int i = 0; i < numClasses; i++) {
+			STATE newst = factory.minimize(statesOfClass.get(i));
+			newState.add(newst);
+			for (STATE oldst : statesOfClass.get(i)) {
+				if (oldInitialStates.contains(oldst))  // any
+					newInitialStates.add(newst);
+				if (oldFinalStates.contains(oldst))    // all
+					newFinalStates.add(newst);
+			}
+		}
 
 		// Construct result NestedWordAutomaton
 		NestedWordAutomaton<LETTER, STATE> nwa = new NestedWordAutomaton<LETTER, STATE>(services, iAlphabet, cAlphabet, rAlphabet, factory);
 
-		for (int i = 0; i < numClasses; i++) {
-			STATE someOldState = statesOfClass.get(i).get(0);
-			nwa.addState(oldInitialStates.contains(someOldState),
-						 oldFinalStates.contains(someOldState),
-						 newState.get(i));
-		}
+		for (STATE st : newState)
+			nwa.addState(newInitialStates.contains(st), newFinalStates.contains(st), st);
 
 		for (NiceITrans x : newITrans) nwa.addInternalTransition(newState.get(x.src), iSym.get(x.sym), newState.get(x.dst));
 		for (NiceCTrans x : newCTrans) nwa.addCallTransition    (newState.get(x.src), cSym.get(x.sym), newState.get(x.dst));
@@ -251,7 +257,7 @@ public class NiceConvert<LETTER, STATE> {
 	public ArrayList<NiceHist> computeHistoryStates() {
 		ArrayList<NiceHist> hist = new ArrayList<NiceHist>();
 
-		// TODO: XXX: How to find out if the bottom-of-stack state is a history state?
+		STATE bottomOfStackState = automaton.getEmptyStackState();
 
 		// casting doesn't really make sense here, but it seems this is
 		// currently the only implementation of history states
@@ -259,10 +265,13 @@ public class NiceConvert<LETTER, STATE> {
 		if (!(automaton instanceof IDoubleDeckerAutomaton<?, ?>))
 			throw new IllegalArgumentException("Operand must be an IDoubleDeckerAutomaton.");
 		doubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>) automaton;
-		for (int i = 0; i < oldState.size(); i++)
+		for (int i = 0; i < oldState.size(); i++) {
+			if (doubleDecker.isDoubleDecker(oldState.get(i), bottomOfStackState))
+				hist.add(new NiceHist(i, -1));  // -1 is bottom-of-stack
 			for (int j = 0; j < oldState.size(); j++)
 				if (doubleDecker.isDoubleDecker(oldState.get(i), oldState.get(j)))
 					hist.add(new NiceHist(i, j));
+		}
 
 		return hist;
 	}

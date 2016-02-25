@@ -582,8 +582,8 @@ public class IntervalDomainState implements IAbstractState<IntervalDomainState, 
 			assert var != null : "Error during TermVar creation";
 			final Sort sort = var.getSort().getRealSort();
 			if (!sort.isNumericSort()) {
-				mLogger.warn("Unfinished term transformation: Unsupported sort " + sort + " for variable " + var + ": "
-				        + this);
+				//TODO: Handle boolean variables (easy) 
+				//TODO: what about arrays (hard -- but perhaps not necessary, c.f. Matthias' integer programs) 
 				continue;
 			}
 			final Term newterm = entry.getValue().getTerm(script, sort, var);

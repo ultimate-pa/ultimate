@@ -35,6 +35,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -79,7 +80,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
@@ -155,13 +155,8 @@ public class MemoryHandler {
 	 */
 	LinkedScopedHashMap<LocalLValueILocationPair, Integer> variablesToBeFreed;
 
-	private boolean m_declareMemCpy = false;
 	private boolean m_declareMemset = false;
 	
-	public void setDeclareMemCpy() {
-		m_declareMemCpy = true;
-	}
-
 	public void setDeclareMemset() {
 		m_declareMemset = true;
 	}
@@ -169,6 +164,7 @@ public class MemoryHandler {
 	private final AExpressionTranslation m_ExpressionTranslation;
 	
 	private final TypeSizeAndOffsetComputer m_TypeSizeAndOffsetComputer;
+	private final TypeSizes m_TypeSizes;
 	private final RequiredMemoryModelFeatures m_RequiredMemoryModelFeatures;
 	private final AMemoryModel m_MemoryModel;
 	
@@ -184,6 +180,7 @@ public class MemoryHandler {
     		TypeSizeAndOffsetComputer typeSizeComputer, TypeSizes typeSizes, 
     		AExpressionTranslation expressionTranslation, boolean bitvectorTranslation) {
     	m_TypeHandler = typeHandler;
+    	m_TypeSizes = typeSizes;
     	m_FunctionHandler = functionHandler;
     	m_ExpressionTranslation = expressionTranslation;
     	m_RequiredMemoryModelFeatures = new RequiredMemoryModelFeatures();
@@ -224,10 +221,26 @@ public class MemoryHandler {
 	}
 
 
+	public enum MemoryModelDeclarations { 
+		Ultimate_MemInit("#Ultimate.meminit"), 
+		C_Memcpy("#C_memcpy"); 
+	
+		MemoryModelDeclarations(String name) {
+			this.m_Name = name;
+		}
+		private final String m_Name;
+		
+		public String getName() {
+			return this.m_Name;
+		}
+	
+	};
 
 	public class RequiredMemoryModelFeatures {
+		
     	private final Set<PRIMITIVE> m_DataOnHeapRequired = new HashSet<>();
     	private boolean m_PointerOnHeapRequired;
+    	private final Set<MemoryModelDeclarations> m_RequiredMemoryModelDeclarations = new HashSet<>();
     	
     	public void reportPointerOnHeapRequired() {
     		m_PointerOnHeapRequired = true;
@@ -248,6 +261,16 @@ public class MemoryHandler {
 		public boolean isMemoryModelInfrastructureRequired() {
 			return isPointerOnHeapRequired() || !getDataOnHeapRequired().isEmpty();
 		}
+		
+		public boolean require(MemoryModelDeclarations mmdecl) {
+			return m_RequiredMemoryModelDeclarations.add(mmdecl);
+		}
+
+		public Set<MemoryModelDeclarations> getRequiredMemoryModelDeclarations() {
+			return Collections.unmodifiableSet(m_RequiredMemoryModelDeclarations);
+		}
+		
+		
     	
     }
     
@@ -273,26 +296,36 @@ public class MemoryHandler {
         if (!main.isMMRequired()) {
             return decl;
         }
-       
 
         decl.add(constructNullPointerConstant());
         decl.add(constructValidArrayDeclaration());
         decl.add(constuctLengthArrayDeclaration());
-        
-        // add memory arrays and access procedures
+
         Collection<HeapDataArray> heapDataArrays = m_MemoryModel.getDataHeapArrays(m_RequiredMemoryModelFeatures);
-        
-        decl.addAll(declareSomeMemoryArrays(tuLoc, heapDataArrays));
+
+        {// add memory arrays and read/write procedures
+        	for (HeapDataArray heapDataArray : heapDataArrays) {
+        		decl.add(constructMemoryArrayDeclaration(tuLoc, heapDataArray.getName(), heapDataArray.getASTType()));
+        		// create and add read and write procedure
+        		decl.addAll(constructWriteProcedures(tuLoc, heapDataArrays, heapDataArray));
+        		decl.addAll(constructReadProcedures(tuLoc, heapDataArray));
+        	}
+        }
 
         decl.addAll(declareFree(main, tuLoc));
         decl.addAll(declareDeallocation(main, tuLoc));
         decl.addAll(declareMalloc(main.typeHandler, tuLoc));
 
-        if (m_declareMemCpy) {
-        	decl.addAll(declareMemCpy(main, heapDataArrays));
-        }
         if (m_declareMemset) {
         	decl.addAll(declareMemset(main, heapDataArrays));
+        }
+        
+        if (m_RequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations().contains(MemoryModelDeclarations.Ultimate_MemInit)) {
+        	decl.addAll(declareUltimateMeminit(main, heapDataArrays));
+        }
+        
+        if (m_RequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations().contains(MemoryModelDeclarations.C_Memcpy)) {
+        	decl.addAll(declareMemcpy(main, heapDataArrays));
         }
 
         return decl;
@@ -331,89 +364,46 @@ public class MemoryHandler {
                 		m_TypeHandler.constructPointerType(ignoreLoc)) });
 		return result;
 	}
-
-    /**
-     * Adds our implementation of the memcpy procedure to the boogie code.
-     */
-    private List<Declaration> declareMemCpy(Dispatcher main,
+	
+	
+    private List<Declaration> declareUltimateMeminit(Dispatcher main,
     		Collection<HeapDataArray> heapDataArrays) {
-    	ArrayList<Declaration> memCpyDecl = new ArrayList<>();
+    	ArrayList<Declaration> decls = new ArrayList<>();
     	ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
     	
-    	VarList inPDest = new VarList(ignoreLoc, new String[] { SFO.MEMCPY_DEST }, main.typeHandler.constructPointerType(ignoreLoc));
-    	VarList inPSrc = new VarList(ignoreLoc, new String[] { SFO.MEMCPY_SRC }, main.typeHandler.constructPointerType(ignoreLoc));
-    	VarList	inPSize = new VarList(ignoreLoc, new String[] { SFO.MEMCPY_SIZE }, new PrimitiveType(ignoreLoc, SFO.INT));
-    	VarList[] inParams = new VarList[] { inPDest, inPSrc, inPSize };
+    	String inParamPtr = "#ptr";
+    	String inParamAmountOfFields = "#amountOfFields";
+    	String inParamSizeOfFields = "#sizeOfFields";
+    	String inParamProduct = "#product";
+    	String proc = MemoryModelDeclarations.Ultimate_MemInit.getName();
     	
-    	VarList[] outParams = new VarList[] { new VarList(ignoreLoc, new String[] { SFO.RES }, main.typeHandler.constructPointerType(ignoreLoc)) };
-
+    	VarList inParamPtrVl = new VarList(ignoreLoc, new String[] { inParamPtr }, 
+    			main.typeHandler.constructPointerType(ignoreLoc));
+    	VarList inParamAmountOfFieldsVl = new VarList(ignoreLoc, new String[] { inParamAmountOfFields }, 
+    			main.typeHandler.ctype2asttype(ignoreLoc, m_TypeSizeAndOffsetComputer.getSize_T()));
+    	VarList inParamSizeOfFieldsVl = new VarList(ignoreLoc, new String[] { inParamSizeOfFields }, 
+    			main.typeHandler.ctype2asttype(ignoreLoc, m_TypeSizeAndOffsetComputer.getSize_T()));
+    	VarList inParamProductVl = new VarList(ignoreLoc, new String[] { inParamProduct }, 
+    			main.typeHandler.ctype2asttype(ignoreLoc, m_TypeSizeAndOffsetComputer.getSize_T()));
+    	
+    	VarList[] inParams = new VarList[] { inParamPtrVl, inParamAmountOfFieldsVl, inParamSizeOfFieldsVl, inParamProductVl };
+    	VarList[] outParams = new VarList[] { };
    			
-    	ArrayList<VariableDeclaration> decl = new ArrayList<>();
-    	ArrayList<Statement> stmt = new ArrayList<>();
-    	
-    	CPrimitive intType = new CPrimitive(PRIMITIVE.INT);
-    	String loopCtr = main.nameHandler.getTempVarUID(SFO.AUXVAR.LOOPCTR, intType);
-    	ASTType astType = new PrimitiveType(ignoreLoc, SFO.INT); //TODO: translate via type handler
+    	List<VariableDeclaration> decl = new ArrayList<>();
+    	CPrimitive sizeT = m_TypeSizeAndOffsetComputer.getSize_T();
+    	String loopCtr = main.nameHandler.getTempVarUID(SFO.AUXVAR.LOOPCTR, sizeT);
+    	ASTType astType = m_TypeHandler.ctype2asttype(ignoreLoc, sizeT);
 		VarList lcvl = new VarList(ignoreLoc, new String[] { loopCtr }, astType);
 		VariableDeclaration loopCtrDec = new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] { lcvl });
 		decl.add(loopCtrDec);
-		//initialize the counter to 0
+
 		Expression zero = m_ExpressionTranslation.constructLiteralForIntegerType(
-				ignoreLoc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
-		stmt.add(new AssignmentStatement(ignoreLoc, new LeftHandSide[] { new VariableLHS(ignoreLoc, loopCtr)}, 
-				new Expression[] { zero }));
+				ignoreLoc, new CPrimitive(PRIMITIVE.UCHAR), BigInteger.ZERO);
+		List<Statement> loopBody = constructMemsetLoopBody(heapDataArrays, loopCtr, inParamPtr, zero);
 		
-		IdentifierExpression ctrIdex = new IdentifierExpression(ignoreLoc, loopCtr);
-		Expression condition = ExpressionFactory.newBinaryExpression(ignoreLoc, BinaryExpression.Operator.COMPLT, 
-				ctrIdex,
-				new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SIZE));
-		
-		
-		ArrayList<Statement> bodyStmt = new ArrayList<>();
-
-		//make the assigments on the arrays
-		Expression currentDest = ((CHandler) main.cHandler).doPointerArithmetic(main, IASTBinaryExpression.op_plus, ignoreLoc, 
-					new IdentifierExpression(ignoreLoc, SFO.MEMCPY_DEST), 
-					new RValue(ctrIdex, m_ExpressionTranslation.getCTypeOfPointerComponents()), 
-					new CPrimitive(PRIMITIVE.VOID));
-		Expression currentSrc = ((CHandler) main.cHandler).doPointerArithmetic(main, IASTBinaryExpression.op_plus, ignoreLoc, 
-					new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SRC), 
-					new RValue(ctrIdex, m_ExpressionTranslation.getCTypeOfPointerComponents()), 
-					new CPrimitive(PRIMITIVE.VOID));
-
-		// handle modifies
-		ArrayList<VariableLHS> modifiesLHSs = new ArrayList<>();
-		for (HeapDataArray hda : heapDataArrays) {
-			String memArrayName = hda.getVariableName();
-
-			ArrayAccessExpression srcAcc = new ArrayAccessExpression(ignoreLoc, new IdentifierExpression(ignoreLoc, memArrayName), new Expression[] { currentSrc });
-			ArrayLHS destAcc = new ArrayLHS(ignoreLoc, new VariableLHS(ignoreLoc, memArrayName), new Expression[] { currentDest });
-			bodyStmt.add(new AssignmentStatement(ignoreLoc, new LeftHandSide[] { destAcc }, new Expression[] { srcAcc }));
-
-			modifiesLHSs.add(new VariableLHS(ignoreLoc, memArrayName));
-
-			if (m_FunctionHandler.getModifiedGlobals().get(SFO.MEMCPY) == null){
-				m_FunctionHandler.getModifiedGlobals().put(SFO.MEMCPY, new LinkedHashSet<String>());
-			}
-			if (m_FunctionHandler.getCallGraph().get(SFO.MEMCPY) == null) {
-				m_FunctionHandler.getCallGraph().put(SFO.MEMCPY, new LinkedHashSet<String>());
-			}
-			m_FunctionHandler.getModifiedGlobals().get(SFO.MEMCPY).add(memArrayName);
-		}
-		
-		//increment counter
-		VariableLHS ctrLHS = new VariableLHS(ignoreLoc, loopCtr);
-		Expression one = m_ExpressionTranslation.constructLiteralForIntegerType(
-				ignoreLoc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
-		bodyStmt.add(new AssignmentStatement(ignoreLoc, new LeftHandSide[] { ctrLHS }, 
-				new Expression[] { constructPointerComponentAddition(ignoreLoc,
-						ctrIdex, one) }));
-
-		
-		Statement[] whileBody = bodyStmt.toArray(new Statement[bodyStmt.size()]);
-		
-		WhileStatement whileStm = new WhileStatement(ignoreLoc, condition, new LoopInvariantSpecification[0], whileBody); 
-		stmt.add(whileStm);
+		IdentifierExpression inParamProductExpr = new IdentifierExpression(ignoreLoc, inParamProduct);
+		IdentifierExpression inParamSizeOfFieldsExpr = new IdentifierExpression(ignoreLoc, inParamSizeOfFields);
+		List<Statement> stmt = constructCountingLoop(inParamProductExpr, loopCtr, inParamSizeOfFieldsExpr, loopBody);
 		
 		Body procBody = new Body(ignoreLoc, 
 				decl.toArray(new VariableDeclaration[decl.size()]), 
@@ -421,107 +411,300 @@ public class MemoryHandler {
 		
 		//make the specifications
 		ArrayList<Specification> specs = new ArrayList<>();
-		ModifiesSpecification modifies = new ModifiesSpecification(ignoreLoc, false, 
-				 modifiesLHSs.toArray(new VariableLHS[modifiesLHSs.size()]));
-		specs.add(modifies);
 		
-		Expression srcBase = new StructAccessExpression(ignoreLoc, new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SRC),
-                    SFO.POINTER_BASE);
-		Expression destBase = new StructAccessExpression(ignoreLoc, new IdentifierExpression(ignoreLoc, SFO.MEMCPY_DEST),
-                    SFO.POINTER_BASE);
-	
+		// add modifies spec
+		ModifiesSpecification modifiesSpec = announceModifiedGlobals(proc, heapDataArrays);
+		specs.add(modifiesSpec);
 		
-        Expression valid = getValidArray(ignoreLoc);	
-		if (m_PointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME 
-        		|| m_PointerBaseValidity == POINTER_CHECKMODE.ASSUME) {
-        	// requires #valid[#ptr!base];
-        	RequiresSpecification specValidSrc = null;
-        	RequiresSpecification specValidDest = null;
-        	if (m_PointerBaseValidity == POINTER_CHECKMODE.ASSERTandASSUME) {
-        		specValidSrc = new RequiresSpecification(ignoreLoc, false,
-            			new ArrayAccessExpression(ignoreLoc, valid,
-            					new Expression[] { srcBase }));
-        		specValidDest = new RequiresSpecification(ignoreLoc, false,
-            			new ArrayAccessExpression(ignoreLoc, valid,
-            					new Expression[] { destBase }));
-        	} else {
-        		assert m_PointerBaseValidity == POINTER_CHECKMODE.ASSUME;
-        		specValidSrc = new RequiresSpecification(ignoreLoc, true,
-            			new ArrayAccessExpression(ignoreLoc, valid,
-            					new Expression[] { srcBase }));
-        		specValidDest = new RequiresSpecification(ignoreLoc, true,
-            			new ArrayAccessExpression(ignoreLoc, valid,
-            					new Expression[] { destBase }));
-        	}
-        	Check check = new Check(Spec.MEMORY_DEREFERENCE);
-        	check.addToNodeAnnot(specValidSrc);
-        	specs.add(specValidSrc);
-        	check.addToNodeAnnot(specValidDest);
-        	specs.add(specValidDest);
-        }
-		Expression srcOffset = new StructAccessExpression(ignoreLoc, new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SRC),
-                    SFO.POINTER_OFFSET);
-		Expression destOffset = new StructAccessExpression(ignoreLoc, new IdentifierExpression(ignoreLoc, SFO.MEMCPY_DEST),
-                    SFO.POINTER_OFFSET);
-//	
-		Expression lengthSrc = new ArrayAccessExpression(ignoreLoc,
-				getLenthArray(ignoreLoc),
-				new Expression[] { srcBase });
-		Expression lengthDest = new ArrayAccessExpression(ignoreLoc,
-				getLenthArray(ignoreLoc),
-				new Expression[] { srcBase });
-
-		if (m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSERTandASSUME 
-				|| m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSUME) {
-			// requires #sizeof~$Pointer$ + #ptr!offset <=
-					// #length[#ptr!base];
-        	RequiresSpecification specLengthSrc = null;
-        	RequiresSpecification specLengthDest = null;
-			if (m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSERTandASSUME) {
-				specLengthSrc = new RequiresSpecification(ignoreLoc, false,
-						constructPointerComponentLessEqual(ignoreLoc, //TODO LT or LEQ?? (also below..)
-								constructPointerComponentAddition(ignoreLoc,
-										new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SIZE),
-										srcOffset), lengthSrc));
-				specLengthDest = new RequiresSpecification(ignoreLoc, false,
-						constructPointerComponentLessEqual(ignoreLoc,
-								constructPointerComponentAddition(ignoreLoc,
-										new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SIZE),
-										destOffset), lengthDest));
-			} else {
-				assert m_PointerTargetFullyAllocated == POINTER_CHECKMODE.ASSUME;
-				specLengthSrc = new RequiresSpecification(ignoreLoc, true,
-						constructPointerComponentLessEqual(ignoreLoc,
-								constructPointerComponentAddition(ignoreLoc,
-										new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SIZE),
-										srcOffset), lengthSrc));
-				specLengthDest = new RequiresSpecification(ignoreLoc, true,
-						constructPointerComponentLessEqual(ignoreLoc,
-								constructPointerComponentAddition(ignoreLoc,
-										new IdentifierExpression(ignoreLoc, SFO.MEMCPY_SIZE),
-										destOffset), lengthDest));
-			}
-			Check check = new Check(Spec.MEMORY_DEREFERENCE);
-			check.addToNodeAnnot(specLengthSrc);
-			specs.add(specLengthSrc);
-			check.addToNodeAnnot(specLengthDest);
-			specs.add(specLengthDest);
-		}	
-   	
 		//add the procedure declaration
-     	Procedure memCpyProcDecl = new Procedure(ignoreLoc, new Attribute[0], SFO.MEMCPY, new String[0], 
+     	Procedure memCpyProcDecl = new Procedure(ignoreLoc, new Attribute[0], proc, new String[0], 
+    			inParams, outParams, specs.toArray(new Specification[specs.size()]), null);
+     	decls.add(memCpyProcDecl);
+     	
+     	//add the procedure implementation
+     	Procedure memCpyProc = new Procedure(ignoreLoc, new Attribute[0], proc, new String[0], 
+    			inParams, outParams, null, procBody);
+     	decls.add(memCpyProc);
+    	
+		return decls;
+	}
+    
+	public CallStatement constructUltimateMeminitCall(ILocation loc, Expression amountOfFields, Expression sizeOfFields,
+			Expression product, Expression pointer) {
+		m_RequiredMemoryModelFeatures.require(MemoryModelDeclarations.Ultimate_MemInit);
+		return new CallStatement(loc, false, new VariableLHS[0], MemoryModelDeclarations.Ultimate_MemInit.getName(),
+				new Expression[] { pointer, amountOfFields, sizeOfFields, product });
+	}
+
+    /**
+     * Tell m_FunctionHandler that procedure proc modifies all heapDataArrays.
+     * Retruns modifies specification.
+     */
+	private ModifiesSpecification announceModifiedGlobals(String proc,
+			Collection<HeapDataArray> heapDataArrays) {
+    	ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+		ArrayList<VariableLHS> modifiesLHSs = new ArrayList<>();
+		for (HeapDataArray hda : heapDataArrays) {
+			String memArrayName = hda.getVariableName();
+			modifiesLHSs.add(new VariableLHS(ignoreLoc, memArrayName));
+
+			if (m_FunctionHandler.getModifiedGlobals().get(proc) == null){
+				m_FunctionHandler.getModifiedGlobals().put(proc, new LinkedHashSet<String>());
+			}
+			if (m_FunctionHandler.getCallGraph().get(proc) == null) {
+				m_FunctionHandler.getCallGraph().put(proc, new LinkedHashSet<String>());
+			}
+			m_FunctionHandler.getModifiedGlobals().get(proc).add(memArrayName);
+		}
+		return new ModifiesSpecification(ignoreLoc, false, 
+				modifiesLHSs.toArray(new VariableLHS[modifiesLHSs.size()]));
+	}
+	
+	
+
+    /**
+     * Adds our implementation of the memcpy procedure to the boogie code.
+     */
+    private List<Declaration> declareMemcpy(Dispatcher main,
+    		Collection<HeapDataArray> heapDataArrays) {
+    	ArrayList<Declaration> memCpyDecl = new ArrayList<>();
+    	ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+    	
+    	String memcpyInParamSize = SFO.MEMCPY_SIZE;
+    	String memcpyInParamDest = SFO.MEMCPY_DEST;
+    	String memcpyInParamSrc = SFO.MEMCPY_SRC;
+    	String memcpyOutParam = SFO.RES;
+    	
+    	VarList inPDest = new VarList(ignoreLoc, new String[] { memcpyInParamDest }, main.typeHandler.constructPointerType(ignoreLoc));
+    	VarList inPSrc = new VarList(ignoreLoc, new String[] { memcpyInParamSrc }, main.typeHandler.constructPointerType(ignoreLoc));
+    	VarList	inPSize = new VarList(ignoreLoc, new String[] { memcpyInParamSize }, 
+    			m_TypeHandler.ctype2asttype(ignoreLoc, m_TypeSizeAndOffsetComputer.getSize_T()));
+    	VarList outP = new VarList(ignoreLoc, new String[] { memcpyOutParam }, main.typeHandler.constructPointerType(ignoreLoc));
+    	VarList[] inParams = new VarList[] { inPDest, inPSrc, inPSize };
+    	VarList[] outParams = new VarList[] { outP };
+
+   			
+    	List<VariableDeclaration> decl = new ArrayList<>();
+    	CPrimitive sizeT = m_TypeSizeAndOffsetComputer.getSize_T();
+    	String loopCtr = main.nameHandler.getTempVarUID(SFO.AUXVAR.LOOPCTR, sizeT);
+    	ASTType astType = m_TypeHandler.ctype2asttype(ignoreLoc, sizeT);
+		VarList lcvl = new VarList(ignoreLoc, new String[] { loopCtr }, astType);
+		VariableDeclaration loopCtrDec = new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] { lcvl });
+		decl.add(loopCtrDec);
+
+		List<Statement> loopBody = constructMemcpyLoopBody(heapDataArrays, loopCtr, memcpyInParamDest, memcpyInParamSrc);
+		
+		IdentifierExpression memcpyInParamSizeExpr = new IdentifierExpression(ignoreLoc, memcpyInParamSize);
+		Expression one = m_ExpressionTranslation.constructLiteralForIntegerType(
+				ignoreLoc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
+		List<Statement> stmt = constructCountingLoop(memcpyInParamSizeExpr, loopCtr, one, loopBody);
+		
+		Body procBody = new Body(ignoreLoc, 
+				decl.toArray(new VariableDeclaration[decl.size()]), 
+				stmt.toArray(new Statement[stmt.size()]));
+		
+		//make the specifications
+		ArrayList<Specification> specs = new ArrayList<>();
+		
+		// add modifies spec
+		ModifiesSpecification modifiesSpec = announceModifiedGlobals(MemoryModelDeclarations.C_Memcpy.getName(), heapDataArrays);
+		specs.add(modifiesSpec);
+		
+		// add requires #valid[dest!base];
+        addPointerBaseValidityCheck(ignoreLoc, memcpyInParamDest, specs);
+        // add requires #valid[src!base];
+        addPointerBaseValidityCheck(ignoreLoc, memcpyInParamSrc, specs);
+        
+        Expression memcpyParamSizeExpr = new IdentifierExpression(ignoreLoc, memcpyInParamSize);
+
+        // add requires size + dest!offset <= #length[dest!base];
+        checkPointerTargetFullyAllocated(ignoreLoc, memcpyParamSizeExpr, memcpyInParamDest, specs);
+        
+        // add requires size + src!offset <= #length[src!base];
+        checkPointerTargetFullyAllocated(ignoreLoc, memcpyParamSizeExpr, memcpyInParamSrc, specs);
+        
+        // free ensures #res == dest;
+        EnsuresSpecification returnValue = new EnsuresSpecification(ignoreLoc, 
+        		true, ExpressionFactory.newBinaryExpression(ignoreLoc, Operator.COMPEQ, 
+        		new IdentifierExpression(ignoreLoc, memcpyOutParam),
+        		new IdentifierExpression(ignoreLoc, memcpyInParamDest)));
+        specs.add(returnValue);
+        
+        
+		//add the procedure declaration
+     	Procedure memCpyProcDecl = new Procedure(ignoreLoc, new Attribute[0], 
+     			MemoryModelDeclarations.C_Memcpy.getName(), new String[0], 
     			inParams, outParams, specs.toArray(new Specification[specs.size()]), null);
      	memCpyDecl.add(memCpyProcDecl);
      	
      	//add the procedure implementation
-     	Procedure memCpyProc = new Procedure(ignoreLoc, new Attribute[0], SFO.MEMCPY, new String[0], 
+     	Procedure memCpyProc = new Procedure(ignoreLoc, new Attribute[0], 
+     			MemoryModelDeclarations.C_Memcpy.getName(), new String[0], 
     			inParams, outParams, null, procBody);
      	memCpyDecl.add(memCpyProc);
     	
 		return memCpyDecl;
 	}
     
+	public CallStatement constructMemcpyCall(ILocation loc, Expression dest, Expression src,
+			Expression size, String resVarId) {
+		m_RequiredMemoryModelFeatures.require(MemoryModelDeclarations.C_Memcpy);
+		return new CallStatement(loc, false, new VariableLHS[] { new VariableLHS(loc, resVarId) }, MemoryModelDeclarations.C_Memcpy.getName(), 
+				new Expression[] { dest, src, size });
+	}
+    
+
     /**
+     * Construct loop of the following form, where loopBody is a List of 
+     * statements and the variables loopConterVariable and loopBoundVariable
+     * have the translated type of size_t.
+     * 
+     * loopConterVariable := 0;
+     * while (#t~loopctr4 < loopBoundVariable) {
+     *    ___loopBody___
+     *    loopConterVariable := loopConterVariable + 1;
+     * }
+     * 
+     * @param loopBoundVariableExpr
+     * @param loopCounterVariableId
+     * @param loopBody
+     * @return
+     */
+	private ArrayList<Statement> constructCountingLoop(Expression loopBoundVariableExpr, 
+			String loopCounterVariableId, Expression loopCounterIncrementExpr,
+			List<Statement> loopBody) {
+		CACSLLocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+		ArrayList<Statement> stmt = new ArrayList<>();
+		
+		//initialize the counter to 0
+		Expression zero = m_ExpressionTranslation.constructLiteralForIntegerType(
+				ignoreLoc, m_TypeSizeAndOffsetComputer.getSize_T(), BigInteger.ZERO);
+		stmt.add(new AssignmentStatement(ignoreLoc, new LeftHandSide[] { new VariableLHS(ignoreLoc, loopCounterVariableId)}, 
+				new Expression[] { zero }));
+		
+		IdentifierExpression loopCounterVariableExpr = new IdentifierExpression(ignoreLoc, loopCounterVariableId);
+		
+		Expression condition = m_ExpressionTranslation.constructBinaryComparisonExpression(
+				ignoreLoc, IASTBinaryExpression.op_lessThan, 
+				loopCounterVariableExpr, m_TypeSizeAndOffsetComputer.getSize_T(), 
+				loopBoundVariableExpr, m_TypeSizeAndOffsetComputer.getSize_T());
+		
+		ArrayList<Statement> bodyStmt = new ArrayList<>();
+		bodyStmt.addAll(loopBody);
+		
+		//increment counter
+		VariableLHS ctrLHS = new VariableLHS(ignoreLoc, loopCounterVariableId);
+		Expression counterPlusOne = m_ExpressionTranslation.constructArithmeticExpression(
+				ignoreLoc, IASTBinaryExpression.op_plus, 
+				loopCounterVariableExpr, m_ExpressionTranslation.getCTypeOfPointerComponents(), 
+				loopCounterIncrementExpr, m_ExpressionTranslation.getCTypeOfPointerComponents());
+		bodyStmt.add(new AssignmentStatement(ignoreLoc, new LeftHandSide[] { ctrLHS }, 
+				new Expression[] { counterPlusOne }));
+		
+		Statement[] whileBody = bodyStmt.toArray(new Statement[bodyStmt.size()]);
+		
+		WhileStatement whileStm = new WhileStatement(ignoreLoc, condition, new LoopInvariantSpecification[0], whileBody); 
+		stmt.add(whileStm);
+		return stmt;
+	}
+
+	/**
+	 * Return the assignments that we do in the loop body of our memcpy 
+	 * implementation.
+	 * 
+	 * #memory_int[{ base: dest!base, offset: dest!offset + #t~loopctr6 * 1 }] := #memory_int[{ base: src!base, offset: src!offset + #t~loopctr6 * 1 }];
+	 * @param heapDataArrays
+	 * @param loopCtr
+	 * @param destPtr
+	 * @param srcPtr
+	 * @return
+	 */
+	private ArrayList<Statement> constructMemcpyLoopBody(Collection<HeapDataArray> heapDataArrays, 
+			String loopCtr, String destPtr, String srcPtr) {
+		
+		ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+		ArrayList<Statement> result = new ArrayList<>();
+		
+		IdentifierExpression loopCtrExpr = new IdentifierExpression(ignoreLoc, loopCtr);
+		IdentifierExpression destPtrExpr = new IdentifierExpression(ignoreLoc, destPtr);
+		IdentifierExpression srcPtrExpr = new IdentifierExpression(ignoreLoc, srcPtr);
+
+		Expression currentDest = doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc, destPtrExpr, 
+				new RValue(loopCtrExpr, m_ExpressionTranslation.getCTypeOfPointerComponents()), 
+				new CPrimitive(PRIMITIVE.VOID));
+		Expression currentSrc = doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc, srcPtrExpr, 
+				new RValue(loopCtrExpr, m_ExpressionTranslation.getCTypeOfPointerComponents()), 
+				new CPrimitive(PRIMITIVE.VOID));
+		for (HeapDataArray hda : heapDataArrays) {
+			String memArrayName = hda.getVariableName();
+			ArrayAccessExpression srcAcc = new ArrayAccessExpression(ignoreLoc, new IdentifierExpression(ignoreLoc, memArrayName), new Expression[] { currentSrc });
+			ArrayLHS destAcc = new ArrayLHS(ignoreLoc, new VariableLHS(ignoreLoc, memArrayName), new Expression[] { currentDest });
+			result.add(new AssignmentStatement(ignoreLoc, new LeftHandSide[] { destAcc }, new Expression[] { srcAcc }));
+			
+		}
+		return result;
+	}
+	
+	private ArrayList<Statement> constructMemsetLoopBody(Collection<HeapDataArray> heapDataArrays, 
+			String loopCtr, String ptr, Expression valueExpr) {
+		
+		ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
+		ArrayList<Statement> result = new ArrayList<>();
+		
+		IdentifierExpression loopCtrExpr = new IdentifierExpression(ignoreLoc, loopCtr);
+		IdentifierExpression ptrExpr = new IdentifierExpression(ignoreLoc, ptr);
+
+		Expression currentPtr = doPointerArithmetic(IASTBinaryExpression.op_plus, ignoreLoc, ptrExpr, 
+				new RValue(loopCtrExpr, m_ExpressionTranslation.getCTypeOfPointerComponents()), 
+				new CPrimitive(PRIMITIVE.VOID));
+		for (HeapDataArray hda : heapDataArrays) {
+			final Expression convertedValue;
+			final ExpressionResult exprRes = new ExpressionResult(new RValue(valueExpr, new CPrimitive(PRIMITIVE.UCHAR)));
+			if (hda.getName().equals(SFO.POINTER)) {
+				m_ExpressionTranslation.convertIntToInt(ignoreLoc, exprRes, m_ExpressionTranslation.getCTypeOfPointerComponents());
+				Expression zero = m_ExpressionTranslation.constructLiteralForIntegerType(ignoreLoc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
+				convertedValue = constructPointerFromBaseAndOffset(zero, exprRes.lrVal.getValue(), ignoreLoc);
+			} else {
+				// convert to smallest
+				List<ReadWriteDefinition> rwds = m_MemoryModel.getReadWriteDefinitionForHeapDataArray(hda, getRequiredMemoryModelFeatures());
+				PRIMITIVE primitive = getCprimitiveThatFitsBest(rwds);
+				m_ExpressionTranslation.convertIntToInt(ignoreLoc, exprRes, new CPrimitive(primitive));
+				convertedValue = exprRes.lrVal.getValue();
+			}
+			String memArrayName = hda.getVariableName();
+			ArrayLHS destAcc = new ArrayLHS(ignoreLoc, new VariableLHS(ignoreLoc, memArrayName), new Expression[] { currentPtr });
+			
+			result.add(new AssignmentStatement(ignoreLoc, new LeftHandSide[] { destAcc }, new Expression[] { convertedValue }));
+		}
+		return result;
+	}
+    
+	/**
+	 * Returns an CPrimitive which is unsigned, integer and not bool that has
+	 * the smallest bytesize.
+	 */
+    private PRIMITIVE getCprimitiveThatFitsBest(List<ReadWriteDefinition> test) {
+    	int smallestBytesize = Integer.MAX_VALUE;
+    	for (ReadWriteDefinition rwd : test) {
+    		if (rwd.getBytesize() < smallestBytesize) {
+    			smallestBytesize = rwd.getBytesize();
+    		}
+    	}
+    	if (smallestBytesize == 0) {
+    		// we only have unbounded data types
+    		return PRIMITIVE.UCHAR;
+    	}
+    	for (PRIMITIVE primitive : new PRIMITIVE[] { PRIMITIVE.UCHAR, PRIMITIVE.USHORT, 
+    			PRIMITIVE.UINT, PRIMITIVE.ULONG, PRIMITIVE.ULONGLONG}) {
+    		if (m_TypeSizes.getSize(primitive) == smallestBytesize) {
+    			return primitive;
+    		}
+    	}
+    	throw new AssertionError("don't know how to store value on heap");
+    }
+    
+    		
+	/**
      * Returns a (Boogie) declaration and an implementation for the method
      * ULTIMATE.memset(startPointer : Pointer, noFields : int, sizeofFields : int, valueToBeWritten : int) returns ()
      * This method should set a continuous list of memory locations beginning at address
@@ -564,12 +747,26 @@ public class MemoryHandler {
 		IdentifierExpression sizeofFields = new IdentifierExpression(ignoreLoc, sizeofFieldsName);
     	
 
+    	List<VariableDeclaration> decl = new ArrayList<>();
+    	CPrimitive sizeT = m_TypeSizeAndOffsetComputer.getSize_T();
+    	String loopCtr = main.nameHandler.getTempVarUID(SFO.AUXVAR.LOOPCTR, sizeT);
+    	ASTType astType = m_TypeHandler.ctype2asttype(ignoreLoc, sizeT);
+		VarList lcvl = new VarList(ignoreLoc, new String[] { loopCtr }, astType);
+		VariableDeclaration loopCtrDec = new VariableDeclaration(ignoreLoc, new Attribute[0], new VarList[] { lcvl });
+		decl.add(loopCtrDec);
+		
+//		List<Statement> loopBody = constructMemsetLoopBody(heapDataArrays, loopCtr, startPointerName, valueName);
+//		
+//		List<Statement> stmt = constructCountingLoop(memcpyInParamSize, loopCtr, loopBody);
+		
+		
     	//var ctr : int;
     	String ctrName = "ctr";
     	VariableDeclaration ctrDec = new VariableDeclaration(
     			ignoreLoc, 
     			new Attribute[0], 
-    			new VarList[] { new VarList(ignoreLoc, new String[] { ctrName }, new PrimitiveType(ignoreLoc, SFO.INT))});
+    			new VarList[] { new VarList(ignoreLoc, new String[] { ctrName }, 
+    					m_TypeHandler.ctype2asttype(ignoreLoc, new CPrimitive(PRIMITIVE.INT)))});
     	localDecls.add(ctrDec);
     	
     	// ctr := 0;
@@ -608,7 +805,7 @@ public class MemoryHandler {
     		whileBody.add(new CallStatement(ignoreLoc, false, new VariableLHS[0], "write~" + SFO.INT,
     				new Expression[] { value, curAddr, sizeofFields}));	
     	}
-    	if (true) {
+    	if (!true) {
 //    	if (namesOfAllMemoryArrayTypes.contains(SFO.POINTER)) {
     		//   write~Pointer(valueToBeWritten, { startPointer!Base, startPointer!Offset + (ctr * sizeOfFields) });
 
@@ -772,34 +969,6 @@ public class MemoryHandler {
 		return memsetDecls;
     }
 
-    /**
-     * Declares those of the memory arrays <code>#memory_int</code>,
-     * <code>#memory_bool</code> (deprecated), <code>#memory_real</code> and
-     * <code>#memory_$Pointer$</code>, that are listed in the arguments,
-     * as well as read and write procedures for these arrays.
-     * 
-     * @param loc the location of the translation unit.
-     * @return the declarations for the memory arrays as well as read and write
-     *         procedures for these arrays.
-     */
-	private ArrayList<Declaration> declareSomeMemoryArrays(final ILocation loc, Collection<HeapDataArray> heapDataArrays) {
-		ArrayList<Declaration> decl = new ArrayList<>();
-        
-		for (HeapDataArray heapDataArray : heapDataArrays) {
-
-            decl.add(constructMemoryArrayDeclaration(loc, heapDataArray.getName(), heapDataArray.getASTType()));
-            
-            // create and add read and write procedure
-           	decl.addAll(constructWriteProcedures(loc, heapDataArrays, heapDataArray));
-            decl.addAll(constructReadProcedures(loc, heapDataArray));
-
-        }
-		return decl;
-	}
-
-
-
-
 	private VariableDeclaration constructMemoryArrayDeclaration(
 			final ILocation loc, final String typeName, final ASTType astType) {
 		final ASTType memoryArrayType = new ArrayType(loc, new String[0],
@@ -813,7 +982,7 @@ public class MemoryHandler {
 	private List<Declaration> constructWriteProcedures(ILocation loc, Collection<HeapDataArray> heapDataArrays,
 			HeapDataArray heapDataArray) {
 		List<Declaration> result = new ArrayList<>();
-		for (ReadWriteDefinition rda : m_MemoryModel.getBytesizesStoredInHeapDataArray(heapDataArray, m_RequiredMemoryModelFeatures)) {
+		for (ReadWriteDefinition rda : m_MemoryModel.getReadWriteDefinitionForHeapDataArray(heapDataArray, m_RequiredMemoryModelFeatures)) {
 			result.add(constructWriteProcedure(loc, heapDataArrays, heapDataArray, rda));
 		}
 		return result;
@@ -821,7 +990,7 @@ public class MemoryHandler {
 	
 	private List<Declaration> constructReadProcedures(ILocation loc, HeapDataArray heapDataArray) {
 		List<Declaration> result = new ArrayList<>();
-		for (ReadWriteDefinition rda : m_MemoryModel.getBytesizesStoredInHeapDataArray(heapDataArray, m_RequiredMemoryModelFeatures)) {
+		for (ReadWriteDefinition rda : m_MemoryModel.getReadWriteDefinitionForHeapDataArray(heapDataArray, m_RequiredMemoryModelFeatures)) {
 			result.add(constructReadProcedure(loc, heapDataArray, rda));
 		}
 		return result;
@@ -1869,5 +2038,51 @@ public class MemoryHandler {
 		return m_TypeSizeAndOffsetComputer;
 	}
 	
+	/**
+	 * Add or subtract a Pointer and an integer.
+	 * Use this method only if you are sure that the type of the integer
+	 * is the same as the type that we use for our pointer components.
+	 * Otherwise, use the method below.
+	 * @param operator Either plus or minus.
+	 * @param integer
+	 * @param valueType
+	 *            The value type the pointer points to (we need it because we
+	 *            have to multiply with its size)
+	 * 
+	 * @return a pointer of the form: {base: ptr.base, offset: ptr.offset +
+	 *         integer * sizeof(valueType)}
+	 */
+	public Expression doPointerArithmetic(int operator, ILocation loc, Expression ptrAddress, RValue integer,
+			CType valueType) {
+		if (m_TypeSizes.getSize(((CPrimitive) integer.getCType()).getType()) != 
+				m_TypeSizes.getSize(m_ExpressionTranslation.getCTypeOfPointerComponents().getType())) {
+			throw new UnsupportedOperationException("not yet implemented, conversion is needed");
+		}
+		final Expression pointerBase = MemoryHandler.getPointerBaseAddress(ptrAddress, loc);
+		final Expression pointerOffset = MemoryHandler.getPointerOffset(ptrAddress, loc);
+		final Expression timesSizeOf = multiplyWithSizeOfAnotherType(loc, valueType, integer.getValue(), 
+					m_ExpressionTranslation.getCTypeOfPointerComponents());
+		final Expression sum = m_ExpressionTranslation.constructArithmeticExpression(loc, 
+				operator, pointerOffset,
+				m_ExpressionTranslation.getCTypeOfPointerComponents(), timesSizeOf, m_ExpressionTranslation.getCTypeOfPointerComponents());
+		final StructConstructor newPointer = MemoryHandler.constructPointerFromBaseAndOffset(pointerBase, sum, loc);
+		return newPointer;
+	}
+	
+	
+	/**
+	 * Multiply an integerExpresion with the size of another type.
+	 * @param integerExpresionType {@link CType} whose translation is the Boogie 
+	 * 		type of integerExpression and the result.
+	 * @return An {@link Expression} that represents <i>integerExpression * sizeof(valueType)</i>
+	 */
+	public Expression multiplyWithSizeOfAnotherType(ILocation loc, CType valueType, Expression integerExpression,
+			CPrimitive integerExpresionType) {
+		final Expression timesSizeOf;
+		timesSizeOf = m_ExpressionTranslation.constructArithmeticExpression(
+				loc, IASTBinaryExpression.op_multiply, integerExpression,
+				integerExpresionType, calculateSizeOf(loc, valueType), integerExpresionType);
+		return timesSizeOf;
+	}
 
 }

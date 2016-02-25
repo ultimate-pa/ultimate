@@ -248,7 +248,6 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 	}
 
 	private Expression handleBinaryExpression(final BinaryExpression expr) {
-		// TODO: Better simplification (newExpr && expr)
 		if (expr.getOperator() != Operator.COMPEQ) {
 			return expr;
 		}

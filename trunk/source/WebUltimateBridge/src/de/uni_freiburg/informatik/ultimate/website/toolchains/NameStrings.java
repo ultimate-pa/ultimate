@@ -7,6 +7,7 @@ public class NameStrings {
 	public static final String s_TOOL_BuchiAutomizer = "Büchi Automizer";
 	public static final String s_TOOL_LassoRanker = "Lasso Ranker";
 	public static final String s_TOOL_AutomizerConcurrent = "Concurrent Trace Abstraction";
+	public static final String s_TOOL_Kojak = "Kojak";
 	
 	public static final String s_DESCRIPTION_Automizer = "Verification of safety properties based on an new automata-theoretic approach to software verification";
 	public static final String s_DESCRIPTION_BuchiAutomizer = "Termination analysis based on Büchi automata";

@@ -51,8 +51,9 @@ class HornClause3 {
     public static final int falseVar = 0;
     public static final int trueVar = 1;
 
-    public static HornClause3 T(int x)                 { return new HornClause3(1, 1, x); }
+    public static HornClause3 T(int z)                 { return new HornClause3(1, 1, z); }
     public static HornClause3 F(int x)                 { return new HornClause3(x, 1, 0); }
-    public static HornClause3 FT(int y, int z)         { return new HornClause3(y, 1, z); }
+    public static HornClause3 FF(int x, int y)         { return new HornClause3(x, y, 0); }
+    public static HornClause3 FT(int x, int z)         { return new HornClause3(x, 1, z); }
     public static HornClause3 FFT(int x, int y, int z) { return new HornClause3(x, y, z); }
 };
