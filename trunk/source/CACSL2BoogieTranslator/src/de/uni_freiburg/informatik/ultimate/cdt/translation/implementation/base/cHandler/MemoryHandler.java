@@ -507,7 +507,7 @@ public class MemoryHandler {
 		ArrayList<Specification> specs = new ArrayList<>();
 		
 		// add modifies spec
-		ModifiesSpecification modifiesSpec = announceModifiedGlobals(SFO.MEMCPY, heapDataArrays);
+		ModifiesSpecification modifiesSpec = announceModifiedGlobals(MemoryModelDeclarations.C_Memcpy.getName(), heapDataArrays);
 		specs.add(modifiesSpec);
 		
 		// add requires #valid[dest!base];
