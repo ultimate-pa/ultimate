@@ -41,7 +41,6 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
-import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
@@ -49,8 +48,7 @@ import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.IntegerTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -68,14 +66,11 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
@@ -288,7 +283,6 @@ public class SvComp14CHandler extends CHandler {
 		}
 		
 		if (methodName.equals("__builtin_memcpy") || methodName.equals("memcpy")) {
-			((CHandler) main.cHandler).mMemoryHandler.setDeclareMemCpy();
 
 			assert node.getArguments().length == 3;
 			ExpressionResult destRex = (ExpressionResult) main.dispatch(node.getArguments()[0]);
@@ -318,18 +312,18 @@ public class SvComp14CHandler extends CHandler {
 			decl.add(tVarDecl);
 			auxVars.put(tVarDecl, loc);		
 			
-			Statement call = new CallStatement(loc, false, new VariableLHS[] { new VariableLHS(loc, tId) }, SFO.MEMCPY, 
-					new Expression[] { destRex.lrVal.getValue(), srcRex.lrVal.getValue(), sizeRex.lrVal.getValue() });
+			Statement call = mMemoryHandler.constructMemcpyCall(loc, destRex.lrVal.getValue(), 
+					srcRex.lrVal.getValue(), sizeRex.lrVal.getValue(), tId);
 			stmt.add(call);
 
 			// add required information to function handler.
-			if (!mFunctionHandler.getCallGraph().containsKey(SFO.MEMCPY)) {
-				mFunctionHandler.getCallGraph().put(SFO.MEMCPY, new LinkedHashSet<String>());
+			if (!mFunctionHandler.getCallGraph().containsKey(MemoryModelDeclarations.C_Memcpy.getName())) {
+				mFunctionHandler.getCallGraph().put(MemoryModelDeclarations.C_Memcpy.getName(), new LinkedHashSet<String>());
 			}
-			if (!mFunctionHandler.getModifiedGlobals().containsKey(SFO.MEMCPY)) {
-				mFunctionHandler.getModifiedGlobals().put(SFO.MEMCPY, new LinkedHashSet<String>());
+			if (!mFunctionHandler.getModifiedGlobals().containsKey(MemoryModelDeclarations.C_Memcpy.getName())) {
+				mFunctionHandler.getModifiedGlobals().put(MemoryModelDeclarations.C_Memcpy.getName(), new LinkedHashSet<String>());
 			}
-			mFunctionHandler.getCallGraph().get(mFunctionHandler.getCurrentProcedureID()).add(SFO.MEMCPY);
+			mFunctionHandler.getCallGraph().get(mFunctionHandler.getCurrentProcedureID()).add(MemoryModelDeclarations.C_Memcpy.getName());
 			
 			return new ExpressionResult(stmt, new RValue(new IdentifierExpression(loc, tId), 
 					destRex.lrVal.getCType()), decl, auxVars, overappr);
@@ -361,7 +355,6 @@ public class SvComp14CHandler extends CHandler {
 
 		return super.visit(main, node);
 	}
-
 
 	
 	@Override

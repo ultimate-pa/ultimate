@@ -162,7 +162,6 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopAnnot;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
-import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
@@ -193,7 +192,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructAccessExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
@@ -371,8 +369,8 @@ public class CHandler implements ICHandler {
 			m_ExpressionTranslation = new IntegerTranslation(main.getTypeSizes(), typeHandler, mUnsignedTreatment, inRange);
 		}
 		this.mPostProcessor = new PostProcessor(main, mLogger, m_ExpressionTranslation);
-		this.mFunctionHandler = new FunctionHandler(m_ExpressionTranslation);
 		this.mTypeSizeComputer = new TypeSizeAndOffsetComputer((TypeHandler) mTypeHandler, m_ExpressionTranslation, main.getTypeSizes());
+		this.mFunctionHandler = new FunctionHandler(m_ExpressionTranslation, mTypeSizeComputer);
 		this.mMemoryHandler = new MemoryHandler(typeHandler, mFunctionHandler, checkPointerValidity, 
 				mTypeSizeComputer, main.getTypeSizes(), m_ExpressionTranslation, bitvectorTranslation);
 		this.mStructHandler = new StructHandler(mMemoryHandler, mTypeSizeComputer, m_ExpressionTranslation);
