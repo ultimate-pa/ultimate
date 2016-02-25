@@ -290,7 +290,13 @@ public final class SFO {
 		 * Auxiliary variable used for the result of a call to the 'builtin'
 		 * memcpy function
 		 */
-		MEMCPYRES("memcpy");
+		MEMCPYRES("memcpy"),
+		
+		/**
+		 * Auxiliary variable used for the result of a call to the 'builtin'
+		 * memset function
+		 */
+		MEMSETRES("memset");
 
 		String m_Id;
 

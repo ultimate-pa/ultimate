@@ -284,7 +284,7 @@ public class SvComp14CHandler extends CHandler {
 		
 		if (methodName.equals("__builtin_memcpy") || methodName.equals("memcpy")) {
 
-			assert node.getArguments().length == 3;
+			assert node.getArguments().length == 3 : "wrong number of arguments";
 			ExpressionResult destRex = (ExpressionResult) main.dispatch(node.getArguments()[0]);
 			ExpressionResult srcRex = (ExpressionResult) main.dispatch(node.getArguments()[1]);
 			ExpressionResult sizeRex = (ExpressionResult) main.dispatch(node.getArguments()[2]);

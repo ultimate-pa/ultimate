@@ -29,7 +29,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -858,46 +857,40 @@ public class FunctionHandler {
 
 			return result;
 		} else if (methodName.equals("memset")) {
-			// void *memset(void *str, int c, size_t n)
-			// void *memset(void *ptr, int value size_t size
-			memoryHandler.setDeclareMemset();
+			/*
+			 * C11 says in 7.24.6.1
+			 * void *memset(void *s, int c, size_t n);
+			 * The memset function copies the value of c (converted to an 
+			 * unsigned char) into each of the first n characters of the 
+			 * object pointed to by s.
+			 */
+			assert arguments.length == 3 : "wrong number of arguments";
+			ExpressionResult arg_s = ((ExpressionResult) main.dispatch(arguments[0])).switchToRValueIfNecessary(main, memoryHandler,structHandler, loc);
+			ExpressionResult arg_c = ((ExpressionResult) main.dispatch(arguments[1])).switchToRValueIfNecessary(main, memoryHandler,structHandler, loc);
+			m_ExpressionTranslation.convertIntToInt(loc, arg_c, new CPrimitive(PRIMITIVE.INT));
+			ExpressionResult arg_n = ((ExpressionResult) main.dispatch(arguments[2])).switchToRValueIfNecessary(main, memoryHandler,structHandler, loc);
+			m_ExpressionTranslation.convertIntToInt(loc, arg_c, m_TypeSizeComputer.getSize_T());
 			
-			ExpressionResult ptr = ((ExpressionResult) main.dispatch(arguments[0])).switchToRValueIfNecessary(
-					main, memoryHandler,
-					structHandler, loc);
-			ExpressionResult er = new ExpressionResult(ptr);
-			ExpressionResult value = ((ExpressionResult) main.dispatch(arguments[1])).switchToRValueIfNecessary(main, memoryHandler,
-					structHandler, loc);
-			er.addAll((ExpressionResult) value);
-			ExpressionResult size = ((ExpressionResult) main.dispatch(arguments[2])).switchToRValueIfNecessary(main, memoryHandler,
-					structHandler, loc);
-			er.addAll((ExpressionResult) size);
-			Expression nr1 = m_ExpressionTranslation.constructLiteralForIntegerType(
-        		loc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
-
-
-			//TODO:
-			// even though memset in C takes an int for the value that is to be written,
-			// that value is cut off to be a char, which is then written to every byte in the memory area
-			// the arithmetic implications of that cutoff are still missing here 
-			// (--> just do modulo 256 - 127 or sth like that??)
-
-			er.stmt.add(new CallStatement(loc, 
-					false, 
-					new VariableLHS[0], 
-					SFO.MEMSET,
-					new Expression[] {
-							ptr.lrVal.getValue(),		//ptr
-							size.lrVal.getValue(),		//noFields
-							nr1,						//sizeofFields (here, 1 byte -- really: sizeof(char)
-							value.lrVal.getValue()		//value TODO: char conversion
-			}));
-
+			final ExpressionResult result = new ExpressionResult(arg_s.lrVal);
+			result.addAll(arg_s);
+			result.addAll(arg_c);
+			result.addAll(arg_n);
+			
+			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMCPYRES, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+			VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
+					loc, new String[] { tId }, main.typeHandler.constructPointerType(loc)) });
+			result.decl.add(tVarDecl);
+			result.auxVars.put(tVarDecl, loc);		
+			
+			result.stmt.add(memoryHandler.constructUltimateMemsetCall(loc, arg_s.lrVal.getValue(), 
+					arg_c.lrVal.getValue(), arg_n.lrVal.getValue(), tId));
+			
 			if (this.callGraph.get(this.currentProcedure.getIdentifier()) == null)
 				this.callGraph.put(this.currentProcedure.getIdentifier(), new LinkedHashSet<String>());
-			this.callGraph.get(this.currentProcedure.getIdentifier()).add(SFO.MEMSET);
-
-			return er;
+			this.callGraph.get(this.currentProcedure.getIdentifier()).add(MemoryModelDeclarations.C_Memset.getName());
+			
+			return result;
+			
 		} else {
 			return null;
 		}
