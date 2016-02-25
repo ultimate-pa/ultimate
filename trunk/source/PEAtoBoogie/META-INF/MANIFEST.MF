@@ -1,6 +1,4 @@
 Manifest-Version: 1.0
-Main-Class: pea_to_boogie.main.Main
-Class-Path: ./jarfiles/antlr-runtime-3.2.jar ./jarfiles/log4j-1.2.15.jar ./jarfiles/czt_1_5_0_bin.jar ./jarfiles/xerces.jar ./jarfiles/apache-log4j-extras-1.1.jar
 Bundle-ManifestVersion: 2
 Bundle-Name: PEAtoBoogie
 Bundle-SymbolicName: PEAtoBoogie;singleton:=true
@@ -12,4 +10,4 @@ Require-Bundle: UltimateCore,
  Library-srParse,
  JavaCup
 Bundle-ActivationPolicy: lazy
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
