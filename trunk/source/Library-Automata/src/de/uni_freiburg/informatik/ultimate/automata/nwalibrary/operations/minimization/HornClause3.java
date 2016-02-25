@@ -43,8 +43,24 @@ class HornClause3 {
 
     public final int l0, l1, l2;
 
-    private HornClause3(int l0, int l1, int l2)
-        { this.l0 = l0; this.l1 = l1; this.l2 = l2; }
+    private HornClause3(int l0, int l1, int l2) {
+    	this.l0 = l0;
+    	this.l1 = l1;
+    	this.l2 = l2;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+    	if (obj == null || !(obj instanceof HornClause3))
+    		return false;
+    	HornClause3 b = (HornClause3) obj;
+    	return l0 == b.l0 && l1 == b.l1 && l2 == b.l2;
+    }
+
+    @Override
+    public int hashCode() {
+    	return (l0 * 31 + l1) * 31 + l2;
+    }
 
     /* These are fixed constants: Clients rely on their values to not hit them
      * accidentally */

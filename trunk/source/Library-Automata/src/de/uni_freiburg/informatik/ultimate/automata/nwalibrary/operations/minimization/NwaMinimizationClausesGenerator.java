@@ -55,17 +55,11 @@ public class NwaMinimizationClausesGenerator {
 		for (Assign x : assignments)
 			assert x == Assign.TRUE || x == Assign.FALSE;
 
-		/*for (int i : new int[]{16, 29, 41, 49, 59, 70, 81, 85}) {
-			System.err.printf("(%d,%d) %d\n", i, 70,
-					assignments[calc.eqVar(i, 70)] == Assign.TRUE ? 1 : 0);
-		}*/
-
 		NiceUnionFind unionFind = new NiceUnionFind(numStates);
 		for (int i = 0; i < numStates; i++) {
 			for (int j = i+1; j < numStates; j++) {
 				int eqVar = calc.eqVar(i, j);
 				if (assignments[eqVar] == Assign.TRUE) {
-					//System.err.printf("merging X_%d,%d\n", i, j);
 					unionFind.merge(i, j);
 				}
 			}
@@ -85,15 +79,15 @@ public class NwaMinimizationClausesGenerator {
 	public static ArrayList<HornClause3> generateConstraints(NiceNWA inNWA, ArrayList<NiceHist> history) {
 		assert NiceHist.checkHistoryStatesConsistency(inNWA, history);
 		{
-		// "assert" that there are no transitions which are never taken
-		HashSet<NiceHist> hs = new HashSet<NiceHist>();
-		for (NiceHist h : history)
-			hs.add(h);
-		for (NiceRTrans x : inNWA.rTrans) {
-			if (!hs.contains(new NiceHist(x.src, x.top)))
-				System.err.printf("missing %d %d\n",  x.src, x.top);
-			assert hs.contains(new NiceHist(x.src, x.top));
-		}
+			// "assert" that there are no transitions which are never taken
+			HashSet<NiceHist> hs = new HashSet<NiceHist>();
+			for (NiceHist h : history)
+				hs.add(h);
+			for (NiceRTrans x : inNWA.rTrans) {
+				if (!hs.contains(new NiceHist(x.src, x.top)))
+					System.err.printf("missing %d %d\n",  x.src, x.top);
+				assert hs.contains(new NiceHist(x.src, x.top));
+			}
 		}
 
 		// some "namespace imports"
@@ -109,13 +103,15 @@ public class NwaMinimizationClausesGenerator {
 		NiceITrans[] iTrans = inNWA.iTrans.clone();
 		NiceCTrans[] cTrans = inNWA.cTrans.clone();
 		NiceRTrans[] rTrans = inNWA.rTrans.clone();
+		NiceRTrans[] rTransTop = inNWA.rTrans.clone();
 
 		history = new ArrayList<NiceHist>(history);
 
 		// IMPORTANT. Sort inputs
 		Arrays.sort(iTrans, NiceITrans::compareSrcSymDst);
 		Arrays.sort(cTrans, NiceCTrans::compareSrcSymDst);
-		Arrays.sort(rTrans, NiceRTrans::compareSrcTopSymDst);
+		Arrays.sort(rTrans, NiceRTrans::compareSrcSymTopDst);
+		Arrays.sort(rTransTop, NiceRTrans::compareSrcTopSymDst);
 
 		history.sort(NiceHist::compareLinHier);
 
@@ -132,57 +128,58 @@ public class NwaMinimizationClausesGenerator {
 		for (int i = 0; i < numCTrans; i++) cTransOut.get(cTrans[i].src).add(cTrans[i]);
 		for (int i = 0; i < numRTrans; i++) rTransOut.get(rTrans[i].src).add(rTrans[i]);
 
-		// OutSet is a combination of iSet, cSet, rSet and hSet as defined in the thesis
-		OutSet[] outSet = new OutSet[numStates];
-		for (int i = 0; i < numStates; i++) outSet[i] = new OutSet();
+		ArrayList<ArrayList<Integer>> iSet = new ArrayList<ArrayList<Integer>>();
+		ArrayList<ArrayList<Integer>> cSet = new ArrayList<ArrayList<Integer>>();
+		ArrayList<ArrayList<Integer>> rSet = new ArrayList<ArrayList<Integer>>();
+		ArrayList<ArrayList<Integer>> rTop = new ArrayList<ArrayList<Integer>>();
+		ArrayList<ArrayList<Integer>> hSet = new ArrayList<ArrayList<Integer>>();
 
-		for (int i = 0; i < numITrans; i++)	if (i == 0 || iTrans[i-1].src != iTrans[i].src || iTrans[i-1].sym != iTrans[i].sym) outSet[iTrans[i].src].iSet.add(iTrans[i].sym);
-		for (int i = 0; i < numCTrans; i++)	if (i == 0 || cTrans[i-1].src != cTrans[i].src || cTrans[i-1].sym != cTrans[i].sym) outSet[cTrans[i].src].cSet.add(cTrans[i].sym);
-		for (int i = 0; i < numRTrans; i++)	if (i == 0 || rTrans[i-1].src != rTrans[i].src || rTrans[i-1].top != rTrans[i].top) outSet[rTrans[i].src].rSet.add(rTrans[i].top);
+		for (int i = 0; i < numStates; i++) iSet.add(new ArrayList<Integer>());
+		for (int i = 0; i < numStates; i++) cSet.add(new ArrayList<Integer>());
+		for (int i = 0; i < numStates; i++) rSet.add(new ArrayList<Integer>());
+		for (int i = 0; i < numStates; i++) rTop.add(new ArrayList<Integer>());
+		for (int i = 0; i < numStates; i++) hSet.add(new ArrayList<Integer>());
+
+		for (int i = 0; i < numITrans; i++)	if (i == 0 || iTrans[i-1].src != iTrans[i].src || iTrans[i-1].sym != iTrans[i].sym) iSet.get(iTrans[i].src).add(iTrans[i].sym);
+		for (int i = 0; i < numCTrans; i++)	if (i == 0 || cTrans[i-1].src != cTrans[i].src || cTrans[i-1].sym != cTrans[i].sym) cSet.get(cTrans[i].src).add(cTrans[i].sym);
+		for (int i = 0; i < numRTrans; i++)	if (i == 0 || rTrans[i-1].src != rTrans[i].src || rTrans[i-1].sym != rTrans[i].sym) rSet.get(rTrans[i].src).add(rTrans[i].sym);
+		for (int i = 0; i < numRTrans; i++)	if (i == 0 || rTransTop[i-1].src != rTransTop[i].src || rTransTop[i-1].top != rTransTop[i].top) rTop.get(rTransTop[i].src).add(rTransTop[i].top);
 
 		{
-		// make the hSet, i.e. those history states except bottom-of-stack
-		// symbol which are not in the outgoing return transitions as
-		// top-of-stack symbol.
-		int i = 0;
-		for (NiceHist h : history) {
-			for (; i < numRTrans; i++)
-				if (h.lin < rTrans[i].src
-						|| (h.lin == rTrans[i].src && h.hier <= rTrans[i].top))
-					break;
-			if (i == numRTrans
-					|| h.lin < rTrans[i].src
-					|| (h.lin == rTrans[i].src && h.hier < rTrans[i].top))
-				if (h.hier >= 0) // could be bottom-of-stack (-1)
-					outSet[h.lin].hSet.add(h.hier);
-		}
-		}
-		/*
-		System.err.printf("out sets:\n");
-		for (int i = 0; i < numStates; i++) {
-			System.err.printf("%d : %s\n", i, outSet[i].toString());
-		}
-		*/
-
-		// group states by (iSet, cSet)
-		HashMap<ICSet, ArrayList<Integer>> byICSet = new HashMap<ICSet, ArrayList<Integer>>();
-
-		for (int i = 0; i < numStates; i++) {
-			ICSet x = new ICSet(outSet[i].iSet, outSet[i].cSet);
-			ArrayList<Integer> list = byICSet.get(x);
-			if (list == null) {
-				list = new ArrayList<Integer>();
-				byICSet.put(x, list);
+			// make the hSet, i.e. those history states except bottom-of-stack
+			// symbol which are not in the outgoing return transitions as
+			// top-of-stack symbol.
+			int i = 0;
+			for (NiceHist h : history) {
+				for (; i < numRTrans; i++)
+					if (h.lin < rTransTop[i].src
+							|| (h.lin == rTransTop[i].src && h.hier <= rTransTop[i].top))
+						break;
+				if (i == numRTrans
+						|| h.lin < rTransTop[i].src
+						|| (h.lin == rTransTop[i].src && h.hier < rTransTop[i].top))
+					if (h.hier >= 0) // could be bottom-of-stack (-1)
+						hSet.get(h.lin).add(h.hier);
 			}
-			list.add(i);
 		}
-		System.err.printf("byICSet (%d states in %d groups):\n", numStates, byICSet.size());
-		for (ArrayList<Integer> x : byICSet.values()) {
-			System.err.printf(x.toString() + "\n");
-		}
-		System.err.printf("rSets and hSets:\n");
-		for (int i = 0; i < numStates; i++) {
-			System.err.printf("rset[%d] %s\nhset[%d] %s\n", i, outSet[i].rSet.toString(), i, outSet[i].hSet.toString());
+
+		for (int i = 0; i < numStates; i++) for (int j = 0; j < iSet.get(i).size(); j++) assert j == 0 || iSet.get(i).get(j) > iSet.get(i).get(j-1);
+		for (int i = 0; i < numStates; i++) for (int j = 0; j < cSet.get(i).size(); j++) assert j == 0 || cSet.get(i).get(j) > cSet.get(i).get(j-1);
+		for (int i = 0; i < numStates; i++) for (int j = 0; j < rSet.get(i).size(); j++) assert j == 0 || rSet.get(i).get(j) > rSet.get(i).get(j-1);
+		for (int i = 0; i < numStates; i++) for (int j = 0; j < rTop.get(i).size(); j++) assert j == 0 || rTop.get(i).get(j) > rTop.get(i).get(j-1);
+		for (int i = 0; i < numStates; i++) for (int j = 0; j < hSet.get(i).size(); j++) assert j == 0 || hSet.get(i).get(j) > hSet.get(i).get(j-1);
+
+		// group rTrans by src and sym
+		HashMap<SrcSym, ArrayList<NiceRTrans>> bySrcSym = new HashMap<SrcSym, ArrayList<NiceRTrans>>();
+
+		for (NiceRTrans x : rTrans) {
+			SrcSym srcsym = new SrcSym(x.src, x.sym);
+			ArrayList<NiceRTrans> a = bySrcSym.get(srcsym);
+			if (a == null) {
+				a = new ArrayList<NiceRTrans>();
+				bySrcSym.put(srcsym, a);
+			}
+			a.add(x);
 		}
 
 
@@ -208,76 +205,69 @@ public class NwaMinimizationClausesGenerator {
 			}
 		}
 
-		// separate states with differing out sets
-		// NOTE: differing out sets means either their iSets or their cSets
-		// are not equal. If they are equal, it could still be the case that
-		// their rSets are not "compatible" but we handle that only later.
-		{
-			ArrayList<Integer> tmp = new ArrayList<Integer>();
-			for (ArrayList<Integer> group : byICSet.values()) {
-				for (int q1 : tmp) {
-					for (int q2 : group) {
-						//System.err.printf("outSet(%d) != outSet(%d), so adding clause: NOT X_%d,%d\n", q1, q2, q1, q2);
-						int eq1 = calc.eqVar(q1, q2);
-						builder.addClauseF(eq1);
-					}
-				}
-				tmp.addAll(group);
-			}
-		}
-
-		// clauses from rules 1, 2 and 3 for states with "equal" out sets
-		// NOTE: equal out sets means that their iSets and cSets are equal.
-		// We still need to check if their rSets are "compatible"
-		for (ArrayList<Integer> group : byICSet.values()) {
-			for (int i = 0; i < group.size(); i++) {
-				for (int j = i+1; j < group.size(); j++) {
-					int q1 = group.get(i);
-					int q2 = group.get(j);
-					assert q1 != q2;
-					if (OutSet.outSetsIncompatible(outSet[q1], outSet[q2])) {
-						int eq1 = calc.eqVar(q1, q2);
-						//System.err.printf("outSet(%d) and outSet(%d) incompatible, so adding clause: NOT X_%d,%d\n", q1, q2, q1, q2);
-						builder.addClauseF(eq1);
-						// XXX: OBACHT!
-						continue;
-					}
+		for (int i = 0; i < numStates; i++) {
+			System.err.printf("now at %d, %d clauses %d requests\n", i, builder.getNumClauses(), builder.getNumRequests());
+			for (int j = i; j < numStates; j++) {
+				if (!iSet.get(i).equals(iSet.get(j))
+						|| !cSet.get(i).equals(cSet.get(j))) {
+					int eq1 = calc.eqVar(i, j);
+					builder.addClauseF(eq1);
+				} else {
 					// rule 1
-					for (NiceITrans x : iTransOut.get(q1)) {
-						for (NiceITrans y : iTransOut.get(q2)) {
-							if (x.sym == y.sym) {
-								assert x.src == q1;
-								assert y.src == q2;
-								int eq1 = calc.eqVar(x.src, y.src);
-								int eq2 = calc.eqVar(x.dst, y.dst);
-								//System.err.printf("from rule 1: NOT X_%d,%d OR X_%d,%d\n", x.src, y.src, x.dst, y.dst);
-								builder.addClauseFT(eq1, eq2);
-							}
+					for (int x = 0, y = 0; x < iTransOut.get(i).size() && y < iTransOut.get(j).size();) {
+						NiceITrans t1 = iTransOut.get(i).get(x);
+						NiceITrans t2 = iTransOut.get(j).get(y);
+						if (t1.sym < t2.sym) {
+							x++;
+						} else if (t1.sym > t2.sym) {
+							y++;
+						} else {
+							int eq1 = calc.eqVar(t1.src, t2.src);
+							int eq2 = calc.eqVar(t1.dst, t2.dst);
+							builder.addClauseFT(eq1, eq2);
+							x++;
+							y++;
 						}
 					}
 					// rule 2
-					for (NiceCTrans x : cTransOut.get(q1)) {
-						for (NiceCTrans y : cTransOut.get(q2)) {
-							if (x.sym == y.sym) {
-								assert x.src == q1;
-								assert y.src == q2;
-								int eq1 = calc.eqVar(x.src, y.src);
-								int eq2 = calc.eqVar(x.dst, y.dst);
-								//System.err.printf("from rule 2: NOT X_%d,%d OR X_%d,%d\n", x.src, y.src, x.dst, y.dst);
-								builder.addClauseFT(eq1, eq2);
-							}
+					for (int x = 0, y = 0; x < cTransOut.get(i).size() && y < cTransOut.get(j).size();) {
+						NiceCTrans t1 = cTransOut.get(i).get(x);
+						NiceCTrans t2 = cTransOut.get(j).get(y);
+						if (t1.sym < t2.sym) {
+							x++;
+						} else if (t1.sym > t2.sym) {
+							y++;
+						} else {
+							int eq1 = calc.eqVar(t1.src, t2.src);
+							int eq2 = calc.eqVar(t1.dst, t2.dst);
+							builder.addClauseFT(eq1, eq2);
+							x++;
+							y++;
 						}
 					}
-					// rule 3
-					for (NiceRTrans x : rTransOut.get(q1)) {
-						for (NiceRTrans y : rTransOut.get(q2)) {
-							if (x.sym == y.sym) {
-								assert x.src == q1;
-								assert y.src == q2;
-								int eq1 = calc.eqVar(x.src, y.src);
-								int eq2 = calc.eqVar(x.top, y.top);
-								int eq3 = calc.eqVar(x.dst, y.dst);
-								//System.err.printf("from rule 3: NOT X_%d,%d OR NOT X_%d,%d OR X_%d,%d\n", x.src, y.src, x.top, y.top, x.dst, y.dst);
+				}
+				// rule 3
+				for (int k : rTop.get(i)) {
+					for (int l : hSet.get(j)) {
+						int eq1 = calc.eqVar(i, j);
+						int eq2 = calc.eqVar(k, l);
+						builder.addClauseFF(eq1, eq2);
+					}
+				}
+				for (int k : hSet.get(i)) {
+					for (int l : rTop.get(j)) {
+						int eq1 = calc.eqVar(i, j);
+						int eq2 = calc.eqVar(k, l);
+						builder.addClauseFF(eq1, eq2);
+					}
+				}
+				for (int s1 : rSet.get(i)) {
+					for (int s2 : rSet.get(j)) {
+						for (NiceRTrans t1 : bySrcSym.get(new SrcSym(i, s1))) {
+							for (NiceRTrans t2 : bySrcSym.get(new SrcSym(j, s2))) {
+								int eq1 = calc.eqVar(t1.src, t2.src);
+								int eq2 = calc.eqVar(t1.top, t2.top);
+								int eq3 = calc.eqVar(t1.dst, t2.dst);
 								builder.addClauseFFT(eq1, eq2, eq3);
 							}
 						}
@@ -286,18 +276,16 @@ public class NwaMinimizationClausesGenerator {
 			}
 		}
 
-		// clauses for transitivity
-		for (ArrayList<Integer> group : byICSet.values()) {
-			for (int i = 0; i < group.size(); i++) {
-				for (int j = i+1; j < group.size(); j++) {
-					for (int k = j+1; k < group.size(); k++) {
-						int eq1 = calc.eqVar(group.get(i), group.get(j));
-						int eq2 = calc.eqVar(group.get(j), group.get(k));
-						int eq3 = calc.eqVar(group.get(i), group.get(k));
-						builder.addClauseFFT(eq1, eq2, eq3);
-						builder.addClauseFFT(eq2, eq3, eq1);
-						builder.addClauseFFT(eq3, eq1, eq2);
-					}
+		for (int i = 0; i < numStates; i++) {
+			System.err.printf("transitive clauses: now at %d, %d clauses, %d requests\n", i, builder.getNumClauses(), builder.getNumRequests());
+			for (int j = i+1; j < numStates; j++) {
+				for (int k = j+1; k < numStates; k++) {
+					int eq1 = calc.eqVar(i, j);
+					int eq2 = calc.eqVar(j, k);
+					int eq3 = calc.eqVar(i, k);
+					builder.addClauseFFT(eq1, eq2, eq3);
+					builder.addClauseFFT(eq2, eq3, eq1);
+					builder.addClauseFFT(eq3, eq1, eq2);
 				}
 			}
 		}
@@ -322,82 +310,10 @@ public class NwaMinimizationClausesGenerator {
 		*/
 
 		ArrayList<HornClause3> clauses = builder.getClauses();
-		//System.err.printf("number of clauses: %d\n", clauses.size());
-		//System.err.printf("number of clause-add requests: %d\n", builder.getNumRequests());
+		System.err.printf("number of clauses: %d\n", clauses.size());
+		System.err.printf("number of clause-add requests: %d\n", builder.getNumRequests());
 
 		return clauses;
-	}
-}
-
-// combination of iSet, cSet, rSet and hSet as defined in the thesis:
-// for a given state q,
-//   iSet = i such that iTrans(q, i, *)
-//   cSet = c such that cTrans(q, c, *)
-//   rSet = q' such that rTrans(q, *, q', *)
-//   hSet = q' such that history(q, q') AND NOT rTrans(q, *, q', *)
-class OutSet {
-	ArrayList<Integer> iSet;
-	ArrayList<Integer> cSet;
-	ArrayList<Integer> rSet;
-	ArrayList<Integer> hSet;
-
-	public OutSet() {
-		iSet = new ArrayList<Integer>();
-		cSet = new ArrayList<Integer>();
-		rSet = new ArrayList<Integer>();
-		hSet = new ArrayList<Integer>();
-	}
-
-	private static boolean nonemptyIntersection(ArrayList<Integer> a, ArrayList<Integer> b) {
-		for (int i = 1; i < a.size(); i++) assert a.get(i) > a.get(i-1);
-		for (int i = 1; i < b.size(); i++) assert b.get(i) > b.get(i-1);
-
-		for (int i = 0, j = 0; i < a.size() && j < b.size();) {
-			if (a.get(i) < b.get(j)) {
-				i++;
-			} else if (a.get(i) > b.get(j)) {
-				j++;
-			} else {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/**
-	 * test for an indication of incompatible out sets (which means
-	 * incompatible states).
-	 */
-	public static boolean outSetsIncompatible(OutSet a, OutSet b) {
-		return (nonemptyIntersection(a.hSet, b.rSet) ||
-				nonemptyIntersection(b.hSet, a.rSet));
-	}
-
-	@Override
-	public String toString() {
-		return "{" + iSet.toString() + " " + cSet.toString() + " " + rSet.toString() + " " + hSet.toString() + "}";
-	}
-}
-
-class ICSet {
-	ArrayList<Integer> iSet;
-	ArrayList<Integer> cSet;
-
-	public ICSet(ArrayList<Integer> iSet, ArrayList<Integer> cSet) {
-		this.iSet = iSet;
-		this.cSet = cSet;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof ICSet)) return false;
-		ICSet b = (ICSet) obj;
-		return iSet.equals(b.iSet) && cSet.equals(b.cSet);
-	}
-
-	@Override
-	public int hashCode() {
-		return 31*iSet.hashCode() + cSet.hashCode();
 	}
 }
 
@@ -423,5 +339,28 @@ class EqVarCalc {
 		if (a > b) return eqVar(b, a);
 		// add 2 because 0 and 1 are reserved for const false / const true
 		return 2 + (n*(n+1)/2)-((n-a)*(n-a+1)/2) + b-a;
+	}
+}
+
+class SrcSym {
+	int src;
+	int sym;
+
+	public SrcSym(int src, int sym) {
+		this.src = src;
+		this.sym = sym;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || !(obj instanceof SrcSym))
+			return false;
+		SrcSym b = (SrcSym) obj;
+		return src == b.src && sym == b.sym;
+	}
+
+	@Override
+	public int hashCode() {
+		return src * 31 + sym;
 	}
 }

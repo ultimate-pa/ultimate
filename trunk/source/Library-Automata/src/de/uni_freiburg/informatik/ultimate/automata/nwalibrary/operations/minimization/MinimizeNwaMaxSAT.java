@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
+import java.io.PrintWriter;
 import java.util.ArrayList;
 
 import org.apache.log4j.Logger;
@@ -89,9 +90,6 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
         generateLog.info("making equivalence classes from assignments");
         NiceClasses eqCls = NwaMinimizationClausesGenerator.makeMergeRelation(nwa.numStates, assignments);
         generateLog.info("finished making equivalence classes");
-
-        logger.info("Testing correctness of equivalence classes");
-        NiceCorrectness.testCorrectness(nwa, history, eqCls);
 
         m_result = converter.constructMerged(eqCls);
         convertLog.info("constructed minimized automaton");
