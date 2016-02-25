@@ -1,5 +1,5 @@
 //#Safe
-/*
+/* Check that there is no memory leak.
  * Date: 2016-02-22
  * Author: heizmann@informtik.uni-freiburg.de
  * 
