@@ -12,6 +12,7 @@
 
 int main() {
 	unsigned char *p = malloc(3*sizeof(char));
+	unsigned char c = *p;
 	char *s = memset(p+1, -1, 3*sizeof(char));
 	free(p);
 	return 0;
