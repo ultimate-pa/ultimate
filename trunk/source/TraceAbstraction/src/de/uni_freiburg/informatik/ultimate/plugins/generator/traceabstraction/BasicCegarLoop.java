@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeDfaHopcroftPaper;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeIncompleteDfa;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeNwaMaxSAT;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.ComplementDD;
@@ -672,6 +673,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 				m_Abstraction = (IAutomaton<CodeBlock, IPredicate>) diff.getResult();
 				// m_DeadEndRemovalTime = diff.getDeadEndRemovalTime();
+
 				if (m_Pref.dumpAutomata()) {
 					String filename = "InterpolantAutomaton_Iteration" + m_Iteration;
 					super.writeAutomatonToFile(interpolAutomaton, filename);
@@ -731,6 +733,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case DFA_HOPCROFT_ARRAYS:
 		case MINIMIZE_SEVPA:
 		case SHRINK_NWA:
+		case NWA_MAX_SAT:
 			minimizeAbstraction(m_StateFactoryForRefinement, m_PredicateFactoryResultChecking, minimization);
 			break;
 		default:
@@ -790,7 +793,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			PredicateFactoryResultChecking resultCheckPredFac, Minimization minimization)
 					throws OperationCanceledException, AutomataLibraryException, AssertionError {
 		if (m_Pref.dumpAutomata()) {
-			String filename = "AbstractionBeforeMinimization_Iteration" + m_Iteration;
+			String filename = m_RootNode.getFilename() + "_DiffAutomatonBeforeMinimization_Iteration" + m_Iteration;
 			super.writeAutomatonToFile(m_Abstraction, filename);
 		}
 		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_AutomataMinimizationTime);
@@ -848,6 +851,17 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				if (m_ComputeHoareAnnotation) {
 					Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
 					m_Haf.updateOnMinimization(oldState2newState, minimized);
+				}
+				break;
+			}
+			case NWA_MAX_SAT: {
+				MinimizeNwaMaxSAT<CodeBlock, IPredicate> minimizeOp = new MinimizeNwaMaxSAT<CodeBlock, IPredicate>(
+						new AutomataLibraryServices(m_Services), predicateFactoryRefinement, newAbstraction);
+				assert minimizeOp.checkResult(resultCheckPredFac);
+				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services),
+						minimizeOp.getResult())).getResult();
+				if (m_ComputeHoareAnnotation) {
+					throw new AssertionError("Hoare annotation and NWA_MAX_SAT incompatible");
 				}
 				break;
 			}
