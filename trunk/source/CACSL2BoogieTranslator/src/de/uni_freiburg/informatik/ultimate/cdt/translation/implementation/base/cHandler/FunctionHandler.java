@@ -304,7 +304,13 @@ public class FunctionHandler {
 			if (checkInParams) {
 				for (int i = 0; i < in.length; i++) {
 					if (!(in[i].getType().toString().equals(proc.getInParams()[i].getType().toString()))) {
-						String msg = "Implementation does not match declaration!" + "Type missmatch on in-parameters!";
+						final String msg = "Implementation does not match declaration! " 
+								+ "Type missmatch on in-parameters! "
+								+ in.length + " arguments, "
+								+ proc.getInParams().length + " parameters, "
+								+ "first missmatch at position " + i + ", "
+								+ "argument type " + in[i].getType().toString() + ", "
+								+ "param type " + proc.getInParams()[i].toString();
 						throw new IncorrectSyntaxException(loc, msg);
 					}
 				}
@@ -869,14 +875,14 @@ public class FunctionHandler {
 			ExpressionResult arg_c = ((ExpressionResult) main.dispatch(arguments[1])).switchToRValueIfNecessary(main, memoryHandler,structHandler, loc);
 			m_ExpressionTranslation.convertIntToInt(loc, arg_c, new CPrimitive(PRIMITIVE.INT));
 			ExpressionResult arg_n = ((ExpressionResult) main.dispatch(arguments[2])).switchToRValueIfNecessary(main, memoryHandler,structHandler, loc);
-			m_ExpressionTranslation.convertIntToInt(loc, arg_c, m_TypeSizeComputer.getSize_T());
+			m_ExpressionTranslation.convertIntToInt(loc, arg_n, m_TypeSizeComputer.getSize_T());
 			
 			final ExpressionResult result = new ExpressionResult(arg_s.lrVal);
 			result.addAll(arg_s);
 			result.addAll(arg_c);
 			result.addAll(arg_n);
 			
-			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMCPYRES, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMSETRES, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
 			VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
 					loc, new String[] { tId }, main.typeHandler.constructPointerType(loc)) });
 			result.decl.add(tVarDecl);
