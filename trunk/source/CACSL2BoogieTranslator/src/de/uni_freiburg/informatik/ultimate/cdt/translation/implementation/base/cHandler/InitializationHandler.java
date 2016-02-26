@@ -675,6 +675,8 @@ public class InitializationHandler {
 			for (int i = 0; i < currentSizeInt; i++) {
 				if (list != null && list.size() > i && list.get(i).lrVal != null) {
 					// we have a value to initialize with
+					final CType valueType = arrayType.getValueType().getUnderlyingType();
+					main.cHandler.convert(main, loc, list.get(i), valueType);
 					val = (RValue) list.get(i).lrVal;
 					decl.addAll(list.get(i).decl);
 					auxVars.putAll(list.get(i).auxVars);
