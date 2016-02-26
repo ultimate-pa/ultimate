@@ -154,12 +154,6 @@ public class MemoryHandler {
 	 */
 	LinkedScopedHashMap<LocalLValueILocationPair, Integer> variablesToBeFreed;
 
-	private boolean m_declareMemset = false;
-	
-	public void setDeclareMemset() {
-		m_declareMemset = true;
-	}
-	
 	private final AExpressionTranslation m_ExpressionTranslation;
 	
 	private final TypeSizeAndOffsetComputer m_TypeSizeAndOffsetComputer;
