@@ -76,7 +76,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
@@ -286,36 +285,29 @@ public class SvComp14CHandler extends CHandler {
 		if (methodName.equals("__builtin_memcpy") || methodName.equals("memcpy")) {
 
 			assert node.getArguments().length == 3 : "wrong number of arguments";
-			ExpressionResult destRex = (ExpressionResult) main.dispatch(node.getArguments()[0]);
-			ExpressionResult srcRex = (ExpressionResult) main.dispatch(node.getArguments()[1]);
-			ExpressionResult sizeRex = (ExpressionResult) main.dispatch(node.getArguments()[2]);
+			ExpressionResult dest = (ExpressionResult) main.dispatch(node.getArguments()[0]);
+			dest = dest.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+			main.cHandler.convert(main, loc, dest, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+			ExpressionResult src = (ExpressionResult) main.dispatch(node.getArguments()[1]);
+			src = src.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+			main.cHandler.convert(main, loc, src, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+			ExpressionResult size = (ExpressionResult) main.dispatch(node.getArguments()[2]);
+			size = size.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+			main.cHandler.convert(main, loc, size, mTypeSizeComputer.getSize_T());
 			
-			destRex = destRex.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-			srcRex = srcRex.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-			sizeRex = sizeRex.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+			final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(dest, src, size);
 			
-			stmt.addAll(destRex.stmt);
-			stmt.addAll(srcRex.stmt);
-			stmt.addAll(sizeRex.stmt);
-			decl.addAll(destRex.decl);
-			decl.addAll(srcRex.decl);
-			decl.addAll(sizeRex.decl);
-			auxVars.putAll(destRex.auxVars);
-			auxVars.putAll(srcRex.auxVars);
-			auxVars.putAll(sizeRex.auxVars);
-			overappr.addAll(destRex.overappr);
-			overappr.addAll(srcRex.overappr);
-			overappr.addAll(sizeRex.overappr);		
-
-			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMCPYRES, destRex.lrVal.getCType());
-			VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
-					loc, new String[] { tId }, main.typeHandler.constructPointerType(loc)) });
+			final String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMCPYRES, dest.lrVal.getCType());
+			final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], 
+					new VarList[] { new VarList(loc, new String[] { tId }, main.typeHandler.constructPointerType(loc)) });
 			decl.add(tVarDecl);
 			auxVars.put(tVarDecl, loc);		
 			
-			Statement call = mMemoryHandler.constructMemcpyCall(loc, destRex.lrVal.getValue(), 
-					srcRex.lrVal.getValue(), sizeRex.lrVal.getValue(), tId);
+			Statement call = mMemoryHandler.constructMemcpyCall(loc, dest.lrVal.getValue(), 
+					src.lrVal.getValue(), size.lrVal.getValue(), tId);
 			stmt.add(call);
+			result.lrVal = new RValue(new IdentifierExpression(loc, tId), 
+					new CPointer(new CPrimitive(PRIMITIVE.VOID)));
 
 			// add required information to function handler.
 			if (!mFunctionHandler.getCallGraph().containsKey(MemoryModelDeclarations.C_Memcpy.getName())) {
@@ -326,8 +318,7 @@ public class SvComp14CHandler extends CHandler {
 			}
 			mFunctionHandler.getCallGraph().get(mFunctionHandler.getCurrentProcedureID()).add(MemoryModelDeclarations.C_Memcpy.getName());
 			
-			return new ExpressionResult(stmt, new RValue(new IdentifierExpression(loc, tId), 
-					destRex.lrVal.getCType()), decl, auxVars, overappr);
+			return result;
 		}
 		
 		if (methodName.equals("__builtin_object_size")) {

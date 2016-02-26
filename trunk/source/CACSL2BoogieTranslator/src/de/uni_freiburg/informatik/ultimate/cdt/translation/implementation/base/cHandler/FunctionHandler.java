@@ -838,9 +838,9 @@ public class FunctionHandler {
 			 */
 			assert arguments.length == 2;
 			ExpressionResult nmemb = ((ExpressionResult) main.dispatch(arguments[0])).switchToRValueIfNecessary(main, memoryHandler,structHandler, loc);
-			m_ExpressionTranslation.convertIntToInt(loc, nmemb, m_TypeSizeComputer.getSize_T());
+			main.cHandler.convert(main, loc, nmemb, m_TypeSizeComputer.getSize_T());
 			ExpressionResult size = ((ExpressionResult) main.dispatch(arguments[1])).switchToRValueIfNecessary(main, memoryHandler,structHandler, loc);
-			m_ExpressionTranslation.convertIntToInt(loc, size, m_TypeSizeComputer.getSize_T());
+			main.cHandler.convert(main, loc, size, m_TypeSizeComputer.getSize_T());
 			
 			Expression product = m_ExpressionTranslation.constructArithmeticExpression(
 					loc, IASTBinaryExpression.op_multiply,
