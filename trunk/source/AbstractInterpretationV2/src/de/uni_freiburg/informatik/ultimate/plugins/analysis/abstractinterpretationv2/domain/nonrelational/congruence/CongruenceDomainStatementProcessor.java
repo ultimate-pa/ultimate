@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -62,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.ExpressionEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
@@ -130,10 +132,10 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 
 		return super.processStatement(statement);
 	}
-
+	
 	@Override
 	protected Expression processExpression(Expression expr) {
-
+		// TODO: Replace by the below version from ExpressionTransformer (handle..Expression methods can be removed then)
 		assert mEvaluatorFactory != null;
 
 		Expression newExpr = null;
@@ -149,12 +151,21 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 			mExpressionEvaluator.addEvaluator(new CongruenceSingletonValueExpressionEvaluator(new CongruenceDomainValue()));
 			return expr;
 		}
-
+		
 		if (newExpr == null || expr == newExpr) {
 			return super.processExpression(expr);
 		} else {
 			return processExpression(newExpr);
 		}
+		
+		/*ExpressionTransformer t = new ExpressionTransformer();
+		Expression newExpr = t.transform(expr);
+		
+		mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Expression ")
+		        .append(BoogiePrettyPrinter.print(expr)).append(" rewritten to: ")
+		        .append(BoogiePrettyPrinter.print(newExpr)));
+		
+		return super.processExpression(newExpr);*/
 	}
 
 	private void handleAssignment(final AssignmentStatement statement) {

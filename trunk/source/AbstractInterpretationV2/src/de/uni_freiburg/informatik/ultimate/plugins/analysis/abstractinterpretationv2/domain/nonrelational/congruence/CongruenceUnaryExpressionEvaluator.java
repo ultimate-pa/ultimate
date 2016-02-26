@@ -83,8 +83,8 @@ public class CongruenceUnaryExpressionEvaluator
 				break;
 			default:
 				mLogger.warn(
-				        "Operator " + mOperator + " not implemented. Assuming logical interpretation to be false.");
-				returnBool = new BooleanValue(false);
+				        "Operator " + mOperator + " not implemented. Assuming logical interpretation to be TOP.");
+				returnBool = new BooleanValue();
 				mLogger.warn("Possible loss of precision: cannot handle operator " + mOperator
 				        + ". Returning current state. Returned value is top.");
 				returnValue = new CongruenceDomainValue();

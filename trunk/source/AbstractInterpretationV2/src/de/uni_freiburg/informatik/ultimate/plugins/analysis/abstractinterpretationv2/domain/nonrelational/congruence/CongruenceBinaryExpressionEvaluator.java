@@ -66,7 +66,9 @@ public class CongruenceBinaryExpressionEvaluator
 
 	private Operator mOperator;
 	
+	// For a modulo expression x % y store the value of y (for comparison)
 	private CongruenceDomainValue mModul = null;
+	// For a equals expression store the evaluated value of both sides (for evaluation of x % c == k)
 	private CongruenceDomainValue mRest = null;
 
 	protected CongruenceBinaryExpressionEvaluator(final Logger logger, final EvaluatorType type) {
@@ -146,30 +148,28 @@ public class CongruenceBinaryExpressionEvaluator
 						break;
 					}
 					
+					// x % kZ == c is false if c < 0
+					// x % k == c is false if c < 0 or c >= |k|
 					if (mLeftSubEvaluator instanceof CongruenceBinaryExpressionEvaluator) {
 						CongruenceBinaryExpressionEvaluator sub  = (CongruenceBinaryExpressionEvaluator) mLeftSubEvaluator;
-						if (sub.mOperator == Operator.ARITHMOD) {
-							if (v2.isConstant()) {
-								if (v2.value().signum() < 0 || sub.mModul.isConstant() && v2.value().compareTo(sub.mModul.value().abs()) >= 0) {
-									returnBool = new BooleanValue(false);
-									break;
-								}
+						if (sub.mOperator == Operator.ARITHMOD && v2.isConstant()) {
+							if (v2.value().signum() < 0 || sub.mModul.isConstant() && v2.value().compareTo(sub.mModul.value().abs()) >= 0) {
+								returnBool = new BooleanValue(false);
+								break;
 							}
 						}
 					}
-					
 					if (mRightSubEvaluator instanceof CongruenceBinaryExpressionEvaluator) {
 						CongruenceBinaryExpressionEvaluator sub  = (CongruenceBinaryExpressionEvaluator) mRightSubEvaluator;
-						if (sub.mOperator == Operator.ARITHMOD) {
-							if (v1.isConstant()) {
-								if (v1.value().signum() < 0 || sub.mModul.isConstant() && v1.value().compareTo(sub.mModul.value().abs()) >= 0) {
-									returnBool = new BooleanValue(false);
-									break;
-								}
+						if (sub.mOperator == Operator.ARITHMOD && v1.isConstant()) {
+							if (v1.value().signum() < 0 || sub.mModul.isConstant() && v1.value().compareTo(sub.mModul.value().abs()) >= 0) {
+								returnBool = new BooleanValue(false);
+								break;
 							}
 						}
 					}
 
+					
 					if (!mLeftSubEvaluator.containsBool() && !mRightSubEvaluator.containsBool()) {
 						if (v1.isConstant() && v2.isConstant()) {
 							returnBool = new BooleanValue(v1.value().equals(v2.value()));
@@ -182,6 +182,7 @@ public class CongruenceBinaryExpressionEvaluator
 						}
 					}
 					break;
+				// !=, <, >, ... can only be computed for constants
 				case COMPNEQ:
 					if (v1.isConstant() && v2.isConstant()) {
 						returnBool = new BooleanValue(!v1.value().equals(v2.value()));
@@ -384,11 +385,11 @@ public class CongruenceBinaryExpressionEvaluator
 					final CongruenceDomainEvaluationResult rightEvalresult = new CongruenceDomainEvaluationResult(newRight,
 					        referenceBool);
 					
+					// Store the values of the other side of the equality (needed for mod-evaluations)
 					if (mLeftSubEvaluator instanceof CongruenceBinaryExpressionEvaluator) {
 						CongruenceBinaryExpressionEvaluator c = (CongruenceBinaryExpressionEvaluator) mLeftSubEvaluator;
 						c.mRest = rightEvalresult.getValue();
 					}
-					
 					if (mRightSubEvaluator instanceof CongruenceBinaryExpressionEvaluator) {
 						CongruenceBinaryExpressionEvaluator c = (CongruenceBinaryExpressionEvaluator) mRightSubEvaluator;
 						c.mRest = leftEvalresult.getValue();
@@ -478,6 +479,8 @@ public class CongruenceBinaryExpressionEvaluator
 			newValue = newValue.intersect(oldValue);
 			break;
 		case ARITHMOD:
+			// If mod is at one side of an equality, the left side of the mod expression
+			// changes according to the other side of the equality
 			if (left && mRest != null) {
 				newValue = oldValue.modEquals(otherValue, mRest);
 			} else {
@@ -490,7 +493,7 @@ public class CongruenceBinaryExpressionEvaluator
 		case COMPGEQ:
 		case COMPGT:
 		case COMPNEQ:
-			newValue = referenceValue;
+			newValue = oldValue.intersect(otherValue);
 			break;
 		default:
 			throw new UnsupportedOperationException("Not implemented: " + mOperator);
