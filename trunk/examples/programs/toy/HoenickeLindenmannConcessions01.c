@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+extern void __VERIFIER_error() __attribute__ ((__noreturn__));
+
 int main() {
 	unsigned int *p = malloc(sizeof(int));
 	*p = 259U;
@@ -22,7 +24,7 @@ int main() {
 	printf("%u\n",c);
 	printf("%p\n",q);
 	if (c != 1) {
-		//@ assert \false;
+		__VERIFIER_error();
 	}
 // 	q++;
 // 	c = *q;
