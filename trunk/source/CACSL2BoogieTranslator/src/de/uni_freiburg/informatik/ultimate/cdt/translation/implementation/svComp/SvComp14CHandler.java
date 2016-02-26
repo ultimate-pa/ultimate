@@ -32,6 +32,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -331,8 +332,9 @@ public class SvComp14CHandler extends CHandler {
 		
 		if (methodName.equals("__builtin_object_size")) {
 			main.warn(loc, "used trivial implementation of __builtin_object_size");
-			return new ExpressionResult(new RValue(new IntegerLiteral(loc, SFO.NR0), 
-					new CPrimitive(PRIMITIVE.INT)));
+			CPrimitive cType = new CPrimitive(PRIMITIVE.INT);
+			Expression zero = m_ExpressionTranslation.constructLiteralForIntegerType(loc, cType, BigInteger.ZERO);
+			return new ExpressionResult(new RValue(zero, cType));
 		}
 
 		/*
