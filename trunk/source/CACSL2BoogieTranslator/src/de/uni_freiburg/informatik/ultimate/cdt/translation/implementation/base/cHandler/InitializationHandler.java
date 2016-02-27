@@ -551,6 +551,9 @@ public class InitializationHandler {
 
 			for (int i = 0; i < currentSizeInt; i++) {
 				CType valueType = arrayType.getValueType().getUnderlyingType();
+				if (valueType instanceof CEnum) {
+					valueType = new CPrimitive(PRIMITIVE.INT);
+				}
 				
 				Expression iAsExpression = mExpressionTranslation.constructLiteralForIntegerType(
 						loc, mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(i));
