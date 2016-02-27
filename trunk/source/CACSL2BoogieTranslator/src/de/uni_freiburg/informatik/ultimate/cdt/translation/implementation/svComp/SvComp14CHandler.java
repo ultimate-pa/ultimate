@@ -300,12 +300,12 @@ public class SvComp14CHandler extends CHandler {
 			final String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMCPYRES, dest.lrVal.getCType());
 			final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], 
 					new VarList[] { new VarList(loc, new String[] { tId }, main.typeHandler.constructPointerType(loc)) });
-			decl.add(tVarDecl);
-			auxVars.put(tVarDecl, loc);		
+			result.decl.add(tVarDecl);
+			result.auxVars.put(tVarDecl, loc);		
 			
 			Statement call = mMemoryHandler.constructMemcpyCall(loc, dest.lrVal.getValue(), 
 					src.lrVal.getValue(), size.lrVal.getValue(), tId);
-			stmt.add(call);
+			result.stmt.add(call);
 			result.lrVal = new RValue(new IdentifierExpression(loc, tId), 
 					new CPointer(new CPrimitive(PRIMITIVE.VOID)));
 
