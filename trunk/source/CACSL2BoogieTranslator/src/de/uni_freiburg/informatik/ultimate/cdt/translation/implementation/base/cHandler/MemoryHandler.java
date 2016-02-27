@@ -214,10 +214,12 @@ public class MemoryHandler {
 	}
 
 
-	public enum MemoryModelDeclarations { 
+	public enum MemoryModelDeclarations {
+		Ultimate_Alloc("#Ultimate.alloc"),
 		Ultimate_MemInit("#Ultimate.meminit"), 
 		C_Memcpy("#Ultimate.C_memcpy"),
 		C_Memset("#Ultimate.C_memset");
+		
 	
 		MemoryModelDeclarations(String name) {
 			this.m_Name = name;
@@ -308,7 +310,10 @@ public class MemoryHandler {
 
         decl.addAll(declareFree(main, tuLoc));
         decl.addAll(declareDeallocation(main, tuLoc));
-        decl.addAll(declareMalloc(main.typeHandler, tuLoc));
+        
+        if (m_RequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations().contains(MemoryModelDeclarations.Ultimate_Alloc)) {
+        	decl.addAll(declareMalloc(main.typeHandler, tuLoc));
+        }
 
         if (m_RequiredMemoryModelFeatures.getRequiredMemoryModelDeclarations().contains(MemoryModelDeclarations.C_Memset)) {
         	decl.addAll(declareMemset(main, heapDataArrays));
@@ -1349,7 +1354,7 @@ public class MemoryHandler {
         specMalloc.add(new ModifiesSpecification(tuLoc, false, new VariableLHS[] {
                 new VariableLHS(tuLoc, SFO.VALID), 
                 new VariableLHS(tuLoc, SFO.LENGTH) }));
-        decl.add(new Procedure(tuLoc, new Attribute[0], SFO.MALLOC,
+        decl.add(new Procedure(tuLoc, new Attribute[0], MemoryModelDeclarations.Ultimate_Alloc.getName(),
                 new String[0], new VarList[] { new VarList(tuLoc,
                         new String[] { SIZE }, intType) },
                 new VarList[] { new VarList(tuLoc, new String[] { SFO.RES },
@@ -1392,7 +1397,7 @@ public class MemoryHandler {
         			new LeftHandSide[] { new VariableLHS(tuLoc, SFO.RES) },
         			new Expression[] { addr });
         	Body bodyMalloc = new Body(tuLoc, localVars, block);
-        	decl.add(new Procedure(tuLoc, new Attribute[0], SFO.MALLOC,
+        	decl.add(new Procedure(tuLoc, new Attribute[0], MemoryModelDeclarations.Ultimate_Alloc.getName(),
         			new String[0], new VarList[] { new VarList(tuLoc,
         					new String[] { SIZE }, intType) },
         					new VarList[] { new VarList(tuLoc, new String[] { SFO.RES },
@@ -1462,63 +1467,63 @@ public class MemoryHandler {
         }
         return freeCall;
     }
-    
-    /**
-     * Creates a function call expression for the ~malloc(size) function!
-     * 
-     * @param main
-     *            a reference to the main dispatcher.
-     * @param fh
-     *            a reference to the FunctionHandler - required to add
-     *            information to the call graph.
-     * @param size
-     *            the expression referring to size of the memory to be
-     *            allocated.
-     * @param loc
-     *            Location for errors and new nodes in the AST.
-     * @return a function call expression for ~malloc(size).
-     */
-    public ExpressionResult getMallocCall(Dispatcher main, FunctionHandler fh,
-            Expression size, ILocation loc) {
-    	CPointer voidPointer = new CPointer(new CPrimitive(PRIMITIVE.VOID));
-    	String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC, voidPointer);
-        VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, main.typeHandler.constructPointerType(loc), loc);
-        
-        LocalLValue llVal = new LocalLValue(new VariableLHS(loc, tmpId), voidPointer);
-        ExpressionResult mallocRex = new ExpressionResult(llVal);
-        
-        mallocRex.stmt.add(getMallocCall(main, fh, size, llVal, loc));
-        mallocRex.auxVars.put(tVarDecl, loc);
-        mallocRex.decl.add(tVarDecl);
-        
-		assert (CHandler.isAuxVarMapcomplete(main, mallocRex.decl, mallocRex.auxVars));
-		return mallocRex;
-    }
+//    
+//    /**
+//     * Creates a function call expression for the ~malloc(size) function!
+//     * 
+//     * @param main
+//     *            a reference to the main dispatcher.
+//     * @param fh
+//     *            a reference to the FunctionHandler - required to add
+//     *            information to the call graph.
+//     * @param size
+//     *            the expression referring to size of the memory to be
+//     *            allocated.
+//     * @param loc
+//     *            Location for errors and new nodes in the AST.
+//     * @return a function call expression for ~malloc(size).
+//     */
+//    public ExpressionResult getMallocCall(Dispatcher main, FunctionHandler fh,
+//            Expression size, ILocation loc) {
+//    	CPointer voidPointer = new CPointer(new CPrimitive(PRIMITIVE.VOID));
+//    	String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC, voidPointer);
+//        VariableDeclaration tVarDecl = SFO.getTempVarVariableDeclaration(tmpId, main.typeHandler.constructPointerType(loc), loc);
+//        
+//        LocalLValue llVal = new LocalLValue(new VariableLHS(loc, tmpId), voidPointer);
+//        ExpressionResult mallocRex = new ExpressionResult(llVal);
+//        
+//        mallocRex.stmt.add(getMallocCall(main, fh, size, llVal, loc));
+//        mallocRex.auxVars.put(tVarDecl, loc);
+//        mallocRex.decl.add(tVarDecl);
+//        
+//		assert (CHandler.isAuxVarMapcomplete(main, mallocRex.decl, mallocRex.auxVars));
+//		return mallocRex;
+//    }
 
     public CallStatement getMallocCall(Dispatcher main,	FunctionHandler fh, 
 			LocalLValue resultPointer, ILocation loc) {
-    	return getMallocCall(main, fh, calculateSizeOf(loc, resultPointer.getCType()), resultPointer, loc);
+    	return getMallocCall(calculateSizeOf(loc, resultPointer.getCType()), 
+    			((VariableLHS) resultPointer.getLHS()).getIdentifier(), loc);
     }
 
-    private CallStatement getMallocCall(Dispatcher main,	FunctionHandler fh, Expression size,
-			LocalLValue resultPointer, ILocation loc) {
-        Expression[] args = new Expression[] { size };
-        
-        CallStatement mallocCall = new CallStatement(loc, false, new VariableLHS[] { (VariableLHS) resultPointer.getLHS() },
-                SFO.MALLOC, args);
+    public CallStatement getMallocCall(Expression size,
+			String resultVarId, ILocation loc) {
+    	m_RequiredMemoryModelFeatures.require(MemoryModelDeclarations.Ultimate_Alloc);
+        CallStatement result = new CallStatement(loc, false, 
+        		new VariableLHS[] { new VariableLHS(loc, resultVarId) }, MemoryModelDeclarations.Ultimate_Alloc.getName(), new Expression[] { size });
         
         // add required information to function handler.
-        if (fh.getCurrentProcedureID() != null) {
+        if (m_FunctionHandler.getCurrentProcedureID() != null) {
             LinkedHashSet<String> mgM = new LinkedHashSet<String>();
             mgM.add(SFO.VALID);
             mgM.add(SFO.LENGTH);
-            if (!fh.getModifiedGlobals().containsKey(SFO.MALLOC)) {
-            	fh.getModifiedGlobals().put(SFO.MALLOC, mgM);
-            	fh.getCallGraph().put(SFO.MALLOC, new LinkedHashSet<String>());
+            if (!m_FunctionHandler.getModifiedGlobals().containsKey(MemoryModelDeclarations.Ultimate_Alloc.getName())) {
+            	m_FunctionHandler.getModifiedGlobals().put(MemoryModelDeclarations.Ultimate_Alloc.getName(), mgM);
+            	m_FunctionHandler.getCallGraph().put(MemoryModelDeclarations.Ultimate_Alloc.getName(), new LinkedHashSet<String>());
             }
-            fh.getCallGraph().get(fh.getCurrentProcedureID()).add(SFO.MALLOC);
+            m_FunctionHandler.getCallGraph().get(m_FunctionHandler.getCurrentProcedureID()).add(MemoryModelDeclarations.Ultimate_Alloc.getName());
         }
-        return mallocCall;
+        return result;
     }
     
     /**

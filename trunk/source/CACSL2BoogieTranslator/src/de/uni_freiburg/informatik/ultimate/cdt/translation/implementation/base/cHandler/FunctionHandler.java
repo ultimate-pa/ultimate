@@ -800,26 +800,32 @@ public class FunctionHandler {
 			ILocation loc, String methodName, IASTInitializerClause[] arguments) {
 		if (methodName.equals("malloc") || methodName.equals("alloca") || methodName.equals("__builtin_alloca")) {
 			assert arguments.length == 1;
-			Result sizeRes = main.dispatch(arguments[0]);
-			ExpressionResult er = ((ExpressionResult) sizeRes).switchToRValueIfNecessary(main, memoryHandler,
-					structHandler, loc);
-
-			ExpressionResult mallocRex = memoryHandler.getMallocCall(main, this, er.lrVal.getValue(), loc);
-
-			er.addAll(mallocRex);
-			er.lrVal = mallocRex.lrVal;
-
+			ExpressionResult exprRes = (ExpressionResult) main.dispatch(arguments[0]);
+			exprRes = exprRes.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+			main.cHandler.convert(main, loc, exprRes, m_TypeSizeComputer.getSize_T());
+			
+	    	CPointer resultType = new CPointer(new CPrimitive(PRIMITIVE.VOID));
+	    	String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC, resultType);
+	        VariableDeclaration tmpVarDecl = SFO.getTempVarVariableDeclaration(tmpId, 
+	        		main.typeHandler.constructPointerType(loc), loc);
+	        exprRes.decl.add(tmpVarDecl);
+	        
+	        exprRes.stmt.add(memoryHandler.getMallocCall(exprRes.lrVal.getValue(), tmpId, loc));
+	        exprRes.lrVal = new RValue(new IdentifierExpression(loc, tmpId), resultType);
+	        
+	        
 			// for alloc a we have to free the variable ourselves when the
 			// stackframe is closed, i.e. at a return
 			if (methodName.equals("alloca") || methodName.equals("__builtin_alloca")) {
+				LocalLValue llVal = new LocalLValue(new VariableLHS(loc, tmpId), resultType);
 				memoryHandler.addVariableToBeFreed(main, 
-						new LocalLValueILocationPair((LocalLValue) mallocRex.lrVal, 
+						new LocalLValueILocationPair(llVal, 
 								LocationFactory.createIgnoreLocation(loc)));
 				//we need to clear auxVars because otherwise the malloc auxvar is havocced after 
 				//this, and free (triggered by the statement before) would fail.
-				er.auxVars.clear();
+				exprRes.auxVars.clear();
 			}
-			return er;
+			return exprRes;
 		} else if (methodName.equals("free")) {
 			assert arguments.length == 1;
 			Result pRes = main.dispatch(arguments[0]);
@@ -846,20 +852,24 @@ public class FunctionHandler {
 					loc, IASTBinaryExpression.op_multiply,
 					nmemb.lrVal.getValue(), m_TypeSizeComputer.getSize_T(), 
 					size.lrVal.getValue(), m_TypeSizeComputer.getSize_T());
-
-			ExpressionResult mallocExprRes = memoryHandler.getMallocCall(main, this, product, loc);
-			final ExpressionResult result = new ExpressionResult(mallocExprRes.lrVal);
-			result.addAll(nmemb);
-			result.addAll(size);
-			result.addAll(mallocExprRes);
+			final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(nmemb, size);
+			
+	    	CPointer resultType = new CPointer(new CPrimitive(PRIMITIVE.VOID));
+	    	String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC, resultType);
+	        VariableDeclaration tmpVarDecl = SFO.getTempVarVariableDeclaration(tmpId, 
+	        		main.typeHandler.constructPointerType(loc), loc);
+	        result.decl.add(tmpVarDecl);
+	        
+	        result.stmt.add(memoryHandler.getMallocCall(product, tmpId, loc));
+	        result.lrVal = new RValue(new IdentifierExpression(loc, tmpId), resultType);
 			
 			result.stmt.add(memoryHandler.constructUltimateMeminitCall(loc, nmemb.lrVal.getValue(), 
-					size.lrVal.getValue(), product, mallocExprRes.lrVal.getValue()));
+					size.lrVal.getValue(), product, new IdentifierExpression(loc, tmpId)));
 			
 			if (this.callGraph.get(this.currentProcedure.getIdentifier()) == null)
 				this.callGraph.put(this.currentProcedure.getIdentifier(), new LinkedHashSet<String>());
 			this.callGraph.get(this.currentProcedure.getIdentifier()).add(MemoryModelDeclarations.Ultimate_MemInit.getName());
-			this.callGraph.get(this.currentProcedure.getIdentifier()).add(SFO.MALLOC);
+			this.callGraph.get(this.currentProcedure.getIdentifier()).add(MemoryModelDeclarations.Ultimate_Alloc.getName());
 
 			return result;
 		} else if (methodName.equals("memset")) {

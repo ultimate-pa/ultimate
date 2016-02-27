@@ -2996,7 +2996,8 @@ public class CHandler implements ICHandler {
 	
 			if (main.nameHandler.isTempVar(id)) {
 				//malloc auxvars do not need to be havocced in some cases (alloca)
-				result &= auxVars.containsKey(varDecl) || id.contains(SFO.MALLOC);
+				// result &= auxVars.containsKey(varDecl) || id.contains(SFO.MALLOC);
+				result &= auxVars.containsKey(varDecl);
 			}
 		}
 		return result;

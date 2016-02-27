@@ -107,10 +107,10 @@ public final class SFO {
 	 * String holding "0.0".
 	 */
 	public static final String NR0F = "0.0";
-	/**
-	 * Identifier of malloc procedure.
-	 */
-	public static final String MALLOC = "~malloc";
+//	/**
+//	 * Identifier of malloc procedure.
+//	 */
+//	public static final String MALLOC = "~malloc";
 	/**
 	 * Identifier of free procedure.
 	 */
