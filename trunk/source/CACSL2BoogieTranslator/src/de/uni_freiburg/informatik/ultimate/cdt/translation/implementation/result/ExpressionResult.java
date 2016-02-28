@@ -296,9 +296,10 @@ public class ExpressionResult extends Result {
 				newValue = (RValue) rex.lrVal;
 			} else if (underlyingType instanceof CArray) {
 				CArray cArray = (CArray) underlyingType;
-				ExpressionResult rex = readArrayFromHeap(main, structHandler,
-						memoryHandler, loc, hlv.getAddress(), cArray);
-				result = copyStmtDeclAuxvarOverapprox(this, rex);	
+//				ExpressionResult rex = readArrayFromHeap(main, structHandler,
+//						memoryHandler, loc, hlv.getAddress(), cArray);
+//				result = copyStmtDeclAuxvarOverapprox(this, rex);
+				result = copyStmtDeclAuxvarOverapprox(this);
 				newValue = new RValue(hlv.getAddress(), new CPointer(cArray.getValueType()), 
 						false, false);
 			} else if (underlyingType instanceof CEnum) {
@@ -499,7 +500,7 @@ public class ExpressionResult extends Result {
 
 			String newArrayId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYCOPY, arrayType);
 			VarList newArrayVl = new VarList(loc, new String[] { newArrayId }, 
-					new ArrayType(loc, new String[0], new ASTType[] { new PrimitiveType(loc, SFO.INT) }, 
+					new ArrayType(loc, new String[0], new ASTType[] { main.typeHandler.ctype2asttype(loc, arrayType.getDimensions()[0].getCType()) }, 
 							main.typeHandler.ctype2asttype(loc, arrayType.getValueType())));
 			VariableDeclaration newArrayDec = new VariableDeclaration(loc, new Attribute[0], new VarList[] { newArrayVl });
 			xfieldHeapLValue = new HeapLValue(new IdentifierExpression(loc, newArrayId), arrayType);
@@ -540,7 +541,7 @@ public class ExpressionResult extends Result {
 				overApp.addAll(readRex.overappr);
 
 				ArrayLHS aAcc = new ArrayLHS(loc, new VariableLHS(loc, newArrayId),
-						new Expression[] { new IntegerLiteral(loc, new Integer(pos).toString())} );
+						new Expression[] { exprTrans.constructLiteralForIntegerType(loc, new CPrimitive(PRIMITIVE.INT), BigInteger.valueOf(pos)) } );
 				ExpressionResult assRex = ((CHandler) main.cHandler).makeAssignment(main, loc, stmt, 
 						new LocalLValue(aAcc, arrayType.getValueType()), (RValue) readRex.lrVal, decl, auxVars, overappr);
 				decl = assRex.decl;
