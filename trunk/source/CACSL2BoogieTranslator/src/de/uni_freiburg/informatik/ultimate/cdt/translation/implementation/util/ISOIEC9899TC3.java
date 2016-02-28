@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.c
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
@@ -179,15 +180,14 @@ public final class ISOIEC9899TC3 {
 	 *            the location
 	 * @return the parsed value
 	 */
-	public static final String handleFloatConstant(String val, ILocation loc, Dispatcher dispatch) {
+	public static final String handleFloatConstant(String val, ILocation loc) {
 		String value = val;
 		// if there is a float-suffix: throw it away
 		for (String s : SUFFIXES_FLOAT) {
 			if (val.endsWith(s)) {
 				value = val.substring(0, val.length() - s.length());
 				String msg = IGNORED_SUFFIX + " " + "Float suffix ignored: " + s;
-				dispatch.warn(loc, msg);
-				break;
+				throw new UnsupportedSyntaxException(loc, msg);
 			}
 		}
 		try {

@@ -287,11 +287,11 @@ public class ExpressionResult extends Result {
 		
 			final RValue newValue;
 			if (underlyingType instanceof CPrimitive) {
-				ExpressionResult rex = memoryHandler.getReadCall(main, hlv.getAddress(), underlyingType);
+				ExpressionResult rex = memoryHandler.getReadCall(hlv.getAddress(), underlyingType);
 				result = copyStmtDeclAuxvarOverapprox(this, rex);
 				newValue = (RValue) rex.lrVal;
 			} else if (underlyingType instanceof CPointer) {
-				ExpressionResult rex = memoryHandler.getReadCall(main, hlv.getAddress(), underlyingType);
+				ExpressionResult rex = memoryHandler.getReadCall(hlv.getAddress(), underlyingType);
 				result = copyStmtDeclAuxvarOverapprox(this, rex);				
 				newValue = (RValue) rex.lrVal;
 			} else if (underlyingType instanceof CArray) {
@@ -532,8 +532,7 @@ public class ExpressionResult extends Result {
 					readRex = readStructFromHeap(main, structHandler, memoryHandler, loc,
 							readAddress, (CStruct) arrayType.getValueType().getUnderlyingType());
 				} else {
-					readRex = memoryHandler.getReadCall(main, readAddress, 
-							arrayType.getValueType());
+					readRex = memoryHandler.getReadCall(readAddress, arrayType.getValueType());
 				}
 				decl.addAll(readRex.decl);
 				stmt.addAll(readRex.stmt);
@@ -542,8 +541,8 @@ public class ExpressionResult extends Result {
 
 				ArrayLHS aAcc = new ArrayLHS(loc, new VariableLHS(loc, newArrayId),
 						new Expression[] { exprTrans.constructLiteralForIntegerType(loc, new CPrimitive(PRIMITIVE.INT), BigInteger.valueOf(pos)) } );
-				ExpressionResult assRex = ((CHandler) main.cHandler).makeAssignment(main, loc, stmt, 
-						new LocalLValue(aAcc, arrayType.getValueType()), (RValue) readRex.lrVal, decl, auxVars, overappr);
+				ExpressionResult assRex = ((CHandler) main.cHandler).makeAssignment(loc, stmt, new LocalLValue(aAcc, arrayType.getValueType()), 
+						(RValue) readRex.lrVal, decl, auxVars, overappr);
 				decl = assRex.decl;
 				stmt = assRex.stmt;
 				auxVars = assRex.auxVars;

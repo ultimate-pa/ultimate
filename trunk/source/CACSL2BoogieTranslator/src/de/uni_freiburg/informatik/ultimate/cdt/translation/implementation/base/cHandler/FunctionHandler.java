@@ -51,6 +51,7 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
@@ -458,7 +459,7 @@ public class FunctionHandler {
 				String id = outParams[0].getIdentifiers()[0];
 				VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, id) };
 				rExp.lrVal = exprResult.lrVal;
-				main.cHandler.convert(main, loc, rExp, functionResultType);
+				main.cHandler.convert(loc, rExp, functionResultType);
 				RValue castExprResultRVal = (RValue) rExp.lrVal;
 				stmt.add(new AssignmentStatement(loc, lhs, new Expression[] { castExprResultRVal.getValue() }));
 				// //assuming that we need no auxvars or overappr, here
@@ -757,7 +758,7 @@ public class FunctionHandler {
 					expectedParamType = new CPointer(((CArray) expectedParamType).getValueType());
 				}
 				// implicit casts
-				main.cHandler.convert(main, loc, in, expectedParamType);
+				main.cHandler.convert(loc, in, expectedParamType);
 			}
 			args.add(in.lrVal.getValue());
 			stmt.addAll(in.stmt);
@@ -802,7 +803,7 @@ public class FunctionHandler {
 			assert arguments.length == 1;
 			ExpressionResult exprRes = (ExpressionResult) main.dispatch(arguments[0]);
 			exprRes = exprRes.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
-			main.cHandler.convert(main, loc, exprRes, m_TypeSizeComputer.getSize_T());
+			main.cHandler.convert(loc, exprRes, m_TypeSizeComputer.getSize_T());
 			
 	    	CPointer resultType = new CPointer(new CPrimitive(PRIMITIVE.VOID));
 	    	String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC, resultType);
@@ -844,9 +845,9 @@ public class FunctionHandler {
 			 */
 			assert arguments.length == 2;
 			ExpressionResult nmemb = ((ExpressionResult) main.dispatch(arguments[0])).switchToRValueIfNecessary(main, memoryHandler,structHandler, loc);
-			main.cHandler.convert(main, loc, nmemb, m_TypeSizeComputer.getSize_T());
+			main.cHandler.convert(loc, nmemb, m_TypeSizeComputer.getSize_T());
 			ExpressionResult size = ((ExpressionResult) main.dispatch(arguments[1])).switchToRValueIfNecessary(main, memoryHandler,structHandler, loc);
-			main.cHandler.convert(main, loc, size, m_TypeSizeComputer.getSize_T());
+			main.cHandler.convert(loc, size, m_TypeSizeComputer.getSize_T());
 			
 			Expression product = m_ExpressionTranslation.constructArithmeticExpression(
 					loc, IASTBinaryExpression.op_multiply,
@@ -1132,11 +1133,10 @@ public class FunctionHandler {
 					// dereference
 					HeapLValue hlv = new HeapLValue(llv.getValue(), cvar);
 
-					ExpressionResult assign = ((CHandler) main.cHandler).makeAssignment(main, igLoc, stmt, hlv,
-							// convention: if a variable is put on heap or not,
-							// its ctype stays the same
-							new RValue(rhsId, cvar), new ArrayList<Declaration>(), new LinkedHashMap<VariableDeclaration, ILocation>(),
-							new ArrayList<Overapprox>());
+					ExpressionResult assign = ((CHandler) main.cHandler).makeAssignment(igLoc, stmt, hlv, // convention: if a variable is put on heap or not,
+					// its ctype stays the same
+					new RValue(rhsId, cvar),
+							new ArrayList<Declaration>(), new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>());
 					stmt.add(
 							memoryHandler.getMallocCall(main, this, llv, igLoc));						
 					stmt.addAll(assign.stmt);
@@ -1258,14 +1258,14 @@ public class FunctionHandler {
 	 * @param errLoc
 	 *            the location for possible errors!
 	 */
-	public void checkIfModifiedGlobal(Dispatcher main, String searchString, ILocation errLoc) {
+	public void checkIfModifiedGlobal(SymbolTable symbTab, String searchString, ILocation errLoc) {
 		String cName;
-		if (!main.cHandler.getSymbolTable().containsBoogieSymbol(searchString)) {
+		if (!symbTab.containsBoogieSymbol(searchString)) {
 			return; // temp variable!
 		}
-		cName = main.cHandler.getSymbolTable().getCID4BoogieID(searchString, errLoc);
+		cName = symbTab.getCID4BoogieID(searchString, errLoc);
 		String cId = currentProcedure.getIdentifier();
-		SymbolTableValue stValue = main.cHandler.getSymbolTable().get(cName, errLoc);
+		SymbolTableValue stValue = symbTab.get(cName, errLoc);
 		CType cvar = stValue.getCVariable();
 		if (cvar != null && stValue.getCDecl().isStatic()) {
 			modifiedGlobals.get(cId).add(searchString);
@@ -1279,7 +1279,7 @@ public class FunctionHandler {
 			// therefore local!
 			isLocal = true;
 		} else {
-			isLocal = !main.cHandler.getSymbolTable().get(cName, errLoc).isBoogieGlobalVar();
+			isLocal = !symbTab.get(cName, errLoc).isBoogieGlobalVar();
 		}
 		if (!isLocal) {
 			// the variable is not local but could be a formal parameter
@@ -1523,7 +1523,7 @@ public class FunctionHandler {
 		CType returnCType = methodsCalledBeforeDeclared.contains(methodName) ? new CPrimitive(PRIMITIVE.INT)
 				: procedureToCFunctionType.get(methodName).getResultType().getUnderlyingType();
 		m_ExpressionTranslation.addAssumeValueInRangeStatements(loc, expr, returnCType, stmt);
-		assert (CHandler.isAuxVarMapcomplete(main, decl, auxVars));
+		assert (CHandler.isAuxVarMapcomplete(main.nameHandler, decl, auxVars));
 		return new ExpressionResult(stmt, new RValue(expr, returnCType), decl, auxVars, overappr);
 	}
 

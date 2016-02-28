@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
@@ -125,8 +126,8 @@ public class SvComp14CHandler extends CHandler {
 	 * @param bitvectorTranslation 
 	 */
 	public SvComp14CHandler(Dispatcher main, CACSL2BoogieBacktranslator backtranslator, 
-			Logger logger, ITypeHandler typeHandler, boolean bitvectorTranslation) {
-		super(main, backtranslator, false, logger, typeHandler, bitvectorTranslation);
+			Logger logger, ITypeHandler typeHandler, boolean bitvectorTranslation, INameHandler nameHandler) {
+		super(main, backtranslator, false, logger, typeHandler, bitvectorTranslation, nameHandler);
 	}
 
 	//
@@ -187,7 +188,7 @@ public class SvComp14CHandler extends CHandler {
 //			could just take the first as there is only one, but it's so easy to make it more general..
 				stmt.add(new AssumeStatement(loc, a));
 			}
-			assert (isAuxVarMapcomplete(main, decl, auxVars));
+			assert (isAuxVarMapcomplete(main.nameHandler, decl, auxVars));
 			return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
 		}
 		for (String t : NONDET_TYPE_STRINGS)
@@ -255,7 +256,7 @@ public class SvComp14CHandler extends CHandler {
 				returnValue = new RValue(new IdentifierExpression(loc, tmpName), cType);
 				m_ExpressionTranslation.addAssumeValueInRangeStatements(loc, returnValue.getValue(), returnValue.getCType(), stmt);
 				
-				assert (isAuxVarMapcomplete(main, decl, auxVars));
+				assert (isAuxVarMapcomplete(main.nameHandler, decl, auxVars));
 				return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
 			}
 		if (methodName.equals("printf")) {
@@ -274,7 +275,7 @@ public class SvComp14CHandler extends CHandler {
 			decl.add(tVarDecl);
 			stmt.add(new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, tId) }));
 			returnValue = new RValue(new IdentifierExpression(loc, tId), null);
-			assert (isAuxVarMapcomplete(main, decl, auxVars));
+			assert (isAuxVarMapcomplete(main.nameHandler, decl, auxVars));
 			return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
 		}
 //		this is a gcc-builtin function that helps with branch prediction, it always returns the first argument.
@@ -287,13 +288,13 @@ public class SvComp14CHandler extends CHandler {
 			assert node.getArguments().length == 3 : "wrong number of arguments";
 			ExpressionResult dest = (ExpressionResult) main.dispatch(node.getArguments()[0]);
 			dest = dest.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-			main.cHandler.convert(main, loc, dest, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+			main.cHandler.convert(loc, dest, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
 			ExpressionResult src = (ExpressionResult) main.dispatch(node.getArguments()[1]);
 			src = src.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-			main.cHandler.convert(main, loc, src, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+			main.cHandler.convert(loc, src, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
 			ExpressionResult size = (ExpressionResult) main.dispatch(node.getArguments()[2]);
 			size = size.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-			main.cHandler.convert(main, loc, size, mTypeSizeComputer.getSize_T());
+			main.cHandler.convert(loc, size, mTypeSizeComputer.getSize_T());
 			
 			final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(dest, src, size);
 			

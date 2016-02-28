@@ -61,7 +61,7 @@ public class SvComp14MainDispatcher extends MainDispatcher {
 		typeHandler = new SVCompTypeHandler(!m_BitvectorTranslation);
 		acslHandler = new ACSLHandler();
 		nameHandler = new NameHandler(backtranslator);
-		cHandler = new SvComp14CHandler(this, backtranslator, mLogger, typeHandler, m_BitvectorTranslation);
+		cHandler = new SvComp14CHandler(this, backtranslator, mLogger, typeHandler, m_BitvectorTranslation, nameHandler);
 		this.backtranslator.setExpressionTranslation(((SvComp14CHandler) cHandler).getExpressionTranslation());
 		preprocessorHandler = new SvComp14PreprocessorHandler();
 		REPORT_WARNINGS = false;
