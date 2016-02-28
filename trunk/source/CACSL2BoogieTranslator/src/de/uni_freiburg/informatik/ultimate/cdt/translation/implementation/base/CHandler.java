@@ -1026,7 +1026,7 @@ public class CHandler implements ICHandler {
 		} else if (main.getFunctionToIndex().containsKey(cId)) {
 			throw new AssertionError("function not known to function handler");
 		} else {
-			throw new UnsupportedSyntaxException(loc, "identifier is not declared (neither a variable nor a function name)");
+			throw new UnsupportedSyntaxException(loc, "identifier is not declared (neither a variable nor a function name): " + cId);
 		}
 
 		LRValue lrVal = null;
@@ -1269,7 +1269,7 @@ public class CHandler implements ICHandler {
 					IdentifierExpression idExpr = (IdentifierExpression) expr;
 					((PRDispatcher) main).moveIdOnHeap(loc, idExpr);
 				} else {
-					((PRDispatcher) main).moveArrayAndStructIdsOnHeap(loc, expr);
+					((PRDispatcher) main).moveArrayAndStructIdsOnHeap(loc, expr, er.auxVars);
 				}
 				ad = new RValue(expr, new CPointer(er.lrVal.getCType()));
 			} else {

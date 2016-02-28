@@ -255,7 +255,7 @@ public class ExpressionResult extends Result {
 				// we are in prerun mode
 				if (lrVal.getCType().getUnderlyingType() instanceof CArray) {
 					// move it on-heap
-					((PRDispatcher) main).moveArrayAndStructIdsOnHeap(loc, lrVal.getValue());
+					((PRDispatcher) main).moveArrayAndStructIdsOnHeap(loc, lrVal.getValue(), this.auxVars);
 				}
 			} else {
 				if (lrVal.getCType().getUnderlyingType() instanceof CArray) {
