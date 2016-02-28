@@ -192,6 +192,7 @@ public class InitializationHandler {
 					rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, (CPrimitive) lCType, BigInteger.ZERO);
 				} else {
 					initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
+					main.cHandler.convert(main, loc, initializer, lCType);
 					rhs = initializer.lrVal.getValue();
 				}
 				break;
@@ -199,6 +200,8 @@ public class InitializationHandler {
 				if (initializer == null) {
 					rhs = new RealLiteral(loc, SFO.NR0F);
 				} else {
+					initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
+					main.cHandler.convert(main, loc, initializer, lCType);
 					rhs = initializer.lrVal.getValue();
 				}
 				break;
