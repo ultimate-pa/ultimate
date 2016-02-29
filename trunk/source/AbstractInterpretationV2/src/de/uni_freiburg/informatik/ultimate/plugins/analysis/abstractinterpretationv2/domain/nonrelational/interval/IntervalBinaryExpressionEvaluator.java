@@ -35,43 +35,48 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class IntervalBinaryExpressionEvaluator
-        implements INAryEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
-
-	private IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> mLeftSubEvaluator;
-	private IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> mRightSubEvaluator;
+        implements INAryEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	private final Set<String> mVariableSet;
-
 	private final Logger mLogger;
+	private final EvaluatorType mEvaluatorType;
+	private final int mMaxParallelStates;
+
+	private IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> mLeftSubEvaluator;
+	private IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> mRightSubEvaluator;
 
 	private Operator mOperator;
 
-	protected IntervalBinaryExpressionEvaluator(Logger logger) {
+	protected IntervalBinaryExpressionEvaluator(final Logger logger, final EvaluatorType type) {
 		mLogger = logger;
 		mVariableSet = new HashSet<>();
+		mEvaluatorType = type;
+		mMaxParallelStates = new UltimatePreferenceStore(Activator.PLUGIN_ID)
+		        .getInt(AbsIntPrefInitializer.LABEL_STATES_UNTIL_MERGE);
 	}
 
 	@Override
-	public List<IEvaluationResult<IntervalDomainEvaluationResult>> evaluate(IntervalDomainState currentState) {
+	public List<IEvaluationResult<IntervalDomainValue>> evaluate(IntervalDomainState currentState) {
 
-		final List<IEvaluationResult<IntervalDomainEvaluationResult>> returnList = new ArrayList<>();
+		final List<IEvaluationResult<IntervalDomainValue>> returnList = new ArrayList<>();
 
 		assert currentState != null;
 
-		final List<IEvaluationResult<IntervalDomainEvaluationResult>> firstResult = mLeftSubEvaluator
-		        .evaluate(currentState);
-		final List<IEvaluationResult<IntervalDomainEvaluationResult>> secondResult = mRightSubEvaluator
-		        .evaluate(currentState);
+		final List<IEvaluationResult<IntervalDomainValue>> firstResult = mLeftSubEvaluator.evaluate(currentState);
+		final List<IEvaluationResult<IntervalDomainValue>> secondResult = mRightSubEvaluator.evaluate(currentState);
 
 		for (String var : mLeftSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
@@ -79,223 +84,72 @@ public class IntervalBinaryExpressionEvaluator
 		for (String var : mRightSubEvaluator.getVarIdentifiers()) {
 			mVariableSet.add(var);
 		}
-		
-		for (final IEvaluationResult<IntervalDomainEvaluationResult> res1 : firstResult) {
-			for (final IEvaluationResult<IntervalDomainEvaluationResult> res2 : secondResult) {
-				final List<IntervalDomainState> returnStates = new ArrayList<>();
+
+		for (final IEvaluationResult<IntervalDomainValue> res1 : firstResult) {
+			for (final IEvaluationResult<IntervalDomainValue> res2 : secondResult) {
 				IntervalDomainValue returnValue = new IntervalDomainValue();
 				BooleanValue returnBool = new BooleanValue();
 
-				boolean setToBottom = false;
-
 				switch (mOperator) {
 				case ARITHPLUS:
-					returnValue = res1.getResult().getEvaluatedValue().add(res2.getResult().getEvaluatedValue());
+					returnValue = res1.getValue().add(res2.getValue());
 					returnBool = new BooleanValue(false);
 					break;
 				case ARITHMINUS:
-					returnValue = res1.getResult().getEvaluatedValue().subtract(res2.getResult().getEvaluatedValue());
+					returnValue = res1.getValue().subtract(res2.getValue());
 					returnBool = new BooleanValue(false);
 					break;
 				case ARITHMUL:
-					returnValue = res1.getResult().getEvaluatedValue().multiply(res2.getResult().getEvaluatedValue());
+					returnValue = res1.getValue().multiply(res2.getValue());
 					returnBool = new BooleanValue(false);
 					break;
 				case ARITHDIV:
-					returnValue = res1.getResult().getEvaluatedValue().divide(res2.getResult().getEvaluatedValue());
+					switch (mEvaluatorType) {
+					case INTEGER:
+						returnValue = res1.getValue().integerDivide(res2.getValue());
+						break;
+					case REAL:
+						returnValue = res1.getValue().divide(res2.getValue());
+						break;
+					default:
+						throw new UnsupportedOperationException(
+						        "Division on types other than integers and reals is undefined.");
+					}
 					returnBool = new BooleanValue(false);
 					break;
 				case ARITHMOD:
-					returnValue = res1.getResult().getEvaluatedValue().modulo(res2.getResult().getEvaluatedValue());
+					mLogger.warn("Cannot handle modulo operation precisely. Returning top.");
 					returnBool = new BooleanValue(false);
 					break;
 				case LOGICAND:
 					returnBool = res1.getBooleanValue().and(res2.getBooleanValue());
-					if (returnBool.getValue() == Value.FALSE) {
-						setToBottom = true;
-					} else {
-						final IntervalDomainState firstIntervalState = res1.getResult().getEvaluatedState();
-						final IntervalDomainState secondIntervalState = res2.getResult().getEvaluatedState();
-						returnStates.add(firstIntervalState.intersect(secondIntervalState));
-					}
 					break;
 				case LOGICOR:
 					returnBool = res1.getBooleanValue().or(res2.getBooleanValue());
-					if (returnBool.getValue() == Value.FALSE) {
-						setToBottom = true;
-					} else {
-						final IntervalDomainState firstIntervalState = res1.getResult().getEvaluatedState();
-						final IntervalDomainState secondIntervalState = res2.getResult().getEvaluatedState();
-
-						returnStates.add(firstIntervalState);
-						returnStates.add(secondIntervalState);
-					}
 					break;
 				case LOGICIMPLIES:
-					returnBool = res1.getBooleanValue().neg().or(res2.getBooleanValue());
-					if (returnBool.getValue() == Value.FALSE) {
-						setToBottom = true;
-					}
-					// TODO: Do something with the state here!
-					break;
+					throw new UnsupportedOperationException("Implications should have been resolved earlier.");
 				case LOGICIFF:
-					returnBool = (res1.getBooleanValue().and(res2.getBooleanValue())
-					        .or((res1.getBooleanValue().neg().and(res2.getBooleanValue().neg()))));
-					if (returnBool.getValue() == Value.FALSE) {
-						setToBottom = true;
-					}
-					// TODO: Do something with the state here!
-					break;
+					throw new UnsupportedOperationException(
+					        "If and only if expressions should have been resolved earlier.");
 				case COMPEQ:
-					// TODO: Make better, make shorter, move to separate method s.t. it can be called when handling NEQ
-					// as well.
-					if (mLeftSubEvaluator.getVarIdentifiers().size() == 0
-					        && mRightSubEvaluator.getVarIdentifiers().size() == 0) {
+					if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
+						returnBool = res1.getBooleanValue().intersect(res2.getBooleanValue());
+					}
 
-						if (mLeftSubEvaluator.containsBool() && mRightSubEvaluator.containsBool()) {
-							returnBool = res1.getBooleanValue().intersect(res2.getBooleanValue());
+					returnValue = res1.getValue().intersect(res2.getValue());
+
+					if (returnBool.isBottom() || returnValue.isBottom()) {
+						returnBool = new BooleanValue(false);
+						break;
+					}
+
+					if (!mLeftSubEvaluator.containsBool() && !mRightSubEvaluator.containsBool()) {
+						if (returnValue.isEqualTo(res1.getValue()) && returnValue.isEqualTo(res2.getValue())) {
+							returnBool = new BooleanValue(true);
 						} else {
-							returnBool = new BooleanValue(res1.getResult().getEvaluatedValue()
-							        .isContainedIn(res2.getResult().getEvaluatedValue()));
+							returnBool = new BooleanValue();
 						}
-
-						if (returnBool.getValue() == Value.FALSE) {
-							setToBottom = true;
-						}
-
-					} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 0
-					        && mRightSubEvaluator.getVarIdentifiers().size() == 1) {
-
-						String varName = null;
-
-						for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
-							varName = var;
-						}
-
-						assert varName != null;
-
-						if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
-							returnBool = res1.getBooleanValue().intersect(res2.getBooleanValue());
-						} else {
-							returnBool = new BooleanValue(res1.getResult().getEvaluatedValue()
-							        .isContainedIn(res2.getResult().getEvaluatedValue()));
-						}
-
-						if (returnBool.getValue() == Value.FALSE) {
-							setToBottom = true;
-						} else {
-							IntervalDomainState returnState;
-
-							if (mLeftSubEvaluator.containsBool()) {
-								returnState = currentState.setBooleanValue(varName, res1.getBooleanValue());
-							} else {
-								returnState = currentState.setValue(varName, res1.getResult().getEvaluatedValue());
-							}
-
-							returnStates.add(returnState.intersect(currentState));
-						}
-
-					} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 1
-					        && mRightSubEvaluator.getVarIdentifiers().size() == 0) {
-
-						String varName = null;
-
-						for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
-							varName = var;
-						}
-
-						assert varName != null;
-
-						if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
-							returnBool = res1.getBooleanValue().intersect(res2.getBooleanValue());
-						} else {
-							returnBool = new BooleanValue(res1.getResult().getEvaluatedValue()
-							        .isContainedIn(res2.getResult().getEvaluatedValue()));
-						}
-
-						if (returnBool.getValue() == Value.FALSE) {
-							setToBottom = true;
-						} else {
-							IntervalDomainState returnState;
-
-							if (mRightSubEvaluator.containsBool()) {
-								returnState = currentState.setBooleanValue(varName, res2.getBooleanValue());
-							} else {
-								returnState = currentState.setValue(varName, res2.getResult().getEvaluatedValue());
-							}
-
-							returnStates.add(returnState.intersect(currentState));
-						}
-
-					} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 1
-					        && mRightSubEvaluator.getVarIdentifiers().size() == 1) {
-
-						String leftVar = null;
-						String rightVar = null;
-
-						for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
-							leftVar = var;
-						}
-						for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
-							rightVar = var;
-						}
-
-						assert leftVar != null;
-						assert rightVar != null;
-
-						if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
-							returnBool = res1.getBooleanValue().intersect(res2.getBooleanValue());
-						} else {
-							returnBool = new BooleanValue(res1.getResult().getEvaluatedValue()
-							        .isContainedIn(res2.getResult().getEvaluatedValue()));
-						}
-
-						if (returnBool.getValue() == Value.FALSE) {
-							setToBottom = true;
-						} else {
-							List<String> boolVarsToChange = new ArrayList<>();
-							List<String> varsToChange = new ArrayList<>();
-							List<BooleanValue.Value> boolsToChange = new ArrayList<>();
-							List<IntervalDomainValue> valsToChange = new ArrayList<>();
-
-							if (mLeftSubEvaluator.containsBool()) {
-								boolVarsToChange.add(rightVar);
-								boolsToChange.add(res1.getBooleanValue().getValue());
-							} else {
-								varsToChange.add(rightVar);
-								valsToChange.add(res1.getResult().getEvaluatedValue());
-							}
-
-							if (mRightSubEvaluator.containsBool()) {
-								boolVarsToChange.add(leftVar);
-								boolsToChange.add(res2.getBooleanValue().getValue());
-							} else {
-								varsToChange.add(leftVar);
-								valsToChange.add(res2.getResult().getEvaluatedValue());
-							}
-
-							returnStates.add(
-							        currentState.setMixedValues(varsToChange.toArray(new String[varsToChange.size()]),
-							                valsToChange.toArray(new IntervalDomainValue[valsToChange.size()]),
-							                boolVarsToChange.toArray(new String[boolVarsToChange.size()]),
-							                boolsToChange.toArray(new BooleanValue.Value[boolsToChange.size()]),
-							                new String[0], new IntervalDomainValue[0]).intersect(currentState));
-						}
-
-					} else {
-						if (mLeftSubEvaluator.containsBool() && mRightSubEvaluator.containsBool()) {
-							returnBool = res1.getBooleanValue().intersect(res2.getBooleanValue());
-						} else {
-							returnBool = new BooleanValue(res1.getResult().getEvaluatedValue()
-							        .isContainedIn(res2.getResult().getEvaluatedValue()));
-						}
-
-						if (returnBool.getValue() == Value.FALSE) {
-							setToBottom = true;
-						}
-
-						mLogger.warn(
-						        "Cannot handle more than one variables in a sub-tree of an expression. Returning current state.");
 					}
 					break;
 				case COMPNEQ:
@@ -305,250 +159,36 @@ public class IntervalBinaryExpressionEvaluator
 					mLogger.warn(
 					        "Cannot handle greater than operators precisely. Using greater or equal over-approximation instead.");
 				case COMPGEQ:
-					if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
-						throw new UnsupportedOperationException(
-						        "Boolean values are not allowed in a COMPGEQ expression.");
-					}
+					returnValue = res1.getValue().greaterOrEqual(res2.getValue());
 
-					if (mLeftSubEvaluator.getVarIdentifiers().size() == 0
-					        && mRightSubEvaluator.getVarIdentifiers().size() == 0) {
-
-						if (res1.getResult().getEvaluatedValue().greaterOrEqual(res2.getResult().getEvaluatedValue())
-						        .isBottom()) {
-							returnBool = new BooleanValue(false);
-							setToBottom = true;
-						} else {
-							returnBool = new BooleanValue(true);
-						}
-
-					} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 0
-					        && mRightSubEvaluator.getVarIdentifiers().size() == 1) {
-
-						String varName = null;
-
-						for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
-							varName = var;
-						}
-
-						assert varName != null;
-
-						final IntervalDomainValue leftValue = new IntervalDomainValue(new IntervalValue(),
-						        res1.getResult().getEvaluatedValue().getUpper());
-
-						final IntervalDomainValue computationResult = leftValue
-						        .intersect(res2.getResult().getEvaluatedValue());
-
-						returnStates.add(currentState.setValue(varName, computationResult));
-
-						if (computationResult.isBottom()) {
-							returnBool = new BooleanValue(false);
-						} else {
-							returnBool = new BooleanValue(true);
-						}
-
-					} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 1
-					        && mRightSubEvaluator.getVarIdentifiers().size() == 0) {
-
-						String varName = null;
-
-						for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
-							varName = var;
-						}
-
-						assert varName != null;
-
-						final IntervalDomainValue rightValue = new IntervalDomainValue(
-						        res2.getResult().getEvaluatedValue().getLower(), new IntervalValue());
-
-						final IntervalDomainValue computationResult = res1.getResult().getEvaluatedValue()
-						        .intersect(rightValue);
-
-						returnStates.add(currentState.setValue(varName, computationResult));
-
-						if (computationResult.isBottom()) {
-							returnBool = new BooleanValue(false);
-						} else {
-							returnBool = new BooleanValue(true);
-						}
-
-					} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 1
-					        && mRightSubEvaluator.getVarIdentifiers().size() == 1) {
-
-						String leftVar = null;
-						String rightVar = null;
-
-						for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
-							leftVar = var;
-						}
-						for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
-							rightVar = var;
-						}
-
-						assert leftVar != null;
-						assert rightVar != null;
-
-						List<String> vars = new ArrayList<>();
-						List<IntervalDomainValue> vals = new ArrayList<>();
-
-						final IntervalDomainValue rightForLeft = new IntervalDomainValue(
-						        res2.getResult().getEvaluatedValue().getLower(), new IntervalValue());
-
-						final IntervalDomainValue leftComputationResult = res1.getResult().getEvaluatedValue()
-						        .intersect(rightForLeft);
-
-						vars.add(leftVar);
-						vals.add(leftComputationResult);
-
-						final IntervalDomainValue leftForRight = new IntervalDomainValue(new IntervalValue(),
-						        res1.getResult().getEvaluatedValue().getUpper());
-
-						final IntervalDomainValue rightComputationResult = leftForRight
-						        .intersect(res2.getResult().getEvaluatedValue());
-
-						vars.add(rightVar);
-						vals.add(rightComputationResult);
-
-						returnStates.add(currentState.setValues(vars.toArray(new String[vars.size()]),
-						        vals.toArray(new IntervalDomainValue[vals.size()])));
-
-						if (leftComputationResult.isBottom() || rightComputationResult.isBottom()) {
-							returnBool = new BooleanValue(false);
-						} else {
-							returnBool = new BooleanValue(true);
-						}
-
+					if (returnValue.isBottom()) {
+						returnBool = new BooleanValue(false);
+						break;
 					} else {
-						if (res1.getResult().getEvaluatedValue().greaterOrEqual(res2.getResult().getEvaluatedValue())
-						        .isBottom()) {
-							returnBool = new BooleanValue(false);
-						} else {
+						final IntervalDomainValue leq = res1.getValue().lessOrEqual(res2.getValue());
+						if (leq.isBottom() || leq.isPointInterval()) {
 							returnBool = new BooleanValue(true);
+						} else {
+							returnBool = new BooleanValue();
 						}
-						mLogger.warn(
-						        "Cannot handle more than one variables in a sub-tree of an expression. Returning current state.");
 					}
 					break;
 				case COMPLT:
 					mLogger.warn(
 					        "Cannot handle less than operators precisely. Using less or equal over-approximation instead.");
 				case COMPLEQ:
-					if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
-						throw new UnsupportedOperationException(
-						        "Boolean values are not allowed in a COMPLEQ expression.");
-					}
+					returnValue = res1.getValue().lessOrEqual(res2.getValue());
 
-					if (mLeftSubEvaluator.getVarIdentifiers().size() == 0
-					        && mRightSubEvaluator.getVarIdentifiers().size() == 0) {
-
-						if (res1.getResult().getEvaluatedValue().lessOrEqual(res2.getResult().getEvaluatedValue())
-						        .isBottom()) {
-							returnBool = new BooleanValue(false);
-							setToBottom = true;
-						} else {
-							returnBool = new BooleanValue(true);
-						}
-					} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 0
-					        && mRightSubEvaluator.getVarIdentifiers().size() == 1) {
-
-						String varName = null;
-
-						for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
-							varName = var;
-						}
-
-						assert varName != null;
-
-						final IntervalDomainValue newLeftSide = new IntervalDomainValue(
-						        res1.getResult().getEvaluatedValue().getUpper(), new IntervalValue());
-
-						final IntervalDomainValue computationResult = newLeftSide
-						        .intersect(res2.getResult().getEvaluatedValue());
-
-						returnStates.add(currentState.setValue(varName, computationResult));
-
-						if (computationResult.isBottom()) {
-							returnBool = new BooleanValue(false);
-						} else {
-							returnBool = new BooleanValue(true);
-						}
-					} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 1
-					        && mRightSubEvaluator.getVarIdentifiers().size() == 0) {
-
-						String varName = null;
-
-						for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
-							varName = var;
-						}
-
-						assert varName != null;
-
-						final IntervalDomainValue newRightSide = new IntervalDomainValue(new IntervalValue(),
-						        res2.getResult().getEvaluatedValue().getLower());
-
-						final IntervalDomainValue computationResult = res1.getResult().getEvaluatedValue()
-						        .intersect(newRightSide);
-
-						returnStates.add(currentState.setValue(varName, computationResult));
-
-						if (computationResult.isBottom()) {
-							returnBool = new BooleanValue(false);
-						} else {
-							returnBool = new BooleanValue(true);
-						}
-					} else if (mLeftSubEvaluator.getVarIdentifiers().size() == 1
-					        && mRightSubEvaluator.getVarIdentifiers().size() == 1) {
-
-						String leftVar = null;
-						String rightVar = null;
-
-						for (final String var : mLeftSubEvaluator.getVarIdentifiers()) {
-							leftVar = var;
-						}
-						for (final String var : mRightSubEvaluator.getVarIdentifiers()) {
-							rightVar = var;
-						}
-
-						assert leftVar != null;
-						assert rightVar != null;
-
-						List<String> vars = new ArrayList<>();
-						List<IntervalDomainValue> vals = new ArrayList<>();
-
-						final IntervalDomainValue rightSideForLeft = new IntervalDomainValue(new IntervalValue(),
-						        res2.getResult().getEvaluatedValue().getLower());
-
-						final IntervalDomainValue leftComputationResult = res1.getResult().getEvaluatedValue()
-						        .intersect(rightSideForLeft);
-
-						vars.add(leftVar);
-						vals.add(leftComputationResult);
-
-						final IntervalDomainValue leftSideForRight = new IntervalDomainValue(
-						        res1.getResult().getEvaluatedValue().getUpper(), new IntervalValue());
-
-						final IntervalDomainValue rightComputationResult = leftSideForRight
-						        .intersect(res2.getResult().getEvaluatedValue());
-
-						vars.add(rightVar);
-						vals.add(rightComputationResult);
-
-						returnStates.add(currentState.setValues(vars.toArray(new String[vars.size()]),
-						        vals.toArray(new IntervalDomainValue[vals.size()])));
-
-						if (leftComputationResult.isBottom() || rightComputationResult.isBottom()) {
-							returnBool = new BooleanValue(false);
-						} else {
-							returnBool = new BooleanValue(true);
-						}
+					if (returnValue.isBottom()) {
+						returnBool = new BooleanValue(false);
+						break;
 					} else {
-						if (res1.getResult().getEvaluatedValue().lessOrEqual(res2.getResult().getEvaluatedValue())
-						        .isBottom()) {
-							returnBool = new BooleanValue(false);
-						} else {
+						final IntervalDomainValue geq = res1.getValue().greaterOrEqual(res2.getValue());
+						if (geq.isBottom() || geq.isPointInterval()) {
 							returnBool = new BooleanValue(true);
+						} else {
+							returnBool = new BooleanValue();
 						}
-						mLogger.warn(
-						        "Cannot handle more than one variables in a sub-tree of an expression. Returning current state.");
 					}
 					break;
 				case COMPPO:
@@ -558,29 +198,13 @@ public class IntervalBinaryExpressionEvaluator
 					        + ". Returning current state.");
 					returnValue = new IntervalDomainValue();
 				}
-
-				if (setToBottom) {
-					returnStates.clear();
-					returnStates.add(currentState.bottomState());
-				}
-
-				// If no state has been added to return, return the current state.
-				if (returnStates.size() == 0) {
-					returnStates.add(currentState.copy());
-				}
-
-				for (final IntervalDomainState s : returnStates) {
-					if (s.isBottom()) {
-						returnList.add(new IntervalDomainEvaluationResult(returnValue, s, new BooleanValue(false)));
-					} else {
-						returnList.add(new IntervalDomainEvaluationResult(returnValue, s, returnBool));
-					}
-					
-				}
+				returnList.add(new IntervalDomainEvaluationResult(returnValue, returnBool));
 			}
 		}
 
-		return returnList;
+		assert returnList.size() != 0;
+		return IntervalUtils.mergeIfNecessary(returnList, mMaxParallelStates);
+
 	}
 
 	@Override
@@ -589,8 +213,7 @@ public class IntervalBinaryExpressionEvaluator
 	}
 
 	@Override
-	public void addSubEvaluator(
-	        IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
 		assert evaluator != null;
 
 		if (mLeftSubEvaluator != null && mRightSubEvaluator != null) {
@@ -626,5 +249,307 @@ public class IntervalBinaryExpressionEvaluator
 	@Override
 	public int getArity() {
 		return 2;
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+
+		sb.append(mLeftSubEvaluator);
+
+		switch (mOperator) {
+		case ARITHDIV:
+			sb.append(" / ");
+			break;
+		case ARITHMINUS:
+			sb.append(" - ");
+			break;
+		case ARITHMOD:
+			sb.append(" % ");
+			break;
+		case ARITHMUL:
+			sb.append(" * ");
+			break;
+		case ARITHPLUS:
+			sb.append(" + ");
+			break;
+		case COMPEQ:
+			sb.append(" == ");
+			break;
+		case COMPGEQ:
+			sb.append(" >= ");
+			break;
+		case COMPGT:
+			sb.append(" > ");
+			break;
+		case COMPLEQ:
+			sb.append(" <= ");
+			break;
+		case COMPLT:
+			sb.append(" < ");
+			break;
+		case COMPNEQ:
+			sb.append(" != ");
+			break;
+		case LOGICAND:
+			sb.append(" && ");
+			break;
+		case LOGICIFF:
+			sb.append(" <==> ");
+			break;
+		case LOGICIMPLIES:
+			sb.append(" ==> ");
+			break;
+		case LOGICOR:
+			sb.append(" || ");
+			break;
+		default:
+			mOperator.name();
+		}
+
+		sb.append(mRightSubEvaluator);
+
+		return sb.toString();
+	}
+
+	@Override
+	public List<IntervalDomainState> inverseEvaluate(final IEvaluationResult<IntervalDomainValue> computedValue,
+	        final IntervalDomainState currentState) {
+
+		final List<IntervalDomainState> returnList = new ArrayList<>();
+
+		final IntervalDomainValue referenceValue = computedValue.getValue();
+		final BooleanValue referenceBool = computedValue.getBooleanValue();
+
+		final List<IEvaluationResult<IntervalDomainValue>> leftValue = mLeftSubEvaluator.evaluate(currentState);
+		final List<IEvaluationResult<IntervalDomainValue>> rightValue = mRightSubEvaluator.evaluate(currentState);
+
+		for (final IEvaluationResult<IntervalDomainValue> left : leftValue) {
+			for (final IEvaluationResult<IntervalDomainValue> right : rightValue) {
+				List<IntervalDomainState> returnStates = new ArrayList<>();
+
+				switch (mOperator) {
+				case LOGICAND:
+					final List<IntervalDomainState> leftAnd = mLeftSubEvaluator.inverseEvaluate(computedValue,
+					        currentState);
+					final List<IntervalDomainState> rightAnd = mRightSubEvaluator.inverseEvaluate(computedValue,
+					        currentState);
+					for (final IntervalDomainState le : leftAnd) {
+						for (final IntervalDomainState ri : rightAnd) {
+							returnStates.add(le.intersect(ri));
+						}
+					}
+					break;
+				case LOGICOR:
+					final List<IntervalDomainState> leftOr = mLeftSubEvaluator.inverseEvaluate(computedValue,
+					        currentState);
+					final List<IntervalDomainState> rightOr = mRightSubEvaluator.inverseEvaluate(computedValue,
+					        currentState);
+					for (final IntervalDomainState le : leftOr) {
+						returnStates.add(le);
+					}
+					for (final IntervalDomainState ri : rightOr) {
+						returnStates.add(ri);
+					}
+					break;
+				case LOGICIMPLIES:
+					throw new UnsupportedOperationException("Implications should have been resolved earlier.");
+				case LOGICIFF:
+					throw new UnsupportedOperationException(
+					        "If and only if expressions should have been resolved earlier.");
+				case COMPEQ:
+					final IntervalDomainValue newLeft = computeNewValue(referenceValue, left.getValue(),
+					        right.getValue(), true);
+					final IntervalDomainValue newRight = computeNewValue(referenceValue, right.getValue(),
+					        left.getValue(), false);
+
+					final IntervalDomainEvaluationResult leftEvalresult = new IntervalDomainEvaluationResult(newLeft,
+					        referenceBool);
+					final IntervalDomainEvaluationResult rightEvalresult = new IntervalDomainEvaluationResult(newRight,
+					        referenceBool);
+
+					final List<IntervalDomainState> leftEq = mLeftSubEvaluator.inverseEvaluate(leftEvalresult,
+					        currentState);
+					final List<IntervalDomainState> rightEq = mRightSubEvaluator.inverseEvaluate(rightEvalresult,
+					        currentState);
+					for (final IntervalDomainState le : leftEq) {
+						for (final IntervalDomainState ri : rightEq) {
+							returnStates.add(le.intersect(ri));
+						}
+					}
+					break;
+				case COMPNEQ:
+					throw new UnsupportedOperationException(
+					        "COMPNEQ expression occurs even though it should have been replaced before.");
+				case COMPGT:
+					mLogger.warn(
+					        "Cannot handle greater than operators precisely. Using greater or equal over-approximation instead.");
+				case COMPGEQ:
+					// Construct interval of the form [lower, \infty) for the right hand side.
+					final IntervalDomainValue rightForLeftGeq = new IntervalDomainValue(right.getValue().getLower(),
+					        new IntervalValue());
+					final IntervalDomainValue leftComputationResultGeq = left.getValue().intersect(rightForLeftGeq);
+
+					// Construct interval of the form (-\infty, upper] for the left hand side.
+					final IntervalDomainValue leftForRightGeq = new IntervalDomainValue(new IntervalValue(),
+					        left.getValue().getUpper());
+					final IntervalDomainValue rightComputationResultGeq = right.getValue().intersect(leftForRightGeq);
+
+					// Prepare reference evaluation results for the inverse evaluation.
+					final IntervalDomainEvaluationResult inverseResultGeqLeft = new IntervalDomainEvaluationResult(
+					        leftComputationResultGeq, left.getBooleanValue());
+					final IntervalDomainEvaluationResult inverseResultGeqRight = new IntervalDomainEvaluationResult(
+					        rightComputationResultGeq, right.getBooleanValue());
+
+					// Inverse evaluate.
+					final List<IntervalDomainState> leftInverseGeq = mLeftSubEvaluator
+					        .inverseEvaluate(inverseResultGeqLeft, currentState);
+					final List<IntervalDomainState> rightInverseGeq = mRightSubEvaluator
+					        .inverseEvaluate(inverseResultGeqRight, currentState);
+
+					for (final IntervalDomainState le : leftInverseGeq) {
+						for (final IntervalDomainState ri : rightInverseGeq) {
+							returnStates.add(le.intersect(ri));
+						}
+					}
+					break;
+				case COMPLT:
+					mLogger.warn(
+					        "Cannot handle less than operators precisely. Using less or equal over-approximation instead.");
+				case COMPLEQ:
+					// Construct interval of the form (-\infty, upper] for the right hand side.
+					final IntervalDomainValue rightForLeftLeq = new IntervalDomainValue(new IntervalValue(),
+					        right.getValue().getUpper());
+					final IntervalDomainValue leftComputationResultLeq = left.getValue().intersect(rightForLeftLeq);
+
+					// Construct interval of the form [lower, \infty) for the left hand side.
+					final IntervalDomainValue leftForRightLeq = new IntervalDomainValue(left.getValue().getLower(),
+					        new IntervalValue());
+					final IntervalDomainValue rightComputationResultLeq = right.getValue().intersect(leftForRightLeq);
+
+					// Prepare reference evaluation result for the invere evaluation.
+					final IntervalDomainEvaluationResult inverseResultLeqLeft = new IntervalDomainEvaluationResult(
+					        leftComputationResultLeq, left.getBooleanValue());
+					final IntervalDomainEvaluationResult inverseResultLeqRight = new IntervalDomainEvaluationResult(
+					        rightComputationResultLeq, right.getBooleanValue());
+
+					// Inverse evaluate.
+					final List<IntervalDomainState> leftInverseLeq = mLeftSubEvaluator
+					        .inverseEvaluate(inverseResultLeqLeft, currentState);
+					final List<IntervalDomainState> rightInverseLeq = mRightSubEvaluator
+					        .inverseEvaluate(inverseResultLeqRight, currentState);
+
+					for (final IntervalDomainState le : leftInverseLeq) {
+						for (final IntervalDomainState ri : rightInverseLeq) {
+							returnStates.add(le.intersect(ri));
+						}
+					}
+					break;
+				case COMPPO:
+					returnStates.add(currentState);
+					break;
+				case ARITHDIV:
+				case ARITHMINUS:
+				case ARITHMOD:
+				case ARITHMUL:
+				case ARITHPLUS:
+					final IntervalDomainValue newArithValueLeft = computeNewValue(referenceValue, left.getValue(),
+					        right.getValue(), true);
+					final IntervalDomainValue newArithValueRight = computeNewValue(referenceValue, right.getValue(),
+					        left.getValue(), false);
+
+					final IntervalDomainEvaluationResult inverseResultArithLeft = new IntervalDomainEvaluationResult(
+					        newArithValueLeft, referenceBool);
+					final IntervalDomainEvaluationResult inverseResultArithRight = new IntervalDomainEvaluationResult(
+					        newArithValueRight, referenceBool);
+
+					final List<IntervalDomainState> leftInverseArith = mLeftSubEvaluator
+					        .inverseEvaluate(inverseResultArithLeft, currentState);
+					final List<IntervalDomainState> rightInverseArith = mRightSubEvaluator
+					        .inverseEvaluate(inverseResultArithRight, currentState);
+					
+					for (final IntervalDomainState le : leftInverseArith) {
+						for (final IntervalDomainState ri : rightInverseArith) {
+							returnStates.add(le.intersect(ri));
+						}
+					}
+					break;
+				default:
+					returnStates.add(currentState);
+					break;
+
+				}
+
+				if (returnStates.size() == 0) {
+					returnStates.add(currentState);
+				}
+
+				returnList.addAll(returnStates);
+			}
+		}
+
+		assert returnList.size() != 0;
+		return returnList;
+	}
+
+	private IntervalDomainValue computeNewValue(final IntervalDomainValue referenceValue,
+	        final IntervalDomainValue oldValue, final IntervalDomainValue otherValue, boolean left) {
+		IntervalDomainValue newValue;
+
+		switch (mOperator) {
+		case ARITHPLUS:
+			newValue = referenceValue.subtract(otherValue);
+			newValue = newValue.intersect(oldValue);
+			break;
+		case ARITHMINUS:
+			if (left) {
+				newValue = referenceValue.add(otherValue);
+			} else {
+				newValue = otherValue.subtract(referenceValue);
+			}
+			newValue = newValue.intersect(oldValue);
+			break;
+		case ARITHMUL:
+			if (mEvaluatorType == EvaluatorType.INTEGER) {
+				newValue = referenceValue.integerDivide(otherValue);
+			} else if (mEvaluatorType == EvaluatorType.REAL) {
+				newValue = referenceValue.divide(otherValue);
+			} else {
+				throw new UnsupportedOperationException(
+				        "Division on types other than integers and reals is undefined.");
+			}
+			newValue = newValue.intersect(oldValue);
+			break;
+		case ARITHDIV:
+			if (left) {
+				newValue = referenceValue.multiply(otherValue);
+			} else {
+				if (mEvaluatorType == EvaluatorType.INTEGER) {
+					newValue = otherValue.integerDivide(referenceValue);
+				} else if (mEvaluatorType == EvaluatorType.REAL) {
+					newValue = otherValue.divide(referenceValue);
+				} else {
+					throw new UnsupportedOperationException(
+					        "Division on types other than integers and reals is undefined.");
+				}
+			}
+			newValue = newValue.intersect(oldValue);
+			break;
+		case ARITHMOD:
+			mLogger.warn("Cannot handle inverse of the modulo operation precisely. Returning old value.");
+			newValue = oldValue;
+			break;
+		case COMPEQ:
+		case COMPLEQ:
+		case COMPLT:
+		case COMPGEQ:
+		case COMPGT:
+		case COMPNEQ:
+			newValue = referenceValue;
+			break;
+		default:
+			throw new UnsupportedOperationException("Not implemented: " + mOperator);
+		}
+		return newValue;
 	}
 }

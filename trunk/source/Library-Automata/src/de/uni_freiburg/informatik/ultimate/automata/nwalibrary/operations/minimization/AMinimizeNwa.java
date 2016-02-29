@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minim
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
@@ -38,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsDeterministic;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * This is the superclass of all minimization classes.
@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
 public abstract class AMinimizeNwa<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
 	
-	protected final IUltimateServiceProvider m_Services;
+	protected final AutomataLibraryServices m_Services;
 	/**
 	 * The logger.
 	 */
@@ -82,7 +82,7 @@ public abstract class AMinimizeNwa<LETTER, STATE>
 	 * @param name operation name
 	 * @param operand input automaton
 	 */
-	protected AMinimizeNwa(IUltimateServiceProvider services,
+	protected AMinimizeNwa(AutomataLibraryServices services,
 			StateFactory<STATE> stateFactory, final String name,
 			final INestedWordAutomaton<LETTER, STATE> operand) {
 		m_Services = services;

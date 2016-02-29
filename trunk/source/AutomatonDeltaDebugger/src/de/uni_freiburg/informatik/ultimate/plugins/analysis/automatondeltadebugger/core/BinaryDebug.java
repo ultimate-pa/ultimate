@@ -31,7 +31,7 @@ import java.util.ArrayDeque;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.shrinkers.AShrinker;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.AShrinker;
 
 /**
  * Reduces a list of objects in a binary search manner until a local minimum is
@@ -51,13 +51,13 @@ public class BinaryDebug<T, LETTER, STATE> {
 	private class SublistBounds {
 		final int mLeft, mRight;
 		final boolean mIsLhs;
-
+		
 		SublistBounds(final int left, final int right, final boolean isLhs) {
 			this.mLeft = left;
 			this.mRight = right;
 			this.mIsLhs = isLhs;
 		}
-
+		
 		@Override
 		public String toString() {
 			final StringBuilder b = new StringBuilder();
@@ -72,11 +72,11 @@ public class BinaryDebug<T, LETTER, STATE> {
 			return b.toString();
 		}
 	}
-
+	
 	private final ATester<LETTER, STATE> mTester;
 	private final AShrinker<T, LETTER, STATE> mShrinker;
 	private final ArrayDeque<SublistBounds> mStack;
-
+	
 	/**
 	 * @param tester tester
 	 * @param shrinker shrinker
@@ -87,7 +87,7 @@ public class BinaryDebug<T, LETTER, STATE> {
 		this.mShrinker = shrinker;
 		this.mStack = new ArrayDeque<SublistBounds>();
 	}
-
+	
 	/**
 	 * Splits a list into two sublists of equal size.
 	 * 
@@ -96,12 +96,12 @@ public class BinaryDebug<T, LETTER, STATE> {
 	private void split(final SublistBounds bounds) {
 		final int left = bounds.mLeft;
 		final int right = bounds.mRight;
-
+		
 		// do not split intervals of size <= 1 (useless and would run forever)
 		if (right - left <= 1) {
 			return;
 		}
-
+		
 		final int mid = (left + right) / 2;
 		final boolean isLhs;
 		if (mid < right) {
@@ -114,7 +114,7 @@ public class BinaryDebug<T, LETTER, STATE> {
 			mStack.push(new SublistBounds(left, mid, isLhs));
 		}
 	}
-
+	
 	/**
 	 * Runs the binary search for the current shrinker.
 	 * 
@@ -133,14 +133,14 @@ public class BinaryDebug<T, LETTER, STATE> {
 			if (sublist.isEmpty()) {
 				continue;
 			}
-
+			
 			// initialize test for the sublist
 			final INestedWordAutomaton<LETTER, STATE> automaton =
 					mShrinker.createAutomaton(sublist);
-
+					
 			// run test
 			final boolean isTestSuccessful = mTester.test(automaton);
-
+			
 			if (isTestSuccessful) {
 				// error reproduced
 				mShrinker.error(automaton);
@@ -164,7 +164,7 @@ public class BinaryDebug<T, LETTER, STATE> {
 		}
 		return result;
 	}
-
+	
 	@Override
 	public String toString() {
 		return this.getClass().getSimpleName();

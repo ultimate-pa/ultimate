@@ -439,7 +439,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 			for (int i = 0; i < fields.length; i++) {
 				if (fields[i].equals(sae.getField())) {
 					newExpr = exprs[i];
-					ModelUtils.mergeAnnotations(expr, newExpr);
+					ModelUtils.copyAnnotations(expr, newExpr);
 					return newExpr;
 				}
 			}
@@ -468,7 +468,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 			result.setType(flattenType(expr.getType()));
 			return result;
 		} else {
-			ModelUtils.mergeAnnotations(expr, newExpr);
+			ModelUtils.copyAnnotations(expr, newExpr);
 			return newExpr;
 		}
 	}
@@ -629,7 +629,7 @@ public class StructExpander extends BoogieTransformer implements IUnmanagedObser
 			for (int i = 0; i < st.getFieldCount(); i++) {
 				if (st.getFieldIds()[i].equals(slhs.getField())) {
 					LeftHandSide newLhs = allFields[i];
-					ModelUtils.mergeAnnotations(lhs, newLhs);
+					ModelUtils.copyAnnotations(lhs, newLhs);
 					return newLhs;
 				}
 			}

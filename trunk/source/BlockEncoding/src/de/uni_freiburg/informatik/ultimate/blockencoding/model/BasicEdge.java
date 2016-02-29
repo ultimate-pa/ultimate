@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  * 
  */
 public class BasicEdge extends
-		ModifiableMultigraphEdge<MinimizedNode, IMinimizedEdge> implements
+		ModifiableMultigraphEdge<MinimizedNode, IMinimizedEdge,MinimizedNode, IMinimizedEdge> implements
 		IBasicEdge {
 
 	/**
@@ -159,6 +159,11 @@ public class BasicEdge extends
 	@Override
 	public Set<BoogieVar> getDifferentVariables() {
 		return this.usedVariables;
+	}
+
+	@Override
+	public IMinimizedEdge getLabel() {
+		return this;
 	}
 
 }

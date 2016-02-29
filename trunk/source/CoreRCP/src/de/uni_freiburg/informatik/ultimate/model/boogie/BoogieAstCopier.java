@@ -51,10 +51,10 @@ public class BoogieAstCopier extends BoogieTransformer {
 		Declaration[] newDeclarations = new Declaration[oldDeclarations.length];
 		for (int i = 0; i < oldDeclarations.length; i++) {
 			newDeclarations[i] = processDeclaration(oldDeclarations[i]);
-			ModelUtils.mergeAnnotations(oldDeclarations[i], newDeclarations[i]);
+			ModelUtils.copyAnnotations(oldDeclarations[i], newDeclarations[i]);
 		}
 		Unit newUnit = new Unit(unit.getLocation(), newDeclarations);
-		ModelUtils.mergeAnnotations(unit, newUnit);
+		ModelUtils.copyAnnotations(unit, newUnit);
 		return newUnit;
 	}
 
@@ -87,7 +87,7 @@ public class BoogieAstCopier extends BoogieTransformer {
 		} else {
 			result = super.processExpression(expr);
 		}
-		ModelUtils.mergeAnnotations(expr, result);
+		ModelUtils.copyAnnotations(expr, result);
 		return result;
 	}
 }

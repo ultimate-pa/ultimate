@@ -27,6 +27,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.result;
 
+import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity;
+
 /**
  * Objects of this class are used to report the overall result of a termination
  * analysis. Do not use this for synthesis of termination arguments.

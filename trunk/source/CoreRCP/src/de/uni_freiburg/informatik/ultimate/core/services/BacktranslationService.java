@@ -28,12 +28,12 @@ package de.uni_freiburg.informatik.ultimate.core.services;
 
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslatedCFG;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.model.ITranslator;
-import de.uni_freiburg.informatik.ultimate.result.IBacktranslationValueProvider;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
 
 /**
  * 
@@ -55,7 +55,7 @@ public class BacktranslationService implements IStorable, IBacktranslationServic
 	}
 
 	@Override
-	public <SE,TE> TE translateExpression(SE expression, Class<SE> clazz) {
+	public <SE, TE> TE translateExpression(SE expression, Class<SE> clazz) {
 		return mTranslatorSequence.translateExpression(expression, clazz);
 	}
 
@@ -70,6 +70,11 @@ public class BacktranslationService implements IStorable, IBacktranslationServic
 	}
 
 	@Override
+	public <STE, SE> IBacktranslatedCFG<?, ?> translateCFG(IBacktranslatedCFG< ?, STE> cfg) {
+		return mTranslatorSequence.translateCFG(cfg);
+	}
+
+	@Override
 	public <SE> String translateExpressionToString(SE expression, Class<SE> clazz) {
 		return mTranslatorSequence.translateExpressionToString(expression, clazz);
 	}
@@ -77,12 +82,6 @@ public class BacktranslationService implements IStorable, IBacktranslationServic
 	@Override
 	public <STE> List<String> translateTraceToHumanReadableString(List<STE> trace, Class<STE> clazz) {
 		return mTranslatorSequence.translateTraceToHumanReadableString(trace, clazz);
-	}
-	
-	@Override
-	public <TTE, TE> IBacktranslationValueProvider<TTE, TE> getValueProvider(Class<TTE> targetTraceElementClass,
-			Class<TE> targetExpressionClass) {
-		return mTranslatorSequence.getValueProvider(targetTraceElementClass, targetExpressionClass);
 	}
 
 	@Override
@@ -109,4 +108,5 @@ public class BacktranslationService implements IStorable, IBacktranslationServic
 	public void destroy() {
 		mTranslatorSequence = null;
 	}
+
 }

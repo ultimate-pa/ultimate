@@ -47,9 +47,9 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 
 	// Witness generation
 	public static final String DESC_WITNESS = "Witness generation";
-	public static final String LABEL_WITNESS_GEN = "Generate witness from each counter example result";
+	public static final String LABEL_WITNESS_GEN = "Generate witness(es)";
 	public static final boolean VALUE_WITNESS_GEN = false;
-	public static final String LABEL_WITNESS_LOG = "Log witness";
+	public static final String LABEL_WITNESS_LOG = "Log witness to console";
 	public static final boolean VALUE_WITNESS_LOG = false;
 	public static final String LABEL_WITNESS_WRITE = "Write witness as \"<inputfilename>-witness.graphml\" "
 			+ "in the same directory as the input file";

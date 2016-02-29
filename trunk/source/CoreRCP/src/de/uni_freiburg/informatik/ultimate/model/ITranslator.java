@@ -29,8 +29,8 @@ package de.uni_freiburg.informatik.ultimate.model;
 
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.result.IBacktranslationValueProvider;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslatedCFG;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
 
 /**
  * Object translate traces and expressions from one format to another. In ULTIMATE generator plugins may transform one
@@ -76,11 +76,7 @@ public interface ITranslator<STE, TTE, SE, TE> {
 
 	public IProgramExecution<TTE, TE> translateProgramExecution(IProgramExecution<STE, SE> programExecution);
 
-	/**
-	 * @return a {@link IBacktranslationValueProvider} instance that can provide values for the current TTE and TE
-	 *         instances or null.
-	 */
-	public IBacktranslationValueProvider<TTE, TE> getValueProvider();
+	public IBacktranslatedCFG<?, TTE> translateCFG(IBacktranslatedCFG<?, STE> cfg);
 
 	public Class<STE> getSourceTraceElementClass();
 

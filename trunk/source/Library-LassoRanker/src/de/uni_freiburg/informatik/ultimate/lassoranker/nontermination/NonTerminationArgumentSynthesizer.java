@@ -122,6 +122,11 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	private NonTerminationArgument m_argument = null;
 	
 	/**
+	 * Result of SMT query
+	 */
+	private LBool m_IsSat;
+	
+	/**
 	 * Constructor for the termination argument function synthesizer.
 	 * 
 	 * @param lasso the lasso program
@@ -187,9 +192,14 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			vars_gevs.add(vars_gev);
 			lambdas.add(newConstant(s_prefix_evalue + i, sort));
 		}
-		List<Term> nus = new ArrayList<Term>(m_settings.number_of_gevs - 1);
-		for (int i = 0; i < m_settings.number_of_gevs - 1; ++i) {
-			nus.add(newConstant(s_prefix_nilpotent + i, sort));
+		List<Term> nus;
+		if (m_settings.number_of_gevs > 0) {
+			nus = new ArrayList<Term>(m_settings.number_of_gevs - 1);
+			for (int i = 0; i < m_settings.number_of_gevs - 1; ++i) {
+				nus.add(newConstant(s_prefix_nilpotent + i, sort));
+			}
+		} else {
+			nus = Collections.emptyList();
 		}
 		
 		Term constraints = generateConstraints(vars_init, vars_honda, vars_gevs,
@@ -198,14 +208,14 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		m_script.assertTerm(constraints);
 		
 		// Check for satisfiability
-		LBool isSat = m_script.checkSat();
-		if (isSat == LBool.SAT) {
+		m_IsSat = m_script.checkSat();
+		if (m_IsSat == LBool.SAT) {
 			m_argument = extractArgument(vars_init, vars_honda, vars_gevs,
 					lambdas, nus);
-		} else if (isSat == LBool.UNKNOWN) {
+		} else if (m_IsSat == LBool.UNKNOWN) {
 			m_script.echo(new QuotedObject(ArgumentSynthesizer.s_SolverUnknownMessage));
 		}
-		return isSat;
+		return m_IsSat;
 	}
 	
 	/**
@@ -225,7 +235,12 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		assert m_settings.number_of_gevs >= 0;
 		assert vars_gevs.size() == m_settings.number_of_gevs;
 		assert lambdas.size() == m_settings.number_of_gevs;
-		int num_vars = vars_gevs.get(0).size();
+		int num_vars;
+		if (vars_gevs.isEmpty()) {
+			num_vars = 0;
+		} else {
+			num_vars = vars_gevs.get(0).size();
+		}
 		assert num_vars >= 0;
 		
 		Collection<RankVar> rankVars = m_lasso.getAllRankVars();
@@ -301,7 +316,13 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			for (int i = 0; i < m_settings.number_of_gevs; ++i) {
 				summands[i + 1] = vars_gevs.get(i).get(rkVar);
 			}
-			vars_end_plus_gevs.put(rkVar, m_script.term("+", summands));
+			final Term sum;
+			if (summands.length == 1) {
+				sum = summands[0];
+			} else {
+				sum = m_script.term("+", summands);
+			}
+			vars_end_plus_gevs.put(rkVar, sum);
 		}
 		
 		// vars_gev[i] * lambda_guesses + nu_i * vars_gev[i+1] for each i
@@ -531,10 +552,20 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			Map<RankVar, Rational> state1 = extractState(vars_honda);
 			List<Map<RankVar, Rational>> gevs =
 					new ArrayList<Map<RankVar, Rational>>(m_settings.number_of_gevs);
-			Map<Term, Term> lambda_val = m_script.getValue(var_lambdas.toArray(new Term[0]));
-			Map<Term, Term> nu_val = m_script.getValue(var_nus.toArray(new Term[0]));
+			final Map<Term, Term> lambda_val;
+			if (var_lambdas.size() > 0) {
+				lambda_val = m_script.getValue(var_lambdas.toArray(new Term[var_lambdas.size()]));
+			} else {
+				lambda_val = Collections.emptyMap();
+			}
+			final Map<Term, Term> nu_val;
+			if (var_nus.size() > 0) {
+				nu_val = m_script.getValue(var_nus.toArray(new Term[var_nus.size()]));
+			} else {
+				nu_val = Collections.emptyMap();
+			}
 			List<Rational> lambdas = new ArrayList<Rational>(m_settings.number_of_gevs);
-			List<Rational> nus = new ArrayList<Rational>(m_settings.number_of_gevs - 1);
+			List<Rational> nus = new ArrayList<Rational>();
 			for (int i = 0; i < m_settings.number_of_gevs; ++i) {
 				gevs.add(extractState(vars_gevs.get(i)));
 				lambdas.add(ModelExtractionUtils.const2Rational(
@@ -562,4 +593,5 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		assert synthesisSuccessful();
 		return m_argument;
 	}
+	
 }

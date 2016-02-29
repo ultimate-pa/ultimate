@@ -346,7 +346,7 @@ public class FunctionInliner extends BoogieTransformer
 		    return super.processExpression(expr);
 		}
 		else {
-		    ModelUtils.mergeAnnotations(expr, newExpr);
+		    ModelUtils.copyAnnotations(expr, newExpr);
 		    return newExpr;
 		}
 	}

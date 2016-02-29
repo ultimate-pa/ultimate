@@ -35,9 +35,9 @@ import org.eclipse.cdt.core.dom.ast.IASTExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
 import de.uni_freiburg.informatik.ultimate.result.ProgramExecutionFormatter;
-import de.uni_freiburg.informatik.ultimate.witnessprinter.FalseWitnessGenerator;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.witnessprinter.ViolationWitnessGenerator;
 
 /**
  * 
@@ -102,7 +102,7 @@ public class CACSLProgramExecution implements IProgramExecution<CACSLLocation, I
 
 	@Override
 	public String getSVCOMPWitnessString() {
-		return new FalseWitnessGenerator<CACSLLocation, IASTExpression>(this, new CACSLBacktranslationValueProvider(),
+		return new ViolationWitnessGenerator<CACSLLocation, IASTExpression>(this, new CACSLBacktranslationValueProvider(),
 				mLogger).makeGraphMLString();
 	}
 

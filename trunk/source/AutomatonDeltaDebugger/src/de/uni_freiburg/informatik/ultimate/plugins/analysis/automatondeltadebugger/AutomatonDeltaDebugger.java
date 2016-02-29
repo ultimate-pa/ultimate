@@ -34,8 +34,13 @@ import java.util.List;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.access.IObserver;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.buchiNwa.BuchiClosureNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeNwaMaxSAT;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -43,14 +48,15 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.IAnalysis;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.ATester;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.AutomatonDeltaDebuggerObserver;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.shrinkers.AShrinker;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.shrinkers.CallTransitionShrinker;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.shrinkers.InternalTransitionShrinker;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.shrinkers.NormalizeStateShrinker;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.shrinkers.ReturnTransitionShrinker;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.shrinkers.SingleExitShrinker;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.shrinkers.StateShrinker;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.shrinkers.UnusedLetterShrinker;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.core.DebuggerException;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.AShrinker;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.CallTransitionShrinker;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.InternalTransitionShrinker;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.NormalizeStateShrinker;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.ReturnTransitionShrinker;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.SingleExitShrinker;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.StateShrinker;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.UnusedLetterShrinker;
 
 /**
  * Ultimate interface to the automaton delta debugger.
@@ -107,8 +113,8 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 				mLogger.info("Preparing to process Automata...");
 				mObservers
 						.add(new AutomatonDeltaDebuggerObserver<LETTER, STATE>(
-								mServices, getTester(), getShrinkersLoop(),
-								getShrinkersEnd()));
+								mServices, getCheckResultTester(),
+								getShrinkersLoop(), getShrinkersEnd()));
 				break;
 			default:
 				mLogger.warn("Ignoring input definition " + creator);
@@ -116,12 +122,14 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 	}
 	
 	/**
+	 * example tester for debugging general problems
+	 * 
 	 * NOTE: Insert an instance of a throwable and one of the automaton library
 	 * methods here.
 	 * 
 	 * @return tester which listens for the specified throwable
 	 */
-	private ATester<LETTER, STATE> getTester() {
+	private ATester<LETTER, STATE> getGeneralTester() {
 		// example, use your own throwable here
 		final Throwable throwable = new Exception();
 		
@@ -130,7 +138,45 @@ public class AutomatonDeltaDebugger<LETTER, STATE> implements IAnalysis {
 			@Override
 			public void execute(INestedWordAutomaton<LETTER, STATE> automaton)
 					throws Throwable {
-				new BuchiClosureNwa<LETTER, STATE>(mServices, automaton);
+				new BuchiClosureNwa<LETTER, STATE>(
+						new AutomataLibraryServices(mServices), automaton);
+			}
+		};
+	}
+	
+	/**
+	 * example tester for debugging problems with the <code>checkResult()</code>
+	 * method of <code>IOperation</code>
+	 * 
+	 * NOTE: Insert one of the automaton library methods here.
+	 * 
+	 * @return tester which listens for checkResult problems
+	 */
+	private ATester<LETTER, STATE> getCheckResultTester() {
+		// example, use your own thrower class here (not important)
+		final Class<?> thrower = MinimizeNwaMaxSAT.class;
+		
+		final String message = "'checkResult' failed";
+		final Throwable throwable = new DebuggerException(thrower, message);
+		
+		return new ATester<LETTER, STATE>(throwable) {
+			@Override
+			public void execute(INestedWordAutomaton<LETTER, STATE> automaton)
+					throws Throwable {
+				final StateFactory<STATE> factory = automaton.getStateFactory();
+				
+				// example, use your own IOperation here
+				final IOperation<LETTER, STATE> op =
+						new MinimizeNwaMaxSAT<LETTER, STATE>(
+								new AutomataLibraryServices(mServices), factory,
+								new RemoveUnreachable<LETTER, STATE>(
+										new AutomataLibraryServices(mServices),
+										automaton).getResult());
+										
+				// throws a fresh exception iff checkResult() fails
+				if (!op.checkResult(factory)) {
+					throw new DebuggerException(thrower, message);
+				}
 			}
 		};
 	}

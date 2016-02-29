@@ -86,7 +86,7 @@ public class LoggingView extends ViewPart {
 			}
 		});
 
-		UltimatePreferenceStore preferenceStore = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		UltimatePreferenceStore preferenceStore = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 
 		mAppender = new GuiLoggingWindowAppender();
 		mAppender.init();
@@ -174,7 +174,7 @@ public class LoggingView extends ViewPart {
 	}
 
 	private void refreshPreferenceProperties() {
-		UltimatePreferenceStore preferenceStore = new UltimatePreferenceStore(Activator.s_PLUGIN_ID);
+		UltimatePreferenceStore preferenceStore = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 
 		mAppender
 				.setLayout(new PatternLayout(preferenceStore.getString(CorePreferenceInitializer.LABEL_LOG4J_PATTERN)));

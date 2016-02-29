@@ -33,6 +33,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolant\ automaton=TWOTRACK
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolants\ consolidation=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Interpolants\ along\ a\ Counterexample=FPandBP
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=true
 
 
 #Thu Oct 29 23:01:13 CET 2015
@@ -40,6 +41,14 @@ file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=0.0.1
 \!/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=
 /instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/to\ procedures,\ called\ more\ than\ once=true
+
+
+#Fri Feb 05 13:27:20 CET 2016
+@de.uni_freiburg.informatik.ultimate.witnessprinter=0.0.1
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.witnessprinter/Generate\ witness(es)=true
+/instance/de.uni_freiburg.informatik.ultimate.witnessprinter/Write\ witness\ as\ "<inputfilename>-witness.graphml"\ in\ the\ same\ directory\ as\ the\ input\ file=true
+\!/instance/de.uni_freiburg.informatik.ultimate.witnessprinter=
 
 
 #Fri Nov 06 13:55:47 CET 2015

@@ -117,27 +117,27 @@ public class SignMergeOperator implements IAbstractStateBinaryOperator<SignDomai
 	 * @return Returns a new {@link SignDomainValue}.
 	 */
 	private SignDomainValue computeMergedValue(SignDomainValue value1, SignDomainValue value2) {
-		if (value1.getResult() == value2.getResult()) {
-			return new SignDomainValue(value1.getResult());
+		if (value1.getValue() == value2.getValue()) {
+			return new SignDomainValue(value1.getValue());
 		}
 
-		if (value1.getResult() == Values.BOTTOM || value2.getResult() == Values.BOTTOM) {
+		if (value1.getValue() == Values.BOTTOM || value2.getValue() == Values.BOTTOM) {
 			return new SignDomainValue(Values.BOTTOM);
 		}
 
-		if ((value1.getResult() == Values.POSITIVE && value2.getResult() == Values.NEGATIVE)
-				|| (value1.getResult() == Values.NEGATIVE && value2.getResult() == Values.POSITIVE)) {
+		if ((value1.getValue() == Values.POSITIVE && value2.getValue() == Values.NEGATIVE)
+				|| (value1.getValue() == Values.NEGATIVE && value2.getValue() == Values.POSITIVE)) {
 			return new SignDomainValue(Values.TOP);
 		}
 
-		if (value1.getResult() == Values.ZERO || value2.getResult() == Values.ZERO) {
+		if (value1.getValue() == Values.ZERO || value2.getValue() == Values.ZERO) {
 			return new SignDomainValue(Values.TOP);
 		}
 
 		final StringBuilder stringBuilder = new StringBuilder(BUFFER_SIZE);
 
-		stringBuilder.append("Unable to handle value1 = ").append(value1.getResult()).append(" and value2 = ")
-				.append(value2.getResult()).append('.');
+		stringBuilder.append("Unable to handle value1 = ").append(value1.getValue()).append(" and value2 = ")
+				.append(value2.getValue()).append('.');
 
 		throw new UnsupportedOperationException(stringBuilder.toString());
 	}

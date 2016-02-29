@@ -85,7 +85,7 @@ public class SignSingletonVariableExpressionEvaluator
 			        "The variable with name " + mVariableName + " has not been found in the current abstract state.");
 		}
 
-		returnList.add(new SignDomainValue(val.getResult()));
+		returnList.add(new SignDomainValue(val.getValue()));
 
 		return returnList;
 	}
@@ -99,5 +99,12 @@ public class SignSingletonVariableExpressionEvaluator
 	public boolean containsBool() {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	@Override
+	public List<SignDomainState> inverseEvaluate(final IEvaluationResult<Values> computedValue,
+	        final SignDomainState currentState) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

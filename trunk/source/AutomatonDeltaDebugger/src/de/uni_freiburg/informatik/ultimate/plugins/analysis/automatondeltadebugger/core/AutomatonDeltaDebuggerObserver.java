@@ -37,12 +37,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories.AAutomatonFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories.NestedWordAutomatonFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.AShrinker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter.AutomataDefinitionInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataDefinitionsAST;
 import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.AST.AutomataTestFileAST;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.factories.AAutomatonFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.factories.NestedWordAutomatonFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.shrinkers.AShrinker;
 
 /**
  * Obeserver which initializes the delta debugging process.
@@ -111,7 +111,7 @@ public class AutomatonDeltaDebuggerObserver<LETTER, STATE>
 		final AAutomatonFactory<LETTER, STATE> automatonFactory =
 				new NestedWordAutomatonFactory<LETTER, STATE>(automaton,
 						mServices);
-		
+						
 		// delta debugger
 		final AutomatonDebugger<LETTER, STATE> debugger =
 				new AutomatonDebugger<LETTER, STATE>(automaton,

@@ -29,45 +29,50 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool;
 
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Iterator;
-import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PreprocessorAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.LiteralCollector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IResultReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IVariableProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.SilentReporter;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.nwa.NWAPathProgramTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.AnnotatingRcfgAbstractStateStorageProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.BaseRcfgAbstractStateStorageProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RCFGLiteralCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgAbstractStateStorageProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgLibraryModeResultReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgLoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgResultReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgVariableProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.SilentReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty.EmptyDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence.CongruenceDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp.VPDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector.RCFGLoopDetector;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
@@ -86,44 +91,121 @@ public final class AbstractInterpreter {
 	 * 
 	 * Suppress all exceptions except {@link OutOfMemoryError}, {@link ToolchainCanceledException},
 	 * {@link IllegalArgumentException}. Produce no results.
+	 * 
+	 * @return
 	 */
-	public static Map<CodeBlock, Map<ProgramPoint, Term>> runSilently(final RootNode root,
+	public static IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ProgramPoint> runSilently(final RootNode root,
 			final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
 			final IUltimateServiceProvider services) {
 		final Logger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		final Map<CodeBlock, Map<ProgramPoint, Term>> rtr = new HashMap<CodeBlock, Map<ProgramPoint, Term>>();
 		try {
-			runInternal(root, initials, timer, services, (a, b, isLib) -> new SilentReporter<>(), rtr);
+			return runOnRCFG(root, initials, timer, services, true);
 		} catch (OutOfMemoryError oom) {
 			throw oom;
 		} catch (IllegalArgumentException iae) {
 			throw iae;
 		} catch (ToolchainCanceledException tce) {
 			// suppress timeout results / timeouts
-			return rtr;
+			return null;
 		} catch (Throwable t) {
 			logger.fatal("Suppressed exception in AIv2: " + t.getMessage());
-			return rtr;
+			return null;
 		}
-		return rtr;
+	}
+
+	/**
+	 * Run abstract interpretation on a path program constructed from a counterexample.
+	 * 
+	 */
+	public static <LOC> IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, LOC> runSilently(
+			final NestedRun<CodeBlock, LOC> counterexample,
+			final INestedWordAutomatonOldApi<CodeBlock, LOC> currentAutomata, final RootNode root,
+			final IProgressAwareTimer timer, final IUltimateServiceProvider services) {
+		assert counterexample != null && counterexample.getLength() > 0 : "Invalid counterexample";
+		assert currentAutomata != null;
+		assert root != null;
+		assert services != null;
+		assert timer != null;
+
+		final Logger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		try {
+			final NWAPathProgramTransitionProvider<LOC> transProvider = new NWAPathProgramTransitionProvider<>(
+					currentAutomata, counterexample, services, root.getRootAnnot());
+			return runSilentlyOnNWA(transProvider, counterexample.getSymbol(0), root, timer, services);
+		} catch (OutOfMemoryError oom) {
+			throw oom;
+		} catch (IllegalArgumentException iae) {
+			throw iae;
+		} catch (ToolchainCanceledException tce) {
+			// suppress timeout results / timeouts
+			return null;
+		} catch (Throwable t) {
+			logger.fatal("Suppressed exception in AIv2: " + t.getClass().getSimpleName() + " with message "
+					+ t.getMessage());
+			t.printStackTrace();
+			return null;
+		}
+	}
+
+	private static <LOC> AbstractInterpretationResult<?, CodeBlock, IBoogieVar, LOC> runSilentlyOnNWA(
+			final NWAPathProgramTransitionProvider<LOC> transProvider, final CodeBlock initial, final RootNode root,
+			final IProgressAwareTimer timer, final IUltimateServiceProvider services) throws Throwable {
+
+		final BoogieSymbolTable symbolTable = getSymbolTable(root);
+		if (symbolTable == null) {
+			throw new IllegalArgumentException("Could not get BoogieSymbolTable");
+		}
+
+		final RootAnnot rootAnnot = root.getRootAnnot();
+		final Boogie2SMT bpl2smt = rootAnnot.getBoogie2SMT();
+		final Script script = rootAnnot.getScript();
+		final Boogie2SmtSymbolTable boogieVarTable = bpl2smt.getBoogie2SmtSymbolTable();
+
+		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain = selectDomain(() -> new RCFGLiteralCollector(root),
+				symbolTable, services);
+
+		return runSilentlyOnNWA(initial, timer, services, symbolTable, bpl2smt, script, boogieVarTable, domain,
+				transProvider, transProvider);
+	}
+
+	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>, LOC> AbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, LOC> runSilentlyOnNWA(
+			final CodeBlock initial, final IProgressAwareTimer timer, final IUltimateServiceProvider services,
+			final BoogieSymbolTable symbolTable, final Boogie2SMT bpl2smt, final Script script,
+			final Boogie2SmtSymbolTable boogieVarTable, final IAbstractDomain<STATE, CodeBlock, IBoogieVar> domain,
+			final ITransitionProvider<CodeBlock, LOC> transitionProvider, ILoopDetector<CodeBlock> loopDetector) {
+
+		final BaseRcfgAbstractStateStorageProvider<STATE, LOC> storage = new RcfgAbstractStateStorageProvider<STATE, LOC>(
+				domain.getMergeOperator(), services, transitionProvider);
+		final IVariableProvider<STATE, CodeBlock, IBoogieVar, LOC> varProvider = new RcfgVariableProvider<STATE, LOC>(
+				symbolTable, boogieVarTable, services);
+
+		final FixpointEngine<STATE, CodeBlock, IBoogieVar, LOC> fxpe = new FixpointEngine<STATE, CodeBlock, IBoogieVar, LOC>(
+				services, timer, transitionProvider, storage, domain, varProvider, loopDetector);
+		final Logger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		try {
+			final AbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, LOC> result = fxpe.run(initial, script,
+					bpl2smt);
+			if (!result.hasReachedError()) {
+				logger.info("NWA was safe (error state unreachable)");
+			}
+			if (logger.isDebugEnabled()) {
+				logger.debug("Found the following predicates:");
+				AbsIntUtil.logPredicates(Collections.singletonMap(initial, result.getLoc2Term()), script, logger::debug);
+			}
+			logger.info(result.getBenchmark());
+			return result;
+		} catch (ToolchainCanceledException c) {
+			throw c;
+		}
 	}
 
 	/**
 	 * Run abstract interpretation on the whole RCFG.
 	 * 
 	 */
-	public static Map<CodeBlock, Map<ProgramPoint, Term>> run(final RootNode root, final Collection<CodeBlock> initials,
-			final IProgressAwareTimer timer, final IUltimateServiceProvider services) throws Throwable {
-		final Map<CodeBlock, Map<ProgramPoint, Term>> rtr = new HashMap<CodeBlock, Map<ProgramPoint, Term>>();
-		runInternal(root, initials, timer, services,
-				(a, b, libMode) -> libMode ? new RcfgLibraryModeResultReporter(a, b) : new RcfgResultReporter(a, b),
-				rtr);
-		return rtr;
-	}
-
-	private static void runInternal(final RootNode root, final Collection<CodeBlock> initials,
-			final IProgressAwareTimer timer, final IUltimateServiceProvider services, ReporterFactory funCreateReporter,
-			Map<CodeBlock, Map<ProgramPoint, Term>> predicates) throws Throwable {
+	public static IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ProgramPoint> runOnRCFG(final RootNode root,
+			final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
+			final IUltimateServiceProvider services, final boolean isSilent) throws Throwable {
 		if (initials == null) {
 			throw new IllegalArgumentException("No initial edges provided");
 		}
@@ -140,70 +222,76 @@ public final class AbstractInterpreter {
 		final Boogie2SMT bpl2smt = rootAnnot.getBoogie2SMT();
 		final Script script = rootAnnot.getScript();
 		final Boogie2SmtSymbolTable boogieVarTable = bpl2smt.getBoogie2SmtSymbolTable();
+		final ITransitionProvider<CodeBlock, ProgramPoint> transitionProvider = new RcfgTransitionProvider();
+		final ILoopDetector<CodeBlock> loopDetector = new RcfgLoopDetector<>(rootAnnot.getLoopLocations().keySet(),
+				transitionProvider);
 
-		final RCFGLoopDetector externalLoopDetector = new RCFGLoopDetector(services);
-		externalLoopDetector.process(root);
-
-		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain = selectDomain(root, symbolTable, services);
-		runInternal(initials, timer, services, funCreateReporter, predicates, symbolTable, bpl2smt, script,
-				boogieVarTable, externalLoopDetector, domain);
+		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain = selectDomain(() -> new RCFGLiteralCollector(root),
+				symbolTable, services);
+		return runOnRCFG(initials, timer, services, symbolTable, bpl2smt, script, boogieVarTable, loopDetector, domain,
+				transitionProvider, isSilent);
 	}
 
-	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>> void runInternal(
+	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>> AbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, ProgramPoint> runOnRCFG(
 			final Collection<CodeBlock> initials, final IProgressAwareTimer timer,
-			final IUltimateServiceProvider services, ReporterFactory funCreateReporter,
-			Map<CodeBlock, Map<ProgramPoint, Term>> predicates, final BoogieSymbolTable symbolTable,
-			final Boogie2SMT bpl2smt, final Script script, final Boogie2SmtSymbolTable boogieVarTable,
-			final RCFGLoopDetector externalLoopDetector, final IAbstractDomain<STATE, CodeBlock, IBoogieVar> domain) {
+			final IUltimateServiceProvider services, final BoogieSymbolTable symbolTable, final Boogie2SMT bpl2smt,
+			final Script script, final Boogie2SmtSymbolTable boogieVarTable,
+			final ILoopDetector<CodeBlock> loopDetector, final IAbstractDomain<STATE, CodeBlock, IBoogieVar> domain,
+			final ITransitionProvider<CodeBlock, ProgramPoint> transitionProvider, final boolean isSilent) {
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
-		final ITransitionProvider<CodeBlock> transitionProvider = new RcfgTransitionProvider();
-
-		final ILoopDetector<CodeBlock> loopDetector = new RcfgLoopDetector(externalLoopDetector);
 
 		final Collection<CodeBlock> filteredInitialElements = transitionProvider.filterInitialElements(initials);
 		final boolean persist = ups.getBoolean(AbsIntPrefInitializer.LABEL_PERSIST_ABS_STATES);
 
 		if (filteredInitialElements.isEmpty()) {
-			final BaseRcfgAbstractStateStorageProvider<?> storage = createStorage(services, domain, persist);
-			final IResultReporter<CodeBlock> reporter = funCreateReporter.create(services, storage, false);
-			reporter.reportSafe(null, "The program is empty");
-			return;
+			getReporter(services, false, false).reportSafe(null, "The program is empty");
+			return null;
 		}
 
-		boolean allSafe = true;
+		final Logger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		final boolean isLib = filteredInitialElements.size() > 1;
+
 		final Iterator<CodeBlock> iter = filteredInitialElements.iterator();
-		//TODO: If an if is at the beginning of a method, this method will be analyzed two times
+		AbstractInterpretationResult<STATE, CodeBlock, IBoogieVar, ProgramPoint> result = null;
+		// TODO: If an if is at the beginning of a method, this method will be analyzed two times
 		while (iter.hasNext()) {
 			final CodeBlock initial = iter.next();
-			final BaseRcfgAbstractStateStorageProvider<STATE> storage = createStorage(services, domain, persist);
-			final IResultReporter<CodeBlock> reporter = funCreateReporter.create(services, storage, isLib);
-			final IVariableProvider<STATE, CodeBlock, IBoogieVar, ProgramPoint> varProvider = new RcfgVariableProvider<STATE>(
+			final BaseRcfgAbstractStateStorageProvider<STATE, ProgramPoint> storage = createStorage(services, domain,
+					transitionProvider, persist);
+
+			final IVariableProvider<STATE, CodeBlock, IBoogieVar, ProgramPoint> varProvider = new RcfgVariableProvider<STATE, ProgramPoint>(
 					symbolTable, boogieVarTable, services);
+
 			final FixpointEngine<STATE, CodeBlock, IBoogieVar, ProgramPoint> fxpe = new FixpointEngine<STATE, CodeBlock, IBoogieVar, ProgramPoint>(
-					services, timer, transitionProvider, storage, domain, varProvider, loopDetector, reporter);
-			try {
-				allSafe = fxpe.run(initial) && allSafe;
-			} catch (ToolchainCanceledException c) {
-				predicates.put(initial, storage.getTerms(initial, script, bpl2smt));
-				throw c;
-			}
-			predicates.put(initial, storage.getTerms(initial, script, bpl2smt));
-			if (!iter.hasNext() && allSafe) {
-				//report all safe
-				funCreateReporter.create(services, storage, false).reportSafe(null);
-			}
+					services, timer, transitionProvider, storage, domain, varProvider, loopDetector);
+			result = fxpe.run(initial, script, bpl2smt, result);
 		}
+
+		if (result.hasReachedError()) {
+			final IResultReporter<STATE, CodeBlock, IBoogieVar, ProgramPoint> reporter = getReporter(services, isLib,
+					isSilent);
+			result.getCounterexamples().forEach(cex -> reporter.reportPossibleError(cex));
+		} else {
+			getReporter(services, false, isSilent).reportSafe(null);
+		}
+		if (logger.isDebugEnabled()) {
+			logger.debug("Found the following predicates:");
+			AbsIntUtil.logPredicates(result.getLoc2Term(), logger::debug);
+		}
+		logger.info(result.getBenchmark());
+		return result;
 	}
 
-	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>> BaseRcfgAbstractStateStorageProvider<STATE> createStorage(
+	private static <STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>, LOC> BaseRcfgAbstractStateStorageProvider<STATE, LOC> createStorage(
 			final IUltimateServiceProvider services, final IAbstractDomain<STATE, CodeBlock, IBoogieVar> domain,
-			final boolean persist) {
-		final BaseRcfgAbstractStateStorageProvider<STATE> storage;
+			final ITransitionProvider<CodeBlock, LOC> transprovider, final boolean persist) {
+		final BaseRcfgAbstractStateStorageProvider<STATE, LOC> storage;
 		if (persist) {
-			storage = new AnnotatingRcfgAbstractStateStorageProvider<STATE>(domain.getMergeOperator(), services);
+			storage = new AnnotatingRcfgAbstractStateStorageProvider<STATE, LOC>(domain.getMergeOperator(), services,
+					transprovider);
 		} else {
-			storage = new RcfgAbstractStateStorageProvider<STATE>(domain.getMergeOperator(), services);
+			storage = new RcfgAbstractStateStorageProvider<STATE, LOC>(domain.getMergeOperator(), services,
+					transprovider);
 		}
 		return storage;
 	}
@@ -216,8 +304,9 @@ public final class AbstractInterpreter {
 		return pa.getSymbolTable();
 	}
 
-	private static IAbstractDomain<?, CodeBlock, IBoogieVar> selectDomain(final RootNode root,
-			final BoogieSymbolTable symbolTable, final IUltimateServiceProvider services) {
+	private static IAbstractDomain<?, CodeBlock, IBoogieVar> selectDomain(
+			final LiteralCollectorFactory literalCollector, final BoogieSymbolTable symbolTable,
+			final IUltimateServiceProvider services) {
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		final String selectedDomain = ups.getString(AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN);
 
@@ -230,15 +319,33 @@ public final class AbstractInterpreter {
 			return new SignDomain(services);
 		} else if (IntervalDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new IntervalDomain(services.getLoggingService().getLogger(Activator.PLUGIN_ID), symbolTable,
-					new LiteralCollector(root));
+					literalCollector.create().getLiteralCollection());
+		} else if (OctagonDomain.class.getSimpleName().equals(selectedDomain)) {
+			Logger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+			return new OctagonDomain(logger, symbolTable, literalCollector);
+		} else if (VPDomain.class.getSimpleName().equals(selectedDomain)) {
+			return new VPDomain(services);
+		} else if (CongruenceDomain.class.getSimpleName().equals(selectedDomain)) {
+			return new CongruenceDomain(services.getLoggingService().getLogger(Activator.PLUGIN_ID), symbolTable);
 		}
 		throw new UnsupportedOperationException("The value \"" + selectedDomain + "\" of preference \""
 				+ AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN + "\" was not considered before! ");
 	}
 
+	private static <STATE extends IAbstractState<STATE, CodeBlock, VARDECL>, VARDECL> IResultReporter<STATE, CodeBlock, VARDECL, ProgramPoint> getReporter(
+			final IUltimateServiceProvider services, final boolean isLibrary, final boolean isSilent) {
+		if (isSilent) {
+			return new SilentReporter<>();
+		}
+		if (isLibrary) {
+			return new RcfgLibraryModeResultReporter<STATE, VARDECL>(services);
+		} else {
+			return new RcfgResultReporter<STATE, VARDECL>(services);
+		}
+	}
+
 	@FunctionalInterface
-	private interface ReporterFactory {
-		IResultReporter<CodeBlock> create(final IUltimateServiceProvider services,
-				final BaseRcfgAbstractStateStorageProvider<?> storage, final boolean isLibrary);
+	public interface LiteralCollectorFactory {
+		RCFGLiteralCollector create();
 	}
 }

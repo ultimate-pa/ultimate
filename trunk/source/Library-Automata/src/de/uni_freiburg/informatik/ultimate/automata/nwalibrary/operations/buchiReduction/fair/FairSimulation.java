@@ -37,6 +37,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -44,17 +45,16 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiR
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.ASimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.GameGraphChanges;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.GameGraphSuccessorProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.CountingMeasure;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.MultipleDataOption;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.ECountingMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.EMultipleDataOption;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationPerformance;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationType;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.TimeMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.ESimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.ETimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.relation.Quad;
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.util.scc.DefaultStronglyConnectedComponentFactory;
@@ -69,6 +69,14 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * <br/>
  * 
  * For more information on the type of simulation see {@link FairGameGraph}.
+ * <br/>
+ * <br/>
+ * 
+ * The algorithm runs in <b>O(n^4 * k^2)</b> time and <b>O(n * k)</b> space
+ * where n is the amount of states and k the amount of transitions from the
+ * inputed automaton.<br/>
+ * The algorithm is based on the paper: <i>Fair simulation minimization<i> by
+ * <i>Gurumurthy, Bloem and Somenzi</i>.
  * 
  * @author Daniel Tischner
  * 
@@ -169,6 +177,10 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 */
 	private final int m_GlobalInfinity;
 	/**
+	 * Amount of SCCs of the initial game graph version.
+	 */
+	private int m_AmountOfSCCs;
+	/**
 	 * The logger used by the Ultimate framework.
 	 */
 	private final Logger m_Logger;
@@ -231,7 +243,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public FairSimulation(final IUltimateServiceProvider services, final IProgressAwareTimer progressTimer,
+	public FairSimulation(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
 		this(progressTimer, logger, buechi, useSCCs, stateFactory, Collections.emptyList(),
@@ -273,7 +285,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public FairSimulation(final IUltimateServiceProvider services, final IProgressAwareTimer progressTimer,
+	public FairSimulation(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses)
 					throws OperationCanceledException {
@@ -319,7 +331,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses,
 			final FairGameGraph<LETTER, STATE> game) throws OperationCanceledException {
-		super(progressTimer, logger, useSCCs, stateFactory, SimulationType.FAIR);
+		super(progressTimer, logger, useSCCs, stateFactory, ESimulationType.FAIR);
 
 		m_Buechi = buechi;
 		m_Logger = getLogger();
@@ -331,11 +343,13 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		m_Logger.debug("Starting generation of Fair Game Graph...");
 		m_Game = game;
 		m_Game.setSimulationPerformance(super.getSimulationPerformance());
+		m_Logger.debug("Fair Game Graph has " + m_Game.getSize() + " vertices.");
 
 		m_GlobalInfinity = m_Game.getGlobalInfinity();
 
 		m_AttemptingChanges = false;
 		m_SimulationWasAborted = false;
+		m_AmountOfSCCs = 0;
 
 		doSimulation();
 	}
@@ -356,7 +370,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		result.append(lineSeparator + "\tuseSCCs = " + isUsingSCCs());
 		result.append(lineSeparator + "\tglobalInfinity = " + m_GlobalInfinity);
 		result.append(lineSeparator + "\tstepCounter = "
-				+ getSimulationPerformance().getCountingMeasureResult(CountingMeasure.SIMULATION_STEPS));
+				+ getSimulationPerformance().getCountingMeasureResult(ECountingMeasure.SIMULATION_STEPS));
 		result.append(lineSeparator + "\tbuechi size before = " + m_Buechi.size() + " states");
 		if (getResult() != null) {
 			result.append(lineSeparator + "\tbuechi size after = " + getResult().size() + " states");
@@ -440,7 +454,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			throws OperationCanceledException {
 		if (isUsingSCCs()) {
 			m_pokedFromNeighborSCC = new HashSet<>();
-			getSimulationPerformance().startTimeMeasure(TimeMeasure.BUILD_SCC);
+			getSimulationPerformance().startTimeMeasure(ETimeMeasure.BUILD_SCC);
 			DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>> sccFactory = new DefaultStronglyConnectedComponentFactory<>();
 			GameGraphSuccessorProvider<LETTER, STATE> succProvider = new GameGraphSuccessorProvider<>(m_Game);
 			setSccComp(new SccComputation<Vertex<LETTER, STATE>, StronglyConnectedComponent<Vertex<LETTER, STATE>>>(
@@ -448,7 +462,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 			Iterator<StronglyConnectedComponent<Vertex<LETTER, STATE>>> iter = new LinkedList<StronglyConnectedComponent<Vertex<LETTER, STATE>>>(
 					getSccComp().getSCCs()).iterator();
-			getSimulationPerformance().stopTimeMeasure(TimeMeasure.BUILD_SCC);
+			getSimulationPerformance().stopTimeMeasure(ETimeMeasure.BUILD_SCC);
 			while (iter.hasNext()) {
 				StronglyConnectedComponent<Vertex<LETTER, STATE>> scc = iter.next();
 				iter.remove();
@@ -457,6 +471,9 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 				m_CurrentChanges = changes;
 				efficientLiftingAlgorithm(infinityOfSCC, scc.getNodes());
+				if (changes == null) {
+					m_AmountOfSCCs++;
+				}
 				if (m_SimulationWasAborted) {
 					return false;
 				}
@@ -733,8 +750,8 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	@Override
 	protected void doSimulation() throws OperationCanceledException {
 		SimulationPerformance performance = super.getSimulationPerformance();
-		performance.startTimeMeasure(TimeMeasure.OVERALL_TIME);
-		performance.startTimeMeasure(TimeMeasure.SIMULATION_ONLY_TIME);
+		performance.startTimeMeasure(ETimeMeasure.OVERALL_TIME);
+		performance.startTimeMeasure(ETimeMeasure.SIMULATION_ONLY_TIME);
 
 		// First simulation
 		m_Logger.debug("Starting first simulation...");
@@ -745,13 +762,16 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 		// overhead of using SCCs is only worth it if simulation does not
 		// terminate as quickly as it will do now.
 		if (!isUsingSCCs()) {
-			performance.addTimeMeasureValue(TimeMeasure.BUILD_SCC, SimulationPerformance.NO_TIME_RESULT);
+			performance.addTimeMeasureValue(ETimeMeasure.BUILD_SCC, SimulationPerformance.NO_TIME_RESULT);
+			performance.setCountingMeasure(ECountingMeasure.SCCS, SimulationPerformance.NO_COUNTING_RESULT);
 		}
 		boolean disabledSCCUsage = false;
 		if (isUsingSCCs()) {
 			setUseSCCs(false);
 			disabledSCCUsage = true;
+			performance.setCountingMeasure(ECountingMeasure.SCCS, m_AmountOfSCCs);
 		}
+		performance.setCountingMeasure(ECountingMeasure.GLOBAL_INFINITY, m_GlobalInfinity);
 
 		// Merge states
 		m_AttemptingChanges = true;
@@ -777,7 +797,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 				}
 
 				m_Game.undoChanges(changes);
-				performance.increaseCountingMeasure(CountingMeasure.FAILED_MERGE_ATTEMPTS);
+				performance.increaseCountingMeasure(ECountingMeasure.FAILED_MERGE_ATTEMPTS);
 			} else {
 				if (m_Logger.isDebugEnabled()) {
 					m_Logger.debug("Attempted merge for " + leftState + " and " + rightState + " was successful.");
@@ -825,7 +845,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 				}
 
 				m_Game.undoChanges(changes);
-				performance.increaseCountingMeasure(CountingMeasure.FAILED_TRANSREMOVE_ATTEMPTS);
+				performance.increaseCountingMeasure(ECountingMeasure.FAILED_TRANSREMOVE_ATTEMPTS);
 			} else {
 				if (m_Logger.isDebugEnabled()) {
 					m_Logger.debug(
@@ -848,24 +868,25 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 			setUseSCCs(true);
 		}
 
-		performance.stopTimeMeasure(TimeMeasure.SIMULATION_ONLY_TIME);
+		performance.stopTimeMeasure(ETimeMeasure.SIMULATION_ONLY_TIME);
 
 		// Generate the resulting automata
 		m_Logger.debug("Generating the result automaton...");
 		setResult(m_Game.generateBuchiAutomatonFromGraph());
 
-		long duration = performance.stopTimeMeasure(TimeMeasure.OVERALL_TIME);
+		long duration = performance.stopTimeMeasure(ETimeMeasure.OVERALL_TIME);
 		// Add time building of the graph took to the overall time since this
 		// happens outside of simulation
-		long durationGraph = performance.getTimeMeasureResult(TimeMeasure.BUILD_GRAPH_TIME,
-				MultipleDataOption.ADDITIVE);
+		long durationGraph = performance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH_TIME,
+				EMultipleDataOption.ADDITIVE);
 		if (durationGraph != SimulationPerformance.NO_TIME_RESULT) {
 			duration += durationGraph;
-			performance.addTimeMeasureValue(TimeMeasure.OVERALL_TIME, durationGraph);
+			performance.addTimeMeasureValue(ETimeMeasure.OVERALL_TIME, durationGraph);
 		}
+		performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_VERTICES, m_Game.getSize());
 
 		m_Logger.info((isUsingSCCs() ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds and "
-				+ performance.getCountingMeasureResult(CountingMeasure.SIMULATION_STEPS) + " simulation steps.");
+				+ performance.getCountingMeasureResult(ECountingMeasure.SIMULATION_STEPS) + " simulation steps.");
 	}
 
 	/*
@@ -891,7 +912,7 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 
 		// Work through the working list until its empty
 		while (!getWorkingList().isEmpty()) {
-			performance.increaseCountingMeasure(CountingMeasure.SIMULATION_STEPS);
+			performance.increaseCountingMeasure(ECountingMeasure.SIMULATION_STEPS);
 
 			// Poll the current working vertex
 			Vertex<LETTER, STATE> workingVertex = pollVertexFromWorkingList();

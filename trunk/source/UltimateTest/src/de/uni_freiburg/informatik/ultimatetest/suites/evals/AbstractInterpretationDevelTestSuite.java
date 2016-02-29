@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
  */
 public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite {
 
-	private static final String[] I = new String[] { ".i" };
+	private static final String[] C = new String[] { ".i", ".c" };
 	private static final String[] BPL = new String[] { ".bpl" };
 	private static final int DEFAULT_LIMIT = Integer.MAX_VALUE;
 	// private static final int DEFAULT_LIMIT = 10;
@@ -54,72 +54,42 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
-//			new Triple<>("AbstractInterpretationMk2CInline.xml", ALL_C, "ai/AI2_INT.epf"),
-//			new Triple<>("AbstractInterpretationMk2C.xml", ALL_C, "ai/AI2_INT.epf"),
-//			new Triple<>("AbstractInterpretationMk2.xml", BPL, "ai/AI2_INT.epf"),
+			//### BPL 
+//			new Triple<>("AutomizerBpl.xml", BPL, "EmptySettings.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
+//			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+//			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
+			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/AIv2_CON.epf"),
 			
-//			new Triple<>("KojakAIC.xml", ALL_C, "svcomp2016/svcomp-Reach-32bit-Kojak_Default.epf"),
-//			new Triple<>("KojakCInline.xml", ALL_C, "svcomp2016/svcomp-Reach-32bit-Kojak_Default.epf"),
-			
-//			new Triple<>("AbstractInterpretationMk2CInline.xml", ALL_C, "ai/AI2_PLT.epf"),
-//			new Triple<>("AbstractInterpretationMk2C.xml", ALL_C, "ai/AI2_PLT.epf"),
-//			new Triple<>("AbstractInterpretationMk2.xml", BPL, "ai/AI2_PLT.epf"),
-			
-//			new Triple<>("AbstractInterpretationMk2CInline.xml", ".c", "ai/AI2_CMP.epf"),
-//			new Triple<>("AbstractInterpretationMk2C.xml", ".c", "ai/AI2_CMP.epf"),
-//			new Triple<>("AbstractInterpretationMk2.xml", ".bpl", "ai/AI2_CMP.epf"),
-
-//			new Triple<>("AbstractInterpretationv2CInline.xml", ALL_C, "ai/AIv2_INT.epf"),
-//			new Triple<>("AbstractInterpretationv2C.xml", I, "ai/AIv2_INT.epf"),
-			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/AIv2_INT.epf"),
-
-//			new Triple<>("AbstractInterpretationC.xml", ALL_C, "ai/AI.epf"),
-//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/AI.epf"),
-			
-//			new Triple<>("AutomizerCInline.xml", ".c", "EmptySettings.epf"),
-//			new Triple<>("AutomizerC.xml", ".c", "EmptySettings.epf"),
-//			new Triple<>("AutomizerBpl.xml", ".bpl", "EmptySettings.epf"), 
+			//### C
+//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
+//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+//			new Triple<>("AutomizerC.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
+//			new Triple<>("AbstractInterpretationv2C.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+//			new Triple<>("AbstractInterpretationv2C.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
+//			new Triple<>("AbstractInterpretationv2C.xml", C, "ai/AIv2_CON.epf"),
 	};
 
 
 
 	private static final String[] INPUT = new String[] {
 			/* ULTIMATE repo */
-//			 "examples/programs/abstractInterpretation/",
-			 "examples/programs/abstractInterpretation/regression",
-//			 "examples/programs/abstractInterpretation/regression/ProcedureCallNested-unsafe.bpl",
-//			 "examples/programs/abstractInterpretation/regression/ProcedureCallNested-safe.bpl",
-			 
-			// "examples/programs/abstractInterpretationNoRec/",
-//			 "examples/programs/regression/bpl/",
-//			 "examples/programs/regression/c/",
-			// "examples/programs/recursivePrograms",
-			
-			 /* SV-COMP repo */
-//			"examples/svcomp/loops/", 
-			// "examples/svcomp/loopsSelection/",
-//			 "examples/svcomp/eca-rers2012/", 
-			// "examples/svcomp/ecaSelection/",
-			// "examples/svcomp/systemc/", 
-			// "examples/svcomp/systemc1/",
-			// "examples/svcomp/systemc2/",
-			// "examples/svcomp/eca-rers2012/",
-			// "examples/svcomp/recursive/",
-//			 "examples/svcomp/ssh-simplified/",
-//			 "examples/svcomp/ntdrivers-simplified/",
-//			 "examples/svcomp/ssh/",
-			
-			//unsoundness
-//			"examples/svcomp/loops/array_false-unreach-call.i",
-//			"examples/svcomp/loops/eureka_01_false-unreach-call.i"
+//			"examples/programs/abstractInterpretation/",
+//			"examples/programs/abstractInterpretation/regression",
+//			"examples/programs/abstractInterpretation/regression/CountTillBound-Loop-2.bpl",
+			"examples/programs/abstractInterpretation/congruence.bpl",
 
+			/* SVCOMP */
+			//"examples/svcomp",
 	};
 
 	// @formatter:on
 
 	@Override
 	protected long getTimeout() {
-		return 60 * 1000 * 1000 ;
+		return 10 * 1000 ;
 	}
 
 	@Override

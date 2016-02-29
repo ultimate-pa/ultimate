@@ -32,18 +32,18 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.direct.DirectSimulation;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.CountingMeasure;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.MultipleDataOption;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.ECountingMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.EMultipleDataOption;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationPerformance;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.SimulationType;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.TimeMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.ESimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.performance.ETimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices.Vertex;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
 /**
@@ -55,7 +55,14 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * <br/>
  * 
  * For more information on the type of simulation see
- * {@link FairDirectGameGraph}.
+ * {@link FairDirectGameGraph}.<br/>
+ * <br/>
+ * 
+ * The algorithm runs in <b>O(n^4 * k^2)</b> time and <b>O(n * k)</b> space
+ * where n is the amount of states and k the amount of transitions from the
+ * inputed automaton.<br/>
+ * The algorithm is based on the paper: <i>Fair simulation minimization<i> by
+ * <i>Gurumurthy, Bloem and Somenzi</i>.
  * 
  * @author Daniel Tischner
  * 
@@ -110,7 +117,7 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public FairDirectSimulation(final IUltimateServiceProvider services, final IProgressAwareTimer progressTimer,
+	public FairDirectSimulation(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory) throws OperationCanceledException {
 		this(services, progressTimer, logger, buechi, useSCCs, stateFactory, Collections.emptyList());
@@ -151,7 +158,7 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
 	 */
-	public FairDirectSimulation(final IUltimateServiceProvider services, final IProgressAwareTimer progressTimer,
+	public FairDirectSimulation(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final Logger logger, final INestedWordAutomatonOldApi<LETTER, STATE> buechi, final boolean useSCCs,
 			final StateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses)
 					throws OperationCanceledException {
@@ -259,9 +266,9 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 */
 	@Override
 	protected void doSimulation() throws OperationCanceledException {
-		m_Performance = new SimulationPerformance(SimulationType.FAIRDIRECT, isUsingSCCs());
-		m_Performance.startTimeMeasure(TimeMeasure.OVERALL_TIME);
-		m_Performance.startTimeMeasure(TimeMeasure.SIMULATION_ONLY_TIME);
+		m_Performance = new SimulationPerformance(ESimulationType.FAIRDIRECT, isUsingSCCs());
+		m_Performance.startTimeMeasure(ETimeMeasure.OVERALL_TIME);
+		m_Performance.startTimeMeasure(ETimeMeasure.SIMULATION_ONLY_TIME);
 
 		int directSimSimulationSteps = 0;
 		long directSimSCCBuildTime = 0;
@@ -283,9 +290,9 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 
 			// Remember performance data
 			directSimSimulationSteps = directSim.getSimulationPerformance()
-					.getCountingMeasureResult(CountingMeasure.SIMULATION_STEPS);
-			directSimSCCBuildTime = directSim.getSimulationPerformance().getTimeMeasureResult(TimeMeasure.BUILD_SCC,
-					MultipleDataOption.ADDITIVE);
+					.getCountingMeasureResult(ECountingMeasure.SIMULATION_STEPS);
+			directSimSCCBuildTime = directSim.getSimulationPerformance().getTimeMeasureResult(ETimeMeasure.BUILD_SCC,
+					EMultipleDataOption.ADDITIVE);
 
 			// Transform back to fair simulation
 			game.transformToFairGameGraph();
@@ -295,27 +302,27 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 			getLogger().debug("Starting fair simulation...");
 		}
 
-		m_Performance.stopTimeMeasure(TimeMeasure.SIMULATION_ONLY_TIME);
+		m_Performance.stopTimeMeasure(ETimeMeasure.SIMULATION_ONLY_TIME);
 
 		// After that do the normal fair simulation process that will use the
 		// overridden methods which profit from the direct simulation.
 		super.doSimulation();
 
 		SimulationPerformance fairPerformance = super.getSimulationPerformance();
-		long durationFairSimOnly = fairPerformance.getTimeMeasureResult(TimeMeasure.SIMULATION_ONLY_TIME,
-				MultipleDataOption.ADDITIVE);
+		long durationFairSimOnly = fairPerformance.getTimeMeasureResult(ETimeMeasure.SIMULATION_ONLY_TIME,
+				EMultipleDataOption.ADDITIVE);
 		if (durationFairSimOnly != SimulationPerformance.NO_TIME_RESULT) {
-			m_Performance.addTimeMeasureValue(TimeMeasure.SIMULATION_ONLY_TIME, durationFairSimOnly);
+			m_Performance.addTimeMeasureValue(ETimeMeasure.SIMULATION_ONLY_TIME, durationFairSimOnly);
 		}
 
-		long duration = m_Performance.stopTimeMeasure(TimeMeasure.OVERALL_TIME);
+		long duration = m_Performance.stopTimeMeasure(ETimeMeasure.OVERALL_TIME);
 		// Add time building of the graph took to the overall time since this
 		// happens outside of simulation
-		long durationGraph = fairPerformance.getTimeMeasureResult(TimeMeasure.BUILD_GRAPH_TIME,
-				MultipleDataOption.ADDITIVE);
+		long durationGraph = fairPerformance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH_TIME,
+				EMultipleDataOption.ADDITIVE);
 		if (durationGraph != SimulationPerformance.NO_TIME_RESULT) {
 			duration += durationGraph;
-			m_Performance.addTimeMeasureValue(TimeMeasure.OVERALL_TIME, duration);
+			m_Performance.addTimeMeasureValue(ETimeMeasure.OVERALL_TIME, duration);
 		}
 
 		getLogger().info((isUsingSCCs() ? "SCC version" : "nonSCC version") + " of fairdirect simulation took "
@@ -329,25 +336,35 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 		if (directSimSCCBuildTime == SimulationPerformance.NO_TIME_RESULT) {
 			directSimSCCBuildTime = 0;
 		}
-		m_Performance.addTimeMeasureValue(TimeMeasure.BUILD_SCC,
-				fairPerformance.getTimeMeasureResult(TimeMeasure.BUILD_SCC, MultipleDataOption.ADDITIVE)
+		m_Performance.addTimeMeasureValue(ETimeMeasure.BUILD_SCC,
+				fairPerformance.getTimeMeasureResult(ETimeMeasure.BUILD_SCC, EMultipleDataOption.ADDITIVE)
 						+ directSimSCCBuildTime);
-		m_Performance.setCountingMeasure(CountingMeasure.SIMULATION_STEPS,
-				fairPerformance.getCountingMeasureResult(CountingMeasure.SIMULATION_STEPS) + directSimSimulationSteps);
-		m_Performance.addTimeMeasureValue(TimeMeasure.BUILD_GRAPH_TIME,
-				fairPerformance.getTimeMeasureResult(TimeMeasure.BUILD_GRAPH_TIME, MultipleDataOption.ADDITIVE));
-		m_Performance.addTimeMeasureValue(TimeMeasure.BUILD_RESULT_TIME,
-				fairPerformance.getTimeMeasureResult(TimeMeasure.BUILD_RESULT_TIME, MultipleDataOption.ADDITIVE));
-		m_Performance.setCountingMeasure(CountingMeasure.REMOVED_STATES,
-				fairPerformance.getCountingMeasureResult(CountingMeasure.REMOVED_STATES));
-		m_Performance.setCountingMeasure(CountingMeasure.REMOVED_TRANSITIONS,
-				fairPerformance.getCountingMeasureResult(CountingMeasure.REMOVED_TRANSITIONS));
-		m_Performance.setCountingMeasure(CountingMeasure.FAILED_MERGE_ATTEMPTS,
-				fairPerformance.getCountingMeasureResult(CountingMeasure.FAILED_MERGE_ATTEMPTS));
-		m_Performance.setCountingMeasure(CountingMeasure.FAILED_TRANSREMOVE_ATTEMPTS,
-				fairPerformance.getCountingMeasureResult(CountingMeasure.FAILED_TRANSREMOVE_ATTEMPTS));
-		m_Performance.setCountingMeasure(CountingMeasure.BUCHI_STATES,
-				fairPerformance.getCountingMeasureResult(CountingMeasure.BUCHI_STATES));
+		m_Performance.setCountingMeasure(ECountingMeasure.SIMULATION_STEPS,
+				fairPerformance.getCountingMeasureResult(ECountingMeasure.SIMULATION_STEPS) + directSimSimulationSteps);
+		m_Performance.addTimeMeasureValue(ETimeMeasure.BUILD_GRAPH_TIME,
+				fairPerformance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH_TIME, EMultipleDataOption.ADDITIVE));
+		m_Performance.addTimeMeasureValue(ETimeMeasure.BUILD_RESULT_TIME,
+				fairPerformance.getTimeMeasureResult(ETimeMeasure.BUILD_RESULT_TIME, EMultipleDataOption.ADDITIVE));
+		m_Performance.setCountingMeasure(ECountingMeasure.REMOVED_STATES,
+				fairPerformance.getCountingMeasureResult(ECountingMeasure.REMOVED_STATES));
+		m_Performance.setCountingMeasure(ECountingMeasure.REMOVED_TRANSITIONS,
+				fairPerformance.getCountingMeasureResult(ECountingMeasure.REMOVED_TRANSITIONS));
+		m_Performance.setCountingMeasure(ECountingMeasure.FAILED_MERGE_ATTEMPTS,
+				fairPerformance.getCountingMeasureResult(ECountingMeasure.FAILED_MERGE_ATTEMPTS));
+		m_Performance.setCountingMeasure(ECountingMeasure.FAILED_TRANSREMOVE_ATTEMPTS,
+				fairPerformance.getCountingMeasureResult(ECountingMeasure.FAILED_TRANSREMOVE_ATTEMPTS));
+		m_Performance.setCountingMeasure(ECountingMeasure.BUCHI_STATES,
+				fairPerformance.getCountingMeasureResult(ECountingMeasure.BUCHI_STATES));
+		m_Performance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS,
+				fairPerformance.getCountingMeasureResult(ECountingMeasure.BUCHI_TRANSITIONS));
+		m_Performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_VERTICES,
+				fairPerformance.getCountingMeasureResult(ECountingMeasure.GAMEGRAPH_VERTICES));
+		m_Performance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES,
+				fairPerformance.getCountingMeasureResult(ECountingMeasure.GAMEGRAPH_EDGES));
+		m_Performance.setCountingMeasure(ECountingMeasure.SCCS,
+				fairPerformance.getCountingMeasureResult(ECountingMeasure.SCCS));
+		m_Performance.setCountingMeasure(ECountingMeasure.GLOBAL_INFINITY,
+				fairPerformance.getCountingMeasureResult(ECountingMeasure.GLOBAL_INFINITY));
 
 		m_HasFinished = true;
 	}

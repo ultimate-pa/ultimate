@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.model.annotation.Visualizable;
 public class WitnessNodeAnnotation extends ModernAnnotations {
 
 	private static final long serialVersionUID = 1L;
-	private static final String KEY = Activator.s_PLUGIN_ID + "_Node";
+	private static final String KEY = Activator.PLUGIN_ID + "_Node";
 
 	@Visualizable
 	private final boolean mIsInitial;

@@ -16,12 +16,12 @@ public class CKojakTC extends WebToolchain {
 
 	@Override
 	protected String defineDescription() {
-		return "Kojak toolchain";
+		return NameStrings.s_TOOL_Kojak;
 	}
 
 	@Override
 	protected String defineName() {
-		return "Kojak";
+		return NameStrings.s_TOOL_Kojak;
 	}
 
 	@Override
@@ -43,6 +43,7 @@ public class CKojakTC extends WebToolchain {
 	protected List<Tool> defineTools() {
 		List<Tool> tools = new ArrayList<Tool>();
 
+		tools.add(new Tool(PrefStrings.s_syntaxchecker));
 		tools.add(new Tool(PrefStrings.s_cacsl2boogietranslator));
 		tools.add(new Tool(PrefStrings.s_boogiePreprocessor));
 		tools.add(new Tool(PrefStrings.s_rcfgBuilder));
@@ -56,18 +57,18 @@ public class CKojakTC extends WebToolchain {
 	protected List<Setting> defineAdditionalSettings() {
 		List<Setting> rtr = new ArrayList<Setting>();
 
-		rtr.add(new Setting(PrefStrings.s_CACSL_LABEL_StartFunction, SettingType.STRING, "Starting procedure: ",
-				"main", true));
-		rtr.add(new Setting(PrefStrings.s_CACSL_LABEL_TranslationMode, "Translation Mode",
-				new String[] { PrefStrings.s_CACSL_VALUE_Svcomp }, false, new String[] {
-						PrefStrings.s_CACSL_VALUE_Base, PrefStrings.s_CACSL_VALUE_Svcomp }, true));
+//		rtr.add(new Setting(PrefStrings.s_CACSL_LABEL_StartFunction, SettingType.STRING, "Starting procedure: ",
+//				"main", true));
+//		rtr.add(new Setting(PrefStrings.s_CACSL_LABEL_TranslationMode, "Translation Mode",
+//				new String[] { PrefStrings.s_CACSL_VALUE_Svcomp }, false, new String[] {
+//						PrefStrings.s_CACSL_VALUE_Base, PrefStrings.s_CACSL_VALUE_Svcomp }, true));
 
 		return rtr;
 	}
 	
 	@Override
 	protected String defineToolchainSettingsFile() {
-		return "CodeCheck-C.epf";
+		return "Kojak-C.epf";
 	}
 
 }

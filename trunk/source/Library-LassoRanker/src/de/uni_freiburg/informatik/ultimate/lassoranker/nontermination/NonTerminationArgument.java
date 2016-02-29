@@ -105,7 +105,7 @@ public class NonTerminationArgument implements Serializable {
 		assert(nus != null);
 		m_Nus = nus;
 		assert m_GEVs.size() == lambdas.size();
-		assert m_GEVs.size() == nus.size() + 1;
+		assert m_GEVs.size() == nus.size() + 1 || m_GEVs.size() == 0;
 	}
 	
 	/**

@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.result;
 
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
+import de.uni_freiburg.informatik.ultimate.result.model.IResultWithLocation;
 
 /**
  * Report a syntax error that has been detected.

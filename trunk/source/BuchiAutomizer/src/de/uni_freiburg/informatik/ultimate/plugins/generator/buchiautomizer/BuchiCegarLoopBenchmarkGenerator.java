@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.lassoranker.LassoAnalysis.PreprocessingBenchmark;
+import de.uni_freiburg.informatik.ultimate.lassoranker.termination.NonterminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.lassoranker.termination.TerminationAnalysisBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoopBenchmark.LassoAnalysisResults;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.ContinueDirective;
@@ -53,6 +54,13 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopBenchmarkGenerato
 			new ArrayList<PreprocessingBenchmark>();
 	private final List<TerminationAnalysisBenchmark> m_TerminationAnalysisBenchmarks =
 			new ArrayList<>();
+	private final List<NonterminationAnalysisBenchmark> m_NonterminationAnalysisBenchmarks =
+			new ArrayList<>();
+	private int m_LassoNonterminationAnalysisSAT = 0;
+	private int m_LassoNonterminationAnalysisUNSAT = 0;
+	private int m_LassoNonterminationAnalysisUNKOWN = 0;
+	private long m_LassoNonterminationAnalysisTime = 0;
+
 	
 	@Override
 	public IBenchmarkType getBenchmarkType() {
@@ -107,7 +115,14 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopBenchmarkGenerato
 			return m_PreprocessingBenchmarks;
 		case BuchiCegarLoopBenchmark.s_LassoTerminationAnalysisBenchmarks:
 			return m_TerminationAnalysisBenchmarks;
-
+		case BuchiCegarLoopBenchmark.s_LassoNonterminationAnalysisSAT:
+			return m_LassoNonterminationAnalysisSAT;
+		case BuchiCegarLoopBenchmark.s_LassoNonterminationAnalysisUNSAT:
+			return m_LassoNonterminationAnalysisUNSAT;
+		case BuchiCegarLoopBenchmark.s_LassoNonterminationAnalysisUNKNOWN:
+			return m_LassoNonterminationAnalysisUNKOWN;
+		case BuchiCegarLoopBenchmark.s_LassoNonterminationAnalysisTIME:
+			return m_LassoNonterminationAnalysisTime;
 		default:
 			return super.getValue(key);
 		}
@@ -117,6 +132,23 @@ public class BuchiCegarLoopBenchmarkGenerator extends CegarLoopBenchmarkGenerato
 		LassoCheckResult lcr = lassoChecker.getLassoCheckResult();
 		m_PreprocessingBenchmarks.addAll(lassoChecker.getPreprocessingBenchmarks());
 		m_TerminationAnalysisBenchmarks.addAll(lassoChecker.getTerminationAnalysisBenchmarks());
+		m_NonterminationAnalysisBenchmarks.addAll(lassoChecker.getNonterminationAnalysisBenchmarks());
+		for (NonterminationAnalysisBenchmark nab : m_NonterminationAnalysisBenchmarks) {
+			switch (nab.getConstraintsSatisfiability()) {
+			case SAT:
+				m_LassoNonterminationAnalysisSAT++;
+				break;
+			case UNKNOWN:
+				m_LassoNonterminationAnalysisUNKOWN++;
+				break;
+			case UNSAT:
+				m_LassoNonterminationAnalysisUNSAT++;
+				break;
+			default:
+				throw new AssertionError();
+			}
+			m_LassoNonterminationAnalysisTime += nab.getTime();
+		}
 		ContinueDirective cd = lcr.getContinueDirective();
 		switch (cd) {
 

@@ -81,10 +81,7 @@ public class AbstractInterpretationRcfgObserver extends BaseObserver {
 			timer = mServices.getProgressMonitorService();
 		}
 
-		AbstractInterpreter.run(root, initial, timer, mServices);
-		// final Map<CodeBlock, Map<ProgramPoint, Term>> preds = AbstractInterpreter.run(root, initial, timer,
-		// mServices);
-		// AbsIntUtil.dumpToFile(preds, "");
+		AbstractInterpreter.runOnRCFG(root, initial, timer, mServices, false);
 
 		// do not descend, this is already the root
 		return false;

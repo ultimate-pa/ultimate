@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
@@ -601,6 +602,26 @@ public class TypeHandler implements ITypeHandler {
 				return new PrimitiveType(loc, SFO.INT);
 			} else {
 				return new NamedType(loc, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
+			}
+		case FLOATTYPE:
+			return new PrimitiveType(loc, SFO.REAL);
+		default:
+			throw new UnsupportedSyntaxException(loc, "unknown primitive type");
+		}
+    }
+    
+    public ASTType bytesize2asttype(ILocation loc, GENERALPRIMITIVE generalprimitive, int bytesize) {
+		switch (generalprimitive) {
+		case VOID:
+			throw new UnsupportedOperationException();
+		case INTTYPE:
+			if (m_UseIntForAllIntegerTypes) {
+				return new PrimitiveType(loc, SFO.INT);
+			} else {
+				final int  bitsize = bytesize * 8;
+				final String name= "bv" + bitsize;
+				final ASTType astType = new PrimitiveType(loc, name);
+				return astType;
 			}
 		case FLOATTYPE:
 			return new PrimitiveType(loc, SFO.REAL);

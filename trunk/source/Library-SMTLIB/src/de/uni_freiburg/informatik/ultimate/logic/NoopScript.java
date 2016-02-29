@@ -131,7 +131,7 @@ public class NoopScript implements Script {
 			Sort resultSort, Term definition) throws SMTLIBException {
 		if (mTheory == null)
 			throw new SMTLIBException("No logic set!");
-        if (!resultSort.equals(definition.getSort()))
+        if (!resultSort.equalsSort(definition.getSort()))
         	throw new SMTLIBException("Sort mismatch");
         try {
         	mTheory.defineFunction(fun, params, definition);

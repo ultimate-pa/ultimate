@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.BoogieASTUtil;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
@@ -281,9 +282,7 @@ public class PostProcessor {
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		ArrayList<VariableDeclaration> initDecl = new ArrayList<VariableDeclaration>();
 		if (main.isMMRequired()) {
-			if (memoryHandler.isFloatArrayRequiredInMM ||
-					memoryHandler.isIntArrayRequiredInMM ||
-					memoryHandler.isPointerArrayRequiredInMM) {
+			if (memoryHandler.getRequiredMemoryModelFeatures().isMemoryModelInfrastructureRequired()) {
 				Expression zero = m_ExpressionTranslation.constructLiteralForIntegerType(
 						translationUnitLoc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ZERO);
 				LeftHandSide[] lhs = new LeftHandSide[] { new ArrayLHS(translationUnitLoc,
@@ -522,9 +521,10 @@ public class PostProcessor {
 	 * modular and can ease debugging.
 	 * However, that this located in this class and fixed to bitvectors is a
 	 * workaround.
+	 * @param typeHandler 
 	 */
 	public static ArrayList<Declaration> declarePrimitiveDataTypeSynonyms(ILocation loc, 
-			TypeSizes typeSizes) {
+			TypeSizes typeSizes, TypeHandler typeHandler) {
 		ArrayList<Declaration> decls = new ArrayList<Declaration>();
 		for (CPrimitive.PRIMITIVE cPrimitive: CPrimitive.PRIMITIVE.values()) {
 			CPrimitive cPrimitiveO = new CPrimitive(cPrimitive);
@@ -539,7 +539,7 @@ public class PostProcessor {
 				String identifier = "C_" + cPrimitive.name();
 				String[] typeParams = new String[0];
 				String name= "bv" + bitsize;
-				ASTType astType = new PrimitiveType(loc, name);
+				ASTType astType = typeHandler.bytesize2asttype(loc, GENERALPRIMITIVE.INTTYPE, bytesize);
 				decls.add(new TypeDeclaration(loc, attributes, false, identifier, typeParams , astType));
 			}
 		}

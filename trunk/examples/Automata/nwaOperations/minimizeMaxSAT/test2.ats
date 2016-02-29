@@ -1,0 +1,27 @@
+NestedWordAutomaton nwa = removeDeadEnds(nwaUnprocessed);
+
+print(numberOfStates(nwa));
+print(numberOfStates(shrinkNwa(nwa)));
+print(numberOfStates(minimizeSevpa(nwa)));
+print(numberOfStates(minimizeNwaMaxSat(nwa)));
+
+NestedWordAutomaton nwaUnprocessed = (
+	callAlphabet = { c },
+	internalAlphabet = { a },
+	returnAlphabet = { r },
+	states = { q0 q0b q1 q2 q3 },
+	initialStates = { q0 },
+	finalStates = { q3 },
+	callTransitions = {
+		//(q1 c q3)
+	},
+	internalTransitions = {
+		(q0 a q1)
+		(q0b a q1)
+		(q1 a q2)
+		(q2 a q3)
+	},
+	returnTransitions = {
+		//(q1 q3 r q3)
+	}
+);

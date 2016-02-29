@@ -30,8 +30,8 @@ import java.math.BigDecimal;
 
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement.StepInfo;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution.ProgramState;
-import de.uni_freiburg.informatik.ultimate.result.IBacktranslationValueProvider;
+import de.uni_freiburg.informatik.ultimate.result.model.IBacktranslationValueProvider;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution.ProgramState;
 
 /**
  * 
@@ -47,6 +47,7 @@ public class GeneratedWitnessEdge<TE, E> {
 
 	GeneratedWitnessEdge(final AtomicTraceElement<TE> traceElement, final ProgramState<E> state,
 			final IBacktranslationValueProvider<TE, E> stringProvider, long currentEdgeId) {
+		assert stringProvider != null;
 		mStringProvider = stringProvider;
 		mId = "E" + String.valueOf(currentEdgeId);
 		mATE = traceElement;
@@ -185,4 +186,12 @@ public class GeneratedWitnessEdge<TE, E> {
 		sb.append(";");
 	}
 
+	@Override
+	public String toString() {
+		if (getStartLineNumber() == getEndLineNumber()) {
+			return "L" + getStartLineNumber();
+		} else {
+			return "L" + getStartLineNumber() + "-L" + getEndLineNumber();
+		}
+	}
 }

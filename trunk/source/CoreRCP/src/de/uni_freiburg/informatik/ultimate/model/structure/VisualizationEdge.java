@@ -31,27 +31,25 @@ import de.uni_freiburg.informatik.ultimate.model.IPayload;
 
 /***
  * 
- * This class represents the edges for the Ultimate visualization structure. For
- * more details, see {@link VisualizationNode}.
+ * This class represents the edges for the Ultimate visualization structure. For more details, see
+ * {@link VisualizationNode}.
  * 
  * @author dietsch
  * 
  * @see VisualizationNode
  * @see BaseMultigraphEdge
  */
-public final class VisualizationEdge extends
-		BaseMultigraphEdge<VisualizationNode, VisualizationEdge> {
+public final class VisualizationEdge
+		extends BaseMultigraphEdge<VisualizationNode, VisualizationEdge, VisualizationNode, VisualizationEdge> {
 
 	protected Object mBacking;
 
-	protected VisualizationEdge(VisualizationNode source,
-			VisualizationNode target, IPayload payload, Object backing) {
+	protected VisualizationEdge(VisualizationNode source, VisualizationNode target, IPayload payload, Object backing) {
 		super(source, target, payload);
 		mBacking = backing;
 	}
 
-	protected VisualizationEdge(VisualizationNode source,
-			VisualizationNode target, Object backing) {
+	protected VisualizationEdge(VisualizationNode source, VisualizationNode target, Object backing) {
 		super(source, target);
 		mBacking = backing;
 	}
@@ -67,8 +65,8 @@ public final class VisualizationEdge extends
 			return mBacking.toString();
 		}
 	}
-	
-	public Object getBacking(){
+
+	public Object getBacking() {
 		return mBacking;
 	}
 
@@ -94,6 +92,11 @@ public final class VisualizationEdge extends
 		} else {
 			return mBacking.hashCode();
 		}
+	}
+
+	@Override
+	public VisualizationEdge getLabel() {
+		return this;
 	}
 
 }

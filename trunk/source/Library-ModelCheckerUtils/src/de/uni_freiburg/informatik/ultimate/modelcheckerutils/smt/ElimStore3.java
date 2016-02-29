@@ -208,7 +208,7 @@ public class ElimStore3 {
 					store = update.getMultiDimensionalStore();
 				}
 				Map<Term, Term> auxMap = Collections.singletonMap((Term) store.getStoreTerm(), (Term) auxArray);
-				SafeSubstitution subst = new SafeSubstitution(m_Script, auxMap);
+				SafeSubstitution subst = new SafeSubstitutionWithLocalSimplification(m_Script, auxMap);
 				Term auxTerm = subst.transform(term);
 				Term auxVarDef = m_Script.term("=", auxArray, store.getStoreTerm());
 				if (quantifier == QuantifiedFormula.EXISTS) {
@@ -238,13 +238,13 @@ public class ElimStore3 {
 			// we replace all occurrences of (store oldArr idx val) by newArr.
 			Map<Term, Term> mapping = Collections.singletonMap(
 					(Term) writeInto.getMultiDimensionalStore().getStoreTerm(), (Term) writeInto.getNewArray());
-			SafeSubstitution substStoreTerm = new SafeSubstitution(script, mapping);
+			SafeSubstitution substStoreTerm = new SafeSubstitutionWithLocalSimplification(script, mapping);
 			intermediateResult = substStoreTerm.transform(intermediateResult);
 		}
 		
 		// Indices and corresponding values of a_elim 
 		IndicesAndValues iav = new IndicesAndValues(eliminatee, conjuncts);
-		SafeSubstitution subst = new SafeSubstitution(script, iav.getMapping());
+		SafeSubstitution subst = new SafeSubstitutionWithLocalSimplification(script, iav.getMapping());
 
 		ArrayList<Term> additionalConjuncs = new ArrayList<Term>();
 		intermediateResult = subst.transform(intermediateResult);
@@ -291,7 +291,7 @@ public class ElimStore3 {
 			if (writtenFrom != null) {
 				Term storeRenamed = SmtUtils.multiDimensionalStore(script, a_heir, idx_writeRenamed, dataRenamed);
 				Map<Term, Term> mapping = Collections.singletonMap((Term) eliminatee, storeRenamed);
-				writtenFromSubst = new SafeSubstitution(script, mapping);
+				writtenFromSubst = new SafeSubstitutionWithLocalSimplification(script, mapping);
 			} else {
 				writtenFromSubst = null;
 			}

@@ -34,6 +34,7 @@ import java.math.BigInteger;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
@@ -54,7 +55,8 @@ public class SignLogicalEvaluatorFactory implements IEvaluatorFactory<Values, Si
 	}
 
 	@Override
-	public INAryEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createNAryExpressionEvaluator(int arity) {
+	public INAryEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createNAryExpressionEvaluator(int arity,
+	        EvaluatorType type) {
 
 		assert arity >= 1 && arity <= 2;
 
@@ -62,7 +64,7 @@ public class SignLogicalEvaluatorFactory implements IEvaluatorFactory<Values, Si
 		case 1:
 			return new SignLogicalUnaryExpressionEvaluator();
 		case 2:
-			return new SignLogicalBinaryExpressionEvaluator(mServices);
+			return new SignLogicalBinaryExpressionEvaluator(mServices, type);
 		default:
 			throw new UnsupportedOperationException("Arity of " + arity + " is not implemented.");
 		}
@@ -70,7 +72,7 @@ public class SignLogicalEvaluatorFactory implements IEvaluatorFactory<Values, Si
 
 	@Override
 	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createSingletonValueExpressionEvaluator(
-			String value, Class<?> valueType) {
+	        String value, Class<?> valueType) {
 
 		if (valueType.equals(BigInteger.class)) {
 			return new SignLogicalSingletonIntegerExpressionEvaluator(value);
@@ -89,13 +91,26 @@ public class SignLogicalEvaluatorFactory implements IEvaluatorFactory<Values, Si
 
 	@Override
 	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createSingletonVariableExpressionEvaluator(
-			String variableName) {
+	        String variableName) {
 		return new SignLogicalSingletonVariableExpressionEvaluator(variableName);
 	}
 
 	@Override
 	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createSingletonLogicalValueExpressionEvaluator(
-			BooleanValue value) {
+	        BooleanValue value) {
+		return null;
+	}
+
+	@Override
+	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createFunctionEvaluator(String functionName,
+	        int inputParamCount) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public IEvaluator<Values, SignDomainState, CodeBlock, IBoogieVar> createConditionalEvaluator() {
+		// TODO Auto-generated method stub
 		return null;
 	}
 

@@ -89,8 +89,21 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 			final List<IntervalDomainState> afterProcessStates = new ArrayList<>();
 			for (final IntervalDomainState currentState : currentStates) {
 				final List<IntervalDomainState> processed = mStatementProcessor.process(currentState, stmt);
-				assert processed.size() > 0;
-				afterProcessStates.addAll(processed);
+				final List<IntervalDomainState> postProcessed = new ArrayList<>();
+				for (final IntervalDomainState s : processed) {
+					if (!s.isBottom()) {
+						postProcessed.add(s);
+					}
+				}
+				if (postProcessed.size() == 0) {
+					currentStates.clear();
+					if (oldstate.getVariables().size() != 0) {
+						currentStates.add(oldstate.bottomState());
+					}
+					return currentStates;
+				} else {
+					afterProcessStates.addAll(postProcessed);
+				}
 			}
 			currentStates = afterProcessStates;
 		}
@@ -164,7 +177,7 @@ public class IntervalPostOperator implements IAbstractPostOperator<IntervalDomai
 					final String tempName = paramNames.get(i);
 					final String realName = paramIdentifiers.get(i);
 
-					final IBoogieVar type = interimState.getVariableType(tempName);
+					final IBoogieVar type = interimState.getVariableDeclarationType(tempName);
 					if (type.getIType() instanceof PrimitiveType) {
 						final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
 

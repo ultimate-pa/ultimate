@@ -39,6 +39,7 @@ import java.util.SortedMap;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.InCaReCounter;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
@@ -170,17 +171,17 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		try {
 			// 4. Compute the difference between the path automaton and the determinized
 			//    finite automaton (from step 3)
-			Difference<CodeBlock, IPredicate> diff = new Difference<CodeBlock, IPredicate>(m_Services,
+			Difference<CodeBlock, IPredicate> diff = new Difference<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services),
 					(INestedWordAutomatonOldApi<CodeBlock, IPredicate>) pathprogramautomaton,
 					interpolantAutomatonDeterminized, psd2,
 					pfconsol /* PredicateFactory for Refinement */, false /*explointSigmaStarConcatOfIA*/ );
 			if (m_printAutomataOfDifference) {
 				// Needed for debug
-				AutomatonDefinitionPrinter<CodeBlock, IPredicate> pathAutomatonPrinter = new AutomatonDefinitionPrinter<>(m_Services, "PathAutomaton", Format.ATS, pathprogramautomaton);
-				AutomatonDefinitionPrinter<CodeBlock, IPredicate> interpolantAutomatonPrinter = new AutomatonDefinitionPrinter<>(m_Services, "InterpolantAutomatonNonDet", Format.ATS, interpolantAutomaton);
-				AutomatonDefinitionPrinter<CodeBlock, IPredicate> interpolantAutomatonPrinterDet = new AutomatonDefinitionPrinter<>(m_Services, "InterpolantAutomatonDet", Format.ATS, interpolantAutomatonDeterminized);
+				AutomatonDefinitionPrinter<CodeBlock, IPredicate> pathAutomatonPrinter = new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(m_Services), "PathAutomaton", Format.ATS, pathprogramautomaton);
+				AutomatonDefinitionPrinter<CodeBlock, IPredicate> interpolantAutomatonPrinter = new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(m_Services), "InterpolantAutomatonNonDet", Format.ATS, interpolantAutomaton);
+				AutomatonDefinitionPrinter<CodeBlock, IPredicate> interpolantAutomatonPrinterDet = new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(m_Services), "InterpolantAutomatonDet", Format.ATS, interpolantAutomatonDeterminized);
 				INestedWordAutomatonOldApi<CodeBlock, IPredicate> diffAutomaton = diff.getResult();
-				AutomatonDefinitionPrinter<CodeBlock, IPredicate> diffAutomatonPrinter = new AutomatonDefinitionPrinter<>(m_Services, "DifferenceAutomaton", Format.ATS, diffAutomaton);
+				AutomatonDefinitionPrinter<CodeBlock, IPredicate> diffAutomatonPrinter = new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(m_Services), "DifferenceAutomaton", Format.ATS, diffAutomaton);
 				m_Logger.debug(pathAutomatonPrinter.getDefinitionAsString());
 				m_Logger.debug(interpolantAutomatonPrinter.getDefinitionAsString());
 				m_Logger.debug(interpolantAutomatonPrinterDet.getDefinitionAsString());
@@ -188,7 +189,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 			}
 			m_HoareTripleChecker.releaseLock();
 			// 5. Check if difference is empty
-			IsEmpty<CodeBlock, IPredicate> empty = new IsEmpty<CodeBlock, IPredicate>(m_Services, diff.getResult());
+			IsEmpty<CodeBlock, IPredicate> empty = new IsEmpty<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), diff.getResult());
 			if (!empty.getResult()) {
 				if (!useConsolidationInNonEmptyCase) {
 					m_ConsolidatedInterpolants = m_InterpolatingTraceChecker.getInterpolants();
@@ -475,7 +476,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 		StateFactory<IPredicate> predicateFactory = new PredicateFactory(smtManager, taPrefs);
 
-		NestedWordAutomaton<CodeBlock, IPredicate> nwa  = new NestedWordAutomaton<CodeBlock, IPredicate>(   services, 
+		NestedWordAutomaton<CodeBlock, IPredicate> nwa  = new NestedWordAutomaton<CodeBlock, IPredicate>(   new AutomataLibraryServices(services), 
 				internalAlphabet,
 				callAlphabet,
 				returnAlphabet,

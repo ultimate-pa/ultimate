@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -48,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class IntervalSingletonVariableExpressionEvaluator
-        implements IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
+        implements IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	private final Set<String> mVariableSet;
 
@@ -63,14 +64,14 @@ public class IntervalSingletonVariableExpressionEvaluator
 	}
 
 	@Override
-	public List<IEvaluationResult<IntervalDomainEvaluationResult>> evaluate(IntervalDomainState currentState) {
+	public List<IEvaluationResult<IntervalDomainValue>> evaluate(IntervalDomainState currentState) {
 
-		final List<IEvaluationResult<IntervalDomainEvaluationResult>> returnList = new ArrayList<>();
+		final List<IEvaluationResult<IntervalDomainValue>> returnList = new ArrayList<>();
 
 		IntervalDomainValue val;
 		BooleanValue returnBool = new BooleanValue();
 
-		final IBoogieVar type = currentState.getVariableType(mVariableName);
+		final IBoogieVar type = currentState.getVariableDeclarationType(mVariableName);
 		if (type.getIType() instanceof PrimitiveType) {
 			final PrimitiveType primitiveType = (PrimitiveType) type.getIType();
 
@@ -91,15 +92,15 @@ public class IntervalSingletonVariableExpressionEvaluator
 			val = currentState.getValue(mVariableName);
 		}
 
-		if (val.isBottom()) {
-			returnList.add(new IntervalDomainEvaluationResult(new IntervalDomainValue(true), currentState,
-			        new BooleanValue(BooleanValue.Value.BOTTOM)));
+		if (val.isBottom() || returnBool.isBottom()) {
+			returnList.add(
+			        new IntervalDomainEvaluationResult(new IntervalDomainValue(true), new BooleanValue(Value.BOTTOM)));
 		} else {
-			returnList.add(new IntervalDomainEvaluationResult(new IntervalDomainValue(val.getLower(), val.getUpper()),
-			        currentState, returnBool));
+			returnList.add(new IntervalDomainEvaluationResult(val, returnBool));
 		}
 
 		return returnList;
+
 	}
 
 	@Override
@@ -108,8 +109,7 @@ public class IntervalSingletonVariableExpressionEvaluator
 	}
 
 	@Override
-	public void addSubEvaluator(
-	        IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
 		throw new UnsupportedOperationException(
 		        "A sub evaluator cannot be added to a singleton variable expression evaluator.");
 	}
@@ -124,4 +124,22 @@ public class IntervalSingletonVariableExpressionEvaluator
 		return false;
 	}
 
+	@Override
+	public String toString() {
+		return mVariableName;
+	}
+
+	@Override
+	public List<IntervalDomainState> inverseEvaluate(IEvaluationResult<IntervalDomainValue> computedValue,
+	        IntervalDomainState currentState) {
+		List<IntervalDomainState> returnList = new ArrayList<>();
+
+		if (mContainsBoolean) {
+			returnList.add(currentState.setBooleanValue(mVariableName, computedValue.getBooleanValue()));
+		} else {
+			returnList.add(currentState.setValue(mVariableName, computedValue.getValue()));
+		}
+
+		return returnList;
+	}
 }

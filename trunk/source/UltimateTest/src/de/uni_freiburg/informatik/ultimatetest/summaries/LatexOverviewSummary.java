@@ -114,10 +114,7 @@ public class LatexOverviewSummary extends LatexSummary {
 
 		for (final String tool : tools) {
 			// make table header
-			sb.append("\\begin{table}").append(br);
-			sb.append("\\centering").append(br);
-			sb.append("\\resizebox{\\linewidth}{!}{%").append(br);
-			sb.append("\\begin{tabu} to \\linewidth {lcllc");
+			sb.append("\\begin{longtabu} to \\linewidth {lcllc");
 			for (int i = 0; i < mLatexTableHeaderCount; ++i) {
 				sb.append("r");
 			}
@@ -160,9 +157,8 @@ public class LatexOverviewSummary extends LatexSummary {
 			makeTableBody(sb, resultsPerTool, tool);
 
 			// end table
-			sb.append("\\end{tabu}}").append(br);
 			sb.append("\\caption{Results for ").append(removeInvalidCharsForLatex(tool)).append(".}").append(br);
-			sb.append("\\end{table}").append(br);
+			sb.append("\\end{longtabu}").append(br);
 		}
 
 		// append finishing code
@@ -175,8 +171,8 @@ public class LatexOverviewSummary extends LatexSummary {
 
 	private void appendPreamble(StringBuilder sb, String br) {
 		// append preamble
-		sb.append("\\documentclass[a4paper]{article}").append(br);
-		sb.append("\\usepackage[a4paper, margin=1.5cm, top=1.1cm]{geometry}").append(br);
+		sb.append("\\documentclass[a3paper]{article}").append(br);
+		sb.append("\\usepackage[a3paper, margin=1.5cm, top=1.1cm]{geometry}").append(br);
 		sb.append("\\usepackage[table]{xcolor} ").append(br);
 		sb.append("\\usepackage[utf8]{inputenc}").append(br);
 		sb.append("\\usepackage{amsmath,amssymb}").append(br);

@@ -39,6 +39,7 @@ import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -47,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * Class for minimize deterministic finite automaton by the Hopcroft -
@@ -201,7 +201,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 	 * @throws AutomataLibraryException
 	 *             thrown by DFA check
 	 */
-	public MinimizeDfaHopcroftParallel(final IUltimateServiceProvider services,
+	public MinimizeDfaHopcroftParallel(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand)
 			throws AutomataLibraryException, AutomataLibraryException {
@@ -214,7 +214,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 	 * @param operand
 	 *            the input automaton
 	 */
-	public MinimizeDfaHopcroftParallel(final IUltimateServiceProvider services,
+	public MinimizeDfaHopcroftParallel(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt) {
 		super(services, operand.getStateFactory(),
@@ -243,7 +243,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends
 	 * @throws AutomataLibraryException
 	 *             thrown by DFA check
 	 */
-	public MinimizeDfaHopcroftParallel(final IUltimateServiceProvider services,
+	public MinimizeDfaHopcroftParallel(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt, ArrayList<STATE> int2state,

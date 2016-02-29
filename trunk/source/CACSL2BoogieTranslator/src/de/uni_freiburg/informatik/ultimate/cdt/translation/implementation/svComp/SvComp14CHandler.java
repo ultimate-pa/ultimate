@@ -32,6 +32,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -41,7 +42,6 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
-import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTCompoundStatement;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
@@ -49,8 +49,7 @@ import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.IntegerTranslation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.MemoryHandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType.Type;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
@@ -66,21 +65,18 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.SkipResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.INameHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
@@ -130,8 +126,8 @@ public class SvComp14CHandler extends CHandler {
 	 * @param bitvectorTranslation 
 	 */
 	public SvComp14CHandler(Dispatcher main, CACSL2BoogieBacktranslator backtranslator, 
-			Logger logger, ITypeHandler typeHandler, boolean bitvectorTranslation) {
-		super(main, backtranslator, false, logger, typeHandler, bitvectorTranslation);
+			Logger logger, ITypeHandler typeHandler, boolean bitvectorTranslation, INameHandler nameHandler) {
+		super(main, backtranslator, false, logger, typeHandler, bitvectorTranslation, nameHandler);
 	}
 
 	//
@@ -192,7 +188,7 @@ public class SvComp14CHandler extends CHandler {
 //			could just take the first as there is only one, but it's so easy to make it more general..
 				stmt.add(new AssumeStatement(loc, a));
 			}
-			assert (isAuxVarMapcomplete(main, decl, auxVars));
+			assert (isAuxVarMapcomplete(main.nameHandler, decl, auxVars));
 			return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
 		}
 		for (String t : NONDET_TYPE_STRINGS)
@@ -260,7 +256,7 @@ public class SvComp14CHandler extends CHandler {
 				returnValue = new RValue(new IdentifierExpression(loc, tmpName), cType);
 				m_ExpressionTranslation.addAssumeValueInRangeStatements(loc, returnValue.getValue(), returnValue.getCType(), stmt);
 				
-				assert (isAuxVarMapcomplete(main, decl, auxVars));
+				assert (isAuxVarMapcomplete(main.nameHandler, decl, auxVars));
 				return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
 			}
 		if (methodName.equals("printf")) {
@@ -279,7 +275,7 @@ public class SvComp14CHandler extends CHandler {
 			decl.add(tVarDecl);
 			stmt.add(new HavocStatement(loc, new VariableLHS[] { new VariableLHS(loc, tId) }));
 			returnValue = new RValue(new IdentifierExpression(loc, tId), null);
-			assert (isAuxVarMapcomplete(main, decl, auxVars));
+			assert (isAuxVarMapcomplete(main.nameHandler, decl, auxVars));
 			return new ExpressionResult(stmt, returnValue, decl, auxVars, overappr);
 		}
 //		this is a gcc-builtin function that helps with branch prediction, it always returns the first argument.
@@ -287,58 +283,50 @@ public class SvComp14CHandler extends CHandler {
 			return main.dispatch(node.getArguments()[0]);
 		}
 		
-		if (methodName.equals("__builtin_memcpy")) {
-			((CHandler) main.cHandler).mMemoryHandler.setDeclareMemCpy();
+		if (methodName.equals("__builtin_memcpy") || methodName.equals("memcpy")) {
 
-			assert node.getArguments().length == 3;
-			ExpressionResult destRex = (ExpressionResult) main.dispatch(node.getArguments()[0]);
-			ExpressionResult srcRex = (ExpressionResult) main.dispatch(node.getArguments()[1]);
-			ExpressionResult sizeRex = (ExpressionResult) main.dispatch(node.getArguments()[2]);
+			assert node.getArguments().length == 3 : "wrong number of arguments";
+			ExpressionResult dest = (ExpressionResult) main.dispatch(node.getArguments()[0]);
+			dest = dest.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+			main.cHandler.convert(loc, dest, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+			ExpressionResult src = (ExpressionResult) main.dispatch(node.getArguments()[1]);
+			src = src.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+			main.cHandler.convert(loc, src, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+			ExpressionResult size = (ExpressionResult) main.dispatch(node.getArguments()[2]);
+			size = size.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+			main.cHandler.convert(loc, size, mTypeSizeComputer.getSize_T());
 			
-			destRex = destRex.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-			srcRex = srcRex.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
-			sizeRex = sizeRex.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
+			final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(dest, src, size);
 			
-			stmt.addAll(destRex.stmt);
-			stmt.addAll(srcRex.stmt);
-			stmt.addAll(sizeRex.stmt);
-			decl.addAll(destRex.decl);
-			decl.addAll(srcRex.decl);
-			decl.addAll(sizeRex.decl);
-			auxVars.putAll(destRex.auxVars);
-			auxVars.putAll(srcRex.auxVars);
-			auxVars.putAll(sizeRex.auxVars);
-			overappr.addAll(destRex.overappr);
-			overappr.addAll(srcRex.overappr);
-			overappr.addAll(sizeRex.overappr);		
-
-			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMCPYRES, destRex.lrVal.getCType());
-			VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
-					loc, new String[] { tId }, main.typeHandler.constructPointerType(loc)) });
-			decl.add(tVarDecl);
-			auxVars.put(tVarDecl, loc);		
+			final String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMCPYRES, dest.lrVal.getCType());
+			final VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], 
+					new VarList[] { new VarList(loc, new String[] { tId }, main.typeHandler.constructPointerType(loc)) });
+			result.decl.add(tVarDecl);
+			result.auxVars.put(tVarDecl, loc);		
 			
-			Statement call = new CallStatement(loc, false, new VariableLHS[] { new VariableLHS(loc, tId) }, SFO.MEMCPY, 
-					new Expression[] { destRex.lrVal.getValue(), srcRex.lrVal.getValue(), sizeRex.lrVal.getValue() });
-			stmt.add(call);
+			Statement call = mMemoryHandler.constructMemcpyCall(loc, dest.lrVal.getValue(), 
+					src.lrVal.getValue(), size.lrVal.getValue(), tId);
+			result.stmt.add(call);
+			result.lrVal = new RValue(new IdentifierExpression(loc, tId), 
+					new CPointer(new CPrimitive(PRIMITIVE.VOID)));
 
 			// add required information to function handler.
-			if (!mFunctionHandler.getCallGraph().containsKey(SFO.MEMCPY)) {
-				mFunctionHandler.getCallGraph().put(SFO.MEMCPY, new LinkedHashSet<String>());
+			if (!mFunctionHandler.getCallGraph().containsKey(MemoryModelDeclarations.C_Memcpy.getName())) {
+				mFunctionHandler.getCallGraph().put(MemoryModelDeclarations.C_Memcpy.getName(), new LinkedHashSet<String>());
 			}
-			if (!mFunctionHandler.getModifiedGlobals().containsKey(SFO.MEMCPY)) {
-				mFunctionHandler.getModifiedGlobals().put(SFO.MEMCPY, new LinkedHashSet<String>());
+			if (!mFunctionHandler.getModifiedGlobals().containsKey(MemoryModelDeclarations.C_Memcpy.getName())) {
+				mFunctionHandler.getModifiedGlobals().put(MemoryModelDeclarations.C_Memcpy.getName(), new LinkedHashSet<String>());
 			}
-			mFunctionHandler.getCallGraph().get(mFunctionHandler.getCurrentProcedureID()).add(SFO.MEMCPY);
+			mFunctionHandler.getCallGraph().get(mFunctionHandler.getCurrentProcedureID()).add(MemoryModelDeclarations.C_Memcpy.getName());
 			
-			return new ExpressionResult(stmt, new RValue(new IdentifierExpression(loc, tId), 
-					destRex.lrVal.getCType()), decl, auxVars, overappr);
+			return result;
 		}
 		
 		if (methodName.equals("__builtin_object_size")) {
 			main.warn(loc, "used trivial implementation of __builtin_object_size");
-			return new ExpressionResult(new RValue(new IntegerLiteral(loc, SFO.NR0), 
-					new CPrimitive(PRIMITIVE.INT)));
+			CPrimitive cType = new CPrimitive(PRIMITIVE.INT);
+			Expression zero = m_ExpressionTranslation.constructLiteralForIntegerType(loc, cType, BigInteger.ZERO);
+			return new ExpressionResult(new RValue(zero, cType));
 		}
 
 		/*
@@ -361,7 +349,6 @@ public class SvComp14CHandler extends CHandler {
 
 		return super.visit(main, node);
 	}
-
 
 	
 	@Override

@@ -101,7 +101,7 @@ public class BoogieCopyTransformer extends BoogieTransformer {
 		} else {
 			throw new UnsupportedOperationException("Cannot process unknown expression: " + stat.getClass().getName());
 		}
-		ModelUtils.mergeAnnotations(stat, newStat);
+		ModelUtils.copyAnnotations(stat, newStat);
 		return newStat;
 	}
 
@@ -187,7 +187,7 @@ public class BoogieCopyTransformer extends BoogieTransformer {
 		} else {
 			throw new UnsupportedOperationException("Cannot process unknown expression: " + expr.getClass().getName());
 		}
-		ModelUtils.mergeAnnotations(expr, newExpr);
+		ModelUtils.copyAnnotations(expr, newExpr);
 		return newExpr;
 	}
 }

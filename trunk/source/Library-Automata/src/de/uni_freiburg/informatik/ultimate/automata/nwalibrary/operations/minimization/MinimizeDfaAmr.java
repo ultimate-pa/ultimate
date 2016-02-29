@@ -37,6 +37,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -44,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * This class implements the incremental DFA minimization algorithm by Almeida,
@@ -141,7 +141,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	 * @throws OperationCanceledException thrown when execution is cancelled
 	 * @throws AutomataLibraryException thrown by DFA check
 	 */
-	public MinimizeDfaAmr(final IUltimateServiceProvider services,
+	public MinimizeDfaAmr(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand)
 			throws AutomataLibraryException, AutomataLibraryException {
@@ -156,7 +156,7 @@ public class MinimizeDfaAmr<LETTER, STATE>
 	 * @throws OperationCanceledException thrown when execution is cancelled
 	 * @throws AutomataLibraryException thrown by DFA check
 	 */
-	public MinimizeDfaAmr(final IUltimateServiceProvider services,
+	public MinimizeDfaAmr(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt)

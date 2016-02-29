@@ -29,20 +29,21 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.result.GenericResultAtElement;
-import de.uni_freiburg.informatik.ultimate.result.IResultWithSeverity.Severity;
+import de.uni_freiburg.informatik.ultimate.result.model.IResultWithSeverity.Severity;
 
 /**
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class RcfgLibraryModeResultReporter extends RcfgResultReporter {
+public class RcfgLibraryModeResultReporter<STATE extends IAbstractState<STATE, CodeBlock, VARDECL>, VARDECL>
+		extends RcfgResultReporter<STATE, VARDECL> {
 
-	public RcfgLibraryModeResultReporter(final IUltimateServiceProvider services,
-			final BaseRcfgAbstractStateStorageProvider<?> storageProvider) {
-		super(services, storageProvider);
+	public RcfgLibraryModeResultReporter(final IUltimateServiceProvider services) {
+		super(services);
 	}
 
 	@Override

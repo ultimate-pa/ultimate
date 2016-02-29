@@ -31,6 +31,7 @@ import java.util.Map.Entry;
 import java.util.ArrayList;
 import java.util.TreeMap;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
@@ -58,13 +59,13 @@ public class TermcompProofBenchmark implements ICsvProviderProvider<Double> {
 	}
 
 	void reportFiniteModule(Integer iteration, INestedWordAutomatonSimple<CodeBlock, IPredicate> automaton) {
-		String stringRepresentation = (new AutomatonDefinitionPrinter<>(m_Services, "finiteAutomatonIteration" + iteration, Format.ATS, automaton))
+		String stringRepresentation = (new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(m_Services), "finiteAutomatonIteration" + iteration, Format.ATS, automaton))
 				.getDefinitionAsString();
 		m_ModuleFinite.put(iteration, stringRepresentation);
 	}
 
 	void reportBuchiModule(Integer iteration, INestedWordAutomatonSimple<CodeBlock, IPredicate> automaton) {
-		String stringRepresentation = (new AutomatonDefinitionPrinter<>(m_Services, "buchiAutomatonIteration" + iteration, Format.ATS, automaton))
+		String stringRepresentation = (new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(m_Services), "buchiAutomatonIteration" + iteration, Format.ATS, automaton))
 				.getDefinitionAsString();
 		m_ModuleBuchi.put(iteration, stringRepresentation);
 	}

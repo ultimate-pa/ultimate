@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.core.services.model;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.result.IResult;
+import de.uni_freiburg.informatik.ultimate.result.model.IResult;
 
 /**
  * {@link IResultService} allows tools to report results.

@@ -27,6 +27,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.result;
 
+import de.uni_freiburg.informatik.ultimate.result.model.IResult;
+import de.uni_freiburg.informatik.ultimate.result.model.ITimeoutResult;
+
 /**
  * Use this to report that there was a timeout in cases this timeout is not
  * related to a specific element. (In cases the timeout is related to a specific

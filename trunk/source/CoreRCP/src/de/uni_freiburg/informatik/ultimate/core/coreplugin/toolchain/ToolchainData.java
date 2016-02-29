@@ -98,7 +98,7 @@ public class ToolchainData {
 		JAXBContext jc = JAXBContext.newInstance("de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain");
 
 		// all this effort just for validating the input XML file...
-		Bundle bundle = Platform.getBundle(Activator.s_PLUGIN_ID);
+		Bundle bundle = Platform.getBundle(Activator.PLUGIN_ID);
 
 		if (!isReady(bundle)) {
 			System.err.println("Bundle not ready");

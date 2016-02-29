@@ -59,6 +59,7 @@ public class CBuchiAutomizerTC extends WebToolchain {
 	protected List<Tool> defineTools() {
 		List<Tool> tools = new ArrayList<Tool>();
 
+		tools.add(new Tool(PrefStrings.s_syntaxchecker));
 		tools.add(new Tool(PrefStrings.s_cacsl2boogietranslator));
 		tools.addAll(BoogieBuchiAutomizerTC.boogieBuchiAutomizerToolchain());
 

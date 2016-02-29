@@ -1,0 +1,39 @@
+NestedWordAutomaton nwa = removeUnreachable(nwaUnprocessed);
+
+// how to get this to work?
+// INestedWordAutomatonSimple resultShrinkNwa = shrinkNwa(nwa);
+// INestedWordAutomatonSimple resultMinimizeSevpa = minimizeSevpa(nwa);
+// INestedWordAutomatonSimple resultMinimizeMaxSAT = minimizeNwaMaxSAT(nwa);
+
+print(nwaUnprocessed);
+print(nwa);
+
+print(numberOfStates(nwa));
+print(numberOfStates(shrinkNwa(nwa)));
+print(numberOfStates(minimizeSevpa(nwa)));
+print(numberOfStates(minimizeNwaMaxSAT(nwa)));
+print((minimizeNwaMaxSAT(nwa)));
+
+NestedWordAutomaton nwaUnprocessed = (
+	callAlphabet = {c0 c1 },
+	internalAlphabet = {a0 a1 a2 a3 a4 a5 },
+	returnAlphabet = {r0 r1 },
+	states = { st1 st2 st3 st4 st5 st6 st7},
+	initialStates = { st1 },
+	finalStates = { st7 },
+	callTransitions = {
+		 (st1 c0 st2)
+		 (st2 c1 st3)
+		 (st5 c1 st3)
+	},
+	internalTransitions = {
+		 (st1 a1 st2)
+		 (st3 a3 st4)
+		 (st4 a4 st1)
+		 (st4 a5 st5)
+	},
+	returnTransitions = {
+		 (st2 st1 r0 st6)
+		 (st6 st2 r1 st7)
+	}
+);

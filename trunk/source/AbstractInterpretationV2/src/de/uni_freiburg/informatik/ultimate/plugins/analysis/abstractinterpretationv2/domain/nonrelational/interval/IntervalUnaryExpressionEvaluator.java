@@ -37,7 +37,6 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
@@ -50,11 +49,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 public class IntervalUnaryExpressionEvaluator
-        implements INAryEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> {
+        implements INAryEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> {
 
 	private final Logger mLogger;
 
-	protected IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> mSubEvaluator;
+	protected IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> mSubEvaluator;
 	protected Operator mOperator;
 
 	protected IntervalUnaryExpressionEvaluator(Logger logger) {
@@ -62,53 +61,44 @@ public class IntervalUnaryExpressionEvaluator
 	}
 
 	@Override
-	public List<IEvaluationResult<IntervalDomainEvaluationResult>> evaluate(IntervalDomainState currentState) {
+	public List<IEvaluationResult<IntervalDomainValue>> evaluate(IntervalDomainState currentState) {
 
-		final List<IEvaluationResult<IntervalDomainEvaluationResult>> subEvaluatorResult = mSubEvaluator
-		        .evaluate(currentState);
+		final List<IEvaluationResult<IntervalDomainValue>> subEvaluatorResult = mSubEvaluator.evaluate(currentState);
 
-		final List<IEvaluationResult<IntervalDomainEvaluationResult>> returnEvaluationResults = new ArrayList<>();
+		final List<IEvaluationResult<IntervalDomainValue>> returnEvaluationResults = new ArrayList<>();
 
-		for (final IEvaluationResult<IntervalDomainEvaluationResult> result : subEvaluatorResult) {
-			IntervalDomainState returnState = currentState.copy();
+		for (final IEvaluationResult<IntervalDomainValue> result : subEvaluatorResult) {
 			IntervalDomainValue returnValue = new IntervalDomainValue();
 			BooleanValue returnBool;
-
-			boolean setToBottom = false;
 
 			switch (mOperator) {
 			case ARITHNEGATIVE:
 				returnBool = new BooleanValue(false);
-				returnValue = result.getResult().getEvaluatedValue().negate();
+				returnValue = result.getValue().negate();
 				break;
 			case LOGICNEG:
 				returnBool = result.getBooleanValue().neg();
-				if (returnBool.getValue() == Value.FALSE || returnBool.getValue() == Value.BOTTOM) {
-					setToBottom = true;
-				}
+				returnValue = new IntervalDomainValue();
 				break;
 			default:
 				mLogger.warn(
-				        "Operator " + mOperator + " not implemented. Assuming logical interpretation to be false.");
-				returnBool = new BooleanValue(false);
+				        "Operator " + mOperator + " not implemented. Assuming logical interpretation to be TOP.");
+				returnBool = new BooleanValue();
 				mLogger.warn("Possible loss of precision: cannot handle operator " + mOperator
 				        + ". Returning current state. Returned value is top.");
 				returnValue = new IntervalDomainValue();
 			}
 
-			if (setToBottom) {
-				returnState = returnState.bottomState();
-			}
-
-			returnEvaluationResults.add(new IntervalDomainEvaluationResult(returnValue, returnState, returnBool));
+			returnEvaluationResults.add(new IntervalDomainEvaluationResult(returnValue, returnBool));
 		}
 
-		return returnEvaluationResults;
+		assert returnEvaluationResults.size() != 0;
+		return IntervalUtils.mergeIfNecessary(returnEvaluationResults, 2);
+
 	}
 
 	@Override
-	public void addSubEvaluator(
-	        IEvaluator<IntervalDomainEvaluationResult, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(IEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> evaluator) {
 		assert mSubEvaluator == null;
 		assert evaluator != null;
 
@@ -142,4 +132,54 @@ public class IntervalUnaryExpressionEvaluator
 		return 1;
 	}
 
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+
+		switch (mOperator) {
+		case LOGICNEG:
+			sb.append("!");
+			break;
+		case OLD:
+			sb.append("old(");
+			break;
+		case ARITHNEGATIVE:
+			sb.append("-");
+			break;
+		default:
+		}
+
+		sb.append(mSubEvaluator);
+
+		if (mOperator == Operator.OLD) {
+			sb.append(")");
+		}
+
+		return sb.toString();
+	}
+
+	@Override
+	public List<IntervalDomainState> inverseEvaluate(IEvaluationResult<IntervalDomainValue> computedValue,
+	        IntervalDomainState currentState) {
+		final List<IntervalDomainState> returnList = new ArrayList<>();
+		IntervalDomainValue evalValue = computedValue.getValue();
+		BooleanValue evalBool = computedValue.getBooleanValue();
+
+		switch (mOperator) {
+		case ARITHNEGATIVE:
+			evalValue = computedValue.getValue().negate();
+			break;
+		case LOGICNEG:
+			evalBool = computedValue.getBooleanValue().neg();
+			break;
+		default:
+			throw new UnsupportedOperationException(
+			        new StringBuilder().append("Operator ").append(mOperator).append(" not supported.").toString());
+		}
+
+		final IntervalDomainEvaluationResult evalResult = new IntervalDomainEvaluationResult(evalValue, evalBool);
+		final List<IntervalDomainState> result = mSubEvaluator.inverseEvaluate(evalResult, currentState);
+		returnList.addAll(result);
+		return returnList;
+	}
 }

@@ -194,7 +194,7 @@ public class StructHandler {
 		CType resultType = structType.getFieldTypes()[fieldIndex];
 
 		ExpressionResult call = 
-				m_MemoryHandler.getReadCall(main, newPointer, resultType);
+				m_MemoryHandler.getReadCall(newPointer, resultType);
 		ArrayList<Statement> stmt = new ArrayList<Statement>();
 		ArrayList<Declaration> decl = new ArrayList<Declaration>();
 		Map<VariableDeclaration, ILocation> auxVars = 

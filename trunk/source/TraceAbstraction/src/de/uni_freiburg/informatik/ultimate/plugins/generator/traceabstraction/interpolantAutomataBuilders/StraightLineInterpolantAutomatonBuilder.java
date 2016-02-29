@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.InCaReAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
@@ -66,7 +67,7 @@ public class StraightLineInterpolantAutomatonBuilder {
 		InterpolantsPreconditionPostcondition ipp = 
 				new InterpolantsPreconditionPostcondition(interpolantGenerator);
 		m_Result =	new NestedWordAutomaton<CodeBlock, IPredicate>(
-				m_Services, 
+				new AutomataLibraryServices(m_Services), 
 						alphabet.getInternalAlphabet(),
 						alphabet.getCallAlphabet(),
 						alphabet.getReturnAlphabet(),

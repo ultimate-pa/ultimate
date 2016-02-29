@@ -33,7 +33,6 @@ import java.util.Map.Entry;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * Given two nondeterministic NWAs nwa_minuend and nwa_subtrahend a
@@ -51,12 +50,12 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  */
 public class AutomatonEpimorphism<STATE> {
 
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 
 	private HashMap<STATE, STATE> m_epimorphism;
 
-	public AutomatonEpimorphism(IUltimateServiceProvider services) {
+	public AutomatonEpimorphism(AutomataLibraryServices services) {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);
 		m_epimorphism = new HashMap<STATE, STATE>();
@@ -75,7 +74,7 @@ public class AutomatonEpimorphism<STATE> {
 	 * @return an epimorphism structure from a1 to a2
 	 */
 	public static AutomatonEpimorphism<String> createFromAutomatonLabels(
-			IUltimateServiceProvider services,
+			AutomataLibraryServices services,
 			
 			INestedWordAutomatonOldApi<String, String> a1,
 			INestedWordAutomatonOldApi<String, String> a2) {

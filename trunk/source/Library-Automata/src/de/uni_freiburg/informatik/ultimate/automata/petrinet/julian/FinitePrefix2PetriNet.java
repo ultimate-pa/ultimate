@@ -38,17 +38,17 @@ import java.util.TreeSet;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.util.UnionFind;
 
 public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 	
 	BranchingProcess<L, C> m_Input;
@@ -86,7 +86,7 @@ public class FinitePrefix2PetriNet<L, C> implements IOperation<L, C> {
 //		return result;
 //	}
 
-	public FinitePrefix2PetriNet(IUltimateServiceProvider services, 
+	public FinitePrefix2PetriNet(AutomataLibraryServices services, 
 			BranchingProcess<L, C> bp) throws AutomataLibraryException {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);

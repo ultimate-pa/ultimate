@@ -46,11 +46,11 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.core.util.MonitoredProcess;
 import de.uni_freiburg.informatik.ultimate.core.util.MonitoredProcess.MonitoredProcessState;
-import de.uni_freiburg.informatik.ultimate.result.IProgramExecution;
-import de.uni_freiburg.informatik.ultimate.result.IResultWithLocation;
 import de.uni_freiburg.informatik.ultimate.result.WitnessResult;
 import de.uni_freiburg.informatik.ultimate.result.WitnessResult.WitnessVerificationStatus;
-import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution;
+import de.uni_freiburg.informatik.ultimate.result.model.IResult;
+import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.preferences.PreferenceInitializer;
 
 /**
@@ -82,20 +82,22 @@ public class WitnessManager {
 	/**
 	 * 
 	 * @param funsResultSupplier
-	 *            A collection of functions were each provides a string that represents a valid SVCOMP witness.
+	 *            A collection of functions were each provides a triple (IResult, filename, string that represents a
+	 *            valid SVCOMP witness).
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	public void run(final Collection<Supplier<Pair<IResultWithLocation, String>>> funsResultSupplier)
+	public void run(final Collection<Supplier<Triple<IResult, String, String>>> funsResultSupplier)
 			throws IOException, InterruptedException {
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 
 		int cexNo = 0;
 		String suffix = null;
-		for (final Supplier<Pair<IResultWithLocation, String>> funResultSupplier : funsResultSupplier) {
-			final Pair<IResultWithLocation, String> pair = funResultSupplier.get();
-			final IResultWithLocation cex = pair.getFirst();
-			final String svcompWitness = pair.getSecond();
+		for (final Supplier<Triple<IResult, String, String>> funResultSupplier : funsResultSupplier) {
+			final Triple<IResult, String, String> triple = funResultSupplier.get();
+			final IResult cex = triple.getFirst();
+			final String originalFile = triple.getSecond();
+			final String svcompWitness = triple.getThird();
 
 			final boolean writeInWorkingDir = ups.getBoolean(PreferenceInitializer.LABEL_WITNESS_WRITE_WORKINGDIR);
 			final boolean writeBesideInputFile = ups.getBoolean(PreferenceInitializer.LABEL_WITNESS_WRITE);
@@ -111,18 +113,20 @@ public class WitnessManager {
 			}
 
 			if (writeBesideInputFile && svcompWitness != null) {
-				filename = writeWitness(svcompWitness, cex.getLocation().getFileName(), suffix);
+				filename = writeWitness(svcompWitness, originalFile, suffix);
 				filenamesToDelete.add(filename);
 			}
 
 			if (ups.getBoolean(PreferenceInitializer.LABEL_WITNESS_VERIFY)) {
 				if (svcompWitness == null) {
-					reportWitnessResult(null, cex, WitnessVerificationStatus.INTERNAL_ERROR);
+					reportWitnessResult(null, cex, WitnessVerificationStatus.INTERNAL_ERROR,
+							WitnessVerificationStatus.VERIFIED);
 				} else {
-					checkWitness(filename, cex, svcompWitness);
+					checkWitness(filename, cex, originalFile, svcompWitness);
 				}
 			} else if (ups.getBoolean(PreferenceInitializer.LABEL_WITNESS_LOG)) {
-				reportWitnessResult(svcompWitness, cex, WitnessVerificationStatus.UNVERIFIED);
+				reportWitnessResult(svcompWitness, cex, WitnessVerificationStatus.UNVERIFIED,
+						WitnessVerificationStatus.UNVERIFIED);
 			}
 
 			if (ups.getBoolean(PreferenceInitializer.LABEL_WITNESS_DELETE_GRAPHML)) {
@@ -172,13 +176,13 @@ public class WitnessManager {
 		return filename.toString();
 	}
 
-	private void reportWitnessResult(String svcompWitness, IResultWithLocation cex,
-			WitnessVerificationStatus verificationStatus) {
+	private void reportWitnessResult(final String svcompWitness, final IResult cex,
+			final WitnessVerificationStatus verificationStatus, final WitnessVerificationStatus expectedStatus) {
 		mServices.getResultService().reportResult(cex.getPlugin(),
-				new WitnessResult(Activator.PLUGIN_ID, cex, svcompWitness, verificationStatus));
+				new WitnessResult(Activator.PLUGIN_ID, cex, svcompWitness, verificationStatus, expectedStatus));
 	}
 
-	private boolean checkWitness(String svcompWitnessFile, IResultWithLocation cex, String svcompWitness)
+	private boolean checkWitness(String svcompWitnessFile, IResult cex, String originalFile, String svcompWitness)
 			throws IOException, InterruptedException {
 		mLogger.info("Verifying witness for CEX: " + cex.getShortDescription());
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
@@ -188,24 +192,24 @@ public class WitnessManager {
 
 		switch (type) {
 		case CPACHECKER:
-			return checkWitnessWithCPAChecker(svcompWitnessFile, cex, command, svcompWitness);
+			return checkWitnessWithCPAChecker(svcompWitnessFile, cex, originalFile, command, svcompWitness);
 		default:
 			throw new UnsupportedOperationException("Witness verifier " + type + " unknown");
 		}
 	}
 
-	private boolean checkWitnessWithCPAChecker(String svcompWitnessFile, IResultWithLocation cex, String command,
-			String svcompWitness) throws IOException, InterruptedException {
+	private boolean checkWitnessWithCPAChecker(String svcompWitnessFile, IResult cex, String originalFile,
+			String command, String svcompWitness) throws IOException, InterruptedException {
 		final String cpaCheckerHome = System.getenv().get("CPACHECKER_HOME");
 		if (cpaCheckerHome == null) {
 			mLogger.error("CPACHECKER_HOME not set, cannot use CPACHECKER as witness verifier");
-			reportWitnessResult(svcompWitness, cex, WitnessVerificationStatus.INTERNAL_ERROR);
+			reportWitnessResult(svcompWitness, cex, WitnessVerificationStatus.INTERNAL_ERROR,
+					WitnessVerificationStatus.VERIFIED);
 			return false;
 		}
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		int timeoutInS = ups.getInt(PreferenceInitializer.LABEL_WITNESS_VERIFIER_TIMEOUT);
 
-		final String originalFile = cex.getLocation().getFileName();
 		final String[] cmdArray = makeCPACheckerCommand(command, svcompWitnessFile,
 				ups.getString(PreferenceInitializer.LABEL_WITNESS_CPACHECKER_PROPERTY), originalFile, cpaCheckerHome,
 				timeoutInS);
@@ -228,7 +232,8 @@ public class WitnessManager {
 
 		if (checkOutputForSuccess(output)) {
 			mLogger.info("Witness for CEX was verified successfully");
-			reportWitnessResult(svcompWitness, cex, WitnessVerificationStatus.VERIFIED);
+			reportWitnessResult(svcompWitness, cex, WitnessVerificationStatus.VERIFIED,
+					WitnessVerificationStatus.VERIFIED);
 			return true;
 		} else {
 			final StringBuilder logMessage = new StringBuilder().append("Witness for CEX did not verify");
@@ -240,7 +245,8 @@ public class WitnessManager {
 					.append(CoreUtil.getPlatformLineSeparator()).append("STDOUT:")
 					.append(CoreUtil.getPlatformLineSeparator()).append(output);
 			mLogger.error(logMessage.toString());
-			reportWitnessResult(svcompWitness, cex, WitnessVerificationStatus.VERIFICATION_FAILED);
+			reportWitnessResult(svcompWitness, cex, WitnessVerificationStatus.VERIFICATION_FAILED,
+					WitnessVerificationStatus.VERIFIED);
 			return false;
 		}
 	}

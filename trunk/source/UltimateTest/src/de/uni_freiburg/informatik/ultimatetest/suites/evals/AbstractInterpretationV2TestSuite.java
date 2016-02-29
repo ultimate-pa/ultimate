@@ -34,11 +34,11 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.decider.NoTimeoutTestResultDecider;
+import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.suites.AbstractEvalTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition;
-import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
+import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -51,19 +51,52 @@ public class AbstractInterpretationV2TestSuite extends AbstractEvalTestSuite {
 	
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String, String>[] TOOLCHAINS = new Triple[] {
-	        new Triple<>("AbstractInterpretationV2C.xml", ".c", "ai/AIv2_INT.epf"),
+//	        new Triple<>("AutomizerC.xml", ".i", "svcomp2016/svcomp-Reach-64bit-Automizer_Default.epf"),
+//	        new Triple<>("AbstractInterpretationv2C.xml", ".i", "ai/AIv2_INT.epf"),
+//	        new Triple<>("AbstractInterpretationv2.xml", ".bpl", "ai/AIv2_INT.epf"),
+	        new Triple<>("AbstractInterpretationv2C.xml", ".c", "ai/AIv2_OCT.epf"),
+	        new Triple<>("AbstractInterpretationv2.xml", ".bpl", "ai/AIv2_OCT.epf"),
 	};
 
 	private static final String[] INPUT = new String[] {
+			/* failed tests */
+//			"examples/programs/abstractInterpretation/EvenOdd.bpl",  // doesn't terminate (FXPE cannot handle recursion)
+//			// ... more recursive programs
+//			"examples/programs/regression/c/InParamRenaming.c",      // cacsl2boogie UnsupportedOperationException
+//	        "examples/svcomp/loops/bubble_sort_true-unreach-call.c", // RCFG AssertionError non-linear
+			/* RCFG does not seem to terminate */
+//	        "examples/svcomp/loops/compact_false-unreach-call.c",
+//	        "examples/svcomp/loops/heavy_false-unreach-call.c",
+//	        "examples/svcomp/loops/heavy_true-unreach-call.c",
+//			"examples/programs/abstractInterpretation/EasyRecursive_incorrect.bpl",
 
-//	         "examples/programs/abstractInterpretation/",
-//	         "examples/programs/abstractInterpretationNoRec/",
+//	        "varDiffOrder/",
+
+			/* closure test set */
+//			"examples/svcomp/locks/",
+//			"examples/svcomp/loop-acceleration/",
+//			"examples/svcomp/loop-invgen/",
+//			"examples/svcomp/loop-lit/",
+//			"examples/svcomp/loop-new/",
+//			"examples/svcomp/loops/",
+//			"examples/svcomp/ntdrivers/",
+//			"examples/svcomp/ntdrivers-simplified/",
+//			"examples/svcomp/ssh/",
+//			"examples/svcomp/ssh-simplified/",
+//			"examples/svcomp/systemc/",
+
+	        "examples/programs/abstractInterpretation/",
 	        /* ULTIMATE repo */
-//	         "examples/programs/regression/bpl/",
-//	         "examples/programs/regression/c/",
-//	         "examples/programs/recursivePrograms",
+	         "examples/programs/regression/bpl/",
+	         "examples/programs/regression/c/",
+	         "examples/programs/recursivePrograms",
 	        /* SV-COMP repo */
-//	        "examples/svcomp/loops/", // SPLIT
+	        "examples/svcomp/loops/", // SPLIT
+			// "examples/svcomp/ntdrivers-simplified/",
+	   		// "examples/svcomp/ssh-simplified/", 
+			// "examples/svcomp/locks/",
+			// "examples/svcomp/recursive/",
+			// "examples/svcomp/systemc/",
 			// "examples/svcomp/loopsSelection/",
 			// "examples/svcomp/eca/", // SPLIT
 			// "examples/svcomp/ecaSelection/",
@@ -103,13 +136,13 @@ public class AbstractInterpretationV2TestSuite extends AbstractEvalTestSuite {
 
 	@Override
 	protected long getTimeout() {
-		return 10 * 1000;
-//		return 0;
+		return 10 * 1000; // origin/dev uses 60 * 1000
 	}
 	
 	@Override
 	public ITestResultDecider constructITestResultDecider(UltimateRunDefinition urd) {
-		return new NoTimeoutTestResultDecider(urd);
+		return new SafetyCheckTestResultDecider(urd, true);
+		//		return new NoTimeoutTestResultDecider(urd);
 	}
 
 	@Override

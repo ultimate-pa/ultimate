@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.result.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
  * Represents the transition of a program or a transition system as an SMT
@@ -585,8 +586,13 @@ public class TransFormula implements Serializable {
 
 		formula = new FormulaUnLet().unlet(formula);
 		if (simplify) {
-			Term simplified = SmtUtils.simplify(script, formula, services);
-			formula = simplified;
+			try {
+				Term simplified = SmtUtils.simplify(script, formula, services);
+				formula = simplified;
+			} catch (ToolchainCanceledException tce) {
+				throw new ToolchainCanceledException(TransFormula.class, tce.getRunningTaskInfo() + 
+						" while doing sequential composition of " + transFormula.length + " TransFormulas");
+			}
 		}
 		removesuperfluousVariables(inVars, outVars, auxVars, formula);
 
@@ -640,6 +646,8 @@ public class TransFormula implements Serializable {
 		services.getResultService().reportResult(ModelCheckerUtils.sPluginID, timeOutRes);
 	}
 
+	@Deprecated
+	// there is also a probably similar methods with a similar name
 	private static void removesuperfluousVariables(Map<BoogieVar, TermVariable> inVars,
 			Map<BoogieVar, TermVariable> outVars, Set<TermVariable> auxVars, Term formula) {
 		Set<TermVariable> occuringVars = new HashSet<TermVariable>(Arrays.asList(formula.getFreeVars()));
@@ -1535,8 +1543,6 @@ public class TransFormula implements Serializable {
 	}
 	
 	private static TransFormula negate(TransFormula tf, Boogie2SMT boogie2smt, IUltimateServiceProvider services, Logger logger) {
-		Map<BoogieVar, TermVariable> inVars = tf.getInVars();
-		Map<BoogieVar, TermVariable> outVars = tf.getOutVars();
 		Set<TermVariable> auxVars = Collections.emptySet();
 		if (!tf.getBranchEncoders().isEmpty()) {
 			throw new AssertionError("I think this does not make sense with branch enconders");
@@ -1547,6 +1553,13 @@ public class TransFormula implements Serializable {
 		formula = PartialQuantifierElimination.quantifier(services, logger, 
 				boogie2smt.getScript(), boogie2smt.getVariableManager(), QuantifiedFormula.EXISTS, 
 				tf.getAuxVars(), formula, new Term[0]);
+		formula = Util.not(boogie2smt.getScript(), formula);
+		
+		Map<BoogieVar, TermVariable> inVars = new HashMap<>(tf.getInVars());
+		Map<BoogieVar, TermVariable> outVars = new HashMap<>(tf.getOutVars());
+		TransFormula.removeSuperfluousVars(formula, inVars, outVars, auxVars);
+		
+
 		//FIXME: Filter inVars and outVars to tv that occur in formula
 //		formula = SmtUtils.quantifier(boogie2smt.getScript(), QuantifiedFormula.EXISTS, tf.getAuxVars(), formula);
 		Term closedFormula = computeClosedFormula(formula, inVars, outVars, auxVars, true, boogie2smt);

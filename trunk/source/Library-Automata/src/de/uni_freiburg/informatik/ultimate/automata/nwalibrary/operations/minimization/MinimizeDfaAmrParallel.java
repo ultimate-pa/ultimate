@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -47,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 /**
  * This class implements the incremental DFA minimization algorithm by Almeida,
@@ -81,7 +81,7 @@ public class MinimizeDfaAmrParallel<LETTER, STATE> extends
 	/**
 	 * Service Provider.
 	 */
-	private final IUltimateServiceProvider m_services;
+	private final AutomataLibraryServices m_services;
 	/**
 	 * The result automaton.
 	 */
@@ -218,7 +218,7 @@ public class MinimizeDfaAmrParallel<LETTER, STATE> extends
 	 * @throws AutomataLibraryException
 	 *             thrown by DFA check
 	 */
-	public MinimizeDfaAmrParallel(final IUltimateServiceProvider services,
+	public MinimizeDfaAmrParallel(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand)
 			throws AutomataLibraryException, AutomataLibraryException {
@@ -237,7 +237,7 @@ public class MinimizeDfaAmrParallel<LETTER, STATE> extends
 	 * @throws AutomataLibraryException
 	 *             thrown by DFA check
 	 */
-	public MinimizeDfaAmrParallel(final IUltimateServiceProvider services,
+	public MinimizeDfaAmrParallel(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt) throws AutomataLibraryException,
@@ -265,7 +265,7 @@ public class MinimizeDfaAmrParallel<LETTER, STATE> extends
 	 * @throws AutomataLibraryException
 	 *             thrown by DFA check
 	 */
-	public MinimizeDfaAmrParallel(final IUltimateServiceProvider services,
+	public MinimizeDfaAmrParallel(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Interrupt interrupt, ArrayList<STATE> int2state,

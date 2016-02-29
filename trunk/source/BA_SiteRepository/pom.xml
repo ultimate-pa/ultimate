@@ -54,8 +54,8 @@
 									<attachId>UltimateDebug</attachId>
 								</product>
 								<product>
-									<id>BOSCHReqAnalyzer</id>
-									<attachId>BOSCHReqAnalyzer</attachId>
+									<id>ReqAnalyzer</id>
+									<attachId>ReqAnalyzer</attachId>
 								</product>
 							</products>
 						</configuration>

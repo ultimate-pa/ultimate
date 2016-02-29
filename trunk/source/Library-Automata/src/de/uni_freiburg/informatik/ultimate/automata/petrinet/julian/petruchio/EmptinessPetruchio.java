@@ -33,11 +33,8 @@ import java.util.Map;
 
 import org.apache.log4j.Logger;
 
-import petruchio.cov.Backward;
-import petruchio.cov.SimpleList;
-import petruchio.interfaces.petrinet.Place;
-import petruchio.interfaces.petrinet.Transition;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
@@ -46,7 +43,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import petruchio.cov.Backward;
+import petruchio.cov.SimpleList;
+import petruchio.interfaces.petrinet.Place;
+import petruchio.interfaces.petrinet.Transition;
 
 /**
  * Check if a PetriNetJulian has an accepting run.
@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
 
 public class EmptinessPetruchio<S,C> implements IOperation<S,C> {
 	
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	private final Logger m_Logger;
 	
 	@Override
@@ -91,7 +91,7 @@ public class EmptinessPetruchio<S,C> implements IOperation<S,C> {
 
 	NestedRun<S,C> m_AcceptedRun = null;
 	
-	public EmptinessPetruchio(IUltimateServiceProvider services, 
+	public EmptinessPetruchio(AutomataLibraryServices services, 
 			PetriNetJulian<S,C> net) {
 		m_Services = services;
 		m_Logger = m_Services.getLoggingService().getLogger(LibraryIdentifiers.s_LibraryID);

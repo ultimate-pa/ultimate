@@ -186,7 +186,7 @@ public class WeakestPrecondition extends BoogieTransformer {
 		    return expr;
 		}
 		else {
-		    ModelUtils.mergeAnnotations(expr, newExpr);
+		    ModelUtils.copyAnnotations(expr, newExpr);
 		    return newExpr;
 		}
 	}

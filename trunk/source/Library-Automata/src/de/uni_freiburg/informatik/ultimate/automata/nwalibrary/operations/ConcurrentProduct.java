@@ -34,11 +34,11 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 
 
 /**
@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  */
 public class ConcurrentProduct<LETTER,STATE> {
 	
-	private final IUltimateServiceProvider m_Services;
+	private final AutomataLibraryServices m_Services;
 	
 	private final Logger m_Logger;
 	
@@ -173,7 +173,7 @@ public class ConcurrentProduct<LETTER,STATE> {
 	}
 	
 	
-	public ConcurrentProduct(IUltimateServiceProvider services, 
+	public ConcurrentProduct(AutomataLibraryServices services, 
 			INestedWordAutomatonOldApi<LETTER,STATE> nwa1,
 			INestedWordAutomatonOldApi<LETTER,STATE> nwa2, boolean concurrentPrefixProduct) {
 		m_Services = services;
