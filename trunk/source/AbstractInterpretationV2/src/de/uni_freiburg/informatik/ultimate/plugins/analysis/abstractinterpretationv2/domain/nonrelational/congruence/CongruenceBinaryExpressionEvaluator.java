@@ -144,6 +144,17 @@ public class CongruenceBinaryExpressionEvaluator
 						returnBool = new BooleanValue(false);
 						break;
 					}
+					if (!mLeftSubEvaluator.containsBool() && !mRightSubEvaluator.containsBool()) {
+						if (v1.isConstant() && v2.isConstant()) {
+							returnBool = new BooleanValue(v1.value().equals(v2.value()));
+							break;
+						}
+						if (returnValue.isBottom()) {
+							returnBool = new BooleanValue(false);
+						} else {
+							returnBool = new BooleanValue();
+						}
+					}
 					break;
 				// !=, <, >, ... can only be computed for constants
 				case COMPNEQ:
