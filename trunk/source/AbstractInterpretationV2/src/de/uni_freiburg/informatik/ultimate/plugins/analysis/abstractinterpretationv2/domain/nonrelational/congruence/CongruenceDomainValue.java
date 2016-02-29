@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 /**
  * Representation of a congruence value in the congruence domain
  * 
- * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * @author Frank SchÃ¼ssele (schuessf@informatik.uni-freiburg.de)
  *
  */
 

@@ -12,10 +12,11 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
-/*
+/**
  * Class to transform {@link Expression}s to an equivalent linear normal form (just used as container)
  * 
- * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * @author Frank SchÃ¼ssele (schuessf@informatik.uni-freiburg.de)
+ * 
  */
 public class ExpressionTransformer {
 	private BigInteger mConstant;
@@ -28,8 +29,8 @@ public class ExpressionTransformer {
 		mIsLinear = true;
 	}
 	
-	/*
-	 * Tranforms a given {@link Expression} to an equivalent linear normal form (if possible), w.r.t logical operators (and, or, not)
+	/**
+	 * Tranforms a given {@link Expression} to an equivalent linear normal form (if possible), w.r.t logical operators
 	 * Normal form: conjunctions / disjunctions of: k1 * x1 + ... + kn * xn + k0 (op 0) (where xi are variables and ki constant integers)
 	 */
 	public Expression transform(Expression e) {
@@ -42,7 +43,7 @@ public class ExpressionTransformer {
 		return e;
 	}
 
-	/*
+	/**
 	 * Transforms a {@link UnaryExpression} to normal form
 	 * Just moves the not inside and uses atomicTransform
 	 */
@@ -55,6 +56,8 @@ public class ExpressionTransformer {
 
 				Expression newLeft = binexp.getLeft();
 				Expression newRight = binexp.getRight();
+				
+				ILocation loc = binexp.getLocation();
 
 				switch (binexp.getOperator()) {
 				case COMPEQ:
@@ -77,19 +80,32 @@ public class ExpressionTransformer {
 					break;
 				case LOGICAND:
 					newOp = Operator.LOGICOR;
-					newLeft = new UnaryExpression(binexp.getLocation(), UnaryExpression.Operator.LOGICNEG, newLeft);
-					newRight = new UnaryExpression(binexp.getLocation(), UnaryExpression.Operator.LOGICNEG, newRight);
+					newLeft = new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, newLeft);
+					newRight = new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, newRight);
 					break;
 				case LOGICOR:
 					newOp = Operator.LOGICAND;
-					newLeft = new UnaryExpression(binexp.getLocation(), UnaryExpression.Operator.LOGICNEG, newLeft);
-					newRight = new UnaryExpression(binexp.getLocation(), UnaryExpression.Operator.LOGICNEG, newRight);
+					newLeft = new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, newLeft);
+					newRight = new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, newRight);
+					break;
+				case LOGICIMPLIES:
+					newOp = Operator.LOGICAND;
+					newRight = new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, newRight);
+					break;
+				case LOGICIFF:
+					newOp = Operator.LOGICOR;
+					Expression leftLeft = newLeft;
+					Expression leftRight = new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, newRight);
+					Expression rightLeft = new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, newLeft);
+					Expression rightRight = newRight;
+					newLeft = new BinaryExpression(loc, Operator.LOGICAND, leftLeft, leftRight);
+					newRight = new BinaryExpression(loc, Operator.LOGICAND, rightLeft, rightRight);
 					break;
 				default:
 					// Other operators can't be handled or are not valid, so just return the old expression
 					return expr;
 				}
-				final BinaryExpression newExp = new BinaryExpression(binexp.getLocation(), newOp, newLeft, newRight);
+				final BinaryExpression newExp = new BinaryExpression(loc, newOp, newLeft, newRight);
 				return transform(newExp);
 			} else if (expr.getExpr() instanceof UnaryExpression) {
 				final UnaryExpression unexp = (UnaryExpression) expr.getExpr();
@@ -101,23 +117,47 @@ public class ExpressionTransformer {
 		return atomicTransform(expr);
 	}
 	
-	/*
+	/**
 	 * Transforms a {@link BinaryExpression} to normal form
 	 * Just splits conjunctions / disjunctions and uses atomicTransform then
 	 */
 	private Expression transformBinary(BinaryExpression e) {
+		Operator newOp = e.getOperator();
+		
+		Expression newLeft = e.getLeft();
+		Expression newRight = e.getRight();
+		
+		ExpressionTransformer left = new ExpressionTransformer();
+		ExpressionTransformer right = new ExpressionTransformer();
+		
+		ILocation loc = e.getLocation();
+		
 		switch(e.getOperator()) {
 		case LOGICAND:
 		case LOGICOR:
-			ExpressionTransformer left = new ExpressionTransformer();
-			ExpressionTransformer right = new ExpressionTransformer();
-			return new BinaryExpression(e.getLocation(), e.getOperator(), left.transform(e.getLeft()), right.transform(e.getRight()));
+			newLeft = left.transform(e.getLeft());
+			newRight = right.transform(e.getRight());
+			break;
+		case LOGICIMPLIES:
+			newOp = Operator.LOGICOR;
+			newLeft = left.transform(new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, e.getLeft()));
+			newRight = right.transform(e.getRight());
+			break;
+		case LOGICIFF:
+			// x <==> y --> (x && y) || (!x && !y)
+			newOp = Operator.LOGICOR;
+			newLeft = left.transform(new BinaryExpression(loc, Operator.LOGICAND, e.getLeft(), e.getRight()));		
+			Expression negLeft = new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, e.getLeft());
+			Expression negRight = new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, e.getRight());
+			newRight = right.transform(new BinaryExpression(loc, Operator.LOGICAND, negLeft, negRight));
+			break;
 		default:
 			return atomicTransform(e);
 		}
+		return new BinaryExpression(loc, newOp, newLeft, newRight);
 	}
 
-	/*
+	/**
 	 * Transforms an atomic expression (without logical symbols) to normal form
 	 */
 	private Expression atomicTransform(Expression e) {
@@ -128,24 +168,38 @@ public class ExpressionTransformer {
 			return e;
 		}
 		// Construct an expression from the map + constant
-		// TODO: Maybe produce "nicer" formulae (... + -1 * x -> ... - x)
 		ILocation loc = e.getLocation();
 		Expression newExpr = null;
 		for (Map.Entry<String, BigInteger> entry : mCoefficients.entrySet()) {
-			Expression var = new IdentifierExpression(loc, entry.getKey());
-			Expression coeff = new IntegerLiteral(loc, entry.getValue().toString());
-			Expression summand = new BinaryExpression(loc, Operator.ARITHMUL, coeff, var);
 			if (newExpr == null) {
-				newExpr = summand;
+				Expression var = new IdentifierExpression(loc, entry.getKey());
+				if (entry.getValue().equals(BigInteger.ONE)) {
+					newExpr = var;
+				} else if (entry.getValue().abs().equals(BigInteger.ONE)) {
+					newExpr = new UnaryExpression(loc, UnaryExpression.Operator.ARITHNEGATIVE, var);
+				} else {
+					Expression coeff = new IntegerLiteral(loc, entry.getValue().toString());
+					newExpr = new BinaryExpression(loc, Operator.ARITHMUL, coeff, var);
+				}
 			} else {
-				newExpr = new BinaryExpression(loc, Operator.ARITHPLUS, newExpr, summand);
+				Expression var = new IdentifierExpression(loc, entry.getKey());
+				Expression coeff = new IntegerLiteral(loc, entry.getValue().abs().toString());
+				Expression summand = new BinaryExpression(loc, Operator.ARITHMUL, coeff, var);
+				Operator op = entry.getValue().signum() > 0 ? Operator.ARITHPLUS : Operator.ARITHMINUS;
+				if (entry.getValue().abs().equals(BigInteger.ONE)) {
+					newExpr = new BinaryExpression(loc, op, newExpr, var);
+				} else {
+					newExpr = new BinaryExpression(loc, op, newExpr, summand);
+				}
+				
 			}
 		}
-		Expression constant = new IntegerLiteral(loc, mConstant.toString());
 		if (newExpr == null) {
-			newExpr = constant;
+			newExpr = new IntegerLiteral(loc, mConstant.toString());;
 		} else if (mConstant.signum() != 0) {
-			newExpr = new BinaryExpression(loc, Operator.ARITHPLUS, newExpr, constant);
+			Expression constant = new IntegerLiteral(loc, mConstant.abs().toString());
+			Operator op = mConstant.signum() > 0 ? Operator.ARITHPLUS : Operator.ARITHMINUS;
+			newExpr = new BinaryExpression(loc, op, newExpr, constant);
 		}
 		if (e instanceof BinaryExpression) {
 			Operator op = ((BinaryExpression) e).getOperator();
@@ -164,8 +218,8 @@ public class ExpressionTransformer {
 		return newExpr;
 	}
 	
-	/*
-	 * 
+	/**
+	 *  Calculates the coefficients and the constant
 	 */
 	private void process(Expression e) {
 		if (e instanceof IntegerLiteral) {

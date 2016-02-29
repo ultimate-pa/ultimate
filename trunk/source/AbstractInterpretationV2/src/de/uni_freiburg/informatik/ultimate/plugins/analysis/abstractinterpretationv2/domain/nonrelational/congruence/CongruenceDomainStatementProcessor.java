@@ -74,7 +74,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 /**
  * Processes Boogie {@link Statement}s and returns a new {@link CongruenceDomainState} for the given statement.
  * 
- * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * @author Frank SchÃ¼ssele (schuessf@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
@@ -150,16 +150,6 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 			mExpressionEvaluator.addEvaluator(new CongruenceSingletonValueExpressionEvaluator(new CongruenceDomainValue()));
 			return expr;
 		}
-		
-//		ExpressionTransformer t = new ExpressionTransformer();
-//		Expression newExpr = t.transform(expr);
-//		
-//		if (!newExpr.toString().equals(expr.toString())) {
-//			mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Expression ")
-//			        .append(BoogiePrettyPrinter.print(expr)).append(" rewritten to: ")
-//			        .append(BoogiePrettyPrinter.print(newExpr)));
-//		}
-//		
 		return super.processExpression(expr);
 	}
 
