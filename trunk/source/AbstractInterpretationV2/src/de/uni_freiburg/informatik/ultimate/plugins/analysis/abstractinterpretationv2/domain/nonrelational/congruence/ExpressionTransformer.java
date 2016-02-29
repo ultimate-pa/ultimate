@@ -144,7 +144,7 @@ public class ExpressionTransformer {
 		Expression constant = new IntegerLiteral(loc, mConstant.toString());
 		if (newExpr == null) {
 			newExpr = constant;
-		} else {
+		} else if (mConstant.signum() != 0) {
 			newExpr = new BinaryExpression(loc, Operator.ARITHPLUS, newExpr, constant);
 		}
 		if (e instanceof BinaryExpression) {
