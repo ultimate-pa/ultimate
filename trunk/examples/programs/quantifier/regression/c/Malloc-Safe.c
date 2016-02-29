@@ -10,6 +10,8 @@
 #include <stdlib.h>
 
 int nonMain() {
-    int *p = malloc(sizeof(int));
+	// check also that conversion does not crash
+	long long size = sizeof(int);
+    int *p = malloc(size);
     return 0;
 }

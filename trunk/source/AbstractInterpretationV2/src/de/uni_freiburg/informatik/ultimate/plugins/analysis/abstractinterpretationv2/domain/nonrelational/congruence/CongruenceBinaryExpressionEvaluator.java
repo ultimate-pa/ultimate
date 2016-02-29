@@ -66,8 +66,6 @@ public class CongruenceBinaryExpressionEvaluator
 
 	private Operator mOperator;
 	
-	// For a modulo expression x % y store the value of y (for comparison)
-	private CongruenceDomainValue mModul = null;
 	// For a equals expression store the evaluated value of both sides (for evaluation of x % c == k)
 	private CongruenceDomainValue mRest = null;
 
@@ -123,7 +121,6 @@ public class CongruenceBinaryExpressionEvaluator
 				case ARITHMOD:
 					returnValue = v1.mod(v2);
 					returnBool = new BooleanValue(false);
-					mModul = v2;
 					break;
 				case LOGICAND:
 					returnBool = res1.getBooleanValue().and(res2.getBooleanValue());
@@ -147,29 +144,6 @@ public class CongruenceBinaryExpressionEvaluator
 						returnBool = new BooleanValue(false);
 						break;
 					}
-					
-					// x % kZ == c is false if c < 0
-					// x % k == c is false if c < 0 or c >= |k|
-					if (mLeftSubEvaluator instanceof CongruenceBinaryExpressionEvaluator) {
-						CongruenceBinaryExpressionEvaluator sub  = (CongruenceBinaryExpressionEvaluator) mLeftSubEvaluator;
-						if (sub.mOperator == Operator.ARITHMOD && v2.isConstant()) {
-							if (v2.value().signum() < 0 || sub.mModul.isConstant() && v2.value().compareTo(sub.mModul.value().abs()) >= 0) {
-								returnBool = new BooleanValue(false);
-								break;
-							}
-						}
-					}
-					if (mRightSubEvaluator instanceof CongruenceBinaryExpressionEvaluator) {
-						CongruenceBinaryExpressionEvaluator sub  = (CongruenceBinaryExpressionEvaluator) mRightSubEvaluator;
-						if (sub.mOperator == Operator.ARITHMOD && v1.isConstant()) {
-							if (v1.value().signum() < 0 || sub.mModul.isConstant() && v1.value().compareTo(sub.mModul.value().abs()) >= 0) {
-								returnBool = new BooleanValue(false);
-								break;
-							}
-						}
-					}
-
-					
 					if (!mLeftSubEvaluator.containsBool() && !mRightSubEvaluator.containsBool()) {
 						if (v1.isConstant() && v2.isConstant()) {
 							returnBool = new BooleanValue(v1.value().equals(v2.value()));
@@ -482,18 +456,20 @@ public class CongruenceBinaryExpressionEvaluator
 			// If mod is at one side of an equality, the left side of the mod expression
 			// changes according to the other side of the equality
 			if (left && mRest != null) {
-				newValue = oldValue.modEquals(otherValue, mRest);
+				newValue = otherValue.modEquals(mRest);
 			} else {
 				newValue = oldValue;
 			}
 			break;
 		case COMPEQ:
+			newValue = oldValue.intersect(otherValue);
+			break;
 		case COMPLEQ:
 		case COMPLT:
 		case COMPGEQ:
 		case COMPGT:
 		case COMPNEQ:
-			newValue = oldValue.intersect(otherValue);
+			newValue = referenceValue;
 			break;
 		default:
 			throw new UnsupportedOperationException("Not implemented: " + mOperator);

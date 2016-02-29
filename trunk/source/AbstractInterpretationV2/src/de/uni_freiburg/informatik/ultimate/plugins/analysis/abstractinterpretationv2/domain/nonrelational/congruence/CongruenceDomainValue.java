@@ -10,7 +10,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  * Representation of a congruence value in the congruence domain
  * 
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
- * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
 
@@ -36,10 +35,6 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 	}
 	
 	protected CongruenceDomainValue(BigInteger value, boolean isConstant) {
-		if (value == null) {
-			setToBottom();
-			return;
-		}
 		mIsBottom = false;
 		mIsConstant = isConstant;
 		if (value.equals(BigInteger.ZERO)) {
@@ -64,26 +59,6 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 		return mIsConstant;
 	}
 	
-	protected void setToBottom() {
-		mValue = null;
-		mIsBottom = true;
-		mIsConstant = false;
-	}
-	
-	protected void setValue(BigInteger value, boolean isConstant) {
-		assert value != null;
-		mIsBottom = false;
-		mIsConstant = isConstant;
-		if (value.equals(BigInteger.ZERO)) {
-			mIsConstant = true;
-		}
-		mValue = mIsConstant ? value : value.abs();
-	}
-	
-	protected void setValue(BigInteger value) {
-		setValue(value, false);
-	}
-	
 	@Override
 	public int compareTo(CongruenceDomainValue other) {
 		throw new UnsupportedOperationException(
@@ -91,14 +66,14 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 	}
 	
 	protected CongruenceDomainValue merge(CongruenceDomainValue other) {
-		if (other == null || mIsBottom && other.mIsBottom) {
+		if (other == null) {
 			return new CongruenceDomainValue(true);
 		}
 		if (mIsBottom) {
-			return new CongruenceDomainValue(other.mValue, other.mIsConstant);
+			return other.copy();
 		}
 		if (other.mIsBottom) {
-			return new CongruenceDomainValue(mValue, mIsConstant);
+			return copy();
 		}
 		// If both are constant and have the same value, the result is also constant (otherwise not)
 		if (mValue.equals(other.mValue) && mIsConstant && other.mIsConstant) {
@@ -160,7 +135,7 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 	}
 	
 	protected CongruenceDomainValue mod(CongruenceDomainValue other) {
-		if (other == null || mIsBottom || other.mIsBottom) {
+		if (other == null || mIsBottom || other.mIsBottom || other.mValue.equals(BigInteger.ZERO)) {
 			return new CongruenceDomainValue(true);
 		}
 		// If both are constant, simply calculate the result
@@ -247,6 +222,9 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 		return script.term("=", script.term("mod", var, script.numeral(mValue)), script.numeral(BigInteger.ZERO));
 	}
 	
+	/*
+	 * Check if two values are equal
+	 */
 	protected boolean isEqualTo(CongruenceDomainValue other) {
 		if (other == null) {
 			return false;
@@ -257,19 +235,38 @@ public class CongruenceDomainValue implements Comparable<CongruenceDomainValue>{
 		return mValue.equals(other.mValue) && mIsConstant == other.mIsConstant;
 	}
 	
+	/*
+	 * Return a copy of the value
+	 */
 	protected CongruenceDomainValue copy() {
 		if (mIsBottom) {
 			return new CongruenceDomainValue(true);
 		}
 		return new CongruenceDomainValue(mValue, mIsConstant);
 	}
-	
-	// Computes the new value for this, if we have an "assume this % modul == rest"
-	protected CongruenceDomainValue modEquals(CongruenceDomainValue modul, CongruenceDomainValue rest) {
-		if (mIsBottom || modul == null || modul.mIsBottom || rest == null || rest.mIsBottom) {
+
+	/*
+	 * Return the the new value for x for a "x % this == rest" - expression (soft-merge)
+	 */
+	protected CongruenceDomainValue modEquals(CongruenceDomainValue rest) {
+		if (mIsBottom ||  rest == null || rest.mIsBottom) {
 			return new CongruenceDomainValue(true);
 		}
-		CongruenceDomainValue val = rest.merge(modul);
-		return new CongruenceDomainValue(mValue.multiply(val.mValue).divide(mValue.gcd(val.mValue)));
+		// If the rest is < 0, return bottom
+		if (rest.mValue.signum() < 0) {
+			return new CongruenceDomainValue(true);
+		}
+		// If the rest is >= |this|, return bottom if rest is constant, otherwise the non-constant value of this
+		// (because rest has to be 0 then, since all other values are too big)
+		if (mIsConstant && rest.mValue.compareTo(mValue.abs()) >= 0) {
+			if (rest.mIsConstant) {
+				return new CongruenceDomainValue(true);
+			} else {
+				return new CongruenceDomainValue(mValue);
+			}			
+		}
+		// Otherwise return the non-constant value of the merge
+		CongruenceDomainValue val = merge(rest);
+		return new CongruenceDomainValue(val.mValue);
 	}
 }

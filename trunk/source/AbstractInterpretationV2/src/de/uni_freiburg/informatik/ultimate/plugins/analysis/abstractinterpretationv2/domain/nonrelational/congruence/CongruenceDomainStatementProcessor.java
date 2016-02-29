@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
@@ -110,7 +109,16 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 
 		mLhsVariable = null;
 
-		processStatement(statement);
+		// Use the overridden version of the BoogieVisitor (calls ExpressionTransformer just once)
+		Statement transformedStatement = new TransformedVisitor().processStatement(statement);
+		
+		if (transformedStatement != statement && mLogger.isDebugEnabled()) {
+			mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Statement ")
+			        .append(BoogiePrettyPrinter.print(statement)).append(" rewritten to: ")
+			        .append(BoogiePrettyPrinter.print(transformedStatement)));
+		}
+		
+		processStatement(transformedStatement);
 
 		assert mReturnState.size() != 0;
 
@@ -134,17 +142,8 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 	}
 	
 	@Override
-	protected Expression processExpression(Expression expr) {
-		// TODO: Replace by the below version from ExpressionTransformer (handle..Expression methods can be removed then)
-		assert mEvaluatorFactory != null;
-
-		Expression newExpr = null;
-
-		if (expr instanceof BinaryExpression) {
-			newExpr = handleBinaryExpression((BinaryExpression) expr);
-		} else if (expr instanceof UnaryExpression) {
-			newExpr = handleUnaryExpression((UnaryExpression) expr);
-		} else if (expr instanceof ArrayStoreExpression) {
+	protected Expression processExpression(Expression expr) {	
+		if (expr instanceof ArrayStoreExpression) {
 			mExpressionEvaluator.addEvaluator(new CongruenceSingletonValueExpressionEvaluator(new CongruenceDomainValue()));
 			return expr;
 		} else if (expr instanceof ArrayAccessExpression) {
@@ -152,20 +151,16 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 			return expr;
 		}
 		
-		if (newExpr == null || expr == newExpr) {
-			return super.processExpression(expr);
-		} else {
-			return processExpression(newExpr);
-		}
-		
-		/*ExpressionTransformer t = new ExpressionTransformer();
-		Expression newExpr = t.transform(expr);
-		
-		mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Expression ")
-		        .append(BoogiePrettyPrinter.print(expr)).append(" rewritten to: ")
-		        .append(BoogiePrettyPrinter.print(newExpr)));
-		
-		return super.processExpression(newExpr);*/
+//		ExpressionTransformer t = new ExpressionTransformer();
+//		Expression newExpr = t.transform(expr);
+//		
+//		if (!newExpr.toString().equals(expr.toString())) {
+//			mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Expression ")
+//			        .append(BoogiePrettyPrinter.print(expr)).append(" rewritten to: ")
+//			        .append(BoogiePrettyPrinter.print(newExpr)));
+//		}
+//		
+		return super.processExpression(expr);
 	}
 
 	private void handleAssignment(final AssignmentStatement statement) {
@@ -256,168 +251,6 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 		assert mEvaluatorFactory != null;
 
 		mExpressionEvaluator.addEvaluator(new CongruenceSingletonValueExpressionEvaluator(new CongruenceDomainValue()));
-	}
-
-	private Expression handleBinaryExpression(final BinaryExpression expr) {
-		if (expr.getOperator() != Operator.COMPEQ) {
-			return expr;
-		}
-		// x +- k == y +- k --> x == y (in all 4 combinations for plus, 2 for minus)
-		if (expr.getLeft() instanceof BinaryExpression && expr.getRight() instanceof BinaryExpression) {
-			BinaryExpression left = (BinaryExpression) expr.getLeft();
-			BinaryExpression right = (BinaryExpression) expr.getRight();
-			if (left.getOperator() == Operator.ARITHMINUS && right.getOperator() == Operator.ARITHMINUS || 
-				left.getOperator() == Operator.ARITHPLUS && right.getOperator() == Operator.ARITHPLUS) {
-				if (left.getLeft() instanceof IntegerLiteral) {
-					IntegerLiteral i1 = (IntegerLiteral) left.getLeft();
-					if (right.getLeft() instanceof IntegerLiteral) {
-						IntegerLiteral i2 = (IntegerLiteral) right.getLeft();
-						if (i1.getValue().equals(i2.getValue())) {
-							return new BinaryExpression(expr.getLocation(), Operator.COMPEQ, left.getRight(), right.getRight());
-						}
-					}
-					if (right.getRight() instanceof IntegerLiteral && left.getOperator() == Operator.ARITHPLUS) {
-						IntegerLiteral i2 = (IntegerLiteral) right.getRight();
-						if (i1.getValue().equals(i2.getValue())) {
-							return new BinaryExpression(expr.getLocation(), Operator.COMPEQ, left.getRight(), right.getLeft());
-						}
-					}
-				}
-				if (left.getRight() instanceof IntegerLiteral) {
-					IntegerLiteral i1 = (IntegerLiteral) left.getRight();
-					if (right.getLeft() instanceof IntegerLiteral  && left.getOperator() == Operator.ARITHPLUS) {
-						IntegerLiteral i2 = (IntegerLiteral) right.getLeft();
-						if (i1.getValue().equals(i2.getValue())) {
-							return new BinaryExpression(expr.getLocation(), Operator.COMPEQ, left.getLeft(), right.getRight());
-						}
-					}
-					if (right.getRight() instanceof IntegerLiteral) {
-						IntegerLiteral i2 = (IntegerLiteral) right.getRight();
-						if (i1.getValue().equals(i2.getValue())) {
-							return new BinaryExpression(expr.getLocation(), Operator.COMPEQ, left.getLeft(), right.getLeft());
-						}
-					}
-				}
-			}
-		}
-		// x +- c1 == c2 --> x == c2 -+ c1 (and so on...)
-		if (expr.getLeft() instanceof IntegerLiteral) {
-			if (expr.getRight() instanceof BinaryExpression) {
-				BinaryExpression right = (BinaryExpression) expr.getRight();
-				if (right.getOperator() == Operator.ARITHMINUS) {
-					if (right.getRight() instanceof IntegerLiteral) {
-						BinaryExpression newLeft = new BinaryExpression(expr.getLeft().getLocation(), Operator.ARITHPLUS,
-								expr.getLeft(), right.getRight());
-						return new BinaryExpression(expr.getLocation(), Operator.COMPEQ, newLeft, right.getLeft());
-					}
-					if (right.getLeft() instanceof IntegerLiteral) {
-						BinaryExpression newLeft = new BinaryExpression(expr.getLeft().getLocation(), Operator.ARITHMINUS,
-								right.getLeft(), expr.getLeft());
-						return new BinaryExpression(expr.getLocation(), Operator.COMPEQ, newLeft, right.getRight());
-					}
-				}
-				if (right.getOperator() == Operator.ARITHPLUS) {
-					if (right.getRight() instanceof IntegerLiteral) {
-						BinaryExpression newLeft = new BinaryExpression(expr.getLeft().getLocation(), Operator.ARITHMINUS,
-								expr.getLeft(), right.getRight());
-						return new BinaryExpression(expr.getLocation(), Operator.COMPEQ, newLeft, right.getLeft());
-					}
-					if (right.getLeft() instanceof IntegerLiteral) {
-						BinaryExpression newLeft = new BinaryExpression(expr.getLeft().getLocation(), Operator.ARITHMINUS,
-								expr.getLeft(), right.getLeft());
-						return new BinaryExpression(expr.getLocation(), Operator.COMPEQ, newLeft, right.getRight());
-					}
-				}
-			}
-		}
-		if (expr.getRight() instanceof IntegerLiteral) {
-			if (expr.getLeft() instanceof BinaryExpression) {
-				BinaryExpression left = (BinaryExpression) expr.getLeft();
-				if (left.getOperator() == Operator.ARITHMINUS) {
-					if (left.getRight() instanceof IntegerLiteral) {
-						BinaryExpression newRight = new BinaryExpression(expr.getRight().getLocation(), Operator.ARITHPLUS,
-								expr.getRight(), left.getRight());
-						return new BinaryExpression(expr.getLocation(), Operator.COMPEQ, left.getLeft(), newRight);
-					}
-					if (left.getLeft() instanceof IntegerLiteral) {
-						BinaryExpression newRight = new BinaryExpression(expr.getRight().getLocation(), Operator.ARITHMINUS,
-								left.getLeft(), expr.getRight());
-						return new BinaryExpression(expr.getLocation(), Operator.COMPEQ, left.getRight(), newRight);
-					}
-				}
-				if (left.getOperator() == Operator.ARITHPLUS) {
-					if (left.getRight() instanceof IntegerLiteral) {
-						BinaryExpression newRight = new BinaryExpression(expr.getRight().getLocation(), Operator.ARITHMINUS,
-								expr.getRight(), left.getRight());
-						return new BinaryExpression(expr.getLocation(), Operator.COMPEQ, left.getLeft(), newRight);
-					}
-					if (left.getLeft() instanceof IntegerLiteral) {
-						BinaryExpression newRight = new BinaryExpression(expr.getRight().getLocation(), Operator.ARITHMINUS,
-								expr.getRight(), left.getLeft());
-						return new BinaryExpression(expr.getLocation(), Operator.COMPEQ, left.getRight(), newRight);
-					}
-				}
-			}
-		}
-		return expr;
-	}
-
-	private Expression handleUnaryExpression(final UnaryExpression expr) {
-		if (expr.getOperator() == UnaryExpression.Operator.LOGICNEG) {
-			if (expr.getExpr() instanceof BinaryExpression) {
-				final BinaryExpression binexp = (BinaryExpression) expr.getExpr();
-
-				Operator newOp;
-
-				Expression newLeft = binexp.getLeft();
-				Expression newRight = binexp.getRight();
-
-				switch (binexp.getOperator()) {
-				case COMPEQ:
-					newOp = Operator.COMPNEQ;
-					break;
-				case COMPNEQ:
-					newOp = Operator.COMPEQ;
-					break;
-				case COMPGEQ:
-					newOp = Operator.COMPLT;
-					break;
-				case COMPGT:
-					newOp = Operator.COMPLEQ;
-					break;
-				case COMPLEQ:
-					newOp = Operator.COMPGT;
-					break;
-				case COMPLT:
-					newOp = Operator.COMPGEQ;
-					break;
-				case LOGICAND:
-					newOp = Operator.LOGICOR;
-					newLeft = new UnaryExpression(binexp.getLocation(), UnaryExpression.Operator.LOGICNEG, newLeft);
-					newRight = new UnaryExpression(binexp.getLocation(), UnaryExpression.Operator.LOGICNEG, newRight);
-					break;
-				case LOGICOR:
-					newOp = Operator.LOGICAND;
-					newLeft = new UnaryExpression(binexp.getLocation(), UnaryExpression.Operator.LOGICNEG, newLeft);
-					newRight = new UnaryExpression(binexp.getLocation(), UnaryExpression.Operator.LOGICNEG, newRight);
-					break;
-				case COMPPO:
-					mLogger.warn("The comparison operator " + binexp.getOperator() + " is not yet supported.");
-				default:
-					newOp = binexp.getOperator();
-				}
-
-				final BinaryExpression newExp = new BinaryExpression(binexp.getLocation(), newOp, newLeft, newRight);
-
-				return newExp;
-			} else if (expr.getExpr() instanceof UnaryExpression) {
-				final UnaryExpression unexp = (UnaryExpression) expr.getExpr();
-				if (unexp.getOperator() == UnaryExpression.Operator.LOGICNEG) {
-					return unexp.getExpr();
-				}
-			}
-		}
-		return expr;
 	}
 
 	@Override
@@ -592,4 +425,17 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 		processExpression(newUnary);
 	}
 
+	private final static class TransformedVisitor extends BoogieVisitor{
+		@Override
+		protected Statement processStatement(Statement statement) {
+			return super.processStatement(statement);
+		}
+		
+		@Override
+		protected Expression processExpression(Expression expr) {
+			final ExpressionTransformer t = new ExpressionTransformer();
+			return t.transform(expr);
+		}
+	}
+	
 }

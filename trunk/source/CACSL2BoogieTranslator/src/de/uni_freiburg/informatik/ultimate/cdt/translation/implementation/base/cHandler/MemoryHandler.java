@@ -881,7 +881,7 @@ public class MemoryHandler {
 			for (int i=0; i<rda.getBytesize()/heapDataArray.getSize(); i++) {
 				final Function<Expression, Expression> extractBits;
 				final int currentI = i;
-				extractBits = x -> m_ExpressionTranslation.extractBits(loc, x, heapDataArray.getSize()*(currentI+1), heapDataArray.getSize()*currentI);
+				extractBits = x -> m_ExpressionTranslation.extractBits(loc, x, heapDataArray.getSize()*(currentI+1)*8, heapDataArray.getSize()*currentI*8);
 				if (i==0) {
 					addWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray, value, extractBits, inPtr, x -> x, swrite);
 				} else {
@@ -905,7 +905,7 @@ public class MemoryHandler {
 			ArrayList<Specification> swrite) {
 		for (HeapDataArray other : heapDataArrays) {
 			if (heapDataArray == other) {
-				swrite.add(ensuresHeapArrayUpdate(loc, value, inPtr, other));
+				swrite.add(ensuresHeapArrayUpdate(loc, value, valueModification, inPtr, other));
 			} else {
 				swrite.add(ensuresHeapArrayHardlyModified(loc, inPtr, other));
 			}
@@ -987,11 +987,11 @@ public class MemoryHandler {
 
 	// ensures #memory_X == old(#memory_X)[#ptr := #value];
 	private EnsuresSpecification ensuresHeapArrayUpdate(final ILocation loc, 
-			final String valueId, final String ptrId, final HeapDataArray hda) {
+			final String valueId, Function<Expression, Expression> valueModification, final String ptrId, final HeapDataArray hda) {
 		final Expression valueExpr = new IdentifierExpression(loc, valueId);
         final Expression memArray = new IdentifierExpression(loc, hda.getVariableName());
         final Expression ptrExpr = new IdentifierExpression(loc, ptrId);
-		return ensuresArrayUpdate(loc, valueExpr, ptrExpr, memArray);
+		return ensuresArrayUpdate(loc, valueModification.apply(valueExpr), ptrExpr, memArray);
 	}
 	
 	//#memory_$Pointer$ == old(#memory_X)[#ptr := #memory_X[#ptr]];
