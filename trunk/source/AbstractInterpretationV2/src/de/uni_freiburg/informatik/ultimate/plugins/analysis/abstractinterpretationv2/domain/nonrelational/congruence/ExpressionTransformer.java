@@ -9,7 +9,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Ope
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
@@ -40,7 +39,7 @@ public class ExpressionTransformer {
 		if (e instanceof BinaryExpression) {
 			return transformBinary((BinaryExpression) e);
 		}
-		return atomicTransform(e);
+		return e;
 	}
 
 	/*
@@ -107,11 +106,11 @@ public class ExpressionTransformer {
 	 * Just splits conjunctions / disjunctions and uses atomicTransform then
 	 */
 	private Expression transformBinary(BinaryExpression e) {
-		ExpressionTransformer left = new ExpressionTransformer();
-		ExpressionTransformer right = new ExpressionTransformer();
 		switch(e.getOperator()) {
 		case LOGICAND:
 		case LOGICOR:
+			ExpressionTransformer left = new ExpressionTransformer();
+			ExpressionTransformer right = new ExpressionTransformer();
 			return new BinaryExpression(e.getLocation(), e.getOperator(), left.transform(e.getLeft()), right.transform(e.getRight()));
 		default:
 			return atomicTransform(e);
@@ -135,21 +134,21 @@ public class ExpressionTransformer {
 		for (Map.Entry<String, BigInteger> entry : mCoefficients.entrySet()) {
 			Expression var = new IdentifierExpression(loc, entry.getKey());
 			Expression coeff = new IntegerLiteral(loc, entry.getValue().toString());
-			Expression summand = new BinaryExpression(loc, BinaryExpression.Operator.ARITHMUL, coeff, var);
+			Expression summand = new BinaryExpression(loc, Operator.ARITHMUL, coeff, var);
 			if (newExpr == null) {
 				newExpr = summand;
 			} else {
-				newExpr = new BinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS, newExpr, summand);
+				newExpr = new BinaryExpression(loc, Operator.ARITHPLUS, newExpr, summand);
 			}
 		}
 		Expression constant = new IntegerLiteral(loc, mConstant.toString());
 		if (newExpr == null) {
 			newExpr = constant;
 		} else {
-			newExpr = new BinaryExpression(loc, BinaryExpression.Operator.ARITHPLUS, newExpr, constant);
+			newExpr = new BinaryExpression(loc, Operator.ARITHPLUS, newExpr, constant);
 		}
 		if (e instanceof BinaryExpression) {
-			BinaryExpression.Operator op = ((BinaryExpression) e).getOperator();
+			Operator op = ((BinaryExpression) e).getOperator();
 			switch (op) {
 				case COMPLT:
 				case COMPGT:
@@ -172,8 +171,6 @@ public class ExpressionTransformer {
 		if (e instanceof IntegerLiteral) {
 			String value = ((IntegerLiteral) e).getValue();
 			mConstant = new BigInteger(value);
-		} else if (e instanceof RealLiteral) {
-			mIsLinear = false;
 		} else if (e instanceof IdentifierExpression) {
 			String varName = ((IdentifierExpression) e).getIdentifier();
 			mCoefficients.put(varName, BigInteger.ONE);
@@ -181,6 +178,8 @@ public class ExpressionTransformer {
 			processUnary((UnaryExpression) e);
 		} else if (e instanceof BinaryExpression) {
 			processBinary((BinaryExpression) e);
+		} else {
+			mIsLinear = false;
 		}
 	}
 	
