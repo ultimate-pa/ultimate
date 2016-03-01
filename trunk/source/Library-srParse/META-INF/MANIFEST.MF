@@ -14,4 +14,4 @@ Export-Package: srParse;
 Require-Bundle: Library-PEA,
  JavaCup,
  UltimateCore
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8

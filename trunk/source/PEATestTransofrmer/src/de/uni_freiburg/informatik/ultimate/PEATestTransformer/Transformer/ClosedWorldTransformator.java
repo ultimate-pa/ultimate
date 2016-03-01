@@ -167,8 +167,8 @@ public class ClosedWorldTransformator extends BasicTransformer {
 		this.newIdentIndex(s);
 		Transition transition = pea.getPhases()[0].getTransitions().get(0);
 		transition.setGuard(transition.getGuard().and(
-				// !R_s or (p' and L_p))
-				this.createClosedWorldGuard(s).or(p.prime().and(this.createReadGuard(p)))));		// P && R_s or
+				// !R_s or (p and L_p))
+				this.createClosedWorldGuard(s).or(p.prime().and(this.createReadGuard(p)))));
 		return pea;
 	}
 
@@ -185,7 +185,7 @@ public class ClosedWorldTransformator extends BasicTransformer {
 				transition.setGuard(transition.getGuard().and(
 							this.createReadGuard(q).and(
 									this.createClosedWorldGuard(s).or(
-												p.and(this.createReadGuard(p))
+												p.prime().and(this.createReadGuard(p))
 											)
 									)
 						));	
@@ -196,7 +196,7 @@ public class ClosedWorldTransformator extends BasicTransformer {
 			// !R_s or (P and L_p)
 			transition.setGuard(transition.getGuard().and(
 								this.createClosedWorldGuard(s).or(
-											p.and(this.createReadGuard(p))
+											p.prime().and(this.createReadGuard(p))
 										)
 					));	
 		}
@@ -205,7 +205,7 @@ public class ClosedWorldTransformator extends BasicTransformer {
 			// !R_s or (P and L_p)
 			transition.setGuard(transition.getGuard().and(
 								this.createClosedWorldGuard(s).or(
-											p.and(this.createReadGuard(p))
+											p.prime().and(this.createReadGuard(p))
 										)
 					));	
 		}
