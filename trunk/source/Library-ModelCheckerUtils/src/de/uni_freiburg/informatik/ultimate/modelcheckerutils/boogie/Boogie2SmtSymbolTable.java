@@ -242,6 +242,26 @@ public class Boogie2SmtSymbolTable {
 		Sort[] paramTypes = new Sort[0];
 		IType iType = varlist.getType().getBoogieType();
 		Sort sort = m_TypeSortTranslator.getSort(iType, varlist);
+
+		Map<String, Expression[]> attributes = extractAttributes(constdecl);
+		if (attributes != null) {
+			String attributeDefinedIdentifier = checkForAttributeDefinedIdentifier(
+					attributes, s_BUILTINIDENTIFIER);
+			if (attributeDefinedIdentifier != null) {
+				final BigInteger[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
+				if (varlist.getIdentifiers().length > 1) {
+					throw new IllegalArgumentException("if builtin identifier is "
+							+ "used we support only one constant per const declaration");
+				}
+				String constId = varlist.getIdentifiers()[0];
+				ApplicationTerm constant = (ApplicationTerm) m_Script.term(attributeDefinedIdentifier, indices, null);
+				BoogieConst boogieConst = new BoogieConst(constId, iType, constant);
+				BoogieConst previousValue = m_Constants.put(constId, boogieConst);
+				assert previousValue == null : "constant already contained";
+				m_SmtConst2BoogieConst.put(constant, boogieConst);
+				return;
+			} 
+		}
 		for (String constId : varlist.getIdentifiers()) {
 			m_Script.declareFun(constId, paramTypes, sort);
 			ApplicationTerm constant = (ApplicationTerm) m_Script.term(constId);

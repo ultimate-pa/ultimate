@@ -198,7 +198,8 @@ public class TypeSortTranslator {
 				}
 				catch (SMTLIBException e) {
 					if (e.getMessage().equals("Sort Array not declared")) {
-						Boogie2SMT.reportUnsupportedSyntax(BoogieASTNode, "Solver does not support arrays", mServices);
+						Boogie2SMT.reportUnsupportedSyntax(BoogieASTNode, 
+								"Solver does not support arrays", mServices);
 						throw e;
 					}
 					else {
