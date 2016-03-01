@@ -90,9 +90,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		if (states.size() <= mMaxParallelStates) {
 			return states;
 		}
-		List<OctDomainState> joinedStates = new ArrayList<>();
-		joinedStates.add(join(states));
-		return joinedStates;
+		return joinToSingleton(states);
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -153,10 +151,6 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 		List<Statement> statements = mHavocBundler.bundleHavocsCached(codeBlock);
 		for (Statement statement : statements) {
 			currentState = mStatementProcessor.processStatement(statement, currentState);
-//			mLogger.warn("after " + BoogiePrettyPrinter.print(statement));
-//			mLogger.warn(statement);
-//			mLogger.warn(currentState);
-//			mLogger.warn("---´");
 		}
 		currentState.forEach(s -> s.lock());
 		return currentState;
