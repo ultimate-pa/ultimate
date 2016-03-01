@@ -65,8 +65,6 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
         convertLog.info("starting conversion");
         NiceConvert<LETTER, STATE> converter = new NiceConvert<LETTER, STATE>(services, stateFactory, automaton);
         NiceNWA nwa = converter.getNiceNWA();
-        // it shouldn't be like this, but...
-        ArrayList<NiceHist> history = converter.computeHistoryStates();
         convertLog.info(
                 "finished conversion. "
                 + Integer.toString(nwa.numStates) + " states, "
@@ -77,6 +75,8 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
                 + Integer.toString(nwa.cTrans.length) + " cTrans, "
                 + Integer.toString(nwa.rTrans.length) + " rTrans."
         );
+        // it shouldn't be like this, but...
+        ArrayList<NiceHist> history = converter.computeHistoryStates();
 
         generateLog.info("starting clauses generation");
         ArrayList<HornClause3> clauses = NwaMinimizationClausesGenerator.generateConstraints(nwa, history);
@@ -89,9 +89,6 @@ public class MinimizeNwaMaxSAT<LETTER, STATE>
         generateLog.info("making equivalence classes from assignments");
         NiceClasses eqCls = NwaMinimizationClausesGenerator.makeMergeRelation(nwa.numStates, assignments);
         generateLog.info("finished making equivalence classes");
-
-        logger.info("Testing correctness of equivalence classes");
-        NiceCorrectness.testCorrectness(nwa, history, eqCls);
 
         m_result = converter.constructMerged(eqCls);
         convertLog.info("constructed minimized automaton");

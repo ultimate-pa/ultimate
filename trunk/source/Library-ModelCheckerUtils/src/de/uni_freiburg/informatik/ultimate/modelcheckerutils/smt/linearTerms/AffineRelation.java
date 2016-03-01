@@ -296,6 +296,12 @@ public class AffineRelation {
 			}
 		}
 		{
+			if (!m_OriginalTerm.getSort().isNumericSort() && 
+					!termsCoeff.abs().equals(Rational.ONE)) {
+				// for bitvectors we may only divide by 1 or -1
+				throw new NotAffineException("No affine representation "
+						+ "where desired variable is on left hand side");
+			}
 			Rational newConstant = m_AffineTerm.getConstant().div(termsCoeff);
 			if (newConstant.isIntegral() && newConstant.isRational() || m_AffineTerm.getSort().getName().equals("Real")) {
 				Rational negated = newConstant.negate();

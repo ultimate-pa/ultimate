@@ -27,8 +27,10 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 
 import java.text.ParseException;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
@@ -131,6 +133,8 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieIdExtractor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
@@ -164,7 +168,7 @@ public class PRDispatcher extends Dispatcher {
 		boolean bitvectorTranslation = mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
 		nameHandler = new NameHandler(backtranslator);
 		typeHandler = new SVCompTypeHandler(!bitvectorTranslation);
-		cHandler = new SvComp14CHandler(this, backtranslator, mLogger, typeHandler, bitvectorTranslation);
+		cHandler = new SvComp14CHandler(this, backtranslator, mLogger, typeHandler, bitvectorTranslation, nameHandler);
 	}
 
 	@Override
@@ -469,16 +473,28 @@ public class PRDispatcher extends Dispatcher {
 	}
 	
 	
-	public void moveArrayAndStructIdsOnHeap(ILocation loc, Expression expr) {
+	public void moveArrayAndStructIdsOnHeap(ILocation loc, Expression expr, Map<VariableDeclaration, ILocation> auxVars) {
+		final Set<String> auxVarIds = new HashSet<>();
+		for (VariableDeclaration decl : auxVars.keySet()) {
+			for (VarList varList : decl.getVariables()) {
+				for (String id : varList.getIdentifiers()) {
+					auxVarIds.add(id);
+				}
+			}
+		}
 		BoogieIdExtractor bie = new BoogieIdExtractor();
 		bie.processExpression(expr);
 		for (String id : bie.getIds()) {
-			SymbolTable st = this.cHandler.getSymbolTable();
-			String cid = st.getCID4BoogieID(id, loc);
-			SymbolTableValue value = st.get(cid, loc);
-			CType type = value.getCVariable().getUnderlyingType();
-			if (type instanceof CArray || type instanceof CStruct) {
-				this.getVariablesOnHeap().add(value.getDeclarationNode());
+			// auxVars do not have a corresponding C var, hence we move nothing
+			// onto the heap
+			if (!auxVarIds.contains(id)) {
+				SymbolTable st = this.cHandler.getSymbolTable();
+				String cid = st.getCID4BoogieID(id, loc);
+				SymbolTableValue value = st.get(cid, loc);
+				CType type = value.getCVariable().getUnderlyingType();
+				if (type instanceof CArray || type instanceof CStruct) {
+					this.getVariablesOnHeap().add(value.getDeclarationNode());
+				}
 			}
 		}
 	}

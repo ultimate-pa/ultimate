@@ -255,7 +255,7 @@ public class ExpressionResult extends Result {
 				// we are in prerun mode
 				if (lrVal.getCType().getUnderlyingType() instanceof CArray) {
 					// move it on-heap
-					((PRDispatcher) main).moveArrayAndStructIdsOnHeap(loc, lrVal.getValue());
+					((PRDispatcher) main).moveArrayAndStructIdsOnHeap(loc, lrVal.getValue(), this.auxVars);
 				}
 			} else {
 				if (lrVal.getCType().getUnderlyingType() instanceof CArray) {
@@ -287,18 +287,19 @@ public class ExpressionResult extends Result {
 		
 			final RValue newValue;
 			if (underlyingType instanceof CPrimitive) {
-				ExpressionResult rex = memoryHandler.getReadCall(main, hlv.getAddress(), underlyingType);
+				ExpressionResult rex = memoryHandler.getReadCall(hlv.getAddress(), underlyingType);
 				result = copyStmtDeclAuxvarOverapprox(this, rex);
 				newValue = (RValue) rex.lrVal;
 			} else if (underlyingType instanceof CPointer) {
-				ExpressionResult rex = memoryHandler.getReadCall(main, hlv.getAddress(), underlyingType);
+				ExpressionResult rex = memoryHandler.getReadCall(hlv.getAddress(), underlyingType);
 				result = copyStmtDeclAuxvarOverapprox(this, rex);				
 				newValue = (RValue) rex.lrVal;
 			} else if (underlyingType instanceof CArray) {
 				CArray cArray = (CArray) underlyingType;
-				ExpressionResult rex = readArrayFromHeap(main, structHandler,
-						memoryHandler, loc, hlv.getAddress(), cArray);
-				result = copyStmtDeclAuxvarOverapprox(this, rex);	
+//				ExpressionResult rex = readArrayFromHeap(main, structHandler,
+//						memoryHandler, loc, hlv.getAddress(), cArray);
+//				result = copyStmtDeclAuxvarOverapprox(this, rex);
+				result = copyStmtDeclAuxvarOverapprox(this);
 				newValue = new RValue(hlv.getAddress(), new CPointer(cArray.getValueType()), 
 						false, false);
 			} else if (underlyingType instanceof CEnum) {
@@ -499,7 +500,7 @@ public class ExpressionResult extends Result {
 
 			String newArrayId = main.nameHandler.getTempVarUID(SFO.AUXVAR.ARRAYCOPY, arrayType);
 			VarList newArrayVl = new VarList(loc, new String[] { newArrayId }, 
-					new ArrayType(loc, new String[0], new ASTType[] { new PrimitiveType(loc, SFO.INT) }, 
+					new ArrayType(loc, new String[0], new ASTType[] { main.typeHandler.ctype2asttype(loc, arrayType.getDimensions()[0].getCType()) }, 
 							main.typeHandler.ctype2asttype(loc, arrayType.getValueType())));
 			VariableDeclaration newArrayDec = new VariableDeclaration(loc, new Attribute[0], new VarList[] { newArrayVl });
 			xfieldHeapLValue = new HeapLValue(new IdentifierExpression(loc, newArrayId), arrayType);
@@ -531,8 +532,7 @@ public class ExpressionResult extends Result {
 					readRex = readStructFromHeap(main, structHandler, memoryHandler, loc,
 							readAddress, (CStruct) arrayType.getValueType().getUnderlyingType());
 				} else {
-					readRex = memoryHandler.getReadCall(main, readAddress, 
-							arrayType.getValueType());
+					readRex = memoryHandler.getReadCall(readAddress, arrayType.getValueType());
 				}
 				decl.addAll(readRex.decl);
 				stmt.addAll(readRex.stmt);
@@ -540,9 +540,9 @@ public class ExpressionResult extends Result {
 				overApp.addAll(readRex.overappr);
 
 				ArrayLHS aAcc = new ArrayLHS(loc, new VariableLHS(loc, newArrayId),
-						new Expression[] { new IntegerLiteral(loc, new Integer(pos).toString())} );
-				ExpressionResult assRex = ((CHandler) main.cHandler).makeAssignment(main, loc, stmt, 
-						new LocalLValue(aAcc, arrayType.getValueType()), (RValue) readRex.lrVal, decl, auxVars, overappr);
+						new Expression[] { exprTrans.constructLiteralForIntegerType(loc, new CPrimitive(PRIMITIVE.INT), BigInteger.valueOf(pos)) } );
+				ExpressionResult assRex = ((CHandler) main.cHandler).makeAssignment(loc, stmt, new LocalLValue(aAcc, arrayType.getValueType()), 
+						(RValue) readRex.lrVal, decl, auxVars, overappr);
 				decl = assRex.decl;
 				stmt = assRex.stmt;
 				auxVars = assRex.auxVars;

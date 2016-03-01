@@ -57,6 +57,7 @@ import org.eclipse.cdt.core.dom.ast.IASTTypeId;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTSimpleDeclaration;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
@@ -354,17 +355,15 @@ public class PreRunner extends ASTVisitor {
         if (declaration instanceof CASTSimpleDeclaration) {
             CASTSimpleDeclaration cd = (CASTSimpleDeclaration) declaration;
             for (IASTDeclarator d : cd.getDeclarators()) {
-                String key = d.getName().toString();
-                if (!(d instanceof IASTFunctionDeclarator))
-                	sT.put(key, d);
-
                 IASTDeclarator nd = d;
-
                 do {
+                	addNameOfNonFunctionDeclarator(nd);
                 	if (nd.getPointerOperators() != null
-                			&& nd.getPointerOperators().length != 0) 
-                		isMMRequired = true;               	
+                			&& nd.getPointerOperators().length != 0) {
+                		isMMRequired = true;
+                	}
                 	nd = nd.getNestedDeclarator();
+                	
                 } while (nd != null);
 
             }
@@ -376,6 +375,15 @@ public class PreRunner extends ASTVisitor {
         }
         return super.visit(declaration);
     }
+
+	private void addNameOfNonFunctionDeclarator(IASTDeclarator d) {
+		if (d instanceof IASTFunctionDeclarator) {
+			// do nothing
+		} else {
+			final String key = d.getName().toString();
+			sT.put(key, d);
+		}
+	}
 
     @Override
     public int leave(IASTDeclaration declaration) {

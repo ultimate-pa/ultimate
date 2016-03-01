@@ -40,23 +40,32 @@ import java.util.HashSet;
  * @author stimpflj
  */
 public class HornCNFBuilder {
+	int numVars;
+
 	int numRequests;  // request counter, to calculate savings later
 	boolean solveable;
-	private HashSet<Integer> falseVars;
-	private HashSet<Integer> trueVars;
-	private ArrayList<HornClause3> clauses;
+	private HashSet<HornClause3> clauses;
 
-	public HornCNFBuilder() {
+	int numFalse;
+	int numTrue;
+	boolean isFalse[];
+	boolean isTrue[];
+
+	public HornCNFBuilder(int numVars) {
+		this.numVars = numVars;
 		numRequests = 0;
 		solveable = true;
-		falseVars = new HashSet<Integer>();
-		trueVars = new HashSet<Integer>();
-		clauses = new ArrayList<HornClause3>();
+		isFalse = new boolean[numVars];
+		isTrue = new boolean[numVars];
+		numFalse = 0;
+		numTrue = 0;
+		clauses = new HashSet<HornClause3>();
+		setFalse(0);
+		setTrue(1);
 	}
 
 	/**
-	 * Get the produced horn clauses. Make no mistake: This is not a copy. So
-	 * don't mutate it, or don't use this HornCNFBuilder instance afterwards.
+	 * Get the produced horn clauses.
 	 *
 	 * If we already figured out that these clauses are not solveable,
 	 * <code>null</code> is returned instead.
@@ -64,101 +73,135 @@ public class HornCNFBuilder {
 	public ArrayList<HornClause3> getClauses() {
 		if (!solveable)
 			return null;
-		else
-			return clauses;
+		ArrayList<HornClause3> out = new ArrayList<HornClause3>();
+		out.addAll(clauses);
+		for (int i = 0; i < numVars; i++) {
+			if (isFalse[i]) out.add(HornClause3.F(i));
+			else if (isTrue[i]) out.add(HornClause3.T(i));
+		}
+		return out;
 	}
 
 	/** number of add-clause requests so far */
-	public int getNumRequests() { return numRequests; }
+	public int getNumRequests() {
+		return numRequests;
+	}
+
+	/** number of actual clauses generated */
+	public int getNumClauses() {
+		return clauses.size() + numFalse + numTrue;
+	}
+
+	/** do we already know that the given variable must be assigned false? */
+	public boolean isAlreadyFalse(int x) {
+		return isFalse[x];
+	}
+
+	public boolean isSolveable() {
+		return solveable;
+	}
 
 	public void addClauseF(int x) { numRequests++; addF(x); }
 	public void addClauseT(int z) { numRequests++; addT(z); }
 	public void addClauseFF(int x, int y) { numRequests++; addFF(x, y); }
 	public void addClauseFT(int x, int z) { numRequests++; addFT(x, z); }
 	public void addClauseFFT(int x, int y, int z) { numRequests++; addFFT(x, y, z); }
-	/*
-	public void addClauseF(int x) { clauses.add(HornClause3.F(x)); }
-	public void addClauseT(int z) { clauses.add(HornClause3.T(z)); }
-	public void addClauseFF(int x, int y) { clauses.add(HornClause3.FF(x, y)); }
-	public void addClauseFT(int x, int z) { clauses.add(HornClause3.FT(x, z)); }
-	public void addClauseFFT(int x, int y, int z) { clauses.add(HornClause3.FFT(x, y, z)); }
-	 */
 
-	public boolean isSolveable() {
-		return solveable;
+	private void setFalse(int x) {
+		assert !isTrue[x];
+		if (!isFalse[x]) {
+			isFalse[x] = true;
+			numFalse++;
+		}
+	}
+
+	private void setTrue(int x) {
+		System.err.printf("set %d to true (now %d)\n", x, isTrue[x] ? 1 : 0);
+		assert !isFalse[x];
+		if (!isTrue[x]) {
+			isTrue[x] = true;
+			numTrue++;
+		}
+	}
+
+	private void addClause(HornClause3 c) {
+		if (c.l0 > c.l1)
+			clauses.add(HornClause3.FFT(c.l1, c.l0, c.l2));
+		else
+			clauses.add(c);
 	}
 
 	private void addF(int x) {
 		assert x >= 2;
-		if (falseVars.contains(x))
+		if (isFalse[x])
 			return;
-		else if (trueVars.contains(x))
+		else if (isTrue[x])
 			solveable = false;
 		else {
-			falseVars.add(x);
-			clauses.add(HornClause3.F(x));
+			setFalse(x);
+			/* horn clause will be added when finished, to save memory */
 		}
 	}
 
 	private void addT(int z) {
 		assert z >= 2;
-		if (trueVars.contains(z))
+		if (isTrue[z])
 			return;
-		else if (falseVars.contains(z))
+		else if (isFalse[z])
 			solveable = false;
 		else {
-			trueVars.add(z);
-			clauses.add(HornClause3.T(z));
+			setTrue(z);
+			/* horn clause will be added when finished, to save memory */
 		}
 	}
 
 	private void addFF(int x, int y) {
 		assert x >= 2;
 		assert y >= 2;
-		if (falseVars.contains(x))
+		if (isFalse[x])
 			return;
-		else if (falseVars.contains(y))
+		else if (isFalse[y])
 			return;
-		else if (trueVars.contains(x))
+		else if (isTrue[x])
 			addF(y);
-		else if (trueVars.contains(y))
+		else if (isTrue[y])
 			addF(x);
 		else
-			clauses.add(HornClause3.FF(x, y));
+			addClause(HornClause3.FF(x, y));
 	}
 
 	private void addFT(int x, int z) {
 		assert x >= 2;
 		assert z >= 2;
-		if (falseVars.contains(x))
+		if (isFalse[x])
 			return;
-		else if (trueVars.contains(z))
+		else if (isTrue[z])
 			return;
-		else if (trueVars.contains(x))
+		else if (isTrue[x])
 			addT(z);
-		else if (falseVars.contains(z))
+		else if (isFalse[z])
 			addF(x);
 		else
-			clauses.add(HornClause3.FT(x, z));
+			addClause(HornClause3.FT(x, z));
 	}
 
 	private void addFFT(int x, int y, int z) {
 		assert x >= 2;
 		assert y >= 2;
 		assert z >= 2;
-		if (falseVars.contains(x))
+		if (isFalse[x])
 			return;
-		else if (falseVars.contains(y))
+		else if (isFalse[y])
 			return;
-		else if (trueVars.contains(z))
+		else if (isTrue[z])
 			return;
-		else if (trueVars.contains(x))
+		else if (isTrue[x])
 			addFT(y, z);
-		else if (trueVars.contains(y))
+		else if (isTrue[y])
 			addFT(x, z);
-		else if (falseVars.contains(z))
+		else if (isFalse[z])
 			addFF(x, y);
 		else
-			clauses.add(HornClause3.FFT(x, y, z));
+			addClause(HornClause3.FFT(x, y, z));
 	}
 }

@@ -192,6 +192,7 @@ public class InitializationHandler {
 					rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, (CPrimitive) lCType, BigInteger.ZERO);
 				} else {
 					initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
+					main.cHandler.convert(loc, initializer, lCType);
 					rhs = initializer.lrVal.getValue();
 				}
 				break;
@@ -199,6 +200,8 @@ public class InitializationHandler {
 				if (initializer == null) {
 					rhs = new RealLiteral(loc, SFO.NR0F);
 				} else {
+					initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
+					main.cHandler.convert(loc, initializer, lCType);
 					rhs = initializer.lrVal.getValue();
 				}
 				break;
@@ -283,7 +286,7 @@ public class InitializationHandler {
 			String msg = "Unknown type - don't know how to initialize!";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		assert (CHandler.isAuxVarMapcomplete(main, decl, auxVars));
+		assert (CHandler.isAuxVarMapcomplete(main.nameHandler, decl, auxVars));
 
 		// lrVal is null in case we got a lhs to assign to, the initializing value otherwise
 		return new ExpressionResult(stmt, lrVal, decl, auxVars, overappr);
@@ -329,7 +332,7 @@ public class InitializationHandler {
 					rhs = mExpressionTranslation.constructLiteralForIntegerType(loc, (CPrimitive) lCType, BigInteger.ZERO);
 				} else {
 					initializer.rexBoolToIntIfNecessary(loc, mExpressionTranslation);
-					main.cHandler.convert(main, loc, initializer, lCType);
+					main.cHandler.convert(loc, initializer, lCType);
 					rhs = initializer.lrVal.getValue();
 				}
 				break;
@@ -338,7 +341,7 @@ public class InitializationHandler {
 					rhs = new RealLiteral(loc, SFO.NR0F);
 				} else {
 					rhs = initializer.lrVal.getValue();
-					main.cHandler.convert(main, loc, initializer, lCType);
+					main.cHandler.convert(loc, initializer, lCType);
 				}
 				break;
 			case VOID:
@@ -346,9 +349,9 @@ public class InitializationHandler {
 				throw new AssertionError("unknown type to init");
 			}
 			if (onHeap) {
-				stmt.addAll(mMemoryHandler.getWriteCall(main, loc,
-						(HeapLValue) var,
-						rhs, cType));
+				stmt.addAll(mMemoryHandler.getWriteCall(loc, (HeapLValue) var,
+						rhs,
+						cType));
 			} else {
 				assert lhs != null;
 				AssignmentStatement assignment = new AssignmentStatement(loc, 
@@ -382,7 +385,7 @@ public class InitializationHandler {
 				}
 			}
 			if (onHeap) {
-				stmt.addAll(mMemoryHandler.getWriteCall(main, loc, (HeapLValue) var, rhs, lCType));
+				stmt.addAll(mMemoryHandler.getWriteCall(loc, (HeapLValue) var, rhs, lCType));
 			} else {
 				assert lhs != null;
 				AssignmentStatement assignment = new AssignmentStatement(loc, 
@@ -484,9 +487,9 @@ public class InitializationHandler {
 				rhs = initializer.lrVal.getValue();
 			}		
 			if (onHeap) {
-				stmt.addAll(mMemoryHandler.getWriteCall(main, loc,
-						(HeapLValue) var,
-						rhs, cType));
+				stmt.addAll(mMemoryHandler.getWriteCall(loc, (HeapLValue) var,
+						rhs,
+						cType));
 			} else {
 				assert lhs != null;
 				Statement assignment = new AssignmentStatement(loc, 
@@ -551,6 +554,9 @@ public class InitializationHandler {
 
 			for (int i = 0; i < currentSizeInt; i++) {
 				CType valueType = arrayType.getValueType().getUnderlyingType();
+				if (valueType instanceof CEnum) {
+					valueType = new CPrimitive(PRIMITIVE.INT);
+				}
 				
 				Expression iAsExpression = mExpressionTranslation.constructLiteralForIntegerType(
 						loc, mExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.valueOf(i));
@@ -576,7 +582,7 @@ public class InitializationHandler {
 					auxVars.putAll(list.get(i).auxVars);
 					stmt.addAll(list.get(i).stmt);
 					overApp.addAll(list.get(i).overappr);
-					stmt.addAll(mMemoryHandler.getWriteCall(main, loc, new HeapLValue(writeLocation, valueType), val.getValue(), val.getCType()));
+					stmt.addAll(mMemoryHandler.getWriteCall(loc, new HeapLValue(writeLocation, valueType), val.getValue(), val.getCType()));
 				} else {
 					if (valueType instanceof CArray) {
 						throw new AssertionError("this should not be the case as we are in the inner/outermost array right??");
@@ -592,7 +598,7 @@ public class InitializationHandler {
 								(VariableLHS) null, valueType, null);
 						assert pInit.stmt.isEmpty() && pInit.decl.isEmpty() && pInit.auxVars.isEmpty();
 						RValue val = (RValue) pInit.lrVal;
-						stmt.addAll(mMemoryHandler.getWriteCall(main, loc, new HeapLValue(writeLocation, valueType), val.getValue(), val.getCType()));
+						stmt.addAll(mMemoryHandler.getWriteCall(loc, new HeapLValue(writeLocation, valueType), val.getValue(), val.getCType()));
 					} else {
 						throw new UnsupportedSyntaxException(loc, "trying to init unknown type " + valueType);
 					}
@@ -675,6 +681,8 @@ public class InitializationHandler {
 			for (int i = 0; i < currentSizeInt; i++) {
 				if (list != null && list.size() > i && list.get(i).lrVal != null) {
 					// we have a value to initialize with
+					final CType valueType = arrayType.getValueType().getUnderlyingType();
+					main.cHandler.convert(loc, list.get(i), valueType);
 					val = (RValue) list.get(i).lrVal;
 					decl.addAll(list.get(i).decl);
 					auxVars.putAll(list.get(i).auxVars);
@@ -786,8 +794,8 @@ public class InitializationHandler {
 
 		if (rerl.lrVal != null) {//we have an identifier (or sth else too?)
 			ExpressionResult writes = new ExpressionResult((RValue) null);
-			ArrayList<Statement> writeCalls = mMemoryHandler.getWriteCall(main, loc,
-					new HeapLValue(startAddress, rerl.lrVal.getCType()), ((RValue) rerl.lrVal).getValue(), rerl.lrVal.getCType());
+			ArrayList<Statement> writeCalls = mMemoryHandler.getWriteCall(loc, new HeapLValue(startAddress, rerl.lrVal.getCType()),
+					((RValue) rerl.lrVal).getValue(), rerl.lrVal.getCType());
 			writes.stmt.addAll(writeCalls);
 			return writes;
 		}
@@ -850,9 +858,9 @@ public class InitializationHandler {
 					String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.UNION, underlyingFieldType);
 
 					fieldWrites = new ExpressionResult((RValue) null);
-					fieldWrites.stmt.addAll(mMemoryHandler.getWriteCall(main, loc,
-							fieldHlv,
-							new IdentifierExpression(loc, tmpId), underlyingFieldType));
+					fieldWrites.stmt.addAll(mMemoryHandler.getWriteCall(loc, fieldHlv,
+							new IdentifierExpression(loc, tmpId),
+							underlyingFieldType));
 					VariableDeclaration auxVarDec = new VariableDeclaration(loc, new Attribute[0], 
 							new VarList[] { new VarList(loc, new String[] { tmpId }, 
 									main.typeHandler.ctype2asttype(loc, underlyingFieldType)) } );

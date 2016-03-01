@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 
@@ -174,11 +175,16 @@ public class AffineTerm extends Term {
 					affineTerm.m_Variable2Coefficient.entrySet()) {
 				assert summand.getKey().getSort() == m_Sort : 
 					"Sort mismatch: " + summand.getKey().getSort() + " vs. " + m_Sort;
-				Rational coeff = m_Variable2Coefficient.get(summand.getKey());
+				final Rational coeff = m_Variable2Coefficient.get(summand.getKey());
 				if (coeff == null) {
 					m_Variable2Coefficient.put(summand.getKey(), summand.getValue());
 				} else {
-					Rational newCoeff = coeff.add(summand.getValue());
+					final Rational newCoeff;
+					if (BitvectorUtils.isBitvectorSort(m_Sort)) {
+						newCoeff = bringValueInRange(coeff.add(summand.getValue()), m_Sort);
+					} else {
+						newCoeff = coeff.add(summand.getValue());
+					}
 					if (newCoeff.equals(Rational.ZERO)) {
 						m_Variable2Coefficient.remove(summand.getKey());
 					} else {
@@ -186,7 +192,11 @@ public class AffineTerm extends Term {
 					}
 				}
 			}
-			constant = constant.add(affineTerm.m_Constant);
+			if (BitvectorUtils.isBitvectorSort(m_Sort)) {
+				constant = bringValueInRange(constant.add(affineTerm.m_Constant), m_Sort);
+			} else {
+				constant = constant.add(affineTerm.m_Constant);
+			}
 		}
 		m_Constant = constant;
 	}
@@ -202,13 +212,36 @@ public class AffineTerm extends Term {
 			m_Variable2Coefficient = Collections.emptyMap();
 		} else {
 			m_Variable2Coefficient = new HashMap<Term, Rational>();
-			m_Constant = affineTerm.m_Constant.mul(multiplier);
 			m_Sort = affineTerm.getSort();
+			if (BitvectorUtils.isBitvectorSort(m_Sort)) {
+				m_Constant = bringValueInRange(affineTerm.m_Constant.mul(multiplier), m_Sort);
+			} else {
+				assert m_Sort.isNumericSort();
+				m_Constant = affineTerm.m_Constant.mul(multiplier);
+			}
 			for (Map.Entry<Term, Rational> summand :
 				affineTerm.m_Variable2Coefficient.entrySet()) {
 				m_Variable2Coefficient.put(summand.getKey(), summand.getValue().mul(multiplier));
 			}
 		}
+	}
+
+	/**
+	 * Use modulo operation to bring Rational in the range of representable
+	 * values.
+	 * @param bv Rational that represents a bitvector
+	 * @param sort bitvector sort
+	 * @return bv % 2^sort.getIndices[0]
+	 */
+	private static Rational bringValueInRange(Rational bv, Sort sort) {
+		assert BitvectorUtils.isBitvectorSort(sort);
+		assert sort.getIndices().length == 1;
+		assert bv.isIntegral();
+		final int bitsize = sort.getIndices()[0].intValueExact();
+		final BigInteger bvBigInt = bv.numerator();
+		final BigInteger numberOfValues = BigInteger.valueOf(2).pow(bitsize);
+		final BigInteger resultBigInt = BoogieUtils.euclideanMod(bvBigInt, numberOfValues);
+		return Rational.valueOf(resultBigInt, BigInteger.ONE);
 	}
 
 	/**

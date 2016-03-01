@@ -71,7 +71,7 @@ public class FunctionDeclarations {
 		m_TypeSizeConstants = typeSizeConstants;
 	}
 
-	public void declareFunction(ILocation loc, String resultName, Attribute[] attributes, 
+	public void declareFunction(ILocation loc, String prefixedFunctionName, Attribute[] attributes, 
 			boolean boogieResultTypeBool, CPrimitive resultCType, CPrimitive... paramCTypes) {
 		final ASTType resultASTType;
 		if (boogieResultTypeBool) {
@@ -83,7 +83,7 @@ public class FunctionDeclarations {
 		for (int i=0; i<paramCTypes.length; i++) {
 			paramASTTypes[i] = m_TypeHandler.ctype2asttype(loc, paramCTypes[i]);
 		}
-		declareFunction(loc, resultName, attributes, resultASTType, paramASTTypes);
+		declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTTypes);
 	}
 	
 	public void declareFunction(ILocation loc, String prefixedFunctionName, Attribute[] attributes, ASTType resultASTType, ASTType... paramASTTypes) {

@@ -29,7 +29,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -52,6 +51,7 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.MainDispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.PRDispatcher;
@@ -305,7 +305,13 @@ public class FunctionHandler {
 			if (checkInParams) {
 				for (int i = 0; i < in.length; i++) {
 					if (!(in[i].getType().toString().equals(proc.getInParams()[i].getType().toString()))) {
-						String msg = "Implementation does not match declaration!" + "Type missmatch on in-parameters!";
+						final String msg = "Implementation does not match declaration! " 
+								+ "Type missmatch on in-parameters! "
+								+ in.length + " arguments, "
+								+ proc.getInParams().length + " parameters, "
+								+ "first missmatch at position " + i + ", "
+								+ "argument type " + in[i].getType().toString() + ", "
+								+ "param type " + proc.getInParams()[i].toString();
 						throw new IncorrectSyntaxException(loc, msg);
 					}
 				}
@@ -453,7 +459,7 @@ public class FunctionHandler {
 				String id = outParams[0].getIdentifiers()[0];
 				VariableLHS[] lhs = new VariableLHS[] { new VariableLHS(loc, id) };
 				rExp.lrVal = exprResult.lrVal;
-				main.cHandler.convert(main, loc, rExp, functionResultType);
+				main.cHandler.convert(loc, rExp, functionResultType);
 				RValue castExprResultRVal = (RValue) rExp.lrVal;
 				stmt.add(new AssignmentStatement(loc, lhs, new Expression[] { castExprResultRVal.getValue() }));
 				// //assuming that we need no auxvars or overappr, here
@@ -752,7 +758,7 @@ public class FunctionHandler {
 					expectedParamType = new CPointer(((CArray) expectedParamType).getValueType());
 				}
 				// implicit casts
-				main.cHandler.convert(main, loc, in, expectedParamType);
+				main.cHandler.convert(loc, in, expectedParamType);
 			}
 			args.add(in.lrVal.getValue());
 			stmt.addAll(in.stmt);
@@ -795,26 +801,32 @@ public class FunctionHandler {
 			ILocation loc, String methodName, IASTInitializerClause[] arguments) {
 		if (methodName.equals("malloc") || methodName.equals("alloca") || methodName.equals("__builtin_alloca")) {
 			assert arguments.length == 1;
-			Result sizeRes = main.dispatch(arguments[0]);
-			ExpressionResult er = ((ExpressionResult) sizeRes).switchToRValueIfNecessary(main, memoryHandler,
-					structHandler, loc);
-
-			ExpressionResult mallocRex = memoryHandler.getMallocCall(main, this, er.lrVal.getValue(), loc);
-
-			er.addAll(mallocRex);
-			er.lrVal = mallocRex.lrVal;
-
+			ExpressionResult exprRes = (ExpressionResult) main.dispatch(arguments[0]);
+			exprRes = exprRes.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);
+			main.cHandler.convert(loc, exprRes, m_TypeSizeComputer.getSize_T());
+			
+	    	CPointer resultType = new CPointer(new CPrimitive(PRIMITIVE.VOID));
+	    	String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC, resultType);
+	        VariableDeclaration tmpVarDecl = SFO.getTempVarVariableDeclaration(tmpId, 
+	        		main.typeHandler.constructPointerType(loc), loc);
+	        exprRes.decl.add(tmpVarDecl);
+	        
+	        exprRes.stmt.add(memoryHandler.getMallocCall(exprRes.lrVal.getValue(), tmpId, loc));
+	        exprRes.lrVal = new RValue(new IdentifierExpression(loc, tmpId), resultType);
+	        
+	        
 			// for alloc a we have to free the variable ourselves when the
 			// stackframe is closed, i.e. at a return
 			if (methodName.equals("alloca") || methodName.equals("__builtin_alloca")) {
+				LocalLValue llVal = new LocalLValue(new VariableLHS(loc, tmpId), resultType);
 				memoryHandler.addVariableToBeFreed(main, 
-						new LocalLValueILocationPair((LocalLValue) mallocRex.lrVal, 
+						new LocalLValueILocationPair(llVal, 
 								LocationFactory.createIgnoreLocation(loc)));
 				//we need to clear auxVars because otherwise the malloc auxvar is havocced after 
 				//this, and free (triggered by the statement before) would fail.
-				er.auxVars.clear();
+				exprRes.auxVars.clear();
 			}
-			return er;
+			return exprRes;
 		} else if (methodName.equals("free")) {
 			assert arguments.length == 1;
 			Result pRes = main.dispatch(arguments[0]);
@@ -833,71 +845,69 @@ public class FunctionHandler {
 			 */
 			assert arguments.length == 2;
 			ExpressionResult nmemb = ((ExpressionResult) main.dispatch(arguments[0])).switchToRValueIfNecessary(main, memoryHandler,structHandler, loc);
-			m_ExpressionTranslation.convertIntToInt(loc, nmemb, m_TypeSizeComputer.getSize_T());
+			main.cHandler.convert(loc, nmemb, m_TypeSizeComputer.getSize_T());
 			ExpressionResult size = ((ExpressionResult) main.dispatch(arguments[1])).switchToRValueIfNecessary(main, memoryHandler,structHandler, loc);
-			m_ExpressionTranslation.convertIntToInt(loc, size, m_TypeSizeComputer.getSize_T());
+			main.cHandler.convert(loc, size, m_TypeSizeComputer.getSize_T());
 			
 			Expression product = m_ExpressionTranslation.constructArithmeticExpression(
 					loc, IASTBinaryExpression.op_multiply,
 					nmemb.lrVal.getValue(), m_TypeSizeComputer.getSize_T(), 
 					size.lrVal.getValue(), m_TypeSizeComputer.getSize_T());
-
-			ExpressionResult mallocExprRes = memoryHandler.getMallocCall(main, this, product, loc);
-			final ExpressionResult result = new ExpressionResult(mallocExprRes.lrVal);
-			result.addAll(nmemb);
-			result.addAll(size);
-			result.addAll(mallocExprRes);
+			final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(nmemb, size);
+			
+	    	CPointer resultType = new CPointer(new CPrimitive(PRIMITIVE.VOID));
+	    	String tmpId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MALLOC, resultType);
+	        VariableDeclaration tmpVarDecl = SFO.getTempVarVariableDeclaration(tmpId, 
+	        		main.typeHandler.constructPointerType(loc), loc);
+	        result.decl.add(tmpVarDecl);
+	        
+	        result.stmt.add(memoryHandler.getMallocCall(product, tmpId, loc));
+	        result.lrVal = new RValue(new IdentifierExpression(loc, tmpId), resultType);
 			
 			result.stmt.add(memoryHandler.constructUltimateMeminitCall(loc, nmemb.lrVal.getValue(), 
-					size.lrVal.getValue(), product, mallocExprRes.lrVal.getValue()));
+					size.lrVal.getValue(), product, new IdentifierExpression(loc, tmpId)));
 			
 			if (this.callGraph.get(this.currentProcedure.getIdentifier()) == null)
 				this.callGraph.put(this.currentProcedure.getIdentifier(), new LinkedHashSet<String>());
 			this.callGraph.get(this.currentProcedure.getIdentifier()).add(MemoryModelDeclarations.Ultimate_MemInit.getName());
-			this.callGraph.get(this.currentProcedure.getIdentifier()).add(SFO.MALLOC);
+			this.callGraph.get(this.currentProcedure.getIdentifier()).add(MemoryModelDeclarations.Ultimate_Alloc.getName());
 
 			return result;
 		} else if (methodName.equals("memset")) {
-			// void *memset(void *str, int c, size_t n)
-			// void *memset(void *ptr, int value size_t size
-			memoryHandler.setDeclareMemset();
+			/*
+			 * C11 says in 7.24.6.1
+			 * void *memset(void *s, int c, size_t n);
+			 * The memset function copies the value of c (converted to an 
+			 * unsigned char) into each of the first n characters of the 
+			 * object pointed to by s.
+			 */
+			assert arguments.length == 3 : "wrong number of arguments";
+			ExpressionResult arg_s = ((ExpressionResult) main.dispatch(arguments[0])).switchToRValueIfNecessary(main, memoryHandler,structHandler, loc);
+			ExpressionResult arg_c = ((ExpressionResult) main.dispatch(arguments[1])).switchToRValueIfNecessary(main, memoryHandler,structHandler, loc);
+			m_ExpressionTranslation.convertIntToInt(loc, arg_c, new CPrimitive(PRIMITIVE.INT));
+			ExpressionResult arg_n = ((ExpressionResult) main.dispatch(arguments[2])).switchToRValueIfNecessary(main, memoryHandler,structHandler, loc);
+			m_ExpressionTranslation.convertIntToInt(loc, arg_n, m_TypeSizeComputer.getSize_T());
 			
-			ExpressionResult ptr = ((ExpressionResult) main.dispatch(arguments[0])).switchToRValueIfNecessary(
-					main, memoryHandler,
-					structHandler, loc);
-			ExpressionResult er = new ExpressionResult(ptr);
-			ExpressionResult value = ((ExpressionResult) main.dispatch(arguments[1])).switchToRValueIfNecessary(main, memoryHandler,
-					structHandler, loc);
-			er.addAll((ExpressionResult) value);
-			ExpressionResult size = ((ExpressionResult) main.dispatch(arguments[2])).switchToRValueIfNecessary(main, memoryHandler,
-					structHandler, loc);
-			er.addAll((ExpressionResult) size);
-			Expression nr1 = m_ExpressionTranslation.constructLiteralForIntegerType(
-        		loc, m_ExpressionTranslation.getCTypeOfPointerComponents(), BigInteger.ONE);
-
-
-			//TODO:
-			// even though memset in C takes an int for the value that is to be written,
-			// that value is cut off to be a char, which is then written to every byte in the memory area
-			// the arithmetic implications of that cutoff are still missing here 
-			// (--> just do modulo 256 - 127 or sth like that??)
-
-			er.stmt.add(new CallStatement(loc, 
-					false, 
-					new VariableLHS[0], 
-					SFO.MEMSET,
-					new Expression[] {
-							ptr.lrVal.getValue(),		//ptr
-							size.lrVal.getValue(),		//noFields
-							nr1,						//sizeofFields (here, 1 byte -- really: sizeof(char)
-							value.lrVal.getValue()		//value TODO: char conversion
-			}));
-
+			final ExpressionResult result = new ExpressionResult(arg_s.lrVal);
+			result.addAll(arg_s);
+			result.addAll(arg_c);
+			result.addAll(arg_n);
+			
+			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.MEMSETRES, new CPointer(new CPrimitive(PRIMITIVE.VOID)));
+			VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
+					loc, new String[] { tId }, main.typeHandler.constructPointerType(loc)) });
+			result.decl.add(tVarDecl);
+			result.auxVars.put(tVarDecl, loc);		
+			
+			result.stmt.add(memoryHandler.constructUltimateMemsetCall(loc, arg_s.lrVal.getValue(), 
+					arg_c.lrVal.getValue(), arg_n.lrVal.getValue(), tId));
+			
 			if (this.callGraph.get(this.currentProcedure.getIdentifier()) == null)
 				this.callGraph.put(this.currentProcedure.getIdentifier(), new LinkedHashSet<String>());
-			this.callGraph.get(this.currentProcedure.getIdentifier()).add(SFO.MEMSET);
-
-			return er;
+			this.callGraph.get(this.currentProcedure.getIdentifier()).add(MemoryModelDeclarations.C_Memset.getName());
+			
+			return result;
+			
 		} else {
 			return null;
 		}
@@ -1123,11 +1133,10 @@ public class FunctionHandler {
 					// dereference
 					HeapLValue hlv = new HeapLValue(llv.getValue(), cvar);
 
-					ExpressionResult assign = ((CHandler) main.cHandler).makeAssignment(main, igLoc, stmt, hlv,
-							// convention: if a variable is put on heap or not,
-							// its ctype stays the same
-							new RValue(rhsId, cvar), new ArrayList<Declaration>(), new LinkedHashMap<VariableDeclaration, ILocation>(),
-							new ArrayList<Overapprox>());
+					ExpressionResult assign = ((CHandler) main.cHandler).makeAssignment(igLoc, stmt, hlv, // convention: if a variable is put on heap or not,
+					// its ctype stays the same
+					new RValue(rhsId, cvar),
+							new ArrayList<Declaration>(), new LinkedHashMap<VariableDeclaration, ILocation>(), new ArrayList<Overapprox>());
 					stmt.add(
 							memoryHandler.getMallocCall(main, this, llv, igLoc));						
 					stmt.addAll(assign.stmt);
@@ -1249,14 +1258,14 @@ public class FunctionHandler {
 	 * @param errLoc
 	 *            the location for possible errors!
 	 */
-	public void checkIfModifiedGlobal(Dispatcher main, String searchString, ILocation errLoc) {
+	public void checkIfModifiedGlobal(SymbolTable symbTab, String searchString, ILocation errLoc) {
 		String cName;
-		if (!main.cHandler.getSymbolTable().containsBoogieSymbol(searchString)) {
+		if (!symbTab.containsBoogieSymbol(searchString)) {
 			return; // temp variable!
 		}
-		cName = main.cHandler.getSymbolTable().getCID4BoogieID(searchString, errLoc);
+		cName = symbTab.getCID4BoogieID(searchString, errLoc);
 		String cId = currentProcedure.getIdentifier();
-		SymbolTableValue stValue = main.cHandler.getSymbolTable().get(cName, errLoc);
+		SymbolTableValue stValue = symbTab.get(cName, errLoc);
 		CType cvar = stValue.getCVariable();
 		if (cvar != null && stValue.getCDecl().isStatic()) {
 			modifiedGlobals.get(cId).add(searchString);
@@ -1270,7 +1279,7 @@ public class FunctionHandler {
 			// therefore local!
 			isLocal = true;
 		} else {
-			isLocal = !main.cHandler.getSymbolTable().get(cName, errLoc).isBoogieGlobalVar();
+			isLocal = !symbTab.get(cName, errLoc).isBoogieGlobalVar();
 		}
 		if (!isLocal) {
 			// the variable is not local but could be a formal parameter
@@ -1514,7 +1523,7 @@ public class FunctionHandler {
 		CType returnCType = methodsCalledBeforeDeclared.contains(methodName) ? new CPrimitive(PRIMITIVE.INT)
 				: procedureToCFunctionType.get(methodName).getResultType().getUnderlyingType();
 		m_ExpressionTranslation.addAssumeValueInRangeStatements(loc, expr, returnCType, stmt);
-		assert (CHandler.isAuxVarMapcomplete(main, decl, auxVars));
+		assert (CHandler.isAuxVarMapcomplete(main.nameHandler, decl, auxVars));
 		return new ExpressionResult(stmt, new RValue(expr, returnCType), decl, auxVars, overappr);
 	}
 

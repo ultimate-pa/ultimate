@@ -27,8 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 
 enum Sat { OK, UNSATISFIABLE; };

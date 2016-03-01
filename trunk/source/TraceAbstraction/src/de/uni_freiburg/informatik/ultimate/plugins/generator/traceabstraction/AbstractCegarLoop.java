@@ -434,7 +434,7 @@ public abstract class AbstractCegarLoop {
 	}
 
 	protected void writeAutomatonToFile(IAutomaton<CodeBlock, IPredicate> automaton, String filename) {
-		new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(m_Services), filename,
+		new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(m_Services), "nwa",
 				m_Pref.dumpPath() + "/" + filename, m_PrintAutomataLabeling, "", automaton);
 	}
 

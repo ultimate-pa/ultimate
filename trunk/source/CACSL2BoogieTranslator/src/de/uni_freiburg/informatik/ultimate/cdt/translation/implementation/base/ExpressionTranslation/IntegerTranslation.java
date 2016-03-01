@@ -582,17 +582,17 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public void convertPointerToInt(Dispatcher main, ILocation loc,
+	public void convertPointerToInt(ILocation loc,
 			ExpressionResult rexp, CPrimitive newType) {
 		assert (newType.isIntegerType());
 		assert (rexp.lrVal.getCType() instanceof CPointer);
 		if (m_OverapproximateIntPointerConversion) {
-			super.convertPointerToInt(main, loc, rexp, newType);
+			super.convertPointerToInt(loc, rexp, newType);
 		} else {
 			final Expression pointerExpression = rexp.lrVal.getValue();
 			final Expression intExpression;
-			if (main.getTypeSizes().useFixedTypeSizes()) {
-				BigInteger maxPtrValuePlusOne = main.getTypeSizes().getMaxValueOfPointer().add(BigInteger.ONE); 
+			if (m_TypeSizes.useFixedTypeSizes()) {
+				BigInteger maxPtrValuePlusOne = m_TypeSizes.getMaxValueOfPointer().add(BigInteger.ONE); 
 				IntegerLiteral max_Pointer = new IntegerLiteral(loc, maxPtrValuePlusOne.toString());
 				intExpression = constructArithmeticExpression(loc,
 						IASTBinaryExpression.op_plus,
@@ -610,16 +610,16 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public void convertIntToPointer(Dispatcher main, ILocation loc,
+	public void convertIntToPointer(ILocation loc,
 			ExpressionResult rexp, CPointer newType) {
 		if (m_OverapproximateIntPointerConversion) {
-			super.convertIntToPointer(main, loc, rexp, newType);
+			super.convertIntToPointer(loc, rexp, newType);
 		} else {
 			final Expression intExpression = rexp.lrVal.getValue();
 			final Expression baseAdress;
 			final Expression offsetAdress;
-			if (main.getTypeSizes().useFixedTypeSizes()) {
-				BigInteger maxPtrValuePlusOne = main.getTypeSizes().getMaxValueOfPointer().add(BigInteger.ONE); 
+			if (m_TypeSizes.useFixedTypeSizes()) {
+				BigInteger maxPtrValuePlusOne = m_TypeSizes.getMaxValueOfPointer().add(BigInteger.ONE); 
 				IntegerLiteral max_Pointer = new IntegerLiteral(loc, maxPtrValuePlusOne.toString());
 				baseAdress = constructArithmeticExpression(loc,
 								IASTBinaryExpression.op_divide,

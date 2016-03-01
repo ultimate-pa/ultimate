@@ -29,7 +29,7 @@
 /**
  * Package information for the congruence domain of Abstract Interpretation.
  * 
- * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * @author Frank SchÃ¼ssele (schuessf@informatik.uni-freiburg.de)
  *
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence;
