@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.LocalBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ConstDeclaration;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
@@ -71,7 +72,7 @@ public class Boogie2SmtSymbolTable {
 	 * </ul>
 	 * 
 	 */
-	private static final String s_BUILTINIDENTIFIER = "builtin";
+	static final String s_BUILTINIDENTIFIER = "builtin";
 	
 	private static final String s_INDICESIDENTIFIER = "indices";
 	
@@ -350,9 +351,9 @@ public class Boogie2SmtSymbolTable {
 		}
 	}
 	
-	private Map<String, Expression[]> extractAttributes(FunctionDeclaration funcdecl) {
+	public static Map<String, Expression[]> extractAttributes(Declaration decl) {
 		Map<String, Expression[]> result = new HashMap<String, Expression[]>();
-		for (Attribute attr : funcdecl.getAttributes()) {
+		for (Attribute attr : decl.getAttributes()) {
 			if (attr instanceof NamedAttribute) {
 				NamedAttribute nattr = (NamedAttribute) attr;
 				result.put(nattr.getName(), ((NamedAttribute) attr).getValues());
