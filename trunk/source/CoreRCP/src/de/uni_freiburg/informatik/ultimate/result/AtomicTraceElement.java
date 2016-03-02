@@ -109,12 +109,7 @@ public class AtomicTraceElement<TE> {
 	}
 
 	public AtomicTraceElement(TE element, TE step, EnumSet<AtomicTraceElement.StepInfo> info) {
-		this(element, step, info, new IToString<TE>() {
-			@Override
-			public String toString(TE elem) {
-				return elem.toString();
-			}
-		});
+		this(element, step, info, a -> a.toString());
 	}
 
 	public AtomicTraceElement(TE element, TE step, EnumSet<AtomicTraceElement.StepInfo> info,
