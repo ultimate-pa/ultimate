@@ -926,16 +926,13 @@ public class Theory {
 			int mNumArgs;
 			Sort mResult;
 			int mFlags;
+			int mFirstFloat;
 			public RegularFloatingPointFunction(
 					String name, int numArgs, Sort result, int flags) {
 				super(name);
 				mNumArgs = numArgs;				
 				mResult = result;
 				mFlags = flags;
-			}
-			public RegularFloatingPointFunction(
-					String name, int numArgs, Sort result) {
-				this(name, numArgs, result, FunctionSymbol.INTERNAL);
 			}
 			@Override
 			public int getFlags(BigInteger[] indices, Sort[] paramSorts,
@@ -949,8 +946,12 @@ public class Theory {
 					|| paramSorts.length != mNumArgs || resultSort != null){
 					return null;
 				}
-					
-				for (int i = 0; i < mNumArgs; i++) {
+				if (paramSorts[0].getName() == ("RoundingMode")) {
+					mFirstFloat = 1;
+				} else {
+					mFirstFloat = 0;
+				}
+				for (int i = mFirstFloat; i < mNumArgs; i++) {
 					if (!(paramSorts[i].getName() == "FloatingPoint" ||
 							paramSorts[i].getName() == "Float16" ||
 							paramSorts[i].getName() == "Float32" ||
@@ -959,13 +960,13 @@ public class Theory {
 						return null;
 					}
 				}
-				return mResult == null ? paramSorts[0] : mResult;
+				return mResult == null ? paramSorts[mFirstFloat] : mResult;
 			}
 		}
 		
 		/*
 		 * Used to create function symbols that take roundingModes and floating points as arguments
-		 */
+		 *
 		class RoundedFloatingPointFunction extends FunctionSymbolFactory {
 			int mNumArgs;
 			Sort mResult;
@@ -1006,7 +1007,7 @@ public class Theory {
 				}
 				return mResult == null ? paramSorts[1] : mResult;
 			}
-		}
+		}*/
 		
 		defineFunction(new FunctionSymbolFactory("fp") {
 			@Override
@@ -1176,13 +1177,13 @@ public class Theory {
 		defineFunction(new RegularFloatingPointFunction("fp.max", 2, null, FunctionSymbol.INTERNAL));
 		defineFunction(new RegularFloatingPointFunction("fp.rem", 2, null, FunctionSymbol.INTERNAL));
 		// rounded operators
-		defineFunction(new RoundedFloatingPointFunction("fp.add", 3, null, FunctionSymbol.INTERNAL));
-		defineFunction(new RoundedFloatingPointFunction("fp.sub", 3, null, FunctionSymbol.INTERNAL));
-		defineFunction(new RoundedFloatingPointFunction("fp.mul", 3, null, FunctionSymbol.INTERNAL));
-		defineFunction(new RoundedFloatingPointFunction("fp.div", 3, null, FunctionSymbol.INTERNAL));
-		defineFunction(new RoundedFloatingPointFunction("fp.fma", 4, null, FunctionSymbol.INTERNAL));
-		defineFunction(new RoundedFloatingPointFunction("fp.sqrt", 2, null, FunctionSymbol.INTERNAL));
-		defineFunction(new RoundedFloatingPointFunction("fp.roundToIntegral", 2, null, FunctionSymbol.INTERNAL));
+		defineFunction(new RegularFloatingPointFunction("fp.add", 3, null, FunctionSymbol.INTERNAL));
+		defineFunction(new RegularFloatingPointFunction("fp.sub", 3, null, FunctionSymbol.INTERNAL));
+		defineFunction(new RegularFloatingPointFunction("fp.mul", 3, null, FunctionSymbol.INTERNAL));
+		defineFunction(new RegularFloatingPointFunction("fp.div", 3, null, FunctionSymbol.INTERNAL));
+		defineFunction(new RegularFloatingPointFunction("fp.fma", 4, null, FunctionSymbol.INTERNAL));
+		defineFunction(new RegularFloatingPointFunction("fp.sqrt", 2, null, FunctionSymbol.INTERNAL));
+		defineFunction(new RegularFloatingPointFunction("fp.roundToIntegral", 2, null, FunctionSymbol.INTERNAL));
 		
 		// Comparison Operators
 		defineFunction(new RegularFloatingPointFunction("fp.leq", 2, mBooleanSort, FunctionSymbol.INTERNAL | FunctionSymbol.CHAINABLE));
@@ -1201,7 +1202,7 @@ public class Theory {
 		defineFunction(new RegularFloatingPointFunction("fp.isPositive", 1, mBooleanSort, FunctionSymbol.INTERNAL));
 		
 		// Conversion from FP
-		defineFunction(new RegularFloatingPointFunction("fp.to_real", 1, mRealSort));
+		defineFunction(new RegularFloatingPointFunction("fp.to_real", 1, mRealSort, FunctionSymbol.INTERNAL));
 	}
 	
 	private void setLogic(Logics logic) {
