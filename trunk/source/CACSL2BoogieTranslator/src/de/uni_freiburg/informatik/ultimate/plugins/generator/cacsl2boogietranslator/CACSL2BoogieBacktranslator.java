@@ -132,7 +132,7 @@ public class CACSL2BoogieBacktranslator
 	@Override
 	public List<CACSLLocation> translateTrace(List<BoogieASTNode> trace) {
 		// dirty but quick: convert trace to program execution
-		//TODO: set the correct step info (but how?)
+		// TODO: set the correct step info (but how?)
 		final List<AtomicTraceElement<BoogieASTNode>> ateTrace = trace.stream()
 				.map(a -> new AtomicTraceElement<>(a, BoogiePrettyPrinter.getBoogieToStringprovider()))
 				.collect(Collectors.toList());
@@ -550,6 +550,19 @@ public class CACSL2BoogieBacktranslator
 			if (!closed.add(current)) {
 				continue;
 			}
+			
+			for (final MultigraphEdge<String, CACSLLocation> inEdge : new ArrayList<>(current.getIncomingEdges())) {
+				final Multigraph<String, CACSLLocation> source = inEdge.getSource();
+				
+				if(source.getOutgoingEdges().size() == 1 && inEdge.getLabel() == null && source.getLabel() == null){
+					//merge unlabeled nodes that reach current via an unlabeled edge with me 
+					inEdge.disconnectSource();
+					inEdge.disconnectTarget();
+					for (final MultigraphEdge<String, CACSLLocation> sourceInEdge : new ArrayList<>(source.getIncomingEdges())) {
+						sourceInEdge.redirectTarget(current);
+					}
+				}
+			}
 
 			for (final MultigraphEdge<String, CACSLLocation> outEdge : new ArrayList<>(current.getOutgoingEdges())) {
 				final Multigraph<String, CACSLLocation> target = outEdge.getTarget();
@@ -568,6 +581,14 @@ public class CACSL2BoogieBacktranslator
 							out.redirectSource(current);
 						}
 					}
+				}
+
+				if (outEdge.getLabel() == null && target.getIncomingEdges().size() > 1
+						&& current.getOutgoingEdges().size() > 1) {
+					// remove outEdge if it has no label and the target wont get disconnected and the source wont become
+					// a sink
+					outEdge.disconnectSource();
+					outEdge.disconnectTarget();
 				}
 			}
 
