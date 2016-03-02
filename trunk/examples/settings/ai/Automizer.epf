@@ -6,7 +6,7 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/Parallel\ states\ before\ merging=2
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/Collect\ literals\ from\ the\ RCFG's\ expressions=true
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/INTERVAL\ -\ Widening\ operator=Nearest In Set
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretation/INTERVAL\ -\ Interval\ Widening\ operator=Nearest In Set
 #Thu Dec 18 17:11:39 CET 2014
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator/Check\ if\ freed\ pointer\ was\ valid=false
