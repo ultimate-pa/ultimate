@@ -627,5 +627,7 @@ public abstract class AExpressionTranslation {
 	public abstract Expression extractBits(ILocation loc, Expression operand, int high, int low);
 
 	public abstract Expression concatBits(ILocation loc, List<Expression> dataChunks, int size);
+	
+	public abstract Expression signExtend(ILocation loc, Expression operand, int bitsBefore, int bitsAfter);
 
 }

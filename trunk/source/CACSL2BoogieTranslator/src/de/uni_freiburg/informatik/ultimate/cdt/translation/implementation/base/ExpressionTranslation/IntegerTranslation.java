@@ -705,4 +705,10 @@ public class IntegerTranslation extends AExpressionTranslation {
 		throw new UnsupportedOperationException("not yet implemented");
 	}
 
+	@Override
+	public Expression signExtend(ILocation loc, Expression operand, int bitsBefore, int bitsAfter) {
+		// we probably also have to provide information if input is signed/unsigned
+		throw new UnsupportedOperationException("not yet implemented");
+	}
+
 }
