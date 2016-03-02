@@ -619,11 +619,13 @@ public class CACSL2BoogieBacktranslator
 			cache.put(oldTarget, lastTarget);
 		}
 
-		if (oldEdge.getLabel() == null) {
+		final BoogieASTNode label = oldEdge.getLabel();
+		if (label == null) {
 			new MultigraphEdge<>(currentSource, null, lastTarget);
 			return lastTarget;
 		}
-		final List<CACSLLocation> translatedTrace = translateTrace(Collections.singletonList(oldEdge.getLabel()));
+		
+		final List<CACSLLocation> translatedTrace = translateTrace(Collections.singletonList(label));
 
 		if (translatedTrace.isEmpty()) {
 			new MultigraphEdge<>(currentSource, null, lastTarget);
