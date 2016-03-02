@@ -35,11 +35,30 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 	HashMap<BoogieVar, HashMap<BoogieVar, HashSet<BoogieVar>>> m_arrayToPartitions;
 	Script m_script;
 
-//	public HeapSepRcfgVisitor(Logger logger, HashMap<BoogieVar, HashMap<BoogieVar, BoogieVar>> map) {
 	public HeapSepRcfgVisitor(Logger logger, HashMap<BoogieVar, HashMap<BoogieVar, BoogieVar>> map, Script script) {
 		super(logger);
 		m_oldArrayToPointerToNewArray = map;
+		m_arrayToPartitions = reverseInnerMap(m_oldArrayToPointerToNewArray);
 		m_script = script;
+	}
+
+
+	private HashMap<BoogieVar, HashMap<BoogieVar, HashSet<BoogieVar>>> reverseInnerMap(
+			HashMap<BoogieVar, HashMap<BoogieVar, BoogieVar>> map) {
+		HashMap<BoogieVar, HashMap<BoogieVar, HashSet<BoogieVar>>> result = new HashMap<BoogieVar, HashMap<BoogieVar,HashSet<BoogieVar>>>();
+
+		for (Entry<BoogieVar, HashMap<BoogieVar, BoogieVar>> en1 : map.entrySet()) {
+			result.put(en1.getKey(), new HashMap<>());
+			for (Entry<BoogieVar, BoogieVar> en2 : en1.getValue().entrySet()) {
+				HashSet<BoogieVar> pointers = result.get(en1.getKey()).get(en2.getValue());
+				if (pointers == null) {
+					pointers = new HashSet<BoogieVar>();
+					result.get(en1.getKey()).put(en2.getValue(), pointers);
+				}
+				pointers.add(en2.getKey());
+			}
+		}
+		return result;
 	}
 
 
@@ -66,13 +85,10 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		if (!(edge instanceof CodeBlock))
 			return;
 		TransFormula tf = ((CodeBlock) edge).getTransitionFormula();
-		//TODO: maybe build a TransformulaTransformer??
 		
 		TransFormula newTf = splitArraysInTransFormula(tf);
 		
 		
-//		TransFormula tfNew = new TransFormula(nt, null, null, null, null, null, null);
-//		tf.
 		super.level(edge);
 	}
 
@@ -107,12 +123,12 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		Term newFormula = new ArraySplitter(m_script, m_oldArrayToPointerToNewArray, m_arrayToPartitions, oldInVars, oldOutVars).transform(tf.getFormula());
 
 		
-		Map<BoogieVar, TermVariable> newInVars = null;
-		Map<BoogieVar, TermVariable> newOutVars = null;
-		Set<TermVariable> newAuxVars = null;
-		Set<TermVariable> newBranchEncoders = null;
-		Infeasibility newInfeasibility = null;
-		Term newClosedFormula = null;
+		Map<BoogieVar, TermVariable> newInVars = tf.getInVars();
+		Map<BoogieVar, TermVariable> newOutVars = tf.getOutVars();
+		Set<TermVariable> newAuxVars = tf.getAuxVars();
+		Set<TermVariable> newBranchEncoders = tf.getBranchEncoders();
+		Infeasibility newInfeasibility = tf.isInfeasible();
+		Term newClosedFormula = tf.getClosedFormula();
 
 		TransFormula result = new TransFormula(newFormula, newInVars, newOutVars, newAuxVars, newBranchEncoders, newInfeasibility, newClosedFormula);
 		
@@ -123,12 +139,16 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		return script.variable(String.format("{}_split_{}", arrayName, splitIndex), sort);
 	}
 	
-	public static BoogieVar getBoogieVarFromTermVar(TermVariable tv, Map<BoogieVar, TermVariable> map) {
-		for (Entry<BoogieVar, TermVariable> en : map.entrySet()) {
+	public static BoogieVar getBoogieVarFromTermVar(TermVariable tv, Map<BoogieVar, TermVariable> map1, Map<BoogieVar, TermVariable> map2) {
+		for (Entry<BoogieVar, TermVariable> en : map1.entrySet()) {
 			if (en.getValue().equals(tv))
 				return en.getKey();
 		}
-		assert false : "did not find " + tv + "in the given map";
+		for (Entry<BoogieVar, TermVariable> en : map2.entrySet()) {
+			if (en.getValue().equals(tv))
+				return en.getKey();
+		}
+		assert false : "did not find " + tv + " in the given maps";
 		return null;
 	}
 	/**
@@ -140,6 +160,8 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		Map<BoogieVar, TermVariable> m_outVars;
 		
 		boolean m_equalsMode = false;
+		BoogieVar m_aOld;
+		BoogieVar m_aNew;
 
 		/**
 		 * arrayId (old array) X pointerId -> arrayId (split version)
@@ -161,20 +183,43 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 			m_inVars = inVars;
 			m_outVars = outVars;
 		}
+
 		
 		public ArraySplitter(Script script, 
 				HashMap<BoogieVar, HashMap<BoogieVar, BoogieVar>> arrayToPointerToPartition,
 				HashMap<BoogieVar, HashMap<BoogieVar, HashSet<BoogieVar>>> arrayToPartitions,
 				Map<BoogieVar, TermVariable> inVars, Map<BoogieVar, TermVariable> outVars, 
-				BoogieVar a1Old, BoogieVar a1New, BoogieVar a2Old, BoogieVar a2New) {
+//				BoogieVar a1Old, BoogieVar a1New, 
+//				BoogieVar a2Old, BoogieVar a2New, 
+				BoogieVar aOld, BoogieVar aNew) {
 			this(script, arrayToPointerToPartition, arrayToPartitions, inVars, outVars);
 			m_equalsMode = true;
+			m_aOld = aOld;
+			m_aNew = aNew;
 		}
 
 
 
 		@Override
 		public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
+			
+			if (m_equalsMode) {
+				if (appTerm.getParameters().length == 0) {
+					// we have a constant
+					
+					if (appTerm.getSort().isArraySort() && appTerm.equals(m_aOld)) {
+						setResult(m_aNew.getTermVariable()); //FIXME this TermVariable?? update for the inOutVar-maps?
+						m_equalsMode = false;
+						return;
+					}
+				} else if (appTerm.getFunction().getName().equals("store")) {
+					//TODO
+					// do nothing maybe??
+					// we seem to rely on the traversal order of the TermTransformer here -- is that a problem?
+				} else {
+					m_equalsMode = false;
+				}
+			}
 
 			if (appTerm.getFunction().getName().equals("select")
 					|| appTerm.getFunction().getName().equals("store")) {
@@ -182,16 +227,28 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 						&& appTerm.getParameters()[1] instanceof TermVariable) {
 					assert appTerm.getParameters()[0].getSort().isArraySort();
 
-					BoogieVar arrayVar = getBoogieVarFromTermVar(((TermVariable) appTerm.getParameters()[0]), m_inVars); //TODO do inVars suffice??
+					BoogieVar arrayVar = getBoogieVarFromTermVar(((TermVariable) appTerm.getParameters()[0]), m_inVars, m_outVars);
 
 					HashMap<BoogieVar, BoogieVar> im = m_arrayToPointerToPartition.get(arrayVar);
 					if (im != null) {
-						BoogieVar ptrName = getBoogieVarFromTermVar(((TermVariable) appTerm.getParameters()[1]), m_inVars); //TODO do inVars suffice??
+						BoogieVar ptrName = getBoogieVarFromTermVar(((TermVariable) appTerm.getParameters()[1]), m_inVars, m_outVars);
 
 						TermVariable newVar = im.get(ptrName).getTermVariable(); //FIXME probably replace getTermVariable, here
 								//getSplitTermVariable(arrayVar, splitIndex, appTerm.getParameters()[0].getSort(), m_script);
 
-						setResult(m_script.term(appTerm.getFunction().getName(), newVar, appTerm.getParameters()[1]));
+						Term newTerm = appTerm.getFunction().getName().equals("store") ? 
+								m_script.term(
+								appTerm.getFunction().getName(), 
+								newVar, 
+								appTerm.getParameters()[1],
+								appTerm.getParameters()[2]) :
+									m_script.term(
+								appTerm.getFunction().getName(), 
+								newVar, 
+								appTerm.getParameters()[1]);
+
+						setResult(newTerm);
+						return;
 					}
 				}
 			} else if (appTerm.getFunction().getName().equals("=")) {
@@ -207,9 +264,16 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 					 *   i.e., no partition of a may overlap two partitions of b and vice versa
 					 */
 
+					ArrayFinder af0 = new ArrayFinder();
+					af0.transform(p0);
+					BoogieVar a0Id = getBoogieVarFromTermVar(af0.getResult(), m_inVars, m_outVars);
+
+					ArrayFinder af1 = new ArrayFinder();
+					af1.transform(p1);
+					BoogieVar a1Id = getBoogieVarFromTermVar(af1.getResult(), m_inVars, m_outVars);
+							
+
 					//assert partitionsAreCompatible(findArrayId(p0), findArrayId(p1)); TODO: write those methods for the assert..
-					BoogieVar a0Id = null;
-					BoogieVar a1Id = null;
 					
 					ArrayList<Term> equationConjunction = new ArrayList<Term>();
 
@@ -218,12 +282,6 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 					 *  equate e1[a_p] = e2[b_q]
 					 *  (where e1, e2 may be stores or just array identifiers (something else?).
 					 */
-//					for (int i = 0; i < m_arrayToPartitions.get(a0Id).size(); i++) {
-//						HashSet<String> partA0 = m_arrayToPartitions.get(a0Id).get(i);
-//						for (int j = 0; j < m_arrayToPartitions.get(a0Id).size(); j++) {
-//							HashSet<String> partA1 = m_arrayToPartitions.get(a1Id).get(j);
-
-
 					for (Entry<BoogieVar, HashSet<BoogieVar>> a0SplitArrayToPointers : m_arrayToPartitions.get(a0Id).entrySet()) {
 						for (Entry<BoogieVar, HashSet<BoogieVar>> a1SplitArrayToPointers : m_arrayToPartitions.get(a1Id).entrySet()) {
 
@@ -232,20 +290,43 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 
 							if (!intersection.isEmpty()) {
 								equationConjunction.add(
-										new ArraySplitter(m_script, m_arrayToPointerToPartition, m_arrayToPartitions, m_inVars, m_outVars, 
-										a0Id, a0SplitArrayToPointers.getKey(), a1Id, a1SplitArrayToPointers.getKey()).transform(appTerm));
+										m_script.term("=", 
+												new ArraySplitter(m_script, m_arrayToPointerToPartition, m_arrayToPartitions, m_inVars, m_outVars, 
+														a0Id, a0SplitArrayToPointers.getKey()).transform(appTerm.getParameters()[0]),
+												new ArraySplitter(m_script, m_arrayToPointerToPartition, m_arrayToPartitions, m_inVars, m_outVars, 
+														a1Id, a1SplitArrayToPointers.getKey()).transform(appTerm.getParameters()[1])
+												));
 								
 							}
 						}
 					}
-					
-				
+					setResult(m_script.term("and", equationConjunction.toArray(new Term[equationConjunction.size()])));
+					return;
 				}
-
-			} else
-				super.convertApplicationTerm(appTerm, newArgs);
+			} 
+				
+			super.convertApplicationTerm(appTerm, newArgs);
 		}
 	}
 
 
+	public static class ArrayFinder extends TermTransformer {
+		TermVariable m_arrayId;
+		
+		
+		
+		@Override
+		protected void convert(Term term) {
+			if (term.getSort().isArraySort() && term instanceof TermVariable) {
+				m_arrayId = (TermVariable) term;
+				setResult(term);
+				return;
+			}
+			super.convert(term);
+		}
+	
+		TermVariable getResult() {
+			return m_arrayId;
+		}
+	}
 }

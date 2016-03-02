@@ -37,16 +37,22 @@ import de.uni_freiburg.informatik.ultimate.access.WalkerOptions;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.model.GraphType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.model.boogie.DeclarationInformation.StorageClass;
+import de.uni_freiburg.informatik.ultimate.model.boogie.LocalBoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.model.structure.BaseExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.ObserverDispatcher;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.ObserverDispatcherSequential;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker.RCFGWalkerBreadthFirst;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 
 public class HeapSeparatorObserver implements IUnmanagedObserver {
@@ -55,8 +61,8 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 	private final Logger m_logger;
 	
 	// arrayId before separation --> pointerId --> arrayId after separation
-//	HashMap<BoogieVar, HashMap<BoogieVar, BoogieVar>> m_oldArrayToPointerToNewArray;
-	HashMap<String, HashMap<String, Integer>> m_oldArrayToPointerToNewArray;
+	HashMap<BoogieVar, HashMap<BoogieVar, BoogieVar>> m_oldArrayToPointerToNewArray;
+//	HashMap<String, HashMap<String, Integer>> m_oldArrayToPointerToNewArray;
 	private Script m_script;
 
 	public HeapSeparatorObserver(IUltimateServiceProvider services) {
@@ -92,9 +98,10 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 	@Override
 	public boolean process(IElement root) throws Throwable {
 		
-		testSetup(((RootNode) root).getOutgoingEdges().get(0).getTarget());
-		
 		m_script = ((RootNode) root).getRootAnnot().getScript();
+//		testSetup(((RootNode) root).getOutgoingEdges().get(0).getTarget());
+		testSetup(((RootNode) root).getRootAnnot());
+		
 		
 		ObserverDispatcher od = new ObserverDispatcherSequential(m_logger);
 		RCFGWalkerBreadthFirst walker = new RCFGWalkerBreadthFirst(od, m_logger);
@@ -108,13 +115,66 @@ public class HeapSeparatorObserver implements IUnmanagedObserver {
 	}
 	
 	
-	void testSetup(RCFGNode rcfgNode) {
-//		m_oldArrayToPointerToNewArray = new HashMap<BoogieVar, HashMap<BoogieVar, BoogieVar>>();
-		m_oldArrayToPointerToNewArray = new HashMap<String, HashMap<String, Integer>>();
+	void testSetup(RootAnnot ra) {
 		
-		m_oldArrayToPointerToNewArray.put("p_m", new HashMap<String, Integer>());
-		m_oldArrayToPointerToNewArray.get("p_m").put("p_p", 1);
-		m_oldArrayToPointerToNewArray.get("p_m").put("p_q", 2);
+		BoogieVar m = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
+				"m", 
+				new DeclarationInformation(StorageClass.LOCAL, "p"), 
+				false);
+		
+		BoogieVar p = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
+				"p", 
+				new DeclarationInformation(StorageClass.LOCAL, "p"), 
+				false);
+
+		BoogieVar q = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
+				"q", 
+				new DeclarationInformation(StorageClass.LOCAL, "p"), 
+				false);
+
+		BoogieVar i = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
+				"#i", 
+				new DeclarationInformation(StorageClass.LOCAL, "p"), 
+				false);
+
+		BoogieVar j = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
+				"#j", 
+				new DeclarationInformation(StorageClass.LOCAL, "p"), 
+				false);
+		
+		BoogieVar m1 = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
+				"m1", 
+				new DeclarationInformation(StorageClass.LOCAL, "p"), 
+				false);
+
+		BoogieVar m2 = ra.getBoogie2SMT().getBoogie2SmtSymbolTable().getBoogieVar(
+				"m2", 
+				new DeclarationInformation(StorageClass.LOCAL, "p"), 
+				false);
+	
+		
+//		BoogieVar m1 = new LocalBoogieVar("m1", "p", 
+//				//m.getIType(), 
+//				null,
+//				m_script.variable("m1_tv", m.getTermVariable().getSort()),
+//				null,null
+////				(ApplicationTerm) m_script.term("m1_dc"),
+////				(ApplicationTerm) m_script.term("m1_pc")
+//				);
+//		
+//		BoogieVar m2 = new LocalBoogieVar("m2", "p", 
+//				//m.getIType(), 
+//				null,
+//				m_script.variable("m2_tv", m.getTermVariable().getSort()),
+//				null,null
+////				(ApplicationTerm) m_script.term("m2_dc"),
+////				(ApplicationTerm) m_script.term("m2_pc")
+//				);
+	
+		m_oldArrayToPointerToNewArray = new HashMap<>();
+		m_oldArrayToPointerToNewArray.put(m, new HashMap<BoogieVar, BoogieVar>());
+		m_oldArrayToPointerToNewArray.get(m).put(p, m1);
+		m_oldArrayToPointerToNewArray.get(m).put(q, m2);
 		
 	}
 }
