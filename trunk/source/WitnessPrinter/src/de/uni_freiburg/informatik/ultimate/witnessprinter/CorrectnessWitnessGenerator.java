@@ -143,6 +143,10 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 
 		final Deque<IExplicitEdgesMultigraph<?, ?, String, TTE>> worklist = new ArrayDeque<>();
 		final Map<IExplicitEdgesMultigraph<?, ?, String, TTE>, GeneratedWitnessNode> nodecache = new HashMap<>();
+
+		// add initial node to nodecache s.t. it will always be initial
+		nodecache.put(root, annotateInvariant(root, fac.createInitialWitnessNode()));
+
 		final Set<IMultigraphEdge<?, ?, String, TTE>> closed = new HashSet<>();
 		worklist.add(root);
 
@@ -152,7 +156,7 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 
 			for (final IMultigraphEdge<?, ?, String, TTE> outgoing : sourceNode.getOutgoingEdges()) {
 				if (!closed.add(outgoing)) {
-//					mLogger.info("Ignoring " + outgoing);
+					// mLogger.info("Ignoring " + outgoing);
 					continue;
 				}
 				final TTE label = outgoing.getLabel();
@@ -164,7 +168,7 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 				}
 				final GeneratedWitnessNode targetWNode = getWitnessNode(outgoing.getTarget(), mStringProvider, fac,
 						nodecache);
-//				mLogger.info("Adding edge from " + sourceWNode + " to " + targetWNode);
+				// mLogger.info("Adding edge from " + sourceWNode + " to " + targetWNode);
 				graph.addEdge(edge, sourceWNode, targetWNode);
 				worklist.add(outgoing.getTarget());
 			}
@@ -181,14 +185,17 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 		if (wnode != null) {
 			return wnode;
 		}
-
-		wnode = fac.createWitnessNode();
+		wnode = annotateInvariant(node, fac.createWitnessNode());
 		nodecache.put(node, wnode);
+		return wnode;
+	}
+
+	private GeneratedWitnessNode annotateInvariant(final IExplicitEdgesMultigraph<?, ?, String, TTE> node,
+			final GeneratedWitnessNode wnode) {
 		final String invariant = node.getLabel();
 		if (invariant != null) {
 			wnode.setInvariant(invariant);
 		}
-
 		return wnode;
 	}
 }
