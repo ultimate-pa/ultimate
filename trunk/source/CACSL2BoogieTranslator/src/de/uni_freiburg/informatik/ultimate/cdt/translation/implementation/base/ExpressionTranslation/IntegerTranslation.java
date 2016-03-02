@@ -581,8 +581,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 		}
 	}
 
-	@Override
-	public void convertPointerToInt(ILocation loc,
+	public void old_convertPointerToInt(ILocation loc,
 			ExpressionResult rexp, CPrimitive newType) {
 		assert (newType.isIntegerType());
 		assert (rexp.lrVal.getCType() instanceof CPointer);
@@ -609,8 +608,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 		}
 	}
 
-	@Override
-	public void convertIntToPointer(ILocation loc,
+	public void old_convertIntToPointer(ILocation loc,
 			ExpressionResult rexp, CPointer newType) {
 		if (m_OverapproximateIntPointerConversion) {
 			super.convertIntToPointer(loc, rexp, newType);
