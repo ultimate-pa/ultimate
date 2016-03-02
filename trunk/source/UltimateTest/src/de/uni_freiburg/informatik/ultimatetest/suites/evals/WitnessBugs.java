@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class SVCOMP16Bugs extends AbstractEvalTestSuite {
+public class WitnessBugs extends AbstractEvalTestSuite {
 	private static final String[] ALL_C = new String[] { ".c", ".i" };
 	private static final String[] BPL = new String[] { ".bpl" };
 	private static final int DEFAULT_LIMIT = Integer.MAX_VALUE;
@@ -52,13 +52,10 @@ public class SVCOMP16Bugs extends AbstractEvalTestSuite {
 	// @formatter:off
 	@SuppressWarnings("unchecked")
 	private static final Quad<String, String[], String,String[]>[] DEFS = new Quad[] {
-//			new Quad<>("AutomizerCInline.xml", ALL_C, "automizer/interpolation/Reach-32bit-SMTInterpol-TreeInterpolation.epf",
-//					sv("loops/linear_sea.ch_true-unreach-call.i")),
-//			witnessSV("loops/array_true-unreach-call.i"),
 			witnessSV("loops/sum03_true-unreach-call_false-termination.i"),
-//			witnessSV("loops/linear_sea.ch_true-unreach-call.i"),
-			
-			
+			witnessSV("loops/trex02_true-unreach-call_true-termination.i"),
+			witnessSV("recursive-simple/afterrec_true-unreach-call.c"),
+			witness("examples/programs/toy/showcase/GoannaDoubleFree.c")
 	};
 	// @formatter:on
 
@@ -98,13 +95,16 @@ public class SVCOMP16Bugs extends AbstractEvalTestSuite {
 		return super.createTestCases();
 	}
 
-	private static String[] sv(final String path) {
-		return new String[] { "examples/svcomp/" + path };
+	private static String sv(final String path) {
+		return "examples/svcomp/" + path;
 	}
 
 	private static Quad<String, String[], String, String[]> witnessSV(String example) {
-		return new Quad<>("AutomizerC_WitnessPrinter.xml", ALL_C,
-				"svcomp2016/witness-verif/svcomp-Reach-32bit-Automizer_Default-Witness.epf", sv(example));
+		return witness(sv(example));
 	}
 
+	private static Quad<String, String[], String, String[]> witness(String example) {
+		return new Quad<>("AutomizerC_WitnessPrinter.xml", ALL_C,
+				"svcomp2016/witness-verif/svcomp-Reach-32bit-Automizer_Default-Witness.epf", new String[] { example });
+	}
 }
