@@ -82,6 +82,9 @@ public class WitnessBugs extends AbstractEvalTestSuite {
 		return new SafetyCheckTestResultDecider(urd, false);
 	}
 
+	/**
+	 * Create test cases from quadruples (toolchain, fileendings, settingsfile, inputfiles)
+	 */
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		for (final Quad<String, String[], String, String[]> triple : DEFS) {

@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -41,12 +42,8 @@ import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 import org.eclipse.cdt.core.dom.ast.ASTGenericVisitor;
-import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
-import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFileLocation;
-import org.eclipse.cdt.core.dom.ast.IASTInitializer;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
-import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -231,15 +228,21 @@ public class CorrectnessWitnessExtractor {
 		}
 
 		final LineMatchingVisitor matcher = new LineMatchingVisitor(beforeLines, afterLines);
-		mTranslationUnit.accept(matcher);
+		matcher.run(mTranslationUnit);
 
 		final Pair<List<IASTNode>, List<IASTNode>> matchedNodes = matcher.getMatchedNodes();
+		boolean printlabel = false;
 		if (matchedNodes.getFirst().isEmpty() && !beforeLines.isEmpty()) {
 			mLogger.warn(
 					"Could not match AST node to invariant before witness lines " + toStringCollection(beforeLines));
+			printlabel = true;
 		}
 		if (matchedNodes.getSecond().isEmpty() && !afterLines.isEmpty()) {
 			mLogger.warn("Could not match AST node to invariant after witness lines " + toStringCollection(afterLines));
+			printlabel = true;
+		}
+		if (printlabel) {
+			mLogger.warn("Label is " + current.getLabel());
 		}
 
 		return matchedNodes;
@@ -249,56 +252,127 @@ public class CorrectnessWitnessExtractor {
 		return String.join(",", lines.stream().map(a -> String.valueOf(a)).collect(Collectors.toList()));
 	}
 
-	private final class LineMatchingVisitor extends ASTGenericVisitor {
+	private final static class LineMatchingVisitor extends ASTGenericVisitor {
 
 		private final Set<Integer> mBeforeLines;
 		private final Set<Integer> mAfterLines;
 		private final Pair<List<IASTNode>, List<IASTNode>> mMatchedNodes;
 
-		public LineMatchingVisitor(final Set<Integer> beforeLines, Set<Integer> afterLines) {
+		public LineMatchingVisitor(final Set<Integer> beforeLines, final Set<Integer> afterLines) {
 			super(true);
 			mBeforeLines = beforeLines;
 			mAfterLines = afterLines;
 			mMatchedNodes = new Pair<List<IASTNode>, List<IASTNode>>(new ArrayList<>(), new ArrayList<>());
 		}
 
+		public void run(IASTTranslationUnit translationUnit) {
+			translationUnit.accept(this);
+			removeSubtreeMatches(mMatchedNodes.getFirst());
+			removeSubtreeMatches(mMatchedNodes.getSecond());
+		}
+
 		private Pair<List<IASTNode>, List<IASTNode>> getMatchedNodes() {
 			return mMatchedNodes;
 		}
 
+//		@Override
+//		public int visit(IASTDeclaration declaration) {
+//			match(declaration);
+//			return super.visit(declaration);
+//		}
+//
+//		@Override
+//		public int visit(IASTStatement statement) {
+//			match(statement);
+//			return super.visit(statement);
+//		}
+//
+//		@Override
+//		public int visit(IASTInitializer initializer) {
+//			match(initializer);
+//			return super.visit(initializer);
+//		}
+//
+//		@Override
+//		public int visit(IASTDeclarator declarator) {
+//			return super.visit(declarator);
+//		}
+		
+//		@Override
+//		public int visit(IASTExpression expression) {
+//			match(expression);
+//			return super.visit(expression);
+//		}
+		
 		@Override
-		public int visit(IASTDeclaration declaration) {
-			match(declaration);
-			return super.visit(declaration);
+		protected int genericVisit(IASTNode node) {
+			if (match(node)) {
+				return PROCESS_SKIP;
+			}
+			return PROCESS_CONTINUE;
 		}
 
-		@Override
-		public int visit(IASTStatement statement) {
-			match(statement);
-			return super.visit(statement);
-		}
-
-		@Override
-		public int visit(IASTInitializer initializer) {
-			match(initializer);
-			return super.visit(initializer);
-		}
-
-		@Override
-		public int visit(IASTDeclarator declarator) {
-			return super.visit(declarator);
-		}
-
-		private void match(IASTNode node) {
+		private boolean match(IASTNode node) {
 			final IASTFileLocation loc = node.getFileLocation();
 			final int startLine = loc.getStartingLineNumber();
 			final int endLine = loc.getEndingLineNumber();
 
+			boolean matched = false;
 			if (mBeforeLines.contains(startLine)) {
 				mMatchedNodes.getFirst().add(node);
+				matched = true;
 			}
 			if (mAfterLines.contains(endLine)) {
 				mMatchedNodes.getSecond().add(node);
+				matched = true;
+			}
+			return matched;
+		}
+
+		/**
+		 * Remove all nodes from a list of {@link IASTNode}s where the parent of a node is also in the list.
+		 */
+		private void removeSubtreeMatches(final List<IASTNode> list) {
+			final Iterator<IASTNode> iter = list.iterator();
+			while (iter.hasNext()) {
+				final IASTNode current = iter.next();
+				if (list.stream().filter(a -> a != current).anyMatch(a -> isContainedInSubtree(current, a))) {
+					iter.remove();
+				}
+			}
+		}
+
+		private boolean isContainedInSubtree(final IASTNode candidate, final IASTNode possibleParent) {
+			final SubtreeChecker sc = new SubtreeChecker(candidate);
+			possibleParent.accept(sc);
+			return sc.isContainedInSubtree();
+		}
+
+		private final static class SubtreeChecker extends ASTGenericVisitor {
+
+			private final IASTNode mCandidate;
+			private boolean mIsContainedInSubtree;
+
+			public SubtreeChecker(final IASTNode candidate) {
+				super(true);
+				mCandidate = candidate;
+				mIsContainedInSubtree = false;
+			}
+
+			public boolean isContainedInSubtree() {
+				return mIsContainedInSubtree;
+			}
+
+			@Override
+			protected int genericVisit(IASTNode child) {
+				if (mIsContainedInSubtree) {
+					return PROCESS_SKIP;
+				}
+				if (child == mCandidate) {
+					mIsContainedInSubtree = true;
+					return PROCESS_SKIP;
+				}
+				return PROCESS_CONTINUE;
 			}
 		}
 	}

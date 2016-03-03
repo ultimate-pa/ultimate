@@ -36,11 +36,10 @@ import java.util.Deque;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
@@ -146,7 +145,6 @@ public class CACSL2BoogieBacktranslator
 			// perhaps we have to skip steps here, but lets try it this way and see how it goes
 			translatedTrace.add(ate.getStep());
 		}
-
 		return translatedTrace;
 	}
 
@@ -173,7 +171,6 @@ public class CACSL2BoogieBacktranslator
 					// we skip all clocs that can be ignored, i.e. things that
 					// belong to internal structures
 					continue;
-
 				}
 
 				final IASTNode cnode = cloc.getNode();
@@ -521,7 +518,7 @@ public class CACSL2BoogieBacktranslator
 		// printHondas(cfg, mLogger::info);
 		// printCFG(cfg, mLogger::info);
 		mGenerateBacktranslationWarnings = false;
-		IBacktranslatedCFG<String, CACSLLocation> translated = translateCFG(cfg, (a, b, c) -> translateEdge(a, b, c),
+		IBacktranslatedCFG<String, CACSLLocation> translated = translateCFG(cfg, (a, b, c) -> translateCFGEdge(a, b, c),
 				(a, b, c) -> new CACSLBacktranslatedCFG(a, b, c, mLogger));
 		translated = reduceCFGs(translated);
 		// mLogger.info("################# Output: " + translated.getClass().getSimpleName());
@@ -550,19 +547,20 @@ public class CACSL2BoogieBacktranslator
 			if (!closed.add(current)) {
 				continue;
 			}
-			
-			for (final MultigraphEdge<String, CACSLLocation> inEdge : new ArrayList<>(current.getIncomingEdges())) {
-				final Multigraph<String, CACSLLocation> source = inEdge.getSource();
-				
-				if(source.getOutgoingEdges().size() == 1 && inEdge.getLabel() == null && source.getLabel() == null){
-					//merge unlabeled nodes that reach current via an unlabeled edge with me 
-					inEdge.disconnectSource();
-					inEdge.disconnectTarget();
-					for (final MultigraphEdge<String, CACSLLocation> sourceInEdge : new ArrayList<>(source.getIncomingEdges())) {
-						sourceInEdge.redirectTarget(current);
-					}
-				}
-			}
+
+			// for (final MultigraphEdge<String, CACSLLocation> inEdge : new ArrayList<>(current.getIncomingEdges())) {
+			// final Multigraph<String, CACSLLocation> source = inEdge.getSource();
+			//
+			// if(source.getOutgoingEdges().size() == 1 && inEdge.getLabel() == null && source.getLabel() == null){
+			// //merge unlabeled nodes that reach current via an unlabeled edge with me
+			// inEdge.disconnectSource();
+			// inEdge.disconnectTarget();
+			// for (final MultigraphEdge<String, CACSLLocation> sourceInEdge : new
+			// ArrayList<>(source.getIncomingEdges())) {
+			// sourceInEdge.redirectTarget(current);
+			// }
+			// }
+			// }
 
 			for (final MultigraphEdge<String, CACSLLocation> outEdge : new ArrayList<>(current.getOutgoingEdges())) {
 				final Multigraph<String, CACSLLocation> target = outEdge.getTarget();
@@ -603,7 +601,7 @@ public class CACSL2BoogieBacktranslator
 	}
 
 	@SuppressWarnings("unchecked")
-	private <TVL, SVL> Multigraph<TVL, CACSLLocation> translateEdge(
+	private <TVL, SVL> Multigraph<TVL, CACSLLocation> translateCFGEdge(
 			final Map<IExplicitEdgesMultigraph<?, ?, SVL, BoogieASTNode>, Multigraph<TVL, CACSLLocation>> cache,
 			final IMultigraphEdge<?, ?, ?, BoogieASTNode> oldEdge, final Multigraph<TVL, CACSLLocation> newSourceNode) {
 
@@ -611,7 +609,6 @@ public class CACSL2BoogieBacktranslator
 		final IExplicitEdgesMultigraph<?, ?, SVL, BoogieASTNode> oldTarget = (IExplicitEdgesMultigraph<?, ?, SVL, BoogieASTNode>) oldEdge
 				.getTarget();
 		Multigraph<TVL, CACSLLocation> currentSource = newSourceNode;
-		Multigraph<TVL, CACSLLocation> currentTarget = newSourceNode;
 
 		Multigraph<TVL, CACSLLocation> lastTarget = cache.get(oldTarget);
 		if (lastTarget == null) {
@@ -624,27 +621,62 @@ public class CACSL2BoogieBacktranslator
 			new MultigraphEdge<>(currentSource, null, lastTarget);
 			return lastTarget;
 		}
-		
-		final List<CACSLLocation> translatedTrace = translateTrace(Collections.singletonList(label));
 
-		if (translatedTrace.isEmpty()) {
-			new MultigraphEdge<>(currentSource, null, lastTarget);
-			return lastTarget;
-		}
-
-		final Iterator<CACSLLocation> iter = translatedTrace.iterator();
-		while (iter.hasNext()) {
-			final CACSLLocation loc = iter.next();
-			if (iter.hasNext()) {
-				currentTarget = createWitnessNode();
-			} else {
-				currentTarget = lastTarget;
-			}
-			new MultigraphEdge<>(currentSource, loc, currentTarget);
-			currentSource = currentTarget;
-		}
-
+		final ILocation loc = label.getLocation();
+		final CACSLLocation filteredLoc = filterLocationsForCFGEdge(loc);
+		new MultigraphEdge<>(currentSource, filteredLoc, lastTarget);
 		return lastTarget;
+	}
+
+	public CACSLLocation filterLocationsForCFGEdge(final ILocation loc) {
+		if (loc instanceof CLocation) {
+			final CLocation cloc = (CLocation) loc;
+			if (cloc.ignoreDuringBacktranslation()) {
+				// we skip all clocs that can be ignored, i.e. things that
+				// belong to internal structures
+				return null;
+			}
+
+			final IASTNode cnode = cloc.getNode();
+
+			if (cnode == null) {
+				reportUnfinishedBacktranslation(
+						sUnfinishedBacktranslation + ": Skipping invalid CLocation because IASTNode is null");
+				return null;
+			}
+
+			if (cnode instanceof CASTTranslationUnit) {
+				return null;
+			} else if (cnode instanceof CASTIfStatement) {
+				final CASTIfStatement ifstmt = (CASTIfStatement) cnode;
+				return LocationFactory.createCLocation(ifstmt.getConditionExpression());
+			} else if (cnode instanceof CASTWhileStatement) {
+				CASTWhileStatement whileStmt = (CASTWhileStatement) cnode;
+				return LocationFactory.createCLocation(whileStmt.getCondition());
+			} else if (cnode instanceof CASTDoStatement) {
+				// same as while
+				CASTDoStatement doStmt = (CASTDoStatement) cnode;
+				return LocationFactory.createCLocation(doStmt.getCondition());
+			} else if (cnode instanceof CASTForStatement) {
+				// same as while
+				CASTForStatement forStmt = (CASTForStatement) cnode;
+				return LocationFactory.createCLocation(forStmt.getConditionExpression());
+			} else if (cnode instanceof CASTFunctionCallExpression) {
+				return cloc;
+			} else if (cnode instanceof CASTFunctionDefinition) {
+				return null;
+			} else {
+				return cloc;
+			}
+		} else if (loc instanceof ACSLLocation) {
+			final ACSLLocation aloc = (ACSLLocation) loc;
+			return aloc;
+		} else {
+			// invalid location
+			reportUnfinishedBacktranslation(
+					sUnfinishedBacktranslation + ": Invalid location (Location is no CACSLLocation)");
+			return null;
+		}
 	}
 
 	@Override
