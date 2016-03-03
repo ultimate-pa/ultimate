@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.TranslationTestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.suites.AbstractEvalTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition;
@@ -140,8 +139,7 @@ public class Svcomp2016CTranslationTestSuite extends AbstractEvalTestSuite {
 
 	@Override
 	public ITestResultDecider constructITestResultDecider(UltimateRunDefinition urd) {
-		return new TranslationTestResultDecider(urd.getInput());
-//		return new SafetyCheckTestResultDecider(urd, false);
+		return new TranslationTestResultDecider(urd.selectPrimaryInputFile());
 	}
 
 	@Override

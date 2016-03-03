@@ -242,8 +242,8 @@ public class ColumnDefinitionUtil {
 		int rows = provider.getRowHeaders().size();
 		for (int i = 0; i < rows; i++) {
 			List<String> resultRow = new ArrayList<>();
-			resultRow.add(TestUtil.removeTrunkExamplesPrefix(urd.getInput().getParent()));
-			resultRow.add(urd.getInput().getName());
+			resultRow.add(urd.getInputFileFolders());
+			resultRow.add(urd.getInputFileNames());
 			resultRow.add(urd.getSettings().getName());
 			resultRow.add(urd.getToolchain().getName());
 			resultRow.add(message);

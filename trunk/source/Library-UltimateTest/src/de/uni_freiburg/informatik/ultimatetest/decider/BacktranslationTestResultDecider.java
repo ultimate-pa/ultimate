@@ -67,8 +67,8 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 	 *            use .c or .bpl or something like that. The . is important
 	 * 
 	 */
-	public BacktranslationTestResultDecider(final String inputFile, final String settingsFile, final String fileending) {
-		mInputFile = inputFile;
+	public BacktranslationTestResultDecider(final File inputFile, final String settingsFile, final String fileending) {
+		mInputFile = inputFile.getAbsolutePath();
 		mSettingsFile = settingsFile;
 	}
 

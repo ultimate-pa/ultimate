@@ -151,7 +151,7 @@ public abstract class OldTestSummary implements ITestSummary {
 
 	private void add(Summary s, UltimateRunDefinition ultimateRunDefinition, String message) {
 		s.setCount(s.getCount() + 1);
-		s.getFileToMessage().put(ultimateRunDefinition.getInput().getAbsolutePath(), message);
+		s.getFileToMessage().put(ultimateRunDefinition.getInputFileNames(), message);
 	}
 
 	public class Summary {

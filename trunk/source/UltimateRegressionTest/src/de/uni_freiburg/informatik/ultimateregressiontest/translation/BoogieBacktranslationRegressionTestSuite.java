@@ -46,7 +46,7 @@ public class BoogieBacktranslationRegressionTestSuite extends AbstractRegression
 
 	@Override
 	protected ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition) {
-		return new BacktranslationTestResultDecider(runDefinition.getInput().getAbsolutePath(), runDefinition
+		return new BacktranslationTestResultDecider(runDefinition.selectPrimaryInputFile(), runDefinition
 				.getSettings().getAbsolutePath(), sFileending);
 	}
 }

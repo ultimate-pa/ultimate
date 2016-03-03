@@ -27,15 +27,14 @@
 package de.uni_freiburg.informatik.ultimatetest.summaries;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
-import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 
 public abstract class LatexSummary extends BaseCsvProviderSummary {
@@ -47,15 +46,11 @@ public abstract class LatexSummary extends BaseCsvProviderSummary {
 	}
 
 	protected Set<String> getDistinctFolderSuffixes(PartitionedResults results) {
-		Set<File> folders = CoreUtil.selectDistinct(results.All, new IMyReduce<File>() {
-			@Override
-			public File reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return entry.getKey().getInput().getParentFile();
-			}
-		});
-	
-		HashSet<String[]> working = new HashSet<>();
-	
+		Set<File> folders = results.All.stream().flatMap(c -> Arrays.stream(c.getKey().getInput()))
+				.map(a -> a.getParentFile()).collect(Collectors.toSet());
+
+		Set<String[]> working = new HashSet<>();
+
 		for (File folder : folders) {
 			working.add(folder.getAbsolutePath().split(Pattern.quote(File.separator)));
 		}
@@ -68,12 +63,12 @@ public abstract class LatexSummary extends BaseCsvProviderSummary {
 				String currentlast = File.separator;
 				int end = pathSegments.length - 1;
 				int j = end - offset;
-	
+
 				while (j <= end) {
 					currentlast += pathSegments[j] + File.separator;
 					++j;
 				}
-	
+
 				if (!currentlast.equals(last)) {
 					last = currentlast;
 				} else {
@@ -83,7 +78,7 @@ public abstract class LatexSummary extends BaseCsvProviderSummary {
 				}
 			}
 		}
-	
+
 		HashSet<String> rtr = new HashSet<>();
 		for (String[] pathSegments : working) {
 			String suffix = "";
@@ -94,10 +89,10 @@ public abstract class LatexSummary extends BaseCsvProviderSummary {
 			rtr.add(suffix);
 		}
 		assert rtr.size() == folders.size();
-	
+
 		return rtr;
 	}
-	
+
 	protected boolean isInvalidForLatex(String cell) {
 		return cell == null || cell.contains("[");
 	}

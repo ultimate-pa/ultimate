@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.ep.interfaces.ITool;
  * Call runUltimate() to execute it and complete after processing the results
  * (to release resources).
  * 
- * @author dietsch
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
 public class UltimateStarter implements IController {
@@ -66,20 +66,20 @@ public class UltimateStarter implements IController {
 	private Logger mLogger;
 	private FileAppender mAppender;
 
-	private final UltimateRunDefinition m_UltimateRunDefinition;
-	private long mDeadline;
-
-	private String mLogPattern;
-	private File mLogFile;
-	private IUltimateServiceProvider mCurrentSerivces;
+	private final UltimateRunDefinition mUltimateRunDefinition;
+	private final long mDeadline;
+	private final String mLogPattern;
+	private final File mLogFile;
 	private final ExternalUltimateCore mExternalUltimateCore;
 
+	private IUltimateServiceProvider mCurrentSerivces;
+	
 	public UltimateStarter(UltimateRunDefinition ultimateRunDefinition, long deadline) {
 		this(ultimateRunDefinition, deadline, null, null);
 	}
 
 	public UltimateStarter(UltimateRunDefinition ultimateRunDefintion, long deadline, File logFile, String logPattern) {
-		m_UltimateRunDefinition = ultimateRunDefintion;
+		mUltimateRunDefinition = ultimateRunDefintion;
 		mLogger = Logger.getLogger(UltimateStarter.class);
 		mExternalUltimateCore = new ExternalUltimateCoreTest(this);
 		mDeadline = deadline;
@@ -95,8 +95,8 @@ public class UltimateStarter implements IController {
 	@Override
 	public int init(ICore core, ILoggingService loggingService) {
 		core.resetPreferences();
-		return mExternalUltimateCore.init(core, loggingService, m_UltimateRunDefinition.getSettings(), mDeadline,
-				new File[] { m_UltimateRunDefinition.getInput() }, null).getCode();
+		return mExternalUltimateCore.init(core, loggingService, mUltimateRunDefinition.getSettings(), mDeadline,
+				mUltimateRunDefinition.getInput(), null).getCode();
 	}
 
 	public void complete() {
@@ -149,12 +149,12 @@ public class UltimateStarter implements IController {
 	@Override
 	public ToolchainData selectTools(List<ITool> tools) {
 		try {
-			ToolchainData tc = new ToolchainData(m_UltimateRunDefinition.getToolchain().getAbsolutePath());
+			ToolchainData tc = new ToolchainData(mUltimateRunDefinition.getToolchain().getAbsolutePath());
 			mCurrentSerivces = tc.getServices();
-			mLogger.info("Loaded toolchain from " + m_UltimateRunDefinition.getToolchain().getAbsolutePath());
+			mLogger.info("Loaded toolchain from " + mUltimateRunDefinition.getToolchain().getAbsolutePath());
 			return tc;
 		} catch (FileNotFoundException | JAXBException | SAXException e) {
-			mLogger.fatal("Toolchain could not be created from file " + m_UltimateRunDefinition.getToolchain() + ": "
+			mLogger.fatal("Toolchain could not be created from file " + mUltimateRunDefinition.getToolchain() + ": "
 					+ e);
 			return null;
 		}

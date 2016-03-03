@@ -203,7 +203,7 @@ public class LatexOverviewSummary extends LatexSummary {
 					new ITestSummaryResultPredicate() {
 						@Override
 						public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-							return entry.getKey().getInput().getParent().endsWith(suffix);
+							return entry.getKey().getInputFileFolders().endsWith(suffix);
 						}
 					}));
 			i++;
