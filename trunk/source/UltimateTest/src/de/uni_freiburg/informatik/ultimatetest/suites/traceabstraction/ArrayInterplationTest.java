@@ -68,42 +68,42 @@ public class ArrayInterplationTest extends
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		if (m_TraceAbstractionBoogieWithForwardPredicates) {
-			addTestCases(
+			addTestCase(
 					"AutomizerBpl.xml",
 					"automizer/ForwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".bpl"});
 		} 
 		if (m_TraceAbstractionBoogieWithBackwardPredicates) {
-			addTestCases(
+			addTestCase(
 					"AutomizerBpl.xml",
 					"automizer/BackwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".bpl"});
 		}
 		if (m_TraceAbstractionBoogieWithFPandBP) {
-			addTestCases(
+			addTestCase(
 					"AutomizerBpl.xml",
 					"automizer/ForwardPredicatesAndBackwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".bpl"});
 		}
 		if (m_TraceAbstractionCWithForwardPredicates) {
-			addTestCases(
+			addTestCase(
 					"AutomizerC.xml",
 					"automizer/arrayInterpolationTest/ForwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"});
 		}
 		if (m_TraceAbstractionCWithBackwardPredicates) {
-			addTestCases(
+			addTestCase(
 					"AutomizerC.xml",
 					"automizer/BackwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"});
 		}
 		if (m_TraceAbstractionCWithFPandBP) {
-			addTestCases(
+			addTestCase(
 					"AutomizerC.xml",
 					"automizer/ForwardPredicatesAndBackwardPredicates.epf",
 				    m_Directories,

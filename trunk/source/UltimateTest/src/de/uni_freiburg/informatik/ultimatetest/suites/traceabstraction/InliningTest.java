@@ -60,28 +60,28 @@ public class InliningTest extends AbstractTraceAbstractionTestSuite {
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		if (sTraceAbstractionBoogie) {
-			addTestCases(
+			addTestCase(
 					"AutomizerBpl.xml",
 					"automizer/ForwardPredicates.epf",
 				    sDirectories,
 				    new String[] {".bpl"});
 		}
 		if (sTraceAbstractionBoogieInline) {
-			addTestCases(
+			addTestCase(
 					"AutomizerBplInline.xml",
 					"automizer/ForwardPredicates.epf",
 				    sDirectories,
 				    new String[] {".bpl"});
 		}
 		if (sTraceAbstractionC) {
-			addTestCases(
+			addTestCase(
 					"AutomizerC.xml",
 					"automizer/ForwardPredicates.epf",
 				    sDirectories,
 				    new String[] {".c", ".i"});
 		}
 		if (sTraceAbstractionCInline) {
-			addTestCases(
+			addTestCase(
 					"AutomizerCInline.xml",
 					"automizer/ForwardPredicates.epf",
 				    sDirectories,

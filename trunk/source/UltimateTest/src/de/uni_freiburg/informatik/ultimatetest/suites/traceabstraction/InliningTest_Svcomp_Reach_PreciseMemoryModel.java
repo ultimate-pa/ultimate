@@ -32,8 +32,8 @@ package de.uni_freiburg.informatik.ultimatetest.suites.traceabstraction;
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimatetest.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimatetest.suites.AbstractModelCheckerTestSuite.DirectoryFileEndingsPair;
 
 /**
  * Test for inlining with all SV-COMP programs that use the precise memory model.
@@ -104,18 +104,18 @@ public class InliningTest_Svcomp_Reach_PreciseMemoryModel extends AbstractTraceA
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		if (sAutomizerWithInlining) {
-			addTestCases("AutomizerCInline.xml", 
+			addTestCase("AutomizerCInline.xml", 
 					"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", 
 					s_SVCOMP_Examples);
-			addTestCases("AutomizerCInlineWithBlockEncoding.xml", 
+			addTestCase("AutomizerCInlineWithBlockEncoding.xml", 
 					"automizer/ForwardPredicates_SvcompReachPreciseMM_BlockEncoding.epf", 
 					s_SVCOMP_Examples);
 		}
 		if (sAutomizerWithoutInlining) {
-			addTestCases("AutomizerC.xml", 
+			addTestCase("AutomizerC.xml", 
 					"automizer/ForwardPredicates_SvcompReachPreciseMM.epf", 
 					s_SVCOMP_Examples);
-			addTestCases("AutomizerCWithBlockEncoding.xml", 
+			addTestCase("AutomizerCWithBlockEncoding.xml", 
 					"automizer/ForwardPredicates_SvcompReachPreciseMM_BlockEncoding.epf", 
 					s_SVCOMP_Examples);
 		}

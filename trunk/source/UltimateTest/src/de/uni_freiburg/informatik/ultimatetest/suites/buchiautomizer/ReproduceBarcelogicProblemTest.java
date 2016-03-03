@@ -72,7 +72,7 @@ public class ReproduceBarcelogicProblemTest extends
 		
 		for (String setting : m_Settings) {
 			for (String toolchain : m_BoogieToolchains) {
-				addTestCases(toolchain, setting, m_UltimateRepository, 
+				addTestCase(toolchain, setting, m_UltimateRepository, 
 						new String[] {".bpl"});
 			}
 		}

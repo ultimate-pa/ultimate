@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimatetest.suites.traceabstraction;
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimatetest.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 
 /**
@@ -111,14 +112,14 @@ public class InterpolationTest_Memsafety_Kojak extends AbstractTraceAbstractionT
 	public Collection<UltimateTestCase> createTestCases() {
 		for (String setting : m_Settings) {
 			for (String toolchain : m_CToolchains) {
-				addTestCases(toolchain, setting, m_DirectoryFileEndingsPairs_Deref);
-				addTestCases(toolchain, setting, m_CurrentBugs_Deref, new String[] {".c", ".i"});
+				addTestCase(toolchain, setting, m_DirectoryFileEndingsPairs_Deref);
+				addTestCase(toolchain, setting, m_CurrentBugs_Deref, new String[] {".c", ".i"});
 			}
 		}
 		for (String setting : m_Settings) {
 			for (String toolchain : m_CToolchains) {
-				addTestCases(toolchain, setting, m_DirectoryFileEndingsPairs_DerefFreeMemtrack);
-				addTestCases(toolchain, setting, m_CurrentBugs_DerefFreeMemtrack, new String[] {".c", ".i"});
+				addTestCase(toolchain, setting, m_DirectoryFileEndingsPairs_DerefFreeMemtrack);
+				addTestCase(toolchain, setting, m_CurrentBugs_DerefFreeMemtrack, new String[] {".c", ".i"});
 			}
 		}
 		return super.createTestCases();

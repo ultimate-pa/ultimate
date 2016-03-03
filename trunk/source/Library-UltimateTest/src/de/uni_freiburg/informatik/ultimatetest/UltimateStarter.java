@@ -79,6 +79,7 @@ public class UltimateStarter implements IController {
 	}
 
 	public UltimateStarter(UltimateRunDefinition ultimateRunDefintion, long deadline, File logFile, String logPattern) {
+		assert deadline >= 0 : "Deadline has to be positive or zero";
 		mUltimateRunDefinition = ultimateRunDefintion;
 		mLogger = Logger.getLogger(UltimateStarter.class);
 		mExternalUltimateCore = new ExternalUltimateCoreTest(this);

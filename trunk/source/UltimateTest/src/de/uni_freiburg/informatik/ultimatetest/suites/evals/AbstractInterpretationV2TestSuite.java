@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimatetest.suites.evals;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
+import de.uni_freiburg.informatik.ultimatetest.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
@@ -152,7 +153,7 @@ public class AbstractInterpretationV2TestSuite extends AbstractEvalTestSuite {
 			for (int i = 0; i < INPUT.length; ++i) {
 				pairs[i] = new DirectoryFileEndingsPair(INPUT[i], new String[] { triple.getSecond() }, DEFAULT_LIMIT);
 			}
-			addTestCases(triple.getFirst(), triple.getThird(), pairs);
+			addTestCase(triple.getFirst(), triple.getThird(), pairs);
 		}
 		return super.createTestCases();
 	}

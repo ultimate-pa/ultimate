@@ -32,7 +32,6 @@ package de.uni_freiburg.informatik.ultimatetest.suites.traceabstraction;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimatetest.suites.AbstractModelCheckerTestSuite.DirectoryFileEndingsPair;
 
 /**
  * Test small examples on our two most common settings.
@@ -92,13 +91,13 @@ public class AutomizerRegressionTest extends AbstractTraceAbstractionTestSuite {
 			// Tests with TreeInterpolation
 			for (String setting : m_Settings_TreeInterpolation) {
 				for (String toolchain : m_BoogieToolchains) {
-					addTestCases(toolchain, setting, m_UltimateRepository_TreeInterpolation, 
+					addTestCase(toolchain, setting, m_UltimateRepository_TreeInterpolation, 
 							new String[] {".bpl"});
 				}
 			}
 			for (String setting : m_Settings_TreeInterpolation) {
 				for (String toolchain : m_CToolchains) {
-					addTestCases(toolchain, setting, m_UltimateRepository_TreeInterpolation, 
+					addTestCase(toolchain, setting, m_UltimateRepository_TreeInterpolation, 
 							new String[] {".c", ".i"});
 				}
 			}
@@ -107,13 +106,13 @@ public class AutomizerRegressionTest extends AbstractTraceAbstractionTestSuite {
 		{	// Tests with ForwardPredicates
 			for (String setting : m_Settings_ForwardPredicates) {
 				for (String toolchain : m_BoogieToolchains) {
-					addTestCases(toolchain, setting, m_UltimateRepository_ForwardPredicates, 
+					addTestCase(toolchain, setting, m_UltimateRepository_ForwardPredicates, 
 							new String[] {".bpl"});
 				}
 			}
 			for (String setting : m_Settings_ForwardPredicates) {
 				for (String toolchain : m_CToolchains) {
-					addTestCases(toolchain, setting, m_UltimateRepository_ForwardPredicates, 
+					addTestCase(toolchain, setting, m_UltimateRepository_ForwardPredicates, 
 							new String[] {".c", ".i"});
 				}
 			}

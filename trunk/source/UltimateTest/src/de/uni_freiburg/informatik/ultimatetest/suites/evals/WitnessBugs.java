@@ -27,10 +27,11 @@
 
 package de.uni_freiburg.informatik.ultimatetest.suites.evals;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.util.relation.Quad;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinitionGenerator;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimatetest.decider.SafetyCheckTestResultDecider;
@@ -47,17 +48,16 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 public class WitnessBugs extends AbstractEvalTestSuite {
 	private static final String[] ALL_C = new String[] { ".c", ".i" };
 	private static final String[] BPL = new String[] { ".bpl" };
-	private static final int DEFAULT_LIMIT = Integer.MAX_VALUE;
 
-	// @formatter:off
-	@SuppressWarnings("unchecked")
-	private static final Quad<String, String[], String,String[]>[] DEFS = new Quad[] {
-			witnessSV("loops/sum03_true-unreach-call_false-termination.i"),
-			witnessSV("loops/trex02_true-unreach-call_true-termination.i"),
-			witnessSV("recursive-simple/afterrec_true-unreach-call.c"),
-			witness("examples/programs/toy/showcase/GoannaDoubleFree.c")
-	};
-	// @formatter:on
+	private static Collection<UltimateRunDefinition> createDefs() {
+		Collection<UltimateRunDefinition> rtr = new ArrayList<>();
+		rtr.addAll(witnessSV("loops/sum03_true-unreach-call_false-termination.i"));
+		rtr.addAll(witnessSV("loops/trex02_true-unreach-call_true-termination.i"));
+		rtr.addAll(witnessSV("recursive-simple/afterrec_true-unreach-call.c"));
+		rtr.addAll(witness("examples/programs/toy/showcase/GoannaDoubleFree.c"));
+
+		return rtr;
+	}
 
 	@Override
 	protected long getTimeout() {
@@ -87,14 +87,7 @@ public class WitnessBugs extends AbstractEvalTestSuite {
 	 */
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		for (final Quad<String, String[], String, String[]> triple : DEFS) {
-			final String[] input = triple.getFourth();
-			final DirectoryFileEndingsPair[] pairs = new DirectoryFileEndingsPair[input.length];
-			for (int i = 0; i < input.length; ++i) {
-				pairs[i] = new DirectoryFileEndingsPair(input[i], triple.getSecond(), DEFAULT_LIMIT);
-			}
-			addTestCases(triple.getFirst(), triple.getThird(), pairs);
-		}
+		addTestCase(createDefs());
 		return super.createTestCases();
 	}
 
@@ -102,12 +95,13 @@ public class WitnessBugs extends AbstractEvalTestSuite {
 		return "examples/svcomp/" + path;
 	}
 
-	private static Quad<String, String[], String, String[]> witnessSV(String example) {
+	private static Collection<UltimateRunDefinition> witnessSV(String example) {
 		return witness(sv(example));
 	}
 
-	private static Quad<String, String[], String, String[]> witness(String example) {
-		return new Quad<>("AutomizerC_WitnessPrinter.xml", ALL_C,
-				"svcomp2016/witness-verif/svcomp-Reach-32bit-Automizer_Default-Witness.epf", new String[] { example });
+	private static Collection<UltimateRunDefinition> witness(String example) {
+		return UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(new String[] { example }, ALL_C,
+				"svcomp2016/witness-verif/svcomp-Reach-32bit-Automizer_Default-Witness.epf",
+				"AutomizerC_WitnessPrinter.xml");
 	}
 }
