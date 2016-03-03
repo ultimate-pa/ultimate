@@ -180,6 +180,8 @@ public class SmtParser implements ISource {
 			mLogger.info("Failed while executing SMT file " + file.getAbsolutePath());
 			mLogger.info("SMTLIBException " + exc.getMessage());
 			parseEnv.printError(exc.getMessage());
+		} finally {
+			script.exit();
 		}
 		
 	}
