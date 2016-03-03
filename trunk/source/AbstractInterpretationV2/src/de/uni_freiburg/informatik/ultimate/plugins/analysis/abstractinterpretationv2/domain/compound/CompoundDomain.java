@@ -1,5 +1,4 @@
 /*
- * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
@@ -26,9 +25,12 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.compound;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
@@ -36,43 +38,44 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
- * This abstract domain keeps track of the sign of each variable during abstract interpretation. Variables can either be
- * negative, equal to 0, or positive.
+ * Implementation of the compound domain for abstract interpretation.
  * 
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
- * 
+ *
  */
-public class VPDomain implements IAbstractDomain<VPDomainState, CodeBlock, IBoogieVar> {
+public class CompoundDomain implements IAbstractDomain<CompoundDomainState, CodeBlock, IBoogieVar> {
 
-	private final IUltimateServiceProvider mServices;
+	private final Logger mLogger;
+	private final List<IAbstractDomain<?, CodeBlock, IBoogieVar>> mDomainList;
 
-	public VPDomain(IUltimateServiceProvider services) {
-		mServices = services;
+	public CompoundDomain(Logger logger, List<IAbstractDomain<?, CodeBlock, IBoogieVar>> domainList) {
+		mLogger = logger;
+		mDomainList = domainList;
 	}
 
 	@Override
-	public VPDomainState createFreshState() {
-		return new VPDomainState();
+	public CompoundDomainState createFreshState() {
+		return new CompoundDomainState(mLogger, mDomainList);
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<VPDomainState> getWideningOperator() {
-		return new VPMergeOperator();
+	public IAbstractStateBinaryOperator<CompoundDomainState> getWideningOperator() {
+		return new CompoundDomainWideningOperator(mLogger);
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<VPDomainState> getMergeOperator() {
-		return new VPMergeOperator();
+	public IAbstractStateBinaryOperator<CompoundDomainState> getMergeOperator() {
+		return new CompoundDomainMergeOperator(mLogger);
 	}
 
 	@Override
-	public IAbstractPostOperator<VPDomainState, CodeBlock, IBoogieVar> getPostOperator() {
-		return new VPPostOperator(mServices);
+	public IAbstractPostOperator<CompoundDomainState, CodeBlock, IBoogieVar> getPostOperator() {
+		return new CompoundDomainPostOperator(mLogger, mDomainList);
 	}
 
-	@Override
 	public int getDomainPrecision() {
-		// TODO Fill with sense.
-		return 0;
+		// This domain is the most-expressive domain there is.
+		return Integer.MAX_VALUE;
 	}
+
 }

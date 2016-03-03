@@ -96,4 +96,9 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Code
 	public IAbstractPostOperator<IntervalDomainState, CodeBlock, IBoogieVar> getPostOperator() {
 		return new IntervalPostOperator(mLogger, mSymbolTable);
 	}
+
+	@Override
+	public int getDomainPrecision() {
+		return 1000;
+	}
 }

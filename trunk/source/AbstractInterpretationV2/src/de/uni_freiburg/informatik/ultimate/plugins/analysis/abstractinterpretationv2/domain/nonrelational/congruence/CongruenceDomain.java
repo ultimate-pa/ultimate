@@ -47,4 +47,9 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState, 
 	public IAbstractPostOperator<CongruenceDomainState, CodeBlock, IBoogieVar> getPostOperator() {
 		return new CongruencePostOperator(mLogger, mSymbolTable);
 	}
+
+	@Override
+	public int getDomainPrecision() {
+		return 300;
+	}
 }

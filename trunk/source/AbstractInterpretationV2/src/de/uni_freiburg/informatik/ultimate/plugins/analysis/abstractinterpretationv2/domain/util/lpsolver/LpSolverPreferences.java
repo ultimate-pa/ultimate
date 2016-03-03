@@ -34,6 +34,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItemContainer;
 
 /**
  * Defines the Ultimate preferences page for the LP solver to be used.
@@ -56,9 +57,12 @@ public class LpSolverPreferences {
 	public static List<AbstractUltimatePreferenceItem> getPreferences() {
 		final List<AbstractUltimatePreferenceItem> returnList = new ArrayList<>();
 
-		returnList.add(new UltimatePreferenceItem<String>(LABEL_LPSOLVER_NUMBER_TYPE, DEF_VALUES_NUMBER_TYPE,
+		final UltimatePreferenceItemContainer lpSolverContainer = new UltimatePreferenceItemContainer("LP Solver");
+		
+		lpSolverContainer.addItem(new UltimatePreferenceItem<String>(LABEL_LPSOLVER_NUMBER_TYPE, DEF_VALUES_NUMBER_TYPE,
 		        PreferenceType.Combo, VALUES_NUMBER_TYPE));
 
+		returnList.add(lpSolverContainer);
 		return returnList;
 	}
 }

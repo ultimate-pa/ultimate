@@ -26,53 +26,27 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.compound;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
- * This abstract domain keeps track of the sign of each variable during abstract interpretation. Variables can either be
- * negative, equal to 0, or positive.
+ * Widening operator of the {@link CompoundDomain}.
  * 
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
- * 
+ *
  */
-public class VPDomain implements IAbstractDomain<VPDomainState, CodeBlock, IBoogieVar> {
+public class CompoundDomainWideningOperator implements IAbstractStateBinaryOperator<CompoundDomainState> {
 
-	private final IUltimateServiceProvider mServices;
-
-	public VPDomain(IUltimateServiceProvider services) {
-		mServices = services;
+	public CompoundDomainWideningOperator(Logger logger) {
+		// TODO Auto-generated constructor stub
 	}
 
 	@Override
-	public VPDomainState createFreshState() {
-		return new VPDomainState();
+	public CompoundDomainState apply(CompoundDomainState first, CompoundDomainState second) {
+		return null;
 	}
 
-	@Override
-	public IAbstractStateBinaryOperator<VPDomainState> getWideningOperator() {
-		return new VPMergeOperator();
-	}
-
-	@Override
-	public IAbstractStateBinaryOperator<VPDomainState> getMergeOperator() {
-		return new VPMergeOperator();
-	}
-
-	@Override
-	public IAbstractPostOperator<VPDomainState, CodeBlock, IBoogieVar> getPostOperator() {
-		return new VPPostOperator(mServices);
-	}
-
-	@Override
-	public int getDomainPrecision() {
-		// TODO Fill with sense.
-		return 0;
-	}
 }

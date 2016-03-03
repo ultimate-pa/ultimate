@@ -37,6 +37,8 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceIt
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItemContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.compound.CompoundDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.compound.CompoundDomainPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty.EmptyDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence.CongruenceDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence.CongruenceDomainPreferences;
@@ -58,7 +60,7 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 
 	public static final String[] VALUES_ABSTRACT_DOMAIN = new String[] { EmptyDomain.class.getSimpleName(),
 	        SignDomain.class.getSimpleName(), IntervalDomain.class.getSimpleName(), OctagonDomain.class.getSimpleName(),
-	        VPDomain.class.getSimpleName(), CongruenceDomain.class.getSimpleName() };
+	        VPDomain.class.getSimpleName(), CongruenceDomain.class.getSimpleName(), CompoundDomain.class.getSimpleName() };
 
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING = "Minimum iterations before widening";
 	public static final String LABEL_STATES_UNTIL_MERGE = "Parallel states before merging";
@@ -99,30 +101,21 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 		        PreferenceType.Combo, VALUES_ABSTRACT_DOMAIN));
 
 		// Interval Domain
-		final UltimatePreferenceItemContainer intervalContainer = new UltimatePreferenceItemContainer(
-		        "Interval Domain");
-		intervalContainer.addItems(IntervalDomainPreferences.getPreferences());
-		abstractDomainContainer.addItem(intervalContainer);
+		abstractDomainContainer.addAbstractItems(IntervalDomainPreferences.getPreferences());
 
 		// Octagon Domain
-		final UltimatePreferenceItemContainer octagonContainer = new UltimatePreferenceItemContainer("Octagon Domain");
-		octagonContainer.addItems(OctPreferences.createPreferences());
-		abstractDomainContainer.addItem(octagonContainer);
+		abstractDomainContainer.addAbstractItems(OctPreferences.createPreferences());
 
 		// Congruence Domain
-		final UltimatePreferenceItemContainer congruenceContainer = new UltimatePreferenceItemContainer(
-		        "Congruence Domain");
-		congruenceContainer.addItems(CongruenceDomainPreferences.getPreferences());
-		abstractDomainContainer.addItem(congruenceContainer);
+		abstractDomainContainer.addAbstractItems(CongruenceDomainPreferences.getPreferences());
 
+		// Compound Domain
+		abstractDomainContainer.addAbstractItems(CompoundDomainPreferences.getPreferences());
+		
 		rtr.add(abstractDomainContainer);
 
-		// Linear Program solver container
-		final UltimatePreferenceItemContainer lpSolverContainer = new UltimatePreferenceItemContainer("LP Solver");
-		// Add ojAlgo preferences
-		lpSolverContainer.addItems(LpSolverPreferences.getPreferences());
-		
-		rtr.add(lpSolverContainer);
+		// LPSolver Preferences
+		rtr.addAll(LpSolverPreferences.getPreferences());
 		
 		return rtr.toArray(new AbstractUltimatePreferenceItem[rtr.size()]);
 	}

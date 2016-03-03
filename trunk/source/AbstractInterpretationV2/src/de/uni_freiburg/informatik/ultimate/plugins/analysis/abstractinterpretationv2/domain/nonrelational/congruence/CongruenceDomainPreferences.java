@@ -34,6 +34,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItemContainer;
 
 /**
  * Defines the Ultimate preferences page for the Congruence domain and the kind of evaluators to use.
@@ -61,15 +62,18 @@ public class CongruenceDomainPreferences {
 	public static final String DEF_EVALUATOR_TYPE = VALUE_EVALUATOR_DEFAULT;
 
 	public static List<AbstractUltimatePreferenceItem> getPreferences() {
-
 		final List<AbstractUltimatePreferenceItem> returnList = new ArrayList<>();
 
-		returnList.add(new UltimatePreferenceItem<String>(LABEL_Congruence_WIDENING_OPERATOR, DEF_WIDENING_OPERATOR,
+		final UltimatePreferenceItemContainer congruenceContainer = new UltimatePreferenceItemContainer(
+		        "Congruence Domain");
+		
+		congruenceContainer.addItem(new UltimatePreferenceItem<String>(LABEL_Congruence_WIDENING_OPERATOR, DEF_WIDENING_OPERATOR,
 		        PreferenceType.Combo, VALUES_WIDENING_OPERATOR));
 
-		returnList.add(new UltimatePreferenceItem<String>(LABEL_EVALUATOR_TYPE, DEF_EVALUATOR_TYPE,
+		congruenceContainer.addItem(new UltimatePreferenceItem<String>(LABEL_EVALUATOR_TYPE, DEF_EVALUATOR_TYPE,
 		        PreferenceType.Combo, VALUES_EVALUATOR_TYPE));
 
+		returnList.add(congruenceContainer);
 		return returnList;
 	}
 }

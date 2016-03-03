@@ -34,6 +34,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItemContainer;
 
 /**
  * Defines the Ultimate preferences page for the interval domain and the kind of evaluators to use.
@@ -64,12 +65,16 @@ public class IntervalDomainPreferences {
 	public static List<AbstractUltimatePreferenceItem> getPreferences() {
 		final List<AbstractUltimatePreferenceItem> rtr = new ArrayList<>();
 		
-		rtr.add(new UltimatePreferenceItem<String>(LABEL_INTERVAL_WIDENING_OPERATOR, DEF_WIDENING_OPERATOR,
+		final UltimatePreferenceItemContainer intervalContainer = new UltimatePreferenceItemContainer(
+		        "Interval Domain");
+		
+		intervalContainer.addItem(new UltimatePreferenceItem<String>(LABEL_INTERVAL_WIDENING_OPERATOR, DEF_WIDENING_OPERATOR,
 		        PreferenceType.Combo, VALUES_WIDENING_OPERATOR));
 
-		rtr.add(new UltimatePreferenceItem<String>(LABEL_EVALUATOR_TYPE, DEF_EVALUATOR_TYPE,
+		intervalContainer.addItem(new UltimatePreferenceItem<String>(LABEL_EVALUATOR_TYPE, DEF_EVALUATOR_TYPE,
 		        PreferenceType.Combo, VALUES_EVALUATOR_TYPE));
 		
+		rtr.add(intervalContainer);
 		return rtr;
 	}
 }

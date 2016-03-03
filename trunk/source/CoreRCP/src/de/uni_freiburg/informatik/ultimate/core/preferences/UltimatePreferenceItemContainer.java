@@ -55,7 +55,11 @@ public final class UltimatePreferenceItemContainer extends AbstractUltimatePrefe
 		mContainerItems.add(item);
 	}
 
-	public void addItems(final List<AbstractUltimatePreferenceItem> items) {
+	public void addAbstractItems(final List<AbstractUltimatePreferenceItem> items) {
+		mContainerItems.addAll(items);
+	}
+	
+	public void addItems(final List<UltimatePreferenceItem<?>> items) {
 		mContainerItems.addAll(items);
 	}
 

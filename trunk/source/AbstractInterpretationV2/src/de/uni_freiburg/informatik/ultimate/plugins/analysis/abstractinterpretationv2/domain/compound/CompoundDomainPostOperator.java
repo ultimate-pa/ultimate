@@ -26,53 +26,44 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.compound;
 
-import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
- * This abstract domain keeps track of the sign of each variable during abstract interpretation. Variables can either be
- * negative, equal to 0, or positive.
+ * Post operator of the {@link CompoundDomain}.
  * 
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
- * 
+ *
  */
-public class VPDomain implements IAbstractDomain<VPDomainState, CodeBlock, IBoogieVar> {
+public class CompoundDomainPostOperator implements IAbstractPostOperator<CompoundDomainState, CodeBlock, IBoogieVar> {
 
-	private final IUltimateServiceProvider mServices;
+	private final Logger mLogger;
+	private final List<IAbstractDomain<?, CodeBlock, IBoogieVar>> mDomainList;
 
-	public VPDomain(IUltimateServiceProvider services) {
-		mServices = services;
+	protected CompoundDomainPostOperator(Logger logger, List<IAbstractDomain<?, CodeBlock, IBoogieVar>> mDomainListTable) {
+		mLogger = logger;
+		mDomainList = mDomainListTable;
 	}
 
 	@Override
-	public VPDomainState createFreshState() {
-		return new VPDomainState();
+	public List<CompoundDomainState> apply(CompoundDomainState oldstate, CodeBlock transition) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<VPDomainState> getWideningOperator() {
-		return new VPMergeOperator();
+	public List<CompoundDomainState> apply(CompoundDomainState stateBeforeLeaving,
+	        CompoundDomainState stateAfterLeaving, CodeBlock transition) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
-	@Override
-	public IAbstractStateBinaryOperator<VPDomainState> getMergeOperator() {
-		return new VPMergeOperator();
-	}
-
-	@Override
-	public IAbstractPostOperator<VPDomainState, CodeBlock, IBoogieVar> getPostOperator() {
-		return new VPPostOperator(mServices);
-	}
-
-	@Override
-	public int getDomainPrecision() {
-		// TODO Fill with sense.
-		return 0;
-	}
 }
