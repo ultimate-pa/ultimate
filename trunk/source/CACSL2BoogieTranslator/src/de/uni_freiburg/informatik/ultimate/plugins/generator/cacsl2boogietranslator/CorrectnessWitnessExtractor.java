@@ -314,6 +314,9 @@ public class CorrectnessWitnessExtractor {
 
 		private boolean match(IASTNode node) {
 			final IASTFileLocation loc = node.getFileLocation();
+			if (loc == null) {
+				return false;
+			}
 			final int startLine = loc.getStartingLineNumber();
 			final int endLine = loc.getEndingLineNumber();
 
