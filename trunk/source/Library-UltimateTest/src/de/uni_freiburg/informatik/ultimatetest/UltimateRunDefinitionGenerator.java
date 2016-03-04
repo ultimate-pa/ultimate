@@ -101,8 +101,7 @@ public final class UltimateRunDefinitionGenerator {
 	 * Note:
 	 * <ul>
 	 * <li>All files are defined by their paths relative to the Ultimate trunk directory.
-	 * <li>A witness is a file that ends in .graphml and begins with the name of the actual input file without their
-	 * ending.
+	 * <li>A witness is a file that ends in .graphml and begins with the name of the actual input file.
 	 * </ul>
 	 */
 	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunkWithWitnesses(final String[] directories,
@@ -118,8 +117,7 @@ public final class UltimateRunDefinitionGenerator {
 	 * Note:
 	 * <ul>
 	 * <li>All files are defined by their paths relative to the Ultimate trunk directory.
-	 * <li>A witness is a file that ends in .graphml and begins with the name of the actual input file without their
-	 * ending.
+	 * <li>A witness is a file that ends in .graphml and begins with the name of the actual input file.
 	 * <li>For each directory, at most <code>limit</code> files are used. They are selected pseudo-randomly but
 	 * deterministic (i.e., multiple runs with the same parameter generate the same result).
 	 * </ul>
@@ -148,10 +146,8 @@ public final class UltimateRunDefinitionGenerator {
 			}
 
 			for (final File inputFile : inputFiles) {
-				final String endingRegex = TestUtil.getRegexFromFileendings(pair.getFileEndings());
-				final String nameWithoutEnding = inputFile.getName().replaceAll(endingRegex, "");
 				final List<File> witnesses = witnessCandidates.stream()
-						.filter(a -> a.getName().startsWith(nameWithoutEnding)).collect(Collectors.toList());
+						.filter(a -> a.getName().startsWith(inputFile.getName())).collect(Collectors.toList());
 				for (final File witness : witnesses) {
 					rtr.add(new UltimateRunDefinition(new File[] { inputFile, witness }, settingsFile, toolchainFile));
 				}
@@ -170,8 +166,7 @@ public final class UltimateRunDefinitionGenerator {
 	 * <ul>
 	 * <li><code>witnessFolder</code> is an absolute path.
 	 * <li>All other files are defined by their paths relative to the Ultimate trunk directory.
-	 * <li>A witness is a file that ends in .graphml and begins with the name of the actual input file without their
-	 * ending.
+	 * <li>A witness is a file that ends in .graphml and begins with the name of the actual input file.
 	 * <li>For each directory, at most <code>limit</code> files are used. They are selected pseudo-randomly but
 	 * deterministic (i.e., multiple runs with the same parameter generate the same result).
 	 * </ul>
@@ -200,10 +195,8 @@ public final class UltimateRunDefinitionGenerator {
 			final Collection<File> inputFiles = getInputFiles(dir, pair.getFileEndings(), pair.getLimit());
 
 			for (final File inputFile : inputFiles) {
-				final String endingRegex = TestUtil.getRegexFromFileendings(pair.getFileEndings());
-				final String nameWithoutEnding = inputFile.getName().replaceAll(endingRegex, "");
 				final List<File> witnesses = witnessCandidates.stream()
-						.filter(a -> a.getName().startsWith(nameWithoutEnding)).collect(Collectors.toList());
+						.filter(a -> a.getName().startsWith(inputFile.getName())).collect(Collectors.toList());
 				for (final File witness : witnesses) {
 					rtr.add(new UltimateRunDefinition(new File[] { inputFile, witness }, settingsFile, toolchainFile));
 				}

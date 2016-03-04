@@ -38,20 +38,20 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
  */
 public class AutomataLibraryServices {
 	
-	private final ILoggingService m_LoggingService;
-	private final IProgressMonitorService m_ProgressMonitorService;
+	private final ILoggingService mLoggingService;
+	private final IProgressMonitorService mProgressMonitorService;
 	
-	public AutomataLibraryServices(IUltimateServiceProvider ultimareServices) {
-		m_LoggingService = ultimareServices.getLoggingService();
-		m_ProgressMonitorService = ultimareServices.getProgressMonitorService();
+	public AutomataLibraryServices(IUltimateServiceProvider ultimateServices) {
+		mLoggingService = ultimateServices.getLoggingService();
+		mProgressMonitorService = ultimateServices.getProgressMonitorService();
 	}
 	
 	public ILoggingService getLoggingService() {
-		return m_LoggingService;
+		return mLoggingService;
 	}
 
 	public IProgressMonitorService getProgressMonitorService() {
-		return m_ProgressMonitorService;
+		return mProgressMonitorService;
 	}
 
 }
