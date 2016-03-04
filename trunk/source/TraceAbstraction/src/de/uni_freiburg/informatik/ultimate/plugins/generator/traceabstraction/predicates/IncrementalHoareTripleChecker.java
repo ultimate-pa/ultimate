@@ -297,9 +297,10 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		m_TransFormula = cb.getTransitionFormula();
 		Term cbFormula = m_TransFormula.getClosedFormula();
 		
-		if (m_AddDebugInformation) {
+		if (m_AddDebugInformation || isAddAnnotation()) {
 			String name = "codeBlock";
 			Annotation annot = new Annotation(":named", name);
+			signalAnnotation(annot);
 			cbFormula = m_Script.annotate(cbFormula, annot);
 		}
 		LBool quickCheck = m_SmtManager.assertTerm(cbFormula);
@@ -356,7 +357,28 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	}
 
 	
-
+	/**
+	 * Inheriting classes can signal an annotation of a <code>CodeBlock</code>
+	 * here.
+	 * 
+	 * NOTE: overwrite for more functionality
+	 * 
+	 * @return true iff <code>CodeBlock</code> should be annotated in the solver
+	 */
+	protected boolean isAddAnnotation() {
+		return false;
+	}
+	
+	/**
+	 * Signals inheriting classes that a <code>CodeBlock</code> is annotated.
+	 * 
+	 * NOTE: overwrite for more functionality
+	 * 
+	 * @param annot annotated <code>CodeBlock</code> term
+	 */
+	protected void signalAnnotation(Annotation annot) {
+		; // do nothing here
+	}
 
 	private void unAssertCodeBlock() {
 		assert m_AssertedCodeBlock != null : "No CodeBlock asserted";
