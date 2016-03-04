@@ -25,67 +25,48 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat;
 
-/* Personally I hate builder interfaces, but in Java it's easier than
- * declaring a POD type for edges */
+/**
+ * Call transition for nested word automata (NWA)
+ *
+ * @author stimpflj
+ */
+public class NiceCTrans {
+	/** Source state */
+	public int src;
 
-public class NiceUnionFind {
-	private int[] root;
-	private int[] size;
-	private int[] stack;
+	/** Call symbol */
+	public int sym;
 
-	public NiceUnionFind(int numNodes) {
-		root = new int[numNodes];
-		size = new int[numNodes];
-		stack = new int[numNodes];
+	/** Destination state */
+	public int dst;
 
-		for (int i = 0; i < numNodes; i++) {
-			root[i] = i;
-			size[i] = 1;
-		}
+
+	public NiceCTrans() {}
+
+	public NiceCTrans(int src, int sym, int dst) {
+		this.src = src;
+		this.sym = sym;
+		this.dst = dst;
 	}
 
-	private void updateRoot(int node) {
-		int ptr = 0;
-
-		while (node != root[node]) {
-			stack[ptr++] = node;
-			node = root[node];
-		}
-		while (ptr --> 0)
-			root[stack[ptr]] = node;
+	@Override
+	public boolean equals(Object obj) {
+		if (obj == null || !(obj instanceof NiceCTrans))
+			return false;
+		NiceCTrans b = (NiceCTrans) obj;
+		return src == b.src && sym == b.sym && dst == b.dst;
 	}
 
-	/**
-	 * Add an edge between two nodes. This makes them equivalent and they
-	 * will be together, with a root right over their heads. They'll share
-	 * the same root, yeah!
-	 *
-	 * @param n1 The one node.
-	 * @param n2 The other node, you know?
-	 */
-	public void merge(int n1, int n2) {
-		updateRoot(n1);
-		updateRoot(n2);
-		n1 = root[n1];
-		n2 = root[n2];
-
-		if (n1 == n2)
-			return;
-
-		if (size[n1] < size[n2]) {
-			root[n1] = n2;
-			size[n2] += size[n1];
-		} else {
-			root[n2] = n1;
-			size[n1] += size[n2];
-		}
+	@Override
+	public int hashCode() {
+		return (src * 31 + sym) * 31 + dst;
 	}
 
-	public int[] getRoots() {
-		for (int i = 0; i < root.length; i++)
-			updateRoot(i);
-		return root.clone();
+	public static int compareSrcSymDst(NiceCTrans a, NiceCTrans b) {
+		if (a.src != b.src) return a.src - b.src;
+		if (a.sym != b.sym) return a.sym - b.sym;
+		return a.dst - b.dst;
 	}
 }

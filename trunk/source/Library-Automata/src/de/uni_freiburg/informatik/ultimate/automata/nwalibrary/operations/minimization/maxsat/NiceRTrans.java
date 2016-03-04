@@ -25,47 +25,60 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat;
 
 /**
- * Call transition for nested word automata (NWA).
+ * Return transition for nested word automata (NWA).
  *
  * @author stimpflj
  */
-public class NiceITrans {
+public class NiceRTrans implements Comparable<NiceRTrans> {
 	/** Source state */
 	public int src;
 
-	/** Internal symbol */
+	/** Return symbol */
 	public int sym;
+
+	/** top-of-stack (hierarchical) state */
+	public int top;
 
 	/** Destination state */
 	public int dst;
 
 
-	public NiceITrans() {}
+	public NiceRTrans() {}
 
-	public NiceITrans(int src, int sym, int dst) {
-		this.src = src;
-		this.sym = sym;
-		this.dst = dst;
-	}
+	public NiceRTrans(int src, int sym, int top, int dst)
+		{ this.src = src; this.sym = sym; this.top = top; this.dst = dst; }
 
 	@Override
 	public boolean equals(Object obj) {
-		if (obj == null || !(obj instanceof NiceITrans))
+		if (!(obj instanceof NiceRTrans))
 			return false;
-		NiceITrans b = (NiceITrans) obj;
-		return src == b.src && sym == b.sym && dst == b.dst;
+		NiceRTrans b = (NiceRTrans) obj;
+		return src == b.src && top == b.top && sym == b.sym && dst == b.dst;
 	}
 
 	@Override
 	public int hashCode() {
-		return (src * 31 + sym) * 31 + dst;
+		return ((src * 31 + sym) * 31 + top) * 31 + dst;
 	}
 
-	public static int compareSrcSymDst(NiceITrans a, NiceITrans b) {
+	@Override
+	public int compareTo(NiceRTrans b) {
+		return NiceRTrans.compareSrcSymTopDst(this, b);
+	}
+
+	public static int compareSrcSymTopDst(NiceRTrans a, NiceRTrans b) {
 		if (a.src != b.src) return a.src - b.src;
+		if (a.sym != b.sym) return a.sym - b.sym;
+		if (a.top != b.top) return a.top - b.top;
+		return a.dst - b.dst;
+	}
+
+	public static int compareSrcTopSymDst(NiceRTrans a, NiceRTrans b) {
+		if (a.src != b.src) return a.src - b.src;
+		if (a.top != b.top) return a.top - b.top;
 		if (a.sym != b.sym) return a.sym - b.sym;
 		return a.dst - b.dst;
 	}

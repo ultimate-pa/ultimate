@@ -25,62 +25,73 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
+package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.parallel;
 
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.Set;
 
 /**
- * Helper Task for processing information from the Hopcroft algorithm for the
- * Incremental algorithm
+ * Helper Task for processing information from the Incremental algorithm for the
+ * Hopcroft algorithm
  * 
  * @author layla
  *
  */
-public class HelpIncremental implements Runnable {
+public class HelpHopcroft implements Runnable {
 	private MinimizeDfaAmrParallel<?, ?> m_incrementalAlgorithm;
-	private HashSet<Integer> m_array1;
-	private HashSet<Integer> m_array2;
+	private MinimizeDfaHopcroftParallel<?, ?> m_hopcroftAlgorithm;
+	private int m_state1;
 
 	/**
-	 * For each pair (a, b) of states where w.l.o.g. a in array1, b in array2 we
-	 * know that a and b are not in the same equivalence class.
+	 * The incremental algorithm determined, that state1 and state2 are of the
+	 * same equivalence class.
 	 * 
 	 * @param incremental
-	 *            Currently running instance of the incremental algorithm
-	 * @param array1
-	 * @param array2
+	 *            Instance of incremental algorithm that creates the task
+	 * @param hopcroft
+	 *            Instance of currently parallel running Hopcroft algorithm
+	 * @param state1
+	 * @param state2
 	 */
-	public HelpIncremental(MinimizeDfaAmrParallel<?, ?> incremental,
-			HashSet<Integer> array1, HashSet<Integer> array2) {
+	public HelpHopcroft(final MinimizeDfaAmrParallel<?, ?> incremental,
+			final MinimizeDfaHopcroftParallel<?, ?> hopcroft, final int state1,
+			final int state2) {
 		m_incrementalAlgorithm = incremental;
-		m_array1 = array1;
-		m_array2 = array2;
+		m_hopcroftAlgorithm = hopcroft;
+		m_state1 = state1;
 	}
 
 	@Override
 	public void run() {
-		Set<Tuple> neq = m_incrementalAlgorithm.getNeq();
-		for (Iterator<Integer> iter1 = m_array1.iterator(); iter1.hasNext();) {
-			int i = iter1.next();
-			for (Iterator<Integer> iter2 = m_array2.iterator(); iter2.hasNext();) {
-				// Write into m_neq
+		// If a set in partition of Hopcroft contains state1 and state2 check
+		// whether all states in that set are equivalent.
+		HashSet<Integer> set = null;
+		try {
+			set = m_hopcroftAlgorithm.getBlock(m_state1);
+		} catch (NullPointerException e) {
+			return;
+		}
+		// Return in case of empty set list.
+		if (set == null) {
+			return;
+		}
+		boolean eq = true;
+		assert (set.size() > 1);
+		if (set.size() > 2) {
+			for (Iterator<Integer> iter = set.iterator(); iter.hasNext();) {
+				int elem = iter.next();
 
-				int j = iter2.next();
-
-				Tuple tuple;
-				if (i < j) {
-					tuple = new Tuple(i, j);
-				} else {
-					tuple = new Tuple(j, i);
-				}
-				if (!neq.contains(tuple)) {
-					((Set<Tuple>) neq).add(tuple);
+				int state1rep = m_incrementalAlgorithm.find(m_state1);
+				if (m_incrementalAlgorithm.find(elem) != state1rep) {
+					eq = false;
 				}
 			}
 		}
-
+		if (eq) {
+			for (int state : set) {
+				m_hopcroftAlgorithm.removePartition(state);
+			}
+		}
 	}
 
 }
