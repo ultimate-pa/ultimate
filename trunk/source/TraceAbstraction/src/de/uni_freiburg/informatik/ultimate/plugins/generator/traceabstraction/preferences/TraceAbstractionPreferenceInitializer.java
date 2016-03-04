@@ -54,6 +54,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 				new UltimatePreferenceItem<Integer>(LABEL_WATCHITERATION, DEF_WATCHITERATION, PreferenceType.Integer,
 						new IUltimatePreferenceItemValidator.IntegerValidator(0, 10000000)),
 				new UltimatePreferenceItem<Boolean>(LABEL_HOARE, DEF_HOARE, PreferenceType.Boolean),
+				new UltimatePreferenceItem<HoareAnnotationPositions>(LABEL_HOARE_Positions, DEF_HOARE_POSITIONS, PreferenceType.Combo, HoareAnnotationPositions.values()),
 				
 				new UltimatePreferenceItem<Boolean>(LABEL_SEPARATE_SOLVER, DEF_SEPARATE_SOLVER, PreferenceType.Boolean),
 				new UltimatePreferenceItem<SolverMode>(RcfgPreferenceInitializer.LABEL_Solver, DEF_Solver, PreferenceType.Combo, SolverMode.values()),
@@ -116,6 +117,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String LABEL_ARTIFACT = "Kind of artifact that is visualized";
 	public static final String LABEL_WATCHITERATION = "Number of iteration whose artifact is visualized";
 	public static final String LABEL_HOARE = "Compute Hoare Annotation of negated interpolant automaton, abstraction and CFG";
+	public static final String LABEL_HOARE_Positions = "Positions where we compute the Hoare Annotation";
 	public static final String LABEL_SEPARATE_SOLVER = "Use separate solver for trace checks";
 	public static final String LABEL_INTERPOLATED_LOCS = "Compute Interpolants along a Counterexample";
 	public static final String LABEL_INTERPOLANTS_CONSOLIDATION = "Interpolants consolidation";
@@ -162,6 +164,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final String DEF_ARTIFACT = VALUE_RCFG;
 	public static final int DEF_WATCHITERATION = 1000000;
 	public static final boolean DEF_HOARE = false;
+	public static final HoareAnnotationPositions DEF_HOARE_POSITIONS = HoareAnnotationPositions.All;
 	public static final boolean DEF_SEPARATE_SOLVER = true;
 	public static final SolverMode DEF_Solver = SolverMode.Internal_SMTInterpol;
 	public static final String DEF_ExtSolverCommand = RcfgPreferenceInitializer.Z3_DEFAULT;
@@ -212,6 +215,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	
 	public enum HoareTripleChecks {
 		MONOLITHIC, INCREMENTAL
+	}
+	
+	public enum HoareAnnotationPositions {
+		All, LoopInvariantsAndEnsures,
 	}
 
 }

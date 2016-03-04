@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IntersectDD;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa.DifferenceSenwa;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
@@ -107,6 +108,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
@@ -162,7 +164,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 	// private IHoareTripleChecker m_HoareTripleChecker;
 	private boolean m_DoFaultLocalization = false;
-
+	private HashSet<ProgramPoint> m_HoareAnnotationPositions;
 
 	public BasicCegarLoop(String name, RootNode rootNode, SmtManager smtManager, TAPreferences taPrefs,
 			Collection<ProgramPoint> errorLocs, INTERPOLATION interpolation, boolean computeHoareAnnotation,
@@ -192,9 +194,14 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 		// InterpolationPreferenceChecker.check(Activator.s_PLUGIN_NAME, interpolation);
 		m_ComputeHoareAnnotation = computeHoareAnnotation;
-		m_Haf = new HoareAnnotationFragments(mLogger);
+		if (m_Pref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopInvariantsAndEnsures) {
+			m_HoareAnnotationPositions = new HashSet<ProgramPoint>();
+			m_HoareAnnotationPositions.addAll(rootNode.getRootAnnot().getLoopLocations().keySet());
+			m_HoareAnnotationPositions.addAll(rootNode.getRootAnnot().getExitNodes().values());
+		}
+		m_Haf = new HoareAnnotationFragments(mLogger, m_HoareAnnotationPositions, m_Pref.getHoareAnnotationPositions());
 		m_StateFactoryForRefinement = new PredicateFactoryRefinement(m_RootNode.getRootAnnot().getProgramPoints(),
-				super.m_SmtManager, m_Pref, REMOVE_DEAD_ENDS && m_ComputeHoareAnnotation, m_Haf);
+				super.m_SmtManager, m_Pref, REMOVE_DEAD_ENDS && m_ComputeHoareAnnotation, m_Haf, m_HoareAnnotationPositions);
 		m_PredicateFactoryInterpolantAutomata = new PredicateFactory(super.m_SmtManager, m_Pref);
 
 		m_AssertCodeBlocksIncrementally = (new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).getEnum(
@@ -202,6 +209,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				AssertCodeBlockOrder.class);
 
 		m_PredicateFactoryResultChecking = new PredicateFactoryResultChecking(smtManager);
+		
+
 		m_CegarLoopBenchmark = new CegarLoopBenchmarkGenerator();
 		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_OverallTime);
 
@@ -217,6 +226,15 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 		m_Abstraction = cFG2NestedWordAutomaton.getNestedWordAutomaton(super.m_RootNode, m_StateFactoryForRefinement,
 				super.m_ErrorLocs);
+		if (m_Pref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopInvariantsAndEnsures) {
+			INestedWordAutomaton<CodeBlock, IPredicate> nwa = (INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction;
+			for (IPredicate pred : nwa.getStates()) {
+				for (OutgoingCallTransition<CodeBlock, IPredicate> trans : nwa.callSuccessors(pred)) {
+					m_HoareAnnotationPositions.add(((ISLPredicate) pred).getProgramPoint());
+					m_HoareAnnotationPositions.add(((ISLPredicate) trans.getSucc()).getProgramPoint());
+				}
+			}
+		}
 		if (m_WitnessAutomaton != null) {
 			WitnessProductAutomaton wpa = new WitnessProductAutomaton(m_Services,
 					(INestedWordAutomatonSimple<CodeBlock, IPredicate>) m_Abstraction, m_WitnessAutomaton,

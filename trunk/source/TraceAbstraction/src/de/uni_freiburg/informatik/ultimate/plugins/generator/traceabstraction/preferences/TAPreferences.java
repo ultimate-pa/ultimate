@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceSt
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
@@ -55,6 +56,7 @@ public class TAPreferences {
 	private final boolean m_SeperateViolationCheck = true;
 	private final HoareTripleChecks m_HoareTripleChecks;
 	private UltimatePreferenceStore m_Prefs;
+	private final HoareAnnotationPositions m_HoareAnnotationPositions;
 
 	public enum Artifact {
 		ABSTRACTION, INTERPOLANT_AUTOMATON, NEG_INTERPOLANT_AUTOMATON, RCFG
@@ -90,6 +92,9 @@ public class TAPreferences {
 
 		m_Hoare = m_Prefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_HOARE,
 				TraceAbstractionPreferenceInitializer.DEF_HOARE);
+		
+		m_HoareAnnotationPositions = m_Prefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_HOARE_Positions,
+				TraceAbstractionPreferenceInitializer.DEF_HOARE_POSITIONS, HoareAnnotationPositions.class);
 
 		m_Interpolation = m_Prefs.getEnum(
 				TraceAbstractionPreferenceInitializer.LABEL_INTERPOLATED_LOCS,
@@ -270,6 +275,10 @@ public class TAPreferences {
 
 	public boolean computeHoareAnnotation() {
 		return m_Hoare;
+	}
+	
+	public HoareAnnotationPositions getHoareAnnotationPositions() {
+		return m_HoareAnnotationPositions;
 	}
 
 	public boolean seperateViolationCheck() {
