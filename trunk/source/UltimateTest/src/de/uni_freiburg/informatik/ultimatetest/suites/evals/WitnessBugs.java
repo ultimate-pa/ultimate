@@ -51,8 +51,9 @@ public class WitnessBugs extends AbstractEvalTestSuite {
 
 	private static Collection<UltimateRunDefinition> createDefs() {
 		Collection<UltimateRunDefinition> rtr = new ArrayList<>();
-		rtr.addAll(verifyWitnessSV("loops/sum03_true-unreach-call_false-termination.i"));
-		rtr.addAll(verifyWitnessSV("loops/array_true-unreach-call.i"));
+		rtr.addAll(verifyWitnessSV("loops"));
+		rtr.addAll(verifyWitnessSV("product-lines"));
+//		rtr.addAll(verifyWitnessSV("loops/array_true-unreach-call.i"));
 //		rtr.addAll(produceWitnessSV("loops/trex02_true-unreach-call_true-termination.i"));
 //		rtr.addAll(produceWitnessSV("recursive-simple/afterrec_true-unreach-call.c"));
 //		rtr.addAll(produceWitness("examples/programs/toy/showcase/GoannaDoubleFree.c"));
