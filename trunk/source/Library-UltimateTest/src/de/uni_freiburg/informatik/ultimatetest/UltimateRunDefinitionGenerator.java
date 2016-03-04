@@ -159,4 +159,56 @@ public final class UltimateRunDefinitionGenerator {
 		}
 		return rtr;
 	}
+
+	/**
+	 * Get a {@link Collection} of {@link UltimateRunDefinition}s where for each directory in <code>directories</code>
+	 * all files with a file ending from <code>fileEndings</code> that have a witness in the folder
+	 * <code>witnessFolder</code> define a run definition with the settings file <code>settings</code> and the toolchain
+	 * file <code>toolchain</code>.
+	 * 
+	 * Note:
+	 * <ul>
+	 * <li><code>witnessFolder</code> is an absolute path.
+	 * <li>All other files are defined by their paths relative to the Ultimate trunk directory.
+	 * <li>A witness is a file that ends in .graphml and begins with the name of the actual input file without their
+	 * ending.
+	 * <li>For each directory, at most <code>limit</code> files are used. They are selected pseudo-randomly but
+	 * deterministic (i.e., multiple runs with the same parameter generate the same result).
+	 * </ul>
+	 */
+	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunkWithWitnessesFromSomeFolder(
+			final String toolchain, final String settings, final DirectoryFileEndingsPair[] input,
+			final String witnessFolder) {
+		final Collection<UltimateRunDefinition> rtr = new ArrayList<UltimateRunDefinition>();
+		final File toolchainFile = getFileFromToolchainDir(toolchain);
+		final File settingsFile = settings == null ? null : getFileFromSettingsDir(settings);
+
+		final File witnessFolderFile = new File(witnessFolder);
+		if (!witnessFolderFile.exists()) {
+			throw new IllegalArgumentException(
+					"Path to witness folder " + witnessFolderFile.getAbsolutePath() + " does not exist.");
+		}
+		final Collection<File> witnessCandidates;
+		if (witnessFolderFile.isFile()) {
+			witnessCandidates = TestUtil.getFiles(witnessFolderFile.getParentFile(), new String[] { ".graphml" });
+		} else {
+			witnessCandidates = TestUtil.getFiles(witnessFolderFile, new String[] { ".graphml" });
+		}
+
+		for (final DirectoryFileEndingsPair pair : input) {
+			final File dir = getFileFromTrunkDir(pair.getDirectory());
+			final Collection<File> inputFiles = getInputFiles(dir, pair.getFileEndings(), pair.getLimit());
+
+			for (final File inputFile : inputFiles) {
+				final String endingRegex = TestUtil.getRegexFromFileendings(pair.getFileEndings());
+				final String nameWithoutEnding = inputFile.getName().replaceAll(endingRegex, "");
+				final List<File> witnesses = witnessCandidates.stream()
+						.filter(a -> a.getName().startsWith(nameWithoutEnding)).collect(Collectors.toList());
+				for (final File witness : witnesses) {
+					rtr.add(new UltimateRunDefinition(new File[] { inputFile, witness }, settingsFile, toolchainFile));
+				}
+			}
+		}
+		return rtr;
+	}
 }
