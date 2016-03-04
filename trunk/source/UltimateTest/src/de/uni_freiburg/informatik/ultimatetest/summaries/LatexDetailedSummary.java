@@ -27,12 +27,14 @@
 package de.uni_freiburg.informatik.ultimatetest.summaries;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
@@ -190,13 +192,9 @@ public class LatexDetailedSummary extends LatexSummary {
 
 		int i = 0;
 		for (final String suffix : distinctSuffixes) {
-			PartitionedResults resultsPerFolder = partitionResults(
-					CoreUtil.where(results.All, new ITestSummaryResultPredicate() {
-						@Override
-						public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-							return entry.getKey().getInputFileFolders().endsWith(suffix);
-						}
-					}));
+			final PartitionedResults resultsPerFolder = partitionResults(results.All.stream().filter(
+					entry -> Arrays.stream(entry.getKey().getInput()).anyMatch(a -> a.getParent().endsWith(suffix)))
+					.collect(Collectors.toList()));
 			i++;
 			makeFolderRow(sb, resultsPerFolder, suffix, i >= distinctSuffixes.size(), additionalTableHeaders);
 		}
@@ -204,10 +202,10 @@ public class LatexDetailedSummary extends LatexSummary {
 
 	private void makeFolderRow(StringBuilder sb, PartitionedResults results, String folder, boolean last,
 			int additionalTableHeaders) {
-		String br = CoreUtil.getPlatformLineSeparator();
+		final String br = CoreUtil.getPlatformLineSeparator();
 		final int additionalHeaders = additionalTableHeaders;
 
-		List<String> files = new ArrayList<>(CoreUtil.selectDistinct(results.All, new IMyReduce<String>() {
+		final List<String> files = new ArrayList<>(CoreUtil.selectDistinct(results.All, new IMyReduce<String>() {
 			@Override
 			public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 				return entry.getKey().getInputFileNames();
@@ -288,13 +286,8 @@ public class LatexDetailedSummary extends LatexSummary {
 	private void makeFileEntry(StringBuilder sb, Collection<Entry<UltimateRunDefinition, ExtendedResult>> current,
 			final List<String> files) {
 
-		List<Entry<UltimateRunDefinition, ExtendedResult>> results = new ArrayList<>(
-				CoreUtil.where(current, new ITestSummaryResultPredicate() {
-					@Override
-					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-						return files.contains(entry.getKey().getInput());
-					}
-				}));
+		final List<Entry<UltimateRunDefinition, ExtendedResult>> results = current.stream()
+				.filter(a -> files.contains(a.getKey().getInputFileNames())).collect(Collectors.toList());
 
 		Collections.sort(results, new Comparator<Entry<UltimateRunDefinition, ExtendedResult>>() {
 			@Override

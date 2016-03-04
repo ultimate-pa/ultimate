@@ -248,11 +248,25 @@ public final class TestUtil {
 		return dir + name;
 	}
 
-	public static List<File> getFiles(File root, String[] endings) {
-		ArrayList<File> rtr = new ArrayList<File>();
+	public static String getRegexFromFileendings(final String[] fileendings) {
+		if (fileendings == null || fileendings.length == 0) {
+			return ".*";
+		}
+		final StringBuilder sb = new StringBuilder();
+		sb.append("(");
+		sb.append("\\").append(fileendings[0]);
+		for (int i = 1; i < fileendings.length; i++) {
+			sb.append("|\\").append(fileendings[i]);
+		}
+		sb.append(")$");
+		return sb.toString();
+	}
+
+	public static List<File> getFiles(final File root, final String[] endings) {
+		final List<File> rtr = new ArrayList<File>();
 
 		if (root.isFile()) {
-			for (String s : endings) {
+			for (final String s : endings) {
 				if (root.getAbsolutePath().endsWith(s)) {
 					rtr.add(root);
 					break;
@@ -261,29 +275,13 @@ public final class TestUtil {
 			return rtr;
 		}
 
-		File[] list = root.listFiles();
-
+		final File[] list = root.listFiles();
 		if (list == null) {
 			return rtr;
 		}
 
-		for (File f : list) {
-			if (f.isDirectory()) {
-				rtr.addAll(getFiles(f, endings));
-			} else {
-
-				if (endings == null || endings.length == 0) {
-					rtr.add(f);
-				} else {
-					for (String s : endings) {
-						if (f.getAbsolutePath().endsWith(s)) {
-							rtr.add(f);
-							break;
-						}
-
-					}
-				}
-			}
+		for (final File f : list) {
+			rtr.addAll(getFiles(f, endings));
 		}
 		return rtr;
 	}
@@ -314,38 +312,30 @@ public final class TestUtil {
 		if (!root.getAbsolutePath().startsWith(prefix)) {
 			throw new IllegalArgumentException("prefix is no prefix of root.getAbsolutePath()");
 		}
-		ArrayList<File> rtr = new ArrayList<File>();
+		final List<File> rtr = new ArrayList<File>();
 
 		if (root.isFile()) {
 			rtr.add(root);
 			return rtr;
 		}
 
-		File[] list = root.listFiles();
+		final File[] list = root.listFiles();
 
 		if (list == null) {
 			return rtr;
 		}
 
-		for (File f : list) {
+		for (final File f : list) {
 			if (f.isDirectory()) {
 				rtr.addAll(getFilesRegex(prefix, f, regex));
+			} else if (regex == null || regex.length == 0) {
+				rtr.add(f);
 			} else {
-
-				if (regex == null || regex.length == 0) {
-					rtr.add(f);
-				} else {
-					for (String s : regex) {
-						try {
-							String suffix = f.getAbsolutePath().substring(prefix.length());
-							if (suffix.matches(s)) {
-								rtr.add(f);
-								break;
-							}
-						} catch (Exception e) {
-							throw e;
-						}
-
+				for (final String s : regex) {
+					final String suffix = f.getAbsolutePath().substring(prefix.length());
+					if (suffix.matches(s)) {
+						rtr.add(f);
+						break;
 					}
 				}
 			}
@@ -354,14 +344,15 @@ public final class TestUtil {
 	}
 
 	public static <E> Collection<E> uniformN(Collection<E> collection, int n) {
-		ArrayList<E> rtr = new ArrayList<E>(n);
-		int i = 1;
-		int size = collection.size();
+		final List<E> rtr = new ArrayList<E>(n);
+		final int size = collection.size();
+
 		int step = 1;
 		if (n != 0) {
 			step = (int) Math.floor(((double) size) / ((double) n));
 		}
 
+		int i = 1;
 		for (E elem : collection) {
 			if (i % step == 0) {
 				rtr.add(elem);
@@ -570,10 +561,10 @@ public final class TestUtil {
 	@SuppressWarnings("rawtypes")
 	private static <E extends ICsvProviderProvider> Collection<E> getCsvProviderProviderFromBenchmarkResults(
 			Collection<BenchmarkResult> benchmarkResults, Class<E> benchmarkClass) {
-		ArrayList<E> filteredList = new ArrayList<E>();
-		for (BenchmarkResult<?> benchmarkResult : benchmarkResults) {
+		final List<E> filteredList = new ArrayList<E>();
+		for (final BenchmarkResult<?> benchmarkResult : benchmarkResults) {
 			@SuppressWarnings("unchecked")
-			E benchmark = (E) benchmarkResult.getBenchmark();
+			final E benchmark = (E) benchmarkResult.getBenchmark();
 			if (benchmark.getClass().isAssignableFrom(benchmarkClass)) {
 				filteredList.add(benchmark);
 			}

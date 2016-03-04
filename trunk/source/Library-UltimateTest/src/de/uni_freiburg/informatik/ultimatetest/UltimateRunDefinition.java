@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
  */
 public final class UltimateRunDefinition implements Comparable<UltimateRunDefinition> {
 	private static final String[] PRIMARY_ENDINGS = new String[] { ".i", ".c", ".bpl", ".ats" };
+	private static final String PATH_SEPARATOR = ";";
 
 	private final File[] mInput;
 	private final File mSettings;
@@ -112,7 +113,7 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 				sb.append("[");
 				sb.append(removeTrunkExamplesPrefix(input[0].getAbsolutePath()));
 				for (int i = 1; i < input.length; ++i) {
-					sb.append(",");
+					sb.append(PATH_SEPARATOR);
 					sb.append(removeTrunkExamplesPrefix(input[i].getAbsolutePath()));
 				}
 				sb.append("]");
@@ -141,7 +142,7 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 			for (int i = 1; i < input.length; ++i) {
 				path = removeTrunkExamplesPrefix(input[i].getParent());
 				if (set.add(path)) {
-					sb.append(",");
+					sb.append(PATH_SEPARATOR);
 					sb.append(path);
 				}
 			}

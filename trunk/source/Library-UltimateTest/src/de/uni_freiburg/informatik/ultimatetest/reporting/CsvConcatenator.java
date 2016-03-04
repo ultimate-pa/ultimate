@@ -124,7 +124,7 @@ public class CsvConcatenator implements ITestSummary {
 		int rows = benchmark.getRowHeaders().size();
 		for (int i = 0; i < rows; i++) {
 			List<Object> resultRow = new ArrayList<>();
-			resultRow.add(ultimateRunDefinition.getInputFileNames());
+			resultRow.add(ultimateRunDefinition.getInputFileNames().replace(",", ";"));
 			resultRow.add(ultimateRunDefinition.getSettings().getAbsolutePath());
 			resultRow.add(ultimateRunDefinition.getToolchain().getAbsolutePath());
 			resultRow.addAll(benchmark.getRow(i));

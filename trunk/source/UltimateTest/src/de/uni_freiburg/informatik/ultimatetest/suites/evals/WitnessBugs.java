@@ -51,10 +51,11 @@ public class WitnessBugs extends AbstractEvalTestSuite {
 
 	private static Collection<UltimateRunDefinition> createDefs() {
 		Collection<UltimateRunDefinition> rtr = new ArrayList<>();
-		rtr.addAll(witnessSV("loops/sum03_true-unreach-call_false-termination.i"));
-		rtr.addAll(witnessSV("loops/trex02_true-unreach-call_true-termination.i"));
-		rtr.addAll(witnessSV("recursive-simple/afterrec_true-unreach-call.c"));
-		rtr.addAll(witness("examples/programs/toy/showcase/GoannaDoubleFree.c"));
+		rtr.addAll(verifyWitnessSV("loops/sum03_true-unreach-call_false-termination.i"));
+		rtr.addAll(verifyWitnessSV("loops/array_true-unreach-call.i"));
+//		rtr.addAll(produceWitnessSV("loops/trex02_true-unreach-call_true-termination.i"));
+//		rtr.addAll(produceWitnessSV("recursive-simple/afterrec_true-unreach-call.c"));
+//		rtr.addAll(produceWitness("examples/programs/toy/showcase/GoannaDoubleFree.c"));
 
 		return rtr;
 	}
@@ -95,12 +96,22 @@ public class WitnessBugs extends AbstractEvalTestSuite {
 		return "examples/svcomp/" + path;
 	}
 
-	private static Collection<UltimateRunDefinition> witnessSV(String example) {
-		return witness(sv(example));
+	private static Collection<UltimateRunDefinition> produceWitnessSV(String example) {
+		return produceWitness(sv(example));
 	}
 
-	private static Collection<UltimateRunDefinition> witness(String example) {
+	private static Collection<UltimateRunDefinition> produceWitness(String example) {
 		return UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(new String[] { example }, ALL_C,
+				"svcomp2016/witness-verif/svcomp-Reach-32bit-Automizer_Default-Witness.epf",
+				"AutomizerC_WitnessPrinter.xml");
+	}
+	
+	private static Collection<UltimateRunDefinition> verifyWitnessSV(String example) {
+		return verifyWitness(sv(example));
+	}
+
+	private static Collection<UltimateRunDefinition> verifyWitness(String example) {
+		return UltimateRunDefinitionGenerator.getRunDefinitionFromTrunkWithWitnesses(new String[] { example }, ALL_C,
 				"svcomp2016/witness-verif/svcomp-Reach-32bit-Automizer_Default-Witness.epf",
 				"AutomizerC_WitnessPrinter.xml");
 	}

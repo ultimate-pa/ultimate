@@ -1,8 +1,10 @@
 package de.uni_freiburg.informatik.ultimatetest;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
@@ -16,15 +18,15 @@ public final class UltimateRunDefinitionGenerator {
 	private static final String SETTINGS_PATH = "examples/settings/";
 	private static final String TOOLCHAIN_PATH = "examples/toolchains/";
 
-	private static File getSettingsFileFromTrunk(String settings) {
+	private static File getFileFromSettingsDir(String settings) {
 		return new File(TestUtil.getPathFromTrunk(SETTINGS_PATH + settings));
 	}
 
-	private static File getToolchainFileFromTrunk(String toolchain) {
+	private static File getFileFromToolchainDir(String toolchain) {
 		return new File(TestUtil.getPathFromTrunk(TOOLCHAIN_PATH + toolchain));
 	}
 
-	private static File getInputFileFromTrunk(String input) {
+	private static File getFileFromTrunkDir(String input) {
 		return new File(TestUtil.getPathFromTrunk(input));
 	}
 
@@ -47,8 +49,8 @@ public final class UltimateRunDefinitionGenerator {
 	 */
 	public static UltimateRunDefinition getRunDefinitionFromTrunk(final String input, final String settings,
 			final String toolchain) {
-		return new UltimateRunDefinition(getInputFileFromTrunk(input),
-				settings == null ? null : getSettingsFileFromTrunk(settings), getToolchainFileFromTrunk(toolchain));
+		return new UltimateRunDefinition(getFileFromTrunkDir(input),
+				settings == null ? null : getFileFromSettingsDir(settings), getFileFromToolchainDir(toolchain));
 	}
 
 	/**
@@ -67,16 +69,18 @@ public final class UltimateRunDefinitionGenerator {
 	 * some files with a file ending from <code>fileEndings</code> define a run definition with the settings file
 	 * <code>settings</code> and the toolchain file <code>toolchain</code>.
 	 * 
-	 * All files are defined by their paths relative to the Ultimate trunk directory.
-	 * 
-	 * For each directory, at most <code>limit</code> files are used. They are selected pseudo-randomly but
+	 * Note:
+	 * <ul>
+	 * <li>All files are defined by their paths relative to the Ultimate trunk directory.
+	 * <li>For each directory, at most <code>limit</code> files are used. They are selected pseudo-randomly but
 	 * deterministic (i.e., multiple runs with the same parameter generate the same result).
+	 * </ul>
 	 */
 	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunk(final String[] directories,
 			final String[] fileEndings, final String settings, final String toolchain, int limit) {
-		final File toolchainFile = getToolchainFileFromTrunk(toolchain);
-		final File settingsFile = settings == null ? null : getSettingsFileFromTrunk(settings);
-		return Arrays.stream(directories).map(a -> getInputFileFromTrunk(a))
+		final File toolchainFile = getFileFromToolchainDir(toolchain);
+		final File settingsFile = settings == null ? null : getFileFromSettingsDir(settings);
+		return Arrays.stream(directories).map(a -> getFileFromTrunkDir(a))
 				.map(a -> getInputFiles(a, fileEndings, limit)).flatMap(a -> a.stream()).distinct()
 				.map(a -> new UltimateRunDefinition(a, settingsFile, toolchainFile)).collect(Collectors.toList());
 	}
@@ -88,12 +92,71 @@ public final class UltimateRunDefinitionGenerator {
 						a.getFileEndings(), settings, toolchain, a.getLimit()))
 				.flatMap(a -> a.stream()).collect(Collectors.toList());
 	}
-	
-	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunkWithWitnesses(String toolchain, String settings,
-			DirectoryFileEndingsPair[] directoryFileEndingsPairs) {
-		return Arrays.stream(directoryFileEndingsPairs)
-				.map(a -> UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(new String[] { a.getDirectory() },
-						a.getFileEndings(), settings, toolchain, a.getLimit()))
-				.flatMap(a -> a.stream()).collect(Collectors.toList());
+
+	/**
+	 * Get a {@link Collection} of {@link UltimateRunDefinition}s where for each directory in <code>directories</code>
+	 * all files with a file ending from <code>fileEndings</code> that have a witness in the same folder define a run
+	 * definition with the settings file <code>settings</code> and the toolchain file <code>toolchain</code>.
+	 * 
+	 * Note:
+	 * <ul>
+	 * <li>All files are defined by their paths relative to the Ultimate trunk directory.
+	 * <li>A witness is a file that ends in .graphml and begins with the name of the actual input file without their
+	 * ending.
+	 * </ul>
+	 */
+	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunkWithWitnesses(final String[] directories,
+			final String[] fileEndings, final String settings, final String toolchain) {
+		return getRunDefinitionFromTrunkWithWitnesses(directories, fileEndings, settings, toolchain, -1);
+	}
+
+	/**
+	 * Get a {@link Collection} of {@link UltimateRunDefinition}s where for each directory in <code>directories</code>
+	 * all files with a file ending from <code>fileEndings</code> that have a witness in the same folder define a run
+	 * definition with the settings file <code>settings</code> and the toolchain file <code>toolchain</code>.
+	 * 
+	 * Note:
+	 * <ul>
+	 * <li>All files are defined by their paths relative to the Ultimate trunk directory.
+	 * <li>A witness is a file that ends in .graphml and begins with the name of the actual input file without their
+	 * ending.
+	 * <li>For each directory, at most <code>limit</code> files are used. They are selected pseudo-randomly but
+	 * deterministic (i.e., multiple runs with the same parameter generate the same result).
+	 * </ul>
+	 */
+	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunkWithWitnesses(final String[] directories,
+			final String[] fileEndings, final String settings, final String toolchain, int limit) {
+		return getRunDefinitionFromTrunkWithWitnesses(toolchain, settings,
+				Arrays.stream(directories).map(a -> new DirectoryFileEndingsPair(a, fileEndings, limit))
+						.toArray(size -> new DirectoryFileEndingsPair[size]));
+	}
+
+	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunkWithWitnesses(final String toolchain,
+			final String settings, final DirectoryFileEndingsPair[] directoryFileEndingsPairs) {
+		final Collection<UltimateRunDefinition> rtr = new ArrayList<UltimateRunDefinition>();
+		final File toolchainFile = getFileFromToolchainDir(toolchain);
+		final File settingsFile = settings == null ? null : getFileFromSettingsDir(settings);
+
+		for (final DirectoryFileEndingsPair pair : directoryFileEndingsPairs) {
+			final File dir = getFileFromTrunkDir(pair.getDirectory());
+			final Collection<File> inputFiles = getInputFiles(dir, pair.getFileEndings(), pair.getLimit());
+			final Collection<File> witnessCandidates;
+			if (dir.isFile()) {
+				witnessCandidates = TestUtil.getFiles(dir.getParentFile(), new String[] { ".graphml" });
+			} else {
+				witnessCandidates = TestUtil.getFiles(dir, new String[] { ".graphml" });
+			}
+
+			for (final File inputFile : inputFiles) {
+				final String endingRegex = TestUtil.getRegexFromFileendings(pair.getFileEndings());
+				final String nameWithoutEnding = inputFile.getName().replaceAll(endingRegex, "");
+				final List<File> witnesses = witnessCandidates.stream()
+						.filter(a -> a.getName().startsWith(nameWithoutEnding)).collect(Collectors.toList());
+				for (final File witness : witnesses) {
+					rtr.add(new UltimateRunDefinition(new File[] { inputFile, witness }, settingsFile, toolchainFile));
+				}
+			}
+		}
+		return rtr;
 	}
 }

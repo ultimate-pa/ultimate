@@ -98,7 +98,7 @@ public abstract class LatexSummary extends BaseCsvProviderSummary {
 	}
 
 	protected String removeInvalidCharsForLatex(String cell) {
-		return cell.replace("\\", " \\textbackslash ").replace("_", "\\_");
+		return cell.replace("\\", "{\\textbackslash}").replace("_", "\\_");
 	}
 
 }
