@@ -211,4 +211,20 @@ public final class UltimateRunDefinitionGenerator {
 		}
 		return rtr;
 	}
+
+	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunkWithWitnessesFromSomeFolder(
+			final String[] directories, final String[] fileEndings, final String settings, final String toolchain,
+			final String witnessFolder, int limit) {
+		return getRunDefinitionFromTrunkWithWitnessesFromSomeFolder(toolchain, settings,
+				Arrays.stream(directories).map(a -> new DirectoryFileEndingsPair(a, fileEndings, limit))
+						.toArray(size -> new DirectoryFileEndingsPair[size]),
+				witnessFolder);
+	}
+
+	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunkWithWitnessesFromSomeFolder(
+			final String[] directories, final String[] fileEndings, final String settings, final String toolchain,
+			final String witnessFolder) {
+		return getRunDefinitionFromTrunkWithWitnessesFromSomeFolder(directories, fileEndings, settings, toolchain,
+				witnessFolder, -1);
+	}
 }

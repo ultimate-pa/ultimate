@@ -112,8 +112,12 @@ public class WitnessBugs extends AbstractEvalTestSuite {
 	}
 
 	private static Collection<UltimateRunDefinition> verifyWitness(String example) {
-		return UltimateRunDefinitionGenerator.getRunDefinitionFromTrunkWithWitnesses(new String[] { example }, ALL_C,
+		return UltimateRunDefinitionGenerator.getRunDefinitionFromTrunkWithWitnessesFromSomeFolder(new String[] { example }, ALL_C,
 				"svcomp2016/witness-verif/svcomp-Reach-32bit-Automizer_Default-Witness.epf",
-				"AutomizerC_WitnessPrinter.xml");
+				"AutomizerC_WitnessPrinter.xml","F:/tmp/ultimate wip/correctness witnesses/results");
+		
+//		return UltimateRunDefinitionGenerator.getRunDefinitionFromTrunkWithWitnesses(new String[] { example }, ALL_C,
+//				"svcomp2016/witness-verif/svcomp-Reach-32bit-Automizer_Default-Witness.epf",
+//				"AutomizerC_WitnessPrinter.xml");
 	}
 }

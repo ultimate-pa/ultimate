@@ -30,4 +30,9 @@ public class DirectoryFileEndingsPair {
 	public int getLimit() {
 		return mLimit;
 	}
+	
+	@Override
+	public String toString() {
+		return mDirectory+" "+mFileEndings+" "+mLimit;
+	}
 }
