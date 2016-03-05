@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -43,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
@@ -65,6 +67,8 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
  */
 public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		implements IOperation<LETTER, STATE> {
+	// old automaton
+	private IDoubleDeckerAutomaton<LETTER, STATE> m_doubleDecker;
 	// partition object
 	private Partition m_partition;
 	// IDs for equivalence classes
@@ -87,7 +91,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand)
 					throws AutomataLibraryException {
-		this(services, stateFactory, operand, null, false);
+		this(services, stateFactory, operand, null, false, false);
 	}
 	
 	/**
@@ -98,15 +102,20 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	 * @param equivalenceClasses represent initial equivalence classes
 	 * @param stateFactory used for Hoare annotation
 	 * @param includeMapping true iff mapping old to new state is needed
+	 * @param considerNeutralStates true iff neutral states should be considered
 	 * @throws OperationCanceledException if cancel signal is received
 	 */
 	public ShrinkNwaAsDfa(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
 			final Collection<Set<STATE>> equivalenceClasses,
-			final boolean includeMapping) throws AutomataLibraryException {
+			final boolean includeMapping, final boolean considerNeutralStates)
+					throws AutomataLibraryException {
 		super(services, stateFactory, "shrinkNwaAsDfa", operand);
 		
+		m_doubleDecker = considerNeutralStates
+				? (IDoubleDeckerAutomaton<LETTER, STATE>) m_operand
+				: null;
 		m_stateFactory = (stateFactory == null)
 				? m_operand.getStateFactory()
 				: stateFactory;
@@ -280,9 +289,29 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			}
 		} else {
 			// split each map value (set of predecessor states)
-			for (final HashSet<STATE> predecessorSet : letter2states.values()) {
+			for (final Entry<Pair<LETTER, STATE>, HashSet<STATE>> entry : letter2states
+					.entrySet()) {
+				final Pair<LETTER, STATE> letter;
+				if (m_doubleDecker == null) {
+					letter = null;
+				} else {
+					switch (type) {
+						case Internal:
+						case Call:
+							letter = null;
+							break;
+							
+						case Return:
+							letter = entry.getKey();
+							break;
+							
+						default:
+							throw new IllegalArgumentException("Illegal type.");
+					}
+				}
+				final HashSet<STATE> predecessorSet = entry.getValue();
 				assert (!predecessorSet.isEmpty());
-				m_partition.splitEquivalenceClasses(predecessorSet);
+				m_partition.splitEquivalenceClasses(predecessorSet, letter);
 			}
 		}
 	}
@@ -589,6 +618,18 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 				assert (splitEcs.contains(ec));
 			}
 			
+			splitStateFast(state, ec);
+		}
+		
+		/**
+		 * This method splits a state for a given equivalence class without any
+		 * further considerations.
+		 * 
+		 * @param state state
+		 * @param ec equivalence class
+		 */
+		private void splitStateFast(final STATE state,
+				final EquivalenceClass ec) {
 			// move state to intersection set
 			ec.m_intersection.add(state);
 			
@@ -604,9 +645,11 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 		 * restored.
 		 * 
 		 * @param states set of states to split
+		 * @param letter pair (letter, state) used for splitting
 		 * @return true iff a split occurred
 		 */
-		public boolean splitEquivalenceClasses(final Iterable<STATE> states) {
+		public boolean splitEquivalenceClasses(final Iterable<STATE> states,
+				final Pair<LETTER, STATE> letter) {
 			boolean splitOccurred = false;
 			final LinkedList<EquivalenceClass> splitEcs =
 					new LinkedList<EquivalenceClass>();
@@ -618,6 +661,18 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 			
 			// check and finalize splits
 			for (final EquivalenceClass ec : splitEcs) {
+				if ((letter != null) && (!ec.m_states.isEmpty())) {
+					final STATE hier = (STATE) letter.getSecond();
+					// return split, also add neutral states
+					final ArrayList<STATE> ecStates =
+							new ArrayList<STATE>(ec.m_states);
+					for (final STATE lin : ecStates) {
+						if (!m_doubleDecker.isDoubleDecker(lin, hier)) {
+							splitStateFast(lin, ec);
+						}
+					}
+				}
+				
 				// split removed every state, restore equivalence class
 				if (ec.m_states.isEmpty()) {
 					ec.m_states = ec.m_intersection;
