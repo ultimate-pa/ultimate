@@ -429,24 +429,21 @@ public class CHandler implements ICHandler {
 
 		// TODO(thrax): Check if decl should be passed as null or not.
 		checkForACSL(main, null, decl, node, null);
-
+		
+		// delayed processing of IASTFunctionDefinitions
+		// This is a workaround. Invariants my use global variables that
+		// are not yet declared.
+		final List<IASTFunctionDefinition> functionDefinitions = new ArrayList<>();
 		for (IASTNode child : node.getChildren()) {
-			checkForACSL(main, null, decl, child, null);
-			Result childRes = main.dispatch(child);
-
-			if (childRes instanceof DeclarationResult) {
-				// we have to add a global variable
-				DeclarationResult rd = (DeclarationResult) childRes;
-				for (CDeclaration cd : rd.getDeclarations()) {
-					mDeclarationsGlobalInBoogie.put(mSymbolTable.getBoogieDeclOfCDecl(cd), cd);
-				}
+			String raw = child.getRawSignature();
+			if (child instanceof IASTFunctionDefinition) {
+				functionDefinitions.add((IASTFunctionDefinition) child);
 			} else {
-				if (childRes instanceof SkipResult)
-					continue;
-				assert childRes.getClass() == Result.class;
-				assert childRes.node != null;
-				decl.add((Declaration) childRes.node);
+				processTUchild(main, decl, child);
 			}
+		}
+		for (IASTFunctionDefinition funcDef : functionDefinitions) {
+			processTUchild(main, decl, funcDef);
 		}
 
 		//(alex:) new function pointers
@@ -521,6 +518,25 @@ public class CHandler implements ICHandler {
 		return new Result(boogieUnit);
 	}
 
+	private void processTUchild(Dispatcher main, ArrayList<Declaration> decl, IASTNode child) {
+		checkForACSL(main, null, decl, child, null);
+		Result childRes = main.dispatch(child);
+
+		if (childRes instanceof DeclarationResult) {
+			// we have to add a global variable
+			DeclarationResult rd = (DeclarationResult) childRes;
+			for (CDeclaration cd : rd.getDeclarations()) {
+				mDeclarationsGlobalInBoogie.put(mSymbolTable.getBoogieDeclOfCDecl(cd), cd);
+			}
+		} else {
+			if (childRes instanceof SkipResult)
+				return;
+			assert childRes.getClass() == Result.class;
+			assert childRes.node != null;
+			decl.add((Declaration) childRes.node);
+		}
+	}
+
 	@Override
 	public Result visit(Dispatcher main, IASTFunctionDefinition node) {
 		LinkedHashSet<IASTDeclaration> reachableDecs = ((Dispatcher) main).getReachableDeclarationsOrDeclarators();
@@ -551,6 +567,7 @@ public class CHandler implements ICHandler {
 		}
 
 		for (IASTNode child : node.getChildren()) {
+			String raw = child.getRawSignature();
 			checkForACSL(main, stmt, decl, child, null);
 			Result r = main.dispatch(child);
 			if (r instanceof ExpressionResult) {
