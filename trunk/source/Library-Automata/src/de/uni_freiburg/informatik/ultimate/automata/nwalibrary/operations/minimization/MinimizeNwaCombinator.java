@@ -100,7 +100,7 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends
 				throw new IllegalArgumentException("Undefined enum state.");
 		}
 		
-		++gCounter;
+		gCounter = (gCounter + 1) % gPattern.length;
 	}
 	
 	@SuppressWarnings("unchecked")
