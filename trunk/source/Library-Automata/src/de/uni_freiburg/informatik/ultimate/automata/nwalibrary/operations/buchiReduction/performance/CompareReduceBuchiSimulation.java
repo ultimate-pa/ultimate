@@ -617,7 +617,7 @@ public final class CompareReduceBuchiSimulation<LETTER, STATE> implements IOpera
 			saveStateOfPerformance(performance);
 		} else if (method instanceof MinimizeSevpa) {
 			MinimizeSevpa<LETTER, STATE> minimizeSevpa = (MinimizeSevpa<LETTER, STATE>) method;
-			INestedWordAutomatonOldApi<LETTER, STATE> methodResult = minimizeSevpa.getResult();
+			INestedWordAutomatonSimple<LETTER, STATE> methodResult = minimizeSevpa.getResult();
 			// Removed states
 			if (methodResult != null) {
 				int removedStates = m_Operand.size() - methodResult.size();

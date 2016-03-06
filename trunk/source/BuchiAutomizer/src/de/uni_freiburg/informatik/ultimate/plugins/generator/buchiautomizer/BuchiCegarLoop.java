@@ -108,7 +108,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.INTERPOLATION;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.TraceCheckerUtils;
@@ -634,7 +633,8 @@ public class BuchiCegarLoop {
 			MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(
 					new AutomataLibraryServices(m_Services), m_Abstraction, partition, m_StateFactoryForRefinement);
 			assert (minimizeOp.checkResult(m_PredicateFactoryResultChecking));
-			result = minimizeOp.getResult();
+			result = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), minimizeOp.getResult()))
+					.getResult();
 			break;
 		}
 		case None: {
