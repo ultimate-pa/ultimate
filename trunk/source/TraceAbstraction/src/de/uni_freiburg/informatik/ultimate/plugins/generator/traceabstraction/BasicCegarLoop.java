@@ -58,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeDfaHopcroftPaper;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeIncompleteDfa;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeNwaCombinator;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat.MinimizeNwaMaxSAT;
@@ -114,7 +115,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.InterpolatingTraceCheckerCraig;
@@ -754,6 +754,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		case MINIMIZE_SEVPA:
 		case SHRINK_NWA:
 		case NWA_MAX_SAT:
+		case NWA_COMBINATOR:
 			minimizeAbstraction(m_StateFactoryForRefinement, m_PredicateFactoryResultChecking, minimization);
 			break;
 		default:
@@ -828,7 +829,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(
 						new AutomataLibraryServices(m_Services), newAbstraction, partition, predicateFactoryRefinement);
 				assert minimizeOp.checkResult(resultCheckPredFac);
-				minimized = minimizeOp.getResult();
+				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services),
+						minimizeOp.getResult())).getResult();
 				if (m_ComputeHoareAnnotation) {
 					Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
 					m_Haf.updateOnMinimization(oldState2newState, minimized);
@@ -843,6 +845,18 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services),
 						minimizeOp.getResult())).getResult();
 				if (m_ComputeHoareAnnotation) {
+					Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
+					m_Haf.updateOnMinimization(oldState2newState, minimized);
+				}
+				break;
+			}
+			case NWA_COMBINATOR: {
+				MinimizeNwaCombinator<CodeBlock, IPredicate> minimizeOp = new MinimizeNwaCombinator<CodeBlock, IPredicate>(
+						new AutomataLibraryServices(m_Services), predicateFactoryRefinement, newAbstraction, partition);
+				assert minimizeOp.checkResult(resultCheckPredFac);
+				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services),
+						minimizeOp.getResult())).getResult();
+				if (m_ComputeHoareAnnotation && minimizeOp.supportHoareAnnotation()) {
 					Map<IPredicate, IPredicate> oldState2newState = minimizeOp.getOldState2newState();
 					m_Haf.updateOnMinimization(oldState2newState, minimized);
 				}

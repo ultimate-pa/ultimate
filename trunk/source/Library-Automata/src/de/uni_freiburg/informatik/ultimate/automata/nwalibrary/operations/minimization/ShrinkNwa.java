@@ -248,7 +248,6 @@ public class ShrinkNwa<LETTER, STATE> extends AMinimizeNwa<LETTER, STATE>
 	 * @param returnSplitNaive true iff a naive return split is used
 	 * @throws OperationCanceledException if cancel signal is received
 	 */
-	@SuppressWarnings("unchecked")
 	public ShrinkNwa(
 			final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,

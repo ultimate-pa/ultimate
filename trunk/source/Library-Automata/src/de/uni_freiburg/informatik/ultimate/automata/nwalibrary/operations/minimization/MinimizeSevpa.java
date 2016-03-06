@@ -39,19 +39,21 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
-
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.StateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.IncomingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.SummaryReturnTransition;
 
 /**
@@ -67,11 +69,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.Summa
  * 
  * @author Christian Schilling <schillic@informatik.uni-freiburg.de>
  */
-public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
-	private final AutomataLibraryServices m_Services;
-	private final Logger m_Logger;
+public class MinimizeSevpa<LETTER,STATE> extends AMinimizeNwa<LETTER, STATE> implements IOperation<LETTER,STATE> {
 	// old automaton
-	private final INestedWordAutomatonOldApi<LETTER,STATE> m_operand;
 	private final IDoubleDeckerAutomaton<LETTER, STATE> m_doubleDecker;
 	// new (minimized) automaton
 	private NestedWordAutomaton<LETTER,STATE> m_nwa;
@@ -119,7 +118,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * @throws OperationCanceledException iff cancel signal is received
 	 */
 	public MinimizeSevpa(AutomataLibraryServices services,
-			INestedWordAutomatonOldApi<LETTER,STATE> operand)
+			INestedWordAutomaton<LETTER,STATE> operand)
 			throws AutomataLibraryException {
 		this(services, operand, null, operand.getStateFactory());
 	}
@@ -133,17 +132,13 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 * @param removeDeadEnds true iff removal of dead-end states is used
 	 * @throws OperationCanceledException iff cancel signal is received
 	 */
-	@SuppressWarnings("unchecked")
 	public MinimizeSevpa(
 			AutomataLibraryServices services,
-			final INestedWordAutomatonOldApi<LETTER,STATE> operand,
+			final INestedWordAutomaton<LETTER,STATE> operand,
 			Collection<Set<STATE>> equivalenceClasses,
 			StateFactory<STATE> stateFactoryConstruction)
 					throws OperationCanceledException {
-		m_Services = services;
-		m_Logger = m_Services.getLoggingService().getLogger(
-				LibraryIdentifiers.s_LibraryID);
-		m_operand = operand;
+		super(services, stateFactoryConstruction, "minimizeSevpa", operand);
 		if (operand instanceof IDoubleDeckerAutomaton<?, ?>) {
 			m_doubleDecker = (IDoubleDeckerAutomaton<LETTER, STATE>)operand;
 		}
@@ -153,13 +148,11 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		}
 		m_StateFactoryConstruction = stateFactoryConstruction;
 		
-
 		// must be the last part of the constructor
-		m_Logger.info(startMessage());
 		minimize(equivalenceClasses);
 		m_MinimizationFinished = true;
-		m_Logger.info(exitMessage());
-		
+		s_logger.info(exitMessage());
+
 		if (STATISTICS) {
 			System.out.println("positive splits: " + m_splitsWithChange);
 			System.out.println("negative splits: " + m_splitsWithoutChange);
@@ -190,8 +183,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	
 		// merge non-distinguishable states
 		m_nwa = mergeStates(states, equivalenceClasses);
-		m_Logger.debug("Size after merging identical states: " +
-				m_nwa.size());
+		s_logger.debug("Size after merging identical states: " + m_nwa.size());
 	}
 	
 	/**
@@ -972,7 +964,9 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			
 			// internal successors
 			for (LETTER l : m_operand.lettersInternal(stateFirst)) {
-				for (STATE next : m_Partition.succInternal(stateFirst, l)) {
+				for (OutgoingInternalTransition<LETTER, STATE> trans :
+						m_Partition.succInternal(stateFirst, l)) {
+					final STATE next = trans.getSucc();
 					result.addInternalTransition(
 						representative,
 						l,
@@ -982,7 +976,9 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			
 			// call successors
 			for (LETTER l : m_operand.lettersCall(stateFirst)) {
-				for (STATE next : m_Partition.succCall(stateFirst, l)) {
+				for (OutgoingCallTransition<LETTER, STATE> trans :
+						m_Partition.succCall(stateFirst, l)) {
+					final STATE next = trans.getSucc();
 					result.addCallTransition(
 						representative,
 						l,
@@ -998,8 +994,9 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			for (STATE stateRet : ec.getCollection()) {
 				for (LETTER l : m_operand.lettersReturn(stateRet)) {
 					for (STATE hier : m_Partition.hierPred(stateRet, l)) {
-						for (STATE next : m_Partition.succReturn(stateRet,
-																hier, l)) {
+						for (OutgoingReturnTransition<LETTER, STATE> trans :
+								m_Partition.succReturn(stateRet, hier, l)) {
+							final STATE next = trans.getSucc();
 							result.addReturnTransition(
 								representative,
 								m_Partition.getRepresentative(hier),
@@ -1119,16 +1116,17 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		 * checks if there is a successor state equivalent to the old one
 		 * 
 		 * @param partition partition of the states
-		 * @param successors collection of possible successor states
+		 * @param iterable collection of possible successor states
 		 * @param equivalenceClass equivalence class of successor state 
 		 * @return true iff there is an equivalent successor state 
 		 */
 		private boolean checkExistenceOfSimilarTransition(
 				Partition partition,
-				Iterable<STATE> successors,
+				Iterable<OutgoingReturnTransition<LETTER, STATE>> iterable,
 				EquivalenceClass equivalenceClass) {
-			for (STATE candidate : successors) {
-				if (partition.getEquivalenceClass(candidate).equals(
+			for (OutgoingReturnTransition<LETTER, STATE> candidate : iterable) {
+				final STATE succ = candidate.getSucc();
+				if (partition.getEquivalenceClass(succ).equals(
 						equivalenceClass)) {
 					return true;
 			    }
@@ -1668,7 +1666,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 */
 	public class Partition {
 		// original nested word automaton
-		private INestedWordAutomatonOldApi<LETTER, STATE> m_parentOperand;
+		private INestedWordAutomaton<LETTER, STATE> m_parentOperand;
 		// equivalence classes
 		private LinkedList<EquivalenceClass> m_equivalenceClasses;
 		// work list (W) with equivalence classes still to refine
@@ -1680,7 +1678,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		 * @param operand original nested word automaton
 		 * @param states number of states (avoids rehashing)
 		 */
-		Partition(INestedWordAutomatonOldApi<LETTER, STATE> operand, int states) {
+		Partition(INestedWordAutomaton<LETTER, STATE> operand, int states) {
 			this.m_parentOperand = operand;
 			this.m_equivalenceClasses = new LinkedList<EquivalenceClass>();
 			this.m_workList = new WorkList(m_parentOperand.size() / 2);
@@ -1796,9 +1794,11 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 				for (LETTER letter : m_parentOperand.lettersReturn(state)) {
 					Iterable<STATE> hierPreds = hierPred(state, letter);
 					for (STATE hier : hierPreds) {
-						Iterable<STATE> succStates =
+						Iterable<OutgoingReturnTransition<LETTER, STATE>> succStates =
 								succReturn(state, hier, letter);
-						for (STATE succ : succStates) { 
+						for (OutgoingReturnTransition<LETTER, STATE> trans :
+								succStates) {
+							final STATE succ = trans.getSucc();
 							EquivalenceClass ec = getEquivalenceClass(succ);
 							if (! ec.isInWorkList()) {
 								addToWorkList(ec);
@@ -1858,20 +1858,20 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			}
 			return result;
 		}
-		Iterable<STATE> succInternal(STATE state, LETTER letter) {
-				return m_parentOperand.succInternal(state, letter);
+		Iterable<OutgoingInternalTransition<LETTER, STATE>> succInternal(
+				STATE state, LETTER letter) {
+			return m_parentOperand.internalSuccessors(state, letter);
 		}
-		Iterable<STATE> succCall(STATE state, LETTER letter) {
-				return m_parentOperand.succCall(state,
-				letter);
+		Iterable<OutgoingCallTransition<LETTER, STATE>> succCall(
+				STATE state, LETTER letter) {
+			return m_parentOperand.callSuccessors(state, letter);
 		}
-		Iterable<STATE> succReturn(STATE state, STATE hier, LETTER letter) {
-				return m_parentOperand.succReturn(state, hier,
-				letter);
+		Iterable<OutgoingReturnTransition<LETTER, STATE>> succReturn(
+				STATE state, STATE hier, LETTER letter) {
+			return m_parentOperand.returnSucccessors(state, hier, letter);
 		}
 		Iterable<STATE> hierPred(STATE state, LETTER letter) {
-				return m_parentOperand.hierPred(state,
-				letter);
+			return m_parentOperand.hierPred(state, letter);
 		}
 		Iterable<IncomingReturnTransition<LETTER, STATE>> linPredIncoming(
 				STATE state, STATE hier, LETTER letter) {
@@ -1929,12 +1929,12 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 
 		
 		void addPredInternal(STATE state, LETTER letter, PredecessorSet x) {
-				addNeighborsEfficient(m_parentOperand.predInternal(state,
-																letter), x);
+				addNeighborsEfficient(new InternalTransitionIterator(
+						m_parentOperand.internalPredecessors(letter, state)), x);
 		}
 		void addPredCall(STATE state, LETTER letter, PredecessorSet x) {
-				addNeighborsEfficient(m_parentOperand.predCall(state, letter),
-										x);
+				addNeighborsEfficient(new CallTransitionIterator(
+						m_parentOperand.callPredecessors(letter, state)), x);
 		}
 		void addPredReturnLin(STATE state, LETTER letter,
 				STATE hier, PredecessorSet x) {
@@ -1950,8 +1950,61 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 			for (STATE hier : m_parentOperand.hierPred(state, letter)) {
 				hierSet.add(hier);
 			}
+			addNeighborsEfficient(hierSet, x);
+		}
+		
+		/**
+		 * Iterable for internal transitions.
+		 */
+		class InternalTransitionIterator implements Iterable<STATE> {
+			final Iterable<IncomingInternalTransition<LETTER, STATE>> mIterable;
+			public InternalTransitionIterator(
+					final Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors) {
+				mIterable = internalPredecessors;
+			}
 			
-				addNeighborsEfficient(hierSet, x);
+			@Override
+			public Iterator<STATE> iterator() {
+				final Iterator<IncomingInternalTransition<LETTER, STATE>> mIt =
+						mIterable.iterator();
+				return new Iterator<STATE>() {
+					@Override
+					public boolean hasNext() {
+						return mIt.hasNext();
+					}
+					@Override
+					public STATE next() {
+						return mIt.next().getPred();
+					}
+				};
+			}
+		}
+		
+		/**
+		 * Iterable for call transitions.
+		 */
+		class CallTransitionIterator implements Iterable<STATE> {
+			final Iterable<IncomingCallTransition<LETTER, STATE>> mIterable;
+			public CallTransitionIterator(
+					final Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors) {
+				mIterable = callPredecessors;
+			}
+			
+			@Override
+			public Iterator<STATE> iterator() {
+				final Iterator<IncomingCallTransition<LETTER, STATE>> mIt =
+						mIterable.iterator();
+				return new Iterator<STATE>() {
+					@Override
+					public boolean hasNext() {
+						return mIt.hasNext();
+					}
+					@Override
+					public STATE next() {
+						return mIt.next().getPred();
+					}
+				};
+			}
 		}
 		
 		/**
@@ -2254,7 +2307,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	 */
 	class StatesContainer {
 		// original nested word automaton
-		private INestedWordAutomatonOldApi<LETTER, STATE> m_parentOperand;
+		private INestedWordAutomaton<LETTER, STATE> m_parentOperand;
 		// states
 		private HashSet<STATE> m_finals;
 		private HashSet<STATE> m_nonfinals;
@@ -2264,7 +2317,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 		/**
 		 * constructor
 		 */
-		StatesContainer(INestedWordAutomatonOldApi<LETTER, STATE> operand) {
+		StatesContainer(INestedWordAutomaton<LETTER, STATE> operand) {
 			this.m_parentOperand = operand;
 			this.m_mode = StatesContainerMode.none;
 
@@ -2738,44 +2791,7 @@ public class MinimizeSevpa<LETTER,STATE> implements IOperation<LETTER,STATE> {
 	}
 	
 	@Override
-	public String operationName() {
-		return "minimizeSevpa";
-	}
-	
-	@Override
-	public String startMessage() {
-		return "Start " + operationName() + ". Operand " +
-			m_operand.sizeInformation();
-	}
-	
-	@Override
-	public String exitMessage() {
-		return "Finished " + operationName() + ". Reduced states from " +
-			m_operand.size() + " to " + m_nwa.size();
-	}
-	
-	@Override
-	public INestedWordAutomatonOldApi<LETTER,STATE> getResult()
-			throws AutomataLibraryException {
+	public INestedWordAutomatonSimple<LETTER,STATE> getResult() {
 		return m_nwa;
-	}
-
-	@Override
-	public boolean checkResult(StateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-		m_Logger.info("Start testing correctness of " + operationName());
-		boolean correct = true;
-		correct &= (ResultChecker.nwaLanguageInclusion(
-				m_Services, m_operand, m_nwa, stateFactory) == null);
-		assert correct;
-		correct &= (ResultChecker.nwaLanguageInclusion(
-				m_Services, m_nwa, m_operand, stateFactory) == null);
-		assert correct;
-		if (!correct) {
-			ResultChecker.writeToFileIfPreferred(
-					m_Services, operationName() + "Failed", "", m_operand);
-		}
-		m_Logger.info("Finished testing correctness of " + operationName());
-		return correct;
 	}
 }
