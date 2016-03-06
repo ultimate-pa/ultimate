@@ -90,6 +90,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopInvariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopStatement;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.LoopVariant;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.MallocableExpression;
+import de.uni_freiburg.informatik.ultimate.model.acsl.ast.OldValueExpression;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.Requires;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ValidExpression;
@@ -169,9 +170,19 @@ public class ACSLHandler implements IACSLHandler {
 
     @Override
     public Result visit(Dispatcher main, ACSLNode node) {
-        String msg = "ACSLHandler: Not yet implemented: " + node.toString();
-        ILocation loc = LocationFactory.createACSLLocation(node);
-        throw new UnsupportedSyntaxException(loc, msg);
+    	ILocation loc = LocationFactory.createACSLLocation(node);
+    	if (node instanceof OldValueExpression) {
+    		OldValueExpression ove = (OldValueExpression) node;
+    		ExpressionResult inner = (ExpressionResult) main.dispatch(ove.getFormula());
+    		inner.switchToRValueIfNecessary(main, ((CHandler) main.cHandler).mMemoryHandler, ((CHandler) main.cHandler).mStructHandler, loc);
+    		inner.lrVal = new RValue(
+    				ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.OLD, inner.lrVal.getValue()), 
+    				inner.lrVal.getCType());
+    		return inner;
+    	} else {
+    		String msg = "ACSLHandler: Not yet implemented: " + node.toString();
+    		throw new UnsupportedSyntaxException(loc, msg);
+    	}
     }
 
     @Override
