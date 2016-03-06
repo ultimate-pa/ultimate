@@ -273,7 +273,7 @@ def createToolchainString(termmode, witnessmode):
     else:
         for root, dirs, files in os.walk('.'):
             for name in files:
-                if fnmatch.fnmatch(name, '*.xml') and not fnmatch.fnmatch(name, 'artifacts.xml') and not fnmatch.fnmatch(name, '*Termination.xml'):
+                if fnmatch.fnmatch(name, '*.xml') and not fnmatch.fnmatch(name, 'artifacts.xml') and not fnmatch.fnmatch(name, '*Termination.xml') and not fnmatch.fnmatch(name, '*WitnessValidation.xml'):
                     return os.path.join(root, name)
             break
     print('No suitable toolchain file found')
