@@ -26,12 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary;
 
-import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
-
-
-
 public interface INestedWordAutomatonOldApi<LETTER,STATE> 
-										extends IAutomaton<LETTER,STATE>, INestedWordAutomaton<LETTER, STATE> {
+										extends INestedWordAutomaton<LETTER, STATE> {
 
 
 	
