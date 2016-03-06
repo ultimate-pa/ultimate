@@ -57,14 +57,24 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends
 	}
 	
 	// minimization algorithms executed from left to right
-	private static final EMinimizations[] gPattern = new EMinimizations[] {
-			EMinimizations.None, EMinimizations.MinimizeSevpa,
-			EMinimizations.None, EMinimizations.MinimizeSevpa,
-			EMinimizations.None, EMinimizations.ShrinkNwa };
+	private final EMinimizations[] mPattern;
 	// current state in the pattern
-	private static int gCounter = 0;
+	private final int mCounter;
 	// current minimization method
-	private Object mCurrent;
+	private final Object mCurrent;
+	
+	/**
+	 * @param services services
+	 * @param stateFactory state factory
+	 * @param operand input automaton
+	 * @throws AutomataLibraryException thrown by minimization methods
+	 */
+	public MinimizeNwaCombinator(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand)
+					throws AutomataLibraryException {
+		this(services, stateFactory, operand, null, 0);
+	}
 	
 	/**
 	 * @param services services
@@ -76,11 +86,35 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends
 	public MinimizeNwaCombinator(final AutomataLibraryServices services,
 			final StateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand,
-			final Collection<Set<STATE>> partition)
+			final Collection<Set<STATE>> partition,
+			final int iteration)
+					throws AutomataLibraryException {
+		this(services, stateFactory, operand, partition, new EMinimizations[] {
+				EMinimizations.None, EMinimizations.MinimizeSevpa,
+				EMinimizations.None, EMinimizations.MinimizeSevpa,
+				EMinimizations.None, EMinimizations.ShrinkNwa }, iteration);
+	}
+	
+	/**
+	 * /**
+	 * @param services services
+	 * @param stateFactory state factory
+	 * @param operand input automaton
+	 * @param partition pre-defined partition of states
+	 * @param pattern minimization methods pattern
+	 * @param iteration index in the pattern
+	 * @throws AutomataLibraryException thrown by minimization methods
+	 */
+	public MinimizeNwaCombinator(final AutomataLibraryServices services,
+			final StateFactory<STATE> stateFactory,
+			final INestedWordAutomaton<LETTER, STATE> operand,
+			final Collection<Set<STATE>> partition,
+			final EMinimizations[] pattern, final int iteration)
 					throws AutomataLibraryException {
 		super(services, stateFactory, "MinimizeNwaCombinator", operand);
-		
-		switch (gPattern[gCounter]) {
+		mPattern = pattern;
+		mCounter = iteration % mPattern.length;
+		switch (mPattern[mCounter]) {
 			case MinimizeSevpa:
 				mCurrent = new MinimizeSevpa<LETTER, STATE>(services, operand,
 						partition, stateFactory);
@@ -99,14 +133,12 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends
 			default:
 				throw new IllegalArgumentException("Undefined enum state.");
 		}
-		
-		gCounter = (gCounter + 1) % gPattern.length;
 	}
 	
 	@SuppressWarnings("unchecked")
 	@Override
 	public INestedWordAutomatonSimple<LETTER, STATE> getResult() {
-		switch (gPattern[gCounter]) {
+		switch (mPattern[mCounter]) {
 			case MinimizeSevpa:
 				return ((MinimizeSevpa<LETTER, STATE>) mCurrent).getResult();
 				
@@ -123,7 +155,7 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends
 	
 	@SuppressWarnings("unchecked")
 	public Map<STATE, STATE> getOldState2newState() {
-		switch (gPattern[gCounter]) {
+		switch (mPattern[mCounter]) {
 			case MinimizeSevpa:
 				return ((MinimizeSevpa<LETTER, STATE>) mCurrent)
 						.getOldState2newState();
@@ -145,7 +177,7 @@ public class MinimizeNwaCombinator<LETTER, STATE> extends
 	 * @return true iff backing minimization method supports Hoare annotation
 	 */
 	public boolean supportHoareAnnotation() {
-		switch (gPattern[gCounter]) {
+		switch (mPattern[mCounter]) {
 			case MinimizeSevpa:
 			case ShrinkNwa:
 				return true;

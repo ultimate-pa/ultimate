@@ -851,8 +851,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				break;
 			}
 			case NWA_COMBINATOR: {
-				MinimizeNwaCombinator<CodeBlock, IPredicate> minimizeOp = new MinimizeNwaCombinator<CodeBlock, IPredicate>(
-						new AutomataLibraryServices(m_Services), predicateFactoryRefinement, newAbstraction, partition);
+				MinimizeNwaCombinator<CodeBlock, IPredicate> minimizeOp =
+						new MinimizeNwaCombinator<CodeBlock, IPredicate>(
+						new AutomataLibraryServices(m_Services), predicateFactoryRefinement,
+						newAbstraction, partition, m_Iteration);
 				assert minimizeOp.checkResult(resultCheckPredFac);
 				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services),
 						minimizeOp.getResult())).getResult();
