@@ -66,6 +66,7 @@ import org.eclipse.cdt.core.dom.ast.IASTDeclarationStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTDefaultStatement;
 import org.eclipse.cdt.core.dom.ast.IASTDoStatement;
+import org.eclipse.cdt.core.dom.ast.IASTElaboratedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTEnumerationSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTEqualsInitializer;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
@@ -430,19 +431,28 @@ public class CHandler implements ICHandler {
 		// TODO(thrax): Check if decl should be passed as null or not.
 		checkForACSL(main, null, decl, node, null);
 		
-		// delayed processing of IASTFunctionDefinitions
+		// delayed processing of IASTFunctionDefinitions and structs
 		// This is a workaround. Invariants my use global variables that
 		// are not yet declared.
-		final List<IASTFunctionDefinition> functionDefinitions = new ArrayList<>();
+		// Better solution: obtain function signature in a first pass
+		// process function body in a second pass
+		final List<IASTNode> complexNodes = new ArrayList<>();
 		for (IASTNode child : node.getChildren()) {
 			String raw = child.getRawSignature();
-			if (child instanceof IASTFunctionDefinition) {
-				functionDefinitions.add((IASTFunctionDefinition) child);
+			if (child instanceof IASTSimpleDeclaration) {
+				IASTSimpleDeclaration simpleDecl = (IASTSimpleDeclaration) child;
+				if (simpleDecl.getDeclSpecifier() instanceof IASTElaboratedTypeSpecifier) {
+					complexNodes.add(child);
+				} else {
+					processTUchild(main, decl, child);
+				}
+			} else if (child instanceof IASTFunctionDefinition) {
+				complexNodes.add((IASTFunctionDefinition) child);
 			} else {
 				processTUchild(main, decl, child);
 			}
 		}
-		for (IASTFunctionDefinition funcDef : functionDefinitions) {
+		for (IASTNode funcDef : complexNodes) {
 			processTUchild(main, decl, funcDef);
 		}
 
