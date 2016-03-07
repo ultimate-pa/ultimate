@@ -120,6 +120,7 @@ public class Minimization extends AbstractTraceAbstractionTestSuite {
 		"automizer/minimization/TreeInterpolants-MINIMIZE_SEVPA.epf",
 		"automizer/minimization/TreeInterpolants-NONE.epf",
 		"automizer/minimization/TreeInterpolants-SHRINK_NWA.epf",
+		"automizer/minimization/TreeInterpolants-NWA_COMBINATOR.epf",
 	};
 	
 	/**
