@@ -71,4 +71,9 @@ public class ConditionAnnotation extends ModernAnnotations {
 		}
 		return null;
 	}
+
+	@Override
+	public String toString() {
+		return "IsNegated=" + String.valueOf(mIsNegated);
+	}
 }
