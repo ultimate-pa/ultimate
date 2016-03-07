@@ -67,15 +67,15 @@ import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 /**
- * Convert structured Boogie-Code (code containing while-loops, if-then-else
- * constructs, break statements) into unstructured Boogie-Code. Unstructured
- * Boogie-Code is a sequence of Statements of the form: <quote>(Label+
- * (Assert|Assume|Assign|Havoc|Call)* (Goto|Return))+</quote> In other words, a
- * sequence of basic blocks, each starting with one or more labels followed by
- * non-control statements and ended by a single Goto or Return statement.
+ * Convert structured Boogie-Code (code containing while-loops, if-then-else constructs, break statements) into
+ * unstructured Boogie-Code. Unstructured Boogie-Code is a sequence of Statements of the form: <quote>(Label+
+ * (Assert|Assume|Assign|Havoc|Call)* (Goto|Return))+</quote> In other words, a sequence of basic blocks, each starting
+ * with one or more labels followed by non-control statements and ended by a single Goto or Return statement.
  * 
- * @author hoenicke
- * 
+ * @author Jochen Hoenicke
+ * @author Christian Schilling
+ * @author Matthias Heizmann
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class UnstructureCode extends BaseObserver {
 
@@ -86,23 +86,21 @@ public class UnstructureCode extends BaseObserver {
 	/** A counter to produce unique label names. */
 	private int mLabelNr;
 	/**
-	 * True, iff the current statement is reachable. This is set to false after
-	 * a Return or Goto Statement was seen and to true if a label was just seen.
+	 * True, iff the current statement is reachable. This is set to false after a Return or Goto Statement was seen and
+	 * to true if a label was just seen.
 	 */
 	private boolean mReachable;
 	/**
-	 * This stack remembers for each named block the break info that maps the
-	 * label of the break block to the destination label after the block.
+	 * This stack remembers for each named block the break info that maps the label of the break block to the
+	 * destination label after the block.
 	 */
 	Stack<BreakInfo> mBreakStack;
 	private final BoogiePreprocessorBacktranslator mTranslator;
 
 	/**
-	 * This class stores the information needed for breaking out of a block.
-	 * Whenever a break to breakLabel is found, it is replaced by a goto to
-	 * destLabel. If destLabel was not set at this time a new unique label is
-	 * produced. If after analyzing a block destLabel is still not set, there is
-	 * no break and the label does not need to be produced.
+	 * This class stores the information needed for breaking out of a block. Whenever a break to breakLabel is found, it
+	 * is replaced by a goto to destLabel. If destLabel was not set at this time a new unique label is produced. If
+	 * after analyzing a block destLabel is still not set, there is no break and the label does not need to be produced.
 	 * 
 	 * @author hoenicke
 	 * 
@@ -135,9 +133,8 @@ public class UnstructureCode extends BaseObserver {
 	}
 
 	/**
-	 * The process function. Called by the tool-chain and gets a node of the
-	 * graph as parameter. This function descends to the unit node and then
-	 * searches for all procedures and runs unstructureBody on it.
+	 * The process function. Called by the tool-chain and gets a node of the graph as parameter. This function descends
+	 * to the unit node and then searches for all procedures and runs unstructureBody on it.
 	 */
 	public boolean process(IElement root) {
 		if (root instanceof Unit) {
@@ -155,8 +152,7 @@ public class UnstructureCode extends BaseObserver {
 	}
 
 	/**
-	 * The main function that converts a body of a procedure into unstructured
-	 * code.
+	 * The main function that converts a body of a procedure into unstructured code.
 	 */
 	private void unstructureBody(Procedure proc) {
 		Body body = proc.getBody();
@@ -172,8 +168,7 @@ public class UnstructureCode extends BaseObserver {
 		unstructureBlock(body.getBlock());
 
 		/*
-		 * If the last block doesn't have a goto or a return, add a return
-		 * statement
+		 * If the last block doesn't have a goto or a return, add a return statement
 		 */
 		// TODO Christian: add annotations? how?
 		if (mReachable)
@@ -183,8 +178,7 @@ public class UnstructureCode extends BaseObserver {
 
 	private void addLabel(Label lab) {
 		/*
-		 * Check if we are inside a block and thus need to add a goto to this
-		 * block
+		 * Check if we are inside a block and thus need to add a goto to this block
 		 */
 		// TODO Christian: add annotations? how?
 		if (mReachable && mFlatStatements.size() > 0 && !(mFlatStatements.getLast() instanceof Label)) {
@@ -194,16 +188,16 @@ public class UnstructureCode extends BaseObserver {
 	}
 
 	/**
-	 * The recursive function that converts a block (i.e. a procedure block or
-	 * while block or then/else-block) into unstructured code.
+	 * The recursive function that converts a block (i.e. a procedure block or while block or then/else-block) into
+	 * unstructured code.
 	 * 
 	 * @param block
 	 *            The sequence of statements in this block.
 	 */
 	private void unstructureBlock(Statement[] block) {
 		/*
-		 * The currentBI contains all labels of the current statement, and is
-		 * used to generate appropriate break destination labels.
+		 * The currentBI contains all labels of the current statement, and is used to generate appropriate break
+		 * destination labels.
 		 */
 		BreakInfo currentBI = new BreakInfo();
 		for (int i = 0; i < block.length; i++) {
@@ -229,8 +223,7 @@ public class UnstructureCode extends BaseObserver {
 				unstructureStatement(currentBI, s);
 				mBreakStack.pop();
 				/*
-				 * Create break label unless no break occurred or we reused
-				 * existing label
+				 * Create break label unless no break occurred or we reused existing label
 				 */
 				if (!reusedLabel && currentBI.destLabel != null) {
 					addLabel(new Label(s.getLocation(), currentBI.destLabel));
@@ -256,13 +249,12 @@ public class UnstructureCode extends BaseObserver {
 	}
 
 	/**
-	 * Converts a single statement to unstructured code. This may produce many
-	 * new flat statements for example if statement is a while-loop.
+	 * Converts a single statement to unstructured code. This may produce many new flat statements for example if
+	 * statement is a while-loop.
 	 * 
 	 * @param outer
-	 *            The BreakInfo of the current statement. Used for if-then and
-	 *            while which may implicitly jump to the end of the current
-	 *            statement.
+	 *            The BreakInfo of the current statement. Used for if-then and while which may implicitly jump to the
+	 *            end of the current statement.
 	 * @param s
 	 *            The current statement that should be converted (not a label).
 	 */
@@ -295,9 +287,10 @@ public class UnstructureCode extends BaseObserver {
 
 			// The label before the condition of the while loop gets the
 			// location that represents the while loop.
-			ILocation loopLocation = new BoogieLocation(stmt.getLocation().getFileName(), stmt.getLocation()
-					.getStartLine(), stmt.getLocation().getEndLine(), stmt.getLocation().getStartColumn(), stmt
-					.getLocation().getEndColumn(), stmt.getLocation().getOrigin(), true);
+			ILocation loopLocation = new BoogieLocation(stmt.getLocation().getFileName(),
+					stmt.getLocation().getStartLine(), stmt.getLocation().getEndLine(),
+					stmt.getLocation().getStartColumn(), stmt.getLocation().getEndColumn(),
+					stmt.getLocation().getOrigin(), true);
 			addLabel(new Label(loopLocation, head));
 			for (LoopInvariantSpecification spec : stmt.getInvariants()) {
 				if (spec.isFree()) {
@@ -320,8 +313,9 @@ public class UnstructureCode extends BaseObserver {
 
 			if (!(stmt.getCondition() instanceof WildcardExpression)) {
 				addStmtAndAnnots(s, new Label(s.getLocation(), done));
-				addStmtAndAnnots(s, new AssumeStatement(stmt.getLocation(), new UnaryExpression(stmt.getCondition()
-						.getLocation(), BoogieType.boolType, UnaryExpression.Operator.LOGICNEG, stmt.getCondition())));
+				addStmtAndAnnots(s,
+						new AssumeStatement(stmt.getLocation(), new UnaryExpression(stmt.getCondition().getLocation(),
+								BoogieType.boolType, UnaryExpression.Operator.LOGICNEG, stmt.getCondition())));
 				mReachable = true;
 			}
 		} else if (s instanceof IfStatement) {
@@ -342,8 +336,9 @@ public class UnstructureCode extends BaseObserver {
 			mReachable = true;
 			addStmtAndAnnots(s, new Label(s.getLocation(), elseLabel));
 			if (!(stmt.getCondition() instanceof WildcardExpression)) {
-				addStmtAndAnnots(s, new AssumeStatement(stmt.getLocation(), new UnaryExpression(stmt.getCondition()
-						.getLocation(), BoogieType.boolType, UnaryExpression.Operator.LOGICNEG, stmt.getCondition())));
+				addStmtAndAnnots(s,
+						new AssumeStatement(stmt.getLocation(), new UnaryExpression(stmt.getCondition().getLocation(),
+								BoogieType.boolType, UnaryExpression.Operator.LOGICNEG, stmt.getCondition())));
 			}
 			unstructureBlock(stmt.getElsePart());
 		} else if (s instanceof AssignmentStatement) {
@@ -356,7 +351,8 @@ public class UnstructureCode extends BaseObserver {
 					LeftHandSide array = ((ArrayLHS) lhs[i]).getArray();
 					Expression[] indices = ((ArrayLHS) lhs[i]).getIndices();
 					Expression arrayExpr = (Expression) getLHSExpression(array);
-					rhs[i] = new ArrayStoreExpression(lhs[i].getLocation(), array.getType(), arrayExpr, indices, rhs[i]);
+					rhs[i] = new ArrayStoreExpression(lhs[i].getLocation(), array.getType(), arrayExpr, indices,
+							rhs[i]);
 					lhs[i] = array;
 					changed = true;
 				}
@@ -374,10 +370,8 @@ public class UnstructureCode extends BaseObserver {
 	/**
 	 * Adds a new statement to the list and also adds all annotations.
 	 * 
-	 * @author Christian Schilling
-	 * @author Matthias Heizmann
 	 */
-	private void addStmtAndAnnots(BoogieASTNode source, Statement newStmt) {
+	private void addStmtAndAnnots(final BoogieASTNode source, final Statement newStmt) {
 		// adds annotations from old statement to new statement (if any)
 		ModelUtils.copyAnnotations(source, newStmt);
 
