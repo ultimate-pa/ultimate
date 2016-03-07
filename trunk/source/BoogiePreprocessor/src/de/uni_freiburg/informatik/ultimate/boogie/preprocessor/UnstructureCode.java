@@ -32,12 +32,14 @@ package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.ListIterator;
+import java.util.Set;
 import java.util.Stack;
 
 import de.uni_freiburg.informatik.ultimate.access.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.model.annotation.ConditionAnnotation;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayLHS;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
@@ -96,27 +98,6 @@ public class UnstructureCode extends BaseObserver {
 	 */
 	Stack<BreakInfo> mBreakStack;
 	private final BoogiePreprocessorBacktranslator mTranslator;
-
-	/**
-	 * This class stores the information needed for breaking out of a block. Whenever a break to breakLabel is found, it
-	 * is replaced by a goto to destLabel. If destLabel was not set at this time a new unique label is produced. If
-	 * after analyzing a block destLabel is still not set, there is no break and the label does not need to be produced.
-	 * 
-	 * @author hoenicke
-	 * 
-	 */
-	private static class BreakInfo {
-		HashSet<String> breakLabels = new HashSet<String>();
-		String destLabel;
-
-		BreakInfo() {
-		}
-
-		void clear() {
-			breakLabels.clear();
-			destLabel = null;
-		}
-	}
 
 	protected UnstructureCode(BoogiePreprocessorBacktranslator translator) {
 		mTranslator = translator;
@@ -269,7 +250,7 @@ public class UnstructureCode extends BaseObserver {
 			BreakInfo dest = findLabel(label);
 			if (dest.destLabel == null)
 				dest.destLabel = generateLabel();
-			addStmtAndAnnots(s, new GotoStatement(s.getLocation(), new String[] { dest.destLabel }));
+			postCreateStatement(s, new GotoStatement(s.getLocation(), new String[] { dest.destLabel }));
 			mReachable = false;
 		} else if (s instanceof WhileStatement) {
 			WhileStatement stmt = (WhileStatement) s;
@@ -294,51 +275,53 @@ public class UnstructureCode extends BaseObserver {
 			addLabel(new Label(loopLocation, head));
 			for (LoopInvariantSpecification spec : stmt.getInvariants()) {
 				if (spec.isFree()) {
-					addStmtAndAnnots(spec, new AssumeStatement(spec.getLocation(), spec.getFormula()));
+					postCreateStatement(spec, new AssumeStatement(spec.getLocation(), spec.getFormula()));
 				} else {
-					addStmtAndAnnots(spec, new AssertStatement(spec.getLocation(), spec.getFormula()));
+					postCreateStatement(spec, new AssertStatement(spec.getLocation(), spec.getFormula()));
 				}
 			}
-			addStmtAndAnnots(s, new GotoStatement(s.getLocation(), new String[] { body, done }));
-			addStmtAndAnnots(s, new Label(s.getLocation(), body));
+			postCreateStatement(s, new GotoStatement(s.getLocation(), new String[] { body, done }));
+			postCreateStatement(s, new Label(s.getLocation(), body));
 			if (!(stmt.getCondition() instanceof WildcardExpression)) {
-				addStmtAndAnnots(s, new AssumeStatement(stmt.getLocation(), stmt.getCondition()));
+				postCreateStatementFromCond(s, new AssumeStatement(stmt.getLocation(), stmt.getCondition()), false);
 			}
 			outer.breakLabels.add("*");
 			unstructureBlock(stmt.getBody());
 			if (mReachable) {
-				addStmtAndAnnots(s, new GotoStatement(s.getLocation(), new String[] { head }));
+				postCreateStatement(s, new GotoStatement(s.getLocation(), new String[] { head }));
 			}
 			mReachable = false;
 
 			if (!(stmt.getCondition() instanceof WildcardExpression)) {
-				addStmtAndAnnots(s, new Label(s.getLocation(), done));
-				addStmtAndAnnots(s,
+				postCreateStatement(s, new Label(s.getLocation(), done));
+				postCreateStatementFromCond(s,
 						new AssumeStatement(stmt.getLocation(), new UnaryExpression(stmt.getCondition().getLocation(),
-								BoogieType.boolType, UnaryExpression.Operator.LOGICNEG, stmt.getCondition())));
+								BoogieType.boolType, UnaryExpression.Operator.LOGICNEG, stmt.getCondition())),
+						true);
 				mReachable = true;
 			}
 		} else if (s instanceof IfStatement) {
 			IfStatement stmt = (IfStatement) s;
 			String thenLabel = generateLabel();
 			String elseLabel = generateLabel();
-			addStmtAndAnnots(s, new GotoStatement(stmt.getLocation(), new String[] { thenLabel, elseLabel }));
-			addStmtAndAnnots(s, new Label(s.getLocation(), thenLabel));
+			postCreateStatement(s, new GotoStatement(stmt.getLocation(), new String[] { thenLabel, elseLabel }));
+			postCreateStatement(s, new Label(s.getLocation(), thenLabel));
 			if (!(stmt.getCondition() instanceof WildcardExpression)) {
-				addStmtAndAnnots(s, new AssumeStatement(stmt.getLocation(), stmt.getCondition()));
+				postCreateStatementFromCond(s, new AssumeStatement(stmt.getLocation(), stmt.getCondition()), false);
 			}
 			unstructureBlock(stmt.getThenPart());
 			if (mReachable) {
 				if (outer.destLabel == null)
 					outer.destLabel = generateLabel();
-				addStmtAndAnnots(s, new GotoStatement(s.getLocation(), new String[] { outer.destLabel }));
+				postCreateStatement(s, new GotoStatement(s.getLocation(), new String[] { outer.destLabel }));
 			}
 			mReachable = true;
-			addStmtAndAnnots(s, new Label(s.getLocation(), elseLabel));
+			postCreateStatement(s, new Label(s.getLocation(), elseLabel));
 			if (!(stmt.getCondition() instanceof WildcardExpression)) {
-				addStmtAndAnnots(s,
+				postCreateStatementFromCond(s,
 						new AssumeStatement(stmt.getLocation(), new UnaryExpression(stmt.getCondition().getLocation(),
-								BoogieType.boolType, UnaryExpression.Operator.LOGICNEG, stmt.getCondition())));
+								BoogieType.boolType, UnaryExpression.Operator.LOGICNEG, stmt.getCondition())),
+						true);
 			}
 			unstructureBlock(stmt.getElsePart());
 		} else if (s instanceof AssignmentStatement) {
@@ -358,7 +341,7 @@ public class UnstructureCode extends BaseObserver {
 				}
 			}
 			if (changed) {
-				addStmtAndAnnots(assign, new AssignmentStatement(assign.getLocation(), lhs, rhs));
+				postCreateStatement(assign, new AssignmentStatement(assign.getLocation(), lhs, rhs));
 			} else {
 				mFlatStatements.add(s);
 			}
@@ -368,10 +351,10 @@ public class UnstructureCode extends BaseObserver {
 	}
 
 	/**
-	 * Adds a new statement to the list and also adds all annotations.
-	 * 
+	 * Adds a new statement to the list of flat statements, add all annotations of the old statement, and remember it
+	 * for backtranslation.
 	 */
-	private void addStmtAndAnnots(final BoogieASTNode source, final Statement newStmt) {
+	private void postCreateStatement(final BoogieASTNode source, final Statement newStmt) {
 		// adds annotations from old statement to new statement (if any)
 		ModelUtils.copyAnnotations(source, newStmt);
 
@@ -382,8 +365,31 @@ public class UnstructureCode extends BaseObserver {
 		mTranslator.addMapping(source, newStmt);
 	}
 
+	private void postCreateStatementFromCond(final BoogieASTNode source, final AssumeStatement newStmt,
+			final boolean isNegated) {
+		postCreateStatement(source, newStmt);
+		new ConditionAnnotation(isNegated).annotate(newStmt);
+	}
+
 	private String generateLabel() {
 		return sLabelPrefix + (mLabelNr++);
 	}
 
+	/**
+	 * This class stores the information needed for breaking out of a block. Whenever a break to breakLabel is found, it
+	 * is replaced by a goto to destLabel. If destLabel was not set at this time a new unique label is produced. If
+	 * after analyzing a block destLabel is still not set, there is no break and the label does not need to be produced.
+	 * 
+	 * @author hoenicke
+	 * 
+	 */
+	private static final class BreakInfo {
+		Set<String> breakLabels = new HashSet<String>();
+		String destLabel;
+
+		void clear() {
+			breakLabels.clear();
+			destLabel = null;
+		}
+	}
 }
