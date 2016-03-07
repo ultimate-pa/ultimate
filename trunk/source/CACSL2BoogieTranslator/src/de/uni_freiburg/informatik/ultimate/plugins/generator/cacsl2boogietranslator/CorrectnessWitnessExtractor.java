@@ -189,19 +189,23 @@ public class CorrectnessWitnessExtractor {
 		}
 
 		for (final IASTNode node : nodes.getFirst()) {
-			addInvariants(rtr.getFirst(), invariant, node);
+			addInvariants(rtr.getFirst(), invariant, node, current);
 		}
 		for (final IASTNode node : nodes.getSecond()) {
-			addInvariants(rtr.getSecond(), invariant, node);
+			addInvariants(rtr.getSecond(), invariant, node, current);
 		}
 		return ExtractionResult.EXTRACTED;
 	}
 
-	private void addInvariants(final Map<IASTNode, String> rtr, final String invariant, final IASTNode node) {
+	private void addInvariants(final Map<IASTNode, String> rtr, final String invariant, final IASTNode node,
+			final WitnessNode current) {
 		final String oldInvariant = rtr.put(node, invariant);
 		if (oldInvariant != null) {
-			final String newInvariant = invariant + " || " + oldInvariant;
-			mLogger.warn("Multiple witness invariants matched for the same node, merging to " + newInvariant);
+			final String newInvariant = "(" + invariant + ") || (" + oldInvariant + ")";
+			mLogger.warn("Already matched invariant to C node [" + node.getFileLocation().getStartingLineNumber() + "] "
+					+ node.getRawSignature());
+			mLogger.warn("  Witness node is " + current);
+			mLogger.warn("  Replacing invariant " + oldInvariant + " with invariant " + newInvariant);
 			rtr.put(node, newInvariant);
 		}
 	}
@@ -249,7 +253,7 @@ public class CorrectnessWitnessExtractor {
 	}
 
 	private String toStringCollection(final Collection<?> lines) {
-		return String.join(",", lines.stream().map(a -> String.valueOf(a)).collect(Collectors.toList()));
+		return String.join(", ", lines.stream().map(a -> String.valueOf(a)).collect(Collectors.toList()));
 	}
 
 	private final static class LineMatchingVisitor extends ASTGenericVisitor {
@@ -275,35 +279,6 @@ public class CorrectnessWitnessExtractor {
 			return mMatchedNodes;
 		}
 
-//		@Override
-//		public int visit(IASTDeclaration declaration) {
-//			match(declaration);
-//			return super.visit(declaration);
-//		}
-//
-//		@Override
-//		public int visit(IASTStatement statement) {
-//			match(statement);
-//			return super.visit(statement);
-//		}
-//
-//		@Override
-//		public int visit(IASTInitializer initializer) {
-//			match(initializer);
-//			return super.visit(initializer);
-//		}
-//
-//		@Override
-//		public int visit(IASTDeclarator declarator) {
-//			return super.visit(declarator);
-//		}
-		
-//		@Override
-//		public int visit(IASTExpression expression) {
-//			match(expression);
-//			return super.visit(expression);
-//		}
-		
 		@Override
 		protected int genericVisit(IASTNode node) {
 			if (match(node)) {
