@@ -56,14 +56,17 @@ import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 
 public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILockHolderWithVoluntaryLockRelease  {
 	
+	private enum TransType { CALL, INTERNAL, RETURN };
 	private final SmtManager m_SmtManager;
 	private final Script m_Script;
 	private final ModifiableGlobalVariableManager m_ModifiableGlobalVariableManager;
 	
-	private IPredicate m_AssertedState;
+	private TransType m_TransType;
+	private IPredicate m_AssertedPrecond;
 	private IPredicate m_AssertedHier;
 	private CodeBlock m_AssertedCodeBlock;
 	private TransFormula m_TransFormula;
+	private IPredicate m_AssertedPostcond;
 	private ScopedHashMap<BoogieVar, Term> m_HierConstants;
 	public final static boolean m_AddDebugInformation = !false;
 	public final static boolean m_UnletTerms = true;
@@ -92,131 +95,184 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	
 	
 	@Override
-	public Validity checkInternal(IPredicate pre, CodeBlock cb, IPredicate succ) {
-		if (m_AssertedHier != null) {
-			this.unAssertHierPred();
-			m_AssertedHier = null;
+	public Validity checkInternal(IPredicate pre, CodeBlock cb, IPredicate post) {
+		final LBool quickCheck_Trans = prepareAssertionStackAndAddTransition(cb);
+		if (quickCheck_Trans == LBool.UNSAT) {
+			return Validity.VALID;
 		}
-		if (m_AssertedState != pre || m_AssertedCodeBlock != cb) {
-			if (m_AssertedState != null) {
-				this.unAssertPrecondition();
-			}
-			if (m_AssertedCodeBlock != cb) {
-				if (m_AssertedCodeBlock != null) {
-					this.unAssertCodeBlock();
-				}
-				this.assertCodeBlock(cb);
-				m_AssertedCodeBlock = cb;
-			}
-			LBool quickCheck = this.assertPrecondition(pre);
-			m_AssertedState = pre;
-			if (quickCheck == LBool.UNSAT) {
-				return Validity.VALID;
-			}
+		final LBool quickCheck_LinPred = prepareAssertionStackAndAddPrecondition(pre);
+		if (quickCheck_LinPred == LBool.UNSAT) {
+			return Validity.VALID;
 		}
-		assert m_AssertedState == pre && m_AssertedCodeBlock == cb;
-		Validity result = this.postInternalImplies(succ);
-		return result;
+		final LBool quickCheck_Postcond = prepareAssertionStackAndAddPostcond(post);
+		if (quickCheck_Postcond == LBool.UNSAT) {
+			return Validity.VALID;
+		}
+		assert quickCheck_Postcond == LBool.UNKNOWN : "unexpected quickcheck result";
+		assert m_AssertedPrecond == pre && m_AssertedHier == null && 
+				m_AssertedCodeBlock == cb && m_AssertedPostcond == post;
+		return checkValidity();
 	}
 	
 	
 	@Override
-	public Validity checkCall(IPredicate pre, CodeBlock cb, IPredicate succ) {
-		if (m_AssertedHier != null) {
-			this.unAssertHierPred();
-			m_AssertedHier = null;
+	public Validity checkCall(IPredicate pre, CodeBlock cb, IPredicate post) {
+		final LBool quickCheck_Trans = prepareAssertionStackAndAddTransition(cb);
+		if (quickCheck_Trans == LBool.UNSAT) {
+			return Validity.VALID;
 		}
-		if (m_AssertedState != pre || m_AssertedCodeBlock != cb) {
-			if (m_AssertedState != null) {
-				this.unAssertPrecondition();
-			}
-			if (m_AssertedCodeBlock != cb) {
-				if (m_AssertedCodeBlock != null) {
-					this.unAssertCodeBlock();
-				}
-				this.assertCodeBlock(cb);
-				m_AssertedCodeBlock = cb;
-			}
-			LBool quickCheck = this.assertPrecondition(pre);
-			m_AssertedState = pre;
-			if (quickCheck == LBool.UNSAT) {
-				return Validity.VALID;
-			}
+		final LBool quickCheck_LinPred = prepareAssertionStackAndAddPrecondition(pre);
+		if (quickCheck_LinPred == LBool.UNSAT) {
+			return Validity.VALID;
 		}
-		assert m_AssertedState == pre && m_AssertedCodeBlock == cb;
-		Validity result = this.postCallImplies(succ);
-		return result;
+		final LBool quickCheck_Postcond = prepareAssertionStackAndAddPostcond(post);
+		if (quickCheck_Postcond == LBool.UNSAT) {
+			return Validity.VALID;
+		}
+		assert quickCheck_Postcond == LBool.UNKNOWN : "unexpected quickcheck result";
+		assert m_AssertedPrecond == pre && m_AssertedHier == null && 
+				m_AssertedCodeBlock == cb && m_AssertedPostcond == post;
+		return checkValidity();
 	}
 
+	
 	@Override
-	public Validity checkReturn(IPredicate preLin, IPredicate preHier,
-			CodeBlock cb, IPredicate succ) {
-		if (m_AssertedHier != preHier || m_AssertedState != preLin || m_AssertedCodeBlock != cb) {
-			if (m_AssertedHier != null) {
-				this.unAssertHierPred();
-				// set the asserted hierarchical predecessor to null
-				// necessary because the quickcheck may cause a return of
-				// this procedure before a new m_AssertedHier has been set
-				m_AssertedHier = null;
-			}
-			if (m_AssertedState != preLin || m_AssertedCodeBlock != cb) {
-				if (m_AssertedState != null) {
-					this.unAssertPrecondition();
-				}
-				if (m_AssertedCodeBlock != cb) {
-					if (m_AssertedCodeBlock != null) {
-						this.unAssertCodeBlock();
+	public Validity checkReturn(IPredicate linPre, IPredicate hierPre,
+			CodeBlock cb, IPredicate postcond) {
+		final LBool quickCheck_Trans = prepareAssertionStackAndAddTransition(cb);
+		if (quickCheck_Trans == LBool.UNSAT) {
+			return Validity.VALID;
+		}
+		final LBool quickCheck_LinPred = prepareAssertionStackAndAddPrecondition(linPre);
+		if (quickCheck_LinPred == LBool.UNSAT) {
+			return Validity.VALID;
+		}
+		final LBool quickCheck_HierPred = prepareAssertionStackAndAddHierpred(hierPre);
+		if (quickCheck_HierPred == LBool.UNSAT) {
+			return Validity.VALID;
+		}
+		final LBool quickCheck_Postcond = prepareAssertionStackAndAddPostcond(postcond);
+		if (quickCheck_Postcond == LBool.UNSAT) {
+			return Validity.VALID;
+		}
+		assert quickCheck_Postcond == LBool.UNKNOWN : "unexpected quickcheck result";
+		assert m_AssertedPrecond == linPre && m_AssertedHier == hierPre && 
+				m_AssertedCodeBlock == cb && m_AssertedPostcond == postcond;
+		return checkValidity();
+	}
+	
+	
+	private LBool prepareAssertionStackAndAddTransition(CodeBlock cb) {
+		if (m_AssertedCodeBlock != cb) {
+			if (m_AssertedCodeBlock != null) {
+				if (m_AssertedPrecond != null) {
+					if (m_AssertedPostcond != null) {
+						unAssertPostcondition();
 					}
-					this.assertCodeBlock(cb);
-					m_AssertedCodeBlock = cb;
+					if (m_AssertedHier != null) {
+						unAssertHierPred();
+					}
+					unAssertPrecondition();
 				}
-				LBool quickCheck = this.assertPrecondition(preLin);
-				m_AssertedState = preLin;
-				if (quickCheck == LBool.UNSAT) {
-					return Validity.VALID;
-				}
+				unAssertCodeBlock();
 			}
-			LBool quickCheck = this.assertHierPred(preHier);
-			m_AssertedHier = preHier;
-			if (quickCheck == LBool.UNSAT) {
-				return Validity.VALID;
-			}
+			final LBool quickCheck = assertCodeBlock(cb);
+			return quickCheck;
 		}
-		assert m_AssertedState == preLin && m_AssertedHier == preHier && m_AssertedCodeBlock == cb;
-		Validity result = this.postReturnImplies(succ);
-		return result;
+		return null;
+	}
+
+
+	private LBool prepareAssertionStackAndAddPrecondition(IPredicate precond) {
+		if (m_AssertedPrecond != precond) {
+			if (m_AssertedPrecond != null) {
+				if (m_AssertedPostcond != null) {
+					unAssertPostcondition();
+				}
+				if (m_AssertedHier != null) {
+					unAssertHierPred();
+				}
+				unAssertPrecondition();
+			}
+			final LBool quickCheck = assertPrecondition(precond);
+			return quickCheck;
+		}
+		return null;
+	}
+	
+	
+	private LBool prepareAssertionStackAndAddHierpred(IPredicate hierpred) {
+		if (m_AssertedHier != hierpred) {
+			if (m_AssertedPostcond != null) {
+				unAssertPostcondition();
+			}
+			if (m_AssertedHier != null) {
+				unAssertHierPred();
+			}
+			final LBool quickCheck = assertHierPred(hierpred);
+			return quickCheck;
+		}
+		return null;
+	}
+	
+	
+	private LBool prepareAssertionStackAndAddPostcond(IPredicate postcond) {
+		if (m_AssertedPostcond != postcond) {
+			if (m_AssertedPostcond != null) {
+				unAssertPostcondition();
+			}
+			final LBool quickCheck = assertPostcond(postcond);
+			return quickCheck;
+		}
+		return null;
 	}
 	
 
+	private LBool assertPostcond(IPredicate postcond) {
+		switch (m_TransType) {
+		case CALL:
+			return assertPostcond_Call(postcond);
+		case INTERNAL:
+			return assertPostcond_Internal(postcond);
+		case RETURN:
+			return assertPostcond_Return(postcond);
+		default:
+			throw new AssertionError("unknown trans type");
+		}
+	}
 
+	
 	public void clearAssertionStack() {
-		if (m_AssertedState != null) {
+		if (m_AssertedPostcond != null) {
+			this.unAssertPostcondition();
+		}
+		if (m_AssertedPrecond != null) {
 			this.unAssertPrecondition();
-			m_AssertedState = null;
 		}
 		if (m_AssertedHier != null) {
 			this.unAssertHierPred();
-			m_AssertedHier = null;
 		}
 		if (m_AssertedCodeBlock != null) {
 			this.unAssertCodeBlock();
-			m_AssertedCodeBlock = null;
 		}
 	}
+	
 	
 	@Override
 	public void releaseLock() {
 		clearAssertionStack();
 	}
 
+	
 	private LBool assertPrecondition(IPredicate p) {
 		assert m_SmtManager.isLockOwner(this);
-		assert m_AssertedState == null : "PrePred already asserted";
-		assert m_AssertedCodeBlock != null : "Assert CodeBlock first!";
-		m_AssertedState = p;
+		assert m_AssertedCodeBlock != null : "Assert CodeBlock first";
+		assert m_TransType != null : "TransType not set";
+		assert m_AssertedPrecond == null : "precond already asserted";
+		m_AssertedPrecond = p;
 		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
 		m_Script.push(1);
-		if (m_AssertedCodeBlock instanceof Return) {
+		if (m_TransType == TransType.RETURN) {
 			m_HierConstants.beginScope();
 		}
 		Term predcondition = p.getClosedFormula();
@@ -272,10 +328,11 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 
 	private void unAssertPrecondition() {
 		assert m_SmtManager.isLockOwner(this);
-		assert m_AssertedState != null : "No PrePred asserted";
-		m_AssertedState = null;
+		assert m_AssertedPrecond != null : "No PrePred asserted";
+		assert m_TransType != null : "TransType not set";
+		m_AssertedPrecond = null;
 		m_Script.pop(1);
-		if (m_AssertedCodeBlock instanceof Return) {
+		if (m_TransType == TransType.RETURN) {
 			m_HierConstants.endScope();
 		}
 		if (m_AssertedCodeBlock == null) {
@@ -291,16 +348,23 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		m_SmtManager.lock(this);
 		m_Script.echo(new QuotedObject(s_StartEdgeCheck));
 		assert m_AssertedCodeBlock == null : "CodeBlock already asserted";
+		assert m_TransType == null : "TransType already asserted";
 		m_AssertedCodeBlock = cb;
+		if (m_AssertedCodeBlock instanceof Return) {
+			m_TransType = TransType.RETURN;
+		} else if (m_AssertedCodeBlock instanceof Call) {
+			m_TransType = TransType.CALL;
+		} else {
+			m_TransType = TransType.INTERNAL;
+		}
 		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
 		m_Script.push(1);
 		m_TransFormula = cb.getTransitionFormula();
 		Term cbFormula = m_TransFormula.getClosedFormula();
 		
-		if (m_AddDebugInformation || isAddAnnotation()) {
+		if (m_AddDebugInformation) {
 			String name = "codeBlock";
 			Annotation annot = new Annotation(":named", name);
-			signalAnnotation(annot);
 			cbFormula = m_Script.annotate(cbFormula, annot);
 		}
 		LBool quickCheck = m_SmtManager.assertTerm(cbFormula);
@@ -357,41 +421,20 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	}
 
 	
-	/**
-	 * Inheriting classes can signal an annotation of a <code>CodeBlock</code>
-	 * here.
-	 * 
-	 * NOTE: overwrite for more functionality
-	 * 
-	 * @return true iff <code>CodeBlock</code> should be annotated in the solver
-	 */
-	protected boolean isAddAnnotation() {
-		return false;
-	}
-	
-	/**
-	 * Signals inheriting classes that a <code>CodeBlock</code> is annotated.
-	 * 
-	 * NOTE: overwrite for more functionality
-	 * 
-	 * @param annot annotated <code>CodeBlock</code> term
-	 */
-	protected void signalAnnotation(Annotation annot) {
-		; // do nothing here
-	}
-
 	private void unAssertCodeBlock() {
+		assert m_SmtManager.isLockOwner(this);
 		assert m_AssertedCodeBlock != null : "No CodeBlock asserted";
+		assert m_TransType != null : "No TransType determined";
 		m_AssertedCodeBlock = null;
+		m_TransType = null;
 		m_HierConstants = null;
 		m_Script.pop(1);
-		if (m_AssertedState == null) {
+		if (m_AssertedPrecond == null) {
 			m_SmtManager.unlock(this);
 			m_Script.echo(new QuotedObject(s_EndEdgeCheck));
 		} else {
 			throw new AssertionError("CodeBlock is unasserted last");
 		}
-
 	}
 	
 	
@@ -399,13 +442,14 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		assert m_SmtManager.isLockOwner(this);
 		assert m_AssertedCodeBlock != null : "assert Return first";
 		assert m_AssertedCodeBlock instanceof Return : "assert Return first";
+		assert m_TransType != null : "determine TransType first";
+		assert m_AssertedPrecond != null : "assert precond fist";
 		assert m_AssertedHier == null : "HierPred already asserted";
 		m_AssertedHier = p;
 		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
 		m_Script.push(1);
 		m_HierConstants.beginScope();
 		Term hierFormula = p.getFormula();
-
 		
 		// rename globals that are not modifiable by callee to default constants
 		String callee = m_AssertedCodeBlock.getPreceedingProcedure();
@@ -518,23 +562,25 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		return conjunction;
 	}
 
+	
 	private void unAssertHierPred() {
 		assert m_SmtManager.isLockOwner(this);
 		assert m_AssertedHier != null : "No HierPred asserted";
+		assert m_TransType == TransType.RETURN : "Wrong TransType";
 		m_AssertedHier = null;
 		m_Script.pop(1);
 		m_HierConstants.endScope();
 	}
 	
 	
-	
-	
-	
-	private Validity postInternalImplies(IPredicate p) {
-		assert m_AssertedState != null;
+	private LBool assertPostcond_Internal(IPredicate p) {
+		assert m_SmtManager.isLockOwner(this);
+		assert m_AssertedPrecond != null;
 		assert m_AssertedCodeBlock != null;
+		assert m_TransType == TransType.INTERNAL;
 		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
 		m_Script.push(1);
+		m_AssertedPostcond = p;
 		
 		//OldVars renamed (depending on modifiability)
 		//All variables get index 0 
@@ -557,36 +603,19 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 			negation = m_Script.annotate(negation, annot);
 		}
 		LBool isSat = m_SmtManager.assertTerm(negation);
-		
-		if (isSat == LBool.UNKNOWN) {
-			// quickcheck failed
-			isSat = m_Script.checkSat();
-		}
-		switch (isSat) {
-		case SAT:
-			m_EdgeCheckerBenchmark.getSolverCounterSat().incIn();
-			break;
-		case UNKNOWN:
-			m_EdgeCheckerBenchmark.getSolverCounterUnknown().incIn();
-			break;
-		case UNSAT:
-			m_EdgeCheckerBenchmark.getSolverCounterUnsat().incIn();
-			break;
-		default:
-			throw new AssertionError("unknown case");
-		}
-		m_Script.pop(1);
 		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
-		return SmtManager.lbool2validity(isSat);
+		return isSat;
 	}
 	
-	
 
-	private Validity postCallImplies(IPredicate p) {
-		assert m_AssertedState != null;
-		assert (m_AssertedCodeBlock instanceof Call);
+	private LBool assertPostcond_Call(IPredicate p) {
+		assert m_SmtManager.isLockOwner(this);
+		assert m_AssertedPrecond != null;
+		assert m_AssertedCodeBlock != null;
+		assert m_TransType == TransType.CALL;
 		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
 		m_Script.push(1);
+		m_AssertedPostcond = p;
 		
 		Set<BoogieVar> boogieVars = p.getVars();
 		// rename oldVars to default constants of non-oldvars
@@ -606,39 +635,21 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 			negation = m_Script.annotate(negation, annot);
 		}
 		LBool isSat = m_SmtManager.assertTerm(negation);
-		
-		if (isSat == LBool.UNKNOWN) {
-			// quickcheck failed
-			isSat = m_Script.checkSat();
-		}
-		switch (isSat) {
-		case SAT:
-			m_EdgeCheckerBenchmark.getSolverCounterSat().incCa();
-			break;
-		case UNKNOWN:
-			m_EdgeCheckerBenchmark.getSolverCounterUnknown().incCa();
-			break;
-		case UNSAT:
-			m_EdgeCheckerBenchmark.getSolverCounterUnsat().incCa();
-			break;
-		default:
-			throw new AssertionError("unknown case");
-		}
-		m_Script.pop(1);
 		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
-		return SmtManager.lbool2validity(isSat);
+		return isSat;
 	}
 
 
 
-	private Validity postReturnImplies(IPredicate p) {
-		assert m_AssertedState != null;
-		assert (m_AssertedCodeBlock instanceof Return);
+	private LBool assertPostcond_Return(IPredicate p) {
+		assert m_SmtManager.isLockOwner(this);
+		assert m_AssertedPrecond != null;
+		assert m_TransType == TransType.RETURN;
 		assert m_AssertedHier != null;
 		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
 		m_Script.push(1);
 		m_HierConstants.beginScope();
-		
+		m_AssertedPostcond = p;
 		
 		//rename assignedVars to primed vars
 		Set<BoogieVar> assignedVars = m_TransFormula.getAssignedVars();
@@ -681,11 +692,34 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 			negation = m_Script.annotate(negation, annot);
 		}
 		LBool isSat = m_SmtManager.assertTerm(negation);
-		
-		if (isSat == LBool.UNKNOWN) {
-			// quickcheck failed
-			isSat = m_Script.checkSat();
+		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
+		return isSat;
+	}
+	
+	private void unAssertPostcondition() {
+		assert m_SmtManager.isLockOwner(this);
+		assert m_AssertedCodeBlock != null : "Assert CodeBlock first!";
+		assert m_AssertedPrecond != null : "Assert precond first!";
+		assert m_AssertedPostcond != null : "Assert postcond first!";
+		m_AssertedPostcond = null;
+		m_Script.pop(1);
+		if (m_TransType == TransType.RETURN) {
+			assert m_HierConstants != null : "Assert hierPred first!";
+			assert m_AssertedHier != null : "Assert hierPred first!";
+			m_HierConstants.endScope();
 		}
+	}
+
+	
+
+	
+	private Validity checkValidity() {
+		assert m_SmtManager.isLockOwner(this);
+		assert m_AssertedCodeBlock != null : "Assert CodeBlock first!";
+		assert m_AssertedPrecond != null : "Assert precond first! ";
+		assert m_AssertedPostcond != null : "Assert postcond first! ";
+		m_EdgeCheckerBenchmark.continueEdgeCheckerTime();
+		final LBool isSat = m_Script.checkSat();
 		switch (isSat) {
 		case SAT:
 			m_EdgeCheckerBenchmark.getSolverCounterSat().incRe();
@@ -699,15 +733,9 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		default:
 			throw new AssertionError("unknown case");
 		}
-		m_Script.pop(1);
-		m_HierConstants.endScope();
 		m_EdgeCheckerBenchmark.stopEdgeCheckerTime();
 		return SmtManager.lbool2validity(isSat);
 	}
-	
-
-	
-	
 	
 	
 
@@ -879,8 +907,6 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	}
 
 	
-	
-	
 	private Term renameNonModifiableGlobalsToDefaultConstants(
 			Map<BoogieVar,TermVariable> boogieVars, 
 			Set<BoogieVar> modifiableGlobals,
@@ -911,8 +937,6 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 	}
 	
 	
-	
-	
 	private Term renameGlobalsAndOldVarsToNonOldDefaultConstants(
 			Set<BoogieVar> boogieVars, 
 			Term formula) {
@@ -935,20 +959,15 @@ public class IncrementalHoareTripleChecker implements IHoareTripleChecker, ILock
 		return m_Script.let( vars , values, formula);
 	}
 	
-
-	
-	
 	
 	public boolean isAssertionStackEmpty() {
 		if (m_AssertedCodeBlock == null) {
-			assert m_AssertedState == null;
+			assert m_AssertedPrecond == null;
 			assert m_AssertedHier == null;
 			return true;
 		} else {
 			return false;
 		}
 	}
-
-
 	
 }

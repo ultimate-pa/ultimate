@@ -40,15 +40,15 @@ public class FaultLocalizationRelevanceChecker {
 			super(smtManager, modGlobVarManager);
 		}
 		
-		@Override
-		protected boolean isAddAnnotation() {
-			return true;
-		}
-		
-		@Override
-		protected void signalAnnotation(Annotation annot) {
-			mAnnot = annot;
-		}
+//		@Override
+//		protected boolean isAddAnnotation() {
+//			return true;
+//		}
+//		
+//		@Override
+//		protected void signalAnnotation(Annotation annot) {
+//			mAnnot = annot;
+//		}
 	}
 	
 	private final FaultLocalizationHoareTripleChecker mHoareTripleChecker;
