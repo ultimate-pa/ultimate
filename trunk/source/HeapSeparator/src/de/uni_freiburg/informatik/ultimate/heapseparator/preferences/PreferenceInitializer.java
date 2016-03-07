@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.heapseparator.preferences;
 
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.heapseparator.Activator;
 
 public class PreferenceInitializer extends UltimatePreferenceInitializer {
