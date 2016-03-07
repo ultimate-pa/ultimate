@@ -920,7 +920,7 @@ public class Theory {
 				.getSort(null, new Sort[0]);
 		
 		/*
-		 * Used to create Functions that only need floating points as arguments
+		 * Used to create Functions of the Floating Point theory
 		 */
 		class RegularFloatingPointFunction extends FunctionSymbolFactory {
 			int mNumArgs;
@@ -964,50 +964,7 @@ public class Theory {
 			}
 		}
 		
-		/*
-		 * Used to create function symbols that take roundingModes and floating points as arguments
-		 *
-		class RoundedFloatingPointFunction extends FunctionSymbolFactory {
-			int mNumArgs;
-			Sort mResult;
-			int mFlags;
-			public RoundedFloatingPointFunction(
-					String name, int numArgs, Sort result, int flags) {
-				super(name);
-				mNumArgs = numArgs;
-				mResult = result;
-				mFlags = flags;
-			}
-			public RoundedFloatingPointFunction(
-					String name, int numArgs, Sort result) {
-				this(name, numArgs, result, FunctionSymbol.INTERNAL);
-			}
-			@Override
-			public int getFlags(BigInteger[] indices, Sort[] paramSorts,
-					Sort resultSort) {
-				return mFlags;
-			}	
-			@Override
-			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,
-					Sort resultSort) {
-				if (indices != null
-					|| paramSorts.length != mNumArgs || resultSort != null
-					|| paramSorts[0].getName() != "RoundingMode"){
-					return null;
-				}
-					
-				for (int i = 1; i < mNumArgs; i++) {
-					if (!(paramSorts[i].getName() != "FloatingPoint" ||
-							paramSorts[i].getName() != "Float16" ||
-							paramSorts[i].getName() != "Float32" ||
-							paramSorts[i].getName() != "Float64" ||
-							paramSorts[i].getName() != "Float128")) {
-						return null;
-					}
-				}
-				return mResult == null ? paramSorts[1] : mResult;
-			}
-		}*/
+		
 		
 		defineFunction(new FunctionSymbolFactory("fp") {
 			@Override
