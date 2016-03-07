@@ -684,10 +684,10 @@ public class CACSL2BoogieBacktranslator
 		return translateExpression(expression, null);
 	}
 
-	public IASTExpression translateExpression(Expression expression, CType cType) {
+	private IASTExpression translateExpression(final Expression expression, CType cType) {
 		if (expression instanceof UnaryExpression) {
 			// handle old vars
-			UnaryExpression uexp = (UnaryExpression) expression;
+			final UnaryExpression uexp = (UnaryExpression) expression;
 			if (uexp.getOperator() == Operator.OLD) {
 				IASTExpression innerTrans = translateExpression(uexp.getExpr());
 				if (innerTrans == null) {
@@ -706,7 +706,7 @@ public class CACSL2BoogieBacktranslator
 			return ((TemporaryPointerExpression) expression).translate();
 		}
 
-		ILocation loc = expression.getLocation();
+		final ILocation loc = expression.getLocation();
 		if (loc instanceof ACSLLocation) {
 			reportUnfinishedBacktranslation(sUnfinishedBacktranslation + ": Expression "
 					+ BoogiePrettyPrinter.print(expression) + " has an ACSLNode, but we do not support it yet");
@@ -715,15 +715,14 @@ public class CACSL2BoogieBacktranslator
 		}
 
 		if (loc instanceof CLocation) {
-			CLocation cloc = (CLocation) loc;
+			final CLocation cloc = (CLocation) loc;
 
 			if (cloc.ignoreDuringBacktranslation()) {
 				// this should lead to nothing
 				return null;
 			}
 
-			IASTNode cnode = cloc.getNode();
-
+			final IASTNode cnode = cloc.getNode();
 			if (cnode == null) {
 				reportUnfinishedBacktranslation(sUnfinishedBacktranslation + ": Expression "
 						+ BoogiePrettyPrinter.print(expression) + " has no C AST node");
@@ -799,10 +798,15 @@ public class CACSL2BoogieBacktranslator
 			return clit;
 		} else {
 			// things that land here are typically synthesized contracts or
-			// things like that
-			Expression translated = new SynthesizedExpressionTransformer().processExpression(expression);
+			// things like that. Here we replace Boogie variable names with C variable names
+			final Expression translated = new SynthesizedExpressionTransformer().processExpression(expression);
 			if (translated != null) {
-				return new FakeExpression(BoogiePrettyPrinter.print(translated));
+				String translatedString = BoogiePrettyPrinter.print(translated);
+				// its ugly, but the easiest way to backtranslate a synthesized boogie expression
+				// we just replace operators that "look" different in C
+				translatedString = translatedString.replaceAll("old\\(", "\\\\old\\(");
+				
+				return new FakeExpression(translatedString);
 			}
 			reportUnfinishedBacktranslation(sUnfinishedBacktranslation + ": Expression "
 					+ BoogiePrettyPrinter.print(expression) + " has no CACSLLocation");
