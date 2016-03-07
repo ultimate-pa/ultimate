@@ -113,12 +113,25 @@ public class FaultLocalizationRelevanceChecker {
 	}
 	
 	public ERelevanceStatus relevanceInternal(final IPredicate pre,
-			final CodeBlock cb, final IPredicate succ) {
-		// TODO negate succ? no!
-		final Validity val = mHoareTripleChecker.checkInternal(pre, cb, succ);
-		
+			final CodeBlock cb, final IPredicate post) {
+		final Validity val = mHoareTripleChecker.checkInternal(pre, cb, post);
 		return getResult(val, mHoareTripleChecker);
 	}
+	
+	public ERelevanceStatus relevanceCall(final IPredicate pre,
+			final CodeBlock cb, final IPredicate post) {
+		final Validity val = mHoareTripleChecker.checkCall(pre, cb, post);
+		return getResult(val, mHoareTripleChecker);
+	}
+	
+	public ERelevanceStatus relevanceReturn(final IPredicate returnPre,
+			final IPredicate callPre,
+			final CodeBlock cb, final IPredicate post) {
+		final Validity val = mHoareTripleChecker.checkReturn(returnPre, 
+				callPre, cb, post);
+		return getResult(val, mHoareTripleChecker);
+	}
+
 	
 	/**
 	 * @param val validity status from Hoare triple check
