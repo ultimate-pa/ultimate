@@ -56,6 +56,10 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Code
 	private final Logger mLogger;
 	private final LiteralCollection mLiteralCollection;
 
+	private IAbstractStateBinaryOperator<IntervalDomainState> mWideningOperator;
+	private IAbstractStateBinaryOperator<IntervalDomainState> mMergeOperator;
+	private IAbstractPostOperator<IntervalDomainState, CodeBlock, IBoogieVar> mPostOperator;
+
 	public IntervalDomain(Logger logger, BoogieSymbolTable symbolTable, LiteralCollection literalCollector) {
 		mLogger = logger;
 		mSymbolTable = symbolTable;
@@ -69,32 +73,42 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState, Code
 
 	@Override
 	public IAbstractStateBinaryOperator<IntervalDomainState> getWideningOperator() {
-		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
-		final String wideningOperator = ups.getString(IntervalDomainPreferences.LABEL_INTERVAL_WIDENING_OPERATOR);
+		if (mWideningOperator == null) {
+			final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
+			final String wideningOperator = ups.getString(IntervalDomainPreferences.LABEL_INTERVAL_WIDENING_OPERATOR);
 
-		if (wideningOperator.equals(IntervalDomainPreferences.VALUE_WIDENING_OPERATOR_SIMPLE)) {
-			return new IntervalSimpleWideningOperator();
-		} else if (wideningOperator.equals(IntervalDomainPreferences.VALUE_WIDENING_OPERATOR_LITERALS)) {
-			final IAbstractStateBinaryOperator<IntervalDomainState> rtr = new IntervalLiteralWideningOperator(
-					mLiteralCollection);
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("Using the following literals during widening: " + mLiteralCollection);
+			if (wideningOperator.equals(IntervalDomainPreferences.VALUE_WIDENING_OPERATOR_SIMPLE)) {
+				mWideningOperator = new IntervalSimpleWideningOperator();
+			} else if (wideningOperator.equals(IntervalDomainPreferences.VALUE_WIDENING_OPERATOR_LITERALS)) {
+				final IAbstractStateBinaryOperator<IntervalDomainState> rtr = new IntervalLiteralWideningOperator(
+				        mLiteralCollection);
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Using the following literals during widening: " + mLiteralCollection);
+				}
+				mWideningOperator = rtr;
+			} else {
+				throw new UnsupportedOperationException(
+				        "The widening operator " + wideningOperator + " is not implemented.");
 			}
-			return rtr;
-		} else {
-			throw new UnsupportedOperationException(
-					"The widening operator " + wideningOperator + " is not implemented.");
 		}
+
+		return mWideningOperator;
 	}
 
 	@Override
 	public IAbstractStateBinaryOperator<IntervalDomainState> getMergeOperator() {
-		return new IntervalMergeOperator();
+		if (mMergeOperator == null) {
+			mMergeOperator = new IntervalMergeOperator();
+		}
+		return mMergeOperator;
 	}
 
 	@Override
 	public IAbstractPostOperator<IntervalDomainState, CodeBlock, IBoogieVar> getPostOperator() {
-		return new IntervalPostOperator(mLogger, mSymbolTable);
+		if (mPostOperator == null) {
+			mPostOperator = new IntervalPostOperator(mLogger, mSymbolTable);
+		}
+		return mPostOperator;
 	}
 
 	@Override

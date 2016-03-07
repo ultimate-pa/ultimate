@@ -28,9 +28,16 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.compound;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  * Widening operator of the {@link CompoundDomain}.
@@ -38,15 +45,38 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class CompoundDomainWideningOperator implements IAbstractStateBinaryOperator<CompoundDomainState> {
 
+	private final Logger mLogger;
+
 	public CompoundDomainWideningOperator(Logger logger) {
-		// TODO Auto-generated constructor stub
+		mLogger = logger;
 	}
 
 	@Override
 	public CompoundDomainState apply(CompoundDomainState first, CompoundDomainState second) {
-		return null;
+		final List<IAbstractState<?, CodeBlock, IBoogieVar>> firstStates = first.getAbstractStatesList();
+		final List<IAbstractState<?, CodeBlock, IBoogieVar>> secondStates = second.getAbstractStatesList();
+
+		assert firstStates.size() == secondStates.size();
+		assert first.getDomainList().size() == second.getDomainList().size();
+
+		final List<IAbstractDomain> domains = first.getDomainList();
+
+		final List<IAbstractState<?, CodeBlock, IBoogieVar>> widenedList = new ArrayList<>();
+
+		for (int i = 0; i < firstStates.size(); i++) {
+			widenedList.add(
+			        widenInternally(firstStates.get(i), secondStates.get(i), domains.get(i).getWideningOperator()));
+		}
+
+		return new CompoundDomainState(mLogger, domains, widenedList);
+	}
+
+	private static <T extends IAbstractState> T widenInternally(T firstState, T secondState,
+	        IAbstractStateBinaryOperator<T> wideningOperator) {
+		return wideningOperator.apply(firstState, secondState);
 	}
 
 }

@@ -43,12 +43,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
+@SuppressWarnings("rawtypes")
 public class CompoundDomain implements IAbstractDomain<CompoundDomainState, CodeBlock, IBoogieVar> {
 
 	private final Logger mLogger;
-	private final List<IAbstractDomain<?, CodeBlock, IBoogieVar>> mDomainList;
+	private final List<IAbstractDomain> mDomainList;
 
-	public CompoundDomain(Logger logger, List<IAbstractDomain<?, CodeBlock, IBoogieVar>> domainList) {
+	private IAbstractStateBinaryOperator<CompoundDomainState> mMergeOperator;
+	private IAbstractStateBinaryOperator<CompoundDomainState> mWideningOperator;
+	private IAbstractPostOperator<CompoundDomainState, CodeBlock, IBoogieVar> mPostOperator;
+	
+	public CompoundDomain(Logger logger, List<IAbstractDomain> domainList) {
 		mLogger = logger;
 		mDomainList = domainList;
 	}
@@ -60,19 +65,29 @@ public class CompoundDomain implements IAbstractDomain<CompoundDomainState, Code
 
 	@Override
 	public IAbstractStateBinaryOperator<CompoundDomainState> getWideningOperator() {
-		return new CompoundDomainWideningOperator(mLogger);
+		if (mWideningOperator == null) {
+			mWideningOperator = new CompoundDomainWideningOperator(mLogger);
+		}
+		return mWideningOperator;
 	}
 
 	@Override
 	public IAbstractStateBinaryOperator<CompoundDomainState> getMergeOperator() {
-		return new CompoundDomainMergeOperator(mLogger);
+		if (mMergeOperator == null) {
+			mMergeOperator = new CompoundDomainMergeOperator(mLogger);
+		}
+		return mMergeOperator;
 	}
 
 	@Override
 	public IAbstractPostOperator<CompoundDomainState, CodeBlock, IBoogieVar> getPostOperator() {
-		return new CompoundDomainPostOperator(mLogger, mDomainList);
+		if (mPostOperator == null) {
+			mPostOperator = new CompoundDomainPostOperator(mLogger);
+		}
+		return mPostOperator;
 	}
 
+	@Override
 	public int getDomainPrecision() {
 		// This domain is the most-expressive domain there is.
 		return Integer.MAX_VALUE;

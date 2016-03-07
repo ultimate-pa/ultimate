@@ -331,7 +331,8 @@ public final class AbstractInterpreter {
 		} else if (CongruenceDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new CongruenceDomain(logger, symbolTable);
 		} else if (CompoundDomain.class.getSimpleName().equals(selectedDomain)) {
-			List<IAbstractDomain<?, CodeBlock, IBoogieVar>> domainList = new ArrayList<>();
+			@SuppressWarnings("rawtypes")
+			List<IAbstractDomain> domainList = new ArrayList<>();
 			if (ups.getBoolean(CompoundDomainPreferences.LABEL_USE_EMPTY_DOMAIN)) {
 				domainList.add(new EmptyDomain<>());
 			}

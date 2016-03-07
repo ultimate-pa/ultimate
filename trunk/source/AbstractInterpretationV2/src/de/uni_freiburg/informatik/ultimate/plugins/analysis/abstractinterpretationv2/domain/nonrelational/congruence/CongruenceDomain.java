@@ -21,6 +21,10 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState, 
 	private final BoogieSymbolTable mSymbolTable;
 	private final Logger mLogger;
 	
+	private IAbstractStateBinaryOperator<CongruenceDomainState> mWideningOperator;
+	private IAbstractStateBinaryOperator<CongruenceDomainState> mMergeOperator;
+	private IAbstractPostOperator<CongruenceDomainState, CodeBlock, IBoogieVar> mPostOperator;
+	
 	public CongruenceDomain(Logger logger, BoogieSymbolTable symbolTable) {
 		mLogger = logger;
 		mSymbolTable = symbolTable;
@@ -34,18 +38,27 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState, 
 
 	@Override
 	public IAbstractStateBinaryOperator<CongruenceDomainState> getWideningOperator() {
-		// Widening is the same as merge, so we don't need an extra operator
-		return new CongruenceMergeOperator();
+		if (mWideningOperator == null) {
+			// Widening is the same as merge, so we don't need an extra operator
+			mWideningOperator = new CongruenceMergeOperator();
+		}
+		return mWideningOperator;
 	}
 
 	@Override
 	public IAbstractStateBinaryOperator<CongruenceDomainState> getMergeOperator() {
-		return new CongruenceMergeOperator();
+		if (mMergeOperator == null) {
+			mMergeOperator = new CongruenceMergeOperator();
+		}
+		return mMergeOperator;
 	}
 
 	@Override
 	public IAbstractPostOperator<CongruenceDomainState, CodeBlock, IBoogieVar> getPostOperator() {
-		return new CongruencePostOperator(mLogger, mSymbolTable);
+		if (mPostOperator == null) {
+			mPostOperator = new CongruencePostOperator(mLogger, mSymbolTable);
+		}
+		return mPostOperator;
 	}
 
 	@Override

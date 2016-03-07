@@ -54,23 +54,29 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
+@SuppressWarnings({ "unchecked", "rawtypes" })
 public class CompoundDomainState implements IAbstractState<CompoundDomainState, CodeBlock, IBoogieVar> {
 
 	private final Logger mLogger;
 	private final List<IAbstractState<?, CodeBlock, IBoogieVar>> mAbstractStates;
-	private final List<IAbstractDomain<?, CodeBlock, IBoogieVar>> mDomainList;
+	private final List<IAbstractDomain> mDomainList;
 
-	public CompoundDomainState(final Logger logger, final List<IAbstractDomain<?, CodeBlock, IBoogieVar>> domainList) {
+	public CompoundDomainState(final Logger logger, final List<IAbstractDomain> domainList) {
 		mLogger = logger;
 		mDomainList = domainList;
 		mAbstractStates = new ArrayList<>();
-		for (final IAbstractDomain<?, CodeBlock, IBoogieVar> domain : mDomainList) {
+		for (final IAbstractDomain domain : mDomainList) {
 			mAbstractStates.add(domain.createFreshState());
 		}
 	}
 
-	public CompoundDomainState(final Logger logger, final List<IAbstractDomain<?, CodeBlock, IBoogieVar>> domainList,
+	public CompoundDomainState(final Logger logger, final List<IAbstractDomain> domainList,
 	        final List<IAbstractState<?, CodeBlock, IBoogieVar>> abstractStateList) {
+		if (domainList.size() != abstractStateList.size()) {
+			throw new UnsupportedOperationException(
+			        "The domain list size and the abstract state list size must be identical.");
+		}
+
 		mLogger = logger;
 		mDomainList = domainList;
 		mAbstractStates = abstractStateList;
@@ -123,7 +129,6 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 		return new CompoundDomainState(mLogger, mDomainList, returnList);
 	}
 
-	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private static <T extends IAbstractState> T patchInternally(T current, T dominator) {
 		return (T) current.patch(dominator);
 	}
@@ -151,7 +156,6 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 		return true;
 	}
 
-	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private static <T extends IAbstractState> boolean isEqualToInternally(T current, T other) {
 		return current.isEqualTo(other);
 	}
@@ -178,5 +182,13 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	        Function<IAbstractState<?, CodeBlock, IBoogieVar>, IAbstractState<?, CodeBlock, IBoogieVar>> state) {
 		return new CompoundDomainState(mLogger, mDomainList,
 		        mAbstractStates.stream().map(state).collect(Collectors.toList()));
+	}
+
+	protected List<IAbstractDomain> getDomainList() {
+		return mDomainList;
+	}
+
+	protected List<IAbstractState<?, CodeBlock, IBoogieVar>> getAbstractStatesList() {
+		return mAbstractStates;
 	}
 }
