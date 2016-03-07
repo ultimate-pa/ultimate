@@ -29,24 +29,26 @@
  */
 package de.uni_freiburg.informatik.ultimate.gui.misc;
 
-
 /**
  * @author dietsch
  *
  */
 public class Entry extends TreeViewEntry {
-	
-	private String eValue;
-	
-	
-	public Entry(String entryName, String value, GroupEntry parent){
-		super(entryName,parent);
-		this.eValue=value;
+
+	private final String mValue;
+
+	public Entry(String entryName, String value, GroupEntry parent) {
+		super(entryName, parent);
+		mValue = value;
 
 	}
-	
-	public String getValue(){
-		return this.eValue;
+
+	public String getValue() {
+		return mValue;
 	}
 
+	@Override
+	public boolean isEmpty() {
+		return false;
+	}
 }

@@ -27,9 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.gui.provider;
 
-import java.io.Console;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -50,8 +48,8 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.IPayload;
-import de.uni_freiburg.informatik.ultimate.model.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.structure.ITree;
 import de.uni_freiburg.informatik.ultimate.model.structure.IWalkable;
@@ -156,25 +154,32 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 				rtr.add(location);
 				location.addEntry(new Entry("Source Info", payload.getLocation().toString(), location));
 				location.addEntry(new Entry("Filename", payload.getLocation().getFileName(), location));
-				location.addEntry(new Entry("Start Line Number",
-						Integer.toString(payload.getLocation().getStartLine()), location));
-				location.addEntry(new Entry("Start Column Number", Integer.toString(payload.getLocation()
-						.getStartColumn()), location));
-				location.addEntry(new Entry("End Line Number", Integer.toString(payload.getLocation().getEndLine()),
+				location.addEntry(new Entry("Start Line Number", Integer.toString(payload.getLocation().getStartLine()),
 						location));
-				location.addEntry(new Entry("End Column Number",
-						Integer.toString(payload.getLocation().getEndColumn()), location));
+				location.addEntry(new Entry("Start Column Number",
+						Integer.toString(payload.getLocation().getStartColumn()), location));
+				location.addEntry(
+						new Entry("End Line Number", Integer.toString(payload.getLocation().getEndLine()), location));
+				location.addEntry(new Entry("End Column Number", Integer.toString(payload.getLocation().getEndColumn()),
+						location));
 			}
-			final GroupEntry annotation = new GroupEntry("IPayload.Annotation", null);
-			rtr.add(annotation);
+			final GroupEntry annotationGroup = new GroupEntry("IPayload.Annotation", null);
+			rtr.add(annotationGroup);
 			for (final String outer : payload.getAnnotations().keySet()) {
-				final GroupEntry group = new GroupEntry(outer, annotation);
-				final IAnnotations subhash = payload.getAnnotations().get(outer);
+				final GroupEntry group = new GroupEntry(outer, annotationGroup);
+				final IAnnotations annotations = payload.getAnnotations().get(outer);
 
-				for (final String inner : subhash.getAnnotationsAsMap().keySet()) {
-					group.addEntry(convertEntry(inner, subhash.getAnnotationsAsMap().get(inner), group));
+				final Map<String, Object> innerMap = annotations.getAnnotationsAsMap();
+
+				for (final java.util.Map.Entry<String, Object> inner : innerMap.entrySet()) {
+					final TreeViewEntry innerEntry = convertEntry(inner.getKey(), inner.getValue(), group);
+					if (innerEntry.isEmpty()) {
+						continue;
+					}
+					group.addEntry(innerEntry);
 				}
-				annotation.addEntry(group);
+				addVisualizableFields(group, annotations);
+				annotationGroup.addEntry(group);
 			}
 		}
 		return rtr.toArray();
@@ -193,6 +198,11 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 			inspectionTarget = elem;
 		}
 
+		addVisualizableFields(elementGroup, inspectionTarget);
+		return elementGroup;
+	}
+
+	private void addVisualizableFields(final GroupEntry elementGroup, final Object inspectionTarget) {
 		final Field[] fields = getFields(inspectionTarget);
 		for (final Field field : fields) {
 			if (!field.isAnnotationPresent(Visualizable.class)) {
@@ -207,7 +217,6 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 				// we ignore all exceptions during retrieval
 			}
 		}
-		return elementGroup;
 	}
 
 	private Field[] getFields(final Object inspectionTarget) {
