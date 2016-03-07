@@ -952,11 +952,7 @@ public class Theory {
 					mFirstFloat = 0;
 				}
 				for (int i = mFirstFloat; i < mNumArgs; i++) {
-					if (!(paramSorts[i].getName() == "FloatingPoint" ||
-							paramSorts[i].getName() == "Float16" ||
-							paramSorts[i].getName() == "Float32" ||
-							paramSorts[i].getName() == "Float64" ||
-							paramSorts[i].getName() == "Float128")) {
+					if (paramSorts[i].getName() != "FloatingPoint") {
 						return null;
 					}
 				}
@@ -1002,11 +998,7 @@ public class Theory {
 
 		    // from FP to FP
 		    if (paramSorts.length == 2 && paramSorts[0].getName() == "RoundingMode"
-		    		&& (paramSorts[1].getName() == "FloatingPoint" ||
-		    				paramSorts[1].getName() == "Float16" ||
-		    				paramSorts[1].getName() == "Float32" ||
-		    				paramSorts[1].getName() == "Float64" ||
-		    				paramSorts[1].getName() == "Float128" )) {
+		    		&& (paramSorts[1].getName() == "FloatingPoint")) {
 		    	return mFloatingPointSort.getSort(indices, new Sort[0]);
 		    }
 
