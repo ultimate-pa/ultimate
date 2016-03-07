@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.IsEmpty;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.parallel.Tuple;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
@@ -65,7 +64,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.NestedSsaBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.AnnotateAndAssertCodeBlocks;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.FaultLocalizationRelevanceChecker.ERelevanceStatus;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.util.Utils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 /**
@@ -158,11 +160,67 @@ public class FlowSensitiveFaultLocalizer {
 	
 	{
 		NestedWord<CodeBlock> counterexampleWord = (NestedWord<CodeBlock>) counterexampleRun.getWord();
-		
-		m_Logger.warn("Computing Flow Sensitive Formula . . . .");
 		DefaultTransFormulas nestedTransFormulas = new DefaultTransFormulas(counterexampleWord, errorPrecondition, falsePredicate, new TreeMap<>(), modGlobVarManager, false);
 		NestedSsaBuilder ssaBuilder = new NestedSsaBuilder(counterexampleWord, smtManager, nestedTransFormulas, modGlobVarManager, m_Logger, false);
 		NestedFormulas<Term, Term> ssa = ssaBuilder.getSsa();
+		PredicateTransformer pt = new PredicateTransformer(smtManager, modGlobVarManager, m_Services);
+		FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(smtManager, modGlobVarManager);
+		
+		
+		// INCREMENTAL ANALYSIS
+		m_Logger.warn("Doing Incremental Analysis . . .");
+
+		ArrayList<ERelevanceStatus> relevant = new ArrayList<>(); //Will store the terms relevant for the error.
+	    
+		int backward_counter = counterexampleWord.length();
+		for(int i = backward_counter-1 ; i >= 0; i--)
+		{
+			// compute the weakest_precondition_list for each last statement .
+			ArrayList<IPredicate> weakest_precondition_list = new ArrayList<>();
+			ArrayList<IPredicate> pre_precondition_list = new ArrayList<>();
+			m_Logger.warn("Doing Analysis for "+ counterexampleWord.getSymbolAt(i));
+			IPredicate weakest_precondition = smtManager.newFalsePredicate(); // FALSE for WP(False, error_trace)
+			for(int j = i; j>=0; j--)
+			{
+				CodeBlock statement = counterexampleWord.getSymbolAt(j);
+				TransFormula transition_formula = statement.getTransitionFormula();
+				weakest_precondition = pt.weakestPrecondition(weakest_precondition, transition_formula);
+				weakest_precondition_list.add(weakest_precondition);
+				pre_precondition_list.add(weakest_precondition); // NEGATE WEAKEST PRE CONDITION AND THEN ADD !!!!!
+				
+			}
+			
+			m_Logger.warn("Computed WP list for "+ counterexampleWord.getSymbol(i) );
+			
+			int wp_counter = 0;
+			int pre_counter = wp_counter + 1;
+			
+			for(int j= i - 1; j>=0;j--)
+			{
+				CodeBlock statement = counterexampleWord.getSymbolAt(j);
+				IPredicate wp = weakest_precondition_list.get(wp_counter);
+				IPredicate pre = pre_precondition_list.get(pre_counter);
+			//	ERelevanceStatus relevance = rc.relevanceInternal(pre, statement, wp);
+			//	m_Logger.warn(relevance.toString()) ; 
+			//	if(relevance.toString() == "INUNSATCORE")
+			//	{
+			//		if(relevant.contains(relevance))
+			//		{
+						
+			//		}
+			//		else 
+			//	}
+				wp_counter = wp_counter + 1;
+				pre_counter = pre_counter + 1;
+			}
+			
+			
+		}
+		///////////////////////////////////////////////////////////////////////- - - - DONE WITH INCREMENTAL ANALYSIS --- //////////////////////////////// 
+		
+		
+		m_Logger.warn("Computing Flow Sensitive Formula . . . .");
+
 		m_Logger.warn(" ");
 		m_Logger.warn("Precondition : " + ssa.getPrecondition());
 		m_Logger.warn("Precondition : " + errorPrecondition);
