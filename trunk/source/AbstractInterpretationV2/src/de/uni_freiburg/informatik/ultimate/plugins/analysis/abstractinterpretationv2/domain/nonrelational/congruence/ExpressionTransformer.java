@@ -4,6 +4,7 @@ import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -150,6 +151,23 @@ public class ExpressionTransformer {
 			Expression negLeft = new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, e.getLeft());
 			Expression negRight = new UnaryExpression(loc, UnaryExpression.Operator.LOGICNEG, e.getRight());
 			newRight = right.transform(new BinaryExpression(loc, Operator.LOGICAND, negLeft, negRight));
+			break;
+		case COMPEQ:
+		case COMPNEQ:
+			if (e.getLeft().getType() instanceof PrimitiveType) {
+				PrimitiveType p = (PrimitiveType) e.getLeft().getType();
+				if (p.getTypeCode() == PrimitiveType.BOOL) {
+					newLeft = left.transform(e.getLeft());
+					newRight = right.transform(e.getRight());
+				} else if (p.getTypeCode() == PrimitiveType.INT) {
+					return atomicTransform(e);
+				} else {
+					return e;
+				}
+				
+			} else {
+				return e;
+			}
 			break;
 		default:
 			return atomicTransform(e);

@@ -1,15 +1,10 @@
 procedure main()
 {
-   var x, y, z : int;
-   var b : bool;
+   var x, y: int;
+   var b1, b2 : bool;
    
-   assume x == y <==> z == 5;
-   assume x == y ==>  z == 5;
-   assume !(x == y <==> z == 5);
-   assume !(x == y ==>  z == 5);
-
-   //assume y % 4 == 0;
-   //assume x % 3 == y;
+   //assume (if y == 1 && y == 0 then x == -1 else x == 1);
    
-   //assume !((x + 2) * (3 + 7) + (14 % -5) * (8 / 7) * y == 0 && y == 7);
+   assume b1 == b2;
+   assume b1 == (x != y);
 }
