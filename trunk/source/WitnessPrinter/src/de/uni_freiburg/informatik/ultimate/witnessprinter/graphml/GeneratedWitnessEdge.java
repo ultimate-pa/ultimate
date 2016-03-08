@@ -80,7 +80,7 @@ public class GeneratedWitnessEdge<TE, E> {
 		}
 		if (mATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE)) {
 			return "condition-false";
-		} else if (mATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE)) {
+		} else if (mATE.hasStepInfo(StepInfo.CONDITION_EVAL_TRUE)) {
 			return "condition-true";
 		} else {
 			return null;
