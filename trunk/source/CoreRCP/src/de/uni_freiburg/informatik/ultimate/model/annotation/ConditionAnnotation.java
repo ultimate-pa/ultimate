@@ -60,6 +60,9 @@ public class ConditionAnnotation extends ModernAnnotations {
 	}
 
 	public static ConditionAnnotation getAnnotation(IElement node) {
+		if(node == null){
+			return null;
+		}
 		if (node.hasPayload()) {
 			final IPayload payload = node.getPayload();
 			if (payload.hasAnnotation()) {

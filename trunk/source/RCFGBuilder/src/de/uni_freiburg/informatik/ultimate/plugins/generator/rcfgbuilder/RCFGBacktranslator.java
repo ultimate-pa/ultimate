@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslatedCF
 import de.uni_freiburg.informatik.ultimate.core.util.IToString;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.DefaultTranslator;
+import de.uni_freiburg.informatik.ultimate.model.annotation.ConditionAnnotation;
 import de.uni_freiburg.informatik.ultimate.model.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieProgramExecution;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
@@ -210,7 +211,7 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 			throw new UnsupportedOperationException("Cannot translate cfg that is not an RCFG");
 		}
 		final IBacktranslatedCFG<String, BoogieASTNode> translatedCfg = translateCFG(cfg,
-				(a, b, c) -> translateEdge(a, (RCFGEdge) b, c));
+				(a, b, c) -> translateCFGEdge(a, (RCFGEdge) b, c));
 //		 mLogger.info(getClass().getSimpleName());
 //		 printHondas(cfg, mLogger::info);
 //		 printCFG(cfg, mLogger::info);
@@ -225,7 +226,7 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 	 * @param cache
 	 */
 	@SuppressWarnings("unchecked")
-	private <TVL> Multigraph<String, BoogieASTNode> translateEdge(
+	private <TVL> Multigraph<String, BoogieASTNode> translateCFGEdge(
 			final Map<IExplicitEdgesMultigraph<?, ?, TVL, RCFGEdge>, Multigraph<String, BoogieASTNode>> cache,
 			final RCFGEdge oldEdge, final Multigraph<String, BoogieASTNode> newSourceNode) {
 		final RCFGNode oldTarget = oldEdge.getTarget();
@@ -258,7 +259,7 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 			final SequentialComposition seqComp = (SequentialComposition) oldEdge;
 			Multigraph<String, BoogieASTNode> current = newSourceNode;
 			for (final CodeBlock sccb : seqComp.getCodeBlocks()) {
-				current = translateEdge(cache, sccb, current);
+				current = translateCFGEdge(cache, sccb, current);
 			}
 			createNewEdge(current, newTarget, null);
 		} else if (oldEdge instanceof ParallelComposition) {
@@ -267,7 +268,7 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 			final Iterator<Entry<TermVariable, CodeBlock>> iter = bi2cb.entrySet().iterator();
 			while (iter.hasNext()) {
 				final CodeBlock someBranch = iter.next().getValue();
-				final Multigraph<String, BoogieASTNode> intermediate = translateEdge(cache, someBranch, newSourceNode);
+				final Multigraph<String, BoogieASTNode> intermediate = translateCFGEdge(cache, someBranch, newSourceNode);
 				createNewEdge(intermediate, newTarget, null);
 			}
 		} else if (oldEdge instanceof GotoEdge) {
@@ -312,6 +313,7 @@ public class RCFGBacktranslator extends DefaultTranslator<RCFGEdge, BoogieASTNod
 		// mLogger.info(" label loc " + label.getPayload().getLocation().getStartLine() + "-"
 		// + label.getPayload().getLocation().getEndLine());
 		// }
+		ConditionAnnotation coan = ConditionAnnotation.getAnnotation(label);
 		new MultigraphEdge<>(source, label, target);
 	}
 

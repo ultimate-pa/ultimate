@@ -42,9 +42,11 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IBacktranslatedCFG;
+import de.uni_freiburg.informatik.ultimate.model.annotation.ConditionAnnotation;
 import de.uni_freiburg.informatik.ultimate.model.structure.IExplicitEdgesMultigraph;
 import de.uni_freiburg.informatik.ultimate.model.structure.IMultigraphEdge;
 import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement;
+import de.uni_freiburg.informatik.ultimate.result.AtomicTraceElement.StepInfo;
 import de.uni_freiburg.informatik.ultimate.result.model.IBacktranslationValueProvider;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessprinter.graphml.GeneratedWitnessNode;
@@ -164,7 +166,13 @@ public class CorrectnessWitnessGenerator<TTE, TE> extends BaseWitnessGenerator<T
 				if (label == null) {
 					edge = fac.createDummyWitnessEdge();
 				} else {
-					edge = fac.createWitnessEdge(new AtomicTraceElement<>(label));
+					final ConditionAnnotation coan = ConditionAnnotation.getAnnotation(outgoing);
+					if (coan != null) {
+						edge = fac.createWitnessEdge(new AtomicTraceElement<>(label, label,
+								coan.isNegated() ? StepInfo.CONDITION_EVAL_FALSE : StepInfo.CONDITION_EVAL_TRUE));
+					} else {
+						edge = fac.createWitnessEdge(new AtomicTraceElement<>(label));
+					}
 				}
 				final GeneratedWitnessNode targetWNode = getWitnessNode(outgoing.getTarget(), mStringProvider, fac,
 						nodecache);
