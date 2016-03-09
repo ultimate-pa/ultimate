@@ -54,7 +54,6 @@ public class CsvSummary extends BaseCsvProviderSummary {
 		ICsvProvider<String> csvTotal = makePrintCsvProviderFromResults(results.All, mColumnDefinitions);
 		csvTotal.toCsv(sb, null);
 		sb.append(CoreUtil.getPlatformLineSeparator());
-
 		return sb.toString();
 	}
 	

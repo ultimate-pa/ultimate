@@ -621,7 +621,7 @@ public interface ICHandler extends IHandler {
 	 * Method may exchange the {@link RValue} of the  {@link ExpressionResult}
 	 * and add additional objects (statements, auxVars, etc.).
 	 */
-	public void convert(Dispatcher main, ILocation loc, ExpressionResult rexp, CType resultType);
+	public void convert(ILocation loc, ExpressionResult rexp, CType resultType);
 
 	public InitializationHandler getInitHandler();
 

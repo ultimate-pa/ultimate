@@ -11,7 +11,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 
 /**
  * 
- * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * @author Frank SchÃ¼ssele (schuessf@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
@@ -20,6 +20,10 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState, 
 	
 	private final BoogieSymbolTable mSymbolTable;
 	private final Logger mLogger;
+	
+	private IAbstractStateBinaryOperator<CongruenceDomainState> mWideningOperator;
+	private IAbstractStateBinaryOperator<CongruenceDomainState> mMergeOperator;
+	private IAbstractPostOperator<CongruenceDomainState, CodeBlock, IBoogieVar> mPostOperator;
 	
 	public CongruenceDomain(Logger logger, BoogieSymbolTable symbolTable) {
 		mLogger = logger;
@@ -34,17 +38,31 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState, 
 
 	@Override
 	public IAbstractStateBinaryOperator<CongruenceDomainState> getWideningOperator() {
-		// Widening is the same as merge, so we don't need an extra operator
-		return new CongruenceMergeOperator();
+		if (mWideningOperator == null) {
+			// Widening is the same as merge, so we don't need an extra operator
+			mWideningOperator = new CongruenceMergeOperator();
+		}
+		return mWideningOperator;
 	}
 
 	@Override
 	public IAbstractStateBinaryOperator<CongruenceDomainState> getMergeOperator() {
-		return new CongruenceMergeOperator();
+		if (mMergeOperator == null) {
+			mMergeOperator = new CongruenceMergeOperator();
+		}
+		return mMergeOperator;
 	}
 
 	@Override
 	public IAbstractPostOperator<CongruenceDomainState, CodeBlock, IBoogieVar> getPostOperator() {
-		return new CongruencePostOperator(mLogger, mSymbolTable);
+		if (mPostOperator == null) {
+			mPostOperator = new CongruencePostOperator(mLogger, mSymbolTable);
+		}
+		return mPostOperator;
+	}
+
+	@Override
+	public int getDomainPrecision() {
+		return 300;
 	}
 }

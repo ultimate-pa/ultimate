@@ -107,10 +107,10 @@ public final class SFO {
 	 * String holding "0.0".
 	 */
 	public static final String NR0F = "0.0";
-	/**
-	 * Identifier of malloc procedure.
-	 */
-	public static final String MALLOC = "~malloc";
+//	/**
+//	 * Identifier of malloc procedure.
+//	 */
+//	public static final String MALLOC = "~malloc";
 	/**
 	 * Identifier of free procedure.
 	 */
@@ -290,7 +290,13 @@ public final class SFO {
 		 * Auxiliary variable used for the result of a call to the 'builtin'
 		 * memcpy function
 		 */
-		MEMCPYRES("memcpy");
+		MEMCPYRES("memcpy"),
+		
+		/**
+		 * Auxiliary variable used for the result of a call to the 'builtin'
+		 * memset function
+		 */
+		MEMSETRES("memset");
 
 		String m_Id;
 

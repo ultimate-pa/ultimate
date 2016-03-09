@@ -14,7 +14,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
@@ -39,11 +38,7 @@ public class OctStatementProcessor {
 			return mPostOp.getAssumeProcessor().assume(assumption, oldStates);
 		} else if (statement instanceof HavocStatement) {
 			return processHavocStatement((HavocStatement) statement, oldStates);
-		} else if (statement instanceof IfStatement) {
-			// TODO support if it can occur
-			String msg = "IfStatements are not supported by post-operator. Set block-encoding to single statements.";
-			throw new UnsupportedOperationException(msg);
-		} else if (statement instanceof Label) {
+		} if (statement instanceof Label) {
 			return oldStates; // nothing to do
 		} else {
 			throw new UnsupportedOperationException("Unsupported type of statement: " + statement);
@@ -184,7 +179,8 @@ public class OctStatementProcessor {
 				Consumer<OctDomainState> action = s -> s.copyVar(targetVar, ovf.var);
 				if (ovf.negVar) {
 					action = action.andThen(s -> s.negateNumericVar(targetVar));
-				} else {
+				}
+				if (ovf.constant.signum() != 0) {
 					action = action.andThen(s -> s.incrementNumericVar(targetVar, ovf.constant));
 				}
 				oldStates.forEach(action);

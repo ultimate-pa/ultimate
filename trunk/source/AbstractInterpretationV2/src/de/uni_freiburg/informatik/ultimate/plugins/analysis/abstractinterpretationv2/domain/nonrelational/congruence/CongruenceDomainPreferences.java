@@ -31,48 +31,49 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItemContainer;
 
 /**
  * Defines the Ultimate preferences page for the Congruence domain and the kind of evaluators to use.
  * 
- * @author Frank Sch�ssele (schuessf@informatik.uni-freiburg.de)
+ * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
 public class CongruenceDomainPreferences {
 
-	public static final String LABEL_Congruence_DOMAIN_SEPARATOR = "   ---   Congruence Domain   ---   ";
-
 	public static final String VALUE_WIDENING = CongruenceMergeOperator.class.getSimpleName();
 	public static final String[] VALUES_WIDENING_OPERATOR = new String[] { VALUE_WIDENING };
 
-	public static final String VALUE_EVALUATOR_DEFAULT = "Default Evaluator";
-	public static final String VALUE_EVALUATOR_OPTIMIZATION = "Optimizer Evaluator";
+	public static final String VALUE_EVALUATOR_DEFAULT = "Congruence Default Evaluator";
+	public static final String VALUE_EVALUATOR_OPTIMIZATION = "Congruence Optimizer Evaluator";
 	public static final String[] VALUES_EVALUATOR_TYPE = new String[] { VALUE_EVALUATOR_DEFAULT,
 	        VALUE_EVALUATOR_OPTIMIZATION };
 
-	public static final String LABEL_Congruence_WIDENING_OPERATOR = "Widening operator (CON)";
+	public static final String LABEL_Congruence_WIDENING_OPERATOR = "Congruence Widening operator";
 
-	public static final String LABEL_EVALUATOR_TYPE = "Evaluator type (CON)";
+	public static final String LABEL_EVALUATOR_TYPE = "Congruence Evaluator type";
 
 	// DEFAULT VALUES
 	public static final String DEF_WIDENING_OPERATOR = VALUE_WIDENING;
 	public static final String DEF_EVALUATOR_TYPE = VALUE_EVALUATOR_DEFAULT;
 
-	public static List<UltimatePreferenceItem<?>> getPreferences() {
+	public static List<AbstractUltimatePreferenceItem> getPreferences() {
+		final List<AbstractUltimatePreferenceItem> returnList = new ArrayList<>();
 
-		final List<UltimatePreferenceItem<?>> returnList = new ArrayList<>();
-
-		returnList.add(new UltimatePreferenceItem<String>(LABEL_Congruence_DOMAIN_SEPARATOR, null, PreferenceType.Label));
-
-		returnList.add(new UltimatePreferenceItem<String>(LABEL_Congruence_WIDENING_OPERATOR, DEF_WIDENING_OPERATOR,
+		final UltimatePreferenceItemContainer congruenceContainer = new UltimatePreferenceItemContainer(
+		        "Congruence Domain");
+		
+		congruenceContainer.addItem(new UltimatePreferenceItem<String>(LABEL_Congruence_WIDENING_OPERATOR, DEF_WIDENING_OPERATOR,
 		        PreferenceType.Combo, VALUES_WIDENING_OPERATOR));
 
-		returnList.add(new UltimatePreferenceItem<String>(LABEL_EVALUATOR_TYPE, DEF_EVALUATOR_TYPE,
+		congruenceContainer.addItem(new UltimatePreferenceItem<String>(LABEL_EVALUATOR_TYPE, DEF_EVALUATOR_TYPE,
 		        PreferenceType.Combo, VALUES_EVALUATOR_TYPE));
 
+		returnList.add(congruenceContainer);
 		return returnList;
 	}
 }

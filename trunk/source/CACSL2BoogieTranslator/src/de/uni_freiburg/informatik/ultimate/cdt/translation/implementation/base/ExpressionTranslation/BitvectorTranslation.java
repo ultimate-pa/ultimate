@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation;
 
 import java.math.BigInteger;
+import java.util.Iterator;
 import java.util.List;
 
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
@@ -36,6 +37,7 @@ import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CEnum;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -49,7 +51,10 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.I
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ExpressionFactory;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Attribute;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitVectorAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -291,12 +296,19 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			// function already declared
 			return;
 		}
-		//String functionName = prefixedFunctionName.substring(1, prefixedFunctionName.length());
+		Attribute[] attributes = generateAttributes(loc, smtlibFunctionName, indices);
+		m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName, attributes, boogieResultTypeBool, resultCType, paramCType);
+	}
+
+	/**
+	 * Generate the attributes for the Boogie code that make sure that we
+	 * translate to the desired SMT functions.
+	 */
+	private Attribute[] generateAttributes(ILocation loc, String smtlibFunctionName, int[] indices) {
 		Attribute[] attributes;
 		if (indices == null) {
 			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[] { new StringLiteral(loc, smtlibFunctionName) });
 		    attributes = new Attribute[] { attribute };
-			m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName, attributes, boogieResultTypeBool, resultCType, paramCType);
 		} else {
 		    Expression[] literalIndices = new IntegerLiteral[indices.length];
 		    for (int i = 0; i < indices.length; ++i) {
@@ -305,8 +317,8 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		    Attribute attribute1 = new NamedAttribute(loc, FunctionDeclarations.s_BUILTIN_IDENTIFIER, new Expression[] { new StringLiteral(loc, smtlibFunctionName) });
 		    Attribute attribute2 = new NamedAttribute(loc, FunctionDeclarations.s_INDEX_IDENTIFIER, literalIndices);
 		    attributes = new Attribute[] { attribute1, attribute2 };
-			m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName, attributes, boogieResultTypeBool, resultCType, paramCType);
 		}
+		return attributes;
 	}
 
 	@Override
@@ -331,10 +343,17 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			extend(loc, operand, resultType, resultPrimitive, resultLength,
 					operandLength);
 		} else {
-			Expression bv = new BitVectorAccessExpression(loc, operand.lrVal.getValue(), resultLength, 0);
+			Expression bv = extractBits(loc, operand.lrVal.getValue(), resultLength, 0);
 			RValue rVal = new RValue(bv, resultType);
 			operand.lrVal = rVal;
 		}
+	}
+
+
+	@Override
+	public Expression extractBits(ILocation loc, Expression operand, int high, int low) {
+		Expression bv = new BitVectorAccessExpression(loc, operand, high, low);
+		return bv;
 	}
 
 	private void extend(ILocation loc, ExpressionResult operand, CType resultType, CPrimitive resultPrimitive, int resultLength, int operandLength) {
@@ -388,6 +407,35 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	public void addAssumeValueInRangeStatements(ILocation loc, Expression expr, CType ctype, List<Statement> stmt) {
 		// do nothing. not needed for bitvectors
 		
+	}
+
+	@Override
+	public Expression concatBits(ILocation loc, List<Expression> dataChunks, int size) {
+		Expression result;
+		final Iterator<Expression> it = dataChunks.iterator();
+		result = it.next();
+		while (it.hasNext()) {
+			final Expression nextChunk = it.next();
+			result = ExpressionFactory.newBinaryExpression(loc, 
+				BinaryExpression.Operator.BITVECCONCAT, 
+				result, 
+				nextChunk);
+		}
+		return result;
+	}
+
+	@Override
+	public Expression signExtend(ILocation loc, Expression operand, int bitsBefore, int bitsAfter) {
+		final ASTType resultType = ((TypeHandler) m_TypeHandler).bytesize2asttype(loc, GENERALPRIMITIVE.INTTYPE, bitsAfter/8);
+		final ASTType inputType = ((TypeHandler) m_TypeHandler).bytesize2asttype(loc, GENERALPRIMITIVE.INTTYPE, bitsBefore/8);
+		final String smtlibFunctionName = "sign_extend";
+		final String boogieFunctionName = smtlibFunctionName + "From" + bitsBefore + "To" + bitsAfter;
+		if (!m_FunctionDeclarations.getDeclaredFunctions().containsKey(SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName)) {
+			final int[] indices = new int[]{bitsAfter - bitsBefore};
+			final Attribute[] attributes = generateAttributes(loc, smtlibFunctionName, indices);
+			m_FunctionDeclarations.declareFunction(loc, SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName, attributes, resultType, inputType);
+		}
+		return new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName, new Expression[]{ operand });
 	}
 	
 	

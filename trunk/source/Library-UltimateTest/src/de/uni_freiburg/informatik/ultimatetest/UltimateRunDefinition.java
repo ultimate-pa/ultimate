@@ -28,25 +28,40 @@
 package de.uni_freiburg.informatik.ultimatetest;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Optional;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
- * A run of ultimate is defined by three files:
+ * A run of ultimate is defined by three things:
  * <ul>
- * <li>an input file (e.g. an ANSI C file that is verified),
+ * <li>a list of input files (e.g. an ANSI C file that is verified),
  * <li>a settings file, and
  * <li>a toolchain file.
  * </ul>
  * 
  * @author heizmann@informatik.uni-freiburg.de
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
-public class UltimateRunDefinition {
-	private final File mInput;
+public final class UltimateRunDefinition implements Comparable<UltimateRunDefinition> {
+	private static final String[] PRIMARY_ENDINGS = new String[] { ".i", ".c", ".bpl", ".ats" };
+	private static final String PATH_SEPARATOR = ";";
+
+	private final File[] mInput;
 	private final File mSettings;
 	private final File mToolchain;
 
-	public UltimateRunDefinition(File input, File settings, File toolchain) {
+	private String mInputFilenames;
+
+	public UltimateRunDefinition(final File input, final File settings, final File toolchain) {
+		this(new File[] { input }, settings, toolchain);
+	}
+
+	public UltimateRunDefinition(final File[] input, final File settings, final File toolchain) {
 		super();
 		if (input == null || toolchain == null) {
 			throw new IllegalArgumentException("Toolchain and Input may not be null");
@@ -56,7 +71,7 @@ public class UltimateRunDefinition {
 		mToolchain = toolchain;
 	}
 
-	public File getInput() {
+	public File[] getInput() {
 		return mInput;
 	}
 
@@ -66,6 +81,74 @@ public class UltimateRunDefinition {
 
 	public File getToolchain() {
 		return mToolchain;
+	}
+
+	/**
+	 * This method tries to find the "primary" input file. This method is a hack to retain compatibility with the times
+	 * were we only accepted one input file.
+	 */
+	public File selectPrimaryInputFile() {
+		if (mInput.length == 1) {
+			return mInput[0];
+		} else {
+			// DD: If we see multiple files here, we just select the first that ends in .i or .c. This is quite hacky,
+			// but I do not see another option.
+			final Optional<File> first = Arrays.stream(mInput)
+					.filter(a -> Arrays.stream(PRIMARY_ENDINGS).anyMatch(ending -> a.getName().endsWith(ending)))
+					.findFirst();
+			if (first.isPresent()) {
+				return first.get();
+			}
+		}
+		return null;
+	}
+
+	public String getInputFileNames() {
+		if (mInputFilenames == null) {
+			final StringBuilder sb = new StringBuilder();
+			final File[] input = getInput();
+			if (input.length == 1) {
+				sb.append(removeTrunkExamplesPrefix(input[0].getAbsolutePath()));
+			} else if (input.length > 1) {
+				sb.append("[");
+				sb.append(removeTrunkExamplesPrefix(input[0].getAbsolutePath()));
+				for (int i = 1; i < input.length; ++i) {
+					sb.append(PATH_SEPARATOR);
+					sb.append(removeTrunkExamplesPrefix(input[i].getAbsolutePath()));
+				}
+				sb.append("]");
+			}
+			mInputFilenames = sb.toString();
+		}
+		return mInputFilenames;
+	}
+
+	/**
+	 * Returns a string describing the folders from which the input files come.
+	 * 
+	 * @return
+	 */
+	public String getInputFileFolders() {
+		final StringBuilder sb = new StringBuilder();
+		final File[] input = getInput();
+		final Set<String> set = new HashSet<>();
+		if (input.length == 1) {
+			sb.append(removeTrunkExamplesPrefix(input[0].getParent()));
+		} else if (input.length > 1) {
+			sb.append("[");
+			String path = removeTrunkExamplesPrefix(input[0].getParent());
+			set.add(path);
+			sb.append(path);
+			for (int i = 1; i < input.length; ++i) {
+				path = removeTrunkExamplesPrefix(input[i].getParent());
+				if (set.add(path)) {
+					sb.append(PATH_SEPARATOR);
+					sb.append(path);
+				}
+			}
+			sb.append("]");
+		}
+		return sb.toString();
 	}
 
 	@Override
@@ -78,26 +161,27 @@ public class UltimateRunDefinition {
 	}
 
 	public String generateShortStringRepresentation() {
-		StringBuilder sb = new StringBuilder();
-		sb.append("Input:");
-		sb.append(removeTrunkExamplesPrefix(getInput().getAbsolutePath()));
+		final StringBuilder sb = new StringBuilder();
+		final File settings = getSettings();
+		final File toolchain = getToolchain();
+		sb.append("Input:").append(getInputFileNames());
 		sb.append(" Settings:");
-		if (getSettings() == null) {
+		if (settings == null) {
 			sb.append("default");
 		} else {
-			sb.append(removeTrunkExamplesPrefix(getSettings().getAbsolutePath()));
+			sb.append(removeTrunkExamplesPrefix(settings.getAbsolutePath()));
 		}
 		sb.append(" Toolchain:");
-		sb.append(removeTrunkExamplesPrefix(getToolchain().getAbsolutePath()));
+		sb.append(removeTrunkExamplesPrefix(toolchain.getAbsolutePath()));
 		return sb.toString();
 	}
 
-	public String removeTrunkExamplesPrefix(String path) {
-		String trunk = TestUtil.getPathFromTrunk("");
-		String examples = trunk + File.separator + "examples" + File.separator;
-		int lastIndexOf = path.lastIndexOf(examples);
+	public String removeTrunkExamplesPrefix(final String path) {
+		final String trunk = TestUtil.getPathFromTrunk("");
+		final String examples = trunk + File.separator + "examples" + File.separator;
+		final int lastIndexOf = path.lastIndexOf(examples);
 		if (lastIndexOf != -1) {
-			String trunkated = path.substring(lastIndexOf + examples.length(), path.length());
+			final String trunkated = path.substring(lastIndexOf + examples.length(), path.length());
 			return trunkated;
 		} else {
 			return path;
@@ -115,14 +199,14 @@ public class UltimateRunDefinition {
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(final Object obj) {
 		if (this == obj)
 			return true;
 		if (obj == null)
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		UltimateRunDefinition other = (UltimateRunDefinition) obj;
+		final UltimateRunDefinition other = (UltimateRunDefinition) obj;
 		if (mInput == null) {
 			if (other.mInput != null)
 				return false;
@@ -141,4 +225,34 @@ public class UltimateRunDefinition {
 		return true;
 	}
 
+	@Override
+	public int compareTo(final UltimateRunDefinition other) {
+		if (other.mInput.length > mInput.length) {
+			return -1;
+		} else if (other.mInput.length < mInput.length) {
+			return 1;
+		} else {
+			for (int i = 0; i < mInput.length; ++i) {
+				final int inputCmp = mInput[i].compareTo(other.mInput[i]);
+				if (inputCmp != 0) {
+					return inputCmp;
+				}
+			}
+		}
+
+		final int tcCmp = mToolchain.compareTo(other.mToolchain);
+		if (tcCmp != 0) {
+			return tcCmp;
+		}
+
+		if (mSettings == null && other.mSettings == null) {
+			return 0;
+		} else if (mSettings == null) {
+			return 1;
+		} else if (other.mSettings == null) {
+			return -1;
+		} else {
+			return mSettings.compareTo(other.mSettings);
+		}
+	}
 }

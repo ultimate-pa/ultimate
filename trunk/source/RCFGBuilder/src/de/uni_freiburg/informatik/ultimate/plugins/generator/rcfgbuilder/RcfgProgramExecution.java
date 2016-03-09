@@ -77,8 +77,8 @@ public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Express
 
 		// a list of boogieastnodes is a trace that consists of atomic
 		// statements.
-		ArrayList<AtomicTraceElement<RCFGEdge>> atomictrace = new ArrayList<>();
-		for (RCFGEdge te : trace) {
+		final List<AtomicTraceElement<RCFGEdge>> atomictrace = new ArrayList<>();
+		for (final RCFGEdge te : trace) {
 			if (te instanceof Call) {
 				atomictrace.add(new AtomicTraceElement<RCFGEdge>(te, te, StepInfo.PROC_CALL));
 			} else if (te instanceof Return) {

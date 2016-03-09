@@ -69,4 +69,10 @@ public class VPDomain implements IAbstractDomain<VPDomainState, CodeBlock, IBoog
 	public IAbstractPostOperator<VPDomainState, CodeBlock, IBoogieVar> getPostOperator() {
 		return new VPPostOperator(mServices);
 	}
+
+	@Override
+	public int getDomainPrecision() {
+		// TODO Fill with sense.
+		return 0;
+	}
 }

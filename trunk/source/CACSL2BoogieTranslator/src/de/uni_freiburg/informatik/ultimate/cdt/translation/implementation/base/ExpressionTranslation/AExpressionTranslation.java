@@ -76,13 +76,15 @@ public abstract class AExpressionTranslation {
 	protected final FunctionDeclarations m_FunctionDeclarations;
 	protected final TypeSizes m_TypeSizes;
 	protected final ITypeHandler m_TypeHandler;
+	protected final IPointerIntegerConversion m_PointerIntegerConversion;
 
 
-	public AExpressionTranslation(TypeSizes typeSizeConstants, ITypeHandler typeHandler) {
+	public AExpressionTranslation(TypeSizes typeSizes, ITypeHandler typeHandler) {
 		super();
-		this.m_TypeSizes = typeSizeConstants;
+		this.m_TypeSizes = typeSizes;
 		this.m_FunctionDeclarations = new FunctionDeclarations(typeHandler, m_TypeSizes);
 		this.m_TypeHandler = typeHandler;
+		this.m_PointerIntegerConversion = new OverapproximationUF(this, m_FunctionDeclarations, m_TypeHandler);
 	}
 
 	public ExpressionResult translateLiteral(Dispatcher main, IASTLiteralExpression node) {
@@ -92,7 +94,7 @@ public abstract class AExpressionTranslation {
 		case IASTLiteralExpression.lk_float_constant:
 		{
 			String val = new String(node.getValue());
-			val = ISOIEC9899TC3.handleFloatConstant(val, loc, main);
+			val = ISOIEC9899TC3.handleFloatConstant(val, loc);
 			return new ExpressionResult(new RValue(new RealLiteral(loc, val), new CPrimitive(PRIMITIVE.FLOAT)));
 		}
 		case IASTLiteralExpression.lk_char_constant:
@@ -108,7 +110,7 @@ public abstract class AExpressionTranslation {
 			CPointer pointerType = new CPointer(new CPrimitive(PRIMITIVE.CHAR));
 			String tId = main.nameHandler.getTempVarUID(SFO.AUXVAR.NONDET, pointerType);
 			VariableDeclaration tVarDecl = new VariableDeclaration(loc, new Attribute[0], new VarList[] { new VarList(
-					loc, new String[] { tId }, main.typeHandler.constructPointerType(loc)) });
+					loc, new String[] { tId }, m_TypeHandler.constructPointerType(loc)) });
 			RValue rvalue = new RValue(new IdentifierExpression(loc, tId), pointerType);
 			ArrayList<Declaration> decls = new ArrayList<Declaration>();
 			decls.add(tVarDecl);
@@ -236,7 +238,7 @@ public abstract class AExpressionTranslation {
 	 * complex double not to a (real double).
 	 * Fixing this will be postponed until we want to support complex types.
 	 */
-	public void usualArithmeticConversions(Dispatcher main, ILocation loc, 
+	public void usualArithmeticConversions(ILocation loc, 
 			ExpressionResult leftRex, ExpressionResult rightRex) {
 		final CPrimitive leftPrimitive = (CPrimitive) 
 				CEnum.replaceEnumWithInt(leftRex.lrVal.getCType()); 
@@ -401,56 +403,17 @@ public abstract class AExpressionTranslation {
 	
 
 	/**
-	 * In our Lindenmann-Hoenicke memory model, we use an array for all
-	 * integer data on the heap. This method returns the CType that we use to
-	 * represents this data.
-	 */
-	public CPrimitive getCTypeOfIntArray() {
-		return new CPrimitive(PRIMITIVE.INT);
-	}
-
-	/**
-	 * In our Lindenmann-Hoenicke memory model, we use an array for all
-	 * floating type data on the heap. This method returns the CType that we 
-	 * use to represent this data.
-	 */
-	public CPrimitive getCTypeOfFloatingArray() {
-		return new CPrimitive(PRIMITIVE.FLOAT);
-	}
-	
-	/**
 	 * In our Lindenmann-Hoenicke memory model, a pointer is a struct of two
 	 * integer data types. This method returns the CType of the structs
 	 * components.
 	 */
 	public abstract CPrimitive getCTypeOfPointerComponents();
 
-	public void convertPointerToInt(Dispatcher main, ILocation loc, ExpressionResult rexp,
+	public final void convertPointerToInt(ILocation loc, ExpressionResult rexp,
 			CPrimitive newType) {
-		if (newType.getType() == PRIMITIVE.BOOL) {
-			convertToBool(loc, rexp);
-		} else {
-			String prefixedFunctionName = declareConvertPointerToIntFunction(main,
-					loc, newType);
-			Expression pointerExpression = rexp.lrVal.getValue();
-			Expression intExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {pointerExpression});
-			RValue rValue = new RValue(intExpression, newType, false, false);
-			rexp.lrVal = rValue;
-		}
+		m_PointerIntegerConversion.convertPointerToInt(loc, rexp, newType);
 	}
 
-	private String declareConvertPointerToIntFunction(Dispatcher main, ILocation loc, CPrimitive newType) {
-		String functionName = "convertPointerTo" + newType.toString();
-		String prefixedFunctionName = "~" + functionName;
-		if (!m_FunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
-			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
-			Attribute[] attributes = new Attribute[] { attribute };
-			ASTType resultASTType = main.typeHandler.ctype2asttype(loc, newType);
-			ASTType paramASTType = main.typeHandler.constructPointerType(loc);
-			m_FunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTType);
-		}
-		return prefixedFunctionName;
-	}
 	
 	private String declareConversionFunction(ILocation loc, CPrimitive oldType, CPrimitive newType) {
 		String functionName = "convert" + oldType.toString() +"To" + newType.toString();
@@ -502,35 +465,12 @@ public abstract class AExpressionTranslation {
 		return prefixedFunctionName;
 	}
 	
-	public void convertIntToPointer(Dispatcher main, ILocation loc, ExpressionResult rexp,
+	public final void convertIntToPointer(ILocation loc, ExpressionResult rexp,
 			CPointer newType) {
-		boolean overapproximate = false;
-		if (overapproximate) {
-			String prefixedFunctionName = declareConvertIntToPointerFunction(main, loc, (CPrimitive) rexp.lrVal.getCType());
-			Expression intExpression = rexp.lrVal.getValue();
-			Expression pointerExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {intExpression});
-			RValue rValue = new RValue(pointerExpression, newType, false, false);
-			rexp.lrVal = rValue;
-		} else {
-			convertIntToInt(loc, rexp, getCTypeOfPointerComponents());
-			Expression zero = constructLiteralForIntegerType(loc, getCTypeOfPointerComponents(), BigInteger.ZERO);
-			RValue rValue = new RValue(MemoryHandler.constructPointerFromBaseAndOffset(zero, rexp.lrVal.getValue(), loc), newType, false, false);
-			rexp.lrVal = rValue;
-		}
+		m_PointerIntegerConversion.convertIntToPointer(loc, rexp, newType);
 	}
 	
-	private String declareConvertIntToPointerFunction(Dispatcher main, ILocation loc, CPrimitive newType) {
-		String functionName = "convert" + newType.toString() + "toPointer";
-		String prefixedFunctionName = "~" + functionName;
-		if (!m_FunctionDeclarations.getDeclaredFunctions().containsKey(prefixedFunctionName)) {
-			Attribute attribute = new NamedAttribute(loc, FunctionDeclarations.s_OVERAPPROX_IDENTIFIER, new Expression[] { new StringLiteral(loc, functionName ) });
-			Attribute[] attributes = new Attribute[] { attribute };
-			ASTType resultASTType = main.typeHandler.constructPointerType(loc); 
-			ASTType paramASTType = main.typeHandler.ctype2asttype(loc, newType);
-			m_FunctionDeclarations.declareFunction(loc, prefixedFunctionName, attributes, resultASTType, paramASTType);
-		}
-		return prefixedFunctionName;
-	}
+
 	
 	public void convertFloatToInt(ILocation loc, ExpressionResult rexp, CPrimitive newType) {
 		if (newType.getType() == PRIMITIVE.BOOL) {
@@ -573,7 +513,7 @@ public abstract class AExpressionTranslation {
  	 * When any scalar value is converted to _Bool, the result is 0 if the value 
      * compares equal to 0; otherwise, the result is 1.
 	 */
-	private void convertToBool(ILocation loc, ExpressionResult rexp) {
+	void convertToBool(ILocation loc, ExpressionResult rexp) {
 		CType underlyingType = rexp.lrVal.getCType();
 		underlyingType = CEnum.replaceEnumWithInt(underlyingType);
 		final Expression zeroInputType = constructZero(loc, underlyingType);
@@ -636,5 +576,16 @@ public abstract class AExpressionTranslation {
 		}
 		return result;
 	}
+
+	/**
+	 * Returns an {@link Expression} that represents the following bits of 
+	 * operand high-1, high-2, ..., low+1, low (i.e., the bit at the higher 
+	 * index is not included, the bit at the lower index is included).  
+	 */
+	public abstract Expression extractBits(ILocation loc, Expression operand, int high, int low);
+
+	public abstract Expression concatBits(ILocation loc, List<Expression> dataChunks, int size);
 	
+	public abstract Expression signExtend(ILocation loc, Expression operand, int bitsBefore, int bitsAfter);
+
 }

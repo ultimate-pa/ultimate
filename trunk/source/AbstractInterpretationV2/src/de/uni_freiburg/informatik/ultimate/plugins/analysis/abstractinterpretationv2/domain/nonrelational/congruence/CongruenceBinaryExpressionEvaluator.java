@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 
 /**
  * 
- * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * @author Frank SchÃ¼ssele (schuessf@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
@@ -66,7 +66,7 @@ public class CongruenceBinaryExpressionEvaluator
 
 	private Operator mOperator;
 	
-	private CongruenceDomainValue mModul = null;
+	// For a equals expression store the evaluated value of both sides (for evaluation of x % c == k)
 	private CongruenceDomainValue mRest = null;
 
 	protected CongruenceBinaryExpressionEvaluator(final Logger logger, final EvaluatorType type) {
@@ -121,7 +121,6 @@ public class CongruenceBinaryExpressionEvaluator
 				case ARITHMOD:
 					returnValue = v1.mod(v2);
 					returnBool = new BooleanValue(false);
-					mModul = v2;
 					break;
 				case LOGICAND:
 					returnBool = res1.getBooleanValue().and(res2.getBooleanValue());
@@ -145,31 +144,6 @@ public class CongruenceBinaryExpressionEvaluator
 						returnBool = new BooleanValue(false);
 						break;
 					}
-					
-					if (mLeftSubEvaluator instanceof CongruenceBinaryExpressionEvaluator) {
-						CongruenceBinaryExpressionEvaluator sub  = (CongruenceBinaryExpressionEvaluator) mLeftSubEvaluator;
-						if (sub.mOperator == Operator.ARITHMOD) {
-							if (v2.isConstant()) {
-								if (v2.value().signum() < 0 || sub.mModul.isConstant() && v2.value().compareTo(sub.mModul.value().abs()) >= 0) {
-									returnBool = new BooleanValue(false);
-									break;
-								}
-							}
-						}
-					}
-					
-					if (mRightSubEvaluator instanceof CongruenceBinaryExpressionEvaluator) {
-						CongruenceBinaryExpressionEvaluator sub  = (CongruenceBinaryExpressionEvaluator) mRightSubEvaluator;
-						if (sub.mOperator == Operator.ARITHMOD) {
-							if (v1.isConstant()) {
-								if (v1.value().signum() < 0 || sub.mModul.isConstant() && v1.value().compareTo(sub.mModul.value().abs()) >= 0) {
-									returnBool = new BooleanValue(false);
-									break;
-								}
-							}
-						}
-					}
-
 					if (!mLeftSubEvaluator.containsBool() && !mRightSubEvaluator.containsBool()) {
 						if (v1.isConstant() && v2.isConstant()) {
 							returnBool = new BooleanValue(v1.value().equals(v2.value()));
@@ -182,6 +156,7 @@ public class CongruenceBinaryExpressionEvaluator
 						}
 					}
 					break;
+				// !=, <, >, ... can only be computed for constants
 				case COMPNEQ:
 					if (v1.isConstant() && v2.isConstant()) {
 						returnBool = new BooleanValue(!v1.value().equals(v2.value()));
@@ -384,11 +359,11 @@ public class CongruenceBinaryExpressionEvaluator
 					final CongruenceDomainEvaluationResult rightEvalresult = new CongruenceDomainEvaluationResult(newRight,
 					        referenceBool);
 					
+					// Store the values of the other side of the equality (needed for mod-evaluations)
 					if (mLeftSubEvaluator instanceof CongruenceBinaryExpressionEvaluator) {
 						CongruenceBinaryExpressionEvaluator c = (CongruenceBinaryExpressionEvaluator) mLeftSubEvaluator;
 						c.mRest = rightEvalresult.getValue();
 					}
-					
 					if (mRightSubEvaluator instanceof CongruenceBinaryExpressionEvaluator) {
 						CongruenceBinaryExpressionEvaluator c = (CongruenceBinaryExpressionEvaluator) mRightSubEvaluator;
 						c.mRest = leftEvalresult.getValue();
@@ -478,13 +453,17 @@ public class CongruenceBinaryExpressionEvaluator
 			newValue = newValue.intersect(oldValue);
 			break;
 		case ARITHMOD:
+			// If mod is at one side of an equality, the left side of the mod expression
+			// changes according to the other side of the equality
 			if (left && mRest != null) {
-				newValue = oldValue.modEquals(otherValue, mRest);
+				newValue = otherValue.modEquals(mRest);
 			} else {
 				newValue = oldValue;
 			}
 			break;
 		case COMPEQ:
+			newValue = oldValue.intersect(otherValue);
+			break;
 		case COMPLEQ:
 		case COMPLT:
 		case COMPGEQ:

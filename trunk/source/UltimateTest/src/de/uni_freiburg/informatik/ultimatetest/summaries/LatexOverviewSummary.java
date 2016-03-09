@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
@@ -51,21 +52,18 @@ public class LatexOverviewSummary extends LatexSummary {
 	private final int mLatexTableHeaderCount;
 
 	/**
-	 * Create a summary that prints a file containing LaTex table for each
-	 * toolchain. The table groups test runs by folder name and compares them
-	 * against different setting files.
+	 * Create a summary that prints a file containing LaTex table for each toolchain. The table groups test runs by
+	 * folder name and compares them against different setting files.
 	 * 
-	 * The values result from benchmark providers collected during the Ultimate
-	 * runs.
+	 * The values result from benchmark providers collected during the Ultimate runs.
 	 * 
 	 * @param ultimateTestSuite
 	 *            To which testsuite belongs this summary?
 	 * @param benchmarks
-	 *            A list of benchmark types that should be included in the
-	 *            table.
+	 *            A list of benchmark types that should be included in the table.
 	 * @param columnDefinitions
-	 *            An array of column definitions that specify how the benchmark
-	 *            results should be processed (values as well as strings)
+	 *            An array of column definitions that specify how the benchmark results should be processed (values as
+	 *            well as strings)
 	 */
 	public LatexOverviewSummary(Class<? extends UltimateTestSuite> ultimateTestSuite,
 			Collection<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks,
@@ -147,8 +145,8 @@ public class LatexOverviewSummary extends LatexSummary {
 			sb.append("}").append(br);
 
 			// make table body
-			PartitionedResults resultsPerTool = partitionResults(CoreUtil.where(results.All,
-					new ITestSummaryResultPredicate() {
+			PartitionedResults resultsPerTool = partitionResults(
+					CoreUtil.where(results.All, new ITestSummaryResultPredicate() {
 						@Override
 						public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 							return entry.getKey().getToolchain().getName().equals(tool);
@@ -194,18 +192,13 @@ public class LatexOverviewSummary extends LatexSummary {
 
 	private void makeTableBody(StringBuilder sb, PartitionedResults results, String toolname) {
 		// make header
-
-		Set<String> distinctSuffixes = getDistinctFolderSuffixes(results);
+		final Set<String> distinctSuffixes = getDistinctFolderSuffixes(results);
 
 		int i = 0;
 		for (final String suffix : distinctSuffixes) {
-			PartitionedResults resultsPerFolder = partitionResults(CoreUtil.where(results.All,
-					new ITestSummaryResultPredicate() {
-						@Override
-						public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-							return entry.getKey().getInput().getParent().endsWith(suffix);
-						}
-					}));
+			final PartitionedResults resultsPerFolder = partitionResults(results.All.stream().filter(
+					entry -> Arrays.stream(entry.getKey().getInput()).anyMatch(a -> a.getParent().endsWith(suffix)))
+					.collect(Collectors.toList()));
 			i++;
 			makeFolderRow(sb, resultsPerFolder, suffix, i >= distinctSuffixes.size());
 		}

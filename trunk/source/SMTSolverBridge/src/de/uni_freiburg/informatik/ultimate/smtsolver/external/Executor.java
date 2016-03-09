@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
  * This class runs an external SMT solver. The main methods are <code>input</code>, which gives an input to the SMT
@@ -71,7 +72,7 @@ class Executor {
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
 	private final String mName;
-	
+
 	private static final String sEofErrorMessage = "Received EOF on stdin.";
 
 	Executor(final String solverCommand, final Script script, final Logger logger,
@@ -122,7 +123,11 @@ class Executor {
 			mWriter.write(in + "\n");
 			mWriter.flush();
 		} catch (IOException e) {
-			throw new SMTLIBException(getLogStringPrefix() + " Connection to SMT solver broken", e);
+			if (mServices.getProgressMonitorService().continueProcessing()) {
+				throw new SMTLIBException(getLogStringPrefix() + " Connection to SMT solver broken", e);
+			} else {
+				throw new ToolchainCanceledException(getClass());
+			}
 		}
 	}
 
@@ -204,8 +209,8 @@ class Executor {
 			return parser.parse();
 		} catch (SMTLIBException ex) {
 			if (ex.getMessage().equals(Parser.s_EOF)) {
-				throw new SMTLIBException(
-						getLogStringPrefix() + sEofErrorMessage + " " + generateStderrMessage(stderr), ex);
+				throw new SMTLIBException(getLogStringPrefix() + sEofErrorMessage + " " + generateStderrMessage(stderr),
+						ex);
 			} else {
 				throw ex;
 			}
@@ -213,8 +218,7 @@ class Executor {
 			throw ex;
 		} catch (Exception ex) {
 			throw new SMTLIBException(
-					getLogStringPrefix() + "Unexpected Exception while parsing. " + 
-					generateStderrMessage(stderr), ex);
+					getLogStringPrefix() + "Unexpected Exception while parsing. " + generateStderrMessage(stderr), ex);
 		}
 	}
 
@@ -258,7 +262,7 @@ class Executor {
 	private String getLogStringPrefix() {
 		return mName + " (" + mSolverCmd + ")";
 	}
-	
+
 	private static String generateStderrMessage(String stderr) {
 		if (stderr.isEmpty()) {
 			return "No stderr output.";

@@ -32,6 +32,7 @@ package de.uni_freiburg.informatik.ultimatetest.suites.traceabstraction;
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimatetest.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 
 /**
@@ -100,15 +101,15 @@ public class Svcomp2016_PThreadFloat extends AbstractTraceAbstractionTestSuite {
 	public Collection<UltimateTestCase> createTestCases() {
 		for (String setting : m_Settings_32bit) {
 			for (String toolchain : m_CToolchains) {
-				addTestCases(toolchain, setting, m_DirectoryFileEndingsPairs_32bit);
-				addTestCases(toolchain, setting, m_CurrentBugs_32bit, new String[] {".c", ".i"});
+				addTestCase(toolchain, setting, m_DirectoryFileEndingsPairs_32bit);
+				addTestCase(toolchain, setting, m_CurrentBugs_32bit, new String[] {".c", ".i"});
 			}
 		}
 		
 		for (String setting : m_Settings_64bit) {
 			for (String toolchain : m_CToolchains) {
-				addTestCases(toolchain, setting, m_DirectoryFileEndingsPairs_64bit);
-				addTestCases(toolchain, setting, m_CurrentBugs_64bit, new String[] {".c", ".i"});
+				addTestCase(toolchain, setting, m_DirectoryFileEndingsPairs_64bit);
+				addTestCase(toolchain, setting, m_CurrentBugs_64bit, new String[] {".c", ".i"});
 			}
 		}
 		return super.createTestCases();

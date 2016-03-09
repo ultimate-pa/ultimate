@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 /**
  * Class for {@link IfThenElseExpression} evaluators in the {@link CongruenceDomain}.
  * 
- * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * @author Frank SchÃ¼ssele (schuessf@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
@@ -158,7 +158,7 @@ public class CongruenceConditionalEvaluator
 
 	@Override
 	public boolean containsBool() {
-		return true;
+		return mIfEvaluator.containsBool() || mElseEvaluator.containsBool();
 	}
 
 	@Override

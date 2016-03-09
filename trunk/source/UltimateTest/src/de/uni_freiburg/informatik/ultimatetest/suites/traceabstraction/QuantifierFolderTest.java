@@ -58,14 +58,14 @@ public class QuantifierFolderTest extends
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		if (s_Boogie) {
-			addTestCases(
+			addTestCase(
 					"AutomizerBpl.xml",
 					"automizer/ForwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".bpl"});
 		} 
 		if (s_C) {
-			addTestCases(
+			addTestCase(
 					"AutomizerC.xml",
 					"automizer/ForwardPredicates.epf",
 				    m_Directories,

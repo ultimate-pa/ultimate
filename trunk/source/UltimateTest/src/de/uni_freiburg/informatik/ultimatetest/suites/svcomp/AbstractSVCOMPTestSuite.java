@@ -33,7 +33,10 @@ import java.io.FileInputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerTimingBenchmark;
@@ -52,6 +55,7 @@ import de.uni_freiburg.informatik.ultimatetest.logs.IncrementalLogWithVMParamete
 import de.uni_freiburg.informatik.ultimatetest.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimatetest.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition;
+import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimatetest.summaries.CsvSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.HTMLSummary;
@@ -60,7 +64,6 @@ import de.uni_freiburg.informatik.ultimatetest.summaries.LatexDetailedSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.LatexOverviewSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.SVCOMPTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.summaries.TraceAbstractionTestSummary;
-import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
 /**
@@ -78,11 +81,11 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		if (mTestCases == null) {
-			List<TestDefinition> testDefs = getTestDefinitions();
-			File svcompRootDir = getSVCOMP15RootDirectory();
+			final List<SVCOMPTestDefinition> testDefs = getTestDefinitions();
+			final File svcompRootDir = getSVCOMP15RootDirectory();
 
-			Collection<File> setFiles = getAllSetFiles(svcompRootDir);
-			Collection<File> allInputFiles = getAllPotentialInputFiles(svcompRootDir);
+			final Collection<File> setFiles = getAllSetFiles(svcompRootDir);
+			final Collection<File> allInputFiles = getAllPotentialInputFiles(svcompRootDir);
 
 			if (testDefs == null || testDefs.isEmpty()) {
 				System.err.println("No test definitions given. Did you implement getTestDefinitions correctly?");
@@ -96,40 +99,39 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 				return new ArrayList<>();
 			}
 
+			final Map<String, File> setName2File = getName2File(setFiles);
+			final Map<String, Collection<File>> set2InputFiles = getSetName2InputFiles(setName2File, allInputFiles);
 			mTestCases = new ArrayList<>();
 
-			for (TestDefinition def : testDefs) {
-				List<UltimateTestCase> current = new ArrayList<>();
-				String setFilename = def.getSetName() + ".set";
-				for (File set : setFiles) {
-					if (setFilename.equals(set.getName())) {
-						addTestCases(def, set, allInputFiles, current, svcompRootDir);
-					}
-				}
+			for (final SVCOMPTestDefinition def : testDefs) {
+				final List<UltimateTestCase> current = new ArrayList<>();
+				final String setFileName = def.getSetName() + ".set";
+				addTestCases(def, set2InputFiles.get(setFileName), current, svcompRootDir);
 				mTestCases.addAll(current);
 			}
 
+			mTestCases.sort(null);
 			mIncrementalLog.setCountTotal(mTestCases.size());
 		}
 		return mTestCases;
 	}
 
-	private void addTestCases(TestDefinition def, File setFile, Collection<File> possibleInputFiles,
-			List<UltimateTestCase> testcases, File svcompRootDir) {
+	private void addTestCases(final SVCOMPTestDefinition def, final Collection<File> allInputFiles,
+			final List<UltimateTestCase> testcases, final File svcompRootDir) {
 
-		Collection<File> inputFiles = getFilesForSetFile(possibleInputFiles, setFile);
-		// use this for testing
-		// inputFiles = Util.firstN(inputFiles, 3);
-		for (File input : inputFiles) {
+		final int limit = def.getLimit() < 0 ? getFilesPerCategory() : def.getLimit();
+		final Collection<File> inputFiles = TestUtil.limitFiles(allInputFiles, limit);
 
+		for (final File input : inputFiles) {
 			try {
 				// note: do not change the name without also checking
 				// SVCOMP15TestSummary
-				String name = createTestCaseName(svcompRootDir, input, def);
-				UltimateRunDefinition urd = new UltimateRunDefinition(input, def.getSettings(), def.getToolchain());
-				UltimateStarter starter = new UltimateStarter(urd, def.getTimeout());
+				final String name = createTestCaseName(svcompRootDir, input, def);
+				final UltimateRunDefinition urd = new UltimateRunDefinition(input, def.getSettings(),
+						def.getToolchain());
+				final UltimateStarter starter = new UltimateStarter(urd, def.getTimeout());
 
-				UltimateTestCase testCase = new UltimateTestCase(name, getTestResultDecider(urd), starter, urd,
+				final UltimateTestCase testCase = new UltimateTestCase(name, getTestResultDecider(urd), starter, urd,
 						super.getSummaries(), super.getIncrementalLogs());
 
 				testcases.add(testCase);
@@ -138,14 +140,29 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 				ex.printStackTrace();
 			}
 		}
-
 	}
 
-	protected ITestResultDecider getTestResultDecider(UltimateRunDefinition urd) {
-		return new SafetyCheckTestResultDecider(urd, true);
+	private Map<String, Collection<File>> getSetName2InputFiles(final Map<String, File> setName2File,
+			final Collection<File> allInputFiles) {
+		final Map<String, Collection<File>> rtr = new HashMap<String, Collection<File>>();
+		for (final Entry<String, File> entry : setName2File.entrySet()) {
+			rtr.put(entry.getKey(), getFilesForSetFile(allInputFiles, entry.getValue()));
+		}
+		return rtr;
 	}
 
-	private String createTestCaseName(File svcompRootDir, File input, TestDefinition def) {
+	private Map<String, File> getName2File(final Collection<File> files) {
+		final Map<String, File> rtr = new HashMap<String, File>();
+		for (final File file : files) {
+			final File old = rtr.put(file.getName(), file);
+			if (old != null) {
+				throw new UnsupportedOperationException("Multiple files with the same name");
+			}
+		}
+		return rtr;
+	}
+
+	private String createTestCaseName(File svcompRootDir, File input, SVCOMPTestDefinition def) {
 		// note: do not change the name without also checking
 		// SVCOMP15TestSummary
 		StringBuilder sb = new StringBuilder();
@@ -158,6 +175,10 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 		sb.append(input.getAbsolutePath().substring(svcompRootDir.getAbsolutePath().length(),
 				input.getAbsolutePath().length()));
 		return sb.toString();
+	}
+
+	protected ITestResultDecider getTestResultDecider(UltimateRunDefinition urd) {
+		return new SafetyCheckTestResultDecider(urd, true);
 	}
 
 	@Override
@@ -234,7 +255,7 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 	 * 
 	 * @return
 	 */
-	protected abstract List<TestDefinition> getTestDefinitions();
+	protected abstract List<SVCOMPTestDefinition> getTestDefinitions();
 
 	/**
 	 * -1 if you want all files per category, a value larger than 0 if you want to limit the number of files per
@@ -246,12 +267,11 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 
 	protected abstract long getTimeout();
 
-	private Collection<File> getFilesForSetFile(Collection<File> allFiles, File setFile) {
-
-		List<String> regexes = new ArrayList<>();
+	private Collection<File> getFilesForSetFile(final Collection<File> allFiles, final File setFile) {
+		final List<String> regexes = new ArrayList<>();
 		try {
-			DataInputStream in = new DataInputStream(new FileInputStream(setFile));
-			BufferedReader br = new BufferedReader(new InputStreamReader(in));
+			final DataInputStream in = new DataInputStream(new FileInputStream(setFile));
+			final BufferedReader br = new BufferedReader(new InputStreamReader(in));
 			String line;
 			while ((line = br.readLine()) != null) {
 				if (line.isEmpty()) {
@@ -263,29 +283,17 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 				line = line.replace("/", Pattern.quote(String.valueOf(File.separatorChar)));
 				line = line.replace(".", "\\.").replace("*", ".*");
 				line = ".*" + line;
-
 				regexes.add(line);
-
 			}
 			in.close();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		ArrayList<File> currentFiles = new ArrayList<File>();
-		int filesPerCategory = getFilesPerCategory();
-		if (filesPerCategory == -1) {
-			for (String regex : regexes) {
-				currentFiles.addAll(TestUtil.filterFiles(allFiles, regex));
-			}
-		} else if (filesPerCategory > 0) {
-			int filesPerSetLine = filesPerCategory / regexes.size();
-			filesPerSetLine = filesPerSetLine <= 0 ? 1 : filesPerSetLine;
-			for (String regex : regexes) {
-				currentFiles.addAll(de.uni_freiburg.informatik.ultimate.core.util.CoreUtil
-						.firstN(TestUtil.filterFiles(allFiles, regex), filesPerSetLine));
-			}
-		}
 
+		final List<File> currentFiles = new ArrayList<File>();
+		for (final String regex : regexes) {
+			currentFiles.addAll(TestUtil.filterFiles(allFiles, regex));
+		}
 		return currentFiles;
 	}
 
@@ -317,17 +325,40 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 	 *            Timeout in ms after which Ultimate should timeout. Overrides timeout in settings. Values <= 0 disable
 	 *            the timeout (Timeout in settings still applies).
 	 */
-	protected TestDefinition getTestDefinitionFromExamples(String setname, String toolchain, String settings,
+	protected SVCOMPTestDefinition getTestDefinitionFromExamples(String setname, String toolchain, String settings,
 			long timeout) {
-		return new TestDefinition(setname, new File(TestUtil.getPathFromTrunk("examples/toolchains/" + toolchain)),
-				new File(TestUtil.getPathFromTrunk("examples/settings/" + settings)), timeout);
+		return getTestDefinitionFromExamples(setname, toolchain, settings, timeout, -1);
 	}
 
-	public class TestDefinition {
+	/**
+	 * @param setname
+	 *            Case-sensitive name of the .set file without the suffix and without the path, e.g.
+	 *            ControlFlowInteger.false-unreach-label or Simple
+	 * @param toolchain
+	 *            Path to .xml file describing the toolchain relative to trunk/examples/toolchains, e.g.
+	 *            "AutomizerBpl.xml"
+	 * @param settings
+	 *            Path to .xml file describing the toolchain relative to trunk/examples/settings, e.g.
+	 *            "automizer/BackwardPredicates.epf"
+	 * @param timeout
+	 *            Timeout in ms after which Ultimate should timeout. Overrides timeout in settings. Values <= 0 disable
+	 *            the timeout (Timeout in settings still applies).
+	 * @param limit
+	 *            How many files from this set should be used.
+	 */
+	protected SVCOMPTestDefinition getTestDefinitionFromExamples(String setname, String toolchain, String settings,
+			long timeout, int limit) {
+		return new SVCOMPTestDefinition(setname,
+				new File(TestUtil.getPathFromTrunk("examples/toolchains/" + toolchain)),
+				new File(TestUtil.getPathFromTrunk("examples/settings/" + settings)), timeout, limit);
+	}
+
+	protected final class SVCOMPTestDefinition {
 		private final String mSetname;
 		private final File mToolchain;
 		private final File mSettings;
 		private final long mTimeout;
+		private final int mLimit;
 
 		/**
 		 * 
@@ -341,14 +372,18 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 		 * @param timeout
 		 *            Timeout in ms after which Ultimate should timeout. Overrides timeout in settings. Values <= 0
 		 *            disable the timeout (Timeout in settings still applies).
+		 * @param limit
+		 *            How many files from this set should be used.
 		 * 
 		 * @author dietsch@informatik.uni-freiburg.de
 		 */
-		public TestDefinition(String setname, File toolchain, File settings, long timeout) {
+		private SVCOMPTestDefinition(final String setname, final File toolchain, final File settings, final long timeout,
+				final int limit) {
 			mSetname = setname;
 			mToolchain = toolchain;
 			mSettings = settings;
 			mTimeout = timeout;
+			mLimit = limit;
 		}
 
 		public String getSetName() {
@@ -365,6 +400,10 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 
 		public long getTimeout() {
 			return mTimeout;
+		}
+
+		public int getLimit() {
+			return mLimit;
 		}
 	}
 }

@@ -3,15 +3,18 @@
 procedure foo()
 {
   var y: int;
+  var x: int;
 
-  y := 0;    
-    
-  if(*) {
-    y := 1;
+  if(y==0) 
+  {
+    x := 1;
   }
-  else {
+  else 
+  {
     y := 2;
+    y := 3;
+    y := 4;
   }
-  assert(y > 0);
+  assert(x == 0);
 }
 

@@ -101,6 +101,20 @@ public abstract class AbstractBuchiAutomizerTestSuite extends AbstractModelCheck
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
 				new ColumnDefinition("LassoAnalysisTime", "lasso analysis time", 
 						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Average),
+				
+				new ColumnDefinition("LassoNonterminationAnalysisTime", "gnta time", 
+						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Ignore, Aggregate.Sum),
+				new ColumnDefinition(
+						"LassoNonterminationAnalysisSat", "gnta sat",
+						ConversionContext.Divide(1, 0, ""), Aggregate.Ignore, Aggregate.Sum),
+				new ColumnDefinition(
+						"LassoNonterminationAnalysisUnsat", "gnta unsat",
+						ConversionContext.Divide(1, 0, ""), Aggregate.Ignore, Aggregate.Sum),
+				new ColumnDefinition(
+						"LassoNonterminationAnalysisUnknown", "gnta unknown",
+						ConversionContext.Divide(1, 0, ""), Aggregate.Ignore, Aggregate.Sum),
+
+				
 		};
 
 		return new ITestSummary[] { 

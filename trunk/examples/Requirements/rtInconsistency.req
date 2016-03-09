@@ -1,0 +1,2 @@
+Globally, it is always the case that if "A" holds then "!C" holds for at least "10" time units.
+Globally, it is always the case that if "B" holds then "C" holds after at most "5" time units.

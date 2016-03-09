@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: UltimateTest
 Bundle-SymbolicName: UltimateTest;singleton:=true
 Bundle-Version: 0.0.1
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
 Require-Bundle: Library-log4j,
  org.junit,

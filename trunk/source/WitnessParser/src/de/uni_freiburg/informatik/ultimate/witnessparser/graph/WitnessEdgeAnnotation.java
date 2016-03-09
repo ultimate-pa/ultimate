@@ -28,15 +28,13 @@ package de.uni_freiburg.informatik.ultimate.witnessparser.graph;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.IPayload;
-import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.ModernAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Visualizable;
 
 public class WitnessEdgeAnnotation extends ModernAnnotations {
 
 	private static final long serialVersionUID = 1L;
-	private static final String sKey = Activator.PLUGIN_ID + "_Edge";
+	private static final String KEY = Activator.PLUGIN_ID + "_Edge";
 
 	@Visualizable
 	private final Boolean mCondition;
@@ -94,26 +92,10 @@ public class WitnessEdgeAnnotation extends ModernAnnotations {
 	}
 
 	public void annotate(WitnessEdge elem) {
-		elem.getPayload().getAnnotations().put(sKey, this);
+		elem.getPayload().getAnnotations().put(KEY, this);
 	}
 
-	public static WitnessEdgeAnnotation getAnnotation(IElement elem) {
-		if (elem instanceof WitnessEdge) {
-			return getAnnotation((WitnessEdge) elem);
-		}
-		return null;
-	}
-
-	public static WitnessEdgeAnnotation getAnnotation(WitnessEdge elem) {
-		if (elem.hasPayload()) {
-			final IPayload payload = elem.getPayload();
-			if (payload.hasAnnotation()) {
-				final IAnnotations annot = payload.getAnnotations().get(sKey);
-				if (annot != null) {
-					return (WitnessEdgeAnnotation) annot;
-				}
-			}
-		}
-		return null;
+	public static WitnessEdgeAnnotation getAnnotation(final IElement node) {
+		return ModernAnnotations.getAnnotation(node, KEY, a -> (WitnessEdgeAnnotation) a);
 	}
 }

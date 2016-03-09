@@ -327,6 +327,7 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 
 	// TODO document: Returned state is a shallow copy. Do not modify!
 	public OctDomainState join(OctDomainState other) {
+		// TODO use closure if available
 		return operation(other, BoolValue::union, OctMatrix::max, false);
 	}
 

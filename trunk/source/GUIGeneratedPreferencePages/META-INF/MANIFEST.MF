@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: GUIGeneratedPreferencePages
 Bundle-SymbolicName: GUIGeneratedPreferencePages;singleton:=true
 Bundle-Version: 0.0.1
-Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.gui.preferencepages
 Require-Bundle: org.eclipse.ui;visibility:=reexport,
  Library-log4j,

@@ -32,6 +32,7 @@ package de.uni_freiburg.informatik.ultimatetest.suites.traceabstraction;
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimatetest.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 
 /**
@@ -63,11 +64,11 @@ public class NonlinearArithmeticInterpolationTest extends
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		if (m_AutomizerWithForwardPredicates) {
-			addTestCases(
+			addTestCase(
 					"AutomizerC.xml",
 					"automizer/nonlinearArithmetic/svComp-64bit-memsafety-Automizer.epf",
 					m_DirectoryFileEndingsPairsMemsafety);
-			addTestCases(
+			addTestCase(
 					"AutomizerC.xml",
 					"automizer/nonlinearArithmetic/svComp-64bit-precise-Automizer.epf",
 					m_DirectoryFileEndingsPairsReach);

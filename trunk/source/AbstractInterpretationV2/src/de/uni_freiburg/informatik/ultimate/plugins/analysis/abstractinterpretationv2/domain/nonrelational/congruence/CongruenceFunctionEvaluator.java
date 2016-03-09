@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 /**
  * Implementation of the function evaluator in the {@link CongruenceDomain}.
  * 
- * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * @author Frank SchÃ¼ssele (schuessf@informatik.uni-freiburg.de)
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
@@ -66,7 +66,7 @@ public class CongruenceFunctionEvaluator
 		final List<IEvaluationResult<CongruenceDomainValue>> returnList = new ArrayList<>();
 
 		final CongruenceDomainEvaluationResult res = new CongruenceDomainEvaluationResult(new CongruenceDomainValue(),
-		        new BooleanValue(false));
+		        new BooleanValue());
 
 		returnList.add(res);
 		return returnList;

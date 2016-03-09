@@ -58,28 +58,28 @@ public class AllExamplesTraceAbstractionTestSuite extends
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		if (m_TraceAbstractionWithForwardPredicates) {
-			addTestCases(
+			addTestCase(
 					"AutomizerBpl.xml",
 					"automizer/ForwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".bpl"});
 		} 
 		if (m_TraceAbstractionWithBackwardPredicates) {
-			addTestCases(
+			addTestCase(
 					"AutomizerBpl.xml",
 					"automizer/BackwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".bpl"});
 		}
 		if (m_TraceAbstractionCWithForwardPredicates) {
-			addTestCases(
+			addTestCase(
 					"AutomizerC.xml",
 					"automizer/ForwardPredicates.epf",
 				    m_Directories,
 				    new String[] {".c", ".i"});
 		}
 		if (m_TraceAbstractionCWithBackwardPredicates) {
-			addTestCases(
+			addTestCase(
 					"AutomizerC.xml",
 					"automizer/BackwardPredicates.epf",
 				    m_Directories,

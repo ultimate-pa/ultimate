@@ -28,9 +28,9 @@ package de.uni_freiburg.informatik.ultimate.cdt.parser.preferences;
 
 
 import de.uni_freiburg.informatik.ultimate.cdt.parser.Activator;
+import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
 
 public class PreferenceInitializer extends UltimatePreferenceInitializer {
 

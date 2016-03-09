@@ -794,7 +794,7 @@ public class Theory {
 			@Override
 			public int getFlags(BigInteger[] indices, Sort[] paramSorts,
 					Sort resultSort) {
-				return FunctionSymbol.INTERNAL | FunctionSymbol.LEFTASSOC;
+				return FunctionSymbol.INTERNAL;
 			}
 			@Override
 			public Sort getResultSort(BigInteger[] indices, Sort[] paramSorts,

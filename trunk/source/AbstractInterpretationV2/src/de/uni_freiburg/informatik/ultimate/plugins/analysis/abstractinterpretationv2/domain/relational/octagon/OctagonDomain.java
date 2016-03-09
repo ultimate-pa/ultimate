@@ -125,5 +125,10 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock,
 	public IAbstractPostOperator<OctDomainState, CodeBlock, IBoogieVar> getPostOperator() {
 		return mPostOperatorFactory.get();
 	}
+
+	@Override
+	public int getDomainPrecision() {
+		return 2000;
+	}
 	
 }

@@ -30,7 +30,7 @@
 package de.uni_freiburg.informatik.ultimate.gui.misc;
 
 import java.util.ArrayList;
-
+import java.util.List;
 
 /**
  * @author dietsch
@@ -38,24 +38,28 @@ import java.util.ArrayList;
  */
 public class GroupEntry extends TreeViewEntry {
 
-	private ArrayList<TreeViewEntry> gEntries;
-	
-	public GroupEntry(String entryName,GroupEntry parent){
-		super(entryName,parent);
-		this.gEntries = new ArrayList<TreeViewEntry>();
-	}
-	
-	public Object[] getEntries(){
-		return this.gEntries.toArray();
+	private List<TreeViewEntry> mEntries;
+
+	public GroupEntry(String entryName, GroupEntry parent) {
+		super(entryName, parent);
+		mEntries = new ArrayList<TreeViewEntry>();
 	}
 
-	
-	public boolean removeEntry(TreeViewEntry entry){
-		return gEntries.remove(entry);
+	public Object[] getEntries() {
+		return mEntries.toArray();
 	}
-	
-	public boolean addEntry(TreeViewEntry entry){
-		return gEntries.add(entry);
+
+	public boolean removeEntry(TreeViewEntry entry) {
+		return mEntries.remove(entry);
 	}
-	
+
+	public boolean addEntry(TreeViewEntry entry) {
+		return mEntries.add(entry);
+	}
+
+	@Override
+	public boolean isEmpty() {
+		return mEntries.isEmpty();
+	}
+
 }

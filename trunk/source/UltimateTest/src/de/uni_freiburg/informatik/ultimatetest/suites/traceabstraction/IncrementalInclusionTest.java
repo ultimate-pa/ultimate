@@ -33,8 +33,8 @@ package de.uni_freiburg.informatik.ultimatetest.suites.traceabstraction;
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimatetest.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
-import de.uni_freiburg.informatik.ultimatetest.suites.AbstractModelCheckerTestSuite.DirectoryFileEndingsPair;
 
 /**
  * Test for the different versions of incremental inclusion.
@@ -159,20 +159,20 @@ public class IncrementalInclusionTest extends
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		for (String setting : s_Settings) {
-			addTestCases("AutomizerCInline.xml", 
+			addTestCase("AutomizerCInline.xml", 
 					setting, 
 					s_SVCOMP_Programs);
 		}
 		
 		for (String setting : s_Settings) {
-			addTestCases(
+			addTestCase(
 					"AutomizerBplInline.xml",
 					setting,
 					s_UltimateRepository_Programs,
 				    new String[] {".bpl"});
 		}
 		for (String setting : s_Settings) {
-			addTestCases(
+			addTestCase(
 					"AutomizerCInline.xml",
 					setting,
 					s_UltimateRepository_Programs,

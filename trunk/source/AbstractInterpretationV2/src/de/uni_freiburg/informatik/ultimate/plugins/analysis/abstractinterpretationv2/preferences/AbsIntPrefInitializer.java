@@ -30,11 +30,15 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 
+import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.preferences.AbstractUltimatePreferenceItem.PreferenceType;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.IUltimatePreferenceItemValidator;
-import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceItemContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.compound.CompoundDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.compound.CompoundDomainPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.empty.EmptyDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence.CongruenceDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence.CongruenceDomainPreferences;
@@ -55,11 +59,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 
 	public static final String[] VALUES_ABSTRACT_DOMAIN = new String[] { EmptyDomain.class.getSimpleName(),
-			SignDomain.class.getSimpleName(), IntervalDomain.class.getSimpleName(), OctagonDomain.class.getSimpleName(), 
-			VPDomain.class.getSimpleName(), CongruenceDomain.class.getSimpleName() };
+	        SignDomain.class.getSimpleName(), IntervalDomain.class.getSimpleName(), OctagonDomain.class.getSimpleName(),
+	        VPDomain.class.getSimpleName(), CongruenceDomain.class.getSimpleName(), CompoundDomain.class.getSimpleName() };
 
 	public static final String LABEL_ITERATIONS_UNTIL_WIDENING = "Minimum iterations before widening";
 	public static final String LABEL_STATES_UNTIL_MERGE = "Parallel states before merging";
+	public static final String LABEL_DESCRIPTION_ABSTRACT_DOMAIN = "Settings for the abstract domain to use. Select the Abstract domain to use here.\n\nChange the settings for each abstract domain in the corresponding sub-page.";
 	public static final String LABEL_ABSTRACT_DOMAIN = "Abstract domain";
 
 	public static final String LABEL_RUN_AS_PRE_ANALYSIS = "Run as pre-analysis";
@@ -76,32 +81,43 @@ public class AbsIntPrefInitializer extends UltimatePreferenceInitializer {
 	public static final String INDENT = "   ";
 
 	@Override
-	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
-		final ArrayList<UltimatePreferenceItem<?>> rtr = new ArrayList<UltimatePreferenceItem<?>>();
+	protected AbstractUltimatePreferenceItem[] initDefaultPreferences() {
+		final ArrayList<AbstractUltimatePreferenceItem> rtr = new ArrayList<>();
 		rtr.add(new UltimatePreferenceItem<Integer>(LABEL_ITERATIONS_UNTIL_WIDENING, DEF_ITERATIONS_UNTIL_WIDENING,
-				PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
+		        PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
 		rtr.add(new UltimatePreferenceItem<Integer>(LABEL_STATES_UNTIL_MERGE, DEF_STATES_UNTIL_MERGE,
-				PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
-		rtr.add(new UltimatePreferenceItem<String>(LABEL_ABSTRACT_DOMAIN, DEF_ABSTRACT_DOMAIN, PreferenceType.Combo,
-				VALUES_ABSTRACT_DOMAIN));
+		        PreferenceType.Integer, new IUltimatePreferenceItemValidator.IntegerValidator(1, 100000)));
 		rtr.add(new UltimatePreferenceItem<Boolean>(LABEL_RUN_AS_PRE_ANALYSIS, DEF_RUN_AS_PRE_ANALYSIS,
-				TOOLTIP_RUN_AS_PRE_ANALYSIS, PreferenceType.Boolean));
+		        TOOLTIP_RUN_AS_PRE_ANALYSIS, PreferenceType.Boolean));
 		rtr.add(new UltimatePreferenceItem<Boolean>(LABEL_PERSIST_ABS_STATES, DEF_PERSIST_ABS_STATES,
-				PreferenceType.Boolean));
+		        PreferenceType.Boolean));
 
-		// Add Interval Domain preferences
-		rtr.addAll(IntervalDomainPreferences.getPreferences());
+		// Abstract Domains Container
+		final UltimatePreferenceItemContainer abstractDomainContainer = new UltimatePreferenceItemContainer(
+		        "Abstract Domains");
+		abstractDomainContainer.addItem(
+		        new UltimatePreferenceItem<String>(LABEL_DESCRIPTION_ABSTRACT_DOMAIN, null, PreferenceType.Label));
+		abstractDomainContainer.addItem(new UltimatePreferenceItem<String>(LABEL_ABSTRACT_DOMAIN, DEF_ABSTRACT_DOMAIN,
+		        PreferenceType.Combo, VALUES_ABSTRACT_DOMAIN));
 
-		// Add Octagon Domain preferences
-		rtr.addAll(OctPreferences.createPreferences());
+		// Interval Domain
+		abstractDomainContainer.addAbstractItems(IntervalDomainPreferences.getPreferences());
 
-		// Add ojAlgo preferences
+		// Octagon Domain
+		abstractDomainContainer.addAbstractItems(OctPreferences.createPreferences());
+
+		// Congruence Domain
+		abstractDomainContainer.addAbstractItems(CongruenceDomainPreferences.getPreferences());
+
+		// Compound Domain
+		abstractDomainContainer.addAbstractItems(CompoundDomainPreferences.getPreferences());
+		
+		rtr.add(abstractDomainContainer);
+
+		// LPSolver Preferences
 		rtr.addAll(LpSolverPreferences.getPreferences());
 		
-		// Add Congruence Domain preferences
-		rtr.addAll(CongruenceDomainPreferences.getPreferences());
-
-		return rtr.toArray(new UltimatePreferenceItem<?>[rtr.size()]);
+		return rtr.toArray(new AbstractUltimatePreferenceItem[rtr.size()]);
 	}
 
 	@Override

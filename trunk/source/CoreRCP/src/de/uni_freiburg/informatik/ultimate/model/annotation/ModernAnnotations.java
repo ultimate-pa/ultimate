@@ -34,10 +34,13 @@ package de.uni_freiburg.informatik.ultimate.model.annotation;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.function.Function;
+
+import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.model.IPayload;
 
 /**
- * Modern annotations do not use a backing map but rather the
- * {@link Visualizable} annotation.
+ * Modern annotations do not use a backing map but rather the {@link Visualizable} annotation.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
@@ -51,4 +54,20 @@ public class ModernAnnotations implements IAnnotations {
 		return Collections.emptyMap();
 	}
 
+	protected static <T extends IAnnotations> T getAnnotation(final IElement node, final String key,
+			final Function<IAnnotations, T> funCast) {
+		if (node == null) {
+			return null;
+		}
+		if (node.hasPayload()) {
+			final IPayload payload = node.getPayload();
+			if (payload.hasAnnotation()) {
+				final IAnnotations annot = payload.getAnnotations().get(key);
+				if (annot != null) {
+					return funCast.apply(annot);
+				}
+			}
+		}
+		return null;
+	}
 }

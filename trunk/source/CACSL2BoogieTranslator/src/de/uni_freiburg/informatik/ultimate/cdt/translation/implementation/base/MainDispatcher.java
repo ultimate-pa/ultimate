@@ -254,7 +254,7 @@ public class MainDispatcher extends Dispatcher {
 	private LinkedHashSet<VariableDeclaration> _boogieDeclarationsOfVariablesOnHeap;
 	private LinkedHashMap<Integer, String> indexToFunction;
 	protected boolean m_BitvectorTranslation;
-	private WitnessInvariants m_WitnessInvariants;
+	protected WitnessInvariants m_WitnessInvariants;
 
 	public LinkedHashMap<String, Integer> getFunctionToIndex() {
 		return mFunctionToIndex;
@@ -363,9 +363,9 @@ public class MainDispatcher extends Dispatcher {
 		
 		sideEffectHandler = new SideEffectHandler();
 		typeHandler = new TypeHandler(!m_BitvectorTranslation);
-		acslHandler = new ACSLHandler();
+		acslHandler = new ACSLHandler(m_WitnessInvariants != null);
 		nameHandler = new NameHandler(backtranslator);
-		cHandler = new CHandler(this, backtranslator, true, mLogger, typeHandler, m_BitvectorTranslation);
+		cHandler = new CHandler(this, backtranslator, true, mLogger, typeHandler, m_BitvectorTranslation, nameHandler);
 		this.backtranslator.setExpressionTranslation(((CHandler) cHandler).getExpressionTranslation());
 		preprocessorHandler = new PreprocessorHandler();
 		REPORT_WARNINGS = true;

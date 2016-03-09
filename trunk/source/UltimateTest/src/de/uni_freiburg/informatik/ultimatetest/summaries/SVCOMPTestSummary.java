@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimatetest.summaries;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -44,9 +43,8 @@ import de.uni_freiburg.informatik.ultimatetest.reporting.NewTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.suites.svcomp.SVCOMP15TestSuite;
 
 /**
- * This summary should only be used with {@link SVCOMP15TestSuite}, because it
- * relies on the name of the test case generated there to extract the SVCOMP
- * category of a given test.
+ * This summary should only be used with {@link SVCOMP15TestSuite}, because it relies on the name of the test case
+ * generated there to extract the SVCOMP category of a given test.
  * 
  * @author dietsch@informatik.uni-freiburg.de
  * 
@@ -60,28 +58,26 @@ public class SVCOMPTestSummary extends NewTestSummary {
 	@Override
 	public String getSummaryLog() {
 
-		Set<TCS> tcs = CoreUtil.selectDistinct(mResults.entrySet(),
-				new IMyReduce<TCS>() {
-					@Override
-					public TCS reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-						return new TCS(entry.getKey().getToolchain(), entry.getKey().getSettings());
-					}
-				});
+		Set<TCS> tcs = CoreUtil.selectDistinct(mResults.entrySet(), new IMyReduce<TCS>() {
+			@Override
+			public TCS reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
+				return new TCS(entry.getKey().getToolchain(), entry.getKey().getSettings());
+			}
+		});
 
-		Set<String> svcompCategories = CoreUtil.selectDistinct(
-				mResults.entrySet(), new IMyReduce<String>() {
-					@Override
-					public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-						return entry.getValue().Testname.split(" ")[0];
-					}
-				});
+		Set<String> svcompCategories = CoreUtil.selectDistinct(mResults.entrySet(), new IMyReduce<String>() {
+			@Override
+			public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
+				return entry.getValue().Testname.split(" ")[0];
+			}
+		});
 
 		StringBuilder sb = new StringBuilder();
 		String indent = "\t";
 		for (final TCS atcs : tcs) {
 			for (final String svcompCategory : svcompCategories) {
-				Collection<Entry<UltimateRunDefinition, ExtendedResult>> results = CoreUtil
-						.where(mResults.entrySet(), new ITestSummaryResultPredicate() {
+				Collection<Entry<UltimateRunDefinition, ExtendedResult>> results = CoreUtil.where(mResults.entrySet(),
+						new ITestSummaryResultPredicate() {
 							@Override
 							public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 								return entry.getKey().getToolchain().equals(atcs.Toolchain)
@@ -108,8 +104,8 @@ public class SVCOMPTestSummary extends NewTestSummary {
 				// write the result type and the content (SUCCESS, UNKNOWN,
 				// FAIL)
 				for (final TestResult tResult : TestResult.values()) {
-					Collection<Entry<UltimateRunDefinition, ExtendedResult>> specificResults = CoreUtil
-							.where(results, new ITestSummaryResultPredicate() {
+					Collection<Entry<UltimateRunDefinition, ExtendedResult>> specificResults = CoreUtil.where(results,
+							new ITestSummaryResultPredicate() {
 								@Override
 								public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 									return entry.getValue().Result == tResult;
@@ -126,21 +122,18 @@ public class SVCOMPTestSummary extends NewTestSummary {
 
 					sb.append("===== ");
 					sb.append(tResult);
-					sb.append(" =====").append(
-							CoreUtil.getPlatformLineSeparator());
+					sb.append(" =====").append(CoreUtil.getPlatformLineSeparator());
 
-					Set<String> resultCategories = CoreUtil.selectDistinct(
-							specificResults, new IMyReduce<String>() {
-								@Override
-								public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-									return entry.getValue().Category;
-								}
-							});
+					Set<String> resultCategories = CoreUtil.selectDistinct(specificResults, new IMyReduce<String>() {
+						@Override
+						public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
+							return entry.getValue().Category;
+						}
+					});
 
 					for (final String resultCategory : resultCategories) {
 						// group by result category
-						sb.append(indent).append(resultCategory)
-								.append(CoreUtil.getPlatformLineSeparator());
+						sb.append(indent).append(resultCategory).append(CoreUtil.getPlatformLineSeparator());
 						Collection<Entry<UltimateRunDefinition, ExtendedResult>> resultsByCategory = CoreUtil
 								.where(results, new ITestSummaryResultPredicate() {
 									@Override
@@ -152,18 +145,12 @@ public class SVCOMPTestSummary extends NewTestSummary {
 
 							// name of the file
 							sb.append(indent).append(indent);
-							sb.append(entry.getKey().getInput().getParentFile().getName());
-							sb.append(File.separator);
-							sb.append(entry.getKey().getInput().getName());
+							sb.append(entry.getKey().getInputFileNames());
 							sb.append(CoreUtil.getPlatformLineSeparator());
 
 							// message
-							sb.append(indent)
-									.append(indent)
-									.append(indent)
-									.append(entry.getValue().Message)
-									.append(CoreUtil
-											.getPlatformLineSeparator());
+							sb.append(indent).append(indent).append(indent).append(entry.getValue().Message)
+									.append(CoreUtil.getPlatformLineSeparator());
 
 						}
 
@@ -174,11 +161,9 @@ public class SVCOMPTestSummary extends NewTestSummary {
 					sb.append(CoreUtil.getPlatformLineSeparator());
 				}
 
-				sb.append("===== TOTAL =====").append(
-						CoreUtil.getPlatformLineSeparator());
+				sb.append("===== TOTAL =====").append(CoreUtil.getPlatformLineSeparator());
 				sb.append(summary.toString());
-				sb.append("All: ").append(totalCount)
-						.append(CoreUtil.getPlatformLineSeparator());
+				sb.append("All: ").append(totalCount).append(CoreUtil.getPlatformLineSeparator());
 				sb.append(CoreUtil.getPlatformLineSeparator());
 			}
 
@@ -206,16 +191,15 @@ public class SVCOMPTestSummary extends NewTestSummary {
 			}
 		});
 
-		sb.append("################# Reasons for !SUCCESS #################").append(
-				CoreUtil.getPlatformLineSeparator());
+		sb.append("################# Reasons for !SUCCESS #################")
+				.append(CoreUtil.getPlatformLineSeparator());
 		for (Entry<String, Integer> entry : nemesis) {
 			sb.append(entry.getValue()).append(indent).append(entry.getKey())
 					.append(CoreUtil.getPlatformLineSeparator());
 		}
 		sb.append(CoreUtil.getPlatformLineSeparator());
 
-		sb.append("################# Total Comparison #################").append(
-				CoreUtil.getPlatformLineSeparator());
+		sb.append("################# Total Comparison #################").append(CoreUtil.getPlatformLineSeparator());
 		sb.append("Toolchain").append(indent);
 		sb.append("Settings").append(indent);
 		sb.append("Success").append(indent);
@@ -235,8 +219,8 @@ public class SVCOMPTestSummary extends NewTestSummary {
 		}
 
 		sb.append(CoreUtil.getPlatformLineSeparator());
-		sb.append("################# Comparison by SVCOMP Category #################").append(
-				CoreUtil.getPlatformLineSeparator());
+		sb.append("################# Comparison by SVCOMP Category #################")
+				.append(CoreUtil.getPlatformLineSeparator());
 
 		sb.append("SVCOMP-Cat.").append(indent);
 		sb.append("Toolchain").append(indent);
@@ -268,29 +252,26 @@ public class SVCOMPTestSummary extends NewTestSummary {
 	private void appendComparison(StringBuilder sb, String indent, final TCS toolchainAndSettings,
 			Collection<Entry<UltimateRunDefinition, ExtendedResult>> specificResults) {
 
-		int success = CoreUtil.where(specificResults,
-				new ITestSummaryResultPredicate() {
-					@Override
-					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-						return entry.getValue().Result.equals(TestResult.SUCCESS);
-					}
-				}).size();
+		int success = CoreUtil.where(specificResults, new ITestSummaryResultPredicate() {
+			@Override
+			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
+				return entry.getValue().Result.equals(TestResult.SUCCESS);
+			}
+		}).size();
 
-		int unknown = CoreUtil.where(specificResults,
-				new ITestSummaryResultPredicate() {
-					@Override
-					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-						return entry.getValue().Result.equals(TestResult.UNKNOWN);
-					}
-				}).size();
+		int unknown = CoreUtil.where(specificResults, new ITestSummaryResultPredicate() {
+			@Override
+			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
+				return entry.getValue().Result.equals(TestResult.UNKNOWN);
+			}
+		}).size();
 
-		int fail = CoreUtil.where(specificResults,
-				new ITestSummaryResultPredicate() {
-					@Override
-					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-						return entry.getValue().Result.equals(TestResult.FAIL);
-					}
-				}).size();
+		int fail = CoreUtil.where(specificResults, new ITestSummaryResultPredicate() {
+			@Override
+			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
+				return entry.getValue().Result.equals(TestResult.FAIL);
+			}
+		}).size();
 
 		sb.append(toolchainAndSettings.Toolchain.getName());
 		sb.append(indent);

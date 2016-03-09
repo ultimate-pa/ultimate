@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimatetest.reporting.ITestSummary;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
-public class UltimateTestCase {
+public class UltimateTestCase implements Comparable<UltimateTestCase> {
 
 	private final String mName;
 	private final UltimateRunDefinition mUltimateRunDefinition;
@@ -54,10 +54,13 @@ public class UltimateTestCase {
 	private final List<IIncrementalLog> mLogs;
 	private final Logger mLogger;
 
-	public UltimateTestCase(String name, ITestResultDecider decider, UltimateStarter starter,
-			UltimateRunDefinition ultimateRunDefinition, List<ITestSummary> summaries,
-			List<IIncrementalLog> incrementalLogs) {
+	public UltimateTestCase(final String name, final ITestResultDecider decider, final UltimateStarter starter,
+			final UltimateRunDefinition ultimateRunDefinition, final List<ITestSummary> summaries,
+			final List<IIncrementalLog> incrementalLogs) {
 		mLogger = Logger.getLogger(UltimateStarter.class);
+		if (ultimateRunDefinition == null) {
+			throw new IllegalArgumentException("ultimateRunDefinition");
+		}
 		mStarter = starter;
 		mName = name;
 		mDecider = decider;
@@ -202,5 +205,10 @@ public class UltimateTestCase {
 				"UltimateTestCase.java", -1);
 		exception.setStackTrace(new StackTraceElement[] { elem });
 		throw exception;
+	}
+
+	@Override
+	public int compareTo(UltimateTestCase o) {
+		return mUltimateRunDefinition.compareTo(o.mUltimateRunDefinition);
 	}
 }

@@ -8,12 +8,12 @@ import java.math.BigInteger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence.CongruenceDomainValue;
 
 /**
- * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
+ * @author Frank SchÃ¼ssele (schuessf@informatik.uni-freiburg.de)
  */
 
 public class CongruenceDomainValueTest{
 	@Test
-	public void testConstructSet() {
+	public void testConstruct() {
 		CongruenceDomainValue x = new CongruenceDomainValue();
 		assertTrue(x.toString().equals("1Z"));
 		x = new CongruenceDomainValue(true);
@@ -24,10 +24,6 @@ public class CongruenceDomainValueTest{
 		assertTrue(x.toString().equals("-1"));
 		x = new CongruenceDomainValue(new BigInteger("-1"));
 		assertTrue(x.toString().equals("1Z"));
-		x.setToBottom();
-		assertTrue(x.toString().equals("{}"));
-		x.setValue(new BigInteger("-2"));
-		assertTrue(x.toString().equals("2Z"));
 	}
 	
 	@Test
@@ -147,14 +143,17 @@ public class CongruenceDomainValueTest{
 	@Test
 	public void testModEquals() {
 		CongruenceDomainValue zero = new CongruenceDomainValue(BigInteger.ZERO, true);
+		CongruenceDomainValue one = new CongruenceDomainValue(BigInteger.ONE, true);
 		CongruenceDomainValue two = new CongruenceDomainValue(new BigInteger("2"), true);
 		CongruenceDomainValue minusTwo = new CongruenceDomainValue(new BigInteger("-2"), true);
-		CongruenceDomainValue z2 = new CongruenceDomainValue(new BigInteger("2"));
 		CongruenceDomainValue z3 = new CongruenceDomainValue(new BigInteger("3"));
 		CongruenceDomainValue z4 = new CongruenceDomainValue(new BigInteger("4"));
-		assertTrue(z2.modEquals(z3, zero).toString().equals("6Z"));
-		assertTrue(z3.modEquals(z4, two).toString().equals("6Z"));
-		assertTrue(z3.modEquals(two, zero).toString().equals("6Z"));
-		assertTrue(z3.modEquals(minusTwo, zero).toString().equals("6Z"));
+		assertTrue(z3.modEquals(zero).toString().equals("3Z"));
+		assertTrue(z4.modEquals(two).toString().equals("2Z"));
+		assertTrue(two.modEquals(zero).toString().equals("2Z"));
+		assertTrue(minusTwo.modEquals(zero).toString().equals("2Z"));
+		assertTrue(z3.modEquals(minusTwo).toString().equals("{}"));
+		assertTrue(one.modEquals(two).toString().equals("{}"));
+		assertTrue(minusTwo.modEquals(z3).toString().equals("2Z"));
 	}
 }

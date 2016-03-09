@@ -5,8 +5,7 @@
 // Author: heizmann@informatik.uni-freiburg.de
 
 assert(!accepts(nwa, ["a1" "a1" "a1" "a1"]));
-NestedWordAutomaton minimized = minimizeSevpa(removeDeadEnds(nwa));
-assert(!accepts(minimized, ["a1" "a1" "a1" "a1"]));
+assert(!accepts(minimizeSevpa(removeDeadEnds(nwa)), ["a1" "a1" "a1" "a1"]));
 
 int minimizeSevpaSize = numberOfStates(minimizeSevpa(removeDeadEnds(nwa)));
 print(minimizeSevpaSize);

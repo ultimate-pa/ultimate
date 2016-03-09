@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 
 /**
@@ -55,6 +56,8 @@ public class TypeSortTranslator {
 
 	private final Map<IType, Sort> m_type2sort = new HashMap<IType, Sort>();
 	private final Map<Sort, IType> m_sort2type = new HashMap<Sort, IType>();
+	final Map<String, Map<String, Expression[]>> m_Type2Attributes =
+			new HashMap<String, Map<String,Expression[]>>();
 
 	private final boolean m_BlackHoleArrays;
 
@@ -126,10 +129,22 @@ public class TypeSortTranslator {
 	
 	
 	private void declareType(TypeDeclaration typeDecl) {
-		String id = typeDecl.getIdentifier();
-		String[] typeParams = typeDecl.getTypeParams();
+		final String[] typeParams = typeDecl.getTypeParams();
 		if (typeParams.length != 0) {
 			throw new IllegalArgumentException("Only types without parameters supported");
+		}
+		final String id = typeDecl.getIdentifier();
+
+		final Map<String, Expression[]> attributes = Boogie2SmtSymbolTable.extractAttributes(typeDecl);
+		if (attributes != null) {
+			m_Type2Attributes.put(id, attributes);
+			final String attributeDefinedIdentifier = Boogie2SmtSymbolTable.
+					checkForAttributeDefinedIdentifier(attributes, Boogie2SmtSymbolTable.s_BUILTINIDENTIFIER);
+			if (attributeDefinedIdentifier != null) {
+				// we do not declare or define a Sort since we should use
+				// a built-in Sort.
+				return;
+			}
 		}
 		if (typeDecl.getSynonym() == null) {
 			m_Script.declareSort(id, 0);
@@ -183,7 +198,8 @@ public class TypeSortTranslator {
 				}
 				catch (SMTLIBException e) {
 					if (e.getMessage().equals("Sort Array not declared")) {
-						Boogie2SMT.reportUnsupportedSyntax(BoogieASTNode, "Solver does not support arrays", mServices);
+						Boogie2SMT.reportUnsupportedSyntax(BoogieASTNode, 
+								"Solver does not support arrays", mServices);
 						throw e;
 					}
 					else {
@@ -195,7 +211,21 @@ public class TypeSortTranslator {
 		else if (boogieType instanceof ConstructedType) {
 			ConstructedType constructedType = (ConstructedType) boogieType;
 			String name = constructedType.getConstr().getName();
-			result = m_Script.sort(name);
+			Map<String, Expression[]> attributes = m_Type2Attributes.get(name);
+			if (attributes == null) {
+				result = m_Script.sort(name);
+			} else {
+				final String attributeDefinedIdentifier = Boogie2SmtSymbolTable.
+						checkForAttributeDefinedIdentifier(attributes, Boogie2SmtSymbolTable.s_BUILTINIDENTIFIER);
+				if (attributeDefinedIdentifier == null) {
+					result = m_Script.sort(name);
+				} else {
+					// use SMT identifier that was defined by our "builtin"
+					// attribute
+					final BigInteger[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
+					result = m_Script.sort(attributeDefinedIdentifier, indices);
+				}
+			}
 		} else {
 			throw new IllegalArgumentException("Unsupported type " + boogieType);
 		}

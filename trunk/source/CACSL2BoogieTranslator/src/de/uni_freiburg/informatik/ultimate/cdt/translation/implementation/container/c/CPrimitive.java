@@ -33,10 +33,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.conta
 import org.eclipse.cdt.core.dom.ast.IASTDeclSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclSpecifier;
 
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
@@ -50,13 +47,14 @@ public class CPrimitive extends CType {
      * (updated 10.12.2013 by nutz)
      */
     public static enum PRIMITIVE {
+
     	/* Integer Types*/
     	/* char */
-    	CHAR,
+    	CHAR(GENERALPRIMITIVE.INTTYPE),
     	/* signed char */
-    	SCHAR,
+    	SCHAR(GENERALPRIMITIVE.INTTYPE),
     	/* unsigned char */
-    	UCHAR,
+    	UCHAR(GENERALPRIMITIVE.INTTYPE),
     	/* ?? */
 //        WCHAR,
     	/* ?? */
@@ -64,42 +62,56 @@ public class CPrimitive extends CType {
     	/* ?? */
 //        CHAR16,
     	/* short, short int, signed short, signed short int */
-        SHORT,
+        SHORT(GENERALPRIMITIVE.INTTYPE),
         /* unsigned short, unsigned short int */
-        USHORT,
+        USHORT(GENERALPRIMITIVE.INTTYPE),
     	/* int, signed int */
-        INT,
+        INT(GENERALPRIMITIVE.INTTYPE),
     	/* unsigned, unsigned int */
-        UINT,
+        UINT(GENERALPRIMITIVE.INTTYPE),
         /* long, long int, signed long, signed long int */
-        LONG,
+        LONG(GENERALPRIMITIVE.INTTYPE),
         /* unsigned long, unsigned long int */
-        ULONG,
+        ULONG(GENERALPRIMITIVE.INTTYPE),
         /* long long, long long int, signed long long, signed long long int */
-        LONGLONG,
+        LONGLONG(GENERALPRIMITIVE.INTTYPE),
         /* unsigned long long, unsigned long long int */
-        ULONGLONG,
+        ULONGLONG(GENERALPRIMITIVE.INTTYPE),
         /* _Bool */
-        BOOL,
+        BOOL(GENERALPRIMITIVE.INTTYPE),
     	/* Floating Types*/
         /* float */
-        FLOAT,
+        FLOAT(GENERALPRIMITIVE.FLOATTYPE),
         /* _Complex float */
-        COMPLEX_FLOAT,
+        COMPLEX_FLOAT(GENERALPRIMITIVE.FLOATTYPE),
         /* double */
-        DOUBLE,
+        DOUBLE(GENERALPRIMITIVE.FLOATTYPE),
         /* _Complex double */
-        COMPLEX_DOUBLE,
+        COMPLEX_DOUBLE(GENERALPRIMITIVE.FLOATTYPE),
         /* long double */
-        LONGDOUBLE,
+        LONGDOUBLE(GENERALPRIMITIVE.FLOATTYPE),
          /* _Complex long double */
-        COMPLEX_LONGDOUBLE,
+        COMPLEX_LONGDOUBLE(GENERALPRIMITIVE.FLOATTYPE),
         //TODO: something with "_imaginary"??
         /*other type(s)*/
         /**
          * C type : void.
          */
-        VOID,
+        VOID(GENERALPRIMITIVE.VOID);
+        
+        PRIMITIVE(GENERALPRIMITIVE generalprimitive) {
+    		m_Generalprimitive = generalprimitive;
+    	}
+        
+    	private final GENERALPRIMITIVE m_Generalprimitive;
+    	
+    	public boolean isIntegertype() {
+    		return m_Generalprimitive == GENERALPRIMITIVE.INTTYPE;
+    	}
+    	
+    	public boolean isFloatingtype() {
+    		return m_Generalprimitive == GENERALPRIMITIVE.FLOATTYPE;
+    	}
     }
     
     public enum GENERALPRIMITIVE {

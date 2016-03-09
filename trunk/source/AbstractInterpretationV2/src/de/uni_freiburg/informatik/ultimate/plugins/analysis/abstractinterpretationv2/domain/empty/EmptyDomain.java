@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *            Any variable declaration.
  */
 public class EmptyDomain<ACTION, VARDECL>
-		implements IAbstractDomain<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL> {
+        implements IAbstractDomain<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL> {
 
 	@Override
 	public EmptyDomainState<ACTION, VARDECL> createFreshState() {
@@ -61,5 +61,11 @@ public class EmptyDomain<ACTION, VARDECL>
 	@Override
 	public IAbstractPostOperator<EmptyDomainState<ACTION, VARDECL>, ACTION, VARDECL> getPostOperator() {
 		return new EmptyPostOperator<>();
+	}
+
+	@Override
+	public int getDomainPrecision() {
+		// This domain is the least-expressive domain there is.
+		return 0;
 	}
 }

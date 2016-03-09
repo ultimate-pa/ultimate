@@ -36,6 +36,8 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.buchiReduction.vertices,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.incremental_inclusion,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization,
+ de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.maxsat,
+ de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.minimization.parallel,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.senwa,
  de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions,
@@ -47,5 +49,5 @@ Export-Package: de.uni_freiburg.informatik.ultimate.automata;
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ClassPath: src/de/uni_freiburg/informatik/ultimate/automata/petrinet/julian/petruchio/petruchio.jar,
  .
-Import-Package: cern.colt.function,
+Import-Package: de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates,
  de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2

@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
@@ -399,7 +400,8 @@ public abstract class AbstractCegarLoop {
 			mLogger.info("Abstraction has " + m_Abstraction.sizeInformation());
 			mLogger.info("Interpolant automaton has " + m_InterpolAutomaton.sizeInformation());
 
-			if (m_Pref.computeHoareAnnotation()) {
+			if (m_Pref.computeHoareAnnotation() && 
+					m_Pref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
 				assert (new InductivityCheck(m_Services, (INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction,
 						false, true, new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager)))
 								.getResult() : "Not inductive";
@@ -434,7 +436,7 @@ public abstract class AbstractCegarLoop {
 	}
 
 	protected void writeAutomatonToFile(IAutomaton<CodeBlock, IPredicate> automaton, String filename) {
-		new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(m_Services), filename,
+		new AutomatonDefinitionPrinter<String, String>(new AutomataLibraryServices(m_Services), "nwa",
 				m_Pref.dumpPath() + "/" + filename, m_PrintAutomataLabeling, "", automaton);
 	}
 

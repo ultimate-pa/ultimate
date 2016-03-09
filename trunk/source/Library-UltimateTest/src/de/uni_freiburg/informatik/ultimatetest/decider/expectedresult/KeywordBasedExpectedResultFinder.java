@@ -39,75 +39,72 @@ import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 /**
  * Find the expected result for a file using keywords that occur in
  * <ul>
- * <li> the filename of the input,
- * <li> the path of the input (without the filename), or
- * <li> the first line of the input.
+ * <li>the filename of the input,
+ * <li>the path of the input (without the filename), or
+ * <li>the first line of the input.
  * <ul>
- * For each occurrence the keywords have to be given as a 
- * Map<String, OVERALL_RESULT>. If you do not want to check some occurrences
- * (e.g., do not want to check the path, you may use an empty Map or null.
+ * For each occurrence the keywords have to be given as a Map<String, OVERALL_RESULT>. If you do not want to check some
+ * occurrences (e.g., do not want to check the path, you may use an empty Map or null.
  * 
- * This IExpectedResultFinder takes neither settings nor toolchain into account. 
+ * This IExpectedResultFinder takes neither settings nor toolchain into account.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  *
  * @param <OVERALL_RESULT>
  */
-public class KeywordBasedExpectedResultFinder<OVERALL_RESULT> implements
-		IExpectedResultFinder<OVERALL_RESULT> {
+public class KeywordBasedExpectedResultFinder<OVERALL_RESULT> implements IExpectedResultFinder<OVERALL_RESULT> {
 	private final Map<String, OVERALL_RESULT> m_FilenameKeywords;
-	private final Map<String, OVERALL_RESULT> m_PathKeywords;	
+	private final Map<String, OVERALL_RESULT> m_PathKeywords;
 	private final Map<String, OVERALL_RESULT> m_FirstlineKeywords;
-	
+
 	OVERALL_RESULT m_ExpectedResult;
 	ExpectedResultFinderStatus m_EvaluationStatus;
 	String m_ExpectedResultEvaluation;
 
-	public KeywordBasedExpectedResultFinder(
-			Map<String, OVERALL_RESULT> filenameKeywords, 
-			Map<String, OVERALL_RESULT> pathKeywords,
-			Map<String, OVERALL_RESULT> firstlineKeywords) {
+	public KeywordBasedExpectedResultFinder(Map<String, OVERALL_RESULT> filenameKeywords,
+			Map<String, OVERALL_RESULT> pathKeywords, Map<String, OVERALL_RESULT> firstlineKeywords) {
 		if (filenameKeywords == null) {
-			m_FilenameKeywords = Collections.emptyMap(); 
+			m_FilenameKeywords = Collections.emptyMap();
 		} else {
 			m_FilenameKeywords = filenameKeywords;
 		}
 		if (pathKeywords == null) {
-			m_PathKeywords = Collections.emptyMap(); 
+			m_PathKeywords = Collections.emptyMap();
 		} else {
 			m_PathKeywords = pathKeywords;
 		}
 		if (firstlineKeywords == null) {
-			m_FirstlineKeywords = Collections.emptyMap(); 
+			m_FirstlineKeywords = Collections.emptyMap();
 		} else {
 			m_FirstlineKeywords = firstlineKeywords;
 		}
 	}
-	
+
 	@Override
-	public void findExpectedResult(
-			UltimateRunDefinition ultimateRunDefinition) {
-		File file = ultimateRunDefinition.getInput();
-		Set<OVERALL_RESULT> expectedResult= new HashSet<OVERALL_RESULT>();
-		String filename = file.getName();
-		for (Entry<String, OVERALL_RESULT> entry  : m_FilenameKeywords.entrySet()) {
-			if (filename.matches(entry.getKey())) {
-				expectedResult.add(entry.getValue());
-			}
-		}
-		String folder = file.getParent();
-		for (Entry<String, OVERALL_RESULT> entry  : m_PathKeywords.entrySet()) {
-			if (folder.contains(entry.getKey())) {
-				expectedResult.add(entry.getValue());
-			}
-		}
-		String firstline = TestUtil.extractFirstLine(file);
-		// 2015-10-04 Matthias: firstline != null is a workaround that I used
-		// for emtpy files (SV-COMP benchmark set contained empty files). 
-		if (firstline != null) {
-			for (Entry<String, OVERALL_RESULT> entry  : m_FirstlineKeywords.entrySet()) {
-				if (firstline.contains(entry.getKey())) {
+	public void findExpectedResult(UltimateRunDefinition ultimateRunDefinition) {
+		File file = ultimateRunDefinition.selectPrimaryInputFile();
+		Set<OVERALL_RESULT> expectedResult = new HashSet<OVERALL_RESULT>();
+		if (file != null) {
+			String filename = file.getName();
+			for (Entry<String, OVERALL_RESULT> entry : m_FilenameKeywords.entrySet()) {
+				if (filename.matches(entry.getKey())) {
 					expectedResult.add(entry.getValue());
+				}
+			}
+			String folder = file.getParent();
+			for (Entry<String, OVERALL_RESULT> entry : m_PathKeywords.entrySet()) {
+				if (folder.contains(entry.getKey())) {
+					expectedResult.add(entry.getValue());
+				}
+			}
+			String firstline = TestUtil.extractFirstLine(file);
+			// 2015-10-04 Matthias: firstline != null is a workaround that I used
+			// for emtpy files (SV-COMP benchmark set contained empty files).
+			if (firstline != null) {
+				for (Entry<String, OVERALL_RESULT> entry : m_FirstlineKeywords.entrySet()) {
+					if (firstline.contains(entry.getKey())) {
+						expectedResult.add(entry.getValue());
+					}
 				}
 			}
 		}

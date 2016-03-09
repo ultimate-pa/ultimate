@@ -81,7 +81,7 @@ public class TermcompTests extends
 	public Collection<UltimateTestCase> createTestCases() {
 		for (String setting : m_Settings) {
 			for (String toolchain : m_CToolchains) {
-				addTestCases(toolchain, setting, m_UltimateRepository, 
+				addTestCase(toolchain, setting, m_UltimateRepository, 
 						new String[] {".c", ".i"});
 			}
 		}

@@ -32,6 +32,7 @@ package de.uni_freiburg.informatik.ultimatetest.suites.traceabstraction;
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimatetest.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 
 /**
@@ -117,7 +118,7 @@ public class Svcomp_Reach_SmtBenchmarkProduction extends AbstractTraceAbstractio
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		for (String setting : m_Settings) {
-			addTestCases("AutomizerC.xml", 
+			addTestCase("AutomizerC.xml", 
 					setting, 
 					m_SVCOMP_Examples);
 		}

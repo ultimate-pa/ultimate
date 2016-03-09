@@ -31,20 +31,18 @@ import org.eclipse.core.runtime.preferences.IEclipsePreferences;
 import org.osgi.service.prefs.BackingStoreException;
 
 /**
- * UltimatePreferenceInitializer implements an AbstractPreferenceInitializer for
- * Ultimate. It initializes the default values for preferences and provides
- * access to the preferences for Ultimate.
+ * UltimatePreferenceInitializer implements an AbstractPreferenceInitializer for Ultimate. It initializes the default
+ * values for preferences and provides access to the preferences for Ultimate.
  * 
  * Clients should derive from this class and contribute to the extension point
- * org.eclipse.core.runtime.preferences.initializer (see the plugin.xml of
- * CoreRCP for an example)
+ * org.eclipse.core.runtime.preferences.initializer (see the plugin.xml of CoreRCP for an example)
  * 
  * @author dietsch
  * 
  */
 public abstract class UltimatePreferenceInitializer extends AbstractPreferenceInitializer {
 
-	private final UltimatePreferenceItem<?>[] mPreferenceDescriptors;
+	private final AbstractUltimatePreferenceItem[] mPreferenceDescriptors;
 	private final UltimatePreferenceStore mPreferenceStore;
 
 	public UltimatePreferenceInitializer() {
@@ -53,12 +51,10 @@ public abstract class UltimatePreferenceInitializer extends AbstractPreferenceIn
 	}
 
 	/***
-	 * This method is called by the preference initializer to initialize default
-	 * preference values.
+	 * This method is called by the preference initializer to initialize default preference values.
 	 * 
-	 * Note: Clients should not call this method. It will be called
-	 * automatically by the preference initializer when the appropriate default
-	 * preference node is accessed.
+	 * Note: Clients should not call this method. It will be called automatically by the preference initializer when the
+	 * appropriate default preference node is accessed.
 	 */
 	@Override
 	public void initializeDefaultPreferences() {
@@ -77,38 +73,41 @@ public abstract class UltimatePreferenceInitializer extends AbstractPreferenceIn
 		} catch (BackingStoreException e) {
 			e.printStackTrace();
 		}
-		
-		for (UltimatePreferenceItem<?> item : mPreferenceDescriptors) {
-			String label = item.getLabel();
-			Object value = item.getDefaultValue();
-			prefs.remove(label);
-			
-			switch (item.getType()) {
-			case Boolean:
-				prefs.putBoolean(label, (Boolean) value);
-				break;
-			case Integer:
-				prefs.putInt(label, (Integer) value);
-				break;
-			case Directory:
-			case String:
-			case MultilineString:
-			case Combo:
-			case Radio:
-			case Path:
-			case File:
-			case Color:
-				prefs.put(label, value.toString());
-				break;
-			case Label:
-				// A Label is not really a preference; its just nice for
-				// automatic generation of preference pages
-				break;
-			default:
-				throw new UnsupportedOperationException("You need to implement the new enum type \"" + item.getType()
-						+ "\" here");
-			}
 
+		for (AbstractUltimatePreferenceItem prefItem : AbstractUltimatePreferenceItem
+		        .constructFlattenedList(mPreferenceDescriptors)) {
+			if (prefItem instanceof UltimatePreferenceItem) {
+				UltimatePreferenceItem<?> item = (UltimatePreferenceItem<?>) prefItem;
+				String label = item.getLabel();
+				Object value = item.getDefaultValue();
+				prefs.remove(label);
+
+				switch (item.getType()) {
+				case Boolean:
+					prefs.putBoolean(label, (Boolean) value);
+					break;
+				case Integer:
+					prefs.putInt(label, (Integer) value);
+					break;
+				case Directory:
+				case String:
+				case MultilineString:
+				case Combo:
+				case Radio:
+				case Path:
+				case File:
+				case Color:
+					prefs.put(label, value.toString());
+					break;
+				case Label:
+					// A Label is not really a preference; its just nice for
+					// automatic generation of preference pages
+					break;
+				default:
+					throw new UnsupportedOperationException(
+					        "You need to implement the new enum type \"" + item.getType() + "\" here");
+				}
+			}
 		}
 		try {
 			prefs.flush();
@@ -118,23 +117,21 @@ public abstract class UltimatePreferenceInitializer extends AbstractPreferenceIn
 		}
 	}
 
-	public UltimatePreferenceItem<?>[] getDefaultPreferences() {
+	public AbstractUltimatePreferenceItem[] getDefaultPreferences() {
 		return mPreferenceDescriptors;
 	}
 
 	/**
-	 * Should return an array of UltimatePreferenceItem describing the
-	 * preferences of the implementing plugin. Will be called once during
-	 * construction.
+	 * Should return an array of UltimatePreferenceItem describing the preferences of the implementing plugin. Will be
+	 * called once during construction.
 	 * 
 	 * The index prescribes the position in the preference pages.
 	 * 
-	 * Note: Clients should only set default preference values for their own
-	 * plugin.
+	 * Note: Clients should only set default preference values for their own plugin.
 	 * 
 	 * @return
 	 */
-	protected abstract UltimatePreferenceItem<?>[] initDefaultPreferences();
+	protected abstract AbstractUltimatePreferenceItem[] initDefaultPreferences();
 
 	/**
 	 * Should return the ID of the implementing plugin.

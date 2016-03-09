@@ -26,100 +26,27 @@
  */
 package de.uni_freiburg.informatik.ultimate.core.preferences;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import de.uni_freiburg.informatik.ultimate.ep.interfaces.IController;
 
 /**
- * An UltimatePReferenceItem describes exactly one setting of a preference.
- * Based on its {@link PreferenceType}, the active {@link IController} will
- * present it to users for modification.
+ * An UltimatePReferenceItem describes exactly one setting of a preference. Based on its {@link PreferenceType}, the
+ * active {@link IController} will present it to users for modification.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  * @param <T>
- *            The type of the preference. Usually a primitive, an enum, or
- *            something that can be easily constructed from a String.
+ *            The type of the preference. Usually a primitive, an enum, or something that can be easily constructed from
+ *            a String.
  */
-public final class UltimatePreferenceItem<T> {
-
-	/**
-	 * PreferenceType describes, how a preference item should be presented to
-	 * the user by the active {@link IController}.
-	 * 
-	 * @author dietsch
-	 * 
-	 */
-	public enum PreferenceType {
-		/**
-		 * Yes/no choice. Usually a single check-box or a flag.
-		 */
-		Boolean,
-		/**
-		 * A string representing an absolute path to a single directory on the
-		 * local file system.
-		 */
-		Directory,
-		/**
-		 * A single line of text.
-		 */
-		String,
-		/**
-		 * A non-editable label that can be used to describe parts of the
-		 * preferences.
-		 * 
-		 * @see {@link UltimatePreferenceInitializer#initializeDefaultPreferences()}
-		 *      for more information on positioning
-		 *      {@link UltimatePreferenceItem UltimatePreferenceItems}.
-		 */
-		Label,
-		/**
-		 * Presents the user with a single choice from some predefined values.
-		 * Can be used for e.g. Enums.
-		 * 
-		 * Differs from {@link #Radio} because the guideline is that Combo does
-		 * not show all values simultaneously (think Combobox,
-		 * Radiobuttons/Radiolist).
-		 */
-		Combo,
-		/**
-		 * Presents the user with a single choice from some predefined values.
-		 * Can be used for e.g. Enums.
-		 * 
-		 * Differs from {@link #Combo} because the guideline is that Radio shows
-		 * all values simultaneously.
-		 */
-		Radio,
-		/**
-		 * A single number representing an Integer.
-		 */
-		Integer,
-		/**
-		 * A string representing one or multiple paths to a file or directory on
-		 * the system. If multiple paths are specified by the user, they are
-		 * separated by a semicolon.
-		 */
-		Path,
-		/**
-		 * A string spanning multiple lines. The lines are separated by the
-		 * system-default line break character (e.g. \r or \n).
-		 */
-		MultilineString,
-		/**
-		 * A string representing an absolute path on the local file system to a
-		 * single file.
-		 */
-		File,
-		/**
-		 * A string representing a color. The string has to be of the form
-		 * "red,green,blue", where 0 <= red,green,blue <= 255.
-		 */
-		Color
-	}
+public final class UltimatePreferenceItem<T> extends AbstractUltimatePreferenceItem {
 
 	private final String mLabel;
 	private final T mDefaultValue;
 	private final PreferenceType mType;
 	private final T[] mChoices;
-	private final boolean mUseCustomPreferencePage;
 	private final IUltimatePreferenceItemValidator<T> mPreferenceValidator;
 	private final String mToolTip;
 
@@ -128,28 +55,28 @@ public final class UltimatePreferenceItem<T> {
 	}
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type,
-			final T[] choices, IUltimatePreferenceItemValidator<T> preferenceValidator) {
+	        final T[] choices, IUltimatePreferenceItemValidator<T> preferenceValidator) {
 		this(label, defaultValue, type, null, false, choices, preferenceValidator);
 	}
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type,
-			final T[] choices) {
+	        final T[] choices) {
 		this(label, defaultValue, type, null, false, choices, null);
 	}
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type,
-			final IUltimatePreferenceItemValidator<T> preferenceValidator) {
+	        final IUltimatePreferenceItemValidator<T> preferenceValidator) {
 		this(label, defaultValue, type, null, false, null, preferenceValidator);
 	}
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final String tooltip,
-			final PreferenceType type) {
+	        final PreferenceType type) {
 		this(label, defaultValue, type, tooltip, false, null, null);
 	}
 
 	public UltimatePreferenceItem(final String label, final T defaultValue, final PreferenceType type,
-			final String tooltip, final boolean useCustomPreferencePage, final T[] choices,
-			final IUltimatePreferenceItemValidator<T> preferenceValidator) {
+	        final String tooltip, final boolean useCustomPreferencePage, final T[] choices,
+	        final IUltimatePreferenceItemValidator<T> preferenceValidator) {
 		mLabel = label;
 		mDefaultValue = defaultValue;
 		mType = type;
@@ -161,7 +88,7 @@ public final class UltimatePreferenceItem<T> {
 		if (mType == PreferenceType.Radio || mType == PreferenceType.Combo) {
 			if (mChoices == null) {
 				throw new IllegalArgumentException(
-						"You have to supply choices if you use PreferenceType Radio or Combo ");
+				        "You have to supply choices if you use PreferenceType Radio or Combo ");
 			}
 		}
 	}
@@ -174,12 +101,9 @@ public final class UltimatePreferenceItem<T> {
 		return mDefaultValue;
 	}
 
+	@Override
 	public PreferenceType getType() {
 		return mType;
-	}
-
-	public boolean getUseCustomPreferencePage() {
-		return mUseCustomPreferencePage;
 	}
 
 	public T[] getChoices() {
@@ -234,5 +158,12 @@ public final class UltimatePreferenceItem<T> {
 				return "Valid range is " + mMin + " <= value <= " + mMax;
 			}
 		}
+	}
+
+	@Override
+	public List<UltimatePreferenceItem<?>> getFlattenedList() {
+		final List<UltimatePreferenceItem<?>> returnList = new ArrayList<>();
+		returnList.add(this);
+		return returnList;
 	}
 }

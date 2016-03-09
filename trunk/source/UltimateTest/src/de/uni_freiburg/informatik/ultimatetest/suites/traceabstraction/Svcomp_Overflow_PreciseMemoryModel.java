@@ -32,6 +32,7 @@ package de.uni_freiburg.informatik.ultimatetest.suites.traceabstraction;
 
 import java.util.Collection;
 
+import de.uni_freiburg.informatik.ultimatetest.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider;
@@ -113,12 +114,12 @@ public class Svcomp_Overflow_PreciseMemoryModel extends AbstractTraceAbstraction
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		if (m_AutomizerWithForwardPredicates) {
-			addTestCases("AutomizerC.xml", 
+			addTestCase("AutomizerC.xml", 
 					"automizer/ForwardPredicates_SvcompOverflowPreciseMM.epf", 
 					m_DirectoryFileEndingsPairs);
 		}
 		if (m_AutomizerWithBackwardPredicates) {
-			addTestCases("AutomizerC.xml", 
+			addTestCase("AutomizerC.xml", 
 					"automizer/BackwardPredicates_SvcompOverflowPreciseMM.epf", 
 					m_DirectoryFileEndingsPairs);
 		}

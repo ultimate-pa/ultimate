@@ -66,14 +66,14 @@ public class CraigInterpolationTest extends
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		if (s_Boogie_TreeInterpolants) {
-			addTestCases(
+			addTestCase(
 					"AutomizerBpl.xml",
 					"automizer/TreeInterpolants.epf",
 				    m_Directories,
 				    new String[] {".bpl"});
 		} 
 		if (s_C_TreeInterpolants) {
-			addTestCases(
+			addTestCase(
 					"AutomizerC.xml",
 					"automizer/TreeInterpolants.epf",
 				    m_Directories,
@@ -81,14 +81,14 @@ public class CraigInterpolationTest extends
 		}
 		
 		if (s_Boogie_NestedInterpolants) {
-			addTestCases(
+			addTestCase(
 					"AutomizerBpl.xml",
 					"automizer/NestedInterpolants.epf",
 				    m_Directories,
 				    new String[] {".bpl"});
 		} 
 		if (s_C_NestedInterpolants) {
-			addTestCases(
+			addTestCase(
 					"AutomizerC.xml",
 					"automizer/NestedInterpolants.epf",
 				    m_Directories,

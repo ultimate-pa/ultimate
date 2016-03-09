@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
@@ -41,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 
 public class PredicateFactoryRefinement extends PredicateFactory {
 	
@@ -50,17 +52,20 @@ public class PredicateFactoryRefinement extends PredicateFactory {
 	protected int m_Iteration;
 	protected final HoareAnnotationFragments m_HoareAnnotationFragments;
 	private final boolean m_MaintainHoareAnnotationFragments = false;
+	private final HashSet<ProgramPoint> m_HoareAnnotationPositions;
 	
 	
 	public PredicateFactoryRefinement(Map<String,Map<String,ProgramPoint>> locNodes,
 							SmtManager smtManager,
 							TAPreferences taPrefs, 
 							boolean maintainHoareAnnotationFragments, 
-							HoareAnnotationFragments haf) {
+							HoareAnnotationFragments haf, 
+							HashSet<ProgramPoint> hoareAnnotationPositions) {
 		super(smtManager, taPrefs);
 		m_locNodes = locNodes;
 //		m_MaintainHoareAnnotationFragments = maintainHoareAnnotationFragments;
 		m_HoareAnnotationFragments = haf;
+		m_HoareAnnotationPositions = hoareAnnotationPositions;
 	}
 
 	
@@ -75,7 +80,7 @@ public class PredicateFactoryRefinement extends PredicateFactory {
 
 		ProgramPoint pp = ((ISLPredicate) p1).getProgramPoint();
 
-		if (!m_Pref.computeHoareAnnotation() || m_SmtManager.isDontCare(p1) || m_SmtManager.isDontCare(p2)) {
+		if (omitComputationOfHoareAnnotation(pp, p1, p2)) {
 			return m_SmtManager.newDontCarePredicate(pp);
 		}
 		TermVarsProc tvp = m_SmtManager.and(p1, p2);
@@ -100,6 +105,18 @@ public class PredicateFactoryRefinement extends PredicateFactory {
 //			m_HoareAnnotationFragments.announceReplacement(p1, result);
 		}
 		return result;
+	}
+	
+	private boolean omitComputationOfHoareAnnotation(ProgramPoint pp, IPredicate p1, IPredicate p2) {
+		if (!m_Pref.computeHoareAnnotation() || m_SmtManager.isDontCare(p1) || m_SmtManager.isDontCare(p2)) {
+			return true;
+		}
+		if (m_Pref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopInvariantsAndEnsures) {
+			assert m_HoareAnnotationPositions != null : "we need this for HoareAnnotationPositions.LoopInvariantsAndEnsures";
+			return !m_HoareAnnotationPositions.contains(pp);
+		} else {
+			return false;
+		}
 	}
 	
 

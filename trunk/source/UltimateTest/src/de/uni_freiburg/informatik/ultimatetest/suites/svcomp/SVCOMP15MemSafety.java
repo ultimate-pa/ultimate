@@ -49,8 +49,8 @@ public class SVCOMP15MemSafety extends AbstractSVCOMPTestSuite {
 	}
 
 	@Override
-	protected List<TestDefinition> getTestDefinitions() {
-		List<TestDefinition> rtr = new ArrayList<>();
+	protected List<SVCOMPTestDefinition> getTestDefinitions() {
+		List<SVCOMPTestDefinition> rtr = new ArrayList<>();
 
 		/* Automizer */
 		rtr.add(getTestDefinitionFromExamples("MemorySafety", "AutomizerC.xml",

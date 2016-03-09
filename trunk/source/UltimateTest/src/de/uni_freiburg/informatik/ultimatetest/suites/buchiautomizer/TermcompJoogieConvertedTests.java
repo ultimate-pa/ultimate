@@ -78,7 +78,7 @@ public class TermcompJoogieConvertedTests extends
 	public Collection<UltimateTestCase> createTestCases() {
 		for (String setting : m_Settings) {
 			for (String toolchain : m_Toolchains) {
-				addTestCases(toolchain, setting, m_UltimateRepository, 
+				addTestCase(toolchain, setting, m_UltimateRepository, 
 						new String[] {".bpl"});
 			}
 		}

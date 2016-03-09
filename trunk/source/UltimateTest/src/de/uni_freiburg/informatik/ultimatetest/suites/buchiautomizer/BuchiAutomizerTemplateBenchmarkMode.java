@@ -89,12 +89,12 @@ public class BuchiAutomizerTemplateBenchmarkMode extends
 	
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		addTestCases(
+		addTestCase(
 			"BuchiAutomizerBplWithBlockEncoding.xml",
 			s_Setting,
 		    m_Directories,
 		    new String[] {".bpl"});
-		addTestCases(
+		addTestCase(
 			"BuchiAutomizerCWithBlockEncoding.xml",
 			s_Setting,
 			m_Directories,

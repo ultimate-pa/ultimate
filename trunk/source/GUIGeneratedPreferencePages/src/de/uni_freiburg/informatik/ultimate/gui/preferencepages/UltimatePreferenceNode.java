@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.gui.preferencepages;
 import org.eclipse.jface.preference.PreferenceNode;
 
 public class UltimatePreferenceNode extends PreferenceNode {
-
 	
 	private UltimateGeneratedPreferencePage mCachedPage;
 	
@@ -49,9 +48,4 @@ public class UltimatePreferenceNode extends PreferenceNode {
 	public String getLabelText() {
 		return mCachedPage.getTitle();
 	}
-	
-	
-	
-	
-
 }

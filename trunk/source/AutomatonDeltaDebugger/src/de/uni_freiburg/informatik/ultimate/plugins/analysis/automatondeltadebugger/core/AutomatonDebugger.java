@@ -31,8 +31,8 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.factories.AAutomatonFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.source.automatondeltadebugger.shrinkers.AShrinker;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories.AAutomatonFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.AShrinker;
 
 /**
  * Delta debugger for automaton-related methods.
@@ -65,7 +65,7 @@ public class AutomatonDebugger<LETTER, STATE> {
 	private INestedWordAutomaton<LETTER, STATE> mAutomaton;
 	private final AAutomatonFactory<LETTER, STATE> mFactory;
 	private final ATester<LETTER, STATE> mTester;
-
+	
 	public AutomatonDebugger(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final AAutomatonFactory<LETTER, STATE> factory,
@@ -74,7 +74,7 @@ public class AutomatonDebugger<LETTER, STATE> {
 		this.mFactory = factory;
 		this.mTester = tester;
 	}
-
+	
 	/**
 	 * Shrinks an automaton according to given rules.
 	 * 
@@ -101,7 +101,7 @@ public class AutomatonDebugger<LETTER, STATE> {
 		applyShrinkers(shrinkersEnd);
 		return mAutomaton;
 	}
-
+	
 	/**
 	 * Runs a binary search for each shrinker in a list.
 	 * 
@@ -123,7 +123,7 @@ public class AutomatonDebugger<LETTER, STATE> {
 		}
 		return isReduced;
 	}
-
+	
 	@Override
 	public String toString() {
 		final StringBuilder b = new StringBuilder();

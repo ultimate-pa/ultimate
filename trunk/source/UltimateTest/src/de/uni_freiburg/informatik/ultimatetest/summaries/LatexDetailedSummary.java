@@ -26,14 +26,15 @@
  */
 package de.uni_freiburg.informatik.ultimatetest.summaries;
 
-import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
@@ -140,8 +141,8 @@ public class LatexDetailedSummary extends LatexSummary {
 			sb.append("}").append(br);
 
 			// make table body
-			PartitionedResults resultsPerTool = partitionResults(CoreUtil.where(results.All,
-					new ITestSummaryResultPredicate() {
+			PartitionedResults resultsPerTool = partitionResults(
+					CoreUtil.where(results.All, new ITestSummaryResultPredicate() {
 						@Override
 						public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 							return entry.getKey().getToolchain().getName().equals(tool);
@@ -151,8 +152,7 @@ public class LatexDetailedSummary extends LatexSummary {
 
 			// end table
 			sb.append("\\end{tabu}}").append(br);
-			sb.append("\\caption{Results for ").append(removeInvalidCharsForLatex(tool)).append(".}")
-					.append(br);
+			sb.append("\\caption{Results for ").append(removeInvalidCharsForLatex(tool)).append(".}").append(br);
 			sb.append("\\end{table}").append(br);
 		}
 		// append finishing code
@@ -186,18 +186,15 @@ public class LatexDetailedSummary extends LatexSummary {
 		sb.append("\\newcommand{\\folder}[1]{\\parbox{5em}{#1}}").append(br);
 	}
 
-	private void makeTableBody(StringBuilder sb, PartitionedResults results, String toolname, int additionalTableHeaders) {
+	private void makeTableBody(StringBuilder sb, PartitionedResults results, String toolname,
+			int additionalTableHeaders) {
 		Set<String> distinctSuffixes = getDistinctFolderSuffixes(results);
 
 		int i = 0;
 		for (final String suffix : distinctSuffixes) {
-			PartitionedResults resultsPerFolder = partitionResults(CoreUtil.where(results.All,
-					new ITestSummaryResultPredicate() {
-						@Override
-						public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-							return entry.getKey().getInput().getParent().endsWith(suffix);
-						}
-					}));
+			final PartitionedResults resultsPerFolder = partitionResults(results.All.stream().filter(
+					entry -> Arrays.stream(entry.getKey().getInput()).anyMatch(a -> a.getParent().endsWith(suffix)))
+					.collect(Collectors.toList()));
 			i++;
 			makeFolderRow(sb, resultsPerFolder, suffix, i >= distinctSuffixes.size(), additionalTableHeaders);
 		}
@@ -205,13 +202,13 @@ public class LatexDetailedSummary extends LatexSummary {
 
 	private void makeFolderRow(StringBuilder sb, PartitionedResults results, String folder, boolean last,
 			int additionalTableHeaders) {
-		String br = CoreUtil.getPlatformLineSeparator();
+		final String br = CoreUtil.getPlatformLineSeparator();
 		final int additionalHeaders = additionalTableHeaders;
 
-		List<File> files = new ArrayList<>(CoreUtil.selectDistinct(results.All, new IMyReduce<File>() {
+		final List<String> files = new ArrayList<>(CoreUtil.selectDistinct(results.All, new IMyReduce<String>() {
 			@Override
-			public File reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return entry.getKey().getInput();
+			public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
+				return entry.getKey().getInputFileNames();
 			}
 		}));
 
@@ -287,25 +284,16 @@ public class LatexDetailedSummary extends LatexSummary {
 	}
 
 	private void makeFileEntry(StringBuilder sb, Collection<Entry<UltimateRunDefinition, ExtendedResult>> current,
-			final List<File> files) {
+			final List<String> files) {
 
-		List<Entry<UltimateRunDefinition, ExtendedResult>> results = new ArrayList<>(CoreUtil.where(current,
-				new ITestSummaryResultPredicate() {
-					@Override
-					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-						return files.contains(entry.getKey().getInput());
-					}
-				}));
+		final List<Entry<UltimateRunDefinition, ExtendedResult>> results = current.stream()
+				.filter(a -> files.contains(a.getKey().getInputFileNames())).collect(Collectors.toList());
 
 		Collections.sort(results, new Comparator<Entry<UltimateRunDefinition, ExtendedResult>>() {
 			@Override
 			public int compare(Entry<UltimateRunDefinition, ExtendedResult> o1,
 					Entry<UltimateRunDefinition, ExtendedResult> o2) {
-				int nameCompare = o1.getKey().getInput().compareTo(o2.getKey().getInput());
-				if (nameCompare == 0) {
-					return o1.getKey().getSettings().getName().compareTo(o2.getKey().getSettings().getName());
-				}
-				return nameCompare;
+				return o1.getKey().compareTo(o2.getKey());
 			}
 		});
 
@@ -332,7 +320,7 @@ public class LatexDetailedSummary extends LatexSummary {
 			} else {
 				sb.append(sep).append(sep);
 			}
-			sb.append(removeInvalidCharsForLatex(result.getKey().getInput().getName()));
+			sb.append(removeInvalidCharsForLatex(result.getKey().getInputFileNames()));
 			sb.append(sep);
 			sb.append(removeInvalidCharsForLatex(result.getKey().getSettings().getName()));
 			sb.append(sep);

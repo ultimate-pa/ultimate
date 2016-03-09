@@ -71,6 +71,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	private final IAbstractDomain<STATE, ACTION, VARDECL> mDomain;
 	private final IVariableProvider<STATE, ACTION, VARDECL, LOCATION> mVarProvider;
 	private final ILoopDetector<ACTION> mLoopDetector;
+	private final IDebugHelper<STATE, ACTION, VARDECL, LOCATION> mDebugHelper;
 	private final IProgressAwareTimer mTimer;
 	private final Logger mLogger;
 
@@ -78,26 +79,19 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	private AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> mResult;
 
 	public FixpointEngine(final IUltimateServiceProvider services, final IProgressAwareTimer timer,
-			final ITransitionProvider<ACTION, LOCATION> post,
-			final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> storage,
-			final IAbstractDomain<STATE, ACTION, VARDECL> domain,
-			final IVariableProvider<STATE, ACTION, VARDECL, LOCATION> varProvider,
-			final ILoopDetector<ACTION> loopDetector) {
+			final FixpointEngineParameters<STATE, ACTION, VARDECL, LOCATION> params) {
 		assert timer != null;
 		assert services != null;
-		assert post != null;
-		assert storage != null;
-		assert domain != null;
-		assert varProvider != null;
-		assert loopDetector != null;
+		assert params != null;
 
 		mTimer = timer;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mTransitionProvider = post;
-		mStateStorage = storage;
-		mDomain = domain;
-		mVarProvider = varProvider;
-		mLoopDetector = loopDetector;
+		mTransitionProvider = params.getTransitionProvider();
+		mStateStorage = params.getStorage();
+		mDomain = params.getAbstractDomain();
+		mVarProvider = params.getVariableProvider();
+		mLoopDetector = params.getLoopDetector();
+		mDebugHelper = params.getDebugHelper();
 
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		mMaxUnwindings = ups.getInt(AbsIntPrefInitializer.LABEL_ITERATIONS_UNTIL_WIDENING);
@@ -111,7 +105,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		mResult = (intermediateResult == null ? new AbstractInterpretationResult<>() : intermediateResult);
 		mBenchmark = mResult.getBenchmark();
 		calculateFixpoint(start);
-		mResult.saveTerms(mStateStorage,start, script, bpl2smt);
+		mResult.saveTerms(mStateStorage, start, script, bpl2smt);
 		return mResult;
 	}
 
@@ -157,6 +151,9 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				// a context switch happened
 				postStates = post.apply(preState, preStateWithFreshVariables, currentAction);
 			}
+
+			assert mDebugHelper.isPostSound(preStateWithFreshVariables, postStates,
+					currentAction) : getLogMessageUnsoundPost(preStateWithFreshVariables, postStates, currentAction);
 
 			if (postStates.isEmpty()) {
 				// if there are no post states, we interpret this as bottom
@@ -491,6 +488,12 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			mLogger.warn("Received timeout, aborting fixpoint engine");
 			throw new ToolchainCanceledException(getClass(), "Got cancel request during abstract interpretation");
 		}
+	}
+
+	private String getLogMessageUnsoundPost(STATE preStateWithFreshVariables, List<STATE> postStates,
+			ACTION currentAction) {
+		// TODO Auto-generated method stub
+		return "Post is unsound";
 	}
 
 	private StringBuilder getLogMessageEmptyIsBottom() {

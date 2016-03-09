@@ -58,8 +58,8 @@ public class SVCOMP15TestSuite extends AbstractSVCOMPTestSuite {
 	}
 
 	@Override
-	protected List<TestDefinition> getTestDefinitions() {
-		List<TestDefinition> rtr = new ArrayList<>();
+	protected List<SVCOMPTestDefinition> getTestDefinitions() {
+		List<SVCOMPTestDefinition> rtr = new ArrayList<>();
 		//@formatter:off
 
 		// available sets:
