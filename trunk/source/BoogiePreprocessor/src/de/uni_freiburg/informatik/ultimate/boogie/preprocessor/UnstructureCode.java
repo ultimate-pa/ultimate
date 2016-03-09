@@ -239,24 +239,28 @@ public class UnstructureCode extends BaseObserver {
 	 * @param outer
 	 *            The BreakInfo of the current statement. Used for if-then and while which may implicitly jump to the
 	 *            end of the current statement.
-	 * @param s
+	 * @param origStmt
 	 *            The current statement that should be converted (not a label).
 	 */
-	private void unstructureStatement(BreakInfo outer, Statement s) {
-		if (s instanceof GotoStatement || s instanceof ReturnStatement) {
-			mFlatStatements.add(s);
+	private void unstructureStatement(final BreakInfo outer, final Statement origStmt) {
+		if (origStmt instanceof GotoStatement) {
+			new LoopEntryAnnotation(LoopEntryType.GOTO).annotate(origStmt);
+			mFlatStatements.add(origStmt);
 			mReachable = false;
-		} else if (s instanceof BreakStatement) {
-			String label = ((BreakStatement) s).getLabel();
+		} else if (origStmt instanceof ReturnStatement) {
+			mFlatStatements.add(origStmt);
+			mReachable = false;
+		} else if (origStmt instanceof BreakStatement) {
+			String label = ((BreakStatement) origStmt).getLabel();
 			if (label == null)
 				label = "*";
 			BreakInfo dest = findLabel(label);
 			if (dest.destLabel == null)
 				dest.destLabel = generateLabel();
-			postCreateStatement(s, new GotoStatement(s.getLocation(), new String[] { dest.destLabel }));
+			postCreateStatement(origStmt, new GotoStatement(origStmt.getLocation(), new String[] { dest.destLabel }));
 			mReachable = false;
-		} else if (s instanceof WhileStatement) {
-			WhileStatement stmt = (WhileStatement) s;
+		} else if (origStmt instanceof WhileStatement) {
+			WhileStatement stmt = (WhileStatement) origStmt;
 			String head = generateLabel();
 			String body = generateLabel();
 			String done;
@@ -284,59 +288,61 @@ public class UnstructureCode extends BaseObserver {
 				}
 			}
 
-			postCreateStatement(s, new GotoStatement(s.getLocation(), new String[] { body, done }));
-			postCreateStatement(s, new Label(s.getLocation(), body));
+			postCreateStatement(origStmt, new GotoStatement(origStmt.getLocation(), new String[] { body, done }));
+			postCreateStatement(origStmt, new Label(origStmt.getLocation(), body));
 			if (!(stmt.getCondition() instanceof WildcardExpression)) {
 				final AssumeStatement newCondStmt = new AssumeStatement(stmt.getLocation(), stmt.getCondition());
 				new LoopEntryAnnotation(LoopEntryType.WHILE).annotate(newCondStmt);
-				postCreateStatementFromCond(s, newCondStmt, false);
+				postCreateStatementFromCond(origStmt, newCondStmt, false);
 			} else {
 				final AssumeStatement newCondStmt = new AssumeStatement(stmt.getLocation(),
 						new BooleanLiteral(stmt.getCondition().getLocation(), true));
 				new LoopEntryAnnotation(LoopEntryType.WHILE).annotate(newCondStmt);
-				postCreateStatementFromCond(s, newCondStmt, false);
+				postCreateStatementFromCond(origStmt, newCondStmt, false);
 			}
 			outer.breakLabels.add("*");
 			unstructureBlock(stmt.getBody());
 			if (mReachable) {
-				postCreateStatement(s, new GotoStatement(s.getLocation(), new String[] { head }));
+				postCreateStatement(origStmt, new GotoStatement(origStmt.getLocation(), new String[] { head }));
 			}
 			mReachable = false;
 
 			if (!(stmt.getCondition() instanceof WildcardExpression)) {
-				postCreateStatement(s, new Label(s.getLocation(), done));
-				postCreateStatementFromCond(s,
+				postCreateStatement(origStmt, new Label(origStmt.getLocation(), done));
+				postCreateStatementFromCond(origStmt,
 						new AssumeStatement(stmt.getLocation(), new UnaryExpression(stmt.getCondition().getLocation(),
 								BoogieType.boolType, UnaryExpression.Operator.LOGICNEG, stmt.getCondition())),
 						true);
 				mReachable = true;
 			}
-		} else if (s instanceof IfStatement) {
-			IfStatement stmt = (IfStatement) s;
+		} else if (origStmt instanceof IfStatement) {
+			IfStatement stmt = (IfStatement) origStmt;
 			String thenLabel = generateLabel();
 			String elseLabel = generateLabel();
-			postCreateStatement(s, new GotoStatement(stmt.getLocation(), new String[] { thenLabel, elseLabel }));
-			postCreateStatement(s, new Label(s.getLocation(), thenLabel));
+			postCreateStatement(origStmt, new GotoStatement(stmt.getLocation(), new String[] { thenLabel, elseLabel }));
+			postCreateStatement(origStmt, new Label(origStmt.getLocation(), thenLabel));
 			if (!(stmt.getCondition() instanceof WildcardExpression)) {
-				postCreateStatementFromCond(s, new AssumeStatement(stmt.getLocation(), stmt.getCondition()), false);
+				postCreateStatementFromCond(origStmt, new AssumeStatement(stmt.getLocation(), stmt.getCondition()),
+						false);
 			}
 			unstructureBlock(stmt.getThenPart());
 			if (mReachable) {
 				if (outer.destLabel == null)
 					outer.destLabel = generateLabel();
-				postCreateStatement(s, new GotoStatement(s.getLocation(), new String[] { outer.destLabel }));
+				postCreateStatement(origStmt,
+						new GotoStatement(origStmt.getLocation(), new String[] { outer.destLabel }));
 			}
 			mReachable = true;
-			postCreateStatement(s, new Label(s.getLocation(), elseLabel));
+			postCreateStatement(origStmt, new Label(origStmt.getLocation(), elseLabel));
 			if (!(stmt.getCondition() instanceof WildcardExpression)) {
-				postCreateStatementFromCond(s,
+				postCreateStatementFromCond(origStmt,
 						new AssumeStatement(stmt.getLocation(), new UnaryExpression(stmt.getCondition().getLocation(),
 								BoogieType.boolType, UnaryExpression.Operator.LOGICNEG, stmt.getCondition())),
 						true);
 			}
 			unstructureBlock(stmt.getElsePart());
-		} else if (s instanceof AssignmentStatement) {
-			AssignmentStatement assign = (AssignmentStatement) s;
+		} else if (origStmt instanceof AssignmentStatement) {
+			AssignmentStatement assign = (AssignmentStatement) origStmt;
 			LeftHandSide[] lhs = assign.getLhs();
 			Expression[] rhs = assign.getRhs();
 			boolean changed = false;
@@ -354,10 +360,10 @@ public class UnstructureCode extends BaseObserver {
 			if (changed) {
 				postCreateStatement(assign, new AssignmentStatement(assign.getLocation(), lhs, rhs));
 			} else {
-				mFlatStatements.add(s);
+				mFlatStatements.add(origStmt);
 			}
 		} else {
-			mFlatStatements.add(s);
+			mFlatStatements.add(origStmt);
 		}
 	}
 

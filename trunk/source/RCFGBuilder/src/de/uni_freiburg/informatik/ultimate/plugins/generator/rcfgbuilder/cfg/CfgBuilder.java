@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
 import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.model.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
@@ -664,6 +665,11 @@ public class CfgBuilder {
 					gotoEdge.setTarget(null);
 					child.removeIncoming(gotoEdge);
 
+					// transfer goto-loop annotations to the outgoing edges of child
+					for (final RCFGEdge out : child.getOutgoingEdges()) {
+						ModelUtils.copyAnnotations(gotoEdge, out, LoopEntryAnnotation.class);
+					}
+
 					mLogger.debug(mother + " has no sucessors any more or " + child + "has no predecessors any more.");
 					mLogger.debug(child + " gets absorbed by " + mother);
 					mergeLocNodes(child, mother);
@@ -679,11 +685,13 @@ public class CfgBuilder {
 								+ child.getIncomingNodes());
 						mLogger.debug(mother + " has " + mother.getIncomingEdges().size() + " successors" + ", namely "
 								+ mother.getOutgoingNodes());
-						mLogger.debug("Adding for every successor" + " transition of " + child + " a copy of that"
-								+ " transition as successor of " + mother);
+						mLogger.debug("Adding for every successor transition of " + child
+								+ " a copy of that transition as successor of " + mother);
 						for (RCFGEdge grandchild : child.getOutgoingEdges()) {
 							ProgramPoint target = (ProgramPoint) grandchild.getTarget();
 							CodeBlock edge = m_Cbf.copyCodeBlock((CodeBlock) grandchild, mother, target);
+							// transfer goto-loop annotations to the duplicated edges 							
+							ModelUtils.copyAnnotations(gotoEdge, edge, LoopEntryAnnotation.class);
 							if (edge instanceof GotoEdge) {
 								m_GotoEdges.add((GotoEdge) edge);
 							} else {
