@@ -34,16 +34,20 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util;
 
 import java.math.BigInteger;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.FunctionDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.cHandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.PRIMITIVE;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.IncorrectSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.RValue;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BitvecLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.FunctionDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 /**
@@ -180,28 +184,37 @@ public final class ISOIEC9899TC3 {
 	 *            the location
 	 * @return the parsed value
 	 */
-	public static final String handleFloatConstant(String val, ILocation loc) {
-		String value = val;
-		// if there is a float-suffix: throw it away
-		for (String s : SUFFIXES_FLOAT) {
-			if (val.endsWith(s)) {
-				value = val.substring(0, val.length() - s.length());
-				String msg = IGNORED_SUFFIX + " " + "Float suffix ignored: " + s;
-				throw new UnsupportedSyntaxException(loc, msg);
+	public static final RValue handleFloatConstant(String val, ILocation loc,
+			boolean bitvectorTranslation, 
+			TypeSizes typeSizeConstants,
+			FunctionDeclarations functionDeclarations) {
+		if (bitvectorTranslation) {
+			//TODO bitprecise Float translation
+			return null;
+		} else {
+			String value = val;
+			// if there is a float-suffix: throw it away
+			for (String s : SUFFIXES_FLOAT) {
+				if (val.endsWith(s)) {
+					value = val.substring(0, val.length() - s.length());
+					String msg = IGNORED_SUFFIX + " " + "Float suffix ignored: " + s;
+					throw new UnsupportedSyntaxException(loc, msg);
+				}
 			}
-		}
-		try {
-			// check for integer-prefix.
-			if (value.startsWith(HEX_L0X) || value.startsWith(HEX_U0X)) {
-				// val is a hexadecimal-constant!
-				//FIXME: --> is removing the + in front of the exponent enough??
-				return Double.valueOf(value.replaceAll("\\+", "")).toString();
+			try {
+				// check for integer-prefix.
+				if (value.startsWith(HEX_L0X) || value.startsWith(HEX_U0X)) {
+					// val is a hexadecimal-constant!
+					//FIXME: --> is removing the + in front of the exponent enough??
+					value = Double.valueOf(value.replaceAll("\\+", "")).toString();
+				} else {
+					Double.valueOf(value); //using double for good measure..
+				}
+				return new RValue(new RealLiteral(loc, value), new CPrimitive(PRIMITIVE.FLOAT));
+			} catch (NumberFormatException nfe) {
+				String msg = "Unable to translate float!";
+				throw new IncorrectSyntaxException(loc, msg);
 			}
-			Double.valueOf(value); //using double for good measure..
-			return value;
-		} catch (NumberFormatException nfe) {
-			String msg = "Unable to translate float!";
-			throw new IncorrectSyntaxException(loc, msg);
 		}
 	}
 

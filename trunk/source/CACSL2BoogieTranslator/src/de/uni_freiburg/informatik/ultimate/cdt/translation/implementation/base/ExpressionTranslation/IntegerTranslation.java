@@ -116,6 +116,11 @@ public class IntegerTranslation extends AExpressionTranslation {
 		return ISOIEC9899TC3.constructLiteralForCIntegerLiteral(loc, false, m_TypeSizes, type, value);
 	}
 	
+	@Override
+	public RValue translateFloatingLiteral(ILocation loc, String val) {
+		RValue rVal = ISOIEC9899TC3.handleFloatConstant(val, loc, true, m_TypeSizes, m_FunctionDeclarations);
+		return rVal;
+	}
 	
 
 	@Override

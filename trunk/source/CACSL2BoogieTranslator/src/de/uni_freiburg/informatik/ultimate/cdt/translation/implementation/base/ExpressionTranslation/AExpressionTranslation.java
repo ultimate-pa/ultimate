@@ -94,8 +94,8 @@ public abstract class AExpressionTranslation {
 		case IASTLiteralExpression.lk_float_constant:
 		{
 			String val = new String(node.getValue());
-			val = ISOIEC9899TC3.handleFloatConstant(val, loc);
-			return new ExpressionResult(new RValue(new RealLiteral(loc, val), new CPrimitive(PRIMITIVE.FLOAT)));
+			RValue rVal = translateFloatingLiteral(loc, val);
+			return new ExpressionResult(rVal);
 		}
 		case IASTLiteralExpression.lk_char_constant:
 			throw new AssertionError("To be handled by subclass");
@@ -184,6 +184,8 @@ public abstract class AExpressionTranslation {
 	}
 	
 	public abstract RValue translateIntegerLiteral(ILocation loc, String val);
+	
+	public abstract RValue translateFloatingLiteral(ILocation loc, String val);
 	
 	public abstract Expression constructLiteralForIntegerType(ILocation loc, CPrimitive type, BigInteger value);
 	public Expression constructLiteralForFloatingType(ILocation loc, CPrimitive inputPrimitive, BigInteger zero) {
