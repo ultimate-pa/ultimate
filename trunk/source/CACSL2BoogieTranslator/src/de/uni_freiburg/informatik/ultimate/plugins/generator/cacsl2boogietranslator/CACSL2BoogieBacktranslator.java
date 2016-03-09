@@ -799,7 +799,7 @@ public class CACSL2BoogieBacktranslator
 				String translatedString = BoogiePrettyPrinter.print(translated);
 				// its ugly, but the easiest way to backtranslate a synthesized boogie expression
 				// we just replace operators that "look" different in C
-				translatedString = translatedString.replaceAll("old\\(", "\\\\old\\(");
+				translatedString = translatedString.replaceAll("old\\(", "\\old\\(").replace("\\\\old", "\\old");
 
 				return new FakeExpression(translatedString);
 			}
@@ -1027,8 +1027,9 @@ public class CACSL2BoogieBacktranslator
 				if (loc instanceof CACSLLocation) {
 					IASTExpression translated = translateExpression(ident);
 					if (translated != null) {
-						return new IdentifierExpression(ident.getLocation(), ident.getType(),
-								translated.getRawSignature(), ident.getDeclarationInformation());
+						final String raw = translated.getRawSignature();
+						return new IdentifierExpression(ident.getLocation(), ident.getType(), raw,
+								ident.getDeclarationInformation());
 					}
 				}
 			}
