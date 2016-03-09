@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.model.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 
@@ -37,21 +39,23 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
-public class RcfgLoopDetector<ACTION, LOCATION> implements ILoopDetector<ACTION> {
+public class RcfgLoopDetector<ACTION extends IElement, LOCATION> implements ILoopDetector<ACTION> {
 
-	private final Set<LOCATION> mLoopLocations;
-	private final ITransitionProvider<ACTION, LOCATION> mTransitionProvider;
+//	private final Set<LOCATION> mLoopLocations;
+//	private final ITransitionProvider<ACTION, LOCATION> mTransitionProvider;
 
 	public RcfgLoopDetector(final Set<LOCATION> loopLocations,
 			final ITransitionProvider<ACTION, LOCATION> transProvider) {
-		mLoopLocations = loopLocations;
-		mTransitionProvider = transProvider;
+//		mLoopLocations = loopLocations;
+//		mTransitionProvider = transProvider;
 	}
 
 	@Override
-	public boolean isEnteringLoop(ACTION transition) {
+	public boolean isEnteringLoop(final ACTION transition) {
 		assert transition != null;
-		final LOCATION source = mTransitionProvider.getSource(transition);
-		return mLoopLocations.contains(source);
+//		final LOCATION source = mTransitionProvider.getSource(transition);
+		LoopEntryAnnotation leannot = LoopEntryAnnotation.getAnnotation(transition);
+		return leannot != null;
+//		return mLoopLocations.contains(source);
 	}
 }
