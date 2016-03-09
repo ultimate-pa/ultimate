@@ -44,6 +44,7 @@ file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2=0.0.1
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Abstract\ domain=CompoundDomain
+/instance/de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2/Log\ string\ format=TERM
 
 
 #Fri Jun 05 02:20:55 CEST 2015
