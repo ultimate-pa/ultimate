@@ -633,8 +633,7 @@ public class BuchiCegarLoop {
 			MinimizeSevpa<CodeBlock, IPredicate> minimizeOp = new MinimizeSevpa<CodeBlock, IPredicate>(
 					new AutomataLibraryServices(m_Services), m_Abstraction, partition, m_StateFactoryForRefinement);
 			assert (minimizeOp.checkResult(m_PredicateFactoryResultChecking));
-			result = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), minimizeOp.getResult()))
-					.getResult();
+			result = minimizeOp.getResult();
 			break;
 		}
 		case None: {
