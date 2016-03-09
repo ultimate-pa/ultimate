@@ -165,12 +165,12 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 			}
 			final GroupEntry annotationGroup = new GroupEntry("IPayload.Annotation", null);
 			rtr.add(annotationGroup);
-			for (final String outer : payload.getAnnotations().keySet()) {
-				final GroupEntry group = new GroupEntry(outer, annotationGroup);
-				final IAnnotations annotations = payload.getAnnotations().get(outer);
+			for (final java.util.Map.Entry<String, IAnnotations> outer : payload.getAnnotations().entrySet()) {
+				final GroupEntry group = new GroupEntry(outer.getKey(), annotationGroup);
 
-				final Map<String, Object> innerMap = annotations.getAnnotationsAsMap();
+				final Map<String, Object> innerMap = outer.getValue().getAnnotationsAsMap();
 
+				//add traditional annotations to view
 				for (final java.util.Map.Entry<String, Object> inner : innerMap.entrySet()) {
 					final TreeViewEntry innerEntry = convertEntry(inner.getKey(), inner.getValue(), group);
 					if (innerEntry.isEmpty()) {
@@ -178,7 +178,8 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 					}
 					group.addEntry(innerEntry);
 				}
-				addVisualizableFields(group, annotations);
+				//add modern annotations to view
+				addVisualizableFields(group, outer.getValue());
 				annotationGroup.addEntry(group);
 			}
 		}
