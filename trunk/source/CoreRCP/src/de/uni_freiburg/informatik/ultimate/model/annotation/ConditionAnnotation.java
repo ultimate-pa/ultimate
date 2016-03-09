@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.model.annotation;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
-import de.uni_freiburg.informatik.ultimate.model.IPayload;
 
 /**
  * 
@@ -42,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.model.IPayload;
 public class ConditionAnnotation extends ModernAnnotations {
 
 	private static final long serialVersionUID = 1L;
-	private static final String KEY = Activator.PLUGIN_ID + "_ConditionAnnotation";
+	private static final String KEY = Activator.PLUGIN_ID + "_Condition";
 
 	@Visualizable
 	private final boolean mIsNegated;
@@ -59,22 +58,10 @@ public class ConditionAnnotation extends ModernAnnotations {
 		node.getPayload().getAnnotations().put(KEY, this);
 	}
 
-	public static ConditionAnnotation getAnnotation(IElement node) {
-		if(node == null){
-			return null;
-		}
-		if (node.hasPayload()) {
-			final IPayload payload = node.getPayload();
-			if (payload.hasAnnotation()) {
-				final IAnnotations annot = payload.getAnnotations().get(KEY);
-				if (annot != null) {
-					return (ConditionAnnotation) annot;
-				}
-			}
-		}
-		return null;
+	public static ConditionAnnotation getAnnotation(final IElement node) {
+		return ModernAnnotations.getAnnotation(node, KEY, a -> (ConditionAnnotation) a);
 	}
-
+	
 	@Override
 	public String toString() {
 		return "IsNegated=" + String.valueOf(mIsNegated);
