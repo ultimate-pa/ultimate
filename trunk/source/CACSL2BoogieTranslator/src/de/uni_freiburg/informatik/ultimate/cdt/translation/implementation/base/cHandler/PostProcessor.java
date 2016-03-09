@@ -545,5 +545,18 @@ public class PostProcessor {
 		}
 		return decls;
 	}
+
+	/**
+	 * Generate FloatingPoint types
+	 * @param loc
+	 * @param typesizes
+	 * @param typeHandler
+	 * @return
+	 */
+	public static ArrayList<Declaration> declareFloatDataTypes(ILocation loc,
+			TypeSizes typesizes, TypeHandler typeHandler) {
+		//TODO: Implement
+		return null;
+	}
 			
 }
