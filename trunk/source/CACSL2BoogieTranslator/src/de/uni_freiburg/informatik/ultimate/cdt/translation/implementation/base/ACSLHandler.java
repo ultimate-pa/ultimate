@@ -156,8 +156,17 @@ public class ACSLHandler implements IACSLHandler {
      * Holds the spec type, which we need later in the code.
      */
     private ACSLHandler.SPEC_TYPE specType = ACSLHandler.SPEC_TYPE.NOT;
+    /**
+     * in the witness invariant mode we write a different annotation at the
+     * assert
+     */
+	private final  boolean m_WitnessInvariantMode;
     
     
+
+	public ACSLHandler(boolean witnessInvariantMode) {
+		m_WitnessInvariantMode = witnessInvariantMode;
+	}
 
 	/**
      * @deprecated is not supported in this handler! Do not use!
@@ -198,7 +207,12 @@ public class ACSLHandler implements IACSLHandler {
             check.addToNodeAnnot(assertStmt);
             return new Result(assertStmt);
             */
-            Check check = new Check(Check.Spec.ASSERT);
+            final Check check; 
+            if (m_WitnessInvariantMode) {
+            	check = new Check(Check.Spec.WITNESS_INVARIANT);
+            } else {
+            	check = new Check(Check.Spec.ASSERT);
+            }
             ILocation loc = LocationFactory.createACSLLocation(node, check);
             ArrayList<Declaration> decl = new ArrayList<Declaration>();
             ArrayList<Statement> stmt = new ArrayList<Statement>();
