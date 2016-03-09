@@ -179,7 +179,8 @@ public class OctStatementProcessor {
 				Consumer<OctDomainState> action = s -> s.copyVar(targetVar, ovf.var);
 				if (ovf.negVar) {
 					action = action.andThen(s -> s.negateNumericVar(targetVar));
-				} else {
+				}
+				if (ovf.constant.signum() != 0) {
 					action = action.andThen(s -> s.incrementNumericVar(targetVar, ovf.constant));
 				}
 				oldStates.forEach(action);
