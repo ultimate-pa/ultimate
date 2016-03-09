@@ -95,6 +95,12 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 	
 	@Override
+	public RValue translateFloatingLiteral(ILocation loc, String val) {
+		RValue rVal = ISOIEC9899TC3.handleFloatConstant(val, loc, true, m_TypeSizes, m_FunctionDeclarations);
+		return rVal;
+	}
+	
+	@Override
 	public Expression constructLiteralForIntegerType(ILocation loc, CPrimitive type, BigInteger value) {
 		return ISOIEC9899TC3.constructLiteralForCIntegerLiteral(loc, true, m_TypeSizes, type, value);
 	}
