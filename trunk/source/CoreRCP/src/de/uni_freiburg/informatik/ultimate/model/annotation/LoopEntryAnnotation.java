@@ -70,6 +70,14 @@ public class LoopEntryAnnotation extends ModernAnnotations {
 	}
 
 	public enum LoopEntryType {
-		GOTO, WHILE
+		/**
+		 * A GOTO loop entry may or may not be an edge leading into a loop. All original gotos are marked with this
+		 * annotation.
+		 */
+		GOTO,
+		/**
+		 * A WHILE loop entry is always an edge that leads into a loop.
+		 */
+		WHILE
 	}
 }
