@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.AffineSubtermNormalizer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
@@ -81,6 +82,7 @@ public class HoareAnnotation extends SPredicate {
 
 	private boolean m_FormulaHasBeenComputed = false;
 	private Term m_ClosedFormula;
+	private static final boolean s_AvoidImplications = true;
 	
 
 	public HoareAnnotation(ProgramPoint programPoint, int serialNumber, SmtManager smtManager, IUltimateServiceProvider services) {
@@ -166,6 +168,9 @@ public class HoareAnnotation extends SPredicate {
 			Term invariant = getPrecondition2Invariant().get(precond);
 			invariant = SmtUtils.simplify(m_SmtManager.getScript(), invariant, m_Services); 
 			Term precondTerm = Util.implies(m_SmtManager.getScript(), precond, invariant);
+			if (s_AvoidImplications) {
+				precondTerm = (new Nnf(m_SmtManager.getScript(), m_Services, m_SmtManager.getVariableManager())).transform(precondTerm);
+			}
 			mLogger.debug("In " + this + " holds " + invariant + " for precond " + precond);
 			m_Formula = Util.and(m_SmtManager.getScript(), m_Formula, precondTerm);
 		}
