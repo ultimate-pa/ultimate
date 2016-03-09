@@ -71,6 +71,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	private final IAbstractDomain<STATE, ACTION, VARDECL> mDomain;
 	private final IVariableProvider<STATE, ACTION, VARDECL, LOCATION> mVarProvider;
 	private final ILoopDetector<ACTION> mLoopDetector;
+	private final IDebugHelper<STATE, ACTION, VARDECL, LOCATION> mDebugHelper;
 	private final IProgressAwareTimer mTimer;
 	private final Logger mLogger;
 
@@ -90,6 +91,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		mDomain = params.getAbstractDomain();
 		mVarProvider = params.getVariableProvider();
 		mLoopDetector = params.getLoopDetector();
+		mDebugHelper = params.getDebugHelper();
 
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		mMaxUnwindings = ups.getInt(AbsIntPrefInitializer.LABEL_ITERATIONS_UNTIL_WIDENING);
@@ -103,7 +105,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		mResult = (intermediateResult == null ? new AbstractInterpretationResult<>() : intermediateResult);
 		mBenchmark = mResult.getBenchmark();
 		calculateFixpoint(start);
-		mResult.saveTerms(mStateStorage,start, script, bpl2smt);
+		mResult.saveTerms(mStateStorage, start, script, bpl2smt);
 		return mResult;
 	}
 
@@ -150,9 +152,9 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				postStates = post.apply(preState, preStateWithFreshVariables, currentAction);
 			}
 
-			assert isPostSound(preStateWithFreshVariables, postStates,
+			assert mDebugHelper.isPostSound(preStateWithFreshVariables, postStates,
 					currentAction) : getLogMessageUnsoundPost(preStateWithFreshVariables, postStates, currentAction);
-			
+
 			if (postStates.isEmpty()) {
 				// if there are no post states, we interpret this as bottom
 				if (mLogger.isDebugEnabled()) {
@@ -487,16 +489,11 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			throw new ToolchainCanceledException(getClass(), "Got cancel request during abstract interpretation");
 		}
 	}
-	
-	private boolean isPostSound(STATE pre, List<STATE> postStates, ACTION transition) {
-		// TODO Auto-generated method stub
-		return true;
-	}
-	
+
 	private String getLogMessageUnsoundPost(STATE preStateWithFreshVariables, List<STATE> postStates,
 			ACTION currentAction) {
 		// TODO Auto-generated method stub
-		return "";
+		return "Post is unsound";
 	}
 
 	private StringBuilder getLogMessageEmptyIsBottom() {

@@ -29,7 +29,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class NWAPathProgramTransitionProvider<LOCATION> implements ITransitionProvider<CodeBlock, LOCATION>,ILoopDetector<CodeBlock> {
+public class NWAPathProgramTransitionProvider<LOCATION>
+		implements ITransitionProvider<CodeBlock, LOCATION>, ILoopDetector<CodeBlock> {
 
 	private final INestedWordAutomatonOldApi<CodeBlock, LOCATION> mAutomata;
 	private final NestedRun<CodeBlock, LOCATION> mCex;
@@ -38,7 +39,8 @@ public class NWAPathProgramTransitionProvider<LOCATION> implements ITransitionPr
 	private final Set<ProgramPoint> mLoopLocations;
 
 	public NWAPathProgramTransitionProvider(final INestedWordAutomatonOldApi<CodeBlock, LOCATION> currentAutomata,
-			final NestedRun<CodeBlock, LOCATION> counterexample, final IUltimateServiceProvider services,RootAnnot annotation) {
+			final NestedRun<CodeBlock, LOCATION> counterexample, final IUltimateServiceProvider services,
+			final RootAnnot annotation) {
 		mAutomata = currentAutomata;
 		mCex = counterexample;
 		mLetter2Index = createLetter2Index(mCex);
@@ -127,7 +129,7 @@ public class NWAPathProgramTransitionProvider<LOCATION> implements ITransitionPr
 			// TODO: Implement
 			throw new UnsupportedOperationException();
 		} else {
-			final LOCATION locAtIndex = mCex.getStateAtPosition(index+1);
+			final LOCATION locAtIndex = mCex.getStateAtPosition(index + 1);
 			return locAtIndex;
 		}
 	}
@@ -137,23 +139,23 @@ public class NWAPathProgramTransitionProvider<LOCATION> implements ITransitionPr
 		final Collection<CodeBlock> rtr = new ArrayList<>();
 		for (OutgoingInternalTransition<CodeBlock, LOCATION> internalSucc : mAutomata.internalSuccessors(loc)) {
 			final CodeBlock succ = internalSucc.getLetter();
-			if(mLetter2Index.containsKey(succ)){
+			if (mLetter2Index.containsKey(succ)) {
 				rtr.add(succ);
 			}
 		}
 		for (OutgoingCallTransition<CodeBlock, LOCATION> callSucc : mAutomata.callSuccessors(loc)) {
 			final CodeBlock succ = callSucc.getLetter();
-			if(mLetter2Index.containsKey(succ)){
+			if (mLetter2Index.containsKey(succ)) {
 				rtr.add(succ);
 			}
 		}
 		for (OutgoingReturnTransition<CodeBlock, LOCATION> returnSucc : mAutomata.returnSuccessors(loc)) {
 			final CodeBlock succ = returnSucc.getLetter();
-			if(mLetter2Index.containsKey(succ)){
+			if (mLetter2Index.containsKey(succ)) {
 				rtr.add(succ);
 			}
 		}
-		//TODO: Add loop successors
+		// TODO: Add loop successors
 		return rtr;
 	}
 
