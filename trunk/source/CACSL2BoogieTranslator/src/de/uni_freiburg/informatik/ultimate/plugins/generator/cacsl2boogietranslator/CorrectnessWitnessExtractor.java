@@ -255,10 +255,10 @@ public class CorrectnessWitnessExtractor {
 		while (beforeIter.hasNext()) {
 			final IASTNode beforeCurrent = beforeIter.next();
 			final IASTDeclaration beforeScope = determineScope(beforeCurrent);
-			if (beforeScope == null) {
-				// its the global scope
-				continue;
-			}
+			 if (beforeScope == null) {
+			 // its the global scope
+			 continue;
+			 }
 			for (final IASTNode afterCurrent : matchedNodes.getSecond()) {
 				final IASTDeclaration afterScope = determineScope(afterCurrent);
 				if (afterScope == null) {
@@ -269,13 +269,18 @@ public class CorrectnessWitnessExtractor {
 					mLogger.warn("Removing invariant match "
 							+ toLogStringCNode("Before", beforeCurrent,
 									WitnessNodeAnnotation.getAnnotation(wnode).getInvariant())
-							+ " because scopes differ: B=L" + beforeScope.getFileLocation().getStartingLineNumber()
-							+ ", A=L" + afterScope.getFileLocation().getStartingLineNumber());
+							+ " because scopes differ: " + toLogString(beforeScope, afterScope));
 					beforeIter.remove();
 					break;
 				}
 			}
 		}
+	}
+
+	private String toLogString(IASTNode bScope, IASTNode aScope) {
+		String bScopeId = bScope == null ? "Global" : "L" + bScope.getFileLocation().getStartingLineNumber();
+		String aScopeId = aScope == null ? "Global" : "L" + aScope.getFileLocation().getStartingLineNumber();
+		return "B=" + bScopeId + ", A=" + aScopeId;
 	}
 
 	private IASTDeclaration determineScope(final IASTNode current) {
