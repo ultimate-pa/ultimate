@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BoogieASTNode;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BreakStatement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -282,12 +283,16 @@ public class UnstructureCode extends BaseObserver {
 					postCreateStatement(spec, new AssertStatement(spec.getLocation(), spec.getFormula()));
 				}
 			}
-			final GotoStatement gotoStmt = new GotoStatement(s.getLocation(), new String[] { body, done });
-			new LoopEntryAnnotation(LoopEntryType.WHILE).annotate(gotoStmt);
-			postCreateStatement(s, gotoStmt);
+
+			postCreateStatement(s, new GotoStatement(s.getLocation(), new String[] { body, done }));
 			postCreateStatement(s, new Label(s.getLocation(), body));
 			if (!(stmt.getCondition() instanceof WildcardExpression)) {
 				final AssumeStatement newCondStmt = new AssumeStatement(stmt.getLocation(), stmt.getCondition());
+				new LoopEntryAnnotation(LoopEntryType.WHILE).annotate(newCondStmt);
+				postCreateStatementFromCond(s, newCondStmt, false);
+			} else {
+				final AssumeStatement newCondStmt = new AssumeStatement(stmt.getLocation(),
+						new BooleanLiteral(stmt.getCondition().getLocation(), true));
 				new LoopEntryAnnotation(LoopEntryType.WHILE).annotate(newCondStmt);
 				postCreateStatementFromCond(s, newCondStmt, false);
 			}

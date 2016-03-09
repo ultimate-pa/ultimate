@@ -664,11 +664,6 @@ public class CfgBuilder {
 					gotoEdge.setTarget(null);
 					child.removeIncoming(gotoEdge);
 
-					// transfer goto annotations to the outgoing edges of child
-					for (RCFGEdge out : child.getOutgoingEdges()) {
-						ModelUtils.copyAnnotations(gotoEdge, out);
-					}
-
 					mLogger.debug(mother + " has no sucessors any more or " + child + "has no predecessors any more.");
 					mLogger.debug(child + " gets absorbed by " + mother);
 					mergeLocNodes(child, mother);
