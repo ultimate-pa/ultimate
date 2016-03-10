@@ -40,6 +40,7 @@ import org.apache.log4j.Logger;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.ast.AstNode;
@@ -111,7 +112,8 @@ public class Never2Automaton {
 		mUseSBE = ups.getBoolean(PreferenceInitializer.LABEL_OPTIMIZE_SBE);
 		mRewriteAssumeDuringSBE = ups.getBoolean(PreferenceInitializer.LABEL_OPTIMIZE_REWRITEASSUME);
 
-		mAutomaton = new NestedWordAutomaton<CodeBlock, String>(new AutomataLibraryServices(mServices), collectAlphabet(), null, // call
+		mAutomaton = new NestedWordAutomaton<CodeBlock, String>(new AutomataLibraryServices(mServices),
+				collectAlphabet(), null, // call
 				null, // return
 				new DummyStateFactory<String>());
 
@@ -171,8 +173,6 @@ public class Never2Automaton {
 			}
 		}
 	}
-
-
 
 	/**
 	 * Collect all symbols that the automaton will have from the AST which will be all conditions found in the AST.
@@ -307,7 +307,8 @@ public class Never2Automaton {
 			return expr;
 
 		} else if (branch instanceof BoolLiteral) {
-			return new CheckableExpression(new BooleanLiteral(null, ((BoolLiteral) branch).getValue()), null);
+			return new CheckableExpression(
+					new BooleanLiteral(null, BoogieType.boolType, ((BoolLiteral) branch).getValue()), null);
 		} else if (branch instanceof ComperativeOperator) {
 			BinaryExpression.Operator op;
 			switch (((ComperativeOperator) branch).getType()) {
@@ -363,7 +364,7 @@ public class Never2Automaton {
 		mAutomaton.getAlphabet().add(letter);
 		mAutomaton.addInternalTransition(predecessor, letter, successor);
 	}
-	
+
 	private void addState(String state) {
 		if (!mAutomaton.getStates().contains(state)) {
 			mAutomaton.addState(state.endsWith("init"), state.startsWith("accept"), state);

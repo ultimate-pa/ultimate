@@ -296,7 +296,7 @@ public class UnstructureCode extends BaseObserver {
 				postCreateStatementFromCond(origStmt, newCondStmt, false);
 			} else {
 				final AssumeStatement newCondStmt = new AssumeStatement(stmt.getLocation(),
-						new BooleanLiteral(stmt.getCondition().getLocation(), true));
+						new BooleanLiteral(stmt.getCondition().getLocation(), BoogieType.boolType, true));
 				new LoopEntryAnnotation(LoopEntryType.WHILE).annotate(newCondStmt);
 				postCreateStatementFromCond(origStmt, newCondStmt, false);
 			}

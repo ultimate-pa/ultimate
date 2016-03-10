@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.interfaces.IRati
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.DisjunctMultiStatementRating;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.DisjunctVariablesRating;
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
@@ -80,8 +81,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 /**
- * This special visitor class is responsible for the conversion from
- * MinimizedEdges and MinimizedNodes, back to ProgramPoint and CodeBlock-Edges.
+ * This special visitor class is responsible for the conversion from MinimizedEdges and MinimizedNodes, back to
+ * ProgramPoint and CodeBlock-Edges.
  * 
  * @author Stefan Wissert
  * 
@@ -126,8 +127,7 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	private final boolean mSimplify;
 
 	/**
-	 * Apply an extended (more expensive) partial quantifier elimination to
-	 * eliminate auxiliary variables.
+	 * Apply an extended (more expensive) partial quantifier elimination to eliminate auxiliary variables.
 	 */
 	private boolean m_ExtPqe = false;
 
@@ -172,11 +172,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	/*
 	 * (non-Javadoc)
 	 * 
-	 * @see
-	 * de.uni_freiburg.informatik.ultimate.blockencoding.interfaces.visitor.
-	 * IRCFGVisitor
-	 * #visitNode(de.uni_freiburg.informatik.ultimate.blockencoding.model
-	 * .MinimizedNode)
+	 * @see de.uni_freiburg.informatik.ultimate.blockencoding.interfaces.visitor. IRCFGVisitor
+	 * #visitNode(de.uni_freiburg.informatik.ultimate.blockencoding.model .MinimizedNode)
 	 */
 	@Override
 	public void visitNode(MinimizedNode node) {
@@ -188,24 +185,23 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		if (!mRefNodeMap.containsKey(node)) {
 			mRefNodeMap.put(node, mStartNode);
 		}
-		
-//		if (!mServices.getProgressMonitorService().continueProcessing()) {
-//			return;
-//		}
+
+		// if (!mServices.getProgressMonitorService().continueProcessing()) {
+		// return;
+		// }
 		// Start recursion here
 		internalVisitNode(node);
 	}
 
 	/**
-	 * This method runs recursively over all minimized nodes, which are
-	 * reachable from the initial node (function head). While doing this we
-	 * convert every edge into a valid CodeBlock and every node in a
-	 * ProgramPoint. In the end the whole function is translated in a RCFG.
+	 * This method runs recursively over all minimized nodes, which are reachable from the initial node (function head).
+	 * While doing this we convert every edge into a valid CodeBlock and every node in a ProgramPoint. In the end the
+	 * whole function is translated in a RCFG.
 	 * 
 	 * @param node
 	 *            MinimizedNode to convert
-	 * @param simplify 
-	 * @param extPqe 
+	 * @param simplify
+	 * @param extPqe
 	 */
 	private void internalVisitNode(MinimizedNode node) {
 		// We have no outgoing edges, so we reached an end of the recursion
@@ -251,11 +247,11 @@ public class ConversionVisitor implements IMinimizationVisitor {
 					cb = replaceGotoEdge(cb, null);
 				} else if (edge instanceof ShortcutErrEdge) {
 					if (cb instanceof ShortcutCodeBlock) {
-						cb = mCbf.constuctInterproceduralSequentialComposition(null, null,
-								false, false, Arrays.asList(((ShortcutCodeBlock) cb).getCodeBlocks()));
+						cb = mCbf.constuctInterproceduralSequentialComposition(null, null, false, false,
+								Arrays.asList(((ShortcutCodeBlock) cb).getCodeBlocks()));
 					} else {
-						throw new IllegalArgumentException("Converted CodeBlock for ShortcutErrEdge"
-								+ " is no ShortcutCodeBlock");
+						throw new IllegalArgumentException(
+								"Converted CodeBlock for ShortcutErrEdge" + " is no ShortcutCodeBlock");
 					}
 				}
 				if (cb != null) {
@@ -273,9 +269,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 				}
 				// Since we convert function by function, we do not need to
 				// follow Call- and Return-Edges
-				if (edge.isBasicEdge()
-						&& (((IBasicEdge) edge).getOriginalEdge() instanceof Call || ((IBasicEdge) edge)
-								.getOriginalEdge() instanceof Return)) {
+				if (edge.isBasicEdge() && (((IBasicEdge) edge).getOriginalEdge() instanceof Call
+						|| ((IBasicEdge) edge).getOriginalEdge() instanceof Return)) {
 					continue;
 				}
 				if (edge.getTarget() != null) {
@@ -317,9 +312,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	}
 
 	/**
-	 * We put into our reference map to a minimized node a new ProgramPoint
-	 * which is used later on during the conversion, and then we return it. the
-	 * access on the map, should always be handled by this method.
+	 * We put into our reference map to a minimized node a new ProgramPoint which is used later on during the
+	 * conversion, and then we return it. the access on the map, should always be handled by this method.
 	 * 
 	 * @param node
 	 *            the minimized Node to convert
@@ -341,9 +335,10 @@ public class ConversionVisitor implements IMinimizationVisitor {
 					}
 				}
 			}
-			ProgramPoint newNode = new ProgramPoint(node.getOriginalNode().getPosition(), node.getOriginalNode()
-					.getProcedure(), node.getOriginalNode().isErrorLocation(), BoogieASTNode);
-			//inserted by alex 1.11.2014: (don't forget the annotations.. (mb this would be nicer in the constructor TODO
+			ProgramPoint newNode = new ProgramPoint(node.getOriginalNode().getPosition(),
+					node.getOriginalNode().getProcedure(), node.getOriginalNode().isErrorLocation(), BoogieASTNode);
+			// inserted by alex 1.11.2014: (don't forget the annotations.. (mb this would be nicer in the constructor
+			// TODO
 			for (Entry<String, IAnnotations> annots : node.getOriginalNode().getPayload().getAnnotations().entrySet()) {
 				newNode.getPayload().getAnnotations().put(annots.getKey(), annots.getValue());
 			}
@@ -366,14 +361,13 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	}
 
 	/**
-	 * This recursive method, converts a MinimizedEdge into a valid CodeBlock.
-	 * While doing this, the method uses "Sequential" and "Parallel"
-	 * Composition.
+	 * This recursive method, converts a MinimizedEdge into a valid CodeBlock. While doing this, the method uses
+	 * "Sequential" and "Parallel" Composition.
 	 * 
 	 * @param edge
 	 *            the minimized edge to convert
-	 * @param simplify 
-	 * @param extPqe 
+	 * @param simplify
+	 * @param extPqe
 	 * @return a converted CodeBlock
 	 */
 	private CodeBlock convertMinimizedEdge(IMinimizedEdge edge, boolean simplify, boolean extPqe) {
@@ -426,12 +420,11 @@ public class ConversionVisitor implements IMinimizationVisitor {
 			// should be edges to compose sequentially
 			if (recConvEdges.isEmpty() && mSeqComposedBlocks.isEmpty()) {
 				mLogger.error("Conversion fails, both sides are null (" + edges[0] + " -- " + edges[1] + ")");
-				throw new IllegalStateException("Conversion failure, both sides are null"
-						+ " / and there are no seq. edges to compose!");
+				throw new IllegalStateException(
+						"Conversion failure, both sides are null" + " / and there are no seq. edges to compose!");
 			}
 			if (edge instanceof ConjunctionEdge) {
-				
-				
+
 				// if the parent of this conjunction is also a conjunction we do
 				// not create a sequential composition here
 				// seqComposedBlocks.addAll(recConvEdges);
@@ -459,8 +452,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 					// stack whereas this is only done for not
 					// SequentialCompositons
 					if (edge instanceof ShortcutErrEdge) {
-						return new ShortcutCodeBlock(null, null, new CodeBlock[] { replaceGotoEdge(gotoEdges.get(0),
-								gotoEdges.get(1)) }, mLogger);
+						return new ShortcutCodeBlock(null, null,
+								new CodeBlock[] { replaceGotoEdge(gotoEdges.get(0), gotoEdges.get(1)) }, mLogger);
 					}
 					return mCbf.constructSequentialComposition(null, null, simplify, extPqe,
 							Collections.singletonList(replaceGotoEdge(gotoEdges.get(0), gotoEdges.get(1))));
@@ -478,8 +471,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 						// if we have no code block, we have to remove the
 						// created lists on the stack
 						if (!mSeqComposedBlocks.pop().isEmpty()) {
-							throw new IllegalArgumentException("It is not allowed to pop "
-									+ "non empty lists, from the stack");
+							throw new IllegalArgumentException(
+									"It is not allowed to pop " + "non empty lists, from the stack");
 						}
 					}
 					if (cb instanceof GotoEdge) {
@@ -502,8 +495,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 					return composeEdges.get(0);
 				}
 				if (composeEdges.size() != 2) {
-					throw new IllegalArgumentException("For DisjunctionEdges there should always"
-							+ " be exactly two edges, to compose!");
+					throw new IllegalArgumentException(
+							"For DisjunctionEdges there should always" + " be exactly two edges, to compose!");
 				}
 				if (composeEdges.get(0) instanceof ShortcutCodeBlock
 						|| composeEdges.get(1) instanceof ShortcutCodeBlock) {
@@ -521,9 +514,8 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	}
 
 	/**
-	 * This method converts a basic edge into one basic code block. It is
-	 * copied, because we create new instances, since we do not want to change
-	 * the original RCFG.
+	 * This method converts a basic edge into one basic code block. It is copied, because we create new instances, since
+	 * we do not want to change the original RCFG.
 	 * 
 	 * @param edge
 	 *            IMinimizedEdge which is a basic edge
@@ -549,9 +541,9 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		} else if (cb instanceof GotoEdge) {
 			copyOfCodeBlock = cb;
 		} else {
-			throw new IllegalArgumentException("Failure while converting a" + "CodeBlock, maybe there is a new type,"
-					+ "which should be added");
-		} 
+			throw new IllegalArgumentException(
+					"Failure while converting a" + "CodeBlock, maybe there is a new type," + "which should be added");
+		}
 		copyOfCodeBlock.setTransitionFormula(cb.getTransitionFormula());
 		ModelUtils.copyAnnotations(cb, copyOfCodeBlock);
 		return copyOfCodeBlock;
@@ -570,12 +562,14 @@ public class ConversionVisitor implements IMinimizationVisitor {
 	private CodeBlock replaceGotoEdge(CodeBlock gotoEdge, CodeBlock secondGotoEdge) {
 		StatementSequence replacement = null;
 		if (secondGotoEdge == null) {
-			replacement = mCbf.constructStatementSequence(null, null, new AssumeStatement(gotoEdge.getPayload().getLocation(),
-					new BooleanLiteral(gotoEdge.getPayload().getLocation(), true)));
+			replacement = mCbf.constructStatementSequence(null, null,
+					new AssumeStatement(gotoEdge.getPayload().getLocation(),
+							new BooleanLiteral(gotoEdge.getPayload().getLocation(), BoogieType.boolType, true)));
 			ModelUtils.copyAnnotations(gotoEdge, replacement);
 		} else {
-			replacement = mCbf.constructStatementSequence(null, null, new AssumeStatement(gotoEdge.getPayload().getLocation(),
-					new BooleanLiteral(gotoEdge.getPayload().getLocation(), true)));
+			replacement = mCbf.constructStatementSequence(null, null,
+					new AssumeStatement(gotoEdge.getPayload().getLocation(),
+							new BooleanLiteral(gotoEdge.getPayload().getLocation(), BoogieType.boolType, true)));
 			ModelUtils.copyAnnotations(gotoEdge, replacement);
 			ModelUtils.copyAnnotations(secondGotoEdge, replacement);
 		}
