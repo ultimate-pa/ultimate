@@ -29,10 +29,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.model.annotation.AbstractAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.annotation.LoopEntryAnnotation;
+import de.uni_freiburg.informatik.ultimate.model.annotation.LoopEntryAnnotation.LoopEntryType;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
@@ -40,7 +44,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGl
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBacktranslator;
 
 /**
- * Stores information about about a program that is not represented by the recursive control flow graph.
+ * Stores information about about a program that is not represented by the
+ * recursive control flow graph.
  * 
  * @author heizmann@informatik.uni-freiburg.de
  *
@@ -55,32 +60,38 @@ public class RootAnnot extends AbstractAnnotations {
 	private final BoogieDeclarations m_BoogieDeclarations;
 
 	/**
-	 * Maps a procedure name to the entry node of that procedure. The entry node of a procedure represents an auxiliary
-	 * location that is reached after calling the procedure. Afterwards we assume that the global variables and
-	 * corresponding and oldvars have the same values, we assume the requires clause and reach the initial node.
+	 * Maps a procedure name to the entry node of that procedure. The entry node
+	 * of a procedure represents an auxiliary location that is reached after
+	 * calling the procedure. Afterwards we assume that the global variables and
+	 * corresponding and oldvars have the same values, we assume the requires
+	 * clause and reach the initial node.
 	 * 
 	 */
 	final Map<String, ProgramPoint> m_entryNode = new HashMap<String, ProgramPoint>();
 
 	/**
-	 * Maps a procedure name to the final node of that procedure. The final node of a procedure represents the location
-	 * that is reached after executing the last statement of the procedure or after executing a return statement. At
-	 * this node the ensures part of the specification is asserted (has to be checked to prove correctness of the
-	 * procedure). A sequence of edges that assumes the ensures part of the specification leads to the exit node of the
-	 * procedure.
+	 * Maps a procedure name to the final node of that procedure. The final node
+	 * of a procedure represents the location that is reached after executing
+	 * the last statement of the procedure or after executing a return
+	 * statement. At this node the ensures part of the specification is asserted
+	 * (has to be checked to prove correctness of the procedure). A sequence of
+	 * edges that assumes the ensures part of the specification leads to the
+	 * exit node of the procedure.
 	 * 
 	 */
 	final Map<String, ProgramPoint> m_finalNode = new HashMap<String, ProgramPoint>();
 
 	/**
-	 * Maps a procedure name to the the exit node of that procedure. The exit node of a procedure represents an
-	 * auxiliary location that is reached after assuming the ensures part of the specification. This locNode is the
+	 * Maps a procedure name to the the exit node of that procedure. The exit
+	 * node of a procedure represents an auxiliary location that is reached
+	 * after assuming the ensures part of the specification. This locNode is the
 	 * source of ReturnEdges which lead to the callers of this procecure.
 	 */
 	final Map<String, ProgramPoint> m_exitNode = new HashMap<String, ProgramPoint>();
 
 	/**
-	 * Maps the pair of procedure name location name to the LocNode that represents this location.
+	 * Maps the pair of procedure name location name to the LocNode that
+	 * represents this location.
 	 */
 	final Map<String, Map<String, ProgramPoint>> m_LocNodes = new HashMap<String, Map<String, ProgramPoint>>();
 
@@ -98,7 +109,8 @@ public class RootAnnot extends AbstractAnnotations {
 	private final CodeBlockFactory m_CodeBlockFactory;
 
 	/**
-	 * The published attributes. Update this and getFieldValue() if you add new attributes.
+	 * The published attributes. Update this and getFieldValue() if you add new
+	 * attributes.
 	 */
 	private final static String[] s_AttribFields = { "locNodes", "loopEntry" };
 
@@ -181,4 +193,15 @@ public class RootAnnot extends AbstractAnnotations {
 	public CodeBlockFactory getCodeBlockFactory() {
 		return m_CodeBlockFactory;
 	}
+
+	public Set<ProgramPoint> getPotentialCycleProgramPoints() {
+		final Set<ProgramPoint> relevantLocs = m_LocNodes.entrySet().stream()
+				.flatMap(a -> a.getValue().entrySet().stream()).map(a -> a.getValue())
+				.filter(a -> a.getOutgoingEdges().stream().anyMatch(b -> {
+					final LoopEntryAnnotation loa = LoopEntryAnnotation.getAnnotation(b);
+					return loa != null && loa.getLoopEntryType() == LoopEntryType.GOTO;
+				})).collect(Collectors.toSet());
+		return relevantLocs;
+	}
+
 }
