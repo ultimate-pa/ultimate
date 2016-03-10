@@ -83,6 +83,7 @@ import org.eclipse.cdt.core.dom.ast.IASTInitializerClause;
 import org.eclipse.cdt.core.dom.ast.IASTInitializerList;
 import org.eclipse.cdt.core.dom.ast.IASTLabelStatement;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
+import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTNullStatement;
 import org.eclipse.cdt.core.dom.ast.IASTParameterDeclaration;
@@ -102,6 +103,8 @@ import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.IASTTypeIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTWhileStatement;
+import org.eclipse.cdt.core.dom.ast.c.ICASTCompositeTypeSpecifier;
+import org.eclipse.cdt.core.dom.ast.cpp.ICPPASTNamedTypeSpecifier;
 import org.eclipse.cdt.core.dom.ast.gnu.IGNUASTCompoundStatementExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
@@ -441,7 +444,10 @@ public class CHandler implements ICHandler {
 			String raw = child.getRawSignature();
 			if (child instanceof IASTSimpleDeclaration) {
 				IASTSimpleDeclaration simpleDecl = (IASTSimpleDeclaration) child;
-				if (simpleDecl.getDeclSpecifier() instanceof IASTElaboratedTypeSpecifier) {
+				if (simpleDecl.getDeclSpecifier() instanceof IASTElaboratedTypeSpecifier
+						|| simpleDecl.getDeclSpecifier() instanceof ICASTCompositeTypeSpecifier
+						|| (simpleDecl.getDeclarators().length > 0 && simpleDecl.getDeclarators()[0] instanceof CASTFunctionDeclarator)
+						|| simpleDecl.getDeclSpecifier() instanceof IASTNamedTypeSpecifier) {
 					complexNodes.add(child);
 				} else {
 					processTUchild(main, decl, child);
