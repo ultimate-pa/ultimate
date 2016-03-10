@@ -72,9 +72,9 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, CodeBlock, IBoo
 				modifiableGlobalsBefore, modifiableGlobalsAfter);
 		if (result != LBool.UNSAT) {
 			mLogger.fatal("Soundness check failed for the following triple:");
-			mLogger.fatal("Pre: {" + precond.getFormula() + "}");
-			mLogger.fatal(tf.getFormula());
-			mLogger.fatal("Post: {" + postcond.getFormula() + "}");
+			mLogger.fatal("Pre: {" + precond.getFormula().toStringDirect() + "}");
+			mLogger.fatal(tf.getFormula().toStringDirect());
+			mLogger.fatal("Post: {" + postcond.getFormula().toStringDirect() + "}");
 		}
 		return result == LBool.UNSAT;
 	}
