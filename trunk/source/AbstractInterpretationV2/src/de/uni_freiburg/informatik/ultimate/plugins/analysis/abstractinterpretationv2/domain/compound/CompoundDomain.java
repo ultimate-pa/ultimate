@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 
 /**
  * Implementation of the compound domain for abstract interpretation.
@@ -48,14 +49,16 @@ public class CompoundDomain implements IAbstractDomain<CompoundDomainState, Code
 
 	private final Logger mLogger;
 	private final List<IAbstractDomain> mDomainList;
+	private final RootAnnot mRootAnnotation;
 
 	private IAbstractStateBinaryOperator<CompoundDomainState> mMergeOperator;
 	private IAbstractStateBinaryOperator<CompoundDomainState> mWideningOperator;
 	private IAbstractPostOperator<CompoundDomainState, CodeBlock, IBoogieVar> mPostOperator;
 	
-	public CompoundDomain(Logger logger, List<IAbstractDomain> domainList) {
+	public CompoundDomain(Logger logger, List<IAbstractDomain> domainList, RootAnnot rootAnnotation) {
 		mLogger = logger;
 		mDomainList = domainList;
+		mRootAnnotation = rootAnnotation;
 	}
 
 	@Override
@@ -82,7 +85,7 @@ public class CompoundDomain implements IAbstractDomain<CompoundDomainState, Code
 	@Override
 	public IAbstractPostOperator<CompoundDomainState, CodeBlock, IBoogieVar> getPostOperator() {
 		if (mPostOperator == null) {
-			mPostOperator = new CompoundDomainPostOperator(mLogger);
+			mPostOperator = new CompoundDomainPostOperator(mLogger, mRootAnnotation);
 		}
 		return mPostOperator;
 	}
