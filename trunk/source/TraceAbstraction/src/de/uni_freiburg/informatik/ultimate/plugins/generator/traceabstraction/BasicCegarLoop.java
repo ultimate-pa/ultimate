@@ -201,7 +201,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 		m_Haf = new HoareAnnotationFragments(mLogger, m_HoareAnnotationPositions, m_Pref.getHoareAnnotationPositions());
 		m_StateFactoryForRefinement = new PredicateFactoryRefinement(m_RootNode.getRootAnnot().getProgramPoints(),
-				super.m_SmtManager, m_Pref, REMOVE_DEAD_ENDS && m_ComputeHoareAnnotation, m_Haf, m_HoareAnnotationPositions);
+				super.m_SmtManager, m_Pref, REMOVE_DEAD_ENDS && m_ComputeHoareAnnotation, m_Haf,
+				m_HoareAnnotationPositions);
 		m_PredicateFactoryInterpolantAutomata = new PredicateFactory(super.m_SmtManager, m_Pref);
 
 		m_AssertCodeBlocksIncrementally = (new UltimatePreferenceStore(Activator.s_PLUGIN_ID)).getEnum(
@@ -209,7 +210,6 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				AssertCodeBlockOrder.class);
 
 		m_PredicateFactoryResultChecking = new PredicateFactoryResultChecking(smtManager);
-		
 
 		m_CegarLoopBenchmark = new CegarLoopBenchmarkGenerator();
 		m_CegarLoopBenchmark.start(CegarLoopBenchmarkType.s_OverallTime);
@@ -508,8 +508,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton = new AbstractInterpretationAutomatonGenerator(
 					m_Services, (INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, mAbsIntResult, predUnifier,
 					m_SmtManager).getResult();
-			refineWithGivenAutomaton(aiInterpolAutomaton, predUnifier);
-			mLogger.info("Finished additional refinement with abstract interpretation automaton");
+			boolean aiResult = refineWithGivenAutomaton(aiInterpolAutomaton, predUnifier);
+			mLogger.info("Finished additional refinement with abstract interpretation automaton. Did we make progress: "
+					+ aiResult);
 			m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AbsIntTime);
 		}
 		return refineWithGivenAutomaton(m_InterpolAutomaton, predUnifier);
@@ -850,10 +851,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 				break;
 			}
 			case NWA_COMBINATOR: {
-				MinimizeNwaCombinator<CodeBlock, IPredicate> minimizeOp =
-						new MinimizeNwaCombinator<CodeBlock, IPredicate>(
-						new AutomataLibraryServices(m_Services), predicateFactoryRefinement,
-						newAbstraction, partition, m_Iteration);
+				MinimizeNwaCombinator<CodeBlock, IPredicate> minimizeOp = new MinimizeNwaCombinator<CodeBlock, IPredicate>(
+						new AutomataLibraryServices(m_Services), predicateFactoryRefinement, newAbstraction, partition,
+						m_Iteration);
 				assert minimizeOp.checkResult(resultCheckPredFac);
 				minimized = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services),
 						minimizeOp.getResult())).getResult();
