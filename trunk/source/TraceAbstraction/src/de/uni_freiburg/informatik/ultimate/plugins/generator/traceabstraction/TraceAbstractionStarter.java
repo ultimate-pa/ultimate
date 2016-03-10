@@ -166,7 +166,6 @@ public class TraceAbstractionStarter {
 			final IBacktranslationService backTranslatorService = m_Services.getBacktranslationService();
 			final Term trueterm = smtManager.getScript().term("true");
 
-			
 			final Set<ProgramPoint> locsForLoopLocations = new HashSet<>();
 			locsForLoopLocations.addAll(rootAnnot.getPotentialCycleProgramPoints());
 			locsForLoopLocations.addAll(rootAnnot.getLoopLocations().keySet());
@@ -203,7 +202,8 @@ public class TraceAbstractionStarter {
 							Activator.s_PLUGIN_NAME, finalNode, backTranslatorService, proc, expr);
 
 					reportResult(result);
-					// TODO: Add setting that controls the generation of those witness invariants; for now, just commented out 
+					// TODO: Add setting that controls the generation of those witness invariants; for now, just
+					// commented out
 					// if (!formula.equals(trueterm)) {
 					// final String inv = backTranslatorService.translateExpressionToString(expr, Expression.class);
 					// new WitnessInvariant(inv).annotate(finalNode);
@@ -249,6 +249,7 @@ public class TraceAbstractionStarter {
 		}
 		if (numberOfCheckedInvariants > 0) {
 			m_Logger.info("Automizer considered " + numberOfCheckedInvariants + " witness invariants");
+			m_Logger.info("WitnessConsidered=" + numberOfCheckedInvariants);
 		}
 	}
 
