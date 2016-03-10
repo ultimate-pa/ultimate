@@ -189,8 +189,8 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	public void finish() {
 		if (mWitnessExtractor.isReady()) {
 
-			final Map<IASTNode, String> bInvariants = mWitnessExtractor.getBeforeAST2Invariants();
-			final Map<IASTNode, String> aInvariants = mWitnessExtractor.getAfterAST2Invariants();
+			final Map<IASTNode, WitnessInvariant> bInvariants = mWitnessExtractor.getBeforeAST2Invariants();
+			final Map<IASTNode, WitnessInvariant> aInvariants = mWitnessExtractor.getAfterAST2Invariants();
 			mWitnessInvariants = new WitnessInvariants(bInvariants, aInvariants);
 
 			// clear witness extractor to make him loose unused references

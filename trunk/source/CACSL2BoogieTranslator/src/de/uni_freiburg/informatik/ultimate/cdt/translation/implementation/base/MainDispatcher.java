@@ -40,7 +40,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
@@ -138,8 +137,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.DeclarationResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionListResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.Result;
@@ -216,6 +213,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.WitnessInvariants;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 
@@ -239,8 +237,8 @@ public class MainDispatcher extends Dispatcher {
 	 */
 	private DecoratorNode nextACSLBuffer;
 	/**
-	 * Whether in the C program there is a variable that is declared as a pointer, and that
-	 * is dereferenced at some point.
+	 * Whether in the C program there is a variable that is declared as a pointer, and that is dereferenced at some
+	 * point.
 	 */
 	private boolean thereAreDereferencedPointerVariables;
 
@@ -278,23 +276,22 @@ public class MainDispatcher extends Dispatcher {
 
 	// end alex
 
-	public MainDispatcher(CACSL2BoogieBacktranslator backtranslator, WitnessInvariants witnessInvariants, IUltimateServiceProvider services, Logger logger) {
+	public MainDispatcher(CACSL2BoogieBacktranslator backtranslator, WitnessInvariants witnessInvariants,
+			IUltimateServiceProvider services, Logger logger) {
 		super(backtranslator, services, logger);
 		m_BitvectorTranslation = mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
 		m_WitnessInvariants = witnessInvariants;
 	}
 
 	/**
-	 * Answers the question if we need the basic infrastructure for our memory model.
-	 * That basic infrastructure is: the arrays "valid" and "length" and definitions of 
-	 * our malloc and deallocate functions, the type "$Pointer" and the NULL pointer.
-	 * The basic infrastructure does not include the memory arrays themselves (like
-	 * memory_int,...), those are triggered differently.
+	 * Answers the question if we need the basic infrastructure for our memory model. That basic infrastructure is: the
+	 * arrays "valid" and "length" and definitions of our malloc and deallocate functions, the type "$Pointer" and the
+	 * NULL pointer. The basic infrastructure does not include the memory arrays themselves (like memory_int,...), those
+	 * are triggered differently.
 	 */
 	@Override
 	public boolean isMMRequired() {
-		return !this.variablesOnHeap.isEmpty() 
-				|| !this.mFunctionToIndex.isEmpty() 
+		return !this.variablesOnHeap.isEmpty() || !this.mFunctionToIndex.isEmpty()
 				|| this.thereAreDereferencedPointerVariables;
 	}
 
@@ -304,11 +301,9 @@ public class MainDispatcher extends Dispatcher {
 	}
 
 	/**
-	 * Returns a set of variables, that have to be handled using the memory
-	 * model.
+	 * Returns a set of variables, that have to be handled using the memory model.
 	 * 
-	 * @return a set of variables, that have to be handled using the memory
-	 *         model.
+	 * @return a set of variables, that have to be handled using the memory model.
 	 */
 	public LinkedHashSet<IASTNode> getVariablesForHeap() {
 		return variablesOnHeap;
@@ -318,11 +313,11 @@ public class MainDispatcher extends Dispatcher {
 	protected void preRun(DecoratorNode node) {
 		assert node.getCNode() != null;
 		assert node.getCNode() instanceof IASTTranslationUnit;
-		
+
 		IASTTranslationUnit tu = (IASTTranslationUnit) node.getCNode();
-		
+
 		variablesOnHeap = new LinkedHashSet<>();
-	
+
 		FunctionTableBuilder ftb = new FunctionTableBuilder();
 		tu.accept(ftb);
 		PreRunner pr = new PreRunner(ftb.getFunctionTable());
@@ -343,11 +338,12 @@ public class MainDispatcher extends Dispatcher {
 			reachableDeclarations = null;
 		}
 
-		PRDispatcher prd = new PRDispatcher(backtranslator, mServices, mLogger, mFunctionToIndex, reachableDeclarations);
+		PRDispatcher prd = new PRDispatcher(backtranslator, mServices, mLogger, mFunctionToIndex,
+				reachableDeclarations);
 		prd.init();
 		prd.dispatch(node);
 		variablesOnHeap.addAll(prd.getVariablesOnHeap());
-	
+
 		indexToFunction = new LinkedHashMap<>();
 		for (Entry<String, Integer> en : mFunctionToIndex.entrySet()) {
 			indexToFunction.put(en.getValue(), en.getKey());
@@ -355,12 +351,11 @@ public class MainDispatcher extends Dispatcher {
 
 		thereAreDereferencedPointerVariables = pr.isMMRequired();
 
-
 	}
 
 	@Override
 	protected void init() {
-		
+
 		sideEffectHandler = new SideEffectHandler();
 		typeHandler = new TypeHandler(!m_BitvectorTranslation);
 		acslHandler = new ACSLHandler(m_WitnessInvariants != null);
@@ -376,20 +371,21 @@ public class MainDispatcher extends Dispatcher {
 		final List<AssertStatement> witnessInvariantsBefore;
 		final String invariantBefore;
 		if (m_WitnessInvariants != null) {
-			invariantBefore = m_WitnessInvariants.getInvariantsBefore().get(n);
+			WitnessInvariant wBefore = m_WitnessInvariants.getInvariantsBefore().get(n);
+			invariantBefore = wBefore == null ? null : wBefore.getInvariant();
 			witnessInvariantsBefore = translateWitnessInvariant(n, invariantBefore);
 		} else {
 			invariantBefore = null;
 			witnessInvariantsBefore = Collections.emptyList();
 		}
-		
+
 		final Result result;
 		if (n instanceof IASTTranslationUnit) {
 			result = cHandler.visit(this, ((IASTTranslationUnit) n));
 		} else if (n instanceof IASTSimpleDeclaration) {
-			result =  cHandler.visit(this, (IASTSimpleDeclaration) n);
+			result = cHandler.visit(this, (IASTSimpleDeclaration) n);
 		} else if (n instanceof IASTParameterDeclaration) {
-			result =  cHandler.visit(this, (IASTParameterDeclaration) n);
+			result = cHandler.visit(this, (IASTParameterDeclaration) n);
 		} else if (n instanceof IASTASMDeclaration) {
 			result = cHandler.visit(this, (IASTASMDeclaration) n);
 		} else if (n instanceof IASTDeclarator) {
@@ -469,11 +465,10 @@ public class MainDispatcher extends Dispatcher {
 				result = cHandler.visit(this, (CASTDesignatedInitializer) n);
 			} else if (n instanceof IASTInitializerList) {
 				result = cHandler.visit(this, (IASTInitializerList) n);
-			} else { 
+			} else {
 				result = cHandler.visit(this, (IASTInitializer) n);
 			}
-		} else
-		if (n instanceof IASTExpression) {
+		} else if (n instanceof IASTExpression) {
 			if (n instanceof IASTLiteralExpression) {
 				result = cHandler.visit(this, (IASTLiteralExpression) n);
 			} else if (n instanceof IASTIdExpression) {
@@ -523,7 +518,7 @@ public class MainDispatcher extends Dispatcher {
 			result = cHandler.visit(this, (IASTProblem) n);
 		} else if (n instanceof IASTTypeId) {
 			result = cHandler.visit(this, (IASTTypeId) n);
-			
+
 			// Indirect implementations of IASTNode in CDT version 7:
 		} else if (n instanceof IASTArrayDeclarator) {
 			result = cHandler.visit(this, (IASTArrayDeclarator) n);
@@ -561,13 +556,15 @@ public class MainDispatcher extends Dispatcher {
 		final List<AssertStatement> witnessInvariantsAfter;
 		final String invariantAfter;
 		if (m_WitnessInvariants != null) {
-			invariantAfter = m_WitnessInvariants.getInvariantsAfter().get(n);
+			// TODO: Use the new information as you see fit
+			WitnessInvariant wAfter = m_WitnessInvariants.getInvariantsAfter().get(n);
+			invariantAfter = wAfter == null ? null : wAfter.getInvariant();
 			witnessInvariantsAfter = translateWitnessInvariant(n, invariantAfter);
 		} else {
 			invariantAfter = null;
 			witnessInvariantsAfter = Collections.emptyList();
 		}
-		
+
 		if (!witnessInvariantsBefore.isEmpty() || !witnessInvariantsAfter.isEmpty()) {
 			ILocation loc = LocationFactory.createCLocation(n);
 			if (result instanceof ExpressionResult) {
@@ -575,34 +572,40 @@ public class MainDispatcher extends Dispatcher {
 				final ArrayList<Statement> stmt = exprResult.stmt;
 				if (invariantBefore != null) {
 					stmt.addAll(0, witnessInvariantsBefore);
-					mLogger.warn("Checking witness invariant " + invariantBefore + " directly before the following code " + loc);
+					mLogger.warn("Checking witness invariant " + invariantBefore
+							+ " directly before the following code " + loc);
 				}
 				if (invariantAfter != null) {
 					stmt.addAll(witnessInvariantsAfter);
-					mLogger.warn("Checking witness invariant " + invariantAfter + " directly after the following code " + loc);
+					mLogger.warn("Checking witness invariant " + invariantAfter + " directly after the following code "
+							+ loc);
 				}
 			} else if (result instanceof ExpressionListResult) {
 				ExpressionListResult exlire = (ExpressionListResult) result;
 				if (invariantBefore != null) {
 					ArrayList<Statement> stmt = exlire.list.get(0).stmt;
 					stmt.addAll(0, witnessInvariantsBefore);
-					mLogger.warn("Checking witness invariant " + invariantBefore + " directly before the following code " + loc);
+					mLogger.warn("Checking witness invariant " + invariantBefore
+							+ " directly before the following code " + loc);
 				}
 				if (invariantAfter != null) {
-					ArrayList<Statement> stmt = exlire.list.get(exlire.list.size()-1).stmt;
+					ArrayList<Statement> stmt = exlire.list.get(exlire.list.size() - 1).stmt;
 					stmt.addAll(witnessInvariantsAfter);
-					mLogger.warn("Checking witness invariant " + invariantAfter + " directly after the following code " + loc);
+					mLogger.warn("Checking witness invariant " + invariantAfter + " directly after the following code "
+							+ loc);
 				}
 			} else {
 				if (invariantBefore != null) {
-					String message = "Found witness invariant but unable to add check " + invariantBefore + " directly before the following code " + loc;
+					String message = "Found witness invariant but unable to add check " + invariantBefore
+							+ " directly before the following code " + loc;
 					mLogger.warn(message);
-//					throw new AssertionError(message);
+					// throw new AssertionError(message);
 				}
 				if (invariantAfter != null) {
-					String message = "Found witness invariant but unable to add check " + invariantAfter + " directly after the following code " + loc;
+					String message = "Found witness invariant but unable to add check " + invariantAfter
+							+ " directly after the following code " + loc;
 					mLogger.warn(message);
-//					throw new AssertionError(message);
+					// throw new AssertionError(message);
 				}
 			}
 		}
@@ -610,12 +613,11 @@ public class MainDispatcher extends Dispatcher {
 	}
 
 	private List<AssertStatement> translateWitnessInvariant(IASTNode n, String invariant) throws AssertionError {
-//		ILocation loca = LocationFactory.createCLocation(n);
+		// ILocation loca = LocationFactory.createCLocation(n);
 		if (invariant != null) {
 			ACSLNode acslNode = null;
 			try {
-				acslNode = Parser.parseComment("lstart\n assert " + invariant + ";",
-						0, 0, mLogger);
+				acslNode = Parser.parseComment("lstart\n assert " + invariant + ";", 0, 0, mLogger);
 			} catch (Exception e) {
 				throw new IllegalArgumentException(e);
 			}
@@ -933,9 +935,8 @@ public class MainDispatcher extends Dispatcher {
 	}
 
 	/**
-	 * Parent node of an ACSL node should be a decorator node containing C. The
-	 * C node should be instance of IASTCompoundStatement or
-	 * IASTTranslationUnit.<br>
+	 * Parent node of an ACSL node should be a decorator node containing C. The C node should be instance of
+	 * IASTCompoundStatement or IASTTranslationUnit.<br>
 	 * <b>ACSL is unexpected in other locations.</b>
 	 * 
 	 * @param acslNode
@@ -943,8 +944,8 @@ public class MainDispatcher extends Dispatcher {
 	 */
 	private static void checkACSLLocation(DecoratorNode acslNode) {
 		if (acslNode.getAcslNode() == null) {
-			throw new IllegalArgumentException("The given decorator node is not holding ACSL"
-					+ acslNode.getCNode().getRawSignature());
+			throw new IllegalArgumentException(
+					"The given decorator node is not holding ACSL" + acslNode.getCNode().getRawSignature());
 		}
 		if (acslNode.getParent().getCNode() == null) {
 			throw new IllegalArgumentException(

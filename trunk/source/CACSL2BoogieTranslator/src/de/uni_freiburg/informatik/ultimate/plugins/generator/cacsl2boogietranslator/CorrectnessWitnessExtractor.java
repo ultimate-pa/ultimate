@@ -64,7 +64,7 @@ public class CorrectnessWitnessExtractor {
 	private final Logger mLogger;
 	private WitnessNode mWitnessNode;
 	private IASTTranslationUnit mTranslationUnit;
-	private Pair<Map<IASTNode, String>, Map<IASTNode, String>> mAST2Invariant;
+	private Pair<Map<IASTNode, WitnessInvariant>, Map<IASTNode, WitnessInvariant>> mAST2Invariant;
 
 	public CorrectnessWitnessExtractor(final IUltimateServiceProvider service) {
 		mServices = service;
@@ -92,7 +92,7 @@ public class CorrectnessWitnessExtractor {
 	 * @return a map from {@link IASTNode} to a String that represents a witness invariant which has to hold before
 	 *         whatever is represented by this node.
 	 */
-	public Map<IASTNode, String> getBeforeAST2Invariants() {
+	public Map<IASTNode, WitnessInvariant> getBeforeAST2Invariants() {
 		if (mAST2Invariant == null) {
 			mAST2Invariant = extract();
 		}
@@ -103,19 +103,19 @@ public class CorrectnessWitnessExtractor {
 	 * @return a map from {@link IASTNode} to a String that represents a witness invariant which has to hold after
 	 *         whatever is represented by this node.
 	 */
-	public Map<IASTNode, String> getAfterAST2Invariants() {
+	public Map<IASTNode, WitnessInvariant> getAfterAST2Invariants() {
 		if (mAST2Invariant == null) {
 			mAST2Invariant = extract();
 		}
 		return mAST2Invariant.getSecond();
 	}
 
-	private Pair<Map<IASTNode, String>, Map<IASTNode, String>> extract() {
+	private Pair<Map<IASTNode, WitnessInvariant>, Map<IASTNode, WitnessInvariant>> extract() {
 		if (!isReady()) {
 			mLogger.warn("Cannot extract witness if there is no witness");
 			return null;
 		}
-		final Pair<Map<IASTNode, String>, Map<IASTNode, String>> rtr = new Pair<Map<IASTNode, String>, Map<IASTNode, String>>(
+		final Pair<Map<IASTNode, WitnessInvariant>, Map<IASTNode, WitnessInvariant>> rtr = new Pair<Map<IASTNode, WitnessInvariant>, Map<IASTNode, WitnessInvariant>>(
 				new HashMap<>(), new HashMap<>());
 
 		final Deque<WitnessNode> worklist = new ArrayDeque<>();
@@ -153,18 +153,18 @@ public class CorrectnessWitnessExtractor {
 		return rtr;
 	}
 
-	private void printResults(final Pair<Map<IASTNode, String>, Map<IASTNode, String>> rtr) {
-		final Map<IASTNode, String> before = rtr.getFirst();
-		final Map<IASTNode, String> after = rtr.getSecond();
+	private void printResults(final Pair<Map<IASTNode, WitnessInvariant>, Map<IASTNode, WitnessInvariant>> rtr) {
+		final Map<IASTNode, WitnessInvariant> before = rtr.getFirst();
+		final Map<IASTNode, WitnessInvariant> after = rtr.getSecond();
 		if (before.isEmpty() && after.isEmpty()) {
 			mLogger.info("Witness did not contain any usable invariants.");
 			return;
 		}
 		mLogger.info("Found the following invariants in the witness:");
-		for (final Entry<IASTNode, String> entry : before.entrySet()) {
+		for (final Entry<IASTNode, WitnessInvariant> entry : before.entrySet()) {
 			mLogger.info(toLogStringCNode("Before", entry.getKey(), entry.getValue()));
 		}
-		for (final Entry<IASTNode, String> entry : after.entrySet()) {
+		for (final Entry<IASTNode, WitnessInvariant> entry : after.entrySet()) {
 			mLogger.info(toLogStringCNode("After", entry.getKey(), entry.getValue()));
 		}
 	}
@@ -173,7 +173,7 @@ public class CorrectnessWitnessExtractor {
 	 * @return true iff an invariant was extracted, false otherwise.
 	 */
 	private ExtractionResult extractNode(final WitnessNode current,
-			final Pair<Map<IASTNode, String>, Map<IASTNode, String>> rtr) {
+			final Pair<Map<IASTNode, WitnessInvariant>, Map<IASTNode, WitnessInvariant>> rtr) {
 		final WitnessNodeAnnotation annot = WitnessNodeAnnotation.getAnnotation(current);
 		if (annot == null) {
 			return ExtractionResult.NOT_RELEVANT;
@@ -197,16 +197,22 @@ public class CorrectnessWitnessExtractor {
 		return ExtractionResult.EXTRACTED;
 	}
 
-	private void addInvariants(final Map<IASTNode, String> rtr, final String invariant, final IASTNode node,
+	private void addInvariants(final Map<IASTNode, WitnessInvariant> rtr, final String invariant, final IASTNode node,
 			final WitnessNode current) {
-		final String oldInvariant = rtr.put(node, invariant);
-		if (oldInvariant != null) {
-			final String newInvariant = "(" + invariant + ") || (" + oldInvariant + ")";
+
+		WitnessInvariant oldInvariant = rtr.get(node);
+		if (oldInvariant == null) {
+			oldInvariant = new WitnessInvariant(invariant, current.getName());
+			rtr.put(node, oldInvariant);
+		} else {
+			final String newInvariant = "(" + invariant + ") || (" + oldInvariant.getInvariant() + ")";
 			mLogger.warn("Already matched invariant to C node [" + node.getFileLocation().getStartingLineNumber() + "] "
 					+ node.getRawSignature());
 			mLogger.warn("  Witness node label is " + current);
 			mLogger.warn("  Replacing invariant " + oldInvariant + " with invariant " + newInvariant);
-			rtr.put(node, newInvariant);
+			Set<String> labels = new HashSet<>(oldInvariant.getNodeLabel());
+			labels.add(current.getName());
+			rtr.put(node, new WitnessInvariant(newInvariant, labels));
 		}
 	}
 
@@ -255,10 +261,10 @@ public class CorrectnessWitnessExtractor {
 		while (beforeIter.hasNext()) {
 			final IASTNode beforeCurrent = beforeIter.next();
 			final IASTDeclaration beforeScope = determineScope(beforeCurrent);
-			 if (beforeScope == null) {
-			 // its the global scope
-			 continue;
-			 }
+			if (beforeScope == null) {
+				// its the global scope
+				continue;
+			}
 			for (final IASTNode afterCurrent : matchedNodes.getSecond()) {
 				final IASTDeclaration afterScope = determineScope(afterCurrent);
 				if (afterScope == null) {
@@ -305,6 +311,10 @@ public class CorrectnessWitnessExtractor {
 	private String toLogStringCNode(final String prefix, final IASTNode node, final String invariant) {
 		return prefix + " [L" + node.getFileLocation().getStartingLineNumber() + "] " + node.getRawSignature()
 				+ " invariant is " + invariant;
+	}
+
+	private String toLogStringCNode(final String prefix, final IASTNode node, final WitnessInvariant invariant) {
+		return toLogStringCNode(prefix, node, invariant.toString());
 	}
 
 	private final static class LineMatchingVisitor extends ASTGenericVisitor {

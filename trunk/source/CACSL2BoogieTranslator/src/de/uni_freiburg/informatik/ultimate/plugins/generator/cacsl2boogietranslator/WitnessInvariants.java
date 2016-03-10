@@ -37,22 +37,19 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
  */
 public class WitnessInvariants {
 
-	private final Map<IASTNode, String> m_bInvariants;
-	private final Map<IASTNode, String> m_aInvariants;
+	private final Map<IASTNode, WitnessInvariant> mBInvariants;
+	private final Map<IASTNode, WitnessInvariant> mAInvariants;
 
-	public WitnessInvariants(Map<IASTNode, String> bInvariants, Map<IASTNode, String> aInvariants) {
-		m_bInvariants = bInvariants;
-		m_aInvariants = aInvariants;
+	public WitnessInvariants(Map<IASTNode, WitnessInvariant> bInvariants, Map<IASTNode, WitnessInvariant> aInvariants) {
+		mBInvariants = bInvariants;
+		mAInvariants = aInvariants;
 	}
 
-	public Map<IASTNode, String> getInvariantsBefore() {
-		return m_bInvariants;
+	public Map<IASTNode, WitnessInvariant> getInvariantsBefore() {
+		return mBInvariants;
 	}
 
-	public Map<IASTNode, String> getInvariantsAfter() {
-		return m_aInvariants;
+	public Map<IASTNode, WitnessInvariant> getInvariantsAfter() {
+		return mAInvariants;
 	}
-	
-	
-
 }

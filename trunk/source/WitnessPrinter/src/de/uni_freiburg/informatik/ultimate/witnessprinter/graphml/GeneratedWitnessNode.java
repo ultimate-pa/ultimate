@@ -64,7 +64,8 @@ public class GeneratedWitnessNode {
 
 	public String getInvariant() {
 		// TODO: Hack to remove invariants with \old or \result
-		if (mInvariant != null && (mInvariant.contains("\\old") || mInvariant.contains("\\result"))) {
+		if (mInvariant != null && (mInvariant.contains("\\old") || mInvariant.contains("\\result")
+				|| mInvariant.contains("\\exists"))) {
 			return null;
 		}
 		return mInvariant;
