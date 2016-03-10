@@ -17,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
@@ -43,6 +44,7 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, CodeBlock, IBoo
 	private final ModifiableGlobalVariableManager mGlobalVariableManager;
 	private final Script mScript;
 	private final Logger mLogger;
+	private final IUltimateServiceProvider mServices;
 
 	private static int sIllegalPredicates = Integer.MAX_VALUE;
 
@@ -50,6 +52,7 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, CodeBlock, IBoo
 		mScript = rootAnnot.getScript();
 		mBoogie2Smt = rootAnnot.getBoogie2SMT();
 		mGlobalVariableManager = rootAnnot.getModGlobVarManager();
+		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
@@ -70,11 +73,12 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, CodeBlock, IBoo
 
 		final LBool result = PredicateUtils.isInductiveHelper(mBoogie2Smt, precond, postcond, tf,
 				modifiableGlobalsBefore, modifiableGlobalsAfter);
+		
 		if (result != LBool.UNSAT) {
 			mLogger.fatal("Soundness check failed for the following triple:");
-			mLogger.fatal("Pre: {" + precond.getFormula().toStringDirect() + "}");
+			mLogger.fatal("Pre: {" + SmtUtils.simplify(mScript, precond.getFormula(), mServices).toStringDirect() + "}");
 			mLogger.fatal(tf.getFormula().toStringDirect());
-			mLogger.fatal("Post: {" + postcond.getFormula().toStringDirect() + "}");
+			mLogger.fatal("Post: {" + SmtUtils.simplify(mScript, postcond.getFormula(), mServices).toStringDirect() + "}");
 		}
 		return result == LBool.UNSAT;
 	}
