@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.model.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
@@ -64,6 +65,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.LanguageOperation;
 import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.result.Check;
+import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.ProcedureContractResult;
@@ -138,6 +141,7 @@ public class TraceAbstractionStarter {
 						witnessAutomaton);
 			}
 		}
+		logNumberOfWitnessInvariants(errNodesOfAllProc);
 		if (m_OverallResult == Result.SAFE) {
 			final String longDescription;
 			if (errNodesOfAllProc.isEmpty()) {
@@ -253,6 +257,22 @@ public class TraceAbstractionStarter {
 		}
 
 		m_RootOfNewModel = m_Artifact;
+	}
+
+	private void logNumberOfWitnessInvariants(Collection<ProgramPoint> errNodesOfAllProc) {
+		int numberOfCheckedInvariants = 0;
+		for (ProgramPoint err : errNodesOfAllProc) {
+			IAnnotations annot = err.getBoogieASTNode().getPayload().getAnnotations().get(Check.class.getName());
+			if (annot != null) {
+				Check check = (Check) annot;
+				if (check.getSpec() == Spec.WITNESS_INVARIANT) {
+					numberOfCheckedInvariants++;
+				}
+			}
+		}
+		if (numberOfCheckedInvariants > 0) {
+			m_Logger.info("Automizer considered " + numberOfCheckedInvariants + " witness invariants");
+		}
 	}
 
 	private void iterate(String name, RootNode root, TAPreferences taPrefs, SmtManager smtManager,
