@@ -48,7 +48,9 @@ public class OctInterval {
 	}
 	
 	public boolean isBottom() {
-		// note: [-inf, inf] is represeted as [inf, inf], which is also not empty
+		if (mMin.isInfinity()) { // [-inf, inf] is represeted as [inf, inf]
+			return false;
+		}
 		return mMin.compareTo(mMax) > 0;
 	}
 	

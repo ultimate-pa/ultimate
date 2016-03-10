@@ -185,6 +185,8 @@ public class OctStatementProcessor {
 				}
 				oldStates.forEach(action);
 				return oldStates;
+			// TODO use octagon values for TwoVarAffineExpression to assign intervals
+			// (e.g. res:=a+b; with a+b=[-2,0] ==> res=[-2,0])
 			} else if (mPostOp.isFallbackAssignIntervalProjectionEnabled()) {
 				return IntervalProjection.assignNumericVarAffine(targetVar, ae, oldStates);
 			}
