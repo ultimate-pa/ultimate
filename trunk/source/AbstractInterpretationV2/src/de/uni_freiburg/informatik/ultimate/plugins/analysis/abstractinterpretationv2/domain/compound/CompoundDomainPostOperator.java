@@ -46,6 +46,8 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Ope
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.BoogieExpressionTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.NormalFormTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
@@ -56,7 +58,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 
@@ -72,11 +73,13 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 	private final Logger mLogger;
 	private boolean mCreateStateAssumptions = false;
 	private boolean mUseSmtSolverChecks = false;
+	private boolean mSimplifyAssumption = false;
 	private final Boogie2SMT mBoogie2Smt;
 	private final Script mScript;
 	private final CodeBlockFactory mCodeBlockFactory;
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final TransFormulaBuilder mTransformulaBuilder;
+	private final NormalFormTransformer<Expression> mNormalFormTransformer;
 
 	/**
 	 * Default constructor of the {@link CompoundDomain} post operator.
@@ -93,10 +96,12 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		mCodeBlockFactory = rootAnnotation.getCodeBlockFactory();
 		mStatementExtractor = new RcfgStatementExtractor();
 		mTransformulaBuilder = new TransFormulaBuilder(mBoogie2Smt, services);
+		mNormalFormTransformer = new NormalFormTransformer<>(new BoogieExpressionTransformer());
 
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		mCreateStateAssumptions = ups.getBoolean(CompoundDomainPreferences.LABEL_CREATE_ASSUMPTIONS);
 		mUseSmtSolverChecks = ups.getBoolean(CompoundDomainPreferences.LABEL_USE_SMT_SOLVER_FEASIBILITY);
+		mSimplifyAssumption = ups.getBoolean(CompoundDomainPreferences.LABEL_SIMPLIFY_ASSUMPTIONS);
 	}
 
 	@Override
@@ -113,8 +118,13 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		final List<IAbstractState<?, CodeBlock, IBoogieVar>> resultingStates = new ArrayList<>();
 
 		for (int i = 0; i < domains.size(); i++) {
+			mLogger.debug("Running " + domains.get(i).getClass().getSimpleName() + " post with code block "
+			        + transitionList.get(i));
+
 			final List<IAbstractState> result = applyInternally(states.get(i), domains.get(i).getPostOperator(),
 			        transitionList.get(i));
+
+			mLogger.debug("Result for domain " + domains.get(i).getClass().getSimpleName() + ": \n" + result);
 
 			if (result.size() == 0) {
 				return new ArrayList<>();
@@ -160,8 +170,13 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		final List<CodeBlock> returnList = new ArrayList<>();
 
 		if (mCreateStateAssumptions) {
-			for (int i = 0; i < states.size(); i++) {
-				returnList.add(createBlockWithoutState(states, i, transition));
+			// If there is only one internal compound state, keep the transitions as they are and do nothing else.
+			if (states.size() == 1) {
+				returnList.add(transition);
+			} else {
+				for (int i = 0; i < states.size(); i++) {
+					returnList.add(createBlockWithoutState(states, i, transition));
+				}
 			}
 		} else {
 			for (int i = 0; i < states.size(); i++) {
@@ -188,6 +203,8 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 	 */
 	private CodeBlock createBlockWithoutState(final List<IAbstractState<?, CodeBlock, IBoogieVar>> states,
 	        final int index, final CodeBlock transition) {
+
+		assert states.size() > 0;
 
 		final List<Expression> expressionsList = new ArrayList<>();
 
@@ -217,15 +234,18 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 				assumeExpression = new BinaryExpression(current.getLocation(), BoogieType.boolType, Operator.LOGICAND,
 				        assumeExpression, current);
 			}
+		}
 
+		if (mSimplifyAssumption) {
+			assumeExpression = mNormalFormTransformer.simplify(assumeExpression);
 		}
 
 		final AssumeStatement assume = new AssumeStatement(assumeExpression.getLocation(), assumeExpression);
 		final List<Statement> secondStatements = new ArrayList<>();
 		secondStatements.add(assume);
 		secondStatements.addAll(mStatementExtractor.process(transition));
-		final CodeBlock returnCodeBlock = mCodeBlockFactory.constructStatementSequence((ProgramPoint) transition.getSource(),
-		        (ProgramPoint) transition.getTarget(), secondStatements, Origin.IMPLEMENTATION);
+		final CodeBlock returnCodeBlock = mCodeBlockFactory.constructStatementSequence(null, null, secondStatements,
+		        Origin.IMPLEMENTATION);
 		mTransformulaBuilder.addTransitionFormulas(returnCodeBlock, transition.getPreceedingProcedure());
 		return returnCodeBlock;
 	}
