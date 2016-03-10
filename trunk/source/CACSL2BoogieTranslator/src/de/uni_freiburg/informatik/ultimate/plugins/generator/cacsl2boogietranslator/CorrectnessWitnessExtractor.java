@@ -142,7 +142,8 @@ public class CorrectnessWitnessExtractor {
 		}
 
 		mLogger.info("Processed " + closed.size() + " nodes");
-		mLogger.info("Extracted " + successCounter + " invariants");
+		mLogger.info("WitnessExtracted=" + successCounter);
+		mLogger.info("WitnessTotal=" + (successCounter + failCounter));
 		if (failCounter > 0) {
 			mLogger.info("Could not extract " + failCounter + " invariants");
 		} else {
