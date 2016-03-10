@@ -57,11 +57,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 @SuppressWarnings({ "unchecked", "rawtypes" })
 public class CompoundDomainState implements IAbstractState<CompoundDomainState, CodeBlock, IBoogieVar> {
 
+	private static int sId;
+	
 	private final Logger mLogger;
 	private final List<IAbstractState<?, CodeBlock, IBoogieVar>> mAbstractStates;
 	private final List<IAbstractDomain> mDomainList;
+	private final int mId;
 
 	public CompoundDomainState(final Logger logger, final List<IAbstractDomain> domainList) {
+		sId++;
+		mId = sId;
 		mLogger = logger;
 		mDomainList = domainList;
 		mAbstractStates = new ArrayList<>();
@@ -72,6 +77,8 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 
 	public CompoundDomainState(final Logger logger, final List<IAbstractDomain> domainList,
 	        final List<IAbstractState<?, CodeBlock, IBoogieVar>> abstractStateList) {
+		sId++;
+		mId = sId;
 		if (domainList.size() != abstractStateList.size()) {
 			throw new UnsupportedOperationException(
 			        "The domain list size and the abstract state list size must be identical.");
@@ -190,5 +197,10 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 
 	protected List<IAbstractState<?, CodeBlock, IBoogieVar>> getAbstractStatesList() {
 		return mAbstractStates;
+	}
+
+	@Override
+	public int hashCode() {
+		return mId;
 	}
 }
