@@ -48,7 +48,7 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, CodeBlock, IBoo
 	}
 
 	@Override
-	public boolean isPostSound(STATE pre, List<STATE> postStates, CodeBlock transition) {
+	public boolean isPostSound(final STATE pre, final List<STATE> postStates, final CodeBlock transition) {
 		if (transition instanceof Call || transition instanceof Return) {
 			// TODO: The current hoare triple checker is not usable for call/return, so we just say its sound (but it
 			// should be anyways)

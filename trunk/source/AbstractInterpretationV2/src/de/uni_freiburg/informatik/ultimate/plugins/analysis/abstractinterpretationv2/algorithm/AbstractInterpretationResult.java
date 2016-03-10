@@ -58,10 +58,6 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 				.add(new AbstractCounterexample<>(post, transitionProvider.getSource(transition), abstractExecution));
 	}
 
-	protected void addTerms(final Map<LOCATION, Term> terms) {
-
-	}
-
 	protected void saveTerms(IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> rootStateStorage, ACTION start,
 			Script script, Boogie2SMT bpl2smt) {
 		mLoc2Term.putAll(rootStateStorage.getLoc2Term(start, script, bpl2smt));
@@ -88,5 +84,4 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 	public Set<Term> getTerms() {
 		return mTerms;
 	}
-
 }

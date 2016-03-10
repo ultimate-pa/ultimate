@@ -180,13 +180,14 @@ public final class AbstractInterpreter {
 	        final ITransitionProvider<CodeBlock, LOC> transitionProvider, final ILoopDetector<CodeBlock> loopDetector,
 	        final RootAnnot rootAnnot) {
 
+		final RcfgDebugHelper<STATE, LOC> debugHelper = new RcfgDebugHelper<>(rootAnnot);
 		final FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, LOC> params = new FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, LOC>()
-		        .addDomain(domain).addLoopDetector(loopDetector)
-		        .addStorage(new RcfgAbstractStateStorageProvider<STATE, LOC>(domain.getMergeOperator(), services,
-		                transitionProvider))
-		        .addTransitionProvider(transitionProvider)
-		        .addVariableProvider(new RcfgVariableProvider<STATE, LOC>(symbolTable, boogieVarTable, services))
-		        .addDebugHelper(new RcfgDebugHelper<>(rootAnnot));
+				.addDomain(domain).addLoopDetector(loopDetector)
+				.addStorage(new RcfgAbstractStateStorageProvider<STATE, LOC>(domain.getMergeOperator(), services,
+						transitionProvider))
+				.addTransitionProvider(transitionProvider)
+				.addVariableProvider(new RcfgVariableProvider<STATE, LOC>(symbolTable, boogieVarTable, services))
+				.addDebugHelper(debugHelper);
 
 		final FixpointEngine<STATE, CodeBlock, IBoogieVar, LOC> fxpe = new FixpointEngine<STATE, CodeBlock, IBoogieVar, LOC>(
 		        services, timer, params);
