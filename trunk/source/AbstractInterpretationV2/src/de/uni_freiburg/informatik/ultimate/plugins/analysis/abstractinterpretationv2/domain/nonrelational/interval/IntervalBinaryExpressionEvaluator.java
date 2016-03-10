@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
@@ -135,6 +136,9 @@ public class IntervalBinaryExpressionEvaluator
 				case COMPEQ:
 					if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
 						returnBool = res1.getBooleanValue().intersect(res2.getBooleanValue());
+						if (returnBool.getValue() != Value.BOTTOM) {
+							returnBool = new BooleanValue(true);
+						}
 					}
 
 					returnValue = res1.getValue().intersect(res2.getValue());
@@ -364,9 +368,9 @@ public class IntervalBinaryExpressionEvaluator
 					        left.getValue(), false);
 
 					final IntervalDomainEvaluationResult leftEvalresult = new IntervalDomainEvaluationResult(newLeft,
-					        referenceBool);
+					        right.getBooleanValue());
 					final IntervalDomainEvaluationResult rightEvalresult = new IntervalDomainEvaluationResult(newRight,
-					        referenceBool);
+					        left.getBooleanValue());
 
 					final List<IntervalDomainState> leftEq = mLeftSubEvaluator.inverseEvaluate(leftEvalresult,
 					        currentState);

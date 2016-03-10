@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
@@ -136,6 +137,9 @@ public class CongruenceBinaryExpressionEvaluator
 				case COMPEQ:
 					if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
 						returnBool = res1.getBooleanValue().intersect(res2.getBooleanValue());
+						if (returnBool.getValue() != Value.BOTTOM) {
+							returnBool = new BooleanValue(true);
+						}
 					}
 
 					returnValue = v1.intersect(v2);
@@ -355,9 +359,9 @@ public class CongruenceBinaryExpressionEvaluator
 					        left.getValue(), false);
 
 					final CongruenceDomainEvaluationResult leftEvalresult = new CongruenceDomainEvaluationResult(newLeft,
-					        referenceBool);
+					        right.getBooleanValue());
 					final CongruenceDomainEvaluationResult rightEvalresult = new CongruenceDomainEvaluationResult(newRight,
-					        referenceBool);
+					        left.getBooleanValue());
 					
 					// Store the values of the other side of the equality (needed for mod-evaluations)
 					if (mLeftSubEvaluator instanceof CongruenceBinaryExpressionEvaluator) {
