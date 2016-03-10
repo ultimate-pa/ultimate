@@ -1051,52 +1051,53 @@ public class OctMatrix {
 
 	public Term getTerm(Script script, Term[] vars) {
 		Term acc = script.term("true");
-		for (int rowBlock = 0; rowBlock < variables(); ++rowBlock) {
-			Term rowVar = vars[rowBlock];
-			for (int colBlock = 0; colBlock <= rowBlock; ++colBlock) {
-				Term colVar = vars[colBlock];
-				Term blockTerm = getBlockTerm(script, rowBlock, colBlock, rowVar, colVar);
-				acc = Util.and(script, acc, blockTerm);
+		for (int row = 0; row < 2*variables(); ++row) {
+			Term rowVar = selectVar(script, row, vars);
+			// iterate only block lower triangular matrix (skip coherent upper part)
+			for (int col = 0; col < (row/2 + 1) * 2; ++col) {
+				OctValue entry = get(row, col);
+				if (col == row) {
+					if (entry.signum() < 0) {
+						return script.term("false"); // 0 <= -1
+					} else {
+						continue; // 0 <= 1
+					}
+				}
+				Term colVar = selectVar(script, col, vars);
+				acc = Util.and(script, acc, createBoundedDiffTerm(script, colVar, rowVar, entry));
 			}
 		}
 		return acc;
 	}
 
-	private Term getBlockTerm(Script script, int rowBlock, int colBlock, Term rowVar, Term colVar) {
-		Term acc = script.term("true");
-		boolean rowIsInt = TypeUtil.isIntTerm(rowVar);
-		boolean colIsInt = TypeUtil.isIntTerm(colVar);
-		boolean relationIsInt = rowIsInt && colIsInt;
-		if (rowIsInt != colIsInt) {
-			// one var is a real => typecast non-reals to real
-			if (rowIsInt) {
-				rowVar = script.term("to_real", rowVar);
-			} else /* if (colIsInt) */ {
-				colVar = script.term("to_real", colVar);
+	// returns variable in positive or negative form, depending on row or column
+	private Term selectVar(Script script, int rowCol, Term[] vars) {
+		Term posNegVar = vars[rowCol / 2];
+		if (rowCol % 2 == 1) {
+			return script.term("-", posNegVar);
+		}
+		return posNegVar;
+	}
+
+	// returns minuend - subtrahend <= bound
+	private Term createBoundedDiffTerm(Script script, Term minuend, Term subtrahend, OctValue bound) {
+		if (bound.isInfinity()) {
+			return script.term("true");
+		}
+		Term tBound;
+		boolean minuendIsInt = TypeUtil.isIntTerm(minuend);
+		boolean subtrahendIsInt = TypeUtil.isIntTerm(subtrahend);
+		if (minuendIsInt && subtrahendIsInt) {
+			tBound = script.numeral(bound.getValue().round(new MathContext(0, RoundingMode.FLOOR)).toBigIntegerExact());
+		} else {
+			tBound = script.decimal(bound.getValue());
+			if (minuendIsInt) {
+				minuend = script.term("to_real", minuend);
+			} else if (subtrahendIsInt) {
+				subtrahend = script.term("to_real", subtrahend);
 			}
 		}
-		// 0 = plus, 1 = minus
-		for (int i = 0; i < 2; ++i) { // row offset
-			for (int j = 0; j < 2; ++j) { // col offset
-				OctValue value = get(rowBlock + i, colBlock + j);
-				if (!value.isInfinity()) {
-					BigDecimal max = value.getValue();
-					Term vj = j == 0 ? colVar : script.term("-", colVar);
-					Term vi = i == 0 ? rowVar : script.term("-", rowVar);
-					Term maxTerm;
-					if (relationIsInt) {
-						// (intX - intY <= 7.3) is equivalent to (intX - intY <= 7)
-						// (intX - intY <= -7.3) is equivalent to (intX - intY <= -8)
-						BigInteger maxInt = max.round(new MathContext(0, RoundingMode.FLOOR)).toBigIntegerExact();
-						maxTerm = script.numeral(maxInt);
-					} else {
-						maxTerm = script.decimal(max);
-					}
-					acc = Util.and(script, acc, script.term("<=", script.term("-", vj, vi), maxTerm));
-				}
-			}
-		}
-		return acc;
+		return script.term("<=", script.term("-", minuend, subtrahend), tBound);
 	}
 
 	@Override
