@@ -198,6 +198,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			m_HoareAnnotationPositions = new HashSet<ProgramPoint>();
 			m_HoareAnnotationPositions.addAll(rootNode.getRootAnnot().getLoopLocations().keySet());
 			m_HoareAnnotationPositions.addAll(rootNode.getRootAnnot().getExitNodes().values());
+			m_HoareAnnotationPositions.addAll(rootNode.getRootAnnot().getPotentialCycleProgramPoints());
 		}
 		m_Haf = new HoareAnnotationFragments(mLogger, m_HoareAnnotationPositions, m_Pref.getHoareAnnotationPositions());
 		m_StateFactoryForRefinement = new PredicateFactoryRefinement(m_RootNode.getRootAnnot().getProgramPoints(),

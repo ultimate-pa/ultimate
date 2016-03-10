@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -165,13 +166,13 @@ public class TraceAbstractionStarter {
 			final IBacktranslationService backTranslatorService = m_Services.getBacktranslationService();
 			final Term trueterm = smtManager.getScript().term("true");
 
+			
+			final Set<ProgramPoint> locsForLoopLocations = new HashSet<>();
+			locsForLoopLocations.addAll(rootAnnot.getPotentialCycleProgramPoints());
+			locsForLoopLocations.addAll(rootAnnot.getLoopLocations().keySet());
 			// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
-			final Set<ProgramPoint> relevantLocs = rootAnnot.getProgramPoints().entrySet().stream()
-					.flatMap(a -> a.getValue().entrySet().stream()).map(a -> a.getValue()).filter(a -> a
-							.getOutgoingEdges().stream().anyMatch(b -> LoopEntryAnnotation.getAnnotation(b) != null))
-					.collect(Collectors.toSet());
 
-			for (ProgramPoint locNode : relevantLocs) {
+			for (ProgramPoint locNode : locsForLoopLocations) {
 				assert (locNode.getBoogieASTNode() != null) : "locNode without BoogieASTNode";
 				final HoareAnnotation hoare = getHoareAnnotation(locNode);
 				if (hoare != null) {
@@ -209,30 +210,6 @@ public class TraceAbstractionStarter {
 					// }
 				}
 			}
-
-			// TODO: delete the old way of generating hoare annotations for loops if we are sure that the new way works
-			// as expected
-
-			// Map<ProgramPoint, ILocation> loopLocations = rootAnnot.getLoopLocations();
-			// for (ProgramPoint locNode : loopLocations.keySet()) {
-			// assert (locNode.getBoogieASTNode() != null) : "locNode without BoogieASTNode";
-			// HoareAnnotation hoare = getHoareAnnotation(locNode);
-			// if (hoare != null) {
-			// Term formula = hoare.getFormula();
-			// Expression expr = rootAnnot.getBoogie2SMT().getTerm2Expression().translate(formula);
-			// InvariantResult<RcfgElement, Expression> invResult = new InvariantResult<RcfgElement, Expression>(
-			// Activator.s_PLUGIN_NAME, locNode, backTranslatorService, expr);
-			// // s_Logger.warn(invResult.getLongDescription());
-			// reportResult(invResult);
-			//
-			// if (!formula.equals(trueterm)) {
-			// new WitnessInvariant(backTranslatorService.translateExpressionToString(expr, Expression.class))
-			// .annotate(locNode);
-			// }
-			// }
-			// }
-
-			// End old way of generating hoare annotations for loops
 		}
 		reportBenchmark(traceAbstractionBenchmark);
 		switch (m_OverallResult) {
