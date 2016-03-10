@@ -191,7 +191,7 @@ public class AffineExpression {
 	public AffineExpression divide(AffineExpression divisor, boolean integerDivison) {
 		try {
 			if (divisor.isConstant()) {
-				return divideByConstant(divisor, integerDivison);
+				return divideByConstant(divisor.mConstant, integerDivison);
 			} else {
 				return divideByNonConstant(divisor, integerDivison);
 			}
@@ -200,22 +200,28 @@ public class AffineExpression {
 		return null;
 	}
 
-	private AffineExpression divideByConstant(AffineExpression divisor, boolean integerDivison) {
-		assert divisor.isConstant();
-		AffineExpression quotient = new AffineExpression();
-		BiFunction<BigDecimal, BigDecimal, BigDecimal> divOp =
-				integerDivison ? NumUtil::euclideanDivision : BigDecimal::divide;
-		quotient.mConstant = divOp.apply(mConstant, divisor.mConstant);
-		for (Map.Entry<String, BigDecimal> entry : mCoefficients.entrySet()) {
-			BigDecimal newCoefficent = divOp.apply(entry.getValue(), divisor.mConstant);
-			quotient.mCoefficients.put(entry.getKey(), newCoefficent);
+	private AffineExpression divideByConstant(BigDecimal divisor, boolean integerDivison) {
+		if (integerDivison) {
+			if (isConstant()) {
+				return new AffineExpression(NumUtil.euclideanDivision(mConstant, divisor));
+			} else {
+				return null;
+			}
+		} else {
+			AffineExpression quotient = new AffineExpression();
+			quotient.mConstant = mConstant.divide(divisor);
+			for (Map.Entry<String, BigDecimal> entry : mCoefficients.entrySet()) {
+				BigDecimal newCoefficent = entry.getValue().divide(divisor);
+				quotient.mCoefficients.put(entry.getKey(), newCoefficent);
+			}
+			return quotient;
 		}
-		return quotient;
 	}
 	
-	// also allows to divide by constants, but returns null more often
-	// divide by constant may return an AfffineTerm where this doesn't
-	// the result will always be a constant
+	// Also allows to divide by constants, but returns null more often.
+	// divideByConstant may return an AfffineTerm where this returns null.
+	// The result will always be a constant.
+	// Supports only:    c*AE / AE  =  c
 	private AffineExpression divideByNonConstant(AffineExpression divisor, boolean integerDivison) {
 		Set<String> vars = mCoefficients.keySet();
 		if (!vars.equals(divisor.mCoefficients.keySet())) {
