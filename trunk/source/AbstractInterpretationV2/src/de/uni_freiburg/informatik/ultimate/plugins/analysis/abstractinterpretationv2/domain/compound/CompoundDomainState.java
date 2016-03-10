@@ -76,12 +76,12 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	}
 
 	public CompoundDomainState(final Logger logger, final List<IAbstractDomain> domainList,
-	        final List<IAbstractState<?, CodeBlock, IBoogieVar>> abstractStateList) {
+			final List<IAbstractState<?, CodeBlock, IBoogieVar>> abstractStateList) {
 		sId++;
 		mId = sId;
 		if (domainList.size() != abstractStateList.size()) {
 			throw new UnsupportedOperationException(
-			        "The domain list size and the abstract state list size must be identical.");
+					"The domain list size and the abstract state list size must be identical.");
 		}
 
 		mLogger = logger;
@@ -170,7 +170,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	@Override
 	public Term getTerm(Script script, Boogie2SMT bpl2smt) {
 		return Util.and(script,
-		        mAbstractStates.stream().map(state -> state.getTerm(script, bpl2smt)).toArray(i -> new Term[i]));
+				mAbstractStates.stream().map(state -> state.getTerm(script, bpl2smt)).toArray(i -> new Term[i]));
 	}
 
 	@Override
@@ -178,17 +178,24 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 		final StringBuilder sb = new StringBuilder();
 
 		for (final IAbstractState<?, CodeBlock, IBoogieVar> state : mAbstractStates) {
-			sb.append("\n");
-			sb.append(state.getClass().getSimpleName()).append(":\n").append(state.toLogString());
+			sb.append(getShortName(state.getClass())).append(": ").append(state.toLogString()).append(", ");
 		}
 
 		return sb.toString();
 	}
 
+	private String getShortName(Class<?> clazz) {
+		String s = clazz.getSimpleName();
+		if (s.length() < 4) {
+			return s;
+		}
+		return s.substring(0, 3);
+	}
+
 	private CompoundDomainState performStateOperation(
-	        Function<IAbstractState<?, CodeBlock, IBoogieVar>, IAbstractState<?, CodeBlock, IBoogieVar>> state) {
+			Function<IAbstractState<?, CodeBlock, IBoogieVar>, IAbstractState<?, CodeBlock, IBoogieVar>> state) {
 		return new CompoundDomainState(mLogger, mDomainList,
-		        mAbstractStates.stream().map(state).collect(Collectors.toList()));
+				mAbstractStates.stream().map(state).collect(Collectors.toList()));
 	}
 
 	protected List<IAbstractDomain> getDomainList() {

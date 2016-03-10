@@ -96,6 +96,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		mMaxUnwindings = ups.getInt(AbsIntPrefInitializer.LABEL_ITERATIONS_UNTIL_WIDENING);
 		mMaxParallelStates = ups.getInt(AbsIntPrefInitializer.LABEL_STATES_UNTIL_MERGE);
+		// mMaxParallelStates = 1;
 	}
 
 	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> run(final ACTION start, final Script script,
@@ -526,8 +527,21 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 	private String getLogMessageUnsoundPost(STATE preStateWithFreshVariables, List<STATE> postStates,
 			ACTION currentAction) {
-		// TODO Auto-generated method stub
-		return "Post is unsound";
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Post is unsound because the term-transformation of the following triple is not valid: {");
+		sb.append(preStateWithFreshVariables.toLogString());
+		sb.append("} ");
+		sb.append(mTransitionProvider.toLogString(currentAction));
+		sb.append(" {");
+		final Iterator<STATE> iter = postStates.iterator();
+		while (iter.hasNext()) {
+			sb.append(iter.next().toLogString());
+			if (iter.hasNext()) {
+				sb.append(" OR ");
+			}
+		}
+		sb.append("}");
+		return sb.toString();
 	}
 
 	private StringBuilder getLogMessageEmptyIsBottom() {
