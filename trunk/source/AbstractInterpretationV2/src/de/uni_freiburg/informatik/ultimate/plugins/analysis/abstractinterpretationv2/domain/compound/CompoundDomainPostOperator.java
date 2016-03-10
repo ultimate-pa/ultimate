@@ -36,6 +36,7 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
@@ -52,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlockFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
@@ -74,6 +76,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 	private final Script mScript;
 	private final CodeBlockFactory mCodeBlockFactory;
 	private final RcfgStatementExtractor mStatementExtractor;
+	private final TransFormulaBuilder mTransformulaBuilder;
 
 	/**
 	 * Default constructor of the {@link CompoundDomain} post operator.
@@ -83,12 +86,13 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 	 * @param rootAnnotation
 	 *            The {@link RootAnnot} node from the {@link AbstractInterpreter}.
 	 */
-	protected CompoundDomainPostOperator(Logger logger, final RootAnnot rootAnnotation) {
-		mLogger = logger;
+	protected CompoundDomainPostOperator(final IUltimateServiceProvider services, final RootAnnot rootAnnotation) {
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mBoogie2Smt = rootAnnotation.getBoogie2SMT();
 		mScript = rootAnnotation.getScript();
 		mCodeBlockFactory = rootAnnotation.getCodeBlockFactory();
 		mStatementExtractor = new RcfgStatementExtractor();
+		mTransformulaBuilder = new TransFormulaBuilder(mBoogie2Smt, services);
 
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		mCreateStateAssumptions = ups.getBoolean(CompoundDomainPreferences.LABEL_CREATE_ASSUMPTIONS);
@@ -132,6 +136,9 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		returnStates.add(new CompoundDomainState(mLogger, domains, resultingStates));
 
 		if (mUseSmtSolverChecks) {
+			for (final CompoundDomainState state : returnStates) {
+				state.getTerm(mScript, mBoogie2Smt);
+			}
 			// TODO implement SMT Solver checks of the state.
 		}
 
@@ -217,8 +224,10 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		final List<Statement> secondStatements = new ArrayList<>();
 		secondStatements.add(assume);
 		secondStatements.addAll(mStatementExtractor.process(transition));
-		return mCodeBlockFactory.constructStatementSequence((ProgramPoint) transition.getSource(),
+		final CodeBlock returnCodeBlock = mCodeBlockFactory.constructStatementSequence((ProgramPoint) transition.getSource(),
 		        (ProgramPoint) transition.getTarget(), secondStatements, Origin.IMPLEMENTATION);
+		mTransformulaBuilder.addTransitionFormulas(returnCodeBlock, transition.getPreceedingProcedure());
+		return returnCodeBlock;
 	}
 
 	@Override

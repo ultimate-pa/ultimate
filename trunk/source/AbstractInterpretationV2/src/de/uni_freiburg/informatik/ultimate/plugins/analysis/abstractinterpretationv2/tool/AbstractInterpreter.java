@@ -358,8 +358,7 @@ public final class AbstractInterpreter {
 			if (ups.getBoolean(CompoundDomainPreferences.LABEL_USE_OCTAGON_DOMAIN)) {
 				domainList.add(new OctagonDomain(logger, symbolTable, literalCollector));
 			}
-			return new CompoundDomain(services.getLoggingService().getLogger(Activator.PLUGIN_ID), domainList,
-			        rootAnnotation);
+			return new CompoundDomain(services, domainList, rootAnnotation);
 		}
 		throw new UnsupportedOperationException("The value \"" + selectedDomain + "\" of preference \""
 		        + AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN + "\" was not considered before! ");

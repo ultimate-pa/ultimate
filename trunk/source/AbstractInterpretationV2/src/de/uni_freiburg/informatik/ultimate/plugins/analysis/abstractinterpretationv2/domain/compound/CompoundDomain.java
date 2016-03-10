@@ -31,7 +31,9 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
+import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractStateBinaryOperator;
@@ -48,15 +50,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Roo
 public class CompoundDomain implements IAbstractDomain<CompoundDomainState, CodeBlock, IBoogieVar> {
 
 	private final Logger mLogger;
+	private final IUltimateServiceProvider mServiceProvider;
 	private final List<IAbstractDomain> mDomainList;
 	private final RootAnnot mRootAnnotation;
 
 	private IAbstractStateBinaryOperator<CompoundDomainState> mMergeOperator;
 	private IAbstractStateBinaryOperator<CompoundDomainState> mWideningOperator;
 	private IAbstractPostOperator<CompoundDomainState, CodeBlock, IBoogieVar> mPostOperator;
-	
-	public CompoundDomain(Logger logger, List<IAbstractDomain> domainList, RootAnnot rootAnnotation) {
-		mLogger = logger;
+
+	public CompoundDomain(final IUltimateServiceProvider serviceProvider,
+	        final List<IAbstractDomain> domainList, final RootAnnot rootAnnotation) {
+		mLogger = serviceProvider.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mServiceProvider = serviceProvider;
 		mDomainList = domainList;
 		mRootAnnotation = rootAnnotation;
 	}
@@ -85,7 +90,7 @@ public class CompoundDomain implements IAbstractDomain<CompoundDomainState, Code
 	@Override
 	public IAbstractPostOperator<CompoundDomainState, CodeBlock, IBoogieVar> getPostOperator() {
 		if (mPostOperator == null) {
-			mPostOperator = new CompoundDomainPostOperator(mLogger, mRootAnnotation);
+			mPostOperator = new CompoundDomainPostOperator(mServiceProvider, mRootAnnotation);
 		}
 		return mPostOperator;
 	}
