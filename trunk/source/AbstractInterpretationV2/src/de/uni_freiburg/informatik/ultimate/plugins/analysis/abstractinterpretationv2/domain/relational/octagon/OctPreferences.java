@@ -55,7 +55,8 @@ public class OctPreferences {
 
 	public static final String EXP_WIDENING_THRESHOLD = "Threshold for exponential widening";
 	public static final String EXP_WIDENING_THRESHOLD_DEFAULT_VALUE = "131072"; // 2 * 2^16
-	public static final String EXP_WIDENING_THRESHOLD_TOOLTIP = "Exponential widening will set matrix entries above this threshold to infinity. "
+	public static final String EXP_WIDENING_THRESHOLD_TOOLTIP =
+			"Exponential widening will set matrix entries above this threshold to infinity. "
 	        + "You may want to double the threshold, since interval bounds are stored with factor 2.";
 
 	public static final String FALLBACK_ASSIGN_INTERVAL_PROJECTION = "Fallback: assign interval projection";

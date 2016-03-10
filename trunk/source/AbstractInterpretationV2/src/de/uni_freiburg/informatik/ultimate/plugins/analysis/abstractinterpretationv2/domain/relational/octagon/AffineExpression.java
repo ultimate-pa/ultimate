@@ -135,6 +135,7 @@ public class AffineExpression {
 		twoVarForm.var2 = vars.get(1);
 		twoVarForm.negVar1 = coefficients.get(0).signum() < 0;
 		twoVarForm.negVar2 = coefficients.get(1).signum() < 0;
+		twoVarForm.constant = new OctValue(mConstant);
 		return twoVarForm;
 	}
 	

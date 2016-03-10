@@ -22,8 +22,7 @@ public class IntervalProjection {
 		oldStates = OctPostOperator.removeBottomStates(oldStates);
 		for (OctDomainState state : oldStates) {
 			IntervalDomainValue i = projectNumericExprWithoutIfs(rhs, state);
-			OctInterval oi = new OctInterval(i);
-			state.assignNumericVarInterval(var, oi.getMin(), oi.getMax());
+			state.assignNumericVarInterval(var, new OctInterval(i));
 		}
 		return oldStates;
 	}
@@ -34,8 +33,7 @@ public class IntervalProjection {
 		oldStates = OctPostOperator.removeBottomStates(oldStates);
 		for (OctDomainState state : oldStates) {
 			IntervalDomainValue i = projectAffineExpr(rhs, state);
-			OctInterval oi = new OctInterval(i);
-			state.assignNumericVarInterval(var, oi.getMin(), oi.getMax());
+			state.assignNumericVarInterval(var, new OctInterval(i));
 		}
 		return oldStates;
 	}

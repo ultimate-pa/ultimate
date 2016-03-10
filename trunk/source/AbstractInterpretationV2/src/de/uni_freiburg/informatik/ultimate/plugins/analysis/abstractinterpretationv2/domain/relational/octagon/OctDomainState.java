@@ -580,11 +580,11 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 	}
 	
 	// min <= var <= max
-	protected void assignNumericVarInterval(String targetVar, OctValue min, OctValue max) {
+	protected void assignNumericVarInterval(String targetVar, OctInterval interval) {
 		assert assertNotLockedBeforeModification();
 		assert assertNotBottomBeforeAssign();
 		mNumericAbstraction = cachedNormalizedNumericAbstraction().copy();
-		mNumericAbstraction.assignVarInterval(numVarIndex(targetVar), min, max);
+		mNumericAbstraction.assignVarInterval(numVarIndex(targetVar), interval.getMin(), interval.getMax());
 	}
 
 	
@@ -608,6 +608,28 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 
 	public OctInterval projectToInterval(String numericVar) {
 		return OctInterval.fromMatrix(cachedNormalizedNumericAbstraction(), numVarIndex(numericVar));
+	}
+	
+	public OctInterval projectToInterval(AffineExpression.TwoVarForm tvf) {
+		int iVar1 = mMapNumericVarToIndex.get(tvf.var1) * 2;
+		int iVar2Inv = mMapNumericVarToIndex.get(tvf.var2) * 2 + 1; // inverted form, because x-(-y) = x+y
+		if (tvf.negVar1) {
+			iVar1 = iVar1 + 1;
+		}
+		if (tvf.negVar2) {
+			iVar2Inv = iVar2Inv - 1;
+		}
+		OctMatrix m = cachedNormalizedNumericAbstraction();
+		// var1 - (-var2) <= c     equivalent     var1 + var2 <= c
+		OctValue max = m.get(iVar2Inv, iVar1);
+		// (-var1) - var2 <= c     equivalent     -c <= var1 + var2
+		OctValue min = m.get(iVar2Inv^1, iVar1^1).negateIfNotInfinity();
+		if (tvf.constant.signum() != 0) {
+			max = max.add(tvf.constant);
+			min = min.add(tvf.constant);
+		}
+		// TODO negate min
+		return new OctInterval(min, max);
 	}
 
 	private int numVarIndex(String var) {
