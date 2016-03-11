@@ -36,10 +36,12 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.Map.Entry;
 
 import org.apache.log4j.Logger;
@@ -214,7 +216,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.WitnessInvariant;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.WitnessInvariants;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.BeforeAfterWitnessInvariantsMapping;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 
 /**
@@ -247,12 +249,14 @@ public class MainDispatcher extends Dispatcher {
 	 * Variables that need some special memory handling.
 	 */
 	private LinkedHashSet<IASTNode> variablesOnHeap;
+	
+	private Set<Set<String>> m_NodeLabelsOfAddedWitnesses = new HashSet<>();
 
 	// begin alex
 	private LinkedHashSet<VariableDeclaration> _boogieDeclarationsOfVariablesOnHeap;
 	private LinkedHashMap<Integer, String> indexToFunction;
 	protected boolean m_BitvectorTranslation;
-	protected WitnessInvariants m_WitnessInvariants;
+	protected BeforeAfterWitnessInvariantsMapping m_WitnessInvariants;
 
 	public LinkedHashMap<String, Integer> getFunctionToIndex() {
 		return mFunctionToIndex;
@@ -276,7 +280,7 @@ public class MainDispatcher extends Dispatcher {
 
 	// end alex
 
-	public MainDispatcher(CACSL2BoogieBacktranslator backtranslator, WitnessInvariants witnessInvariants,
+	public MainDispatcher(CACSL2BoogieBacktranslator backtranslator, BeforeAfterWitnessInvariantsMapping witnessInvariants,
 			IUltimateServiceProvider services, Logger logger) {
 		super(backtranslator, services, logger);
 		m_BitvectorTranslation = mPreferences.getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
@@ -369,10 +373,9 @@ public class MainDispatcher extends Dispatcher {
 	@Override
 	public Result dispatch(IASTNode n) {
 		final List<AssertStatement> witnessInvariantsBefore;
-		final String invariantBefore;
+		WitnessInvariant invariantBefore;
 		if (m_WitnessInvariants != null) {
-			WitnessInvariant wBefore = m_WitnessInvariants.getInvariantsBefore().get(n);
-			invariantBefore = wBefore == null ? null : wBefore.getInvariant();
+			invariantBefore = m_WitnessInvariants.getInvariantsBefore().get(n);
 			witnessInvariantsBefore = translateWitnessInvariant(n, invariantBefore);
 		} else {
 			invariantBefore = null;
@@ -554,11 +557,10 @@ public class MainDispatcher extends Dispatcher {
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 		final List<AssertStatement> witnessInvariantsAfter;
-		final String invariantAfter;
+		WitnessInvariant invariantAfter;
 		if (m_WitnessInvariants != null) {
 			// TODO: Use the new information as you see fit
-			WitnessInvariant wAfter = m_WitnessInvariants.getInvariantsAfter().get(n);
-			invariantAfter = wAfter == null ? null : wAfter.getInvariant();
+			invariantAfter = m_WitnessInvariants.getInvariantsAfter().get(n);
 			witnessInvariantsAfter = translateWitnessInvariant(n, invariantAfter);
 		} else {
 			invariantAfter = null;
@@ -570,38 +572,42 @@ public class MainDispatcher extends Dispatcher {
 			if (result instanceof ExpressionResult) {
 				final ExpressionResult exprResult = (ExpressionResult) result;
 				final ArrayList<Statement> stmt = exprResult.stmt;
-				if (invariantBefore != null) {
+				if (invariantBefore != null && !m_NodeLabelsOfAddedWitnesses.contains(invariantBefore.getNodeLabels())) {
 					stmt.addAll(0, witnessInvariantsBefore);
+					m_NodeLabelsOfAddedWitnesses.add(invariantBefore.getNodeLabels());
 					mLogger.warn("Checking witness invariant " + invariantBefore
 							+ " directly before the following code " + loc);
 				}
-				if (invariantAfter != null) {
+				if (invariantAfter != null && !m_NodeLabelsOfAddedWitnesses.contains(invariantAfter.getNodeLabels())) {
 					stmt.addAll(witnessInvariantsAfter);
+					m_NodeLabelsOfAddedWitnesses.add(invariantAfter.getNodeLabels());
 					mLogger.warn("Checking witness invariant " + invariantAfter + " directly after the following code "
 							+ loc);
 				}
 			} else if (result instanceof ExpressionListResult) {
 				ExpressionListResult exlire = (ExpressionListResult) result;
-				if (invariantBefore != null) {
+				if (invariantBefore != null && !m_NodeLabelsOfAddedWitnesses.contains(invariantBefore.getNodeLabels())) {
 					ArrayList<Statement> stmt = exlire.list.get(0).stmt;
 					stmt.addAll(0, witnessInvariantsBefore);
+					m_NodeLabelsOfAddedWitnesses.add(invariantBefore.getNodeLabels());
 					mLogger.warn("Checking witness invariant " + invariantBefore
 							+ " directly before the following code " + loc);
 				}
-				if (invariantAfter != null) {
+				if (invariantAfter != null && !m_NodeLabelsOfAddedWitnesses.contains(invariantAfter.getNodeLabels())) {
 					ArrayList<Statement> stmt = exlire.list.get(exlire.list.size() - 1).stmt;
 					stmt.addAll(witnessInvariantsAfter);
+					m_NodeLabelsOfAddedWitnesses.add(invariantAfter.getNodeLabels());
 					mLogger.warn("Checking witness invariant " + invariantAfter + " directly after the following code "
 							+ loc);
 				}
 			} else {
-				if (invariantBefore != null) {
+				if (invariantBefore != null && !m_NodeLabelsOfAddedWitnesses.contains(invariantBefore.getNodeLabels())) {
 					String message = "Found witness invariant but unable to add check " + invariantBefore
 							+ " directly before the following code " + loc;
 					mLogger.warn(message);
 					// throw new AssertionError(message);
 				}
-				if (invariantAfter != null) {
+				if (invariantAfter != null && !m_NodeLabelsOfAddedWitnesses.contains(invariantAfter.getNodeLabels())) {
 					String message = "Found witness invariant but unable to add check " + invariantAfter
 							+ " directly after the following code " + loc;
 					mLogger.warn(message);
@@ -612,12 +618,12 @@ public class MainDispatcher extends Dispatcher {
 		return result;
 	}
 
-	private List<AssertStatement> translateWitnessInvariant(IASTNode n, String invariant) throws AssertionError {
+	private List<AssertStatement> translateWitnessInvariant(IASTNode n, WitnessInvariant invariantBefore) throws AssertionError {
 		// ILocation loca = LocationFactory.createCLocation(n);
-		if (invariant != null) {
+		if (invariantBefore != null) {
 			ACSLNode acslNode = null;
 			try {
-				acslNode = Parser.parseComment("lstart\n assert " + invariant + ";", 0, 0, mLogger);
+				acslNode = Parser.parseComment("lstart\n assert " + invariantBefore.getInvariant() + ";", 0, 0, mLogger);
 			} catch (Exception e) {
 				throw new IllegalArgumentException(e);
 			}

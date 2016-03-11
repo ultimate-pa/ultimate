@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.svComp.cHandler.SVCompTypeHandler;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.WitnessInvariants;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.BeforeAfterWitnessInvariantsMapping;
 
 /**
  * TODO: rename this to 2015 perhaps??
@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  */
 public class SvComp14MainDispatcher extends MainDispatcher {
 
-	public SvComp14MainDispatcher(CACSL2BoogieBacktranslator backtranslator, WitnessInvariants witnessInvariants, IUltimateServiceProvider services,
+	public SvComp14MainDispatcher(CACSL2BoogieBacktranslator backtranslator, BeforeAfterWitnessInvariantsMapping witnessInvariants, IUltimateServiceProvider services,
 			Logger logger) {
 		super(backtranslator, witnessInvariants, services, logger);
 	}

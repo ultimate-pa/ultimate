@@ -30,7 +30,7 @@ public class WitnessInvariant {
 		return mInvariant;
 	}
 
-	public Set<String> getNodeLabel() {
+	public Set<String> getNodeLabels() {
 		return mNodeLabels;
 	}
 

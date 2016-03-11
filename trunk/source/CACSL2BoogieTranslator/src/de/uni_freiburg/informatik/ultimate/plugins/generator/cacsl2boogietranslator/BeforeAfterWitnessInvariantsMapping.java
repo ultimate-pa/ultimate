@@ -35,12 +35,14 @@ import org.eclipse.cdt.core.dom.ast.IASTNode;
  * @author Matthias Heizmann
  *
  */
-public class WitnessInvariants {
+public class BeforeAfterWitnessInvariantsMapping {
 
 	private final Map<IASTNode, WitnessInvariant> mBInvariants;
 	private final Map<IASTNode, WitnessInvariant> mAInvariants;
 
-	public WitnessInvariants(Map<IASTNode, WitnessInvariant> bInvariants, Map<IASTNode, WitnessInvariant> aInvariants) {
+	public BeforeAfterWitnessInvariantsMapping(
+			Map<IASTNode, WitnessInvariant> bInvariants, 
+			Map<IASTNode, WitnessInvariant> aInvariants) {
 		mBInvariants = bInvariants;
 		mAInvariants = aInvariants;
 	}

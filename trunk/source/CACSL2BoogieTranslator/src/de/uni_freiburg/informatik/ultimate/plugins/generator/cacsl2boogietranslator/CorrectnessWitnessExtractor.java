@@ -211,7 +211,7 @@ public class CorrectnessWitnessExtractor {
 					+ node.getRawSignature());
 			mLogger.warn("  Witness node label is " + current);
 			mLogger.warn("  Replacing invariant " + oldInvariant + " with invariant " + newInvariant);
-			Set<String> labels = new HashSet<>(oldInvariant.getNodeLabel());
+			Set<String> labels = new HashSet<>(oldInvariant.getNodeLabels());
 			labels.add(current.getName());
 			rtr.put(node, new WitnessInvariant(newInvariant, labels));
 		}
