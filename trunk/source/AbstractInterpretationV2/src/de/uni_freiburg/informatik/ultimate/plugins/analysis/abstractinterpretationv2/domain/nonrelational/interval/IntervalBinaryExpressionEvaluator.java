@@ -362,6 +362,13 @@ public class IntervalBinaryExpressionEvaluator
 					throw new UnsupportedOperationException(
 					        "If and only if expressions should have been resolved earlier.");
 				case COMPEQ:
+					final BooleanValue intersectBool = left.getBooleanValue().intersect(right.getBooleanValue());
+					if ((mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool())
+					        && (intersectBool.getValue() == Value.TOP)) {
+						returnStates.add(currentState);
+						break;
+					}
+
 					final IntervalDomainValue newLeft = computeNewValue(referenceValue, left.getValue(),
 					        right.getValue(), true);
 					final IntervalDomainValue newRight = computeNewValue(referenceValue, right.getValue(),
@@ -471,7 +478,7 @@ public class IntervalBinaryExpressionEvaluator
 					        .inverseEvaluate(inverseResultArithLeft, currentState);
 					final List<IntervalDomainState> rightInverseArith = mRightSubEvaluator
 					        .inverseEvaluate(inverseResultArithRight, currentState);
-					
+
 					for (final IntervalDomainState le : leftInverseArith) {
 						for (final IntervalDomainState ri : rightInverseArith) {
 							returnStates.add(le.intersect(ri));
