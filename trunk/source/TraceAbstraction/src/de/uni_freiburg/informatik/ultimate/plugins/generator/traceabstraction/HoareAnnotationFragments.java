@@ -253,7 +253,7 @@ public class HoareAnnotationFragments {
 
 	void addDoubleDecker(IPredicate down, IPredicate up, IPredicate emtpy) {
 		ProgramPoint pp = getProgramPoint(up);
-		if (m_HoareAnnotationPos == HoareAnnotationPositions.LoopInvariantsAndEnsures && 
+		if (m_HoareAnnotationPos == HoareAnnotationPositions.LoopsAndPotentialCycles && 
 				!m_HoareAnnotationPositions.contains(pp)) {
 			// do not compute Hoare annotation for this program point
 			return;

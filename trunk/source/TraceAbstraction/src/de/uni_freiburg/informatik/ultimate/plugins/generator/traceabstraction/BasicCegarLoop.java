@@ -194,10 +194,10 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 		// InterpolationPreferenceChecker.check(Activator.s_PLUGIN_NAME, interpolation);
 		m_ComputeHoareAnnotation = computeHoareAnnotation;
-		if (m_Pref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopInvariantsAndEnsures) {
+		if (m_Pref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopsAndPotentialCycles) {
 			m_HoareAnnotationPositions = new HashSet<ProgramPoint>();
 			m_HoareAnnotationPositions.addAll(rootNode.getRootAnnot().getLoopLocations().keySet());
-			m_HoareAnnotationPositions.addAll(rootNode.getRootAnnot().getExitNodes().values());
+//			m_HoareAnnotationPositions.addAll(rootNode.getRootAnnot().getExitNodes().values());
 			m_HoareAnnotationPositions.addAll(rootNode.getRootAnnot().getPotentialCycleProgramPoints());
 		}
 		m_Haf = new HoareAnnotationFragments(mLogger, m_HoareAnnotationPositions, m_Pref.getHoareAnnotationPositions());
@@ -227,7 +227,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 		m_Abstraction = cFG2NestedWordAutomaton.getNestedWordAutomaton(super.m_RootNode, m_StateFactoryForRefinement,
 				super.m_ErrorLocs);
-		if (m_Pref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopInvariantsAndEnsures) {
+		if (m_Pref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopsAndPotentialCycles) {
 			INestedWordAutomaton<CodeBlock, IPredicate> nwa = (INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction;
 			for (IPredicate pred : nwa.getStates()) {
 				for (OutgoingCallTransition<CodeBlock, IPredicate> trans : nwa.callSuccessors(pred)) {
