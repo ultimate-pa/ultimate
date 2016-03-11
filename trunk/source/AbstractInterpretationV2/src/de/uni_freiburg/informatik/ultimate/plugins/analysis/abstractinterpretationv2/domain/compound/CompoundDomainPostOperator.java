@@ -31,6 +31,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 
@@ -38,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceStore;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
@@ -48,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.BoogieExpressionTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.NormalFormTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractDomain;
@@ -146,13 +149,31 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		returnStates.add(new CompoundDomainState(mLogger, domains, resultingStates));
 
 		if (mUseSmtSolverChecks) {
-			for (final CompoundDomainState state : returnStates) {
-				state.getTerm(mScript, mBoogie2Smt);
-			}
-			// TODO implement SMT Solver checks of the state.
+			return returnStates.stream().filter(state -> checkSat(state)).collect(Collectors.toList());
 		}
 
 		return returnStates;
+	}
+
+	/**
+	 * Checks satisfiability of a {@link CompoundDomainState}.
+	 * 
+	 * @param state
+	 *            The state to check for satisfiability.
+	 * @return <code>true</code> if and only if the term generated from {@link CompoundDomainState#getTerm(Script,
+	 *         Boogie2SMT))} is satisfiable, <code>false</code> otherwise.
+	 */
+	private boolean checkSat(CompoundDomainState state) {
+		final Term stateTerm = state.getTerm(mScript, mBoogie2Smt);
+		mLogger.debug(
+		        new StringBuilder().append("Checking state term for satisfiability: ").append(stateTerm).toString());
+		final LBool result = SmtUtils.checkSatTerm(mScript, stateTerm);
+		mLogger.debug(new StringBuilder().append("Result of satisfiability check is: ").append(result).toString());
+		if (result == LBool.UNSAT) {
+			return false;
+		}
+
+		return true;
 	}
 
 	/**
