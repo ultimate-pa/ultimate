@@ -165,8 +165,9 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			}
 
 			if (postStates.size() > mMaxParallelStates) {
-				mLogger.warn("Domain produced too many abstract states during post: " + mMaxParallelStates
-						+ " allowed, " + postStates.size() + " received.");
+				mLogger.warn("Domain " + mDomain.getClass().getSimpleName()
+						+ " produced too many abstract states during post: " + mMaxParallelStates + " allowed, "
+						+ postStates.size() + " received.");
 				postStates = Collections
 						.singletonList(postStates.stream().reduce((a, b) -> mergeOperator.apply(a, b)).get());
 			}
