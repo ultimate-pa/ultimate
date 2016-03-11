@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.Automaton2UltimateModel;
 import de.uni_freiburg.informatik.ultimate.automata.HistogramOfIterable;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.OperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomaton;
@@ -197,7 +198,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		if (m_Pref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopsAndPotentialCycles) {
 			m_HoareAnnotationPositions = new HashSet<ProgramPoint>();
 			m_HoareAnnotationPositions.addAll(rootNode.getRootAnnot().getLoopLocations().keySet());
-//			m_HoareAnnotationPositions.addAll(rootNode.getRootAnnot().getExitNodes().values());
+			// m_HoareAnnotationPositions.addAll(rootNode.getRootAnnot().getExitNodes().values());
 			m_HoareAnnotationPositions.addAll(rootNode.getRootAnnot().getPotentialCycleProgramPoints());
 		}
 		m_Haf = new HoareAnnotationFragments(mLogger, m_HoareAnnotationPositions, m_Pref.getHoareAnnotationPositions());
@@ -510,11 +511,32 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					m_Services, (INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, mAbsIntResult, predUnifier,
 					m_SmtManager).getResult();
 			boolean aiResult = refineWithGivenAutomaton(aiInterpolAutomaton, predUnifier);
+			assert hasAiProgress(aiResult, aiInterpolAutomaton, m_Counterexample) : "No progress during AI refinement";
 			mLogger.info("Finished additional refinement with abstract interpretation automaton. Did we make progress: "
 					+ aiResult);
 			m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AbsIntTime);
 		}
 		return refineWithGivenAutomaton(m_InterpolAutomaton, predUnifier);
+	}
+
+	private boolean hasAiProgress(final boolean result,
+			final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton,
+			final IRun<CodeBlock, IPredicate> m_Counterexample) {
+		if (result) {
+			return result;
+		}
+		if (mAbsIntResult == null) {
+			return true;
+		}
+		if (mAbsIntResult.hasReachedError()) {
+			return true;
+		}
+		mLogger.fatal(
+				"No progress during refinement with abstract interpretation although AI did not reach the error state. The following run is still accepted.");
+		mLogger.fatal(m_Counterexample);
+		mLogger.fatal("Used the following AI result: " + mAbsIntResult);
+		mLogger.fatal("Automaton had the following predicates: " + aiInterpolAutomaton.getStates());
+		return false;
 	}
 
 	private boolean refineWithGivenAutomaton(NestedWordAutomaton<CodeBlock, IPredicate> interpolAutomaton,

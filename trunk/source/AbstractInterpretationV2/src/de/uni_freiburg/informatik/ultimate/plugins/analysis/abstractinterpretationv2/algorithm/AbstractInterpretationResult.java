@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -83,5 +84,21 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 	@Override
 	public Set<Term> getTerms() {
 		return mTerms;
+	}
+
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		if (hasReachedError()) {
+			sb.append("AI reached error location.");
+		} else {
+			sb.append("AI did not reach error location.");
+		}
+		if (getTerms() != null) {
+			sb.append(" Found terms ");
+			sb.append(String.join(", ", getTerms().stream().map(a -> a.toStringDirect()).collect(Collectors.toList())));
+		}
+
+		return sb.toString();
 	}
 }
