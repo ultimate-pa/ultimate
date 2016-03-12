@@ -32,10 +32,13 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
 
+import org.apache.log4j.jmx.AbstractDynamicMBean;
+
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.NumUtil;
 
 /**
  * Representation of an interval value in the interval domain.
@@ -685,87 +688,70 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 	}
 
 	/**
-	 * Computes the modulus operation of two {@link IntervalDomainValue}s following the scheme:
-	 * <p>
-	 * <ul>
-	 * <li>[a, b] % [c, d] = [0, min(max(|a|, |b|), max(|c|, |d|) - 1)]</li>
-	 * </ul>
-	 * </p>
+	 * Computes the modulus operation of two {@link IntervalDomainValue}s.
 	 * 
-	 * @param other
+	 * @param divisor
 	 *            The other value to compute the modulus for.
+	 * @param integerDivision
+	 *            The modulo operation is an integer operation.
 	 * @return A new {@link IntervalDomainValue} which corresponds to the application of the modulus operator.
 	 */
-	public IntervalDomainValue modulo(IntervalDomainValue other) {
+	public IntervalDomainValue modulo(IntervalDomainValue divisor, boolean integerDivision) {
 
-		assert other != null;
+		assert divisor != null;
 
-		if (isBottom() || other.isBottom()) {
+		if (isBottom() || divisor.isBottom()) {
 			return new IntervalDomainValue(true);
 		}
 
-		// If both intervals are infinite, the minimum is also infinite.
-		if (isInfinity() && other.isInfinity()) {
-			return new IntervalDomainValue(new IntervalValue(new BigDecimal(0)), new IntervalValue());
+		if (divisor.containsZero()) {
+			// modulo is a total function in SMT, but (a % 0) is not specified
+			// => result is an unknown but fixed value => return TOP
+			return new IntervalDomainValue();
 		}
-
-		// When we have [a; b] % [c; d], and c > b, then the resulting interval is [a; b]
-		if (!mUpper.isInfinity() && !other.getLower().isInfinity() && other.getLower().compareTo(getUpper()) > 0) {
-			return new IntervalDomainValue(mLower, mUpper);
-		}
-
+		
 		// If we are dealing with point intervals, the modulo computation is easy.
-		if (isPointInterval() && other.isPointInterval()) {
-			if (other.mLower.getValue().signum() == 0) {
-				return new IntervalDomainValue(true);
-			}
-
-			if (other.mLower.getValue().compareTo(new BigDecimal(1)) == 0) {
-				return new IntervalDomainValue(0, 0);
-			}
-
-			BigDecimal remainder = mLower.getValue().remainder(other.mLower.getValue());
-			if (remainder.signum() < 0) {
-				remainder = other.mLower.getValue().abs().add(remainder);
-			}
-
+		if (isPointInterval() && divisor.isPointInterval()) {
+			BigDecimal remainder = NumUtil.euclideanModulo(mLower.getValue(), divisor.mLower.getValue());
 			return new IntervalDomainValue(new IntervalValue(remainder), new IntervalValue(remainder));
 		}
 
-		// Division by zero: return [0, \infty].
-		if (other.containsZero()) {
-			return new IntervalDomainValue(new IntervalValue(new BigDecimal(0)), new IntervalValue());
+		divisor = divisor.abs(); // The sign of the divisor does not matter for euclidean modulo.
+
+		// [a; b] % [c; d] = [a; b]    if    (0 <= a) and (b < c)
+		if (!mLower.isInfinity() && !divisor.mLower.isInfinity() &&
+				new IntervalValue(0).compareTo(mLower) <= 0 && mUpper.compareTo(divisor.mLower) < 0) {
+			return new IntervalDomainValue(mLower, mUpper);
 		}
 
-		// Compute max(|a|, |b|)
-		IntervalValue maxAB;
+		// euclidean division (x / y) has the remainder (r) with (0 <= r < |y|).
+		IntervalValue min = new IntervalValue(0);
+		IntervalValue max = divisor.mUpper;
+		if (integerDivision && !max.isInfinity()) {
+			max.setValue(max.getValue().subtract(BigDecimal.ONE));
+		}
+		return new IntervalDomainValue(min, max);
+	}
+	
+	/**
+	 * Applies the absolute function on all values in this interval and creates a new interval from the results.
+	 * @return Non-negative interval.
+	 */
+	private IntervalDomainValue abs() {
+		if (isBottom()) {
+			return new IntervalDomainValue();
+		}
+		IntervalValue min, max;
 		if (mLower.isInfinity() || mUpper.isInfinity()) {
-			maxAB = new IntervalValue();
+			min = new IntervalValue(0);
+			max = new IntervalValue();
 		} else {
-			if (mLower.getValue().abs().compareTo(mUpper.getValue().abs()) > 0) {
-				maxAB = new IntervalValue(mLower.getValue().abs());
-			} else {
-				maxAB = new IntervalValue(mUpper.getValue().abs());
-			}
+			BigDecimal a = mLower.getValue().abs();
+			BigDecimal b = mUpper.getValue().abs();
+			min = new IntervalValue(a.min(b));
+			max = new IntervalValue(a.max(b));
 		}
-
-		// Compute max(|c|, |d|)
-		IntervalValue maxCD;
-		if (other.mLower.isInfinity() || other.mUpper.isInfinity()) {
-			maxCD = new IntervalValue();
-		} else {
-			if (other.mLower.getValue().abs().compareTo(other.mUpper.getValue().abs()) > 0) {
-				maxCD = new IntervalValue(other.mLower.getValue().abs().subtract(new BigDecimal(1)));
-			} else {
-				maxCD = new IntervalValue(other.mUpper.getValue().abs().subtract(new BigDecimal(1)));
-			}
-		}
-
-		if (maxAB.compareTo(maxCD) < 0) {
-			return new IntervalDomainValue(new IntervalValue(new BigDecimal(0)), new IntervalValue(maxAB));
-		} else {
-			return new IntervalDomainValue(new IntervalValue(new BigDecimal(0)), new IntervalValue(maxCD));
-		}
+		return new IntervalDomainValue(min, max);
 	}
 
 	/**

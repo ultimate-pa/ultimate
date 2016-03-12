@@ -81,7 +81,7 @@ public class IntervalProjection {
 					return left.divide(right);
 				}
 			case ARITHMOD:
-				return left.modulo(right);
+				return left.modulo(right, TypeUtil.isNumericInt(be.getType()));
 			default:
 				// see end of this method
 			}
