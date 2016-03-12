@@ -294,6 +294,8 @@ public class OctMatrix {
 	
 	public static OctMatrix max(OctMatrix a, OctMatrix b) {
 		return a.elementwiseOperation(b, OctValue::max);
+		// TODO set cached closure of result:
+		// a and b are closed ==> max(a,b) are closed
 	}
 
 	// TODO document: Different matrices may represent the same octagon.
@@ -366,6 +368,14 @@ public class OctMatrix {
 		return tightClosure(sDefaultShortestPathClosure);
 	}
 	
+	public boolean hasCachedStrongClosure() {
+		return mStrongClosure != null;
+	}
+	
+	public boolean hasCachedTightClosure() {
+		return mTightClosure != null;
+	}
+
 	public OctMatrix tightClosurePrimitiveSparse() {
 		return tightClosure(OctMatrix::shortestPathClosurePrimitiveSparse);
 	}
@@ -1058,9 +1068,9 @@ public class OctMatrix {
 				OctValue entry = get(row, col);
 				if (col == row) {
 					if (entry.signum() < 0) {
-						return script.term("false"); // 0 <= -1
+						return script.term("false"); // constraint of the form (0 <= -1)
 					} else {
-						continue; // 0 <= 1
+						continue; // constraint of the form (0 <= 1)
 					}
 				}
 				Term colVar = selectVar(script, col, vars);
