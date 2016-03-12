@@ -735,20 +735,32 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 	
 	/**
 	 * Applies the absolute function on all values in this interval and creates a new interval from the results.
-	 * @return Non-negative interval.
+	 * <p>
+	 * abs([a; b]) := [0; max(|a|,|b|)]              if [a; b] contains zero, 
+	 *                [min(|a|,|b|); max(|a|,|b|)]   otherwise
+	 * 
+	 * @return Non-negative interval abs([a, b]).
 	 */
-	private IntervalDomainValue abs() {
+	public IntervalDomainValue abs() {
 		if (isBottom()) {
-			return new IntervalDomainValue();
+			return new IntervalDomainValue(true);
 		}
+		boolean lowerIsInf = mLower.isInfinity();
+		boolean upperIsInf = mUpper.isInfinity();
 		IntervalValue min, max;
-		if (mLower.isInfinity() || mUpper.isInfinity()) {
-			min = new IntervalValue(0);
+		if (lowerIsInf || upperIsInf) {
 			max = new IntervalValue();
+			if (containsZero() || (lowerIsInf && upperIsInf)) {
+				min = new IntervalValue(0);
+			} else if (lowerIsInf) { // && !upperIsInf
+				min = new IntervalValue(mUpper.getValue().abs());
+			} else { // upperIsInf && !lowerIsInf
+				min = new IntervalValue(mLower.getValue().abs());
+			}
 		} else {
 			BigDecimal a = mLower.getValue().abs();
 			BigDecimal b = mUpper.getValue().abs();
-			min = new IntervalValue(a.min(b));
+			min = new IntervalValue(containsZero() ? BigDecimal.ZERO : a.min(b));
 			max = new IntervalValue(a.max(b));
 		}
 		return new IntervalDomainValue(min, max);

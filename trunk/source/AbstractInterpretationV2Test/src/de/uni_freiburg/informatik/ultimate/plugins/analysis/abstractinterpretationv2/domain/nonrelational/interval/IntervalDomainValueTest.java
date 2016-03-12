@@ -98,8 +98,37 @@ public class IntervalDomainValueTest {
 		assertTrue(bottomInterval.getLower() == null);
 		assertTrue(bottomInterval.getUpper() == null);
 	}
-	
 
+	@Test
+	public void testAbs() {
+		
+		// bottom
+		assertAbs("1", "-1", "1", "-1");
+
+		// intervals containing zero
+		assertAbs("inf", "inf", "0", "inf");
+		assertAbs("-1", "inf", "0", "inf");
+		assertAbs("inf", "1", "0", "inf");
+		assertAbs("-2", "3", "0", "3");
+		assertAbs("-3", "2", "0", "3");
+
+		// negative intervals
+		assertAbs("inf", "-1", "1", "inf");
+		assertAbs("-2", "-1", "1", "2");
+
+		// positive intervals
+		assertAbs("1", "inf", "1", "inf");
+		assertAbs("1", "2", "1", "2");
+	}
+
+	private void assertAbs(String a, String b, String c, String d) {
+		IntervalDomainValue ab, cd, result;
+		ab = parseInterval(a, b);
+		cd = parseInterval(c, d);
+		result = ab.abs();
+		assertTrue("expected " + cd + ", was " + result, result.isEqualTo(cd));
+	}
+	
 	@Test
 	public void testModulo() {
 		// TODO Test is incomplete. Test all cases!
