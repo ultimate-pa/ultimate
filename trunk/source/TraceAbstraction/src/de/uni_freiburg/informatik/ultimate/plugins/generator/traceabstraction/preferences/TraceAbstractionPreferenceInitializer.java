@@ -163,8 +163,8 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	public static final int DEF_ITERATIONS = 1000000;
 	public static final String DEF_ARTIFACT = VALUE_RCFG;
 	public static final int DEF_WATCHITERATION = 1000000;
-	public static final boolean DEF_HOARE = !false;
-	public static final HoareAnnotationPositions DEF_HOARE_POSITIONS = HoareAnnotationPositions.LoopsAndPotentialCycles;
+	public static final boolean DEF_HOARE = false;
+	public static final HoareAnnotationPositions DEF_HOARE_POSITIONS = HoareAnnotationPositions.All;
 	public static final boolean DEF_SEPARATE_SOLVER = true;
 	public static final SolverMode DEF_Solver = SolverMode.Internal_SMTInterpol;
 	public static final String DEF_ExtSolverCommand = RcfgPreferenceInitializer.Z3_DEFAULT;
