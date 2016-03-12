@@ -672,7 +672,7 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 				assert sourceIndex != null : "Incompatible types";
 				mNumericAbstraction.assignVarCopy(targetIndex, sourceIndex);
 
-			} else if (mBooleanAbstraction.containsKey(targetIndex)) {
+			} else if (mBooleanAbstraction.containsKey(targetVar)) {
 				BoolValue value = mBooleanAbstraction.get(sourceVar);
 				assert value != null : "Incompatible types";
 				mBooleanAbstraction.put(targetVar, value);
