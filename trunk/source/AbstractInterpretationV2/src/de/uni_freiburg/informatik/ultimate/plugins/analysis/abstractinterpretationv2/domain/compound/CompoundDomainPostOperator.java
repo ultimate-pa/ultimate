@@ -70,11 +70,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sta
 @SuppressWarnings({ "rawtypes", "unchecked" })
 public class CompoundDomainPostOperator implements IAbstractPostOperator<CompoundDomainState, CodeBlock, IBoogieVar> {
 
-	
 	private final boolean mCreateStateAssumptions;
 	private final boolean mUseSmtSolverChecks;
 	private final boolean mSimplifyAssumption;
-	
+
 	private final Logger mLogger;
 	private final Boogie2SMT mBoogie2Smt;
 	private final Script mScript;
@@ -122,13 +121,17 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		final List<IAbstractState<?, CodeBlock, IBoogieVar>> resultingStates = new ArrayList<>();
 
 		for (int i = 0; i < domains.size(); i++) {
-			mLogger.debug("Running " + domains.get(i).getClass().getSimpleName() + " post with code block "
-					+ transitionList.get(i));
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Running " + domains.get(i).getClass().getSimpleName() + " post with code block "
+						+ transitionList.get(i));
+			}
 
 			final List<IAbstractState> result = applyInternally(states.get(i), domains.get(i).getPostOperator(),
 					transitionList.get(i));
 
-			mLogger.debug("Result for domain " + domains.get(i).getClass().getSimpleName() + ": \n" + result);
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Result for domain " + domains.get(i).getClass().getSimpleName() + ": \n" + result);
+			}
 
 			if (result.size() == 0) {
 				return new ArrayList<>();
@@ -166,10 +169,14 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 	 */
 	private boolean checkSat(CompoundDomainState state) {
 		final Term stateTerm = state.getTerm(mScript, mBoogie2Smt);
-		mLogger.debug(
-				new StringBuilder().append("Checking state term for satisfiability: ").append(stateTerm).toString());
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(new StringBuilder().append("Checking state term for satisfiability: ").append(stateTerm)
+					.toString());
+		}
 		final LBool result = SmtUtils.checkSatTerm(mScript, stateTerm);
-		mLogger.debug(new StringBuilder().append("Result of satisfiability check is: ").append(result).toString());
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(new StringBuilder().append("Result of satisfiability check is: ").append(result).toString());
+		}
 		if (result == LBool.UNSAT) {
 			return false;
 		}
@@ -233,7 +240,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 			if (i == index) {
 				continue;
 			}
-			if(assumeTerm == null){
+			if (assumeTerm == null) {
 				assumeTerm = states.get(i).getTerm(mScript, mBoogie2Smt);
 			} else {
 				assumeTerm = Util.and(mScript, assumeTerm, states.get(i).getTerm(mScript, mBoogie2Smt));
@@ -242,7 +249,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		if (mSimplifyAssumption) {
 			assumeTerm = SmtUtils.simplify(mScript, assumeTerm, mServices);
 		}
-		
+
 		final Expression assumeExpression = mBoogie2Smt.getTerm2Expression().translate(assumeTerm);
 		final AssumeStatement assume = new AssumeStatement(assumeExpression.getLocation(), assumeExpression);
 		final List<Statement> secondStatements = new ArrayList<>();
