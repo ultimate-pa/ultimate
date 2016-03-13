@@ -426,6 +426,7 @@ public class CHandler implements ICHandler {
 		
 		if (!((TypeHandler) mTypeHandler).useIntForAllIntegerTypes()) {
 			decl.addAll(PostProcessor.declarePrimitiveDataTypeSynonyms(loc, main.getTypeSizes(), (TypeHandler) mTypeHandler));
+			decl.addAll(PostProcessor.declareFloatDataTypes(loc, main.getTypeSizes(), (TypeHandler) mTypeHandler));
 		}
 
 		// TODO(thrax): Check if decl should be passed as null or not.

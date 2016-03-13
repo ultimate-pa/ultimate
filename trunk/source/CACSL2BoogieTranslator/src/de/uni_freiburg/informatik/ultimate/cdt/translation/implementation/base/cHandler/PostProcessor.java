@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.T
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.ExpressionTranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.GENERALPRIMITIVE;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.exception.UnsupportedSyntaxException;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.CDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.ExpressionResult;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.result.LocalLValue;
@@ -556,6 +557,47 @@ public class PostProcessor {
 	public static ArrayList<Declaration> declareFloatDataTypes(ILocation loc,
 			TypeSizes typesizes, TypeHandler typeHandler) {
 		//TODO: Implement
+		ArrayList<Declaration> decls = new ArrayList<Declaration>();
+		for (CPrimitive.PRIMITIVE cPrimitive: CPrimitive.PRIMITIVE.values()) {
+			
+			CPrimitive cPrimitive0 = new CPrimitive(cPrimitive);
+			
+			if (cPrimitive0.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
+				Attribute[] attributes = new Attribute[1];
+				int bytesize = typesizes.getSize(cPrimitive);
+				int[] indices = new int[2];
+				String name = null;
+				switch (bytesize) {
+					case 4:
+						indices[0] = 8;
+						indices[1] = 24;
+						name = "float";
+						break;
+					case 8:
+						indices[0] = 11;
+						indices[1] = 53;
+						name = "double";
+						break;
+					case 16:
+						indices[0] = 15;
+						indices[1] = 113;
+						name = "long_double";
+						break;
+					default:
+						throw new UnsupportedSyntaxException(loc, "unknown primitive type");
+				}
+				attributes[0] = new NamedAttribute(loc, "indices",
+						new Expression[]{	new IntegerLiteral(loc, String.valueOf(indices[0])),
+											new IntegerLiteral(loc, String.valueOf(indices[1]))});
+				String identifier = "C_" + cPrimitive.name();
+				String[] typeParams = new String[0];
+				ASTType astType = typeHandler.bytesize2asttype(loc, GENERALPRIMITIVE.FLOATTYPE, bytesize);
+				decls.add(new TypeDeclaration(loc, attributes, false, identifier, typeParams , astType));
+				
+			}
+		}	
+			
+			
 		return null;
 	}
 			
