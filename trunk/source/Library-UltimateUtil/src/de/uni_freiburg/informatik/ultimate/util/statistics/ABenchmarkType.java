@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark;
+package de.uni_freiburg.informatik.ultimate.util.statistics;
 
 import java.util.ArrayList;
 import java.util.Collection;

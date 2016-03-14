@@ -30,9 +30,9 @@ import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import de.uni_freiburg.informatik.ultimate.automata.InCaReCounter;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IStatisticsDataProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.Benchmark;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 
 public class HoareTripleCheckerBenchmarkGenerator implements IStatisticsDataProvider {
 	

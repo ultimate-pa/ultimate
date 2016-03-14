@@ -27,9 +27,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.StatisticsData;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 public class BuchiAutomizerTimingBenchmark implements ICsvProviderProvider<Object>{
 	private StatisticsData m_BenchmarkData;
