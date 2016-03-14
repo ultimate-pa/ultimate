@@ -1,6 +1,9 @@
 procedure main()
 {
-   var x: int;
+   var x, y: int;
    
-   assume (x + 7) % -1 == 0;
+   assume x % 3 == 0;
+   assume y % 2 == 0;
+
+   assume x % y == 0;
 }

@@ -67,9 +67,6 @@ public class CongruenceBinaryExpressionEvaluator
 
 	private Operator mOperator;
 
-	// For a equals expression store the evaluated value of both sides (for evaluation of x % c == k)
-	private CongruenceDomainValue mRest = null;
-
 	protected CongruenceBinaryExpressionEvaluator(final Logger logger, final EvaluatorType type) {
 		mLogger = logger;
 		mVariableSet = new HashSet<>();
@@ -370,16 +367,6 @@ public class CongruenceBinaryExpressionEvaluator
 					final CongruenceDomainEvaluationResult rightEvalresult = new CongruenceDomainEvaluationResult(
 					        newRight, left.getBooleanValue());
 
-					// Store the values of the other side of the equality (needed for mod-evaluations)
-					if (mLeftSubEvaluator instanceof CongruenceBinaryExpressionEvaluator) {
-						CongruenceBinaryExpressionEvaluator c = (CongruenceBinaryExpressionEvaluator) mLeftSubEvaluator;
-						c.mRest = rightEvalresult.getValue();
-					}
-					if (mRightSubEvaluator instanceof CongruenceBinaryExpressionEvaluator) {
-						CongruenceBinaryExpressionEvaluator c = (CongruenceBinaryExpressionEvaluator) mRightSubEvaluator;
-						c.mRest = leftEvalresult.getValue();
-					}
-
 					final List<CongruenceDomainState> leftEq = mLeftSubEvaluator.inverseEvaluate(leftEvalresult,
 					        currentState);
 					final List<CongruenceDomainState> rightEq = mRightSubEvaluator.inverseEvaluate(rightEvalresult,
@@ -456,14 +443,13 @@ public class CongruenceBinaryExpressionEvaluator
 			newValue = newValue.intersect(oldValue);
 			break;
 		case ARITHDIV:
-			// Division can't be handled precise!
 			newValue = oldValue;
 			break;
 		case ARITHMOD:
 			// If mod is at one side of an equality, the left side of the mod expression
 			// changes according to the other side of the equality
-			if (left && mRest != null) {
-				newValue = otherValue.modEquals(mRest);
+			if (left) {
+				newValue = oldValue.intersect(otherValue.modEquals(referenceValue));
 			} else {
 				newValue = oldValue;
 			}
