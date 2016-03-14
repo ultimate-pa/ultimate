@@ -677,5 +677,9 @@ public class TypeHandler implements ITypeHandler {
 		return decl;
 	}
 	
+	public boolean areFloatingTypesNeeded() {
+		return m_FloatingTypesNeeded;
+	}
+	
 	
 }
