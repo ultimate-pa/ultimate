@@ -583,6 +583,11 @@ public class PostProcessor {
 						indices[1] = 113;
 						name = "long_double";
 						break;
+					case 32:
+						indices[0] = 15;
+						indices[1] = 113;
+						name = "long_double";
+						break;
 					default:
 						throw new UnsupportedSyntaxException(loc, "unknown primitive type");
 				}
@@ -598,7 +603,7 @@ public class PostProcessor {
 		}	
 			
 			
-		return null;
+		return decls;
 	}
 			
 }
