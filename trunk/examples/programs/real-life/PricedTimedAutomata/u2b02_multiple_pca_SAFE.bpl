@@ -90,6 +90,7 @@ requires x == 0.0;
 requires A_1$power == 0.0;
 requires x$new == x;
 requires steps$new == steps;
+requires steps == 0;
 requires !x$reset;
 requires !steps$reset;
 {
@@ -97,7 +98,6 @@ requires !steps$reset;
   sync := sync_none;
   loc$A_1 := id1_1;
   loc$B_1 := id3_1;
-  steps := 0;
   
 uppaal2boogie$step:
   assert property(x, steps, A_1$power);
