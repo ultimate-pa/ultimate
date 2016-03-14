@@ -162,8 +162,8 @@ public class LatexDetailedSummary extends LatexSummary {
 
 	private void appendPreamble(StringBuilder sb, String br) {
 		// append preamble
-		sb.append("\\documentclass[a4paper]{article}").append(br);
-		sb.append("\\usepackage[a4paper, margin=1.5cm, top=1.1cm]{geometry}").append(br);
+		sb.append("\\documentclass[a3paper,landscape]{article}").append(br);
+		sb.append("\\usepackage[a3paper, margin=1.5cm, top=1.1cm]{geometry}").append(br);
 		sb.append("\\usepackage[table]{xcolor} ").append(br);
 		sb.append("\\usepackage[utf8]{inputenc}").append(br);
 		sb.append("\\usepackage{amsmath,amssymb}").append(br);
