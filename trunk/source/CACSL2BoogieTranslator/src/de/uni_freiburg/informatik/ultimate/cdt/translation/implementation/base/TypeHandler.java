@@ -611,7 +611,11 @@ public class TypeHandler implements ITypeHandler {
 			}
 		case FLOATTYPE:
 			m_FloatingTypesNeeded = true;
-			return new PrimitiveType(loc, SFO.REAL);
+			if (m_UseIntForAllIntegerTypes) {
+				return new PrimitiveType(loc, SFO.REAL);
+			} else {
+				return new NamedType(loc, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
+			}
 		default:
 			throw new UnsupportedSyntaxException(loc, "unknown primitive type");
 		}
