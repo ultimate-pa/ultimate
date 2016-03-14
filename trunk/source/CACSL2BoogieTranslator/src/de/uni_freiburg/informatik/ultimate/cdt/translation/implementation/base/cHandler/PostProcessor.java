@@ -557,7 +557,7 @@ public class PostProcessor {
 	 */
 	public static ArrayList<Declaration> declareFloatDataTypes(ILocation loc,
 			TypeSizes typesizes, TypeHandler typeHandler) {
-		//TODO: Implement
+		//TODO: proper handling of complex floats
 		ArrayList<Declaration> decls = new ArrayList<Declaration>();
 		for (CPrimitive.PRIMITIVE cPrimitive: CPrimitive.PRIMITIVE.values()) {
 			
@@ -565,7 +565,7 @@ public class PostProcessor {
 			
 			if (cPrimitive0.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
 				Attribute[] attributes = new Attribute[2];
-				attributes[0] = new NamedAttribute(loc, "buildin", new Expression[]{new StringLiteral(loc, "FloatingPoint")});
+				attributes[0] = new NamedAttribute(loc, "builtin", new Expression[]{new StringLiteral(loc, "FloatingPoint")});
 				int bytesize = typesizes.getSize(cPrimitive);
 				int[] indices = new int[2];
 				String name = null;
