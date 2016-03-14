@@ -68,7 +68,6 @@ procedure main () returns ()
 modifies sync, sync_channel, sender, delay, loc$Template_1, Template_1$power, time, time$new, time$reset, x, x$new, x$reset;
 requires time == 0.0;
 requires x == 0.0;
-requires Template_1$power == 0.0;
 requires time$new == time;
 requires x$new == x;
 requires !time$reset;
@@ -77,6 +76,7 @@ requires !x$reset;
   // *** INITIALIZATION *** //
   sync := sync_none;
   loc$Template_1 := id1_1;
+  Template_1$power := 0.0;
   
 uppaal2boogie$step:
   assert property(time, x, Template_1$power);

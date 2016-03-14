@@ -74,6 +74,7 @@ function { :inline true } property (v: int) returns (bool)
 
 procedure main () returns ()
 modifies sync, sync_channel, sender, delay, loc$A1_1, loc$A2_1, loc$A3_1, v, v$new, v$reset;
+requires v == 0;
 requires v$new == v;
 requires !v$reset;
 {
@@ -82,7 +83,6 @@ requires !v$reset;
   loc$A1_1 := id1_1;
   loc$A2_1 := id3_1;
   loc$A3_1 := id5_1;
-  v := 0;
   
 uppaal2boogie$step:
   assert property(v);
