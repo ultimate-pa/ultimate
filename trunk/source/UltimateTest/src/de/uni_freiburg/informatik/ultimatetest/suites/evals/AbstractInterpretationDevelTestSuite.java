@@ -63,8 +63,8 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Debug.epf"),
 //			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
-//			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
-			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Debug.epf"),
+			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
+//			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Debug.epf"),
 //			new Triple<>("AbstractInterpretationv2.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_WO_CON_Debug.epf"),
 			
 			//### C
@@ -86,10 +86,9 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 			/* ULTIMATE repo */
 //			"examples/programs/abstractInterpretation/",
 			"examples/programs/abstractInterpretation/regression",
-//			"examples/programs/abstractInterpretation/regression/loop-110517_Martin01-safe.bpl",
+//			"examples/programs/abstractInterpretation/congruence.bpl",
 			
-//			"examples/programs/abstractInterpretation/regression/loop-Goto.bpl",
-			
+//			"examples/programs/abstractInterpretation/regression/recursive-Collatz.bpl",			
 
 			// ################################# Bugs #########################
 			// ########### Here are representatives of current bugs ########### 
@@ -103,7 +102,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 	@Override
 	protected long getTimeout() {
-		return 30 * 1000 ;
+		return 10 * 1000 ;
 	}
 
 	@Override

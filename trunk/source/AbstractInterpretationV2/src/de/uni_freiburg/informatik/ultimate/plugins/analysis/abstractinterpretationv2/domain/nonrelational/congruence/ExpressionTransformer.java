@@ -352,6 +352,9 @@ public class ExpressionTransformer {
 			case ARITHMOD:
 				if (sLeft == 0 && sRight == 0 && right.mConstant.signum() != 0) {
 					mConstant = left.mConstant.mod(right.mConstant.abs());
+				} else if (sRight == 0 && right.mConstant.abs().equals(BigInteger.ONE)){
+					// x % +-1 = 0  (for all x of type int)
+					break;
 				} else {
 					mIsLinear = false;
 				}
@@ -365,6 +368,16 @@ public class ExpressionTransformer {
 						} else {
 							mConstant = mConstant.add(BigInteger.ONE);
 						}
+					}
+				} else if (sRight == 0 && right.mConstant.equals(BigInteger.ONE)){
+					// x / 1 = x  (for all x of type int)
+					mConstant = left.mConstant;
+					mCoefficients = left.mCoefficients;
+				} else if (sRight == 0 && right.mConstant.negate().equals(BigInteger.ONE)){
+					// x / -1 = -x  (for all x of type int)
+					mConstant = left.mConstant.negate();
+					for (Map.Entry<String, BigInteger> entry : left.mCoefficients.entrySet()) {
+						mCoefficients.put(entry.getKey(), entry.getValue().negate());
 					}
 				} else {
 					mIsLinear = false;
