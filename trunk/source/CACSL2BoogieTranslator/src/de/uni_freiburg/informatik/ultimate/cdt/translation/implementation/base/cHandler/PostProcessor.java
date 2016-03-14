@@ -75,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StringLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VarList;
@@ -563,7 +564,8 @@ public class PostProcessor {
 			CPrimitive cPrimitive0 = new CPrimitive(cPrimitive);
 			
 			if (cPrimitive0.getGeneralType() == GENERALPRIMITIVE.FLOATTYPE) {
-				Attribute[] attributes = new Attribute[1];
+				Attribute[] attributes = new Attribute[2];
+				attributes[0] = new NamedAttribute(loc, "buildin", new Expression[]{new StringLiteral(loc, "FloatingPoint")});
 				int bytesize = typesizes.getSize(cPrimitive);
 				int[] indices = new int[2];
 				String name = null;
@@ -591,7 +593,7 @@ public class PostProcessor {
 					default:
 						throw new UnsupportedSyntaxException(loc, "unknown primitive type");
 				}
-				attributes[0] = new NamedAttribute(loc, "indices",
+				attributes[1] = new NamedAttribute(loc, "indices",
 						new Expression[]{	new IntegerLiteral(loc, String.valueOf(indices[0])),
 											new IntegerLiteral(loc, String.valueOf(indices[1]))});
 				String identifier = "C_" + cPrimitive.name();
