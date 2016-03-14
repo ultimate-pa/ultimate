@@ -107,10 +107,7 @@ public class LatexDetailedSummary extends LatexSummary {
 
 		for (final String tool : tools) {
 			// make table header
-			sb.append("\\begin{table}").append(br);
-			sb.append("\\centering").append(br);
-			sb.append("\\resizebox{\\linewidth}{!}{%").append(br);
-			sb.append("\\begin{tabu} to \\linewidth {llll");
+			sb.append("\\begin{longtabu} to \\linewidth {llll");
 			for (int i = 0; i < mLatexTableHeaderCount; ++i) {
 				sb.append("r");
 			}
@@ -152,9 +149,8 @@ public class LatexDetailedSummary extends LatexSummary {
 			makeTableBody(sb, resultsPerTool, tool, additionalHeaders);
 
 			// end table
-			sb.append("\\end{tabu}}").append(br);
 			sb.append("\\caption{Results for ").append(removeInvalidCharsForLatex(tool)).append(".}").append(br);
-			sb.append("\\end{table}").append(br);
+			sb.append("\\end{longtabu}").append(br);
 		}
 		// append finishing code
 		appendEnd(sb, br);
