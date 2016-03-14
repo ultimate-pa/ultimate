@@ -29,13 +29,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.StatisticsData;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
 public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object> {
 
-	private final BenchmarkData m_CegarLoopBenchmarkData;
+	private final StatisticsData m_CegarLoopBenchmarkData;
 	private final int m_Procedures;
 	private final int m_Locations;
 	private final int m_ErrorLocations;
@@ -44,7 +44,7 @@ public class TraceAbstractionBenchmarks implements ICsvProviderProvider<Object> 
 		m_Procedures = rootAnnot.getEntryNodes().size();
 		m_Locations = rootAnnot.getNumberOfProgramPoints();
 		m_ErrorLocations = rootAnnot.getNumberOfErrorNodes();
-		m_CegarLoopBenchmarkData = new BenchmarkData();
+		m_CegarLoopBenchmarkData = new StatisticsData();
 	}
 
 	public void aggregateBenchmarkData(CegarLoopBenchmarkGenerator cegarLoopBenchmarkGenerator) {

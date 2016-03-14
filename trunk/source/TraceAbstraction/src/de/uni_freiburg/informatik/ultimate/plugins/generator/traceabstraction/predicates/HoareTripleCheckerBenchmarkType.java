@@ -31,10 +31,10 @@ import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.automata.InCaReCounter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IStatisticsType;
 
-public class HoareTripleCheckerBenchmarkType implements IBenchmarkType {
+public class HoareTripleCheckerBenchmarkType implements IStatisticsType {
 	
 	private static HoareTripleCheckerBenchmarkType s_Instance = new HoareTripleCheckerBenchmarkType();
 	public final static String s_SDtfs = "SDtfs";
@@ -84,7 +84,7 @@ public class HoareTripleCheckerBenchmarkType implements IBenchmarkType {
 	}
 
 	@Override
-	public String prettyprintBenchmarkData(IBenchmarkDataProvider benchmarkData) {
+	public String prettyprintBenchmarkData(IStatisticsDataProvider benchmarkData) {
 		StringBuilder sb = new StringBuilder();
 		sb.append("HoareTripleChecks: ");
 		sb.append(benchmarkData.getValue(s_SDtfs) + " SDtfs, ");

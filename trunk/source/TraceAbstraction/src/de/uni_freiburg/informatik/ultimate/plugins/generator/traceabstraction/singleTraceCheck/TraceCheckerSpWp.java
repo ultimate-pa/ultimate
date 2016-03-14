@@ -54,8 +54,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IStatisticsType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.BasicPredicateExplicitQuantifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -834,7 +834,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	}
 
 
-	public static class TraceCheckerSpWpBenchmarkType extends TraceCheckerBenchmarkType implements IBenchmarkType {
+	public static class TraceCheckerSpWpBenchmarkType extends TraceCheckerBenchmarkType implements IStatisticsType {
 
 		private static TraceCheckerSpWpBenchmarkType s_Instance = new TraceCheckerSpWpBenchmarkType();
 
@@ -885,7 +885,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		}
 
 		@Override
-		public String prettyprintBenchmarkData(IBenchmarkDataProvider benchmarkData) {
+		public String prettyprintBenchmarkData(IStatisticsDataProvider benchmarkData) {
 			StringBuilder sb = new StringBuilder();
 			sb.append(super.prettyprintBenchmarkData(benchmarkData));
 			sb.append("\t");
@@ -914,7 +914,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 	 * size of predicates obtained via interpolation.
 	 */
 	public class TraceCheckerBenchmarkSpWpGenerator extends TraceCheckerBenchmarkGenerator implements
-	IBenchmarkDataProvider {
+	IStatisticsDataProvider {
 		// m_NumberOfQuantifierFreePredicates[0] : Sum of the DAG-Size of
 		// predicates computed via FP
 		// m_NumberOfQuantifierFreePredicates[1] : Sum of the DAG-Size of

@@ -43,14 +43,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.StatisticsData;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IStatisticsType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.HoareTripleCheckerBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 
-public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements IBenchmarkType {
+public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements IStatisticsType {
 	
 	private static final BuchiCegarLoopBenchmark s_Instance = new BuchiCegarLoopBenchmark();
 	
@@ -148,7 +148,7 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 	}
 
 	@Override
-	public String prettyprintBenchmarkData(IBenchmarkDataProvider benchmarkData) {
+	public String prettyprintBenchmarkData(IStatisticsDataProvider benchmarkData) {
 		StringBuilder sb = new StringBuilder();
 		
 		sb.append("BüchiAutomizer plugin needed ");
@@ -164,8 +164,8 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 		sb.append(prettyprintNanoseconds(laTime));
 		sb.append(". ");
 		
-		BenchmarkData ecData = 
-				(BenchmarkData) benchmarkData.getValue(s_EdgeCheckerData);
+		StatisticsData ecData = 
+				(StatisticsData) benchmarkData.getValue(s_EdgeCheckerData);
 		Long ecTime;
 		if (ecData.getBenchmarkType() == null) {
 			ecTime = 0L;
@@ -349,7 +349,7 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 	}
 	
 	
-	public static class LassoAnalysisResults implements IBenchmarkDataProvider, IBenchmarkType {
+	public static class LassoAnalysisResults implements IStatisticsDataProvider, IStatisticsType {
 		public static final String s_LassoNonterminating = "nont";
 		public static final String s_TerminationUnknown = "unkn";
 		/**
@@ -454,7 +454,7 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 		}
 
 		@Override
-		public IBenchmarkType getBenchmarkType() {
+		public IStatisticsType getBenchmarkType() {
 			return this;
 		}
 
@@ -464,7 +464,7 @@ public class BuchiCegarLoopBenchmark extends CegarLoopBenchmarkType implements I
 		}
 
 		@Override
-		public String prettyprintBenchmarkData(IBenchmarkDataProvider benchmarkData) {
+		public String prettyprintBenchmarkData(IStatisticsDataProvider benchmarkData) {
 			LassoAnalysisResults lar = (LassoAnalysisResults) benchmarkData;
 			StringBuilder sb = new StringBuilder();
 			for (String key : lar.getKeys()) {

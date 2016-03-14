@@ -67,9 +67,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ce
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkGeneratorWithStopwatches;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.StatisticsGeneratorWithStopwatches;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IStatisticsType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.HoareTripleCheckerBenchmarkGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
@@ -589,7 +589,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 	}
 
 	// Benchmarks Section
-	public static class InterpolantConsolidationBenchmarkType implements IBenchmarkType {
+	public static class InterpolantConsolidationBenchmarkType implements IStatisticsType {
 		private static InterpolantConsolidationBenchmarkType s_Instance = new InterpolantConsolidationBenchmarkType();
 
 
@@ -658,7 +658,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 		@Override
 		public String prettyprintBenchmarkData(
-				IBenchmarkDataProvider benchmarkData) {
+				IStatisticsDataProvider benchmarkData) {
 			StringBuilder sb = new StringBuilder();
 
 			sb.append("\t").append(s_DifferenceAutomatonEmptyCounter).append(": ");
@@ -687,7 +687,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 
 	}
 
-	public class InterpolantConsolidationBenchmarkGenerator extends BenchmarkGeneratorWithStopwatches implements 	IBenchmarkDataProvider {
+	public class InterpolantConsolidationBenchmarkGenerator extends StatisticsGeneratorWithStopwatches implements 	IStatisticsDataProvider {
 		private int m_DisjunctionsGreaterOneCounter = 0;
 		private int m_DifferenceBeforeAfter = 0;
 		private int m_NewlyCreatedInterpolants = 0;
@@ -747,7 +747,7 @@ public class InterpolantConsolidation implements IInterpolantGenerator {
 		}
 
 		@Override
-		public IBenchmarkType getBenchmarkType() {
+		public IStatisticsType getBenchmarkType() {
 			return InterpolantConsolidationBenchmarkType.getInstance();
 		}
 

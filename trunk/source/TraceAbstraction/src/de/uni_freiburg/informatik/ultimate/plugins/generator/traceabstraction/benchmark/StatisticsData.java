@@ -39,16 +39,16 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
  * Default implementation for objects that store benchmark data.
  * @author Matthias Heizmann
  */
-public class BenchmarkData implements IBenchmarkDataProvider {
+public class StatisticsData implements IStatisticsDataProvider {
 	private final Map<String, Object> m_Key2Value = new HashMap<String, Object>();
-	private IBenchmarkType m_BenchmarkType;
+	private IStatisticsType m_BenchmarkType;
 	
 	/**
 	 * Aggregate the benchmark data of this object and another 
 	 * IBenchmarkDataProvider. The aggregated data is stored in this object.
 	 * Both objects have to have the same IBenchmarkType.
 	 */
-	public void aggregateBenchmarkData(IBenchmarkDataProvider benchmarkDataProvider) {
+	public void aggregateBenchmarkData(IStatisticsDataProvider benchmarkDataProvider) {
 		if (m_BenchmarkType == null) {
 			assert m_Key2Value.isEmpty() : "may not contain data if type is not known";
 			m_BenchmarkType = benchmarkDataProvider.getBenchmarkType();
@@ -112,7 +112,7 @@ public class BenchmarkData implements IBenchmarkDataProvider {
 	}
 
 	@Override
-	public IBenchmarkType getBenchmarkType() {
+	public IStatisticsType getBenchmarkType() {
 		return m_BenchmarkType;
 	}
 	
@@ -133,21 +133,21 @@ public class BenchmarkData implements IBenchmarkDataProvider {
 		LinkedHashMap<String, Object> result = new LinkedHashMap<>();
 		for(String key : getKeys()) {
 			Object value = getValue(key);
-			if (value instanceof IBenchmarkDataProvider) {
-				if (value instanceof BenchmarkData) {
-					if (((BenchmarkData) value).isEmpty()) {
+			if (value instanceof IStatisticsDataProvider) {
+				if (value instanceof StatisticsData) {
+					if (((StatisticsData) value).isEmpty()) {
 						// do nothing
 					} else {
 						LinkedHashMap<String, Object> FlattenedKeyValueMap = 
-								((BenchmarkData) value).getFlattenedKeyValueMap();
+								((StatisticsData) value).getFlattenedKeyValueMap();
 						for (Entry<String, Object> entry : FlattenedKeyValueMap.entrySet()) {
 							String composedKey = key + "_" + entry.getKey();
 							result.put(composedKey, entry.getValue());
 						}
 					}
 				} else {
-					for (String subKey : ((IBenchmarkDataProvider) value).getKeys()) {
-						Object subValue = ((IBenchmarkDataProvider) value).getValue(subKey);
+					for (String subKey : ((IStatisticsDataProvider) value).getKeys()) {
+						Object subValue = ((IStatisticsDataProvider) value).getValue(subKey);
 						String composedKey = key + "_" + subKey;
 						result.put(composedKey, subValue);
 					}

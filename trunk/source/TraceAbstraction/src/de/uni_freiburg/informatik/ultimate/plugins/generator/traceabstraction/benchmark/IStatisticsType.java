@@ -28,18 +28,23 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.b
 
 import java.util.Collection;
 
-/**
- * Classes that implement this interface can provide data to our benchmarks.
- * Our benchmarks are key-value stores.
- * @author Matthias Heizmann
- *
- */
-public interface IBenchmarkDataProvider {
 
-	public abstract Collection<String> getKeys();
+/**
+ * Classes that implement this interface define a type of benchmark that is a
+ * key-value store. These classes define the following.
+ * <li> the allows keys
+ * <li> how several benchmark objects can be aggregated into one. Therefore
+ * classes that implement this interface define how values of several objects 
+ * have to be aggregated (e.g. taking the sum, or taking the maximum)
+ * <li> how benchmark data can be prettyprinted 
+ * @author Matthias Heizmann
+ */
+public interface IStatisticsType {
 	
-	public abstract Object getValue(String key);
+	Collection<String> getKeys();
 	
-	public abstract IBenchmarkType getBenchmarkType();
+	Object aggregate(String key, Object value1, Object value2);
+
+	String prettyprintBenchmarkData(IStatisticsDataProvider benchmarkData);
 
 }

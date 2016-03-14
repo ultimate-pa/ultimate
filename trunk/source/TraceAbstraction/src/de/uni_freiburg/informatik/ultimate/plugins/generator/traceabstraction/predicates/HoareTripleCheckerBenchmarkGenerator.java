@@ -30,11 +30,11 @@ import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import de.uni_freiburg.informatik.ultimate.automata.InCaReCounter;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.Benchmark;
 
-public class HoareTripleCheckerBenchmarkGenerator implements IBenchmarkDataProvider {
+public class HoareTripleCheckerBenchmarkGenerator implements IStatisticsDataProvider {
 	
 	protected final InCaReCounter m_SDtfsCounter;
 	protected final InCaReCounter m_SDsluCounter;
@@ -128,7 +128,7 @@ public class HoareTripleCheckerBenchmarkGenerator implements IBenchmarkDataProvi
 	}
 
 	@Override
-	public IBenchmarkType getBenchmarkType() {
+	public IStatisticsType getBenchmarkType() {
 		return HoareTripleCheckerBenchmarkType.getInstance();
 	}
 

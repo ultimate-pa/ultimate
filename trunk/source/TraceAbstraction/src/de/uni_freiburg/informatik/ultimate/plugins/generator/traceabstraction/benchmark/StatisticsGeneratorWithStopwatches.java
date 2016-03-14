@@ -40,14 +40,14 @@ import de.uni_freiburg.informatik.ultimate.util.Benchmark;
  * @author Matthias Heizmann
  *
  */
-public abstract class BenchmarkGeneratorWithStopwatches {
+public abstract class StatisticsGeneratorWithStopwatches {
 
 	private final Map<String, Boolean> mRunningStopwatches;
 	private final Benchmark mBenchmark;
 
 	public abstract String[] getStopwatches();
 
-	public BenchmarkGeneratorWithStopwatches() {
+	public StatisticsGeneratorWithStopwatches() {
 		mRunningStopwatches = new HashMap<String, Boolean>(getStopwatches().length);
 		mBenchmark = new Benchmark();
 		for (final String name : getStopwatches()) {

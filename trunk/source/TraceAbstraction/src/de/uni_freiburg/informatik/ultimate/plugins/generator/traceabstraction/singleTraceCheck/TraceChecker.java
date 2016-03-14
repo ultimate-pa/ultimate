@@ -56,9 +56,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RcfgPro
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkGeneratorWithStopwatches;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.StatisticsGeneratorWithStopwatches;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IStatisticsType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.result.model.IProgramExecution.ProgramState;
@@ -150,7 +150,7 @@ public class TraceChecker {
 	 * @author Matthias Heizmann
 	 * 
 	 */
-	public static class TraceCheckerBenchmarkType implements IBenchmarkType {
+	public static class TraceCheckerBenchmarkType implements IStatisticsType {
 
 		private static TraceCheckerBenchmarkType s_Instance = new TraceCheckerBenchmarkType();
 
@@ -198,7 +198,7 @@ public class TraceChecker {
 		}
 
 		@Override
-		public String prettyprintBenchmarkData(IBenchmarkDataProvider benchmarkData) {
+		public String prettyprintBenchmarkData(IStatisticsDataProvider benchmarkData) {
 			StringBuilder sb = new StringBuilder();
 			addTimedStatistic(benchmarkData, sb,s_SsaConstruction);
 			addTimedStatistic(benchmarkData, sb,s_SatisfiabilityAnalysis);
@@ -234,7 +234,7 @@ public class TraceChecker {
 			return sb.toString();
 		}
 
-		private StringBuilder addTimedStatistic(final IBenchmarkDataProvider benchmarkData, final StringBuilder sb, final String key) {
+		private StringBuilder addTimedStatistic(final IStatisticsDataProvider benchmarkData, final StringBuilder sb, final String key) {
 			sb.append(key);
 			sb.append(": ");
 			final Long time = (Long) benchmarkData.getValue(key);
@@ -250,8 +250,8 @@ public class TraceChecker {
 	 * 
 	 * @author Matthias Heizmann
 	 */
-	public class TraceCheckerBenchmarkGenerator extends BenchmarkGeneratorWithStopwatches
-			implements IBenchmarkDataProvider {
+	public class TraceCheckerBenchmarkGenerator extends StatisticsGeneratorWithStopwatches
+			implements IStatisticsDataProvider {
 
 		int m_NumberOfCodeBlocks = 0;
 		int m_NumberOfCodeBlocksAsserted = 0;
@@ -298,7 +298,7 @@ public class TraceChecker {
 		}
 
 		@Override
-		public IBenchmarkType getBenchmarkType() {
+		public IStatisticsType getBenchmarkType() {
 			return TraceCheckerBenchmarkType.getInstance();
 		}
 
