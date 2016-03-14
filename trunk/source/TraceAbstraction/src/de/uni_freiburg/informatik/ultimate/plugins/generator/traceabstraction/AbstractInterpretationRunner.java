@@ -84,8 +84,9 @@ public class AbstractInterpretationRunner {
 			final IRun<CodeBlock, IPredicate> currentCex) {
 
 		final Set<CodeBlock> transitions = new HashSet<CodeBlock>();
+		// words count their states, so 0 is first state, length is last state
 		final int length = currentCex.getLength();
-		for (int i = 0; i < length; ++i) {
+		for (int i = 0; i < length - 1; ++i) {
 			transitions.add(currentCex.getSymbol(i));
 		}
 		return knownPathPrograms.add(transitions);

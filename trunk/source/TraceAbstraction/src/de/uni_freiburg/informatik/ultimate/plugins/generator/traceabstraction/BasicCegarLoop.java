@@ -613,13 +613,16 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 							String filename = "EnhancedInterpolantAutomaton_Iteration" + m_Iteration;
 							super.writeAutomatonToFile(test, filename);
 						}
-						boolean ctxAccepted = (new Accepts<CodeBlock, IPredicate>(
-								new AutomataLibraryServices(m_Services), test,
-								(NestedWord<CodeBlock>) m_Counterexample.getWord(), true, false)).getResult();
-						if (!ctxAccepted) {
-							throw new AssertionError("enhanced interpolant automaton in iteration " + m_Iteration
-									+ " broken: counterexample of length " + m_Counterexample.getLength()
-									+ " not accepted");
+						if (mAbsIntRunner == null) {
+							//check only if AI did not run 
+							boolean ctxAccepted = (new Accepts<CodeBlock, IPredicate>(
+									new AutomataLibraryServices(m_Services), test,
+									(NestedWord<CodeBlock>) m_Counterexample.getWord(), true, false)).getResult();
+							if (!ctxAccepted) {
+								throw new AssertionError("enhanced interpolant automaton in iteration " + m_Iteration
+										+ " broken: counterexample of length " + m_Counterexample.getLength()
+										+ " not accepted");
+							}
 						}
 						assert (new InductivityCheck(m_Services, test, false, true,
 								new IncrementalHoareTripleChecker(
