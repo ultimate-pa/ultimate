@@ -5,20 +5,24 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Function;
 
-public abstract class ABenchmarkType<T extends Enum<T> & IStatisticsElement> implements IStatisticsType {
+import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
+
+public abstract class AStatisticsType<T extends Enum<T> & IStatisticsElement> implements IStatisticsType {
 	
-	public static Function<Object, Function<Object,Object>> s_IntegerAddition = x -> y -> (Integer) x + (Integer) y;
-	public static Function<Object, Function<Object,Object>> s_LongAddition = x -> y -> (Long) x + (Long) y;
-	public static Function<String, Function<Object,String>> s_DataBeforeKey = key -> data -> String.valueOf(data) + " " + key;
-	
-	public static Function<String, Function<Object,String>> s_TimeBeforeKey = key -> time -> prettyprintNanoseconds( (Long) time) + " " + key;
-	
-	
+	public static Function<Object, Function<Object,Object>> s_IntegerAddition = 
+			x -> y -> (Integer) x + (Integer) y;
+	public static Function<Object, Function<Object,Object>> s_LongAddition = 
+			x -> y -> (Long) x + (Long) y;
+	public static Function<Object, Function<Object,Object>> s_IncareAddition = 
+			x -> y -> { ((InCaReCounter) x).add((InCaReCounter) y); return x;};
+	public static Function<String, Function<Object,String>> s_DataBeforeKey = 
+			key -> data -> String.valueOf(data) + " " + key;
+	public static Function<String, Function<Object,String>> s_TimeBeforeKey = 
+			key -> time -> prettyprintNanoseconds( (Long) time) + " " + key;
 	
 	private final Class<T> m_Keys;
 	
-	
-	public ABenchmarkType(Class<T> keys) {
+	public AStatisticsType(Class<T> keys) {
 		super();
 		m_Keys = keys;
 	}
@@ -42,8 +46,13 @@ public abstract class ABenchmarkType<T extends Enum<T> & IStatisticsElement> imp
 	@Override
 	public String prettyprintBenchmarkData(IStatisticsDataProvider benchmarkData) {
 		StringBuilder sb = new StringBuilder();
+		boolean first = true;
 		for (String key : getKeys()) {
-			sb.append(" ");
+			if (first) {
+				first = false;
+			} else {
+				sb.append(", ");
+			}
 			Object value = benchmarkData.getValue(key);
 			T keyE = (T) Enum.valueOf(m_Keys, key);
 			sb.append(keyE.prettyprint(value));

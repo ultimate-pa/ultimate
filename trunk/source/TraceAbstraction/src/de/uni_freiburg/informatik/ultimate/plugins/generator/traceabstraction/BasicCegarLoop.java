@@ -81,12 +81,15 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.BestApproximationDeterminizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton;
@@ -99,9 +102,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.TwoTrackInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EfficientHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -498,7 +499,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
 		assert (accepts(m_Services, m_InterpolAutomaton, m_Counterexample.getWord())) : "Interpolant automaton broken!";
 		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult();
+				new IncrementalHoareTripleChecker(new ManagedScript(m_Services, 
+						m_SmtManager.getScript()), m_ModGlobVarManager, m_SmtManager.getBoogie2Smt()))).getResult();
 	}
 
 	@Override
@@ -556,7 +558,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		if (m_InterpolantGenerator instanceof InterpolantConsolidation) {
 			htc = ((InterpolantConsolidation) m_InterpolantGenerator).getHoareTripleChecker();
 		} else {
-			IHoareTripleChecker ehtc = getEfficientHoareTripleChecker(m_Pref.getHoareTripleChecks(), m_SmtManager,
+			IHoareTripleChecker ehtc = getEfficientHoareTripleChecker(m_Services, m_Pref.getHoareTripleChecks(), m_SmtManager,
 					m_ModGlobVarManager, m_InterpolantGenerator.getPredicateUnifier());
 			htc = new CachingHoareTripleChecker(ehtc, m_InterpolantGenerator.getPredicateUnifier());
 		}
@@ -665,7 +667,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 							}
 						}
 						assert (new InductivityCheck(m_Services, test, false, true,
-								new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult();
+								new IncrementalHoareTripleChecker(new ManagedScript(m_Services, 
+										m_SmtManager.getScript()), m_ModGlobVarManager, m_SmtManager.getBoogie2Smt()))).getResult();
 					}
 					break;
 				case EAGER:
@@ -698,7 +701,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 								+ " not accepted");
 					}
 					assert (new InductivityCheck(m_Services, test, false, true,
-							new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult();
+							new IncrementalHoareTripleChecker(new ManagedScript(m_Services, 
+									m_SmtManager.getScript()), m_ModGlobVarManager, m_SmtManager.getBoogie2Smt()))).getResult();
 				}
 					break;
 				default:
@@ -805,7 +809,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 	}
 
-	public static IHoareTripleChecker getEfficientHoareTripleChecker(HoareTripleChecks hoareTripleChecks,
+	public static IHoareTripleChecker getEfficientHoareTripleChecker(IUltimateServiceProvider services, HoareTripleChecks hoareTripleChecks,
 			SmtManager smtManager, ModifiableGlobalVariableManager modGlobVarManager, PredicateUnifier predicateUnifier)
 					throws AssertionError {
 		final IHoareTripleChecker solverHtc;
@@ -814,7 +818,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			solverHtc = new MonolithicHoareTripleChecker(smtManager);
 			break;
 		case INCREMENTAL:
-			solverHtc = new IncrementalHoareTripleChecker(smtManager, modGlobVarManager);
+			solverHtc = new IncrementalHoareTripleChecker(new ManagedScript(services, 
+					smtManager.getScript()), modGlobVarManager, smtManager.getBoogie2Smt());
 			break;
 		default:
 			throw new AssertionError("unknown value");
@@ -1044,7 +1049,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 
 		if (m_ComputeHoareAnnotation) {
 			assert (new InductivityCheck(m_Services, dia, false, true,
-					new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager)))
+					new IncrementalHoareTripleChecker(new ManagedScript(m_Services, 
+							m_SmtManager.getScript()), m_ModGlobVarManager, m_SmtManager.getBoogie2Smt())))
 							.getResult() : "Not inductive";
 		}
 		if (m_Pref.dumpAutomata()) {

@@ -9,6 +9,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms,
+ de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates,
  de.uni_freiburg.informatik.ultimate.modelcheckerutils.transfomers

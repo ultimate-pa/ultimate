@@ -60,9 +60,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.util.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
@@ -70,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.relation.Triple;
-import de.uni_freiburg.informatik.ultimate.util.statistics.ABenchmarkType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.AStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsElement;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
@@ -97,10 +97,10 @@ public class PredicateUnifier {
 	private final IPredicate m_TruePredicate;
 	private final IPredicate m_FalsePredicate;
 	
-	private final PredicateUnifierBenchmarkGenerator m_PredicateUnifierBenchmarkGenerator;
+	private final PredicateUnifierStatisticsGenerator m_PredicateUnifierBenchmarkGenerator;
 
 	public PredicateUnifier(IUltimateServiceProvider services, SmtManager smtManager, IPredicate... initialPredicates) {
-		m_PredicateUnifierBenchmarkGenerator = new PredicateUnifierBenchmarkGenerator();
+		m_PredicateUnifierBenchmarkGenerator = new PredicateUnifierStatisticsGenerator();
 		m_SmtManager = smtManager;
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
@@ -737,7 +737,7 @@ public class PredicateUnifier {
 	
 	public String collectPredicateUnifierStatistics() {
 		StringBuilder builder = new StringBuilder();
-		builder.append(PredicateUnifierBenchmarkType.getInstance().
+		builder.append(PredicateUnifierStatisticsType.getInstance().
 				prettyprintBenchmarkData(m_PredicateUnifierBenchmarkGenerator));
 		builder.append(m_CoverageRelation.getCoverageRelationStatistics());
 		return builder.toString();
@@ -938,94 +938,19 @@ public class PredicateUnifier {
 	}
 	
 	
-//	builder.append("DeclaredPredicates=").append(m_DeclaredPredicates)
-//	.append(" GetRequests=").append(m_GetRequests)
-//	.append(" SyntacticMatches=").append(m_SyntacticMatches)
-//	.append(" SemanticMatches=").append(m_SemanticMatches)
-//	.append(" ConstructedPredicates=").append(m_ConstructedPredicates)
-//	.append(" CoveringChecksByTransitivity=").append(m_ImplicationChecksByTransitivity)
-//	.append(" ").append(m_CoverageRelation.getCoverageRelationStatistics());
-	
-//	public static class PredicateUnifierBenchmarkType implements IBenchmarkType {
-//		
-//		private static final PredicateUnifierBenchmarkType s_Instance = new PredicateUnifierBenchmarkType();
-//		public final static String s_DeclaredPredicates = "DeclaredPredicates";
-//		public final static String s_GetRequests = "GetRequests";
-//		public final static String s_SyntacticMatches = "SyntacticMatches";
-//		public final static String s_SemanticMatches = "SemanticMatches";
-//		public final static String s_ConstructedPredicates = "ConstructedPredicates";
-//		public final static String s_IntricatePredicates = "IntricatePredicates";
-//		public final static String s_DeprecatedPredicates = "DeprecatedPredicates";
-//		public final static String s_ImplicationChecksByTransitivity = "ImplicationChecksByTransitivity";
-//		public final static String s_Time = "Time";
-//		
-//		public static PredicateUnifierBenchmarkType getInstance() {
-//			return s_Instance;
-//		}
-//		
-//		@Override
-//		public Collection<String> getKeys() {
-//			return Arrays.asList(new String[] { s_DeclaredPredicates, s_GetRequests, s_SyntacticMatches, 
-//					s_SemanticMatches, 
-//					s_ConstructedPredicates, s_IntricatePredicates, s_DeprecatedPredicates,
-//					s_ImplicationChecksByTransitivity, s_Time });
-//		}
-//		
-//		@Override
-//		public Object aggregate(String key, Object value1, Object value2) {
-//			switch (key) {
-//			case s_DeclaredPredicates:
-//			case s_GetRequests:
-//			case s_SyntacticMatches:
-//			case s_SemanticMatches:
-//			case s_ConstructedPredicates: 
-//			case s_IntricatePredicates:
-//			case s_DeprecatedPredicates:
-//			case s_ImplicationChecksByTransitivity:
-//				Integer long1 = (Integer) value1;
-//				Integer long2 = (Integer) value2;
-//				return long1 + long2;
-//			case s_Time:
-//				Long time1 = (Long) value1;
-//				Long time2 = (Long) value2;
-//				return time1 + time2;
-//			default:
-//				throw new AssertionError("unknown key");
-//			}
-//		}
-//
-//		@Override
-//		public String prettyprintBenchmarkData(IBenchmarkDataProvider benchmarkData) {
-//			StringBuilder sb = new StringBuilder();
-//			for (String key : getKeys()) {
-//				if (key == s_Time) {
-//					long time = (long) benchmarkData.getValue(s_Time);
-//					sb.append(TraceAbstractionBenchmarks.prettyprintNanoseconds(time));
-//					sb.append(s_Time);
-//				} else {
-//					sb.append(benchmarkData.getValue(key));
-//					sb.append(" ");
-//					sb.append(key);
-//				}
-//				sb.append(", ");
-//			}
-//			return sb.toString();
-//		}
-//	}
-	
 	
 	public enum PredicateUniferStatisticsDefinitions implements IStatisticsElement {
 		
-		DeclaredPredicates(Integer.class, ABenchmarkType.s_IntegerAddition, ABenchmarkType.s_DataBeforeKey),
-		GetRequests(Integer.class, ABenchmarkType.s_IntegerAddition, ABenchmarkType.s_DataBeforeKey),
+		DeclaredPredicates(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+		GetRequests(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
 		
-		SyntacticMatches(Integer.class, ABenchmarkType.s_IntegerAddition, ABenchmarkType.s_DataBeforeKey),
-		SemanticMatches(Integer.class, ABenchmarkType.s_IntegerAddition, ABenchmarkType.s_DataBeforeKey),
-		ConstructedPredicates(Integer.class, ABenchmarkType.s_IntegerAddition, ABenchmarkType.s_DataBeforeKey),
-		IntricatePredicates(Integer.class, ABenchmarkType.s_IntegerAddition, ABenchmarkType.s_DataBeforeKey),
-		DeprecatedPredicates(Integer.class, ABenchmarkType.s_IntegerAddition, ABenchmarkType.s_DataBeforeKey),
-		ImplicationChecksByTransitivity(Integer.class, ABenchmarkType.s_IntegerAddition, ABenchmarkType.s_DataBeforeKey),
-		Time(Integer.class, ABenchmarkType.s_LongAddition, ABenchmarkType.s_TimeBeforeKey),
+		SyntacticMatches(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+		SemanticMatches(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+		ConstructedPredicates(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+		IntricatePredicates(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+		DeprecatedPredicates(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+		ImplicationChecksByTransitivity(Integer.class, AStatisticsType.s_IntegerAddition, AStatisticsType.s_DataBeforeKey),
+		Time(Integer.class, AStatisticsType.s_LongAddition, AStatisticsType.s_TimeBeforeKey),
 		;
 		
 		private final Class<?> m_Clazz;
@@ -1057,83 +982,23 @@ public class PredicateUnifier {
 	}
 	
 	
-	public static class PredicateUnifierBenchmarkType extends ABenchmarkType<PredicateUniferStatisticsDefinitions> implements IStatisticsType {
+	public static class PredicateUnifierStatisticsType extends AStatisticsType<PredicateUniferStatisticsDefinitions> implements IStatisticsType {
 		
-		
-
-		
-		public PredicateUnifierBenchmarkType() {
+		public PredicateUnifierStatisticsType() {
 			super(PredicateUniferStatisticsDefinitions.class);
 		}
 
-		private static final PredicateUnifierBenchmarkType s_Instance = new PredicateUnifierBenchmarkType();
-//		public final static String s_DeclaredPredicates = "DeclaredPredicates";
-//		public final static String s_GetRequests = "GetRequests";
-//		public final static String s_SyntacticMatches = "SyntacticMatches";
-//		public final static String s_SemanticMatches = "SemanticMatches";
-//		public final static String s_ConstructedPredicates = "ConstructedPredicates";
-//		public final static String s_IntricatePredicates = "IntricatePredicates";
-//		public final static String s_DeprecatedPredicates = "DeprecatedPredicates";
-//		public final static String s_ImplicationChecksByTransitivity = "ImplicationChecksByTransitivity";
-//		public final static String s_Time = "Time";
+		private static final PredicateUnifierStatisticsType s_Instance = new PredicateUnifierStatisticsType();
 		
-		public static PredicateUnifierBenchmarkType getInstance() {
+		public static PredicateUnifierStatisticsType getInstance() {
 			return s_Instance;
 		}
 		
-//		@Override
-//		public Collection<String> getKeys() {
-//			return Arrays.asList(new String[] { s_DeclaredPredicates, s_GetRequests, s_SyntacticMatches, 
-//					s_SemanticMatches, 
-//					s_ConstructedPredicates, s_IntricatePredicates, s_DeprecatedPredicates,
-//					s_ImplicationChecksByTransitivity, s_Time });
-//		}
-//		
-//		@Override
-//		public Object aggregate(String key, Object value1, Object value2) {
-//			switch (key) {
-//			case s_DeclaredPredicates:
-//			case s_GetRequests:
-//			case s_SyntacticMatches:
-//			case s_SemanticMatches:
-//			case s_ConstructedPredicates: 
-//			case s_IntricatePredicates:
-//			case s_DeprecatedPredicates:
-//			case s_ImplicationChecksByTransitivity:
-//				Integer long1 = (Integer) value1;
-//				Integer long2 = (Integer) value2;
-//				return long1 + long2;
-//			case s_Time:
-//				Long time1 = (Long) value1;
-//				Long time2 = (Long) value2;
-//				return time1 + time2;
-//			default:
-//				throw new AssertionError("unknown key");
-//			}
-//		}
-//
-//		@Override
-//		public String prettyprintBenchmarkData(IBenchmarkDataProvider benchmarkData) {
-//			StringBuilder sb = new StringBuilder();
-//			for (String key : getKeys()) {
-//				if (key == s_Time) {
-//					long time = (long) benchmarkData.getValue(s_Time);
-//					sb.append(TraceAbstractionBenchmarks.prettyprintNanoseconds(time));
-//					sb.append(s_Time);
-//				} else {
-//					sb.append(benchmarkData.getValue(key));
-//					sb.append(" ");
-//					sb.append(key);
-//				}
-//				sb.append(", ");
-//			}
-//			return sb.toString();
-//		}
 	}
 	
 	
 	
-	public class PredicateUnifierBenchmarkGenerator implements IStatisticsDataProvider {
+	public class PredicateUnifierStatisticsGenerator implements IStatisticsDataProvider {
 		
 		private int m_DeclaredPredicates = 0;
 		private int m_GetRequests = 0;
@@ -1147,7 +1012,7 @@ public class PredicateUnifier {
 
 		protected boolean m_Running = false;
 
-		public PredicateUnifierBenchmarkGenerator() {
+		public PredicateUnifierStatisticsGenerator() {
 			m_Benchmark = new Benchmark();
 			m_Benchmark.register(String.valueOf(PredicateUniferStatisticsDefinitions.Time));
 		}
@@ -1196,7 +1061,7 @@ public class PredicateUnifier {
 		}
 		@Override
 		public Collection<String> getKeys() {
-			return PredicateUnifierBenchmarkType.getInstance().getKeys();
+			return PredicateUnifierStatisticsType.getInstance().getKeys();
 		}
 		public Object getValue(String key) {
 			PredicateUniferStatisticsDefinitions keyEnum = Enum.valueOf(PredicateUniferStatisticsDefinitions.class, key);
@@ -1226,7 +1091,7 @@ public class PredicateUnifier {
 
 		@Override
 		public IStatisticsType getBenchmarkType() {
-			return PredicateUnifierBenchmarkType.getInstance();
+			return PredicateUnifierStatisticsType.getInstance();
 		}
 	}
 

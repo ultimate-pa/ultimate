@@ -28,10 +28,13 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IncrementalHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IHoareTripleChecker.Validity;
 
 /**
  * Checks the relevance of a <code>CodeBlock</code> with respect to a pre- and a
@@ -61,9 +64,10 @@ public class FaultLocalizationRelevanceChecker {
 	private class FaultLocalizationHoareTripleChecker
 			extends IncrementalHoareTripleChecker {
 		
-		public FaultLocalizationHoareTripleChecker(SmtManager smtManager,
-				ModifiableGlobalVariableManager modGlobVarManager) {
-			super(smtManager, modGlobVarManager);
+		public FaultLocalizationHoareTripleChecker(ManagedScript managedScript, 
+				ModifiableGlobalVariableManager modGlobVarManager,
+				Boogie2SMT boogie2smt) {
+			super(managedScript, modGlobVarManager, boogie2smt);
 		}
 		
 		@Override
@@ -93,7 +97,7 @@ public class FaultLocalizationRelevanceChecker {
 		}
 		
 		public boolean doesUnsatCoreContainTransition() {
-			Term[] unsatCore = m_Script.getUnsatCore();
+			Term[] unsatCore = m_ManagedScript.getUnsatCore(this);
 			for (Term term : unsatCore) {
 				ApplicationTerm appTerm = (ApplicationTerm) term;
 				if (appTerm.equals(IncrementalHoareTripleChecker.s_IdTransitionFormula)) {
@@ -106,10 +110,11 @@ public class FaultLocalizationRelevanceChecker {
 	
 	private final FaultLocalizationHoareTripleChecker mHoareTripleChecker;
 	
-	public FaultLocalizationRelevanceChecker(final SmtManager smtManager,
-			final ModifiableGlobalVariableManager modGlobVarManager) {
+	public FaultLocalizationRelevanceChecker(ManagedScript managedScript, 
+			ModifiableGlobalVariableManager modGlobVarManager,
+			Boogie2SMT boogie2smt) {
 		this.mHoareTripleChecker = new FaultLocalizationHoareTripleChecker(
-				smtManager, modGlobVarManager);
+				managedScript, modGlobVarManager, boogie2smt);
 	}
 	
 	public ERelevanceStatus relevanceInternal(final IPredicate pre,

@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript.ILockHolderWithVoluntaryLockRelease;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
@@ -80,13 +81,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCF
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IHoareTripleChecker;
 
 public class SmtManager {
 
@@ -655,7 +657,7 @@ public class SmtManager {
 			assertTerm(formula1);
 			Term negFormula2 = m_Script.term("not", formula2);
 			assertTerm(negFormula2);
-			result = lbool2validity(m_Script.checkSat());
+			result = IHoareTripleChecker.lbool2validity(m_Script.checkSat());
 			m_NontrivialCoverQueries++;
 			m_Script.pop(1);
 		}
@@ -1448,7 +1450,7 @@ public class SmtManager {
 		Validity testRes = sdhtch.sdecReturn(ps1, psk, ta, ps2);
 		if (testRes != null) {
 			// assert testRes == result : "my return dataflow check failed";
-			if (testRes != lbool2validity(result)) {
+			if (testRes != IHoareTripleChecker.lbool2validity(result)) {
 				sdhtch.sdecReturn(ps1, psk, ta, ps2);
 			}
 		}
@@ -1462,7 +1464,7 @@ public class SmtManager {
 		SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals, null);
 		Validity testRes = sdhtch.sdecCall(ps1, ta, ps2);
 		if (testRes != null) {
-			assert testRes == lbool2validity(result) : "my call dataflow check failed";
+			assert testRes == IHoareTripleChecker.lbool2validity(result) : "my call dataflow check failed";
 			// if (testRes != result) {
 			// sdhtch.sdecReturn(ps1, psk, ta, ps2);
 			// }
@@ -1475,7 +1477,7 @@ public class SmtManager {
 			SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals, null);
 			Validity testRes = sdhtch.sdecInternalToFalse(ps1, ta);
 			if (testRes != null) {
-				assert testRes == lbool2validity(result) || testRes == lbool2validity(LBool.UNKNOWN) && result == LBool.SAT : "my internal dataflow check failed";
+				assert testRes == IHoareTripleChecker.lbool2validity(result) || testRes == IHoareTripleChecker.lbool2validity(LBool.UNKNOWN) && result == LBool.SAT : "my internal dataflow check failed";
 				// if (testRes != result) {
 				// sdhtch.sdecInternalToFalse(ps1, ta);
 				// }
@@ -1486,7 +1488,7 @@ public class SmtManager {
 			SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals, null);
 			Validity testRes = sdhtch.sdecInternalSelfloop(ps1, ta);
 			if (testRes != null) {
-				assert testRes == lbool2validity(result) : "my internal dataflow check failed";
+				assert testRes == IHoareTripleChecker.lbool2validity(result) : "my internal dataflow check failed";
 				// if (testRes != result) {
 				// sdhtch.sdecReturn(ps1, psk, ta, ps2);
 				// }
@@ -1498,7 +1500,7 @@ public class SmtManager {
 		SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(m_ModifiableGlobals, null);
 		Validity testRes = sdhtch.sdecInteral(ps1, ta, ps2);
 		if (testRes != null) {
-			assert testRes == lbool2validity(result) : "my internal dataflow check failed";
+			assert testRes == IHoareTripleChecker.lbool2validity(result) : "my internal dataflow check failed";
 			// if (testRes != result) {
 			// sdhtch.sdecReturn(ps1, psk, ta, ps2);
 			// }
@@ -1715,10 +1717,6 @@ public class SmtManager {
 		return allegedLockOwner == m_LockOwner;
 	}
 	
-	public interface ILockHolderWithVoluntaryLockRelease {
-		public void releaseLock();
-	}
-
 	private class AuxilliaryTerm extends Term {
 
 		String m_Name;
@@ -1763,19 +1761,6 @@ public class SmtManager {
 			throw new UnsupportedOperationException("Auxiliary term must not be contained in any collection");
 		}
 	}
-	
-	
-	public static Validity lbool2validity(LBool lbool) {
-		switch (lbool) {
-		case SAT:
-			return Validity.INVALID;
-		case UNKNOWN:
-			return Validity.UNKNOWN;
-		case UNSAT:
-			return Validity.VALID;
-		default:
-			throw new AssertionError();
-		}
-	}
+
 
 }
