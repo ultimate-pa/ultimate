@@ -1,3 +1,4 @@
+//#Unsafe
 var time: real;
 var power: real;
 
