@@ -203,7 +203,6 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 				HashMap<BoogieVar, HashMap<BoogieVar, BoogieVar>> arrayToPointerToPartition,
 				HashMap<BoogieVar, HashMap<BoogieVar, HashSet<BoogieVar>>> arrayToPartitions,
 				Map<BoogieVar, TermVariable> inVars, Map<BoogieVar, TermVariable> outVars, 
-//				BoogieVar aOld, BoogieVar aNew
 				TermVariable aOld, TermVariable aNew
 				) {
 			this(script, arrayToPointerToPartition, arrayToPartitions, inVars, outVars);
@@ -215,156 +214,138 @@ public class HeapSepRcfgVisitor extends SimpleRCFGVisitor {
 		@Override
 		protected void convert(Term term) {
 			if (m_equalsMode) {
-//				if (term.getSort().isArraySort() && term instanceof TermVariable) {
+				//TODO: not sure how robust this is..
 				if (term.equals(m_aOld)) {
 					setResult(m_aNew);
 					m_equalsMode = false;
 					return;
 				}
 			}
+			if (term instanceof ApplicationTerm) {
+				ApplicationTerm appTerm = (ApplicationTerm) term;
+				if (appTerm.getFunction().getName().equals("select")
+						|| appTerm.getFunction().getName().equals("store")) {
+
+					if (m_equalsMode 
+							&& appTerm.getFunction().getName().equals("store") 
+							&& appTerm.getParameters()[0] instanceof TermVariable) {
+						//TODO: not sure how robust this is..
+						super.convert(appTerm);
+						return;
+
+					} else if (appTerm.getParameters()[0] instanceof TermVariable
+							&& appTerm.getParameters()[1] instanceof TermVariable) {
+						assert appTerm.getParameters()[0].getSort().isArraySort();
+
+						BoogieVar oldArrayVar = getBoogieVarFromTermVar(((TermVariable) appTerm.getParameters()[0]), m_inVars, m_outVars);
+
+						HashMap<BoogieVar, BoogieVar> im = m_arrayToPointerToPartition.get(oldArrayVar);
+						if (im != null) {
+							BoogieVar ptrName = getBoogieVarFromTermVar(((TermVariable) appTerm.getParameters()[1]), m_inVars, m_outVars);
+
+							BoogieVar newArrayVar = im.get(ptrName);
+
+							TermVariable newVar = newArrayVar.getTermVariable(); //FIXME probably replace getTermVariable, here
+
+							Term newTerm = appTerm.getFunction().getName().equals("store") 
+									? m_script.term(
+											appTerm.getFunction().getName(), 
+											newVar, 
+											appTerm.getParameters()[1],
+											appTerm.getParameters()[2]) 
+											: m_script.term(
+													appTerm.getFunction().getName(), 
+													newVar, 
+													appTerm.getParameters()[1]);
+
+											// TODO: do we also need outVars here, sometimes?
+											m_inVarsToRemove.add(oldArrayVar);
+											m_inVarsToAdd.put(newArrayVar, newVar);
+
+											setResult(newTerm);
+											return;
+						}
+					}
+				} else if (appTerm.getFunction().getName().equals("=")) {
+					if (appTerm.getParameters()[0].getSort().isArraySort()
+							&& appTerm.getParameters()[1].getSort().isArraySort()) {
+
+						Term p0 = appTerm.getParameters()[0];
+						Term p1 = appTerm.getParameters()[1];
+
+						ArrayFinder af0 = new ArrayFinder();
+						af0.transform(p0);
+						TermVariable a0Tv = af0.getResult();
+						BoogieVar a0Id = getBoogieVarFromTermVar(a0Tv, m_inVars, m_outVars);
+
+						ArrayFinder af1 = new ArrayFinder();
+						af1.transform(p1);
+						TermVariable a1Tv = af1.getResult();
+						BoogieVar a1Id = getBoogieVarFromTermVar(a1Tv, m_inVars, m_outVars);
+
+						/*
+						 * sanity check:
+						 *  if anywhere in the program, the two arrays a and b are equated, their partitionings must be compatible
+						 *   i.e., no partition of a may overlap two partitions of b and vice versa
+						 */
+						//assert partitionsAreCompatible(findArrayId(p0), findArrayId(p1)); TODO: write those methods for the assert..
+
+						ArrayList<Term> equationConjunction = new ArrayList<Term>();
+
+						/*
+						 * for each partition p of a, which has an intersecting partition q of b:
+						 *  equate e1[a_p] = e2[b_q]
+						 *  (where e1, e2 may be stores or just array identifiers (something else?).
+						 */
+						for (Entry<BoogieVar, HashSet<BoogieVar>> a0SplitArrayToPointers : m_arrayToPartitions.get(a0Id).entrySet()) {
+							for (Entry<BoogieVar, HashSet<BoogieVar>> a1SplitArrayToPointers : m_arrayToPartitions.get(a1Id).entrySet()) {
+
+								HashSet<BoogieVar> intersection = new HashSet<BoogieVar>(a0SplitArrayToPointers.getValue());
+								intersection.retainAll(a1SplitArrayToPointers.getValue());
+
+								if (!intersection.isEmpty()) {
+									BoogieVar a0New = a0SplitArrayToPointers.getKey();
+									BoogieVar a1New = a1SplitArrayToPointers.getKey();
+									TermVariable a0NewTv = a0New.getTermVariable(); //TODO replace getTermVariable through a unique version
+									TermVariable a1NewTv = a1New.getTermVariable(); //TODO replace getTermVariable through a unique version
+									equationConjunction.add(
+											m_script.term("=", 
+													new ArraySplitter(m_script, m_arrayToPointerToPartition, m_arrayToPartitions, m_inVars, m_outVars, 
+															a0Tv, a0NewTv).transform(appTerm.getParameters()[0]), 
+													new ArraySplitter(m_script, m_arrayToPointerToPartition, m_arrayToPartitions, m_inVars, m_outVars, 
+															a1Tv, a1NewTv).transform(appTerm.getParameters()[1])
+													));
+
+									if (m_inVars.containsKey(a0Id)) {
+										m_inVarsToRemove.add(a0Id);
+										m_inVarsToAdd.put(a0New, a0NewTv);
+									} else if (m_outVars.containsKey(a0Id)) {
+										m_outVarsToRemove.add(a0Id);
+										m_outVarsToAdd.put(a0New, a0NewTv);
+									} else
+										assert false;
+
+									if (m_inVars.containsKey(a1Id)) {
+										m_inVarsToRemove.add(a1Id);
+										m_inVarsToAdd.put(a1Id, a1NewTv);
+									} else if (m_outVars.containsKey(a1Id)) {
+										m_outVarsToRemove.add(a1Id);
+										m_outVarsToAdd.put(a1Id, a1NewTv);
+									} else
+										assert false;
+
+								}
+							}
+						}
+						setResult(m_script.term("and", equationConjunction.toArray(new Term[equationConjunction.size()])));
+						return;
+					}
+				} 
+			}
+
 			super.convert(term);
 		}
 
-		@Override
-		public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
-			
-//			if (m_equalsMode) {
-//				if (appTerm.getParameters().length == 0) {
-//					// we have a constant
-//					
-//					if (appTerm.getSort().isArraySort() && appTerm.equals(m_aOld)) {
-//						setResult(m_aNew.getTermVariable()); //FIXME this TermVariable?? update for the inOutVar-maps?
-//						m_equalsMode = false;
-//						return;
-//					}
-//				} else if (appTerm.getFunction().getName().equals("store")) {
-//					//TODO
-//					// do nothing maybe??
-//					// we seem to rely on the traversal order of the TermTransformer here -- is that a problem?
-//				} else {
-//					m_equalsMode = false;
-//				}
-//			}
-//
-			if (appTerm.getFunction().getName().equals("select")
-					|| appTerm.getFunction().getName().equals("store")) {
-				if (appTerm.getParameters()[0] instanceof TermVariable
-						&& appTerm.getParameters()[1] instanceof TermVariable) {
-					assert appTerm.getParameters()[0].getSort().isArraySort();
-
-					BoogieVar oldArrayVar = getBoogieVarFromTermVar(((TermVariable) appTerm.getParameters()[0]), m_inVars, m_outVars);
-
-					HashMap<BoogieVar, BoogieVar> im = m_arrayToPointerToPartition.get(oldArrayVar);
-					if (im != null) {
-						BoogieVar ptrName = getBoogieVarFromTermVar(((TermVariable) appTerm.getParameters()[1]), m_inVars, m_outVars);
-
-						BoogieVar newArrayVar = im.get(ptrName);
-
-						TermVariable newVar = newArrayVar.getTermVariable(); //FIXME probably replace getTermVariable, here
-
-						Term newTerm = appTerm.getFunction().getName().equals("store") 
-								? m_script.term(
-										appTerm.getFunction().getName(), 
-										newVar, 
-										appTerm.getParameters()[1],
-										appTerm.getParameters()[2]) 
-										: m_script.term(
-												appTerm.getFunction().getName(), 
-												newVar, 
-												appTerm.getParameters()[1]);
-										
-						// FIXME: have to do this lazily probably -- the old invar may still be used
-						// TODO: do we also need outVars here, sometimes?
-						m_inVarsToRemove.add(oldArrayVar);
-						m_inVarsToAdd.put(newArrayVar, newVar);
-
-						setResult(newTerm);
-						return;
-					}
-				}
-			} else if (appTerm.getFunction().getName().equals("=")) {
-				if (appTerm.getParameters()[0].getSort().isArraySort()
-						&& appTerm.getParameters()[1].getSort().isArraySort()) {
-
-					Term p0 = appTerm.getParameters()[0];
-					Term p1 = appTerm.getParameters()[1];
-
-					/*
-					 * sanity check:
-					 *  if anywhere in the program, the two arrays a and b are equated, their partitionings must be compatible
-					 *   i.e., no partition of a may overlap two partitions of b and vice versa
-					 */
-
-					ArrayFinder af0 = new ArrayFinder();
-					af0.transform(p0);
-					TermVariable a0Tv = af0.getResult();
-					BoogieVar a0Id = getBoogieVarFromTermVar(a0Tv, m_inVars, m_outVars);
-
-					ArrayFinder af1 = new ArrayFinder();
-					af1.transform(p1);
-					TermVariable a1Tv = af1.getResult();
-					BoogieVar a1Id = getBoogieVarFromTermVar(a1Tv, m_inVars, m_outVars);
-							
-
-					//assert partitionsAreCompatible(findArrayId(p0), findArrayId(p1)); TODO: write those methods for the assert..
-					
-					ArrayList<Term> equationConjunction = new ArrayList<Term>();
-
-					/*
-					 * for each partition p of a, which has an intersecting partition q of b:
-					 *  equate e1[a_p] = e2[b_q]
-					 *  (where e1, e2 may be stores or just array identifiers (something else?).
-					 */
-					for (Entry<BoogieVar, HashSet<BoogieVar>> a0SplitArrayToPointers : m_arrayToPartitions.get(a0Id).entrySet()) {
-						for (Entry<BoogieVar, HashSet<BoogieVar>> a1SplitArrayToPointers : m_arrayToPartitions.get(a1Id).entrySet()) {
-
-							HashSet<BoogieVar> intersection = new HashSet<BoogieVar>(a0SplitArrayToPointers.getValue());
-							intersection.retainAll(a1SplitArrayToPointers.getValue());
-
-							if (!intersection.isEmpty()) {
-								BoogieVar a0New = a0SplitArrayToPointers.getKey();
-								BoogieVar a1New = a1SplitArrayToPointers.getKey();
-								TermVariable a0NewTv = a0New.getTermVariable(); //TODO replace getTermVariable through a unique version
-								TermVariable a1NewTv = a1New.getTermVariable(); //TODO replace getTermVariable through a unique version
-								equationConjunction.add(
-										m_script.term("=", 
-												new ArraySplitter(m_script, m_arrayToPointerToPartition, m_arrayToPartitions, m_inVars, m_outVars, 
-//														a0Id, a0New).transform(appTerm.getParameters()[0]),
-														a0Tv, a0NewTv).transform(appTerm.getParameters()[0]), 
-												new ArraySplitter(m_script, m_arrayToPointerToPartition, m_arrayToPartitions, m_inVars, m_outVars, 
-//														a1Id, a1New).transform(appTerm.getParameters()[1])
-														a1Tv, a1NewTv).transform(appTerm.getParameters()[1])
-												));
-
-								if (m_inVars.containsKey(a0Id)) {
-									m_inVarsToRemove.add(a0Id);
-									m_inVarsToAdd.put(a0New, a0NewTv);
-								} else if (m_outVars.containsKey(a0Id)) {
-									m_outVarsToRemove.add(a0Id);
-									m_outVarsToAdd.put(a0New, a0NewTv);
-								} else
-									assert false;
-
-								if (m_inVars.containsKey(a1Id)) {
-									m_inVarsToRemove.add(a1Id);
-									m_inVarsToAdd.put(a1Id, a1NewTv);
-								} else if (m_outVars.containsKey(a1Id)) {
-									m_outVarsToRemove.add(a1Id);
-									m_outVarsToAdd.put(a1Id, a1NewTv);
-								} else
-									assert false;
-								
-							}
-						}
-					}
-					setResult(m_script.term("and", equationConjunction.toArray(new Term[equationConjunction.size()])));
-					return;
-				}
-			} 
-				
-			super.convertApplicationTerm(appTerm, newArgs);
-		}
-		
 		public HashMap<BoogieVar, TermVariable> getUpdatedInVars() {
 			HashMap<BoogieVar, TermVariable> result = new HashMap<BoogieVar, TermVariable>(m_inVars);
 			for (BoogieVar bv : m_inVarsToRemove) 
