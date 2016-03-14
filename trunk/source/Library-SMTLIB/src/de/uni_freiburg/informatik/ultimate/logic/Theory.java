@@ -488,25 +488,6 @@ public class Theory {
 		return constant(new QuotedObject(value), mStringSort);
 	}
 	
-	public Term roundingMode(String rm) {
-		assert (rm.startsWith("R") || rm.startsWith("round"));
-		if (mFloatingPointSort == null) {
-			return null;
-		}
-		Term mode = constant(rm, mRoundingModeSort);
-		FunctionSymbol RNE = getFunction("roundNearestTiesToEven", mRoundingModeSort);
-		mode = term(RNE, mode);
-		
-		
-		//switch (rm) {
-		//case ("RNE") : case ("roundNearestTiesToEven"):
-			//mode = new ConstantTerm(rm, mRoundingModeSort, ConstantTerm.hashConstant(rm, mRoundingModeSort));
-		//}
-		
-		
-		return mode;
-	}
-
 	/******************** LOGICS AND THEORIES ********************************/
 	public Logics getLogic() {
 		return mLogic;
