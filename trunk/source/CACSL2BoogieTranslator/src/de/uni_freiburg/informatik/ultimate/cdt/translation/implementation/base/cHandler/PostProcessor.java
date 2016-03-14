@@ -585,6 +585,7 @@ public class PostProcessor {
 						indices[1] = 113;
 						name = "long_double";
 						break;
+					//FIXME: Handling of complex floats
 					case 32:
 						indices[0] = 15;
 						indices[1] = 113;
@@ -598,8 +599,7 @@ public class PostProcessor {
 											new IntegerLiteral(loc, String.valueOf(indices[1]))});
 				String identifier = "C_" + cPrimitive.name();
 				String[] typeParams = new String[0];
-				ASTType astType = typeHandler.bytesize2asttype(loc, GENERALPRIMITIVE.FLOATTYPE, bytesize);
-				decls.add(new TypeDeclaration(loc, attributes, false, identifier, typeParams , astType));
+				decls.add(new TypeDeclaration(loc, attributes, false, identifier, typeParams ));
 				
 			}
 		}	
