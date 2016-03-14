@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.RCFGBacktranslator;
 
 /**
@@ -105,6 +106,7 @@ public class RootAnnot extends AbstractAnnotations {
 	final HashMap<ProgramPoint, ILocation> m_LoopLocations = new HashMap<ProgramPoint, ILocation>();
 
 	private final Boogie2SMT m_Boogie2SMT;
+	private final ManagedScript m_ManagedScript;
 	private final ModifiableGlobalVariableManager m_ModifiableGlobalVariableManager;
 	private final CodeBlockFactory m_CodeBlockFactory;
 
@@ -118,6 +120,7 @@ public class RootAnnot extends AbstractAnnotations {
 			RCFGBacktranslator backtranslator) {
 		m_BoogieDeclarations = boogieDeclarations;
 		m_Boogie2SMT = m_Boogie2smt;
+		m_ManagedScript = new ManagedScript(services, m_Boogie2smt.getScript());
 		m_ModifiableGlobalVariableManager = new ModifiableGlobalVariableManager(m_BoogieDeclarations.getModifiedVars(),
 				m_Boogie2smt);
 		m_CodeBlockFactory = new CodeBlockFactory(services, m_Boogie2SMT, m_ModifiableGlobalVariableManager);
@@ -176,6 +179,10 @@ public class RootAnnot extends AbstractAnnotations {
 
 	public Script getScript() {
 		return m_Boogie2SMT.getScript();
+	}
+	
+	public ManagedScript getManagedScript() {
+		return m_ManagedScript;
 	}
 
 	public Boogie2SMT getBoogie2SMT() {

@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript.ILockHolderWithVoluntaryLockRelease;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -99,10 +100,10 @@ public class SmtManager {
 	private final boolean m_ExtendedDebugOutputInScript = false;
 
 //	private Status m_Status = Status.IDLE;
-	private Object m_LockOwner = null;
 
 	private final Boogie2SMT m_Boogie2Smt;
 	private final Script m_Script;
+	private final ManagedScript m_ManagedScript;
 	// private final Map<String,ASTType> m_GlobalVars;
 	private final ModifiableGlobalVariableManager m_ModifiableGlobals;
 	private int m_satProbNumber;
@@ -163,7 +164,7 @@ public class SmtManager {
 	protected String[] m_NoProcedure;
 
 	public SmtManager(Script script, Boogie2SMT boogie2smt, ModifiableGlobalVariableManager modifiableGlobals,
-			IUltimateServiceProvider services, boolean interpolationModeSwitchNeeded) {
+			IUltimateServiceProvider services, boolean interpolationModeSwitchNeeded, ManagedScript managedScript) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
 		m_InterpolationModeSwitchNeeded = interpolationModeSwitchNeeded;
@@ -172,6 +173,7 @@ public class SmtManager {
 		m_EmptyStackTerm = new AuxilliaryTerm("emptyStack");
 		m_Boogie2Smt = boogie2smt;
 		m_Script = script;
+		m_ManagedScript = managedScript;
 		m_ModifiableGlobals = modifiableGlobals;
 	}
 
@@ -644,7 +646,7 @@ public class SmtManager {
 	}
 
 	public Validity isCovered(Object caller, Term formula1, Term formula2) {
-		assert (m_LockOwner == caller) : "only lock owner may call";
+		assert (m_ManagedScript.isLockOwner(caller)) : "only lock owner may call";
 		long startTime = System.nanoTime();
 
 		final Validity result;
@@ -1660,6 +1662,10 @@ public class SmtManager {
 				tvp.getVars(), tvp.getClosedFormula(), inputPreds);
 		return buchi;
 	}
+	
+	public ManagedScript getManagedScript() {
+		return m_ManagedScript;
+	}
 
 //	Status getStatus() {
 //		return m_Status;
@@ -1670,51 +1676,23 @@ public class SmtManager {
 //	}
 	
 	public void lock(Object lockOwner) {
-		if (lockOwner == null) {
-			throw new NullPointerException("cannot be locked by null");
-		} else {
-			if (m_LockOwner == null) {
-				m_LockOwner = lockOwner;
-				mLogger.debug("SmtManager locked by " + lockOwner.toString());
-			} else {
-				throw new IllegalStateException("SmtManager already locked by " + m_LockOwner.toString());
-			}
-		}
+		m_ManagedScript.lock(lockOwner);
 	}
 	
 	public void unlock(Object lockOwner) {
-		if (m_LockOwner == null) {
-			throw new IllegalStateException("SmtManager not locked");
-		} else {
-			if (m_LockOwner == lockOwner) {
-				m_LockOwner = null;
-				mLogger.debug("SmtManager unlocked by " + lockOwner.toString());
-			} else {
-				throw new IllegalStateException("SmtManager locked by " + m_LockOwner.toString());
-			}
-		}
+		m_ManagedScript.unlock(lockOwner);
 	}
 	
 	public boolean isLocked() {
-		return m_LockOwner != null;
+		return m_ManagedScript.isLocked();
 	}
 	
 	public boolean requestLockRelease() {
-		if (m_LockOwner == null) {
-			throw new IllegalStateException("SmtManager not locked");
-		} else {
-			if (m_LockOwner instanceof ILockHolderWithVoluntaryLockRelease) {
-				mLogger.debug("Asking " + m_LockOwner + " to release lock");
-				((ILockHolderWithVoluntaryLockRelease) m_LockOwner).releaseLock();
-				return true;
-			} else {
-				return false;
-			}
-		}
+		return m_ManagedScript.requestLockRelease();
 	}
 	
 	boolean isLockOwner(Object allegedLockOwner) {
-		return allegedLockOwner == m_LockOwner;
+		return m_ManagedScript.isLockOwner(allegedLockOwner);
 	}
 	
 	private class AuxilliaryTerm extends Term {

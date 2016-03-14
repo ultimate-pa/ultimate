@@ -404,8 +404,7 @@ public abstract class AbstractCegarLoop {
 			if (m_Pref.computeHoareAnnotation() && 
 					m_Pref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
 				assert (new InductivityCheck(m_Services, (INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction,
-						false, true, new IncrementalHoareTripleChecker(new ManagedScript(m_Services, 
-								m_SmtManager.getScript()), m_ModGlobVarManager, m_SmtManager.getBoogie2Smt())))
+						false, true, new IncrementalHoareTripleChecker(m_RootNode.getRootAnnot().getManagedScript(), m_ModGlobVarManager, m_SmtManager.getBoogie2Smt())))
 								.getResult() : "Not inductive";
 			}
 

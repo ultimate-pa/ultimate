@@ -500,8 +500,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 		}
 		assert !m_SmtManager.isLocked();
 		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(new ManagedScript(m_Services, 
-						m_SmtManager.getScript()), m_ModGlobVarManager, m_SmtManager.getBoogie2Smt())).getResult());
+				new IncrementalHoareTripleChecker(m_RootNode.getRootAnnot().getManagedScript(), m_ModGlobVarManager, m_SmtManager.getBoogie2Smt())).getResult());
 		// do the following check only to obtain logger messages of
 		// checkInductivity
 
@@ -553,8 +552,7 @@ public class TAwAFAsCegarLoop extends CegarLoopConcurrentAutomata {
 			solverHtc = new MonolithicHoareTripleChecker(m_SmtManager);
 			break;
 		case INCREMENTAL:
-			solverHtc = new IncrementalHoareTripleChecker(new ManagedScript(m_Services, 
-					m_SmtManager.getScript()), m_ModGlobVarManager, m_SmtManager.getBoogie2Smt());
+			solverHtc = new IncrementalHoareTripleChecker(m_RootNode.getRootAnnot().getManagedScript(), m_ModGlobVarManager, m_SmtManager.getBoogie2Smt());
 			break;
 		default:
 			throw new AssertionError("unknown value");

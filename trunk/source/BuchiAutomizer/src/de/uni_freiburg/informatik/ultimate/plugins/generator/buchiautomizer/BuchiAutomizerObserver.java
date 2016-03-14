@@ -109,7 +109,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		mGraphRoot = root;
 
 		mSmtManager = new SmtManager(mRootAnnot.getScript(), mRootAnnot.getBoogie2SMT(), 
-				mRootAnnot.getModGlobVarManager(), mServices, false);
+				mRootAnnot.getModGlobVarManager(), mServices, false, mRootAnnot.getManagedScript());
 
 		mPref = taPrefs;
 

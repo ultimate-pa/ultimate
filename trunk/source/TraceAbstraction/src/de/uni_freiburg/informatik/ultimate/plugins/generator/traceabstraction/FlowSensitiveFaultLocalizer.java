@@ -165,8 +165,7 @@ public class FlowSensitiveFaultLocalizer {
 		NestedSsaBuilder ssaBuilder = new NestedSsaBuilder(counterexampleWord, smtManager, nestedTransFormulas, modGlobVarManager, m_Logger, false);
 		NestedFormulas<Term, Term> ssa = ssaBuilder.getSsa();
 		PredicateTransformer pt = new PredicateTransformer(smtManager, modGlobVarManager, m_Services);
-		FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(new ManagedScript(m_Services, 
-				smtManager.getScript()), modGlobVarManager, smtManager.getBoogie2Smt());
+		FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(smtManager.getManagedScript(), modGlobVarManager, smtManager.getBoogie2Smt());
 		
 		
 		// INCREMENTAL ANALYSIS

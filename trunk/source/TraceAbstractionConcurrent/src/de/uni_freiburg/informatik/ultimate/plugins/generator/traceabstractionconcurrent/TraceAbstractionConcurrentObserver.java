@@ -100,7 +100,7 @@ public class TraceAbstractionConcurrentObserver implements IUnmanagedObserver {
 		mLogger.warn(taPrefs.dumpPath());
 
 		SmtManager smtManager = new ConcurrentSmtManager(rootNode.getRootAnnot().getBoogie2SMT(), rootNode
-				.getRootAnnot().getModGlobVarManager(), m_Services, false);
+				.getRootAnnot().getModGlobVarManager(), m_Services, false, rootNode.getRootAnnot().getManagedScript());
 		TraceAbstractionBenchmarks timingStatistics = new TraceAbstractionBenchmarks(rootNode.getRootAnnot());
 
 		Map<String, Collection<ProgramPoint>> proc2errNodes = rootAnnot.getErrorNodes();

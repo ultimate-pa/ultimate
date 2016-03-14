@@ -179,7 +179,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		RootAnnot rootAnnot = m_originalRoot.getRootAnnot();
 
 		m_smtManager = new SmtManager(rootAnnot.getScript(), rootAnnot.getBoogie2SMT(),
-				rootAnnot.getModGlobVarManager(), m_services, false);
+				rootAnnot.getModGlobVarManager(), m_services, false, rootAnnot.getManagedScript());
 
 		_predicateUnifier = new PredicateUnifier(m_services, m_smtManager);
 
@@ -437,7 +437,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 								"TraceCheck_Iteration" + iterationsCount);
 
 						smtManagerTracechecks = new SmtManager(tcSolver, m_originalRoot.getRootAnnot().getBoogie2SMT(),
-								m_originalRoot.getRootAnnot().getModGlobVarManager(), m_services, false);
+								m_originalRoot.getRootAnnot().getModGlobVarManager(), m_services, false, m_originalRoot.getRootAnnot().getManagedScript());
 						TermTransferrer tt = new TermTransferrer(tcSolver);
 						for (Term axiom : m_originalRoot.getRootAnnot().getBoogie2SMT().getAxioms()) {
 							tcSolver.assertTerm(tt.transform(axiom));

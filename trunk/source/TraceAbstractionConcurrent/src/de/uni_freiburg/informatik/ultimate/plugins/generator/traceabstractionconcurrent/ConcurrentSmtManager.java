@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 
@@ -41,8 +42,9 @@ public class ConcurrentSmtManager extends SmtManager {
 
 	
 	public ConcurrentSmtManager(Boogie2SMT boogie2smt,
-			ModifiableGlobalVariableManager modifiableGlobals, IUltimateServiceProvider services, boolean interpolationModeSwitchNeeded) {
-		super(boogie2smt.getScript(), boogie2smt, modifiableGlobals, services, interpolationModeSwitchNeeded);
+			ModifiableGlobalVariableManager modifiableGlobals, IUltimateServiceProvider services, boolean interpolationModeSwitchNeeded,
+			ManagedScript managedScript) {
+		super(boogie2smt.getScript(), boogie2smt, modifiableGlobals, services, interpolationModeSwitchNeeded, managedScript);
 		// TODO Auto-generated constructor stub
 	}
 
