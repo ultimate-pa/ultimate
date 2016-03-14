@@ -103,7 +103,7 @@ public class PricedTimedAutomataTestSuite extends AbstractEvalTestSuite {
 
 	@Override
 	protected long getTimeout() {
-		return 30 * 1000 ;
+		return 60 * 1000 ;
 	}
 
 	@Override

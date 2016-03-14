@@ -170,7 +170,7 @@ broadcast_rcv$a:
   // Template A2_1
   if (sender != A2_1)
   {
-    goto transition$t1;
+    goto transition$t1, broadcast_rcvr_done$A2_1$a$negative;
   }
   else
   {
@@ -182,11 +182,13 @@ transition$t1:
   loc$A2_1 := id2_1;
   call schedule_reset_v(2);
   goto broadcast_rcvr_done$a$A2_1;
+broadcast_rcvr_done$A2_1$a$negative:
+  assume !(loc$A2_1 == id3_1 && guard_t1(v));
 broadcast_rcvr_done$a$A2_1:
   // Template A3_1
   if (sender != A3_1)
   {
-    goto transition$t2;
+    goto transition$t2, broadcast_rcvr_done$A3_1$a$negative;
   }
   else
   {
@@ -198,6 +200,8 @@ transition$t2:
   loc$A3_1 := id4_1;
   call schedule_reset_v(3);
   goto broadcast_rcvr_done$a$A3_1;
+broadcast_rcvr_done$A3_1$a$negative:
+  assume !(loc$A3_1 == id5_1 && guard_t2(v));
 broadcast_rcvr_done$a$A3_1:
   call perform_resets();
   sync := sync_none;

@@ -260,7 +260,7 @@ broadcast_rcv$a:
   // Template A2_1
   if (sender != A2_1)
   {
-    goto transition$t5;
+    goto transition$t5, broadcast_rcvr_done$A2_1$a$negative;
   }
   else
   {
@@ -272,11 +272,13 @@ transition$t5:
   loc$A2_1 := id5_1;
   call schedule_reset_v(2);
   goto broadcast_rcvr_done$a$A2_1;
+broadcast_rcvr_done$A2_1$a$negative:
+  assume !(loc$A2_1 == id6_1 && guard_t5(v));
 broadcast_rcvr_done$a$A2_1:
   // Template A3_1
   if (sender != A3_1)
   {
-    goto transition$t6;
+    goto transition$t6, broadcast_rcvr_done$A3_1$a$negative;
   }
   else
   {
@@ -288,6 +290,8 @@ transition$t6:
   loc$A3_1 := id7_1;
   call schedule_reset_v(3);
   goto broadcast_rcvr_done$a$A3_1;
+broadcast_rcvr_done$A3_1$a$negative:
+  assume !(loc$A3_1 == id8_1 && guard_t6(v));
 broadcast_rcvr_done$a$A3_1:
   call perform_resets();
   sync := sync_none;
@@ -298,7 +302,7 @@ broadcast_rcv$c:
   // Template A2_1
   if (sender != A2_1)
   {
-    goto transition$t3;
+    goto transition$t3, broadcast_rcvr_done$A2_1$c$negative;
   }
   else
   {
@@ -309,11 +313,13 @@ transition$t3:
   assume guard_t3(v);
   loc$A2_1 := id3_1;
   goto broadcast_rcvr_done$c$A2_1;
+broadcast_rcvr_done$A2_1$c$negative:
+  assume !(loc$A2_1 == id4_1 && guard_t3(v));
 broadcast_rcvr_done$c$A2_1:
   // Template A3_1
   if (sender != A3_1)
   {
-    goto transition$t7;
+    goto transition$t7, broadcast_rcvr_done$A3_1$c$negative;
   }
   else
   {
@@ -324,6 +330,8 @@ transition$t7:
   assume guard_t7(v);
   loc$A3_1 := id10_1;
   goto broadcast_rcvr_done$c$A3_1;
+broadcast_rcvr_done$A3_1$c$negative:
+  assume !(loc$A3_1 == id9_1 && guard_t7(v));
 broadcast_rcvr_done$c$A3_1:
   call perform_resets();
   sync := sync_none;

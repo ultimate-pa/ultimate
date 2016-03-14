@@ -1,4 +1,4 @@
-//#Unsafe
+//#Safe
 type sync_state;
 const unique sync_none : sync_state;
 const unique waiting : sync_state;
