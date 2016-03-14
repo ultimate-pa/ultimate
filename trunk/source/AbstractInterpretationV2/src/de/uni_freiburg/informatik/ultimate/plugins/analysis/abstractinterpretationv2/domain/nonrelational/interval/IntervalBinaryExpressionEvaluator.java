@@ -119,7 +119,17 @@ public class IntervalBinaryExpressionEvaluator
 					returnBool = new BooleanValue(false);
 					break;
 				case ARITHMOD:
-					mLogger.warn("Cannot handle modulo operation precisely. Returning top.");
+					switch (mEvaluatorType) {
+					case INTEGER:
+						returnValue = res1.getValue().modulo(res2.getValue(), true);
+						break;
+					case REAL:
+						returnValue = res1.getValue().modulo(res2.getValue(), false);
+						break;
+					default:
+						throw new UnsupportedOperationException(
+						        "Modulo operation on types other than integers and reals is undefined.");
+					}
 					returnBool = new BooleanValue(false);
 					break;
 				case LOGICAND:
@@ -547,7 +557,7 @@ public class IntervalBinaryExpressionEvaluator
 			newValue = newValue.intersect(oldValue);
 			break;
 		case ARITHMOD:
-			mLogger.warn("Cannot handle inverse of the modulo operation precisely. Returning old value.");
+			mLogger.debug("Cannot handle inverse of the modulo operation precisely. Returning old value.");
 			newValue = oldValue;
 			break;
 		case COMPEQ:

@@ -32,8 +32,6 @@ import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
 
-import org.apache.log4j.jmx.AbstractDynamicMBean;
-
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -314,19 +312,19 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		if (other.isInfinity()) {
 			return true;
 		}
-	
+
 		if (mLower.isInfinity() && !other.mLower.isInfinity()) {
 			return false;
 		}
-		
+
 		if (other.mLower.isInfinity()) {
 			return mUpper.compareTo(other.mUpper) <= 0;
 		}
-		
+
 		if (!mLower.isInfinity() && !other.mLower.isInfinity()) {
 			return mLower.compareTo(other.mLower) >= 0 && mUpper.compareTo(other.mUpper) <= 0;
 		}
-		
+
 		return mLower.compareTo(other.mLower) >= 0 && mUpper.compareTo(other.mUpper) <= 0;
 	}
 
@@ -688,7 +686,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 	}
 
 	/**
-	 * Computes the modulus operation of two {@link IntervalDomainValue}s.
+	 * Computes the modulo operation of two {@link IntervalDomainValue}s.
 	 * 
 	 * @param divisor
 	 *            The other value to compute the modulus for.
@@ -709,7 +707,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 			// => result is an unknown but fixed value => return TOP
 			return new IntervalDomainValue();
 		}
-		
+
 		// If we are dealing with point intervals, the modulo computation is easy.
 		if (isPointInterval() && divisor.isPointInterval()) {
 			BigDecimal remainder = NumUtil.euclideanModulo(mLower.getValue(), divisor.mLower.getValue());
@@ -718,9 +716,9 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 
 		divisor = divisor.abs(); // The sign of the divisor does not matter for euclidean modulo.
 
-		// [a; b] % [c; d] = [a; b]    if    (0 <= a) and (b < c)
-		if (!mLower.isInfinity() && !divisor.mLower.isInfinity() &&
-				new IntervalValue(0).compareTo(mLower) <= 0 && mUpper.compareTo(divisor.mLower) < 0) {
+		// [a; b] % [c; d] = [a; b] if (0 <= a) and (b < c)
+		if (!mLower.isInfinity() && !divisor.mLower.isInfinity() && new IntervalValue(0).compareTo(mLower) <= 0
+		        && mUpper.compareTo(divisor.mLower) < 0) {
 			return new IntervalDomainValue(mLower, mUpper);
 		}
 
@@ -732,12 +730,23 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		}
 		return new IntervalDomainValue(min, max);
 	}
-	
+
 	/**
 	 * Applies the absolute function on all values in this interval and creates a new interval from the results.
 	 * <p>
-	 * abs([a; b]) := [0; max(|a|,|b|)]              if [a; b] contains zero, 
-	 *                [min(|a|,|b|); max(|a|,|b|)]   otherwise
+	 * <table>
+	 * <tr>
+	 * <td>abs([a; b]) :=</td>
+	 * <td>[0; max(|a|,|b|)]</td>
+	 * <td>if [a; b] contains zero,</td>
+	 * </tr>
+	 * <tr>
+	 * <td></td>
+	 * <td>[min(|a|,|b|); max(|a|,|b|)]</td>
+	 * <td>otherwise</td>
+	 * </tr>
+	 * </table>
+	 * </p>
 	 * 
 	 * @return Non-negative interval abs([a, b]).
 	 */
