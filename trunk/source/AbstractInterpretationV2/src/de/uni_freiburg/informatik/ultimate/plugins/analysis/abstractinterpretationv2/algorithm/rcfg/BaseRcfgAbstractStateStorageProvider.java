@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -74,7 +73,8 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 		mChildStores = new ArrayList<>();
 	}
 
-	public Collection<STATE> getAbstractPreStates(CodeBlock transition) {
+	@Override
+	public List<STATE> getAbstractPreStates(CodeBlock transition) {
 		assert transition != null;
 		return getStates(mTransProvider.getSource(transition)).stream().collect(Collectors.toList());
 	}
@@ -127,6 +127,25 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 			iterator.remove();
 		}
 
+		assert accumulator != null;
+		states.addFirst(accumulator);
+		assert states.size() == 1;
+		return accumulator;
+	}
+
+	@Override
+	public STATE widenPostState(final CodeBlock transition, final IAbstractStateBinaryOperator<STATE> wideningOp,
+			STATE operand) {
+		assert transition != null;
+		final Deque<STATE> states = getStates(mTransProvider.getTarget(transition));
+		assert states.size() == 1 : "Can only widen with exactly one state";
+
+		final Iterator<STATE> iterator = states.iterator();
+		STATE accumulator = iterator.next();
+		iterator.remove();
+		accumulator = wideningOp.apply(operand, accumulator);
+		assert accumulator.getVariables().keySet()
+				.equals(operand.getVariables().keySet()) : "states have different variables";
 		assert accumulator != null;
 		states.addFirst(accumulator);
 		assert states.size() == 1;
@@ -339,9 +358,9 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 			mState = null;
 		}
 
-//		private boolean isBottom() {
-//			return mState == null || mState.isBottom();
-//		}
+		// private boolean isBottom() {
+		// return mState == null || mState.isBottom();
+		// }
 
 		private StateDecorator(STATE state) {
 			mState = state;

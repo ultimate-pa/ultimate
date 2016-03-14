@@ -30,6 +30,8 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.HoareTripleCheckerStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap3;
 import de.uni_freiburg.informatik.ultimate.util.relation.NestedMap4;
@@ -146,7 +148,7 @@ public class CachingHoareTripleChecker implements IHoareTripleChecker {
 	
 
 	@Override
-	public HoareTripleCheckerBenchmarkGenerator getEdgeCheckerBenchmark() {
+	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
 		return m_ComputingHoareTripleChecker.getEdgeCheckerBenchmark();
 	}
 

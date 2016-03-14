@@ -210,7 +210,7 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 			//       or variable was not stored at all => already removed
 		}
 		if (!indexRemovedNumericVars.isEmpty()) {
-			newState.mNumericAbstraction = cachedNormalizedNumericAbstraction().removeVariables(indexRemovedNumericVars);
+			newState.mNumericAbstraction = cachedSelectiveClosure().removeVariables(indexRemovedNumericVars);
 			defragmentMap(newState.mMapNumericVarToIndex); // already unref'd
 		}
 		return newState;
@@ -250,7 +250,7 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 	}
 
 	private boolean isNumericAbstractionBottom() {
-		return cachedNormalizedNumericAbstraction().hasNegativeSelfLoop();
+		return cachedSelectiveClosure().hasNegativeSelfLoop();
 	}
 
 	private boolean isBooleanAbstractionBottom() {
@@ -259,12 +259,21 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 
 	// TODO document
 	// - returns original cache. Do not modify in-place!
-	private OctMatrix cachedNormalizedNumericAbstraction() {
+	private OctMatrix cachedSelectiveClosure() {
 		if (isNumericAbstractionIntegral()) {
 			return mNumericAbstraction.cachedTightClosure();
 		} else {
 			return mNumericAbstraction.cachedStrongClosure();
 		}
+	}
+	
+	private OctMatrix bestAvailableClosure() {
+		if (isNumericAbstractionIntegral() && mNumericAbstraction.hasCachedTightClosure()) {
+			return mNumericAbstraction.cachedTightClosure();
+		} else if (mNumericAbstraction.hasCachedStrongClosure()) {
+			return mNumericAbstraction.cachedStrongClosure();
+		}
+		return mNumericAbstraction;
 	}
 
 	private boolean isNumericAbstractionIntegral() {
@@ -305,8 +314,8 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 			}
 			mapThisVarIndexToOtherVarIndex[thisVarIndex] = otherVarIndex;
 		}
-		OctMatrix thisClosure = cachedNormalizedNumericAbstraction();
-		OctMatrix otherClosure = other.cachedNormalizedNumericAbstraction();
+		OctMatrix thisClosure = cachedSelectiveClosure();
+		OctMatrix otherClosure = other.cachedSelectiveClosure();
 		boolean thisIsBottom = thisClosure.hasNegativeSelfLoop();
 		boolean otherIsBottom = otherClosure.hasNegativeSelfLoop();
 		if (thisIsBottom != otherIsBottom) {
@@ -322,25 +331,27 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 
 	// TODO document: Returned state is a shallow copy. Do not modify!
 	public OctDomainState meet(OctDomainState other) {
-		return operation(other, BoolValue::intersect, OctMatrix::min, false);
+		OctMatrix numResult = OctMatrix.min(bestAvailableClosure(), other.bestAvailableClosure());
+		return operation(other, BoolValue::intersect, numResult);
 	}
 
 	// TODO document: Returned state is a shallow copy. Do not modify!
 	public OctDomainState join(OctDomainState other) {
-		// TODO use closure if available
-		return operation(other, BoolValue::union, OctMatrix::max, false);
+		OctMatrix numResult = OctMatrix.max(bestAvailableClosure(), other.bestAvailableClosure());
+		return operation(other, BoolValue::union, numResult);
 	}
 
 	// TODO document: Returned state is a shallow copy. Do not modify!
 	public OctDomainState widen(OctDomainState other, BiFunction<OctMatrix, OctMatrix, OctMatrix> widenOp) {
-		return operation(other, BoolValue::union, widenOp, true);
+		// left argument of widening operation must not be closed (or widening may not stabilize)!
+		OctMatrix numResult = widenOp.apply(mNumericAbstraction, other.bestAvailableClosure());
+		return operation(other, BoolValue::union, numResult);
 	}
 
 	// TODO document: Returned state is a shallow copy. Do not modify!
-	private OctDomainState operation(OctDomainState other,
-			BiFunction<BoolValue, BoolValue, BoolValue> booleanOperation,
-			BiFunction<OctMatrix, OctMatrix, OctMatrix> numericOperation,
-			boolean closureOtherInAdvance) {
+	// operation only on bools. Operation on numeric abstraction has to be applied manually.
+	private OctDomainState operation(OctDomainState other, BiFunction<BoolValue,
+			BoolValue, BoolValue> booleanOperation, OctMatrix numericAbstractionResult) {
 		OctDomainState result = shallowCopy();
 		for (Map.Entry<String, BoolValue> entry : mBooleanAbstraction.entrySet()) {
 			String name = entry.getKey();
@@ -351,12 +362,12 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 				result.mBooleanAbstraction.put(name, newValue);
 			}
 		}
-		OctMatrix otherNumericAbstraction = closureOtherInAdvance ?
-				other.cachedNormalizedNumericAbstraction() : other.mNumericAbstraction;
-		result.mNumericAbstraction = numericOperation.apply(mNumericAbstraction, otherNumericAbstraction);
+		result.mNumericAbstraction = numericAbstractionResult;
 		return result;
 	}
 
+	public Term lastTerm = null;
+	
 	@Override
 	public Term getTerm(Script script, Boogie2SMT bpl2smt) {
 		if (isBottom()) {
@@ -364,6 +375,7 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 		}
 		Term n = getTermNumericAbstraction(script, bpl2smt);
 		Term b = getTermBooleanAbstraction(script, bpl2smt);
+		lastTerm = n;
 		return Util.and(script, n, b);
 	}
 
@@ -373,7 +385,7 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 			Term termVar = getTermVar(entry.getKey());
 			mapIndexToTerm[entry.getValue()] = termVar;
 		}
-		return cachedNormalizedNumericAbstraction().getTerm(script, mapIndexToTerm);
+		return cachedSelectiveClosure().getTerm(script, mapIndexToTerm);
 	}
 
 	private Term getTermBooleanAbstraction(Script script, Boogie2SMT bpl2smt) {
@@ -438,7 +450,7 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 			unrefOtherMapNumericVarToIndex(patchedState);
 			patchedState.mMapNumericVarToIndex.put(var, patchedState.mMapNumericVarToIndex.size());
 		}
-		patchedState.mNumericAbstraction = cachedNormalizedNumericAbstraction()
+		patchedState.mNumericAbstraction = cachedSelectiveClosure()
 				.appendSelection(dominator.mNumericAbstraction, mapDominatorIndicesOfNewNumericVars.keySet());
 		patchedState.mNumericAbstraction.copySelection(dominator.mNumericAbstraction, mapTargetVarToSourceVar);
 		return patchedState;
@@ -483,7 +495,7 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 		// create new state
 		OctDomainState newState = shallowCopy();
 		if (!mapNumericTargetToSource.isEmpty()) {
-			newState.mNumericAbstraction = cachedNormalizedNumericAbstraction().copy();
+			newState.mNumericAbstraction = cachedSelectiveClosure().copy();
 			newState.mNumericAbstraction.copySelection(source.mNumericAbstraction, mapNumericTargetToSource);
 		}
 		if (!mapBooleanTargetToSource.isEmpty()) {
@@ -554,7 +566,7 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 			assert mMapVarToBoogieVar.containsKey(var) : "unknown variable in havoc: " + var;
 		}
 		if (!numVarIndices.isEmpty()) {
-			mNumericAbstraction = cachedNormalizedNumericAbstraction().copy();
+			mNumericAbstraction = cachedSelectiveClosure().copy();
 			numVarIndices.forEach(v -> mNumericAbstraction.havocVar(v));
 		}
 	}
@@ -575,16 +587,16 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 	protected void assignNumericVarConstant(String targetVar, OctValue constant) {
 		assert assertNotLockedBeforeModification();
 		assert assertNotBottomBeforeAssign();
-		mNumericAbstraction = cachedNormalizedNumericAbstraction().copy();
+		mNumericAbstraction = cachedSelectiveClosure().copy();
 		mNumericAbstraction.assignVarConstant(numVarIndex(targetVar), constant);
 	}
 	
 	// min <= var <= max
-	protected void assignNumericVarInterval(String targetVar, OctValue min, OctValue max) {
+	protected void assignNumericVarInterval(String targetVar, OctInterval interval) {
 		assert assertNotLockedBeforeModification();
 		assert assertNotBottomBeforeAssign();
-		mNumericAbstraction = cachedNormalizedNumericAbstraction().copy();
-		mNumericAbstraction.assignVarInterval(numVarIndex(targetVar), min, max);
+		mNumericAbstraction = cachedSelectiveClosure().copy();
+		mNumericAbstraction.assignVarInterval(numVarIndex(targetVar), interval.getMin(), interval.getMax());
 	}
 
 	
@@ -607,7 +619,29 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 	}
 
 	public OctInterval projectToInterval(String numericVar) {
-		return OctInterval.fromMatrix(cachedNormalizedNumericAbstraction(), numVarIndex(numericVar));
+		return OctInterval.fromMatrix(cachedSelectiveClosure(), numVarIndex(numericVar));
+	}
+	
+	public OctInterval projectToInterval(AffineExpression.TwoVarForm tvf) {
+		int iVar1 = mMapNumericVarToIndex.get(tvf.var1) * 2;
+		int iVar2Inv = mMapNumericVarToIndex.get(tvf.var2) * 2 + 1; // inverted form, because x-(-y) = x+y
+		if (tvf.negVar1) {
+			iVar1 = iVar1 + 1;
+		}
+		if (tvf.negVar2) {
+			iVar2Inv = iVar2Inv - 1;
+		}
+		OctMatrix m = cachedSelectiveClosure();
+		// var1 - (-var2) <= c     equivalent     var1 + var2 <= c
+		OctValue max = m.get(iVar2Inv, iVar1);
+		// (-var1) - var2 <= c     equivalent     -c <= var1 + var2
+		OctValue min = m.get(iVar2Inv^1, iVar1^1).negateIfNotInfinity();
+		if (tvf.constant.signum() != 0) {
+			max = max.add(tvf.constant);
+			min = min.add(tvf.constant);
+		}
+		// TODO negate min
+		return new OctInterval(min, max);
 	}
 
 	private int numVarIndex(String var) {
@@ -631,14 +665,14 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 			Integer targetIndex = mMapNumericVarToIndex.get(targetVar);
 			if (targetIndex != null) {
 				if (!usedClosure) {
-					mNumericAbstraction = cachedNormalizedNumericAbstraction().copy();
+					mNumericAbstraction = cachedSelectiveClosure().copy();
 					usedClosure = true;
 				}
 				Integer sourceIndex = mMapNumericVarToIndex.get(sourceVar);
 				assert sourceIndex != null : "Incompatible types";
 				mNumericAbstraction.assignVarCopy(targetIndex, sourceIndex);
 
-			} else if (mBooleanAbstraction.containsKey(targetIndex)) {
+			} else if (mBooleanAbstraction.containsKey(targetVar)) {
 				BoolValue value = mBooleanAbstraction.get(sourceVar);
 				assert value != null : "Incompatible types";
 				mBooleanAbstraction.put(targetVar, value);
@@ -670,7 +704,8 @@ public class OctDomainState implements IAbstractState<OctDomainState, CodeBlock,
 
 	@Override
 	public String toString() {
-		return toLogString();
+//		return toLogString();
+		return logStringHalfMatrix();
 	}
 
 	@Override

@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimatetest.reporting.ExtendedResult;
 import de.uni_freiburg.informatik.ultimatetest.summaries.ColumnDefinition.Aggregate;
 
 /**
@@ -106,10 +107,7 @@ public class LatexDetailedSummary extends LatexSummary {
 
 		for (final String tool : tools) {
 			// make table header
-			sb.append("\\begin{table}").append(br);
-			sb.append("\\centering").append(br);
-			sb.append("\\resizebox{\\linewidth}{!}{%").append(br);
-			sb.append("\\begin{tabu} to \\linewidth {llll");
+			sb.append("\\begin{longtabu} to \\linewidth {llll");
 			for (int i = 0; i < mLatexTableHeaderCount; ++i) {
 				sb.append("r");
 			}
@@ -151,9 +149,8 @@ public class LatexDetailedSummary extends LatexSummary {
 			makeTableBody(sb, resultsPerTool, tool, additionalHeaders);
 
 			// end table
-			sb.append("\\end{tabu}}").append(br);
 			sb.append("\\caption{Results for ").append(removeInvalidCharsForLatex(tool)).append(".}").append(br);
-			sb.append("\\end{table}").append(br);
+			sb.append("\\end{longtabu}").append(br);
 		}
 		// append finishing code
 		appendEnd(sb, br);
@@ -165,8 +162,8 @@ public class LatexDetailedSummary extends LatexSummary {
 
 	private void appendPreamble(StringBuilder sb, String br) {
 		// append preamble
-		sb.append("\\documentclass[a4paper]{article}").append(br);
-		sb.append("\\usepackage[a4paper, margin=1.5cm, top=1.1cm]{geometry}").append(br);
+		sb.append("\\documentclass[a3paper,landscape]{article}").append(br);
+		sb.append("\\usepackage[a3paper, margin=1.5cm, top=1.1cm]{geometry}").append(br);
 		sb.append("\\usepackage[table]{xcolor} ").append(br);
 		sb.append("\\usepackage[utf8]{inputenc}").append(br);
 		sb.append("\\usepackage{amsmath,amssymb}").append(br);

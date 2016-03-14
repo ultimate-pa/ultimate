@@ -99,7 +99,7 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	private final CorrectnessWitnessExtractor mWitnessExtractor;
 	private IASTTranslationUnit inputTU;
 	private boolean m_LastModel;
-	private WitnessInvariants mWitnessInvariants;
+	private BeforeAfterWitnessInvariantsMapping mWitnessInvariants;
 
 	public CACSL2BoogieTranslatorObserver(IUltimateServiceProvider services, IToolchainStorage storage) {
 		assert storage != null;
@@ -189,9 +189,9 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 	public void finish() {
 		if (mWitnessExtractor.isReady()) {
 
-			final Map<IASTNode, String> bInvariants = mWitnessExtractor.getBeforeAST2Invariants();
-			final Map<IASTNode, String> aInvariants = mWitnessExtractor.getAfterAST2Invariants();
-			mWitnessInvariants = new WitnessInvariants(bInvariants, aInvariants);
+			final Map<IASTNode, WitnessInvariant> bInvariants = mWitnessExtractor.getBeforeAST2Invariants();
+			final Map<IASTNode, WitnessInvariant> aInvariants = mWitnessExtractor.getAfterAST2Invariants();
+			mWitnessInvariants = new BeforeAfterWitnessInvariantsMapping(bInvariants, aInvariants);
 
 			// clear witness extractor to make him loose unused references
 			//mWitnessExtractor.clear();

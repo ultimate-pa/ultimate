@@ -57,6 +57,13 @@ public class CompoundDomainPreferences {
 	public static final boolean DEF_USE_INTERVAL_DOMAIN = true;
 	public static final boolean DEF_USE_OCTAGON_DOMAIN = true;
 
+	public static final String LABEL_CREATE_ASSUMPTIONS = "Create assumptions of other states before post";
+	public static final String LABEL_USE_SMT_SOLVER_FEASIBILITY = "Check feasibility of abstract posts with an SMT solver";
+	public static final String LABEL_SIMPLIFY_ASSUMPTIONS = "Simplify assumptions before abstract post";
+	public static final boolean DEF_CREATE_ASSUMPTIONS = false;
+	public static final boolean DEF_USE_SMT_SOLVER = false;
+	public static final boolean DEF_SIMPLIFY_ASSUMPTIONS = false;
+
 	public static List<AbstractUltimatePreferenceItem> getPreferences() {
 		final List<AbstractUltimatePreferenceItem> returnList = new ArrayList<>();
 
@@ -66,6 +73,14 @@ public class CompoundDomainPreferences {
 		compoundContainer.addItem(new UltimatePreferenceItem<String>(LABEL_DESCRIPTION_CHOOSE_ABSTRACT_DOMAINS, null,
 		        PreferenceType.Label));
 		compoundContainer.addItems(addAbstractDomains());
+
+		compoundContainer.addItem(new UltimatePreferenceItem<String>("", null, PreferenceType.Label));
+		compoundContainer.addItem(new UltimatePreferenceItem<Boolean>(LABEL_CREATE_ASSUMPTIONS, DEF_CREATE_ASSUMPTIONS,
+		        PreferenceType.Boolean));
+		compoundContainer.addItem(new UltimatePreferenceItem<Boolean>(LABEL_SIMPLIFY_ASSUMPTIONS,
+		        DEF_SIMPLIFY_ASSUMPTIONS, PreferenceType.Boolean));
+		compoundContainer.addItem(new UltimatePreferenceItem<Boolean>(LABEL_USE_SMT_SOLVER_FEASIBILITY,
+		        DEF_USE_SMT_SOLVER, PreferenceType.Boolean));
 
 		returnList.add(compoundContainer);
 		return returnList;

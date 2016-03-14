@@ -1,0 +1,196 @@
+/**
+ * JavaCC file
+ */
+
+
+options {
+  JDK_VERSION = "1.5";
+  STATIC = false;
+}
+PARSER_BEGIN(TreeTransducerParser)
+package de.uni_muenster.cs.sev.lethal.parser.treetransducer;
+
+import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import de.uni_muenster.cs.sev.lethal.symbol.common.*;
+import de.uni_muenster.cs.sev.lethal.symbol.standard.*;
+import de.uni_muenster.cs.sev.lethal.states.*;
+import de.uni_muenster.cs.sev.lethal.utils.*;
+import de.uni_muenster.cs.sev.lethal.tree.common.*;
+import de.uni_muenster.cs.sev.lethal.tree.standard.*;
+import de.uni_muenster.cs.sev.lethal.factories.*;
+import de.uni_muenster.cs.sev.lethal.treetransducer.*;
+import java.util.*;
+
+/**
+ * Tree transducer parser
+ * @author Philipp
+ */
+public class TreeTransducerParser {
+	private static TreeTransducerParser parser = new TreeTransducerParser(new ByteArrayInputStream(new byte[]{}));
+	
+	public static EasyTT parseString(String s) throws ParseException{
+		parser.ReInit(new ByteArrayInputStream(s.getBytes()));
+		return parser.treedransducer();
+	}
+}
+PARSER_END(TreeTransducerParser)
+
+SKIP : { " " | "\t" }
+
+TOKEN :
+{
+    < NAME:    ( ["a"-"z","A"-"Z","_", "'", "<", ">", "0"-"9"] )+ > |
+    < FIN_MARK: [ "\u00b0", "%", "!"] > |
+    <LINE_END_COMMENT: "//" (~["\n"])* >
+}
+
+EasyTT treedransducer() :
+{
+	EasyTTRule rule;
+	EasyTTEpsRule epsRule;
+	Set<State> finalStates = new HashSet<State>();
+	List<EasyTTRule> rules = new ArrayList<EasyTTRule>();
+	List<EasyTTEpsRule> epsRules = new ArrayList<EasyTTEpsRule>();
+}
+{
+	(
+		( LOOKAHEAD(2) rule = ttRule(finalStates) {rules.add(rule);} | epsRule = ttEpsRule(finalStates) {epsRules.add(epsRule);} )? (<LINE_END_COMMENT>)?
+		( "\n"
+			(
+				( LOOKAHEAD(2) rule = ttRule(finalStates) {rules.add(rule);} | epsRule = ttEpsRule(finalStates) {epsRules.add(epsRule);} )? (<LINE_END_COMMENT>)?
+			)
+		)*
+	) <EOF> 
+	{ return new EasyTT(finalStates, rules, epsRules); }
+}
+
+EasyTTEpsRule ttEpsRule(Set<State> finalStates) :
+{
+	State srcState;
+	String varName = null;
+	State destState;
+	Tree<BiSymbol<RankedSymbol,Variable>> vtree = null;
+}
+{
+	( srcState = state(finalStates) [ ":" varName=<NAME>.image ] "=>" destState = state(finalStates) [ "," vtree = tree(Arrays.asList(new String []{varName})) ] )
+	{ 
+		//if (!varName.equals(varName)) throw new ParseException("Variable names in left and right side of rule must match.");
+		
+		BiSymbol<RankedSymbol,Variable> var = new LeafSymbol<RankedSymbol,Variable>(varName == null ? new StdVariable(0) : new NamedVariable(varName, 0));
+		
+		if (vtree == null){
+			vtree = TreeFactory.getTreeFactory().makeTreeFromSymbol(var);
+		}
+		
+		return new EasyTTEpsRule(srcState, destState ,vtree);
+	}
+}
+
+EasyTTRule ttRule(Set<State> finalStates) :
+{
+	Triple<RankedSymbol, List<State>, List<String>> func;
+	State destState;
+	Tree<BiSymbol<RankedSymbol,Variable>> vtree = null;
+	Pair<RankedSymbol,Tree<BiSymbol<RankedSymbol,Variable>>> rule;
+}
+{
+	func = function(finalStates) "->" destState=state(finalStates) ( "," vtree = tree(func.getThird()) )?
+	{		
+		RankedSymbol symbol = func.getFirst();		
+		List<State> stateList = func.getSecond();
+		
+		if (vtree == null){
+			List<String> varNames = func.getThird();
+			List<Tree<BiSymbol<RankedSymbol,Variable>>> vsubtrees = new ArrayList<Tree<BiSymbol<RankedSymbol,Variable>>>(varNames.size());
+			for (int i = 0; i < varNames.size(); i++){
+				String varName = varNames.get(i);
+				Variable var = (varNames == null) ? new StdVariable(i) : new NamedVariable(varName, i);
+				vsubtrees.add(TreeFactory.getTreeFactory().makeTreeFromSymbol((BiSymbol<RankedSymbol,Variable>)new LeafSymbol<RankedSymbol,Variable>(var)));
+			}
+			vtree = TreeFactory.getTreeFactory().makeTreeFromSymbol((BiSymbol<RankedSymbol,Variable>)new InnerSymbol<RankedSymbol,Variable>(symbol), vsubtrees);
+		}
+		
+		return new EasyTTRule(symbol, stateList, destState, vtree);
+	}
+}
+
+Triple<RankedSymbol, List<State>, List<String>> function(Set<State> finalStates) :
+{
+	String functionName;
+	Pair<State,String> stateVarPair;
+	List<State> states = new ArrayList<State>();
+	List<String> varNames = new ArrayList<String>();
+}
+{
+	functionName=<NAME>.image
+	( 
+		"(" 
+		( stateVarPair=stateVarPair(finalStates) {states.add(stateVarPair.getFirst()); varNames.add(stateVarPair.getSecond());} 
+			( "," stateVarPair=stateVarPair(finalStates) {states.add(stateVarPair.getFirst()); varNames.add(stateVarPair.getSecond());} )* 
+		)?
+		")"
+	)?
+	{
+		for (int i = 0; i < varNames.size(); i++){
+			if (varNames.lastIndexOf(varNames.get(i)) != i) throw new ParseException("Variable names on left side must be unique");
+		}
+		RankedSymbol function = new StdNamedRankedSymbol(functionName, states.size());
+		return new Triple<RankedSymbol, List<State>, List<String>>(function,states, varNames);
+	}
+}
+
+Pair<State,String> stateVarPair(Set<State> finalStates) :
+{
+	State state;
+	String var = null;
+}
+{
+	( state = state(finalStates) ( ":" var=<NAME>.image )? )
+	{ return new Pair<State,String>(state, var); }
+}
+
+Tree<BiSymbol<RankedSymbol,Variable>> tree(List<String> variableNames) : 
+{
+	Tree<BiSymbol<RankedSymbol,Variable>> subtree;
+	ArrayList<Tree<BiSymbol<RankedSymbol,Variable>>> subtrees = new ArrayList<Tree<BiSymbol<RankedSymbol,Variable>>>();
+	String symbolName; 
+}
+{
+	symbolName=<NAME>.image 
+	(
+		"("
+		(
+			subtree = tree(variableNames) {subtrees.add(subtree);} 
+			(
+				"," subtree = tree(variableNames) {subtrees.add(subtree);} 
+			)* 
+		)? 
+		")" 
+	)?
+	
+	{
+		int index = variableNames.indexOf(symbolName);
+		if (index != -1){
+			if (subtrees.size() != 0) throw new ParseException("Variable Symbols must be leaf nodes");
+			return TreeFactory.getTreeFactory().makeTreeFromSymbol((BiSymbol<RankedSymbol,Variable>)new LeafSymbol<RankedSymbol,Variable>((Variable)new NamedVariable(symbolName, index)));
+		} else {
+			return TreeFactory.getTreeFactory().makeTreeFromSymbol((BiSymbol<RankedSymbol,Variable>)new InnerSymbol<RankedSymbol,Variable>(new StdNamedRankedSymbol(symbolName, subtrees.size())), subtrees);
+		}
+	}
+}
+
+State state(Set<State> finalStates) :
+{
+	String name;
+	boolean isFinal = false;
+}
+{
+	name=<NAME>.image ( <FIN_MARK> {isFinal= true;} )?
+	{
+		State state = StateFactory.getStateFactory().makeState(name);
+		if (isFinal) finalStates.add(state); 
+		return state;
+	}
+}

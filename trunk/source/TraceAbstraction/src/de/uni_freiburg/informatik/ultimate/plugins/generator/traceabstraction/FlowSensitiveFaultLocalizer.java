@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -164,7 +165,8 @@ public class FlowSensitiveFaultLocalizer {
 		NestedSsaBuilder ssaBuilder = new NestedSsaBuilder(counterexampleWord, smtManager, nestedTransFormulas, modGlobVarManager, m_Logger, false);
 		NestedFormulas<Term, Term> ssa = ssaBuilder.getSsa();
 		PredicateTransformer pt = new PredicateTransformer(smtManager, modGlobVarManager, m_Services);
-		FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(smtManager, modGlobVarManager);
+		FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(new ManagedScript(m_Services, 
+				smtManager.getScript()), modGlobVarManager, smtManager.getBoogie2Smt());
 		
 		
 		// INCREMENTAL ANALYSIS

@@ -56,16 +56,17 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operations.increm
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.operationsOldApi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EfficientHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
@@ -261,7 +262,8 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 				INestedWordAutomaton<CodeBlock, IPredicate> test = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), 
 						determinized)).getResult();
 				assert (new InductivityCheck(m_Services, test, false, true,
-						new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult();
+						new IncrementalHoareTripleChecker(new ManagedScript(m_Services, 
+								m_SmtManager.getScript()), m_ModGlobVarManager, m_SmtManager.getBoogie2Smt()))).getResult();
 				progress = true;
 				break;
 			}
@@ -283,7 +285,8 @@ public class IncrementalInclusionCegarLoop extends BasicCegarLoop {
 				INestedWordAutomaton<CodeBlock, IPredicate> test = (new RemoveUnreachable<CodeBlock, IPredicate>(new AutomataLibraryServices(m_Services), 
 						nondet)).getResult();
 				assert (new InductivityCheck(m_Services, test, false, true,
-						new IncrementalHoareTripleChecker(m_SmtManager, m_ModGlobVarManager))).getResult();
+						new IncrementalHoareTripleChecker(new ManagedScript(m_Services, 
+								m_SmtManager.getScript()), m_ModGlobVarManager, m_SmtManager.getBoogie2Smt()))).getResult();
 				progress = true;
 				break;
 			}

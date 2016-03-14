@@ -171,6 +171,7 @@ public class OctStatementProcessor {
 		AffineExpression ae = mPostOp.getExprTransformer().affineExprCached(rhs);
 		if (ae != null) {
 			AffineExpression.OneVarForm ovf;
+			AffineExpression.TwoVarForm tvf;
 			if (ae.isConstant()) {
 				OctValue value = new OctValue(ae.getConstant());
 				oldStates.forEach(s -> s.assignNumericVarConstant(targetVar, value));
@@ -184,6 +185,12 @@ public class OctStatementProcessor {
 					action = action.andThen(s -> s.incrementNumericVar(targetVar, ovf.constant));
 				}
 				oldStates.forEach(action);
+				return oldStates;
+			} else if ((tvf = ae.getTwoVarForm()) != null) {
+				for (OctDomainState oldState : oldStates) {
+					OctInterval oi = oldState.projectToInterval(tvf);
+					oldState.assignNumericVarInterval(targetVar, oi);
+				}
 				return oldStates;
 			} else if (mPostOp.isFallbackAssignIntervalProjectionEnabled()) {
 				return IntervalProjection.assignNumericVarAffine(targetVar, ae, oldStates);

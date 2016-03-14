@@ -45,7 +45,7 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 	private final ACTION mAction;
 	private final Deque<IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>> mScopedStorages;
 	private final Deque<LOCATION> mActiveLoops;
-	private final Map<LOCATION, Integer> mLoopCounters;
+	private final Map<LOCATION, Pair<Integer, STATE>> mLoopPairs;
 	private final WorklistItem<STATE, ACTION, VARDECL, LOCATION> mPredecessor;
 
 	private Deque<ACTION> mScopes;
@@ -61,7 +61,7 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 		mScopedStorages = new ArrayDeque<IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>();
 		mScopedStorages.addFirst(globalStorage);
 		mActiveLoops = new ArrayDeque<>();
-		mLoopCounters = new HashMap<>();
+		mLoopPairs = new HashMap<>();
 		mPredecessor = null;
 	}
 
@@ -76,7 +76,7 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 		mScopes = oldItem.getScopesCopy();
 		mScopedStorages = oldItem.getStoragesCopy();
 		mActiveLoops = new ArrayDeque<>(oldItem.mActiveLoops);
-		mLoopCounters = new HashMap<>(oldItem.mLoopCounters);
+		mLoopPairs = new HashMap<>(oldItem.mLoopPairs);
 	}
 
 	public ACTION getAction() {
@@ -123,7 +123,6 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 		return mScopes.size();
 	}
 
-
 	/**
 	 * 
 	 * @return A {@link Deque} that contains pairs of scopes and the corresponding state storage.
@@ -161,26 +160,33 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 	public int leaveCurrentLoop() {
 		assert !mActiveLoops.isEmpty() : "Active loops is empty";
 		final LOCATION lastLoopHead = mActiveLoops.pop();
-		final Integer loopCounterValue = mLoopCounters.get(lastLoopHead);
-		assert loopCounterValue != null;
-		mLoopCounters.put(lastLoopHead, loopCounterValue + 1);
-		return loopCounterValue + 1;
+		final Pair<Integer, STATE> loopPair = mLoopPairs.get(lastLoopHead);
+		assert loopPair != null;
+		return loopPair.getFirst();
 	}
 
-	public int enterLoop(final LOCATION loopHead) {
-		mActiveLoops.push(loopHead);
-		Integer loopCounterValue = mLoopCounters.get(loopHead);
-		if (loopCounterValue == null) {
-			loopCounterValue = 0;
-			mLoopCounters.put(loopHead, loopCounterValue);
+	public int enterLoop(final LOCATION loopHead, final STATE prestate) {
+		if (mActiveLoops.isEmpty() || !mActiveLoops.peek().equals(loopHead)) {
+			mActiveLoops.push(loopHead);
 		}
-		return loopCounterValue;
+		Pair<Integer, STATE> loopPair = mLoopPairs.get(loopHead);
+		if (loopPair == null) {
+			loopPair = new Pair<Integer, STATE>(0, prestate);
+		} else {
+			loopPair = new Pair<Integer, STATE>(loopPair.getFirst() + 1, prestate);
+		}
+		mLoopPairs.put(loopHead, loopPair);
+		return loopPair.getFirst();
 	}
-	
-	public WorklistItem<STATE, ACTION, VARDECL, LOCATION> getPredecessor(){
+
+	public Pair<Integer, STATE> getLoopPair(final LOCATION loopHead) {
+		return mLoopPairs.get(loopHead);
+	}
+
+	public WorklistItem<STATE, ACTION, VARDECL, LOCATION> getPredecessor() {
 		return mPredecessor;
 	}
-	
+
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder().append("[").append(mPreState.hashCode()).append("]--[")
@@ -191,7 +197,7 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 		builder.append("})");
 		return builder.toString();
 	}
-	
+
 	private Deque<ACTION> getScopesCopy() {
 		if (mScopes == null || mScopes.isEmpty()) {
 			return null;

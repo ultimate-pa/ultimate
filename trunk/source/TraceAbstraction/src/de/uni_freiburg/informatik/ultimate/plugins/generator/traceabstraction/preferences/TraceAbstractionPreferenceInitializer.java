@@ -218,7 +218,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 	}
 	
 	public enum HoareAnnotationPositions {
-		All, LoopInvariantsAndEnsures,
+		All, LoopsAndPotentialCycles,
 	}
 
 }

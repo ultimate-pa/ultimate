@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
+import de.uni_freiburg.informatik.ultimatetest.reporting.ExtendedResult;
 import de.uni_freiburg.informatik.ultimatetest.reporting.NewTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.suites.svcomp.SVCOMP15TestSuite;
 
@@ -68,7 +69,7 @@ public class SVCOMPTestSummary extends NewTestSummary {
 		Set<String> svcompCategories = CoreUtil.selectDistinct(mResults.entrySet(), new IMyReduce<String>() {
 			@Override
 			public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return entry.getValue().Testname.split(" ")[0];
+				return entry.getValue().getTestname().split(" ")[0];
 			}
 		});
 
@@ -82,7 +83,7 @@ public class SVCOMPTestSummary extends NewTestSummary {
 							public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 								return entry.getKey().getToolchain().equals(atcs.Toolchain)
 										&& entry.getKey().getSettings().equals(atcs.Setting)
-										&& entry.getValue().Testname.split(" ")[0].equals(svcompCategory);
+										&& entry.getValue().getTestname().split(" ")[0].equals(svcompCategory);
 							}
 						});
 
@@ -108,7 +109,7 @@ public class SVCOMPTestSummary extends NewTestSummary {
 							new ITestSummaryResultPredicate() {
 								@Override
 								public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-									return entry.getValue().Result == tResult;
+									return entry.getValue().getResult() == tResult;
 								}
 							});
 
@@ -127,7 +128,7 @@ public class SVCOMPTestSummary extends NewTestSummary {
 					Set<String> resultCategories = CoreUtil.selectDistinct(specificResults, new IMyReduce<String>() {
 						@Override
 						public String reduce(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-							return entry.getValue().Category;
+							return entry.getValue().getCategory();
 						}
 					});
 
@@ -138,7 +139,7 @@ public class SVCOMPTestSummary extends NewTestSummary {
 								.where(results, new ITestSummaryResultPredicate() {
 									@Override
 									public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-										return entry.getValue().Category.equals(resultCategory);
+										return entry.getValue().getCategory().equals(resultCategory);
 									}
 								});
 						for (Entry<UltimateRunDefinition, ExtendedResult> entry : resultsByCategory) {
@@ -149,7 +150,7 @@ public class SVCOMPTestSummary extends NewTestSummary {
 							sb.append(CoreUtil.getPlatformLineSeparator());
 
 							// message
-							sb.append(indent).append(indent).append(indent).append(entry.getValue().Message)
+							sb.append(indent).append(indent).append(indent).append(entry.getValue().getMessage())
 									.append(CoreUtil.getPlatformLineSeparator());
 
 						}
@@ -171,11 +172,11 @@ public class SVCOMPTestSummary extends NewTestSummary {
 
 		HashMap<String, Integer> nemesisMap = new HashMap<>();
 		for (Entry<UltimateRunDefinition, ExtendedResult> entry : mResults.entrySet()) {
-			if (entry.getValue().Result.equals(TestResult.SUCCESS)) {
+			if (entry.getValue().getResult().equals(TestResult.SUCCESS)) {
 				continue;
 			}
 
-			String message = entry.getValue().Message.intern();
+			String message = entry.getValue().getMessage().intern();
 			if (!nemesisMap.containsKey(message)) {
 				nemesisMap.put(message, 1);
 			} else {
@@ -237,7 +238,7 @@ public class SVCOMPTestSummary extends NewTestSummary {
 							public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
 								return entry.getKey().getToolchain().equals(toolchainAndSettings.Toolchain)
 										&& entry.getKey().getSettings().equals(toolchainAndSettings.Setting)
-										&& entry.getValue().Testname.split(" ")[0].equals(svcompCategory);
+										&& entry.getValue().getTestname().split(" ")[0].equals(svcompCategory);
 							}
 						});
 				sb.append(svcompCategory).append(indent);
@@ -255,21 +256,21 @@ public class SVCOMPTestSummary extends NewTestSummary {
 		int success = CoreUtil.where(specificResults, new ITestSummaryResultPredicate() {
 			@Override
 			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return entry.getValue().Result.equals(TestResult.SUCCESS);
+				return entry.getValue().getResult().equals(TestResult.SUCCESS);
 			}
 		}).size();
 
 		int unknown = CoreUtil.where(specificResults, new ITestSummaryResultPredicate() {
 			@Override
 			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return entry.getValue().Result.equals(TestResult.UNKNOWN);
+				return entry.getValue().getResult().equals(TestResult.UNKNOWN);
 			}
 		}).size();
 
 		int fail = CoreUtil.where(specificResults, new ITestSummaryResultPredicate() {
 			@Override
 			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return entry.getValue().Result.equals(TestResult.FAIL);
+				return entry.getValue().getResult().equals(TestResult.FAIL);
 			}
 		}).size();
 

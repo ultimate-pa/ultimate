@@ -55,7 +55,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.HoareTripleCheckerStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager.Status;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singleTraceCheck.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.util.ScopedHashMap;
@@ -75,7 +76,7 @@ public class EdgeChecker {
 	public final static boolean m_AddDebugInformation = !false;
 	public final static boolean m_UnletTerms = true;
 	
-	private final HoareTripleCheckerBenchmarkGenerator m_EdgeCheckerBenchmark;
+	private final HoareTripleCheckerStatisticsGenerator m_EdgeCheckerBenchmark;
 	private final IPredicateCoverageChecker m_PredicateCoverageChecker;
 	
 	private static final String s_StartEdgeCheck = "starting to check validity of Hoare triples";
@@ -87,7 +88,7 @@ public class EdgeChecker {
 		m_SmtManager = smtManager;
 		m_ModifiableGlobalVariableManager = modGlobVarManager;
 		m_Script = smtManager.getScript();
-		m_EdgeCheckerBenchmark = new HoareTripleCheckerBenchmarkGenerator();
+		m_EdgeCheckerBenchmark = new HoareTripleCheckerStatisticsGenerator();
 		m_PredicateCoverageChecker = predicateCoverageChecker;
 	}
 	
@@ -99,7 +100,7 @@ public class EdgeChecker {
 		return m_SmtManager;
 	}
 	
-	public HoareTripleCheckerBenchmarkGenerator getEdgeCheckerBenchmark() {
+	public HoareTripleCheckerStatisticsGenerator getEdgeCheckerBenchmark() {
 		return m_EdgeCheckerBenchmark;
 	}
 

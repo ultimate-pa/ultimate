@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue.Value;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
@@ -65,7 +66,7 @@ public class CongruenceBinaryExpressionEvaluator
 	private IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> mRightSubEvaluator;
 
 	private Operator mOperator;
-	
+
 	// For a equals expression store the evaluated value of both sides (for evaluation of x % c == k)
 	private CongruenceDomainValue mRest = null;
 
@@ -97,7 +98,7 @@ public class CongruenceBinaryExpressionEvaluator
 			for (final IEvaluationResult<CongruenceDomainValue> res2 : secondResult) {
 				CongruenceDomainValue returnValue = new CongruenceDomainValue();
 				BooleanValue returnBool = new BooleanValue();
-				
+
 				CongruenceDomainValue v1 = res1.getValue();
 				CongruenceDomainValue v2 = res2.getValue();
 
@@ -136,6 +137,9 @@ public class CongruenceBinaryExpressionEvaluator
 				case COMPEQ:
 					if (mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool()) {
 						returnBool = res1.getBooleanValue().intersect(res2.getBooleanValue());
+						if (returnBool.getValue() != Value.BOTTOM) {
+							returnBool = new BooleanValue(true);
+						}
 					}
 
 					returnValue = v1.intersect(v2);
@@ -204,7 +208,8 @@ public class CongruenceBinaryExpressionEvaluator
 	}
 
 	@Override
-	public void addSubEvaluator(IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> evaluator) {
+	public void addSubEvaluator(
+	        IEvaluator<CongruenceDomainValue, CongruenceDomainState, CodeBlock, IBoogieVar> evaluator) {
 		assert evaluator != null;
 
 		if (mLeftSubEvaluator != null && mRightSubEvaluator != null) {
@@ -349,16 +354,22 @@ public class CongruenceBinaryExpressionEvaluator
 					throw new UnsupportedOperationException(
 					        "If and only if expressions should have been resolved earlier.");
 				case COMPEQ:
+					final BooleanValue intersectBool = left.getBooleanValue().intersect(right.getBooleanValue());
+					if ((mLeftSubEvaluator.containsBool() || mRightSubEvaluator.containsBool())
+					        && (intersectBool.getValue() == Value.TOP)) {
+						returnStates.add(currentState);
+						break;
+					}
 					final CongruenceDomainValue newLeft = computeNewValue(referenceValue, left.getValue(),
 					        right.getValue(), true);
 					final CongruenceDomainValue newRight = computeNewValue(referenceValue, right.getValue(),
 					        left.getValue(), false);
 
-					final CongruenceDomainEvaluationResult leftEvalresult = new CongruenceDomainEvaluationResult(newLeft,
-					        referenceBool);
-					final CongruenceDomainEvaluationResult rightEvalresult = new CongruenceDomainEvaluationResult(newRight,
-					        referenceBool);
-					
+					final CongruenceDomainEvaluationResult leftEvalresult = new CongruenceDomainEvaluationResult(
+					        newLeft, right.getBooleanValue());
+					final CongruenceDomainEvaluationResult rightEvalresult = new CongruenceDomainEvaluationResult(
+					        newRight, left.getBooleanValue());
+
 					// Store the values of the other side of the equality (needed for mod-evaluations)
 					if (mLeftSubEvaluator instanceof CongruenceBinaryExpressionEvaluator) {
 						CongruenceBinaryExpressionEvaluator c = (CongruenceBinaryExpressionEvaluator) mLeftSubEvaluator;
@@ -398,7 +409,7 @@ public class CongruenceBinaryExpressionEvaluator
 					        .inverseEvaluate(inverseResultArithLeft, currentState);
 					final List<CongruenceDomainState> rightInverseArith = mRightSubEvaluator
 					        .inverseEvaluate(inverseResultArithRight, currentState);
-					
+
 					for (final CongruenceDomainState le : leftInverseArith) {
 						for (final CongruenceDomainState ri : rightInverseArith) {
 							returnStates.add(le.intersect(ri));

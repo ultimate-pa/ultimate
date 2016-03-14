@@ -37,6 +37,11 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public abstract class LatexSummary extends BaseCsvProviderSummary {
 
 	public LatexSummary(Class<? extends UltimateTestSuite> ultimateTestSuite,

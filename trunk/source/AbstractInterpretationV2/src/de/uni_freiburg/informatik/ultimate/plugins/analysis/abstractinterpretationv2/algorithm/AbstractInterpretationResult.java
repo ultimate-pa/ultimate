@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -58,10 +59,6 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 				.add(new AbstractCounterexample<>(post, transitionProvider.getSource(transition), abstractExecution));
 	}
 
-	protected void addTerms(final Map<LOCATION, Term> terms) {
-
-	}
-
 	protected void saveTerms(IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> rootStateStorage, ACTION start,
 			Script script, Boogie2SMT bpl2smt) {
 		mLoc2Term.putAll(rootStateStorage.getLoc2Term(start, script, bpl2smt));
@@ -89,4 +86,19 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 		return mTerms;
 	}
 
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		if (hasReachedError()) {
+			sb.append("AI reached error location.");
+		} else {
+			sb.append("AI did not reach error location.");
+		}
+		if (getTerms() != null) {
+			sb.append(" Found terms ");
+			sb.append(String.join(", ", getTerms().stream().map(a -> a.toStringDirect()).collect(Collectors.toList())));
+		}
+
+		return sb.toString();
+	}
 }

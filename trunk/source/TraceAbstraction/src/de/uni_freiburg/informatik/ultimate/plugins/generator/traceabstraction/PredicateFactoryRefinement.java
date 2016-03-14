@@ -111,7 +111,7 @@ public class PredicateFactoryRefinement extends PredicateFactory {
 		if (!m_Pref.computeHoareAnnotation() || m_SmtManager.isDontCare(p1) || m_SmtManager.isDontCare(p2)) {
 			return true;
 		}
-		if (m_Pref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopInvariantsAndEnsures) {
+		if (m_Pref.getHoareAnnotationPositions() == HoareAnnotationPositions.LoopsAndPotentialCycles) {
 			assert m_HoareAnnotationPositions != null : "we need this for HoareAnnotationPositions.LoopInvariantsAndEnsures";
 			return !m_HoareAnnotationPositions.contains(pp);
 		} else {

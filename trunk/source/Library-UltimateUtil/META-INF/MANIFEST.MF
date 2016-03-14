@@ -8,4 +8,5 @@ Require-Bundle: Library-log4j
 Export-Package: de.uni_freiburg.informatik.ultimate.util,
  de.uni_freiburg.informatik.ultimate.util.csv,
  de.uni_freiburg.informatik.ultimate.util.relation,
- de.uni_freiburg.informatik.ultimate.util.scc
+ de.uni_freiburg.informatik.ultimate.util.scc,
+ de.uni_freiburg.informatik.ultimate.util.statistics

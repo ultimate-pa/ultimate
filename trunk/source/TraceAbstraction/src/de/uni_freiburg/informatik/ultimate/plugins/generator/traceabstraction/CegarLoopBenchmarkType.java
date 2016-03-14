@@ -34,11 +34,11 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.BenchmarkData;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkDataProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.IBenchmarkType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
-public class CegarLoopBenchmarkType implements IBenchmarkType {
+public class CegarLoopBenchmarkType implements IStatisticsType {
 	
 	public static final String s_Result = "Result";
 	public static final String s_OverallTime = "Overall time";
@@ -118,8 +118,8 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 		case s_TraceCheckerBenchmark:
 		case s_InterpolantConsolidationBenchmark:
 		case s_TotalInterpolationBenchmark:
-			BenchmarkData bmData1 = (BenchmarkData) value1;
-			BenchmarkData bmData2 = (BenchmarkData) value2;
+			StatisticsData bmData1 = (StatisticsData) value1;
+			StatisticsData bmData2 = (StatisticsData) value2;
 			if (bmData2.getBenchmarkType() == null) {
 				// benchmark not provided for this CEGAR loop,
 				// add nothing
@@ -150,7 +150,7 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 	}
 
 	@Override
-	public String prettyprintBenchmarkData(IBenchmarkDataProvider benchmarkData) {
+	public String prettyprintBenchmarkData(IStatisticsDataProvider benchmarkData) {
 		StringBuilder sb = new StringBuilder();
 		
 		sb.append("Automizer needed ");
@@ -204,34 +204,34 @@ public class CegarLoopBenchmarkType implements IBenchmarkType {
 		
 		sb.append(s_EdgeCheckerData);
 		sb.append(": ");
-		BenchmarkData ecData = 
-				(BenchmarkData) benchmarkData.getValue(s_EdgeCheckerData);
+		StatisticsData ecData = 
+				(StatisticsData) benchmarkData.getValue(s_EdgeCheckerData);
 		sb.append(ecData);
 		sb.append("\t");
 		
 		sb.append(s_PredicateUnifierData);
 		sb.append(": ");
-		BenchmarkData puData = 
-				(BenchmarkData) benchmarkData.getValue(s_PredicateUnifierData);
+		StatisticsData puData = 
+				(StatisticsData) benchmarkData.getValue(s_PredicateUnifierData);
 		sb.append(puData);
 		sb.append("\t");
 		
 		sb.append(s_TraceCheckerBenchmark);
 		sb.append(": ");
-		BenchmarkData tcData = 
-				(BenchmarkData) benchmarkData.getValue(s_TraceCheckerBenchmark);
+		StatisticsData tcData = 
+				(StatisticsData) benchmarkData.getValue(s_TraceCheckerBenchmark);
 		sb.append(tcData);
 		sb.append("\t");
 		
 		sb.append(s_InterpolantConsolidationBenchmark);
 		sb.append(": ");
-		BenchmarkData icData = 
-				(BenchmarkData) benchmarkData.getValue(s_InterpolantConsolidationBenchmark);
+		StatisticsData icData = 
+				(StatisticsData) benchmarkData.getValue(s_InterpolantConsolidationBenchmark);
 		sb.append(icData);
 		sb.append("\t");
 		
-		BenchmarkData tiData = 
-				(BenchmarkData) benchmarkData.getValue(s_TotalInterpolationBenchmark);
+		StatisticsData tiData = 
+				(StatisticsData) benchmarkData.getValue(s_TotalInterpolationBenchmark);
 		if (!tiData.isEmpty()) {
 			sb.append(s_TotalInterpolationBenchmark);
 			sb.append(": ");

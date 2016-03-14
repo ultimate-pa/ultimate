@@ -96,6 +96,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		mMaxUnwindings = ups.getInt(AbsIntPrefInitializer.LABEL_ITERATIONS_UNTIL_WIDENING);
 		mMaxParallelStates = ups.getInt(AbsIntPrefInitializer.LABEL_STATES_UNTIL_MERGE);
+		// mMaxParallelStates = 1;
 	}
 
 	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> run(final ACTION start, final Script script,
@@ -117,7 +118,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	private void calculateFixpoint(final ACTION start) {
 		final Deque<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> worklist = new ArrayDeque<WorklistItem<STATE, ACTION, VARDECL, LOCATION>>();
 		final IAbstractPostOperator<STATE, ACTION, VARDECL> post = mDomain.getPostOperator();
-		final IAbstractStateBinaryOperator<STATE> widening = mDomain.getWideningOperator();
+		final IAbstractStateBinaryOperator<STATE> wideningOp = mDomain.getWideningOperator();
 		final IAbstractStateBinaryOperator<STATE> mergeOperator = mDomain.getMergeOperator();
 		final Set<ACTION> reachedErrors = new HashSet<>();
 
@@ -164,8 +165,9 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			}
 
 			if (postStates.size() > mMaxParallelStates) {
-				mLogger.warn("Domain produced too many abstract states during post: " + mMaxParallelStates
-						+ " allowed, " + postStates.size() + " received.");
+				mLogger.warn("Domain " + mDomain.getClass().getSimpleName()
+						+ " produced too many abstract states during post: " + mMaxParallelStates + " allowed, "
+						+ postStates.size() + " received.");
 				postStates = Collections
 						.singletonList(postStates.stream().reduce((a, b) -> mergeOperator.apply(a, b)).get());
 			}
@@ -180,22 +182,14 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 					continue;
 				}
 
-				// check if this action leaves a loop
-				if (currentItem.hasActiveLoop()) {
-					// are we leaving a loop?
-					final LOCATION currentLoopHead = mTransitionProvider.getTarget(currentAction);
-					if (currentItem.isActiveLoopHead(currentLoopHead)) {
-						// yes, we are leaving a loop
-						// here we also check if we have to widen
-						final List<STATE> currentStateStack = currentStateStorage.getAbstractPostStates(currentAction);
-						pendingNewPostState = loopLeave(currentItem, currentLoopHead, widening, currentStateStack,
-								pendingNewPostState);
-					}
+				if (mLoopDetector.isEnteringLoop(currentAction)) {
+					// we are entering a loop
+					loopEnter(currentItem);
 				}
 
 				// check if we should widen after entering a new scope
 				if (mTransitionProvider.isEnteringScope(currentAction)) {
-					pendingNewPostState = widenAtScopeEntry(currentItem, widening, pendingNewPostState);
+					pendingNewPostState = widenAtScopeEntry(currentItem, wideningOp, pendingNewPostState);
 					// check if the resulting state is a fixpoint
 					if (checkFixpointAtScopeEntry(currentItem, pendingNewPostState)) {
 						// TODO: Add the summary successor here
@@ -205,12 +199,13 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 				final STATE newPostState = pendingNewPostState;
 
-				// check if we are about to enter a loop
-				if (mLoopDetector.isEnteringLoop(currentAction)) {
-					// we are entering a loop
-					// TODO: Consider action when entering the loop; for this, entering actions have to be marked in the
-					// boogie preprocessor
-					loopEnter(currentItem);
+				if (currentItem.hasActiveLoop()) {
+					// are we leaving a loop?
+					final LOCATION currentLoopHead = mTransitionProvider.getTarget(currentAction);
+					if (currentItem.isActiveLoopHead(currentLoopHead)) {
+						// we are leaving a loop
+						loopLeave(currentItem);
+					}
 				}
 
 				// check if the current state is a fixpoint
@@ -234,54 +229,26 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				}
 
 				// now add successors
-				addSuccessors(worklist, currentItem);
+				addSuccessors(worklist, currentItem, wideningOp);
 			}
 		}
 	}
 
-	private boolean checkFixpoint(final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> currentStorage,
-			ACTION currentAction, STATE newPostState) {
-		final Collection<STATE> oldPostStates = currentStorage.getAbstractPostStates(currentAction);
-		final Optional<STATE> fixpointState = oldPostStates.stream().filter(old -> newPostState.isEqualTo(old))
-				.findAny();
-
-		if (fixpointState.isPresent()) {
-			// if the state is a fixpoint, we do not need to continue
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(getLogMessageFixpointFound(fixpointState.get(), newPostState));
-			}
-			mBenchmark.addFixpoint();
-			return true;
+	private void loopLeave(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem) {
+		final int loopCounterValue = currentItem.leaveCurrentLoop();
+		if (mLogger.isDebugEnabled()) {
+			final ACTION current = currentItem.getAction();
+			final LOCATION loopHead = mTransitionProvider.getTarget(current);
+			mLogger.debug(getLogMessageLeaveLoop(loopCounterValue, loopHead));
 		}
-		return false;
-
 	}
 
 	private void loopEnter(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem) {
-		final ACTION current = currentItem.getAction();
-		final LOCATION loopHead = mTransitionProvider.getSource(current);
-		int loopCounterValue = currentItem.enterLoop(loopHead);
+		final LOCATION currentLoopHead = mTransitionProvider.getSource(currentItem.getAction());
+		final int loopCounterValue = currentItem.enterLoop(currentLoopHead, currentItem.getPreState());
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug(getLogMessageEnterLoop(loopCounterValue, loopHead));
+			mLogger.debug(getLogMessageEnterLoop(loopCounterValue, currentLoopHead));
 		}
-	}
-
-	private STATE loopLeave(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem,
-			final LOCATION currentLoopHead, final IAbstractStateBinaryOperator<STATE> widening,
-			final List<STATE> currentStateStack, final STATE pendingPostState) {
-
-		int loopCounterValue = currentItem.leaveCurrentLoop();
-
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug(getLogMessageLeaveLoop(loopCounterValue, currentLoopHead));
-		}
-
-		if (loopCounterValue > mMaxUnwindings) {
-			assert !currentStateStack.isEmpty();
-			// we widen with the last state at this location, but we could widen from the beginning
-			return applyWidening(widening, currentStateStack.get(0), pendingPostState);
-		}
-		return pendingPostState;
 	}
 
 	private WorklistItem<STATE, ACTION, VARDECL, LOCATION> createInitialWorklistItem(final ACTION elem) {
@@ -297,26 +264,9 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		return startItem;
 	}
 
-	private STATE applyWidening(final IAbstractStateBinaryOperator<STATE> widening, final STATE oldPostState,
-			STATE pendingPostState) {
-		// TODO: Remove all worklist items that will be superseded by this widening operation,i.e. all abstract states
-		// from the source of oldPostState
-		// TODO: Remove all stored states that are superseded
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug(getLogMessageUnwinding(oldPostState, pendingPostState));
-		}
-		mBenchmark.addWiden();
-		final STATE newPostState = widening.apply(oldPostState, pendingPostState);
-		assert oldPostState.getVariables().keySet()
-				.equals(newPostState.getVariables().keySet()) : "Widening destroyed the state";
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug(getLogMessageUnwindingResult(newPostState));
-		}
-		return newPostState;
-	}
-
 	private void addSuccessors(final Deque<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> worklist,
-			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem) {
+			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem,
+			final IAbstractStateBinaryOperator<STATE> widening) {
 		final ACTION current = currentItem.getAction();
 		final Collection<ACTION> successors = mTransitionProvider.getSuccessors(current, currentItem.getCurrentScope());
 
@@ -330,24 +280,99 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> currentStateStorage = currentItem
 				.getCurrentStorage();
 		final Collection<STATE> availablePostStates = currentStateStorage.getAbstractPostStates(current);
-		final int availablePostStatesCount = availablePostStates.size();
 
-		if (availablePostStatesCount > mMaxParallelStates) {
-			mBenchmark.addMerge(availablePostStatesCount);
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(getLogMessageMergeStates(availablePostStatesCount, availablePostStates));
+		// check if we have to merge before adding successors
+		if (availablePostStates.size() > mMaxParallelStates) {
+			final STATE mergedState = merge(worklist, current, successors, currentStateStorage, availablePostStates);
+			availablePostStates.clear();
+			availablePostStates.add(mergedState);
+		}
+
+		// check if we should widen at this location before adding new successors
+		boolean skipLoopEntrySuccessors = false;
+		final Pair<Integer, STATE> loopPair = currentItem.getLoopPair(mTransitionProvider.getTarget(current));
+		if (loopPair != null && loopPair.getFirst() > mMaxUnwindings) {
+			// we should widen with the last state at this loop head
+			final STATE oldLoopState = loopPair.getSecond();
+
+			// we have to ensure that there is only one state at this location for widening
+			final STATE currentPostState;
+			if (availablePostStates.size() > 1) {
+				// no, we have to merge
+				currentPostState = merge(worklist, current, successors, currentStateStorage, availablePostStates);
+			} else if (availablePostStates.size() == 1) {
+				currentPostState = availablePostStates.iterator().next();
+			} else {
+				throw new AssertionError("No post states available for widening");
 			}
-			removeMergedStatesFromWorklist(worklist, availablePostStates, successors);
-			final STATE newPostState = currentStateStorage.mergePostStates(current);
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(getLogMessageMergeResult(newPostState));
-			}
-			addSuccessorsForPostState(worklist, currentItem, successors, newPostState);
-		} else {
-			for (final STATE postState : availablePostStates) {
-				addSuccessorsForPostState(worklist, currentItem, successors, postState);
+			// is the current state already a fixpoint?
+			skipLoopEntrySuccessors = checkFixpoint(oldLoopState, currentPostState);
+
+			if (!skipLoopEntrySuccessors) {
+				// if it is no fixpoint, we really have to widen
+				final STATE widenedState = widen(currentStateStorage, widening, current, oldLoopState,
+						currentPostState);
+				availablePostStates.clear();
+				availablePostStates.add(widenedState);
+
+				// check if the widened state is a fixpoint. If it is, we do not need to enter the loop again
+				skipLoopEntrySuccessors = checkFixpoint(oldLoopState, widenedState);
 			}
 		}
+
+		for (final STATE postState : availablePostStates) {
+			for (final ACTION successor : successors) {
+				if (skipLoopEntrySuccessors && mLoopDetector.isEnteringLoop(successor)) {
+					continue;
+				}
+
+				final WorklistItem<STATE, ACTION, VARDECL, LOCATION> successorItem = new WorklistItem<STATE, ACTION, VARDECL, LOCATION>(
+						postState, successor, currentItem);
+
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(getLogMessageAddTransition(successorItem));
+				}
+				scopeEnterOrLeave(currentItem, successor, successorItem);
+				worklist.add(successorItem);
+			}
+		}
+	}
+
+	private STATE widen(final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> currentStateStorage,
+			final IAbstractStateBinaryOperator<STATE> wideningOp, final ACTION current, final STATE oldPostState,
+			final STATE currentPostState) {
+		// TODO: Remove all worklist items that will be superseded by this widening operation, i.e. all abstract states
+		// from the source of oldPostState
+		// TODO: Remove all stored states that are superseded
+
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(getLogMessageUnwinding(oldPostState, currentPostState));
+		}
+		mBenchmark.addWiden();
+		final STATE newPostState = currentStateStorage.widenPostState(current, wideningOp, oldPostState);
+		assert oldPostState.getVariables().keySet()
+				.equals(newPostState.getVariables().keySet()) : "Widening destroyed the state";
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(getLogMessageUnwindingResult(newPostState));
+		}
+		return newPostState;
+	}
+
+	private STATE merge(final Deque<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> worklist, final ACTION current,
+			final Collection<ACTION> successors,
+			final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> currentStateStorage,
+			final Collection<STATE> statesToMerge) {
+		mBenchmark.addMerge(statesToMerge.size());
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(getLogMessageMergeStates(statesToMerge.size(), statesToMerge));
+		}
+		removeMergedStatesFromWorklist(worklist, statesToMerge, successors);
+		final STATE newPostState = currentStateStorage.mergePostStates(current);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(getLogMessageMergeResult(newPostState));
+		}
+		assert currentStateStorage.getAbstractPostStates(current).size() == 1;
+		return newPostState;
 	}
 
 	private void removeMergedStatesFromWorklist(final Deque<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> worklist,
@@ -364,21 +389,6 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 					mLogger.debug(getLogMessageRemoveFromWorklistDuringMerge(currentItem));
 				}
 			}
-		}
-	}
-
-	private void addSuccessorsForPostState(final Deque<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> worklist,
-			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem, final Collection<ACTION> successors,
-			final STATE postState) {
-		for (final ACTION successor : successors) {
-			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> successorItem = new WorklistItem<STATE, ACTION, VARDECL, LOCATION>(
-					postState, successor, currentItem);
-
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(getLogMessageAddTransition(successorItem));
-			}
-			scopeEnterOrLeave(currentItem, successor, successorItem);
-			worklist.add(successorItem);
 		}
 	}
 
@@ -427,7 +437,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 					.map(a -> a.getSecond().getAbstractPostStates(currentAction)).flatMap(a -> a.stream().sequential())
 					.findFirst();
 			if (lastState.isPresent()) {
-				return applyWidening(widening, lastState.get(), pendingPostState);
+				return widenAtScopeEntry(widening, lastState.get(), pendingPostState);
 			}
 
 			final Optional<STATE> lastAllState = stackAtCallLocation.stream().sequential()
@@ -435,11 +445,44 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 					.findFirst();
 			if (lastAllState.isPresent()) {
 				mLogger.warn(AbsIntPrefInitializer.INDENT + " Widening uses all states");
-				return applyWidening(widening, lastAllState.get(), pendingPostState);
+				return widenAtScopeEntry(widening, lastAllState.get(), pendingPostState);
 			}
 			mLogger.warn("Could not widen at " + getHashCodeString(currentAction) + currentAction);
 		}
 		return pendingPostState;
+	}
+
+	private STATE widenAtScopeEntry(final IAbstractStateBinaryOperator<STATE> widening, final STATE oldPostState,
+			final STATE pendingPostState) {
+		// TODO: Do it similar to the "normal" widen
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(getLogMessageUnwinding(oldPostState, pendingPostState));
+		}
+		mBenchmark.addWiden();
+		final STATE newPostState = widening.apply(oldPostState, pendingPostState);
+		assert oldPostState.getVariables().keySet()
+				.equals(newPostState.getVariables().keySet()) : "Widening destroyed the state";
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(getLogMessageUnwindingResult(newPostState));
+		}
+		return newPostState;
+	}
+
+	private boolean checkFixpoint(final STATE oldState, final STATE newState) {
+		if (oldState.isEqualTo(newState)) {
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(getLogMessageFixpointFound(oldState, newState));
+			}
+			mBenchmark.addFixpoint();
+			return true;
+		}
+		return false;
+	}
+
+	private boolean checkFixpoint(final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> currentStorage,
+			ACTION currentAction, STATE newPostState) {
+		final Collection<STATE> oldPostStates = currentStorage.getAbstractPostStates(currentAction);
+		return oldPostStates.stream().anyMatch(old -> checkFixpoint(old, newPostState));
 	}
 
 	private boolean checkFixpointAtScopeEntry(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem,
@@ -449,13 +492,6 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		// get all calls at the current locations
 		final Deque<Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>> stackAtCallLocation = currentItem
 				.getStack();
-
-		// get all stack items in the correct order that contain only calls to the current scope
-		// the global stack item has null as action
-		// final List<Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>> relevantStackItems =
-		// stackAtCallLocation
-		// .stream().sequential().filter(a -> a.getFirst() == currentAction)
-		// .collect(Collectors.toList());
 
 		if (stackAtCallLocation.isEmpty()) {
 			// if there are no relevant stack items, there cannot be a fixpoint
@@ -492,8 +528,21 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 	private String getLogMessageUnsoundPost(STATE preStateWithFreshVariables, List<STATE> postStates,
 			ACTION currentAction) {
-		// TODO Auto-generated method stub
-		return "Post is unsound";
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Post is unsound because the term-transformation of the following triple is not valid: {");
+		sb.append(preStateWithFreshVariables.toLogString());
+		sb.append("} ");
+		sb.append(mTransitionProvider.toLogString(currentAction));
+		sb.append(" {");
+		final Iterator<STATE> iter = postStates.iterator();
+		while (iter.hasNext()) {
+			sb.append(iter.next().toLogString());
+			if (iter.hasNext()) {
+				sb.append(" OR ");
+			}
+		}
+		sb.append("}");
+		return sb.toString();
 	}
 
 	private StringBuilder getLogMessageEmptyIsBottom() {

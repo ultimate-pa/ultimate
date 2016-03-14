@@ -143,7 +143,7 @@ public class CongruenceDomainStatementProcessor extends BoogieVisitor {
 		}
 		final ExpressionTransformer t = new ExpressionTransformer();
 		Expression newExpr = t.transform(expr);
-		if (!newExpr.toString().equals(expr.toString()) && mLogger.isDebugEnabled()) {
+		if (mLogger.isDebugEnabled() && !newExpr.toString().equals(expr.toString())) {
 			mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Expression ")
 			        .append(BoogiePrettyPrinter.print(expr)).append(" rewritten to: ")
 			        .append(BoogiePrettyPrinter.print(newExpr)));

@@ -34,6 +34,7 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.core.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimatetest.reporting.ExtendedResult;
 import de.uni_freiburg.informatik.ultimatetest.reporting.NewTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
@@ -111,7 +112,7 @@ public class ComparativeSummary extends NewTestSummary {
 				sb.append(tool);
 				sb.append(CoreUtil.getPlatformLineSeparator());
 				sb.append(indent).append(indent);
-				sb.append(differentEntry.getValue().Message);
+				sb.append(differentEntry.getValue().getMessage());
 				sb.append(CoreUtil.getPlatformLineSeparator());
 			}
 			sb.append(CoreUtil.getPlatformLineSeparator());

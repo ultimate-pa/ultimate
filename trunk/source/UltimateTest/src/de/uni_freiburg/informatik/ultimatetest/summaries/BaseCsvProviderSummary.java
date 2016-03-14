@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimatetest.decider.ITestResultDecider.TestResult;
+import de.uni_freiburg.informatik.ultimatetest.reporting.ExtendedResult;
 import de.uni_freiburg.informatik.ultimatetest.reporting.NewTestSummary;
 import de.uni_freiburg.informatik.ultimatetest.util.TestUtil;
 
@@ -98,7 +99,7 @@ public abstract class BaseCsvProviderSummary extends NewTestSummary {
 				continue;
 			}
 			current = CsvUtils.concatenateRows(current, ColumnDefinitionUtil.preparePrintProvider(provider,
-					entry.getKey(), entry.getValue().Message, columnDefinitions));
+					entry.getKey(), entry.getValue(), columnDefinitions));
 		}
 		return current;
 	}

@@ -28,9 +28,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 
@@ -41,6 +44,8 @@ import de.uni_freiburg.informatik.ultimate.core.services.model.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.IElement;
+import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.model.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.model.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
@@ -61,6 +66,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.LanguageOperation;
 import de.uni_freiburg.informatik.ultimate.result.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.result.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.result.Check;
+import de.uni_freiburg.informatik.ultimate.result.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.result.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.result.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.result.ProcedureContractResult;
@@ -135,6 +142,7 @@ public class TraceAbstractionStarter {
 						witnessAutomaton);
 			}
 		}
+		logNumberOfWitnessInvariants(errNodesOfAllProc);
 		if (m_OverallResult == Result.SAFE) {
 			final String longDescription;
 			if (errNodesOfAllProc.isEmpty()) {
@@ -158,42 +166,48 @@ public class TraceAbstractionStarter {
 			final IBacktranslationService backTranslatorService = m_Services.getBacktranslationService();
 			final Term trueterm = smtManager.getScript().term("true");
 
-			Map<String, ProgramPoint> finalNodes = rootAnnot.getExitNodes();
-			for (String proc : finalNodes.keySet()) {
-				if (isAuxilliaryProcedure(proc)) {
-					continue;
-				}
-				ProgramPoint finalNode = finalNodes.get(proc);
-				HoareAnnotation hoare = getHoareAnnotation(finalNode);
-				if (hoare != null) {
-					Term formula = hoare.getFormula();
-					Expression expr = rootAnnot.getBoogie2SMT().getTerm2Expression().translate(formula);
-					ProcedureContractResult<RcfgElement, Expression> result = new ProcedureContractResult<RcfgElement, Expression>(
-							Activator.s_PLUGIN_NAME, finalNode, backTranslatorService, proc, expr);
-					// s_Logger.warn(result.getShortDescription());
-					reportResult(result);
-					if (!formula.equals(trueterm)) {
-						new WitnessInvariant(backTranslatorService.translateExpressionToString(expr, Expression.class))
-								.annotate(finalNode);
-					}
-				}
-			}
-			Map<ProgramPoint, ILocation> loopLocations = rootAnnot.getLoopLocations();
-			for (ProgramPoint locNode : loopLocations.keySet()) {
+			final Set<ProgramPoint> locsForLoopLocations = new HashSet<>();
+			locsForLoopLocations.addAll(rootAnnot.getPotentialCycleProgramPoints());
+			locsForLoopLocations.addAll(rootAnnot.getLoopLocations().keySet());
+			// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
+
+			for (ProgramPoint locNode : locsForLoopLocations) {
 				assert (locNode.getBoogieASTNode() != null) : "locNode without BoogieASTNode";
-				HoareAnnotation hoare = getHoareAnnotation(locNode);
+				final HoareAnnotation hoare = getHoareAnnotation(locNode);
 				if (hoare != null) {
-					Term formula = hoare.getFormula();
-					Expression expr = rootAnnot.getBoogie2SMT().getTerm2Expression().translate(formula);
-					InvariantResult<RcfgElement, Expression> invResult = new InvariantResult<RcfgElement, Expression>(
+					final Term formula = hoare.getFormula();
+					final Expression expr = rootAnnot.getBoogie2SMT().getTerm2Expression().translate(formula);
+					final InvariantResult<RcfgElement, Expression> invResult = new InvariantResult<RcfgElement, Expression>(
 							Activator.s_PLUGIN_NAME, locNode, backTranslatorService, expr);
-					// s_Logger.warn(invResult.getLongDescription());
 					reportResult(invResult);
 
 					if (!formula.equals(trueterm)) {
-						new WitnessInvariant(backTranslatorService.translateExpressionToString(expr, Expression.class))
-								.annotate(locNode);
+						final String inv = backTranslatorService.translateExpressionToString(expr, Expression.class);
+						new WitnessInvariant(inv).annotate(locNode);
 					}
+				}
+			}
+
+			final Map<String, ProgramPoint> finalNodes = rootAnnot.getExitNodes();
+			for (final String proc : finalNodes.keySet()) {
+				if (isAuxilliaryProcedure(proc)) {
+					continue;
+				}
+				final ProgramPoint finalNode = finalNodes.get(proc);
+				final HoareAnnotation hoare = getHoareAnnotation(finalNode);
+				if (hoare != null) {
+					final Term formula = hoare.getFormula();
+					final Expression expr = rootAnnot.getBoogie2SMT().getTerm2Expression().translate(formula);
+					final ProcedureContractResult<RcfgElement, Expression> result = new ProcedureContractResult<RcfgElement, Expression>(
+							Activator.s_PLUGIN_NAME, finalNode, backTranslatorService, proc, expr);
+
+					reportResult(result);
+					// TODO: Add setting that controls the generation of those witness invariants; for now, just
+					// commented out
+					// if (!formula.equals(trueterm)) {
+					// final String inv = backTranslatorService.translateExpressionToString(expr, Expression.class);
+					// new WitnessInvariant(inv).annotate(finalNode);
+					// }
 				}
 			}
 		}
@@ -220,6 +234,23 @@ public class TraceAbstractionStarter {
 		}
 
 		m_RootOfNewModel = m_Artifact;
+	}
+
+	private void logNumberOfWitnessInvariants(Collection<ProgramPoint> errNodesOfAllProc) {
+		int numberOfCheckedInvariants = 0;
+		for (ProgramPoint err : errNodesOfAllProc) {
+			IAnnotations annot = err.getBoogieASTNode().getPayload().getAnnotations().get(Check.class.getName());
+			if (annot != null) {
+				Check check = (Check) annot;
+				if (check.getSpec() == Spec.WITNESS_INVARIANT) {
+					numberOfCheckedInvariants++;
+				}
+			}
+		}
+		if (numberOfCheckedInvariants > 0) {
+			m_Logger.info("Automizer considered " + numberOfCheckedInvariants + " witness invariants");
+			m_Logger.info("WitnessConsidered=" + numberOfCheckedInvariants);
+		}
 	}
 
 	private void iterate(String name, RootNode root, TAPreferences taPrefs, SmtManager smtManager,

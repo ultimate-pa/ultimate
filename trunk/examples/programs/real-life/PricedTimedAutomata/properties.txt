@@ -1,0 +1,10 @@
+u2b01_single_pca_SAFE.bpl : time <= 11.0 ==> Template_1$power <= 150.0
+u2b01_single_pca_UNSAFE.bpl : Template_1$power <= 3000.0
+u2b02_multiple_pca_SAFE.bpl : steps <= 6 ==> A_1$power < 150.0
+u2b02_multiple_pca_UNSAFE.bpl : steps <= 15 ==> A_1$power < 300.0
+u2b03_simple_broadcast_SAFE.bpl : v != 1 && v != 2
+u2b03_simple_broadcast_UNSAFE.bpl : v != 3
+u2b04_multiple_broadcast_SAFE.bpl : v == 0 || v == 3
+u2b04_multiple_broadcast_UNSAFE.bpl : v != 3
+u2b05_broadcast_guards_vars_SAFE.bpl : v != 3
+u2b05_broadcast_guards_vars_UNSAFE.bpl : v != 2

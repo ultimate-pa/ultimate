@@ -167,7 +167,7 @@ public final class AbstractInterpreter {
 		final Boogie2SmtSymbolTable boogieVarTable = bpl2smt.getBoogie2SmtSymbolTable();
 
 		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain = selectDomain(() -> new RCFGLiteralCollector(root),
-				symbolTable, services);
+				symbolTable, services, rootAnnot);
 
 		return runSilentlyOnNWA(initial, timer, services, symbolTable, bpl2smt, script, boogieVarTable, domain,
 				transProvider, transProvider, rootAnnot);
@@ -180,13 +180,14 @@ public final class AbstractInterpreter {
 			final ITransitionProvider<CodeBlock, LOC> transitionProvider, final ILoopDetector<CodeBlock> loopDetector,
 			final RootAnnot rootAnnot) {
 
+		final RcfgDebugHelper<STATE, LOC> debugHelper = new RcfgDebugHelper<STATE, LOC>(rootAnnot, services);
 		final FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, LOC> params = new FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, LOC>()
 				.addDomain(domain).addLoopDetector(loopDetector)
 				.addStorage(new RcfgAbstractStateStorageProvider<STATE, LOC>(domain.getMergeOperator(), services,
 						transitionProvider))
 				.addTransitionProvider(transitionProvider)
 				.addVariableProvider(new RcfgVariableProvider<STATE, LOC>(symbolTable, boogieVarTable, services))
-				.addDebugHelper(new RcfgDebugHelper<>(rootAnnot));
+				.addDebugHelper(debugHelper);
 
 		final FixpointEngine<STATE, CodeBlock, IBoogieVar, LOC> fxpe = new FixpointEngine<STATE, CodeBlock, IBoogieVar, LOC>(
 				services, timer, params);
@@ -237,7 +238,7 @@ public final class AbstractInterpreter {
 				transitionProvider);
 
 		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain = selectDomain(() -> new RCFGLiteralCollector(root),
-				symbolTable, services);
+				symbolTable, services, rootAnnot);
 		return runOnRCFG(initials, timer, services, symbolTable, bpl2smt, script, boogieVarTable, loopDetector, domain,
 				transitionProvider, rootAnnot, isSilent);
 	}
@@ -274,7 +275,7 @@ public final class AbstractInterpreter {
 					.addTransitionProvider(transitionProvider)
 					.addVariableProvider(
 							new RcfgVariableProvider<STATE, ProgramPoint>(symbolTable, boogieVarTable, services))
-					.addDebugHelper(new RcfgDebugHelper<>(rootAnnot));
+					.addDebugHelper(new RcfgDebugHelper<>(rootAnnot, services));
 
 			final FixpointEngine<STATE, CodeBlock, IBoogieVar, ProgramPoint> fxpe = new FixpointEngine<>(services,
 					timer, params);
@@ -320,7 +321,7 @@ public final class AbstractInterpreter {
 
 	private static IAbstractDomain<?, CodeBlock, IBoogieVar> selectDomain(
 			final LiteralCollectorFactory literalCollector, final BoogieSymbolTable symbolTable,
-			final IUltimateServiceProvider services) {
+			final IUltimateServiceProvider services, final RootAnnot rootAnnotation) {
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		final String selectedDomain = ups.getString(AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN);
 		final Logger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -358,7 +359,7 @@ public final class AbstractInterpreter {
 			if (ups.getBoolean(CompoundDomainPreferences.LABEL_USE_OCTAGON_DOMAIN)) {
 				domainList.add(new OctagonDomain(logger, symbolTable, literalCollector));
 			}
-			return new CompoundDomain(services.getLoggingService().getLogger(Activator.PLUGIN_ID), domainList);
+			return new CompoundDomain(services, domainList, rootAnnotation);
 		}
 		throw new UnsupportedOperationException("The value \"" + selectedDomain + "\" of preference \""
 				+ AbsIntPrefInitializer.LABEL_ABSTRACT_DOMAIN + "\" was not considered before! ");

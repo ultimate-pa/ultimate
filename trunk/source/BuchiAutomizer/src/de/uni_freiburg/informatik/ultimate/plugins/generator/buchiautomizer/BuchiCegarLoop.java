@@ -73,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.lassoranker.termination.rankingfuncti
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.ModifiableGlobalVariableManager;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.ContinueDirective;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.LassoChecker.LassoCheckResult;
@@ -88,6 +89,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RcfgElement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootNode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopBenchmarkType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis;
@@ -99,9 +102,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.InterpolantAutomataTransitionAppender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantAutomataBuilders.CanonicalInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EfficientHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.SmtManager;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.InterpolationPreferenceChecker;
@@ -783,7 +784,8 @@ public class BuchiCegarLoop {
 		constructInterpolantAutomaton(traceChecker, run);
 		
 		ModifiableGlobalVariableManager modGlobVarManager = m_RootNode.getRootAnnot().getModGlobVarManager();
-		final IHoareTripleChecker solverHtc = new IncrementalHoareTripleChecker(m_SmtManager, modGlobVarManager);
+		final IHoareTripleChecker solverHtc = new IncrementalHoareTripleChecker(new ManagedScript(m_Services, 
+				m_SmtManager.getScript()), modGlobVarManager, m_SmtManager.getBoogie2Smt());
 		IHoareTripleChecker htc = new EfficientHoareTripleChecker(solverHtc, modGlobVarManager, traceChecker.getPredicateUnifier(), m_SmtManager);
 		
 		DeterministicInterpolantAutomaton determinized = new DeterministicInterpolantAutomaton(m_Services, m_SmtManager, modGlobVarManager, htc,
@@ -815,7 +817,8 @@ public class BuchiCegarLoop {
 					m_RefineBuchi.getInterpolAutomatonUsedInRefinement());
 		}
 		m_MDBenchmark.reportTrivialModule(m_Iteration, m_InterpolAutomaton.size());
-		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true, new IncrementalHoareTripleChecker(m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager()))).getResult();
+		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true, new IncrementalHoareTripleChecker(new ManagedScript(m_Services, 
+				m_SmtManager.getScript()), modGlobVarManager, m_SmtManager.getBoogie2Smt()))).getResult();
 		m_Abstraction = diff.getResult();
 		m_BenchmarkGenerator.addEdgeCheckerData(htc.getEdgeCheckerBenchmark());
 		m_BenchmarkGenerator.stop(CegarLoopBenchmarkType.s_AutomataDifference);
@@ -837,7 +840,8 @@ public class BuchiCegarLoop {
 		// assert((new BuchiAccepts<CodeBlock, IPredicate>(m_InterpolAutomaton,
 		// m_Counterexample.getNestedLassoWord())).getResult()) :
 		// "Interpolant automaton broken!";
-		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true, new IncrementalHoareTripleChecker(m_SmtManager, m_RootNode.getRootAnnot().getModGlobVarManager()))).getResult();
+		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true, new IncrementalHoareTripleChecker(new ManagedScript(m_Services, 
+				m_SmtManager.getScript()), m_RootNode.getRootAnnot().getModGlobVarManager(), m_SmtManager.getBoogie2Smt()))).getResult();
 	}
 
 	private TerminationArgumentResult<RcfgElement> constructTAResult(TerminationArgument terminationArgument,
