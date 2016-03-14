@@ -95,6 +95,7 @@ public abstract class AExpressionTranslation {
 		{
 			String val = new String(node.getValue());
 			RValue rVal = translateFloatingLiteral(loc, val);
+			assert rVal != null : "result must not be null";
 			return new ExpressionResult(rVal);
 		}
 		case IASTLiteralExpression.lk_char_constant:
