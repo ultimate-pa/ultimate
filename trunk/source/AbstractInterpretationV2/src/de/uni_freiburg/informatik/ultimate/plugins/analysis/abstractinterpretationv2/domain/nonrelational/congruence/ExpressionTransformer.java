@@ -113,6 +113,8 @@ public class ExpressionTransformer {
 				if (unexp.getOperator() == UnaryExpression.Operator.LOGICNEG) {
 					return transform(unexp.getExpr());
 				}
+			} else {
+				return expr;
 			}
 		}
 		return atomicTransform(expr);

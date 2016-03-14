@@ -456,12 +456,8 @@ public class CongruenceBinaryExpressionEvaluator
 			newValue = newValue.intersect(oldValue);
 			break;
 		case ARITHDIV:
-			if (left) {
-				newValue = referenceValue.multiply(otherValue);
-			} else {
-				newValue = otherValue.divide(referenceValue);
-			}
-			newValue = newValue.intersect(oldValue);
+			// Division can't be handled precise!
+			newValue = oldValue;
 			break;
 		case ARITHMOD:
 			// If mod is at one side of an equality, the left side of the mod expression
