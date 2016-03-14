@@ -36,6 +36,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.util.HashRelation;
 import de.uni_freiburg.informatik.ultimatetest.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimatetest.UltimateTestSuite;
+import de.uni_freiburg.informatik.ultimatetest.reporting.ExtendedResult;
 import de.uni_freiburg.informatik.ultimatetest.reporting.NewTestSummary;
 
 /**

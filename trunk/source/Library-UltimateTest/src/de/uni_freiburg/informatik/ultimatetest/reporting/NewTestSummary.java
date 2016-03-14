@@ -73,20 +73,6 @@ public abstract class NewTestSummary implements ITestSummary {
 		mResults.put(ultimateRunDefinition, new ExtendedResult(threeValuedResult, message, category, testname));
 	}
 
-	protected class ExtendedResult {
-		public ExtendedResult(TestResult result, String message, String category, String testname) {
-			Result = result;
-			Message = message;
-			Category = category;
-			Testname = testname;
-		}
-
-		public TestResult Result;
-		public String Message;
-		public String Category;
-		public String Testname;
-	}
-
 	protected class TCS {
 		public File Toolchain;
 		public File Setting;
@@ -153,7 +139,7 @@ public abstract class NewTestSummary implements ITestSummary {
 				new ITestSummaryResultPredicate() {
 					@Override
 					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-						return entry.getValue().Result == TestResult.SUCCESS;
+						return entry.getValue().getResult() == TestResult.SUCCESS;
 					}
 				}));
 
@@ -162,7 +148,7 @@ public abstract class NewTestSummary implements ITestSummary {
 				new ITestSummaryResultPredicate() {
 					@Override
 					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-						return (entry.getValue().Result == TestResult.UNKNOWN && entry.getValue().Message.toLowerCase()
+						return (entry.getValue().getResult() == TestResult.UNKNOWN && entry.getValue().getMessage().toLowerCase()
 								.contains("timeout"));
 					}
 				}));
@@ -179,7 +165,7 @@ public abstract class NewTestSummary implements ITestSummary {
 				new ITestSummaryResultPredicate() {
 					@Override
 					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-						return entry.getValue().Message.contains("UNSAFE");
+						return entry.getValue().getMessage().contains("UNSAFE");
 					}
 				}));
 
@@ -195,10 +181,10 @@ public abstract class NewTestSummary implements ITestSummary {
 		int expectedSafe = 0;
 		int expectedUnsafe = 0;
 		for (Entry<UltimateRunDefinition, ExtendedResult> entry : all) {
-			if (entry.getValue().Message.contains("ExpectedResult: UNSAFE")) {
+			if (entry.getValue().getMessage().contains("ExpectedResult: UNSAFE")) {
 				expectedUnsafe++;
 			}
-			if (entry.getValue().Message.contains("ExpectedResult: SAFE")) {
+			if (entry.getValue().getMessage().contains("ExpectedResult: SAFE")) {
 				expectedSafe++;
 			}
 		}
@@ -215,7 +201,7 @@ public abstract class NewTestSummary implements ITestSummary {
 				new ITestSummaryResultPredicate() {
 					@Override
 					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-						return entry.getValue().Result == TestResult.SUCCESS;
+						return entry.getValue().getResult() == TestResult.SUCCESS;
 					}
 				});
 
@@ -223,7 +209,7 @@ public abstract class NewTestSummary implements ITestSummary {
 				new ITestSummaryResultPredicate() {
 					@Override
 					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-						return entry.getValue().Result == TestResult.UNKNOWN;
+						return entry.getValue().getResult() == TestResult.UNKNOWN;
 					}
 				});
 
@@ -231,7 +217,7 @@ public abstract class NewTestSummary implements ITestSummary {
 				new ITestSummaryResultPredicate() {
 					@Override
 					public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-						return entry.getValue().Result == TestResult.FAIL;
+						return entry.getValue().getResult() == TestResult.FAIL;
 					}
 				});
 
