@@ -121,7 +121,7 @@ public class PricedTimedAutomataTestSuite extends AbstractEvalTestSuite {
 
 	@Override
 	public ITestResultDecider constructITestResultDecider(UltimateRunDefinition urd) {
-		return new SafetyCheckTestResultDecider(urd, !false);
+		return new SafetyCheckTestResultDecider(urd, false);
 	}
 
 	@Override
