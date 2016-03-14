@@ -568,22 +568,18 @@ public class PostProcessor {
 				attributes[0] = new NamedAttribute(loc, "builtin", new Expression[]{new StringLiteral(loc, "FloatingPoint")});
 				int bytesize = typesizes.getSize(cPrimitive);
 				int[] indices = new int[2];
-				String name = null;
 				switch (bytesize) {
 					case 4:
 						indices[0] = 8;
 						indices[1] = 24;
-						name = "float";
 						break;
 					case 8:
 						indices[0] = 11;
 						indices[1] = 53;
-						name = "double";
 						break;
 					case 16:
 						indices[0] = 15;
 						indices[1] = 113;
-						name = "long_double";
 						break;
 					default:
 						throw new UnsupportedSyntaxException(loc, "unknown primitive type");
