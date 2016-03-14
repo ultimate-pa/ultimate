@@ -91,6 +91,21 @@ public class PrintTerm {
 		return id;
 	}
 	
+	/**
+	 * Ensure that object can be used as SMT-LIB 2 compliant identifier.
+	 * otherwise the input is returned.
+	 * @param value some object.
+	 * @return quoted identifier if value is String, otherwise value 
+	 * (the input) is returned. 
+	 */
+	public static Object quoteObjectIfString(Object value) {
+		if (value instanceof String) {
+			return quoteIdentifier((String) value);
+		} else {
+			return value;
+		}
+	}
+	
 	private void run(Appendable appender) throws IOException {
 		while (!mTodo.isEmpty()) {
 			Object next = mTodo.removeLast();

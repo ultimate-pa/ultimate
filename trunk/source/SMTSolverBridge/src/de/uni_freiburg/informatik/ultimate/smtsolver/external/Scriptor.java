@@ -115,7 +115,7 @@ public class Scriptor extends NoopScript {
 		sb.append("(set-info ");
 		sb.append(info);
 		sb.append(' ');
-		sb.append(value);
+		sb.append(PrintTerm.quoteObjectIfString(value));
 		sb.append(")");
 		sb.append(System.lineSeparator());
 		mExecutor.input(sb.toString());
