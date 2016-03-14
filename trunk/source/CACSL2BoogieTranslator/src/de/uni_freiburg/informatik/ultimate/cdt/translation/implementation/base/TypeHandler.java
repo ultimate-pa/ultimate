@@ -135,6 +135,12 @@ public class TypeHandler implements ITypeHandler {
      * this type has to be declared.
      */
 	private boolean m_PointerTypeNeeded = false;
+	
+	/**
+	 * Is true iff we yet processed a floating type.
+	 * (And hence floating types have to be added to Boogie).
+	 */
+	private boolean m_FloatingTypesNeeded = false;
     
     
 
@@ -604,6 +610,7 @@ public class TypeHandler implements ITypeHandler {
 				return new NamedType(loc, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
 			}
 		case FLOATTYPE:
+			m_FloatingTypesNeeded = true;
 			return new PrimitiveType(loc, SFO.REAL);
 		default:
 			throw new UnsupportedSyntaxException(loc, "unknown primitive type");
