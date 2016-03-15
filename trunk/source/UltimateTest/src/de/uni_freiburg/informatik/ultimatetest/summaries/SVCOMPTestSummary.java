@@ -253,26 +253,12 @@ public class SVCOMPTestSummary extends NewTestSummary {
 	private void appendComparison(StringBuilder sb, String indent, final TCS toolchainAndSettings,
 			Collection<Entry<UltimateRunDefinition, ExtendedResult>> specificResults) {
 
-		int success = CoreUtil.where(specificResults, new ITestSummaryResultPredicate() {
-			@Override
-			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return entry.getValue().getResult().equals(TestResult.SUCCESS);
-			}
-		}).size();
-
-		int unknown = CoreUtil.where(specificResults, new ITestSummaryResultPredicate() {
-			@Override
-			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return entry.getValue().getResult().equals(TestResult.UNKNOWN);
-			}
-		}).size();
-
-		int fail = CoreUtil.where(specificResults, new ITestSummaryResultPredicate() {
-			@Override
-			public boolean check(Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return entry.getValue().getResult().equals(TestResult.FAIL);
-			}
-		}).size();
+		final long success = specificResults.stream().filter(a -> a.getValue().getResult().equals(TestResult.SUCCESS))
+				.count();
+		final long unknown = specificResults.stream().filter(a -> a.getValue().getResult().equals(TestResult.UNKNOWN))
+				.count();
+		final long fail = specificResults.stream().filter(a -> a.getValue().getResult().equals(TestResult.FAIL))
+				.count();
 
 		sb.append(toolchainAndSettings.Toolchain.getName());
 		sb.append(indent);
