@@ -116,6 +116,7 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 			case UNSAFE_DEREF:
 			case UNSAFE_FREE:
 			case UNSAFE_MEMTRACK:
+			case UNSAFE_OVERAPPROXIMATED:
 			case UNKNOWN:
 			case SYNTAX_ERROR:
 			case TIMEOUT:
@@ -157,6 +158,15 @@ public class SafetyCheckTestResultDecider extends ThreeTierTestResultDecider<Saf
 					mTestResult = TestResult.FAIL;
 				}
 				break;
+			case UNSAFE_OVERAPPROXIMATED:
+				if (expectedResult == overallResult) {
+					mTestResult = TestResult.SUCCESS;
+				} else if (expectedResult == SafetyCheckerOverallResult.UNSAFE) {
+					mTestResult = TestResult.SUCCESS;
+				} else {
+					mTestResult = TestResult.UNKNOWN;
+				}
+				break;	
 			case UNKNOWN:
 				// syntax error should always have been found
 				if (expectedResult == SafetyCheckerOverallResult.SYNTAX_ERROR) {
