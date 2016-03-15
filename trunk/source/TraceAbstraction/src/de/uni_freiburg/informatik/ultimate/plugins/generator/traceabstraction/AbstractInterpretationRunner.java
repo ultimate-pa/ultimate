@@ -15,7 +15,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
@@ -80,9 +82,8 @@ public class AbstractInterpretationRunner {
 				+ " with the following transitions: ");
 		mLogger.info(String.join(", ", pathProgramSet.stream().map(a -> a.hashCode()).sorted()
 				.map(a -> "[" + String.valueOf(a) + "]").collect(Collectors.toList())));
-		final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> result = AbstractInterpreter
-				.runSilently((NestedRun<CodeBlock, IPredicate>) currentCex, currentAbstraction, mRoot, timer,
-						mServices);
+		final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> result = AbstractInterpreter.runSilently(
+				(NestedRun<CodeBlock, IPredicate>) currentCex, currentAbstraction, mRoot, timer, mServices);
 		mAbsIntResult = result;
 		mCegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AbsIntTime);
 	}
@@ -139,9 +140,13 @@ public class AbstractInterpretationRunner {
 		mLogger.fatal(
 				"No progress during refinement with abstract interpretation although AI did not reach the error state. The following run is still accepted.");
 		mLogger.fatal(m_Counterexample);
-		mLogger.fatal("Used the following AI result: " + mAbsIntResult);
+		mLogger.fatal("Used the following AI result: " + mAbsIntResult.toSimplifiedString(this::simplify));
 		mLogger.fatal("Automaton had the following predicates: " + aiInterpolAutomaton.getStates());
 		return false;
+	}
+
+	private String simplify(Term term) {
+		return SmtUtils.simplify(mRoot.getRootAnnot().getScript(), term, mServices).toStringDirect();
 	}
 
 	@FunctionalInterface

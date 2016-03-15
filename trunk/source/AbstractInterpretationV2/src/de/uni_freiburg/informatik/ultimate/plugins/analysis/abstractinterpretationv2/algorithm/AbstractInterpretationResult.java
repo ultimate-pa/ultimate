@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -88,7 +89,11 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder();
+		return toSimplifiedString(a -> a.toStringDirect());
+	}
+
+	public String toSimplifiedString(Function<Term, String> funSimplify) {
+		final StringBuilder sb = new StringBuilder();
 		if (hasReachedError()) {
 			sb.append("AI reached error location.");
 		} else {
@@ -96,9 +101,8 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 		}
 		if (getTerms() != null) {
 			sb.append(" Found terms ");
-			sb.append(String.join(", ", getTerms().stream().map(a -> a.toStringDirect()).collect(Collectors.toList())));
+			sb.append(String.join(", ", getTerms().stream().map(a -> funSimplify.apply(a)).collect(Collectors.toList())));
 		}
-
 		return sb.toString();
 	}
 }
