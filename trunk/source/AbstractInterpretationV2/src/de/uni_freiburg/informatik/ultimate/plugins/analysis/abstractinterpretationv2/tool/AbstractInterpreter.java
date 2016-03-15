@@ -122,9 +122,9 @@ public final class AbstractInterpreter {
 	 * Run abstract interpretation on a path program constructed from a counterexample.
 	 * 
 	 */
-	public static <LOC> IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, LOC> runSilently(
-			final NestedRun<CodeBlock, LOC> counterexample,
-			final INestedWordAutomatonOldApi<CodeBlock, LOC> currentAutomata, final RootNode root,
+	public static IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> runSilently(
+			final NestedRun<CodeBlock, ?> counterexample,
+			final INestedWordAutomatonOldApi<CodeBlock, ?> currentAutomata, final RootNode root,
 			final IProgressAwareTimer timer, final IUltimateServiceProvider services) {
 		assert counterexample != null && counterexample.getLength() > 0 : "Invalid counterexample";
 		assert currentAutomata != null;
@@ -134,8 +134,8 @@ public final class AbstractInterpreter {
 
 		final Logger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		try {
-			final NWAPathProgramTransitionProvider<LOC> transProvider = new NWAPathProgramTransitionProvider<>(
-					currentAutomata, counterexample, services, root.getRootAnnot());
+			final NWAPathProgramTransitionProvider transProvider = new NWAPathProgramTransitionProvider(
+					counterexample, services, root.getRootAnnot());
 			return runSilentlyOnNWA(transProvider, counterexample.getSymbol(0), root, timer, services);
 		} catch (OutOfMemoryError oom) {
 			throw oom;
@@ -152,8 +152,8 @@ public final class AbstractInterpreter {
 		}
 	}
 
-	private static <LOC> AbstractInterpretationResult<?, CodeBlock, IBoogieVar, LOC> runSilentlyOnNWA(
-			final NWAPathProgramTransitionProvider<LOC> transProvider, final CodeBlock initial, final RootNode root,
+	private static AbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> runSilentlyOnNWA(
+			final NWAPathProgramTransitionProvider transProvider, final CodeBlock initial, final RootNode root,
 			final IProgressAwareTimer timer, final IUltimateServiceProvider services) throws Throwable {
 
 		final BoogieSymbolTable symbolTable = getSymbolTable(root);

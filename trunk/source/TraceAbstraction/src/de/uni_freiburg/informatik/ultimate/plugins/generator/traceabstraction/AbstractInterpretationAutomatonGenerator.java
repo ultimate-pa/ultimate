@@ -35,7 +35,7 @@ public class AbstractInterpretationAutomatonGenerator {
 
 	public AbstractInterpretationAutomatonGenerator(final IUltimateServiceProvider services,
 			final INestedWordAutomaton<CodeBlock, IPredicate> oldAbstraction,
-			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, IPredicate> aiResult,
+			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> aiResult,
 			final PredicateUnifier predUnifier, final SmtManager smtManager) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);

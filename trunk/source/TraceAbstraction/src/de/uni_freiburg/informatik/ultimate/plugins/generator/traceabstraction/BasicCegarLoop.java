@@ -306,7 +306,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 					m_Pref.dumpSmtScriptToFile(), m_Pref.pathOfDumpedScript(), m_Pref.commandExternalSolver(), false,
 					false, m_Pref.logicForExternalSolver(), "TraceCheck_Iteration" + m_Iteration);
 			smtMangerTracechecks = new SmtManager(tcSolver, m_RootNode.getRootAnnot().getBoogie2SMT(),
-					m_RootNode.getRootAnnot().getModGlobVarManager(), m_Services, false, m_RootNode.getRootAnnot().getManagedScript());
+					m_RootNode.getRootAnnot().getModGlobVarManager(), m_Services, false,
+					m_RootNode.getRootAnnot().getManagedScript());
 			TermTransferrer tt = new TermTransferrer(tcSolver);
 			for (Term axiom : m_RootNode.getRootAnnot().getBoogie2SMT().getAxioms()) {
 				tcSolver.assertTerm(tt.transform(axiom));
@@ -486,17 +487,23 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 		m_CegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_BasicInterpolantAutomatonTime);
 		assert (accepts(m_Services, m_InterpolAutomaton, m_Counterexample.getWord())) : "Interpolant automaton broken!";
-		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true,
-				new IncrementalHoareTripleChecker(m_RootNode.getRootAnnot().getManagedScript(),
-						m_ModGlobVarManager, m_SmtManager.getBoogie2Smt()))).getResult();
+		assert (new InductivityCheck(m_Services, m_InterpolAutomaton, false, true, new IncrementalHoareTripleChecker(
+				m_RootNode.getRootAnnot().getManagedScript(), m_ModGlobVarManager, m_SmtManager.getBoogie2Smt())))
+						.getResult();
 	}
 
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		final PredicateUnifier predUnifier = m_InterpolantGenerator.getPredicateUnifier();
 		if (mAbsIntRunner != null) {
-			mAbsIntRunner.refine(predUnifier, m_SmtManager, (INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction,
-					m_Counterexample, this::refineWithGivenAutomaton);
+			if (mAbsIntRunner.refine(predUnifier, m_SmtManager,
+					(INestedWordAutomaton<CodeBlock, IPredicate>) m_Abstraction, m_Counterexample,
+					this::refineWithGivenAutomaton)) {
+				// TODO: Prevent creation of m_InterpolAutomaton for this case.
+				mLogger.info(
+						"Abstract interpretation was strong enough to show infeasibility. Skipping refinement with interpol automaton.");
+				return true;
+			}
 		}
 		return refineWithGivenAutomaton(m_InterpolAutomaton, predUnifier);
 	}
@@ -613,7 +620,7 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 							super.writeAutomatonToFile(test, filename);
 						}
 						if (mAbsIntRunner == null) {
-							//check only if AI did not run 
+							// check only if AI did not run
 							boolean ctxAccepted = (new Accepts<CodeBlock, IPredicate>(
 									new AutomataLibraryServices(m_Services), test,
 									(NestedWord<CodeBlock>) m_Counterexample.getWord(), true, false)).getResult();
@@ -624,9 +631,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 							}
 						}
 						assert (new InductivityCheck(m_Services, test, false, true,
-								new IncrementalHoareTripleChecker(
-										m_RootNode.getRootAnnot().getManagedScript(), m_ModGlobVarManager,
-										m_SmtManager.getBoogie2Smt()))).getResult();
+								new IncrementalHoareTripleChecker(m_RootNode.getRootAnnot().getManagedScript(),
+										m_ModGlobVarManager, m_SmtManager.getBoogie2Smt()))).getResult();
 					}
 					break;
 				case EAGER:
@@ -777,8 +783,8 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 			solverHtc = new MonolithicHoareTripleChecker(smtManager);
 			break;
 		case INCREMENTAL:
-			solverHtc = new IncrementalHoareTripleChecker(smtManager.getManagedScript(),
-					modGlobVarManager, smtManager.getBoogie2Smt());
+			solverHtc = new IncrementalHoareTripleChecker(smtManager.getManagedScript(), modGlobVarManager,
+					smtManager.getBoogie2Smt());
 			break;
 		default:
 			throw new AssertionError("unknown value");
@@ -1007,9 +1013,9 @@ public class BasicCegarLoop extends AbstractCegarLoop {
 		}
 
 		if (m_ComputeHoareAnnotation) {
-			assert (new InductivityCheck(m_Services, dia, false, true,
-					new IncrementalHoareTripleChecker(m_RootNode.getRootAnnot().getManagedScript(),
-							m_ModGlobVarManager, m_SmtManager.getBoogie2Smt()))).getResult() : "Not inductive";
+			assert (new InductivityCheck(m_Services, dia, false, true, new IncrementalHoareTripleChecker(
+					m_RootNode.getRootAnnot().getManagedScript(), m_ModGlobVarManager, m_SmtManager.getBoogie2Smt())))
+							.getResult() : "Not inductive";
 		}
 		if (m_Pref.dumpAutomata()) {
 			String filename = "InterpolantAutomatonDeterminized_Iteration" + m_Iteration;

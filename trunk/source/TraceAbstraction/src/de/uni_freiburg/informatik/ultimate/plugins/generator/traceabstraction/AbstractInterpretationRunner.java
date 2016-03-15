@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.log4j.Logger;
 
@@ -37,7 +38,7 @@ public class AbstractInterpretationRunner {
 
 	private final Set<Set<CodeBlock>> mKnownPathPrograms;
 
-	private IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, IPredicate> mAbsIntResult;
+	private IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> mAbsIntResult;
 	private boolean mSkipSeen;
 
 	public AbstractInterpretationRunner(final IUltimateServiceProvider services,
@@ -63,44 +64,52 @@ public class AbstractInterpretationRunner {
 		mCegarLoopBenchmark.start(CegarLoopBenchmarkType.s_AbsIntTime);
 		mAbsIntResult = null;
 
-		if (!shouldRun(mKnownPathPrograms, currentCex)) {
+		final Set<CodeBlock> pathProgramSet = convertCex2Set(currentCex);
+
+		if (!mKnownPathPrograms.add(pathProgramSet)) {
 			mSkipSeen = true;
 			mLogger.info("Skipping current iteration for AI because path program would be the same");
 			mCegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AbsIntTime);
 			return;
 		}
+		mSkipSeen = false;
 
 		// allow for 20% of the remaining time
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
-		mLogger.info("Running abstract interpretation on error trace of length " + currentCex.getLength());
-		final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, IPredicate> result = AbstractInterpreter
+		mLogger.info("Running abstract interpretation on error trace of length " + currentCex.getLength()
+				+ " with the following transitions: ");
+		mLogger.info(String.join(", ", pathProgramSet.stream().map(a -> a.hashCode()).sorted()
+				.map(a -> "[" + String.valueOf(a) + "]").collect(Collectors.toList())));
+		final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, ?> result = AbstractInterpreter
 				.runSilently((NestedRun<CodeBlock, IPredicate>) currentCex, currentAbstraction, mRoot, timer,
 						mServices);
 		mAbsIntResult = result;
 		mCegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AbsIntTime);
 	}
 
-	private boolean shouldRun(final Set<Set<CodeBlock>> knownPathPrograms,
-			final IRun<CodeBlock, IPredicate> currentCex) {
-
+	private Set<CodeBlock> convertCex2Set(final IRun<CodeBlock, IPredicate> currentCex) {
 		final Set<CodeBlock> transitions = new HashSet<CodeBlock>();
 		// words count their states, so 0 is first state, length is last state
 		final int length = currentCex.getLength();
 		for (int i = 0; i < length - 1; ++i) {
 			transitions.add(currentCex.getSymbol(i));
 		}
-		return knownPathPrograms.add(transitions);
+		return transitions;
 	}
 
-	public void refine(final PredicateUnifier predUnifier, final SmtManager smtManager,
+	/**
+	 * 
+	 * @return true iff abstract interpretation was strong enough to prove infeasibility of the current counterexample.
+	 */
+	public boolean refine(final PredicateUnifier predUnifier, final SmtManager smtManager,
 			final INestedWordAutomaton<CodeBlock, IPredicate> abstraction, final IRun<CodeBlock, IPredicate> currentCex,
 			final RefineFunction refineFun) throws AutomataLibraryException {
 		if (mSkipSeen) {
-			return;
+			return false;
 		}
 		if (mAbsIntResult == null) {
-			mLogger.error("Cannot refine abstraction with AI automaton without calculating fixpoint first");
-			return;
+			mLogger.warn("Cannot refine abstraction with AI automaton without calculating fixpoint first");
+			return false;
 		}
 
 		mCegarLoopBenchmark.start(CegarLoopBenchmarkType.s_AbsIntTime);
@@ -112,7 +121,7 @@ public class AbstractInterpretationRunner {
 		mLogger.info("Finished additional refinement with abstract interpretation automaton. Did we make progress: "
 				+ aiResult);
 		mCegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AbsIntTime);
-
+		return !mAbsIntResult.hasReachedError();
 	}
 
 	private boolean hasAiProgress(final boolean result,

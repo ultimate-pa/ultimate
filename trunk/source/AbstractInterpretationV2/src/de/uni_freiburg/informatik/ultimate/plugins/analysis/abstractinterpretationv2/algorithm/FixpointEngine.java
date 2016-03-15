@@ -291,7 +291,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		// check if we should widen at this location before adding new successors
 		// we should widen if the current item is a transition to a loop head
 		boolean skipLoopEntrySuccessors = false;
-		final Pair<Integer, STATE> loopPair = currentItem.getLoopPair(mTransitionProvider.getTarget(current));
+		final LOCATION target = mTransitionProvider.getTarget(current);
+		final Pair<Integer, STATE> loopPair = currentItem.getLoopPair(target);
 		if (loopPair != null && loopPair.getFirst() > mMaxUnwindings) {
 			// we should widen with the last state at this loop head
 			final STATE oldLoopState = loopPair.getSecond();

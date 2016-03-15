@@ -6,18 +6,16 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.INestedWordAutomatonOldApi;
 import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nwalibrary.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.model.annotation.LoopEntryAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ILoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RCFGEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.RootAnnot;
@@ -28,27 +26,24 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class NWAPathProgramTransitionProvider<LOCATION>
-		implements ITransitionProvider<CodeBlock, LOCATION>, ILoopDetector<CodeBlock> {
+public class NWAPathProgramTransitionProvider
+		implements ITransitionProvider<CodeBlock, ProgramPoint>, ILoopDetector<CodeBlock> {
 
-	private final INestedWordAutomatonOldApi<CodeBlock, LOCATION> mAutomata;
-	private final NestedRun<CodeBlock, LOCATION> mCex;
+	private final NestedRun<CodeBlock, ?> mCex;
 	private Map<CodeBlock, Integer> mLetter2Index;
 	private CodeBlock mPostErrorLoc;
-//	private final Set<ProgramPoint> mLoopLocations;
+	// private final Set<ProgramPoint> mLoopLocations;
 
-	public NWAPathProgramTransitionProvider(final INestedWordAutomatonOldApi<CodeBlock, LOCATION> currentAutomata,
-			final NestedRun<CodeBlock, LOCATION> counterexample, final IUltimateServiceProvider services,
-			final RootAnnot annotation) {
-		mAutomata = currentAutomata;
+	public NWAPathProgramTransitionProvider(final NestedRun<CodeBlock, ?> counterexample,
+			final IUltimateServiceProvider services, final RootAnnot annotation) {
 		mCex = counterexample;
 		mLetter2Index = createLetter2Index(mCex);
 		// words count their states, so 0 is first state, length is last state
 		mPostErrorLoc = mCex.getSymbol(mCex.getLength() - 2);
-//		mLoopLocations = annotations.getLoopLocations().keySet();
+		// mLoopLocations = annotations.getLoopLocations().keySet();
 	}
 
-	private Map<CodeBlock, Integer> createLetter2Index(final NestedRun<CodeBlock, LOCATION> cex) {
+	private Map<CodeBlock, Integer> createLetter2Index(final NestedRun<CodeBlock, ?> cex) {
 		final Map<CodeBlock, Integer> rtr = new HashMap<>();
 		final int length = cex.getLength();
 		for (int i = 0; i < length - 1; ++i) {
@@ -59,7 +54,7 @@ public class NWAPathProgramTransitionProvider<LOCATION>
 
 	@Override
 	public Collection<CodeBlock> getSuccessors(CodeBlock elem, CodeBlock scope) {
-		final LOCATION target = getTarget(elem);
+		final ProgramPoint target = getTarget(elem);
 		if (target == null) {
 			return Collections.emptyList();
 		}
@@ -108,54 +103,19 @@ public class NWAPathProgramTransitionProvider<LOCATION>
 	}
 
 	@Override
-	public LOCATION getSource(CodeBlock current) {
-		final Integer index = mLetter2Index.get(current);
-		if (index == null) {
-			// this is not part of the CEX, it must be part of the path program
-			// TODO: Implement
-			throw new UnsupportedOperationException();
-		} else {
-			final LOCATION locAtIndex = mCex.getStateAtPosition(index);
-			return locAtIndex;
-		}
+	public ProgramPoint getSource(CodeBlock current) {
+		return (ProgramPoint) current.getSource();
 	}
 
 	@Override
-	public LOCATION getTarget(CodeBlock current) {
-		final Integer index = mLetter2Index.get(current);
-		if (index == null) {
-			// this is not part of the CEX, it must be part of the path program
-			// TODO: Implement
-			throw new UnsupportedOperationException();
-		} else {
-			final LOCATION locAtIndex = mCex.getStateAtPosition(index + 1);
-			return locAtIndex;
-		}
+	public ProgramPoint getTarget(CodeBlock current) {
+		return (ProgramPoint) current.getTarget();
 	}
 
 	@Override
-	public Collection<CodeBlock> getSuccessorActions(LOCATION loc) {
-		final Collection<CodeBlock> rtr = new ArrayList<>();
-		for (OutgoingInternalTransition<CodeBlock, LOCATION> internalSucc : mAutomata.internalSuccessors(loc)) {
-			final CodeBlock succ = internalSucc.getLetter();
-			if (mLetter2Index.containsKey(succ)) {
-				rtr.add(succ);
-			}
-		}
-		for (OutgoingCallTransition<CodeBlock, LOCATION> callSucc : mAutomata.callSuccessors(loc)) {
-			final CodeBlock succ = callSucc.getLetter();
-			if (mLetter2Index.containsKey(succ)) {
-				rtr.add(succ);
-			}
-		}
-		for (OutgoingReturnTransition<CodeBlock, LOCATION> returnSucc : mAutomata.returnSuccessors(loc)) {
-			final CodeBlock succ = returnSucc.getLetter();
-			if (mLetter2Index.containsKey(succ)) {
-				rtr.add(succ);
-			}
-		}
-		// TODO: Add loop successors
-		return rtr;
+	public Collection<CodeBlock> getSuccessorActions(ProgramPoint loc) {
+		return loc.getOutgoingEdges().stream().filter(a -> mLetter2Index.containsKey(a)).map(a -> (CodeBlock) a)
+				.collect(Collectors.toList());
 	}
 
 	private Collection<CodeBlock> getValidCodeBlocks(final Collection<CodeBlock> successors, CodeBlock scope) {
@@ -213,9 +173,7 @@ public class NWAPathProgramTransitionProvider<LOCATION>
 	@Override
 	public boolean isEnteringLoop(CodeBlock transition) {
 		assert transition != null;
-//		final LOCATION source = getSource(transition);
-		LoopEntryAnnotation leannot = LoopEntryAnnotation.getAnnotation(transition);
+		final LoopEntryAnnotation leannot = LoopEntryAnnotation.getAnnotation(transition);
 		return leannot != null;
-//		return mLoopLocations.contains(source);
 	}
 }
