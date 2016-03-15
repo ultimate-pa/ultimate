@@ -102,7 +102,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> run(final ACTION start, final Script script,
 			final Boogie2SMT bpl2smt,
 			final AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> intermediateResult) {
-		mLogger.info("Starting fixpoint engine");
+		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName());
 		mResult = (intermediateResult == null ? new AbstractInterpretationResult<>() : intermediateResult);
 		mBenchmark = mResult.getBenchmark();
 		calculateFixpoint(start);
@@ -165,9 +165,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			}
 
 			if (postStates.size() > mMaxParallelStates) {
-				mLogger.warn("Domain " + mDomain.getClass().getSimpleName()
-						+ " produced too many abstract states during post: " + mMaxParallelStates + " allowed, "
-						+ postStates.size() + " received.");
+				mLogger.warn(getLogMessageWarnTooManyPostStates(postStates));
 				postStates = Collections
 						.singletonList(postStates.stream().reduce((a, b) -> mergeOperator.apply(a, b)).get());
 			}
@@ -289,8 +287,9 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		}
 
 		// check if we should widen at this location before adding new successors
+		// we should widen if the current item is a transition to a loop head
 		boolean skipLoopEntrySuccessors = false;
-		final Pair<Integer, STATE> loopPair = currentItem.getLoopPair(mTransitionProvider.getSource(current));
+		final Pair<Integer, STATE> loopPair = currentItem.getLoopPair(mTransitionProvider.getTarget(current));
 		if (loopPair != null && loopPair.getFirst() > mMaxUnwindings) {
 			// we should widen with the last state at this loop head
 			final STATE oldLoopState = loopPair.getSecond();
@@ -309,7 +308,10 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			skipLoopEntrySuccessors = checkFixpoint(oldLoopState, currentPostState);
 
 			if (!skipLoopEntrySuccessors) {
-				// if it is no fixpoint, we really have to widen
+				// it is no fixpoint, we really have to widen
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(getLogMessageNoFixpointFound(oldLoopState, currentPostState));
+				}
 				final STATE widenedState = widen(currentStateStorage, widening, current, oldLoopState,
 						currentPostState);
 				availablePostStates.clear();
@@ -526,6 +528,12 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		}
 	}
 
+	private StringBuilder getLogMessageWarnTooManyPostStates(List<STATE> postStates) {
+		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Domain ")
+				.append(mDomain.getClass().getSimpleName()).append(" produced too many abstract states during post: ")
+				.append(mMaxParallelStates).append(" allowed, ").append(postStates.size()).append(" received.");
+	}
+
 	private String getLogMessageUnsoundPost(STATE preStateWithFreshVariables, List<STATE> postStates,
 			ACTION currentAction) {
 		final StringBuilder sb = new StringBuilder();
@@ -572,6 +580,13 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Found fixpoint state [")
 				.append(oldPostState.hashCode()).append("] ").append(oldPostState.toLogString())
 				.append(" -- replacing with [").append(newPostState.hashCode()).append("]");
+	}
+
+	private StringBuilder getLogMessageNoFixpointFound(STATE oldPostState, final STATE newPostState) {
+		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" New post state [")
+				.append(newPostState.hashCode()).append("] ").append(newPostState.toLogString())
+				.append(" is no fixpoint compared to old state  [").append(oldPostState.hashCode()).append("] ")
+				.append(oldPostState.toLogString());
 	}
 
 	private StringBuilder getLogMessageMergeResult(STATE newPostState) {
