@@ -56,26 +56,35 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, CodeBlock, IBoo
 	}
 
 	@Override
-	public boolean isPostSound(final STATE pre, final List<STATE> postStates, final CodeBlock transition) {
-		final IPredicate precond = createPredicateFromState(Collections.singletonList(pre));
+	public boolean isPostSound(final STATE stateBeforeLeaving, final STATE stateAfterLeaving,
+			final List<STATE> postStates, final CodeBlock transition) {
+		final IPredicate precond = createPredicateFromState(Collections.singletonList(stateBeforeLeaving));
 		final IPredicate postcond = createPredicateFromState(postStates);
+		final IPredicate precondHier;
 		final Validity result;
 
 		if (transition instanceof Call) {
+			precondHier = null;
 			result = mHTC.checkCall(precond, transition, postcond);
 		} else if (transition instanceof Return) {
-//			result = mHTC.checkReturn(preLin, preHier, cb, succ)(precond, transition, postcond);
-			//TODO: How to check return? 
-			result = Validity.VALID;
+			precondHier = createPredicateFromState(Collections.singletonList(stateAfterLeaving));
+			result = mHTC.checkReturn(precond, precondHier, transition, postcond);
 		} else {
+			precondHier = null;
 			result = mHTC.checkInternal(precond, transition, postcond);
 		}
 		mHTC.releaseLock();
 
 		if (result != Validity.VALID) {
 			mLogger.fatal("Soundness check failed for the following triple:");
-			mLogger.fatal(
-					"Pre: {" + SmtUtils.simplify(mScript, precond.getFormula(), mServices).toStringDirect() + "}");
+			final String simplePre = SmtUtils.simplify(mScript, precond.getFormula(), mServices).toStringDirect();
+			if (precondHier == null) {
+				mLogger.fatal("Pre: {" + simplePre + "}");
+			} else {
+				mLogger.fatal("PreBefore: {" + simplePre + "}");
+				mLogger.fatal("PreAfter: {"
+						+ SmtUtils.simplify(mScript, precondHier.getFormula(), mServices).toStringDirect() + "}");
+			}
 			mLogger.fatal(transition.getTransitionFormula().getFormula().toStringDirect());
 			mLogger.fatal(
 					"Post: {" + SmtUtils.simplify(mScript, postcond.getFormula(), mServices).toStringDirect() + "}");

@@ -150,11 +150,13 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				postStates = post.apply(preStateWithFreshVariables, currentAction);
 			} else {
 				// a context switch happened
+				// TODO: save the preState for evaluation of old variables
 				postStates = post.apply(preState, preStateWithFreshVariables, currentAction);
 			}
 
-			assert mDebugHelper.isPostSound(preStateWithFreshVariables, postStates,
-					currentAction) : getLogMessageUnsoundPost(preStateWithFreshVariables, postStates, currentAction);
+			assert mDebugHelper.isPostSound(preState, preStateWithFreshVariables, postStates,
+					currentAction) : getLogMessageUnsoundPost(preState, preStateWithFreshVariables, postStates,
+							currentAction);
 
 			if (postStates.isEmpty()) {
 				// if there are no post states, we interpret this as bottom
@@ -534,12 +536,17 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				.append(mMaxParallelStates).append(" allowed, ").append(postStates.size()).append(" received.");
 	}
 
-	private String getLogMessageUnsoundPost(STATE preStateWithFreshVariables, List<STATE> postStates,
-			ACTION currentAction) {
+	private String getLogMessageUnsoundPost(final STATE preState, final STATE preStateWithFreshVariables,
+			final List<STATE> postStates, final ACTION currentAction) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Post is unsound because the term-transformation of the following triple is not valid: {");
-		sb.append(preStateWithFreshVariables.toLogString());
+		sb.append(preState.toLogString());
 		sb.append("} ");
+		if (preState != preStateWithFreshVariables) {
+			sb.append("{");
+			sb.append(preStateWithFreshVariables.toLogString());
+			sb.append("} ");
+		}
 		sb.append(mTransitionProvider.toLogString(currentAction));
 		sb.append(" {");
 		final Iterator<STATE> iter = postStates.iterator();
