@@ -127,16 +127,13 @@ public class CoreUtil {
 	}
 
 	/**
-	 * Returns all elements of a collection that match the check defined by
-	 * predicate.
+	 * Returns all elements of a collection that match the check defined by predicate.
 	 * 
 	 * @param collection
 	 *            The collection you want to filter. May not be null.
 	 * @param predicate
-	 *            The predicate you want to use to filter said collection. May
-	 *            not be null.
-	 * @return A new collection that only contains elements for which
-	 *         {@link IPredicate#check(Object)} returned true.
+	 *            The predicate you want to use to filter said collection. May not be null.
+	 * @return A new collection that only contains elements for which {@link IPredicate#check(Object)} returned true.
 	 */
 	public static <E> Collection<E> where(Collection<E> collection, IPredicate<E> predicate) {
 		ArrayList<E> rtr = new ArrayList<>();
@@ -149,8 +146,7 @@ public class CoreUtil {
 	}
 
 	/**
-	 * Returns a {@link Set} of elements that are created by applying the
-	 * reducer to every element in the collection.
+	 * Returns a {@link Set} of elements that are created by applying the reducer to every element in the collection.
 	 * 
 	 * @param collection
 	 *            May not be null.
@@ -199,17 +195,14 @@ public class CoreUtil {
 	}
 
 	/**
-	 * Indents a (possibly multiline) String such that the resulting
-	 * StringBuilder object contains the same String, but indented with the
-	 * indentPrefix. It also converts line breaks to the system-specific line
-	 * separator.
+	 * Indents a (possibly multiline) String such that the resulting StringBuilder object contains the same String, but
+	 * indented with the indentPrefix. It also converts line breaks to the system-specific line separator.
 	 * 
 	 * @param original
 	 * @param indentPrefix
 	 * @param forceRemoveLastLinebreak
-	 *            When true, the last linebreak will always be removed, when
-	 *            false, an existing last line break will be preserved (but
-	 *            converted to system-specific line break)
+	 *            When true, the last linebreak will always be removed, when false, an existing last line break will be
+	 *            preserved (but converted to system-specific line break)
 	 * @return
 	 */
 	public static StringBuilder indentMultilineString(String original, String indentPrefix,
@@ -234,8 +227,7 @@ public class CoreUtil {
 	}
 
 	/**
-	 * Flattens a string, i.e. removes all line breaks and replaces them with
-	 * separator
+	 * Flattens a string, i.e. removes all line breaks and replaces them with separator
 	 * 
 	 * @param original
 	 * @param separator
@@ -265,8 +257,8 @@ public class CoreUtil {
 	}
 
 	/**
-	 * Returns new Collections that contains all IResults from ultimateIResults
-	 * that are subclasses of the class resClass.
+	 * Returns new Collections that contains all IResults from ultimateIResults that are subclasses of the class
+	 * resClass.
 	 */
 	public static <E extends IResult> Collection<E> filterResults(Map<String, List<IResult>> ultimateIResults,
 			Class<E> resClass) {
@@ -274,7 +266,7 @@ public class CoreUtil {
 		for (Entry<String, List<IResult>> entry : ultimateIResults.entrySet()) {
 			for (IResult res : entry.getValue()) {
 				if (resClass.isAssignableFrom(res.getClass())) {
-//				if (res.getClass().isAssignableFrom(resClass)) {
+					// if (res.getClass().isAssignableFrom(resClass)) {
 					@SuppressWarnings("unchecked")
 					E benchmarkResult = (E) res;
 					filteredList.add((E) benchmarkResult);
@@ -283,10 +275,10 @@ public class CoreUtil {
 		}
 		return filteredList;
 	}
-	
+
 	public static String convertStreamToString(InputStream is) {
-	    final Scanner s = new Scanner(is).useDelimiter("\\A");
-	    return s.hasNext() ? s.next() : "";
+		final Scanner s = new Scanner(is).useDelimiter("\\A");
+		return s.hasNext() ? s.next() : "";
 	}
 
 }
