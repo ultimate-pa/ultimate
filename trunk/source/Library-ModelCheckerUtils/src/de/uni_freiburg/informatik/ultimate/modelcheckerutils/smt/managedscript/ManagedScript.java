@@ -162,10 +162,4 @@ public class ManagedScript {
 		assert lockOwner == m_LockOwner : "ManagedScript locked by " + m_LockOwner;
 		return m_Script.echo(msg);
 	}
-	
-	
-	
-	
-	
-
 }
