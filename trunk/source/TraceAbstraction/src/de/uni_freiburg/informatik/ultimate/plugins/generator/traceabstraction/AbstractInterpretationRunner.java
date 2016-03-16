@@ -57,6 +57,7 @@ public class AbstractInterpretationRunner {
 	/**
 	 * Generate fixpoints for each program location of a path program represented by the current counterexample in the
 	 * current abstraction.
+	 * 
 	 */
 	public void generateFixpoints(final IRun<CodeBlock, IPredicate> currentCex,
 			final INestedWordAutomatonOldApi<CodeBlock, IPredicate> currentAbstraction) {
@@ -88,23 +89,41 @@ public class AbstractInterpretationRunner {
 		mCegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AbsIntTime);
 	}
 
-	private Set<CodeBlock> convertCex2Set(final IRun<CodeBlock, IPredicate> currentCex) {
-		final Set<CodeBlock> transitions = new HashSet<CodeBlock>();
-		// words count their states, so 0 is first state, length is last state
-		final int length = currentCex.getLength();
-		for (int i = 0; i < length - 1; ++i) {
-			transitions.add(currentCex.getSymbol(i));
+	/**
+	 * 
+	 * @return true iff abstract interpretation was strong enough to prove infeasibility of the current counterexample.
+	 */
+	public boolean hasShownInfeasibility() {
+		return mAbsIntResult != null && !mAbsIntResult.hasReachedError();
+	}
+
+	public NestedWordAutomaton<CodeBlock, IPredicate> constructInterpolantAutomaton(final PredicateUnifier predUnifier,
+			final SmtManager smtManager, final INestedWordAutomaton<CodeBlock, IPredicate> abstraction,
+			final IRun<CodeBlock, IPredicate> currentCex) {
+		if (mSkipSeen) {
+			return null;
 		}
-		return transitions;
+		if (mAbsIntResult == null) {
+			mLogger.warn("Cannot construct AI interpolant automaton without calculating fixpoint first");
+			return null;
+		}
+
+		mCegarLoopBenchmark.start(CegarLoopBenchmarkType.s_AbsIntTime);
+		mLogger.info("Constructing abstract interpretation automaton");
+		final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton = new AbstractInterpretationAutomatonGenerator(
+				mServices, abstraction, mAbsIntResult, predUnifier, smtManager).getResult();
+		mCegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AbsIntTime);
+		return aiInterpolAutomaton;
 	}
 
 	/**
 	 * 
 	 * @return true iff abstract interpretation was strong enough to prove infeasibility of the current counterexample.
 	 */
-	public boolean refine(final PredicateUnifier predUnifier, final SmtManager smtManager,
-			final INestedWordAutomaton<CodeBlock, IPredicate> abstraction, final IRun<CodeBlock, IPredicate> currentCex,
-			final RefineFunction refineFun) throws AutomataLibraryException {
+	public boolean refine(final PredicateUnifier predUnifier,
+			final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton,
+			final IRun<CodeBlock, IPredicate> currentCex, final RefineFunction refineFun)
+			throws AutomataLibraryException {
 		if (mSkipSeen) {
 			return false;
 		}
@@ -115,14 +134,22 @@ public class AbstractInterpretationRunner {
 
 		mCegarLoopBenchmark.start(CegarLoopBenchmarkType.s_AbsIntTime);
 		mLogger.info("Refining with abstract interpretation automaton");
-		final NestedWordAutomaton<CodeBlock, IPredicate> aiInterpolAutomaton = new AbstractInterpretationAutomatonGenerator(
-				mServices, abstraction, mAbsIntResult, predUnifier, smtManager).getResult();
 		boolean aiResult = refineFun.refine(aiInterpolAutomaton, predUnifier);
 		assert hasAiProgress(aiResult, aiInterpolAutomaton, currentCex) : "No progress during AI refinement";
 		mLogger.info("Finished additional refinement with abstract interpretation automaton. Did we make progress: "
 				+ aiResult);
 		mCegarLoopBenchmark.stop(CegarLoopBenchmarkType.s_AbsIntTime);
 		return !mAbsIntResult.hasReachedError();
+	}
+
+	private Set<CodeBlock> convertCex2Set(final IRun<CodeBlock, IPredicate> currentCex) {
+		final Set<CodeBlock> transitions = new HashSet<CodeBlock>();
+		// words count their states, so 0 is first state, length is last state
+		final int length = currentCex.getLength();
+		for (int i = 0; i < length - 1; ++i) {
+			transitions.add(currentCex.getSymbol(i));
+		}
+		return transitions;
 	}
 
 	private boolean hasAiProgress(final boolean result,
