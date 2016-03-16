@@ -32,6 +32,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -41,6 +42,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IAbstractStateStorage;
@@ -173,10 +175,10 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 
 	@Override
 	public Set<Term> getTerms(final CodeBlock initialTransition, final Script script, final Boogie2SMT bpl2smt) {
-		final Set<Term> rtr = new HashSet<>();
+		final Set<Term> rtr = new LinkedHashSet<>();
 		getLocalTerms(initialTransition, script, bpl2smt, rtr);
 		for (final BaseRcfgAbstractStateStorageProvider<STATE, LOCATION> child : mChildStores) {
-			child.getLocalTerms(initialTransition, script, bpl2smt, rtr);
+			rtr.addAll(child.getTerms(initialTransition, script, bpl2smt));
 		}
 		return rtr;
 	}
@@ -236,7 +238,7 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 	private Set<Term> getLocalTerms(final CodeBlock initialTransition, final Script script, final Boogie2SMT bpl2smt,
 			final Set<Term> terms) {
 		final Deque<LOCATION> worklist = new ArrayDeque<>();
-		final Set<LOCATION> closed = new HashSet<>();
+		final Set<LOCATION> closed = new LinkedHashSet<>();
 
 		worklist.add(mTransProvider.getTarget(initialTransition));
 
@@ -264,9 +266,11 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 				// no states for this location
 				terms.add(falseTerm);
 			} else {
-				for (STATE state : states) {
-					terms.add(state.getTerm(script, bpl2smt));
+				Term localTerm = falseTerm;
+				for (final STATE state : states) {
+					localTerm = Util.or(script, localTerm, state.getTerm(script, bpl2smt));
 				}
+				terms.add(localTerm);
 			}
 		}
 		return terms;

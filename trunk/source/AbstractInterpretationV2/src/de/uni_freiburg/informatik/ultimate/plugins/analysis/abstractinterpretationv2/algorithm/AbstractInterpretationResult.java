@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,7 +35,7 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 		mCounterexamples = new ArrayList<>();
 		mBenchmark = new AbstractInterpretationBenchmark<>();
 		mLoc2Term = new HashMap<LOCATION, Term>();
-		mTerms = new HashSet<>();
+		mTerms = new LinkedHashSet<>();
 	}
 
 	protected void reachedError(final ITransitionProvider<ACTION, LOCATION> transitionProvider,
