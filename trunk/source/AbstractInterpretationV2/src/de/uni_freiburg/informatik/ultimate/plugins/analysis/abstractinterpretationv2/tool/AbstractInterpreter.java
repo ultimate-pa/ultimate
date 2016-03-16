@@ -134,13 +134,15 @@ public final class AbstractInterpreter {
 
 		final Logger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		try {
-			final NWAPathProgramTransitionProvider transProvider = new NWAPathProgramTransitionProvider(
-					counterexample, services, root.getRootAnnot());
+			final NWAPathProgramTransitionProvider transProvider = new NWAPathProgramTransitionProvider(counterexample,
+					services, root.getRootAnnot());
 			return runSilentlyOnNWA(transProvider, counterexample.getSymbol(0), root, timer, services);
 		} catch (OutOfMemoryError oom) {
 			throw oom;
 		} catch (IllegalArgumentException iae) {
 			throw iae;
+		} catch (AssertionError aerr) {
+			throw aerr;
 		} catch (ToolchainCanceledException tce) {
 			// suppress timeout results / timeouts
 			return null;
