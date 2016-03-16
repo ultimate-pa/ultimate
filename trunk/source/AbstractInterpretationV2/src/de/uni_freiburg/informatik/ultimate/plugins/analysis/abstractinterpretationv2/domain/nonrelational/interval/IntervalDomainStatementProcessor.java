@@ -36,7 +36,6 @@ import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
-import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVisitor;
@@ -250,12 +249,16 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 
 	private Expression handleBinaryExpression(final BinaryExpression expr) {
 		if (expr.getOperator() == Operator.COMPNEQ) {
-			if (expr.getType() instanceof PrimitiveType) {
+			if (expr.getType() instanceof PrimitiveType && expr.getLeft().getType() instanceof PrimitiveType
+			        && expr.getRight().getType() instanceof PrimitiveType) {
 				final PrimitiveType prim = (PrimitiveType) expr.getType();
-				if (prim.getTypeCode() == PrimitiveType.BOOL) {
+				final PrimitiveType leftPrim = (PrimitiveType) expr.getLeft().getType();
+				final PrimitiveType rightPrim = (PrimitiveType) expr.getRight().getType();
+				if (prim.getTypeCode() == PrimitiveType.BOOL && leftPrim.getTypeCode() == PrimitiveType.BOOL
+				        && rightPrim.getTypeCode() == PrimitiveType.BOOL) {
 					final UnaryExpression negatedRight = new UnaryExpression(expr.getLocation(),
 					        UnaryExpression.Operator.LOGICNEG, expr.getRight());
-					negatedRight.setType(BoogieType.boolType);
+					negatedRight.setType(expr.getRight().getType());
 					final BinaryExpression newExp = new BinaryExpression(expr.getLocation(), Operator.COMPEQ,
 					        expr.getLeft(), negatedRight);
 					newExp.setType(expr.getType());
@@ -272,8 +275,10 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 
 			final BinaryExpression negativeCase = new BinaryExpression(expr.getLocation(), Operator.COMPLT,
 			        expr.getLeft(), expr.getRight());
+			negativeCase.setType(expr.getType());
 			final BinaryExpression positiveCase = new BinaryExpression(expr.getLocation(), Operator.COMPGT,
 			        expr.getLeft(), expr.getRight());
+			positiveCase.setType(expr.getType());
 
 			final Expression newExp = new BinaryExpression(expr.getLocation(), Operator.LOGICOR, negativeCase,
 			        positiveCase);
@@ -299,6 +304,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 						final BinaryExpression newRightGt = new BinaryExpression(expr.getRight().getLocation(),
 						        Operator.ARITHPLUS, expr.getRight(),
 						        new IntegerLiteral(expr.getRight().getLocation(), "1"));
+						newRightGt.setType(expr.getRight().getType());
 
 						newExp = new BinaryExpression(expr.getLocation(), Operator.COMPGEQ, expr.getLeft(), newRightGt);
 						break;
@@ -306,7 +312,8 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 						final BinaryExpression newRightLt = new BinaryExpression(expr.getRight().getLocation(),
 						        Operator.ARITHMINUS, expr.getRight(),
 						        new IntegerLiteral(expr.getRight().getLocation(), "1"));
-
+						newRightLt.setType(expr.getRight().getType());
+						
 						newExp = new BinaryExpression(expr.getLocation(), Operator.COMPLEQ, expr.getLeft(), newRightLt);
 						break;
 					default:
@@ -376,7 +383,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 					mLogger.warn("The comparison operator " + binexp.getOperator() + " is not yet supported.");
 				default:
 					newOp = binexp.getOperator();
-					throw new UnsupportedOperationException("Fix me");
+					throw new UnsupportedOperationException("Fix me: " + binexp.getOperator());
 				}
 
 				final BinaryExpression newExp = new BinaryExpression(binexp.getLocation(), newOp, newLeft, newRight);
