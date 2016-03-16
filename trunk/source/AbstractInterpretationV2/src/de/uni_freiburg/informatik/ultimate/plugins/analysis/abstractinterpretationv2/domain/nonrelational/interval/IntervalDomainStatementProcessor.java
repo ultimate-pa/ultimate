@@ -31,13 +31,16 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.apache.log4j.Logger;
 
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.ArrayType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.model.IType;
 import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVisitor;
+import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
@@ -247,6 +250,26 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 
 	private Expression handleBinaryExpression(final BinaryExpression expr) {
 		if (expr.getOperator() == Operator.COMPNEQ) {
+			if (expr.getType() instanceof PrimitiveType) {
+				final PrimitiveType prim = (PrimitiveType) expr.getType();
+				if (prim.getTypeCode() == PrimitiveType.BOOL) {
+					final UnaryExpression negatedRight = new UnaryExpression(expr.getLocation(),
+					        UnaryExpression.Operator.LOGICNEG, expr.getRight());
+					negatedRight.setType(BoogieType.boolType);
+					final BinaryExpression newExp = new BinaryExpression(expr.getLocation(), Operator.COMPEQ,
+					        expr.getLeft(), negatedRight);
+					newExp.setType(expr.getType());
+
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Expression ")
+						        .append(BoogiePrettyPrinter.print(expr)).append(" rewritten to: ")
+						        .append(BoogiePrettyPrinter.print(newExp)).toString());
+					}
+
+					return newExp;
+				}
+			}
+
 			final BinaryExpression negativeCase = new BinaryExpression(expr.getLocation(), Operator.COMPLT,
 			        expr.getLeft(), expr.getRight());
 			final BinaryExpression positiveCase = new BinaryExpression(expr.getLocation(), Operator.COMPGT,
@@ -254,10 +277,13 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 
 			final Expression newExp = new BinaryExpression(expr.getLocation(), Operator.LOGICOR, negativeCase,
 			        positiveCase);
+			newExp.setType(expr.getType());
 
-			mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Expression ")
-			        .append(BoogiePrettyPrinter.print(expr)).append(" rewritten to: ")
-			        .append(BoogiePrettyPrinter.print(newExp)));
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Expression ")
+				        .append(BoogiePrettyPrinter.print(expr)).append(" rewritten to: ")
+				        .append(BoogiePrettyPrinter.print(newExp)));
+			}
 			return newExp;
 		} else if (expr.getOperator() == Operator.COMPGT || expr.getOperator() == Operator.COMPLT) {
 			if (expr.getLeft().getType() instanceof PrimitiveType
@@ -287,9 +313,13 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 						throw new UnsupportedOperationException("Unexpected operator: " + expr.getOperator());
 					}
 
-					mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Expression ")
-					        .append(BoogiePrettyPrinter.print(expr)).append(" rewritten to: ")
-					        .append(BoogiePrettyPrinter.print(newExp)));
+					newExp.setType(expr.getType());
+
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Expression ")
+						        .append(BoogiePrettyPrinter.print(expr)).append(" rewritten to: ")
+						        .append(BoogiePrettyPrinter.print(newExp)));
+					}
 					return newExp;
 				}
 			}
@@ -305,7 +335,9 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 				Operator newOp;
 
 				Expression newLeft = binexp.getLeft();
+				final IType leftType = binexp.getLeft().getType();
 				Expression newRight = binexp.getRight();
+				final IType rightType = binexp.getRight().getType();
 
 				switch (binexp.getOperator()) {
 				case COMPEQ:
@@ -329,12 +361,16 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 				case LOGICAND:
 					newOp = Operator.LOGICOR;
 					newLeft = new UnaryExpression(binexp.getLocation(), UnaryExpression.Operator.LOGICNEG, newLeft);
+					newLeft.setType(leftType);
 					newRight = new UnaryExpression(binexp.getLocation(), UnaryExpression.Operator.LOGICNEG, newRight);
+					newRight.setType(rightType);
 					break;
 				case LOGICOR:
 					newOp = Operator.LOGICAND;
 					newLeft = new UnaryExpression(binexp.getLocation(), UnaryExpression.Operator.LOGICNEG, newLeft);
+					newLeft.setType(leftType);
 					newRight = new UnaryExpression(binexp.getLocation(), UnaryExpression.Operator.LOGICNEG, newRight);
+					newRight.setType(rightType);
 					break;
 				case COMPPO:
 					mLogger.warn("The comparison operator " + binexp.getOperator() + " is not yet supported.");
@@ -344,10 +380,13 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 				}
 
 				final BinaryExpression newExp = new BinaryExpression(binexp.getLocation(), newOp, newLeft, newRight);
+				newExp.setType(expr.getType());
 
-				mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Expression ")
-				        .append(BoogiePrettyPrinter.print(expr)).append(" rewritten to: ")
-				        .append(BoogiePrettyPrinter.print(newExp)));
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Expression ")
+					        .append(BoogiePrettyPrinter.print(expr)).append(" rewritten to: ")
+					        .append(BoogiePrettyPrinter.print(newExp)));
+				}
 
 				return newExp;
 			} else if (expr.getExpr() instanceof UnaryExpression) {
