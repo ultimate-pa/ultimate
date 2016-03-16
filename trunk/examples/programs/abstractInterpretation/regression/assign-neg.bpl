@@ -2,6 +2,6 @@
 procedure ULTIMATE.start() {
 	var x, y: int;
 	x := 3;
-	x := -x;
+	y := -x;
 	assert x == -y;
 }
