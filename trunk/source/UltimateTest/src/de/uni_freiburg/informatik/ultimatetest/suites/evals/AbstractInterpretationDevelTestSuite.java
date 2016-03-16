@@ -85,35 +85,8 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 	private static final String[] INPUT = new String[] {
 			/* ULTIMATE repo */
-//			"examples/programs/abstractInterpretation/",
 			"examples/programs/abstractInterpretation/regression",
-//			"examples/programs/abstractInterpretation/regression/count_by_1_variant_true-unreach-call.i.bpl",
 //			"examples/programs/abstractInterpretation/regression/loop-nested-assume-safe.bpl",
-//			"examples/programs/abstractInterpretation/regression/procedure-Call-bools.bpl",
-//			"examples/programs/abstractInterpretation/regression/assert-relations-int-nonstrict.bpl",
-			
-//			"examples/svcomp/loop-new/count_by_1_true-unreach-call.i"
-//			"examples/svcomp/loop-new/count_by_1_variant_true-unreach-call.i" 
-			
-//			"examples/programs/abstractInterpretation/regression/loop-nondet.bpl",
-//			"examples/programs/abstractInterpretation/regression/loop-nested-unsafe.bpl",
-//			"examples/programs/abstractInterpretation/regression/loop-procedure.bpl",
-//			"examples/svcomp/loops/s3_false-unreach-call.i",
-//			"examples/svcomp/loops/insertion_sort_false-unreach-call.i"
-			
-			
-//			"examples/programs/abstractInterpretation/regression/loop-110517_Martin01-safe.bpl",
-//			"examples/programs/real-life/PricedTimedAutomata"
-			
-//			"examples/programs/abstractInterpretation/regression/loop-Goto.bpl",
-			
-
-			// ################################# Bugs #########################
-			// ########### Here are representatives of current bugs ########### 
-
-			//Unknown Term
-//			"examples/svcomp/eca-rers2012/Problem17_label25_false-unreach-call.c",
-//			"examples/svcomp/product-lines/elevator_spec1_product29_true-unreach-call.cil.c"
 	};
 
 	// @formatter:on
