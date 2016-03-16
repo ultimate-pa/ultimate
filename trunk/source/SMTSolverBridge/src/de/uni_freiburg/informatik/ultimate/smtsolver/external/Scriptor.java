@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.smtsolver.external;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.function.Supplier;
 
 import org.apache.log4j.Logger;
 
@@ -45,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.util.ToolchainCanceledException;
 
 /**
  * Create a script that connects to an external SMT solver. The solver must be SMTLIB-2 compliant and expect commands on
@@ -213,21 +211,16 @@ public class Scriptor extends NoopScript {
 
 	@Override
 	public LBool assertTerm(Term term) throws SMTLIBException {
-		return filterSMTLibExceptionTimeouts(() -> {
-			// super.assertTerm(term);
-			mExecutor.input("(assert " + term.toStringDirect() + ")");
-			mExecutor.parseSuccess();
-			return LBool.UNKNOWN;
-		});
+		mExecutor.input("(assert " + term.toStringDirect() + ")");
+		mExecutor.parseSuccess();
+		return LBool.UNKNOWN;
 	}
 
 	@Override
 	public LBool checkSat() throws SMTLIBException {
-		return filterSMTLibExceptionTimeouts(() -> {
-			mExecutor.input("(check-sat)");
-			mStatus = mExecutor.parseCheckSatResult();
-			return mStatus;
-		});
+		mExecutor.input("(check-sat)");
+		mStatus = mExecutor.parseCheckSatResult();
+		return mStatus;
 	}
 
 	@Override
@@ -244,10 +237,8 @@ public class Scriptor extends NoopScript {
 
 	@Override
 	public Term[] getUnsatCore() throws SMTLIBException, UnsupportedOperationException {
-		return filterSMTLibExceptionTimeouts(() -> {
-			mExecutor.input("(get-unsat-core)");
-			return mExecutor.parseGetUnsatCoreResult();
-		});
+		mExecutor.input("(get-unsat-core)");
+		return mExecutor.parseGetUnsatCoreResult();
 	}
 
 	@Override
@@ -325,14 +316,4 @@ public class Scriptor extends NoopScript {
 		return mStatus;
 	}
 
-	private <T> T filterSMTLibExceptionTimeouts(final Supplier<T> fun) {
-		try {
-			return fun.get();
-		} catch (final SMTLIBException ex) {
-			if (ex.getMessage() != null && ex.getMessage().endsWith("canceled")) {
-				throw new ToolchainCanceledException(Scriptor.class);
-			}
-			throw ex;
-		}
-	}
 }
