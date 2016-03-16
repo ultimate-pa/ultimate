@@ -182,6 +182,11 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 					continue;
 				}
 
+				// check if the current state is a fixpoint
+				if (checkFixpoint(currentStateStorage, currentAction, pendingNewPostState)) {
+					continue;
+				}
+
 				if (mLoopDetector.isEnteringLoop(currentAction)) {
 					// we are entering a loop
 					loopEnter(currentItem);
@@ -206,11 +211,6 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 						// we are leaving a loop
 						loopLeave(currentItem);
 					}
-				}
-
-				// check if the current state is a fixpoint
-				if (checkFixpoint(currentStateStorage, currentAction, newPostState)) {
-					continue;
 				}
 
 				if (mLogger.isDebugEnabled()) {
@@ -290,30 +290,36 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 		// check if we should widen at this location before adding new successors
 		// we should widen if the current item is a transition to a loop head
-		boolean skipLoopEntrySuccessors = false;
 		final LOCATION target = mTransitionProvider.getTarget(current);
 		final Pair<Integer, STATE> loopPair = currentItem.getLoopPair(target);
+		Set<STATE> fixpoints = Collections.emptySet();
 		if (loopPair != null && loopPair.getFirst() > mMaxUnwindings) {
 			// we should widen with the last state at this loop head
 			final STATE oldLoopState = loopPair.getSecond();
 
-			// is one of the current states already a fixpoint?
-			skipLoopEntrySuccessors = availablePostStates.stream().anyMatch(a -> checkFixpoint(oldLoopState, a));
+			// remove all post states that are already fixpoints
+			// final List<STATE> fixpoints = availablePostStates.stream().filter(a -> checkFixpoint(oldLoopState, a))
+			// .collect(Collectors.toList());
 
-			if (!skipLoopEntrySuccessors) {
-				// it is no fixpoint, we really have to widen
-				if (mLogger.isDebugEnabled()) {
-					for (STATE postState : availablePostStates) {
-						mLogger.debug(getLogMessageNoFixpointFound(oldLoopState, postState));
-					}
-				}
-				availablePostStates = widen(currentStateStorage, wideningOp, current, oldLoopState, availablePostStates);
-			}
+			// it is no fixpoint, we really have to widen
+			// if (mLogger.isDebugEnabled()) {
+			// for (STATE postState : availablePostStates) {
+			// mLogger.debug(getLogMessageNoFixpointFound(oldLoopState, postState));
+			// }
+			// }
+			availablePostStates = widen(currentStateStorage, wideningOp, current, oldLoopState, availablePostStates);
+			fixpoints = availablePostStates.stream().filter(a -> checkFixpoint(oldLoopState, a))
+					.collect(Collectors.toSet());
 		}
 
 		for (final STATE postState : availablePostStates) {
 			for (final ACTION successor : successors) {
-				if (skipLoopEntrySuccessors && mLoopDetector.isEnteringLoop(successor)) {
+				if (worklist.stream().anyMatch(a -> a.getAction() == successor && a.getPreState() == postState)) {
+					// do not add already existing items
+					continue;
+				}
+				if (fixpoints.contains(postState) && mLoopDetector.isEnteringLoop(successor)) {
+					// do not continue with fixpoints into loops
 					continue;
 				}
 
@@ -343,9 +349,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 		final List<STATE> newPostStates = currentStateStorage.widenPostState(current, wideningOp, oldPostState);
 		if (mLogger.isDebugEnabled()) {
-			for (final STATE newPostState : newPostStates) {
-				mLogger.debug(getLogMessageUnwindingResult(newPostState));
-			}
+			newPostStates.forEach(a -> mLogger.debug(getLogMessageUnwindingResult(a)));
 		}
 		return newPostStates;
 	}
@@ -574,7 +578,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	private StringBuilder getLogMessageFixpointFound(STATE oldPostState, final STATE newPostState) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Found fixpoint state [")
 				.append(oldPostState.hashCode()).append("] ").append(oldPostState.toLogString())
-				.append(" -- replacing with [").append(newPostState.hashCode()).append("]");
+				.append(" is equal to [").append(newPostState.hashCode()).append("]");
 	}
 
 	private StringBuilder getLogMessageNoFixpointFound(STATE oldPostState, final STATE newPostState) {

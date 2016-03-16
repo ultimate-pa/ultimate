@@ -107,6 +107,10 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 		addState(transition, state, mTransProvider.getTarget(transition));
 	}
 
+	public void removeAbstractPostState(CodeBlock transition, STATE state) {
+		getStates(mTransProvider.getTarget(transition)).remove(state);
+	}
+
 	@Override
 	public STATE mergePostStates(CodeBlock transition) {
 		assert transition != null;
@@ -140,19 +144,18 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 			STATE operand) {
 		assert transition != null;
 		final Deque<STATE> states = getStates(mTransProvider.getTarget(transition));
-
 		final Iterator<STATE> iterator = states.iterator();
-		final List<STATE> newStates = new ArrayList<STATE>(states.size());
+		final Deque<STATE> newStates = new ArrayDeque<STATE>(states.size());
 		while (iterator.hasNext()) {
 			final STATE newState = wideningOp.apply(operand, iterator.next());
 			assert newState.getVariables().keySet()
 					.equals(operand.getVariables().keySet()) : "states have different variables";
 			assert newState != null;
 			iterator.remove();
-			newStates.add(newState);
+			newStates.addFirst(newState);
 		}
-		states.addAll(newStates);
-		return newStates;
+		newStates.forEach(a -> addAbstractPostState(transition, a));
+		return getAbstractPostStates(transition);
 	}
 
 	@Override
@@ -319,8 +322,10 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 		assert transition != null;
 		assert node.equals(mTransProvider.getSource(transition)) || node.equals(mTransProvider.getTarget(transition));
 		final Deque<STATE> states = getStates(node);
-		// TODO: Optimize by removing lower states if they are equal to this one
-		assert states.stream().allMatch(a -> a != state) : " state is already there";
+		if (states.stream().anyMatch(a -> a == state || a.isEqualTo(state))) {
+			// do not add already existing states or fixpoint states
+			return;
+		}
 		states.addFirst(state);
 	}
 
