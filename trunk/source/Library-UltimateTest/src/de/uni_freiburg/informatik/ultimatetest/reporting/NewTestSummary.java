@@ -160,7 +160,7 @@ public abstract class NewTestSummary implements ITestSummary {
 				.collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
 
 		final Set<Entry<UltimateRunDefinition, ExtendedResult>> safeResults = goodResults.stream().sequential()
-				.filter(a -> unsafeResults.contains(a))
+				.filter(a -> !unsafeResults.contains(a))
 				.collect(Collectors.toCollection(() -> new LinkedHashSet<>()));
 
 		final PartitionedResults rtr = new PartitionedResults();
