@@ -51,8 +51,11 @@ public class WitnessBugs extends AbstractEvalTestSuite {
 
 	private static Collection<UltimateRunDefinition> createDefs() {
 		Collection<UltimateRunDefinition> rtr = new ArrayList<>();
-		rtr.addAll(verifyWitnessSV("loops"));
-		rtr.addAll(verifyWitnessSV("product-lines"));
+//		rtr.addAll(produceWitnessSV("locks"));
+//		rtr.addAll(produceWitnessSV("loops/veris.c_NetBSD-libc__loop_true-unreach-call.c"));
+		rtr.addAll(verifyWitnessSV("loops/veris.c_NetBSD-libc__loop_true-unreach-call.c"));
+//		rtr.addAll(produceWitnessSV("loop-acceleration"));
+//		rtr.addAll(verifyWitnessSV("product-lines"));
 //		rtr.addAll(verifyWitnessSV("loops/array_true-unreach-call.i"));
 //		rtr.addAll(produceWitnessSV("loops/trex02_true-unreach-call_true-termination.i"));
 //		rtr.addAll(produceWitnessSV("recursive-simple/afterrec_true-unreach-call.c"));
@@ -112,12 +115,12 @@ public class WitnessBugs extends AbstractEvalTestSuite {
 	}
 
 	private static Collection<UltimateRunDefinition> verifyWitness(String example) {
-		return UltimateRunDefinitionGenerator.getRunDefinitionFromTrunkWithWitnessesFromSomeFolder(new String[] { example }, ALL_C,
-				"svcomp2016/witness-verif/svcomp-Reach-32bit-Automizer_Default-Witness.epf",
-				"AutomizerC_WitnessPrinter.xml","F:/tmp/ultimate wip/correctness witnesses/results");
-		
-//		return UltimateRunDefinitionGenerator.getRunDefinitionFromTrunkWithWitnesses(new String[] { example }, ALL_C,
+//		return UltimateRunDefinitionGenerator.getRunDefinitionFromTrunkWithWitnessesFromSomeFolder(new String[] { example }, ALL_C,
 //				"svcomp2016/witness-verif/svcomp-Reach-32bit-Automizer_Default-Witness.epf",
-//				"AutomizerC_WitnessPrinter.xml");
+//				"AutomizerC_WitnessPrinter.xml","F:/tmp/ultimate wip/correctness witnesses/results");
+		
+		return UltimateRunDefinitionGenerator.getRunDefinitionFromTrunkWithWitnesses(new String[] { example }, ALL_C,
+				"svcomp2016/witness-verif/svcomp-Reach-32bit-Automizer_Default-Witness.epf",
+				"AutomizerC_WitnessPrinter.xml");
 	}
 }
