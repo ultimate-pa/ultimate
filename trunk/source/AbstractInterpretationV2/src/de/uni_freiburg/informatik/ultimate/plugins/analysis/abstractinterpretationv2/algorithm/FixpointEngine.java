@@ -581,13 +581,6 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				.append(" is equal to [").append(newPostState.hashCode()).append("]");
 	}
 
-	private StringBuilder getLogMessageNoFixpointFound(STATE oldPostState, final STATE newPostState) {
-		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" New post state [")
-				.append(newPostState.hashCode()).append("] ").append(newPostState.toLogString())
-				.append(" is no fixpoint compared to old state  [").append(oldPostState.hashCode()).append("] ")
-				.append(oldPostState.toLogString());
-	}
-
 	private StringBuilder getLogMessageMergeResult(STATE newPostState) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Merging resulted in [")
 				.append(newPostState.hashCode()).append("] ").append(newPostState.toLogString());
