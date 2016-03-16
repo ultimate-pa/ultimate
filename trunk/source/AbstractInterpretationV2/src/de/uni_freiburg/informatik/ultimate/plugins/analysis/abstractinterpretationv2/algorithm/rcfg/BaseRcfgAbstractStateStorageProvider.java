@@ -136,22 +136,23 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 	}
 
 	@Override
-	public STATE widenPostState(final CodeBlock transition, final IAbstractStateBinaryOperator<STATE> wideningOp,
+	public List<STATE> widenPostState(final CodeBlock transition, final IAbstractStateBinaryOperator<STATE> wideningOp,
 			STATE operand) {
 		assert transition != null;
 		final Deque<STATE> states = getStates(mTransProvider.getTarget(transition));
-		assert states.size() == 1 : "Can only widen with exactly one state";
 
 		final Iterator<STATE> iterator = states.iterator();
-		STATE accumulator = iterator.next();
-		iterator.remove();
-		accumulator = wideningOp.apply(operand, accumulator);
-		assert accumulator.getVariables().keySet()
-				.equals(operand.getVariables().keySet()) : "states have different variables";
-		assert accumulator != null;
-		states.addFirst(accumulator);
-		assert states.size() == 1;
-		return accumulator;
+		final List<STATE> newStates = new ArrayList<STATE>(states.size());
+		while (iterator.hasNext()) {
+			final STATE newState = wideningOp.apply(operand, iterator.next());
+			assert newState.getVariables().keySet()
+					.equals(operand.getVariables().keySet()) : "states have different variables";
+			assert newState != null;
+			iterator.remove();
+			newStates.add(newState);
+		}
+		states.addAll(newStates);
+		return newStates;
 	}
 
 	@Override

@@ -266,7 +266,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 	private void addSuccessors(final Deque<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> worklist,
 			final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem,
-			final IAbstractStateBinaryOperator<STATE> widening) {
+			final IAbstractStateBinaryOperator<STATE> wideningOp) {
 		final ACTION current = currentItem.getAction();
 		final Collection<ACTION> successors = mTransitionProvider.getSuccessors(current, currentItem.getCurrentScope());
 
@@ -279,7 +279,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 		final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> currentStateStorage = currentItem
 				.getCurrentStorage();
-		final Collection<STATE> availablePostStates = currentStateStorage.getAbstractPostStates(current);
+		Collection<STATE> availablePostStates = currentStateStorage.getAbstractPostStates(current);
 
 		// check if we have to merge before adding successors
 		if (availablePostStates.size() > mMaxParallelStates) {
@@ -297,31 +297,17 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			// we should widen with the last state at this loop head
 			final STATE oldLoopState = loopPair.getSecond();
 
-			// we have to ensure that there is only one state at this location for widening
-			final STATE currentPostState;
-			if (availablePostStates.size() > 1) {
-				// no, we have to merge
-				currentPostState = merge(worklist, current, successors, currentStateStorage, availablePostStates);
-			} else if (availablePostStates.size() == 1) {
-				currentPostState = availablePostStates.iterator().next();
-			} else {
-				throw new AssertionError("No post states available for widening");
-			}
-			// is the current state already a fixpoint?
-			skipLoopEntrySuccessors = checkFixpoint(oldLoopState, currentPostState);
+			// is one of the current states already a fixpoint?
+			skipLoopEntrySuccessors = availablePostStates.stream().anyMatch(a -> checkFixpoint(oldLoopState, a));
 
 			if (!skipLoopEntrySuccessors) {
 				// it is no fixpoint, we really have to widen
 				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(getLogMessageNoFixpointFound(oldLoopState, currentPostState));
+					for (STATE postState : availablePostStates) {
+						mLogger.debug(getLogMessageNoFixpointFound(oldLoopState, postState));
+					}
 				}
-				final STATE widenedState = widen(currentStateStorage, widening, current, oldLoopState,
-						currentPostState);
-				availablePostStates.clear();
-				availablePostStates.add(widenedState);
-
-				// check if the widened state is a fixpoint. If it is, we do not need to enter the loop again
-				skipLoopEntrySuccessors = checkFixpoint(oldLoopState, widenedState);
+				availablePostStates = widen(currentStateStorage, wideningOp, current, oldLoopState, availablePostStates);
 			}
 		}
 
@@ -343,24 +329,25 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		}
 	}
 
-	private STATE widen(final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> currentStateStorage,
+	private List<STATE> widen(final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> currentStateStorage,
 			final IAbstractStateBinaryOperator<STATE> wideningOp, final ACTION current, final STATE oldPostState,
-			final STATE currentPostState) {
+			final Collection<STATE> currentPostStates) {
 		// TODO: Remove all worklist items that will be superseded by this widening operation, i.e. all abstract states
 		// from the source of oldPostState
 		// TODO: Remove all stored states that are superseded
 
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug(getLogMessageUnwinding(oldPostState, currentPostState));
+			currentPostStates.forEach(a -> mLogger.debug(getLogMessageUnwinding(oldPostState, a)));
 		}
 		mBenchmark.addWiden();
-		final STATE newPostState = currentStateStorage.widenPostState(current, wideningOp, oldPostState);
-		assert oldPostState.getVariables().keySet()
-				.equals(newPostState.getVariables().keySet()) : "Widening destroyed the state";
+
+		final List<STATE> newPostStates = currentStateStorage.widenPostState(current, wideningOp, oldPostState);
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug(getLogMessageUnwindingResult(newPostState));
+			for (final STATE newPostState : newPostStates) {
+				mLogger.debug(getLogMessageUnwindingResult(newPostState));
+			}
 		}
-		return newPostState;
+		return newPostStates;
 	}
 
 	private STATE merge(final Deque<WorklistItem<STATE, ACTION, VARDECL, LOCATION>> worklist, final ACTION current,
