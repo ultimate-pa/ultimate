@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * 
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  *
  * @param <ACTION>
  *            Any action.
@@ -68,6 +69,7 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 	private final Map<String, IBoogieVar> mVariablesMap;
 	private final Map<String, Set<Expression>> mVarExprMap;
 	private final Set<Expression> mExprSet;
+	private final Map<String, Set<Expression>> mPtrReadintMap;
 
 	private boolean mIsFixpoint;
 
@@ -75,6 +77,7 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 		mVariablesMap = new HashMap<String, IBoogieVar>();
 		mVarExprMap = new HashMap<String, Set<Expression>>();
 		mExprSet = new HashSet<Expression>();
+		mPtrReadintMap = new HashMap<String, Set<Expression>>();
 		mIsFixpoint = false;
 		sId++;
 		mId = sId;
@@ -82,13 +85,18 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 
 	protected VPDomainState(Map<String, IBoogieVar> variablesMap,
 			Map<String, Set<Expression>> varExprMap, Set<Expression> exprSet,
-			boolean isFixpoint) {
+			Map<String, Set<Expression>> ptrReadintMap, boolean isFixpoint) {
 		mVariablesMap = new HashMap<String, IBoogieVar>(variablesMap);
 		mVarExprMap = new HashMap<String, Set<Expression>>(varExprMap);
 		mExprSet = new HashSet<Expression>(exprSet);
+		mPtrReadintMap = new HashMap<String, Set<Expression>>(ptrReadintMap);
 		mIsFixpoint = isFixpoint;
 		sId++;
 		mId = sId;
+	}
+	
+	public Map<String, Set<Expression>> getPtrReadintMap() {
+		return mPtrReadintMap;
 	}
 	
 	public Set<Expression> getExprSet() {
@@ -116,12 +124,12 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 					"Variable names must be disjoint.");
 		}
 
-		final Map<String, Set<Expression>> newExprMap = new HashMap<String, Set<Expression>>(
-				mVarExprMap);
+//		final Map<String, Set<Expression>> newExprMap = new HashMap<String, Set<Expression>>(
+//				mVarExprMap);
+//
+//		newExprMap.put(name, new HashSet<Expression>());
 
-		newExprMap.put(name, new HashSet<Expression>());
-
-		return new VPDomainState(newVarMap, newExprMap, mExprSet, mIsFixpoint);
+		return new VPDomainState(newVarMap, mVarExprMap, mExprSet, mPtrReadintMap, mIsFixpoint);
 	}
 
 	@Override
@@ -132,12 +140,12 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(
 				mVariablesMap);
 //		newVarMap.remove(name);
-		final Map<String, Set<Expression>> newExprMap = new HashMap<String, Set<Expression>>(
-				mVarExprMap);
+//		final Map<String, Set<Expression>> newExprMap = new HashMap<String, Set<Expression>>(
+//				mVarExprMap);
 
 //		newExprMap.remove(name);
 
-		return new VPDomainState(newVarMap, newExprMap, mExprSet, mIsFixpoint);
+		return new VPDomainState(newVarMap, mVarExprMap, mExprSet, mPtrReadintMap, mIsFixpoint);
 	}
 
 	@Override
@@ -147,8 +155,8 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 
 		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(
 				mVariablesMap);
-		final Map<String, Set<Expression>> newExprMap = new HashMap<String, Set<Expression>>(
-				mVarExprMap);
+//		final Map<String, Set<Expression>> newExprMap = new HashMap<String, Set<Expression>>(
+//				mVarExprMap);
 
 		for (final Entry<String, IBoogieVar> entry : variables.entrySet()) {
 			final IBoogieVar old = newVarMap.put(entry.getKey(),
@@ -157,10 +165,10 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 				throw new UnsupportedOperationException(
 						"Variable names must be disjoint.");
 			}
-			newExprMap.put(entry.getKey(), new HashSet<Expression>());
+//			newExprMap.put(entry.getKey(), new HashSet<Expression>());
 		}
 
-		return new VPDomainState(newVarMap, newExprMap, mExprSet, mIsFixpoint);
+		return new VPDomainState(newVarMap, mVarExprMap, mExprSet, mPtrReadintMap, mIsFixpoint);
 	}
 
 	@Override
@@ -170,15 +178,15 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 
 		final Map<String, IBoogieVar> newVarMap = new HashMap<String, IBoogieVar>(
 				mVariablesMap);
-		final Map<String, Set<Expression>> newExprMap = new HashMap<String, Set<Expression>>(
-				mVarExprMap);
+//		final Map<String, Set<Expression>> newExprMap = new HashMap<String, Set<Expression>>(
+//				mVarExprMap);
 
 //		for (final Entry<String, IBoogieVar> entry : variables.entrySet()) {
 //			newVarMap.remove(entry.getKey());
 //			newExprMap.remove(entry.getKey());
 //		}
 
-		return new VPDomainState(newVarMap, newExprMap, mExprSet, mIsFixpoint);
+		return new VPDomainState(newVarMap, mVarExprMap, mExprSet, mPtrReadintMap, mIsFixpoint);
 	}
 
 	@Override
@@ -206,7 +214,7 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 	}
 
 	public VPDomainState setFixpoint(boolean value) {
-		return new VPDomainState(mVariablesMap, mVarExprMap, mExprSet, value);
+		return new VPDomainState(mVariablesMap, mVarExprMap, mExprSet, mPtrReadintMap, value);
 	}
 
 	/**
@@ -218,11 +226,12 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 	@Override
 	public String toLogString() {
 		final StringBuilder stringBuffer = new StringBuilder();
-		for (final Entry<String, IBoogieVar> entry : mVariablesMap.entrySet()) {
-			stringBuffer.append(entry.getKey()).append(':')
-					.append(entry.getValue()).append(" = ")
-					.append(mVarExprMap.get(entry.getKey()).toString())
-					.append("; ");
+		for (final Entry<String, Set<Expression>> entry : mVarExprMap.entrySet()) {
+				stringBuffer.append(entry.getKey()).append(':')
+				.append(entry.getValue()).append(" = ")
+				.append(mVarExprMap.get(entry.getKey()).toString())
+				.append("; ");
+			
 		}
 		return stringBuffer.toString();
 	}
@@ -300,16 +309,22 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 	public VPDomainState copy() {
 		
 		Map<String, Set<Expression>> newExprMap = new HashMap<String, Set<Expression>>();
-		
 		for (final Entry<String, Set<Expression>> entry : mVarExprMap.entrySet()) {
 			final String key = entry.getKey();
 			newExprMap.put(key, new HashSet<Expression>(mVarExprMap.get(key)));
+		}
+		
+		Map<String, Set<Expression>> newPtrReadinMap = new HashMap<String, Set<Expression>>();
+		for (final Entry<String, Set<Expression>> entry : mPtrReadintMap.entrySet()) {
+			final String key = entry.getKey();
+			newPtrReadinMap.put(key, new HashSet<Expression>(mPtrReadintMap.get(key)));
 		}
 		
 		return new VPDomainState(
 				new HashMap<String, IBoogieVar>(mVariablesMap),
 				newExprMap, 
 				new HashSet<Expression>(mExprSet),
+				newPtrReadinMap,
 				mIsFixpoint);
 	}
 
@@ -342,9 +357,36 @@ public class VPDomainState implements IAbstractState<VPDomainState, CodeBlock, I
 		mExprSet.addAll(exprSet);
 	}
 	
+	protected void setPtrReadinMap(Map<String, Set<Expression>> ptrReadinMap) {
+
+		assert ptrReadinMap != null;
+		// assert mVariablesMap.containsKey(name);
+		// assert mVarPartitionMap.containsKey(name);
+
+		mPtrReadintMap.clear();
+
+		for (final Entry<String, Set<Expression>> entry : ptrReadinMap.entrySet()) {
+			mPtrReadintMap.put(entry.getKey(), entry.getValue());
+		}
+	}
+	
 	public void printExprMap() {
 		System.out.println(" Variables Expression Map: ");
 		for (Entry<String, Set<Expression>> entry : mVarExprMap.entrySet()) {
+			if (entry.getValue() instanceof IntegerLiteral) {
+				System.out.println(entry.getKey() + ": "
+						+ ((IntegerLiteral) entry.getValue()).getValue());
+			} else {
+				System.out.println(entry.getKey() + ": "
+						+  entry.getValue().toString());
+			}
+
+		}
+	}
+	
+	public void printPtrReadintMap() {
+		System.out.println(" Pointer Read-int Map: ");
+		for (Entry<String, Set<Expression>> entry : mPtrReadintMap.entrySet()) {
 			if (entry.getValue() instanceof IntegerLiteral) {
 				System.out.println(entry.getKey() + ": "
 						+ ((IntegerLiteral) entry.getValue()).getValue());

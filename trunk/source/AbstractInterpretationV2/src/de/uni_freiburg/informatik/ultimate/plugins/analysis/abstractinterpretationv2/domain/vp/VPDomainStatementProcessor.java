@@ -28,36 +28,24 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp;
 
-import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVisitor;
+import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
+import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssertStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssignmentStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BinaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.BooleanLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.HavocStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IfStatement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.IntegerLiteral;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.LeftHandSide;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.StructLHS;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.UnaryExpression;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.model.boogie.ast.WhileStatement;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.ExpressionEvaluator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluatorFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp.VPDomainValue.Values;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
@@ -65,13 +53,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * Processes Boogie {@link Statement}s and returns a new {@link VPDomainState} for the given Statement.
  * 
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  *
  */
-public class VPDomainStatementProcessor extends BoogieVisitor {
+public class VPDomainStatementProcessor extends NonRecursive {
 
 	private VPDomainState mOldState;
 	private List<VPDomainState> mNewState;
 	private VPDomainState mCurrentNewState;
+	
+	private final Set<ApplicationTerm> termSet = new HashSet<>();
 
 	private final IUltimateServiceProvider mServices;
 
@@ -84,199 +75,136 @@ public class VPDomainStatementProcessor extends BoogieVisitor {
 		mServices = services;
 	}
 
-	protected List<VPDomainState> process(VPDomainState oldState, Statement statement) {
+	protected List<VPDomainState> process(VPDomainState oldState, CodeBlock transition) {
 
 		assert oldState != null;
-		assert statement != null;
+		assert transition != null;
 
 		mOldState = oldState;
 		mNewState = new ArrayList<>();
 		mCurrentNewState = oldState.copy();
-
+		mCurrentNewState.getPtrReadintMap().clear();
+		
 		mLhsVariable = null;
 
 		// Process the current statement and alter mNewState
-		processStatement(statement);
+		termSet.addAll(processTerm(transition.getTransitionFormula().getFormula()));
 
 		return mNewState;
 	}
 
-	@Override
-	protected void visit(HavocStatement statement) {
+	private class  VPDomainTermWalker extends TermWalker {
+		VPDomainTermWalker(Term term) { super(term); }
 		
-		final VPDomainState retState = mCurrentNewState.copy();
-		Set<Expression> exprSet;
-		
-		final VariableLHS[] vars = statement.getIdentifiers();
-		for (final VariableLHS var : vars) {
-			
-			if (retState.getExpressionMap().containsKey(var.getIdentifier())) {
-				retState.getExpressionMap().clear();
-				retState.getExpressionMap().get(var.getIdentifier()).addAll(retState.getExprSet());
+		@Override
+		public void walk(NonRecursive walker) {
+			if (m_Visited.contains(getTerm())) {
+				// do nothing
 			} else {
-				exprSet = new HashSet<Expression>();
-				exprSet.addAll(retState.getExprSet());
-				retState.getExpressionMap().put(var.getIdentifier(), exprSet);
+				m_Visited.add(getTerm());
+				super.walk(walker);
 			}
 		}
-		mNewState.add(retState);
+		
+		@Override
+		public void walk(NonRecursive walker, ConstantTerm term) {
+			// do nothing
+		}
+		@Override
+		public void walk(NonRecursive walker, AnnotatedTerm term) {
+			walker.enqueueWalker(new VPDomainTermWalker(term.getSubterm()));
+		}
+		@Override
+		public void walk(NonRecursive walker, ApplicationTerm term) {
+			if (term.getFunction().getName() == "=") {
+				m_Result.add(term);
+			}
+			for (Term t : term.getParameters()) {
+				walker.enqueueWalker(new VPDomainTermWalker(t));
+			}
+		}
+		@Override
+		public void walk(NonRecursive walker, LetTerm term) {
+			throw new UnsupportedOperationException();
+		}
+		@Override
+		public void walk(NonRecursive walker, QuantifiedFormula term) {
+			walker.enqueueWalker(new VPDomainTermWalker(term.getSubformula()));
+		}
+		@Override
+		public void walk(NonRecursive walker, TermVariable term) {
+			// do nothing
+		}
 	}
+	
 
-	@Override
-	protected void visit(AssignmentStatement statement) {
-//		mEvaluatorFactory = new VPEvaluatorFactory(mServices);
-		
-		final LeftHandSide[] lhs = statement.getLhs();
-		final Expression[] rhs = statement.getRhs();
-		final VPDomainState retState = mCurrentNewState.copy();
-		
-		for (int i = 0; i < lhs.length; i++) {
-//			mExpressionEvaluator = new ExpressionEvaluator<Values, VPDomainState, CodeBlock, IBoogieVar>();
-
-			assert mLhsVariable == null;
-			processLeftHandSide(lhs[i]);	// determine mLhsVariable
-			
-			assert mLhsVariable != null;
-			final String varName = mLhsVariable;
-			mLhsVariable = null;
-
+	private Set<ApplicationTerm> m_Result;
+	private Set<Term> m_Visited;
+	
+	public Set<ApplicationTerm> processTerm(Term term) {
+		if (term == null) {
+			throw new NullPointerException();
+		}
+		m_Visited = new HashSet<>();
+		m_Result = new HashSet<ApplicationTerm>();
+		run(new VPDomainTermWalker(term));
+		m_Visited = null;
+		return m_Result;
+	}
+	
+	
+//	protected void visit(HavocStatement statement) {
+//		
+//		final VPDomainState retState = mCurrentNewState.copy();
+//		Set<Expression> exprSet;
+//		
+//		final VariableLHS[] vars = statement.getIdentifiers();
+//		for (final VariableLHS var : vars) {
+//			
+//			if (retState.getExpressionMap().containsKey(var.getIdentifier())) {
+//				retState.getExpressionMap().clear();
+//				retState.getExpressionMap().get(var.getIdentifier()).addAll(retState.getExprSet());
+//			} else {
+//				exprSet = new HashSet<Expression>();
+//				exprSet.addAll(retState.getExprSet());
+//				retState.getExpressionMap().put(var.getIdentifier(), exprSet);
+//			}
+//		}
+//		mNewState.add(retState);
+//	}
+//
+//	protected void visit(AssignmentStatement statement) {
+////		mEvaluatorFactory = new VPEvaluatorFactory(mServices);
+//		
+//		final LeftHandSide[] lhs = statement.getLhs();
+//		final Expression[] rhs = statement.getRhs();
+//		final VPDomainState retState = mCurrentNewState.copy();
+//		
+//		for (int i = 0; i < lhs.length; i++) {
+////			mExpressionEvaluator = new ExpressionEvaluator<Values, VPDomainState, CodeBlock, IBoogieVar>();
+//
+//			assert mLhsVariable == null;
+//			processLeftHandSide(lhs[i]);	// determine mLhsVariable
+//			
+//			assert mLhsVariable != null;
+//			final String varName = mLhsVariable;
+//			mLhsVariable = null;
+//
 //			processExpression(rhs[i]);
-//			assert mExpressionEvaluator.isFinished();
-			
-			retState.getExprSet().add(rhs[i]);
-			if (retState.getVarExprMap().containsKey(varName)) {
-				retState.getVarExprMap().get(varName).clear();
-				retState.getVarExprMap().get(varName).add(rhs[i]);
-			} else {
-				Set<Expression> exprSet = new HashSet<Expression>();
-				exprSet.add(rhs[i]);
-				retState.getVarExprMap().put(varName, exprSet);
-			}
-		}
-		mNewState.add(retState);
-	}
-	
-	@Override
-	protected void visit(WhileStatement statement) {
-		
-		for (Statement stmt : statement.getBody()) {
-			processStatement(stmt);
-			assert mNewState.size() == 1;
-			mOldState = mCurrentNewState.copy();
-			mCurrentNewState = mNewState.get(0).copy();
-			mNewState.clear();
-		}
-		mNewState.add(mCurrentNewState);
-	}
-	
-	@Override
-	protected void visit(IfStatement statement) {
-		
-		final VPDomainState thenPartState;
-		final VPDomainState elsePartState;
-		
-		for (Statement stmt : statement.getThenPart()) {
-			processStatement(stmt);
-			assert mNewState.size() == 1;
-			mOldState = mCurrentNewState.copy();
-			mCurrentNewState = mNewState.get(0).copy();
-			mNewState.clear();
-		}
-		thenPartState = mCurrentNewState.copy();
-
-		for (Statement stmt : statement.getElsePart()) {
-			processStatement(stmt);
-			assert mNewState.size() == 1;
-			mOldState = mCurrentNewState.copy();
-			mCurrentNewState = mNewState.get(0).copy();
-			mNewState.clear();
-		}
-		elsePartState = mCurrentNewState.copy();
-		
-		mNewState.add(thenPartState);
-		mNewState.add(elsePartState);
-		
-	}
-	
-	@Override
-	protected void visit(AssumeStatement statement) {
-		mNewState.add(mCurrentNewState);
-	}
-
-	@Override
-	protected void visit(AssertStatement statement) {
-//		mEvaluatorFactory = new VPLogicalEvaluatorFactory(mServices);
-//		// TODO Auto-generated method stub
-		super.visit(statement);
-	}
-
-	@Override
-	protected void visit(BinaryExpression expr) {
-		INAryEvaluator<Values, VPDomainState, CodeBlock, IBoogieVar> evaluator;
-
-//		evaluator = mEvaluatorFactory.createNAryExpressionEvaluator(2, EvaluatorUtils.getEvaluatorType(expr.getType()));
-//
-//		evaluator.setOperator(expr.getOperator());
-//
-//		mExpressionEvaluator.addEvaluator(evaluator);
-
-		super.visit(expr);
-	}
-
-	@Override
-	protected void visit(BooleanLiteral expr) {
-		
-	}
-
-	@Override
-	protected void visit(RealLiteral expr) {
-		IEvaluator<Values, VPDomainState, CodeBlock, IBoogieVar> integerExpressionEvaluator = mEvaluatorFactory
-		        .createSingletonValueExpressionEvaluator(expr.getValue(), BigDecimal.class);
-
-		mExpressionEvaluator.addEvaluator(integerExpressionEvaluator);
-	}
-
-	@Override
-	protected void visit(IntegerLiteral expr) {
-//
-//		IEvaluator<Values, VPDomainState, CodeBlock, IBoogieVar> integerExpressionEvaluator = mEvaluatorFactory
-//		        .createSingletonValueExpressionEvaluator(expr.getValue(), BigInteger.class);
-//
-//		mExpressionEvaluator.addEvaluator(integerExpressionEvaluator);
-	}
-
-	@Override
-	protected void visit(UnaryExpression expr) {
-
-//		VPUnaryExpressionEvaluator unaryExpressionEvaluator = (VPUnaryExpressionEvaluator) mEvaluatorFactory
-//		        .createNAryExpressionEvaluator(1, EvaluatorUtils.getEvaluatorType(expr.getType()));
-//
-//		unaryExpressionEvaluator.setOperator(expr.getOperator());
-//
-//		mExpressionEvaluator.addEvaluator(unaryExpressionEvaluator);
-
-		super.visit(expr);
-	}
-
-	@Override
-	protected void visit(IdentifierExpression expr) {
-
-//		final IEvaluator<Values, VPDomainState, CodeBlock, IBoogieVar> variableExpressionEvaluator = mEvaluatorFactory
-//		        .createSingletonVariableExpressionEvaluator(expr.getIdentifier());
-//
-//		mExpressionEvaluator.addEvaluator(variableExpressionEvaluator);
-
-		super.visit(expr);
-	}
-
-	@Override
-	protected void visit(VariableLHS lhs) {
-		mLhsVariable = lhs.getIdentifier();
-	}
-	
-	@Override
-	protected void visit(StructLHS lhs) {
-		mLhsVariable = lhs.getField();
-	}
+////			assert mExpressionEvaluator.isFinished();
+//			
+//			retState.getExprSet().add(rhs[i]);
+//			if (retState.getVarExprMap().containsKey(varName)) {
+//				retState.getVarExprMap().get(varName).clear();
+//				retState.getVarExprMap().get(varName).add(rhs[i]);
+//			} else {
+//				Set<Expression> exprSet = new HashSet<Expression>();
+//				exprSet.add(rhs[i]);
+//				retState.getVarExprMap().put(varName, exprSet);
+//			}
+//			mCurrentNewState = retState.copy();
+//		}
+//		mNewState.add(retState);
+//	}
 	
 }

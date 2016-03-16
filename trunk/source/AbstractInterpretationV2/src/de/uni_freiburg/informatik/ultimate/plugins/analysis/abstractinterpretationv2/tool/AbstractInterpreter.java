@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.core.preferences.UltimatePreferenceSt
 import de.uni_freiburg.informatik.ultimate.core.services.model.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.services.model.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.model.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
@@ -75,6 +76,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.sign.SignDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomain;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp.RCFGArrayIndexCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.vp.VPDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
@@ -168,7 +170,7 @@ public final class AbstractInterpreter {
 		final Script script = rootAnnot.getScript();
 		final Boogie2SmtSymbolTable boogieVarTable = bpl2smt.getBoogie2SmtSymbolTable();
 
-		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain = selectDomain(() -> new RCFGLiteralCollector(root),
+		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain = selectDomain(root, () -> new RCFGLiteralCollector(root),
 				symbolTable, services, rootAnnot);
 
 		return runSilentlyOnNWA(initial, timer, services, symbolTable, bpl2smt, script, boogieVarTable, domain,
@@ -239,8 +241,9 @@ public final class AbstractInterpreter {
 		final ILoopDetector<CodeBlock> loopDetector = new RcfgLoopDetector<>(rootAnnot.getLoopLocations().keySet(),
 				transitionProvider);
 
-		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain = selectDomain(() -> new RCFGLiteralCollector(root),
+		final IAbstractDomain<?, CodeBlock, IBoogieVar> domain = selectDomain(root, () -> new RCFGLiteralCollector(root),
 				symbolTable, services, rootAnnot);
+		
 		return runOnRCFG(initials, timer, services, symbolTable, bpl2smt, script, boogieVarTable, loopDetector, domain,
 				transitionProvider, rootAnnot, isSilent);
 	}
@@ -321,7 +324,7 @@ public final class AbstractInterpreter {
 		return pa.getSymbolTable();
 	}
 
-	private static IAbstractDomain<?, CodeBlock, IBoogieVar> selectDomain(
+	private static IAbstractDomain<?, CodeBlock, IBoogieVar> selectDomain(RootNode root,
 			final LiteralCollectorFactory literalCollector, final BoogieSymbolTable symbolTable,
 			final IUltimateServiceProvider services, final RootAnnot rootAnnotation) {
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
@@ -339,7 +342,27 @@ public final class AbstractInterpreter {
 		} else if (OctagonDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new OctagonDomain(logger, symbolTable, literalCollector);
 		} else if (VPDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new VPDomain(services);
+			RCFGArrayIndexCollector arrayIndexCollector = new RCFGArrayIndexCollector(root);
+			
+			for (BoogieVar bv : arrayIndexCollector.getPointerMap().keySet()) {
+				System.out.println("PointerMap Key: " + bv);
+				Iterator pointerMapValueSetIter = arrayIndexCollector.getPointerMap().get(bv).iterator();
+				while (pointerMapValueSetIter.hasNext()) {
+					System.out.println("PointerMap Value: " + pointerMapValueSetIter.next().toString());
+				}
+				System.out.println();
+			}
+			System.out.println("============");
+			for (BoogieVar bv : arrayIndexCollector.getIndexToArraysMap().keySet()) {
+				System.out.println("IndexToArraysMap Key: " + bv);
+				Iterator indexToArraysSetIter = arrayIndexCollector.getIndexToArraysMap().get(bv).iterator();
+				while (indexToArraysSetIter.hasNext()) {
+					System.out.println("IndexToArraysMap Value: " + indexToArraysSetIter.next());
+				}
+				System.out.println();
+			}
+			
+			return new VPDomain(services, arrayIndexCollector.getPointerMap(), arrayIndexCollector.getIndexToArraysMap());
 		} else if (CongruenceDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new CongruenceDomain(logger, symbolTable);
 		} else if (CompoundDomain.class.getSimpleName().equals(selectedDomain)) {

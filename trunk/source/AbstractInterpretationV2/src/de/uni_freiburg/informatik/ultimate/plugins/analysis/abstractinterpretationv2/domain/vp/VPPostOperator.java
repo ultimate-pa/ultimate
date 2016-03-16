@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
  * Applies a post operation to an abstract state of the {@link VPDomain}.
  * 
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  */
 public class VPPostOperator implements IAbstractPostOperator<VPDomainState, CodeBlock, IBoogieVar> {
 
@@ -67,45 +68,50 @@ public class VPPostOperator implements IAbstractPostOperator<VPDomainState, Code
 	}
 
 	/**
-	 * Applies the post operator to a given {@link IAbstractState}, according to some Boogie {@link CodeBlock}.
+	 * Applies the post operator to a given {@link IAbstractState}, according to
+	 * some Boogie {@link CodeBlock}.
 	 * 
 	 * @param oldstate
 	 *            The current abstract state, the post operator is applied on.
 	 * @param transition
 	 *            The Boogie code block that is used to apply the post operator.
-	 * @return A new abstract state which is the result of applying the post operator to a given abstract state.
+	 * @return A new abstract state which is the result of applying the post
+	 *         operator to a given abstract state.
 	 */
 	@Override
 	public List<VPDomainState> apply(final VPDomainState oldstate, final CodeBlock transition) {
 		assert oldstate != null;
-//		assert !oldstate.isBottom();
+		// assert !oldstate.isBottom();
 		assert transition != null;
 
 		List<VPDomainState> currentStates = new ArrayList<>();
 		currentStates.add(oldstate);
-		final List<Statement> statements = mStatementExtractor.process(transition);
-
-		for (final Statement stmt : statements) {
-			final List<VPDomainState> afterProcessStates = new ArrayList<>();
-			for (final VPDomainState currentState : currentStates) {
-				final List<VPDomainState> processed = mStatementProcessor.process(currentState, stmt);
-				assert processed.size() > 0;
-				afterProcessStates.addAll(processed);
-			}
-
-			currentStates = afterProcessStates;
-		}
-		// TODO 這裡 return 的 list 怎麼會有 null 在裡面?
-		return currentStates;
+		
+		transition.getTransitionFormula();
+		final List<VPDomainState> processed = mStatementProcessor.process(oldstate, transition);
+		
+//		final List<Statement> statements = mStatementExtractor.process(transition);
+//
+//		for (final Statement stmt : statements) {
+//			final List<VPDomainState> afterProcessStates = new ArrayList<>();
+//			for (final VPDomainState currentState : currentStates) {
+//				final List<VPDomainState> processed = mStatementProcessor.process(currentState, stmt);
+//				assert processed.size() > 0;
+//				afterProcessStates.addAll(processed);
+//			}
+//
+//			currentStates = afterProcessStates;
+//		}
+		return processed;
 	}
 
 	@Override
 	public List<VPDomainState> apply(final VPDomainState stateBeforeLeaving, final VPDomainState stateAfterLeaving,
-	        final CodeBlock transition) {
+			final CodeBlock transition) {
 		assert transition instanceof Call || transition instanceof Return;
 
 		final List<VPDomainState> returnList = new ArrayList<>();
-		
+
 		if (transition instanceof Call) {
 			// nothing changes during this switch
 			returnList.add(stateAfterLeaving);
@@ -114,13 +120,13 @@ public class VPPostOperator implements IAbstractPostOperator<VPDomainState, Code
 			final Return ret = (Return) transition;
 			final CallStatement correspondingCall = ret.getCallStatement();
 			mLogger.error("VPDomain does not handle returns correctly: " + ret + " for "
-			        + BoogiePrettyPrinter.print(correspondingCall));
+					+ BoogiePrettyPrinter.print(correspondingCall));
 			returnList.add(stateAfterLeaving);
 		} else {
 			throw new UnsupportedOperationException(
-			        "VPDomain does not support context switches other than Call and Return (yet)");
+					"VPDomain does not support context switches other than Call and Return (yet)");
 		}
-		
+
 		return returnList;
 	}
 
