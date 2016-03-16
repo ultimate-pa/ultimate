@@ -120,13 +120,17 @@ public class FaultLocalizationRelevanceChecker {
 	public ERelevanceStatus relevanceInternal(final IPredicate pre,
 			final CodeBlock cb, final IPredicate post) {
 		final Validity val = mHoareTripleChecker.checkInternal(pre, cb, post);
-		return getResult(val, mHoareTripleChecker);
+		ERelevanceStatus result = getResult(val, mHoareTripleChecker);
+		mHoareTripleChecker.clearAssertionStack();
+		return result;
 	}
 	
 	public ERelevanceStatus relevanceCall(final IPredicate pre,
 			final CodeBlock cb, final IPredicate post) {
 		final Validity val = mHoareTripleChecker.checkCall(pre, cb, post);
-		return getResult(val, mHoareTripleChecker);
+		ERelevanceStatus result = getResult(val, mHoareTripleChecker);
+		mHoareTripleChecker.clearAssertionStack();
+		return result;
 	}
 	
 	public ERelevanceStatus relevanceReturn(final IPredicate returnPre,
@@ -134,7 +138,9 @@ public class FaultLocalizationRelevanceChecker {
 			final CodeBlock cb, final IPredicate post) {
 		final Validity val = mHoareTripleChecker.checkReturn(returnPre, 
 				callPre, cb, post);
-		return getResult(val, mHoareTripleChecker);
+		ERelevanceStatus result = getResult(val, mHoareTripleChecker);
+		mHoareTripleChecker.clearAssertionStack();
+		return result;
 	}
 
 	
