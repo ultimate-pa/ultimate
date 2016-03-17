@@ -468,6 +468,95 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		}
 		return new FunctionApplication(loc, SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName, new Expression[]{ operand });
 	}
+
+	@Override
+	public Expression constructBinaryComparisonFloatingPointExpression(ILocation loc, int nodeOperator, Expression exp1,
+			CPrimitive type1, Expression exp2, CPrimitive type2) {
+		if(!m_FunctionDeclarations.checkParameters(type1, type2)) {
+			throw new IllegalArgumentException("incompatible types " + type1 + " " + type2);
+		}
+		final Expression result = null;
+		final String funcname;
+		switch (nodeOperator) {
+		case IASTBinaryExpression.op_equals:
+			funcname = "fp.eq";
+			break;
+		case IASTBinaryExpression.op_notequals:
+			//TODO: map notequals to SMT-LIB !fp.eq
+			funcname = "fp.eq";
+			break;			
+		case IASTBinaryExpression.op_greaterEqual:
+			funcname = "fp.geq";
+			break;
+		case IASTBinaryExpression.op_greaterThan:
+			funcname = "fp.gt";
+			break;
+		case IASTBinaryExpression.op_lessEqual:
+			funcname = "fp.leq";
+			break;
+		case IASTBinaryExpression.op_lessThan:
+			funcname = "fp.lt";
+			break;
+		default:
+			throw new AssertionError("unknown operation " + nodeOperator);
+		}
+		//TODO: declare FloatingPointFunction
+		return result;
+	}
+
+	@Override
+	public Expression constructUnaryFloatingPointExpression(ILocation loc, int nodeOperator, Expression exp,
+			CPrimitive type) {
+		Expression func = null;
+		final String funcname;
+		switch (nodeOperator) {
+		case IASTUnaryExpression.op_minus:
+			funcname = "fp.neg";
+			break;
+		default:
+			String msg = "Unknown or unsupported unary expression";
+			throw new UnsupportedSyntaxException(loc, msg);
+		}
+		return func;
+	}
+
+	@Override
+	public Expression constructArithmeticFloatingPointExpression(ILocation loc, int nodeOperator, Expression exp1,
+			CPrimitive type1, Expression exp2, CPrimitive type2) {
+		FunctionApplication func = null;
+		if(!m_FunctionDeclarations.checkParameters(type1, type2)) {
+			throw new IllegalArgumentException("incompatible types " + type1 + " " + type2);
+		}
+		final String funcname;
+		switch (nodeOperator) {
+		case IASTBinaryExpression.op_minusAssign:
+		case IASTBinaryExpression.op_minus:
+			funcname = "fp.sub";
+			break;
+		case IASTBinaryExpression.op_multiplyAssign:
+		case IASTBinaryExpression.op_multiply:
+			funcname = "fp.mul";
+			break;
+		case IASTBinaryExpression.op_divideAssign:
+		case IASTBinaryExpression.op_divide:
+			funcname = "fp.div";
+			break;
+		case IASTBinaryExpression.op_moduloAssign:
+		case IASTBinaryExpression.op_modulo:
+			funcname = "fp.rem"; //TODO: <rohlandm> check if this is correkt when the SMTtheory is reachable again
+			break;
+		case IASTBinaryExpression.op_plusAssign:
+		case IASTBinaryExpression.op_plus:
+			funcname = "fp.add";
+			break;
+		default:
+			String msg = "Unknown or unsupported arithmetic expression";
+			throw new UnsupportedSyntaxException(loc, msg);
+		}
+		
+		//TODO: declareFloatingPointFunction
+		return func;
+	}
 	
 	
 	

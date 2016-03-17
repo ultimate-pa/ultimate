@@ -168,7 +168,11 @@ public abstract class AExpressionTranslation {
 	public abstract Expression constructBinaryBitwiseIntegerExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
 	public abstract Expression constructUnaryIntegerExpression(ILocation loc, int nodeOperator, Expression exp, CPrimitive type);
 	public abstract Expression constructArithmeticIntegerExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
-	
+
+	public abstract Expression constructBinaryComparisonFloatingPointExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
+	public abstract Expression constructUnaryFloatingPointExpression(ILocation loc, int nodeOperator, Expression exp, CPrimitive type);
+	public abstract Expression constructArithmeticFloatingPointExpression(ILocation loc, int nodeOperator, Expression exp1, CPrimitive type1, Expression exp2, CPrimitive type2);
+
 	
 	public Expression constructBinaryEqualityExpression(ILocation loc, int nodeOperator, Expression exp1, CType type1, Expression exp2, CType type2) {
 		if (type1.isRealFloatingType() || type2.isRealFloatingType()) {
