@@ -313,6 +313,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		if (m_FunctionDeclarations.getDeclaredFunctions().containsKey(SFO.AUXILIARY_FUNCTION_PREFIX + boogieFunctionName)) {
 			// function already declared
 			return;
+		}
 		if (isRounded) {
 			ASTType[] paramASTTypes = new ASTType[paramCType.length + 1];
 			ASTType resultASTType = m_TypeHandler.ctype2asttype(loc, resultCType);
