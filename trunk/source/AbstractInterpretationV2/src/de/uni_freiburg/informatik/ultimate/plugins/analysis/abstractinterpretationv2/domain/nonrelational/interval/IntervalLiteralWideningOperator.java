@@ -89,7 +89,7 @@ public class IntervalLiteralWideningOperator implements IAbstractStateBinaryOper
 					final IntervalDomainValue firstValue = first.getValue(var);
 					final IntervalDomainValue secondValue = second.getValue(var);
 
-					if (secondValue.isContainedInDD(firstValue)) {
+					if (secondValue.isContainedIn(firstValue)) {
 						varsToWiden.add(var);
 						varValues.add(firstValue);
 					} else if (!firstValue.isEqualTo(secondValue)) {

@@ -261,7 +261,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 	 * @return <code>true</code> if and only if either <code>this</code> is included in other, or vice versa,
 	 *         <code>false</code> otherwise.
 	 */
-	public boolean isContainedIn(IntervalDomainValue other) {
+	public boolean isContainedInBoth(IntervalDomainValue other) {
 		assert other != null;
 
 		if (isBottom() || other.isBottom()) {
@@ -273,19 +273,11 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		}
 
 		if (mLower.isInfinity()) {
-			if (mUpper.compareTo(other.mUpper) < 0) {
-				return false;
-			} else {
-				return true;
-			}
+			return mUpper.compareTo(other.mUpper) >= 0;
 		}
 
 		if (other.mLower.isInfinity()) {
-			if (other.mUpper.compareTo(mUpper) < 0) {
-				return false;
-			} else {
-				return true;
-			}
+			return other.mUpper.compareTo(mUpper) >= 0;
 		}
 
 		return (mLower.compareTo(other.mLower) <= 0 && mUpper.compareTo(other.mUpper) >= 0)
@@ -302,7 +294,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 	 *            The other value to compare to.
 	 * @return <code>true</code> if and only if <code>this</code> is included in other, <code>false</code> otherwise.
 	 */
-	public boolean isContainedInDD(IntervalDomainValue other) {
+	public boolean isContainedIn(IntervalDomainValue other) {
 		assert other != null;
 
 		if (isBottom()) {
@@ -332,11 +324,7 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 	 * @return <code>true</code> if and only if lower == upper and lower != &infin;. <code>false</code> otherwise.
 	 */
 	public boolean isPointInterval() {
-		if (!mLower.isInfinity() && mLower.compareTo(mUpper) == 0) {
-			return true;
-		}
-
-		return false;
+		return !mLower.isInfinity() && mLower.compareTo(mUpper) == 0;
 	}
 
 	@Override
@@ -452,7 +440,8 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 			return new IntervalDomainValue();
 		}
 
-		IntervalValue newLower, newUpper;
+		IntervalValue newLower;
+		IntervalValue newUpper;
 
 		if (mLower.compareTo(other.mLower) > 0) {
 			if (mLower.isInfinity()) {
@@ -697,34 +686,35 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 	public IntervalDomainValue modulo(IntervalDomainValue divisor, boolean integerDivision) {
 
 		assert divisor != null;
+		IntervalDomainValue workingDivisor = divisor;
 
-		if (isBottom() || divisor.isBottom()) {
+		if (isBottom() || workingDivisor.isBottom()) {
 			return new IntervalDomainValue(true);
 		}
 
-		if (divisor.containsZero()) {
+		if (workingDivisor.containsZero()) {
 			// modulo is a total function in SMT, but (a % 0) is not specified
 			// => result is an unknown but fixed value => return TOP
 			return new IntervalDomainValue();
 		}
 
 		// If we are dealing with point intervals, the modulo computation is easy.
-		if (isPointInterval() && divisor.isPointInterval()) {
-			BigDecimal remainder = NumUtil.euclideanModulo(mLower.getValue(), divisor.mLower.getValue());
+		if (isPointInterval() && workingDivisor.isPointInterval()) {
+			BigDecimal remainder = NumUtil.euclideanModulo(mLower.getValue(), workingDivisor.mLower.getValue());
 			return new IntervalDomainValue(new IntervalValue(remainder), new IntervalValue(remainder));
 		}
 
-		divisor = divisor.abs(); // The sign of the divisor does not matter for euclidean modulo.
+		workingDivisor = workingDivisor.abs(); // The sign of the divisor does not matter for euclidean modulo.
 
 		// [a; b] % [c; d] = [a; b] if (0 <= a) and (b < c)
-		if (!mLower.isInfinity() && !divisor.mLower.isInfinity() && new IntervalValue(0).compareTo(mLower) <= 0
-		        && mUpper.compareTo(divisor.mLower) < 0) {
+		if (!mLower.isInfinity() && !workingDivisor.mLower.isInfinity() && new IntervalValue(0).compareTo(mLower) <= 0
+		        && mUpper.compareTo(workingDivisor.mLower) < 0) {
 			return new IntervalDomainValue(mLower, mUpper);
 		}
 
 		// euclidean division (x / y) has the remainder (r) with (0 <= r < |y|).
 		IntervalValue min = new IntervalValue(0);
-		IntervalValue max = divisor.mUpper;
+		IntervalValue max = workingDivisor.mUpper;
 		if (integerDivision && !max.isInfinity()) {
 			max.setValue(max.getValue().subtract(BigDecimal.ONE));
 		}
@@ -754,9 +744,12 @@ public class IntervalDomainValue implements Comparable<IntervalDomainValue> {
 		if (isBottom()) {
 			return new IntervalDomainValue(true);
 		}
+
 		boolean lowerIsInf = mLower.isInfinity();
 		boolean upperIsInf = mUpper.isInfinity();
-		IntervalValue min, max;
+		IntervalValue min;
+		IntervalValue max;
+
 		if (lowerIsInf || upperIsInf) {
 			max = new IntervalValue();
 			if (containsZero() || (lowerIsInf && upperIsInf)) {

@@ -85,8 +85,8 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 	private IntervalDomainState mOldState;
 	private List<IntervalDomainState> mReturnState;
 
-	IEvaluatorFactory<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> mEvaluatorFactory;
-	ExpressionEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> mExpressionEvaluator;
+	private IEvaluatorFactory<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> mEvaluatorFactory;
+	private ExpressionEvaluator<IntervalDomainValue, IntervalDomainState, CodeBlock, IBoogieVar> mExpressionEvaluator;
 
 	private String mLhsVariable;
 
@@ -111,7 +111,7 @@ public class IntervalDomainStatementProcessor extends BoogieVisitor {
 
 		processStatement(statement);
 
-		assert !(oldState.getVariables().size() != 0) || (mReturnState.size() != 0);
+		assert (oldState.getVariables().size() == 0) || (mReturnState.size() != 0);
 
 		return mReturnState;
 	}
