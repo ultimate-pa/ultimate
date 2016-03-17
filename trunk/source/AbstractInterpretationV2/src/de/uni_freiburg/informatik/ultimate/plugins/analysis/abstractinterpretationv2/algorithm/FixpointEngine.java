@@ -96,8 +96,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 
 		final UltimatePreferenceStore ups = new UltimatePreferenceStore(Activator.PLUGIN_ID);
 		mMaxUnwindings = ups.getInt(AbsIntPrefInitializer.LABEL_ITERATIONS_UNTIL_WIDENING);
-		// mMaxParallelStates = ups.getInt(AbsIntPrefInitializer.LABEL_STATES_UNTIL_MERGE);
-		mMaxParallelStates = 1;
+		mMaxParallelStates = ups.getInt(AbsIntPrefInitializer.LABEL_STATES_UNTIL_MERGE);
+		// mMaxParallelStates = 1;
 	}
 
 	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> run(final ACTION start, final Script script,
@@ -164,7 +164,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 		final ACTION currentAction = currentItem.getAction();
 
 		prepareScope(currentItem);
-		
+
 		// calculate the (abstract) effect of the current action by first
 		// declaring variables in the prestate, and then calculating their
 		// values
@@ -348,7 +348,6 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 				final Set<STATE> fixpoints = availablePostStates.stream().filter(a -> checkFixpoint(oldScopeState, a))
 						.collect(Collectors.toSet());
 				filter = filter.and(p -> !fixpoints.contains(p.getFirst()));
-				// TODO: save abstract summary for method
 			}
 		}
 
@@ -432,7 +431,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 	}
 
 	/**
-	 * Check if we are entering or leaving a scope and if so, create or delete it. 
+	 * Check if we are entering or leaving a scope and if so, create or delete it.
 	 */
 	private void prepareScope(final WorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem) {
 		final ACTION action = currentItem.getAction();
@@ -468,11 +467,12 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, ACTION, VARDECL>
 			return null;
 		}
 
-		final Optional<STATE> lastState = relevantStackItems.stream().sequential()
+		final List<STATE> orderedStates = relevantStackItems.stream().sequential()
 				.map(a -> a.getSecond().getAbstractPostStates(currentAction)).flatMap(a -> a.stream().sequential())
-				.findFirst();
-		if (lastState.isPresent()) {
-			lastState.get();
+				.collect(Collectors.toList());
+		if (!orderedStates.isEmpty()) {
+			final STATE lastState = orderedStates.get(orderedStates.size()-1);
+			return lastState;
 		}
 
 		final Optional<STATE> lastAllState = stackAtCallLocation.stream().sequential()
