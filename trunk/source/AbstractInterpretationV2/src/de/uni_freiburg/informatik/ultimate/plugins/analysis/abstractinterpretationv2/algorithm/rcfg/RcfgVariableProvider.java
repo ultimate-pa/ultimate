@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.model.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.model.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IAbstractStateStorage;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.model.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
@@ -56,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Ret
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>,LOCATION>
+public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock, IBoogieVar>, LOCATION>
 		implements IVariableProvider<STATE, CodeBlock, IBoogieVar, LOCATION> {
 
 	private static final StorageClass[] LOCAL_STORAGE_CLASSES = new StorageClass[] { StorageClass.LOCAL,
@@ -98,21 +97,20 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 	}
 
 	@Override
-	public STATE defineVariablesAfter(final CodeBlock current, final STATE state,
-			final IAbstractStateStorage<STATE, CodeBlock, IBoogieVar, LOCATION> storage) {
-		assert current != null;
-		assert state != null;
+	public STATE defineVariablesAfter(final CodeBlock action, final STATE localPreState, final STATE hierachicalPreState) {
+		assert action != null;
+		assert localPreState != null;
 
 		// we assume that state has all variables except the ones that would be
 		// introduced or removed by this edge
 		// so, only call or return can do this
 
-		if (current instanceof Call) {
+		if (action instanceof Call) {
 			// if we call we just need to update all local variables, i.e., remove all the ones from the current scope
 			// and add all the ones from the new scope (thus also automatically masking globals)
-			final String remove = current.getPreceedingProcedure();
-			final String add = current.getSucceedingProcedure();
-			STATE rtr = state;
+			final String remove = action.getPreceedingProcedure();
+			final String add = action.getSucceedingProcedure();
+			STATE rtr = localPreState;
 			// remove current locals
 			rtr = removeLocals(rtr, remove);
 			// remove globals that will be masked by the new scope
@@ -123,15 +121,15 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 			// add locals of new scope
 			rtr = applyLocals(rtr, add, rtr::addVariables);
 			return rtr;
-		} else if (current instanceof Return) {
+		} else if (action instanceof Return) {
 			// if the action is a return, we have to:
 			// - remove all currently local variables
 			// - keep all unmasked globals
 			// - add old locals from the scope we are returning to
 			// - add globals that were masked by this scope from the scope we are returning to
 
-			final String source = current.getPreceedingProcedure();
-			final String target = current.getSucceedingProcedure();
+			final String source = action.getPreceedingProcedure();
+			final String target = action.getSucceedingProcedure();
 			final Map<String, IBoogieVar> varsNeededFromOldScope = new HashMap<String, IBoogieVar>();
 
 			if (source != null) {
@@ -144,7 +142,7 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 				varsNeededFromOldScope.putAll(getLocalVariables(target));
 			}
 
-			STATE rtr = state;
+			STATE rtr = localPreState;
 			// in any case, we have to remove all local variables from the state
 			rtr = removeLocals(rtr, source);
 
@@ -159,9 +157,7 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 
 			// the program state that has to be used to obtain the values of the old scope
 			// (old locals, unmasked globals) is the pre state of the call
-			final Call call = ((Return) current).getCorrespondingCall();
-			STATE preCallState = storage.getCurrentAbstractPreState(call);
-
+			STATE preCallState = hierachicalPreState;
 			assert preCallState != null : "There is no abstract state before the call that corresponds to this return";
 			// we determine which variables are not needed ...
 			final Map<String, IBoogieVar> toberemoved = new TreeMap<String, IBoogieVar>();
@@ -188,7 +184,7 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, CodeBlock,
 
 		} else {
 			// nothing changes
-			return state;
+			return localPreState;
 		}
 	}
 

@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.util.relation.Pair;
 
 /**
  * 
- * @author dietsch@informatik.uni-freiburg.de
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
 
@@ -48,7 +48,8 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 	private final Map<LOCATION, Pair<Integer, STATE>> mLoopPairs;
 	private final WorklistItem<STATE, ACTION, VARDECL, LOCATION> mPredecessor;
 
-	private Deque<ACTION> mScopes;
+	private STATE mHierachicalPreState;
+	private Deque<Pair<ACTION, STATE>> mScopes;
 
 	protected WorklistItem(final STATE pre, final ACTION action,
 			final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> globalStorage) {
@@ -56,6 +57,7 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 		assert pre != null;
 		assert globalStorage != null;
 
+		mHierachicalPreState = pre;
 		mPreState = pre;
 		mAction = action;
 		mScopedStorages = new ArrayDeque<IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>();
@@ -73,6 +75,7 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 		mPredecessor = oldItem;
 		mPreState = pre;
 		mAction = action;
+		mHierachicalPreState = oldItem.getHierachicalPreState();
 		mScopes = oldItem.getScopesCopy();
 		mScopedStorages = oldItem.getStoragesCopy();
 		mActiveLoops = new ArrayDeque<>(oldItem.mActiveLoops);
@@ -87,12 +90,17 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 		return mPreState;
 	}
 
-	public void addScope(ACTION scope) {
+	public STATE getHierachicalPreState() {
+		return mHierachicalPreState;
+	}
+
+	public void addScope(final ACTION scope) {
 		assert scope != null;
 		if (mScopes == null) {
-			mScopes = new ArrayDeque<ACTION>();
+			mScopes = new ArrayDeque<>();
 		}
-		mScopes.addFirst(scope);
+		mScopes.addFirst(new Pair<>(scope, mHierachicalPreState));
+		mHierachicalPreState = mPreState;
 		mScopedStorages.addFirst(getCurrentStorage().createStorage());
 	}
 
@@ -100,7 +108,7 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 		if (mScopes == null || mScopes.isEmpty()) {
 			return null;
 		}
-		return mScopes.peek();
+		return mScopes.peek().getFirst();
 	}
 
 	public ACTION removeCurrentScope() {
@@ -108,7 +116,9 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 			return null;
 		}
 		mScopedStorages.removeFirst();
-		return mScopes.removeFirst();
+		Pair<ACTION, STATE> rtr = mScopes.removeFirst();
+		mHierachicalPreState = rtr.getSecond();
+		return rtr.getFirst();
 	}
 
 	public IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> getCurrentStorage() {
@@ -137,11 +147,11 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 			return rtr;
 		}
 
-		final Iterator<ACTION> scopeIter = mScopes.iterator();
+		final Iterator<Pair<ACTION, STATE>> scopeIter = mScopes.iterator();
 
 		while (scopeIter.hasNext() && storageIter.hasNext()) {
-			rtr.add(new Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>(scopeIter.next(),
-					storageIter.next()));
+			rtr.add(new Pair<ACTION, IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION>>(
+					scopeIter.next().getFirst(), storageIter.next()));
 		}
 		assert !scopeIter.hasNext();
 		assert !storageIter.hasNext();
@@ -149,12 +159,8 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 		return rtr;
 	}
 
-	public boolean hasActiveLoop() {
-		return !mActiveLoops.isEmpty();
-	}
-
 	public boolean isActiveLoopHead(LOCATION currentLoopHead) {
-		return mActiveLoops.peek() == currentLoopHead;
+		return !mActiveLoops.isEmpty() && mActiveLoops.peek() == currentLoopHead;
 	}
 
 	public int leaveCurrentLoop() {
@@ -191,14 +197,14 @@ final class WorklistItem<STATE extends IAbstractState<STATE, ACTION, VARDECL>, A
 	public String toString() {
 		final StringBuilder builder = new StringBuilder().append("[").append(mPreState.hashCode()).append("]--[")
 				.append(mAction.hashCode()).append("]--> ? (Scope={");
-		for (final ACTION scope : mScopes) {
-			builder.append("[").append(scope.hashCode()).append("]");
+		for (final Pair<ACTION, STATE> scope : mScopes) {
+			builder.append("[").append(scope.getFirst().hashCode()).append("]");
 		}
 		builder.append("})");
 		return builder.toString();
 	}
 
-	private Deque<ACTION> getScopesCopy() {
+	private Deque<Pair<ACTION, STATE>> getScopesCopy() {
 		if (mScopes == null || mScopes.isEmpty()) {
 			return null;
 		}

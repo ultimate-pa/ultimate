@@ -88,12 +88,6 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 	}
 
 	@Override
-	public STATE getCurrentAbstractPreState(final CodeBlock transition) {
-		assert transition != null;
-		return getCurrentState(mTransProvider.getSource(transition));
-	}
-
-	@Override
 	public void addAbstractPreState(CodeBlock transition, STATE state) {
 		assert transition != null;
 		assert state != null;
@@ -327,24 +321,6 @@ public abstract class BaseRcfgAbstractStateStorageProvider<STATE extends IAbstra
 			return;
 		}
 		states.addFirst(state);
-	}
-
-	/**
-	 * This method extracts the current state at a given node by comparing all the states at this node in the stack
-	 * order with the matcher. The stack of states at a node is saved as a pair (transition,state), where the state is
-	 * the post state of the transition.
-	 * 
-	 * @param node
-	 * @param matcher
-	 * @return
-	 */
-	private STATE getCurrentState(final LOCATION node) {
-		assert node != null;
-		final Deque<STATE> states = getStates(node);
-		if (states.isEmpty()) {
-			return null;
-		}
-		return states.getFirst();
 	}
 
 	protected abstract Deque<STATE> getStates(LOCATION node);

@@ -48,22 +48,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION> {
 
 	List<STATE> getAbstractPreStates(CodeBlock transition);
-	
-	List<STATE> getAbstractPostStates(ACTION transition);
 
-	STATE getCurrentAbstractPreState(ACTION transition);
+	List<STATE> getAbstractPostStates(ACTION transition);
 
 	void addAbstractPreState(ACTION transition, STATE state);
 
 	void addAbstractPostState(ACTION transition, STATE state);
 
 	STATE mergePostStates(ACTION transition);
-	
-	List<STATE> widenPostState(ACTION transition,IAbstractStateBinaryOperator<STATE> wideningOp, STATE operand);
+
+	List<STATE> widenPostState(ACTION transition, IAbstractStateBinaryOperator<STATE> wideningOp, STATE operand);
 
 	IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> createStorage();
 
 	Map<LOCATION, Term> getLoc2Term(final ACTION initialTransition, final Script script, final Boogie2SMT bpl2smt);
-	
+
 	Set<Term> getTerms(final ACTION initialTransition, final Script script, final Boogie2SMT bpl2smt);
 }
