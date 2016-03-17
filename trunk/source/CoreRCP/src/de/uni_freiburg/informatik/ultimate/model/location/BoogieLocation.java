@@ -154,7 +154,6 @@ public class BoogieLocation implements Serializable, ILocation {
 		} else {
 			return new Check(Check.Spec.UNKNOWN);
 		}
-
 	}
 
 	@Override
@@ -169,5 +168,4 @@ public class BoogieLocation implements Serializable, ILocation {
 	public void setBoogieASTNode(BoogieASTNode BoogieASTNode) {
 		mBoogieASTNode = BoogieASTNode;
 	}
-
 }

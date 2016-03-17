@@ -58,7 +58,7 @@ public class AtsASTNode extends BaseAST<AtsASTNode> {
 	private Map<Class<?>, Class<?>> m_primitiveToClassTypes;
 	
  	public AtsASTNode(ILocation loc) {
- 		super(new Payload(loc, "AtsASTNode"));
+ 		super(new Payload(loc));
 		m_children = new ArrayList<AtsASTNode>();
 		m_parent = null;
 		m_primitiveToClassTypes = new HashMap<Class<?>, Class<?>>();
@@ -74,7 +74,7 @@ public class AtsASTNode extends BaseAST<AtsASTNode> {
 //	}
 	
 	public AtsASTNode(ILocation loc, AtsASTNode par) {
-		super(new Payload(loc, "AtsASTNode"));
+		super(new Payload(loc));
 		m_children = new ArrayList<AtsASTNode>();
 		m_parent = par;
 	}

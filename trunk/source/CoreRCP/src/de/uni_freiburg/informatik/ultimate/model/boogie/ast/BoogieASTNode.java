@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.model.boogie.ast;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.model.Payload;
 import de.uni_freiburg.informatik.ultimate.model.location.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.structure.BasePayloadContainer;
@@ -42,9 +43,7 @@ public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<Bo
 	private static final long serialVersionUID = 5856434889026482850L;
 
 	public BoogieASTNode(ILocation location) {
-		super();
-
-		getPayload().setLocation(location);
+		super(new Payload(location));
 
 		if (location instanceof BoogieLocation) {
 			((BoogieLocation) location).setBoogieASTNode(this);

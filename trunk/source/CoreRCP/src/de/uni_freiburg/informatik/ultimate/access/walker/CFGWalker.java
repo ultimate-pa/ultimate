@@ -50,8 +50,7 @@ public class CFGWalker extends BaseWalker {
 	}
 
 	/**
-	 * Does the actual walking for IManagedObservers. Has to handle all logic
-	 * with respect to managed mode.
+	 * Does the actual walking for IManagedObservers. Has to handle all logic with respect to managed mode.
 	 * 
 	 * Currently not complete!
 	 * 
@@ -69,21 +68,21 @@ public class CFGWalker extends BaseWalker {
 			this.mVisitedNodes.add(node);
 
 			ArrayList<Command> cmds = new ArrayList<Command>();
-			for (Command cmd : observer.process(node.getPayload(),
-					WalkerOptions.State.OUTER, node.getSuccessors().size())) {
+			for (Command cmd : observer.process(node.getPayload(), WalkerOptions.State.OUTER,
+					node.getSuccessors().size())) {
 				cmds.add(cmd);
 			}
 
 			if (cmds.toString().equals(WalkerOptions.Command.SKIP.toString())) {
-				mLogger.debug("Skipping " + node.getPayload().getName());
-			} else if (cmds.contains(WalkerOptions.Command.DESCEND)
-					&& node.getSuccessors() != null) {
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Skipping " + node.toString());
+				}
+			} else if (cmds.contains(WalkerOptions.Command.DESCEND) && node.getSuccessors() != null) {
 				for (IWalkable i : node.getSuccessors()) {
 					if (!this.mVisitedNodes.contains(i)) {
 						runObserver(i, observer);
-					} else {
-						mLogger.debug("CFGWalker >> Found Potential CutPoint: "
-								+ i.getPayload().getName());
+					} else if (mLogger.isDebugEnabled()){
+						mLogger.debug("CFGWalker >> Found Potential CutPoint: " + i.toString());
 					}
 				}
 			}

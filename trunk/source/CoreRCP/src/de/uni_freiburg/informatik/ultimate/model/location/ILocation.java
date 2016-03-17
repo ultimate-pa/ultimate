@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.result.Check;
  * Used to specify where an BoogieASTNode is defined.
  * 
  * @author heizmann@informatik.uni-freiburg.de
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
 public interface ILocation {

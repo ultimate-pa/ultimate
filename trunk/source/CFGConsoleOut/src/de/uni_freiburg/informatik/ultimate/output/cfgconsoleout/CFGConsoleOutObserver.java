@@ -84,7 +84,7 @@ public class CFGConsoleOutObserver implements IUnmanagedObserver {
 		}
 		
 		mSeenList.put(node, numbering);
-		mWriter.println("Node " + numbering + "; Name: " + node.getPayload().getName() + ";Annotations: ");
+		mWriter.println("Node " + numbering + ";Annotations: ");
 		if (node.hasPayload()) {
 			IPayload payload = node.getPayload();
 			if (payload.hasAnnotation()) {

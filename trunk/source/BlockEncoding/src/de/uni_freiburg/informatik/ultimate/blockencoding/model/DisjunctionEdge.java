@@ -32,10 +32,9 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFa
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
 
 /**
- * This edge represents a disjunction of the formulas of two edges. This is here
- * only virtually, that means we keep here only the references. The "real"
- * disjunction (parallel composition) is done later, when we generate the new
- * minimized graph.
+ * This edge represents a disjunction of the formulas of two edges. This is here only virtually, that means we keep here
+ * only the references. The "real" disjunction (parallel composition) is done later, when we generate the new minimized
+ * graph.
  * 
  * @author Stefan Wissert
  * 
@@ -50,7 +49,7 @@ public class DisjunctionEdge extends AbstractCompositeEdge {
 	/**
 	 * the rating for this Disjunction-Edge
 	 */
-	private IRating rating;
+	private IRating mRating;
 
 	/**
 	 * @param left
@@ -58,14 +57,11 @@ public class DisjunctionEdge extends AbstractCompositeEdge {
 	 */
 	public DisjunctionEdge(IMinimizedEdge left, IMinimizedEdge right) {
 		super(left, right);
-		this.containedDisjunctions++;
-		this.payload.setName(leftEdge + " V " + rightEdge);
-		this.rating = RatingFactory.getInstance().createRating(this);
+		mContainedDisjunctions++;
+		mRating = RatingFactory.getInstance().createRating(this);
 		EncodingStatistics.incCountOfDisjunctions();
-		EncodingStatistics
-				.setMaxDisjunctionsInOneEdge(this.containedDisjunctions);
-		EncodingStatistics.setMaxElementsInOneDisjunction(this
-				.getElementCount());
+		EncodingStatistics.setMaxDisjunctionsInOneEdge(this.mContainedDisjunctions);
+		EncodingStatistics.setMaxElementsInOneDisjunction(this.getElementCount());
 	}
 
 	/**
@@ -77,6 +73,6 @@ public class DisjunctionEdge extends AbstractCompositeEdge {
 
 	@Override
 	public IRating getRating() {
-		return rating;
+		return mRating;
 	}
 }

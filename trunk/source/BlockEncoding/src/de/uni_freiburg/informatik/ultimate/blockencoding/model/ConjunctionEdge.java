@@ -35,9 +35,8 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.metrics.RatingFa
 import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingStatistics;
 
 /**
- * This edge represents a conjunction of the formulas of two edges. This is here
- * only virtually, that means we keep here only the references. The "real"
- * conjunction (sequential composition) is done later, when we generate the new
+ * This edge represents a conjunction of the formulas of two edges. This is here only virtually, that means we keep here
+ * only the references. The "real" conjunction (sequential composition) is done later, when we generate the new
  * minimized graph.
  * 
  * @author Stefan Wissert
@@ -45,15 +44,12 @@ import de.uni_freiburg.informatik.ultimate.blockencoding.rating.util.EncodingSta
  */
 public class ConjunctionEdge extends AbstractCompositeEdge {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
 
 	/**
 	 * the rating for this Conjunction-Edge
 	 */
-	protected IRating rating;
+	protected IRating mRating;
 
 	/**
 	 * @param left
@@ -61,15 +57,12 @@ public class ConjunctionEdge extends AbstractCompositeEdge {
 	 */
 	public ConjunctionEdge(IMinimizedEdge left, IMinimizedEdge right) {
 		super(left, right);
-		this.payload.setName(leftEdge + " /\\ " + rightEdge);
-		this.rating = RatingFactory.getInstance().createRating(this);
-		EncodingStatistics
-				.setMaxDisjunctionsInOneEdge(this.containedDisjunctions);
+		mRating = RatingFactory.getInstance().createRating(this);
+		EncodingStatistics.setMaxDisjunctionsInOneEdge(this.mContainedDisjunctions);
 	}
 
 	@Override
 	public IRating getRating() {
-		return rating;
+		return mRating;
 	}
-
 }

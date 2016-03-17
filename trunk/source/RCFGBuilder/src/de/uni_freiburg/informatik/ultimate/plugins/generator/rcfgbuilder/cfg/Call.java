@@ -63,14 +63,8 @@ public class Call extends CodeBlock {
 		super(serialNumber, source, target, logger);
 		m_CallStatement = st;
 		m_PrettyPrintedStatements = BoogiePrettyPrinter.print(st);
-		updatePayloadName();
 	}
-
-	@Override
-	public void updatePayloadName() {
-		super.getPayload().setName(BoogiePrettyPrinter.print(m_CallStatement));
-	}
-
+	
 	@Override
 	protected String[] getFieldNames() {
 		return s_AttribFields;

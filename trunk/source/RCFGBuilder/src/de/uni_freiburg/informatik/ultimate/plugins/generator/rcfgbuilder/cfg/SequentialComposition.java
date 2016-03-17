@@ -126,7 +126,6 @@ public class SequentialComposition extends CodeBlock {
 				extPqe, s_TransformToCNF, true, mLogger, services, codeBlocks);
 
 		m_PrettyPrinted = prettyPrinted.toString();
-		updatePayloadName();
 	}
 
 	protected void checkNumberOfCallsAndReturns(int numberCalls, int numberReturns) {

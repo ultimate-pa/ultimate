@@ -323,20 +323,20 @@ public class ConversionVisitor implements IMinimizationVisitor {
 		if (mRefNodeMap.containsKey(node)) {
 			return mRefNodeMap.get(node);
 		} else {
-			BoogieASTNode BoogieASTNode = node.getOriginalNode().getBoogieASTNode();
-			if (BoogieASTNode == null && node.getOriginalNode().getPayload().hasLocation()) {
+			BoogieASTNode astNode = node.getOriginalNode().getBoogieASTNode();
+			if (astNode == null && node.getOriginalNode().getPayload().hasLocation()) {
 				ILocation loc = node.getOriginalNode().getPayload().getLocation();
 				if (loc instanceof BoogieLocation) {
-					BoogieASTNode = ((BoogieLocation) loc).getBoogieASTNode();
+					astNode = ((BoogieLocation) loc).getBoogieASTNode();
 					if (loc.getOrigin() != null) {
 						// we have to update the ast node with the original
 						// location
-						BoogieASTNode.getPayload().setLocation(loc.getOrigin());
+						astNode.getPayload().setLocation(loc.getOrigin());
 					}
 				}
 			}
 			ProgramPoint newNode = new ProgramPoint(node.getOriginalNode().getPosition(),
-					node.getOriginalNode().getProcedure(), node.getOriginalNode().isErrorLocation(), BoogieASTNode);
+					node.getOriginalNode().getProcedure(), node.getOriginalNode().isErrorLocation(), astNode);
 			// inserted by alex 1.11.2014: (don't forget the annotations.. (mb this would be nicer in the constructor
 			// TODO
 			for (Entry<String, IAnnotations> annots : node.getOriginalNode().getPayload().getAnnotations().entrySet()) {

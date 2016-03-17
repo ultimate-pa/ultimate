@@ -960,7 +960,6 @@ public class CfgBuilder {
 						|| m_CodeBlockSize == CodeBlockSize.LoopFreeBlock) {
 					StatementSequence stSeq = (StatementSequence) m_current;
 					stSeq.addStatement(st);
-					stSeq.updatePayloadName();
 					passAllAnnotations(st, stSeq);
 				} else {
 					String locName = getLocName(st.getLocation());

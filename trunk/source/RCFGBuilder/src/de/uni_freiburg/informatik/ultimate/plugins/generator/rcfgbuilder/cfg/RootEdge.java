@@ -47,7 +47,6 @@ public class RootEdge extends RCFGEdge {
 
 	public RootEdge(RCFGNode source, RCFGNode target) {
 		super(source, target, new Payload());
-		getPayload().setName(" ");
 		setSource(source);
 		source.addOutgoing(this);
 		setTarget(target);

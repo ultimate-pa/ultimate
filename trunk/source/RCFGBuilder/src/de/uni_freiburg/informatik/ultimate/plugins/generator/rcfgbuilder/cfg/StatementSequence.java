@@ -80,14 +80,12 @@ public class StatementSequence extends CodeBlock {
 		super(serialNumber, source, target, logger);
 		m_Origin = Origin.IMPLEMENTATION;
 		this.addStatement(st);
-		updatePayloadName();
 	}
 
 	StatementSequence(int serialNumber, ProgramPoint source, ProgramPoint target, Statement st, Origin origin, Logger logger) {
 		super(serialNumber, source, target, logger);
 		m_Origin = origin;
 		this.addStatement(st);
-		updatePayloadName();
 	}
 
 	StatementSequence(int serialNumber, ProgramPoint source, ProgramPoint target, List<Statement> stmts, Origin origin,
@@ -99,7 +97,6 @@ public class StatementSequence extends CodeBlock {
 		for (Statement st : stmts) {
 			m_PrettyPrintedStatements += BoogiePrettyPrinter.print(st);
 		}
-		updatePayloadName();
 	}
 	
 	@Override

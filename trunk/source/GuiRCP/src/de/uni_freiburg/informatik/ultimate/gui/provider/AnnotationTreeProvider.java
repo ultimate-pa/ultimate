@@ -145,7 +145,6 @@ public class AnnotationTreeProvider implements ITreeContentProvider {
 
 			final GroupEntry payloadGroup = new GroupEntry("IPayload", null);
 			rtr.add(payloadGroup);
-			payloadGroup.addEntry(new Entry("Name", payload.getName(), elementGroup));
 			payloadGroup.addEntry(new Entry("UID", payload.getID().toString(), elementGroup));
 
 			final ILocation loc = payload.getLocation();

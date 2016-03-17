@@ -40,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.model.structure.IWalkable;
 import de.uni_freiburg.informatik.ultimate.model.structure.WrapperNode;
 
 /**
- * This is a basic tree walker. it does breadth first search. For a depth first
- * search you might want to implement your own walkers.
+ * This is a basic tree walker. it does breadth first search. For a depth first search you might want to implement your
+ * own walkers.
  * 
  * @author dietsch
  */
@@ -52,8 +52,7 @@ public class DFSTreeWalker extends BaseWalker {
 	}
 
 	/**
-	 * Does the actual walking for IManagedObservers. Has to handle all logic
-	 * with respect to managed mode.
+	 * Does the actual walking for IManagedObservers. Has to handle all logic with respect to managed mode.
 	 * 
 	 * Currently not complete!
 	 * 
@@ -70,13 +69,14 @@ public class DFSTreeWalker extends BaseWalker {
 			IWalkable node = (IWalkable) element;
 
 			ArrayList<Command> cmds = new ArrayList<Command>();
-			for (Command cmd : v.process(node.getPayload(),
-					WalkerOptions.State.OUTER, node.getSuccessors().size())) {
+			for (Command cmd : v.process(node.getPayload(), WalkerOptions.State.OUTER, node.getSuccessors().size())) {
 				cmds.add(cmd);
 			}
 
 			if (cmds.toString().equals(WalkerOptions.Command.SKIP.toString())) {
-				mLogger.debug("Skipping " + node.getPayload().getName());
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Skipping " + node.toString());
+				}
 			} else if (cmds.contains(WalkerOptions.Command.DESCEND)) {
 				for (IWalkable i : node.getSuccessors()) {
 					// TODO handle labeled trees
@@ -91,10 +91,10 @@ public class DFSTreeWalker extends BaseWalker {
 
 	protected void runObserver(IElement element, IUnmanagedObserver v) throws Throwable {
 
-		if(element == null || v == null){
+		if (element == null || v == null) {
 			return;
 		}
-		
+
 		IElement tobeproccessed = element;
 
 		if (element instanceof WrapperNode) {

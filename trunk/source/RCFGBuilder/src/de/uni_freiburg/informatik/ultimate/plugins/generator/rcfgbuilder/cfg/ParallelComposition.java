@@ -125,7 +125,6 @@ public class ParallelComposition extends CodeBlock {
 				null, s_TransformToCNF, transFormulas);
 		m_TransitionFormulaWithBranchEncoders = TransFormula.parallelComposition(mLogger, mServices,
 				this.getSerialNumer(), boogie2smt, branchIndicator, s_TransformToCNF, transFormulasWithBranchEncoders);
-		updatePayloadName();
 	}
 
 	@Override

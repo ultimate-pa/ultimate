@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nwalibrary.visualization;
 
-import java.util.HashMap;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.model.annotation.DefaultAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
@@ -46,7 +46,7 @@ public class AutomatonState extends ModifiableExplicitEdgesMultigraph<AutomatonS
 		
 		DefaultAnnotations acceptance = new DefaultAnnotations();
 		acceptance.put("isAccepting",isAccepting);
-		HashMap<String,IAnnotations> annotations = getPayload().getAnnotations();
+		Map<String,IAnnotations> annotations = getPayload().getAnnotations();
 		annotations.put("isAccepting", acceptance);
 		
 		if (content instanceof IAnnotations) {

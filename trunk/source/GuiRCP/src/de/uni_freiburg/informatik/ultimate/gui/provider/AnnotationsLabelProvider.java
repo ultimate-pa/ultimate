@@ -50,7 +50,7 @@ public class AnnotationsLabelProvider extends LabelProvider {
 			}
 		}
 		if (element instanceof IPayload) {
-			return ((IPayload) element).getName();
+			return ((IPayload) element).toString();
 		}
 		if (element instanceof GroupEntry) {
 			return ((GroupEntry) element).getName();

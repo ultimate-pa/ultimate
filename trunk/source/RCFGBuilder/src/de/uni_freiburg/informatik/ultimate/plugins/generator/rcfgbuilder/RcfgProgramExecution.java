@@ -133,7 +133,7 @@ public class RcfgProgramExecution implements IProgramExecution<RCFGEdge, Express
 		Map<String, ILocation> result = new HashMap<>();
 		for (RCFGEdge cb : trace) {
 			if (cb.getPayload().hasAnnotation()) {
-				HashMap<String, IAnnotations> annotations = cb.getPayload().getAnnotations();
+				Map<String, IAnnotations> annotations = cb.getPayload().getAnnotations();
 				if (annotations.containsKey(Overapprox.getIdentifier())) {
 					Overapprox overapprox = (Overapprox) annotations.get(Overapprox.getIdentifier());
 					@SuppressWarnings("unchecked")

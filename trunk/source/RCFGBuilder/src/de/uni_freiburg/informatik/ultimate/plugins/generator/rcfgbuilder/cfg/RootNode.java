@@ -54,7 +54,7 @@ public class RootNode extends RCFGNode {
 	private static final long serialVersionUID = 1L;
 
 	public RootNode(ILocation location, RootAnnot rootAnnot) {
-		super(new Payload(location, "RootNode"));
+		super(new Payload(location));
 		getPayload().getAnnotations().put(Activator.PLUGIN_ID, rootAnnot);
 	}
 
@@ -71,7 +71,7 @@ public class RootNode extends RCFGNode {
 
 	@Override
 	public String toString() {
-		return getPayload().getName();
+		return "RootNode";
 	}
 	
 	

@@ -46,11 +46,6 @@ public class GotoEdge extends CodeBlock {
 	}
 
 	@Override
-	public void updatePayloadName() {
-		getPayload().setName("goto");
-	}
-
-	@Override
 	public String getPrettyPrintedStatements() {
 		if (mTarget == null) {
 			return "disconnected goto";

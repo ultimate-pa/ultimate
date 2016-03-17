@@ -45,15 +45,14 @@ import de.uni_freiburg.informatik.ultimate.model.structure.VisualizationNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.ProgramPoint;
 
 /**
- * This is a node in our model to store all steps of the minimization. Basically
- * we store here all steps, hence all created edges, of the minimization
- * algorithm. <br>
+ * This is a node in our model to store all steps of the minimization. Basically we store here all steps, hence all
+ * created edges, of the minimization algorithm. <br>
  * 
  * @author Stefan Wissert
  * 
  */
-public class MinimizedNode implements
-		IModifiableExplicitEdgesMultigraph<MinimizedNode, IMinimizedEdge,MinimizedNode, IMinimizedEdge> {
+public class MinimizedNode
+		implements IModifiableExplicitEdgesMultigraph<MinimizedNode, IMinimizedEdge, MinimizedNode, IMinimizedEdge> {
 
 	/**
 	 * Serial number, do not know if this really needed
@@ -63,34 +62,29 @@ public class MinimizedNode implements
 	/**
 	 * the reference for the underlying node in the original RCFG
 	 */
-	private ProgramPoint originalNode;
+	private ProgramPoint mOriginalNode;
 
 	/**
-	 * Because we want to store all levels of the minimization, we keep in track
-	 * all created edges. We store each level in this list. So the first entry
-	 * of list are all basic edges. The most recent entry is the set of the most
-	 * minimized edges. Every set of minimized edges is stored with an rating.
-	 * Whereas the rating is the maximum rating of the complete set of minimized
-	 * edges.
+	 * Because we want to store all levels of the minimization, we keep in track all created edges. We store each level
+	 * in this list. So the first entry of list are all basic edges. The most recent entry is the set of the most
+	 * minimized edges. Every set of minimized edges is stored with an rating. Whereas the rating is the maximum rating
+	 * of the complete set of minimized edges.
 	 */
 	private List<SimpleEntry<IRating, List<IMinimizedEdge>>> outgoingEdges;
 
 	private List<SimpleEntry<IRating, List<IMinimizedEdge>>> incomingEdges;
 
-	private Payload payload;
+	private Payload mPayload;
 
 	/**
-	 * Constructor for the MinimizedNode, it takes as input an INode, which
-	 * should always be an ProgramPoint
+	 * Constructor for the MinimizedNode, it takes as input an INode, which should always be an ProgramPoint
 	 * 
 	 * @param originalNode
-	 *            the underlying original node (should be a ProgramPoint, since
-	 *            we rely on the RCFG model)
+	 *            the underlying original node (should be a ProgramPoint, since we rely on the RCFG model)
 	 */
 	public MinimizedNode(ProgramPoint originalNode) {
-		this.originalNode = originalNode;
-		this.payload = new Payload();
-		this.payload.setName(this.originalNode.toString());
+		mOriginalNode = originalNode;
+		mPayload = new Payload();
 	}
 
 	/**
@@ -99,14 +93,13 @@ public class MinimizedNode implements
 	 * @return the original node (ProgramPoint)
 	 */
 	public ProgramPoint getOriginalNode() {
-		return originalNode;
+		return mOriginalNode;
 	}
 
 	/**
 	 * @param edges
 	 */
-	public void addNewOutgoingEdgeLevel(List<IMinimizedEdge> edges,
-			IMinimizedEdge edgeToRate) {
+	public void addNewOutgoingEdgeLevel(List<IMinimizedEdge> edges, IMinimizedEdge edgeToRate) {
 		// we have to determine the maximum Rating of all edges in the list
 		IRating maxRating = null;
 		if (edgeToRate != null) {
@@ -125,8 +118,7 @@ public class MinimizedNode implements
 		if (this.outgoingEdges == null) {
 			this.outgoingEdges = new ArrayList<SimpleEntry<IRating, List<IMinimizedEdge>>>();
 		}
-		this.outgoingEdges.add(new SimpleEntry<IRating, List<IMinimizedEdge>>(
-				maxRating, edges));
+		this.outgoingEdges.add(new SimpleEntry<IRating, List<IMinimizedEdge>>(maxRating, edges));
 	}
 
 	/**
@@ -137,8 +129,7 @@ public class MinimizedNode implements
 			return null;
 		}
 		if (this.outgoingEdges.size() > 0) {
-			return this.outgoingEdges.get(this.outgoingEdges.size() - 1)
-					.getValue();
+			return this.outgoingEdges.get(this.outgoingEdges.size() - 1).getValue();
 		}
 		return new ArrayList<IMinimizedEdge>();
 	}
@@ -162,8 +153,7 @@ public class MinimizedNode implements
 		if (this.incomingEdges == null) {
 			this.incomingEdges = new ArrayList<SimpleEntry<IRating, List<IMinimizedEdge>>>();
 		}
-		this.incomingEdges.add(new SimpleEntry<IRating, List<IMinimizedEdge>>(
-				maxRating, edges));
+		this.incomingEdges.add(new SimpleEntry<IRating, List<IMinimizedEdge>>(maxRating, edges));
 	}
 
 	/**
@@ -174,8 +164,7 @@ public class MinimizedNode implements
 			return null;
 		}
 		if (this.incomingEdges.size() > 0) {
-			return this.incomingEdges.get(this.incomingEdges.size() - 1)
-					.getValue();
+			return this.incomingEdges.get(this.incomingEdges.size() - 1).getValue();
 		}
 		return new ArrayList<IMinimizedEdge>();
 	}
@@ -217,12 +206,12 @@ public class MinimizedNode implements
 	 */
 	@Override
 	public String toString() {
-		return this.originalNode.toString();
+		return this.mOriginalNode.toString();
 	}
 
 	@Override
 	public IPayload getPayload() {
-		return this.payload;
+		return this.mPayload;
 	}
 
 	@Override
@@ -257,8 +246,7 @@ public class MinimizedNode implements
 	}
 
 	@Override
-	public boolean addAllIncoming(int index,
-			Collection<? extends IMinimizedEdge> c) {
+	public boolean addAllIncoming(int index, Collection<? extends IMinimizedEdge> c) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -298,8 +286,7 @@ public class MinimizedNode implements
 	}
 
 	@Override
-	public boolean addAllOutgoing(int index,
-			Collection<? extends IMinimizedEdge> c) {
+	public boolean addAllOutgoing(int index, Collection<? extends IMinimizedEdge> c) {
 		throw new UnsupportedOperationException();
 	}
 

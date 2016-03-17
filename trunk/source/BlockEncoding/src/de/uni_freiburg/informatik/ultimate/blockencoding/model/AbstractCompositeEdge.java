@@ -68,7 +68,7 @@ public abstract class AbstractCompositeEdge implements ICompositeEdge {
 	 */
 	protected IMinimizedEdge rightEdge;
 
-	protected int containedDisjunctions;
+	protected int mContainedDisjunctions;
 
 	protected Payload payload;
 
@@ -96,11 +96,11 @@ public abstract class AbstractCompositeEdge implements ICompositeEdge {
 		this.payload = new Payload();
 		// update the contained disjunctions
 		if (left instanceof AbstractCompositeEdge) {
-			containedDisjunctions = ((AbstractCompositeEdge) left)
+			mContainedDisjunctions = ((AbstractCompositeEdge) left)
 					.getContainedDisjunctions();
 		}
 		if (right instanceof AbstractCompositeEdge) {
-			containedDisjunctions += ((AbstractCompositeEdge) right)
+			mContainedDisjunctions += ((AbstractCompositeEdge) right)
 					.getContainedDisjunctions();
 		}
 		this.usedVariables = new HashSet<BoogieVar>();
@@ -323,7 +323,7 @@ public abstract class AbstractCompositeEdge implements ICompositeEdge {
 	 * @return the containedDisjunctions
 	 */
 	public int getContainedDisjunctions() {
-		return containedDisjunctions;
+		return mContainedDisjunctions;
 	}
 
 	/*

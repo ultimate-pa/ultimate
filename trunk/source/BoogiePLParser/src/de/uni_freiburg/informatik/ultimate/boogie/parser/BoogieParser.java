@@ -141,7 +141,7 @@ public class BoogieParser implements ISource {
 	 * @see de.uni_freiburg.informatik.ultimate.ep.interfaces.IParser#parseAST(java.io.File[])
 	 */
 	public IElement parseAST(File[] files) throws IOException {
-		WrapperNode dirRoot = new WrapperNode(null, null, new Payload(null, "PROJECT"));
+		final WrapperNode dirRoot = new WrapperNode(null, null);
 
 		for (File f : files) {
 			Unit node = parseFile(f);

@@ -51,12 +51,6 @@ public class Return extends CodeBlock {
 	Return(int serialNumber, ProgramPoint source, ProgramPoint target, Call correspondingCall, Logger logger) {
 		super(serialNumber, source, target, logger);
 		m_CorrespondingCall = correspondingCall;
-		updatePayloadName();
-	}
-
-	@Override
-	public void updatePayloadName() {
-		super.getPayload().setName("return " + BoogiePrettyPrinter.print(getCallStatement()));
 	}
 
 	public Call getCorrespondingCall() {

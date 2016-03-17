@@ -83,12 +83,6 @@ public class Summary extends CodeBlock {
 		m_CallStatement = st;
 		m_CalledProcedureHasImplementation = calledProcedureHasImplementation;
 		m_PrettyPrintedStatements = BoogiePrettyPrinter.print(st);
-		updatePayloadName();
-	}
-
-	@Override
-	public void updatePayloadName() {
-		super.getPayload().setName("summary");
 	}
 
 	public boolean calledProcedureHasImplementation() {

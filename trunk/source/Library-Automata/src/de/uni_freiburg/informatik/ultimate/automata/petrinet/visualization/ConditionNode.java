@@ -27,7 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.BranchingProcess;
@@ -54,7 +54,7 @@ public class ConditionNode<S,C> extends PetriNetVisualizationNode {
 		annot.put("CorrespondingPlace",condition.getPlace());
 		annot.put("NumberSuccesorEvents", condition.getSuccessorEvents().size());
 		annot.put("AllConditionsInCoRelation", allConditionsInCoRelation(condition,bc));
-		HashMap<String,IAnnotations> annotations = this.getPayload().getAnnotations();
+		Map<String,IAnnotations> annotations = getPayload().getAnnotations();
 		annotations.put(LibraryIdentifiers.s_LibraryID, annot);
 		
 		C content = condition.getPlace().getContent();
