@@ -116,15 +116,18 @@ public class FunctionDeclarations {
 		return String.valueOf(bitsize);
 	}
 	
-	public boolean checkParameters(CPrimitive... paramCTypes) {
-		PRIMITIVE type = paramCTypes[0].getType();
-		
-		for (CPrimitive t : paramCTypes) {
+	
+	/**
+	 * Check if all CPrimitives in a sequence are equivalent.
+	 * @return true iff all CPrimitives in cPrimitives are equivalent.
+	 */
+	public boolean checkParameters(CPrimitive... cPrimitives) {
+		PRIMITIVE type = cPrimitives[0].getType();
+		for (CPrimitive t : cPrimitives) {
 			if (!t.getType().equals(type)) {
 				return false;
 			}
 		}
-		
 		return true;
 	}
 
