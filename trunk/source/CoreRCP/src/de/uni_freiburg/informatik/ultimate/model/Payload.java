@@ -33,16 +33,15 @@ import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 /**
- * A concrete implementation of the {@link IPayload} interface. The payload contains all informations carried by a node.
+ * A concrete implementation of the {@link IPayload} interface. The payload contains all information carried by a node.
  * 
- * @author dietsch@informatik.uni-freiburg.de
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
 public final class Payload implements IPayload {
 
 	private static final long serialVersionUID = 9150283961581614549L;
 	private ILocation mLocation;
-	private UltimateUID mID;
 	private Map<String, IAnnotations> mAnnotations;
 
 	public Payload() {
@@ -59,14 +58,6 @@ public final class Payload implements IPayload {
 			mAnnotations = new HashMap<String, IAnnotations>();
 		}
 		return mAnnotations;
-	}
-
-	@Override
-	public UltimateUID getID() {
-		if (mID == null) {
-			mID = new UltimateUID();
-		}
-		return mID;
 	}
 
 	@Override

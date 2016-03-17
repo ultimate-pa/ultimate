@@ -149,11 +149,6 @@ public class PersistenceAwareModelManager implements IModelManager {
 		return this.addItem(vault);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#getItemNames()
-	 */
 	@Override
 	public ArrayList<String> getItemNames() {
 		ArrayList<String> names = new ArrayList<String>();
@@ -164,22 +159,11 @@ public class PersistenceAwareModelManager implements IModelManager {
 		return names;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#getLastAdded()
-	 */
 	@Override
 	public GraphType getLastAdded() {
 		return this.mLastAdded;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#getRootNode(de
-	 * .uni_freiburg.informatik.ultimate.model.GraphType )
-	 */
 	@Override
 	public IElement getRootNode(GraphType graph) throws GraphNotFoundException {
 		ModelContainer container = this.mModelMap.get(graph);
@@ -197,21 +181,11 @@ public class PersistenceAwareModelManager implements IModelManager {
 		return container.getRoot();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#isEmpty()
-	 */
 	@Override
 	public boolean isEmpty() {
 		return (this.mModelMap.isEmpty() && this.mRepository.isEmpty());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#persistAll(boolean )
-	 */
 	@Override
 	public void persistAll(boolean keepInMemory) throws StoreObjectException {
 		for (final Entry<GraphType, ModelContainer> mapEntry : mModelMap.entrySet()) {
@@ -225,23 +199,11 @@ public class PersistenceAwareModelManager implements IModelManager {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#persistExistingGraph
-	 * (de.uni_freiburg.informatik.ultimate.model .GraphType)
-	 */
 	@Override
 	public void persistAndDropExistingGraph(GraphType key) throws StoreObjectException, GraphNotFoundException {
 		persistExistingGraph(key, false);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#persistExistingGraph
-	 * (de.uni_freiburg.informatik.ultimate.model .GraphType, boolean)
-	 */
 	@Override
 	public void persistExistingGraph(GraphType key, boolean keepInMemory)
 			throws StoreObjectException, GraphNotFoundException {
@@ -256,22 +218,11 @@ public class PersistenceAwareModelManager implements IModelManager {
 
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#removeAll()
-	 */
 	@Override
 	public void removeAll() {
 		this.mModelMap.clear();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#removeItem(de
-	 * .uni_freiburg.informatik.ultimate.model.GraphType)
-	 */
 	@Override
 	public boolean removeItem(GraphType graphtype) {
 		boolean successfull = true;
@@ -281,11 +232,6 @@ public class PersistenceAwareModelManager implements IModelManager {
 		return successfull && this.mRepository.remove(graphtype.toString());
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#removeItem(java .lang.String)
-	 */
 	@Override
 	public boolean removeItem(String id) {
 		boolean successfull = true;
@@ -296,22 +242,11 @@ public class PersistenceAwareModelManager implements IModelManager {
 		return successfull && this.mRepository.remove(id);
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#removeItem(de
-	 * .uni_freiburg.informatik.ultimate.model.ModelContainer )
-	 */
 	@Override
 	public boolean removeItem(ModelContainer vault) {
 		return this.mModelMap.remove(vault.getType()) != null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#searchGraphType (java.lang.String)
-	 */
 	@Override
 	public GraphType getGraphTypeById(String s) {
 		for (GraphType t : this.mModelMap.keySet()) {
@@ -338,11 +273,6 @@ public class PersistenceAwareModelManager implements IModelManager {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager# getGraphTypeByGeneratorPluginId(java .lang.String)
-	 */
 	@Override
 	public GraphType getGraphTypeByGeneratorPluginId(String id) {
 		for (GraphType t : this.mModelMap.keySet()) {
@@ -364,22 +294,11 @@ public class PersistenceAwareModelManager implements IModelManager {
 		return null;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#setLastAdded(
-	 * de.uni_freiburg.informatik.ultimate.model.GraphType )
-	 */
 	@Override
 	public void setLastAdded(GraphType lastAdded) {
 		this.mLastAdded = lastAdded;
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#showStatus(java .lang.String)
-	 */
 	@Override
 	public void showStatus(String callerName) {
 		mLogger.debug(callerName + " reguests chamber status");
@@ -391,11 +310,6 @@ public class PersistenceAwareModelManager implements IModelManager {
 		}
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#size()
-	 */
 	@Override
 	public int size() {
 		mLogger.debug("Current MM size is " + mModelMap.size() + ". There are " + this.mRepository.listKeys().size()
@@ -403,36 +317,8 @@ public class PersistenceAwareModelManager implements IModelManager {
 		return this.mModelMap.size();
 	}
 
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#getItemKeys()
-	 */
 	@Override
 	public List<GraphType> getItemKeys() {
 		return new ArrayList<GraphType>(mModelMap.keySet());
 	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see de.uni_freiburg.informatik.ultimate.model.IModelManager#search(de.
-	 * uni_freiburg.informatik.ultimate.model.GraphType, java.lang.String)
-	 */
-	@Override
-	public IPayload search(GraphType modelId, String id) {
-		if (this.mModelMap.containsKey(modelId)) {
-			return this.mModelMap.get(modelId).findNode(id);
-		} else {
-			try {
-				ModelContainer container = this.mRepository.get(modelId.toString());
-				this.mModelMap.put(modelId, container);
-				return container.findNode(id);
-			} catch (DataAccessException e) {
-				mLogger.debug("Could not find requested GraphType in VaultMap.");
-				return null;
-			}
-		}
-	}
-
 }

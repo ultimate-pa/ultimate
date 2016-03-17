@@ -34,60 +34,48 @@ import de.uni_freiburg.informatik.ultimate.model.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.model.location.ILocation;
 
 /**
+ * This interface describes all information contained by an implementation of {@link IElement}.
  * 
- * This interface describes all information contained in an INode. We use it to hide the data structure from the
- * information and to save resources
- * 
- * @author dietsch@informatik.uni-freiburg.de
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
 public interface IPayload extends Serializable {
 
 	/**
-	 * Get a two-dimensional HashMap containing Annotations. Initializes annotations automatically if not already
-	 * initialized.
+	 * Get a two-dimensional {@link Map} containing {@link IAnnotations}. Initializes annotations automatically if not
+	 * already initialized.
 	 * 
-	 * @return the HashMap containing the annotations
+	 * @return the {@link Map} containing the {@link IAnnotations} of this payload.
 	 */
 	Map<String, IAnnotations> getAnnotations();
 
 	/**
-	 * Tries to give you a satisfying answer where this token was found. May be null.
-	 * 
-	 * @return the location itself
+	 * @return an {@link ILocation} instance describing which part of the input is described by this {@link IPayload}.
 	 */
 	ILocation getLocation();
 
 	/**
-	 * Returns the unique identifier for this node. The identifier should be unique for all objects of the same type.
+	 * Returns true if the annotation map is already initialized and contains elements. Returns false if the annotations
+	 * are not initialized or contain no elements. Should be used instead of a direct null test of the
+	 * {@link #getAnnotations()} method to prevent unnecessary initialization.
 	 * 
-	 * @return A composite data structure serving as unique identifier. Consists of a short, long and int.
-	 */
-	UltimateUID getID();
-
-	/**
-	 * Returns true if the annotation hash map is already initialized and contains elements. Returns false if the
-	 * annotations are not initialized or contain no elements. Should be used instead of a direct null test of the
-	 * getAnnotations() method to prevent unnecessary initialization.
-	 * 
-	 * @return true if the annotation hash map is already initialized and contains elements. Returns false if the
-	 *         annotations are not initialized or contain no elements.
+	 * @return true if the annotation map is already initialized and contains elements. Returns false if the annotations
+	 *         are not initialized or contain no elements.
 	 */
 	boolean hasAnnotation();
 
 	/**
-	 * Returns true if the Location Object is already initialized and false if not. Should be used instead of a direct
-	 * null test of the getLocation() method to prevent unnecessary initialization.
+	 * Returns true if this {@link IPayload} instance has a {@link ILocation}. Should be used instead of a direct null
+	 * test of the {@link #getLocation()} method to prevent unnecessary initialization.
 	 * 
-	 * @return True if the Location has been initialized, false if not
+	 * @return true iff this {@link IPayload} has a {@link ILocation} instance, false otherwise.
 	 */
 	boolean hasLocation();
 
 	/**
-	 * Overwrites the location with <code>loc</code>.
+	 * Overwrites the {@link ILocation} attached to this {@link IPayload} with <code>loc</code>.
 	 * 
-	 * @deprecated Should not be used anymore because IPayload should become immutable.
-	 * @param loc
+	 * @deprecated Should not be used anymore because {@link IPayload} should become immutable.
 	 */
 	void setLocation(ILocation loc);
 }

@@ -224,16 +224,4 @@ public interface IModelManager {
 	 * 
 	 */
 	List<GraphType> getItemKeys();
-	
-	/**
-	 * IPayload search for a payload of the requested element in the given model
-	 * 
-	 * @param modelId
-	 *            GraphType identifying the model
-	 * @param id
-	 *            the id of the requested element
-	 * @return the requested payload
-	 */
-	IPayload search(GraphType modelId, String id);
-
 }
